@@ -17,21 +17,21 @@ final class YetiEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("yeti", "Yeti", 220, 6, 1.1f, BodyArchetype.YETI)
+                .startingAt(EnemyDefinition.of("yeti", "Yeti", 165, 3, 1.1f, BodyArchetype.YETI)
                         .withDescription("Thick fur against cold and blows alike.")
                         .withArmor(15f)
                         .withMagicResist(15f)
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
                                 IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.5f)))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(440, 11))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(880, 16)
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(330, 6))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(660, 8)
                         .withAdditionalTraits(List.of(
                                 IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.75f)))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1760, 31)
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1320, 16)
                         .withStats(20f, 20f, 2f, 2f, 20f, 5f, 15f)
                         .withAdditionalAbilities(List.of(hunker(6f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(3520, 56)
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(2640, 28)
                         .withStats(25f, 25f, 3f, 3f, 50f, 5f, 25f)
                         .withAdditionalAbilities(List.of(hunker(12f))))
                 .build());

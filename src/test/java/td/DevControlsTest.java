@@ -1,6 +1,8 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.damage.DamageUnits;
+import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.LevelFixtures;
@@ -186,7 +188,7 @@ class DevControlsTest {
         assertThat(refused).isEqualTo("Enemy health must be above 0%");
         assertThat(set).isEqualTo("New enemies get 250% health");
         assertThat(this.world.enemies().getEnemies()).extracting(td.enemy.EnemyMob::getHealth)
-                .containsExactly(authored, authored * 5 / 2);
+                .containsExactly(authored, DamageUnits.ofPoints(Math.round(EnemyCatalog.builtIn().get("c").baseHealth() * 2.5f)));
     }
 
     private Tower placeSniper(int cellX, int cellY) {

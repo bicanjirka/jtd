@@ -204,8 +204,8 @@ any slot can name a different rank inline, before the enemy id (`elite c`) or be
 shape (`elite swarm 4 c`). Each rank's health and bounty are written out per enemy (the Simple mob
 derives its own from the pattern), following one pattern: health multiplies by about the same factor every rank, 2 for the Simple mob and 1.7 to 2 for
 the others, lower where an enemy's traits already grow with rank; bounty adds instead, a step of its
-own for Soldier and for Veteran, three more for Elite and five more for Boss (a Simple mob has 100,
-200, 400, 800 and 1600 health and pays 3, 6, 9, 18 and 33). A kill's score is weighted by
+own for Soldier and for Veteran, three more for Elite and five more for Boss (a Simple mob has 75,
+150, 300, 600 and 1200 health and pays 2, 4, 6, 12 and 22). A kill's score is weighted by
 rank too — a Boss-rank kill is worth disproportionately more than a Grunt-rank one of the same
 bounty. Every enemy defines all five ranks, and gains traits or abilities as it climbs, except the
 spawnlings, which are one rank each, and the Warden chain, which is unique: every stage and egg is a

@@ -24,7 +24,7 @@ final class WardenEnemy {
                 "The last egg: destroy it to end the encounter.",
                 new Shell(25f, 1f, 0f), List.of()));
         // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
-        catalog.registerUnique(warden("warden3", "The Exhausted Warden", 6800, "hulking armored sentinel, barely standing",
+        catalog.registerUnique(warden("warden3", "The Exhausted Warden", 5100, "hulking armored sentinel, barely standing",
                 new Shell(5f, 2.5f, 0f), "wardenEgg3"));
         catalog.registerUnique(egg("wardenEgg2", "Warden's Egg",
                 "Hatches into a weaker Warden if not destroyed in time.",
@@ -32,7 +32,7 @@ final class WardenEnemy {
                 List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE))))
                 .withAbilities(hatchInto("warden3")));
-        catalog.registerUnique(warden("warden2", "The Weakened Warden", 11000,
+        catalog.registerUnique(warden("warden2", "The Weakened Warden", 8250,
                 "hulking armored sentinel, worn down from its last hatching", new Shell(10f, 5f, 0f), "wardenEgg2"));
         catalog.registerUnique(egg("wardenEgg1", "Warden's Egg",
                 "Hatches into a weaker Warden if not destroyed in time.",
@@ -41,7 +41,7 @@ final class WardenEnemy {
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL))))
                 .withAbilities(hatchInto("warden2")));
-        catalog.registerUnique(warden("warden1", "The Warden", 18000, "hulking armored sentinel", new Shell(15f, 10f, 0f),
+        catalog.registerUnique(warden("warden1", "The Warden", 13500, "hulking armored sentinel", new Shell(15f, 10f, 0f),
                 "wardenEgg1"));
     }
 
@@ -58,7 +58,7 @@ final class WardenEnemy {
 
     private static EnemyDefinition egg(String id, String name, String description, Shell shell,
                                        List<IdentifiedTrait> traits) {
-        return EnemyDefinition.of(id, name, 3000, 20, 0f, BodyArchetype.WARDEN_EGG)
+        return EnemyDefinition.of(id, name, 2250, 10, 0f, BodyArchetype.WARDEN_EGG)
                 .withDescription(description)
                 .withStats(shell.resist(), shell.resist(), shell.plating(), shell.plating(), shell.resilience(), 0f, 0f)
                 .withIdentifiedTraits(traits);
@@ -86,7 +86,7 @@ final class WardenEnemy {
                         new ApplyEffectAction(new ShieldTemplate(health * 0.03f, 30), new SelfTarget())))));
         abilities.add(IdentifiedAbility.anonymous(new Ability(AbilityTerm.LAY_EGG, new OnDeathTrigger(),
                 new SpawnEnemiesAction(eggId, 1, false))));
-        return EnemyDefinition.of(id, name, health, 100, 0.8f, BodyArchetype.WARDEN)
+        return EnemyDefinition.of(id, name, health, 50, 0.8f, BodyArchetype.WARDEN)
                 .withDescription("A " + lead + ".")
                 .withLivesOnLeak(EnemyDefinition.ALL_LIVES)
                 .withMovement(new RotorMovement((float) Math.toRadians(2.0)))

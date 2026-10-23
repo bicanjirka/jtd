@@ -16,20 +16,20 @@ final class ShieldbearerEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("shieldbearer", "Shieldbearer", 140, 6, 1.0f, BodyArchetype.SHIELDBEARER)
+                .startingAt(EnemyDefinition.of("shieldbearer", "Shieldbearer", 105, 3, 1.0f, BodyArchetype.SHIELDBEARER)
                         // "other" is load-bearing: a radius target excludes the caster.
                         .withDescription("Guards the enemies around it; break it first.")
                         .withArmor(30f)
                         .withIdentifiedAbilities(List.of(shield(40f, 100f))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(252, 11)
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(189, 6)
                         .withAdditionalAbilities(List.of(shield(80f, 100f))))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(454, 16)
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(341, 8)
                         .withSpirit(10f)
                         .withAdditionalAbilities(List.of(shield(160f, 100f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(816, 31)
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(612, 16)
                         .withStats(40f, 10f, 2f, 0f, 20f, 5f, 20f)
                         .withAdditionalAbilities(List.of(shield(320f, 100f), selfShield(320f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1470, 56)
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1103, 28)
                         .withStats(50f, 15f, 4f, 0f, 30f, 5f, 30f)
                         .withAdditionalAbilities(List.of(shield(640f, 130f), selfShield(640f))))
                 .build());

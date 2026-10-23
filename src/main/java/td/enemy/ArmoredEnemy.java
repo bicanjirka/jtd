@@ -19,7 +19,7 @@ final class ArmoredEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("s", "Armored mob", 160, 4, 1.28f, BodyArchetype.SQUARE)
+                .startingAt(EnemyDefinition.of("s", "Armored mob", 120, 2, 1.28f, BodyArchetype.SQUARE)
                         .withDescription("Heavy plates blunt physical hits; magic goes through.")
                         .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
                         .withArmor(25f)
@@ -28,25 +28,25 @@ final class ArmoredEnemy {
                         .withResilience(100f)
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.named("freeze", EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f)))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(288, 8)
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(216, 4)
                         .withArmor(33f)
                         .withMagicResist(33f))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(518, 12)
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(389, 6)
                         .withArmor(43f)
                         .withMagicResist(43f)
                         .withPlating(3f)
                         .withAdditionalTraits(List.of(
                                 IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.25f)))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(933, 24)
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(700, 12)
                         .withStats(67f, 67f, 8f, 0f, 100f, 5f, 10f)
                         .withAdditionalAbilities(List.of(brace(150f), wardMine(120f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1680, 44)
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1260, 22)
                         .withStats(100f, 100f, 10f, 0f, 100f, 5f, 20f)
                         .withAdditionalAbilities(List.of(brace(300f), wardMine(240f), IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE,
                                 new PeriodicTrigger(Math.round(3 * TickRate.TICKS_PER_SECOND)),
                                 new SpawnEnemiesAction("sSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
                 .build());
-        catalog.register(EnemyDefinition.of("sSpawn", "Armored Reinforcement", 200, 1, 1.28f, BodyArchetype.SQUARE)
+        catalog.register(EnemyDefinition.of("sSpawn", "Armored Reinforcement", 150, 1, 1.28f, BodyArchetype.SQUARE)
                 .withDescription("Called in by an Armored boss to hold the line.")
                 .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
                 .withArmor(25f)
