@@ -18,6 +18,7 @@ import td.util.LoadedLevel;
 import td.wave.Wave;
 import td.wave.WaveContent;
 import td.wave.WaveScript;
+import td.wave.WaveScriptSuggestions;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -131,6 +132,15 @@ public final class DevControls implements EconomyListener {
         }
         int path = Math.floorMod(pathIndex, level.pathCount());
         return WaveScriptCheck.of(new Wave(this.world, content, ++this.spawnSeed, path, 1f));
+    }
+
+    /** What could be typed at {@code caret} of a wave script, in the installed level's catalog. */
+    public WaveScriptSuggestions.Result suggestWaveScript(String script, int caret) {
+        LoadedLevel level = this.world.level();
+        if (!level.isLoaded()) {
+            return WaveScriptSuggestions.Result.none();
+        }
+        return WaveScriptSuggestions.suggest(script, caret, level.catalog());
     }
 
     /**
