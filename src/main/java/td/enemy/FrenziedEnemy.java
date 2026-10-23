@@ -19,23 +19,23 @@ final class FrenziedEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("t", "Frenzied mob", 120, 4, 1.28f, BodyArchetype.TRIANGLE)
+                .startingAt(EnemyDefinition.of("t", "Frenzied mob", 90, 2, 1.28f, BodyArchetype.TRIANGLE)
                         .withDescription("Reckless: the more it is hurt, the faster it runs.")
                         .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
                         .withResilience(-20f)
                         .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f)))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(228, 7))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(433, 10)
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(171, 4))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(325, 5)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.5f))))
                         .withAdditionalAbilities(List.of(hasteGround(0.5f, 1.5f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(823, 19)
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(617, 10)
                         .withStats(10f, 10f, 0f, 0f, -20f, 10f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.8f))))
                         .withAdditionalAbilities(List.of(hasteGround(0.75f, 2f),
                                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.SECOND_WIND,
                                         new HealthThresholdTrigger(0.5f),
                                         new ApplyEffectAction(new SprintTemplate(40), new SelfTarget()))))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1564, 34)
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1173, 17)
                         .withStats(15f, 15f, 0f, 0f, 100f, 10f, 20f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(2f))))
                         .withMovement(new RotorMovement((float) Math.toRadians(-10.0)))
@@ -46,7 +46,7 @@ final class FrenziedEnemy {
                                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(200),
                                         new ApplyEffectAction(new HealTemplate(2f, 200), new SelfTarget()))))))
                 .build());
-        catalog.register(EnemyDefinition.of("tSpawn", "Frenzy Spawnling", 280, 2, 1.28f, BodyArchetype.TRIANGLE)
+        catalog.register(EnemyDefinition.of("tSpawn", "Frenzy Spawnling", 210, 1, 1.28f, BodyArchetype.TRIANGLE)
                 .withDescription("Born of an enraged Frenzied boss; it tends its kin as it dies.")
                 .withResilience(-20f)
                 .withTraits(List.of(new HurtSpeedTrait(1.4f)))

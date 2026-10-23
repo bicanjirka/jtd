@@ -50,28 +50,32 @@ final class CurlyPathLevel {
                     new Point(8, 7), new Point(13, 7), new Point(13, 2), new Point(16, 2),
                     new Point(16, 11), new Point(18, 11), new Point(18, 7), new Point(20, 7)),
             List.of(
-                    new WaveDefinition("column 6 c", Rank.GRUNT),
-                    new WaveDefinition("drip 4 courier", Rank.GRUNT),
-                    new WaveDefinition("line 3 s e line 3 s", Rank.SOLDIER),
-                    new WaveDefinition("g 2 e 6 c", Rank.SOLDIER),
+                    new WaveDefinition("column 6 c e line 4 c e column 6 c", Rank.GRUNT),
+                    new WaveDefinition("drip 4 courier e 4 c e drip 4 courier", Rank.GRUNT),
+                    new WaveDefinition("line 3 s e line 3 s e line 3 s e 4 c", Rank.SOLDIER),
+                    new WaveDefinition("g 2 e 8 c e g 2 e 8 c", Rank.SOLDIER),
                     new WaveDefinition("yeti 2 e yeti 2 e yeti", Rank.SOLDIER),
-                    new WaveDefinition("grunt 5 c 3 e elite drip 3 yeti", Rank.GRUNT),
-                    new WaveDefinition("flank courier 2 e flank courier", Rank.SOLDIER),
-                    new WaveDefinition("column 4 c e veteran j e column 3 s", Rank.SOLDIER),
-                    new WaveDefinition("line 3 skirmisher 2 e line 3 skirmisher", Rank.SOLDIER),
-                    new WaveDefinition("swarm 12 mite e column 10 mite e veteran t e swarm 12 mite", Rank.SOLDIER),
+                    new WaveDefinition("grunt 5 c 3 e elite drip 3 yeti 3 e grunt drip 4 courier e grunt 6 c", Rank.GRUNT),
+                    new WaveDefinition("flank courier 2 e flank courier 2 e line 4 c 2 e flank courier 2 e flank courier",
+                            Rank.SOLDIER),
+                    new WaveDefinition("column 8 c e veteran j e column 5 s e column 6 c", Rank.SOLDIER),
+                    new WaveDefinition("line 3 skirmisher 2 e line 3 skirmisher 2 e line 3 skirmisher", Rank.SOLDIER),
+                    new WaveDefinition("swarm 12 mite e column 10 mite e veteran t e swarm 12 mite e column 10 c e swarm 12 mite "
+                            + "e line 6 courier e column 8 c e veteran t", Rank.SOLDIER),
                     new WaveDefinition("w8 column 12 mite elite g column 12 mite swarm 12 mite 2 e soldier line 4 c column 8 mite "
-                            + "elite g column 8 mite", Rank.VETERAN),
-                    new WaveDefinition("boss t elite mender elite mender 3 e elite salamander", Rank.ELITE),
-                    new WaveDefinition("drip 3 courier", Rank.VETERAN),
-                    new WaveDefinition("juggernaut e elite g", Rank.VETERAN),
-                    new WaveDefinition("elite column 3 juggernaut 2 veteran flank shieldbearer 3 e soldier 3 armored s",
+                            + "elite g column 8 mite 2 e soldier column 10 c column 12 mite soldier line 6 courier swarm 12 mite "
+                            + "column 10 c elite g swarm 12 mite", Rank.VETERAN),
+                    new WaveDefinition("column 8 c boss t elite mender elite mender 3 e elite salamander e column 8 c",
                             Rank.ELITE),
+                    new WaveDefinition("drip 3 courier e column 6 c e drip 3 courier", Rank.VETERAN),
+                    new WaveDefinition("juggernaut e elite g", Rank.VETERAN),
+                    new WaveDefinition("elite column 3 juggernaut 2 veteran flank shieldbearer 3 e soldier 3 armored s "
+                            + "e soldier column 10 c", Rank.ELITE),
                     new WaveDefinition("line 3 skirmisher e veteran j", Rank.ELITE),
-                    new WaveDefinition("2 juggernaut veteran flank shieldbearer 3 e boss drip 3 yeti 3 e 6 t mender mender 3 e "
-                            + "column 12 mite g column 12 mite", Rank.ELITE),
-                    new WaveDefinition("warden1 8 e elite swarm 12 mite 2 e veteran 3 skirmisher elite mender",
-                            Rank.BOSS)),
+                    new WaveDefinition("2 juggernaut veteran flank shieldbearer 3 e boss drip 3 yeti 3 e 9 t mender mender 3 e "
+                            + "column 12 mite g column 12 mite swarm 12 mite e column 10 c g swarm 12 mite", Rank.ELITE),
+                    new WaveDefinition("warden1 8 e elite swarm 12 mite 2 e veteran 3 skirmisher elite mender e veteran "
+                            + "column 10 c e swarm 12 mite", Rank.BOSS)),
             STARTING_CREDITS, STARTING_LIVES, SMOOTHING)
             .withCustomRankedEnemies(List.of(MENDER));
 

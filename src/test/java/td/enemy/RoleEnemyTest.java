@@ -81,7 +81,7 @@ class RoleEnemyTest {
         EnemyCatalog catalog = EnemyCatalog.builtIn();
 
         assertThat(catalog.get("courier").baseSpeed()).isGreaterThan(catalog.get("c").baseSpeed() * 2);
-        assertThat(catalog.get("courier").price()).isGreaterThan(catalog.get("c").price() * 3);
+        assertThat(catalog.get("courier").price()).isGreaterThan(catalog.get("c").price() * 2);
     }
 
     @Test

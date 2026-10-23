@@ -11,6 +11,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.BodyArchetype;
 import td.enemy.EffectResistTrait;
+import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
@@ -1741,7 +1742,7 @@ class GameEngineTest {
 
         assertThat(engine.getGameWorld().enemies().getEnemies())
                 .extracting(EnemyMob::getHealth)
-                .containsOnly(DamageUnits.ofPoints(150));
+                .containsOnly(DamageUnits.ofPoints(Math.round(EnemyCatalog.builtIn().get("c").baseHealth() * 1.5f)));
     }
 
     @Test

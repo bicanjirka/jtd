@@ -21,7 +21,7 @@ final class JuggernautEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("juggernaut", "Juggernaut", 600, 12, 0.64f, BodyArchetype.JUGGERNAUT)
+                .startingAt(EnemyDefinition.of("juggernaut", "Juggernaut", 450, 6, 0.64f, BodyArchetype.JUGGERNAUT)
                         .withDescription("A slow fortress whose plating swallows small hits.")
                         .withMovement(new RotorMovement((float) Math.toRadians(1.5)))
                         .withPlating(25f)
@@ -29,13 +29,13 @@ final class JuggernautEnemy {
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.FREEZE, 0.3f)),
                                 IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.CHILL, 0.3f)))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1200, 22))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2400, 32).withPlating(30f)
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(900, 11))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(1800, 16).withPlating(30f)
                         .withAdditionalAbilities(List.of(blast(2f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(4800, 62)
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(3600, 31)
                         .withStats(15f, 15f, 30f, 0f, 100f, 0f, 10f)
                         .withAdditionalAbilities(List.of(blast(4f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(9600, 112)
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(7200, 56)
                         .withStats(25f, 20f, 40f, 0f, 100f, 0f, 20f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.BULWARK,
                                 new HealthThresholdTrigger(0.5f),

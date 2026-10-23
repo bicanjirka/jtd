@@ -88,19 +88,19 @@ class EnemyCatalogTest {
         RankedEnemy toughCircle = catalog.cloneAndAdjust("c", "toughCircle",
                 d -> d.withHealthAndPrice(d.baseHealth() + 50, d.price() + 5));
 
-        assertThat(toughCircle.definitionFor(Rank.GRUNT).baseHealth()).isEqualTo(150);
-        assertThat(toughCircle.definitionFor(Rank.SOLDIER).baseHealth()).isEqualTo(250);
-        assertThat(toughCircle.definitionFor(Rank.VETERAN).baseHealth()).isEqualTo(450);
-        assertThat(toughCircle.definitionFor(Rank.ELITE).baseHealth()).isEqualTo(850);
-        assertThat(toughCircle.definitionFor(Rank.BOSS).baseHealth()).isEqualTo(1650);
-        assertThat(toughCircle.definitionFor(Rank.GRUNT).price()).isEqualTo(8);
-        assertThat(toughCircle.definitionFor(Rank.BOSS).price()).isEqualTo(38);
+        assertThat(toughCircle.definitionFor(Rank.GRUNT).baseHealth()).isEqualTo(125);
+        assertThat(toughCircle.definitionFor(Rank.SOLDIER).baseHealth()).isEqualTo(200);
+        assertThat(toughCircle.definitionFor(Rank.VETERAN).baseHealth()).isEqualTo(350);
+        assertThat(toughCircle.definitionFor(Rank.ELITE).baseHealth()).isEqualTo(650);
+        assertThat(toughCircle.definitionFor(Rank.BOSS).baseHealth()).isEqualTo(1250);
+        assertThat(toughCircle.definitionFor(Rank.GRUNT).price()).isEqualTo(7);
+        assertThat(toughCircle.definitionFor(Rank.BOSS).price()).isEqualTo(27);
 
         for (Rank rank : Rank.values()) {
             assertThat(toughCircle.definitionFor(rank).id()).isEqualTo("toughCircle");
         }
-        assertThat(catalog.get("c", Rank.GRUNT).baseHealth()).isEqualTo(100);
-        assertThat(catalog.get("c", Rank.BOSS).baseHealth()).isEqualTo(1600);
+        assertThat(catalog.get("c", Rank.GRUNT).baseHealth()).isEqualTo(75);
+        assertThat(catalog.get("c", Rank.BOSS).baseHealth()).isEqualTo(1200);
 
         assertThat(toughCircle.definitionFor(Rank.SOLDIER).traitsFor(DamageMix.none())).isEmpty();
         DamageMix allPhysical = DamageMix.of(Damage.physical(10));

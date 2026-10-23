@@ -39,7 +39,7 @@ final class TwistedHourglassLevel {
     }
 
     private static final RankedEnemy REAVER = RankedEnemy
-            .startingAt(EnemyDefinition.of("reaver", "Reaver", 1000, 12, 1.28f, BodyArchetype.TRIANGLE)
+            .startingAt(EnemyDefinition.of("reaver", "Reaver", 750, 6, 1.28f, BodyArchetype.TRIANGLE)
                     .withDescription("A brute that runs faster as it is hurt and splits when it falls.")
                     .withMovement(new PathDirectionalMovement())
                     .withHealthDivisor(0.8f)
@@ -50,14 +50,14 @@ final class TwistedHourglassLevel {
                             panicShield(100f),
                             IdentifiedAbility.named("splitOnDeath",
                                     new Ability(AbilityTerm.SPLIT, new OnDeathTrigger(), new SpawnEnemiesAction("c", 2, false))))))
-            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1800, 20)
+            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1350, 10)
                     .withAdditionalAbilities(List.of(panicShield(180f))))
-            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(3240, 28)
+            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2430, 14)
                     .withAdditionalAbilities(List.of(panicShield(320f))))
-            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(5832, 52)
+            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(4374, 26)
                     .withStats(10f, 10f, 1f, 1f, 100f, 5f, 10f)
                     .withAdditionalAbilities(List.of(panicShield(580f))))
-            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(10498, 92)
+            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(7874, 46)
                     .withStats(15f, 15f, 1f, 1f, 100f, 5f, 20f)
                     .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.6f))))
                     .withAdditionalAbilities(List.of(panicShield(1050f))))
@@ -72,16 +72,16 @@ final class TwistedHourglassLevel {
                             new Point(5, 7), new Point(7, 9), new Point(7, 13),
                             new Point(-1, 13)),
                     List.of(
-                            new WaveDefinition("c e c e c e c e armored c", Rank.GRUNT),
-                            new WaveDefinition("s e s e s", Rank.GRUNT),
-                            new WaveDefinition("5 t", Rank.SOLDIER),
-                            new WaveDefinition("g e g e g e g", Rank.SOLDIER),
-                            new WaveDefinition("line 3 c e line 3 s", Rank.SOLDIER),
-                            new WaveDefinition("flank c e flank t", Rank.VETERAN),
-                            new WaveDefinition("swarm 4 c e swarm 4 s", Rank.VETERAN),
-                            new WaveDefinition("column 3 t e column 3 g", Rank.VETERAN),
-                            new WaveDefinition("drip 4 s e drip 4 t", Rank.ELITE),
-                            new WaveDefinition("3 g 3 t 3 s 3 c", Rank.ELITE)),
+                            new WaveDefinition("c e c e c e c e armored c e 4 c e 3 s", Rank.GRUNT),
+                            new WaveDefinition("s e s e s e 4 c e s e s", Rank.GRUNT),
+                            new WaveDefinition("5 t e 4 c e 2 s e 2 t", Rank.SOLDIER),
+                            new WaveDefinition("g e g e g e g e 3 s e 3 c", Rank.SOLDIER),
+                            new WaveDefinition("line 3 c e line 3 s e line 4 c e line 2 t", Rank.SOLDIER),
+                            new WaveDefinition("flank c e flank t e 4 c e flank s", Rank.VETERAN),
+                            new WaveDefinition("swarm 4 c e swarm 4 s e swarm 4 t e 3 g", Rank.VETERAN),
+                            new WaveDefinition("column 3 t e column 3 g e column 4 c e column 2 s", Rank.VETERAN),
+                            new WaveDefinition("drip 4 s e drip 4 t e drip 4 c e 2 g", Rank.ELITE),
+                            new WaveDefinition("3 g 3 t 3 s 3 c 2 e 4 g 4 t 4 s", Rank.ELITE)),
                     SMOOTHING)
             .withColor(TEAL_COLOR);
 
@@ -91,15 +91,15 @@ final class TwistedHourglassLevel {
                             new Point(2, -1), new Point(2, 5), new Point(5, 7),
                             new Point(2, 9), new Point(2, 14)),
                     List.of(
-                            new WaveDefinition("c e c e c", Rank.GRUNT),
-                            new WaveDefinition("6 c", Rank.GRUNT),
-                            new WaveDefinition("s e s e s", Rank.GRUNT),
-                            new WaveDefinition("t e t e t", Rank.SOLDIER),
-                            new WaveDefinition("4 s 2 e 4 c", Rank.SOLDIER),
-                            new WaveDefinition("g e g e g", Rank.SOLDIER),
-                            new WaveDefinition("2 g 3 t", Rank.VETERAN),
-                            new WaveDefinition("8 c e 6 s", Rank.VETERAN),
-                            new WaveDefinition("3 g 2 t 2 g", Rank.ELITE),
+                            new WaveDefinition("c e c e c e 4 c e 3 s", Rank.GRUNT),
+                            new WaveDefinition("6 c e 4 c e 2 s", Rank.GRUNT),
+                            new WaveDefinition("s e s e s e 4 c e s e s", Rank.GRUNT),
+                            new WaveDefinition("t e t e t e 4 c e 2 s e t", Rank.SOLDIER),
+                            new WaveDefinition("4 s 2 e 4 c 2 e 4 s 2 e 4 c", Rank.SOLDIER),
+                            new WaveDefinition("g e g e g e 3 s e 3 c e g", Rank.SOLDIER),
+                            new WaveDefinition("2 g 3 t 2 e 2 g 3 s 3 c", Rank.VETERAN),
+                            new WaveDefinition("8 c e 6 s e 6 c e 4 t", Rank.VETERAN),
+                            new WaveDefinition("3 g 2 t 2 g 2 e 3 s 3 t 4 c", Rank.ELITE),
                             new WaveDefinition("s", Rank.ELITE)),
                     SMOOTHING)
             .withColor(AMBER_COLOR);
@@ -110,15 +110,15 @@ final class TwistedHourglassLevel {
                             new Point(9, 5), new Point(2, 5), new Point(0, 7),
                             new Point(2, 9), new Point(9, 9)),
                     List.of(
-                            new WaveDefinition("c e c e reaver e c e c", Rank.GRUNT),
-                            new WaveDefinition("6 c", Rank.GRUNT),
-                            new WaveDefinition("s e s e s", Rank.GRUNT),
-                            new WaveDefinition("t e t e t", Rank.SOLDIER),
-                            new WaveDefinition("4 s 2 e 4 c", Rank.SOLDIER),
-                            new WaveDefinition("g e g e g", Rank.SOLDIER),
-                            new WaveDefinition("2 g 3 t 3 s", Rank.VETERAN),
-                            new WaveDefinition("8 c e 6 s e 4 t", Rank.VETERAN),
-                            new WaveDefinition("3 g 2 t 2 g 2 t", Rank.ELITE),
+                            new WaveDefinition("c e c e reaver e c e c e 4 c e 3 s", Rank.GRUNT),
+                            new WaveDefinition("6 c e 4 c e 2 s", Rank.GRUNT),
+                            new WaveDefinition("s e s e s e 4 c e s e s", Rank.GRUNT),
+                            new WaveDefinition("t e t e t e 4 c e 2 s e t", Rank.SOLDIER),
+                            new WaveDefinition("4 s 2 e 4 c 2 e 4 s 2 e 4 c", Rank.SOLDIER),
+                            new WaveDefinition("g e g e g e 3 s e 3 c e g", Rank.SOLDIER),
+                            new WaveDefinition("2 g 3 t 3 s 2 e 2 g 3 s 3 c", Rank.VETERAN),
+                            new WaveDefinition("8 c e 6 s e 4 t e 6 c e 4 s", Rank.VETERAN),
+                            new WaveDefinition("3 g 2 t 2 g 2 t 2 e 3 s 3 t 4 c", Rank.ELITE),
                             new WaveDefinition("s", Rank.BOSS)),
                     SMOOTHING)
             .withColor(CRIMSON_COLOR);

@@ -14,8 +14,8 @@ final class SimpleEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("c", "Simple mob", 100, 3, 1.28f, BodyArchetype.CIRCLE)
-                        .withDescription("The plain foot soldier of every wave."), RankGrowth.of(2f, 3))
+                .startingAt(EnemyDefinition.of("c", "Simple mob", 75, 2, 1.28f, BodyArchetype.CIRCLE)
+                        .withDescription("The plain foot soldier of every wave."), RankGrowth.of(2f, 2))
                 .thenAt(Rank.ELITE, e -> e
                         .withStats(10f, 10f, 0f, 0f, 10f, 5f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f)))))

@@ -17,18 +17,18 @@ final class SalamanderEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("salamander", "Salamander", 180, 5, 1.28f, BodyArchetype.SALAMANDER)
+                .startingAt(EnemyDefinition.of("salamander", "Salamander", 135, 3, 1.28f, BodyArchetype.SALAMANDER)
                         .withDescription("A fire-proof walker that slowly regrows what it loses.")
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                                 regrowth(1f))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(342, 9))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(650, 13).withAdditionalTraits(List.of(regrowth(2f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1235, 25)
+                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(257, 5))
+                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(488, 7).withAdditionalTraits(List.of(regrowth(2f))))
+                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(926, 13)
                         .withStats(10f, 25f, 0f, 0f, 10f, 10f, 15f)
                         .withAdditionalTraits(List.of(regrowth(4f)))
                         .withAdditionalAbilities(List.of(shed(4f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(2346, 45)
+                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1760, 23)
                         .withStats(15f, 30f, 0f, 0f, 20f, 10f, 25f)
                         .withAdditionalTraits(List.of(regrowth(8f)))
                         .withAdditionalAbilities(List.of(shed(8f))))
