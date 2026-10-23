@@ -5,12 +5,11 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
-import td.fixtures.FakeTower;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.stat.StatModifiers;
-import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.wave.PathNormal;
 import td.wave.Vec2;
@@ -113,9 +112,7 @@ class AuraTowerTest {
     void aTowerGivenAWitherIntervalMakesItsNextHitApplyVulnerableOnceEachInterval() {
         SniperTower sniper = new SniperTower(this.context, 0, 0);
         this.context.towers().add(sniper);
-        this.context.towers().add(FakeTower.offering(this.context, 0, 1, UpgradeTree.none())
-                .giving(TowerModifiers.witherEvery(200)));
-        sniper.recalculateStats();
+        TowerFixtures.buffed(sniper, this.context, TowerModifiers.witherEvery(200));
         FakeEnemyMob target = FakeEnemyMob.at(sniper.getX(), sniper.getY());
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 

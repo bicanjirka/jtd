@@ -6,6 +6,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.DamageSink;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
@@ -621,6 +622,30 @@ class AbstractTowerTest {
         assertThat(first.critChance()).isZero();
         assertThat(second.critChance()).isEqualTo(0.5f);
         assertThat(tower.stats().critChance()).isZero();
+    }
+
+    @Test
+    void aTowerThatDealsMagicReportsItsDamageRowAsMagic() {
+        UpgradeNode arcane = UpgradeNode.of("arcane", UpgradeSlot.HEAD, "Arcane", 10)
+                .withCapability(TowerCapability.MAGIC_DAMAGE);
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.of(arcane));
+        TowerStatRow before = tower.inspect().stats().get(1).stat();
+
+        UpgradePaths.buy(tower, this.context, "Arcane");
+
+        assertThat(before).isEqualTo(TowerStatRow.PHYSICAL_DAMAGE);
+        assertThat(tower.inspect().stats().get(1).stat()).isEqualTo(TowerStatRow.MAGIC_DAMAGE);
+    }
+
+    @Test
+    void anOnHitProcThatAppliesStacksPutsThemOnTheEnemyHit() {
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none())
+                .withBaseProcs(List.of(Proc.onHit(new ProcPayload.ApplyStacks(EffectKind.VULNERABLE, 2))));
+        FakeEnemyMob target = FakeEnemyMob.at(0, 0);
+
+        tower.reportHit(target);
+
+        assertThat(target.effectStacks(EffectKind.VULNERABLE)).isEqualTo(2);
     }
 
     @Test

@@ -2,13 +2,17 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
+import td.damage.Damage;
+import td.damage.DamageType;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
+import td.stat.StatModifiers;
 import td.tower.sniper.AimFocus;
 import td.ui.TowerSpriteFrameBuilder;
 import td.ui.render.Palette;
@@ -98,6 +102,18 @@ class SniperTowerTest {
     }
 
     @Test
+    void steadyAimBuildsAsManyStacksAsItsAimStacksAllow() {
+        SniperTower tower = TowerFixtures.buffed(this.sniperWith("Attune"), this.world, TowerModifiers.aimStacks(2));
+        FakeEnemyMob target = this.onlyTarget();
+
+        this.fireShots(tower, target, 8);
+
+        int cap = Math.round(tower.stats().value(TowerStat.AIM_STACKS));
+        assertThat(cap).isGreaterThan(1);
+        assertThat(tower.steadyAimStacks()).hasValue(cap);
+    }
+
+    @Test
     void steadyAimShowsItsStacksAndTheTimeToItsNextFade() {
         SniperTower tower = this.sniperWith("Attune");
         FakeEnemyMob target = this.onlyTarget();
@@ -119,6 +135,18 @@ class SniperTowerTest {
         this.fireShots(tower, target, 4);
 
         assertThat(tower.experience().deeds()).isEqualTo(3);
+    }
+
+    @Test
+    void aShotGivenTheMagicCapabilityLandsAsMagicAndTheNextAsItWas() {
+        SniperTower tower = new SniperTower(this.world, 3, 3);
+        FakeEnemyMob target = this.onlyTarget();
+        tower.grantStatus(TowerStatus.nextShots(TowerTerm.SILVER_ROUND, 1, StatModifiers.none())
+                .withCapability(TowerCapability.MAGIC_DAMAGE));
+
+        this.fireShots(tower, target, 2);
+
+        assertThat(target.hits()).extracting(Damage::type).containsExactly(DamageType.MAGIC, DamageType.PHYSICAL);
     }
 
     @Test

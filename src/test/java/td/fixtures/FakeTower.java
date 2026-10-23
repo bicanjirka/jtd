@@ -1,5 +1,6 @@
 package td.fixtures;
 
+import td.enemy.EnemyMob;
 import td.stat.StatModifiers;
 import td.tower.AbstractTower;
 import td.tower.Tower;
@@ -7,6 +8,7 @@ import td.tower.TowerBaseStats;
 import td.tower.TowerFactory;
 import td.tower.TowerStat;
 import td.tower.TowerVisitor;
+import td.tower.proc.HitKind;
 import td.tower.proc.Proc;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -18,6 +20,9 @@ import java.util.Optional;
 /** A tower with test-supplied upgrades, for testing the upgrade mechanism apart from real content. */
 public final class FakeTower extends AbstractTower {
 
+    private final GameWorld world;
+    private final int cellX;
+    private final int cellY;
     private final UpgradeTree tree;
     private final Optional<UpgradeState> ownedUpgrades;
     private StatModifiers<TowerStat> given = StatModifiers.none();
@@ -26,6 +31,9 @@ public final class FakeTower extends AbstractTower {
 
     private FakeTower(GameWorld context, int x, int y, UpgradeTree tree, Optional<UpgradeState> ownedUpgrades) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(10, 3f, 20), context, x, y);
+        this.world = context;
+        this.cellX = x;
+        this.cellY = y;
         this.tree = tree;
         this.ownedUpgrades = ownedUpgrades;
     }
@@ -88,6 +96,11 @@ public final class FakeTower extends AbstractTower {
         this.killCount = killCount;
     }
 
+    /** Tells its procs it landed a plain hit on {@code target}, as an attack would. */
+    public void reportHit(EnemyMob target) {
+        this.report(target, HitKind.DIRECT, false, false);
+    }
+
     /** Does its job once, as an attack would. */
     public void performDeedOfAttack() {
         this.countDeedOfAttack();
@@ -97,8 +110,9 @@ public final class FakeTower extends AbstractTower {
     public void doTick(int gameTime) {
     }
 
+    /** Visited as a plain tower of the type it reports, standing in its cell. */
     @Override
     public <R> R accept(TowerVisitor<R> visitor) {
-        throw new UnsupportedOperationException("test double, not meant to be rendered");
+        return TowerFactory.createTower(this.getType(), this.world, this.cellX, this.cellY).accept(visitor);
     }
 }

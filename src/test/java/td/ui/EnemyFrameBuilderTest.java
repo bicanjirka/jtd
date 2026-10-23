@@ -17,6 +17,7 @@ import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.HurtSpeedTrait;
+import td.enemy.PathDirectionalMovement;
 import td.enemy.PeriodicTrigger;
 import td.enemy.RadiusTarget;
 import td.enemy.Rank;
@@ -148,6 +149,20 @@ class EnemyFrameBuilderTest {
 
         assertThat(draw.x()).isCloseTo(expectedX, within(0.01f));
         assertThat(draw.y()).isCloseTo(expectedY, within(0.01f));
+    }
+
+    @Test
+    void aMobThatFacesItsPathIsDrawnPointingTheWayItWalksAndAFixedOneIsNot() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(1, 1001, 1001);
+        context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(5, 105))));
+        EnemyMob facing = EnemyFixtures.liveMob(context,
+                EnemyFixtures.simpleDefinition("facing").withMovement(new PathDirectionalMovement()));
+        EnemyMob fixed = EnemyFixtures.plainMob(context, 50, 3);
+        facing.doTick(1);
+        fixed.doTick(1);
+
+        assertThat(bodyDrawAt(facing, 1, 1.0).facingRadians()).isCloseTo(Math.PI / 2, within(1e-6));
+        assertThat(bodyDrawAt(fixed, 1, 1.0).facingRadians()).isZero();
     }
 
     @Test

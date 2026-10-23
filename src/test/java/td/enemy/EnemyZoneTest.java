@@ -64,7 +64,7 @@ class EnemyZoneTest {
     }
 
     @Test
-    void aWardMineAnEnemyLeavesShieldsTheFirstEnemyToStepOnIt() {
+    void aWardMineAnEnemyLeavesShieldsTheFirstEnemyToStepOnItByItsPoints() {
         DefinedEnemyMob miner = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("miner")
                 .withAbilities(List.of(new Ability(AbilityTerm.GUARD, new OnceTrigger(1),
                         LeaveZoneAction.wardMine(1f, 1000, 20f)))));
@@ -82,7 +82,7 @@ class EnemyZoneTest {
         walker.jumpToDistance(mine.x());
         this.world.zones().doTick(armed + 2);
 
-        assertThat(walker.hasEffect(EffectKind.SHIELD)).isTrue();
+        assertThat(walker.shieldGauge().max()).isEqualTo(20f);
         assertThat(miner.hasEffect(EffectKind.SHIELD)).isFalse();
         assertThat(this.world.zones().zones()).doesNotContain(mine);
     }

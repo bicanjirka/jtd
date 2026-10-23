@@ -11,11 +11,10 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
-import td.fixtures.FakeTower;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
-import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.RandomSource;
 import td.wave.PathNormal;
@@ -301,10 +300,7 @@ class CinderTowerTest {
 
     @Test
     void aStokeGraceLetsAnEnemyThatLostItsBurnKeepItsStokeForThatLong() {
-        CinderTower tower = this.towerWith("Attune");
-        this.context.towers().add(FakeTower.offering(this.context, 3, 4, UpgradeTree.none())
-                .giving(TowerModifiers.stokeGrace(40)));
-        tower.recalculateStats();
+        CinderTower tower = TowerFixtures.buffed(this.towerWith("Attune"), this.context, TowerModifiers.stokeGrace(40));
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
         tickThrough(tower, 1, 3 * CYCLE);
@@ -323,9 +319,7 @@ class CinderTowerTest {
 
     @Test
     void bellowsWidensTheConeByTheFireRateAnAuraGivesItOnlyOnceAwakened() {
-        CinderTower tower = towerAt(3, 3);
-        this.context.towers().add(FakeTower.offering(this.context, 3, 4, UpgradeTree.none())
-                .giving(TowerModifiers.attackSpeed(0.2f)));
+        CinderTower tower = TowerFixtures.buffed(towerAt(3, 3), this.context, TowerModifiers.attackSpeed(0.2f));
         double base = tower.getHalfWidthRadians();
 
         this.context.economy().startEconomy(1_000_000, 5);
@@ -397,6 +391,31 @@ class CinderTowerTest {
         assertThat(afterTheIgnition).isEqualTo(1);
         assertThat(target.appliedEffects().stream().filter(e -> e.kind() == EffectKind.VULNERABLE).count())
                 .isBetween(2L, 4L);
+    }
+
+    @Test
+    void aWiderConeStatWidensTheCone() {
+        CinderTower plain = towerAt(3, 3);
+
+        CinderTower wide = TowerFixtures.buffed(towerAt(8, 3), this.context, TowerModifiers.coneWidth(0.3f));
+
+        assertThat(wide.getHalfWidthRadians()).isGreaterThan(plain.getHalfWidthRadians());
+    }
+
+    @Test
+    void anIgnitionBurnsForTheTowersBurnDurationAndFeedsAPoolTunedByItsStats() {
+        CinderTower tower = TowerFixtures.buffed(towerAt(3, 3), this.context, TowerModifiers.burnDuration(20)
+                .plus(TowerModifiers.burnPoolCap(1f)).plus(TowerModifiers.burnMarkRate(1f)));
+        FakeEnemyMob target = FakeEnemyMob.at(150, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        tickThrough(tower, 1, 1 + TRAVEL);
+
+        Effect burn = burns(target).getFirst();
+        assertThat(burn.authoredDurationTicks()).isEqualTo(Math.round(tower.stats().value(TowerStat.BURN_DURATION)));
+        assertThat(burn.tuning().capFactor()).isEqualTo(tower.stats().value(TowerStat.BURN_POOL_CAP));
+        assertThat(burn.tuning().stackRate()).isEqualTo(Math.round(tower.stats().value(TowerStat.BURN_MARK_RATE)));
+        assertThat(burn.tuning().capFactor()).isGreaterThan(PoolTuning.standard().capFactor());
     }
 
     @Test
