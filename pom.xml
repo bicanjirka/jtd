@@ -18,6 +18,8 @@
         <assertj.version>3.27.3</assertj.version>
         <slf4j.version>2.0.18</slf4j.version>
         <logback.version>1.5.37</logback.version>
+        <pit.targetClasses>td.*</pit.targetClasses>
+        <pit.targetTests>td.*</pit.targetTests>
     </properties>
 
     <dependencies>
@@ -171,6 +173,46 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <!-- Mutation testing on demand only: bound to no phase, so `mvn verify` never runs it.
+                     Narrow a run with -Dpit.targetClasses / -Dpit.targetTests. -->
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.30.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>1.2.3</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <targetClasses>
+                        <param>${pit.targetClasses}</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>${pit.targetTests}</param>
+                    </targetTests>
+                    <excludedClasses>
+                        <param>td.Main</param>
+                        <param>td.*Harness</param>
+                        <param>td.balance.*Report</param>
+                    </excludedClasses>
+                    <!-- Thread and Swing timing tests prove nothing about a mutant and slow every run;
+                         TooltipLayerTest is flaky, and PIT refuses to start on a red baseline. -->
+                    <excludedTestClasses>
+                        <param>td.GameLoopTest</param>
+                        <param>td.EngineThreadingTest</param>
+                        <param>td.util.ThreadsTest</param>
+                        <param>td.ui.TooltipLayerTest</param>
+                    </excludedTestClasses>
+                    <threads>4</threads>
+                    <timestampedReports>false</timestampedReports>
+                    <outputFormats>
+                        <param>HTML</param>
+                    </outputFormats>
+                </configuration>
             </plugin>
         </plugins>
     </build>
