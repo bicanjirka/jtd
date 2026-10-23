@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(EventDispatchThreadExtension.class)
-class WaveScriptCompleterTest {
+class FieldCompleterTest {
 
     private final HudTextField field = new HudTextField("", 14);
     private final JRootPane root = new JRootPane();
@@ -30,12 +30,12 @@ class WaveScriptCompleterTest {
     private final AtomicInteger escaped = new AtomicInteger();
     private final AtomicInteger movedRight = new AtomicInteger();
 
-    WaveScriptCompleterTest() {
+    FieldCompleterTest() {
         this.bind(KeyEvent.VK_ENTER, this.entered);
         this.bind(KeyEvent.VK_ESCAPE, this.escaped);
         this.bind(KeyEvent.VK_RIGHT, this.movedRight);
         this.root.getContentPane().add(this.field);
-        new WaveScriptCompleter(this.field, WaveScriptCompleterTest::suggest);
+        new FieldCompleter(this.field, FieldCompleterTest::suggest);
     }
 
     /** Counts presses of {@code keyCode}, standing in for what the panel binds to it. */
