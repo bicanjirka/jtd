@@ -34,11 +34,8 @@ class ChoiceButtonTest {
 
     private final JRootPane root = new JRootPane();
     private final AtomicInteger closed = new AtomicInteger();
-    private final ChoiceButton<String> choice = new ChoiceButton<>(
-            new Choices<>(List.of(BRAVO, ALPHA, BETA), Comparator.naturalOrder(), title -> title, title -> "",
-                    title -> new RowLook(new PaintedIcon(8, 8, g2 -> {
-                    }), Color.WHITE, Color.GRAY)),
-            ALPHA, this.closed::incrementAndGet);
+    private final ChoiceButton<String> choice = new ChoiceButton<>(choices(BRAVO, ALPHA, BETA), ALPHA,
+            this.closed::incrementAndGet);
 
     ChoiceButtonTest() {
         this.root.getContentPane().setLayout(null);
@@ -117,6 +114,36 @@ class ChoiceButtonTest {
 
         assertThat(this.openList()).isNull();
         assertThat(this.choice.chosen()).isEqualTo(ALPHA);
+    }
+
+    @Test
+    void aDigitJumpsToATitleWithAWordItStarts() {
+        this.choice.offer(choices("Path 1", "Path 2"), "Path 1");
+        this.choice.toggle();
+
+        this.type('2');
+        this.press(KeyEvent.VK_ENTER);
+
+        assertThat(this.choice.chosen()).isEqualTo("Path 2");
+    }
+
+    @Test
+    void offeringANewSetClosesTheListAndListsOnlyTheNewSet() {
+        this.choice.toggle();
+
+        this.choice.offer(choices("Gamma", "Delta"), "Gamma");
+        assertThat(this.openList()).isNull();
+        this.choice.toggle();
+        this.press(KeyEvent.VK_END);
+        this.press(KeyEvent.VK_ENTER);
+
+        assertThat(this.choice.chosen()).isEqualTo("Gamma");
+    }
+
+    private static Choices<String> choices(String... titles) {
+        return new Choices<>(List.of(titles), Comparator.naturalOrder(), title -> title, title -> "",
+                title -> new RowLook(new PaintedIcon(8, 8, g2 -> {
+                }), Color.WHITE, Color.GRAY));
     }
 
     private Component openList() {

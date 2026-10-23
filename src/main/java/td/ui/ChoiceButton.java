@@ -15,13 +15,14 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.Serial;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 /**
  * A button showing the chosen item's icon and title in its colours; a click opens the list of every item, all of it
- * in view. The list takes the keys while it is open: arrows, Page Up/Down, Home and End move, a letter jumps to the
- * next title it starts, Enter or Space takes the row and Esc closes it.
+ * in view. The list takes the keys while it is open: arrows, Page Up/Down, Home and End move, a letter or digit jumps
+ * to the next title with a word it starts, Enter or Space takes the row and Esc closes it.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class ChoiceButton<T> {
@@ -31,17 +32,17 @@ final class ChoiceButton<T> {
     private static final int CHROME = 6 + 4 + 10 + 6;
 
     private final HudButton button = new HudButton("");
-    private final Choices<T> choices;
     private final SuggestionList list;
     private final Runnable onClosed;
 
+    private Choices<T> choices;
     private T chosen;
 
     /** {@code onClosed} runs when Enter, Space, Esc or a click closes the list, so the keys can go elsewhere. */
     ChoiceButton(Choices<T> choices, T initial, Runnable onClosed) {
         this.choices = choices;
         this.onClosed = onClosed;
-        this.list = new SuggestionList(choices::lookOfRow, this::take);
+        this.list = new SuggestionList(row -> this.choices.lookOfRow(row), this::take);
         this.list.setFocusable(true);
         this.list.setFocusTraversalKeysEnabled(false);
         this.bind(KeyEvent.VK_UP, () -> this.list.move(-1));
@@ -74,8 +75,16 @@ final class ChoiceButton<T> {
             }
         });
         this.button.addActionListener(evt -> this.toggle());
+        this.offer(choices, initial);
+    }
+
+    /** Offers a new set, such as a new level's paths, with {@code chosen} chosen; closes the list if it is open. */
+    void offer(Choices<T> choices, T chosen) {
+        this.close();
+        this.choices = choices;
         this.button.setPreferredSize(this.size());
-        this.show(initial);
+        this.button.revalidate();
+        this.show(chosen);
     }
 
     JComponent component() {
@@ -113,13 +122,14 @@ final class ChoiceButton<T> {
         this.list.takeDown();
     }
 
-    /** Highlights the next row after the highlighted one whose title starts with {@code key}, wrapping round. */
+    /** Highlights the next row after the highlighted one with a word {@code key} starts, wrapping round. */
     private void jumpTo(char key) {
         List<Candidate> rows = this.choices.rows();
         String start = String.valueOf(key).toLowerCase(Locale.ROOT);
         for (int step = 1; step <= rows.size(); step++) {
             int index = (this.list.selectedIndex() + step) % rows.size();
-            if (rows.get(index).text().toLowerCase(Locale.ROOT).startsWith(start)) {
+            if (Arrays.stream(rows.get(index).text().toLowerCase(Locale.ROOT).split(" "))
+                    .anyMatch(word -> word.startsWith(start))) {
                 this.list.select(index);
                 return;
             }

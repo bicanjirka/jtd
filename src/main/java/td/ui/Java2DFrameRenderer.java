@@ -934,6 +934,12 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
+    /** A path's chevron centred on the origin, pointing the way its markers run. */
+    void paintPathGlyph(Graphics2D g2, Color color, float size) {
+        g2.setColor(color);
+        g2.fill(chevronShape(size));
+    }
+
     /** The colour a rank badge is drawn in; a grunt has no badge. */
     static Optional<Palette> rankBadgePalette(RankBadge badge) {
         return switch (badge) {
