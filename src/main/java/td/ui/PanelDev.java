@@ -5,6 +5,7 @@ import td.DevEffects;
 import td.DevSelection;
 import td.effect.EffectKind;
 import td.enemy.Rank;
+import td.term.Side;
 import td.tower.TowerTerm;
 import td.ui.render.InfoSheet;
 import td.util.GameWorld;
@@ -36,6 +37,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -67,8 +69,10 @@ public class PanelDev extends JPanel {
     private static final String CARD_NOTHING = "nothing";
     private static final String CARD_TOWER = "tower";
     private static final String CARD_ENEMY = "enemy";
-    private static final List<EffectKind> ENEMY_EFFECTS = DevEffects.enemyKinds();
-    private static final List<TowerTerm> TOWER_BUFFS = DevEffects.towerBuffs();
+    private static final TermPicker<EffectKind> ENEMY_EFFECTS = new TermPicker<>(DevEffects.enemyKinds(),
+            Comparator.comparing(EffectKind::category), kind -> kind.category().label(), TermLooks::faceOf);
+    private static final TermPicker<TowerTerm> TOWER_BUFFS = new TermPicker<>(DevEffects.towerBuffs(),
+            Comparator.comparing(TowerTerm::side), term -> sideLabel(term.side()), TermLooks::faceOf);
     /** Space between sections, and between unrelated controls in a row. */
     private static final int ROW_GAP = 3;
     private static final int CONTROL_GAP = 12;
@@ -86,8 +90,10 @@ public class PanelDev extends JPanel {
     private final HudTextField effectPower = new HudTextField("3", 4);
     private final HudTextField buffSeconds = new HudTextField("10", 3);
     private final HudTextField buffPower = new HudTextField("50", 4);
-    private final HudButton effectButton = new HudButton("");
-    private final HudButton buffButton = new HudButton("");
+    private final TermChoiceButton<EffectKind> effectChoice = new TermChoiceButton<>(ENEMY_EFFECTS, EffectKind.CHILL,
+            () -> this.onReleaseFocus.run());
+    private final TermChoiceButton<TowerTerm> buffChoice = new TermChoiceButton<>(TOWER_BUFFS, TowerTerm.HASTE,
+            () -> this.onReleaseFocus.run());
     private final JLabel towerSelected = label("");
     private final JLabel enemySelected = label("");
     private final CardLayout selectionCards = new CardLayout();
@@ -109,8 +115,6 @@ public class PanelDev extends JPanel {
     private DevControls dev;
     private Rank rank = Rank.GRUNT;
     private int path = 0;
-    private int effectIndex = 0;
-    private int buffIndex = 0;
     private DevSelection shownSelection = DevSelection.none();
     private Runnable onSkipWave = () -> {
     };
@@ -196,10 +200,11 @@ public class PanelDev extends JPanel {
         this.onReleaseFocus = listener;
     }
 
-    /** Whether one of this panel's fields has the keyboard focus. */
+    /** Whether one of this panel's fields, or a list it opened, has the keyboard focus. */
     public boolean holdsFocus() {
         Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        return owner != null && SwingUtilities.isDescendingFrom(owner, this);
+        return (owner != null && SwingUtilities.isDescendingFrom(owner, this)) || this.effectChoice.holdsFocus()
+                || this.buffChoice.holdsFocus();
     }
 
     public boolean isCellGridOn() {
@@ -213,8 +218,6 @@ public class PanelDev extends JPanel {
         this.rankButton.setText("Rank: " + this.rank.name().toLowerCase(Locale.ROOT));
         this.pathButton.setText("Path " + (this.path + 1) + "/" + paths);
         this.pathButton.setForeground(this.pathColor());
-        this.effectButton.setText(ENEMY_EFFECTS.get(this.effectIndex).title());
-        this.buffButton.setText(TOWER_BUFFS.get(this.buffIndex).title());
         this.refreshPreview();
     }
 
@@ -349,14 +352,6 @@ public class PanelDev extends JPanel {
         this.submitOnEnter(this.effectPower, this::applyEffect);
         this.submitOnEnter(this.buffSeconds, this::applyBuff);
         this.submitOnEnter(this.buffPower, this::applyBuff);
-        this.effectButton.addActionListener(evt -> {
-            this.effectIndex = (this.effectIndex + 1) % ENEMY_EFFECTS.size();
-            this.refresh();
-        });
-        this.buffButton.addActionListener(evt -> {
-            this.buffIndex = (this.buffIndex + 1) % TOWER_BUFFS.size();
-            this.refresh();
-        });
         this.rankButton.addActionListener(evt -> {
             this.rank = RANKS[(this.rank.ordinal() + 1) % RANKS.length];
             this.refresh();
@@ -386,7 +381,7 @@ public class PanelDev extends JPanel {
                 this.enemyHealth, this.effectSeconds, this.effectPower, this.buffSeconds, this.buffPower)) {
             releaseFocusOnEscape(field);
         }
-        new WaveScriptCompleter(this.script,
+        new FieldCompleter(this.script,
                 (text, caret) -> this.dev == null ? Result.none() : this.dev.suggestWaveScript(text, caret));
 
         HudButton setCredits = button("Set", this::setCredits);
@@ -449,9 +444,9 @@ public class PanelDev extends JPanel {
         this.selectionArea.setOpaque(false);
         this.selectionArea.add(row(label("Select a tower or an enemy on the board first.")), CARD_NOTHING);
         this.selectionArea.add(row(this.towerSelected, gap(), label("XP"), this.xp, grant, gap(),
-                this.buffButton, label("Secs"), this.buffSeconds, label("Power"), this.buffPower, applyBuff, gap(),
+                this.buffChoice.component(), label("Secs"), this.buffSeconds, label("Power"), this.buffPower, applyBuff, gap(),
                 reset), CARD_TOWER);
-        this.selectionArea.add(row(this.enemySelected, gap(), this.effectButton, label("Secs"),
+        this.selectionArea.add(row(this.enemySelected, gap(), this.effectChoice.component(), label("Secs"),
                 this.effectSeconds, label("Power"), this.effectPower, applyEffect, clearEffects, gap(), kill, heal,
                 remove), CARD_ENEMY);
         this.selectionCards.show(this.selectionArea, CARD_NOTHING);
@@ -497,9 +492,9 @@ public class PanelDev extends JPanel {
         this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
         this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", focus(this.xp));
         this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset::doClick);
-        this.bind("Tower", alt(KeyEvent.VK_Y), "next buff", this.buffButton::doClick);
+        this.bind("Tower", alt(KeyEvent.VK_Y), "choose the buff", this.buffChoice::toggle);
         this.bind("Tower", altShift(KeyEvent.VK_Y), "apply the buff", applyBuff::doClick);
-        this.bind("Enemy", alt(KeyEvent.VK_F), "next effect", this.effectButton::doClick);
+        this.bind("Enemy", alt(KeyEvent.VK_F), "choose the effect", this.effectChoice::toggle);
         this.bind("Enemy", altShift(KeyEvent.VK_F), "apply the effect", applyEffect::doClick);
         this.bind("Enemy", alt(KeyEvent.VK_D), "clear its effects", clearEffects::doClick);
         this.bind("Enemy", alt(KeyEvent.VK_Q), "kill", kill::doClick);
@@ -595,7 +590,7 @@ public class PanelDev extends JPanel {
         if (seconds.isEmpty() || power.isEmpty()) {
             return false;
         }
-        this.showMessage(this.dev.applyEffectToEnemy(ENEMY_EFFECTS.get(this.effectIndex), seconds.getAsInt(),
+        this.showMessage(this.dev.applyEffectToEnemy(this.effectChoice.chosen(), seconds.getAsInt(),
                 power.getAsInt()));
         return true;
     }
@@ -606,7 +601,7 @@ public class PanelDev extends JPanel {
         if (seconds.isEmpty() || power.isEmpty()) {
             return false;
         }
-        this.showMessage(this.dev.grantBuffToSelectedTower(TOWER_BUFFS.get(this.buffIndex), seconds.getAsInt(),
+        this.showMessage(this.dev.grantBuffToSelectedTower(this.buffChoice.chosen(), seconds.getAsInt(),
                 power.getAsInt()));
         return true;
     }
@@ -629,6 +624,10 @@ public class PanelDev extends JPanel {
             field.requestFocusInWindow();
             field.selectAll();
         };
+    }
+
+    private static String sideLabel(Side side) {
+        return side.name().toLowerCase(Locale.ROOT);
     }
 
     private void releaseFocusOnEscape(HudTextField field) {

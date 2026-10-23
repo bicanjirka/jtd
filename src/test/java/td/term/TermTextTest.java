@@ -1,6 +1,7 @@
 package td.term;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.FakeTerm;
 
 import java.util.List;
 

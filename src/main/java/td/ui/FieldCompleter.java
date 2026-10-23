@@ -6,69 +6,60 @@ import td.wave.WaveScriptSuggestions.Result;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JComponent;
-import javax.swing.JLayeredPane;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import java.awt.Color;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.KeyboardFocusManager;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
 import java.io.Serial;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 
 /**
- * Suggests the next token of a field's wave script. The best match shows as ghost text that Tab or
+ * Suggests the next token of a field. The best match shows as ghost text that Tab or
  * Right accepts; Down opens the list of every match, and Enter or a click takes a row. Esc closes
  * the list before it leaves the field, Enter with the list closed applies the field as ever, and Tab
  * with nothing typed moves focus on.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-final class WaveScriptCompleter {
+final class FieldCompleter {
+
+    private static final int MAX_ROWS = 8;
 
     private final HudTextField field;
     private final BiFunction<String, Integer, Result> source;
-    private final SuggestionList list = new SuggestionList();
+    private final SuggestionList list;
 
     private Result result = Result.none();
     private boolean open;
 
     /** {@code source} gets the field's text and caret, and answers what could be typed there. */
-    WaveScriptCompleter(HudTextField field, BiFunction<String, Integer, Result> source) {
+    FieldCompleter(HudTextField field, BiFunction<String, Integer, Result> source) {
         this.field = field;
         this.source = source;
+        this.list = new SuggestionList(candidate -> Optional.empty(), this::acceptSelected);
         field.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Set.of());
         DocumentListener changes = new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                WaveScriptCompleter.this.refresh();
+                FieldCompleter.this.refresh();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                WaveScriptCompleter.this.refresh();
+                FieldCompleter.this.refresh();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                WaveScriptCompleter.this.refresh();
+                FieldCompleter.this.refresh();
             }
         };
         field.getDocument().addDocumentListener(changes);
@@ -77,36 +68,15 @@ final class WaveScriptCompleter {
         field.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
-                WaveScriptCompleter.this.refresh();
+                FieldCompleter.this.refresh();
             }
 
             @Override
             public void focusLost(FocusEvent e) {
-                WaveScriptCompleter.this.close();
-                WaveScriptCompleter.this.field.setGhostText("");
+                FieldCompleter.this.close();
+                FieldCompleter.this.field.setGhostText("");
             }
         });
-        MouseAdapter pointer = new MouseAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                WaveScriptCompleter.this.list.highlightAt(e.getY());
-            }
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (WaveScriptCompleter.this.list.highlightAt(e.getY())) {
-                    WaveScriptCompleter.this.acceptSelected();
-                }
-            }
-
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                WaveScriptCompleter.this.list.move(e.getWheelRotation());
-            }
-        };
-        this.list.addMouseListener(pointer);
-        this.list.addMouseMotionListener(pointer);
-        this.list.addMouseWheelListener(pointer);
         this.wrap(KeyEvent.VK_DOWN, () -> this.step(1));
         this.wrap(KeyEvent.VK_UP, () -> this.open && this.step(-1));
         this.wrap(KeyEvent.VK_TAB, this::acceptBest);
@@ -148,7 +118,7 @@ final class WaveScriptCompleter {
                 this.close();
             } else {
                 this.list.show(this.result.candidates());
-                this.place();
+                this.list.hangUnder(this.field, MAX_ROWS);
             }
         }
     }
@@ -163,7 +133,7 @@ final class WaveScriptCompleter {
             this.open = true;
             this.list.show(this.result.candidates());
         }
-        this.place();
+        this.list.hangUnder(this.field, MAX_ROWS);
         return true;
     }
 
@@ -221,121 +191,7 @@ final class WaveScriptCompleter {
     private boolean close() {
         boolean wasOpen = this.open;
         this.open = false;
-        if (this.list.getParent() != null) {
-            JComponent parent = (JComponent) this.list.getParent();
-            parent.remove(this.list);
-            parent.repaint();
-        }
+        this.list.takeDown();
         return wasOpen;
-    }
-
-    /** Hangs the list under the field, or above it where the window has no room below. */
-    private void place() {
-        JLayeredPane layers = SwingUtilities.getRootPane(this.field).getLayeredPane();
-        Point below = SwingUtilities.convertPoint(this.field, 0, this.field.getHeight(), layers);
-        int width = this.list.preferredWidth();
-        int height = this.list.getPreferredSize().height;
-        int x = Math.max(0, Math.min(below.x, layers.getWidth() - width));
-        int y = below.y + height > layers.getHeight() ? below.y - this.field.getHeight() - height : below.y;
-        this.list.setBounds(x, y, width, height);
-        if (this.list.getParent() == null) {
-            layers.add(this.list, JLayeredPane.POPUP_LAYER);
-        }
-        layers.repaint();
-    }
-
-    private static final class SuggestionList extends JComponent {
-
-        @Serial
-        private static final long serialVersionUID = 1L;
-
-        private static final int MAX_ROWS = 8;
-        private static final int ROW_HEIGHT = 16;
-        private static final int PADDING = 6;
-        private static final Color SELECTED_FILL = new Color(46, 66, 46);
-        private static final Color HINT = new Color(150, 170, 150);
-
-        private List<Candidate> rows = List.of();
-        private int selected;
-        private int top;
-
-        /** The field keeps focus while the list is clicked, so typing carries on. */
-        SuggestionList() {
-            setFocusable(false);
-        }
-
-        void show(List<Candidate> candidates) {
-            this.rows = candidates;
-            this.selected = 0;
-            this.top = 0;
-            this.fit();
-        }
-
-        void move(int delta) {
-            this.selected = Math.floorMod(this.selected + delta, this.rows.size());
-            if (this.selected < this.top) {
-                this.top = this.selected;
-            } else if (this.selected >= this.top + MAX_ROWS) {
-                this.top = this.selected - MAX_ROWS + 1;
-            }
-            repaint();
-        }
-
-        /** Highlights the row at {@code y}, and answers whether one is there. */
-        boolean highlightAt(int y) {
-            int row = this.top + Math.floorDiv(y - 1, ROW_HEIGHT);
-            if (y < 1 || row >= Math.min(this.rows.size(), this.top + MAX_ROWS)) {
-                return false;
-            }
-            if (row != this.selected) {
-                this.selected = row;
-                repaint();
-            }
-            return true;
-        }
-
-        Candidate selected() {
-            return this.rows.get(this.selected);
-        }
-
-        int preferredWidth() {
-            FontMetrics metrics = getFontMetrics(Hud.LABEL_FONT);
-            int widest = 0;
-            for (Candidate row : this.rows) {
-                widest = Math.max(widest, metrics.stringWidth(row.text()) + metrics.stringWidth(row.hint()));
-            }
-            return widest + 5 * PADDING;
-        }
-
-        private void fit() {
-            setSize(getWidth(), Math.min(this.rows.size(), MAX_ROWS) * ROW_HEIGHT + 2);
-            setPreferredSize(getSize());
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setColor(Hud.BACKGROUND);
-            g2.fillRect(0, 0, getWidth(), getHeight());
-            g2.setColor(Hud.BORDER_IDLE);
-            g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
-            g2.setFont(Hud.LABEL_FONT);
-            FontMetrics metrics = g2.getFontMetrics();
-            int shown = Math.min(this.rows.size() - this.top, MAX_ROWS);
-            for (int i = 0; i < shown; i++) {
-                Candidate row = this.rows.get(this.top + i);
-                int y = 1 + i * ROW_HEIGHT;
-                if (this.top + i == this.selected) {
-                    g2.setColor(SELECTED_FILL);
-                    g2.fillRect(1, y, getWidth() - 2, ROW_HEIGHT);
-                }
-                int baseline = y + (ROW_HEIGHT + metrics.getAscent() - metrics.getDescent()) / 2;
-                g2.setColor(Hud.FOREGROUND);
-                g2.drawString(row.text(), PADDING, baseline);
-                g2.setColor(HINT);
-                g2.drawString(row.hint(), getWidth() - PADDING - metrics.stringWidth(row.hint()), baseline);
-            }
-            g2.dispose();
-        }
     }
 }
