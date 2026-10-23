@@ -24,6 +24,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.io.Serial;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +36,7 @@ import java.util.function.BooleanSupplier;
 
 /**
  * Suggests the next token of a field's wave script. The best match shows as ghost text that Tab or
- * Right accepts; Down opens the list of every match, and Enter takes the highlighted one. Esc closes
+ * Right accepts; Down opens the list of every match, and Enter or a click takes a row. Esc closes
  * the list before it leaves the field, Enter with the list closed applies the field as ever, and Tab
  * with nothing typed moves focus on.
  */
@@ -83,6 +86,27 @@ final class WaveScriptCompleter {
                 WaveScriptCompleter.this.field.setGhostText("");
             }
         });
+        MouseAdapter pointer = new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                WaveScriptCompleter.this.list.highlightAt(e.getY());
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (WaveScriptCompleter.this.list.highlightAt(e.getY())) {
+                    WaveScriptCompleter.this.acceptSelected();
+                }
+            }
+
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                WaveScriptCompleter.this.list.move(e.getWheelRotation());
+            }
+        };
+        this.list.addMouseListener(pointer);
+        this.list.addMouseMotionListener(pointer);
+        this.list.addMouseWheelListener(pointer);
         this.wrap(KeyEvent.VK_DOWN, () -> this.step(1));
         this.wrap(KeyEvent.VK_UP, () -> this.open && this.step(-1));
         this.wrap(KeyEvent.VK_TAB, this::acceptBest);
@@ -235,6 +259,11 @@ final class WaveScriptCompleter {
         private int selected;
         private int top;
 
+        /** The field keeps focus while the list is clicked, so typing carries on. */
+        SuggestionList() {
+            setFocusable(false);
+        }
+
         void show(List<Candidate> candidates) {
             this.rows = candidates;
             this.selected = 0;
@@ -250,6 +279,19 @@ final class WaveScriptCompleter {
                 this.top = this.selected - MAX_ROWS + 1;
             }
             repaint();
+        }
+
+        /** Highlights the row at {@code y}, and answers whether one is there. */
+        boolean highlightAt(int y) {
+            int row = this.top + Math.floorDiv(y - 1, ROW_HEIGHT);
+            if (y < 1 || row >= Math.min(this.rows.size(), this.top + MAX_ROWS)) {
+                return false;
+            }
+            if (row != this.selected) {
+                this.selected = row;
+                repaint();
+            }
+            return true;
         }
 
         Candidate selected() {

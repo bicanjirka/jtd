@@ -313,7 +313,8 @@ public class PanelDev extends JPanel {
                 next token: tab or right takes
                 the grey completion, down opens
                 the list, enter takes the
-                highlighted one, esc closes it.
+                highlighted row, a click takes
+                any row, esc closes it.
                 Health % applies to enemies
                 that walk in after it is set.
                 Kill all pays bounty and XP,
