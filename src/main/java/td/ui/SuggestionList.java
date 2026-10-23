@@ -1,6 +1,5 @@
 package td.ui;
 
-import td.ui.render.IconFace;
 import td.util.ThreadConfined;
 import td.wave.WaveScriptSuggestions.Candidate;
 
@@ -24,8 +23,8 @@ import java.util.function.Function;
 /**
  * A list of candidates hung on the window's popup layer by the control it serves: a scrolling column of a few rows,
  * or every row at once, in as many columns as the window's height needs. The pointer highlights a row, the wheel
- * moves the highlight and a click takes the row. A row with an icon is written in the icon's colours, and rows
- * whose hints differ are ruled apart.
+ * moves the highlight and a click takes the row. A row with a look shows its icon and colours, and rows whose hints
+ * differ are ruled apart.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class SuggestionList extends JComponent {
@@ -37,10 +36,9 @@ final class SuggestionList extends JComponent {
     private static final int PADDING = 6;
     private static final Color SELECTED_FILL = new Color(46, 66, 46);
     private static final Color HINT = new Color(150, 170, 150);
-    private static final int ICON = TermIconPainter.MENTION;
     private static final int ICON_GAP = 4;
 
-    private final transient Function<Candidate, Optional<IconFace>> faces;
+    private final transient Function<Candidate, Optional<RowLook>> looks;
 
     private List<Candidate> rows = List.of();
     private int selected;
@@ -49,8 +47,8 @@ final class SuggestionList extends JComponent {
     private int columns = 1;
 
     /** The control it serves keeps the focus while it is clicked, unless it is made focusable. */
-    SuggestionList(Function<Candidate, Optional<IconFace>> faces, Runnable onTake) {
-        this.faces = faces;
+    SuggestionList(Function<Candidate, Optional<RowLook>> looks, Runnable onTake) {
+        this.looks = looks;
         setFocusable(false);
         MouseAdapter pointer = new MouseAdapter() {
             @Override
@@ -196,9 +194,10 @@ final class SuggestionList extends JComponent {
         return widest + 5 * PADDING + this.iconRoom();
     }
 
-    /** The icon and its gap when any row has one, so every row's text lines up. */
+    /** The widest icon and its gap, so every row's text lines up. */
     private int iconRoom() {
-        return this.rows.stream().anyMatch(row -> this.faces.apply(row).isPresent()) ? ICON + ICON_GAP : 0;
+        return this.rows.stream().map(this.looks).flatMap(Optional::stream)
+                .mapToInt(look -> look.icon().getIconWidth() + ICON_GAP).max().orElse(0);
     }
 
     @Override
@@ -215,7 +214,7 @@ final class SuggestionList extends JComponent {
         int shown = Math.min(this.rows.size() - this.top, this.perColumn * this.columns);
         for (int i = 0; i < shown; i++) {
             Candidate row = this.rows.get(this.top + i);
-            Optional<IconFace> face = this.faces.apply(row);
+            Optional<RowLook> look = this.looks.apply(row);
             int left = (i / this.perColumn) * columnWidth;
             int line = i % this.perColumn;
             int y = 1 + line * ROW_HEIGHT;
@@ -231,17 +230,12 @@ final class SuggestionList extends JComponent {
                 g2.setColor(Hud.BORDER_IDLE);
                 g2.drawLine(left + PADDING, y, left + columnWidth - PADDING, y);
             }
-            int iconX = left + PADDING;
-            int iconY = y + (ROW_HEIGHT - ICON) / 2;
-            face.ifPresent(f -> {
-                g2.translate(iconX, iconY);
-                TermIconPainter.paint(g2, f, ICON);
-                g2.translate(-iconX, -iconY);
-            });
+            look.ifPresent(l -> l.icon().paintIcon(this, g2, left + PADDING,
+                    y + (ROW_HEIGHT - l.icon().getIconHeight()) / 2));
             int baseline = y + (ROW_HEIGHT + metrics.getAscent() - metrics.getDescent()) / 2;
-            g2.setColor(face.map(f -> TermIconPainter.ink(f.tone())).orElse(Hud.FOREGROUND));
+            g2.setColor(look.map(RowLook::text).orElse(Hud.FOREGROUND));
             g2.drawString(row.text(), left + PADDING + iconRoom, baseline);
-            g2.setColor(face.map(f -> TermIconPainter.ink(f.frame())).orElse(HINT));
+            g2.setColor(look.map(RowLook::hint).orElse(HINT));
             g2.drawString(row.hint(), left + columnWidth - PADDING - metrics.stringWidth(row.hint()), baseline);
         }
         g2.dispose();

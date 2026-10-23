@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.economy.StatusTerm;
+import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.AbilityTerm;
 import td.enemy.TraitTerm;
@@ -38,6 +39,18 @@ public final class TermLooks {
         IconFace face = IconFace.of(artNode.id(), monogram(artNode.displayName()), perkTone(type, artNode),
                 TowerSpriteFrameBuilder.slotPaletteFor(artNode.slot()));
         return level > 0 ? face.withNumeral(NUMERALS[level]) : face;
+    }
+
+    /** The frame a label naming {@code category} is written in, so every kind of it reads as one group. */
+    static Palette frameOf(EffectCategory category) {
+        return switch (category) {
+            case HARD_CC, SOFT_CC -> Palette.TERM_FRAME_CONTROL;
+            case DAMAGE_OVER_TIME -> Palette.TERM_FRAME_AFFLICTION;
+            case DEBUFF -> Palette.TERM_FRAME_WEAKNESS;
+            case HEX -> Palette.TERM_FRAME_HEX;
+            case SPOTTED, STEALTH -> Palette.TERM_FRAME_MARK;
+            case RESTORATIVE, BUFF -> Palette.TERM_FRAME_BOON;
+        };
     }
 
     static String monogram(String title) {
