@@ -6,10 +6,10 @@ import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.EffectKind;
-import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
@@ -85,10 +85,10 @@ class SeekerTowerTest {
         SeekerTower tower = towerAt(3, 3);
         UpgradePaths.awakenVeteran(tower);
         UpgradeNode twinWarhead = UpgradePaths.named(tower, "Twin Warhead");
-        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        EnemyMob fodder = EnemyFixtures.plainMob(this.context, 1, 1);
         for (int i = 0; i < 10; i++) {
             tower.dealDamage(fodder, Damage.physical(1_000_000));
-            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+            fodder = EnemyFixtures.plainMob(this.context, 1, 1);
         }
 
         boolean chosen = tower.buyUpgrade(twinWarhead);
@@ -418,10 +418,10 @@ class SeekerTowerTest {
         this.context.economy().startEconomy(100000, 5);
         SeekerTower tower = towerAt(3, 3);
         UpgradePaths.awakenVeteran(tower);
-        EnemyMob fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+        EnemyMob fodder = EnemyFixtures.plainMob(this.context, 1, 1);
         for (int i = 0; i < 25; i++) {
             tower.dealDamage(fodder, Damage.magic(1_000_000));
-            fodder = EnemyFactory.getEnemy("c", this.context, 0, 1, 1, Rank.GRUNT);
+            fodder = EnemyFixtures.plainMob(this.context, 1, 1);
         }
         tower.buyUpgrade(UpgradePaths.named(tower, "Deep Freeze"));
         tower.buyUpgrade(UpgradePaths.named(tower, "Deep Freeze II"));

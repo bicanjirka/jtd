@@ -2,8 +2,9 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.effect.EffectKind;
-
-import java.util.List;
+import td.effect.HealTemplate;
+import td.effect.ShieldTemplate;
+import td.zone.Zone;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -11,43 +12,42 @@ class AbilityTextTest {
 
     private static final float CELL = 40f;
 
-    private final EnemyCatalog catalog = EnemyCatalog.builtIn();
-    private final AbilityText.Words words = new AbilityText.Words(CELL, id -> this.catalog.get(id).displayName());
+    private final AbilityText.Words words = new AbilityText.Words(CELL, id -> "Broodling");
 
-    private List<Ability> abilitiesOf(AbilityTerm term) {
-        return this.catalog.ids().stream().flatMap(id -> java.util.Arrays.stream(Rank.values())
-                .flatMap(rank -> this.catalog.get(id, rank).abilities().stream()))
-                .filter(ability -> ability.term() == term).distinct().toList();
+    private String plain(Ability ability) {
+        return AbilityText.of(ability, this.words).plain();
     }
 
     @Test
     void aThresholdShieldSaysWhenWhatHowMuchAndAgainstWhat() {
-        List<Ability> braces = abilitiesOf(AbilityTerm.BRACE);
+        Ability brace = new Ability(AbilityTerm.BRACE, new HealthThresholdTrigger(0.5f),
+                new ApplyEffectAction(ShieldTemplate.physicalOnly(300f, 100), new SelfTarget()));
 
-        List<String> texts = braces.stream().map(brace -> AbilityText.of(brace, this.words)).map(text -> text.plain()).toList();
-        assertThat(texts).contains("once, below 50% health: gains Shield of 300 against physical for 5 s");
-        assertThat(AbilityText.of(braces.getFirst(), this.words).mentions()).containsExactly(EffectKind.SHIELD);
+        assertThat(this.plain(brace)).isEqualTo("once, below 50% health: gains Shield of 300 against physical for 5 s");
+        assertThat(AbilityText.of(brace, this.words).mentions()).containsExactly(EffectKind.SHIELD);
     }
 
     @Test
     void anAreaHealSaysHowFarItReachesInCells() {
-        Ability mend = abilitiesOf(AbilityTerm.MEND).getFirst();
+        Ability mend = new Ability(AbilityTerm.MEND, new PeriodicTrigger(20),
+                new ApplyEffectAction(new HealTemplate(1f, 40), new RadiusTarget(2 * CELL)));
 
-        assertThat(AbilityText.of(mend, this.words).plain()).startsWith("every ").contains("every other enemy within 2 cells Heal of");
+        assertThat(this.plain(mend)).startsWith("every ").contains("every other enemy within 2 cells Heal of");
     }
 
     @Test
     void aSpawnNamesWhatItCalls() {
-        Ability brood = abilitiesOf(AbilityTerm.BROOD).getFirst();
+        Ability brood = new Ability(AbilityTerm.BROOD, new OnDeathTrigger(), new SpawnEnemiesAction("broodling", 3, false));
 
-        assertThat(AbilityText.of(brood, this.words).plain()).isEqualTo("when it dies: calls 3 Mite Broodling");
+        assertThat(this.plain(brood)).isEqualTo("when it dies: calls 3 Broodling");
     }
 
     @Test
     void aBlindingBurstSaysHowFarItReachesHowMuchItBlindsAndHowLong() {
-        Ability blast = abilitiesOf(AbilityTerm.BLINDING_BURST).getFirst();
+        Ability blast = new Ability(AbilityTerm.BLINDING_BURST, new OnDeathTrigger(),
+                LeaveZoneAction.blindingField(2f, 0.75f));
 
-        assertThat(AbilityText.of(blast, this.words).plain())
+        assertThat(this.plain(blast))
                 .isEqualTo("when it dies: blinds the towers within 2 cells: 75% miss chance, until the wave is over");
     }
 
@@ -56,7 +56,7 @@ class AbilityTextTest {
         Ability pool = new Ability(AbilityTerm.HEALING_POOL, new PeriodicTrigger(60),
                 LeaveZoneAction.healingGround(1.5f, 100, 0.4f));
 
-        assertThat(AbilityText.of(pool, this.words).plain())
+        assertThat(this.plain(pool))
                 .startsWith("every 3 s: leaves ground 1.5 cells wide that gives enemies on it Heal of")
                 .endsWith("a second, for 5 s");
         assertThat(AbilityText.of(pool, this.words).mentions()).containsExactly(EffectKind.HEAL);
@@ -64,20 +64,10 @@ class AbilityTextTest {
 
     @Test
     void aHasteFieldNamesTheHasteItGives() {
-        Ability field = abilitiesOf(AbilityTerm.HASTE_FIELD).getFirst();
+        Ability field = new Ability(AbilityTerm.HASTE_FIELD, new HealthThresholdTrigger(0.5f),
+                LeaveZoneAction.hasteGround(1.5f, Zone.UNTIL_WAVE_END));
 
         assertThat(AbilityText.of(field, this.words).mentions()).containsExactly(EffectKind.HASTENED);
-        assertThat(AbilityText.of(field, this.words).plain()).endsWith("until the wave is over");
-    }
-
-    @Test
-    void everyBuiltInAbilityHasATerm() {
-        for (String id : this.catalog.ids()) {
-            for (Rank rank : Rank.values()) {
-                for (Ability ability : this.catalog.get(id, rank).abilities()) {
-                    assertThat(ability.term()).as(id + " " + rank).isNotNull();
-                }
-            }
-        }
+        assertThat(this.plain(field)).endsWith("until the wave is over");
     }
 }

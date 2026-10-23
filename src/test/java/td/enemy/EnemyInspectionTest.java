@@ -5,12 +5,15 @@ import td.damage.Damage;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.ShieldTemplate;
 import td.enemy.EnemyInspection.EffectState;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
 import td.util.GameWorld;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -19,8 +22,8 @@ class EnemyInspectionTest {
 
     private final GameWorld world = WorldFixtures.newWorld();
 
-    private DefinedEnemyMob spawn(String id, Rank rank) {
-        return (DefinedEnemyMob) EnemyCatalog.builtIn().spawn(id, this.world, 0, 100, 5, rank);
+    private DefinedEnemyMob anEnemy() {
+        return EnemyFixtures.plainMob(this.world, 100, 5);
     }
 
     private static EffectState stateOf(DefinedEnemyMob mob, EffectKind kind) {
@@ -29,7 +32,7 @@ class EnemyInspectionTest {
 
     @Test
     void effectsAreListedInTheOrderTheyWereGained() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.chill(0.4f, 100, DamageSink.none()));
         mob.doTick(1);
         mob.applyEffect(Effect.burn(Damage.magic(10), 100, DamageSink.none()));
@@ -42,7 +45,7 @@ class EnemyInspectionTest {
 
     @Test
     void aFreezeThatEndedStaysFadedWhileItsDiminishingReturnsRun() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.freeze(3, DamageSink.none()));
         for (int tick = 1; tick <= 6; tick++) {
             mob.doTick(tick);
@@ -56,7 +59,7 @@ class EnemyInspectionTest {
 
     @Test
     void aBurnReportsHowFullItsPoolIs() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.burn(Damage.magic(10), 100, DamageSink.none()));
 
         assertThat(stateOf(mob, EffectKind.BURN).fullness().orElseThrow()).isBetween(0.0, 1.0);
@@ -64,7 +67,7 @@ class EnemyInspectionTest {
 
     @Test
     void aTimedEffectReportsTheTicksItsClockStartedFrom() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.vulnerable(1, 100, DamageSink.none()));
         mob.doTick(1);
 
@@ -73,16 +76,16 @@ class EnemyInspectionTest {
 
     @Test
     void anEffectKeptOutNamesWhatKeepsItOut() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.freeze(30, DamageSink.none()));
 
         assertThat(mob.inspect().immunities()).contains(
-                new EnemyInspection.Immunity(EffectKind.BURN, java.util.Optional.of(EffectKind.FREEZE)));
+                new EnemyInspection.Immunity(EffectKind.BURN, Optional.of(EffectKind.FREEZE)));
     }
 
     @Test
     void theArmorBreakdownListsBaseEachSourceAndResult() {
-        DefinedEnemyMob mob = this.spawn("s", Rank.ELITE);
+        DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("armored").withArmor(30f));
         float base = mob.baseStat(EnemyStat.ARMOR);
         mob.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
 
@@ -95,7 +98,7 @@ class EnemyInspectionTest {
 
     @Test
     void aSpeedBreakdownRecordsChillAsAMultiplier() {
-        DefinedEnemyMob mob = this.spawn("c", Rank.GRUNT);
+        DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.chill(0.4f, 100, DamageSink.none()));
 
         StatBreakdown speed = mob.inspect().breakdowns().get(EnemyStat.MOVE_SPEED);
@@ -107,12 +110,15 @@ class EnemyInspectionTest {
 
     @Test
     void abilitiesAndTraitsBecomeNamedEntries() {
-        EnemyInspection armored = this.spawn("s", Rank.BOSS).inspect();
-        EnemyInspection yeti = this.spawn("yeti", Rank.ELITE).inspect();
+        EnemyDefinition definition = EnemyFixtures.simpleDefinition("bracer")
+                .withAbilities(List.of(new Ability(AbilityTerm.BRACE, new HealthThresholdTrigger(0.5f),
+                        new ApplyEffectAction(new ShieldTemplate(10f, 100), new SelfTarget()))))
+                .withTraits(List.of(EffectResistTrait.immuneTo(EffectKind.FREEZE)));
 
-        assertThat(armored.abilityEntries()).extracting(AbilityEntry::term)
-                .contains(AbilityTerm.BRACE, AbilityTerm.REINFORCE);
-        assertThat(yeti.traitEntries()).anyMatch(entry -> entry.term() == EffectKind.FREEZE && entry.immune());
+        EnemyInspection inspection = EnemyFixtures.liveMob(this.world, definition).inspect();
+
+        assertThat(inspection.abilityEntries()).extracting(AbilityEntry::term).containsExactly(AbilityTerm.BRACE);
+        assertThat(inspection.traitEntries()).anyMatch(entry -> entry.term() == EffectKind.FREEZE && entry.immune());
     }
 
     @Test

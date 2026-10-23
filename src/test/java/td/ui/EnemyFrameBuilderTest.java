@@ -7,16 +7,23 @@ import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.FieldStrength;
+import td.effect.InvisibleTemplate;
+import td.enemy.Ability;
+import td.enemy.AbilityTerm;
+import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
-import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.HurtSpeedTrait;
+import td.enemy.PeriodicTrigger;
+import td.enemy.RadiusTarget;
 import td.enemy.Rank;
 import td.enemy.RegenerationTrait;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
+import td.stat.DisruptionAura;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBodyDraw;
@@ -50,6 +57,13 @@ class EnemyFrameBuilderTest {
         return context;
     }
 
+    /** Immune to freeze, resisting chill and armored: two traits that each wear a marker, and a stat that wears none. */
+    private static EnemyMob hardy(GameWorld context) {
+        return EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("hardy").withArmor(20f)
+                .withTraits(List.of(EffectResistTrait.immuneTo(EffectKind.FREEZE),
+                        EffectResistTrait.resisting(EffectKind.CHILL, 0.5f))));
+    }
+
     private static EnemyBodyDraw bodyDrawAt(EnemyMob enemy, int gameTime, double alpha) {
         EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, alpha);
         enemy.accept(builder);
@@ -71,7 +85,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyHeldByAFieldEffectFlickersBetweenSteadyAndDimmed() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.corroded(FieldStrength.FULL, 100, DamageSink.none()));
         int half = EnemyFrameBuilder.FLICKER_HALF_PERIOD_TICKS;
 
@@ -87,7 +101,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyWithNoFieldEffectNeverFlickers() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.burn(Damage.magic(10), 100, DamageSink.none()));
 
         float dimmedHalf = bodyDrawAt(enemy, EnemyFrameBuilder.FLICKER_HALF_PERIOD_TICKS, 0.0).flicker();
@@ -98,7 +112,7 @@ class EnemyFrameBuilderTest {
     @Test
     void alphaZeroReproducesThePreviousTickPosition() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
         enemy.doTick(1);
 
@@ -111,7 +125,7 @@ class EnemyFrameBuilderTest {
     @Test
     void alphaOneReproducesTheCurrentTickPosition() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
         enemy.doTick(1);
 
@@ -124,7 +138,7 @@ class EnemyFrameBuilderTest {
     @Test
     void alphaOneHalfIsTheMidpointBetweenPreviousAndCurrentPosition() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         DefinedEnemyMob mob = (DefinedEnemyMob) enemy;
         enemy.doTick(1);
         float expectedX = (float) ((mob.getPrevX() + mob.getX()) / 2.0);
@@ -139,7 +153,7 @@ class EnemyFrameBuilderTest {
     @Test
     void aGruntSpawnsWithNoBadgeAtAll() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
 
         assertThat(bodyDrawAt(enemy, 0, 0.0).badge()).isEqualTo(RankBadge.NONE);
     }
@@ -148,13 +162,13 @@ class EnemyFrameBuilderTest {
     void everyNonGruntRankMapsToItsOwnDistinctBadge() {
         GameWorld context = contextWithStraightPath();
 
-        assertThat(bodyDrawAt(EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.SOLDIER), 0, 0.0).badge())
+        assertThat(bodyDrawAt(EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), Rank.SOLDIER), 0, 0.0).badge())
                 .isEqualTo(RankBadge.ONE_CHEVRON);
-        assertThat(bodyDrawAt(EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.VETERAN), 0, 0.0).badge())
+        assertThat(bodyDrawAt(EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), Rank.VETERAN), 0, 0.0).badge())
                 .isEqualTo(RankBadge.TWO_CHEVRON);
-        assertThat(bodyDrawAt(EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.ELITE), 0, 0.0).badge())
+        assertThat(bodyDrawAt(EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), Rank.ELITE), 0, 0.0).badge())
                 .isEqualTo(RankBadge.STAR);
-        assertThat(bodyDrawAt(EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.BOSS), 0, 0.0).badge())
+        assertThat(bodyDrawAt(EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), Rank.BOSS), 0, 0.0).badge())
                 .isEqualTo(RankBadge.SKULL);
     }
 
@@ -162,7 +176,7 @@ class EnemyFrameBuilderTest {
     void deathFadeIsDrawnUntilFadeDurationTicksAfterTheTickThatNoticedDeath() {
         GameWorld context = contextWithStraightPath();
         Rank rank = Rank.SOLDIER;
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, rank);
+        EnemyMob enemy = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), rank);
         int fadeDuration = EnemyFrameBuilder.fadeDurationTicks(rank);
 
         enemy.doDamage(Damage.physical(5000));
@@ -184,7 +198,7 @@ class EnemyFrameBuilderTest {
         GameWorld context = WorldFixtures.newWorldOnBoard(1, 1001, 1001);
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5))));
 
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 10, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 10, 3);
         int initialLives = context.economy().getLives();
         int tick = 0;
         while (context.economy().getLives() == initialLives) {
@@ -201,7 +215,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyWithNoActiveEffectsYieldsNoStatusMarkers() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
         enemy.accept(builder);
@@ -212,7 +226,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anActiveSlowYieldsExactlyOneStatusMarkerWithTheSlowRole() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
@@ -226,7 +240,7 @@ class EnemyFrameBuilderTest {
     @Test
     void twoActiveEffectsYieldTwoDistinctlyPositionedMarkers() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
         enemy.applyEffect(Effect.heal(1, 5, DamageSink.none()));
 
@@ -241,7 +255,7 @@ class EnemyFrameBuilderTest {
     @Test
     void aFourthSimultaneousEffectCollapsesIntoOneOverflowMarkerInsteadOfGrowingTheRow() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
         enemy.applyEffect(Effect.heal(1, 5, DamageSink.none()));
         enemy.applyEffect(Effect.vulnerable(1, 5, DamageSink.none()));
@@ -260,7 +274,7 @@ class EnemyFrameBuilderTest {
     @Test
     void effectsPastTheCapGroupByCategoryAndEachMarkerCountsTheOtherKindsOfItsCategory() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.burn(Damage.magic(10), 50, DamageSink.none()));
         enemy.applyEffect(Effect.poison(Damage.magic(10), 50, DamageSink.none()));
         enemy.applyEffect(Effect.exposed(5, DamageSink.none()));
@@ -283,9 +297,9 @@ class EnemyFrameBuilderTest {
     @Test
     void aHexedEnemyWearsItsHexsRuneAndAPlainOneNone() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob doomed = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob doomed = EnemyFixtures.plainMob(context, 50, 3);
         doomed.applyEffect(Effect.hex(EffectKind.DOOM, 80, DamageSink.none()));
-        EnemyMob plain = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob plain = EnemyFixtures.plainMob(context, 50, 3);
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(0, 0.0);
         doomed.accept(builder);
@@ -299,12 +313,12 @@ class EnemyFrameBuilderTest {
     void anEnemyThatJustDodgedYieldsAMissMarkBesideItAndNoCritSpark() {
         GameWorld context = WorldFixtures.newWorldOnBoard(() -> 0.0, 1, 1001, 1001);
         context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(105, 5))));
-        EnemyMob courier = EnemyFactory.getEnemy("courier", context, 0, 50, 3, Rank.GRUNT);
-        courier.takeHit(Damage.physical(10), AttackProfile.critChance(1f).asAimed());
-        courier.doTick(1); // captures the dodge
+        EnemyMob nimble = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("nimble").withAgility(50f));
+        nimble.takeHit(Damage.physical(10), AttackProfile.critChance(1f).asAimed());
+        nimble.doTick(1); // captures the dodge
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(1, 0.0);
-        courier.accept(builder);
+        nimble.accept(builder);
         EnemyBodyDraw body = (EnemyBodyDraw) builder.build().getFirst();
 
         assertThat(builder.buildCritSparks()).isEmpty();
@@ -320,7 +334,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyThatNeverTookACriticalHitYieldsNoCritSpark() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.doTick(1);
 
         EnemyFrameBuilder builder = new EnemyFrameBuilder(1, 0.0);
@@ -332,7 +346,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyThatJustSurvivedACriticalHitYieldsOneCritSpark() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.doDamage(Damage.physical(10), AttackProfile.critChance(1f));
         enemy.doTick(1); // captures the critical hit
 
@@ -348,7 +362,7 @@ class EnemyFrameBuilderTest {
     @Test
     void theCritSparkStopsShowingAfterItsDurationElapses() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.doDamage(Damage.physical(10), AttackProfile.critChance(1f));
         enemy.doTick(1); // captures the critical hit at tick 1
 
@@ -362,7 +376,7 @@ class EnemyFrameBuilderTest {
     @Test
     void aFifthSimultaneousEffectDoesNotGrowTheRowFurther() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.chill(0.5f, 5, DamageSink.none()));
         enemy.applyEffect(Effect.vulnerable(1, 5, DamageSink.none()));
         enemy.applyEffect(Effect.exposed(5, DamageSink.none()));
@@ -379,7 +393,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyThatWasNeverInvisibleHasNoCloakProgress() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
 
         assertThat(bodyDrawAt(enemy, 0, 0.0).cloakProgress()).isZero();
     }
@@ -387,7 +401,7 @@ class EnemyFrameBuilderTest {
     @Test
     void cloakProgressRampsUpOverTheFadeDurationAfterGainingInvisibility() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.invisible(200, DamageSink.none()));
         enemy.doTick(1); // captures the gain at tick 1
 
@@ -401,7 +415,7 @@ class EnemyFrameBuilderTest {
     @Test
     void cloakProgressRampsBackDownOverTheFadeDurationAfterInvisibilityExpires() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.invisible(3, DamageSink.none()));
         enemy.doTick(1);
         enemy.doTick(2);
@@ -436,7 +450,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyWithNoShieldAndNoSupportAuraYieldsNoOverlays() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
 
         assertThat(overlaysOf(enemy, 0)).isEmpty();
     }
@@ -444,7 +458,8 @@ class EnemyFrameBuilderTest {
     @Test
     void aJammerDrawsADisruptionRingAsWideAsItsReach() {
         GameWorld context = contextWithStraightPath();
-        DefinedEnemyMob jammer = (DefinedEnemyMob) EnemyFactory.getEnemy("j", context, 0, 50, 3, Rank.GRUNT);
+        DefinedEnemyMob jammer = EnemyFixtures.liveMob(context,
+                EnemyFixtures.simpleDefinition("jammer").withDisruption(new DisruptionAura(100f, 0.3f, 0.6f)));
 
         List<EnemyOverlayDraw> overlays = overlaysOf(jammer, 0);
 
@@ -459,7 +474,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anActiveShieldYieldsARingInTheShieldMarkersColour() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.shield(0.3f, 5, DamageSink.none()));
 
         List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
@@ -472,7 +487,7 @@ class EnemyFrameBuilderTest {
     @Test
     void theShieldRingDisappearsOnceTheShieldExpires() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.shield(0.3f, 1, DamageSink.none()));
         enemy.doTick(1); // the shield expires this tick
 
@@ -482,7 +497,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anActiveFreezeYieldsAnIceCrystalOverlayInTheFreezeCrystalColour() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.freeze(5, DamageSink.none()));
 
         List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
@@ -495,7 +510,7 @@ class EnemyFrameBuilderTest {
     @Test
     void theIceCrystalOverlayDisappearsOnceTheFreezeExpires() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.freeze(1, DamageSink.none()));
         enemy.doTick(1); // the freeze expires this tick
 
@@ -505,9 +520,11 @@ class EnemyFrameBuilderTest {
     @Test
     void aDefinitionWithARadiusAbilityYieldsASupportAuraRingAtItsAuthoredRadius() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob eliteGhost = EnemyFactory.getEnemy("g", context, 0, 800, 16, Rank.ELITE); // has the shroud ability
+        EnemyMob shrouder = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("shrouder")
+                .withAbilities(List.of(new Ability(AbilityTerm.SHROUD, new PeriodicTrigger(40),
+                        new ApplyEffectAction(new InvisibleTemplate(60), new RadiusTarget(100f))))));
 
-        List<EnemyOverlayDraw> overlays = overlaysOf(eliteGhost, 0);
+        List<EnemyOverlayDraw> overlays = overlaysOf(shrouder, 0);
 
         assertThat(overlays).hasSize(1);
         EnemyRingDraw ring = (EnemyRingDraw) overlays.getFirst();
@@ -518,7 +535,7 @@ class EnemyFrameBuilderTest {
     @Test
     void aGainedEffectYieldsAnOutwardPulseAtTheMomentItsGained() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.chill(0.5f, 200, DamageSink.none()));
         enemy.doTick(1); // captures the gain at tick 1
 
@@ -534,7 +551,7 @@ class EnemyFrameBuilderTest {
     @Test
     void theGainPulseDisappearsAfterItsDuration() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.chill(0.5f, 200, DamageSink.none()));
         enemy.doTick(1);
 
@@ -545,7 +562,7 @@ class EnemyFrameBuilderTest {
     @Test
     void aLostEffectYieldsAnInwardPulseAtTheMomentItExpires() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         int durationTicks = EnemyFrameBuilder.EFFECT_PULSE_DURATION_TICKS + 2;
         enemy.applyEffect(Effect.chill(0.5f, durationTicks, DamageSink.none()));
         for (int t = 1; t <= durationTicks; t++) { // the slow expires on the last of these
@@ -564,7 +581,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anAbilityDrivenSpawnYieldsASpawnBurstPulseAtItsArrival() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         ((DefinedEnemyMob) enemy).recordAbilitySpawn(0);
 
         List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
@@ -579,7 +596,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyWithNoTraitsYieldsNoTraitMarkers() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT); // no traits
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3); // no traits
 
         assertThat(overlaysOf(enemy, 0)).isEmpty();
     }
@@ -587,9 +604,9 @@ class EnemyFrameBuilderTest {
     @Test
     void eachTraitYieldsItsOwnMarkerAndABaseStatNone() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob yeti = EnemyFactory.getEnemy("yeti", context, 0, 80, 3, Rank.GRUNT); // freeze immune, chill resist, armor
+        EnemyMob hardy = hardy(context);
 
-        List<EnemyOverlayDraw> overlays = overlaysOf(yeti, 0);
+        List<EnemyOverlayDraw> overlays = overlaysOf(hardy, 0);
 
         assertThat(overlays).hasSize(2);
         assertThat(overlays).allMatch(TraitMarkerDraw.class::isInstance);
@@ -601,10 +618,10 @@ class EnemyFrameBuilderTest {
     @Test
     void traitMarkersSitBelowTheBodyWhileEffectMarkersSitAbove() {
         GameWorld context = contextWithStraightPath();
-        EnemyMob yeti = EnemyFactory.getEnemy("yeti", context, 0, 80, 3, Rank.GRUNT);
-        EnemyBodyDraw body = bodyDrawAt(yeti, 0, 0.0);
+        EnemyMob hardy = hardy(context);
+        EnemyBodyDraw body = bodyDrawAt(hardy, 0, 0.0);
 
-        List<EnemyOverlayDraw> overlays = overlaysOf(yeti, 0);
+        List<EnemyOverlayDraw> overlays = overlaysOf(hardy, 0);
 
         assertThat(overlays).allSatisfy(o -> assertThat(((TraitMarkerDraw) o).y()).isGreaterThan(body.y()));
     }

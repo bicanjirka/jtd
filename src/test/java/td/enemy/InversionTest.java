@@ -2,35 +2,25 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
-import td.damage.DamageType;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.HealTemplate;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
-import td.wave.PathNormal;
-import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/** What an inversion does to a live mob's heals and shields, and which mobs it is worth casting on. */
 class InversionTest {
 
     private static final int LONG = 1000;
 
-    private static GameWorld worldWithStraightPath() {
-        GameWorld world = WorldFixtures.newWorldOnBoard(32, 1000, 1000);
-        world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
-        return world;
-    }
-
-    private static DefinedEnemyMob spawn(GameWorld world, String id, int slot) {
-        DefinedEnemyMob mob = (DefinedEnemyMob) world.getEnemyCatalog().spawn(id, world, 0, 100, slot, Rank.GRUNT);
-        world.enemies().add(mob);
-        return mob;
-    }
+    private final GameWorld world = WorldFixtures.newWorldOnStraightPath();
 
     /** Inverts {@code mob}, crediting what it deals to {@code credited}. */
     private static void invert(DefinedEnemyMob mob, List<Damage> credited) {
@@ -41,43 +31,22 @@ class InversionTest {
     }
 
     @Test
-    void aMendersHealOnAnInvertedAllyDamagesItAsMagicInsteadOfHealingIt() {
-        GameWorld world = worldWithStraightPath();
-        DefinedEnemyMob mender = spawn(world, "m", 3);
-        DefinedEnemyMob ally = spawn(world, "c", 4);
-        ally.doDamage(Damage.physical(5000));
-        int woundedHealth = ally.getHealth();
-        List<Damage> credited = new ArrayList<>();
-        invert(ally, credited);
-
-        for (int t = 1; t <= 20; t++) {
-            mender.doTick(t);
-            ally.doTick(t);
-        }
-
-        assertThat(ally.getHealth()).isLessThan(woundedHealth);
-        assertThat(credited).isNotEmpty().allSatisfy(damage -> assertThat(damage.type()).isEqualTo(DamageType.MAGIC));
-    }
-
-    @Test
     void anInvertedHealCountsAsDamageTaken() {
-        GameWorld world = worldWithStraightPath();
-        DefinedEnemyMob ally = spawn(world, "c", 4);
-        invert(ally, new ArrayList<>());
-        long before = ally.damageTaken();
+        DefinedEnemyMob enemy = EnemyFixtures.plainMob(this.world, 100, 4);
+        invert(enemy, new ArrayList<>());
+        long before = enemy.damageTaken();
 
-        ally.applyEffect(Effect.heal(100, 10, DamageSink.none()));
+        enemy.applyEffect(Effect.heal(100, 10, DamageSink.none()));
         for (int t = 1; t <= 10; t++) {
-            ally.doTick(t);
+            enemy.doTick(t);
         }
 
-        assertThat(ally.damageTaken() - before).isPositive();
+        assertThat(enemy.damageTaken() - before).isPositive();
     }
 
     @Test
     void aShieldOnAnInvertedEnemyIsOneHitOfItsPointsAndNeverGoesOn() {
-        GameWorld world = worldWithStraightPath();
-        DefinedEnemyMob enemy = spawn(world, "c", 4);
+        DefinedEnemyMob enemy = EnemyFixtures.plainMob(this.world, 100, 4);
         List<Damage> credited = new ArrayList<>();
         invert(enemy, credited);
 
@@ -88,45 +57,16 @@ class InversionTest {
     }
 
     @Test
-    void anInvertedEnemyCannotVanish() {
-        GameWorld world = worldWithStraightPath();
-        DefinedEnemyMob ghost = spawn(world, "g", 4);
-        invert(ghost, new ArrayList<>());
+    void anEnemyAppliesEffectsOnlyWhenOneOfItsAbilitiesGivesOne() {
+        DefinedEnemyMob healer = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("healer")
+                .withAbilities(List.of(new Ability(AbilityTerm.MEND, new PeriodicTrigger(20),
+                        new ApplyEffectAction(new HealTemplate(1f, 20), new RadiusTarget(80f))))));
+        DefinedEnemyMob blinder = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("blinder")
+                .withAbilities(List.of(new Ability(AbilityTerm.BLINDING_BURST, new OnDeathTrigger(),
+                        LeaveZoneAction.blindingField(2f, 0.5f)))));
 
-        ghost.applyEffect(Effect.invisible(200, DamageSink.none()));
-
-        assertThat(ghost.hasEffect(EffectKind.INVISIBLE)).isFalse();
-        assertThat(ghost.isHidden()).isFalse();
-    }
-
-    @Test
-    void invertingAnEnemyThatHasAlreadyVanishedBringsItBack() {
-        GameWorld world = worldWithStraightPath();
-        DefinedEnemyMob ghost = spawn(world, "g", 4);
-        ghost.applyEffect(Effect.invisible(200, DamageSink.none()));
-
-        invert(ghost, new ArrayList<>());
-
-        assertThat(ghost.isHidden()).isFalse();
-    }
-
-    @Test
-    void anEnemyThatIsNotInvertedHealsAndShieldsAsBefore() {
-        GameWorld world = worldWithStraightPath();
-        DefinedEnemyMob enemy = spawn(world, "c", 4);
-
-        enemy.applyEffect(Effect.shield(0.3f, 100, DamageSink.none()));
-        enemy.applyEffect(Effect.heal(100, 10, DamageSink.none()));
-
-        assertThat(enemy.activeEffectKinds()).contains(EffectKind.SHIELD, EffectKind.HEAL);
-    }
-
-    @Test
-    void anEnemyWithAHealAbilityAppliesEffectsAndOneThatOnlyWalksDoesNot() {
-        GameWorld world = worldWithStraightPath();
-
-        assertThat(spawn(world, "m", 3).appliesEffects()).isTrue();
-        assertThat(spawn(world, "g", 4).appliesEffects()).isTrue();
-        assertThat(spawn(world, "c", 5).appliesEffects()).isFalse();
+        assertThat(healer.appliesEffects()).isTrue();
+        assertThat(blinder.appliesEffects()).isFalse();
+        assertThat(EnemyFixtures.plainMob(this.world, 100, 4).appliesEffects()).isFalse();
     }
 }

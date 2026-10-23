@@ -22,17 +22,16 @@ import java.util.List;
  */
 public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime> paths, EnemyCatalog catalog) {
 
-    // One degenerate path rather than none, so pathAt(0) resolves before any level loads.
-    private static final LoadedLevel NONE = new LoadedLevel(CellGrid.empty(), BoardGeometry.empty(),
-            List.of(new PathRuntime(new PathNormal(List.of()), List.of(), PathColor.DEFAULT)), EnemyCatalog.builtIn());
-
     /** Copies the list, so the caller cannot change it after publication. */
     public LoadedLevel {
         paths = List.copyOf(paths);
     }
 
+    /** Fresh each call: a catalog takes registrations, so no two worlds may share one. */
     public static LoadedLevel none() {
-        return NONE;
+        // One degenerate path rather than none, so pathAt(0) resolves before any level loads.
+        return new LoadedLevel(CellGrid.empty(), BoardGeometry.empty(),
+                List.of(new PathRuntime(new PathNormal(List.of()), List.of(), PathColor.DEFAULT)), EnemyCatalog.builtIn());
     }
 
     public boolean isLoaded() {

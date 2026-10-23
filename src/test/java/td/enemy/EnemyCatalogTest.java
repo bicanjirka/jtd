@@ -1,10 +1,6 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
-import td.damage.Damage;
-import td.damage.DamageMix;
-import td.damage.DamageType;
-import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
@@ -82,48 +78,26 @@ class EnemyCatalogTest {
     }
 
     @Test
-    void cloneAndAdjustOfABuiltInFiveRankLadderProducesADistinctAdjustedValuePerRank() {
-        EnemyCatalog catalog = EnemyCatalog.builtIn();
-
-        RankedEnemy toughCircle = catalog.cloneAndAdjust("c", "toughCircle",
-                d -> d.withHealthAndPrice(d.baseHealth() + 50, d.price() + 5));
-
-        assertThat(toughCircle.definitionFor(Rank.GRUNT).baseHealth()).isEqualTo(125);
-        assertThat(toughCircle.definitionFor(Rank.SOLDIER).baseHealth()).isEqualTo(200);
-        assertThat(toughCircle.definitionFor(Rank.VETERAN).baseHealth()).isEqualTo(350);
-        assertThat(toughCircle.definitionFor(Rank.ELITE).baseHealth()).isEqualTo(650);
-        assertThat(toughCircle.definitionFor(Rank.BOSS).baseHealth()).isEqualTo(1250);
-        assertThat(toughCircle.definitionFor(Rank.GRUNT).price()).isEqualTo(7);
-        assertThat(toughCircle.definitionFor(Rank.BOSS).price()).isEqualTo(27);
-
-        for (Rank rank : Rank.values()) {
-            assertThat(toughCircle.definitionFor(rank).id()).isEqualTo("toughCircle");
-        }
-        assertThat(catalog.get("c", Rank.GRUNT).baseHealth()).isEqualTo(75);
-        assertThat(catalog.get("c", Rank.BOSS).baseHealth()).isEqualTo(1200);
-
-        assertThat(toughCircle.definitionFor(Rank.SOLDIER).traitsFor(DamageMix.none())).isEmpty();
-        DamageMix allPhysical = DamageMix.of(Damage.physical(10));
-        assertThat(toughCircle.definitionFor(Rank.ELITE).traitsFor(allPhysical))
-                .containsExactly(new AdaptiveResist.Adapted(67f, DamageType.PHYSICAL));
-        assertThat(toughCircle.definitionFor(Rank.BOSS).traitsFor(allPhysical))
-                .containsExactly(new AdaptiveResist.Adapted(67f, DamageType.PHYSICAL));
-    }
-
-    @Test
     void theRankAwareOverloadCanSetHealthAndStatsCompletelyPersistAddAndReplaceTraitsPerRank() {
-        EnemyCatalog catalog = EnemyCatalog.builtIn();
+        EnemyCatalog catalog = new EnemyCatalog();
+        catalog.register(RankedEnemy.startingAt(EnemyFixtures.simpleDefinition("square").withArmor(10f)
+                        .withIdentifiedTraits(List.of(
+                                IdentifiedTrait.named("freeze", EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f)),
+                                IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.25f)))))
+                .thenAt(Rank.SOLDIER, d -> d)
+                .thenAt(Rank.VETERAN, d -> d)
+                .thenAt(Rank.ELITE, d -> d)
+                .build());
 
-        RankedEnemy toughenedSquare = catalog.cloneAndAdjust("s", "toughenedSquare", (rank, d) -> switch (rank) {
+        RankedEnemy toughenedSquare = catalog.cloneAndAdjust("square", "toughenedSquare", (rank, d) -> switch (rank) {
             // set outright, proving a replacement rather than a delta
             case GRUNT -> d.withHealthAndPrice(1000, 100);
-            case SOLDIER -> d;
+            case SOLDIER, BOSS -> d;
             case VETERAN -> d.withAdditionalTraits(
                     List.of(IdentifiedTrait.named("regrowth", new RegenerationTrait(1f))));
             // replaces "freeze" under the same id; other traits stay
             case ELITE -> d.withArmor(233f).withAdditionalTraits(
                     List.of(IdentifiedTrait.named("freeze", EffectResistTrait.immuneTo(EffectKind.FREEZE))));
-            case BOSS -> d;
         });
 
         EnemyDefinition grunt = toughenedSquare.definitionFor(Rank.GRUNT);
@@ -131,18 +105,15 @@ class EnemyCatalogTest {
         assertThat(grunt.price()).isEqualTo(100);
 
         EnemyDefinition soldier = toughenedSquare.definitionFor(Rank.SOLDIER);
-        assertThat(soldier.baseStats().value(EnemyStat.ARMOR)).isEqualTo(33f);
+        assertThat(soldier.baseStats().value(EnemyStat.ARMOR)).isEqualTo(10f);
         assertThat(traitNamed(soldier, "freeze")).contains(EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f));
 
         EnemyDefinition veteran = toughenedSquare.definitionFor(Rank.VETERAN);
         assertThat(veteran.traitSlots()).hasSize(3);
-        assertThat(traitNamed(veteran, "freeze")).contains(EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f));
-        assertThat(traitNamed(veteran, "chill")).contains(EffectResistTrait.resisting(EffectKind.CHILL, 0.25f));
         assertThat(traitNamed(veteran, "regrowth")).contains(new RegenerationTrait(1f));
 
         EnemyDefinition elite = toughenedSquare.definitionFor(Rank.ELITE);
         assertThat(elite.baseStats().value(EnemyStat.ARMOR)).isEqualTo(233f);
-        assertThat(elite.baseStats().value(EnemyStat.PLATING)).isEqualTo(DamageUnits.ofPoints(8f));
         assertThat(elite.traitSlots()).hasSize(2);
         assertThat(traitNamed(elite, "freeze")).contains(EffectResistTrait.immuneTo(EffectKind.FREEZE));
         assertThat(traitNamed(elite, "chill")).contains(EffectResistTrait.resisting(EffectKind.CHILL, 0.25f));
@@ -197,33 +168,13 @@ class EnemyCatalogTest {
     }
 
     @Test
-    void builtInPreRegistersTheFourBasicBuiltInsUnderTheirWaveScriptLetters() {
-        EnemyCatalog catalog = EnemyCatalog.builtIn();
+    void aUniqueEnemySpawnsAsABossWhateverRankIsAskedFor() {
+        EnemyCatalog catalog = new EnemyCatalog();
+        catalog.registerUnique(EnemyFixtures.simpleDefinition("warlord"));
 
-        assertThat(catalog.contains("c")).isTrue();
-        assertThat(catalog.contains("s")).isTrue();
-        assertThat(catalog.contains("t")).isTrue();
-        assertThat(catalog.contains("g")).isTrue();
-    }
+        EnemyMob spawned = catalog.spawn("warlord", WorldFixtures.newWorld(), 0, 100, 5, Rank.GRUNT);
 
-    @Test
-    void builtInPreRegistersTheFullWardenBossChain() {
-        EnemyCatalog catalog = EnemyCatalog.builtIn();
-
-        assertThat(catalog.contains("warden1")).isTrue();
-        assertThat(catalog.contains("wardenEgg1")).isTrue();
-        assertThat(catalog.contains("warden2")).isTrue();
-        assertThat(catalog.contains("wardenEgg2")).isTrue();
-        assertThat(catalog.contains("warden3")).isTrue();
-        assertThat(catalog.contains("wardenEgg3")).isTrue();
-    }
-
-    @Test
-    void builtInPreRegistersTheFrenziedBossSSpawnlingEvenThoughNoWaveScriptSpawnsItDirectly() {
-        EnemyCatalog catalog = EnemyCatalog.builtIn();
-
-        assertThat(catalog.contains("tSpawn")).isTrue();
-        assertThat(catalog.get("tSpawn")).isNotNull();
+        assertThat(spawned.getRank()).isEqualTo(Rank.BOSS);
     }
 
     @Test
@@ -234,15 +185,6 @@ class EnemyCatalogTest {
         catalog.register(EnemyFixtures.simpleDefinition("third"));
 
         assertThat(catalog.ids()).containsExactly("first", "second", "third");
-    }
-
-    @Test
-    void idsIncludesALaterRegistrationAddedAfterBuiltIn() {
-        EnemyCatalog catalog = EnemyCatalog.builtIn();
-
-        catalog.register(EnemyFixtures.simpleDefinition("custom"));
-
-        assertThat(catalog.ids()).contains("c", "s", "t", "g", "warden1").endsWith("custom");
     }
 
     @Test

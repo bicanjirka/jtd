@@ -1,10 +1,9 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
-import td.wave.PathNormal;
-import td.wave.Vec2;
 
 import java.util.List;
 
@@ -15,18 +14,11 @@ class MultiMemberAbilitySpawnTest {
 
     @Test
     void laterMembersStartInactiveAndBecomeValidTargetsOnlyAfterTheirOwnDelay() {
-        EnemyCatalog catalog = new EnemyCatalog();
-        catalog.register(EnemyDefinition.of("spawnling", "Spawnling", 50, 1, 1.28f, BodyArchetype.CIRCLE));
-        AbilitySpawnShape shape = new AbilitySpawnShape(3, 2.0);
-        catalog.register(EnemyDefinition.of("spawner", "Spawner", 100, 5, 1.28f, BodyArchetype.CIRCLE)
-                .withIdentifiedAbilities(List.of(IdentifiedAbility.named("spawn",
-                        new Ability(AbilityTerm.GUARD, new OnceTrigger(1), new SpawnEnemiesAction("spawnling", shape, false))))));
-
-        GameWorld world = WorldFixtures.newWorldOnBoard(32, 1000, 1000);
-        world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
-        world.setEnemyCatalog(catalog);
-        DefinedEnemyMob spawner = (DefinedEnemyMob) world.getEnemyCatalog().spawn("spawner", world, 0, 100, 5, Rank.GRUNT);
-        world.enemies().add(spawner);
+        GameWorld world = WorldFixtures.newWorldOnStraightPath();
+        world.getEnemyCatalog().register(EnemyFixtures.simpleDefinition("spawnling"));
+        DefinedEnemyMob spawner = EnemyFixtures.liveMob(world, EnemyFixtures.simpleDefinition("spawner")
+                .withAbilities(List.of(new Ability(AbilityTerm.GUARD, new OnceTrigger(1),
+                        new SpawnEnemiesAction("spawnling", new AbilitySpawnShape(3, 2.0), false)))));
 
         spawner.doTick(1); // fires the Once-at-1 trigger, spawning all 3 members immediately
 

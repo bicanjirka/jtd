@@ -10,10 +10,10 @@ import td.damage.Delivery;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
@@ -48,7 +48,7 @@ class SniperTowerTest {
         SniperTower tower = new SniperTower(world, 3, 3);
         UpgradePaths.awakenVeteran(tower);
         for (int i = 0; i < killsEarned; i++) {
-            tower.dealDamage(EnemyFactory.getEnemy("c", world, 0, 1, 1, Rank.GRUNT), Damage.physical(1_000_000));
+            tower.dealDamage(EnemyFixtures.plainMob(world, 1, 1), Damage.physical(1_000_000));
         }
         return tower;
     }

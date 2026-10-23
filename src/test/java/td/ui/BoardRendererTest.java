@@ -4,10 +4,9 @@ import org.junit.jupiter.api.Test;
 import td.GameEngine;
 import td.cell.Cell;
 import td.damage.Damage;
-import td.enemy.EnemyFactory;
 import td.enemy.EnemyMob;
-import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.LevelFixtures;
 import td.projectile.CannonballProjectile;
 import td.tower.AuraTower;
@@ -236,7 +235,7 @@ class BoardRendererTest {
     void aDeadEnemyYieldsAFadeDrawAndNoBodyDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.doDamage(Damage.physical(5000));
         enemy.doTick(1); // captures deathTick, matching how a mob really ticks
 
@@ -287,7 +286,7 @@ class BoardRendererTest {
         GameWorld context = engine.getGameWorld();
         CinderTower tower = new CinderTower(context, 1, 1);
         context.towers().add(tower);
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 50, 3, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         context.enemies().setEnemies(new EnemyMob[]{enemy});
 
         int firedAt = 1;
@@ -322,7 +321,7 @@ class BoardRendererTest {
     void aSelectedEnemysSheetCarriesWhatTowersRememberOfIt() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        EnemyMob enemy = EnemyFactory.getEnemy("c", context, 0, 100, 5, Rank.GRUNT);
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 100, 5);
         context.enemies().add(enemy);
         int scale = context.getBoard().scale();
         CinderTower cinder = new CinderTower(context, (int) (enemy.getX() / scale) + 1, (int) (enemy.getY() / scale));
