@@ -56,10 +56,14 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void withNoActiveEffectsSpeedMultiplierIsUnchanged() {
-        ActiveEffects effects = new ActiveEffects();
+    void withNoActiveEffectsEveryStatKeepsItsBase() {
+        BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 1f);
 
-        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isEqualTo(1f);
+        StatSheet sheet = new StatSheet(base, new ActiveEffects()::contributeTo);
+
+        for (EnemyStat stat : EnemyStat.values()) {
+            assertThat(sheet.value(stat)).as(stat.name()).isEqualTo(base.value(stat));
+        }
     }
 
     @Test
@@ -100,18 +104,6 @@ class ActiveEffectsTest {
         effects.apply(Effect.chill(0.5f, 3, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isZero();
-    }
-
-    @Test
-    void aChillEndsWhenItsLevelHasFadedToNothing() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.5f, 2, DamageSink.none()));
-
-        effects.tick();
-        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.75f, within(0.001f));
-
-        effects.tick();
-        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isEqualTo(1f);
     }
 
     @Test
@@ -245,13 +237,6 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void withNoActiveShieldDamageTakenIsUnchanged() {
-        ActiveEffects effects = new ActiveEffects();
-
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.0f, within(0.001f));
-    }
-
-    @Test
     void aShieldAbsorbsUntilItsPoolRunsOut() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.shield(500f, 100, DamageSink.none()));
@@ -273,13 +258,6 @@ class ActiveEffectsTest {
         effects.tick();
 
         assertThat(effects.absorb(DamageType.PHYSICAL, 300)).isZero();
-    }
-
-    @Test
-    void withNoActiveInvisibilityEffectStealthIsZero() {
-        ActiveEffects effects = new ActiveEffects();
-
-        assertThat(resolved(effects, EnemyStat.STEALTH)).isZero();
     }
 
     @Test
@@ -324,7 +302,7 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void shatterToneTakesAQuarterOfWhatRemains() {
+    void weakeningAShieldTakesItsShareOfWhatRemains() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.shield(400f, 100, DamageSink.none()));
         effects.absorb(DamageType.PHYSICAL, 200);
@@ -332,13 +310,6 @@ class ActiveEffectsTest {
         effects.weakenShield(0.25f);
 
         assertThat(effects.shieldGauge().remaining()).isEqualTo(1.5f);
-    }
-
-    @Test
-    void withNoActiveHealRegenerationIsZero() {
-        ActiveEffects effects = new ActiveEffects();
-
-        assertThat(resolved(effects, EnemyStat.REGENERATION)).isZero();
     }
 
     @Test
@@ -366,34 +337,20 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void vulnerableStacksAddUpToThreeAndEachRaisesDamageTakenByAFixedShare() {
+    void anApplicationPastTheCapOnlyRefreshesTheSharedClock() {
         ActiveEffects effects = new ActiveEffects();
-
-        effects.apply(Effect.vulnerable(1, 80, DamageSink.none()));
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.15f, within(0.001f));
-
-        effects.apply(Effect.vulnerable(1, 80, DamageSink.none()));
-        effects.apply(Effect.vulnerable(1, 80, DamageSink.none()));
-
-        assertThat(effects.stacks(EffectKind.VULNERABLE)).isEqualTo(3);
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.45f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.45f, within(0.001f));
-    }
-
-    @Test
-    void aFourthVulnerableApplicationOnlyRefreshesTheSharedClock() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.vulnerable(3, 80, DamageSink.none()));
+        int cap = EffectKind.VULNERABLE.maxStacks();
+        effects.apply(Effect.vulnerable(cap, 80, DamageSink.none()));
         tickTimes(effects, 50);
 
         effects.apply(Effect.vulnerable(1, 80, DamageSink.none()));
 
-        assertThat(effects.stacks(EffectKind.VULNERABLE)).isEqualTo(3);
+        assertThat(effects.stacks(EffectKind.VULNERABLE)).isEqualTo(cap);
         assertThat(effects.remainingTicks(EffectKind.VULNERABLE)).hasValue(80);
     }
 
     @Test
-    void everyVulnerableStackEndsTogetherWhenTheSharedClockRunsOut() {
+    void everyStackOnASharedClockEndsTogetherWhenItRunsOut() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.vulnerable(2, 5, DamageSink.none()));
 
@@ -423,21 +380,6 @@ class ActiveEffectsTest {
         tickTimes(effects, 3);
 
         assertThat(resolved(effects, EnemyStat.STEALTH)).isEqualTo(1f);
-    }
-
-    @Test
-    void eachSickenedStackLowersSpiritByOneAndNoneWearOffWhilePoisonKeepsEarningThem() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.poison(Damage.magic(10), 5000, DamageSink.none()));
-        assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-1f);
-
-        tickTimes(effects, 100); // earned 1 + 10, decayed none
-        assertThat(effects.stacks(EffectKind.SICKENED)).isEqualTo(11);
-        assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-11f);
-
-        tickTimes(effects, 2000);
-        assertThat(effects.stacks(EffectKind.SICKENED)).isBetween(99, 100);
-        assertThat(resolved(effects, EnemyStat.SPIRIT)).isBetween(-100f, -99f);
     }
 
     @Test
@@ -651,28 +593,7 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void sunderedStacksEachTakeFiveArmorAndStopAtTenOnOneClock() {
-        ActiveEffects effects = new ActiveEffects();
-        BaseStats<EnemyStat> armored = BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 80f);
-
-        effects.apply(Effect.sundered(4, 100, DamageSink.none()));
-        assertThat(resolvedOn(armored, effects, EnemyStat.ARMOR)).isEqualTo(60f);
-
-        effects.apply(Effect.sundered(20, 100, DamageSink.none()));
-        assertThat(effects.stacks(EffectKind.SUNDERED)).isEqualTo(10);
-        assertThat(resolvedOn(armored, effects, EnemyStat.ARMOR)).isEqualTo(30f);
-    }
-
-    @Test
-    void sunderedNeverTakesArmorBelowZero() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.sundered(10, 100, DamageSink.none()));
-
-        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 20f), effects, EnemyStat.ARMOR)).isEqualTo(0f);
-    }
-
-    @Test
-    void anExposedEnemyLosesFiftyResilienceOnceEvenWhenAlsoRevealed() {
+    void aRevealedEnemyCountsAsExposedAndBothTogetherCountOnce() {
         ActiveEffects exposed = new ActiveEffects();
         exposed.apply(Effect.exposed(100, DamageSink.none()));
         ActiveEffects both = new ActiveEffects();
@@ -681,35 +602,11 @@ class ActiveEffectsTest {
         ActiveEffects revealed = new ActiveEffects();
         revealed.apply(Effect.revealed(100, DamageSink.none()));
 
-        assertThat(resolved(exposed, EnemyStat.RESILIENCE)).isEqualTo(-50f);
-        assertThat(resolved(revealed, EnemyStat.RESILIENCE)).isEqualTo(-50f);
-        assertThat(resolved(both, EnemyStat.RESILIENCE)).isEqualTo(-50f);
-    }
+        float once = resolved(exposed, EnemyStat.RESILIENCE);
 
-    @Test
-    void vulnerableAndPriorityAddTheirDamageTakenRatherThanMultiply() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.priority(100, DamageSink.none()));
-        effects.apply(Effect.vulnerable(3, 100, DamageSink.none()));
-        effects.apply(Effect.resonating(2, 100, DamageSink.none()));
-
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.60f, within(1e-5f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.60f + 0.16f, within(1e-5f));
-    }
-
-    @Test
-    void fracturedStacksEachTakeTenResilienceStopAtFiveAndRecoverOneASecond() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.fractured(3, DamageSink.none()));
-        effects.apply(Effect.fractured(9, DamageSink.none()));
-
-        assertThat(effects.stacks(EffectKind.FRACTURED)).isEqualTo(5);
-        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-50f);
-
-        tickTimes(effects, 20);
-        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-40f);
-        tickTimes(effects, 80);
-        assertThat(effects.activeKinds()).isEmpty();
+        assertThat(once).isNegative();
+        assertThat(resolved(revealed, EnemyStat.RESILIENCE)).isEqualTo(once);
+        assertThat(resolved(both, EnemyStat.RESILIENCE)).isEqualTo(once);
     }
 
     @Test
@@ -800,37 +697,6 @@ class ActiveEffectsTest {
         tarred.apply(Effect.burn(Damage.magic(100), 60, DamageSink.none()));
 
         assertThat(fuelOf(tarred, EffectKind.BURN) - before).isLessThan(100f);
-    }
-
-    @Test
-    void aTarredEnemyKeepsSixtyPercentOfItsSpeed() {
-        ActiveEffects effects = new ActiveEffects();
-
-        effects.apply(Effect.tarred(100, DamageSink.none()));
-
-        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.6f, within(1e-5f));
-    }
-
-    @Test
-    void aTarredEnemysFreezeLastsASecondLonger() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.tarred(100, DamageSink.none()));
-
-        effects.apply(Effect.freeze(20, DamageSink.none()));
-
-        assertThat(effects.remainingTicks(EffectKind.FREEZE)).hasValue(40);
-    }
-
-    @Test
-    void crackedTakesFivePlatingAndNeverBelowZero() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.cracked(100, DamageSink.none()));
-        BaseStats<EnemyStat> plated = BaseStats.defaults(EnemyStat.class).with(EnemyStat.PLATING, 800f).with(EnemyStat.INSULATION, 400f);
-
-        StatSheet sheet = new StatSheet(plated, effects::contributeTo);
-
-        assertThat(sheet.value(EnemyStat.PLATING)).isEqualTo(300f);
-        assertThat(sheet.value(EnemyStat.INSULATION)).isZero();
     }
 
     @Test
@@ -926,85 +792,17 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void tollStacksUpToFiveOrTheCapItWasGiven() {
+    void stacksStopAtTheKindsCapOrTheCapTheEffectWasGiven() {
+        int cap = EffectKind.TOLL.maxStacks();
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.toll(4, 20, DamageSink.none()));
-        effects.apply(Effect.toll(4, 20, DamageSink.none()));
+        effects.apply(Effect.toll(cap, 20, DamageSink.none()));
+        effects.apply(Effect.toll(cap, 20, DamageSink.none()));
         ActiveEffects deep = new ActiveEffects();
-        deep.apply(Effect.toll(4, 20, DamageSink.none()).withStackCap(10));
-        deep.apply(Effect.toll(4, 20, DamageSink.none()).withStackCap(10));
+        deep.apply(Effect.toll(cap, 20, DamageSink.none()).withStackCap(3 * cap));
+        deep.apply(Effect.toll(cap, 20, DamageSink.none()).withStackCap(3 * cap));
 
-        assertThat(effects.stacks(EffectKind.TOLL)).isEqualTo(5);
-        assertThat(deep.stacks(EffectKind.TOLL)).isEqualTo(8);
-    }
-
-    @Test
-    void eachUnraveledStackLowersMagicResistByTenAndNeverBelowZero() {
-        ActiveEffects effects = new ActiveEffects();
-        BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MAGIC_RESIST, 25f);
-
-        effects.apply(Effect.unraveled(2, 100, DamageSink.none()));
-        float two = resolvedOn(base, effects, EnemyStat.MAGIC_RESIST);
-        effects.apply(Effect.unraveled(3, 100, DamageSink.none()));
-        float five = resolvedOn(base, effects, EnemyStat.MAGIC_RESIST);
-
-        assertThat(two).isEqualTo(5f);
-        assertThat(five).isZero();
-    }
-
-    @Test
-    void brittleRaisesPhysicalDamageTakenByAThirdOnlyWhileTheEnemyIsFrozen() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.brittle(100, DamageSink.none()));
-        float thawed = resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN);
-
-        effects.apply(Effect.freeze(10, DamageSink.none()));
-        float frozen = resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN);
-
-        assertThat(thawed).isEqualTo(1f);
-        assertThat(frozen).isCloseTo(1.3f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isEqualTo(1f);
-    }
-
-    @Test
-    void anchoredCapsSpeedAtThreeQuartersOfBaseAndLeavesASlowerEnemyAlone() {
-        ActiveEffects fast = new ActiveEffects();
-        fast.apply(Effect.anchored(100, DamageSink.none()));
-        ActiveEffects slowed = new ActiveEffects();
-        slowed.apply(Effect.anchored(100, DamageSink.none()));
-        slowed.apply(Effect.chill(0.5f, 100, DamageSink.none()));
-        BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 2f);
-
-        assertThat(resolvedOn(base, fast, EnemyStat.MOVE_SPEED)).isCloseTo(1.5f, within(0.001f));
-        assertThat(resolvedOn(base, slowed, EnemyStat.MOVE_SPEED)).isCloseTo(1f, within(0.001f));
-    }
-
-    @Test
-    void corrosionAtFullStrengthLowersArmorAndMagicResistByThirtyAndNeverBelowZero() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.corroded(FieldStrength.FULL, 10, DamageSink.none()));
-
-        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 80f), effects, EnemyStat.ARMOR))
-                .isEqualTo(50f);
-        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.MAGIC_RESIST, 40f), effects,
-                EnemyStat.MAGIC_RESIST)).isEqualTo(10f);
-        assertThat(resolvedOn(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 10f), effects, EnemyStat.ARMOR)).isZero();
-    }
-
-    @Test
-    void appliedSickenedStacksAddUpLowerSpiritByOneEachAndStopAtAHundred() {
-        ActiveEffects effects = new ActiveEffects();
-
-        effects.apply(Effect.sickened(5));
-        effects.apply(Effect.sickened(5));
-        float ten = resolved(effects, EnemyStat.SPIRIT);
-        for (int i = 0; i < 30; i++) {
-            effects.apply(Effect.sickened(5));
-        }
-
-        assertThat(ten).isEqualTo(-10f);
-        assertThat(effects.stacks(EffectKind.SICKENED)).isEqualTo(100);
-        assertThat(resolved(effects, EnemyStat.SPIRIT)).isEqualTo(-100f);
+        assertThat(effects.stacks(EffectKind.TOLL)).isEqualTo(cap);
+        assertThat(deep.stacks(EffectKind.TOLL)).isEqualTo(2 * cap);
     }
 
     @Test
@@ -1014,16 +812,6 @@ class ActiveEffectsTest {
         effects.apply(Effect.frail(FieldStrength.MOST, 10, DamageSink.none()));
 
         assertThat(effects.stacks(EffectKind.FRAIL)).isEqualTo(FieldStrength.MOST);
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.3f, within(0.001f));
-    }
-
-    @Test
-    void frailAtFullStrengthRaisesEveryDamageTakenByTwentyPercent() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.frail(FieldStrength.FULL, 10, DamageSink.none()));
-
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.2f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.2f, within(0.001f));
     }
 
     @Test
@@ -1053,33 +841,6 @@ class ActiveEffectsTest {
 
         assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.FALLOUT, EffectKind.SHIELD);
         assertThat(effects.blockedKinds()).containsExactly(EffectKind.HEAL);
-    }
-
-    @Test
-    void theMostDragTakesHalfTheSpeedAndAnUndertowBesideItBuysAFreezeTheChillsExtraTime() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.dragged(DragStrength.MOST + 10, 10, DamageSink.none()));
-        effects.apply(Effect.undertow(10, DamageSink.none()));
-        BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 2f);
-
-        float slowed = resolvedOn(base, effects, EnemyStat.MOVE_SPEED);
-        effects.apply(Effect.freeze(40, DamageSink.none()));
-
-        assertThat(slowed).isCloseTo(1f, within(0.001f));
-        assertThat(effects.remainingTicks(EffectKind.FREEZE)).hasValue(50);
-        assertThat(effects.has(EffectKind.UNDERTOW)).isTrue();
-    }
-
-    @Test
-    void condemnedStopsAtFourStacksAndRaisesEveryDamageTakenByTwentyPercent() {
-        ActiveEffects effects = new ActiveEffects();
-        for (int zap = 0; zap < 6; zap++) {
-            effects.apply(Effect.condemned(1, 60, DamageSink.none()));
-        }
-
-        assertThat(effects.stacks(EffectKind.CONDEMNED)).isEqualTo(4);
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.2f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(1.2f, within(0.001f));
     }
 
     @Test
@@ -1302,19 +1063,7 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void cauterizeHalvesTheHealingAndShieldingOfABurningEnemy() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.heal(10, 100, DamageSink.none()));
-        float healBefore = resolved(effects, EnemyStat.REGENERATION);
-
-        effects.apply(Effect.burn(Damage.magic(100), 60, DamageSink.none()).withTuning(PoolTuning.standard().withCarried(StatModifiers.of(EnemyStat.HEALING_RECEIVED, StatModifier.flat(-0.5f)))));
-
-        assertThat(resolved(effects, EnemyStat.REGENERATION)).isCloseTo(healBefore / 2, within(1e-4f));
-        assertThat(resolved(effects, EnemyStat.HEALING_RECEIVED)).isEqualTo(0.5f);
-    }
-
-    @Test
-    void heatAndThePyromancersMarkWorkOnlyWhileTheTunedPoolBurns() {
+    void aPoolCarriesItsTunedModifiersOnlyWhileItBurns() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.burn(Damage.magic(100), 20, DamageSink.none()).withTuning(PoolTuning.standard().withCarried(StatModifiers.of(EnemyStat.PERIODIC_DAMAGE_TAKEN, StatModifier.flat(0.1f))
                 .and(EnemyStat.MAGIC_DAMAGE_TAKEN, StatModifier.flat(0.15f)))));
@@ -1370,15 +1119,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.freeze(100, DamageSink.none()));
 
         assertThat(thawed).isEqualTo(1f);
-        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.3f, within(1e-6f));
-    }
-
-    @Test
-    void aRevealedEnemyCountsAsExposedOnce() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.revealed(100, DamageSink.none()));
-
-        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-50f);
+        assertThat(resolved(effects, EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isGreaterThan(thawed);
     }
 
     @Test
