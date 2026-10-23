@@ -7,6 +7,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
 /** Uses one concrete subclass; none of these behaviours depend on the curve. */
 class AbstractCornerSmoothingTest {
@@ -58,8 +59,8 @@ class AbstractCornerSmoothingTest {
 
         Vec2 pulledBackBefore = smoothed.get(1);
         Vec2 pulledBackAfter = smoothed.get(smoothed.size() - 2);
-        assertThat(pulledBackBefore.x()).isCloseTo(8.0, org.assertj.core.data.Offset.offset(1e-9)); // 10 - 0.5*4
-        assertThat(pulledBackAfter.y()).isCloseTo(2.0, org.assertj.core.data.Offset.offset(1e-9)); // 0 + 0.5*4
+        assertThat(pulledBackBefore.x()).isCloseTo(8.0, within(1e-9)); // 10 - 0.5*4
+        assertThat(pulledBackAfter.y()).isCloseTo(2.0, within(1e-9)); // 0 + 0.5*4
     }
 
     @Test

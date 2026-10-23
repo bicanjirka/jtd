@@ -2,7 +2,6 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
-import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.term.TermText;
 import td.tower.NodeWords;
@@ -199,19 +198,12 @@ class UpgradeSheetTextTest {
 
     @Test
     void aLinesNextLevelSaysWhatItAddsTo() {
-        this.world.economy().startEconomy(1000, 5);
-        Tower sniper = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.world, 3, 3);
-        sniper.earnXp(1_000);
-        sniper.buyUpgrade(UpgradePaths.named(sniper, "Attune"));
-        sniper.buyUpgrade(UpgradePaths.named(sniper, "Focused Optics"));
-        UpgradeNode second = UpgradePaths.named(sniper, "Focused Optics II");
+        FakeTower steady = this.choosing("Attune", "Steady");
 
-        InfoSheet sheet = UpgradeSheetText.hover(UpgradeOffer.of(second, sniper.offeredUpgrades(this.world), sniper,
-                this.world));
+        InfoSheet sheet = UpgradeSheetText.hover(this.offer(steady, STEADY_TWO));
 
-        assertThat(sheet.lines()).contains(SheetLine.Sentence.of(TermText.of("Adds to Focused Optics:")));
+        assertThat(sheet.lines()).contains(SheetLine.Sentence.of(TermText.of("Adds to Steady:")));
     }
-
 
     @Test
     void theXpLabelCountsTowardTheNextOfferedNodeXpOpens() {

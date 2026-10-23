@@ -1,8 +1,6 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
-import td.level.BuiltInLevelCatalog;
-import td.level.LevelDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,26 +88,23 @@ class PathCoverageTest {
         assertThat(covered).isEmpty();
     }
 
-    /**
-     * A shipped level's corner-only path covers exactly the cells the old one-cell-per-step
-     * expansion did.
-     */
+    /** A path given only by its corners covers exactly the cells a one-cell-per-step walk of it does. */
     @Test
-    void curlyPathsSparseCornersCoverTheSameCellsAsTheOldDenseExpansionDid() {
-        LevelDefinition curlyPath = new BuiltInLevelCatalog().levels().getFirst();
-        List<Point> corners = curlyPath.paths().getFirst().corners();
+    void sparseOrthogonalCornersCoverTheSameCellsAsAStepByStepExpansion() {
+        List<Point> corners = List.of(new Point(0, 2), new Point(5, 2), new Point(5, 7), new Point(9, 7),
+                new Point(9, 1), new Point(13, 1));
+        int width = 15;
+        int height = 9;
 
         List<Vec2> oldDensePolyline = expandThroughCornersLikeTheOldLevelPathDid(corners).stream()
                 .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2), cell.y() * SCALE + (SCALE / 2)))
                 .toList();
-        Set<Point> coveredByOldDensePath = PathCoverage.unbuildableCells(
-                oldDensePolyline, SCALE, curlyPath.width(), curlyPath.height());
+        Set<Point> coveredByOldDensePath = PathCoverage.unbuildableCells(oldDensePolyline, SCALE, width, height);
 
         List<Vec2> sparsePolyline = corners.stream()
                 .map(cell -> new Vec2(cell.x() * SCALE + (SCALE / 2), cell.y() * SCALE + (SCALE / 2)))
                 .toList();
-        Set<Point> coveredBySparsePath = PathCoverage.unbuildableCells(
-                sparsePolyline, SCALE, curlyPath.width(), curlyPath.height());
+        Set<Point> coveredBySparsePath = PathCoverage.unbuildableCells(sparsePolyline, SCALE, width, height);
 
         assertThat(coveredBySparsePath).containsExactlyInAnyOrderElementsOf(coveredByOldDensePath);
     }

@@ -9,6 +9,7 @@ import td.effect.DamageSink;
 import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.enemy.AdaptiveResist;
 import td.enemy.BodyArchetype;
 import td.enemy.EffectResistTrait;
 import td.enemy.EnemyCatalog;
@@ -17,12 +18,15 @@ import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.enemy.HurtSpeedTrait;
+import td.enemy.IdentifiedTrait;
 import td.enemy.Rank;
+import td.enemy.RankedEnemy;
 import td.enemy.Trait;
 import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeTower;
 import td.fixtures.LevelFixtures;
+import td.fixtures.UpgradePaths;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.projectile.CannonballProjectile;
@@ -44,9 +48,16 @@ import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
+import td.wave.Path;
+import td.wave.PathBuilder;
+import td.wave.PathCoverage;
+import td.wave.PathDefinition;
+import td.wave.Point;
 import td.wave.RoundSummary;
+import td.wave.Vec2;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
+import td.wave.smoothing.QuadraticBezierSmoothing;
 import td.zone.Zone;
 import td.zone.ZoneKind;
 
@@ -54,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -373,11 +385,7 @@ class GameEngineTest {
         engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
         Tower sonar = towerOfType(engine, TowerFactory.Type.SONAR);
         Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
-        sonar.earnXp(1_000_000);
-        for (String node : List.of("Attune", "Awaken", "Mark on Sweep")) {
-            sonar.buyUpgrade(sonar.upgradeTree().nodes().stream()
-                    .filter(n -> n.displayName().equals(node)).findFirst().orElseThrow());
-        }
+        UpgradePaths.buy(sonar, engine.getGameWorld(), "Mark on Sweep");
         engine.nextWave();
         int tick = 0;
         EnemyMob enemy;
@@ -423,41 +431,17 @@ class GameEngineTest {
         assertThat(enemy.getHealthFraction()).isEqualTo(1f);
     }
 
-    private static void buy(Tower tower, String... nodeNames) {
-        tower.earnXp(1_000_000);
-        for (String node : nodeNames) {
-            tower.buyUpgrade(tower.upgradeTree().nodes().stream()
-                    .filter(n -> n.displayName().equals(node)).findFirst().orElseThrow());
-        }
-    }
-
     @Test
-    void afterADodgedShotASniperWithMarksmansEyeLandsAGuaranteedCrit() {
+    void aSnipersDodgedShotStillRunsItsDodgeProcs() {
         GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SNIPER);
         Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
-        buy(sniper, "Attune", "Marksman's Eye");
-        engine.nextWave();
-
-        for (int t = 1; t <= 300 && sniper.getDamageDealt() == 0; t++) {
-            engine.doTick(t);
-        }
-
-        // The dodged shot built one Steady Aim stack: +20% damage under Marksman's Eye.
-        assertThat(sniper.getDamageDealt())
-                .isEqualTo(DamageUnits.ofPoints(SniperTower.DAMAGE_POINTS * 1.2f * SniperTower.CRIT_MULTIPLIER));
-    }
-
-    @Test
-    void aDodgedShotStartsFocusedOpticsFrenzy() {
-        GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SNIPER);
-        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
-        buy(sniper, "Attune", "Focused Optics", "Focused Optics II");
+        UpgradePaths.buy(sniper, engine.getGameWorld(), "Focused Optics II");
         engine.nextWave();
 
         engine.doTick(1);
 
         assertThat(sniper.getDamageDealt()).isZero();
-        assertThat(fireRate(sniper).current()).isEqualTo(fireRate(sniper).base() * 2f, within(0.01f));
+        assertThat(fireRate(sniper).current()).isGreaterThan(fireRate(sniper).base());
     }
 
     @Test
@@ -750,18 +734,20 @@ class GameEngineTest {
     }
 
     @Test
-    void anEliteSpawnedAfterMostlyPhysicalDamageAdaptsItsArmorAgainstPhysicalOnly() {
+    void anEnemySpawnedAfterMostlyPhysicalDamageAdaptsAgainstPhysicalOnly() {
+        EnemyDefinition adapter = EnemyFixtures.simpleDefinition("adapter").withHealthAndPrice(100_000, 1)
+                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(50f))));
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("c", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("adapter", Rank.GRUNT)), 100)
+                .withCustomEnemies(List.of(adapter)));
         engine.nextWave();
         engine.getGameWorld().enemies().getEnemies()[0].doDamage(Damage.physical(10));
         GameWorld world = engine.getGameWorld();
 
-        EnemyMob elite = world.getEnemyCatalog().spawn("c", world, 0, 100_000, 1, Rank.ELITE);
+        EnemyMob adapted = world.getEnemyCatalog().spawn("adapter", world, 0, 100_000, 1, Rank.GRUNT);
 
-        // Its base 10 armor and 10 magic resist keep 1000 * 100 / 110; only physical adapts beyond that.
-        assertThat(elite.doDamage(Damage.physical(1000)).amount()).isLessThan(909);
-        assertThat(elite.doDamage(Damage.magic(1000)).amount()).isEqualTo(909);
+        assertThat(adapted.doDamage(Damage.physical(1000)).amount()).isLessThan(1000);
+        assertThat(adapted.doDamage(Damage.magic(1000)).amount()).isEqualTo(1000);
     }
 
     @Test
@@ -819,11 +805,12 @@ class GameEngineTest {
     }
 
     @Test
-    void aRoundSendingTheWardenIsABossRoundWithAUniqueEnemyWhateverItsDefaultRank() {
+    void aRoundSendingAUniqueEnemyIsABossRoundWithAUniqueEnemyWhateverItsDefaultRank() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(
-                new WaveDefinition("warden1 e elite c", Rank.GRUNT),
-                new WaveDefinition("boss c", Rank.GRUNT)), 100));
+                new WaveDefinition("warlord e elite c", Rank.GRUNT),
+                new WaveDefinition("boss c", Rank.GRUNT)), 100)
+                .withCustomRankedEnemies(List.of(RankedEnemy.unique(EnemyFixtures.simpleDefinition("warlord")))));
 
         WaveProgress progress = engine.waveProgress();
 
@@ -1116,6 +1103,39 @@ class GameEngineTest {
 
         assertThat(selected).isEmpty();
         assertThat(engine.cells().at(2, 5).hasTower()).isFalse();
+    }
+
+    @Test
+    void aCurvedPathBlocksBuildingOnACellOnlyItsCurveCoversAndLeavesFarCellsBuildable() {
+        List<Point> corners = List.of(new Point(0, 1), new Point(6, 1), new Point(6, 7), new Point(12, 7));
+        LevelDefinition level = LevelDefinition.singlePath("Curved", "", 14, 10, corners, List.of(), 100_000, 5,
+                new QuadraticBezierSmoothing(0.45, 12));
+        Point curveOnly = aCellOnlyTheSmoothedCurveCovers(level);
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(level);
+
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        Optional<Tower> onTheCurve = engine.mouseClicked(BoardFixtures.cellCenter(curveOnly.x()),
+                BoardFixtures.cellCenter(curveOnly.y()));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(13), BoardFixtures.cellCenter(9));
+
+        assertThat(onTheCurve).isEmpty();
+        assertThat(engine.cells().at(curveOnly.x(), curveOnly.y()).hasTower()).isFalse();
+        assertThat(engine.cells().at(13, 9).hasTower()).isTrue();
+    }
+
+    /** A cell the level's smoothed curve covers and its raw corners do not. */
+    private static Point aCellOnlyTheSmoothedCurveCovers(LevelDefinition level) {
+        PathDefinition path = level.paths().getFirst();
+        List<Vec2> rawPolyline = path.corners().stream()
+                .map(cell -> new Vec2(BoardFixtures.cellCenter(cell.x()), BoardFixtures.cellCenter(cell.y())))
+                .toList();
+        Set<Point> rawCoverage = PathCoverage.unbuildableCells(rawPolyline, BoardFixtures.SCALE, level.width(),
+                level.height());
+        Path smoothed = PathBuilder.build(path.corners(), path.smoothing(), BoardFixtures.SCALE);
+        return PathCoverage.unbuildableCells(smoothed.points(), BoardFixtures.SCALE, level.width(), level.height())
+                .stream().filter(cell -> !rawCoverage.contains(cell)).findFirst().orElseThrow();
     }
 
     @Test

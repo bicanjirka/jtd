@@ -19,6 +19,8 @@ import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerStatusDraw;
 import td.util.GameWorld;
 import td.util.TickRate;
+import td.wave.PathNormal;
+import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,17 +51,9 @@ class TowerEffectFrameBuilderTest {
     }
 
     private static SplashTower splashWith(GameWorld context, String... nodes) {
-        context.economy().startEconomy(1_000_000, 5);
-        context.playtestRules().setUpgradeGatesIgnored(true);
         SplashTower splash = new SplashTower(context, 3, 3);
         context.towers().add(splash);
-        splash.earnXp(1_000);
-        for (String name : List.of("Attune", "Awaken")) {
-            splash.buyUpgrade(UpgradePaths.named(splash, name));
-        }
-        for (String name : nodes) {
-            splash.buyUpgrade(UpgradePaths.named(splash, name));
-        }
+        UpgradePaths.buy(splash, context, nodes);
         return splash;
     }
 
@@ -93,17 +87,9 @@ class TowerEffectFrameBuilderTest {
     }
 
     private static AuraTower auraWith(GameWorld context, String... nodes) {
-        context.economy().startEconomy(1_000_000, 5);
-        context.playtestRules().setUpgradeGatesIgnored(true);
         AuraTower aura = new AuraTower(context, 0, 0);
         context.towers().add(aura);
-        aura.earnXp(1_000);
-        for (String name : List.of("Attune", "Awaken")) {
-            aura.buyUpgrade(UpgradePaths.named(aura, name));
-        }
-        for (String name : nodes) {
-            aura.buyUpgrade(UpgradePaths.named(aura, name));
-        }
+        UpgradePaths.buy(aura, context, nodes);
         return aura;
     }
 
@@ -162,7 +148,7 @@ class TowerEffectFrameBuilderTest {
     @Test
     void ralliesSpotIsMarkedOnlyWhileTheAuraIsSelected() {
         GameWorld context = WorldFixtures.newWorld();
-        context.setPath(new td.wave.PathNormal(List.of(new td.wave.Vec2(0, 0), new td.wave.Vec2(900, 0))));
+        context.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(900, 0))));
         AuraTower aura = auraWith(context, "Rally");
 
         int unselected = ringsIn(drawnBy(context, aura), Palette.TOWER_AURA_RALLY).size();
@@ -308,12 +294,7 @@ class TowerEffectFrameBuilderTest {
     void aNukeLandsInAWhiteFlashAndAnExpandingRingThatEndAfterTenTicks() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         MortarTower mortar = new MortarTower(context, 3, 3);
-        context.economy().startEconomy(1_000_000, 5);
-        context.playtestRules().setUpgradeGatesIgnored(true);
-        for (String name : List.of("Attune", "Awaken", "Siege Rounds", "Siege Rounds II", "Heavy Shell", "Napalm",
-                "Transcendent", "Tactical Nuke")) {
-            mortar.buyUpgrade(UpgradePaths.named(mortar, name));
-        }
+        UpgradePaths.buy(mortar, context, "Tactical Nuke");
         FakeEnemyMob target = FakeEnemyMob.at(mortar.getX() + 3 * BoardFixtures.SCALE, mortar.getY());
         context.enemies().setEnemies(new EnemyMob[]{target});
         int landedAt = 0;

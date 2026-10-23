@@ -24,6 +24,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -75,7 +76,7 @@ class InfoSheetDocumentTest {
     @Test
     void anIconRowIsOneEmbeddedIconAsTallAsItsLayout() {
         IconFace face = TermLooks.faceOf(EffectKind.CHILL);
-        List<SheetIcon> icons = java.util.stream.IntStream.range(0, 7)
+        List<SheetIcon> icons = IntStream.range(0, 7)
                 .mapToObj(i -> new SheetIcon(face, TooltipKey.of("effect", "e" + i), new InfoSheet(List.of()))).toList();
 
         StyledDocument doc = layOutLines(new SheetLine.IconRow("Debuffs", icons));

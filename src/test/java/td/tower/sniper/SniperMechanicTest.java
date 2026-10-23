@@ -2,6 +2,7 @@ package td.tower.sniper;
 
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
+import td.damage.DamageType;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.fixtures.FakeEnemyMob;
@@ -25,8 +26,8 @@ class SniperMechanicTest {
     void weakSpotIgnoresPlatingAndSomeArmorOnlyOnShotsThatDoNotCrit() {
         AttackProfile attack = new WeakSpotMechanic().shape(BASE, context(0, true, 1)).attack();
 
-        assertThat(attack.penetrate(td.damage.DamageType.PHYSICAL, 80f, false)).isEqualTo(30f);
-        assertThat(attack.penetrate(td.damage.DamageType.PHYSICAL, 80f, true)).isEqualTo(80f);
+        assertThat(attack.penetrate(DamageType.PHYSICAL, 80f, false)).isEqualTo(30f);
+        assertThat(attack.penetrate(DamageType.PHYSICAL, 80f, true)).isEqualTo(80f);
         assertThat(attack.penetrateFlatReduction(300f, false)).isZero();
         assertThat(attack.penetrateFlatReduction(300f, true)).isEqualTo(300f);
     }
