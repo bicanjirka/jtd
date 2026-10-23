@@ -97,6 +97,13 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         this.enemies.clear();
     }
 
+    /** Takes one mob off the board and pays nothing; a live one stops counting toward the wave. */
+    public void remove(EnemyMob mob) {
+        if (this.enemies.remove(mob) && !mob.isDead()) {
+            this.count.decrementAndGet();
+        }
+    }
+
     @Override
     public void add(EnemyMob mob) {
         this.enemies.add(mob);

@@ -1,7 +1,11 @@
 package td.ui;
 
 import td.DevControls;
+import td.DevEffects;
+import td.DevSelection;
+import td.effect.EffectKind;
 import td.enemy.Rank;
+import td.tower.TowerTerm;
 import td.ui.render.InfoSheet;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -41,7 +45,7 @@ import java.util.function.IntConsumer;
 
 /**
  * The hidden dev panel (Ctrl+Shift+D) for playtesting: set the economy, spawn any wave script,
- * move through the level, dial the game speed by ticks per second, push the selected tower along
+ * move through the level, dial the game speed by ticks per second, push the selected tower or enemy about
  * and show the cell grid. Board changes go to {@link DevControls}; changes to the level's lifecycle
  * go up through the {@code onX} setters.
  * <p>
@@ -59,6 +63,11 @@ public class PanelDev extends JPanel {
     private static final Color MUTED = new Color(150, 170, 150);
     private static final String CARD_PREVIEW = "preview";
     private static final String CARD_PROBLEM = "problem";
+    private static final String CARD_NOTHING = "nothing";
+    private static final String CARD_TOWER = "tower";
+    private static final String CARD_ENEMY = "enemy";
+    private static final List<EffectKind> ENEMY_EFFECTS = DevEffects.enemyKinds();
+    private static final List<TowerTerm> TOWER_BUFFS = DevEffects.towerBuffs();
     /** Space between sections, and between unrelated controls in a row. */
     private static final int ROW_GAP = 3;
     private static final int CONTROL_GAP = 12;
@@ -72,6 +81,16 @@ public class PanelDev extends JPanel {
     private final HudTextField jumpTo = new HudTextField("1", 3);
     private final HudTextField xp = new HudTextField("150", 5);
     private final HudTextField enemyHealth = new HudTextField("100", 4);
+    private final HudTextField effectSeconds = new HudTextField("5", 3);
+    private final HudTextField effectPower = new HudTextField("3", 4);
+    private final HudTextField buffSeconds = new HudTextField("10", 3);
+    private final HudTextField buffPower = new HudTextField("50", 4);
+    private final HudButton effectButton = new HudButton("");
+    private final HudButton buffButton = new HudButton("");
+    private final JLabel towerSelected = label("");
+    private final JLabel enemySelected = label("");
+    private final CardLayout selectionCards = new CardLayout();
+    private final JPanel selectionArea = new JPanel(this.selectionCards);
     private final HudButton rankButton = new HudButton("");
     private final HudButton pathButton = new HudButton("");
     private final HudToggleButton cellGridToggle = toggle("Cell grid");
@@ -89,6 +108,9 @@ public class PanelDev extends JPanel {
     private DevControls dev;
     private Rank rank = Rank.GRUNT;
     private int path = 0;
+    private int effectIndex = 0;
+    private int buffIndex = 0;
+    private DevSelection shownSelection = DevSelection.none();
     private Runnable onSkipWave = () -> {
     };
     private IntConsumer onJumpToWave = wave -> {
@@ -190,6 +212,8 @@ public class PanelDev extends JPanel {
         this.rankButton.setText("Rank: " + this.rank.name().toLowerCase(Locale.ROOT));
         this.pathButton.setText("Path " + (this.path + 1) + "/" + paths);
         this.pathButton.setForeground(this.pathColor());
+        this.effectButton.setText(ENEMY_EFFECTS.get(this.effectIndex).title());
+        this.buffButton.setText(TOWER_BUFFS.get(this.buffIndex).title());
         this.refreshPreview();
     }
 
@@ -217,6 +241,27 @@ public class PanelDev extends JPanel {
     /** Animates the wave preview on the render pulse. */
     public void doTick(int gameTime) {
         this.preview.doTick(gameTime);
+        this.refreshSelection();
+    }
+
+    /** Shows the card for what is selected now, and names it; only a change repaints. */
+    private void refreshSelection() {
+        if (this.dev == null) {
+            return;
+        }
+        DevSelection selection = this.dev.selection();
+        if (selection.equals(this.shownSelection)) {
+            return;
+        }
+        this.shownSelection = selection;
+        boolean tower = selection.kind() == DevSelection.Kind.TOWER;
+        this.towerSelected.setText(tower ? "Tower: " + selection.description() : "");
+        this.enemySelected.setText(tower ? "" : "Enemy: " + selection.description());
+        this.selectionCards.show(this.selectionArea, switch (selection.kind()) {
+            case NONE -> CARD_NOTHING;
+            case TOWER -> CARD_TOWER;
+            case ENEMY -> CARD_ENEMY;
+        });
     }
 
     /**
@@ -266,9 +311,19 @@ public class PanelDev extends JPanel {
                 Health % applies to enemies
                 that walk in after it is set.
                 Kill all pays bounty and XP,
-                clear all pays nothing. Reset
-                rebuilds the selected tower
-                with no upgrades or XP.""");
+                clear all pays nothing.
+
+                Selected: click a tower or an
+                enemy on the board. A tower
+                takes XP, a buff and a reset
+                (reset rebuilds it with no
+                upgrades or XP). An enemy takes
+                an effect, a clear, a kill (pays
+                bounty and XP), a heal to full
+                or a removal (pays nothing).
+                Power is the effect's own
+                number: stacks, percent or
+                points.""");
         return text.toString();
     }
 
@@ -283,6 +338,18 @@ public class PanelDev extends JPanel {
         this.submitOnEnter(this.jumpTo, this::jump);
         this.submitOnEnter(this.xp, this::grantXp);
         this.submitOnEnter(this.enemyHealth, this::setEnemyHealth);
+        this.submitOnEnter(this.effectSeconds, this::applyEffect);
+        this.submitOnEnter(this.effectPower, this::applyEffect);
+        this.submitOnEnter(this.buffSeconds, this::applyBuff);
+        this.submitOnEnter(this.buffPower, this::applyBuff);
+        this.effectButton.addActionListener(evt -> {
+            this.effectIndex = (this.effectIndex + 1) % ENEMY_EFFECTS.size();
+            this.refresh();
+        });
+        this.buffButton.addActionListener(evt -> {
+            this.buffIndex = (this.buffIndex + 1) % TOWER_BUFFS.size();
+            this.refresh();
+        });
         this.rankButton.addActionListener(evt -> {
             this.rank = RANKS[(this.rank.ordinal() + 1) % RANKS.length];
             this.refresh();
@@ -309,7 +376,7 @@ public class PanelDev extends JPanel {
         });
         this.cellGridToggle.addActionListener(evt -> this.onCellGrid.accept(this.cellGridToggle.isSelected()));
         for (HudTextField field : List.of(this.credits, this.lives, this.script, this.jumpTo, this.xp,
-                this.enemyHealth)) {
+                this.enemyHealth, this.effectSeconds, this.effectPower, this.buffSeconds, this.buffPower)) {
             releaseFocusOnEscape(field);
         }
 
@@ -319,8 +386,10 @@ public class PanelDev extends JPanel {
         infiniteLives.addActionListener(evt -> this.dev.setInfiniteLives(infiniteLives.isSelected()));
         HudToggleButton freeBuild = toggle("Free build");
         freeBuild.addActionListener(evt -> this.dev.setFreeBuild(freeBuild.isSelected()));
+        HudToggleButton ignoreGates = toggle("Ignore gates");
+        ignoreGates.addActionListener(evt -> this.dev.setUpgradeGatesIgnored(ignoreGates.isSelected()));
         this.section(0, "Economy", row(label("Credits"), this.credits, setCredits, gap(),
-                label("Lives"), this.lives, setLives, gap(), infiniteLives, freeBuild));
+                label("Lives"), this.lives, setLives, gap(), infiniteLives, freeBuild, ignoreGates));
 
         HudButton skip = button("Skip wave", () -> this.onSkipWave.run());
         HudButton step = button("Step", () -> this.onStep.run());
@@ -361,10 +430,23 @@ public class PanelDev extends JPanel {
         this.section(3, "Spawn", spawnRow);
 
         HudButton grant = button("Grant", this::grantXp);
-        HudToggleButton ignoreGates = toggle("Ignore gates");
-        ignoreGates.addActionListener(evt -> this.dev.setUpgradeGatesIgnored(ignoreGates.isSelected()));
         HudButton reset = button("Reset", () -> this.onResetTower.run());
-        this.section(4, "Tower", row(label("XP"), this.xp, grant, gap(), ignoreGates, gap(), reset));
+        HudButton applyBuff = button("Apply", this::applyBuff);
+        HudButton applyEffect = button("Apply", this::applyEffect);
+        HudButton clearEffects = button("Clear", () -> this.showMessage(this.dev.clearEnemyEffects()));
+        HudButton kill = button("Kill", () -> this.showMessage(this.dev.killSelectedEnemy()));
+        HudButton heal = button("Heal", () -> this.showMessage(this.dev.healSelectedEnemy()));
+        HudButton remove = button("Remove", () -> this.showMessage(this.dev.removeSelectedEnemy()));
+        this.selectionArea.setOpaque(false);
+        this.selectionArea.add(row(label("Select a tower or an enemy on the board first.")), CARD_NOTHING);
+        this.selectionArea.add(row(this.towerSelected, gap(), label("XP"), this.xp, grant, gap(),
+                this.buffButton, label("Secs"), this.buffSeconds, label("Power"), this.buffPower, applyBuff, gap(),
+                reset), CARD_TOWER);
+        this.selectionArea.add(row(this.enemySelected, gap(), this.effectButton, label("Secs"),
+                this.effectSeconds, label("Power"), this.effectPower, applyEffect, clearEffects, gap(), kill, heal,
+                remove), CARD_ENEMY);
+        this.selectionCards.show(this.selectionArea, CARD_NOTHING);
+        this.section(4, "Selected", this.selectionArea);
 
         this.pointerCell.setForeground(MUTED);
         this.clickedCell.setForeground(MUTED);
@@ -403,9 +485,17 @@ public class PanelDev extends JPanel {
         this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", focus(this.script));
         this.bind("Spawn", alt(KeyEvent.VK_R), "next rank", this.rankButton::doClick);
         this.bind("Spawn", alt(KeyEvent.VK_P), "next path", this.pathButton::doClick);
+        this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
         this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", focus(this.xp));
-        this.bind("Tower", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
         this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset::doClick);
+        this.bind("Tower", alt(KeyEvent.VK_Y), "next buff", this.buffButton::doClick);
+        this.bind("Tower", altShift(KeyEvent.VK_Y), "apply the buff", applyBuff::doClick);
+        this.bind("Enemy", alt(KeyEvent.VK_F), "next effect", this.effectButton::doClick);
+        this.bind("Enemy", altShift(KeyEvent.VK_F), "apply the effect", applyEffect::doClick);
+        this.bind("Enemy", alt(KeyEvent.VK_D), "clear its effects", clearEffects::doClick);
+        this.bind("Enemy", alt(KeyEvent.VK_Q), "kill", kill::doClick);
+        this.bind("Enemy", alt(KeyEvent.VK_W), "heal to full", heal::doClick);
+        this.bind("Enemy", altShift(KeyEvent.VK_Q), "remove", remove::doClick);
         this.bind("Board", alt(KeyEvent.VK_G), "cell grid", this.cellGridToggle::doClick);
         this.bind("Board", alt(KeyEvent.VK_H), "this help", help::doClick);
 
@@ -488,6 +578,28 @@ public class PanelDev extends JPanel {
         OptionalInt amount = this.parsed(this.xp);
         amount.ifPresent(granted -> this.showMessage(this.dev.grantXpToSelected(granted)));
         return amount.isPresent();
+    }
+
+    private boolean applyEffect() {
+        OptionalInt seconds = this.parsed(this.effectSeconds);
+        OptionalInt power = this.parsed(this.effectPower);
+        if (seconds.isEmpty() || power.isEmpty()) {
+            return false;
+        }
+        this.showMessage(this.dev.applyEffectToEnemy(ENEMY_EFFECTS.get(this.effectIndex), seconds.getAsInt(),
+                power.getAsInt()));
+        return true;
+    }
+
+    private boolean applyBuff() {
+        OptionalInt seconds = this.parsed(this.buffSeconds);
+        OptionalInt power = this.parsed(this.buffPower);
+        if (seconds.isEmpty() || power.isEmpty()) {
+            return false;
+        }
+        this.showMessage(this.dev.grantBuffToSelectedTower(TOWER_BUFFS.get(this.buffIndex), seconds.getAsInt(),
+                power.getAsInt()));
+        return true;
     }
 
     private OptionalInt parsed(HudTextField field) {
