@@ -97,7 +97,7 @@ frame build reads them.
 - `EconomyLedger` computes inside `synchronized (this)` and fires listeners outside it. `doPay`
   is the atomic check-and-charge; never `if (canPay(n)) doPay(n)`.
 - Listener and live-entity lists are `CopyOnWriteArrayList`.
-- `GameEngine.doTick` order is fixed: enemies, projectiles, zones, towers. Falling behind runs one
+- `GameEngine.doTick` order is fixed: enemies, projectiles, zones, playtest hooks, towers. Falling behind runs one
   tick and resyncs, never a burst. The tick rate exists only in `TickRate`.
 
 ## Code style

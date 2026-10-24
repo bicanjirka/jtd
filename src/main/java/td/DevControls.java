@@ -7,6 +7,7 @@ import td.economy.EconomyDelta;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.effect.DamageSink;
+import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMob;
@@ -46,6 +47,7 @@ public final class DevControls implements EconomyListener {
     /** The panel as an attacker: what its effects deal is periodic, so it never crits or spends a mark. */
     private final AttackOrigin origin = AttackOrigin.fresh();
     private final AttackProfile attack = AttackProfile.none().asPeriodic().withOrigin(this.origin);
+    private final DevHexCaster hexCaster;
     private final Queue<Runnable> pending = new ConcurrentLinkedQueue<>();
 
     private volatile DevSelection selection = DevSelection.none();
@@ -55,8 +57,15 @@ public final class DevControls implements EconomyListener {
     private volatile boolean freeBuild;
     private volatile long spawnSeed;
 
+    /** Register it with the world's economy listeners and {@link GameWorld#playtestHooks() playtest hooks}. */
     public DevControls(GameWorld world) {
         this.world = world;
+        this.hexCaster = new DevHexCaster(world, this.attack);
+    }
+
+    /** What the panel keeps going on the board by itself, every tick: its hexes' payouts. */
+    public void doTick(int time) {
+        this.hexCaster.doTick(time);
     }
 
     public void setCredits(int credits) {
@@ -206,6 +215,9 @@ public final class DevControls implements EconomyListener {
         return this.onSelectedEnemy("Applying " + kind.title(), mob -> {
             DamageSink sink = damage -> mob.doDamage(damage, this.attack);
             DevEffects.enemyEffects(kind, values, sink, this.origin).forEach(mob::applyEffect);
+            if (kind.category() == EffectCategory.HEX && mob.hasEffect(kind)) {
+                this.hexCaster.record(mob, kind);
+            }
             this.report(mob.hasEffect(kind) ? "Applied " + kind.title()
                     : kind.title() + " didn't take hold: resisted, immune or kept out");
         });

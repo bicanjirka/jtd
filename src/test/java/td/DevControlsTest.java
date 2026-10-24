@@ -36,6 +36,7 @@ class DevControlsTest {
 
     DevControlsTest() {
         this.world.economy().addEconomyListener(this.dev);
+        this.world.playtestHooks().add(this.dev::doTick);
     }
 
     @Test
@@ -253,19 +254,34 @@ class DevControlsTest {
     @Test
     void aChargeFromThePanelDischargesIntoTheEnemyWhenAnotherAttackerHitsIt() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        this.dev.spawnWave("2 simple", Rank.GRUNT, 0);
-        this.dev.runPending();
-        EnemyMob charged = this.world.enemies().getEnemies()[0];
-        EnemyMob plain = this.world.enemies().getEnemies()[1];
-        this.selectFirstEnemy();
+        EnemyMob charged = this.spawnAndSelectOne();
         this.dev.applyEffectToEnemy(EffectKind.CHARGED, List.of(5f));
         this.dev.runPending();
+        EnemyMob plain = this.spawnAnotherLive();
         AttackProfile tower = AttackProfile.none().withOrigin(AttackOrigin.fresh());
 
         charged.doDamage(Damage.magic(charged.getHealth() / 4), tower);
         plain.doDamage(Damage.magic(plain.getHealth() / 4), tower);
 
         assertThat(charged.getHealth()).isLessThan(plain.getHealth());
+    }
+
+    @Test
+    void aDoomFromThePanelPaysAShareOfWhatTheEnemyTookUnderItWhenItEnds() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        EnemyMob doomed = this.spawnAndSelectOne();
+        this.dev.applyEffectToEnemy(EffectKind.DOOM, List.of(0.5f));
+        this.dev.runPending();
+        EnemyMob plain = this.spawnAnotherLive();
+        doomed.doDamage(Damage.magic(doomed.getHealth() / 4));
+        plain.doDamage(Damage.magic(plain.getHealth() / 4));
+
+        for (int t = 1; t <= 20; t++) {
+            this.engine.doTick(t);
+        }
+
+        assertThat(doomed.hasEffect(EffectKind.DOOM)).isFalse();
+        assertThat(doomed.getHealth()).isLessThan(plain.getHealth());
     }
 
     @Test
@@ -410,6 +426,14 @@ class DevControlsTest {
         this.dev.runPending();
         this.selectFirstEnemy();
         return this.world.enemies().getEnemies()[0];
+    }
+
+    /** One more enemy, the first of a wave of its own, so it is live at once and takes hits like the first. */
+    private EnemyMob spawnAnotherLive() {
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
+        this.dev.runPending();
+        EnemyMob[] enemies = this.world.enemies().getEnemies();
+        return enemies[enemies.length - 1];
     }
 
     private void selectFirstEnemy() {

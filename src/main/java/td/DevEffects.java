@@ -36,7 +36,6 @@ public final class DevEffects {
     private static final DevField DAMAGE_TIMES = new DevField("Damage ×", 3f, 1f, 100f);
     /** A stack field starts at the cap, or at this many for a kind that holds more. */
     private static final int MOST_STACKS_TO_START = 10;
-    private static final String NEEDS_A_HEXER = "needs a Hexer";
 
     private DevEffects() {
     }
@@ -118,10 +117,9 @@ public final class DevEffects {
             case FRACTURED -> one(List.of(stacks(kind)), in -> Effect.fractured(in.whole(0), in.sink()));
             case SCORCHED -> one(List.of(stacks(kind)), in -> Effect.scorched(in.whole(0)));
             case SICKENED -> one(List.of(stacks(kind)), in -> Effect.sickened(in.whole(0)));
-            case RIME, ASH, INVERSION -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
+            case RIME, ASH, INVERSION, DOOM, CONTAGION, SYMPATHY, RECKONING -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
             case BLIGHT -> new Builds(List.of(SECONDS, DAMAGE_PER_SECOND), in -> List.of(Effect.hex(kind, in.ticks(0), in.sink()),
                     Effect.poison(in.magicPerTick(1), in.ticks(0), in.sink())));
-            case DOOM, CONTAGION, SYMPATHY, RECKONING -> new Refuses(NEEDS_A_HEXER);
             case STILLED -> new Refuses("needs an Obelisk field");
         };
     }

@@ -283,10 +283,11 @@ fixed-timestep accumulators:
   keeps redrawing while paused.
 
 `GameEngine.doTick` ticks in a fixed order: **enemies, then in-flight projectiles, then ground
-zones, then towers.** Projectiles sit after enemies and before towers deliberately — a homing missile aims at this
+zones, then playtest hooks, then towers.** Projectiles sit after enemies and before towers deliberately — a homing missile aims at this
 tick's enemy positions, not last tick's, and a projectile a tower spawns while its own loop
 runs below is left for the *next* tick to advance rather than moving twice in the tick it was
-fired.
+fired. The playtest hooks (the dev panel's own work, such as paying out its hexes) run after
+the enemies and before the towers, so the panel acts on a tick like a tower that ticks first.
 
 ### Why the snapshot rule exists
 
