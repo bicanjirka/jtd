@@ -7,7 +7,6 @@ import td.wave.WaveScriptSuggestions.Candidate;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 /** A fixed set to choose one from, in a set order, each a row with a title, a hint and a look. */
@@ -15,13 +14,14 @@ final class Choices<T> {
 
     private final List<T> sorted;
     private final List<Candidate> rows;
-    private final Function<T, RowLook> looks;
+    /** Built once, so painting a row makes nothing and two rows alike still keep their own look. */
+    private final List<RowLook> looks;
 
     Choices(List<T> items, Comparator<T> order, Function<T, String> title, Function<T, String> hint,
             Function<T, RowLook> looks) {
         this.sorted = items.stream().sorted(order).toList();
         this.rows = this.sorted.stream().map(item -> Candidate.token(title.apply(item), hint.apply(item))).toList();
-        this.looks = looks;
+        this.looks = this.sorted.stream().map(looks).toList();
     }
 
     /**
@@ -58,11 +58,10 @@ final class Choices<T> {
     }
 
     RowLook lookOf(T item) {
-        return this.looks.apply(item);
+        return this.looks.get(this.indexOf(item));
     }
 
-    Optional<RowLook> lookOfRow(Candidate row) {
-        int index = this.rows.indexOf(row);
-        return index < 0 ? Optional.empty() : Optional.of(this.looks.apply(this.sorted.get(index)));
+    RowLook lookAt(int index) {
+        return this.looks.get(index);
     }
 }

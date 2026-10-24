@@ -125,6 +125,7 @@ public class PanelDev extends JPanel {
     private GameWorld world;
     private DevControls dev;
     private DevSelection shownSelection = DevSelection.none();
+    private long shownReport;
     private Runnable onSkipWave = () -> {
     };
     private IntConsumer onJumpToWave = wave -> {
@@ -252,6 +253,20 @@ public class PanelDev extends JPanel {
     public void doTick(int gameTime) {
         this.preview.doTick(gameTime);
         this.refreshSelection();
+        this.refreshReport();
+    }
+
+    /** Shows what a queued change turned out to do, once the game loop has run it. */
+    private void refreshReport() {
+        if (this.dev == null) {
+            return;
+        }
+        DevControls.Report report = this.dev.report();
+        if (report.serial() == this.shownReport) {
+            return;
+        }
+        this.shownReport = report.serial();
+        this.showMessage(report.text());
     }
 
     /** Shows the card for what is selected now, and names it; only a change repaints. */
@@ -265,8 +280,8 @@ public class PanelDev extends JPanel {
         }
         this.shownSelection = selection;
         boolean tower = selection.kind() == DevSelection.Kind.TOWER;
-        this.towerSelected.setText(tower ? "Tower: " + selection.description() : "");
-        this.enemySelected.setText(tower ? "" : "Enemy: " + selection.description());
+        this.towerSelected.setText(tower ? selection.description() : "");
+        this.enemySelected.setText(tower ? "" : selection.description());
         this.selectionCards.show(this.selectionArea, switch (selection.kind()) {
             case NONE -> CARD_NOTHING;
             case TOWER -> CARD_TOWER;
@@ -337,6 +352,8 @@ public class PanelDev extends JPanel {
                 an effect, a clear, a kill (pays
                 bounty and XP), a heal to full
                 or a removal (pays nothing).
+                The status line then says
+                whether the effect took hold.
                 Power is the effect's own
                 number: stacks, percent or
                 points.""");

@@ -18,6 +18,7 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * A button showing the chosen item's icon and title in its colours; a click opens the list of every item, all of it
@@ -42,7 +43,7 @@ final class ChoiceButton<T> {
     ChoiceButton(Choices<T> choices, T initial, Runnable onClosed) {
         this.choices = choices;
         this.onClosed = onClosed;
-        this.list = new SuggestionList(row -> this.choices.lookOfRow(row), this::take);
+        this.list = new SuggestionList(index -> Optional.of(this.choices.lookAt(index)), this::take);
         this.list.setFocusable(true);
         this.list.setFocusTraversalKeysEnabled(false);
         this.bind(KeyEvent.VK_UP, () -> this.list.move(-1));

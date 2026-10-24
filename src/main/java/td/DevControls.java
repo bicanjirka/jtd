@@ -1,7 +1,6 @@
 package td;
 
 import td.damage.Damage;
-import td.damage.DamageUnits;
 import td.economy.EconomyDelta;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
@@ -20,7 +19,6 @@ import td.wave.WaveContent;
 import td.wave.WaveScript;
 import td.wave.WaveScriptSuggestions;
 
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -43,6 +41,7 @@ public final class DevControls implements EconomyListener {
     private final Queue<Runnable> pending = new ConcurrentLinkedQueue<>();
 
     private volatile DevSelection selection = DevSelection.none();
+    private volatile Report report = new Report(0L, "");
     private volatile boolean infiniteLives;
     private volatile int livesFloor;
     private volatile boolean freeBuild;
@@ -181,10 +180,17 @@ public final class DevControls implements EconomyListener {
         return this.selection;
     }
 
-    /** @return what happened, or why nothing did */
+    /**
+     * Whether the effect took hold is known only once it runs, so that comes as a {@link #report()}.
+     *
+     * @return what was queued, or why nothing was
+     */
     public String applyEffectToEnemy(EffectKind kind, float seconds, int power) {
-        return this.onSelectedEnemy("Applied " + kind.title(),
-                mob -> mob.applyEffect(DevEffects.enemyEffect(kind, seconds, power)));
+        return this.onSelectedEnemy("Applying " + kind.title(), mob -> {
+            mob.applyEffect(DevEffects.enemyEffect(kind, seconds, power));
+            this.report(mob.hasEffect(kind) ? "Applied " + kind.title()
+                    : kind.title() + " didn't take hold: resisted, immune or kept out");
+        });
     }
 
     /** @return what happened, or why nothing did */
@@ -232,22 +238,29 @@ public final class DevControls implements EconomyListener {
     private DevSelection currentSelection() {
         Optional<Tower> tower = this.selectedTower();
         if (tower.isPresent()) {
-            return DevSelection.tower(tower.get().displayName() + " · " + tower.get().experience().xp() + " XP");
+            return DevSelection.tower(tower.get().displayName());
         }
-        return this.selectedEnemy().map(mob -> DevSelection.enemy(mob.inspect().name() + " "
-                + mob.getRank().name().toLowerCase(Locale.ROOT) + " · "
-                + Math.round(DamageUnits.inPoints(mob.getHealth())) + "/" + mob.getMaxHealthPoints() + " hp"))
+        return this.selectedEnemy().map(mob -> DevSelection.enemy(mob.definition().displayName()))
                 .orElse(DevSelection.none());
     }
 
     /** @return what happened, or why nothing did */
     public String grantXpToSelected(int xp) {
-        Optional<Tower> selected = this.selectedTower();
-        if (selected.isEmpty()) {
+        if (this.selection.kind() != DevSelection.Kind.TOWER) {
             return "Select a tower first";
         }
-        this.pending.add(() -> selected.get().earnXp(xp));
-        return "+" + xp + " XP to " + selected.get().getType();
+        this.pending.add(() -> this.selectedTower().ifPresent(tower -> tower.earnXp(xp)));
+        return "+" + xp + " XP to " + this.selection.description();
+    }
+
+    /** What the last queued change turned out to do, once the game-loop thread ran it. */
+    public Report report() {
+        return this.report;
+    }
+
+    /** Game-loop thread only, the one writer. */
+    private void report(String text) {
+        this.report = new Report(this.report.serial() + 1, text);
     }
 
     /** The installed level's paths, at least one: the spawn box picks among them. */
@@ -265,6 +278,13 @@ public final class DevControls implements EconomyListener {
             change.run();
         }
         this.selection = this.currentSelection();
+    }
+
+    /**
+     * One line saying what a queued change did; {@code serial} grows with every report, so the same words twice
+     * still read as news.
+     */
+    public record Report(long serial, String text) {
     }
 
     /** A wave script's parse: the wave it would spawn, or the problem that stops it. */

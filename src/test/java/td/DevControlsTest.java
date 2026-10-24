@@ -158,12 +158,13 @@ class DevControlsTest {
         Tower tower = this.placeSniper(1, 1);
         String withoutSelection = this.dev.grantXpToSelected(100);
         tower.setSelected(true);
+        this.dev.runPending();
 
         String withSelection = this.dev.grantXpToSelected(100);
         this.dev.runPending();
 
         assertThat(withoutSelection).isEqualTo("Select a tower first");
-        assertThat(withSelection).isEqualTo("+100 XP to SNIPER");
+        assertThat(withSelection).isEqualTo("+100 XP to " + tower.displayName());
         assertThat(tower.experience().xp()).isEqualTo(100);
     }
 
@@ -211,9 +212,11 @@ class DevControlsTest {
         this.dev.runPending();
 
         assertThat(withoutSelection).isEqualTo("Select an enemy first");
-        assertThat(withSelection).isEqualTo("Applied " + EffectKind.FREEZE.title());
+        assertThat(withSelection).isEqualTo("Applying " + EffectKind.FREEZE.title());
+        assertThat(this.dev.report().text()).isEqualTo("Applied " + EffectKind.FREEZE.title());
         assertThat(this.frozenEnemies()).isEqualTo(1);
     }
+
 
     @Test
     void clearingTheSelectedEnemysEffectsEndsThemAll() {
@@ -292,6 +295,22 @@ class DevControlsTest {
         assertThat(nothing.kind()).isEqualTo(DevSelection.Kind.NONE);
         assertThat(enemy.kind()).isEqualTo(DevSelection.Kind.ENEMY);
         assertThat(this.dev.selection().kind()).isEqualTo(DevSelection.Kind.TOWER);
+    }
+
+    @Test
+    void theSelectionIsNamedByItsNameAlone() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        Tower tower = this.placeSniper(1, 1);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
+        this.dev.runPending();
+        this.selectFirstEnemy();
+        String enemy = this.dev.selection().description();
+
+        tower.setSelected(true);
+        this.dev.runPending();
+
+        assertThat(enemy).isEqualTo(EnemyCatalog.builtIn().get("simple").displayName());
+        assertThat(this.dev.selection().description()).isEqualTo(tower.displayName());
     }
 
     @Test

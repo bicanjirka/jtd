@@ -44,7 +44,7 @@ final class FieldCompleter {
     FieldCompleter(HudTextField field, BiFunction<String, Integer, Result> source) {
         this.field = field;
         this.source = source;
-        this.list = new SuggestionList(candidate -> Optional.empty(), this::acceptSelected);
+        this.list = new SuggestionList(index -> Optional.empty(),this::acceptSelected);
         field.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Set.of());
         DocumentListener changes = new DocumentListener() {
             @Override
