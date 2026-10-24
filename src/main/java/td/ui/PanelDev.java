@@ -81,6 +81,8 @@ public class PanelDev extends JPanel {
     private static final Choices<TowerTerm> TOWER_TERMS = Choices.ofTerms(DevEffects.towerTerms(),
             Comparator.comparing(TowerTerm::side), term -> sideLabel(term.side()), PanelDev::sideFrame,
             TermLooks::faceOf, DevEffects::whyUngrantable);
+    /** A selected unit's name has this much room, a longer one ending in an ellipsis, so its row never widens the panel. */
+    private static final int SELECTED_NAME_WIDTH = 72;
     /** Space between sections, and between unrelated controls in a row. */
     private static final int ROW_GAP = 3;
     private static final int CONTROL_GAP = 12;
@@ -92,7 +94,7 @@ public class PanelDev extends JPanel {
     private final HudTextField lives = new HudTextField("20", 4);
     private final HudTextField script = new HudTextField("3 simple", 14);
     private final HudTextField jumpTo = new HudTextField("1", 3);
-    private final HudTextField xp = new HudTextField("150", 5);
+    private final HudTextField xp = new HudTextField("150", 4);
     private final HudTextField enemyHealth = new HudTextField("100", 4);
     private final DevFieldSlots<EffectKind> effectFields = new DevFieldSlots<>(DevEffects.enemyKinds(),
             DevEffects::enemyFields, EffectKind.CHILL);
@@ -442,6 +444,9 @@ public class PanelDev extends JPanel {
         this.previewArea.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
         widthFollowsPanel(this.problem);
         widthFollowsPanel(this.status);
+        for (JLabel name : List.of(this.towerSelected, this.enemySelected)) {
+            name.setPreferredSize(new Dimension(SELECTED_NAME_WIDTH, name.getFontMetrics(Hud.LABEL_FONT).getHeight()));
+        }
         JPanel spawnRow = new JPanel(new GridBagLayout());
         spawnRow.setOpaque(false);
         spawnRow.add(row(this.script, this.rankChoice.component(), this.pathChoice.component(), button("Spawn", this::spawn)));
