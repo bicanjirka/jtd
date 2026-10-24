@@ -5,7 +5,7 @@ package td;
  * Built on the game-loop thread, which owns both selections, and read by the EDT.
  *
  * @param kind        what is selected
- * @param description one short line naming it
+ * @param description its name and nothing more: the board already shows the rest
  */
 public record DevSelection(Kind kind, String description) {
 

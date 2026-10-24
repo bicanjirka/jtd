@@ -7,6 +7,7 @@ import td.ui.render.IconFace;
 import td.ui.render.Palette;
 import td.wave.WaveScriptSuggestions.Candidate;
 
+import java.awt.Color;
 import java.util.Comparator;
 import java.util.List;
 
@@ -31,18 +32,27 @@ class ChoicesTest {
 
     @Test
     void aTermRowIsWrittenInItsIconsTone() {
-        Candidate cinder = this.choices.rows().get(3);
+        int cinder = 3;
 
-        assertThat(this.choices.lookOfRow(cinder)).map(RowLook::text)
-                .contains(TermIconPainter.ink(Palette.ENEMY_GHOST));
+        assertThat(this.choices.lookAt(cinder).text()).isEqualTo(TermIconPainter.ink(Palette.ENEMY_GHOST));
     }
 
     @Test
     void everyHintOfATypeIsWrittenInTheTypesFrameWhateverItsIconsFrame() {
-        List<Candidate> rows = this.choices.rows();
+        List<RowLook> typeB = List.of(this.choices.lookAt(2), this.choices.lookAt(3));
 
-        assertThat(rows.subList(2, 4)).map(row -> this.choices.lookOfRow(row).orElseThrow().hint())
-                .containsOnly(TermIconPainter.ink(Palette.TERM_FRAME_MARK));
+        assertThat(typeB).map(RowLook::hint).containsOnly(TermIconPainter.ink(Palette.TERM_FRAME_MARK));
+    }
+
+    @Test
+    void twoItemsWithTheSameTitleAndHintEachKeepTheirOwnLook() {
+        Choices<String> twins = new Choices<>(List.of("x", "y"), Comparator.naturalOrder(), item -> "Same",
+                item -> "", item -> new RowLook(new PaintedIcon(8, 8, g2 -> {
+                }), item.equals("x") ? Color.RED : Color.BLUE, Color.GRAY));
+
+        RowLook second = twins.lookAt(1);
+
+        assertThat(second.text()).isEqualTo(Color.BLUE);
     }
 
     private static FakeTerm term(String type, String title) {

@@ -18,7 +18,8 @@ import java.awt.event.MouseWheelEvent;
 import java.io.Serial;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.stream.IntStream;
 
 /**
  * A list of candidates hung on the window's popup layer by the control it serves: a scrolling column of a few rows,
@@ -38,7 +39,8 @@ final class SuggestionList extends JComponent {
     private static final Color HINT = new Color(150, 170, 150);
     private static final int ICON_GAP = 4;
 
-    private final transient Function<Candidate, Optional<RowLook>> looks;
+    /** Each row's look, by its place in the list. */
+    private final transient IntFunction<Optional<RowLook>> looks;
 
     private List<Candidate> rows = List.of();
     private int selected;
@@ -47,7 +49,7 @@ final class SuggestionList extends JComponent {
     private int columns = 1;
 
     /** The control it serves keeps the focus while it is clicked, unless it is made focusable. */
-    SuggestionList(Function<Candidate, Optional<RowLook>> looks, Runnable onTake) {
+    SuggestionList(IntFunction<Optional<RowLook>> looks, Runnable onTake) {
         this.looks = looks;
         setFocusable(false);
         MouseAdapter pointer = new MouseAdapter() {
@@ -196,7 +198,7 @@ final class SuggestionList extends JComponent {
 
     /** The widest icon and its gap, so every row's text lines up. */
     private int iconRoom() {
-        return this.rows.stream().map(this.looks).flatMap(Optional::stream)
+        return IntStream.range(0, this.rows.size()).mapToObj(this.looks).flatMap(Optional::stream)
                 .mapToInt(look -> look.icon().getIconWidth() + ICON_GAP).max().orElse(0);
     }
 
@@ -214,7 +216,7 @@ final class SuggestionList extends JComponent {
         int shown = Math.min(this.rows.size() - this.top, this.perColumn * this.columns);
         for (int i = 0; i < shown; i++) {
             Candidate row = this.rows.get(this.top + i);
-            Optional<RowLook> look = this.looks.apply(row);
+            Optional<RowLook> look = this.looks.apply(this.top + i);
             int left = (i / this.perColumn) * columnWidth;
             int line = i % this.perColumn;
             int y = 1 + line * ROW_HEIGHT;
