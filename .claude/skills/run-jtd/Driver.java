@@ -96,6 +96,8 @@ public class Driver {
             case "trace" -> trace(rest.trim());
             case "waitfor" -> waitFor(rest.trim());
             case "click" -> click(Integer.parseInt(rest.trim()));
+            case "clicktext" -> clickText(rest.trim());
+            case "resize" -> resize(rest.trim());
             case "hover" -> hover(rest);
             case "pointer" -> pointer(rest.trim());
             case "clickat" -> clickAt(rest.trim());
@@ -134,10 +136,16 @@ public class Driver {
     // Clickable = an AbstractButton (JButton/JToggleButton/...) or any component with its
     // own MouseListener (e.g. PanelLevelSelect's level cards, which are plain JPanels with
     // a mouseClicked handler, not buttons). DFS pre-order, so indices are stable across
-    // list/click calls within one run.
+    // list/click calls within one run. What is open on the popup layer (a question, a tooltip)
+    // comes after the content, so it never shifts the content's indices.
     private static List<Component> findClickables() {
         List<Component> out = new ArrayList<>();
         collect(game.getContentPane(), out);
+        for (Component popup : game.getLayeredPane().getComponentsInLayer(javax.swing.JLayeredPane.POPUP_LAYER)) {
+            if (popup instanceof Container inner) {
+                collect(inner, out);
+            }
+        }
         return out;
     }
 
@@ -339,6 +347,33 @@ public class Driver {
             }
         }
         return null;
+    }
+
+    // Resizes the window, as dragging its edge would, and waits for the layout.
+    private static void resize(String args) throws Exception {
+        String[] parts = args.split("\s+");
+        int width = Integer.parseInt(parts[0]);
+        int height = Integer.parseInt(parts[1]);
+        javax.swing.SwingUtilities.invokeAndWait(() -> {
+            game.setSize(width, height);
+            game.validate();
+        });
+        Thread.sleep(300);
+        System.out.println("OK resize " + width + "x" + height);
+    }
+
+    // Clicks the first button whose text contains the substring: for a button whose index isn't
+    // known ahead, such as a confirmation's.
+    private static void clickText(String text) throws Exception {
+        List<Component> clickables = findClickables();
+        for (int i = 0; i < clickables.size(); i++) {
+            if (clickables.get(i) instanceof AbstractButton button && button.isShowing() && button.getText() != null
+                    && button.getText().contains(text)) {
+                click(i);
+                return;
+            }
+        }
+        System.out.println("ERROR: no showing button with text containing \"" + text + "\"");
     }
 
     private static void click(int index) throws Exception {

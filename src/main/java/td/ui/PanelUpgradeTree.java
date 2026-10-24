@@ -50,6 +50,10 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private static final long serialVersionUID = 1L;
 
     private static final float MAX_SCALE = 1.15f;
+    /** What the Info panel above keeps at least when the window is short. */
+    private static final int INFO_FLOOR = 180;
+    /** The least height the tree is drawn at, a little over half size. */
+    private static final int MIN_HEIGHT = 240;
     private static final int HIT_SLACK = 2;
 
     private final transient Map<UpgradeTree, UpgradeTreeLayout> layouts = new IdentityHashMap<>();
@@ -65,9 +69,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     public PanelUpgradeTree() {
         this.setBackground(Color.BLACK);
         this.setBorder(Hud.panelBorder("Upgrades"));
-        // The console is shorter than every panel's preferred height, so its layout gives each its minimum.
         this.setPreferredSize(new Dimension(UpgradeTreeLayout.WIDTH, UpgradeTreeLayout.HEIGHT));
-        this.setMinimumSize(new Dimension(UpgradeTreeLayout.WIDTH, UpgradeTreeLayout.HEIGHT));
         MouseAdapter mouse = new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent event) {
@@ -88,12 +90,23 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         this.addMouseMotionListener(mouse);
     }
 
+    /**
+     * Its full height while the console has room for it above {@link #INFO_FLOOR}, else what is left, down to
+     * {@link #MIN_HEIGHT}: the console is shorter than its panels' preferred heights, so its layout gives each
+     * panel its minimum, and the tree scales to whatever it gets.
+     */
+    @Override
+    public Dimension getMinimumSize() {
+        int room = this.getParent() == null ? UpgradeTreeLayout.HEIGHT : this.getParent().getHeight() - INFO_FLOOR;
+        return new Dimension(UpgradeTreeLayout.WIDTH, Math.clamp(room, MIN_HEIGHT, UpgradeTreeLayout.HEIGHT));
+    }
+
     /** Each node's hover is a tooltip of what it is and what a click on it does now. */
     public void setTooltips(TooltipLayer tooltips) {
         this.tooltips = tooltips;
         tooltips.watchSpots(this, point -> this.nodeAt(point).filter(node -> this.tower != null)
                 .map(node -> new TooltipSpot(new SheetTooltip(TooltipKey.of("upgrade", node.id()), this.sheetOf(node)),
-                        this.boundsOf(node))));
+                        this.anchorOf(node))));
     }
 
     public void setGameWorld(GameWorld context) {
@@ -135,7 +148,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             next.put(node, UpgradeNodeState.of(node, this.tower, this.context));
         }
         this.states = next;
-        this.hover = this.hovered.map(node -> UpgradeHover.of(node, this.tower, this.context));
+        this.hover = this.hovered.filter(node -> !this.levelEnded).map(node -> UpgradeHover.of(node, this.tower, this.context));
         this.repaint();
         if (this.tooltips != null) {
             this.tooltips.refreshButtons();
@@ -190,6 +203,9 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     }
 
     private Footer footer() {
+        if (this.levelEnded) {
+            return new Footer(UpgradeSheetText.ENDED_FOOTER, false, false);
+        }
         return new Footer(UpgradeSheetText.footer(this.hover), UpgradeSheetText.footerWarns(this.hover),
                 this.hover.isPresent());
     }
@@ -200,7 +216,8 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             return;
         }
         this.hovered = now;
-        this.hover = now.filter(node -> this.tower != null).map(node -> UpgradeHover.of(node, this.tower, this.context));
+        this.hover = now.filter(node -> this.tower != null && !this.levelEnded)
+                .map(node -> UpgradeHover.of(node, this.tower, this.context));
         this.repaint();
     }
 
@@ -233,7 +250,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         }
         this.confirmation.ifPresent(ConfirmPopup::cancel);
         Tower downgraded = this.tower;
-        Rectangle anchor = SwingUtilities.convertRectangle(this, this.boundsOf(node),
+        Rectangle anchor = SwingUtilities.convertRectangle(this, this.anchorOf(node),
                 SwingUtilities.getRootPane(this).getLayeredPane());
         this.confirmation = Optional.of(ConfirmPopup.open(SwingUtilities.getRootPane(this).getLayeredPane(), anchor,
                 UpgradeSheetText.downgradeConfirmation(downgrading, downgraded.upgradeTree()),
@@ -249,9 +266,11 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     }
 
     private InfoSheet sheetOf(UpgradeNode node) {
-        UpgradeTree tree = this.tower.upgradeTree();
-        return UpgradeSheetText.hover(UpgradeOffer.of(node, this.tower, this.context),
-                UpgradeHover.of(node, this.tower, this.context), tree);
+        UpgradeOffer offer = UpgradeOffer.of(node, this.tower, this.context);
+        if (this.levelEnded) {
+            return UpgradeSheetText.hover(offer);
+        }
+        return UpgradeSheetText.hover(offer, UpgradeHover.of(node, this.tower, this.context), this.tower.upgradeTree());
     }
 
     private Optional<UpgradeNode> nodeAt(Point point) {
@@ -269,6 +288,15 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                         && Math.abs(entry.getValue().y() - y) <= entry.getValue().size() / 2 + HIT_SLACK)
                 .map(Map.Entry::getKey)
                 .findFirst();
+    }
+
+    /**
+     * The panel's left edge, level with {@code node}: what opens from a node opens over the board, never over the
+     * tree, where it would sit on the nodes the pointer goes to next.
+     */
+    private Rectangle anchorOf(UpgradeNode node) {
+        Rectangle bounds = this.boundsOf(node);
+        return new Rectangle(0, bounds.y, 0, bounds.height);
     }
 
     private Rectangle boundsOf(UpgradeNode node) {

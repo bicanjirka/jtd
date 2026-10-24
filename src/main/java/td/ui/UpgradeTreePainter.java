@@ -164,7 +164,7 @@ final class UpgradeTreePainter {
     private void paintHalo(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states) {
         boolean owned = this.any(states, UpgradeSlot.SPECIAL, Look.OWNED);
         boolean open = states.values().stream().anyMatch(s -> s.node().slot() == UpgradeSlot.SPECIAL
-                && s.look() != Look.SEALED);
+                && s.look() != Look.SEALED && s.look() != Look.LOCKED_OUT);
         Color special = slotColor(UpgradeSlot.SPECIAL);
         Shape halo = new Ellipse2D.Float(UpgradeTreeLayout.HALO_X - UpgradeTreeLayout.HALO_RX,
                 UpgradeTreeLayout.HALO_Y - UpgradeTreeLayout.HALO_RY, 2 * UpgradeTreeLayout.HALO_RX,

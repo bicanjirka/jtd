@@ -36,8 +36,9 @@ on `quit` or end of input.
 |---|---|
 | `level <n>` | Loads built-in level `n` (0 Curly Path, 1 Zigzag Path, 2 Twisted Hourglass) and waits until it is installed. |
 | `menu` | Back to level select, skipping the confirm dialog. Asynchronous: `sleep` after it. |
-| `list [filter]` | Clickable and hoverable components as `index: Class "label"`; a filter keeps matching lines with their real indices (`list sheetpane`, `list statusicon`). Indices shift when a panel is added or removed, so look one up before using it. |
+| `list [filter]` | Clickable and hoverable components as `index: Class "label"`; a filter keeps matching lines with their real indices (`list sheetpane`, `list statusicon`). Indices shift when a panel is added or removed, so look one up before using it. What is open on the popup layer (a confirmation's buttons) is listed last. |
 | `click <n>` | Clicks component `n`. |
+| `clicktext <text>` | Clicks the first showing button whose text contains `text`, such as a confirmation's `Downgrade`. |
 | `hover <n> [dx dy]` | Moves the pointer onto component `n` so its hover fires; `dx dy` picks a point inside it, such as a wave-preview slot. |
 | `pointer <x> <y>` | Walks the pointer to window pixel (x, y) in small steps, so panes and popups see it enter and leave. For what has no component of its own, such as a tooltip; read the pixel off an `ss`. |
 | `clickat <x> <y>` | `pointer` to window pixel (x, y), then a left click there: for a popup with no index, such as the script field's suggestion list. |
@@ -59,6 +60,7 @@ on `quit` or end of input.
 | `waitfor text <n> <substring>` | Waits until text component `n` contains the substring. |
 | `ss <path>` | Screenshots the whole window. |
 | `ssboard <path> <x> <y> <w> <h> [zoom]` | Screenshots a block of board cells, zoomed (x3 by default), for glyphs and markers. |
+| `resize <w> <h>` | Resizes the window, as dragging its edge would. |
 | `state` | Prints game time, grid size, wave, credits, lives and score. |
 | `sleep <ms>` | Last resort; prefer `waitfor`. |
 | `quit` | Exits. |
