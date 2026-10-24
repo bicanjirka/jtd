@@ -603,7 +603,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.unSelectTower();
         this.gameWorld.towers().sell(tower);
         this.engine.startPlacing(tower.getType(), 0f);
-        this.engine.mouseClicked(boardX, boardY);
         this.engine.mouseClicked(boardX, boardY).ifPresent(this.gameConsole::selectTower);
         this.panelDev.showMessage("Rebuilt fresh: upgrades and XP reset");
     }
@@ -817,6 +816,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
                 if (this.engine.isPlacingTower()) {
                     this.engine.cancelPlacing();
                     this.panelTowerSelector.stopPlacing();
+                    this.unSelectTower();
                 }
             }
             default -> {

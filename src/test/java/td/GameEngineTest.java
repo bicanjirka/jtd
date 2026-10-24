@@ -1,6 +1,7 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.cell.Cell;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageMix;
@@ -879,12 +880,23 @@ class GameEngineTest {
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        Optional<Tower> selected = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
-        assertThat(selected).isEmpty(); // placing doesn't "select" the newly-built tower
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - SniperTower.PRICE);
         assertThat(engine.cells().at(0, 0).hasTower()).isTrue();
         assertThat(engine.isPlacingTower()).isFalse();
+    }
+
+    @Test
+    void theClickThatBuildsATowerSelectsIt() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+
+        Optional<Tower> selected = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
+
+        assertThat(selected).containsSame(engine.cells().at(0, 0).getTower());
+        assertThat(engine.cells().at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.SELECT);
     }
 
     @Test
