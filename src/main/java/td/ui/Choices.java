@@ -3,6 +3,8 @@ package td.ui;
 import td.term.Term;
 import td.ui.render.IconFace;
 import td.ui.render.Palette;
+import td.ui.render.SheetTooltip;
+import td.ui.render.TooltipKey;
 import td.wave.WaveScriptSuggestions.Candidate;
 
 import java.util.Comparator;
@@ -11,8 +13,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * A fixed set to choose one from, in a set order, each a row with a title, a hint and a look. An item that can't be
- * taken stays in the list, greyed out, with the reason as its hint.
+ * A fixed set to choose one from, in a set order, each a row with a title, a hint, a look and maybe a tooltip. An item
+ * that can't be taken stays in the list, greyed out, with the reason as its hint.
  */
 final class Choices<T> {
 
@@ -21,6 +23,7 @@ final class Choices<T> {
     /** Built once, so painting a row makes nothing and two rows alike still keep their own look. */
     private final List<RowLook> looks;
     private final List<Boolean> usable;
+    private final List<Optional<SheetTooltip>> tooltips;
 
     Choices(List<T> items, Comparator<T> order, Function<T, String> title, Function<T, String> hint,
             Function<T, RowLook> looks) {
@@ -30,6 +33,12 @@ final class Choices<T> {
     /** {@code unusable} names why an item can't be taken; empty for one that can. */
     Choices(List<T> items, Comparator<T> order, Function<T, String> title, Function<T, String> hint,
             Function<T, RowLook> looks, Function<T, Optional<String>> unusable) {
+        this(items, order, title, hint, looks, unusable, item -> Optional.empty());
+    }
+
+    private Choices(List<T> items, Comparator<T> order, Function<T, String> title, Function<T, String> hint,
+            Function<T, RowLook> looks, Function<T, Optional<String>> unusable,
+            Function<T, Optional<SheetTooltip>> tooltips) {
         this.sorted = items.stream().sorted(order).toList();
         this.rows = this.sorted.stream()
                 .map(item -> Candidate.token(title.apply(item), unusable.apply(item).orElseGet(() -> hint.apply(item))))
@@ -38,11 +47,12 @@ final class Choices<T> {
                 .map(item -> unusable.apply(item).isPresent() ? looks.apply(item).dimmed() : looks.apply(item))
                 .toList();
         this.usable = this.sorted.stream().map(item -> unusable.apply(item).isEmpty()).toList();
+        this.tooltips = this.sorted.stream().map(tooltips).toList();
     }
 
     /**
      * Terms grouped by type and then by title, each shown with its icon and hinted with its type, written in the
-     * type's frame; {@code byType} orders the groups.
+     * type's frame, its tooltip saying what it does; {@code byType} orders the groups.
      */
     static <T extends Term> Choices<T> ofTerms(List<T> terms, Comparator<T> byType, Function<T, String> typeLabel,
             Function<T, Palette> typeFrame, Function<T, IconFace> faces) {
@@ -60,7 +70,8 @@ final class Choices<T> {
                         g2.translate(-TermIconPainter.MENTION / 2.0, -TermIconPainter.MENTION / 2.0);
                         TermIconPainter.paint(g2, face, TermIconPainter.MENTION);
                     }), TermIconPainter.ink(face.tone()), TermIconPainter.ink(typeFrame.apply(term)));
-                }, unusable);
+                }, unusable, term -> Optional.of(new SheetTooltip(TooltipKey.ofTerm("choice", term),
+                        TermSheets.of(faces.apply(term), term, term.describe(), List.of()))));
     }
 
     List<Candidate> rows() {
@@ -86,6 +97,11 @@ final class Choices<T> {
 
     RowLook lookAt(int index) {
         return this.looks.get(index);
+    }
+
+    /** What hovering the row at {@code index} shows, whether or not it can be taken. */
+    Optional<SheetTooltip> tooltipAt(int index) {
+        return this.tooltips.get(index);
     }
 
     /** Whether the row at {@code index} can be taken. */
