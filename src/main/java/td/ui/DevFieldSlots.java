@@ -28,7 +28,7 @@ import java.util.function.Function;
 final class DevFieldSlots<T> {
 
     private static final int SLOTS = DevField.MOST_PER_ENTRY;
-    private static final int FIELD_COLUMNS = 4;
+    private static final int FIELD_COLUMNS = 3;
     private static final int GAP = 4;
 
     private final Function<T, List<DevField>> fieldsOf;
@@ -39,14 +39,16 @@ final class DevFieldSlots<T> {
 
     private T shown;
 
-    /** {@code items} are every item that may be chosen, so each slot is as wide as the widest label any of them has. */
+    /** {@code items} are every item that may be chosen, so each slot is as wide as the widest label any of them puts there. */
     DevFieldSlots(List<T> items, Function<T, List<DevField>> fieldsOf, T initial) {
         this.fieldsOf = fieldsOf;
         this.panel.setOpaque(false);
         FontMetrics metrics = this.panel.getFontMetrics(Hud.LABEL_FONT);
-        int labelWidth = items.stream().flatMap(item -> fieldsOf.apply(item).stream())
-                .mapToInt(field -> metrics.stringWidth(field.label())).max().orElse(0);
         for (int slot = 0; slot < SLOTS; slot++) {
+            int index = slot;
+            // Only as wide as the labels this slot ever shows: the row has no room to spare.
+            int labelWidth = items.stream().map(fieldsOf).filter(fields -> fields.size() > index)
+                    .mapToInt(fields -> metrics.stringWidth(fields.get(index).label())).max().orElse(0);
             JLabel label = new JLabel("", SwingConstants.RIGHT);
             label.setFont(Hud.LABEL_FONT);
             label.setForeground(Hud.FOREGROUND);

@@ -26,7 +26,8 @@ import java.util.stream.IntStream;
  * A list of candidates hung on the window's popup layer by the control it serves: a scrolling column of a few rows,
  * or every row at once, in as many columns as the window's height needs. The pointer highlights a row, the wheel
  * moves the highlight and a click takes the row. A row with a look shows its icon and colours, and rows whose hints
- * differ are ruled apart. A row that can't be taken is never highlighted.
+ * differ are ruled apart. A row that can't be taken is never highlighted, and rows that can't are ruled apart only
+ * from those that can.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class SuggestionList extends JComponent {
@@ -222,6 +223,18 @@ final class SuggestionList extends JComponent {
         return true;
     }
 
+    /**
+     * Whether a rule goes above row {@code index}: its hint differs from the row above's, or one of the two can be
+     * taken and the other can't. Rows that can't be taken are hinted with why, so their hints don't rule them apart.
+     */
+    boolean startsGroup(int index) {
+        boolean usable = this.usable.test(index);
+        if (usable != this.usable.test(index - 1)) {
+            return true;
+        }
+        return usable && !this.rows.get(index).hint().equals(this.rows.get(index - 1).hint());
+    }
+
     private int columnWidth() {
         FontMetrics metrics = getFontMetrics(Hud.LABEL_FONT);
         int widest = 0;
@@ -263,7 +276,7 @@ final class SuggestionList extends JComponent {
                 g2.setColor(SELECTED_FILL);
                 g2.fillRect(left + 1, y, columnWidth - 2, ROW_HEIGHT);
             }
-            if (line > 0 && !row.hint().equals(this.rows.get(this.top + i - 1).hint())) {
+            if (line > 0 && this.startsGroup(this.top + i)) {
                 g2.setColor(Hud.BORDER_IDLE);
                 g2.drawLine(left + PADDING, y, left + columnWidth - PADDING, y);
             }
