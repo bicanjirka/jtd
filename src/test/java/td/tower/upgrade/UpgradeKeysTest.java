@@ -25,12 +25,12 @@ class UpgradeKeysTest {
     }
 
     @Test
-    void theBaseChainIsOneAndTheRangeLineTwoOnEveryTower() {
+    void theCoreChainIsOneAndTheRangeLineTwoOnEveryTower() {
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             UpgradeTree tree = treeOf(type);
 
-            assertThat(tree.nodesIn(UpgradeSlot.BASE)).allSatisfy(node -> assertThat(tree.keyOf(node))
-                    .isEqualTo(node.id().startsWith(StandardBaseSlot.RANGE_ID) ? 2 : 1));
+            assertThat(tree.nodesIn(UpgradeSlot.CORE)).allSatisfy(node -> assertThat(tree.keyOf(node)).isEqualTo(1));
+            assertThat(tree.nodesIn(UpgradeSlot.BASE)).allSatisfy(node -> assertThat(tree.keyOf(node)).isEqualTo(2));
         }
     }
 

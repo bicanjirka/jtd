@@ -192,7 +192,7 @@ class TowerSheetTextTest {
     void anUpgradeShowsInTheStatsItRaisesWhileTheUpgradesPanelNamesIt() {
         this.world.economy().startEconomy(1000, 5);
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        UpgradeNode range = sniper.offeredUpgrades(this.world).getFirst();
+        UpgradeNode range = UpgradePaths.named(sniper, "Range");
 
         sniper.buyUpgrade(range);
 

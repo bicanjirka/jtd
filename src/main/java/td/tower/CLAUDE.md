@@ -166,12 +166,12 @@
 
 ## Upgrade tree
 
-- Slots `BASE` (always `StandardBaseSlot.nodes`: the Range line and Attune -> Awaken ->
-  Transcendent), `HEAD` (two chains, plus an extra node that excludes nothing) and `SPECIAL` (one
-  set of up to three, or one set per chain). Content per tower comes from
+- Slots `CORE` and `BASE` (always `StandardBaseSlot.nodes`: Attune -> Awaken -> Transcendent, and the
+  Range line), `HEAD` (two chains, plus an extra node that excludes nothing) and `SPECIAL` (one
+  set of up to three, or one set per chain). Core nodes keep their `base.` ids, which saves store. Content per tower comes from
   `docs/features/FEATURE-tower-specialization-abilities.md` and the tower-rework feature requests.
 - Build a node at its step: `UpgradeTier.HEAD_2.node(id, name, PRICE)` sets its slot, its price
-  (a multiple of the list price), its XP (the gate table) and the base node that opens it;
+  (a multiple of the list price), its XP (the gate table) and the Core node that opens it;
   `after(previous)` adds its line. Then `withModifiers`/`withGate`. `requires`
   decides whether a node is offered. Once offered it needs its `xp` and its `gate`, a purpose or
   layout condition (`always()`, `ClusterCondition`, `TranscendentCondition`) whose `progress()`
@@ -180,13 +180,13 @@
   `specials` for a special set), never `slotEmpty` in `requires`: the tree enforces it and the
   panel draws it. Pass `StandardBaseSlot.nodes` a tree's level III heads; without any, the tree
   has no Transcendent and no Range III.
-- A node's number key comes from its place in the tree (`UpgradeTree.keyOf`): 1 the chain, 2 Range,
+- A node's number key comes from its place in the tree (`UpgradeTree.keyOf`): 1 the Core chain, 2 Range,
   3 the extra line, 4 and 5 a choice's two sides, 6-8 a special set. A tree that leaves a node
   without a key (a three-way head choice, four specials opened alike) is rejected.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel lists offered nodes.
 - A mechanic says what it adds (`describe()`), built from its own constants; a node carries no note but the
-  base chain's structural text. The Upgrades panel lists `Tower.bonusesOf(node)`: the node's data rows,
+  Core chain's structural text. The Upgrades panel lists `Tower.bonusesOf(node)`: the node's data rows,
   then its mechanics' words. A number a mechanic's words quote lives in the mechanic, or in the delegate or effect
   rule it describes, never in the tower class.
 - `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
@@ -205,7 +205,7 @@
   `hitAdjustment(...)` to each hit it computes and reports each landed attack with `report(...)` after
   its mechanics settled it; hit bonuses add. A hit aimed at one enemy is `asAimed()` and lands through `landHit`;
   a dodge is reported with `reportDodge(...)` instead, never settled by mechanics that answer a landed hit.
-- Never check `owns(...)` in tower code except for the base chain; Checkstyle rejects it.
+- Never check `owns(...)` in tower code except for the Core chain; Checkstyle rejects it.
 - A node that adds a mechanic brings a `*Mechanic` class, in the tower's own package. A static `MechanicCatalogue`
   says which mechanics each node brings, and the tower's `OwnedMechanics` builds its own. Mechanics run in
   purchase order through `refineSpec` (and the tower's per-hit hooks); they are pure (no tower, no

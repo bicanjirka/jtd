@@ -70,6 +70,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     /** An upgrade slot's colour role, for its pips, chevrons and info rows. */
     static Palette slotPaletteFor(UpgradeSlot slot) {
         return switch (slot) {
+            case CORE -> Palette.TOWER_UPGRADE_CORE;
             case BASE -> Palette.TOWER_UPGRADE_BASE;
             case HEAD -> Palette.TOWER_UPGRADE_HEAD;
             case SPECIAL -> Palette.TOWER_UPGRADE_SPECIAL;

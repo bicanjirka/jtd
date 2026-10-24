@@ -4,11 +4,11 @@ import td.tower.TowerModifiers;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
- * The {@code BASE} slot every tower shares: the Range line, and the chain Attune, Awaken,
- * Transcendent that opens the other slots step by step (see {@link UpgradeTier#openedBy()}).
+ * The two slots every tower shares: {@code BASE}, the Range line, and {@code CORE}, the chain Attune,
+ * Awaken, Transcendent that opens the other slots step by step (see {@link UpgradeTier#openedBy()}). The
+ * Core nodes keep their {@code base.} ids so saved games still load them.
  */
 public final class StandardBaseSlot {
 
@@ -22,18 +22,11 @@ public final class StandardBaseSlot {
     private static final float RANGE_BONUS = 0.15f;
     static final float RANGE_STEP_BONUS = 0.1f;
 
-    private static final Set<String> RANGE_LINE_IDS = Set.of(RANGE_ID, RANGE_2_ID, RANGE_3_ID);
-
     private StandardBaseSlot() {
     }
 
-    /** Whether {@code node} is Range, Range II or Range III rather than a step of the chain. */
-    static boolean isRangeLine(UpgradeNode node) {
-        return RANGE_LINE_IDS.contains(node.id());
-    }
-
     /**
-     * The base slot of a tower listed at {@code listPrice} with {@code baseRange} cells of range: Range I
+     * The shared slots of a tower listed at {@code listPrice} with {@code baseRange} cells of range: Range I
      * and II, Attune and Awaken, and Range III and Transcendent once the tree has a level III head for
      * Transcendent to need.
      */

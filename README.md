@@ -41,7 +41,7 @@ Buy a tower from the toolbar on the right (or with `q`–`t`), then click a buil
 cell to place it; hovering a toolbar button opens a tooltip of the tower, and the side panel shows
 it in full while you place it. The click that builds a tower selects it, as does clicking a placed
 tower later: the side panel shows its stats and its own upgrade
-tree — three slots, `base`/`head`/`special`, each offering a small number of nodes to buy.
+tree — four slots, `core`/`base`/`head`/`special`, drawn whole as a talent tree.
 Start each wave yourself when you are ready — waves do not auto-advance.
 
 ### Controls
@@ -134,9 +134,9 @@ The price is the first copy's: each copy of a tower already on the board makes t
 15% more, and the shop shows the current price. Selling refunds three quarters of what the tower
 and its upgrades cost.
 
-Every tower, the Aura included, has its own upgrade tree of three slots, shown in place of the
-wave preview once the tower is selected. `base` holds three Range steps and the chain Attune ->
-Awaken -> Transcendent: Attune opens the first two levels of `head`, Awaken opens level III and
+Every tower, the Aura included, has its own upgrade tree of four slots, shown in place of the
+wave preview once the tower is selected. `core` holds the chain Attune -> Awaken -> Transcendent and
+`base` three Range steps: Attune opens the first two levels of `head`, Awaken opens level III and
 a special, and Transcendent (once a special and a level III head are owned) opens Range III and a
 second special. `head` offers two chains that exclude each other; `special` offers one to three
 specializations, of which a tower keeps one, or two once Transcendent. Past the first steps a

@@ -92,9 +92,9 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
         return lines.entrySet().stream().map(line -> new UpgradeLine(line.getKey(), line.getValue())).toList();
     }
 
-    /** The node whose art a button or line for {@code node} shows: a level IV or special its own, else its line's first. */
+    /** The node whose art a node or line for {@code node} shows: a Core step, level IV or special its own, else its line's first. */
     public UpgradeNode artNodeOf(UpgradeNode node) {
-        return node.tier() == UpgradeTier.HEAD_4 || node.tier() == UpgradeTier.SPECIAL ? node : this.firstOf(node);
+        return node.tier().hasOwnArt() ? node : this.firstOf(node);
     }
 
     /** The node that starts {@code node}'s line: back along the prerequisite one tier step before, while there is one. */
@@ -159,7 +159,7 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
     }
 
     /**
-     * The number key that buys {@code node}, the same for every tower: 1 the Attune, Awaken, Transcendent chain,
+     * The number key that buys {@code node}, the same for every tower: 1 the Core chain (Attune, Awaken, Transcendent),
      * 2 the Range line, 3 the head line that does not branch, 4 and 5 the two head lines that exclude each other
      * (and, past them, the two level-IV nodes that exclude each other), 6 to 8 the specials a tower can reach
      * together.
@@ -171,7 +171,8 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
     /** 0 for a node outside the shape {@link #keyOf(UpgradeNode)} numbers, which the constructor rejects. */
     private static int keyOf(UpgradeNode node, List<UpgradeNode> nodes, List<ExclusiveChoice> choices) {
         return switch (node.slot()) {
-            case BASE -> StandardBaseSlot.isRangeLine(node) ? RANGE_KEY : CHAIN_KEY;
+            case CORE -> CHAIN_KEY;
+            case BASE -> RANGE_KEY;
             case HEAD -> headKeyOf(node, nodes, choices);
             case SPECIAL -> specialKeyOf(node, nodes);
         };

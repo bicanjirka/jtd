@@ -80,7 +80,7 @@ final class UpgradeSheetText {
             return name;
         }
         return switch (slot) {
-            case BASE -> name;
+            case CORE, BASE -> name;
             case HEAD -> owned.owns(StandardBaseSlot.ATTUNE_ID) ? name : name + ": needs Attune";
             case SPECIAL -> owned.owns(StandardBaseSlot.AWAKEN_ID) ? name + ": choose a chain first"
                     : name + ": needs Awaken";

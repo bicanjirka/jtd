@@ -41,7 +41,7 @@ class UpgradeTreeCatalogueTest {
             List<UpgradeNode> offered = tower.offeredUpgrades(this.context);
 
             assertThat(offered).as("%s's initially offered nodes", type).extracting(UpgradeNode::id)
-                    .containsExactly(StandardBaseSlot.RANGE_ID, StandardBaseSlot.ATTUNE_ID);
+                    .containsExactly(StandardBaseSlot.ATTUNE_ID, StandardBaseSlot.RANGE_ID);
         }
     }
 

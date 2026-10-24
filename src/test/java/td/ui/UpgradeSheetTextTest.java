@@ -76,7 +76,7 @@ class UpgradeSheetTextTest {
     void aButtonShowsItsKeyNameAndPriceWhenItCanBeBought() {
         this.world.economy().startEconomy(100, 5);
 
-        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("1  Range\t$30");
+        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("2  Range\t$30");
         assertThat(this.offer(RANGE).buyable()).isTrue();
     }
 
@@ -93,7 +93,7 @@ class UpgradeSheetTextTest {
     void anUnaffordableButtonSaysWhatItNeeds() {
         this.world.economy().startEconomy(20, 5);
 
-        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("1  Range\tneed $30");
+        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("2  Range\tneed $30");
     }
 
     @Test
@@ -150,7 +150,7 @@ class UpgradeSheetTextTest {
                 .withChoice(ExclusiveChoice.oneOf(OPTICS, EYE));
         FakeTower fresh = this.choosing();
         FakeTower awakened = FakeTower.offering(this.world, 2, 2, perChain);
-        perChain.nodesIn(UpgradeSlot.BASE).stream()
+        perChain.nodesIn(UpgradeSlot.CORE).stream()
                 .filter(n -> n.id().equals(StandardBaseSlot.ATTUNE_ID) || n.id().equals(StandardBaseSlot.AWAKEN_ID))
                 .forEach(awakened::buyUpgrade);
 
