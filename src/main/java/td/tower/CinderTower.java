@@ -217,6 +217,11 @@ public final class CinderTower extends AbstractTower {
         this.mechanics.add(node);
     }
 
+    @Override
+    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
+        this.mechanics.remove(removed);
+    }
+
     /** How the cone and the burn are shaped, as the mechanics in {@code owned} make them. */
     private CinderSpec spec(List<CinderMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());

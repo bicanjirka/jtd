@@ -189,7 +189,8 @@
   Core chain's structural text. The Upgrades panel lists `Tower.bonusesOf(node)`: the node's data rows,
   then its mechanics' words. A number a mechanic's words quote lives in the mechanic, or in the delegate or effect
   rule it describes, never in the tower class.
-- `buyUpgrade` is the only entry point and is check-and-charge (returns `false` without effect).
+- `buyUpgrade` (one node) and `buyPath` (a node with every node it needs, one charge) are the only ways in,
+  and `downgrade` the only way out; all three are check-and-act (they return `false` without effect).
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
 - Pass `StandardBaseSlot.nodes` the tower's base range (Range nodes add a share of it, in cells) and a
   `BaseSlotMechanics` for what Attune, Awaken and Range III add to a tower.

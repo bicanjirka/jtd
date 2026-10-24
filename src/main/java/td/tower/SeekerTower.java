@@ -212,6 +212,11 @@ public final class SeekerTower extends AbstractTower {
         this.mechanics.add(node);
     }
 
+    @Override
+    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
+        this.mechanics.remove(removed);
+    }
+
     /** Whom it may fire at, how it picks and what its nest holds, as the mechanics in {@code owned} make it. */
     private SeekerSpec spec(List<SeekerMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
@@ -275,6 +280,13 @@ public final class SeekerTower extends AbstractTower {
         this.clock.advance(this.attackRate());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
+        }
+    }
+
+    @Override
+    protected void forgetRemovedUpgrades(List<UpgradeNode> removed) {
+        if (!this.nest(this.spec(this.mechanics.all())).isActive()) {
+            this.nest.empty();
         }
     }
 

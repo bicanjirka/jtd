@@ -356,6 +356,17 @@ class SeekerTowerTest {
         return tower;
     }
 
+    @Test
+    void downgradingTheNodeThatBuiltTheNestLetsItsStoredMissilesGo() {
+        SeekerTower tower = this.attunedTower();
+        int tick = tickUntilNestHolds(tower, 1, 1);
+
+        tower.downgrade(UpgradePaths.named(tower, "Attune"));
+        tower.beginTick(tick);
+
+        assertThat(tower.getNestStored()).isZero();
+    }
+
     /** Ticks {@code tower} from {@code from} until its nest holds {@code stored} missiles. */
     private static int tickUntilNestHolds(SeekerTower tower, int from, int stored) {
         int tick = from;

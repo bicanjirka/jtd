@@ -147,6 +147,11 @@ public final class AuraTower extends AbstractTower {
         this.mechanics.add(node);
     }
 
+    @Override
+    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
+        this.mechanics.remove(removed);
+    }
+
     /** What the owned mechanics make this aura do, folded once per set of mechanics. */
     private AuraSpec spec() {
         List<AuraMechanic> owned = this.mechanics.all();

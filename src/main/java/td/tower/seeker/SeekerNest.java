@@ -21,6 +21,11 @@ public final class SeekerNest {
     private int gapLeft;
     private int ticksSinceLaunch = IDLE_CAP_TICKS;
 
+    /** Lets every stored missile go, as a nest that is no longer there. */
+    public void empty() {
+        this.stored = 0;
+    }
+
     public int stored() {
         return this.stored;
     }

@@ -203,6 +203,11 @@ public final class PulseTower extends AbstractTower {
         this.mechanics.add(node);
     }
 
+    @Override
+    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
+        this.mechanics.remove(removed);
+    }
+
     /** Whom the field touches and how Toll builds, as the mechanics in {@code owned} make it and the deaths inside widen it. */
     private PulseSpec spec(List<PulseMechanic> owned) {
         PulseSpec spec = this.spec(owned, this.rangeReal());
