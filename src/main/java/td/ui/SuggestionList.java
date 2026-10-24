@@ -12,12 +12,14 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.Serial;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
@@ -207,20 +209,36 @@ final class SuggestionList extends JComponent {
         layers.repaint();
     }
 
-    /** Highlights the row at ({@code x}, {@code y}), and answers whether one is there. */
+    /** Highlights the row at ({@code x}, {@code y}), and answers whether one that can be taken is there. */
     private boolean highlightAt(int x, int y) {
-        int column = x / Math.max(1, getWidth() / this.columns);
-        int line = Math.floorDiv(y - 1, ROW_HEIGHT);
-        int index = this.top + column * this.perColumn + line;
-        if (y < 1 || line >= this.perColumn || column >= this.columns || index >= this.rows.size()
-                || !this.usable.test(index)) {
+        OptionalInt index = this.rowAt(new Point(x, y));
+        if (index.isEmpty() || !this.usable.test(index.getAsInt())) {
             return false;
         }
-        if (index != this.selected) {
-            this.selected = index;
+        if (index.getAsInt() != this.selected) {
+            this.selected = index.getAsInt();
             repaint();
         }
         return true;
+    }
+
+    /** The row shown at {@code point}, whether or not it can be taken; empty off every row. */
+    OptionalInt rowAt(Point point) {
+        int column = point.x / Math.max(1, getWidth() / this.columns);
+        int line = Math.floorDiv(point.y - 1, ROW_HEIGHT);
+        int index = this.top + column * this.perColumn + line;
+        if (point.x < 0 || point.y < 1 || line >= this.perColumn || column >= this.columns || index >= this.rows.size()) {
+            return OptionalInt.empty();
+        }
+        return OptionalInt.of(index);
+    }
+
+    /** Where the shown row {@code index} is painted. */
+    Rectangle rowBounds(int index) {
+        int shown = index - this.top;
+        int columnWidth = getWidth() / this.columns;
+        return new Rectangle((shown / this.perColumn) * columnWidth, 1 + (shown % this.perColumn) * ROW_HEIGHT,
+                columnWidth, ROW_HEIGHT);
     }
 
     /**

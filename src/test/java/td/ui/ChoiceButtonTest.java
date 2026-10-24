@@ -2,6 +2,11 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import td.fixtures.FakeTerm;
+import td.term.TermText;
+import td.ui.render.IconFace;
+import td.ui.render.Palette;
+import td.ui.render.SheetLine;
 
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
@@ -15,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -32,11 +38,19 @@ class ChoiceButtonTest {
     private static final int BUTTON_HEIGHT = 20;
     /** A list row's height, so a window can be made exactly two rows short. */
     private static final int ROW_HEIGHT = 16;
+    private static final TermText SLOWS = TermText.of("slows what it hits");
+    private static final FakeTerm ASH = new FakeTerm("t.ash", "Ash", TermText.of("burns what it hits"));
+    private static final FakeTerm BOG = new FakeTerm("t.bog", "Bog", SLOWS);
 
     private final JRootPane root = new JRootPane();
     private final AtomicInteger closed = new AtomicInteger();
     private final ChoiceButton<String> choice = new ChoiceButton<>(choices(BRAVO, ALPHA, BETA), ALPHA,
             this.closed::incrementAndGet);
+    /** Ash then Bog. */
+    private final ChoiceButton<FakeTerm> terms = new ChoiceButton<>(Choices.ofTerms(List.of(BOG, ASH),
+            Comparator.comparing(term -> ""), term -> "", term -> Palette.TERM_FRAME_HEX,
+            term -> IconFace.of(term.key(), "", Palette.ENEMY_CIRCLE, Palette.TERM_FRAME_HEX)), ASH, () -> {
+            });
 
     ChoiceButtonTest() {
         this.root.getContentPane().setLayout(null);
@@ -175,6 +189,47 @@ class ChoiceButtonTest {
         assertThat(this.openList()).isNotNull();
     }
 
+    @Test
+    void hoveringARowOfTheOpenListOpensATooltipSayingWhatItsTermDoes() {
+        TooltipLayer tooltips = this.offerTermsWithTooltips();
+        this.terms.toggle();
+
+        this.hoverSecondRow();
+        tooltips.openPending();
+
+        assertThat(this.tooltipPanel().sheet().lines()).contains(SheetLine.Sentence.of(SLOWS.asSentence()));
+    }
+
+    @Test
+    void takingARowClosesTheTooltipItsHoverOpened() {
+        TooltipLayer tooltips = this.offerTermsWithTooltips();
+        this.terms.toggle();
+        this.hoverSecondRow();
+        tooltips.openPending();
+
+        this.press(KeyEvent.VK_ENTER);
+
+        assertThat(this.root.getLayeredPane().getComponentsInLayer(JLayeredPane.POPUP_LAYER)).isEmpty();
+    }
+
+    private TooltipLayer offerTermsWithTooltips() {
+        TooltipLayer tooltips = new TooltipLayer(this.root.getLayeredPane(), TooltipLayerTest.NEVER);
+        this.root.getContentPane().add(this.terms.component());
+        this.terms.component().setBounds(0, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT);
+        this.terms.setTooltips(tooltips);
+        return tooltips;
+    }
+
+    private void hoverSecondRow() {
+        Component list = this.openList();
+        list.dispatchEvent(new MouseEvent(list, MouseEvent.MOUSE_MOVED, 0, 0, 5, 1 + ROW_HEIGHT + ROW_HEIGHT / 2, 0, false));
+    }
+
+    private TooltipPanel tooltipPanel() {
+        return Arrays.stream(this.root.getLayeredPane().getComponentsInLayer(JLayeredPane.POPUP_LAYER))
+                .filter(TooltipPanel.class::isInstance).map(TooltipPanel.class::cast).findFirst().orElseThrow();
+    }
+
     private static Choices<String> choices(String... titles) {
         return new Choices<>(List.of(titles), Comparator.naturalOrder(), title -> title, title -> "", ChoiceButtonTest::look);
     }
@@ -190,9 +245,10 @@ class ChoiceButtonTest {
         }), Color.WHITE, Color.GRAY);
     }
 
+    /** The open list, not a tooltip it opened on the same layer. */
     private Component openList() {
-        Component[] popups = this.root.getLayeredPane().getComponentsInLayer(JLayeredPane.POPUP_LAYER);
-        return popups.length == 0 ? null : popups[0];
+        return Arrays.stream(this.root.getLayeredPane().getComponentsInLayer(JLayeredPane.POPUP_LAYER))
+                .filter(SuggestionList.class::isInstance).findFirst().orElse(null);
     }
 
     private void press(int keyCode) {

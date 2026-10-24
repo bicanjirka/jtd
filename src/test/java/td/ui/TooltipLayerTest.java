@@ -29,7 +29,7 @@ class TooltipLayerTest {
 
     private static final int WIDTH = 184;
     /** The tests open and close tooltips themselves, so no timer may do it for them, during a test or after. */
-    private static final TooltipDelays NEVER = new TooltipDelays(Integer.MAX_VALUE, Integer.MAX_VALUE);
+    static final TooltipDelays NEVER = new TooltipDelays(Integer.MAX_VALUE, Integer.MAX_VALUE);
 
     private final JLayeredPane layer = new JLayeredPane();
     private final TooltipLayer tooltips = new TooltipLayer(this.layer, NEVER);

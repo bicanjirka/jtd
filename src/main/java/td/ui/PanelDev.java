@@ -156,9 +156,11 @@ public class PanelDev extends JPanel {
         initComponents();
     }
 
-    /** The layer the preview enemies' tooltips open on. */
+    /** The layer the preview enemies' tooltips, and those of the effects and buffs to choose from, open on. */
     public void setTooltips(TooltipLayer tooltips) {
         this.preview.setTooltips(tooltips);
+        this.effectChoice.setTooltips(tooltips);
+        this.buffChoice.setTooltips(tooltips);
     }
 
     public void setGameWorld(GameWorld world, DevControls dev) {
@@ -380,7 +382,8 @@ public class PanelDev extends JPanel {
                 shows its own fields, and keeps what was
                 typed in them. A greyed-out
                 one says why the panel can't
-                apply it.""");
+                apply it. Hover one in the
+                list to see what it does.""");
         return text.toString();
     }
 

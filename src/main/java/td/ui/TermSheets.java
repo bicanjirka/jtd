@@ -22,8 +22,13 @@ final class TermSheets {
 
     /** {@code term}'s tooltip: its title line, {@code meaning} as a sentence, then {@code more}. */
     static InfoSheet of(Term term, TermText meaning, List<SheetLine> more) {
+        return of(TermLooks.faceOf(term), term, meaning, more);
+    }
+
+    /** The same, headed by {@code face}. */
+    static InfoSheet of(IconFace face, Term term, TermText meaning, List<SheetLine> more) {
         List<SheetLine> lines = new ArrayList<>();
-        lines.add(title(term, ""));
+        lines.add(new SheetLine.IconTitle(face, term.title(), face.tone(), ""));
         lines.add(SheetLine.Sentence.of(meaning.asSentence()));
         lines.addAll(more);
         return new InfoSheet(lines);

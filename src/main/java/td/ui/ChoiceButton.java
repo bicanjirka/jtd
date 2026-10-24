@@ -9,6 +9,7 @@ import javax.swing.KeyStroke;
 
 import java.awt.Dimension;
 import java.awt.FontMetrics;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -19,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * A button showing the chosen item's icon and title in its colours; a click opens the list of every item, all of it
@@ -39,6 +41,8 @@ final class ChoiceButton<T> {
 
     private Choices<T> choices;
     private T chosen;
+    private Runnable closeTooltips = () -> {
+    };
 
     /** {@code onClosed} runs when Enter, Space, Esc or a click closes the list, so the keys can go elsewhere. */
     ChoiceButton(Choices<T> choices, T initial, Runnable onClosed) {
@@ -90,6 +94,21 @@ final class ChoiceButton<T> {
         this.show(chosen);
     }
 
+    /** Hovering a row of the open list opens that choice's tooltip on {@code tooltips}; closing the list closes it. */
+    void setTooltips(TooltipLayer tooltips) {
+        tooltips.watchSpots(this.list, this::spotAt);
+        this.closeTooltips = tooltips::closeAll;
+    }
+
+    private Optional<TooltipSpot> spotAt(Point point) {
+        OptionalInt row = this.list.rowAt(point);
+        if (row.isEmpty()) {
+            return Optional.empty();
+        }
+        return this.choices.tooltipAt(row.getAsInt())
+                .map(tooltip -> new TooltipSpot(tooltip, this.list.rowBounds(row.getAsInt())));
+    }
+
     JComponent component() {
         return this.button;
     }
@@ -124,7 +143,11 @@ final class ChoiceButton<T> {
         this.onClosed.run();
     }
 
+    /** A list taken down under the pointer never hears it leave, so the tooltip it opened is closed here. */
     private void close() {
+        if (this.list.isHung()) {
+            this.closeTooltips.run();
+        }
         this.list.takeDown();
     }
 
