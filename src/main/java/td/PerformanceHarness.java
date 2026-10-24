@@ -1,7 +1,9 @@
 package td;
 
 import td.cell.CellGrid;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyObservation;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.Tower;
@@ -16,6 +18,7 @@ import td.util.TickRate;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,7 +26,9 @@ import java.util.Set;
  * Headless performance run: fills every buildable cell of the last built-in level with towers,
  * plays it to the end several times, and reports tick time, frame-build time and allocation per
  * frame. A tool run on demand, not a test. The argument {@code zones} fills the board with only the
- * towers that leave ground zones, each with the upgrades that make the most of them.
+ * towers that leave ground zones, each with the upgrades that make the most of them; {@code observe=one}
+ * keeps one enemy observed and {@code observe=all} every enemy, each writing its trace to the log as the
+ * dev panel's Observe does. Only unobserved play must keep the budget: an observed run shows what a trace costs.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class PerformanceHarness {
@@ -48,6 +53,7 @@ public final class PerformanceHarness {
     private final long[] frameBytes = new long[TICKS_PER_PASS * MEASURED_PASSES];
     private int measured = 0;
     private final boolean zonesOnly;
+    private final Observed observed;
     private int peakEnemies = 0;
     private int peakZones = 0;
     private int towerCount = 0;
@@ -58,13 +64,21 @@ public final class PerformanceHarness {
     private static final Set<String> ZONE_UPGRADES = Set.of("mortar.extra.ballistics.4", "mortar.special.napalm",
             "cinder.head.wide_nozzle.3");
 
-    private PerformanceHarness(boolean zonesOnly) {
+    private PerformanceHarness(boolean zonesOnly, Observed observed) {
         this.zonesOnly = zonesOnly;
+        this.observed = observed;
     }
 
     public static void main(String[] args) {
+        List<String> given = List.of(args);
+        Observed observed = given.contains("observe=all") ? Observed.ALL
+                : given.contains("observe=one") ? Observed.ONE : Observed.NONE;
+        if (observed != Observed.NONE) {
+            // Before anything touches SLF4J, so the traces go to a log of their own rather than a session's.
+            System.setProperty("jtd.logTimestamp", "harness");
+        }
         LevelDefinition level = new BuiltInLevelCatalog().levels().getLast();
-        if (!new PerformanceHarness(args.length > 0 && args[0].equals("zones")).run(level)) {
+        if (!new PerformanceHarness(given.contains("zones"), observed).run(level)) {
             System.exit(1);
         }
     }
@@ -77,7 +91,8 @@ public final class PerformanceHarness {
 
         System.out.println("=== Performance report: " + level.name() + " ===");
         System.out.println("Towers: " + this.towerCount + ", peak alive enemies: " + this.peakEnemies
-                + ", peak zones: " + this.peakZones + ", measured ticks: " + this.measured);
+                + ", peak zones: " + this.peakZones + ", measured ticks: " + this.measured + ", observed: "
+                + this.observed.name().toLowerCase(Locale.ROOT));
         boolean tickOk = printMillis("Tick", Arrays.copyOf(this.tickNanos, this.measured), TICK_P99_BUDGET_MILLIS);
         boolean frameOk = printMillis("Frame build", Arrays.copyOf(this.frameNanos, this.measured),
                 FRAME_P99_BUDGET_MILLIS);
@@ -115,6 +130,7 @@ public final class PerformanceHarness {
             if (engine.inspectSelectedEnemy().isEmpty()) {
                 firstAlive(engine).ifPresent(enemy -> engine.requestEnemySelectionAt((int) enemy.getX(), (int) enemy.getY()));
             }
+            this.observe(engine);
             long tickStart = System.nanoTime();
             engine.doTick(t);
             long tickEnd = System.nanoTime();
@@ -132,6 +148,27 @@ public final class PerformanceHarness {
                 this.peakZones = Math.max(this.peakZones, engine.getGameWorld().zones().zones().size());
             }
         }
+    }
+
+    /** Starts observing what {@link #observed} asks for that isn't yet: one enemy at a time, or every one. */
+    private void observe(GameEngine engine) {
+        if (this.observed == Observed.NONE) {
+            return;
+        }
+        EnemyObservation observation = engine.getGameWorld().enemyObservation();
+        for (EnemyMob mob : engine.getGameWorld().enemies().getEnemies()) {
+            if (this.observed == Observed.ONE && observation.anyObserved()) {
+                return;
+            }
+            DefinedEnemyMob defined = mob.accept(enemy -> enemy);
+            if (!defined.isDead() && !defined.isObserved()) {
+                observation.observe(defined, "harness");
+            }
+        }
+    }
+
+    private enum Observed {
+        NONE, ONE, ALL
     }
 
     /** The first enemy still alive, which a click would select. */

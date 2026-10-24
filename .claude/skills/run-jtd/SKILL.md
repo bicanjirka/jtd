@@ -1,6 +1,6 @@
 ---
 name: run-jtd
-description: Build, run and drive jTD (the Swing tower-defense app) to check what tests can't - Swing wiring (clicks, hover, panel text and layout) in the live window, and board visuals rendered headless. Use when asked to start jTD, screenshot it, click something in it, or visually verify a UI or board-rendering change.
+description: Build, run and drive jTD (the Swing tower-defense app) to check what tests can't - Swing wiring (clicks, hover, panel text and layout) in the live window, and board visuals rendered headless - and trace what happens to an enemy tick by tick (every hit and its reduction steps, effect, heal, cast and its end) in a live game. Use when asked to start jTD, screenshot it, click something in it, visually verify a UI or board-rendering change, or find out why an enemy behaved as it did in play.
 ---
 
 ## Pick the cheapest check
@@ -47,7 +47,8 @@ on `quit` or end of input.
 | `devlabels` | Prints the dev panel's labels: its status line, the script problem and the pointer and clicked cells. |
 | `boardclick <x> <y>` | Clicks board cell (x, y): places the tower chosen with `key`, or selects a tower. |
 | `clickenemy [n]` | Clicks where the `n`-th alive enemy is now and prints its effects. |
-| `enemies` | One line per enemy: alive index, id, rank, health, board px, effects, fate. |
+| `enemies` | One line per enemy: alive index, `#id` (the one its trace lines carry), catalog id, rank, health, board px, effects, fate. |
+| `trace [#id]` | Prints this run's `OBSERVE` lines from its session log: every observed enemy's, or one id's. |
 | `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `armored` for Armored) at the path start. |
 | `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `resonating`, `fractured`, `dazed`, `saturated`, `charged`, `doom`, `blight`, `contagion`, `rime`, `ash`, `sprinting`) on every alive enemy. |
 | `kill` | Deals lethal damage to every enemy through the real hit path, so on-death abilities fire. |
@@ -73,6 +74,31 @@ clickenemy 0
 list SheetPane   # the Info pane's index, which moves whenever a panel is added
 text 62
 ssboard .claude/skills/run-jtd/shots/selected.png 0 9 4 4
+quit
+EOF
+```
+
+## Tracing an enemy
+
+The dev panel's Observe makes an enemy write one `OBSERVE t=<tick> #<id> <Name> <Rank> <EVENT> ...` line
+per event to the session log until its `END`: `START` (a full stat snapshot), `HIT`/`PERIODIC` with every
+reduction step, `DODGE`, `EFFECT` (requested, shortened, blocked, gained, refreshed, stacks, ended...),
+`HEAL`, `CAST`, `SPAWN`/`HATCH`, `KILLED`, `END` with totals. What it spawns or hatches into is observed
+too. Turn it on with `key alt+m` on a selected enemy (`clickenemy` first), or `key alt+shift+s` before
+spawning from the panel's script box (`key alt+s`, `type 2 armored`, `key enter`); `key alt+shift+m`
+writes a snapshot of every observed enemy. Then `trace` or `trace #12`. While anything is observed the
+game may run slower: a trace never drops a line.
+
+```bash
+cat <<'EOF' | java -cp "$CP" Driver
+level 0
+key ctrl+shift+d
+key alt+shift+s
+key alt+s
+type armored
+key enter
+waitfor ticks 200
+trace
 quit
 EOF
 ```
