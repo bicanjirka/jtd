@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractButton;
@@ -48,6 +50,9 @@ public class Driver {
     private static Robot robot;
 
     public static void main(String[] args) throws Exception {
+        // As td.Main does, before anything touches SLF4J: logback.xml names this run's log after it, and
+        // `trace` reads that log back.
+        System.setProperty("jtd.logTimestamp", "driver-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")));
         robot = new Robot();
         // On the EDT, exactly as td.Main does it: TowerDefense builds its whole component tree
         // in its constructor, and Swing requires that on the Event Dispatch Thread. It asserts
@@ -88,6 +93,7 @@ public class Driver {
             case "ssboard" -> screenshotBoard(rest.trim());
             case "list" -> list(rest.trim());
             case "enemies" -> enemies();
+            case "trace" -> trace(rest.trim());
             case "waitfor" -> waitFor(rest.trim());
             case "click" -> click(Integer.parseInt(rest.trim()));
             case "hover" -> hover(rest);
@@ -202,11 +208,27 @@ public class Driver {
             EnemyInspection inspection = mob.accept(DefinedEnemyMob::inspect);
             String id = mob.accept(m -> m.definition().id());
             String aliveIndex = mob.isDead() ? "-" : String.valueOf(alive++);
-            System.out.println(i + ": alive=" + aliveIndex + " " + id + " " + inspection.rank() + " hp "
+            System.out.println(i + ": alive=" + aliveIndex + " #" + mob.accept(DefinedEnemyMob::id) + " " + id + " "
+                    + inspection.rank() + " hp "
                     + inspection.health() + "/" + inspection.maxHealth() + " at board px " + Math.round(mob.getX())
                     + "," + Math.round(mob.getY()) + " effects " + mob.activeEffectKinds() + " " + inspection.fate());
         }
         System.out.println("OK enemies " + mobs.length);
+    }
+
+    // This run's OBSERVE lines from its session log: every observed enemy's, or one id's ("#12" or "12"). The
+    // log's queues write on their own threads, so a short wait lets the last lines land first.
+    private static void trace(String args) throws Exception {
+        Thread.sleep(300);
+        java.nio.file.Path log = java.nio.file.Path.of("logs", "jTD-" + System.getProperty("jtd.logTimestamp") + ".log");
+        String id = args.isEmpty() ? "" : " #" + args.replace("#", "") + " ";
+        List<String> lines = java.nio.file.Files.readAllLines(log).stream()
+                .filter(line -> line.contains(" OBSERVE t="))
+                .map(line -> line.substring(line.indexOf("OBSERVE t=")))
+                .filter(line -> id.isEmpty() || line.contains(id))
+                .toList();
+        lines.forEach(System.out::println);
+        System.out.println("OK trace " + lines.size());
     }
 
     // Polls instead of sleeping a guessed wall-clock time, which reads the screen too early when
