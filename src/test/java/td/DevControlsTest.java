@@ -13,6 +13,7 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.FakeTower;
 import td.fixtures.LevelFixtures;
 import td.level.LevelOutcome;
+import td.term.Term;
 import td.tower.Tower;
 import td.tower.TowerBuffState;
 import td.tower.TowerFactory;
@@ -406,14 +407,49 @@ class DevControlsTest {
     }
 
     @Test
-    void aBuffGoesOnTheSelectedTowerAndNeedsOne() {
+    void aJamFromThePanelHoldsOnlyTheSelectedTowerJammedUntilItRunsOut() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        Tower jammed = this.placeSniper(1, 1);
+        Tower neighbour = this.placeSniper(2, 1);
+        jammed.setSelected(true);
+        this.dev.runPending();
+        this.dev.grantToSelectedTower(TowerTerm.JAMMED, List.of(0.5f, 30f, 1f));
+        this.dev.runPending();
+
+        this.engine.doTick(1);
+        boolean whileHeld = jammed.isDisrupted();
+        List<Term> shown = jammed.conditions().stream().map(TowerBuffState::term).toList();
+        for (int t = 2; t <= 20; t++) {
+            this.engine.doTick(t);
+        }
+
+        assertThat(whileHeld).isTrue();
+        assertThat(shown).contains(TowerTerm.JAMMED);
+        assertThat(neighbour.isDisrupted()).isFalse();
+        assertThat(jammed.isDisrupted()).isFalse();
+    }
+
+    @Test
+    void aTowerTermThePanelCannotGrantIsRefusedWithItsReason() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         Tower tower = this.placeSniper(1, 1);
-        String withoutSelection = this.dev.grantBuffToSelectedTower(TowerTerm.HASTE, List.of(5f, 50f));
         tower.setSelected(true);
         this.dev.runPending();
 
-        String withSelection = this.dev.grantBuffToSelectedTower(TowerTerm.HASTE, List.of(5f, 50f));
+        String message = this.dev.grantToSelectedTower(TowerTerm.STOKE, List.of());
+
+        assertThat(message).isEqualTo(TowerTerm.STOKE.title() + " " + DevEffects.whyUngrantable(TowerTerm.STOKE).orElseThrow());
+    }
+
+    @Test
+    void aBuffGoesOnTheSelectedTowerAndNeedsOne() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        Tower tower = this.placeSniper(1, 1);
+        String withoutSelection = this.dev.grantToSelectedTower(TowerTerm.HASTE, List.of(5f, 50f));
+        tower.setSelected(true);
+        this.dev.runPending();
+
+        String withSelection = this.dev.grantToSelectedTower(TowerTerm.HASTE, List.of(5f, 50f));
         this.dev.runPending();
 
         assertThat(withoutSelection).isEqualTo("Select a tower first");

@@ -6,6 +6,7 @@ import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.stat.DisruptionAura;
 import td.stat.StatModifiers;
 import td.tower.TowerCapability;
 import td.tower.TowerModifiers;
@@ -19,9 +20,9 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * What the dev panel can put on a unit: every enemy effect, each built from its own {@link DevField fields}, or the
- * reason the panel can't make it work; and the tower buffs it offers. Nothing it makes is credited to a tower: its
- * damage goes through the sink it is given.
+ * What the dev panel can put on a unit: every enemy effect and every tower term, each built from its own
+ * {@link DevField fields}, or the reason the panel can't make it work. Nothing it makes is credited to a tower: an
+ * effect's damage goes through the sink it is given.
  */
 public final class DevEffects {
 
@@ -34,8 +35,16 @@ public final class DevEffects {
     private static final DevField DAMAGE_PER_CELL = new DevField("Dmg/cell", 5f, 0.1f, 100_000f);
     private static final DevField ATTACK_SPEED = new DevField("Speed %", 50f, 1f, 900f);
     private static final DevField DAMAGE_TIMES = new DevField("Damage ×", 3f, 1f, 100f);
+    private static final DevField CRIT_DAMAGE = new DevField("Crit +%", 150f, 1f, 1000f);
+    private static final DevField MAGIC_PIERCE = new DevField("Pierce %", 25f, 1f, 100f);
+    private static final DevField ATTACK_SPEED_LOST = new DevField("Slow %", 30f, 1f, 75f);
+    private static final DevField RANGE_LOST = new DevField("Range -", 1f, 0f, 20f);
     /** A stack field starts at the cap, or at this many for a kind that holds more. */
     private static final int MOST_STACKS_TO_START = 10;
+    /** A dev jam reaches only the tower it is held on: a quarter cell around its centre. */
+    private static final float JAM_REACH_CELLS = 0.25f;
+    private static final String KEPT_BY_THE_TOWER = "the tower keeps it itself";
+    private static final String FROM_AN_UPGRADE = "comes with an upgrade";
 
     private DevEffects() {
     }
@@ -47,18 +56,12 @@ public final class DevEffects {
 
     /** Why the panel can't make {@code kind} work on its own; empty when it can. */
     public static Optional<String> whyUnusable(EffectKind kind) {
-        return switch (offer(kind)) {
-            case Builds builds -> Optional.empty();
-            case Refuses refuses -> Optional.of(refuses.reason());
-        };
+        return offer(kind).refusal();
     }
 
     /** What the panel asks for before it applies {@code kind}, in order; none for a kind it can't make work. */
     public static List<DevField> enemyFields(EffectKind kind) {
-        return switch (offer(kind)) {
-            case Builds builds -> builds.fields();
-            case Refuses refuses -> List.of();
-        };
+        return offer(kind).fields();
     }
 
     /**
@@ -67,13 +70,33 @@ public final class DevEffects {
      * fields}, in order. Its damage goes through {@code sink}, and it is put on by {@code origin}.
      */
     public static List<Effect> enemyEffects(EffectKind kind, List<Float> values, DamageSink sink, AttackOrigin origin) {
-        return switch (offer(kind)) {
-            case Builds builds -> builds.builder().apply(new Inputs(values, sink, origin));
-            case Refuses refuses -> List.of();
-        };
+        return offer(kind).build(new Inputs(values, sink, origin, 0)).orElse(List.of());
     }
 
-    private static Offer offer(EffectKind kind) {
+    /** Every tower term, the ones the panel can't grant among them. */
+    public static List<TowerTerm> towerTerms() {
+        return List.of(TowerTerm.values());
+    }
+
+    /** Why the panel can't grant {@code term}; empty when it can. */
+    public static Optional<String> whyUngrantable(TowerTerm term) {
+        return grant(term).refusal();
+    }
+
+    /** What the panel asks for before it grants {@code term}, in order; none for a term it can't grant. */
+    public static List<DevField> towerFields(TowerTerm term) {
+        return grant(term).fields();
+    }
+
+    /**
+     * What granting {@code term} does to a tower on a board {@code scale} pixels a cell, from {@code values} that fill
+     * its {@link #towerFields fields} in order; empty for a term the panel can't grant.
+     */
+    public static Optional<TowerGrant> towerGrant(TowerTerm term, List<Float> values, int scale) {
+        return grant(term).build(new Inputs(values, DamageSink.none(), AttackOrigin.none(), scale));
+    }
+
+    private static Offer<List<Effect>> offer(EffectKind kind) {
         return switch (kind) {
             case CHILL -> one(List.of(SECONDS, SLOW), in -> Effect.chill(in.value(1) / 100f, in.ticks(0), in.sink()));
             case BURN -> one(List.of(SECONDS, DAMAGE_PER_SECOND), in -> Effect.burn(in.magicPerTick(1), in.ticks(0), in.sink()));
@@ -82,9 +105,9 @@ public final class DevEffects {
                     in -> Effect.soulfire(in.magicPerTick(1), in.ticks(0), in.sink()));
             case BLEEDING -> one(List.of(SECONDS, DAMAGE_PER_CELL),
                     in -> Effect.bleeding(DamageUnits.ofPoints(in.value(1)), in.ticks(0), in.sink()));
-            case SHIELD -> one(List.of(SECONDS, SHIELD_POINTS), in -> Effect.shield(DamageUnits.ofPoints(in.value(1)), in.ticks(0), in.sink()));
-            case HEAL -> one(List.of(SECONDS, HEAL_PER_SECOND),
-                    in -> Effect.heal(in.unitsPerTick(1), in.ticks(0), in.sink()));
+            case SHIELD -> one(List.of(SECONDS, SHIELD_POINTS),
+                    in -> Effect.shield(DamageUnits.ofPoints(in.value(1)), in.ticks(0), in.sink()));
+            case HEAL -> one(List.of(SECONDS, HEAL_PER_SECOND), in -> Effect.heal(in.unitsPerTick(1), in.ticks(0), in.sink()));
             case FREEZE -> timed(Effect::freeze);
             case DAZED -> timed(Effect::dazed);
             case INVISIBLE -> timed(Effect::invisible);
@@ -118,58 +141,71 @@ public final class DevEffects {
             case SCORCHED -> one(List.of(stacks(kind)), in -> Effect.scorched(in.whole(0)));
             case SICKENED -> one(List.of(stacks(kind)), in -> Effect.sickened(in.whole(0)));
             case RIME, ASH, INVERSION, DOOM, CONTAGION, SYMPATHY, RECKONING -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
-            case BLIGHT -> new Builds(List.of(SECONDS, DAMAGE_PER_SECOND), in -> List.of(Effect.hex(kind, in.ticks(0), in.sink()),
+            case BLIGHT -> new Builds<>(List.of(SECONDS, DAMAGE_PER_SECOND), in -> List.of(Effect.hex(kind, in.ticks(0), in.sink()),
                     Effect.poison(in.magicPerTick(1), in.ticks(0), in.sink())));
-            case STILLED -> new Refuses("needs an Obelisk field");
+            case STILLED -> new Refuses<>("needs an Obelisk field");
         };
     }
 
-    /** The tower buffs the panel offers. */
-    public static List<TowerTerm> towerBuffs() {
-        return List.of(TowerTerm.HASTE, TowerTerm.PATIENCE, TowerTerm.CHARGED_SHOT);
-    }
-
-    /** What the panel asks for before it grants {@code term}, in order. */
-    public static List<DevField> buffFields(TowerTerm term) {
-        return buff(term).fields();
-    }
-
-    /** {@code term} built from {@code values}, which fill its {@link #buffFields fields} in order. */
-    public static TowerStatus towerBuff(TowerTerm term, List<Float> values) {
-        return buff(term).builder().apply(new Inputs(values, DamageSink.none(), AttackOrigin.none()));
-    }
-
-    private static BuffRecipe buff(TowerTerm term) {
+    private static Offer<TowerGrant> grant(TowerTerm term) {
         return switch (term) {
-            case HASTE -> new BuffRecipe(List.of(SECONDS, ATTACK_SPEED),
+            case HASTE, RALLY -> status(List.of(SECONDS, ATTACK_SPEED),
                     in -> TowerStatus.timed(term, TowerModifiers.attackSpeed(in.value(1) / 100f), in.ticks(0)));
-            case PATIENCE -> new BuffRecipe(List.of(SHOTS), in -> TowerStatus.nextShots(term, in.whole(0),
+            case FRENZY -> status(List.of(SHOTS, ATTACK_SPEED),
+                    in -> TowerStatus.nextShots(term, in.whole(0), TowerModifiers.attackSpeed(in.value(1) / 100f)));
+            case PATIENCE -> status(List.of(SHOTS), in -> TowerStatus.nextShots(term, in.whole(0),
                     StatModifiers.<TowerStat>none()).withCapability(TowerCapability.GUARANTEED_CRIT));
-            case CHARGED_SHOT -> new BuffRecipe(List.of(SHOTS, DAMAGE_TIMES), in -> TowerStatus.nextShots(term, in.whole(0),
+            case CHARGED_SHOT -> status(List.of(SHOTS, DAMAGE_TIMES), in -> TowerStatus.nextShots(term, in.whole(0),
                     TowerModifiers.damageTimes(in.value(1)).plus(TowerModifiers.armorPenetration(1f))
                             .plus(TowerModifiers.flatPenetration(1f))));
-            default -> throw new IllegalArgumentException(term + " is no buff the panel grants");
+            case DEADEYE_ROUND -> status(List.of(SHOTS, CRIT_DAMAGE), in -> TowerStatus.nextShots(term, in.whole(0),
+                    TowerModifiers.critMultiplier(in.value(1) / 100f)).withCapability(TowerCapability.GUARANTEED_CRIT));
+            case SILVER_ROUND -> status(List.of(SHOTS, MAGIC_PIERCE), in -> TowerStatus.nextShots(term, in.whole(0),
+                    TowerModifiers.magicPenetration(in.value(1) / 100f)).withCapability(TowerCapability.MAGIC_DAMAGE));
+            case JAMMED -> new Builds<>(List.of(SECONDS, ATTACK_SPEED_LOST, RANGE_LOST), in -> new TowerGrant.Jam(in.ticks(0),
+                    new DisruptionAura(JAM_REACH_CELLS * in.scale(), in.value(1) / 100f, in.value(2))));
+            case STEADY_AIM, CRIT_STREAK, FOCUS, BRACKETING, NEST, EVENT_HORIZON, INTERFERENCE, STOKE -> new Refuses<>(KEPT_BY_THE_TOWER);
+            case NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, NUKE_SHELL, CRYO_MISSILE, ARCANE_MISSILE, EMP_MISSILE, TRACER_MISSILE,
+                    PING, SHATTER, ARC, HEX, SHRAPNEL, BOMBLET -> new Refuses<>(FROM_AN_UPGRADE);
+            case AURA, KINSHIP -> new Refuses<>("comes from a Beacon");
+            case LEY_LINE -> new Refuses<>("comes from two Obelisks");
         };
     }
 
-    private static Offer one(List<DevField> fields, Function<Inputs, Effect> builder) {
-        return new Builds(fields, in -> List.of(builder.apply(in)));
+    private static Offer<List<Effect>> one(List<DevField> fields, Function<Inputs, Effect> builder) {
+        return new Builds<>(fields, in -> List.of(builder.apply(in)));
     }
 
-    private static Offer timed(TimedMaker maker) {
+    private static Offer<List<Effect>> timed(TimedMaker maker) {
         return one(List.of(SECONDS), in -> maker.make(in.ticks(0), in.sink()));
     }
 
-    private static Offer stacking(EffectKind kind, StackingMaker maker) {
+    private static Offer<List<Effect>> stacking(EffectKind kind, StackingMaker maker) {
         return one(List.of(SECONDS, stacks(kind)), in -> maker.make(in.whole(1), in.ticks(0), in.sink()));
+    }
+
+    private static Offer<TowerGrant> status(List<DevField> fields, Function<Inputs, TowerStatus> builder) {
+        return new Builds<>(fields, in -> new TowerGrant.Status(builder.apply(in)));
     }
 
     private static DevField stacks(EffectKind kind) {
         return new DevField("Stacks", Math.min(kind.maxStacks(), MOST_STACKS_TO_START), 1f, kind.maxStacks());
     }
 
-    /** What the panel was given for one application: its fields' values, in order. */
-    private record Inputs(List<Float> values, DamageSink sink, AttackOrigin origin) {
+    /** What granting a tower term does: a status the tower holds, or a jam the panel holds on it. */
+    public sealed interface TowerGrant {
+
+        /** A status the tower receives, as another tower would give it. */
+        record Status(TowerStatus status) implements TowerGrant {
+        }
+
+        /** A disruption the panel lays on the tower every tick for {@code ticks}, as a nearby enemy would. */
+        record Jam(int ticks, DisruptionAura aura) implements TowerGrant {
+        }
+    }
+
+    /** What the panel was given for one application: its fields' values, in order, and the board's scale. */
+    private record Inputs(List<Float> values, DamageSink sink, AttackOrigin origin, int scale) {
 
         float value(int field) {
             return this.values.get(field);
@@ -193,16 +229,45 @@ public final class DevEffects {
         }
     }
 
-    private sealed interface Offer permits Builds, Refuses {
+    /** One entry: what it asks for and how it is built, or why the panel can't build it. */
+    private sealed interface Offer<R> permits Builds, Refuses {
+
+        Optional<String> refusal();
+
+        List<DevField> fields();
+
+        Optional<R> build(Inputs inputs);
     }
 
-    private record Builds(List<DevField> fields, Function<Inputs, List<Effect>> builder) implements Offer {
+    private record Builds<R>(List<DevField> fields, Function<Inputs, R> builder) implements Offer<R> {
+
+        @Override
+        public Optional<String> refusal() {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<R> build(Inputs inputs) {
+            return Optional.of(this.builder.apply(inputs));
+        }
     }
 
-    private record Refuses(String reason) implements Offer {
-    }
+    private record Refuses<R>(String reason) implements Offer<R> {
 
-    private record BuffRecipe(List<DevField> fields, Function<Inputs, TowerStatus> builder) {
+        @Override
+        public Optional<String> refusal() {
+            return Optional.of(this.reason);
+        }
+
+        @Override
+        public List<DevField> fields() {
+            return List.of();
+        }
+
+        @Override
+        public Optional<R> build(Inputs inputs) {
+            return Optional.empty();
+        }
     }
 
     private interface TimedMaker {

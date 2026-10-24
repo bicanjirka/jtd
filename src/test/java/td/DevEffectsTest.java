@@ -28,8 +28,8 @@ class DevEffectsTest {
             assertThat(DevEffects.enemyFields(kind)).hasSizeLessThanOrEqualTo(DevField.MOST_PER_ENTRY)
                     .allSatisfy(field -> assertThat(field.problemWith(field.initial())).isEmpty());
         }
-        for (TowerTerm term : DevEffects.towerBuffs()) {
-            assertThat(DevEffects.buffFields(term)).hasSizeLessThanOrEqualTo(DevField.MOST_PER_ENTRY)
+        for (TowerTerm term : DevEffects.towerTerms()) {
+            assertThat(DevEffects.towerFields(term)).hasSizeLessThanOrEqualTo(DevField.MOST_PER_ENTRY)
                     .allSatisfy(field -> assertThat(field.problemWith(field.initial())).isEmpty());
         }
     }
@@ -44,10 +44,27 @@ class DevEffectsTest {
     }
 
     @Test
-    void everyOfferedTowerBuffBuildsAStatusOfItsOwnTerm() {
-        for (TowerTerm term : DevEffects.towerBuffs()) {
-            assertThat(DevEffects.towerBuff(term, initials(DevEffects.buffFields(term))).term()).isEqualTo(term);
+    void everyGrantableTowerTermBuiltFromItsStartingValuesGrantsSomethingAndAStatusCarriesItsOwnTerm() {
+        for (TowerTerm term : DevEffects.towerTerms()) {
+            if (DevEffects.whyUngrantable(term).isEmpty()) {
+                assertThat(DevEffects.towerGrant(term, initials(DevEffects.towerFields(term)), 40)).get()
+                        .satisfies(grant -> {
+                            switch (grant) {
+                                case DevEffects.TowerGrant.Status status -> assertThat(status.status().term()).isEqualTo(term);
+                                case DevEffects.TowerGrant.Jam jam -> assertThat(jam.ticks()).isPositive();
+                            }
+                        });
+            }
         }
+    }
+
+    @Test
+    void anUngrantableTowerTermAsksForNothingAndGrantsNothing() {
+        TowerTerm ungrantable = DevEffects.towerTerms().stream().filter(term -> DevEffects.whyUngrantable(term).isPresent())
+                .findFirst().orElseThrow();
+
+        assertThat(DevEffects.towerFields(ungrantable)).isEmpty();
+        assertThat(DevEffects.towerGrant(ungrantable, List.of(), 40)).isEmpty();
     }
 
     private static List<Float> initials(List<DevField> fields) {
