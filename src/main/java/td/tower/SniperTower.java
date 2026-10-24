@@ -138,7 +138,7 @@ public final class SniperTower extends AbstractTower {
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode SUNDER_ROUNDS = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4b",
             "Sunder Rounds", PRICE)
-            .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(EffectKind.SUNDERED, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
+            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(EffectKind.SUNDERED, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode TRADECRAFT_1 = UpgradeTier.EXTRA_1.node("sniper.extra.tradecraft.1",
             "Tradecraft", PRICE);

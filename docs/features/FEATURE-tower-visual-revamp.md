@@ -175,7 +175,7 @@ and settles back as it reloads.
 | Executioner | an execution has its own visual on the enemy it kills |
 | Ricochet | the bullet visibly bounces from enemy to enemy, each hop an arc like a lobbed grenade, taking time to fly |
 | Headhunter | the head looks different while it aims at an Elite or a Boss |
-| Sunder Rounds | no visual change here; the rule change is in `TODO.md` |
+| Sunder Rounds | no visual change |
 
 Primed shots (Silver Round, Deadeye Round, Charged Shot, Patience) can stack on one shot, so their head
 cues must combine: each readable alongside the others, never one replacing another.
@@ -252,7 +252,6 @@ ripples and spin, the Radar's sweep).
   steps the foundation now shows.
 - The README's tower section describes the pips, the special glow and the rank diamonds, and its tower
   table describes the Burst as instant; both change with this feature.
-- `TODO.md`'s Sunder Rounds entry is a mechanic change kept out of this feature.
 
 ## Constraints and open risks
 
@@ -288,7 +287,6 @@ ripples and spin, the Radar's sweep).
   special has its own touch.
 - New toolbar icons, at most two colours.
 - Spotter Uplink becomes **Spotter**.
-- Sunder Rounds' rule change goes to `TODO.md`, not this feature.
 - The two tooltip bugs ship with this feature.
 
 ## Open questions
