@@ -48,6 +48,7 @@ public final class DevControls implements EconomyListener {
     private final AttackOrigin origin = AttackOrigin.fresh();
     private final AttackProfile attack = AttackProfile.none().asPeriodic().withOrigin(this.origin);
     private final DevHexCaster hexCaster;
+    private final DevJammer jammer;
     private final Queue<Runnable> pending = new ConcurrentLinkedQueue<>();
 
     private volatile DevSelection selection = DevSelection.none();
@@ -61,11 +62,13 @@ public final class DevControls implements EconomyListener {
     public DevControls(GameWorld world) {
         this.world = world;
         this.hexCaster = new DevHexCaster(world, this.attack);
+        this.jammer = new DevJammer(world);
     }
 
-    /** What the panel keeps going on the board by itself, every tick: its hexes' payouts. */
+    /** What the panel keeps going on the board by itself, every tick: its hexes' payouts and its jams. */
     public void doTick(int time) {
         this.hexCaster.doTick(time);
+        this.jammer.doTick();
     }
 
     public void setCredits(int credits) {
@@ -243,21 +246,30 @@ public final class DevControls implements EconomyListener {
     }
 
     /**
-     * {@code values} fill the buff's {@link DevEffects#buffFields fields}, in order.
+     * A buff or a debuff: {@code values} fill the term's {@link DevEffects#towerFields fields}, in order.
      *
      * @return what happened, or why nothing did
      */
-    public String grantBuffToSelectedTower(TowerTerm buff, List<Float> values) {
+    public String grantToSelectedTower(TowerTerm term, List<Float> values) {
+        Optional<String> ungrantable = DevEffects.whyUngrantable(term);
+        if (ungrantable.isPresent()) {
+            return term.title() + " " + ungrantable.get();
+        }
         if (this.selection.kind() != DevSelection.Kind.TOWER) {
             return "Select a tower first";
         }
-        Optional<String> problem = problemWith(DevEffects.buffFields(buff), values);
+        Optional<String> problem = problemWith(DevEffects.towerFields(term), values);
         if (problem.isPresent()) {
             return problem.get();
         }
-        this.pending.add(() -> this.selectedTower()
-                .ifPresent(tower -> tower.receiveStatus(DevEffects.towerBuff(buff, values))));
-        return "Granted " + buff.title() + " to " + this.selection.description();
+        this.pending.add(() -> this.selectedTower().ifPresent(tower -> DevEffects
+                .towerGrant(term, values, this.world.getBoard().scale()).ifPresent(grant -> {
+                    switch (grant) {
+                        case DevEffects.TowerGrant.Status status -> tower.receiveStatus(status.status());
+                        case DevEffects.TowerGrant.Jam jam -> this.jammer.jam(tower, jam.ticks(), jam.aura());
+                    }
+                })));
+        return "Granted " + term.title() + " to " + this.selection.description();
     }
 
     /** The first value that doesn't fit its field, or a count that doesn't match. */

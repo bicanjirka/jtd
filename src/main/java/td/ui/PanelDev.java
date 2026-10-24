@@ -78,9 +78,9 @@ public class PanelDev extends JPanel {
     private static final Choices<EffectKind> ENEMY_EFFECTS = Choices.ofTerms(DevEffects.enemyKinds(),
             Comparator.comparing(EffectKind::category), kind -> kind.category().label(),
             kind -> TermLooks.frameOf(kind.category()), TermLooks::faceOf, DevEffects::whyUnusable);
-    private static final Choices<TowerTerm> TOWER_BUFFS = Choices.ofTerms(DevEffects.towerBuffs(),
+    private static final Choices<TowerTerm> TOWER_TERMS = Choices.ofTerms(DevEffects.towerTerms(),
             Comparator.comparing(TowerTerm::side), term -> sideLabel(term.side()), PanelDev::sideFrame,
-            TermLooks::faceOf);
+            TermLooks::faceOf, DevEffects::whyUngrantable);
     /** Space between sections, and between unrelated controls in a row. */
     private static final int ROW_GAP = 3;
     private static final int CONTROL_GAP = 12;
@@ -96,11 +96,11 @@ public class PanelDev extends JPanel {
     private final HudTextField enemyHealth = new HudTextField("100", 4);
     private final DevFieldSlots<EffectKind> effectFields = new DevFieldSlots<>(DevEffects.enemyKinds(),
             DevEffects::enemyFields, EffectKind.CHILL);
-    private final DevFieldSlots<TowerTerm> buffFields = new DevFieldSlots<>(DevEffects.towerBuffs(),
-            DevEffects::buffFields, TowerTerm.HASTE);
+    private final DevFieldSlots<TowerTerm> buffFields = new DevFieldSlots<>(DevEffects.towerTerms(),
+            DevEffects::towerFields, TowerTerm.HASTE);
     private final ChoiceButton<EffectKind> effectChoice = new ChoiceButton<>(ENEMY_EFFECTS, EffectKind.CHILL,
             () -> this.choiceClosed(this.effectFields, this.effectChoice));
-    private final ChoiceButton<TowerTerm> buffChoice = new ChoiceButton<>(TOWER_BUFFS, TowerTerm.HASTE,
+    private final ChoiceButton<TowerTerm> buffChoice = new ChoiceButton<>(TOWER_TERMS, TowerTerm.HASTE,
             () -> this.choiceClosed(this.buffFields, this.buffChoice));
     private final JLabel towerSelected = label("");
     private final JLabel enemySelected = label("");
@@ -346,16 +346,19 @@ public class PanelDev extends JPanel {
 
                 Selected: click a tower or an
                 enemy on the board. A tower
-                takes XP, a buff and a reset
-                (reset rebuilds it with no
-                upgrades or XP). An enemy takes
+                takes XP, a buff or debuff
+                and a reset (reset rebuilds
+                it with no upgrades or XP).
+                Jammed holds a jam on it, as
+                a nearby enemy would. An
+                enemy takes
                 an effect, a clear, a kill (pays
                 bounty and XP), a heal to full
                 or a removal (pays nothing).
                 The status line then says
                 whether the effect took hold.
-                Each effect and buff shows its
-                own fields, and keeps what was
+                Each effect, buff and debuff
+                shows its own fields, and keeps what was
                 typed in them. A greyed-out
                 one says why the panel can't
                 apply it.""");
@@ -506,8 +509,8 @@ public class PanelDev extends JPanel {
         this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
         this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", focus(this.xp));
         this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset::doClick);
-        this.bind("Tower", alt(KeyEvent.VK_Y), "choose the buff", this.buffChoice::toggle);
-        this.bind("Tower", altShift(KeyEvent.VK_Y), "apply the buff", applyBuff::doClick);
+        this.bind("Tower", alt(KeyEvent.VK_Y), "choose the buff or debuff", this.buffChoice::toggle);
+        this.bind("Tower", altShift(KeyEvent.VK_Y), "grant the buff or debuff", applyBuff::doClick);
         this.bind("Enemy", alt(KeyEvent.VK_F), "choose the effect", this.effectChoice::toggle);
         this.bind("Enemy", altShift(KeyEvent.VK_F), "apply the effect", applyEffect::doClick);
         this.bind("Enemy", alt(KeyEvent.VK_D), "clear its effects", clearEffects::doClick);
@@ -632,7 +635,7 @@ public class PanelDev extends JPanel {
 
     private boolean applyBuff() {
         Optional<List<Float>> values = this.buffFields.values(this::showMessage);
-        values.ifPresent(typed -> this.showMessage(this.dev.grantBuffToSelectedTower(this.buffChoice.chosen(), typed)));
+        values.ifPresent(typed -> this.showMessage(this.dev.grantToSelectedTower(this.buffChoice.chosen(), typed)));
         return values.isPresent();
     }
 

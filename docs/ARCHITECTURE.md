@@ -287,7 +287,8 @@ zones, then playtest hooks, then towers.** Projectiles sit after enemies and bef
 tick's enemy positions, not last tick's, and a projectile a tower spawns while its own loop
 runs below is left for the *next* tick to advance rather than moving twice in the tick it was
 fired. The playtest hooks (the dev panel's own work, such as paying out its hexes) run after
-the enemies and before the towers, so the panel acts on a tick like a tower that ticks first.
+the enemies and before the towers, so the panel acts on a tick like a tower that ticks first, and
+a jam it holds on a tower joins the disruption the enemies laid down before the towers sample it.
 
 ### Why the snapshot rule exists
 
