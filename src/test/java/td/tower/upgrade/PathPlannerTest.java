@@ -75,6 +75,26 @@ class PathPlannerTest {
     }
 
     @Test
+    void aStepWhoseGateNeedsAStepGatheredAfterItIsBoughtAfterThatStep() {
+        UpgradeNode one = UpgradeTier.HEAD_1.node("z.1", "Z", LIST_PRICE);
+        UpgradeNode two = UpgradeTier.HEAD_2.node("z.2", "Z II", LIST_PRICE).after(one);
+        UpgradeNode three = UpgradeTier.HEAD_3.node("z.3", "Z III", LIST_PRICE).after(two);
+        UpgradeNode four = UpgradeTier.HEAD_4.node("z.4", "Z IV", LIST_PRICE).after(three);
+        List<UpgradeNode> shared = StandardBaseSlot.nodes(LIST_PRICE, 4f, three);
+        UpgradeTree tree = UpgradeTree.of(shared).with(one, two, three, four, FREE);
+        Tower tower = FakeTower.owning(this.context, 0, 0, new UpgradeState(List.of(
+                shared.stream().filter(n -> n.id().equals(StandardBaseSlot.ATTUNE_ID)).findFirst().orElseThrow(),
+                shared.stream().filter(n -> n.id().equals(StandardBaseSlot.AWAKEN_ID)).findFirst().orElseThrow(),
+                one, two, FREE)));
+        tower.earnXp(1_000);
+
+        UpgradePath path = tree.planPath(four, tower, this.context);
+
+        assertThat(path.isOpen()).isTrue();
+        assertThat(path.steps()).extracting(UpgradeNode::displayName).containsExactly("Z III", "Transcendent", "Z IV");
+    }
+
+    @Test
     void anUnmetGateBlocksThePathAtItsStep() {
         UpgradeNode transcendent = core(StandardBaseSlot.TRANSCENDENT_ID);
         Tower tower = this.towerOwning(core(StandardBaseSlot.ATTUNE_ID), core(StandardBaseSlot.AWAKEN_ID), A1, A2, FREE);

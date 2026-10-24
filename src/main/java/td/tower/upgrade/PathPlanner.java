@@ -47,13 +47,41 @@ final class PathPlanner {
             return this.blocked(UpgradePath.Reason.LOCKED_OUT);
         }
         this.gather(this.target);
+        List<UpgradeNode> ordered = this.schedule(owned);
         UpgradeState state = owned;
-        for (UpgradeNode step : this.steps) {
-            this.judge(step, state).ifPresent(reason -> this.blockAt(step, reason));
+        for (UpgradeNode step : ordered) {
             state = state.with(step);
         }
-        return new UpgradePath(this.target, this.steps, Optional.ofNullable(this.block),
+        return new UpgradePath(this.target, ordered, Optional.ofNullable(this.block),
                 this.tree.newlyLockedOut(owned, state));
+    }
+
+    /**
+     * The gathered steps in an order they can be bought in: each time the first one whose prerequisites and
+     * gate hold on what comes before it, since a gate (Transcendent's head III) can need a step gathered after
+     * it. When none can go next, the path is blocked at the first whose prerequisites hold, and the rest follow
+     * in the gathered order.
+     */
+    private List<UpgradeNode> schedule(UpgradeState owned) {
+        List<UpgradeNode> pending = new ArrayList<>(this.steps);
+        List<UpgradeNode> ordered = new ArrayList<>();
+        UpgradeState state = owned;
+        while (!pending.isEmpty()) {
+            UpgradeState before = state;
+            Optional<UpgradeNode> next = pending.stream().filter(step -> this.judge(step, before).isEmpty()).findFirst();
+            if (next.isEmpty()) {
+                UpgradeNode stuck = pending.stream().filter(step -> this.judge(step, before)
+                        .filter(reason -> reason == UpgradePath.Reason.XP || reason == UpgradePath.Reason.GATE).isPresent())
+                        .findFirst().orElse(pending.getFirst());
+                this.judge(stuck, before).ifPresent(reason -> this.blockAt(stuck, reason));
+                ordered.addAll(pending);
+                return ordered;
+            }
+            ordered.add(next.get());
+            pending.remove(next.get());
+            state = state.with(next.get());
+        }
+        return ordered;
     }
 
     private UpgradePath blocked(UpgradePath.Reason reason) {
