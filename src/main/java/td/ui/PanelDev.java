@@ -77,7 +77,7 @@ public class PanelDev extends JPanel {
     private static final String CARD_ENEMY = "enemy";
     private static final Choices<EffectKind> ENEMY_EFFECTS = Choices.ofTerms(DevEffects.enemyKinds(),
             Comparator.comparing(EffectKind::category), kind -> kind.category().label(),
-            kind -> TermLooks.frameOf(kind.category()), TermLooks::faceOf);
+            kind -> TermLooks.frameOf(kind.category()), TermLooks::faceOf, DevEffects::whyUnusable);
     private static final Choices<TowerTerm> TOWER_BUFFS = Choices.ofTerms(DevEffects.towerBuffs(),
             Comparator.comparing(TowerTerm::side), term -> sideLabel(term.side()), PanelDev::sideFrame,
             TermLooks::faceOf);

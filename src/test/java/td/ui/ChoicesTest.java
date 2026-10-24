@@ -10,6 +10,7 @@ import td.wave.WaveScriptSuggestions.Candidate;
 import java.awt.Color;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,6 +54,22 @@ class ChoicesTest {
         RowLook second = twins.lookAt(1);
 
         assertThat(second.text()).isEqualTo(Color.BLUE);
+    }
+
+    @Test
+    void aTermThatCannotBeTakenComesLastInItsTypeGreyedOutAndHintedWithWhy() {
+        FakeTerm ash = term("b", "Ash");
+        Choices<FakeTerm> some = Choices.ofTerms(List.of(ash, term("b", "Cinder"), term("a", "Bravo")),
+                Comparator.comparing(ChoicesTest::type), ChoicesTest::type, term -> Palette.TERM_FRAME_HEX,
+                term -> IconFace.of(term.key(), "", Palette.ENEMY_CIRCLE, Palette.TERM_FRAME_HEX),
+                term -> term == ash ? Optional.of("not here") : Optional.empty());
+
+        List<Candidate> rows = some.rows();
+
+        assertThat(rows).extracting(Candidate::text).containsExactly("Bravo", "Cinder", "Ash");
+        assertThat(rows.get(2).hint()).isEqualTo("not here");
+        assertThat(some.usableAt(2)).isFalse();
+        assertThat(some.lookAt(2).text()).isNotEqualTo(some.lookAt(1).text());
     }
 
     private static FakeTerm term(String type, String title) {

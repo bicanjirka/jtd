@@ -1,9 +1,12 @@
 package td;
 
+import td.damage.AttackOrigin;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
+import td.effect.DamageSink;
 import td.effect.EffectKind;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMob;
@@ -38,6 +41,9 @@ public final class DevControls implements EconomyListener {
     private static final EnemyMobVisitor<DefinedEnemyMob> AS_DEFINED = mob -> mob;
 
     private final GameWorld world;
+    /** The panel as an attacker: what its effects deal is periodic, so it never crits or spends a mark. */
+    private final AttackOrigin origin = AttackOrigin.fresh();
+    private final AttackProfile attack = AttackProfile.none().asPeriodic().withOrigin(this.origin);
     private final Queue<Runnable> pending = new ConcurrentLinkedQueue<>();
 
     private volatile DevSelection selection = DevSelection.none();
@@ -186,8 +192,13 @@ public final class DevControls implements EconomyListener {
      * @return what was queued, or why nothing was
      */
     public String applyEffectToEnemy(EffectKind kind, float seconds, int power) {
+        Optional<String> unusable = DevEffects.whyUnusable(kind);
+        if (unusable.isPresent()) {
+            return kind.title() + " " + unusable.get();
+        }
         return this.onSelectedEnemy("Applying " + kind.title(), mob -> {
-            mob.applyEffect(DevEffects.enemyEffect(kind, seconds, power));
+            DamageSink sink = damage -> mob.doDamage(damage, this.attack);
+            DevEffects.enemyEffects(kind, seconds, power, sink, this.origin).forEach(mob::applyEffect);
             this.report(mob.hasEffect(kind) ? "Applied " + kind.title()
                     : kind.title() + " didn't take hold: resisted, immune or kept out");
         });

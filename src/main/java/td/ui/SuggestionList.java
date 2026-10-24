@@ -19,13 +19,14 @@ import java.io.Serial;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
 /**
  * A list of candidates hung on the window's popup layer by the control it serves: a scrolling column of a few rows,
  * or every row at once, in as many columns as the window's height needs. The pointer highlights a row, the wheel
  * moves the highlight and a click takes the row. A row with a look shows its icon and colours, and rows whose hints
- * differ are ruled apart.
+ * differ are ruled apart. A row that can't be taken is never highlighted.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class SuggestionList extends JComponent {
@@ -41,6 +42,8 @@ final class SuggestionList extends JComponent {
 
     /** Each row's look, by its place in the list. */
     private final transient IntFunction<Optional<RowLook>> looks;
+    /** Whether a row can be taken; the pointer, the wheel and the keys pass over one that can't. */
+    private final transient IntPredicate usable;
 
     private List<Candidate> rows = List.of();
     private int selected;
@@ -48,9 +51,15 @@ final class SuggestionList extends JComponent {
     private int perColumn = 1;
     private int columns = 1;
 
-    /** The control it serves keeps the focus while it is clicked, unless it is made focusable. */
+    /** Every row can be taken. */
     SuggestionList(IntFunction<Optional<RowLook>> looks, Runnable onTake) {
+        this(looks, index -> true, onTake);
+    }
+
+    /** The control it serves keeps the focus while it is clicked, unless it is made focusable. */
+    SuggestionList(IntFunction<Optional<RowLook>> looks, IntPredicate usable, Runnable onTake) {
         this.looks = looks;
+        this.usable = usable;
         setFocusable(false);
         MouseAdapter pointer = new MouseAdapter() {
             @Override
@@ -81,16 +90,41 @@ final class SuggestionList extends JComponent {
         this.top = 0;
     }
 
+    /** Moves the highlight {@code delta} rows that can be taken on, wrapping round. */
     void move(int delta) {
-        this.select(Math.floorMod(this.selected + delta, this.rows.size()));
+        int step = Integer.signum(delta);
+        for (int moved = 0; moved < Math.abs(delta); moved++) {
+            int tried = 1;
+            while (tried < this.rows.size() && !this.usable.test(Math.floorMod(this.selected + step * tried, this.rows.size()))) {
+                tried++;
+            }
+            this.selectIfUsable(Math.floorMod(this.selected + step * tried, this.rows.size()));
+        }
     }
 
     /** Moves the highlight to the same row of a column to either side, if that column has one. */
     void moveAcross(int delta) {
         int index = this.selected + delta * this.perColumn;
         if (index >= 0 && index < this.rows.size()) {
-            this.select(index);
+            this.selectNear(index);
         }
+    }
+
+    /** Highlights row {@code index}, or the nearest after or before it that can be taken. */
+    void selectNear(int index) {
+        for (int distance = 0; distance < this.rows.size(); distance++) {
+            if (this.selectIfUsable(index + distance) || this.selectIfUsable(index - distance)) {
+                return;
+            }
+        }
+    }
+
+    private boolean selectIfUsable(int index) {
+        if (index < 0 || index >= this.rows.size() || !this.usable.test(index)) {
+            return false;
+        }
+        this.select(index);
+        return true;
     }
 
     /** Highlights row {@code index}, scrolling it into view. */
@@ -177,7 +211,8 @@ final class SuggestionList extends JComponent {
         int column = x / Math.max(1, getWidth() / this.columns);
         int line = Math.floorDiv(y - 1, ROW_HEIGHT);
         int index = this.top + column * this.perColumn + line;
-        if (y < 1 || line >= this.perColumn || column >= this.columns || index >= this.rows.size()) {
+        if (y < 1 || line >= this.perColumn || column >= this.columns || index >= this.rows.size()
+                || !this.usable.test(index)) {
             return false;
         }
         if (index != this.selected) {

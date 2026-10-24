@@ -17,6 +17,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -140,10 +141,53 @@ class ChoiceButtonTest {
         assertThat(this.choice.chosen()).isEqualTo("Gamma");
     }
 
+    @Test
+    void theKeysPassOverARowThatCannotBeTaken() {
+        this.choice.offer(choicesWithoutBeta(), ALPHA);
+        this.choice.toggle();
+
+        this.press(KeyEvent.VK_DOWN);
+        this.press(KeyEvent.VK_ENTER);
+
+        assertThat(this.choice.chosen()).isEqualTo(BRAVO);
+    }
+
+    @Test
+    void aLetterPassesOverARowThatCannotBeTaken() {
+        this.choice.offer(choicesWithoutBeta(), ALPHA);
+        this.choice.toggle();
+
+        this.type('b');
+        this.press(KeyEvent.VK_ENTER);
+
+        assertThat(this.choice.chosen()).isEqualTo(BRAVO);
+    }
+
+    @Test
+    void clickingARowThatCannotBeTakenTakesNothingAndLeavesTheListOpen() {
+        this.choice.offer(choicesWithoutBeta(), ALPHA);
+        this.choice.toggle();
+        Component list = this.openList();
+
+        list.dispatchEvent(new MouseEvent(list, MouseEvent.MOUSE_CLICKED, 0, 0, 5, 1 + ROW_HEIGHT + ROW_HEIGHT / 2, 1, false));
+
+        assertThat(this.choice.chosen()).isEqualTo(ALPHA);
+        assertThat(this.openList()).isNotNull();
+    }
+
     private static Choices<String> choices(String... titles) {
-        return new Choices<>(List.of(titles), Comparator.naturalOrder(), title -> title, title -> "",
-                title -> new RowLook(new PaintedIcon(8, 8, g2 -> {
-                }), Color.WHITE, Color.GRAY));
+        return new Choices<>(List.of(titles), Comparator.naturalOrder(), title -> title, title -> "", ChoiceButtonTest::look);
+    }
+
+    /** Alpha, Beta and Bravo in that order, Beta greyed out. */
+    private static Choices<String> choicesWithoutBeta() {
+        return new Choices<>(List.of(ALPHA, BETA, BRAVO), Comparator.naturalOrder(), title -> title, title -> "",
+                ChoiceButtonTest::look, title -> title.equals(BETA) ? Optional.of("not here") : Optional.empty());
+    }
+
+    private static RowLook look(String title) {
+        return new RowLook(new PaintedIcon(8, 8, g2 -> {
+        }), Color.WHITE, Color.GRAY);
     }
 
     private Component openList() {
