@@ -9,20 +9,23 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- * Diverts one class's log into memory for the duration of a test, so a test that provokes an
- * error can assert on it instead of printing a stack trace into a passing build.
+ * Diverts one class's log into memory for the duration of a test, every level of it, so a test that
+ * provokes an error can assert on it instead of printing a stack trace into a passing build.
  */
 final class CapturedLog implements AutoCloseable {
 
     private final Logger logger;
     private final ListAppender<ILoggingEvent> appender;
     private final boolean wasAdditive;
+    private final Level wasLevel;
 
     CapturedLog(Class<?> source) {
         this.logger = (Logger) LoggerFactory.getLogger(source);
         this.appender = new ListAppender<>();
         this.appender.start();
         this.wasAdditive = this.logger.isAdditive();
+        this.wasLevel = this.logger.getLevel();
+        this.logger.setLevel(Level.ALL);
         this.logger.addAppender(this.appender);
         this.logger.setAdditive(false);
     }
@@ -35,6 +38,7 @@ final class CapturedLog implements AutoCloseable {
     @Override
     public void close() {
         this.logger.setAdditive(this.wasAdditive);
+        this.logger.setLevel(this.wasLevel);
         this.logger.detachAppender(this.appender);
         this.appender.stop();
     }

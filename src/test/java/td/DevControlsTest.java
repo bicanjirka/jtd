@@ -1,13 +1,17 @@
 package td;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageUnits;
 import td.effect.EffectKind;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyObservation;
 import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeTower;
@@ -391,18 +395,19 @@ class DevControlsTest {
     }
 
     @Test
-    void theSelectionIsNamedByItsNameAlone() {
+    void aSelectedTowerIsNamedByItsNameAloneAndASelectedEnemyAlsoByItsId() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         Tower tower = this.placeSniper(1, 1);
         this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
         this.selectFirstEnemy();
+        DefinedEnemyMob mob = this.world.enemies().getEnemies()[0].accept(defined -> defined);
         String enemy = this.dev.selection().description();
 
         tower.setSelected(true);
         this.dev.runPending();
 
-        assertThat(enemy).isEqualTo(EnemyCatalog.builtIn().get("simple").displayName());
+        assertThat(enemy).isEqualTo(mob.definition().displayName() + " #" + mob.id());
         assertThat(this.dev.selection().description()).isEqualTo(tower.displayName());
     }
 
@@ -495,4 +500,65 @@ class DevControlsTest {
         }
     }
 
+    @Test
+    void observeOnTheSelectedEnemyObservesItAndPressedAgainStops() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
+        this.dev.runPending();
+        this.selectFirstEnemy();
+
+        this.dev.toggleObserveSelected();
+        this.dev.runPending();
+        boolean observed = this.dev.selection().observed();
+        this.dev.toggleObserveSelected();
+        this.dev.runPending();
+
+        assertThat(observed).isTrue();
+        assertThat(this.dev.selection().observed()).isFalse();
+    }
+
+    @Test
+    void theSpawnBoxObservesWhatItSpawnsOnlyWhileItsToggleIsOn() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
+        this.dev.setObserveSpawns(true);
+        this.dev.spawnWave("2 simple", Rank.GRUNT, 0);
+
+        this.dev.runPending();
+
+        assertThat(Arrays.stream(this.world.enemies().getEnemies()).map(mob -> mob.accept(DefinedEnemyMob::isObserved)))
+                .containsExactly(false, true, true);
+    }
+
+    @Test
+    void clearingEveryEnemyEndsTheTraceOfEachObservedOne() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.setObserveSpawns(true);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
+        this.dev.runPending();
+        DefinedEnemyMob mob = this.world.enemies().getEnemies()[0].accept(defined -> defined);
+
+        this.dev.clearAll();
+        this.dev.runPending();
+
+        assertThat(mob.isObserved()).isFalse();
+    }
+
+    @Test
+    void whatThePanelDoesToAnObservedEnemyIsNamedAsThePanelsInItsTrace() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.setObserveSpawns(true);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
+        this.dev.runPending();
+        this.selectFirstEnemy();
+
+        List<String> lines;
+        try (CapturedLog log = new CapturedLog(EnemyObservation.class)) {
+            this.dev.killSelectedEnemy();
+            this.dev.runPending();
+            lines = log.atLevel(Level.INFO).stream().map(ILoggingEvent::getFormattedMessage).toList();
+        }
+
+        assertThat(lines).anyMatch(line -> line.contains(" KILLED by=dev:kill "));
+    }
 }

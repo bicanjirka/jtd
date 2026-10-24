@@ -57,12 +57,14 @@ public final class DevControls implements EconomyListener {
     private volatile int livesFloor;
     private volatile boolean freeBuild;
     private volatile long spawnSeed;
+    private volatile boolean observeSpawns;
 
     /** Register it with the world's economy listeners and {@link GameWorld#playtestHooks() playtest hooks}. */
     public DevControls(GameWorld world) {
         this.world = world;
         this.hexCaster = new DevHexCaster(world, this.attack);
         this.jammer = new DevJammer(world);
+        world.enemyObservation().name(this.origin, "dev:effect");
     }
 
     /** What the panel keeps going on the board by itself, every tick: its hexes' payouts and its jams. */
@@ -170,9 +172,13 @@ public final class DevControls implements EconomyListener {
      */
     public String spawnWave(String script, Rank defaultRank, int pathIndex) {
         WaveScriptCheck check = this.checkWaveScript(script, defaultRank, pathIndex);
+        boolean observed = this.observeSpawns;
         check.wave().ifPresent(wave -> this.pending.add(() -> {
             for (EnemyMob mob : wave.spawn()) {
                 this.world.enemies().add(mob);
+                if (observed) {
+                    this.world.enemyObservation().observe(mob.accept(AS_DEFINED), "spawn-box");
+                }
             }
         }));
         return check.wave().map(wave -> "Spawning " + wave.enemyCount() + " on path " + (wave.getPathIndex() + 1))
@@ -181,18 +187,53 @@ public final class DevControls implements EconomyListener {
 
     /** Kills every enemy on the board through the normal hit, so bounty and XP are paid. */
     public void killAll() {
-        this.pending.add(() -> {
+        this.pending.add(() -> this.world.enemyObservation().during("dev:kill-all", () -> {
             for (EnemyMob mob : this.world.enemies().getEnemies()) {
                 if (!mob.isDead()) {
                     mob.doDamage(Damage.physical(Integer.MAX_VALUE / 2));
                 }
             }
-        });
+        }));
     }
 
     /** Removes every enemy, waiting ones included, paying nothing. A running wave counts as cleared. */
     public void clearAll() {
-        this.pending.add(() -> this.world.enemies().clear());
+        this.pending.add(() -> {
+            for (EnemyMob mob : this.world.enemies().getEnemies()) {
+                this.world.enemyObservation().end(mob.accept(AS_DEFINED), "removed");
+            }
+            this.world.enemies().clear();
+        });
+    }
+
+    /** Enemies the spawn box spawns from now on are observed from their first tick. */
+    public void setObserveSpawns(boolean on) {
+        this.observeSpawns = on;
+    }
+
+    /**
+     * Starts observing the selected enemy, or stops if it already is.
+     *
+     * @return what was queued, or why nothing was
+     */
+    public String toggleObserveSelected() {
+        return this.onSelectedEnemy("Toggling whether it is observed", mob -> {
+            boolean observed = mob.isObserved();
+            if (observed) {
+                this.world.enemyObservation().end(mob, "stopped");
+            } else {
+                this.world.enemyObservation().observe(mob, "selected");
+            }
+            this.report(observed ? "Stopped observing it" : "Observing #" + mob.id() + ": its trace goes to the log");
+        });
+    }
+
+    /** Writes a full snapshot of every observed enemy to the log. */
+    public void snapshotObserved() {
+        this.pending.add(() -> {
+            this.world.enemyObservation().snapshotAll();
+            this.report("Snapshot written to the log");
+        });
     }
 
     /** What the selection row works on, as of the last {@link #runPending}. */
@@ -215,34 +256,43 @@ public final class DevControls implements EconomyListener {
         if (problem.isPresent()) {
             return problem.get();
         }
-        return this.onSelectedEnemy("Applying " + kind.title(), mob -> {
+        return this.onSelectedEnemy("Applying " + kind.title(), this.as("dev:effect", mob -> {
             DamageSink sink = damage -> mob.doDamage(damage, this.attack);
-            DevEffects.enemyEffects(kind, values, sink, this.origin).forEach(mob::applyEffect);
+            DevEffects.enemyEffects(kind, values, sink, this.origin).forEach(effect -> mob.applyEffect(effect, this.origin));
             if (kind.category() == EffectCategory.HEX && mob.hasEffect(kind)) {
                 this.hexCaster.record(mob, kind);
             }
             this.report(mob.hasEffect(kind) ? "Applied " + kind.title()
                     : kind.title() + " didn't take hold: resisted, immune or kept out");
-        });
+        }));
     }
 
     /** @return what happened, or why nothing did */
     public String clearEnemyEffects() {
-        return this.onSelectedEnemy("Cleared its effects", DefinedEnemyMob::clearEffects);
+        return this.onSelectedEnemy("Cleared its effects", this.as("dev:clear", DefinedEnemyMob::clearEffects));
     }
 
     /** Through the normal hit, so bounty and XP are paid. */
     public String killSelectedEnemy() {
-        return this.onSelectedEnemy("Killed it", mob -> mob.doDamage(Damage.physical(Integer.MAX_VALUE / 2)));
+        return this.onSelectedEnemy("Killed it",
+                this.as("dev:kill", mob -> mob.doDamage(Damage.physical(Integer.MAX_VALUE / 2))));
     }
 
     public String healSelectedEnemy() {
-        return this.onSelectedEnemy("Healed it to full", DefinedEnemyMob::restoreHealth);
+        return this.onSelectedEnemy("Healed it to full", this.as("dev:heal", DefinedEnemyMob::restoreHealth));
     }
 
     /** Takes it off the board and pays nothing. */
     public String removeSelectedEnemy() {
-        return this.onSelectedEnemy("Removed it", this.world.enemies()::remove);
+        return this.onSelectedEnemy("Removed it", mob -> {
+            this.world.enemyObservation().end(mob, "removed");
+            this.world.enemies().remove(mob);
+        });
+    }
+
+    /** {@code change}, with {@code cause} naming it in the trace of an observed enemy it touches. */
+    private Consumer<DefinedEnemyMob> as(String cause, Consumer<DefinedEnemyMob> change) {
+        return mob -> this.world.enemyObservation().during(cause, () -> change.accept(mob));
     }
 
     /**
@@ -299,7 +349,8 @@ public final class DevControls implements EconomyListener {
         if (tower.isPresent()) {
             return DevSelection.tower(tower.get().displayName());
         }
-        return this.selectedEnemy().map(mob -> DevSelection.enemy(mob.definition().displayName()))
+        return this.selectedEnemy().map(mob -> DevSelection.enemy(mob.definition().displayName() + " #" + mob.id(),
+                        mob.isObserved()))
                 .orElse(DevSelection.none());
     }
 

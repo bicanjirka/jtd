@@ -113,6 +113,8 @@ public class PanelDev extends JPanel {
     private final ChoiceButton<Integer> pathChoice = new ChoiceButton<>(this.pathChoices(1), 0,
             this::spawnChoiceClosed);
     private final HudToggleButton cellGridToggle = toggle("Cell grid");
+    private final HudToggleButton observeSpawns = toggle("Observe");
+    private final HudToggleButton observeSelected = toggle("Observe");
     private final PathWaveRow preview = new PathWaveRow();
     private final JLabel problem = label("");
     private final CardLayout previewCards = new CardLayout();
@@ -286,6 +288,7 @@ public class PanelDev extends JPanel {
         boolean tower = selection.kind() == DevSelection.Kind.TOWER;
         this.towerSelected.setText(tower ? selection.description() : "");
         this.enemySelected.setText(tower ? "" : selection.description());
+        this.observeSelected.setSelected(selection.observed());
         this.selectionCards.show(this.selectionArea, switch (selection.kind()) {
             case NONE -> CARD_NOTHING;
             case TOWER -> CARD_TOWER;
@@ -348,6 +351,18 @@ public class PanelDev extends JPanel {
                 Kill all pays bounty and XP,
                 clear all pays nothing.
 
+                Observe writes every hit,
+                effect, heal and cast an
+                enemy goes through to the
+                log, one OBSERVE line each,
+                until it ends. By the spawn
+                box it observes what Spawn
+                makes; on a selected enemy,
+                that one. What an observed
+                enemy spawns is observed
+                too. Snapshot writes each
+                observed enemy's stats.
+
                 Selected: click a tower or an
                 enemy on the board. A tower
                 takes XP, a buff or debuff
@@ -399,6 +414,12 @@ public class PanelDev extends JPanel {
             }
         });
         this.cellGridToggle.addActionListener(evt -> this.onCellGrid.accept(this.cellGridToggle.isSelected()));
+        this.observeSpawns.addActionListener(evt -> this.dev.setObserveSpawns(this.observeSpawns.isSelected()));
+        // The selection shows whether it is observed once the game loop has done it, so the toggle waits for that.
+        this.observeSelected.addActionListener(evt -> {
+            this.observeSelected.setSelected(this.shownSelection.observed());
+            this.showMessage(this.dev.toggleObserveSelected());
+        });
         List<HudTextField> fields = new ArrayList<>(List.of(this.credits, this.lives, this.script, this.jumpTo, this.xp,
                 this.enemyHealth));
         fields.addAll(this.effectFields.textFields());
@@ -451,7 +472,12 @@ public class PanelDev extends JPanel {
         }
         JPanel spawnRow = new JPanel(new GridBagLayout());
         spawnRow.setOpaque(false);
-        spawnRow.add(row(this.script, this.rankChoice.component(), this.pathChoice.component(), button("Spawn", this::spawn)));
+        HudButton snapshot = button("Snapshot", () -> {
+            this.dev.snapshotObserved();
+            this.showMessage("Writing a snapshot of every observed enemy");
+        });
+        spawnRow.add(row(this.script, this.rankChoice.component(), this.pathChoice.component(), this.observeSpawns,
+                button("Spawn", this::spawn), snapshot));
         GridBagConstraints previewCell = new GridBagConstraints();
         previewCell.weightx = 1.0;
         previewCell.fill = GridBagConstraints.HORIZONTAL;
@@ -472,7 +498,8 @@ public class PanelDev extends JPanel {
         this.selectionArea.add(row(this.towerSelected, gap(), label("XP"), this.xp, grant, gap(),
                 this.buffChoice.component(), this.buffFields.component(), applyBuff, gap(), reset), CARD_TOWER);
         this.selectionArea.add(row(this.enemySelected, gap(), this.effectChoice.component(),
-                this.effectFields.component(), applyEffect, clearEffects, gap(), kill, heal, remove), CARD_ENEMY);
+                this.effectFields.component(), applyEffect, clearEffects, gap(), kill, heal, remove, gap(),
+                this.observeSelected), CARD_ENEMY);
         this.selectionCards.show(this.selectionArea, CARD_NOTHING);
         this.section(4, "Selected", this.selectionArea);
 
@@ -513,6 +540,8 @@ public class PanelDev extends JPanel {
         this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", focus(this.script));
         this.bind("Spawn", alt(KeyEvent.VK_R), "choose the rank", this.rankChoice::toggle);
         this.bind("Spawn", alt(KeyEvent.VK_P), "choose the path", this.pathChoice::toggle);
+        this.bind("Spawn", altShift(KeyEvent.VK_S), "observe what it spawns", this.observeSpawns::doClick);
+        this.bind("Spawn", altShift(KeyEvent.VK_M), "snapshot every observed enemy", snapshot::doClick);
         this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
         this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", focus(this.xp));
         this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset::doClick);
@@ -524,6 +553,7 @@ public class PanelDev extends JPanel {
         this.bind("Enemy", alt(KeyEvent.VK_Q), "kill", kill::doClick);
         this.bind("Enemy", alt(KeyEvent.VK_W), "heal to full", heal::doClick);
         this.bind("Enemy", altShift(KeyEvent.VK_Q), "remove", remove::doClick);
+        this.bind("Enemy", alt(KeyEvent.VK_M), "observe it", this.observeSelected::doClick);
         this.bind("Board", alt(KeyEvent.VK_G), "cell grid", this.cellGridToggle::doClick);
         this.bind("Board", alt(KeyEvent.VK_H), "this help", help::doClick);
 
