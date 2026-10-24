@@ -6,7 +6,8 @@ import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.enemy.SpawnParameters;
-import td.ui.render.InfoSheet;
+import td.ui.render.SheetTooltip;
+import td.ui.render.TooltipKey;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -20,18 +21,16 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 
 /**
  * The wave preview: each enemy type with its count, drawn as real mobs. They live in a throwaway
@@ -47,7 +46,6 @@ public class PanelEnemy extends JPanel {
     private final List<Rank> ranks = new ArrayList<>();
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final GameWorld contextLocal;
-    private final Consumer<Optional<InfoSheet>> onEnemyHover;
     private List<Integer> enemiesCount = new ArrayList<>();
     private Font font;
     private int pHeight = 0;
@@ -55,9 +53,7 @@ public class PanelEnemy extends JPanel {
     private int scale = 32;
     private int gameTime = 0;
 
-    /** {@code onEnemyHover} gets the sheet of the enemy under the pointer, or empty once it rests on none. */
-    public PanelEnemy(Consumer<Optional<InfoSheet>> onEnemyHover) {
-        this.onEnemyHover = onEnemyHover;
+    public PanelEnemy() {
         initComponents();
         this.contextLocal = new GameWorld(GameHost.noOp());
         this.contextLocal.setPath(new PathNormal(List.of()));
@@ -145,22 +141,19 @@ public class PanelEnemy extends JPanel {
         }
     }
 
-    private void mouseOver(int x) {
+    /** The enemy's slot under {@code point} and the tooltip it opens; empty past the last one. */
+    Optional<TooltipSpot> spotAt(Point point) {
         // Zero until the first layout gives the strip a height.
-        if (this.scale == 0) {
-            return;
+        if (this.scale == 0 || point.x < 0) {
+            return Optional.empty();
         }
-        int nr = x / this.scale;
-        if (nr < this.enemies.size()) {
-            EnemyMob e = this.enemies.get(nr);
-            this.onEnemyHover.accept(Optional.of(e.accept(new EnemyInfoText())));
-        } else {
-            this.onEnemyHover.accept(Optional.empty());
+        int nr = point.x / this.scale;
+        if (nr >= this.enemies.size()) {
+            return Optional.empty();
         }
-    }
-
-    private void pointerLeft() {
-        this.onEnemyHover.accept(Optional.empty());
+        TooltipKey key = TooltipKey.of("preview", nr + ":" + this.definitions.get(nr).id());
+        return Optional.of(new TooltipSpot(new SheetTooltip(key, this.enemies.get(nr).accept(new EnemyInfoText())),
+                new Rectangle(this.scale * nr, 0, this.scale, this.pHeight)));
     }
 
     private void initComponents() {
@@ -174,21 +167,7 @@ public class PanelEnemy extends JPanel {
                 formComponentResized(evt);
             }
         });
-        addMouseMotionListener(new MouseMotionAdapter() {
-            public void mouseMoved(MouseEvent evt) {
-                formMouseMoved(evt);
-            }
-        });
-        addMouseListener(new MouseAdapter() {
-            public void mouseExited(MouseEvent evt) {
-                pointerLeft();
-            }
-        });
 
-    }
-
-    private void formMouseMoved(MouseEvent evt) {
-        this.mouseOver(evt.getX());
     }
 
     private void formComponentResized(ComponentEvent evt) {

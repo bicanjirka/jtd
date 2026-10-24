@@ -1,7 +1,6 @@
 package td.ui;
 
 import td.enemy.EnemyDefinition;
-import td.ui.render.InfoSheet;
 import td.ui.render.PathMarkerBrightness;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
@@ -22,8 +21,6 @@ import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.io.Serial;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * One path's part of a round: a swatch in the path's colour and a {@link PanelEnemy} strip of what
@@ -38,12 +35,16 @@ final class PathWaveRow extends JPanel {
     private static final int SWATCH_HEIGHT = 16;
 
     private final Swatch swatch = new Swatch();
-    private final PanelEnemy panelEnemy;
+    private final PanelEnemy panelEnemy = new PanelEnemy();
     private GameWorld gameWorld;
 
-    PathWaveRow(Consumer<Optional<InfoSheet>> onEnemyHover) {
-        this.panelEnemy = new PanelEnemy(onEnemyHover);
+    PathWaveRow() {
         initComponents();
+    }
+
+    /** Each enemy's hover is a tooltip of what it spawns as. */
+    void setTooltips(TooltipLayer tooltips) {
+        tooltips.watchSpots(this.panelEnemy, this.panelEnemy::spotAt);
     }
 
     void setGameWorld(GameWorld world) {

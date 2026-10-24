@@ -5,11 +5,13 @@ import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 import td.util.ThreadConfined;
 
+import javax.swing.AbstractButton;
 import javax.swing.JLayeredPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import java.awt.Component;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -104,7 +107,7 @@ public final class TooltipLayer {
      * A button, a depth-0 source, whose hover opens the tooltip {@code tooltip} gives for it now, if any. The
      * tooltip belongs to the button: it follows whatever the button offers.
      */
-    void watchButton(HudButton button, Supplier<Optional<SheetTooltip>> tooltip) {
+    void watchButton(AbstractButton button, Supplier<Optional<SheetTooltip>> tooltip) {
         this.watchSource(button, tooltip);
     }
 
@@ -115,6 +118,32 @@ public final class TooltipLayer {
     void watchBelow(Component source, Supplier<Optional<SheetTooltip>> tooltip) {
         this.below.add(source);
         this.watchSource(source, tooltip);
+    }
+
+    /**
+     * A depth-0 source with several targets, such as a strip of enemies: {@code spotAt} says which one a point of it
+     * rests on and the tooltip that one opens.
+     */
+    void watchSpots(Component source, Function<Point, Optional<TooltipSpot>> spotAt) {
+        source.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent event) {
+                TooltipLayer.this.pointerOn(source, 0, spotAt.apply(event.getPoint()));
+            }
+        });
+        source.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent event) {
+                TooltipLayer.this.closeTimer.stop();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent event) {
+                TooltipLayer.this.openTimer.stop();
+                TooltipLayer.this.pending = null;
+                TooltipLayer.this.startClose();
+            }
+        });
     }
 
     private void watchSource(Component button, Supplier<Optional<SheetTooltip>> tooltip) {
@@ -185,18 +214,24 @@ public final class TooltipLayer {
     private void paneMoved(SheetPane pane, MouseEvent event) {
         Optional<HoverTarget> target = pane.hoverAt(event.getPoint());
         pane.highlight(target);
-        this.watchChild(this.paneDepths.get(pane) + 1, target);
-        if (target.isEmpty()) {
+        this.pointerOn(pane, this.paneDepths.get(pane),
+                target.map(hovered -> new TooltipSpot(new SheetTooltip(hovered.key(), hovered.sheet()), hovered.bounds())));
+    }
+
+    /** The pointer rests on {@code spot} of {@code source}, a source at {@code depth}, or on none of its spots. */
+    private void pointerOn(Component source, int depth, Optional<TooltipSpot> spot) {
+        this.watchChild(depth + 1, spot.map(on -> on.tooltip().key()));
+        if (spot.isEmpty()) {
             this.openTimer.stop();
             this.pending = null;
             return;
         }
-        HoverTarget hovered = target.get();
-        if (this.pending != null && this.pending.source() == pane && this.pending.tooltip().key().equals(hovered.key())) {
+        SheetTooltip tooltip = spot.get().tooltip();
+        if (this.pending != null && this.pending.source() == source && this.pending.tooltip().key().equals(tooltip.key())) {
             return;
         }
-        Rectangle anchor = SwingUtilities.convertRectangle(pane, hovered.bounds(), this.layer);
-        this.pending = new Pending(this.paneDepths.get(pane), new SheetTooltip(hovered.key(), hovered.sheet()), pane, anchor);
+        Rectangle anchor = SwingUtilities.convertRectangle(source, spot.get().bounds(), this.layer);
+        this.pending = new Pending(depth, tooltip, source, anchor);
         this.openTimer.restart();
     }
 
@@ -204,10 +239,10 @@ public final class TooltipLayer {
      * The pointer is on a source whose tooltip is open at {@code depth}: while it is on what opened it, the tooltip
      * stays; off it, the tooltip closes a moment later unless the pointer reaches it or comes back.
      */
-    private void watchChild(int depth, Optional<HoverTarget> target) {
+    private void watchChild(int depth, Optional<TooltipKey> target) {
         boolean open = this.opened.stream().anyMatch(shown -> shown.depth() == depth);
         boolean onIt = target.isPresent() && this.opened.stream()
-                .anyMatch(shown -> shown.depth() == depth && shown.key().equals(target.get().key()));
+                .anyMatch(shown -> shown.depth() == depth && shown.key().equals(target.get()));
         if (!open || onIt) {
             this.childCloseTimer.stop();
         } else if (!this.childCloseTimer.isRunning()) {

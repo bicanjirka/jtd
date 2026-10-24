@@ -18,8 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(EventDispatchThreadExtension.class)
 class PanelTowerInfoTest {
 
-    private static final InfoSheet HOVERED = sheet("Hovered");
-
     private final GameWorld world = WorldFixtures.newWorld();
     private final FakeTower tower = FakeTower.offering(this.world, 2, 3, UpgradeTree.none());
     private final PanelTowerInfo info = new PanelTowerInfo();
@@ -29,32 +27,20 @@ class PanelTowerInfoTest {
     }
 
     @Test
-    void aHoveredSheetGivesThePaneBackToTheSelectedTowerOnceTheHoverEnds() {
+    void theSelectedTowersSheetBuiltWithTheFrameReplacesItsStatus() {
         this.info.setTower(this.tower);
-        this.info.showHoveredSheet(HOVERED);
-
-        this.info.hoverEnded();
-
-        assertThat(this.tower.isSelected()).isTrue();
-        assertThat(this.info.shownSheet()).isEqualTo(TowerSheetText.status(this.tower.inspect()));
-    }
-
-    @Test
-    void theSelectedTowersLiveSheetWaitsWhileAnotherSheetIsHovered() {
-        this.info.setTower(this.tower);
-        this.info.showHoveredSheet(HOVERED);
 
         this.info.showTowerSheet(new TowerSheet(this.tower.getX(), this.tower.getY(), sheet("Live")));
 
-        assertThat(this.info.shownSheet()).isEqualTo(HOVERED);
+        assertThat(this.info.shownSheet()).isEqualTo(sheet("Live"));
     }
 
     @Test
-    void withNothingSelectedAHoveredSheetStaysOnceTheHoverEnds() {
-        this.info.showHoveredSheet(HOVERED);
+    void aSheetBuiltForAnotherTowerLeavesTheSelectedTowersStatus() {
+        this.info.setTower(this.tower);
 
-        this.info.hoverEnded();
+        this.info.showTowerSheet(new TowerSheet(this.tower.getX() + 1, this.tower.getY(), sheet("Other")));
 
-        assertThat(this.info.shownSheet()).isEqualTo(HOVERED);
+        assertThat(this.info.shownSheet()).isEqualTo(TowerSheetText.status(this.tower.inspect()));
     }
 }
