@@ -5,6 +5,7 @@ import td.tower.Tower;
 import td.util.GameWorld;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Whether a node is available to a tower, evaluated on each call. Independent of price, which is
@@ -28,7 +29,12 @@ public interface UpgradeCondition {
         return new SlotEmptyCondition(slot);
     }
 
-    boolean isSatisfied(Tower tower, GameWorld context);
+    /** Whether {@code tower} would meet this condition if it owned {@code owned} instead of what it owns. */
+    boolean isSatisfied(Tower tower, UpgradeState owned, GameWorld context);
+
+    default boolean isSatisfied(Tower tower, GameWorld context) {
+        return this.isSatisfied(tower, tower.upgrades(), context);
+    }
 
     /**
      * The ids of the nodes a tower must own to meet this condition, taking the cheaper side of an
@@ -37,6 +43,23 @@ public interface UpgradeCondition {
      */
     default Set<String> requiredNodes() {
         return Set.of();
+    }
+
+    /**
+     * The ids of the nodes {@code owned} still lacks for this condition: an {@code or} met on one side needs
+     * nothing, else it takes the side buying can meet with fewer nodes. None for a condition no purchase
+     * changes.
+     */
+    default Set<String> missingNodes(Tower tower, UpgradeState owned, GameWorld context) {
+        return Set.of();
+    }
+
+    /**
+     * Whether no purchase can ever meet this condition, given which nodes are locked out for good: an
+     * {@code owns} of a locked node, an {@code and} with such a side, an {@code or} with both.
+     */
+    default boolean lockedOut(Predicate<String> nodeLockedOut) {
+        return false;
     }
 
     /** A short description of the gate, e.g. {@code "10 kills"}. */

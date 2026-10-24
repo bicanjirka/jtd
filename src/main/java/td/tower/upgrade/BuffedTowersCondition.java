@@ -8,7 +8,7 @@ import td.util.GameWorld;
 public record BuffedTowersCondition(int required) implements UpgradeCondition {
 
     @Override
-    public boolean isSatisfied(Tower tower, GameWorld context) {
+    public boolean isSatisfied(Tower tower, UpgradeState owned, GameWorld context) {
         return buffed(tower, context) >= this.required;
     }
 

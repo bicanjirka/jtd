@@ -17,8 +17,8 @@ public record TranscendentCondition(List<String> levelThreeIds) implements Upgra
     }
 
     @Override
-    public boolean isSatisfied(Tower tower, GameWorld context) {
-        return ownsSpecial(tower) && this.ownsLevelThree(tower);
+    public boolean isSatisfied(Tower tower, UpgradeState owned, GameWorld context) {
+        return ownsSpecial(owned) && this.ownsLevelThree(owned);
     }
 
     @Override
@@ -29,8 +29,8 @@ public record TranscendentCondition(List<String> levelThreeIds) implements Upgra
     /** Short enough to share a button row with the node's name. */
     @Override
     public TermText progress(Tower tower, GameWorld context) {
-        boolean special = ownsSpecial(tower);
-        boolean levelThree = this.ownsLevelThree(tower);
+        boolean special = ownsSpecial(tower.upgrades());
+        boolean levelThree = this.ownsLevelThree(tower.upgrades());
         if (special && levelThree) {
             return TermText.of("special and head III");
         }
@@ -40,11 +40,11 @@ public record TranscendentCondition(List<String> levelThreeIds) implements Upgra
         return TermText.of(special ? "needs head III" : "needs special");
     }
 
-    private static boolean ownsSpecial(Tower tower) {
-        return tower.upgrades().countIn(UpgradeSlot.SPECIAL) > 0;
+    private static boolean ownsSpecial(UpgradeState owned) {
+        return owned.countIn(UpgradeSlot.SPECIAL) > 0;
     }
 
-    private boolean ownsLevelThree(Tower tower) {
-        return this.levelThreeIds.stream().anyMatch(tower.upgrades()::owns);
+    private boolean ownsLevelThree(UpgradeState owned) {
+        return this.levelThreeIds.stream().anyMatch(owned::owns);
     }
 }

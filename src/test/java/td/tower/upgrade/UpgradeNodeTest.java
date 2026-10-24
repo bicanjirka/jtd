@@ -28,7 +28,7 @@ class UpgradeNodeTest {
         UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Name", 10);
 
         assertThat(node.effects().modifiers()).isEqualTo(StatModifiers.none());
-        assertThat(node.requires().isSatisfied(null, null)).isTrue();
+        assertThat(node.requires()).isEqualTo(UpgradeCondition.always());
         assertThat(node.effects().note()).isEmpty();
     }
 
