@@ -395,7 +395,7 @@ class DevControlsTest {
     }
 
     @Test
-    void aSelectedTowerIsNamedByItsNameAloneAndASelectedEnemyAlsoByItsId() {
+    void aSelectedTowerIsNamedByItsNameAloneAndASelectedEnemyByItsIdThenItsName() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         Tower tower = this.placeSniper(1, 1);
         this.dev.spawnWave("simple", Rank.GRUNT, 0);
@@ -407,7 +407,7 @@ class DevControlsTest {
         tower.setSelected(true);
         this.dev.runPending();
 
-        assertThat(enemy).isEqualTo(mob.definition().displayName() + " #" + mob.id());
+        assertThat(enemy).isEqualTo("#" + mob.id() + " " + mob.definition().displayName());
         assertThat(this.dev.selection().description()).isEqualTo(tower.displayName());
     }
 

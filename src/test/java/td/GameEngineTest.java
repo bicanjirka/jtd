@@ -16,6 +16,7 @@ import td.enemy.Ability;
 import td.enemy.AbilityTerm;
 import td.enemy.AdaptiveResist;
 import td.enemy.BodyArchetype;
+import td.enemy.DefinedEnemyMob;
 import td.enemy.EffectResistTrait;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -1836,6 +1837,25 @@ class GameEngineTest {
 
         assertThat(burned).isFalse();
         assertThat(enemy.activeEffectKinds()).contains(EffectKind.SOULFIRE);
+    }
+
+    @Test
+    void aTowersHitOnAnObservedEnemyIsNamedAfterTheTowerAndItsCell() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition(WEAKLING.id(), Rank.GRUNT)), 1000)
+                .withCustomEnemies(List.of(WEAKLING)));
+        Tower tower = placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
+        engine.nextWave();
+        DefinedEnemyMob mob = engine.getGameWorld().enemies().getEnemies()[0].accept(defined -> defined);
+
+        List<String> lines;
+        try (CapturedLog log = new CapturedLog(EnemyObservation.class)) {
+            engine.getGameWorld().enemyObservation().observe(mob, "test");
+            tickUntilWaveCleared(engine);
+            lines = log.atLevel(Level.INFO).stream().map(ILoggingEvent::getFormattedMessage).toList();
+        }
+
+        assertThat(lines).anyMatch(line -> line.contains(" HIT from=" + tower.displayName() + "@1,1 "));
     }
 
     @Test

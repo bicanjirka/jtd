@@ -5,7 +5,8 @@ package td;
  * Built on the game-loop thread, which owns both selections, and read by the EDT.
  *
  * @param kind        what is selected
- * @param description its name and, for an enemy, its id: the board already shows the rest
+ * @param description its name and, for an enemy, its id first, so a cut-off name keeps it: the board
+ *                    already shows the rest
  * @param observed    whether the selected enemy is observed
  */
 public record DevSelection(Kind kind, String description, boolean observed) {
