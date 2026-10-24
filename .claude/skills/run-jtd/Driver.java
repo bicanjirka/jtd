@@ -99,6 +99,7 @@ public class Driver {
             case "hover" -> hover(rest);
             case "pointer" -> pointer(rest.trim());
             case "clickat" -> clickAt(rest.trim());
+            case "rclickat" -> rightClickAt(rest.trim());
             case "key" -> typeKey(rest.trim());
             case "type" -> typeText(rest);
             case "devlabels" -> devLabels();
@@ -389,6 +390,16 @@ public class Driver {
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
         Thread.sleep(80);
         System.out.println("OK clickat " + args);
+    }
+
+    // Walks the pointer to a window pixel, then right-clicks there.
+    private static void rightClickAt(String args) throws InterruptedException {
+        pointer(args);
+        robot.mousePress(InputEvent.BUTTON3_DOWN_MASK);
+        Thread.sleep(60);
+        robot.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
+        Thread.sleep(80);
+        System.out.println("OK rclickat " + args);
     }
 
     // Moves the pointer onto a component without clicking, so its mouseEntered fires. jTD opens

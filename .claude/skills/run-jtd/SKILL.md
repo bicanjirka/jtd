@@ -41,6 +41,7 @@ on `quit` or end of input.
 | `hover <n> [dx dy]` | Moves the pointer onto component `n` so its hover fires; `dx dy` picks a point inside it, such as a wave-preview slot. |
 | `pointer <x> <y>` | Walks the pointer to window pixel (x, y) in small steps, so panes and popups see it enter and leave. For what has no component of its own, such as a tooltip; read the pixel off an `ss`. |
 | `clickat <x> <y>` | `pointer` to window pixel (x, y), then a left click there: for a popup with no index, such as the script field's suggestion list. |
+| `rclickat <x> <y>` | `pointer` to window pixel (x, y), then a right click there. |
 | `text <n>` | Prints a text component's full content. Use it on the Info pane instead of a screenshot. |
 | `key <c>` | Presses a key or chord through `Robot`: `q w e r t y u i` build a tower, `p` pause, `f` speed, `s` next wave; `ctrl+shift+d` opens the dev panel; `alt+<letter>` runs a dev panel control (`alt+h` lists them in the Info pane). A part is one character or a `KeyEvent` name without `VK_` (`enter`, `esc`, `tab`, `space`, `period`, `comma`, `left`, `f5`); an unknown name prints `ERROR` and presses nothing. Debug `n` skips a wave, `x` spawns the next catalog id, `c` grants credits - only while the dev panel is open. |
 | `type <text>` | Replaces the focused text field's content, such as a dev panel field after `key alt+s`; `key enter` then applies it. |
