@@ -3,7 +3,6 @@ package td.enemy;
 import td.damage.AttackOrigin;
 import td.util.ThreadConfined;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -11,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 /**
@@ -29,7 +29,8 @@ public final class EnemyObservation {
     private final Function<AttackOrigin, Optional<String>> attackers;
     // Registered from the EDT while the panel is built, read on the game loop.
     private final Map<AttackOrigin, String> named = new ConcurrentHashMap<>();
-    private final List<DefinedEnemyMob> observed = new ArrayList<>();
+    // Ending every trace when a save loads runs on the EDT, while a tick may be sweeping the list.
+    private final List<DefinedEnemyMob> observed = new CopyOnWriteArrayList<>();
 
     private int tick;
     private String cause = NO_CAUSE;
@@ -79,7 +80,7 @@ public final class EnemyObservation {
 
     /** Ends every trace with {@code how}, such as the level ending under them. */
     public void endAll(String how) {
-        for (DefinedEnemyMob mob : List.copyOf(this.observed)) {
+        for (DefinedEnemyMob mob : this.observed) {
             mob.endObservation(how);
         }
         this.observed.clear();

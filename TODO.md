@@ -87,9 +87,9 @@ unnecessary, and every mutation lands on a deterministic tick boundary.
   the same way while the EDT mutates the world directly. If recorded human sessions become a goal,
   this stops being indirection and starts being the feature - do it then, and not before.
 
-### `Tower` is a twenty-three-method interface
+### `Tower` is a forty-method interface
 
-`CLAUDE.md`'s code style asks for interfaces of one to five methods. `Tower` has twenty-three:
+`CLAUDE.md`'s code style asks for interfaces of one to five methods. `Tower` has over forty:
 identity, position, rendering, selection, economy, damage accounting, upgrade paths and buff
 contribution, all on one type. It is what every consumer depends on, so every consumer depends
 on all of it — `PanelTowerInfo` wants the upgrade and accounting half, `BoardRenderer` wants
