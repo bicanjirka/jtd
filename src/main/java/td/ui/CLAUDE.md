@@ -77,6 +77,7 @@ keeps the seam honest.
 - The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) where `UpgradeTreeLayout` derives each
   node's place from the tree, scaled to fit, never scrolled; a node's look is an `UpgradeNodeState`, and its hover
   is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).
+- A question is a `ConfirmPopup` on the popup layer, never a platform dialog.
 - Info-pane content is an AWT-free `InfoSheet` that a `*SheetText` builds from a domain
   inspection (`EnemyInspection`, `TowerInspection`): stat rows, then icon rows (Traits, Buffs,
   Debuffs; on a tower Perks, Buffs, Debuffs, Applies), each icon a `SheetIcon` carrying its tooltip sheet. `InfoSheetDocument` alone lays

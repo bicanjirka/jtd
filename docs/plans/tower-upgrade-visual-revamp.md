@@ -1,6 +1,6 @@
 # Plan: Tower Upgrade Visual Revamp
 
-**Status:** planned, 2026-10-24. Implements `docs/features/FEATURE-tower-upgrade-visual-revamp.md`;
+**Status:** implemented, 2026-10-24. Implements `docs/features/FEATURE-tower-upgrade-visual-revamp.md`;
 the accepted look is the mockup canvas linked there.
 
 Seven phases, one commit each, `mvn verify` green before every commit. The live `run-jtd` pass runs
@@ -70,13 +70,12 @@ tree already has: Core on the spine by level, Base's Range line by level, Head r
 line's first node (4, 5, 3 top to bottom), a level IV in a two-member choice on a fork, specials
 centred on the halo in declaration order. Coordinates are the mockup's, in design units of a 300x420
 panel, scaled to the real size, so node size follows the space (D9). Two nodes on one place, or more
-than six specials, throw; the panel lays out every tower type when it is built, so a tree that doesn't
-fit fails at startup, and a rule test covers every built-in tower. *Rejected:* a layout check in the
+than six specials, throw; a rule test lays out every built-in tower, and the panel lays a tree out the
+first time it shows it. *Rejected:* a layout check in the
 `UpgradeTree` constructor (test fixture trees of loose nodes would all have to change).
 
 **D9. Node size adapts at runtime** (open question 1): the design scales by `min(w/300, h/420)`, never
-up past 1.15 and never below 0.75 (24 px nodes), so the tree always fits and grows where the panel is
-larger. The preferred height is 420.
+up past 1.15, so the tree always fits and grows where the panel is larger. The preferred height is 420.
 
 **D10. Specials keep keys 6-8 per set, and the halo shows no digits** (open question 4), as the mockup.
 
