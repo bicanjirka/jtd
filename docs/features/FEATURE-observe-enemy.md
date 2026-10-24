@@ -1,14 +1,15 @@
 # Feature Request: Observe Enemy
 
-**Status: requested.**
+**Status: requested; every open question answered, ready to plan.**
 
 ## Summary
 
-A dev-panel switch that makes one enemy report, tick by tick, everything that happens to it -
-every hit, effect, heal, shield, ability and how it ended - to the game's log. Tests prove each
-rule alone; this shows how the rules combine on a real enemy in a real run, so a surprise seen in
-play ("why did that survive?", "did the freeze land or diminish?") can be read off instead of
-guessed, then pinned down by a test.
+A dev-panel switch that makes enemies report, tick by tick, everything that happens to them -
+every hit and how it was reduced, every effect, heal, shield, ability and how they ended - to the
+game's log. Tests prove each rule alone; this shows how the rules combine on a real enemy in a
+real run, so a surprise seen in play ("why did that survive?", "did the freeze land or
+diminish?") can be read off instead of guessed, then pinned down by a test. Its main reader is
+Claude driving the game through `run-jtd`; the developer reads it too.
 
 ## Current state (what exists today)
 
@@ -23,80 +24,152 @@ guessed, then pinned down by a test.
     `applyEffect`;
   - the hit sequence in `takeHit`/`land`: mark spent, dodge, `HitResolution` (crit, mitigation),
     shield absorption, the cap at health, a charge discharging, death and its payout.
+- `HitResolution.resolve` returns only the final `Damage`; the steps between (crit, armor or magic
+  resist after penetration, plating or insulation, damage taken) are not kept.
 - Periodic damage reaches the mob through `takeHit` like a hit, with a periodic `AttackProfile`
-  (`AbstractTower.dealPeriodicDamage`), so it never crits or spends a mark. An `AttackProfile`
-  carries the attacker's `origin()`.
+  (`AbstractTower.dealPeriodicDamage`), so it never crits or spends a mark. A fuel pool several
+  towers feed splits each tick's damage into one sink call per contributor
+  (`ActiveEffects`).
+- An `AttackProfile` carries an `AttackOrigin`, which is identity only: no name, no position.
+  `td.damage` may not depend on `td.tower`. Dev-panel effects and ability effects carry
+  `AttackOrigin.none()`.
 - A hit carries no game time: `doTick` stamps pending moments on the next tick
-  (`MobMoments.capturePending`) because towers hit after the mob's own tick ran.
+  (`MobMoments.capturePending`), because towers hit after the mob's own tick ran.
+- An enemy killed by a hit runs its death-tick abilities (an on-death spawn or burst) on its next
+  `doTick`, once its death is captured.
+- The only per-mob number is `entryOrdinal`, which is `0` until the spawn delay ends.
+- A hatch replaces the mob with a new one (`EnemySpawner.replace`); ability spawns are built by
+  `AbilitySpawnFactory` at the caster's position and rank.
+- The wave preview and tooltips build `DefinedEnemyMob`s that never enter the board.
 - The dev panel (`PanelDev`, ctrl+shift+d) has a "Selected" section; with an enemy selected it
-  offers Apply effect, Clear, Kill, Heal, Remove. Its actions go through `DevControls`, which
-  queues them to run on the game-loop thread (`onSelectedEnemy`). The Spawn box takes the same
-  wave-script grammar the levels use.
+  offers Apply effect, Clear, Kill, Heal, Remove. The Spawn row holds the script field, rank,
+  path, the Spawn button and the script preview. Its actions go through `DevControls`, which
+  queues them to run on the game-loop thread (`onSelectedEnemy`). Every dev control has an
+  `alt+<letter>` shortcut, listed by `alt+h`; the `run-jtd` Driver drives the panel through them
+  because component indices shift.
 - Logging is SLF4J + Logback (`src/main/resources/logback.xml`): root at INFO, to the console and
-  to an async `logs/jTD-<timestamp>.log`. The async appender never blocks and drops events once
-  its 2048-entry queue is full, so it does not stall the game loop.
+  to `logs/jTD-<timestamp>.log` through an async appender that never blocks and drops events once
+  its 2048-entry queue is full.
+- The `run-jtd` Driver has no command that reads the log.
 - Performance budget: tick p99 ≤ 1 ms with every buildable cell a tower (`td.PerformanceHarness`).
 
 ## What this feature adds
 
-- A dev-panel control that starts and stops observing the selected enemy. Only the dev panel can
-  turn it on: no wave script, level or saved game can make an enemy observed.
-- While observed, the enemy writes one log line per event, each with the tick, the enemy's
-  identity (name, rank, a per-mob id so two of the same kind can be told apart) and the numbers
-  that explain the outcome. Events, at least:
-  - **hits**: what arrived, from whom, its type; crit or not; dodged; mark spent; what the
-    shield absorbed; what landed; health before and after; overkill;
-  - **periodic damage**: the same, marked as periodic, with the effect it came from where known;
-  - **effects**: requested, then what happened to it - landed (at what strength and length),
-    shortened by resistance, shortened by diminishing returns, blocked, kept out by another
-    effect, refreshed, stacked, turned into damage by Inversion; and later expired, dispelled,
-    consumed or stacks lost;
-  - **health and shields**: regeneration and heals that changed health, shield gained, broken
-    or absorbed;
-  - **abilities**: what it cast or spawned, and what it did to others;
-  - **its end**: killed (bounty and score paid), leaked (lives lost), hatched, or removed.
-- An enemy that isn't observed costs nothing measurable; the performance budget still holds.
-- Out of scope for v1: showing the trace on screen, filtering events by kind, recording a trace in
-  headless balance runs, and keeping the observed mark through a save and load.
+### Choosing what is observed
+
+- An **Observe** toggle on the Selected section's enemy card observes the selected enemy from that
+  moment until it is toggled off.
+- An **Observe** toggle on the Spawn row: while it is on, every enemy the Spawn button creates is
+  observed from its first tick, its spawn delay included. Enemies a wave spawns can be observed
+  only by selecting them.
+- Any number of enemies may be observed at once.
+- Whatever an observed enemy spawns, or hatches into, is observed too.
+- Only the dev panel can make an enemy observed: no wave script, level or saved game can.
+- The Selected card shows the id of every selected enemy, observed or not, and the toggle shows
+  whether it is observed. There is no marker on the board.
+
+### The lines
+
+- One line per event, written as it happens, so lines keep the order things happened in:
+  `OBSERVE t=<tick> #<id> <Name> <Rank> <EVENT> key=value ...`. The tick is the one the event
+  happened in.
+- Health and damage in points, as the Info pane shows them; effect, tower and enemy names as the
+  game titles them.
+- `from=` names the cause: `<Tower>@<x>,<y>` (a tower by name and board cell), `#<id>` (an
+  enemy's cast), `dev:<action>` (`dev:kill`, `dev:kill-all`, `dev:effect`, `dev:heal`, ...) or `-`
+  (nothing in particular). A dev action never passes for game behaviour.
+- A line belongs to the enemy it happened to. A caster logs that it cast (what, radius, how many
+  targets); each target that is itself observed logs what the effect did to it, `from=#<id>`.
+  What an enemy does to towers shows only in its cast line.
+- Every line goes to the session log at INFO, and none is dropped: while anything is observed
+  the game may run slower rather than lose a line. With nothing observed, nothing changes and the
+  performance budget holds.
+
+### Events
+
+- **START**: a full snapshot - health (current and max), every base and resolved stat, traits,
+  active effects - and how observation began: `selected`, `spawn box`, `spawned by #<id>` or
+  `hatched from #<id>`.
+- **HIT**: the attacker, type, and every step from what arrived to what landed: crit (or a spent
+  mark), each reduction with the value it was resolved against (armor or magic resist after
+  penetration, plating or insulation, damage taken), what the shield absorbed, the cap at health;
+  health before and after; overkill. **DODGE** for a dodged hit.
+- **Periodic damage**: every tick, one line per contributing tower, with the same steps minus crit
+  and mark, and the effect it came from.
+- **Effects**, discrete changes only: gained (strength and length), refreshed (old and new
+  length), stack count changed (decay included), shortened by resistance or diminishing returns,
+  blocked, kept out by another effect, turned into damage by Inversion; ended, with why: expired,
+  dispelled, consumed, stacks lost, cleared from the dev panel. A continuous level (Chill's
+  strength, fullness) appears in these lines and in END, never as a line of its own each tick.
+- **Health and shields**: regeneration or a heal that changed health; a shield gained or broken.
+- **Abilities**: what it cast or spawned.
+- **KILLED** at the killing hit, by whom, with overkill.
+- **END**, always the last line for its id, written after any death-tick abilities: how it ended
+  (killed, leaked, hatched into `#<id>`, removed, stopped, level ended), how long it lived, and its
+  totals: damage taken per source and type, absorbed by shields, dodges, overkill. Restarting,
+  going back to the menu or loading a game ends every observed enemy with `level ended`.
+- A **Snapshot** button on the Spawn row writes a START-style full snapshot of every observed
+  enemy on demand; with nothing observed it writes one line saying so. It is always enabled.
+
+### Controls and the Driver
+
+- Both Observe toggles and Snapshot get `alt+<letter>` dev shortcuts, listed by `alt+h`.
+- A `run-jtd` Driver command, `trace [#id]`, prints the `OBSERVE` lines of the game the Driver
+  launched, all of them or one enemy's.
+- The `run-jtd` skill's description (the part loaded in every session) says it can trace what
+  happens to an enemy tick by tick; its command table documents `trace` and the shortcuts. This
+  ships with the Driver change.
+
+### Out of scope for v1
+
+Showing the trace on screen, filtering lines by event, a board marker over observed enemies,
+recording traces in headless balance runs, keeping observation through a save and load, and
+observing towers.
 
 ## Interconnections
 
 - `TODO.md`'s "What the balance tools cannot see yet" lists measures the recorder doesn't take
-  (damage wasted on overkill and shields). This trace shows them for one enemy live, but does not
+  (damage wasted on overkill and shields). END's totals show them for one enemy live, but don't
   close that gap: the balance tools need them in aggregate, headless.
-- The `run-jtd` skill drives the live game. A trace in the log gives it something to read besides
-  screenshots when checking an enemy rule live.
 
 ## Constraints and open risks
 
 - The engine is headless and the mob is owned by the game-loop thread; the dev panel lives on the
-  EDT. Turning observation on or off crosses that boundary.
-- Hits arrive without a game time, but each line must carry its tick.
-- A busy enemy under several towers can produce many lines per tick; the async log drops events
-  rather than block once its queue fills, so a trace can lose lines under load.
-- What the enemy does *to others* (an aura, a heal on an ally, a spawn) is partly owned by the
-  ability system and the receiving mob, not the caster.
-- Event names and numbers in the log are dev text, not game vocabulary; whether they should use
-  `td.term` wording is open (below).
-- The design must not let a level or wave script reach it, and must keep the "Test mechanics,
-  never content" rule: the tests prove that observed events are reported, not what any built-in
-  enemy logs.
+  EDT. Turning observation on or off, and Snapshot, cross that boundary.
+- Hits arrive without a game time, but each line must carry the tick it happened in. Stamping a
+  hit on the mob's next tick would be off by one.
+- Naming an attacker by tower and cell needs a way from an `AttackOrigin` to a tower that keeps
+  `td.damage` free of `td.tower`.
+- The id must exist from the moment a mob is built; `entryOrdinal` doesn't.
+- Showing every reduction step needs `HitResolution`'s intermediate values, on a per-hit path that
+  must cost nothing measurable while nothing is observed.
+- The session log is written by an async appender that drops; lines that may never be dropped
+  must share that file without corrupting it or arriving out of order.
+- Enemies built for the wave preview and tooltips must never be observed.
+- The Spawn row is already full; two more controls must fit without squeezing the script preview.
+- Content rules still hold: tests prove that each event is reported with the numbers its input
+  gives, never what a built-in enemy logs.
 
 ## Decisions made
 
-- Name: **Observe enemy**.
-- Dev panel only; never placeable in a level's waves, never saved.
-- Output goes to the existing log, not to a new file or window.
+- Name: **Observe enemy**. Dev panel only; never in a level's waves, never saved.
+- Output goes to the existing session log, not a new file or window.
+- The choices above under "What this feature adds" are the developer's, settled in review:
+  selection plus a spawn-box toggle, any number at once, spawns and hatches inherit, no board
+  marker, ids on every selected enemy, fixed `key=value` lines in points and game names, towers by
+  name and cell, dev causes named, lines owned by the enemy they happened to, a full START
+  snapshot, every reduction step on hits, every periodic tick, discrete effect changes only,
+  KILLED then END after death-tick abilities, a Snapshot button, never drop a line, shortcuts for
+  every control, and a Driver `trace` command with the skill updated alongside.
+- Tests: one per event source, on a fixture enemy with a recording fake, numbers from the test's
+  input; one formatter test per event kind for the exact line, since `trace` and grep depend on
+  it; one that an unobserved enemy reports nothing; and one `GameEngineTest` following a
+  spawn-box enemy through a hatch to its child's `hatched from` START. The performance harness
+  proves the unobserved cost.
+- The one live `run-jtd` pass checks only Swing wiring: the toggles and shortcuts, the id on the
+  Selected card, the Spawn row's layout, and `trace` reading a real session.
 - It complements tests, never replaces them: a finding from a trace becomes a test.
 
 ## Open questions
 
-1. **How is an enemy chosen?** (a) Only the selected enemy, through a toggle in the Selected
-   section, observed from that moment on; or (b) also an "observe" checkbox by the Spawn box, so
-   the enemies it spawns are observed from their first tick (catching their spawn and early hits).
-2. **One at a time or several?** (a) Selecting and observing another enemy stops the first; or
-   (b) any number may be observed at once, each line telling them apart by its id.
-3. **Does the panel show that an enemy is observed?** (a) Only the toggle's state in the Selected
-   section; or (b) also a marker on the board over every observed enemy.
-4. **Wording:** (a) plain dev text with raw numbers (damage units, ticks); or (b) the game's terms
-   and points, as the Info pane shows them.
+None.
