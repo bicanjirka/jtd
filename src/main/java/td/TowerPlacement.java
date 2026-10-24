@@ -109,7 +109,7 @@ public class TowerPlacement {
     }
 
     /**
-     * @return the tower selected by the click, or empty
+     * @return the tower selected by the click: the one on the clicked cell, or the one it built; else empty
      */
     public Optional<Tower> mouseClicked(int boardX, int boardY) {
         Tower selected = null;
@@ -130,6 +130,10 @@ public class TowerPlacement {
                         this.gameWorld.towers().add(tower);
                         cell.setTower(tower);
                         cell.enable(false);
+                        selected = tower;
+                        this.unHighlightCell();
+                        this.highlightedCell = new int[]{cellX, cellY};
+                        cell.setHighlight(Cell.HighlightType.SELECT);
                         LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.gameWorld.economy().getCredits());
                     } else {
                         LOG.info("Tower placement rejected: not enough credits for {} (need {}, have {})",
