@@ -65,7 +65,9 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     public PanelUpgradeTree() {
         this.setBackground(Color.BLACK);
         this.setBorder(Hud.panelBorder("Upgrades"));
+        // The console is shorter than every panel's preferred height, so its layout gives each its minimum.
         this.setPreferredSize(new Dimension(UpgradeTreeLayout.WIDTH, UpgradeTreeLayout.HEIGHT));
+        this.setMinimumSize(new Dimension(UpgradeTreeLayout.WIDTH, UpgradeTreeLayout.HEIGHT));
         MouseAdapter mouse = new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent event) {
