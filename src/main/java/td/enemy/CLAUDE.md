@@ -46,7 +46,7 @@
   adding a query method (like `EffectTemplate.kind()`) over another switch on
   `AbilityAction`/`EffectTarget`.
 - A mob is built by one constructor and its birth fields are `final`. `DefinedEnemyMob` composes
-  its parts (`PathMotion`, `MobMoments`, `ActiveEffects`); don't reintroduce a base class.
+  its parts (`PathMotion`, `MobMoments`, `MobHealth`, `ActiveEffects`); don't reintroduce a base class.
 
 ## Traits and abilities
 

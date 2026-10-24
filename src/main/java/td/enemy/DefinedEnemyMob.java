@@ -52,7 +52,6 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final List<Trait> traits;
     private final Rank rank;
     private final int price;
-    private final int healthMax;
     private final int pathIndex;
     private final float bodyScale;
     private final List<AbilityState> abilityStates;
@@ -60,12 +59,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final EffectTransitions effectTransitions = new EffectTransitions();
     private final PathMotion motion;
     private final MobMoments moments = new MobMoments();
+    private final MobHealth health;
     private final Map<EffectKind, DiminishingReturns> diminishing = new EnumMap<>(EffectKind.class);
     private final StatSheet stats;
     private final BaseStats<EnemyStat> base;
 
-    private int health;
-    private long damageTaken;
     private EnemyInspection.Fate fate = EnemyInspection.Fate.ALIVE;
     private LifeStage stage;
     // Only meaningful while LIVE: off-board mobs walk in from and out to off-screen untargetable.
@@ -79,8 +77,6 @@ public final class DefinedEnemyMob implements EnemyMob {
     // Counts from spawn, so a fresh mob does not trivially satisfy an idle threshold.
     private int ticksSinceLastHit;
     private int dodges;
-    // The part of a heal too small to land as a whole unit this tick; paid out once it adds up.
-    private float regenCarry;
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, Rank rank) {
         this.gameWorld = gameWorld;
@@ -91,8 +87,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         // Divided after the spawn shape's multiplier, which the wave already applied to the health.
         int healthPoints = Math.round(spawnParameters.health() / definition.healthDivisor()
                 * gameWorld.playtestRules().enemyHealthScale());
-        this.health = DamageUnits.ofPoints(healthPoints);
-        this.healthMax = DamageUnits.ofPoints(healthPoints);
+        this.health = new MobHealth(DamageUnits.ofPoints(healthPoints));
         this.pathIndex = spawnParameters.pathIndex();
         this.base = definition.baseStats()
                 .with(EnemyStat.MOVE_SPEED, definition.baseSpeed() * spawnParameters.speedMultiplier());
@@ -127,12 +122,12 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     public int getHealth() {
-        return this.health;
+        return this.health.current();
     }
 
     /** Full health in points, after every divisor and spawn-shape multiplier. */
     public int getMaxHealthPoints() {
-        return this.healthMax / DamageUnits.PER_POINT;
+        return this.health.max() / DamageUnits.PER_POINT;
     }
 
     public int getBounty() {
@@ -151,7 +146,7 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     @Override
     public float getHealthFraction() {
-        return (float) this.health / this.healthMax;
+        return this.health.fraction();
     }
 
     public boolean isInactive() {
@@ -399,7 +394,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** Back to full health at once. Nothing is credited, and a dead mob stays dead. */
     public void restoreHealth() {
         if (!this.isDead()) {
-            this.health = this.healthMax;
+            this.health.restore();
             this.stats.invalidate();
         }
     }
@@ -480,7 +475,7 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     @Override
     public long damageTaken() {
-        return this.damageTaken;
+        return this.health.damageTaken();
     }
 
     @Override
@@ -575,11 +570,8 @@ public final class DefinedEnemyMob implements EnemyMob {
             if (absorbed > 0) {
                 this.gameWorld.enemies().reportShielded(this, Damage.of(mitigated.type(), absorbed));
             }
-            Damage landed = new Damage(mitigated.amount() - absorbed, mitigated.type(), mitigated.critical())
-                    .cappedAt(this.health);
+            Damage landed = this.health.lose(new Damage(mitigated.amount() - absorbed, mitigated.type(), mitigated.critical()));
             result = new HitResult(landed, absorbed);
-            this.health -= landed.amount();
-            this.damageTaken += landed.amount();
             this.gameWorld.damageTally().record(Damage.of(mitigated.type(), result.credited()));
             if (result.credited() > 0) {
                 this.moments.markPending(Moment.DAMAGE_TAKEN);
@@ -588,14 +580,19 @@ public final class DefinedEnemyMob implements EnemyMob {
                 this.moments.markPending(Moment.CRITICAL_HIT);
             }
         }
-        if (this.health <= 0) {
-            this.die();
-            this.fate = EnemyInspection.Fate.KILLED;
-            int score = Math.round(this.price * this.rank.scoreMultiplier());
-            this.gameWorld.economy().apply(EconomyDelta.kill(this.price, score));
-            this.gameWorld.enemies().reportDeath(this);
+        if (this.health.depleted()) {
+            this.kill();
         }
         return result;
+    }
+
+    /** Pays the bounty and its score, then starts the fade. */
+    private void kill() {
+        this.die();
+        this.fate = EnemyInspection.Fate.KILLED;
+        int score = Math.round(this.price * this.rank.scoreMultiplier());
+        this.gameWorld.economy().apply(EconomyDelta.kill(this.price, score));
+        this.gameWorld.enemies().reportDeath(this);
     }
 
     /**
@@ -704,7 +701,8 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         // Read before tick(): an effect in its last tick must still slow this tick's movement.
         float speed = this.stats.value(EnemyStat.MOVE_SPEED);
-        boolean healthChanged = this.regenerate();
+        // Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
+        boolean healthChanged = this.health.regenerate(this.stats.value(EnemyStat.REGENERATION));
         if (healthChanged || !this.activeEffects.isEmpty()) {
             this.tickEffects(speed);
         }
@@ -733,21 +731,6 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.entryOrdinal = this.gameWorld.enemies().recordEntry();
             this.doTick(gameTime);
         }
-    }
-
-    /**
-     * Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
-     *
-     * @return whether health changed
-     */
-    private boolean regenerate() {
-        this.regenCarry += this.stats.value(EnemyStat.REGENERATION);
-        int whole = (int) this.regenCarry;
-        this.regenCarry -= whole;
-        int healed = Math.min(this.healthMax, this.health + whole);
-        boolean changed = healed != this.health;
-        this.health = healed;
-        return changed;
     }
 
     private void tickEffects(float speed) {
