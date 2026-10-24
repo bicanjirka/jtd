@@ -81,6 +81,9 @@ keeps the seam honest.
   a sheet out. The live enemy sheet is built with the frame and travels in
   `RenderFrame.enemyInspection`; the EDT only shows it, and only after a board click asked for a
   selection.
+- A hover off the board (a shop button, a wave-preview enemy) lends the Info pane its sheet and never clears the
+  selection; once it ends, the selection's sheet comes back (`TowerDefense.showHoveredSheet`). Only a click
+  changes the selection.
 - A term's icon is an `IconFace` (AWT-free) that `TermIconPainter` alone paints; its art is a `Pictogram` keyed by
   the term's key in `PictogramCatalogue`, its colours come from `TermLooks`. A new term needs a row in a
   `*Pictograms` table (or it shows its monogram) and a case in `TermLooks`.

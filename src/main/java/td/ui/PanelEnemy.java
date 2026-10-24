@@ -23,11 +23,13 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
@@ -45,7 +47,7 @@ public class PanelEnemy extends JPanel {
     private final List<Rank> ranks = new ArrayList<>();
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final GameWorld contextLocal;
-    private final Consumer<InfoSheet> onEnemyHover;
+    private final Consumer<Optional<InfoSheet>> onEnemyHover;
     private List<Integer> enemiesCount = new ArrayList<>();
     private Font font;
     private int pHeight = 0;
@@ -53,8 +55,8 @@ public class PanelEnemy extends JPanel {
     private int scale = 32;
     private int gameTime = 0;
 
-    /** {@code onEnemyHover} gets the sheet of the enemy under the pointer. */
-    public PanelEnemy(Consumer<InfoSheet> onEnemyHover) {
+    /** {@code onEnemyHover} gets the sheet of the enemy under the pointer, or empty once it rests on none. */
+    public PanelEnemy(Consumer<Optional<InfoSheet>> onEnemyHover) {
         this.onEnemyHover = onEnemyHover;
         initComponents();
         this.contextLocal = new GameWorld(GameHost.noOp());
@@ -151,8 +153,14 @@ public class PanelEnemy extends JPanel {
         int nr = x / this.scale;
         if (nr < this.enemies.size()) {
             EnemyMob e = this.enemies.get(nr);
-            this.onEnemyHover.accept(e.accept(new EnemyInfoText()));
+            this.onEnemyHover.accept(Optional.of(e.accept(new EnemyInfoText())));
+        } else {
+            this.onEnemyHover.accept(Optional.empty());
         }
+    }
+
+    private void pointerLeft() {
+        this.onEnemyHover.accept(Optional.empty());
     }
 
     private void initComponents() {
@@ -169,6 +177,11 @@ public class PanelEnemy extends JPanel {
         addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent evt) {
                 formMouseMoved(evt);
+            }
+        });
+        addMouseListener(new MouseAdapter() {
+            public void mouseExited(MouseEvent evt) {
+                pointerLeft();
             }
         });
 

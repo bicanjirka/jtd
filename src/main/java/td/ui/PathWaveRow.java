@@ -22,6 +22,7 @@ import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.io.Serial;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -40,7 +41,7 @@ final class PathWaveRow extends JPanel {
     private final PanelEnemy panelEnemy;
     private GameWorld gameWorld;
 
-    PathWaveRow(Consumer<InfoSheet> onEnemyHover) {
+    PathWaveRow(Consumer<Optional<InfoSheet>> onEnemyHover) {
         this.panelEnemy = new PanelEnemy(onEnemyHover);
         initComponents();
     }
