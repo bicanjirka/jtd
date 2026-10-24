@@ -94,14 +94,14 @@ public class PanelDev extends JPanel {
     private final HudTextField jumpTo = new HudTextField("1", 3);
     private final HudTextField xp = new HudTextField("150", 5);
     private final HudTextField enemyHealth = new HudTextField("100", 4);
-    private final HudTextField effectSeconds = new HudTextField("5", 3);
-    private final HudTextField effectPower = new HudTextField("3", 4);
-    private final HudTextField buffSeconds = new HudTextField("10", 3);
-    private final HudTextField buffPower = new HudTextField("50", 4);
+    private final DevFieldSlots<EffectKind> effectFields = new DevFieldSlots<>(DevEffects.enemyKinds(),
+            DevEffects::enemyFields, EffectKind.CHILL);
+    private final DevFieldSlots<TowerTerm> buffFields = new DevFieldSlots<>(DevEffects.towerBuffs(),
+            DevEffects::buffFields, TowerTerm.HASTE);
     private final ChoiceButton<EffectKind> effectChoice = new ChoiceButton<>(ENEMY_EFFECTS, EffectKind.CHILL,
-            () -> this.onReleaseFocus.run());
+            () -> this.choiceClosed(this.effectFields, this.effectChoice));
     private final ChoiceButton<TowerTerm> buffChoice = new ChoiceButton<>(TOWER_BUFFS, TowerTerm.HASTE,
-            () -> this.onReleaseFocus.run());
+            () -> this.choiceClosed(this.buffFields, this.buffChoice));
     private final JLabel towerSelected = label("");
     private final JLabel enemySelected = label("");
     private final CardLayout selectionCards = new CardLayout();
@@ -354,9 +354,11 @@ public class PanelDev extends JPanel {
                 or a removal (pays nothing).
                 The status line then says
                 whether the effect took hold.
-                Power is the effect's own
-                number: stacks, percent or
-                points.""");
+                Each effect and buff shows its
+                own fields, and keeps what was
+                typed in them. A greyed-out
+                one says why the panel can't
+                apply it.""");
         return text.toString();
     }
 
@@ -371,10 +373,8 @@ public class PanelDev extends JPanel {
         this.submitOnEnter(this.jumpTo, this::jump);
         this.submitOnEnter(this.xp, this::grantXp);
         this.submitOnEnter(this.enemyHealth, this::setEnemyHealth);
-        this.submitOnEnter(this.effectSeconds, this::applyEffect);
-        this.submitOnEnter(this.effectPower, this::applyEffect);
-        this.submitOnEnter(this.buffSeconds, this::applyBuff);
-        this.submitOnEnter(this.buffPower, this::applyBuff);
+        this.effectFields.textFields().forEach(field -> this.submitOnEnter(field, this::applyEffect));
+        this.buffFields.textFields().forEach(field -> this.submitOnEnter(field, this::applyBuff));
         this.script.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -392,10 +392,11 @@ public class PanelDev extends JPanel {
             }
         });
         this.cellGridToggle.addActionListener(evt -> this.onCellGrid.accept(this.cellGridToggle.isSelected()));
-        for (HudTextField field : List.of(this.credits, this.lives, this.script, this.jumpTo, this.xp,
-                this.enemyHealth, this.effectSeconds, this.effectPower, this.buffSeconds, this.buffPower)) {
-            releaseFocusOnEscape(field);
-        }
+        List<HudTextField> fields = new ArrayList<>(List.of(this.credits, this.lives, this.script, this.jumpTo, this.xp,
+                this.enemyHealth));
+        fields.addAll(this.effectFields.textFields());
+        fields.addAll(this.buffFields.textFields());
+        fields.forEach(this::releaseFocusOnEscape);
         new FieldCompleter(this.script,
                 (text, caret) -> this.dev == null ? Result.none() : this.dev.suggestWaveScript(text, caret));
 
@@ -459,11 +460,9 @@ public class PanelDev extends JPanel {
         this.selectionArea.setOpaque(false);
         this.selectionArea.add(row(label("Select a tower or an enemy on the board first.")), CARD_NOTHING);
         this.selectionArea.add(row(this.towerSelected, gap(), label("XP"), this.xp, grant, gap(),
-                this.buffChoice.component(), label("Secs"), this.buffSeconds, label("Power"), this.buffPower, applyBuff, gap(),
-                reset), CARD_TOWER);
-        this.selectionArea.add(row(this.enemySelected, gap(), this.effectChoice.component(), label("Secs"),
-                this.effectSeconds, label("Power"), this.effectPower, applyEffect, clearEffects, gap(), kill, heal,
-                remove), CARD_ENEMY);
+                this.buffChoice.component(), this.buffFields.component(), applyBuff, gap(), reset), CARD_TOWER);
+        this.selectionArea.add(row(this.enemySelected, gap(), this.effectChoice.component(),
+                this.effectFields.component(), applyEffect, clearEffects, gap(), kill, heal, remove), CARD_ENEMY);
         this.selectionCards.show(this.selectionArea, CARD_NOTHING);
         this.section(4, "Selected", this.selectionArea);
 
@@ -626,25 +625,21 @@ public class PanelDev extends JPanel {
     }
 
     private boolean applyEffect() {
-        OptionalInt seconds = this.parsed(this.effectSeconds);
-        OptionalInt power = this.parsed(this.effectPower);
-        if (seconds.isEmpty() || power.isEmpty()) {
-            return false;
-        }
-        this.showMessage(this.dev.applyEffectToEnemy(this.effectChoice.chosen(), seconds.getAsInt(),
-                power.getAsInt()));
-        return true;
+        Optional<List<Float>> values = this.effectFields.values(this::showMessage);
+        values.ifPresent(typed -> this.showMessage(this.dev.applyEffectToEnemy(this.effectChoice.chosen(), typed)));
+        return values.isPresent();
     }
 
     private boolean applyBuff() {
-        OptionalInt seconds = this.parsed(this.buffSeconds);
-        OptionalInt power = this.parsed(this.buffPower);
-        if (seconds.isEmpty() || power.isEmpty()) {
-            return false;
-        }
-        this.showMessage(this.dev.grantBuffToSelectedTower(this.buffChoice.chosen(), seconds.getAsInt(),
-                power.getAsInt()));
-        return true;
+        Optional<List<Float>> values = this.buffFields.values(this::showMessage);
+        values.ifPresent(typed -> this.showMessage(this.dev.grantBuffToSelectedTower(this.buffChoice.chosen(), typed)));
+        return values.isPresent();
+    }
+
+    /** The chosen item's own fields take the slots, and the keys go back to the board. */
+    private <T> void choiceClosed(DevFieldSlots<T> slots, ChoiceButton<T> choice) {
+        slots.show(choice.chosen());
+        this.onReleaseFocus.run();
     }
 
     private OptionalInt parsed(HudTextField field) {

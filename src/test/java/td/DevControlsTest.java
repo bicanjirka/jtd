@@ -207,10 +207,10 @@ class DevControlsTest {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         this.dev.spawnWave("2 simple", Rank.GRUNT, 0);
         this.dev.runPending();
-        String withoutSelection = this.dev.applyEffectToEnemy(EffectKind.FREEZE, 5, 1);
+        String withoutSelection = this.dev.applyEffectToEnemy(EffectKind.FREEZE, List.of(5f));
         this.selectFirstEnemy();
 
-        String withSelection = this.dev.applyEffectToEnemy(EffectKind.FREEZE, 5, 1);
+        String withSelection = this.dev.applyEffectToEnemy(EffectKind.FREEZE, List.of(5f));
         this.dev.runPending();
 
         assertThat(withoutSelection).isEqualTo("Select an enemy first");
@@ -224,11 +224,11 @@ class DevControlsTest {
     void anEffectThatDoesNotTakeHoldIsReportedOnceTheGameLoopRunsIt() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         this.spawnAndSelectOne();
-        this.dev.applyEffectToEnemy(EffectKind.INVERSION, 5, 1);
+        this.dev.applyEffectToEnemy(EffectKind.INVERSION, List.of(5f));
         this.dev.runPending();
         long before = this.dev.report().serial();
 
-        this.dev.applyEffectToEnemy(EffectKind.SHIELD, 5, 50);
+        this.dev.applyEffectToEnemy(EffectKind.SHIELD, List.of(5f, 50f));
         this.dev.runPending();
 
         assertThat(this.dev.report().serial()).isGreaterThan(before);
@@ -241,7 +241,7 @@ class DevControlsTest {
         EnemyMob mob = this.spawnAndSelectOne();
         int full = mob.getHealth();
 
-        this.dev.applyEffectToEnemy(EffectKind.POISON, 5, 5);
+        this.dev.applyEffectToEnemy(EffectKind.POISON, List.of(5f, 100f));
         this.dev.runPending();
         for (int t = 1; t <= 20; t++) {
             this.engine.doTick(t);
@@ -258,7 +258,7 @@ class DevControlsTest {
         EnemyMob charged = this.world.enemies().getEnemies()[0];
         EnemyMob plain = this.world.enemies().getEnemies()[1];
         this.selectFirstEnemy();
-        this.dev.applyEffectToEnemy(EffectKind.CHARGED, 5, 1);
+        this.dev.applyEffectToEnemy(EffectKind.CHARGED, List.of(5f));
         this.dev.runPending();
         AttackProfile tower = AttackProfile.none().withOrigin(AttackOrigin.fresh());
 
@@ -273,11 +273,25 @@ class DevControlsTest {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         this.spawnAndSelectOne();
 
-        String message = this.dev.applyEffectToEnemy(EffectKind.STILLED, 5, 1);
+        String message = this.dev.applyEffectToEnemy(EffectKind.STILLED, List.of(5f));
         this.dev.runPending();
 
         assertThat(message).isEqualTo(EffectKind.STILLED.title() + " " + DevEffects.whyUnusable(EffectKind.STILLED).orElseThrow());
         assertThat(this.world.enemies().getEnemies()[0].hasEffect(EffectKind.STILLED)).isFalse();
+    }
+
+    @Test
+    void aValueOutsideItsFieldsRangeIsRefusedByNameAndAppliesNothing() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        EnemyMob mob = this.spawnAndSelectOne();
+        DevField stacks = DevEffects.enemyFields(EffectKind.VULNERABLE).get(1);
+
+        String message = this.dev.applyEffectToEnemy(EffectKind.VULNERABLE, List.of(5f, stacks.max() + 1));
+        this.dev.runPending();
+
+        assertThat(message).isEqualTo(stacks.problemWith(stacks.max() + 1).orElseThrow());
+        assertThat(message).startsWith(stacks.label());
+        assertThat(mob.hasEffect(EffectKind.VULNERABLE)).isFalse();
     }
 
     @Test
@@ -286,7 +300,7 @@ class DevControlsTest {
         this.dev.spawnWave("simple", Rank.GRUNT, 0);
         this.dev.runPending();
         this.selectFirstEnemy();
-        this.dev.applyEffectToEnemy(EffectKind.FREEZE, 5, 1);
+        this.dev.applyEffectToEnemy(EffectKind.FREEZE, List.of(5f));
         this.dev.runPending();
 
         this.dev.clearEnemyEffects();
@@ -379,11 +393,11 @@ class DevControlsTest {
     void aBuffGoesOnTheSelectedTowerAndNeedsOne() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         Tower tower = this.placeSniper(1, 1);
-        String withoutSelection = this.dev.grantBuffToSelectedTower(TowerTerm.HASTE, 5, 50);
+        String withoutSelection = this.dev.grantBuffToSelectedTower(TowerTerm.HASTE, List.of(5f, 50f));
         tower.setSelected(true);
         this.dev.runPending();
 
-        String withSelection = this.dev.grantBuffToSelectedTower(TowerTerm.HASTE, 5, 50);
+        String withSelection = this.dev.grantBuffToSelectedTower(TowerTerm.HASTE, List.of(5f, 50f));
         this.dev.runPending();
 
         assertThat(withoutSelection).isEqualTo("Select a tower first");

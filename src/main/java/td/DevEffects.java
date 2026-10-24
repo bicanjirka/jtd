@@ -14,32 +14,29 @@ import td.tower.TowerStatus;
 import td.tower.TowerTerm;
 import td.util.TickRate;
 
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * What the dev panel can put on a unit: every enemy effect, each built from a length in seconds and one power number
- * whose meaning is the kind's own (stacks, percent, points), or the reason the panel can't make it work; and the tower
- * buffs it offers. Nothing it makes is credited to a tower: its damage goes through the sink it is given.
+ * What the dev panel can put on a unit: every enemy effect, each built from its own {@link DevField fields}, or the
+ * reason the panel can't make it work; and the tower buffs it offers. Nothing it makes is credited to a tower: its
+ * damage goes through the sink it is given.
  */
 public final class DevEffects {
 
-    private static final float MOST_CHILL = 0.8f;
+    private static final DevField SECONDS = DevField.seconds();
+    private static final DevField SHOTS = DevField.shots();
+    private static final DevField SLOW = new DevField("Slow %", 40f, 1f, 80f);
+    private static final DevField DAMAGE_PER_SECOND = new DevField("Dmg/s", 20f, 0.1f, 100_000f);
+    private static final DevField SHIELD_POINTS = new DevField("Points", 50f, 1f, 100_000f);
+    private static final DevField HEAL_PER_SECOND = new DevField("Heal/s", 10f, 0.1f, 100_000f);
+    private static final DevField DAMAGE_PER_CELL = new DevField("Dmg/cell", 5f, 0.1f, 100_000f);
+    private static final DevField ATTACK_SPEED = new DevField("Speed %", 50f, 1f, 900f);
+    private static final DevField DAMAGE_TIMES = new DevField("Damage ×", 3f, 1f, 100f);
+    /** A stack field starts at the cap, or at this many for a kind that holds more. */
+    private static final int MOST_STACKS_TO_START = 10;
     private static final String NEEDS_A_HEXER = "needs a Hexer";
-
-    private static final Map<TowerTerm, BuffBuilder> TOWER = new EnumMap<>(TowerTerm.class);
-
-    static {
-        TOWER.put(TowerTerm.HASTE, (ticks, power) -> TowerStatus.timed(TowerTerm.HASTE,
-                TowerModifiers.attackSpeed(power / 100f), ticks));
-        TOWER.put(TowerTerm.PATIENCE, (ticks, power) -> TowerStatus.nextShots(TowerTerm.PATIENCE, 1,
-                StatModifiers.<TowerStat>none()).withCapability(TowerCapability.GUARANTEED_CRIT));
-        TOWER.put(TowerTerm.CHARGED_SHOT, (ticks, power) -> TowerStatus.nextShots(TowerTerm.CHARGED_SHOT, 1,
-                TowerModifiers.damageTimes(Math.max(1, power))));
-    }
 
     private DevEffects() {
     }
@@ -57,103 +54,164 @@ public final class DevEffects {
         };
     }
 
+    /** What the panel asks for before it applies {@code kind}, in order; none for a kind it can't make work. */
+    public static List<DevField> enemyFields(EffectKind kind) {
+        return switch (offer(kind)) {
+            case Builds builds -> builds.fields();
+            case Refuses refuses -> List.of();
+        };
+    }
+
     /**
      * What applying {@code kind} puts on the enemy, in order: one effect, or more for a kind that brings another
-     * with it; none for a kind {@link #whyUnusable unusable} here. Its damage goes through {@code sink}, and it is
-     * put on by {@code origin}.
+     * with it; none for a kind {@link #whyUnusable unusable} here. {@code values} fill its {@link #enemyFields
+     * fields}, in order. Its damage goes through {@code sink}, and it is put on by {@code origin}.
      */
-    public static List<Effect> enemyEffects(EffectKind kind, float seconds, int power, DamageSink sink,
-            AttackOrigin origin) {
+    public static List<Effect> enemyEffects(EffectKind kind, List<Float> values, DamageSink sink, AttackOrigin origin) {
         return switch (offer(kind)) {
-            case Builds builds -> builds.builder().apply(new Inputs(ticks(seconds), power, sink, origin));
+            case Builds builds -> builds.builder().apply(new Inputs(values, sink, origin));
             case Refuses refuses -> List.of();
         };
     }
 
     private static Offer offer(EffectKind kind) {
         return switch (kind) {
-            case CHILL -> one(in -> Effect.chill(Math.clamp(in.power() / 100f, 0f, MOST_CHILL), in.ticks(), in.sink()));
-            case BURN -> one(in -> Effect.burn(pool(in.power()), in.ticks(), in.sink()));
-            case POISON -> one(in -> Effect.poison(pool(in.power()), in.ticks(), in.sink()));
-            case SOULFIRE -> one(in -> Effect.soulfire(pool(in.power()), in.ticks(), in.sink()));
-            case BLEEDING -> one(in -> Effect.bleeding(DamageUnits.ofPoints(in.power()), in.ticks(), in.sink()));
-            case SHIELD -> one(in -> Effect.shield(DamageUnits.ofPoints(in.power()), in.ticks(), in.sink()));
-            case HEAL -> one(in -> Effect.heal(DamageUnits.ofPoints(in.power()), in.ticks(), in.sink()));
-            case FREEZE -> one(in -> Effect.freeze(in.ticks(), in.sink()));
-            case DAZED -> one(in -> Effect.dazed(in.ticks(), in.sink()));
-            case INVISIBLE -> one(in -> Effect.invisible(in.ticks(), in.sink()));
-            case SPRINTING -> one(in -> Effect.sprinting(in.ticks(), in.sink()));
-            case HASTENED -> one(in -> Effect.hastened(in.ticks(), in.sink()));
-            case REVEALED -> one(in -> Effect.revealed(in.ticks(), in.sink()));
-            case UNVEILED -> one(in -> Effect.unveiled(in.ticks(), in.sink()));
-            case SILENCED -> one(in -> Effect.silenced(in.ticks(), in.sink()));
-            case ANCHORED -> one(in -> Effect.anchored(in.ticks(), in.sink()));
-            case UNDERTOW -> one(in -> Effect.undertow(in.ticks(), in.sink()));
-            case BRITTLE -> one(in -> Effect.brittle(in.ticks(), in.sink()));
-            case CRACKED -> one(in -> Effect.cracked(in.ticks(), in.sink()));
-            case TARRED -> one(in -> Effect.tarred(in.ticks(), in.sink()));
-            case DEAD_ZONE -> one(in -> Effect.deadZone(in.ticks(), in.sink()));
-            case FALLOUT -> one(in -> Effect.fallout(in.ticks(), in.sink()));
-            case EXPOSED -> one(in -> Effect.exposed(in.ticks(), in.sink()));
-            case MARKED -> one(in -> Effect.marked(in.ticks(), in.sink()));
-            case PRIORITY -> one(in -> Effect.priority(in.ticks(), in.sink()));
-            case CHARGED -> one(in -> Effect.charged(in.ticks(), in.origin(), in.sink()));
-            case VULNERABLE -> one(in -> Effect.vulnerable(in.power(), in.ticks(), in.sink()));
-            case SUNDERED -> one(in -> Effect.sundered(in.power(), in.ticks(), in.sink()));
-            case RESONATING -> one(in -> Effect.resonating(in.power(), in.ticks(), in.sink()));
-            case UNRAVELED -> one(in -> Effect.unraveled(in.power(), in.ticks(), in.sink()));
-            case CONDEMNED -> one(in -> Effect.condemned(in.power(), in.ticks(), in.sink()));
-            case SATURATED -> one(in -> Effect.saturated(in.power(), in.ticks(), in.sink()));
-            case TOLL -> one(in -> Effect.toll(in.power(), in.ticks(), in.sink()));
-            case CORRODED -> one(in -> Effect.corroded(in.power(), in.ticks(), in.sink()));
-            case DRAGGED -> one(in -> Effect.dragged(in.power(), in.ticks(), in.sink()));
-            case FRAIL -> one(in -> Effect.frail(in.power(), in.ticks(), in.sink()));
-            case FRACTURED -> one(in -> Effect.fractured(in.power(), in.sink()));
-            case SCORCHED -> one(in -> Effect.scorched(in.power()));
-            case SICKENED -> one(in -> Effect.sickened(in.power()));
-            case RIME, ASH, INVERSION -> one(in -> Effect.hex(kind, in.ticks(), in.sink()));
-            case BLIGHT -> new Builds(in -> List.of(Effect.hex(kind, in.ticks(), in.sink()),
-                    Effect.poison(pool(in.power()), in.ticks(), in.sink())));
+            case CHILL -> one(List.of(SECONDS, SLOW), in -> Effect.chill(in.value(1) / 100f, in.ticks(0), in.sink()));
+            case BURN -> one(List.of(SECONDS, DAMAGE_PER_SECOND), in -> Effect.burn(in.magicPerTick(1), in.ticks(0), in.sink()));
+            case POISON -> one(List.of(SECONDS, DAMAGE_PER_SECOND), in -> Effect.poison(in.magicPerTick(1), in.ticks(0), in.sink()));
+            case SOULFIRE -> one(List.of(SECONDS, DAMAGE_PER_SECOND),
+                    in -> Effect.soulfire(in.magicPerTick(1), in.ticks(0), in.sink()));
+            case BLEEDING -> one(List.of(SECONDS, DAMAGE_PER_CELL),
+                    in -> Effect.bleeding(DamageUnits.ofPoints(in.value(1)), in.ticks(0), in.sink()));
+            case SHIELD -> one(List.of(SECONDS, SHIELD_POINTS), in -> Effect.shield(DamageUnits.ofPoints(in.value(1)), in.ticks(0), in.sink()));
+            case HEAL -> one(List.of(SECONDS, HEAL_PER_SECOND),
+                    in -> Effect.heal(in.unitsPerTick(1), in.ticks(0), in.sink()));
+            case FREEZE -> timed(Effect::freeze);
+            case DAZED -> timed(Effect::dazed);
+            case INVISIBLE -> timed(Effect::invisible);
+            case SPRINTING -> timed(Effect::sprinting);
+            case HASTENED -> timed(Effect::hastened);
+            case REVEALED -> timed(Effect::revealed);
+            case UNVEILED -> timed(Effect::unveiled);
+            case SILENCED -> timed(Effect::silenced);
+            case ANCHORED -> timed(Effect::anchored);
+            case UNDERTOW -> timed(Effect::undertow);
+            case BRITTLE -> timed(Effect::brittle);
+            case CRACKED -> timed(Effect::cracked);
+            case TARRED -> timed(Effect::tarred);
+            case DEAD_ZONE -> timed(Effect::deadZone);
+            case FALLOUT -> timed(Effect::fallout);
+            case EXPOSED -> timed(Effect::exposed);
+            case MARKED -> timed(Effect::marked);
+            case PRIORITY -> timed(Effect::priority);
+            case CHARGED -> one(List.of(SECONDS), in -> Effect.charged(in.ticks(0), in.origin(), in.sink()));
+            case VULNERABLE -> stacking(kind, Effect::vulnerable);
+            case SUNDERED -> stacking(kind, Effect::sundered);
+            case RESONATING -> stacking(kind, Effect::resonating);
+            case UNRAVELED -> stacking(kind, Effect::unraveled);
+            case CONDEMNED -> stacking(kind, Effect::condemned);
+            case SATURATED -> stacking(kind, Effect::saturated);
+            case TOLL -> stacking(kind, Effect::toll);
+            case CORRODED -> stacking(kind, Effect::corroded);
+            case DRAGGED -> stacking(kind, Effect::dragged);
+            case FRAIL -> stacking(kind, Effect::frail);
+            case FRACTURED -> one(List.of(stacks(kind)), in -> Effect.fractured(in.whole(0), in.sink()));
+            case SCORCHED -> one(List.of(stacks(kind)), in -> Effect.scorched(in.whole(0)));
+            case SICKENED -> one(List.of(stacks(kind)), in -> Effect.sickened(in.whole(0)));
+            case RIME, ASH, INVERSION -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
+            case BLIGHT -> new Builds(List.of(SECONDS, DAMAGE_PER_SECOND), in -> List.of(Effect.hex(kind, in.ticks(0), in.sink()),
+                    Effect.poison(in.magicPerTick(1), in.ticks(0), in.sink())));
             case DOOM, CONTAGION, SYMPATHY, RECKONING -> new Refuses(NEEDS_A_HEXER);
             case STILLED -> new Refuses("needs an Obelisk field");
         };
     }
 
-    /** The tower buffs the panel offers, in the order it cycles them. */
+    /** The tower buffs the panel offers. */
     public static List<TowerTerm> towerBuffs() {
-        return List.copyOf(TOWER.keySet());
+        return List.of(TowerTerm.HASTE, TowerTerm.PATIENCE, TowerTerm.CHARGED_SHOT);
     }
 
-    public static TowerStatus towerBuff(TowerTerm term, float seconds, int power) {
-        return TOWER.get(term).build(ticks(seconds), power);
+    /** What the panel asks for before it grants {@code term}, in order. */
+    public static List<DevField> buffFields(TowerTerm term) {
+        return buff(term).fields();
     }
 
-    private static Offer one(Function<Inputs, Effect> builder) {
-        return new Builds(in -> List.of(builder.apply(in)));
+    /** {@code term} built from {@code values}, which fill its {@link #buffFields fields} in order. */
+    public static TowerStatus towerBuff(TowerTerm term, List<Float> values) {
+        return buff(term).builder().apply(new Inputs(values, DamageSink.none(), AttackOrigin.none()));
     }
 
-    private static int ticks(float seconds) {
-        return Math.max(1, Math.round(seconds * TickRate.TICKS_PER_SECOND));
+    private static BuffRecipe buff(TowerTerm term) {
+        return switch (term) {
+            case HASTE -> new BuffRecipe(List.of(SECONDS, ATTACK_SPEED),
+                    in -> TowerStatus.timed(term, TowerModifiers.attackSpeed(in.value(1) / 100f), in.ticks(0)));
+            case PATIENCE -> new BuffRecipe(List.of(SHOTS), in -> TowerStatus.nextShots(term, in.whole(0),
+                    StatModifiers.<TowerStat>none()).withCapability(TowerCapability.GUARANTEED_CRIT));
+            case CHARGED_SHOT -> new BuffRecipe(List.of(SHOTS, DAMAGE_TIMES), in -> TowerStatus.nextShots(term, in.whole(0),
+                    TowerModifiers.damageTimes(in.value(1)).plus(TowerModifiers.armorPenetration(1f))
+                            .plus(TowerModifiers.flatPenetration(1f))));
+            default -> throw new IllegalArgumentException(term + " is no buff the panel grants");
+        };
     }
 
-    private static Damage pool(int power) {
-        return Damage.magic(DamageUnits.ofPoints(power));
+    private static Offer one(List<DevField> fields, Function<Inputs, Effect> builder) {
+        return new Builds(fields, in -> List.of(builder.apply(in)));
     }
 
-    /** What the panel was given for one application. */
-    private record Inputs(int ticks, int power, DamageSink sink, AttackOrigin origin) {
+    private static Offer timed(TimedMaker maker) {
+        return one(List.of(SECONDS), in -> maker.make(in.ticks(0), in.sink()));
+    }
+
+    private static Offer stacking(EffectKind kind, StackingMaker maker) {
+        return one(List.of(SECONDS, stacks(kind)), in -> maker.make(in.whole(1), in.ticks(0), in.sink()));
+    }
+
+    private static DevField stacks(EffectKind kind) {
+        return new DevField("Stacks", Math.min(kind.maxStacks(), MOST_STACKS_TO_START), 1f, kind.maxStacks());
+    }
+
+    /** What the panel was given for one application: its fields' values, in order. */
+    private record Inputs(List<Float> values, DamageSink sink, AttackOrigin origin) {
+
+        float value(int field) {
+            return this.values.get(field);
+        }
+
+        int whole(int field) {
+            return Math.round(this.value(field));
+        }
+
+        int ticks(int field) {
+            return Math.max(1, Math.round(this.value(field) * TickRate.TICKS_PER_SECOND));
+        }
+
+        /** A field in points a second, as units each tick. */
+        int unitsPerTick(int field) {
+            return DamageUnits.ofPoints(this.value(field) / TickRate.TICKS_PER_SECOND);
+        }
+
+        Damage magicPerTick(int field) {
+            return Damage.magic(this.unitsPerTick(field));
+        }
     }
 
     private sealed interface Offer permits Builds, Refuses {
     }
 
-    private record Builds(Function<Inputs, List<Effect>> builder) implements Offer {
+    private record Builds(List<DevField> fields, Function<Inputs, List<Effect>> builder) implements Offer {
     }
 
     private record Refuses(String reason) implements Offer {
     }
 
-    private interface BuffBuilder {
-        TowerStatus build(int ticks, int power);
+    private record BuffRecipe(List<DevField> fields, Function<Inputs, TowerStatus> builder) {
+    }
+
+    private interface TimedMaker {
+        Effect make(int ticks, DamageSink sink);
+    }
+
+    private interface StackingMaker {
+        Effect make(int stacks, int ticks, DamageSink sink);
     }
 }
