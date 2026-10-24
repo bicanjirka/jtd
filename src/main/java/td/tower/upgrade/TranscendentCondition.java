@@ -40,6 +40,12 @@ public record TranscendentCondition(List<String> levelThreeIds) implements Upgra
         return TermText.of(special ? "needs head III" : "needs special");
     }
 
+    /** Half for each of the two it needs. */
+    @Override
+    public float progressShare(Tower tower, GameWorld context) {
+        return ((ownsSpecial(tower.upgrades()) ? 1 : 0) + (this.ownsLevelThree(tower.upgrades()) ? 1 : 0)) / 2f;
+    }
+
     private static boolean ownsSpecial(UpgradeState owned) {
         return owned.countIn(UpgradeSlot.SPECIAL) > 0;
     }

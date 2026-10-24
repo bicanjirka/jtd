@@ -27,6 +27,11 @@ public record ClusterCondition(int requiredAdjacent) implements UpgradeCondition
                 + this.requiredAdjacent + " nearby towers");
     }
 
+    @Override
+    public float progressShare(Tower tower, GameWorld context) {
+        return Math.min(1f, adjacentCount(tower, context) / (float) this.requiredAdjacent);
+    }
+
     private static int adjacentCount(Tower tower, GameWorld context) {
         BoardGeometry board = context.getBoard();
         int cellX = board.cellX(tower.getX());

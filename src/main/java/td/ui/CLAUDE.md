@@ -74,7 +74,9 @@ keeps the seam honest.
   the title and the speed buttons, which stand above the console. A status icon is a tooltip source that opens its tooltip under
   itself (`TooltipLayer.watchBelow`); only lives (on a drop) and wave (on an increase) flash, and a level's first
   numbers are a baseline, never a change.
-- An upgrade button paints its perk icon beside its row text.
+- The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) where `UpgradeTreeLayout` derives each
+  node's place from the tree, scaled to fit, never scrolled; a node's look is an `UpgradeNodeState`, and its hover
+  is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).
 - Info-pane content is an AWT-free `InfoSheet` that a `*SheetText` builds from a domain
   inspection (`EnemyInspection`, `TowerInspection`): stat rows, then icon rows (Traits, Buffs,
   Debuffs; on a tower Perks, Buffs, Debuffs, Applies), each icon a `SheetIcon` carrying its tooltip sheet. `InfoSheetDocument` alone lays

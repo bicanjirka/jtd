@@ -39,7 +39,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      * The one colour exception to the shared control look: selling is irreversible, so its text
      * reads differently.
      */
-    private static final Color SELL_TEXT_COLOR = new Color(255, 120, 120);
+    static final Color SELL_TEXT_COLOR = new Color(255, 120, 120);
     private static final InfoSheet NO_SHEET = new InfoSheet(List.of());
     /** Before the pane is laid out, the width the side panel gives it. */
     private static final int FALLBACK_TEXT_WIDTH = 170;
