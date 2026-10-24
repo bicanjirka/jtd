@@ -216,6 +216,64 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
         return Optional.ofNullable(this.choiceContaining(node));
     }
 
+    /** The node with {@code id}; empty for an id outside this tree. */
+    public Optional<UpgradeNode> node(String id) {
+        return this.nodes.stream().filter(node -> node.id().equals(id)).findFirst();
+    }
+
+    /**
+     * Whether no purchase can bring {@code node} to {@code owned} any more: it is unowned and its choice is
+     * spent, or its prerequisites need a node that is locked out.
+     */
+    public boolean isLockedOut(UpgradeNode node, UpgradeState owned) {
+        if (owned.owns(node.id())) {
+            return false;
+        }
+        ExclusiveChoice choice = this.choiceContaining(node);
+        if (choice != null && choice.isSpent(owned)) {
+            return true;
+        }
+        return node.requires().lockedOut(id -> this.node(id).map(needed -> this.isLockedOut(needed, owned)).orElse(true));
+    }
+
+    /** The nodes {@code after} locks out that {@code before} did not, in declaration order. */
+    public List<UpgradeNode> newlyLockedOut(UpgradeState before, UpgradeState after) {
+        return this.nodes.stream()
+                .filter(node -> this.isLockedOut(node, after) && !this.isLockedOut(node, before))
+                .toList();
+    }
+
+    /**
+     * The first Core step {@code tower} still lacks that keeps {@code node} closed: its prerequisites fail
+     * even with the rest of its line owned, and hold once the Core chain up to that step is owned too. Empty
+     * for a Core node, and for a node no Core step holds back.
+     */
+    public Optional<UpgradeNode> sealedBy(UpgradeNode node, Tower tower, GameWorld context) {
+        if (node.slot() == UpgradeSlot.CORE) {
+            return Optional.empty();
+        }
+        UpgradeState assumed = tower.upgrades();
+        for (UpgradeNode before : this.pathTo(node)) {
+            if (before != node && before.slot() != UpgradeSlot.CORE && !assumed.owns(before.id())) {
+                assumed = assumed.with(before);
+            }
+        }
+        if (node.requires().isSatisfied(tower, assumed, context)) {
+            return Optional.empty();
+        }
+        List<UpgradeNode> chain = this.nodesIn(UpgradeSlot.CORE).stream()
+                .sorted(Comparator.comparingInt(core -> core.tier().level())).toList();
+        for (UpgradeNode step : chain) {
+            if (!assumed.owns(step.id())) {
+                assumed = assumed.with(step);
+                if (node.requires().isSatisfied(tower, assumed, context)) {
+                    return Optional.of(step);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     // Allocation-free: offered() runs for every tower on every frame build.
     private boolean isOffered(UpgradeNode node, Tower tower, GameWorld context) {
         UpgradeState owned = tower.upgrades();

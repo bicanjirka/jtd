@@ -8,8 +8,8 @@ import td.util.GameWorld;
 record SlotEmptyCondition(UpgradeSlot slot) implements UpgradeCondition {
 
     @Override
-    public boolean isSatisfied(Tower tower, GameWorld context) {
-        return tower.upgrades().countIn(this.slot) == 0;
+    public boolean isSatisfied(Tower tower, UpgradeState owned, GameWorld context) {
+        return owned.countIn(this.slot) == 0;
     }
 
     @Override

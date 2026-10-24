@@ -12,7 +12,7 @@ import td.util.GameWorld;
 public record ClusterCondition(int requiredAdjacent) implements UpgradeCondition {
 
     @Override
-    public boolean isSatisfied(Tower tower, GameWorld context) {
+    public boolean isSatisfied(Tower tower, UpgradeState owned, GameWorld context) {
         return adjacentCount(tower, context) >= this.requiredAdjacent;
     }
 

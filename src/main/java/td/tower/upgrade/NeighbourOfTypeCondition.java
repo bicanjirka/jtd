@@ -10,7 +10,7 @@ import td.util.GameWorld;
 public record NeighbourOfTypeCondition(TowerFactory.Type type) implements UpgradeCondition {
 
     @Override
-    public boolean isSatisfied(Tower tower, GameWorld context) {
+    public boolean isSatisfied(Tower tower, UpgradeState owned, GameWorld context) {
         BoardGeometry board = context.getBoard();
         int cellX = board.cellX(tower.getX());
         int cellY = board.cellY(tower.getY());
