@@ -35,6 +35,8 @@ import java.util.function.Supplier;
 public final class TooltipLayer {
 
     private static final String TERM_KIND = "term:";
+    /** An idle depth deeper than any tooltip: closing from it closes nothing. */
+    private static final int NOTHING_IDLE = Integer.MAX_VALUE;
 
     private final JLayeredPane layer;
     private final Timer openTimer;
@@ -46,7 +48,7 @@ public final class TooltipLayer {
     private final List<Open> opened = new ArrayList<>();
     private TooltipChain chain = TooltipChain.empty();
     private Pending pending;
-    private int idleDepth;
+    private int idleDepth = NOTHING_IDLE;
 
     /** What a tooltip is about and where it opens from: a target in a pane, or a button. */
     private record Pending(int depth, SheetTooltip tooltip, Component source, Rectangle anchor) {
@@ -135,6 +137,7 @@ public final class TooltipLayer {
             @Override
             public void mouseEntered(MouseEvent event) {
                 TooltipLayer.this.closeTimer.stop();
+                TooltipLayer.this.pointerOn(source, 0, spotAt.apply(event.getPoint()));
             }
 
             @Override
@@ -276,6 +279,11 @@ public final class TooltipLayer {
             return;
         }
         this.closeFrom(request.depth() + 1);
+        // The idle tooltips this one replaces are closed already; their grace must not close it too.
+        if (this.idleDepth > request.depth()) {
+            this.childCloseTimer.stop();
+            this.idleDepth = NOTHING_IDLE;
+        }
         this.chain = next.get();
         TooltipPanel panel = new TooltipPanel();
         panel.show(request.tooltip().sheet());

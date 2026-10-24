@@ -203,6 +203,21 @@ class TooltipLayerTest {
     }
 
     @Test
+    void aTooltipOpenedInPlaceOfAnIdleOneOutlivesTheGraceThatClosedIt() {
+        JPanel strip = this.stripOfTwoSpots();
+        move(strip, new Point(10, 10));
+        this.tooltips.openPending();
+        move(strip, new Point(70, 10));
+
+        this.tooltips.openPending();
+        this.tooltips.closeIdleChildren();
+
+        TooltipPanel popup = (TooltipPanel) this.popups().getFirst();
+        assertThat(this.popups()).hasSize(1);
+        assertThat(popup.sheet()).isEqualTo(new InfoSheet(List.of(SheetLine.Sentence.of(TermText.of("Half 1")))));
+    }
+
+    @Test
     void thePointerLeavingASourceWithSpotsBeforeItsTooltipOpensOpensNothing() {
         JPanel strip = this.stripOfTwoSpots();
         move(strip, new Point(10, 10));
