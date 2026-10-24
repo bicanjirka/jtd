@@ -174,16 +174,6 @@ against 1,100 under heals, so the heals land everywhere else. The answers are ei
   Line's beam carrying Dead Zone, a Sickened that lowers spirit for long enough to shrink every heal), then check
   Curly Path's wave 12 with `td.balance.WaveCheckReport --checks 12:sustain --parts strong,strip`.
 
-### Sunder Rounds sunders only on a crit
-
-Sunder Rounds (the Sniper's Marksman's Eye IV-B) applies one Sunder stack only when a direct shot crits. It should
-apply Sunder on every direct shot, crit or not.
-
-- **Where:** `SniperTower.SUNDER_ROUNDS` (its `Proc.onCrit`), its tooltip text and the tests that assert it.
-- **Approach:** make the proc fire on every direct hit, then check the node against its IV-A rival Unbroken Aim with
-  `td.balance.BalanceReport --compare` and `td.BuildHarness`; lower the stacks or the Sunder strength if it
-  outgrows it.
-
 ### Upgrade-tree node numbers are unbalanced placeholders
 
 Every tower's `UpgradeNode`s carry real prices and stat bonuses, but none of them have been played
