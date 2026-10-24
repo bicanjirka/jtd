@@ -24,6 +24,8 @@ final class UpgradeSheetText {
 
     /** The footer while nothing is hovered. */
     static final String IDLE_FOOTER = "Click: buy · Right-click: downgrade";
+    /** The footer once the level is over and nothing can be bought or downgraded. */
+    static final String ENDED_FOOTER = "Level over";
 
     private UpgradeSheetText() {
     }
@@ -74,7 +76,7 @@ final class UpgradeSheetText {
                 lines.add(Row.plain(Glyph.LOCK, "Locks out", ""));
                 offer.rivals().forEach(rival -> lines.add(Row.plain(Glyph.DOT, rival.displayName(), "")));
             }
-        } else if (offer.inChoice()) {
+        } else if (offer.inChoice() && offer.nextPickWaits()) {
             lines.add(Row.plain(Glyph.LOCK, "Next pick", "Transcendent"));
         }
         lines.add(new SheetLine.Gap());

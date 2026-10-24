@@ -3,6 +3,7 @@ package td.ui;
 import td.term.TermText;
 import td.tower.NodeWords;
 import td.tower.Tower;
+import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -23,10 +24,11 @@ import java.util.Optional;
  * @param face              the icon of the line it belongs to, at the level it brings the line to
  * @param addsTo            the name of the line's first node when this deepens a line, else empty
  * @param sealedBy          the Core step that keeps it closed, else empty
+ * @param nextPickWaits     whether its choice's later picks wait for Transcendent, which the tower lacks
  */
 record UpgradeOffer(UpgradeNode node, boolean xpMet, String xpProgress, boolean conditionMet,
                     TermText conditionProgress, List<UpgradeNode> rivals, boolean lastPick, NodeWords words,
-                    IconFace face, Optional<String> addsTo, Optional<UpgradeNode> sealedBy) {
+                    IconFace face, Optional<String> addsTo, Optional<UpgradeNode> sealedBy, boolean nextPickWaits) {
 
     UpgradeOffer {
         rivals = List.copyOf(rivals);
@@ -46,7 +48,8 @@ record UpgradeOffer(UpgradeNode node, boolean xpMet, String xpProgress, boolean 
                 tree.isLastPick(node, owned), tower.wordsOf(node),
                 TermLooks.faceOfLine(tower.getType(), tree.artNodeOf(node), level),
                 level > 1 ? Optional.of(tree.firstOf(node).displayName()) : Optional.empty(),
-                tree.sealedBy(node, tower, world));
+                tree.sealedBy(node, tower, world),
+                !owned.owns(StandardBaseSlot.TRANSCENDENT_ID));
     }
 
     /** Whether it belongs to an exclusive choice with another member still open. */

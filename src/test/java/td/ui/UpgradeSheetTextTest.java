@@ -139,6 +139,24 @@ class UpgradeSheetTextTest {
     }
 
     @Test
+    void aSpecialsHoverOnATranscendentTowerLeftWithNoSpecialDoesNotSayTheNextPickWaits() {
+        UpgradeNode levelThree = UpgradeTier.HEAD_3.node("optics.3", "Optics III", LIST_PRICE);
+        UpgradeTree tree = UpgradeTree.of(StandardBaseSlot.nodes(LIST_PRICE, 4f, levelThree))
+                .with(levelThree, MARKED, FIFTH, MOMENTUM)
+                .withChoice(ExclusiveChoice.specials(MARKED, FIFTH, MOMENTUM));
+        this.world.economy().startEconomy(10_000, 5);
+        this.world.playtestRules().setUpgradeGatesIgnored(true);
+        FakeTower transcended = FakeTower.offering(this.world, 5, 5, tree);
+        transcended.buyPath(MARKED);
+        transcended.buyPath(tree.node(StandardBaseSlot.TRANSCENDENT_ID).orElseThrow());
+        transcended.downgrade(MARKED);
+
+        InfoSheet sheet = UpgradeSheetText.hover(this.offer(transcended, FIFTH));
+
+        assertThat(sheet.lines()).noneMatch(line -> line instanceof Row row && row.label().equals("Next pick"));
+    }
+
+    @Test
     void aLinesNextLevelSaysWhatItAddsTo() {
         FakeTower steady = this.choosing("Attune", "Steady");
 
