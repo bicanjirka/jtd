@@ -26,6 +26,8 @@ import java.util.List;
 final class TooltipPanel extends JPanel {
 
     static final int MAX_WIDTH = 240;
+    /** The least room between a label and the value aligned right of it. */
+    static final int VALUE_GAP = 12;
     private static final Color BACKGROUND = new Color(8, 14, 8);
     private static final float EXPIRED_ALPHA = 0.45f;
 
@@ -82,7 +84,8 @@ final class TooltipPanel extends JPanel {
         this.pane.show(shown, this.renderer, inner);
         View root = this.pane.getUI().getRootView(this.pane);
         int natural = (int) Math.ceil(root.getPreferredSpan(View.X_AXIS));
-        int width = Math.min(inner, Math.max(natural, 1));
+        boolean aligned = shown.lines().stream().anyMatch(TooltipPanel::alignsAValue);
+        int width = Math.min(inner, Math.max(natural + (aligned ? VALUE_GAP : 0), 1));
         if (width < inner) {
             this.pane.setSize(width, 1);
             this.pane.show(shown, this.renderer, width);
@@ -93,6 +96,22 @@ final class TooltipPanel extends JPanel {
         this.setSize(new Dimension(width + insets.left + insets.right, preferred.height + insets.top + insets.bottom));
         this.revalidate();
         this.repaint();
+    }
+
+    /** Whether {@code line} puts a value against the right edge, where a width cut to the text would butt it on its label. */
+    private static boolean alignsAValue(SheetLine line) {
+        return switch (line) {
+            case SheetLine.EnemyHeader header -> !header.rank().isEmpty();
+            case SheetLine.Title title -> !title.value().isEmpty();
+            case SheetLine.IconTitle title -> !title.value().isEmpty();
+            case SheetLine.Row row -> !row.value().isEmpty();
+            case SheetLine.HealthBar bar -> false;
+            case SheetLine.Prose prose -> false;
+            case SheetLine.IconRow row -> false;
+            case SheetLine.Sentence sentence -> false;
+            case SheetLine.Divider divider -> false;
+            case SheetLine.Gap gap -> false;
+        };
     }
 
     @Override
