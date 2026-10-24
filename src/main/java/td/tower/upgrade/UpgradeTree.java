@@ -150,6 +150,15 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
         return List.copyOf(path);
     }
 
+    /**
+     * What buying {@code target} for {@code tower} takes now: every unowned node it needs first, across
+     * slots, judged in buy order as if the earlier ones were owned. It never makes an exclusive pick off
+     * the target's own line.
+     */
+    public UpgradePath planPath(UpgradeNode target, Tower tower, GameWorld context) {
+        return PathPlanner.plan(this, target, tower, context);
+    }
+
     private void collectPath(UpgradeNode node, Set<UpgradeNode> path) {
         for (String id : node.requires().requiredNodes().stream().sorted().toList()) {
             this.nodes.stream().filter(candidate -> candidate.id().equals(id)).findFirst()
