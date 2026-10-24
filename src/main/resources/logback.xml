@@ -31,6 +31,19 @@
         <queueSize>2048</queueSize>
     </appender>
 
+    <!-- the dev panel's enemy traces share the session file through a queue of their own that
+         waits when full: a trace must never lose a line, so observing may slow the game instead -->
+    <appender name="OBSERVE_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE"/>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>false</neverBlock>
+        <queueSize>8192</queueSize>
+    </appender>
+
+    <logger name="td.enemy.EnemyObservation" level="INFO" additivity="false">
+        <appender-ref ref="OBSERVE_FILE"/>
+    </logger>
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="ASYNC_FILE"/>

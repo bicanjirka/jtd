@@ -3,12 +3,14 @@ package td.tower;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import td.board.BoardGeometry;
+import td.damage.AttackOrigin;
 import td.economy.EconomyDelta;
 import td.economy.EconomyLedger;
 import td.util.GameHost;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -34,6 +36,13 @@ public class TowerRoster {
     /** A snapshot; later additions and removals don't show in it. */
     public List<Tower> all() {
         return List.copyOf(this.towers);
+    }
+
+    /** The tower whose hits and effects come from {@code origin}, as its name and cell: {@code Sniper@7,4}. */
+    public Optional<String> attackerName(AttackOrigin origin) {
+        BoardGeometry geometry = this.board.get();
+        return this.towers.stream().filter(t -> t.origin() == origin).findFirst()
+                .map(t -> t.displayName() + "@" + geometry.cellX(t.getX()) + "," + geometry.cellY(t.getY()));
     }
 
     /** What the next tower of {@code type} costs, given the copies already on the board. */

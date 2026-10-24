@@ -5,8 +5,10 @@ import td.cell.CellGrid;
 import td.damage.DamageTally;
 import td.economy.EconomyLedger;
 import td.enemy.EnemyCatalog;
+import td.enemy.EnemyObservation;
 import td.enemy.EnemyRoster;
 import td.enemy.EnemySelection;
+import td.enemy.ObserveLog;
 import td.projectile.ProjectileRoster;
 import td.stat.DisruptionField;
 import td.tower.ExperienceAwarder;
@@ -41,6 +43,7 @@ public class GameWorld {
     private final DamageTally damageTally = new DamageTally();
     private final DisruptionField disruptions = new DisruptionField();
     private final EnemySelection enemySelection = new EnemySelection();
+    private final EnemyObservation enemyObservation;
     private volatile LoadedLevel level = LoadedLevel.none();
 
     public GameWorld(GameHost mainApp) {
@@ -53,6 +56,7 @@ public class GameWorld {
         this.enemies = new EnemyRoster();
         this.zones = new ZoneRoster(this.enemies);
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
+        this.enemyObservation = new EnemyObservation(ObserveLog.toSessionLog(), this.towers::attackerName);
         this.enemies.addWalkEndListener(new ExperienceAwarder(this.towers));
     }
 
@@ -98,6 +102,11 @@ public class GameWorld {
     /** The enemy the player is inspecting. */
     public EnemySelection enemySelection() {
         return this.enemySelection;
+    }
+
+    /** The enemies the dev panel observes, and what names the causes in their traces. */
+    public EnemyObservation enemyObservation() {
+        return this.enemyObservation;
     }
 
     /** Where enemies weaken towers this tick. */

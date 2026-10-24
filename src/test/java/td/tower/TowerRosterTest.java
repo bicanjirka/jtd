@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
+import td.damage.AttackOrigin;
 import td.economy.EconomyLedger;
 import td.fixtures.BoardFixtures;
 import td.fixtures.WorldFixtures;
@@ -61,5 +62,14 @@ class TowerRosterTest {
         roster.clear();
 
         assertThat(roster.all()).isEmpty();
+    }
+
+    @Test
+    void theTowerBehindAnAttackIsNamedByItsNameAndCell() {
+        Tower tower = aTower();
+        roster.add(tower);
+
+        assertThat(roster.attackerName(tower.origin())).contains(tower.displayName() + "@2,3");
+        assertThat(roster.attackerName(AttackOrigin.fresh())).isEmpty();
     }
 }

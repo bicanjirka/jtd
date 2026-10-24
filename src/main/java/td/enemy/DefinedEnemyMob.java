@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
@@ -63,6 +64,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final Map<EffectKind, DiminishingReturns> diminishing = new EnumMap<>(EffectKind.class);
     private final StatSheet stats;
     private final BaseStats<EnemyStat> base;
+    private final long id;
 
     private EnemyInspection.Fate fate = EnemyInspection.Fate.ALIVE;
     private LifeStage stage;
@@ -77,9 +79,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     // Counts from spawn, so a fresh mob does not trivially satisfy an idle threshold.
     private int ticksSinceLastHit;
     private int dodges;
+    private MobObserver observer = MobObserver.off();
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, Rank rank) {
         this.gameWorld = gameWorld;
+        this.id = gameWorld.enemies().recordBirth();
         this.definition = definition;
         this.traits = definition.traitsFor(gameWorld.damageTally().mix());
         this.rank = rank;
@@ -119,6 +123,71 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     public <R> R accept(EnemyMobVisitor<R> visitor) {
         return visitor.visitDefined(this);
+    }
+
+    /** Unique among the mobs built in its world, from the moment it is built. */
+    public long id() {
+        return this.id;
+    }
+
+    /** Whether the dev panel observes it: every event it goes through is written to the log. */
+    public boolean isObserved() {
+        return this.observer.isOn();
+    }
+
+    MobLabel label() {
+        return new MobLabel(this.id, this.definition.displayName(), this.rank, this.health.max());
+    }
+
+    /** Its health, every stat, its traits and its effects, for its trace. */
+    MobSnapshot snapshot() {
+        List<MobSnapshot.StatReading> readings = new ArrayList<>();
+        for (EnemyStat stat : EnemyStat.values()) {
+            readings.add(new MobSnapshot.StatReading(stat, this.baseStat(stat), this.stats.value(stat)));
+        }
+        List<String> traitTitles = this.traits.stream().map(trait -> trait.entry().term().title()).toList();
+        return new MobSnapshot(this.health.current(), readings, traitTitles, this.effectStates());
+    }
+
+    private List<EffectState> effectStates() {
+        return List.copyOf(EffectStates.of(this.activeEffects).values());
+    }
+
+    /** Hands its events to {@code observer} from now on, starting with a full snapshot. */
+    void startObservation(MobObserver observer, String via) {
+        this.observer = observer;
+        observer.baseline(EffectStates.of(this.activeEffects));
+        observer.report(new MobEvent.Started(via, this.snapshot()));
+    }
+
+    /** The last line of its trace, then no more; nothing if it isn't observed. */
+    void endObservation(String how) {
+        if (!this.observer.isOn()) {
+            return;
+        }
+        this.observer.report(new MobEvent.Ended(how, this.ticksSinceSpawn, this.observer.totals(), this.effectStates()));
+        this.observer = MobObserver.off();
+    }
+
+    void reportSnapshot() {
+        if (this.observer.isOn()) {
+            this.observer.report(new MobEvent.Snapshot(this.snapshot()));
+        }
+    }
+
+    /** Where what its abilities do is reported. */
+    MobObserver observer() {
+        return this.observer;
+    }
+
+    private void reportEffects(String cause) {
+        if (this.observer.isOn()) {
+            this.observer.effectsNow(EffectStates.of(this.activeEffects), cause);
+        }
+    }
+
+    private String nameOf(AttackOrigin origin) {
+        return this.gameWorld.enemyObservation().nameOf(origin);
     }
 
     public int getHealth() {
@@ -323,10 +392,26 @@ public final class DefinedEnemyMob implements EnemyMob {
      * it is applied, by spirit and healing received.
      */
     public void applyEffect(Effect effect) {
+        this.applyEffect(effect, AttackOrigin.none());
+    }
+
+    @Override
+    public void applyEffect(Effect effect, AttackOrigin from) {
+        if (this.observer.isOn()) {
+            AttackOrigin origin = from == AttackOrigin.none() ? effect.origin() : from;
+            this.observer.report(new MobEvent.EffectRequested(effect.kind(), this.nameOf(origin), effect.remainingTicks()));
+        }
         Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
         if (inversion.isPresent() && effect.kind() == EffectKind.SHIELD) {
+            if (this.observer.isOn()) {
+                this.observer.report(new MobEvent.EffectInverted(EffectKind.SHIELD,
+                        "struck as " + MobEventText.number(DamageUnits.inPoints(effect.shieldRemaining())) + " magic"));
+            }
             this.strikeInsteadOfShielding(effect, inversion.get());
             return;
+        }
+        if (inversion.isPresent() && effect.kind() == EffectKind.HEAL && this.observer.isOn()) {
+            this.observer.report(new MobEvent.EffectInverted(EffectKind.HEAL, "deals magic each tick instead"));
         }
         Effect received = effect.kind() == EffectKind.SHIELD
                 ? effect.withShieldScaledBy(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f)
@@ -344,19 +429,33 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     private void applyResisted(Effect effect) {
-        float factor = effect.kind().resistedBy().map(stat -> 1f - this.stats.value(stat)).orElse(1f);
+        float resisted = effect.kind().resistedBy().map(stat -> 1f - this.stats.value(stat)).orElse(1f);
         Optional<DiminishingReturns> ladder = this.ladderFor(effect.kind());
         boolean active = this.activeEffects.has(effect.kind());
+        float diminished = 1f;
         if (ladder.isPresent()) {
-            factor *= ladder.get().factorAt(this.ticksSinceSpawn, active);
+            diminished = ladder.get().factorAt(this.ticksSinceSpawn, active);
         }
+        float factor = resisted * diminished;
         Effect scaled = factor < 1f ? effect.withDurationScaledBy(factor) : effect;
+        if (factor < 1f && this.observer.isOn()) {
+            this.observer.report(new MobEvent.EffectShortened(effect.kind(), resisted, diminished,
+                    scaled.remainingTicks()));
+        }
         if (factor < 1f && scaled.authoredDurationTicks() < 1) {
+            if (this.observer.isOn()) {
+                this.observer.report(new MobEvent.EffectBlocked(effect.kind(), "would last under a tick"));
+            }
             return;
         }
         ladder.ifPresent(steps -> steps.recordAt(this.ticksSinceSpawn, active));
-        this.activeEffects.apply(scaled);
+        this.activeEffects.apply(scaled, this.observer);
+        this.observer.dealt();
         this.stats.invalidate();
+        if (this.observer.isOn()) {
+            this.observer.effectApplied(EffectStates.of(this.activeEffects), effect.kind(),
+                    this.activeEffects.keptOutBy(effect.kind()));
+        }
     }
 
     /** Hard crowd control climbs its own ladder of diminishing returns; nothing else has one. */
@@ -389,13 +488,19 @@ public final class DefinedEnemyMob implements EnemyMob {
     public void clearEffects() {
         this.activeEffects.activeKinds().forEach(this.activeEffects::consume);
         this.stats.invalidate();
+        this.reportEffects(this.gameWorld.enemyObservation().causeOr("cleared"));
     }
 
     /** Back to full health at once. Nothing is credited, and a dead mob stays dead. */
     public void restoreHealth() {
         if (!this.isDead()) {
+            int before = this.health.current();
             this.health.restore();
             this.stats.invalidate();
+            if (this.observer.isOn()) {
+                this.observer.report(new MobEvent.HealthChanged(this.gameWorld.enemyObservation().causeOr("restored"),
+                        before, this.health.current()));
+            }
         }
     }
 
@@ -404,6 +509,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.activeEffects.consume(EffectKind.SHIELD);
         this.activeEffects.consume(EffectKind.HEAL);
         this.stats.invalidate();
+        this.reportEffects("dispelled");
     }
 
     @Override
@@ -411,12 +517,14 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.activeEffects.activeKinds().stream().filter(kind -> kind.category() == EffectCategory.BUFF)
                 .forEach(this.activeEffects::consume);
         this.stats.invalidate();
+        this.reportEffects("dispelled");
     }
 
     @Override
     public void loseStacks(EffectKind kind, int stacks) {
         this.activeEffects.loseStacks(kind, stacks);
         this.stats.invalidate();
+        this.reportEffects("stacks-lost");
     }
 
     @Override
@@ -432,6 +540,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     public void breakShield(float fraction) {
         this.activeEffects.weakenShield(fraction);
         this.stats.invalidate();
+        this.reportEffects("shield-broken");
     }
 
     public boolean hasEffect(EffectKind kind) {
@@ -546,11 +655,14 @@ public final class DefinedEnemyMob implements EnemyMob {
             if (HitResolution.dodges(attack, this.stats, this.gameWorld.random())) {
                 this.dodges++;
                 this.moments.markPending(Moment.DODGE);
+                if (this.observer.isOn()) {
+                    this.observer.report(new MobEvent.Dodged(this.nameOf(attack.origin()), damage));
+                }
                 return HitResult.dodge();
             }
         }
         this.ticksSinceLastHit = 0;
-        HitResult result = this.land(damage, attack);
+        HitResult result = this.land(damage, attack, attack != attacker);
         this.discharge(attack, result.landed());
         // Health-dependent traits re-derive from the new health.
         this.stats.invalidate();
@@ -558,12 +670,14 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /** Armor and the rest of the hit formula first, then the shield's pool, then the cap at health. */
-    private HitResult land(Damage damage, AttackProfile attacker) {
+    private HitResult land(Damage damage, AttackProfile attacker, boolean markSpent) {
         if (this.isDead()) {
             return HitResult.none();
         }
         HitResult result = HitResult.none();
+        int overkill = 0;
         if (this.validTarget()) {
+            int healthBefore = this.health.current();
             Damage mitigated = HitResolution.resolve(damage, attacker, this.stats, this.gameWorld.random());
             boolean bypasses = attacker.ignoresShields() || (mitigated.critical() && attacker.critsPierceShields());
             int absorbed = bypasses ? 0 : this.activeEffects.absorb(mitigated.type(), mitigated.amount());
@@ -572,6 +686,11 @@ public final class DefinedEnemyMob implements EnemyMob {
             }
             Damage landed = this.health.lose(new Damage(mitigated.amount() - absorbed, mitigated.type(), mitigated.critical()));
             result = new HitResult(landed, absorbed);
+            overkill = mitigated.amount() - absorbed - landed.amount();
+            if (this.observer.isOn()) {
+                this.reportHit(damage, attacker, markSpent, mitigated,
+                        new MobEvent.HitOutcome(absorbed, landed, healthBefore, this.health.current()));
+            }
             this.gameWorld.damageTally().record(Damage.of(mitigated.type(), result.credited()));
             if (result.credited() > 0) {
                 this.moments.markPending(Moment.DAMAGE_TAKEN);
@@ -581,9 +700,25 @@ public final class DefinedEnemyMob implements EnemyMob {
             }
         }
         if (this.health.depleted()) {
+            if (this.observer.isOn()) {
+                this.observer.report(new MobEvent.Killed(this.nameOf(attacker.origin()), overkill));
+            }
             this.kill();
         }
         return result;
+    }
+
+    /** Called before the hit invalidates the stats, so its steps read what it was resolved against. */
+    private void reportHit(Damage arrived, AttackProfile attacker, boolean markSpent, Damage mitigated,
+                           MobEvent.HitOutcome outcome) {
+        boolean rolledCrit = mitigated.critical() && !arrived.critical();
+        Optional<EffectKind> source = attacker.delivery() == Delivery.PERIODIC ? this.observer.periodicSource()
+                : Optional.empty();
+        this.observer.report(new MobEvent.Hit(new MobEvent.HitCause(this.nameOf(attacker.origin()), source, markSpent),
+                HitResolution.steps(arrived, attacker, this.stats, rolledCrit), outcome));
+        if (outcome.absorbed() > 0) {
+            this.reportEffects(MobObserver.ABSORBED);
+        }
     }
 
     /** Pays the bounty and its score, then starts the fade. */
@@ -609,6 +744,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         this.activeEffects.consume(EffectKind.CHARGED);
         this.stats.invalidate();
+        this.reportEffects("discharged");
         float share = Effect.CHARGE_DISCHARGE_SHARE * (landed.critical() ? 2f : 1f);
         charge.get().sink().apply(Damage.magic(Math.round(landed.amount() * share)));
     }
@@ -620,6 +756,9 @@ public final class DefinedEnemyMob implements EnemyMob {
     private AttackProfile spendMark(AttackProfile attacker) {
         boolean spent = attacker.delivery() == Delivery.HIT && this.stats.value(EnemyStat.RESILIENCE) < 100f
                 && this.activeEffects.consume(EffectKind.MARKED);
+        if (spent) {
+            this.reportEffects("spent-by-hit");
+        }
         return spent ? attacker.withGuaranteedCrit() : attacker;
     }
 
@@ -696,13 +835,18 @@ public final class DefinedEnemyMob implements EnemyMob {
             // doTick already ran this tick.
             if (this.ticksSinceDeath(gameTime) == 0) {
                 this.evaluateAbilities(gameTime);
+                this.endObservation(this.fate == EnemyInspection.Fate.LEAKED ? "leaked" : "killed");
             }
             return;
         }
         // Read before tick(): an effect in its last tick must still slow this tick's movement.
         float speed = this.stats.value(EnemyStat.MOVE_SPEED);
+        int healthBefore = this.health.current();
         // Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
         boolean healthChanged = this.health.regenerate(this.stats.value(EnemyStat.REGENERATION));
+        if (healthChanged && this.observer.isOn()) {
+            this.observer.report(new MobEvent.HealthChanged("regen", healthBefore, this.health.current()));
+        }
         if (healthChanged || !this.activeEffects.isEmpty()) {
             this.tickEffects(speed);
         }
@@ -737,8 +881,10 @@ public final class DefinedEnemyMob implements EnemyMob {
         // The pace of stack decay is the same scale that spirit puts on heals and shields.
         int cellSize = this.gameWorld.getBoard().scale();
         this.activeEffects.tick(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f),
-                cellSize > 0 ? speed / cellSize : 0f);
+                cellSize > 0 ? speed / cellSize : 0f, this.observer);
+        this.observer.dealt();
         this.stats.invalidate();
+        this.reportEffects(EffectDiff.TICK);
     }
 
     private void trackBoardPresence() {
@@ -784,7 +930,17 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.moments.markPending(Moment.DEATH);
     }
 
+    /** An effect its abilities put on others is named after it, while anything is observed. */
     private void evaluateAbilities(int gameTime) {
+        EnemyObservation observation = this.gameWorld.enemyObservation();
+        if (observation.anyObserved() && !this.definition.abilities().isEmpty()) {
+            observation.during("#" + this.id, () -> this.evaluateEachAbility(gameTime));
+        } else {
+            this.evaluateEachAbility(gameTime);
+        }
+    }
+
+    private void evaluateEachAbility(int gameTime) {
         List<Ability> abilities = this.definition.abilities();
         for (int i = 0; i < abilities.size(); i++) {
             Ability ability = abilities.get(i);

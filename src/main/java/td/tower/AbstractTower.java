@@ -330,7 +330,7 @@ public abstract class AbstractTower implements Tower {
     protected void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
         Effect applied = effect.apply(d -> this.dealPeriodicDamage(target, d));
         float length = this.stats.effectLength();
-        target.applyEffect(length == 1f ? applied : applied.withDurationScaledBy(length));
+        target.applyEffect(length == 1f ? applied : applied.withDurationScaledBy(length), this.origin);
     }
 
     /** {@code ticks} as long as the effects this tower makes last, for what a tower leaves on the ground. */
@@ -639,6 +639,11 @@ public abstract class AbstractTower implements Tower {
 
     public int getBoardX() {
         return this.boardX;
+    }
+
+    @Override
+    public AttackOrigin origin() {
+        return this.origin;
     }
 
     public int getBoardY() {

@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
@@ -29,6 +30,11 @@ public interface HitReceiver {
     }
 
     void applyEffect(Effect effect);
+
+    /** {@link #applyEffect(Effect)} from {@code from}, which a trace names as what put it on. */
+    default void applyEffect(Effect effect, AttackOrigin from) {
+        this.applyEffect(effect);
+    }
 
     /**
      * The share of a {@code type} hit this enemy's armor or magic resist and damage taken remove

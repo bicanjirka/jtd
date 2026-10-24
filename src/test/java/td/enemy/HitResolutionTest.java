@@ -234,4 +234,30 @@ class HitResolutionTest {
 
         assertThat(draws[0]).isZero();
     }
+
+    @Test
+    void itsStepsLandWhatTheFormulaLandsWithTheSameCrit() {
+        StatView stats = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 60f).with(EnemyStat.PLATING, 150f)
+                .with(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 1.2f).with(EnemyStat.PERIODIC_DAMAGE_TAKEN, 1.5f));
+        AttackProfile crit = AttackProfile.critChance(1f).withArmorPenetration(0.25f, 10f);
+        AttackProfile periodic = AttackProfile.none().asPeriodic();
+
+        Damage critical = HitResolution.resolve(Damage.physical(1234), crit, stats, () -> 0.0);
+        Damage ticking = HitResolution.resolve(Damage.physical(1234), periodic, stats, () -> 0.0);
+
+        assertThat(HitResolution.steps(Damage.physical(1234), crit, stats, true).result()).isEqualTo(critical);
+        assertThat(HitResolution.steps(Damage.physical(1234), periodic, stats, false).result()).isEqualTo(ticking);
+    }
+
+    @Test
+    void aStepShowsThePenetrationThatCameOffItsStat() {
+        StatView stats = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f));
+        AttackProfile piercing = AttackProfile.none().withArmorPenetration(0.5f, 0f);
+
+        HitSteps steps = HitResolution.steps(Damage.physical(1000), piercing, stats, false);
+
+        HitStep mitigation = steps.steps().getFirst();
+        assertThat(mitigation.stat()).isEqualTo(100f);
+        assertThat(mitigation.effective()).isEqualTo(piercing.penetrate(DamageType.PHYSICAL, 100f, false));
+    }
 }

@@ -370,6 +370,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void showMenu() {
+        // The loop is stopped, and the board left behind ends every trace on it.
+        this.gameWorld.enemyObservation().endAll("level-ended");
         this.tooltips.closeAll();
         this.setSpeed(TickSpeed.PAUSED);
         this.boardOverlays.reset();

@@ -29,23 +29,66 @@ public final class HitResolution {
      * untouched.
      */
     public static Damage resolve(Damage incoming, AttackProfile attacker, StatView stats, RandomSource random) {
-        float amount = incoming.amount();
-        boolean critical = incoming.critical();
         float resilience = stats.value(EnemyStat.RESILIENCE);
-        if (!critical && attacker.delivery() == Delivery.HIT && resilience < 100f
-                && rollsCrit(attacker, resilience, random)) {
-            critical = true;
-            amount *= critFactor(attacker, stats);
-        }
-        float mitigation = attacker.penetrate(incoming.type(), stats.value(EnemyStat.mitigationFor(incoming.type())),
-                critical);
-        amount *= mitigationMultiplier(mitigation);
-        amount = Math.max(0f, amount - attacker.penetrateFlatReduction(stats.value(EnemyStat.flatReductionFor(incoming.type())), critical));
-        amount *= stats.value(EnemyStat.damageTakenFor(incoming.type()));
+        boolean rolledCrit = !incoming.critical() && attacker.delivery() == Delivery.HIT && resilience < 100f
+                && rollsCrit(attacker, resilience, random);
+        boolean critical = incoming.critical() || rolledCrit;
+        DamageType type = incoming.type();
+        float amount = rolledCrit ? incoming.amount() * critFactor(attacker, stats) : incoming.amount();
+        amount = afterMitigation(amount, type, attacker, stats, critical);
+        amount = afterFlatReduction(amount, type, attacker, stats, critical);
+        amount = afterDamageTaken(amount, type, stats);
         if (attacker.delivery() == Delivery.PERIODIC) {
             amount *= stats.value(EnemyStat.PERIODIC_DAMAGE_TAKEN);
         }
-        return new Damage(Math.round(amount), incoming.type(), critical);
+        return new Damage(Math.round(amount), type, critical);
+    }
+
+    /**
+     * {@link #resolve} with the crit already decided, one step at a time, for a trace of the hit: the same
+     * numbers, never a second roll.
+     *
+     * @param rolledCrit whether the crit roll succeeded; a hit that arrived critical is not rolled
+     */
+    public static HitSteps steps(Damage incoming, AttackProfile attacker, StatView stats, boolean rolledCrit) {
+        boolean critical = incoming.critical() || rolledCrit;
+        DamageType type = incoming.type();
+        HitSteps steps = HitSteps.arriving(incoming, attacker.delivery());
+        float amount = incoming.amount();
+        if (rolledCrit) {
+            float factor = critFactor(attacker, stats);
+            amount *= factor;
+            steps = steps.then(HitStep.crit(factor, amount));
+        }
+        float mitigation = stats.value(EnemyStat.mitigationFor(type));
+        amount = afterMitigation(amount, type, attacker, stats, critical);
+        steps = steps.then(HitStep.mitigation(mitigation, attacker.penetrate(type, mitigation, critical), amount));
+        float flat = stats.value(EnemyStat.flatReductionFor(type));
+        amount = afterFlatReduction(amount, type, attacker, stats, critical);
+        steps = steps.then(HitStep.flatReduction(flat, attacker.penetrateFlatReduction(flat, critical), amount));
+        float taken = stats.value(EnemyStat.damageTakenFor(type));
+        amount = afterDamageTaken(amount, type, stats);
+        steps = steps.then(HitStep.damageTaken(taken, amount));
+        if (attacker.delivery() == Delivery.PERIODIC) {
+            float periodic = stats.value(EnemyStat.PERIODIC_DAMAGE_TAKEN);
+            amount *= periodic;
+            steps = steps.then(HitStep.periodicTaken(periodic, amount));
+        }
+        return steps.resolvedTo(new Damage(Math.round(amount), type, critical));
+    }
+
+    private static float afterMitigation(float amount, DamageType type, AttackProfile attacker, StatView stats,
+                                         boolean critical) {
+        return amount * mitigationMultiplier(attacker.penetrate(type, stats.value(EnemyStat.mitigationFor(type)), critical));
+    }
+
+    private static float afterFlatReduction(float amount, DamageType type, AttackProfile attacker, StatView stats,
+                                            boolean critical) {
+        return Math.max(0f, amount - attacker.penetrateFlatReduction(stats.value(EnemyStat.flatReductionFor(type)), critical));
+    }
+
+    private static float afterDamageTaken(float amount, DamageType type, StatView stats) {
+        return amount * stats.value(EnemyStat.damageTakenFor(type));
     }
 
     /**

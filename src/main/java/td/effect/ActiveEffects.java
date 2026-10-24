@@ -94,6 +94,11 @@ public final class ActiveEffects {
      * fire are bent by what is already there (chill, Rime, Tar) is read from {@link EffectInteractions}.
      */
     public void apply(Effect effect) {
+        this.apply(effect, PeriodicDamageListener.none());
+    }
+
+    /** {@link #apply(Effect)}, telling {@code listener} about the burn a freeze lands at once. */
+    public void apply(Effect effect, PeriodicDamageListener listener) {
         Set<EffectKind> kinds = this.active.keySet();
         if (EffectInteractions.blocks(kinds, effect.kind())) {
             return;
@@ -112,6 +117,7 @@ public final class ActiveEffects {
             for (EffectKind fire : EffectKind.values()) {
                 Effect burning = fire.isBurning() ? this.active.get(fire) : null;
                 if (burning != null) {
+                    listener.dealing(fire);
                     burstPool(burning, EffectInteractions.freezeBurstShare(kinds, burning.tuning().freezeBurstShare()));
                 }
             }
@@ -458,6 +464,11 @@ public final class ActiveEffects {
      * {@code cellsMoved} is how far the enemy walked this tick, which a bleed turns into damage.
      */
     public void tick(float spiritFactor, float cellsMoved) {
+        this.tick(spiritFactor, cellsMoved, PeriodicDamageListener.none());
+    }
+
+    /** {@link #tick(float, float)}, telling {@code listener} which effect deals each part of the tick's damage. */
+    public void tick(float spiritFactor, float cellsMoved, PeriodicDamageListener listener) {
         List<EffectKind> expired = new ArrayList<>();
         float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
         float debuffPace = spiritFactor <= 0f ? 0f : Math.max(MIN_DEBUFF_PACE, spiritFactor);
@@ -468,13 +479,18 @@ public final class ActiveEffects {
                 case EffectDynamics.Stacks _ when kind.isStackDebuff() ->
                         this.decayStacks(effect, kind.rule().pacing() == EffectPacing.SPIRIT ? debuffPace : spiritFactor);
                 case EffectDynamics.ChillLevel _ -> this.tickChill(effect, this.paceSteps(kind, debuffPace));
-                case EffectDynamics.FuelPool _ -> this.tickPool(effect, kind.isBurning() ? burnFactor : 1f);
+                case EffectDynamics.FuelPool _ -> {
+                    listener.dealing(kind);
+                    yield this.tickPool(effect, kind.isBurning() ? burnFactor : 1f);
+                }
                 case EffectDynamics.Distance distance -> {
+                    listener.dealing(kind);
                     this.bleed(effect, distance, cellsMoved);
                     yield this.countDown(effect, debuffPace);
                 }
                 case EffectDynamics.TickDamage damage -> {
                     if (damage.perTick().amount() > 0) {
+                        listener.dealing(kind);
                         effect.sink().apply(damage.perTick());
                     }
                     yield this.countDown(effect, debuffPace);

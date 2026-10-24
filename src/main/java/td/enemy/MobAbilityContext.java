@@ -10,6 +10,9 @@ import td.util.GameWorld;
 import td.zone.Zone;
 import td.zone.ZoneOwner;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /** Resolves ability data against one caster's world, position and definition, for one tick. */
 final class MobAbilityContext implements AbilityContext {
 
@@ -59,21 +62,30 @@ final class MobAbilityContext implements AbilityContext {
 
     @Override
     public void applyEffect(EffectTemplate template, EffectTarget target) {
-        switch (target) {
-            case SelfTarget ignored -> this.caster.applyEffect(template.toEffect(MobAbilityContext::creditNoOne));
+        int targets = switch (target) {
+            case SelfTarget ignored -> {
+                this.caster.applyEffect(template.toEffect(MobAbilityContext::creditNoOne));
+                yield 1;
+            }
             case RadiusTarget radiusTarget -> this.applyToOthersInRadius(template, radiusTarget.radius());
-        }
+        };
         float castRadius = switch (target) {
             case SelfTarget ignored -> 0f;
             case RadiusTarget radiusTarget -> radiusTarget.radius();
         };
         this.caster.recordAbilityCast(template.kind(), castRadius, this.gameTime);
+        MobObserver observer = this.caster.observer();
+        if (observer.isOn()) {
+            observer.report(new MobEvent.Cast(template.kind(), castRadius / this.world.getBoard().scale(), targets));
+        }
     }
 
-    private void applyToOthersInRadius(EffectTemplate template, float radius) {
+    /** @return how many it reached */
+    private int applyToOthersInRadius(EffectTemplate template, float radius) {
         float radius2 = radius * radius;
         double selfX = this.caster.getX();
         double selfY = this.caster.getY();
+        int reached = 0;
         for (EnemyMob other : this.world.enemies().getEnemies()) {
             if (other == this.caster || !other.validTarget()) {
                 continue;
@@ -82,8 +94,10 @@ final class MobAbilityContext implements AbilityContext {
             double dy = other.getY() - selfY;
             if (dx * dx + dy * dy <= radius2) {
                 other.applyEffect(template.toEffect(MobAbilityContext::creditNoOne));
+                reached++;
             }
         }
+        return reached;
     }
 
     @Override
@@ -103,6 +117,10 @@ final class MobAbilityContext implements AbilityContext {
                     action.kind() + " is a tower zone, not an enemy one");
         };
         this.world.zones().add(zone);
+        MobObserver observer = this.caster.observer();
+        if (observer.isOn()) {
+            observer.report(new MobEvent.ZoneLeft(action.kind(), action.radiusCells()));
+        }
     }
 
     /** Ability effects deal no direct damage, so this sink is never invoked. */
@@ -112,13 +130,28 @@ final class MobAbilityContext implements AbilityContext {
     @Override
     public void spawnEnemies(SpawnEnemiesAction spawn) {
         EnemySpawner roster = this.world.enemies();
-        for (DefinedEnemyMob spawned : AbilitySpawnFactory.build(this.world, this.caster, spawn, this.gameTime)) {
+        List<DefinedEnemyMob> built = AbilitySpawnFactory.build(this.world, this.caster, spawn, this.gameTime);
+        for (DefinedEnemyMob spawned : built) {
             if (spawn.consumesSelf()) {
                 this.caster.markHatched();
                 roster.replace(this.caster, spawned);
             } else {
                 roster.add(spawned);
             }
+        }
+        if (this.caster.isObserved()) {
+            this.passObservationOn(built, spawn.consumesSelf());
+        }
+    }
+
+    /** What an observed enemy spawns is observed too; one that hatches ends its own trace in its hatchling. */
+    private void passObservationOn(List<DefinedEnemyMob> built, boolean hatched) {
+        List<Long> ids = built.stream().map(DefinedEnemyMob::id).toList();
+        this.caster.observer().report(new MobEvent.Spawned(ids, hatched));
+        String via = (hatched ? "hatched-from:#" : "spawned-by:#") + this.caster.id();
+        built.forEach(spawned -> this.world.enemyObservation().observe(spawned, via));
+        if (hatched) {
+            this.caster.endObservation("hatched-into:" + ids.stream().map(id -> "#" + id).collect(Collectors.joining(",")));
         }
     }
 }
