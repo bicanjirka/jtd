@@ -29,7 +29,10 @@ import java.io.Serial;
  * running unless the owner pauses it.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
-final class ConfirmPopup extends JPanel {
+public final class ConfirmPopup extends JPanel {
+
+    /** The text colour of a button that can't be undone, as Sell's. */
+    public static final Color IRREVERSIBLE = PanelTowerInfo.SELL_TEXT_COLOR;
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -83,7 +86,7 @@ final class ConfirmPopup extends JPanel {
      * written in {@code confirmColor}. {@code onConfirm} runs when it is pressed, {@code onCancel} when the popup
      * is cancelled.
      */
-    static ConfirmPopup open(JLayeredPane layer, Rectangle anchor, InfoSheet sheet, String confirm, Color confirmColor,
+    public static ConfirmPopup open(JLayeredPane layer, Rectangle anchor, InfoSheet sheet, String confirm, Color confirmColor,
                              Runnable onConfirm, Runnable onCancel) {
         ConfirmPopup popup = new ConfirmPopup(layer, sheet, confirm, confirmColor, onConfirm, onCancel);
         layer.add(popup, JLayeredPane.POPUP_LAYER, 0);
@@ -96,12 +99,12 @@ final class ConfirmPopup extends JPanel {
         return popup;
     }
 
-    boolean isOpen() {
+    public boolean isOpen() {
         return this.open;
     }
 
     /** Closes it as Cancel would. */
-    void cancel() {
+    public void cancel() {
         if (this.open) {
             this.close();
             this.onCancel.run();

@@ -50,15 +50,17 @@ Start each wave yourself when you are ready — waves do not auto-advance.
 |---------------------------------|------------------------------------------------------------------------------------------------------|
 | `q` `w` `e` `r` `t` `y` `u` `i` | Select tower 1–8 for placement                                                                       |
 | `Esc`                           | Cancel tower placement                                                                               |
-| `1`–`8`                         | Buy the selected tower's upgrade: 1 chain, 2 Range, 3 extra line, 4/5 the branches, 6–8 specials     |
+| `1`–`8`                         | Buy the selected tower's next upgrade step: 1 Core, 2 Range, 3 extra line, 4/5 the branches, 6–8 specials |
 | `s`                             | Start the next wave                                                                                  |
 | `p`                             | Pause / unpause                                                                                      |
 | `f`                             | Cycle tick speed (normal → fast → super fast → normal)                                               |
-| `m`                             | Back to the level-select menu (asks to confirm mid-level)                                            |
+| `m`                             | Back to the level-select menu (asks to confirm mid-level; `Esc` cancels)                             |
 | `Ctrl`+`Shift`+`D`              | Open or close the dev panel (playtesting controls; its **Help** button lists its own keys)           |
 
-Mouse: move to preview placement, click to place or to select a placed tower, or click an
-upgrade-tree button to buy that node. Click a moving enemy, invisible ones too (when not placing a
+Mouse: move to preview placement, click to place or to select a placed tower. In the Upgrades panel,
+hovering a node shows what it does and what a click would do; a click buys it with every node it
+needs first, in one payment or not at all, and a right-click on an owned node downgrades it (after a
+confirmation) with every node that depends on it. Click a moving enemy, invisible ones too (when not placing a
 tower), to inspect it: the side panel shows its live health, stats, effects and traits, updating even while paused,
 and keeps a "Killed" or "Leaked" line after it's gone until your next click. Hovering an enemy in
 the wave preview opens a tooltip of the stats that enemy type spawns with.
@@ -142,8 +144,9 @@ second special. `head` offers two chains that exclude each other; `special` offe
 specializations, of which a tower keeps one, or two once Transcendent. Past the first steps a
 node also needs XP: every tower an enemy reached earns its bounty as XP when its walk ends,
 killed or leaked (an Aura earns with the towers it buffs), and a few nodes need towers built
-nearby. Every purchase is permanent for that tower. Upgrade prices are multiples of the tower's
-price. Pips on the board show each slot's
+nearby. A downgrade takes a node back with everything that needs it, refunds three quarters of what
+they cost (selling afterwards pays what selling would have) and reopens the choices they made. Upgrade
+prices are multiples of the tower's price. Pips on the board show each slot's
 level, and a tower with a special glows. Silver diamonds beside a tower show its rank, earned
 with XP: Seasoned at 50, Expert at 150, Hero at 300. The Upgrades panel's XP bar ticks where the
 next node waits. The Beacon draws a faint line to every tower it's

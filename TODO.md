@@ -61,12 +61,13 @@ listed below.
 
 Not a defect - an option, recorded with the condition that would make it worth taking.
 
-Every mutation originating on the EDT (placing or selling a tower, choosing an upgrade path,
-loading a level, requesting a wave) currently reaches the simulation by one of three ad-hoc
+Every mutation originating on the EDT (placing or selling a tower, buying an upgrade path or
+downgrading one, loading a level, requesting a wave) currently reaches the simulation by one of three ad-hoc
 routes: a volatile flag `doTick` consumes (`requestNextWave`), direct mutation under a stopped
 loop (`loadLevel`), or direct mutation while the loop runs (tower placement). Each is
 individually safe, but there are three of them, and the third is why `AbstractTower`,
-`CellNormal` and `GameWorld` all carry publication rules of their own.
+`CellNormal` and `GameWorld` all carry publication rules of their own. A downgrade already hands
+what the tower holds for a removed node to the tick thread (`AbstractTower.removedSinceTick`).
 
 The second route is now genuinely guaranteed rather than best-effort: `GameLoop.stop()` joins
 without bound and `TowerDefense.stopLoopThen` runs it off the EDT, so `loadLevel` provably has

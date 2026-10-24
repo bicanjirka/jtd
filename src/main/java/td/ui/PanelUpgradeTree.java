@@ -235,7 +235,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                 SwingUtilities.getRootPane(this).getLayeredPane());
         this.confirmation = Optional.of(ConfirmPopup.open(SwingUtilities.getRootPane(this).getLayeredPane(), anchor,
                 UpgradeSheetText.downgradeConfirmation(downgrading, downgraded.upgradeTree()),
-                UpgradeSheetText.downgradeButton(downgrading), PanelTowerInfo.SELL_TEXT_COLOR,
+                UpgradeSheetText.downgradeButton(downgrading), ConfirmPopup.IRREVERSIBLE,
                 () -> {
                     this.confirmation = Optional.empty();
                     if (!this.levelEnded) {

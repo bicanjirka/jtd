@@ -11,10 +11,12 @@ import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.save.GameSave;
 import td.save.GameSaveText;
+import td.term.TermText;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.ui.BoardOverlays;
 import td.ui.BoardRenderer;
+import td.ui.ConfirmPopup;
 import td.ui.GameBoard;
 import td.ui.Hud;
 import td.ui.Java2DFrameRenderer;
@@ -28,7 +30,9 @@ import td.ui.TooltipDelays;
 import td.ui.TooltipLayer;
 import td.ui.render.AsciiBoardRenderer;
 import td.ui.render.InfoSheet;
+import td.ui.render.Palette;
 import td.ui.render.RenderFrame;
+import td.ui.render.SheetLine;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -36,7 +40,6 @@ import td.util.Threads;
 import td.wave.WaveProgress;
 
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -63,6 +66,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
@@ -139,6 +143,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private volatile boolean levelLoaded = false;
 
     private TooltipLayer tooltips;
+    private Optional<ConfirmPopup> abandonQuestion = Optional.empty();
     private CardLayout contentCardLayout;
     private JPanel jPanel_game;
     private PanelLevelSelect panelLevelSelect;
@@ -355,10 +360,11 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (!this.levelLoaded) {
             return;
         }
-        if (!this.engine.outcome().isOver() && !this.confirmAbandonLevel()) {
-            return;
+        if (this.engine.outcome().isOver()) {
+            this.returnToMenu();
+        } else if (this.abandonQuestion.filter(ConfirmPopup::isOpen).isEmpty()) {
+            this.askToAbandonLevel();
         }
-        this.returnToMenu();
     }
 
     /**
@@ -387,20 +393,19 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setLocationRelativeTo(null);
     }
 
-    /**
-     * Pauses while the dialog is open, since the loop keeps running behind a modal, and restores
-     * the speed on "no".
-     */
-    private boolean confirmAbandonLevel() {
+    /** Pauses while the question is open, and restores the speed on Cancel. */
+    private void askToAbandonLevel() {
         TickSpeed previousSpeed = this.currentSpeed;
         this.setSpeed(TickSpeed.PAUSED);
-        boolean confirmed = JOptionPane.showConfirmDialog(this,
-                "Abandon this level and return to the menu?", "Back to menu",
-                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
-        if (!confirmed) {
-            this.setSpeed(previousSpeed);
-        }
-        return confirmed;
+        this.tooltips.closeAll();
+        InfoSheet question = new InfoSheet(List.of(
+                new SheetLine.Title(SheetLine.Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, "Back to menu", ""),
+                new SheetLine.Prose(TermText.of("Abandon this level and return to the menu?"))));
+        Rectangle board = SwingUtilities.convertRectangle(this.gameBoard.getParent(), this.gameBoard.getBounds(),
+                this.getLayeredPane());
+        Rectangle centre = new Rectangle((int) board.getCenterX(), (int) board.getCenterY() - 60, 1, 1);
+        this.abandonQuestion = Optional.of(ConfirmPopup.open(this.getLayeredPane(), centre, question, "Abandon",
+                ConfirmPopup.IRREVERSIBLE, this::returnToMenu, () -> this.setSpeed(previousSpeed)));
     }
 
     public void setInfoText(String s) {
