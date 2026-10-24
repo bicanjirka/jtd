@@ -151,8 +151,8 @@ public class PanelDev extends JPanel {
     private Runnable onReleaseFocus = () -> {
     };
 
-    /** {@code onEnemyHover} gets the sheet of the preview enemy under the pointer. */
-    public PanelDev(Consumer<InfoSheet> onEnemyHover) {
+    /** {@code onEnemyHover} gets the sheet of the preview enemy under the pointer, or empty once it rests on none. */
+    public PanelDev(Consumer<Optional<InfoSheet>> onEnemyHover) {
         this.preview = new PathWaveRow(onEnemyHover);
         initComponents();
     }

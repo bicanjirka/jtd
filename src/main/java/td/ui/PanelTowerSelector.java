@@ -27,6 +27,7 @@ import java.awt.image.BufferedImage;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The tower toolbar: one {@link HudToggleButton} per {@link TowerFactory.Type}, in enum order,
@@ -83,6 +84,10 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
             tempToggle.addMouseListener(new MouseAdapter() {
                 public void mouseEntered(MouseEvent evt) {
                     mouseOver(n);
+                }
+
+                public void mouseExited(MouseEvent evt) {
+                    pointerLeft();
                 }
             });
             gridBagConstraints = new GridBagConstraints();
@@ -155,8 +160,12 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
 
     private void mouseOver(int i) {
         if (!this.placing) {
-            this.mainApp.showInfoSheet(this.shopSheet(i));
+            this.mainApp.showHoveredSheet(Optional.of(this.shopSheet(i)));
         }
+    }
+
+    private void pointerLeft() {
+        this.mainApp.showHoveredSheet(Optional.empty());
     }
 
     private void initComponents() {

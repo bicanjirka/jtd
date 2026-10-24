@@ -15,6 +15,7 @@ import java.awt.Insets;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -35,15 +36,15 @@ public class PanelWaveInfo extends JPanel {
     private final List<PathWaveRow> curRows = new ArrayList<>();
     private final List<PathWaveRow> nextRows = new ArrayList<>();
     private GameWorld gameWorld;
-    private Consumer<InfoSheet> onEnemyHover = sheet -> {
+    private Consumer<Optional<InfoSheet>> onEnemyHover = sheet -> {
     };
 
     public PanelWaveInfo() {
         initComponents();
     }
 
-    /** Called with the sheet of a preview enemy under the pointer. */
-    public void onEnemyHover(Consumer<InfoSheet> listener) {
+    /** Called with the sheet of a preview enemy under the pointer, or empty once it rests on none. */
+    public void onEnemyHover(Consumer<Optional<InfoSheet>> listener) {
         this.onEnemyHover = listener;
     }
 
