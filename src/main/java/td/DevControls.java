@@ -349,7 +349,7 @@ public final class DevControls implements EconomyListener {
         if (tower.isPresent()) {
             return DevSelection.tower(tower.get().displayName());
         }
-        return this.selectedEnemy().map(mob -> DevSelection.enemy(mob.definition().displayName() + " #" + mob.id(),
+        return this.selectedEnemy().map(mob -> DevSelection.enemy("#" + mob.id() + " " + mob.definition().displayName(),
                         mob.isObserved()))
                 .orElse(DevSelection.none());
     }
