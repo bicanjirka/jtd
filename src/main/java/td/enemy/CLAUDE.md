@@ -133,6 +133,18 @@
 - `getEnemies()` returns a fresh snapshot (a `CopyOnWriteArrayList` behind it), so don't rely on
   reference identity.
 
+## Observation
+
+- Only the dev panel starts observing an enemy (`EnemyObservation.observe`); what an observed enemy
+  spawns or hatches into is observed too. A wave, a level or a save never does.
+- A mob builds a `MobEvent` only after `observer.isOn()`: an unobserved mob must cost nothing. A
+  change to its health, effects or hits that a trace should show reports through its `MobObserver`,
+  and an effect change through `reportEffects`, which diffs (`EffectDiff`) rather than naming one.
+- A cause is named by `EnemyObservation.nameOf`: the tower behind an origin, else what runs
+  `during` (an enemy's `#id` while its abilities run, a dev panel `dev:<action>`), else `-`.
+- `HitResolution.steps` reuses `resolve`'s step functions with the crit already decided; never a
+  second formula or a second roll.
+
 ## Adding a `BodyArchetype`
 
 1. Add the constant.

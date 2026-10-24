@@ -198,6 +198,7 @@ public class GameEngine {
      * clearing towers maps their positions back to cells through the current board.
      */
     private void unloadCurrentLevel() {
+        this.gameWorld.enemyObservation().endAll("level-ended");
         this.placement.reset();
         this.gameWorld.projectiles().clear();
         this.gameWorld.zones().clear();
@@ -271,6 +272,7 @@ public class GameEngine {
             return false;
         }
         LOG.debug("doTick t={}", time);
+        this.gameWorld.enemyObservation().beginTick(time);
         boolean waveStarted = false;
         if (this.startWave) {
             waveStarted = this.nextWave();
@@ -294,6 +296,7 @@ public class GameEngine {
             tower.doTick(time);
         }
         this.settleDeaths(time);
+        this.gameWorld.enemyObservation().sweep(this.gameWorld.enemies());
         this.settleWave();
         return waveStarted;
     }

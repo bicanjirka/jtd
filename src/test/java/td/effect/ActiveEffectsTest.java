@@ -1135,4 +1135,27 @@ class ActiveEffectsTest {
         assertThat(effects.stacks(EffectKind.FRACTURED)).isEqualTo(4);
         assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(5);
     }
+
+    @Test
+    void aTickNamesTheEffectBehindEachDamageBeforeItLands() {
+        ActiveEffects effects = new ActiveEffects();
+        List<String> heard = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(100), 40, damage -> heard.add("damage")));
+
+        effects.tick(1f, 0f, kind -> heard.add(kind.title()));
+
+        assertThat(heard).containsExactly(EffectKind.BURN.title(), "damage");
+    }
+
+    @Test
+    void aFreezeNamesTheBurnItLandsAtOnce() {
+        ActiveEffects effects = new ActiveEffects();
+        List<EffectKind> heard = new ArrayList<>();
+        effects.apply(Effect.burn(Damage.magic(100), 40, damage -> {
+        }));
+
+        effects.apply(Effect.freeze(20, DamageSink.none()), heard::add);
+
+        assertThat(heard).containsExactly(EffectKind.BURN);
+    }
 }

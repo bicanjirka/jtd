@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.damage.AttackOrigin;
 import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
@@ -60,6 +61,9 @@ public interface Tower {
     int getY();
 
     int getBoardX();
+
+    /** Who this tower's hits and effects come from, for its whole life. */
+    AttackOrigin origin();
 
     int getBoardY();
 

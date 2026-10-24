@@ -16,6 +16,7 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
 
     private final AtomicInteger count = new AtomicInteger();
     private final AtomicLong entries = new AtomicLong();
+    private final AtomicLong births = new AtomicLong();
     private final AtomicLong leaks = new AtomicLong();
     private final List<WalkEndListener> walkEndListeners = new CopyOnWriteArrayList<>();
     private final List<ShieldListener> shieldListeners = new CopyOnWriteArrayList<>();
@@ -85,6 +86,11 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
     /** A mob going live takes the next place in the entry order. */
     public long recordEntry() {
         return this.entries.incrementAndGet();
+    }
+
+    /** A mob being built takes the next id, which no other mob built against this roster shares. */
+    public long recordBirth() {
+        return this.births.incrementAndGet();
     }
 
     /** How many mobs have gone live so far: a mob whose ordinal is higher entered after this call. */

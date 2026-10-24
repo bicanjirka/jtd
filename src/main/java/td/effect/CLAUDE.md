@@ -101,6 +101,8 @@
 - `ShieldTemplate` can be restricted to one `DamageType` (`physicalOnly`/`magicOnly`).
 - `EffectTransitions` records when each kind was last gained or lost; the UI derives
   transitions from it.
+- Before an effect deals through its sink, `ActiveEffects` tells the `PeriodicDamageListener` it was
+  given which kind deals, so a trace can name the effect behind a periodic hit; a new sink call does too.
 
 ## Per-tick order (in `DefinedEnemyMob.doTick`)
 
