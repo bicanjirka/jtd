@@ -1,5 +1,7 @@
 package td;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.junit.jupiter.api.Test;
 import td.cell.Cell;
 import td.damage.AttackProfile;
@@ -10,6 +12,8 @@ import td.effect.DamageSink;
 import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.enemy.Ability;
+import td.enemy.AbilityTerm;
 import td.enemy.AdaptiveResist;
 import td.enemy.BodyArchetype;
 import td.enemy.EffectResistTrait;
@@ -17,11 +21,14 @@ import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyObservation;
 import td.enemy.HitResult;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.IdentifiedTrait;
+import td.enemy.OnceTrigger;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
+import td.enemy.SpawnEnemiesAction;
 import td.enemy.Trait;
 import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
@@ -1829,5 +1836,40 @@ class GameEngineTest {
 
         assertThat(burned).isFalse();
         assertThat(enemy.activeEffectKinds()).contains(EffectKind.SOULFIRE);
+    }
+
+    @Test
+    void anEnemyFromTheSpawnBoxThatHatchesPassesItsTraceToItsHatchlingInTheSameTick() {
+        EnemyDefinition hatchling = EnemyDefinition.of("hatchling", "Hatchling", 100, 1, 0f, BodyArchetype.CIRCLE);
+        EnemyDefinition egg = EnemyDefinition.of("egg", "Egg", 100, 1, 0f, BodyArchetype.CIRCLE).withAbilities(
+                List.of(new Ability(AbilityTerm.HATCH, new OnceTrigger(5), new SpawnEnemiesAction("hatchling", 1, true))));
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100).withCustomEnemies(List.of(egg, hatchling)));
+        DevControls dev = new DevControls(engine.getGameWorld());
+        dev.setObserveSpawns(true);
+        dev.spawnWave("egg", Rank.GRUNT, 0);
+
+        List<String> lines;
+        try (CapturedLog log = new CapturedLog(EnemyObservation.class)) {
+            dev.runPending();
+            for (int t = 1; t <= 20; t++) {
+                engine.doTick(t);
+            }
+            lines = log.atLevel(Level.INFO).stream().map(ILoggingEvent::getFormattedMessage).toList();
+        }
+
+        String eggStart = lines.stream().filter(line -> line.contains("START via=spawn-box")).findFirst().orElseThrow();
+        String eggId = traceField(eggStart, 2);
+        String hatchlingStart = lines.stream().filter(line -> line.contains("START via=hatched-from:" + eggId))
+                .findFirst().orElseThrow();
+        String eggEnd = lines.stream().filter(line -> traceField(line, 2).equals(eggId) && line.contains(" END "))
+                .findFirst().orElseThrow();
+        assertThat(eggEnd).contains("END hatched-into:" + traceField(hatchlingStart, 2));
+        assertThat(traceField(hatchlingStart, 1)).isEqualTo(traceField(eggEnd, 1)).isNotEqualTo("t=0");
+    }
+
+    /** The {@code index}-th space-separated field of a trace line: {@code 1} its tick, {@code 2} its enemy's id. */
+    private static String traceField(String traceLine, int index) {
+        return traceLine.split(" ")[index];
     }
 }
