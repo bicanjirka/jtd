@@ -176,17 +176,27 @@ public final class MobEventText {
         return number(DamageUnits.inPoints(units));
     }
 
-    /** At most two decimals, and none for a whole number. */
+    /** At most two decimals, and none for a whole number. Built by hand: a trace formats many per tick. */
     static String number(double value) {
-        String text = String.format(Locale.ROOT, "%.2f", value);
-        if (text.contains(".")) {
-            text = text.replaceAll("0+$", "").replaceAll("\\.$", "");
+        long hundredths = Math.round(value * 100);
+        String sign = hundredths < 0 ? "-" : "";
+        long size = Math.abs(hundredths);
+        long cents = size % 100;
+        if (cents == 0) {
+            return sign + size / 100;
         }
-        return text.equals("-0") ? "0" : text;
+        String decimals = cents % 10 == 0 ? String.valueOf(cents / 10) : twoDigits(cents);
+        return sign + size / 100 + "." + decimals;
     }
 
     private static String factor(float factor) {
-        return "x" + String.format(Locale.ROOT, "%.2f", factor);
+        long hundredths = Math.round(factor * 100.0);
+        String sign = hundredths < 0 ? "-" : "";
+        return "x" + sign + Math.abs(hundredths) / 100 + "." + twoDigits(Math.abs(hundredths) % 100);
+    }
+
+    private static String twoDigits(long value) {
+        return value < 10 ? "0" + value : String.valueOf(value);
     }
 
     private static String titleCase(String constant) {
