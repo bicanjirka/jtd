@@ -369,9 +369,8 @@ public class Driver {
         System.out.println("OK clickat " + args);
     }
 
-    // Moves the pointer onto a component without clicking, so its mouseEntered fires. jTD shows
-    // a tower's pre-purchase stats on toolbar hover (PanelTowerSelector.mouseOver), which
-    // click() cannot reach: a JToggleButton is an AbstractButton, so click() takes the
+    // Moves the pointer onto a component without clicking, so its mouseEntered fires. jTD opens
+    // a tooltip of a tower's stats on toolbar hover, which click() cannot reach: a JToggleButton is an AbstractButton, so click() takes the
     // doClick() path and never generates a mouse-entered event at all.
     private static void hover(String args) throws AWTException, InterruptedException {
         String[] parts = args.trim().split("\s+");
