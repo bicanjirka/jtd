@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * The nodes a tower owns of one line, in purchase order: a head chain with its level IV, the extra line, the Range
- * line, the Attune chain, or one special.
+ * line, the Core chain, or one special.
  */
 public record UpgradeLine(UpgradeNode first, List<UpgradeNode> owned) {
 
@@ -23,9 +23,8 @@ public record UpgradeLine(UpgradeNode first, List<UpgradeNode> owned) {
         return this.tip().tier().level();
     }
 
-    /** The node whose art the line shows: a level IV or special tip its own, every other line its first node's. */
+    /** The node whose art the line shows: a Core step, level IV or special tip its own, every other line its first node's. */
     public UpgradeNode artNode() {
-        UpgradeTier tier = this.tip().tier();
-        return tier == UpgradeTier.HEAD_4 || tier == UpgradeTier.SPECIAL ? this.tip() : this.first;
+        return this.tip().tier().hasOwnArt() ? this.tip() : this.first;
     }
 }

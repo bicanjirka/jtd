@@ -152,12 +152,12 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         TowerSpriteDraw sprite = frame.towerSprites().getFirst();
-        assertThat(sprite.slotMarks()).extracting(SlotMarkDraw::level).containsExactly(0, 0, 0);
+        assertThat(sprite.slotMarks()).extracting(SlotMarkDraw::level).containsExactly(0, 0, 0, 0);
         assertThat(sprite.enchantPulse()).isZero();
     }
 
     @Test
-    void aFundedFreshTowersBaseSlotIsMarkedReadyButHeadIsNotYetLocked() {
+    void aFundedFreshTowersCoreSlotIsMarkedReadyButHeadIsNotYetLocked() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.economy().startEconomy(1000, 5);
@@ -166,27 +166,27 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
-        assertThat(marks.get(UpgradeSlot.BASE.ordinal()).ready()).isTrue();
+        assertThat(marks.get(UpgradeSlot.CORE.ordinal()).ready()).isTrue();
         assertThat(marks.get(UpgradeSlot.HEAD.ordinal()).ready()).isFalse();
         assertThat(marks.get(UpgradeSlot.SPECIAL.ordinal()).ready()).isFalse();
     }
 
     @Test
-    void buyingTwoHeadNodesShowsTwoPipsInTheHeadSlotAndOneInBase() {
+    void buyingTwoHeadNodesShowsTwoPipsInTheHeadSlotAndOneInCore() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(context, 1, 1);
         context.towers().add(tower);
         tower.earnXp(1_000);
-        tower.buyUpgrade(baseNode(tower, StandardBaseSlot.ATTUNE_ID));
+        tower.buyUpgrade(coreNode(tower, StandardBaseSlot.ATTUNE_ID));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(0));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(1));
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
-        assertThat(marks.get(UpgradeSlot.BASE.ordinal()).level()).isEqualTo(1);
+        assertThat(marks.get(UpgradeSlot.CORE.ordinal()).level()).isEqualTo(1);
         assertThat(marks.get(UpgradeSlot.HEAD.ordinal()).level()).isEqualTo(2);
         assertThat(marks.get(UpgradeSlot.SPECIAL.ordinal()).level()).isZero();
     }
@@ -202,8 +202,8 @@ class BoardRendererTest {
         context.towers().add(new SniperTower(context, 0, 0));
         context.towers().add(new SniperTower(context, 2, 2));
         tower.earnXp(1_000);
-        tower.buyUpgrade(baseNode(tower, StandardBaseSlot.ATTUNE_ID));
-        tower.buyUpgrade(baseNode(tower, StandardBaseSlot.AWAKEN_ID));
+        tower.buyUpgrade(coreNode(tower, StandardBaseSlot.ATTUNE_ID));
+        tower.buyUpgrade(coreNode(tower, StandardBaseSlot.AWAKEN_ID));
         tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.SPECIAL).getFirst());
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
@@ -313,8 +313,8 @@ class BoardRendererTest {
         assertThat(frame.projectiles().getFirst()).isInstanceOf(ProjectileDraw.class);
     }
 
-    private static UpgradeNode baseNode(Tower tower, String id) {
-        return tower.upgradeTree().nodesIn(UpgradeSlot.BASE).stream().filter(n -> n.id().equals(id)).findFirst().orElseThrow();
+    private static UpgradeNode coreNode(Tower tower, String id) {
+        return tower.upgradeTree().nodesIn(UpgradeSlot.CORE).stream().filter(n -> n.id().equals(id)).findFirst().orElseThrow();
     }
 
     @Test
@@ -327,7 +327,7 @@ class BoardRendererTest {
         CinderTower cinder = new CinderTower(context, (int) (enemy.getX() / scale) + 1, (int) (enemy.getY() / scale));
         context.towers().add(cinder);
         context.economy().startEconomy(1000, 5);
-        cinder.buyUpgrade(baseNode(cinder, StandardBaseSlot.ATTUNE_ID));
+        cinder.buyUpgrade(coreNode(cinder, StandardBaseSlot.ATTUNE_ID));
         for (int t = 1; t <= 400 && cinder.marksOn(enemy).isEmpty(); t++) {
             cinder.doTick(t);
         }

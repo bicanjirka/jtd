@@ -11,6 +11,10 @@ final class PerkPictograms {
             Map.entry("base.range", "S O9.4 12 5.8 ; F O9.4 12 1.6 ; S M15.4 12H21.4 M18.4 8.8L21.6 12L18.4 15.2"),
             // Attune
             Map.entry("base.attune", "F M5.6 8.6L9 3.8H15L18.4 8.6L12 20.6Z ; X M5.6 8.6H18.4 M9 3.8L10.4 8.6L12 20.6 M15 3.8L13.6 8.6L12 20.6"),
+            // Awaken
+            Map.entry("base.awaken", "S M2.2 12C6 5.6 18 5.6 21.8 12C18 18.4 6 18.4 2.2 12Z ; F O12 12 3.4 ; T M12 2.4V4.6 M5.6 4.2L6.8 6 M18.4 4.2L17.2 6"),
+            // Transcendent
+            Map.entry("base.transcendent", "F M3.4 18.6L4.6 7.4L8.8 12.4L12 4.6L15.2 12.4L19.4 7.4L20.6 18.6Z ; T M3.4 21H20.6"),
             // Focused Optics
             Map.entry("sniper.head.focused_optics.1", "F M2.6 9.6H14.4V14.4H2.6Z M14.4 7.6H19.4L21.4 9.6V14.4L19.4 16.4H14.4Z ; F M5.4 14.4H8.6V18H5.4Z ; X M17.6 9.4V14.6"),
             // Railgun

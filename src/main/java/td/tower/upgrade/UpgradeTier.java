@@ -4,7 +4,7 @@ import java.util.Optional;
 
 /**
  * A step of the tree shape every tower shares: which slot it fills, what it costs as a multiple of
- * the tower's list price, the XP it needs, and which base node opens it. A node's own line (the
+ * the tower's list price, the XP it needs, and which Core node opens it. A node's own line (the
  * level before it) is added with {@link UpgradeNode#after(UpgradeNode)}. Steps behind
  * Transcendent need no XP of their own: Transcendent is their gate.
  */
@@ -12,9 +12,9 @@ public enum UpgradeTier {
     RANGE_1(UpgradeSlot.BASE, 60, 0),
     RANGE_2(UpgradeSlot.BASE, 120, 0),
     RANGE_3(UpgradeSlot.BASE, 200, 0),
-    ATTUNE(UpgradeSlot.BASE, 80, 0),
-    AWAKEN(UpgradeSlot.BASE, 100, 0),
-    TRANSCENDENT(UpgradeSlot.BASE, 400, 300),
+    ATTUNE(UpgradeSlot.CORE, 80, 0),
+    AWAKEN(UpgradeSlot.CORE, 100, 0),
+    TRANSCENDENT(UpgradeSlot.CORE, 400, 300),
     HEAD_1(UpgradeSlot.HEAD, 100, 0),
     HEAD_2(UpgradeSlot.HEAD, 150, 50),
     /** Also the tower's purpose gate, once its own feature gives it a deed. */
@@ -64,6 +64,11 @@ public enum UpgradeTier {
         };
     }
 
+    /** Whether a node at this step shows art of its own rather than its line's: a Core step, a level IV, a special. */
+    public boolean hasOwnArt() {
+        return this.slot == UpgradeSlot.CORE || this == HEAD_4 || this == SPECIAL;
+    }
+
     /** The step before this one in its line; empty for the first step and for a special. */
     public Optional<UpgradeTier> previous() {
         return switch (this) {
@@ -84,13 +89,14 @@ public enum UpgradeTier {
     /** The first step of a line that a node of {@code slot} starts at unless it says otherwise. */
     static UpgradeTier startOf(UpgradeSlot slot) {
         return switch (slot) {
-            case BASE -> ATTUNE;
+            case CORE -> ATTUNE;
+            case BASE -> RANGE_1;
             case HEAD -> HEAD_1;
             case SPECIAL -> SPECIAL;
         };
     }
 
-    /** A node at this step: its slot, its price, its XP and the base node that opens it. */
+    /** A node at this step: its slot, its price, its XP and the Core node that opens it. */
     public UpgradeNode node(String id, String displayName, int listPrice) {
         return UpgradeNode.of(id, this.slot, displayName, this.price(listPrice))
                 .withRequires(this.openedBy())
@@ -98,7 +104,7 @@ public enum UpgradeTier {
                 .withTier(this);
     }
 
-    /** What the base chain must own before a node at this step is offered. */
+    /** What the Core chain must own before a node at this step is offered. */
     public UpgradeCondition openedBy() {
         return switch (this) {
             case RANGE_1, ATTUNE -> UpgradeCondition.always();

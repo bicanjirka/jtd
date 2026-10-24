@@ -44,7 +44,7 @@ class StandardTreeShapeTest {
     @Test
     void aFreshTowerIsOfferedRangeAndAttuneOnly() {
         assertThat(this.offeredAfter()).extracting(UpgradeNode::id)
-                .containsExactly(StandardBaseSlot.RANGE_ID, StandardBaseSlot.ATTUNE_ID);
+                .containsExactly(StandardBaseSlot.ATTUNE_ID, StandardBaseSlot.RANGE_ID);
     }
 
     @Test

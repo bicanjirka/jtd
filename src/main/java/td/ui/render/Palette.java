@@ -39,6 +39,7 @@ public enum Palette {
     TOWER_AURA_RALLY,
     TOWER_AURA_MENTEE,
     /** Slot marks, one role per upgrade slot. */
+    TOWER_UPGRADE_CORE,
     TOWER_UPGRADE_BASE,
     TOWER_UPGRADE_HEAD,
     TOWER_UPGRADE_SPECIAL,

@@ -449,6 +449,7 @@ public final class Java2DFrameRenderer {
             case TOWER_AURA_LINK_CHOSEN -> withAlpha(new Color(255, 215, 90), 110);
             case TOWER_AURA_RALLY -> new Color(255, 170, 60);
             case TOWER_AURA_MENTEE -> new Color(255, 215, 90);
+            case TOWER_UPGRADE_CORE -> new Color(127, 212, 255);
             case TOWER_UPGRADE_BASE -> new Color(140, 255, 140);
             case TOWER_UPGRADE_HEAD -> new Color(255, 200, 60);
             case TOWER_UPGRADE_SPECIAL -> new Color(200, 100, 255);
@@ -1325,7 +1326,7 @@ public final class Java2DFrameRenderer {
 
     /**
      * Pips below a tower, one per owned node, grouped by slot with a gap between groups. A
-     * Transcendent tower's last base pip, Transcendent's own, is a gold diamond: the head's pips
+     * Transcendent tower's last Core pip, Transcendent's own, is a gold diamond: the head's pips
      * are gold too, so the shape tells them apart.
      */
     private void paintSlotPips(Graphics2D g2, List<SlotMarkDraw> marks, boolean transcendent, float bodySize) {
@@ -1342,7 +1343,7 @@ public final class Java2DFrameRenderer {
             for (int i = 0; i < mark.level(); i++) {
                 pipColors.add(color);
             }
-            if (transcendent && mark.palette() == Palette.TOWER_UPGRADE_BASE) {
+            if (transcendent && mark.palette() == Palette.TOWER_UPGRADE_CORE) {
                 crownIndex = pipColors.size() - 1;
                 pipColors.set(crownIndex, colorFor(Palette.TOWER_TRANSCENDENT));
             }
