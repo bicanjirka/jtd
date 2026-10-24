@@ -1,6 +1,16 @@
 # Feature Request: Observe Enemy
 
-**Status: requested; every open question answered, ready to plan.**
+**Status: implemented.** Everything below shipped as decided. What building it settled:
+
+- Trace lines go to the session log file only, not the console, through a queue of their own that waits
+  instead of dropping. They can land a few lines out of place among the other loggers' lines; each
+  carries its tick, and one enemy's lines keep their order.
+- A dev panel action runs between ticks, so its effects carry the tick before it; an `END` after a
+  kill from the panel is stamped on the next tick, when the death is settled.
+- Cost (`td.PerformanceHarness`, last built-in level, every cell a tower): with nothing observed, tick
+  p99 is unchanged at about 0.21 ms; one enemy observed, about 0.27 ms; every enemy, about 0.46 ms; the
+  ground-zone loadout with every enemy observed, about 1.0 ms, at the budget. `observe=one|all` repeats
+  the measurement.
 
 ## Summary
 

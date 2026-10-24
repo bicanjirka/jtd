@@ -113,7 +113,7 @@ Player-visible behaviour, view by view.
   precedent.
 - **`FEATURE-tower-upgrade-trees.md` and `FEATURE-tower-specialization-abilities.md`** define the
   slots, gates and node wording this feature displays.
-- **`TODO.md`, "`Tower` is a twenty-three-method interface"**: `getInfoString`/`getStatusString`
+- **`TODO.md`, "`Tower` is a forty-method interface"**: `getInfoString`/`getStatusString`
   are two of those methods, and that entry names `PanelTowerInfo` as a consumer. This feature
   changes what the info panel needs from a tower, which is the kind of consumer pressure that
   entry waits for.
