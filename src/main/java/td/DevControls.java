@@ -22,10 +22,12 @@ import td.wave.WaveContent;
 import td.wave.WaveScript;
 import td.wave.WaveScriptSuggestions;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 /**
  * The dev panel's playtesting cheats, built from the world's public API. Anything that touches
@@ -187,18 +189,23 @@ public final class DevControls implements EconomyListener {
     }
 
     /**
-     * Whether the effect took hold is known only once it runs, so that comes as a {@link #report()}.
+     * {@code values} fill the kind's {@link DevEffects#enemyFields fields}, in order. Whether the effect took hold is
+     * known only once it runs, so that comes as a {@link #report()}.
      *
      * @return what was queued, or why nothing was
      */
-    public String applyEffectToEnemy(EffectKind kind, float seconds, int power) {
+    public String applyEffectToEnemy(EffectKind kind, List<Float> values) {
         Optional<String> unusable = DevEffects.whyUnusable(kind);
         if (unusable.isPresent()) {
             return kind.title() + " " + unusable.get();
         }
+        Optional<String> problem = problemWith(DevEffects.enemyFields(kind), values);
+        if (problem.isPresent()) {
+            return problem.get();
+        }
         return this.onSelectedEnemy("Applying " + kind.title(), mob -> {
             DamageSink sink = damage -> mob.doDamage(damage, this.attack);
-            DevEffects.enemyEffects(kind, seconds, power, sink, this.origin).forEach(mob::applyEffect);
+            DevEffects.enemyEffects(kind, values, sink, this.origin).forEach(mob::applyEffect);
             this.report(mob.hasEffect(kind) ? "Applied " + kind.title()
                     : kind.title() + " didn't take hold: resisted, immune or kept out");
         });
@@ -223,14 +230,31 @@ public final class DevControls implements EconomyListener {
         return this.onSelectedEnemy("Removed it", this.world.enemies()::remove);
     }
 
-    /** @return what happened, or why nothing did */
-    public String grantBuffToSelectedTower(TowerTerm buff, float seconds, int power) {
+    /**
+     * {@code values} fill the buff's {@link DevEffects#buffFields fields}, in order.
+     *
+     * @return what happened, or why nothing did
+     */
+    public String grantBuffToSelectedTower(TowerTerm buff, List<Float> values) {
         if (this.selection.kind() != DevSelection.Kind.TOWER) {
             return "Select a tower first";
         }
+        Optional<String> problem = problemWith(DevEffects.buffFields(buff), values);
+        if (problem.isPresent()) {
+            return problem.get();
+        }
         this.pending.add(() -> this.selectedTower()
-                .ifPresent(tower -> tower.receiveStatus(DevEffects.towerBuff(buff, seconds, power))));
+                .ifPresent(tower -> tower.receiveStatus(DevEffects.towerBuff(buff, values))));
         return "Granted " + buff.title() + " to " + this.selection.description();
+    }
+
+    /** The first value that doesn't fit its field, or a count that doesn't match. */
+    private static Optional<String> problemWith(List<DevField> fields, List<Float> values) {
+        if (values.size() != fields.size()) {
+            return Optional.of("Expected " + fields.size() + " values, got " + values.size());
+        }
+        return IntStream.range(0, fields.size()).mapToObj(i -> fields.get(i).problemWith(values.get(i)))
+                .flatMap(Optional::stream).findFirst();
     }
 
     private String onSelectedEnemy(String done, Consumer<DefinedEnemyMob> change) {
