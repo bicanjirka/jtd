@@ -11,8 +11,8 @@ import td.tower.TowerModifiers;
 import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradePath;
 import td.tower.upgrade.UpgradeSlot;
-import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.render.InfoSheet;
@@ -23,6 +23,7 @@ import td.ui.render.SheetLine.Row;
 import td.util.GameWorld;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,14 +52,18 @@ class UpgradeSheetTextTest {
     private final GameWorld world = WorldFixtures.newWorld();
     private final FakeTower tower = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(RANGE, VETERAN));
 
-    /** As the Upgrades panel reads it: the tower's offered nodes, numbered by the key that buys each. */
+    /** As the Upgrades panel reads it for a hover. */
     private UpgradeOffer offer(UpgradeNode node) {
         return offer(this.tower, node);
     }
 
     private UpgradeOffer offer(FakeTower offering, UpgradeNode node) {
-        List<UpgradeNode> offered = offering.offeredUpgrades(this.world);
-        return UpgradeOffer.of(node, offered, offering, this.world);
+        return UpgradeOffer.of(node, offering, this.world);
+    }
+
+    /** The hover sheet as the panel builds it: the node, then what a click on it does. */
+    private InfoSheet sheet(FakeTower tower, UpgradeNode node) {
+        return UpgradeSheetText.hover(this.offer(tower, node), UpgradeHover.of(node, tower, this.world), CHOICES);
     }
 
     /** A tower on the {@link #CHOICES} tree that bought {@code names} through the real mechanism. */
@@ -70,30 +75,6 @@ class UpgradeSheetTextTest {
             choosing.buyUpgrade(CHOICES.nodes().stream().filter(n -> n.displayName().equals(name)).findFirst().orElseThrow());
         }
         return choosing;
-    }
-
-    @Test
-    void aButtonShowsItsKeyNameAndPriceWhenItCanBeBought() {
-        this.world.economy().startEconomy(100, 5);
-
-        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("2  Range\t$30");
-        assertThat(this.offer(RANGE).buyable()).isTrue();
-    }
-
-    @Test
-    void aGatedButtonShowsItsProgressInsteadOfItsPrice() {
-        this.world.economy().startEconomy(100, 5);
-        this.tower.earnXp(7);
-
-        assertThat(UpgradeSheetText.buttonText(this.offer(VETERAN))).isEqualTo("3  Veteran\tXP 7/10");
-        assertThat(this.offer(VETERAN).buyable()).isFalse();
-    }
-
-    @Test
-    void anUnaffordableButtonSaysWhatItNeeds() {
-        this.world.economy().startEconomy(20, 5);
-
-        assertThat(UpgradeSheetText.buttonText(this.offer(RANGE))).isEqualTo("2  Range\tneed $30");
     }
 
     @Test
@@ -116,7 +97,7 @@ class UpgradeSheetTextTest {
         UpgradeNode executioner = sniper.upgradeTree().nodes().stream()
                 .filter(node -> node.displayName().equals("Executioner")).findFirst().orElseThrow();
 
-        InfoSheet sheet = UpgradeSheetText.hover(UpgradeOffer.of(executioner, List.of(executioner), sniper, this.world));
+        InfoSheet sheet = UpgradeSheetText.hover(UpgradeOffer.of(executioner, sniper, this.world));
 
         List<SheetLine> rows = sheet.lines().subList(sheet.lines().indexOf(new SheetLine.Gap()) + 1, sheet.lines().size());
         NodeWords words = sniper.wordsOf(executioner);
@@ -133,36 +114,6 @@ class UpgradeSheetTextTest {
                 SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, TermText.of("XP 0/10")));
         assertThat(free.lines()).noneMatch(line -> line instanceof SheetLine.Sentence sentence
                 && sentence.glyph().isPresent());
-    }
-
-    @Test
-    void aSlotOnOfferOrHoldingANodeIsJustItsName() {
-        UpgradeState owned = UpgradeState.none().with(RANGE);
-
-        assertThat(UpgradeSheetText.slotHeader(UpgradeSlot.BASE, owned, false)).isEqualTo("Base");
-        assertThat(UpgradeSheetText.slotHeader(UpgradeSlot.HEAD, owned, true)).isEqualTo("Head");
-    }
-
-    @Test
-    void aClosedSlotsHeaderSaysWhatOpensIt() {
-        UpgradeNode forOptics = UpgradeTier.SPECIAL.node("for.optics", "Lens Flare", LIST_PRICE).after(OPTICS);
-        UpgradeTree perChain = UpgradeTree.of(StandardBaseSlot.nodes(LIST_PRICE, 4f)).with(OPTICS, EYE, forOptics)
-                .withChoice(ExclusiveChoice.oneOf(OPTICS, EYE));
-        FakeTower fresh = this.choosing();
-        FakeTower awakened = FakeTower.offering(this.world, 2, 2, perChain);
-        perChain.nodesIn(UpgradeSlot.CORE).stream()
-                .filter(n -> n.id().equals(StandardBaseSlot.ATTUNE_ID) || n.id().equals(StandardBaseSlot.AWAKEN_ID))
-                .forEach(awakened::buyUpgrade);
-
-        assertThat(this.header(fresh, UpgradeSlot.HEAD)).isEqualTo("Head: needs Attune");
-        assertThat(this.header(fresh, UpgradeSlot.SPECIAL)).isEqualTo("Special: needs Awaken");
-        assertThat(this.header(awakened, UpgradeSlot.SPECIAL)).isEqualTo("Special: choose a chain first");
-    }
-
-    /** As the panel builds it: whether anything in the slot is offered right now. */
-    private String header(FakeTower tower, UpgradeSlot slot) {
-        boolean offered = tower.offeredUpgrades(this.world).stream().anyMatch(n -> n.slot() == slot);
-        return UpgradeSheetText.slotHeader(slot, tower.upgrades(), offered);
     }
 
     @Test
@@ -188,21 +139,92 @@ class UpgradeSheetTextTest {
     }
 
     @Test
-    void theChoiceLabelCountsTheMembersOnOffer() {
-        FakeTower awakened = this.choosing("Attune", "Awaken");
-
-        UpgradeOffer fifth = this.offer(awakened, FIFTH);
-
-        assertThat(UpgradeSheetText.choiceLabel(fifth.rivals().size() + 1)).isEqualTo("1 of 3");
-    }
-
-    @Test
     void aLinesNextLevelSaysWhatItAddsTo() {
         FakeTower steady = this.choosing("Attune", "Steady");
 
         InfoSheet sheet = UpgradeSheetText.hover(this.offer(steady, STEADY_TWO));
 
         assertThat(sheet.lines()).contains(SheetLine.Sentence.of(TermText.of("Adds to Steady:")));
+    }
+
+    @Test
+    void aSealedNodesHoverNamesTheCoreStepThatOpensIt() {
+        FakeTower fresh = this.choosing();
+
+        InfoSheet sheet = UpgradeSheetText.hover(this.offer(fresh, OPTICS));
+
+        assertThat(sheet.lines()).contains(Row.toned(Glyph.LOCK, Palette.TOWER_UPGRADE_CORE, "Opens with", "Attune"));
+    }
+
+    @Test
+    void aPathsHoverListsItsStepsAndTotalAndSaysAClickBuysThem() {
+        FakeTower fresh = this.choosing();
+
+        InfoSheet sheet = this.sheet(fresh, OPTICS);
+
+        UpgradeNode attune = core(StandardBaseSlot.ATTUNE_ID);
+        assertThat(sheet.lines()).containsSubsequence(
+                Row.plain(Glyph.CHEVRON, "Path · 2 steps", ""),
+                Row.plain(Glyph.DOT, "Attune", "$" + attune.price()),
+                Row.plain(Glyph.DOT, "Focused Optics", "$" + OPTICS.price()),
+                Row.plain(Glyph.CHEVRON, "Total", "$" + (attune.price() + OPTICS.price())),
+                SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET, TermText.of("Click to buy all 2")),
+                Row.toned(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET, "Locks out", ""),
+                Row.plain(Glyph.DOT, "Marksman's Eye", ""));
+    }
+
+    @Test
+    void aPathTheCashDoesNotCoverSaysHowMuchIsShort() {
+        FakeTower fresh = this.choosing();
+        this.world.economy().startEconomy(1, 5);
+
+        InfoSheet sheet = this.sheet(fresh, STEADY);
+        UpgradePath path = CHOICES.planPath(STEADY, fresh, this.world);
+
+        assertThat(sheet.lines()).contains(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
+                TermText.of("Short $" + (path.total() - 1))));
+        assertThat(UpgradeSheetText.footer(Optional.of(UpgradeHover.of(STEADY, fresh, this.world))))
+                .isEqualTo("2 steps · $" + path.total() + " · short $" + (path.total() - 1));
+    }
+
+    @Test
+    void aBlockedPathNamesTheStepThatStopsIt() {
+        this.world.economy().startEconomy(1000, 5);
+        FakeTower novice = FakeTower.offering(this.world, 4, 4, CHOICES);
+
+        UpgradePath path = CHOICES.planPath(STEADY_TWO, novice, this.world);
+        InfoSheet sheet = this.sheet(novice, STEADY_TWO);
+
+        assertThat(sheet.lines()).contains(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
+                TermText.of("Blocked: Steady needs more XP")));
+        assertThat(UpgradeSheetText.footer(Optional.of(UpgradeHover.of(STEADY_TWO, novice, this.world))))
+                .isEqualTo("3 steps · $" + path.total() + " · blocked: XP");
+    }
+
+    @Test
+    void anOwnedNodesHoverListsWhatADowngradeTakesAndRefundsAndWhatReopens() {
+        FakeTower chosen = this.choosing("Attune", "Focused Optics");
+        UpgradeHover.Downgrading downgrading = (UpgradeHover.Downgrading) UpgradeHover.of(OPTICS, chosen, this.world);
+
+        InfoSheet sheet = UpgradeSheetText.downgradeConfirmation(downgrading, CHOICES);
+
+        assertThat(sheet.lines()).containsSubsequence(
+                Row.plain(Glyph.DOT, "Focused Optics", "$" + OPTICS.price()),
+                Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund 75%", "+$" + downgrading.refund()),
+                Row.plain(Glyph.LOCK, "Reopens", ""),
+                Row.plain(Glyph.DOT, "Marksman's Eye", ""));
+        assertThat(UpgradeSheetText.footer(Optional.of(downgrading)))
+                .isEqualTo("Right-click: downgrade 1 · +$" + downgrading.refund());
+        assertThat(UpgradeSheetText.downgradeButton(downgrading)).isEqualTo("Downgrade ( +$" + downgrading.refund() + " )");
+    }
+
+    @Test
+    void withNothingHoveredTheFooterSaysWhatTheButtonsDo() {
+        assertThat(UpgradeSheetText.footer(Optional.empty())).isEqualTo("Click: buy · Right-click: downgrade");
+    }
+
+    private static UpgradeNode core(String id) {
+        return CHOICES.node(id).orElseThrow();
     }
 
     @Test

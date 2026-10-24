@@ -3,42 +3,45 @@ package td.ui;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
+import td.tower.TowerRank;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
-import td.tower.upgrade.UpgradeState;
-import td.ui.render.Palette;
-import td.ui.render.SheetLine.Glyph;
+import td.tower.upgrade.UpgradeTree;
+import td.ui.UpgradeTreeLayout.Spot;
+import td.ui.UpgradeTreePainter.Footer;
+import td.ui.UpgradeTreePainter.Highlight;
+import td.ui.UpgradeTreePainter.Mark;
+import td.ui.UpgradeTreePainter.XpLine;
+import td.ui.render.InfoSheet;
 import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.Serial;
-import java.util.Comparator;
-import java.util.List;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 /**
- * The selected tower's upgrade tree, under its XP bar (with a tick at the next node XP opens):
- * per {@link UpgradeSlot}, a header in the slot's colour with
- * what the slot holds, and a numbered button per
- * offered node saying its price or why it can't be bought yet. Buttons of one exclusive choice are
- * joined by a bracket, with "1 of N" beside the header. Replaces the wave preview while a tower is
- * selected.
- * <p>
- * No slot offers more than three nodes at once. A button's number is the key that buys it, the
- * same for every tower ({@link td.tower.upgrade.UpgradeTree#keyOf(td.tower.upgrade.UpgradeNode)}), and a
- * slot lists its buttons in key order.
+ * The selected tower's whole upgrade tree as a talent tree over a faint rook (see {@link UpgradeTreeLayout}),
+ * under a slim XP line, every node in the look of its state. Hovering a node opens its sheet and marks what a
+ * click does: a left click buys the node with every node it needs, all or nothing; a right-click on an owned
+ * node asks to downgrade it with everything that depends on it. Replaces the wave preview while a tower is
+ * selected, and never scrolls: the tree scales to the room it has.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelUpgradeTree extends JPanel implements EconomyListener {
@@ -46,44 +49,49 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final int BUTTONS_PER_SLOT = 3;
-    private static final int BUTTON_ICON = 14;
-    private static final float XP_FONT_SIZE = 10f;
-    private static final UpgradeSlot[] SLOTS = UpgradeSlot.values();
-    private static final Color LOCKED_COLOR = new Color(150, 170, 150);
-    private static final int PIP_BOX = 11;
-    private static final float PIP_SIZE = 4.2f;
+    private static final float MAX_SCALE = 1.15f;
+    private static final int HIT_SLACK = 2;
 
-    private final JLabel xpLabel = new JLabel("");
-    private final XpBar xpBar = new XpBar();
-    private final JLabel[] slotHeaders = new JLabel[SLOTS.length];
-    private final JLabel[] choiceLabels = new JLabel[SLOTS.length];
-    private final ChoiceBracket[][] brackets = new ChoiceBracket[SLOTS.length][BUTTONS_PER_SLOT];
-    private final HudButton[][] slotButtons = new HudButton[SLOTS.length][BUTTONS_PER_SLOT];
-    private final UpgradeOffer[][] slotOffers = new UpgradeOffer[SLOTS.length][BUTTONS_PER_SLOT];
-    private final Java2DFrameRenderer glyphRenderer = new Java2DFrameRenderer();
-
-    private GameWorld context;
-    private Tower tower;
+    private final transient Map<UpgradeTree, UpgradeTreeLayout> layouts = new IdentityHashMap<>();
+    private transient GameWorld context;
+    private transient Tower tower;
     private boolean levelEnded = false;
-    private TooltipLayer tooltips = null;
+    private transient TooltipLayer tooltips;
+    private transient Map<UpgradeNode, UpgradeNodeState> states = Map.of();
+    private transient Optional<UpgradeNode> hovered = Optional.empty();
+    private transient Optional<UpgradeHover> hover = Optional.empty();
+    private transient Optional<ConfirmPopup> confirmation = Optional.empty();
 
     public PanelUpgradeTree() {
-        initComponents();
+        this.setBackground(Color.BLACK);
+        this.setBorder(Hud.panelBorder("Upgrades"));
+        this.setPreferredSize(new Dimension(UpgradeTreeLayout.WIDTH, UpgradeTreeLayout.HEIGHT));
+        MouseAdapter mouse = new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent event) {
+                PanelUpgradeTree.this.pointerAt(event.getPoint());
+            }
+
+            @Override
+            public void mouseExited(MouseEvent event) {
+                PanelUpgradeTree.this.pointerAt(new Point(-1, -1));
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                PanelUpgradeTree.this.clicked(event);
+            }
+        };
+        this.addMouseListener(mouse);
+        this.addMouseMotionListener(mouse);
     }
 
-    /** Each button's hover is a tooltip of what it offers now, keyed by the button's place so a purchase swaps it. */
+    /** Each node's hover is a tooltip of what it is and what a click on it does now. */
     public void setTooltips(TooltipLayer tooltips) {
         this.tooltips = tooltips;
-        for (UpgradeSlot slot : SLOTS) {
-            for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
-                String place = slot + ":" + i;
-                UpgradeOffer[] offers = this.slotOffers[slot.ordinal()];
-                int index = i;
-                tooltips.watchButton(this.slotButtons[slot.ordinal()][i], () -> Optional.ofNullable(offers[index])
-                        .map(offer -> new SheetTooltip(TooltipKey.of("button", place), UpgradeSheetText.hover(offer))));
-            }
-        }
+        tooltips.watchSpots(this, point -> this.nodeAt(point).filter(node -> this.tower != null)
+                .map(node -> new TooltipSpot(new SheetTooltip(TooltipKey.of("upgrade", node.id()), this.sheetOf(node)),
+                        this.boundsOf(node))));
     }
 
     public void setGameWorld(GameWorld context) {
@@ -92,7 +100,9 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     }
 
     public void setTower(Tower tower) {
+        this.confirmation.ifPresent(ConfirmPopup::cancel);
         this.tower = tower;
+        this.hovered = Optional.empty();
         this.refresh();
     }
 
@@ -108,169 +118,181 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     }
 
     /**
-     * Rebuilds headers and buttons from the tower's offered upgrades. Also called from the render
-     * pulse, since gate progress changes without economy events; a hovered button's sheet follows.
+     * Reads every node's state and the hovered node's path again. Also called from the render pulse, since XP and
+     * gate progress change without economy events; an open node sheet follows.
      */
     public void refresh() {
-        for (UpgradeSlot slot : SLOTS) {
-            for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
-                this.slotButtons[slot.ordinal()][i].setVisible(false);
-                this.slotButtons[slot.ordinal()][i].setIcon(null);
-                this.slotOffers[slot.ordinal()][i] = null;
-            }
-        }
         if (this.tower == null) {
+            this.states = Map.of();
+            this.hover = Optional.empty();
+            this.repaint();
             return;
         }
-        List<UpgradeNode> offered = this.tower.offeredUpgrades(this.context).stream()
-                .sorted(Comparator.comparingInt(this.tower.upgradeTree()::keyOf)).toList();
-        int[] used = new int[SLOTS.length];
-        for (UpgradeNode node : offered) {
-            UpgradeOffer offer = UpgradeOffer.of(node, offered, this.tower, this.context);
-            int slotIndex = offer.node().slot().ordinal();
-            int buttonIndex = used[slotIndex]++;
-            if (buttonIndex >= BUTTONS_PER_SLOT) {
-                continue;
-            }
-            this.slotOffers[slotIndex][buttonIndex] = offer;
-            HudButton button = this.slotButtons[slotIndex][buttonIndex];
-            button.setVisible(true);
-            button.setText(UpgradeSheetText.buttonText(offer));
-            button.setIcon(new PaintedIcon(BUTTON_ICON, BUTTON_ICON, g2 -> {
-                g2.translate(-BUTTON_ICON / 2.0, -BUTTON_ICON / 2.0);
-                TermIconPainter.paint(g2, offer.face(), BUTTON_ICON);
-            }));
-            button.setEnabled(!this.levelEnded && offer.buyable());
+        Map<UpgradeNode, UpgradeNodeState> next = new LinkedHashMap<>();
+        for (UpgradeNode node : this.tower.upgradeTree().nodes()) {
+            next.put(node, UpgradeNodeState.of(node, this.tower, this.context));
         }
-        int xp = this.tower.experience().xp();
-        Optional<UpgradeNode> nextXpGate = UpgradeSheetText.nextXpGate(offered, xp);
-        this.xpLabel.setText(UpgradeSheetText.xpLabel(xp, nextXpGate));
-        this.xpBar.show(xp, nextXpGate.map(node -> OptionalInt.of(node.xp())).orElse(OptionalInt.empty()));
-        UpgradeState owned = this.tower.upgrades();
-        for (UpgradeSlot slot : SLOTS) {
-            boolean reachable = offered.stream().anyMatch(n -> n.slot() == slot);
-            JLabel header = this.slotHeaders[slot.ordinal()];
-            header.setText(UpgradeSheetText.slotHeader(slot, owned, reachable));
-            header.setForeground(owned.countIn(slot) > 0 || reachable
-                    ? Java2DFrameRenderer.colorFor(TowerSpriteFrameBuilder.slotPaletteFor(slot))
-                    : LOCKED_COLOR);
-            this.refreshChoiceMark(slot);
-        }
+        this.states = next;
+        this.hover = this.hovered.map(node -> UpgradeHover.of(node, this.tower, this.context));
+        this.repaint();
         if (this.tooltips != null) {
             this.tooltips.refreshButtons();
         }
     }
 
-    /** The bracket joining the slot's buttons that belong to one choice, and its "1 of N". */
-    private void refreshChoiceMark(UpgradeSlot slot) {
-        UpgradeOffer[] offers = this.slotOffers[slot.ordinal()];
-        int first = -1;
-        int last = -1;
-        for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
-            if (offers[i] != null && offers[i].inChoice()) {
-                first = first < 0 ? i : first;
-                last = i;
-            }
-        }
-        for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
-            boolean member = offers[i] != null && offers[i].inChoice();
-            ChoiceBracket.Segment segment;
-            if (first < 0 || i < first || i > last) {
-                segment = ChoiceBracket.Segment.NONE;
-            } else if (!member) {
-                segment = ChoiceBracket.Segment.PASS;
-            } else if (i == first) {
-                segment = ChoiceBracket.Segment.FIRST;
-            } else {
-                segment = i == last ? ChoiceBracket.Segment.LAST : ChoiceBracket.Segment.MIDDLE;
-            }
-            this.brackets[slot.ordinal()][i].setSegment(segment);
-        }
-        this.choiceLabels[slot.ordinal()].setText(
-                first < 0 ? "" : UpgradeSheetText.choiceLabel(offers[first].rivals().size() + 1));
-    }
-
-    private void buttonClicked(int slotIndex, int buttonIndex) {
-        UpgradeOffer offer = this.slotOffers[slotIndex][buttonIndex];
-        if (offer == null || this.tower == null) {
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (this.tower == null || this.states.isEmpty()) {
             return;
         }
-        this.tower.buyUpgrade(offer.node());
-        this.refresh();
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            float scale = this.scale();
+            g2.translate(this.originX(scale), this.originY(scale));
+            g2.scale(scale, scale);
+            UpgradeTree tree = this.tower.upgradeTree();
+            new UpgradeTreePainter(this.layoutOf(tree), tree, this.tower.getType())
+                    .paint(g2, this.states, this.highlight(), this.xpLine(), this.footer());
+        } finally {
+            g2.dispose();
+        }
     }
 
-    private void initComponents() {
-        setLayout(new GridBagLayout());
-        setBackground(new Color(0, 0, 0));
-        setBorder(Hud.panelBorder("Upgrades"));
-        setForeground(new Color(220, 255, 220));
+    private Highlight highlight() {
+        if (this.hovered.isEmpty() || this.hover.isEmpty()) {
+            return Highlight.none();
+        }
+        Map<UpgradeNode, Mark> marks = new HashMap<>();
+        UpgradeNode node = this.hovered.get();
+        switch (this.hover.get()) {
+            case UpgradeHover.Buying buying -> {
+                buying.path().locksOut().forEach(locked -> marks.put(locked, Mark.CRACK));
+                buying.path().steps().forEach(step -> marks.put(step, Mark.PATH));
+            }
+            case UpgradeHover.Downgrading downgrading ->
+                    downgrading.removal().removed().forEach(removed -> marks.put(removed, Mark.DROP));
+        }
+        this.states.values().stream().filter(state -> state.sealedBy().filter(node::equals).isPresent())
+                .forEach(state -> marks.putIfAbsent(state.node(), Mark.LIT));
+        return new Highlight(this.hovered, marks);
+    }
 
-        int row = 0;
-        this.xpLabel.setForeground(Hud.FOREGROUND);
-        this.xpLabel.setFont(Hud.LABEL_FONT.deriveFont(XP_FONT_SIZE));
-        GridBagConstraints xpLabelConstraints = new GridBagConstraints();
-        xpLabelConstraints.gridx = 0;
-        xpLabelConstraints.gridy = row++;
-        xpLabelConstraints.gridwidth = 2;
-        xpLabelConstraints.fill = GridBagConstraints.HORIZONTAL;
-        xpLabelConstraints.weightx = 0.01;
-        add(this.xpLabel, xpLabelConstraints);
-        GridBagConstraints xpBarConstraints = new GridBagConstraints();
-        xpBarConstraints.gridx = 0;
-        xpBarConstraints.gridy = row++;
-        xpBarConstraints.gridwidth = 2;
-        xpBarConstraints.fill = GridBagConstraints.HORIZONTAL;
-        xpBarConstraints.weightx = 0.01;
-        xpBarConstraints.insets = new Insets(1, 0, 6, 0);
-        add(this.xpBar, xpBarConstraints);
-        for (UpgradeSlot slot : SLOTS) {
-            int slotIndex = slot.ordinal();
-            JLabel header = new JLabel(SheetNumbers.titleCase(slot));
-            header.setForeground(Hud.FOREGROUND);
-            header.setFont(Hud.LABEL_FONT);
-            Palette slotPalette = TowerSpriteFrameBuilder.slotPaletteFor(slot);
-            header.setIcon(new PaintedIcon(PIP_BOX, PIP_BOX,
-                    g2 -> this.glyphRenderer.paintRowGlyph(g2, Glyph.PIP, Optional.of(slotPalette), PIP_SIZE)));
-            this.slotHeaders[slotIndex] = header;
-            JLabel choiceLabel = new JLabel("");
-            choiceLabel.setForeground(Hud.FOREGROUND);
-            choiceLabel.setFont(Hud.LABEL_FONT);
-            this.choiceLabels[slotIndex] = choiceLabel;
-            JPanel headerRow = new JPanel(new BorderLayout());
-            headerRow.setOpaque(false);
-            headerRow.add(header, BorderLayout.CENTER);
-            headerRow.add(choiceLabel, BorderLayout.EAST);
-            GridBagConstraints headerConstraints = new GridBagConstraints();
-            headerConstraints.gridx = 0;
-            headerConstraints.gridy = row++;
-            headerConstraints.gridwidth = 2;
-            headerConstraints.anchor = GridBagConstraints.WEST;
-            headerConstraints.fill = GridBagConstraints.HORIZONTAL;
-            headerConstraints.weightx = 0.01;
-            headerConstraints.insets = new Insets(slotIndex == 0 ? 0 : 6, 0, 2, 0);
-            add(headerRow, headerConstraints);
+    private XpLine xpLine() {
+        int xp = this.tower.experience().xp();
+        Optional<UpgradeNode> next = UpgradeSheetText.nextXpGate(this.tower.offeredUpgrades(this.context), xp);
+        // With no node waiting on XP, the bar fills toward the next rank.
+        int toward = next.map(UpgradeNode::xp).orElseGet(() -> Arrays.stream(TowerRank.values())
+                .mapToInt(TowerRank::xp).filter(rank -> rank > xp).findFirst().orElse(xp));
+        return new XpLine(UpgradeSheetText.xpLabel(xp, next), toward == 0 ? 1f : xp / (float) toward);
+    }
 
-            for (int i = 0; i < BUTTONS_PER_SLOT; i++) {
-                HudButton button = new HudButton("");
-                button.setVisible(false);
-                int capturedButton = i;
-                button.addActionListener(evt -> this.buttonClicked(slotIndex, capturedButton));
-                this.slotButtons[slotIndex][i] = button;
-                GridBagConstraints buttonConstraints = new GridBagConstraints();
-                buttonConstraints.gridx = 0;
-                buttonConstraints.gridy = row++;
-                buttonConstraints.fill = GridBagConstraints.HORIZONTAL;
-                buttonConstraints.anchor = GridBagConstraints.WEST;
-                buttonConstraints.weightx = 0.01;
-                add(button, buttonConstraints);
-                ChoiceBracket bracket = new ChoiceBracket();
-                this.brackets[slotIndex][i] = bracket;
-                GridBagConstraints bracketConstraints = new GridBagConstraints();
-                bracketConstraints.gridx = 1;
-                bracketConstraints.gridy = buttonConstraints.gridy;
-                bracketConstraints.fill = GridBagConstraints.VERTICAL;
-                add(bracket, bracketConstraints);
+    private Footer footer() {
+        return new Footer(UpgradeSheetText.footer(this.hover), UpgradeSheetText.footerWarns(this.hover),
+                this.hover.isPresent());
+    }
+
+    private void pointerAt(Point point) {
+        Optional<UpgradeNode> now = this.nodeAt(point);
+        if (now.equals(this.hovered)) {
+            return;
+        }
+        this.hovered = now;
+        this.hover = now.filter(node -> this.tower != null).map(node -> UpgradeHover.of(node, this.tower, this.context));
+        this.repaint();
+    }
+
+    private void clicked(MouseEvent event) {
+        Optional<UpgradeNode> node = this.nodeAt(event.getPoint());
+        if (node.isEmpty() || this.tower == null || this.levelEnded) {
+            return;
+        }
+        boolean owned = this.states.get(node.get()).look() == UpgradeNodeState.Look.OWNED;
+        if (SwingUtilities.isRightMouseButton(event) && owned) {
+            this.askToDowngrade(node.get());
+        } else if (SwingUtilities.isLeftMouseButton(event) && !owned) {
+            this.tower.buyPath(node.get());
+            this.refresh();
+        }
+    }
+
+    /** The confirmation beside the node; the list and the refund are worked out again when it is confirmed. */
+    private void askToDowngrade(UpgradeNode node) {
+        switch (UpgradeHover.of(node, this.tower, this.context)) {
+            case UpgradeHover.Downgrading downgrading -> this.askToDowngrade(node, downgrading);
+            case UpgradeHover.Buying buying -> {
             }
         }
+    }
+
+    private void askToDowngrade(UpgradeNode node, UpgradeHover.Downgrading downgrading) {
+        if (this.tooltips != null) {
+            this.tooltips.closeAll();
+        }
+        this.confirmation.ifPresent(ConfirmPopup::cancel);
+        Tower downgraded = this.tower;
+        Rectangle anchor = SwingUtilities.convertRectangle(this, this.boundsOf(node),
+                SwingUtilities.getRootPane(this).getLayeredPane());
+        this.confirmation = Optional.of(ConfirmPopup.open(SwingUtilities.getRootPane(this).getLayeredPane(), anchor,
+                UpgradeSheetText.downgradeConfirmation(downgrading, downgraded.upgradeTree()),
+                UpgradeSheetText.downgradeButton(downgrading), PanelTowerInfo.SELL_TEXT_COLOR,
+                () -> {
+                    this.confirmation = Optional.empty();
+                    if (!this.levelEnded) {
+                        downgraded.downgrade(node);
+                    }
+                    this.refresh();
+                },
+                () -> this.confirmation = Optional.empty()));
+    }
+
+    private InfoSheet sheetOf(UpgradeNode node) {
+        UpgradeTree tree = this.tower.upgradeTree();
+        return UpgradeSheetText.hover(UpgradeOffer.of(node, this.tower, this.context),
+                UpgradeHover.of(node, this.tower, this.context), tree);
+    }
+
+    private Optional<UpgradeNode> nodeAt(Point point) {
+        if (this.tower == null) {
+            return Optional.empty();
+        }
+        float scale = this.scale();
+        if (scale <= 0f) {
+            return Optional.empty();
+        }
+        float x = (point.x - this.originX(scale)) / scale;
+        float y = (point.y - this.originY(scale)) / scale;
+        return this.layoutOf(this.tower.upgradeTree()).spots().entrySet().stream()
+                .filter(entry -> Math.abs(entry.getValue().x() - x) <= entry.getValue().size() / 2 + HIT_SLACK
+                        && Math.abs(entry.getValue().y() - y) <= entry.getValue().size() / 2 + HIT_SLACK)
+                .map(Map.Entry::getKey)
+                .findFirst();
+    }
+
+    private Rectangle boundsOf(UpgradeNode node) {
+        float scale = this.scale();
+        Spot spot = this.layoutOf(this.tower.upgradeTree()).spots().get(node);
+        float size = spot.size() * scale;
+        return new Rectangle(Math.round(this.originX(scale) + (spot.x() * scale) - size / 2),
+                Math.round(this.originY(scale) + (spot.y() * scale) - size / 2), Math.round(size), Math.round(size));
+    }
+
+    private UpgradeTreeLayout layoutOf(UpgradeTree tree) {
+        return this.layouts.computeIfAbsent(tree, UpgradeTreeLayout::of);
+    }
+
+    /** The whole design fits the panel, never growing past {@link #MAX_SCALE}. */
+    private float scale() {
+        float fit = Math.min(this.getWidth() / (float) UpgradeTreeLayout.WIDTH,
+                this.getHeight() / (float) UpgradeTreeLayout.HEIGHT);
+        return Math.min(MAX_SCALE, fit);
+    }
+
+    private float originX(float scale) {
+        return (this.getWidth() - UpgradeTreeLayout.WIDTH * scale) / 2f;
+    }
+
+    private float originY(float scale) {
+        return (this.getHeight() - UpgradeTreeLayout.HEIGHT * scale) / 2f;
     }
 }

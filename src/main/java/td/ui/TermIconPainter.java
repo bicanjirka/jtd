@@ -79,6 +79,20 @@ public final class TermIconPainter {
         }
     }
 
+    /**
+     * Only {@code face}'s symbol, in {@code ink} with its knock-outs in {@code fill}, {@code size} pixels square
+     * with its top-left corner at the origin: for a frame the caller draws itself.
+     */
+    static void paintBareSymbol(Graphics2D g, IconFace face, int size, Color ink, Color fill) {
+        Graphics2D canvas = (Graphics2D) g.create();
+        try {
+            hints(canvas);
+            paintSymbol(canvas, face, size / DESIGN, ink, fill);
+        } finally {
+            canvas.dispose();
+        }
+    }
+
     private static void paintSymbol(Graphics2D g, IconFace face, float k, Color ink, Color fill) {
         Optional<Pictogram> pictogram = PictogramCatalogue.of(face.pictogram());
         if (pictogram.isEmpty()) {

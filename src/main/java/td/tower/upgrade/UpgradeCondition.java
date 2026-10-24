@@ -70,6 +70,11 @@ public interface UpgradeCondition {
         return this.describe();
     }
 
+    /** How far {@code tower} is toward this condition, 0 to 1, for a progress ring. Met or not by default. */
+    default float progressShare(Tower tower, GameWorld context) {
+        return this.isSatisfied(tower, context) ? 1f : 0f;
+    }
+
     default UpgradeCondition and(UpgradeCondition other) {
         return new AndCondition(this, other);
     }

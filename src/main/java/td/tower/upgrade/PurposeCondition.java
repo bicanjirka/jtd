@@ -21,6 +21,11 @@ public record PurposeCondition(TermText deed, int threshold) implements UpgradeC
         return TermText.of(this.threshold + " ").plus(this.deed);
     }
 
+    @Override
+    public float progressShare(Tower tower, GameWorld context) {
+        return Math.min(1f, tower.experience().deeds() / (float) this.threshold);
+    }
+
     /** {@code "shots with [Steady Aim] 12/20"}. */
     @Override
     public TermText progress(Tower tower, GameWorld context) {

@@ -184,9 +184,9 @@
   3 the extra line, 4 and 5 a choice's two sides, 6-8 a special set. A tree that leaves a node
   without a key (a three-way head choice, four specials opened alike) is rejected.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
-  and the Upgrades panel lists offered nodes.
+  and the Upgrades panel shows every node's.
 - A mechanic says what it adds (`describe()`), built from its own constants; a node carries no note but the
-  Core chain's structural text. The Upgrades panel lists `Tower.bonusesOf(node)`: the node's data rows,
+  Core chain's structural text. A node's hover lists `Tower.bonusesOf(node)`: the node's data rows,
   then its mechanics' words. A number a mechanic's words quote lives in the mechanic, or in the delegate or effect
   rule it describes, never in the tower class.
 - `buyUpgrade` (one node) and `buyPath` (a node with every node it needs, one charge) are the only ways in,
@@ -214,7 +214,8 @@
 - Mechanics widen or narrow whom a tower may hit through its `Reach`. A dead zone goes on the `Reach`
   (`withDeadZone`), which applies it last, so it holds whatever order the mechanics were bought in;
   never `and` one onto the query.
-- The UI reads `offeredUpgrades()`/`upgrades()` only; the tower is the source of truth.
+- The UI reads the tree's queries and `upgrades()`, and changes nodes only through `buyUpgrade`, `buyPath`
+  and `downgrade`; the tower is the source of truth.
 
 ## Adding a tower
 

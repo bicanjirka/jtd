@@ -22,6 +22,11 @@ public record BuffedTowersCondition(int required) implements UpgradeCondition {
         return TermText.of("buffing " + Math.min(buffed(tower, context), this.required) + "/" + this.required + " towers");
     }
 
+    @Override
+    public float progressShare(Tower tower, GameWorld context) {
+        return Math.min(1f, buffed(tower, context) / (float) this.required);
+    }
+
     private static long buffed(Tower tower, GameWorld context) {
         return context.towers().all().stream()
                 .filter(other -> other != tower && !tower.buffFor(other).isNone())

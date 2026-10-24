@@ -44,6 +44,8 @@ public final class TooltipLayer {
     private final Timer childCloseTimer;
     private final Map<SheetPane, Integer> paneDepths = new IdentityHashMap<>();
     private final Map<Component, Supplier<Optional<SheetTooltip>>> buttons = new IdentityHashMap<>();
+    private final Map<Component, Function<Point, Optional<TooltipSpot>>> spotSources = new IdentityHashMap<>();
+    private final Map<Component, Point> pointers = new IdentityHashMap<>();
     private final Set<Component> below = Collections.newSetFromMap(new IdentityHashMap<>());
     private final List<Open> opened = new ArrayList<>();
     private TooltipChain chain = TooltipChain.empty();
@@ -127,15 +129,18 @@ public final class TooltipLayer {
      * rests on and the tooltip that one opens.
      */
     void watchSpots(Component source, Function<Point, Optional<TooltipSpot>> spotAt) {
+        this.spotSources.put(source, spotAt);
         source.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent event) {
+                TooltipLayer.this.pointers.put(source, event.getPoint());
                 TooltipLayer.this.pointerOn(source, 0, spotAt.apply(event.getPoint()));
             }
         });
         source.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent event) {
+                TooltipLayer.this.pointers.put(source, event.getPoint());
                 TooltipLayer.this.closeTimer.stop();
                 TooltipLayer.this.pointerOn(source, 0, spotAt.apply(event.getPoint()));
             }
@@ -166,9 +171,19 @@ public final class TooltipLayer {
         });
     }
 
-    /** The watched buttons' offers may have changed: an open button tooltip shows its button's current one. */
+    /**
+     * The watched buttons' offers and spots' sheets may have changed: an open button tooltip shows its button's
+     * current one, and an open spot tooltip the current sheet of the spot under the pointer.
+     */
     void refreshButtons() {
         for (Open open : new ArrayList<>(this.opened)) {
+            Function<Point, Optional<TooltipSpot>> spotAt = this.spotSources.get(open.source());
+            Point pointer = this.pointers.get(open.source());
+            if (spotAt != null && pointer != null) {
+                spotAt.apply(pointer).filter(spot -> spot.tooltip().key().equals(open.key()))
+                        .ifPresent(spot -> open.panel().show(spot.tooltip().sheet()));
+                continue;
+            }
             Supplier<Optional<SheetTooltip>> offer = this.buttons.get(open.source());
             if (offer == null) {
                 continue;
