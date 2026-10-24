@@ -36,6 +36,7 @@ import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeLine;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradePath;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
@@ -603,15 +604,33 @@ public abstract class AbstractTower implements Tower {
         if (!this.context.economy().doPay(node.price())) {
             return false;
         }
-        this.onUpgradeBought(node);
-        UpgradeState nextState = this.upgrades.with(node);
+        this.own(List.of(node));
+        return true;
+    }
+
+    @Override
+    public boolean buyPath(UpgradeNode target) {
+        UpgradePath path = this.upgradeTree().planPath(target, this, this.context);
+        if (!path.isOpen() || !this.context.economy().doPay(path.total())) {
+            return false;
+        }
+        this.own(path.steps());
+        return true;
+    }
+
+    /** Adds {@code bought}, paid for, in order. */
+    private void own(List<UpgradeNode> bought) {
+        UpgradeState nextState = this.upgrades;
+        for (UpgradeNode node : bought) {
+            this.onUpgradeBought(node);
+            nextState = nextState.with(node);
+        }
         this.publishStats(nextState);
         this.upgrades = nextState;
         // This tower's contribution to its neighbours may have changed, so every tower recomputes.
         for (Tower t : this.context.towers().all()) {
             t.recalculateStats();
         }
-        return true;
     }
 
     /**

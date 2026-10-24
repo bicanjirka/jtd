@@ -174,4 +174,11 @@ public interface Tower {
      * in one call, so don't check affordability first.
      */
     boolean buyUpgrade(UpgradeNode node);
+
+    /**
+     * Buys {@code target} with every node it needs first ({@link UpgradeTree#planPath}), paying the total
+     * in one charge. Returns {@code false} with no effect if any step is blocked or the total is
+     * unaffordable.
+     */
+    boolean buyPath(UpgradeNode target);
 }
