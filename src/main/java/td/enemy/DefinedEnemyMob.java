@@ -691,12 +691,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         // doDamage() has no game time, and a hit can land in another phase of the same tick.
         this.moments.capturePending(gameTime);
         if (this.stage == LifeStage.WAITING) {
-            this.delay--;
-            if (this.delay == 0) {
-                this.stage = LifeStage.LIVE;
-                this.entryOrdinal = this.gameWorld.enemies().recordEntry();
-                this.doTick(gameTime);
-            }
+            this.countDownSpawnDelay(gameTime);
             return;
         }
         if (this.isDead()) {
@@ -709,19 +704,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         // Read before tick(): an effect in its last tick must still slow this tick's movement.
         float speed = this.stats.value(EnemyStat.MOVE_SPEED);
-        // Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
-        this.regenCarry += this.stats.value(EnemyStat.REGENERATION);
-        int whole = (int) this.regenCarry;
-        this.regenCarry -= whole;
-        int healed = Math.min(this.healthMax, this.health + whole);
-        boolean healthChanged = healed != this.health;
-        this.health = healed;
+        boolean healthChanged = this.regenerate();
         if (healthChanged || !this.activeEffects.isEmpty()) {
-            // The pace of stack decay is the same scale that spirit puts on heals and shields.
-            int cellSize = this.gameWorld.getBoard().scale();
-            this.activeEffects.tick(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f),
-                    cellSize > 0 ? speed / cellSize : 0f);
-            this.stats.invalidate();
+            this.tickEffects(speed);
         }
         // After tick() so an expiry is seen the tick it happens; before the dead-return so a lethal
         // damage-over-time tick still records the loss.
@@ -733,14 +718,61 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.leak();
             return;
         }
+        this.trackBoardPresence();
+        this.countLiveTick();
+        this.turn();
+        if (!this.isSilenced()) {
+            this.evaluateAbilities(gameTime);
+        }
+    }
+
+    private void countDownSpawnDelay(int gameTime) {
+        this.delay--;
+        if (this.delay == 0) {
+            this.stage = LifeStage.LIVE;
+            this.entryOrdinal = this.gameWorld.enemies().recordEntry();
+            this.doTick(gameTime);
+        }
+    }
+
+    /**
+     * Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
+     *
+     * @return whether health changed
+     */
+    private boolean regenerate() {
+        this.regenCarry += this.stats.value(EnemyStat.REGENERATION);
+        int whole = (int) this.regenCarry;
+        this.regenCarry -= whole;
+        int healed = Math.min(this.healthMax, this.health + whole);
+        boolean changed = healed != this.health;
+        this.health = healed;
+        return changed;
+    }
+
+    private void tickEffects(float speed) {
+        // The pace of stack decay is the same scale that spirit puts on heals and shields.
+        int cellSize = this.gameWorld.getBoard().scale();
+        this.activeEffects.tick(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f),
+                cellSize > 0 ? speed / cellSize : 0f);
+        this.stats.invalidate();
+    }
+
+    private void trackBoardPresence() {
         this.onBoard = this.motion.isOnBoard();
         if (this.onBoard) {
             this.definition.disruption().ifPresent(aura -> this.gameWorld.disruptions().add(this.getX(), this.getY(), aura));
         }
+    }
+
+    private void countLiveTick() {
         this.ticksSinceSpawn++;
         if (this.ticksSinceLastHit < Integer.MAX_VALUE) {
             this.ticksSinceLastHit++;
         }
+    }
+
+    private void turn() {
         switch (this.definition.movement()) {
             case RotorMovement rotor -> this.facingRadians += rotor.radiansPerTick();
             case FixedMovement ignored -> {
@@ -749,9 +781,6 @@ public final class DefinedEnemyMob implements EnemyMob {
             }
             case PulseMovement ignored -> {
             }
-        }
-        if (!this.isSilenced()) {
-            this.evaluateAbilities(gameTime);
         }
     }
 
