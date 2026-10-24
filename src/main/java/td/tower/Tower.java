@@ -6,6 +6,7 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.stat.StatModifiers;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeRemoval;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
@@ -181,4 +182,16 @@ public interface Tower {
      * unaffordable.
      */
     boolean buyPath(UpgradeNode target);
+
+    /**
+     * What a downgrade that takes {@code removal} away gives back: what selling would pay less, so that
+     * downgrading and then selling pays what selling would have.
+     */
+    int refundFor(UpgradeRemoval removal);
+
+    /**
+     * Removes {@code node} and every owned node that depends on it ({@link UpgradeTree#removalFor}), and
+     * refunds {@link #refundFor} them. Returns {@code false} with no effect for a node it doesn't own.
+     */
+    boolean downgrade(UpgradeNode node);
 }

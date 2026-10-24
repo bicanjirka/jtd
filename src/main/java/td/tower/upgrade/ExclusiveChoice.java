@@ -5,7 +5,8 @@ import java.util.List;
 
 /**
  * Nodes that exclude each other: a tower owns at most {@code picks} of them, and once it does the
- * rest are never offered again. The UI draws a choice as one linked set.
+ * rest are not offered while it does: a choice counts only what is owned now, so a downgrade reopens it.
+ * The UI draws a choice as one linked set.
  */
 public record ExclusiveChoice(List<String> nodeIds, int picks) {
 
@@ -17,7 +18,7 @@ public record ExclusiveChoice(List<String> nodeIds, int picks) {
         }
     }
 
-    /** Buying one locks the others out for good: the two chain roots, or IV-A and IV-B. */
+    /** Buying one locks the others out: the two chain roots, or IV-A and IV-B. */
     public static ExclusiveChoice oneOf(UpgradeNode... members) {
         return new ExclusiveChoice(ids(members), 1);
     }

@@ -236,6 +236,11 @@ public final class SniperTower extends AbstractTower {
         this.mechanics.add(node);
     }
 
+    @Override
+    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
+        this.mechanics.remove(removed);
+    }
+
     /** Whom it may shoot and how it picks, as the mechanics in {@code owned} make it. */
     private SniperSpec spec(List<SniperMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());

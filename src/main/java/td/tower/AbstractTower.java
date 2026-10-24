@@ -37,6 +37,7 @@ import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeLine;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeRemoval;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
@@ -45,12 +46,14 @@ import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -98,6 +101,8 @@ public abstract class AbstractTower implements Tower {
     // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
     private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
     private final ActiveTowerStatuses statuses = new ActiveTowerStatuses();
+    // Downgraded on the EDT, forgotten by the tick thread at the start of the tower's next turn.
+    private final AtomicReference<List<UpgradeNode>> removedSinceTick = new AtomicReference<>(List.of());
     private volatile InspectionCache inspectionCache;
     private final ProcActions procActions = new TowerProcActions();
     // What the statuses add, published for the EDT's republish; the live list stays on the tick thread.
@@ -508,6 +513,14 @@ public abstract class AbstractTower implements Tower {
             this.refreshStatusLayer();
             republished = true;
         }
+        List<UpgradeNode> removed = this.removedSinceTick.getAndSet(List.of());
+        if (!removed.isEmpty()) {
+            if (this.statuses.revoke(grantedBy(removed))) {
+                this.refreshStatusLayer();
+                republished = true;
+            }
+            this.forgetRemovedUpgrades(removed);
+        }
         DisruptionPenalty sampled = this.context.disruptions().penaltyAt(this.centerX, this.centerY)
                 .plus(this.context.zones().disruptionAt(this.centerX, this.centerY));
         this.disruption = sampled;
@@ -638,6 +651,55 @@ public abstract class AbstractTower implements Tower {
      * Compare {@code node} by equality, not reference.
      */
     protected void onUpgradeBought(UpgradeNode node) {
+    }
+
+    @Override
+    public int refundFor(UpgradeRemoval removal) {
+        int keptPaid = removal.kept().owned().stream().mapToInt(UpgradeNode::price).sum();
+        return this.getSellPrice() - SellRefund.of(this.price + keptPaid);
+    }
+
+    @Override
+    public boolean downgrade(UpgradeNode node) {
+        UpgradeRemoval removal = this.upgradeTree().removalFor(node, this, this.context);
+        if (removal.isEmpty()) {
+            return false;
+        }
+        int refund = this.refundFor(removal);
+        this.onUpgradesRemoved(removal.removed());
+        this.publishStats(removal.kept());
+        this.upgrades = removal.kept();
+        this.removedSinceTick.accumulateAndGet(removal.removed(), AbstractTower::concatenated);
+        for (Tower t : this.context.towers().all()) {
+            t.recalculateStats();
+        }
+        this.context.economy().apply(EconomyDelta.credits(refund));
+        return true;
+    }
+
+    /**
+     * Hook undoing {@link #onUpgradeBought} for each of {@code removed}, called when they are downgraded,
+     * on the thread that downgrades; a no-op by default.
+     */
+    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
+    }
+
+    /**
+     * Hook clearing what the tower holds for {@code removed} outside its mechanics (a store, a counter),
+     * on the game loop at the start of its first turn after the downgrade; a no-op by default.
+     */
+    protected void forgetRemovedUpgrades(List<UpgradeNode> removed) {
+    }
+
+    /** The statuses {@code nodes}' procs grant, which go with them. */
+    private static Set<TowerTerm> grantedBy(List<UpgradeNode> nodes) {
+        Set<TowerTerm> terms = new HashSet<>();
+        for (UpgradeNode node : nodes) {
+            for (Proc proc : node.effects().procs()) {
+                proc.payload().grantedStatus().ifPresent(status -> terms.add(status.term()));
+            }
+        }
+        return terms;
     }
 
     public boolean isSelected() {

@@ -232,6 +232,11 @@ public final class MortarTower extends AbstractTower {
         this.mechanics.add(node);
     }
 
+    @Override
+    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
+        this.mechanics.remove(removed);
+    }
+
     /** Whom it may shell and how its shells fly and land, as the mechanics in {@code owned} make it. */
     private MortarSpec spec(List<MortarMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());

@@ -251,6 +251,11 @@ public final class SplashTower extends AbstractTower {
         this.mechanics.add(node);
     }
 
+    @Override
+    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
+        this.mechanics.remove(removed);
+    }
+
     /** What its blast is like and what it carries, as the mechanics in {@code owned} make it. */
     private SplashSpec spec(List<SplashMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());

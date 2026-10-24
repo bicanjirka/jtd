@@ -40,6 +40,11 @@ final class ActiveTowerStatuses {
         return this.held.removeIf(h -> h.status().shots() == 0 && nowTick >= h.endsAt());
     }
 
+    /** Drops every status named by {@code terms}, however long it had left; whether anything changed. */
+    boolean revoke(Set<TowerTerm> terms) {
+        return this.held.removeIf(h -> terms.contains(h.status().term()));
+    }
+
     /** Spends one shot of every shot status, dropping those with none left; whether anything changed. */
     boolean spendShot() {
         boolean changed = false;

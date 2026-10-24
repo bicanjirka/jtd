@@ -159,6 +159,31 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
         return PathPlanner.plan(this, target, tower, context);
     }
 
+    /**
+     * What downgrading {@code node} takes from {@code tower}: replays the owned nodes in purchase order
+     * without it, dropping each whose prerequisites or choice now fail. Only prerequisites cascade; gates
+     * were checked at purchase.
+     */
+    public UpgradeRemoval removalFor(UpgradeNode node, Tower tower, GameWorld context) {
+        UpgradeState owned = tower.upgrades();
+        if (!owned.owns(node.id())) {
+            return new UpgradeRemoval(node, List.of(), owned);
+        }
+        UpgradeState kept = UpgradeState.none();
+        List<UpgradeNode> removed = new ArrayList<>();
+        for (UpgradeNode next : owned.owned()) {
+            ExclusiveChoice choice = this.choiceContaining(next);
+            boolean stays = !next.id().equals(node.id()) && next.requires().isSatisfied(tower, kept, context)
+                    && (choice == null || !choice.isSpent(kept));
+            if (stays) {
+                kept = kept.with(next);
+            } else {
+                removed.add(next);
+            }
+        }
+        return new UpgradeRemoval(node, removed, kept);
+    }
+
     private void collectPath(UpgradeNode node, Set<UpgradeNode> path) {
         for (String id : node.requires().requiredNodes().stream().sorted().toList()) {
             this.nodes.stream().filter(candidate -> candidate.id().equals(id)).findFirst()
