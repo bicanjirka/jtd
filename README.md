@@ -38,7 +38,9 @@ The game opens on a level-select screen. Pick a level to start it; each level br
 board size, path, wave list, starting credits and starting lives.
 
 Buy a tower from the toolbar on the right (or with `q`–`t`), then click a buildable
-cell to place it. Clicking a placed tower selects it and shows its stats and its own upgrade
+cell to place it; hovering a toolbar button opens a tooltip of the tower, and the side panel shows
+it in full while you place it. The click that builds a tower selects it, as does clicking a placed
+tower later: the side panel shows its stats and its own upgrade
 tree — three slots, `base`/`head`/`special`, each offering a small number of nodes to buy.
 Start each wave yourself when you are ready — waves do not auto-advance.
 
@@ -59,7 +61,7 @@ Mouse: move to preview placement, click to place or to select a placed tower, or
 upgrade-tree button to buy that node. Click a moving enemy, invisible ones too (when not placing a
 tower), to inspect it: the side panel shows its live health, stats, effects and traits, updating even while paused,
 and keeps a "Killed" or "Leaked" line after it's gone until your next click. Hovering an enemy in
-the wave preview shows the same stat block for that enemy type.
+the wave preview opens a tooltip of the stats that enemy type spawns with.
 
 The dev panel ships in the jar, hidden behind `Ctrl`+`Shift`+`D` rather than a build flag, to
 make manual playtesting cheap. It sets credits and lives, keeps them topped up, spawns any wave

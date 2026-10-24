@@ -1,6 +1,5 @@
 package td.ui;
 
-import td.ui.render.InfoSheet;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.Wave;
@@ -15,8 +14,6 @@ import java.awt.Insets;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * The round in play and the next one side by side, each with one {@link PathWaveRow} per path. Rows
@@ -36,16 +33,17 @@ public class PanelWaveInfo extends JPanel {
     private final List<PathWaveRow> curRows = new ArrayList<>();
     private final List<PathWaveRow> nextRows = new ArrayList<>();
     private GameWorld gameWorld;
-    private Consumer<Optional<InfoSheet>> onEnemyHover = sheet -> {
-    };
+    private TooltipLayer tooltips;
 
     public PanelWaveInfo() {
         initComponents();
     }
 
-    /** Called with the sheet of a preview enemy under the pointer, or empty once it rests on none. */
-    public void onEnemyHover(Consumer<Optional<InfoSheet>> listener) {
-        this.onEnemyHover = listener;
+    /** The layer the preview enemies' tooltips open on, for the rows there are and those still to come. */
+    public void setTooltips(TooltipLayer layer) {
+        this.tooltips = layer;
+        this.curRows.forEach(row -> row.setTooltips(layer));
+        this.nextRows.forEach(row -> row.setTooltips(layer));
     }
 
     public void setGameWorld(GameWorld c) {
@@ -103,8 +101,11 @@ public class PanelWaveInfo extends JPanel {
         container.removeAll();
         rows.clear();
         for (int i = 0; i < count; i++) {
-            PathWaveRow row = new PathWaveRow(sheet -> this.onEnemyHover.accept(sheet));
+            PathWaveRow row = new PathWaveRow();
             row.setGameWorld(this.gameWorld);
+            if (this.tooltips != null) {
+                row.setTooltips(this.tooltips);
+            }
             rows.add(row);
             GridBagConstraints c = new GridBagConstraints();
             c.gridx = 0;

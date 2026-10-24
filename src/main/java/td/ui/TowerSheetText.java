@@ -27,6 +27,7 @@ import td.util.TickRate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Turns a {@link TowerInspection} into the tower pane: stat rows, then icon rows (Perks, Buffs, Debuffs, Applies),
@@ -40,14 +41,26 @@ final class TowerSheetText {
     private TowerSheetText() {
     }
 
-    /** The toolbar's sheet: price, authored stats, whom it targets, what it applies, then what no row says. */
+    /** The sheet while placing: price, authored stats, whom it targets, what it applies, then what no row says. */
     static InfoSheet shop(TowerInspection tower) {
+        return shop(tower, stat -> true, Optional.empty());
+    }
+
+    /** A toolbar button's tooltip: the shop sheet without how a shot travels or turns, with the key that builds it. */
+    static InfoSheet shopTooltip(TowerInspection tower) {
+        return shop(tower, stat -> !describesDelivery(stat),
+                Optional.of(Row.plain(Glyph.DOT, "Shortcut", String.valueOf(tower.type().placementKey))));
+    }
+
+    private static InfoSheet shop(TowerInspection tower, Predicate<TowerStatRow> shown, Optional<SheetLine> shortcut) {
         List<SheetLine> lines = new ArrayList<>();
         lines.add(title(tower, "$" + tower.price()));
         lines.add(new SheetLine.Gap());
-        tower.stats().forEach(stat -> lines.add(statRow(stat.stat(), TowerStatLine.fixed(stat.stat(), stat.base()))));
+        tower.stats().stream().filter(stat -> shown.test(stat.stat()))
+                .forEach(stat -> lines.add(statRow(stat.stat(), TowerStatLine.fixed(stat.stat(), stat.base()))));
         targets(tower).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
+        shortcut.ifPresent(lines::add);
         if (!tower.description().isEmpty()) {
             lines.add(new SheetLine.Gap());
             lines.add(new SheetLine.Prose(TermText.of(tower.description())));
@@ -71,6 +84,14 @@ final class TowerSheetText {
         lines.add(Row.plain(Glyph.SKULL, "Kills",
                 tower.kills() + " · " + Math.round(DamageUnits.inPoints(tower.damageDealt())) + " dmg"));
         return new InfoSheet(lines);
+    }
+
+    /** Whether {@code stat} says how a shot gets there rather than what it does: detail for a closer look. */
+    private static boolean describesDelivery(TowerStatRow stat) {
+        return switch (stat) {
+            case ROTATION, PROJECTILE_SPEED, PROJECTILE_SIZE -> true;
+            case RANGE, PHYSICAL_DAMAGE, MAGIC_DAMAGE, FIRE_RATE, CRIT_CHANCE, SPLASH_RADIUS -> false;
+        };
     }
 
     private static SheetLine.Title title(TowerInspection tower, String value) {

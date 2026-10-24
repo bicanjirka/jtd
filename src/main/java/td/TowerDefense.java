@@ -171,12 +171,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.tooltips = new TooltipLayer(this.getLayeredPane(), TooltipDelays.standard());
         this.gameConsole.setTooltips(this.tooltips);
         this.header.setTooltips(this.tooltips);
+        this.panelDev.setTooltips(this.tooltips);
         this.gameConsole.setGameWorld(this.gameWorld);
         this.header.onPlay(this::playPressed);
         this.header.onPause(this::pausePressed);
         this.header.onFast(this::fastPressed);
         this.header.onSuperFast(this::superFastPressed);
-        this.gameConsole.getWaveInfo().onEnemyHover(this::showHoveredSheet);
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.gameConsole.getTowerInfo().onPinToggled(pinning -> {
             if (pinning) {
@@ -187,6 +187,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             this.gameConsole.getTowerInfo().showPinning(this.engine.isPinningLeyLine());
         });
         this.panelTowerSelector.doInit(this.gameWorld, this);
+        this.panelTowerSelector.setTooltips(this.tooltips);
         this.panelDev.setGameWorld(this.gameWorld, this.devControls);
         this.panelDev.onSkipWave(this::debugSkipWave);
         this.panelDev.onJumpToWave(this::debugJumpToWave);
@@ -408,18 +409,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     public void showInfoSheet(InfoSheet sheet) {
         this.unSelectTower();
         this.gameConsole.getTowerInfo().showSheet(sheet);
-    }
-
-    /**
-     * What the pointer rests on outside the board, shown over the selection without clearing it; empty once it
-     * rests on nothing, which brings the selection's sheet back.
-     */
-    public void showHoveredSheet(Optional<InfoSheet> hovered) {
-        PanelTowerInfo info = this.gameConsole.getTowerInfo();
-        hovered.ifPresentOrElse(info::showHoveredSheet, () -> {
-            info.hoverEnded();
-            this.showEnemyInspection();
-        });
     }
 
     private void setWavePreview() {
@@ -751,7 +740,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void showEnemyInspection() {
         RenderFrame frame = this.latestFrame;
         PanelTowerInfo info = this.gameConsole.getTowerInfo();
-        if (!this.inspectingEnemy || frame == null || info.hasSelectedTower() || info.isHovering()) {
+        if (!this.inspectingEnemy || frame == null || info.hasSelectedTower()) {
             return;
         }
         frame.enemyInspection().ifPresent(info::showSheet);
@@ -855,7 +844,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         jPanel_board = new JPanel();
         jPanel_game = new JPanel();
         panelTowerSelector = new PanelTowerSelector();
-        panelDev = new PanelDev(this::showHoveredSheet);
+        panelDev = new PanelDev();
         panelDev.setVisible(false);
         panelLevelSelect = new PanelLevelSelect(this.levelCatalog.levels(), this::startSelectedLevel);
 

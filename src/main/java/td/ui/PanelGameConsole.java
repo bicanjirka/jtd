@@ -47,6 +47,7 @@ public class PanelGameConsole extends JPanel {
     public void setTooltips(TooltipLayer tooltips) {
         this.panelTowerInfo.setTooltips(tooltips);
         this.panelUpgradeTree.setTooltips(tooltips);
+        this.panelWaveInfo.setTooltips(tooltips);
     }
 
     public void setGameWorld(GameWorld world) {

@@ -6,7 +6,8 @@ import td.economy.EconomyState;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerInspection;
-import td.ui.render.InfoSheet;
+import td.ui.render.SheetTooltip;
+import td.ui.render.TooltipKey;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -21,8 +22,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.Serial;
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     private final List<TowerFactory.Type> towerTypes;
     private GameWorld context;
     private TowerDefense mainApp;
-    private boolean placing = false;
+    private TooltipLayer tooltips;
 
     public PanelTowerSelector() {
         initComponents();
@@ -81,15 +80,6 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
             this.buttons[i] = tempToggle;
             final int n = i;
             tempToggle.addActionListener(evt -> doPlace(n));
-            tempToggle.addMouseListener(new MouseAdapter() {
-                public void mouseEntered(MouseEvent evt) {
-                    mouseOver(n);
-                }
-
-                public void mouseExited(MouseEvent evt) {
-                    pointerLeft();
-                }
-            });
             gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.gridx = n;
             gridBagConstraints.gridy = 0;
@@ -121,14 +111,23 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         this.context.economy().addEconomyListener(this);
     }
 
+    /** Once {@link #doInit} made the buttons: each one's hover is a tooltip of the tower it builds, at today's price. */
+    public void setTooltips(TooltipLayer layer) {
+        this.tooltips = layer;
+        for (int i = 0; i < this.buttons.length; i++) {
+            int index = i;
+            layer.watchButton(this.buttons[i], () -> Optional.of(new SheetTooltip(
+                    TooltipKey.of("shop", this.towerTypes.get(index).name()),
+                    TowerSheetText.shopTooltip(this.priced(index)))));
+        }
+    }
+
     public void startPlacing(TowerFactory.Type t, float r) {
-        this.placing = true;
         this.mainApp.startPlacing(t, r);
     }
 
     public void stopPlacing() {
         this.untoggleAll();
-        this.placing = false;
     }
 
     /** May run on the game-loop thread. */
@@ -136,6 +135,9 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         SwingUtilities.invokeLater(() -> {
             for (int i = 0; i < this.buttons.length; i++) {
                 this.buttons[i].setEnabled(state.canAfford(this.context.towers().priceOf(this.towerTypes.get(i))));
+            }
+            if (this.tooltips != null) {
+                this.tooltips.refreshButtons();
             }
         });
     }
@@ -149,23 +151,13 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     public void doPlace(int i) {
         this.untoggleAll();
         this.buttons[i].setSelected(true);
-        this.mainApp.showInfoSheet(this.shopSheet(i));
+        this.mainApp.showInfoSheet(TowerSheetText.shop(this.priced(i)));
         this.startPlacing(this.towerTypes.get(i), this.towerRanges[i]);
     }
 
-    /** The toolbar description at the price the next copy costs now. */
-    private InfoSheet shopSheet(int i) {
-        return TowerSheetText.shop(this.shopTowers[i].withPrice(this.context.towers().priceOf(this.towerTypes.get(i))));
-    }
-
-    private void mouseOver(int i) {
-        if (!this.placing) {
-            this.mainApp.showHoveredSheet(Optional.of(this.shopSheet(i)));
-        }
-    }
-
-    private void pointerLeft() {
-        this.mainApp.showHoveredSheet(Optional.empty());
+    /** The tower at the price the next copy costs now. */
+    private TowerInspection priced(int i) {
+        return this.shopTowers[i].withPrice(this.context.towers().priceOf(this.towerTypes.get(i)));
     }
 
     private void initComponents() {

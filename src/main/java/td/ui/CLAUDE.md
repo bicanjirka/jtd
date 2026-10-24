@@ -74,16 +74,16 @@ keeps the seam honest.
   the title and the speed buttons, which stand above the console. A status icon is a tooltip source that opens its tooltip under
   itself (`TooltipLayer.watchBelow`); only lives (on a drop) and wave (on an increase) flash, and a level's first
   numbers are a baseline, never a change.
-- An upgrade button paints its perk icon beside its row text; its hover is a tooltip, never the info pane.
+- An upgrade button paints its perk icon beside its row text.
 - Info-pane content is an AWT-free `InfoSheet` that a `*SheetText` builds from a domain
   inspection (`EnemyInspection`, `TowerInspection`): stat rows, then icon rows (Traits, Buffs,
   Debuffs; on a tower Perks, Buffs, Debuffs, Applies), each icon a `SheetIcon` carrying its tooltip sheet. `InfoSheetDocument` alone lays
   a sheet out. The live enemy sheet is built with the frame and travels in
   `RenderFrame.enemyInspection`; the EDT only shows it, and only after a board click asked for a
   selection.
-- A hover off the board (a shop button, a wave-preview enemy) lends the Info pane its sheet and never clears the
-  selection; once it ends, the selection's sheet comes back (`TowerDefense.showHoveredSheet`). Only a click
-  changes the selection.
+- A hover opens a tooltip and never changes the Info pane; only a click does. The pane shows the selected tower or
+  enemy, the tower being placed, or the welcome text. A source with several targets (a strip of preview enemies) is
+  watched with `TooltipLayer.watchSpots`.
 - A term's icon is an `IconFace` (AWT-free) that `TermIconPainter` alone paints; its art is a `Pictogram` keyed by
   the term's key in `PictogramCatalogue`, its colours come from `TermLooks`. A new term needs a row in a
   `*Pictograms` table (or it shows its monogram) and a case in `TermLooks`.

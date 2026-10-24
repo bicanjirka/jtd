@@ -12,6 +12,7 @@ import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 
 import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
 import javax.swing.text.BadLocationException;
 
 import java.awt.Component;
@@ -173,5 +174,42 @@ class TooltipLayerTest {
         Component popup = this.popups().getFirst();
         assertThat(popup.getX()).isEqualTo(300);
         assertThat(popup.getY()).isEqualTo(4 + 28 + TooltipPlacement.GAP);
+    }
+
+    /** A strip of two halves, each a spot with its own one-line tooltip. */
+    private JPanel stripOfTwoSpots() {
+        JPanel strip = new JPanel();
+        strip.setBounds(600, 300, 100, 20);
+        this.layer.add(strip);
+        this.tooltips.watchSpots(strip, point -> {
+            int half = point.x < 50 ? 0 : 1;
+            return Optional.of(new TooltipSpot(new SheetTooltip(TooltipKey.of("half", Integer.toString(half)),
+                    new InfoSheet(List.of(SheetLine.Sentence.of(TermText.of("Half " + half))))),
+                    new Rectangle(half * 50, 0, 50, 20)));
+        });
+        return strip;
+    }
+
+    @Test
+    void aSourceWithSpotsOpensTheTooltipOfTheSpotUnderThePointerBesideThatSpot() {
+        JPanel strip = this.stripOfTwoSpots();
+
+        move(strip, new Point(70, 10));
+        this.tooltips.openPending();
+
+        TooltipPanel popup = (TooltipPanel) this.popups().getFirst();
+        assertThat(popup.sheet()).isEqualTo(new InfoSheet(List.of(SheetLine.Sentence.of(TermText.of("Half 1")))));
+        assertThat(popup.getX() + popup.getWidth()).isEqualTo(600 + 50 - TooltipPlacement.GAP);
+    }
+
+    @Test
+    void thePointerLeavingASourceWithSpotsBeforeItsTooltipOpensOpensNothing() {
+        JPanel strip = this.stripOfTwoSpots();
+        move(strip, new Point(10, 10));
+
+        strip.dispatchEvent(new MouseEvent(strip, MouseEvent.MOUSE_EXITED, 0, 0, 10, 10, 0, false));
+        this.tooltips.openPending();
+
+        assertThat(this.popups()).isEmpty();
     }
 }

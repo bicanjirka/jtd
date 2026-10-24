@@ -7,7 +7,6 @@ import td.effect.EffectKind;
 import td.enemy.Rank;
 import td.term.Side;
 import td.tower.TowerTerm;
-import td.ui.render.InfoSheet;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
 import td.util.GameWorld;
@@ -114,7 +113,7 @@ public class PanelDev extends JPanel {
     private final ChoiceButton<Integer> pathChoice = new ChoiceButton<>(this.pathChoices(1), 0,
             this::spawnChoiceClosed);
     private final HudToggleButton cellGridToggle = toggle("Cell grid");
-    private final PathWaveRow preview;
+    private final PathWaveRow preview = new PathWaveRow();
     private final JLabel problem = label("");
     private final CardLayout previewCards = new CardLayout();
     private final JPanel previewArea = new JPanel(this.previewCards);
@@ -151,10 +150,13 @@ public class PanelDev extends JPanel {
     private Runnable onReleaseFocus = () -> {
     };
 
-    /** {@code onEnemyHover} gets the sheet of the preview enemy under the pointer, or empty once it rests on none. */
-    public PanelDev(Consumer<Optional<InfoSheet>> onEnemyHover) {
-        this.preview = new PathWaveRow(onEnemyHover);
+    public PanelDev() {
         initComponents();
+    }
+
+    /** The layer the preview enemies' tooltips open on. */
+    public void setTooltips(TooltipLayer tooltips) {
+        this.preview.setTooltips(tooltips);
     }
 
     public void setGameWorld(GameWorld world, DevControls dev) {

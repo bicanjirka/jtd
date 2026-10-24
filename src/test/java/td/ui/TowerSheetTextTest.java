@@ -10,6 +10,9 @@ import td.tower.NodeProgress;
 import td.tower.Tower;
 import td.tower.TowerBuffState;
 import td.tower.TowerFactory;
+import td.tower.TowerInspection;
+import td.tower.TowerStatLine;
+import td.tower.TowerStatRow;
 import td.tower.TowerTerm;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
@@ -61,6 +64,27 @@ class TowerSheetTextTest {
 
     private static Row row(InfoSheet sheet, String label) {
         return rows(sheet).stream().filter(row -> row.label().equals(label)).findFirst().orElseThrow();
+    }
+
+    @Test
+    void theToolbarTooltipLeavesOutHowAShotTravelsAndTurns() {
+        TowerInspection tower = TowerInspection.of(TowerFactory.Type.MORTAR, 10, List.of(
+                TowerStatLine.fixed(TowerStatRow.RANGE, 3), TowerStatLine.fixed(TowerStatRow.ROTATION, 2),
+                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, 4), TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, 1)));
+
+        InfoSheet tooltip = TowerSheetText.shopTooltip(tower);
+
+        assertThat(labels(tooltip)).contains("Range").doesNotContain("Rotation", "Projectile speed", "Projectile size");
+        assertThat(labels(TowerSheetText.shop(tower))).contains("Rotation", "Projectile speed", "Projectile size");
+    }
+
+    @Test
+    void theToolbarTooltipNamesTheKeyThatBuildsTheTower() {
+        TowerInspection tower = TowerInspection.of(TowerFactory.Type.SNIPER, 10, List.of());
+
+        InfoSheet tooltip = TowerSheetText.shopTooltip(tower);
+
+        assertThat(row(tooltip, "Shortcut").value()).isEqualTo(String.valueOf(TowerFactory.Type.SNIPER.placementKey));
     }
 
     @Test

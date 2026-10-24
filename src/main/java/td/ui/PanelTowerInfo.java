@@ -27,10 +27,10 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- * The text pane under the tower toolbar: the selected tower's status and a sell button, an enemy's
- * or a shop tower's sheet, or plain text. Each replaces the other, and shows from its top. A hovered
- * sheet only lends the pane: the selected tower's status comes back once the hover ends. Buying
- * upgrades happens on {@link PanelUpgradeTree}.
+ * The text pane under the tower toolbar: the selected tower's status and a sell button, the selected
+ * enemy's sheet, the sheet of the tower being placed, or plain text. Each replaces the other, and
+ * shows from its top. Only a click changes it; a hover opens a tooltip instead. Buying upgrades
+ * happens on {@link PanelUpgradeTree}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelTowerInfo extends JPanel implements EconomyListener {
@@ -55,7 +55,6 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private InfoSheet lastSheet = NO_SHEET;
     private int sheetWidth = 0;
     private boolean levelEnded = false;
-    private boolean hovering = false;
     private Runnable onDeselected = () -> {
     };
     private Consumer<Boolean> onPinToggled = pinning -> {
@@ -98,33 +97,9 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     /** An enemy's or a shop tower's sheet, in place of any tower status. */
     public void showSheet(InfoSheet sheet) {
-        this.hovering = false;
         this.jButton_sell.setVisible(false);
         this.jToggle_pin.setVisible(false);
         this.replaceSheet(sheet);
-    }
-
-    /**
-     * The sheet of what the pointer rests on, shown over the selection without clearing it. Sell and pin hide meanwhile,
-     * as they would read as acting on the hovered tower.
-     */
-    public void showHoveredSheet(InfoSheet sheet) {
-        this.hovering = true;
-        this.jButton_sell.setVisible(false);
-        this.jToggle_pin.setVisible(false);
-        this.replaceSheet(sheet);
-    }
-
-    /** Gives the pane back to the selected tower; with none, the hovered sheet stays so its terms can still be read. */
-    public void hoverEnded() {
-        if (this.hovering) {
-            this.hovering = false;
-            this.updateInterface();
-        }
-    }
-
-    public boolean isHovering() {
-        return this.hovering;
     }
 
     InfoSheet shownSheet() {
@@ -196,9 +171,6 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     private void updateInterface() {
-        if (this.hovering) {
-            return;
-        }
         this.jButton_sell.setVisible(this.selectedTower != null);
         boolean pins = this.selectedTower != null && !this.levelEnded && PulseTower.castsLeyLine(this.selectedTower);
         this.jToggle_pin.setVisible(pins);
@@ -214,11 +186,10 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     /**
-     * The selected tower's sheet, built with the frame; shown only while that tower is still selected and nothing
-     * else owns the pane.
+     * The selected tower's sheet, built with the frame; shown only while that tower is still selected.
      */
     public void showTowerSheet(TowerSheet sheet) {
-        if (!this.hovering && this.selectedTower != null && sheet.x() == this.selectedTower.getX()
+        if (this.selectedTower != null && sheet.x() == this.selectedTower.getX()
                 && sheet.y() == this.selectedTower.getY()) {
             this.replaceSheet(sheet.sheet());
         }

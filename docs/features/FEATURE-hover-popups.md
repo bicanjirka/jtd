@@ -1,6 +1,7 @@
 # Feature Request: Hover popups, click Info pane
 
-**Status: requested.**
+**Status: implemented** in `2268443` (a build selects its tower, Esc clears the pane) and the
+commit after it (the popups), as decided below.
 
 ## Summary
 
@@ -34,10 +35,9 @@ short form. The pane holds "what I picked", live, with its actions and its full 
   (`EnemyStatText.preview`): header, HP + bounty, every stat that differs from the default,
   Traits, role sentence. A preview enemy has no click view.
 - **Placing** starts from a shop click or the tower's shortcut key (`doPlace`). It clears the
-  selection and puts the shop sheet in the pane. Two gaps:
-  - Esc cancels placing but leaves the shop sheet in the pane.
-  - A click on a cell you can't build on keeps placing, but the click's `unSelectTower()`
-    replaces the sheet with the welcome text first.
+  selection and puts the shop sheet in the pane. Any board click ends it: a build, a refused
+  payment, a cell you can't build on, or a click on a tower. Esc cancels it but leaves the shop
+  sheet in the pane.
 - **After a successful build** the pane shows the welcome text, and the new tower is not
   selected.
 - **The wave preview and the upgrade tree share one cell.** Selecting a tower hides the
@@ -54,8 +54,7 @@ What the pane shows:
 stateDiagram-v2
     [*] --> Welcome
     Welcome --> Placing: shop click / shortcut key
-    Placing --> Placing: rejected click
-    Placing --> Welcome: Esc, or the build is refused
+    Placing --> Welcome: Esc, or a click that builds nothing
     Placing --> SelectedTower: build succeeds / a tower is clicked
     Welcome --> SelectedTower: tower clicked
     Welcome --> SelectedEnemy: enemy clicked
@@ -73,9 +72,9 @@ No hover appears in this diagram: a hover never moves the pane.
 - **Wave-preview enemy hover opens a popup** with today's preview sheet, unchanged. This applies
   to the dev panel's preview row too.
 - **While placing, the pane shows the full shop sheet**, every row included, until placing ends.
-  A rejected click doesn't end it.
-- **Placing ends** on Esc (welcome text), on a successful build (the new tower is selected, so
-  its status and upgrade tree show) or on a click on a tower (that tower is selected).
+- **Placing ends** on Esc or a click that builds nothing (welcome text), on a successful build (the
+  new tower is selected, so its status and upgrade tree show) or on a click on a tower (that tower
+  is selected).
 - **With nothing selected, the pane shows the welcome text.** A hover never leaves a sheet
   behind.
 - Sell and Pin stay visible for the whole time a tower is selected: nothing hides them any more.
@@ -120,6 +119,8 @@ the welcome text. Any change to the content of the live tower or enemy sheet.
 - **The placing sheet lasts until placing ends, and a build selects the new tower.** The
   preview hiding after each build is accepted. *Rejected:* returning to the welcome text after a
   build, and selecting for the pane without opening the upgrade tree.
+- **A click that builds nothing still ends placing**, as before: a missed click is a common way
+  to cancel. *Rejected:* keeping placing alive after a click on a cell you can't build on.
 - **Every shop button opens its popup while placing**, the placed one included. That keeps one
   rule.
 - **Shop popup:** the shop sheet without the shot-mechanics rows, plus the shortcut key. No

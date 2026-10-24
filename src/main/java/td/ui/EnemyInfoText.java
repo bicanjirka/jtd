@@ -4,7 +4,7 @@ import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMobVisitor;
 import td.ui.render.InfoSheet;
 
-/** The info-panel sheet for an enemy under the pointer in the wave preview. */
+/** The tooltip of an enemy under the pointer in the wave preview. */
 final class EnemyInfoText implements EnemyMobVisitor<InfoSheet> {
 
     @Override
