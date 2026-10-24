@@ -281,6 +281,7 @@ public class GameEngine {
         }
         this.gameWorld.projectiles().doTick(time);
         this.gameWorld.zones().doTick(time);
+        this.gameWorld.playtestHooks().doTick(time);
         List<Tower> towers = this.gameWorld.towers().all();
         boolean emissionChanged = false;
         for (Tower tower : towers) {

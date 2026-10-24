@@ -164,6 +164,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.boardRenderer = new BoardRenderer(this.gameWorld);
         this.gameWorld.economy().addEconomyListener(this);
         this.gameWorld.economy().addEconomyListener(this.devControls);
+        this.gameWorld.playtestHooks().add(this.devControls::doTick);
         this.gameBoard = new GameBoard(this, this.gameWorld);
         initComponents();
         this.tooltips = new TooltipLayer(this.getLayeredPane(), TooltipDelays.standard());

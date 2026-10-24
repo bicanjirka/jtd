@@ -2,10 +2,11 @@ package td.tower;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
-import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyRegistry;
 import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
@@ -28,8 +29,8 @@ import td.tower.splash.DoomHex;
 import td.tower.splash.FireControlMechanic;
 import td.tower.splash.Hex;
 import td.tower.splash.HexActions;
-import td.tower.splash.HexEvent;
-import td.tower.splash.HexLedger;
+import td.tower.splash.HexCaster;
+import td.tower.splash.HexKeeper;
 import td.tower.splash.HexMechanic;
 import td.tower.splash.HexPick;
 import td.tower.splash.HexScene;
@@ -49,7 +50,6 @@ import td.tower.splash.ShotResult;
 import td.tower.splash.SplashMechanic;
 import td.tower.splash.SplashShot;
 import td.tower.splash.SplashSpec;
-import td.tower.splash.SympathyCopier;
 import td.tower.splash.SympathyHex;
 import td.tower.splash.ThunderclapMechanic;
 import td.tower.splash.ThunderstrikeMechanic;
@@ -82,6 +82,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Cheap, instant, never misses: it picks a visible enemy in range and blasts everything around it,
@@ -107,10 +108,6 @@ public final class SplashTower extends AbstractTower {
     private static final TermText SATURATED_BLAST_DEED = TermText.format("blasts on {}", EffectKind.SATURATED);
     /** How far above its target a Thunderstrike's bolt is drawn from. */
     private static final float THUNDERSTRIKE_HEIGHT_CELLS = 2f;
-    /** How far, in cells before the blast radius bonus, a curse spreads or shares. */
-    private static final float SPREAD_CELLS = 1.5f;
-    /** How often a hex may jump at most. */
-    private static final int MAX_JUMPS = 2;
     private static final TargetSelector THUNDERSTRIKE_AIM = PreferringSelector.priority(new HighestHealthSelector());
     private static final int SATURATED_BLASTS_NEEDED = 45;
     private static final float CLOUD_RADIUS_CELLS = 1.5f;
@@ -219,9 +216,9 @@ public final class SplashTower extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedMechanics<SplashMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final TargetSelector randomAim;
-    private final HexActions hexActions = new Hexing();
+    private final Hexing hexing = new Hexing();
     private final HexTurn hexTurn = new HexTurn();
-    private final HexLedger hexLedger = new HexLedger();
+    private final HexKeeper hexKeeper = new HexKeeper(this.hexing);
     private final FireClock clock = new FireClock(COOLDOWN_MAX);
     private List<Blast> blasts = List.of();
     private List<Trace> arcs = List.of();
@@ -288,12 +285,8 @@ public final class SplashTower extends AbstractTower {
     public void doTick(int gameTime) {
         this.currentTick = gameTime;
         List<SplashMechanic> owned = this.mechanics.all();
-        if (!this.hexLedger.isEmpty()) {
-            SplashSpec spec = this.spec(owned);
-            this.settleHexes(spec);
-            if (gameTime % TICKS_PER_SECOND == 0) {
-                this.sympathize(spec);
-            }
+        if (!this.hexKeeper.isEmpty()) {
+            this.hexKeeper.doTick(gameTime, this.spec(owned).hexes());
         }
         if (this.clock.isReady()) {
             SplashSpec spec = this.spec(owned);
@@ -323,7 +316,7 @@ public final class SplashTower extends AbstractTower {
         }
         float blastRadius = this.blastRadius();
         Optional<HexPick> pick = this.hexTurn.take(hexes.pool(), new HexScene(inReach, blastRadius,
-                this.distance(SPREAD_CELLS), this.distance(HexSpec.SHARE_CELLS)));
+                this.distance(ContagionHex.SPREAD_CELLS), this.distance(HexSpec.SHARE_CELLS)));
         if (pick.isEmpty()) {
             return false;
         }
@@ -339,7 +332,7 @@ public final class SplashTower extends AbstractTower {
         List<Trace> traces = new ArrayList<>();
         for (EnemyMob cursed : this.cursedBy(hex, target, hexes.cursesPerCast(), blastRadius)) {
             traces.add(new Trace(this.centerX, this.centerY, (float) cursed.getX(), (float) cursed.getY()));
-            hex.cast(cursed, hexes, this.hexActions);
+            hex.cast(cursed, hexes, this.hexing);
         }
         this.casts = List.copyOf(traces);
         return true;
@@ -362,38 +355,6 @@ public final class SplashTower extends AbstractTower {
         return cells * this.context.getBoard().scale() * this.distanceScale();
     }
 
-    private static boolean near(EnemyMob a, EnemyMob b, float distance) {
-        return Math.hypot(a.getX() - b.getX(), a.getY() - b.getY()) <= distance;
-    }
-
-    /**
-     * Pays out what happened to the hexes: a Doom that ran out lands its share of what the enemy
-     * took under it, a Reckoning carrier that died releases the Dooms near it, and a Contagion
-     * carrier that died passes its curses on.
-     */
-    private void settleHexes(SplashSpec spec) {
-        for (HexEvent event : this.hexLedger.settle()) {
-            switch (event) {
-                case HexEvent.Ended ended -> {
-                    if (ended.kind() == EffectKind.DOOM) {
-                        this.payDoom(ended.enemy(), ended.stored(), spec);
-                    }
-                }
-                case HexEvent.Died died -> {
-                    if (spec.hexes().cursedCloud()) {
-                        this.leaveCloud(died.enemy());
-                    }
-                    if (died.carried(EffectKind.RECKONING).isPresent()) {
-                        this.reckon(died.enemy(), spec);
-                    }
-                    died.carried(EffectKind.CONTAGION)
-                            .filter(contagion -> contagion.generation() < MAX_JUMPS)
-                            .ifPresent(contagion -> this.spread(died, contagion.generation() + 1, spec));
-                }
-            }
-        }
-    }
-
     /** Mastery: a hexed enemy that died leaves a cloud that gives what stands in it the debuffs it carried. */
     private void leaveCloud(EnemyMob dead) {
         List<Effect> carried = dead.activeEffects().stream().filter(effect -> effect.kind().spreadsWithCurse()).toList();
@@ -403,82 +364,6 @@ public final class SplashTower extends AbstractTower {
         this.context.zones().add(Zone.cloud(dead.getX(), dead.getY(),
                 CLOUD_RADIUS_CELLS * this.context.getBoard().scale(), this.lengthened(CLOUD_TICKS), this::applyEffect,
                 carried));
-    }
-
-    /** Doom's payout: its share of the {@code stored} damage, as one magic hit that never crits. */
-    private void payDoom(EnemyMob enemy, long stored, SplashSpec spec) {
-        int payout = Math.round(stored * spec.hexes().doomShare());
-        if (payout > 0) {
-            this.dealPeriodicDamage(enemy, Damage.magic(payout));
-        }
-    }
-
-    /**
-     * Reckoning: every Doom of this Hexer's within reach of the enemy that died pays out now, and
-     * starts again at its full length.
-     */
-    private void reckon(EnemyMob dead, SplashSpec spec) {
-        Optional<Hex> doom = spec.hexes().hexOf(EffectKind.DOOM);
-        float distance = this.distance(HexSpec.SHARE_CELLS);
-        for (EnemyMob enemy : this.hexLedger.carriers(EffectKind.DOOM)) {
-            if (doom.isEmpty() || enemy == dead || !near(enemy, dead, distance)) {
-                continue;
-            }
-            this.payDoom(enemy, this.hexLedger.restart(enemy, EffectKind.DOOM), spec);
-            if (!enemy.isDead()) {
-                int ticks = doom.get().ticksOn(enemy);
-                this.applyEffect(enemy, sink -> Effect.hex(EffectKind.DOOM, ticks, sink));
-            }
-        }
-    }
-
-    /**
-     * Sympathy: each carrier tops up the other enemies that carry any of this Hexer's hexes, within
-     * reach of it, to the debuffs it has itself.
-     */
-    private void sympathize(SplashSpec spec) {
-        List<EnemyMob> carriers = this.hexLedger.carriers(EffectKind.SYMPATHY);
-        if (carriers.isEmpty()) {
-            return;
-        }
-        float distance = this.distance(HexSpec.SHARE_CELLS);
-        List<EnemyMob> hexed = this.hexLedger.hexed();
-        for (EnemyMob carrier : carriers) {
-            for (EnemyMob other : hexed) {
-                if (other != carrier && near(other, carrier, distance)) {
-                    SympathyCopier.missingFrom(carrier, other).forEach(other::applyEffect);
-                }
-            }
-        }
-    }
-
-    /**
-     * Contagion: the dead enemy's hexes from this Hexer, and every debuff on it a curse carries,
-     * jump to the nearest enemies that carry no hex, with the time they had left.
-     */
-    private void spread(HexEvent.Died died, int generation, SplashSpec spec) {
-        EnemyMob dead = died.enemy();
-        float distance = this.distance(SPREAD_CELLS);
-        List<Effect> carried = dead.activeEffects();
-        List<EnemyMob> next = InRangeTargetQuery.everyone((int) dead.getX(), (int) dead.getY(), distance)
-                .matching(this.context.enemies()).stream()
-                .filter(enemy -> enemy != dead && enemy.activeEffectKinds().stream()
-                        .noneMatch(kind -> kind.category() == EffectCategory.HEX))
-                .sorted(Comparator.comparingDouble(enemy -> Math.hypot(enemy.getX() - dead.getX(),
-                        enemy.getY() - dead.getY())))
-                .limit(ContagionHex.TARGETS)
-                .toList();
-        for (EnemyMob enemy : next) {
-            for (Effect effect : carried) {
-                if (effect.kind().spreadsWithCurse()) {
-                    enemy.applyEffect(effect);
-                } else if (died.carried(effect.kind()).isPresent()) {
-                    int ticks = effect.remainingTicks();
-                    this.applyEffect(enemy, sink -> Effect.hex(effect.kind(), ticks, sink));
-                    this.hexLedger.record(enemy, effect.kind(), generation);
-                }
-            }
-        }
     }
 
     private TargetSelector aimFor(SplashSpec spec) {
@@ -756,13 +641,38 @@ public final class SplashTower extends AbstractTower {
         return visitor.visitSplashTower(this);
     }
 
-    /** What the hexes may make this tower do. */
-    private final class Hexing implements HexActions {
+    /** What the hexes may make this tower do, as they are cast and as they pay out. */
+    private final class Hexing implements HexActions, HexCaster {
 
         @Override
         public void curse(EnemyMob target, EffectKind kind, int ticks) {
             SplashTower.this.applyEffect(target, sink -> Effect.hex(kind, ticks, sink));
-            SplashTower.this.hexLedger.record(target, kind);
+            SplashTower.this.hexKeeper.record(target, kind);
+        }
+
+        @Override
+        public void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
+            SplashTower.this.applyEffect(target, effect);
+        }
+
+        @Override
+        public void dealPeriodicDamage(EnemyMob target, Damage damage) {
+            SplashTower.this.dealPeriodicDamage(target, damage);
+        }
+
+        @Override
+        public float distance(float cells) {
+            return SplashTower.this.distance(cells);
+        }
+
+        @Override
+        public EnemyRegistry enemies() {
+            return SplashTower.this.context.enemies();
+        }
+
+        @Override
+        public void leaveCloud(EnemyMob dead) {
+            SplashTower.this.leaveCloud(dead);
         }
 
         @Override

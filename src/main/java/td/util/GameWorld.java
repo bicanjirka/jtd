@@ -36,6 +36,7 @@ public class GameWorld {
     private final ProjectileRoster projectiles = new ProjectileRoster();
     private final ZoneRoster zones;
     private final PlaytestRules playtestRules = new PlaytestRules();
+    private final PlaytestHooks playtestHooks = new PlaytestHooks();
     private final WaveAnnouncer waves = new WaveAnnouncer();
     private final DamageTally damageTally = new DamageTally();
     private final DisruptionField disruptions = new DisruptionField();
@@ -57,6 +58,11 @@ public class GameWorld {
 
     public PlaytestRules playtestRules() {
         return this.playtestRules;
+    }
+
+    /** The dev panel's own work on the board, run every tick. */
+    public PlaytestHooks playtestHooks() {
+        return this.playtestHooks;
     }
 
     public EconomyLedger economy() {

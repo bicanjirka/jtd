@@ -17,6 +17,10 @@ public final class ContagionHex implements Hex {
 
     /** How many enemies a Contagion jumps to. */
     public static final int TARGETS = 2;
+    /** How far, in cells before the blast radius bonus, a curse spreads. */
+    public static final float SPREAD_CELLS = 1.5f;
+    /** How often a hex may jump at most. */
+    static final int MAX_JUMPS = 2;
 
     @Override
     public EffectKind kind() {
