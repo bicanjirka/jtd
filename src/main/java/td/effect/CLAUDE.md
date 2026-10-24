@@ -116,7 +116,7 @@
 2. A named `Effect` factory if towers or abilities apply it.
 3. An `EffectTemplate` if abilities author it.
 4. The cases the compiler forces (`EnemyFrameBuilder.markerPaletteFor`, `Java2DFrameRenderer.colorFor`,
-   `EffectSentences.of`, `TermLooks.effect`, `ActiveEffects.magnitude`).
+   `EffectSentences.of`, `TermLooks.effect`, `ActiveEffects.magnitude`, `DevEffects.offer`).
 5. An `EffectPictograms` row (else it shows its monogram).
 
 A plain stat debuff needs no other code; a rule between kinds is a row in `EffectInteractions`.

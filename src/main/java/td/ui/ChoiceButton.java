@@ -23,7 +23,8 @@ import java.util.Optional;
 /**
  * A button showing the chosen item's icon and title in its colours; a click opens the list of every item, all of it
  * in view. The list takes the keys while it is open: arrows, Page Up/Down, Home and End move, a letter or digit jumps
- * to the next title with a word it starts, Enter or Space takes the row and Esc closes it.
+ * to the next title with a word it starts, Enter or Space takes the row and Esc closes it. Every way of moving passes
+ * over an item that can't be taken.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class ChoiceButton<T> {
@@ -43,18 +44,19 @@ final class ChoiceButton<T> {
     ChoiceButton(Choices<T> choices, T initial, Runnable onClosed) {
         this.choices = choices;
         this.onClosed = onClosed;
-        this.list = new SuggestionList(index -> Optional.of(this.choices.lookAt(index)), this::take);
+        this.list = new SuggestionList(index -> Optional.of(this.choices.lookAt(index)),
+                index -> this.choices.usableAt(index), this::take);
         this.list.setFocusable(true);
         this.list.setFocusTraversalKeysEnabled(false);
         this.bind(KeyEvent.VK_UP, () -> this.list.move(-1));
         this.bind(KeyEvent.VK_DOWN, () -> this.list.move(1));
         this.bind(KeyEvent.VK_LEFT, () -> this.list.moveAcross(-1));
         this.bind(KeyEvent.VK_RIGHT, () -> this.list.moveAcross(1));
-        this.bind(KeyEvent.VK_PAGE_UP, () -> this.list.select(Math.max(0, this.list.selectedIndex() - this.list.visibleRows())));
-        this.bind(KeyEvent.VK_PAGE_DOWN, () -> this.list.select(
+        this.bind(KeyEvent.VK_PAGE_UP, () -> this.list.selectNear(Math.max(0, this.list.selectedIndex() - this.list.visibleRows())));
+        this.bind(KeyEvent.VK_PAGE_DOWN, () -> this.list.selectNear(
                 Math.min(this.list.rowCount() - 1, this.list.selectedIndex() + this.list.visibleRows())));
-        this.bind(KeyEvent.VK_HOME, () -> this.list.select(0));
-        this.bind(KeyEvent.VK_END, () -> this.list.select(this.list.rowCount() - 1));
+        this.bind(KeyEvent.VK_HOME, () -> this.list.selectNear(0));
+        this.bind(KeyEvent.VK_END, () -> this.list.selectNear(this.list.rowCount() - 1));
         this.bind(KeyEvent.VK_ENTER, this::take);
         this.bind(KeyEvent.VK_SPACE, this::take);
         this.bind(KeyEvent.VK_ESCAPE, () -> {
@@ -114,6 +116,9 @@ final class ChoiceButton<T> {
     }
 
     private void take() {
+        if (!this.choices.usableAt(this.list.selectedIndex())) {
+            return;
+        }
         this.show(this.choices.itemAt(this.list.selectedIndex()));
         this.close();
         this.onClosed.run();
@@ -123,13 +128,13 @@ final class ChoiceButton<T> {
         this.list.takeDown();
     }
 
-    /** Highlights the next row after the highlighted one with a word {@code key} starts, wrapping round. */
+    /** Highlights the next row that can be taken after the highlighted one with a word {@code key} starts, wrapping round. */
     private void jumpTo(char key) {
         List<Candidate> rows = this.choices.rows();
         String start = String.valueOf(key).toLowerCase(Locale.ROOT);
         for (int step = 1; step <= rows.size(); step++) {
             int index = (this.list.selectedIndex() + step) % rows.size();
-            if (Arrays.stream(rows.get(index).text().toLowerCase(Locale.ROOT).split(" "))
+            if (this.choices.usableAt(index) && Arrays.stream(rows.get(index).text().toLowerCase(Locale.ROOT).split(" "))
                     .anyMatch(word -> word.startsWith(start))) {
                 this.list.select(index);
                 return;

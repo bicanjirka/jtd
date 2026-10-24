@@ -1,6 +1,8 @@
 package td;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackOrigin;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageUnits;
 import td.effect.EffectKind;
@@ -219,6 +221,66 @@ class DevControlsTest {
 
 
     @Test
+    void anEffectThatDoesNotTakeHoldIsReportedOnceTheGameLoopRunsIt() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.spawnAndSelectOne();
+        this.dev.applyEffectToEnemy(EffectKind.INVERSION, 5, 1);
+        this.dev.runPending();
+        long before = this.dev.report().serial();
+
+        this.dev.applyEffectToEnemy(EffectKind.SHIELD, 5, 50);
+        this.dev.runPending();
+
+        assertThat(this.dev.report().serial()).isGreaterThan(before);
+        assertThat(this.dev.report().text()).startsWith(EffectKind.SHIELD.title() + " didn't take hold");
+    }
+
+    @Test
+    void aDamageEffectFromThePanelHurtsTheEnemy() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        EnemyMob mob = this.spawnAndSelectOne();
+        int full = mob.getHealth();
+
+        this.dev.applyEffectToEnemy(EffectKind.POISON, 5, 5);
+        this.dev.runPending();
+        for (int t = 1; t <= 20; t++) {
+            this.engine.doTick(t);
+        }
+
+        assertThat(mob.getHealth()).isLessThan(full);
+    }
+
+    @Test
+    void aChargeFromThePanelDischargesIntoTheEnemyWhenAnotherAttackerHitsIt() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.spawnWave("2 simple", Rank.GRUNT, 0);
+        this.dev.runPending();
+        EnemyMob charged = this.world.enemies().getEnemies()[0];
+        EnemyMob plain = this.world.enemies().getEnemies()[1];
+        this.selectFirstEnemy();
+        this.dev.applyEffectToEnemy(EffectKind.CHARGED, 5, 1);
+        this.dev.runPending();
+        AttackProfile tower = AttackProfile.none().withOrigin(AttackOrigin.fresh());
+
+        charged.doDamage(Damage.magic(charged.getHealth() / 4), tower);
+        plain.doDamage(Damage.magic(plain.getHealth() / 4), tower);
+
+        assertThat(charged.getHealth()).isLessThan(plain.getHealth());
+    }
+
+    @Test
+    void anEffectThePanelCannotMakeWorkIsRefusedWithItsReason() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.spawnAndSelectOne();
+
+        String message = this.dev.applyEffectToEnemy(EffectKind.STILLED, 5, 1);
+        this.dev.runPending();
+
+        assertThat(message).isEqualTo(EffectKind.STILLED.title() + " " + DevEffects.whyUnusable(EffectKind.STILLED).orElseThrow());
+        assertThat(this.world.enemies().getEnemies()[0].hasEffect(EffectKind.STILLED)).isFalse();
+    }
+
+    @Test
     void clearingTheSelectedEnemysEffectsEndsThemAll() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         this.dev.spawnWave("simple", Rank.GRUNT, 0);
@@ -327,6 +389,13 @@ class DevControlsTest {
         assertThat(withoutSelection).isEqualTo("Select a tower first");
         assertThat(withSelection).startsWith("Granted " + TowerTerm.HASTE.title());
         assertThat(tower.conditions()).extracting(TowerBuffState::term).contains(TowerTerm.HASTE);
+    }
+
+    private EnemyMob spawnAndSelectOne() {
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
+        this.dev.runPending();
+        this.selectFirstEnemy();
+        return this.world.enemies().getEnemies()[0];
     }
 
     private void selectFirstEnemy() {
