@@ -34,6 +34,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.Serial;
@@ -54,8 +56,9 @@ import java.util.stream.IntStream;
  * and show the cell grid. Board changes go to {@link DevControls}; changes to the level's lifecycle
  * go up through the {@code onX} setters.
  * <p>
- * Every control has an Alt shortcut, which {@link #runShortcut} runs for the frame. A shortcut on a
- * field gives it the focus; Enter applies it and hands the keys back to the board, as Esc does.
+ * Every control has an Alt shortcut, which {@link #runShortcut} runs for the frame; holding Alt shows each one's
+ * chip ({@link #revealChips}). A shortcut on a field gives it the focus; Enter applies it and hands the keys back to
+ * the board, as Esc does, and while a field has the focus the button Enter presses shows the Enter chip.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelDev extends JPanel {
@@ -124,11 +127,14 @@ public class PanelDev extends JPanel {
     private final JLabel speed = label("");
     private final JLabel status = label(" ");
     private final List<Shortcut> shortcuts = new ArrayList<>();
+    private final List<HudButton> submitButtons = new ArrayList<>();
 
     private GameWorld world;
     private DevControls dev;
     private DevSelection shownSelection = DevSelection.none();
     private long shownReport;
+    private boolean chipsRevealed = false;
+    private Optional<HudButton> enterTarget = Optional.empty();
     private Runnable onSkipWave = () -> {
     };
     private IntConsumer onJumpToWave = wave -> {
@@ -309,19 +315,41 @@ public class PanelDev extends JPanel {
             return false;
         }
         Optional<Shortcut> match = this.shortcuts.stream().filter(s -> s.stroke().equals(stroke)).findFirst();
-        match.ifPresent(s -> s.action().run());
+        match.ifPresent(s -> s.target().press().run());
         return match.isPresent();
+    }
+
+    /**
+     * Shows every control's Alt chip while {@code revealed}, drawn over the controls so nothing moves; hidden, the
+     * Enter chip comes back on the button of a focused field.
+     */
+    public void revealChips(boolean revealed) {
+        if (revealed != this.chipsRevealed) {
+            this.chipsRevealed = revealed;
+            this.refreshChips();
+        }
+    }
+
+    private void refreshChips() {
+        this.submitButtons.forEach(button -> button.setFace(button.face().withOverlayChip("")));
+        for (Shortcut shortcut : this.shortcuts) {
+            shortcut.target().chip().accept(this.chipsRevealed ? chipLabel(shortcut.stroke()) : "");
+        }
+        if (!this.chipsRevealed) {
+            this.enterTarget.ifPresent(button -> button.setFace(button.face().withOverlayChip(GameKey.CONFIRM.chip())));
+        }
     }
 
     /** Every shortcut and what the panel's controls do, for the info pane. */
     String helpText() {
         StringBuilder text = new StringBuilder("""
                 Dev panel - ctrl+shift+d
-                Alt+key presses a control. On
-                a field it takes the focus;
-                enter applies it, and enter
-                or esc gives the keys back
-                to the board.
+                Alt+key presses a control;
+                hold alt to see each key on
+                its control. On a field it
+                takes the focus; enter applies
+                it, and enter or esc gives the
+                keys back to the board.
                 """);
         String group = "";
         for (Shortcut shortcut : this.shortcuts) {
@@ -332,11 +360,6 @@ public class PanelDev extends JPanel {
             text.append(keyName(shortcut.stroke())).append("  ").append(shortcut.name()).append('\n');
         }
         text.append("""
-
-                Bare keys, while open:
-                n  skip wave
-                x  spawn next catalog enemy
-                c  +1000 credits
 
                 The script is a level's wave
                 script, as in "3 elite swarm
@@ -392,14 +415,6 @@ public class PanelDev extends JPanel {
         setBackground(Hud.BACKGROUND);
         setBorder(Hud.panelBorder("Dev · ctrl+shift+d · alt+h help"));
 
-        this.submitOnEnter(this.credits, this::setCredits);
-        this.submitOnEnter(this.lives, this::setLives);
-        this.submitOnEnter(this.script, this::spawn);
-        this.submitOnEnter(this.jumpTo, this::jump);
-        this.submitOnEnter(this.xp, this::grantXp);
-        this.submitOnEnter(this.enemyHealth, this::setEnemyHealth);
-        this.effectFields.textFields().forEach(field -> this.submitOnEnter(field, this::applyEffect));
-        this.buffFields.textFields().forEach(field -> this.submitOnEnter(field, this::applyBuff));
         this.script.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -449,8 +464,10 @@ public class PanelDev extends JPanel {
         HudButton clearAll = button("Clear all", () -> this.dev.clearAll());
         HudButton save = button("Save", () -> this.onSaveGame.run());
         HudButton load = button("Load", () -> this.onLoadGame.run());
-        this.section(1, "Level", row(skip, gap(), label("Wave"), this.jumpTo, button("Go", this::jump), gap(),
-                killAll, clearAll, gap(), label("Health %"), this.enemyHealth, button("Set", this::setEnemyHealth),
+        HudButton go = button("Go", this::jump);
+        HudButton setHealth = button("Set", this::setEnemyHealth);
+        this.section(1, "Level", row(skip, gap(), label("Wave"), this.jumpTo, go, gap(),
+                killAll, clearAll, gap(), label("Health %"), this.enemyHealth, setHealth,
                 gap(), save, load, gap(), restart));
 
         HudButton slowerByFive = button("-5", () -> this.onNudgeSpeed.accept(-5));
@@ -479,8 +496,9 @@ public class PanelDev extends JPanel {
             this.dev.snapshotObserved();
             this.showMessage("Writing a snapshot of every observed enemy");
         });
+        HudButton spawn = button("Spawn", this::spawn);
         spawnRow.add(row(this.script, this.rankChoice.component(), this.pathChoice.component(), this.observeSpawns,
-                button("Spawn", this::spawn), snapshot));
+                spawn, snapshot));
         GridBagConstraints previewCell = new GridBagConstraints();
         previewCell.weightx = 1.0;
         previewCell.fill = GridBagConstraints.HORIZONTAL;
@@ -523,42 +541,51 @@ public class PanelDev extends JPanel {
         boardRow.add(help, new GridBagConstraints());
         this.section(5, "Board", boardRow);
 
-        this.bind("Economy", alt(KeyEvent.VK_C), "credits", focus(this.credits));
-        this.bind("Economy", alt(KeyEvent.VK_L), "lives", focus(this.lives));
-        this.bind("Economy", alt(KeyEvent.VK_I), "infinite lives", infiniteLives::doClick);
-        this.bind("Economy", alt(KeyEvent.VK_B), "free build", freeBuild::doClick);
-        this.bind("Level", alt(KeyEvent.VK_N), "skip wave", skip::doClick);
-        this.bind("Level", altShift(KeyEvent.VK_R), "restart level", restart::doClick);
-        this.bind("Level", alt(KeyEvent.VK_J), "jump to wave", focus(this.jumpTo));
-        this.bind("Level", alt(KeyEvent.VK_K), "kill all", killAll::doClick);
-        this.bind("Level", altShift(KeyEvent.VK_K), "clear all", clearAll::doClick);
-        this.bind("Level", alt(KeyEvent.VK_E), "enemy health %", focus(this.enemyHealth));
-        this.bind("Level", alt(KeyEvent.VK_V), "save the game between waves", save::doClick);
-        this.bind("Level", alt(KeyEvent.VK_O), "load the saved game", load::doClick);
-        this.bind("Speed", alt(KeyEvent.VK_T), "step one tick", step::doClick);
-        this.bind("Speed", altShift(KeyEvent.VK_COMMA), "5 ticks/s slower", slowerByFive::doClick);
-        this.bind("Speed", alt(KeyEvent.VK_COMMA), "1 tick/s slower", slower::doClick);
-        this.bind("Speed", alt(KeyEvent.VK_PERIOD), "1 tick/s faster", faster::doClick);
-        this.bind("Speed", altShift(KeyEvent.VK_PERIOD), "5 ticks/s faster", fasterByFive::doClick);
-        this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", focus(this.script));
-        this.bind("Spawn", alt(KeyEvent.VK_R), "choose the rank", this.rankChoice::toggle);
-        this.bind("Spawn", alt(KeyEvent.VK_P), "choose the path", this.pathChoice::toggle);
-        this.bind("Spawn", altShift(KeyEvent.VK_S), "observe what it spawns", this.observeSpawns::doClick);
-        this.bind("Spawn", altShift(KeyEvent.VK_M), "snapshot every observed enemy", snapshot::doClick);
-        this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates::doClick);
-        this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", focus(this.xp));
-        this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset::doClick);
-        this.bind("Tower", alt(KeyEvent.VK_Y), "choose the buff or debuff", this.buffChoice::toggle);
-        this.bind("Tower", altShift(KeyEvent.VK_Y), "grant the buff or debuff", applyBuff::doClick);
-        this.bind("Enemy", alt(KeyEvent.VK_F), "choose the effect", this.effectChoice::toggle);
-        this.bind("Enemy", altShift(KeyEvent.VK_F), "apply the effect", applyEffect::doClick);
-        this.bind("Enemy", alt(KeyEvent.VK_D), "clear its effects", clearEffects::doClick);
-        this.bind("Enemy", alt(KeyEvent.VK_Q), "kill", kill::doClick);
-        this.bind("Enemy", alt(KeyEvent.VK_W), "heal to full", heal::doClick);
-        this.bind("Enemy", altShift(KeyEvent.VK_Q), "remove", remove::doClick);
-        this.bind("Enemy", alt(KeyEvent.VK_M), "observe it", this.observeSelected::doClick);
-        this.bind("Board", alt(KeyEvent.VK_G), "cell grid", this.cellGridToggle::doClick);
-        this.bind("Board", alt(KeyEvent.VK_H), "this help", help::doClick);
+        this.submitOnEnter(this.credits, setCredits, this::setCredits);
+        this.submitOnEnter(this.lives, setLives, this::setLives);
+        this.submitOnEnter(this.script, spawn, this::spawn);
+        this.submitOnEnter(this.jumpTo, go, this::jump);
+        this.submitOnEnter(this.xp, grant, this::grantXp);
+        this.submitOnEnter(this.enemyHealth, setHealth, this::setEnemyHealth);
+        this.effectFields.textFields().forEach(field -> this.submitOnEnter(field, applyEffect, this::applyEffect));
+        this.buffFields.textFields().forEach(field -> this.submitOnEnter(field, applyBuff, this::applyBuff));
+
+        this.bind("Economy", alt(KeyEvent.VK_C), "credits", this.credits);
+        this.bind("Economy", alt(KeyEvent.VK_L), "lives", this.lives);
+        this.bind("Economy", alt(KeyEvent.VK_I), "infinite lives", infiniteLives);
+        this.bind("Economy", alt(KeyEvent.VK_B), "free build", freeBuild);
+        this.bind("Level", alt(KeyEvent.VK_N), "skip wave", skip);
+        this.bind("Level", altShift(KeyEvent.VK_R), "restart level", restart);
+        this.bind("Level", alt(KeyEvent.VK_J), "jump to wave", this.jumpTo);
+        this.bind("Level", alt(KeyEvent.VK_K), "kill all", killAll);
+        this.bind("Level", altShift(KeyEvent.VK_K), "clear all", clearAll);
+        this.bind("Level", alt(KeyEvent.VK_E), "enemy health %", this.enemyHealth);
+        this.bind("Level", alt(KeyEvent.VK_V), "save the game between waves", save);
+        this.bind("Level", alt(KeyEvent.VK_O), "load the saved game", load);
+        this.bind("Speed", alt(KeyEvent.VK_T), "step one tick", step);
+        this.bind("Speed", altShift(KeyEvent.VK_COMMA), "5 ticks/s slower", slowerByFive);
+        this.bind("Speed", alt(KeyEvent.VK_COMMA), "1 tick/s slower", slower);
+        this.bind("Speed", alt(KeyEvent.VK_PERIOD), "1 tick/s faster", faster);
+        this.bind("Speed", altShift(KeyEvent.VK_PERIOD), "5 ticks/s faster", fasterByFive);
+        this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", this.script);
+        this.bind("Spawn", alt(KeyEvent.VK_R), "choose the rank", this.rankChoice);
+        this.bind("Spawn", alt(KeyEvent.VK_P), "choose the path", this.pathChoice);
+        this.bind("Spawn", altShift(KeyEvent.VK_S), "observe what it spawns", this.observeSpawns);
+        this.bind("Spawn", altShift(KeyEvent.VK_M), "snapshot every observed enemy", snapshot);
+        this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates);
+        this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", this.xp);
+        this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset);
+        this.bind("Tower", alt(KeyEvent.VK_Y), "choose the buff or debuff", this.buffChoice);
+        this.bind("Tower", altShift(KeyEvent.VK_Y), "grant the buff or debuff", applyBuff);
+        this.bind("Enemy", alt(KeyEvent.VK_F), "choose the effect", this.effectChoice);
+        this.bind("Enemy", altShift(KeyEvent.VK_F), "apply the effect", applyEffect);
+        this.bind("Enemy", alt(KeyEvent.VK_D), "clear its effects", clearEffects);
+        this.bind("Enemy", alt(KeyEvent.VK_Q), "kill", kill);
+        this.bind("Enemy", alt(KeyEvent.VK_W), "heal to full", heal);
+        this.bind("Enemy", altShift(KeyEvent.VK_Q), "remove", remove);
+        this.bind("Enemy", alt(KeyEvent.VK_M), "observe it", this.observeSelected);
+        this.bind("Board", alt(KeyEvent.VK_G), "cell grid", this.cellGridToggle);
+        this.bind("Board", alt(KeyEvent.VK_H), "this help", help);
 
         this.refresh();
     }
@@ -608,13 +635,30 @@ public class PanelDev extends JPanel {
     }
 
     /**
-     * Enter runs {@code action}; once it applies, the keys go back to the board, so a typed
-     * command reads like a shortcut. A field whose text didn't apply keeps the focus.
+     * Enter runs {@code action}, as pressing {@code button} does; once it applies, the keys go back to the board, so
+     * a typed command reads like a shortcut. A field whose text didn't apply keeps the focus. While the field has the
+     * focus, {@code button} shows the Enter chip.
      */
-    private void submitOnEnter(HudTextField field, BooleanSupplier action) {
+    private void submitOnEnter(HudTextField field, HudButton button, BooleanSupplier action) {
         field.addActionListener(evt -> {
             if (action.getAsBoolean()) {
                 this.onReleaseFocus.run();
+            }
+        });
+        if (!this.submitButtons.contains(button)) {
+            this.submitButtons.add(button);
+        }
+        field.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent evt) {
+                PanelDev.this.enterTarget = Optional.of(button);
+                PanelDev.this.refreshChips();
+            }
+
+            @Override
+            public void focusLost(FocusEvent evt) {
+                PanelDev.this.enterTarget = Optional.empty();
+                PanelDev.this.refreshChips();
             }
         });
     }
@@ -694,15 +738,39 @@ public class PanelDev extends JPanel {
         }
     }
 
-    private void bind(String group, KeyStroke stroke, String name, Runnable action) {
-        this.shortcuts.add(new Shortcut(group, stroke, name, action));
+    /** A shortcut that presses {@code control}; its chip shows on it. */
+    private void bind(String group, KeyStroke stroke, String name, HudButton control) {
+        this.shortcuts.add(new Shortcut(group, stroke, name, new ShortcutTarget(control::doClick,
+                label -> control.setFace(control.face().withOverlayChip(label)))));
     }
 
-    private static Runnable focus(HudTextField field) {
-        return () -> {
+    private void bind(String group, KeyStroke stroke, String name, HudToggleButton control) {
+        this.shortcuts.add(new Shortcut(group, stroke, name, new ShortcutTarget(control::doClick,
+                label -> control.setFace(control.face().withOverlayChip(label)))));
+    }
+
+    /** A shortcut that opens or closes {@code choice}'s list; its chip shows on the choice's button. */
+    private void bind(String group, KeyStroke stroke, String name, ChoiceButton<?> choice) {
+        this.shortcuts.add(new Shortcut(group, stroke, name, new ShortcutTarget(choice::toggle, choice::showChip)));
+    }
+
+    /** A shortcut that gives {@code field} the focus with its text selected; its chip shows on the field. */
+    private void bind(String group, KeyStroke stroke, String name, HudTextField field) {
+        this.shortcuts.add(new Shortcut(group, stroke, name, new ShortcutTarget(() -> {
             field.requestFocusInWindow();
             field.selectAll();
+        }, field::showChip)));
+    }
+
+    /** A stroke as its chip shows it: the key, after ⇧ when Shift is part of it. */
+    static String chipLabel(KeyStroke stroke) {
+        boolean shift = (stroke.getModifiers() & InputEvent.SHIFT_DOWN_MASK) != 0;
+        String key = switch (stroke.getKeyCode()) {
+            case KeyEvent.VK_COMMA -> ",";
+            case KeyEvent.VK_PERIOD -> ".";
+            default -> KeyEvent.getKeyText(stroke.getKeyCode());
         };
+        return (shift ? "⇧" : "") + key;
     }
 
     private static String sideLabel(Side side) {
@@ -805,6 +873,11 @@ public class PanelDev extends JPanel {
         return toggle;
     }
 
-    private record Shortcut(String group, KeyStroke stroke, String name, Runnable action) {
+    /** A key and the control it presses. */
+    private record Shortcut(String group, KeyStroke stroke, String name, ShortcutTarget target) {
+    }
+
+    /** What a shortcut presses, and how it shows a chip on that control, or takes it away given "". */
+    private record ShortcutTarget(Runnable press, Consumer<String> chip) {
     }
 }

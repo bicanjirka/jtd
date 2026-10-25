@@ -62,6 +62,7 @@ public class BoardOverlays {
         plate.add(label, labelConstraints);
 
         HudButton backToMenu = new HudButton("Back to menu");
+        backToMenu.setFace(ControlFace.button().withChip(GameKey.MENU.chip()));
         backToMenu.addActionListener(this::backToMenuActionPerformed);
         GridBagConstraints buttonConstraints = new GridBagConstraints();
         buttonConstraints.gridy = 1;

@@ -37,7 +37,7 @@ mvn test -Dtest=GameEngineTest#placingATowerOnABuildableCellChargesCreditsAndOcc
 The game opens on a level-select screen. Pick a level to start it; each level brings its own
 board size, path, wave list, starting credits and starting lives.
 
-Buy a tower from the toolbar on the right (or with `q`–`t`), then click a buildable
+Buy a tower from the toolbar (or with its key, `q`–`i`), then click a buildable
 cell to place it; hovering a toolbar button opens a tooltip of the tower, and the side panel shows
 it in full while you place it. The click that builds a tower selects it, as does clicking a placed
 tower later: the side panel shows its stats and its own upgrade
@@ -46,16 +46,20 @@ Start each wave yourself when you are ready — waves do not auto-advance.
 
 ### Controls
 
+Every button shows its key on a chip in its top-left corner.
+
 | Key                             | Action                                                                                               |
 |---------------------------------|------------------------------------------------------------------------------------------------------|
 | `q` `w` `e` `r` `t` `y` `u` `i` | Select tower 1–8 for placement                                                                       |
-| `Esc`                           | Cancel tower placement                                                                               |
+| `Esc`                           | Cancel tower placement; cancel a question                                                            |
 | `1`–`8`                         | Buy the selected tower's next upgrade step: 1 Core, 2 Range, 3 extra line, 4/5 the branches, 6–8 specials |
-| `s`                             | Start the next wave                                                                                  |
-| `p`                             | Pause / unpause                                                                                      |
-| `f`                             | Cycle tick speed (normal → fast → super fast → normal)                                               |
-| `m`                             | Back to the level-select menu (asks to confirm mid-level; `Esc` cancels)                             |
-| `Ctrl`+`Shift`+`D`              | Open or close the dev panel (playtesting controls; its **Help** button lists its own keys)           |
+| `Space`                         | Pause; while paused or between waves, play on at the last speed and send the next wave               |
+| `d` `f` `g`                     | Normal, fast, super fast speed; each also sends the next wave if it is waiting                       |
+| `Delete`                        | Sell the selected tower                                                                              |
+| `m`                             | Back to the level-select menu (asks to confirm mid-level)                                            |
+| `Enter`                         | Confirm a question                                                                                   |
+| `1`–`9` on the menu             | Start that level                                                                                     |
+| `Ctrl`+`Shift`+`D`              | Open or close the dev panel (playtesting controls; hold `Alt` to see their keys)                     |
 
 Mouse: move to preview placement, click to place or to select a placed tower. In the Upgrades panel,
 hovering a node shows what it does and what a click would do; a click buys it with every node it

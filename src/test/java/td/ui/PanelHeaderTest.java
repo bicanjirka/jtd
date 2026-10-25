@@ -2,6 +2,7 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import td.TickSpeed;
 import td.economy.EconomyState;
 import td.economy.StatusTerm;
 import td.enemy.Rank;
@@ -9,9 +10,13 @@ import td.level.LevelOutcome;
 import td.wave.RoundSummary;
 import td.wave.WaveProgress;
 
+import javax.swing.AbstractButton;
+
+import java.awt.Component;
+import java.awt.Container;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,25 +73,49 @@ class PanelHeaderTest {
     }
 
     @Test
-    void theSpeedButtonsReportTheirClicks() {
-        AtomicInteger clicks = new AtomicInteger();
-        this.header.onPlay(clicks::incrementAndGet);
-        this.header.onFast(() -> clicks.addAndGet(10));
-        this.header.onSuperFast(() -> clicks.addAndGet(100));
+    void theSpeedButtonsAndTheMenuButtonReportTheirClicks() {
+        List<String> clicked = new ArrayList<>();
+        this.header.onPause(() -> clicked.add("pause"));
+        this.header.onPlay(() -> clicked.add("play"));
+        this.header.onFast(() -> clicked.add("fast"));
+        this.header.onSuperFast(() -> clicked.add("super fast"));
+        this.header.onMenu(() -> clicked.add("menu"));
 
-        PanelHeaderTest.buttons(this.header).stream().filter(b -> !"❚❚".equals(b.getText())).forEach(HudButton::doClick);
+        PanelHeaderTest.buttons(this.header).forEach(AbstractButton::doClick);
 
-        assertThat(clicks.get()).isEqualTo(111);
+        assertThat(clicked).containsExactlyInAnyOrder("pause", "play", "fast", "super fast", "menu");
     }
 
     @Test
-    void playAndPauseShareOneSlotAndTheLoopDecidesWhichShows() {
-        this.header.setPlaying(true);
+    void onlyTheButtonOfTheSpeedShownIsSelectedAndNoneForARateBetweenPresets() {
+        this.header.showSpeed(TickSpeed.FAST);
 
-        assertThat(PanelHeaderTest.buttons(this.header).stream().filter(b -> "❚❚".equals(b.getText()))
-                .allMatch(HudButton::isVisible)).isTrue();
-        assertThat(PanelHeaderTest.buttons(this.header).stream().filter(b -> "▶".equals(b.getText()))
-                .noneMatch(HudButton::isVisible)).isTrue();
+        assertThat(this.selectedTexts()).containsExactly("▶▶");
+
+        this.header.showSpeed(TickSpeed.ofTicksPerSecond(30));
+
+        assertThat(this.selectedTexts()).isEmpty();
+    }
+
+    @Test
+    void everySpeedButtonAndTheMenuButtonShowTheirKeysOnChips() {
+        List<String> chips = PanelHeaderTest.buttons(this.header).stream().map(PanelHeaderTest::chipOf).toList();
+
+        assertThat(chips).containsExactlyInAnyOrder(GameKey.PAUSE.chip(), GameKey.PLAY.chip(), GameKey.FAST.chip(),
+                GameKey.SUPER_FAST.chip(), GameKey.MENU.chip());
+    }
+
+    private List<String> selectedTexts() {
+        return PanelHeaderTest.buttons(this.header).stream().filter(AbstractButton::isSelected)
+                .map(AbstractButton::getText).toList();
+    }
+
+    private static String chipOf(AbstractButton button) {
+        return switch (button) {
+            case HudButton push -> push.face().chip();
+            case HudToggleButton toggle -> toggle.face().chip();
+            default -> "";
+        };
     }
 
     @Test
@@ -108,12 +137,12 @@ class PanelHeaderTest {
         assertThat(eleven).isEqualTo(score);
     }
 
-    private static List<HudButton> buttons(java.awt.Container root) {
-        List<HudButton> found = new java.util.ArrayList<>();
-        for (java.awt.Component child : root.getComponents()) {
-            if (child instanceof HudButton button) {
+    private static List<AbstractButton> buttons(Container root) {
+        List<AbstractButton> found = new ArrayList<>();
+        for (Component child : root.getComponents()) {
+            if (child instanceof AbstractButton button) {
                 found.add(button);
-            } else if (child instanceof java.awt.Container container) {
+            } else if (child instanceof Container container) {
                 found.addAll(buttons(container));
             }
         }

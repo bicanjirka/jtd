@@ -42,8 +42,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * The level-select screen: one card per level with a path preview and its waves, credits and lives.
- * Clicking a card only calls the callback; loading the level is the caller's job.
+ * The level-select screen: one card per level with a path preview and its waves, credits and lives, the first nine
+ * with a digit key on a chip. Clicking a card or pressing its digit only calls the callback; loading the level is the
+ * caller's job.
  */
 public class PanelLevelSelect extends JPanel {
 
@@ -61,12 +62,19 @@ public class PanelLevelSelect extends JPanel {
     private static final Color PREVIEW_BACKGROUND = new Color(6, 9, 6);
     private static final Color PREVIEW_GRID_DOT = new Color(22, 30, 22);
     private static final int CARD_BORDER = 2;
+    private static final int CHIP_INSET = 8;
+    private static final int KEYED_CARDS = 9;
     private static final float HOVER_LIGHTEN = 0.35f;
 
     /** Cycled by card index. */
     private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE};
 
+    private final List<LevelDefinition> levels;
+    private final transient Consumer<LevelDefinition> onLevelSelected;
+
     public PanelLevelSelect(List<LevelDefinition> levels, Consumer<LevelDefinition> onLevelSelected) {
+        this.levels = List.copyOf(levels);
+        this.onLevelSelected = onLevelSelected;
         this.setLayout(new BorderLayout());
         this.setBackground(BACKGROUND);
         this.setBorder(new EmptyBorder(32, 32, 28, 32));
@@ -97,6 +105,20 @@ public class PanelLevelSelect extends JPanel {
         this.add(cards, BorderLayout.CENTER);
     }
 
+    /**
+     * Starts the level whose card shows {@code key}, as a click on it would.
+     *
+     * @return whether a card has that key
+     */
+    public boolean startByKey(char key) {
+        int index = key - '1';
+        if (index < 0 || index >= Math.min(KEYED_CARDS, this.levels.size())) {
+            return false;
+        }
+        this.onLevelSelected.accept(this.levels.get(index));
+        return true;
+    }
+
     private static JPanel buildCard(LevelDefinition level, int index, Consumer<LevelDefinition> onLevelSelected) {
         Color accent = ACCENTS[index % ACCENTS.length];
 
@@ -108,6 +130,16 @@ public class PanelLevelSelect extends JPanel {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 paintWatermark((Graphics2D) g, index, accent, this.getWidth(), this.getHeight());
+            }
+
+            /** The key chip over the path preview, which covers the card's own paint. */
+            @Override
+            protected void paintChildren(Graphics g) {
+                super.paintChildren(g);
+                if (index < KEYED_CARDS) {
+                    Hud.paintChip((Graphics2D) g, String.valueOf(index + 1), CHIP_INSET, CHIP_INSET,
+                            Hud.withAlpha(accent, 0.6f), accent);
+                }
             }
         };
         card.setBackground(CARD_BACKGROUND);

@@ -9,6 +9,7 @@ import javax.swing.text.BadLocationException;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.io.Serial;
 
@@ -27,6 +28,7 @@ final class HudTextField extends JTextField {
     private static final Color GHOST = new Color(100, 130, 100);
 
     private String ghost = "";
+    private String chip = "";
 
     HudTextField(String text, int columns) {
         super(text, columns);
@@ -48,9 +50,20 @@ final class HudTextField extends JTextField {
         }
     }
 
+    /** A key chip over the field's corner for a moment, as the dev panel shows while Alt is held; "" for none. */
+    void showChip(String label) {
+        if (!label.equals(this.chip)) {
+            this.chip = label;
+            repaint();
+        }
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        if (!this.chip.isEmpty()) {
+            Hud.paintChip((Graphics2D) g, this.chip, 1, 1, Hud.CHIP_BORDER, Hud.FOREGROUND);
+        }
         if (this.ghost.isEmpty()) {
             return;
         }

@@ -15,7 +15,7 @@ Read when a Driver or preview step misbehaves. Each item cost a past session a r
   wave-preview row appears once a wave has started. Filter (`list panelenemy`) right before use.
 - **Leaks end the game.** Starting lives are small (Curly Path: 5). A script that starts real
   waves without towers, or lets spawned mobs walk, hits game over and then sits there. Run
-  `setlives 1000` first, and reach late content with `spawn <id>`, `key n` or `key x`.
+  `setlives 1000` first, and reach late content with `spawn <id>` or the dev panel's skip wave (`key alt+n`).
 - **`spawn` places a mob at the raw path start**, which some levels put one cell off the board so
   a moving mob walks in. A zero-speed mob (a Warden egg) spawned that way stays off screen; reach
   it with `spawn warden`, `waitfor ticks 40`, `kill`, which drops the egg where the Warden died.

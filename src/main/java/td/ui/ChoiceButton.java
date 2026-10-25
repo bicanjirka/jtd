@@ -113,6 +113,11 @@ final class ChoiceButton<T> {
         return this.button;
     }
 
+    /** A key chip over the button for a moment; "" takes it away. */
+    void showChip(String label) {
+        this.button.setFace(this.button.face().withOverlayChip(label));
+    }
+
     T chosen() {
         return this.chosen;
     }

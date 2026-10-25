@@ -1557,35 +1557,6 @@ class GameEngineTest {
     }
 
     @Test
-    void debugSpawnCyclesThroughEveryCatalogIdInOrderThenWraps() {
-        GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        List<String> ids = engine.getGameWorld().getEnemyCatalog().ids();
-
-        for (String expected : ids) {
-            assertThat(engine.debugSpawnNextCatalogEnemy()).contains(expected);
-        }
-        assertThat(engine.debugSpawnNextCatalogEnemy()).contains(ids.getFirst()); // wraps around
-    }
-
-    @Test
-    void debugSpawnAddsALiveEnemyToTheRosterImmediately() {
-        GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-
-        engine.debugSpawnNextCatalogEnemy();
-
-        assertThat(engine.getGameWorld().enemies().getEnemies()).hasSize(1);
-    }
-
-    @Test
-    void debugSpawnWithNoLevelLoadedSpawnsNothing() {
-        GameEngine engine = FakeGameHost.newBoundEngine();
-
-        assertThat(engine.debugSpawnNextCatalogEnemy()).isEmpty();
-    }
-
-    @Test
     void debugGrantingCreditsRaisesTheBalanceByExactlyTheAmount() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
