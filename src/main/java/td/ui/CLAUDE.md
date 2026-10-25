@@ -76,8 +76,8 @@ keeps the seam honest.
 - The header strip (`PanelHeader`) holds the title and the menu button, the four `StatusIcon`s (wave, lives, score, cash)
   centred between them and the speed buttons, which stand above the console. The speed buttons are a radio the owner
   selects from the live speed; a click only reports. A status icon is a tooltip source that opens its tooltip under
-  itself (`TooltipLayer.watchBelow`); only lives (on a drop) and wave (on an increase) flash, and a level's first
-  numbers are a baseline, never a change.
+  itself (`TooltipLayer.watchBelow`); only lives (on a drop), wave (on an increase) and cash (on a purchase refused
+  for want of it, `EconomyListener.paymentRefused`) flash, and a level's first numbers are a baseline, never a change.
 - The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) where `UpgradeTreeLayout` derives each
   node's place from the tree, scaled to fit, never scrolled; a node's look is an `UpgradeNodeState`, and its hover
   is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).

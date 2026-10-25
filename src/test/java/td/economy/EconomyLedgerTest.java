@@ -55,6 +55,28 @@ class EconomyLedgerTest {
     }
 
     @Test
+    void aRefusedPaymentTellsTheListenersOnceAndChangesNothing() {
+        List<String> heard = new ArrayList<>();
+        ledger.addEconomyListener(new EconomyListener() {
+            @Override
+            public void economyChanged(EconomyState state) {
+                heard.add("changed");
+            }
+
+            @Override
+            public void paymentRefused() {
+                heard.add("refused");
+            }
+        });
+        int before = ledger.getCredits();
+
+        ledger.doPay(before + 1);
+
+        assertThat(heard).containsExactly("refused");
+        assertThat(ledger.getCredits()).isEqualTo(before);
+    }
+
+    @Test
     void applyingALeakNotifiesEconomyListenersExactlyOnce() {
         AtomicInteger economyChangedCalls = new AtomicInteger();
         ledger.addEconomyListener(state -> economyChangedCalls.incrementAndGet());

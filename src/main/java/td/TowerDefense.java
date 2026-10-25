@@ -627,6 +627,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         SwingUtilities.invokeLater(this::updateInfo);
     }
 
+    /** Any purchase refused for want of cash, a tower or an upgrade, by click or key, flashes the cash icon. */
+    @Override
+    public void paymentRefused() {
+        SwingUtilities.invokeLater(this.header::cashRefused);
+    }
+
     /** Callers pass an outcome only on the transition, so each overlay shows once. */
     private void showOutcome(LevelOutcome outcome) {
         this.syncTransportButtons();
@@ -741,6 +747,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
         if (wasPlacing && !this.engine.isPlacingTower()) {
             this.panelTowerSelector.stopPlacing();
+        } else if (this.engine.isPlacingTower()) {
+            // Refused for want of cash: the ghost and the shop sheet stay up for the next try.
+            this.engine.highlightCell(boardX, boardY);
+            this.panelTowerSelector.showPlacingSheet();
         }
     }
 

@@ -18,6 +18,11 @@ public interface Cell {
 
     void setHighlightRange(float range);
 
+    /** What the tower the placement hover shows would cost; the frame compares it with the credits. */
+    int getHighlightPrice();
+
+    void setHighlightPrice(int price);
+
     /** Top-left corner in board pixels, not the grid index. */
     int getX();
 

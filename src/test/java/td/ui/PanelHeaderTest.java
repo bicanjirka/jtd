@@ -62,6 +62,15 @@ class PanelHeaderTest {
     }
 
     @Test
+    void aRefusedPurchaseFlashesTheCashIcon() {
+        this.header.show(progress(3, 18), false, LevelOutcome.PLAYING, new EconomyState(10, 0, 5));
+
+        this.header.cashRefused();
+
+        assertThat(this.header.icon(StatusTerm.CASH).flash()).isPositive();
+    }
+
+    @Test
     void theFirstNumbersOfALevelAreABaselineAndFlashNothing() {
         this.header.show(progress(9, 18), false, LevelOutcome.PLAYING, new EconomyState(100, 0, 2));
         this.header.reset();

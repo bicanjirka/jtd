@@ -122,15 +122,13 @@ class TowerPlacementTest {
     }
 
     @Test
-    void placingWithoutEnoughCreditsLeavesTheCellEmptyAndExitsPlacingMode() {
+    void theHoverCarriesThePriceOfTheTowerItWouldBuild() {
         CellGrid grid = grid(3, 3);
-        TowerPlacement placement = newPlacement(grid, SniperTower.PRICE - 1);
+        TowerPlacement placement = newPlacement(grid, 0);
         placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
 
-        Optional<Tower> selected = placement.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
+        placement.highlightCell(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
 
-        assertThat(selected).isEmpty();
-        assertThat(grid.at(0, 0).hasTower()).isFalse();
-        assertThat(placement.isPlacing()).isFalse();
+        assertThat(grid.at(1, 1).getHighlightPrice()).isEqualTo(SniperTower.PRICE);
     }
 }

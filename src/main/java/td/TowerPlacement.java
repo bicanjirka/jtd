@@ -105,14 +105,21 @@ public class TowerPlacement {
             Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
             cell.setHighlight(Cell.HighlightType.PLACE);
             cell.setHighlightRange(this.placingTowerRange);
+            if (this.placingTower) {
+                cell.setHighlightPrice(this.gameWorld.towers().priceOf(this.placingTowerType));
+            }
         }
     }
 
     /**
+     * A click while placing builds on a free cell, or selects the tower already there. Placing ends with it, unless
+     * the cash was short: then placing goes on, so the click after the cash comes in builds.
+     *
      * @return the tower selected by the click: the one on the clicked cell, or the one it built; else empty
      */
     public Optional<Tower> mouseClicked(int boardX, int boardY) {
         Tower selected = null;
+        boolean shortOfCash = false;
         BoardGeometry board = this.gameWorld.getBoard();
         if (board.containsPixel(boardX, boardY)) {
             Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
@@ -138,14 +145,14 @@ public class TowerPlacement {
                     } else {
                         LOG.info("Tower placement rejected: not enough credits for {} (need {}, have {})",
                                 this.placingTowerType, price, this.gameWorld.economy().getCredits());
+                        shortOfCash = true;
                     }
-                    this.placingTower = false;
                 } else {
                     LOG.info("Tower placement rejected: cell ({},{}) is not buildable", board.cellX(boardX), board.cellY(boardY));
                 }
             }
         }
-        if (this.placingTower) {
+        if (!shortOfCash) {
             this.placingTower = false;
         }
         return Optional.ofNullable(selected);

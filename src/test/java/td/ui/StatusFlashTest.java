@@ -56,6 +56,16 @@ class StatusFlashTest {
     }
 
     @Test
+    void aRefusedPurchaseFlashesTheCash() {
+        this.flash.observe(readout(3, 5, 0, 100), 0);
+
+        this.flash.refused(10);
+
+        assertThat(this.flash.strength(StatusTerm.CASH, 10)).isEqualTo(1f);
+        assertThat(this.flash.strength(StatusTerm.LIVES, 10)).isZero();
+    }
+
+    @Test
     void gainingALifeOrLosingARoundIsNotAFlash() {
         this.flash.observe(readout(3, 5, 0, 100), 0);
 

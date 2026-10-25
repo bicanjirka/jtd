@@ -7,9 +7,10 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * How brightly each status icon flashes now. Lives flash when they drop, the round when it goes up; cash and score
- * never, since they change several times a second late in a wave. Values set directly (a level starting or
- * loading) are a new baseline, never a change. The clock is passed in, so nothing here reads one.
+ * How brightly each status icon flashes now. Lives flash when they drop, the round when it goes up, and cash when a
+ * purchase is refused for want of it; a change in cash or score never flashes, since they change several times a
+ * second late in a wave. Values set directly (a level starting or loading) are a new baseline, never a change. The
+ * clock is passed in, so nothing here reads one.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class StatusFlash {
@@ -36,6 +37,11 @@ final class StatusFlash {
             }
         }
         this.last = now;
+    }
+
+    /** Starts the cash flash: something the player tried to buy cost more than they have. */
+    void refused(long nowMillis) {
+        this.startedAt.put(StatusTerm.CASH, nowMillis);
     }
 
     /** From 1 the moment it changed, fading evenly to 0 after {@value #DURATION_MS} ms. */

@@ -235,6 +235,12 @@ public class PanelHeader extends JPanel {
         }
     }
 
+    /** Flashes the cash icon: a purchase was refused for want of cash. */
+    public void cashRefused() {
+        this.flash.refused(nowMillis());
+        this.pulse();
+    }
+
     /** Called every render pulse: lets a flash fade and the round skulls move. */
     public void pulse() {
         long now = nowMillis();

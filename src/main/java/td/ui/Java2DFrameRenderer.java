@@ -78,6 +78,8 @@ public final class Java2DFrameRenderer {
 
     private static final Color CELL_OK = Color.GRAY;
     private static final Color CELL_NOK = Color.RED;
+    /** A free cell the credits can't build the tower on yet: amber, apart from the red of a cell nothing builds on. */
+    private static final Color CELL_SHORT = new Color(255, 170, 60);
     private static final Color CELL_RANGE = new Color(250, 250, 210, 150);
     private static final Color BOARD_BACKGROUND = Color.BLACK;
     /** The HUD's dark grey-green, so the dev grid reads as part of the panel chrome. */
@@ -814,7 +816,7 @@ public final class Java2DFrameRenderer {
         int scale = frame.scale();
         int x = cell.x();
         int y = cell.y();
-        Color highlightColor = cell.buildable() ? CELL_OK : CELL_NOK;
+        Color highlightColor = !cell.buildable() ? CELL_NOK : cell.affordable() ? CELL_OK : CELL_SHORT;
 
         this.paintRangeCircle(g2, cell, frame);
 
