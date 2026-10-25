@@ -101,7 +101,6 @@ final class UpgradeTreePainter {
     private static final float HOVER_BORDER = 0.35f;
     private static final Font XP_FONT = new Font(Font.DIALOG, Font.PLAIN, 10);
     private static final Font PRICE_FONT = Hud.PRICE_FONT;
-    private static final Font DIGIT_FONT = Hud.CHIP_FONT;
     private static final Font NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 7);
     private static final Font FOOTER_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
     private static final Font FOOTER_BOLD = FOOTER_FONT.deriveFont(Font.BOLD);
@@ -110,7 +109,9 @@ final class UpgradeTreePainter {
     private static final float CORNER = 7f;
     private static final float RING_GAP = 4.5f;
     private static final float BADGE = 15f;
-    private static final float DIGIT = 12f;
+    /** How far in from the box's corner the key chip sits; further on a round node, whose edge curves away. */
+    private static final float CHIP_INSET = 3f;
+    private static final float ROUND_CHIP_INSET = 5f;
     private static final float DIAMOND = 12f;
     private static final float FORK_DIAMOND = 8f;
     private static final Shape HEAD_BAND = path(new float[][]{{54, 100}, {82, 100}, {82, 112}, {106, 112}, {106, 100},
@@ -389,14 +390,9 @@ final class UpgradeTreePainter {
             return;
         }
         if (node.slot() != UpgradeSlot.SPECIAL) {
-            Shape box = new RoundRectangle2D.Float(spot.x() - half - 5, spot.y() - half - 5, DIGIT, DIGIT, 3f, 3f);
-            g.setColor(Color.BLACK);
-            g.fill(box);
-            g.setColor(Hud.withAlpha(slot, 0.6f));
-            g.setStroke(new BasicStroke(1f));
-            g.draw(box);
-            g.setColor(slot);
-            centred(g, String.valueOf(this.tree.keyOf(node)), DIGIT_FONT, spot.x() - half + 1, spot.y() - half + 4);
+            float inset = spot.round() ? ROUND_CHIP_INSET : CHIP_INSET;
+            Hud.paintChip(g, String.valueOf(this.tree.keyOf(node)), spot.x() - half + inset, spot.y() - half + inset,
+                    Hud.withAlpha(slot, 0.6f), slot);
         }
         Color price = switch (state.look()) {
             case WAITING -> Hud.withAlpha(slot, 0.53f);

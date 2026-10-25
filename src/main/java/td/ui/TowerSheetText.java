@@ -37,22 +37,25 @@ import java.util.function.Predicate;
 final class TowerSheetText {
 
     private static final int TIME_LABEL_BELOW_TICKS = Math.round(10 * TickRate.TICKS_PER_SECOND);
+    static final String PLACING_HINT = "Click a free cell to build it. Esc cancels.";
 
     private TowerSheetText() {
     }
 
-    /** The sheet while placing: price, authored stats, whom it targets, what it applies, then what no row says. */
+    /**
+     * The sheet while placing: price, authored stats, whom it targets, what it applies, what no row says, then how to
+     * place it and how to stop.
+     */
     static InfoSheet shop(TowerInspection tower) {
-        return shop(tower, stat -> true, Optional.empty());
+        return shop(tower, stat -> true, Optional.of(new SheetLine.Prose(TermText.of(PLACING_HINT))));
     }
 
-    /** A toolbar button's tooltip: the shop sheet without how a shot travels or turns, with the key that builds it. */
+    /** A toolbar button's tooltip: the shop sheet without how a shot travels or turns. */
     static InfoSheet shopTooltip(TowerInspection tower) {
-        return shop(tower, stat -> !describesDelivery(stat),
-                Optional.of(Row.plain(Glyph.DOT, "Shortcut", String.valueOf(tower.type().placementKey))));
+        return shop(tower, stat -> !describesDelivery(stat), Optional.empty());
     }
 
-    private static InfoSheet shop(TowerInspection tower, Predicate<TowerStatRow> shown, Optional<SheetLine> shortcut) {
+    private static InfoSheet shop(TowerInspection tower, Predicate<TowerStatRow> shown, Optional<SheetLine> closing) {
         List<SheetLine> lines = new ArrayList<>();
         lines.add(title(tower, "$" + tower.price()));
         lines.add(new SheetLine.Gap());
@@ -60,11 +63,14 @@ final class TowerSheetText {
                 .forEach(stat -> lines.add(statRow(stat.stat(), TowerStatLine.fixed(stat.stat(), stat.base()))));
         targets(tower).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
-        shortcut.ifPresent(lines::add);
         if (!tower.description().isEmpty()) {
             lines.add(new SheetLine.Gap());
             lines.add(new SheetLine.Prose(TermText.of(tower.description())));
         }
+        closing.ifPresent(line -> {
+            lines.add(new SheetLine.Gap());
+            lines.add(line);
+        });
         return new InfoSheet(lines);
     }
 

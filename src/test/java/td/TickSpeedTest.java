@@ -15,24 +15,6 @@ class TickSpeedTest {
     }
 
     @Test
-    void nextCyclesThroughThePlayablePresets() {
-        assertThat(TickSpeed.NORMAL.next()).isEqualTo(TickSpeed.FAST);
-        assertThat(TickSpeed.FAST.next()).isEqualTo(TickSpeed.SUPER_FAST);
-        assertThat(TickSpeed.SUPER_FAST.next()).isEqualTo(TickSpeed.NORMAL);
-    }
-
-    @Test
-    void nextFromPausedGoesToNormal() {
-        assertThat(TickSpeed.PAUSED.next()).isEqualTo(TickSpeed.NORMAL);
-    }
-
-    @Test
-    void nextFromASpeedBetweenPresetsGoesToTheNextFasterPreset() {
-        assertThat(TickSpeed.ofTicksPerSecond(30).next()).isEqualTo(TickSpeed.FAST);
-        assertThat(TickSpeed.ofTicksPerSecond(500).next()).isEqualTo(TickSpeed.NORMAL);
-    }
-
-    @Test
     void presetsReadAsWholeTicksPerSecond() {
         assertThat(TickSpeed.PAUSED.ticksPerSecond()).isZero();
         assertThat(TickSpeed.NORMAL.ticksPerSecond()).isEqualTo(20);

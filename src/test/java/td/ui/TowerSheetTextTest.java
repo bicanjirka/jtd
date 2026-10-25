@@ -79,12 +79,14 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void theToolbarTooltipNamesTheKeyThatBuildsTheTower() {
+    void theShopSheetEndsWithHowToPlaceAndCancelButTheToolbarTooltipDoesNot() {
         TowerInspection tower = TowerInspection.of(TowerFactory.Type.SNIPER, 10, List.of());
 
+        InfoSheet shop = TowerSheetText.shop(tower);
         InfoSheet tooltip = TowerSheetText.shopTooltip(tower);
 
-        assertThat(row(tooltip, "Shortcut").value()).isEqualTo(String.valueOf(TowerFactory.Type.SNIPER.placementKey));
+        assertThat(shop.lines().getLast()).isEqualTo(new SheetLine.Prose(TermText.of(TowerSheetText.PLACING_HINT)));
+        assertThat(tooltip.lines()).doesNotContain(new SheetLine.Prose(TermText.of(TowerSheetText.PLACING_HINT)));
     }
 
     @Test
@@ -114,7 +116,8 @@ class TowerSheetTextTest {
         assertThat(labels(sheet)).containsExactly("Range", "Physical damage", "Fire rate", "Splash radius",
                 "Projectile speed", "Projectile size", "Targets");
         assertThat(iconRow(sheet, "Applies").icons()).isNotEmpty();
-        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose(TermText.of("Lobs a slow, unguided shell.")));
+        assertThat(sheet.lines()).endsWith(new SheetLine.Prose(TermText.of("Lobs a slow, unguided shell.")),
+                new SheetLine.Gap(), new SheetLine.Prose(TermText.of(TowerSheetText.PLACING_HINT)));
     }
 
     @Test

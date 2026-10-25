@@ -7,10 +7,8 @@ import td.cell.Cell;
 import td.cell.CellGrid;
 import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
-import td.enemy.EnemyDefinition;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
-import td.enemy.Rank;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.save.GameSave;
@@ -71,7 +69,6 @@ public class GameEngine {
     // 0-based rounds an enemy escaped; swapped whole.
     private volatile Set<Integer> leakedRounds = Set.of();
     private volatile long leaksAtRoundStart = 0L;
-    private int debugSpawnCursor = 0;
 
     public GameEngine(GameHost host) {
         this(new GameWorld(host));
@@ -540,26 +537,6 @@ public class GameEngine {
         this.leakedRounds = this.leakedRounds.stream().filter(round -> round < next - 1)
                 .collect(Collectors.toUnmodifiableSet());
         return next;
-    }
-
-    /**
-     * Debug: spawns the next catalog id at the path start with its base health and price, cycling
-     * through the catalog.
-     *
-     * @return the id spawned, or empty if no level is loaded
-     */
-    public Optional<String> debugSpawnNextCatalogEnemy() {
-        if (!this.gameWorld.level().isLoaded()) {
-            return Optional.empty();
-        }
-        EnemyCatalog catalog = this.gameWorld.getEnemyCatalog();
-        List<String> ids = catalog.ids();
-        String id = ids.get(this.debugSpawnCursor % ids.size());
-        this.debugSpawnCursor++;
-        EnemyDefinition definition = catalog.get(id);
-        EnemyMob mob = catalog.spawn(id, this.gameWorld, 0, definition.baseHealth(), definition.price(), Rank.GRUNT);
-        this.gameWorld.enemies().add(mob);
-        return Optional.of(id);
     }
 
     /** Debug: grants credits through the normal economy path. */

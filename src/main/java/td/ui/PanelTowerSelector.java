@@ -104,7 +104,8 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
             BufferedImage icon = iconRenderer.renderTowerIcon(TowerSpriteFrameBuilder.bodyPaletteFor(type), ICON_SIZE);
             this.buttons[i].setIcon(new SharpImageIcon(icon));
             this.buttons[i].setFace(ControlFace.tile(
-                    Java2DFrameRenderer.colorFor(TowerSpriteFrameBuilder.bodyPaletteFor(type))));
+                    Java2DFrameRenderer.colorFor(TowerSpriteFrameBuilder.bodyPaletteFor(type)))
+                    .withChip(String.valueOf(Character.toUpperCase(type.placementKey))));
         }
 
         this.context.economy().addEconomyListener(this);

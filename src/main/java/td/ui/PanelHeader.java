@@ -1,8 +1,13 @@
 package td.ui;
 
+import td.TickSpeed;
 import td.economy.EconomyState;
 import td.economy.StatusTerm;
 import td.level.LevelOutcome;
+import td.term.TermText;
+import td.ui.render.InfoSheet;
+import td.ui.render.Palette;
+import td.ui.render.SheetLine;
 import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 import td.util.ThreadConfined;
@@ -29,9 +34,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * The strip across the top of the game: the title, the status icons centred between the title and the speed
- * buttons, and the speed buttons above the console. It owns the speed buttons and their visibility, not what a click does, and shows the
- * numbers it is given.
+ * The strip across the top of the game: the title and the menu button, the status icons centred between them and the
+ * speed buttons, and the speed buttons above the console. The speed buttons are a radio showing the speed it is told;
+ * a click only reports, so what a click does and which one is selected stay with the owner. It shows the numbers it
+ * is given.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelHeader extends JPanel {
@@ -44,10 +50,11 @@ public class PanelHeader extends JPanel {
 
     private final List<StatusIcon> icons = Arrays.stream(StatusTerm.values()).map(StatusIcon::new).toList();
     private final StatusFlash flash = new StatusFlash();
-    private final HudButton play = glyphButton("▶");
-    private final HudButton pause = glyphButton("❚❚");
-    private final HudButton fast = glyphButton("▶▶");
-    private final HudButton superFast = glyphButton("▶▶▶");
+    private final HudToggleButton pause = speedButton("❚❚", GameKey.PAUSE);
+    private final HudToggleButton play = speedButton("▶", GameKey.PLAY);
+    private final HudToggleButton fast = speedButton("▶▶", GameKey.FAST);
+    private final HudToggleButton superFast = speedButton("▶▶▶", GameKey.SUPER_FAST);
+    private final HudButton menu = new HudButton("Menu");
 
     private TooltipLayer tooltips = null;
     private StatusReadout readout = StatusReadout.empty();
@@ -59,6 +66,8 @@ public class PanelHeader extends JPanel {
     private Runnable onFast = () -> {
     };
     private Runnable onSuperFast = () -> {
+    };
+    private Runnable onMenu = () -> {
     };
 
     public PanelHeader(String titleText) {
@@ -78,27 +87,30 @@ public class PanelHeader extends JPanel {
         this.icons.forEach(icon -> status.add(icon, each));
         JPanel aboveBoard = new JPanel(new TitleAndCentre());
         aboveBoard.setOpaque(false);
+        this.menu.setFace(ControlFace.button().withChip(GameKey.MENU.chip()));
         aboveBoard.add(title);
         aboveBoard.add(status);
+        aboveBoard.add(this.menu);
         this.add(aboveBoard, BorderLayout.CENTER);
         this.add(speedButtons(), BorderLayout.EAST);
 
         this.setPreferredSize(new Dimension(0, STRIP_HEIGHT));
         this.setMinimumSize(new Dimension(0, STRIP_HEIGHT));
         this.play.addActionListener(this::playClicked);
-        this.pause.setVisible(false);
         this.pause.addActionListener(this::pauseClicked);
         this.fast.addActionListener(this::fastClicked);
         this.superFast.addActionListener(this::superFastClicked);
+        this.menu.addActionListener(evt -> this.onMenu.run());
     }
 
     /**
-     * The title at the left and the status group centred in the space between the title and the right edge, where the
-     * speed buttons begin; never squeezed.
+     * The title at the left with the menu button after it, and the status group centred in the space between the menu
+     * button and the right edge, where the speed buttons begin; never squeezed.
      */
     private static final class TitleAndCentre implements LayoutManager {
 
         private static final int MARGIN = 10;
+        private static final int MENU_GAP = 10;
 
         @Override
         public void addLayoutComponent(String name, Component component) {
@@ -112,7 +124,9 @@ public class PanelHeader extends JPanel {
         public Dimension preferredLayoutSize(Container parent) {
             Dimension title = parent.getComponent(0).getPreferredSize();
             Dimension status = parent.getComponent(1).getPreferredSize();
-            return new Dimension(MARGIN + title.width + status.width, Math.max(title.height, status.height));
+            Dimension menu = parent.getComponent(2).getPreferredSize();
+            return new Dimension(MARGIN + title.width + MENU_GAP + menu.width + status.width,
+                    Math.max(Math.max(title.height, status.height), menu.height));
         }
 
         @Override
@@ -124,27 +138,29 @@ public class PanelHeader extends JPanel {
         public void layoutContainer(Container parent) {
             Component title = parent.getComponent(0);
             Component status = parent.getComponent(1);
+            Component menu = parent.getComponent(2);
             Dimension titleSize = title.getPreferredSize();
             Dimension statusSize = status.getPreferredSize();
+            Dimension menuSize = menu.getPreferredSize();
             title.setBounds(MARGIN, (parent.getHeight() - titleSize.height) / 2, titleSize.width, titleSize.height);
-            int free = MARGIN + titleSize.width;
+            int menuX = MARGIN + titleSize.width + MENU_GAP;
+            menu.setBounds(menuX, (parent.getHeight() - menuSize.height) / 2, menuSize.width, menuSize.height);
+            int free = menuX + menuSize.width;
             int centred = free + (parent.getWidth() - free - statusSize.width) / 2;
             status.setBounds(Math.max(centred, free), (parent.getHeight() - statusSize.height) / 2,
                     statusSize.width, statusSize.height);
         }
     }
 
-    private static HudButton glyphButton(String glyph) {
-        HudButton button = new HudButton(glyph);
+    private static HudToggleButton speedButton(String glyph, GameKey key) {
+        HudToggleButton button = new HudToggleButton();
+        button.setText(glyph);
         button.setFont(Hud.GLYPH_FONT);
+        button.setFace(ControlFace.button().withChip(key.chip()));
         return button;
     }
 
     private JPanel speedButtons() {
-        this.play.setToolTipText("Play / start the next wave");
-        this.pause.setToolTipText("Pause");
-        this.fast.setToolTipText("Fast (single-steps one tick while paused)");
-        this.superFast.setToolTipText("Super fast");
         JPanel buttons = new JPanel(new GridBagLayout());
         buttons.setOpaque(false);
         buttons.setPreferredSize(new Dimension(PanelGameConsole.WIDTH, STRIP_HEIGHT));
@@ -154,22 +170,40 @@ public class PanelHeader extends JPanel {
         at.weightx = 0.1;
         at.insets = new Insets(0, 2, 0, 0);
         at.gridx = 0;
-        buttons.add(this.play, at);
         buttons.add(this.pause, at);
         at.gridx = 1;
-        buttons.add(this.fast, at);
+        buttons.add(this.play, at);
         at.gridx = 2;
+        buttons.add(this.fast, at);
+        at.gridx = 3;
         buttons.add(this.superFast, at);
         return buttons;
     }
 
-    /** Each icon's hover is a tooltip of what it counts and its value now, opening under it. */
+    /**
+     * Each icon's hover is a tooltip of what it counts and its value now, opening under it; each speed button's, what
+     * it does; the menu button's, where it goes.
+     */
     public void setTooltips(TooltipLayer tooltips) {
         for (StatusIcon icon : this.icons) {
             tooltips.watchBelow(icon, () -> Optional.of(new SheetTooltip(
                     TooltipKey.ofTerm("status", icon.term()), StatusSheetText.of(icon.term(), this.readout, this.rounds))));
         }
+        tooltips.watchButton(this.pause, () -> tooltip("Pause",
+                "Pauses the game. While paused or between waves, plays on at the last speed and sends the next wave."));
+        tooltips.watchButton(this.play, () -> tooltip("Play", "Normal speed. Sends the next wave if it is waiting."));
+        tooltips.watchButton(this.fast, () -> tooltip("Fast", "Fast speed. Sends the next wave if it is waiting."));
+        tooltips.watchButton(this.superFast, () -> tooltip("Super fast",
+                "The fastest speed. Sends the next wave if it is waiting."));
+        tooltips.watchBelow(this.menu, () -> tooltip("Menu",
+                "Back to the level select. Asks first while the level is still being played."));
         this.tooltips = tooltips;
+    }
+
+    private static Optional<SheetTooltip> tooltip(String name, String what) {
+        return Optional.of(new SheetTooltip(TooltipKey.of("header", name), new InfoSheet(List.of(
+                new SheetLine.Title(SheetLine.Glyph.CHEVRON, Palette.TERM_STATUS_WAVE, name, ""),
+                new SheetLine.Prose(TermText.of(what))))));
     }
 
     /** The next {@link #show} is a baseline, not a change: a level is starting or loading. */
@@ -218,9 +252,23 @@ public class PanelHeader extends JPanel {
         return System.nanoTime() / 1_000_000L;
     }
 
-    public void setPlaying(boolean playing) {
-        this.play.setVisible(!playing);
-        this.pause.setVisible(playing);
+    /** Selects the button of {@code speed}; none for a rate between the presets, as the dev panel can dial. */
+    public void showSpeed(TickSpeed speed) {
+        this.pause.setSelected(speed.equals(TickSpeed.PAUSED));
+        this.play.setSelected(speed.equals(TickSpeed.NORMAL));
+        this.fast.setSelected(speed.equals(TickSpeed.FAST));
+        this.superFast.setSelected(speed.equals(TickSpeed.SUPER_FAST));
+    }
+
+    /** Once a level is won or lost the speed buttons, and their chips, go dim. */
+    public void setSpeedEnabled(boolean enabled) {
+        for (HudToggleButton button : List.of(this.pause, this.play, this.fast, this.superFast)) {
+            button.setEnabled(enabled);
+        }
+    }
+
+    public void onMenu(Runnable r) {
+        this.onMenu = r;
     }
 
     public void onPlay(Runnable r) {

@@ -2,9 +2,14 @@ package td.ui;
 
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
+import td.term.TermText;
 import td.tower.PulseTower;
 import td.tower.Tower;
 import td.ui.render.InfoSheet;
+import td.ui.render.Palette;
+import td.ui.render.SheetLine;
+import td.ui.render.SheetTooltip;
+import td.ui.render.TooltipKey;
 import td.ui.render.TowerSheet;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -24,6 +29,7 @@ import java.awt.event.ComponentEvent;
 import java.io.Serial;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -41,6 +47,9 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
      */
     static final Color SELL_TEXT_COLOR = new Color(255, 120, 120);
     private static final InfoSheet NO_SHEET = new InfoSheet(List.of());
+    private static final InfoSheet PIN_TOOLTIP = new InfoSheet(List.of(
+            new SheetLine.Title(SheetLine.Glyph.CHEVRON, Palette.TOWER_PULSE_BODY, "Pin line", ""),
+            new SheetLine.Prose(TermText.of("Pick the Obelisk this one's Ley Line links to; pick it again to unpin."))));
     /** Before the pane is laid out, the width the side panel gives it. */
     private static final int FALLBACK_TEXT_WIDTH = 170;
 
@@ -73,6 +82,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     public void setTooltips(TooltipLayer layer) {
         this.tooltips = layer;
         layer.watch(this.sheetPane);
+        layer.watchButton(this.jToggle_pin, () -> Optional.of(new SheetTooltip(TooltipKey.of("tower", "pin"),
+                PIN_TOOLTIP)));
     }
 
     public void setTower(Tower t) {
@@ -230,6 +241,13 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         this.context.economy().addEconomyListener(this);
     }
 
+    /** Sells the selected tower as a click on Sell does, while Sell shows and is enabled. */
+    public void sellSelected() {
+        if (this.jButton_sell.isVisible() && this.jButton_sell.isEnabled()) {
+            this.sellCurrentTower();
+        }
+    }
+
     private void sellCurrentTower() {
         if (this.selectedTower != null) {
             this.context.towers().sell(this.selectedTower);
@@ -283,7 +301,6 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         add(jScrollPane1, gridBagConstraints);
 
         jToggle_pin.setText("Pin line");
-        jToggle_pin.setToolTipText("Pick the Obelisk this one's Ley Line links to; pick it again to unpin");
         jToggle_pin.setVisible(false);
         jToggle_pin.addActionListener(evt -> this.onPinToggled.accept(this.jToggle_pin.isSelected()));
 
@@ -297,6 +314,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
         jButton_sell.setText("Sell");
         jButton_sell.setForeground(SELL_TEXT_COLOR);
+        jButton_sell.setFace(ControlFace.button().withChip(GameKey.SELL.chip()));
         jButton_sell.addActionListener(this::jButton_sellActionPerformed);
 
         gridBagConstraints = new GridBagConstraints();

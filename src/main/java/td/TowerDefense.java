@@ -18,6 +18,7 @@ import td.ui.BoardOverlays;
 import td.ui.BoardRenderer;
 import td.ui.ConfirmPopup;
 import td.ui.GameBoard;
+import td.ui.GameKey;
 import td.ui.Hud;
 import td.ui.Java2DFrameRenderer;
 import td.ui.PanelDev;
@@ -62,12 +63,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -101,8 +103,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final int MENU_HEIGHT = 700;
     private static final int GAME_WIDTH = 1100;
     private static final int GAME_HEIGHT = 740;
-    /** Credits one press of the debug grant key adds. */
-    private static final int DEBUG_CREDIT_GRANT = 1000;
     private static final KeyStroke DEV_PANEL_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_D,
             InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
 
@@ -139,6 +139,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     // Set by a board click that asked for an enemy; cleared with every deselection.
     private boolean inspectingEnemy = false;
     private TickSpeed currentSpeed = TickSpeed.NORMAL;
+    /** What pause resumes at: the last speed the game ran at, normal when a level starts. */
+    private TickSpeed lastPlaySpeed = TickSpeed.NORMAL;
     // Input and the loop can fire before a level exists and after one is torn down.
     private volatile boolean levelLoaded = false;
 
@@ -178,10 +180,11 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.header.setTooltips(this.tooltips);
         this.panelDev.setTooltips(this.tooltips);
         this.gameConsole.setGameWorld(this.gameWorld);
-        this.header.onPlay(this::playPressed);
         this.header.onPause(this::pausePressed);
-        this.header.onFast(this::fastPressed);
-        this.header.onSuperFast(this::superFastPressed);
+        this.header.onPlay(() -> this.playAt(TickSpeed.NORMAL));
+        this.header.onFast(() -> this.playAt(TickSpeed.FAST));
+        this.header.onSuperFast(() -> this.playAt(TickSpeed.SUPER_FAST));
+        this.header.onMenu(this::requestReturnToMenu);
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.gameConsole.getTowerInfo().onPinToggled(pinning -> {
             if (pinning) {
@@ -208,6 +211,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         // A dispatcher, not a key binding: the frame itself usually holds the focus, and a
         // Window runs no bindings. It also sees keys while a dev panel field has the focus.
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this::dispatchShortcut);
+        // Alt released in another window never arrives here.
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowDeactivated(WindowEvent evt) {
+                TowerDefense.this.panelDev.revealChips(false);
+            }
+        });
 
         // Same cell as the win/lose overlays so they stack; in a cell of its own the board gets
         // pushed out of view when an overlay appears.
@@ -239,15 +249,15 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    /** The welcome text: a line per tower from the types themselves, so a shop name never drifts from its key. */
+    /** The welcome text: only the keys no button shows on its chip. */
     static String welcomeText() {
-        StringBuilder text = new StringBuilder("Welcome to Tower Defense\nShortcuts:\n\n");
-        for (TowerFactory.Type type : TowerFactory.Type.values()) {
-            text.append(type.placementKey).append(" - build ").append(type.displayName().toLowerCase(Locale.ROOT))
-                    .append('\n');
-        }
-        return text.append("esc - cancel placing\np - pause\nf - cycle speed\ns - start wave\nm - back to menu\n"
-                + "ctrl+shift+d - dev panel").toString();
+        return """
+                Welcome to Tower Defense
+
+                Every button shows its key in its corner.
+
+                esc - cancel placing
+                ctrl+shift+d - dev panel""";
     }
 
     private void doGameTick() {
@@ -429,14 +439,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    private void nextWave() {
-        if (this.engine.nextWave()) {
-            this.setWavePreview();
-            this.updateInfo();
-            this.syncTransportButtons();
-        }
-    }
-
     private void debugSkipWave() {
         this.engine.debugSkipCurrentWave();
         this.setWavePreview();
@@ -508,6 +510,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
         boolean show = !this.panelDev.isVisible();
         this.panelDev.refresh();
+        this.panelDev.revealChips(false);
         this.panelDev.setVisible(show);
         this.boardRenderer.setCellGridShown(show && this.panelDev.isCellGridOn());
         if (!show) {
@@ -551,12 +554,23 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /**
-     * Ctrl+Shift+D anywhere in this window, and the dev panel's own shortcuts while it shows.
+     * Ctrl+Shift+D anywhere in this window, and the dev panel's own shortcuts while it shows. While it shows, holding
+     * Alt alone reveals its chips; the Alt press and release are used up, so the platform's own Alt handling never
+     * takes the focus from a field or the board.
      *
      * @return whether the key was used up
      */
     private boolean dispatchShortcut(KeyEvent evt) {
-        if (evt.getID() != KeyEvent.KEY_PRESSED || !this.isFocused()) {
+        if (!this.isFocused()) {
+            return false;
+        }
+        if (evt.getKeyCode() == KeyEvent.VK_ALT && this.panelDev.isShowing()) {
+            if (evt.getID() != KeyEvent.KEY_TYPED) {
+                this.panelDev.revealChips(evt.getID() == KeyEvent.KEY_PRESSED);
+            }
+            return true;
+        }
+        if (evt.getID() != KeyEvent.KEY_PRESSED) {
             return false;
         }
         KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(evt);
@@ -657,31 +671,21 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    /** The single place tick speed changes, keeping the transport buttons and the dev panel in step. */
+    /** The single place tick speed changes, keeping the speed buttons and the dev panel in step. */
     private void setSpeed(TickSpeed speed) {
         this.currentSpeed = speed;
+        if (!speed.isPaused()) {
+            this.lastPlaySpeed = speed;
+        }
         this.gameLoop.setSpeed(speed);
         this.syncTransportButtons();
         this.panelDev.showTicksPerSecond(speed.ticksPerSecond());
     }
 
-    /**
-     * Shows play when pressing it would do what the player waits for - unpause, or send a ready
-     * wave - and pause only while a wave runs. Speed alone cannot decide this: between waves the
-     * loop runs at normal speed with an empty board, and after the level ends no wave runs at all.
-     */
+    /** The speed buttons show the speed, and go dim once the level is won or lost. */
     private void syncTransportButtons() {
-        boolean waveRunning = !this.currentSpeed.isPaused() && !this.engine.isWaveReady()
-                && !this.engine.outcome().isOver();
-        this.header.setPlaying(waveRunning);
-    }
-
-    private void togglePause() {
-        this.setSpeed(this.currentSpeed.isPaused() ? TickSpeed.NORMAL : TickSpeed.PAUSED);
-    }
-
-    private void cycleSpeed() {
-        this.setSpeed(this.currentSpeed.next());
+        this.header.showSpeed(this.currentSpeed);
+        this.header.setSpeedEnabled(!this.levelLoaded || !this.engine.outcome().isOver());
     }
 
     /** Paints the last published frame; reads no simulation state. */
@@ -774,12 +778,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
+    /** A character: a tower's key, an upgrade's digit, or on the menu a level's digit. */
     private void keyTyped(char key) {
-        if (!this.levelLoaded) {
+        if (this.panelLevelSelect.isShowing()) {
+            this.panelLevelSelect.startByKey(key);
             return;
         }
-        if (key == 'm') {
-            this.requestReturnToMenu();
+        if (!this.levelLoaded) {
             return;
         }
         // After a win or loss the board stays inspectable, but nothing may change the outcome.
@@ -799,35 +804,42 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
                 return;
             }
         }
+    }
+
+    /**
+     * One of the {@link GameKey}s; the menu key and Esc still work once the level is over. None works behind the
+     * question whether to leave, which pauses the game for as long as it is open.
+     */
+    private void gameKeyPressed(GameKey key) {
+        if (!this.levelLoaded || this.abandonQuestion.filter(ConfirmPopup::isOpen).isPresent()) {
+            return;
+        }
         switch (key) {
-            case 'p' -> this.togglePause();
-            case 'f' -> this.cycleSpeed();
-            case 's' -> this.nextWave();
-            case 'n', 'x', 'c' -> {
-                if (this.panelDev.isVisible()) {
-                    this.debugKeyTyped(key);
-                }
-            }
-            case KeyEvent.VK_ESCAPE -> {
+            case MENU -> this.requestReturnToMenu();
+            case CANCEL -> {
                 if (this.engine.isPlacingTower()) {
                     this.engine.cancelPlacing();
                     this.panelTowerSelector.stopPlacing();
                     this.unSelectTower();
                 }
             }
-            default -> {
+            case CONFIRM -> {
+            }
+            case PAUSE, PLAY, FAST, SUPER_FAST, SELL -> {
+                if (!this.engine.outcome().isOver()) {
+                    this.playKeyPressed(key);
+                }
             }
         }
     }
 
-    /** The debug keys, live only while the dev panel is open. */
-    private void debugKeyTyped(char key) {
+    private void playKeyPressed(GameKey key) {
         switch (key) {
-            case 'n' -> this.debugSkipWave();
-            case 'x' -> this.setInfoText(this.engine.debugSpawnNextCatalogEnemy()
-                    .map(id -> "Debug spawned: " + id)
-                    .orElse("Debug spawn needs a level loaded first"));
-            case 'c' -> this.engine.debugGrantCredits(DEBUG_CREDIT_GRANT);
+            case PAUSE -> this.pausePressed();
+            case PLAY -> this.playAt(TickSpeed.NORMAL);
+            case FAST -> this.playAt(TickSpeed.FAST);
+            case SUPER_FAST -> this.playAt(TickSpeed.SUPER_FAST);
+            case SELL -> this.gameConsole.getTowerInfo().sellSelected();
             default -> {
             }
         }
@@ -843,6 +855,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         addKeyListener(new KeyAdapter() {
             public void keyTyped(KeyEvent evt) {
                 formKeyTyped(evt);
+            }
+
+            public void keyPressed(KeyEvent evt) {
+                formKeyPressed(evt);
             }
         });
 
@@ -932,29 +948,24 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         contentCardLayout.show(getContentPane(), CARD_MENU);
     }
 
-    /** Resumes and sends the next wave if one is ready, whether or not the game was paused. */
-    private void playPressed() {
-        this.setSpeed(TickSpeed.NORMAL);
+    /** Runs at {@code speed} and sends the next wave if one is ready, whether or not the game was paused. */
+    private void playAt(TickSpeed speed) {
+        this.setSpeed(speed);
         if (this.engine.isWaveReady()) {
             this.engine.requestNextWave();
         }
     }
 
+    /**
+     * Pauses, unless the game is already paused or a wave waits: then it plays on at the last speed and sends the
+     * wave, since between waves there is nothing to pause.
+     */
     private void pausePressed() {
-        this.setSpeed(TickSpeed.PAUSED);
-    }
-
-    /** While paused, single-steps one tick instead of changing speed. */
-    private void fastPressed() {
-        if (this.currentSpeed.isPaused()) {
-            this.doGameTick();
-            return;
+        if (this.currentSpeed.isPaused() || this.engine.isWaveReady()) {
+            this.playAt(this.lastPlaySpeed);
+        } else {
+            this.setSpeed(TickSpeed.PAUSED);
         }
-        this.setSpeed(TickSpeed.FAST);
-    }
-
-    private void superFastPressed() {
-        this.setSpeed(TickSpeed.SUPER_FAST);
     }
 
     /** An Alt or Ctrl chord also types its letter; that letter is not a bare shortcut. */
@@ -963,6 +974,14 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             return;
         }
         this.keyTyped(evt.getKeyChar());
+    }
+
+    /** Keys that type no character, such as Delete, arrive only as a press, so every {@link GameKey} is read here. */
+    private void formKeyPressed(KeyEvent evt) {
+        if (evt.isAltDown() || evt.isControlDown() || evt.isMetaDown()) {
+            return;
+        }
+        GameKey.of(evt.getKeyCode()).ifPresent(this::gameKeyPressed);
     }
 
 }

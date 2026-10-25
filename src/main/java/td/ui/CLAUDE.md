@@ -73,14 +73,18 @@ keeps the seam honest.
 - Tooltips are `TooltipPanel`s on the frame's popup layer, owned by one `TooltipLayer`; what is hovered, where a
   tooltip goes and which stay open are answered by `SheetPane.hoverAt`, `TooltipPlacement` and `TooltipChain`.
   Never use `setToolTipText` for game content.
-- The header strip (`PanelHeader`) holds the title, the four `StatusIcon`s (wave, lives, score, cash) centred between
-  the title and the speed buttons, which stand above the console. A status icon is a tooltip source that opens its tooltip under
+- The header strip (`PanelHeader`) holds the title and the menu button, the four `StatusIcon`s (wave, lives, score, cash)
+  centred between them and the speed buttons, which stand above the console. The speed buttons are a radio the owner
+  selects from the live speed; a click only reports. A status icon is a tooltip source that opens its tooltip under
   itself (`TooltipLayer.watchBelow`); only lives (on a drop) and wave (on an increase) flash, and a level's first
   numbers are a baseline, never a change.
 - The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) where `UpgradeTreeLayout` derives each
   node's place from the tree, scaled to fit, never scrolled; a node's look is an `UpgradeNodeState`, and its hover
   is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).
 - A question is a `ConfirmPopup` on the popup layer, never a platform dialog.
+- A key chip shows the binding its key runs, never a copy: a tower's `placementKey`, an upgrade's `UpgradeTree.keyOf`,
+  a `GameKey`, a dev `Shortcut`'s stroke. Game chips always show; dev chips only while Alt is held, drawn over the
+  control so nothing moves.
 - Info-pane content is an AWT-free `InfoSheet` that a `*SheetText` builds from a domain
   inspection (`EnemyInspection`, `TowerInspection`): stat rows, then icon rows (Traits, Buffs,
   Debuffs; on a tower Perks, Buffs, Debuffs, Applies), each icon a `SheetIcon` carrying its tooltip sheet. `InfoSheetDocument` alone lays
