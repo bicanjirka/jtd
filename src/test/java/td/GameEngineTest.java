@@ -908,7 +908,7 @@ class GameEngineTest {
     }
 
     @Test
-    void placingATowerWithoutEnoughCreditsCancelsPlacementWithoutBuildingOrCharging() {
+    void placingATowerWithoutEnoughCreditsKeepsPlacingWithoutBuildingOrCharging() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), SniperTower.PRICE - 1));
 
@@ -918,7 +918,21 @@ class GameEngineTest {
         assertThat(selected).isEmpty();
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(SniperTower.PRICE - 1);
         assertThat(engine.cells().at(0, 0).hasTower()).isFalse();
-        assertThat(engine.isPlacingTower()).isFalse(); // failed payment still cancels placement mode
+        assertThat(engine.isPlacingTower()).isTrue();
+    }
+
+    @Test
+    void theClickAfterTheMissingCashArrivesBuildsTheTowerAndEndsPlacing() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(), SniperTower.PRICE - 1));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
+        engine.debugGrantCredits(1);
+
+        Optional<Tower> built = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
+
+        assertThat(built).isPresent();
+        assertThat(engine.isPlacingTower()).isFalse();
     }
 
     @Test

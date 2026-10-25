@@ -68,14 +68,18 @@ public class EconomyLedger {
         return this.economy.canAfford(amount);
     }
 
+    /** Pays {@code amount} if the credits cover it; a refusal tells the listeners, since something went unbought. */
     public boolean doPay(int amount) {
+        boolean paid;
         EconomyState updated;
         synchronized (this) {
-            if (!this.economy.canAfford(amount)) {
-                return false;
-            }
-            updated = this.economy.after(EconomyDelta.credits(-amount));
+            paid = this.economy.canAfford(amount);
+            updated = paid ? this.economy.after(EconomyDelta.credits(-amount)) : this.economy;
             this.economy = updated;
+        }
+        if (!paid) {
+            this.listeners.forEach(EconomyListener::paymentRefused);
+            return false;
         }
         LOG.debug("Credits -{} -> {}", amount, updated.credits());
         this.fireEconomyChangedEvent(updated);

@@ -258,6 +258,22 @@ class BoardRendererTest {
     }
 
     @Test
+    void aPlacementHoverIsAffordableOnlyWhileTheCreditsCoverItsPrice() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        Cell cell = engine.cells().at(0, 0);
+        cell.setHighlight(Cell.HighlightType.PLACE);
+        cell.setHighlightPrice(context.economy().getCredits() + 1);
+
+        boolean shortOfCash = rendererFor(context).buildFrame(0, 0.0, 0.0).cells().getFirst().affordable();
+        cell.setHighlightPrice(context.economy().getCredits());
+        boolean covered = rendererFor(context).buildFrame(0, 0.0, 0.0).cells().getFirst().affordable();
+
+        assertThat(shortOfCash).isFalse();
+        assertThat(covered).isTrue();
+    }
+
+    @Test
     void aSelectedCellProducesExactlyOneCellDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();

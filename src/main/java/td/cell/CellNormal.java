@@ -13,6 +13,7 @@ public class CellNormal implements Cell {
     private final int y;
     private volatile HighlightType highlight = HighlightType.NONE;
     private volatile float highlightRange = 0;
+    private volatile int highlightPrice = 0;
     private volatile boolean buildable = true;
     private volatile Tower tower = null;
 
@@ -63,6 +64,14 @@ public class CellNormal implements Cell {
 
     public void setHighlightRange(float range) {
         this.highlightRange = range;
+    }
+
+    public int getHighlightPrice() {
+        return this.highlightPrice;
+    }
+
+    public void setHighlightPrice(int price) {
+        this.highlightPrice = price;
     }
 
     public int getX() {

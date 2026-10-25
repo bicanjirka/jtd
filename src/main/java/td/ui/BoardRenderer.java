@@ -52,8 +52,9 @@ public final class BoardRenderer {
         LoadedLevel level = this.world.level();
 
         List<CellDraw> cells = new ArrayList<>();
+        int credits = this.world.economy().getCredits();
         level.cells().forEach(cell -> {
-            CellDraw draw = CellFrameBuilder.build(cell);
+            CellDraw draw = CellFrameBuilder.build(cell, credits);
             if (draw != null) {
                 cells.add(draw);
             }

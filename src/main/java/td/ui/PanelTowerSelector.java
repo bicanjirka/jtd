@@ -25,6 +25,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * The tower toolbar: one tile per {@link TowerFactory.Type}, in enum order, bordered in the tower's colour with its
@@ -45,6 +46,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     private GameWorld context;
     private TowerDefense mainApp;
     private TooltipLayer tooltips;
+    private OptionalInt placing = OptionalInt.empty();
 
     public PanelTowerSelector() {
         initComponents();
@@ -129,6 +131,12 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
 
     public void stopPlacing() {
         this.untoggleAll();
+        this.placing = OptionalInt.empty();
+    }
+
+    /** Shows the sheet of the tower being placed again, at today's price. */
+    public void showPlacingSheet() {
+        this.placing.ifPresent(i -> this.mainApp.showInfoSheet(TowerSheetText.shop(this.priced(i))));
     }
 
     /** May run on the game-loop thread. */
@@ -158,8 +166,10 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         }
     }
 
+    /** Starts placing tower {@code i}, affordable or not: the shop sheet and the hover show it either way. */
     public void doPlace(int i) {
         this.untoggleAll();
+        this.placing = OptionalInt.of(i);
         this.buttons[i].setSelected(true);
         this.mainApp.showInfoSheet(TowerSheetText.shop(this.priced(i)));
         this.startPlacing(this.towerTypes.get(i), this.towerRanges[i]);
