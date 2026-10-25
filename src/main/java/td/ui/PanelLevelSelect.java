@@ -50,16 +50,18 @@ public class PanelLevelSelect extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final Color BACKGROUND = new Color(2, 3, 2);
-    private static final Color FOREGROUND = new Color(220, 255, 220);
-    private static final Color MUTED_FOREGROUND = new Color(120, 150, 125);
-    private static final Color SUBTITLE_FOREGROUND = new Color(90, 120, 95);
-    private static final Color CARD_BACKGROUND = new Color(12, 13, 12);
-    private static final Color CARD_HOVER_BACKGROUND = new Color(21, 24, 21);
-    private static final Color STAT_BORDER = new Color(42, 46, 42);
-    private static final Color STAT_LABEL = new Color(106, 128, 110);
-    private static final Color PREVIEW_BACKGROUND = new Color(6, 7, 6);
-    private static final Color PREVIEW_GRID_DOT = new Color(22, 24, 22);
+    private static final Color BACKGROUND = Hud.BACKGROUND;
+    private static final Color FOREGROUND = Hud.FOREGROUND;
+    private static final Color MUTED_FOREGROUND = Hud.TEXT_DIM;
+    private static final Color SUBTITLE_FOREGROUND = Hud.BORDER_HOVER;
+    private static final Color CARD_BACKGROUND = Hud.BACKGROUND;
+    private static final Color CARD_HOVER_BACKGROUND = Hud.FILL_HOVER;
+    private static final Color STAT_BORDER = Hud.BORDER_IDLE;
+    private static final Color STAT_LABEL = Hud.BORDER_HOVER;
+    private static final Color PREVIEW_BACKGROUND = new Color(6, 9, 6);
+    private static final Color PREVIEW_GRID_DOT = new Color(22, 30, 22);
+    private static final int CARD_BORDER = 2;
+    private static final float HOVER_LIGHTEN = 0.35f;
 
     /** Cycled by card index. */
     private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE};
@@ -109,7 +111,7 @@ public class PanelLevelSelect extends JPanel {
             }
         };
         card.setBackground(CARD_BACKGROUND);
-        card.setBorder(BorderFactory.createLineBorder(accent, 2));
+        card.setBorder(BorderFactory.createLineBorder(accent, CARD_BORDER));
         card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         PathPreview preview = new PathPreview(level, accent);
@@ -165,11 +167,13 @@ public class PanelLevelSelect extends JPanel {
             @Override
             public void mouseEntered(MouseEvent e) {
                 card.setBackground(CARD_HOVER_BACKGROUND);
+                card.setBorder(BorderFactory.createLineBorder(Hud.mix(accent, Color.WHITE, HOVER_LIGHTEN), CARD_BORDER));
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
                 card.setBackground(CARD_BACKGROUND);
+                card.setBorder(BorderFactory.createLineBorder(accent, CARD_BORDER));
             }
         };
         attachToWholeCard(card, interaction);
