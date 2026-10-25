@@ -6,8 +6,6 @@ Every control in the game shows its keyboard shortcut as a small key chip, the w
 their digit, and every control shares one look. Today the HUD is drawn by three systems that agree on nothing but the
 background, and most shortcuts are invisible: listed in the welcome text or a tooltip, or not at all.
 
-Mockup of the options weighed (1:1 game pixels): https://claude.ai/artifact/76BANu1jVxNpgfTZRHCu2c
-
 ## Current state (what exists today)
 
 **Three ways of drawing a control**
@@ -142,7 +140,7 @@ Mockup of the options weighed (1:1 game pixels): https://claude.ai/artifact/76BA
 ## Decisions made
 
 - One request; the look lands before the chips.
-- Every row of *What this feature adds* above was chosen from options shown in the mockup or in the grilling: tile vs
+- Every row of *What this feature adds* above was chosen from options weighed in the grilling: tile vs
   button, green-tinted neutrals, square buttons with 7 px tiles, tower-colour tile borders with the price under,
   outlined keycap chips in the accent colour, fill-tint hover, the key table, Alt-reveal for the dev panel only,
   pickable unaffordable towers with the cash flash, the four-button radio speed strip.

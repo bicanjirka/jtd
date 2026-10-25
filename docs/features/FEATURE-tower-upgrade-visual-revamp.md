@@ -1,6 +1,6 @@
 # Feature Request: Tower Upgrade Visual Revamp
 
-**Status:** implemented, 2026-10-24 (plan: `docs/plans/tower-upgrade-visual-revamp.md`). Refined in a grilling session; the design was accepted from the mockup
+**Status:** implemented, 2026-10-24. Refined in a grilling session; the design was accepted from the mockup
 canvas (https://claude.ai/artifact/CTqU66VFJauPieb1CGes2S): Sniper and Aura at rest, a blocked
 multi-step hover, a two-step path and the downgrade confirmation, all at 1:1.
 
