@@ -69,8 +69,7 @@ final class TwistedHourglassLevel {
     private static final PathDefinition TEAL_PATH = PathDefinition.smoothed(
                     List.of(
                             new Point(-1, 1), new Point(7, 1), new Point(7, 5),
-                            new Point(5, 7), new Point(7, 9), new Point(7, 13),
-                            new Point(-1, 13)),
+                            new Point(5, 7), new Point(2, 9), new Point(2, 15)),
                     List.of(
                             new WaveDefinition("simple e simple e simple e simple e plated simple e 4 simple e 3 armored", Rank.GRUNT),
                             new WaveDefinition("armored e armored e armored e 4 simple e armored e armored", Rank.GRUNT),
@@ -89,7 +88,7 @@ final class TwistedHourglassLevel {
     private static final PathDefinition AMBER_PATH = PathDefinition.smoothed(
                     List.of(
                             new Point(2, -1), new Point(2, 5), new Point(5, 7),
-                            new Point(2, 9), new Point(2, 14)),
+                            new Point(7, 9), new Point(7, 13), new Point(-1, 13)),
                     List.of(
                             new WaveDefinition("simple e simple e simple e 4 simple e 3 armored", Rank.GRUNT),
                             new WaveDefinition("6 simple e 4 simple e 2 armored", Rank.GRUNT),
@@ -124,7 +123,7 @@ final class TwistedHourglassLevel {
             .withColor(CRIMSON_COLOR);
 
     static final LevelDefinition DEFINITION = LevelDefinition
-            .of(LEVEL_NAME, 9, 14, List.of(CRIMSON_PATH, TEAL_PATH, AMBER_PATH))
+            .of(LEVEL_NAME, 9, 15, List.of(CRIMSON_PATH, TEAL_PATH, AMBER_PATH))
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
