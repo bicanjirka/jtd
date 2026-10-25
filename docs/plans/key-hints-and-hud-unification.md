@@ -1,6 +1,6 @@
 # Plan: Key hints and HUD unification
 
-**Status:** in progress. Implements `docs/features/FEATURE-key-hints-and-hud-unification.md`; the accepted look is
+**Status:** implemented, 2026-10-25. Implements `docs/features/FEATURE-key-hints-and-hud-unification.md`; the accepted look is
 the mockup linked there.
 
 Three phases, one commit each, `mvn verify` green before every commit. The live `run-jtd` pass runs once, after

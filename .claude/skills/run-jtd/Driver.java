@@ -103,6 +103,9 @@ public class Driver {
             case "clickat" -> clickAt(rest.trim());
             case "rclickat" -> rightClickAt(rest.trim());
             case "key" -> typeKey(rest.trim());
+            case "keydown" -> holdKey(rest.trim(), true);
+            case "keyup" -> holdKey(rest.trim(), false);
+            case "focus" -> printFocus();
             case "type" -> typeText(rest);
             case "devlabels" -> devLabels();
             case "state" -> state();
@@ -502,6 +505,30 @@ public class Driver {
         }
         Thread.sleep(80);
         System.out.println("OK key " + chord);
+    }
+
+    // Presses or releases one key and leaves it so, for what shows only while a key is held (Alt).
+    private static void holdKey(String part, boolean down) throws InterruptedException {
+        int code = keyCode(part);
+        if (code == KeyEvent.VK_UNDEFINED) {
+            System.out.println("ERROR: key '" + part + "' is not a key");
+            return;
+        }
+        if (down) {
+            robot.keyPress(code);
+        } else {
+            robot.keyRelease(code);
+        }
+        Thread.sleep(80);
+        System.out.println("OK key" + (down ? "down " : "up ") + part);
+    }
+
+    // Prints what has the keyboard focus: a dev panel field, or the frame itself.
+    private static void printFocus() throws Exception {
+        onEventDispatchThread(() -> {
+            Component owner = java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            System.out.println("OK focus " + (owner == null ? "none" : describe(owner)));
+        });
     }
 
     /** The key code a chord part names, or {@code VK_UNDEFINED}. */

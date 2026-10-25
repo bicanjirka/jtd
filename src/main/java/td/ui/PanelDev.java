@@ -647,6 +647,7 @@ public class PanelDev extends JPanel {
         });
         if (!this.submitButtons.contains(button)) {
             this.submitButtons.add(button);
+            button.setBorder(Hud.paddingForChip(button, GameKey.CONFIRM.chip()));
         }
         field.addFocusListener(new FocusAdapter() {
             @Override

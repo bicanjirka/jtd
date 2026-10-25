@@ -15,6 +15,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
@@ -151,6 +152,15 @@ public final class Hud {
             paintChip(g2, face.chip(), CHIP_INSET, CHIP_INSET, chipBorderFor(face, enabled), chipInkFor(face, enabled));
         }
         g2.dispose();
+    }
+
+    /**
+     * Control padding with room on the left for a chip of {@code label}, for a control whose chip comes and goes
+     * often enough that it should never cover the text.
+     */
+    static Border paddingForChip(Component control, String label) {
+        Insets padding = CONTROL_PADDING.getBorderInsets(control);
+        return new EmptyBorder(padding.top, padding.left + chipRoom(control, label), padding.bottom, padding.right);
     }
 
     /** The room a chip takes from the left edge, its gap included. */
