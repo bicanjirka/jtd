@@ -129,7 +129,10 @@ public final class LevelPlay {
         // after it measure by how much.
         engine.loadLevel(level.withStartingLives(UNLIMITED_LIVES));
         rules.applyTo(engine);
-        span.from().ifPresent(save -> engine.restore(withLives(save, UNLIMITED_LIVES)));
+        // A save that loads only in part would play the waves with a weaker army and blame the waves.
+        span.from().flatMap(save -> engine.restore(withLives(save, UNLIMITED_LIVES))).ifPresent(problem -> {
+            throw new IllegalStateException("The save does not fit the game any more: " + problem);
+        });
         RunRecorder recorder = new RunRecorder(engine, lives);
         Turn.Rehearsal rehearsal = (alternative, through) -> play(survey, alternative, name, seed,
                 pacing.playingOut(), rules, new Span(span.from(), through)).record();
