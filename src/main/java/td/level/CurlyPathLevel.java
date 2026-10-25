@@ -41,16 +41,17 @@ final class CurlyPathLevel {
 
     static final LevelDefinition DEFINITION = LevelDefinition.singlePath(
             "Curly Path",
-            "A lane that spirals through two tight loops before unwinding into a steady zigzag, creating a curly visuals.",
+            "A lane that loops once at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge.",
             20, 13,
             List.of(
-                    new Point(-1, 11), new Point(2, 11), new Point(2, 2), new Point(6, 2),
-                    new Point(6, 8), new Point(3, 8), new Point(3, 5), new Point(7, 5),
-                    new Point(7, 10), new Point(10, 10), new Point(10, 4), new Point(8, 4),
-                    new Point(8, 7), new Point(13, 7), new Point(13, 2), new Point(16, 2),
-                    new Point(16, 11), new Point(18, 11), new Point(18, 7), new Point(20, 7)),
+                    new Point(-1, 10), new Point(2, 10), new Point(3, 9), new Point(3, 3),
+                    new Point(2, 2), new Point(1, 3), new Point(1, 9), new Point(2, 10),
+                    new Point(11, 10), new Point(13, 11), new Point(15, 11), new Point(17, 10),
+                    new Point(18, 8), new Point(18, 6), new Point(17, 4), new Point(15, 3),
+                    new Point(13, 3), new Point(11, 4), new Point(10, 6), new Point(10, 8),
+                    new Point(6, 8), new Point(6, 3), new Point(7, 2), new Point(11, 2), new Point(11, -1)),
             List.of(
-                    new WaveDefinition("column 6 simple e line 4 simple e column 6 simple", Rank.GRUNT),
+                    new WaveDefinition("3 simple column 3 simple e simple e line 3 simple e simple e column 3 simple", Rank.GRUNT),
                     new WaveDefinition("drip 4 courier e 4 simple e drip 4 courier", Rank.GRUNT),
                     new WaveDefinition("line 3 armored e line 3 armored e line 3 armored e 4 simple", Rank.SOLDIER),
                     new WaveDefinition("ghost 2 e 8 simple e ghost 2 e 8 simple", Rank.SOLDIER),

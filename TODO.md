@@ -36,7 +36,8 @@ support tower, and the balance tools price support. Its tree is being rebuilt as
 `FEATURE-obelisk-kill-box.md`.
 
 `FEATURE-curly-path-retune.md` (implemented, but for the anti-sustain check; see Tower features): Curly Path's
-eighteen waves rebuilt around five signature checks and the Warden, with the tools to prove each check.
+eighteen waves rebuilt around five signature checks and the Warden, with the tools to prove each check. Its lane has
+since been redrawn, so the checks need proving again (see Levels).
 
 `docs/plans/stat-driven-buffs.md` (phases 1 to 9) and `FEATURE-agility-and-dodge.md` are implemented.
 
@@ -144,6 +145,20 @@ shrouded groups down three lanes, so one Obelisk per lane is the only affordable
 - **Where:** the wave scripts in `td.level.ZigZagPathLevel` and `td.level.TwistedHourglassLevel`.
 - **Approach:** a feature request of its own; retune by wave composition, not by enemy health. Compare each change
   with `BalanceReport --seeds 12 --strong --variety --compare ob-phase4`.
+
+### Curly Path's waves were tuned on its old path
+
+Curly Path's lane was redrawn (one entrance loop, a wide bend, an inward hook out over the top edge) after its waves
+were tuned on the old double spiral, and its first wave changed with it. The new lane is about 9% shorter (69 cells
+against 76), and the cell that sees the most of it sees 15-22% less than the old spiral's best cell did, so the level
+is likely harder. Every Curly Path figure elsewhere in this file, in `FEATURE-curly-path-retune.md` and in
+`docs/ARCHITECTURE.md` was measured on the old path.
+
+- **Where:** the wave scripts and starting credits in `td.level.CurlyPathLevel`.
+- **Approach:** re-prove the retune's five signature checks and the Warden with
+  `td.balance.WaveCheckReport --level 0` (the checks from `FEATURE-curly-path-retune.md`), then
+  `BalanceReport --levels 0 --strong` against a baseline saved from the old path; retune by wave composition and
+  bounty, not by moving the lane back.
 
 ### Only a Java-code level catalog exists
 
