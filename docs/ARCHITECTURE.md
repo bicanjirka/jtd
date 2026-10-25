@@ -25,6 +25,7 @@ If a paragraph here ever contradicts `CLAUDE.md`, `CLAUDE.md` wins and this file
 11. [Style lineage](#11-style-lineage)
 12. [Reducing test churn from feature work](#12-reducing-test-churn-from-feature-work)
 13. [Stat-driven buffs](#13-stat-driven-buffs)
+14. [Upgrade node ids are permanent](#14-upgrade-node-ids-are-permanent)
 
 ---
 
@@ -708,3 +709,19 @@ math stays a named class).
 
 Rejected: iterating aura-on-aura buffs to a fixed point; making every perk number a stat; a generic
 `StatSheet` on the per-hit path; data-defined towers (worth doing later, not needed for this).
+
+## 14. Upgrade node ids are permanent
+
+A saved game (`td.save`) records each tower's upgrades as the ids of the nodes it owns, in the order
+bought, and loading rebuys them by id. Loading skips an id it doesn't know, without any error, so a
+renamed id makes old saves bring the tower back without that upgrade, and without any later node that
+needs it. So an id is fixed once it ships: the player-facing name, the slot and the tree's layout can
+all change around it.
+
+The upgrade visual revamp moved Attune, Awaken and Transcendent out of the `BASE` slot into a new
+`CORE` slot, yet their ids stayed `base.attune`, `base.awaken` and `base.transcendent`, and
+`StandardBaseSlot` kept its name while building both shared slots. The ids read slightly wrong, but
+nobody sees them.
+
+Rejected: `core.*` ids with an alias table (or a save migration) mapping the old ids to the new. It
+is code to keep forever for no gain a player can see.
