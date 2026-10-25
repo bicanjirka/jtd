@@ -384,9 +384,9 @@ at the entrance, sweeps around a wide bend and hooks inward to leave over the to
 waves that each ask for a different defence - single-target damage at 6, area damage at 11, control at 12,
 anti-physical at 15, all of them at 17 - and the Warden at 18, with just enough bounty to beat it), **Zigzag Path** (a smaller,
 16×11 board where a fuchsia lane hooks back on itself and a lime lane cuts across it twice, 8
-waves per lane, only 3 lives) and **Twisted Hourglass** (a tight, 9×14 portrait board where three
+waves per lane, only 3 lives) and **Twisted Hourglass** (a tight, 9×15 portrait board where three
 Bezier lanes - crimson, teal and amber - twist through a pinched waist so the layout reads as an
-hourglass, 10 waves per lane). A level can define more than one enemy path, each with its own color, waves
+hourglass, teal and amber crossing at its middle, 10 waves per lane). A level can define more than one enemy path, each with its own color, waves
 and pace; Zigzag Path and Twisted Hourglass are the two built-in levels that do. A level's
 paths all run the same number of waves as synchronized rounds - starting a round spawns every
 path's wave for it together. A level can also register its own enemy on top of the ones above,

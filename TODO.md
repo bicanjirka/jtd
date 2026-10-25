@@ -160,6 +160,16 @@ is likely harder. Every Curly Path figure elsewhere in this file, in `FEATURE-cu
   `BalanceReport --levels 0 --strong` against a baseline saved from the old path; retune by wave composition and
   bounty, not by moving the lane back.
 
+### Twisted Hourglass's waves were tuned on its old lanes
+
+Twisted Hourglass's teal and amber lanes now cross at the waist and swap exits, and the board grew a row (9×15).
+Before, teal ran about 30 cells and amber 18; now both run about 24, so amber's waves get more of the board and
+teal's less. Every Twisted Hourglass figure elsewhere in this file was measured on the old lanes.
+
+- **Where:** the wave scripts and starting credits in `td.level.TwistedHourglassLevel`.
+- **Approach:** `BalanceReport --levels 2 --seeds 12 --strong --variety` against a baseline saved from the old
+  lanes; retune by wave composition, not by moving the lanes back.
+
 ### Only a Java-code level catalog exists
 
 `LevelCatalog` is the abstraction levels are meant to be sourced through, but `BuiltInLevelCatalog` (levels defined as
