@@ -379,8 +379,8 @@ packs it tighter.
 
 ### Levels
 
-Three levels ship with the game: **Curly Path** (a 20×13 board whose single lane spirals
-through two tight loops before unwinding into a zigzag, 18 waves: the hard level, built around five
+Three levels ship with the game: **Curly Path** (a 20×13 board whose single lane loops once
+at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge, 18 waves: the hard level, built around five
 waves that each ask for a different defence - single-target damage at 6, area damage at 11, control at 12,
 anti-physical at 15, all of them at 17 - and the Warden at 18, with just enough bounty to beat it), **Zigzag Path** (a smaller,
 16×11 board where a fuchsia lane hooks back on itself and a lime lane cuts across it twice, 8

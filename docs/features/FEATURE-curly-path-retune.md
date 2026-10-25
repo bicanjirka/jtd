@@ -1,6 +1,8 @@
 # Feature Request: Curly Path Retune
 
-**Status: implemented** (2026-10-20). Planned 2026-10-19; what changed from the plan is under *Outcome*.
+**Status: implemented** (2026-10-20). Planned 2026-10-19; what changed from the plan is under *Outcome*. On
+2026-10-25 the lane was redrawn (one entrance loop instead of the double spiral, out over the top edge), so every
+measurement below is of the old path; re-proving it is a `TODO.md` entry under Levels.
 
 ## Summary
 
