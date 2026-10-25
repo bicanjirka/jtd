@@ -90,7 +90,7 @@ public class PanelDev extends JPanel {
     private static final int CONTROL_GAP = 12;
     /** The preview strip is as tall as its enemy slots plus their padding. */
     private static final int PREVIEW_WIDTH = 160;
-    private static final int PREVIEW_HEIGHT = 34;
+    private static final int PREVIEW_HEIGHT = PanelEnemy.HEIGHT;
 
     private final HudTextField credits = new HudTextField("10000", 6);
     private final HudTextField lives = new HudTextField("20", 4);

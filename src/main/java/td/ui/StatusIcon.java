@@ -237,7 +237,7 @@ final class StatusIcon extends JComponent {
         float crack = this.cracks.progress(round, this.nowMillis);
         float centre = SKULL_SIZE / 2f;
         if (kind == RoundSkulls.Kind.UNIQUE && !state.isOver()) {
-            paintGlow(g2, ink, x + centre, y + centre, state == RoundStrip.State.CURRENT ? pulse : 0.5f);
+            paintGlow(g2, ink, x + centre, y + centre, state == RoundStrip.State.CURRENT ? pulse : 0.5f, SKULL_SIZE);
         }
         switch (state) {
             case AHEAD -> ink = mix(ink, Color.BLACK, AHEAD_DARKEN);
@@ -257,8 +257,25 @@ final class StatusIcon extends JComponent {
         one.dispose();
     }
 
-    private static void paintGlow(Graphics2D g2, Color tone, float cx, float cy, float strength) {
-        float radius = SKULL_SIZE * GLOW_RADIUS;
+    /** A round's skull held still in its own tone, for a panel that names the same round as the strip. */
+    static void paintStillSkull(Graphics2D g2, RoundSkulls.Kind kind, RoundStrip.State state, float x, float y, int size) {
+        Pictogram skull = PictogramCatalogue.of(RoundSkulls.pictogram(kind, state)).orElseThrow();
+        Color ink = Java2DFrameRenderer.colorFor(RoundSkulls.tone(kind, state));
+        float centre = size / 2f;
+        if (kind == RoundSkulls.Kind.UNIQUE && !state.isOver()) {
+            paintGlow(g2, ink, x + centre, y + centre, 0.5f, size);
+        }
+        Graphics2D one = (Graphics2D) g2.create();
+        one.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        one.translate(x, y);
+        double scale = (double) size / Pictogram.UNIT;
+        one.scale(scale, scale);
+        TermIconPainter.paintLayers(one, skull, ink, Hud.BACKGROUND);
+        one.dispose();
+    }
+
+    private static void paintGlow(Graphics2D g2, Color tone, float cx, float cy, float strength, int size) {
+        float radius = size * GLOW_RADIUS;
         Color inner = new Color(tone.getRed(), tone.getGreen(), tone.getBlue(), Math.round(GLOW_ALPHA * (0.5f + strength)));
         Color outer = new Color(tone.getRed(), tone.getGreen(), tone.getBlue(), 0);
         Graphics2D glow = (Graphics2D) g2.create();
