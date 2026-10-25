@@ -38,7 +38,7 @@ public final class ConfirmPopup extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private static final Color BACKGROUND = new Color(8, 14, 8);
-    private static final Color HINT = new Color(143, 168, 143);
+    private static final Color HINT = Hud.TEXT_DIM;
     private static final Font HINT_FONT = Hud.LABEL_FONT.deriveFont(9f);
 
     private final transient JLayeredPane layer;

@@ -72,33 +72,36 @@ final class UpgradeTreePainter {
     record Footer(String text, boolean warns, boolean active) {
     }
 
-    private static final Color FOREGROUND = new Color(220, 255, 220);
-    private static final Color DIM_TEXT = new Color(143, 168, 143);
+    private static final Color FOREGROUND = Hud.FOREGROUND;
+    private static final Color DIM_TEXT = Hud.TEXT_DIM;
     private static final Color WHITE = Color.WHITE;
     private static final Color DROP = new Color(255, 90, 90);
-    private static final Color SHORT = new Color(255, 107, 107);
+    private static final Color SHORT = Hud.SHORT;
     private static final Color WARN = new Color(255, 138, 138);
-    private static final Color LINK_IDLE = new Color(58, 58, 58);
-    private static final Color LINK_OUT = new Color(36, 36, 36);
-    private static final Color ROOT_IDLE = new Color(90, 90, 90);
-    private static final Color DIAMOND_IDLE = new Color(119, 119, 119);
-    private static final Color DIAMOND_OUT = new Color(44, 44, 44);
-    private static final Color SEALED_BORDER = new Color(74, 74, 74);
-    private static final Color SEALED_FILL = new Color(18, 18, 18);
-    private static final Color SEALED_INK = new Color(128, 128, 128);
-    private static final Color OUT_BORDER = new Color(44, 44, 44);
-    private static final Color OUT_FILL = new Color(12, 12, 12);
-    private static final Color OUT_HATCH = new Color(24, 24, 24);
-    private static final Color OUT_INK = new Color(74, 74, 74);
+    // The neutrals are the HUD's green-tinted greys, darkest for what is locked out.
+    private static final Color LINK_IDLE = new Color(50, 66, 50);
+    private static final Color LINK_OUT = new Color(30, 40, 30);
+    private static final Color ROOT_IDLE = Hud.BORDER_IDLE;
+    private static final Color DIAMOND_IDLE = Hud.CHIP_BORDER;
+    private static final Color DIAMOND_OUT = new Color(38, 50, 38);
+    private static final Color SEALED_BORDER = new Color(64, 84, 64);
+    private static final Color SEALED_FILL = new Color(14, 20, 14);
+    private static final Color SEALED_INK = new Color(112, 138, 112);
+    private static final Color OUT_BORDER = new Color(38, 50, 38);
+    private static final Color OUT_FILL = new Color(10, 14, 10);
+    private static final Color OUT_HATCH = new Color(20, 28, 20);
+    private static final Color OUT_INK = new Color(64, 82, 64);
     private static final Color BUY_FILL = new Color(12, 22, 12);
     private static final Color WAIT_FILL = new Color(5, 8, 5);
-    private static final Color RING_TRACK = new Color(38, 38, 38);
+    private static final Color RING_TRACK = new Color(32, 44, 32);
     private static final Color BADGE_FILL = new Color(7, 21, 32);
     private static final Color XP_TRACK = new Color(20, 32, 20);
     private static final Color XP_FILL = new Color(155, 224, 155);
+    private static final float HOVER_FILL = 0.12f;
+    private static final float HOVER_BORDER = 0.35f;
     private static final Font XP_FONT = new Font(Font.DIALOG, Font.PLAIN, 10);
-    private static final Font PRICE_FONT = new Font(Font.DIALOG, Font.BOLD, 9);
-    private static final Font DIGIT_FONT = new Font(Font.DIALOG, Font.BOLD, 8);
+    private static final Font PRICE_FONT = Hud.PRICE_FONT;
+    private static final Font DIGIT_FONT = Hud.CHIP_FONT;
     private static final Font NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 7);
     private static final Font FOOTER_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
     private static final Font FOOTER_BOLD = FOOTER_FONT.deriveFont(Font.BOLD);
@@ -148,7 +151,7 @@ final class UpgradeTreePainter {
     private void paintRook(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states) {
         g.setColor(this.tint(states, UpgradeSlot.HEAD));
         g.fill(HEAD_BAND);
-        g.setColor(withAlpha(FOREGROUND, 0.06f));
+        g.setColor(Hud.withAlpha(FOREGROUND, 0.06f));
         g.fill(NECK);
         g.setColor(this.tint(states, UpgradeSlot.BASE));
         g.fill(FOUNDATION);
@@ -157,7 +160,7 @@ final class UpgradeTreePainter {
     /** A band takes its slot's colour once the tower owns a node there. */
     private Color tint(Map<UpgradeNode, UpgradeNodeState> states, UpgradeSlot slot) {
         boolean owns = states.values().stream().anyMatch(s -> s.node().slot() == slot && s.look() == Look.OWNED);
-        return owns ? withAlpha(slotColor(slot), 0.09f) : withAlpha(FOREGROUND, 0.06f);
+        return owns ? Hud.withAlpha(slotColor(slot), 0.09f) : Hud.withAlpha(FOREGROUND, 0.06f);
     }
 
     /** A ghost until a special can be reached, lit once one is owned. */
@@ -171,11 +174,11 @@ final class UpgradeTreePainter {
                 2 * UpgradeTreeLayout.HALO_RY);
         float glow = owned ? 0.18f : open ? 0.08f : 0f;
         if (glow > 0f) {
-            g.setColor(withAlpha(special, glow));
+            g.setColor(Hud.withAlpha(special, glow));
             g.setStroke(new BasicStroke(7f));
             g.draw(halo);
         }
-        g.setColor(withAlpha(special, owned ? 0.6f : open ? 0.4f : 0.12f));
+        g.setColor(Hud.withAlpha(special, owned ? 0.6f : open ? 0.4f : 0.12f));
         g.setStroke(new BasicStroke(1.5f));
         g.draw(halo);
     }
@@ -191,7 +194,7 @@ final class UpgradeTreePainter {
         Spot spot = this.layout.spots().get(crown.get());
         boolean owned = states.get(crown.get()).look() == Look.OWNED;
         Color core = slotColor(UpgradeSlot.CORE);
-        g.setColor(highlight.is(crown.get(), Mark.PATH) ? WHITE : owned ? core : withAlpha(core, 0.4f));
+        g.setColor(highlight.is(crown.get(), Mark.PATH) ? WHITE : owned ? core : Hud.withAlpha(core, 0.4f));
         g.setStroke(owned ? new BasicStroke(2f) : dashed(2f));
         float top = spot.y() - spot.size() / 2;
         g.draw(new QuadCurve2D.Float(spot.x(), top, spot.x() + 2, UpgradeTreeLayout.HALO_Y + 2,
@@ -280,7 +283,7 @@ final class UpgradeTreePainter {
             return new LinkLook(LINK_OUT, new BasicStroke(2f));
         }
         if (a == Look.OWNED && b.showsPrice()) {
-            return new LinkLook(withAlpha(slot, 0.73f), dashed(2f));
+            return new LinkLook(Hud.withAlpha(slot, 0.73f), dashed(2f));
         }
         return new LinkLook(LINK_IDLE, new BasicStroke(2f));
     }
@@ -300,18 +303,20 @@ final class UpgradeTreePainter {
     private void paintNode(Graphics2D g, UpgradeNode node, Spot spot, UpgradeNodeState state, Highlight highlight) {
         Color slot = slotColor(node.slot());
         Look look = state.look();
+        boolean hovered = highlight.hovered().filter(node::equals).isPresent();
         if (look == Look.WAITING) {
             paintRing(g, spot, slot, state.ring());
         }
         Shape box = shapeOf(spot, 0f);
         if (look == Look.BUYABLE || look == Look.SHORT_OF_CASH) {
             for (int i = 3; i >= 1; i--) {
-                g.setColor(withAlpha(slot, 0.12f));
+                g.setColor(Hud.withAlpha(slot, 0.12f));
                 g.setStroke(new BasicStroke(2f + 2.5f * i));
                 g.draw(box);
             }
         }
-        g.setColor(fillOf(look, slot));
+        Color fill = hovered ? Hud.mix(fillOf(look, slot), slot, HOVER_FILL) : fillOf(look, slot);
+        g.setColor(fill);
         g.fill(box);
         if (look == Look.LOCKED_OUT) {
             paintHatch(g, box, spot);
@@ -324,7 +329,7 @@ final class UpgradeTreePainter {
             symbol.translate(spot.x() - spot.size() / 2 + inset, spot.y() - spot.size() / 2 + inset);
             float k = (spot.size() - 2 * inset) / TermIconPainter.ROW;
             symbol.scale(k, k);
-            TermIconPainter.paintBareSymbol(symbol, face, TermIconPainter.ROW, ink, fillOf(look, slot));
+            TermIconPainter.paintBareSymbol(symbol, face, TermIconPainter.ROW, ink, fill);
         } finally {
             symbol.dispose();
         }
@@ -335,12 +340,12 @@ final class UpgradeTreePainter {
             g.drawString(face.numeral(), spot.x() + spot.size() / 2 - 3 - metrics.stringWidth(face.numeral()),
                     spot.y() + spot.size() / 2 - 3);
         }
-        g.setColor(borderOf(look, slot));
+        g.setColor(hovered ? Hud.mix(borderOf(look, slot), WHITE, HOVER_BORDER) : borderOf(look, slot));
         g.setStroke(look == Look.NEEDS_PREVIOUS ? dashed(1.5f) : new BasicStroke(2f));
         g.draw(shapeOf(spot, -1f));
         if (highlight.is(node, Mark.PATH) || highlight.is(node, Mark.DROP)) {
             Color edge = highlight.is(node, Mark.PATH) ? WHITE : DROP;
-            g.setColor(withAlpha(edge, 0.35f));
+            g.setColor(Hud.withAlpha(edge, 0.35f));
             g.setStroke(new BasicStroke(5f));
             g.draw(shapeOf(spot, 2.5f));
             g.setColor(edge);
@@ -354,11 +359,6 @@ final class UpgradeTreePainter {
         }
         if (highlight.is(node, Mark.CRACK)) {
             paintCracks(g, spot);
-        }
-        if (highlight.hovered().filter(node::equals).isPresent()) {
-            g.setColor(WHITE);
-            g.setStroke(new BasicStroke(1f));
-            g.draw(shapeOf(spot, 4.5f));
         }
     }
 
@@ -392,14 +392,14 @@ final class UpgradeTreePainter {
             Shape box = new RoundRectangle2D.Float(spot.x() - half - 5, spot.y() - half - 5, DIGIT, DIGIT, 3f, 3f);
             g.setColor(Color.BLACK);
             g.fill(box);
-            g.setColor(withAlpha(slot, 0.6f));
+            g.setColor(Hud.withAlpha(slot, 0.6f));
             g.setStroke(new BasicStroke(1f));
             g.draw(box);
             g.setColor(slot);
             centred(g, String.valueOf(this.tree.keyOf(node)), DIGIT_FONT, spot.x() - half + 1, spot.y() - half + 4);
         }
         Color price = switch (state.look()) {
-            case WAITING -> withAlpha(slot, 0.53f);
+            case WAITING -> Hud.withAlpha(slot, 0.53f);
             case SHORT_OF_CASH -> SHORT;
             default -> slot;
         };
@@ -501,8 +501,8 @@ final class UpgradeTreePainter {
     private static Color borderOf(Look look, Color slot) {
         return switch (look) {
             case OWNED, BUYABLE, SHORT_OF_CASH -> slot;
-            case WAITING -> withAlpha(slot, 0.53f);
-            case NEEDS_PREVIOUS -> withAlpha(slot, 0.6f);
+            case WAITING -> Hud.withAlpha(slot, 0.53f);
+            case NEEDS_PREVIOUS -> Hud.withAlpha(slot, 0.6f);
             case SEALED -> SEALED_BORDER;
             case LOCKED_OUT -> OUT_BORDER;
         };
@@ -512,8 +512,8 @@ final class UpgradeTreePainter {
         return switch (look) {
             case OWNED -> WHITE;
             case BUYABLE, SHORT_OF_CASH -> slot;
-            case WAITING -> withAlpha(slot, 0.73f);
-            case NEEDS_PREVIOUS -> withAlpha(slot, 0.6f);
+            case WAITING -> Hud.withAlpha(slot, 0.73f);
+            case NEEDS_PREVIOUS -> Hud.withAlpha(slot, 0.6f);
             case SEALED -> SEALED_INK;
             case LOCKED_OUT -> OUT_INK;
         };
@@ -527,10 +527,6 @@ final class UpgradeTreePainter {
     private static Color blend(Color color, float share) {
         return new Color(Math.round(color.getRed() * share), Math.round(color.getGreen() * share),
                 Math.round(color.getBlue() * share));
-    }
-
-    private static Color withAlpha(Color color, float alpha) {
-        return new Color(color.getRed(), color.getGreen(), color.getBlue(), Math.round(255 * alpha));
     }
 
     private static Stroke dashed(float width) {
