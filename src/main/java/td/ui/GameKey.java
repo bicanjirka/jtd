@@ -10,7 +10,7 @@ import java.util.Optional;
  * chip, from one place so the two never drift apart.
  */
 public enum GameKey {
-    PAUSE(KeyEvent.VK_SPACE, "␣"),
+    PAUSE(KeyEvent.VK_SPACE, "Space"),
     PLAY(KeyEvent.VK_D, "D"),
     FAST(KeyEvent.VK_F, "F"),
     SUPER_FAST(KeyEvent.VK_G, "G"),

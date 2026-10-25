@@ -45,6 +45,8 @@ on `quit` or end of input.
 | `rclickat <x> <y>` | `pointer` to window pixel (x, y), then a right click there. |
 | `text <n>` | Prints a text component's full content. Use it on the Info pane instead of a screenshot. |
 | `key <c>` | Presses a key or chord through `Robot`: `q w e r t y u i` build a tower, `space` pause (or play on and send the waiting wave), `d f g` normal/fast/super fast (each sends a waiting wave), `delete` sells the selected tower, `m` menu; `ctrl+shift+d` opens the dev panel; `alt+<letter>` runs a dev panel control (`alt+h` lists them in the Info pane). A part is one character or a `KeyEvent` name without `VK_` (`enter`, `esc`, `tab`, `space`, `delete`, `period`, `comma`, `left`, `f5`); an unknown name prints `ERROR` and presses nothing. |
+| `keydown <k>`, `keyup <k>` | Holds one key down or lets it go, for what shows only while a key is held: `keydown alt`, `ss`, `keyup alt` for the dev panel's chips. |
+| `focus` | Prints what has the keyboard focus: a field, or the frame (the board's keys). |
 | `type <text>` | Replaces the focused text field's content, such as a dev panel field after `key alt+s`; `key enter` then applies it. |
 | `devlabels` | Prints the dev panel's labels: its status line, the script problem and the pointer and clicked cells. |
 | `boardclick <x> <y>` | Clicks board cell (x, y): places the tower chosen with `key`, or selects a tower. |

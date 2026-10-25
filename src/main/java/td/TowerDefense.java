@@ -748,9 +748,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (wasPlacing && !this.engine.isPlacingTower()) {
             this.panelTowerSelector.stopPlacing();
         } else if (this.engine.isPlacingTower()) {
-            // Refused for want of cash: the ghost and the shop sheet stay up for the next try.
-            this.engine.highlightCell(boardX, boardY);
+            // Refused for want of cash: the shop sheet and the ghost stay up for the next try. The sheet first, since
+            // showing it clears the highlight.
             this.panelTowerSelector.showPlacingSheet();
+            this.engine.highlightCell(boardX, boardY);
         }
     }
 
