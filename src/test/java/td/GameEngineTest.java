@@ -41,6 +41,7 @@ import td.level.LevelOutcome;
 import td.projectile.CannonballProjectile;
 import td.save.GameSave;
 import td.save.GameSaveText;
+import td.save.TowerSave;
 import td.stat.DisruptionAura;
 import td.tower.AuraTower;
 import td.tower.MortarTower;
@@ -53,6 +54,7 @@ import td.tower.TowerFactory;
 import td.tower.TowerStatLine;
 import td.tower.TowerStatRow;
 import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
@@ -1702,6 +1704,35 @@ class GameEngineTest {
         assertThat(loaded.getTowers()).extracting(Tower::getSellPrice)
                 .containsExactlyElementsOf(saved.getTowers().stream().map(Tower::getSellPrice).toList());
         assertThat(loaded.getGameWorld().playtestRules().upgradeGatesIgnored()).isFalse();
+    }
+
+    @Test
+    void aSaveNamingAnUpgradeTheTreeNoLongerHasLoadsTheRestAndNamesWhatItCouldNotRebuild() {
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT),
+                new WaveDefinition("simple", Rank.GRUNT)), 100_000);
+        GameEngine saved = FakeGameHost.newBoundEngine();
+        saved.loadLevel(level);
+        saved.startPlacing(TowerFactory.Type.SONAR, SonarTower.RANGE);
+        saved.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
+        Tower sonar = towerOfType(saved, TowerFactory.Type.SONAR);
+        sonar.earnXp(1_000_000);
+        List<UpgradeNode> chain = List.of("Attune", "Awaken").stream().map(name -> sonar.upgradeTree().nodes().stream()
+                .filter(n -> n.displayName().equals(name)).findFirst().orElseThrow()).toList();
+        chain.forEach(sonar::buyUpgrade);
+        GameSave save = saved.save().orElseThrow();
+        TowerSave tower = save.towers().getFirst();
+        List<String> renamed = tower.nodes().stream()
+                .map(id -> id.equals(chain.getFirst().id()) ? "renamed.node" : id).toList();
+        GameEngine loaded = FakeGameHost.newBoundEngine();
+        loaded.loadLevel(level);
+
+        Optional<String> problem = loaded.restore(new GameSave(save.level(), save.nextWave(), save.economy(),
+                List.of(new TowerSave(tower.type(), tower.cell(), renamed, tower.tally()))));
+
+        assertThat(problem).hasValueSatisfying(text -> assertThat(text).contains("renamed.node")
+                .contains(chain.getLast().id()));
+        assertThat(loaded.getTowers()).singleElement().satisfies(rebuilt -> assertThat(rebuilt.upgrades().owns(
+                chain.getLast().id())).isFalse());
     }
 
     @Test

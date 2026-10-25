@@ -455,9 +455,10 @@ public class GameEngine {
     /**
      * Puts {@code save}'s game on the board in place of the one running: its towers, its economy, and its wave next.
      * The towers are rebuilt in the order they were built, so each records the price it was bought for, and own
-     * their upgrades whatever the gates.
+     * their upgrades whatever the gates. What can't be rebuilt any more, since the level or a tower changed after the
+     * save, is left out and named: a game that loads only in part must not pass for the saved one.
      *
-     * @return why it could not, or empty once it did
+     * @return why it could not load, or what of it is missing; empty once all of it loaded
      */
     public Optional<String> restore(GameSave save) {
         LoadedLevel installed = this.gameWorld.level();
@@ -473,28 +474,43 @@ public class GameEngine {
         boolean gatesIgnored = rules.upgradeGatesIgnored();
         rules.setUpgradeGatesIgnored(true);
         this.gameWorld.economy().startEconomy(REBUILD_CREDITS, save.economy().lives());
-        save.towers().forEach(this::rebuild);
+        List<String> missing = save.towers().stream().flatMap(saved -> this.rebuild(saved).stream()).toList();
         rules.setUpgradeGatesIgnored(gatesIgnored);
         this.gameWorld.economy().startEconomy(save.economy().credits(), save.economy().lives());
         this.gameWorld.economy().apply(EconomyDelta.score(save.economy().score()));
         LOG.info("Game loaded: {} before wave {}, {} towers", save.level(), save.nextWave(), save.towers().size());
-        return Optional.empty();
+        if (missing.isEmpty()) {
+            return Optional.empty();
+        }
+        String problem = "Loaded before wave " + save.nextWave() + ", but " + missing.size() + " not rebuilt: "
+                + String.join("; ", missing);
+        LOG.warn(problem);
+        return Optional.of(problem);
     }
 
-    private void rebuild(TowerSave saved) {
+    /** Builds {@code saved} again with its upgrades; returns what of it could not be. */
+    private List<String> rebuild(TowerSave saved) {
         int scale = this.gameWorld.getBoard().scale();
+        String where = saved.type().displayName() + " at " + saved.cell().x() + "," + saved.cell().y();
         this.placement.start(saved.type(), 0f);
         this.placement.mouseClicked(saved.cell().x() * scale + scale / 2, saved.cell().y() * scale + scale / 2);
         Cell cell = this.gameWorld.cells().at(saved.cell().x(), saved.cell().y());
         if (!cell.hasTower()) {
-            LOG.warn("Saved {} at {} not rebuilt: the cell takes no tower", saved.type(), saved.cell());
-            return;
+            return List.of(where + " (the cell takes no tower)");
         }
         Tower tower = cell.getTower();
-        saved.nodes().forEach(id -> tower.upgradeTree().nodes().stream()
-                .filter(node -> node.id().equals(id)).findFirst()
-                .ifPresent(tower::buyUpgrade));
+        List<String> missing = new ArrayList<>();
+        for (String id : saved.nodes()) {
+            Optional<UpgradeNode> node = tower.upgradeTree().nodes().stream()
+                    .filter(candidate -> candidate.id().equals(id)).findFirst();
+            if (node.isEmpty()) {
+                missing.add(where + ": upgrade " + id + " (no such upgrade)");
+            } else if (!tower.buyUpgrade(node.get())) {
+                missing.add(where + ": upgrade " + id + " (not on offer)");
+            }
+        }
         tower.restore(saved.tally());
+        return missing;
     }
 
     /**

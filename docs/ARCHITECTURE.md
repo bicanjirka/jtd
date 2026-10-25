@@ -713,10 +713,10 @@ Rejected: iterating aura-on-aura buffs to a fixed point; making every perk numbe
 ## 14. Upgrade node ids are permanent
 
 A saved game (`td.save`) records each tower's upgrades as the ids of the nodes it owns, in the order
-bought, and loading rebuys them by id. Loading skips an id it doesn't know, without any error, so a
-renamed id makes old saves bring the tower back without that upgrade, and without any later node that
-needs it. So an id is fixed once it ships: the player-facing name, the slot and the tree's layout can
-all change around it.
+bought, and loading rebuys them by id. A renamed id brings the tower back without that upgrade and
+without any later node that needs it. Loading names what it could not rebuild (the dev panel shows it,
+and a balance run from such a save stops), but the save is spoiled all the same. So an id is fixed once
+it ships: the player-facing name, the slot and the tree's layout can all change around it.
 
 The upgrade visual revamp moved Attune, Awaken and Transcendent out of the `BASE` slot into a new
 `CORE` slot, yet their ids stayed `base.attune`, `base.awaken` and `base.transcendent`, and
