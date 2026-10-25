@@ -27,5 +27,8 @@ Read when a Driver or preview step misbehaves. Each item cost a past session a r
   away selects the other one; confirm with `text`.
 - **The Info pane scrolls.** A long stat block opens scrolled, hiding the header and the
   `Killed`/`Leaked` line in a screenshot. Assert with `text <n>`.
-- **Wave-preview slots are square, as tall as the row** (about 30 px at the default size), and
-  `hover` picks by x only; hover at 15, 45, 75 for the first three slots of that row.
+- **Wave-preview slots are 32 px wide**, narrower when a wave's types don't fit, and `hover` picks
+  by x only; hover at 16, 48, 80 for the first three slots of an uncrowded row.
+- **The pointer stays where the last run left it.** A run that starts over a preview slot opens its
+  tooltip at once, and a later `hover` that ends inside that tooltip keeps it open. Start with
+  `pointer 300 300` before hovering.

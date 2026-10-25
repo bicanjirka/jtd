@@ -31,12 +31,13 @@ class PanelEnemyTest {
         return mob.accept(new EnemyInfoText());
     }
 
-    /** As a wave row fills it: two enemies, then a layout that gives each a square slot of the strip's height. */
-    private static PanelEnemy stripOf(EnemyDefinition first, EnemyDefinition second) {
+    /** As a wave row fills it: the enemies, then a layout of the given width. */
+    private static PanelEnemy stripOf(int width, EnemyDefinition... definitions) {
         PanelEnemy strip = new PanelEnemy();
-        strip.addEnemy(first, 3, Rank.SOLDIER);
-        strip.addEnemy(second, 1, Rank.SOLDIER);
-        strip.setSize(80, 40);
+        for (EnemyDefinition definition : definitions) {
+            strip.addEnemy(definition, 3, Rank.SOLDIER);
+        }
+        strip.setSize(width, PanelEnemy.HEIGHT);
         strip.recalculateSize();
         return strip;
     }
@@ -44,20 +45,30 @@ class PanelEnemyTest {
     @Test
     void theSpotUnderThePointerIsItsEnemysSlotAndOpensThatEnemysPreview() {
         EnemyDefinition second = EnemyFixtures.simpleDefinition("second");
-        PanelEnemy strip = stripOf(EnemyFixtures.simpleDefinition("first"), second);
+        PanelEnemy strip = stripOf(200, EnemyFixtures.simpleDefinition("first"), second);
 
-        TooltipSpot spot = strip.spotAt(new Point(60, 20)).orElseThrow();
+        TooltipSpot spot = strip.spotAt(new Point(40, 20)).orElseThrow();
 
-        assertThat(spot.bounds()).isEqualTo(new Rectangle(40, 0, 40, 40));
+        assertThat(spot.bounds()).isEqualTo(new Rectangle(32, 0, 32, PanelEnemy.HEIGHT));
         assertThat(spot.tooltip().sheet())
                 .isEqualTo(PanelEnemy.previewMob(second, Rank.SOLDIER, this.world).accept(new EnemyInfoText()));
     }
 
     @Test
     void pastTheLastEnemyThereIsNoSpot() {
-        PanelEnemy strip = stripOf(EnemyFixtures.simpleDefinition("first"), EnemyFixtures.simpleDefinition("second"));
+        PanelEnemy strip = stripOf(200, EnemyFixtures.simpleDefinition("first"), EnemyFixtures.simpleDefinition("second"));
 
-        assertThat(strip.spotAt(new Point(85, 20))).isEmpty();
+        assertThat(strip.spotAt(new Point(70, 20))).isEmpty();
+    }
+
+    @Test
+    void enemiesThatDoNotFitShareTheWidthInEqualSlots() {
+        PanelEnemy strip = stripOf(60, EnemyFixtures.simpleDefinition("first"), EnemyFixtures.simpleDefinition("second"),
+                EnemyFixtures.simpleDefinition("third"));
+
+        TooltipSpot spot = strip.spotAt(new Point(45, 20)).orElseThrow();
+
+        assertThat(spot.bounds()).isEqualTo(new Rectangle(40, 0, 20, PanelEnemy.HEIGHT));
     }
 
     @Test

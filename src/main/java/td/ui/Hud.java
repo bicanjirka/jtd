@@ -55,7 +55,7 @@ public final class Hud {
     /** Padding inside a control, since {@link #paintControl} draws the border. */
     private static final Border CONTROL_PADDING = new EmptyBorder(3, 8, 3, 8);
     private static final int CHIP_INSET = 2;
-    private static final int CHIP_SIZE = 12;
+    static final int CHIP_SIZE = 12;
     private static final int CHIP_PADDING = 2;
     private static final int CHIP_GAP = 2;
     private static final float CHIP_ARC = 6f;
@@ -77,6 +77,12 @@ public final class Hud {
      */
     public static Border outlineBorder() {
         return BorderFactory.createLineBorder(BORDER_IDLE);
+    }
+
+    /** A faint line across the top, splitting one part of a panel from the part above it. */
+    static Border ruleAboveBorder(int gap) {
+        return BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER_DISABLED),
+                new EmptyBorder(gap, 0, 0, 0));
     }
 
     /** The titled border every HUD panel wears. */

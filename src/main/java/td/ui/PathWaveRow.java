@@ -32,7 +32,8 @@ final class PathWaveRow extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private static final int SWATCH_WIDTH = 10;
-    private static final int SWATCH_HEIGHT = 16;
+    /** As tall as the mob line, so the chevron points at the mobs rather than their counts. */
+    private static final int SWATCH_HEIGHT = 24;
 
     private final Swatch swatch = new Swatch();
     private final PanelEnemy panelEnemy = new PanelEnemy();
@@ -81,17 +82,15 @@ final class PathWaveRow extends JPanel {
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0;
         c.gridy = 0;
-        c.anchor = GridBagConstraints.WEST;
-        c.insets = new Insets(0, 0, 0, 5);
+        c.anchor = GridBagConstraints.NORTHWEST;
+        c.insets = new Insets(0, 0, 0, 4);
         add(this.swatch, c);
 
-        this.panelEnemy.setMinimumSize(new Dimension(30, 30));
         c = new GridBagConstraints();
         c.gridx = 1;
         c.gridy = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 0.01;
-        c.insets = new Insets(2, 0, 2, 0);
+        c.weightx = 1.0;
         add(this.panelEnemy, c);
     }
 

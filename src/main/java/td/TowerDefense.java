@@ -38,7 +38,6 @@ import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.util.Threads;
-import td.wave.WaveProgress;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -429,14 +428,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void setWavePreview() {
-        WaveProgress progress = this.engine.waveProgress();
-        this.gameConsole.getWaveInfo().clearWaves();
-        if (!progress.current().isEmpty()) {
-            this.gameConsole.getWaveInfo().setWaveCur(progress.currentNumber(), progress.current());
-        }
-        if (!progress.next().isEmpty()) {
-            this.gameConsole.getWaveInfo().setWaveNext(progress.nextNumber(), progress.next());
-        }
+        this.gameConsole.getWaveInfo().show(this.engine.waveProgress(), this.engine.isWaveReady(),
+                this.engine.outcome());
     }
 
     private void debugSkipWave() {
@@ -636,6 +629,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     /** Callers pass an outcome only on the transition, so each overlay shows once. */
     private void showOutcome(LevelOutcome outcome) {
         this.syncTransportButtons();
+        this.setWavePreview();
         switch (outcome) {
             case PLAYING -> {
             }
@@ -661,6 +655,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      */
     public void doTick(int time) {
         boolean wasReady = this.engine.isWaveReady();
+        boolean wasOver = this.engine.outcome().isOver();
         boolean waveStarted = this.engine.doTick(time);
         if (waveStarted) {
             SwingUtilities.invokeLater(() -> {
@@ -669,10 +664,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
                 this.syncTransportButtons();
             });
         } else if (this.engine.isWaveReady() != wasReady) {
-            SwingUtilities.invokeLater(this::syncTransportButtons);
+            SwingUtilities.invokeLater(() -> {
+                this.setWavePreview();
+                this.syncTransportButtons();
+            });
         }
         LevelOutcome outcome = this.engine.outcome();
-        if (outcome.isOver()) {
+        if (outcome.isOver() && !wasOver) {
             SwingUtilities.invokeLater(() -> this.showOutcome(outcome));
         }
     }
