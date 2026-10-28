@@ -284,10 +284,10 @@ public final class TowerLab {
         for (String key : hiding) {
             String[] parts = key.split(AT);
             LevelDefinition duel = duelLevel(level, parts[0], Rank.valueOf(parts[1]), PROBE_HEALTH);
-            double unseen = partnerDamage(duel, partnerCell.get(), type, cell, Optional.empty(), true, false);
-            double seen = partnerDamage(duel, partnerCell.get(), type, cell, Optional.empty(), true, true);
+            double unseen = partnerDamage(duel, partnerCell.get(), type, cell, Optional.empty(), false);
+            double seen = partnerDamage(duel, partnerCell.get(), type, cell, Optional.empty(), true);
             for (UpgradeNode node : revealing) {
-                double with = partnerDamage(duel, partnerCell.get(), type, cell, Optional.of(node), true, false);
+                double with = partnerDamage(duel, partnerCell.get(), type, cell, Optional.of(node), false);
                 double share = seen - unseen <= HIDING_MATTERS * seen ? 1.0
                         : Math.clamp((with - unseen) / (seen - unseen), 0.0, 1.0);
                 shares.computeIfAbsent(node.id(), id -> new LinkedHashMap<>()).put(key, share);
@@ -423,18 +423,16 @@ public final class TowerLab {
     }
 
     /**
-     * What the partner on {@code partnerCell} lands in one probe round, averaged over seeds, alone or with a
-     * {@code type} owning {@code line} on {@code cell} beside it, and with every enemy kept revealed or not.
+     * What the partner on {@code partnerCell} lands in one probe round, averaged over seeds, with a {@code type}
+     * owning {@code line} on {@code cell} beside it, and with every enemy kept revealed or not.
      */
     private static double partnerDamage(LevelDefinition probes, Point partnerCell, TowerFactory.Type type, Point cell,
-                                        Optional<UpgradeNode> line, boolean withSubject, boolean revealAll) {
+                                        Optional<UpgradeNode> line, boolean revealAll) {
         return LongStream.range(FIRST_SEED, FIRST_SEED + SEEDS).mapToDouble(seed -> {
             GameEngine engine = labEngine(probes, seed);
             Tower partner = Turn.place(engine, PARTNER, partnerCell).orElseThrow();
-            if (withSubject) {
-                Tower subject = Turn.place(engine, type, cell).orElseThrow();
-                line.ifPresent(node -> buyLine(subject, node));
-            }
+            Tower subject = Turn.place(engine, type, cell).orElseThrow();
+            line.ifPresent(node -> buyLine(subject, node));
             runRound(engine, revealAll);
             return partner.getDamageDealt();
         }).average().orElse(0);
