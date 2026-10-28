@@ -140,7 +140,7 @@ final class RunRecorder {
             PlayRecord.Foe foe = foeOf(mob);
             if (this.seen.add(mob)) {
                 this.healthIn += foe.maxHealth();
-                if (mob.accept(defined -> defined.ticksSinceAbilitySpawn(tick)) >= 0) {
+                if (mob.accept(defined -> defined.ticksSinceAbilitySpawn(tick)).isPresent()) {
                     this.casts.merge(PlayRecord.Watch.spawnKey(foe.kind()), 1, Integer::sum);
                 }
             }

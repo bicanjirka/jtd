@@ -202,10 +202,14 @@ class EnemyFrameBuilderTest {
     }
 
     @Test
-    void fadeProgressStaysWithinRangeBeforeTheDeathTickIsCaptured() {
-        float progress = EnemyFrameBuilder.fadeProgress(Rank.GRUNT, -1);
+    void anEnemyKilledBeforeItsNextTickFadesFromTheStart() {
+        GameWorld context = contextWithStraightPath();
+        EnemyMob enemy = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), Rank.GRUNT);
 
-        assertThat(progress).isBetween(0f, 1f);
+        enemy.doDamage(Damage.physical(5000));
+
+        assertThat(drawsAt(enemy, 0)).singleElement().isInstanceOfSatisfying(EnemyFadeDraw.class,
+                fade -> assertThat(fade.fadeProgress()).isZero());
     }
 
     @Test

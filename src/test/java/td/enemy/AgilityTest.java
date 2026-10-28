@@ -34,7 +34,7 @@ class AgilityTest {
         assertThat(result.dodged()).isTrue();
         assertThat(result.credited()).isZero();
         assertThat(enemy.getHealth()).isEqualTo(health);
-        assertThat(enemy.ticksSinceDodge(1)).isZero();
+        assertThat(enemy.ticksSinceDodge(1)).hasValue(0);
     }
 
     @Test

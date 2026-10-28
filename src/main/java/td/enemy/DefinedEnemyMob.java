@@ -32,6 +32,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -599,14 +600,19 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.activeEffects.activeKinds();
     }
 
-    /** {@code -1} if never gained. */
-    public int ticksSinceEffectGained(EffectKind kind, int gameTime) {
+    /** Empty if never gained. */
+    public OptionalInt ticksSinceEffectGained(EffectKind kind, int gameTime) {
         return this.effectTransitions.ticksSinceGained(kind, gameTime);
     }
 
-    /** {@code -1} if never lost. */
-    public int ticksSinceEffectLost(EffectKind kind, int gameTime) {
-        return this.effectTransitions.ticksSinceLost(kind, gameTime);
+    /** How long ago {@code kind} was last gained, if no more than {@code ticks} ago. */
+    public OptionalInt effectGainedWithin(EffectKind kind, int gameTime, int ticks) {
+        return this.effectTransitions.gainedWithin(kind, gameTime, ticks);
+    }
+
+    /** How long ago {@code kind} was last lost, if no more than {@code ticks} ago. */
+    public OptionalInt effectLostWithin(EffectKind kind, int gameTime, int ticks) {
+        return this.effectTransitions.lostWithin(kind, gameTime, ticks);
     }
 
     /** Spawned, on the board and alive. */
@@ -748,18 +754,18 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /**
-     * {@code -1} while alive. Captured on the first {@code doTick} after death, so the fade follows
-     * the simulation clock rather than the repaint rate.
+     * Empty while alive, and after a death until the first {@code doTick} captures it, so the fade
+     * follows the simulation clock rather than the repaint rate.
      */
-    public int ticksSinceDeath(int gameTime) {
+    public OptionalInt ticksSinceDeath(int gameTime) {
         return this.moments.ticksSince(Moment.DEATH, gameTime);
     }
 
     /**
-     * {@code -1} if never. Captured on the next {@code doTick}, like {@link #ticksSinceDeath},
+     * Empty if never. Captured on the next {@code doTick}, like {@link #ticksSinceDeath},
      * because {@code doDamage} has no game time.
      */
-    public int ticksSinceCriticalHit(int gameTime) {
+    public OptionalInt ticksSinceCriticalHit(int gameTime) {
         return this.moments.ticksSince(Moment.CRITICAL_HIT, gameTime);
     }
 
@@ -768,13 +774,13 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.dodges;
     }
 
-    /** {@code -1} if it never dodged. Captured like {@link #ticksSinceCriticalHit}. */
-    public int ticksSinceDodge(int gameTime) {
+    /** Empty if it never dodged. Captured like {@link #ticksSinceCriticalHit}. */
+    public OptionalInt ticksSinceDodge(int gameTime) {
         return this.moments.ticksSince(Moment.DODGE, gameTime);
     }
 
-    /** {@code -1} if never. Captured like {@link #ticksSinceCriticalHit}. */
-    public int ticksSinceDamageTaken(int gameTime) {
+    /** Empty if never. Captured like {@link #ticksSinceCriticalHit}. */
+    public OptionalInt ticksSinceDamageTaken(int gameTime) {
         return this.moments.ticksSince(Moment.DAMAGE_TAKEN, gameTime);
     }
 
@@ -794,8 +800,8 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.ticksSinceLastHit;
     }
 
-    /** {@code -1} for a mob that came from a wave. */
-    public int ticksSinceAbilitySpawn(int gameTime) {
+    /** Empty for a mob that came from a wave. */
+    public OptionalInt ticksSinceAbilitySpawn(int gameTime) {
         return this.moments.ticksSince(Moment.ABILITY_SPAWN, gameTime);
     }
 
@@ -814,7 +820,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         if (this.isDead()) {
             // Gated on the death capture, not on death: a tower can kill this mob after its own
             // doTick already ran this tick.
-            if (this.ticksSinceDeath(gameTime) == 0) {
+            if (this.ticksSinceDeath(gameTime).equals(OptionalInt.of(0))) {
                 this.evaluateAbilities(gameTime);
                 this.endObservation(this.fate == EnemyInspection.Fate.LEAKED ? "leaked" : "killed");
             }

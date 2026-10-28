@@ -6,6 +6,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -44,15 +45,28 @@ public final class EffectTransitions {
                 .toList();
     }
 
-    /** {@code -1} if never gained. */
-    public int ticksSinceGained(EffectKind kind, int gameTime) {
-        Integer tick = this.gainedTick.get(kind);
-        return tick == null ? -1 : gameTime - tick;
+    /** Empty if never gained. */
+    public OptionalInt ticksSinceGained(EffectKind kind, int gameTime) {
+        return this.gainedWithin(kind, gameTime, Integer.MAX_VALUE);
     }
 
-    /** {@code -1} if never lost. */
-    public int ticksSinceLost(EffectKind kind, int gameTime) {
-        Integer tick = this.lostTick.get(kind);
-        return tick == null ? -1 : gameTime - tick;
+    /** Empty if never lost. */
+    public OptionalInt ticksSinceLost(EffectKind kind, int gameTime) {
+        return this.lostWithin(kind, gameTime, Integer.MAX_VALUE);
+    }
+
+    /** How long ago {@code kind} was last gained, if no more than {@code ticks} ago. */
+    public OptionalInt gainedWithin(EffectKind kind, int gameTime, int ticks) {
+        return within(this.gainedTick.get(kind), gameTime, ticks);
+    }
+
+    /** How long ago {@code kind} was last lost, if no more than {@code ticks} ago. */
+    public OptionalInt lostWithin(EffectKind kind, int gameTime, int ticks) {
+        return within(this.lostTick.get(kind), gameTime, ticks);
+    }
+
+    /** Builds an answer only inside the window: the frame build asks every kind of every enemy each frame. */
+    private static OptionalInt within(Integer tick, int gameTime, int ticks) {
+        return tick == null || gameTime - tick > ticks ? OptionalInt.empty() : OptionalInt.of(gameTime - tick);
     }
 }
