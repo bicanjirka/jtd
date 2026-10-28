@@ -1061,7 +1061,7 @@ Yes. Every question has an answer (7.8, 7.9), and the documents and checks it ne
 committed. What remains is code, in this order:
 
 1. **Do now, one commit each:**
-   - F15a (the Splash next-shot bug, failing test first);
+   - F15a (the Splash next-shot bug, failing test first; done);
    - F3 (`TermLooks` frames from the category);
    - F4 (delete `ShieldListener`, with its doc line);
    - F5 (the kill-hook guard test);
