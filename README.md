@@ -71,7 +71,8 @@ the wave preview opens a tooltip of the stats that enemy type spawns with.
 
 The dev panel ships in the jar, hidden behind `Ctrl`+`Shift`+`D` rather than a build flag, to
 make manual playtesting cheap. It sets credits and lives, keeps them topped up, spawns any wave
-script on any path with a live preview, skips, jumps to or restarts waves, steps one tick, shows
+script on any path with a live preview (enemies spawned between waves hold the next wave back until
+they are gone), skips, jumps to or restarts waves, steps one tick, shows
 the live speed in ticks per second and nudges it by 1 or 5 (0 pauses), kills
 or clears the board, saves the game between waves and loads it back (one save per level, in `saves/`), grants XP to or resets the selected tower, lets upgrades ignore their gates,
 and draws the cell grid with the path's cells shaded and the pointed-at cell's coordinates. Every

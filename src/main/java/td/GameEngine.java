@@ -346,13 +346,15 @@ public class GameEngine {
     }
 
     /**
-     * Game-loop thread: applies the debug round commands asked for since the last call. Runs while
-     * paused, when no tick does.
+     * Game-loop thread: applies the debug round commands asked for since the last call, and notes
+     * enemies the dev panel put on a board waiting for its next wave. Runs while paused, when no
+     * tick does.
      */
     void applyRequests() {
         for (Runnable request = this.requests.poll(); request != null; request = this.requests.poll()) {
             request.run();
         }
+        this.round = this.round.joinedBy(this.gameWorld.enemies().aliveCount());
     }
 
     public void startPlacing(TowerFactory.Type t, float r) {

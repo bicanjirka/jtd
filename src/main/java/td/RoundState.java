@@ -22,6 +22,8 @@ record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart)
         READY,
         /** A wave is out. */
         RUNNING,
+        /** Between waves, with enemies no wave sent on the board: the next wave waits until they are gone. */
+        OCCUPIED,
         WON,
         LOST
     }
@@ -43,7 +45,7 @@ record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart)
         return switch (this.phase) {
             case WON -> LevelOutcome.WON;
             case LOST -> LevelOutcome.LOST;
-            case READY, RUNNING -> LevelOutcome.PLAYING;
+            case READY, RUNNING, OCCUPIED -> LevelOutcome.PLAYING;
         };
     }
 
@@ -69,8 +71,18 @@ record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart)
         }
         return switch (this.phase) {
             case RUNNING -> alive > 0 ? this : this.noted(leaks).in(this.wave < waveCount ? Phase.READY : Phase.WON);
-            case READY, WON, LOST -> this;
+            case READY -> this.joinedBy(alive);
+            case OCCUPIED -> alive > 0 ? this : this.in(Phase.READY);
+            case WON, LOST -> this;
         };
+    }
+
+    /**
+     * The round once enemies no wave sent may have joined the board between ticks. Only that: a mob
+     * killed between ticks runs its on-death abilities on the next tick, so a clear waits for it.
+     */
+    RoundState joinedBy(int alive) {
+        return this.phase == Phase.READY && alive > 0 ? this.in(Phase.OCCUPIED) : this;
     }
 
     /** Debug: the board was cleared, so the round in play ends with nothing more to settle. */

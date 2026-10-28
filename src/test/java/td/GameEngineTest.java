@@ -1545,6 +1545,27 @@ class GameEngineTest {
     }
 
     @Test
+    void enemiesSpawnedWhileTheNextWaveWaitsHoldItBackUntilTheyAreGone() {
+        EnemyDefinition post = EnemyDefinition.of("post", "Post", 100, 1, 0f, BodyArchetype.SQUARE);
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT)), 100)
+                .withCustomEnemies(List.of(post)));
+        DevControls dev = new DevControls(engine.getGameWorld());
+        dev.spawnWave("post", Rank.GRUNT, 0);
+
+        dev.runPending();
+        engine.applyRequests();
+        boolean readyWhileHeld = engine.isWaveReady();
+        dev.killAll();
+        dev.runPending();
+        engine.doTick(1);
+
+        assertThat(readyWhileHeld).isFalse();
+        assertThat(engine.isWaveReady()).isTrue();
+        assertThat(engine.getCurrentWaveIndex()).isZero();
+    }
+
+    @Test
     void debugSkippingAWaveClearsItAndStartsTheNextOneImmediately() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
