@@ -1,7 +1,9 @@
 # jTD — Tower Defense
 
 Swing tower-defense game. Java 25, Maven. Runtime deps: SLF4J + Logback. Tests: JUnit 5 + AssertJ.
-The *why* behind these rules is in `docs/ARCHITECTURE.md`; most tasks don't need it.
+Before a structural choice (a new type, package, interface, listener, switch, parameter, state
+field or text format), read `docs/DESIGN.md`. Before reversing a structure, check `docs/adr/` for
+the decision behind it. `docs/ARCHITECTURE.md` is an overview of the system as it is now.
 
 ```bash
 mvn verify                # Spotless + Checkstyle + tests - run before every commit
@@ -40,6 +42,7 @@ violation. They are not restated here.
 - Comments only for a non-obvious *why*. Don't name levels, content or other classes in them,
   and don't restate the code: no number, count or threshold the code beside it already holds
   ("once badly hurt", not "at 65% health"), so a tuning edit can't make the comment false.
+- The design rules are heuristics: a deviation states its reason in the commit body.
 - `CLAUDE.md` files hold constraints only - no history, no feature narrative. A change that
   makes a line in one false fixes it in the same commit.
 - Commit subject lines are imperative mood, capitalized, no trailing period (`Add X`, not
@@ -72,8 +75,8 @@ zones that keep working after the shot that made them). `GameEngine`,
   and their own previews; board content always goes through the pipeline.
 - **Depend on the narrowest thing.** `GameWorld` hands out collaborators
   (`world.economy().doPay(n)`, `world.towers().all()`); a consumer needing one takes that type,
-  one using most of the world takes `GameWorld`. `projectile` never depends on `tower`; `effect`
-  belongs to neither `tower` nor `enemy`; `stat` depends only on `damage`.
+  one using most of the world takes `GameWorld`. `projectile` uses only `tower.targeting` from
+  `tower`; `effect` belongs to neither `tower` nor `enemy`; `stat` depends only on `damage`.
 
 ## Threading
 
@@ -91,6 +94,8 @@ frame build reads them.
   bare `volatile`.
 - Publish finished objects: fill a local, then assign. A concurrent collection doesn't make
   `clear()` + `addAll()` atomic.
+- An EDT command that changes game state is a request the next tick consumes
+  (`requestNextWave`), never a write into engine state.
 - `Threads.assertEventDispatchThread()` / `assertNotEventDispatchThread()` at thread-sensitive
   entry points.
 - `GameLoop.stop()` joins without bound: never call it on the EDT. Level teardown goes through
@@ -106,20 +111,14 @@ frame build reads them.
 - **Value types** are immutable records with named factories (`Damage.physical(400)`,
   `EconomyDelta.kill(bounty)`). Absence is a value (`none()`, `empty()`) or `Optional`, never
   `null`. The one exception: `td.ui` frame builders return `null` for "no draw command".
-- Values that combine get an algebra: operation, identity, absorber if any (`Damage`,
-  `StatModifiers`, `TargetQuery`).
 - A record with 5+ components has a narrow factory and grows by fluent `withX` copies, never a
   wider constructor (`PathDefinition`, `EnemyDefinition`). `td.ui.render` draw records are
   exempt.
 - Randomness comes from an injected `RandomSource` (`GameWorld.random()`), never
   `Math.random()`, so headless balance runs reproduce.
-- Services: constructor injection into `final` fields; one constructor, no init step. Small
-  classes; interfaces of 1-5 methods. Inherit only for a closed set of variants, with `final`
-  leaves and `private` base-class state.
-- Branch on domain type with a visitor (`TowerVisitor`, `EnemyMobVisitor`,
-  `ProjectileVisitor`) or a `switch` over a sealed type, never `instanceof`.
-- Compose instead of hand-rolling: a tower's targeting combines `td.tower.targeting` filter and
-  selector pieces. Streams to transform, `reduce` to combine.
+- Services: constructor injection into `final` fields; one constructor, no init step.
+  Interfaces of 1-5 methods; the wide domain interfaces in `TODO.md` are the known exceptions.
+- Streams to transform, `reduce` to combine.
 - Names put the role noun last and say what a thing does: `SniperTower`,
   `FurthestAlongPathSelector`.
 - `this.` on every field access. Field order: constants, collaborators, mutable state.

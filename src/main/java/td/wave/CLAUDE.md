@@ -24,26 +24,6 @@ never in the constructor: that keeps a level load a single `LoadedLevel` publica
 `spawn()` call builds a fresh set, so calling it twice puts two copies on the board. For
 counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
-| Token     | Enemy                                                    |
-|-----------|----------------------------------------------------------|
-| `simple`  | Simple                                                   |
-| `armored` | Armored (reduced damage)                                 |
-| `fast`    | Fast (faster when hurt; Boss spawns a brood)         |
-| `ghost`   | Ghost (turns invisible when first hit; Elite+ shrouds)   |
-| `mender`  | Mender (heals allies)                                    |
-| `jammer`  | Jammer (weakens nearby towers; in no wave yet)           |
-| `e`       | spacer: takes a spawn slot, spawns nothing               |
-| `warden`  | the Warden boss chain (Curly Path only)                  |
-| `titan`  | Juggernaut (slow, huge plating)                       |
-| `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
-| `courier` | Courier (very fast, fragile, high bounty)                |
-| `shield` | Shieldbearer (physical-only shield for allies)      |
-| `lizard` | Salamander (burn-immune)                              |
-| `yeti`    | Yeti (freeze-immune, half chill)                         |
-| `magma`   | Magma (slow, burn-proof; its trail heals)                |
-| `golem`   | Golem (slow, heavily armored; shields itself when hurt) |
-| `dodger` | Skirmisher (nimble: dodges aimed shots)               |
-
 - A leading `w<number>` (`w30 3 c`) sets the ticks one slot of spacing is worth, default
   `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`; it carries on `WaveContent`. It must be the first token and
   positive, and no enemy id may look like it.
@@ -64,7 +44,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
   read with the cursor after it. A spawn-type keyword is one `ShapeKeyword` row.
 - Reserved tokens are matched before catalog lookup, and `EnemyCatalog.register` rejects ids that
   collide with them. Built-in and per-level ids resolve identically.
-- A new enemy id gets a row in this table and in `README.md`.
+- A new enemy id gets a row in `README.md`'s "Wave script ids" table.
 
 ## Composition rules
 

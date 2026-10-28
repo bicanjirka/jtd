@@ -382,6 +382,30 @@ A wave's script can also open with `w<number>` (`w30 8 c`), which sets how many 
 slot of spacing is worth. The default is 22.4; a bigger number spreads the wave out, a smaller one
 packs it tighter.
 
+### Wave script ids
+
+A wave script names enemies by these ids; the full grammar is in `src/main/java/td/wave/CLAUDE.md`.
+
+| Token     | Enemy                                                    |
+|-----------|----------------------------------------------------------|
+| `simple`  | Simple                                                   |
+| `armored` | Armored (reduced damage)                                 |
+| `fast`    | Fast (faster when hurt; Boss spawns a brood)         |
+| `ghost`   | Ghost (turns invisible when first hit; Elite+ shrouds)   |
+| `mender`  | Mender (heals allies)                                    |
+| `jammer`  | Jammer (weakens nearby towers; in no wave yet)           |
+| `e`       | spacer: takes a spawn slot, spawns nothing               |
+| `warden`  | the Warden boss chain (Curly Path only)                  |
+| `titan`  | Juggernaut (slow, huge plating)                       |
+| `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
+| `courier` | Courier (very fast, fragile, high bounty)                |
+| `shield` | Shieldbearer (physical-only shield for allies)      |
+| `lizard` | Salamander (burn-immune)                              |
+| `yeti`    | Yeti (freeze-immune, half chill)                         |
+| `magma`   | Magma (slow, burn-proof; its trail heals)                |
+| `golem`   | Golem (slow, heavily armored; shields itself when hurt) |
+| `dodger` | Skirmisher (nimble: dodges aimed shots)               |
+
 ### Levels
 
 Three levels ship with the game: **Curly Path** (a 20×13 board whose single lane loops once
@@ -439,9 +463,12 @@ driven and asserted from tests with no display.
 - **`CLAUDE.md`** — the constraints: the headless/Swing boundary, the threading rule, code
   style, conventions, test conventions and the wave mini-language. Read this before making
   non-trivial changes. It deliberately holds rules only, no rationale.
-- **`docs/ARCHITECTURE.md`** — the *why* behind those constraints: how the render pipeline is
-  layered, why the art is vector, how levels load and unload, what the threading rule is
-  protecting against, and the design history.
+- **`docs/DESIGN.md`** — how to choose a design here: decomposition, coupling and cohesion,
+  object design and SOLID as this codebase applies them, the functional core, and a quick guide.
+- **`docs/adr/`** — one architecture decision record per structural decision: what was decided,
+  why, and what was rejected.
+- **`docs/ARCHITECTURE.md`** — an overview of the system as it is now: the two sides, a tick, the
+  threads, the world, a frame, levels, stats and the tooling, linking to the records.
 - **`docs/features/`** — design documents for features that have shipped, kept as a record.
 - **`src/main/java/td/<package>/CLAUDE.md`** — per-package notes for the packages whose
   internals have invariants worth stating up front.

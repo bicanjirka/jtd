@@ -16,10 +16,9 @@
   A unique enemy (`EnemyCatalog.registerUnique`) has no ladder: it is Boss rank only, whatever is asked
   for, and so is the rank its mobs carry (`RankedEnemy.spawnRank`). A spawn ability that must not
   inherit a Boss caster's rank fixes one (`SpawnEnemiesAction.atRank`).
-  A built-in ladder derives its health and bounty from a `RankGrowth` (`startingAt(grunt, growth)`),
-  which grows the ranks it skips up to `BOSS`: health on an upward-bending curve to the enemy's Boss
-  factor, bounty with the square root of health. A rank step's `withHealthAndPrice` overrides both
-  for that rank alone. A unique enemy that leaks ends the level (`EnemyDefinition.ALL_LIVES`). Every
+  A built-in ladder derives its health and bounty from a `RankGrowth` (`startingAt(grunt, growth)`)
+  for the ranks it skips up to `BOSS`; a rank step's `withHealthAndPrice` overrides both for that
+  rank alone. A unique enemy that leaks ends the level (`EnemyDefinition.ALL_LIVES`). Every
   enemy gains something of its identity from Elite on.
 - Stat, trait, ability, effect, each thing is exactly one:
   - A **base stat** is a number every enemy has on its sheet. It is authored with its named method
@@ -31,8 +30,6 @@
     base stat instead.
   - An **ability** is a trigger and an action: it happens at a moment.
   - An **effect** is a timed status put on an enemy by a tower or an ability.
-- From Elite every built-in enemy has every base stat but plating and insulation above zero, unless its identity rules
-  it out (stated in its class javadoc or a comment).
 - Single-rank enemy: `EnemyCatalog.register(EnemyDefinition)`. A variant of an existing one:
   `EnemyCatalog.cloneAndAdjust(baseId, newId, adjust)`, which clones every rank from the
   original's own definition. `adjust` is a `UnaryOperator` (rank-blind) or a
@@ -61,9 +58,7 @@
 - `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
   `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
   it (e.g. `"armor"`, which a later rank step replaces).
-- Built-in traits are `EffectResistTrait` (`immuneTo` at 1), `RegenerationTrait`, `HurtSpeedTrait`,
-  `HurtAgilityTrait` and the `AdaptiveResist` template. Every enemy diminishes hard-CC durations; there
-  is no opt-in.
+- Every enemy diminishes hard-CC durations; there is no opt-in.
 - `DefinedEnemyMob.applyEffect` shortens the effect by its resistance and freeze diminishing
   returns before `ActiveEffects` sees it; there is no separate immunity check. The one exception
   is `INVERSION`: it turns a heal into damage and a shield into one hit, credited to its caster,
@@ -102,13 +97,14 @@
 - Each mob owns a `StatSheet` fed by its traits and `ActiveEffects`. `MOVE_SPEED`'s base is
   `baseSpeed` × spawn multiplier. The sheet is invalidated on a hit, on applying an effect, and
   after a tick that ticked effects or changed health. `doTick` reads speed and regeneration
-  *before* `ActiveEffects.tick()`, and returns early if a damage-over-time tick killed the mob.
-- `takeHit(damage, attacker)` first spends a mark, then lets agility dodge an aimed hit (`HitResult.dodge()`:
-  nothing else happens, not even the idle timer's reset); otherwise it lands the hit through `HitResolution` (a crit roll for hits only, and
-  none at resilience 100; a guaranteed crit skips the roll, otherwise it rolls against resilience,
-  which scales crit chance and crit bonus both ways; then penetration, mitigation, plating or insulation, damage
-  taken), then a shield pool absorbs what it can, then the cap at health; it returns a `HitResult`
-  (health lost, absorbed). Callers credit `credited()`. `doDamage` is its `landed()`.
+  *before* `ActiveEffects.tick()` (which removes an effect on its last tick), invalidates the sheet
+  after it, runs `EffectTransitions.observe` after it but before returning early for a mob a
+  damage-over-time tick killed, so an expiry is seen on time and a lethal tick still records its
+  losses.
+- `takeHit(damage, attacker)` lands a hit through `HitResolution`, the one hit formula, then the
+  shield pool and the cap at health, and returns a `HitResult`; callers credit `credited()`, and
+  `doDamage` is its `landed()`. A dodge (`HitResult.dodge()`) changes nothing else, not even the
+  idle timer.
 - A spawn shape's trait override is composed into the definition before the mob is built. There
   is no separate multiplier mechanism.
 - Spawn delay: the mob starts inactive iff its *converted* tick delay is > 0.
@@ -152,7 +148,7 @@
    compiler forces these.
 3. Add its shape in `Java2DFrameRenderer.enemyShape` and its fade case in `paintEnemyFade`. The
    compiler does **not** force these (they have a throwing `default`).
-4. Add its token to `td/wave/CLAUDE.md`'s table and to `README.md`.
+4. Add its id to `README.md`'s "Wave script ids" table and its row to the enemy table.
 
 A new `Trait` also needs a `TraitMarker` constant and its palette cases in
 `EnemyFrameBuilder.traitMarkerPaletteFor`/`Java2DFrameRenderer.colorFor`, and an `entry()`: the term its icon shows and
@@ -166,6 +162,4 @@ its sentence (an adaptive template describes the most it can reach). A new abili
   game-loop thread, once per frame build. A killed or leaked selection keeps its snapshot; one
   that left the roster still alive is dropped. A hatch marks the mob `HATCHED` first, so its
   snapshot stays like a kill's or a leak's.
-- `EnemyInspection` also carries base stats, effects in the order gained (with their clock, fullness
-  and DR), immunities and their cause, trait and ability entries, and a `StatBreakdown` for each
-  shown stat; `StatRows.shows` decides which.
+- `StatRows.shows` decides which stats an inspection shows.
