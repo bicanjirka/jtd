@@ -188,6 +188,19 @@ public record EnemyDefinition(
                 this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
     }
 
+    public EnemyDefinition withDisplayName(String displayName) {
+        return new EnemyDefinition(this.id, displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+    }
+
+    /** Pixels per tick; {@code 0} never moves. */
+    public EnemyDefinition withBaseSpeed(float baseSpeed) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+    }
+
     public EnemyDefinition withDescription(String description) {
         return new EnemyDefinition(this.id, this.displayName, description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,

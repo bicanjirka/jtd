@@ -206,6 +206,7 @@ on the Wardens, whose shield answers crits.
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
 | The Warden | large spiked crest | A boss: armor and magic resist, and plating, all lower with each hatching; periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. If any stage escapes, the level is lost, however many lives are left. Appears as the final wave of Curly Path. |
 | Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat point of every hit, crit immune from Elite, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
+| Bulky mob  | circle, pulsing | A Simple mob with three times the health at half the speed, on the Simple's ladder and abilities. Appears on Curly Path — a level-authored enemy, like the Reaver. |
 
 ### Rank
 
@@ -392,8 +393,8 @@ hourglass, teal and amber crossing at its middle, 10 waves per lane). A level ca
 and pace; Zigzag Path and Twisted Hourglass are the two built-in levels that do. A level's
 paths all run the same number of waves as synchronized rounds - starting a round spawns every
 path's wave for it together. A level can also register its own enemy on top of the ones above,
-scoped to that level only; Twisted Hourglass's Reaver and Curly Path's warding Mender (see the
-Enemies table) are the built-in ones.
+scoped to that level only; Twisted Hourglass's Reaver and Curly Path's warding Mender, Bulky mob
+and Warden chain (see the Enemies table) are the built-in ones.
 
 Levels are defined as Java constants in `td.level.BuiltInLevelCatalog`, so adding one today
 means a code change and a rebuild. See `TODO.md` for the planned file-based catalog.
