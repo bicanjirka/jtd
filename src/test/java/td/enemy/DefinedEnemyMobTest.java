@@ -18,9 +18,6 @@ import td.util.GameWorld;
 import td.util.RecordingGameHost;
 import td.wave.Vec2;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
@@ -153,11 +150,9 @@ class DefinedEnemyMobTest {
     }
 
     @Test
-    void whatAShieldTookIsReportedAndAnAttackThatIgnoresShieldsTakesNoneOfIt() {
+    void aShieldTakesAnOrdinaryHitButNoneOfAnAttackThatIgnoresShields() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
-        List<Damage> reported = new ArrayList<>();
-        context.enemies().addShieldListener((mob, absorbed) -> reported.add(absorbed));
         enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
 
         HitResult ordinary = enemy.takeHit(Damage.physical(300), AttackProfile.none());
@@ -166,7 +161,6 @@ class DefinedEnemyMobTest {
         assertThat(ordinary.absorbed()).isEqualTo(300);
         assertThat(ignoring.absorbed()).isZero();
         assertThat(ignoring.landed()).isEqualTo(Damage.physical(300));
-        assertThat(reported).containsExactly(Damage.physical(300));
     }
 
     @Test

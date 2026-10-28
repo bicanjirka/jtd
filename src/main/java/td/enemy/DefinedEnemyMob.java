@@ -690,9 +690,6 @@ public final class DefinedEnemyMob implements EnemyMob {
             Damage mitigated = HitResolution.resolve(damage, attacker, this.stats, this.gameWorld.random());
             boolean bypasses = attacker.ignoresShields() || (mitigated.critical() && attacker.critsPierceShields());
             int absorbed = bypasses ? 0 : this.activeEffects.absorb(mitigated.type(), mitigated.amount());
-            if (absorbed > 0) {
-                this.gameWorld.enemies().reportShielded(this, Damage.of(mitigated.type(), absorbed));
-            }
             Damage landed = this.health.lose(new Damage(mitigated.amount() - absorbed, mitigated.type(), mitigated.critical()));
             result = new HitResult(landed, absorbed);
             overkill = mitigated.amount() - absorbed - landed.amount();
