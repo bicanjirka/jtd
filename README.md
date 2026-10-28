@@ -76,8 +76,7 @@ they are gone), skips, jumps to or restarts waves, steps one tick, shows
 the live speed in ticks per second and nudges it by 1 or 5 (0 pauses), kills
 or clears the board, saves the game between waves and loads it back (one save per level, in `saves/`), grants XP to or resets the selected tower, lets upgrades ignore their gates,
 and draws the cell grid with the path's cells shaded and the pointed-at cell's coordinates. Every
-control has an `Alt` shortcut, and while the panel is open the bare keys `n` (skip wave), `x`
-(spawn the next catalog enemy) and `c` (grant credits) work too.
+control has an `Alt` shortcut.
 
 `td.balance.BalanceReport` checks balance headlessly. It plays every built-in level with the level's real
 credits and lives, over many seeds, with a naive player (random towers on random cells), a competent one
