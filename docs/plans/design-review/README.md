@@ -652,6 +652,7 @@ independent of the others and revertible on its own.
 - **Benefit:** (a) an inspector field is 2 files, not 3; (c) the mob's surface shrinks from 75 to about 70, and `HitReceiver` loses what is display-only.
 - **Proof:** replay the last inspection change (`git log -1 -- src/main/java/td/enemy/EnemyInspection.java`): it touched the mob. After, it wouldn't.
 - **Cost:** `DefinedEnemyMob`, `EnemyInspection`, and whichever interface declares those methods, plus `FakeEnemyMob` if they are on `HitReceiver`.
+- **Done** (`5631fa0`): six forwards went and four queries became package-private. None of them was on `HitReceiver`, so it doesn't shrink; its `TODO.md` entry now follows `Tower`'s approach.
 
 **F18. `FakeEnemyMob` uses a real `ActiveEffects`.** Smell: duplicated logic in tests.
 - **Fix:** the fake keeps its applied-effect record for assertions but answers effect queries from a real `ActiveEffects`. `effect` doesn't depend on `enemy`, so that works.
@@ -663,6 +664,7 @@ independent of the others and revertible on its own.
 - **Fix:** `OptionalInt`, or a `Moment` value with `notYet()`.
 - **Benefit:** the "callers must handle it" rule goes.
 - **Cost:** `MobMoments`, 2 callers. Do it with F17.
+- **Done** (`21a3093`): `OptionalInt`, for `EffectTransitions` too, which had the same sentinel. The frame build's per-kind queries take their window, so allocation per frame didn't change.
 
 **F15b. An attack works on a `Shot`, not on the live stats.** Book: a functional core.
 - **Fix:** `beginShot()` returns a `Shot` value (stats, number). The attack code of the 8 leaves takes it, and the live conveniences (`damageCurrent()`, `attackRate()`, `rangeReal()`) stop being reachable from attack paths. Mortar's landing-time reads stay deliberate (its spec), on a `Shot` stored with the shell.
@@ -671,12 +673,14 @@ independent of the others and revertible on its own.
 - **Cost:** 8 leaves. Do it at the next tower feature, one leaf per commit.
 
 **F9. The hover highlight is one `CellHighlight` snapshot published by `TowerPlacement`.** `Cell` goes from 14 methods to 8. Cost: 5 main files and 3 tests, plus one `run-jtd` pass.
+- **Done** (`ad5ab83`), with the live pass: the hover, its affordability, the selection outline, and its clearing on sell and Esc.
 
 **F10/F11. Wave-script suggestions ask the grammar; ranks become rows like `ShapeKeyword`.** Do at the next grammar change.
 
 **F14. The diminishing-returns ladder is `EffectRule` data, checked when the enum loads.** Do at the next hard-CC kind.
 
 **F6. `PathPlanner.gather` gets an in-progress set.** Do when upgrade requirements next change.
+- **Done differently** (`c31c6b9`): the tree rejects a prerequisite cycle when it is built. Three more walks would hang on one: the tree's path, lock-out and line lookups.
 
 ### Backlog (draft `TODO.md` entries)
 
@@ -1047,7 +1051,7 @@ Net: package files −79 lines in the files that already existed. The seven new 
 | `effect`'s "Adding a kind" step 4 (`TermLooks.effect`, `colorFor`) | F3, F16-A |
 | `ui`'s colour rule and its exhaustive-switch exceptions | F16-A |
 | `tower`'s `beginShot` rule | F15b |
-| `enemy`'s `ticksSinceDeath` sentinel | F19 |
+| `enemy`'s `ticksSinceDeath` sentinel | F19 (done) |
 | The `EnemyMobVisitor` lines | B-3 |
 | The tower price duty, moving to `TowerFactory.createTower` | with the next `TowerFactory` change |
 
@@ -1070,8 +1074,8 @@ committed. What remains is code, in this order:
    - F1 + 0019 with the pause-bug fix (done);
    - F16-A + 0018 with the tower visual revamp;
    - F15b with the next tower feature;
-   - F17 + F19 with the next inspection change;
+   - F17 + F19 (done);
    - F18 with B-3;
-   - F9, F10/F11, F14 and F6 as their areas change.
+   - F9 (done), F6 (done), and F10/F11 and F14 as their areas change.
 3. **`TODO.md`:** B-1 to B-4, the amended visitor entry, and the `HitReceiver`/`Cell` interface
    exceptions (done).
