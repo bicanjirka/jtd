@@ -33,7 +33,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 | `mender`  | Mender (heals allies)                                    |
 | `jammer`  | Jammer (weakens nearby towers; in no wave yet)           |
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
-| `warden`  | the Warden boss chain                                    |
+| `warden`  | the Warden boss chain (Curly Path only)                  |
 | `titan`  | Juggernaut (slow, huge plating)                       |
 | `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
 | `courier` | Courier (very fast, fragile, high bounty)                |

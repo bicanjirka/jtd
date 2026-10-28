@@ -1,11 +1,32 @@
-package td.enemy;
+package td.level;
 
 import td.effect.EffectKind;
 import td.effect.HealTemplate;
 import td.effect.ShieldTemplate;
+import td.enemy.Ability;
+import td.enemy.AbilityTerm;
+import td.enemy.ApplyEffectAction;
+import td.enemy.BodyArchetype;
+import td.enemy.EffectResistTrait;
+import td.enemy.EnemyDefinition;
+import td.enemy.HealthThresholdTrigger;
+import td.enemy.IdentifiedAbility;
+import td.enemy.IdentifiedTrait;
+import td.enemy.OnCriticalHitTakenTrigger;
+import td.enemy.OnDeathTrigger;
+import td.enemy.OnceTrigger;
+import td.enemy.PeriodicTrigger;
+import td.enemy.RadiusTarget;
+import td.enemy.Rank;
+import td.enemy.RankedEnemy;
+import td.enemy.RotorMovement;
+import td.enemy.SelfTarget;
+import td.enemy.SpawnEnemiesAction;
+import td.enemy.TimeSinceLastHitTrigger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * The Warden boss chain: three Wardens, each weaker than the last, and the egg each leaves on death.
@@ -17,32 +38,37 @@ final class WardenEnemy {
     private WardenEnemy() {
     }
 
-    static void registerIn(EnemyCatalog catalog) {
-        // Protection, not health, is what makes a hatch likely: the first egg shrugs off all but the
-        // heaviest hits and each later one gives something up, until the last can simply be shot.
-        catalog.registerUnique(egg("wardenEgg3", "Warden's Final Egg",
-                "The last egg: destroy it to end the encounter.",
-                new Shell(25f, 1f, 0f), List.of()));
-        // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
-        catalog.registerUnique(warden("warden3", "The Exhausted Warden", 5100, "hulking armored sentinel, barely standing",
-                new Shell(5f, 2.5f, 0f), "wardenEgg3"));
-        catalog.registerUnique(egg("wardenEgg2", "Warden's Egg",
-                "Hatches into a weaker Warden if not destroyed in time.",
-                new Shell(100f, 4f, 0f),
-                List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
-                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE))))
-                .withAbilities(hatchInto("warden3")));
-        catalog.registerUnique(warden("warden2", "The Weakened Warden", 8250,
-                "hulking armored sentinel, worn down from its last hatching", new Shell(10f, 5f, 0f), "wardenEgg2"));
-        catalog.registerUnique(egg("wardenEgg1", "Warden's Egg",
-                "Hatches into a weaker Warden if not destroyed in time.",
-                new Shell(400f, 12f, 100f),
-                List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
-                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL))))
-                .withAbilities(hatchInto("warden2")));
-        catalog.registerUnique(warden("warden", "The Warden", 13500, "hulking armored sentinel", new Shell(15f, 10f, 0f),
-                "wardenEgg1"));
+    /** Every stage and egg, each unique. */
+    static List<RankedEnemy> chain() {
+        return Stream.of(
+                        // Protection, not health, is what makes a hatch likely: the first egg shrugs off all but the
+                        // heaviest hits and each later one gives something up, until the last can simply be shot.
+                        egg("wardenEgg3", "Warden's Final Egg",
+                                "The last egg: destroy it to end the encounter.",
+                                new Shell(25f, 1f, 0f), List.of()),
+                        // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
+                        warden("warden3", "The Exhausted Warden", 5100, "hulking armored sentinel, barely standing",
+                                new Shell(5f, 2.5f, 0f), "wardenEgg3"),
+                        egg("wardenEgg2", "Warden's Egg",
+                                "Hatches into a weaker Warden if not destroyed in time.",
+                                new Shell(100f, 4f, 0f),
+                                List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
+                                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE))))
+                                .withAbilities(hatchInto("warden3")),
+                        warden("warden2", "The Weakened Warden", 8250,
+                                "hulking armored sentinel, worn down from its last hatching", new Shell(10f, 5f, 0f),
+                                "wardenEgg2"),
+                        egg("wardenEgg1", "Warden's Egg",
+                                "Hatches into a weaker Warden if not destroyed in time.",
+                                new Shell(400f, 12f, 100f),
+                                List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
+                                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
+                                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL))))
+                                .withAbilities(hatchInto("warden2")),
+                        warden("warden", "The Warden", 13500, "hulking armored sentinel", new Shell(15f, 10f, 0f),
+                                "wardenEgg1"))
+                .map(RankedEnemy::unique)
+                .toList();
     }
 
     /**

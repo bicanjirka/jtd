@@ -8,8 +8,8 @@
 - A new enemy is a new definition, not a mob class: global content is one `XxxEnemy` class holding
   everything it needs (its ladder, its spawnlings, its eggs), with a `registerIn(EnemyCatalog)` that
   `EnemyCatalog.builtIn()` calls in id order; one-level content goes in `LevelDefinition.customEnemies()` /
-  `customRankedEnemies()`. Write values straight into the factory calls; a private helper method (`MenderEnemy.heal`,
-  `WardenEnemy.warden`) takes the place of a constant that several steps share. An enemy a boss spawns is a
+  `customRankedEnemies()`. Write values straight into the factory calls; a private helper method (`MenderEnemy.heal`)
+  takes the place of a constant that several steps share. An enemy a boss spawns is a
   definition of its own, never the boss's ladder, which would be a spawn cycle.
 - A ladder is authored contiguously upward from `Rank.GRUNT`; a gap or a backward step is a
   `GameStartupException`, and asking for an unauthored rank falls back to the highest authored one.
