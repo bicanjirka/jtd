@@ -1051,11 +1051,9 @@ Net: package files −79 lines in the files that already existed. The seven new 
 | The `EnemyMobVisitor` lines | B-3 |
 | The tower price duty, moving to `TowerFactory.createTower` | with the next `TowerFactory` change |
 
-**Known gaps in the docs, by choice:**
-- Root "the wide domain interfaces in `TODO.md` are the known exceptions": `TODO.md` lists `Tower`
-  only until the backlog entries (step 6) add `HitReceiver` and `Cell`.
-- `TODO.md` cites "`docs/ARCHITECTURE.md` section 9" twice. Those references, and the backlog
-  entries, wait because `TODO.md` holds uncommitted work that isn't from this review.
+**Known gaps in the docs:** none left. `TODO.md` now lists `HitReceiver` and `Cell` beside `Tower`
+as the wide interfaces root `CLAUDE.md` refers to, and its two stale "`docs/ARCHITECTURE.md`
+section 9" references (to the retired bare debug keys) point at the dev panel.
 
 ### Is the plan final?
 
@@ -1076,4 +1074,4 @@ committed. What remains is code, in this order:
    - F18 with B-3;
    - F9, F10/F11, F14 and F6 as their areas change.
 3. **`TODO.md`:** B-1 to B-4, the amended visitor entry, and the `HitReceiver`/`Cell` interface
-   exceptions, once its current uncommitted edits are committed.
+   exceptions (done).

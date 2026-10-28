@@ -104,6 +104,44 @@ position and the visitor, `AuraTower` wants position and type.
   actually hurt by the width, not as a tidying exercise: a wide interface with one
   implementation hierarchy costs far less than a wrong split.
 
+### `HitReceiver` and `Cell` are wide interfaces too
+
+`HitReceiver` carries what a hit needs and what only the enemy inspector reads; `Cell` carries the
+square's own state and the hover highlight the placement preview sets on it.
+
+- **Where:** `td.enemy.HitReceiver` (and `FakeEnemyMob`), `td.cell.Cell`.
+- **Approach:** shrink them before splitting: the inspection built from the mob's parts takes the
+  display-only queries off `HitReceiver`, and one highlight snapshot published by `TowerPlacement`
+  takes the highlight off `Cell` (`docs/plans/design-review/README.md` 7.4, F17 and F9). Split what
+  is left only if a consumer is still hurt by the width.
+
+### Settle a finished walk outside the mob
+
+`DefinedEnemyMob.kill` and `leak` pay the bounty, charge the lives and report the walk themselves, so
+the mob knows the economy's rules.
+
+- **Where:** `DefinedEnemyMob.kill`/`leak`, `EnemyRoster.reportDeath`.
+- **Approach:** `EnemyWalk` carries its fate, score and lives on leak; a `WalkSettlement` listener in
+  `economy` applies them.
+
+### `td.util` mixes leaves and the world
+
+`td.util` holds small leaf helpers beside `GameWorld` and `GameHost`, so importing a helper looks the
+same as depending on the whole world.
+
+- **Where:** `td.util`.
+- **Approach:** split it into leaves and a `td.world` package. Almost every package imports it, so do it
+  only together with a full layer map of the packages, which has been decided against for now.
+
+### Path geometry lives in `td.wave`
+
+`Vec2`, `Point`, the `Path*` types, `ArcLengthPath` and the smoothing are geometry, not wave scripts,
+yet everything that moves along a path imports `td.wave` for them.
+
+- **Where:** `td.wave`.
+- **Approach:** move them into a geometry package. About 70 files import them, so do it only with the
+  same layer map.
+
 ### `EnemyMob`/`Tower`/`Projectile` use Visitor, not a sealed type + switch
 
 Sealing would drop the `accept()` methods and the visitor interfaces, but `permits` cannot name
@@ -113,6 +151,10 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   builders.
 - **Approach:** only if the fakes go away first (tests built on real mobs/towers from
   `td.fixtures`). `Projectile` has no fakes but alone would leave two dispatch styles.
+- **Where the visitor is a cast:** `DevControls` and `EnemySelection` visit an `EnemyMob` only to
+  reach `DefinedEnemyMob`'s fate and inspection. Lift `fate()` and the inspection onto `EnemyMob`
+  (with the inspection built from the mob's parts, F17), and give `FakeEnemyMob` a real
+  `ActiveEffects` (F18) so the fake is cheaper to keep (`docs/plans/design-review/README.md` 7.4).
 
 ## Balance tools
 
@@ -230,7 +272,7 @@ Shot) saved nothing until the Sniper's retune; see the crit entry below.
   condition-threshold values until each node feels like a meaningful, roughly-comparable-in-power choice rather than
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
   constant, not embedded in logic. `td.balance.BalanceReport` (the lab's node factors, `--save` and `--compare`)
-  and the `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap to actually do.
+  and the dev panel (`README.md`) make this cheap to actually do.
 
 ### The Mortar's, Cinder's and zones' numbers are unbalanced placeholders
 
@@ -315,8 +357,8 @@ single hit), making the Warden's armor mechanically inert regardless of which to
   once they get their own late-game content) repeatedly, adjusting values until the chain and
   the migrated traits feel meaningfully tuned rather than placeholder guesses - no code or
   architecture change needed, every number here is already a named constant. `td.balance.BalanceReport`
-  and the `n`/`x`/`c` debug keybindings (see `docs/ARCHITECTURE.md` section 9) now make this cheap to actually do - `x` specifically can spawn the Warden chain's
-  stages on demand without playing to wave 18 first.
+  and the dev panel (`README.md`) make this cheap to actually do: its wave script box spawns the Warden chain's
+  stages on demand without playing up to them first.
 
 ### Critical-damage numbers are unbalanced placeholders
 
