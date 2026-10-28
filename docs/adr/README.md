@@ -56,5 +56,5 @@ Each alternative, with why it lost.
 | [0016](0016-upgrade-node-ids-are-permanent.md) | Upgrade node ids are permanent | Accepted |
 | [0017](0017-package-cycle-accepted.md) | The domain packages form one cycle through `GameWorld`; only boundaries that hold are enforced | Accepted |
 | [0018](0018-board-looks-are-role-tables.md) | Board looks are tables per role, not switches in the painter | Accepted, not yet implemented |
-| [0019](0019-edt-commands-are-requests.md) | An EDT command to the engine is a request the next tick applies | Accepted, not yet implemented |
+| [0019](0019-edt-commands-are-requests.md) | An EDT command to the engine is a request the next tick applies | Accepted |
 | [0020](0020-design-docs-family.md) | Design principles, decisions and the overview live in separate documents | Accepted |

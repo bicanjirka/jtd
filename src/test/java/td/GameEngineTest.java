@@ -1393,7 +1393,8 @@ class GameEngineTest {
                 new WaveDefinition("2 simple", Rank.GRUNT), new WaveDefinition("3 simple", Rank.GRUNT)), 100));
         engine.nextWave();
 
-        int next = engine.debugJumpToWave(3);
+        int next = engine.requestJumpToWave(3);
+        engine.applyRequests();
         boolean started = engine.nextWave();
 
         assertThat(next).isEqualTo(3);
@@ -1552,7 +1553,8 @@ class GameEngineTest {
         engine.nextWave();
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
 
-        assertThat(engine.debugSkipCurrentWave()).isTrue();
+        engine.requestSkipWave();
+        engine.applyRequests();
 
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(2);
         assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty(); // the 2nd wave's own enemies
@@ -1566,7 +1568,8 @@ class GameEngineTest {
         engine.nextWave();
         assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty();
 
-        assertThat(engine.debugSkipCurrentWave()).isFalse();
+        engine.requestSkipWave();
+        engine.applyRequests();
 
         assertThat(engine.getGameWorld().enemies().getEnemies()).isEmpty();
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
@@ -1581,7 +1584,8 @@ class GameEngineTest {
         int livesBefore = engine.getGameWorld().economy().getLives();
         int creditsBefore = engine.getGameWorld().economy().getCredits();
 
-        engine.debugSkipCurrentWave();
+        engine.requestSkipWave();
+        engine.applyRequests();
 
         assertThat(engine.getGameWorld().economy().getLives()).isEqualTo(livesBefore);
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsBefore);
@@ -1705,7 +1709,8 @@ class GameEngineTest {
             sonar.buyUpgrade(sonar.upgradeTree().nodes().stream()
                     .filter(n -> n.displayName().equals(node)).findFirst().orElseThrow());
         }
-        saved.debugJumpToWave(3);
+        saved.requestJumpToWave(3);
+        saved.applyRequests();
         GameSave save = saved.save().orElseThrow();
         GameEngine loaded = FakeGameHost.newBoundEngine();
         loaded.loadLevel(level);
@@ -1777,7 +1782,8 @@ class GameEngineTest {
         LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT)), 100);
         engine.loadLevel(level);
         engine.nextWave();
-        engine.debugSkipCurrentWave();
+        engine.requestSkipWave();
+        engine.applyRequests();
 
         engine.loadLevel(level);
 

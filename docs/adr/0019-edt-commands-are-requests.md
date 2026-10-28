@@ -1,6 +1,6 @@
 # 0019. An EDT command to the engine is a request the next tick applies
 
-- Status: Accepted, not yet implemented
+- Status: Accepted
 - Date: 2026-10-28
 
 ## Context

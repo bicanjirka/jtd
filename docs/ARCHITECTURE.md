@@ -84,8 +84,9 @@ flowchart LR
 - The EDT owns the cells and recalculates tower stats; the game loop owns everything else and
   builds each frame.
 - `EconomyLedger` is written from both threads, computes under its lock, and fires outside it.
-- Two places don't follow the snapshot rule yet: the engine's round state and the hover highlight
-  on cells ([0019](adr/0019-edt-commands-are-requests.md), `TODO.md`).
+- The engine's round state crosses as one `RoundState`, and the dev panel's round commands are
+  requests the tick applies ([0019](adr/0019-edt-commands-are-requests.md)). The hover highlight
+  on cells doesn't follow the snapshot rule yet (`TODO.md`).
 - Records: [0007](adr/0007-owner-publishes-snapshots.md).
 
 ## 4. The world
