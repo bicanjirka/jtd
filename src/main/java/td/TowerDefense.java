@@ -280,6 +280,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      */
     private void buildAndPublishFrame() {
         this.devControls.runPending();
+        this.reportRoundChange(this.engine::applyRequests);
         int time = this.gameTime;
         this.latestFrame = this.boardRenderer.buildFrame(time,
                 this.gameLoop.tickInterpolationAlpha(), this.gameLoop.animationSeconds(),
@@ -433,18 +434,11 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void debugSkipWave() {
-        this.engine.debugSkipCurrentWave();
-        this.setWavePreview();
-        this.updateInfo();
-        this.syncTransportButtons();
-        this.showOutcome(this.engine.outcome());
+        this.engine.requestSkipWave();
     }
 
     private void debugJumpToWave(int number) {
-        int next = this.engine.debugJumpToWave(number);
-        this.setWavePreview();
-        this.updateInfo();
-        this.syncTransportButtons();
+        int next = this.engine.requestJumpToWave(number);
         this.panelDev.showMessage(next == 0 ? "No level in play" : "Wave " + next + " is next");
     }
 
@@ -645,7 +639,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     public void startLevel() {
-        this.engine.startLevel();
         this.setWavePreview();
     }
 
@@ -654,23 +647,28 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * when the loop is not ticking.
      */
     public void doTick(int time) {
-        boolean wasReady = this.engine.isWaveReady();
-        boolean wasOver = this.engine.outcome().isOver();
-        boolean waveStarted = this.engine.doTick(time);
-        if (waveStarted) {
+        this.reportRoundChange(() -> this.engine.doTick(time));
+    }
+
+    /** Runs {@code change} and has the EDT show what it did to the round. */
+    private void reportRoundChange(Runnable change) {
+        RoundState before = this.engine.round();
+        change.run();
+        RoundState after = this.engine.round();
+        if (after.wave() != before.wave()) {
             SwingUtilities.invokeLater(() -> {
                 this.setWavePreview();
                 this.updateInfo();
                 this.syncTransportButtons();
             });
-        } else if (this.engine.isWaveReady() != wasReady) {
+        } else if (!after.equals(before)) {
             SwingUtilities.invokeLater(() -> {
                 this.setWavePreview();
                 this.syncTransportButtons();
             });
         }
-        LevelOutcome outcome = this.engine.outcome();
-        if (outcome.isOver() && !wasOver) {
+        LevelOutcome outcome = after.outcome();
+        if (outcome.isOver() && !before.outcome().isOver()) {
             SwingUtilities.invokeLater(() -> this.showOutcome(outcome));
         }
     }

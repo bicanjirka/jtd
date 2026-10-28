@@ -41,8 +41,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.IntStream;
 
 /**
@@ -62,15 +63,13 @@ public class GameEngine {
     private final GameWorld gameWorld;
     private final TowerPlacement placement;
 
-    // Pair with the wave list only through waveProgress().
+    // Debug round commands from the EDT, applied on the game-loop thread.
+    private final Queue<Runnable> requests = new ConcurrentLinkedQueue<>();
+
     private volatile String levelName = "";
-    private volatile int wave = 0;
-    private volatile boolean waveReady = true;
+    // Pair with the wave list only through waveProgress().
+    private volatile RoundState round = RoundState.before(0);
     private volatile boolean startWave = false;
-    private volatile LevelOutcome outcome = LevelOutcome.PLAYING;
-    // 0-based rounds an enemy escaped; swapped whole.
-    private volatile Set<Integer> leakedRounds = Set.of();
-    private volatile long leaksAtRoundStart = 0L;
 
     public GameEngine(GameHost host) {
         this(new GameWorld(host));
@@ -100,7 +99,7 @@ public class GameEngine {
     }
 
     public int getCurrentWaveIndex() {
-        return this.wave;
+        return this.round.wave();
     }
 
     public int getWaveCount() {
@@ -114,19 +113,19 @@ public class GameEngine {
      */
     public WaveProgress waveProgress() {
         LoadedLevel installed = this.gameWorld.level();
-        int index = this.wave;
+        RoundState state = this.round;
+        int index = state.wave();
         int count = installed.waveCount();
         if (index > count) {
             // The wave counter can outrun a freshly installed, shorter level.
-            return new WaveProgress(count, this.roundsOf(installed), List.of(), List.of());
+            return new WaveProgress(count, roundsOf(installed, state.leaked()), List.of(), List.of());
         }
         List<Wave> current = index > 0 ? installed.wavesAt(index - 1) : List.of();
         List<Wave> next = index < count ? installed.wavesAt(index) : List.of();
-        return new WaveProgress(index, this.roundsOf(installed), current, next);
+        return new WaveProgress(index, roundsOf(installed, state.leaked()), current, next);
     }
 
-    private List<RoundSummary> roundsOf(LoadedLevel installed) {
-        Set<Integer> leaked = this.leakedRounds;
+    private static List<RoundSummary> roundsOf(LoadedLevel installed, Set<Integer> leaked) {
         return IntStream.range(0, installed.waveCount())
                 .mapToObj(round -> new RoundSummary(installed.highestRankAt(round), installed.uniqueAt(round),
                         leaked.contains(round)))
@@ -134,11 +133,16 @@ public class GameEngine {
     }
 
     public boolean isWaveReady() {
-        return this.waveReady;
+        return this.round.isWaveReady();
     }
 
     public LevelOutcome outcome() {
-        return this.outcome;
+        return this.round.outcome();
+    }
+
+    /** The round as one value, for a reader that needs more than one part of it to agree. */
+    RoundState round() {
+        return this.round;
     }
 
     public boolean isPlacingTower() {
@@ -187,7 +191,6 @@ public class GameEngine {
         }
         markUnbuildableCells(grid, pathRuntimes, scale);
 
-        this.wave = 0;
         this.levelName = level.name();
         this.gameWorld.installLevel(new LoadedLevel(grid,
                 BoardGeometry.of(scale, width, height), pathRuntimes, catalog));
@@ -212,9 +215,8 @@ public class GameEngine {
         this.gameWorld.enemies().clear();
         this.gameWorld.damageTally().clear();
         this.startWave = false;
-        this.waveReady = true;
-        this.outcome = LevelOutcome.PLAYING;
-        this.leakedRounds = Set.of();
+        this.requests.clear();
+        this.round = RoundState.before(0);
     }
 
     /**
@@ -230,10 +232,6 @@ public class GameEngine {
         }
     }
 
-    public void startLevel() {
-        this.waveReady = true;
-    }
-
     /**
      * Only sets a flag that {@link #doTick} consumes, so spawning always happens on the game-loop
      * thread in tick order.
@@ -247,21 +245,20 @@ public class GameEngine {
      */
     public boolean nextWave() {
         LoadedLevel installed = this.gameWorld.level();
-        if (!this.outcome.isOver() && this.waveReady && this.wave < installed.waveCount()) {
+        RoundState state = this.round;
+        if (state.canBegin(installed.waveCount())) {
             this.startWave = false;
-            this.waveReady = false;
-            List<Wave> starting = installed.wavesAt(this.wave);
+            List<Wave> starting = installed.wavesAt(state.wave());
             List<EnemyMob> spawned = new ArrayList<>();
             int totalEnemies = 0;
             for (Wave w : starting) {
                 spawned.addAll(List.of(w.spawn()));
                 totalEnemies += w.enemyCount();
             }
-            this.leaksAtRoundStart = this.gameWorld.enemies().leaks();
+            this.round = state.begun(this.gameWorld.enemies().leaks());
             this.gameWorld.enemies().setEnemies(spawned.toArray(new EnemyMob[0]));
             this.gameWorld.startWave(starting);
-            this.wave++;
-            LOG.info("Round {}/{} started, {} paths, {} enemies", this.wave, installed.waveCount(),
+            LOG.info("Round {}/{} started, {} paths, {} enemies", state.wave() + 1, installed.waveCount(),
                     starting.size(), totalEnemies);
             return true;
         }
@@ -274,7 +271,8 @@ public class GameEngine {
      * @return whether this tick started a new wave
      */
     public boolean doTick(int time) {
-        if (this.outcome.isOver()) {
+        this.applyRequests();
+        if (this.outcome().isOver()) {
             return false;
         }
         LOG.debug("doTick t={}", time);
@@ -326,38 +324,39 @@ public class GameEngine {
      * leaking the last life loses.
      */
     private void settleWave() {
-        LoadedLevel installed = this.gameWorld.level();
-        if (this.gameWorld.economy().state().isGameOver()) {
-            this.noteLeaks();
-            this.endLevel(LevelOutcome.LOST);
-        } else if (this.wave > 0 && !this.waveReady && this.gameWorld.enemies().aliveCount() == 0) {
-            this.noteLeaks();
+        RoundState before = this.round;
+        RoundState after = before.settled(this.gameWorld.enemies().aliveCount(), this.gameWorld.enemies().leaks(),
+                this.gameWorld.economy().state().isGameOver(), this.gameWorld.level().waveCount());
+        this.round = after;
+        if (before.phase() == RoundState.Phase.RUNNING && after.phase() != RoundState.Phase.RUNNING
+                && after.phase() != RoundState.Phase.LOST) {
             this.gameWorld.zones().endWave();
-            if (this.wave < installed.waveCount()) {
-                LOG.info("Wave {} cleared, ready for the next one", this.wave);
-                this.waveReady = true;
-            } else {
-                this.endLevel(LevelOutcome.WON);
+            if (after.isWaveReady()) {
+                LOG.info("Wave {} cleared, ready for the next one", after.wave());
             }
         }
+        this.logIfOver(before);
     }
 
-    /** Marks the round in play as one an enemy escaped, if one has since it started. */
-    private void noteLeaks() {
-        if (this.wave > 0 && this.gameWorld.enemies().leaks() > this.leaksAtRoundStart) {
-            Set<Integer> leaked = new HashSet<>(this.leakedRounds);
-            leaked.add(this.wave - 1);
-            this.leakedRounds = Set.copyOf(leaked);
+    private void logIfOver(RoundState before) {
+        LevelOutcome reached = this.outcome();
+        if (reached.isOver() && !before.outcome().isOver()) {
+            LOG.info("Level over - {}, score={}", reached, this.gameWorld.economy().getScore());
         }
     }
 
-    private void endLevel(LevelOutcome reached) {
-        this.outcome = reached;
-        LOG.info("Level over - {}, score={}", reached, this.gameWorld.economy().getScore());
+    /**
+     * Game-loop thread: applies the debug round commands asked for since the last call. Runs while
+     * paused, when no tick does.
+     */
+    void applyRequests() {
+        for (Runnable request = this.requests.poll(); request != null; request = this.requests.poll()) {
+            request.run();
+        }
     }
 
     public void startPlacing(TowerFactory.Type t, float r) {
-        if (!this.outcome.isOver()) {
+        if (!this.outcome().isOver()) {
             this.placement.start(t, r);
         }
     }
@@ -373,7 +372,7 @@ public class GameEngine {
 
     /** The next board click picks the host of the selected Obelisk's Ley Line; a no-op for any other selection. */
     public void startPinningLeyLine() {
-        if (!this.outcome.isOver() && this.selectedTower().filter(PulseTower::castsLeyLine).isPresent()) {
+        if (!this.outcome().isOver() && this.selectedTower().filter(PulseTower::castsLeyLine).isPresent()) {
             this.placement.startPinningLeyLine();
         }
     }
@@ -441,7 +440,7 @@ public class GameEngine {
      * @return the tower selected by the click, or empty
      */
     public Optional<Tower> mouseClicked(int boardX, int boardY) {
-        if (this.outcome.isOver()) {
+        if (this.outcome().isOver()) {
             this.placement.cancel();
         }
         return this.placement.mouseClicked(boardX, boardY);
@@ -449,7 +448,7 @@ public class GameEngine {
 
     /** The game as it stands between rounds, to load later: empty while a round runs or once the level is over. */
     public Optional<GameSave> save() {
-        if (!this.waveReady || this.outcome.isOver() || !this.gameWorld.level().isLoaded()) {
+        if (!this.isWaveReady() || !this.gameWorld.level().isLoaded()) {
             return Optional.empty();
         }
         BoardGeometry board = this.gameWorld.getBoard();
@@ -458,7 +457,7 @@ public class GameEngine {
                         new Point(board.cellX(tower.getX()), board.cellY(tower.getY())),
                         tower.upgrades().owned().stream().map(UpgradeNode::id).toList(), tower.tally()))
                 .toList();
-        return Optional.of(new GameSave(this.levelName, this.wave + 1, this.gameWorld.economy().state(), towers));
+        return Optional.of(new GameSave(this.levelName, this.round.wave() + 1, this.gameWorld.economy().state(), towers));
     }
 
     /**
@@ -478,7 +477,7 @@ public class GameEngine {
             return Optional.of("The level has no wave " + save.nextWave());
         }
         this.unloadCurrentLevel();
-        this.wave = save.nextWave() - 1;
+        this.round = RoundState.before(save.nextWave() - 1);
         PlaytestRules rules = this.gameWorld.playtestRules();
         boolean gatesIgnored = rules.upgradeGatesIgnored();
         rules.setUpgradeGatesIgnored(true);
@@ -523,44 +522,45 @@ public class GameEngine {
     }
 
     /**
-     * Debug: clears the current wave with no bounty or score and starts the next; skipping the
-     * last wave wins.
-     *
-     * @return whether a next wave started; false on the last wave
+     * Debug: on the next tick, or the next frame while paused, clears the current wave with no bounty
+     * or score and starts the next; skipping the last wave wins.
      */
-    public boolean debugSkipCurrentWave() {
-        if (this.outcome.isOver() || !this.gameWorld.level().isLoaded()) {
-            return false;
-        }
-        this.noteLeaks();
-        this.gameWorld.enemies().clear();
-        this.gameWorld.zones().endWave();
-        this.waveReady = true;
-        if (this.nextWave()) {
-            return true;
-        }
-        this.endLevel(LevelOutcome.WON);
-        return false;
+    public void requestSkipWave() {
+        this.requests.add(() -> {
+            if (this.outcome().isOver() || !this.gameWorld.level().isLoaded()) {
+                return;
+            }
+            RoundState before = this.round;
+            this.gameWorld.enemies().clear();
+            this.gameWorld.zones().endWave();
+            this.round = before.skipped(this.gameWorld.enemies().leaks());
+            if (!this.nextWave()) {
+                this.round = this.round.won();
+                this.logIfOver(before);
+            }
+        });
     }
 
     /**
-     * Debug: clears the board with no bounty or score and makes wave {@code number} (1-based,
-     * clamped to the level) the next to start.
+     * Debug: on the next tick, or the next frame while paused, clears the board with no bounty or
+     * score and makes wave {@code number} (1-based, clamped to the level) the next to start.
      *
-     * @return the wave that is now next, or 0 if nothing is loaded or the level is over
+     * @return the wave that will be next, or 0 if nothing is loaded or the level is over
      */
-    public int debugJumpToWave(int number) {
-        if (this.outcome.isOver() || !this.gameWorld.level().isLoaded()) {
+    public int requestJumpToWave(int number) {
+        if (this.outcome().isOver() || !this.gameWorld.level().isLoaded()) {
             return 0;
         }
         int next = Math.max(1, Math.min(number, this.gameWorld.level().waveCount()));
-        this.gameWorld.enemies().clear();
-        this.gameWorld.zones().endWave();
-        this.startWave = false;
-        this.wave = next - 1;
-        this.waveReady = true;
-        this.leakedRounds = this.leakedRounds.stream().filter(round -> round < next - 1)
-                .collect(Collectors.toUnmodifiableSet());
+        this.requests.add(() -> {
+            if (this.outcome().isOver()) {
+                return;
+            }
+            this.gameWorld.enemies().clear();
+            this.gameWorld.zones().endWave();
+            this.startWave = false;
+            this.round = this.round.jumpedTo(next);
+        });
         return next;
     }
 
@@ -575,7 +575,7 @@ public class GameEngine {
      * selected or nothing on offer has that key.
      */
     public void buyUpgradeForSelected(int number) {
-        if (this.outcome.isOver()) {
+        if (this.outcome().isOver()) {
             return;
         }
         this.gameWorld.towers().all().stream()

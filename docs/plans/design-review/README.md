@@ -1050,8 +1050,6 @@ Net: package files −79 lines in the files that already existed. The seven new 
 | The tower price duty, moving to `TowerFactory.createTower` | with the next `TowerFactory` change |
 
 **Known gaps in the docs, by choice:**
-- The root rule "An EDT command … is a request the next tick consumes" is ahead of the code until
-  F1 lands (record 0019 says "not yet implemented").
 - Root "the wide domain interfaces in `TODO.md` are the known exceptions": `TODO.md` lists `Tower`
   only until the backlog entries (step 6) add `HitReceiver` and `Cell`.
 - `TODO.md` cites "`docs/ARCHITECTURE.md` section 9" twice. Those references, and the backlog
@@ -1069,7 +1067,7 @@ committed. What remains is code, in this order:
    - F5 (the kill-hook guard test);
    - T1 (`TowerLab`'s dead flag).
 2. **With the feature that touches each:**
-   - F1 + 0019 with the pause-bug fix;
+   - F1 + 0019 with the pause-bug fix (done);
    - F16-A + 0018 with the tower visual revamp;
    - F15b with the next tower feature;
    - F17 + F19 with the next inspection change;

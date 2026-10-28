@@ -63,7 +63,6 @@ class EngineThreadingTest {
     void aWaveRequestedFromAnotherThreadIsConsumedByTheTickThread() throws InterruptedException {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(level("Requested", 5, 5));
-        engine.startLevel();
         CountDownLatch waveStarted = new CountDownLatch(1);
 
         Thread ticker = new Thread(() -> {
