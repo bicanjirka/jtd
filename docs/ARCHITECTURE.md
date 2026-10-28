@@ -85,8 +85,8 @@ flowchart LR
   builds each frame.
 - `EconomyLedger` is written from both threads, computes under its lock, and fires outside it.
 - The engine's round state crosses as one `RoundState`, and the dev panel's round commands are
-  requests the tick applies ([0019](adr/0019-edt-commands-are-requests.md)). The hover highlight
-  on cells doesn't follow the snapshot rule yet (`TODO.md`).
+  requests the tick applies ([0019](adr/0019-edt-commands-are-requests.md)). The hover and
+  selection highlight crosses as one `CellHighlight`, which `TowerPlacement` publishes.
 - Records: [0007](adr/0007-owner-publishes-snapshots.md).
 
 ## 4. The world
@@ -124,7 +124,7 @@ BoardRenderer.buildFrame(gameTime, interpolationAlpha, animationSeconds)   on ga
 
 | Builder | Describes | Dispatch |
 |---|---|---|
-| `CellFrameBuilder` | placement and selection highlights | plain reads (one `Cell` type) |
+| `CellFrameBuilder` | the placement or selection highlight | one `CellHighlight` and its cell |
 | `ZoneFrameBuilder` | ground zones, drawn under the enemies | — |
 | `EnemyFrameBuilder` | bodies, death fades, status markers, overlays | `EnemyMobVisitor` |
 | `TowerSpriteFrameBuilder` | tower base and turret head | `TowerVisitor` |

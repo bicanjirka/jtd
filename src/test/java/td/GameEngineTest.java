@@ -3,7 +3,7 @@ package td;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.junit.jupiter.api.Test;
-import td.cell.Cell;
+import td.cell.CellHighlight;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageMix;
@@ -909,7 +909,7 @@ class GameEngineTest {
         Optional<Tower> selected = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
         assertThat(selected).containsSame(engine.cells().at(0, 0).getTower());
-        assertThat(engine.cells().at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.SELECT);
+        assertThat(engine.cellHighlight()).isEqualTo(CellHighlight.select(0, 0));
     }
 
     @Test

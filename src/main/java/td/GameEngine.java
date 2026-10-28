@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.cell.CellGrid;
+import td.cell.CellHighlight;
 import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyInspection;
@@ -412,10 +413,16 @@ public class GameEngine {
         Cell cell = this.gameWorld.cells().at(x, y);
         cell.unSetTower();
         cell.enable(true);
+        this.placement.cellCleared(x, y);
     }
 
     public void highlightCell(int boardX, int boardY) {
         this.placement.highlightCell(boardX, boardY);
+    }
+
+    /** Any thread: the placement hover or selection outline, for the frame build. */
+    public CellHighlight cellHighlight() {
+        return this.placement.highlight();
     }
 
     /** Any thread: selects the enemy nearest this board pixel on the next frame build. */

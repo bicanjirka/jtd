@@ -108,7 +108,7 @@ public final class PerformanceHarness {
 
     private void playPass(LevelDefinition level, boolean record) {
         GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(RANDOM_SEED));
-        BoardRenderer renderer = new BoardRenderer(engine.getGameWorld());
+        BoardRenderer renderer = new BoardRenderer(engine.getGameWorld(), engine::cellHighlight);
         engine.loadLevel(level);
         engine.debugGrantCredits(GRANTED_CREDITS);
         this.towerCount = fillBoard(engine, this.zonesOnly ? ZONE_TOWERS : List.of(TowerFactory.Type.values()));

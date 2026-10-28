@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.board.BoardGeometry;
+import td.cell.CellHighlight;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
@@ -19,6 +20,7 @@ import td.util.PathRuntime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Describes one frame of the board as an AWT-free {@link RenderFrame}, owning the dispatch to each
@@ -30,11 +32,13 @@ import java.util.Optional;
 public final class BoardRenderer {
 
     private final GameWorld world;
+    private final Supplier<CellHighlight> highlight;
 
     private volatile boolean cellGridShown;
 
-    public BoardRenderer(GameWorld world) {
+    public BoardRenderer(GameWorld world, Supplier<CellHighlight> highlight) {
         this.world = world;
+        this.highlight = highlight;
     }
 
     /** Set from the EDT; the next frame built carries the grid, or drops it. */
@@ -52,13 +56,10 @@ public final class BoardRenderer {
         LoadedLevel level = this.world.level();
 
         List<CellDraw> cells = new ArrayList<>();
-        int credits = this.world.economy().getCredits();
-        level.cells().forEach(cell -> {
-            CellDraw draw = CellFrameBuilder.build(cell, credits);
-            if (draw != null) {
-                cells.add(draw);
-            }
-        });
+        CellDraw highlighted = CellFrameBuilder.build(this.highlight.get(), level.cells(), this.world.economy().getCredits());
+        if (highlighted != null) {
+            cells.add(highlighted);
+        }
 
         Optional<EnemyMob> selected = inspection.isPresent() ? this.world.enemySelection().selectedAlive() : Optional.empty();
         EnemyFrameBuilder enemyFrameBuilder = new EnemyFrameBuilder(gameTime, interpolationAlpha, selected);
