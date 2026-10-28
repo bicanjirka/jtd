@@ -620,6 +620,8 @@ independent of the others and revertible on its own.
 - **Cost:** 3 main files, 1 test, 1 doc.
 
 **F5. Pin the kill-hook guard with a test.** Deleting `inKillHook` breaks 0 tests today and 1 after. Cost: 1 test.
+- **Dropped:** the finding was wrong. `SeekerTowerTest.aShatterThatKillsAFrozenNeighbourDoesNotShatterItInTurn`
+  (from `4335d96`) fails once the guard is disabled, so the guard was already pinned.
 
 **T1. Remove `TowerLab.partnerDamage`'s `withSubject` flag** (true at every call site). Cost: 1 file.
 
@@ -1062,10 +1064,10 @@ committed. What remains is code, in this order:
 
 1. **Do now, one commit each:**
    - F15a (the Splash next-shot bug, failing test first; done);
-   - F3 (`TermLooks` frames from the category);
-   - F4 (delete `ShieldListener`, with its doc line);
-   - F5 (the kill-hook guard test);
-   - T1 (`TowerLab`'s dead flag).
+   - F3 (`TermLooks` frames from the category; done);
+   - F4 (delete `ShieldListener`, with its doc line; done);
+   - F5 (the kill-hook guard test; dropped: the guard was already pinned, see F5);
+   - T1 (`TowerLab`'s dead flag; done).
 2. **With the feature that touches each:**
    - F1 + 0019 with the pause-bug fix (done);
    - F16-A + 0018 with the tower visual revamp;
