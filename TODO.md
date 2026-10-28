@@ -106,13 +106,13 @@ position and the visitor, `AuraTower` wants position and type.
 
 ### `HitReceiver` and `Cell` are wide interfaces too
 
-`HitReceiver` carries what a hit needs and what only the enemy inspector reads. `Cell` is wider than
-five methods, but all of them are the square's own position, buildability and tower, so it stays.
+`HitReceiver` carries everything a hit, an effect or a tower's hit bonus asks of an enemy. `Cell` is
+wider than five methods, but all of them are the square's own position, buildability and tower, so it
+stays.
 
 - **Where:** `td.enemy.HitReceiver` (and `FakeEnemyMob`).
-- **Approach:** shrink it before splitting: the inspection built from the mob's parts takes the
-  display-only queries off it (`docs/plans/design-review/README.md` 7.4, F17). Split what is left
-  only if a consumer is still hurt by the width.
+- **Approach:** as for `Tower`: split along the lines its consumers already use (a hit, an effect, a
+  query a bonus reads) when one is actually hurt by the width.
 
 ### Settle a finished walk outside the mob
 
