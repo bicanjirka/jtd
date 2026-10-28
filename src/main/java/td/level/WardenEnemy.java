@@ -114,7 +114,6 @@ final class WardenEnemy {
                 new SpawnEnemiesAction(eggId, 1, false))));
         return EnemyDefinition.of(id, name, health, 50, 0.8f, BodyArchetype.WARDEN)
                 .withDescription("A " + lead + ".")
-                .withLivesOnLeak(EnemyDefinition.ALL_LIVES)
                 .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
                 .withStats(shell.resist(), shell.resist(), shell.plating(), 0f, shell.resilience(), 0f, 0f)
                 .withIdentifiedAbilities(List.copyOf(abilities));

@@ -22,18 +22,17 @@ final class GhostEnemy {
                 .startingAt(EnemyDefinition.of("ghost", "Ghost mob", 150, 3, 1.28f, BodyArchetype.GHOST)
                         .withDescription("Half there: hard to hit and hard to see, but area damage finds it.")
                         .withArmor(20f)
-                        .withIdentifiedAbilities(List.of(fade(200))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(270, 5))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(486, 7)
+                        .withIdentifiedAbilities(List.of(fade(200))), RankGrowth.of(14f))
+                .thenAt(Rank.VETERAN, e -> e
                         .withAdditionalAbilities(List.of(fade(300))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(875, 13)
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(30f, 10f, 0f, 0f, 20f, 15f, 15f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SHROUD,
                                 // A tick longer than the interval, so an ally that stays in radius never flickers
                                 // visible, while a reveal holds until the next cast.
                                 new PeriodicTrigger(SHROUD_TICKS),
                                 new ApplyEffectAction(new InvisibleTemplate(SHROUD_TICKS + 1), new RadiusTarget(100f)))))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1575, 23)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(40f, 15f, 0f, 0f, 30f, 20f, 25f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.PHASE,
                                 new PeriodicTrigger(200), new ApplyEffectAction(new InvisibleTemplate(60),

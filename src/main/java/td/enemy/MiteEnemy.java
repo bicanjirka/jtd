@@ -16,12 +16,12 @@ final class MiteEnemy {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("mite", "Mite", 15, 1, 1.5f, BodyArchetype.MITE)
                         .withDescription("Tiny and quick, it comes in swarms and dies to anything.")
-                        .withAgility(10f))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(27, 1).withAgility(15f))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(49, 2).withAgility(20f))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(88, 3)
+                        .withAgility(10f), RankGrowth.of(14f))
+                .thenAt(Rank.SOLDIER, e -> e.withAgility(15f))
+                .thenAt(Rank.VETERAN, e -> e.withAgility(20f))
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(5f, 5f, 0f, 0f, 10f, 25f, 10f))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(158, 6)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(5f, 5f, 0f, 0f, 15f, 35f, 15f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.BROOD, new OnDeathTrigger(),
                                 new SpawnEnemiesAction("miteBrood", AbilitySpawnShape.brood(3, 1f, 1f), false))))))

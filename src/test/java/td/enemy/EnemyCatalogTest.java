@@ -178,6 +178,14 @@ class EnemyCatalogTest {
     }
 
     @Test
+    void aUniqueEnemyThatLeaksTakesEveryLife() {
+        EnemyCatalog catalog = new EnemyCatalog();
+        catalog.registerUnique(EnemyFixtures.simpleDefinition("warlord"));
+
+        assertThat(catalog.ranked("warlord").definitionFor(Rank.BOSS).livesOnLeak()).isEqualTo(EnemyDefinition.ALL_LIVES);
+    }
+
+    @Test
     void idsListsEveryRegisteredIdInRegistrationOrder() {
         EnemyCatalog catalog = new EnemyCatalog();
         catalog.register(EnemyFixtures.simpleDefinition("first"));

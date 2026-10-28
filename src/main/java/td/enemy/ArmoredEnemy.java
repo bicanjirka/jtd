@@ -27,20 +27,21 @@ final class ArmoredEnemy {
                         .withPlating(2f)
                         .withResilience(100f)
                         .withIdentifiedTraits(List.of(
-                                IdentifiedTrait.named("freeze", EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f)))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(216, 4)
+                                IdentifiedTrait.named("freeze", EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f)))),
+                        RankGrowth.of(14f))
+                .thenAt(Rank.SOLDIER, e -> e
                         .withArmor(33f)
                         .withMagicResist(33f))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(389, 6)
+                .thenAt(Rank.VETERAN, e -> e
                         .withArmor(43f)
                         .withMagicResist(43f)
                         .withPlating(3f)
                         .withAdditionalTraits(List.of(
                                 IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.25f)))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(700, 12)
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(67f, 67f, 8f, 0f, 100f, 5f, 10f)
                         .withAdditionalAbilities(List.of(brace(150f), wardMine(120f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1260, 22)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(100f, 100f, 10f, 0f, 100f, 5f, 20f)
                         .withAdditionalAbilities(List.of(brace(300f), wardMine(240f), IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE,
                                 new PeriodicTrigger(Math.round(3 * TickRate.TICKS_PER_SECOND)),

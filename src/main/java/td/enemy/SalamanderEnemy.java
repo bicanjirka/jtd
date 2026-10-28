@@ -21,14 +21,13 @@ final class SalamanderEnemy {
                         .withDescription("A fire-proof walker that slowly regrows what it loses.")
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
-                                regrowth(1f))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(257, 5))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(488, 7).withAdditionalTraits(List.of(regrowth(2f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(926, 13)
+                                regrowth(1f))), RankGrowth.of(15f))
+                .thenAt(Rank.VETERAN, e -> e.withAdditionalTraits(List.of(regrowth(2f))))
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(10f, 25f, 0f, 0f, 10f, 10f, 15f)
                         .withAdditionalTraits(List.of(regrowth(4f)))
                         .withAdditionalAbilities(List.of(shed(4f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1760, 23)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(15f, 30f, 0f, 0f, 20f, 10f, 25f)
                         .withAdditionalTraits(List.of(regrowth(8f)))
                         .withAdditionalAbilities(List.of(shed(8f))))

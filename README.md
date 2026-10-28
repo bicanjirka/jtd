@@ -213,11 +213,13 @@ on the Wardens, whose shield answers crits.
 Every enemy spawns at one of five named ranks — **Grunt, Soldier, Veteran, Elite, Boss** — shown
 as a badge on its body rather than as a number. A wave declares the rank its slots default to;
 any slot can name a different rank inline, before the enemy id (`elite c`) or before a spawn
-shape (`elite swarm 4 c`). Each rank's health and bounty are written out per enemy (the Simple mob
-derives its own from the pattern), following one pattern: health multiplies by about the same factor every rank, 2 for the Simple mob and 1.7 to 2 for
-the others, lower where an enemy's traits already grow with rank; bounty adds instead, a step of its
-own for Soldier and for Veteran, three more for Elite and five more for Boss (a Simple mob has 75,
-150, 300, 600 and 1200 health and pays 2, 4, 6, 12 and 22). A kill's score is weighted by
+shape (`elite swarm 4 c`). Each rank's health and bounty grow from the Grunt's on one pattern:
+health climbs a quadratic curve to the enemy's Boss factor (20 times the Grunt for the Simple mob,
+12 to 20 for the others, lower where an enemy's traits already grow with rank), so each rank adds
+more than the one before and Elite and Boss stand out; bounty grows only with the square root of
+health, so a tougher rank asks for more damage per credit (a Simple mob has 75, 164, 431, 877 and
+1500 health and pays 2, 3, 5, 7 and 9). An enemy can still write a rank's health and bounty by
+hand. A kill's score is weighted by
 rank too — a Boss-rank kill is worth disproportionately more than a Grunt-rank one of the same
 bounty. Every enemy defines all five ranks, and gains traits or abilities as it climbs, except the
 spawnlings, which are one rank each, and the Warden chain, which is unique: every stage and egg is a

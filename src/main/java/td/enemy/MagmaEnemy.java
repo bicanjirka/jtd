@@ -35,17 +35,17 @@ final class MagmaEnemy {
                         .withSpirit(30f)
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.named("burn", EffectResistTrait.resisting(EffectKind.BURN, 0.75f))))
-                        .withIdentifiedAbilities(List.of(spellWard(15), lastStand())))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(380, 7)
+                        .withIdentifiedAbilities(List.of(spellWard(15), lastStand())), RankGrowth.of(20f))
+                .thenAt(Rank.SOLDIER, e -> e
                         .withAdditionalAbilities(List.of(spellWard(30))))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(760, 9)
+                .thenAt(Rank.VETERAN, e -> e
                         .withAdditionalTraits(List.of(
                                 IdentifiedTrait.named("burn", EffectResistTrait.immuneTo(EffectKind.BURN))))
                         .withAdditionalAbilities(List.of(spellWard(50), pool(0.35f, 1f, 0.5f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1520, 18)
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(10f, 45f, 0f, 0f, 85f, 10f, 45f)
                         .withAdditionalAbilities(List.of(pool(0.6f, 1.25f, 0.5f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(3040, 31)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(15f, 60f, 0f, 0f, 95f, 10f, 60f)
                         .withAdditionalAbilities(List.of(pool(1f, 1.5f, 0.25f))))
                 .build());

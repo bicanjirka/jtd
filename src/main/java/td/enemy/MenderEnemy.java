@@ -24,19 +24,19 @@ final class MenderEnemy {
                         .withDescription("Keeps the rest of its wave on its feet.")
                         .withMovement(new SwingMovement())
                         .withSpirit(20f)
-                        .withIdentifiedAbilities(List.of(heal(0.25f, 40))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(162, 5)
+                        .withIdentifiedAbilities(List.of(heal(0.25f, 40))), RankGrowth.of(14f))
+                .thenAt(Rank.SOLDIER, e -> e
                         .withAdditionalAbilities(List.of(heal(0.5f, 40))))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(292, 7)
+                .thenAt(Rank.VETERAN, e -> e
                         .withSpirit(30f)
                         .withAdditionalAbilities(List.of(heal(1f, 40), selfHeal(0.7f), lastRites(2f, 40),
                                 lastWard(60f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(525, 13)
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(10f, 10f, 0f, 0f, 10f, 5f, 40f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f))))
                         .withAdditionalAbilities(List.of(heal(2f, 80), selfHeal(1.4f), lastRites(3f, 40),
                                 lastWard(150f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(945, 23)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(15f, 15f, 0f, 0f, 20f, 5f, 60f)
                         .withoutAbility("lastWard")
                         .withAdditionalAbilities(List.of(heal(4f, 80), selfHeal(2.8f), lastRites(4f, 100))))
