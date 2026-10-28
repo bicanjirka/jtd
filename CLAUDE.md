@@ -38,7 +38,8 @@ violation. They are not restated here.
 - Known gaps go in `TODO.md` (with **Where** and **Approach**), never an inline TODO. Closing a
   gap deletes its entry in the same commit.
 - Comments only for a non-obvious *why*. Don't name levels, content or other classes in them,
-  and don't restate the code.
+  and don't restate the code: no number, count or threshold the code beside it already holds
+  ("once badly hurt", not "at 65% health"), so a tuning edit can't make the comment false.
 - `CLAUDE.md` files hold constraints only - no history, no feature narrative. A change that
   makes a line in one false fixes it in the same commit.
 - Commit subject lines are imperative mood, capitalized, no trailing period (`Add X`, not

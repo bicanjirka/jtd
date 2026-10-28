@@ -206,6 +206,8 @@ public final class Java2DFrameRenderer {
             case ENEMY_SQUARE, ENEMY_JUGGERNAUT -> new Rectangle2D.Float(-scale, -scale, scale * 2, scale * 2);
             case ENEMY_TRIANGLE, ENEMY_COURIER -> triangleShape(scale, true);
             case ENEMY_SKIRMISHER -> diamondShape(scale);
+            case ENEMY_MAGMA -> magmaShape(scale);
+            case ENEMY_GOLEM -> starShape(6, scale, scale * 0.87f);
             case ENEMY_WARDEN -> starShape(8, scale, scale * 0.55f);
             case ENEMY_WARDEN_EGG -> wardenEggShape(scale);
             case ENEMY_MENDER, ENEMY_SHIELDBEARER -> crossShape(scale);
@@ -229,6 +231,11 @@ public final class Java2DFrameRenderer {
         Shape star = starShape(6, scale, scale * 0.65f);
         AffineTransform elongate = AffineTransform.getScaleInstance(0.8, 1.3);
         return elongate.createTransformedShape(star);
+    }
+
+    /** A blunt many-pointed star, so it reads as a boulder rather than as spikes. */
+    private static Shape magmaShape(float scale) {
+        return starShape(12, scale, scale * 0.78f);
     }
 
     private static Shape circleShape(float scale) {
@@ -435,6 +442,8 @@ public final class Java2DFrameRenderer {
             case ENEMY_SHIELDBEARER -> new Color(90, 150, 255);
             case ENEMY_SALAMANDER -> new Color(255, 120, 30);
             case ENEMY_YETI -> new Color(200, 235, 255);
+            case ENEMY_MAGMA -> new Color(220, 45, 35);
+            case ENEMY_GOLEM -> new Color(150, 140, 125);
             case TOWER_SNIPER_BODY -> Color.GREEN;
             case TOWER_SPLASH_BODY -> Color.RED;
             case TOWER_STORMCALLER_BODY -> new Color(80, 150, 255);
@@ -550,6 +559,8 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_SHIELD -> new Color(220, 220, 100);
             case STATUS_MARKER_INVISIBLE -> new Color(180, 180, 180);
             case STATUS_MARKER_SPRINTING -> new Color(130, 240, 180);
+            case STATUS_MARKER_SPELLPROOF -> new Color(170, 120, 255);
+            case STATUS_MARKER_UNYIELDING -> new Color(255, 200, 60);
             case STATUS_MARKER_HEAL -> new Color(120, 220, 140);
             case STATUS_MARKER_VULNERABLE -> new Color(235, 80, 150);
             case STATUS_MARKER_REVEALED -> new Color(200, 160, 255);
@@ -1048,6 +1059,8 @@ public final class Java2DFrameRenderer {
                 g2.draw(triangleShape(grownScale, true));
             }
             case ENEMY_SKIRMISHER -> g2.draw(diamondShape(grownScale));
+            case ENEMY_MAGMA -> g2.draw(magmaShape(grownScale));
+            case ENEMY_GOLEM -> g2.draw(starShape(6, grownScale, grownScale * 0.87f));
             case ENEMY_WARDEN -> g2.draw(starShape(8, grownScale, grownScale * 0.55f));
             case ENEMY_WARDEN_EGG -> g2.draw(wardenEggShape(grownScale));
             case ENEMY_MENDER, ENEMY_SHIELDBEARER -> g2.draw(crossShape(grownScale));

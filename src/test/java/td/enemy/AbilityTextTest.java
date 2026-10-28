@@ -28,6 +28,22 @@ class AbilityTextTest {
     }
 
     @Test
+    void aShieldThatLastsSaysItHoldsUntilBroken() {
+        Ability shield = new Ability(AbilityTerm.BRACE, new HealthThresholdTrigger(0.5f),
+                new ApplyEffectAction(ShieldTemplate.untilBroken(300f), new SelfTarget()));
+
+        assertThat(this.plain(shield)).isEqualTo("once, below 50% health: gains Shield of 300 until broken");
+    }
+
+    @Test
+    void aPeriodicAbilityWithAHealthFloorSaysAboveWhatItKeepsFiring() {
+        Ability shield = new Ability(AbilityTerm.WARD, new PeriodicTrigger(40, 0.25f),
+                new ApplyEffectAction(new ShieldTemplate(300f, 100), new SelfTarget()));
+
+        assertThat(this.plain(shield)).startsWith("every 2 s, while above 25% health: ");
+    }
+
+    @Test
     void anAreaHealSaysHowFarItReachesInCells() {
         Ability mend = new Ability(AbilityTerm.MEND, new PeriodicTrigger(20),
                 new ApplyEffectAction(new HealTemplate(1f, 40), new RadiusTarget(2 * CELL)));

@@ -129,7 +129,13 @@ public enum EffectKind implements Term {
     /** A short burst of speed an enemy gives itself. */
     SPRINTING("Sprint", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(0.6f)).helpsCarrier()),
     /** Twice the speed, and no slow takes hold; a freeze or daze still stops it. */
-    HASTENED("Hasten", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(2f)).helpsCarrier());
+    HASTENED("Hasten", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(2f)).helpsCarrier()),
+    /** Magic resist that stacks, on one shared clock. */
+    SPELLPROOF("Spellproof", EffectRule.of(EffectCategory.BUFF).stackingOnASharedClock(200)
+            .perStack(EnemyStat.MAGIC_RESIST, 1f).helpsCarrier()),
+    /** A last stand: far more resilience, spirit and magic resist. */
+    UNYIELDING("Unyielding", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.RESILIENCE, 100f)
+            .perStack(EnemyStat.SPIRIT, 100f).perStack(EnemyStat.MAGIC_RESIST, 100f).helpsCarrier());
 
     /** The kind {@code resistance} shortens; throws for a stat that resists no kind. */
     public static EffectKind resistedThrough(EnemyStat resistance) {

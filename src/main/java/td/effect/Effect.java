@@ -27,6 +27,8 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     public static final int FAULT_LINE_STACK_CAP = 10;
     /** Spirit runs from 0 down to -100, so a hundred stacks of Sickened is all there is to lose. */
     private static final int SICKENED_STACK_CAP = 100;
+    /** A duration that never runs out: the effect holds until it breaks, something removes it, or its carrier dies. */
+    public static final int LASTING_TICKS = Integer.MAX_VALUE;
     private static final EffectDynamics FLAG = new EffectDynamics.Flag();
 
     /**
@@ -90,6 +92,16 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     /** Twice as fast while active, and slows cannot take hold. */
     public static Effect hastened(int durationTicks, DamageSink sink) {
         return timed(EffectKind.HASTENED, durationTicks, sink);
+    }
+
+    /** {@code stacks} more stacks of magic resist, on one shared clock. */
+    public static Effect spellproof(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.SPELLPROOF, stacks, durationTicks, sink);
+    }
+
+    /** Far more resilience, spirit and magic resist while active. */
+    public static Effect unyielding(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.UNYIELDING, durationTicks, sink);
     }
 
     /** Targetable again while active, even through invisibility. */
@@ -472,6 +484,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
      * lasts as many times longer as its decay is slower.
      */
     public Effect withDurationScaledBy(float factor) {
+        if (this.isLasting() && factor > 0f) {
+            return this;
+        }
         EffectDynamics scaled = switch (this.dynamics) {
             case EffectDynamics.ChillLevel chill -> chill.withDurationScaledBy(factor);
             default -> this.dynamics;
@@ -487,12 +502,23 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
 
     /** The same effect lasting {@code ticks} longer, authored time included. */
     Effect withExtraTicks(int ticks) {
+        if (this.isLasting()) {
+            return this;
+        }
         return new Effect(this.kind, this.remainingTicks + ticks, this.authoredDurationTicks + ticks, this.sink, this.origin,
                 this.dynamics);
     }
 
+    /** Whether it was authored to last for good rather than for a time. */
+    public boolean isLasting() {
+        return this.authoredDurationTicks == LASTING_TICKS;
+    }
+
     /** This effect with {@code ticks} gone from the time it has left; empty once none is left. */
     public Optional<Effect> afterTicks(int ticks) {
+        if (this.isLasting()) {
+            return Optional.of(this);
+        }
         int left = this.remainingTicks - ticks;
         return left > 0 ? Optional.of(this.withRemainingTicks(left)) : Optional.empty();
     }

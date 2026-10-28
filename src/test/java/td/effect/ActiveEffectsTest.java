@@ -261,6 +261,21 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void aLastingShieldOutlivesAnyClockShowsNoTimeLeftAndEndsOnlyWhenBroken() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.shield(500f, Effect.LASTING_TICKS, DamageSink.none()));
+
+        for (int tick = 0; tick < 10_000; tick++) {
+            effects.tick();
+        }
+
+        assertThat(effects.remainingTicks(EffectKind.SHIELD)).isEmpty();
+        assertThat(effects.absorb(DamageType.PHYSICAL, 300)).isEqualTo(300);
+        assertThat(effects.absorb(DamageType.PHYSICAL, 300)).isEqualTo(200);
+        assertThat(effects.has(EffectKind.SHIELD)).isFalse();
+    }
+
+    @Test
     void anInvisibilityEffectSetsFullStealthForItsDuration() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.invisible(1, DamageSink.none()));

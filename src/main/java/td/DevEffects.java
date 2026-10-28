@@ -113,6 +113,7 @@ public final class DevEffects {
             case INVISIBLE -> timed(Effect::invisible);
             case SPRINTING -> timed(Effect::sprinting);
             case HASTENED -> timed(Effect::hastened);
+            case UNYIELDING -> timed(Effect::unyielding);
             case REVEALED -> timed(Effect::revealed);
             case UNVEILED -> timed(Effect::unveiled);
             case SILENCED -> timed(Effect::silenced);
@@ -134,6 +135,7 @@ public final class DevEffects {
             case CONDEMNED -> stacking(kind, Effect::condemned);
             case SATURATED -> stacking(kind, Effect::saturated);
             case TOLL -> stacking(kind, Effect::toll);
+            case SPELLPROOF -> stacking(kind, Effect::spellproof);
             case CORRODED -> stacking(kind, Effect::corroded);
             case DRAGGED -> stacking(kind, Effect::dragged);
             case FRAIL -> stacking(kind, Effect::frail);

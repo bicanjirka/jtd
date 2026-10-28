@@ -11,7 +11,7 @@ public final class AbilityEvaluator {
 
     public static boolean shouldFire(AbilityTrigger trigger, AbilityState state, AbilityContext context) {
         return switch (trigger) {
-            case PeriodicTrigger t -> firePeriodic(t, state);
+            case PeriodicTrigger t -> firePeriodic(t, state, context);
             case OnceTrigger ignored -> fireOnce(state);
             case HealthThresholdTrigger t -> fireHealthThreshold(t, state, context);
             case OnDeathTrigger ignored -> fireOnDeath(state, context);
@@ -30,7 +30,10 @@ public final class AbilityEvaluator {
         }
     }
 
-    private static boolean firePeriodic(PeriodicTrigger trigger, AbilityState state) {
+    private static boolean firePeriodic(PeriodicTrigger trigger, AbilityState state, AbilityContext context) {
+        if (context.healthFraction() < trigger.minHealthFraction()) {
+            return false;
+        }
         state.tickDown();
         if (state.ticksRemaining() <= 0) {
             state.resetTicks(trigger.intervalTicks());

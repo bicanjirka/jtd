@@ -29,6 +29,18 @@ class AbilityEvaluatorTest {
     }
 
     @Test
+    void aPeriodicTriggerStopsCountingAndFiringBelowItsHealthFloorAndResumesWhenHealed() {
+        AbilityTrigger trigger = new PeriodicTrigger(2, 0.5f);
+        AbilityState state = AbilityState.forTrigger(trigger);
+        FakeAbilityContext context = new FakeAbilityContext();
+
+        context.setHealthFraction(0.4f);
+        assertThat(fireSequence(trigger, state, context, 4)).containsExactly(false, false, false, false);
+        context.setHealthFraction(0.5f);
+        assertThat(fireSequence(trigger, state, context, 2)).containsExactly(false, true);
+    }
+
+    @Test
     void aOnceTriggerFiresExactlyOnceAfterItsDelayThenNeverAgain() {
         AbilityTrigger trigger = new OnceTrigger(2);
         AbilityState state = AbilityState.forTrigger(trigger);

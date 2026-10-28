@@ -158,6 +158,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case BLEEDING -> Palette.STATUS_MARKER_BLEEDING;
             case SOULFIRE -> Palette.STATUS_MARKER_SOULFIRE;
             case SPRINTING, HASTENED -> Palette.STATUS_MARKER_SPRINTING;
+            case SPELLPROOF -> Palette.STATUS_MARKER_SPELLPROOF;
+            case UNYIELDING -> Palette.STATUS_MARKER_UNYIELDING;
         };
     }
 
@@ -191,6 +193,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case SHIELDBEARER -> Palette.ENEMY_SHIELDBEARER;
             case SALAMANDER -> Palette.ENEMY_SALAMANDER;
             case YETI -> Palette.ENEMY_YETI;
+            case MAGMA -> Palette.ENEMY_MAGMA;
+            case GOLEM -> Palette.ENEMY_GOLEM;
         };
     }
 
@@ -231,7 +235,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         } else if (!mob.isInactive()) {
             float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
             float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
-            this.draws.add(new EnemyBodyDraw(palette, x, y, facingRadians, scale, mob.getHealthFraction(),
+            this.draws.add(new EnemyBodyDraw(palette, x, y, facingRadians, mob.getDrawScale(), mob.getHealthFraction(),
                     badgeFor(mob.getRank()), this.cloakProgress(mob), this.flicker(mob)));
             this.markers(mob, x, y, scale);
             this.critSpark(mob, x, y);

@@ -19,5 +19,7 @@ public enum BodyArchetype {
     SHIELDBEARER,
     SALAMANDER,
     YETI,
+    MAGMA,
+    GOLEM,
     SKIRMISHER
 }

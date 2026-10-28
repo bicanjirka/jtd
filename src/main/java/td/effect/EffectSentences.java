@@ -144,6 +144,11 @@ final class EffectSentences {
             case SPRINTING -> TermText.of(
                     TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd())
                             + " speed");
+            case SPELLPROOF -> TermText.of("each stack: " + TermNumbers.signed(perStack(kind, EnemyStat.MAGIC_RESIST))
+                    + " magic resist, up to " + kind.maxStacks() + " stacks");
+            case UNYIELDING -> TermText.of(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)) + " resilience, "
+                    + TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)) + " spirit and "
+                    + TermNumbers.signed(perStack(kind, EnemyStat.MAGIC_RESIST)) + " magic resist");
             case HASTENED -> TermText.of(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply())
                     + " speed, and no slow can take hold; ").plus(EffectKind.FREEZE).plus(" and ")
                     .plus(EffectKind.DAZED).plus(" still stop it");

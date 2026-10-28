@@ -298,12 +298,12 @@ public final class ActiveEffects {
     }
 
     /**
-     * Ticks left on the active effect of {@code kind}; empty when none is active or for a decaying
-     * level, which fades rather than counting down.
+     * Ticks left on the active effect of {@code kind}; empty when none is active, for a decaying
+     * level, which fades rather than counting down, and for one that lasts for good.
      */
     public OptionalInt remainingTicks(EffectKind kind) {
         Effect effect = this.active.get(kind);
-        if (effect == null || kind.isDecaying()) {
+        if (effect == null || kind.isDecaying() || effect.isLasting()) {
             return OptionalInt.empty();
         }
         return OptionalInt.of(effect.remainingTicks());
@@ -348,7 +348,7 @@ public final class ActiveEffects {
      */
     public OptionalInt clockTicks(EffectKind kind) {
         Effect effect = this.active.get(kind);
-        if (effect == null || kind.isDecaying()) {
+        if (effect == null || kind.isDecaying() || effect.isLasting()) {
             return OptionalInt.empty();
         }
         return OptionalInt.of(Math.max(effect.authoredDurationTicks(), effect.remainingTicks()));
@@ -508,6 +508,9 @@ public final class ActiveEffects {
 
     /** Runs a timer down by a tick, or by its spirit pace when it has one; empty once it runs out. */
     private Optional<Effect> countDown(Effect effect, float debuffPace) {
+        if (effect.isLasting()) {
+            return Optional.of(effect);
+        }
         EffectKind kind = effect.kind();
         int steps = kind.isPacedBySpirit() ? this.paceSteps(kind, debuffPace) : 1;
         int remaining = effect.remainingTicks() - steps;
