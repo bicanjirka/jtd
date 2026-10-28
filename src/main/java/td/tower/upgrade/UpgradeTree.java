@@ -6,11 +6,13 @@ import td.util.GameWorld;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -32,7 +34,8 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
 
     /**
      * Rejects duplicate node ids, which would make matching by id ambiguous, a choice naming a
-     * node outside the tree or a node already in another choice, and a node no number key buys.
+     * node outside the tree or a node already in another choice, a node that requires itself through
+     * other nodes, on which every walk back along prerequisites would never end, and a node no number key buys.
      */
     public UpgradeTree {
         Set<String> ids = new HashSet<>();
@@ -51,6 +54,12 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
         }
         nodes = List.copyOf(nodes);
         choices = List.copyOf(choices);
+        Map<String, UpgradeNode> byId = new HashMap<>();
+        nodes.forEach(node -> byId.put(node.id(), node));
+        Set<String> acyclic = new HashSet<>();
+        for (UpgradeNode node : nodes) {
+            rejectCycleFrom(node, byId, new LinkedHashSet<>(), acyclic);
+        }
         for (UpgradeNode node : nodes) {
             if (keyOf(node, nodes, choices) == 0) {
                 throw new IllegalArgumentException("No number key buys upgrade node: " + node.id());
@@ -182,6 +191,21 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
             }
         }
         return new UpgradeRemoval(node, removed, kept);
+    }
+
+    private static void rejectCycleFrom(UpgradeNode node, Map<String, UpgradeNode> byId, Set<String> walking,
+            Set<String> acyclic) {
+        if (acyclic.contains(node.id())) {
+            return;
+        }
+        if (!walking.add(node.id())) {
+            throw new IllegalArgumentException("Upgrade nodes require each other: " + String.join(" -> ", walking)
+                    + " -> " + node.id());
+        }
+        node.requires().requiredNodes().stream().map(byId::get).filter(Objects::nonNull)
+                .forEach(required -> rejectCycleFrom(required, byId, walking, acyclic));
+        walking.remove(node.id());
+        acyclic.add(node.id());
     }
 
     private void collectPath(UpgradeNode node, Set<UpgradeNode> path) {
