@@ -16,11 +16,11 @@
   A unique enemy (`EnemyCatalog.registerUnique`) has no ladder: it is Boss rank only, whatever is asked
   for, and so is the rank its mobs carry (`RankedEnemy.spawnRank`). A spawn ability that must not
   inherit a Boss caster's rank fixes one (`SpawnEnemiesAction.atRank`).
-  A built-in ladder authors all five ranks, each with its health and bounty as integers
-  (`withHealthAndPrice`): health multiplies by the enemy's factor each rank, bounty adds its step
-  once for Soldier and Veteran, three times more for Elite and five more for Boss. `SimpleEnemy` alone
-  derives them from a `RankGrowth` (`startingAt(grunt, growth)`), which grows the ranks it skips up to
-  `BOSS`; it is the reference ladder. Every enemy gains something of its identity from Elite on.
+  A built-in ladder derives its health and bounty from a `RankGrowth` (`startingAt(grunt, growth)`),
+  which grows the ranks it skips up to `BOSS`: health on an upward-bending curve to the enemy's Boss
+  factor, bounty with the square root of health. A rank step's `withHealthAndPrice` overrides both
+  for that rank alone. A unique enemy that leaks ends the level (`EnemyDefinition.ALL_LIVES`). Every
+  enemy gains something of its identity from Elite on.
 - Stat, trait, ability, effect, each thing is exactly one:
   - A **base stat** is a number every enemy has on its sheet. It is authored with its named method
     (`withArmor`, `withMagicResist`, `withPlating`, `withInsulation`, `withResilience`,

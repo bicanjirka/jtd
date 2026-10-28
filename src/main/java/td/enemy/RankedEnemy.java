@@ -39,10 +39,13 @@ public final class RankedEnemy {
         this.unique = unique;
     }
 
-    /** A one-of-a-kind enemy: {@code boss} at {@link Rank#BOSS}, and no other rank. */
+    /**
+     * A one-of-a-kind enemy: {@code boss} at {@link Rank#BOSS}, and no other rank. Letting it through ends the level,
+     * however many lives are left.
+     */
     public static RankedEnemy unique(EnemyDefinition boss) {
         Map<Rank, EnemyDefinition> only = new EnumMap<>(Rank.class);
-        only.put(Rank.BOSS, boss);
+        only.put(Rank.BOSS, boss.withLivesOnLeak(EnemyDefinition.ALL_LIVES));
         return new RankedEnemy(boss.id(), Collections.unmodifiableMap(only), Rank.BOSS, true);
     }
 
@@ -53,7 +56,8 @@ public final class RankedEnemy {
 
     /**
      * Starts a ladder whose every rank, up to {@link Rank#BOSS}, takes its health and bounty from {@code growth}
-     * before its own step applies; a rank without a step is the rank below it, grown.
+     * before its own step applies, so a step's {@code withHealthAndPrice} overrides them for its rank alone; a rank
+     * without a step is the rank below it, grown.
      */
     public static Builder startingAt(EnemyDefinition grunt, RankGrowth growth) {
         return new Builder(grunt, Optional.of(growth));

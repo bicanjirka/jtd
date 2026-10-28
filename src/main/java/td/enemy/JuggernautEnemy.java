@@ -28,14 +28,14 @@ final class JuggernautEnemy {
                         .withMagicResist(15f)
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.FREEZE, 0.3f)),
-                                IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.CHILL, 0.3f)))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(900, 11))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(1800, 16).withPlating(30f)
+                                IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.CHILL, 0.3f)))),
+                        RankGrowth.of(20f))
+                .thenAt(Rank.VETERAN, e -> e.withPlating(30f)
                         .withAdditionalAbilities(List.of(blast(2f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(3600, 31)
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(15f, 15f, 30f, 0f, 100f, 0f, 10f)
                         .withAdditionalAbilities(List.of(blast(4f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(7200, 56)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(25f, 20f, 40f, 0f, 100f, 0f, 20f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.BULWARK,
                                 new HealthThresholdTrigger(0.5f),

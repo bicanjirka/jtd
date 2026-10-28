@@ -23,19 +23,19 @@ final class FastEnemy {
                         .withDescription("Reckless: the more it is hurt, the faster it runs.")
                         .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
                         .withResilience(-20f)
-                        .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f)))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(171, 4))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(325, 5)
+                        .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f)))),
+                        RankGrowth.of(15f))
+                .thenAt(Rank.VETERAN, e -> e
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.5f))))
                         .withAdditionalAbilities(List.of(hasteGround(0.5f, 1.5f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(617, 10)
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(10f, 10f, 0f, 0f, -20f, 10f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.8f))))
                         .withAdditionalAbilities(List.of(hasteGround(0.75f, 2f),
                                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.SECOND_WIND,
                                         new HealthThresholdTrigger(0.5f),
                                         new ApplyEffectAction(new SprintTemplate(40), new SelfTarget()))))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1173, 17)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(15f, 15f, 0f, 0f, 100f, 10f, 20f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(2f))))
                         .withMovement(new RotorMovement((float) Math.toRadians(-10.0)))

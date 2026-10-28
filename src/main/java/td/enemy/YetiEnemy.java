@@ -23,15 +23,15 @@ final class YetiEnemy {
                         .withMagicResist(15f)
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                                IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.5f)))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(330, 6))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(660, 8)
+                                IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.5f)))),
+                        RankGrowth.of(20f))
+                .thenAt(Rank.VETERAN, e -> e
                         .withAdditionalTraits(List.of(
                                 IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.75f)))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(1320, 16)
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(20f, 20f, 2f, 2f, 20f, 5f, 15f)
                         .withAdditionalAbilities(List.of(hunker(6f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(2640, 28)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(25f, 25f, 3f, 3f, 50f, 5f, 25f)
                         .withAdditionalAbilities(List.of(hunker(12f))))
                 .build());

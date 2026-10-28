@@ -13,6 +13,7 @@ import td.enemy.IdentifiedTrait;
 import td.enemy.OnDeathTrigger;
 import td.enemy.PathDirectionalMovement;
 import td.enemy.Rank;
+import td.enemy.RankGrowth;
 import td.enemy.RankedEnemy;
 import td.enemy.SelfTarget;
 import td.enemy.SpawnEnemiesAction;
@@ -49,15 +50,16 @@ final class TwistedHourglassLevel {
                     .withIdentifiedAbilities(List.of(
                             panicShield(100f),
                             IdentifiedAbility.named("splitOnDeath",
-                                    new Ability(AbilityTerm.SPLIT, new OnDeathTrigger(), new SpawnEnemiesAction("simple", 2, false))))))
-            .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(1350, 10)
+                                    new Ability(AbilityTerm.SPLIT, new OnDeathTrigger(), new SpawnEnemiesAction("simple", 2, false))))),
+                    RankGrowth.of(14f))
+            .thenAt(Rank.SOLDIER, e -> e
                     .withAdditionalAbilities(List.of(panicShield(180f))))
-            .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(2430, 14)
+            .thenAt(Rank.VETERAN, e -> e
                     .withAdditionalAbilities(List.of(panicShield(320f))))
-            .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(4374, 26)
+            .thenAt(Rank.ELITE, e -> e
                     .withStats(10f, 10f, 1f, 1f, 100f, 5f, 10f)
                     .withAdditionalAbilities(List.of(panicShield(580f))))
-            .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(7874, 46)
+            .thenAt(Rank.BOSS, e -> e
                     .withStats(15f, 15f, 1f, 1f, 100f, 5f, 20f)
                     .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.6f))))
                     .withAdditionalAbilities(List.of(panicShield(1050f))))

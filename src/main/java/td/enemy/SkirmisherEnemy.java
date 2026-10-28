@@ -20,16 +20,16 @@ final class SkirmisherEnemy {
                 .startingAt(EnemyDefinition.of("dodger", "Skirmisher", 90, 2, 1.6f, BodyArchetype.SKIRMISHER)
                         .withDescription("Nimble and hard to pin down with aimed shots.")
                         .withResilience(20f)
-                        .withAgility(40f))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(162, 4)
+                        .withAgility(40f), RankGrowth.of(14f))
+                .thenAt(Rank.SOLDIER, e -> e
                         .withAgility(50f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SIDESTEP, new OnDodgeTrigger(),
                                 new ApplyEffectAction(new SprintTemplate(30), new SelfTarget()))))))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(292, 5).withAgility(60f))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(525, 10)
+                .thenAt(Rank.VETERAN, e -> e.withAgility(60f))
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(10f, 10f, 0f, 0f, 20f, 60f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("evasive", new HurtAgilityTrait(60f)))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(945, 17)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(15f, 15f, 0f, 0f, 30f, 80f, 20f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("evasive", new HurtAgilityTrait(80f))))
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.VANISH, new OnDodgeTrigger(),

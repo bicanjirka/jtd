@@ -21,16 +21,16 @@ final class ShieldbearerEnemy {
                         .withDescription("Guards the enemies around it; break it first.")
                         .withMovement(new SwingMovement())
                         .withArmor(30f)
-                        .withIdentifiedAbilities(List.of(shield(40f, 100f))))
-                .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(189, 6)
+                        .withIdentifiedAbilities(List.of(shield(40f, 100f))), RankGrowth.of(14f))
+                .thenAt(Rank.SOLDIER, e -> e
                         .withAdditionalAbilities(List.of(shield(80f, 100f))))
-                .thenAt(Rank.VETERAN, e -> e.withHealthAndPrice(341, 8)
+                .thenAt(Rank.VETERAN, e -> e
                         .withSpirit(10f)
                         .withAdditionalAbilities(List.of(shield(160f, 100f))))
-                .thenAt(Rank.ELITE, e -> e.withHealthAndPrice(612, 16)
+                .thenAt(Rank.ELITE, e -> e
                         .withStats(40f, 10f, 2f, 0f, 20f, 5f, 20f)
                         .withAdditionalAbilities(List.of(shield(320f, 100f), selfShield(320f))))
-                .thenAt(Rank.BOSS, e -> e.withHealthAndPrice(1103, 28)
+                .thenAt(Rank.BOSS, e -> e
                         .withStats(50f, 15f, 4f, 0f, 30f, 5f, 30f)
                         .withAdditionalAbilities(List.of(shield(640f, 130f), selfShield(640f))))
                 .build());
