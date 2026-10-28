@@ -93,6 +93,18 @@ class UpgradeTreeTest {
     }
 
     @Test
+    void aTreeWhoseNodesRequireEachOtherIsRejected() {
+        UpgradeNode first = UpgradeNode.of("loop.a", UpgradeSlot.BASE, "Loop A", 10)
+                .withRequires(UpgradeCondition.owns("loop.b"));
+        UpgradeNode second = UpgradeNode.of("loop.b", UpgradeSlot.BASE, "Loop B", 10)
+                .withRequires(UpgradeCondition.owns(AWAKEN.id()).and(UpgradeCondition.owns(first.id())));
+
+        assertThatThrownBy(() -> UpgradeTree.of(AWAKEN, first, second))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("loop.a");
+    }
+
+    @Test
     void xpProgressReadsTheTowersLiveXpCappedAtWhatTheNodeNeeds() {
         UpgradeNode gated = UpgradeNode.of("gated", UpgradeSlot.HEAD, "Gated", 10).withXp(150);
         FakeTower learning = FakeTower.owning(context, 0, 0, UpgradeState.none());
