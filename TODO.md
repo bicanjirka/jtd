@@ -152,8 +152,130 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   `td.fixtures`). `Projectile` has no fakes but alone would leave two dispatch styles.
 - **Where the visitor is a cast:** `DevControls` and `EnemySelection` visit an `EnemyMob` only to
   reach `DefinedEnemyMob`'s fate and inspection. Lift `fate()` and the inspection onto `EnemyMob`
-  (with the inspection built from the mob's parts, F17), and give `FakeEnemyMob` a real
-  `ActiveEffects` (F18) so the fake is cheaper to keep (`docs/plans/design-review/README.md` 7.4).
+  (`EnemyInspection` is already built from the mob's parts).
+- **`FakeEnemyMob` answers effects from a real `ActiveEffects`** (design review F18), done with the
+  fakes' question above. Today the fake keeps its own simplified record of applied effects, so a change
+  to stacking, caps or refreshing in `ActiveEffects` never reaches the tests that use the fake. Keep the
+  record of what was applied for assertions, but answer every effect query from an `ActiveEffects` built
+  the way `DefinedEnemyMob` builds one (`effect` does not depend on `enemy`, so the fake may hold one).
+  Proof: change the stack cap rule in `ActiveEffects` and see a test on the fake fail. Some tests may
+  rely on the simplified model; rewrite them on `EnemyFixtures.liveMob`, never by editing an expected
+  value.
+
+## Design follow-ups, each done with the change that touches it
+
+From the design review (`docs/plans/design-review/README.md`, section 7.4; the F labels are its).
+Each entry names its trigger: do it in the same work, as its own commits, not before.
+
+### A board look is a switch in the painter, not a table row (ADR 0018)
+
+**Trigger:** the tower visual revamp (`FEATURE-tower-visual-revamp.md`), then the next new enemy
+body, marker or effect look. (Design review F16-A.)
+
+`td.ui.render.Palette` is one flat enum for every look: enemy bodies, tower bodies and heads,
+markers, terms, interface colours. `Java2DFrameRenderer.colorFor` maps every constant to a colour,
+and four shape switches each cover only their own slice of the enum (`enemyShape`,
+`towerBodyShape`, `turretHeadShape`, the one in `paintEnemyFade`), with a `default` that throws. So a
+new tower or body without its shape compiles, passes `mvn verify` and fails while painting, and every
+look change edits the painter.
+
+- **Where:** `Palette`; `Java2DFrameRenderer` (`colorFor` and the four switches); the draw records
+  that carry a `Palette` (`EnemyBodyDraw`, `BeamDraw`, `CannonballDraw` and others in `td.ui.render`);
+  the frame builders that choose one (`EnemyFrameBuilder.bodyPaletteFor`, `markerPaletteFor`, the
+  tower builders); `AsciiBoardRenderer.towerChar`/`enemyChar`.
+- **Approach:** ADR 0018 is the decision; read it first. One role per commit, towers first, since the
+  revamp redraws them anyway:
+  1. An AWT-free role enum in `td.ui.render` (`TowerLook`), one constant per look.
+  2. A table in `td.ui` (`TowerLooks`): an `EnumMap` from role to its colour and shapes, built once,
+     that throws `IllegalStateException` naming any role without a row when the class loads.
+  3. The draw record's field changes from `Palette` to the role, with the frame builder that sets it
+     and `AsciiBoardRenderer`.
+  4. The painter looks the row up. That role's `Palette` constants, its `colorFor` cases and its
+     shape switch go.
+  5. `mvn verify`, a `PreviewBoard` render of the same scene before and after, and
+     `td.PerformanceHarness` (draw records and builders change).
+
+  Then enemy bodies, then markers, then the rest. When `Palette` is gone, so is `colorFor`; update
+  `ui/CLAUDE.md` (the colour rule and the exhaustive-switch list) and `effect/CLAUDE.md` ("Adding a
+  kind", step 4) in the commit that makes their lines false.
+
+### An attack can read the stats its shot already spent
+
+**Trigger:** the next change to how a tower attacks; at the latest the visual revamp's delayed hits
+(a Sniper hit landing when its tracer arrives, the Burst's lobbed ball, Ricochet bounces in flight).
+(Design review F15b.)
+
+`AbstractTower.beginShot()` spends the tower's next-shot charges (a `TowerStatus` granted with
+`grantStatus`, such as a primed round), republishes the live stats without them, and returns the
+`TowerStats` the attack should use. Every attacker but the Sniper and one Burst path ignores that
+return value and reads the live stats (`damageCurrent()`, `stats()`), which is right only while no
+charge was spent. The Burst's blast lost its bonus exactly this way until it was fixed. A hit that
+lands ticks after the shot widens the gap: by then the live stats may have changed for other reasons
+too.
+
+- **Where:** `AbstractTower.beginShot`; its callers in `SniperTower`, `SplashTower`, `MortarTower`,
+  `CinderTower`, `PulseTower`, `SeekerTower` and `SonarTower`; the rule in `tower/CLAUDE.md` that
+  starts "Every attack starts with `beginShot()`".
+- **Approach:** `beginShot()` returns a `Shot` record (the attack's `TowerStats` and its shot
+  number). Every attack path takes it, and anything in flight (a projectile, a delayed hit) stores it,
+  so a hit uses the stats it was fired with. The Mortar reads some stats when its shell lands, by its
+  spec: keep that, read from the stored `Shot`. One tower per commit, each with a test first on the
+  model of `SplashTowerTest.aNextShotDamageStatusLandsOnTheBlastItIsSpentBy` (grant a next-shot damage
+  status, fire, assert the hit carries it). When no attack path reads the live stats any more, delete
+  the `tower/CLAUDE.md` rule. Run `td.PerformanceHarness`: one `Shot` per attack is fine.
+
+### A tower's price is recorded by a constructor duty
+
+**Trigger:** the next change to `TowerFactory`.
+
+`AbstractTower`'s constructor reads `TowerRoster.priceOf`, which grows with each copy on the board, so
+a tower must be built after its price is charged and before `TowerRoster.add`. Only
+`tower/CLAUDE.md` says so; `TowerPlacement` keeps the order by hand.
+
+- **Where:** `TowerFactory.createTower`, `AbstractTower`'s constructor (the price field),
+  `TowerPlacement`'s place branch, the first rule in `tower/CLAUDE.md`.
+- **Approach:** the least: move the duty into `createTower`'s Javadoc, its one place of use, and delete
+  the `tower/CLAUDE.md` lines. Better, if that change touches the constructors anyway: pass the price
+  paid into `createTower`, so the order can't be got wrong (the toolbar's preview passes the list
+  price).
+
+### The wave-script suggestions parse the grammar a second time; ranks are a token switch
+
+**Trigger:** the next change to the wave-script grammar: a new keyword, rank or token. (Design review
+F10 and F11.)
+
+`WaveScriptSuggestions.positionAfter` walks the typed tokens with its own small state machine
+(`Position`, `ShapeState`) to know what may come next. `WaveScriptGrammar`, the real parser, knows the
+same, so a new keyword has to be taught to both. Ranks are string constants and two switches in
+`WaveScript` (`isRankToken`, `rankFor`), while spawn shapes are rows of the `ShapeKeyword` enum.
+
+- **Where:** `td.wave.WaveScriptSuggestions` (`positionAfter`, `RANKS`, `SHAPES`), `WaveScriptGrammar`,
+  `WaveScript` (`isRankToken`, `rankFor`, the rank `*_TOKEN` constants, `RESERVED_TOKENS`),
+  `ShapeKeyword` as the model, `wave/CLAUDE.md`.
+- **Approach:** ranks first, it is small: a package-private `RankKeyword` enum shaped like
+  `ShapeKeyword` (token, `Rank`, `of(String)`), which `isRankToken`, `rankFor` and the suggestions'
+  `RANKS` read. Then the grammar answers what is pending after a typed prefix (a rank seen, a shape
+  waiting for its member count), and `WaveScriptSuggestions` asks it instead of `positionAfter`.
+  `WaveScriptSuggestionsTest` and `WaveScriptTest` must pass unchanged: the behaviour stays. Done when
+  a new keyword is one row plus the grammar.
+
+### A hard crowd-control kind's diminishing-returns ladder is a switch that throws in play
+
+**Trigger:** adding the next `EffectCategory.HARD_CC` kind. (Design review F14.)
+
+`DiminishingReturns.of(kind)` and `stepsOf(kind)` switch on the kind: Freeze and Daze have ladders,
+and `of`'s `default` throws. A new hard crowd-control kind without a case compiles and passes every
+test that doesn't apply it, then throws the first time it lands on an enemy in play.
+
+- **Where:** `td.effect.DiminishingReturns` (`FREEZE_STEPS`, `DAZED_STEPS`, `of`, `stepsOf`),
+  `EffectRule` (its factory and `withX` copies), the `FREEZE` and `DAZED` rows of `EffectKind`,
+  `EffectSentences` (reads `stepsOf`), `effect/CLAUDE.md` ("Adding a kind").
+- **Approach:** the ladder becomes rule data: a fluent `EffectRule.diminishing(float... steps)`
+  (stored as a `List<Float>`, empty by default), set on the `FREEZE` and `DAZED` rows with today's
+  steps. `DiminishingReturns.of` takes the rule's steps, `EffectSentences` reads the rule, and the
+  switches and `stepsOf` go. A rule every entry keeps, in `EffectKindTest`: every `HARD_CC` kind has a
+  ladder ending in 0, and no other kind has one. The numbers move, they don't change, so no balance
+  check.
 
 ## Balance tools
 

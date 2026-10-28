@@ -272,6 +272,14 @@ ripples and spin, the Radar's sweep).
 - The renderer holds every shape and colour, keyed by `Palette` roles, never by domain type; there are no
   image assets. The forked Burst looks (coil, cauldron) are the most complex vector art in the game so
   far.
+- **Tower looks become tables** (ADR 0018, `TODO.md` "A board look is a switch in the painter"): this
+  feature redraws every tower, so it moves the tower looks out of `Palette` and the painter's switches
+  into a `TowerLook` role and a table checked complete when it loads, one role per commit, before
+  drawing the new art into it.
+- **A delayed hit carries the stats it was fired with** (`TODO.md` "An attack can read the stats its
+  shot already spent"): a Sniper hit that lands when its tracer arrives, the lobbed ball and a Ricochet
+  bounce in flight must not read the tower's live stats on landing, or a primed round spent at the shot
+  is lost. Do that entry with the first shot-timing change.
 - The board can show a primed shot, a target's rank or a running Frenzy only through state the tower
   publishes for the frame build; the engine stays headless.
 - Renaming Spotter Uplink touches its term, texts and tests; its node id stays so saved games load.

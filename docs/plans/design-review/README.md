@@ -1079,3 +1079,6 @@ committed. What remains is code, in this order:
    - F9 (done), F6 (done), and F10/F11 and F14 as their areas change.
 3. **`TODO.md`:** B-1 to B-4, the amended visitor entry, and the `HitReceiver`/`Cell` interface
    exceptions (done).
+4. **The deferred items are in `TODO.md`,** each with its trigger, where and approach (F18 in the
+   visitor entry; F16-A, F15b, F10/F11, F14 and the price duty under "Design follow-ups"), so the
+   work that triggers one finds it without this document.
