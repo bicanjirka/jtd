@@ -56,7 +56,10 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
   the whole slot (`3 elite swarm 4 c`); placed right after a shape keyword, it is the member
   count.
 - Errors (`GameStartupException`): an unknown token, a rank after a shape, a rank right before
-  `e`, two ranks in a row, a missing or forbidden member count. Blank tokens are skipped.
+  `e`, two ranks in a row, a missing or forbidden member count. Blank tokens are skipped. An error
+  marks the offending token in the script, and a level's load adds its level, path and wave.
+- `WaveScriptGrammar` parses: each rule takes an immutable cursor and returns what it
+  read with the cursor after it. A spawn-type keyword is one `ShapeKeyword` row.
 - Reserved tokens are matched before catalog lookup, and `EnemyCatalog.register` rejects ids that
   collide with them. Built-in and per-level ids resolve identically.
 - A new enemy id gets a row in this table and in `README.md`.

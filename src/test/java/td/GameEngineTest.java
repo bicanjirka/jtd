@@ -57,6 +57,7 @@ import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
+import td.util.GameStartupException;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.wave.Path;
@@ -68,6 +69,7 @@ import td.wave.RoundSummary;
 import td.wave.Vec2;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
+import td.wave.smoothing.PathSmoothing;
 import td.wave.smoothing.QuadraticBezierSmoothing;
 import td.zone.Zone;
 import td.zone.ZoneKind;
@@ -80,6 +82,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 class GameEngineTest {
@@ -1159,6 +1162,18 @@ class GameEngineTest {
         assertThat(onTheCurve).isEmpty();
         assertThat(engine.cells().at(curveOnly.x(), curveOnly.y()).hasTower()).isFalse();
         assertThat(engine.cells().at(13, 9).hasTower()).isTrue();
+    }
+
+    @Test
+    void aWaveThatDoesNotParseNamesItsLevelPathAndWave() {
+        List<Point> corners = List.of(new Point(0, 1), new Point(12, 1));
+        LevelDefinition level = LevelDefinition.singlePath("Broken", "", 14, 10, corners,
+                List.of(new WaveDefinition("simple", Rank.GRUNT), new WaveDefinition("nonsense", Rank.GRUNT)), 100, 5,
+                PathSmoothing.none());
+        GameEngine engine = FakeGameHost.newBoundEngine();
+
+        assertThatThrownBy(() -> engine.loadLevel(level)).isInstanceOf(GameStartupException.class)
+                .hasMessageStartingWith("Level 'Broken', path 1, wave 2: ");
     }
 
     /** A cell the level's smoothed curve covers and its raw corners do not. */
