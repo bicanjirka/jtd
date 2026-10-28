@@ -1,6 +1,7 @@
 package td.enemy;
 
 import td.damage.DamageUnits;
+import td.effect.ActiveEffects;
 import td.effect.EffectKind;
 import td.effect.ShieldGauge;
 import td.stat.EnemyStat;
@@ -51,8 +52,9 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         marks = List.copyOf(marks);
     }
 
-    /** {@code mob} as it is now. */
-    public static EnemyInspection of(DefinedEnemyMob mob) {
+    /** {@code mob} as it is now, read from its parts; {@link DefinedEnemyMob#inspect()} is the way in. */
+    static EnemyInspection of(DefinedEnemyMob mob) {
+        ActiveEffects live = mob.liveEffects();
         EnemyDefinition definition = mob.definition();
         Map<EnemyStat, Float> stats = new EnumMap<>(EnemyStat.class);
         for (EnemyStat stat : EnemyStat.values()) {
@@ -67,15 +69,15 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
             }
         }
         Map<EffectKind, Float> diminished = mob.diminishedFactors();
-        Set<EffectKind> active = mob.activeEffectKinds();
+        Set<EffectKind> active = live.activeKinds();
         List<EffectState> effects = new ArrayList<>();
         for (EffectKind kind : mob.effectKindsByGain()) {
-            EffectState state = active.contains(kind) ? activeState(mob, kind) : EffectState.faded(kind);
+            EffectState state = active.contains(kind) ? activeState(live, kind) : EffectState.faded(kind);
             Float nextShare = diminished.get(kind);
             effects.add(nextShare == null ? state : state.withNextShare(nextShare));
         }
-        List<Immunity> immunities = mob.blockedEffectKinds().stream()
-                .map(kind -> new Immunity(kind, mob.keptOutBy(kind))).toList();
+        List<Immunity> immunities = live.blockedKinds().stream()
+                .map(kind -> new Immunity(kind, live.keptOutBy(kind))).toList();
         List<TraitEntry> traitEntries = new ArrayList<>(
                 definition.traitSlots().stream().map(slot -> slot.template().entry()).toList());
         float cellSize = mob.cellSize();
@@ -92,12 +94,12 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                 abilityEntries, breakdowns, List.of());
     }
 
-    private static EffectState activeState(DefinedEnemyMob mob, EffectKind kind) {
-        EffectState state = EffectState.of(kind, mob.effectRemainingTicks(kind)).withStacks(mob.effectStacks(kind))
-                .withLevel(mob.effectLevel(kind))
-                .withShield(kind == EffectKind.SHIELD ? mob.shieldGauge() : ShieldGauge.none());
-        state = state.withClockTicks(mob.effectClockTicks(kind));
-        return state.withFullness(mob.effectFullness(kind));
+    private static EffectState activeState(ActiveEffects live, EffectKind kind) {
+        return EffectState.of(kind, live.remainingTicks(kind)).withStacks(live.stacks(kind))
+                .withLevel(kind == EffectKind.CHILL ? live.chillLevel() : 0f)
+                .withShield(kind == EffectKind.SHIELD ? live.shieldGauge() : ShieldGauge.none())
+                .withClockTicks(live.clockTicks(kind))
+                .withFullness(live.fullness(kind));
     }
 
     /** A copy carrying {@code marks}: memory towers keep about this enemy, filled in by the frame build. */

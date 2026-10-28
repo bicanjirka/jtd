@@ -156,6 +156,8 @@ its sentence (an adaptive template describes the most it can reach). A new abili
 
 - The UI shows an enemy only through `EnemyInspection` (`DefinedEnemyMob.inspect()`), an
   immutable snapshot taken on the thread that owns the mob, never by reading live stats.
+- `EnemyInspection.of` reads the mob's parts (`liveEffects()`, package-private queries), so a new
+  inspector field adds no public query to the mob.
 - `EnemySelection` (world-owned) takes requests from any thread but resolves them only on the
   game-loop thread, once per frame build. A killed or leaked selection keeps its snapshot; one
   that left the roster still alive is dropped. A hatch marks the mob `HATCHED` first, so its

@@ -32,8 +32,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -330,7 +328,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /** What {@code stat} is before any trait or effect. */
-    public float baseStat(EnemyStat stat) {
+    float baseStat(EnemyStat stat) {
         return this.base.value(stat);
     }
 
@@ -347,7 +345,7 @@ public final class DefinedEnemyMob implements EnemyMob {
      * Every kind that is active or whose diminishing returns run, ordered by the tick it was last gained (oldest
      * first, ties in kind order).
      */
-    public List<EffectKind> effectKindsByGain() {
+    List<EffectKind> effectKindsByGain() {
         Set<EffectKind> kinds = EnumSet.noneOf(EffectKind.class);
         kinds.addAll(this.activeEffects.activeKinds());
         kinds.addAll(this.diminishedFactors().keySet());
@@ -355,7 +353,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /** What {@code stat} is made of now: base, each trait and active effect that changes it, and the result. */
-    public StatBreakdown breakdown(EnemyStat stat) {
+    StatBreakdown breakdown(EnemyStat stat) {
         TraitContext context = this.traitContext();
         List<StatPart> parts = new ArrayList<>();
         for (Trait trait : this.traits) {
@@ -373,17 +371,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         return new StatBreakdown(stat, this.baseStat(stat), parts, this.stats.value(stat));
     }
 
-    /** The active kind that keeps {@code kind} out now, if one does. */
-    public Optional<EffectKind> keptOutBy(EffectKind kind) {
-        return this.activeEffects.keptOutBy(kind);
-    }
-
-    public OptionalDouble effectFullness(EffectKind kind) {
-        return this.activeEffects.fullness(kind);
-    }
-
-    public OptionalInt effectClockTicks(EffectKind kind) {
-        return this.activeEffects.clockTicks(kind);
+    /** The effects on it, for the inspection to read in place of a forward per query. */
+    ActiveEffects liveEffects() {
+        return this.activeEffects;
     }
 
     private void contributeStats(StatAccumulator<EnemyStat> accumulator) {
@@ -479,7 +469,7 @@ public final class DefinedEnemyMob implements EnemyMob {
      * For each kind whose diminishing returns are running, the share of its duration the next fresh
      * application would get, in kind order.
      */
-    public Map<EffectKind, Float> diminishedFactors() {
+    Map<EffectKind, Float> diminishedFactors() {
         Map<EffectKind, Float> factors = new EnumMap<>(EffectKind.class);
         this.diminishing.forEach((kind, ladder) -> {
             if (ladder.stepAt(this.ticksSinceSpawn) > 0) {
@@ -565,11 +555,6 @@ public final class DefinedEnemyMob implements EnemyMob {
         return HitResolution.critFactor(attacker, this.stats);
     }
 
-    /** The kinds an active effect currently keeps out. */
-    public Set<EffectKind> blockedEffectKinds() {
-        return this.activeEffects.blockedKinds();
-    }
-
     /** The active shield's pool, in points. */
     public ShieldGauge shieldGauge() {
         return this.activeEffects.shieldGauge();
@@ -579,11 +564,6 @@ public final class DefinedEnemyMob implements EnemyMob {
     public float shieldFraction() {
         ShieldGauge gauge = this.activeEffects.shieldGauge();
         return gauge.max() > 0f ? gauge.remaining() / gauge.max() : 0f;
-    }
-
-    /** How much speed the active chill takes away; {@code 0} for any other kind or when inactive. */
-    public float effectLevel(EffectKind kind) {
-        return kind == EffectKind.CHILL ? this.activeEffects.chillLevel() : 0f;
     }
 
     @Override
@@ -599,11 +579,6 @@ public final class DefinedEnemyMob implements EnemyMob {
     @Override
     public int effectStacks(EffectKind kind) {
         return this.activeEffects.stacks(kind);
-    }
-
-    /** Ticks left on the active {@code kind}; empty when inactive or for a fuel pool. */
-    public OptionalInt effectRemainingTicks(EffectKind kind) {
-        return this.activeEffects.remainingTicks(kind);
     }
 
     public EnemyInspection.Fate fate() {
