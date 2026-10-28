@@ -11,6 +11,7 @@ import td.zone.Zone;
 import td.zone.ZoneOwner;
 
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 /** Resolves ability data against one caster's world, position and definition, for one tick. */
@@ -42,22 +43,26 @@ final class MobAbilityContext implements AbilityContext {
     @Override
     public boolean justDied() {
         return this.caster.isDead() && this.caster.fate() != EnemyInspection.Fate.LEAKED
-                && this.caster.ticksSinceDeath(this.gameTime) == 0;
+                && isNow(this.caster.ticksSinceDeath(this.gameTime));
     }
 
     @Override
     public boolean justTookCriticalHit() {
-        return this.caster.ticksSinceCriticalHit(this.gameTime) == 0;
+        return isNow(this.caster.ticksSinceCriticalHit(this.gameTime));
     }
 
     @Override
     public boolean justDodged() {
-        return this.caster.ticksSinceDodge(this.gameTime) == 0;
+        return isNow(this.caster.ticksSinceDodge(this.gameTime));
     }
 
     @Override
     public boolean justTookDamage() {
-        return this.caster.ticksSinceDamageTaken(this.gameTime) == 0;
+        return isNow(this.caster.ticksSinceDamageTaken(this.gameTime));
+    }
+
+    private static boolean isNow(OptionalInt ticksSince) {
+        return ticksSince.equals(OptionalInt.of(0));
     }
 
     @Override

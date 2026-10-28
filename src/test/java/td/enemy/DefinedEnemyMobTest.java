@@ -210,23 +210,23 @@ class DefinedEnemyMobTest {
 
         mob.doDamage(Damage.physical(100), AttackProfile.critChance(1f));
 
-        assertThat(mob.ticksSinceCriticalHit(0)).isEqualTo(-1);
+        assertThat(mob.ticksSinceCriticalHit(0)).isEmpty();
 
         mob.doTick(1);
 
-        assertThat(mob.ticksSinceCriticalHit(1)).isZero();
-        assertThat(mob.ticksSinceCriticalHit(2)).isEqualTo(1);
+        assertThat(mob.ticksSinceCriticalHit(1)).hasValue(0);
+        assertThat(mob.ticksSinceCriticalHit(2)).hasValue(1);
     }
 
     @Test
-    void aNonCriticalHitLeavesTicksSinceCriticalHitAtMinusOne() {
+    void aNonCriticalHitLeavesNoCriticalHitMoment() {
         GameWorld context = newContext();
         DefinedEnemyMob mob = EnemyFixtures.plainMob(context, 50, 3);
 
         mob.doDamage(Damage.physical(100));
         mob.doTick(1);
 
-        assertThat(mob.ticksSinceCriticalHit(1)).isEqualTo(-1);
+        assertThat(mob.ticksSinceCriticalHit(1)).isEmpty();
     }
 
     @Test

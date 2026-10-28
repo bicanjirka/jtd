@@ -5,6 +5,7 @@ import td.util.ThreadConfined;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -33,10 +34,10 @@ final class MobMoments {
         this.lastTick.put(moment, gameTime);
     }
 
-    /** {@code -1} if it never happened, or is still pending. */
-    int ticksSince(Moment moment, int gameTime) {
+    /** Empty if it never happened, or is still pending. */
+    OptionalInt ticksSince(Moment moment, int gameTime) {
         Integer tick = this.lastTick.get(moment);
-        return tick == null ? -1 : gameTime - tick;
+        return tick == null ? OptionalInt.empty() : OptionalInt.of(gameTime - tick);
     }
 
     enum Moment {

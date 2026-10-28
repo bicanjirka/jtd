@@ -32,6 +32,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -227,7 +228,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private Void body(Palette palette, DefinedEnemyMob mob, float scale, double facingRadians,
             Optional<SupportAura> supportAura, List<Trait> traits) {
         if (mob.isDead()) {
-            int age = mob.ticksSinceDeath(this.gameTime);
+            int age = mob.ticksSinceDeath(this.gameTime).orElse(0);
             if (age <= fadeDurationTicks(mob.getRank())) {
                 float fadeProgress = fadeProgress(mob.getRank(), age);
                 this.draws.add(new EnemyFadeDraw(palette, (float) mob.getX(), (float) mob.getY(), facingRadians, scale, age, fadeProgress));
@@ -292,8 +293,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             if (kind == EffectKind.INVISIBLE) {
                 continue;
             }
-            this.addTransitionPulse(x, y, scale, kind, mob.ticksSinceEffectGained(kind, this.gameTime), PulseDirection.OUTWARD);
-            this.addTransitionPulse(x, y, scale, kind, mob.ticksSinceEffectLost(kind, this.gameTime), PulseDirection.INWARD);
+            this.addTransitionPulse(x, y, scale, kind,
+                    mob.effectGainedWithin(kind, this.gameTime, EFFECT_PULSE_DURATION_TICKS), PulseDirection.OUTWARD);
+            this.addTransitionPulse(x, y, scale, kind,
+                    mob.effectLostWithin(kind, this.gameTime, EFFECT_PULSE_DURATION_TICKS), PulseDirection.INWARD);
         }
         mob.lastAbilityCast().ifPresent(cast -> {
             int ticksSince = this.gameTime - cast.tick();
@@ -304,35 +307,42 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                 this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(cast.kind()), x, y, ringRadius, progress, PulseDirection.OUTWARD));
             }
         });
-        int ticksSinceSpawn = mob.ticksSinceAbilitySpawn(this.gameTime);
-        if (ticksSinceSpawn >= 0 && ticksSinceSpawn <= EFFECT_PULSE_DURATION_TICKS) {
-            float progress = (float) ticksSinceSpawn / EFFECT_PULSE_DURATION_TICKS;
+        OptionalInt spawned = mob.ticksSinceAbilitySpawn(this.gameTime);
+        if (within(spawned, EFFECT_PULSE_DURATION_TICKS)) {
+            float progress = (float) spawned.getAsInt() / EFFECT_PULSE_DURATION_TICKS;
             this.overlayDraws.add(new EffectPulseDraw(Palette.SPAWN_BURST, x, y, scale * SPAWN_BURST_RADIUS_FRACTION, progress, PulseDirection.OUTWARD));
         }
     }
 
-    private void addTransitionPulse(float x, float y, float scale, EffectKind kind, int ticksSince, PulseDirection direction) {
-        if (ticksSince < 0 || ticksSince > EFFECT_PULSE_DURATION_TICKS) {
-            return;
+    private void addTransitionPulse(float x, float y, float scale, EffectKind kind, OptionalInt since, PulseDirection direction) {
+        if (since.isPresent()) {
+            float progress = (float) since.getAsInt() / EFFECT_PULSE_DURATION_TICKS;
+            this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(kind), x, y, scale * GAIN_LOSS_PULSE_RADIUS_FRACTION, progress, direction));
         }
-        float progress = (float) ticksSince / EFFECT_PULSE_DURATION_TICKS;
-        this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(kind), x, y, scale * GAIN_LOSS_PULSE_RADIUS_FRACTION, progress, direction));
     }
 
     private void critSpark(DefinedEnemyMob mob, float x, float y) {
-        int ticksSince = mob.ticksSinceCriticalHit(this.gameTime);
-        if (ticksSince >= 0 && ticksSince <= CRIT_SPARK_DURATION_TICKS) {
-            float fadeProgress = (float) ticksSince / CRIT_SPARK_DURATION_TICKS;
+        OptionalInt crit = mob.ticksSinceCriticalHit(this.gameTime);
+        if (within(crit, CRIT_SPARK_DURATION_TICKS)) {
+            float fadeProgress = (float) crit.getAsInt() / CRIT_SPARK_DURATION_TICKS;
             this.critSparkDraws.add(new CritSparkDraw(Palette.CRIT_SPARK, x, y, CRIT_SPARK_FIXED_SCALE, fadeProgress));
         }
     }
 
     /** Beside the body, since the badge and the effect markers fill the space above it. */
     private void missMark(DefinedEnemyMob mob, float rightOfBody, float y) {
-        int ticksSince = mob.ticksSinceDodge(this.gameTime);
-        if (ticksSince >= 0 && ticksSince <= MISS_MARK_DURATION_TICKS) {
-            this.overlayDraws.add(new MissMarkDraw(rightOfBody, y, (float) ticksSince / MISS_MARK_DURATION_TICKS));
+        OptionalInt dodged = mob.ticksSinceDodge(this.gameTime);
+        if (within(dodged, MISS_MARK_DURATION_TICKS)) {
+            this.overlayDraws.add(new MissMarkDraw(rightOfBody, y, (float) dodged.getAsInt() / MISS_MARK_DURATION_TICKS));
         }
+    }
+
+    /**
+     * Whether {@code since} happened no more than {@code ticks} ago. Plain branches, not a lambda per query: a
+     * capturing lambda is built even when nothing happened, for every enemy every frame.
+     */
+    private static boolean within(OptionalInt since, int ticks) {
+        return since.isPresent() && since.getAsInt() <= ticks;
     }
 
     /**
@@ -348,14 +358,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             return 0f;
         }
         if (mob.activeEffectKinds().contains(EffectKind.INVISIBLE)) {
-            int ticksSinceGained = Math.max(0, mob.ticksSinceEffectGained(EffectKind.INVISIBLE, this.gameTime));
+            int ticksSinceGained = mob.ticksSinceEffectGained(EffectKind.INVISIBLE, this.gameTime).orElse(0);
             return Math.min(1f, (float) ticksSinceGained / CLOAK_FADE_DURATION_TICKS);
         }
-        int ticksSinceLost = mob.ticksSinceEffectLost(EffectKind.INVISIBLE, this.gameTime);
-        if (ticksSinceLost < 0 || ticksSinceLost >= CLOAK_FADE_DURATION_TICKS) {
-            return 0f;
-        }
-        return 1f - (float) ticksSinceLost / CLOAK_FADE_DURATION_TICKS;
+        OptionalInt lost = mob.effectLostWithin(EffectKind.INVISIBLE, this.gameTime, CLOAK_FADE_DURATION_TICKS - 1);
+        return lost.isPresent() ? 1f - (float) lost.getAsInt() / CLOAK_FADE_DURATION_TICKS : 0f;
     }
 
     /** 1 on the dimmed half of a flicker while a tower's field holds an effect on the enemy, else 0. */
@@ -436,10 +443,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return 3 * rank.ordinal() + 6;
     }
 
-    /**
-     * {@code 0} at death to {@code 1} when gone. Clamped, because {@code ticksSinceDeath} is
-     * {@code -1} between a mid-tick death and the next {@code doTick}.
-     */
+    /** {@code 0} at death to {@code 1} when gone. */
     static float fadeProgress(Rank rank, int ticksSinceDeath) {
         int alpha = 255 - (ticksSinceDeath * (255 / (fadeDurationTicks(rank) + 1)));
         return 1f - (Math.clamp(alpha, 0, 255) / 255f);

@@ -23,8 +23,10 @@ keeps the seam honest.
   into `TowerEffectDraw`. Invisibility fades the body itself (`EnemyBodyDraw.cloakProgress`), and a
   field effect on the enemy flickers it (`EnemyBodyDraw.flicker`).
 - Timed visuals follow one idiom: the entity records the tick something happened
-  (`ticksSinceDeath`, `ticksSinceCriticalHit`, `ticksSinceEffectGained`/`Lost`), and the frame
-  builder turns it into a 0..1 progress. Draw records carry progress, never stored animation
+  (`ticksSinceDeath`, `ticksSinceCriticalHit`, `effectGainedWithin`/`LostWithin`), answered as an
+  `OptionalInt` that is empty when it never happened, and the frame builder turns it into a 0..1
+  progress. A query the frame build makes for every kind of every enemy takes its window, so it
+  builds no answer outside it. Draw records carry progress, never stored animation
   state.
 - `Panel*` previews reuse `Java2DFrameRenderer`'s paint methods (`PanelEnemy` →
   `paintEnemies`) rather than drawing their own copy.
