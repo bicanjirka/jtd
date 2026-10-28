@@ -1,11 +1,7 @@
 import td.GameEngine;
 import td.cell.CellGrid;
 import td.damage.Damage;
-import td.damage.DamageUnits;
 import td.effect.DamageSink;
-import td.effect.Effect;
-import td.effect.EffectKind;
-import td.effect.FieldStrength;
 import td.economy.EconomyDelta;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -178,56 +174,7 @@ public class PreviewBoard {
 
     /** {@code effect <kind> [ticks]}: puts the effect on every enemy, as a tower would. */
     private static void applyEffect(String args) {
-        String[] parts = args.split("\s+");
-        EffectKind kind = EffectKind.valueOf(parts[0].toUpperCase());
-        int ticks = parts.length > 1 ? Integer.parseInt(parts[1]) : 200;
-        for (EnemyMob mob : engine.getGameWorld().enemies().getEnemies()) {
-            Effect effect = switch (kind) {
-                case CHILL -> Effect.chill(0.5f, ticks, DamageSink.none());
-                case BURN -> Effect.burn(Damage.magic(1), ticks, DamageSink.none());
-                case POISON -> Effect.poison(Damage.magic(1), ticks, DamageSink.none());
-                case FREEZE -> Effect.freeze(ticks, DamageSink.none());
-                case SHIELD -> Effect.shield(DamageUnits.PER_POINT * 200f, ticks, DamageSink.none());
-                case INVISIBLE -> Effect.invisible(ticks, DamageSink.none());
-                case HEAL -> Effect.heal(1, ticks, DamageSink.none());
-                case VULNERABLE -> Effect.vulnerable(2, ticks, DamageSink.none());
-                case REVEALED -> Effect.revealed(ticks, DamageSink.none());
-                case SUNDERED -> Effect.sundered(3, ticks, DamageSink.none());
-                case EXPOSED -> Effect.exposed(ticks, DamageSink.none());
-                case MARKED -> Effect.marked(ticks, DamageSink.none());
-                case PRIORITY -> Effect.priority(ticks, DamageSink.none());
-                case RESONATING -> Effect.resonating(2, ticks, DamageSink.none());
-                case FRACTURED -> Effect.fractured(3, DamageSink.none());
-                case DAZED -> Effect.dazed(ticks, DamageSink.none());
-                case SATURATED -> Effect.saturated(3, ticks, DamageSink.none());
-                case CHARGED -> Effect.charged(ticks, td.damage.AttackOrigin.none(), DamageSink.none());
-                case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING ->
-                        Effect.hex(kind, ticks, DamageSink.none());
-                case SILENCED -> Effect.silenced(ticks, DamageSink.none());
-                case ANCHORED -> Effect.anchored(ticks, DamageSink.none());
-                case UNRAVELED -> Effect.unraveled(3, ticks, DamageSink.none());
-                case BRITTLE -> Effect.brittle(ticks, DamageSink.none());
-                case TOLL -> Effect.toll(3, ticks, DamageSink.none());
-                case CORRODED -> Effect.corroded(FieldStrength.FULL, ticks, DamageSink.none());
-                case DRAGGED -> Effect.dragged(30, ticks, DamageSink.none());
-                case UNDERTOW -> Effect.undertow(ticks, DamageSink.none());
-                case CONDEMNED -> Effect.condemned(4, ticks, DamageSink.none());
-                case STILLED -> Effect.stilled(ticks, DamageSink.none());
-                case UNVEILED -> Effect.unveiled(ticks, DamageSink.none());
-                case DEAD_ZONE -> Effect.deadZone(ticks, DamageSink.none());
-                case FALLOUT -> Effect.fallout(ticks, DamageSink.none());
-                case FRAIL -> Effect.frail(FieldStrength.FULL, ticks, DamageSink.none());
-                case CRACKED -> Effect.cracked(ticks, DamageSink.none());
-                case TARRED -> Effect.tarred(ticks, DamageSink.none());
-                case BLEEDING -> Effect.bleeding(1, ticks, DamageSink.none());
-                case SOULFIRE -> Effect.soulfire(Damage.magic(1), ticks, DamageSink.none());
-                case SPRINTING -> Effect.sprinting(ticks, DamageSink.none());
-                case HASTENED -> Effect.hastened(ticks, DamageSink.none());
-                case SCORCHED, SICKENED -> throw new IllegalArgumentException(kind + " is earned by burn and poison");
-            };
-            mob.applyEffect(effect);
-        }
-        System.out.println("OK effect " + kind);
+        System.out.println(EffectCommand.apply(args, engine.getGameWorld().enemies().getEnemies()));
     }
 
     /** {@code zone <kind> <cellX> <cellY> [radiusCells=1] [ticks=200]}: a ground zone no tower owns. */

@@ -73,7 +73,7 @@ on `quit` or end of input.
 cat <<'EOF' | java -cp "$CP" Driver
 level 0
 setlives 1000
-spawn c elite
+spawn armored elite
 waitfor ticks 40
 clickenemy 0
 list SheetPane   # the Info pane's index, which moves whenever a panel is added
@@ -126,7 +126,7 @@ cat <<'EOF' | java -cp "$CP" PreviewBoard
 level 0
 credits 5000
 place sniper 6 11
-spawn s elite
+spawn simple elite
 tick 60
 render .claude/skills/run-jtd/shots/scene.png
 quit
