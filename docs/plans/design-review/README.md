@@ -1047,8 +1047,8 @@ Net: package files −79 lines in the files that already existed. The seven new 
 
 | Doc change | Its code change |
 |---|---|
-| The `enemy` `ShieldListener` rule | F4 |
-| `effect`'s "Adding a kind" step 4 (`TermLooks.effect`, `colorFor`) | F3, F16-A |
+| The `enemy` `ShieldListener` rule | F4 (done) |
+| `effect`'s "Adding a kind" step 4 (`TermLooks.effect`, `colorFor`) | F3 (done: `TermLooks.effect` went), F16-A (`colorFor`) |
 | `ui`'s colour rule and its exhaustive-switch exceptions | F16-A |
 | `tower`'s `beginShot` rule | F15b |
 | `enemy`'s `ticksSinceDeath` sentinel | F19 (done) |
