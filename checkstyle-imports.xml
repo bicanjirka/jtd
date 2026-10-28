@@ -3,14 +3,38 @@
         "-//Checkstyle//DTD ImportControl Configuration 1.4//EN"
         "https://checkstyle.org/dtds/import_control_1_4.dtd">
 
+<!-- The boundaries that hold today (docs/adr/0017). A new package is covered by the AWT/Swing ban without an edit. -->
 <import-control pkg="td" strategyOnMismatch="allowed">
-    <subpackage name="board|cell|damage|economy|effect|enemy|level|projectile|stat|tower|util|wave|zone" regex="true">
-        <disallow pkg="javax.swing"/>
-        <disallow pkg="java.awt"/>
-    </subpackage>
+    <disallow pkg="javax.swing"/>
+    <disallow pkg="java.awt"/>
     <subpackage name="ui">
+        <allow pkg="javax.swing"/>
+        <allow pkg="java.awt"/>
         <subpackage name="render">
             <disallow pkg="java.awt"/>
         </subpackage>
     </subpackage>
+    <subpackage name="damage">
+        <allow pkg="td.damage"/>
+        <allow pkg="td.util"/>
+        <disallow pkg="td"/>
+    </subpackage>
+    <subpackage name="stat">
+        <allow pkg="td.stat"/>
+        <allow pkg="td.damage"/>
+        <allow pkg="td.util"/>
+        <disallow pkg="td"/>
+    </subpackage>
+    <subpackage name="effect">
+        <disallow pkg="td.tower"/>
+        <disallow pkg="td.enemy"/>
+    </subpackage>
+    <file name="Main">
+        <allow pkg="javax.swing"/>
+        <allow pkg="java.awt"/>
+    </file>
+    <file name="TowerDefense">
+        <allow pkg="javax.swing"/>
+        <allow pkg="java.awt"/>
+    </file>
 </import-control>
