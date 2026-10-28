@@ -5,7 +5,7 @@
 - `AbstractTower` holds shared state; leaves are `final`, constructed only via `TowerFactory`,
   and their constructor just calls `super(...)` (derived board fields are already `final`).
 - A tower records its price from `TowerRoster.priceOf` in its constructor (each copy on the board
-  adds 15%), so build it after charging that price and before `TowerRoster.add`.
+  costs more), so build it after charging that price and before `TowerRoster.add`.
 - A tower's class name names the behaviour, not the shape. Its UI name is `TowerFactory.Type.displayName()`, chosen
   separately and display only: the constant, the class, the node ids and the hotkey keep the class's word.
 - Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage`. It accumulates the
@@ -22,80 +22,11 @@
   times in 20 ticks, a second hit in the tick the remembered tenths reach a whole). A shot that waits
   longer or shorter than the base spends more or less than one period. The Sonar divides its seconds per
   revolution by the rate instead, and no counter that carries an attack rate may round to a tick.
-- `SonarTower` hits what its `SonarBeam` crossed this tick: a spinning beam the arc swept since
-  last tick (`SonarSweep`, half-open), never the instantaneous angle. Beams are pure geometry
-  (bearings, never enemies), and a mechanic that changes the beam reshapes it from where it is. The
-  head is drawn from `sweepRadiansAt`, the same angle that decides hits. Whatever the beam renews
-  each pass lasts `SonarSpec.untilNextPass()`.
-- `SplashTower` falloff is `1 - (d/radius)²` from the primary, floored by `BLAST_EDGE`. The blast
-  radius is `AREA_RADIUS`: range doesn't move it, auras never emit it, only its own nodes change it,
-  and every distance the payload uses (an arc's reach) grows with it. The blast lands and Saturates
-  first, then the payload runs.
+- Each tower's own constraints are in its sub-package's `CLAUDE.md` (`td/tower/sonar/`, `splash/`,
+  `seeker/`, `pulse/`, `mortar/`, `cinder/`, `aura/`): read it before editing that tower's leaf class here.
 - A tower whose fork renames it overrides `displayName()`; the id and `TowerFactory.Type` stay.
 - A missile's speed and size are a tower stat (`ProjectileStats`), shown as `TowerStatRow.PROJECTILE_SPEED`
   (cells a second, so it holds at any board scale) and `PROJECTILE_SIZE`, and drawn from the same record.
-- The Seeker's nest loads from the cooldown whether or not an enemy is in range, so it fills between
-  waves; stored missiles launch `launchGapTicks` apart, one target pick per missile. A spread salvo
-  (`SalvoPlanner`) avoids the enemies the salvo in progress has fired at, and a mechanic reacts to a
-  landed missile through `Impact`; a rearmed missile is flagged so its freeze rearms nothing. How a
-  missile freezes, shatters and crits is spec data (`FreezeSpec`, `ShatterSpec`), not a hook; the
-  `FrozenLedger` only watches the enemies the Seeker froze for the tick their freeze ends. A missile's
-  payload is decided when it is launched (`PayloadPlan.loadFor` its number), so it is drawn in its
-  colour in flight; a plain missile freezes, a payload missile does only what its payload does.
-- The Pulse's field touches `Reach.everyone`, never only the visible. Toll is earned by time inside
-  (`TollTracker` counts it per enemy) and held by an ordinary `TOLL` effect the field refreshes each
-  tick while the enemy is inside, so a visit is exactly the life of that effect. Toll never adds
-  damage: it is the strength (`FieldStrength.at`) the field tops its numeric effects up to. The
-  field's damage changes only through stats; Interference reads the other fields once a second
-  through a `TowerVisitor`.
-- A rule the Pulse holds inside its field (`FieldMode`, the drag in `HoldSpec`) is an effect refreshed every
-  tick the enemy is inside, never a flag on the enemy; `FieldHolds` remembers what this field gave, so it lowers
-  only that. A Ley Line is pure geometry (`LeyLine`): each field re-picks its host and its casters once a second,
-  and applies its own rules to the enemies on every line it casts or hosts, without damage or Toll. Event Horizon counts the deaths of enemies that were inside the
-  tick before and resets on the wave announcer; the tower subscribes lazily and unsubscribes in
-  `doCleanup`.
-- A Hexer's hex is an enemy effect in `EffectCategory.HEX`, applied through `applyEffect`, and that
-  effect is the hex's only timer (spirit paces it). The Hexer's `HexKeeper` only watches it: what
-  a hex pays out when it ends or its carrier dies is settled at the start of the Hexer's tick,
-  never by the enemy. The keeper reaches its caster only through `HexCaster`, so the dev panel's
-  caster pays hexes out by the same rules. Each hex picks its own target in one pass per cast, never per tick.
-- What a hex shares or releases in range (Sympathy, Reckoning) reaches `SHARE_CELLS` grown by the
-  blast radius bonus, and only enemies the ledger still watches. A share tops the receiver up to
-  what the carrier has and never adds on top, so two carriers sharing back and forth settle
-  instead of climbing.
-- The Mortar's shell is slow and unguided: it flies to where its target stood, so a fast enemy dodges
-  it. Its dead zone is `DEAD_ZONE`, a fixed distance on the `Reach` that range never moves. Bracketing is read at
-  the landing, from the spec as it stands then, and `BracketTracker` is the only memory of where the
-  last shell fell. Every shell Cracks plating; a shell's size is a tower stat that follows its damage.
-  A shell's type (`ShellPlan.typeOf` its number) is fixed when it is fired, so it is drawn in its look
-  in flight; a special shell leaves one zone where it lands, owned by the Mortar (`ZoneOwner`), and
-  shrapnel never does. Shrapnel hands its shell's zone effect to the enemies it hits directly through
-  `ZoneEffects.touch`, the same pulse a zone gives. Bomblets are placed along the enemy path from the
-  point of it nearest the landing (`PathLine`), never by geometry around the impact. Every blast leaves
-  a `BlastMark` the board draws as a fading flash; a nuke adds its own `NukeFlash`. Predictive Fire
-  asks the target where it will stand (`EnemyTarget.positionAfter`) and re-aims a few times, since flight
-  time depends on where the shell is going; a Barrage's later shells re-pick their target when they fire.
-- The Cinder never deals direct damage: each wave sets an enemy alight once, and `ignite` is the one place
-  that decides how strong the pool starts (Stoke steps, then a crit ignition's factor, which it rolls with
-  `HitReceiver.rollsCrit` since an ignition is no hit). The `Burning` ledger is the only memory of whom it
-  has set alight: Stoke steps live there and go when the burn has been out longer than the grace. Soulfire is a
-  second pool the same ignition applies beside the ordinary burn, with the same level; Combustion reads an
-  enemy's burning pools together. What its pools do to an enemy (hold more, mark faster, cauterize, heat,
-  mark for magic, burst at a freeze) is a `PoolTuning` the pool carries, never state the Cinder keeps on the
-  enemy; a Thermal Shock's chill and an
-  Everburn top-up are the Cinder's own work in `tendBurning`. Bellows reads the attack speed in what the tower
-  receives (`TowerStats.received()`), so it needs no Aura-specific code.
-- A Splash's mines and a Hexer's cursed clouds are zones it makes (`Zone.mine`, `Zone.cloud`); a mine
-  blasts through the same `blast` a shot does, centred where it lay, with the enemy that stepped on it as
-  the primary, and the Splash keeps its own list of mines to replace the oldest and to take them off with it.
-- The Aura gives `buffFor`: damage and range at `AURA_POWER` (plus Kinship), half the disruption, and
-  every owned node's emission; Chosen scales it all ×3. Its mechanics (Kinship, the XP mentoring,
-  Chosen, Rally) are `AuraMechanic`s over an `AuraSpec`.
-- The Aura never reaches into another tower's state except through `Tower.receiveStatus` (Rally).
-  Withering Field is an interval in the buff (`WITHER_INTERVAL`) that each tower spends on its own first
-  hit after it, never on periodic damage. Chosen's hero is derived from XP on every call, so
-  `AuraTower.doTick` republishes every tower's stats when the hero changes. Rally's spot is the path point
-  nearest the Aura, found once.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.buffs`' single "is this an aura" check stays the only role check.
 
@@ -235,3 +166,4 @@
    `ExclusiveChoice` per choice.
 6. `targetingLabel()` and `baseApplies()`, and, for the shop only, a `description()` saying what no row does.
 7. `README.md`'s tower table. The toolbar icon reuses the board paint code, so it needs no art.
+8. A `CLAUDE.md` in the tower's sub-package for its own constraints, and its name in this file's pointer.

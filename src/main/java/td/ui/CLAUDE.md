@@ -73,11 +73,9 @@ keeps the seam honest.
 - Tooltips are `TooltipPanel`s on the frame's popup layer, owned by one `TooltipLayer`; what is hovered, where a
   tooltip goes and which stay open are answered by `SheetPane.hoverAt`, `TooltipPlacement` and `TooltipChain`.
   Never use `setToolTipText` for game content.
-- The header strip (`PanelHeader`) holds the title and the menu button, the four `StatusIcon`s (wave, lives, score, cash)
-  centred between them and the speed buttons, which stand above the console. The speed buttons are a radio the owner
-  selects from the live speed; a click only reports. A status icon is a tooltip source that opens its tooltip under
-  itself (`TooltipLayer.watchBelow`); only lives (on a drop), wave (on an increase) and cash (on a purchase refused
-  for want of it, `EconomyListener.paymentRefused`) flash, and a level's first numbers are a baseline, never a change.
+- The speed buttons in `PanelHeader` are a radio the owner selects from the live speed; a click only reports. A
+  `StatusIcon` opens its tooltip under itself (`TooltipLayer.watchBelow`), and a level's first numbers are a baseline,
+  never a change to flash.
 - The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) where `UpgradeTreeLayout` derives each
   node's place from the tree, scaled to fit, never scrolled; a node's look is an `UpgradeNodeState`, and its hover
   is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).
