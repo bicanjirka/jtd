@@ -5,6 +5,7 @@ import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.AbilityTerm;
 import td.enemy.TraitTerm;
+import td.term.Side;
 import td.term.Term;
 import td.tower.TowerFactory;
 import td.tower.TowerTerm;
@@ -67,15 +68,10 @@ public final class TermLooks {
         return Map.copyOf(looks);
     }
 
+    /** A kind that helps its carrier reads as a boon, whatever its category. */
     private static TermLook effect(EffectKind kind) {
-        return new TermLook(EnemyFrameBuilder.markerPaletteFor(kind), switch (kind) {
-            case CHILL, FREEZE, DAZED, SILENCED, ANCHORED, DRAGGED, UNDERTOW -> Palette.TERM_FRAME_CONTROL;
-            case BURN, POISON, BLEEDING, SOULFIRE -> Palette.TERM_FRAME_AFFLICTION;
-            case VULNERABLE, SCORCHED, SICKENED, SUNDERED, RESONATING, FRACTURED, SATURATED, UNRAVELED, BRITTLE, TOLL, CORRODED, CONDEMNED, STILLED, DEAD_ZONE, FALLOUT, FRAIL, CRACKED, TARRED -> Palette.TERM_FRAME_WEAKNESS;
-            case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING -> Palette.TERM_FRAME_HEX;
-            case REVEALED, EXPOSED, MARKED, PRIORITY, CHARGED, UNVEILED -> Palette.TERM_FRAME_MARK;
-            case SHIELD, INVISIBLE, HEAL, SPRINTING, HASTENED, SPELLPROOF, UNYIELDING -> Palette.TERM_FRAME_BOON;
-        });
+        return new TermLook(EnemyFrameBuilder.markerPaletteFor(kind),
+                kind.side() == Side.BUFF ? Palette.TERM_FRAME_BOON : frameOf(kind.category()));
     }
 
     private static TermLook tower(TowerTerm term) {
