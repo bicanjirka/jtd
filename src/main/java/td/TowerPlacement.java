@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import td.board.BoardGeometry;
 import td.cell.Cell;
 import td.cell.CellGrid;
+import td.cell.CellHighlight;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.util.GameWorld;
@@ -15,7 +16,7 @@ import java.util.function.Supplier;
 
 /**
  * Placement mode and the click highlight shared by placing and selecting. The grid is supplied,
- * since each level load replaces it.
+ * since each level load replaces it. The highlight is published whole for the frame build to read.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class TowerPlacement {
@@ -28,7 +29,7 @@ public class TowerPlacement {
     private boolean placingTower = false;
     private TowerFactory.Type placingTowerType;
     private float placingTowerRange = 0;
-    private int[] highlightedCell;
+    private volatile CellHighlight highlight = CellHighlight.none();
     private boolean pinningLeyLine = false;
 
     public TowerPlacement(GameWorld gameWorld, Supplier<CellGrid> cellGrid) {
@@ -68,6 +69,18 @@ public class TowerPlacement {
         this.pinningLeyLine = false;
     }
 
+    /** Any thread: the highlighted cell as last published. */
+    public CellHighlight highlight() {
+        return this.highlight;
+    }
+
+    /** Drops the highlight if it is on the cell at grid ({@code x}, {@code y}), whose tower just went. */
+    public void cellCleared(int x, int y) {
+        if (this.highlight.isOn(x, y)) {
+            this.unHighlightCell();
+        }
+    }
+
     /** The tower standing on the cell under this board pixel; empty off the board or on an empty cell. */
     public Optional<Tower> towerAt(int boardX, int boardY) {
         BoardGeometry board = this.gameWorld.getBoard();
@@ -78,36 +91,26 @@ public class TowerPlacement {
         return cell.hasTower() ? Optional.of(cell.getTower()) : Optional.empty();
     }
 
-    /**
-     * Drops placement mode and the highlight without touching the grid, for use before a possibly
-     * smaller grid replaces it.
-     */
+    /** Drops placement mode and the highlight, for use before a possibly smaller grid replaces the grid. */
     public void reset() {
         this.placingTower = false;
         this.pinningLeyLine = false;
         this.placingTowerType = null;
         this.placingTowerRange = 0;
-        this.highlightedCell = null;
+        this.unHighlightCell();
     }
 
     private void unHighlightCell() {
-        if (this.highlightedCell != null) {
-            this.cellGrid.get().at(this.highlightedCell[0], this.highlightedCell[1]).setHighlight(Cell.HighlightType.NONE);
-            this.highlightedCell = null;
-        }
+        this.highlight = CellHighlight.none();
     }
 
     public void highlightCell(int boardX, int boardY) {
-        this.unHighlightCell();
         BoardGeometry board = this.gameWorld.getBoard();
         if (board.containsPixel(boardX, boardY)) {
-            this.highlightedCell = new int[]{board.cellX(boardX), board.cellY(boardY)};
-            Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
-            cell.setHighlight(Cell.HighlightType.PLACE);
-            cell.setHighlightRange(this.placingTowerRange);
-            if (this.placingTower) {
-                cell.setHighlightPrice(this.gameWorld.towers().priceOf(this.placingTowerType));
-            }
+            int price = this.placingTower ? this.gameWorld.towers().priceOf(this.placingTowerType) : 0;
+            this.highlight = CellHighlight.place(board.cellX(boardX), board.cellY(boardY), this.placingTowerRange, price);
+        } else {
+            this.unHighlightCell();
         }
     }
 
@@ -125,8 +128,7 @@ public class TowerPlacement {
             Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
             if (cell.hasTower()) {
                 selected = cell.getTower();
-                this.highlightedCell = new int[]{board.cellX(boardX), board.cellY(boardY)};
-                cell.setHighlight(Cell.HighlightType.SELECT);
+                this.highlight = CellHighlight.select(board.cellX(boardX), board.cellY(boardY));
             } else if (this.placingTower) {
                 if (cell.buildable()) {
                     int cellX = board.cellX(boardX);
@@ -138,9 +140,7 @@ public class TowerPlacement {
                         cell.setTower(tower);
                         cell.enable(false);
                         selected = tower;
-                        this.unHighlightCell();
-                        this.highlightedCell = new int[]{cellX, cellY};
-                        cell.setHighlight(Cell.HighlightType.SELECT);
+                        this.highlight = CellHighlight.select(cellX, cellY);
                         LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.gameWorld.economy().getCredits());
                     } else {
                         LOG.info("Tower placement rejected: not enough credits for {} (need {}, have {})",

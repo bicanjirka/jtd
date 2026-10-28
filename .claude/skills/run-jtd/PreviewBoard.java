@@ -251,7 +251,7 @@ public class PreviewBoard {
 
     private static void render(String path) throws Exception {
         GameWorld world = engine.getGameWorld();
-        BoardRenderer boardRenderer = new BoardRenderer(world);
+        BoardRenderer boardRenderer = new BoardRenderer(world, engine::cellHighlight);
         boardRenderer.setCellGridShown(cellGrid);
         double animationSeconds = gameTime / TickRate.TICKS_PER_SECOND;
         // alpha 1.0: this is always a snapshot exactly at gameTime (the last doTick that ran),

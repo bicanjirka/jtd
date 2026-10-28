@@ -2,7 +2,7 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import td.GameEngine;
-import td.cell.Cell;
+import td.cell.CellHighlight;
 import td.damage.Damage;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
@@ -45,7 +45,11 @@ class BoardRendererTest {
     }
 
     private static BoardRenderer rendererFor(GameWorld context) {
-        return new BoardRenderer(context);
+        return rendererFor(context, CellHighlight.none());
+    }
+
+    private static BoardRenderer rendererFor(GameWorld context, CellHighlight highlight) {
+        return new BoardRenderer(context, () -> highlight);
     }
 
     @Test
@@ -247,10 +251,9 @@ class BoardRendererTest {
     }
 
     @Test
-    void onlyHighlightedCellsProduceADraw() {
+    void noHighlightProducesNoCellDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        // a freshly loaded level has HighlightType.NONE everywhere
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
@@ -261,13 +264,12 @@ class BoardRendererTest {
     void aPlacementHoverIsAffordableOnlyWhileTheCreditsCoverItsPrice() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        Cell cell = engine.cells().at(0, 0);
-        cell.setHighlight(Cell.HighlightType.PLACE);
-        cell.setHighlightPrice(context.economy().getCredits() + 1);
+        int credits = context.economy().getCredits();
 
-        boolean shortOfCash = rendererFor(context).buildFrame(0, 0.0, 0.0).cells().getFirst().affordable();
-        cell.setHighlightPrice(context.economy().getCredits());
-        boolean covered = rendererFor(context).buildFrame(0, 0.0, 0.0).cells().getFirst().affordable();
+        boolean shortOfCash = rendererFor(context, CellHighlight.place(0, 0, 1f, credits + 1))
+                .buildFrame(0, 0.0, 0.0).cells().getFirst().affordable();
+        boolean covered = rendererFor(context, CellHighlight.place(0, 0, 1f, credits))
+                .buildFrame(0, 0.0, 0.0).cells().getFirst().affordable();
 
         assertThat(shortOfCash).isFalse();
         assertThat(covered).isTrue();
@@ -277,12 +279,22 @@ class BoardRendererTest {
     void aSelectedCellProducesExactlyOneCellDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        engine.cells().at(0, 0).setHighlight(Cell.HighlightType.SELECT);
 
-        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
+        RenderFrame frame = rendererFor(context, CellHighlight.select(0, 0)).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.cells()).hasSize(1);
-        assertThat(frame.cells().getFirst().highlight()).isEqualTo(Cell.HighlightType.SELECT);
+        assertThat(frame.cells().getFirst().highlight()).isEqualTo(CellHighlight.Kind.SELECT);
+    }
+
+    @Test
+    void aHighlightOffAReplacedSmallerGridProducesNoCellDraw() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        int outside = engine.cells().width();
+
+        RenderFrame frame = rendererFor(context, CellHighlight.select(outside, 0)).buildFrame(0, 0.0, 0.0);
+
+        assertThat(frame.cells()).isEmpty();
     }
 
     @Test

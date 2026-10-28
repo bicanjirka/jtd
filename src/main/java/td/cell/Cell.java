@@ -3,25 +3,13 @@ package td.cell;
 import td.tower.Tower;
 
 /**
- * One board square: pixel position, buildability, occupying tower and highlight.
+ * One board square: pixel position, buildability and occupying tower. The highlight is not the cell's:
+ * it is one {@link CellHighlight} for the whole board.
  * <p>
  * A path covering the cell and a tower occupying it share one buildability flag, so selling calls
  * {@code unSetTower()} and then {@code enable(true)}.
  */
 public interface Cell {
-
-    HighlightType getHighlight();
-
-    void setHighlight(HighlightType highlight);
-
-    float getHighlightRange();
-
-    void setHighlightRange(float range);
-
-    /** What the tower the placement hover shows would cost; the frame compares it with the credits. */
-    int getHighlightPrice();
-
-    void setHighlightPrice(int price);
 
     /** Top-left corner in board pixels, not the grid index. */
     int getX();
@@ -39,15 +27,5 @@ public interface Cell {
     Tower getTower();
 
     void setTower(Tower tower);
-
-    /**
-     * {@code PLACE} is the placement hover, {@code SELECT} the selected tower's outline,
-     * {@code NONE} draws nothing.
-     */
-    enum HighlightType {
-        NONE,
-        SELECT,
-        PLACE
-    }
 
 }

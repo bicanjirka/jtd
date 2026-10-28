@@ -2,8 +2,8 @@ package td;
 
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
-import td.cell.Cell;
 import td.cell.CellGrid;
+import td.cell.CellHighlight;
 import td.fixtures.BoardFixtures;
 import td.fixtures.WorldFixtures;
 import td.tower.SniperTower;
@@ -48,7 +48,7 @@ class TowerPlacementTest {
         placement.cancel();
 
         assertThat(placement.isPlacing()).isFalse();
-        assertThat(grid.at(1, 1).getHighlight()).isEqualTo(Cell.HighlightType.NONE);
+        assertThat(placement.highlight()).isEqualTo(CellHighlight.none());
     }
 
     @Test
@@ -60,8 +60,9 @@ class TowerPlacementTest {
         placement.highlightCell(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
         placement.highlightCell(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
 
-        assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.NONE);
-        assertThat(grid.at(1, 1).getHighlight()).isEqualTo(Cell.HighlightType.PLACE);
+        assertThat(placement.highlight().isOn(0, 0)).isFalse();
+        assertThat(placement.highlight().isOn(1, 1)).isTrue();
+        assertThat(placement.highlight().kind()).isEqualTo(CellHighlight.Kind.PLACE);
     }
 
     @Test
@@ -74,7 +75,7 @@ class TowerPlacementTest {
         Optional<Tower> selected = placement.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
 
         assertThat(selected).isPresent();
-        assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.SELECT);
+        assertThat(placement.highlight()).isEqualTo(CellHighlight.select(0, 0));
     }
 
     @Test
@@ -87,11 +88,11 @@ class TowerPlacementTest {
 
         placement.unSelectTower();
 
-        assertThat(grid.at(0, 0).getHighlight()).isEqualTo(Cell.HighlightType.NONE);
+        assertThat(placement.highlight()).isEqualTo(CellHighlight.none());
     }
 
     @Test
-    void resetClearsPlacementModeAndTheStaleHighlightWithoutTouchingTheGrid() {
+    void resetClearsPlacementModeAndTheHighlight() {
         CellGrid bigGrid = grid(3, 3);
         TowerPlacement placement = newPlacement(bigGrid, 100);
         placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
@@ -100,7 +101,7 @@ class TowerPlacementTest {
         placement.reset();
 
         assertThat(placement.isPlacing()).isFalse();
-        assertThat(bigGrid.at(2, 2).getHighlight()).isEqualTo(Cell.HighlightType.PLACE);
+        assertThat(placement.highlight()).isEqualTo(CellHighlight.none());
     }
 
     @Test
@@ -129,6 +130,21 @@ class TowerPlacementTest {
 
         placement.highlightCell(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
 
-        assertThat(grid.at(1, 1).getHighlightPrice()).isEqualTo(SniperTower.PRICE);
+        assertThat(placement.highlight().price()).isEqualTo(SniperTower.PRICE);
+    }
+
+    @Test
+    void clearingTheHighlightedCellDropsTheHighlightButClearingAnotherKeepsIt() {
+        CellGrid grid = grid(3, 3);
+        TowerPlacement placement = newPlacement(grid, 100);
+        placement.start(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        placement.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
+
+        placement.cellCleared(1, 1);
+        CellHighlight afterAnother = placement.highlight();
+        placement.cellCleared(0, 0);
+
+        assertThat(afterAnother).isEqualTo(CellHighlight.select(0, 0));
+        assertThat(placement.highlight()).isEqualTo(CellHighlight.none());
     }
 }

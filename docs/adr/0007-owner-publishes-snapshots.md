@@ -48,7 +48,7 @@ damage and the old cooldown.
 - A concurrent collection makes the collection safe, not its contents. The question is always "who
   owns this, and what do the other threads get instead?"
 - Several separate `volatile`s that must agree are a defect. The 2026-10 review found two (the
-  round state in `GameEngine`, the hover highlight on cells), now planned fixes.
+  round state in `GameEngine`, the hover highlight on cells), both since fixed.
 
 ## Rejected
 - *A dusting of `volatile`* on whatever is read across threads: it doesn't make correlated fields
