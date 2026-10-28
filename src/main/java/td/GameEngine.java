@@ -18,6 +18,7 @@ import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameHost;
+import td.util.GameStartupException;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.util.PathRuntime;
@@ -31,6 +32,7 @@ import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.RoundSummary;
 import td.wave.Wave;
+import td.wave.WaveContent;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
 import td.wave.WaveScript;
@@ -171,8 +173,15 @@ public class GameEngine {
                 // specified by the JLS.
                 long scatterSeed = ((long) level.name().hashCode() * 31L + pathIndex) * 31L + round;
                 float speedMultiplier = pathDefinition.speedMultiplier() * wd.speedMultiplier();
-                pathWaves.add(new Wave(this.gameWorld, WaveScript.parse(wd.enemies(), wd.rank(), catalog),
-                        scatterSeed, pathIndex, speedMultiplier));
+                WaveContent content;
+                try {
+                    content = WaveScript.parse(wd.enemies(), wd.rank(), catalog);
+                } catch (GameStartupException e) {
+                    throw new GameStartupException(
+                            "Level '" + level.name() + "', path " + (pathIndex + 1) + ", wave " + (round + 1) + ": "
+                                    + e.getMessage(), e);
+                }
+                pathWaves.add(new Wave(this.gameWorld, content, scatterSeed, pathIndex, speedMultiplier));
             }
             pathRuntimes.add(new PathRuntime(path, pathWaves, pathDefinition.color()));
         }

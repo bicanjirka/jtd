@@ -292,6 +292,27 @@ class WaveScriptTest {
     }
 
     @Test
+    void aCountAfterARankTokenWinsOverOneBeforeIt() {
+        WaveContent content = WaveScript.parse("2 elite 3 simple", Rank.GRUNT, this.catalog);
+
+        assertThat(content.spawnSequence()).hasSize(3);
+    }
+
+    @Test
+    void ofConsecutiveCountsOnlyTheLastOneRepeats() {
+        WaveContent content = WaveScript.parse("2 3 simple", Rank.GRUNT, this.catalog);
+
+        assertThat(content.enemyCount(this.simple)).isEqualTo(3);
+    }
+
+    @Test
+    void aCountLeftAtTheEndOfTheScriptRepeatsNothing() {
+        WaveContent content = WaveScript.parse("simple 3", Rank.GRUNT, this.catalog);
+
+        assertThat(content.spawnSequence()).hasSize(1);
+    }
+
+    @Test
     void aCountBeforeARankTokenWithNoShapeRepeatsTheWholeRankedSlot() {
         WaveContent content = WaveScript.parse("3 elite simple", Rank.GRUNT, this.catalog);
 
@@ -321,5 +342,19 @@ class WaveScriptTest {
     void aWaveEndingWithADanglingRankTokenFailsTheParse() {
         assertThatThrownBy(() -> WaveScript.parse("simple elite", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
+    }
+
+    @Test
+    void aParseFailureMarksTheOffendingTokenInTheScript() {
+        assertThatThrownBy(() -> WaveScript.parse("2 simple e nonsense simple", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("token 4 'nonsense'")
+                .hasMessageContaining("\"2 simple e »nonsense« simple\"");
+    }
+
+    @Test
+    void aWaveEndingEarlyPointsPastTheLastToken() {
+        assertThatThrownBy(() -> WaveScript.parse("simple elite", Rank.GRUNT, this.catalog))
+                .hasMessageContaining("\"simple elite »«\"");
     }
 }
