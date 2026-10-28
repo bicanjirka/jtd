@@ -70,6 +70,18 @@ class SplashTowerTest {
     }
 
     @Test
+    void aNextShotDamageStatusLandsOnTheBlastItIsSpentBy() {
+        SplashTower tower = this.tower();
+        tower.grantStatus(TowerStatus.nextShots(TowerTerm.CHARGED_SHOT, 1, TowerModifiers.damageTimes(3f)));
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.enemies(enemy);
+
+        tower.doTick(0);
+
+        assertThat(enemy.onlyHitAmount()).isEqualTo(this.full * 3);
+    }
+
+    @Test
     void unattunedItAimsAtRandomAndBuildsNoSaturation() {
         SplashTower tower = this.tower();
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);

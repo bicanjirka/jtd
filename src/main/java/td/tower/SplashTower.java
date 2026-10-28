@@ -384,7 +384,7 @@ public final class SplashTower extends AbstractTower {
      * landed.
      */
     private void fire(EnemyMob primary, SplashSpec spec, List<SplashMechanic> owned) {
-        this.beginShot();
+        TowerStats shotStats = this.beginShot();
         this.lastShotTick = this.currentTick;
         this.shotsFired++;
         this.clock.spend();
@@ -399,8 +399,9 @@ public final class SplashTower extends AbstractTower {
             this.countDeedOfAttack();
         }
         List<Trace> traces = new ArrayList<>();
-        Optional<EnemyMob> struck = shot.thunderstrike() ? this.thunderstrike(spec, shot.thunderstrikeFactor(), traces) : Optional.empty();
-        Blast blast = this.blast(primary, (int) primary.getX(), (int) primary.getY(), spec);
+        Optional<EnemyMob> struck = shot.thunderstrike()
+                ? this.thunderstrike(spec, shot.thunderstrikeFactor(), shotStats, traces) : Optional.empty();
+        Blast blast = this.blast(primary, (int) primary.getX(), (int) primary.getY(), spec, shotStats);
         this.blasts = List.of(blast);
         if (spec.mines().isActive() && this.shotsFired % spec.mines().every() == 0) {
             this.leaveMine(primary.getX(), primary.getY(), spec);
@@ -409,10 +410,10 @@ public final class SplashTower extends AbstractTower {
         if (spec.arcs().active()) {
             EnemyMob start = struck.orElseGet(() -> this.outermost(blast));
             ArcSpec arcs = struck.isPresent() ? spec.arcs().withShareAtLeast(1f) : spec.arcs();
-            critical |= this.arc(blast, start, spec.withArcs(arcs), traces);
+            critical |= this.arc(blast, start, spec.withArcs(arcs), shotStats, traces);
         }
         if (shot.thunderclap()) {
-            this.discharge(spec, shot.thunderclapShare(), traces);
+            this.discharge(spec, shot.thunderclapShare(), shotStats, traces);
         }
         this.arcs = List.copyOf(traces);
         ShotResult result = new ShotResult(critical);
@@ -423,9 +424,9 @@ public final class SplashTower extends AbstractTower {
 
     /**
      * Hits the primary first, then everything else within the blast, each for its share of the
-     * damage at its distance; then Saturates them all.
+     * damage at its distance; then Saturates them all. {@code shot} is the stats the blast hits with.
      */
-    private Blast blast(EnemyMob primary, int x, int y, SplashSpec spec) {
+    private Blast blast(EnemyMob primary, int x, int y, SplashSpec spec, TowerStats shot) {
         float radius = this.blastRadius();
         List<EnemyMob> caught = new ArrayList<>(InRangeTargetQuery.everyone(x, y, radius).matching(this.context.enemies()));
         caught.remove(primary);
@@ -434,10 +435,10 @@ public final class SplashTower extends AbstractTower {
         boolean critical = false;
         for (EnemyMob enemy : caught) {
             float distanceShare = (float) (Math.hypot(enemy.getX() - x, enemy.getY() - y) / radius);
-            HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BLAST, 0f, this.stats());
-            int amount = Math.round(this.damageCurrent() * this.falloff(Math.min(1f, distanceShare))
+            HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BLAST, 0f, shot);
+            int amount = Math.round(shot.damage() * this.falloff(Math.min(1f, distanceShare))
                     * adjustment.damageFactor());
-            boolean crit = this.dealDamage(enemy, Damage.physical(amount), adjustment.applyTo(this.stats().attack()));
+            boolean crit = this.dealDamage(enemy, Damage.physical(amount), adjustment.applyTo(shot.attack()));
             this.report(enemy, HitKind.BLAST, crit, enemy.isDead());
             critical |= enemy == primary && crit;
             if (saturation.isActive() && !enemy.isDead()) {
@@ -472,7 +473,7 @@ public final class SplashTower extends AbstractTower {
     /** A mine went off under {@code by}: one blast where it lay. */
     private void explode(Zone mine, EnemyMob by) {
         this.mines.remove(mine);
-        this.blast(by, (int) mine.x(), (int) mine.y(), this.spec(this.mechanics.all()));
+        this.blast(by, (int) mine.x(), (int) mine.y(), this.spec(this.mechanics.all()), this.stats());
     }
 
     /** The enemy the blast caught furthest from its centre, where its arcs start. */
@@ -487,7 +488,7 @@ public final class SplashTower extends AbstractTower {
      * The arcs the blast carries, from {@code start}; each lands as a magic hit. Records where they
      * ran, and tells whether one crit.
      */
-    private boolean arc(Blast blast, EnemyMob start, SplashSpec spec, List<Trace> traces) {
+    private boolean arc(Blast blast, EnemyMob start, SplashSpec spec, TowerStats shot, List<Trace> traces) {
         ArcSpec arcs = spec.arcs();
         float cellReach = this.context.getBoard().scale() * this.distanceScale();
         float bound = blast.area().radius()
@@ -502,16 +503,16 @@ public final class SplashTower extends AbstractTower {
         for (ArcStrike strike : strikes) {
             traces.add(new Trace((float) strike.from().getX(), (float) strike.from().getY(),
                     (float) strike.to().getX(), (float) strike.to().getY()));
-            critical |= this.strikeWithArc(strike.to(), strike.share(), spec, arcs.daze());
+            critical |= this.strikeWithArc(strike.to(), strike.share(), spec, arcs.daze(), shot);
         }
         return critical;
     }
 
     /** Thunderclap: an arc from the tower into every enemy in range; each one it crits is Dazed. */
-    private void discharge(SplashSpec spec, float share, List<Trace> traces) {
+    private void discharge(SplashSpec spec, float share, TowerStats shot, List<Trace> traces) {
         for (EnemyMob enemy : spec.reach().matching(this.context.enemies())) {
             traces.add(new Trace(this.centerX, this.centerY, (float) enemy.getX(), (float) enemy.getY()));
-            this.strikeWithArc(enemy, share, spec, SplashShot.DAZE_SECONDS);
+            this.strikeWithArc(enemy, share, spec, SplashShot.DAZE_SECONDS, shot);
         }
     }
 
@@ -519,13 +520,13 @@ public final class SplashTower extends AbstractTower {
      * Thunderstrike: lightning from above onto the healthiest enemy in range, the Priority first,
      * for several times the blast as magic, and a Daze. The enemy it struck, if any.
      */
-    private Optional<EnemyMob> thunderstrike(SplashSpec spec, float factor, List<Trace> traces) {
+    private Optional<EnemyMob> thunderstrike(SplashSpec spec, float factor, TowerStats shot, List<Trace> traces) {
         Optional<EnemyMob> target = THUNDERSTRIKE_AIM.selectFrom(spec.reach().matching(this.context.enemies()));
         target.ifPresent(enemy -> {
             float x = (float) enemy.getX();
             float y = (float) enemy.getY();
             traces.add(new Trace(x, y - THUNDERSTRIKE_HEIGHT_CELLS * this.context.getBoard().scale(), x, y));
-            this.dealDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
+            this.dealDamage(enemy, Damage.magic(Math.round(shot.damage() * factor)), shot.attack());
             if (!enemy.isDead()) {
                 int ticks = Math.round(SplashShot.DAZE_SECONDS * TICKS_PER_SECOND);
                 this.applyEffect(enemy, sink -> Effect.dazed(ticks, sink));
@@ -535,9 +536,9 @@ public final class SplashTower extends AbstractTower {
     }
 
     /** One arc's hit on {@code target}: magic, with the arc spec's crit rules; a crit Dazes for {@code dazeSeconds}. */
-    private boolean strikeWithArc(EnemyMob target, float share, SplashSpec spec, float dazeSeconds) {
+    private boolean strikeWithArc(EnemyMob target, float share, SplashSpec spec, float dazeSeconds, TowerStats shot) {
         ArcSpec arcs = spec.arcs();
-        AttackProfile attack = this.stats().attack();
+        AttackProfile attack = shot.attack();
         if (!arcs.canCrit()) {
             attack = attack.withCritChance(0f);
         } else {
@@ -550,9 +551,9 @@ public final class SplashTower extends AbstractTower {
         if (target.isStopped()) {
             attack = attack.withCritDamageBonus(arcs.stoppedCritDamage());
         }
-        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.ARC, 0f, this.stats());
+        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.ARC, 0f, shot);
         boolean critical = this.dealDamage(target,
-                Damage.magic(Math.round(this.damageCurrent() * share * adjustment.damageFactor())), adjustment.applyTo(attack));
+                Damage.magic(Math.round(shot.damage() * share * adjustment.damageFactor())), adjustment.applyTo(attack));
         this.report(target, HitKind.ARC, critical, target.isDead());
         if (critical && dazeSeconds > 0f && !target.isDead()) {
             int ticks = Math.round(dazeSeconds * TICKS_PER_SECOND);
