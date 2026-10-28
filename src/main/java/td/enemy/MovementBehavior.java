@@ -1,5 +1,5 @@
 package td.enemy;
 
-/** Which way a mob's body faces. Whether it moves at all is its speed. */
-public sealed interface MovementBehavior permits FixedMovement, PathDirectionalMovement, RotorMovement, PulseMovement {
+/** How a mob's body is posed: which way it faces and how large it is drawn. Whether it moves at all is its speed. */
+public sealed interface MovementBehavior permits FixedMovement, PathDirectionalMovement, RotorMovement, PulseMovement, SwingMovement {
 }

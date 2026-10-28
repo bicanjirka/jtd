@@ -1,12 +1,15 @@
 package td.enemy;
 
 import td.damage.DamageType;
+import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.EffectTemplate;
 import td.effect.HealTemplate;
 import td.effect.InvisibleTemplate;
 import td.effect.ShieldTemplate;
+import td.effect.SpellproofTemplate;
 import td.effect.SprintTemplate;
+import td.effect.UnyieldingTemplate;
 import td.stat.DisruptionAura;
 import td.term.TermNumbers;
 import td.term.TermText;
@@ -39,7 +42,9 @@ final class AbilityText {
 
     private static String when(AbilityTrigger trigger) {
         return switch (trigger) {
-            case PeriodicTrigger periodic -> "every " + seconds(periodic.intervalTicks());
+            case PeriodicTrigger periodic -> "every " + seconds(periodic.intervalTicks())
+                    + (periodic.minHealthFraction() > 0f
+                            ? ", while above " + TermNumbers.percent(periodic.minHealthFraction()) + " health" : "");
             case OnceTrigger once -> "once, after " + seconds(once.delayTicks());
             case HealthThresholdTrigger threshold -> "once, below " + TermNumbers.percent(threshold.fraction())
                     + " health";
@@ -87,20 +92,27 @@ final class AbilityText {
     private static TermText effect(EffectTemplate template) {
         return switch (template) {
             case ShieldTemplate shield -> TermText.of(EffectKind.SHIELD)
-                    .plus(" of " + TermNumbers.number(shield.points()) + against(shield.restrictedTo()) + " for "
-                            + seconds(shield.durationTicks()));
+                    .plus(" of " + TermNumbers.number(shield.points()) + against(shield.restrictedTo())
+                            + (shield.durationTicks() == Effect.LASTING_TICKS ? " until broken" : lasting(shield.durationTicks())));
             case HealTemplate heal -> TermText.of(EffectKind.HEAL)
                     .plus(" of " + TermNumbers.number(heal.pointsPerTick() * heal.durationTicks()) + " over "
                             + seconds(heal.durationTicks()));
-            case SprintTemplate sprint -> TermText.of(EffectKind.SPRINTING)
-                    .plus(" for " + seconds(sprint.durationTicks()));
+            case SprintTemplate sprint -> TermText.of(EffectKind.SPRINTING).plus(lasting(sprint.durationTicks()));
+            case SpellproofTemplate spellproof -> TermText.of(EffectKind.SPELLPROOF)
+                    .plus(" of " + TermNumbers.number(spellproof.stacks()) + " stacks" + lasting(spellproof.durationTicks()));
+            case UnyieldingTemplate unyielding -> TermText.of(EffectKind.UNYIELDING)
+                    .plus(lasting(unyielding.durationTicks()));
             case InvisibleTemplate invisible -> TermText.of(EffectKind.INVISIBLE)
-                    .plus(" for " + seconds(invisible.durationTicks()));
+                    .plus(lasting(invisible.durationTicks()));
         };
     }
 
     private static String against(Optional<DamageType> type) {
         return type.map(restricted -> " against " + restricted.name().toLowerCase(java.util.Locale.ROOT)).orElse("");
+    }
+
+    private static String lasting(int ticks) {
+        return ticks == Effect.LASTING_TICKS ? " for good" : " for " + seconds(ticks);
     }
 
     private static String seconds(int ticks) {

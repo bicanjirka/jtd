@@ -37,6 +37,8 @@ public final class EnemyCatalog {
         CourierEnemy.registerIn(catalog);
         ShieldbearerEnemy.registerIn(catalog);
         SalamanderEnemy.registerIn(catalog);
+        MagmaEnemy.registerIn(catalog);
+        GolemEnemy.registerIn(catalog);
         YetiEnemy.registerIn(catalog);
         SkirmisherEnemy.registerIn(catalog);
         return catalog;

@@ -16,6 +16,7 @@ public enum AbilityTerm implements Term {
     AEGIS("Aegis", "shields the allies near it once badly hurt"),
     HARDEN("Harden", "answers each crit it survives with a shield"),
     PANIC("Panic", "throws up a shield once badly hurt"),
+    STONE_SKIN("Stone Skin", "hardens into a shield that holds until broken, once badly hurt"),
     WARD("Ward", "shields the allies near it from time to time"),
     MEND("Mend", "heals the allies near it"),
     RECOVER("Recover", "heals itself when it is left alone"),
@@ -39,7 +40,9 @@ public enum AbilityTerm implements Term {
     HEALING_POOL("Healing Pool", "leaves pools behind it that heal the enemies who stand in them"),
     HASTE_FIELD("Haste Field", "leaves ground that speeds up the enemies who cross it, until the wave is over"),
     WARD_MINE("Ward Mine", "lays mines that shield the first enemy to step on them"),
-    BLINDING_BURST("Blinding Burst", "blinds the towers near it as it dies, until the wave is over");
+    BLINDING_BURST("Blinding Burst", "blinds the towers near it as it dies, until the wave is over"),
+    SPELL_WARD("Spell Ward", "gives the enemies near it magic resist once badly hurt"),
+    LAST_STAND("Last Stand", "turns almost proof against magic and crits once nearly dead");
 
     private final String title;
     private final String sentence;

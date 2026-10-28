@@ -6,7 +6,7 @@ import td.damage.DamageUnits;
 import java.util.Optional;
 
 /**
- * A timed shield that absorbs up to {@code points} of damage. {@code restrictedTo}, when present,
+ * A shield that absorbs up to {@code points} of damage for {@code durationTicks}, or until broken. {@code restrictedTo}, when present,
  * limits it to one {@link DamageType}.
  */
 public record ShieldTemplate(float points, int durationTicks, Optional<DamageType> restrictedTo)
@@ -14,6 +14,11 @@ public record ShieldTemplate(float points, int durationTicks, Optional<DamageTyp
 
     public ShieldTemplate(float points, int durationTicks) {
         this(points, durationTicks, Optional.empty());
+    }
+
+    /** A shield that holds until its points are spent. */
+    public static ShieldTemplate untilBroken(float points) {
+        return new ShieldTemplate(points, Effect.LASTING_TICKS);
     }
 
     public static ShieldTemplate physicalOnly(float points, int durationTicks) {

@@ -40,6 +40,8 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 | `shield` | Shieldbearer (physical-only shield for allies)      |
 | `lizard` | Salamander (burn-immune)                              |
 | `yeti`    | Yeti (freeze-immune, half chill)                         |
+| `magma`   | Magma (slow, burn-proof; its trail heals)                |
+| `golem`   | Golem (slow, heavily armored; shields itself when hurt) |
 | `dodger` | Skirmisher (nimble: dodges aimed shots)               |
 
 - A leading `w<number>` (`w30 3 c`) sets the ticks one slot of spacing is worth, default

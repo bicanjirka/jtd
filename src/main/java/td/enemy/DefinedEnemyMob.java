@@ -112,7 +112,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             case CIRCLE, SALAMANDER -> scale / 6f;
             case SQUARE, TRIANGLE, GHOST, COURIER, SKIRMISHER -> scale / (float) (7 - rank.ordinal());
             case MITE -> scale / 10f;
-            case YETI -> scale / 5f;
+            case YETI, MAGMA, GOLEM -> scale / 5f;
             case JUGGERNAUT -> scale / (float) (6 - rank.ordinal());
             // Fixed, so it always reads as the biggest thing on the board.
             case WARDEN -> scale / 1.5f;
@@ -277,10 +277,19 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.motion.prevY();
     }
 
+    /** The size it is drawn at: its body scale, swollen if its movement pulses. */
+    public float getDrawScale() {
+        return switch (this.definition.movement()) {
+            case PulseMovement pulse -> this.bodyScale * pulse.scaleAt(this.ticksSinceSpawn);
+            case SwingMovement _, FixedMovement _, PathDirectionalMovement _, RotorMovement _ -> this.bodyScale;
+        };
+    }
+
     public double getFacingRadians() {
         return switch (this.definition.movement()) {
             case FixedMovement ignored -> 0.0;
             case PulseMovement ignored -> 0.0;
+            case SwingMovement swing -> swing.angleAt(this.ticksSinceSpawn);
             case PathDirectionalMovement ignored -> this.motion.facingRadians();
             case RotorMovement ignored -> this.facingRadians;
         };
@@ -909,6 +918,8 @@ public final class DefinedEnemyMob implements EnemyMob {
             case PathDirectionalMovement ignored -> {
             }
             case PulseMovement ignored -> {
+            }
+            case SwingMovement ignored -> {
             }
         }
     }

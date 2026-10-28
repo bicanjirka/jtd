@@ -22,6 +22,7 @@ final class MenderEnemy {
                 .startingAt(EnemyDefinition.of("mender", "Mender mob", 90, 3, 1.28f, BodyArchetype.MENDER)
                         // "other" is load-bearing: a radius target excludes the caster.
                         .withDescription("Keeps the rest of its wave on its feet.")
+                        .withMovement(new SwingMovement())
                         .withSpirit(20f)
                         .withIdentifiedAbilities(List.of(heal(0.25f, 40))))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(162, 5)

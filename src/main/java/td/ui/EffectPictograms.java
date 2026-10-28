@@ -101,6 +101,10 @@ final class EffectPictograms {
             Map.entry("effect.soulfire", "S M12 2.6C12 2.6 19 8.4 19 14.4A7 7 0 0 1 5 14.4C5 11 7 8.9 8.5 7.6C9 9.8 10 11 11.2 11.4C10.6 8.4 11 5 12 2.6Z ; F O12 15.6 2.6"),
             // Sprint
             Map.entry("effect.sprinting", "F M8.4 5.6L14.8 12L8.4 18.4H4.6L11 12L4.6 5.6Z M15 5.6L21.4 12L15 18.4H11.2L17.6 12L11.2 5.6Z"),
+            // Spellproof
+            Map.entry("effect.spellproof", "S M12 2.5C8 2.5 4.5 6 4.5 10.2C4.5 14 7 16.6 9 18V21.5H15V18C17 16.6 19.5 14 19.5 10.2C19.5 6 16 2.5 12 2.5Z ; F O12 10 2.4"),
+            // Unyielding
+            Map.entry("effect.unyielding", "F M12 2.5L20 6V12C20 16.8 16.6 20.2 12 21.8C7.4 20.2 4 16.8 4 12V6Z ; K M12 6.4V17.4 M7.6 11.6H16.4"),
             // Haste
             Map.entry("effect.hastened", "F M4 5.6L9.4 12L4 18.4H6.6L12 12L6.6 5.6Z M10 5.6L15.4 12L10 18.4H12.6L18 12L12.6 5.6Z M16 5.6L21.4 12L16 18.4H18.6L24 12L18.6 5.6Z"));
 

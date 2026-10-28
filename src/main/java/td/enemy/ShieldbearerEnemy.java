@@ -19,6 +19,7 @@ final class ShieldbearerEnemy {
                 .startingAt(EnemyDefinition.of("shield", "Shieldbearer", 105, 3, 1.0f, BodyArchetype.SHIELDBEARER)
                         // "other" is load-bearing: a radius target excludes the caster.
                         .withDescription("Guards the enemies around it; break it first.")
+                        .withMovement(new SwingMovement())
                         .withArmor(30f)
                         .withIdentifiedAbilities(List.of(shield(40f, 100f))))
                 .thenAt(Rank.SOLDIER, e -> e.withHealthAndPrice(189, 6)
