@@ -304,17 +304,6 @@ The first eight are small and each a commit of its own; the rest are larger or a
 
 - **Approach:** the IDE's `rename_refactoring`, one rename per commit. Pure renames, no behaviour.
 
-### `TowerDefense` and `PanelDev` are large
-
-`TowerDefense` (about 1,000 lines) mixes the frame and its layout, the level lifecycle
-(`stopLoopThen`, `installLevel`, `showMenu`), the dev panel's save and load, the render pulse, and board
-input. `PanelDev.initComponents` is about 180 lines and `TowerDefense.initComponents` about 100.
-
-- **Where:** `td.TowerDefense`, `td.ui.PanelDev`.
-- **Approach:** only if a change there gets hard. Seams that already exist: save/load and the dev wiring
-  could move to a small dev-session class; `PanelDev.initComponents` could build each of its rows in its
-  own method. Swing wiring has no tests, so each step needs a `run-jtd` pass.
-
 ## Balance tools
 
 ### What the balance tools cannot see yet
