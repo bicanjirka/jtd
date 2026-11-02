@@ -5,9 +5,9 @@ import td.ui.render.SheetIcon;
 import td.util.ThreadConfined;
 
 import javax.swing.JTextPane;
-import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
+import javax.swing.text.Position;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -17,6 +17,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -106,8 +108,8 @@ final class SheetPane extends JTextPane {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(HIGHLIGHT);
-            Rectangle bounds = target.bounds();
-            g2.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, HIGHLIGHT_ARC, HIGHLIGHT_ARC);
+            target.areas().forEach(area -> g2.fillRoundRect(area.x, area.y, area.width, area.height, HIGHLIGHT_ARC,
+                    HIGHLIGHT_ARC));
             g2.dispose();
         });
     }
@@ -115,26 +117,43 @@ final class SheetPane extends JTextPane {
     private Optional<HoverTarget> mentionAt(Point point, Element element, HoverRun.MentionRun run)
             throws BadLocationException {
         Element paragraph = element.getParentElement();
-        Rectangle2D union = null;
+        int start = Integer.MAX_VALUE;
+        int end = Integer.MIN_VALUE;
         for (int i = 0; i < paragraph.getElementCount(); i++) {
             Element sibling = paragraph.getElement(i);
-            AttributeSet attributes = sibling.getAttributes();
-            if (attributes.getAttribute(HoverKey.INSTANCE) != run) {
-                continue;
+            if (sibling.getAttributes().getAttribute(HoverKey.INSTANCE) == run) {
+                start = Math.min(start, sibling.getStartOffset());
+                end = Math.max(end, sibling.getEndOffset());
             }
-            Rectangle2D start = this.modelToView2D(sibling.getStartOffset());
-            Rectangle2D end = this.modelToView2D(sibling.getEndOffset() - 1);
-            Rectangle2D span = start.createUnion(end);
-            union = union == null ? span : union.createUnion(span);
         }
-        if (union == null) {
+        if (start >= end) {
             return Optional.empty();
         }
-        Rectangle bounds = union.getBounds();
-        bounds.width = Math.max(bounds.width, 1);
-        return bounds.contains(point)
-                ? Optional.of(new HoverTarget.Mention(run.mention(), bounds))
-                : Optional.empty();
+        List<Rectangle> lines = this.lineBoxes(start, end);
+        return lines.stream().filter(line -> line.contains(point)).findFirst()
+                .map(line -> new HoverTarget.Mention(run.mention(), line, lines));
+    }
+
+    /**
+     * One box per line the text from {@code start} to {@code end} covers, each only as wide as that text: a wrapped
+     * mention's two halves, not the block both lines span.
+     */
+    private List<Rectangle> lineBoxes(int start, int end) throws BadLocationException {
+        List<Rectangle2D> boxes = new ArrayList<>();
+        for (int at = start; at < end; at++) {
+            Rectangle2D left = this.getUI().modelToView2D(this, at, Position.Bias.Forward);
+            // Backward bias keeps the edge after the last character of a line on that line, not the next one's start.
+            Rectangle2D right = this.getUI().modelToView2D(this, at + 1, Position.Bias.Backward);
+            Rectangle2D character = new Rectangle2D.Double(left.getX(), left.getY(),
+                    Math.max(1, right.getX() - left.getX()), left.getHeight());
+            Rectangle2D last = boxes.isEmpty() ? null : boxes.getLast();
+            if (last != null && last.getY() < character.getMaxY() && character.getY() < last.getMaxY()) {
+                boxes.set(boxes.size() - 1, last.createUnion(character));
+            } else {
+                boxes.add(character);
+            }
+        }
+        return boxes.stream().map(Rectangle2D::getBounds).toList();
     }
 
     private Optional<HoverTarget> iconAt(Point point, Element element, HoverRun.IconRowRun run)
