@@ -339,15 +339,6 @@ input. `PanelDev.initComponents` is about 180 lines and `TowerDefense.initCompon
   could move to a small dev-session class; `PanelDev.initComponents` could build each of its rows in its
   own method. Swing wiring has no tests, so each step needs a `run-jtd` pass.
 
-### Mixed accessor styles
-
-Towers and enemies use `getX()`, `getHealth()`, `getBounty()`, but also `id()`, `spirit()`,
-`entryOrdinal()`; zones and records use `x()`, `radius()`. Inconsistent, but renaming touches most
-packages and every test.
-
-- **Approach:** probably leave. If ever done, only with a decision on one style recorded first, and
-  never as a drive-by.
-
 ## Balance tools
 
 ### What the balance tools cannot see yet

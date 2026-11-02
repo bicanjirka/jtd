@@ -121,6 +121,8 @@ frame build reads them.
 - Streams to transform, `reduce` to combine.
 - Names put the role noun last and say what a thing does: `SniperTower`,
   `FurthestAlongPathSelector`.
+- New accessors take the record style (`x()`, `radius()`); never rename an existing `getX()` in
+  passing.
 - `this.` on every field access. Field order: constants, collaborators, mutable state.
   `@Serial` on `serialVersionUID`.
 - Never expose an internal array or live collection; offer the queries callers need, or return a
