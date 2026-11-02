@@ -6,6 +6,8 @@ import td.util.ThreadConfined;
 import td.util.Threads;
 import td.util.TickRate;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Runs the simulation on its own thread with two fixed-timestep accumulators: {@code onTick} runs
  * zero or more times per interval depending on tick speed, while {@code onRender} fires at a flat
@@ -27,6 +29,7 @@ public class GameLoop implements Runnable {
     private final TickAccumulator renderAccumulator = new TickAccumulator(RENDER_INTERVAL_NANOS);
     private final Runnable onTick;
     private final Runnable onRender;
+    private final AtomicInteger stepsRequested = new AtomicInteger();
 
     private volatile double speedMultiplier = TickSpeed.NORMAL.multiplier();
     private volatile boolean running = false;
@@ -80,6 +83,14 @@ public class GameLoop implements Runnable {
     }
 
     /**
+     * Any thread: one more tick, run on the loop's own thread on its next turn, whatever the speed. A
+     * tick run on the calling thread would race the render pulse, which runs while paused.
+     */
+    public void requestStep() {
+        this.stepsRequested.incrementAndGet();
+    }
+
+    /**
      * Starts the loop on a new daemon thread. A second call while running is ignored. Restartable
      * after {@link #stop()}: all per-run progress is reset, except the cosmetic
      * {@code animationSeconds}.
@@ -95,6 +106,7 @@ public class GameLoop implements Runnable {
         this.tickInterpolationAlpha = 0.0;
         this.tickNumber = 0;
         this.consecutiveTickFailures = 0;
+        this.stepsRequested.set(0);
         this.running = true;
         Thread newThread = new Thread(this, Threads.GAME_LOOP);
         newThread.setDaemon(true);
@@ -150,6 +162,9 @@ public class GameLoop implements Runnable {
                 for (int i = 0; i < ticks && this.running; i++) {
                     this.runTick();
                 }
+            }
+            for (int steps = this.stepsRequested.getAndSet(0); steps > 0 && this.running; steps--) {
+                this.runTick();
             }
 
             if (this.renderAccumulator.accumulate(elapsedNanos) > 0) {

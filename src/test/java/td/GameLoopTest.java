@@ -2,6 +2,7 @@ package td;
 
 import ch.qos.logback.classic.Level;
 import org.junit.jupiter.api.Test;
+import td.util.Threads;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +46,32 @@ class GameLoopTest {
         try {
             Thread.sleep(200);
             assertThat(tickCount.get()).isZero();
+        } finally {
+            loop.stop();
+        }
+    }
+
+    @Test
+    void aRequestedStepRunsOneTickOnTheLoopThreadWhilePaused() throws InterruptedException {
+        AtomicInteger tickCount = new AtomicInteger();
+        AtomicReference<String> tickedOn = new AtomicReference<>();
+        CountDownLatch sawATick = new CountDownLatch(1);
+        GameLoop loop = new GameLoop(() -> {
+            tickCount.incrementAndGet();
+            tickedOn.set(Thread.currentThread().getName());
+            sawATick.countDown();
+        }, () -> {
+        });
+        loop.setSpeed(TickSpeed.PAUSED);
+        loop.start();
+
+        try {
+            loop.requestStep();
+
+            assertThat(sawATick.await(2, TimeUnit.SECONDS)).as("expected the step's tick within 2s").isTrue();
+            Thread.sleep(100);
+            assertThat(tickCount.get()).isEqualTo(1);
+            assertThat(tickedOn.get()).isEqualTo(Threads.GAME_LOOP);
         } finally {
             loop.stop();
         }
