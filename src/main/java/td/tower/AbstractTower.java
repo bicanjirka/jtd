@@ -184,7 +184,7 @@ public abstract class AbstractTower implements Tower {
         return false;
     }
 
-    public float getRange() {
+    public float baseRange() {
         return this.rangeBase;
     }
 

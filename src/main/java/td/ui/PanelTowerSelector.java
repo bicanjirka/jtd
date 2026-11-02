@@ -101,7 +101,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
             TowerFactory.Type type = this.towerTypes.get(i);
             Tower tower = TowerFactory.createTower(type, previewWorld, 0, 0);
             this.shopTowers[i] = tower.inspect();
-            this.towerRanges[i] = tower.getRange();
+            this.towerRanges[i] = tower.baseRange();
 
             BufferedImage icon = iconRenderer.renderTowerIcon(TowerSpriteFrameBuilder.bodyPaletteFor(type), ICON_SIZE);
             this.buttons[i].setIcon(new SharpImageIcon(icon));
