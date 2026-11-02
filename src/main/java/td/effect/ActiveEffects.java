@@ -173,8 +173,9 @@ public final class ActiveEffects {
 
     /**
      * A fuel pool ({@code BURN} or {@code POISON}, each its own pool) is additive and decaying. A
-     * reapplication adds its intensity, scaled down the closer the pool is to its cap, and never
-     * changes the decay rate or earns a stack. A pool that starts earns its first stack at once and
+     * reapplication adds its intensity, scaled down the closer the pool is to its cap, and nothing to
+     * a pool already over a cap that shrank while it burned; it never changes the decay rate or earns
+     * a stack. A pool that starts earns its first stack at once and
      * another every {@code STACK_INTERVAL_TICKS} while it lasts. Each contribution keeps its own
      * sink, so every contributing tower is credited for its share.
      */
@@ -189,9 +190,12 @@ public final class ActiveEffects {
         float peakL0 = Math.max(existing.peakL0(), incomingL0);
         PoolTuning tuning = existing.tuning().strongerWith(incoming.tuning());
         float lmax = tuning.capFactor() * peakL0 * this.poolFactor();
-        float deltaL = incomingL0 * (1f - existing.fuelLevel() / lmax);
+        // A negative share would drain the pool and over-pay the others, whose shares are dealt in full.
+        float deltaL = Math.max(0f, incomingL0 * (1f - existing.fuelLevel() / lmax));
         List<FuelContribution> fuel = new ArrayList<>(existing.fuel());
-        fuel.add(new FuelContribution(incoming.sink(), deltaL));
+        if (deltaL > 0f) {
+            fuel.add(new FuelContribution(incoming.sink(), deltaL));
+        }
         this.active.put(incoming.kind(), existing.withFuel(List.copyOf(fuel), peakL0).withTuning(tuning));
     }
 

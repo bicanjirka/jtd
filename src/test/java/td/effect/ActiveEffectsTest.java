@@ -744,6 +744,21 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void aTopUpOnAPoolLeftOverItsCapWhenAshEndedTakesNoFuelAway() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.hex(EffectKind.ASH, 1000, DamageSink.none()));
+        for (int i = 0; i < 12; i++) {
+            effects.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()));
+        }
+        effects.apply(Effect.hex(EffectKind.RIME, 1000, DamageSink.none()));
+        float overCap = fuelOf(effects, EffectKind.BURN);
+
+        effects.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()));
+
+        assertThat(fuelOf(effects, EffectKind.BURN)).isEqualTo(overCap);
+    }
+
+    @Test
     void rimeAndAshEachReplaceTheOther() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.hex(EffectKind.RIME, 100, DamageSink.none()));
