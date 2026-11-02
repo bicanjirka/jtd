@@ -324,16 +324,6 @@ carries on, and every later `Thread.sleep` then throws at once, so an interrupte
   rather than restoring the flag and going on. A test can interrupt a started loop and assert its
   thread ends.
 
-### A clock-scale method that ignores its argument
-
-`GameLoop.animationTimeScale(double multiplier)` always returns `1.0`; its Javadoc offers returning
-`multiplier` instead as a future choice. It is speculative generality, and the parameter is unused.
-
-- **Where:** `td.GameLoop.animationTimeScale`, its call in `advance`, `animationSeconds()`'s Javadoc.
-- **Approach:** fold it away: `animationSeconds += elapsedNanos / 1e9`, with a one-line comment that the
-  cosmetic clock ignores game speed on purpose. `GameLoopTest.animationSecondsDoesNotRaceAheadAtSuperFastSpeed`
-  pins the behaviour.
-
 ### Placement mode is three fields that must agree, one of them null
 
 `TowerPlacement` holds `placingTower` (boolean), `placingTowerType` (set to `null` by `reset`) and

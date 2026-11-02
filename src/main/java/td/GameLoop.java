@@ -45,14 +45,6 @@ public class GameLoop implements Runnable {
         this.onRender = onRender;
     }
 
-    /**
-     * How fast {@link #animationSeconds} advances relative to wall-clock time. {@code 1.0} ignores
-     * game speed; return {@code multiplier} to track it exactly.
-     */
-    private static double animationTimeScale(double multiplier) {
-        return 1.0;
-    }
-
     private static void sleepQuietly(long nanos) {
         try {
             Thread.sleep(nanos / 1_000_000L, (int) (nanos % 1_000_000L));
@@ -71,7 +63,7 @@ public class GameLoop implements Runnable {
 
     /**
      * Seconds of cosmetic animation time, which neither freezes while paused nor races while
-     * fast-forwarding. See {@link #animationTimeScale(double)}.
+     * fast-forwarding.
      */
     public double animationSeconds() {
         return this.animationSeconds;
@@ -160,7 +152,7 @@ public class GameLoop implements Runnable {
      */
     void advance(long elapsedNanos) {
         double multiplier = this.speedMultiplier;
-        this.animationSeconds += (elapsedNanos / 1_000_000_000.0) * animationTimeScale(multiplier);
+        this.animationSeconds += elapsedNanos / 1_000_000_000.0;
 
         if (multiplier > 0.0) {
             int due = this.tickAccumulator.accumulate((long) (elapsedNanos * multiplier));
