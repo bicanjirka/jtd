@@ -296,17 +296,6 @@ the wide `Tower`/`HitReceiver` interfaces, Visitor over sealed types, the `td.ut
 
 The first eight are small and each a commit of its own; the rest are larger or a matter of taste.
 
-### A tautological test of tower prices
-
-`TowerFactoryTest.enumPriceMatchesEachTowersStaticPrice` asserts `TowerFactory.Type.SNIPER.price`
-equals `SniperTower.PRICE` for every tower, but the enum is built from those very constants
-(`SNIPER(SniperTower.PRICE, 'q', "Sniper")`), so it asserts X == X. It also asserts content, which the
-test rules forbid.
-
-- **Where:** `src/test/java/td/tower/TowerFactoryTest.java`.
-- **Approach:** delete the test. The enum's Javadoc ("the single source of both") is then slightly off:
-  the price's source is the tower class; reword it.
-
 ### Every tower with mechanics wires the same two hooks by hand
 
 Eight leaves (`SniperTower`, `SplashTower`, `SonarTower`, `PulseTower`, `MortarTower`, `SeekerTower`,
