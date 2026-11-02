@@ -313,17 +313,6 @@ duty a caller must remember, `docs/DESIGN.md` section 5).
   nothing else overrides them. Leaves keep their typed field for their own `spec(...)` folds. Mind that
   `downgrade` runs on the EDT and `OwnedMechanics` publishes through a `volatile`; keep that.
 
-### An interrupted game loop would spin
-
-`GameLoop.sleepQuietly` catches `InterruptedException`, restores the interrupt flag and returns; the loop
-carries on, and every later `Thread.sleep` then throws at once, so an interrupted loop busy-spins at
-100% CPU until stopped. Nothing interrupts the loop today, so it is latent.
-
-- **Where:** `td.GameLoop.sleepQuietly` and `run`.
-- **Approach:** treat an interrupt as a stop: leave `run`'s loop (clear `running` for this thread)
-  rather than restoring the flag and going on. A test can interrupt a started loop and assert its
-  thread ends.
-
 ### Placement mode is three fields that must agree, one of them null
 
 `TowerPlacement` holds `placingTower` (boolean), `placingTowerType` (set to `null` by `reset`) and

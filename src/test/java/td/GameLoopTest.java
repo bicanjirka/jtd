@@ -166,6 +166,23 @@ class GameLoopTest {
     }
 
     @Test
+    void interruptingTheLoopThreadEndsIt() throws InterruptedException {
+        AtomicReference<Thread> loopThread = new AtomicReference<>();
+        CountDownLatch ticked = new CountDownLatch(1);
+        GameLoop loop = loopAt(TickSpeed.SUPER_FAST, () -> {
+            loopThread.set(Thread.currentThread());
+            ticked.countDown();
+        }, GameLoopTest::noOp);
+        loop.start();
+        assertThat(ticked.await(2, TimeUnit.SECONDS)).isTrue();
+
+        loopThread.get().interrupt();
+        loopThread.get().join(2_000);
+
+        assertThat(loopThread.get().isAlive()).isFalse();
+    }
+
+    @Test
     void aStoppedLoopCanBeStartedAgainAndResumesTicking() throws InterruptedException {
         AtomicReference<CountDownLatch> nextTick = new AtomicReference<>(new CountDownLatch(1));
         GameLoop loop = loopAt(TickSpeed.SUPER_FAST, () -> nextTick.get().countDown(), GameLoopTest::noOp);
