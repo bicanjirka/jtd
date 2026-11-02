@@ -574,12 +574,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    /** Pauses if needed, then runs exactly one tick. */
+    /** Pauses if needed, then has the loop run exactly one tick. */
     private void stepOneTick() {
         if (!this.currentSpeed.isPaused()) {
             this.setSpeed(TickSpeed.PAUSED);
         }
-        this.doGameTick();
+        this.gameLoop.requestStep();
     }
 
     /**
@@ -642,10 +642,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setWavePreview();
     }
 
-    /**
-     * One logic tick, on the game-loop thread. Also called on the EDT to single-step while paused,
-     * when the loop is not ticking.
-     */
+    /** One logic tick, on the game-loop thread, a single step included. */
     public void doTick(int time) {
         this.reportRoundChange(() -> this.engine.doTick(time));
     }
