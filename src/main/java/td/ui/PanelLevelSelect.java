@@ -65,11 +65,11 @@ public class PanelLevelSelect extends JPanel {
     private static final int CHIP_INSET = 8;
     private static final int KEYED_CARDS = 9;
     /** A second row of cards leaves too little height for a card's preview, name and stats at the menu's size. */
-    private static final int CARDS_PER_ROW = 4;
+    private static final int CARDS_PER_ROW = 5;
     private static final float HOVER_LIGHTEN = 0.35f;
 
     /** Cycled by card index. */
-    private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE, Color.CYAN};
+    private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE, Color.CYAN, Color.MAGENTA};
 
     private final List<LevelDefinition> levels;
     private final transient Consumer<LevelDefinition> onLevelSelected;
@@ -153,31 +153,25 @@ public class PanelLevelSelect extends JPanel {
 
         JPanel body = new JPanel(new BorderLayout());
         body.setOpaque(false);
-        body.setBorder(new EmptyBorder(20, 20, 16, 20));
+        body.setBorder(new EmptyBorder(18, 14, 14, 14));
 
-        JLabel name = new JLabel(level.name());
-        name.setFont(new Font("SansSerif", Font.BOLD, 19));
-        name.setForeground(accent);
+        // Wraps rather than truncates: a narrow card still shows the whole name.
+        JTextArea name = wrappingText(level.name(), new Font("SansSerif", Font.BOLD, 19), accent);
         name.setBorder(new EmptyBorder(0, 0, 8, 0));
         body.add(name, BorderLayout.NORTH);
 
-        JTextArea description = new JTextArea(level.description());
-        description.setLineWrap(true);
-        description.setWrapStyleWord(true);
-        description.setEditable(false);
-        description.setFocusable(false);
-        description.setOpaque(false);
-        description.setForeground(MUTED_FOREGROUND);
-        description.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        JTextArea description = wrappingText(level.description(), new Font("SansSerif", Font.PLAIN, 13), MUTED_FOREGROUND);
         body.add(description, BorderLayout.CENTER);
 
         JPanel south = new JPanel();
         south.setLayout(new BoxLayout(south, BoxLayout.Y_AXIS));
         south.setOpaque(false);
 
-        JPanel stats = new JPanel(new GridLayout(1, 3, 10, 0));
+        JPanel stats = new JPanel(new GridLayout(3, 1, 0, 4));
         stats.setOpaque(false);
-        stats.setBorder(new EmptyBorder(16, 0, 12, 0));
+        stats.setBorder(BorderFactory.createCompoundBorder(
+                new EmptyBorder(12, 0, 12, 0),
+                BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(STAT_BORDER, 1), new EmptyBorder(6, 10, 6, 10))));
         stats.add(buildStat("WAVES", String.valueOf(level.paths().getFirst().waves().size()), accent));
         stats.add(buildStat("CREDITS", "$" + level.startingCredits(), accent));
         stats.add(buildStat("LIVES", String.valueOf(level.startingLives()), accent));
@@ -226,28 +220,35 @@ public class PanelLevelSelect extends JPanel {
         }
     }
 
+    /** One row of the stats box: the label on the left, its value on the right. */
     private static JPanel buildStat(String label, String value, Color accent) {
-        JPanel stat = new JPanel();
-        stat.setLayout(new BoxLayout(stat, BoxLayout.Y_AXIS));
+        JPanel stat = new JPanel(new BorderLayout());
         stat.setOpaque(false);
-        stat.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(STAT_BORDER, 1),
-                new EmptyBorder(8, 4, 8, 4)));
 
-        JLabel labelText = new JLabel(label, SwingConstants.CENTER);
-        labelText.setFont(new Font("SansSerif", Font.BOLD, 9));
+        JLabel labelText = new JLabel(label);
+        labelText.setFont(new Font("SansSerif", Font.BOLD, 10));
         labelText.setForeground(STAT_LABEL);
-        labelText.setAlignmentX(Component.CENTER_ALIGNMENT);
-        labelText.setBorder(new EmptyBorder(0, 0, 6, 0));
 
-        JLabel valueText = new JLabel(value, SwingConstants.CENTER);
-        valueText.setFont(new Font("SansSerif", Font.BOLD, 18));
+        JLabel valueText = new JLabel(value, SwingConstants.RIGHT);
+        valueText.setFont(new Font("SansSerif", Font.BOLD, 15));
         valueText.setForeground(accent);
-        valueText.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        stat.add(labelText);
-        stat.add(valueText);
+        stat.add(labelText, BorderLayout.WEST);
+        stat.add(valueText, BorderLayout.EAST);
         return stat;
+    }
+
+    private static JTextArea wrappingText(String text, Font font, Color foreground) {
+        JTextArea area = new JTextArea(text);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setEditable(false);
+        area.setFocusable(false);
+        area.setOpaque(false);
+        area.setForeground(foreground);
+        area.setFont(font);
+        area.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return area;
     }
 
     private static void paintWatermark(Graphics2D g2, int index, Color accent, int width, int height) {

@@ -331,6 +331,15 @@ teal's less. Every Twisted Hourglass figure elsewhere in this file was measured 
 - **Approach:** `BalanceReport --levels 2 --seeds 12 --strong --variety` against a baseline saved from the old
   lanes; retune by wave composition, not by moving the lanes back.
 
+### The level-select screen fits five levels
+
+Every card sits in one row, because a second row leaves a card too little height at the menu's size for its preview,
+name, description and stats; a sixth level would make each card too narrow for its stats.
+
+- **Where:** `td.ui.PanelLevelSelect` (`CARDS_PER_ROW`), `td.TowerDefense` (`MENU_WIDTH`, `MENU_HEIGHT`)
+- **Approach:** past five, page the row with `HudButton` arrows (and the digit keys moving the page), or switch to a
+  list of one-line rows - preview thumbnail, name, stats - with the description in the hovered row only.
+
 ### Only a Java-code level catalog exists
 
 `LevelCatalog` is the abstraction levels are meant to be sourced through, but `BuiltInLevelCatalog` (levels defined as

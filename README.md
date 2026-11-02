@@ -210,6 +210,10 @@ on the Wardens, whose shield answers crits.
 | The Iron Colossus | hexagon, swaying | A boss in an iron shell: armor and heavy plating blunt physical hits, crit immune, half freeze resist. It lays ward mines that shield the escorts behind it and calls two Armored escorts from time to time. Once badly hurt it reforges into the Molten Core. If it or the Core escapes, the level is lost. The final wave of Iron Crossing — a level-authored enemy. |
 | The Molten Core | jagged boulder, pulsing | What the Colossus melts down into: no armor or plating but high magic resist and a casing that blunts magic hits, immune to burn and freeze, and faster the more it is hurt. It leaves pools behind it that heal the escorts who stand in them, and bursts into four Embers when it dies. |
 | Ember      | circle, tiny | A quick, nimble, burn-immune shard of the Molten Core; each one that gets through costs a life. |
+| Mirage     | diamond       | A Skirmisher that leaves a Mirror Image behind every time it dodges: a fragile copy that pays no bounty and grows tougher with the Mirage's rank. Appears on The Rift — a level-authored enemy. |
+| Herald     | triangle      | A Courier that lays haste ground until the wave is over the moment it is first hurt, speeding everything behind it. Appears on The Rift. |
+| Eclipse    | dark orb, spinning | Every few seconds hides every other ally near it from aimed shots, longer with rank; never itself. Appears on The Rift. |
+| The Monolith | large spiked crest | A lone, very slow boss: crit immune, freeze and chill immune, armor that hardens against the damage type that hurts it most, regeneration, a heal whenever it is left alone, a stone-skin shield at two thirds and at one third of its health, and a last stand once nearly dead. If it escapes, the level is lost. Walks alone in one round of The Rift. |
 
 ### Rank
 
@@ -400,6 +404,7 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
 | `warden`  | the Warden boss chain (Curly Path only)                  |
 | `colossus` | the Iron Colossus boss (Iron Crossing only)             |
+| `mirage`, `herald`, `eclipse`, `monolith` | The Rift's own enemies (The Rift only) |
 | `titan`  | Juggernaut (slow, huge plating)                       |
 | `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
 | `courier` | Courier (very fast, fragile, high bounty)                |
@@ -412,7 +417,7 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 
 ### Levels
 
-Four levels ship with the game: **Curly Path** (a 20×13 board whose single lane loops once
+Five levels ship with the game: **Curly Path** (a 20×13 board whose single lane loops once
 at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge, 18 waves: the hard level, built around five
 waves that each ask for a different defence - single-target damage at 6, area damage at 11, control at 12,
 anti-physical at 15, all of them at 17 - and the Warden at 18, with just enough bounty to beat it), **Zigzag Path** (a smaller,
@@ -423,12 +428,16 @@ hourglass, teal and amber crossing at its middle, 10 waves per lane) and **Iron 
 board, the hardest: a long steel lane winds Golems, Juggernauts, Magma and their support back and forth
 while a short rush lane of Couriers, Skirmishers, Ghosts and Mite swarms knifes straight through it
 three times, 15 waves per lane, 3 lives, and the Iron Colossus at the end: break its shell with magic, then catch the
-Molten Core inside with physical damage before it runs). A level can define more than one enemy path, each with its own color, waves
-and pace; Zigzag Path, Twisted Hourglass and Iron Crossing are the built-in levels that do. A level's
+Molten Core inside with physical damage before it runs) and **The Rift** (a 17×15 board, the hardest: lanes
+that start and end at a tear in the middle of the board, one of them silent for the first rounds, 12 waves per lane, 3
+lives, and one round in which a single enemy walks alone). A level can define more than one enemy path, each with its own color, waves
+and pace; every built-in level but Curly Path does. A lane may start or end inside the board, run faster or
+slower than the others (`PathDefinition.withSpeed`) and send nothing in a round (a wave of just `e`). A level's
 paths all run the same number of waves as synchronized rounds - starting a round spawns every
 path's wave for it together. A level can also register its own enemy on top of the ones above,
 scoped to that level only; Twisted Hourglass's Reaver and Curly Path's warding Mender, Bulky mob
-and Warden chain and Iron Crossing's Colossus, Molten Core and Embers (see the Enemies table) are the built-in ones.
+and Warden chain and Iron Crossing's Colossus, Molten Core and Embers and The Rift's Mirage, Herald, Eclipse and Monolith (see the Enemies table)
+are the built-in ones.
 
 Levels are defined as Java constants in `td.level.BuiltInLevelCatalog`, so adding one today
 means a code change and a rebuild. See `TODO.md` for the planned file-based catalog.
