@@ -34,7 +34,7 @@ on `quit` or end of input.
 
 | command | what it does |
 |---|---|
-| `level <n>` | Loads built-in level `n` (0 Curly Path, 1 Zigzag Path, 2 Twisted Hourglass) and waits until it is installed. |
+| `level <n>` | Loads built-in level `n` (0 Curly Path, 1 Zigzag Path, 2 Twisted Hourglass, 3 Iron Crossing) and waits until it is installed. |
 | `menu` | Back to level select, skipping the confirm dialog. Asynchronous: `sleep` after it. |
 | `list [filter]` | Clickable and hoverable components as `index: Class "label"`; a filter keeps matching lines with their real indices (`list sheetpane`, `list statusicon`). Indices shift when a panel is added or removed, so look one up before using it. What is open on the popup layer (a confirmation's buttons) is listed last. |
 | `click <n>` | Clicks component `n`. |
