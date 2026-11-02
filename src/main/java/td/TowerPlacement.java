@@ -26,9 +26,7 @@ public class TowerPlacement {
     private final GameWorld gameWorld;
     private final Supplier<CellGrid> cellGrid;
 
-    private boolean placingTower = false;
-    private TowerFactory.Type placingTowerType;
-    private float placingTowerRange = 0;
+    private Optional<Placing> placing = Optional.empty();
     private volatile CellHighlight highlight = CellHighlight.none();
     private boolean pinningLeyLine = false;
 
@@ -38,17 +36,15 @@ public class TowerPlacement {
     }
 
     public boolean isPlacing() {
-        return this.placingTower;
+        return this.placing.isPresent();
     }
 
     public void start(TowerFactory.Type t, float r) {
-        this.placingTower = true;
-        this.placingTowerType = t;
-        this.placingTowerRange = r;
+        this.placing = Optional.of(new Placing(t, r));
     }
 
     public void cancel() {
-        this.placingTower = false;
+        this.placing = Optional.empty();
         this.unHighlightCell();
     }
 
@@ -93,10 +89,8 @@ public class TowerPlacement {
 
     /** Drops placement mode and the highlight, for use before a possibly smaller grid replaces the grid. */
     public void reset() {
-        this.placingTower = false;
+        this.placing = Optional.empty();
         this.pinningLeyLine = false;
-        this.placingTowerType = null;
-        this.placingTowerRange = 0;
         this.unHighlightCell();
     }
 
@@ -107,8 +101,9 @@ public class TowerPlacement {
     public void highlightCell(int boardX, int boardY) {
         BoardGeometry board = this.gameWorld.getBoard();
         if (board.containsPixel(boardX, boardY)) {
-            int price = this.placingTower ? this.gameWorld.towers().priceOf(this.placingTowerType) : 0;
-            this.highlight = CellHighlight.place(board.cellX(boardX), board.cellY(boardY), this.placingTowerRange, price);
+            int price = this.placing.map(p -> this.gameWorld.towers().priceOf(p.type())).orElse(0);
+            float range = this.placing.map(Placing::range).orElse(0f);
+            this.highlight = CellHighlight.place(board.cellX(boardX), board.cellY(boardY), range, price);
         } else {
             this.unHighlightCell();
         }
@@ -129,22 +124,23 @@ public class TowerPlacement {
             if (cell.hasTower()) {
                 selected = cell.getTower();
                 this.highlight = CellHighlight.select(board.cellX(boardX), board.cellY(boardY));
-            } else if (this.placingTower) {
+            } else if (this.placing.isPresent()) {
+                TowerFactory.Type type = this.placing.orElseThrow().type();
                 if (cell.buildable()) {
                     int cellX = board.cellX(boardX);
                     int cellY = board.cellY(boardY);
-                    int price = this.gameWorld.towers().priceOf(this.placingTowerType);
+                    int price = this.gameWorld.towers().priceOf(type);
                     if (this.gameWorld.economy().doPay(price)) {
-                        Tower tower = TowerFactory.createTower(this.placingTowerType, this.gameWorld, cellX, cellY);
+                        Tower tower = TowerFactory.createTower(type, this.gameWorld, cellX, cellY);
                         this.gameWorld.towers().add(tower);
                         cell.setTower(tower);
                         cell.enable(false);
                         selected = tower;
                         this.highlight = CellHighlight.select(cellX, cellY);
-                        LOG.info("Tower placed: {} at ({},{}), credits left={}", this.placingTowerType, cellX, cellY, this.gameWorld.economy().getCredits());
+                        LOG.info("Tower placed: {} at ({},{}), credits left={}", type, cellX, cellY, this.gameWorld.economy().getCredits());
                     } else {
                         LOG.info("Tower placement rejected: not enough credits for {} (need {}, have {})",
-                                this.placingTowerType, price, this.gameWorld.economy().getCredits());
+                                type, price, this.gameWorld.economy().getCredits());
                         shortOfCash = true;
                     }
                 } else {
@@ -153,8 +149,12 @@ public class TowerPlacement {
             }
         }
         if (!shortOfCash) {
-            this.placingTower = false;
+            this.placing = Optional.empty();
         }
         return Optional.ofNullable(selected);
+    }
+
+    /** The tower being placed and its range, which only mean something together. */
+    private record Placing(TowerFactory.Type type, float range) {
     }
 }

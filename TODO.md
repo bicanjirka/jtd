@@ -313,19 +313,6 @@ duty a caller must remember, `docs/DESIGN.md` section 5).
   nothing else overrides them. Leaves keep their typed field for their own `spec(...)` folds. Mind that
   `downgrade` runs on the EDT and `OwnedMechanics` publishes through a `volatile`; keep that.
 
-### Placement mode is three fields that must agree, one of them null
-
-`TowerPlacement` holds `placingTower` (boolean), `placingTowerType` (set to `null` by `reset`) and
-`placingTowerRange`, which only mean something together. That is a temporary field and a null for
-absence (root `CLAUDE.md`: absence is a value or `Optional`, never `null`), against `docs/DESIGN.md`'s
-"one state, one value".
-
-- **Where:** `td.TowerPlacement` (`start`, `cancel`, `reset`, `highlightCell`, `mouseClicked`,
-  `isPlacing`).
-- **Approach:** a private record `Placing(TowerFactory.Type type, float range)` held as
-  `Optional<Placing>`; `isPlacing()` is `isPresent()`. The class is EDT-confined, so no publication
-  change. `TowerPlacementTest` and `GameEngineTest` cover the behaviour.
-
 ### Names that mislead or say nothing
 
 - `AbstractTower.getRange()` returns the *base* range in cells while `getRangeReal()` returns the current
