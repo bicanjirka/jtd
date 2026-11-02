@@ -2,7 +2,7 @@ package td;
 
 import ch.qos.logback.classic.Level;
 import org.junit.jupiter.api.Test;
-import td.util.Threads;
+import td.util.TickRate;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -11,19 +11,133 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
- * Smoke tests that the loop drives a real thread; the tick math is covered by
- * {@code TickAccumulatorTest}.
+ * A turn of the loop is driven with made-up time through {@code advance}; only what needs the thread
+ * itself (start, stop, restart) runs a real one. The tick maths is covered by {@code TickAccumulatorTest}.
  */
 class GameLoopTest {
 
+    private static final long ONE_SECOND = 1_000_000_000L;
+
+    private static GameLoop loopAt(TickSpeed speed, Runnable onTick, Runnable onRender) {
+        GameLoop loop = new GameLoop(onTick, onRender);
+        loop.setSpeed(speed);
+        return loop;
+    }
+
+    private static void noOp() {
+    }
+
     @Test
-    void ticksRepeatedlyAtSuperFastSpeed() throws InterruptedException {
+    void aTurnRunsTheTicksItsTimePaysForAtTheSpeed() {
+        AtomicInteger ticks = new AtomicInteger();
+        GameLoop loop = loopAt(TickSpeed.NORMAL, ticks::incrementAndGet, GameLoopTest::noOp);
+
+        loop.advance(TickRate.TICK_NANOS / 2);
+        loop.advance(TickRate.TICK_NANOS / 2);
+
+        assertThat(ticks.get()).isEqualTo(1);
+    }
+
+    @Test
+    void aTurnThatFellBehindRunsOneTickRatherThanABurst() {
+        AtomicInteger ticks = new AtomicInteger();
+        GameLoop loop = loopAt(TickSpeed.NORMAL, ticks::incrementAndGet, GameLoopTest::noOp);
+
+        loop.advance(5 * TickRate.TICK_NANOS);
+        loop.advance(TickRate.TICK_NANOS / 2);
+
+        assertThat(ticks.get()).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTickWhilePaused() {
+        AtomicInteger ticks = new AtomicInteger();
+        GameLoop loop = loopAt(TickSpeed.PAUSED, ticks::incrementAndGet, GameLoopTest::noOp);
+
+        loop.advance(ONE_SECOND);
+
+        assertThat(ticks.get()).isZero();
+    }
+
+    @Test
+    void aRequestedStepRunsExactlyOneTickWhilePaused() {
+        AtomicInteger ticks = new AtomicInteger();
+        GameLoop loop = loopAt(TickSpeed.PAUSED, ticks::incrementAndGet, GameLoopTest::noOp);
+
+        loop.requestStep();
+        loop.advance(0);
+        loop.advance(ONE_SECOND);
+
+        assertThat(ticks.get()).isEqualTo(1);
+    }
+
+    @Test
+    void rendersEvenWhilePaused() {
+        AtomicInteger renders = new AtomicInteger();
+        GameLoop loop = loopAt(TickSpeed.PAUSED, GameLoopTest::noOp, renders::incrementAndGet);
+
+        loop.advance(ONE_SECOND);
+
+        assertThat(renders.get()).isEqualTo(1);
+    }
+
+    @Test
+    void aFailingTickIsLoggedAndDoesNotStopSubsequentTicks() {
+        AtomicInteger attempts = new AtomicInteger();
+        RuntimeException failure = new RuntimeException("tick failed on purpose");
+        GameLoop loop = loopAt(TickSpeed.NORMAL, () -> {
+            if (attempts.getAndIncrement() == 0) {
+                throw failure;
+            }
+        }, GameLoopTest::noOp);
+
+        try (CapturedLog log = new CapturedLog(GameLoop.class)) {
+            for (int turn = 0; turn < 4; turn++) {
+                loop.advance(TickRate.TICK_NANOS);
+            }
+
+            assertThat(attempts.get()).isEqualTo(4);
+            assertThat(log.atLevel(Level.ERROR))
+                    .singleElement()
+                    .satisfies(event -> assertThat(event.getThrowableProxy().getMessage())
+                            .isEqualTo(failure.getMessage()));
+        }
+    }
+
+    @Test
+    void tickInterpolationAlphaIsHowFarTheLoopIsIntoTheNextTick() {
+        GameLoop loop = loopAt(TickSpeed.NORMAL, GameLoopTest::noOp, GameLoopTest::noOp);
+
+        loop.advance(TickRate.TICK_NANOS * 3 / 2);
+
+        assertThat(loop.tickInterpolationAlpha()).isCloseTo(0.5, within(1e-9));
+    }
+
+    @Test
+    void animationSecondsAdvancesEvenWhilePaused() {
+        GameLoop loop = loopAt(TickSpeed.PAUSED, GameLoopTest::noOp, GameLoopTest::noOp);
+
+        loop.advance(ONE_SECOND / 4);
+
+        assertThat(loop.animationSeconds()).isCloseTo(0.25, within(1e-9));
+    }
+
+    @Test
+    void animationSecondsDoesNotRaceAheadAtSuperFastSpeed() {
+        GameLoop loop = loopAt(TickSpeed.SUPER_FAST, GameLoopTest::noOp, GameLoopTest::noOp);
+
+        loop.advance(ONE_SECOND / 4);
+
+        assertThat(loop.animationSeconds()).isCloseTo(0.25, within(1e-9));
+    }
+
+    @Test
+    void ticksRepeatedlyOnItsOwnThreadAtSuperFastSpeed() throws InterruptedException {
         CountDownLatch sawSeveralTicks = new CountDownLatch(3);
-        GameLoop loop = new GameLoop(sawSeveralTicks::countDown, () -> {
-        });
-        loop.setSpeed(TickSpeed.SUPER_FAST);
+        GameLoop loop = loopAt(TickSpeed.SUPER_FAST, sawSeveralTicks::countDown, GameLoopTest::noOp);
 
         loop.start();
         try {
@@ -36,203 +150,56 @@ class GameLoopTest {
     }
 
     @Test
-    void doesNotTickWhilePaused() throws InterruptedException {
-        AtomicInteger tickCount = new AtomicInteger();
-        GameLoop loop = new GameLoop(tickCount::incrementAndGet, () -> {
-        });
-        loop.setSpeed(TickSpeed.PAUSED);
-
+    void stopEndsTheLoopThreadSoNoTickCanFollow() throws InterruptedException {
+        AtomicReference<Thread> loopThread = new AtomicReference<>();
+        CountDownLatch ticked = new CountDownLatch(1);
+        GameLoop loop = loopAt(TickSpeed.SUPER_FAST, () -> {
+            loopThread.set(Thread.currentThread());
+            ticked.countDown();
+        }, GameLoopTest::noOp);
         loop.start();
-        try {
-            Thread.sleep(200);
-            assertThat(tickCount.get()).isZero();
-        } finally {
-            loop.stop();
-        }
-    }
-
-    @Test
-    void aRequestedStepRunsOneTickOnTheLoopThreadWhilePaused() throws InterruptedException {
-        AtomicInteger tickCount = new AtomicInteger();
-        AtomicReference<String> tickedOn = new AtomicReference<>();
-        CountDownLatch sawATick = new CountDownLatch(1);
-        GameLoop loop = new GameLoop(() -> {
-            tickCount.incrementAndGet();
-            tickedOn.set(Thread.currentThread().getName());
-            sawATick.countDown();
-        }, () -> {
-        });
-        loop.setSpeed(TickSpeed.PAUSED);
-        loop.start();
-
-        try {
-            loop.requestStep();
-
-            assertThat(sawATick.await(2, TimeUnit.SECONDS)).as("expected the step's tick within 2s").isTrue();
-            Thread.sleep(100);
-            assertThat(tickCount.get()).isEqualTo(1);
-            assertThat(tickedOn.get()).isEqualTo(Threads.GAME_LOOP);
-        } finally {
-            loop.stop();
-        }
-    }
-
-    @Test
-    void rendersEvenWhilePaused() throws InterruptedException {
-        CountDownLatch sawARender = new CountDownLatch(1);
-        GameLoop loop = new GameLoop(() -> {
-        }, sawARender::countDown);
-        loop.setSpeed(TickSpeed.PAUSED);
-
-        loop.start();
-        try {
-            assertThat(sawARender.await(2, TimeUnit.SECONDS))
-                    .as("expected a render request within 2s even while paused")
-                    .isTrue();
-        } finally {
-            loop.stop();
-        }
-    }
-
-    @Test
-    void aFailingTickIsLoggedAndDoesNotStopSubsequentTicks() throws InterruptedException {
-        AtomicInteger attempts = new AtomicInteger();
-        CountDownLatch sawTicksAfterAFailure = new CountDownLatch(3);
-        RuntimeException failure = new RuntimeException("tick failed on purpose");
-        GameLoop loop = new GameLoop(() -> {
-            if (attempts.getAndIncrement() == 0) {
-                throw failure;
-            }
-            sawTicksAfterAFailure.countDown();
-        }, () -> {
-        });
-        loop.setSpeed(TickSpeed.SUPER_FAST);
-
-        try (CapturedLog log = new CapturedLog(GameLoop.class)) {
-            loop.start();
-            boolean keptTicking;
-            try {
-                keptTicking = sawTicksAfterAFailure.await(2, TimeUnit.SECONDS);
-            } finally {
-                loop.stop();
-            }
-
-            assertThat(keptTicking)
-                    .as("expected ticks to keep running after the first one threw")
-                    .isTrue();
-            assertThat(log.atLevel(Level.ERROR))
-                    .singleElement()
-                    .satisfies(event -> assertThat(event.getThrowableProxy().getMessage())
-                            .isEqualTo(failure.getMessage()));
-        }
-    }
-
-    @Test
-    void tickInterpolationAlphaStaysWithinOneTickStep() throws InterruptedException {
-        CountDownLatch sawARender = new CountDownLatch(3);
-        GameLoop loop = new GameLoop(() -> {
-        }, sawARender::countDown);
-        loop.setSpeed(TickSpeed.NORMAL);
-
-        loop.start();
-        try {
-            assertThat(sawARender.await(2, TimeUnit.SECONDS))
-                    .as("expected several renders within 2s")
-                    .isTrue();
-            assertThat(loop.tickInterpolationAlpha()).isGreaterThanOrEqualTo(0.0).isLessThan(1.0);
-        } finally {
-            loop.stop();
-        }
-    }
-
-    @Test
-    void animationSecondsAdvancesEvenWhilePaused() throws InterruptedException {
-        GameLoop loop = new GameLoop(() -> {
-        }, () -> {
-        });
-        loop.setSpeed(TickSpeed.PAUSED);
-
-        loop.start();
-        try {
-            Thread.sleep(150);
-            assertThat(loop.animationSeconds()).isGreaterThan(0.0);
-        } finally {
-            loop.stop();
-        }
-    }
-
-    @Test
-    void animationSecondsDoesNotRaceAheadAtSuperFastSpeed() throws InterruptedException {
-        GameLoop loop = new GameLoop(() -> {
-        }, () -> {
-        });
-        loop.setSpeed(TickSpeed.SUPER_FAST);
-
-        loop.start();
-        try {
-            Thread.sleep(250);
-            assertThat(loop.animationSeconds()).isLessThan(1.0);
-        } finally {
-            loop.stop();
-        }
-    }
-
-    @Test
-    void stopHaltsFutureTicks() throws InterruptedException {
-        AtomicInteger tickCount = new AtomicInteger();
-        GameLoop loop = new GameLoop(tickCount::incrementAndGet, () -> {
-        });
-        loop.setSpeed(TickSpeed.SUPER_FAST);
-        loop.start();
-        Thread.sleep(50);
+        assertThat(ticked.await(2, TimeUnit.SECONDS)).isTrue();
 
         loop.stop();
-        Thread.sleep(50);
-        int countAfterStop = tickCount.get();
-        Thread.sleep(100);
 
-        assertThat(tickCount.get()).isEqualTo(countAfterStop);
+        assertThat(loopThread.get().isAlive()).isFalse();
     }
 
     @Test
     void aStoppedLoopCanBeStartedAgainAndResumesTicking() throws InterruptedException {
-        AtomicInteger tickCount = new AtomicInteger();
-        GameLoop loop = new GameLoop(tickCount::incrementAndGet, () -> {
-        });
-        loop.setSpeed(TickSpeed.SUPER_FAST);
+        AtomicReference<CountDownLatch> nextTick = new AtomicReference<>(new CountDownLatch(1));
+        GameLoop loop = loopAt(TickSpeed.SUPER_FAST, () -> nextTick.get().countDown(), GameLoopTest::noOp);
         loop.start();
-        Thread.sleep(50);
+        assertThat(nextTick.get().await(2, TimeUnit.SECONDS)).isTrue();
         loop.stop();
-        Thread.sleep(50);
-        int countAfterStop = tickCount.get();
+        CountDownLatch afterRestart = new CountDownLatch(1);
+        nextTick.set(afterRestart);
 
         loop.start();
         try {
-            Thread.sleep(200);
-            assertThat(tickCount.get())
+            assertThat(afterRestart.await(2, TimeUnit.SECONDS))
                     .as("expected the restarted loop to tick again")
-                    .isGreaterThan(countAfterStop);
+                    .isTrue();
         } finally {
             loop.stop();
         }
     }
 
     @Test
-    void stopWaitsForTheInFlightTickToFinishBeforeReturning() throws InterruptedException {
+    void stopWaitsOutAnInFlightTickHoweverLongItRuns() throws InterruptedException {
         AtomicBoolean insideATick = new AtomicBoolean();
         CountDownLatch tickBegan = new CountDownLatch(1);
-        GameLoop loop = new GameLoop(() -> {
+        GameLoop loop = loopAt(TickSpeed.SUPER_FAST, () -> {
             insideATick.set(true);
             tickBegan.countDown();
             try {
-                Thread.sleep(150);
+                // Longer than the half-second bound stop() once gave up after.
+                Thread.sleep(900);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
             insideATick.set(false);
-        }, () -> {
-        });
-        loop.setSpeed(TickSpeed.SUPER_FAST);
+        }, GameLoopTest::noOp);
 
         loop.start();
         assertThat(tickBegan.await(2, TimeUnit.SECONDS)).isTrue();
@@ -244,36 +211,8 @@ class GameLoopTest {
     }
 
     @Test
-    void stopWaitsOutATickLongerThanTheHalfSecondBoundItUsedToGiveUpAfter() throws InterruptedException {
-        AtomicBoolean insideATick = new AtomicBoolean();
-        CountDownLatch tickBegan = new CountDownLatch(1);
-        GameLoop loop = new GameLoop(() -> {
-            insideATick.set(true);
-            tickBegan.countDown();
-            try {
-                Thread.sleep(900);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            insideATick.set(false);
-        }, () -> {
-        });
-        loop.setSpeed(TickSpeed.SUPER_FAST);
-
-        loop.start();
-        assertThat(tickBegan.await(2, TimeUnit.SECONDS)).isTrue();
-        loop.stop();
-
-        assertThat(insideATick)
-                .as("stop() gave up on a tick that outlasted the old 500ms bound")
-                .isFalse();
-    }
-
-    @Test
     void stopRefusesToRunOnTheEventDispatchThreadRatherThanFreezingIt() throws InterruptedException {
-        GameLoop loop = new GameLoop(() -> {
-        }, () -> {
-        });
+        GameLoop loop = loopAt(TickSpeed.PAUSED, GameLoopTest::noOp, GameLoopTest::noOp);
         AtomicReference<RuntimeException> thrown = new AtomicReference<>();
 
         Thread pretendEdt = new Thread(() -> {
@@ -292,18 +231,13 @@ class GameLoopTest {
     }
 
     @Test
-    void startingAnAlreadyRunningLoopDoesNotSpawnASecondLoopThread() throws InterruptedException {
-        GameLoop loop = new GameLoop(() -> {
-        }, () -> {
-        });
-        loop.setSpeed(TickSpeed.PAUSED);
+    void startingAnAlreadyRunningLoopDoesNotSpawnASecondLoopThread() {
+        GameLoop loop = loopAt(TickSpeed.PAUSED, GameLoopTest::noOp, GameLoopTest::noOp);
 
         try (CapturedLog log = new CapturedLog(GameLoop.class)) {
             loop.start();
             try {
-                Thread.sleep(50);
                 loop.start();
-                Thread.sleep(50);
 
                 long gameLoopThreads = Thread.getAllStackTraces().keySet().stream()
                         .filter(t -> "game-loop".equals(t.getName()))
