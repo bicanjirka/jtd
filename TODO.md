@@ -67,7 +67,7 @@ downgrading one, loading a level, requesting a wave) currently reaches the simul
 routes: a volatile flag `doTick` consumes (`requestNextWave`), direct mutation under a stopped
 loop (`loadLevel`), or direct mutation while the loop runs (tower placement). Each is
 individually safe, but there are three of them, and the third is why `AbstractTower`,
-`CellNormal` and `GameWorld` all carry publication rules of their own. A downgrade already hands
+`Cell` and `GameWorld` all carry publication rules of their own. A downgrade already hands
 what the tower holds for a removed node to the tick thread (`AbstractTower.removedSinceTick`).
 
 The second route is now genuinely guaranteed rather than best-effort: `GameLoop.stop()` joins
@@ -104,11 +104,9 @@ position and the visitor, `AuraTower` wants position and type.
   actually hurt by the width, not as a tidying exercise: a wide interface with one
   implementation hierarchy costs far less than a wrong split.
 
-### `HitReceiver` and `Cell` are wide interfaces too
+### `HitReceiver` is a wide interface too
 
-`HitReceiver` carries everything a hit, an effect or a tower's hit bonus asks of an enemy. `Cell` is
-wider than five methods, but all of them are the square's own position, buildability and tower, so it
-stays.
+`HitReceiver` carries everything a hit, an effect or a tower's hit bonus asks of an enemy.
 
 - **Where:** `td.enemy.HitReceiver` (and `FakeEnemyMob`).
 - **Approach:** as for `Tower`: split along the lines its consumers already use (a hit, an effect, a
@@ -298,17 +296,12 @@ The first eight are small and each a commit of its own; the rest are larger or a
 
 ### Names that mislead or say nothing
 
-- `AbstractTower.getRange()` returns the *base* range in cells while `getRangeReal()` returns the current
-  range in pixels; a reader takes `getRange()` for the current one. Rename to `baseRange()` (or similar).
-- `Cell.enable(boolean b)`: a flag argument with a nameless parameter; `cell.enable(false)` reads poorly.
-  Consider `setBuildable(boolean buildable)`, matching the `buildable()` query.
+
 - GUI-builder leftovers: `jPanel_board`, `jPanel_game`, `jPanel_boardMouseClicked`,
   `jPanel_boardMouseMoved`, `formKeyTyped`, `formKeyPressed` in `td.TowerDefense`, and `jButton_sell`,
   `jButton_sellActionPerformed` in `td.ui.PanelTowerInfo`. Name them for their role (`boardPanel`,
   `onBoardClicked`, `sellButton`).
-- `CellNormal` and `PathNormal`: the only implementations of `Cell` and `Path`. "Normal" contrasts with
-  nothing and puts the role noun first, against the naming rule. `Cell` stays an interface by decision
-  (see "`HitReceiver` and `Cell` are wide interfaces too"); at most rename the classes.
+- `PathNormal`: the only implementation of the one-method `Path`. Collapse them into one record.
 - **Approach:** the IDE's `rename_refactoring`, one rename per commit. Pure renames, no behaviour.
 
 ### `TowerDefense` and `PanelDev` are large

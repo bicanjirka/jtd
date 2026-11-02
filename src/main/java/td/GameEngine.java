@@ -229,7 +229,7 @@ public class GameEngine {
             unbuildable.addAll(PathCoverage.unbuildableCells(pathRuntime.path().points(), scale, grid.width(), grid.height()));
         }
         for (Point cell : unbuildable) {
-            grid.at(cell.x(), cell.y()).enable(false);
+            grid.at(cell.x(), cell.y()).setBuildable(false);
         }
     }
 
@@ -412,7 +412,7 @@ public class GameEngine {
     public void clearCell(int x, int y) {
         Cell cell = this.gameWorld.cells().at(x, y);
         cell.unSetTower();
-        cell.enable(true);
+        cell.setBuildable(true);
         this.placement.cellCleared(x, y);
     }
 

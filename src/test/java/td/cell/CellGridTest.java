@@ -80,7 +80,7 @@ class CellGridTest {
         CellGrid first = CellGrid.of(2, 2, SCALE);
         CellGrid second = CellGrid.of(2, 2, SCALE);
 
-        first.at(0, 0).enable(false);
+        first.at(0, 0).setBuildable(false);
 
         assertThat(second.at(0, 0).buildable()).isTrue();
     }
