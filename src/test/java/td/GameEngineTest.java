@@ -8,6 +8,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageMix;
 import td.damage.DamageUnits;
+import td.economy.EconomyState;
 import td.effect.DamageSink;
 import td.effect.DiminishingReturns;
 import td.effect.Effect;
@@ -53,6 +54,7 @@ import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerStatLine;
 import td.tower.TowerStatRow;
+import td.tower.TowerTally;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -1774,6 +1776,24 @@ class GameEngineTest {
                 .contains(chain.getLast().id()));
         assertThat(loaded.getTowers()).singleElement().satisfies(rebuilt -> assertThat(rebuilt.upgrades().owns(
                 chain.getLast().id())).isFalse());
+    }
+
+    @Test
+    void aSaveNamingACellOffTheBoardLoadsTheRestAndNamesTheTowerItCouldNotRebuild() {
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT),
+                new WaveDefinition("simple", Rank.GRUNT)), 100);
+        GameEngine loaded = FakeGameHost.newBoundEngine();
+        loaded.loadLevel(level);
+        TowerTally untried = new TowerTally(0, 0, 0L, 0);
+
+        Optional<String> problem = loaded.restore(new GameSave(level.name(), 1, new EconomyState(50, 0, 5), List.of(
+                new TowerSave(TowerFactory.Type.SNIPER, new Point(99, 1), List.of(), untried),
+                new TowerSave(TowerFactory.Type.SNIPER, new Point(1, 1), List.of(), untried))));
+
+        assertThat(problem).hasValueSatisfying(text -> assertThat(text).contains("99,1"));
+        assertThat(loaded.getTowers()).hasSize(1);
+        assertThat(loaded.getGameWorld().economy().getCredits()).isEqualTo(50);
+        assertThat(loaded.getGameWorld().playtestRules().upgradeGatesIgnored()).isFalse();
     }
 
     @Test
