@@ -482,12 +482,18 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             this.panelDev.showMessage(read.problem());
             return;
         }
+        GameSave save = read.save().get();
         this.unSelectTower();
-        Optional<String> problem = this.engine.restore(read.save().get());
-        this.setWavePreview();
-        this.updateInfo();
-        this.syncTransportButtons();
-        this.panelDev.showMessage(problem.orElse("Loaded: wave " + read.save().get().nextWave() + " is next"));
+        // Restoring tears the level down and rebuilds it, so no tick may run meanwhile.
+        this.stopLoopThen(() -> {
+            Optional<String> problem = this.engine.restore(save);
+            this.levelLoaded = true;
+            this.gameLoop.start();
+            this.setWavePreview();
+            this.updateInfo();
+            this.syncTransportButtons();
+            this.panelDev.showMessage(problem.orElse("Loaded: wave " + save.nextWave() + " is next"));
+        });
     }
 
     /** Opens or closes the dev panel. The cell grid shows only while the panel is open. */
