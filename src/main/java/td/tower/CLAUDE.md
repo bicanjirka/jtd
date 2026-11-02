@@ -141,7 +141,8 @@
   a dodge is reported with `reportDodge(...)` instead, never settled by mechanics that answer a landed hit.
 - Never check `owns(...)` in tower code except for the Core chain; Checkstyle rejects it.
 - A node that adds a mechanic brings a `*Mechanic` class, in the tower's own package. A static `MechanicCatalogue`
-  says which mechanics each node brings, and the tower's `OwnedMechanics` builds its own. Mechanics run in
+  says which mechanics each node brings, and the tower's `OwnedMechanics`, which it hands over through
+  `ownedMechanics()`, builds its own as nodes are bought and downgraded. Mechanics run in
   purchase order through `refineSpec` (and the tower's per-hit hooks); they are pure (no tower, no
   `GameWorld`).
 - Mechanics widen or narrow whom a tower may hit through its `Reach`. A dead zone goes on the `Reach`

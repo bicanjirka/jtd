@@ -237,23 +237,13 @@ public final class SplashTower extends AbstractTower {
     }
 
     @Override
-    protected MechanicCatalogue<SplashMechanic> mechanicCatalogue() {
-        return MECHANICS;
+    protected OwnedMechanics<SplashMechanic> ownedMechanics() {
+        return this.mechanics;
     }
 
     @Override
     public UpgradeTree upgradeTree() {
         return TREE;
-    }
-
-    @Override
-    protected void onUpgradeBought(UpgradeNode node) {
-        this.mechanics.add(node);
-    }
-
-    @Override
-    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
-        this.mechanics.remove(removed);
     }
 
     /** What its blast is like and what it carries, as the mechanics in {@code owned} make it. */

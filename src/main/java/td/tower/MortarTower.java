@@ -218,23 +218,13 @@ public final class MortarTower extends AbstractTower {
     }
 
     @Override
-    protected MechanicCatalogue<MortarMechanic> mechanicCatalogue() {
-        return MECHANICS;
+    protected OwnedMechanics<MortarMechanic> ownedMechanics() {
+        return this.mechanics;
     }
 
     @Override
     public UpgradeTree upgradeTree() {
         return TREE;
-    }
-
-    @Override
-    protected void onUpgradeBought(UpgradeNode node) {
-        this.mechanics.add(node);
-    }
-
-    @Override
-    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
-        this.mechanics.remove(removed);
     }
 
     /** Whom it may shell and how its shells fly and land, as the mechanics in {@code owned} make it. */

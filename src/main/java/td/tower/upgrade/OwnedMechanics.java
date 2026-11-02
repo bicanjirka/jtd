@@ -22,6 +22,11 @@ public final class OwnedMechanics<P extends Mechanic> {
         this.catalogue = catalogue;
     }
 
+    /** Which mechanics each node brings. */
+    public MechanicCatalogue<P> catalogue() {
+        return this.catalogue;
+    }
+
     /** Adds what {@code node} brings; call it once, when the node is bought. */
     public void add(UpgradeNode node) {
         List<P> brought = this.catalogue.mechanicsOf(node);
@@ -49,6 +54,9 @@ public final class OwnedMechanics<P extends Mechanic> {
                 from.add(now.from().get(i));
                 mechanics.add(now.mechanics().get(i));
             }
+        }
+        if (from.size() == now.from().size()) {
+            return;
         }
         this.held = new Held<>(from, mechanics);
     }

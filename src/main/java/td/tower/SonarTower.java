@@ -195,23 +195,13 @@ public final class SonarTower extends AbstractTower {
     }
 
     @Override
-    protected MechanicCatalogue<SonarMechanic> mechanicCatalogue() {
-        return MECHANICS;
+    protected OwnedMechanics<SonarMechanic> ownedMechanics() {
+        return this.mechanics;
     }
 
     @Override
     public UpgradeTree upgradeTree() {
         return TREE;
-    }
-
-    @Override
-    protected void onUpgradeBought(UpgradeNode node) {
-        this.mechanics.add(node);
-    }
-
-    @Override
-    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
-        this.mechanics.remove(removed);
     }
 
     /** How it scans, as the mechanics in {@code owned} make it. */
