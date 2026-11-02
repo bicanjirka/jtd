@@ -1,6 +1,7 @@
 package td.tower.sonar;
 
 
+import td.tower.TurretAim;
 import td.util.ThreadConfined;
 
 /**
@@ -58,20 +59,10 @@ public final class SonarSweep {
         return wrapped < 0 ? wrapped + TWO_PI : wrapped;
     }
 
-    /** Wraps to {@code [-PI, PI)}, keeping the stored angle bounded. */
-    private static double normalizeSigned(double radians) {
-        double wrapped = radians % TWO_PI;
-        if (wrapped < -Math.PI) {
-            wrapped += TWO_PI;
-        } else if (wrapped >= Math.PI) {
-            wrapped -= TWO_PI;
-        }
-        return wrapped;
-    }
 
     public void advance() {
         this.previousRadians = this.currentRadians;
-        this.currentRadians = normalizeSigned(this.currentRadians - this.radiansPerTick);
+        this.currentRadians = TurretAim.normalizeRadians(this.currentRadians - this.radiansPerTick);
         this.swept += this.radiansPerTick;
         this.completedRevolution = this.swept >= TWO_PI - 1e-9;
         if (this.completedRevolution) {
