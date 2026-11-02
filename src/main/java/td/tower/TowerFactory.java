@@ -20,7 +20,7 @@ public class TowerFactory {
         };
     }
 
-    /** The buildable towers, each with its price and placement key - the single source of both. */
+    /** The buildable towers, each with its placement key and name; its price is its tower class's. */
     public enum Type {
         SNIPER(SniperTower.PRICE, 'q', "Sniper"),
         SPLASH(SplashTower.PRICE, 'w', "Burst"),
