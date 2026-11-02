@@ -364,10 +364,10 @@ against 1,100 under heals, so the heals land everywhere else. The answers are ei
 
 Every tower's `UpgradeNode`s carry real prices and stat bonuses, but none of them have been played
 against actual waves. Prices start from `UpgradeTier`'s multiples of the tower's list price (the table in
-`docs/features/FEATURE-tower-progression.md`); the stat bonuses still follow the placeholder rule of the
+`docs/features/shipped/FEATURE-tower-progression.md`); the stat bonuses still follow the placeholder rule of the
 first trees (an unquantified "+X" in the source doc became +25%, an unquantified crit bonus +10%). The
 `ClusterCondition` thresholds are unverified guesses, and `UpgradeTier`'s XP table is checked only
-against the bounty arithmetic in `docs/features/FEATURE-xp-and-purpose-gates.md`, not against play.
+against the bounty arithmetic in `docs/features/shipped/FEATURE-xp-and-purpose-gates.md`, not against play.
 Feature 7's balance pass sets the final numbers.
 
 `td.PurchaseHarness` measures them: lives saved per 100 credits, on Twisted Hourglass with 12 seeds. The +15%

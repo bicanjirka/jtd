@@ -24,7 +24,7 @@ radius ability, being healed) should be visible too - not just the steady-state 
 - There is no healing mechanic anywhere in the game. `EffectKind` has no `HEAL` value, and
   `td.damage.Damage`'s compact constructor clamps every amount at zero specifically so a
   "healing hit" cannot exist.
-- `docs/features/FEATURE-enemy-traits-and-effects.md`'s product review notes already set this
+- `docs/features/shipped/FEATURE-enemy-traits-and-effects.md`'s product review notes already set this
   bar for the original five effect kinds: "no trait or ability ships without an unambiguous
   on-board visual telling the player it's active." That bar was met only by the marker row, and
   this request extends it to abilities, traits, auras, and every transition between states.
@@ -55,7 +55,7 @@ radius ability, being healed) should be visible too - not just the steady-state 
   request's transition visuals are what that rework was missing.
 - Shares the enemy rank system's existing rank badge as precedent: a small, closed set of visual
   roles, keyed off a `Palette` enum, drawn by one frame builder - not a per-enemy special case.
-- Extends `docs/features/FEATURE-enemy-traits-and-effects.md`'s effect-marker-row plan rather than
+- Extends `docs/features/shipped/FEATURE-enemy-traits-and-effects.md`'s effect-marker-row plan rather than
   replacing it; the marker row's existing three-visible-plus-overflow cap is reused, not redesigned.
 
 ## Constraints and open risks

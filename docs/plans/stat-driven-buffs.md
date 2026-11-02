@@ -1,7 +1,7 @@
 # Plan: Stat-driven buffs, debuffs and upgrades
 
 **Status:** planned, 2026-10-12; revised after review the same day. Implemented, phases 1 to 9.
-**Follow-up:** `docs/features/FEATURE-agility-and-dodge.md` is implemented after this plan, on top of
+**Follow-up:** `docs/features/shipped/FEATURE-agility-and-dodge.md` is implemented after this plan, on top of
 it. Do not start it here.
 
 This plan replaces an earlier one written for an older codebase (kept on the local branch
@@ -2422,4 +2422,4 @@ Live checks, one `run-jtd` pass after phase 9. Each names what no test can asser
 - **Aura diminishing returns (Factorio beacon style).** If it comes back, use the strongest-first
   variant: sort auras by strength and weight the k-th by √k − √(k−1), per stat, emissions only.
 - **Data-defined towers (`TowerDefinition`)**, like `EnemyDefinition`, with a shared attack loop.
-- **Agility and dodge:** `docs/features/FEATURE-agility-and-dodge.md`.
+- **Agility and dodge:** `docs/features/shipped/FEATURE-agility-and-dodge.md`.

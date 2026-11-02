@@ -5,7 +5,7 @@
 selected, number keys buy offered nodes by a key fixed per role in the tree
 (`UpgradeTree.keyOf`, `GameEngine.buyUpgradeForSelected`), and the board shows per-slot pips, ready chevrons and a
 `SPECIAL`-slot halo instead of the old two-role accent ring. The concrete node content itself
-(names, prices, gates, buffs) is `docs/features/FEATURE-tower-specialization-abilities.md`'s
+(names, prices, gates, buffs) is `docs/features/shipped/FEATURE-tower-specialization-abilities.md`'s
 job, and that document's own `[S]`-tagged stub nodes still wait on their primitives - see
 `TODO.md`'s "Tower specialization primitives". `FEATURE-tower-progression.md` since reshaped
 the slots: `base` is the Range line and Attune -> Awaken -> Transcendent, `head` gains an extra
@@ -153,7 +153,7 @@ shipped with zero upgrade paths, becomes a scoped-in future consumer of the new 
   that in as a target; it does not design `AuraTower`'s specific upgrade content.
 - **This feature builds a real `UpgradeNode` for every `base`/`head`/`special` node across all 9
   towers** — the concrete content (names, prices, gates, `TowerBuff` bonuses) is authored in
-  `docs/features/FEATURE-tower-specialization-abilities.md`, not invented at this feature's own
+  `docs/features/shipped/FEATURE-tower-specialization-abilities.md`, not invented at this feature's own
   planning time. Every node's hook is wired to real behavior where the engine already supports
   the mechanic (a `TowerBuff` axis, the existing per-tower field-bump hook pattern, an existing
   `Effect` kind reused as-is, a straightforward `td.tower.targeting` composition); where a node
@@ -167,7 +167,7 @@ shipped with zero upgrade paths, becomes a scoped-in future consumer of the new 
 
 ## Interconnections
 
-- **Directly supersedes/extends `docs/features/FEATURE-tower-upgrades.md`.** That document's
+- **Directly supersedes/extends `docs/features/shipped/FEATURE-tower-upgrades.md`.** That document's
   "exactly two, mutually exclusive, permanent" decision and its "not in scope: `AuraTower`"
   decision are the two calls this feature revisits. The eight existing shipped `UpgradePath`
   constants across `SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`/`MortarTower`/
@@ -184,7 +184,7 @@ shipped with zero upgrade paths, becomes a scoped-in future consumer of the new 
 - **Touches the same `PanelTowerInfo`/`PanelGameConsole`/`PanelWaveInfo` sidebar surface** the v1
   upgrade doc already flagged as tight for two buttons — this feature's panel-swap and
   three-times-the-content ask make that tension concrete rather than theoretical.
-- **Two-way dependency with `docs/features/FEATURE-tower-specialization-abilities.md`** (formerly
+- **Two-way dependency with `docs/features/shipped/FEATURE-tower-specialization-abilities.md`** (formerly
   "Vulnerability Status Effect" — renamed once its scope grew to cover every tower's concrete
   node content, not just one status effect). This feature is that document's prerequisite for the
   slot/node/gating shape — in particular, `head`/`special` being exclusive pick-one-path-forever

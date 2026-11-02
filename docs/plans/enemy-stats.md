@@ -1,4 +1,4 @@
-# Plan: Enemy Stats (`docs/features/FEATURE-enemy-stats.md`)
+# Plan: Enemy Stats (`docs/features/shipped/FEATURE-enemy-stats.md`)
 
 ## Context
 
