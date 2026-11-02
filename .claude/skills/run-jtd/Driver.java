@@ -189,8 +189,10 @@ public class Driver {
         int cellsH = Integer.parseInt(p[4]);
         int zoom = p.length > 5 ? Integer.parseInt(p[5]) : 3;
         int scale = getGameWorld().getBoard().scale();
+        td.ui.BoardZoom view = gameBoard().zoom();
         Point loc = gameBoard().getLocationOnScreen();
-        Rectangle bounds = new Rectangle(loc.x + cellX * scale, loc.y + cellY * scale, cellsW * scale, cellsH * scale);
+        Rectangle bounds = new Rectangle(loc.x + view.toView(cellX * scale), loc.y + view.toView(cellY * scale),
+                view.toView(cellsW * scale), view.toView(cellsH * scale));
         BufferedImage crop = robot.createScreenCapture(bounds);
         BufferedImage zoomed = new BufferedImage(bounds.width * zoom, bounds.height * zoom, BufferedImage.TYPE_INT_RGB);
         java.awt.Graphics2D g2 = zoomed.createGraphics();
@@ -310,10 +312,10 @@ public class Driver {
         return content[0];
     }
 
-    private static Component gameBoard() throws Exception {
+    private static td.ui.GameBoard gameBoard() throws Exception {
         Field gameBoardField = TowerDefense.class.getDeclaredField("gameBoard");
         gameBoardField.setAccessible(true);
-        return (Component) gameBoardField.get(game);
+        return (td.ui.GameBoard) gameBoardField.get(game);
     }
 
     // Prints a text component's whole content, since a scrolled panel hides lines a screenshot can't show.
@@ -633,16 +635,17 @@ public class Driver {
 
     // Clicks a board cell (not a Swing component, so not reachable via click(int)) by
     // reflecting into TowerDefense's private gameBoard field and using GameWorld.getBoard()'s
-    // scale to turn a cell coordinate into a screen point.
+    // scale and the board's zoom to turn a cell coordinate into a screen point.
     private static void boardClick(String args) throws Exception {
         String[] p = args.split("\\s+");
         int cellX = Integer.parseInt(p[0]);
         int cellY = Integer.parseInt(p[1]);
 
         int scale = getGameWorld().getBoard().scale();
+        td.ui.BoardZoom view = gameBoard().zoom();
         Point loc = gameBoard().getLocationOnScreen();
-        int cx = loc.x + cellX * scale + scale / 2;
-        int cy = loc.y + cellY * scale + scale / 2;
+        int cx = loc.x + view.toView(cellX * scale + scale / 2);
+        int cy = loc.y + view.toView(cellY * scale + scale / 2);
         robot.mouseMove(cx, cy);
         Thread.sleep(80);
         robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
@@ -661,9 +664,10 @@ public class Driver {
             return;
         }
         EnemyMob mob = mobs.get(index);
+        td.ui.BoardZoom view = gameBoard().zoom();
         Point loc = gameBoard().getLocationOnScreen();
-        int cx = loc.x + (int) Math.round(mob.getX());
-        int cy = loc.y + (int) Math.round(mob.getY());
+        int cx = loc.x + view.toView((int) Math.round(mob.getX()));
+        int cy = loc.y + view.toView((int) Math.round(mob.getY()));
         robot.mouseMove(cx, cy);
         Thread.sleep(40);
         robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);

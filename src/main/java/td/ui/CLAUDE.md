@@ -68,6 +68,9 @@ keeps the seam honest.
   (`BoardOverlays.onBackToMenu`), never by reaching for the frame or a sibling panel.
 - `GameBoard.paint` skips `super.paint()`; the renderer's background fill is what clears the
   frame.
+- The board zooms only in the view: `BoardFitLayout` sizes it to its room and `GameBoard` scales
+  the painted frame by its `BoardZoom`. Board pixels never change with the window, and a pointer
+  becomes a board pixel only through `GameBoard.boardPixelAt`.
 - `BoardOverlays` and `GameBoard` share one `GridBagLayout` cell with identical constraints.
   `TowerDefense.requestRender` repaints the *container* (repainting only the board erases the
   overlay). Overlay translucency is painted in `paintComponent`; an alpha background colour on an
