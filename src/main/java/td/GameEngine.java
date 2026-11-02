@@ -491,8 +491,12 @@ public class GameEngine {
         boolean gatesIgnored = rules.upgradeGatesIgnored();
         rules.setUpgradeGatesIgnored(true);
         this.gameWorld.economy().startEconomy(REBUILD_CREDITS, save.economy().lives());
-        List<String> missing = save.towers().stream().flatMap(saved -> this.rebuild(saved).stream()).toList();
-        rules.setUpgradeGatesIgnored(gatesIgnored);
+        List<String> missing;
+        try {
+            missing = save.towers().stream().flatMap(saved -> this.rebuild(saved).stream()).toList();
+        } finally {
+            rules.setUpgradeGatesIgnored(gatesIgnored);
+        }
         this.gameWorld.economy().startEconomy(save.economy().credits(), save.economy().lives());
         this.gameWorld.economy().apply(EconomyDelta.score(save.economy().score()));
         LOG.info("Game loaded: {} before wave {}, {} towers", save.level(), save.nextWave(), save.towers().size());
@@ -509,6 +513,9 @@ public class GameEngine {
     private List<String> rebuild(TowerSave saved) {
         int scale = this.gameWorld.getBoard().scale();
         String where = saved.type().displayName() + " at " + saved.cell().x() + "," + saved.cell().y();
+        if (!this.gameWorld.cells().contains(saved.cell().x(), saved.cell().y())) {
+            return List.of(where + " (off the board)");
+        }
         this.placement.start(saved.type(), 0f);
         this.placement.mouseClicked(saved.cell().x() * scale + scale / 2, saved.cell().y() * scale + scale / 2);
         Cell cell = this.gameWorld.cells().at(saved.cell().x(), saved.cell().y());
