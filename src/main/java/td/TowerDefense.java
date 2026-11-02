@@ -13,6 +13,7 @@ import td.save.GameSave;
 import td.term.TermText;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.ui.BoardFitLayout;
 import td.ui.BoardOverlays;
 import td.ui.BoardRenderer;
 import td.ui.ConfirmPopup;
@@ -53,6 +54,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
@@ -655,8 +657,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             return;
         }
         this.requestFocusInWindow();
-        int boardX = evt.getX() - this.gameBoard.getX();
-        int boardY = evt.getY() - this.gameBoard.getY();
+        Point boardPixel = this.gameBoard.boardPixelAt(evt);
+        int boardX = boardPixel.x;
+        int boardY = boardPixel.y;
         if (this.engine.isPinningLeyLine()) {
             this.engine.pinLeyLineAt(boardX, boardY);
             this.gameConsole.getTowerInfo().showPinning(false);
@@ -705,8 +708,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (!this.panelDev.holdsFocus()) {
             this.requestFocusInWindow();
         }
-        int boardX = evt.getX() - this.gameBoard.getX();
-        int boardY = evt.getY() - this.gameBoard.getY();
+        Point boardPixel = this.gameBoard.boardPixelAt(evt);
+        int boardX = boardPixel.x;
+        int boardY = boardPixel.y;
         if (this.engine.isPlacingTower()) {
             this.engine.highlightCell(boardX, boardY);
         }
@@ -854,10 +858,13 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
-        // No fill: the board keeps its exact pixel size, centred in its cell.
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
-        gamePanel.add(boardPanel, gridBagConstraints);
+        JPanel boardRoom = new JPanel(new BoardFitLayout(boardPanel));
+        boardRoom.setBackground(new Color(0, 0, 0));
+        boardRoom.add(boardPanel);
+        gamePanel.add(boardRoom, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;

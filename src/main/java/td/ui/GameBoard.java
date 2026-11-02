@@ -1,18 +1,25 @@
 package td.ui;
 
 import td.TowerDefense;
+import td.board.BoardGeometry;
 import td.util.GameWorld;
 
 import javax.swing.GroupLayout;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
 import java.io.Serial;
 
 /**
- * The board component. {@link #paint} skips {@code super.paint()} and hands the graphics to the
- * frame painter, whose background fill clears the previous frame.
+ * The board component, drawn at the zoom its size allows. {@link #paint} skips
+ * {@code super.paint()} and hands the graphics to the frame painter, whose background fill clears
+ * the previous frame.
  */
 public class GameBoard extends JPanel {
     @Serial
@@ -28,16 +35,37 @@ public class GameBoard extends JPanel {
     }
 
     public void paint(Graphics g) {
-        this.game.paintBoard((Graphics2D) g);
+        // The zoomed frame can stop a pixel short of the component's edge.
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, this.getWidth(), this.getHeight());
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            double factor = this.zoom().factor();
+            g2.scale(factor, factor);
+            this.game.paintBoard(g2);
+        } finally {
+            g2.dispose();
+        }
     }
 
-    /** Resizes the board and window for a level of {@code width} x {@code height} cells. */
+    /** The zoom the board is drawn at, from the size the layout gave it. */
+    public BoardZoom zoom() {
+        BoardGeometry board = this.context.getBoard();
+        return BoardZoom.fit(new Dimension(board.pixelWidth(), board.pixelHeight()), this.getSize());
+    }
+
+    /** The board pixel under {@code evt}, whichever component received it. */
+    public Point boardPixelAt(MouseEvent evt) {
+        Point here = SwingUtilities.convertPoint(evt.getComponent(), evt.getPoint(), this);
+        BoardZoom zoom = this.zoom();
+        return new Point(zoom.toBoard(here.x), zoom.toBoard(here.y));
+    }
+
+    /** Sizes the board, at its natural zoom, for a level of {@code width} x {@code height} cells. */
     public void recalculateBoard(int width, int height) {
         int scale = this.context.getBoard().scale();
         int realW = width * scale;
         int realH = height * scale;
-        // 210 = the info column's natural width, 93 = the tower-buttons panel's natural height
-        game.setSize(realW + 210 + scale, realH + 93 + scale);
         GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
