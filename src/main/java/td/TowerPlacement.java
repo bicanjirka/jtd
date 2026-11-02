@@ -134,7 +134,7 @@ public class TowerPlacement {
                         Tower tower = TowerFactory.createTower(type, this.gameWorld, cellX, cellY);
                         this.gameWorld.towers().add(tower);
                         cell.setTower(tower);
-                        cell.enable(false);
+                        cell.setBuildable(false);
                         selected = tower;
                         this.highlight = CellHighlight.select(cellX, cellY);
                         LOG.info("Tower placed: {} at ({},{}), credits left={}", type, cellX, cellY, this.gameWorld.economy().getCredits());

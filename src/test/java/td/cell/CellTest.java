@@ -8,13 +8,13 @@ import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CellNormalTest {
+class CellTest {
 
     private final GameWorld context = WorldFixtures.newWorld();
 
     @Test
     void startsBuildableAndEmpty() {
-        CellNormal cell = new CellNormal(0, 0);
+        Cell cell = new Cell(0, 0);
 
         assertThat(cell.buildable()).isTrue();
         assertThat(cell.hasTower()).isFalse();
@@ -23,7 +23,7 @@ class CellNormalTest {
 
     @Test
     void setTowerOccupiesTheCellAndMakesItUnbuildable() {
-        CellNormal cell = new CellNormal(0, 0);
+        Cell cell = new Cell(0, 0);
         Tower tower = TowerFactory.createTower(TowerFactory.Type.SNIPER, context, 0, 0);
 
         cell.setTower(tower);
@@ -35,7 +35,7 @@ class CellNormalTest {
 
     @Test
     void setTowerOnAnAlreadyOccupiedCellIsIgnored() {
-        CellNormal cell = new CellNormal(0, 0);
+        Cell cell = new Cell(0, 0);
         Tower first = TowerFactory.createTower(TowerFactory.Type.SNIPER, context, 0, 0);
         Tower second = TowerFactory.createTower(TowerFactory.Type.SPLASH, context, 0, 0);
 
@@ -47,7 +47,7 @@ class CellNormalTest {
 
     @Test
     void unSetTowerClearsTheCellAndMakesItBuildableAgain() {
-        CellNormal cell = new CellNormal(0, 0);
+        Cell cell = new Cell(0, 0);
         cell.setTower(TowerFactory.createTower(TowerFactory.Type.SNIPER, context, 0, 0));
 
         cell.unSetTower();
@@ -59,12 +59,12 @@ class CellNormalTest {
 
     @Test
     void enableTogglesBuildability() {
-        CellNormal cell = new CellNormal(0, 0);
+        Cell cell = new Cell(0, 0);
 
-        cell.enable(false);
+        cell.setBuildable(false);
         assertThat(cell.buildable()).isFalse();
 
-        cell.enable(true);
+        cell.setBuildable(true);
         assertThat(cell.buildable()).isTrue();
     }
 }
