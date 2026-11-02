@@ -3,8 +3,8 @@ package td.ui;
 import org.junit.jupiter.api.Test;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
+import td.wave.Path;
 import td.wave.PathColor;
-import td.wave.PathNormal;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
@@ -19,17 +19,17 @@ class PathMarkerFrameBuilderTest {
     private static final int SCALE = 32;
 
     // cell coordinates in, pixel cell centres out, as production path building does
-    private static PathNormal pathOf(int... xyPairs) {
+    private static Path pathOf(int... xyPairs) {
         List<Vec2> points = new ArrayList<>();
         for (int i = 0; i < xyPairs.length; i += 2) {
             int x = xyPairs[i];
             int y = xyPairs[i + 1];
             points.add(new Vec2(x * SCALE + (SCALE / 2), y * SCALE + (SCALE / 2)));
         }
-        return new PathNormal(points);
+        return new Path(points);
     }
 
-    private static PathNormal straightPath(int fromX, int toX) {
+    private static Path straightPath(int fromX, int toX) {
         return pathOf(fromX, 0, toX, 0);
     }
 
@@ -43,7 +43,7 @@ class PathMarkerFrameBuilderTest {
 
     @Test
     void aPathWithFewerThanTwoStepsYieldsNoMarkers() {
-        PathNormal singleStep = pathOf(0, 0);
+        Path singleStep = pathOf(0, 0);
 
         assertThat(PathMarkerFrameBuilder.build(singleStep, PathColor.DEFAULT, SCALE, 0.0)).isEmpty();
     }
@@ -69,7 +69,7 @@ class PathMarkerFrameBuilderTest {
     @Test
     void movingMarkersAdvanceByPaceTimesElapsedSecondsAndWrap() {
         // just short of two marker spacings: exactly one moving marker, starting at distance 0
-        PathNormal path = straightPath(0, 2);
+        Path path = straightPath(0, 2);
         List<PathMarkerDraw> atZero = moving(PathMarkerFrameBuilder.build(path, PathColor.DEFAULT, SCALE, 0.0));
         assertThat(atZero).hasSize(1);
         float startX = atZero.getFirst().x();
@@ -94,7 +94,7 @@ class PathMarkerFrameBuilderTest {
     @Test
     void facingMatchesTheSegmentDirectionOnBothSidesOfACorner() {
         // first segment points +x (facing 0 rad); second points +y (facing +90 deg)
-        PathNormal corner = pathOf(0, 0, 5, 0, 5, 5);
+        Path corner = pathOf(0, 0, 5, 0, 5, 5);
 
         List<Double> distinctFacings = PathMarkerFrameBuilder.build(corner, PathColor.DEFAULT, SCALE, 0.0).stream()
                 .map(PathMarkerDraw::facingRadians)
@@ -108,7 +108,7 @@ class PathMarkerFrameBuilderTest {
 
     @Test
     void supportsANonOrthogonalDiagonalPath() {
-        PathNormal diagonal = pathOf(0, 0, 3, 3);
+        Path diagonal = pathOf(0, 0, 3, 3);
 
         List<PathMarkerDraw> markers = PathMarkerFrameBuilder.build(diagonal, PathColor.DEFAULT, SCALE, 0.0);
 

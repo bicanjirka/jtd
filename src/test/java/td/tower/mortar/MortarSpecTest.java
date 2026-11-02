@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import td.fixtures.BoardFixtures;
 import td.tower.targeting.Viewpoint;
 import td.wave.Path;
-import td.wave.PathNormal;
 import td.wave.Vec2;
 
 import java.util.List;
@@ -59,7 +58,7 @@ class MortarSpecTest {
 
     @Test
     void pathLinePlacesPointsAlongTheNearestPathFromTheImpactBehindAndAhead() {
-        Path path = new PathNormal(List.of(new Vec2(0, 100),
+        Path path = new Path(List.of(new Vec2(0, 100),
                 new Vec2(500, 100)));
 
         List<Vec2> points = PathLine.along(List.of(path), 200, 130, new double[]{-50, 0, 80});
@@ -70,15 +69,15 @@ class MortarSpecTest {
 
     @Test
     void pathLineIsEmptyWithoutAPathOfAnyLength() {
-        assertThat(PathLine.along(List.of(new PathNormal(List.of())), 0, 0,
+        assertThat(PathLine.along(List.of(new Path(List.of())), 0, 0,
                 new double[]{10})).isEmpty();
     }
 
     @Test
     void pathLineChoosesTheNearestOfSeveralPaths() {
-        Path far = new PathNormal(List.of(new Vec2(0, 500),
+        Path far = new Path(List.of(new Vec2(0, 500),
                 new Vec2(500, 500)));
-        Path near = new PathNormal(List.of(new Vec2(0, 100),
+        Path near = new Path(List.of(new Vec2(0, 100),
                 new Vec2(500, 100)));
 
         List<Vec2> points = PathLine.along(List.of(far, near), 100, 120,

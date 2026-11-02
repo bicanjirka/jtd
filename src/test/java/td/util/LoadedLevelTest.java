@@ -5,8 +5,8 @@ import td.board.BoardGeometry;
 import td.cell.CellGrid;
 import td.enemy.EnemyCatalog;
 import td.fixtures.EnemyFixtures;
+import td.wave.Path;
 import td.wave.PathColor;
-import td.wave.PathNormal;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ class LoadedLevelTest {
         LoadedLevel level = new LoadedLevel(CellGrid.of(3, 3, 32), BoardGeometry.of(32, 3, 3),
                 mutable, EnemyCatalog.builtIn());
 
-        mutable.add(new PathRuntime(new PathNormal(List.of(new Vec2(0, 0))), List.of(), PathColor.DEFAULT));
+        mutable.add(new PathRuntime(new Path(List.of(new Vec2(0, 0))), List.of(), PathColor.DEFAULT));
 
         assertThat(level.pathCount()).isZero();
         assertThatThrownBy(() -> level.paths().add(null))
@@ -54,11 +54,11 @@ class LoadedLevelTest {
     @Test
     void replacingOnePartLeavesEveryOtherPartAlone() {
         List<PathRuntime> paths = List.of(
-                new PathRuntime(new PathNormal(List.of(new Vec2(0, 0))), List.of(), PathColor.DEFAULT));
+                new PathRuntime(new Path(List.of(new Vec2(0, 0))), List.of(), PathColor.DEFAULT));
         LoadedLevel level = new LoadedLevel(CellGrid.of(4, 4, 32), BoardGeometry.of(32, 4, 4),
                 paths, EnemyCatalog.builtIn());
 
-        LoadedLevel moved = level.withSinglePath(new PathNormal(List.of(new Vec2(9, 9))));
+        LoadedLevel moved = level.withSinglePath(new Path(List.of(new Vec2(9, 9))));
 
         assertThat(moved.cells()).isSameAs(level.cells());
         assertThat(moved.board()).isSameAs(level.board());

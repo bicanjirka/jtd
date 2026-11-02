@@ -1,8 +1,8 @@
 package td.fixtures;
 
 import td.level.LevelDefinition;
+import td.wave.Path;
 import td.wave.PathDefinition;
-import td.wave.PathNormal;
 import td.wave.Point;
 import td.wave.Vec2;
 import td.wave.WaveDefinition;
@@ -45,11 +45,11 @@ public final class LevelFixtures {
     }
 
     /** A straight pixel-space path along {@code y = scale/2} through the given cell columns. */
-    public static PathNormal straightPath(int scale, int... xCoords) {
+    public static Path straightPath(int scale, int... xCoords) {
         List<Vec2> points = new ArrayList<>();
         for (int x : xCoords) {
             points.add(new Vec2(x * scale + (scale / 2), scale / 2));
         }
-        return new PathNormal(points);
+        return new Path(points);
     }
 }

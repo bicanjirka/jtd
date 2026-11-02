@@ -42,7 +42,7 @@ import td.ui.render.RankBadge;
 import td.ui.render.StatusMarkerDraw;
 import td.ui.render.TraitMarkerDraw;
 import td.util.GameWorld;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 
 import java.util.List;
@@ -54,7 +54,7 @@ class EnemyFrameBuilderTest {
 
     private static GameWorld contextWithStraightPath() {
         GameWorld context = WorldFixtures.newWorldOnBoard(1, 1001, 1001);
-        context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(105, 5))));
+        context.setPath(new Path(List.of(new Vec2(5, 5), new Vec2(105, 5))));
         return context;
     }
 
@@ -154,7 +154,7 @@ class EnemyFrameBuilderTest {
     @Test
     void aMobThatFacesItsPathIsDrawnPointingTheWayItWalksAndAFixedOneIsNot() {
         GameWorld context = WorldFixtures.newWorldOnBoard(1, 1001, 1001);
-        context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(5, 105))));
+        context.setPath(new Path(List.of(new Vec2(5, 5), new Vec2(5, 105))));
         EnemyMob facing = EnemyFixtures.liveMob(context,
                 EnemyFixtures.simpleDefinition("facing").withMovement(new PathDirectionalMovement()));
         EnemyMob fixed = EnemyFixtures.plainMob(context, 50, 3);
@@ -215,7 +215,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyThatReachesThePathsEndFadesInPlaceInsteadOfWrappingToTheStart() {
         GameWorld context = WorldFixtures.newWorldOnBoard(1, 1001, 1001);
-        context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5))));
+        context.setPath(new Path(List.of(new Vec2(5, 5), new Vec2(15, 5))));
 
         EnemyMob enemy = EnemyFixtures.plainMob(context, 10, 3);
         int initialLives = context.economy().getLives();
@@ -331,7 +331,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEnemyThatJustDodgedYieldsAMissMarkBesideItAndNoCritSpark() {
         GameWorld context = WorldFixtures.newWorldOnBoard(() -> 0.0, 1, 1001, 1001);
-        context.setPath(new PathNormal(List.of(new Vec2(5, 5), new Vec2(105, 5))));
+        context.setPath(new Path(List.of(new Vec2(5, 5), new Vec2(105, 5))));
         EnemyMob nimble = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("nimble").withAgility(50f));
         nimble.takeHit(Damage.physical(10), AttackProfile.critChance(1f).asAimed());
         nimble.doTick(1); // captures the dodge
@@ -454,7 +454,7 @@ class EnemyFrameBuilderTest {
     @Test
     void cloakProgressIsValidOnTheExactTickAnAbilityFirstAppliesInvisibility() {
         GameWorld world = WorldFixtures.newWorldOnBoard(32, 1000, 1000);
-        world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
+        world.setPath(new Path(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
         EnemyMob ghost = world.getEnemyCatalog().spawn("ghost", world, 0, 100, 4, Rank.GRUNT);
         world.enemies().add(ghost);
 

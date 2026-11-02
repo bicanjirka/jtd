@@ -17,7 +17,7 @@ import td.projectile.Projectile;
 import td.projectile.ShellLook;
 import td.stat.StatModifiers;
 import td.util.GameWorld;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 import td.zone.Zone;
 import td.zone.ZoneKind;
@@ -501,7 +501,7 @@ class MortarTowerTest {
 
     /** A straight path along the row 3 cells below the tower, for bomblets to run along. */
     private void pathBelow(MortarTower tower) {
-        this.context.setPath(new PathNormal(List.of(new Vec2(0, tower.getY() + OUT), new Vec2(900, tower.getY() + OUT))));
+        this.context.setPath(new Path(List.of(new Vec2(0, tower.getY() + OUT), new Vec2(900, tower.getY() + OUT))));
     }
 
     @Test

@@ -30,7 +30,7 @@ class WaveTest {
     /** Horizontal, so a lateral offset lands purely on y. */
     private void setStraightHorizontalPath() {
         this.context.setBoard(BoardGeometry.of(32, 100, 100));
-        this.context.setPath(new PathNormal(List.of(new Vec2(0, 50), new Vec2(200, 50))));
+        this.context.setPath(new Path(List.of(new Vec2(0, 50), new Vec2(200, 50))));
     }
 
     @Test
@@ -234,7 +234,7 @@ class WaveTest {
     void aShapedMembersOffsetFromTheCentrelineStaysConstantThroughAnUnroundedCorner() {
         // a hard right-angle turn: facing is discontinuous at the corner
         this.context.setBoard(BoardGeometry.of(32, 500, 500));
-        this.context.setPath(new PathNormal(List.of(new Vec2(0, 100), new Vec2(300, 100), new Vec2(300, 400))));
+        this.context.setPath(new Path(List.of(new Vec2(0, 100), new Vec2(300, 100), new Vec2(300, 400))));
 
         EnemyMob member = wave("flank simple").spawn()[0];
         EnemyMob centerline = wave("simple").spawn()[0];
@@ -259,7 +259,7 @@ class WaveTest {
     void aLateralOffsetNearTheBoardEdgeIsClampedRatherThanLeavingTheBoard() {
         this.context.setBoard(BoardGeometry.of(32, 100, 100));
         // hugging the board's top edge, so an unclamped upward offset would go negative
-        this.context.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(200, 0))));
+        this.context.setPath(new Path(List.of(new Vec2(0, 0), new Vec2(200, 0))));
 
         EnemyMob[] flank = wave("flank simple").spawn();
 

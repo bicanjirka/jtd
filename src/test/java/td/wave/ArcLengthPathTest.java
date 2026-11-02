@@ -11,7 +11,7 @@ class ArcLengthPathTest {
 
     @Test
     void onlyTheWalkedStretchCountsAsPassingNearAPoint() {
-        ArcLengthPath path = ArcLengthPath.of(new PathNormal(List.of(new Vec2(0, 0), new Vec2(100, 0), new Vec2(100, 100))))
+        ArcLengthPath path = ArcLengthPath.of(new Path(List.of(new Vec2(0, 0), new Vec2(100, 0), new Vec2(100, 100))))
                 .orElseThrow();
 
         assertThat(path.passesWithin(30, 10, 15, 0, 100)).isTrue();
@@ -22,21 +22,21 @@ class ArcLengthPathTest {
 
     @Test
     void aPathWithFewerThanTwoPointsHasNoArcLength() {
-        PathNormal path = new PathNormal(List.of(new Vec2(5, 5)));
+        Path path = new Path(List.of(new Vec2(5, 5)));
 
         assertThat(ArcLengthPath.of(path)).isEmpty();
     }
 
     @Test
     void aPathWithZeroTotalLengthHasNoArcLength() {
-        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(5, 5)));
+        Path path = new Path(List.of(new Vec2(5, 5), new Vec2(5, 5)));
 
         assertThat(ArcLengthPath.of(path)).isEmpty();
     }
 
     @Test
     void totalLengthIsTheSumOfEuclideanSegmentLengths() {
-        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(8, 9)));
+        Path path = new Path(List.of(new Vec2(5, 5), new Vec2(8, 9)));
 
         ArcLengthPath arcLengthPath = ArcLengthPath.of(path).orElseThrow();
 
@@ -45,7 +45,7 @@ class ArcLengthPathTest {
 
     @Test
     void poseAtZeroIsTheFirstPointFacingTheFirstSegment() {
-        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5)));
+        Path path = new Path(List.of(new Vec2(5, 5), new Vec2(15, 5)));
 
         PathPose pose = ArcLengthPath.of(path).orElseThrow().poseAt(0);
 
@@ -55,7 +55,7 @@ class ArcLengthPathTest {
 
     @Test
     void poseAtInterpolatesWithinTheContainingSegment() {
-        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5), new Vec2(15, 15)));
+        Path path = new Path(List.of(new Vec2(5, 5), new Vec2(15, 5), new Vec2(15, 15)));
 
         ArcLengthPath arcLengthPath = ArcLengthPath.of(path).orElseThrow();
 
@@ -66,7 +66,7 @@ class ArcLengthPathTest {
 
     @Test
     void poseAtClampsPastTheEndToTheFinalSegment() {
-        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5)));
+        Path path = new Path(List.of(new Vec2(5, 5), new Vec2(15, 5)));
 
         PathPose pose = ArcLengthPath.of(path).orElseThrow().poseAt(1000);
 

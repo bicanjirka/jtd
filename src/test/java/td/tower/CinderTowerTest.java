@@ -17,7 +17,7 @@ import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
 import td.util.GameWorld;
 import td.util.RandomSource;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 import td.zone.ZoneKind;
 
@@ -489,7 +489,7 @@ class CinderTowerTest {
 
     /** A real enemy standing where the path starts, which nothing ticks, so its pool never decays. */
     private EnemyMob realEnemyAt(double x, double y) {
-        this.context.setPath(new PathNormal(List.of(new Vec2(x, y), new Vec2(x + 900, y))));
+        this.context.setPath(new Path(List.of(new Vec2(x, y), new Vec2(x + 900, y))));
         return EnemyFixtures.plainMob(this.context, 1_000_000, 3);
     }
 

@@ -19,6 +19,6 @@ public final class PathBuilder {
         for (Point cell : corners) {
             pixelCenters.add(new Vec2(cell.x() * scale + (scale / 2), cell.y() * scale + (scale / 2)));
         }
-        return new PathNormal(smoothing.smooth(pixelCenters));
+        return new Path(smoothing.smooth(pixelCenters));
     }
 }

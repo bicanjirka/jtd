@@ -10,7 +10,7 @@ Levels are authored in cells but enemies walk curves. Movement and the path mark
 ## Decision
 - `Point` (integer cells) is used only for authoring. `Vec2` (pixels) is the only thing a `Path`
   stores. `PathBuilder` is the one conversion: cell centres, then the level's `PathSmoothing`, then
-  a `PathNormal`. Consecutive corners may be any distance and angle apart.
+  a `Path`. Consecutive corners may be any distance and angle apart.
 - `PathSmoothing` is a per-level strategy. `none()` is the identity. `AbstractCornerSmoothing`
   walks the interior corners and pulls back a fraction of the shorter leg, capped so that two
   pullbacks never cross; a subclass supplies only one corner's curve (an exact arc, or a cheaper

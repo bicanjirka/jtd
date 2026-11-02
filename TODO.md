@@ -301,7 +301,7 @@ The first eight are small and each a commit of its own; the rest are larger or a
   `jPanel_boardMouseMoved`, `formKeyTyped`, `formKeyPressed` in `td.TowerDefense`, and `jButton_sell`,
   `jButton_sellActionPerformed` in `td.ui.PanelTowerInfo`. Name them for their role (`boardPanel`,
   `onBoardClicked`, `sellButton`).
-- `PathNormal`: the only implementation of the one-method `Path`. Collapse them into one record.
+
 - **Approach:** the IDE's `rename_refactoring`, one rename per commit. Pure renames, no behaviour.
 
 ### `TowerDefense` and `PanelDev` are large

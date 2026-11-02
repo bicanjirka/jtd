@@ -379,7 +379,7 @@ public final class TowerLab {
             return List.of();
         }
         Vec2 from = survey.centre(cell);
-        List<Path> paths = IntStream.range(0, survey.pathCount()).<Path>mapToObj(i -> () -> survey.samples(i)).toList();
+        List<Path> paths = IntStream.range(0, survey.pathCount()).mapToObj(i -> new Path(survey.samples(i))).toList();
         Set<Point> taken = new LinkedHashSet<>(List.of(cell));
         box.forEach(placement -> taken.add(placement.cell()));
         return survey.buildable().stream().filter(other -> !taken.contains(other))

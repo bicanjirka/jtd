@@ -16,7 +16,7 @@ import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.pulse.FieldMode;
 import td.util.GameWorld;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
@@ -548,7 +548,7 @@ class PulseTowerTest {
 
     @Test
     void aLeyLineLinksToTheObeliskWhoseBeamCrossesThePathAndGivesAnEnemyOnItBothFieldsRulesButNoDamage() {
-        this.board.setPath(new PathNormal(List.of(new Vec2(0, 176), new Vec2(640, 176))));
+        this.board.setPath(new Path(List.of(new Vec2(0, 176), new Vec2(640, 176))));
         PulseTower caster = this.pulseWith("Frailty", "Ley Line");
         PulseTower across = this.pulseAt(3, 7, "Sight");
         PulseTower beside = this.pulseAt(7, 3);
@@ -571,7 +571,7 @@ class PulseTowerTest {
 
     @Test
     void aPinnedLeyLineLinksToTheChosenObeliskUntilPinnedAgain() {
-        this.board.setPath(new PathNormal(List.of(new Vec2(0, 176), new Vec2(640, 176))));
+        this.board.setPath(new Path(List.of(new Vec2(0, 176), new Vec2(640, 176))));
         PulseTower caster = this.pulseWith("Ley Line");
         PulseTower across = this.pulseAt(3, 7);
         PulseTower beside = this.pulseAt(7, 3);

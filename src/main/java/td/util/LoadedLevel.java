@@ -6,7 +6,6 @@ import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
 import td.wave.Path;
 import td.wave.PathColor;
-import td.wave.PathNormal;
 import td.wave.Wave;
 
 import java.util.Comparator;
@@ -31,7 +30,7 @@ public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime>
     public static LoadedLevel none() {
         // One degenerate path rather than none, so pathAt(0) resolves before any level loads.
         return new LoadedLevel(CellGrid.empty(), BoardGeometry.empty(),
-                List.of(new PathRuntime(new PathNormal(List.of()), List.of(), PathColor.DEFAULT)), EnemyCatalog.builtIn());
+                List.of(new PathRuntime(new Path(List.of()), List.of(), PathColor.DEFAULT)), EnemyCatalog.builtIn());
     }
 
     public boolean isLoaded() {
