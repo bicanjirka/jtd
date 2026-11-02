@@ -4,6 +4,7 @@ import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -20,6 +21,13 @@ record OrCondition(UpgradeCondition left, UpgradeCondition right) implements Upg
         Set<String> left = this.left.requiredNodes();
         Set<String> right = this.right.requiredNodes();
         return left.size() <= right.size() ? left : right;
+    }
+
+    @Override
+    public Set<String> mentionedNodes() {
+        Set<String> both = new HashSet<>(this.left.mentionedNodes());
+        both.addAll(this.right.mentionedNodes());
+        return both;
     }
 
     /** A side that lacks no node yet isn't met is one no purchase meets, so the other side is taken. */

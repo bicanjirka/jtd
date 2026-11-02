@@ -23,6 +23,13 @@ record AndCondition(UpgradeCondition left, UpgradeCondition right) implements Up
     }
 
     @Override
+    public Set<String> mentionedNodes() {
+        Set<String> both = new HashSet<>(this.left.mentionedNodes());
+        both.addAll(this.right.mentionedNodes());
+        return both;
+    }
+
+    @Override
     public Set<String> missingNodes(Tower tower, UpgradeState owned, GameWorld context) {
         Set<String> both = new HashSet<>(this.left.missingNodes(tower, owned, context));
         both.addAll(this.right.missingNodes(tower, owned, context));
