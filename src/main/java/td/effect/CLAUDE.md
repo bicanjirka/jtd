@@ -17,7 +17,7 @@
   (largest remainder), so every tower gets credit for its share. Damage lands in a pulse a few times
   a second carrying the whole window's worth; the pool still decays every tick, and pulses ride the
   stack clock, so `STACK_INTERVAL_TICKS` must stay a multiple of the pulse interval. A top-up adds
-  `L0 * (1 - fuel / lmax)`. A pool ends when a tick would round to zero. The two kinds are separate
+  `L0 * (1 - fuel / lmax)`, and nothing to a pool over its cap (the cap shrinks when Ash ends). A pool ends when a tick would round to zero. The two kinds are separate
   pools, so they stack with each other. A pool earns a stack of its lasting mark (`SCORCHED` for
   burn, `SICKENED` for poison, `EffectInteractions.earnedBy`) when it starts and another every
   `STACK_INTERVAL_TICKS` while it lasts, up to their cap; a top-up earns none.
