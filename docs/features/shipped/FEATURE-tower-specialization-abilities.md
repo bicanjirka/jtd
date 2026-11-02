@@ -29,7 +29,7 @@ up to double. Twin Array III sweeps a second beam half a turn opposite the first
 
 ## Summary
 
-`docs/features/FEATURE-tower-upgrade-trees.md` proposes the three-slot (`base`/`head`/`special`)
+`docs/features/shipped/FEATURE-tower-upgrade-trees.md` proposes the three-slot (`base`/`head`/`special`)
 upgrade *system* — nodes, slots, gating, prerequisites — but deliberately doesn't design any
 tower's actual node content. This document is that content: a full `base`/`head`/`special`
 catalogue for all 9 towers, worked out collaboratively and recorded here so it survives past the
@@ -75,7 +75,7 @@ whichever ones need something new.
   below (Sniper's Fifth Shot and Momentum, Sonar's Mark on Sweep) describe their own multiplier
   (250%, 500%) or their own guaranteed-crit trigger; neither capability exists yet. See "New
   primitives," #3.
-- `docs/features/FEATURE-tower-upgrade-trees.md` is itself still **proposed, not yet built**.
+- `docs/features/shipped/FEATURE-tower-upgrade-trees.md` is itself still **proposed, not yet built**.
   Its "`head`/`special` are exclusive, pick-one-path-forever slots" decision, and its `base` slot
   allowing both of its own nodes to be bought rather than being exclusive, is what every gate and
   exclusivity assumption below is built against.

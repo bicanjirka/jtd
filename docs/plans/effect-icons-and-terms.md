@@ -1,4 +1,4 @@
-# Plan: Effect icons and terms (`docs/features/FEATURE-effect-icons-and-terms.md`)
+# Plan: Effect icons and terms (`docs/features/shipped/FEATURE-effect-icons-and-terms.md`)
 
 **Status:** planned 2026-10-20 and 2026-10-21, reviewed 2026-10-21 (D19 to D21, phase 12 required). Implemented through phase 12.
 

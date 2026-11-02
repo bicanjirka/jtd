@@ -100,7 +100,7 @@
 - Slots `CORE` and `BASE` (always `StandardBaseSlot.nodes`: Attune -> Awaken -> Transcendent, and the
   Range line), `HEAD` (two chains, plus an extra node that excludes nothing) and `SPECIAL` (one
   set of up to three, or one set per chain). Core nodes keep their `base.` ids, which saves store. Content per tower comes from
-  `docs/features/FEATURE-tower-specialization-abilities.md` and the tower-rework feature requests.
+  `docs/features/shipped/FEATURE-tower-specialization-abilities.md` and the tower-rework feature requests.
 - Build a node at its step: `UpgradeTier.HEAD_2.node(id, name, PRICE)` sets its slot, its price
   (a multiple of the list price), its XP (the gate table) and the Core node that opens it;
   `after(previous)` adds its line. Then `withModifiers`/`withGate`. `requires`

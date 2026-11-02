@@ -6,7 +6,7 @@
 ## Context
 A fixed loadout with unlimited credits measured nothing a player meets. Lives lost didn't move when
 a burn doubled, and purchase rankings flipped with the budget. The full design is in
-`docs/features/FEATURE-playtesting-and-balance-tooling.md`.
+`docs/features/shipped/FEATURE-playtesting-and-balance-tooling.md`.
 
 ## Decision
 `td.balance` plays the real game through `GameEngine` with `GameHost.noOp()`:
