@@ -277,6 +277,160 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
   ladder ending in 0, and no other kind has one. The numbers move, they don't change, so no balance
   check.
 
+## Code smells awaiting the owner's evaluation
+
+**Evaluate each entry before fixing it: the owner decides whether it is worth a change at all, and
+how.** None of these is a known defect, and none changes behaviour when fixed. They come from a
+code-smell sweep on 2026-11-02 against Fowler's catalogue (Refactoring, 2nd ed., chapter 3), Wake's
+additions (dead code, magic numbers), the Open Catalog of Test Smells
+(<https://test-smell-catalog.readthedocs.io/>) and concurrency test smells. Method length, parameter
+count, nesting, duplicated blocks (six or more identical lines) and test shape were measured by
+script over `src/main/java` and all 1,826 tests; every hit was read, and false positives (builder
+chains read as nesting, tick-driving loops in tests) were dropped.
+
+Clean on the sweep, so not listed: no swallowed or over-broad catches, no mutable statics, no
+`instanceof`, no TODO comments, little duplication; `null` only as a local "none found yet", a
+private cache, or the documented `td.ui` frame-builder exception. Already tracked elsewhere in this
+file, so not repeated: `Palette`'s repeated switches and `Java2DFrameRenderer.colorFor` (ADR 0018),
+the wide `Tower`/`HitReceiver` interfaces, Visitor over sealed types, the `td.util`/`td.wave` splits.
+
+The first eight are small and each a commit of its own; the rest are larger or a matter of taste.
+
+### A tautological test of tower prices
+
+`TowerFactoryTest.enumPriceMatchesEachTowersStaticPrice` asserts `TowerFactory.Type.SNIPER.price`
+equals `SniperTower.PRICE` for every tower, but the enum is built from those very constants
+(`SNIPER(SniperTower.PRICE, 'q', "Sniper")`), so it asserts X == X. It also asserts content, which the
+test rules forbid.
+
+- **Where:** `src/test/java/td/tower/TowerFactoryTest.java`.
+- **Approach:** delete the test. The enum's Javadoc ("the single source of both") is then slightly off:
+  the price's source is the tower class; reword it.
+
+### Every tower with mechanics wires the same two hooks by hand
+
+Eight leaves (`SniperTower`, `SplashTower`, `SonarTower`, `PulseTower`, `MortarTower`, `SeekerTower`,
+`CinderTower`, `AuraTower`) each hold an `OwnedMechanics<XMechanic>` field, override
+`mechanicCatalogue()`, and override `onUpgradeBought(node)` to call `mechanics.add(node)` and
+`onUpgradesRemoved(removed)` to call `mechanics.remove(removed)`; neither hook does anything else in any
+tower. A new tower must remember both hooks, or its mechanics silently never arrive or never leave (a
+duty a caller must remember, `docs/DESIGN.md` section 5).
+
+- **Where:** the eight leaves above; `AbstractTower.own`, `AbstractTower.downgrade`, the two hooks;
+  `td.tower.upgrade.OwnedMechanics`; `tower/CLAUDE.md` ("A node that adds a mechanic brings...").
+- **Approach:** one leaf override, `protected OwnedMechanics<? extends Mechanic> ownedMechanics()`
+  (default: an empty one), which `AbstractTower` calls in `own` and `downgrade` itself; derive
+  `mechanicCatalogue()` from it so a leaf overrides one method instead of three. Then drop the hooks if
+  nothing else overrides them. Leaves keep their typed field for their own `spec(...)` folds. Mind that
+  `downgrade` runs on the EDT and `OwnedMechanics` publishes through a `volatile`; keep that.
+
+### An interrupted game loop would spin
+
+`GameLoop.sleepQuietly` catches `InterruptedException`, restores the interrupt flag and returns; the loop
+carries on, and every later `Thread.sleep` then throws at once, so an interrupted loop busy-spins at
+100% CPU until stopped. Nothing interrupts the loop today, so it is latent.
+
+- **Where:** `td.GameLoop.sleepQuietly` and `run`.
+- **Approach:** treat an interrupt as a stop: leave `run`'s loop (clear `running` for this thread)
+  rather than restoring the flag and going on. A test can interrupt a started loop and assert its
+  thread ends.
+
+### A clock-scale method that ignores its argument
+
+`GameLoop.animationTimeScale(double multiplier)` always returns `1.0`; its Javadoc offers returning
+`multiplier` instead as a future choice. It is speculative generality, and the parameter is unused.
+
+- **Where:** `td.GameLoop.animationTimeScale`, its call in `advance`, `animationSeconds()`'s Javadoc.
+- **Approach:** fold it away: `animationSeconds += elapsedNanos / 1e9`, with a one-line comment that the
+  cosmetic clock ignores game speed on purpose. `GameLoopTest.animationSecondsDoesNotRaceAheadAtSuperFastSpeed`
+  pins the behaviour.
+
+### Placement mode is three fields that must agree, one of them null
+
+`TowerPlacement` holds `placingTower` (boolean), `placingTowerType` (set to `null` by `reset`) and
+`placingTowerRange`, which only mean something together. That is a temporary field and a null for
+absence (root `CLAUDE.md`: absence is a value or `Optional`, never `null`), against `docs/DESIGN.md`'s
+"one state, one value".
+
+- **Where:** `td.TowerPlacement` (`start`, `cancel`, `reset`, `highlightCell`, `mouseClicked`,
+  `isPlacing`).
+- **Approach:** a private record `Placing(TowerFactory.Type type, float range)` held as
+  `Optional<Placing>`; `isPlacing()` is `isPresent()`. The class is EDT-confined, so no publication
+  change. `TowerPlacementTest` and `GameEngineTest` cover the behaviour.
+
+### Selling and clearing a tower repeat one block
+
+`TowerRoster.sell` and `TowerRoster.clear` both look up the board, compute the cell, call
+`host.clearCell`, `doCleanup` and remove the tower, line for line.
+
+- **Where:** `td.tower.TowerRoster`.
+- **Approach:** one private method that takes a tower off the board; `sell` adds the stats recompute and
+  the refund, `clear` loops. Note `clear` reads the board inside its loop, `sell` once; either is fine.
+
+### Two copies of the signed angle wrap
+
+`TurretAim.normalizeRadians` (public) and `SonarSweep.normalizeSigned` (private) are the same code,
+wrapping to `[-PI, PI)`. `SonarSweep` also has its own `normalizeToCircle` (`[0, 2PI)`).
+
+- **Where:** `td.tower.TurretAim`, `td.tower.sonar.SonarSweep`.
+- **Approach:** have `SonarSweep` call `TurretAim.normalizeRadians` (`td.tower.sonar` already imports
+  `td.tower` types, e.g. in `PingMechanic`, so this adds no new dependency). `tower/CLAUDE.md` says
+  `InWedgeTargetQuery` is deliberately not built on `SonarSweep`; sharing a maths helper doesn't touch
+  that.
+
+### A test whose assertion is hidden in a throwing fake
+
+`HitResolutionTest.anAttackerWithoutCritChanceNeverDrawsFromTheRandomSource` has no assertion: it passes
+because its random source throws if drawn from. Correct, but it reads as a test that checks nothing.
+
+- **Where:** `src/test/java/td/enemy/HitResolutionTest.java`.
+- **Approach:** wrap the call in `assertThatCode(...).doesNotThrowAnyException()`, or have the fake count
+  draws and assert zero.
+
+### Names that mislead or say nothing
+
+- `AbstractTower.getRange()` returns the *base* range in cells while `getRangeReal()` returns the current
+  range in pixels; a reader takes `getRange()` for the current one. Rename to `baseRange()` (or similar).
+- `Cell.enable(boolean b)`: a flag argument with a nameless parameter; `cell.enable(false)` reads poorly.
+  Consider `setBuildable(boolean buildable)`, matching the `buildable()` query.
+- GUI-builder leftovers: `jPanel_board`, `jPanel_game`, `jPanel_boardMouseClicked`,
+  `jPanel_boardMouseMoved`, `formKeyTyped`, `formKeyPressed` in `td.TowerDefense`, and `jButton_sell`,
+  `jButton_sellActionPerformed` in `td.ui.PanelTowerInfo`. Name them for their role (`boardPanel`,
+  `onBoardClicked`, `sellButton`).
+- `CellNormal` and `PathNormal`: the only implementations of `Cell` and `Path`. "Normal" contrasts with
+  nothing and puts the role noun first, against the naming rule. `Cell` stays an interface by decision
+  (see "`HitReceiver` and `Cell` are wide interfaces too"); at most rename the classes.
+- **Approach:** the IDE's `rename_refactoring`, one rename per commit. Pure renames, no behaviour.
+
+### `TowerDefense` and `PanelDev` are large
+
+`TowerDefense` (about 1,000 lines) mixes the frame and its layout, the level lifecycle
+(`stopLoopThen`, `installLevel`, `showMenu`), the dev panel's save and load, the render pulse, and board
+input. `PanelDev.initComponents` is about 180 lines and `TowerDefense.initComponents` about 100.
+
+- **Where:** `td.TowerDefense`, `td.ui.PanelDev`.
+- **Approach:** only if a change there gets hard. Seams that already exist: save/load and the dev wiring
+  could move to a small dev-session class; `PanelDev.initComponents` could build each of its rows in its
+  own method. Swing wiring has no tests, so each step needs a `run-jtd` pass.
+
+### One test checks four behaviours
+
+`EnemyCatalogTest.theRankAwareOverloadCanSetHealthAndStatsCompletelyPersistAddAndReplaceTraitsPerRank`
+asserts ten things across four behaviours, as its name lists (eager test / assertion roulette: a failure
+says little about which behaviour broke).
+
+- **Where:** `src/test/java/td/enemy/EnemyCatalogTest.java`.
+- **Approach:** split into one test per behaviour, sharing the fixture through a helper.
+
+### Mixed accessor styles
+
+Towers and enemies use `getX()`, `getHealth()`, `getBounty()`, but also `id()`, `spirit()`,
+`entryOrdinal()`; zones and records use `x()`, `radius()`. Inconsistent, but renaming touches most
+packages and every test.
+
+- **Approach:** probably leave. If ever done, only with a decision on one style recorded first, and
+  never as a drive-by.
+
 ## Balance tools
 
 ### What the balance tools cannot see yet
