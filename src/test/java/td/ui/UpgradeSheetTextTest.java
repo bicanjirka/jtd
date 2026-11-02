@@ -1,14 +1,14 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.effect.EffectKind;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.term.TermText;
 import td.tower.NodeWords;
-import td.tower.Tower;
-import td.tower.TowerFactory;
 import td.tower.TowerModifiers;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.PurposeCondition;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradePath;
@@ -93,16 +93,61 @@ class UpgradeSheetTextTest {
 
     @Test
     void aNodesSentencesFollowItsStatRows() {
-        Tower sniper = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.world, 3, 3);
-        UpgradeNode executioner = sniper.upgradeTree().nodes().stream()
-                .filter(node -> node.displayName().equals("Executioner")).findFirst().orElseThrow();
+        FakeTower describing = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(RANGE))
+                .describing(List.of(TermText.of("first"), TermText.of("second")));
 
-        InfoSheet sheet = UpgradeSheetText.hover(UpgradeOffer.of(executioner, sniper, this.world));
+        InfoSheet sheet = UpgradeSheetText.hover(this.offer(describing, RANGE));
 
         List<SheetLine> rows = sheet.lines().subList(sheet.lines().indexOf(new SheetLine.Gap()) + 1, sheet.lines().size());
-        NodeWords words = sniper.wordsOf(executioner);
-        assertThat(rows).hasSize(words.stats().size() + words.sentences().size() + 1);
-        assertThat(rows.getLast()).isEqualTo(SheetLine.Sentence.of(words.sentences().getLast().asSentence()));
+        NodeWords words = describing.wordsOf(RANGE);
+        assertThat(rows).hasSize(words.stats().size() + 2);
+        assertThat(rows.subList(words.stats().size(), rows.size())).containsExactly(
+                SheetLine.Sentence.of(TermText.of("first").asSentence()),
+                SheetLine.Sentence.of(TermText.of("second").asSentence()));
+    }
+
+    @Test
+    void aNodeSentencesMentionsAreDefinedBelowThemInOrder() {
+        FakeTower describing = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(RANGE))
+                .describing(List.of(TermText.of("brings ").plus(EffectKind.CHILL), TermText.of(EffectKind.BURN)));
+
+        List<SheetLine> lines = UpgradeSheetText.hover(this.offer(describing, RANGE)).lines();
+
+        assertThat(lines.subList(lines.lastIndexOf(new SheetLine.Divider()) + 1, lines.size())).containsExactly(
+                definition(TermText.of(EffectKind.CHILL), EffectKind.CHILL.describe()),
+                definition(TermText.of(EffectKind.BURN), EffectKind.BURN.describe()));
+    }
+
+    @Test
+    void aRepeatedMentionIsDefinedOnceButADifferentDetailIsDefinedAgain() {
+        TermText detail = TermText.of("only here");
+        FakeTower describing = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(RANGE))
+                .describing(List.of(TermText.of(EffectKind.CHILL), TermText.of("again ").plus(EffectKind.CHILL),
+                        TermText.of(EffectKind.CHILL, detail)));
+
+        List<SheetLine> lines = UpgradeSheetText.hover(this.offer(describing, RANGE)).lines();
+
+        assertThat(lines.subList(lines.lastIndexOf(new SheetLine.Divider()) + 1, lines.size())).containsExactly(
+                definition(TermText.of(EffectKind.CHILL), EffectKind.CHILL.describe()),
+                definition(TermText.of(EffectKind.CHILL, detail), detail));
+    }
+
+    @Test
+    void aMentionOnlyInTheGateOrInsideADefinitionGetsNoDefinition() {
+        UpgradeNode gated = UpgradeNode.of("gated", UpgradeSlot.BASE, "Gated", 10)
+                .withGate(new PurposeCondition(TermText.of("shots with ").plus(EffectKind.POISON), 5));
+        TermText detail = TermText.of("as ").plus(EffectKind.BURN);
+        FakeTower describing = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(gated))
+                .describing(List.of(TermText.of(EffectKind.CHILL, detail)));
+
+        List<SheetLine> lines = UpgradeSheetText.hover(this.offer(describing, gated)).lines();
+
+        assertThat(lines.subList(lines.lastIndexOf(new SheetLine.Divider()) + 1, lines.size()))
+                .containsExactly(definition(TermText.of(EffectKind.CHILL, detail), detail));
+    }
+
+    private static SheetLine definition(TermText mention, TermText meaning) {
+        return new SheetLine.Prose(mention.plus(" — ").plus(meaning.asSentence()));
     }
 
     @Test

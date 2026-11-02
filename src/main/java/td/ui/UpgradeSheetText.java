@@ -83,7 +83,26 @@ final class UpgradeSheetText {
         offer.addsTo().ifPresent(first -> lines.add(SheetLine.Sentence.of(TermText.of("Adds to " + first + ":"))));
         offer.words().stats().forEach(row -> lines.add(Row.plain(Glyph.DOT, row.label(), row.value())));
         offer.words().sentences().forEach(text -> lines.add(SheetLine.Sentence.of(text.asSentence())));
+        List<SheetLine> definitions = definitions(offer.words().sentences());
+        if (!definitions.isEmpty()) {
+            lines.add(new SheetLine.Divider());
+            lines.addAll(definitions);
+        }
         return lines;
+    }
+
+    /**
+     * What each term the sentences mention means there, in the order they first name it: a node's sentence often
+     * only points at a term, and the term is what the player is buying. A mention repeated with the same meaning is
+     * defined once; the terms a definition mentions are left to their own hover.
+     */
+    private static List<SheetLine> definitions(List<TermText> sentences) {
+        return sentences.stream().flatMap(text -> text.spans().stream())
+                .filter(TermText.Mention.class::isInstance).map(TermText.Mention.class::cast)
+                .distinct()
+                .<SheetLine>map(mention -> new SheetLine.Prose(new TermText(List.of(mention)).plus(" — ")
+                        .plus(mention.meaning().asSentence())))
+                .toList();
     }
 
     /** What the downgrade confirmation lists: the nodes going and their prices, the refund, what reopens. */

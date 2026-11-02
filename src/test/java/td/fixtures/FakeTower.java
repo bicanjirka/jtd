@@ -2,7 +2,9 @@ package td.fixtures;
 
 import td.enemy.EnemyMob;
 import td.stat.StatModifiers;
+import td.term.TermText;
 import td.tower.AbstractTower;
+import td.tower.NodeWords;
 import td.tower.Tower;
 import td.tower.TowerBaseStats;
 import td.tower.TowerFactory;
@@ -10,10 +12,12 @@ import td.tower.TowerStat;
 import td.tower.TowerVisitor;
 import td.tower.proc.HitKind;
 import td.tower.proc.Proc;
+import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +32,7 @@ public final class FakeTower extends AbstractTower {
     private StatModifiers<TowerStat> given = StatModifiers.none();
     private int recalculations;
     private List<Proc> baseProcs = List.of();
+    private List<TermText> mechanicSentences = List.of();
 
     private FakeTower(GameWorld context, int x, int y, UpgradeTree tree, Optional<UpgradeState> ownedUpgrades) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(10, 3f, 20), context, x, y);
@@ -78,6 +83,20 @@ public final class FakeTower extends AbstractTower {
     @Override
     protected List<Proc> baseProcs() {
         return this.baseProcs;
+    }
+
+    /** This tower, every node of which now ends its words with {@code sentences}, as a mechanic's would. */
+    public FakeTower describing(List<TermText> sentences) {
+        this.mechanicSentences = List.copyOf(sentences);
+        return this;
+    }
+
+    @Override
+    public NodeWords wordsOf(UpgradeNode node) {
+        NodeWords words = super.wordsOf(node);
+        List<TermText> sentences = new ArrayList<>(words.sentences());
+        sentences.addAll(this.mechanicSentences);
+        return NodeWords.of(words.name(), words.stats(), sentences);
     }
 
     /** How many times {@link #recalculateStats()} has run. */
