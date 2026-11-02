@@ -335,17 +335,6 @@ absence (root `CLAUDE.md`: absence is a value or `Optional`, never `null`), agai
 - **Approach:** one private method that takes a tower off the board; `sell` adds the stats recompute and
   the refund, `clear` loops. Note `clear` reads the board inside its loop, `sell` once; either is fine.
 
-### Two copies of the signed angle wrap
-
-`TurretAim.normalizeRadians` (public) and `SonarSweep.normalizeSigned` (private) are the same code,
-wrapping to `[-PI, PI)`. `SonarSweep` also has its own `normalizeToCircle` (`[0, 2PI)`).
-
-- **Where:** `td.tower.TurretAim`, `td.tower.sonar.SonarSweep`.
-- **Approach:** have `SonarSweep` call `TurretAim.normalizeRadians` (`td.tower.sonar` already imports
-  `td.tower` types, e.g. in `PingMechanic`, so this adds no new dependency). `tower/CLAUDE.md` says
-  `InWedgeTargetQuery` is deliberately not built on `SonarSweep`; sharing a maths helper doesn't touch
-  that.
-
 ### Names that mislead or say nothing
 
 - `AbstractTower.getRange()` returns the *base* range in cells while `getRangeReal()` returns the current
