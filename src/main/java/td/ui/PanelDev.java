@@ -446,6 +446,17 @@ public class PanelDev extends JPanel {
         new FieldCompleter(this.script,
                 (text, caret) -> this.dev == null ? Result.none() : this.dev.suggestWaveScript(text, caret));
 
+        this.addEconomySection();
+        this.addLevelSection();
+        this.addSpeedSection();
+        this.addSpawnSection();
+        this.addSelectedSection();
+        this.addBoardSection();
+
+        this.refresh();
+    }
+
+    private void addEconomySection() {
         HudButton setCredits = button("Set", this::setCredits);
         HudButton setLives = button("Set", this::setLives);
         HudToggleButton infiniteLives = toggle("∞ Lives");
@@ -457,8 +468,17 @@ public class PanelDev extends JPanel {
         this.section(0, "Economy", row(label("Credits"), this.credits, setCredits, gap(),
                 label("Lives"), this.lives, setLives, gap(), infiniteLives, freeBuild, ignoreGates));
 
+        this.submitOnEnter(this.credits, setCredits, this::setCredits);
+        this.submitOnEnter(this.lives, setLives, this::setLives);
+        this.bind("Economy", alt(KeyEvent.VK_C), "credits", this.credits);
+        this.bind("Economy", alt(KeyEvent.VK_L), "lives", this.lives);
+        this.bind("Economy", alt(KeyEvent.VK_I), "infinite lives", infiniteLives);
+        this.bind("Economy", alt(KeyEvent.VK_B), "free build", freeBuild);
+        this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates);
+    }
+
+    private void addLevelSection() {
         HudButton skip = button("Skip wave", () -> this.onSkipWave.run());
-        HudButton step = button("Step", () -> this.onStep.run());
         HudButton restart = button("Restart", () -> this.onRestart.run());
         HudButton killAll = button("Kill all", () -> this.dev.killAll());
         HudButton clearAll = button("Clear all", () -> this.dev.clearAll());
@@ -470,6 +490,20 @@ public class PanelDev extends JPanel {
                 killAll, clearAll, gap(), label("Health %"), this.enemyHealth, setHealth,
                 gap(), save, load, gap(), restart));
 
+        this.submitOnEnter(this.jumpTo, go, this::jump);
+        this.submitOnEnter(this.enemyHealth, setHealth, this::setEnemyHealth);
+        this.bind("Level", alt(KeyEvent.VK_N), "skip wave", skip);
+        this.bind("Level", altShift(KeyEvent.VK_R), "restart level", restart);
+        this.bind("Level", alt(KeyEvent.VK_J), "jump to wave", this.jumpTo);
+        this.bind("Level", alt(KeyEvent.VK_K), "kill all", killAll);
+        this.bind("Level", altShift(KeyEvent.VK_K), "clear all", clearAll);
+        this.bind("Level", alt(KeyEvent.VK_E), "enemy health %", this.enemyHealth);
+        this.bind("Level", alt(KeyEvent.VK_V), "save the game between waves", save);
+        this.bind("Level", alt(KeyEvent.VK_O), "load the saved game", load);
+    }
+
+    private void addSpeedSection() {
+        HudButton step = button("Step", () -> this.onStep.run());
         HudButton slowerByFive = button("-5", () -> this.onNudgeSpeed.accept(-5));
         HudButton slower = button("-1", () -> this.onNudgeSpeed.accept(-1));
         HudButton faster = button("+1", () -> this.onNudgeSpeed.accept(1));
@@ -480,16 +514,20 @@ public class PanelDev extends JPanel {
         this.speed.setHorizontalAlignment(SwingConstants.CENTER);
         this.section(2, "Speed", row(step, gap(), slowerByFive, slower, this.speed, faster, fasterByFive));
 
+        this.bind("Speed", alt(KeyEvent.VK_T), "step one tick", step);
+        this.bind("Speed", altShift(KeyEvent.VK_COMMA), "5 ticks/s slower", slowerByFive);
+        this.bind("Speed", alt(KeyEvent.VK_COMMA), "1 tick/s slower", slower);
+        this.bind("Speed", alt(KeyEvent.VK_PERIOD), "1 tick/s faster", faster);
+        this.bind("Speed", altShift(KeyEvent.VK_PERIOD), "5 ticks/s faster", fasterByFive);
+    }
+
+    private void addSpawnSection() {
         this.problem.setForeground(PROBLEM);
         this.previewArea.setOpaque(false);
         this.previewArea.add(this.preview, CARD_PREVIEW);
         this.previewArea.add(this.problem, CARD_PROBLEM);
         this.previewArea.setPreferredSize(new Dimension(PREVIEW_WIDTH, PREVIEW_HEIGHT));
         widthFollowsPanel(this.problem);
-        widthFollowsPanel(this.status);
-        for (JLabel name : List.of(this.towerSelected, this.enemySelected)) {
-            name.setPreferredSize(new Dimension(SELECTED_NAME_WIDTH, name.getFontMetrics(Hud.LABEL_FONT).getHeight()));
-        }
         JPanel spawnRow = new JPanel(new GridBagLayout());
         spawnRow.setOpaque(false);
         HudButton snapshot = button("Snapshot", () -> {
@@ -506,6 +544,18 @@ public class PanelDev extends JPanel {
         spawnRow.add(this.previewArea, previewCell);
         this.section(3, "Spawn", spawnRow);
 
+        this.submitOnEnter(this.script, spawn, this::spawn);
+        this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", this.script);
+        this.bind("Spawn", alt(KeyEvent.VK_R), "choose the rank", this.rankChoice);
+        this.bind("Spawn", alt(KeyEvent.VK_P), "choose the path", this.pathChoice);
+        this.bind("Spawn", altShift(KeyEvent.VK_S), "observe what it spawns", this.observeSpawns);
+        this.bind("Spawn", altShift(KeyEvent.VK_M), "snapshot every observed enemy", snapshot);
+    }
+
+    private void addSelectedSection() {
+        for (JLabel name : List.of(this.towerSelected, this.enemySelected)) {
+            name.setPreferredSize(new Dimension(SELECTED_NAME_WIDTH, name.getFontMetrics(Hud.LABEL_FONT).getHeight()));
+        }
         HudButton grant = button("Grant", this::grantXp);
         HudButton reset = button("Reset", () -> this.onResetTower.run());
         HudButton applyBuff = button("Apply", this::applyBuff);
@@ -524,6 +574,24 @@ public class PanelDev extends JPanel {
         this.selectionCards.show(this.selectionArea, CARD_NOTHING);
         this.section(4, "Selected", this.selectionArea);
 
+        this.submitOnEnter(this.xp, grant, this::grantXp);
+        this.effectFields.textFields().forEach(field -> this.submitOnEnter(field, applyEffect, this::applyEffect));
+        this.buffFields.textFields().forEach(field -> this.submitOnEnter(field, applyBuff, this::applyBuff));
+        this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", this.xp);
+        this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset);
+        this.bind("Tower", alt(KeyEvent.VK_Y), "choose the buff or debuff", this.buffChoice);
+        this.bind("Tower", altShift(KeyEvent.VK_Y), "grant the buff or debuff", applyBuff);
+        this.bind("Enemy", alt(KeyEvent.VK_F), "choose the effect", this.effectChoice);
+        this.bind("Enemy", altShift(KeyEvent.VK_F), "apply the effect", applyEffect);
+        this.bind("Enemy", alt(KeyEvent.VK_D), "clear its effects", clearEffects);
+        this.bind("Enemy", alt(KeyEvent.VK_Q), "kill", kill);
+        this.bind("Enemy", alt(KeyEvent.VK_W), "heal to full", heal);
+        this.bind("Enemy", altShift(KeyEvent.VK_Q), "remove", remove);
+        this.bind("Enemy", alt(KeyEvent.VK_M), "observe it", this.observeSelected);
+    }
+
+    private void addBoardSection() {
+        widthFollowsPanel(this.status);
         this.pointerCell.setForeground(MUTED);
         this.clickedCell.setForeground(MUTED);
         this.clearPointerCell();
@@ -541,53 +609,8 @@ public class PanelDev extends JPanel {
         boardRow.add(help, new GridBagConstraints());
         this.section(5, "Board", boardRow);
 
-        this.submitOnEnter(this.credits, setCredits, this::setCredits);
-        this.submitOnEnter(this.lives, setLives, this::setLives);
-        this.submitOnEnter(this.script, spawn, this::spawn);
-        this.submitOnEnter(this.jumpTo, go, this::jump);
-        this.submitOnEnter(this.xp, grant, this::grantXp);
-        this.submitOnEnter(this.enemyHealth, setHealth, this::setEnemyHealth);
-        this.effectFields.textFields().forEach(field -> this.submitOnEnter(field, applyEffect, this::applyEffect));
-        this.buffFields.textFields().forEach(field -> this.submitOnEnter(field, applyBuff, this::applyBuff));
-
-        this.bind("Economy", alt(KeyEvent.VK_C), "credits", this.credits);
-        this.bind("Economy", alt(KeyEvent.VK_L), "lives", this.lives);
-        this.bind("Economy", alt(KeyEvent.VK_I), "infinite lives", infiniteLives);
-        this.bind("Economy", alt(KeyEvent.VK_B), "free build", freeBuild);
-        this.bind("Level", alt(KeyEvent.VK_N), "skip wave", skip);
-        this.bind("Level", altShift(KeyEvent.VK_R), "restart level", restart);
-        this.bind("Level", alt(KeyEvent.VK_J), "jump to wave", this.jumpTo);
-        this.bind("Level", alt(KeyEvent.VK_K), "kill all", killAll);
-        this.bind("Level", altShift(KeyEvent.VK_K), "clear all", clearAll);
-        this.bind("Level", alt(KeyEvent.VK_E), "enemy health %", this.enemyHealth);
-        this.bind("Level", alt(KeyEvent.VK_V), "save the game between waves", save);
-        this.bind("Level", alt(KeyEvent.VK_O), "load the saved game", load);
-        this.bind("Speed", alt(KeyEvent.VK_T), "step one tick", step);
-        this.bind("Speed", altShift(KeyEvent.VK_COMMA), "5 ticks/s slower", slowerByFive);
-        this.bind("Speed", alt(KeyEvent.VK_COMMA), "1 tick/s slower", slower);
-        this.bind("Speed", alt(KeyEvent.VK_PERIOD), "1 tick/s faster", faster);
-        this.bind("Speed", altShift(KeyEvent.VK_PERIOD), "5 ticks/s faster", fasterByFive);
-        this.bind("Spawn", alt(KeyEvent.VK_S), "wave script", this.script);
-        this.bind("Spawn", alt(KeyEvent.VK_R), "choose the rank", this.rankChoice);
-        this.bind("Spawn", alt(KeyEvent.VK_P), "choose the path", this.pathChoice);
-        this.bind("Spawn", altShift(KeyEvent.VK_S), "observe what it spawns", this.observeSpawns);
-        this.bind("Spawn", altShift(KeyEvent.VK_M), "snapshot every observed enemy", snapshot);
-        this.bind("Economy", alt(KeyEvent.VK_U), "ignore upgrade gates", ignoreGates);
-        this.bind("Tower", alt(KeyEvent.VK_X), "XP to grant", this.xp);
-        this.bind("Tower", altShift(KeyEvent.VK_X), "reset", reset);
-        this.bind("Tower", alt(KeyEvent.VK_Y), "choose the buff or debuff", this.buffChoice);
-        this.bind("Tower", altShift(KeyEvent.VK_Y), "grant the buff or debuff", applyBuff);
-        this.bind("Enemy", alt(KeyEvent.VK_F), "choose the effect", this.effectChoice);
-        this.bind("Enemy", altShift(KeyEvent.VK_F), "apply the effect", applyEffect);
-        this.bind("Enemy", alt(KeyEvent.VK_D), "clear its effects", clearEffects);
-        this.bind("Enemy", alt(KeyEvent.VK_Q), "kill", kill);
-        this.bind("Enemy", alt(KeyEvent.VK_W), "heal to full", heal);
-        this.bind("Enemy", altShift(KeyEvent.VK_Q), "remove", remove);
-        this.bind("Enemy", alt(KeyEvent.VK_M), "observe it", this.observeSelected);
         this.bind("Board", alt(KeyEvent.VK_G), "cell grid", this.cellGridToggle);
         this.bind("Board", alt(KeyEvent.VK_H), "this help", help);
-
-        this.refresh();
     }
 
     private void refreshPreview() {
