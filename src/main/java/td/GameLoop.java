@@ -147,33 +147,42 @@ public class GameLoop implements Runnable {
         long lastNanos = System.nanoTime();
         while (this.running && this.thread == self) {
             long now = System.nanoTime();
-            long elapsedNanos = now - lastNanos;
+            this.advance(now - lastNanos);
             lastNanos = now;
-
-            double multiplier = this.speedMultiplier;
-            this.animationSeconds += (elapsedNanos / 1_000_000_000.0) * animationTimeScale(multiplier);
-
-            if (multiplier > 0.0) {
-                int ticks = this.tickAccumulator.accumulate((long) (elapsedNanos * multiplier));
-                if (ticks > 1) {
-                    ticks = 1;
-                    this.tickAccumulator.reset();
-                }
-                for (int i = 0; i < ticks && this.running; i++) {
-                    this.runTick();
-                }
-            }
-            for (int steps = this.stepsRequested.getAndSet(0); steps > 0 && this.running; steps--) {
-                this.runTick();
-            }
-
-            if (this.renderAccumulator.accumulate(elapsedNanos) > 0) {
-                this.tickInterpolationAlpha = this.tickAccumulator.fractionElapsed();
-                this.runRender();
-            }
-
             sleepQuietly(POLL_NANOS);
         }
+    }
+
+    /**
+     * One turn of the loop for {@code elapsedNanos} of wall-clock time: the ticks that time pays for at
+     * the current speed (falling behind runs one and resyncs, never a burst), the steps asked for, and a
+     * render if one is due. The loop's thread takes its turns with the real clock; a test, with made-up time.
+     */
+    void advance(long elapsedNanos) {
+        double multiplier = this.speedMultiplier;
+        this.animationSeconds += (elapsedNanos / 1_000_000_000.0) * animationTimeScale(multiplier);
+
+        if (multiplier > 0.0) {
+            int due = this.tickAccumulator.accumulate((long) (elapsedNanos * multiplier));
+            if (due > 1) {
+                this.tickAccumulator.reset();
+            }
+            if (due > 0) {
+                this.runTick();
+            }
+        }
+        for (int steps = this.stepsRequested.getAndSet(0); steps > 0 && !this.gaveUp(); steps--) {
+            this.runTick();
+        }
+
+        if (this.renderAccumulator.accumulate(elapsedNanos) > 0) {
+            this.tickInterpolationAlpha = this.tickAccumulator.fractionElapsed();
+            this.runRender();
+        }
+    }
+
+    private boolean gaveUp() {
+        return this.consecutiveTickFailures >= MAX_CONSECUTIVE_TICK_FAILURES;
     }
 
     private void runTick() {
@@ -185,7 +194,7 @@ public class GameLoop implements Runnable {
             this.consecutiveTickFailures++;
             LOG.error("Tick {} failed, skipping this tick ({}/{} consecutive failures)",
                     this.tickNumber, this.consecutiveTickFailures, MAX_CONSECUTIVE_TICK_FAILURES, e);
-            if (this.consecutiveTickFailures >= MAX_CONSECUTIVE_TICK_FAILURES) {
+            if (this.gaveUp()) {
                 LOG.error("GameLoop stopping after {} consecutive tick failures", this.consecutiveTickFailures);
                 this.running = false;
             }
