@@ -13,8 +13,8 @@ Files here:
 - `README.md` (this file): what was read, the book notes, the smell catalogue, the
   measurements, leads for phase 2 and the phase-2 prompt.
 - `metrics.py`, `report.py`: the throwaway measuring scripts, kept so phase 2 can re-run them.
-  `python docs/plans/design-review/metrics.py . target/design-review` writes `metrics.json`;
-  `python docs/plans/design-review/report.py target/design-review/metrics.json pkg|cls|meth|gw|sw|lis|git|test`
+  `python docs/plans/shipped/design-review/metrics.py . target/design-review` writes `metrics.json`;
+  `python docs/plans/shipped/design-review/report.py target/design-review/metrics.json pkg|cls|meth|gw|sw|lis|git|test`
   prints one section. They are regex-based, not a parser (see "Caveats").
 
 ---
@@ -345,7 +345,7 @@ inferred from the first `case` label. Treat the numbers as pointers to look at, 
 ````
 # Task: design-quality review of jTD, phase 2 (analysis first, no edits)
 
-Read `docs/plans/design-review/README.md` first, fully. It holds phase 1's results: what was
+Read `docs/plans/shipped/design-review/README.md` first, fully. It holds phase 1's results: what was
 read, paraphrased notes from Yourdon & Constantine's *Structured Design*, the smell catalogue,
 the measurements, and leads per probe. Do not redo phase 1. Re-run its scripts only to refresh a
 number, or to measure something it did not.
@@ -357,7 +357,7 @@ those, and the benefit must be shown, not asserted. "Looks cleaner" is not a ben
 
 This phase is READ-ONLY: do not edit, commit, rename or reformat anything in `src`, `CLAUDE.md`
 files, `docs/ARCHITECTURE.md`, `TODO.md` or the Checkstyle files. The one file you write is this
-review's own `docs/plans/design-review/README.md` (append the phase 2 results, keep phase 1 as it
+review's own `docs/plans/shipped/design-review/README.md` (append the phase 2 results, keep phase 1 as it
 is) so a further session can continue from it. Report in the console too, then stop and wait for
 my decision.
 

@@ -39,7 +39,7 @@ support tower, and the balance tools price support. Its tree is being rebuilt as
 eighteen waves rebuilt around five signature checks and the Warden, with the tools to prove each check. Its lane has
 since been redrawn, so the checks need proving again (see Levels).
 
-`docs/plans/stat-driven-buffs.md` (phases 1 to 9) and `FEATURE-agility-and-dodge.md` are implemented.
+`docs/plans/shipped/stat-driven-buffs.md` (phases 1 to 9) and `FEATURE-agility-and-dodge.md` are implemented.
 
 Every earlier feature request has shipped (see each doc's own status line) except the draft
 `FEATURE-effect-interactions.md`, whose scope has landed in part (vulnerable, poison, revealed,
@@ -162,7 +162,7 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
 
 ## Design follow-ups, each done with the change that touches it
 
-From the design review (`docs/plans/design-review/README.md`, section 7.4; the F labels are its).
+From the design review (`docs/plans/shipped/design-review/README.md`, section 7.4; the F labels are its).
 Each entry names its trigger: do it in the same work, as its own commits, not before.
 
 ### A board look is a switch in the painter, not a table row (ADR 0018)
@@ -279,7 +279,7 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
 
 ### What the balance tools cannot see yet
 
-`docs/plans/balance-verification-review.md` ranks these; each is a gap in `td.balance`, not in the game.
+`docs/plans/shipped/balance-verification-review.md` ranks these; each is a gap in `td.balance`, not in the game.
 
 - **Measures the recorder does not take:** damage wasted on overkill and shields, time each enemy spends in
   each tower's reach, damage per enemy kind per tower.

@@ -1,6 +1,6 @@
 # Feature Request: Enemy Stats
 
-**Status: implemented.** Plan: `docs/plans/enemy-stats.md`. Deferred: tower detection levels
+**Status: implemented.** Plan: `docs/plans/shipped/enemy-stats.md`. Deferred: tower detection levels
 (stealth is one level), and Momentum's kill-triggered fire-rate burst (`TODO.md`).
 
 ## Summary

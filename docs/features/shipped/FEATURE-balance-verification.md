@@ -2,7 +2,7 @@
 
 **Status: implemented** (2026-10-13, completed 2026-10-14): the first version, the strong player, each tower
 alone and banned, and every item of the branch list below. The review of the toolset (part 0) is
-`docs/plans/balance-verification-review.md`. Every open question below is settled (✅). Every `TODO.md` entry that says "unbalanced placeholders" is tuned with it.
+`docs/plans/shipped/balance-verification-review.md`. Every open question below is settled (✅). Every `TODO.md` entry that says "unbalanced placeholders" is tuned with it.
 
 ## Where we are
 
