@@ -10,7 +10,6 @@ import td.level.LevelCatalog;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.save.GameSave;
-import td.save.GameSaveText;
 import td.term.TermText;
 import td.tower.Tower;
 import td.tower.TowerFactory;
@@ -67,7 +66,6 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serial;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -91,7 +89,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     private static final Logger LOG = LoggerFactory.getLogger(TowerDefense.class);
-    private static final String SAVE_DIRECTORY = "saves";
+
     static final String VERSION = loadVersion();
     @Serial
     private static final long serialVersionUID = 1L;
@@ -110,6 +108,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final GameEngine engine;
     private final GameWorld gameWorld;
     private final DevControls devControls;
+    private final DevSession devSession;
     private final GameBoard gameBoard;
     private final BoardRenderer boardRenderer;
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
@@ -174,6 +173,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameWorld.playtestHooks().add(this.devControls::doTick);
         this.gameBoard = new GameBoard(this, this.gameWorld);
         initComponents();
+        this.devSession = new DevSession(this.engine, this.devControls, this.panelDev, this::unSelectTower,
+                this.gameConsole::selectTower, this::restoreGame);
         this.tooltips = new TooltipLayer(this.getLayeredPane(), TooltipDelays.standard());
         this.gameConsole.setTooltips(this.tooltips);
         this.header.setTooltips(this.tooltips);
@@ -196,14 +197,14 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.panelTowerSelector.doInit(this.gameWorld, this);
         this.panelTowerSelector.setTooltips(this.tooltips);
         this.panelDev.setGameWorld(this.gameWorld, this.devControls);
-        this.panelDev.onSkipWave(this::debugSkipWave);
-        this.panelDev.onJumpToWave(this::debugJumpToWave);
+        this.panelDev.onSkipWave(this.devSession::skipWave);
+        this.panelDev.onJumpToWave(this.devSession::jumpToWave);
         this.panelDev.onRestart(this::restartLevel);
         this.panelDev.onStep(this::stepOneTick);
         this.panelDev.onNudgeSpeed(delta -> this.setSpeed(this.currentSpeed.nudged(delta)));
-        this.panelDev.onResetTower(this::rebuildSelectedTower);
-        this.panelDev.onSaveGame(this::saveGame);
-        this.panelDev.onLoadGame(this::loadGame);
+        this.panelDev.onResetTower(this.devSession::rebuildSelectedTower);
+        this.panelDev.onSaveGame(() -> this.devSession.save(this.currentLevel.name()));
+        this.panelDev.onLoadGame(() -> this.devSession.load(this.currentLevel.name()));
         this.panelDev.onCellGrid(this.boardRenderer::setCellGridShown);
         this.panelDev.onInfoText(this::setInfoText);
         this.panelDev.onReleaseFocus(this::requestFocusInWindow);
@@ -433,57 +434,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
                 this.engine.outcome());
     }
 
-    private void debugSkipWave() {
-        this.engine.requestSkipWave();
-    }
-
-    private void debugJumpToWave(int number) {
-        int next = this.engine.requestJumpToWave(number);
-        this.panelDev.showMessage(next == 0 ? "No level in play" : "Wave " + next + " is next");
-    }
-
-    /** Where the dev panel keeps the level's one saved game. */
-    private java.nio.file.Path saveFile() {
-        return java.nio.file.Path.of(SAVE_DIRECTORY, this.currentLevel.name() + ".save");
-    }
-
-    private void saveGame() {
-        Optional<GameSave> save = this.engine.save();
-        if (save.isEmpty()) {
-            this.panelDev.showMessage("Save between waves");
-            return;
-        }
-        java.nio.file.Path file = this.saveFile();
-        try {
-            Files.createDirectories(file.getParent());
-            Files.writeString(file, GameSaveText.write(save.get()));
-            this.panelDev.showMessage("Saved before wave " + save.get().nextWave() + " to " + file);
-        } catch (IOException e) {
-            LOG.warn("Could not save the game to {}", file, e);
-            this.panelDev.showMessage("Could not save: " + e.getMessage());
-        }
-    }
-
-    private void loadGame() {
-        java.nio.file.Path file = this.saveFile();
-        if (!Files.exists(file)) {
-            this.panelDev.showMessage("No save at " + file);
-            return;
-        }
-        GameSaveText.Read read;
-        try {
-            read = GameSaveText.read(Files.readString(file));
-        } catch (IOException e) {
-            LOG.warn("Could not read the save {}", file, e);
-            this.panelDev.showMessage("Could not read: " + e.getMessage());
-            return;
-        }
-        if (read.save().isEmpty()) {
-            this.panelDev.showMessage(read.problem());
-            return;
-        }
-        GameSave save = read.save().get();
-        this.unSelectTower();
+    private void restoreGame(GameSave save) {
         // Restoring tears the level down and rebuilds it, so no tick may run meanwhile.
         this.stopLoopThen(() -> {
             Optional<String> problem = this.engine.restore(save);
@@ -588,27 +539,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.gameLoop.requestStep();
     }
 
-    /**
-     * Sells the selected tower and builds a fresh one of its type on its cell, through the same
-     * input path a player uses, then selects it: its upgrades and XP start over.
-     */
-    private void rebuildSelectedTower() {
-        Optional<Tower> selected = this.devControls.selectedTower();
-        if (selected.isEmpty()) {
-            this.panelDev.showMessage("Select a tower first");
-            return;
-        }
-        Tower tower = selected.get();
-        BoardGeometry board = this.gameWorld.getBoard();
-        int scale = board.scale();
-        int boardX = board.cellX(tower.getX()) * scale + scale / 2;
-        int boardY = board.cellY(tower.getY()) * scale + scale / 2;
-        this.unSelectTower();
-        this.gameWorld.towers().sell(tower);
-        this.engine.startPlacing(tower.getType(), 0f);
-        this.engine.mouseClicked(boardX, boardY).ifPresent(this.gameConsole::selectTower);
-        this.panelDev.showMessage("Rebuilt fresh: upgrades and XP reset");
-    }
 
     private void updateInfo() {
         this.header.show(this.engine.waveProgress(), this.engine.isWaveReady(), this.engine.outcome(),
