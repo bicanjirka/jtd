@@ -214,6 +214,9 @@ on the Wardens, whose shield answers crits.
 | Herald     | triangle      | A Courier that lays haste ground until the wave is over the moment it is first hurt, speeding everything behind it. Appears on The Rift. |
 | Eclipse    | dark orb, spinning | Every few seconds hides every other ally near it from aimed shots, longer with rank; never itself. Appears on The Rift. |
 | The Monolith | large spiked crest | A lone, very slow boss: crit immune, freeze and chill immune, armor that hardens against the damage type that hurts it most, regeneration, a heal whenever it is left alone, a stone-skin shield at two thirds and at one third of its health, and a last stand once nearly dead. If it escapes, the level is lost. Walks alone in one round of The Rift. |
+| Bronze Bull | triangle | A Fast mob cast in bronze: half its health, a little plating and immune to burn, on the Fast's ladder and abilities. Appears on The Labyrinth — a level-authored enemy. |
+| Talos      | square, path-facing | A boss: the bronze guardian. A body that crits cut deep (-60 resilience) inside a huge shield that holds until broken, recast again and again; shooting through it is hopeless, so it asks for a tower that strips, pierces, blocks or inverts shields. If it escapes, the level is lost. Round 2 of The Labyrinth. |
+| The Minotaur | large spiked crest, path-facing | A boss: thick hide (armor, plating, resilience), half freeze and chill resist, a bellow that jams the towers near it, a charge every ten seconds, faster the more it bleeds, and a bloodlust once badly hurt that heals it and sends it running. If it escapes, the level is lost. The last round of The Labyrinth. |
 
 ### Rank
 
@@ -405,6 +408,7 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 | `warden`  | the Warden boss chain (Curly Path only)                  |
 | `colossus` | the Iron Colossus boss (Iron Crossing only)             |
 | `mirage`, `herald`, `eclipse`, `monolith` | The Rift's own enemies (The Rift only) |
+| `bull`, `talos`, `minotaur` | The Labyrinth's own enemies (The Labyrinth only) |
 | `titan`  | Juggernaut (slow, huge plating)                       |
 | `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
 | `courier` | Courier (very fast, fragile, high bounty)                |
@@ -417,7 +421,7 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 
 ### Levels
 
-Five levels ship with the game: **Curly Path** (a 20×13 board whose single lane loops once
+Six levels ship with the game: **Curly Path** (a 20×13 board whose single lane loops once
 at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge, 18 waves: the hard level, built around five
 waves that each ask for a different defence - single-target damage at 6, area damage at 11, control at 12,
 anti-physical at 15, all of them at 17 - and the Warden at 18, with just enough bounty to beat it), **Zigzag Path** (a smaller,
@@ -430,13 +434,15 @@ while a short rush lane of Couriers, Skirmishers, Ghosts and Mite swarms knifes 
 three times, 15 waves per lane, 3 lives, and the Iron Colossus at the end: break its shell with magic, then catch the
 Molten Core inside with physical damage before it runs) and **The Rift** (a 17×15 board, the hardest: lanes
 that start and end at a tear in the middle of the board, one of them silent for the first rounds, 12 waves per lane, 3
-lives, and one round in which a single enemy walks alone). A level can define more than one enemy path, each with its own color, waves
+lives, and one round in which a single enemy walks alone) and **The Labyrinth** (a 9×9 board where one lane
+winds through every cell but the 3×3 at its heart, so nine towers are all there is: three rounds - a long one that
+pays for the defence, a round of Bosses around Talos, whose shield needs a tower's answer to shields, and the Minotaur). A level can define more than one enemy path, each with its own color, waves
 and pace; every built-in level but Curly Path does. A lane may start or end inside the board, run faster or
 slower than the others (`PathDefinition.withSpeed`) and send nothing in a round (a wave of just `e`). A level's
 paths all run the same number of waves as synchronized rounds - starting a round spawns every
 path's wave for it together. A level can also register its own enemy on top of the ones above,
 scoped to that level only; Twisted Hourglass's Reaver and Curly Path's warding Mender, Bulky mob
-and Warden chain and Iron Crossing's Colossus, Molten Core and Embers and The Rift's Mirage, Herald, Eclipse and Monolith (see the Enemies table)
+and Warden chain and Iron Crossing's Colossus, Molten Core and Embers and The Rift's Mirage, Herald, Eclipse and Monolith and The Labyrinth's Bronze Bull, Talos and Minotaur (see the Enemies table)
 are the built-in ones.
 
 Levels are defined as Java constants in `td.level.BuiltInLevelCatalog`, so adding one today

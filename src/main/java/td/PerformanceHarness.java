@@ -1,5 +1,6 @@
 package td;
 
+import td.balance.BoardSurvey;
 import td.cell.CellGrid;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMob;
@@ -17,13 +18,14 @@ import td.util.TickRate;
 
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * Headless performance run: fills every buildable cell of the last built-in level with towers,
+ * Headless performance run: fills every buildable cell of the built-in level with the most of them with towers,
  * plays it to the end several times, and reports tick time, frame-build time and allocation per
  * frame. A tool run on demand, not a test. The argument {@code zones} fills the board with only the
  * towers that leave ground zones, each with the upgrades that make the most of them; {@code observe=one}
@@ -77,7 +79,8 @@ public final class PerformanceHarness {
             // Before anything touches SLF4J, so the traces go to a log of their own rather than a session's.
             System.setProperty("jtd.logTimestamp", "harness");
         }
-        LevelDefinition level = new BuiltInLevelCatalog().levels().getLast();
+        LevelDefinition level = new BuiltInLevelCatalog().levels().stream()
+                .max(Comparator.comparingInt(candidate -> BoardSurvey.of(candidate).buildable().size())).orElseThrow();
         if (!new PerformanceHarness(given.contains("zones"), observed).run(level)) {
             System.exit(1);
         }

@@ -65,11 +65,11 @@ public class PanelLevelSelect extends JPanel {
     private static final int CHIP_INSET = 8;
     private static final int KEYED_CARDS = 9;
     /** A second row of cards leaves too little height for a card's preview, name and stats at the menu's size. */
-    private static final int CARDS_PER_ROW = 5;
+    private static final int CARDS_PER_ROW = 6;
     private static final float HOVER_LIGHTEN = 0.35f;
 
     /** Cycled by card index. */
-    private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE, Color.CYAN, Color.MAGENTA};
+    private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE, Color.CYAN, Color.MAGENTA, new Color(235, 200, 120)};
 
     private final List<LevelDefinition> levels;
     private final transient Consumer<LevelDefinition> onLevelSelected;
