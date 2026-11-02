@@ -36,6 +36,7 @@ public enum AbilityTerm implements Term {
     SPLIT("Split", "splits in two when it dies"),
     LAY_EGG("Lay Egg", "leaves an egg when it dies"),
     HATCH("Hatch", "hatches unless it is destroyed in time"),
+    MIRROR_IMAGE("Mirror Image", "leaves a copy of itself behind each time it dodges"),
     REFORGE("Reforge", "melts down into a new body once badly hurt"),
     LAST_WARD("Last Ward", "shields the allies near it as it dies"),
     HEALING_POOL("Healing Pool", "leaves pools behind it that heal the enemies who stand in them"),

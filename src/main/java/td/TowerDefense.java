@@ -96,7 +96,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final String NAME = "Tower Defense";
     private static final String CARD_MENU = "menu";
     private static final String CARD_GAME = "game";
-    private static final int MENU_WIDTH = 1040;
+    private static final int MENU_WIDTH = 1100;
     private static final int MENU_HEIGHT = 700;
     private static final int GAME_WIDTH = 1100;
     private static final int GAME_HEIGHT = 740;

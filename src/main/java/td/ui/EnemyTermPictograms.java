@@ -90,7 +90,9 @@ final class EnemyTermPictograms {
             Map.entry("ability.last_stand", "F M12 2.5L20 6V12C20 16.8 16.6 20.2 12 21.8C7.4 20.2 4 16.8 4 12V6Z ; K M12 6.4V17.4 M7.6 11.6H16.4 ; T M12 0.8V2"),
             Map.entry("ability.hatch", "F M5.2 14L7.6 12L9.8 14.4L12 11.8L14.2 14.4L16.4 12L18.8 14C18.8 18.2 15.8 21.4 12 21.4C8.2 21.4 5.2 18.2 5.2 14Z ; F M6.6 8.8L8.8 7L11.2 9.4L13.4 7L15.6 8.8C14.8 5 13 2.2 11.2 2.2C9.2 2.2 7.4 4.6 6.6 8.8Z"),
             // Reforge
-            Map.entry("ability.reforge", "F M12 2.2C10.4 4.6 8.6 6.6 8.6 8.6A3.4 3.4 0 0 0 15.4 8.6C15.4 6.6 13.6 4.6 12 2.2Z ; F M3 13.2H21V15.6H16.4L18 20.4H6L7.6 15.6H3Z"));
+            Map.entry("ability.reforge", "F M12 2.2C10.4 4.6 8.6 6.6 8.6 8.6A3.4 3.4 0 0 0 15.4 8.6C15.4 6.6 13.6 4.6 12 2.2Z ; F M3 13.2H21V15.6H16.4L18 20.4H6L7.6 15.6H3Z"),
+            // Mirror Image
+            Map.entry("ability.mirror_image", "F M8.4 3.6L13.2 12L8.4 20.4L3.6 12Z ; S M15.6 3.6L20.4 12L15.6 20.4L10.8 12Z"));
 
     private EnemyTermPictograms() {
     }
