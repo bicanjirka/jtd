@@ -73,25 +73,25 @@ public class TowerRoster {
     }
 
     public void sell(Tower t) {
-        BoardGeometry geometry = this.board.get();
-        int cellX = geometry.cellX(t.getX());
-        int cellY = geometry.cellY(t.getY());
-        this.host.clearCell(cellX, cellY);
-        t.doCleanup();
-        this.towers.remove(t);
+        BoardGeometry geometry = this.takeOffBoard(t);
         this.recalculateAllStats();
         this.economy.apply(EconomyDelta.credits(t.getSellPrice()));
-        LOG.info("Tower sold: {} at ({},{}), refund={}", t.getType(), cellX, cellY, t.getSellPrice());
+        LOG.info("Tower sold: {} at ({},{}), refund={}", t.getType(), geometry.cellX(t.getX()), geometry.cellY(t.getY()),
+                t.getSellPrice());
     }
 
     public void clear() {
         for (Tower t : new ArrayList<>(this.towers)) {
-            BoardGeometry geometry = this.board.get();
-            int cellX = geometry.cellX(t.getX());
-            int cellY = geometry.cellY(t.getY());
-            this.host.clearCell(cellX, cellY);
-            t.doCleanup();
-            this.towers.remove(t);
+            this.takeOffBoard(t);
         }
+    }
+
+    /** Frees {@code t}'s cell and drops it; returns the board it stood on. */
+    private BoardGeometry takeOffBoard(Tower t) {
+        BoardGeometry geometry = this.board.get();
+        this.host.clearCell(geometry.cellX(t.getX()), geometry.cellY(t.getY()));
+        t.doCleanup();
+        this.towers.remove(t);
+        return geometry;
     }
 }
