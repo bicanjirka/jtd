@@ -51,8 +51,8 @@ public interface Tower {
 
     int getSellPrice();
 
-    /** Range in cells. */
-    float getRange();
+    /** Range in cells, before upgrades and buffs. */
+    float baseRange();
 
     /** Range in pixels, with buffs. */
     float getRangeReal();
