@@ -346,15 +346,6 @@ wrapping to `[-PI, PI)`. `SonarSweep` also has its own `normalizeToCircle` (`[0,
   `InWedgeTargetQuery` is deliberately not built on `SonarSweep`; sharing a maths helper doesn't touch
   that.
 
-### A test whose assertion is hidden in a throwing fake
-
-`HitResolutionTest.anAttackerWithoutCritChanceNeverDrawsFromTheRandomSource` has no assertion: it passes
-because its random source throws if drawn from. Correct, but it reads as a test that checks nothing.
-
-- **Where:** `src/test/java/td/enemy/HitResolutionTest.java`.
-- **Approach:** wrap the call in `assertThatCode(...).doesNotThrowAnyException()`, or have the fake count
-  draws and assert zero.
-
 ### Names that mislead or say nothing
 
 - `AbstractTower.getRange()` returns the *base* range in cells while `getRangeReal()` returns the current
