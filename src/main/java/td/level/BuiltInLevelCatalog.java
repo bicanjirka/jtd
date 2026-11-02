@@ -8,6 +8,7 @@ public class BuiltInLevelCatalog implements LevelCatalog {
     @Override
     public List<LevelDefinition> levels() {
         return List.of(CurlyPathLevel.DEFINITION, ZigZagPathLevel.DEFINITION, TwistedHourglassLevel.DEFINITION,
-                IronCrossingLevel.DEFINITION, RiftLevel.DEFINITION);
+                IronCrossingLevel.DEFINITION, RiftLevel.DEFINITION,
+                LabyrinthLevel.DEFINITION);
     }
 }
