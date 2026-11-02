@@ -198,23 +198,13 @@ public final class SeekerTower extends AbstractTower {
     }
 
     @Override
-    protected MechanicCatalogue<SeekerMechanic> mechanicCatalogue() {
-        return MECHANICS;
+    protected OwnedMechanics<SeekerMechanic> ownedMechanics() {
+        return this.mechanics;
     }
 
     @Override
     public UpgradeTree upgradeTree() {
         return TREE;
-    }
-
-    @Override
-    protected void onUpgradeBought(UpgradeNode node) {
-        this.mechanics.add(node);
-    }
-
-    @Override
-    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
-        this.mechanics.remove(removed);
     }
 
     /** Whom it may fire at, how it picks and what its nest holds, as the mechanics in {@code owned} make it. */

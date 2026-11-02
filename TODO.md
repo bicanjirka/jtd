@@ -296,23 +296,6 @@ the wide `Tower`/`HitReceiver` interfaces, Visitor over sealed types, the `td.ut
 
 The first eight are small and each a commit of its own; the rest are larger or a matter of taste.
 
-### Every tower with mechanics wires the same two hooks by hand
-
-Eight leaves (`SniperTower`, `SplashTower`, `SonarTower`, `PulseTower`, `MortarTower`, `SeekerTower`,
-`CinderTower`, `AuraTower`) each hold an `OwnedMechanics<XMechanic>` field, override
-`mechanicCatalogue()`, and override `onUpgradeBought(node)` to call `mechanics.add(node)` and
-`onUpgradesRemoved(removed)` to call `mechanics.remove(removed)`; neither hook does anything else in any
-tower. A new tower must remember both hooks, or its mechanics silently never arrive or never leave (a
-duty a caller must remember, `docs/DESIGN.md` section 5).
-
-- **Where:** the eight leaves above; `AbstractTower.own`, `AbstractTower.downgrade`, the two hooks;
-  `td.tower.upgrade.OwnedMechanics`; `tower/CLAUDE.md` ("A node that adds a mechanic brings...").
-- **Approach:** one leaf override, `protected OwnedMechanics<? extends Mechanic> ownedMechanics()`
-  (default: an empty one), which `AbstractTower` calls in `own` and `downgrade` itself; derive
-  `mechanicCatalogue()` from it so a leaf overrides one method instead of three. Then drop the hooks if
-  nothing else overrides them. Leaves keep their typed field for their own `spec(...)` folds. Mind that
-  `downgrade` runs on the EDT and `OwnedMechanics` publishes through a `volatile`; keep that.
-
 ### Names that mislead or say nothing
 
 - `AbstractTower.getRange()` returns the *base* range in cells while `getRangeReal()` returns the current

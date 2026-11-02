@@ -189,23 +189,13 @@ public final class PulseTower extends AbstractTower {
     }
 
     @Override
-    protected MechanicCatalogue<PulseMechanic> mechanicCatalogue() {
-        return MECHANICS;
+    protected OwnedMechanics<PulseMechanic> ownedMechanics() {
+        return this.mechanics;
     }
 
     @Override
     public UpgradeTree upgradeTree() {
         return TREE;
-    }
-
-    @Override
-    protected void onUpgradeBought(UpgradeNode node) {
-        this.mechanics.add(node);
-    }
-
-    @Override
-    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
-        this.mechanics.remove(removed);
     }
 
     /** Whom the field touches and how Toll builds, as the mechanics in {@code owned} make it and the deaths inside widen it. */

@@ -203,23 +203,13 @@ public final class CinderTower extends AbstractTower {
     }
 
     @Override
-    protected MechanicCatalogue<CinderMechanic> mechanicCatalogue() {
-        return MECHANICS;
+    protected OwnedMechanics<CinderMechanic> ownedMechanics() {
+        return this.mechanics;
     }
 
     @Override
     public UpgradeTree upgradeTree() {
         return TREE;
-    }
-
-    @Override
-    protected void onUpgradeBought(UpgradeNode node) {
-        this.mechanics.add(node);
-    }
-
-    @Override
-    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
-        this.mechanics.remove(removed);
     }
 
     /** How the cone and the burn are shaped, as the mechanics in {@code owned} make them. */

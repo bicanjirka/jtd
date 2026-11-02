@@ -32,6 +32,7 @@ import td.tower.proc.ProcPayload;
 import td.tower.proc.ProcRunner;
 import td.tower.upgrade.Mechanic;
 import td.tower.upgrade.MechanicCatalogue;
+import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeLine;
@@ -73,6 +74,8 @@ public abstract class AbstractTower implements Tower {
     private static final float SUNDERED_SECONDS = 5f;
     private static final float RESONATING_SECONDS = 4f;
     private static final float UNRAVELED_SECONDS = 5f;
+    // Shared, since an empty catalogue never brings a mechanic to hold.
+    private static final OwnedMechanics<Mechanic> NO_MECHANICS = new OwnedMechanics<>(MechanicCatalogue.empty());
 
     protected final GameWorld context;
     protected final int boardX;
@@ -598,9 +601,17 @@ public abstract class AbstractTower implements Tower {
         return this.upgrades;
     }
 
-    /** Which mechanics each node brings; none by default. */
-    protected MechanicCatalogue<? extends Mechanic> mechanicCatalogue() {
-        return MechanicCatalogue.empty();
+    /**
+     * The mechanics this tower's owned nodes brought, which buying and downgrading keep up to date; none by
+     * default. Return the same instance every call.
+     */
+    protected OwnedMechanics<? extends Mechanic> ownedMechanics() {
+        return NO_MECHANICS;
+    }
+
+    /** Which mechanics each node brings. */
+    protected final MechanicCatalogue<? extends Mechanic> mechanicCatalogue() {
+        return this.ownedMechanics().catalogue();
     }
 
     @Override
@@ -635,7 +646,7 @@ public abstract class AbstractTower implements Tower {
     private void own(List<UpgradeNode> bought) {
         UpgradeState nextState = this.upgrades;
         for (UpgradeNode node : bought) {
-            this.onUpgradeBought(node);
+            this.ownedMechanics().add(node);
             nextState = nextState.with(node);
         }
         this.publishStats(nextState);
@@ -646,12 +657,6 @@ public abstract class AbstractTower implements Tower {
         }
     }
 
-    /**
-     * Hook for an upgrade effect that no stat expresses; a no-op by default.
-     * Compare {@code node} by equality, not reference.
-     */
-    protected void onUpgradeBought(UpgradeNode node) {
-    }
 
     @Override
     public int refundFor(UpgradeRemoval removal) {
@@ -666,7 +671,7 @@ public abstract class AbstractTower implements Tower {
             return false;
         }
         int refund = this.refundFor(removal);
-        this.onUpgradesRemoved(removal.removed());
+        this.ownedMechanics().remove(removal.removed());
         this.publishStats(removal.kept());
         this.upgrades = removal.kept();
         this.removedSinceTick.accumulateAndGet(removal.removed(), AbstractTower::concatenated);
@@ -677,12 +682,6 @@ public abstract class AbstractTower implements Tower {
         return true;
     }
 
-    /**
-     * Hook undoing {@link #onUpgradeBought} for each of {@code removed}, called when they are downgraded,
-     * on the thread that downgrades; a no-op by default.
-     */
-    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
-    }
 
     /**
      * Hook clearing what the tower holds for {@code removed} outside its mechanics (a store, a counter),

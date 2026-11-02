@@ -222,23 +222,13 @@ public final class SniperTower extends AbstractTower {
     }
 
     @Override
-    protected MechanicCatalogue<SniperMechanic> mechanicCatalogue() {
-        return MECHANICS;
+    protected OwnedMechanics<SniperMechanic> ownedMechanics() {
+        return this.mechanics;
     }
 
     @Override
     public UpgradeTree upgradeTree() {
         return TREE;
-    }
-
-    @Override
-    protected void onUpgradeBought(UpgradeNode node) {
-        this.mechanics.add(node);
-    }
-
-    @Override
-    protected void onUpgradesRemoved(List<UpgradeNode> removed) {
-        this.mechanics.remove(removed);
     }
 
     /** Whom it may shoot and how it picks, as the mechanics in {@code owned} make it. */
