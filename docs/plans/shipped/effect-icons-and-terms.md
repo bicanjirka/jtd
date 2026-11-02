@@ -2,7 +2,7 @@
 
 **Status:** planned 2026-10-20 and 2026-10-21, reviewed 2026-10-21 (D19 to D21, phase 12 required). Implemented through phase 12.
 
-**Companion files** in `docs/plans/effect-icons-and-terms/`:
+**Companion files** in `docs/plans/shipped/effect-icons-and-terms/`:
 
 | File | What it is |
 |---|---|
@@ -2114,7 +2114,7 @@ public record IconFace(String pictogram, String monogram, Palette tone, Palette 
 ### 6.3 `Pictogram`, `PictogramPath`, `PictogramCatalogue`, the four tables (`td.ui`)
 
 - `PictogramPath.java`: a package-private final class; copy the lab's nested `PictogramPath` from
-  `docs/plans/effect-icons-and-terms/lab/IconLab.java` exactly (the `M L H V C S Q T A Z` subset,
+  `docs/plans/shipped/effect-icons-and-terms/lab/IconLab.java` exactly (the `M L H V C S Q T A Z` subset,
   relative and absolute, the arc-to-cubic conversion and `O cx cy r`), with a private constructor and
   `static Path2D.Float parse(String data)`. Malformed data throws `IllegalArgumentException` naming
   the data.
@@ -2186,7 +2186,7 @@ record Pictogram(List<Layer> layers) {
 ```
 
 - `EffectPictograms.java`, `TowerTermPictograms.java`, `EnemyTermPictograms.java`, `PerkPictograms.java`:
-  paste the four classes from `docs/plans/effect-icons-and-terms/pictogram-tables.md` unchanged.
+  paste the four classes from `docs/plans/shipped/effect-icons-and-terms/pictogram-tables.md` unchanged.
 - `PictogramCatalogue.java`:
 
 ```java
@@ -2348,7 +2348,7 @@ from `TermLooks`. A new term needs a row in a `*Pictograms` table (or it shows i
 
 ### Done when
 
-Green; `PreviewIcons` renders the same symbols as `docs/plans/effect-icons-and-terms/pictograms.png`
+Green; `PreviewIcons` renders the same symbols as `docs/plans/shipped/effect-icons-and-terms/pictograms.png`
 (compare by eye once: the art files were retoned to the palette roles, appendix E.7, so nothing differs);
 `PerformanceHarness` passes (nothing per-frame changed yet).
 
@@ -3374,7 +3374,7 @@ timing, placement and legibility.
 | 5 | Move the pointer off everything | All tooltips close a moment later |
 | 6 | Select a Sniper with Fourth Shot bought; let it fire | Perks row with numerals and a "k/4" corner; Deadeye Round appears in Buffs on the 4th shot; Steady Aim shows stacks |
 | 7 | Hover an upgrade button, then click it with the tooltip open | Its face beside its name and price; a tooltip beside the button that switches to the next offer after the purchase; slot headers read "Special: needs Awaken" until Awaken |
-| 8 | Screenshot the panes | They match `docs/plans/effect-icons-and-terms/panes.png` in layout and size |
+| 8 | Screenshot the panes | They match `docs/plans/shipped/effect-icons-and-terms/panes.png` in layout and size |
 
 ## Critical files
 

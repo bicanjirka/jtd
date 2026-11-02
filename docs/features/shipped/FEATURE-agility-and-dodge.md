@@ -1,6 +1,6 @@
 # Feature Request: Agility and Dodge
 
-**Status:** implemented 2026-10-13, on top of `docs/plans/stat-driven-buffs.md`. "As built" below
+**Status:** implemented 2026-10-13, on top of `docs/plans/shipped/stat-driven-buffs.md`. "As built" below
 records the choices made while implementing; the "Current state" section describes the game before it.
 
 ## Summary
@@ -111,7 +111,7 @@ surely and hitting everything.
 
 ## Interconnections
 
-- **`docs/plans/stat-driven-buffs.md`** must ship first. This feature relies on its tower stat sheet
+- **`docs/plans/shipped/stat-driven-buffs.md`** must ship first. This feature relies on its tower stat sheet
   (accuracy is a `TowerStat`, auras can give it), its procs and hit kinds (what is aimed; an "on
   dodge" tower trigger), its statuses, and its resilience rule (resilience, not agility, makes crits
   likelier).
