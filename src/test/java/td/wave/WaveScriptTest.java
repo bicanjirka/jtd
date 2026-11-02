@@ -49,6 +49,13 @@ class WaveScriptTest {
     }
 
     @Test
+    void aRepeatCountAboveTheMaximumIsRejectedBeforeAnySlotIsBuilt() {
+        assertThatThrownBy(() -> WaveScript.parse("999999999 simple", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining(String.valueOf(WaveScript.MAX_REPEAT));
+    }
+
+    @Test
     void aSpacingOfZeroIsRejected() {
         assertThatThrownBy(() -> WaveScript.parse("w0 simple", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)

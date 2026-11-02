@@ -78,6 +78,10 @@ final class WaveScriptGrammar {
                     + "' with no enemy id between them");
         }
         int slotRepeat = countAfterRank.value().orElse(leadingCount.value().orElse(1));
+        if (slotRepeat > WaveScript.MAX_REPEAT) {
+            throw target.fail("Repeat count " + slotRepeat + " is more than the most a slot may repeat, "
+                    + WaveScript.MAX_REPEAT);
+        }
         return slot(target, slotRepeat, rank.value(), shape.value(), memberCount.value());
     }
 
