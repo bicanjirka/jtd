@@ -64,10 +64,12 @@ public class PanelLevelSelect extends JPanel {
     private static final int CARD_BORDER = 2;
     private static final int CHIP_INSET = 8;
     private static final int KEYED_CARDS = 9;
+    /** A second row of cards leaves too little height for a card's preview, name and stats at the menu's size. */
+    private static final int CARDS_PER_ROW = 4;
     private static final float HOVER_LIGHTEN = 0.35f;
 
     /** Cycled by card index. */
-    private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE};
+    private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE, Color.CYAN};
 
     private final List<LevelDefinition> levels;
     private final transient Consumer<LevelDefinition> onLevelSelected;
@@ -97,7 +99,7 @@ public class PanelLevelSelect extends JPanel {
         header.add(subtitle);
         this.add(header, BorderLayout.NORTH);
 
-        JPanel cards = new JPanel(new GridLayout(0, Math.clamp(levels.size(), 1, 3), 24, 24));
+        JPanel cards = new JPanel(new GridLayout(0, Math.clamp(levels.size(), 1, CARDS_PER_ROW), 24, 24));
         cards.setOpaque(false);
         for (int i = 0; i < levels.size(); i++) {
             cards.add(buildCard(levels.get(i), i, onLevelSelected));

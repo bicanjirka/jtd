@@ -207,6 +207,9 @@ on the Wardens, whose shield answers crits.
 | The Warden | large spiked crest | A boss: armor and magic resist, and plating, all lower with each hatching; periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. If any stage escapes, the level is lost, however many lives are left. Appears as the final wave of Curly Path. |
 | Reaver     | triangle, path-facing | Speeds up as it's hurt, shrugs off a flat point of every hit, crit immune from Elite, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
 | Bulky mob  | circle, pulsing | A Simple mob with three times the health at half the speed, on the Simple's ladder and abilities. Appears on Curly Path — a level-authored enemy, like the Reaver. |
+| The Iron Colossus | hexagon, swaying | A boss in an iron shell: armor and heavy plating blunt physical hits, crit immune, half freeze resist. It lays ward mines that shield the escorts behind it and calls two Armored escorts from time to time. Once badly hurt it reforges into the Molten Core. If it or the Core escapes, the level is lost. The final wave of Iron Crossing — a level-authored enemy. |
+| The Molten Core | jagged boulder, pulsing | What the Colossus melts down into: no armor or plating but high magic resist and a casing that blunts magic hits, immune to burn and freeze, and faster the more it is hurt. It leaves pools behind it that heal the escorts who stand in them, and bursts into four Embers when it dies. |
+| Ember      | circle, tiny | A quick, nimble, burn-immune shard of the Molten Core; each one that gets through costs a life. |
 
 ### Rank
 
@@ -396,6 +399,7 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 | `jammer`  | Jammer (weakens nearby towers; in no wave yet)           |
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
 | `warden`  | the Warden boss chain (Curly Path only)                  |
+| `colossus` | the Iron Colossus boss (Iron Crossing only)             |
 | `titan`  | Juggernaut (slow, huge plating)                       |
 | `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
 | `courier` | Courier (very fast, fragile, high bounty)                |
@@ -408,19 +412,23 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 
 ### Levels
 
-Three levels ship with the game: **Curly Path** (a 20×13 board whose single lane loops once
+Four levels ship with the game: **Curly Path** (a 20×13 board whose single lane loops once
 at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge, 18 waves: the hard level, built around five
 waves that each ask for a different defence - single-target damage at 6, area damage at 11, control at 12,
 anti-physical at 15, all of them at 17 - and the Warden at 18, with just enough bounty to beat it), **Zigzag Path** (a smaller,
 16×11 board where a fuchsia lane hooks back on itself and a lime lane cuts across it twice, 8
 waves per lane, only 3 lives) and **Twisted Hourglass** (a tight, 9×15 portrait board where three
 Bezier lanes - crimson, teal and amber - twist through a pinched waist so the layout reads as an
-hourglass, teal and amber crossing at its middle, 10 waves per lane). A level can define more than one enemy path, each with its own color, waves
-and pace; Zigzag Path and Twisted Hourglass are the two built-in levels that do. A level's
+hourglass, teal and amber crossing at its middle, 10 waves per lane) and **Iron Crossing** (an 18×13
+board, the hardest: a long steel lane winds Golems, Juggernauts, Magma and their support back and forth
+while a short rush lane of Couriers, Skirmishers, Ghosts and Mite swarms knifes straight through it
+three times, 15 waves per lane, 3 lives, and the Iron Colossus at the end: break its shell with magic, then catch the
+Molten Core inside with physical damage before it runs). A level can define more than one enemy path, each with its own color, waves
+and pace; Zigzag Path, Twisted Hourglass and Iron Crossing are the built-in levels that do. A level's
 paths all run the same number of waves as synchronized rounds - starting a round spawns every
 path's wave for it together. A level can also register its own enemy on top of the ones above,
 scoped to that level only; Twisted Hourglass's Reaver and Curly Path's warding Mender, Bulky mob
-and Warden chain (see the Enemies table) are the built-in ones.
+and Warden chain and Iron Crossing's Colossus, Molten Core and Embers (see the Enemies table) are the built-in ones.
 
 Levels are defined as Java constants in `td.level.BuiltInLevelCatalog`, so adding one today
 means a code change and a rebuild. See `TODO.md` for the planned file-based catalog.
