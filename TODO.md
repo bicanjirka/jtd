@@ -326,15 +326,6 @@ absence (root `CLAUDE.md`: absence is a value or `Optional`, never `null`), agai
   `Optional<Placing>`; `isPlacing()` is `isPresent()`. The class is EDT-confined, so no publication
   change. `TowerPlacementTest` and `GameEngineTest` cover the behaviour.
 
-### Selling and clearing a tower repeat one block
-
-`TowerRoster.sell` and `TowerRoster.clear` both look up the board, compute the cell, call
-`host.clearCell`, `doCleanup` and remove the tower, line for line.
-
-- **Where:** `td.tower.TowerRoster`.
-- **Approach:** one private method that takes a tower off the board; `sell` adds the stats recompute and
-  the refund, `clear` loops. Note `clear` reads the board inside its loop, `sell` once; either is fine.
-
 ### Names that mislead or say nothing
 
 - `AbstractTower.getRange()` returns the *base* range in cells while `getRangeReal()` returns the current
