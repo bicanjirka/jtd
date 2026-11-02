@@ -8,6 +8,8 @@ import td.stat.BaseStats;
 import td.stat.EnemyStat;
 import td.stat.StatView;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HitResolutionTest {
@@ -84,10 +86,14 @@ class HitResolutionTest {
     @Test
     void anAttackerWithoutCritChanceNeverDrawsFromTheRandomSource() {
         StatView plain = stats(BaseStats.defaults(EnemyStat.class));
+        AtomicInteger draws = new AtomicInteger();
 
         HitResolution.resolve(Damage.physical(1000), AttackProfile.none(), plain, () -> {
-            throw new IllegalStateException("drew a random number");
+            draws.incrementAndGet();
+            return 0.0;
         });
+
+        assertThat(draws).hasValue(0);
     }
 
     @Test
