@@ -213,6 +213,13 @@ public record EnemyDefinition(
                 this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
     }
 
+    /** The body it is drawn as; a clone wears its own look this way. */
+    public EnemyDefinition withArchetype(BodyArchetype archetype) {
+        return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, archetype, this.movement, this.traitSlots,
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+    }
+
     public EnemyDefinition withMovement(MovementBehavior movement) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, movement, this.traitSlots,

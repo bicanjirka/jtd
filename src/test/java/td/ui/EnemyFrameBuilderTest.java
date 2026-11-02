@@ -22,6 +22,7 @@ import td.enemy.PeriodicTrigger;
 import td.enemy.RadiusTarget;
 import td.enemy.Rank;
 import td.enemy.RegenerationTrait;
+import td.enemy.StrideMovement;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
@@ -163,6 +164,20 @@ class EnemyFrameBuilderTest {
 
         assertThat(bodyDrawAt(facing, 1, 1.0).facingRadians()).isCloseTo(Math.PI / 2, within(1e-6));
         assertThat(bodyDrawAt(fixed, 1, 1.0).facingRadians()).isZero();
+    }
+
+    @Test
+    void aStridingMobFacesItsPathTurnedByItsSway() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(1, 1001, 1001);
+        context.setPath(new Path(List.of(new Vec2(5, 5), new Vec2(5, 105))));
+        StrideMovement stride = new StrideMovement(0.5f, 4);
+        EnemyMob striding = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("striding").withMovement(stride));
+        striding.doTick(1);
+        striding.doTick(2);
+
+        double sway = bodyDrawAt(striding, 2, 1.0).facingRadians() - Math.PI / 2;
+
+        assertThat(sway).isNotZero().isCloseTo(stride.angleAt(2), within(1e-6));
     }
 
     @Test

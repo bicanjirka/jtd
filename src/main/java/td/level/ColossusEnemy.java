@@ -35,7 +35,7 @@ final class ColossusEnemy {
 
     /** What the core bursts into: fast, fireproof and fragile, each one a life if it gets through. */
     static EnemyDefinition ember() {
-        return EnemyDefinition.of("ember", "Ember", 160, 1, 1.7f, BodyArchetype.MITE)
+        return EnemyDefinition.of("ember", "Ember", 160, 1, 1.7f, BodyArchetype.EMBER)
                 .withDescription("A burning shard of a Molten Core, quick and fireproof.")
                 .withAgility(20f)
                 .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN))));
@@ -47,7 +47,7 @@ final class ColossusEnemy {
     }
 
     private static EnemyDefinition colossus() {
-        return EnemyDefinition.of("colossus", "The Iron Colossus", 5000, 40, 0.45f, BodyArchetype.GOLEM)
+        return EnemyDefinition.of("colossus", "The Iron Colossus", 5000, 40, 0.45f, BodyArchetype.COLOSSUS)
                 .withDescription("A walking foundry in an iron shell. Break the shell and what is inside comes out running.")
                 .withMovement(new SwingMovement((float) Math.toRadians(10.0), 60, SwingCurve.SMOOTH))
                 .withStats(35f, 10f, 15f, 0f, 100f, 0f, 0f)
@@ -63,7 +63,7 @@ final class ColossusEnemy {
     }
 
     private static EnemyDefinition moltenCore() {
-        return EnemyDefinition.of("moltenCore", "The Molten Core", 3800, 40, 0.6f, BodyArchetype.MAGMA)
+        return EnemyDefinition.of("moltenCore", "The Molten Core", 3800, 40, 0.6f, BodyArchetype.MOLTEN_CORE)
                 .withDescription("The Colossus's burning heart, loose at last.")
                 .withMovement(new PulseMovement(0.12f, 30, 15))
                 .withStats(0f, 60f, 0f, 4f, 60f, 0f, 0f)

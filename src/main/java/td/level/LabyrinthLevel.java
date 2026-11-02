@@ -16,11 +16,13 @@ import td.enemy.HurtSpeedTrait;
 import td.enemy.IdentifiedAbility;
 import td.enemy.IdentifiedTrait;
 import td.enemy.OnceTrigger;
-import td.enemy.PathDirectionalMovement;
 import td.enemy.PeriodicTrigger;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
 import td.enemy.SelfTarget;
+import td.enemy.StrideMovement;
+import td.enemy.SwingCurve;
+import td.enemy.SwingMovement;
 import td.stat.DisruptionAura;
 import td.wave.PathColor;
 import td.wave.PathDefinition;
@@ -47,6 +49,8 @@ final class LabyrinthLevel {
     private static final RankedEnemy BRONZE_BULL = EnemyCatalog.builtIn().ranked("fast").cloneAs("bull",
             fast -> fast
                     .withDisplayName("Bronze Bull")
+                    .withArchetype(BodyArchetype.BRONZE_BULL)
+                    .withMovement(new StrideMovement((float) Math.toRadians(15.0), 12))
                     .withDescription("A bull cast in bronze, faster the more it is dented.")
                     .withHealthAndPrice(fast.baseHealth() / 2, fast.price())
                     .withPlating(3f)
@@ -58,10 +62,10 @@ final class LabyrinthLevel {
      * recast again and again. A tower that strips, pierces, blocks or inverts shields is the way in.
      */
     private static final RankedEnemy TALOS = RankedEnemy.unique(
-            EnemyDefinition.of("talos", "Talos", 3000, 60, 0.35f, BodyArchetype.JUGGERNAUT)
+            EnemyDefinition.of("talos", "Talos", 3000, 60, 0.35f, BodyArchetype.TALOS)
                     .withDescription("The bronze guardian of the island. One vein of ichor runs through it, "
                             + "and the shield never stops.")
-                    .withMovement(new PathDirectionalMovement())
+                    .withMovement(new SwingMovement((float) Math.toRadians(8.0), 40, SwingCurve.SMOOTH))
                     .withStats(30f, 30f, 0f, 0f, -60f, 0f, 0f)
                     .withIdentifiedAbilities(List.of(
                             IdentifiedAbility.anonymous(new Ability(AbilityTerm.BRONZE_SHELL, new OnceTrigger(1),
@@ -74,9 +78,9 @@ final class LabyrinthLevel {
      * time and faster the more it bleeds, and once badly hurt a frenzy that heals it and sends it running.
      */
     private static final RankedEnemy MINOTAUR = RankedEnemy.unique(
-            EnemyDefinition.of("minotaur", "The Minotaur", 12000, 0, 0.5f, BodyArchetype.WARDEN)
+            EnemyDefinition.of("minotaur", "The Minotaur", 12000, 0, 0.5f, BodyArchetype.MINOTAUR)
                     .withDescription("Born of a queen and a bull, kept at the heart of the maze. It knows every turn.")
-                    .withMovement(new PathDirectionalMovement())
+                    .withMovement(new StrideMovement((float) Math.toRadians(12.0), 18))
                     .withStats(40f, 15f, 8f, 0f, 60f, 0f, 40f)
                     .withDisruption(new DisruptionAura(110f, 0.35f, 0.8f))
                     .withIdentifiedTraits(List.of(

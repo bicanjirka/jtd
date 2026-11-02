@@ -109,13 +109,23 @@ public final class DefinedEnemyMob implements EnemyMob {
     private static float bodyScaleFor(BodyArchetype archetype, int scale, Rank rank) {
         return switch (archetype) {
             case CIRCLE, SALAMANDER -> scale / 6f;
-            case SQUARE, TRIANGLE, GHOST, COURIER, SKIRMISHER -> scale / (float) (7 - rank.ordinal());
+            case SQUARE, TRIANGLE, GHOST, COURIER, SKIRMISHER, JAMMER, REAVER, MIRAGE, HERALD ->
+                    scale / (float) (7 - rank.ordinal());
+            case MIRROR_IMAGE -> scale / 8f;
+            case EMBER -> scale / 9f;
+            case BULKY -> scale / 4.5f;
+            case ECLIPSE -> scale / 5f;
+            case BRONZE_BULL -> scale / (float) (6 - rank.ordinal());
             case MITE -> scale / 10f;
             case YETI, MAGMA, GOLEM -> scale / 5f;
             case JUGGERNAUT -> scale / (float) (6 - rank.ordinal());
             // Fixed, so it always reads as the biggest thing on the board.
             case WARDEN -> scale / 1.5f;
             case WARDEN_EGG -> scale / 3f;
+            case MINOTAUR -> scale / 1.7f;
+            case MONOLITH -> scale / 2f;
+            case COLOSSUS, TALOS -> scale / 2.2f;
+            case MOLTEN_CORE -> scale / 2.6f;
             case MENDER, SHIELDBEARER -> scale / (float) (7 - rank.ordinal());
         };
     }
@@ -280,7 +290,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     public float getDrawScale() {
         return switch (this.definition.movement()) {
             case PulseMovement pulse -> this.bodyScale * pulse.scaleAt(this.ticksSinceSpawn);
-            case SwingMovement _, FixedMovement _, PathDirectionalMovement _, RotorMovement _ -> this.bodyScale;
+            case SwingMovement _, FixedMovement _, PathDirectionalMovement _, RotorMovement _, StrideMovement _ -> this.bodyScale;
         };
     }
 
@@ -291,6 +301,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             case SwingMovement swing -> swing.angleAt(this.ticksSinceSpawn);
             case PathDirectionalMovement ignored -> this.motion.facingRadians();
             case RotorMovement ignored -> this.facingRadians;
+            case StrideMovement stride -> this.motion.facingRadians() + stride.angleAt(this.ticksSinceSpawn);
         };
     }
 
@@ -898,6 +909,8 @@ public final class DefinedEnemyMob implements EnemyMob {
             case PulseMovement ignored -> {
             }
             case SwingMovement ignored -> {
+            }
+            case StrideMovement ignored -> {
             }
         }
     }

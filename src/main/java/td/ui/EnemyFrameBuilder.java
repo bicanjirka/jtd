@@ -196,6 +196,20 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case YETI -> Palette.ENEMY_YETI;
             case MAGMA -> Palette.ENEMY_MAGMA;
             case GOLEM -> Palette.ENEMY_GOLEM;
+            case JAMMER -> Palette.ENEMY_JAMMER;
+            case REAVER -> Palette.ENEMY_REAVER;
+            case BULKY -> Palette.ENEMY_BULKY;
+            case COLOSSUS -> Palette.ENEMY_COLOSSUS;
+            case MOLTEN_CORE -> Palette.ENEMY_MOLTEN_CORE;
+            case EMBER -> Palette.ENEMY_EMBER;
+            case MONOLITH -> Palette.ENEMY_MONOLITH;
+            case ECLIPSE -> Palette.ENEMY_ECLIPSE;
+            case MIRAGE -> Palette.ENEMY_MIRAGE;
+            case MIRROR_IMAGE -> Palette.ENEMY_MIRROR_IMAGE;
+            case HERALD -> Palette.ENEMY_HERALD;
+            case TALOS -> Palette.ENEMY_TALOS;
+            case MINOTAUR -> Palette.ENEMY_MINOTAUR;
+            case BRONZE_BULL -> Palette.ENEMY_BRONZE_BULL;
         };
     }
 

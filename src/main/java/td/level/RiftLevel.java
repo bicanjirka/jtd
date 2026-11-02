@@ -20,6 +20,7 @@ import td.enemy.IdentifiedTrait;
 import td.enemy.LeaveZoneAction;
 import td.enemy.OnDodgeTrigger;
 import td.enemy.OnFirstDamageTakenTrigger;
+import td.enemy.PathDirectionalMovement;
 import td.enemy.PeriodicTrigger;
 import td.enemy.RadiusTarget;
 import td.enemy.Rank;
@@ -55,13 +56,14 @@ final class RiftLevel {
 
     /** What a Mirage leaves where a shot missed it: no bounty, and stronger behind a stronger Mirage. */
     private static final EnemyDefinition ECHO = EnemyDefinition.of("echo", "Mirror Image", 30, 1, 1.6f,
-                    BodyArchetype.SKIRMISHER)
+                    BodyArchetype.MIRROR_IMAGE)
             .withDescription("What was left where a shot missed a Mirage.");
 
     /** A Skirmisher that turns every dodge into one more enemy, so aimed shots feed it and area damage starves it. */
     private static final RankedEnemy MIRAGE = EnemyCatalog.builtIn().ranked("dodger").cloneAs("mirage",
             (rank, dodger) -> dodger
                     .withDisplayName("Mirage")
+                    .withArchetype(BodyArchetype.MIRAGE)
                     .withDescription("Nimble, and never quite where the shot went.")
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("mirror", new Ability(AbilityTerm.MIRROR_IMAGE,
                             new OnDodgeTrigger(), new SpawnEnemiesAction("echo",
@@ -71,13 +73,15 @@ final class RiftLevel {
     private static final RankedEnemy HERALD = EnemyCatalog.builtIn().ranked("courier").cloneAs("herald",
             courier -> courier
                     .withDisplayName("Herald")
+                    .withArchetype(BodyArchetype.HERALD)
+                    .withMovement(new PathDirectionalMovement())
                     .withDescription("Runs ahead of the others, and raises the alarm the moment it is hurt.")
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("alarm", new Ability(AbilityTerm.HASTE_FIELD,
                             new OnFirstDamageTakenTrigger(), LeaveZoneAction.hasteGround(1.2f, Zone.UNTIL_WAVE_END))))));
 
     /** Hides the allies around it from aimed shots every few seconds, but never itself. */
     private static final RankedEnemy ECLIPSE = RankedEnemy
-            .startingAt(EnemyDefinition.of("eclipse", "Eclipse", 110, 3, 1.1f, BodyArchetype.WARDEN_EGG)
+            .startingAt(EnemyDefinition.of("eclipse", "Eclipse", 110, 3, 1.1f, BodyArchetype.ECLIPSE)
                     .withDescription("A shard of the dark inside the rift. Its company keeps vanishing.")
                     .withMovement(new RotorMovement((float) Math.toRadians(4.0)))
                     .withMagicResist(20f)
@@ -97,9 +101,8 @@ final class RiftLevel {
      * and hardening twice more on the way down. Letting it through ends the level.
      */
     private static final RankedEnemy MONOLITH = RankedEnemy.unique(
-            EnemyDefinition.of("monolith", "The Monolith", 3800, 80, 0.22f, BodyArchetype.WARDEN)
+            EnemyDefinition.of("monolith", "The Monolith", 3800, 80, 0.22f, BodyArchetype.MONOLITH)
                     .withDescription("It has walked out of the rift before. It does not hurry, and it does not stop.")
-                    .withMovement(new RotorMovement((float) Math.toRadians(0.6)))
                     .withStats(25f, 25f, 4f, 4f, 100f, 0f, 50f)
                     .withIdentifiedTraits(List.of(
                             IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(50f)),

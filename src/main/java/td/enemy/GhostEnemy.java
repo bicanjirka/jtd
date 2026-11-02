@@ -20,6 +20,8 @@ final class GhostEnemy {
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("ghost", "Ghost mob", 150, 3, 1.28f, BodyArchetype.GHOST)
+                        // A sheet that floats rather than walks.
+                        .withMovement(new SwingMovement((float) Math.toRadians(12.0), 45, SwingCurve.SMOOTH))
                         .withDescription("Half there: hard to hit and hard to see, but area damage finds it.")
                         .withArmor(20f)
                         .withIdentifiedAbilities(List.of(fade(200))), RankGrowth.of(14f))
