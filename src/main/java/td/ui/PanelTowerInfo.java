@@ -69,8 +69,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private Consumer<Boolean> onPinToggled = pinning -> {
     };
     private TooltipLayer tooltips;
-    private HudButton jButton_sell;
-    private HudToggleButton jToggle_pin;
+    private HudButton sellButton;
+    private HudToggleButton pinToggle;
     private JScrollPane jScrollPane1;
     private SheetPane sheetPane;
 
@@ -82,7 +82,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     public void setTooltips(TooltipLayer layer) {
         this.tooltips = layer;
         layer.watch(this.sheetPane);
-        layer.watchButton(this.jToggle_pin, () -> Optional.of(new SheetTooltip(TooltipKey.of("tower", "pin"),
+        layer.watchButton(this.pinToggle, () -> Optional.of(new SheetTooltip(TooltipKey.of("tower", "pin"),
                 PIN_TOOLTIP)));
     }
 
@@ -101,15 +101,15 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     public void setExternalText(String s) {
         this.closeTooltips();
-        this.jButton_sell.setVisible(false);
-        this.jToggle_pin.setVisible(false);
+        this.sellButton.setVisible(false);
+        this.pinToggle.setVisible(false);
         this.setText(s);
     }
 
     /** An enemy's or a shop tower's sheet, in place of any tower status. */
     public void showSheet(InfoSheet sheet) {
-        this.jButton_sell.setVisible(false);
-        this.jToggle_pin.setVisible(false);
+        this.sellButton.setVisible(false);
+        this.pinToggle.setVisible(false);
         this.replaceSheet(sheet);
     }
 
@@ -172,7 +172,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     /** Shows whether the next board click picks the selected Obelisk's Ley Line host. */
     public void showPinning(boolean pinning) {
-        this.jToggle_pin.setSelected(pinning);
+        this.pinToggle.setSelected(pinning);
     }
 
     /** After a level ends, a selected tower's stats stay visible but selling is disabled. */
@@ -182,16 +182,16 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     }
 
     private void updateInterface() {
-        this.jButton_sell.setVisible(this.selectedTower != null);
+        this.sellButton.setVisible(this.selectedTower != null);
         boolean pins = this.selectedTower != null && !this.levelEnded && PulseTower.castsLeyLine(this.selectedTower);
-        this.jToggle_pin.setVisible(pins);
+        this.pinToggle.setVisible(pins);
         if (!pins) {
-            this.jToggle_pin.setSelected(false);
+            this.pinToggle.setSelected(false);
         }
 
         if (this.selectedTower != null) {
-            this.jButton_sell.setEnabled(!this.levelEnded);
-            this.jButton_sell.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
+            this.sellButton.setEnabled(!this.levelEnded);
+            this.sellButton.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
             this.replaceSheet(TowerSheetText.status(this.selectedTower.inspect()));
         }
     }
@@ -243,7 +243,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
     /** Sells the selected tower as a click on Sell does, while Sell shows and is enabled. */
     public void sellSelected() {
-        if (this.jButton_sell.isVisible() && this.jButton_sell.isEnabled()) {
+        if (this.sellButton.isVisible() && this.sellButton.isEnabled()) {
             this.sellCurrentTower();
         }
     }
@@ -267,8 +267,8 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
         jScrollPane1 = new JScrollPane();
         sheetPane = new SheetPane();
-        jButton_sell = new HudButton("Sell");
-        jToggle_pin = new HudToggleButton();
+        sellButton = new HudButton("Sell");
+        pinToggle = new HudToggleButton();
 
         setLayout(new GridBagLayout());
 
@@ -300,9 +300,9 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         gridBagConstraints.weighty = 0.01;
         add(jScrollPane1, gridBagConstraints);
 
-        jToggle_pin.setText("Pin line");
-        jToggle_pin.setVisible(false);
-        jToggle_pin.addActionListener(evt -> this.onPinToggled.accept(this.jToggle_pin.isSelected()));
+        pinToggle.setText("Pin line");
+        pinToggle.setVisible(false);
+        pinToggle.addActionListener(evt -> this.onPinToggled.accept(this.pinToggle.isSelected()));
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -310,12 +310,12 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = GridBagConstraints.WEST;
         gridBagConstraints.weightx = 0.01;
-        add(jToggle_pin, gridBagConstraints);
+        add(pinToggle, gridBagConstraints);
 
-        jButton_sell.setText("Sell");
-        jButton_sell.setForeground(SELL_TEXT_COLOR);
-        jButton_sell.setFace(ControlFace.button().withChip(GameKey.SELL.chip()));
-        jButton_sell.addActionListener(this::jButton_sellActionPerformed);
+        sellButton.setText("Sell");
+        sellButton.setForeground(SELL_TEXT_COLOR);
+        sellButton.setFace(ControlFace.button().withChip(GameKey.SELL.chip()));
+        sellButton.addActionListener(this::onSellClicked);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -323,11 +323,11 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = GridBagConstraints.WEST;
         gridBagConstraints.weightx = 0.01;
-        add(jButton_sell, gridBagConstraints);
+        add(sellButton, gridBagConstraints);
 
     }
 
-    private void jButton_sellActionPerformed(ActionEvent evt) {
+    private void onSellClicked(ActionEvent evt) {
         this.sellCurrentTower();
     }
 

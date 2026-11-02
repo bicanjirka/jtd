@@ -145,14 +145,14 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private TooltipLayer tooltips;
     private Optional<ConfirmPopup> abandonQuestion = Optional.empty();
     private CardLayout contentCardLayout;
-    private JPanel jPanel_game;
+    private JPanel gamePanel;
     private PanelLevelSelect panelLevelSelect;
     private PanelTowerSelector panelTowerSelector;
     private PanelDev panelDev;
     /** The window's size before the dev panel opened; {@code null} while it is closed. */
     private Dimension sizeWithoutDevPanel;
     private LevelDefinition currentLevel;
-    private JPanel jPanel_board;
+    private JPanel boardPanel;
 
     /**
      * Builds the component tree on the EDT. The frame is shown last, so it is never realized before
@@ -227,7 +227,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         boardConstraints.fill = GridBagConstraints.BOTH;
         boardConstraints.weightx = 0.1;
         boardConstraints.weighty = 0.1;
-        this.jPanel_board.add(this.gameBoard, boardConstraints);
+        this.boardPanel.add(this.gameBoard, boardConstraints);
 
         this.setSize(MENU_WIDTH, MENU_HEIGHT);
         this.setLocationRelativeTo(null);
@@ -310,7 +310,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (!this.painting) {
             // The container, not the board: repainting the board alone paints over the stacked
             // overlay without repainting it.
-            this.jPanel_board.repaint();
+            this.boardPanel.repaint();
         }
     }
 
@@ -475,7 +475,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             if (this.sizeWithoutDevPanel == null) {
                 this.sizeWithoutDevPanel = this.getSize();
             }
-            Dimension game = this.jPanel_game.getPreferredSize();
+            Dimension game = this.gamePanel.getPreferredSize();
             Insets frame = this.getInsets();
             this.setSize(Math.max(this.sizeWithoutDevPanel.width, game.width + frame.left + frame.right),
                     Math.max(this.sizeWithoutDevPanel.height + this.panelDev.getPreferredSize().height,
@@ -650,7 +650,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.engine.clearCell(x, y);
     }
 
-    private void jPanel_boardMouseClicked(MouseEvent evt) {
+    private void onBoardClicked(MouseEvent evt) {
         if (!this.levelLoaded) {
             return;
         }
@@ -697,7 +697,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         frame.enemyInspection().ifPresent(info::showSheet);
     }
 
-    private void jPanel_boardMouseMoved(MouseEvent evt) {
+    private void onBoardMouseMoved(MouseEvent evt) {
         if (!this.levelLoaded) {
             return;
         }
@@ -794,18 +794,18 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
         addKeyListener(new KeyAdapter() {
             public void keyTyped(KeyEvent evt) {
-                formKeyTyped(evt);
+                onFrameKeyTyped(evt);
             }
 
             public void keyPressed(KeyEvent evt) {
-                formKeyPressed(evt);
+                onFrameKeyPressed(evt);
             }
         });
 
         GridBagConstraints gridBagConstraints;
 
-        jPanel_board = new JPanel();
-        jPanel_game = new JPanel();
+        boardPanel = new JPanel();
+        gamePanel = new JPanel();
         panelTowerSelector = new PanelTowerSelector();
         panelDev = new PanelDev();
         panelDev.setVisible(false);
@@ -813,26 +813,26 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
         contentCardLayout = new CardLayout();
         getContentPane().setLayout(contentCardLayout);
-        jPanel_game.setLayout(new GridBagLayout());
-        jPanel_game.setBackground(new Color(0, 0, 0));
+        gamePanel.setLayout(new GridBagLayout());
+        gamePanel.setBackground(new Color(0, 0, 0));
 
-        jPanel_board.setLayout(new GridBagLayout());
+        boardPanel.setLayout(new GridBagLayout());
 
-        jPanel_board.setBackground(new Color(0, 0, 0));
-        jPanel_board.setForeground(new Color(220, 255, 220));
-        jPanel_board.setBorder(Hud.outlineBorder());
-        jPanel_board.addMouseListener(new MouseAdapter() {
+        boardPanel.setBackground(new Color(0, 0, 0));
+        boardPanel.setForeground(new Color(220, 255, 220));
+        boardPanel.setBorder(Hud.outlineBorder());
+        boardPanel.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
-                jPanel_boardMouseClicked(evt);
+                onBoardClicked(evt);
             }
 
             public void mouseExited(MouseEvent evt) {
                 panelDev.clearPointerCell();
             }
         });
-        jPanel_board.addMouseMotionListener(new MouseMotionAdapter() {
+        boardPanel.addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent evt) {
-                jPanel_boardMouseMoved(evt);
+                onBoardMouseMoved(evt);
             }
         });
 
@@ -842,14 +842,14 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
-        this.boardOverlays.addTo(jPanel_board, gridBagConstraints);
+        this.boardOverlays.addTo(boardPanel, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        jPanel_game.add(this.header, gridBagConstraints);
+        gamePanel.add(this.header, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -857,7 +857,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         // No fill: the board keeps its exact pixel size, centred in its cell.
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
-        jPanel_game.add(jPanel_board, gridBagConstraints);
+        gamePanel.add(boardPanel, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 1;
@@ -866,14 +866,14 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints.fill = GridBagConstraints.VERTICAL;
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
         gridBagConstraints.weighty = 1.0;
-        jPanel_game.add(this.gameConsole, gridBagConstraints);
+        gamePanel.add(this.gameConsole, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = GridBagConstraints.PAGE_END;
-        jPanel_game.add(panelTowerSelector, gridBagConstraints);
+        gamePanel.add(panelTowerSelector, gridBagConstraints);
 
         // Between the board and the tower buttons, but added last, so the run-jtd Driver's
         // component indices for everything else stay as they were.
@@ -881,10 +881,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        jPanel_game.add(panelDev, gridBagConstraints);
+        gamePanel.add(panelDev, gridBagConstraints);
 
         getContentPane().add(panelLevelSelect, CARD_MENU);
-        getContentPane().add(jPanel_game, CARD_GAME);
+        getContentPane().add(gamePanel, CARD_GAME);
         contentCardLayout.show(getContentPane(), CARD_MENU);
     }
 
@@ -909,7 +909,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /** An Alt or Ctrl chord also types its letter; that letter is not a bare shortcut. */
-    private void formKeyTyped(KeyEvent evt) {
+    private void onFrameKeyTyped(KeyEvent evt) {
         if (evt.isAltDown() || evt.isControlDown()) {
             return;
         }
@@ -917,7 +917,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     /** Keys that type no character, such as Delete, arrive only as a press, so every {@link GameKey} is read here. */
-    private void formKeyPressed(KeyEvent evt) {
+    private void onFrameKeyPressed(KeyEvent evt) {
         if (evt.isAltDown() || evt.isControlDown() || evt.isMetaDown()) {
             return;
         }
