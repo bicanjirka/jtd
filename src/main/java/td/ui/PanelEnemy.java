@@ -11,7 +11,7 @@ import td.ui.render.TooltipKey;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 
 import javax.swing.JPanel;
@@ -65,7 +65,7 @@ public class PanelEnemy extends JPanel {
     public PanelEnemy() {
         initComponents();
         this.contextLocal = new GameWorld(GameHost.noOp());
-        this.contextLocal.setPath(new PathNormal(List.of()));
+        this.contextLocal.setPath(new Path(List.of()));
     }
 
     public void clearEnemies() {
@@ -73,7 +73,7 @@ public class PanelEnemy extends JPanel {
         this.ranks.clear();
         this.enemies.clear();
         this.enemiesCount = new ArrayList<>();
-        this.contextLocal.setPath(new PathNormal(List.of()));
+        this.contextLocal.setPath(new Path(List.of()));
     }
 
     public void addEnemy(EnemyDefinition definition, int count, Rank rank) {
@@ -115,7 +115,7 @@ public class PanelEnemy extends JPanel {
                 this.contextLocal.setBoard(BoardGeometry.of(Math.max(1, Math.round(cell * room / body)), 0, 0));
                 body = room;
             }
-            this.contextLocal.setPath(new PathNormal(List.of(new Vec2(this.slotWidth * nr + this.slotWidth / 2f,
+            this.contextLocal.setPath(new Path(List.of(new Vec2(this.slotWidth * nr + this.slotWidth / 2f,
                     MOB_SIZE - BASELINE_GAP - body))));
             EnemyMob enemy = previewMob(definition, rank, this.contextLocal);
             enemy.doTick(0);

@@ -15,7 +15,7 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 
 import java.util.List;
@@ -162,7 +162,7 @@ class DefinedEnemyMobAbilityTest {
 
     @Test
     void aMobThatLeaksCastsNoDeathAbility() {
-        this.world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(40, 0))));
+        this.world.setPath(new Path(List.of(new Vec2(0, 0), new Vec2(40, 0))));
         this.world.getEnemyCatalog().register(EnemyFixtures.simpleDefinition("child"));
         DefinedEnemyMob parent = EnemyFixtures.liveMob(this.world, EnemyFixtures.definitionThatSpawns("parent", "child"));
 

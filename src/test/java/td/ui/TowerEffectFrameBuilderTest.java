@@ -19,7 +19,7 @@ import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerStatusDraw;
 import td.util.GameWorld;
 import td.util.TickRate;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
@@ -148,7 +148,7 @@ class TowerEffectFrameBuilderTest {
     @Test
     void ralliesSpotIsMarkedOnlyWhileTheAuraIsSelected() {
         GameWorld context = WorldFixtures.newWorld();
-        context.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(900, 0))));
+        context.setPath(new Path(List.of(new Vec2(0, 0), new Vec2(900, 0))));
         AuraTower aura = auraWith(context, "Rally");
 
         int unselected = ringsIn(drawnBy(context, aura), Palette.TOWER_AURA_RALLY).size();

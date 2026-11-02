@@ -11,7 +11,7 @@ import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.stat.StatModifiers;
 import td.util.GameWorld;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 
 import java.util.List;
@@ -176,7 +176,7 @@ class AuraTowerTest {
     }
 
     private AuraTower rallyAura() {
-        this.context.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(900, 0))));
+        this.context.setPath(new Path(List.of(new Vec2(0, 0), new Vec2(900, 0))));
         return this.auraWith("Rally");
     }
 

@@ -4,7 +4,7 @@ import td.board.BoardGeometry;
 import td.util.GameWorld;
 import td.util.RandomSource;
 import td.util.RecordingGameHost;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 
 import java.util.List;
@@ -63,7 +63,7 @@ public final class WorldFixtures {
     }
 
     private static GameWorld onStraightPath(GameWorld world) {
-        world.setPath(new PathNormal(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
+        world.setPath(new Path(List.of(new Vec2(0, 0), new Vec2(1000, 0))));
         return world;
     }
 }

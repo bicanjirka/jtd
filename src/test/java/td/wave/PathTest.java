@@ -8,18 +8,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class PathNormalTest {
+class PathTest {
 
     @Test
     void pointsReturnsExactlyWhatWasGiven() {
-        PathNormal path = new PathNormal(List.of(new Vec2(5, 5), new Vec2(15, 5)));
+        Path path = new Path(List.of(new Vec2(5, 5), new Vec2(15, 5)));
 
         assertThat(path.points()).containsExactly(new Vec2(5, 5), new Vec2(15, 5));
     }
 
     @Test
     void anEmptyPathHasNoPoints() {
-        PathNormal path = new PathNormal(List.of());
+        Path path = new Path(List.of());
 
         assertThat(path.points()).isEmpty();
     }
@@ -27,7 +27,7 @@ class PathNormalTest {
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredPoints() {
         List<Vec2> points = new ArrayList<>(List.of(new Vec2(0, 0), new Vec2(10, 0)));
-        PathNormal path = new PathNormal(points);
+        Path path = new Path(points);
 
         points.add(new Vec2(20, 0));
 
@@ -36,7 +36,7 @@ class PathNormalTest {
 
     @Test
     void theStoredPointsCannotBeMutatedThroughTheAccessor() {
-        PathNormal path = new PathNormal(List.of(new Vec2(0, 0)));
+        Path path = new Path(List.of(new Vec2(0, 0)));
 
         assertThatThrownBy(() -> path.points().add(new Vec2(1, 1)))
                 .isInstanceOf(UnsupportedOperationException.class);
