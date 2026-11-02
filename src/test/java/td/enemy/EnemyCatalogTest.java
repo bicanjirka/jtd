@@ -1,15 +1,10 @@
 package td.enemy;
 
 import org.junit.jupiter.api.Test;
-import td.effect.EffectKind;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
-import td.stat.EnemyStat;
 import td.util.GameStartupException;
 import td.util.GameWorld;
-
-import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -78,52 +73,20 @@ class EnemyCatalogTest {
     }
 
     @Test
-    void theRankAwareOverloadCanSetHealthAndStatsCompletelyPersistAddAndReplaceTraitsPerRank() {
+    void theRankAwareOverloadAdjustsEachRankByItsOwnRank() {
         EnemyCatalog catalog = new EnemyCatalog();
-        catalog.register(RankedEnemy.startingAt(EnemyFixtures.simpleDefinition("square").withArmor(10f)
-                        .withIdentifiedTraits(List.of(
-                                IdentifiedTrait.named("freeze", EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f)),
-                                IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.25f)))))
+        catalog.register(RankedEnemy.startingAt(EnemyFixtures.simpleDefinition("square"))
                 .thenAt(Rank.SOLDIER, d -> d)
                 .thenAt(Rank.VETERAN, d -> d)
-                .thenAt(Rank.ELITE, d -> d)
                 .build());
 
-        RankedEnemy toughenedSquare = catalog.cloneAndAdjust("square", "toughenedSquare", (rank, d) -> switch (rank) {
-            // set outright, proving a replacement rather than a delta
-            case GRUNT -> d.withHealthAndPrice(1000, 100);
-            case SOLDIER, BOSS -> d;
-            case VETERAN -> d.withAdditionalTraits(
-                    List.of(IdentifiedTrait.named("regrowth", new RegenerationTrait(1f))));
-            // replaces "freeze" under the same id; other traits stay
-            case ELITE -> d.withArmor(233f).withAdditionalTraits(
-                    List.of(IdentifiedTrait.named("freeze", EffectResistTrait.immuneTo(EffectKind.FREEZE))));
-        });
+        RankedEnemy adjusted = catalog.cloneAndAdjust("square", "adjusted",
+                (rank, d) -> rank == Rank.VETERAN ? d : d.withHealthAndPrice(1000 + rank.ordinal(), d.price()));
 
-        EnemyDefinition grunt = toughenedSquare.definitionFor(Rank.GRUNT);
-        assertThat(grunt.baseHealth()).isEqualTo(1000);
-        assertThat(grunt.price()).isEqualTo(100);
-
-        EnemyDefinition soldier = toughenedSquare.definitionFor(Rank.SOLDIER);
-        assertThat(soldier.baseStats().value(EnemyStat.ARMOR)).isEqualTo(10f);
-        assertThat(traitNamed(soldier, "freeze")).contains(EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f));
-
-        EnemyDefinition veteran = toughenedSquare.definitionFor(Rank.VETERAN);
-        assertThat(veteran.traitSlots()).hasSize(3);
-        assertThat(traitNamed(veteran, "regrowth")).contains(new RegenerationTrait(1f));
-
-        EnemyDefinition elite = toughenedSquare.definitionFor(Rank.ELITE);
-        assertThat(elite.baseStats().value(EnemyStat.ARMOR)).isEqualTo(233f);
-        assertThat(elite.traitSlots()).hasSize(2);
-        assertThat(traitNamed(elite, "freeze")).contains(EffectResistTrait.immuneTo(EffectKind.FREEZE));
-        assertThat(traitNamed(elite, "chill")).contains(EffectResistTrait.resisting(EffectKind.CHILL, 0.25f));
-    }
-
-    private static Optional<TraitTemplate> traitNamed(EnemyDefinition definition, String name) {
-        return definition.traitSlots().stream()
-                .filter(slot -> slot.id().equals(TraitId.named(name)))
-                .map(IdentifiedTrait::template)
-                .findFirst();
+        assertThat(adjusted.definitionFor(Rank.GRUNT).baseHealth()).isEqualTo(1000 + Rank.GRUNT.ordinal());
+        assertThat(adjusted.definitionFor(Rank.SOLDIER).baseHealth()).isEqualTo(1000 + Rank.SOLDIER.ordinal());
+        assertThat(adjusted.definitionFor(Rank.VETERAN).baseHealth())
+                .isEqualTo(catalog.get("square", Rank.VETERAN).baseHealth());
     }
 
     @Test

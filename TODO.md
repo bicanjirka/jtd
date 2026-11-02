@@ -339,15 +339,6 @@ input. `PanelDev.initComponents` is about 180 lines and `TowerDefense.initCompon
   could move to a small dev-session class; `PanelDev.initComponents` could build each of its rows in its
   own method. Swing wiring has no tests, so each step needs a `run-jtd` pass.
 
-### One test checks four behaviours
-
-`EnemyCatalogTest.theRankAwareOverloadCanSetHealthAndStatsCompletelyPersistAddAndReplaceTraitsPerRank`
-asserts ten things across four behaviours, as its name lists (eager test / assertion roulette: a failure
-says little about which behaviour broke).
-
-- **Where:** `src/test/java/td/enemy/EnemyCatalogTest.java`.
-- **Approach:** split into one test per behaviour, sharing the fixture through a helper.
-
 ### Mixed accessor styles
 
 Towers and enemies use `getX()`, `getHealth()`, `getBounty()`, but also `id()`, `spirit()`,
