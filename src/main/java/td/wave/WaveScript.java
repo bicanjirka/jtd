@@ -26,6 +26,9 @@ import java.util.stream.Stream;
  */
 public final class WaveScript {
 
+    /** Catches a typo like {@code 99999 c} at parse time, before it builds a slot for every repeat. */
+    public static final int MAX_REPEAT = 100;
+
     static final String EMPTY_TOKEN = "e";
 
     private static final String GRUNT_TOKEN = "grunt";
