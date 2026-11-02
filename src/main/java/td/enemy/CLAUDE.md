@@ -142,10 +142,10 @@
 ## Adding a `BodyArchetype`
 
 1. Add the constant.
-2. Add its cases in `EnemyFrameBuilder.paletteFor` and `Java2DFrameRenderer.colorFor`; the
-   compiler forces these.
-3. Add its shape in `Java2DFrameRenderer.enemyShape` and its fade case in `paintEnemyFade`. The
-   compiler does **not** force these (they have a throwing `default`).
+2. Add its cases in `DefinedEnemyMob.bodyScaleFor`, `EnemyFrameBuilder.paletteFor` and
+   `Java2DFrameRenderer.colorFor`; the compiler forces these.
+3. Add its shape in `Java2DFrameRenderer.enemyShape`, and any second colour in `enemyDetail`/`detailColorFor`;
+   its death fade draws the shape's outline. The compiler does **not** force the shape (a throwing `default`).
 4. Add its id to `README.md`'s "Wave script ids" table and its row to the enemy table.
 
 A new `Trait` also needs a `TraitMarker` constant and its palette cases in

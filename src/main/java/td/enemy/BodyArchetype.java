@@ -21,5 +21,19 @@ public enum BodyArchetype {
     YETI,
     MAGMA,
     GOLEM,
-    SKIRMISHER
+    SKIRMISHER,
+    JAMMER,
+    REAVER,
+    BULKY,
+    COLOSSUS,
+    MOLTEN_CORE,
+    EMBER,
+    MONOLITH,
+    ECLIPSE,
+    MIRAGE,
+    MIRROR_IMAGE,
+    HERALD,
+    TALOS,
+    MINOTAUR,
+    BRONZE_BULL
 }

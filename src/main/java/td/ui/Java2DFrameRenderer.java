@@ -202,7 +202,22 @@ public final class Java2DFrameRenderer {
 
     private static Shape enemyShape(Palette palette, float scale) {
         return switch (palette) {
-            case ENEMY_CIRCLE, ENEMY_GHOST, ENEMY_MITE, ENEMY_SALAMANDER, ENEMY_YETI -> circleShape(scale);
+            case ENEMY_CIRCLE, ENEMY_MITE, ENEMY_BULKY -> circleShape(scale);
+            case ENEMY_GHOST -> ghostShape(scale);
+            case ENEMY_SALAMANDER -> lizardShape(scale);
+            case ENEMY_YETI -> starShape(16, scale, scale * 0.84f);
+            case ENEMY_JAMMER -> jammerShape(scale);
+            case ENEMY_REAVER -> barbShape(scale);
+            case ENEMY_HERALD -> sweptArrowShape(scale);
+            case ENEMY_COLOSSUS -> starShape(8, scale, scale * 0.93f);
+            case ENEMY_MOLTEN_CORE -> starShape(10, scale, scale * 0.7f);
+            case ENEMY_EMBER -> emberShape(scale);
+            case ENEMY_MONOLITH -> slabShape(scale);
+            case ENEMY_ECLIPSE -> crescentShape(scale);
+            case ENEMY_MIRAGE -> twinDiamondShape(scale);
+            case ENEMY_MIRROR_IMAGE -> diamondShape(scale);
+            case ENEMY_TALOS -> giantShape(scale);
+            case ENEMY_MINOTAUR, ENEMY_BRONZE_BULL -> bullHeadShape(scale);
             case ENEMY_SQUARE, ENEMY_JUGGERNAUT -> new Rectangle2D.Float(-scale, -scale, scale * 2, scale * 2);
             case ENEMY_TRIANGLE, ENEMY_COURIER -> triangleShape(scale, true);
             case ENEMY_SKIRMISHER -> diamondShape(scale);
@@ -213,6 +228,199 @@ public final class Java2DFrameRenderer {
             case ENEMY_MENDER, ENEMY_SHIELDBEARER -> crossShape(scale);
             default -> throw new IllegalStateException("Not an enemy palette: " + palette);
         };
+    }
+
+    /**
+     * A second shape painted over a body in its own colour - eyes, horns, a glowing core - so a body reads as more
+     * than one flat colour. Empty for a body that is one colour.
+     */
+    private static Optional<Shape> enemyDetail(Palette palette, float scale) {
+        return switch (palette) {
+            case ENEMY_GHOST -> Optional.of(eyesShape(scale, -scale * 0.2f, scale * 0.16f));
+            case ENEMY_YETI -> Optional.of(eyesShape(scale, -scale * 0.15f, scale * 0.13f));
+            case ENEMY_SALAMANDER -> Optional.of(new Ellipse2D.Float(-scale * 0.6f, -scale * 0.1f, scale * 1.2f, scale * 0.2f));
+            case ENEMY_JAMMER -> Optional.of(circleShape(scale * 0.3f));
+            case ENEMY_BULKY -> Optional.of(circleShape(scale * 0.55f));
+            case ENEMY_WARDEN -> Optional.of(circleShape(scale * 0.28f));
+            case ENEMY_MAGMA, ENEMY_MOLTEN_CORE -> Optional.of(circleShape(scale * 0.4f));
+            case ENEMY_JUGGERNAUT -> Optional.of(new Rectangle2D.Float(-scale * 0.55f, -scale * 0.55f, scale * 1.1f, scale * 1.1f));
+            case ENEMY_COLOSSUS -> Optional.of(new RoundRectangle2D.Float(-scale * 0.6f, -scale * 0.16f, scale * 1.2f,
+                    scale * 0.32f, scale * 0.2f, scale * 0.2f));
+            case ENEMY_MONOLITH -> Optional.of(runeShape(scale));
+            case ENEMY_TALOS -> Optional.of(new Rectangle2D.Float(-scale * 0.07f, -scale * 0.35f, scale * 0.14f, scale * 1.2f));
+            case ENEMY_MINOTAUR, ENEMY_BRONZE_BULL -> Optional.of(hornsShape(scale));
+            default -> Optional.empty();
+        };
+    }
+
+    /** The colour a body's detail is painted in. */
+    private static Color detailColorFor(Palette palette) {
+        return switch (palette) {
+            case ENEMY_GHOST -> new Color(70, 70, 95);
+            case ENEMY_YETI -> new Color(50, 80, 120);
+            case ENEMY_SALAMANDER -> new Color(255, 215, 60);
+            case ENEMY_JAMMER -> new Color(255, 225, 250);
+            case ENEMY_BULKY -> new Color(20, 105, 125);
+            case ENEMY_WARDEN -> new Color(240, 190, 60);
+            case ENEMY_MAGMA -> new Color(255, 170, 60);
+            case ENEMY_MOLTEN_CORE -> new Color(255, 235, 120);
+            case ENEMY_JUGGERNAUT -> new Color(85, 95, 115);
+            case ENEMY_COLOSSUS -> new Color(255, 140, 40);
+            case ENEMY_MONOLITH -> new Color(175, 120, 255);
+            case ENEMY_TALOS -> new Color(200, 25, 30);
+            case ENEMY_MINOTAUR -> new Color(235, 225, 200);
+            case ENEMY_BRONZE_BULL -> new Color(110, 65, 25);
+            default -> Color.WHITE;
+        };
+    }
+
+    /** Two small eyes side by side at height {@code y}. */
+    private static Shape eyesShape(float scale, float y, float radius) {
+        Area eyes = new Area(new Ellipse2D.Float(-scale * 0.35f - radius, y - radius * 1.3f, radius * 2, radius * 2.6f));
+        eyes.add(new Area(new Ellipse2D.Float(scale * 0.35f - radius, y - radius * 1.3f, radius * 2, radius * 2.6f)));
+        return eyes;
+    }
+
+    /** A sheet with a domed head and a scalloped hem. */
+    private static Shape ghostShape(float scale) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(-scale, 0);
+        p.curveTo(-scale, -scale * 1.35f, scale, -scale * 1.35f, scale, 0);
+        p.lineTo(scale, scale * 0.85f);
+        float step = scale * 2f / 3f;
+        for (int i = 0; i < 3; i++) {
+            float right = scale - step * i;
+            p.quadTo(right - step / 2f, scale * 0.35f, right - step, scale * 0.85f);
+        }
+        p.closePath();
+        return p;
+    }
+
+    /** A lizard seen from above, nose forward: body, head, tail and four legs. */
+    private static Shape lizardShape(float scale) {
+        Area lizard = new Area(new Ellipse2D.Float(-scale * 0.75f, -scale * 0.38f, scale * 1.5f, scale * 0.76f));
+        lizard.add(new Area(new Ellipse2D.Float(scale * 0.45f, -scale * 0.3f, scale * 0.7f, scale * 0.6f)));
+        GeneralPath tail = new GeneralPath();
+        tail.moveTo(-scale * 0.6f, -scale * 0.22f);
+        tail.lineTo(-scale * 1.45f, 0);
+        tail.lineTo(-scale * 0.6f, scale * 0.22f);
+        tail.closePath();
+        lizard.add(new Area(tail));
+        for (float legX : new float[] {-scale * 0.4f, scale * 0.3f}) {
+            for (float legY : new float[] {-scale * 0.62f, scale * 0.38f}) {
+                lizard.add(new Area(new Ellipse2D.Float(legX, legY, scale * 0.24f, scale * 0.24f)));
+            }
+        }
+        return lizard;
+    }
+
+    /** A disc with four antennae, broadcasting. */
+    private static Shape jammerShape(float scale) {
+        Area jammer = new Area(circleShape(scale * 0.68f));
+        jammer.add(new Area(starShape(4, scale * 1.15f, scale * 0.22f)));
+        return jammer;
+    }
+
+    /** A barbed arrowhead, point forward. */
+    private static Shape barbShape(float scale) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(scale * 1.1f, 0);
+        p.lineTo(scale * 0.1f, -scale * 0.5f);
+        p.lineTo(-scale * 0.2f, -scale * 0.95f);
+        p.lineTo(-scale * 0.5f, -scale * 0.3f);
+        p.lineTo(-scale * 0.9f, 0);
+        p.lineTo(-scale * 0.5f, scale * 0.3f);
+        p.lineTo(-scale * 0.2f, scale * 0.95f);
+        p.lineTo(scale * 0.1f, scale * 0.5f);
+        p.closePath();
+        return p;
+    }
+
+    /** A swept-back arrow, point forward: a runner. */
+    private static Shape sweptArrowShape(float scale) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(scale, 0);
+        p.lineTo(-scale * 0.75f, -scale * 0.8f);
+        p.lineTo(-scale * 0.3f, 0);
+        p.lineTo(-scale * 0.75f, scale * 0.8f);
+        p.closePath();
+        return p;
+    }
+
+    /** A flame: round at the base, licking up to a point. */
+    private static Shape emberShape(float scale) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(0, -scale * 1.1f);
+        p.curveTo(scale * 0.75f, -scale * 0.2f, scale * 0.7f, scale * 0.85f, 0, scale * 0.85f);
+        p.curveTo(-scale * 0.7f, scale * 0.85f, -scale * 0.75f, -scale * 0.2f, 0, -scale * 1.1f);
+        p.closePath();
+        return p;
+    }
+
+    /** A standing stone: a tall slab with a pointed top. */
+    private static Shape slabShape(float scale) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(-scale * 0.5f, scale);
+        p.lineTo(scale * 0.5f, scale);
+        p.lineTo(scale * 0.5f, -scale * 0.72f);
+        p.lineTo(0, -scale * 1.08f);
+        p.lineTo(-scale * 0.5f, -scale * 0.72f);
+        p.closePath();
+        return p;
+    }
+
+    /** A carved rune down a slab's face. */
+    private static Shape runeShape(float scale) {
+        Area rune = new Area(new Rectangle2D.Float(-scale * 0.06f, -scale * 0.6f, scale * 0.12f, scale * 1.3f));
+        rune.add(new Area(new Rectangle2D.Float(-scale * 0.28f, -scale * 0.3f, scale * 0.56f, scale * 0.1f)));
+        rune.add(new Area(new Rectangle2D.Float(-scale * 0.2f, scale * 0.2f, scale * 0.4f, scale * 0.1f)));
+        return rune;
+    }
+
+    /** A crescent: a disc with a bite taken out by its own shadow. */
+    private static Shape crescentShape(float scale) {
+        Area crescent = new Area(circleShape(scale));
+        crescent.subtract(new Area(new Ellipse2D.Float(-scale * 0.55f, -scale * 1.2f, scale * 2f, scale * 2f)));
+        return crescent;
+    }
+
+    /** Two diamonds overlapping: one body seen twice. */
+    private static Shape twinDiamondShape(float scale) {
+        Shape diamond = diamondShape(scale * 0.8f);
+        Area twin = new Area(AffineTransform.getTranslateInstance(-scale * 0.3f, 0).createTransformedShape(diamond));
+        twin.add(new Area(AffineTransform.getTranslateInstance(scale * 0.3f, 0).createTransformedShape(diamond)));
+        return twin;
+    }
+
+    /** A bronze giant, upright: a broad torso and arms under a small head. */
+    private static Shape giantShape(float scale) {
+        Area giant = new Area(new RoundRectangle2D.Float(-scale * 0.6f, -scale * 0.55f, scale * 1.2f, scale * 1.55f,
+                scale * 0.4f, scale * 0.4f));
+        giant.add(new Area(new Ellipse2D.Float(-scale * 0.3f, -scale * 1.1f, scale * 0.6f, scale * 0.6f)));
+        giant.add(new Area(new RoundRectangle2D.Float(-scale * 0.95f, -scale * 0.5f, scale * 0.3f, scale * 1.1f,
+                scale * 0.2f, scale * 0.2f)));
+        giant.add(new Area(new RoundRectangle2D.Float(scale * 0.65f, -scale * 0.5f, scale * 0.3f, scale * 1.1f,
+                scale * 0.2f, scale * 0.2f)));
+        return giant;
+    }
+
+    /** A bull's head seen from above, muzzle forward. */
+    private static Shape bullHeadShape(float scale) {
+        Area head = new Area(new Ellipse2D.Float(-scale * 0.8f, -scale * 0.62f, scale * 1.45f, scale * 1.24f));
+        head.add(new Area(new Ellipse2D.Float(scale * 0.35f, -scale * 0.4f, scale * 0.7f, scale * 0.8f)));
+        return head;
+    }
+
+    /** A pair of horns curving forward from the sides of a bull's head. */
+    private static Shape hornsShape(float scale) {
+        GeneralPath horn = new GeneralPath();
+        horn.moveTo(-scale * 0.25f, -scale * 0.45f);
+        horn.quadTo(scale * 0.05f, -scale * 1.2f, scale * 0.85f, -scale * 1.0f);
+        horn.quadTo(scale * 0.25f, -scale * 0.85f, scale * 0.2f, -scale * 0.42f);
+        horn.closePath();
+        Area horns = new Area(horn);
+        horns.add(new Area(AffineTransform.getScaleInstance(1, -1).createTransformedShape(horn)));
+        return horns;
     }
 
     /** A cross: two rectangles unioned. */
@@ -444,6 +652,20 @@ public final class Java2DFrameRenderer {
             case ENEMY_YETI -> new Color(200, 235, 255);
             case ENEMY_MAGMA -> new Color(220, 45, 35);
             case ENEMY_GOLEM -> new Color(150, 140, 125);
+            case ENEMY_JAMMER -> new Color(230, 70, 190);
+            case ENEMY_REAVER -> new Color(210, 30, 60);
+            case ENEMY_BULKY -> new Color(40, 170, 190);
+            case ENEMY_COLOSSUS -> new Color(95, 105, 128);
+            case ENEMY_MOLTEN_CORE -> new Color(255, 110, 20);
+            case ENEMY_EMBER -> new Color(255, 175, 40);
+            case ENEMY_MONOLITH -> new Color(80, 78, 105);
+            case ENEMY_ECLIPSE -> new Color(125, 70, 200);
+            case ENEMY_MIRAGE -> new Color(185, 155, 255);
+            case ENEMY_MIRROR_IMAGE -> new Color(220, 210, 255);
+            case ENEMY_HERALD -> new Color(255, 205, 60);
+            case ENEMY_TALOS -> new Color(205, 135, 60);
+            case ENEMY_MINOTAUR -> new Color(115, 60, 35);
+            case ENEMY_BRONZE_BULL -> new Color(190, 120, 50);
             case TOWER_SNIPER_BODY -> Color.GREEN;
             case TOWER_SPLASH_BODY -> Color.RED;
             case TOWER_STORMCALLER_BODY -> new Color(80, 150, 255);
@@ -915,6 +1137,11 @@ public final class Java2DFrameRenderer {
         g2.draw(shape);
         g2.setColor(scaleAlpha(healthColor(color, body.healthFraction()), visibility));
         g2.fill(shape);
+        Optional<Shape> detail = enemyDetail(body.palette(), body.scale());
+        if (detail.isPresent()) {
+            g2.setColor(scaleAlpha(detailColorFor(body.palette()), visibility));
+            g2.fill(detail.get());
+        }
         g2.setTransform(save);
         this.paintRankBadge(g2, body);
     }
@@ -968,6 +1195,11 @@ public final class Java2DFrameRenderer {
     void paintEnemyGlyph(Graphics2D g2, Palette body, float size) {
         g2.setColor(colorFor(body));
         g2.fill(enemyShape(body, size));
+        Optional<Shape> detail = enemyDetail(body, size);
+        if (detail.isPresent()) {
+            g2.setColor(detailColorFor(body));
+            g2.fill(detail.get());
+        }
     }
 
     /**
@@ -1049,7 +1281,7 @@ public final class Java2DFrameRenderer {
         g2.setColor(color);
         float grownScale = fade.scale() + fade.growth();
         switch (fade.palette()) {
-            case ENEMY_CIRCLE, ENEMY_GHOST, ENEMY_MITE, ENEMY_SALAMANDER, ENEMY_YETI -> g2.draw(circleShape(grownScale));
+            // A square or a triangle bursts as two outlines crossing; every other body as its own outline.
             case ENEMY_SQUARE, ENEMY_JUGGERNAUT -> {
                 g2.draw(new Rectangle2D.Float(-grownScale, -fade.scale(), grownScale * 2, fade.scale() * 2));
                 g2.draw(new Rectangle2D.Float(-fade.scale(), -grownScale, fade.scale() * 2, grownScale * 2));
@@ -1058,13 +1290,7 @@ public final class Java2DFrameRenderer {
                 g2.draw(triangleShape(grownScale, false));
                 g2.draw(triangleShape(grownScale, true));
             }
-            case ENEMY_SKIRMISHER -> g2.draw(diamondShape(grownScale));
-            case ENEMY_MAGMA -> g2.draw(magmaShape(grownScale));
-            case ENEMY_GOLEM -> g2.draw(starShape(6, grownScale, grownScale * 0.87f));
-            case ENEMY_WARDEN -> g2.draw(starShape(8, grownScale, grownScale * 0.55f));
-            case ENEMY_WARDEN_EGG -> g2.draw(wardenEggShape(grownScale));
-            case ENEMY_MENDER, ENEMY_SHIELDBEARER -> g2.draw(crossShape(grownScale));
-            default -> throw new IllegalStateException("Not an enemy palette: " + fade.palette());
+            default -> g2.draw(enemyShape(fade.palette(), grownScale));
         }
         g2.setTransform(save);
     }

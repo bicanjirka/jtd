@@ -18,6 +18,7 @@ final class YetiEnemy {
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
                 .startingAt(EnemyDefinition.of("yeti", "Yeti", 165, 3, 1.1f, BodyArchetype.YETI)
+                        .withMovement(new SwingMovement((float) Math.toRadians(10.0), 30, SwingCurve.SMOOTH))
                         .withDescription("Thick fur against cold and blows alike.")
                         .withArmor(15f)
                         .withMagicResist(15f)

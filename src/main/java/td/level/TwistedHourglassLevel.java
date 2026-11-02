@@ -40,7 +40,7 @@ final class TwistedHourglassLevel {
     }
 
     private static final RankedEnemy REAVER = RankedEnemy
-            .startingAt(EnemyDefinition.of("reaver", "Reaver", 750, 6, 1.28f, BodyArchetype.TRIANGLE)
+            .startingAt(EnemyDefinition.of("reaver", "Reaver", 750, 6, 1.28f, BodyArchetype.REAVER)
                     .withDescription("A brute that runs faster as it is hurt and splits when it falls.")
                     .withMovement(new PathDirectionalMovement())
                     .withHealthDivisor(0.8f)

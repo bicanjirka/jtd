@@ -4,6 +4,7 @@ import td.effect.ShieldTemplate;
 import td.enemy.Ability;
 import td.enemy.AbilityTerm;
 import td.enemy.ApplyEffectAction;
+import td.enemy.BodyArchetype;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.IdentifiedAbility;
@@ -43,6 +44,7 @@ final class CurlyPathLevel {
     private static final RankedEnemy BULKY = EnemyCatalog.builtIn().ranked("simple").cloneAs("bulky",
             simple -> simple
                     .withDisplayName("Bulky mob")
+                    .withArchetype(BodyArchetype.BULKY)
                     .withDescription("A simple, yet bulky soldier.")
                     .withMovement(new PulseMovement())
                     .withHealthAndPrice(simple.baseHealth() * 3, simple.price())
