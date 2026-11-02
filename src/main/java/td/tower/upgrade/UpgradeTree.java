@@ -35,7 +35,8 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
     /**
      * Rejects duplicate node ids, which would make matching by id ambiguous, a choice naming a
      * node outside the tree or a node already in another choice, a node that requires itself through
-     * other nodes, on which every walk back along prerequisites would never end, and a node no number key buys.
+     * other nodes on either side of an {@code or}, on which every walk back along prerequisites would never end,
+     * and a node no number key buys.
      */
     public UpgradeTree {
         Set<String> ids = new HashSet<>();
@@ -202,7 +203,7 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
             throw new IllegalArgumentException("Upgrade nodes require each other: " + String.join(" -> ", walking)
                     + " -> " + node.id());
         }
-        node.requires().requiredNodes().stream().map(byId::get).filter(Objects::nonNull)
+        node.requires().mentionedNodes().stream().map(byId::get).filter(Objects::nonNull)
                 .forEach(required -> rejectCycleFrom(required, byId, walking, acyclic));
         walking.remove(node.id());
         acyclic.add(node.id());

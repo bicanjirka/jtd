@@ -14,7 +14,7 @@ import java.util.OptionalInt;
 import java.util.stream.Stream;
 
 /**
- * The wave script as a recursive-descent grammar over an immutable {@link Cursor}; each rule returns what it
+ * The wave script as a grammar of rules over an immutable {@link Cursor}; each rule returns what it
  * read and the cursor after it, so no rule remembers anything between calls.
  * <pre>
  * script := spacing? item*

@@ -333,6 +333,22 @@ A chain with no stop is a finding, even if no content makes it loop today.
 - Never mutate a collection while iterating it.
 - Recursion over data needs a base case and a guard against a cycle the data could contain.
 
+### Recursive structures
+
+Recurse where the data is recursive: a node that names other nodes (prerequisites, spawn chains), a
+condition built from conditions, text that mentions terms with text of their own. Loop across a
+node's children and recurse down each. Where nesting can never go deeper than one level, or the
+syntax has none, a loop is enough and recursion is overkill.
+
+- **Data that refers by id** can hold a cycle. Reject it once, where the data is built, so every
+  walk over it can trust it. The check follows every reference the walks may follow: both sides of
+  an `or`, not the side one query picks.
+- **Nested syntax** cannot cycle, since every rule consumes input; a rule that recurses only on
+  its opening token ends. Cap what nesting multiplies (a repeat inside a repeat) if it can grow
+  without bound.
+- **Accidental recursion** comes from two units that each use the other's service, or from a
+  callback that re-enters what called it. That is the chains above: give it a stop.
+
 ## 11. Boundaries: formats and faults
 
 **One unit owns a text format.** It reads and writes the format, and its structure mirrors the

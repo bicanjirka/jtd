@@ -39,9 +39,18 @@ public interface UpgradeCondition {
     /**
      * The ids of the nodes a tower must own to meet this condition, taking the cheaper side of an
      * {@code or}; none for a condition that asks about anything else. It is how a tool prices a node with
-     * everything that leads to it.
+     * everything that leads to it. A walk that must see every node reachable from here takes
+     * {@link #mentionedNodes()}.
      */
     default Set<String> requiredNodes() {
+        return Set.of();
+    }
+
+    /**
+     * The ids of every node this condition asks about, on both sides of an {@code or}: every node a walk
+     * back along prerequisites may reach from here.
+     */
+    default Set<String> mentionedNodes() {
         return Set.of();
     }
 
