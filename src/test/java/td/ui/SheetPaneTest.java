@@ -46,6 +46,51 @@ class SheetPaneTest {
     }
 
     @Test
+    void aWrappedMentionIsHitOnlyOnItsOwnTextOnEachLine() throws BadLocationException {
+        SheetPane pane = wrappedMentionPane();
+        String text = pane.getDocument().getText(0, pane.getDocument().getLength());
+        Rectangle title = pane.modelToView2D(text.indexOf("Unravel") + 2).getBounds();
+        Rectangle face = pane.modelToView2D(text.indexOf("Unravel") - 2).getBounds();
+        Rectangle lineStart = pane.modelToView2D(0).getBounds();
+
+        Optional<HoverTarget> onTitle = pane.hoverAt(new Point(title.x, title.y + title.height / 2));
+        Optional<HoverTarget> onFace = pane.hoverAt(new Point(face.x + 2, face.y + face.height / 2));
+        Optional<HoverTarget> beforeIt = pane.hoverAt(new Point(lineStart.x + 2, face.y + face.height / 2));
+
+        assertThat(onTitle).isPresent();
+        assertThat(onFace).isPresent();
+        assertThat(onFace.get().key()).isEqualTo(onTitle.get().key());
+        assertThat(beforeIt).isEmpty();
+    }
+
+    @Test
+    void aWrappedMentionLightsEachLineItCoversApart() throws BadLocationException {
+        SheetPane pane = wrappedMentionPane();
+        String text = pane.getDocument().getText(0, pane.getDocument().getLength());
+        Rectangle title = pane.modelToView2D(text.indexOf("Unravel") + 2).getBounds();
+
+        List<Rectangle> areas = pane.hoverAt(new Point(title.x, title.y + title.height / 2)).orElseThrow().areas();
+
+        assertThat(areas).hasSize(2);
+        assertThat(areas.get(0).y).isLessThan(areas.get(1).y);
+        assertThat(areas).noneMatch(area -> area.width >= WIDTH / 2);
+    }
+
+    /** A sentence whose mention starts at the end of its first line and wraps its title onto the second. */
+    private static SheetPane wrappedMentionPane() throws BadLocationException {
+        for (int words = 1; words < 40; words++) {
+            SheetPane pane = paneWith(SheetLine.Sentence.of(TermText.of("ab ".repeat(words)).plus(EffectKind.UNRAVELED)
+                    .plus(" tail")));
+            String text = pane.getDocument().getText(0, pane.getDocument().getLength());
+            int title = text.indexOf("Unravel");
+            if (pane.modelToView2D(title).getY() > pane.modelToView2D(title - 2).getY()) {
+                return pane;
+            }
+        }
+        throw new IllegalStateException("No prefix wraps the mention");
+    }
+
+    @Test
     void aPointOnPlainTextHitsNothing() {
         SheetPane pane = paneWith(SheetLine.Sentence.of(TermText.of("applies ").plus(EffectKind.UNRAVELED)));
 

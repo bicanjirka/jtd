@@ -78,9 +78,6 @@ The toolbar icon (`renderTowerIcon`) is the body shape alone, one solid colour, 
 - **Potency and Mastery** are the Burst's extra line, levels III and IV, not behind Transcendent.
   Potency needs Arc or Hex owned, and Mastery comes after Potency, so the fork is always chosen when
   either is offered. Their text still describes both forks ("Stormcaller: …; Hexer: …").
-- **The wrapped-term hover bug** (a term whose name wraps onto a second line highlights a box over
-  both whole lines): `SheetPane` builds a mention's hover box as the union of its first and last
-  character's rectangles, which for a wrapped term spans the full width of both lines.
 - **The tooltip that doesn't grow**: after a purchase, an open upgrade-button tooltip takes the next
   node's sheet through `TooltipLayer.refreshButtons` → `TooltipPanel.show`; the new, longer text is
   clipped to the old size.
@@ -231,8 +228,6 @@ ripples and spin, the Radar's sweep).
 
 ### Fixes carried by this feature
 
-- **A wrapped term's hover** highlights only the term's own text on each line it covers, and hovering
-  either part opens its tooltip.
 - **An open tooltip whose content changes** (a button's tooltip after a purchase, a live pane's tooltip)
   resizes to its new content and stays inside the window.
 
@@ -407,3 +402,6 @@ kept.
 > - arc lightning should chain with some delay
 > - hex casting should look like a curse flying in space, each hex has different color, hexed enemy
 >   has a hex overlay so that it is visible it was cursed, the overlay should symbolize the curse
+
+## Appendix: more handwritten notes
+
