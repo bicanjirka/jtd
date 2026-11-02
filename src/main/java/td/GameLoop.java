@@ -45,11 +45,13 @@ public class GameLoop implements Runnable {
         this.onRender = onRender;
     }
 
-    private static void sleepQuietly(long nanos) {
+    /** Sleeps for {@code nanos}; {@code false} when interrupted instead. */
+    private static boolean sleptUninterrupted(long nanos) {
         try {
             Thread.sleep(nanos / 1_000_000L, (int) (nanos % 1_000_000L));
+            return true;
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            return false;
         }
     }
 
@@ -141,7 +143,18 @@ public class GameLoop implements Runnable {
             long now = System.nanoTime();
             this.advance(now - lastNanos);
             lastNanos = now;
-            sleepQuietly(POLL_NANOS);
+            if (!sleptUninterrupted(POLL_NANOS)) {
+                // Going on would spin: with the flag restored, every later sleep throws at once.
+                LOG.warn("Game-loop thread interrupted, stopping the loop");
+                this.stopIfStillOwnedBy(self);
+                return;
+            }
+        }
+    }
+
+    private synchronized void stopIfStillOwnedBy(Thread self) {
+        if (this.thread == self) {
+            this.running = false;
         }
     }
 
