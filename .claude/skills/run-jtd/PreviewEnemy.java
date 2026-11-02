@@ -9,7 +9,7 @@ import td.ui.EnemyFrameBuilder;
 import td.ui.Java2DFrameRenderer;
 import td.util.GameHost;
 import td.util.GameWorld;
-import td.wave.PathNormal;
+import td.wave.Path;
 import td.wave.Vec2;
 
 import javax.imageio.ImageIO;
@@ -28,7 +28,7 @@ import java.util.List;
  * <p>
  * It reuses exactly the recipe {@link td.ui.PanelEnemy} already uses to preview a wave's enemies
  * inside the real game: a throwaway {@link GameWorld} with a {@link GameHost#noOp()} host and a
- * one-point {@link PathNormal}, one {@link DefinedEnemyMob} built directly (no level/catalog
+ * one-point {@link Path}, one {@link DefinedEnemyMob} built directly (no level/catalog
  * plumbing beyond {@link EnemyCatalog#builtIn()}), and {@link Java2DFrameRenderer#paintEnemies}
  * - the same call the board itself paints enemies through, so this can never drift from the real
  * in-game look. It only covers body + rank badge, matching what {@code PanelEnemy} shows - not
@@ -63,7 +63,7 @@ public class PreviewEnemy {
         GameWorld world = new GameWorld(GameHost.noOp());
         world.setBoard(BoardGeometry.of(scale, 0, 0));
         int size = scale * MARGIN_CELLS;
-        world.setPath(new PathNormal(List.of(new Vec2(size / 2f, size / 2f))));
+        world.setPath(new Path(List.of(new Vec2(size / 2f, size / 2f))));
 
         SpawnParameters spawnParameters = SpawnParameters.atSlot(0, definition.baseSpeed(), definition.baseHealth(), definition.price());
         EnemyMob mob = new DefinedEnemyMob(definition, world, spawnParameters, rank);
