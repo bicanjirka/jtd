@@ -275,35 +275,6 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
   ladder ending in 0, and no other kind has one. The numbers move, they don't change, so no balance
   check.
 
-## Code smells awaiting the owner's evaluation
-
-**Evaluate each entry before fixing it: the owner decides whether it is worth a change at all, and
-how.** None of these is a known defect, and none changes behaviour when fixed. They come from a
-code-smell sweep on 2026-11-02 against Fowler's catalogue (Refactoring, 2nd ed., chapter 3), Wake's
-additions (dead code, magic numbers), the Open Catalog of Test Smells
-(<https://test-smell-catalog.readthedocs.io/>) and concurrency test smells. Method length, parameter
-count, nesting, duplicated blocks (six or more identical lines) and test shape were measured by
-script over `src/main/java` and all 1,826 tests; every hit was read, and false positives (builder
-chains read as nesting, tick-driving loops in tests) were dropped.
-
-Clean on the sweep, so not listed: no swallowed or over-broad catches, no mutable statics, no
-`instanceof`, no TODO comments, little duplication; `null` only as a local "none found yet", a
-private cache, or the documented `td.ui` frame-builder exception. Already tracked elsewhere in this
-file, so not repeated: `Palette`'s repeated switches and `Java2DFrameRenderer.colorFor` (ADR 0018),
-the wide `Tower`/`HitReceiver` interfaces, Visitor over sealed types, the `td.util`/`td.wave` splits.
-
-The first eight are small and each a commit of its own; the rest are larger or a matter of taste.
-
-### Names that mislead or say nothing
-
-
-- GUI-builder leftovers: `jPanel_board`, `jPanel_game`, `jPanel_boardMouseClicked`,
-  `jPanel_boardMouseMoved`, `formKeyTyped`, `formKeyPressed` in `td.TowerDefense`, and `jButton_sell`,
-  `jButton_sellActionPerformed` in `td.ui.PanelTowerInfo`. Name them for their role (`boardPanel`,
-  `onBoardClicked`, `sellButton`).
-
-- **Approach:** the IDE's `rename_refactoring`, one rename per commit. Pure renames, no behaviour.
-
 ## Balance tools
 
 ### What the balance tools cannot see yet
