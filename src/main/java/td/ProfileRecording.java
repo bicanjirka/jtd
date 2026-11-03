@@ -5,14 +5,17 @@ import jdk.jfr.consumer.RecordedEvent;
 import jdk.jfr.consumer.RecordedFrame;
 import jdk.jfr.consumer.RecordedStackTrace;
 import jdk.jfr.consumer.RecordingFile;
+import td.ui.BoardRenderer;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -65,10 +68,21 @@ final class ProfileRecording {
         System.out.println("=== Profile: " + FILE.toAbsolutePath() + " (timings above ran under the recorder) ===");
         List<RecordedEvent> samples = ofType(events, EXECUTION_SAMPLE);
         printTop("CPU samples, the method running", samples, event -> 1L, ProfileRecording::topFrame);
-        printTop("CPU samples, the game method running or calling", samples, event -> 1L, ProfileRecording::gameFrame);
-        printTop("Allocated KB (sampled estimate), by game method and class", ofType(events, ALLOCATION_SAMPLE),
-                event -> event.getLong("weight") / BYTES_PER_KB,
+        printByPhase("CPU samples", samples, event -> 1L);
+        List<RecordedEvent> allocations = ofType(events, ALLOCATION_SAMPLE);
+        Function<RecordedEvent, Long> kilobytes = event -> event.getLong("weight") / BYTES_PER_KB;
+        // Setup allocates between sparse samples, and a sample carries all the bytes since the last one.
+        List<RecordedEvent> played = allocations.stream().filter(event -> Phase.of(frames(event)) != Phase.OTHER)
+                .toList();
+        printTop("Allocated KB (sampled estimate) in tick and frame build, by game method and class", played, kilobytes,
                 event -> gameFrame(event) + "  " + event.getClass("objectClass").getName());
+        printByPhase("Allocated KB", allocations, kilobytes);
+        long cut = samples.stream().filter(event -> event.getStackTrace() != null && event.getStackTrace().isTruncated())
+                .count();
+        if (cut > 0) {
+            System.out.printf("%d of %d CPU stacks were cut short, so their phase reads as other; rerun with "
+                    + "MAVEN_OPTS=-XX:FlightRecorderOptions:stackdepth=256%n", cut, samples.size());
+        }
         List<RecordedEvent> collections = ofType(events, GARBAGE_COLLECTION);
         double pausedMillis = collections.stream().mapToLong(event -> event.getLong("sumOfPauses")).sum()
                 / NANOS_PER_MILLI;
@@ -93,14 +107,75 @@ final class ProfileRecording {
                         all == 0 ? 0.0 : 100.0 * entry.getValue() / all, entry.getKey()));
     }
 
+    /**
+     * Each phase's share of {@code events}, then for the tick and the frame build the game methods with the most of
+     * theirs, counting a method once per event wherever it sits on the stack: the method with all it calls.
+     */
+    private static void printByPhase(String title, List<RecordedEvent> events, Function<RecordedEvent, Long> weight) {
+        Map<Phase, Long> totals = new EnumMap<>(Phase.class);
+        Map<Phase, Map<String, Long>> inclusive = new EnumMap<>(Phase.class);
+        for (RecordedEvent event : events) {
+            List<RecordedFrame> frames = frames(event);
+            Phase phase = Phase.of(frames);
+            long weighed = weight.apply(event);
+            totals.merge(phase, weighed, Long::sum);
+            Map<String, Long> methods = inclusive.computeIfAbsent(phase, unused -> new HashMap<>());
+            frames.stream().filter(ProfileRecording::isGame).map(ProfileRecording::name).distinct()
+                    .forEach(method -> methods.merge(method, weighed, Long::sum));
+        }
+        System.out.println("-- " + title + " by phase: " + totals);
+        for (Phase phase : List.of(Phase.TICK, Phase.FRAME_BUILD)) {
+            long all = totals.getOrDefault(phase, 0L);
+            System.out.println("   " + phase + ", with all it calls (share of the " + phase + ")");
+            inclusive.getOrDefault(phase, Map.of()).entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(ROWS)
+                    .forEach(entry -> System.out.printf("%8d  %5.1f%%  %s%n", entry.getValue(),
+                            all == 0 ? 0.0 : 100.0 * entry.getValue() / all, entry.getKey()));
+        }
+    }
+
+    /** What a sample was doing, told by the entry point on its stack. */
+    private enum Phase {
+        TICK(GameEngine.class.getName(), "doTick"), FRAME_BUILD(BoardRenderer.class.getName(), "buildFrame"),
+        OTHER("", "");
+
+        private final String type;
+        private final String method;
+
+        Phase(String type, String method) {
+            this.type = type;
+            this.method = method;
+        }
+
+        static Phase of(List<RecordedFrame> frames) {
+            for (Phase phase : List.of(FRAME_BUILD, TICK)) {
+                if (frames.stream().anyMatch(frame -> frame.getMethod().getName().equals(phase.method)
+                        && frame.getMethod().getType().getName().equals(phase.type))) {
+                    return phase;
+                }
+            }
+            return OTHER;
+        }
+
+        @Override
+        public String toString() {
+            return this.name().toLowerCase(Locale.ROOT).replace('_', ' ');
+        }
+    }
+
+    private static boolean isGame(RecordedFrame frame) {
+        String type = frame.getMethod().getType().getName();
+        return type.startsWith(GAME_PACKAGE) && !type.equals(PerformanceHarness.class.getName())
+                && !frame.getMethod().isHidden();
+    }
+
     private static String topFrame(RecordedEvent event) {
         return frames(event).stream().findFirst().map(ProfileRecording::name).orElse("(no stack)");
     }
 
     /** The innermost frame in game code, so time spent in the JDK lands on the game method that asked for it. */
     private static String gameFrame(RecordedEvent event) {
-        return frames(event).stream().filter(frame -> frame.getMethod().getType().getName().startsWith(GAME_PACKAGE))
-                .findFirst().map(ProfileRecording::name).orElse("(outside the game)");
+        return frames(event).stream().filter(ProfileRecording::isGame).findFirst().map(ProfileRecording::name).orElse("(outside the game)");
     }
 
     private static List<RecordedFrame> frames(RecordedEvent event) {
