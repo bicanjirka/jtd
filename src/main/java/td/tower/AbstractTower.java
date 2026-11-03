@@ -114,6 +114,8 @@ public abstract class AbstractTower implements Tower {
     // Downgraded on the EDT, forgotten by the tick thread at the start of the tower's next turn.
     private final AtomicReference<List<UpgradeNode>> removedSinceTick = new AtomicReference<>(List.of());
     private volatile InspectionCache inspectionCache;
+    // Asked for every tower on every frame build, so rebuilt only when the owned nodes change.
+    private volatile Optional<OfferedUpgrades> lastOffered = Optional.empty();
     private final ProcActions procActions = new TowerProcActions();
     // What the statuses add, published for the EDT's republish; the live list stays on the tick thread.
     private volatile StatusLayer statusLayer = StatusLayer.NONE;
@@ -607,6 +609,22 @@ public abstract class AbstractTower implements Tower {
 
     public UpgradeState upgrades() {
         return this.upgrades;
+    }
+
+    /** What is offered reads only the owned nodes (a gate is what reads the board), so it is kept until they change. */
+    @Override
+    public List<UpgradeNode> offeredUpgrades(GameWorld context) {
+        UpgradeState owned = this.upgrades();
+        Optional<OfferedUpgrades> last = this.lastOffered;
+        if (last.isPresent() && last.get().state() == owned) {
+            return last.get().nodes();
+        }
+        List<UpgradeNode> fresh = List.copyOf(this.upgradeTree().offered(this, context));
+        this.lastOffered = Optional.of(new OfferedUpgrades(owned, fresh));
+        return fresh;
+    }
+
+    private record OfferedUpgrades(UpgradeState state, List<UpgradeNode> nodes) {
     }
 
     /**

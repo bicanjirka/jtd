@@ -14,7 +14,8 @@ import td.util.GameWorld;
  * One node in a tower's upgrade tree. Hooks and prerequisites match nodes by their {@code id},
  * unique within one tree, since a branching graph can reconverge.
  * <p>
- * {@code requires} decides whether the node is offered at all. Once offered, it is bought when the
+ * {@code requires} decides whether the node is offered at all, from the nodes the tower owns alone: a tower keeps
+ * what it offers until those change. Once offered, it is bought when the
  * tower has {@code xp} XP and its {@code gate} (a purpose or layout condition) is met: see
  * {@link #gateMet}. The UI hides an unreachable node and shows a gated one with its progress.
  */
