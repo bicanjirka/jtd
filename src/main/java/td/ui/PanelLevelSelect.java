@@ -101,8 +101,9 @@ public class PanelLevelSelect extends JPanel {
 
         JPanel cards = new JPanel(new GridLayout(0, Math.clamp(levels.size(), 1, CARDS_PER_ROW), 24, 24));
         cards.setOpaque(false);
+        Hyphenator hyphenator = Hyphenator.loadEnglish();
         for (int i = 0; i < levels.size(); i++) {
-            cards.add(buildCard(levels.get(i), i, onLevelSelected));
+            cards.add(buildCard(levels.get(i), i, hyphenator, onLevelSelected));
         }
         this.add(cards, BorderLayout.CENTER);
     }
@@ -121,7 +122,8 @@ public class PanelLevelSelect extends JPanel {
         return true;
     }
 
-    private static JPanel buildCard(LevelDefinition level, int index, Consumer<LevelDefinition> onLevelSelected) {
+    private static JPanel buildCard(LevelDefinition level, int index, Hyphenator hyphenator,
+            Consumer<LevelDefinition> onLevelSelected) {
         Color accent = ACCENTS[index % ACCENTS.length];
 
         JPanel card = new JPanel(new BorderLayout()) {
@@ -160,7 +162,9 @@ public class PanelLevelSelect extends JPanel {
         name.setBorder(new EmptyBorder(0, 0, 8, 0));
         body.add(name, BorderLayout.NORTH);
 
-        JTextArea description = wrappingText(level.description(), new Font("SansSerif", Font.PLAIN, 13), MUTED_FOREGROUND);
+        JustifiedTextBlock description = new JustifiedTextBlock(level.description(), hyphenator);
+        description.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        description.setForeground(MUTED_FOREGROUND);
         body.add(description, BorderLayout.CENTER);
 
         JPanel south = new JPanel();
