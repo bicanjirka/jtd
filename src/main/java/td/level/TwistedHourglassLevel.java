@@ -199,7 +199,7 @@ final class TwistedHourglassLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
-            .withGround(BoardGround.of(0x0B1416, GroundMotif.DUNES, 0x2C2A1A))
+            .withGround(BoardGround.of(0x0B1416, GroundMotif.DUNES, 0x1F3436))
             // What the Reaver and the Keeper call, before them.
             .withCustomRankedEnemies(List.of(SANDLING, TIMEKEEPER, GLASS_SENTINEL, REAVER, KeeperEnemy.keeper()));
 
