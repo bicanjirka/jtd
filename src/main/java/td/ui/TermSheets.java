@@ -15,9 +15,10 @@ final class TermSheets {
     private TermSheets() {
     }
 
-    /** A mention's tooltip: its term's face and title, and what it means here. */
+    /** A mention's tooltip: its term's face and title, and what it means here; a stat's says what the stat does. */
     static InfoSheet of(TermText.Mention mention) {
-        return of(mention.term(), mention.meaning(), List.of());
+        return StatLooks.statOf(mention.term()).map(StatRowText::meaningSheet)
+                .orElseGet(() -> of(mention.term(), mention.meaning(), List.of()));
     }
 
     /** {@code term}'s tooltip: its title line, {@code meaning} as a sentence, then {@code more}. */

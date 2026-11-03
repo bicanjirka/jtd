@@ -14,6 +14,7 @@ import td.fixtures.FakeTower;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.StatModifiers;
+import td.stat.StatTerm;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
 import td.tower.proc.Proc;
@@ -522,8 +523,11 @@ class AbstractTowerTest {
         this.context.towers().add(new AuraTower(this.context, 0, 0));
 
         TowerInspection inspection = tower.inspect();
-        assertThat(inspection.stats()).first().isEqualTo(
-                new TowerStatLine(TowerStatRow.RANGE, SniperTower.RANGE, tower.stats().range()));
+        assertThat(inspection.stats().getFirst().stat()).isEqualTo(TowerStat.RANGE);
+        assertThat(inspection.stats().getFirst().base()).isEqualTo(SniperTower.RANGE);
+        assertThat(inspection.stats().getFirst().current()).isEqualTo(tower.stats().range());
+        assertThat(inspection.stats().getFirst().breakdown().added()).extracting(part -> part.source().mentions())
+                .containsExactly(List.of(TowerTerm.AURA));
         assertThat(tower.stats().range()).isGreaterThan(SniperTower.RANGE);
         assertThat(inspection.auras()).isEqualTo(1);
     }
@@ -542,7 +546,9 @@ class AbstractTowerTest {
     void aPassiveTowerReportsNoDamageNoCadenceAndNoCritChance() {
         AuraTower aura = new AuraTower(this.context, 0, 0);
 
-        assertThat(aura.inspect().stats()).extracting(TowerStatLine::stat).containsExactly(TowerStatRow.RANGE);
+        assertThat(aura.inspect().stats()).extracting(TowerStatLine::stat)
+                .doesNotContain(TowerStatRow.PHYSICAL_DAMAGE, TowerStatRow.MAGIC_DAMAGE, TowerStatRow.FIRE_RATE,
+                        TowerStatRow.PHYSICAL_DPS, TowerStatRow.MAGIC_DPS, TowerStat.CRIT_CHANCE);
     }
 
     @Test
@@ -629,7 +635,7 @@ class AbstractTowerTest {
         UpgradeNode arcane = UpgradeNode.of("arcane", UpgradeSlot.HEAD, "Arcane", 10)
                 .withCapability(TowerCapability.MAGIC_DAMAGE);
         FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.of(arcane));
-        TowerStatRow before = tower.inspect().stats().get(1).stat();
+        StatTerm before = tower.inspect().stats().get(1).stat();
 
         UpgradePaths.buy(tower, this.context, "Arcane");
 

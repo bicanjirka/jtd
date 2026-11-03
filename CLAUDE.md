@@ -76,7 +76,7 @@ zones that keep working after the shot that made them). `GameEngine`,
 - **Depend on the narrowest thing.** `GameWorld` hands out collaborators
   (`world.economy().doPay(n)`, `world.towers().all()`); a consumer needing one takes that type,
   one using most of the world takes `GameWorld`. `projectile` uses only `tower.targeting` from
-  `tower`; `effect` belongs to neither `tower` nor `enemy`; `stat` depends only on `damage`.
+  `tower`; `effect` belongs to neither `tower` nor `enemy`; `stat` depends only on `damage` and `term`.
 
 ## Threading
 

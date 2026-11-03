@@ -10,6 +10,7 @@ import td.enemy.EnemyInspection.EffectState;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
+import td.stat.StatBreakdown;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -92,7 +93,9 @@ class EnemyInspectionTest {
         StatBreakdown armor = mob.inspect().breakdowns().get(EnemyStat.ARMOR);
 
         assertThat(armor.base()).isEqualTo(base);
-        assertThat(armor.parts()).extracting(StatPart::source).containsExactly(EffectKind.SUNDERED);
+        assertThat(armor.added()).extracting(part -> part.source().mentions())
+                .containsExactly(List.of(EffectKind.SUNDERED));
+        assertThat(armor.added().getFirst().stacks()).isEqualTo(2);
         assertThat(armor.current()).isCloseTo(Math.max(0f, base - 10f), within(0.001f));
     }
 
@@ -103,9 +106,10 @@ class EnemyInspectionTest {
 
         StatBreakdown speed = mob.inspect().breakdowns().get(EnemyStat.MOVE_SPEED);
 
-        assertThat(speed.parts()).hasSize(1);
-        assertThat(speed.parts().getFirst().source()).isEqualTo(EffectKind.CHILL);
-        assertThat(speed.parts().getFirst().modifier().multiply()).isCloseTo(0.6f, within(0.001f));
+        assertThat(speed.added()).isEmpty();
+        assertThat(speed.scaled()).hasSize(1);
+        assertThat(speed.scaled().getFirst().source().mentions()).containsExactly(EffectKind.CHILL);
+        assertThat(speed.scaled().getFirst().modifier().multiply()).isCloseTo(0.6f, within(0.001f));
     }
 
     @Test
@@ -122,11 +126,12 @@ class EnemyInspectionTest {
     }
 
     @Test
-    void onlyStatsOffTheirDefaultShowAndSpeedAlways() {
+    void onlyStatsOffTheirDefaultShowSpeedAlwaysAndStealthNever() {
         assertThat(StatRows.shows(EnemyStat.MOVE_SPEED, 1f, 1f)).isTrue();
         assertThat(StatRows.shows(EnemyStat.ARMOR, EnemyStat.ARMOR.defaultBase(), EnemyStat.ARMOR.defaultBase()))
                 .isFalse();
         assertThat(StatRows.shows(EnemyStat.ARMOR, 10f, 10f)).isTrue();
-        assertThat(StatRows.shows(EnemyStat.FREEZE_RESIST, 1f, 1f)).isFalse();
+        assertThat(StatRows.shows(EnemyStat.FREEZE_RESIST, 1f, 1f)).isTrue();
+        assertThat(StatRows.shows(EnemyStat.STEALTH, 1f, 1f)).isFalse();
     }
 }

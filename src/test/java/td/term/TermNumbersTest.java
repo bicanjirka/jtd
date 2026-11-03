@@ -22,6 +22,22 @@ class TermNumbersTest {
     }
 
     @Test
+    void numbersKeepOneDecimalAndTwoBelowOne() {
+        assertThat(TermNumbers.number(1.25f)).isEqualTo("1.3");
+        assertThat(TermNumbers.number(0.25f)).isEqualTo("0.25");
+        assertThat(TermNumbers.number(-0.04f)).isEqualTo("-0.04");
+        assertThat(TermNumbers.number(0.001f)).isEqualTo("0");
+    }
+
+    @Test
+    void numbersFromTenThousandAreAbbreviated() {
+        assertThat(TermNumbers.number(9999f)).isEqualTo("9999");
+        assertThat(TermNumbers.number(12345f)).isEqualTo("12.3k");
+        assertThat(TermNumbers.number(1_234_567f)).isEqualTo("1.2M");
+        assertThat(TermNumbers.whole(12345f)).isEqualTo("12345");
+    }
+
+    @Test
     void ordinalsUseTheEnglishSuffixes() {
         assertThat(TermNumbers.ordinal(1)).isEqualTo("1st");
         assertThat(TermNumbers.ordinal(2)).isEqualTo("2nd");

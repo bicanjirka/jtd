@@ -72,6 +72,11 @@ final class ActiveTowerStatuses {
         return total;
     }
 
+    /** Every status held, in the order they were granted. */
+    List<TowerStatus> held() {
+        return this.held.stream().map(Held::status).toList();
+    }
+
     /** What every held status lets the tower do together. */
     Set<TowerCapability> capabilities() {
         Set<TowerCapability> all = EnumSet.noneOf(TowerCapability.class);

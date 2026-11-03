@@ -449,10 +449,10 @@ public final class SeekerTower extends AbstractTower {
     }
 
     @Override
-    protected List<TowerStatLine> ownStats() {
+    protected List<TowerStatLine> ownStats(TowerStats stats) {
         float cellsPerSecond = this.missile.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
-        return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, cellsPerSecond),
-                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, this.missile.size()));
+        return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, cellsPerSecond),
+                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, this.missile.size()));
     }
 
     @Override

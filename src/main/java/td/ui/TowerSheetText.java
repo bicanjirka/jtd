@@ -1,7 +1,10 @@
 package td.ui;
 
 import td.damage.DamageUnits;
+import td.stat.StatBreakdown;
+import td.stat.StatWording;
 import td.term.Side;
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.AppliedEffect;
 import td.tower.NodeProgress;
@@ -10,7 +13,7 @@ import td.tower.TowerBuffState;
 import td.tower.TowerInspection;
 import td.tower.TowerRank;
 import td.tower.TowerStatLine;
-import td.tower.TowerStatRow;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeLine;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.render.IconFace;
@@ -20,24 +23,26 @@ import td.ui.render.SheetIcon;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
-import td.ui.render.SheetLine.Trend;
 import td.ui.render.TooltipKey;
 import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
- * Turns a {@link TowerInspection} into the tower pane: stat rows, then icon rows (Perks, Buffs, Debuffs, Applies),
- * then its record. The shop shows the tower as authored; the status shows it as it is now, a changed stat as
- * base → current. Pure: no Swing, no live tower.
+ * Turns a {@link TowerInspection} into the tower pane: stat rows, what it gives, then icon rows (Perks, Buffs,
+ * Debuffs, Applies), then its record. The shop shows the tower as authored; the status shows it as it is now.
+ * Pure: no Swing, no live tower.
  */
 final class TowerSheetText {
 
     private static final int TIME_LABEL_BELOW_TICKS = Math.round(10 * TickRate.TICKS_PER_SECOND);
     static final String PLACING_HINT = "Click a free cell to build it. Esc cancels.";
+    /** No tower row reads in pixels, so tower words never need the board's cell size. */
+    static final StatWording WORDING = new StatWording(Float.NaN);
+    /** What follows a change a tower hands out rather than takes. */
+    private static final String GIVEN = "nearby";
 
     private TowerSheetText() {
     }
@@ -47,20 +52,20 @@ final class TowerSheetText {
      * place it and how to stop.
      */
     static InfoSheet shop(TowerInspection tower) {
-        return shop(tower, stat -> true, Optional.of(new SheetLine.Prose(TermText.of(PLACING_HINT))));
+        return shop(tower, Optional.of(new SheetLine.Prose(TermText.of(PLACING_HINT))));
     }
 
-    /** A toolbar button's tooltip: the shop sheet without how a shot travels or turns. */
+    /** A toolbar button's tooltip: the shop sheet, every row, without how to place it. */
     static InfoSheet shopTooltip(TowerInspection tower) {
-        return shop(tower, stat -> !describesDelivery(stat), Optional.empty());
+        return shop(tower, Optional.empty());
     }
 
-    private static InfoSheet shop(TowerInspection tower, Predicate<TowerStatRow> shown, Optional<SheetLine> closing) {
+    private static InfoSheet shop(TowerInspection tower, Optional<SheetLine> closing) {
         List<SheetLine> lines = new ArrayList<>();
-        lines.add(title(tower, "$" + tower.price()));
+        lines.add(title(tower, TermNumbers.cash(tower.price())));
         lines.add(new SheetLine.Gap());
-        tower.stats().stream().filter(stat -> shown.test(stat.stat()))
-                .forEach(stat -> lines.add(statRow(stat.stat(), TowerStatLine.fixed(stat.stat(), stat.base()))));
+        lines.addAll(StatRowText.catalog(breakdowns(tower), WORDING));
+        gives(tower, lines);
         targets(tower).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
         if (!tower.description().isEmpty()) {
@@ -79,25 +84,32 @@ final class TowerSheetText {
         List<SheetLine> lines = new ArrayList<>();
         lines.add(title(tower, ""));
         lines.add(new SheetLine.Gap());
-        tower.stats().forEach(stat -> lines.add(statRow(stat.stat(), stat)));
+        lines.addAll(StatRowText.live(breakdowns(tower), WORDING));
+        gives(tower, lines);
         targets(tower).ifPresent(lines::add);
         iconRow("Perks", perkIcons(tower)).ifPresent(lines::add);
         iconRow("Buffs", conditionIcons(tower, Side.BUFF)).ifPresent(lines::add);
         iconRow("Debuffs", conditionIcons(tower, Side.DEBUFF)).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
         lines.add(Row.toned(Glyph.FILLED_DIAMOND, Palette.TOWER_RANK, "XP",
-                tower.xp() + " · " + SheetNumbers.titleCase(TowerRank.of(tower.xp()))));
-        lines.add(Row.plain(Glyph.SKULL, "Kills",
-                tower.kills() + " · " + Math.round(DamageUnits.inPoints(tower.damageDealt())) + " dmg"));
+                TermNumbers.number(tower.xp()) + " · " + TermNumbers.titleCase(TowerRank.of(tower.xp()))));
+        lines.add(Row.plain(Glyph.SKULL, "Kills", TermNumbers.number(tower.kills()) + " · "
+                + TermNumbers.number(DamageUnits.inPoints(tower.damageDealt()))).withGloss("dmg", ""));
         return new InfoSheet(lines);
     }
 
-    /** Whether {@code stat} says how a shot gets there rather than what it does: detail for a closer look. */
-    private static boolean describesDelivery(TowerStatRow stat) {
-        return switch (stat) {
-            case ROTATION, PROJECTILE_SPEED, PROJECTILE_SIZE -> true;
-            case RANGE, PHYSICAL_DAMAGE, MAGIC_DAMAGE, FIRE_RATE, CRIT_CHANCE, SPLASH_RADIUS -> false;
-        };
+    private static List<StatBreakdown> breakdowns(TowerInspection tower) {
+        return tower.stats().stream().map(TowerStatLine::breakdown).toList();
+    }
+
+    /** What a tower hands the towers around it, after a gap, each a change in its stat's own row. */
+    private static void gives(TowerInspection tower, List<SheetLine> lines) {
+        if (tower.gives().isNone()) {
+            return;
+        }
+        lines.add(new SheetLine.Gap());
+        tower.gives().stats().forEach(stat -> lines.add(StatRowText.change(stat, tower.gives().get(stat), WORDING)
+                .withGloss("", GIVEN)));
     }
 
     private static SheetLine.Title title(TowerInspection tower, String value) {
@@ -133,7 +145,7 @@ final class TowerSheetText {
             if (words == null) {
                 continue;
             }
-            words.stats().forEach(stat -> rows.add(Row.plain(Glyph.DOT, stat.label(), stat.value())));
+            words.stats().forEach(bonus -> rows.add(bonusRow(bonus)));
             words.sentences().forEach(text -> rows.add(SheetLine.Sentence.of(text.asSentence())));
             words.chosenOver().forEach(name -> rows.add(SheetLine.Sentence.marked(Glyph.LOCK, slot,
                     TermText.of("chosen over " + name))));
@@ -170,12 +182,13 @@ final class TowerSheetText {
             if (remaining < TIME_LABEL_BELOW_TICKS) {
                 face = face.withBelow((int) Math.ceil(remaining / (double) TickRate.TICKS_PER_SECOND) + "s");
             }
-            rows.add(Row.plain(Glyph.DOT, "Time left", SheetNumbers.decimal(remaining / (float) TickRate.TICKS_PER_SECOND)
-                    + " s"));
+            rows.add(Row.plain(Glyph.DOT, "Time left", TermNumbers.number(remaining / (float) TickRate.TICKS_PER_SECOND))
+                    .withGloss("s", ""));
         }
         if (state.stacks() > 0) {
-            rows.add(Row.plain(Glyph.DOT, "Stacks", Integer.toString(state.stacks())));
+            rows.add(Row.plain(Glyph.DOT, "Stacks", TermNumbers.number(state.stacks())));
         }
+        state.changes().stats().forEach(stat -> rows.add(StatRowText.change(stat, state.changes().get(stat), WORDING)));
         return new SheetIcon(face, TooltipKey.ofTerm("condition", state.term()),
                 TermSheets.of(state.term(), state.detail(), rows));
     }
@@ -193,37 +206,9 @@ final class TowerSheetText {
                 TermSheets.of(applied.term(), applied.term().describe(), rows));
     }
 
-    private static Row statRow(TowerStatRow stat, TowerStatLine line) {
-        NumberText text = stat == TowerStatRow.CRIT_CHANCE ? SheetNumbers::percent : SheetNumbers::decimal;
-        String base = text.of(line.base());
-        String current = text.of(line.current());
-        String value = (base.equals(current) ? current : base + " → " + current) + switch (stat) {
-            case FIRE_RATE -> "/s";
-            case ROTATION -> " s/turn";
-            case PROJECTILE_SPEED -> " cells/s";
-            case PROJECTILE_SIZE -> "x";
-            case RANGE, PHYSICAL_DAMAGE, MAGIC_DAMAGE, CRIT_CHANCE, SPLASH_RADIUS -> "";
-        };
-        Row row = switch (stat) {
-            case RANGE -> Row.plain(Glyph.RING, "Range", value);
-            case PHYSICAL_DAMAGE -> Row.toned(Glyph.DOT, Palette.DAMAGE_PHYSICAL, "Physical damage", value);
-            case MAGIC_DAMAGE -> Row.toned(Glyph.DOT, Palette.DAMAGE_MAGIC, "Magic damage", value);
-            case FIRE_RATE -> Row.plain(Glyph.CHEVRON, "Fire rate", value);
-            case ROTATION -> Row.plain(Glyph.CHEVRON, "Rotation", value);
-            case CRIT_CHANCE -> Row.toned(Glyph.SPARK, Palette.CRIT_SPARK, "Crit chance", value);
-            case SPLASH_RADIUS -> Row.plain(Glyph.RING, "Splash radius", value);
-            case PROJECTILE_SPEED -> Row.plain(Glyph.CHEVRON, "Projectile speed", value);
-            case PROJECTILE_SIZE -> Row.plain(Glyph.DOT, "Projectile size", value);
-        };
-        if (base.equals(current)) {
-            return row;
-        }
-        // A slower rotation is the one stat that is worse higher.
-        boolean better = (line.current() > line.base()) == (stat != TowerStatRow.ROTATION);
-        return row.withTrend(better ? Trend.BETTER : Trend.WORSE);
-    }
-
-    private interface NumberText {
-        String of(float value);
+    /** An owned node's change: the change only, or what it hands the towers around it. */
+    static Row bonusRow(UpgradeBonus bonus) {
+        Row row = StatRowText.change(bonus.stat(), bonus.change(), WORDING);
+        return bonus.given() ? row.withGloss("", GIVEN) : row;
     }
 }

@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerRank;
 import td.tower.upgrade.UpgradeCondition;
@@ -81,7 +82,9 @@ final class UpgradeSheetText {
         }
         lines.add(new SheetLine.Gap());
         offer.addsTo().ifPresent(first -> lines.add(SheetLine.Sentence.of(TermText.of("Adds to " + first + ":"))));
-        offer.words().stats().forEach(row -> lines.add(Row.plain(Glyph.DOT, row.label(), row.value())));
+        offer.words().stats().forEach(bonus -> lines.add(bonus.preview()
+                .map(preview -> StatRowText.change(bonus.stat(), bonus.change(), preview, TowerSheetText.WORDING))
+                .orElseGet(() -> TowerSheetText.bonusRow(bonus))));
         offer.words().sentences().forEach(text -> lines.add(SheetLine.Sentence.of(text.asSentence())));
         List<SheetLine> definitions = definitions(offer.words().sentences());
         if (!definitions.isEmpty()) {
@@ -244,7 +247,7 @@ final class UpgradeSheetText {
      */
     static String xpLabel(int xp, Optional<UpgradeNode> nextXpGate) {
         return nextXpGate.map(node -> "XP " + xp + " / " + node.xp() + " to " + node.displayName())
-                .orElse("XP " + xp + " · " + SheetNumbers.titleCase(TowerRank.of(xp)));
+                .orElse("XP " + xp + " · " + TermNumbers.titleCase(TowerRank.of(xp)));
     }
 
     /** The offered node with the least XP still ahead of {@code xp}: the next one XP opens. */

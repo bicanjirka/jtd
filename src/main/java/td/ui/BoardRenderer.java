@@ -6,6 +6,7 @@ import td.enemy.EnemyInspection;
 import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.projectile.Projectile;
+import td.stat.StatWording;
 import td.tower.Tower;
 import td.ui.render.CellDraw;
 import td.ui.render.CellGridDraw;
@@ -89,7 +90,7 @@ public final class BoardRenderer {
 
         Optional<InfoSheet> enemySheet = inspection
                 .map(found -> selected.map(mob -> found.withMarks(this.marksOn(mob))).orElse(found))
-                .map(EnemyStatText::live);
+                .map(found -> EnemyStatText.live(found, new StatWording(board.scale())));
 
         Optional<TowerSheet> towerSheet = this.world.towers().all().stream().filter(Tower::isSelected).findFirst()
                 .map(tower -> new TowerSheet(tower.getX(), tower.getY(), TowerSheetText.status(tower.inspect()

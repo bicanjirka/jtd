@@ -18,10 +18,13 @@ import td.enemy.MobMoments.Moment;
 import td.stat.BaseStats;
 import td.stat.EnemyStat;
 import td.stat.StatAccumulator;
+import td.stat.StatBreakdown;
 import td.stat.StatModifier;
+import td.stat.StatPart;
 import td.stat.StatRecorder;
 import td.stat.StatSheet;
 import td.stat.StatView;
+import td.term.TermText;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.Vec2;
@@ -371,16 +374,17 @@ public final class DefinedEnemyMob implements EnemyMob {
         for (Trait trait : this.traits) {
             StatModifier modifier = trait.modifiers(context).get(stat);
             if (!modifier.equals(StatModifier.none())) {
-                parts.add(new StatPart(trait.entry().term(), modifier));
+                parts.add(new StatPart(TermText.of(trait.entry().term()), 1, stat, modifier));
             }
         }
         for (EffectKind kind : this.activeEffects.activeKinds()) {
             StatModifier modifier = StatRecorder.of(stat, acc -> this.activeEffects.contributionOf(kind, acc));
             if (!modifier.equals(StatModifier.none())) {
-                parts.add(new StatPart(kind, modifier));
+                parts.add(new StatPart(TermText.of(kind), Math.max(1, this.activeEffects.stacks(kind)), stat,
+                        modifier));
             }
         }
-        return new StatBreakdown(stat, this.baseStat(stat), parts, this.stats.value(stat));
+        return StatBreakdown.resolved(stat, this.baseStat(stat), parts, this.stats.value(stat));
     }
 
     /** The effects on it, for the inspection to read in place of a forward per query. */

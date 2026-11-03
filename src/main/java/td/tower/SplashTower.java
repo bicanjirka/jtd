@@ -604,12 +604,6 @@ public final class SplashTower extends AbstractTower {
     }
 
     @Override
-    protected List<TowerStatLine> ownStats() {
-        return List.of(new TowerStatLine(TowerStatRow.SPLASH_RADIUS, BLAST_RADIUS_CELLS,
-                this.stats().value(TowerStat.AREA_RADIUS)));
-    }
-
-    @Override
     protected List<NodeProgress> ownProgress() {
         List<NodeProgress> all = new ArrayList<>();
         SplashSpec spec = this.spec(this.mechanics.all());

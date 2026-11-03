@@ -1,10 +1,19 @@
 package td.term;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Locale;
 
-/** How texts write numbers: {@code "15%"}, {@code "1.5"}, {@code "2 s"}, {@code "x1.5"}, {@code "3rd"}. */
+/**
+ * How the game writes numbers, on sheets and in texts alike: at most one decimal, two below 1, trailing zeros
+ * dropped, percents whole, from ten thousand abbreviated: {@code "15%"}, {@code "1.5"}, {@code "0.25"},
+ * {@code "12.3k"}, {@code "2 s"}, {@code "x1.5"}, {@code "3rd"}.
+ */
 public final class TermNumbers {
+
+    private static final float ABBREVIATE_FROM = 10_000f;
+    private static final float THOUSAND = 1_000f;
+    private static final float MILLION = 1_000_000f;
 
     private TermNumbers() {
     }
@@ -20,14 +29,34 @@ public final class TermNumbers {
         return (rounded > 0 ? "+" : "") + rounded + "%";
     }
 
-    /** {@code value} to two decimals without trailing zeros: {@code "1.5"}, {@code "4"}. */
+    /** {@code 1.25} as {@code "1.3"}, {@code 0.25} as {@code "0.25"}, {@code 12345} as {@code "12.3k"}. */
     public static String number(float value) {
-        return new BigDecimal(String.format(Locale.ROOT, "%.2f", value)).stripTrailingZeros().toPlainString();
+        float size = Math.abs(value);
+        if (size >= MILLION) {
+            return digits(value / MILLION, 1) + "M";
+        }
+        if (size >= ABBREVIATE_FROM) {
+            return digits(value / THOUSAND, 1) + "k";
+        }
+        return digits(value, size < 1f ? 2 : 1);
+    }
+
+    /** {@code value} in full, rounded to a whole number: a health bar's {@code "12345"}. */
+    public static String whole(float value) {
+        return Long.toString(Math.round((double) value));
+    }
+
+    private static String digits(float value, int decimals) {
+        BigDecimal rounded = new BigDecimal(Float.toString(value)).setScale(decimals, RoundingMode.HALF_UP)
+                .stripTrailingZeros();
+        String text = rounded.signum() == 0 ? "0" : rounded.toPlainString();
+        return text.equals("-0") ? "0" : text;
     }
 
     /** {@code -5} as {@code "-5"}, {@code 5} as {@code "+5"}. */
     public static String signed(float value) {
-        return (value > 0f ? "+" : "") + number(value);
+        String text = number(value);
+        return value > 0f && !text.equals("0") ? "+" + text : text;
     }
 
     /** {@code seconds} with its unit: {@code "2 s"}, {@code "0.5 s"}. */
@@ -35,7 +64,7 @@ public final class TermNumbers {
         return number(seconds) + " s";
     }
 
-    /** A multiple: {@code "x2"}, {@code "x1.5"}. */
+    /** A multiplier: {@code "x2"}, {@code "x1.5"}. */
     public static String times(float factor) {
         return "x" + number(factor);
     }
@@ -56,6 +85,18 @@ public final class TermNumbers {
 
     /** A distance in cells with its unit: {@code "1 cell"}, {@code "1.5 cells"}. */
     public static String cells(float cells) {
-        return number(cells) + (cells == 1f ? " cell" : " cells");
+        String number = number(cells);
+        return number + (number.equals("1") ? " cell" : " cells");
+    }
+
+    /** {@code "$12"}. */
+    public static String cash(int amount) {
+        return "$" + number(amount);
+    }
+
+    /** Title case of an upper-case constant name: {@code "Boss"} for {@code BOSS}. */
+    public static String titleCase(Enum<?> constant) {
+        String name = constant.name();
+        return name.charAt(0) + name.substring(1).toLowerCase(Locale.ROOT);
     }
 }

@@ -1,6 +1,6 @@
 # `td.stat`
 
-- Neutral ground for stats: depends only on `td.damage` (and `td.util` annotations), so `effect`,
+- Neutral ground for stats: depends only on `td.damage`, `td.term` (stats are terms) and `td.util` annotations, so `effect`,
   `enemy` and `tower` can all use it without knowing each other. The core is generic over a
   `StatKey` enum (`EnemyStat`, `TowerStat`): `StatModifier(s)`, `BaseStats`, `StatAccumulator`.
   `StatSheet`/`StatView` stay enemy-only, cached and allocation-free; `ResolvedStats` is the

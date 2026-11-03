@@ -6,6 +6,7 @@ import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.enemy.SpawnParameters;
+import td.stat.StatWording;
 import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 import td.util.GameHost;
@@ -61,11 +62,19 @@ public class PanelEnemy extends JPanel {
     private List<Integer> enemiesCount = new ArrayList<>();
     private int slotWidth = 0;
     private int gameTime = 0;
+    // The strip's own board is sized to its icons, so speeds read in the game board's cells instead.
+    private StatWording wording;
 
     public PanelEnemy() {
         initComponents();
         this.contextLocal = new GameWorld(GameHost.noOp());
         this.contextLocal.setPath(new Path(List.of()));
+        this.wording = new StatWording(this.contextLocal.getBoard().scale());
+    }
+
+    /** The game board's cell size, which the previews' speeds read in. */
+    public void setCellSize(int cellSize) {
+        this.wording = new StatWording(cellSize);
     }
 
     public void clearEnemies() {
@@ -173,7 +182,7 @@ public class PanelEnemy extends JPanel {
             return Optional.empty();
         }
         TooltipKey key = TooltipKey.of("preview", nr + ":" + this.definitions.get(nr).id());
-        return Optional.of(new TooltipSpot(new SheetTooltip(key, this.enemies.get(nr).accept(new EnemyInfoText())),
+        return Optional.of(new TooltipSpot(new SheetTooltip(key, this.enemies.get(nr).accept(new EnemyInfoText(this.wording))),
                 new Rectangle(this.slotWidth * nr, 0, this.slotWidth, this.getHeight())));
     }
 

@@ -87,23 +87,22 @@ public record NodeEffects(StatModifiers<TowerStat> modifiers, StatModifiers<Towe
                 this.procs, note);
     }
 
-    /** The value rows: one per stat changed, one per stat emitted, and whom it targets. */
+    /** The value rows: one per stat changed, then one per stat emitted. */
     public List<UpgradeBonus> statRows() {
         List<UpgradeBonus> bonuses = new ArrayList<>();
         for (TowerStat stat : this.modifiers.stats()) {
-            bonuses.add(new UpgradeBonus(stat.label(), stat.describe(this.modifiers.get(stat))));
+            bonuses.add(UpgradeBonus.of(stat, this.modifiers.get(stat), false));
         }
         for (TowerStat stat : this.emission.stats()) {
-            String label = "Nearby " + Character.toLowerCase(stat.label().charAt(0)) + stat.label().substring(1);
-            bonuses.add(new UpgradeBonus(label, stat.describe(this.emission.get(stat))));
+            bonuses.add(UpgradeBonus.of(stat, this.emission.get(stat), true));
         }
-        this.targeting.ifPresent(priority -> bonuses.add(new UpgradeBonus("Targets", priority.label())));
         return bonuses;
     }
 
-    /** The sentences: each capability, hit bonus and proc, then the note. */
+    /** The sentences: whom it targets, each capability, hit bonus and proc, then the note. */
     public List<TermText> sentences() {
         List<TermText> sentences = new ArrayList<>();
+        this.targeting.ifPresent(priority -> sentences.add(TermText.of("targets " + priority.label())));
         this.capabilities.stream().sorted().forEach(capability -> sentences.add(capability.describe()));
         this.hitBonuses.forEach(bonus -> sentences.add(bonus.describe()));
         this.procs.forEach(proc -> sentences.add(proc.describe()));

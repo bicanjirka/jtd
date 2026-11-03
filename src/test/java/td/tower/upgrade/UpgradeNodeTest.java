@@ -38,8 +38,7 @@ class UpgradeNodeTest {
                 .withModifiers(TowerModifiers.damagePercent(0.3f).plus(TowerModifiers.rangePercent(0.1f)).plus(TowerModifiers.bounty(0.25f)).plus(TowerModifiers.critChance(0.15f)))
                 .withXp(150);
 
-        assertThat(node.effects().statRows()).containsExactly(new UpgradeBonus("Damage", "+30%"), new UpgradeBonus("Range", "+10%"),
-                new UpgradeBonus("Crit chance", "+15%"), new UpgradeBonus("Bounty", "+25%"));
+        assertThat(words(node)).containsExactly("Range +10%", "Damage +30%", "Crit chance +15%", "Bounty +25%");
     }
 
     @Test
@@ -48,7 +47,7 @@ class UpgradeNodeTest {
                 .withModifiers(TowerModifiers.damagePercent(0.35f))
                 .withNote("+30% splash radius");
 
-        assertThat(node.effects().statRows()).containsExactly(new UpgradeBonus("Damage", "+35%"));
+        assertThat(words(node)).containsExactly("Damage +35%");
         assertThat(node.effects().sentences()).extracting(TermText::plain).containsExactly("+30% splash radius");
     }
 
@@ -58,7 +57,7 @@ class UpgradeNodeTest {
                 .withModifiers(TowerModifiers.attackSpeed(-0.5f))
                 .withNote("blast applies slow");
 
-        assertThat(node.effects().statRows()).containsExactly(new UpgradeBonus("Attack speed", "-50%"));
+        assertThat(words(node)).containsExactly("Fire rate -50%");
         assertThat(node.effects().sentences()).extracting(TermText::plain).containsExactly("blast applies slow");
     }
 
@@ -66,7 +65,7 @@ class UpgradeNodeTest {
     void aRangeNodeReadsInCells() {
         UpgradeNode range = StandardBaseSlot.nodes(10, 4.0f).getFirst();
 
-        assertThat(range.effects().statRows()).containsExactly(new UpgradeBonus("Range", "+0.6"));
+        assertThat(words(range)).containsExactly("Range +0.6 cells");
     }
 
     @Test
@@ -74,7 +73,16 @@ class UpgradeNodeTest {
         UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Keen Edge", 10)
                 .withEmission(TowerModifiers.critMultiplier(0.5f));
 
-        assertThat(node.effects().statRows()).containsExactly(new UpgradeBonus("Nearby crit damage", "+50%"));
+        assertThat(node.effects().statRows()).singleElement().satisfies(bonus -> {
+            assertThat(bonus.given()).isTrue();
+            assertThat(bonus.stat().changeText(bonus.change()).plain()).isEqualTo("Critical damage +50%");
+        });
+    }
+
+    /** Each stat row as its short name and change: "Damage +30%". */
+    private static List<String> words(UpgradeNode node) {
+        return node.effects().statRows().stream()
+                .map(bonus -> bonus.stat().shortName() + " " + bonus.stat().change(bonus.change())).toList();
     }
 
     private static List<String> sentences(UpgradeNode node) {
@@ -85,7 +93,8 @@ class UpgradeNodeTest {
     void aNodeThatSetsTheTargetSaysWhomItAimsAt() {
         UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.SPECIAL, "Hunter", 10).withTargeting(TargetPriority.HIGHEST_RANK);
 
-        assertThat(node.effects().statRows()).containsExactly(new UpgradeBonus("Targets", "highest rank"));
+        assertThat(node.effects().statRows()).isEmpty();
+        assertThat(sentences(node)).containsExactly("targets highest rank");
     }
 
     @Test

@@ -7,6 +7,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
+import td.stat.StatPart;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.mortar.AirburstMechanic;
@@ -62,6 +63,7 @@ import td.zone.ZoneOwner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * The Artillery: lobs a slow, unguided shell at the visible enemy furthest along the path, beyond a
@@ -519,25 +521,22 @@ public final class MortarTower extends AbstractTower {
 
     /** A Barrage fires a salvo for a longer reload, so its rate is shells a second over the whole cycle. */
     @Override
-    protected Optional<TowerStatLine> cadence() {
+    protected TowerStatLine cadence(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
         SalvoSpec salvo = this.spec(this.mechanics.all()).salvo();
         if (!salvo.isSalvo()) {
-            return super.cadence();
+            return super.cadence(stats, parts);
         }
-        return Optional.of(new TowerStatLine(TowerStatRow.FIRE_RATE, TICKS_PER_SECOND / (this.coolDownMax + 1),
-                (float) (salvo.shells() * TICKS_PER_SECOND * this.attackRate()
-                        / ((this.coolDownMax + 1) * salvo.reloadFactor()))));
+        return this.derivedRow(TowerStatRow.FIRE_RATE, TowerStat.ATTACK_SPEED, stats, parts,
+                at -> (float) (salvo.shells() * TICKS_PER_SECOND * at.attackRate()
+                        / ((this.coolDownMax + 1) * salvo.reloadFactor())));
     }
 
     @Override
-    protected List<TowerStatLine> ownStats() {
-        MortarSpec spec = this.spec(this.mechanics.all());
+    protected List<TowerStatLine> ownStats(TowerStats stats) {
         ProjectileStats shell = this.shellStats(ShellType.PLAIN);
         float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
-        return List.of(new TowerStatLine(TowerStatRow.SPLASH_RADIUS, SPLASH_RADIUS_BASE,
-                this.stats().value(TowerStat.AREA_RADIUS)),
-                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, cellsPerSecond),
-                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, shell.size()));
+        return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, cellsPerSecond),
+                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, shell.size()));
     }
 
     @Override

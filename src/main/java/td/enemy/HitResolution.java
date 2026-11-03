@@ -5,6 +5,7 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.Delivery;
 import td.stat.EnemyStat;
+import td.stat.StatCurves;
 import td.stat.StatView;
 import td.util.RandomSource;
 
@@ -106,8 +107,7 @@ public final class HitResolution {
 
     /** {@code agility / (agility + 100)}: each point matters less than the one before, and it never reaches 1. */
     public static float dodgeChance(float agility) {
-        float effective = Math.max(0f, agility);
-        return effective / (effective + 100f);
+        return StatCurves.dodgeChance(agility);
     }
 
     /** Whether a hit from {@code attacker} would roll a critical against {@code stats}. */
@@ -143,6 +143,6 @@ public final class HitResolution {
 
     /** {@code 100 / (100 + armor)}: each point matters less than the one before. */
     public static float mitigationMultiplier(float armor) {
-        return 100f / (100f + Math.max(0f, armor));
+        return StatCurves.mitigationMultiplier(armor);
     }
 }

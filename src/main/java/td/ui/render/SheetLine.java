@@ -25,23 +25,39 @@ public sealed interface SheetLine {
     }
 
     /**
-     * A health bar with {@code value} on its right.
+     * A health bar with, on its right, what the enemy is worth while it lives or what became of it.
      *
-     * @param gone killed or leaked: the bar dims and {@code value} says which
+     * @param tallies the bounty and lives, each a face and its number; shown while it lives
+     * @param fate    killed, leaked or hatched: the bar dims and this says which
      */
-    record HealthBar(int health, int maxHealth, String value, boolean gone) implements SheetLine {
+    record HealthBar(int health, int maxHealth, List<Tally> tallies, Optional<String> fate) implements SheetLine {
+
+        public HealthBar {
+            tallies = List.copyOf(tallies);
+        }
+    }
+
+    /** A painted face and the number beside it: {@code [$]5}. */
+    record Tally(IconFace face, String value) {
+    }
+
+    /** A stat's mark and full name, bold: the head of a stat's hover. */
+    record StatTitle(Glyph glyph, Optional<Palette> tone, Optional<IconFace> face, String name) implements SheetLine {
     }
 
     /**
-     * A glyph, a label and a right-aligned value. A {@code tone} colours the glyph and the label,
-     * the same colour the board draws that trait or effect in.
+     * A mark, a label and a right-aligned value with its unit and meaning. A {@code tone} colours the mark only, the
+     * colour the board draws that thing in; a {@code face} is painted in place of the glyph.
      *
-     * @param value empty when the label says everything
-     * @param trend whether the value is better or worse than the thing's own base
+     * @param value   empty when the label says everything
+     * @param unit    the dim word after the value; empty for none
+     * @param meaning the dim words after the unit; empty for none
+     * @param trend   whether the value is better or worse for the player than the thing's own base
+     * @param arrow   which way the value moved from its base
      * @param tooltip what hovering the row opens, if anything
      */
-    record Row(Glyph glyph, Optional<Palette> tone, String label, String value, Trend trend,
-               Optional<SheetTooltip> tooltip) implements SheetLine {
+    record Row(Glyph glyph, Optional<Palette> tone, Optional<IconFace> face, String label, String value, String unit,
+               String meaning, Trend trend, Arrow arrow, Optional<SheetTooltip> tooltip) implements SheetLine {
 
         /** A permanent trait: a hollow diamond, as under the enemy on the board. */
         public static Row trait(Palette tone, String label, String value) {
@@ -53,23 +69,43 @@ public sealed interface SheetLine {
             return toned(Glyph.FILLED_DIAMOND, tone, label, value);
         }
 
-        /** A stat nothing on the board marks. */
+        /** A row nothing on the board marks. */
         public static Row plain(Glyph glyph, String label, String value) {
-            return new Row(glyph, Optional.empty(), label, value, Trend.NONE, Optional.empty());
+            return new Row(glyph, Optional.empty(), Optional.empty(), label, value, "", "", Trend.NONE, Arrow.NONE,
+                    Optional.empty());
         }
 
-        /** Any glyph, with it and the label in {@code tone}'s colour. */
+        /** Any glyph, in {@code tone}'s colour. */
         public static Row toned(Glyph glyph, Palette tone, String label, String value) {
-            return new Row(glyph, Optional.of(tone), label, value, Trend.NONE, Optional.empty());
+            return new Row(glyph, Optional.of(tone), Optional.empty(), label, value, "", "", Trend.NONE, Arrow.NONE,
+                    Optional.empty());
+        }
+
+        /** A term's face in place of a glyph. */
+        public static Row faced(IconFace face, String label, String value) {
+            return new Row(Glyph.DOT, Optional.empty(), Optional.of(face), label, value, "", "", Trend.NONE,
+                    Arrow.NONE, Optional.empty());
         }
 
         public Row withTrend(Trend trend) {
-            return new Row(this.glyph, this.tone, this.label, this.value, trend, this.tooltip);
+            return new Row(this.glyph, this.tone, this.face, this.label, this.value, this.unit, this.meaning, trend,
+                    this.arrow, this.tooltip);
+        }
+
+        public Row withArrow(Arrow arrow) {
+            return new Row(this.glyph, this.tone, this.face, this.label, this.value, this.unit, this.meaning,
+                    this.trend, arrow, this.tooltip);
+        }
+
+        /** The dim unit and meaning after the value. */
+        public Row withGloss(String unit, String meaning) {
+            return new Row(this.glyph, this.tone, this.face, this.label, this.value, unit, meaning, this.trend,
+                    this.arrow, this.tooltip);
         }
 
         public Row withTooltip(TooltipKey key, InfoSheet sheet) {
-            return new Row(this.glyph, this.tone, this.label, this.value, this.trend,
-                    Optional.of(new SheetTooltip(key, sheet)));
+            return new Row(this.glyph, this.tone, this.face, this.label, this.value, this.unit, this.meaning,
+                    this.trend, this.arrow, Optional.of(new SheetTooltip(key, sheet)));
         }
 
         @Override
@@ -144,7 +180,38 @@ public sealed interface SheetLine {
         /** An exclusive choice: what a pick locks out, or what a made one was chosen over. */
         LOCK,
         /** The body shape of the tower whose body palette is the row's tone. */
-        TOWER_BODY
+        TOWER_BODY,
+        /** A ring with a dot at its centre: a blast around where a shot lands. */
+        RING_CENTRE,
+        /** A ring with a gap: what lies too close to reach. */
+        BROKEN_RING,
+        /** A slice of a circle: a cone. */
+        WEDGE,
+        /** A short arrow through a line: what a hit ignores. */
+        PIERCE,
+        /** A ring and a cross with a filled centre: what aims true. */
+        CROSSHAIR_FILLED,
+        /** A ring and a cross: what evades aim. */
+        CROSSHAIR,
+        /** The crit spark's outline: what blunts crits. */
+        HOLLOW_SPARK,
+        /** A shield's outline: what mitigates a share. */
+        HOLLOW_SHIELD,
+        /** A solid shield: what takes a fixed amount off. */
+        FILLED_SHIELD,
+        /** A shield with a crack: what lets more through. */
+        CRACKED_SHIELD,
+        /** A plus: what heals. */
+        PLUS,
+        /** A dot with a short trail: what flies. */
+        COMET
+    }
+
+    /** Which way a value moved from its base. */
+    enum Arrow {
+        NONE,
+        UP,
+        DOWN
     }
 
     /** How a value compares with its own base. */

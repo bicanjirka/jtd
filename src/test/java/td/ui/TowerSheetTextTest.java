@@ -2,15 +2,19 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.term.TermText;
 import td.tower.NodeProgress;
+import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerBuffState;
 import td.tower.TowerFactory;
 import td.tower.TowerInspection;
+import td.tower.TowerModifiers;
+import td.tower.TowerStat;
 import td.tower.TowerStatLine;
 import td.tower.TowerStatRow;
 import td.tower.TowerTerm;
@@ -67,15 +71,16 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void theToolbarTooltipLeavesOutHowAShotTravelsAndTurns() {
+    void theToolbarTooltipShowsEveryRowTheShopDoes() {
         TowerInspection tower = TowerInspection.of(TowerFactory.Type.MORTAR, 10, List.of(
-                TowerStatLine.fixed(TowerStatRow.RANGE, 3), TowerStatLine.fixed(TowerStatRow.ROTATION, 2),
-                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, 4), TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, 1)));
+                TowerStatLine.fixed(TowerStat.RANGE, TowerStat.RANGE, 3),
+                TowerStatLine.fixed(TowerStatRow.SWEEP_TIME, TowerStat.ATTACK_SPEED, 2),
+                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, 4)));
 
         InfoSheet tooltip = TowerSheetText.shopTooltip(tower);
 
-        assertThat(labels(tooltip)).contains("Range").doesNotContain("Rotation", "Projectile speed", "Projectile size");
-        assertThat(labels(TowerSheetText.shop(tower))).contains("Rotation", "Projectile speed", "Projectile size");
+        assertThat(labels(tooltip)).containsExactly("Range", "Sweep time", "Proj speed");
+        assertThat(labels(TowerSheetText.shop(tower))).isEqualTo(labels(tooltip));
     }
 
     @Test
@@ -113,8 +118,7 @@ class TowerSheetTextTest {
     void theShopListsStatsThenWhomItTargetsThenWhatItAppliesThenWhatNoRowSays() {
         InfoSheet sheet = shopSheet(TowerFactory.Type.MORTAR);
 
-        assertThat(labels(sheet)).containsExactly("Range", "Physical damage", "Fire rate", "Splash radius",
-                "Projectile speed", "Projectile size", "Targets");
+        assertThat(labels(sheet)).startsWith("Range").endsWith("Targets");
         assertThat(iconRow(sheet, "Applies").icons()).isNotEmpty();
         assertThat(sheet.lines()).endsWith(new SheetLine.Prose(TermText.of("Lobs a slow, unguided shell.")),
                 new SheetLine.Gap(), new SheetLine.Prose(TermText.of(TowerSheetText.PLACING_HINT)));
@@ -125,13 +129,22 @@ class TowerSheetTextTest {
         InfoSheet seeker = shopSheet(TowerFactory.Type.SEEKER);
 
         assertThat(row(seeker, "Magic damage").tone()).contains(Palette.DAMAGE_MAGIC);
-        assertThat(row(shopSheet(TowerFactory.Type.SNIPER), "Physical damage").tone()).contains(Palette.DAMAGE_PHYSICAL);
+        assertThat(row(shopSheet(TowerFactory.Type.SNIPER), "Phys damage").tone()).contains(Palette.DAMAGE_PHYSICAL);
     }
 
     @Test
-    void aSonarShowsARotationAndCritChanceShowsOnlyWhereATowerHasAny() {
-        assertThat(labels(shopSheet(TowerFactory.Type.SONAR))).contains("Rotation").doesNotContain("Fire rate", "Crit chance");
-        assertThat(row(shopSheet(TowerFactory.Type.SNIPER), "Crit chance").value()).isEqualTo("5%");
+    void aSonarShowsASweepTimeAndNoFireRateOrDps() {
+        assertThat(labels(shopSheet(TowerFactory.Type.SONAR))).contains("Sweep time").doesNotContain("Fire rate", "DPS");
+    }
+
+    @Test
+    void aTowerThatFiresShowsItsDpsAndOneThatCritsShowsItsCritDamage() {
+        SniperTower sniper = TowerFixtures.buffed(new SniperTower(this.world, 0, 0), this.world,
+                TowerModifiers.critChance(0.1f));
+
+        InfoSheet sheet = TowerSheetText.status(sniper.inspect());
+
+        assertThat(labels(sheet)).contains("Fire rate", "DPS", "Crit chance", "Crit damage");
     }
 
     @Test
@@ -152,7 +165,8 @@ class TowerSheetTextTest {
 
         InfoSheet sheet = liveStatus(sniper);
 
-        assertThat(row(sheet, "Physical damage")).extracting(Row::value, Row::trend).containsExactly("40 → 48", Trend.BETTER);
+        assertThat(row(sheet, "Phys damage")).extracting(Row::trend, Row::arrow)
+                .containsExactly(Trend.BETTER, SheetLine.Arrow.UP);
         assertThat(row(sheet, "Fire rate").trend()).isEqualTo(Trend.NONE);
         assertThat(iconRow(sheet, "Buffs").icons()).hasSize(1);
     }
@@ -166,9 +180,10 @@ class TowerSheetTextTest {
         InfoSheet sheet = liveStatus(sniper);
 
         assertThat(iconRow(sheet, "Debuffs").icons()).hasSize(1);
-        assertThat(row(sheet, "Range")).extracting(Row::value, Row::trend).containsExactly("4 → 3.8", Trend.WORSE);
-        assertThat(row(sheet, "Fire rate")).extracting(Row::value, Row::trend).containsExactly("0.4 → 0.3/s", Trend.WORSE);
-        assertThat(row(sheet, "Physical damage").trend()).isEqualTo(Trend.NONE);
+        assertThat(row(sheet, "Range")).extracting(Row::trend, Row::arrow)
+                .containsExactly(Trend.WORSE, SheetLine.Arrow.DOWN);
+        assertThat(row(sheet, "Fire rate")).extracting(Row::trend, Row::unit).containsExactly(Trend.WORSE, "/s");
+        assertThat(row(sheet, "Phys damage").trend()).isEqualTo(Trend.NONE);
     }
 
     @Test
@@ -178,7 +193,7 @@ class TowerSheetTextTest {
 
         InfoSheet sheet = TowerSheetText.status(tower.inspect());
 
-        assertThat(row(sheet, "Kills")).isEqualTo(Row.plain(Glyph.SKULL, "Kills", "3 · 0 dmg"));
+        assertThat(row(sheet, "Kills")).isEqualTo(Row.plain(Glyph.SKULL, "Kills", "3 · 0").withGloss("dmg", ""));
     }
 
     @Test

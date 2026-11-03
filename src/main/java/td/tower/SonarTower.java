@@ -7,6 +7,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
+import td.stat.StatPart;
 import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
@@ -61,7 +62,6 @@ import td.util.ThreadConfined;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.function.Function;
@@ -352,10 +352,12 @@ public final class SonarTower extends AbstractTower {
         return Math.max(0f, 1f - (float) age / HIT_FLASH_TICKS);
     }
 
+    /** A turn of its beam: the mechanics' seconds a revolution, divided by the attack rate at {@code stats}. */
     @Override
-    protected Optional<TowerStatLine> cadence() {
-        float seconds = this.spec(this.mechanics.all()).beam().secondsPerRevolution();
-        return Optional.of(new TowerStatLine(TowerStatRow.ROTATION, SECONDS_PER_REVOLUTION, seconds));
+    protected TowerStatLine cadence(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
+        float unhurried = (float) (this.spec(this.mechanics.all()).beam().secondsPerRevolution() * this.attackRate());
+        return this.derivedRow(TowerStatRow.SWEEP_TIME, TowerStat.ATTACK_SPEED, stats, parts,
+                at -> (float) (unhurried / at.attackRate()));
     }
 
     @Override

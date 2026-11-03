@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.ui.render.IconFace;
 import td.ui.render.InfoSheet;
@@ -24,19 +25,22 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Optional;
 
 /**
  * Lays an {@link InfoSheet} out as a styled document: one paragraph per line, each row's glyph
- * painted by {@link Java2DFrameRenderer} and its label in that glyph's colour, values on a
- * right-aligned tab stop at the pane's edge.
+ * painted by {@link Java2DFrameRenderer} in its own colour, the label muted, values bright on a
+ * right-aligned tab stop at the pane's edge with their unit and meaning dim after them.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 final class InfoSheetDocument {
 
-    private static final Color VALUE_COLOR = new Color(170, 205, 170);
+    private static final Color VALUE_COLOR = Hud.FOREGROUND;
     private static final Color PROSE_COLOR = new Color(150, 170, 150);
+    private static final Color LABEL_COLOR = PROSE_COLOR;
+    private static final Color GLOSS_COLOR = new Color(118, 140, 118);
     private static final Color GONE_COLOR = new Color(255, 120, 120);
     private static final Color BETTER_COLOR = new Color(140, 255, 140);
     private static final Color WORSE_COLOR = GONE_COLOR;
@@ -57,6 +61,8 @@ final class InfoSheetDocument {
     private static final int DIVIDER_HEIGHT = 7;
     private static final int ICON_LABEL_FONT_SIZE = 10;
     private static final int TITLE_GAP = 6;
+    private static final int ARROW_BOX = 9;
+    private static final float ARROW_SIZE = 3.2f;
     /** A value ending exactly at the pane's edge wraps on rounding, so the column stops short. */
     private static final int EDGE_MARGIN = 4;
 
@@ -88,6 +94,7 @@ final class InfoSheetDocument {
             case SheetLine.EnemyHeader header -> this.header(header);
             case SheetLine.Title title -> this.title(title);
             case SheetLine.HealthBar bar -> this.healthBar(bar);
+            case SheetLine.StatTitle title -> this.statTitle(title);
             case SheetLine.Row row -> this.row(row);
             case SheetLine.Prose prose -> {
                 SimpleAttributeSet dim = colored(PROSE_COLOR);
@@ -139,13 +146,30 @@ final class InfoSheetDocument {
         }
     }
 
-    /** The bar fills what its value leaves, with health written across it. */
+    /**
+     * The bar fills what its tallies or its fate leave, with health written across it; each tally is its face and its
+     * number.
+     */
     private void healthBar(SheetLine.HealthBar bar) {
-        int barWidth = this.width - this.metrics.stringWidth(bar.value()) - BAR_VALUE_GAP;
+        int rightWidth = bar.fate().map(this.metrics::stringWidth).orElseGet(() -> bar.tallies().stream()
+                .mapToInt(tally -> TermIconPainter.MENTION + this.metrics.stringWidth(" " + tally.value() + " "))
+                .sum());
+        int barWidth = this.width - rightWidth - BAR_VALUE_GAP;
         float fraction = bar.maxHealth() > 0 ? Math.clamp((float) bar.health() / bar.maxHealth(), 0f, 1f) : 0f;
-        String health = bar.health() + " / " + bar.maxHealth();
-        this.icon(new PaintedIcon(barWidth, BAR_HEIGHT, g2 -> paintBar(g2, barWidth, fraction, health, bar.gone())));
-        this.insert("\t" + bar.value(), colored(bar.gone() ? GONE_COLOR : VALUE_COLOR));
+        String health = TermNumbers.whole(bar.health()) + " / " + TermNumbers.whole(bar.maxHealth()) + " hp";
+        boolean gone = bar.fate().isPresent();
+        this.icon(new PaintedIcon(barWidth, BAR_HEIGHT, g2 -> paintBar(g2, barWidth, fraction, health, gone)));
+        this.insert("\t", new SimpleAttributeSet());
+        if (gone) {
+            this.insert(bar.fate().get(), colored(GONE_COLOR));
+            return;
+        }
+        for (int i = 0; i < bar.tallies().size(); i++) {
+            SheetLine.Tally tally = bar.tallies().get(i);
+            this.icon(new PaintedIcon(TermIconPainter.MENTION, TermIconPainter.MENTION,
+                    g2 -> paintFace(g2, tally.face(), TermIconPainter.MENTION)));
+            this.insert(" " + tally.value() + (i < bar.tallies().size() - 1 ? " " : ""), colored(VALUE_COLOR));
+        }
     }
 
     private static void paintBar(Graphics2D g2, int barWidth, float fraction, String text, boolean gone) {
@@ -164,19 +188,65 @@ final class InfoSheetDocument {
         g2.drawString(text, -barMetrics.stringWidth(text) / 2f, (barMetrics.getAscent() - barMetrics.getDescent()) / 2f);
     }
 
+    /**
+     * The mark, the label muted, then at the right edge the value bright or in its trend colour, its unit and meaning
+     * dim and small, and the arrow of which way it moved.
+     */
     private void row(SheetLine.Row row) {
         this.hover = row.tooltip().isPresent() ? new HoverRun.RowRun(row) : null;
-        this.icon(new PaintedIcon(GLYPH_BOX, GLYPH_BOX, g2 -> this.renderer.paintRowGlyph(g2, row.glyph(), row.tone(), GLYPH_SIZE)));
-        SimpleAttributeSet label = row.tone().map(Java2DFrameRenderer::colorFor).map(InfoSheetDocument::colored).orElseGet(SimpleAttributeSet::new);
-        this.insert(" " + row.label(), label);
+        this.mark(row.glyph(), row.tone(), row.face());
+        this.insert(" " + row.label(), colored(LABEL_COLOR));
+        Color valueColor = switch (row.trend()) {
+            case NONE -> VALUE_COLOR;
+            case BETTER -> BETTER_COLOR;
+            case WORSE -> WORSE_COLOR;
+        };
         if (!row.value().isEmpty()) {
-            this.insert("\t" + row.value(), colored(switch (row.trend()) {
-                case NONE -> VALUE_COLOR;
-                case BETTER -> BETTER_COLOR;
-                case WORSE -> WORSE_COLOR;
-            }));
+            this.insert("\t" + row.value(), colored(valueColor));
+        }
+        SimpleAttributeSet gloss = colored(GLOSS_COLOR);
+        StyleConstants.setFontSize(gloss, PROSE_FONT_SIZE);
+        if (!row.unit().isEmpty()) {
+            this.insert(" " + row.unit(), gloss);
+        }
+        if (row.arrow() != SheetLine.Arrow.NONE) {
+            boolean up = row.arrow() == SheetLine.Arrow.UP;
+            this.icon(new PaintedIcon(ARROW_BOX, ARROW_BOX, g2 -> paintArrow(g2, up, valueColor)));
+        }
+        if (!row.meaning().isEmpty()) {
+            this.insert(" " + row.meaning(), gloss);
         }
         this.hover = null;
+    }
+
+    /** A stat hover's head: its mark and its full name, bold. */
+    private void statTitle(SheetLine.StatTitle title) {
+        this.mark(title.glyph(), title.tone(), title.face());
+        SimpleAttributeSet name = new SimpleAttributeSet();
+        StyleConstants.setBold(name, true);
+        this.insert(" " + title.name(), name);
+    }
+
+    /** A face where there is one, else the glyph in its tone. */
+    private void mark(SheetLine.Glyph glyph, Optional<Palette> tone, Optional<IconFace> face) {
+        if (face.isPresent()) {
+            IconFace shown = face.get();
+            this.icon(new PaintedIcon(TermIconPainter.MENTION, TermIconPainter.MENTION,
+                    g2 -> paintFace(g2, shown, TermIconPainter.MENTION)));
+            return;
+        }
+        this.icon(new PaintedIcon(GLYPH_BOX, GLYPH_BOX, g2 -> this.renderer.paintRowGlyph(g2, glyph, tone, GLYPH_SIZE)));
+    }
+
+    private static void paintArrow(Graphics2D g2, boolean up, Color color) {
+        Path2D.Float arrow = new Path2D.Float();
+        float tip = up ? -ARROW_SIZE : ARROW_SIZE;
+        arrow.moveTo(0f, tip);
+        arrow.lineTo(ARROW_SIZE, -tip);
+        arrow.lineTo(-ARROW_SIZE, -tip);
+        arrow.closePath();
+        g2.setColor(color);
+        g2.fill(arrow);
     }
 
     private void sentence(SheetLine.Sentence sentence) {
@@ -195,12 +265,18 @@ final class InfoSheetDocument {
             switch (span) {
                 case TermText.Plain run -> this.insert(run.text(), plain);
                 case TermText.Mention mention -> {
-                    IconFace face = TermLooks.faceOf(mention.term());
                     this.hover = new HoverRun.MentionRun(mention);
-                    this.icon(new PaintedIcon(TermIconPainter.MENTION, TermIconPainter.MENTION,
-                            g2 -> paintFace(g2, face, TermIconPainter.MENTION)));
                     SimpleAttributeSet title = new SimpleAttributeSet(plain);
-                    StyleConstants.setForeground(title, TermIconPainter.ink(face.tone()));
+                    Optional<StatLooks.StatLook> stat = StatLooks.statOf(mention.term()).map(StatLooks::of);
+                    if (stat.isPresent()) {
+                        this.mark(stat.get().glyph(), stat.get().tone(), stat.get().face());
+                        StyleConstants.setForeground(title, stat.get().word());
+                    } else {
+                        IconFace face = TermLooks.faceOf(mention.term());
+                        this.icon(new PaintedIcon(TermIconPainter.MENTION, TermIconPainter.MENTION,
+                                g2 -> paintFace(g2, face, TermIconPainter.MENTION)));
+                        StyleConstants.setForeground(title, TermIconPainter.ink(face.tone()));
+                    }
                     this.insert(" " + mention.term().title(), title);
                     this.hover = null;
                 }
