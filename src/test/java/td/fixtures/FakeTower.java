@@ -74,6 +74,11 @@ public final class FakeTower extends AbstractTower {
         return other == this ? StatModifiers.none() : this.given;
     }
 
+    @Override
+    public boolean emitsBuffs() {
+        return !this.given.isNone();
+    }
+
     /** This tower, now with {@code procs} of its own, as if born with them. Set it before it attacks. */
     public FakeTower withBaseProcs(List<Proc> procs) {
         this.baseProcs = List.copyOf(procs);
