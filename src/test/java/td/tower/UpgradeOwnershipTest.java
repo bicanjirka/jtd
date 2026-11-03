@@ -110,6 +110,21 @@ class UpgradeOwnershipTest {
     }
 
     @Test
+    void whatATowerOffersFollowsEachPurchaseAndDowngradeAfterBeingAsked() {
+        FakeTower tower = this.towerOwning(core(StandardBaseSlot.ATTUNE_ID));
+        List<UpgradeNode> before = tower.offeredUpgrades(this.context);
+
+        tower.buyUpgrade(A1);
+        List<UpgradeNode> bought = tower.offeredUpgrades(this.context);
+        tower.downgrade(A1);
+        List<UpgradeNode> downgraded = tower.offeredUpgrades(this.context);
+
+        assertThat(before).contains(A1, B1).doesNotContain(A2);
+        assertThat(bought).contains(A2).doesNotContain(A1, B1);
+        assertThat(downgraded).isEqualTo(before);
+    }
+
+    @Test
     void aDowngradeRefundsWhatSellingWouldPayLess() {
         FakeTower tower = this.towerOwning(A2);
         int sellBefore = tower.getSellPrice();
