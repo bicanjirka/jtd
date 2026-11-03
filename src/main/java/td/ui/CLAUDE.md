@@ -97,6 +97,9 @@ keeps the seam honest.
 - A hover opens a tooltip and never changes the Info pane; only a click does. The pane shows the selected tower or
   enemy, the tower being placed, or the welcome text. A source with several targets (a strip of preview enemies) is
   watched with `TooltipLayer.watchSpots`.
+- Every stat row, on any sheet, is built by `StatRowText` from a `StatBreakdown`: its mark from `StatLooks` (one
+  exhaustive switch per stat family, glyph-only colour), its words from the stat's `StatTerm`. A stat named in prose
+  is a mention whose hover is the stat's meaning; `StatUniformityTest` holds every stat to the same rules.
 - A term's icon is an `IconFace` (AWT-free) that `TermIconPainter` alone paints; its art is a `Pictogram` keyed by
   the term's key in `PictogramCatalogue`, its colours come from `TermLooks`. A new term needs a row in a
   `*Pictograms` table (or it shows its monogram) and a case in `TermLooks`.

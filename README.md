@@ -117,16 +117,24 @@ background copies, budget, upgraded copies).
 
 ### Towers
 
+A tower's info pane shows Range, then how it deals damage: a hit tower its Physical or Magic damage (/hit), Fire
+rate (/s) and DPS (/target: damage times fire rate times the average crit, before the target's defences), the Radar
+its Sweep time in place of a fire rate, the Obelisk its damage a second; then every other stat off its default
+(Critical damage whenever it can crit, Effect duration whenever it applies an effect), and what a Beacon gives.
+A changed value is green or red for better or worse, with an arrow for which way it moved; hovering a row says what
+the stat does and what made it. An upgrade's hover shows each change and what the row it moves would become
+(`Fire rate +25% 1.3 → 1.6 /s`).
+
 | Tower  | Price | Behaviour                                                                                                                                           |
 |--------|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path; each shot builds on the last, whichever enemy it hits, so the longer it keeps firing, the likelier it crits; a stack fades 3 s after its last shot, one at a time (crits x2.0) |
+| Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path; each shot builds on the last, whichever enemy it hits, so the longer it keeps firing, the likelier it crits; a stack fades 3 s after its last shot, one at a time (Critical damage 200%) |
 | Burst  | 15    | Instant blast on a random target in range, physical damage falling off with distance; attuned, it aims at the most crowded group and Saturates what it hits. Forks into the Stormcaller (lightning arcs on past the blast) or the Hexer (every 4th shot casts a hex) |
 | Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider. One head adds heavier shells and nukes, the other shrapnel and bombs along the path, and a ballistics line speeds the shell up, leads the target, widens the blast and fires salvos. Its specials turn every third shell into a Napalm, Tar or Cryo shell that leaves burning, tarred or frozen ground |
 | Scorcher | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
 | Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
 | Radar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
 | Obelisk | 25    | Support, a kill box. Short range; a field that drags everything inside 15% and deals a little magic damage to it every tick, ghosts included and with no visible enemy needed, the damage a quarter less for every other field overlapping it. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it stronger. One head holds enemies longer (Gravity: a deeper drag, Dazes, a wider field, a well or Stasis), the other denies them (Ward: reveal, silence, no heals, True Sight or Purge); an extra line makes them take more damage and builds Toll faster. A special Condemns the strongest enemy inside, bosses first, for every tower to turn on; drains spirit; or links two Obelisks with a Ley Line. Reveals nothing until Ward is bought |
-| Beacon | 20    | Passive: buffs the damage and range of the towers in its range (+20%) and halves the disruption they take; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds attack speed and crit damage; the other widens its reach, then lengthens buffs and the effects the towers apply. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
+| Beacon | 20    | Passive: gives the towers in its range Damage and Range +20% and Disruption taken x0.5; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds Fire rate and Critical damage; the other widens its reach, then raises Buff duration and Effect duration. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
 
 The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Hive, Radar, Obelisk and Beacon
 (keys `q` `w` `e` `r` `t` `y` `u` `i`, in that order). A Burst that forks is called a Stormcaller or a Hexer.
@@ -171,11 +179,14 @@ flowchart LR
 
 An enemy is made of four kinds of thing, and each belongs to exactly one:
 
-- **Stats** are the numbers every enemy has, zero or not: armor and magic resist (a hit keeps
-  `100 / (100 + armor)` of itself), plating and insulation (points every physical or magic hit loses; flat penetration ignores them), resilience
-  (against crits; 100 is crit-immune, below zero crits land harder), agility (aimed shots miss) and
-  spirit (heals and shields it receives, and how fast its debuffs run out). The info pane lists the ones
-  off zero; nothing is drawn on the board for them.
+- **Stats** are the numbers every enemy has, zero or not: Move speed (cells/s), Armor and Magic resist (a hit
+  keeps `100 / (100 + armor)` of itself), Plating and Insulation (dmg every physical or magic hit loses; Flat
+  penetration ignores them), Resilience (against crits; 100 is crit-immune, below zero crits land harder), Agility
+  (aimed shots miss), Physical, Magic and Damage over time taken (%), Spirit (heals and shields it receives, and how
+  fast its debuffs run out), Healing received (%), Regeneration (hp/s) and the Chill, Burn and Freeze resists (%).
+  The info pane lists the ones off their default, each with its unit and, where the number alone says little, what
+  it does (`Armor 30 -23% dmg`); hovering a row explains it and, live, what made it. Nothing is drawn on the board
+  for them.
 - **Traits** are what an enemy has that most don't, always on: a resistance or immunity to an effect,
   regeneration, a stat that follows its state (faster or harder to hit when hurt) or adapts to how the
   level is played. Each draws a marker under the enemy.
@@ -252,17 +263,17 @@ effect it carries; selecting it shows each effect as an icon whose tooltip says 
 | Shield | Boon | Buff | Absorbs damage until its amount is spent or it runs out. |
 | Invisibility | Boon | Buff | Towers can't aim at it, though damage on an area still reaches it. |
 | Heal | Boon | Buff | Restores health over time. |
-| Vulnerable | Weakness | Debuff | Each stack: +15% physical and magic damage taken, up to 3 stacks. |
+| Vulnerable | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +15%, up to 3 stacks. |
 | Reveal | Mark | Debuff | Every tower can see and aim at it, and it counts as having Expose. |
 | Poison | Affliction | Debuff | Damage over time that fades, and a slow of up to 30% while it is full; it adds a stack of Sicken every 0.5 s while it lasts. |
-| Scorch | Weakness | Debuff | Each stack: -1 resilience, up to 100; once nothing adds more, it loses a stack every 1 s, sooner with more spirit. |
-| Sicken | Weakness | Debuff | Each stack: -1 spirit, up to 100; once nothing adds more, it loses a stack every 1 s, sooner with more spirit. |
-| Sunder | Weakness | Debuff | Each stack: -5 armor, up to 10 stacks. |
-| Expose | Mark | Debuff | -50 resilience: crits find it more often and hit it harder. |
+| Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 100; once nothing adds more, it loses a stack every 1 s, sooner with more Spirit. |
+| Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 100; once nothing adds more, it loses a stack every 1 s, sooner with more Spirit. |
+| Sunder | Weakness | Debuff | Each stack: Armor -5, up to 10 stacks. |
+| Expose | Mark | Debuff | Resilience -50: crits find it more often and hit it harder. |
 | Mark | Mark | Debuff | The next hit on it is a crit, which spends this. |
-| Priority | Mark | Debuff | +15% physical and magic damage taken, and a tower that picks one target picks it. |
-| Resonance | Weakness | Debuff | Each stack: +8% magic damage taken, up to 3 stacks. |
-| Fracture | Weakness | Debuff | Each stack: -10 resilience, up to 5; it loses a stack every 1 s. |
+| Priority | Mark | Debuff | Physical damage taken and Magic damage taken +15%, and a tower that picks one target picks it. |
+| Resonance | Weakness | Debuff | Each stack: Magic damage taken +8%, up to 3 stacks. |
+| Fracture | Weakness | Debuff | Each stack: Resilience -10, up to 5; it loses a stack every 1 s. |
 | Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze, but leaves its Burn and Chill; within 10 s, each fresh one lasts 100%, 80%, 60%, 40%, 20%, then none. |
 | Saturation | Weakness | Debuff | Each stack makes a Burst's blasts hit it harder. |
 | Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
@@ -275,24 +286,24 @@ effect it carries; selecting it shows each effect as an icon whose tooltip says 
 | Sympathy | Hex | Debuff | Once a second, its Chill, Vulnerable, Sunder, Expose and Unravel are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower. |
 | Reckoning | Hex | Debuff | When it dies, each Doom from the same tower near it releases at once and starts again. |
 | Silence | Control | Debuff | Its abilities don't fire; abilities on death and auras still do. |
-| Anchor | Control | Debuff | It can't be sped up, and its speed is held to 75% of its base. |
-| Unravel | Weakness | Debuff | Each stack: -10 magic resist, up to 5 stacks. |
-| Brittle | Weakness | Debuff | While it has Freeze: +30% physical damage taken. |
+| Anchor | Control | Debuff | It can't be sped up, and its Move speed is held to at most 75% of its base. |
+| Unravel | Weakness | Debuff | Each stack: Magic resist -10, up to 5 stacks. |
+| Brittle | Weakness | Debuff | While it has Freeze: Physical damage taken +30%. |
 | Toll | Weakness | Debuff | Time spent in an Obelisk's field, a stack a second; it sets how strongly the field holds it, and goes soon after it leaves. |
-| Corrode | Weakness | Debuff | Each stack: -3 armor and magic resist, up to 15 stacks. |
-| Drag | Control | Debuff | Each stack takes 1% of its speed, up to 50 stacks; it is no Chill, and nothing resists it. |
+| Corrode | Weakness | Debuff | Each stack: Armor and Magic resist -3, up to 15 stacks. |
+| Drag | Control | Debuff | Each stack: Move speed -1%, up to 50 stacks; it is no Chill, and nothing resists it. |
 | Undertow | Control | Debuff | A Freeze counts it as 25% Chill. |
-| Condemn | Weakness | Debuff | Each stack: +5% physical and magic damage taken, up to 4 stacks. |
+| Condemn | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +5%, up to 4 stacks. |
 | Stasis | Weakness | Debuff | While it also has Daze, the field holding it takes its Toll away. |
 | Unveil | Mark | Debuff | It can't gain Invisibility. |
 | Dead Zone | Weakness | Debuff | Heal and Shield can't take hold. |
 | Fallout | Weakness | Debuff | Heal can't take hold; Shield still can. |
-| Frail | Weakness | Debuff | Each stack: +2% physical and magic damage taken, up to 15 stacks. |
-| Crack | Weakness | Debuff | -5 plating and -5 insulation. |
-| Tar | Weakness | Debuff | -40% speed; a Burn or Soulfire it catches starts at x2, and a Freeze lasts 1 s longer. |
+| Frail | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +2%, up to 15 stacks. |
+| Crack | Weakness | Debuff | Plating -5 and Insulation -5. |
+| Tar | Weakness | Debuff | Move speed x0.6; a Burn or Soulfire it catches starts at x2, and a Freeze lasts 1 s longer. |
 | Bleed | Affliction | Debuff | Physical damage for every cell it travels; standing still, it takes none. |
 | Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; nothing resists it, it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and Freeze puts it out. |
-| Sprint | Boon | Buff | +60% speed. |
+| Sprint | Boon | Buff | Move speed +60%. |
 | Hasten | Boon | Buff | Twice the speed, and no slow (Chill, Tar, Drag, Anchor) can take hold; a Freeze or Daze still stops it. |
 
 #### Tower terms
@@ -360,7 +371,7 @@ freeze in frost bursts a burn.
 
 Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
-own crit multiplier (x1.5, the Sniper x2.0). A guaranteed crit lands whenever the enemy's
+own Critical damage (150%, the Sniper 200%). A guaranteed crit lands whenever the enemy's
 resilience is below 100; at 100 nothing crits. Negative resilience makes crits likelier and harder;
 Exposed and Revealed take 50 resilience. Armor and magic resist never go below 0.
 

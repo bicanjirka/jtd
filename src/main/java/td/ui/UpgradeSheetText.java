@@ -62,7 +62,7 @@ final class UpgradeSheetText {
     private static List<SheetLine> lines(UpgradeOffer offer, boolean rivals) {
         UpgradeNode node = offer.node();
         List<SheetLine> lines = new ArrayList<>();
-        lines.add(new SheetLine.IconTitle(offer.face(), node.displayName(), offer.face().tone(), "$" + node.price()));
+        lines.add(new SheetLine.IconTitle(offer.face(), node.displayName(), offer.face().tone(), TermNumbers.cash(node.price())));
         if (node.xp() > 0) {
             lines.add(gate(offer.xpMet(), TermText.of(offer.xpProgress())));
         }
@@ -167,10 +167,10 @@ final class UpgradeSheetText {
             lines.add(Row.plain(Glyph.CHEVRON, "Path · " + path.steps().size() + " steps", ""));
             for (UpgradeNode step : path.steps()) {
                 lines.add(blockedAt.filter(step::equals).isPresent()
-                        ? Row.toned(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, step.displayName(), "$" + step.price())
-                        : Row.plain(Glyph.DOT, step.displayName(), "$" + step.price()));
+                        ? Row.toned(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, step.displayName(), TermNumbers.cash(step.price()))
+                        : Row.plain(Glyph.DOT, step.displayName(), TermNumbers.cash(step.price())));
             }
-            lines.add(Row.plain(Glyph.CHEVRON, "Total", "$" + path.total()));
+            lines.add(Row.plain(Glyph.CHEVRON, "Total", TermNumbers.cash(path.total())));
         }
         if (path.block().isPresent()) {
             UpgradePath.Block block = path.block().get();
@@ -194,7 +194,7 @@ final class UpgradeSheetText {
     private static List<SheetLine> downgradeLines(UpgradeHover.Downgrading downgrading, UpgradeTree tree) {
         List<SheetLine> lines = new ArrayList<>();
         downgrading.removal().removed().forEach(node -> lines.add(Row.plain(Glyph.DOT, node.displayName(),
-                "$" + node.price())));
+                TermNumbers.cash(node.price()))));
         lines.add(Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund 75%", "+$" + downgrading.refund()));
         List<String> reopened = lineNames(downgrading.reopens(), tree);
         if (!reopened.isEmpty()) {
