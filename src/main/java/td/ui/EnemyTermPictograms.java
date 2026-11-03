@@ -15,6 +15,8 @@ final class EnemyTermPictograms {
             Map.entry("trait.elusive", "F O9.6 12.6 2.4 ; S M2.6 19.4C9.6 19.4 13.6 6 20.4 6 ; F M21.8 6L17.2 2.8V9.2Z"),
             // Adaptation
             Map.entry("trait.adaptation", "S M12 2.6L19.6 5.4V11C19.6 15.8 16.4 19.4 12 21.2C7.6 19.4 4.4 15.8 4.4 11V5.4Z ; T M15.4 10.6A3.6 3.6 0 0 0 8.8 9.8 M8.6 13.4A3.6 3.6 0 0 0 15.2 14.2 ; F M8 7.6L8.8 10.6L11.4 9.2Z M16 16.4L15.2 13.4L12.6 14.8Z"),
+            // Hivemind
+            Map.entry("trait.hivemind", "F M7 3.4L10.6 5.5V9.7L7 11.8L3.4 9.7V5.5Z M17 3.4L20.6 5.5V9.7L17 11.8L13.4 9.7V5.5Z M12 12.2L15.6 14.3V18.5L12 20.6L8.4 18.5V14.3Z"),
             // Jam
             Map.entry("trait.jam", "F O12 12 2.4 ; S M7.6 8A5.8 5.8 0 0 0 7.6 16 M16.4 8A5.8 5.8 0 0 1 16.4 16 ; T M4 4.8A10 10 0 0 0 4 19.2 M20 4.8A10 10 0 0 1 20 19.2"),
             // Brace
@@ -72,6 +74,8 @@ final class EnemyTermPictograms {
             // Lay Egg
             Map.entry("ability.lay_egg", "F M12 2.8C8 2.8 5.2 9.2 5.2 14C5.2 18.2 8.2 21.2 12 21.2C15.8 21.2 18.8 18.2 18.8 14C18.8 9.2 16 2.8 12 2.8Z ; K O9.6 11.6 1.2 O14.4 15.2 1.5 O10.6 17.6 0.9"),
             // Hatch
+            // Pupate
+            Map.entry("ability.pupate", "F M12 2.6C16 2.6 17.8 7.4 17.8 12C17.8 16.6 16 21.4 12 21.4C8 21.4 6.2 16.6 6.2 12C6.2 7.4 8 2.6 12 2.6Z ; X M6.8 9.4L17.2 6.8 M6.4 13.6L17.6 11 M7.2 17.8L16.8 15.4"),
             // Last Ward
             Map.entry("ability.last_ward", "F M5.8 20.6V10C5.8 6.4 8.6 3.4 12 3.4C15.4 3.4 18.2 6.4 18.2 10V20.6Z ; K M12 6.4L16 8V11.4C16 14 14.4 15.8 12 16.8C9.6 15.8 8 14 8 11.4V8Z ; T M2.6 21.4H21.4"),
             // Healing Pool

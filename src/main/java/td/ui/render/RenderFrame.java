@@ -1,5 +1,7 @@
 package td.ui.render;
 
+import td.board.BoardGround;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -22,5 +24,6 @@ public record RenderFrame(int scale, int maxX, int maxY,
                           List<EnemyOverlayDraw> enemyOverlays,
                           Optional<InfoSheet> enemyInspection,
                           Optional<TowerSheet> towerSheet,
-                          Optional<CellGridDraw> cellGrid) {
+                          Optional<CellGridDraw> cellGrid,
+                          BoardGround ground) {
 }

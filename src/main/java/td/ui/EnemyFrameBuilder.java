@@ -175,6 +175,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case BURN_IMMUNE -> Palette.TRAIT_MARKER_BURN_IMMUNE;
             case FREEZE_IMMUNE -> Palette.TRAIT_MARKER_FREEZE_IMMUNE;
             case EFFECT_RESIST -> Palette.TRAIT_MARKER_EFFECT_RESIST;
+            case HIVEMIND -> Palette.TRAIT_MARKER_HIVEMIND;
         };
     }
 
@@ -198,7 +199,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case GOLEM -> Palette.ENEMY_GOLEM;
             case JAMMER -> Palette.ENEMY_JAMMER;
             case REAVER -> Palette.ENEMY_REAVER;
-            case BULKY -> Palette.ENEMY_BULKY;
             case COLOSSUS -> Palette.ENEMY_COLOSSUS;
             case MOLTEN_CORE -> Palette.ENEMY_MOLTEN_CORE;
             case EMBER -> Palette.ENEMY_EMBER;
@@ -210,6 +210,12 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case TALOS -> Palette.ENEMY_TALOS;
             case MINOTAUR -> Palette.ENEMY_MINOTAUR;
             case BRONZE_BULL -> Palette.ENEMY_BRONZE_BULL;
+            case HORNET -> Palette.ENEMY_HORNET;
+            case COCOON -> Palette.ENEMY_COCOON;
+            case LARVA -> Palette.ENEMY_LARVA;
+            case NURSE -> Palette.ENEMY_NURSE;
+            case HIVE_GUARD -> Palette.ENEMY_HIVE_GUARD;
+            case DRONE -> Palette.ENEMY_DRONE;
         };
     }
 

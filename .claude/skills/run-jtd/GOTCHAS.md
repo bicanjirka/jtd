@@ -13,7 +13,7 @@ Read when a Driver or preview step misbehaves. Each item cost a past session a r
   `CardLayout`; the hidden card's components still report `visible=true`.
 - **`list` indices shift.** Selecting a tower makes its upgrade buttons visible and a second
   wave-preview row appears once a wave has started. Filter (`list panelenemy`) right before use.
-- **Leaks end the game.** Starting lives are small (Curly Path: 5). A script that starts real
+- **Leaks end the game.** Starting lives are small (The Amber Hive: 5). A script that starts real
   waves without towers, or lets spawned mobs walk, hits game over and then sits there. Run
   `setlives 1000` first, and reach late content with `spawn <id>` or the dev panel's skip wave (`key alt+n`).
 - **`spawn` places a mob at the raw path start**, which some levels put one cell off the board so

@@ -27,6 +27,11 @@ public interface Trait extends TraitTemplate {
         return StatModifiers.none();
     }
 
+    /** Whether it reads {@link TraitContext#alliesNearby()}, which the mob counts only when a trait asks. */
+    default boolean readsAllies() {
+        return false;
+    }
+
     /** The glyph shown for this trait in the marker row below the mob. */
     TraitMarker marker();
 }

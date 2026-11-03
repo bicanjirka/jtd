@@ -51,6 +51,8 @@
   input arrives as `TraitContext`. `Trait.marker()` has no default, on purpose.
 - A trait changes a mob only through `modifiers(context)` (a `td.stat` bundle), never through a
   new hook on the hit or speed path. Event-shaped behaviour is an ability.
+- A trait that reads `TraitContext.alliesNearby` says so with `readsAllies()`; the mob counts its neighbours each
+  tick only then, and re-derives its stats when the count changes.
 - A trait slot holds a `TraitTemplate`: a plain `Trait` resolves to itself, an adaptive one
   (`AdaptiveResist`) reads `GameWorld.damageTally()`. The mob resolves every slot once, in its
   constructor (`EnemyDefinition.traitsFor`), and keeps that list. Spawn-time variation is a new

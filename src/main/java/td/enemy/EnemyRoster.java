@@ -33,6 +33,23 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         this.enemies = new CopyOnWriteArrayList<>(List.of(enemies));
     }
 
+    /** How many targetable mobs other than {@code around} stand within {@code radius} pixels of it; copies nothing. */
+    public int liveNear(EnemyMob around, double radius) {
+        double radius2 = radius * radius;
+        int near = 0;
+        for (EnemyMob other : this.enemies) {
+            if (other == around || !other.validTarget()) {
+                continue;
+            }
+            double dx = other.getX() - around.getX();
+            double dy = other.getY() - around.getY();
+            if (dx * dx + dy * dy <= radius2) {
+                near++;
+            }
+        }
+        return near;
+    }
+
     public void setCount(int count) {
         this.count.set(count);
     }

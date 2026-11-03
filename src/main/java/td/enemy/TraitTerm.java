@@ -11,7 +11,8 @@ public enum TraitTerm implements Term {
     ADRENALINE("Adrenaline", "moves faster the more it is hurt"),
     ELUSIVE("Elusive", "dodges more the more it is hurt"),
     ADAPTATION("Adaptation", "resists whichever damage type has hit its kind most this level"),
-    JAM("Jam", "weakens the towers near it");
+    JAM("Jam", "weakens the towers near it"),
+    HIVEMIND("Hivemind", "grows tougher for every ally near it");
 
     private final String title;
     private final String sentence;

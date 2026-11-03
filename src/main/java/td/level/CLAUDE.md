@@ -1,7 +1,8 @@
 # `td.level`
 
 - `LevelDefinition.of(name, width, height, paths)` plus `withDescription`/`withStartingCredits`/
-  `withStartingLives`/`withCustomEnemies`/`withCustomRankedEnemies`. `unsmoothed(...)` and
+  `withStartingLives`/`withCustomEnemies`/`withCustomRankedEnemies`/`withGround` (the floor colour and motif the
+  board is painted on; plain black by default). `unsmoothed(...)` and
   `singlePath(...)` are the one-path shortcuts. Defaults are `LevelDefinition`'s constants. Even a
   single-lane level is a one-entry `paths` list.
 - The compact constructor requires at least one path and an equal wave count on every path. It

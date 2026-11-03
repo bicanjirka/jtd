@@ -81,7 +81,6 @@ public final class Java2DFrameRenderer {
     /** A free cell the credits can't build the tower on yet: amber, apart from the red of a cell nothing builds on. */
     private static final Color CELL_SHORT = new Color(255, 170, 60);
     private static final Color CELL_RANGE = new Color(250, 250, 210, 150);
-    private static final Color BOARD_BACKGROUND = Color.BLACK;
     /** The HUD's dark grey-green, so the dev grid reads as part of the panel chrome. */
     private static final Color CELL_GRID_LINE = new Color(48, 60, 48);
     /** A Ley Line's width, and the dash it is drawn with once the player has pinned it. */
@@ -202,7 +201,7 @@ public final class Java2DFrameRenderer {
 
     private static Shape enemyShape(Palette palette, float scale) {
         return switch (palette) {
-            case ENEMY_CIRCLE, ENEMY_MITE, ENEMY_BULKY -> circleShape(scale);
+            case ENEMY_CIRCLE, ENEMY_MITE -> circleShape(scale);
             case ENEMY_GHOST -> ghostShape(scale);
             case ENEMY_SALAMANDER -> lizardShape(scale);
             case ENEMY_YETI -> starShape(16, scale, scale * 0.84f);
@@ -226,6 +225,12 @@ public final class Java2DFrameRenderer {
             case ENEMY_WARDEN -> starShape(8, scale, scale * 0.55f);
             case ENEMY_WARDEN_EGG -> wardenEggShape(scale);
             case ENEMY_MENDER, ENEMY_SHIELDBEARER -> crossShape(scale);
+            case ENEMY_HORNET -> hornetShape(scale);
+            case ENEMY_COCOON -> new Ellipse2D.Float(-scale * 0.7f, -scale * 1.15f, scale * 1.4f, scale * 2.3f);
+            case ENEMY_LARVA -> grubShape(scale);
+            case ENEMY_NURSE -> starShape(6, scale, scale * 0.87f);
+            case ENEMY_HIVE_GUARD -> beetleShape(scale);
+            case ENEMY_DRONE -> beeShape(scale);
             default -> throw new IllegalStateException("Not an enemy palette: " + palette);
         };
     }
@@ -240,7 +245,6 @@ public final class Java2DFrameRenderer {
             case ENEMY_YETI -> Optional.of(eyesShape(scale, -scale * 0.15f, scale * 0.13f));
             case ENEMY_SALAMANDER -> Optional.of(new Ellipse2D.Float(-scale * 0.6f, -scale * 0.1f, scale * 1.2f, scale * 0.2f));
             case ENEMY_JAMMER -> Optional.of(circleShape(scale * 0.3f));
-            case ENEMY_BULKY -> Optional.of(circleShape(scale * 0.55f));
             case ENEMY_WARDEN -> Optional.of(circleShape(scale * 0.28f));
             case ENEMY_MAGMA, ENEMY_MOLTEN_CORE -> Optional.of(circleShape(scale * 0.4f));
             case ENEMY_JUGGERNAUT -> Optional.of(new Rectangle2D.Float(-scale * 0.55f, -scale * 0.55f, scale * 1.1f, scale * 1.1f));
@@ -249,6 +253,12 @@ public final class Java2DFrameRenderer {
             case ENEMY_MONOLITH -> Optional.of(runeShape(scale));
             case ENEMY_TALOS -> Optional.of(new Rectangle2D.Float(-scale * 0.07f, -scale * 0.35f, scale * 0.14f, scale * 1.2f));
             case ENEMY_MINOTAUR, ENEMY_BRONZE_BULL -> Optional.of(hornsShape(scale));
+            case ENEMY_HORNET -> Optional.of(hornetStripesShape(scale));
+            case ENEMY_COCOON -> Optional.of(cocoonBandsShape(scale));
+            case ENEMY_LARVA -> Optional.of(new Ellipse2D.Float(scale * 0.62f, -scale * 0.18f, scale * 0.36f, scale * 0.36f));
+            case ENEMY_NURSE -> Optional.of(crossShape(scale * 0.45f));
+            case ENEMY_HIVE_GUARD -> Optional.of(new Rectangle2D.Float(-scale * 0.85f, -scale * 0.05f, scale * 1.4f, scale * 0.1f));
+            case ENEMY_DRONE -> Optional.of(beeStripesShape(scale));
             default -> Optional.empty();
         };
     }
@@ -260,7 +270,6 @@ public final class Java2DFrameRenderer {
             case ENEMY_YETI -> new Color(50, 80, 120);
             case ENEMY_SALAMANDER -> new Color(255, 215, 60);
             case ENEMY_JAMMER -> new Color(255, 225, 250);
-            case ENEMY_BULKY -> new Color(20, 105, 125);
             case ENEMY_WARDEN -> new Color(240, 190, 60);
             case ENEMY_MAGMA -> new Color(255, 170, 60);
             case ENEMY_MOLTEN_CORE -> new Color(255, 235, 120);
@@ -270,6 +279,12 @@ public final class Java2DFrameRenderer {
             case ENEMY_TALOS -> new Color(200, 25, 30);
             case ENEMY_MINOTAUR -> new Color(235, 225, 200);
             case ENEMY_BRONZE_BULL -> new Color(110, 65, 25);
+            case ENEMY_HORNET -> new Color(35, 22, 10);
+            case ENEMY_COCOON -> new Color(150, 130, 95);
+            case ENEMY_LARVA -> new Color(130, 85, 40);
+            case ENEMY_NURSE -> new Color(205, 120, 30);
+            case ENEMY_HIVE_GUARD -> new Color(70, 40, 12);
+            case ENEMY_DRONE -> new Color(70, 40, 10);
             default -> Color.WHITE;
         };
     }
@@ -444,6 +459,88 @@ public final class Java2DFrameRenderer {
     /** A blunt many-pointed star, so it reads as a boulder rather than as spikes. */
     private static Shape magmaShape(float scale) {
         return starShape(12, scale, scale * 0.78f);
+    }
+
+    /** A bee from above, head forward: a round body, a head and two wings. */
+    private static Shape beeShape(float scale) {
+        Area bee = new Area(new Ellipse2D.Float(-scale * 0.8f, -scale * 0.5f, scale * 1.5f, scale * 1.0f));
+        bee.add(new Area(circleShape(scale * 0.3f)).createTransformedArea(AffineTransform.getTranslateInstance(scale * 0.75f, 0)));
+        bee.add(new Area(new Ellipse2D.Float(-scale * 0.45f, -scale * 1.05f, scale * 0.7f, scale * 0.6f)));
+        bee.add(new Area(new Ellipse2D.Float(-scale * 0.45f, scale * 0.45f, scale * 0.7f, scale * 0.6f)));
+        return bee;
+    }
+
+    /** Dark bands across a bee's body. */
+    private static Shape beeStripesShape(float scale) {
+        Area stripes = new Area(new Rectangle2D.Float(-scale * 0.45f, -scale * 0.45f, scale * 0.2f, scale * 0.9f));
+        stripes.add(new Area(new Rectangle2D.Float(-scale * 0.05f, -scale * 0.48f, scale * 0.2f, scale * 0.96f)));
+        stripes.intersect(new Area(new Ellipse2D.Float(-scale * 0.8f, -scale * 0.5f, scale * 1.5f, scale * 1.0f)));
+        return stripes;
+    }
+
+    /** A beetle from above, head forward: a domed shell, a head and two mandibles. */
+    private static Shape beetleShape(float scale) {
+        Area beetle = new Area(new Ellipse2D.Float(-scale * 0.95f, -scale * 0.75f, scale * 1.65f, scale * 1.5f));
+        beetle.add(new Area(new Ellipse2D.Float(scale * 0.5f, -scale * 0.42f, scale * 0.55f, scale * 0.84f)));
+        GeneralPath mandible = new GeneralPath();
+        mandible.moveTo(scale * 0.9f, -scale * 0.3f);
+        mandible.quadTo(scale * 1.35f, -scale * 0.3f, scale * 1.3f, -scale * 0.02f);
+        mandible.lineTo(scale * 0.95f, -scale * 0.1f);
+        mandible.closePath();
+        beetle.add(new Area(mandible));
+        beetle.add(new Area(AffineTransform.getScaleInstance(1, -1).createTransformedShape(mandible)));
+        return beetle;
+    }
+
+    /** A grub, head forward: three swollen segments in a row. */
+    private static Shape grubShape(float scale) {
+        Area grub = new Area(new Ellipse2D.Float(-scale * 1.05f, -scale * 0.42f, scale * 0.84f, scale * 0.84f));
+        grub.add(new Area(new Ellipse2D.Float(-scale * 0.52f, -scale * 0.55f, scale * 1.1f, scale * 1.1f)));
+        grub.add(new Area(new Ellipse2D.Float(scale * 0.2f, -scale * 0.48f, scale * 0.95f, scale * 0.96f)));
+        return grub;
+    }
+
+    /** Slanting bands of silk wound round a cocoon. */
+    private static Shape cocoonBandsShape(float scale) {
+        Area bands = new Area();
+        for (float y : new float[] {-scale * 0.6f, 0f, scale * 0.6f}) {
+            Shape band = new Rectangle2D.Float(-scale, y - scale * 0.07f, scale * 2f, scale * 0.14f);
+            bands.add(new Area(AffineTransform.getRotateInstance(-0.35, 0, y).createTransformedShape(band)));
+        }
+        bands.intersect(new Area(new Ellipse2D.Float(-scale * 0.7f, -scale * 1.15f, scale * 1.4f, scale * 2.3f)));
+        return bands;
+    }
+
+    /** A hornet from above, head forward: a head, a thorax, a pointed abdomen and swept-back wings. */
+    private static Shape hornetShape(float scale) {
+        Area hornet = new Area(hornetAbdomen(scale));
+        hornet.add(new Area(new Ellipse2D.Float(scale * 0.05f, -scale * 0.32f, scale * 0.6f, scale * 0.64f)));
+        hornet.add(new Area(new Ellipse2D.Float(scale * 0.6f, -scale * 0.22f, scale * 0.44f, scale * 0.44f)));
+        GeneralPath wing = new GeneralPath();
+        wing.moveTo(scale * 0.4f, -scale * 0.2f);
+        wing.quadTo(scale * 0.1f, -scale * 1.1f, -scale * 0.7f, -scale * 0.75f);
+        wing.quadTo(-scale * 0.2f, -scale * 0.45f, scale * 0.2f, -scale * 0.1f);
+        wing.closePath();
+        hornet.add(new Area(wing));
+        hornet.add(new Area(AffineTransform.getScaleInstance(1, -1).createTransformedShape(wing)));
+        return hornet;
+    }
+
+    private static Shape hornetAbdomen(float scale) {
+        GeneralPath abdomen = new GeneralPath();
+        abdomen.moveTo(scale * 0.15f, -scale * 0.3f);
+        abdomen.curveTo(-scale * 0.5f, -scale * 0.42f, -scale * 0.9f, -scale * 0.15f, -scale * 1.15f, 0);
+        abdomen.curveTo(-scale * 0.9f, scale * 0.15f, -scale * 0.5f, scale * 0.42f, scale * 0.15f, scale * 0.3f);
+        abdomen.closePath();
+        return abdomen;
+    }
+
+    /** Black bands across a hornet's abdomen. */
+    private static Shape hornetStripesShape(float scale) {
+        Area stripes = new Area(new Rectangle2D.Float(-scale * 0.75f, -scale * 0.5f, scale * 0.14f, scale));
+        stripes.add(new Area(new Rectangle2D.Float(-scale * 0.4f, -scale * 0.5f, scale * 0.14f, scale)));
+        stripes.intersect(new Area(hornetAbdomen(scale)));
+        return stripes;
     }
 
     private static Shape circleShape(float scale) {
@@ -654,7 +751,6 @@ public final class Java2DFrameRenderer {
             case ENEMY_GOLEM -> new Color(150, 140, 125);
             case ENEMY_JAMMER -> new Color(230, 70, 190);
             case ENEMY_REAVER -> new Color(210, 30, 60);
-            case ENEMY_BULKY -> new Color(40, 170, 190);
             case ENEMY_COLOSSUS -> new Color(95, 105, 128);
             case ENEMY_MOLTEN_CORE -> new Color(255, 110, 20);
             case ENEMY_EMBER -> new Color(255, 175, 40);
@@ -666,6 +762,12 @@ public final class Java2DFrameRenderer {
             case ENEMY_TALOS -> new Color(205, 135, 60);
             case ENEMY_MINOTAUR -> new Color(115, 60, 35);
             case ENEMY_BRONZE_BULL -> new Color(190, 120, 50);
+            case ENEMY_HORNET -> new Color(235, 115, 30);
+            case ENEMY_COCOON -> new Color(220, 210, 185);
+            case ENEMY_LARVA -> new Color(240, 232, 205);
+            case ENEMY_NURSE -> new Color(240, 220, 150);
+            case ENEMY_HIVE_GUARD -> new Color(170, 105, 35);
+            case ENEMY_DRONE -> new Color(245, 190, 45);
             case TOWER_SNIPER_BODY -> Color.GREEN;
             case TOWER_SPLASH_BODY -> Color.RED;
             case TOWER_STORMCALLER_BODY -> new Color(80, 150, 255);
@@ -812,6 +914,7 @@ public final class Java2DFrameRenderer {
             case TRAIT_MARKER_BURN_IMMUNE -> new Color(255, 150, 90);
             case TRAIT_MARKER_FREEZE_IMMUNE -> new Color(170, 225, 255);
             case TRAIT_MARKER_EFFECT_RESIST -> new Color(200, 200, 160);
+            case TRAIT_MARKER_HIVEMIND -> new Color(255, 190, 50);
             case TRAIT_MARKER_OVERFLOW -> Color.LIGHT_GRAY;
             case DISRUPTION -> new Color(235, 90, 200);
             case TERM_FRAME_CONTROL -> new Color(90, 170, 255);
@@ -878,9 +981,8 @@ public final class Java2DFrameRenderer {
         // under HiDPI scaling.
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
-        // paint() skips super.paint(), so this fill is what clears the previous frame.
-        g2.setColor(BOARD_BACKGROUND);
-        g2.fillRect(0, 0, frame.maxX(), frame.maxY());
+        // paint() skips super.paint(), so the ground's fill is what clears the previous frame.
+        GroundPainter.paint(g2, frame.ground(), frame.scale(), frame.maxX(), frame.maxY());
 
         frame.cellGrid().ifPresent(grid -> this.paintCellGrid(g2, grid, frame));
         for (PathMarkerDraw marker : frame.pathMarkers()) {

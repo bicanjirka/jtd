@@ -1,5 +1,6 @@
 package td.level;
 
+import td.board.BoardGround;
 import td.enemy.EnemyDefinition;
 import td.enemy.RankedEnemy;
 import td.wave.PathDefinition;
@@ -27,7 +28,8 @@ public record LevelDefinition(
         List<EnemyDefinition> customEnemies,
         List<RankedEnemy> customRankedEnemies,
         int startingCredits,
-        int startingLives) {
+        int startingLives,
+        BoardGround ground) {
 
     public LevelDefinition {
         paths = List.copyOf(paths);
@@ -48,37 +50,43 @@ public record LevelDefinition(
 
     /**
      * The required shape: name, board size and paths, with the default economy ($100, 5 lives), no
-     * description and no custom enemies. Add the rest with the {@code withX} copies.
+     * description, no custom enemies and a plain ground. Add the rest with the {@code withX} copies.
      */
     public static LevelDefinition of(String name, int width, int height, List<PathDefinition> paths) {
-        return new LevelDefinition(name, "", width, height, paths, List.of(), List.of(), 100, 5);
+        return new LevelDefinition(name, "", width, height, paths, List.of(), List.of(), 100, 5, BoardGround.plain());
     }
 
     public LevelDefinition withDescription(String description) {
         return new LevelDefinition(this.name, description, this.width, this.height, this.paths,
-                this.customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives);
+                this.customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, this.ground);
     }
 
     public LevelDefinition withStartingCredits(int startingCredits) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                this.customEnemies, this.customRankedEnemies, startingCredits, this.startingLives);
+                this.customEnemies, this.customRankedEnemies, startingCredits, this.startingLives, this.ground);
     }
 
     public LevelDefinition withStartingLives(int startingLives) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                this.customEnemies, this.customRankedEnemies, this.startingCredits, startingLives);
+                this.customEnemies, this.customRankedEnemies, this.startingCredits, startingLives, this.ground);
     }
 
     /** Single-rank enemies this level adds to its catalog. */
     public LevelDefinition withCustomEnemies(List<EnemyDefinition> customEnemies) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives);
+                customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, this.ground);
     }
 
     /** Ranked enemies this level adds to its catalog. */
     public LevelDefinition withCustomRankedEnemies(List<RankedEnemy> customRankedEnemies) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                this.customEnemies, customRankedEnemies, this.startingCredits, this.startingLives);
+                this.customEnemies, customRankedEnemies, this.startingCredits, this.startingLives, this.ground);
+    }
+
+    /** What the board is painted on. */
+    public LevelDefinition withGround(BoardGround ground) {
+        return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
+                this.customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, ground);
     }
 
     /** A level with one unsmoothed path. */
