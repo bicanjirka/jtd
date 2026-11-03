@@ -36,13 +36,35 @@ final class SourceShares {
      * the shares that are then gone.
      */
     static <S extends SourceShare<S>> List<S> retimed(List<S> shares, IntUnaryOperator time) {
-        return standing(shares.stream().map(share -> share.remainingTicks() == Effect.LASTING_TICKS ? share
-                : share.withRemainingTicks(time.applyAsInt(share.remainingTicks()))).toList());
+        List<S> retimed = new ArrayList<>(shares.size());
+        for (S share : shares) {
+            S next = share.remainingTicks() == Effect.LASTING_TICKS ? share
+                    : share.withRemainingTicks(time.applyAsInt(share.remainingTicks()));
+            if (!next.isGone()) {
+                retimed.add(next);
+            }
+        }
+        return retimed;
     }
 
-    /** The shares that are not gone. */
+    /** The shares that are not gone: {@code shares} itself while none is. */
     static <S extends SourceShare<S>> List<S> standing(List<S> shares) {
-        return shares.stream().filter(share -> !share.isGone()).toList();
+        int gone = 0;
+        for (S share : shares) {
+            if (share.isGone()) {
+                gone++;
+            }
+        }
+        if (gone == 0) {
+            return shares;
+        }
+        List<S> standing = new ArrayList<>(shares.size() - gone);
+        for (S share : shares) {
+            if (!share.isGone()) {
+                standing.add(share);
+            }
+        }
+        return standing;
     }
 
     /** The ticks until the last share runs out; {@link Effect#LASTING_TICKS} while one lasts until ended. */
