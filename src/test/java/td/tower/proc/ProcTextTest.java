@@ -6,6 +6,7 @@ import td.enemy.Rank;
 import td.term.TermText;
 import td.tower.TowerCapability;
 import td.tower.TowerModifiers;
+import td.tower.TowerStat;
 import td.tower.TowerStatus;
 import td.tower.TowerTerm;
 
@@ -19,15 +20,15 @@ class ProcTextTest {
     void aConditionNamesTheRanksItCovers() {
         HitBonus headhunter = HitBonus.when(new HitCondition.TargetRankAtLeast(Rank.ELITE), HitAdjustment.damage(0.4f));
 
-        assertThat(headhunter.describe().plain()).isEqualTo("+40% damage against Elite and Boss enemies");
+        assertThat(headhunter.describe().plain()).isEqualTo("Damage +40% against Elite and Boss enemies");
     }
 
     @Test
     void aScalingSaysWhatItCountsPer() {
         HitBonus toll = HitBonus.per(new HitScaling.PerStackOf(EffectKind.TOLL), HitAdjustment.damage(0.1f));
 
-        assertThat(toll.describe().plain()).isEqualTo("+10% damage per stack of Toll");
-        assertThat(toll.describe().mentions()).containsExactly(EffectKind.TOLL);
+        assertThat(toll.describe().plain()).isEqualTo("Damage +10% per stack of Toll");
+        assertThat(toll.describe().mentions()).containsExactly(TowerStat.DAMAGE, EffectKind.TOLL);
     }
 
     @Test

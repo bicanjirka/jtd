@@ -1,7 +1,10 @@
 package td.tower.proc;
 
 import td.damage.AttackProfile;
+import td.stat.StatModifier;
 import td.term.TermNumbers;
+import td.term.TermText;
+import td.tower.TowerStat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,22 +81,22 @@ public record HitAdjustment(float damage, float critChance, float critMultiplier
         return adjusted;
     }
 
-    /** "+40% damage", "+50% crit chance": the non-zero parts joined with ", ". */
-    public String describe() {
-        List<String> parts = new ArrayList<>();
-        part(parts, "damage", this.damage);
-        part(parts, "crit chance", this.critChance);
-        part(parts, "crit damage", this.critMultiplier);
-        part(parts, "attack speed", this.attackSpeed);
+    /** "Damage +40%", "Critical chance +50%": each non-zero part, its stat named, joined with ", ". */
+    public TermText describe() {
+        List<TermText> parts = new ArrayList<>();
+        part(parts, TowerStat.DAMAGE, this.damage);
+        part(parts, TowerStat.CRIT_CHANCE, this.critChance);
+        part(parts, TowerStat.CRIT_MULTIPLIER, this.critMultiplier);
+        part(parts, TowerStat.ATTACK_SPEED, this.attackSpeed);
         if (this.accuracy != 0f) {
-            parts.add(TermNumbers.signed(Math.round(this.accuracy)) + " accuracy");
+            parts.add(TowerStat.ACCURACY.changeText(StatModifier.flat(this.accuracy)));
         }
-        return String.join(", ", parts);
+        return TermText.join(", ", parts);
     }
 
-    private static void part(List<String> parts, String name, float fraction) {
+    private static void part(List<TermText> parts, TowerStat stat, float fraction) {
         if (fraction != 0f) {
-            parts.add(TermNumbers.signedPercent(fraction) + " " + name);
+            parts.add(TermText.of(stat).plus(" " + TermNumbers.signedPercent(fraction)));
         }
     }
 }

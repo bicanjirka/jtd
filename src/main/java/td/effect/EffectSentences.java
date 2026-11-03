@@ -35,33 +35,40 @@ final class EffectSentences {
             case SHIELD -> TermText.of("absorbs damage until its amount is spent or it runs out");
             case INVISIBLE -> TermText.of("towers can't aim at it, though damage on an area still reaches it");
             case HEAL -> TermText.of("restores health over time");
-            case VULNERABLE -> TermText.of("each stack: "
-                    + TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN))
-                    + " physical and magic damage taken, up to " + kind.maxStacks() + " stacks");
+            case VULNERABLE -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
+                            EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
+                    .plus(", up to " + kind.maxStacks() + " stacks");
             case REVEALED -> TermText.of("every tower can see and aim at it, and it counts as having ")
                     .plus(EffectKind.EXPOSED);
             case POISON -> TermText.of("damage over time that fades, and a slow of up to "
                     + TermNumbers.percent(ActiveEffects.POISON_MAX_SLOW) + " while it is full; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS) + " while it lasts");
-            case SCORCHED -> TermText.of("each stack: " + TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE))
-                    + " resilience, up to " + kind.maxStacks() + "; once nothing adds more, it loses a stack every "
-                    + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS) + ", sooner with more spirit");
-            case SICKENED -> TermText.of("each stack: " + TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT))
-                    + " spirit, up to " + kind.maxStacks() + "; once nothing adds more, it loses a stack every "
-                    + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS) + ", sooner with more spirit");
-            case SUNDERED -> TermText.of("each stack: " + TermNumbers.signed(perStack(kind, EnemyStat.ARMOR))
-                    + " armor, up to " + kind.maxStacks() + " stacks");
-            case EXPOSED -> TermText.of(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE))
-                    + " resilience: crits find it more often and hit it harder");
+            case SCORCHED -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE))
+                    .plus(", up to " + kind.maxStacks() + "; once nothing adds more, it loses a stack every "
+                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS) + ", sooner with more ")
+                    .plus(EnemyStat.SPIRIT);
+            case SICKENED -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)), EnemyStat.SPIRIT))
+                    .plus(", up to " + kind.maxStacks() + "; once nothing adds more, it loses a stack every "
+                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS) + ", sooner with more ")
+                    .plus(EnemyStat.SPIRIT);
+            case SUNDERED -> stacked(kind, EnemyStat.ARMOR);
+            case EXPOSED -> changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE)
+                    .plus(": crits find it more often and hit it harder");
             case MARKED -> TermText.of("the next hit on it is a crit, which spends this");
-            case PRIORITY -> TermText.of(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN))
-                    + " physical and magic damage taken, and a tower that picks one target picks it");
-            case RESONATING -> TermText.of("each stack: "
-                    + TermNumbers.signedPercent(perStack(kind, EnemyStat.MAGIC_DAMAGE_TAKEN))
-                    + " magic damage taken, up to " + kind.maxStacks() + " stacks");
-            case FRACTURED -> TermText.of("each stack: " + TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE))
-                    + " resilience, up to " + kind.maxStacks() + "; it loses a stack every "
-                    + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
+            case PRIORITY -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
+                    EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN)
+                    .plus(", and a tower that picks one target picks it");
+            case RESONATING -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.MAGIC_DAMAGE_TAKEN)),
+                            EnemyStat.MAGIC_DAMAGE_TAKEN))
+                    .plus(", up to " + kind.maxStacks() + " stacks");
+            case FRACTURED -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE))
+                    .plus(", up to " + kind.maxStacks() + "; it loses a stack every "
+                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
             case DAZED -> TermText.of("stops it and keeps its abilities from firing, like ").plus(EffectKind.FREEZE)
                     .plus(", but leaves its ").plus(EffectKind.BURN).plus(" and ").plus(EffectKind.CHILL)
                     .plus("; within " + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts "
@@ -95,28 +102,32 @@ final class EffectSentences {
             case RECKONING -> TermText.of("when it dies, each ").plus(EffectKind.DOOM)
                     .plus(" from the same tower near it releases at once and starts again");
             case SILENCED -> TermText.of("its abilities don't fire; abilities on death and auras still do");
-            case ANCHORED -> TermText.of("it can't be sped up, and its speed is held to "
-                    + TermNumbers.percent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).capShareOfBase())
-                    + " of its base");
-            case UNRAVELED -> TermText.of("each stack: " + TermNumbers.signed(perStack(kind, EnemyStat.MAGIC_RESIST))
-                    + " magic resist, up to " + kind.maxStacks() + " stacks");
-            case BRITTLE -> TermText.of("while it has ").plus(EffectKind.FREEZE).plus(": "
-                    + TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN))
-                    + " physical damage taken");
+            case ANCHORED -> TermText.of("it can't be sped up, and its ").plus(EnemyStat.MOVE_SPEED)
+                    .plus(" is held to at most "
+                            + TermNumbers.percent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).capShareOfBase())
+                            + " of its base");
+            case UNRAVELED -> stacked(kind, EnemyStat.MAGIC_RESIST);
+            case BRITTLE -> TermText.of("while it has ").plus(EffectKind.FREEZE).plus(": ")
+                    .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
+                            EnemyStat.PHYSICAL_DAMAGE_TAKEN));
             case TOLL -> TermText.of("time spent in an Obelisk's field, a stack a second; it sets how strongly the "
                     + "field holds it, and goes soon after it leaves");
-            case CORRODED -> TermText.of("each stack: " + TermNumbers.signed(perStack(kind, EnemyStat.ARMOR))
-                    + " armor and magic resist, up to " + kind.maxStacks() + " stacks");
-            case DRAGGED -> TermText.of("each stack takes "
-                    + TermNumbers.percent(-kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd())
-                    + " of its speed, up to " + kind.maxStacks() + " stacks; it is no ").plus(EffectKind.CHILL)
+            case CORRODED -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.ARMOR)), EnemyStat.ARMOR,
+                            EnemyStat.MAGIC_RESIST))
+                    .plus(", up to " + kind.maxStacks() + " stacks");
+            case DRAGGED -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED)
+                            .percentAdd()), EnemyStat.MOVE_SPEED))
+                    .plus(", up to " + kind.maxStacks() + " stacks; it is no ").plus(EffectKind.CHILL)
                     .plus(", and nothing resists it");
             case UNDERTOW -> TermText.of("a ").plus(EffectKind.FREEZE).plus(" counts it as "
                     + TermNumbers.percent(EffectInteractions.freezeLengthFactor(EnumSet.of(EffectKind.UNDERTOW), 0f) - 1f)
                     + " ").plus(EffectKind.CHILL);
-            case CONDEMNED -> TermText.of("each stack: "
-                    + TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN))
-                    + " physical and magic damage taken, up to " + kind.maxStacks() + " stacks");
+            case CONDEMNED -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
+                            EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
+                    .plus(", up to " + kind.maxStacks() + " stacks");
             case STILLED -> TermText.of("while it also has ").plus(EffectKind.DAZED)
                     .plus(", the field holding it takes its ").plus(EffectKind.TOLL).plus(" away");
             case UNVEILED -> TermText.of("it can't gain ").plus(EffectKind.INVISIBLE);
@@ -124,15 +135,16 @@ final class EffectSentences {
                     .plus(" can't take hold");
             case FALLOUT -> TermText.of(EffectKind.HEAL).plus(" can't take hold; ").plus(EffectKind.SHIELD)
                     .plus(" still can");
-            case FRAIL -> TermText.of("each stack: "
-                    + TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN))
-                    + " physical and magic damage taken, up to " + kind.maxStacks() + " stacks");
-            case CRACKED -> TermText.of(TermNumbers.signed(DamageUnits.inPoints(perStack(kind, EnemyStat.PLATING)))
-                    + " plating and " + TermNumbers.signed(DamageUnits.inPoints(perStack(kind, EnemyStat.INSULATION)))
-                    + " insulation");
-            case TARRED -> TermText.of(
-                    TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply() - 1f)
-                            + " speed; a ").plus(kinds(EffectKind::isBurning, " or ")).plus(" it catches starts at "
+            case FRAIL -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
+                            EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
+                    .plus(", up to " + kind.maxStacks() + " stacks");
+            case CRACKED -> changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind, EnemyStat.PLATING))),
+                    EnemyStat.PLATING)
+                    .plus(" and ").plus(changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind,
+                            EnemyStat.INSULATION))), EnemyStat.INSULATION));
+            case TARRED -> changes(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply()),
+                    EnemyStat.MOVE_SPEED).plus("; a ").plus(kinds(EffectKind::isBurning, " or ")).plus(" it catches starts at "
                     + TermNumbers.times(EffectInteractions.fireStartFactor(EnumSet.of(EffectKind.TARRED))) + ", and a ")
                     .plus(EffectKind.FREEZE).plus(" lasts "
                             + seconds(EffectInteractions.freezeExtraTicks(EnumSet.of(EffectKind.TARRED))) + " longer");
@@ -141,18 +153,33 @@ final class EffectSentences {
                     .plus(" and ").plus(EffectKind.POISON).plus("; nothing resists it, it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
                             + " while it lasts, and ").plus(EffectKind.FREEZE).plus(" puts it out");
-            case SPRINTING -> TermText.of(
-                    TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd())
-                            + " speed");
-            case SPELLPROOF -> TermText.of("each stack: " + TermNumbers.signed(perStack(kind, EnemyStat.MAGIC_RESIST))
-                    + " magic resist, up to " + kind.maxStacks() + " stacks");
-            case UNYIELDING -> TermText.of(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)) + " resilience, "
-                    + TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)) + " spirit and "
-                    + TermNumbers.signed(perStack(kind, EnemyStat.MAGIC_RESIST)) + " magic resist");
-            case HASTENED -> TermText.of(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply())
-                    + " speed, and no slow can take hold; ").plus(EffectKind.FREEZE).plus(" and ")
+            case SPRINTING -> changes(
+                    TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd()),
+                    EnemyStat.MOVE_SPEED);
+            case SPELLPROOF -> stacked(kind, EnemyStat.MAGIC_RESIST);
+            case UNYIELDING -> TermText.join(", ", List.of(
+                    changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE),
+                    changes(TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)), EnemyStat.SPIRIT),
+                    changes(TermNumbers.signed(perStack(kind, EnemyStat.MAGIC_RESIST)), EnemyStat.MAGIC_RESIST)));
+            case HASTENED -> changes(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply()),
+                    EnemyStat.MOVE_SPEED).plus(", and no slow can take hold; ").plus(EffectKind.FREEZE).plus(" and ")
                     .plus(EffectKind.DAZED).plus(" still stop it");
         };
+    }
+
+    /** "each stack: Armor -5, up to 3 stacks", the change read from {@code kind}'s rule. */
+    private static TermText stacked(EffectKind kind, EnemyStat stat) {
+        return TermText.of("each stack: ").plus(changes(TermNumbers.signed(perStack(kind, stat)), stat))
+                .plus(", up to " + kind.maxStacks() + " stacks");
+    }
+
+    /** Each of {@code stats} named, then {@code change}: "Armor and Magic resist -5". */
+    private static TermText changes(String change, EnemyStat... stats) {
+        TermText named = TermText.empty();
+        for (int i = 0; i < stats.length; i++) {
+            named = named.plus(i == 0 ? "" : " and ").plus(stats[i]);
+        }
+        return named.plus(" " + change);
     }
 
     /** The flat per-stack modifier {@code kind} puts on {@code stat}. */

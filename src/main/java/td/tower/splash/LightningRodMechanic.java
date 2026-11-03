@@ -3,6 +3,7 @@ package td.tower.splash;
 import td.effect.EffectKind;
 import td.term.TermNumbers;
 import td.term.TermText;
+import td.tower.TowerStat;
 import td.tower.TowerTerm;
 
 /**
@@ -24,6 +25,6 @@ public final class LightningRodMechanic implements SplashMechanic {
         return TermText.of("an ").plus(TowerTerm.ARC)
                 .plus(" with nowhere to go returns to the primary at full strength, up to " + RETURNS + " times; an ")
                 .plus(TowerTerm.ARC).plus(" on an enemy with ").plus(EffectKind.DAZED)
-                .plus(" deals " + TermNumbers.signedPercent(STOPPED_CRIT_DAMAGE) + " crit damage");
+                .plus(" gets ").plus(TowerStat.CRIT_MULTIPLIER).plus(" " + TermNumbers.signedPercent(STOPPED_CRIT_DAMAGE));
     }
 }

@@ -18,9 +18,8 @@ public final class FaultLineMechanic implements SonarMechanic {
     public TermText describe() {
         return TermText.of(EffectKind.FRACTURED)
                 .plus(" doesn't wear off while the enemy has ").plus(EffectKind.EXPOSED)
-                .plus(", and can reach "
-                        + TermNumbers.signed(EffectKind.FRACTURED.modifiersAt(1).flat(EnemyStat.RESILIENCE)
-                                * Effect.FAULT_LINE_STACK_CAP)
-                        + " resilience");
+                .plus(", and can reach ").plus(EnemyStat.RESILIENCE)
+                .plus(" " + TermNumbers.signed(EffectKind.FRACTURED.modifiersAt(1).flat(EnemyStat.RESILIENCE)
+                        * Effect.FAULT_LINE_STACK_CAP));
     }
 }

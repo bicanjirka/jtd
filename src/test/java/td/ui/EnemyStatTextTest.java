@@ -88,7 +88,7 @@ class EnemyStatTextTest {
     void aPlainEnemyShowsOnlyItsSpeed() {
         InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("plain"));
 
-        assertThat(labels(sheet)).containsExactly("Speed");
+        assertThat(labels(sheet)).containsExactly("Move speed");
     }
 
     @Test
@@ -124,7 +124,7 @@ class EnemyStatTextTest {
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
 
-        assertThat(row(sheet, "Speed").orElseThrow().trend()).isEqualTo(Trend.BETTER);
+        assertThat(row(sheet, "Move speed").orElseThrow().trend()).isEqualTo(Trend.BETTER);
     }
 
     @Test
@@ -315,7 +315,7 @@ class EnemyStatTextTest {
     void statRowsFollowTheirGroupsWithAGapBetweenTwo() {
         InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("mixed").withSpirit(20f).withArmor(ARMOR));
 
-        assertThat(labels(sheet)).containsSubsequence("Speed", "Armor", "Spirit");
+        assertThat(labels(sheet)).containsSubsequence("Move speed", "Armor", "Spirit");
         int armor = sheet.lines().indexOf(row(sheet, "Armor").orElseThrow());
         assertThat(sheet.lines().get(armor - 1)).isInstanceOf(SheetLine.Gap.class);
     }

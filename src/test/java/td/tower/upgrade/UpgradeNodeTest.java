@@ -38,7 +38,7 @@ class UpgradeNodeTest {
                 .withModifiers(TowerModifiers.damagePercent(0.3f).plus(TowerModifiers.rangePercent(0.1f)).plus(TowerModifiers.bounty(0.25f)).plus(TowerModifiers.critChance(0.15f)))
                 .withXp(150);
 
-        assertThat(words(node)).containsExactly("Range +10%", "Damage +30%", "Crit chance +15%", "Bounty +25%");
+        assertThat(words(node)).containsExactly("Range +10%", "Damage +30%", "Crit chance +15%", "Bounty bonus +25%");
     }
 
     @Test
@@ -104,7 +104,7 @@ class UpgradeNodeTest {
                 .withProc(Proc.onKill(new ProcPayload.GrantStatus(TowerStatus.timed(TowerTerm.HASTE,
                         TowerModifiers.attackSpeed(1f), 100))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))));
 
-        assertThat(sentences(node)).containsExactlyInAnyOrder("+75% damage against Elite and Boss enemies",
+        assertThat(sentences(node)).containsExactlyInAnyOrder("Damage +75% against Elite and Boss enemies",
                 "a shot that kills grants Haste");
     }
 }

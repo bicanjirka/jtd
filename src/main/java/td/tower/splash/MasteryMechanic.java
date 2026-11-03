@@ -3,6 +3,7 @@ package td.tower.splash;
 import td.effect.EffectKind;
 import td.term.TermNumbers;
 import td.term.TermText;
+import td.tower.TowerStat;
 import td.tower.TowerTerm;
 
 /**
@@ -28,7 +29,8 @@ public final class MasteryMechanic implements SplashMechanic {
     @Override
     public TermText describe() {
         return TermText.of("Stormcaller: each ").plus(TowerTerm.ARC)
-                .plus(" gets " + TermNumbers.signedPercent(ARC_CRIT_BONUS) + " crit chance, and Overload's ")
+                .plus(" gets ").plus(TowerStat.CRIT_CHANCE).plus(" " + TermNumbers.signedPercent(ARC_CRIT_BONUS)
+                        + ", and Overload's ")
                 .plus(EffectKind.DAZED).plus(" lasts " + TermNumbers.seconds(ArcSpec.LONG_DAZE_SECONDS) + "; Hexer: ")
                 .plus(EffectKind.BLIGHT)
                 .plus(" deals " + TermNumbers.percent(BLIGHT_SHARE / HexSpec.BLIGHT_SHARE - 1f)

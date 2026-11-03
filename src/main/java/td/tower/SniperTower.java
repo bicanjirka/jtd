@@ -428,7 +428,7 @@ public final class SniperTower extends AbstractTower {
         if (stacks > 0) {
             List<TermText> parts = new ArrayList<>(this.upgrades().hitBonuses().stream()
                     .filter(bonus -> bonus.scaling().focusCounter().filter(TowerTerm.STEADY_AIM::equals).isPresent())
-                    .map(bonus -> TermText.of(bonus.adjustment().describe())).toList());
+                    .map(bonus -> bonus.adjustment().describe()).toList());
             parts.add(TermText.of("up to " + cap + " stacks"));
             states.add(TowerBuffState.of(TowerTerm.STEADY_AIM, TermText.join("; ", parts)).withStacks(stacks)
                     .withClock(this.focus.ticksUntilFade(), AimFocus.STACK_TICKS));

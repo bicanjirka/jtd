@@ -67,18 +67,19 @@ public enum FieldMode {
             case SILENCE -> TermText.of("enemies inside gain ").plus(EffectKind.SILENCED);
             case DEAD_ZONE -> TermText.of("enemies inside gain ").plus(EffectKind.DEAD_ZONE);
             case CORROSION -> TermText.of("enemies inside gain ").plus(EffectKind.CORRODED)
-                    .plus(": " + TermNumbers.signed(resistAt(FieldStrength.ENTRY)) + " armor and magic resist on entry, "
+                    .plus(": ").plus(EnemyStat.ARMOR).plus(" and ").plus(EnemyStat.MAGIC_RESIST)
+                    .plus(" " + TermNumbers.signed(resistAt(FieldStrength.ENTRY)) + " on entry, "
                             + TermNumbers.signed(resistAt(FieldStrength.FULL)) + " at full ")
                     .plus(EffectKind.TOLL).plus(", stopping at 0");
             case UNDERTOW -> TermText.of("enemies inside gain ").plus(EffectKind.ANCHORED).plus(" and ")
                     .plus(EffectKind.UNDERTOW);
             case FRAIL -> TermText.of("enemies inside gain ").plus(EffectKind.FRAIL)
-                    .plus(": " + TermNumbers.signedPercent(damageTakenAt(FieldStrength.ENTRY))
-                            + " damage taken from every source on entry, "
+                    .plus(": ").plus(EnemyStat.PHYSICAL_DAMAGE_TAKEN).plus(" and ").plus(EnemyStat.MAGIC_DAMAGE_TAKEN)
+                    .plus(" " + TermNumbers.signedPercent(damageTakenAt(FieldStrength.ENTRY)) + " on entry, "
                             + TermNumbers.signedPercent(damageTakenAt(FieldStrength.FULL)) + " at full ")
                     .plus(EffectKind.TOLL);
-            case SOUL_DRAIN -> TermText.of("each second inside costs " + SOUL_DRAIN_SPIRIT_PER_SECOND
-                    + " spirit, so every debuff on the enemy, the field's own included, wears off slower and heals land weaker");
+            case SOUL_DRAIN -> TermText.of("each second inside: ").plus(EnemyStat.SPIRIT)
+                    .plus(" " + TermNumbers.signed(-SOUL_DRAIN_SPIRIT_PER_SECOND) + ", so every debuff on the enemy, the field's own included, wears off slower and heals land weaker");
             case PURGE -> TermText.of("an enemy loses every buff and ").plus(EffectKind.SHIELD)
                     .plus(" as it comes in");
         };

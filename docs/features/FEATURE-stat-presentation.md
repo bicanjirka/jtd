@@ -326,15 +326,15 @@ colour; *unmarked* is the neutral glyph colour) · **Shows**. The group is the r
 | `SATURATION_INNER_STACKS` | Inner sat | Saturation in the inner half | `2 stacks` | — | ▲ | Effect face | Saturation | off default |
 | `TOLL_CAP` | Toll cap | Toll cap | `10 stacks` | — | ▲ | Effect face | Toll | off default |
 | `TOLL_RATE` | Toll rate | Toll a second | `2 /s` | — | ▲ | Effect face | Toll | off default |
-| `TOLL_LINGER` | Toll linger | Toll lingers | `2 s` | — | ▲ | Effect face | Toll | off default |
-| `WITHER_INTERVAL` | Wither | Wither interval | `3 s` | `Vulnerable` | ▼ | Effect face | Vulnerable | off default |
+| `TOLL_LINGER` | Toll lingers | Toll lingers | `2 s` | — | ▲ | Effect face | Toll | off default |
+| `WITHER_INTERVAL` | Wither | Wither interval | `3 s` | — | ◇ | Effect face | Vulnerable | off default |
 | `PROJECTILE_SPEED` | Proj speed | Projectile speed | `4 cells/s` | — | ▲ | Comet | unmarked | off default (Mortar, Hive: base sets it) |
 | `PROJECTILE_SIZE` | Proj size | Projectile size | `150%` | — | ◇ | Comet | unmarked | off default |
 | `WAVE_SPEED` | Wave speed | Flame wave speed | `120%` | — | ▲ | Comet | unmarked | off default |
 | `NEST_CAPACITY` | Nest | Nest capacity | `6 missiles` | — | ▲ | Pip | unmarked | off default |
 | `MISSILES_PER_LAUNCH` | Missiles | Missiles a shot | `3` | — | ▲ | Pip | unmarked | off default |
 | `PING_COUNT` | Pings | Pings | `2` | — | ▲ | Pip | unmarked | off default |
-| `BOUNTY` | Bounty | Bounty bonus | `+10%` | — | ▲ | Cash | cash | off default |
+| `BOUNTY` | Bounty bonus | Bounty bonus | `+10%` | — | ▲ | Cash | cash | off default |
 | `DISRUPTION_TAKEN` | Jam taken | Disruption taken | `50%` | — | ▼ | Filled diamond | disruption | off default |
 | `AURA_POWER` | Buff power | Buff strength | `120%` | — | ▲ | Aura ring | aura | off default |
 | Gives (an emitter's modifiers) | the stat's own short form | the stat's own full form | the change: `Damage +20%` | — | ▲ | the stat's own | the stat's own | an emitting tower |
@@ -343,12 +343,12 @@ colour; *unmarked* is the neutral glyph colour) · **Shows**. The group is the r
 
 | Stat | Short | Full | Value | Inline | Dir | Glyph | Tone | Shows |
 |---|---|---|---|---|---|---|---|---|
-| `MOVE_SPEED` | Speed | Move speed | `1.2 cells/s` | — | ▼ | Chevron | unmarked | core |
+| `MOVE_SPEED` | Move speed | Move speed | `1.2 cells/s` | — | ▼ | Chevron | unmarked | core |
 | `ARMOR` | Armor | Armor | `30` | `-23% dmg` | ▼ | Hollow shield | physical | off default |
 | `MAGIC_RESIST` | Magic resist | Magic resist | `25` | `-20% dmg` | ▼ | Hollow shield | magic | off default |
 | `PLATING` | Plating | Plating | `-2 dmg/hit` | (the value) | ▼ | Filled shield | physical | off default |
 | `INSULATION` | Insulation | Insulation | `-2 dmg/hit` | (the value) | ▼ | Filled shield | magic | off default |
-| `RESILIENCE` | Resilience | Resilience | `30` | `-30% crits`; `+20% crits` below 0; `crit immune` at 100 | ▼ | Hollow spark | crit spark | off default |
+| `RESILIENCE` | Resilience | Resilience | `30` | `-30% crits`; `+20% crits` below 0; `immune` at 100 | ▼ | Hollow spark | crit spark | off default |
 | `AGILITY` | Agility | Agility | `25` | `dodges 20%` | ▼ | Crosshair | unmarked | off default |
 | `PHYSICAL_DAMAGE_TAKEN` | Phys taken | Physical damage taken | `115%` | — | ▲ | Cracked shield | physical | off default |
 | `MAGIC_DAMAGE_TAKEN` | Magic taken | Magic damage taken | `115%` | — | ▲ | Cracked shield | magic | off default |
@@ -356,9 +356,9 @@ colour; *unmarked* is the neutral glyph colour) · **Shows**. The group is the r
 | `SPIRIT` | Spirit | Spirit | `20` | `+20% heals` | ▼ | Plus | heal | off default |
 | `HEALING_RECEIVED` | Healing | Healing received | `50%` | — | ▼ | Plus | heal | off default |
 | `REGENERATION` | Regeneration | Regeneration | `1 hp/s` | — | ▼ | Plus | heal | off default |
-| `CHILL_RESIST` | Chill resist | Chill resist | `50%` | `immune` at 100% only | ▼ | Effect face + ward | Chill | off default |
-| `BURN_RESIST` | Burn resist | Burn resist | `50%` | `immune` at 100% only | ▼ | Effect face + ward | Burn | off default |
-| `FREEZE_RESIST` | Freeze resist | Freeze resist | `50%` | `immune` at 100% only | ▼ | Effect face + ward | Freeze | off default |
+| `CHILL_RESIST` | Chill resist | Chill resist | `50%` | — | ▼ | Effect face + ward | Chill | off default |
+| `BURN_RESIST` | Burn resist | Burn resist | `50%` | — | ▼ | Effect face + ward | Burn | off default |
+| `FREEZE_RESIST` | Freeze resist | Freeze resist | `50%` | — | ▼ | Effect face + ward | Freeze | off default |
 | `STEALTH` | — | Stealth | — | — | — | — | — | never: Invisibility icon |
 
 Not stats, on the same sheets (decision 17): health bar `hp`, bounty and lives pictograms, Dodged
@@ -366,7 +366,18 @@ Not stats, on the same sheets (decision 17): health bar `hp`, bounty and lives p
 
 ## Open questions
 
-None. The request is ready for planning.
+None.
+
+## Implementation notes
+
+The rule test (decision 29) settled four rows against the decisions they must keep:
+
+- **Short names** follow decision 12 strictly: Move speed, Bounty bonus and Toll lingers fit 12 characters, so the
+  short form is the full name.
+- **Resist meanings** go to the hover: `Freeze resist 100% immune` overflows the narrowest pane, and the 100% says
+  it. Resilience at 100 reads `immune`.
+- **Wither** is neutral with no inline meaning: a received wither raises the interval from 0 (never), which a
+  lower-is-better direction would paint red.
 
 ## Review — round 2 (outcomes)
 

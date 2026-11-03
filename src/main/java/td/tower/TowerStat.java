@@ -12,7 +12,6 @@ import td.stat.StatWording;
 import td.term.TermText;
 
 import java.util.Locale;
-import java.util.Optional;
 
 /**
  * One number on a tower's stat sheet: its default, its clamp, how the player reads it and when its row shows.
@@ -80,7 +79,7 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     TOLL_RATE(0f, 0f, Float.MAX_VALUE, StatUnit.PER_SECOND, "Toll rate", "Toll a second", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    TOLL_LINGER(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Toll linger", "Toll lingers", StatDirection.HIGHER,
+    TOLL_LINGER(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Toll lingers", "Toll lingers", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     /**
      * Only ever set, so two sources keep the shorter interval; 0 is never. Neutral: switching it on raises the
@@ -100,7 +99,7 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.DELIVERY, Shows.OFF_DEFAULT, false),
     PING_COUNT(0f, 0f, Float.MAX_VALUE, StatUnit.COUNT, "Pings", "Pings", StatDirection.HIGHER, StatGroup.DELIVERY,
             Shows.OFF_DEFAULT, false),
-    BOUNTY(0f, 0f, Float.MAX_VALUE, StatUnit.SIGNED_PERCENT, "Bounty", "Bounty bonus", StatDirection.HIGHER,
+    BOUNTY(0f, 0f, Float.MAX_VALUE, StatUnit.SIGNED_PERCENT, "Bounty bonus", "Bounty bonus", StatDirection.HIGHER,
             StatGroup.ECONOMY, Shows.OFF_DEFAULT, true),
     /** The share of an enemy's disruption that reaches the tower. */
     DISRUPTION_TAKEN(1f, 0f, 1f, StatUnit.PERCENT, "Jam taken", "Disruption taken", StatDirection.LOWER,
@@ -199,12 +198,6 @@ public enum TowerStat implements StatKey, StatTerm {
     @Override
     public StatGroup group() {
         return this.group;
-    }
-
-    /** Wither's number reads as a pause, so its row says what the pause is between. */
-    @Override
-    public Optional<String> inline(float value) {
-        return this == WITHER_INTERVAL && value > 0f ? Optional.of("between marks") : Optional.empty();
     }
 
     @Override
