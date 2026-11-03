@@ -458,6 +458,28 @@ A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
 
+### The planned DPS row undersells burn and splash towers (proposal)
+
+`FEATURE-stat-presentation.md` (decision 8) gives every tower with a Fire rate a `DPS /target` row: hit damage ×
+fire rate × average crit, before armor. That leaves out burns, splash, procs and effects. The Scorcher deals most of
+its damage through the burn its flame leaves, so its DPS row would show a fraction of what it does; the Mortar and the
+Burst show one target's share of a shot that hits a crowd. Players compare towers by the headline number, so these
+would look like poor buys. Not built yet; to address after the stat-presentation feature lands.
+
+- **Where:** the DPS row of the stat-presentation feature (the tower sheet text and `AbstractTower.inspect`), the
+  Scorcher's burn stats (`BURN_DURATION`, `BURN_POOL_CAP`, `STOKE_STEP`, `CinderTower`), the burn rules in
+  `td.effect.ActiveEffects`, and the tower's damage record (`AbstractTower.damageDealt`, `TowerTally`).
+- **Approach:** two parts.
+  1. **The Scorcher's DPS includes its burn.** The sheet DPS adds the burn damage per second one target takes while
+     the tower keeps it in its cone (ignition plus the burn pool at its steady state under the cap and stoking), so
+     the number is honest for a tower whose damage is mostly over time. Its hover says the burn is counted. Splash
+     towers keep `/target`; decide then whether they need a "per crowd" hint.
+  2. **A live DPS beside the sheet one.** A placed tower also shows the damage per second it really dealt this wave:
+     damage credited to it this wave, divided by the seconds it was active (had a target or a burn of its own
+     ticking), reset when a wave starts. It covers what the sheet formula can't (splash count, procs, armor, overkill)
+     and shows next to the theoretical row, in the same format. First check that burn ticks and other periodic damage
+     are credited to the tower that applied them, or the live number repeats the sheet's blind spot.
+
 ## Enemy features
 
 ### Enemy traits/abilities numbers are unbalanced placeholders
