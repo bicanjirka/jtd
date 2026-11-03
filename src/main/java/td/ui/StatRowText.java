@@ -157,13 +157,24 @@ final class StatRowText {
         return Row.plain(Glyph.DOT, label, reading.number()).withGloss(reading.unit(), "");
     }
 
-    /** One kind of source: its face when it is a term, how many of it, and its change in its stat's unit. */
+    /**
+     * One kind of source: its face when it is a term, the stat's own mark when it is a stat, how many of it, and its
+     * change in its stat's unit.
+     */
     private static Row source(StatPart part, StatWording wording) {
         TermText source = part.source();
         String label = source.plain() + (part.stacks() > 1 ? STACKS + part.stacks() : "");
         String change = wording.change(part.stat(), part.modifier());
         List<Term> mentions = source.mentions();
-        return mentions.isEmpty() ? Row.plain(Glyph.PIP, label, change)
-                : Row.faced(TermLooks.faceOf(mentions.getFirst()), label, change);
+        if (mentions.isEmpty()) {
+            return Row.plain(Glyph.PIP, label, change);
+        }
+        Optional<StatTerm> stat = StatLooks.statOf(mentions.getFirst());
+        if (stat.isPresent()) {
+            StatLook look = StatLooks.of(stat.get());
+            return new Row(look.glyph(), look.tone(), look.face(), label, change, "", "", Trend.NONE, Arrow.NONE,
+                    Optional.empty());
+        }
+        return Row.faced(TermLooks.faceOf(mentions.getFirst()), label, change);
     }
 }
