@@ -79,6 +79,8 @@ public class Driver {
         quit();
     }
 
+    private static int markTick;
+
     private static void handle(String line) throws Exception {
         String[] parts = line.split("\\s+", 2);
         String cmd = parts[0];
@@ -105,6 +107,18 @@ public class Driver {
             case "devlabels" -> devLabels();
             case "state" -> state();
             case "boardclick" -> boardClick(rest.trim());
+            case "node" -> clickNode(rest.trim());
+            case "mark" -> {
+                markTick = gameTime();
+                System.out.println("OK mark " + markTick);
+            }
+            case "at" -> {
+                int target = markTick + Integer.parseInt(rest.trim());
+                while (gameTime() < target) {
+                    Thread.sleep(5);
+                }
+                System.out.println("OK at " + rest.trim() + " (t=" + (gameTime() - markTick) + ")");
+            }
             case "clickenemy" -> clickEnemy(rest.trim());
             case "text" -> printText(Integer.parseInt(rest.trim()));
             case "level" -> selectLevel(Integer.parseInt(rest.trim()));
@@ -256,6 +270,15 @@ public class Driver {
                 timeoutMs = p.length > 2 ? Long.parseLong(p[2]) : timeoutMs;
                 condition = () -> probe(() -> gameTime() >= target);
                 what = "ticks until gameTime " + target;
+            }
+            case "ready" -> {
+                timeoutMs = p.length > 1 ? Long.parseLong(p[1]) : timeoutMs;
+                condition = () -> probe(() -> {
+                    Field engineField = TowerDefense.class.getDeclaredField("engine");
+                    engineField.setAccessible(true);
+                    Object engine = engineField.get(game);
+                    return (Boolean) call(engine, engine.getClass(), "isWaveReady");
+                });
             }
             case "alive" -> {
                 int target = Integer.parseInt(p[1]);
@@ -652,6 +675,53 @@ public class Driver {
         Thread.sleep(60);
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
         System.out.println("OK boardclick " + cellX + "," + cellY + " (robot at " + cx + "," + cy + ")");
+    }
+
+    // Robot-clicks the selected tower's upgrade node with this id, as a player clicks it in the Upgrades panel.
+    private static void clickNode(String id) throws Exception {
+        Point[] at = new Point[1];
+        onEventDispatchThread(() -> {
+            td.ui.PanelUpgradeTree panel = findTree(game.getContentPane());
+            Field towerField = td.ui.PanelUpgradeTree.class.getDeclaredField("tower");
+            towerField.setAccessible(true);
+            td.tower.Tower tower = (td.tower.Tower) towerField.get(panel);
+            if (tower == null || !panel.isShowing()) {
+                return;
+            }
+            td.tower.upgrade.UpgradeNode node = tower.upgradeTree().nodes().stream()
+                    .filter(n -> n.id().equals(id)).findFirst().orElseThrow();
+            Method bounds = td.ui.PanelUpgradeTree.class.getDeclaredMethod("boundsOf", td.tower.upgrade.UpgradeNode.class);
+            bounds.setAccessible(true);
+            java.awt.Rectangle r = (java.awt.Rectangle) bounds.invoke(panel, node);
+            Point loc = panel.getLocationOnScreen();
+            at[0] = new Point(loc.x + (int) r.getCenterX(), loc.y + (int) r.getCenterY());
+        });
+        if (at[0] == null) {
+            System.out.println("ERROR: no tower selected for node " + id);
+            return;
+        }
+        robot.mouseMove(at[0].x, at[0].y);
+        Thread.sleep(80);
+        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+        Thread.sleep(60);
+        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+        Thread.sleep(60);
+        System.out.println("OK node " + id);
+    }
+
+    private static td.ui.PanelUpgradeTree findTree(Container container) {
+        for (Component c : container.getComponents()) {
+            if (c instanceof td.ui.PanelUpgradeTree tree) {
+                return tree;
+            }
+            if (c instanceof Container inner) {
+                td.ui.PanelUpgradeTree found = findTree(inner);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
     }
 
     // Robot-clicks where the n-th alive enemy is right now, so selecting a moving enemy goes through
