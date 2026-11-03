@@ -14,7 +14,7 @@ class ShieldTemplateTest {
         Effect any = new ShieldTemplate(3f, 40).toEffect(DamageSink.none());
 
         assertThat(physical.shieldMax()).isEqualTo((float) DamageUnits.ofPoints(3f));
-        assertThat(physical.shieldRestrictedTo()).contains(DamageType.PHYSICAL);
-        assertThat(any.shieldRestrictedTo()).isEmpty();
+        assertThat(physical.shieldShares().getFirst().restrictedTo()).contains(DamageType.PHYSICAL);
+        assertThat(any.shieldShares().getFirst().restrictedTo()).isEmpty();
     }
 }

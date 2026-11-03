@@ -7,13 +7,9 @@ import td.damage.Damage;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.effect.PoolTuning;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.LevelFixtures;
 import td.fixtures.WorldFixtures;
-import td.stat.EnemyStat;
-import td.stat.StatModifier;
-import td.stat.StatModifiers;
 import td.util.GameWorld;
 import td.util.RecordingGameHost;
 import td.wave.Vec2;
@@ -110,27 +106,29 @@ class DefinedEnemyMobTest {
     }
 
     @Test
-    void spiritScalesAShieldWhenItIsApplied() {
+    void lowSpiritMakesAShieldHoldLessOfAHitAndLetsTheRestThrough() {
         GameWorld context = newContext();
         DefinedEnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.sickened(50));
-
         enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
 
-        assertThat(enemy.shieldGauge().max()).isCloseTo(2f, within(1e-4f));
+        HitResult hit = enemy.takeHit(Damage.physical(300), AttackProfile.none());
+
+        assertThat(hit.absorbed()).isEqualTo(200);
+        assertThat(hit.landed()).isEqualTo(Damage.physical(100));
+        assertThat(enemy.hasEffect(EffectKind.SHIELD)).isFalse();
     }
 
     @Test
-    void aStatAPoolCarriesScalesTheShieldsItsCarrierReceives() {
+    void damageOverTimeGoesPastAShieldToHealth() {
         GameWorld context = newContext();
-        DefinedEnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
-        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, DamageSink.none())
-                .withTuning(PoolTuning.standard().withCarried(
-                        StatModifiers.of(EnemyStat.SPIRIT, StatModifier.flat(-50f)))));
-
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
 
-        assertThat(enemy.shieldGauge().max()).isCloseTo(2f, within(1e-4f));
+        HitResult tick = enemy.takeHit(Damage.magic(300), AttackProfile.none().asPeriodic());
+
+        assertThat(tick.absorbed()).isZero();
+        assertThat(tick.landed()).isEqualTo(Damage.magic(300));
     }
 
     @Test
@@ -147,20 +145,6 @@ class DefinedEnemyMobTest {
         assertThat(crit.landed().critical()).isTrue();
         assertThat(plain.absorbed()).isEqualTo(1000);
         assertThat(plain.landed().amount()).isZero();
-    }
-
-    @Test
-    void aShieldTakesAnOrdinaryHitButNoneOfAnAttackThatIgnoresShields() {
-        GameWorld context = newContext();
-        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
-        enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
-
-        HitResult ordinary = enemy.takeHit(Damage.physical(300), AttackProfile.none());
-        HitResult ignoring = enemy.takeHit(Damage.physical(300), AttackProfile.none().withIgnoredShields());
-
-        assertThat(ordinary.absorbed()).isEqualTo(300);
-        assertThat(ignoring.absorbed()).isZero();
-        assertThat(ignoring.landed()).isEqualTo(Damage.physical(300));
     }
 
     @Test

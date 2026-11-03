@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.stat.BaseStats;
 import td.stat.EnemyStat;
 import td.stat.StatModifier;
@@ -242,8 +243,8 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.shield(500f, 100, DamageSink.none()));
 
-        int first = effects.absorb(DamageType.PHYSICAL, 300);
-        int second = effects.absorb(DamageType.PHYSICAL, 300);
+        int first = effects.absorb(DamageType.PHYSICAL, 300, 1f);
+        int second = effects.absorb(DamageType.PHYSICAL, 300, 1f);
 
         assertThat(first).isEqualTo(300);
         assertThat(second).isEqualTo(200);
@@ -258,7 +259,7 @@ class ActiveEffectsTest {
 
         effects.tick();
 
-        assertThat(effects.absorb(DamageType.PHYSICAL, 300)).isZero();
+        assertThat(effects.absorb(DamageType.PHYSICAL, 300, 1f)).isZero();
     }
 
     @Test
@@ -271,8 +272,8 @@ class ActiveEffectsTest {
         }
 
         assertThat(effects.remainingTicks(EffectKind.SHIELD)).isEmpty();
-        assertThat(effects.absorb(DamageType.PHYSICAL, 300)).isEqualTo(300);
-        assertThat(effects.absorb(DamageType.PHYSICAL, 300)).isEqualTo(200);
+        assertThat(effects.absorb(DamageType.PHYSICAL, 300, 1f)).isEqualTo(300);
+        assertThat(effects.absorb(DamageType.PHYSICAL, 300, 1f)).isEqualTo(200);
         assertThat(effects.has(EffectKind.SHIELD)).isFalse();
     }
 
@@ -300,12 +301,52 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void shieldsFromTwoSourcesStackAndTheOneEndingSoonestTakesAHitFirst() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.shield(300f, 50, DamageSink.none()).from(AttackOrigin.fresh()));
+        effects.apply(Effect.shield(300f, 5, DamageSink.none()).from(AttackOrigin.fresh()));
+        float together = effects.shieldGauge().remaining();
+
+        effects.absorb(DamageType.PHYSICAL, 200, 1f);
+        tickTimes(effects, 5);
+
+        assertThat(together).isEqualTo(DamageUnits.inPoints(600));
+        assertThat(effects.shieldGauge().remaining()).isEqualTo(DamageUnits.inPoints(300));
+    }
+
+    @Test
+    void aShieldWorthMoreHoldsThatManyTimesItsPointsOfAHit() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.shield(100f, 50, DamageSink.none()));
+
+        int held = effects.absorb(DamageType.PHYSICAL, 500, 2f);
+
+        assertThat(held).isEqualTo(200);
+        assertThat(effects.has(EffectKind.SHIELD)).isFalse();
+    }
+
+    @Test
+    void aShieldWorthNothingBreaksOnTheFirstHitItMeetsAndHoldsNothing() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.shield(400f, 50, DamageSink.none()).withShieldRestrictedTo(DamageType.PHYSICAL));
+
+        int magic = effects.absorb(DamageType.MAGIC, 100, 0f);
+        boolean standsAfterMagic = effects.has(EffectKind.SHIELD);
+        int physical = effects.absorb(DamageType.PHYSICAL, 100, 0f);
+
+        assertThat(magic).isZero();
+        assertThat(standsAfterMagic).isTrue();
+        assertThat(physical).isZero();
+        assertThat(effects.has(EffectKind.SHIELD)).isFalse();
+    }
+
+    @Test
     void aPhysicalShieldLetsMagicThrough() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.shield(400f, 5, DamageSink.none()).withShieldRestrictedTo(DamageType.PHYSICAL));
 
-        assertThat(effects.absorb(DamageType.MAGIC, 100)).isZero();
-        assertThat(effects.absorb(DamageType.PHYSICAL, 100)).isEqualTo(100);
+        assertThat(effects.absorb(DamageType.MAGIC, 100, 1f)).isZero();
+        assertThat(effects.absorb(DamageType.PHYSICAL, 100, 1f)).isEqualTo(100);
     }
 
     @Test
@@ -313,15 +354,15 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.shield(400f, 5, DamageSink.none()));
 
-        assertThat(effects.absorb(DamageType.MAGIC, 100)).isEqualTo(100);
-        assertThat(effects.absorb(DamageType.PHYSICAL, 100)).isEqualTo(100);
+        assertThat(effects.absorb(DamageType.MAGIC, 100, 1f)).isEqualTo(100);
+        assertThat(effects.absorb(DamageType.PHYSICAL, 100, 1f)).isEqualTo(100);
     }
 
     @Test
     void weakeningAShieldTakesItsShareOfWhatRemains() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.shield(400f, 100, DamageSink.none()));
-        effects.absorb(DamageType.PHYSICAL, 200);
+        effects.absorb(DamageType.PHYSICAL, 200, 1f);
 
         effects.weakenShield(0.25f);
 

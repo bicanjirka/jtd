@@ -79,8 +79,10 @@
   `RESILIENCE` once; every stat is floored by its range. A heal adds its amount to `REGENERATION`: it is
   `PER_SOURCE`, one `HealShare` per `Effect.origin` (`Effect.from`), shares from different sources adding up, a
   recast refreshing its own share (the larger amount, the later end), each running out on its own clock. A
-  shield is an absorb pool (`ActiveEffects.absorb`), applied after armor and plating, scaled once when
-  applied by spirit; reapplying keeps the larger pool. Cauterize lowers `SPIRIT`.
+  shield is `PER_SOURCE` the same way, one `ShieldShare` per source, a recast topping its own share up. Its points
+  are what was cast, never scaled; `ActiveEffects.absorb` lets the shares that take a hit's type hold it, the one
+  ending soonest first, each worth the `worth` the mob passes (its spirit's `StatCurves.restoreFactor`), and at no
+  worth every share the hit meets breaks. Cauterize lowers `SPIRIT`.
   The mob applies regeneration to itself, capped at max health; `Damage` can't be negative.
 - Resistance and diminishing returns only shorten an authored duration, never change an effect's
   curve: `duration = authored * (1 - resist[kind]) * freezeStep`, and under one tick is blocked.

@@ -74,9 +74,13 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return of(kind, durationTicks, sink, EffectDynamics.FuelPool.started(damagePerTick, sink, STACK_INTERVAL_TICKS));
     }
 
-    /** Absorbs up to {@code units} of damage while active, then breaks. */
+    /**
+     * Absorbs up to {@code units} of damage while active, then breaks. Shields from different sources ({@link #from})
+     * stack.
+     */
     public static Effect shield(float units, int durationTicks, DamageSink sink) {
-        return of(EffectKind.SHIELD, durationTicks, sink, new EffectDynamics.ShieldPool(units, units, Optional.empty()));
+        return of(EffectKind.SHIELD, durationTicks, sink, new EffectDynamics.ShieldPool(
+                List.of(ShieldShare.cast(units, durationTicks))));
     }
 
     /** Untargetable while active. */
@@ -325,6 +329,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     public Effect from(AttackOrigin origin) {
         EffectDynamics keyed = switch (this.dynamics) {
             case EffectDynamics.HealOverTime heal -> heal.from(origin);
+            case EffectDynamics.ShieldPool shield -> shield.from(origin);
             default -> this.dynamics;
         };
         return new Effect(this.kind, this.remainingTicks, this.authoredDurationTicks, this.sink, origin, keyed);
@@ -338,6 +343,10 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
                 case EffectDynamics.HealOverTime more -> this.withHeal(heal.with(more)).withAuthoredDuration(authored);
                 default -> incoming;
             };
+            case EffectDynamics.ShieldPool shield -> switch (incoming.dynamics()) {
+                case EffectDynamics.ShieldPool more -> this.withShield(shield.with(more)).withAuthoredDuration(authored);
+                default -> incoming;
+            };
             default -> incoming;
         };
     }
@@ -345,6 +354,11 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     /** This heal holding {@code heal}'s shares, its time the last share's. */
     Effect withHeal(EffectDynamics.HealOverTime heal) {
         return new Effect(this.kind, heal.remainingTicks(), this.authoredDurationTicks, this.sink, this.origin, heal);
+    }
+
+    /** This shield holding {@code shield}'s shares, its time the last share's. */
+    Effect withShield(EffectDynamics.ShieldPool shield) {
+        return new Effect(this.kind, shield.remainingTicks(), this.authoredDurationTicks, this.sink, this.origin, shield);
     }
 
     private Effect withAuthoredDuration(int ticks) {
@@ -457,11 +471,11 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
-    /** The one damage type a shield absorbs; empty absorbs both. */
-    public Optional<DamageType> shieldRestrictedTo() {
+    /** Each source's shield; empty for any other family. */
+    public List<ShieldShare> shieldShares() {
         return switch (this.dynamics) {
-            case EffectDynamics.ShieldPool shield -> shield.restrictedTo();
-            default -> Optional.empty();
+            case EffectDynamics.ShieldPool shield -> shield.shares();
+            default -> List.of();
         };
     }
 
@@ -482,19 +496,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
-    /** This shield with {@code units} left of its pool. */
-    public Effect withShieldRemaining(float units) {
-        return this.withDynamics(this.shieldFamily().withShieldRemaining(units));
-    }
-
-    /** This shield with its pool and its full size {@code factor} times as big. */
-    public Effect withShieldScaledBy(float factor) {
-        return this.withDynamics(this.shieldFamily().withShieldScaledBy(factor));
-    }
-
     /** Narrows a shield to one damage type; the other passes through. */
     public Effect withShieldRestrictedTo(DamageType type) {
-        return this.withDynamics(this.shieldFamily().withShieldRestrictedTo(type));
+        return this.withDynamics(this.shieldPool().restrictedTo(type));
     }
 
     /**
@@ -584,7 +588,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
-    private EffectDynamics.ShieldPool shieldFamily() {
+    EffectDynamics.ShieldPool shieldPool() {
         return switch (this.dynamics) {
             case EffectDynamics.ShieldPool shield -> shield;
             default -> throw this.wrongFamily("a shield");

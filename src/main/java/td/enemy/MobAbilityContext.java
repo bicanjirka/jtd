@@ -118,8 +118,11 @@ final class MobAbilityContext implements AbilityContext {
         Zone zone = switch (action.kind()) {
             case HEALING_GROUND -> Zone.healing(x, y, radius, action.lifetimeTicks(), units, ZoneOwner.nobody());
             case HASTE_GROUND -> Zone.haste(x, y, radius, action.lifetimeTicks(), ZoneOwner.nobody());
-            case WARD_MINE -> Zone.wardMine(x, y, radius, action.lifetimeTicks(), ZoneOwner.nobody(),
-                    (mine, by) -> by.applyEffect(Effect.shield(units, WARD_SHIELD_TICKS, DamageSink.none())));
+            case WARD_MINE -> {
+                AttackOrigin mine = AttackOrigin.fresh();
+                yield Zone.wardMine(x, y, radius, action.lifetimeTicks(), ZoneOwner.nobody(),
+                        (ward, by) -> by.applyEffect(Effect.shield(units, WARD_SHIELD_TICKS, DamageSink.none()).from(mine)));
+            }
             case BLINDING_FIELD -> Zone.blinding(x, y, radius, action.lifetimeTicks(),
                     DisruptionPenalty.blinding(action.power()), ZoneOwner.nobody());
             case BURNING_GROUND, TAR, FROST_GROUND, FALLOUT, MINE, CURSED_CLOUD -> throw new IllegalArgumentException(

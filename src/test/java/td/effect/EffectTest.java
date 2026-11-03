@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -39,7 +37,7 @@ class EffectTest {
         assertThat(shield.dynamics()).isInstanceOf(EffectDynamics.ShieldPool.class);
         assertThat(shield.shieldRemaining()).isEqualTo(500f);
         assertThat(shield.shieldMax()).isEqualTo(500f);
-        assertThat(shield.shieldRestrictedTo()).contains(DamageType.MAGIC);
+        assertThat(shield.shieldShares()).singleElement().satisfies(share -> assertThat(share.restrictedTo()).contains(DamageType.MAGIC));
         assertThat(shield.fuel()).isEmpty();
     }
 
@@ -50,7 +48,7 @@ class EffectTest {
         assertThat(vulnerable.dynamics()).isInstanceOf(EffectDynamics.Stacks.class);
         assertThat(vulnerable.stacks()).isEqualTo(2);
         assertThat(vulnerable.effectiveStackCap()).isEqualTo(8);
-        assertThat(vulnerable.shieldRestrictedTo()).isEqualTo(Optional.empty());
+        assertThat(vulnerable.shieldShares()).isEmpty();
     }
 
     @Test

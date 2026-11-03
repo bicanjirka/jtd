@@ -105,8 +105,10 @@
   after it, runs `EffectTransitions.observe` after it but before returning early for a mob a
   damage-over-time tick killed, so an expiry is seen on time and a lethal tick still records its
   losses.
-- `takeHit(damage, attacker)` lands a hit through `HitResolution`, the one hit formula, then the
-  shield pool and the cap at health, and returns a `HitResult`; callers credit `credited()`, and
+- `takeHit(damage, attacker)` lands a hit through `HitResolution`, the one hit formula: the crit
+  (`raw`), then the shields, worth what spirit makes them, then everything else on what got past them
+  (`pastShields`), then the cap at health. Damage over time and a crit that pierces shields go past
+  them. It returns a `HitResult`; callers credit `credited()`, and
   `doDamage` is its `landed()`. A dodge (`HitResult.dodge()`) changes nothing else, not even the
   idle timer.
 - A spawn shape's trait override is composed into the definition before the mob is built. There

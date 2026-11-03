@@ -5,6 +5,7 @@ import td.damage.Damage;
 import td.damage.DamageType;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -148,20 +149,109 @@ public sealed interface EffectDynamics {
         }
     }
 
-    /** A shield's remaining points, its full size, and the damage type it is limited to. */
-    record ShieldPool(float remaining, float max, Optional<DamageType> restrictedTo) implements EffectDynamics {
+    /** Shields that stack: one share per source, which together absorb what each could. */
+    record ShieldPool(List<ShieldShare> shares) implements EffectDynamics {
 
-        public ShieldPool withShieldRemaining(float remaining) {
-            return new ShieldPool(remaining, this.max, this.restrictedTo);
+        public ShieldPool {
+            shares = List.copyOf(shares);
         }
 
-        public ShieldPool withShieldScaledBy(float factor) {
-            return new ShieldPool(this.remaining * factor, this.max * factor, this.restrictedTo);
+        /** What every share has left together, in damage units. */
+        public float remaining() {
+            float sum = 0f;
+            for (ShieldShare share : this.shares) {
+                sum += share.remaining();
+            }
+            return sum;
         }
 
-        public ShieldPool withShieldRestrictedTo(DamageType type) {
-            return new ShieldPool(this.remaining, this.max, Optional.of(type));
+        /** The pools every share was cast with together, in damage units. */
+        public float max() {
+            float sum = 0f;
+            for (ShieldShare share : this.shares) {
+                sum += share.max();
+            }
+            return sum;
         }
+
+        /** The ticks until the last share runs out; {@link Effect#LASTING_TICKS} while one lasts until broken. */
+        public int remainingTicks() {
+            int most = 0;
+            for (ShieldShare share : this.shares) {
+                most = Math.max(most, share.remainingTicks());
+            }
+            return most;
+        }
+
+        ShieldPool from(AttackOrigin source) {
+            return new ShieldPool(this.shares.stream().map(share -> share.withSource(source)).toList());
+        }
+
+        ShieldPool restrictedTo(DamageType type) {
+            return new ShieldPool(this.shares.stream().map(share -> share.withRestrictedTo(type)).toList());
+        }
+
+        /** With {@code incoming}'s shares: a source already here is topped up, a new one is added. */
+        ShieldPool with(ShieldPool incoming) {
+            List<ShieldShare> merged = new ArrayList<>(this.shares);
+            for (ShieldShare share : incoming.shares) {
+                int at = -1;
+                for (int i = 0; i < merged.size(); i++) {
+                    if (merged.get(i).source() == share.source()) {
+                        at = i;
+                    }
+                }
+                if (at < 0) {
+                    merged.add(share);
+                } else {
+                    merged.set(at, merged.get(at).refreshedBy(share));
+                }
+            }
+            return new ShieldPool(merged);
+        }
+
+        /** A tick later, without the shares that ran out; empty once none is left. */
+        Optional<ShieldPool> ticked() {
+            return left(this.shares.stream().map(ShieldShare::ticked).toList());
+        }
+
+        /** Every share with {@code fraction} of what it has left taken away. */
+        Optional<ShieldPool> weakened(float fraction) {
+            return left(this.shares.stream().map(share -> share.withRemaining(share.remaining() * (1f - fraction))).toList());
+        }
+
+        /**
+         * What the shares that take {@code type} hold of a hit of {@code raw} units, the one ending soonest first,
+         * each holding {@code worth} times what it has left. At no worth every share the hit meets breaks and holds
+         * nothing.
+         */
+        ShieldHit hitBy(DamageType type, int raw, float worth) {
+            List<ShieldShare> order = this.shares.stream().filter(share -> share.takes(type))
+                    .sorted(Comparator.comparingInt(ShieldShare::remainingTicks)).toList();
+            List<ShieldShare> after = new ArrayList<>(this.shares);
+            float rawLeft = raw;
+            for (ShieldShare share : order) {
+                float holds = worth <= 0f ? 0f : Math.min(rawLeft, share.remaining() * worth);
+                float left = worth <= 0f ? 0f : share.remaining() - holds / worth;
+                after.set(after.indexOf(share), share.withRemaining(left));
+                rawLeft -= holds;
+            }
+            return new ShieldHit(left(after), Math.round(raw - rawLeft));
+        }
+
+        private static Optional<ShieldPool> left(List<ShieldShare> shares) {
+            List<ShieldShare> standing = shares.stream().filter(share -> !share.isGone()).toList();
+            return standing.isEmpty() ? Optional.empty() : Optional.of(new ShieldPool(standing));
+        }
+    }
+
+    /**
+     * What a hit left of the shields, and how many units of it they held.
+     *
+     * @param left     the shares still standing; empty once every one broke
+     * @param absorbed the units of the hit the shields held, before anything else reduced it
+     */
+    record ShieldHit(Optional<ShieldPool> left, int absorbed) {
     }
 
     /** Damage for every cell walked: a bleed. */

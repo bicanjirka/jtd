@@ -256,6 +256,20 @@ class HitResolutionTest {
     }
 
     @Test
+    void itsStepsWithAShieldLandWhatGetsPastTheShield() {
+        StatView stats = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 60f).with(EnemyStat.PLATING, 150f));
+        AttackProfile crit = AttackProfile.critChance(1f);
+        Damage raw = HitResolution.raw(Damage.physical(1234), crit, stats, () -> 0.0);
+        int absorbed = 400;
+
+        Damage past = HitResolution.pastShields(new Damage(raw.amount() - absorbed, raw.type(), raw.critical()), crit, stats);
+        HitSteps steps = HitResolution.steps(Damage.physical(1234), crit, stats, true, absorbed);
+
+        assertThat(steps.result()).isEqualTo(past);
+        assertThat(steps.steps().get(1).kind()).isEqualTo(HitStep.Kind.SHIELD);
+    }
+
+    @Test
     void aStepShowsThePenetrationThatCameOffItsStat() {
         StatView stats = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f));
         AttackProfile piercing = AttackProfile.none().withArmorPenetration(0.5f, 0f);

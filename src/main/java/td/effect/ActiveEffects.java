@@ -217,32 +217,35 @@ public final class ActiveEffects {
         this.active.put(incoming.kind(), next.withStackCap(cap).withStacks(stacks, remaining));
     }
 
-    /** Takes {@code fraction} of what the shield has left; a shield that is gone stays gone. */
+    /** Takes {@code fraction} of what every shield has left; a shield that is gone stays gone. */
     public void weakenShield(float fraction) {
         Effect shield = this.active.get(EffectKind.SHIELD);
         if (shield != null) {
-            this.active.put(EffectKind.SHIELD, shield.withShieldRemaining(shield.shieldRemaining() * (1f - fraction)));
+            this.putShield(shield, shield.shieldPool().weakened(fraction));
         }
     }
 
     /**
-     * Takes what the active shield can absorb of {@code amount} units of {@code type} and returns it;
-     * a shield limited to the other type absorbs nothing. A shield with less than a unit left breaks.
+     * Lets the shields that take {@code type} hold what they can of a hit of {@code raw} units, the one ending
+     * soonest first, each worth {@code worth} times what it has left, and returns the units they held. A shield with
+     * less than a unit left breaks, and at no worth every shield the hit meets breaks and holds nothing.
      */
-    public int absorb(DamageType type, int amount) {
+    public int absorb(DamageType type, int raw, float worth) {
         Effect shield = this.active.get(EffectKind.SHIELD);
-        if (shield == null || amount <= 0
-                || (shield.shieldRestrictedTo().isPresent() && shield.shieldRestrictedTo().get() != type)) {
+        if (shield == null || raw <= 0) {
             return 0;
         }
-        int absorbed = Math.min(amount, (int) shield.shieldRemaining());
-        float left = shield.shieldRemaining() - absorbed;
-        if (left < 1f) {
-            this.active.remove(EffectKind.SHIELD);
+        EffectDynamics.ShieldHit hit = shield.shieldPool().hitBy(type, raw, worth);
+        this.putShield(shield, hit.left());
+        return hit.absorbed();
+    }
+
+    private void putShield(Effect shield, Optional<EffectDynamics.ShieldPool> left) {
+        if (left.isPresent()) {
+            this.active.put(EffectKind.SHIELD, shield.withShield(left.get()));
         } else {
-            this.active.put(EffectKind.SHIELD, shield.withShieldRemaining(left));
+            this.active.remove(EffectKind.SHIELD);
         }
-        return absorbed;
     }
 
     /** The active shield's pool, in points; {@link ShieldGauge#none()} without one. */
@@ -480,6 +483,7 @@ public final class ActiveEffects {
                     yield countDown(effect);
                 }
                 case EffectDynamics.HealOverTime heal -> heal.ticked().map(effect::withHeal);
+                case EffectDynamics.ShieldPool shield -> shield.ticked().map(effect::withShield);
                 default -> countDown(effect);
             };
             if (next.isPresent()) {
