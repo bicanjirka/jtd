@@ -8,7 +8,9 @@
   (`EffectStacking`), stack cap, what each stack does to stats, and tags.
   Every classification method reads the rule. `ActiveEffects` keeps one live effect per kind and
   combines applications by the rule's stacking: a refresh keeps the stronger and the longer, a level
-  or a pool adds up, stacks add to their cap. `ActiveEffects` exposes queries only, never its map.
+  or a pool adds up, stacks add to their cap, and a per-source kind keeps one share per source on its own clock
+  (`SourceShares`): the effect's time is always its last share's, and anything that changes the time changes the
+  shares. `ActiveEffects` exposes queries only, never its map.
 - `CHILL` is a level (the share of speed lost, up to a cap) made of one `FuelContribution` per
   application, each fading linearly on its own slope. An application only adds what fits under the
   cap. It also cuts a burn's damage, most at the cap. `FREEZE` is a hard stop.

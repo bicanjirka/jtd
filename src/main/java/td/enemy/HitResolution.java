@@ -55,11 +55,6 @@ public final class HitResolution {
         return new Damage(Math.round(amount), type, critical);
     }
 
-    /** {@link #steps(Damage, AttackProfile, StatView, boolean, int)} of a hit no shield held. */
-    public static HitSteps steps(Damage incoming, AttackProfile attacker, StatView stats, boolean rolledCrit) {
-        return steps(incoming, attacker, stats, rolledCrit, 0);
-    }
-
     /**
      * {@link #raw} and {@link #pastShields} with the crit already decided, one step at a time, for a trace of the
      * hit: the same numbers, never a second roll.

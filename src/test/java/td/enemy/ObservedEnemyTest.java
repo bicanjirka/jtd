@@ -198,6 +198,17 @@ class ObservedEnemyTest {
     }
 
     @Test
+    void anInvertedEnemysRegenerationIsReportedAsTheHitItDealsAndNeverAsAHeal() {
+        DefinedEnemyMob mob = this.observed(this.world, plain().withTraits(List.of(new RegenerationTrait(20f))));
+        mob.applyEffect(Effect.hex(EffectKind.INVERSION, 100, damage -> mob.takeHit(damage, PERIODIC)));
+
+        mob.doTick(1);
+
+        assertThat(this.events.of(MobEvent.HealthChanged.class)).isEmpty();
+        assertThat(this.events.of(MobEvent.Hit.class)).isNotEmpty();
+    }
+
+    @Test
     void aKillingHitReportsWhatHealthCouldNotTake() {
         DefinedEnemyMob mob = this.observed(this.world, plain());
 

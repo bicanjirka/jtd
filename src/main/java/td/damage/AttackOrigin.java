@@ -1,8 +1,9 @@
 package td.damage;
 
 /**
- * Who an attack came from, by identity only: two origins are the same attacker only if they are
- * the same object. Each tower holds one for its whole life.
+ * Who an attack or an effect came from, by identity only: two origins are the same source only if they are
+ * the same object. Each tower holds one for its whole life, as do each enemy ability on each enemy and each zone an
+ * enemy leaves, so their heals and shields stack per source.
  */
 public final class AttackOrigin {
 

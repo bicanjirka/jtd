@@ -6,6 +6,7 @@ import td.damage.DamageType;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.IntUnaryOperator;
 
 /**
  * A timed modifier on a live enemy, from a tower hit or an enemy ability: what every effect has (its
@@ -18,6 +19,15 @@ import java.util.Optional;
  */
 public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTicks, DamageSink sink,
                      AttackOrigin origin, EffectDynamics dynamics) {
+
+    /** A heal's or a shield's time is always its last share's, so the two can never disagree. */
+    public Effect {
+        remainingTicks = switch (dynamics) {
+            case EffectDynamics.HealOverTime heal -> heal.remainingTicks();
+            case EffectDynamics.ShieldPool shield -> shield.remainingTicks();
+            default -> remainingTicks;
+        };
+    }
 
     /** A burn or poison earns a stack this often while it lasts: one every half second. */
     static final int STACK_INTERVAL_TICKS = 10;
@@ -335,34 +345,20 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return new Effect(this.kind, this.remainingTicks, this.authoredDurationTicks, this.sink, origin, keyed);
     }
 
-    /** With {@code incoming}, of the same per-source kind, joined in: its shares refresh or add to these. */
+    /** With {@code incoming}, a heal or a shield like this one, joined in: its shares refresh or add to these. */
     Effect joinedBy(Effect incoming) {
-        int authored = Math.max(this.authoredDurationTicks, incoming.authoredDurationTicks());
-        return switch (this.dynamics) {
-            case EffectDynamics.HealOverTime heal -> switch (incoming.dynamics()) {
-                case EffectDynamics.HealOverTime more -> this.withHeal(heal.with(more)).withAuthoredDuration(authored);
-                default -> incoming;
-            };
-            case EffectDynamics.ShieldPool shield -> switch (incoming.dynamics()) {
-                case EffectDynamics.ShieldPool more -> this.withShield(shield.with(more)).withAuthoredDuration(authored);
-                default -> incoming;
-            };
-            default -> incoming;
+        EffectDynamics joined = switch (incoming.dynamics()) {
+            case EffectDynamics.HealOverTime more -> this.healFamily().with(more);
+            case EffectDynamics.ShieldPool more -> this.shieldPool().with(more);
+            default -> throw incoming.wrongFamily("a heal or a shield");
         };
+        return new Effect(this.kind, this.remainingTicks, Math.max(this.authoredDurationTicks,
+                incoming.authoredDurationTicks()), this.sink, this.origin, joined);
     }
 
-    /** This heal holding {@code heal}'s shares, its time the last share's. */
-    Effect withHeal(EffectDynamics.HealOverTime heal) {
-        return new Effect(this.kind, heal.remainingTicks(), this.authoredDurationTicks, this.sink, this.origin, heal);
-    }
-
-    /** This shield holding {@code shield}'s shares, its time the last share's. */
+    /** This shield holding {@code shield}'s shares. */
     Effect withShield(EffectDynamics.ShieldPool shield) {
-        return new Effect(this.kind, shield.remainingTicks(), this.authoredDurationTicks, this.sink, this.origin, shield);
-    }
-
-    private Effect withAuthoredDuration(int ticks) {
-        return new Effect(this.kind, this.remainingTicks, ticks, this.sink, this.origin, this.dynamics);
+        return this.withDynamics(shield);
     }
 
     /** How many ticks a chill lasts before its last share has faded; {@code 0} for any other kind. */
@@ -520,7 +516,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         }
         EffectDynamics scaled = switch (this.dynamics) {
             case EffectDynamics.ChillLevel chill -> chill.withDurationScaledBy(factor);
-            default -> this.dynamics;
+            default -> this.retimed(ticks -> Math.round(ticks * factor));
         };
         return new Effect(this.kind, Math.round(this.remainingTicks * factor), Math.round(this.authoredDurationTicks * factor),
                 this.sink, this.origin, scaled);
@@ -537,25 +533,47 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
             return this;
         }
         return new Effect(this.kind, this.remainingTicks + ticks, this.authoredDurationTicks + ticks, this.sink, this.origin,
-                this.dynamics);
+                this.retimed(left -> left + ticks));
     }
 
-    /** Whether it was authored to last for good rather than for a time. */
+    /**
+     * Whether it lasts for good rather than for a time: one authored so, or a shield one of whose shares holds until
+     * broken.
+     */
     public boolean isLasting() {
-        return this.authoredDurationTicks == LASTING_TICKS;
+        return this.remainingTicks == LASTING_TICKS;
     }
 
-    /** This effect with {@code ticks} gone from the time it has left; empty once none is left. */
+    /**
+     * This effect with {@code ticks} gone from the time it has left, from each share's for a heal or a shield; empty
+     * once none is left.
+     */
     public Optional<Effect> afterTicks(int ticks) {
-        if (this.isLasting()) {
+        if (this.isLasting() && this.shieldShares().isEmpty()) {
             return Optional.of(this);
         }
-        int left = this.remainingTicks - ticks;
-        return left > 0 ? Optional.of(this.withRemainingTicks(left)) : Optional.empty();
+        Effect after = new Effect(this.kind, this.remainingTicks - ticks, this.authoredDurationTicks, this.sink,
+                this.origin, this.retimed(left -> left - ticks));
+        return after.remainingTicks() > 0 ? Optional.of(after) : Optional.empty();
     }
 
+    /** This effect on one clock with {@code remainingTicks} left; a heal or a shield keeps a clock per share instead. */
     Effect withRemainingTicks(int remainingTicks) {
-        return new Effect(this.kind, remainingTicks, this.authoredDurationTicks, this.sink, this.origin, this.dynamics);
+        return switch (this.dynamics) {
+            case EffectDynamics.HealOverTime heal -> throw this.wrongFamily("on one clock");
+            case EffectDynamics.ShieldPool shield -> throw this.wrongFamily("on one clock");
+            default -> new Effect(this.kind, remainingTicks, this.authoredDurationTicks, this.sink, this.origin,
+                    this.dynamics);
+        };
+    }
+
+    /** The shares' clocks through {@code time}, for a heal or a shield; any other family keeps its dynamics. */
+    private EffectDynamics retimed(IntUnaryOperator time) {
+        return switch (this.dynamics) {
+            case EffectDynamics.HealOverTime heal -> heal.retimed(time);
+            case EffectDynamics.ShieldPool shield -> shield.retimed(time);
+            default -> this.dynamics;
+        };
     }
 
     /** Carries a chill's or a pool's level forward after decay or a top-up. A pool's {@code peakL0} only grows. */
@@ -593,6 +611,13 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return switch (this.dynamics) {
             case EffectDynamics.FuelPool pool -> pool;
             default -> throw this.wrongFamily("a pool");
+        };
+    }
+
+    private EffectDynamics.HealOverTime healFamily() {
+        return switch (this.dynamics) {
+            case EffectDynamics.HealOverTime heal -> heal;
+            default -> throw this.wrongFamily("a heal");
         };
     }
 

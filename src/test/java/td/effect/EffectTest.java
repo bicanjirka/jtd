@@ -1,6 +1,7 @@
 package td.effect;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
 
@@ -39,6 +40,29 @@ class EffectTest {
         assertThat(shield.shieldMax()).isEqualTo(500f);
         assertThat(shield.shieldShares()).singleElement().satisfies(share -> assertThat(share.restrictedTo()).contains(DamageType.MAGIC));
         assertThat(shield.fuel()).isEmpty();
+    }
+
+    @Test
+    void scalingAHealsTimeScalesEachSourcesShareAndTheEffectReadsTheLastOne() {
+        Effect heal = Effect.heal(10, 40, DamageSink.none()).from(AttackOrigin.fresh());
+        Effect both = heal.joinedBy(Effect.heal(20, 10, DamageSink.none()).from(AttackOrigin.fresh()));
+
+        Effect halved = both.withDurationScaledBy(0.5f);
+
+        assertThat(halved.healShares()).extracting(HealShare::remainingTicks).containsExactly(20, 5);
+        assertThat(halved.remainingTicks()).isEqualTo(20);
+    }
+
+    @Test
+    void timePassingOnAShieldEndsTheShareThatRanOutAndKeepsTheOneThatLasts() {
+        Effect lasting = Effect.shield(100f, Effect.LASTING_TICKS, DamageSink.none()).from(AttackOrigin.fresh());
+        Effect both = lasting.joinedBy(Effect.shield(100f, 10, DamageSink.none()).from(AttackOrigin.fresh()));
+
+        Effect later = both.afterTicks(10).orElseThrow();
+
+        assertThat(later.shieldShares()).singleElement()
+                .satisfies(share -> assertThat(share.remainingTicks()).isEqualTo(Effect.LASTING_TICKS));
+        assertThat(later.isLasting()).isTrue();
     }
 
     @Test

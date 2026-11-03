@@ -389,13 +389,9 @@ public final class DefinedEnemyMob implements EnemyMob {
             }
         }
         float current = this.stats.value(stat);
-        if (stat == EnemyStat.REGENERATION) {
-            // The sheet holds what heals and traits give; what a tick restores is that, worth what spirit makes it.
-            float worth = StatCurves.restoreFactor(this.stats.value(EnemyStat.SPIRIT));
-            if (worth != 1f && current > 0f) {
-                parts.add(new StatPart(TermText.of(EnemyStat.SPIRIT), 1, stat, StatModifier.times(worth)));
-                current *= worth;
-            }
+        if (stat == EnemyStat.REGENERATION && this.restoreFactor() != 1f && current > 0f) {
+            parts.add(new StatPart(TermText.of(EnemyStat.SPIRIT), 1, stat, StatModifier.times(this.restoreFactor())));
+            current = this.restoredPerTick();
         }
         return StatBreakdown.resolved(stat, this.baseStat(stat), parts, current);
     }
@@ -694,7 +690,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             Damage raw = HitResolution.raw(damage, attacker, this.stats, this.gameWorld.random());
             boolean meetsShields = attacker.delivery() == Delivery.HIT && !(raw.critical() && attacker.critsPierceShields());
             int absorbed = meetsShields ? this.activeEffects.absorb(raw.type(), raw.amount(),
-                    StatCurves.restoreFactor(this.stats.value(EnemyStat.SPIRIT))) : 0;
+                    this.restoreFactor()) : 0;
             Damage mitigated = HitResolution.pastShields(new Damage(raw.amount() - absorbed, raw.type(), raw.critical()),
                     attacker, this.stats);
             Damage landed = this.health.lose(mitigated);
@@ -883,25 +879,34 @@ public final class DefinedEnemyMob implements EnemyMob {
      * @return whether health changed
      */
     private boolean regenerate() {
-        int healthBefore = this.health.current();
-        int units = this.health.regenerationDue(this.stats.value(EnemyStat.REGENERATION)
-                * StatCurves.restoreFactor(this.stats.value(EnemyStat.SPIRIT)));
+        int units = this.health.regenerationDue(this.restoredPerTick());
         if (units <= 0) {
             return false;
         }
+        int healthBefore = this.health.current();
         Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
         if (inversion.isPresent()) {
             this.observer.dealing(EffectKind.INVERSION);
             inversion.get().sink().apply(Damage.magic(units));
             this.observer.dealt();
-        } else {
-            this.health.heal(units);
+            return this.health.current() != healthBefore;
         }
+        this.health.heal(units);
         boolean changed = this.health.current() != healthBefore;
         if (changed && this.observer.isOn()) {
             this.observer.report(new MobEvent.HealthChanged("regen", healthBefore, this.health.current()));
         }
         return changed;
+    }
+
+    /** What a tick of regeneration restores: the stat, worth what spirit makes it. */
+    private float restoredPerTick() {
+        return this.stats.value(EnemyStat.REGENERATION) * this.restoreFactor();
+    }
+
+    /** What spirit makes its recovery worth: regeneration restores this many times itself, a shield holds as much. */
+    private float restoreFactor() {
+        return StatCurves.restoreFactor(this.stats.value(EnemyStat.SPIRIT));
     }
 
     private void countDownSpawnDelay(int gameTime) {

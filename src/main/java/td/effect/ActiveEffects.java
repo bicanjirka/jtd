@@ -393,11 +393,8 @@ public final class ActiveEffects {
             case REFRESH -> kind.modifiersAt(1).applyTo(accumulator);
             case LEVEL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
             case POOL -> this.contributePool(kind, effect, kinds, accumulator);
-            case PER_SOURCE -> {
-                if (kind == EffectKind.HEAL) {
-                    accumulator.addFlat(EnemyStat.REGENERATION, effect.healPerTick());
-                }
-            }
+            // Of the per-source kinds only a heal gives regeneration; a shield's is zero.
+            case PER_SOURCE -> accumulator.addFlat(EnemyStat.REGENERATION, effect.healPerTick());
         }
     }
 
@@ -482,8 +479,8 @@ public final class ActiveEffects {
                     this.bleed(effect, distance, cellsMoved);
                     yield countDown(effect);
                 }
-                case EffectDynamics.HealOverTime heal -> heal.ticked().map(effect::withHeal);
-                case EffectDynamics.ShieldPool shield -> shield.ticked().map(effect::withShield);
+                case EffectDynamics.HealOverTime heal -> effect.afterTicks(1);
+                case EffectDynamics.ShieldPool shield -> effect.afterTicks(1);
                 default -> countDown(effect);
             };
             if (next.isPresent()) {
