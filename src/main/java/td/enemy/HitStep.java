@@ -13,11 +13,16 @@ package td.enemy;
 public record HitStep(Kind kind, float stat, float effective, float after) {
 
     public enum Kind {
-        CRIT, MITIGATION, FLAT_REDUCTION, DAMAGE_TAKEN, PERIODIC_TAKEN
+        CRIT, SHIELD, MITIGATION, FLAT_REDUCTION, DAMAGE_TAKEN, PERIODIC_TAKEN
     }
 
     public static HitStep crit(float factor, float after) {
         return new HitStep(Kind.CRIT, factor, factor, after);
+    }
+
+    /** The shields held {@code absorbed} units of the raw hit. */
+    public static HitStep shield(float absorbed, float after) {
+        return new HitStep(Kind.SHIELD, absorbed, absorbed, after);
     }
 
     public static HitStep mitigation(float stat, float penetrated, float after) {

@@ -10,8 +10,9 @@ import td.stat.StatView;
 import td.util.RandomSource;
 
 /**
- * The one formula a hit lands by: the dodge roll (aimed hits only), the crit roll (hits only), then penetration,
- * armor or magic resist, plating or insulation and damage taken. Computed in float and rounded once; a shield and the cap at health come after, on the mob.
+ * The one formula a hit lands by: the dodge roll (aimed hits only), the crit roll (hits only), then, past any shield,
+ * penetration, armor or magic resist, plating or insulation and damage taken. The crit is rounded where a shield
+ * meets the hit, what gets past is rounded once at the end, and the cap at health comes after, on the mob.
  */
 public final class HitResolution {
 
@@ -23,20 +24,29 @@ public final class HitResolution {
         return resolve(incoming, AttackProfile.none(), stats, () -> 1.0);
     }
 
-    /**
-     * What {@code incoming} lands for against {@code stats}, before any shield and uncapped; its type
-     * is kept, and it is critical if it arrived critical or the roll succeeds. The random source is
-     * only drawn from when the crit chance is above zero, so attackers without crit leave the sequence
-     * untouched.
-     */
+    /** What {@code incoming} lands for against {@code stats} with no shield in the way, uncapped. */
     public static Damage resolve(Damage incoming, AttackProfile attacker, StatView stats, RandomSource random) {
+        return pastShields(raw(incoming, attacker, stats, random), attacker, stats);
+    }
+
+    /**
+     * What {@code incoming} comes to as it meets the enemy, before any shield: its type kept, critical if it arrived
+     * critical or the roll succeeds, a rolled crit's factor applied. The random source is only drawn from when the
+     * crit chance is above zero, so attackers without crit leave the sequence untouched.
+     */
+    public static Damage raw(Damage incoming, AttackProfile attacker, StatView stats, RandomSource random) {
         float resilience = stats.value(EnemyStat.RESILIENCE);
         boolean rolledCrit = !incoming.critical() && attacker.delivery() == Delivery.HIT && resilience < 100f
                 && rollsCrit(attacker, resilience, random);
-        boolean critical = incoming.critical() || rolledCrit;
-        DamageType type = incoming.type();
-        float amount = rolledCrit ? incoming.amount() * critFactor(attacker, stats) : incoming.amount();
-        amount = afterMitigation(amount, type, attacker, stats, critical);
+        int amount = rolledCrit ? Math.round(incoming.amount() * critFactor(attacker, stats)) : incoming.amount();
+        return new Damage(amount, incoming.type(), incoming.critical() || rolledCrit);
+    }
+
+    /** What {@code raw}, the part of a hit no shield held, lands for against {@code stats}, uncapped. */
+    public static Damage pastShields(Damage raw, AttackProfile attacker, StatView stats) {
+        DamageType type = raw.type();
+        boolean critical = raw.critical();
+        float amount = afterMitigation(raw.amount(), type, attacker, stats, critical);
         amount = afterFlatReduction(amount, type, attacker, stats, critical);
         amount = afterDamageTaken(amount, type, stats);
         if (attacker.delivery() == Delivery.PERIODIC) {
@@ -45,21 +55,32 @@ public final class HitResolution {
         return new Damage(Math.round(amount), type, critical);
     }
 
+    /** {@link #steps(Damage, AttackProfile, StatView, boolean, int)} of a hit no shield held. */
+    public static HitSteps steps(Damage incoming, AttackProfile attacker, StatView stats, boolean rolledCrit) {
+        return steps(incoming, attacker, stats, rolledCrit, 0);
+    }
+
     /**
-     * {@link #resolve} with the crit already decided, one step at a time, for a trace of the hit: the same
-     * numbers, never a second roll.
+     * {@link #raw} and {@link #pastShields} with the crit already decided, one step at a time, for a trace of the
+     * hit: the same numbers, never a second roll.
      *
      * @param rolledCrit whether the crit roll succeeded; a hit that arrived critical is not rolled
+     * @param absorbed   the units of the raw hit the shields held
      */
-    public static HitSteps steps(Damage incoming, AttackProfile attacker, StatView stats, boolean rolledCrit) {
+    public static HitSteps steps(Damage incoming, AttackProfile attacker, StatView stats, boolean rolledCrit,
+                                 int absorbed) {
         boolean critical = incoming.critical() || rolledCrit;
         DamageType type = incoming.type();
         HitSteps steps = HitSteps.arriving(incoming, attacker.delivery());
         float amount = incoming.amount();
         if (rolledCrit) {
             float factor = critFactor(attacker, stats);
-            amount *= factor;
+            amount = Math.round(amount * factor);
             steps = steps.then(HitStep.crit(factor, amount));
+        }
+        if (absorbed > 0) {
+            amount -= absorbed;
+            steps = steps.then(HitStep.shield(absorbed, amount));
         }
         float mitigation = stats.value(EnemyStat.mitigationFor(type));
         amount = afterMitigation(amount, type, attacker, stats, critical);

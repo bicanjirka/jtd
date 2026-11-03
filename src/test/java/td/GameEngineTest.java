@@ -45,6 +45,7 @@ import td.save.GameSave;
 import td.save.GameSaveText;
 import td.save.TowerSave;
 import td.stat.DisruptionAura;
+import td.stat.StatCurves;
 import td.tower.AuraTower;
 import td.tower.MortarTower;
 import td.tower.PulseTower;
@@ -164,7 +165,7 @@ class GameEngineTest {
     }
 
     @Test
-    void armorReducesAHitBeforeTheShieldAbsorbsIt() {
+    void aShieldHoldsAHitBeforeArmorAndArmorCutsOnlyWhatGetsPast() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyMob enemy = spawnOnly(engine, EnemyDefinition.of("resist", "Resist", 100, 1, 1f, BodyArchetype.SQUARE)
                 .withArmor(100f));
@@ -173,7 +174,7 @@ class GameEngineTest {
         HitResult result = enemy.takeHit(Damage.physical(1000), AttackProfile.none());
 
         assertThat(result.absorbed()).isEqualTo(300);
-        assertThat(result.landed()).isEqualTo(Damage.physical(200));
+        assertThat(result.landed()).isEqualTo(Damage.physical(Math.round(700 * StatCurves.mitigationMultiplier(100f))));
     }
 
     @Test

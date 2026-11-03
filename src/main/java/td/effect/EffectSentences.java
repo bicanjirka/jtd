@@ -32,7 +32,9 @@ final class EffectSentences {
                     .plus(EffectKind.CHILL).plus(" and lasts longer by its level, and puts out ")
                     .plus(kinds(EffectKind::isBurning, " and ")).plus("; within "
                             + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts " + ladder(kind));
-            case SHIELD -> TermText.of("absorbs damage until its amount is spent or it runs out");
+            case SHIELD -> TermText.of("takes a hit before armor does, until its amount is spent or it runs out; more ")
+                    .plus(EnemyStat.SPIRIT).plus(" makes it hold more, shields from different sources add up, and damage that"
+                            + " ticks goes past it");
             case INVISIBLE -> TermText.of("towers can't aim at it, though damage on an area still reaches it");
             case HEAL -> TermText.of("adds to its ").plus(EnemyStat.REGENERATION)
                     .plus(" while it lasts; heals from different sources add up");

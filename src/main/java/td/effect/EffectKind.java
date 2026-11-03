@@ -23,7 +23,7 @@ public enum EffectKind implements Term {
     FREEZE("Freeze", EffectRule.of(EffectCategory.HARD_CC).resistedBy(EnemyStat.FREEZE_RESIST)
             .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.setTo(0f))
             .tagged(EffectTag.STOPS)),
-    SHIELD("Shield", EffectRule.of(EffectCategory.RESTORATIVE).helpsCarrier()),
+    SHIELD("Shield", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
     INVISIBLE("Invisibility", EffectRule.of(EffectCategory.STEALTH).perStack(EnemyStat.STEALTH, StatModifier.setTo(1f)).helpsCarrier()),
     HEAL("Heal", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
     VULNERABLE("Vulnerable", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)

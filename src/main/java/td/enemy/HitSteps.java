@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * A hit from what arrived to what {@link HitResolution} made of it, step by step: what a trace shows of
- * how the damage was reduced, before any shield and the cap at health.
+ * how the damage was reduced, shields included, before the cap at health.
  *
  * @param arrived  the damage as it arrived; critical if it came critical
  * @param delivery how it was delivered: a periodic hit never crits

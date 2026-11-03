@@ -98,9 +98,6 @@ public final class MobEventText {
         }
         MobEvent.HitOutcome outcome = hit.outcome();
         text.append(" resolved=").append(points(steps.result().amount()));
-        if (outcome.absorbed() > 0) {
-            text.append(" shield=-").append(points(outcome.absorbed()));
-        }
         return text.append(" landed=").append(points(outcome.landed().amount())).append(" hp=")
                 .append(points(outcome.healthBefore())).append("->").append(points(outcome.healthAfter())).append('/')
                 .append(points(label.maxHealth())).toString();
@@ -110,6 +107,7 @@ public final class MobEventText {
         String after = "->" + points(step.after());
         return switch (step.kind()) {
             case CRIT -> "crit=" + factor(step.stat()) + after;
+            case SHIELD -> "shield=-" + points(step.stat()) + after;
             case MITIGATION -> (type == DamageType.PHYSICAL ? "armor" : "magic_resist") + "=" + number(step.stat())
                     + penetrated(number(step.stat()), number(step.effective())) + after;
             case FLAT_REDUCTION -> (type == DamageType.PHYSICAL ? "plating" : "insulation") + "=" + points(step.stat())

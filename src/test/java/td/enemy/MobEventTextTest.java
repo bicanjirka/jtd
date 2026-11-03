@@ -46,16 +46,17 @@ class MobEventTextTest {
     void aHitShowsEveryStepFromWhatArrivedToWhatLandedInPoints() {
         HitSteps steps = HitSteps.arriving(Damage.physical(1000), Delivery.HIT)
                 .then(HitStep.crit(1.5f, 1500f))
-                .then(HitStep.mitigation(40f, 30f, 1153.85f))
-                .then(HitStep.flatReduction(200f, 100f, 1053.85f))
-                .then(HitStep.damageTaken(1f, 1053.85f))
-                .resolvedTo(new Damage(1054, DamageType.PHYSICAL, true));
+                .then(HitStep.shield(250f, 1250f))
+                .then(HitStep.mitigation(40f, 30f, 961.54f))
+                .then(HitStep.flatReduction(200f, 100f, 861.54f))
+                .then(HitStep.damageTaken(1f, 861.54f))
+                .resolvedTo(new Damage(862, DamageType.PHYSICAL, true));
         MobEvent.Hit hit = new MobEvent.Hit(new MobEvent.HitCause("Sniper@7,4", Optional.empty(), true), steps,
-                new MobEvent.HitOutcome(250, Damage.physical(804), 40_000, 39_196));
+                new MobEvent.HitOutcome(250, Damage.physical(862), 40_000, 39_138));
 
         assertThat(line(hit)).isEqualTo(PREFIX + "HIT from=Sniper@7,4 physical in=10 mark=spent crit=x1.50->15"
-                + " armor=40(pen->30)->11.54 plating=2(pen->1)->10.54 taken=x1.00->10.54 resolved=10.54 shield=-2.5"
-                + " landed=8.04 hp=400->391.96/500");
+                + " shield=-2.5->12.5 armor=40(pen->30)->9.62 plating=2(pen->1)->8.62 taken=x1.00->8.62 resolved=8.62"
+                + " landed=8.62 hp=400->391.38/500");
     }
 
     @Test

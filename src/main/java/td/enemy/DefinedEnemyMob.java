@@ -416,7 +416,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     /**
      * Applies the effect with its duration shortened by this mob's resistance to its kind and, for
      * hard crowd control, by diminishing returns. One that would last under a tick is blocked. Under
-     * Inversion a shield comes in as one hit. A shield's pool is scaled once, as it is applied, by spirit.
+     * Inversion a shield comes in as one hit.
      */
     public void applyEffect(Effect effect) {
         this.applyEffect(effect, AttackOrigin.none());
@@ -437,9 +437,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.strikeInsteadOfShielding(effect, inversion.get());
             return;
         }
-        this.applyResisted(effect.kind() == EffectKind.SHIELD
-                ? effect.withShieldScaledBy(StatCurves.restoreFactor(this.stats.value(EnemyStat.SPIRIT)))
-                : effect);
+        this.applyResisted(effect);
     }
 
     /**
@@ -681,7 +679,10 @@ public final class DefinedEnemyMob implements EnemyMob {
         return result;
     }
 
-    /** Armor and the rest of the hit formula first, then the shield's pool, then the cap at health. */
+    /**
+     * The crit first, then the shields, each worth what spirit makes it, then armor and the rest of the hit formula on
+     * what got past them, then the cap at health. Damage over time goes past the shields.
+     */
     private HitResult land(Damage damage, AttackProfile attacker, boolean markSpent) {
         if (this.isDead()) {
             return HitResult.none();
@@ -690,14 +691,17 @@ public final class DefinedEnemyMob implements EnemyMob {
         int overkill = 0;
         if (this.validTarget()) {
             int healthBefore = this.health.current();
-            Damage mitigated = HitResolution.resolve(damage, attacker, this.stats, this.gameWorld.random());
-            boolean bypasses = attacker.ignoresShields() || (mitigated.critical() && attacker.critsPierceShields());
-            int absorbed = bypasses ? 0 : this.activeEffects.absorb(mitigated.type(), mitigated.amount());
-            Damage landed = this.health.lose(new Damage(mitigated.amount() - absorbed, mitigated.type(), mitigated.critical()));
+            Damage raw = HitResolution.raw(damage, attacker, this.stats, this.gameWorld.random());
+            boolean meetsShields = attacker.delivery() == Delivery.HIT && !(raw.critical() && attacker.critsPierceShields());
+            int absorbed = meetsShields ? this.activeEffects.absorb(raw.type(), raw.amount(),
+                    StatCurves.restoreFactor(this.stats.value(EnemyStat.SPIRIT))) : 0;
+            Damage mitigated = HitResolution.pastShields(new Damage(raw.amount() - absorbed, raw.type(), raw.critical()),
+                    attacker, this.stats);
+            Damage landed = this.health.lose(mitigated);
             result = new HitResult(landed, absorbed);
-            overkill = mitigated.amount() - absorbed - landed.amount();
+            overkill = mitigated.amount() - landed.amount();
             if (this.observer.isOn()) {
-                this.reportHit(damage, attacker, markSpent, mitigated,
+                this.reportHit(damage, attacker, markSpent, raw,
                         new MobEvent.HitOutcome(absorbed, landed, healthBefore, this.health.current()));
             }
             this.gameWorld.damageTally().record(Damage.of(mitigated.type(), result.credited()));
@@ -718,13 +722,13 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /** Called before the hit invalidates the stats, so its steps read what it was resolved against. */
-    private void reportHit(Damage arrived, AttackProfile attacker, boolean markSpent, Damage mitigated,
+    private void reportHit(Damage arrived, AttackProfile attacker, boolean markSpent, Damage raw,
                            MobEvent.HitOutcome outcome) {
-        boolean rolledCrit = mitigated.critical() && !arrived.critical();
+        boolean rolledCrit = raw.critical() && !arrived.critical();
         Optional<EffectKind> source = attacker.delivery() == Delivery.PERIODIC ? this.observer.periodicSource()
                 : Optional.empty();
         this.observer.report(new MobEvent.Hit(new MobEvent.HitCause(this.nameOf(attacker.origin()), source, markSpent),
-                HitResolution.steps(arrived, attacker, this.stats, rolledCrit), outcome));
+                HitResolution.steps(arrived, attacker, this.stats, rolledCrit, outcome.absorbed()), outcome));
         if (outcome.absorbed() > 0) {
             this.reportEffects(MobObserver.ABSORBED);
         }
