@@ -308,6 +308,17 @@ class EnemyStatTextTest {
     }
 
     @Test
+    void theRegenerationHoverOfAHealedEnemyWithSpiritMarksSpiritAsItsOwnLine() {
+        DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("blessed").withSpirit(60f));
+        mob.applyEffect(Effect.heal(100, 40, DamageSink.none()));
+
+        Row regeneration = row(EnemyStatText.live(mob.inspect(), WORDING), "Regeneration").orElseThrow();
+
+        assertThat(regeneration.tooltip().orElseThrow().sheet().lines()).anySatisfy(line -> assertThat(line)
+                .isInstanceOfSatisfying(Row.class, spirit -> assertThat(spirit.label()).isEqualTo(EnemyStat.SPIRIT.title())));
+    }
+
+    @Test
     void agilityReadsAsPointsWithItsDodgeChance() {
         InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("nimble").withAgility(25f));
 
