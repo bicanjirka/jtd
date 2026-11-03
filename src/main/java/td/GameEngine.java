@@ -186,7 +186,8 @@ public class GameEngine {
                             "Level '" + level.name() + "', path " + (pathIndex + 1) + ", wave " + (round + 1) + ": "
                                     + e.getMessage(), e);
                 }
-                pathWaves.add(new Wave(this.gameWorld, content, scatterSeed, pathIndex, speedMultiplier));
+                pathWaves.add(new Wave(this.gameWorld, content, scatterSeed, pathIndex, speedMultiplier)
+                        .withClearBonus(wd.clearBonus()));
             }
             pathRuntimes.add(new PathRuntime(path, pathWaves, pathDefinition.color()));
         }
@@ -332,11 +333,26 @@ public class GameEngine {
         if (before.phase() == RoundState.Phase.RUNNING && after.phase() != RoundState.Phase.RUNNING
                 && after.phase() != RoundState.Phase.LOST) {
             this.gameWorld.zones().endWave();
+            this.payClearBonus(after);
             if (after.isWaveReady()) {
                 LOG.info("Wave {} cleared, ready for the next one", after.wave());
             }
         }
         this.logIfOver(before);
+    }
+
+    /** Pays the round that just ended its clear bonus, unless an enemy escaped it. */
+    private void payClearBonus(RoundState ended) {
+        int round = ended.wave() - 1;
+        LoadedLevel installed = this.gameWorld.level();
+        if (ended.leaked().contains(round) || round >= installed.waveCount()) {
+            return;
+        }
+        int bonus = installed.clearBonusAt(round);
+        if (bonus > 0) {
+            this.gameWorld.economy().apply(EconomyDelta.clearBonus(bonus));
+            LOG.info("Round {} cleared with no leak, {} bonus credits", ended.wave(), bonus);
+        }
     }
 
     private void logIfOver(RoundState before) {

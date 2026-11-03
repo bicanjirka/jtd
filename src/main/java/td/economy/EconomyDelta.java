@@ -34,6 +34,11 @@ public record EconomyDelta(int credits, int score, int lives) {
         return new EconomyDelta(bounty, score, 0);
     }
 
+    /** A round cleared with no enemy leaked: pays its bonus, scored alike. */
+    public static EconomyDelta clearBonus(int bonus) {
+        return new EconomyDelta(bonus, bonus, 0);
+    }
+
     /** An enemy reaching the end of the path: costs a life and score. */
     public static EconomyDelta leak(int penalty) {
         return leak(penalty, 1);

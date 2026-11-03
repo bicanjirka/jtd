@@ -64,31 +64,31 @@ final class CurlyPathLevel {
                     new Point(13, 3), new Point(11, 4), new Point(10, 6), new Point(10, 8),
                     new Point(6, 8), new Point(6, 3), new Point(7, 2), new Point(11, 2), new Point(11, -1)),
             List.of(
-                    new WaveDefinition("3 simple column 3 simple e bulky e line 3 simple e bulky e column 3 simple", Rank.GRUNT),
-                    new WaveDefinition("drip 4 courier e 4 simple e 4 courier e soldier plated courier e soldier bulky", Rank.GRUNT),
-                    new WaveDefinition("3 armored e line 3 armored mender 4 e 12 simple", Rank.SOLDIER),
-                    new WaveDefinition("golem e ghost 2 e 8 simple e ghost 2 e 8 simple", Rank.SOLDIER),
-                    new WaveDefinition("yeti 2 e yeti 2 e yeti e 6 golem", Rank.SOLDIER),
-                    new WaveDefinition("5 simple 3 e veteran 3 yeti 3 e drip 4 courier e 6 bulky", Rank.SOLDIER),
-                    new WaveDefinition("3 flank bulky 3 flank ghost 3 flank bulky 3 flank ghost 3 flank courier", Rank.SOLDIER),
-                    new WaveDefinition("veteran magma e 2 bulky 8 simple e veteran jammer e 7 armored e 6 flank simple mender", Rank.SOLDIER),
-                    new WaveDefinition("line 3 dodger 2 e line 3 dodger 2 e line 3 dodger", Rank.SOLDIER),
+                    new WaveDefinition("3 simple column 3 simple e bulky e line 3 simple e bulky e column 3 simple", Rank.GRUNT).withClearBonus(5),
+                    new WaveDefinition("drip 4 courier e 4 simple e 4 courier e soldier plated courier e soldier bulky", Rank.GRUNT).withClearBonus(5),
+                    new WaveDefinition("3 armored e line 3 armored mender 4 e 12 simple", Rank.SOLDIER).withClearBonus(5),
+                    new WaveDefinition("golem e ghost 2 e 8 simple e ghost 2 e 8 simple", Rank.SOLDIER).withClearBonus(5),
+                    new WaveDefinition("yeti 2 e yeti 2 e yeti e 6 golem", Rank.SOLDIER).withClearBonus(5),
+                    new WaveDefinition("5 simple 3 e veteran 3 yeti 3 e drip 4 courier e 6 bulky", Rank.SOLDIER).withClearBonus(5),
+                    new WaveDefinition("3 flank bulky 3 flank ghost 3 flank bulky 3 flank ghost 3 flank courier", Rank.SOLDIER).withClearBonus(5),
+                    new WaveDefinition("veteran magma e 2 bulky 8 simple e veteran jammer e 7 armored e 6 flank simple mender", Rank.SOLDIER).withClearBonus(5),
+                    new WaveDefinition("line 3 dodger 2 e line 3 dodger 2 e line 3 dodger", Rank.SOLDIER).withClearBonus(5),
                     new WaveDefinition("swarm 12 mite e column 10 mite e veteran fast e swarm 12 mite e column 10 simple e swarm 12 mite "
-                            + "e line 6 courier e column 8 simple e veteran fast", Rank.SOLDIER),
+                            + "e line 6 courier e column 8 simple e veteran fast", Rank.SOLDIER).withClearBonus(5),
                     new WaveDefinition("w8 column 12 mite elite ghost column 12 mite swarm 12 mite 2 e soldier line 4 simple column 8 mite "
                             + "elite ghost column 8 mite 2 e soldier column 10 simple column 12 mite soldier line 6 courier swarm 12 mite "
-                            + "column 10 simple elite ghost swarm 12 mite", Rank.VETERAN),
+                            + "column 10 simple elite ghost swarm 12 mite", Rank.VETERAN).withClearBonus(5),
                     new WaveDefinition("column 8 simple boss fast elite warder elite warder 3 e elite lizard e column 8 simple",
-                            Rank.ELITE),
-                    new WaveDefinition("drip 3 courier e column 6 simple e drip 3 courier", Rank.VETERAN),
-                    new WaveDefinition("titan e elite ghost", Rank.VETERAN),
+                            Rank.ELITE).withClearBonus(5),
+                    new WaveDefinition("drip 3 courier e column 6 simple e drip 3 courier", Rank.VETERAN).withClearBonus(5),
+                    new WaveDefinition("titan e elite ghost", Rank.VETERAN).withClearBonus(5),
                     new WaveDefinition("elite column 3 titan 2 veteran flank shield 3 e soldier 3 plated armored "
-                            + "e soldier column 10 simple", Rank.ELITE),
-                    new WaveDefinition("line 3 dodger e veteran jammer", Rank.ELITE),
+                            + "e soldier column 10 simple", Rank.ELITE).withClearBonus(5),
+                    new WaveDefinition("line 3 dodger e veteran jammer", Rank.ELITE).withClearBonus(5),
                     new WaveDefinition("2 titan veteran flank shield 3 e boss drip 3 yeti 3 e 9 fast warder warder 3 e "
-                            + "column 12 mite ghost column 12 mite swarm 12 mite e column 10 simple ghost swarm 12 mite", Rank.ELITE),
+                            + "column 12 mite ghost column 12 mite swarm 12 mite e column 10 simple ghost swarm 12 mite", Rank.ELITE).withClearBonus(5),
                     new WaveDefinition("warden 8 e elite swarm 12 mite 2 e veteran 3 dodger elite warder e veteran "
-                            + "column 10 simple e swarm 12 mite", Rank.BOSS)),
+                            + "column 10 simple e swarm 12 mite", Rank.BOSS).withClearBonus(5)),
             STARTING_CREDITS, STARTING_LIVES, SMOOTHING)
             .withCustomRankedEnemies(Stream.concat(Stream.of(WARDER, BULKY), WardenEnemy.chain().stream()).toList());
 

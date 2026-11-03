@@ -32,18 +32,31 @@ public class Wave {
     private final long scatterSeed;
     private final int pathIndex;
     private final float speedMultiplier;
+    private final int clearBonus;
 
     /** On path 0 at normal speed. */
     public Wave(GameWorld gameWorld, WaveContent content, long scatterSeed) {
         this(gameWorld, content, scatterSeed, 0, 1f);
     }
 
+    /** With no clear bonus. */
     public Wave(GameWorld gameWorld, WaveContent content, long scatterSeed, int pathIndex, float speedMultiplier) {
+        this(gameWorld, content, scatterSeed, pathIndex, speedMultiplier, 0);
+    }
+
+    private Wave(GameWorld gameWorld, WaveContent content, long scatterSeed, int pathIndex, float speedMultiplier,
+                 int clearBonus) {
         this.gameWorld = gameWorld;
         this.content = content;
         this.scatterSeed = scatterSeed;
         this.pathIndex = pathIndex;
         this.speedMultiplier = speedMultiplier;
+        this.clearBonus = clearBonus;
+    }
+
+    /** This wave paying {@code bonus} credits when its round clears with no enemy leaked. */
+    public Wave withClearBonus(int bonus) {
+        return new Wave(this.gameWorld, this.content, this.scatterSeed, this.pathIndex, this.speedMultiplier, bonus);
     }
 
     private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, long scatterSeed,
@@ -136,6 +149,11 @@ public class Wave {
 
     public int getPathIndex() {
         return this.pathIndex;
+    }
+
+    /** Credits this wave adds when its round clears with no enemy leaked. */
+    public int clearBonus() {
+        return this.clearBonus;
     }
 
 }
