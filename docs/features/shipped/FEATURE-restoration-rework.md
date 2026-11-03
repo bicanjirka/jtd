@@ -1,5 +1,9 @@
 # Feature Request: Restoration rework
 
+> **Status: implemented.** "Current state" below describes the code before the rework. Deferred: the board health
+> bar (a feature of its own), retuning content after the balance shift, and the Hexer picking an enemy that only
+> regenerates (`TODO.md`).
+
 ## Summary
 
 Heals, regeneration, shields and spirit follow one small set of rules instead of several overlapping
@@ -208,10 +212,12 @@ recovery mechanics a player can predict from the sheet, and code with one place 
 
 ## Open questions
 
-- What the Spirit line in the Regeneration hover is called when Cauterize is what lowered spirit:
-  "Spirit", or the source that changed it.
-- Whether the wave-preview hover (full health, no live effects) shows anything of shields an enemy will
-  cast, or stays as it is.
+- Whether the wave-preview hover (full health, no live effects) shows anything of the shields an enemy will cast. It
+  shows nothing for now.
+
+Resolved while implementing: the line in the Regeneration hover is named Spirit, with the stat's own mark, whatever
+lowered it. The Shield and Heal hovers list each source's share without naming the source: a share knows its source
+only by identity.
 
 ---
 
