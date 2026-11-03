@@ -101,6 +101,7 @@ public record EnemyDefinition(
             };
             case SpawnEnemiesAction ignored -> Optional.empty();
             case LeaveZoneAction ignored -> Optional.empty();
+            case ShoveAlliesAction ignored -> Optional.empty();
         };
     }
 

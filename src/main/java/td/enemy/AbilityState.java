@@ -16,6 +16,7 @@ public final class AbilityState {
     private int ticksRemaining;
     private boolean fired;
     private boolean waitingForReset;
+    private boolean armed;
 
     private AbilityState(int ticksRemaining) {
         this.ticksRemaining = ticksRemaining;
@@ -35,6 +36,7 @@ public final class AbilityState {
             case OnCriticalHitTakenTrigger t -> 0;
             case OnFirstDamageTakenTrigger t -> 0;
             case OnDodgeTrigger t -> 0;
+            case KinFallenTrigger t -> t.afterTicks();
         };
     }
 
@@ -60,6 +62,14 @@ public final class AbilityState {
 
     void markFired() {
         this.fired = true;
+    }
+
+    boolean isArmed() {
+        return this.armed;
+    }
+
+    void arm() {
+        this.armed = true;
     }
 
     boolean isWaitingForReset() {

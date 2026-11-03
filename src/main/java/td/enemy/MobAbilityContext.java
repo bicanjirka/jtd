@@ -5,6 +5,7 @@ import td.damage.Damage;
 import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.effect.EffectTemplate;
 import td.stat.DisruptionPenalty;
 import td.util.GameWorld;
@@ -63,6 +64,11 @@ final class MobAbilityContext implements AbilityContext {
     @Override
     public boolean justTookDamage() {
         return isNow(this.caster.ticksSinceDamageTaken(this.gameTime));
+    }
+
+    @Override
+    public boolean kinAlive(String definitionId) {
+        return this.world.enemies().anyAlive(definitionId, this.caster);
     }
 
     private static boolean isNow(OptionalInt ticksSince) {
@@ -132,6 +138,36 @@ final class MobAbilityContext implements AbilityContext {
         MobObserver observer = this.caster.observer();
         if (observer.isOn()) {
             observer.report(new MobEvent.ZoneLeft(action.kind(), action.radiusCells()));
+        }
+    }
+
+    @Override
+    public void shoveAllies(ShoveAlliesAction shove) {
+        float scale = this.world.getBoard().scale();
+        double radius2 = Math.pow(shove.radiusCells() * scale, 2);
+        double distance = shove.distanceCells() * scale;
+        double selfX = this.caster.getX();
+        double selfY = this.caster.getY();
+        int reached = 0;
+        for (EnemyMob other : this.world.enemies().getEnemies()) {
+            if (other == this.caster || !other.validTarget()) {
+                continue;
+            }
+            double dx = other.getX() - selfX;
+            double dy = other.getY() - selfY;
+            if (dx * dx + dy * dy <= radius2) {
+                other.accept(mob -> {
+                    mob.shoveAlong(distance);
+                    return null;
+                });
+                reached++;
+            }
+        }
+        // Drawn as a burst of speed, which is what a shove looks like on the board.
+        this.caster.recordAbilityCast(EffectKind.HASTENED, shove.radiusCells() * scale, this.gameTime);
+        MobObserver observer = this.caster.observer();
+        if (observer.isOn()) {
+            observer.report(new MobEvent.Cast(EffectKind.HASTENED, shove.radiusCells(), reached));
         }
     }
 

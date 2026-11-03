@@ -3,19 +3,31 @@ package td.enemy;
 import td.effect.EffectTemplate;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 final class FakeAbilityContext implements AbilityContext {
 
     final List<AppliedEffect> appliedEffects = new ArrayList<>();
     final List<SpawnCall> spawnCalls = new ArrayList<>();
     final List<LeaveZoneAction> zoneCalls = new ArrayList<>();
+    final List<ShoveAlliesAction> shoveCalls = new ArrayList<>();
+    private final Set<String> kinAlive = new HashSet<>();
     private float healthFraction = 1f;
     private int ticksSinceLastHit = Integer.MAX_VALUE / 2;
     private boolean justDied;
     private boolean justTookCriticalHit;
     private boolean justTookDamage;
     private boolean justDodged;
+
+    void setKinAlive(String definitionId, boolean alive) {
+        if (alive) {
+            this.kinAlive.add(definitionId);
+        } else {
+            this.kinAlive.remove(definitionId);
+        }
+    }
 
     void setHealthFraction(float healthFraction) {
         this.healthFraction = healthFraction;
@@ -72,6 +84,11 @@ final class FakeAbilityContext implements AbilityContext {
     }
 
     @Override
+    public boolean kinAlive(String definitionId) {
+        return this.kinAlive.contains(definitionId);
+    }
+
+    @Override
     public void applyEffect(EffectTemplate template, EffectTarget target) {
         this.appliedEffects.add(new AppliedEffect(template, target));
     }
@@ -79,6 +96,11 @@ final class FakeAbilityContext implements AbilityContext {
     @Override
     public void leaveZone(LeaveZoneAction zone) {
         this.zoneCalls.add(zone);
+    }
+
+    @Override
+    public void shoveAllies(ShoveAlliesAction shove) {
+        this.shoveCalls.add(shove);
     }
 
     @Override

@@ -50,6 +50,17 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         return near;
     }
 
+    /** Whether a mob of {@code definitionId} other than {@code except} is not dead yet, waiting to enter included. */
+    public boolean anyAlive(String definitionId, EnemyMob except) {
+        for (EnemyMob other : this.enemies) {
+            if (other != except && !other.isDead()
+                    && other.accept(mob -> mob.definition().id().equals(definitionId))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void setCount(int count) {
         this.count.set(count);
     }

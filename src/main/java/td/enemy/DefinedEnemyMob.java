@@ -138,6 +138,11 @@ public final class DefinedEnemyMob implements EnemyMob {
             case LARVA -> scale / 5.5f;
             case COCOON -> scale / 3.5f;
             case HORNET -> scale / (float) (6.5f - rank.ordinal());
+            case THUNDER -> scale / 1.8f;
+            case LIGHTNING -> scale / 2.2f;
+            case RAINCLOUD -> scale / 4.5f;
+            case RAINDROP -> scale / 9f;
+            case GALE -> scale / (float) (6 - rank.ordinal());
             case MENDER, SHIELDBEARER -> scale / (float) (7 - rank.ordinal());
         };
     }
@@ -324,6 +329,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** Places this mob anywhere along its path, so an ability spawn appears where its parent was. */
     void jumpToDistance(double distanceIntoLap) {
         this.motion.jumpTo(distanceIntoLap);
+    }
+
+    /** Moves it {@code pixels} further along its path at once, stopping short of the end: a shove, not a walk. */
+    void shoveAlong(double pixels) {
+        this.motion.shove(pixels);
     }
 
     /** Passed on by an ability spawn so the new mob stays on its parent's path. */

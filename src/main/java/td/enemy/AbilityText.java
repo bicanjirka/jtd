@@ -30,7 +30,7 @@ final class AbilityText {
     }
 
     static TermText of(Ability ability, Words words) {
-        return TermText.of(when(ability.trigger()) + ": ").plus(what(ability.action(), words));
+        return TermText.of(when(ability.trigger(), words) + ": ").plus(what(ability.action(), words));
     }
 
     /** A Jammer's disruption, as the trait the player sees. */
@@ -40,7 +40,7 @@ final class AbilityText {
                 + TermNumbers.signed(-aura.rangePenaltyCells()) + " cells");
     }
 
-    private static String when(AbilityTrigger trigger) {
+    private static String when(AbilityTrigger trigger, Words words) {
         return switch (trigger) {
             case PeriodicTrigger periodic -> "every " + seconds(periodic.intervalTicks())
                     + (periodic.minHealthFraction() > 0f
@@ -53,6 +53,8 @@ final class AbilityText {
             case OnCriticalHitTakenTrigger _ -> "each time it survives a crit";
             case OnFirstDamageTakenTrigger _ -> "the first time it is hit";
             case OnDodgeTrigger _ -> "each time it dodges";
+            case KinFallenTrigger kin -> "once, if it still stands " + seconds(kin.afterTicks()) + " after the "
+                    + words.enemyName().apply(kin.kinId()) + " falls";
         };
     }
 
@@ -65,6 +67,9 @@ final class AbilityText {
                         .plus(effect(apply.template()));
             };
             case LeaveZoneAction zone -> zoneText(zone);
+            case ShoveAlliesAction shove -> TermText.of("shoves every other enemy within "
+                    + TermNumbers.cells(shove.radiusCells()) + " " + TermNumbers.cells(shove.distanceCells())
+                    + " further along its path");
             case SpawnEnemiesAction spawn -> spawn.consumesSelf()
                     ? TermText.of("turns into " + words.enemyName().apply(spawn.definitionId()))
                     : TermText.of("calls " + spawn.shape().members() + " " + words.enemyName().apply(spawn.definitionId()));

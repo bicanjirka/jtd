@@ -13,6 +13,7 @@ import td.enemy.EnemyMob;
 import td.enemy.LeaveZoneAction;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
+import td.enemy.ShoveAlliesAction;
 import td.enemy.SpawnEnemiesAction;
 import td.level.LevelDefinition;
 import td.tower.Tower;
@@ -313,6 +314,7 @@ public final class TowerLab {
                         case ApplyEffectAction apply -> apply.template().kind() == EffectKind.INVISIBLE;
                         case SpawnEnemiesAction spawn -> false;
                         case LeaveZoneAction zone -> false;
+                        case ShoveAlliesAction shove -> false;
                     });
         }).toList();
     }
@@ -642,6 +644,8 @@ public final class TowerLab {
                     case ApplyEffectAction apply -> keys.add(PlayRecord.Watch.castKey(key, apply.template().kind()));
                     case LeaveZoneAction zone -> {
                     }
+                    case ShoveAlliesAction shove -> {
+                    }
                 }
             }
         }
@@ -798,6 +802,8 @@ public final class TowerLab {
                         case ApplyEffectAction ignored -> {
                         }
                         case LeaveZoneAction ignored -> {
+                        }
+                        case ShoveAlliesAction ignored -> {
                         }
                     }
                 }

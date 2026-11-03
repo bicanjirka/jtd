@@ -19,6 +19,7 @@ public final class AbilityEvaluator {
             case OnCriticalHitTakenTrigger ignored -> context.justTookCriticalHit();
             case OnDodgeTrigger ignored -> context.justDodged();
             case OnFirstDamageTakenTrigger ignored -> fireOnFirstDamageTaken(state, context);
+            case KinFallenTrigger t -> fireKinFallen(t, state, context);
         };
     }
 
@@ -27,6 +28,7 @@ public final class AbilityEvaluator {
             case ApplyEffectAction a -> context.applyEffect(a.template(), a.target());
             case SpawnEnemiesAction a -> context.spawnEnemies(a);
             case LeaveZoneAction a -> context.leaveZone(a);
+            case ShoveAlliesAction a -> context.shoveAllies(a);
         }
     }
 
@@ -79,6 +81,27 @@ public final class AbilityEvaluator {
         }
         state.markFired();
         return true;
+    }
+
+    /** Arms on seeing its kin alive, counts down while none lives and restarts when one does, and fires once. */
+    private static boolean fireKinFallen(KinFallenTrigger trigger, AbilityState state, AbilityContext context) {
+        if (state.isFired()) {
+            return false;
+        }
+        if (context.kinAlive(trigger.kinId())) {
+            state.arm();
+            state.resetTicks(trigger.afterTicks());
+            return false;
+        }
+        if (!state.isArmed()) {
+            return false;
+        }
+        state.tickDown();
+        if (state.ticksRemaining() <= 0) {
+            state.markFired();
+            return true;
+        }
+        return false;
     }
 
     /** Fires once the idle window is reached, then waits for a hit to re-arm. */

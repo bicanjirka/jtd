@@ -225,6 +225,11 @@ public final class Java2DFrameRenderer {
             case ENEMY_WARDEN -> starShape(8, scale, scale * 0.55f);
             case ENEMY_WARDEN_EGG -> wardenEggShape(scale);
             case ENEMY_MENDER, ENEMY_SHIELDBEARER -> crossShape(scale);
+            case ENEMY_GALE -> galeShape(scale);
+            case ENEMY_RAINDROP -> raindropShape(scale);
+            case ENEMY_RAINCLOUD -> cloudShape(scale);
+            case ENEMY_LIGHTNING -> AffineTransform.getRotateInstance(-Math.PI / 2).createTransformedShape(boltShape(scale));
+            case ENEMY_THUNDER -> thunderheadShape(scale);
             case ENEMY_HORNET -> hornetShape(scale);
             case ENEMY_COCOON -> new Ellipse2D.Float(-scale * 0.7f, -scale * 1.15f, scale * 1.4f, scale * 2.3f);
             case ENEMY_LARVA -> grubShape(scale);
@@ -253,6 +258,10 @@ public final class Java2DFrameRenderer {
             case ENEMY_MONOLITH -> Optional.of(runeShape(scale));
             case ENEMY_TALOS -> Optional.of(new Rectangle2D.Float(-scale * 0.07f, -scale * 0.35f, scale * 0.14f, scale * 1.2f));
             case ENEMY_MINOTAUR, ENEMY_BRONZE_BULL -> Optional.of(hornsShape(scale));
+            case ENEMY_GALE -> Optional.of(circleShape(scale * 0.22f));
+            case ENEMY_RAINCLOUD -> Optional.of(rainStreaksShape(scale));
+            case ENEMY_LIGHTNING -> Optional.of(AffineTransform.getRotateInstance(-Math.PI / 2).createTransformedShape(boltShape(scale * 0.45f)));
+            case ENEMY_THUNDER -> Optional.of(AffineTransform.getTranslateInstance(0, scale * 0.55f).createTransformedShape(boltShape(scale * 0.6f)));
             case ENEMY_HORNET -> Optional.of(hornetStripesShape(scale));
             case ENEMY_COCOON -> Optional.of(cocoonBandsShape(scale));
             case ENEMY_LARVA -> Optional.of(new Ellipse2D.Float(scale * 0.62f, -scale * 0.18f, scale * 0.36f, scale * 0.36f));
@@ -279,6 +288,10 @@ public final class Java2DFrameRenderer {
             case ENEMY_TALOS -> new Color(200, 25, 30);
             case ENEMY_MINOTAUR -> new Color(235, 225, 200);
             case ENEMY_BRONZE_BULL -> new Color(110, 65, 25);
+            case ENEMY_GALE -> new Color(90, 160, 150);
+            case ENEMY_RAINCLOUD -> new Color(95, 150, 240);
+            case ENEMY_LIGHTNING -> new Color(255, 255, 255);
+            case ENEMY_THUNDER -> new Color(255, 225, 80);
             case ENEMY_HORNET -> new Color(35, 22, 10);
             case ENEMY_COCOON -> new Color(150, 130, 95);
             case ENEMY_LARVA -> new Color(130, 85, 40);
@@ -543,6 +556,70 @@ public final class Java2DFrameRenderer {
         return stripes;
     }
 
+    /** A storm cloud: three puffs over a flat base. */
+    private static Shape cloudShape(float scale) {
+        Area cloud = new Area(new Ellipse2D.Float(-scale * 0.95f, -scale * 0.45f, scale * 1.0f, scale * 1.0f));
+        cloud.add(new Area(new Ellipse2D.Float(-scale * 0.5f, -scale * 0.85f, scale * 1.2f, scale * 1.2f)));
+        cloud.add(new Area(new Ellipse2D.Float(scale * 0.1f, -scale * 0.4f, scale * 0.9f, scale * 0.9f)));
+        cloud.add(new Area(new RoundRectangle2D.Float(-scale * 0.95f, -scale * 0.05f, scale * 1.95f, scale * 0.6f,
+                scale * 0.5f, scale * 0.5f)));
+        return cloud;
+    }
+
+    /** A thunderhead: a storm cloud, wider than a raincloud and heavier. */
+    private static Shape thunderheadShape(float scale) {
+        return AffineTransform.getScaleInstance(1.2, 1.0).createTransformedShape(cloudShape(scale));
+    }
+
+    /** A lightning bolt, striking downward. */
+    private static Shape boltShape(float scale) {
+        GeneralPath bolt = new GeneralPath();
+        bolt.moveTo(scale * 0.25f, -scale);
+        bolt.lineTo(-scale * 0.5f, scale * 0.15f);
+        bolt.lineTo(-scale * 0.05f, scale * 0.15f);
+        bolt.lineTo(-scale * 0.3f, scale);
+        bolt.lineTo(scale * 0.5f, -scale * 0.2f);
+        bolt.lineTo(scale * 0.05f, -scale * 0.2f);
+        bolt.lineTo(scale * 0.45f, -scale);
+        bolt.closePath();
+        return bolt;
+    }
+
+    /** Three slanting streaks of rain under a cloud. */
+    private static Shape rainStreaksShape(float scale) {
+        Area streaks = new Area();
+        for (float x : new float[] {-scale * 0.5f, 0f, scale * 0.5f}) {
+            Shape streak = new RoundRectangle2D.Float(x - scale * 0.07f, scale * 0.15f, scale * 0.14f, scale * 0.38f,
+                    scale * 0.1f, scale * 0.1f);
+            streaks.add(new Area(AffineTransform.getRotateInstance(0.3, x, scale * 0.3f).createTransformedShape(streak)));
+        }
+        return streaks;
+    }
+
+    /** A drop of rain, point forward. */
+    private static Shape raindropShape(float scale) {
+        GeneralPath drop = new GeneralPath();
+        drop.moveTo(scale * 1.1f, 0);
+        drop.curveTo(scale * 0.2f, -scale * 0.75f, -scale * 0.8f, -scale * 0.6f, -scale * 0.8f, 0);
+        drop.curveTo(-scale * 0.8f, scale * 0.6f, scale * 0.2f, scale * 0.75f, scale * 1.1f, 0);
+        drop.closePath();
+        return drop;
+    }
+
+    /** A whirlwind: three curved blades about a still eye. */
+    private static Shape galeShape(float scale) {
+        GeneralPath blade = new GeneralPath();
+        blade.moveTo(scale * 0.1f, 0);
+        blade.curveTo(scale * 0.65f, -scale * 0.1f, scale * 1.0f, -scale * 0.45f, scale * 0.9f, -scale * 1.0f);
+        blade.curveTo(scale * 0.65f, -scale * 0.5f, scale * 0.25f, -scale * 0.35f, 0, -scale * 0.12f);
+        blade.closePath();
+        Area gale = new Area(circleShape(scale * 0.32f));
+        for (int i = 0; i < 3; i++) {
+            gale.add(new Area(AffineTransform.getRotateInstance(i * 2 * Math.PI / 3).createTransformedShape(blade)));
+        }
+        return gale;
+    }
+
     private static Shape circleShape(float scale) {
         return new Ellipse2D.Float(-scale, -scale, scale * 2, scale * 2);
     }
@@ -762,6 +839,11 @@ public final class Java2DFrameRenderer {
             case ENEMY_TALOS -> new Color(205, 135, 60);
             case ENEMY_MINOTAUR -> new Color(115, 60, 35);
             case ENEMY_BRONZE_BULL -> new Color(190, 120, 50);
+            case ENEMY_GALE -> new Color(180, 232, 222);
+            case ENEMY_RAINDROP -> new Color(110, 170, 255);
+            case ENEMY_RAINCLOUD -> new Color(150, 165, 192);
+            case ENEMY_LIGHTNING -> new Color(255, 235, 120);
+            case ENEMY_THUNDER -> new Color(70, 80, 118);
             case ENEMY_HORNET -> new Color(235, 115, 30);
             case ENEMY_COCOON -> new Color(220, 210, 185);
             case ENEMY_LARVA -> new Color(240, 232, 205);

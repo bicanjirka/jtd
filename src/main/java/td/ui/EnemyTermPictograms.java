@@ -76,6 +76,10 @@ final class EnemyTermPictograms {
             // Hatch
             // Pupate
             Map.entry("ability.pupate", "F M12 2.6C16 2.6 17.8 7.4 17.8 12C17.8 16.6 16 21.4 12 21.4C8 21.4 6.2 16.6 6.2 12C6.2 7.4 8 2.6 12 2.6Z ; X M6.8 9.4L17.2 6.8 M6.4 13.6L17.6 11 M7.2 17.8L16.8 15.4"),
+            // Gust
+            Map.entry("ability.gust", "S M2.6 7.4H13.4A2.8 2.8 0 1 0 10.6 4.6 M2.6 12H17.8 M2.6 16.6H12.2A2.8 2.8 0 1 1 9.4 19.4 ; F M18.4 8.4L22.4 12L18.4 15.6Z"),
+            // Bond
+            Map.entry("ability.bond", "S O8.2 12 5.6 ; S O15.8 12 5.6 ; F M10.6 12A1.4 1.4 0 1 0 13.4 12A1.4 1.4 0 1 0 10.6 12Z"),
             // Last Ward
             Map.entry("ability.last_ward", "F M5.8 20.6V10C5.8 6.4 8.6 3.4 12 3.4C15.4 3.4 18.2 6.4 18.2 10V20.6Z ; K M12 6.4L16 8V11.4C16 14 14.4 15.8 12 16.8C9.6 15.8 8 14 8 11.4V8Z ; T M2.6 21.4H21.4"),
             // Healing Pool
@@ -86,6 +90,8 @@ final class EnemyTermPictograms {
             Map.entry("ability.ward_mine", "F O12 14.4 6.4 ; K M12 9.6L15.2 10.8V13.4C15.2 15.2 14 16.6 12 17.4C10 16.6 8.8 15.2 8.8 13.4V10.8Z ; T M12 2.4V5.4 M4.6 5.6L6.6 7.6 M19.4 5.6L17.4 7.6"),
             // Blinding Burst
             Map.entry("ability.blinding_burst", "S M2.6 12C6 7 18 7 21.4 12C18 17 6 17 2.6 12Z ; F O12 12 3 ; T M4.4 4.6L19.6 19.4"),
+            // Thunderclap
+            Map.entry("ability.thunderclap", "=ability.blinding_burst"),
             // Stone Skin
             Map.entry("ability.stone_skin", "F M12 2.5L20.2 7.2V16.8L12 21.5L3.8 16.8V7.2Z ; X M9.6 6.4L11.4 10L9 13.2L10.8 17.6 M14.6 8.6L13.2 12L15.4 15"),
             // Spell Ward

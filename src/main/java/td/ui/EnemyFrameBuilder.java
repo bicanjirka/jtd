@@ -210,6 +210,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case TALOS -> Palette.ENEMY_TALOS;
             case MINOTAUR -> Palette.ENEMY_MINOTAUR;
             case BRONZE_BULL -> Palette.ENEMY_BRONZE_BULL;
+            case GALE -> Palette.ENEMY_GALE;
+            case RAINDROP -> Palette.ENEMY_RAINDROP;
+            case RAINCLOUD -> Palette.ENEMY_RAINCLOUD;
+            case LIGHTNING -> Palette.ENEMY_LIGHTNING;
+            case THUNDER -> Palette.ENEMY_THUNDER;
             case HORNET -> Palette.ENEMY_HORNET;
             case COCOON -> Palette.ENEMY_COCOON;
             case LARVA -> Palette.ENEMY_LARVA;
