@@ -1,6 +1,7 @@
 package td.level;
 
 import td.board.BoardGround;
+import td.board.GroundMotif;
 import td.enemy.Rank;
 import td.wave.PathColor;
 import td.wave.PathDefinition;
@@ -74,7 +75,7 @@ final class IronCrossingLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
-            .withGround(BoardGround.floor(0x0D0F14))
+            .withGround(BoardGround.of(0x0D0F14, GroundMotif.PLATES, 0x262B36))
             .withCustomEnemies(List.of(ColossusEnemy.ember()))
             .withCustomRankedEnemies(ColossusEnemy.chain());
 

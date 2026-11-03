@@ -8,5 +8,11 @@ public enum GroundMotif {
     /** Slanting streaks of rain. */
     RAIN,
     /** Rippled lines, like wind-blown sand. */
-    DUNES
+    DUNES,
+    /** Riveted steel plates. */
+    PLATES,
+    /** Jagged cracks running out from the middle of the board. */
+    FISSURES,
+    /** Rows of uneven paving stones. */
+    FLAGSTONES
 }
