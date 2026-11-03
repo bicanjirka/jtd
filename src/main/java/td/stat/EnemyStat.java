@@ -46,12 +46,9 @@ public enum EnemyStat implements StatKey, StatTerm {
     /** Multiplies damage that ticks (a burn, a poison, a field), whatever its type. */
     PERIODIC_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE, "DoT taken", "Damage over time taken", StatUnit.PERCENT,
             StatDirection.HIGHER, StatGroup.DAMAGE_TAKEN, "the share of damage that ticks it takes, whatever its type"),
-    /** Heals and shields the enemy receives are scaled by {@code max(0, 1 + spirit / 100)}. */
+    /** What the enemy's regeneration restores and its shields hold is scaled by {@code StatCurves.restoreFactor}. */
     SPIRIT(0f, -100f, Float.MAX_VALUE, "Spirit", "Spirit", StatUnit.POINTS, StatDirection.LOWER, StatGroup.HEALING,
-            "makes heals and shields on it stronger and runs its debuffs out faster; below zero weaker and slower"),
-    /** The share of heals and shields the enemy receives. */
-    HEALING_RECEIVED(1f, 0f, Float.MAX_VALUE, "Healing", "Healing received", StatUnit.PERCENT, StatDirection.LOWER,
-            StatGroup.HEALING, "the share of heals and shields that reach it"),
+            "makes its regeneration and shields stronger; below zero weaker, and at -100 worth nothing"),
     REGENERATION(0f, 0f, Float.MAX_VALUE, "Regeneration", "Regeneration", StatUnit.HP_PER_SECOND, StatDirection.LOWER,
             StatGroup.HEALING, "health it gains back every second"),
     CHILL_RESIST(0f, 0f, 1f, "Chill resist", "Chill resist", StatUnit.PERCENT, StatDirection.LOWER, StatGroup.RESISTS,
@@ -168,9 +165,9 @@ public enum EnemyStat implements StatKey, StatTerm {
                     : Optional.empty();
             case RESILIENCE -> resilienceMeaning(value);
             case SPIRIT -> value == 0f ? Optional.empty()
-                    : Optional.of(TermNumbers.signedPercent(value / FULL) + " heals");
+                    : Optional.of(TermNumbers.signedPercent(value / FULL) + " recovery");
             case PLATING, INSULATION, CHILL_RESIST, BURN_RESIST, FREEZE_RESIST, MOVE_SPEED, PHYSICAL_DAMAGE_TAKEN, MAGIC_DAMAGE_TAKEN, PERIODIC_DAMAGE_TAKEN,
-                 HEALING_RECEIVED, REGENERATION, STEALTH -> Optional.empty();
+                 REGENERATION, STEALTH -> Optional.empty();
         };
     }
 

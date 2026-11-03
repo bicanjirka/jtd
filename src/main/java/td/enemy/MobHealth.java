@@ -50,19 +50,17 @@ final class MobHealth {
         return landed;
     }
 
-    /**
-     * Adds a tick of regeneration, landing only whole units, never above the maximum.
-     *
-     * @return whether health changed
-     */
-    boolean regenerate(float perTick) {
+    /** The whole units a tick of {@code perTick} regeneration brings, keeping the part of a unit that is not yet whole. */
+    int regenerationDue(float perTick) {
         this.regenCarry += perTick;
         int whole = (int) this.regenCarry;
         this.regenCarry -= whole;
-        int healed = Math.min(this.max, this.current + whole);
-        boolean changed = healed != this.current;
-        this.current = healed;
-        return changed;
+        return whole;
+    }
+
+    /** Adds {@code units} to health, never above the maximum; what does not fit is lost. */
+    void heal(int units) {
+        this.current = Math.min(this.max, this.current + units);
     }
 
     void restore() {

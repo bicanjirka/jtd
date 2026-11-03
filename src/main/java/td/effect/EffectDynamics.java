@@ -1,8 +1,10 @@
 package td.effect;
 
+import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,12 +87,65 @@ public sealed interface EffectDynamics {
         }
     }
 
-    /** Health restored every tick. */
-    record HealOverTime(int perTick) implements EffectDynamics {
-    }
+    /** Regeneration added while it lasts: one share per source, which together add up. */
+    record HealOverTime(List<HealShare> shares) implements EffectDynamics {
 
-    /** Damage every tick: a heal turned against its carrier by Inversion. */
-    record TickDamage(Damage perTick) implements EffectDynamics {
+        public HealOverTime {
+            shares = List.copyOf(shares);
+        }
+
+        /** What every share adds together, in damage units a tick. */
+        public int perTick() {
+            int sum = 0;
+            for (HealShare share : this.shares) {
+                sum += share.perTick();
+            }
+            return sum;
+        }
+
+        /** The ticks until the last share runs out. */
+        public int remainingTicks() {
+            int most = 0;
+            for (HealShare share : this.shares) {
+                most = Math.max(most, share.remainingTicks());
+            }
+            return most;
+        }
+
+        /** Every share keyed to {@code source}. */
+        HealOverTime from(AttackOrigin source) {
+            return new HealOverTime(this.shares.stream()
+                    .map(share -> new HealShare(source, share.perTick(), share.remainingTicks())).toList());
+        }
+
+        /** With {@code incoming}'s shares: a source already here is refreshed, a new one is added. */
+        HealOverTime with(HealOverTime incoming) {
+            List<HealShare> merged = new ArrayList<>(this.shares);
+            for (HealShare share : incoming.shares) {
+                int at = indexOf(merged, share.source());
+                if (at < 0) {
+                    merged.add(share);
+                } else {
+                    merged.set(at, merged.get(at).refreshedBy(share));
+                }
+            }
+            return new HealOverTime(merged);
+        }
+
+        /** A tick later, without the shares that ran out; empty once none is left. */
+        Optional<HealOverTime> ticked() {
+            List<HealShare> left = this.shares.stream().map(HealShare::ticked).filter(share -> !share.isOver()).toList();
+            return left.isEmpty() ? Optional.empty() : Optional.of(new HealOverTime(left));
+        }
+
+        private static int indexOf(List<HealShare> shares, AttackOrigin source) {
+            for (int i = 0; i < shares.size(); i++) {
+                if (shares.get(i).source() == source) {
+                    return i;
+                }
+            }
+            return -1;
+        }
     }
 
     /** A shield's remaining points, its full size, and the damage type it is limited to. */

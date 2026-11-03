@@ -66,7 +66,7 @@ final class StatLooks {
             case PHYSICAL_DAMAGE_TAKEN -> StatLook.toned(Glyph.CRACKED_SHIELD, Palette.DAMAGE_PHYSICAL);
             case MAGIC_DAMAGE_TAKEN -> StatLook.toned(Glyph.CRACKED_SHIELD, Palette.DAMAGE_MAGIC);
             case PERIODIC_DAMAGE_TAKEN -> StatLook.plain(Glyph.CRACKED_SHIELD);
-            case SPIRIT, HEALING_RECEIVED, REGENERATION -> StatLook.toned(Glyph.PLUS, Palette.STATUS_MARKER_HEAL);
+            case SPIRIT, REGENERATION -> StatLook.toned(Glyph.PLUS, Palette.STATUS_MARKER_HEAL);
             case CHILL_RESIST -> StatLook.warded(EffectKind.CHILL);
             case BURN_RESIST -> StatLook.warded(EffectKind.BURN);
             case FREEZE_RESIST -> StatLook.warded(EffectKind.FREEZE);

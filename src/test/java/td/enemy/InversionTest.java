@@ -2,6 +2,7 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -9,6 +10,7 @@ import td.effect.HealTemplate;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,22 @@ class InversionTest {
         }
 
         assertThat(enemy.damageTaken() - before).isPositive();
+    }
+
+    @Test
+    void anInvertedEnemysOwnRegenerationIsDealtToItAsMagicCreditedToTheInversion() {
+        float pointsPerSecond = 20f;
+        DefinedEnemyMob enemy = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("mending")
+                .withTraits(List.of(new RegenerationTrait(pointsPerSecond))));
+        enemy.doDamage(Damage.physical(enemy.getHealth() / 2));
+        List<Damage> credited = new ArrayList<>();
+        invert(enemy, credited);
+        int wounded = enemy.getHealth();
+
+        enemy.doTick(1);
+
+        assertThat(credited).containsExactly(Damage.magic(Math.round(DamageUnits.ofPoints(pointsPerSecond) / TickRate.TICKS_PER_SECOND)));
+        assertThat(enemy.getHealth()).isLessThan(wounded);
     }
 
     @Test

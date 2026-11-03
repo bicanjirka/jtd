@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,18 +69,6 @@ class EffectTest {
         assertThat(heal.dynamics()).isInstanceOf(EffectDynamics.HealOverTime.class);
         assertThat(heal.healPerTick()).isEqualTo(12);
         assertThat(heal.damagePerTick()).isEqualTo(Damage.none());
-    }
-
-    @Test
-    void anInvertedHealDealsDamageEveryTick() {
-        List<Damage> dealt = new ArrayList<>();
-
-        Effect inverted = Effect.heal(12, 40, DamageSink.none()).invertedThrough(dealt::add);
-        inverted.sink().apply(inverted.damagePerTick());
-
-        assertThat(inverted.dynamics()).isInstanceOf(EffectDynamics.TickDamage.class);
-        assertThat(inverted.healPerTick()).isZero();
-        assertThat(dealt).containsExactly(Damage.magic(12));
     }
 
     @Test

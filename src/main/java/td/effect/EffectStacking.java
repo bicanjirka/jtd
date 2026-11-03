@@ -11,5 +11,7 @@ public enum EffectStacking {
     /** A decaying level made of one contribution per application (chill). */
     LEVEL,
     /** A decaying fuel pool (burn, poison, Soulfire). */
-    POOL
+    POOL,
+    /** One share per source that add up; a recast from the same source refreshes its own share. */
+    PER_SOURCE
 }

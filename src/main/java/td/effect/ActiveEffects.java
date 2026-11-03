@@ -45,14 +45,8 @@ public final class ActiveEffects {
     /** How much of a burn's damage a full chill takes away. */
     static final float BURN_CHILL_DAMPENING = 0.5f;
 
-    /**
-     * A stack debuff loses a stack this often at neutral spirit: one per second, half as fast as a pool
-     * earns them. A spirit above zero speeds it up, and at -100 it never happens.
-     */
+    /** A stack debuff loses a stack this often: one per second, half as fast as a pool earns them. */
     public static final int STACK_DECAY_INTERVAL_TICKS = 20;
-
-    /** The slowest a spirit-paced timer runs, however low the enemy's spirit. */
-    private static final float MIN_DEBUFF_PACE = 0.25f;
 
     /** A burn pool reveals an invisible enemy while it holds more than this, in damage units a tick. */
     private static final float BURN_REVEAL_FUEL = 30f;
@@ -62,10 +56,7 @@ public final class ActiveEffects {
     private static final StatModifier REVEALED = StatModifier.setTo(0f);
 
     private final Map<EffectKind, Effect> active = new EnumMap<>(EffectKind.class);
-    /**
-     * Per kind, spirit-scaled progress that is not yet a whole step: towards a stack debuff's next
-     * lost stack, or the part of a tick a paced timer has gathered.
-     */
+    /** Per kind, progress that is not yet a whole step: towards a stack debuff's next lost stack, or a bleed's next unit. */
     private final float[] progress = new float[EffectKind.values().length];
 
     private static Effect strongerOf(Effect a, Effect b) {
@@ -82,7 +73,6 @@ public final class ActiveEffects {
             case EffectDynamics.ChillLevel _ -> effect.fuelLevel();
             case EffectDynamics.FuelPool pool -> pool.perTick().amount();
             case EffectDynamics.HealOverTime heal -> heal.perTick();
-            case EffectDynamics.TickDamage damage -> damage.perTick().amount();
             case EffectDynamics.ShieldPool shield -> shield.remaining();
             case EffectDynamics.Distance distance -> distance.perCell().amount();
         };
@@ -133,6 +123,10 @@ public final class ActiveEffects {
             case LEVEL -> this.applyChill(incoming);
             case POOL -> this.applyPool(incoming);
             case SHARED_CLOCK, EARNED -> this.applyStacks(incoming);
+            case PER_SOURCE -> {
+                Effect existing = this.active.get(incoming.kind());
+                this.active.put(incoming.kind(), existing == null ? incoming : existing.joinedBy(incoming));
+            }
             case REFRESH -> {
                 Effect existing = this.active.get(incoming.kind());
                 // A hold renewed before it ends would never end: its diminishing returns only count fresh holds.
@@ -342,7 +336,7 @@ public final class ActiveEffects {
             case LEVEL -> OptionalDouble.of(chillLevel(effect) / MAX_CHILL);
             case POOL -> OptionalDouble.of(Math.min(1f,
                     effect.fuelLevel() / (effect.tuning().capFactor() * effect.peakL0() * this.poolFactor())));
-            case REFRESH, SHARED_CLOCK, EARNED -> OptionalDouble.empty();
+            case REFRESH, SHARED_CLOCK, EARNED, PER_SOURCE -> OptionalDouble.empty();
         };
     }
 
@@ -396,9 +390,11 @@ public final class ActiveEffects {
             case REFRESH -> kind.modifiersAt(1).applyTo(accumulator);
             case LEVEL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
             case POOL -> this.contributePool(kind, effect, kinds, accumulator);
-        }
-        if (kind == EffectKind.HEAL) {
-            accumulator.restoreFlat(EnemyStat.REGENERATION, effect.healPerTick());
+            case PER_SOURCE -> {
+                if (kind == EffectKind.HEAL) {
+                    accumulator.addFlat(EnemyStat.REGENERATION, effect.healPerTick());
+                }
+            }
         }
     }
 
@@ -449,40 +445,31 @@ public final class ActiveEffects {
         return tuning == null ? NO_TUNING : tuning;
     }
 
-    /** {@link #tick(float)} at neutral spirit. */
+    /** {@link #tick(float)} for an enemy that did not move. */
     public void tick() {
-        this.tick(1f);
-    }
-
-    /** {@link #tick(float, float)} for an enemy that did not move. */
-    public void tick(float spiritFactor) {
-        this.tick(spiritFactor, 0f);
+        this.tick(0f);
     }
 
     /**
      * Applies one tick of damage-over-time, then counts every duration down and removes what
-     * expired. A decaying level fades instead of counting down. {@code spiritFactor} ({@code 1} at
-     * neutral spirit, {@code 0} when spirit is at its floor) sets the pace of the stack debuffs a pool
-     * earns; every debuff a tower applies runs at {@code max(MIN_DEBUFF_PACE, spiritFactor)}, and not at
-     * all while spirit is at its floor.
+     * expired. A decaying level fades instead of counting down.
      * {@code cellsMoved} is how far the enemy walked this tick, which a bleed turns into damage.
      */
-    public void tick(float spiritFactor, float cellsMoved) {
-        this.tick(spiritFactor, cellsMoved, PeriodicDamageListener.none());
+    public void tick(float cellsMoved) {
+        this.tick(cellsMoved, PeriodicDamageListener.none());
     }
 
-    /** {@link #tick(float, float)}, telling {@code listener} which effect deals each part of the tick's damage. */
-    public void tick(float spiritFactor, float cellsMoved, PeriodicDamageListener listener) {
+    /** {@link #tick(float)}, telling {@code listener} which effect deals each part of the tick's damage. */
+    public void tick(float cellsMoved, PeriodicDamageListener listener) {
         List<EffectKind> expired = new ArrayList<>();
         float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
-        float debuffPace = spiritFactor <= 0f ? 0f : Math.max(MIN_DEBUFF_PACE, spiritFactor);
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();
             Optional<Effect> next = switch (effect.dynamics()) {
                 case EffectDynamics.Stacks _ when kind.isStackDebuff() ->
-                        this.decayStacks(effect, kind.rule().pacing() == EffectPacing.SPIRIT ? debuffPace : spiritFactor);
-                case EffectDynamics.ChillLevel _ -> this.tickChill(effect, this.paceSteps(kind, debuffPace));
+                        this.decayStacks(effect);
+                case EffectDynamics.ChillLevel _ -> tickChill(effect);
                 case EffectDynamics.FuelPool _ -> {
                     listener.dealing(kind);
                     yield this.tickPool(effect, kind.isBurning() ? burnFactor : 1f);
@@ -490,16 +477,10 @@ public final class ActiveEffects {
                 case EffectDynamics.Distance distance -> {
                     listener.dealing(kind);
                     this.bleed(effect, distance, cellsMoved);
-                    yield this.countDown(effect, debuffPace);
+                    yield countDown(effect);
                 }
-                case EffectDynamics.TickDamage damage -> {
-                    if (damage.perTick().amount() > 0) {
-                        listener.dealing(kind);
-                        effect.sink().apply(damage.perTick());
-                    }
-                    yield this.countDown(effect, debuffPace);
-                }
-                default -> this.countDown(effect, debuffPace);
+                case EffectDynamics.HealOverTime heal -> heal.ticked().map(effect::withHeal);
+                default -> countDown(effect);
             };
             if (next.isPresent()) {
                 entry.setValue(next.get());
@@ -510,14 +491,12 @@ public final class ActiveEffects {
         expired.forEach(this.active::remove);
     }
 
-    /** Runs a timer down by a tick, or by its spirit pace when it has one; empty once it runs out. */
-    private Optional<Effect> countDown(Effect effect, float debuffPace) {
+    /** Runs a timer down by a tick; empty once it runs out. */
+    private static Optional<Effect> countDown(Effect effect) {
         if (effect.isLasting()) {
             return Optional.of(effect);
         }
-        EffectKind kind = effect.kind();
-        int steps = kind.isPacedBySpirit() ? this.paceSteps(kind, debuffPace) : 1;
-        int remaining = effect.remainingTicks() - steps;
+        int remaining = effect.remainingTicks() - 1;
         return remaining <= 0 ? Optional.empty() : Optional.of(effect.withRemainingTicks(remaining));
     }
 
@@ -532,25 +511,17 @@ public final class ActiveEffects {
         }
     }
 
-    /** The whole ticks a paced timer of {@code kind} runs this tick at {@code pace}, carrying the rest over. */
-    private int paceSteps(EffectKind kind, float pace) {
-        float gathered = this.progress[kind.ordinal()] + pace;
-        int steps = (int) gathered;
-        this.progress[kind.ordinal()] = gathered - steps;
-        return steps;
-    }
-
     /**
-     * Lets a stack debuff fall one stack each time its spirit-scaled progress fills; ends at no
+     * Lets a stack debuff fall one stack each time its progress fills; ends at no
      * stacks. A Fault Line Fractured holds while the enemy is exposed, and a mark holds while a pool
      * that earns it is still active.
      */
-    private Optional<Effect> decayStacks(Effect debuff, float pace) {
+    private Optional<Effect> decayStacks(Effect debuff) {
         if (debuff.faultLine() && this.isExposed() || EffectInteractions.isEarnedBy(debuff.kind(), this.active.keySet())) {
             return Optional.of(debuff);
         }
         int slot = debuff.kind().ordinal();
-        float gathered = this.progress[slot] + pace;
+        float gathered = this.progress[slot] + 1f;
         int stacks = debuff.stacks();
         while (gathered >= STACK_DECAY_INTERVAL_TICKS && stacks > 0) {
             gathered -= STACK_DECAY_INTERVAL_TICKS;
@@ -564,19 +535,10 @@ public final class ActiveEffects {
         return Optional.of(debuff.withStacks(stacks, debuff.remainingTicks()));
     }
 
-    /** {@code steps} ticks of linear decay on every contribution; ends when all of them have run out. */
-    private Optional<Effect> tickChill(Effect effect, int steps) {
-        if (steps == 0) {
-            return Optional.of(effect);
-        }
+    /** A tick of linear decay on every contribution; ends when all of them have run out. */
+    private static Optional<Effect> tickChill(Effect effect) {
         List<FuelContribution> remaining = effect.fuel().stream()
-                .map(contribution -> {
-                    FuelContribution decayed = contribution;
-                    for (int i = 0; i < steps; i++) {
-                        decayed = decayed.decayedLinearly();
-                    }
-                    return decayed;
-                })
+                .map(FuelContribution::decayedLinearly)
                 .filter(c -> c.amount() > 0f)
                 .toList();
         return remaining.isEmpty() ? Optional.empty() : Optional.of(effect.withFuel(remaining, 0f));

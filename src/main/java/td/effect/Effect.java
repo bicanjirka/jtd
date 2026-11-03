@@ -118,16 +118,16 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     /**
-     * {@code stacks} more points of lost resilience, which wear off one at a time at the enemy's spirit
-     * pace. Allowed up to a hundred, the whole of resilience.
+     * {@code stacks} more points of lost resilience, which wear off one at a time. Allowed up to a
+     * hundred, the whole of resilience.
      */
     public static Effect scorched(int stacks) {
         return stackDebuff(EffectKind.SCORCHED, stacks).withStackCap(SICKENED_STACK_CAP);
     }
 
     /**
-     * {@code stacks} more points of lost spirit, which wear off one at a time at the enemy's spirit
-     * pace. Allowed up to a hundred, the whole of spirit.
+     * {@code stacks} more points of lost spirit, which wear off one at a time. Allowed up to a hundred,
+     * the whole of spirit.
      */
     public static Effect sickened(int stacks) {
         return stackDebuff(EffectKind.SICKENED, stacks).withStackCap(SICKENED_STACK_CAP);
@@ -313,23 +313,42 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     /**
-     * Restores {@code healPerTick} every tick. Not a negative {@code damagePerTick}: damage clamps
-     * at zero, and a heal credits nobody.
+     * Adds {@code healPerTick} to regeneration while it lasts. Not a negative {@code damagePerTick}: damage clamps
+     * at zero, and a heal credits nobody. Heals from different sources ({@link #from}) add up.
      */
     public static Effect heal(int healPerTick, int durationTicks, DamageSink sink) {
-        return of(EffectKind.HEAL, durationTicks, sink, new EffectDynamics.HealOverTime(healPerTick));
+        return of(EffectKind.HEAL, durationTicks, sink,
+                new EffectDynamics.HealOverTime(List.of(new HealShare(AttackOrigin.none(), healPerTick, durationTicks))));
     }
 
-    /**
-     * This heal as damage: every tick it would have healed, it deals that much magic instead,
-     * through {@code sink}. Any other kind is returned as it is.
-     */
-    public Effect invertedThrough(DamageSink sink) {
-        return switch (this.dynamics) {
-            case EffectDynamics.HealOverTime heal -> new Effect(this.kind, this.remainingTicks, this.authoredDurationTicks, sink,
-                    this.origin, new EffectDynamics.TickDamage(Damage.magic(heal.perTick())));
-            default -> this;
+    /** This effect as put on by {@code origin}: what tells one source's heal from another's. */
+    public Effect from(AttackOrigin origin) {
+        EffectDynamics keyed = switch (this.dynamics) {
+            case EffectDynamics.HealOverTime heal -> heal.from(origin);
+            default -> this.dynamics;
         };
+        return new Effect(this.kind, this.remainingTicks, this.authoredDurationTicks, this.sink, origin, keyed);
+    }
+
+    /** With {@code incoming}, of the same per-source kind, joined in: its shares refresh or add to these. */
+    Effect joinedBy(Effect incoming) {
+        int authored = Math.max(this.authoredDurationTicks, incoming.authoredDurationTicks());
+        return switch (this.dynamics) {
+            case EffectDynamics.HealOverTime heal -> switch (incoming.dynamics()) {
+                case EffectDynamics.HealOverTime more -> this.withHeal(heal.with(more)).withAuthoredDuration(authored);
+                default -> incoming;
+            };
+            default -> incoming;
+        };
+    }
+
+    /** This heal holding {@code heal}'s shares, its time the last share's. */
+    Effect withHeal(EffectDynamics.HealOverTime heal) {
+        return new Effect(this.kind, heal.remainingTicks(), this.authoredDurationTicks, this.sink, this.origin, heal);
+    }
+
+    private Effect withAuthoredDuration(int ticks) {
+        return new Effect(this.kind, this.remainingTicks, ticks, this.sink, this.origin, this.dynamics);
     }
 
     /** How many ticks a chill lasts before its last share has faded; {@code 0} for any other kind. */
@@ -446,6 +465,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
+    /** What every source's heal adds to regeneration together, in damage units a tick. */
     public int healPerTick() {
         return switch (this.dynamics) {
             case EffectDynamics.HealOverTime heal -> heal.perTick();
@@ -453,11 +473,10 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
-    /** A pool's or an inverted heal's damage a tick, or a bleed's a cell; none for any other family. */
+    /** A pool's damage a tick, or a bleed's a cell; none for any other family. */
     public Damage damagePerTick() {
         return switch (this.dynamics) {
             case EffectDynamics.FuelPool pool -> pool.perTick();
-            case EffectDynamics.TickDamage damage -> damage.perTick();
             case EffectDynamics.Distance distance -> distance.perCell();
             default -> Damage.none();
         };

@@ -453,7 +453,7 @@ class CinderTowerTest {
 
         tickThrough(tower, 1, 1 + TRAVEL);
 
-        assertThat(burns(target).getFirst().tuning().carried().flat(EnemyStat.HEALING_RECEIVED)).isNegative();
+        assertThat(burns(target).getFirst().tuning().carried().flat(EnemyStat.SPIRIT)).isNegative();
         assertThat(burns(target).getFirst().tuning().carried().flat(EnemyStat.PERIODIC_DAMAGE_TAKEN)).isPositive();
     }
 

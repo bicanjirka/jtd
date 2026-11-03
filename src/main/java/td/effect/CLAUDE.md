@@ -1,11 +1,11 @@
 # `td.effect`
 
 - `Effect` is one effect-level record (kind, time, sink, origin) plus one `EffectDynamics` family:
-  flag, stacks, chill level, fuel pool, heal, tick damage, shield pool or distance. A family carries
+  flag, stacks, chill level, fuel pool, heal, shield pool or distance. A family carries
   only its own data. This package never depends on `td.enemy`: the producer binds a `DamageSink` when
   it creates the effect.
 - Each `EffectKind` is one row holding its `EffectRule`: category, resistance, stacking
-  (`EffectStacking`), stack cap, pacing (`EffectPacing`), what each stack does to stats, and tags.
+  (`EffectStacking`), stack cap, what each stack does to stats, and tags.
   Every classification method reads the rule. `ActiveEffects` keeps one live effect per kind and
   combines applications by the rule's stacking: a refresh keeps the stronger and the longer, a level
   or a pool adds up, stacks add to their cap. `ActiveEffects` exposes queries only, never its map.
@@ -24,22 +24,21 @@
 - `SCORCHED` and `SICKENED` are real effects that only `ActiveEffects` creates. Each stack lowers
   `RESILIENCE` or `SPIRIT` by one. They outlast the pool, are never cleared by another effect
   (a freeze puts out the burn, not its mark) and, once no active pool earns them, lose a stack every
-  `STACK_DECAY_INTERVAL_TICKS` scaled by the enemy's spirit factor (`tick(spiritFactor)`; `0` at
-  spirit -100 means never).
+  `STACK_DECAY_INTERVAL_TICKS`.
 - A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`, `RESONATING`,
   `FRACTURED`, `SATURATED`) stacks on the enemy, whichever tower applied them, on one shared clock
   that any application refreshes; a full stack only refreshes. An application may raise the cap
   (`Effect.withStackCap`), and the stack keeps the highest cap any application brought. `FRACTURED` has no clock: it loses a stack at
-  a time like `SCORCHED`, at the spirit pace floored at `MIN_DEBUFF_PACE`. A `faultLine` Fractured
+  a time like `SCORCHED`. A `faultLine` Fractured
   (a higher cap) loses none while the enemy is exposed (or revealed); one such
   application makes the whole effect so until it wears off.
-- A kind with `isPacedBySpirit()` counts its timer down at `max(MIN_DEBUFF_PACE, spiritFactor)`, and not at all at spirit -100;
-  freeze, invisible, shield, heal and the pools keep their own pace.
+- Every timer counts down one tick per tick; nothing about the enemy paces it. Only resistance and
+  diminishing returns change how long an effect lasts, and only as it is applied.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
 - A field effect (`SILENCED`, `ANCHORED`, `CORRODED`, `DRAGGED`, `UNDERTOW`, `DEAD_ZONE`, `FRAIL`) is an
   ordinary timed effect the tower that holds the field refreshes every tick, so it ends a while after
-  the enemy leaves, paced by spirit like any debuff. A field effect with a number holds it in stacks:
+  the enemy leaves. A field effect with a number holds it in stacks:
   `CORRODED` and `FRAIL` in `FieldStrength`, `DRAGGED` in points of speed (`DragStrength`, capped at
   `MOST`). A field tops the stacks up to the strength it gives, so of two fields the stronger holds,
   and lowers (`loseStacks`) only what it gave itself. `TOLL` is a stack debuff on one shared clock
@@ -48,10 +47,10 @@
   `EffectInteractions`' held-off table, which unlike a block strips nothing already there. `BRITTLE` counts
   only while `FREEZE` is active (`EffectInteractions`' requires table).
 - A pool earns `SICKENED` itself, but a tower can also add it (`Effect.sickened`): the stacks add up
-  to the whole of spirit, and wear off one at a time at the enemy's spirit pace.
+  to the whole of spirit, and wear off one at a time.
 - A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
-  `INVERSION` is the one hex the enemy itself reads: `invertedThrough(sink)` turns a heal into
-  damage per tick, and `INVISIBLE` is an `EffectInteractions` row it blocks and removes.
+  `INVERSION` is the one hex the enemy itself reads: its regeneration is dealt through the hex's sink,
+  and `INVISIBLE` is an `EffectInteractions` row it blocks and removes.
 - `SOULFIRE` is a third fuel pool beside burn and poison (`EffectKind.isBurning()` covers it and burn): a
   freeze puts it out and lands part of it, a chill cools it, and it earns `SCORCHED` and `SICKENED` both.
   Nothing resists it, so it burns what is burn-immune.
@@ -77,10 +76,11 @@
 - Effects change a mob only through `contributeTo(StatAccumulator)`, which applies each kind's
   `modifiersAt(stacks)`, the chill level, the pools' rules and what burning pools carry. Damage-taken
   rows **add**; revealed sets `STEALTH` to 0, which beats invisibility's 1; exposed or revealed take 50
-  `RESILIENCE` once; every stat is floored by its range. Heal goes in as restorative, so spirit and `HEALING_RECEIVED` scale it. A
+  `RESILIENCE` once; every stat is floored by its range. A heal adds its amount to `REGENERATION`: it is
+  `PER_SOURCE`, one `HealShare` per `Effect.origin` (`Effect.from`), shares from different sources adding up, a
+  recast refreshing its own share (the larger amount, the later end), each running out on its own clock. A
   shield is an absorb pool (`ActiveEffects.absorb`), applied after armor and plating, scaled once when
-  applied by spirit and `HEALING_RECEIVED`; reapplying keeps the larger pool. Cauterize lowers
-  `HEALING_RECEIVED`.
+  applied by spirit; reapplying keeps the larger pool. Cauterize lowers `SPIRIT`.
   The mob applies regeneration to itself, capped at max health; `Damage` can't be negative.
 - Resistance and diminishing returns only shorten an authored duration, never change an effect's
   curve: `duration = authored * (1 - resist[kind]) * freezeStep`, and under one tick is blocked.

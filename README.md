@@ -182,8 +182,8 @@ An enemy is made of four kinds of thing, and each belongs to exactly one:
 - **Stats** are the numbers every enemy has, zero or not: Move speed (cells/s), Armor and Magic resist (a hit
   keeps `100 / (100 + armor)` of itself), Plating and Insulation (dmg every physical or magic hit loses; Flat
   penetration ignores them), Resilience (against crits; 100 is crit-immune, below zero crits land harder), Agility
-  (aimed shots miss), Physical, Magic and Damage over time taken (%), Spirit (heals and shields it receives, and how
-  fast its debuffs run out), Healing received (%), Regeneration (hp/s) and the Chill, Burn and Freeze resists (%).
+  (aimed shots miss), Physical, Magic and Damage over time taken (%), Spirit (what its regeneration restores and its shields hold),
+  Regeneration (hp/s) and the Chill, Burn and Freeze resists (%).
   The info pane lists the ones off their default, each with its unit and, where the number alone says little, what
   it does (`Armor 30 -23% dmg`); hovering a row explains it and, live, what made it. Nothing is drawn on the board
   for them.
@@ -262,12 +262,12 @@ effect it carries; selecting it shows each effect as an icon whose tooltip says 
 | Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; it removes Chill and lasts longer by its level, and puts out Burn and Soulfire; within 10 s, each fresh one lasts 100%, 50%, 25%, then none. |
 | Shield | Boon | Buff | Absorbs damage until its amount is spent or it runs out. |
 | Invisibility | Boon | Buff | Towers can't aim at it, though damage on an area still reaches it. |
-| Heal | Boon | Buff | Restores health over time. |
+| Heal | Boon | Buff | Adds to its Regeneration while it lasts; heals from different sources add up. |
 | Vulnerable | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +15%, up to 3 stacks. |
 | Reveal | Mark | Debuff | Every tower can see and aim at it, and it counts as having Expose. |
 | Poison | Affliction | Debuff | Damage over time that fades, and a slow of up to 30% while it is full; it adds a stack of Sicken every 0.5 s while it lasts. |
-| Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 100; once nothing adds more, it loses a stack every 1 s, sooner with more Spirit. |
-| Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 100; once nothing adds more, it loses a stack every 1 s, sooner with more Spirit. |
+| Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
+| Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sunder | Weakness | Debuff | Each stack: Armor -5, up to 10 stacks. |
 | Expose | Mark | Debuff | Resilience -50: crits find it more often and hit it harder. |
 | Mark | Mark | Debuff | The next hit on it is a crit, which spends this. |
@@ -282,7 +282,7 @@ effect it carries; selecting it shows each effect as an icon whose tooltip says 
 | Contagion | Hex | Debuff | When it dies, its hexes and debuffs jump to the enemies nearest it. |
 | Rime | Hex | Debuff | A Freeze on it buys x2 the extra time from Chill, and lands all of its Burn or Soulfire at once instead of putting it out; Ash replaces it. |
 | Ash | Hex | Debuff | Its Burn, Poison and Soulfire hold x2 as much and add their stacks x2 as fast; it takes only 25% of a Chill, and Freeze can't take hold; Rime replaces it. |
-| Inversion | Hex | Debuff | A Heal or Shield it receives is dealt to it as damage instead, and it can't gain Invisibility. |
+| Inversion | Hex | Debuff | Its Regeneration deals it damage instead of restoring health, a Shield it receives strikes it instead, and it can't gain Invisibility. |
 | Sympathy | Hex | Debuff | Once a second, its Chill, Vulnerable, Sunder, Expose and Unravel are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower. |
 | Reckoning | Hex | Debuff | When it dies, each Doom from the same tower near it releases at once and starts again. |
 | Silence | Control | Debuff | Its abilities don't fire; abilities on death and auras still do. |
@@ -346,7 +346,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Shrapnel | Buff | Fragments that fly past a shell's blast. |
 | Bomblet | Buff | A small bomb a shell drops on the path. |
 
-Stacks wear off at a pace spirit sets: neutral spirit loses one per second, more spirit is faster, and at -100 they never wear off, so a fully sickened enemy stays sickened. Every other debuff's timer runs at `max(0.25, 1 + spirit / 100)` of normal speed, and at -100 it stops too (freeze keeps its own diminishing returns). A frozen enemy cannot burn, and freezing an enemy puts out its burn, landing half of what was left at once, but keeps its Scorched stacks. Hexes bend this: Rimed and Ashen change what a freeze does, and Inverted keeps an enemy from turning invisible. Nothing else cancels anything.
+Stacks wear off one per second once nothing adds more, and every other debuff runs out on its own clock, whatever the enemy's spirit. A frozen enemy cannot burn, and freezing an enemy puts out its burn, landing half of what was left at once, but keeps its Scorched stacks. Hexes bend this: Rimed and Ashen change what a freeze does, and Inverted keeps an enemy from turning invisible. Nothing else cancels anything.
 
 ### Ground zones
 
