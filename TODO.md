@@ -388,6 +388,16 @@ against 1,100 under heals, so the heals land everywhere else. The answers are ei
   Line's beam carrying Dead Zone, a Sickened that lowers spirit for long enough to shrink every heal), then check
   Curly Path's wave 12 with `td.balance.WaveCheckReport --checks 12:sustain --parts strong,strip`.
 
+### Hex of Inversion does not pick an enemy that only regenerates
+
+Since the restoration rework, Inversion turns an enemy's whole regeneration into damage, a trait's included, so an
+enemy that only regenerates (Salamander, the Monolith) is as good a target as one that heals or shields. The Hexer still
+picks only an enemy whose abilities apply effects (`EnemyMob.appliesEffects`), so it never chooses such an enemy.
+
+- **Where:** `InversionHex.target`, and the query it reads on `EnemyTarget`.
+- **Approach:** let the pick also take an enemy whose regeneration is above zero, through a query on the target
+  rather than its definition, then check a level with Salamanders with `td.balance.WaveCheckReport`.
+
 ### Upgrade-tree node numbers are unbalanced placeholders
 
 Every tower's `UpgradeNode`s carry real prices and stat bonuses, but none of them have been played
