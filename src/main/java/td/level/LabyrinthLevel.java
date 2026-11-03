@@ -1,6 +1,7 @@
 package td.level;
 
 import td.board.BoardGround;
+import td.board.GroundMotif;
 import td.effect.EffectKind;
 import td.effect.HealTemplate;
 import td.effect.ShieldTemplate;
@@ -120,7 +121,7 @@ final class LabyrinthLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
-            .withGround(BoardGround.floor(0x15110A))
+            .withGround(BoardGround.of(0x15110A, GroundMotif.FLAGSTONES, 0x2E2516))
             .withCustomRankedEnemies(List.of(BRONZE_BULL, TALOS, MINOTAUR));
 
     private LabyrinthLevel() {

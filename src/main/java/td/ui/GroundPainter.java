@@ -8,7 +8,9 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.RoundRectangle2D;
 
 /** Paints a board's floor and its motif, under everything else on the board. */
 final class GroundPainter {
@@ -30,6 +32,9 @@ final class GroundPainter {
             case COMB -> comb(scale, width, height);
             case RAIN -> rain(scale, width, height);
             case DUNES -> dunes(scale, width, height);
+            case PLATES -> plates(scale, width, height);
+            case FISSURES -> fissures(scale, width, height);
+            case FLAGSTONES -> flagstones(scale, width, height);
         };
         Object antialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         Stroke stroke = g2.getStroke();
@@ -105,6 +110,91 @@ final class GroundPainter {
             p.moveTo(0, y + (float) (Math.sin(phase) * amplitude));
             for (float x = segment; x <= width + segment; x += segment) {
                 p.lineTo(x, y + (float) (Math.sin(phase + x / wavelength * 2 * Math.PI) * amplitude));
+            }
+        }
+        return p;
+    }
+
+    /** Seams two cells apart, with a rivet at every corner and halfway along each seam. */
+    private static GeneralPath plates(int scale, int width, int height) {
+        GeneralPath p = new GeneralPath();
+        float plate = scale * 2f;
+        float rivet = scale * 0.07f;
+        for (float x = plate; x < width; x += plate) {
+            p.moveTo(x, 0);
+            p.lineTo(x, height);
+        }
+        for (float y = plate; y < height; y += plate) {
+            p.moveTo(0, y);
+            p.lineTo(width, y);
+        }
+        for (float x = plate / 2f; x < width; x += plate / 2f) {
+            for (float y = plate / 2f; y < height; y += plate / 2f) {
+                p.append(new Ellipse2D.Float(x - rivet - scale * 0.15f, y - rivet - scale * 0.15f, rivet * 2, rivet * 2),
+                        false);
+            }
+        }
+        return p;
+    }
+
+    /** Jagged cracks from the middle out to past the edges, some forking once, the same every frame. */
+    private static GeneralPath fissures(int scale, int width, int height) {
+        GeneralPath p = new GeneralPath();
+        float cx = width / 2f;
+        float cy = height / 2f;
+        double reach = Math.hypot(width, height) / 2;
+        int cracks = 11;
+        for (int i = 0; i < cracks; i++) {
+            double angle = i * 2 * Math.PI / cracks + jitter(i, 1) * 0.35;
+            crack(p, cx, cy, angle, scale * 0.6, reach, scale, i);
+            if (i % 3 == 0) {
+                double fork = reach * (0.35 + 0.2 * jitter(i, 2));
+                float fx = cx + (float) (Math.cos(angle) * fork);
+                float fy = cy + (float) (Math.sin(angle) * fork);
+                crack(p, fx, fy, angle + 0.6 * Math.signum(jitter(i, 3) + 0.01), 0, reach * 0.4, scale, i + 50);
+            }
+        }
+        return p;
+    }
+
+    private static void crack(GeneralPath p, float x, float y, double angle, double from, double length, int scale,
+                              int seed) {
+        float step = scale * 0.6f;
+        float px = x + (float) (Math.cos(angle) * from);
+        float py = y + (float) (Math.sin(angle) * from);
+        p.moveTo(px, py);
+        int n = 0;
+        for (double d = from + step; d < from + length; d += step, n++) {
+            double wobble = angle + jitter(seed, n + 10) * 0.5;
+            px += (float) (Math.cos(wobble) * step);
+            py += (float) (Math.sin(wobble) * step);
+            p.lineTo(px, py);
+        }
+    }
+
+    /** A repeatable number in {@code [-1, 1]} for {@code a} and {@code b}. */
+    private static double jitter(int a, int b) {
+        int hash = (a * 73_856_093) ^ (b * 19_349_663);
+        hash ^= hash >>> 13;
+        hash *= 0x5bd1e995;
+        hash ^= hash >>> 15;
+        return (hash & 0xFFFF) / 32_767.5 - 1.0;
+    }
+
+    /** Rows a cell high of stones one to two cells long, each row's joints off the last's. */
+    private static GeneralPath flagstones(int scale, int width, int height) {
+        GeneralPath p = new GeneralPath();
+        float inset = scale * 0.08f;
+        int row = 0;
+        for (float y = 0; y < height; y += scale, row++) {
+            float x = -scale * 0.5f * (row % 2);
+            int stone = 0;
+            while (x < width) {
+                float length = scale * (jitter(row, stone) > 0 ? 2f : 1.5f);
+                p.append(new RoundRectangle2D.Float(x + inset, y + inset, length - 2 * inset,
+                        scale - 2 * inset, scale * 0.25f, scale * 0.25f), false);
+                x += length;
+                stone++;
             }
         }
         return p;
