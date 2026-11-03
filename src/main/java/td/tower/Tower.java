@@ -75,8 +75,8 @@ public interface Tower {
     StatModifiers<TowerStat> buffFor(Tower other);
 
     /**
-     * Whether {@link #buffFor} can give anything, so a change to this tower's own stats can change what
-     * others receive.
+     * Whether {@link #buffFor}, {@link #xpBonusFor} or {@link #xpSharedWith} can give anything, so a change to this
+     * tower's own stats can change what others receive.
      */
     default boolean emitsBuffs() {
         return false;
@@ -107,13 +107,16 @@ public interface Tower {
 
     /**
      * The share of a bounty this tower adds to the XP {@code earner} earns from it, derived from where
-     * towers stand like a buff. Nothing by default.
+     * towers stand like a buff. Nothing by default, and nothing from a tower that does not {@link #emitsBuffs}.
      */
     default float xpBonusFor(Tower earner) {
         return 0f;
     }
 
-    /** The towers this one makes earn what {@code earners} earn, besides them. None by default. */
+    /**
+     * The towers this one makes earn what {@code earners} earn, besides them. None by default, and none from a
+     * tower that does not {@link #emitsBuffs}.
+     */
     default List<Tower> xpSharedWith(List<Tower> earners) {
         return List.of();
     }

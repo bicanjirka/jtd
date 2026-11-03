@@ -3,6 +3,7 @@ package td.tower;
 import td.enemy.EnemyWalk;
 import td.enemy.WalkEndListener;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -25,22 +26,38 @@ public final class ExperienceAwarder implements WalkEndListener {
     @Override
     public void walkEnded(EnemyWalk walk) {
         List<Tower> all = this.towers.all();
-        List<Tower> reached = all.stream().filter(tower -> tower.reached(walk)).toList();
+        List<Tower> reached = new ArrayList<>();
+        // Only an emitter buffs, adds a bonus or shares, and a board holds few next to the towers they serve.
+        List<Tower> emitters = new ArrayList<>();
+        for (Tower tower : all) {
+            if (tower.reached(walk)) {
+                reached.add(tower);
+            }
+            if (tower.emitsBuffs()) {
+                emitters.add(tower);
+            }
+        }
         if (reached.isEmpty()) {
             return;
         }
-        Set<Tower> shared = Collections.newSetFromMap(new IdentityHashMap<>());
-        all.forEach(tower -> shared.addAll(tower.xpSharedWith(reached)));
+        Set<Tower> earning = Collections.newSetFromMap(new IdentityHashMap<>());
+        earning.addAll(reached);
+        for (Tower emitter : emitters) {
+            if (buffsAny(emitter, reached)) {
+                earning.add(emitter);
+            }
+            earning.addAll(emitter.xpSharedWith(reached));
+        }
         for (Tower tower : all) {
-            if (reached.contains(tower) || buffsAny(tower, reached) || shared.contains(tower)) {
-                tower.earnXp(walk.getBounty(), bonusFor(all, tower));
+            if (earning.contains(tower)) {
+                tower.earnXp(walk.getBounty(), bonusFor(emitters, tower));
             }
         }
     }
 
-    /** What every tower adds to the XP {@code earner} gets from a bounty. */
-    private static float bonusFor(List<Tower> all, Tower earner) {
-        return (float) all.stream().mapToDouble(tower -> tower.xpBonusFor(earner)).sum();
+    /** What every emitter adds to the XP {@code earner} gets from a bounty. */
+    private static float bonusFor(List<Tower> emitters, Tower earner) {
+        return (float) emitters.stream().mapToDouble(tower -> tower.xpBonusFor(earner)).sum();
     }
 
 
