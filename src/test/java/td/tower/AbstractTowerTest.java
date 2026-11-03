@@ -20,6 +20,7 @@ import td.tower.proc.HitKind;
 import td.tower.proc.Proc;
 import td.tower.proc.ProcPayload;
 import td.tower.upgrade.ExclusiveChoice;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -540,6 +541,31 @@ class AbstractTowerTest {
 
         assertThat(tower.inspect().kills()).isEqualTo(1);
         assertThat(tower.inspect().damageDealt()).isEqualTo(tower.getDamageDealt()).isPositive();
+    }
+
+    @Test
+    void aStatWhoseRangeStartsAboveItsDefaultShowsNoRowWhileUnset() {
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none());
+
+        assertThat(TowerStat.BURN_DURATION.clamp(TowerStat.BURN_DURATION.defaultBase()))
+                .isNotEqualTo(TowerStat.BURN_DURATION.defaultBase());
+        assertThat(tower.inspect().stats()).extracting(TowerStatLine::stat).doesNotContain(TowerStat.BURN_DURATION);
+    }
+
+    @Test
+    void aNodeNotYetOwnedPreviewsTheRowItMovesOnTheLastingStats() {
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(tower);
+        UpgradeNode range = UpgradePaths.named(tower, "Range");
+
+        UpgradeBonus bonus = tower.wordsOf(range).stats().getFirst();
+
+        assertThat(bonus.stat()).isEqualTo(TowerStat.RANGE);
+        assertThat(bonus.preview()).hasValueSatisfying(preview -> {
+            assertThat(preview.stat()).isEqualTo(TowerStat.RANGE);
+            assertThat(preview.before()).isEqualTo(tower.stats().range());
+            assertThat(preview.after()).isGreaterThan(preview.before());
+        });
     }
 
     @Test
