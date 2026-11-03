@@ -61,8 +61,12 @@
 - Every enemy diminishes hard-CC durations; there is no opt-in.
 - `DefinedEnemyMob.applyEffect` shortens the effect by its resistance and freeze diminishing
   returns before `ActiveEffects` sees it; there is no separate immunity check. The one exception
-  is `INVERSION`: it turns a heal into damage and a shield into one hit, credited to its caster,
-  before anything else.
+  is `INVERSION`: it turns a shield into one hit, credited to its caster, before anything else.
+- Regeneration is restored on the mob's own tick, worth `StatCurves.restoreFactor(spirit)` times the stat, with the
+  part of a unit carried (`MobHealth.regenerationDue`). Under `INVERSION` the same units are dealt to it as magic
+  through the hex's sink instead. A heal only adds to the stat.
+- What an ability puts on others comes from that ability on that mob (`AbilityState.source`, `Effect.from`), so a
+  per-source kind such as a heal adds up across casters and only refreshes on a recast.
 - An ability that leaves ground behind it is a `LeaveZoneAction` (`td.zone` does the rest); never a new mob or a
   hand-rolled tick.
 - `AbilityEvaluator` decides when a trigger fires; actions execute through

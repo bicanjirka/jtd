@@ -1,6 +1,6 @@
 package td.enemy;
 
-
+import td.damage.AttackOrigin;
 import td.util.ThreadConfined;
 
 /**
@@ -9,6 +9,9 @@ import td.util.ThreadConfined;
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class AbilityState {
+
+    /** Who an effect this ability puts on comes from: one source per mob and ability. */
+    private final AttackOrigin source = AttackOrigin.fresh();
 
     private int ticksRemaining;
     private boolean fired;
@@ -33,6 +36,10 @@ public final class AbilityState {
             case OnFirstDamageTakenTrigger t -> 0;
             case OnDodgeTrigger t -> 0;
         };
+    }
+
+    AttackOrigin source() {
+        return this.source;
     }
 
     int ticksRemaining() {

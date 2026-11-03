@@ -12,7 +12,8 @@
 - A mine is looked at every tick, not on a pulse, so nothing walks across it between two; the first enemy
   inside sets it off through its `ZoneTrigger` and it is spent. A tower that lays mines keeps its own list
   to replace the oldest and to take them off the board (`ZoneRoster.remove`) when it is sold.
-- Enemies leave zones too (`LeaveZoneAction`), owned by `ZoneOwner.nobody()`: healing ground, haste ground and ward
+- Enemies leave zones too (`LeaveZoneAction`), owned by `ZoneOwner.nobody()`, one owner per zone and so one
+  source per zone: healing ground, haste ground and ward
   mines help the enemies inside, and a blinding field works on towers instead (`ZoneRoster.disruptionAt`, the strongest
   one counts, never a sum). `Zone.UNTIL_WAVE_END` lasts until `ZoneRoster.endWave()`, which `GameEngine` calls whenever a
   wave ends or is skipped. A ward mine is armed a moment after it is laid, so the enemy that laid it walks off first.

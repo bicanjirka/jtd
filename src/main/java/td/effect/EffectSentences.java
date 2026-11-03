@@ -34,7 +34,8 @@ final class EffectSentences {
                             + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts " + ladder(kind));
             case SHIELD -> TermText.of("absorbs damage until its amount is spent or it runs out");
             case INVISIBLE -> TermText.of("towers can't aim at it, though damage on an area still reaches it");
-            case HEAL -> TermText.of("restores health over time");
+            case HEAL -> TermText.of("adds to its ").plus(EnemyStat.REGENERATION)
+                    .plus(" while it lasts; heals from different sources add up");
             case VULNERABLE -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
@@ -47,13 +48,11 @@ final class EffectSentences {
             case SCORCHED -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE))
                     .plus(", up to " + kind.maxStacks() + "; once nothing adds more, it loses a stack every "
-                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS) + ", sooner with more ")
-                    .plus(EnemyStat.SPIRIT);
+                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
             case SICKENED -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)), EnemyStat.SPIRIT))
                     .plus(", up to " + kind.maxStacks() + "; once nothing adds more, it loses a stack every "
-                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS) + ", sooner with more ")
-                    .plus(EnemyStat.SPIRIT);
+                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
             case SUNDERED -> stacked(kind, EnemyStat.ARMOR);
             case EXPOSED -> changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE)
                     .plus(": crits find it more often and hit it harder");
@@ -93,9 +92,9 @@ final class EffectSentences {
                     + TermNumbers.percent(EffectInteractions.chillTaken(EnumSet.of(EffectKind.ASH))) + " of a ")
                     .plus(EffectKind.CHILL).plus(", and ").plus(EffectKind.FREEZE)
                     .plus(" can't take hold; ").plus(EffectKind.RIME).plus(" replaces it");
-            case INVERSION -> TermText.of("a ").plus(EffectKind.HEAL).plus(" or ").plus(EffectKind.SHIELD)
-                    .plus(" it receives is dealt to it as damage instead, and it can't gain ")
-                    .plus(EffectKind.INVISIBLE);
+            case INVERSION -> TermText.of("its ").plus(EnemyStat.REGENERATION)
+                    .plus(" deals it damage instead of restoring health, a ").plus(EffectKind.SHIELD)
+                    .plus(" it receives strikes it instead, and it can't gain ").plus(EffectKind.INVISIBLE);
             case SYMPATHY -> TermText.of("once a second, its ")
                     .plus(kinds(EffectKind::sharedBySympathy, " and "))
                     .plus(" are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower");

@@ -10,8 +10,7 @@ public interface StatAccumulator<S extends Enum<S> & StatKey> {
 
     void multiply(S stat, float factor);
 
-    /** A flat amount the enemy receives, scaled by its spirit and healing received (a heal's regeneration). */
-    void restoreFlat(S stat, float amount);
+    void addFlat(S stat, float amount);
 
     /** Holds the stat to at most {@code share} of its base value, whatever else raised it. */
     void capAtShareOfBase(S stat, float share);

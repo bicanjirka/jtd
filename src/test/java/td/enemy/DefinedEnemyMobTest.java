@@ -121,12 +121,12 @@ class DefinedEnemyMobTest {
     }
 
     @Test
-    void aCauterizedEnemyReceivesHalfAShield() {
+    void aStatAPoolCarriesScalesTheShieldsItsCarrierReceives() {
         GameWorld context = newContext();
         DefinedEnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         enemy.applyEffect(Effect.burn(Damage.magic(100), 60, DamageSink.none())
                 .withTuning(PoolTuning.standard().withCarried(
-                        StatModifiers.of(EnemyStat.HEALING_RECEIVED, StatModifier.flat(-0.5f)))));
+                        StatModifiers.of(EnemyStat.SPIRIT, StatModifier.flat(-50f)))));
 
         enemy.applyEffect(Effect.shield(400f, 100, DamageSink.none()));
 

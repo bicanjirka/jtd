@@ -70,6 +70,18 @@ class DefinedEnemyMobAbilityTest {
     }
 
     @Test
+    void healsFromTwoCastersAddUpWhileOneCastersRecastOnlyRefreshesItsOwn() {
+        EnemyFixtures.liveMob(this.world, casting("healerA", new PeriodicTrigger(CAST_TICK), healAround()));
+        EnemyFixtures.liveMob(this.world, casting("healerB", new PeriodicTrigger(CAST_TICK), healAround()));
+        DefinedEnemyMob ally = wounded(EnemyFixtures.liveMob(this.world, ALLY));
+
+        EnemyFixtures.tickEnemies(this.world, 1, 2 * CAST_TICK);
+
+        assertThat(ally.activeEffects()).filteredOn(effect -> effect.kind() == EffectKind.HEAL)
+                .extracting(Effect::healPerTick).containsExactly(2 * DamageUnits.ofPoints(1f));
+    }
+
+    @Test
     void aRadiusAbilityNeverReachesItsCaster() {
         DefinedEnemyMob healer = wounded(
                 EnemyFixtures.liveMob(this.world, casting("healer", new PeriodicTrigger(CAST_TICK), healAround())));

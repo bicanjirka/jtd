@@ -10,12 +10,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class EffectRuleTest {
 
     @Test
-    void ofIsARefreshingSelfPacedKindWithNoStatsOrTags() {
+    void ofIsARefreshingKindWithNoStatsOrTags() {
         EffectRule rule = EffectRule.of(EffectCategory.DEBUFF);
 
         assertThat(rule.stacking()).isEqualTo(EffectStacking.REFRESH);
         assertThat(rule.stackCap()).isEqualTo(1);
-        assertThat(rule.pacing()).isEqualTo(EffectPacing.OWN);
         assertThat(rule.perStack().isNone()).isTrue();
         assertThat(rule.tags()).isEmpty();
         assertThat(rule.resistedBy()).isEmpty();

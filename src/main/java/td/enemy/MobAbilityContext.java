@@ -1,5 +1,6 @@
 package td.enemy;
 
+import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageUnits;
 import td.effect.DamageSink;
@@ -23,11 +24,14 @@ final class MobAbilityContext implements AbilityContext {
     private final DefinedEnemyMob caster;
     private final GameWorld world;
     private final int gameTime;
+    /** The ability running: what its heals and shields count as coming from. */
+    private final AttackOrigin source;
 
-    MobAbilityContext(DefinedEnemyMob caster, GameWorld world, int gameTime) {
+    MobAbilityContext(DefinedEnemyMob caster, GameWorld world, int gameTime, AttackOrigin source) {
         this.caster = caster;
         this.world = world;
         this.gameTime = gameTime;
+        this.source = source;
     }
 
     @Override
@@ -69,7 +73,7 @@ final class MobAbilityContext implements AbilityContext {
     public void applyEffect(EffectTemplate template, EffectTarget target) {
         int targets = switch (target) {
             case SelfTarget ignored -> {
-                this.caster.applyEffect(template.toEffect(MobAbilityContext::creditNoOne));
+                this.caster.applyEffect(template.toEffect(MobAbilityContext::creditNoOne).from(this.source));
                 yield 1;
             }
             case RadiusTarget radiusTarget -> this.applyToOthersInRadius(template, radiusTarget.radius());
@@ -98,7 +102,7 @@ final class MobAbilityContext implements AbilityContext {
             double dx = other.getX() - selfX;
             double dy = other.getY() - selfY;
             if (dx * dx + dy * dy <= radius2) {
-                other.applyEffect(template.toEffect(MobAbilityContext::creditNoOne));
+                other.applyEffect(template.toEffect(MobAbilityContext::creditNoOne).from(this.source));
                 reached++;
             }
         }

@@ -19,6 +19,7 @@ import td.stat.BaseStats;
 import td.stat.EnemyStat;
 import td.stat.StatAccumulator;
 import td.stat.StatBreakdown;
+import td.stat.StatCurves;
 import td.stat.StatModifier;
 import td.stat.StatPart;
 import td.stat.StatRecorder;
@@ -367,7 +368,10 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.effectTransitions.inGainedOrder(kinds);
     }
 
-    /** What {@code stat} is made of now: base, each trait and active effect that changes it, and the result. */
+    /**
+     * What {@code stat} is made of now: base, each trait and active effect that changes it, and the result; for
+     * regeneration, also what spirit makes it worth, so the result is what a tick restores.
+     */
     StatBreakdown breakdown(EnemyStat stat) {
         TraitContext context = this.traitContext();
         List<StatPart> parts = new ArrayList<>();
@@ -384,7 +388,16 @@ public final class DefinedEnemyMob implements EnemyMob {
                         modifier));
             }
         }
-        return StatBreakdown.resolved(stat, this.baseStat(stat), parts, this.stats.value(stat));
+        float current = this.stats.value(stat);
+        if (stat == EnemyStat.REGENERATION) {
+            // The sheet holds what heals and traits give; what a tick restores is that, worth what spirit makes it.
+            float worth = StatCurves.restoreFactor(this.stats.value(EnemyStat.SPIRIT));
+            if (worth != 1f && current > 0f) {
+                parts.add(new StatPart(TermText.of(EnemyStat.SPIRIT), 1, stat, StatModifier.times(worth)));
+                current *= worth;
+            }
+        }
+        return StatBreakdown.resolved(stat, this.baseStat(stat), parts, current);
     }
 
     /** The effects on it, for the inspection to read in place of a forward per query. */
@@ -403,8 +416,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     /**
      * Applies the effect with its duration shortened by this mob's resistance to its kind and, for
      * hard crowd control, by diminishing returns. One that would last under a tick is blocked. Under
-     * Inversion a heal comes in as damage and a shield as one hit. A shield's pool is scaled once, as
-     * it is applied, by spirit and healing received.
+     * Inversion a shield comes in as one hit. A shield's pool is scaled once, as it is applied, by spirit.
      */
     public void applyEffect(Effect effect) {
         this.applyEffect(effect, AttackOrigin.none());
@@ -425,14 +437,9 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.strikeInsteadOfShielding(effect, inversion.get());
             return;
         }
-        if (inversion.isPresent() && effect.kind() == EffectKind.HEAL && this.observer.isOn()) {
-            this.observer.report(new MobEvent.EffectInverted(EffectKind.HEAL, "deals magic each tick instead"));
-        }
-        Effect received = effect.kind() == EffectKind.SHIELD
-                ? effect.withShieldScaledBy(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f)
-                        * this.stats.value(EnemyStat.HEALING_RECEIVED))
-                : effect;
-        this.applyResisted(inversion.map(hex -> received.invertedThrough(hex.sink())).orElse(received));
+        this.applyResisted(effect.kind() == EffectKind.SHIELD
+                ? effect.withShieldScaledBy(StatCurves.restoreFactor(this.stats.value(EnemyStat.SPIRIT)))
+                : effect);
     }
 
     /**
@@ -843,12 +850,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         // Read before tick(): an effect in its last tick must still slow this tick's movement.
         float speed = this.stats.value(EnemyStat.MOVE_SPEED);
-        int healthBefore = this.health.current();
-        // Applied here, not through tick()'s sink: a heal is not a negative damagePerTick.
-        boolean healthChanged = this.health.regenerate(this.stats.value(EnemyStat.REGENERATION));
-        if (healthChanged && this.observer.isOn()) {
-            this.observer.report(new MobEvent.HealthChanged("regen", healthBefore, this.health.current()));
-        }
+        boolean healthChanged = this.regenerate();
         if (healthChanged || !this.activeEffects.isEmpty()) {
             this.tickEffects(speed);
         }
@@ -870,6 +872,34 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
     }
 
+    /**
+     * A tick of regeneration, worth what spirit makes it. Under Inversion it lands as magic damage over time instead,
+     * credited to whoever cast the inversion.
+     *
+     * @return whether health changed
+     */
+    private boolean regenerate() {
+        int healthBefore = this.health.current();
+        int units = this.health.regenerationDue(this.stats.value(EnemyStat.REGENERATION)
+                * StatCurves.restoreFactor(this.stats.value(EnemyStat.SPIRIT)));
+        if (units <= 0) {
+            return false;
+        }
+        Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
+        if (inversion.isPresent()) {
+            this.observer.dealing(EffectKind.INVERSION);
+            inversion.get().sink().apply(Damage.magic(units));
+            this.observer.dealt();
+        } else {
+            this.health.heal(units);
+        }
+        boolean changed = this.health.current() != healthBefore;
+        if (changed && this.observer.isOn()) {
+            this.observer.report(new MobEvent.HealthChanged("regen", healthBefore, this.health.current()));
+        }
+        return changed;
+    }
+
     private void countDownSpawnDelay(int gameTime) {
         this.delay--;
         if (this.delay == 0) {
@@ -880,10 +910,8 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     private void tickEffects(float speed) {
-        // The pace of stack decay is the same scale that spirit puts on heals and shields.
         int cellSize = this.gameWorld.getBoard().scale();
-        this.activeEffects.tick(Math.max(0f, 1f + this.stats.value(EnemyStat.SPIRIT) / 100f),
-                cellSize > 0 ? speed / cellSize : 0f, this.observer);
+        this.activeEffects.tick(cellSize > 0 ? speed / cellSize : 0f, this.observer);
         this.observer.dealt();
         this.stats.invalidate();
         this.reportEffects(EffectDiff.TICK);
@@ -951,7 +979,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         for (int i = 0; i < abilities.size(); i++) {
             Ability ability = abilities.get(i);
             AbilityState state = this.abilityStates.get(i);
-            AbilityContext context = new MobAbilityContext(this, this.gameWorld, gameTime);
+            AbilityContext context = new MobAbilityContext(this, this.gameWorld, gameTime, state.source());
             if (AbilityEvaluator.shouldFire(ability.trigger(), state, context)) {
                 AbilityEvaluator.execute(ability.action(), context);
             }

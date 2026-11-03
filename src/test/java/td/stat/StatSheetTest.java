@@ -3,7 +3,6 @@ package td.stat;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 
 class StatSheetTest {
 
@@ -25,15 +24,6 @@ class StatSheetTest {
 
         assertThat(sheet.value(EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isEqualTo(0.1f);
         assertThat(sheet.value(EnemyStat.RESILIENCE)).isEqualTo(100f);
-    }
-
-    @Test
-    void spiritScalesRestorativeContributions() {
-        StatSheet sheet = new StatSheet(BaseStats.defaults(EnemyStat.class).with(EnemyStat.SPIRIT, 50f), accumulator -> {
-            accumulator.restoreFlat(EnemyStat.REGENERATION, 10f);
-        });
-
-        assertThat(sheet.value(EnemyStat.REGENERATION)).isCloseTo(15f, within(0.001f));
     }
 
     @Test

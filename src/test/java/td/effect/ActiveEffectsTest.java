@@ -1,6 +1,7 @@
 package td.effect;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.stat.BaseStats;
@@ -342,13 +343,29 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void reapplyingHealAtALowerRateKeepsTheStrongerOne() {
+    void aRecastFromTheSameSourceKeepsTheLargerHealAndTheLaterEnd() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.heal(80, 5, DamageSink.none()));
+        AttackOrigin source = AttackOrigin.fresh();
+        effects.apply(Effect.heal(80, 5, DamageSink.none()).from(source));
 
-        effects.apply(Effect.heal(20, 10, DamageSink.none()));
+        effects.apply(Effect.heal(20, 10, DamageSink.none()).from(source));
 
         assertThat(resolved(effects, EnemyStat.REGENERATION)).isEqualTo(80f);
+        assertThat(effects.remainingTicks(EffectKind.HEAL)).hasValue(10);
+    }
+
+    @Test
+    void healsFromTwoSourcesAddUpAndEachEndsOnItsOwnClock() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.heal(80, 2, DamageSink.none()).from(AttackOrigin.fresh()));
+        effects.apply(Effect.heal(20, 4, DamageSink.none()).from(AttackOrigin.fresh()));
+        float together = resolved(effects, EnemyStat.REGENERATION);
+
+        tickTimes(effects, 2);
+
+        assertThat(together).isEqualTo(100f);
+        assertThat(resolved(effects, EnemyStat.REGENERATION)).isEqualTo(20f);
+        assertThat(effects.remainingTicks(EffectKind.HEAL)).hasValue(2);
     }
 
     @Test
@@ -586,21 +603,16 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void stackDecayFollowsTheSpiritFactorAndStopsAtZeroSpirit() {
+    void aStackDebuffNothingEarnsLosesOneStackEveryDecayInterval() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
-        tickTimes(effects, 40);
-        int stacks = effects.stacks(EffectKind.SCORCHED);
+        effects.apply(Effect.scorched(5));
 
-        for (int i = 0; i < 200; i++) {
-            effects.tick(0f);
-        }
-        assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(stacks);
+        tickTimes(effects, ActiveEffects.STACK_DECAY_INTERVAL_TICKS - 1);
+        int before = effects.stacks(EffectKind.SCORCHED);
+        effects.tick();
 
-        for (int i = 0; i < 10; i++) {
-            effects.tick(2f);
-        }
-        assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(stacks - 1);
+        assertThat(before).isEqualTo(5);
+        assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(4);
     }
 
     private static float resolvedOn(BaseStats<EnemyStat> base, ActiveEffects effects, EnemyStat stat) {
@@ -786,18 +798,6 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aHealThatBecameDamageIsPaidEveryTickThroughItsSinkAndRestoresNothing() {
-        List<Damage> paid = new ArrayList<>();
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.heal(40, 3, DamageSink.none()).invertedThrough(recordingSink(paid)));
-
-        tickTimes(effects, 3);
-
-        assertThat(paid).containsExactly(Damage.magic(40), Damage.magic(40), Damage.magic(40));
-        assertThat(resolved(effects, EnemyStat.REGENERATION)).isZero();
-    }
-
-    @Test
     void tollLeavesEveryOtherDebuffsTimerAlone() {
         ActiveEffects plain = new ActiveEffects();
         plain.apply(Effect.exposed(100, DamageSink.none()));
@@ -906,64 +906,6 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aDebuffTimerRunsAtTheSpiritPaceButNeverBelowAQuarter() {
-        ActiveEffects fast = new ActiveEffects();
-        fast.apply(Effect.exposed(20, DamageSink.none()));
-        ActiveEffects slowest = new ActiveEffects();
-        slowest.apply(Effect.exposed(20, DamageSink.none()));
-
-        for (int i = 0; i < 10; i++) {
-            fast.tick(2f);
-        }
-        for (int i = 0; i < 79; i++) {
-            slowest.tick(0.01f);
-        }
-
-        assertThat(fast.activeKinds()).isEmpty();
-        assertThat(slowest.activeKinds()).containsExactly(EffectKind.EXPOSED);
-        slowest.tick(0.01f);
-        assertThat(slowest.activeKinds()).isEmpty();
-    }
-
-    @Test
-    void aDebuffTimerStopsWhileSpiritIsAtItsFloor() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.exposed(20, DamageSink.none()));
-
-        for (int i = 0; i < 500; i++) {
-            effects.tick(0f);
-        }
-
-        assertThat(effects.activeKinds()).containsExactly(EffectKind.EXPOSED);
-        assertThat(effects.remainingTicks(EffectKind.EXPOSED)).hasValue(20);
-    }
-
-    @Test
-    void aFreezeAndAnInvisibilityAreNotPacedBySpirit() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.freeze(10, DamageSink.none()));
-        effects.apply(Effect.invisible(10, DamageSink.none()));
-
-        for (int i = 0; i < 10; i++) {
-            effects.tick(0f);
-        }
-
-        assertThat(effects.activeKinds()).isEmpty();
-    }
-
-    @Test
-    void aChillFadesAtTheSpiritPaceToo() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.4f, 100, DamageSink.none()));
-
-        for (int i = 0; i < 50; i++) {
-            effects.tick(2f);
-        }
-
-        assertThat(effects.activeKinds()).isEmpty();
-    }
-
-    @Test
     void shroudingARevealedEnemyEndsTheReveal() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.revealed(100, DamageSink.none()));
@@ -989,9 +931,9 @@ class ActiveEffectsTest {
         List<Damage> received = new ArrayList<>();
         effects.apply(Effect.bleeding(100, 100, recordingSink(received)));
 
-        effects.tick(1f, 0.5f);
-        effects.tick(1f, 0f);
-        effects.tick(1f, 0.5f);
+        effects.tick(0.5f);
+        effects.tick(0f);
+        effects.tick(0.5f);
 
         assertThat(received).containsExactly(Damage.physical(50), Damage.physical(50));
     }
@@ -1003,7 +945,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.bleeding(10, 100, recordingSink(received)));
 
         for (int i = 0; i < 6; i++) {
-            effects.tick(1f, 0.04f);
+            effects.tick(0.04f);
         }
 
         assertThat(received.stream().mapToInt(Damage::amount).sum()).isEqualTo(2);
@@ -1015,8 +957,8 @@ class ActiveEffectsTest {
         List<Damage> received = new ArrayList<>();
         effects.apply(Effect.bleeding(100, 2, recordingSink(received)));
 
-        effects.tick(1f, 0.5f);
-        effects.tick(1f, 0.5f);
+        effects.tick(0.5f);
+        effects.tick(0.5f);
 
         assertThat(effects.activeKinds()).isEmpty();
         assertThat(received).hasSize(2);
@@ -1153,26 +1095,12 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void fracturedWearsOffAtTheFlooredPaceAndScorchedAtTheUnflooredOne() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.fractured(5, DamageSink.none()));
-        effects.apply(Effect.scorched(5));
-
-        for (int t = 0; t < 80; t++) {
-            effects.tick(0.1f);
-        }
-
-        assertThat(effects.stacks(EffectKind.FRACTURED)).isEqualTo(4);
-        assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(5);
-    }
-
-    @Test
     void aTickNamesTheEffectBehindEachDamageBeforeItLands() {
         ActiveEffects effects = new ActiveEffects();
         List<String> heard = new ArrayList<>();
         effects.apply(Effect.burn(Damage.magic(100), 40, damage -> heard.add("damage")));
 
-        effects.tick(1f, 0f, kind -> heard.add(kind.title()));
+        effects.tick(0f, kind -> heard.add(kind.title()));
 
         assertThat(heard).containsExactly(EffectKind.BURN.title(), "damage");
     }

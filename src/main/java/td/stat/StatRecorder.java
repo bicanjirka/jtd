@@ -34,7 +34,7 @@ public final class StatRecorder<S extends Enum<S> & StatKey> implements StatAccu
     }
 
     @Override
-    public void restoreFlat(S stat, float amount) {
+    public void addFlat(S stat, float amount) {
         this.record(stat, StatModifier.flat(amount));
     }
 

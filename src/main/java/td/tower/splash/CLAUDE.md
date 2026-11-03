@@ -8,7 +8,7 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   and every distance the payload uses (an arc's reach) grows with it. The blast lands and Saturates
   first, then the payload runs.
 - A Hexer's hex is an enemy effect in `EffectCategory.HEX`, applied through `applyEffect`, and that
-  effect is the hex's only timer (spirit paces it). The Hexer's `HexKeeper` only watches it: what
+  effect is the hex's only timer. The Hexer's `HexKeeper` only watches it: what
   a hex pays out when it ends or its carrier dies is settled at the start of the Hexer's tick,
   never by the enemy. The keeper reaches its caster only through `HexCaster`, so the dev panel's
   caster pays hexes out by the same rules. Each hex picks its own target in one pass per cast, never per tick.

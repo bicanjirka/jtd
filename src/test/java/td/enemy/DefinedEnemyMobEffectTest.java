@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -11,10 +12,12 @@ import td.fixtures.EnemyFixtures;
 import td.fixtures.LevelFixtures;
 import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
+import td.stat.StatBreakdown;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
 import td.term.TermText;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -127,6 +130,35 @@ class DefinedEnemyMobEffectTest {
     }
 
     @Test
+    void spiritScalesWhatEveryRegenerationTickRestoresATraitsIncluded() {
+        GameWorld context = newContext();
+        context.setPath(LevelFixtures.straightPath(1, 0, 100));
+        float pointsPerSecond = 20f;
+        EnemyMob enemy = EnemyFixtures.liveMob(context, EnemyDefinition.of("mending", "Mending", 100_000, 5, 0f,
+                BodyArchetype.CIRCLE).withSpirit(50f).withTraits(List.of(new RegenerationTrait(pointsPerSecond))));
+        enemy.doDamage(Damage.physical(40_000));
+        int damaged = enemy.getHealth();
+
+        enemy.doTick(1);
+
+        assertThat(enemy.getHealth() - damaged)
+                .isEqualTo(Math.round(DamageUnits.ofPoints(pointsPerSecond) * 1.5f / TickRate.TICKS_PER_SECOND));
+    }
+
+    @Test
+    void theRegenerationBreakdownEndsAtWhatATickRestoresWithSpiritAsItsOwnLine() {
+        GameWorld context = newContext();
+        DefinedEnemyMob enemy = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("blessed").withSpirit(60f));
+        enemy.applyEffect(Effect.heal(100, 40, DamageSink.none()));
+
+        StatBreakdown breakdown = enemy.breakdown(EnemyStat.REGENERATION);
+
+        assertThat(breakdown.together()).isEqualTo(100f);
+        assertThat(breakdown.scaled()).extracting(part -> part.modifier().multiply()).containsExactly(1.6f);
+        assertThat(breakdown.current()).isCloseTo(160f, within(1e-3f));
+    }
+
+    @Test
     void aHealEffectNeverRestoresHealthAboveTheMobsMax() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
@@ -152,34 +184,6 @@ class DefinedEnemyMobEffectTest {
 
         assertThat(enemy.isDead()).isTrue();
         assertThat(enemy.getHealth()).isZero();
-    }
-
-    @Test
-    void anEnemyAtTheSpiritFloorNeverLosesItsScorchedStacksWhileOneAtNeutralSpiritDoes() {
-        GameWorld context = newContext();
-        context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        DefinedEnemyMob brittle = EnemyFixtures.liveMob(context,
-                EnemyDefinition.of("brittle", "Brittle", 100_000, 5, 0f, BodyArchetype.CIRCLE).withSpirit(-100f));
-        DefinedEnemyMob plain = EnemyFixtures.liveMob(context,
-                EnemyDefinition.of("plain", "Plain", 100_000, 5, 0f, BodyArchetype.CIRCLE));
-        for (DefinedEnemyMob mob : List.of(brittle, plain)) {
-            mob.applyEffect(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
-            for (int t = 1; t <= 40; t++) {
-                mob.doTick(t);
-            }
-        }
-        int brittleStacks = brittle.effectStacks(EffectKind.SCORCHED);
-        int plainStacks = plain.effectStacks(EffectKind.SCORCHED);
-
-        for (int t = 41; t <= 240; t++) {
-            brittle.doTick(t);
-            plain.doTick(t);
-        }
-
-        assertThat(brittleStacks).isGreaterThan(0);
-        assertThat(brittle.effectStacks(EffectKind.SCORCHED)).isEqualTo(brittleStacks);
-        assertThat(plainStacks).isGreaterThan(0);
-        assertThat(plain.effectStacks(EffectKind.SCORCHED)).isZero();
     }
 
     @Test
