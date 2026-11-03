@@ -64,6 +64,11 @@ public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime>
         return this.wavesAt(round).stream().map(Wave::highestRank).max(Comparator.naturalOrder()).orElse(Rank.GRUNT);
     }
 
+    /** What round {@code round} pays when it clears with no enemy leaked: every path's wave adds its own. */
+    public int clearBonusAt(int round) {
+        return this.wavesAt(round).stream().mapToInt(Wave::clearBonus).sum();
+    }
+
     /** Whether round {@code round} sends a unique enemy down any path. */
     public boolean uniqueAt(int round) {
         return this.wavesAt(round).stream().anyMatch(Wave::hasUnique);

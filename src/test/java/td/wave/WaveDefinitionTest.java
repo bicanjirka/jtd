@@ -29,9 +29,15 @@ class WaveDefinitionTest {
 
     @Test
     void aNonPositiveSpeedMultiplierIsRejected() {
-        assertThatThrownBy(() -> new WaveDefinition("simple", Rank.GRUNT, 0f))
+        assertThatThrownBy(() -> new WaveDefinition("simple", Rank.GRUNT).withSpeedMultiplier(0f))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new WaveDefinition("simple", Rank.GRUNT, -1f))
+        assertThatThrownBy(() -> new WaveDefinition("simple", Rank.GRUNT).withSpeedMultiplier(-1f))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aNegativeClearBonusIsRejected() {
+        assertThatThrownBy(() -> new WaveDefinition("simple", Rank.GRUNT).withClearBonus(-1))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

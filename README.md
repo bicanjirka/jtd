@@ -42,7 +42,8 @@ cell to place it; hovering a toolbar button opens a tooltip of the tower, and th
 it in full while you place it. The click that builds a tower selects it, as does clicking a placed
 tower later: the side panel shows its stats and its own upgrade
 tree — four slots, `core`/`base`/`head`/`special`, drawn whole as a talent tree.
-Start each wave yourself when you are ready — waves do not auto-advance.
+Start each wave yourself when you are ready — waves do not auto-advance. A level may pay bonus credits, scored
+alike, for each round cleared with no enemy leaked.
 
 ### Controls
 

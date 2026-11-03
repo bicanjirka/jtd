@@ -8,6 +8,7 @@ import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageMix;
 import td.damage.DamageUnits;
+import td.economy.EconomyLedger;
 import td.economy.EconomyState;
 import td.effect.DamageSink;
 import td.effect.DiminishingReturns;
@@ -845,6 +846,59 @@ class GameEngineTest {
         engine.doTick(2000);
 
         assertThat(engine.waveProgress().rounds()).extracting(RoundSummary::leaked).containsExactly(true, false);
+    }
+
+    @Test
+    void aRoundClearedWithNoLeakPaysEveryPathsClearBonusAsCreditsAndScore() {
+        GameEngine plain = clearedFirstRound(List.of(new WaveDefinition("weakling", Rank.GRUNT)),
+                List.of(new WaveDefinition("weakling", Rank.GRUNT)));
+        GameEngine rewarded = clearedFirstRound(List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(3)),
+                List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(4)));
+
+        EconomyLedger paid = rewarded.getGameWorld().economy();
+        EconomyLedger unpaid = plain.getGameWorld().economy();
+
+        assertThat(paid.getCredits() - unpaid.getCredits()).isEqualTo(3 + 4);
+        assertThat(paid.getScore() - unpaid.getScore()).isEqualTo(3 + 4);
+    }
+
+    @Test
+    void aRoundAnEnemyEscapedPaysNoClearBonus() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT).withClearBonus(5),
+                new WaveDefinition("simple", Rank.GRUNT)), 100));
+
+        engine.nextWave();
+        tickUntilWaveCleared(engine);
+        engine.doTick(2000);
+
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100);
+    }
+
+    @Test
+    void aDebugSkippedRoundPaysNoClearBonus() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT).withClearBonus(5),
+                new WaveDefinition("simple", Rank.GRUNT)), 100));
+        engine.nextWave();
+
+        engine.requestSkipWave();
+        engine.applyRequests();
+
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100);
+    }
+
+    /** An engine whose first round, one wave per path, every enemy killed, has just cleared. */
+    private static GameEngine clearedFirstRound(List<WaveDefinition> wavesA, List<WaveDefinition> wavesB) {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.twoPathLevelWith(wavesA, wavesB).withCustomEnemies(List.of(WEAKLING)));
+        DevControls dev = new DevControls(engine.getGameWorld());
+        engine.nextWave();
+        dev.killAll();
+        dev.runPending();
+        engine.doTick(1);
+        assertThat(engine.getGameWorld().enemies().aliveCount()).as("enemies still walking").isZero();
+        return engine;
     }
 
     @Test
