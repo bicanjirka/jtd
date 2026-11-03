@@ -1029,7 +1029,9 @@ public abstract class AbstractTower implements Tower {
     }
 
     private boolean showsRow(TowerStat stat, TowerStats stats, boolean applies) {
-        boolean offDefault = this.baseStats.stats().value(stat) != stat.defaultBase() || stats.value(stat) != stat.defaultBase();
+        // A stat whose range starts above its default resolves to that floor, which is still its default.
+        float unset = stat.clamp(stat.defaultBase());
+        boolean offDefault = stat.clamp(this.baseStats.stats().value(stat)) != unset || stats.value(stat) != unset;
         return switch (stat.shows()) {
             case IN_CORE_ROW -> false;
             case OFF_DEFAULT -> offDefault;
