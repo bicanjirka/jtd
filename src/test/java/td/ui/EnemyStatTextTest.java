@@ -1,6 +1,7 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.effect.DamageSink;
@@ -280,6 +281,30 @@ class EnemyStatTextTest {
         assertThat(healthBar(alive).tallies()).extracting(SheetLine.Tally::value).containsExactly("5", "1");
         assertThat(healthBar(killed).health()).isZero();
         assertThat(healthBar(killed).fate()).contains("Killed");
+    }
+
+    @Test
+    void theHealthBarCarriesWhatItsShieldsHoldByTheDamageTheyTake() {
+        DefinedEnemyMob mob = this.anEnemy();
+        mob.applyEffect(Effect.shield(500f, 100, DamageSink.none()).from(AttackOrigin.fresh()));
+        mob.applyEffect(ShieldTemplate.physicalOnly(3f, 100).toEffect(DamageSink.none()).from(AttackOrigin.fresh()));
+
+        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
+
+        assertThat(healthBar(sheet).shields()).isEqualTo(new SheetLine.Shields(5f, 3f, 0f));
+    }
+
+    @Test
+    void aShieldsHoverListsEachSourcesShieldWithWhatItTakesAndHowLongItHas() {
+        DefinedEnemyMob mob = this.anEnemy();
+        mob.applyEffect(ShieldTemplate.magicOnly(3f, 40).toEffect(DamageSink.none()).from(AttackOrigin.fresh()));
+        mob.applyEffect(ShieldTemplate.untilBroken(2f).toEffect(DamageSink.none()).from(AttackOrigin.fresh()));
+
+        InfoSheet hover = icons(EnemyStatText.live(mob.inspect(), WORDING), "Buffs").getFirst().tooltip();
+
+        assertThat(hover.lines()).contains(
+                Row.plain(Glyph.DOT, "Holds magic", "3 / 3").withGloss("hp", "2 s"),
+                Row.plain(Glyph.DOT, "Holds", "2 / 2").withGloss("hp", "until broken"));
     }
 
     @Test

@@ -186,7 +186,8 @@ An enemy is made of four kinds of thing, and each belongs to exactly one:
   Regeneration (hp/s) and the Chill, Burn and Freeze resists (%).
   The info pane lists the ones off their default, each with its unit and, where the number alone says little, what
   it does (`Armor 30 -23% dmg`); hovering a row explains it and, live, what made it. Nothing is drawn on the board
-  for them.
+  for them. Under a selected enemy's health bar a strip shows what its shields hold, tinted where a shield takes only
+  physical or only magic damage; hovering the Shield or Heal icon lists each source's share and how long it has.
 - **Traits** are what an enemy has that most don't, always on: a resistance or immunity to an effect,
   regeneration, a stat that follows its state (faster or harder to hit when hurt) or adapts to how the
   level is played. Each draws a marker under the enemy.

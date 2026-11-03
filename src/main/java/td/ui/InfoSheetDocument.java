@@ -55,6 +55,12 @@ final class InfoSheetDocument {
     private static final float BADGE_SIZE = 4.5f;
     private static final int BAR_HEIGHT = 12;
     private static final int BAR_VALUE_GAP = 8;
+    private static final int STRIP_HEIGHT = 10;
+    private static final int STRIP_GAP = 2;
+    private static final Font STRIP_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
+    private static final Color SHIELD_ANY = Java2DFrameRenderer.colorFor(Palette.STATUS_MARKER_SHIELD).darker().darker();
+    private static final Color SHIELD_PHYSICAL = Java2DFrameRenderer.colorFor(Palette.DAMAGE_PHYSICAL).darker().darker();
+    private static final Color SHIELD_MAGIC = Java2DFrameRenderer.colorFor(Palette.DAMAGE_MAGIC).darker().darker();
     private static final int RANK_FONT_SIZE = 11;
     private static final int PROSE_FONT_SIZE = 11;
     private static final int GAP_FONT_SIZE = 4;
@@ -158,7 +164,18 @@ final class InfoSheetDocument {
         float fraction = bar.maxHealth() > 0 ? Math.clamp((float) bar.health() / bar.maxHealth(), 0f, 1f) : 0f;
         String health = TermNumbers.whole(bar.health()) + " / " + TermNumbers.whole(bar.maxHealth()) + " hp";
         boolean gone = bar.fate().isPresent();
-        this.icon(new PaintedIcon(barWidth, BAR_HEIGHT, g2 -> paintBar(g2, barWidth, fraction, health, gone)));
+        SheetLine.Shields shields = bar.shields();
+        if (gone || shields.total() <= 0f) {
+            this.icon(new PaintedIcon(barWidth, BAR_HEIGHT, g2 -> paintBar(g2, barWidth, fraction, health, gone)));
+        } else {
+            int height = BAR_HEIGHT + STRIP_GAP + STRIP_HEIGHT;
+            this.icon(new PaintedIcon(barWidth, height, g2 -> {
+                g2.translate(0, -(STRIP_GAP + STRIP_HEIGHT) / 2f);
+                paintBar(g2, barWidth, fraction, health, false);
+                g2.translate(0, (BAR_HEIGHT + 2 * STRIP_GAP + STRIP_HEIGHT) / 2f);
+                paintShieldStrip(g2, barWidth, shields, bar.maxHealth());
+            }));
+        }
         this.insert("\t", new SimpleAttributeSet());
         if (gone) {
             this.insert(bar.fate().get(), colored(GONE_COLOR));
@@ -170,6 +187,35 @@ final class InfoSheetDocument {
                     g2 -> paintFace(g2, tally.face(), TermIconPainter.MENTION)));
             this.insert(" " + tally.value() + (i < bar.tallies().size() - 1 ? " " : ""), colored(VALUE_COLOR));
         }
+    }
+
+    /**
+     * The shields as a strip as wide as the bar: what they hold against full health, those that take every type first,
+     * then those limited to physical, then to magic, each in its own colour, with the total written across it.
+     */
+    private static void paintShieldStrip(Graphics2D g2, int barWidth, SheetLine.Shields shields, int maxHealth) {
+        float left = -barWidth / 2f;
+        float top = -STRIP_HEIGHT / 2f;
+        g2.setColor(BAR_BACKGROUND);
+        g2.fill(new Rectangle2D.Float(left, top, barWidth, STRIP_HEIGHT));
+        float scale = maxHealth > 0 ? barWidth / Math.max((float) maxHealth, shields.total()) : 0f;
+        float x = left;
+        float[] parts = {shields.any(), shields.physicalOnly(), shields.magicOnly()};
+        Color[] colors = {SHIELD_ANY, SHIELD_PHYSICAL, SHIELD_MAGIC};
+        for (int i = 0; i < parts.length; i++) {
+            g2.setColor(colors[i]);
+            g2.fill(new Rectangle2D.Float(x, top, parts[i] * scale, STRIP_HEIGHT));
+            x += parts[i] * scale;
+        }
+        g2.setColor(Hud.BORDER_IDLE);
+        g2.setStroke(new BasicStroke(1f));
+        g2.draw(new Rectangle2D.Float(left + 0.5f, top + 0.5f, barWidth - 1, STRIP_HEIGHT - 1));
+        g2.setFont(STRIP_FONT);
+        FontMetrics stripMetrics = g2.getFontMetrics();
+        String text = TermNumbers.whole(Math.round(shields.total())) + " shield";
+        g2.setColor(Hud.FOREGROUND);
+        g2.drawString(text, -stripMetrics.stringWidth(text) / 2f,
+                (stripMetrics.getAscent() - stripMetrics.getDescent()) / 2f);
     }
 
     private static void paintBar(Graphics2D g2, int barWidth, float fraction, String text, boolean gone) {
