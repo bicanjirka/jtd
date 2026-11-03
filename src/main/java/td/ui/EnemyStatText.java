@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.damage.DamageType;
 import td.economy.StatusTerm;
 import td.effect.EffectKind;
 import td.enemy.EnemyInspection;
@@ -62,7 +63,7 @@ final class EnemyStatText {
                     case KILLED -> Optional.of("Killed");
                     case LEAKED -> Optional.of("Leaked");
                     case HATCHED -> Optional.of("Hatched");
-                }));
+                }).withShields(shieldsOf(inspection)));
         lines.add(new SheetLine.Gap());
         lines.addAll(StatRowText.live(breakdowns(inspection), wording));
         if (inspection.dodges() > 0) {
@@ -194,9 +195,8 @@ final class EnemyStatText {
         if (kind.maxStacks() > 0 && effect.stacks() > 0) {
             rows.add(Row.plain(Glyph.DOT, "Stacks", effect.stacks() + " / " + kind.maxStacks()));
         }
-        if (kind == EffectKind.SHIELD) {
-            rows.add(Row.plain(Glyph.DOT, "Absorbs", TermNumbers.number(effect.shield().remaining()) + " / "
-                    + TermNumbers.number(effect.shield().max())).withGloss("hp", ""));
+        for (EnemyInspection.ShareState share : effect.shares()) {
+            rows.add(kind == EffectKind.SHIELD ? shieldShareRow(share) : healShareRow(share));
         }
         if (kind == EffectKind.CHILL) {
             rows.add(Row.plain(Glyph.DOT, "Slows", TermNumbers.percent(effect.level())));
@@ -205,6 +205,49 @@ final class EnemyStatText {
                 ? "the next one lasts " + TermNumbers.percent((float) share) : "the next one is kept out")
                 .asSentence())));
         return rows;
+    }
+
+    /** One source's shield: what it holds of what it was cast with, what it takes, and how long it has. */
+    private static Row shieldShareRow(EnemyInspection.ShareState share) {
+        String label = share.restrictedTo().map(type -> switch (type) {
+            case PHYSICAL -> "Holds physical";
+            case MAGIC -> "Holds magic";
+        }).orElse("Holds");
+        return Row.plain(Glyph.DOT, label, TermNumbers.number(share.amount()) + " / " + TermNumbers.number(share.max()))
+                .withGloss("hp", timeLeft(share));
+    }
+
+    /** One source's heal: the regeneration it gives, and how long it has. */
+    private static Row healShareRow(EnemyInspection.ShareState share) {
+        return Row.plain(Glyph.DOT, "Gives", TermNumbers.number(share.amount())).withGloss("hp/s", timeLeft(share));
+    }
+
+    private static String timeLeft(EnemyInspection.ShareState share) {
+        return share.remainingTicks().isPresent()
+                ? TermNumbers.number(share.remainingTicks().getAsInt() / TickRate.TICKS_PER_SECOND) + " s"
+                : "until broken";
+    }
+
+    /** What the enemy's shields hold, by the damage they take, for the strip under its health. */
+    private static SheetLine.Shields shieldsOf(EnemyInspection inspection) {
+        float any = 0f;
+        float physical = 0f;
+        float magic = 0f;
+        for (EnemyInspection.EffectState effect : inspection.effects()) {
+            if (effect.kind() != EffectKind.SHIELD || effect.faded()) {
+                continue;
+            }
+            for (EnemyInspection.ShareState share : effect.shares()) {
+                if (share.restrictedTo().isEmpty()) {
+                    any += share.amount();
+                } else if (share.restrictedTo().get() == DamageType.PHYSICAL) {
+                    physical += share.amount();
+                } else {
+                    magic += share.amount();
+                }
+            }
+        }
+        return new SheetLine.Shields(any, physical, magic);
     }
 
     /** The debuffs, then each term towers hold a mark of, once, with its highest step. */

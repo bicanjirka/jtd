@@ -1,11 +1,16 @@
 package td.enemy;
 
+import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.effect.ActiveEffects;
+import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.HealShare;
 import td.effect.ShieldGauge;
+import td.effect.ShieldShare;
 import td.stat.EnemyStat;
 import td.stat.StatBreakdown;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -101,7 +106,15 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                 .withLevel(kind == EffectKind.CHILL ? live.chillLevel() : 0f)
                 .withShield(kind == EffectKind.SHIELD ? live.shieldGauge() : ShieldGauge.none())
                 .withClockTicks(live.clockTicks(kind))
-                .withFullness(live.fullness(kind));
+                .withFullness(live.fullness(kind))
+                .withShares(live.find(kind).map(EnemyInspection::sharesOf).orElse(List.of()));
+    }
+
+    private static List<ShareState> sharesOf(Effect effect) {
+        List<ShareState> shares = new ArrayList<>();
+        effect.healShares().forEach(heal -> shares.add(ShareState.of(heal)));
+        effect.shieldShares().forEach(shield -> shares.add(ShareState.of(shield)));
+        return shares;
     }
 
     /** A copy carrying {@code marks}: memory towers keep about this enemy, filled in by the frame build. */
@@ -140,51 +153,83 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
      * @param stacks         a vulnerability's, burn's or poison's stack count; {@code 0} for other kinds
      * @param level          how much speed a chill takes away, from {@code 0} to {@code 1}; {@code 0} for other kinds
      * @param shield         a shield's pool, in points; {@link ShieldGauge#none()} for other kinds
+     * @param shares         each source's heal or shield; empty for other kinds
      */
     public record EffectState(EffectKind kind, OptionalInt remainingTicks, int stacks, float level, ShieldGauge shield,
                               OptionalInt clockTicks, OptionalDouble fullness, boolean faded,
-                              OptionalDouble nextShare) {
+                              OptionalDouble nextShare, List<ShareState> shares) {
+
+        public EffectState {
+            shares = List.copyOf(shares);
+        }
 
         /** An effect with no stacks, level or shield; add them with the {@code withX} copies. */
         public static EffectState of(EffectKind kind, OptionalInt remainingTicks) {
             return new EffectState(kind, remainingTicks, 0, 0f, ShieldGauge.none(), OptionalInt.empty(),
-                    OptionalDouble.empty(), false, OptionalDouble.empty());
+                    OptionalDouble.empty(), false, OptionalDouble.empty(), List.of());
         }
 
         /** A kind that ended but whose diminishing returns still run. */
         public static EffectState faded(EffectKind kind) {
             return new EffectState(kind, OptionalInt.empty(), 0, 0f, ShieldGauge.none(), OptionalInt.empty(),
-                    OptionalDouble.empty(), true, OptionalDouble.empty());
+                    OptionalDouble.empty(), true, OptionalDouble.empty(), List.of());
         }
 
         public EffectState withStacks(int stacks) {
             return new EffectState(this.kind, this.remainingTicks, stacks, this.level, this.shield, this.clockTicks,
-                    this.fullness, this.faded, this.nextShare);
+                    this.fullness, this.faded, this.nextShare, this.shares);
         }
 
         public EffectState withLevel(float level) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, level, this.shield, this.clockTicks,
-                    this.fullness, this.faded, this.nextShare);
+                    this.fullness, this.faded, this.nextShare, this.shares);
         }
 
         public EffectState withShield(ShieldGauge shield) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, shield, this.clockTicks,
-                    this.fullness, this.faded, this.nextShare);
+                    this.fullness, this.faded, this.nextShare, this.shares);
         }
 
         public EffectState withClockTicks(OptionalInt clockTicks) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, this.shield, clockTicks,
-                    this.fullness, this.faded, this.nextShare);
+                    this.fullness, this.faded, this.nextShare, this.shares);
         }
 
         public EffectState withFullness(OptionalDouble fullness) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, this.shield,
-                    this.clockTicks, fullness, this.faded, this.nextShare);
+                    this.clockTicks, fullness, this.faded, this.nextShare, this.shares);
         }
 
         public EffectState withNextShare(float nextShare) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, this.shield,
-                    this.clockTicks, this.fullness, this.faded, OptionalDouble.of(nextShare));
+                    this.clockTicks, this.fullness, this.faded, OptionalDouble.of(nextShare), this.shares);
+        }
+
+        public EffectState withShares(List<ShareState> shares) {
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, this.shield,
+                    this.clockTicks, this.fullness, this.faded, this.nextShare, shares);
+        }
+    }
+
+    /**
+     * One source's heal or shield.
+     *
+     * @param amount         a heal's regeneration in points a second, or what a shield has left in points
+     * @param max            the pool a shield was cast with; a heal's own amount
+     * @param restrictedTo   the one damage type a shield takes; empty for every type, and for a heal
+     * @param remainingTicks ticks left; empty for a shield that lasts until broken
+     */
+    public record ShareState(float amount, float max, Optional<DamageType> restrictedTo, OptionalInt remainingTicks) {
+
+        static ShareState of(HealShare heal) {
+            float perSecond = DamageUnits.inPoints(heal.perTick()) * TickRate.TICKS_PER_SECOND;
+            return new ShareState(perSecond, perSecond, Optional.empty(), OptionalInt.of(heal.remainingTicks()));
+        }
+
+        static ShareState of(ShieldShare shield) {
+            return new ShareState(DamageUnits.inPoints(shield.remaining()), DamageUnits.inPoints(shield.max()),
+                    shield.restrictedTo(), shield.remainingTicks() == Effect.LASTING_TICKS ? OptionalInt.empty()
+                            : OptionalInt.of(shield.remainingTicks()));
         }
     }
 }

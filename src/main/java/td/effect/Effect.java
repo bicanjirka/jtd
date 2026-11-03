@@ -471,6 +471,14 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
+    /** Each source's heal; empty for any other family. */
+    public List<HealShare> healShares() {
+        return switch (this.dynamics) {
+            case EffectDynamics.HealOverTime heal -> heal.shares();
+            default -> List.of();
+        };
+    }
+
     /** Each source's shield; empty for any other family. */
     public List<ShieldShare> shieldShares() {
         return switch (this.dynamics) {

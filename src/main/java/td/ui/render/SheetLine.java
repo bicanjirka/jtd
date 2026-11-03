@@ -25,15 +25,47 @@ public sealed interface SheetLine {
     }
 
     /**
-     * A health bar with, on its right, what the enemy is worth while it lives or what became of it.
+     * A health bar, with a strip of the shields it holds under it, and on its right what the enemy is worth while it
+     * lives or what became of it.
      *
      * @param tallies the bounty and lives, each a face and its number; shown while it lives
      * @param fate    killed, leaked or hatched: the bar dims and this says which
+     * @param shields what its shields hold, in points; {@link Shields#none()} draws no strip
      */
-    record HealthBar(int health, int maxHealth, List<Tally> tallies, Optional<String> fate) implements SheetLine {
+    record HealthBar(int health, int maxHealth, List<Tally> tallies, Optional<String> fate, Shields shields)
+            implements SheetLine {
 
         public HealthBar {
             tallies = List.copyOf(tallies);
+        }
+
+        /** A bar with no shield strip. */
+        public HealthBar(int health, int maxHealth, List<Tally> tallies, Optional<String> fate) {
+            this(health, maxHealth, tallies, fate, Shields.none());
+        }
+
+        public HealthBar withShields(Shields shields) {
+            return new HealthBar(this.health, this.maxHealth, this.tallies, this.fate, shields);
+        }
+    }
+
+    /**
+     * What an enemy's shields hold, in points, by the damage they take.
+     *
+     * @param any          what the shields that take every type hold
+     * @param physicalOnly what the shields that take only physical damage hold
+     * @param magicOnly    what the shields that take only magic damage hold
+     */
+    record Shields(float any, float physicalOnly, float magicOnly) {
+
+        private static final Shields NONE = new Shields(0f, 0f, 0f);
+
+        public static Shields none() {
+            return NONE;
+        }
+
+        public float total() {
+            return this.any + this.physicalOnly + this.magicOnly;
         }
     }
 
