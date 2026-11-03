@@ -195,7 +195,7 @@ public class GameEngine {
 
         this.levelName = level.name();
         this.gameWorld.installLevel(new LoadedLevel(grid,
-                BoardGeometry.of(scale, width, height), pathRuntimes, catalog));
+                BoardGeometry.of(scale, width, height), pathRuntimes, catalog, level.ground()));
 
         this.gameWorld.economy().startEconomy(level.startingCredits(), level.startingLives());
         LOG.info("Level loaded: {} ({}x{} board, {} paths, {} waves per path, {} starting credits, {} starting lives)",

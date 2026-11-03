@@ -36,6 +36,7 @@ public enum AbilityTerm implements Term {
     SPLIT("Split", "splits in two when it dies"),
     LAY_EGG("Lay Egg", "leaves an egg when it dies"),
     HATCH("Hatch", "hatches unless it is destroyed in time"),
+    PUPATE("Pupate", "spins itself a cocoon after a while, unless it is killed first"),
     BRONZE_SHELL("Bronze Shell", "wears a huge shield that holds until broken, and recasts it again and again"),
     CHARGE("Charge", "charges ahead from time to time"),
     BLOODLUST("Bloodlust", "heals and breaks into a run once badly hurt"),

@@ -1,5 +1,6 @@
 package td.level;
 
+import td.board.BoardGround;
 import td.effect.EffectKind;
 import td.effect.HealTemplate;
 import td.effect.InvisibleTemplate;
@@ -191,6 +192,7 @@ final class RiftLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
+            .withGround(BoardGround.floor(0x0B0713))
             .withCustomEnemies(List.of(ECHO))
             .withCustomRankedEnemies(List.of(MIRAGE, HERALD, ECLIPSE, MONOLITH));
 

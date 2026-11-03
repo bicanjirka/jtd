@@ -10,6 +10,7 @@ import td.enemy.BodyArchetype;
 import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
+import td.enemy.HivemindTrait;
 import td.enemy.IdentifiedAbility;
 import td.enemy.IdentifiedTrait;
 import td.enemy.OnCriticalHitTakenTrigger;
@@ -31,7 +32,8 @@ import java.util.stream.Stream;
 /**
  * The Warden boss chain: three Wardens, each weaker than the last, and the egg each leaves on death.
  * An egg hatches into the next Warden unless it is killed in time, and the last egg has no ability,
- * so the chain is finite and always ends. Every stage is unique: Boss rank only.
+ * so the chain is finite and always ends. Every stage is unique: Boss rank only. A Warden calls drones
+ * to its side and hardens for every ally near it, so its escort has to be cleared before it can be worn down.
  */
 final class WardenEnemy {
 
@@ -44,28 +46,28 @@ final class WardenEnemy {
                         // Protection, not health, is what makes a hatch likely: the first egg shrugs off all but the
                         // heaviest hits and each later one gives something up, until the last can simply be shot.
                         egg("wardenEgg3", "Warden's Final Egg",
-                                "The last egg: destroy it to end the encounter.",
+                                "The last egg, sealed in amber: destroy it to end the encounter.",
                                 new Shell(25f, 1f, 0f), List.of()),
                         // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
-                        warden("warden3", "The Exhausted Warden", 5100, "hulking armored sentinel, barely standing",
-                                new Shell(5f, 2.5f, 0f), "wardenEgg3"),
+                        warden("warden3", "The Exhausted Warden", 5100, "guardian of the hive, barely standing",
+                                new Shell(2f, 2f, 0f), "wardenEgg3"),
                         egg("wardenEgg2", "Warden's Egg",
-                                "Hatches into a weaker Warden if not destroyed in time.",
+                                "Sealed in amber, it hatches into a weaker Warden if not destroyed in time.",
                                 new Shell(100f, 4f, 0f),
                                 List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE))))
                                 .withAbilities(hatchInto("warden3")),
                         warden("warden2", "The Weakened Warden", 8250,
-                                "hulking armored sentinel, worn down from its last hatching", new Shell(10f, 5f, 0f),
+                                "guardian of the hive, worn down from its last hatching", new Shell(6f, 4f, 0f),
                                 "wardenEgg2"),
                         egg("wardenEgg1", "Warden's Egg",
-                                "Hatches into a weaker Warden if not destroyed in time.",
+                                "Sealed in amber, it hatches into a weaker Warden if not destroyed in time.",
                                 new Shell(400f, 12f, 100f),
                                 List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
                                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
                                         IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL))))
                                 .withAbilities(hatchInto("warden2")),
-                        warden("warden", "The Warden", 13500, "hulking armored sentinel", new Shell(15f, 10f, 0f),
+                        warden("warden", "The Warden", 13500, "guardian of the hive, crested in gold", new Shell(10f, 8f, 0f),
                                 "wardenEgg1"))
                 .map(RankedEnemy::unique)
                 .toList();
@@ -99,7 +101,7 @@ final class WardenEnemy {
                                           String eggId) {
         List<IdentifiedAbility> abilities = new ArrayList<>(List.of(
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(100),
-                        new SpawnEnemiesAction("simple", 3, false).atRank(Rank.ELITE))),
+                        new SpawnEnemiesAction("drone", 3, false).atRank(Rank.ELITE))),
                 // Its plating only answers physical hits, so its own shield covers the other type.
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.ARCANE_WARD, new PeriodicTrigger(400),
                         new ApplyEffectAction(ShieldTemplate.magicOnly(health * 0.1f, 100), new SelfTarget()))),
@@ -116,6 +118,7 @@ final class WardenEnemy {
                 .withDescription("A " + lead + ".")
                 .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
                 .withStats(shell.resist(), shell.resist(), shell.plating(), 0f, shell.resilience(), 0f, 0f)
+                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new HivemindTrait(5f, 6))))
                 .withIdentifiedAbilities(List.copyOf(abilities));
     }
 }

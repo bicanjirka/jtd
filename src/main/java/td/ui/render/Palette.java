@@ -23,7 +23,6 @@ public enum Palette {
     ENEMY_GOLEM,
     ENEMY_JAMMER,
     ENEMY_REAVER,
-    ENEMY_BULKY,
     ENEMY_COLOSSUS,
     ENEMY_MOLTEN_CORE,
     ENEMY_EMBER,
@@ -35,6 +34,12 @@ public enum Palette {
     ENEMY_TALOS,
     ENEMY_MINOTAUR,
     ENEMY_BRONZE_BULL,
+    ENEMY_HORNET,
+    ENEMY_COCOON,
+    ENEMY_LARVA,
+    ENEMY_NURSE,
+    ENEMY_HIVE_GUARD,
+    ENEMY_DRONE,
     TOWER_SNIPER_BODY,
     TOWER_SPLASH_BODY,
     /** A Splash forked to Arc. */
@@ -210,6 +215,7 @@ public enum Palette {
     TRAIT_MARKER_BURN_IMMUNE,
     TRAIT_MARKER_FREEZE_IMMUNE,
     TRAIT_MARKER_EFFECT_RESIST,
+    TRAIT_MARKER_HIVEMIND,
     TRAIT_MARKER_OVERFLOW,
     /** An enemy's disruption ring and the marker on a tower it weakens. */
     DISRUPTION,

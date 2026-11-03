@@ -1,6 +1,7 @@
 package td.level;
 
 import org.junit.jupiter.api.Test;
+import td.board.BoardGround;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.Rank;
@@ -28,7 +29,7 @@ class LevelDefinitionTest {
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredPaths() {
         List<PathDefinition> paths = new ArrayList<>(List.of(pathWithRounds(1)));
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, paths, List.of(), List.of(), 100, 5);
+        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, paths, List.of(), List.of(), 100, 5, BoardGround.plain());
 
         paths.add(pathWithRounds(1));
 
@@ -37,7 +38,7 @@ class LevelDefinitionTest {
 
     @Test
     void theStoredPathsCannotBeMutatedThroughTheirAccessor() {
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, List.of(pathWithRounds(1)), List.of(), List.of(), 100, 5);
+        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, List.of(pathWithRounds(1)), List.of(), List.of(), 100, 5, BoardGround.plain());
 
         assertThatThrownBy(() -> level.paths().add(pathWithRounds(1)))
                 .isInstanceOf(UnsupportedOperationException.class);
@@ -45,21 +46,21 @@ class LevelDefinitionTest {
 
     @Test
     void aLevelNeedsAtLeastOnePath() {
-        assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5, List.of(), List.of(), List.of(), 100, 5))
+        assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5, List.of(), List.of(), List.of(), 100, 5, BoardGround.plain()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void everyPathMustDefineTheSameNumberOfWaves() {
         assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5,
-                List.of(pathWithRounds(3), pathWithRounds(2)), List.of(), List.of(), 100, 5))
+                List.of(pathWithRounds(3), pathWithRounds(2)), List.of(), List.of(), 100, 5, BoardGround.plain()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void pathsWithMatchingRoundCountsAreAccepted() {
         LevelDefinition level = new LevelDefinition("Test", "", 5, 5,
-                List.of(pathWithRounds(3), pathWithRounds(3)), List.of(), List.of(), 100, 5);
+                List.of(pathWithRounds(3), pathWithRounds(3)), List.of(), List.of(), 100, 5, BoardGround.plain());
 
         assertThat(level.paths()).hasSize(2);
     }

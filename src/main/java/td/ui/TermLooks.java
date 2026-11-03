@@ -128,6 +128,7 @@ public final class TermLooks {
             case ELUSIVE -> Palette.TRAIT_MARKER_HURT_AGILITY;
             case ADAPTATION -> Palette.TRAIT_MARKER_PERCENT_RESIST;
             case JAM -> Palette.DISRUPTION;
+            case HIVEMIND -> Palette.TRAIT_MARKER_HIVEMIND;
         }, Palette.TERM_FRAME_TRAIT);
     }
 
@@ -141,7 +142,7 @@ public final class TermLooks {
             case SPELL_WARD -> Palette.STATUS_MARKER_SPELLPROOF;
             case LAST_STAND -> Palette.STATUS_MARKER_UNYIELDING;
             case FADE, SHROUD, PHASE, VANISH -> Palette.STATUS_MARKER_INVISIBLE;
-            case REINFORCE, SWARM, BROOD, SPLIT, LAY_EGG, HATCH, REFORGE, MIRROR_IMAGE -> Palette.TERM_SPAWN;
+            case REINFORCE, SWARM, BROOD, SPLIT, LAY_EGG, HATCH, PUPATE, REFORGE, MIRROR_IMAGE -> Palette.TERM_SPAWN;
         }, Palette.TERM_FRAME_ABILITY);
     }
 

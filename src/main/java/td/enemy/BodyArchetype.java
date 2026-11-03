@@ -24,7 +24,6 @@ public enum BodyArchetype {
     SKIRMISHER,
     JAMMER,
     REAVER,
-    BULKY,
     COLOSSUS,
     MOLTEN_CORE,
     EMBER,
@@ -35,5 +34,11 @@ public enum BodyArchetype {
     HERALD,
     TALOS,
     MINOTAUR,
-    BRONZE_BULL
+    BRONZE_BULL,
+    DRONE,
+    HIVE_GUARD,
+    NURSE,
+    LARVA,
+    COCOON,
+    HORNET
 }

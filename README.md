@@ -205,7 +205,7 @@ on the Wardens, whose shield answers crits.
 | Armored    | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10 and 20% freeze resist; immune to critical hits. From Veteran it resists chill; from Elite, thick plating, a physical shield once below half health, and ward mines laid along its path; at Boss rank, calls three armored reinforcements every three seconds |
 | Fast       | triangle      | Speeds up as it loses health; -20 resilience, so crits land harder. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
 | Ghost      | sheet with eyes, floating | +20 armor. Turns invisible to single-target towers for ~10s the first time it's hit (~15s from Veteran; area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it; at Boss rank it fades out for 3s of every 10 |
-| Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone and, when it dies, heals and shields every ally near it; from Elite, adaptive armor; at Boss rank, the death blast is a heal alone. On Curly Path, from Elite it also wards every other ally near it with a small shield that stops any damage |
+| Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone and, when it dies, heals and shields every ally near it; from Elite, adaptive armor; at Boss rank, the death blast is a heal alone. |
 | Jammer     | disc with four antennae, spinning | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield and its casing blunts magic hits (2 insulation, 4 at Boss). |
 | Juggernaut | square with an inset plate | Slow, with plating that blunts a huge flat chunk of every physical hit; magic, Cracked and Sundered get past it. +15 magic resist and 30% freeze and chill resist. From Veteran, when it dies it blinds the towers within 2 cells (4 from Elite) until the wave is over; from Elite, crit immune; at Boss rank, a large magic shield once below half health. |
 | Mite       | circle        | Tiny and quick, with 10 agility rising 5 a rank to 25 at Elite and 35 at Boss; meant for a `swarm 12 mite`. at Boss rank it bursts into three broodlings when it dies. |
@@ -217,9 +217,14 @@ on the Wardens, whose shield answers crits.
 | Golem      | hexagon       | Slow, swaying and heavily armored: +35 armor, +40 resilience, so crits rarely land. Once below 50% health it hardens into a shield that holds until broken (40 points, then 80, 160, 300 and 600 at Boss). When it dies it splits into two smaller Golemites with its defences and a quarter of its health. From Elite, 50 armor, 60 resilience, +20 magic resist and 2 plating (65, 80, 35 and 4 at Boss). |
 | Skirmisher | diamond       | Nimble: 40 agility, rising to 80 with rank, so it dodges some aimed shots; +20 resilience. From Soldier it sprints off for 1.5 s after every dodge; from Elite it gets harder to hit the more it is hurt; at Boss rank it also vanishes for a moment after every dodge. |
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
-| The Warden | large spiked crest with a gold gem | A boss: armor and magic resist, and plating, all lower with each hatching; periodically summons reinforcements and shields itself and nearby allies, and shields itself again whenever it survives a critical hit. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. If any stage escapes, the level is lost, however many lives are left. Appears as the final wave of Curly Path. |
+| The Warden | large spiked crest with a gold gem | A boss: armor and magic resist, and plating, all lower with each hatching; periodically calls three Elite Drones, hardens for every ally near it (Hivemind), shields itself and nearby allies, and shields itself again whenever it survives a critical hit, so its escort has to be cleared before it can be worn down. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. If any stage escapes, the level is lost, however many lives are left. The final round of The Amber Hive — a level-authored enemy. |
 | Reaver     | barbed arrowhead, path-facing | Speeds up as it's hurt, shrugs off a flat point of every hit, crit immune from Elite, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
-| Bulky mob  | teal disc, pulsing | A Simple mob with three times the health at half the speed, on the Simple's ladder and abilities. Appears on Curly Path — a level-authored enemy, like the Reaver. |
+| Drone      | striped bee, buzzing | A Simple mob with Hivemind: +4 armor and magic resist for every other enemy within 1.5 cells, up to five, so a pack is far tougher than its members alone; area damage breaks it up. On the Simple's ladder. Appears on The Amber Hive — a level-authored enemy, like the Reaver. |
+| Hive Guard | amber beetle, striding | A Simple mob with three times the health at half the speed, a point of plating and a stronger Hivemind (+9 a neighbour, up to four). On the Simple's ladder. Appears on The Amber Hive. |
+| Brood Nurse | cream honeycomb cell with an amber cross | A Mender in the hive's colours, on the Mender's ladder; from Veteran it also wards every other ally near it with a shield that stops any damage. Appears on The Amber Hive. |
+| Larva      | pale grub, wriggling | A soft, slow Simple mob that spins itself into a Cocoon where it stands after nine seconds, unless it is killed first. On the Simple's ladder. Appears on The Amber Hive. |
+| Cocoon     | silk-wound ovoid | Stationary, armored and plated but soft to crits (-40 resilience); it hatches into a Hornet after six seconds unless it is broken open. Appears on The Amber Hive. |
+| Hornet     | orange hornet with black bands, path-facing | Quick (2 cells/s), nimble and faster as it is hurt, with -20 resilience; from Veteran it sprints after every dodge. What a Cocoon hatches into, and sent on its own in later rounds. Appears on The Amber Hive. |
 | The Iron Colossus | riveted octagon with a furnace slit, swaying | A boss in an iron shell: armor and heavy plating blunt physical hits, crit immune, half freeze resist. It lays ward mines that shield the escorts behind it and calls two Armored escorts from time to time. Once badly hurt it reforges into the Molten Core. If it or the Core escapes, the level is lost. The final wave of Iron Crossing — a level-authored enemy. |
 | The Molten Core | blazing star with a white-hot heart, pulsing | What the Colossus melts down into: no armor or plating but high magic resist and a casing that blunts magic hits, immune to burn and freeze, and faster the more it is hurt. It leaves pools behind it that heal the escorts who stand in them, and bursts into four Embers when it dies. |
 | Ember      | tiny flame | A quick, nimble, burn-immune shard of the Molten Core; each one that gets through costs a life. |
@@ -418,7 +423,8 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 | `mender`  | Mender (heals allies)                                    |
 | `jammer`  | Jammer (weakens nearby towers; in no wave yet)           |
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
-| `warden`  | the Warden boss chain (Curly Path only)                  |
+| `warden`  | the Warden boss chain (The Amber Hive only)              |
+| `drone`, `hiveguard`, `nurse`, `larva`, `cocoon`, `hornet` | The Amber Hive's own enemies (The Amber Hive only) |
 | `colossus` | the Iron Colossus boss (Iron Crossing only)             |
 | `mirage`, `herald`, `eclipse`, `monolith` | The Rift's own enemies (The Rift only) |
 | `bull`, `talos`, `minotaur` | The Labyrinth's own enemies (The Labyrinth only) |
@@ -434,10 +440,11 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 
 ### Levels
 
-Six levels ship with the game: **Curly Path** (a 20×13 board whose single lane loops once
-at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge, 18 waves: the hard level, built around five
-waves that each ask for a different defence - single-target damage at 6, area damage at 11, control at 12,
-anti-physical at 15, all of them at 17 - and the Warden at 18, with just enough bounty to beat it), **Zigzag Path** (a smaller,
+Six levels ship with the game: **The Amber Hive** (a 20×13 comb whose single honey
+lane loops once at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge, 16 waves: a
+brood that is only strong together - Drones and Hive Guards harden for every ally beside them, so area damage that
+breaks a pack up comes first; Larvae spin Cocoons that hatch into Hornets if they are let walk; Brood Nurses heal and
+ward - and the Warden at the end, who calls Drones to its side), **Zigzag Path** (a smaller,
 16×11 board where a fuchsia lane hooks back on itself and a lime lane cuts across it twice, 8
 waves per lane, only 3 lives) and **Twisted Hourglass** (a tight, 9×15 portrait board where three
 Bezier lanes - crimson, teal and amber - twist through a pinched waist so the layout reads as an
@@ -450,11 +457,11 @@ that start and end at a tear in the middle of the board, one of them silent for 
 lives, and one round in which a single enemy walks alone) and **The Labyrinth** (a 9×9 board where one lane
 winds through every cell but the 3×3 at its heart, so nine towers are all there is: three rounds - a long one that
 pays for the defence, a round of Bosses around Talos, whose shield needs a tower's answer to shields, and the Minotaur). A level can define more than one enemy path, each with its own color, waves
-and pace; every built-in level but Curly Path does. A lane may start or end inside the board, run faster or
+and pace; every built-in level but The Amber Hive and The Labyrinth does. A lane may start or end inside the board, run faster or
 slower than the others (`PathDefinition.withSpeed`) and send nothing in a round (a wave of just `e`). A level's
 paths all run the same number of waves as synchronized rounds - starting a round spawns every
 path's wave for it together. A level can also register its own enemy on top of the ones above,
-scoped to that level only; Twisted Hourglass's Reaver and Curly Path's warding Mender, Bulky mob
+scoped to that level only; Twisted Hourglass's Reaver and The Amber Hive's Drone, Hive Guard, Brood Nurse, Larva, Cocoon, Hornet
 and Warden chain and Iron Crossing's Colossus, Molten Core and Embers and The Rift's Mirage, Herald, Eclipse and Monolith and The Labyrinth's Bronze Bull, Talos and Minotaur (see the Enemies table)
 are the built-in ones.
 

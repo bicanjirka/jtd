@@ -54,6 +54,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final GameWorld gameWorld;
     private final EnemyDefinition definition;
     private final List<Trait> traits;
+    private final boolean readsAllies;
     private final Rank rank;
     private final int price;
     private final int pathIndex;
@@ -82,6 +83,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     // Counts from spawn, so a fresh mob does not trivially satisfy an idle threshold.
     private int ticksSinceLastHit;
     private int dodges;
+    private int alliesNearby;
     private MobObserver observer = MobObserver.off();
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, Rank rank) {
@@ -89,6 +91,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.id = gameWorld.enemies().recordBirth();
         this.definition = definition;
         this.traits = definition.traitsFor(gameWorld.damageTally().mix());
+        this.readsAllies = this.traits.stream().anyMatch(Trait::readsAllies);
         this.rank = rank;
         this.price = Math.round(spawnParameters.price() * gameWorld.playtestRules().bountyScale());
         // Divided after the spawn shape's multiplier, which the wave already applied to the health.
@@ -117,7 +120,6 @@ public final class DefinedEnemyMob implements EnemyMob {
                     scale / (float) (7 - rank.ordinal());
             case MIRROR_IMAGE -> scale / 8f;
             case EMBER -> scale / 9f;
-            case BULKY -> scale / 4.5f;
             case ECLIPSE -> scale / 5f;
             case BRONZE_BULL -> scale / (float) (6 - rank.ordinal());
             case MITE -> scale / 10f;
@@ -130,6 +132,12 @@ public final class DefinedEnemyMob implements EnemyMob {
             case MONOLITH -> scale / 2f;
             case COLOSSUS, TALOS -> scale / 2.2f;
             case MOLTEN_CORE -> scale / 2.6f;
+            case DRONE -> scale / (float) (7 - rank.ordinal());
+            case HIVE_GUARD -> scale / 4.5f;
+            case NURSE -> scale / (float) (7 - rank.ordinal());
+            case LARVA -> scale / 5.5f;
+            case COCOON -> scale / 3.5f;
+            case HORNET -> scale / (float) (6.5f - rank.ordinal());
             case MENDER, SHIELDBEARER -> scale / (float) (7 - rank.ordinal());
         };
     }
@@ -772,7 +780,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     private TraitContext traitContext() {
-        return new TraitContext(this.getHealthFraction());
+        return new TraitContext(this.getHealthFraction(), this.alliesNearby);
     }
 
     /**
@@ -865,6 +873,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             return;
         }
         this.trackBoardPresence();
+        this.countAlliesNearby();
         this.countLiveTick();
         this.turn();
         if (!this.isSilenced()) {
@@ -930,6 +939,20 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.onBoard = this.motion.isOnBoard();
         if (this.onBoard) {
             this.definition.disruption().ifPresent(aura -> this.gameWorld.disruptions().add(this.getX(), this.getY(), aura));
+        }
+    }
+
+    /** Only for a mob whose traits read it; a change re-derives the stats that follow it. */
+    private void countAlliesNearby() {
+        if (!this.readsAllies) {
+            return;
+        }
+        int near = this.onBoard
+                ? this.gameWorld.enemies().liveNear(this, TraitContext.ALLY_REACH_CELLS * this.gameWorld.getBoard().scale())
+                : 0;
+        if (near != this.alliesNearby) {
+            this.alliesNearby = near;
+            this.stats.invalidate();
         }
     }
 

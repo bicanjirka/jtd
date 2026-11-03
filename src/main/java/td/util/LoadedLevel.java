@@ -1,6 +1,7 @@
 package td.util;
 
 import td.board.BoardGeometry;
+import td.board.BoardGround;
 import td.cell.CellGrid;
 import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
@@ -19,11 +20,17 @@ import java.util.List;
  * Every path has the same number of waves, so {@link #waveCount()} is one round count and
  * {@link #wavesAt(int)} is everything round N starts. {@link #none()} means no level is loaded.
  */
-public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime> paths, EnemyCatalog catalog) {
+public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime> paths, EnemyCatalog catalog,
+                          BoardGround ground) {
 
     /** Copies the list, so the caller cannot change it after publication. */
     public LoadedLevel {
         paths = List.copyOf(paths);
+    }
+
+    /** On a plain ground. */
+    public LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime> paths, EnemyCatalog catalog) {
+        this(cells, board, paths, catalog, BoardGround.plain());
     }
 
     /** Fresh each call: a catalog takes registrations, so no two worlds may share one. */
@@ -77,14 +84,14 @@ public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime>
     /** This level with one wave-less path replacing all others, for previews and tests. */
     public LoadedLevel withSinglePath(Path path) {
         return new LoadedLevel(this.cells, this.board, List.of(new PathRuntime(path, List.of(), PathColor.DEFAULT)),
-                this.catalog);
+                this.catalog, this.ground);
     }
 
     public LoadedLevel withBoard(BoardGeometry board) {
-        return new LoadedLevel(this.cells, board, this.paths, this.catalog);
+        return new LoadedLevel(this.cells, board, this.paths, this.catalog, this.ground);
     }
 
     public LoadedLevel withCatalog(EnemyCatalog catalog) {
-        return new LoadedLevel(this.cells, this.board, this.paths, catalog);
+        return new LoadedLevel(this.cells, this.board, this.paths, catalog, this.ground);
     }
 }

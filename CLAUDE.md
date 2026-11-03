@@ -53,7 +53,7 @@ violation. They are not restated here.
 ## Packages (`td.*`)
 
 `balance` (headless players, the tower lab, the balance report) · `board` (scale, cell↔pixel
-math) · `cell` (squares, buildability) · `damage` · `economy` ·
+math, the ground a board is painted on) · `cell` (squares, buildability) · `damage` · `economy` ·
 `effect` (timed status effects) · `enemy` · `level` · `projectile` · `save` (a game between rounds, as
 text) · `stat` (enemy stat sheet) · `term` (the game's vocabulary: terms and the text that mentions them) ·
 `tower` (+ `targeting`, `upgrade`, `proc`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`, `sonar`,
