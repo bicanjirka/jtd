@@ -1,12 +1,23 @@
-# Notes written by hand, to be processed later - write nicer detailed TODO entries from it
+# Known gaps, future work and feature ideas
 
-I would like to add feature ideas to this todo as well to have all possible work idead at one place.
+All the work still open, in one place. The source carries no inline `TODO`; a gap is an entry here.
 
-# Known gaps and future work
+- **A known gap** is a section under its area with **Where** and **Approach**. Closing it deletes the entry.
+- **A feature idea** is one line under "Feature ideas": what it is for and where it stands, with a link to its
+  brainstorm or feature request once one exists. It leaves the list when its feature request ships.
 
-Extracted from inline `TODO` comments (and one unmarked-but-real gap) found throughout the codebase during a
-documentation cleanup pass. Each item below replaces the original comment; the source no longer carries these notes, so
-this file is the single place to look for outstanding design/feature gaps.
+## Feature ideas
+
+- **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
+  shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
+  Burst are written; the other six towers and the open questions remain before planning.
+- **Board health bar**: an enemy's health and stacked shields shown on the board, reading the way the Info pane
+  strip does. Deferred from the restoration rework; no request written yet.
+- **New enemies** (`docs/ideas/enemies-brainstorm.md`): enemies that give each tower a job. Not reviewed yet.
+- **Sniper and Scorcher identity** (`docs/ideas/sniper-and-scorcher-identity.md`): a clear identity for each and a
+  job for every node in their trees. Not reviewed yet.
+- **Astral & Quantum theme** (`docs/ideas/astral-quantum-theme.md`): a science theme that renames what the player
+  reads, recolours a little and changes no rules. Nothing decided.
 
 ## Feature request implementation order
 
@@ -464,15 +475,15 @@ A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
 
-### The planned DPS row undersells burn and splash towers (proposal)
+### The DPS row undersells burn and splash towers (proposal)
 
 `FEATURE-stat-presentation.md` (decision 8) gives every tower with a Fire rate a `DPS /target` row: hit damage ×
 fire rate × average crit, before armor. That leaves out burns, splash, procs and effects. The Scorcher deals most of
-its damage through the burn its flame leaves, so its DPS row would show a fraction of what it does; the Mortar and the
+its damage through the burn its flame leaves, so its DPS row shows a fraction of what it does; the Mortar and the
 Burst show one target's share of a shot that hits a crowd. Players compare towers by the headline number, so these
-would look like poor buys. Not built yet; to address after the stat-presentation feature lands.
+look like poor buys.
 
-- **Where:** the DPS row of the stat-presentation feature (the tower sheet text and `AbstractTower.inspect`), the
+- **Where:** the DPS row (the tower sheet text and `AbstractTower.inspect`), the
   Scorcher's burn stats (`BURN_DURATION`, `BURN_POOL_CAP`, `STOKE_STEP`, `CinderTower`), the burn rules in
   `td.effect.ActiveEffects`, and the tower's damage record (`AbstractTower.damageDealt`, `TowerTally`).
 - **Approach:** two parts.

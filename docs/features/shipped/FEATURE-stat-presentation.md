@@ -1,5 +1,8 @@
 # Feature Request: Uniform stat presentation
 
+> **Status: implemented.** "Current state" below describes the code before the feature. Deferred: the Scorcher's
+> burn in its DPS and a live per-wave DPS (`TODO.md`, "The DPS row undersells burn and splash towers").
+
 ## Summary
 
 Every stat the player sees, on towers and enemies, reads the same way: its value with a unit, a short

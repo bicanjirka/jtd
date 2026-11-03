@@ -38,7 +38,8 @@ violation. They are not restated here.
 - Feature requests live in `docs/features/`, one doc per feature. Content tables (towers,
   enemies, levels, controls) live in `README.md`.
 - Known gaps go in `TODO.md` (with **Where** and **Approach**), never an inline TODO. Closing a
-  gap deletes its entry in the same commit.
+  gap deletes its entry in the same commit. Feature ideas not yet shipped are one line each under
+  its "Feature ideas".
 - Comments only for a non-obvious *why*. Don't name levels, content or other classes in them,
   and don't restate the code: no number, count or threshold the code beside it already holds
   ("once badly hurt", not "at 65% health"), so a tuning edit can't make the comment false.
