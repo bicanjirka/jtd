@@ -7,7 +7,7 @@ public enum GroundMotif {
     COMB,
     /** Slanting streaks of rain. */
     RAIN,
-    /** Rippled lines, like wind-blown sand. */
+    /** Short arched ripples, like wind-blown sand. */
     DUNES,
     /** Riveted steel plates. */
     PLATES,

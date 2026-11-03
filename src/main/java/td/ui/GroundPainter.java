@@ -7,12 +7,16 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
 
-/** Paints a board's floor and its motif, under everything else on the board. */
+/**
+ * Paints a board's floor and its motif, under everything else on the board. A motif stays background by being made
+ * of short or broken marks: paths are dotted lines, so a long unbroken line would read louder than a path.
+ */
 final class GroundPainter {
 
     private static final Stroke MOTIF_STROKE = new BasicStroke(1f);
@@ -27,23 +31,41 @@ final class GroundPainter {
         if (ground.motif() == GroundMotif.NONE || scale <= 0) {
             return;
         }
-        GeneralPath motif = switch (ground.motif()) {
-            case NONE -> new GeneralPath();
-            case COMB -> comb(scale, width, height);
-            case RAIN -> rain(scale, width, height);
-            case DUNES -> dunes(scale, width, height);
+        Marks marks = switch (ground.motif()) {
+            case NONE -> Marks.lines(new GeneralPath());
+            case COMB -> Marks.lines(comb(scale, width, height));
+            case RAIN -> Marks.lines(rain(scale, width, height));
+            case DUNES -> Marks.lines(dunes(scale, width, height));
             case PLATES -> plates(scale, width, height);
-            case FISSURES -> fissures(scale, width, height);
-            case FLAGSTONES -> flagstones(scale, width, height);
+            case FISSURES -> Marks.lines(fissures(scale, width, height));
+            case FLAGSTONES -> Marks.lines(flagstones(scale, width, height));
         };
         Object antialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         Stroke stroke = g2.getStroke();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setStroke(MOTIF_STROKE);
+        g2.setColor(halfway(ground.floorRgb(), ground.motifRgb()));
+        g2.draw(marks.faintLines());
         g2.setColor(new Color(ground.motifRgb()));
-        g2.draw(motif);
+        g2.draw(marks.lines());
+        g2.fill(marks.dots());
         g2.setStroke(stroke);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialiasing);
+    }
+
+    private static Color halfway(int fromRgb, int toRgb) {
+        int r = (((fromRgb >> 16) & 0xFF) + ((toRgb >> 16) & 0xFF)) / 2;
+        int g = (((fromRgb >> 8) & 0xFF) + ((toRgb >> 8) & 0xFF)) / 2;
+        int b = ((fromRgb & 0xFF) + (toRgb & 0xFF)) / 2;
+        return new Color(r, g, b);
+    }
+
+    /** A motif's marks: lines in the motif colour, lines halfway to the floor, and dots filled solid. */
+    private record Marks(Shape lines, Shape faintLines, Shape dots) {
+
+        static Marks lines(Shape lines) {
+            return new Marks(lines, new GeneralPath(), new GeneralPath());
+        }
     }
 
     /** Flat-topped hexagons, each half a cell across. */
@@ -97,61 +119,82 @@ final class GroundPainter {
         return p;
     }
 
-    /** Rippled lines across the board, each row shifted from the last. */
+    /** Short arched ripples in loose rows, like sand ripple marks, each row's gaps off the last's. */
     private static GeneralPath dunes(int scale, int width, int height) {
         GeneralPath p = new GeneralPath();
-        float rowStep = scale * 0.7f;
-        float amplitude = scale * 0.12f;
-        double wavelength = scale * 3.0;
-        float segment = scale / 4f;
+        float rowStep = scale * 0.6f;
+        float rise = scale * 0.1f;
+        int pieces = 6;
         int row = 0;
-        for (float y = rowStep / 2f; y < height; y += rowStep, row++) {
-            double phase = row * 1.3;
-            p.moveTo(0, y + (float) (Math.sin(phase) * amplitude));
-            for (float x = segment; x <= width + segment; x += segment) {
-                p.lineTo(x, y + (float) (Math.sin(phase + x / wavelength * 2 * Math.PI) * amplitude));
+        for (float y = rowStep / 2f; y < height + rowStep; y += rowStep, row++) {
+            float x = -scale * (1f + (float) jitter(row, 0));
+            int ripple = 0;
+            while (x < width) {
+                float length = scale * (0.9f + 0.35f * (float) jitter(row, ripple + 1));
+                float dy = scale * 0.08f * (float) jitter(row, ripple + 100);
+                p.moveTo(x, y + dy);
+                for (int i = 1; i <= pieces; i++) {
+                    float t = i / (float) pieces;
+                    p.lineTo(x + length * t, y + dy - rise * (float) Math.sin(Math.PI * t));
+                }
+                x += length + scale * (0.45f + 0.3f * (float) jitter(row, ripple + 200));
+                ripple++;
             }
         }
         return p;
     }
 
-    /** Seams two cells apart, with a rivet at every corner and halfway along each seam. */
-    private static GeneralPath plates(int scale, int width, int height) {
-        GeneralPath p = new GeneralPath();
-        float plate = scale * 2f;
-        float rivet = scale * 0.07f;
-        for (float x = plate; x < width; x += plate) {
-            p.moveTo(x, 0);
-            p.lineTo(x, height);
-        }
-        for (float y = plate; y < height; y += plate) {
-            p.moveTo(0, y);
-            p.lineTo(width, y);
-        }
-        for (float x = plate / 2f; x < width; x += plate / 2f) {
-            for (float y = plate / 2f; y < height; y += plate / 2f) {
-                p.append(new Ellipse2D.Float(x - rivet - scale * 0.15f, y - rivet - scale * 0.15f, rivet * 2, rivet * 2),
-                        false);
+    /**
+     * Staggered plates, each row shifted half a plate so no seam lines up with the cell grid for long, the seams
+     * faint and a solid rivet in from each plate corner.
+     */
+    private static Marks plates(int scale, int width, int height) {
+        GeneralPath seams = new GeneralPath();
+        GeneralPath rivets = new GeneralPath();
+        float plateWidth = scale * 3f;
+        float plateHeight = scale * 2f;
+        float inset = scale * 0.25f;
+        float rivet = scale * 0.06f;
+        int row = 0;
+        for (float y = 0; y < height; y += plateHeight, row++) {
+            if (y > 0) {
+                seams.moveTo(0, y);
+                seams.lineTo(width, y);
+            }
+            for (float x = -plateWidth / 2f * (row % 2); x < width; x += plateWidth) {
+                if (x > 0) {
+                    seams.moveTo(x, y);
+                    seams.lineTo(x, y + plateHeight);
+                }
+                for (float rx : new float[] {x + inset, x + plateWidth - inset}) {
+                    for (float ry : new float[] {y + inset, y + plateHeight - inset}) {
+                        rivets.append(new Ellipse2D.Float(rx - rivet, ry - rivet, rivet * 2, rivet * 2), false);
+                    }
+                }
             }
         }
-        return p;
+        return new Marks(new GeneralPath(), seams, rivets);
     }
 
-    /** Jagged cracks from the middle out to past the edges, some forking once, the same every frame. */
+    /**
+     * Jagged cracks from the middle out, some forking once, the same every frame. Each breaks up more the further it
+     * runs and dies out before the edge, so no crack reads as a route.
+     */
     private static GeneralPath fissures(int scale, int width, int height) {
         GeneralPath p = new GeneralPath();
         float cx = width / 2f;
         float cy = height / 2f;
-        double reach = Math.hypot(width, height) / 2;
+        double reach = Math.hypot(width, height) / 2 * 0.7;
         int cracks = 11;
         for (int i = 0; i < cracks; i++) {
             double angle = i * 2 * Math.PI / cracks + jitter(i, 1) * 0.35;
-            crack(p, cx, cy, angle, scale * 0.6, reach, scale, i);
+            double length = reach * (0.6 + 0.4 * Math.abs(jitter(i, 4)));
+            crack(p, cx, cy, angle, scale * 0.6, length, scale, i);
             if (i % 3 == 0) {
-                double fork = reach * (0.35 + 0.2 * jitter(i, 2));
+                double fork = length * (0.35 + 0.2 * jitter(i, 2));
                 float fx = cx + (float) (Math.cos(angle) * fork);
                 float fy = cy + (float) (Math.sin(angle) * fork);
-                crack(p, fx, fy, angle + 0.6 * Math.signum(jitter(i, 3) + 0.01), 0, reach * 0.4, scale, i + 50);
+                crack(p, fx, fy, angle + 0.6 * Math.signum(jitter(i, 3) + 0.01), 0, length * 0.4, scale, i + 50);
             }
         }
         return p;
@@ -159,7 +202,7 @@ final class GroundPainter {
 
     private static void crack(GeneralPath p, float x, float y, double angle, double from, double length, int scale,
                               int seed) {
-        float step = scale * 0.6f;
+        float step = scale * 0.4f;
         float px = x + (float) (Math.cos(angle) * from);
         float py = y + (float) (Math.sin(angle) * from);
         p.moveTo(px, py);
@@ -168,7 +211,12 @@ final class GroundPainter {
             double wobble = angle + jitter(seed, n + 10) * 0.5;
             px += (float) (Math.cos(wobble) * step);
             py += (float) (Math.sin(wobble) * step);
-            p.lineTo(px, py);
+            double travelled = (d - from) / length;
+            if (jitter(seed, n + 30) > 0.8 - 1.6 * travelled) {
+                p.moveTo(px, py);
+            } else {
+                p.lineTo(px, py);
+            }
         }
     }
 
