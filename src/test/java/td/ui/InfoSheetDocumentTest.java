@@ -50,7 +50,7 @@ class InfoSheetDocumentTest {
 
         assertThat(colourOf(doc, "3.2 → 3.7")).isEqualTo(new Color(140, 255, 140));
         assertThat(colourOf(doc, "0.5 → 0.4/s")).isEqualTo(new Color(255, 120, 120));
-        assertThat(colourOf(doc, "first")).isEqualTo(new Color(170, 205, 170));
+        assertThat(colourOf(doc, "first")).isEqualTo(Hud.FOREGROUND);
     }
 
     private static StyledDocument layOutLines(SheetLine... lines) {

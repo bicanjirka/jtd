@@ -66,7 +66,8 @@ class SonarTowerTest {
 
     /** The ticks one turn of {@code tower}'s beam takes, at its own rotation. */
     private static int revolutionOf(SonarTower tower) {
-        return Math.round(tower.cadence().orElseThrow().current() * TickRate.TICKS_PER_SECOND);
+        return Math.round(tower.inspect().stats().stream().filter(row -> row.stat() == TowerStatRow.SWEEP_TIME)
+                .findFirst().orElseThrow().current() * TickRate.TICKS_PER_SECOND);
     }
 
     private SonarTower upgradedTower(String... nodes) {
@@ -201,8 +202,9 @@ class SonarTowerTest {
         SonarTower plain = tower();
 
         assertThat(plain.inspect().stats()).extracting(TowerStatLine::stat)
-                .contains(TowerStatRow.ROTATION).doesNotContain(TowerStatRow.FIRE_RATE);
-        assertThat(plain.cadence()).map(TowerStatLine::current).contains(SonarTower.SECONDS_PER_REVOLUTION);
+                .contains(TowerStatRow.SWEEP_TIME).doesNotContain(TowerStatRow.FIRE_RATE);
+        assertThat(revolutionOf(plain)).isEqualTo(Math.round(SonarTower.SECONDS_PER_REVOLUTION
+                * TickRate.TICKS_PER_SECOND));
     }
 
     @Test

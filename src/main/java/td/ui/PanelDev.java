@@ -6,6 +6,7 @@ import td.DevSelection;
 import td.effect.EffectKind;
 import td.enemy.Rank;
 import td.term.Side;
+import td.term.TermNumbers;
 import td.tower.TowerTerm;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
@@ -112,7 +113,7 @@ public class PanelDev extends JPanel {
     private final JPanel selectionArea = new JPanel(this.selectionCards);
     private final Java2DFrameRenderer glyphRenderer = new Java2DFrameRenderer();
     private final ChoiceButton<Rank> rankChoice = new ChoiceButton<>(new Choices<>(List.of(Rank.values()),
-            Comparator.naturalOrder(), SheetNumbers::titleCase, rank -> "", this::rankLook), Rank.GRUNT, this::spawnChoiceClosed);
+            Comparator.naturalOrder(), TermNumbers::titleCase, rank -> "", this::rankLook), Rank.GRUNT, this::spawnChoiceClosed);
     private final ChoiceButton<Integer> pathChoice = new ChoiceButton<>(this.pathChoices(1), 0,
             this::spawnChoiceClosed);
     private final HudToggleButton cellGridToggle = toggle("Cell grid");

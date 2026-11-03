@@ -42,20 +42,20 @@ public record TowerStatus(TowerTerm term, StatModifiers<TowerStat> modifiers, in
     }
 
     /**
-     * What it does, every number from its modifiers: "+150% crit damage, guaranteed crit; spent by the next shot",
-     * "+100% attack speed for 5 s".
+     * What it does, every number from its modifiers: "Crit damage +150%, guaranteed crit; spent by the next shot",
+     * "Fire rate +100%; for 5 s".
      */
     public TermText describe() {
-        List<String> parts = new ArrayList<>();
+        List<TermText> parts = new ArrayList<>();
         for (TowerStat stat : this.modifiers.stats()) {
-            parts.add(stat.describe(this.modifiers.get(stat)) + " " + stat.label().toLowerCase(Locale.ROOT));
+            parts.add(stat.changeText(this.modifiers.get(stat)));
         }
         for (TowerCapability capability : this.capabilities) {
-            parts.add(capability.label().toLowerCase(Locale.ROOT));
+            parts.add(TermText.of(capability.label().toLowerCase(Locale.ROOT)));
         }
         String length = this.shots == 0 ? "for " + TermNumbers.seconds(this.durationTicks / TickRate.TICKS_PER_SECOND)
                 : this.shots == 1 ? "spent by the next shot" : "for the next " + this.shots + " shots";
-        return TermText.of(String.join(", ", parts) + "; " + length);
+        return TermText.join(", ", parts).plus("; " + length);
     }
 
     /** This status, left alone when granted while a copy runs. */

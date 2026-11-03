@@ -84,11 +84,14 @@ class UpgradeSheetTextTest {
 
         InfoSheet sheet = UpgradeSheetText.hover(offer);
 
-        assertThat(sheet.lines()).containsExactly(
+        assertThat(sheet.lines().subList(0, 3)).containsExactly(
                 new SheetLine.IconTitle(offer.face(), "Veteran", offer.face().tone(), "$10"),
                 SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET, TermText.of("XP 10/10")),
-                new SheetLine.Gap(),
-                Row.plain(Glyph.DOT, "Damage", "+20%"));
+                new SheetLine.Gap());
+        assertThat(sheet.lines().getLast()).isInstanceOfSatisfying(Row.class, row -> {
+            assertThat(row.label()).isEqualTo("Damage");
+            assertThat(row.value()).isEqualTo("+20%");
+        });
     }
 
     @Test

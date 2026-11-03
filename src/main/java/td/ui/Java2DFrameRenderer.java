@@ -1227,8 +1227,64 @@ public final class Java2DFrameRenderer {
                 g2.draw(lockShackleShape(size * 0.75f));
             }
             case TOWER_BODY -> g2.fill(towerBodyShape(tone.orElseThrow(), size));
+            case RING_CENTRE -> {
+                g2.draw(circleShape(size * 0.8f));
+                g2.fill(circleShape(size * 0.25f));
+            }
+            case BROKEN_RING -> g2.draw(new Arc2D.Float(-size * 0.8f, -size * 0.8f, size * 1.6f, size * 1.6f, 120f, 300f,
+                    Arc2D.OPEN));
+            case WEDGE -> g2.fill(new Arc2D.Float(-size, -size * 0.6f, size * 2f, size * 2f, 55f, 70f, Arc2D.PIE));
+            case PIERCE -> {
+                g2.draw(new Line2D.Float(size * 0.2f, -size * 0.8f, size * 0.2f, size * 0.8f));
+                g2.draw(new Line2D.Float(-size * 0.9f, 0f, size * 0.8f, 0f));
+                g2.fill(AffineTransform.getTranslateInstance(size * 0.6f, 0f)
+                        .createTransformedShape(chevronShape(size * 0.45f)));
+            }
+            case CROSSHAIR, CROSSHAIR_FILLED -> {
+                g2.draw(circleShape(size * 0.65f));
+                g2.draw(new Line2D.Float(-size, 0f, -size * 0.35f, 0f));
+                g2.draw(new Line2D.Float(size * 0.35f, 0f, size, 0f));
+                g2.draw(new Line2D.Float(0f, -size, 0f, -size * 0.35f));
+                g2.draw(new Line2D.Float(0f, size * 0.35f, 0f, size));
+                if (glyph == SheetLine.Glyph.CROSSHAIR_FILLED) {
+                    g2.fill(circleShape(size * 0.25f));
+                }
+            }
+            case HOLLOW_SPARK -> g2.draw(starShape(4, size, size * 0.3f));
+            case HOLLOW_SHIELD -> g2.draw(shieldShape(size * 0.85f));
+            case FILLED_SHIELD -> g2.fill(shieldShape(size * 0.85f));
+            case CRACKED_SHIELD -> {
+                g2.draw(shieldShape(size * 0.85f));
+                Path2D.Float crack = new Path2D.Float();
+                crack.moveTo(-size * 0.1f, -size * 0.8f);
+                crack.lineTo(size * 0.15f, -size * 0.2f);
+                crack.lineTo(-size * 0.15f, size * 0.15f);
+                crack.lineTo(size * 0.05f, size * 0.6f);
+                g2.draw(crack);
+            }
+            case PLUS -> {
+                g2.fill(new Rectangle2D.Float(-size * 0.25f, -size * 0.8f, size * 0.5f, size * 1.6f));
+                g2.fill(new Rectangle2D.Float(-size * 0.8f, -size * 0.25f, size * 1.6f, size * 0.5f));
+            }
+            case COMET -> {
+                g2.fill(AffineTransform.getTranslateInstance(size * 0.4f, -size * 0.4f)
+                        .createTransformedShape(circleShape(size * 0.45f)));
+                g2.draw(new Line2D.Float(-size * 0.8f, size * 0.8f, size * 0.1f, -size * 0.1f));
+            }
         }
         g2.setStroke(defaultStroke);
+    }
+
+    /** A heater shield: flat top, sides curving to a point. */
+    private static Shape shieldShape(float size) {
+        Path2D.Float shield = new Path2D.Float();
+        shield.moveTo(-size, -size);
+        shield.lineTo(size, -size);
+        shield.lineTo(size, -size * 0.1f);
+        shield.quadTo(size * 0.9f, size * 0.7f, 0f, size * 1.1f);
+        shield.quadTo(-size * 0.9f, size * 0.7f, -size, -size * 0.1f);
+        shield.closePath();
+        return shield;
     }
 
     /** A tick mark, to be stroked. */

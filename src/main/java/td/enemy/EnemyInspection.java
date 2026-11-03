@@ -5,6 +5,7 @@ import td.effect.ActiveEffects;
 import td.effect.EffectKind;
 import td.effect.ShieldGauge;
 import td.stat.EnemyStat;
+import td.stat.StatBreakdown;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,13 +34,14 @@ import java.util.Set;
  * @param abilityEntries every ability as a term, with its sentence
  * @param breakdowns   what each shown stat is made of
  * @param marks        memory towers keep about it
+ * @param livesOnLeak  the lives it takes if it leaks; {@link EnemyDefinition#ALL_LIVES} for every one left
  */
 public record EnemyInspection(String name, String description, Rank rank, BodyArchetype archetype, int health,
                               int maxHealth, int bounty, Map<EnemyStat, Float> stats, List<EffectState> effects,
                               Fate fate,
                               int dodges, Map<EnemyStat, Float> baseStats, List<Immunity> immunities,
                               List<TraitEntry> traitEntries, List<AbilityEntry> abilityEntries,
-                              Map<EnemyStat, StatBreakdown> breakdowns, List<EnemyMark> marks) {
+                              Map<EnemyStat, StatBreakdown> breakdowns, List<EnemyMark> marks, int livesOnLeak) {
 
     public EnemyInspection {
         stats = Collections.unmodifiableMap(new EnumMap<>(stats));
@@ -91,7 +93,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         return new EnemyInspection(definition.displayName(), definition.description(), mob.getRank(), mob.archetype(),
                 (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects,
                 mob.fate(), mob.dodges(), baseStats, immunities, traitEntries,
-                abilityEntries, breakdowns, List.of());
+                abilityEntries, breakdowns, List.of(), definition.livesOnLeak());
     }
 
     private static EffectState activeState(ActiveEffects live, EffectKind kind) {
@@ -107,11 +109,16 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         return new EnemyInspection(this.name, this.description, this.rank, this.archetype, this.health,
                 this.maxHealth, this.bounty, this.stats, this.effects,
                 this.fate, this.dodges, this.baseStats, this.immunities, this.traitEntries,
-                this.abilityEntries, this.breakdowns, marks);
+                this.abilityEntries, this.breakdowns, marks, this.livesOnLeak);
     }
 
     /** An effect kind this enemy cannot take now, and what keeps it out. */
     public record Immunity(EffectKind kind, Optional<EffectKind> keptOutBy) {
+    }
+
+    /** Whether a leak ends the level, whatever lives are left. */
+    public boolean takesAllLives() {
+        return this.livesOnLeak >= EnemyDefinition.ALL_LIVES;
     }
 
     public float stat(EnemyStat stat) {

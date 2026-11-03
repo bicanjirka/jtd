@@ -570,6 +570,11 @@ public final class PulseTower extends AbstractTower {
     }
 
     @Override
+    protected boolean dealsByField() {
+        return true;
+    }
+
+    @Override
     protected DamageType damageType() {
         return DamageType.MAGIC;
     }

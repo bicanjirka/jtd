@@ -575,7 +575,7 @@ class GameEngineTest {
 
         engine.doTick(1);
 
-        assertThat(fireRate(pulse).current() / fireRate(pulse).base()).isCloseTo(0.7f, within(1e-5f));
+        assertThat(fieldDamage(pulse).current() / fieldDamage(pulse).base()).isCloseTo(0.7f, within(1e-5f));
     }
 
     @Test
@@ -604,6 +604,12 @@ class GameEngineTest {
     private static TowerStatLine damage(Tower tower) {
         return tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.PHYSICAL_DAMAGE)
                 .findFirst().orElseThrow();
+    }
+
+    /** A field tower's damage a second, which its attack rate scales. */
+    private static TowerStatLine fieldDamage(Tower tower) {
+        return tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.PHYSICAL_FIELD_DAMAGE
+                || line.stat() == TowerStatRow.MAGIC_FIELD_DAMAGE).findFirst().orElseThrow();
     }
 
     private static TowerStatLine fireRate(Tower tower) {

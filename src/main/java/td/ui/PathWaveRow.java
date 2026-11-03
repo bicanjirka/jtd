@@ -50,6 +50,9 @@ final class PathWaveRow extends JPanel {
 
     void setGameWorld(GameWorld world) {
         this.gameWorld = world;
+        if (world != null) {
+            this.panelEnemy.setCellSize(world.getBoard().scale());
+        }
     }
 
     /**

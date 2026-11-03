@@ -22,6 +22,7 @@
     <subpackage name="stat">
         <allow pkg="td.stat"/>
         <allow pkg="td.damage"/>
+        <allow pkg="td.term"/>
         <allow pkg="td.util"/>
         <disallow pkg="td"/>
     </subpackage>

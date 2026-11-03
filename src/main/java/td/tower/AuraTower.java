@@ -167,6 +167,11 @@ public final class AuraTower extends AbstractTower {
         return true;
     }
 
+    @Override
+    protected StatModifiers<TowerStat> gives() {
+        return this.buff();
+    }
+
     /** What this aura gives a tower that gets no Kinship strength from it. */
     public StatModifiers<TowerStat> buff() {
         return this.emissionAt(this.stats().value(TowerStat.AURA_POWER), this.spec());

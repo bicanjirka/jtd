@@ -15,7 +15,12 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.enemy.HitResult;
 import td.stat.DisruptionPenalty;
+import td.stat.StatBreakdown;
+import td.stat.StatModifier;
 import td.stat.StatModifiers;
+import td.stat.StatPart;
+import td.stat.StatPreview;
+import td.stat.StatTerm;
 import td.term.Side;
 import td.term.Term;
 import td.term.TermNumbers;
@@ -34,6 +39,7 @@ import td.tower.upgrade.Mechanic;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeLine;
 import td.tower.upgrade.UpgradeNode;
@@ -50,7 +56,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -87,6 +92,8 @@ public abstract class AbstractTower implements Tower {
     protected final int coolDownMax;
     protected final float critChanceBase;
     private final TowerBaseStats baseStats;
+    /** The authored stats resolved with nothing on them: what every row's base reads from. */
+    private final TowerStats authored;
     private final TowerFactory.Type type;
     private final int price;
     private final TowerExperience experience = new TowerExperience();
@@ -142,6 +149,7 @@ public abstract class AbstractTower implements Tower {
         this.centerY = this.boardY + scale / 2;
         this.stats = TowerStats.of(base, StatModifiers.none(), StatModifiers.none(), DisruptionPenalty.none(), scale,
                 Set.of());
+        this.authored = this.stats;
     }
 
     /** The stats as authored, before any upgrade or buff. */
@@ -618,7 +626,30 @@ public abstract class AbstractTower implements Tower {
     public NodeWords wordsOf(UpgradeNode node) {
         List<TermText> sentences = new ArrayList<>(node.effects().sentences());
         sentences.addAll(this.mechanicCatalogue().describe(node));
-        return NodeWords.of(node.displayName(), node.effects().statRows(), sentences);
+        return NodeWords.of(node.displayName(), this.previewed(node.effects().statRows(), node), sentences);
+    }
+
+    /**
+     * Each of the tower's own bonuses with the row it moves, as its lasting stats have it now and would with
+     * {@code node}: the first row whose source is the bonus's stat. A node already owned moves nothing, so its
+     * bonuses carry no preview.
+     */
+    private List<UpgradeBonus> previewed(List<UpgradeBonus> bonuses, UpgradeNode node) {
+        Function<TowerStat, List<StatPart>> noParts = stat -> List.of();
+        boolean applies = !this.applies().isEmpty();
+        List<TowerStatLine> before = this.statRows(this.lasting(List.of()), noParts, applies);
+        List<TowerStatLine> after = this.statRows(this.lasting(List.of(node)), noParts, applies);
+        return bonuses.stream().map(bonus -> {
+            if (bonus.given()) {
+                return bonus;
+            }
+            Optional<TowerStatLine> was = before.stream().filter(row -> row.source() == bonus.stat()).findFirst();
+            Optional<TowerStatLine> will = after.stream().filter(row -> row.source() == bonus.stat()).findFirst();
+            return was.isPresent() && will.isPresent() && was.get().stat() == will.get().stat()
+                    && was.get().current() != will.get().current()
+                    ? bonus.withPreview(new StatPreview(was.get().stat(), was.get().current(), will.get().current()))
+                    : bonus;
+        }).toList();
     }
 
     public boolean buyUpgrade(UpgradeNode node) {
@@ -735,15 +766,18 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * How often the tower attacks, as authored and now; empty for a tower that never attacks. A
-     * tower whose cadence is not a cooldown overrides this.
+     * How often the tower attacks at {@code stats}, its parts from {@code parts}. A tower whose cadence is not a
+     * cooldown overrides this.
      */
-    protected Optional<TowerStatLine> cadence() {
-        if (this.isPassive()) {
-            return Optional.empty();
-        }
-        float base = TICKS_PER_SECOND / (this.coolDownMax + 1);
-        return Optional.of(new TowerStatLine(TowerStatRow.FIRE_RATE, base, (float) (base * this.attackRate())));
+    protected TowerStatLine cadence(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
+        float perSecond = TICKS_PER_SECOND / (this.coolDownMax + 1);
+        return this.derivedRow(TowerStatRow.FIRE_RATE, TowerStat.ATTACK_SPEED, stats, parts,
+                at -> (float) (perSecond * at.attackRate()));
+    }
+
+    /** Whether it deals its damage every tick to whoever stands in its field, rather than hit by hit. */
+    protected boolean dealsByField() {
+        return false;
     }
 
     /** Physical by default. */
@@ -751,9 +785,35 @@ public abstract class AbstractTower implements Tower {
         return DamageType.PHYSICAL;
     }
 
-    /** Stats of this tower's own, such as a splash radius, shown after the shared ones. */
-    protected List<TowerStatLine> ownStats() {
+    /** Rows of this tower's own at {@code stats}, such as how its shots fly. */
+    protected List<TowerStatLine> ownStats(TowerStats stats) {
         return List.of();
+    }
+
+    /** What it hands the towers around it; nothing by default. */
+    protected StatModifiers<TowerStat> gives() {
+        return StatModifiers.none();
+    }
+
+    /**
+     * A row worked out from {@code source} by {@code read}: its base read from the authored stats, its sum from the
+     * source's adding parts, its parts the source's.
+     */
+    protected final TowerStatLine derivedRow(StatTerm row, TowerStat source, TowerStats stats,
+                                             Function<TowerStat, List<StatPart>> parts,
+                                             Function<TowerStats, Float> read) {
+        List<StatPart> sourceParts = parts.apply(source);
+        float base = read.apply(this.authored);
+        if (sourceParts.isEmpty()) {
+            return new TowerStatLine(new StatBreakdown(row, base, List.of(), base, List.of(), read.apply(stats)),
+                    source);
+        }
+        StatModifier adding = sourceParts.stream().filter(StatPart::adds).map(part -> part.added().modifier())
+                .reduce(StatModifier.none(), StatModifier::plus);
+        TowerStats summed = TowerStats.of(this.baseStats, StatModifiers.of(source, adding), StatModifiers.none(),
+                DisruptionPenalty.none(), this.context.getBoard().scale(), Set.of());
+        return new TowerStatLine(StatBreakdown.of(row, base, sourceParts, read.apply(summed), read.apply(stats)),
+                source);
     }
     /** What no row says, for the shop; empty by default. */
     protected String description() {
@@ -868,28 +928,22 @@ public abstract class AbstractTower implements Tower {
         if (givers == 0) {
             return Optional.empty();
         }
-        StatModifiers<TowerStat> received = this.stats.received();
-        List<String> parts = new ArrayList<>();
-        for (TowerStat stat : received.stats()) {
-            parts.add(stat.describe(received.get(stat)) + " " + stat.label().toLowerCase(Locale.ROOT));
-        }
-        TowerBuffState state = TowerBuffState.of(TowerTerm.AURA, TermText.of(String.join(", ", parts)));
+        TowerBuffState state = TowerBuffState.of(TowerTerm.AURA, TowerTerm.AURA.describe())
+                .withChanges(this.stats.received());
         return Optional.of(givers > 1 ? state.withStacks((int) givers) : state);
     }
 
+    /** The jam as it reaches this tower: the enemy's penalty times what its disruption taken lets through. */
     private Optional<TowerBuffState> jammedCondition() {
-        DisruptionPenalty jam = this.stats.disruption();
-        if (jam.isNone()) {
+        TowerStats now = this.stats;
+        if (now.disruption().isNone()) {
             return Optional.empty();
         }
-        String blinded = jam.missChance() > 0f ? TermNumbers.percent(jam.missChance()) + " miss chance" : "";
-        if (jam.attackSpeed() == 0f && jam.rangeCells() == 0f) {
-            return Optional.of(TowerBuffState.of(TowerTerm.JAMMED, TermText.of(blinded)));
-        }
-        String slowed = TermNumbers.signedPercent(-jam.attackSpeed()) + " attack speed, "
-                + TermNumbers.signed(-jam.rangeCells()) + " range";
-        return Optional.of(TowerBuffState.of(TowerTerm.JAMMED,
-                TermText.of(blinded.isEmpty() ? slowed : slowed + ", " + blinded)));
+        StatModifiers<TowerStat> changes = jamChanges(now);
+        TermText blinded = now.missChance() > 0f
+                ? TermText.of(TermNumbers.percent(now.missChance()) + " of its hits miss")
+                : TowerTerm.JAMMED.describe();
+        return Optional.of(TowerBuffState.of(TowerTerm.JAMMED, blinded).withChanges(changes));
     }
 
     /** What each owned node says, with the nodes it was chosen over. */
@@ -923,25 +977,136 @@ public abstract class AbstractTower implements Tower {
                                    Map<String, NodeWords> words) {
     }
 
+    /**
+     * The sheet's rows at {@code stats}: range, how it deals damage, its own rows, then every stat whose row shows.
+     *
+     * @param applies whether it puts any effect on enemies or towers
+     */
+    private List<TowerStatLine> statRows(TowerStats stats, Function<TowerStat, List<StatPart>> parts,
+                                         boolean applies) {
+        List<TowerStatLine> rows = new ArrayList<>();
+        rows.add(this.statRow(TowerStat.RANGE, stats, parts));
+        if (!this.isPassive()) {
+            rows.addAll(this.attackRows(stats, parts));
+        }
+        rows.addAll(this.ownStats(stats));
+        for (TowerStat stat : TowerStat.values()) {
+            if (this.showsRow(stat, stats, applies)) {
+                rows.add(this.statRow(stat, stats, parts));
+            }
+        }
+        return rows;
+    }
+
+    /** Damage, then how often: a fire rate with the damage a second it comes to, or a field's damage a second. */
+    private List<TowerStatLine> attackRows(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
+        boolean magic = stats.has(TowerCapability.MAGIC_DAMAGE) || this.damageType() == DamageType.MAGIC;
+        if (this.dealsByField()) {
+            return List.of(this.derivedRow(TowerStatRow.damage(magic, true), TowerStat.DAMAGE, stats, parts,
+                    at -> DamageUnits.inPoints(at.damage()) * TICKS_PER_SECOND * (float) at.attackRate()));
+        }
+        TowerStatLine damage = this.derivedRow(TowerStatRow.damage(magic, false), TowerStat.DAMAGE, stats, parts,
+                at -> (float) at.damage());
+        TowerStatLine cadence = this.cadence(stats, parts);
+        if (cadence.stat() != TowerStatRow.FIRE_RATE) {
+            return List.of(damage, cadence);
+        }
+        float base = DamageUnits.inPoints(damage.base()) * cadence.base() * averageCrit(this.authored);
+        float now = DamageUnits.inPoints(damage.current()) * cadence.current() * averageCrit(stats);
+        TowerStatLine dps = new TowerStatLine(new StatBreakdown(TowerStatRow.dps(magic), base, List.of(), base,
+                List.of(), now), TowerStat.DAMAGE);
+        return List.of(damage, cadence, dps);
+    }
+
+    /** What a hit deals on average for its crits, as a share of a plain one. */
+    private static float averageCrit(TowerStats stats) {
+        return 1f + stats.critChance() * (stats.value(TowerStat.CRIT_MULTIPLIER) - 1f);
+    }
+
+    private TowerStatLine statRow(TowerStat stat, TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
+        return new TowerStatLine(StatBreakdown.resolved(stat, this.baseStats.stats().value(stat), parts.apply(stat),
+                stats.value(stat)), stat);
+    }
+
+    private boolean showsRow(TowerStat stat, TowerStats stats, boolean applies) {
+        boolean offDefault = this.baseStats.stats().value(stat) != stat.defaultBase() || stats.value(stat) != stat.defaultBase();
+        return switch (stat.shows()) {
+            case IN_CORE_ROW -> false;
+            case OFF_DEFAULT -> offDefault;
+            case WHILE_IT_CRITS -> offDefault || stats.critChance() > 0f;
+            case WHILE_IT_APPLIES -> offDefault || applies;
+        };
+    }
+
+    /**
+     * Each kind of source that changes {@code stat} now, once with how many of it there are: every owned node,
+     * every held status, what the towers around it give, and the jam. Game loop only.
+     */
+    private List<StatPart> partsOf(TowerStat stat, StatModifiers<TowerStat> jam) {
+        List<StatPart> parts = new ArrayList<>();
+        for (UpgradeNode node : this.upgrades().owned()) {
+            StatModifier modifier = node.effects().modifiers().get(stat);
+            if (!modifier.equals(StatModifier.none())) {
+                parts.add(new StatPart(TermText.of(node.displayName()), 1, stat, modifier));
+            }
+        }
+        Map<Term, List<TowerStatus>> byTerm = new LinkedHashMap<>();
+        this.statuses.held().forEach(status -> byTerm.computeIfAbsent(status.term(), t -> new ArrayList<>())
+                .add(status));
+        byTerm.forEach((term, held) -> {
+            StatModifier modifier = held.stream().map(status -> status.modifiers().get(stat))
+                    .reduce(StatModifier.none(), StatModifier::plus);
+            if (!modifier.equals(StatModifier.none())) {
+                parts.add(new StatPart(TermText.of(term), held.size(), stat, modifier));
+            }
+        });
+        StatModifier received = this.stats.received().get(stat);
+        if (!received.equals(StatModifier.none())) {
+            int givers = (int) this.context.towers().all().stream()
+                    .filter(other -> !other.buffFor(this).get(stat).equals(StatModifier.none())).count();
+            parts.add(new StatPart(TermText.of(TowerTerm.AURA), Math.max(1, givers), stat, received));
+        }
+        StatModifier jammed = jam.get(stat);
+        if (!jammed.equals(StatModifier.none())) {
+            parts.add(new StatPart(TermText.of(TowerTerm.JAMMED), 1, stat, jammed));
+        }
+        return parts;
+    }
+
+    /** The jam as it reaches this tower: the enemy's penalty times what its disruption taken lets through. */
+    private static StatModifiers<TowerStat> jamChanges(TowerStats stats) {
+        DisruptionPenalty jam = stats.disruption();
+        float taken = stats.value(TowerStat.DISRUPTION_TAKEN);
+        StatModifiers<TowerStat> changes = StatModifiers.none();
+        if (jam.attackSpeed() != 0f) {
+            changes = changes.plus(TowerModifiers.attackSpeed(-jam.attackSpeed() * taken));
+        }
+        if (jam.rangeCells() != 0f) {
+            changes = changes.plus(TowerModifiers.range(-jam.rangeCells() * taken));
+        }
+        return changes;
+    }
+
+    /** The stats that last: its base, its upgrades with {@code extra} and what it receives; no jam, no status. */
+    private TowerStats lasting(List<UpgradeNode> extra) {
+        UpgradeState upgrades = this.upgrades();
+        for (UpgradeNode node : extra) {
+            upgrades = upgrades.owned().contains(node) ? upgrades : upgrades.with(node);
+        }
+        return TowerStats.of(this.baseStats, upgrades.totalModifiers(), this.stats.received(),
+                DisruptionPenalty.none(), this.context.getBoard().scale(), upgrades.capabilities());
+    }
+
     public TowerInspection inspect() {
         InspectionCache cached = this.cachedForUpgrades();
         TowerStats now = this.stats;
-        List<TowerStatLine> lines = new ArrayList<>();
-        lines.add(new TowerStatLine(TowerStatRow.RANGE, this.rangeBase, now.range()));
-        if (!this.isPassive()) {
-            DamageType type = now.has(TowerCapability.MAGIC_DAMAGE) ? DamageType.MAGIC : this.damageType();
-            TowerStatRow damage = type == DamageType.MAGIC ? TowerStatRow.MAGIC_DAMAGE : TowerStatRow.PHYSICAL_DAMAGE;
-            lines.add(new TowerStatLine(damage, DamageUnits.inPoints(this.damageBase), DamageUnits.inPoints(now.damage())));
-            this.cadence().ifPresent(lines::add);
-            if (this.critChanceBase > 0f || now.critChance() > 0f) {
-                lines.add(new TowerStatLine(TowerStatRow.CRIT_CHANCE, this.critChanceBase, now.critChance()));
-            }
-        }
-        lines.addAll(this.ownStats());
+        StatModifiers<TowerStat> jam = jamChanges(now);
+        List<TowerStatLine> lines = this.statRows(now, stat -> this.partsOf(stat, jam), !cached.applies().isEmpty());
         int auras = (int) this.context.towers().all().stream()
                 .filter(other -> !other.buffFor(this).isNone())
                 .count();
         return TowerInspection.of(this.type, this.price, lines)
+                .withGives(this.gives())
                 .withName(this.displayName())
                 .withDescription(this.description())
                 .withRecord(this.killCount, this.damageDealt)

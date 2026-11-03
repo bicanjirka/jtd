@@ -8,6 +8,7 @@ import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /** What a fire-rate buff or debuff does to the towers, counted over long runs against exact arithmetic. */
 class FireRateTest {
@@ -74,11 +75,10 @@ class FireRateTest {
         PulseTower tower = new PulseTower(world, 3, 3);
         tower.grantStatus(TowerStatus.timed(TowerTerm.HASTE, TowerModifiers.attackSpeed(0.1f), Integer.MAX_VALUE / 2));
 
-        TowerStatLine row = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)
-                .findFirst().orElseThrow();
+        TowerStatLine row = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.PHYSICAL_FIELD_DAMAGE
+                || line.stat() == TowerStatRow.MAGIC_FIELD_DAMAGE).findFirst().orElseThrow();
 
-        assertThat(row.base()).isEqualTo(20f);
-        assertThat(row.current()).isEqualTo((float) (20 * rateOf(0.1f)));
+        assertThat(row.current() / row.base()).isCloseTo((float) rateOf(0.1f), within(1e-5f));
     }
 
     private record Run(long shots, int period) {

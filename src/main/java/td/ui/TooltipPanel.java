@@ -106,6 +106,7 @@ final class TooltipPanel extends JPanel {
             case SheetLine.IconTitle title -> !title.value().isEmpty();
             case SheetLine.Row row -> !row.value().isEmpty();
             case SheetLine.HealthBar bar -> false;
+            case SheetLine.StatTitle title -> false;
             case SheetLine.Prose prose -> false;
             case SheetLine.IconRow row -> false;
             case SheetLine.Sentence sentence -> false;

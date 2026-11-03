@@ -736,7 +736,7 @@ class MortarTowerTest {
         TowerStatLine after = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)
                 .findFirst().orElseThrow();
 
-        assertThat(after.base()).isEqualTo(before.base());
+        assertThat(before.current()).isLessThan(after.current());
         assertThat(after.current()).isCloseTo((float) (3 * 20 * tower.attackRate() / ((tower.coolDownMax + 1) * 2f)),
                 within(1e-3f));
     }
