@@ -82,6 +82,8 @@ public final class Java2DFrameRenderer {
     // A body's shape depends only on its palette and size, and some are constructive-area operations far too
     // slow to repeat for every tower on every paint. Sizes follow the cell size, so the map stays small.
     private static final Map<TowerBodyKey, Shape> TOWER_BODIES = new ConcurrentHashMap<>();
+    // Stroking a body's outline on every paint cost more than building it did.
+    private static final Map<TowerBodyKey, Shape> TOWER_BODY_OUTLINES = new ConcurrentHashMap<>();
     private static final Color CELL_NOK = Color.RED;
     /** A free cell the credits can't build the tower on yet: amber, apart from the red of a cell nothing builds on. */
     private static final Color CELL_SHORT = new Color(255, 170, 60);
@@ -714,6 +716,12 @@ public final class Java2DFrameRenderer {
     private static Shape towerBodyShape(Palette palette, float size) {
         return TOWER_BODIES.computeIfAbsent(new TowerBodyKey(palette, size),
                 key -> builtTowerBodyShape(key.palette(), key.size()));
+    }
+
+    /** The body's outline at the default stroke, as an area to fill. */
+    private static Shape towerBodyOutline(Palette palette, float size) {
+        return TOWER_BODY_OUTLINES.computeIfAbsent(new TowerBodyKey(palette, size),
+                key -> new BasicStroke().createStrokedShape(towerBodyShape(key.palette(), key.size())));
     }
 
     private record TowerBodyKey(Palette palette, float size) {
@@ -1959,12 +1967,11 @@ public final class Java2DFrameRenderer {
 
     /** Draws a tower body at the origin; the caller has translated to the tower's centre. */
     private void paintTowerBody(Graphics2D g2, Palette palette, float size) {
-        Shape shape = towerBodyShape(palette, size);
         Color color = colorFor(palette);
         g2.setColor(withAlpha(color, 130));
-        g2.fill(shape);
+        g2.fill(towerBodyShape(palette, size));
         g2.setColor(color);
-        g2.draw(shape);
+        g2.fill(towerBodyOutline(palette, size));
     }
 
     private void paintTurretHead(Graphics2D g2, TurretHeadDraw head, int scale) {
