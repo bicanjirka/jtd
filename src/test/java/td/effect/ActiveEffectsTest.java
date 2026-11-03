@@ -341,6 +341,21 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void onceAShieldThatLastsUntilBrokenBreaksTheTimedOnesLeftShowTheirTime() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.shield(100f, Effect.LASTING_TICKS, DamageSink.none()).withShieldRestrictedTo(DamageType.MAGIC)
+                .from(AttackOrigin.fresh()));
+        effects.apply(Effect.shield(300f, 40, DamageSink.none()).withShieldRestrictedTo(DamageType.PHYSICAL)
+                .from(AttackOrigin.fresh()));
+        boolean timeShownWhileLasting = effects.remainingTicks(EffectKind.SHIELD).isPresent();
+
+        effects.absorb(DamageType.MAGIC, 100, 1f);
+
+        assertThat(timeShownWhileLasting).isFalse();
+        assertThat(effects.remainingTicks(EffectKind.SHIELD)).hasValue(40);
+    }
+
+    @Test
     void aPhysicalShieldLetsMagicThrough() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.shield(400f, 5, DamageSink.none()).withShieldRestrictedTo(DamageType.PHYSICAL));

@@ -177,8 +177,10 @@ final class EnemyStatText {
         }
         if (effect.fullness().isPresent()) {
             face = face.withBar(effect.fullness().getAsDouble());
-        } else if (kind == EffectKind.SHIELD && effect.shield().max() > 0f) {
-            face = face.withBar(effect.shield().remaining() / effect.shield().max());
+        } else if (kind == EffectKind.SHIELD) {
+            float max = (float) effect.shares().stream().mapToDouble(EnemyInspection.ShareState::max).sum();
+            float left = (float) effect.shares().stream().mapToDouble(EnemyInspection.ShareState::amount).sum();
+            face = max > 0f ? face.withBar(left / max) : face;
         }
         return new SheetIcon(face, TooltipKey.ofTerm("effect", kind),
                 TermSheets.of(kind, kind.describe(), effectRows(effect)));

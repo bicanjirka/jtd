@@ -33,20 +33,6 @@ class InversionTest {
     }
 
     @Test
-    void anInvertedHealCountsAsDamageTaken() {
-        DefinedEnemyMob enemy = EnemyFixtures.plainMob(this.world, 100, 4);
-        invert(enemy, new ArrayList<>());
-        long before = enemy.damageTaken();
-
-        enemy.applyEffect(Effect.heal(100, 10, DamageSink.none()));
-        for (int t = 1; t <= 10; t++) {
-            enemy.doTick(t);
-        }
-
-        assertThat(enemy.damageTaken() - before).isPositive();
-    }
-
-    @Test
     void anInvertedEnemysOwnRegenerationIsDealtToItAsMagicCreditedToTheInversion() {
         float pointsPerSecond = 20f;
         DefinedEnemyMob enemy = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("mending")

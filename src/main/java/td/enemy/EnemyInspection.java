@@ -6,7 +6,6 @@ import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.HealShare;
-import td.effect.ShieldGauge;
 import td.effect.ShieldShare;
 import td.stat.EnemyStat;
 import td.stat.StatBreakdown;
@@ -104,7 +103,6 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
     private static EffectState activeState(ActiveEffects live, EffectKind kind) {
         return EffectState.of(kind, live.remainingTicks(kind)).withStacks(live.stacks(kind))
                 .withLevel(kind == EffectKind.CHILL ? live.chillLevel() : 0f)
-                .withShield(kind == EffectKind.SHIELD ? live.shieldGauge() : ShieldGauge.none())
                 .withClockTicks(live.clockTicks(kind))
                 .withFullness(live.fullness(kind))
                 .withShares(live.find(kind).map(EnemyInspection::sharesOf).orElse(List.of()));
@@ -152,10 +150,9 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
      * @param remainingTicks ticks left; empty for a fuel pool, which decays rather than counting down
      * @param stacks         a vulnerability's, burn's or poison's stack count; {@code 0} for other kinds
      * @param level          how much speed a chill takes away, from {@code 0} to {@code 1}; {@code 0} for other kinds
-     * @param shield         a shield's pool, in points; {@link ShieldGauge#none()} for other kinds
      * @param shares         each source's heal or shield; empty for other kinds
      */
-    public record EffectState(EffectKind kind, OptionalInt remainingTicks, int stacks, float level, ShieldGauge shield,
+    public record EffectState(EffectKind kind, OptionalInt remainingTicks, int stacks, float level,
                               OptionalInt clockTicks, OptionalDouble fullness, boolean faded,
                               OptionalDouble nextShare, List<ShareState> shares) {
 
@@ -163,50 +160,45 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
             shares = List.copyOf(shares);
         }
 
-        /** An effect with no stacks, level or shield; add them with the {@code withX} copies. */
+        /** An effect with no stacks, level or shares; add them with the {@code withX} copies. */
         public static EffectState of(EffectKind kind, OptionalInt remainingTicks) {
-            return new EffectState(kind, remainingTicks, 0, 0f, ShieldGauge.none(), OptionalInt.empty(),
+            return new EffectState(kind, remainingTicks, 0, 0f, OptionalInt.empty(),
                     OptionalDouble.empty(), false, OptionalDouble.empty(), List.of());
         }
 
         /** A kind that ended but whose diminishing returns still run. */
         public static EffectState faded(EffectKind kind) {
-            return new EffectState(kind, OptionalInt.empty(), 0, 0f, ShieldGauge.none(), OptionalInt.empty(),
+            return new EffectState(kind, OptionalInt.empty(), 0, 0f, OptionalInt.empty(),
                     OptionalDouble.empty(), true, OptionalDouble.empty(), List.of());
         }
 
         public EffectState withStacks(int stacks) {
-            return new EffectState(this.kind, this.remainingTicks, stacks, this.level, this.shield, this.clockTicks,
+            return new EffectState(this.kind, this.remainingTicks, stacks, this.level, this.clockTicks,
                     this.fullness, this.faded, this.nextShare, this.shares);
         }
 
         public EffectState withLevel(float level) {
-            return new EffectState(this.kind, this.remainingTicks, this.stacks, level, this.shield, this.clockTicks,
-                    this.fullness, this.faded, this.nextShare, this.shares);
-        }
-
-        public EffectState withShield(ShieldGauge shield) {
-            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, shield, this.clockTicks,
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, level, this.clockTicks,
                     this.fullness, this.faded, this.nextShare, this.shares);
         }
 
         public EffectState withClockTicks(OptionalInt clockTicks) {
-            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, this.shield, clockTicks,
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, clockTicks,
                     this.fullness, this.faded, this.nextShare, this.shares);
         }
 
         public EffectState withFullness(OptionalDouble fullness) {
-            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, this.shield,
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level,
                     this.clockTicks, fullness, this.faded, this.nextShare, this.shares);
         }
 
         public EffectState withNextShare(float nextShare) {
-            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, this.shield,
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level,
                     this.clockTicks, this.fullness, this.faded, OptionalDouble.of(nextShare), this.shares);
         }
 
         public EffectState withShares(List<ShareState> shares) {
-            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, this.shield,
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level,
                     this.clockTicks, this.fullness, this.faded, this.nextShare, shares);
         }
     }

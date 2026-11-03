@@ -251,8 +251,8 @@ class HitResolutionTest {
         Damage critical = HitResolution.resolve(Damage.physical(1234), crit, stats, () -> 0.0);
         Damage ticking = HitResolution.resolve(Damage.physical(1234), periodic, stats, () -> 0.0);
 
-        assertThat(HitResolution.steps(Damage.physical(1234), crit, stats, true).result()).isEqualTo(critical);
-        assertThat(HitResolution.steps(Damage.physical(1234), periodic, stats, false).result()).isEqualTo(ticking);
+        assertThat(HitResolution.steps(Damage.physical(1234), crit, stats, true, 0).result()).isEqualTo(critical);
+        assertThat(HitResolution.steps(Damage.physical(1234), periodic, stats, false, 0).result()).isEqualTo(ticking);
     }
 
     @Test
@@ -274,7 +274,7 @@ class HitResolutionTest {
         StatView stats = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.ARMOR, 100f));
         AttackProfile piercing = AttackProfile.none().withArmorPenetration(0.5f, 0f);
 
-        HitSteps steps = HitResolution.steps(Damage.physical(1000), piercing, stats, false);
+        HitSteps steps = HitResolution.steps(Damage.physical(1000), piercing, stats, false, 0);
 
         HitStep mitigation = steps.steps().getFirst();
         assertThat(mitigation.stat()).isEqualTo(100f);

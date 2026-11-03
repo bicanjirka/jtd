@@ -9,20 +9,27 @@ import td.damage.AttackOrigin;
  * @param perTick        the regeneration it adds, in damage units a tick
  * @param remainingTicks the ticks it has left
  */
-public record HealShare(AttackOrigin source, int perTick, int remainingTicks) {
+public record HealShare(AttackOrigin source, int perTick, int remainingTicks) implements SourceShare<HealShare> {
 
-    /** This share as {@code incoming}, the same source's recast, leaves it: the larger amount and the later end. */
-    HealShare refreshedBy(HealShare incoming) {
+    @Override
+    public HealShare withSource(AttackOrigin source) {
+        return new HealShare(source, this.perTick, this.remainingTicks);
+    }
+
+    @Override
+    public HealShare withRemainingTicks(int ticks) {
+        return new HealShare(this.source, this.perTick, ticks);
+    }
+
+    /** The larger amount and the later end. */
+    @Override
+    public HealShare refreshedBy(HealShare incoming) {
         return new HealShare(this.source, Math.max(this.perTick, incoming.perTick),
                 Math.max(this.remainingTicks, incoming.remainingTicks));
     }
 
-    /** A tick later; a share with no time left is gone. */
-    HealShare ticked() {
-        return new HealShare(this.source, this.perTick, this.remainingTicks - 1);
-    }
-
-    boolean isOver() {
+    @Override
+    public boolean isGone() {
         return this.remainingTicks <= 0;
     }
 }

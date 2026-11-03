@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.IntUnaryOperator;
+import java.util.stream.IntStream;
 
 /** The family-specific state of one live effect. */
 public sealed interface EffectDynamics {
@@ -106,46 +108,20 @@ public sealed interface EffectDynamics {
 
         /** The ticks until the last share runs out. */
         public int remainingTicks() {
-            int most = 0;
-            for (HealShare share : this.shares) {
-                most = Math.max(most, share.remainingTicks());
-            }
-            return most;
+            return SourceShares.lastEnd(this.shares);
         }
 
-        /** Every share keyed to {@code source}. */
         HealOverTime from(AttackOrigin source) {
-            return new HealOverTime(this.shares.stream()
-                    .map(share -> new HealShare(source, share.perTick(), share.remainingTicks())).toList());
+            return new HealOverTime(SourceShares.keyedTo(this.shares, source));
         }
 
-        /** With {@code incoming}'s shares: a source already here is refreshed, a new one is added. */
         HealOverTime with(HealOverTime incoming) {
-            List<HealShare> merged = new ArrayList<>(this.shares);
-            for (HealShare share : incoming.shares) {
-                int at = indexOf(merged, share.source());
-                if (at < 0) {
-                    merged.add(share);
-                } else {
-                    merged.set(at, merged.get(at).refreshedBy(share));
-                }
-            }
-            return new HealOverTime(merged);
+            return new HealOverTime(SourceShares.joined(this.shares, incoming.shares));
         }
 
-        /** A tick later, without the shares that ran out; empty once none is left. */
-        Optional<HealOverTime> ticked() {
-            List<HealShare> left = this.shares.stream().map(HealShare::ticked).filter(share -> !share.isOver()).toList();
-            return left.isEmpty() ? Optional.empty() : Optional.of(new HealOverTime(left));
-        }
-
-        private static int indexOf(List<HealShare> shares, AttackOrigin source) {
-            for (int i = 0; i < shares.size(); i++) {
-                if (shares.get(i).source() == source) {
-                    return i;
-                }
-            }
-            return -1;
+        /** Every share's time through {@code time}, without the shares then gone. */
+        HealOverTime retimed(IntUnaryOperator time) {
+            return new HealOverTime(SourceShares.retimed(this.shares, time));
         }
     }
 
@@ -176,48 +152,30 @@ public sealed interface EffectDynamics {
 
         /** The ticks until the last share runs out; {@link Effect#LASTING_TICKS} while one lasts until broken. */
         public int remainingTicks() {
-            int most = 0;
-            for (ShieldShare share : this.shares) {
-                most = Math.max(most, share.remainingTicks());
-            }
-            return most;
+            return SourceShares.lastEnd(this.shares);
         }
 
         ShieldPool from(AttackOrigin source) {
-            return new ShieldPool(this.shares.stream().map(share -> share.withSource(source)).toList());
+            return new ShieldPool(SourceShares.keyedTo(this.shares, source));
         }
 
         ShieldPool restrictedTo(DamageType type) {
             return new ShieldPool(this.shares.stream().map(share -> share.withRestrictedTo(type)).toList());
         }
 
-        /** With {@code incoming}'s shares: a source already here is topped up, a new one is added. */
         ShieldPool with(ShieldPool incoming) {
-            List<ShieldShare> merged = new ArrayList<>(this.shares);
-            for (ShieldShare share : incoming.shares) {
-                int at = -1;
-                for (int i = 0; i < merged.size(); i++) {
-                    if (merged.get(i).source() == share.source()) {
-                        at = i;
-                    }
-                }
-                if (at < 0) {
-                    merged.add(share);
-                } else {
-                    merged.set(at, merged.get(at).refreshedBy(share));
-                }
-            }
-            return new ShieldPool(merged);
+            return new ShieldPool(SourceShares.joined(this.shares, incoming.shares));
         }
 
-        /** A tick later, without the shares that ran out; empty once none is left. */
-        Optional<ShieldPool> ticked() {
-            return left(this.shares.stream().map(ShieldShare::ticked).toList());
+        /** Every share's time through {@code time}, without the shares then gone. */
+        ShieldPool retimed(IntUnaryOperator time) {
+            return new ShieldPool(SourceShares.retimed(this.shares, time));
         }
 
         /** Every share with {@code fraction} of what it has left taken away. */
         Optional<ShieldPool> weakened(float fraction) {
-            return left(this.shares.stream().map(share -> share.withRemaining(share.remaining() * (1f - fraction))).toList());
+            return left(SourceShares.standing(this.shares.stream()
+                    .map(share -> share.withRemaining(share.remaining() * (1f - fraction))).toList()));
         }
 
         /**
@@ -226,21 +184,20 @@ public sealed interface EffectDynamics {
          * nothing.
          */
         ShieldHit hitBy(DamageType type, int raw, float worth) {
-            List<ShieldShare> order = this.shares.stream().filter(share -> share.takes(type))
-                    .sorted(Comparator.comparingInt(ShieldShare::remainingTicks)).toList();
             List<ShieldShare> after = new ArrayList<>(this.shares);
+            List<Integer> order = IntStream.range(0, after.size()).filter(i -> after.get(i).takes(type)).boxed()
+                    .sorted(Comparator.comparingInt(i -> after.get(i).remainingTicks())).toList();
             float rawLeft = raw;
-            for (ShieldShare share : order) {
+            for (int i : order) {
+                ShieldShare share = after.get(i);
                 float holds = worth <= 0f ? 0f : Math.min(rawLeft, share.remaining() * worth);
-                float left = worth <= 0f ? 0f : share.remaining() - holds / worth;
-                after.set(after.indexOf(share), share.withRemaining(left));
+                after.set(i, share.withRemaining(worth <= 0f ? 0f : share.remaining() - holds / worth));
                 rawLeft -= holds;
             }
-            return new ShieldHit(left(after), Math.round(raw - rawLeft));
+            return new ShieldHit(left(SourceShares.standing(after)), Math.round(raw - rawLeft));
         }
 
-        private static Optional<ShieldPool> left(List<ShieldShare> shares) {
-            List<ShieldShare> standing = shares.stream().filter(share -> !share.isGone()).toList();
+        private static Optional<ShieldPool> left(List<ShieldShare> standing) {
             return standing.isEmpty() ? Optional.empty() : Optional.of(new ShieldPool(standing));
         }
     }

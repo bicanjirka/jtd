@@ -16,7 +16,7 @@ import java.util.Optional;
  * @param remainingTicks the ticks it has left; {@link Effect#LASTING_TICKS} until broken
  */
 public record ShieldShare(AttackOrigin source, float remaining, float max, Optional<DamageType> restrictedTo,
-                          int remainingTicks) {
+                          int remainingTicks) implements SourceShare<ShieldShare> {
 
     /** A shield of {@code units} for {@code durationTicks}, from no source in particular, that takes every type. */
     static ShieldShare cast(float units, int durationTicks) {
@@ -28,32 +28,34 @@ public record ShieldShare(AttackOrigin source, float remaining, float max, Optio
         return this.restrictedTo.map(only -> only == type).orElse(true);
     }
 
-    /** This share as the same source's recast leaves it: topped up to the larger pool, with the later end. */
-    ShieldShare refreshedBy(ShieldShare incoming) {
+    @Override
+    public ShieldShare withSource(AttackOrigin source) {
+        return new ShieldShare(source, this.remaining, this.max, this.restrictedTo, this.remainingTicks);
+    }
+
+    @Override
+    public ShieldShare withRemainingTicks(int ticks) {
+        return new ShieldShare(this.source, this.remaining, this.max, this.restrictedTo, ticks);
+    }
+
+    /** Topped up to the larger pool, with the later end. */
+    @Override
+    public ShieldShare refreshedBy(ShieldShare incoming) {
         return new ShieldShare(this.source, Math.max(this.remaining, incoming.remaining), Math.max(this.max, incoming.max),
                 incoming.restrictedTo, Math.max(this.remainingTicks, incoming.remainingTicks));
     }
 
-    /** A tick later; a shield that lasts until broken keeps its time. */
-    ShieldShare ticked() {
-        return this.remainingTicks == Effect.LASTING_TICKS ? this
-                : new ShieldShare(this.source, this.remaining, this.max, this.restrictedTo, this.remainingTicks - 1);
+    /** Out of time, or with less than a unit left. */
+    @Override
+    public boolean isGone() {
+        return this.remainingTicks <= 0 || this.remaining < 1f;
     }
 
     ShieldShare withRemaining(float units) {
         return new ShieldShare(this.source, units, this.max, this.restrictedTo, this.remainingTicks);
     }
 
-    ShieldShare withSource(AttackOrigin source) {
-        return new ShieldShare(source, this.remaining, this.max, this.restrictedTo, this.remainingTicks);
-    }
-
     ShieldShare withRestrictedTo(DamageType type) {
         return new ShieldShare(this.source, this.remaining, this.max, Optional.of(type), this.remainingTicks);
-    }
-
-    /** Whether it has run out of time or has less than a unit left. */
-    boolean isGone() {
-        return this.remainingTicks <= 0 || this.remaining < 1f;
     }
 }
