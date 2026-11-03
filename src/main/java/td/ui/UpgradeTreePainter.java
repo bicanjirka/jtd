@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.term.TermNumbers;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
@@ -400,7 +401,7 @@ final class UpgradeTreePainter {
             default -> slot;
         };
         g.setColor(price);
-        centred(g, "$" + node.price(), PRICE_FONT, spot.x(), spot.y() + half + 11);
+        centred(g, TermNumbers.cash(node.price()), PRICE_FONT, spot.x(), spot.y() + half + 11);
     }
 
     private static void paintRing(Graphics2D g, Spot spot, Color slot, float share) {
