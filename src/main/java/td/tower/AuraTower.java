@@ -313,7 +313,13 @@ public final class AuraTower extends AbstractTower {
 
     /** The towers this aura buffs, derived on each call rather than tracked. */
     public List<Tower> buffedTowers() {
-        return this.context.towers().all().stream().filter(this::buffs).toList();
+        List<Tower> buffed = new ArrayList<>();
+        for (Tower tower : this.context.towers().all()) {
+            if (this.buffs(tower)) {
+                buffed.add(tower);
+            }
+        }
+        return buffed;
     }
 
     /**

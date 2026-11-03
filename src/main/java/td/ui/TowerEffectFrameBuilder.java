@@ -337,8 +337,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         for (Tower buffed : tower.buffedTowers()) {
             this.draws.add(BeamDraw.solid(link, tower.getX(), tower.getY(), buffed.getX(), buffed.getY(), 1.0f));
         }
-        if (tower.mentorsApprentice() && tower.apprentice() != null) {
-            Tower apprentice = tower.apprentice();
+        Tower apprentice = tower.mentorsApprentice() ? tower.apprentice() : null;
+        if (apprentice != null) {
             this.draws.add(new RingDraw(Palette.TOWER_AURA_MENTEE, apprentice.getX(), apprentice.getY(),
                     this.scale * APPRENTICE_MARK_CELLS, 1f));
         }
