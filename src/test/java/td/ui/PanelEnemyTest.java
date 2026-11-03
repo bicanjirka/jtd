@@ -9,6 +9,7 @@ import td.enemy.Rank;
 import td.enemy.TraitTerm;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
+import td.stat.EnemyStat;
 import td.stat.StatWording;
 import td.ui.render.InfoSheet;
 import td.ui.render.SheetLine;
@@ -97,7 +98,7 @@ class PanelEnemyTest {
         InfoSheet sheet = this.hoverSheet("fast", Rank.ELITE);
 
         assertThat(sheet.lines().stream().filter(Row.class::isInstance).map(Row.class::cast)
-                .filter(row -> row.label().equals("Speed")).map(Row::value))
+                .filter(row -> row.label().equals(EnemyStat.MOVE_SPEED.shortName())).map(Row::value))
                 .singleElement().asString().doesNotContain("NaN");
         assertThat(sheet.lines()).anySatisfy(line -> assertThat(line).isInstanceOfSatisfying(SheetLine.IconRow.class,
                 row -> assertThat(row.icons()).anySatisfy(icon -> {

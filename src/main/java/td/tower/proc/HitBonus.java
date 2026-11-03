@@ -38,7 +38,7 @@ public record HitBonus(HitCondition when, HitScaling scaling, HitAdjustment adju
     /** "+75% damage against Elite and Boss enemies", "+20% damage per stack of [Focus], up to 5". */
     public TermText describe() {
         TermText when = this.when.describe();
-        TermText what = this.scaling.around(TermText.of(this.adjustment.describe()));
+        TermText what = this.scaling.around(this.adjustment.describe());
         return when.isEmpty() ? what : what.plus(" ").plus(when);
     }
 }

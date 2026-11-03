@@ -362,10 +362,10 @@ public final class AuraTower extends AbstractTower {
     protected List<AppliedEffect> baseApplies() {
         List<AppliedEffect> all = new ArrayList<>();
         all.add(new AppliedEffect(TowerTerm.AURA, List.of(new AppliedEffect.Source(this.displayName(),
-                TermText.of("towers in range gain ").plus(TowerTerm.AURA).plus(": "
-                        + TermNumbers.signedPercent(this.stats().value(TowerStat.AURA_POWER))
-                        + " damage and range, and they take " + TermNumbers.percent(1f - DISRUPTION_LEFT)
-                        + " less from ").plus(TowerTerm.JAMMED)))));
+                TermText.of("towers in range gain ").plus(TowerTerm.AURA).plus(": ").plus(TowerStat.DAMAGE)
+                        .plus(" and ").plus(TowerStat.RANGE)
+                        .plus(" " + TermNumbers.signedPercent(this.stats().value(TowerStat.AURA_POWER)) + ", ")
+                        .plus(TowerStat.DISRUPTION_TAKEN.changeText(TowerModifiers.disruptionTaken(DISRUPTION_LEFT).get(TowerStat.DISRUPTION_TAKEN)))))));
         StatModifier wither = this.upgrades().totalEmission().get(TowerStat.WITHER_INTERVAL);
         if (wither.hasSetValue()) {
             all.add(new AppliedEffect(EffectKind.VULNERABLE, List.of(new AppliedEffect.Source(

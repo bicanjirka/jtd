@@ -4,6 +4,7 @@ import td.effect.EffectKind;
 import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
+import td.tower.TowerStat;
 import td.tower.TowerTerm;
 
 import java.util.Set;
@@ -29,6 +30,6 @@ public final class OverloadMechanic implements SplashMechanic {
         return TermText.of("an ").plus(TowerTerm.ARC).plus(" that crits applies ").plus(EffectKind.DAZED)
                 .plus(" for " + TermNumbers.seconds(DAZE_SECONDS) + "; an ").plus(TowerTerm.ARC)
                 .plus(" into an enemy at full ").plus(EffectKind.SATURATED)
-                .plus(" gets " + TermNumbers.signedPercent(SATURATED_CRIT_BONUS) + " crit chance");
+                .plus(" gets ").plus(TowerStat.CRIT_CHANCE).plus(" " + TermNumbers.signedPercent(SATURATED_CRIT_BONUS));
     }
 }

@@ -35,9 +35,9 @@ final class AbilityText {
 
     /** A Jammer's disruption, as the trait the player sees. */
     static TermText jam(DisruptionAura aura, float cellSize) {
-        return TermText.of("towers within " + TermNumbers.cells(aura.radius() / cellSize) + ": "
-                + TermNumbers.signedPercent(-aura.attackSpeedPenalty()) + " attack speed, "
-                + TermNumbers.signed(-aura.rangePenaltyCells()) + " range");
+        return TermText.of("towers within " + TermNumbers.cells(aura.radius() / cellSize) + ": Fire rate "
+                + TermNumbers.signedPercent(-aura.attackSpeedPenalty()) + ", Range "
+                + TermNumbers.signed(-aura.rangePenaltyCells()) + " cells");
     }
 
     private static String when(AbilityTrigger trigger) {

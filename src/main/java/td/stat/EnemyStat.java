@@ -27,7 +27,7 @@ public enum EnemyStat implements StatKey, StatTerm {
     INSULATION(0f, 0f, Float.MAX_VALUE, "Insulation", "Insulation", StatUnit.LOSS_PER_HIT, StatDirection.LOWER,
             StatGroup.DEFENCE, "takes a fixed amount off every magic hit, after magic resist"),
     /** Pixels per tick; its base is the definition's speed times the spawn multiplier. */
-    MOVE_SPEED(0f, 0f, Float.MAX_VALUE, "Speed", "Move speed", StatUnit.PIXELS_PER_TICK, StatDirection.LOWER, StatGroup.SPEED,
+    MOVE_SPEED(0f, 0f, Float.MAX_VALUE, "Move speed", "Move speed", StatUnit.PIXELS_PER_TICK, StatDirection.LOWER, StatGroup.SPEED,
             "how fast it walks the path"),
     // Floored above zero so a stacked reduction never makes an enemy immune by accident.
     PHYSICAL_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE, "Phys taken", "Physical damage taken", StatUnit.PERCENT,
@@ -169,15 +169,14 @@ public enum EnemyStat implements StatKey, StatTerm {
             case RESILIENCE -> resilienceMeaning(value);
             case SPIRIT -> value == 0f ? Optional.empty()
                     : Optional.of(TermNumbers.signedPercent(value / FULL) + " heals");
-            case CHILL_RESIST, BURN_RESIST, FREEZE_RESIST -> value >= 1f ? Optional.of("immune") : Optional.empty();
-            case PLATING, INSULATION, MOVE_SPEED, PHYSICAL_DAMAGE_TAKEN, MAGIC_DAMAGE_TAKEN, PERIODIC_DAMAGE_TAKEN,
+            case PLATING, INSULATION, CHILL_RESIST, BURN_RESIST, FREEZE_RESIST, MOVE_SPEED, PHYSICAL_DAMAGE_TAKEN, MAGIC_DAMAGE_TAKEN, PERIODIC_DAMAGE_TAKEN,
                  HEALING_RECEIVED, REGENERATION, STEALTH -> Optional.empty();
         };
     }
 
     private static Optional<String> resilienceMeaning(float value) {
         if (value >= FULL) {
-            return Optional.of("crit immune");
+            return Optional.of("immune");
         }
         return value == 0f ? Optional.empty() : Optional.of(TermNumbers.signedPercent(-value / FULL) + " crits");
     }

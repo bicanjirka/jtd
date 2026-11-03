@@ -3,6 +3,7 @@ package td.tower.sniper;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerBuffState;
+import td.tower.TowerStat;
 import td.tower.TowerTerm;
 import td.util.ThreadConfined;
 
@@ -40,8 +41,8 @@ public final class CritStreakMechanic implements SniperMechanic {
     @Override
     public TermText describe() {
         return TermText.of("each crit adds a stack of ")
-                .plus(TermText.of(TowerTerm.CRIT_STREAK, TermText.of("each stack gives the next crit "
-                        + TermNumbers.signedPercent(CRIT_DAMAGE_PER_STREAK) + " crit damage")))
+                .plus(TermText.of(TowerTerm.CRIT_STREAK, TermText.of("each stack gives the next crit ")
+                        .plus(TowerStat.CRIT_MULTIPLIER).plus(" " + TermNumbers.signedPercent(CRIT_DAMAGE_PER_STREAK))))
                 .plus(", up to " + MAX_STREAK + "; a shot that doesn't crit clears it");
     }
 }
