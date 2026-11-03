@@ -315,26 +315,17 @@ scales it. The Amber Hive pays a placeholder bonus on every round, still to be t
   `bounty` to find the pairing that pays a clean player what kills paid before.
 
 
-### The built-in levels are not tuned to the support Obelisk
+### The three reworked levels are untuned
 
-After the Obelisk became a support tower (`FEATURE-obelisk-support-role.md`, last findings, saved as
-`target/balance/ob-phase4`), the competent player holds 100% of Curly Path, in band, but only 50% of Zigzag Path and
-40% of Twisted Hourglass. Twisted Hourglass also loses 3 of its 4 lives to the Reaver in round 1, and it sends
-shrouded groups down three lanes, so one Obelisk per lane is the only affordable reveal (banning it x0.03).
+The Amber Hive, The Storm Ridge and The Last Hour were rebuilt with new enemies, bosses and waves and have only been
+playtested by hand, not measured. Every figure for Curly Path, Zigzag Path or Twisted Hourglass elsewhere in this
+file was measured on the old levels.
 
-- **Where:** the wave scripts in `td.level.ZigZagPathLevel` and `td.level.TwistedHourglassLevel`.
-- **Approach:** a feature request of its own; retune by wave composition, not by enemy health. Compare each change
-  with `BalanceReport --seeds 12 --strong --variety --compare ob-phase4`.
-
-### Twisted Hourglass's waves were tuned on its old lanes
-
-Twisted Hourglass's teal and amber lanes now cross at the waist and swap exits, and the board grew a row (9×15).
-Before, teal ran about 30 cells and amber 18; now both run about 24, so amber's waves get more of the board and
-teal's less. Every Twisted Hourglass figure elsewhere in this file was measured on the old lanes.
-
-- **Where:** the wave scripts and starting credits in `td.level.TwistedHourglassLevel`.
-- **Approach:** `BalanceReport --levels 2 --seeds 12 --strong --variety` against a baseline saved from the old
-  lanes; retune by wave composition, not by moving the lanes back.
+- **Where:** the wave scripts, starting credits and enemy numbers in `td.level.CurlyPathLevel`, `ZigZagPathLevel`,
+  `TwistedHourglassLevel`, `WardenEnemy`, `StormTwinsEnemy` and `KeeperEnemy`.
+- **Approach:** after the playtests, `BalanceReport --levels 0,1,2 --seeds 12 --strong --variety`; retune by wave
+  composition first, then the bosses' numbers. Check that the bosses' counters (AoE against Hivemind, a kill zone
+  where the storm's lanes cross, a freeze, silence or heal denial against Rewind) show in the reports' purchases.
 
 ### The level-select screen fits six levels
 

@@ -225,6 +225,10 @@ public final class Java2DFrameRenderer {
             case ENEMY_WARDEN -> starShape(8, scale, scale * 0.55f);
             case ENEMY_WARDEN_EGG -> wardenEggShape(scale);
             case ENEMY_MENDER, ENEMY_SHIELDBEARER -> crossShape(scale);
+            case ENEMY_GLASS_SENTINEL -> crystalShape(scale);
+            case ENEMY_SANDLING -> sandGrainShape(scale);
+            case ENEMY_TIMEKEEPER -> circleShape(scale);
+            case ENEMY_KEEPER -> hourglassShape(scale);
             case ENEMY_GALE -> galeShape(scale);
             case ENEMY_RAINDROP -> raindropShape(scale);
             case ENEMY_RAINCLOUD -> cloudShape(scale);
@@ -258,6 +262,9 @@ public final class Java2DFrameRenderer {
             case ENEMY_MONOLITH -> Optional.of(runeShape(scale));
             case ENEMY_TALOS -> Optional.of(new Rectangle2D.Float(-scale * 0.07f, -scale * 0.35f, scale * 0.14f, scale * 1.2f));
             case ENEMY_MINOTAUR, ENEMY_BRONZE_BULL -> Optional.of(hornsShape(scale));
+            case ENEMY_GLASS_SENTINEL -> Optional.of(shardShape(scale * 0.5f, 0));
+            case ENEMY_TIMEKEEPER -> Optional.of(clockHandsShape(scale));
+            case ENEMY_KEEPER -> Optional.of(hourglassSandShape(scale));
             case ENEMY_GALE -> Optional.of(circleShape(scale * 0.22f));
             case ENEMY_RAINCLOUD -> Optional.of(rainStreaksShape(scale));
             case ENEMY_LIGHTNING -> Optional.of(AffineTransform.getRotateInstance(-Math.PI / 2).createTransformedShape(boltShape(scale * 0.45f)));
@@ -288,6 +295,9 @@ public final class Java2DFrameRenderer {
             case ENEMY_TALOS -> new Color(200, 25, 30);
             case ENEMY_MINOTAUR -> new Color(235, 225, 200);
             case ENEMY_BRONZE_BULL -> new Color(110, 65, 25);
+            case ENEMY_GLASS_SENTINEL -> new Color(245, 255, 255);
+            case ENEMY_TIMEKEEPER -> new Color(55, 40, 20);
+            case ENEMY_KEEPER -> new Color(235, 190, 100);
             case ENEMY_GALE -> new Color(90, 160, 150);
             case ENEMY_RAINCLOUD -> new Color(95, 150, 240);
             case ENEMY_LIGHTNING -> new Color(255, 255, 255);
@@ -620,6 +630,62 @@ public final class Java2DFrameRenderer {
         return gale;
     }
 
+    /** An hourglass: two glass bulbs meeting at a narrow waist, between a frame's top and bottom bars. */
+    private static Shape hourglassShape(float scale) {
+        GeneralPath glass = new GeneralPath();
+        glass.moveTo(-scale * 0.75f, -scale * 1.0f);
+        glass.lineTo(scale * 0.75f, -scale * 1.0f);
+        glass.lineTo(scale * 0.12f, 0);
+        glass.lineTo(scale * 0.75f, scale * 1.0f);
+        glass.lineTo(-scale * 0.75f, scale * 1.0f);
+        glass.lineTo(-scale * 0.12f, 0);
+        glass.closePath();
+        Area hourglass = new Area(glass);
+        hourglass.add(new Area(new Rectangle2D.Float(-scale * 0.95f, -scale * 1.2f, scale * 1.9f, scale * 0.22f)));
+        hourglass.add(new Area(new Rectangle2D.Float(-scale * 0.95f, scale * 0.98f, scale * 1.9f, scale * 0.22f)));
+        return hourglass;
+    }
+
+    /** The sand: a heap in the lower bulb and the trickle that feeds it. */
+    private static Shape hourglassSandShape(float scale) {
+        GeneralPath heap = new GeneralPath();
+        heap.moveTo(-scale * 0.6f, scale * 0.95f);
+        heap.lineTo(scale * 0.6f, scale * 0.95f);
+        heap.lineTo(0, scale * 0.4f);
+        heap.closePath();
+        Area sand = new Area(heap);
+        sand.add(new Area(new Rectangle2D.Float(-scale * 0.04f, -scale * 0.1f, scale * 0.08f, scale * 0.55f)));
+        GeneralPath top = new GeneralPath();
+        top.moveTo(-scale * 0.42f, -scale * 0.55f);
+        top.lineTo(scale * 0.42f, -scale * 0.55f);
+        top.lineTo(0, -scale * 0.08f);
+        top.closePath();
+        sand.add(new Area(top));
+        return sand;
+    }
+
+    /** A clock's two hands and the pin they turn on. */
+    private static Shape clockHandsShape(float scale) {
+        Area hands = new Area(new Rectangle2D.Float(-scale * 0.07f, -scale * 0.75f, scale * 0.14f, scale * 0.8f));
+        hands.add(new Area(new Rectangle2D.Float(-scale * 0.05f, -scale * 0.05f, scale * 0.55f, scale * 0.1f)));
+        hands.add(new Area(circleShape(scale * 0.14f)));
+        hands.add(new Area(ringShape(scale * 0.92f, 0.86f)));
+        return hands;
+    }
+
+    /** A grain of sand: a small, uneven stone. */
+    private static Shape sandGrainShape(float scale) {
+        GeneralPath grain = new GeneralPath();
+        grain.moveTo(scale * 1.05f, 0);
+        grain.lineTo(scale * 0.4f, -scale * 0.85f);
+        grain.lineTo(-scale * 0.55f, -scale * 0.75f);
+        grain.lineTo(-scale * 1.0f, scale * 0.1f);
+        grain.lineTo(-scale * 0.45f, scale * 0.85f);
+        grain.lineTo(scale * 0.5f, scale * 0.7f);
+        grain.closePath();
+        return grain;
+    }
+
     private static Shape circleShape(float scale) {
         return new Ellipse2D.Float(-scale, -scale, scale * 2, scale * 2);
     }
@@ -827,7 +893,7 @@ public final class Java2DFrameRenderer {
             case ENEMY_MAGMA -> new Color(220, 45, 35);
             case ENEMY_GOLEM -> new Color(150, 140, 125);
             case ENEMY_JAMMER -> new Color(230, 70, 190);
-            case ENEMY_REAVER -> new Color(210, 30, 60);
+            case ENEMY_REAVER -> new Color(205, 150, 70);
             case ENEMY_COLOSSUS -> new Color(95, 105, 128);
             case ENEMY_MOLTEN_CORE -> new Color(255, 110, 20);
             case ENEMY_EMBER -> new Color(255, 175, 40);
@@ -839,6 +905,10 @@ public final class Java2DFrameRenderer {
             case ENEMY_TALOS -> new Color(205, 135, 60);
             case ENEMY_MINOTAUR -> new Color(115, 60, 35);
             case ENEMY_BRONZE_BULL -> new Color(190, 120, 50);
+            case ENEMY_GLASS_SENTINEL -> new Color(170, 228, 240);
+            case ENEMY_SANDLING -> new Color(225, 190, 120);
+            case ENEMY_TIMEKEEPER -> new Color(205, 170, 95);
+            case ENEMY_KEEPER -> new Color(165, 210, 225);
             case ENEMY_GALE -> new Color(180, 232, 222);
             case ENEMY_RAINDROP -> new Color(110, 170, 255);
             case ENEMY_RAINCLOUD -> new Color(150, 165, 192);
@@ -997,6 +1067,7 @@ public final class Java2DFrameRenderer {
             case TRAIT_MARKER_FREEZE_IMMUNE -> new Color(170, 225, 255);
             case TRAIT_MARKER_EFFECT_RESIST -> new Color(200, 200, 160);
             case TRAIT_MARKER_HIVEMIND -> new Color(255, 190, 50);
+            case TRAIT_MARKER_CRUMBLE -> new Color(215, 180, 110);
             case TRAIT_MARKER_OVERFLOW -> Color.LIGHT_GRAY;
             case DISRUPTION -> new Color(235, 90, 200);
             case TERM_FRAME_CONTROL -> new Color(90, 170, 255);

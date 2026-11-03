@@ -17,6 +17,8 @@ final class EnemyTermPictograms {
             Map.entry("trait.adaptation", "S M12 2.6L19.6 5.4V11C19.6 15.8 16.4 19.4 12 21.2C7.6 19.4 4.4 15.8 4.4 11V5.4Z ; T M15.4 10.6A3.6 3.6 0 0 0 8.8 9.8 M8.6 13.4A3.6 3.6 0 0 0 15.2 14.2 ; F M8 7.6L8.8 10.6L11.4 9.2Z M16 16.4L15.2 13.4L12.6 14.8Z"),
             // Hivemind
             Map.entry("trait.hivemind", "F M7 3.4L10.6 5.5V9.7L7 11.8L3.4 9.7V5.5Z M17 3.4L20.6 5.5V9.7L17 11.8L13.4 9.7V5.5Z M12 12.2L15.6 14.3V18.5L12 20.6L8.4 18.5V14.3Z"),
+            // Crumble
+            Map.entry("trait.crumble", "F M5 6.4L9.4 4.4L11.6 8.4L7.6 10.6Z M13.4 5.6L18.4 6.8L17 11.2L12.8 9.8Z ; D M6.4 14.2L9.4 13.2L10.4 16L7.4 17Z M13.6 14.6L16.4 14.6L16 17.4L13.4 17.2Z ; D O11.6 20.4 1 O17.6 20.2 0.8 O5.6 20.6 0.7"),
             // Jam
             Map.entry("trait.jam", "F O12 12 2.4 ; S M7.6 8A5.8 5.8 0 0 0 7.6 16 M16.4 8A5.8 5.8 0 0 1 16.4 16 ; T M4 4.8A10 10 0 0 0 4 19.2 M20 4.8A10 10 0 0 1 20 19.2"),
             // Brace
@@ -80,6 +82,8 @@ final class EnemyTermPictograms {
             Map.entry("ability.gust", "S M2.6 7.4H13.4A2.8 2.8 0 1 0 10.6 4.6 M2.6 12H17.8 M2.6 16.6H12.2A2.8 2.8 0 1 1 9.4 19.4 ; F M18.4 8.4L22.4 12L18.4 15.6Z"),
             // Bond
             Map.entry("ability.bond", "S O8.2 12 5.6 ; S O15.8 12 5.6 ; F M10.6 12A1.4 1.4 0 1 0 13.4 12A1.4 1.4 0 1 0 10.6 12Z"),
+            // Rewind
+            Map.entry("ability.rewind", "S M19.6 12A7.6 7.6 0 1 1 15.2 5.2 ; F M13.6 2.2L19.8 4.6L15 8.8Z ; T M12 8V12.6L14.8 14.4"),
             // Last Ward
             Map.entry("ability.last_ward", "F M5.8 20.6V10C5.8 6.4 8.6 3.4 12 3.4C15.4 3.4 18.2 6.4 18.2 10V20.6Z ; K M12 6.4L16 8V11.4C16 14 14.4 15.8 12 16.8C9.6 15.8 8 14 8 11.4V8Z ; T M2.6 21.4H21.4"),
             // Healing Pool

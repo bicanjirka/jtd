@@ -2,6 +2,7 @@ package td.enemy;
 
 import td.damage.DamageMix;
 import td.damage.DamageUnits;
+import td.effect.EffectKind;
 import td.stat.BaseStats;
 import td.stat.DisruptionAura;
 import td.stat.EnemyStat;
@@ -102,6 +103,10 @@ public record EnemyDefinition(
             case SpawnEnemiesAction ignored -> Optional.empty();
             case LeaveZoneAction ignored -> Optional.empty();
             case ShoveAlliesAction ignored -> Optional.empty();
+            case RewindAction rewind -> switch (rewind.target()) {
+                case RadiusTarget radiusTarget -> Optional.of(new SupportAura(EffectKind.HEAL, radiusTarget.radius()));
+                case SelfTarget ignored -> Optional.empty();
+            };
         };
     }
 

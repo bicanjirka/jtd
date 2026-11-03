@@ -49,8 +49,8 @@ public enum EnemyStat implements StatKey, StatTerm {
     /** What the enemy's regeneration restores and its shields hold is scaled by {@code StatCurves.restoreFactor}. */
     SPIRIT(0f, -100f, Float.MAX_VALUE, "Spirit", "Spirit", StatUnit.POINTS, StatDirection.LOWER, StatGroup.HEALING,
             "makes its regeneration and shields stronger; below zero weaker, and at -100 worth nothing"),
-    REGENERATION(0f, 0f, Float.MAX_VALUE, "Regeneration", "Regeneration", StatUnit.HP_PER_SECOND, StatDirection.LOWER,
-            StatGroup.HEALING, "health it gains back every second"),
+    REGENERATION(0f, -Float.MAX_VALUE, Float.MAX_VALUE, "Regeneration", "Regeneration", StatUnit.HP_PER_SECOND,
+            StatDirection.LOWER, StatGroup.HEALING, "health it gains back every second; below zero, health it loses"),
     CHILL_RESIST(0f, 0f, 1f, "Chill resist", "Chill resist", StatUnit.PERCENT, StatDirection.LOWER, StatGroup.RESISTS,
             "cuts how long that effect lasts on it; at full it never takes hold"),
     BURN_RESIST(0f, 0f, 1f, "Burn resist", "Burn resist", StatUnit.PERCENT, StatDirection.LOWER, StatGroup.RESISTS,

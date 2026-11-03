@@ -13,6 +13,7 @@ import td.enemy.EnemyMob;
 import td.enemy.LeaveZoneAction;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
+import td.enemy.RewindAction;
 import td.enemy.ShoveAlliesAction;
 import td.enemy.SpawnEnemiesAction;
 import td.level.LevelDefinition;
@@ -315,6 +316,7 @@ public final class TowerLab {
                         case SpawnEnemiesAction spawn -> false;
                         case LeaveZoneAction zone -> false;
                         case ShoveAlliesAction shove -> false;
+                        case RewindAction rewind -> false;
                     });
         }).toList();
     }
@@ -646,6 +648,8 @@ public final class TowerLab {
                     }
                     case ShoveAlliesAction shove -> {
                     }
+                    case RewindAction rewind -> {
+                    }
                 }
             }
         }
@@ -804,6 +808,8 @@ public final class TowerLab {
                         case LeaveZoneAction ignored -> {
                         }
                         case ShoveAlliesAction ignored -> {
+                        }
+                        case RewindAction ignored -> {
                         }
                     }
                 }

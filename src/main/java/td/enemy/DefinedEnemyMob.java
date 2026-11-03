@@ -143,6 +143,10 @@ public final class DefinedEnemyMob implements EnemyMob {
             case RAINCLOUD -> scale / 4.5f;
             case RAINDROP -> scale / 9f;
             case GALE -> scale / (float) (6 - rank.ordinal());
+            case KEEPER -> scale / 1.9f;
+            case TIMEKEEPER -> scale / (float) (6.5f - rank.ordinal());
+            case SANDLING -> scale / 8f;
+            case GLASS_SENTINEL -> scale / 4.5f;
             case MENDER, SHIELDBEARER -> scale / (float) (7 - rank.ordinal());
         };
     }
@@ -334,6 +338,30 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** Moves it {@code pixels} further along its path at once, stopping short of the end: a shove, not a walk. */
     void shoveAlong(double pixels) {
         this.motion.shove(pixels);
+    }
+
+    /**
+     * Turns health back to what it was {@code windowTicks} ago, if that was more: a heal, so what keeps heals out keeps
+     * it out, and under Inversion what it would give back is dealt to it as magic instead.
+     */
+    void rewind(int windowTicks) {
+        int before = this.health.current();
+        int gain = this.health.ticksAgo(windowTicks) - before;
+        if (gain <= 0 || this.isDead() || this.activeEffects.keptOutBy(EffectKind.HEAL).isPresent()) {
+            return;
+        }
+        Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
+        if (inversion.isPresent()) {
+            this.observer.dealing(EffectKind.INVERSION);
+            inversion.get().sink().apply(Damage.magic(gain));
+            this.observer.dealt();
+            return;
+        }
+        this.health.heal(gain);
+        this.stats.invalidate();
+        if (this.observer.isOn()) {
+            this.observer.report(new MobEvent.HealthChanged("rewind", before, this.health.current()));
+        }
     }
 
     /** Passed on by an ability spawn so the new mob stays on its parent's path. */
@@ -885,6 +913,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.trackBoardPresence();
         this.countAlliesNearby();
         this.countLiveTick();
+        if (this.ticksSinceSpawn % MobHealth.SAMPLE_TICKS == 0) {
+            this.health.record();
+        }
         this.turn();
         if (!this.isSilenced()) {
             this.evaluateAbilities(gameTime);
@@ -898,6 +929,10 @@ public final class DefinedEnemyMob implements EnemyMob {
      * @return whether health changed
      */
     private boolean regenerate() {
+        float perTick = this.stats.value(EnemyStat.REGENERATION);
+        if (perTick < 0f) {
+            return this.crumble(perTick);
+        }
         int units = this.health.regenerationDue(this.restoredPerTick());
         if (units <= 0) {
             return false;
@@ -916,6 +951,26 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.observer.report(new MobEvent.HealthChanged("regen", healthBefore, this.health.current()));
         }
         return changed;
+    }
+
+    /**
+     * Regeneration below zero: health lost with no hit behind it, spirit or no spirit. A crumble that takes the last of
+     * it is a kill like any other.
+     */
+    private boolean crumble(float perTick) {
+        int units = -this.health.regenerationDue(perTick);
+        if (units <= 0) {
+            return false;
+        }
+        int before = this.health.current();
+        this.health.decay(units);
+        if (this.observer.isOn()) {
+            this.observer.report(new MobEvent.HealthChanged("crumble", before, this.health.current()));
+        }
+        if (this.health.depleted()) {
+            this.kill();
+        }
+        return true;
     }
 
     /** What a tick of regeneration restores: the stat, worth what spirit makes it. */

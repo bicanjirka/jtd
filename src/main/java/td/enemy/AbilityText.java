@@ -67,6 +67,12 @@ final class AbilityText {
                         .plus(effect(apply.template()));
             };
             case LeaveZoneAction zone -> zoneText(zone);
+            case RewindAction rewind -> TermText.of(switch (rewind.target()) {
+                case SelfTarget _ -> "turns its health back to what it was " + seconds(rewind.windowTicks()) + " before";
+                case RadiusTarget radius -> "turns the health of every other enemy within "
+                        + TermNumbers.number(radius.radius() / words.cellSize()) + " cells back to what it was "
+                        + seconds(rewind.windowTicks()) + " before";
+            }).plus(", as a ").plus(EffectKind.HEAL);
             case ShoveAlliesAction shove -> TermText.of("shoves every other enemy within "
                     + TermNumbers.cells(shove.radiusCells()) + " " + TermNumbers.cells(shove.distanceCells())
                     + " further along its path");

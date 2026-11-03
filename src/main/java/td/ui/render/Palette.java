@@ -34,6 +34,10 @@ public enum Palette {
     ENEMY_TALOS,
     ENEMY_MINOTAUR,
     ENEMY_BRONZE_BULL,
+    ENEMY_GLASS_SENTINEL,
+    ENEMY_SANDLING,
+    ENEMY_TIMEKEEPER,
+    ENEMY_KEEPER,
     ENEMY_GALE,
     ENEMY_RAINDROP,
     ENEMY_RAINCLOUD,
@@ -221,6 +225,7 @@ public enum Palette {
     TRAIT_MARKER_FREEZE_IMMUNE,
     TRAIT_MARKER_EFFECT_RESIST,
     TRAIT_MARKER_HIVEMIND,
+    TRAIT_MARKER_CRUMBLE,
     TRAIT_MARKER_OVERFLOW,
     /** An enemy's disruption ring and the marker on a tower it weakens. */
     DISRUPTION,

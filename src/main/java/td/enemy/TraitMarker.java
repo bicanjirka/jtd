@@ -13,5 +13,6 @@ public enum TraitMarker {
     BURN_IMMUNE,
     FREEZE_IMMUNE,
     EFFECT_RESIST,
-    HIVEMIND
+    HIVEMIND,
+    CRUMBLE
 }

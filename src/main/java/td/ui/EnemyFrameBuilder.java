@@ -176,6 +176,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case FREEZE_IMMUNE -> Palette.TRAIT_MARKER_FREEZE_IMMUNE;
             case EFFECT_RESIST -> Palette.TRAIT_MARKER_EFFECT_RESIST;
             case HIVEMIND -> Palette.TRAIT_MARKER_HIVEMIND;
+            case CRUMBLE -> Palette.TRAIT_MARKER_CRUMBLE;
         };
     }
 
@@ -210,6 +211,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case TALOS -> Palette.ENEMY_TALOS;
             case MINOTAUR -> Palette.ENEMY_MINOTAUR;
             case BRONZE_BULL -> Palette.ENEMY_BRONZE_BULL;
+            case GLASS_SENTINEL -> Palette.ENEMY_GLASS_SENTINEL;
+            case SANDLING -> Palette.ENEMY_SANDLING;
+            case TIMEKEEPER -> Palette.ENEMY_TIMEKEEPER;
+            case KEEPER -> Palette.ENEMY_KEEPER;
             case GALE -> Palette.ENEMY_GALE;
             case RAINDROP -> Palette.ENEMY_RAINDROP;
             case RAINCLOUD -> Palette.ENEMY_RAINCLOUD;
