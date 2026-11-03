@@ -64,7 +64,9 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Turns a {@link RenderFrame} into {@code Graphics2D} calls: the only class that does, and the only
@@ -77,6 +79,9 @@ import java.util.Optional;
 public final class Java2DFrameRenderer {
 
     private static final Color CELL_OK = Color.GRAY;
+    // A body's shape depends only on its palette and size, and some are constructive-area operations far too
+    // slow to repeat for every tower on every paint. Sizes follow the cell size, so the map stays small.
+    private static final Map<TowerBodyKey, Shape> TOWER_BODIES = new ConcurrentHashMap<>();
     private static final Color CELL_NOK = Color.RED;
     /** A free cell the credits can't build the tower on yet: amber, apart from the red of a cell nothing builds on. */
     private static final Color CELL_SHORT = new Color(255, 170, 60);
@@ -707,6 +712,14 @@ public final class Java2DFrameRenderer {
      * same way at any size.
      */
     private static Shape towerBodyShape(Palette palette, float size) {
+        return TOWER_BODIES.computeIfAbsent(new TowerBodyKey(palette, size),
+                key -> builtTowerBodyShape(key.palette(), key.size()));
+    }
+
+    private record TowerBodyKey(Palette palette, float size) {
+    }
+
+    private static Shape builtTowerBodyShape(Palette palette, float size) {
         return switch (palette) {
             case TOWER_SNIPER_BODY -> triangleShape(size, true);
             case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY, TOWER_HEXER_BODY -> ringShape(size, 0.55f);
