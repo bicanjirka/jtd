@@ -31,6 +31,7 @@ import java.util.Set;
  * towers that leave ground zones, each with the upgrades that make the most of them; {@code observe=one}
  * keeps one enemy observed and {@code observe=all} every enemy, each writing its trace to the log as the
  * dev panel's Observe does. Only unobserved play must keep the budget: an observed run shows what a trace costs.
+ * {@code --jfr} records the measured passes with Flight Recorder and prints where the time and allocations go.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class PerformanceHarness {
@@ -56,6 +57,7 @@ public final class PerformanceHarness {
     private int measured = 0;
     private final boolean zonesOnly;
     private final Observed observed;
+    private final boolean profiled;
     private int peakEnemies = 0;
     private int peakZones = 0;
     private int towerCount = 0;
@@ -66,9 +68,10 @@ public final class PerformanceHarness {
     private static final Set<String> ZONE_UPGRADES = Set.of("mortar.extra.ballistics.4", "mortar.special.napalm",
             "cinder.head.wide_nozzle.3");
 
-    private PerformanceHarness(boolean zonesOnly, Observed observed) {
+    private PerformanceHarness(boolean zonesOnly, Observed observed, boolean profiled) {
         this.zonesOnly = zonesOnly;
         this.observed = observed;
+        this.profiled = profiled;
     }
 
     public static void main(String[] args) {
@@ -81,15 +84,19 @@ public final class PerformanceHarness {
         }
         LevelDefinition level = new BuiltInLevelCatalog().levels().stream()
                 .max(Comparator.comparingInt(candidate -> BoardSurvey.of(candidate).buildable().size())).orElseThrow();
-        if (!new PerformanceHarness(given.contains("zones"), observed).run(level)) {
+        if (!new PerformanceHarness(given.contains("zones"), observed, given.contains("--jfr")).run(level)) {
             System.exit(1);
         }
     }
 
     /** Plays the passes, prints the report and returns whether every p99 is within budget. */
     public boolean run(LevelDefinition level) {
-        for (int pass = 0; pass < WARM_UP_PASSES + MEASURED_PASSES; pass++) {
-            this.playPass(level, pass >= WARM_UP_PASSES);
+        for (int pass = 0; pass < WARM_UP_PASSES; pass++) {
+            this.playPass(level, false);
+        }
+        Optional<ProfileRecording> recording = this.profiled ? Optional.of(ProfileRecording.started()) : Optional.empty();
+        for (int pass = 0; pass < MEASURED_PASSES; pass++) {
+            this.playPass(level, true);
         }
 
         System.out.println("=== Performance report: " + level.name() + " ===");
@@ -106,6 +113,7 @@ public final class PerformanceHarness {
         System.out.printf("%-13s p50 %6d KB  p99 %6d KB  max %6d KB  budget p99 %d KB %s%n", "Frame alloc",
                 percentile(bytes, 0.50) / BYTES_PER_KB, allocP99Kb, bytes[bytes.length - 1] / BYTES_PER_KB,
                 FRAME_ALLOC_P99_BUDGET_KB, verdict(allocOk));
+        recording.ifPresent(ProfileRecording::stopAndReport);
         return tickOk && frameOk && allocOk;
     }
 
