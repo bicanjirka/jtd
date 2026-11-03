@@ -42,4 +42,7 @@ public interface AbilityContext {
 
     /** Shoves the allies near this mob along their paths, as {@code shove} describes. */
     void shoveAllies(ShoveAlliesAction shove);
+
+    /** Turns health back on this mob or the allies near it, as {@code rewind} describes. */
+    void rewind(RewindAction rewind);
 }

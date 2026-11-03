@@ -20,6 +20,7 @@ public enum AbilityTerm implements Term {
     WARD("Ward", "shields the allies near it from time to time"),
     MEND("Mend", "heals the allies near it"),
     RECOVER("Recover", "heals itself when it is left alone"),
+    REWIND("Rewind", "turns health back to what it was a few seconds before"),
     LAST_RITES("Last Rites", "heals the allies near it as it dies"),
     SHED_SKIN("Shed Skin", "sheds its skin to heal once badly hurt"),
     HUNKER("Hunker", "hunkers down to heal once badly hurt"),

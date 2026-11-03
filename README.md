@@ -183,7 +183,7 @@ An enemy is made of four kinds of thing, and each belongs to exactly one:
   keeps `100 / (100 + armor)` of itself), Plating and Insulation (dmg every physical or magic hit loses; Flat
   penetration ignores them), Resilience (against crits; 100 is crit-immune, below zero crits land harder), Agility
   (aimed shots miss), Physical, Magic and Damage over time taken (%), Spirit (what its regeneration restores and its shields hold),
-  Regeneration (hp/s) and the Chill, Burn and Freeze resists (%).
+  Regeneration (hp/s; below zero it crumbles, losing health on its own) and the Chill, Burn and Freeze resists (%).
   The info pane lists the ones off their default, each with its unit and, where the number alone says little, what
   it does (`Armor 30 -23% dmg`); hovering a row explains it and, live, what made it. Nothing is drawn on the board
   for them. Under a selected enemy's health bar a strip shows what its shields hold, tinted where a shield takes only
@@ -218,7 +218,11 @@ on the Wardens, whose shield answers crits.
 | Skirmisher | diamond       | Nimble: 40 agility, rising to 80 with rank, so it dodges some aimed shots; +20 resilience. From Soldier it sprints off for 1.5 s after every dodge; from Elite it gets harder to hit the more it is hurt; at Boss rank it also vanishes for a moment after every dodge. |
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
 | The Warden | large spiked crest with a gold gem | A boss: armor and magic resist, and plating, all lower with each hatching; periodically calls three Elite Drones, hardens for every ally near it (Hivemind), shields itself and nearby allies, and shields itself again whenever it survives a critical hit, so its escort has to be cleared before it can be worn down. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. If any stage escapes, the level is lost, however many lives are left. The final round of The Amber Hive — a level-authored enemy. |
-| Reaver     | barbed arrowhead, path-facing | Speeds up as it's hurt, shrugs off a flat point of every hit, crit immune from Elite, shields itself once badly wounded, and splits into two Simple mobs on death. Appears in Twisted Hourglass's first wave — a level-authored enemy, registered only for that level rather than globally (see `td.level.LevelDefinition.customEnemies`). |
+| Sandling   | small grain of sand, path-facing | Quick (1.5 cells/s) and a little nimble, and it crumbles: it loses health on its own (negative regeneration), faster with rank, so it lasts about as long as it takes to cross the board. Slow it and it never arrives; a heal it is given holds it together. Appears on The Last Hour — a level-authored enemy, like the Drone. |
+| Timekeeper | brass clock face, spinning | Every seven seconds it turns the health of every other enemy within about 3 cells back to what it was two or three seconds before (Rewind), further with rank. A rewind is a heal: Dead Zone and Fallout keep it out, Inversion turns it into damage, and a freeze, a daze or a silence stops the cast. Appears on The Last Hour. |
+| Glass Sentinel | glass crystal | Slow, with 8 plating and 8 insulation that blunt every small hit of either type (up to 22 at Boss) and -60 resilience, so crits shatter it: it asks for big hits, crits, Cracked or flat penetration. Appears on The Last Hour. |
+| Sand Reaver | sand-coloured barbed arrowhead, path-facing | Speeds up as it's hurt, shrugs off a flat point of every hit, crit immune from Elite, shields itself once badly wounded, and falls apart into two Sandlings on death. Appears on The Last Hour. |
+| The Keeper of Hours | glass hourglass with falling sand, swaying | A boss: every six seconds it turns its health back to what it was three seconds before (Rewind), every ten it calls a Veteran Timekeeper that turns it back further, once below half it calls six Sandlings, and once nearly dead it turns the glass one last time, eight seconds back. Time runs slow around it: it jams the towers near it. Stop it casting (freeze, Daze, Silence), keep heals out (Dead Zone, Fallout), Invert it, or outpace it. If it escapes, the level is lost. The last round of The Last Hour. |
 | Drone      | striped bee, buzzing | A Simple mob with Hivemind: +4 armor and magic resist for every other enemy within 1.5 cells, up to five, so a pack is far tougher than its members alone; area damage breaks it up. On the Simple's ladder. Appears on The Amber Hive — a level-authored enemy, like the Reaver. |
 | Hive Guard | amber beetle, striding | A Simple mob with three times the health at half the speed, a point of plating and a stronger Hivemind (+9 a neighbour, up to four). On the Simple's ladder. Appears on The Amber Hive. |
 | Brood Nurse | cream honeycomb cell with an amber cross | A Mender in the hive's colours, on the Mender's ladder; from Veteran it also wards every other ally near it with a shield that stops any damage. Appears on The Amber Hive. |
@@ -431,6 +435,7 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 | `warden`  | the Warden boss chain (The Amber Hive only)              |
 | `drone`, `hiveguard`, `nurse`, `larva`, `cocoon`, `hornet` | The Amber Hive's own enemies (The Amber Hive only) |
 | `cloud`, `drop`, `gale`, `thunder`, `lightning` | The Storm Ridge's own enemies (The Storm Ridge only) |
+| `sandling`, `timekeeper`, `sentinel`, `reaver`, `keeper` | The Last Hour's own enemies (The Last Hour only) |
 | `colossus` | the Iron Colossus boss (Iron Crossing only)             |
 | `mirage`, `herald`, `eclipse`, `monolith` | The Rift's own enemies (The Rift only) |
 | `bull`, `talos`, `minotaur` | The Labyrinth's own enemies (The Labyrinth only) |
@@ -446,7 +451,7 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 
 ### Levels
 
-Six levels ship with the game: **The Amber Hive** (a 20×13 comb whose single honey
+Six levels ship with the game, each on a ground of its own: **The Amber Hive** (a 20×13 comb whose single honey
 lane loops once at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge, 16 waves: a
 brood that is only strong together - Drones and Hive Guards harden for every ally beside them, so area damage that
 breaks a pack up comes first; Larvae spin Cocoons that hatch into Hornets if they are let walk; Brood Nurses heal and
@@ -454,9 +459,12 @@ ward - and the Warden at the end, who calls Drones to its side), **The Storm Rid
 16×11 board in the rain where a long blue road hooks back on itself and a short yellow lane cuts across it twice, 12
 waves per lane, 4 lives: Gales shove whatever walks beside them further along, Rainclouds burst into Raindrops, and
 at the end the storm's twins, the Thunder down the road and the Lightning down the lane, who have to fall close
-together) and **Twisted Hourglass** (a tight, 9×15 portrait board where three
-Bezier lanes - crimson, teal and amber - twist through a pinched waist so the layout reads as an
-hourglass, teal and amber crossing at its middle, 10 waves per lane) and **Iron Crossing** (an 18×13
+together) and **The Last Hour** (a tight, 9×15 portrait board over
+wind-rippled sand where three Bezier lanes - dusk, glass and sand - twist through a pinched waist so the layout reads
+as an hourglass, glass and sand crossing at its middle, 12 waves per lane: Sandlings crumble on their own, so what
+holds them back is worth more than what hits them; Timekeepers turn their allies' health back; Glass Sentinels
+shrug off small hits and shatter under crits; and at the end the Keeper of Hours, who turns back what was done to it
+unless it is stopped from casting, kept from healing or Inverted) and **Iron Crossing** (an 18×13
 board, the hardest: a long steel lane winds Golems, Juggernauts, Magma and their support back and forth
 while a short rush lane of Couriers, Skirmishers, Ghosts and Mite swarms knifes straight through it
 three times, 15 waves per lane, 3 lives, and the Iron Colossus at the end: break its shell with magic, then catch the
@@ -469,7 +477,7 @@ and pace; every built-in level but The Amber Hive and The Labyrinth does. A lane
 slower than the others (`PathDefinition.withSpeed`) and send nothing in a round (a wave of just `e`). A level's
 paths all run the same number of waves as synchronized rounds - starting a round spawns every
 path's wave for it together. A level can also register its own enemy on top of the ones above,
-scoped to that level only; Twisted Hourglass's Reaver and The Amber Hive's Drone, Hive Guard, Brood Nurse, Larva, Cocoon, Hornet
+scoped to that level only; The Last Hour's Sandling, Timekeeper, Glass Sentinel, Sand Reaver and Keeper and The Amber Hive's Drone, Hive Guard, Brood Nurse, Larva, Cocoon, Hornet
 and Warden chain and The Storm Ridge's Raincloud, Raindrop, Gale and twins and Iron Crossing's Colossus, Molten Core and Embers and The Rift's Mirage, Herald, Eclipse and Monolith and The Labyrinth's Bronze Bull, Talos and Minotaur (see the Enemies table)
 are the built-in ones.
 

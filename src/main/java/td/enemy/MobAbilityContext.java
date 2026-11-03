@@ -171,6 +171,39 @@ final class MobAbilityContext implements AbilityContext {
         }
     }
 
+    @Override
+    public void rewind(RewindAction rewind) {
+        float radius = switch (rewind.target()) {
+            case SelfTarget ignored -> {
+                this.caster.rewind(rewind.windowTicks());
+                yield 0f;
+            }
+            case RadiusTarget radiusTarget -> {
+                this.rewindOthersWithin(rewind.windowTicks(), radiusTarget.radius());
+                yield radiusTarget.radius();
+            }
+        };
+        // Drawn as a heal, which is what a rewind gives back.
+        this.caster.recordAbilityCast(EffectKind.HEAL, radius, this.gameTime);
+    }
+
+    private void rewindOthersWithin(int windowTicks, float radius) {
+        float radius2 = radius * radius;
+        for (EnemyMob other : this.world.enemies().getEnemies()) {
+            if (other == this.caster || !other.validTarget()) {
+                continue;
+            }
+            double dx = other.getX() - this.caster.getX();
+            double dy = other.getY() - this.caster.getY();
+            if (dx * dx + dy * dy <= radius2) {
+                other.accept(mob -> {
+                    mob.rewind(windowTicks);
+                    return null;
+                });
+            }
+        }
+    }
+
     /** Ability effects deal no direct damage, so this sink is never invoked. */
     private static void creditNoOne(Damage damage) {
     }

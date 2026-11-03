@@ -129,6 +129,7 @@ public final class TermLooks {
             case ADAPTATION -> Palette.TRAIT_MARKER_PERCENT_RESIST;
             case JAM -> Palette.DISRUPTION;
             case HIVEMIND -> Palette.TRAIT_MARKER_HIVEMIND;
+            case CRUMBLE -> Palette.TRAIT_MARKER_CRUMBLE;
         }, Palette.TERM_FRAME_TRAIT);
     }
 
@@ -136,7 +137,7 @@ public final class TermLooks {
         return new TermLook(switch (term) {
             case BRONZE_SHELL, BRACE, SHIELD_WALL, GUARD, AEGIS, HARDEN, PANIC, STONE_SKIN, WARD, LAST_WARD, WARD_MINE -> Palette.STATUS_MARKER_SHIELD;
             case CAPACITOR, BULWARK, ARCANE_WARD -> Palette.STATUS_MARKER_CHARGED;
-            case MEND, RECOVER, LAST_RITES, SHED_SKIN, HUNKER, HEALING_POOL, BLOODLUST -> Palette.STATUS_MARKER_HEAL;
+            case MEND, RECOVER, REWIND, LAST_RITES, SHED_SKIN, HUNKER, HEALING_POOL, BLOODLUST -> Palette.STATUS_MARKER_HEAL;
             case BOLT, SIDESTEP, SECOND_WIND, HASTE_FIELD, CHARGE, GUST -> Palette.STATUS_MARKER_SPRINTING;
             case BLINDING_BURST, THUNDERCLAP -> Palette.DISRUPTION;
             case SPELL_WARD -> Palette.STATUS_MARKER_SPELLPROOF;

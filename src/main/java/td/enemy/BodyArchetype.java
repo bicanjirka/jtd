@@ -45,5 +45,9 @@ public enum BodyArchetype {
     LIGHTNING,
     RAINCLOUD,
     RAINDROP,
-    GALE
+    GALE,
+    KEEPER,
+    TIMEKEEPER,
+    SANDLING,
+    GLASS_SENTINEL
 }

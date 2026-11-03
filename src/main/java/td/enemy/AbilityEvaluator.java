@@ -29,6 +29,7 @@ public final class AbilityEvaluator {
             case SpawnEnemiesAction a -> context.spawnEnemies(a);
             case LeaveZoneAction a -> context.leaveZone(a);
             case ShoveAlliesAction a -> context.shoveAllies(a);
+            case RewindAction a -> context.rewind(a);
         }
     }
 

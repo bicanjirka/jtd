@@ -13,6 +13,7 @@ final class FakeAbilityContext implements AbilityContext {
     final List<SpawnCall> spawnCalls = new ArrayList<>();
     final List<LeaveZoneAction> zoneCalls = new ArrayList<>();
     final List<ShoveAlliesAction> shoveCalls = new ArrayList<>();
+    final List<RewindAction> rewindCalls = new ArrayList<>();
     private final Set<String> kinAlive = new HashSet<>();
     private float healthFraction = 1f;
     private int ticksSinceLastHit = Integer.MAX_VALUE / 2;
@@ -101,6 +102,11 @@ final class FakeAbilityContext implements AbilityContext {
     @Override
     public void shoveAllies(ShoveAlliesAction shove) {
         this.shoveCalls.add(shove);
+    }
+
+    @Override
+    public void rewind(RewindAction rewind) {
+        this.rewindCalls.add(rewind);
     }
 
     @Override

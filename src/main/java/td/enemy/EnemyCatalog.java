@@ -164,6 +164,8 @@ public final class EnemyCatalog {
             }
             case ShoveAlliesAction ignored -> {
             }
+            case RewindAction ignored -> {
+            }
         }
     }
 }

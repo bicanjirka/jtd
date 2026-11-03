@@ -118,6 +118,7 @@ class BuiltInEnemiesTest {
             case ApplyEffectAction ignored -> Optional.empty();
             case LeaveZoneAction ignored -> Optional.empty();
             case ShoveAlliesAction ignored -> Optional.empty();
+            case RewindAction ignored -> Optional.empty();
         };
     }
 
