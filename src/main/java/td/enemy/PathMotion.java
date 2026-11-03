@@ -133,6 +133,19 @@ final class PathMotion {
     }
 
     /**
+     * Moves {@code distance} along the path at once, held just short of its end so a shove never makes a leak; the
+     * stretch it skips counts as walked.
+     */
+    void shove(double distance) {
+        if (this.arcLengthPath.isEmpty()) {
+            return;
+        }
+        double end = this.arcLengthPath.get().totalLength();
+        this.distanceIntoLap = Math.min(this.distanceIntoLap + distance, Math.max(this.distanceIntoLap, end - 1));
+        this.updatePosition();
+    }
+
+    /**
      * Moves {@code distance} along the path.
      *
      * @return true if that reaches the path's end; the position then stays where it was

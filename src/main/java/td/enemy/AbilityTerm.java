@@ -39,6 +39,8 @@ public enum AbilityTerm implements Term {
     PUPATE("Pupate", "spins itself a cocoon after a while, unless it is killed first"),
     BRONZE_SHELL("Bronze Shell", "wears a huge shield that holds until broken, and recasts it again and again"),
     CHARGE("Charge", "charges ahead from time to time"),
+    GUST("Gust", "shoves the allies near it further along the path from time to time"),
+    BOND("Bond", "calls its fallen twin back, reborn and stronger, unless both fall close together"),
     BLOODLUST("Bloodlust", "heals and breaks into a run once badly hurt"),
     MIRROR_IMAGE("Mirror Image", "leaves a copy of itself behind each time it dodges"),
     REFORGE("Reforge", "melts down into a new body once badly hurt"),
@@ -47,6 +49,7 @@ public enum AbilityTerm implements Term {
     HASTE_FIELD("Haste Field", "leaves ground that speeds up the enemies who cross it, until the wave is over"),
     WARD_MINE("Ward Mine", "lays mines that shield the first enemy to step on them"),
     BLINDING_BURST("Blinding Burst", "blinds the towers near it as it dies, until the wave is over"),
+    THUNDERCLAP("Thunderclap", "blinds the towers near it once badly hurt, until the wave is over"),
     SPELL_WARD("Spell Ward", "gives the enemies near it magic resist once badly hurt"),
     LAST_STAND("Last Stand", "turns almost proof against magic and crits once nearly dead");
 

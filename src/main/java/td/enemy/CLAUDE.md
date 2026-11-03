@@ -76,6 +76,8 @@
   `GameWorld.enemies()` (`EnemySpawner.add`/`replace`); spawned mobs are built by
   `AbilitySpawnFactory`. Per-mob `AbilityState` (countdowns,
   fire-once flags) is built in the constructor, parallel to `definition.abilities()`.
+- A trigger that watches another enemy (`KinFallenTrigger`) asks its `AbilityContext` (`kinAlive`); a twin that
+  calls its fallen kin back spawns a reborn definition of its own, never the kin's, which would be a spawn cycle.
 - `ticksSinceLastHit` starts at `0`, so an idle trigger counts from spawn, not "forever".
   `DefinedEnemyMobAbilityTest` covers the ability timing end to end.
 - A mob that `isSilenced()` (frozen, Dazed or `SILENCED`) doesn't evaluate abilities on live

@@ -117,6 +117,7 @@ class BuiltInEnemiesTest {
             case SpawnEnemiesAction spawn -> Optional.of(spawn.definitionId());
             case ApplyEffectAction ignored -> Optional.empty();
             case LeaveZoneAction ignored -> Optional.empty();
+            case ShoveAlliesAction ignored -> Optional.empty();
         };
     }
 

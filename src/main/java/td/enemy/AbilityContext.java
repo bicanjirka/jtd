@@ -29,6 +29,9 @@ public interface AbilityContext {
     /** Like {@link #justTookCriticalHit()}, for any damage. */
     boolean justTookDamage();
 
+    /** Whether any enemy of {@code definitionId} is on the board and not dead, this mob aside. */
+    boolean kinAlive(String definitionId);
+
     void applyEffect(EffectTemplate template, EffectTarget target);
 
     /** Spawns what {@code spawn} names, optionally consuming this mob. */
@@ -36,4 +39,7 @@ public interface AbilityContext {
 
     /** Leaves the zone {@code zone} describes where this mob stands. */
     void leaveZone(LeaveZoneAction zone);
+
+    /** Shoves the allies near this mob along their paths, as {@code shove} describes. */
+    void shoveAllies(ShoveAlliesAction shove);
 }

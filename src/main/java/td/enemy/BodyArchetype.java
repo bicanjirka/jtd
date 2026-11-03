@@ -40,5 +40,10 @@ public enum BodyArchetype {
     NURSE,
     LARVA,
     COCOON,
-    HORNET
+    HORNET,
+    THUNDER,
+    LIGHTNING,
+    RAINCLOUD,
+    RAINDROP,
+    GALE
 }

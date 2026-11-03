@@ -284,4 +284,49 @@ class DefinedEnemyMobAbilityTest {
         return EnemyFixtures.liveMob(this.world,
                 casting("egg", new OnceTrigger(HATCH_TICK), new SpawnEnemiesAction(hatchlingId, 1, true)));
     }
+
+    @Test
+    void aKinFallenAbilityCastsOnceItsKinHasFallenAndStayedDown() {
+        this.world.getEnemyCatalog().register(EnemyFixtures.simpleDefinition("reborn"));
+        EnemyFixtures.liveMob(this.world, casting("twin", new KinFallenTrigger("kin", CAST_TICK),
+                new SpawnEnemiesAction("reborn", 1, false)));
+        DefinedEnemyMob kin = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("kin"));
+        EnemyFixtures.tickEnemies(this.world, 1, 2);
+
+        kin.doDamage(LETHAL);
+        EnemyFixtures.tickEnemies(this.world, 3, 3 + 2 * CAST_TICK);
+
+        assertThat(this.world.enemies().getEnemies())
+                .filteredOn(mob -> ((DefinedEnemyMob) mob).definition().id().equals("reborn")).hasSize(1);
+    }
+
+    @Test
+    void aShoveMovesTheAlliesWithinItsReachAlongTheirPathAndNoOneBeyond() {
+        float scale = this.world.getBoard().scale();
+        EnemyFixtures.liveMob(this.world, casting("gale", new PeriodicTrigger(CAST_TICK),
+                new ShoveAlliesAction(1f, 2f)).withBaseSpeed(0f));
+        DefinedEnemyMob near = EnemyFixtures.liveMob(this.world, ALLY.withBaseSpeed(0f));
+        DefinedEnemyMob far = EnemyFixtures.liveMob(this.world, ALLY.withBaseSpeed(0f));
+        far.jumpToDistance(10 * scale);
+
+        EnemyFixtures.tickEnemies(this.world, 1, CAST_TICK);
+
+        assertThat(near.getX()).isEqualTo(2 * scale);
+        assertThat(far.getX()).isEqualTo(10 * scale);
+    }
+
+    @Test
+    void aShoveNeverCarriesAnAllyPastTheEndOfItsPath() {
+        float scale = this.world.getBoard().scale();
+        DefinedEnemyMob gale = EnemyFixtures.liveMob(this.world, casting("gale", new PeriodicTrigger(CAST_TICK),
+                new ShoveAlliesAction(1f, 5f)).withBaseSpeed(0f));
+        DefinedEnemyMob ally = EnemyFixtures.liveMob(this.world, ALLY.withBaseSpeed(0f));
+        gale.jumpToDistance(1000 - scale);
+        ally.jumpToDistance(1000 - scale);
+
+        EnemyFixtures.tickEnemies(this.world, 1, CAST_TICK + 1);
+
+        assertThat(ally.isDead()).isFalse();
+        assertThat(ally.getX()).isLessThan(1000);
+    }
 }

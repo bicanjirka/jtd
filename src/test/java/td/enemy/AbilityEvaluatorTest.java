@@ -169,4 +169,38 @@ class AbilityEvaluatorTest {
         assertThat(context.spawnCalls)
                 .containsExactly(new FakeAbilityContext.SpawnCall("wardenEgg", AbilitySpawnShape.normal(), true));
     }
+
+    @Test
+    void aKinFallenTriggerWaitsToSeeItsKinThenFiresOnceItHasBeenDownLongEnough() {
+        AbilityTrigger trigger = new KinFallenTrigger("twin", 2);
+        AbilityState state = AbilityState.forTrigger(trigger);
+        FakeAbilityContext context = new FakeAbilityContext();
+
+        List<Boolean> beforeTheKinCame = fireSequence(trigger, state, context, 3);
+        context.setKinAlive("twin", true);
+        List<Boolean> whileItLives = fireSequence(trigger, state, context, 2);
+        context.setKinAlive("twin", false);
+        List<Boolean> afterItFell = fireSequence(trigger, state, context, 4);
+
+        assertThat(beforeTheKinCame).containsExactly(false, false, false);
+        assertThat(whileItLives).containsExactly(false, false);
+        assertThat(afterItFell).containsExactly(false, true, false, false);
+    }
+
+    @Test
+    void aKinThatComesBackBeforeTheCountEndsStartsItAgain() {
+        AbilityTrigger trigger = new KinFallenTrigger("twin", 3);
+        AbilityState state = AbilityState.forTrigger(trigger);
+        FakeAbilityContext context = new FakeAbilityContext();
+        context.setKinAlive("twin", true);
+        fireSequence(trigger, state, context, 1);
+        context.setKinAlive("twin", false);
+        fireSequence(trigger, state, context, 2);
+
+        context.setKinAlive("twin", true);
+        fireSequence(trigger, state, context, 1);
+        context.setKinAlive("twin", false);
+
+        assertThat(fireSequence(trigger, state, context, 3)).containsExactly(false, false, true);
+    }
 }

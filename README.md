@@ -225,6 +225,11 @@ on the Wardens, whose shield answers crits.
 | Larva      | pale grub, wriggling | A soft, slow Simple mob that spins itself into a Cocoon where it stands after nine seconds, unless it is killed first. On the Simple's ladder. Appears on The Amber Hive. |
 | Cocoon     | silk-wound ovoid | Stationary, armored and plated but soft to crits (-40 resilience); it hatches into a Hornet after six seconds unless it is broken open. Appears on The Amber Hive. |
 | Hornet     | orange hornet with black bands, path-facing | Quick (2 cells/s), nimble and faster as it is hurt, with -20 resilience; from Veteran it sprints after every dodge. What a Cocoon hatches into, and sent on its own in later rounds. Appears on The Amber Hive. |
+| Raincloud  | grey cloud with falling rain, pulsing | Slow, +15 magic resist; bursts into Raindrops when it dies, more with rank (3 to 8). From Elite it leaves rain behind it that heals the enemies who stand in it. Appears on The Storm Ridge — a level-authored enemy. |
+| Raindrop   | tiny blue drop, path-facing | Quick (2 cells/s) and a little nimble; what a Raincloud bursts into, and sent in swarms of its own. Appears on The Storm Ridge. |
+| Gale       | three-bladed whirlwind, spinning | Every four seconds it shoves every other enemy within 1.5 cells 1.2 cells further along its path (Gust), further and wider with rank, never past the end; 15 agility. Kill it first, or hold the whole lane. Appears on The Storm Ridge. |
+| The Thunder | wide storm cloud with a lightning bolt, rumbling | A boss, the slow half of the storm's twins: armor, plating and resilience that blunt physical hits, half freeze resist, and a rumble that jams the towers near it; once badly hurt it blinds the towers near it until the wave is over (Thunderclap). Bond: if the Lightning falls and the Thunder still stands six seconds later, it calls the Lightning back, reborn - quicker, harder to hit and worth no bounty. If any twin escapes, the level is lost. The last round of The Storm Ridge. |
+| The Lightning | white-hot lightning bolt, path-facing | A boss, the quick half of the twins: magic resist and insulation that blunt magic hits, agility, half chill resist, faster as it is hurt and a sprint after every dodge. Its Bond calls the Thunder back, reborn - louder and more heavily plated - if the Thunder falls first and stays down six seconds. Bring both down close together. |
 | The Iron Colossus | riveted octagon with a furnace slit, swaying | A boss in an iron shell: armor and heavy plating blunt physical hits, crit immune, half freeze resist. It lays ward mines that shield the escorts behind it and calls two Armored escorts from time to time. Once badly hurt it reforges into the Molten Core. If it or the Core escapes, the level is lost. The final wave of Iron Crossing — a level-authored enemy. |
 | The Molten Core | blazing star with a white-hot heart, pulsing | What the Colossus melts down into: no armor or plating but high magic resist and a casing that blunts magic hits, immune to burn and freeze, and faster the more it is hurt. It leaves pools behind it that heal the escorts who stand in them, and bursts into four Embers when it dies. |
 | Ember      | tiny flame | A quick, nimble, burn-immune shard of the Molten Core; each one that gets through costs a life. |
@@ -425,6 +430,7 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
 | `warden`  | the Warden boss chain (The Amber Hive only)              |
 | `drone`, `hiveguard`, `nurse`, `larva`, `cocoon`, `hornet` | The Amber Hive's own enemies (The Amber Hive only) |
+| `cloud`, `drop`, `gale`, `thunder`, `lightning` | The Storm Ridge's own enemies (The Storm Ridge only) |
 | `colossus` | the Iron Colossus boss (Iron Crossing only)             |
 | `mirage`, `herald`, `eclipse`, `monolith` | The Rift's own enemies (The Rift only) |
 | `bull`, `talos`, `minotaur` | The Labyrinth's own enemies (The Labyrinth only) |
@@ -444,9 +450,11 @@ Six levels ship with the game: **The Amber Hive** (a 20×13 comb whose single ho
 lane loops once at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge, 16 waves: a
 brood that is only strong together - Drones and Hive Guards harden for every ally beside them, so area damage that
 breaks a pack up comes first; Larvae spin Cocoons that hatch into Hornets if they are let walk; Brood Nurses heal and
-ward - and the Warden at the end, who calls Drones to its side), **Zigzag Path** (a smaller,
-16×11 board where a fuchsia lane hooks back on itself and a lime lane cuts across it twice, 8
-waves per lane, only 3 lives) and **Twisted Hourglass** (a tight, 9×15 portrait board where three
+ward - and the Warden at the end, who calls Drones to its side), **The Storm Ridge** (a smaller,
+16×11 board in the rain where a long blue road hooks back on itself and a short yellow lane cuts across it twice, 12
+waves per lane, 4 lives: Gales shove whatever walks beside them further along, Rainclouds burst into Raindrops, and
+at the end the storm's twins, the Thunder down the road and the Lightning down the lane, who have to fall close
+together) and **Twisted Hourglass** (a tight, 9×15 portrait board where three
 Bezier lanes - crimson, teal and amber - twist through a pinched waist so the layout reads as an
 hourglass, teal and amber crossing at its middle, 10 waves per lane) and **Iron Crossing** (an 18×13
 board, the hardest: a long steel lane winds Golems, Juggernauts, Magma and their support back and forth
@@ -462,7 +470,7 @@ slower than the others (`PathDefinition.withSpeed`) and send nothing in a round 
 paths all run the same number of waves as synchronized rounds - starting a round spawns every
 path's wave for it together. A level can also register its own enemy on top of the ones above,
 scoped to that level only; Twisted Hourglass's Reaver and The Amber Hive's Drone, Hive Guard, Brood Nurse, Larva, Cocoon, Hornet
-and Warden chain and Iron Crossing's Colossus, Molten Core and Embers and The Rift's Mirage, Herald, Eclipse and Monolith and The Labyrinth's Bronze Bull, Talos and Minotaur (see the Enemies table)
+and Warden chain and The Storm Ridge's Raincloud, Raindrop, Gale and twins and Iron Crossing's Colossus, Molten Core and Embers and The Rift's Mirage, Herald, Eclipse and Monolith and The Labyrinth's Bronze Bull, Talos and Minotaur (see the Enemies table)
 are the built-in ones.
 
 Levels are defined as Java constants in `td.level.BuiltInLevelCatalog`, so adding one today

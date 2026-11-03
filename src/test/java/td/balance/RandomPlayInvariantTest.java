@@ -7,6 +7,7 @@ import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.LeaveZoneAction;
 import td.enemy.Rank;
+import td.enemy.ShoveAlliesAction;
 import td.enemy.SpawnEnemiesAction;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
@@ -91,6 +92,8 @@ class RandomPlayInvariantTest {
                     case ApplyEffectAction ignored -> {
                     }
                     case LeaveZoneAction ignored -> {
+                    }
+                    case ShoveAlliesAction ignored -> {
                     }
                 }
             }

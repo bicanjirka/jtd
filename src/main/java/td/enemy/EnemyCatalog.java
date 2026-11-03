@@ -162,6 +162,8 @@ public final class EnemyCatalog {
             }
             case LeaveZoneAction ignored -> {
             }
+            case ShoveAlliesAction ignored -> {
+            }
         }
     }
 }
