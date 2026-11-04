@@ -18,13 +18,17 @@ import td.ui.render.EnemyDotLook;
 import td.ui.render.EnemyDotsDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyEggDraw;
+import td.ui.render.EnemyEmissionDraw;
+import td.ui.render.EnemyEmissionLook;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.EnemyIceDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.EnemyTintDraw;
+import td.ui.render.EnemyTintLook;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
-import td.ui.render.IceCrystalDraw;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
@@ -51,14 +55,27 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     static final int CLOAK_FADE_DURATION_TICKS = 8;
     static final int SHIELD_FLASH_DURATION_TICKS = 4;
     static final int SHIELD_POP_DURATION_TICKS = 7;
+    static final int ICE_SHARDS_DURATION_TICKS = 8;
+    /** How long plus signs keep rising after health is turned back at once. */
+    static final int REWIND_HEAL_DURATION_TICKS = 24;
+    /** The share of full health a second at which plus signs reach their most. */
+    private static final float MOST_HEALING_PER_SECOND = 0.06f;
+    private static final float DAZE_SWAY_RADIANS = 0.09f;
+    private static final float DAZE_SWAY_RATE = 5.5f;
     /**
      * A body reaching further than this share of its scale is treated as larger by what must wrap around it; up to
      * here a square's corners still fit an egg made for its scale.
      */
     private static final float HULL_REACH = 1.41f;
-    private static final float EGG_WIDTH_FRACTION = 1.5f;
-    private static final float EGG_HEIGHT_FRACTION = 1.72f;
+    /** What the egg adds to a body's radius across and up: a share of it, up to a limit so a boss's doesn't cover the lane. */
+    private static final float EGG_WIDTH_SHARE = 0.5f;
+    private static final float EGG_HEIGHT_SHARE = 0.72f;
+    private static final float EGG_MOST_WIDTH = 6f;
+    private static final float EGG_MOST_HEIGHT = 8.6f;
     private static final float EGG_MARGIN = 2.5f;
+    /** Ice grows with a body up to this radius, then more slowly for the same reason. */
+    private static final float ICE_FULL_GROWTH_RADIUS = 12f;
+    private static final float ICE_LATER_GROWTH = 0.72f;
     /** How far the egg's bottom sits from the centre, against its top. */
     private static final float EGG_BOTTOM_SHARE = 0.92f;
     /** How close the selection ring keeps to what it snaps around. */
@@ -68,8 +85,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** Enemies on one board can have nearby ids; the multiplier spreads their particle timing apart. */
     private static final float SEED_SPREAD = 3.7f;
     private static final int SEED_WRAP = 4096;
-    /** Ice overlay size relative to the body. */
-    private static final float FREEZE_CRYSTAL_SCALE_FRACTION = 1.35f;
     private static final float SUPPORT_AURA_RING_ALPHA = 0.25f;
     private static final float SELECTION_RING_SCALE_FRACTION = 1.6f;
     private static final float SELECTION_RING_ALPHA = 0.9f;
@@ -267,49 +282,113 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                 this.draws.add(new EnemyFadeDraw(look, (float) mob.getX(), (float) mob.getY(), facingRadians, scale, age, fadeProgress));
             }
         } else if (!mob.isInactive()) {
-            float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
-            float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
-            float cloakProgress = this.cloakProgress(mob);
-            this.draws.add(new EnemyBodyDraw(look, x, y, facingRadians, mob.getDrawScale(), cloakProgress));
-            Set<EffectKind> active = mob.activeEffectKinds();
-            float reach = scale * EnemyLooks.of(look).reach();
-            float seed = mob.id() % SEED_WRAP * SEED_SPREAD + 1f;
-            float hull = Math.max(scale, reach / HULL_REACH);
-            float eggX = hull * EGG_WIDTH_FRACTION + EGG_MARGIN;
-            float eggY = hull * EGG_HEIGHT_FRACTION + EGG_MARGIN;
-            float above = Math.min(reach, scale * RANK_BADGE_REACH_LIMIT);
-            float beneath = reach;
-            float ringRadius = scale * SELECTION_RING_SCALE_FRACTION;
-            if (active.contains(EffectKind.FREEZE)) {
-                this.overlayDraws.add(new IceCrystalDraw(Palette.FREEZE_CRYSTAL, x, y, scale * FREEZE_CRYSTAL_SCALE_FRACTION));
-            }
-            if (active.contains(EffectKind.SHIELD)) {
-                this.overlayDraws.add(new EnemyEggDraw(x, y, eggX, eggY, this.shieldFlash(mob), seed, this.animationSeconds,
-                        1f - cloakProgress));
-                above = Math.max(above, eggY);
-                beneath = Math.max(beneath, eggY * EGG_BOTTOM_SHARE);
-                ringRadius = Math.max(ringRadius, Math.max(eggX, eggY) + SELECTION_RING_MARGIN);
-            }
-            OptionalInt broken = mob.ticksSinceShieldBroken(this.gameTime);
-            if (within(broken, SHIELD_POP_DURATION_TICKS)) {
-                this.overlayDraws.add(new EnemyBurstDraw(EnemyBurstLook.SHIELD_POP, x, y, eggX, eggY,
-                        (float) broken.getAsInt() / SHIELD_POP_DURATION_TICKS, seed, 1f - cloakProgress));
-            }
-            this.critSpark(mob, x, y);
-            this.overlays(mob, x, y, ringRadius, supportAura);
-            this.pulses(mob, x, y, scale);
-            this.badge(mob, x, y - above - RANK_BADGE_GAP, cloakProgress);
-            this.runes(active, x, y - scale * RUNE_ROW_OFFSET_FRACTION);
-            this.missMark(mob, x + scale, y);
-            float below = y + beneath;
-            boolean dotted = this.dots(active, x, below + DOT_GAP, cloakProgress);
-            this.bars(mob, x, dotted ? below + DOT_GAP + DOT_TO_BAR_GAP : below + BAR_GAP, scale, cloakProgress);
+            this.liveBody(look, mob, scale, facingRadians, supportAura);
         }
         return null;
     }
 
+    /** Adds what is drawn on a live enemy, back to front; a later layer never hides what an earlier one reports. */
+    private void liveBody(EnemyLook look, DefinedEnemyMob mob, float scale, double facingRadians, Optional<SupportAura> supportAura) {
+        float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
+        float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
+        float visibility = 1f - this.cloakProgress(mob);
+        Set<EffectKind> active = mob.activeEffectKinds();
+        float reach = scale * EnemyLooks.of(look).reach();
+        float seed = mob.id() % SEED_WRAP * SEED_SPREAD + 1f;
+        float hull = Math.max(scale, reach / HULL_REACH);
+        float eggX = hull + Math.min(hull * EGG_WIDTH_SHARE, EGG_MOST_WIDTH) + EGG_MARGIN;
+        float eggY = hull + Math.min(hull * EGG_HEIGHT_SHARE, EGG_MOST_HEIGHT) + EGG_MARGIN;
+        float iceScale = hull <= ICE_FULL_GROWTH_RADIUS ? hull
+                : ICE_FULL_GROWTH_RADIUS + (hull - ICE_FULL_GROWTH_RADIUS) * ICE_LATER_GROWTH;
+        float above = Math.min(reach, scale * RANK_BADGE_REACH_LIMIT);
+        float beneath = reach;
+        float ringRadius = scale * SELECTION_RING_SCALE_FRACTION;
+        double facing = active.contains(EffectKind.DAZED)
+                ? facingRadians + Math.sin(this.animationSeconds * DAZE_SWAY_RATE + seed) * DAZE_SWAY_RADIANS
+                : facingRadians;
+        float drawScale = mob.getDrawScale();
+
+        if (active.contains(EffectKind.BLEEDING) && (mob.getX() != mob.getPrevX() || mob.getY() != mob.getPrevY())) {
+            this.draws.add(new EnemyEmissionDraw(EnemyEmissionLook.BLEED, x, y, hull, 1f, seed, this.animationSeconds, visibility));
+        }
+        this.draws.add(new EnemyBodyDraw(look, x, y, facing, drawScale, 1f - visibility));
+        if (active.contains(EffectKind.POISON)) {
+            this.overlayDraws.add(new EnemyTintDraw(look, x, y, facing, drawScale, EnemyTintLook.POISON, 1f, visibility));
+            this.emit(EnemyEmissionLook.POISON, x, y, hull, this.fullness(mob, EffectKind.POISON), seed, visibility);
+        }
+        if (active.contains(EffectKind.CHILL)) {
+            float level = this.fullness(mob, EffectKind.CHILL);
+            this.overlayDraws.add(new EnemyTintDraw(look, x, y, facing, drawScale, EnemyTintLook.CHILL, level, visibility));
+            this.emit(EnemyEmissionLook.CHILL, x, y, hull, level, seed, visibility);
+        }
+        int iceVariant = (int) Math.floorMod(mob.id(), EnemyEffects.iceVariants());
+        if (active.contains(EffectKind.FREEZE)) {
+            this.overlayDraws.add(new EnemyTintDraw(look, x, y, facing, drawScale, EnemyTintLook.FREEZE, 1f, visibility));
+            this.overlayDraws.add(new EnemyIceDraw(x, y, iceScale, iceVariant, seed, this.animationSeconds, visibility));
+            above = Math.max(above, EnemyEffects.iceAbove(iceVariant, iceScale));
+            beneath = Math.max(beneath, EnemyEffects.iceBeneath(iceVariant, iceScale));
+            ringRadius = Math.max(ringRadius, EnemyEffects.iceReach(iceVariant, iceScale) + SELECTION_RING_MARGIN);
+        }
+        // A burn strong enough to reveal an enemy keeps showing on one still cloaked: the rule gives it away, not the art.
+        float fireVisibility = mob.isHidden() ? visibility : 1f;
+        if (active.contains(EffectKind.BURN)) {
+            this.emit(EnemyEmissionLook.BURN, x, y, hull, this.fullness(mob, EffectKind.BURN), seed, fireVisibility);
+        }
+        if (active.contains(EffectKind.SOULFIRE)) {
+            this.emit(EnemyEmissionLook.SOULFIRE, x, y, hull, this.fullness(mob, EffectKind.SOULFIRE), seed, fireVisibility);
+        }
+        float healing = this.healingAmount(mob);
+        if (healing > 0f) {
+            this.emit(EnemyEmissionLook.HEAL, x, y, hull, healing, seed, visibility);
+        }
+        if (active.contains(EffectKind.DAZED)) {
+            this.emit(EnemyEmissionLook.DAZE, x, y, hull, 1f, seed, visibility);
+        }
+        if (active.contains(EffectKind.SHIELD)) {
+            this.overlayDraws.add(new EnemyEggDraw(x, y, eggX, eggY, this.shieldFlash(mob), seed, this.animationSeconds, visibility));
+            above = Math.max(above, eggY);
+            beneath = Math.max(beneath, eggY * EGG_BOTTOM_SHARE);
+            ringRadius = Math.max(ringRadius, Math.max(eggX, eggY) + SELECTION_RING_MARGIN);
+        }
+        OptionalInt broken = mob.ticksSinceShieldBroken(this.gameTime);
+        if (within(broken, SHIELD_POP_DURATION_TICKS)) {
+            this.overlayDraws.add(new EnemyBurstDraw(EnemyBurstLook.SHIELD_POP, x, y, eggX, eggY,
+                    (float) broken.getAsInt() / SHIELD_POP_DURATION_TICKS, seed, visibility));
+        }
+        OptionalInt thawed = mob.effectLostWithin(EffectKind.FREEZE, this.gameTime, ICE_SHARDS_DURATION_TICKS);
+        if (thawed.isPresent() && !active.contains(EffectKind.FREEZE)) {
+            this.overlayDraws.add(new EnemyBurstDraw(EnemyBurstLook.ICE_SHARDS, x, y, eggX, eggY,
+                    (float) thawed.getAsInt() / ICE_SHARDS_DURATION_TICKS, seed, visibility));
+        }
+        this.critSpark(mob, x, y);
+        this.overlays(mob, x, y, ringRadius, supportAura);
+        this.pulses(mob, x, y, scale);
+        this.badge(mob, x, y - above - RANK_BADGE_GAP, visibility);
+        this.runes(active, x, y - scale * RUNE_ROW_OFFSET_FRACTION);
+        this.missMark(mob, x + scale, y);
+        float below = y + beneath;
+        boolean dotted = this.dots(active, x, below + DOT_GAP, visibility);
+        this.bars(mob, x, dotted ? below + DOT_GAP + DOT_TO_BAR_GAP : below + BAR_GAP, scale, visibility);
+    }
+
+    private void emit(EnemyEmissionLook look, float x, float y, float hull, float amount, float seed, float alpha) {
+        this.overlayDraws.add(new EnemyEmissionDraw(look, x, y, hull, amount, seed, this.animationSeconds, alpha));
+    }
+
+    private float fullness(DefinedEnemyMob mob, EffectKind kind) {
+        return (float) mob.effectFullness(kind).orElse(0.0);
+    }
+
+    /** How strongly plus signs rise, from {@code 0} for none: at the most for a while after health is turned back. */
+    private float healingAmount(DefinedEnemyMob mob) {
+        if (within(mob.ticksSinceRewind(this.gameTime), REWIND_HEAL_DURATION_TICKS)) {
+            return 1f;
+        }
+        return Math.min(1f, mob.healingPerSecond() / MOST_HEALING_PER_SECOND);
+    }
+
     /** The one place that decides which bars an enemy shows and where, at its still scale, so they ignore a pulse. */
-    private void bars(DefinedEnemyMob mob, float x, float top, float scale, float cloakProgress) {
+    private void bars(DefinedEnemyMob mob, float x, float top, float scale, float visibility) {
         float health = mob.getHealthFraction();
         boolean hurt = health < 1f;
         boolean shielded = mob.hasEffect(EffectKind.SHIELD);
@@ -320,7 +399,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         List<EnemyBarsDraw.Bar> bars = !shielded ? List.of(healthBar)
                 : hurt ? List.of(this.shieldBar(mob), healthBar) : List.of(this.shieldBar(mob));
         this.markDraws.add(new EnemyBarsDraw(x, top, Math.max(BAR_MIN_WIDTH, scale * BAR_WIDTH_SCALE_FRACTION),
-                1f - cloakProgress, bars));
+                visibility, bars));
     }
 
     /** All its shields on the health bar's scale, so the two compare directly. */
@@ -334,15 +413,15 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return within(hit, SHIELD_FLASH_DURATION_TICKS) ? 1f - (float) hit.getAsInt() / SHIELD_FLASH_DURATION_TICKS : 0f;
     }
 
-    private void badge(DefinedEnemyMob mob, float x, float y, float cloakProgress) {
+    private void badge(DefinedEnemyMob mob, float x, float y, float visibility) {
         RankBadge badge = badgeFor(mob.getRank());
         if (badge != RankBadge.NONE) {
-            this.badgeDraws.add(new RankBadgeDraw(badge, x, y, RANK_BADGE_SIZE, 1f - cloakProgress));
+            this.badgeDraws.add(new RankBadgeDraw(badge, x, y, RANK_BADGE_SIZE, visibility));
         }
     }
 
     /** One dot per kind of dot the enemy's effects call for, in a fixed order; whether it drew any. */
-    private boolean dots(Set<EffectKind> active, float x, float y, float cloakProgress) {
+    private boolean dots(Set<EffectKind> active, float x, float y, float visibility) {
         if (active.isEmpty()) {
             return false;
         }
@@ -353,7 +432,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         if (dots.isEmpty()) {
             return false;
         }
-        this.markDraws.add(new EnemyDotsDraw(x, y, 1f - cloakProgress, List.copyOf(dots)));
+        this.markDraws.add(new EnemyDotsDraw(x, y, visibility, List.copyOf(dots)));
         return true;
     }
 

@@ -13,14 +13,16 @@ import td.ui.render.EnemyBurstDraw;
 import td.ui.render.EnemyDotsDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyEggDraw;
+import td.ui.render.EnemyEmissionDraw;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.EnemyIceDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.EnemyTintDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
-import td.ui.render.IceCrystalDraw;
 import td.ui.render.LeyLineDraw;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.MissileDraw;
@@ -555,9 +557,9 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_PRIORITY -> new Color(255, 150, 60);
             case STATUS_MARKER_RESONATING -> new Color(90, 160, 255);
             case STATUS_MARKER_FRACTURED -> new Color(160, 110, 220);
-            case FREEZE_CRYSTAL -> new Color(220, 245, 255);
             case CRIT_SPARK -> Color.WHITE;
             case MISS_MARK -> new Color(190, 190, 190);
+            case FREEZE_CRYSTAL -> new Color(220, 245, 255);
             case SPAWN_BURST -> Color.WHITE;
             case RANK_BADGE_CHEVRON -> Color.WHITE;
             case RANK_BADGE_ELITE -> new Color(230, 190, 60);
@@ -873,6 +875,7 @@ public final class Java2DFrameRenderer {
         switch (enemy) {
             case EnemyBodyDraw body -> this.paintEnemyBody(g2, body);
             case EnemyFadeDraw fade -> this.paintEnemyFade(g2, fade);
+            case EnemyEmissionDraw emission -> EnemyEffects.paintEmission(g2, emission);
         }
     }
 
@@ -1108,7 +1111,7 @@ public final class Java2DFrameRenderer {
         switch (overlay) {
             case EnemyRingDraw ring -> this.paintEnemyRing(g2, ring);
             case EffectPulseDraw pulse -> this.paintEffectPulse(g2, pulse);
-            case IceCrystalDraw crystal -> this.paintIceCrystal(g2, crystal);
+            case EnemyIceDraw ice -> EnemyEffects.paintIce(g2, ice);
             case HexRuneDraw rune -> this.paintHexRune(g2, rune);
             case MissMarkDraw miss -> this.paintMissMark(g2, miss);
             case EnemyBarsDraw bars -> this.paintEnemyBars(g2, bars);
@@ -1116,6 +1119,8 @@ public final class Java2DFrameRenderer {
             case RankBadgeDraw badge -> this.paintRankBadge(g2, badge);
             case EnemyEggDraw egg -> EnemyEffects.paintEgg(g2, egg);
             case EnemyBurstDraw burst -> EnemyEffects.paintBurst(g2, burst);
+            case EnemyEmissionDraw emission -> EnemyEffects.paintEmission(g2, emission);
+            case EnemyTintDraw tint -> EnemyEffects.paintTint(g2, tint);
         }
     }
 
@@ -1150,23 +1155,6 @@ public final class Java2DFrameRenderer {
         g2.setColor(withAlpha(colorFor(Palette.MISS_MARK), Math.round((1f - miss.fadeProgress()) * 255f)));
         float baseline = miss.y() + g2.getFontMetrics().getAscent() / 2f - MISS_MARK_RISE * miss.fadeProgress();
         g2.drawString(MISS_TEXT, miss.x() + MISS_MARK_GAP, baseline);
-    }
-
-    /**
-     * Translucent ice with near-white facets, so it reads as solid ice rather than a blue marker.
-     */
-    private void paintIceCrystal(Graphics2D g2, IceCrystalDraw crystal) {
-        AffineTransform save = g2.getTransform();
-        g2.translate(crystal.centerX(), crystal.centerY());
-        Shape shape = crystalShape(crystal.scale());
-        g2.setColor(withAlpha(colorFor(crystal.palette()), 130));
-        g2.fill(shape);
-        Stroke defaultStroke = g2.getStroke();
-        g2.setColor(withAlpha(Color.WHITE, 210));
-        g2.setStroke(new BasicStroke(1.2f));
-        g2.draw(shape);
-        g2.setStroke(defaultStroke);
-        g2.setTransform(save);
     }
 
     /** A hex's rune: a thin glyph in the rune colour, its shape saying what the hex does. */

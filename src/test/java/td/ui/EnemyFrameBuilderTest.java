@@ -20,6 +20,7 @@ import td.enemy.PeriodicTrigger;
 import td.enemy.PulseMovement;
 import td.enemy.RadiusTarget;
 import td.enemy.Rank;
+import td.enemy.RegenerationTrait;
 import td.enemy.StrideMovement;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
@@ -30,17 +31,22 @@ import td.ui.render.EnemyBarLook;
 import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyBurstDraw;
+import td.ui.render.EnemyBurstLook;
 import td.ui.render.EnemyDotLook;
 import td.ui.render.EnemyDotsDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyEggDraw;
+import td.ui.render.EnemyEmissionDraw;
+import td.ui.render.EnemyEmissionLook;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.EnemyIceDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
+import td.ui.render.EnemyTintDraw;
+import td.ui.render.EnemyTintLook;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
-import td.ui.render.IceCrystalDraw;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
@@ -671,27 +677,248 @@ class EnemyFrameBuilderTest {
                 .singleElement().satisfies(ring -> assertThat(ring.radius()).isGreaterThan(egg.radiusY()));
     }
 
-    @Test
-    void anActiveFreezeYieldsAnIceCrystalOverlayInTheFreezeCrystalColour() {
-        GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
-        enemy.applyEffect(Effect.freeze(5, DamageSink.none()));
+    private static EnemyFrameBuilder builtAt(EnemyMob enemy, int gameTime, double seconds) {
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, 0.0, Optional.empty(), seconds);
+        enemy.accept(builder);
+        return builder;
+    }
 
-        List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
+    private static List<EnemyEmissionDraw> emissionsOf(EnemyMob enemy, EnemyEmissionLook look) {
+        return overlaysOf(enemy, 0).stream()
+                .filter(EnemyEmissionDraw.class::isInstance)
+                .map(EnemyEmissionDraw.class::cast)
+                .filter(emission -> emission.look() == look)
+                .toList();
+    }
 
-        assertThat(overlays).hasSize(1);
-        IceCrystalDraw crystal = (IceCrystalDraw) overlays.getFirst();
-        assertThat(crystal.palette()).isEqualTo(Palette.FREEZE_CRYSTAL);
+    private static List<EnemyTintDraw> tintsOf(EnemyMob enemy) {
+        return overlaysOf(enemy, 0).stream()
+                .filter(EnemyTintDraw.class::isInstance)
+                .map(EnemyTintDraw.class::cast)
+                .toList();
+    }
+
+    private static EnemyIceDraw iceOf(EnemyMob enemy) {
+        return overlaysOf(enemy, 0).stream()
+                .filter(EnemyIceDraw.class::isInstance)
+                .map(EnemyIceDraw.class::cast)
+                .findFirst().orElseThrow();
+    }
+
+    private static DefinedEnemyMob regenerating(float perTick) {
+        return EnemyFixtures.liveMob(contextWithStraightPath(), EnemyFixtures.simpleDefinition("regen")
+                .withHealthAndPrice(50, 3).withTraits(List.of(new RegenerationTrait(perTick))));
     }
 
     @Test
-    void theIceCrystalOverlayDisappearsOnceTheFreezeExpires() {
-        GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
-        enemy.applyEffect(Effect.freeze(1, DamageSink.none()));
-        enemy.doTick(1); // the freeze expires this tick
+    void aFullerPoolEmitsMoreThanAFadingOne() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
+        enemy.applyEffect(Effect.burn(Damage.magic(1000), 40, DamageSink.none()));
 
-        assertThat(overlaysOf(enemy, 1)).isEmpty();
+        float fresh = emissionsOf(enemy, EnemyEmissionLook.BURN).getFirst().amount();
+        for (int tick = 1; tick <= 20; tick++) {
+            enemy.doTick(tick);
+        }
+        float fading = emissionsOf(enemy, EnemyEmissionLook.BURN).getFirst().amount();
+
+        assertThat(fading).isPositive().isLessThan(fresh);
+    }
+
+    @Test
+    void soulfireAndPoisonEmitTheirOwnWayAndPoisonTintsTheBody() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
+        enemy.applyEffect(Effect.soulfire(Damage.magic(100), 40, DamageSink.none()));
+        enemy.applyEffect(Effect.poison(Damage.magic(100), 40, DamageSink.none()));
+
+        assertThat(emissionsOf(enemy, EnemyEmissionLook.SOULFIRE)).hasSize(1);
+        assertThat(emissionsOf(enemy, EnemyEmissionLook.POISON)).hasSize(1);
+        assertThat(tintsOf(enemy)).extracting(EnemyTintDraw::tint).containsExactly(EnemyTintLook.POISON);
+    }
+
+    @Test
+    void emissionsRunOnTheWallClockAndKeepToOneSeedForTheirEnemy() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
+        enemy.applyEffect(Effect.burn(Damage.magic(100), 40, DamageSink.none()));
+
+        EnemyEmissionDraw early = (EnemyEmissionDraw) builtAt(enemy, 0, 1.0).buildOverlays().getFirst();
+        EnemyEmissionDraw later = (EnemyEmissionDraw) builtAt(enemy, 0, 2.5).buildOverlays().getFirst();
+
+        assertThat(later.seconds()).isEqualTo(2.5f);
+        assertThat(later.seed()).isEqualTo(early.seed());
+    }
+
+    @Test
+    void aBleedDripsBeneathTheBodyOnlyWhileTheEnemyMoves() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
+        enemy.applyEffect(Effect.bleeding(1, 100, DamageSink.none()));
+
+        List<EnemyDraw> standing = drawsAt(enemy, 0);
+        enemy.doTick(1);
+        List<EnemyDraw> walking = drawsAt(enemy, 1);
+        enemy.applyEffect(Effect.freeze(50, DamageSink.none()));
+        enemy.doTick(2);
+        enemy.doTick(3);
+        List<EnemyDraw> held = drawsAt(enemy, 3);
+
+        assertThat(standing).hasSize(1);
+        assertThat(walking.getFirst()).isInstanceOf(EnemyEmissionDraw.class);
+        assertThat(walking.getLast()).isInstanceOf(EnemyBodyDraw.class);
+        assertThat(held).hasSize(1);
+    }
+
+    @Test
+    void plusSignsRiseOnlyWhileHealthComesBackAndFasterHealingEmitsMore() {
+        DefinedEnemyMob slow = regenerating(1f);
+        DefinedEnemyMob fast = regenerating(4f);
+
+        assertThat(emissionsOf(slow, EnemyEmissionLook.HEAL)).isEmpty();
+
+        slow.doDamage(Damage.physical(DamageUnits.ofPoints(10)));
+        fast.doDamage(Damage.physical(DamageUnits.ofPoints(10)));
+
+        float slowAmount = emissionsOf(slow, EnemyEmissionLook.HEAL).getFirst().amount();
+        float fastAmount = emissionsOf(fast, EnemyEmissionLook.HEAL).getFirst().amount();
+        assertThat(fastAmount).isGreaterThan(slowAmount);
+    }
+
+    @Test
+    void slowRegenerationKeepsEmittingBetweenTheUnitsItLandsIn() {
+        DefinedEnemyMob slow = regenerating(0.1f);
+        slow.doDamage(Damage.physical(DamageUnits.ofPoints(10)));
+
+        for (int tick = 1; tick <= 12; tick++) {
+            slow.doTick(tick);
+            assertThat(overlaysOf(slow, tick)).anyMatch(EnemyEmissionDraw.class::isInstance);
+        }
+    }
+
+    @Test
+    void noPlusSignsRiseUnderInversionThoughItRegenerates() {
+        DefinedEnemyMob enemy = regenerating(1f);
+        enemy.doDamage(Damage.physical(DamageUnits.ofPoints(10)));
+
+        enemy.applyEffect(Effect.hex(EffectKind.INVERSION, 80, DamageSink.none()));
+
+        assertThat(emissionsOf(enemy, EnemyEmissionLook.HEAL)).isEmpty();
+    }
+
+    @Test
+    void noPlusSignsRiseWhileItCrumbles() {
+        DefinedEnemyMob enemy = regenerating(-1f);
+        enemy.doDamage(Damage.physical(DamageUnits.ofPoints(10)));
+
+        assertThat(emissionsOf(enemy, EnemyEmissionLook.HEAL)).isEmpty();
+    }
+
+    @Test
+    void aDeeperChillTintsAndEmitsMoreStrongly() {
+        EnemyMob shallow = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        EnemyMob deep = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        shallow.applyEffect(Effect.chill(0.2f, 50, DamageSink.none()));
+        deep.applyEffect(Effect.chill(0.7f, 50, DamageSink.none()));
+
+        assertThat(tintsOf(deep).getFirst().strength()).isGreaterThan(tintsOf(shallow).getFirst().strength());
+        assertThat(emissionsOf(deep, EnemyEmissionLook.CHILL).getFirst().amount())
+                .isGreaterThan(emissionsOf(shallow, EnemyEmissionLook.CHILL).getFirst().amount());
+    }
+
+    @Test
+    void aFrozenEnemyIsInsideOneBlockOfIceForItsWholeLifeAndEnemiesGetDifferentBlocks() {
+        GameWorld context = contextWithStraightPath();
+        Set<Integer> variants = new HashSet<>();
+        for (int i = 0; i < 6; i++) {
+            EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
+            enemy.applyEffect(Effect.freeze(5, DamageSink.none()));
+            assertThat(iceOf(enemy).variant()).isEqualTo(iceOf(enemy).variant());
+            variants.add(iceOf(enemy).variant());
+        }
+
+        assertThat(variants).hasSizeGreaterThan(1);
+    }
+
+    @Test
+    void barsAndTheBadgeClearTheIce() {
+        DefinedEnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(), EnemyFixtures.simpleDefinition("plain"), Rank.ELITE);
+        enemy.doDamage(Damage.physical(1));
+        enemy.applyEffect(Effect.freeze(5, DamageSink.none()));
+        EnemyIceDraw ice = iceOf(enemy);
+
+        assertThat(barsOf(enemy, 0).getFirst().y()).isGreaterThan(ice.y() + EnemyEffects.iceBeneath(ice.variant(), ice.scale()));
+        assertThat(badgeOf(enemy).y()).isLessThan(ice.y() - EnemyEffects.iceAbove(ice.variant(), ice.scale()));
+    }
+
+    @Test
+    void iceThrowsShardsWhenAFreezeEndsAndThenTheyGo() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        enemy.applyEffect(Effect.freeze(2, DamageSink.none()));
+
+        assertThat(burstsOf(enemy, 0)).isEmpty();
+        enemy.doTick(1);
+        enemy.doTick(2);
+
+        assertThat(overlaysOf(enemy, 2)).noneMatch(EnemyIceDraw.class::isInstance);
+        assertThat(burstsOf(enemy, 2)).singleElement()
+                .satisfies(burst -> assertThat(burst.look()).isEqualTo(EnemyBurstLook.ICE_SHARDS));
+        assertThat(burstsOf(enemy, 2 + EnemyFrameBuilder.ICE_SHARDS_DURATION_TICKS + 1)).isEmpty();
+    }
+
+    @Test
+    void aDazedEnemySwaysWithStarsOverItsHead() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        enemy.applyEffect(Effect.dazed(50, DamageSink.none()));
+
+        double first = ((EnemyBodyDraw) builtAt(enemy, 0, 1.0).build().getFirst()).facingRadians();
+        double second = ((EnemyBodyDraw) builtAt(enemy, 0, 1.2).build().getFirst()).facingRadians();
+
+        assertThat(first).isNotEqualTo(second);
+        assertThat(emissionsOf(enemy, EnemyEmissionLook.DAZE)).hasSize(1);
+    }
+
+    @Test
+    void aCloakedEnemysEmissionsAndEggGiveNothingAway() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
+        enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
+        enemy.applyEffect(Effect.poison(Damage.magic(1), 100, DamageSink.none()));
+        enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(1), 100, DamageSink.none()));
+        enemy.doTick(0);
+
+        int cloaked = EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS;
+
+        assertThat(eggOf(enemy, cloaked).alpha()).isZero();
+        assertThat(overlaysOf(enemy, cloaked)).filteredOn(EnemyEmissionDraw.class::isInstance)
+                .map(EnemyEmissionDraw.class::cast).allSatisfy(emission -> assertThat(emission.alpha()).isZero());
+    }
+
+    @Test
+    void aBurnStrongEnoughToRevealACloakedEnemyStillShows() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
+        enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
+        enemy.applyEffect(Effect.burn(Damage.magic(10000), 100, DamageSink.none()));
+        enemy.doTick(0);
+
+        List<EnemyOverlayDraw> overlays = overlaysOf(enemy, EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS);
+
+        assertThat(overlays).filteredOn(EnemyEmissionDraw.class::isInstance).map(EnemyEmissionDraw.class::cast)
+                .singleElement().satisfies(flames -> assertThat(flames.alpha()).isEqualTo(1f));
+    }
+
+    @Test
+    void whatAnEnemyCarriesIsDrawnBackToFrontWithItsMarksOverEveryEffect() {
+        DefinedEnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(),
+                EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(5000, 3), Rank.ELITE);
+        enemy.doDamage(Damage.physical(DamageUnits.ofPoints(1)));
+        enemy.applyEffect(Effect.poison(Damage.magic(1), 100, DamageSink.none()));
+        enemy.applyEffect(Effect.chill(0.2f, 100, DamageSink.none()));
+        enemy.applyEffect(Effect.burn(Damage.magic(1), 100, DamageSink.none()));
+        enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(1), 100, DamageSink.none()));
+        enemy.applyEffect(Effect.exposed(100, DamageSink.none()));
+
+        List<String> kinds = overlaysOf(enemy, 0).stream().map(overlay -> overlay.getClass().getSimpleName()).toList();
+
+        assertThat(kinds.indexOf("EnemyEggDraw")).isGreaterThan(kinds.lastIndexOf("EnemyEmissionDraw"));
+        assertThat(kinds.indexOf("RankBadgeDraw")).isGreaterThan(kinds.indexOf("EnemyEggDraw"));
+        assertThat(kinds.indexOf("EnemyDotsDraw")).isGreaterThan(kinds.indexOf("RankBadgeDraw"));
+        assertThat(kinds.indexOf("EnemyBarsDraw")).isGreaterThan(kinds.indexOf("EnemyDotsDraw"));
     }
 
     @Test

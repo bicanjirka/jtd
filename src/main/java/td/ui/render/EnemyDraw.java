@@ -1,5 +1,5 @@
 package td.ui.render;
 
-/** An enemy is exactly one of a live body or a fading corpse. */
-public sealed interface EnemyDraw permits EnemyBodyDraw, EnemyFadeDraw {
+/** What is drawn in the body layer: a live body, a fading corpse, or what falls beneath a body. */
+public sealed interface EnemyDraw permits EnemyBodyDraw, EnemyFadeDraw, EnemyEmissionDraw {
 }
