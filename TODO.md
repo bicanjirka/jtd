@@ -11,8 +11,12 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
-- **Board health bar**: an enemy's health and stacked shields shown on the board, reading the way the Info pane
-  strip does. Deferred from the restoration rework; no request written yet.
+- **Enemy and effect visuals** (`docs/features/FEATURE-enemy-and-effect-visuals.md`): effects drawn on the enemy,
+  trait markers gone, a darker board, a small rank badge, enemy looks as tables. Grilled, next up.
+- **HUD identity** (`docs/features/FEATURE-hud-identity.md`): a neutral HUD, level cards coloured from their level, and
+  a colour only for problems. Draft, for later; pick an option first.
+- **Enemy health bar** (`docs/features/FEATURE-enemy-health-bar.md`): a thin bar under a hurt enemy, solid bodies, and
+  one general way to show a bar under an enemy. Grilled; ships within the enemy and effect visuals' order.
 
 ## Feature request implementation order
 
@@ -171,8 +175,8 @@ Each entry names its trigger: do it in the same work, as its own commits, not be
 
 ### A board look is a switch in the painter, not a table row (ADR 0018)
 
-**Trigger:** the tower visual revamp (`FEATURE-tower-visual-revamp.md`), then the next new enemy
-body, marker or effect look. (Design review F16-A.)
+**Trigger:** the enemy looks with `FEATURE-enemy-and-effect-visuals.md`, then the tower looks with
+`FEATURE-tower-visual-revamp.md`. (Design review F16-A.)
 
 `td.ui.render.Palette` is one flat enum for every look: enemy bodies, tower bodies and heads,
 markers, terms, interface colours. `Java2DFrameRenderer.colorFor` maps every constant to a colour,
@@ -185,10 +189,10 @@ look change edits the painter.
   that carry a `Palette` (`EnemyBodyDraw`, `BeamDraw`, `CannonballDraw` and others in `td.ui.render`);
   the frame builders that choose one (`EnemyFrameBuilder.bodyPaletteFor`, `markerPaletteFor`, the
   tower builders); `AsciiBoardRenderer.towerChar`/`enemyChar`.
-- **Approach:** ADR 0018 is the decision; read it first. One role per commit, towers first, since the
-  revamp redraws them anyway:
-  1. An AWT-free role enum in `td.ui.render` (`TowerLook`), one constant per look.
-  2. A table in `td.ui` (`TowerLooks`): an `EnumMap` from role to its colour and shapes, built once,
+- **Approach:** ADR 0018 is the decision; read it first. One role per commit, enemies first, since their
+  feature ships first:
+  1. An AWT-free role enum in `td.ui.render` (`EnemyLook`, `TowerLook`), one constant per look.
+  2. A table in `td.ui` (`EnemyLooks`, `TowerLooks`): an `EnumMap` from role to its colour and shapes, built once,
      that throws `IllegalStateException` naming any role without a row when the class loads.
   3. The draw record's field changes from `Palette` to the role, with the frame builder that sets it
      and `AsciiBoardRenderer`.
