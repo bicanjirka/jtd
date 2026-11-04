@@ -16,8 +16,9 @@ keeps the seam honest.
   return `null` for "nothing to draw".
 - Ground zones are the one board list drawn under the enemies (`ZoneFrameBuilder`, `RenderFrame.zones`):
   a zone is a patch, not an enemy overlay or a tower effect.
-- Every colour, shape and stroke for board content lives in `Java2DFrameRenderer`, keyed by a
-  `Palette` role, never by domain type. There are no image assets; all art is vector.
+- Every colour, shape and stroke for board content lives in `td.ui`, keyed by a role, never by domain
+  type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), the rest in `Java2DFrameRenderer`
+  (keyed by `Palette`). There are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
   pulses, trait markers, ice crystal, hex runes), not a new `RenderFrame` list. Tower transients likewise go
   into `TowerEffectDraw`. Invisibility fades the body itself (`EnemyBodyDraw.cloakProgress`), and a

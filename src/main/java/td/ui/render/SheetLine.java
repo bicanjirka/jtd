@@ -14,7 +14,7 @@ public sealed interface SheetLine {
     }
 
     /** The enemy's body glyph and name, with its rank badge and rank name on the right. */
-    record EnemyHeader(Palette body, RankBadge badge, String name, String rank) implements SheetLine {
+    record EnemyHeader(EnemyLook body, RankBadge badge, String name, String rank) implements SheetLine {
     }
 
     /**

@@ -26,9 +26,9 @@ import td.stat.EnemyStat;
 import td.stat.StatWording;
 import td.term.TermText;
 import td.tower.TowerTerm;
+import td.ui.render.EnemyLook;
 import td.ui.render.IconFace;
 import td.ui.render.InfoSheet;
-import td.ui.render.Palette;
 import td.ui.render.RankBadge;
 import td.ui.render.SheetIcon;
 import td.ui.render.SheetLine;
@@ -97,7 +97,7 @@ class EnemyStatTextTest {
         InfoSheet sheet = this.hoverSheet(EnemyDefinition.of("brick", "Brick", 100, 5, 1f, BodyArchetype.SQUARE), Rank.BOSS);
 
         assertThat(sheet.lines().getFirst())
-                .isEqualTo(new SheetLine.EnemyHeader(Palette.ENEMY_SQUARE, RankBadge.SKULL, "Brick", "Boss"));
+                .isEqualTo(new SheetLine.EnemyHeader(EnemyLook.SQUARE, RankBadge.SKULL, "Brick", "Boss"));
     }
 
     @Test

@@ -132,11 +132,11 @@ BoardRenderer.buildFrame(gameTime, interpolationAlpha, animationSeconds)   on ga
 | `ProjectileFrameBuilder` | shells and missiles in flight | `ProjectileVisitor` |
 | `PathMarkerFrameBuilder` | the path trail and moving chevrons | geometry only |
 
-- All art is vector, keyed by a `Palette` role.
+- All art is vector, keyed by a role: `EnemyLook` for enemy bodies, `Palette` for the rest.
 - Positions interpolate between the last two ticks. Cosmetics run on the wall clock.
 - The live enemy info sheet is built with the frame and travels in it.
 - Records: [0003](adr/0003-frames-are-described-then-painted.md),
-  [0018](adr/0018-board-looks-are-role-tables.md) (looks as tables per role, planned).
+  [0018](adr/0018-board-looks-are-role-tables.md) (looks as tables per role: enemy bodies done, the rest planned).
 
 ## 6. Levels and paths
 

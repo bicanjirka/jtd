@@ -78,7 +78,7 @@ final class EnemyStatText {
     }
 
     private static SheetLine.EnemyHeader header(EnemyInspection inspection) {
-        return new SheetLine.EnemyHeader(EnemyFrameBuilder.paletteFor(inspection.archetype()),
+        return new SheetLine.EnemyHeader(EnemyFrameBuilder.lookFor(inspection.archetype()),
                 EnemyFrameBuilder.badgeFor(inspection.rank()), inspection.name(),
                 TermNumbers.titleCase(inspection.rank()));
     }

@@ -49,7 +49,7 @@ class ChoiceButtonTest {
     /** Ash then Bog. */
     private final ChoiceButton<FakeTerm> terms = new ChoiceButton<>(Choices.ofTerms(List.of(BOG, ASH),
             Comparator.comparing(term -> ""), term -> "", term -> Palette.TERM_FRAME_HEX,
-            term -> IconFace.of(term.key(), "", Palette.ENEMY_CIRCLE, Palette.TERM_FRAME_HEX)), ASH, () -> {
+            term -> IconFace.of(term.key(), "", Palette.TERM_AURA, Palette.TERM_FRAME_HEX)), ASH, () -> {
             });
 
     ChoiceButtonTest() {

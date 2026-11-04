@@ -35,12 +35,12 @@ public final class AsciiBoardRenderer {
         };
     }
 
-    private static char enemyChar(Palette palette, boolean fading) {
-        char c = switch (palette) {
-            case ENEMY_CIRCLE -> 'c';
-            case ENEMY_GHOST -> 'g';
-            case ENEMY_SQUARE -> 's';
-            case ENEMY_TRIANGLE -> 't';
+    private static char enemyChar(EnemyLook look, boolean fading) {
+        char c = switch (look) {
+            case CIRCLE -> 'c';
+            case GHOST -> 'g';
+            case SQUARE -> 's';
+            case TRIANGLE -> 't';
             default -> UNKNOWN;
         };
         return fading ? Character.toUpperCase(c) : c;
@@ -61,9 +61,9 @@ public final class AsciiBoardRenderer {
         for (EnemyDraw enemy : frame.enemies()) {
             switch (enemy) {
                 case EnemyBodyDraw body ->
-                        place(grid, cellOf(body.x(), scale), cellOf(body.y(), scale), enemyChar(body.palette(), false));
+                        place(grid, cellOf(body.x(), scale), cellOf(body.y(), scale), enemyChar(body.look(), false));
                 case EnemyFadeDraw fade ->
-                        place(grid, cellOf(fade.x(), scale), cellOf(fade.y(), scale), enemyChar(fade.palette(), true));
+                        place(grid, cellOf(fade.x(), scale), cellOf(fade.y(), scale), enemyChar(fade.look(), true));
             }
         }
 

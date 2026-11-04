@@ -175,24 +175,22 @@ Each entry names its trigger: do it in the same work, as its own commits, not be
 
 ### A board look is a switch in the painter, not a table row (ADR 0018)
 
-**Trigger:** the enemy looks with `FEATURE-enemy-and-effect-visuals.md`, then the tower looks with
-`FEATURE-tower-visual-revamp.md`. (Design review F16-A.)
+**Trigger:** the tower looks with `FEATURE-tower-visual-revamp.md`. (Design review F16-A.) Enemy bodies
+are done: `EnemyLook` and `EnemyLooks` are the pattern to follow.
 
-`td.ui.render.Palette` is one flat enum for every look: enemy bodies, tower bodies and heads,
-markers, terms, interface colours. `Java2DFrameRenderer.colorFor` maps every constant to a colour,
-and four shape switches each cover only their own slice of the enum (`enemyShape`,
-`towerBodyShape`, `turretHeadShape`, the one in `paintEnemyFade`), with a `default` that throws. So a
-new tower or body without its shape compiles, passes `mvn verify` and fails while painting, and every
+`td.ui.render.Palette` is one flat enum for every other look: tower bodies and heads, markers, terms,
+interface colours. `Java2DFrameRenderer.colorFor` maps every constant to a colour, and two shape switches
+each cover only their own slice of the enum (`towerBodyShape`, `turretHeadShape`), with a `default` that
+throws. So a new tower without its shape compiles, passes `mvn verify` and fails while painting, and every
 look change edits the painter.
 
 - **Where:** `Palette`; `Java2DFrameRenderer` (`colorFor` and the four switches); the draw records
-  that carry a `Palette` (`EnemyBodyDraw`, `BeamDraw`, `CannonballDraw` and others in `td.ui.render`);
-  the frame builders that choose one (`EnemyFrameBuilder.bodyPaletteFor`, `markerPaletteFor`, the
-  tower builders); `AsciiBoardRenderer.towerChar`/`enemyChar`.
-- **Approach:** ADR 0018 is the decision; read it first. One role per commit, enemies first, since their
-  feature ships first:
-  1. An AWT-free role enum in `td.ui.render` (`EnemyLook`, `TowerLook`), one constant per look.
-  2. A table in `td.ui` (`EnemyLooks`, `TowerLooks`): an `EnumMap` from role to its colour and shapes, built once,
+  that carry a `Palette` (`BeamDraw`, `CannonballDraw` and others in `td.ui.render`);
+  the frame builders that choose one (`EnemyFrameBuilder.markerPaletteFor`, the
+  tower builders); `AsciiBoardRenderer.towerChar`.
+- **Approach:** ADR 0018 is the decision; read it first. One role per commit:
+  1. An AWT-free role enum in `td.ui.render` (`TowerLook`), one constant per look.
+  2. A table in `td.ui` (`TowerLooks`): an `EnumMap` from role to its colour and shapes, built once,
      that throws `IllegalStateException` naming any role without a row when the class loads.
   3. The draw record's field changes from `Palette` to the role, with the frame builder that sets it
      and `AsciiBoardRenderer`.
@@ -201,7 +199,7 @@ look change edits the painter.
   5. `mvn verify`, a `PreviewBoard` render of the same scene before and after, and
      `td.PerformanceHarness` (draw records and builders change).
 
-  Then enemy bodies, then markers, then the rest. When `Palette` is gone, so is `colorFor`; update
+  Then markers, then the rest. When `Palette` is gone, so is `colorFor`; update
   `ui/CLAUDE.md` (the colour rule and the exhaustive-switch list) and `effect/CLAUDE.md` ("Adding a
   kind", step 4) in the commit that makes their lines false.
 
