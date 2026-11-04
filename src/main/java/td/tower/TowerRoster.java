@@ -6,6 +6,8 @@ import td.board.BoardGeometry;
 import td.damage.AttackOrigin;
 import td.economy.EconomyDelta;
 import td.economy.EconomyLedger;
+import td.enemy.EnemyMob;
+import td.enemy.HitResult;
 import td.util.GameHost;
 
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ public class TowerRoster {
     private static final Logger LOG = LoggerFactory.getLogger(TowerRoster.class);
 
     private final List<Tower> towers = new CopyOnWriteArrayList<>();
+    private final List<TowerHitListener> hitListeners = new CopyOnWriteArrayList<>();
     private final GameHost host;
     private final EconomyLedger economy;
     private final Supplier<BoardGeometry> board;
@@ -54,6 +57,17 @@ public class TowerRoster {
             }
         }
         return type.priceFor(copies);
+    }
+
+    public void addHitListener(TowerHitListener listener) {
+        this.hitListeners.add(listener);
+    }
+
+    /** Tells every listener what {@code tower}'s hit on {@code enemy} did. */
+    void reportHit(Tower tower, EnemyMob enemy, HitResult result) {
+        for (TowerHitListener listener : this.hitListeners) {
+            listener.landed(tower, enemy, result);
+        }
     }
 
     public void add(Tower t) {

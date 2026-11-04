@@ -9,6 +9,7 @@ import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.enemy.HitResult;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.FakeTower;
@@ -29,6 +30,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.TickRate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -224,6 +226,22 @@ class AbstractTowerTest {
         context.waves().announce();
 
         assertThat(waveDpsRows(tower)).isEmpty();
+    }
+
+    @Test
+    void theRosterHearsWhatALethalHitTookAndWhatWentPastTheHealthLeft() {
+        FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.none());
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 10, 3);
+        int healthBefore = enemy.getHealth();
+        List<HitResult> heard = new ArrayList<>();
+        context.towers().addHitListener((who, whom, result) -> heard.add(result));
+
+        tower.dealDamage(enemy, Damage.physical(4000));
+
+        assertThat(heard).singleElement().satisfies(result -> {
+            assertThat(result.credited()).isEqualTo(healthBefore);
+            assertThat(result.overkill()).isEqualTo(4000 - healthBefore);
+        });
     }
 
     @Test

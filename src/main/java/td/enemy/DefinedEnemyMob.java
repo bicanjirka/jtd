@@ -730,7 +730,6 @@ public final class DefinedEnemyMob implements EnemyMob {
             return HitResult.none();
         }
         HitResult result = HitResult.none();
-        int overkill = 0;
         if (this.validTarget()) {
             int healthBefore = this.health.current();
             Damage raw = HitResolution.raw(damage, attacker, this.stats, this.gameWorld.random());
@@ -747,8 +746,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             Damage mitigated = HitResolution.pastShields(new Damage(raw.amount() - absorbed, raw.type(), raw.critical()),
                     attacker, this.stats);
             Damage landed = this.health.lose(mitigated);
-            result = new HitResult(landed, absorbed);
-            overkill = mitigated.amount() - landed.amount();
+            result = new HitResult(landed, absorbed).withOverkill(mitigated.amount() - landed.amount());
             if (this.observer.isOn()) {
                 this.reportHit(damage, attacker, markSpent, raw,
                         new MobEvent.HitOutcome(absorbed, landed, healthBefore, this.health.current()));
@@ -763,7 +761,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         if (this.health.depleted()) {
             if (this.observer.isOn()) {
-                this.observer.report(new MobEvent.Killed(this.nameOf(attacker.origin()), overkill));
+                this.observer.report(new MobEvent.Killed(this.nameOf(attacker.origin()), result.overkill()));
             }
             this.kill();
         }

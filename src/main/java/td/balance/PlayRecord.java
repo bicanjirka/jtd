@@ -5,6 +5,7 @@ import td.enemy.Rank;
 import td.tower.TowerFactory;
 import td.wave.Point;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -61,12 +62,15 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
      * @param casts    how often each kind at each rank used each ability, keyed by {@link #castKey} or
      *                 {@link #spawnKey}
      * @param timeline the board sampled every {@link Sample#EVERY} ticks, in order
+     * @param towers   what each tower type did to the enemies, sold towers included
      */
-    public record Watch(EffectUse effects, Map<String, Integer> casts, List<Sample> timeline) {
+    public record Watch(EffectUse effects, Map<String, Integer> casts, List<Sample> timeline,
+                        Map<TowerFactory.Type, TowerWork> towers) {
 
         public Watch {
             casts = Map.copyOf(casts);
             timeline = List.copyOf(timeline);
+            towers = Map.copyOf(towers);
         }
 
         /** An ability of {@code kind} that puts {@code effect} on itself or its allies. */
@@ -95,6 +99,57 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
         /** The share of enemy time {@code kind} was on an enemy. */
         public double uptime(EffectKind kind) {
             return this.enemyTicks == 0 ? 0 : this.ticks.getOrDefault(kind, 0L) / (double) this.enemyTicks;
+        }
+    }
+
+    /**
+     * What one tower type's hits came to, in hundredths of a point.
+     *
+     * @param credited what it is credited with, shields included
+     * @param absorbed of that, what shields took
+     * @param overkill past that, what went beyond the health left and did nothing
+     */
+    public record HitTotals(long credited, long absorbed, long overkill) {
+
+        public HitTotals plus(HitTotals other) {
+            return new HitTotals(this.credited + other.credited, this.absorbed + other.absorbed,
+                    this.overkill + other.overkill);
+        }
+
+        /** Everything its hits carried. */
+        private long carried() {
+            return this.credited + this.overkill;
+        }
+
+        /** The share of what its hits carried that shields took. */
+        public double shieldShare() {
+            return this.carried() == 0 ? 0 : this.absorbed / (double) this.carried();
+        }
+
+        /** The share of what its hits carried that went past the health left. */
+        public double overkillShare() {
+            return this.carried() == 0 ? 0 : this.overkill / (double) this.carried();
+        }
+    }
+
+    /**
+     * What one tower type did: lots of time in reach with little damage says weak, little time in reach says badly
+     * placed.
+     *
+     * @param hits          what its hits came to
+     * @param ticksInReach  ticks an enemy stood within a tower's range, summed over every enemy and every tower
+     * @param damageByKind  what it is credited with per enemy kind, in hundredths of a point
+     */
+    public record TowerWork(HitTotals hits, long ticksInReach, Map<String, Long> damageByKind) {
+
+        public TowerWork {
+            damageByKind = Map.copyOf(damageByKind);
+        }
+
+        public TowerWork plus(TowerWork other) {
+            Map<String, Long> kinds = new HashMap<>(this.damageByKind);
+            other.damageByKind.forEach((kind, damage) -> kinds.merge(kind, damage, Long::sum));
+            return new TowerWork(this.hits.plus(other.hits), this.ticksInReach + other.ticksInReach, kinds);
         }
     }
 

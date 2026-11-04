@@ -233,6 +233,15 @@ public record LevelRun(TowerLab lab, Map<String, List<PlayRecord>> plays, Map<St
         return new PlayRecord.EffectUse(enemyTicks, ticks, starts);
     }
 
+    /** What each tower type did over all of {@code player}'s plays together. */
+    public Map<TowerFactory.Type, PlayRecord.TowerWork> towerWork(String player) {
+        Map<TowerFactory.Type, PlayRecord.TowerWork> totals = new EnumMap<>(TowerFactory.Type.class);
+        for (PlayRecord play : this.playsOf(player)) {
+            play.watch().towers().forEach((type, work) -> totals.merge(type, work, PlayRecord.TowerWork::plus));
+        }
+        return totals;
+    }
+
     /** How often per play {@code player}'s enemies used each ability. */
     public Map<String, Double> abilityUses(String player) {
         Map<String, Double> uses = new LinkedHashMap<>();

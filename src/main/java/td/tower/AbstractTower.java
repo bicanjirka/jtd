@@ -284,6 +284,7 @@ public abstract class AbstractTower implements Tower {
                 this.waveDamage = this.waveDamage.plus(result.credited(), this.context.waves().started(),
                         this.currentTick);
             }
+            this.context.towers().reportHit(this, enemy, result);
             if (enemy.isDead()) {
                 this.killCount++;
                 float bountyBonus = this.stats.bountyBonus();
