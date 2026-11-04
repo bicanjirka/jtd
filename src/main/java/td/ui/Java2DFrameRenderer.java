@@ -143,7 +143,9 @@ public final class Java2DFrameRenderer {
     private static final int SONAR_TRAIL_STEPS = 4;
     private static final int SONAR_TRAIL_ALPHA = 150;
     /** How far apart a badge's two chevrons sit, as a share of its size. */
-    private static final float RANK_BADGE_CHEVRON_SPACING = 0.92f;
+    private static final float RANK_BADGE_CHEVRON_SPACING = 1f;
+    private static final float RANK_BADGE_CHEVRON_RISE = 0.4f;
+    private static final float RANK_BADGE_CHEVRON_STROKE = 0.32f;
     private static final float ENEMY_DOT_RADIUS = 1.3f;
     private static final float ENEMY_DOT_SPACING = 4.1f;
     /** Set on screen at the default window; below that zoom a bar shrinks with the board. */
@@ -913,13 +915,13 @@ public final class Java2DFrameRenderer {
         rankBadgePalette(badge).ifPresent(palette -> g2.setColor(colorFor(palette)));
         AffineTransform save = g2.getTransform();
         switch (badge) {
-            case ONE_CHEVRON -> this.paintUprightChevron(g2, badgeSize);
+            case ONE_CHEVRON -> paintRankChevron(g2, badgeSize);
             case TWO_CHEVRON -> {
                 float spacing = badgeSize * RANK_BADGE_CHEVRON_SPACING;
                 g2.translate(0, -spacing / 2);
-                this.paintUprightChevron(g2, badgeSize);
+                paintRankChevron(g2, badgeSize);
                 g2.translate(0, spacing);
-                this.paintUprightChevron(g2, badgeSize);
+                paintRankChevron(g2, badgeSize);
             }
             case STAR -> g2.fill(starShape(5, badgeSize, badgeSize * 0.45f));
             case SKULL -> g2.fill(skullShape(badgeSize));
@@ -1076,12 +1078,16 @@ public final class Java2DFrameRenderer {
         return p;
     }
 
-    /** Rotates the chevron to point up, around the current origin. */
-    private void paintUprightChevron(Graphics2D g2, float size) {
-        AffineTransform save = g2.getTransform();
-        g2.rotate(-Math.PI / 2);
-        g2.fill(chevronShape(size));
-        g2.setTransform(save);
+    /** An open stroke: a filled arrowhead is the loudest mark on a board, and two of them merge into one. */
+    private static void paintRankChevron(Graphics2D g2, float size) {
+        GeneralPath chevron = new GeneralPath();
+        chevron.moveTo(-size, size * RANK_BADGE_CHEVRON_RISE);
+        chevron.lineTo(0, -size * RANK_BADGE_CHEVRON_RISE);
+        chevron.lineTo(size, size * RANK_BADGE_CHEVRON_RISE);
+        Stroke stroke = g2.getStroke();
+        g2.setStroke(new BasicStroke(size * RANK_BADGE_CHEVRON_STROKE));
+        g2.draw(chevron);
+        g2.setStroke(stroke);
     }
 
     private void paintEnemyFade(Graphics2D g2, EnemyFadeDraw fade) {
