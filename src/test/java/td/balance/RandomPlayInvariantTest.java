@@ -1,6 +1,8 @@
 package td.balance;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Named;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import td.enemy.Ability;
 import td.enemy.ApplyEffectAction;
 import td.enemy.EnemyCatalog;
@@ -22,12 +24,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Random legal play, sells and upgrades included, over every built-in level: whatever a player does, every round
- * clears, credits never go negative, and every enemy that walks in ends exactly once, killed or leaked.
+ * Random legal play, sells and upgrades included, on one built-in level per test, so each level has the time budget
+ * of a test: whatever a player does, every round clears, credits never go negative, and every enemy that walks in
+ * ends exactly once, killed or leaked.
  */
 class RandomPlayInvariantTest {
 
@@ -40,26 +44,27 @@ class RandomPlayInvariantTest {
                 .toList();
     }
 
-    @Test
-    void randomPlayOnEveryBuiltInLevelKeepsTheRules() {
-        for (LevelDefinition level : new BuiltInLevelCatalog().levels()) {
-            // A hatch swaps one mob for another without ending a walk, so only an end that never came is allowed.
-            boolean everyEnemyEnds = !someEnemyHatches(level);
+    private static Stream<Named<LevelDefinition>> builtInLevels() {
+        return new BuiltInLevelCatalog().levels().stream().map(level -> Named.of(level.name(), level));
+    }
 
-            for (PlayRecord play : randomPlays(level)) {
-                assertThat(play.result().roundsCleared()).as("%s rounds cleared", level.name())
-                        .isEqualTo(play.result().roundCount());
-                for (PlayRecord.Round round : play.rounds()) {
-                    long ended = play.ends().stream().filter(end -> end.round() == round.number())
-                            .mapToLong(end -> end.foe().maxHealth()).sum();
-                    assertThat(round.economy().creditsAtStart()).as("%s credits at round %d", level.name(),
-                            round.number()).isNotNegative();
-                    if (everyEnemyEnds) {
-                        assertThat(ended).as("%s health that ended in round %d", level.name(), round.number())
-                                .isEqualTo(round.pressure().healthIn());
-                    } else {
-                        assertThat(ended).isLessThanOrEqualTo(round.pressure().healthIn());
-                    }
+    @ParameterizedTest
+    @MethodSource("builtInLevels")
+    void randomPlayKeepsTheRules(LevelDefinition level) {
+        // A hatch swaps one mob for another without ending a walk, so only an end that never came is allowed.
+        boolean everyEnemyEnds = !someEnemyHatches(level);
+
+        for (PlayRecord play : randomPlays(level)) {
+            assertThat(play.result().roundsCleared()).as("rounds cleared").isEqualTo(play.result().roundCount());
+            for (PlayRecord.Round round : play.rounds()) {
+                long ended = play.ends().stream().filter(end -> end.round() == round.number())
+                        .mapToLong(end -> end.foe().maxHealth()).sum();
+                assertThat(round.economy().creditsAtStart()).as("credits at round %d", round.number()).isNotNegative();
+                if (everyEnemyEnds) {
+                    assertThat(ended).as("health that ended in round %d", round.number())
+                            .isEqualTo(round.pressure().healthIn());
+                } else {
+                    assertThat(ended).isLessThanOrEqualTo(round.pressure().healthIn());
                 }
             }
         }

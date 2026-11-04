@@ -307,14 +307,6 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
 
 ## Levels
 
-### The random play test sits on the five-second limit
-
-`RandomPlayInvariantTest` plays every built-in level on several seeds and takes 5 to 6 seconds on its own, so it can
-fail `mvn verify` on time alone; it asserts nothing wrong when it does.
-
-- **Where:** `td.balance.RandomPlayInvariantTest` (`SEEDS`, the levels it plays).
-- **Approach:** cover each level on fewer seeds rather than raise the limit.
-
 ### A sweep moves one number at a time
 
 `--sweep clear` and `--sweep bounty` each hold the other at the level's own value, so the pairing that pays a clean
