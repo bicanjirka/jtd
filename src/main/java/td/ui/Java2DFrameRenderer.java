@@ -7,6 +7,7 @@ import td.ui.render.CellGridDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
+import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
@@ -142,6 +143,11 @@ public final class Java2DFrameRenderer {
     private static final float RANK_BADGE_SIZE_FRACTION = 0.6f;
     private static final float RANK_BADGE_OFFSET_FRACTION = 1.7f;
     private static final float RANK_BADGE_CHEVRON_SPACING_FRACTION = 0.55f;
+    /** Set on screen at the default window; below that zoom a bar shrinks with the board. */
+    private static final float ENEMY_BAR_HEIGHT = 1.64f;
+    private static final float ENEMY_BAR_GAP = 0.82f;
+    private static final float ENEMY_BAR_TRACK_MARGIN = 0.82f;
+    private static final Color ENEMY_BAR_TRACK = new Color(0, 0, 0, 191);
     private static final float PROJECTILE_SIZE = 5f;
     private static final float SHELL_STREAK_ALPHA = 0.5f;
     private static final int ZONE_FILL_ALPHA = 80;
@@ -618,10 +624,6 @@ public final class Java2DFrameRenderer {
         return new Color(base.getRed(), base.getGreen(), base.getBlue(), Math.clamp(alpha, 0, 255));
     }
 
-    private static Color healthColor(Color base, float healthFraction) {
-        return withAlpha(base, Math.round(healthFraction * 255));
-    }
-
     /** Multiplies {@code base}'s alpha by {@code factor}, clamped, so fades compose. */
     private static Color scaleAlpha(Color base, float factor) {
         return withAlpha(base, Math.round(base.getAlpha() * factor));
@@ -885,12 +887,9 @@ public final class Java2DFrameRenderer {
         g2.translate(body.x(), body.y());
         g2.rotate(body.facingRadians());
         Shape shape = row.body().at(body.scale());
-        // Cloaking is a further alpha reduction on top of the health-fraction one below, not a
-        // replacement for it - a badly wounded, cloaked mob still reads as both at once.
         float visibility = (1f - body.cloakProgress()) * (1f - FLICKER_DIM * body.flicker());
         g2.setColor(scaleAlpha(row.color(), visibility));
         g2.draw(shape);
-        g2.setColor(scaleAlpha(healthColor(row.color(), body.healthFraction()), visibility));
         g2.fill(shape);
         if (row.detail().isPresent()) {
             EnemyLooks.Detail detail = row.detail().get();
@@ -1131,6 +1130,23 @@ public final class Java2DFrameRenderer {
             case IceCrystalDraw crystal -> this.paintIceCrystal(g2, crystal);
             case HexRuneDraw rune -> this.paintHexRune(g2, rune);
             case MissMarkDraw miss -> this.paintMissMark(g2, miss);
+            case EnemyBarsDraw bars -> this.paintEnemyBars(g2, bars);
+        }
+    }
+
+    /** One dark track behind every bar, so the stack reads as one element on any floor; each fill shrinks to the left. */
+    private void paintEnemyBars(Graphics2D g2, EnemyBarsDraw bars) {
+        float left = bars.x() - bars.width() / 2f;
+        int rows = bars.bars().size();
+        g2.setColor(scaleAlpha(ENEMY_BAR_TRACK, bars.alpha()));
+        g2.fill(new Rectangle2D.Float(left - ENEMY_BAR_TRACK_MARGIN, bars.y() - ENEMY_BAR_TRACK_MARGIN,
+                bars.width() + ENEMY_BAR_TRACK_MARGIN * 2,
+                rows * ENEMY_BAR_HEIGHT + (rows - 1) * ENEMY_BAR_GAP + ENEMY_BAR_TRACK_MARGIN * 2));
+        for (int i = 0; i < rows; i++) {
+            EnemyBarsDraw.Bar bar = bars.bars().get(i);
+            g2.setColor(scaleAlpha(EnemyLooks.barColor(bar.look()), bars.alpha()));
+            g2.fill(new Rectangle2D.Float(left, bars.y() + i * (ENEMY_BAR_HEIGHT + ENEMY_BAR_GAP),
+                    bars.width() * bar.fill(), ENEMY_BAR_HEIGHT));
         }
     }
 

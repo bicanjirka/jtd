@@ -12,6 +12,8 @@ import td.enemy.Trait;
 import td.enemy.TraitMarker;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
+import td.ui.render.EnemyBarLook;
+import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
@@ -88,6 +90,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float GAIN_LOSS_PULSE_RADIUS_FRACTION = 1.6f;
     /** Larger than a status pulse: it marks a new mob, not a change on an existing one. */
     private static final float SPAWN_BURST_RADIUS_FRACTION = 2.2f;
+    /** A bar's width against the body's scale, and the least it may be: a bar under a tiny body must still read. */
+    private static final float BAR_WIDTH_SCALE_FRACTION = 1.8f;
+    private static final float BAR_MIN_WIDTH = 8.2f;
+    /** Under the furthest the body's art reaches, with room left for a pulsing body. */
+    private static final float BAR_GAP = 3f;
     private final List<EnemyDraw> draws = new ArrayList<>();
     private final List<StatusMarkerDraw> markerDraws = new ArrayList<>();
     private final List<CritSparkDraw> critSparkDraws = new ArrayList<>();
@@ -267,16 +274,28 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         } else if (!mob.isInactive()) {
             float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
             float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
-            this.draws.add(new EnemyBodyDraw(look, x, y, facingRadians, mob.getDrawScale(), mob.getHealthFraction(),
-                    badgeFor(mob.getRank()), this.cloakProgress(mob), this.flicker(mob)));
+            float cloakProgress = this.cloakProgress(mob);
+            this.draws.add(new EnemyBodyDraw(look, x, y, facingRadians, mob.getDrawScale(), badgeFor(mob.getRank()),
+                    cloakProgress, this.flicker(mob)));
             this.markers(mob, x, y, scale);
             this.critSpark(mob, x, y);
             this.missMark(mob, x + scale, y);
             this.overlays(mob, x, y, scale, supportAura);
             this.pulses(mob, x, y, scale);
             this.traitMarkers(x, y, scale, traits);
+            this.bars(mob, look, x, y, scale, cloakProgress);
         }
         return null;
+    }
+
+    /** The one place that decides which bars an enemy shows and where, at its still scale, so they ignore a pulse. */
+    private void bars(DefinedEnemyMob mob, EnemyLook look, float x, float y, float scale, float cloakProgress) {
+        float health = mob.getHealthFraction();
+        if (health < 1f) {
+            this.overlayDraws.add(new EnemyBarsDraw(x, y + scale * EnemyLooks.of(look).reach() + BAR_GAP,
+                    Math.max(BAR_MIN_WIDTH, scale * BAR_WIDTH_SCALE_FRACTION), 1f - cloakProgress,
+                    List.of(new EnemyBarsDraw.Bar(EnemyBarLook.HEALTH, health))));
+        }
     }
 
     /** One hollow diamond per trait below the body, capped like the effect row. */

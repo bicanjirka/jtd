@@ -19,6 +19,7 @@ import td.enemy.EnemyMob;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.PathDirectionalMovement;
 import td.enemy.PeriodicTrigger;
+import td.enemy.PulseMovement;
 import td.enemy.RadiusTarget;
 import td.enemy.Rank;
 import td.enemy.RegenerationTrait;
@@ -28,9 +29,12 @@ import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
+import td.ui.render.EnemyBarLook;
+import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.EnemyLook;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
 import td.ui.render.HexGlyph;
@@ -82,6 +86,84 @@ class EnemyFrameBuilderTest {
         EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, 0.0);
         enemy.accept(builder);
         return builder.buildOverlays();
+    }
+
+    private static List<EnemyBarsDraw> barsOf(EnemyMob enemy, int gameTime) {
+        return overlaysOf(enemy, gameTime).stream()
+                .filter(EnemyBarsDraw.class::isInstance)
+                .map(EnemyBarsDraw.class::cast)
+                .toList();
+    }
+
+    @Test
+    void anEnemyAtFullHealthCarriesNoBar() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+
+        assertThat(barsOf(enemy, 0)).isEmpty();
+    }
+
+    @Test
+    void aHurtEnemyCarriesAHealthBarFilledToItsHealth() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+
+        enemy.doDamage(Damage.physical(10));
+
+        assertThat(barsOf(enemy, 0)).singleElement().satisfies(bars -> {
+            assertThat(bars.bars()).containsExactly(new EnemyBarsDraw.Bar(EnemyBarLook.HEALTH, enemy.getHealthFraction()));
+            assertThat(bars.alpha()).isEqualTo(1f);
+        });
+    }
+
+    @Test
+    void aBarSitsBelowTheFurthestTheBodyReaches() {
+        DefinedEnemyMob mob = EnemyFixtures.liveMob(contextWithStraightPath(),
+                EnemyFixtures.simpleDefinition("tailed").withArchetype(BodyArchetype.SALAMANDER));
+        mob.doDamage(Damage.physical(1));
+
+        EnemyBarsDraw bars = barsOf(mob, 0).getFirst();
+
+        float reach = EnemyLooks.of(EnemyLook.SALAMANDER).reach();
+        assertThat(reach).isGreaterThan(1f);
+        assertThat(bars.y()).isGreaterThan((float) mob.getY() + mob.getBodyScale() * reach);
+    }
+
+    @Test
+    void aBarKeepsItsSizeAndPlaceWhileTheBodyPulses() {
+        DefinedEnemyMob mob = EnemyFixtures.liveMob(contextWithStraightPath(),
+                EnemyFixtures.simpleDefinition("pulsing").withMovement(new PulseMovement()));
+        mob.doDamage(Damage.physical(1));
+        EnemyBarsDraw still = barsOf(mob, 0).getFirst();
+        float stillBody = bodyDrawAt(mob, 0, 0.0).scale();
+
+        for (int tick = 0; tick < 5; tick++) {
+            mob.doTick(tick);
+        }
+
+        assertThat(bodyDrawAt(mob, 5, 0.0).scale()).isNotEqualTo(stillBody);
+        EnemyBarsDraw pulsed = barsOf(mob, 5).getFirst();
+        assertThat(pulsed.width()).isEqualTo(still.width());
+        assertThat(pulsed.y()).isEqualTo(still.y());
+    }
+
+    @Test
+    void aBarFadesWithACloakedBody() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        enemy.doDamage(Damage.physical(1));
+        enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
+        enemy.doTick(0);
+
+        EnemyBarsDraw bars = barsOf(enemy, EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS).getFirst();
+
+        assertThat(bars.alpha()).isZero();
+    }
+
+    @Test
+    void aDyingEnemyCarriesNoBar() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+
+        enemy.doDamage(Damage.physical(5000));
+
+        assertThat(barsOf(enemy, 0)).isEmpty();
     }
 
     @Test

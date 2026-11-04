@@ -6,11 +6,10 @@ package td.ui.render;
  * steady body and 1 for the dimmed half of a flicker.
  */
 public record EnemyBodyDraw(EnemyLook look, float x, float y, double facingRadians, float scale,
-                            float healthFraction, RankBadge badge, float cloakProgress,
-                            float flicker) implements EnemyDraw {
+                            RankBadge badge, float cloakProgress, float flicker) implements EnemyDraw {
 
     public EnemyBodyDraw(EnemyLook look, float x, float y, double facingRadians, float scale,
-                         float healthFraction, RankBadge badge, float cloakProgress) {
-        this(look, x, y, facingRadians, scale, healthFraction, badge, cloakProgress, 0f);
+                         RankBadge badge, float cloakProgress) {
+        this(look, x, y, facingRadians, scale, badge, cloakProgress, 0f);
     }
 }
