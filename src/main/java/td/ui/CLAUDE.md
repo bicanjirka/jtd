@@ -20,7 +20,7 @@ keeps the seam honest.
   type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), the rest in `Java2DFrameRenderer`
   (keyed by `Palette`). There are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
-  pulses, ice crystal, hex runes, dots, badge, bars), not a new `RenderFrame` list. Tower transients likewise go
+  pulses, ice crystal, hex runes, dots, badge, bars, egg, bursts), not a new `RenderFrame` list. Tower transients likewise go
   into `TowerEffectDraw`. A bar under an enemy is a row in `EnemyFrameBuilder.bars` and a colour in
   `EnemyLooks.barColor`, with no drawing of its own. Invisibility fades the body itself (`EnemyBodyDraw.cloakProgress`).
 - Timed visuals follow one idiom: the entity records the tick something happened

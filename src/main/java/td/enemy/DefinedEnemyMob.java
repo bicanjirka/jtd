@@ -626,12 +626,6 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.activeEffects.shieldGauge();
     }
 
-    /** The share of its pool the active shield has left; {@code 0} without one. */
-    public float shieldFraction() {
-        ShieldGauge gauge = this.activeEffects.shieldGauge();
-        return gauge.max() > 0f ? gauge.remaining() / gauge.max() : 0f;
-    }
-
     @Override
     public List<Effect> activeEffects() {
         return this.activeEffects.effects();
@@ -733,8 +727,15 @@ public final class DefinedEnemyMob implements EnemyMob {
             int healthBefore = this.health.current();
             Damage raw = HitResolution.raw(damage, attacker, this.stats, this.gameWorld.random());
             boolean meetsShields = attacker.delivery() == Delivery.HIT && !(raw.critical() && attacker.critsPierceShields());
+            boolean shielded = meetsShields && this.activeEffects.has(EffectKind.SHIELD);
             int absorbed = meetsShields ? this.activeEffects.absorb(raw.type(), raw.amount(),
                     this.restoreFactor()) : 0;
+            if (absorbed > 0) {
+                this.moments.markPending(Moment.SHIELD_HIT);
+            }
+            if (shielded && !this.activeEffects.has(EffectKind.SHIELD)) {
+                this.moments.markPending(Moment.SHIELD_BROKEN);
+            }
             Damage mitigated = HitResolution.pastShields(new Damage(raw.amount() - absorbed, raw.type(), raw.critical()),
                     attacker, this.stats);
             Damage landed = this.health.lose(mitigated);
@@ -843,6 +844,16 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** Empty if it never dodged. Captured like {@link #ticksSinceCriticalHit}. */
     public OptionalInt ticksSinceDodge(int gameTime) {
         return this.moments.ticksSince(Moment.DODGE, gameTime);
+    }
+
+    /** Empty if no hit ever landed on a shield. Captured like {@link #ticksSinceCriticalHit}. */
+    public OptionalInt ticksSinceShieldHit(int gameTime) {
+        return this.moments.ticksSince(Moment.SHIELD_HIT, gameTime);
+    }
+
+    /** Empty if a hit never broke its last shield; running out of time isn't breaking. Captured like {@link #ticksSinceCriticalHit}. */
+    public OptionalInt ticksSinceShieldBroken(int gameTime) {
+        return this.moments.ticksSince(Moment.SHIELD_BROKEN, gameTime);
     }
 
     /** Empty if never. Captured like {@link #ticksSinceCriticalHit}. */

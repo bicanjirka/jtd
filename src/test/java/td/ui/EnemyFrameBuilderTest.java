@@ -1,8 +1,10 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -27,9 +29,11 @@ import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarLook;
 import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
+import td.ui.render.EnemyBurstDraw;
 import td.ui.render.EnemyDotLook;
 import td.ui.render.EnemyDotsDraw;
 import td.ui.render.EnemyDraw;
+import td.ui.render.EnemyEggDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.EnemyOverlayDraw;
@@ -539,27 +543,132 @@ class EnemyFrameBuilderTest {
                 });
     }
 
-    @Test
-    void anActiveShieldYieldsARingInTheShieldMarkersColour() {
-        GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
-        enemy.applyEffect(Effect.shield(0.3f, 5, DamageSink.none()));
+    private static EnemyMob shielded(int shieldPoints, int ticks) {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(shieldPoints), ticks, DamageSink.none()));
+        return enemy;
+    }
 
-        List<EnemyOverlayDraw> overlays = overlaysOf(enemy, 0);
+    private static EnemyEggDraw eggOf(EnemyMob enemy, int gameTime) {
+        return overlaysOf(enemy, gameTime).stream()
+                .filter(EnemyEggDraw.class::isInstance)
+                .map(EnemyEggDraw.class::cast)
+                .findFirst().orElseThrow();
+    }
 
-        assertThat(overlays).hasSize(1);
-        EnemyRingDraw ring = (EnemyRingDraw) overlays.getFirst();
-        assertThat(ring.palette()).isEqualTo(Palette.STATUS_MARKER_SHIELD);
+    private static List<EnemyBurstDraw> burstsOf(EnemyMob enemy, int gameTime) {
+        return overlaysOf(enemy, gameTime).stream()
+                .filter(EnemyBurstDraw.class::isInstance)
+                .map(EnemyBurstDraw.class::cast)
+                .toList();
     }
 
     @Test
-    void theShieldRingDisappearsOnceTheShieldExpires() {
-        GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
-        enemy.applyEffect(Effect.shield(0.3f, 1, DamageSink.none()));
-        enemy.doTick(1); // the shield expires this tick
+    void aShieldedEnemyAtFullHealthShowsItsEggAndOnlyAShieldBarOnTheHealthBarsScale() {
+        EnemyMob enemy = shielded(10, 100);
 
-        assertThat(overlaysOf(enemy, 1)).isEmpty();
+        assertThat(eggOf(enemy, 0).flash()).isZero();
+        assertThat(barsOf(enemy, 0).getFirst().bars()).containsExactly(new EnemyBarsDraw.Bar(EnemyBarLook.SHIELD, 10f / 50f));
+    }
+
+    @Test
+    void aHurtShieldedEnemyShowsItsShieldBarAboveItsHealthBar() {
+        EnemyMob enemy = shielded(100, 100);
+        enemy.doDamage(Damage.magic(DamageUnits.ofPoints(1)), AttackProfile.none().asPeriodic());
+
+        assertThat(barsOf(enemy, 0).getFirst().bars()).extracting(EnemyBarsDraw.Bar::look)
+                .containsExactly(EnemyBarLook.SHIELD, EnemyBarLook.HEALTH);
+    }
+
+    @Test
+    void theShieldBarStopsAtFullWidthAndNeverGetsTooNarrowToSee() {
+        float full = barsOf(shielded(500, 100), 0).getFirst().bars().getFirst().fill();
+        float sliver = barsOf(shielded(1, 100), 0).getFirst().bars().getFirst().fill();
+
+        assertThat(full).isEqualTo(1f);
+        assertThat(sliver).isGreaterThan(1f / 50f);
+    }
+
+    @Test
+    void theEggAndItsBarGoWhenTheShieldRunsOutWithNoPop() {
+        EnemyMob enemy = shielded(10, 1);
+
+        enemy.doTick(1);
+
+        assertThat(overlaysOf(enemy, 1)).noneMatch(EnemyEggDraw.class::isInstance);
+        assertThat(barsOf(enemy, 1)).isEmpty();
+        assertThat(burstsOf(enemy, 1)).isEmpty();
+    }
+
+    @Test
+    void aHitLandingOnAShieldFlashesTheEggUntilItsWindowEnds() {
+        EnemyMob enemy = shielded(100, 500);
+
+        enemy.doDamage(Damage.physical(DamageUnits.ofPoints(1)));
+        enemy.doTick(1);
+
+        assertThat(eggOf(enemy, 1).flash()).isEqualTo(1f);
+        assertThat(eggOf(enemy, 1 + EnemyFrameBuilder.SHIELD_FLASH_DURATION_TICKS).flash()).isZero();
+    }
+
+    @Test
+    void damageThatGoesPastTheShieldsDoesNotFlashTheEgg() {
+        EnemyMob enemy = shielded(100, 500);
+
+        enemy.doDamage(Damage.magic(DamageUnits.ofPoints(1)), AttackProfile.none().asPeriodic());
+        enemy.doTick(1);
+
+        assertThat(eggOf(enemy, 1).flash()).isZero();
+    }
+
+    @Test
+    void aHitBreakingTheLastShieldPopsTheEggForAWhile() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 500, 3);
+        enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(1), 500, DamageSink.none()));
+
+        enemy.doDamage(Damage.physical(DamageUnits.ofPoints(5)));
+        enemy.doTick(1);
+
+        assertThat(overlaysOf(enemy, 1)).noneMatch(EnemyEggDraw.class::isInstance);
+        assertThat(burstsOf(enemy, 1)).singleElement()
+                .satisfies(burst -> assertThat(burst.progress()).isZero());
+        assertThat(burstsOf(enemy, 1 + EnemyFrameBuilder.SHIELD_POP_DURATION_TICKS + 1)).isEmpty();
+    }
+
+    @Test
+    void aHitBreakingOneShieldWhileAnotherHoldsDoesNotPop() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 500, 3);
+        enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(1), 100, DamageSink.none()).from(AttackOrigin.fresh()));
+        enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(50), 500, DamageSink.none()).from(AttackOrigin.fresh()));
+
+        enemy.doDamage(Damage.physical(DamageUnits.ofPoints(5)));
+        enemy.doTick(1);
+
+        assertThat(overlaysOf(enemy, 1)).anyMatch(EnemyEggDraw.class::isInstance);
+        assertThat(burstsOf(enemy, 1)).isEmpty();
+    }
+
+    @Test
+    void barsAndTheBadgeClearTheEgg() {
+        DefinedEnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(), EnemyFixtures.simpleDefinition("plain"), Rank.ELITE);
+        enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(10), 100, DamageSink.none()));
+
+        EnemyEggDraw egg = eggOf(enemy, 0);
+
+        assertThat(barsOf(enemy, 0).getFirst().y()).isGreaterThan(egg.y() + egg.radiusY() * 0.92f);
+        assertThat(badgeOf(enemy).y()).isLessThan(egg.y() - egg.radiusY());
+    }
+
+    @Test
+    void theSelectionRingSnapsJustOutsideTheEgg() {
+        EnemyMob enemy = shielded(10, 100);
+        EnemyFrameBuilder selected = new EnemyFrameBuilder(0, 0.0, Optional.of(enemy), 0.0);
+
+        enemy.accept(selected);
+
+        EnemyEggDraw egg = eggOf(enemy, 0);
+        assertThat(selected.buildOverlays()).filteredOn(EnemyRingDraw.class::isInstance).map(EnemyRingDraw.class::cast)
+                .singleElement().satisfies(ring -> assertThat(ring.radius()).isGreaterThan(egg.radiusY()));
     }
 
     @Test
@@ -591,7 +700,7 @@ class EnemyFrameBuilderTest {
         EnemyMob shrouder = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("shrouder")
                 .withAbilities(List.of(new Ability(AbilityTerm.SHROUD, new PeriodicTrigger(40),
                         new ApplyEffectAction(new InvisibleTemplate(60), new RadiusTarget(100f))))));
-        EnemyFrameBuilder selected = new EnemyFrameBuilder(0, 0.0, Optional.of(shrouder));
+        EnemyFrameBuilder selected = new EnemyFrameBuilder(0, 0.0, Optional.of(shrouder), 0.0);
 
         shrouder.accept(selected);
 
