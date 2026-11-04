@@ -28,6 +28,7 @@ import td.stat.StatView;
 import td.term.TermText;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
+import td.util.TickRate;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Set;
 
@@ -361,6 +363,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             return;
         }
         this.health.heal(gain);
+        this.moments.markPending(Moment.REWIND);
         this.stats.invalidate();
         if (this.observer.isOn()) {
             this.observer.report(new MobEvent.HealthChanged("rewind", before, this.health.current()));
@@ -846,6 +849,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.moments.ticksSince(Moment.DODGE, gameTime);
     }
 
+    /** Empty if its health was never turned back at once. Captured like {@link #ticksSinceCriticalHit}. */
+    public OptionalInt ticksSinceRewind(int gameTime) {
+        return this.moments.ticksSince(Moment.REWIND, gameTime);
+    }
+
     /** Empty if no hit ever landed on a shield. Captured like {@link #ticksSinceCriticalHit}. */
     public OptionalInt ticksSinceShieldHit(int gameTime) {
         return this.moments.ticksSince(Moment.SHIELD_HIT, gameTime);
@@ -980,6 +988,25 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.kill();
         }
         return true;
+    }
+
+    /**
+     * The share of its full health coming back each second, whatever the source. Steady between the whole units it
+     * lands in, and {@code 0} whenever nothing comes back: at full health, while it crumbles, at no worth, or under
+     * Inversion, where regeneration lands as damage.
+     */
+    public float healingPerSecond() {
+        float perTick = this.restoredPerTick();
+        if (perTick <= 0f || this.isDead() || this.health.current() >= this.health.max()
+                || this.activeEffects.has(EffectKind.INVERSION)) {
+            return 0f;
+        }
+        return perTick * TickRate.TICKS_PER_SECOND / this.health.max();
+    }
+
+    /** How full a fading level or pool is, from 0 to 1; empty for any other kind, or when it isn't active. */
+    public OptionalDouble effectFullness(EffectKind kind) {
+        return this.activeEffects.fullness(kind);
     }
 
     /** What a tick of regeneration restores: the stat, worth what spirit makes it. */

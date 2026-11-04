@@ -64,6 +64,8 @@ public final class AsciiBoardRenderer {
                         place(grid, cellOf(body.x(), scale), cellOf(body.y(), scale), enemyChar(body.look(), false));
                 case EnemyFadeDraw fade ->
                         place(grid, cellOf(fade.x(), scale), cellOf(fade.y(), scale), enemyChar(fade.look(), true));
+                case EnemyEmissionDraw ignored -> {
+                }
             }
         }
 

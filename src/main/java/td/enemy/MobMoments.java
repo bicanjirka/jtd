@@ -44,6 +44,8 @@ final class MobMoments {
         DAMAGE_TAKEN,
         CRITICAL_HIT,
         DODGE,
+        /** Health was turned back at once. */
+        REWIND,
         /** A hit landed on a shield. */
         SHIELD_HIT,
         /** A hit broke the last shield it met. */
