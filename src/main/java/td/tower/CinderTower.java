@@ -3,6 +3,8 @@ package td.tower;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
+import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.PoolTuning;
@@ -233,6 +235,29 @@ public final class CinderTower extends AbstractTower {
         }
         double bellows = spec.bellows() ? 1.0 + this.fireRateFromAuras() : 1.0;
         return this.stats().value(TowerStat.CONE_WIDTH) / 2 * bellows;
+    }
+
+    /** It never deals a hit, so what one target takes a second is the burn its waves keep going. */
+    @Override
+    protected TowerStatLine dpsRow(TowerStats stats, TowerStatLine cadence) {
+        return dpsLine(TowerStatRow.BURN_DPS, settledBurnPerSecond(this.authoredStats(), this.spec(List.of()), cadence.base()),
+                settledBurnPerSecond(stats, this.spec(this.mechanics.all()), cadence.current()));
+    }
+
+    /**
+     * In points, with the Stoke full and crits at their average; Soulfire's pool burns beside the ordinary one. A pool
+     * settles on the average wave, but its cap follows the strongest it has taken, so the cap is put in terms of the
+     * average.
+     */
+    private static float settledBurnPerSecond(TowerStats at, CinderSpec spec, float wavesPerSecond) {
+        float stoke = spec.stoke().active() ? at.value(TowerStat.STOKE_STEP) * spec.stoke().maxSteps() : 0f;
+        float average = averageCrit(at);
+        float strongest = at.critChance() > 0f ? at.value(TowerStat.CRIT_MULTIPLIER) : 1f;
+        float level = at.damage() * (1f + stoke) * average;
+        int duration = Math.max(1, Math.round(at.value(TowerStat.BURN_DURATION) * at.effectLength()));
+        float pool = ActiveEffects.settledPoolPerSecond(level, duration, at.value(TowerStat.BURN_POOL_CAP) * strongest / average,
+                TickRate.TICKS_PER_SECOND / wavesPerSecond);
+        return DamageUnits.inPoints(pool) * (spec.soulfire() ? 2f : 1f);
     }
 
     private int burnDuration() {

@@ -112,7 +112,7 @@ final class StatLooks {
             case MAGIC_DAMAGE, MAGIC_FIELD_DAMAGE -> StatLook.toned(Glyph.DOT, Palette.DAMAGE_MAGIC);
             case FIRE_RATE, SWEEP_TIME -> StatLook.plain(Glyph.CHEVRON);
             case PHYSICAL_DPS -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
-            case MAGIC_DPS -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_MAGIC);
+            case MAGIC_DPS, BURN_DPS -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_MAGIC);
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatLook.plain(Glyph.COMET);
         };
     }

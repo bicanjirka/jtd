@@ -193,6 +193,24 @@ public final class ActiveEffects {
         this.active.put(incoming.kind(), existing.withFuel(List.copyOf(fuel), peakL0).withTuning(tuning));
     }
 
+    /**
+     * What a pool deals each second once it has settled under a top-up of {@code level} every {@code ticksBetween}
+     * ticks: each top-up then adds exactly what the pool lost since the last. A top-up decays unseen until the next
+     * pulse, which on average takes half a window, and that part is never dealt.
+     *
+     * @param level         what each top-up carries, a tick
+     * @param durationTicks the duration the pool decays by
+     * @param capFactor     the most it holds, as a multiple of {@code level}
+     */
+    public static float settledPoolPerSecond(float level, int durationTicks, float capFactor, double ticksBetween) {
+        double alpha = Math.exp(POOL_DECAY_EXPONENT / durationTicks);
+        double keptBetween = Math.pow(alpha, ticksBetween);
+        double afterTopUp = level / (1.0 - keptBetween + keptBetween / capFactor);
+        double dealtBetween = afterTopUp * (1.0 - keptBetween) / (1.0 - alpha);
+        double keptUntilPulse = Math.pow(alpha, (POOL_PULSE_TICKS - 1) / 2.0);
+        return (float) (dealtBetween * keptUntilPulse * TickRate.TICKS_PER_SECOND / ticksBetween);
+    }
+
     /** Adds a stack of each debuff that {@code pool} earns, starting the debuff if the enemy has none. */
     private void earnStack(EffectKind pool) {
         for (EffectKind debuff : EffectInteractions.earnedBy(pool)) {

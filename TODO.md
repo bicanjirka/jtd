@@ -355,6 +355,16 @@ implementation. There is no way to add or edit a level without a code change and
 
 ## Tower features
 
+### The Scorcher's DPS row reads low when its waves keep time with the burn's pulses
+
+The settled formula takes a top-up to wait half a pulse window on average. A wave period that is a whole number of
+pulses lands every top-up on a pulse, so nothing decays unseen and the pool deals more than the row says, most on a short
+burn. Any other whole period visits every phase and the formula holds.
+
+- **Where:** `ActiveEffects.settledPoolPerSecond` (`keptUntilPulse`).
+- **Approach:** drop the wait when the period is a multiple of `POOL_PULSE_TICKS`, against a simulated pool at such a
+  period.
+
 ### No tower denies heals or shields along a whole lane
 
 No wave needs anti-sustain yet. On The Amber Hive (8 seeds) the strong player brings no anti-sustain node to the Brood
@@ -464,27 +474,16 @@ A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
 
-### The DPS row undersells burn and splash towers (proposal)
+### The DPS row undersells splash towers
 
 `FEATURE-stat-presentation.md` (decision 8) gives every tower with a Fire rate a `DPS /target` row: hit damage ×
-fire rate × average crit, before armor. That leaves out burns, splash, procs and effects. The Scorcher deals most of
-its damage through the burn its flame leaves, so its DPS row shows a fraction of what it does; the Mortar and the
-Burst show one target's share of a shot that hits a crowd. Players compare towers by the headline number, so these
-look like poor buys.
+fire rate × average crit, before armor. The Mortar and the Burst show one target's share of a shot that hits a crowd,
+and no fixed number can say how big that crowd is. Players compare towers by the headline number, so these look like
+poor buys.
 
-- **Where:** the DPS row (the tower sheet text and `AbstractTower.inspect`), the
-  Scorcher's burn stats (`BURN_DURATION`, `BURN_POOL_CAP`, `STOKE_STEP`, `CinderTower`), the burn rules in
-  `td.effect.ActiveEffects`, and the tower's damage record (`AbstractTower.damageDealt`, `TowerTally`).
-- **Approach:** two parts.
-  1. **The Scorcher's DPS includes its burn.** The sheet DPS adds the burn damage per second one target takes while
-     the tower keeps it in its cone (ignition plus the burn pool at its steady state under the cap and stoking), so
-     the number is honest for a tower whose damage is mostly over time. Its hover says the burn is counted. Splash
-     towers keep `/target`; decide then whether they need a "per crowd" hint.
-  2. **A live DPS beside the sheet one.** A placed tower also shows the damage per second it really dealt this wave:
-     damage credited to it this wave, divided by the seconds it was active (had a target or a burn of its own
-     ticking), reset when a wave starts. It covers what the sheet formula can't (splash count, procs, armor, overkill)
-     and shows next to the theoretical row, in the same format. First check that burn ticks and other periodic damage
-     are credited to the tower that applied them, or the live number repeats the sheet's blind spot.
+- **Where:** `AbstractTower.landHit` (the one place damage is credited), `AbstractTower.inspect`.
+- **Approach:** a placed tower also shows the damage per second it really dealt this wave, reset when a wave starts.
+  It covers what the sheet formula can't (splash count, procs, armor, overkill) in the same format.
 
 ## Enemy features
 
