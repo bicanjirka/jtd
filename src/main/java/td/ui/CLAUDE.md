@@ -27,7 +27,7 @@ keeps the seam honest.
   enemy's seed, so nothing is stored and frame cost doesn't grow with particles. Emissions run on the wall clock; bursts
   follow game time, since they report an event. A cloaked enemy's art fades with it, except a burn strong enough to reveal it.
 - Timed visuals follow one idiom: the entity records the tick something happened
-  (`ticksSinceDeath`, `ticksSinceCriticalHit`, `effectGainedWithin`/`LostWithin`), answered as an
+  (`ticksSinceDeath`, `ticksSinceCriticalHit`, `effectLostWithin`), answered as an
   `OptionalInt` that is empty when it never happened, and the frame builder turns it into a 0..1
   progress. A query the frame build makes for every kind of every enemy takes its window, so it
   builds no answer outside it. Draw records carry progress, never stored animation

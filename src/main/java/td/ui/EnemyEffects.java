@@ -56,6 +56,8 @@ final class EnemyEffects {
 
     /** How strong a poison tint is: enough to read as sick, little enough to keep the body's own colour. */
     private static final float POISON_TINT_ALPHA = 0.22f;
+    /** A flame grows with a body up to this radius; beyond it a bigger body burns wider, not taller, and keeps its badge clear. */
+    private static final float TALLEST_FLAME_RADIUS = 12f;
     private static final float FREEZE_TINT_ALPHA = 0.55f;
     /** Below this radius on screen a body emits the least, at {@link #TINY_BODY_EMISSION} of the full amount. */
     private static final float TINY_BODY_RADIUS = 5.5f;
@@ -269,13 +271,14 @@ final class EnemyEffects {
     private static void paintFire(Graphics2D g2, EnemyEmissionDraw e, float r, FireColors fire) {
         double t = e.seconds();
         float emit = poolEmission(e.amount(), r);
+        float tall = Math.min(r, TALLEST_FLAME_RADIUS);
         int flames = Math.max(1, Math.round((4f + r / 7f) * emit));
         for (int i = 0; i < flames; i++) {
             double s = e.seed() + i * 7.3;
             double p = frac(t * (1.5 + hash(s) * 0.8) + hash(s + 1));
             double x = (hash(s + 2) * 2 - 1) * r * 0.85 + Math.sin(t * 7 + s) * r * 0.06;
-            double y = -r * (0.05 + hash(s + 3) * 0.55) - p * r * 1.05;
-            double size = (1 - p) * r * 0.6 + 1;
+            double y = -r * (0.05 + hash(s + 3) * 0.55) - p * tall * 1.05;
+            double size = (1 - p) * tall * 0.6 + 1;
             g2.setColor(faded(fire.outer(), Math.min(1.0, (1 - p) * 1.5) * 0.95 * e.alpha()));
             g2.fill(teardrop(x, y, size * 0.62, size * 1.7));
             g2.setColor(faded(fire.inner(), Math.min(1.0, (1 - p) * 1.3) * e.alpha()));
@@ -286,7 +289,7 @@ final class EnemyEffects {
             double s = e.seed() + i * 3.1 + 40;
             double p = frac(t * 0.9 + hash(s));
             g2.setColor(faded(fire.ember(), (1 - p) * e.alpha()));
-            g2.fill(new Rectangle2D.Double((hash(s + 1) * 2 - 1) * r + Math.sin(t * 4 + s) * 2, -r * 0.8 - p * r * 2.1, 1.4, 1.4));
+            g2.fill(new Rectangle2D.Double((hash(s + 1) * 2 - 1) * r + Math.sin(t * 4 + s) * 2, -r * 0.8 - p * tall * 2.1, 1.4, 1.4));
         }
     }
 
