@@ -16,7 +16,7 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **HUD identity** (`docs/features/FEATURE-hud-identity.md`): a neutral HUD, level cards coloured from their level, and
   a colour only for problems. Draft, for later; pick an option first.
 - **Enemy health bar** (`docs/features/FEATURE-enemy-health-bar.md`): a thin bar under a hurt enemy, solid bodies, and
-  one general way to show a bar under an enemy. Grilled; ships within the enemy and effect visuals' order.
+  one general way to show a bar under an enemy. Built; its live check comes with the enemy and effect visuals.
 
 ## Feature request implementation order
 

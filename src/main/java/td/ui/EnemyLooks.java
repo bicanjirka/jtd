@@ -1,11 +1,13 @@
 package td.ui;
 
+import td.ui.render.EnemyBarLook;
 import td.ui.render.EnemyLook;
 
 import java.awt.Color;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.EnumMap;
@@ -18,7 +20,10 @@ import java.util.Set;
 /** The table of enemy looks: one row per {@link EnemyLook}, checked complete when this class loads. */
 final class EnemyLooks {
 
+    /** How closely a curve is followed when measuring a shape's reach at scale one; read while the table builds. */
+    private static final double REACH_FLATNESS = 0.001;
     private static final Map<EnemyLook, Row> ROWS = checkedComplete(rows());
+    private static final Color HEALTH_BAR = new Color(0xE8, 0xE4, 0xDA);
 
     private EnemyLooks() {
     }
@@ -39,24 +44,45 @@ final class EnemyLooks {
     record Detail(Color color, ScaledShape shape) {
     }
 
-    /** One look: its colour, its body, any detail over that body, and how it bursts. */
-    record Row(Color color, ScaledShape body, Optional<Detail> detail, FadeOutlines fade) {
+    /**
+     * One look: its colour, its body, any detail over that body, how it bursts, and how far its art reaches from its
+     * centre at scale one, whichever way it turns.
+     */
+    record Row(Color color, ScaledShape body, Optional<Detail> detail, FadeOutlines fade, float reach) {
 
         private static Row of(Color color, ScaledShape body) {
-            return new Row(color, body, Optional.empty(), (scale, grown) -> List.of(body.at(grown)));
+            return new Row(color, body, Optional.empty(), (scale, grown) -> List.of(body.at(grown)), reachOf(body));
         }
 
         private Row withDetail(Color detailColor, ScaledShape detailShape) {
-            return new Row(this.color, this.body, Optional.of(new Detail(detailColor, detailShape)), this.fade);
+            return new Row(this.color, this.body, Optional.of(new Detail(detailColor, detailShape)), this.fade,
+                    Math.max(this.reach, reachOf(detailShape)));
         }
 
         private Row withFade(FadeOutlines outlines) {
-            return new Row(this.color, this.body, this.detail, outlines);
+            return new Row(this.color, this.body, this.detail, outlines, this.reach);
         }
     }
 
     static Row of(EnemyLook look) {
         return ROWS.get(look);
+    }
+
+    static Color barColor(EnemyBarLook look) {
+        return switch (look) {
+            case HEALTH -> HEALTH_BAR;
+        };
+    }
+
+    private static float reachOf(ScaledShape shape) {
+        double reach = 0;
+        double[] point = new double[6];
+        for (PathIterator path = shape.at(1f).getPathIterator(null, REACH_FLATNESS); !path.isDone(); path.next()) {
+            if (path.currentSegment(point) != PathIterator.SEG_CLOSE) {
+                reach = Math.max(reach, Math.hypot(point[0], point[1]));
+            }
+        }
+        return (float) reach;
     }
 
     static Map<EnemyLook, Row> checkedComplete(Map<EnemyLook, Row> rows) {
