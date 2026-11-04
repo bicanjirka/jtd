@@ -3,6 +3,8 @@ package td.tower;
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
+import td.effect.ActiveEffects;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -17,14 +19,17 @@ import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
 import td.util.GameWorld;
 import td.util.RandomSource;
+import td.util.TickRate;
 import td.wave.Path;
 import td.wave.Vec2;
 import td.zone.ZoneKind;
 
 import java.util.List;
+import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.Assertions.withinPercentage;
 
 /**
  * Cinder only applies burns, so hits appear as burn ticks, and each case ticks long enough for the
@@ -192,6 +197,113 @@ class CinderTowerTest {
         CinderTower tower = this.towerAt(3, 3);
         UpgradePaths.buy(tower, this.context, nodes);
         return tower;
+    }
+
+    private static float burnDpsOf(CinderTower tower) {
+        return tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.BURN_DPS).findFirst()
+                .orElseThrow().breakdown().current();
+    }
+
+    /** What the row should read for burns of {@code level} a wave, from the tower's own stats. */
+    private static float settledPoints(CinderTower tower, float level) {
+        return settledPoints(tower, level, Math.round(tower.stats().value(TowerStat.BURN_DURATION)),
+                tower.stats().value(TowerStat.BURN_POOL_CAP));
+    }
+
+    private static float settledPoints(CinderTower tower, float level, int duration, float capFactor) {
+        double ticksBetween = (CinderTower.COOLDOWN_MAX + 1) / tower.attackRate();
+        return DamageUnits.inPoints(ActiveEffects.settledPoolPerSecond(level, duration, capFactor, ticksBetween));
+    }
+
+    /** The size of the last burn it lands on an enemy it keeps burning, so the Stoke is full. */
+    private float burnAtFullStoke(CinderTower tower) {
+        FakeEnemyMob target = FakeEnemyMob.at(150, 112);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        tickThrough(tower, 1, 6 * CYCLE);
+
+        return burns(target).getLast().damagePerTick().amount();
+    }
+
+    @Test
+    void itsDpsIsTheBurnItsWavesSettleAtNotOneWavesDamage() {
+        CinderTower tower = towerAt(3, 3);
+
+        assertThat(burnDpsOf(tower)).isCloseTo(settledPoints(tower, tower.damageCurrent()), within(0.01f));
+    }
+
+    @Test
+    void itsDpsCountsAFullStoke() {
+        CinderTower tower = this.towerWith("Attune");
+
+        float full = this.burnAtFullStoke(tower);
+
+        assertThat(full).isGreaterThan(tower.damageCurrent());
+        assertThat(burnDpsOf(tower)).isCloseTo(settledPoints(tower, full), within(0.01f));
+    }
+
+    @Test
+    void itsDpsCountsSoulfiresPoolBesideTheOrdinaryOne() {
+        CinderTower tower = this.towerWith("Soulfire");
+
+        float full = this.burnAtFullStoke(tower);
+
+        float crit = AbstractTower.averageCrit(tower.stats());
+        float capOverAverage = tower.stats().value(TowerStat.BURN_POOL_CAP) * tower.stats().value(TowerStat.CRIT_MULTIPLIER) / crit;
+        assertThat(burnDpsOf(tower)).isCloseTo(2 * settledPoints(tower, full * crit,
+                Math.round(tower.stats().value(TowerStat.BURN_DURATION)), capOverAverage), withinPercentage(1));
+    }
+
+    @Test
+    void itsDpsRowComparesTheBuiltTowerWithThePlainOne() {
+        CinderTower tower = this.towerWith("Attune");
+
+        TowerStatLine row = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.BURN_DPS)
+                .findFirst().orElseThrow();
+
+        assertThat(row.breakdown().base()).isCloseTo(settledPoints(towerAt(4, 4), towerAt(4, 4).damageCurrent()),
+                within(0.01f));
+        assertThat(row.breakdown().current()).isGreaterThan(row.breakdown().base());
+    }
+
+    @Test
+    void itsDpsDecaysItsPoolOverTheDurationItsEffectsReallyLast() {
+        CinderTower tower = TowerFixtures.buffed(towerAt(3, 3), this.context, TowerModifiers.effectDuration(1f));
+
+        int lengthened = Math.round(tower.stats().value(TowerStat.BURN_DURATION) * tower.stats().effectLength());
+
+        assertThat(burnDpsOf(tower)).isCloseTo(settledPoints(tower, tower.damageCurrent(), lengthened,
+                tower.stats().value(TowerStat.BURN_POOL_CAP)), within(0.01f));
+        assertThat(burnDpsOf(tower)).isGreaterThan(settledPoints(tower, tower.damageCurrent()));
+    }
+
+    @Test
+    void itsDpsIsWhatAPoolDealsFedByRolledCritsWhoseStrongestSetsItsCap() {
+        CinderTower tower = TowerFixtures.buffed(towerAt(3, 3), this.context,
+                TowerModifiers.critChance(0.1f).plus(TowerModifiers.attackSpeed(2f)));
+        int between = (int) Math.round((CinderTower.COOLDOWN_MAX + 1) / tower.attackRate());
+        int settlingBeats = 100;
+        int measuredBeats = 2000;
+        long[] dealt = {0};
+        Random rolls = new Random(1);
+        ActiveEffects pool = new ActiveEffects();
+        PoolTuning tuning = PoolTuning.standard().withCapFactor(tower.stats().value(TowerStat.BURN_POOL_CAP));
+        int duration = Math.round(tower.stats().value(TowerStat.BURN_DURATION));
+
+        for (int beat = 0; beat < settlingBeats + measuredBeats; beat++) {
+            if (beat == settlingBeats) {
+                dealt[0] = 0;
+            }
+            boolean crit = rolls.nextFloat() < tower.stats().critChance();
+            int size = Math.round(tower.damageCurrent() * (crit ? tower.stats().value(TowerStat.CRIT_MULTIPLIER) : 1f));
+            pool.apply(Effect.burn(Damage.magic(size), duration, damage -> dealt[0] += damage.amount()).withTuning(tuning));
+            for (int tick = 0; tick < between; tick++) {
+                pool.tick();
+            }
+        }
+
+        float seconds = measuredBeats * between / TickRate.TICKS_PER_SECOND;
+        assertThat(burnDpsOf(tower)).isCloseTo(DamageUnits.inPoints(dealt[0]) / seconds, withinPercentage(2));
     }
 
     private static List<Effect> burns(FakeEnemyMob enemy) {

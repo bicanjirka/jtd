@@ -1018,7 +1018,7 @@ public abstract class AbstractTower implements Tower {
 
     /** Damage, then how often: a fire rate with the damage a second it comes to, or a field's damage a second. */
     private List<TowerStatLine> attackRows(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
-        boolean magic = stats.has(TowerCapability.MAGIC_DAMAGE) || this.damageType() == DamageType.MAGIC;
+        boolean magic = this.dealsMagic(stats);
         if (this.dealsByField()) {
             return List.of(this.derivedRow(TowerStatRow.damage(magic, true), TowerStat.DAMAGE, stats, parts,
                     at -> DamageUnits.inPoints(at.damage()) * TICKS_PER_SECOND * (float) at.attackRate()));
@@ -1029,15 +1029,31 @@ public abstract class AbstractTower implements Tower {
         if (cadence.stat() != TowerStatRow.FIRE_RATE) {
             return List.of(damage, cadence);
         }
-        float base = DamageUnits.inPoints(damage.base()) * cadence.base() * averageCrit(this.authored);
-        float now = DamageUnits.inPoints(damage.current()) * cadence.current() * averageCrit(stats);
-        TowerStatLine dps = new TowerStatLine(new StatBreakdown(TowerStatRow.dps(magic), base, List.of(), base,
-                List.of(), now), TowerStat.DAMAGE);
-        return List.of(damage, cadence, dps);
+        return List.of(damage, cadence, this.dpsRow(stats, cadence));
+    }
+
+    private boolean dealsMagic(TowerStats stats) {
+        return stats.has(TowerCapability.MAGIC_DAMAGE) || this.damageType() == DamageType.MAGIC;
+    }
+
+    /** What one target takes a second at {@code stats}: what a hit deals, as often as it fires. */
+    protected TowerStatLine dpsRow(TowerStats stats, TowerStatLine cadence) {
+        return dpsLine(TowerStatRow.dps(this.dealsMagic(stats)), DamageUnits.inPoints(this.authored.damage()) * cadence.base() * averageCrit(this.authored),
+                DamageUnits.inPoints(stats.damage()) * cadence.current() * averageCrit(stats));
+    }
+
+    /** A damage-a-second row, which no node changes by itself: it follows the stats it comes from. */
+    protected static TowerStatLine dpsLine(TowerStatRow row, float base, float now) {
+        return new TowerStatLine(new StatBreakdown(row, base, List.of(), base, List.of(), now), TowerStat.DAMAGE);
+    }
+
+    /** The stats as authored, resolved with nothing on them. */
+    protected final TowerStats authoredStats() {
+        return this.authored;
     }
 
     /** What a hit deals on average for its crits, as a share of a plain one. */
-    private static float averageCrit(TowerStats stats) {
+    protected static float averageCrit(TowerStats stats) {
         return 1f + stats.critChance() * (stats.value(TowerStat.CRIT_MULTIPLIER) - 1f);
     }
 

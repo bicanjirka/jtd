@@ -10,6 +10,7 @@ import td.stat.EnemyStat;
 import td.stat.StatModifier;
 import td.stat.StatModifiers;
 import td.stat.StatSheet;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,6 +88,29 @@ class ActiveEffectsTest {
         for (int i = 0; i < times; i++) {
             effects.tick();
         }
+    }
+
+    @Test
+    void aPoolToppedUpOnASteadyBeatDealsWhatItsSettledFormulaGives() {
+        int between = 21;
+        int duration = 60;
+        int level = 1000;
+        int beats = 20;
+        List<Damage> received = new ArrayList<>();
+        ActiveEffects effects = new ActiveEffects();
+        for (int beat = 0; beat < 2 * beats; beat++) {
+            if (beat == beats) {
+                received.clear();
+            }
+            effects.apply(Effect.burn(Damage.magic(level), duration, recordingSink(received)));
+            tickTimes(effects, between);
+        }
+
+        float seconds = beats * between / TickRate.TICKS_PER_SECOND;
+        float dealtPerSecond = received.stream().mapToInt(Damage::amount).sum() / seconds;
+
+        assertThat(ActiveEffects.settledPoolPerSecond(level, duration, PoolTuning.standard().capFactor(), between))
+                .isCloseTo(dealtPerSecond, within(dealtPerSecond * 0.01f));
     }
 
     @Test

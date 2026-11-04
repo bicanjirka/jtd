@@ -1,5 +1,6 @@
 package td.tower;
 
+import td.effect.EffectKind;
 import td.stat.StatDirection;
 import td.stat.StatGroup;
 import td.stat.StatTerm;
@@ -23,6 +24,8 @@ public enum TowerStatRow implements StatTerm {
     /** Points a second on one target, before its defences. */
     PHYSICAL_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
     MAGIC_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
+    /** Points a second on one target from a burn kept going, before its defences. */
+    BURN_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
     /** In cells a second. */
     PROJECTILE_SPEED("Proj speed", "Projectile speed", StatUnit.CELLS_PER_SECOND, StatDirection.HIGHER),
     /** A share of the standard projectile's size. */
@@ -69,7 +72,7 @@ public enum TowerStatRow implements StatTerm {
     public StatGroup group() {
         return switch (this) {
             case PHYSICAL_DAMAGE, MAGIC_DAMAGE, PHYSICAL_FIELD_DAMAGE, MAGIC_FIELD_DAMAGE, FIRE_RATE, SWEEP_TIME,
-                 PHYSICAL_DPS, MAGIC_DPS -> StatGroup.DAMAGE;
+                 PHYSICAL_DPS, MAGIC_DPS, BURN_DPS -> StatGroup.DAMAGE;
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatGroup.DELIVERY;
         };
     }
@@ -88,6 +91,8 @@ public enum TowerStatRow implements StatTerm {
             case PHYSICAL_DPS, MAGIC_DPS -> TermText.of("damage times fire rate times the average crit, on one "
                     + "target before its defences; it leaves out splash on others, effects and damage over time, "
                     + "extra hits from upgrades, and misses");
+            case BURN_DPS -> TermText.of("what one target takes from its ").plus(EffectKind.BURN)
+                    .plus(" while it stays in the flame, once the waves have built that up, before its defences");
             case PROJECTILE_SPEED -> TermText.of("how fast its shots fly");
             case PROJECTILE_SIZE -> TermText.of("how big its shots are, as a share of the usual");
         };
