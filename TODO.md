@@ -11,12 +11,8 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
-- **Enemy and effect visuals** (`docs/features/FEATURE-enemy-and-effect-visuals.md`): effects drawn on the enemy,
-  trait markers gone, a darker board, a small rank badge, enemy looks as tables. Grilled, next up.
 - **HUD identity** (`docs/features/FEATURE-hud-identity.md`): a neutral HUD, level cards coloured from their level, and
   a colour only for problems. Draft, for later; pick an option first.
-- **Enemy health bar** (`docs/features/FEATURE-enemy-health-bar.md`): a thin bar under a hurt enemy, solid bodies, and
-  one general way to show a bar under an enemy. Built; its live check comes with the enemy and effect visuals.
 
 ## Feature request implementation order
 
@@ -280,6 +276,27 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
   switches and `stepsOf` go. A rule every entry keeps, in `EffectKindTest`: every `HARD_CC` kind has a
   ladder ending in 0, and no other kind has one. The numbers move, they don't change, so no balance
   check.
+
+## Board visuals
+
+### Overlapping ground zones look bad
+
+Translucent zone discs stack: several Ward Mines or Blinding Fields on one stretch of path build into a muddy pile of
+discs and edges, which works against the calmer board. The owner wants the look reviewed.
+
+- **Where:** `Java2DFrameRenderer.paintZone` (`ZONE_FILL_ALPHA`, `ZONE_EDGE_ALPHA`), `ZoneFrameBuilder`.
+- **Approach:** review it live on a level whose enemies drop zones, then choose: merge overlapping zones of one kind into
+  one patch with one outline, or cap how opaque a stack gets.
+
+### The ground and the bee rebuild their shapes on every paint
+
+In a dense wave `GroundPainter` takes about half of the board's paint samples on the EDT and `EnemyShapes.beeShape`
+about a quarter, because each rebuilds its shape every frame. Everything `EnemyEffects` paints takes about a tenth. The
+harness doesn't see this, since painting is outside it.
+
+- **Where:** `GroundPainter.paint`, `EnemyShapes.beeShape` and any other `Area`-built body in `EnemyLooks`.
+- **Approach:** keep the ground in an image at the view's zoom, rebuilt when the ground, the size or the zoom changes;
+  remember a body's shape per scale. Profile live with JFR through the Driver before and after.
 
 ## Balance tools
 

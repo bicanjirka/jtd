@@ -1,6 +1,6 @@
 # Feature Request: Enemy and effect visuals
 
-> **Status: grilled, ready to implement.** Mock: <https://claude.ai/artifact/Ad29S1ti5eq1swojPPQ5tC> (animated, a
+> **Status: implemented.** Mock: <https://claude.ai/artifact/Ad29S1ti5eq1swojPPQ5tC> (animated, a
 > browser drawing at the game's real sizes, to judge the idea, not final art).
 
 ## Summary
