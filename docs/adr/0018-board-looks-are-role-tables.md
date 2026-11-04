@@ -17,7 +17,8 @@ without a shape compiles and throws at paint time.
   shape, fade). It is built once and checked complete when it loads.
 - The painter looks a role up in its table and paints. The colour switch and the per-role shape
   switches go.
-- Implemented one role at a time, starting with the tower visual revamp.
+- Implemented one role at a time, starting with enemy looks (`FEATURE-enemy-and-effect-visuals.md`), which ship
+  first, then the tower visual revamp.
 
 ## Consequences
 - A new body, tower, trait or marker is one row, and the compiler or the table check forces every
