@@ -156,7 +156,7 @@
 ## Adding a `BodyArchetype`
 
 1. Add the constant.
-2. Add its cases in `DefinedEnemyMob.bodyScaleFor` and `EnemyFrameBuilder.lookFor`; the compiler forces these.
+2. Add its cases in `DefinedEnemyMob.bodyRadiusFor` and `EnemyFrameBuilder.lookFor`; the compiler forces these.
 3. Add its `EnemyLook` and that look's row in `EnemyLooks`: colour, shape, any detail. Its death fade draws the
    shape's outline unless the row says otherwise. A look without a row fails `mvn verify` by name.
 4. Add its id to `README.md`'s "Wave script ids" table and its row to the enemy table.

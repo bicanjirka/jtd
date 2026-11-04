@@ -50,6 +50,8 @@ import java.util.Set;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class DefinedEnemyMob implements EnemyMob {
 
+    /** The board scale body radii are chosen at; a body keeps its share of a cell on any other. */
+    private static final float BODY_RADIUS_BOARD_SCALE = 32f;
 
     private final GameWorld gameWorld;
     private final EnemyDefinition definition;
@@ -114,40 +116,41 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     private static float bodyScaleFor(BodyArchetype archetype, int scale, Rank rank) {
+        return bodyRadiusFor(archetype, rank) * scale / BODY_RADIUS_BOARD_SCALE;
+    }
+
+    /** The body's radius on a board of {@link #BODY_RADIUS_BOARD_SCALE}, chosen per body by eye. */
+    private static float bodyRadiusFor(BodyArchetype archetype, Rank rank) {
         return switch (archetype) {
-            case CIRCLE, SALAMANDER -> scale / 6f;
-            case SQUARE, TRIANGLE, GHOST, COURIER, SKIRMISHER, JAMMER, REAVER, MIRAGE, HERALD ->
-                    scale / (float) (7 - rank.ordinal());
-            case MIRROR_IMAGE -> scale / 8f;
-            case EMBER -> scale / 9f;
-            case ECLIPSE -> scale / 5f;
-            case BRONZE_BULL -> scale / (float) (6 - rank.ordinal());
-            case MITE -> scale / 10f;
-            case YETI, MAGMA, GOLEM -> scale / 5f;
-            case JUGGERNAUT -> scale / (float) (6 - rank.ordinal());
-            // Fixed, so it always reads as the biggest thing on the board.
-            case WARDEN -> scale / 1.5f;
-            case WARDEN_EGG -> scale / 3f;
-            case MINOTAUR -> scale / 1.7f;
-            case MONOLITH -> scale / 2f;
-            case COLOSSUS, TALOS -> scale / 2.2f;
-            case MOLTEN_CORE -> scale / 2.6f;
-            case DRONE -> scale / (float) (7 - rank.ordinal());
-            case HIVE_GUARD -> scale / 4.5f;
-            case NURSE -> scale / (float) (7 - rank.ordinal());
-            case LARVA -> scale / 5.5f;
-            case COCOON -> scale / 3.5f;
-            case HORNET -> scale / (float) (6.5f - rank.ordinal());
-            case THUNDER -> scale / 1.8f;
-            case LIGHTNING -> scale / 2.2f;
-            case RAINCLOUD -> scale / 4.5f;
-            case RAINDROP -> scale / 9f;
-            case GALE -> scale / (float) (6 - rank.ordinal());
-            case KEEPER -> scale / 1.9f;
-            case TIMEKEEPER -> scale / (float) (6.5f - rank.ordinal());
-            case SANDLING -> scale / 8f;
-            case GLASS_SENTINEL -> scale / 4.5f;
-            case MENDER, SHIELDBEARER -> scale / (float) (7 - rank.ordinal());
+            case MITE -> 4.5f;
+            case EMBER, RAINDROP, MIRROR_IMAGE, SANDLING -> 5f;
+            case CIRCLE, SALAMANDER, LARVA -> 6.5f;
+            case YETI, MAGMA, GOLEM, ECLIPSE -> 8f;
+            case HIVE_GUARD, RAINCLOUD, GLASS_SENTINEL -> 8.5f;
+            case COCOON -> 10f;
+            case WARDEN_EGG -> 11f;
+            case MOLTEN_CORE -> 13f;
+            case COLOSSUS, TALOS, LIGHTNING -> 15f;
+            case MONOLITH -> 16.5f;
+            case KEEPER -> 17f;
+            case THUNDER -> 18f;
+            case MINOTAUR -> 19f;
+            // So it always reads as the biggest thing on the board.
+            case WARDEN -> 22f;
+            case SQUARE, TRIANGLE, GHOST, COURIER, SKIRMISHER, JAMMER, REAVER, MIRAGE, HERALD, DRONE, NURSE, MENDER, SHIELDBEARER ->
+                    radiusAtRank(rank, 6f, 6.6f, 7.4f, 8.6f, 11f);
+            case HORNET, TIMEKEEPER -> radiusAtRank(rank, 6.2f, 6.8f, 7.6f, 9.4f, 13f);
+            case JUGGERNAUT, BRONZE_BULL, GALE -> radiusAtRank(rank, 7f, 7.6f, 8.6f, 11f, 16f);
+        };
+    }
+
+    private static float radiusAtRank(Rank rank, float grunt, float soldier, float veteran, float elite, float boss) {
+        return switch (rank) {
+            case GRUNT -> grunt;
+            case SOLDIER -> soldier;
+            case VETERAN -> veteran;
+            case ELITE -> elite;
+            case BOSS -> boss;
         };
     }
 
