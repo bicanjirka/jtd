@@ -181,7 +181,7 @@ final class CurlyPathLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
-            .withGround(BoardGround.of(0x1A1206, GroundMotif.COMB, 0x33240E))
+            .withGround(BoardGround.of(0x100B04, GroundMotif.COMB, 0x1C1408))
             // The drone first, so the Warden's reinforcements name a registered id; each hatch's target before it.
             .withCustomRankedEnemies(Stream.concat(Stream.of(DRONE, HIVE_GUARD, NURSE, HORNET, COCOON, LARVA),
                     WardenEnemy.chain().stream()).toList());

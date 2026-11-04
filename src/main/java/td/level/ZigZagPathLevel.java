@@ -135,7 +135,7 @@ final class ZigZagPathLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
-            .withGround(BoardGround.of(0x0A0E17, GroundMotif.RAIN, 0x223050))
+            .withGround(BoardGround.of(0x06090E, GroundMotif.RAIN, 0x121A2A))
             .withCustomEnemies(List.of(RAINDROP))
             .withCustomRankedEnemies(Stream.concat(Stream.of(RAINCLOUD, GALE), StormTwinsEnemy.pair().stream()).toList());
 

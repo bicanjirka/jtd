@@ -5,6 +5,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
@@ -15,6 +16,20 @@ final class EnemyShapes {
     }
 
     /** Two small eyes side by side at height {@code y}. */
+    /** A jagged split across stone, thin enough to stay a crack at a small size. */
+    static Shape crackShape(float scale) {
+        Path2D.Float crack = new Path2D.Float();
+        crack.moveTo(-scale * 0.2f, -scale * 0.72f);
+        crack.lineTo(scale * 0.2f, -scale * 0.22f);
+        crack.lineTo(-scale * 0.08f, scale * 0.08f);
+        crack.lineTo(scale * 0.24f, scale * 0.68f);
+        crack.lineTo(-scale * 0.08f, scale * 0.28f);
+        crack.lineTo(-scale * 0.26f, -scale * 0.02f);
+        crack.lineTo(scale * 0.02f, -scale * 0.26f);
+        crack.closePath();
+        return crack;
+    }
+
     static Shape eyesShape(float scale, float y, float radius) {
         Area eyes = new Area(new Ellipse2D.Float(-scale * 0.35f - radius, y - radius * 1.3f, radius * 2, radius * 2.6f));
         eyes.add(new Area(new Ellipse2D.Float(scale * 0.35f - radius, y - radius * 1.3f, radius * 2, radius * 2.6f)));

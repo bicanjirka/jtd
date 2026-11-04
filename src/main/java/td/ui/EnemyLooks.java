@@ -140,19 +140,25 @@ final class EnemyLooks {
 
     private static Map<EnemyLook, Row> rows() {
         Map<EnemyLook, Row> rows = new EnumMap<>(EnemyLook.class);
-        rows.put(EnemyLook.CIRCLE, Row.of(Color.CYAN, EnemyLooks::circle));
+        rows.put(EnemyLook.CIRCLE, Row.of(new Color(72, 200, 212), EnemyLooks::circle)
+                .withDetail(new Color(190, 240, 240), s -> circle(s * 0.42f)));
         rows.put(EnemyLook.GHOST, Row.of(Color.LIGHT_GRAY, EnemyShapes::ghostShape)
                 .withDetail(new Color(70, 70, 95), s -> EnemyShapes.eyesShape(s, -s * 0.2f, s * 0.16f)));
-        rows.put(EnemyLook.SQUARE, Row.of(Color.PINK, EnemyLooks::square).withFade(EnemyLooks::crossingSquares));
-        rows.put(EnemyLook.TRIANGLE, Row.of(Color.YELLOW, EnemyLooks::triangle).withFade(EnemyLooks::crossingTriangles));
-        rows.put(EnemyLook.WARDEN, Row.of(new Color(139, 0, 0), s -> star(8, s, s * 0.55f))
+        rows.put(EnemyLook.SQUARE, Row.of(new Color(232, 165, 170), EnemyLooks::square)
+                .withDetail(new Color(165, 95, 105), s -> Java2DFrameRenderer.diamondShape(s * 0.62f))
+                .withFade(EnemyLooks::crossingSquares));
+        rows.put(EnemyLook.TRIANGLE, Row.of(new Color(226, 212, 80), EnemyLooks::triangle)
+                .withDetail(new Color(135, 120, 30), s -> Java2DFrameRenderer.triangleShape(s * 0.42f, true))
+                .withFade(EnemyLooks::crossingTriangles));
+        rows.put(EnemyLook.WARDEN, Row.of(new Color(190, 30, 30), s -> star(8, s, s * 0.55f))
                 .withDetail(new Color(240, 190, 60), s -> circle(s * 0.28f)));
-        rows.put(EnemyLook.WARDEN_EGG, Row.of(new Color(139, 0, 0), EnemyShapes::wardenEggShape));
+        rows.put(EnemyLook.WARDEN_EGG, Row.of(new Color(190, 30, 30), EnemyShapes::wardenEggShape));
         rows.put(EnemyLook.MENDER, Row.of(new Color(120, 220, 150), EnemyShapes::crossShape));
         rows.put(EnemyLook.JUGGERNAUT, Row.of(new Color(120, 135, 160), EnemyLooks::square)
                 .withDetail(new Color(85, 95, 115), s -> new Rectangle2D.Float(-s * 0.55f, -s * 0.55f, s * 1.1f, s * 1.1f))
                 .withFade(EnemyLooks::crossingSquares));
-        rows.put(EnemyLook.MITE, Row.of(new Color(190, 140, 80), EnemyLooks::circle));
+        rows.put(EnemyLook.MITE, Row.of(new Color(190, 140, 80), EnemyLooks::circle)
+                .withDetail(new Color(95, 62, 30), s -> new Rectangle2D.Float(-s * 0.2f, -s * 0.95f, s * 0.4f, s * 1.9f)));
         rows.put(EnemyLook.COURIER, Row.of(new Color(170, 255, 80), EnemyLooks::triangle).withFade(EnemyLooks::crossingTriangles));
         rows.put(EnemyLook.SKIRMISHER, Row.of(new Color(80, 220, 200), Java2DFrameRenderer::diamondShape));
         rows.put(EnemyLook.SHIELDBEARER, Row.of(new Color(90, 150, 255), EnemyShapes::crossShape));
@@ -162,7 +168,8 @@ final class EnemyLooks {
                 .withDetail(new Color(50, 80, 120), s -> EnemyShapes.eyesShape(s, -s * 0.15f, s * 0.13f)));
         rows.put(EnemyLook.MAGMA, Row.of(new Color(220, 45, 35), EnemyShapes::magmaShape)
                 .withDetail(new Color(255, 170, 60), s -> circle(s * 0.4f)));
-        rows.put(EnemyLook.GOLEM, Row.of(new Color(150, 140, 125), s -> star(6, s, s * 0.87f)));
+        rows.put(EnemyLook.GOLEM, Row.of(new Color(150, 140, 125), s -> star(6, s, s * 0.87f))
+                .withDetail(new Color(85, 76, 66), EnemyShapes::crackShape));
         rows.put(EnemyLook.JAMMER, Row.of(new Color(230, 70, 190), EnemyShapes::jammerShape)
                 .withDetail(new Color(255, 225, 250), s -> circle(s * 0.3f)));
         rows.put(EnemyLook.REAVER, Row.of(new Color(205, 150, 70), EnemyShapes::barbShape));
@@ -172,7 +179,7 @@ final class EnemyLooks {
         rows.put(EnemyLook.MOLTEN_CORE, Row.of(new Color(255, 110, 20), s -> star(10, s, s * 0.7f))
                 .withDetail(new Color(255, 235, 120), s -> circle(s * 0.4f)));
         rows.put(EnemyLook.EMBER, Row.of(new Color(255, 175, 40), EnemyShapes::emberShape));
-        rows.put(EnemyLook.MONOLITH, Row.of(new Color(80, 78, 105), EnemyShapes::slabShape)
+        rows.put(EnemyLook.MONOLITH, Row.of(new Color(118, 115, 152), EnemyShapes::slabShape)
                 .withDetail(new Color(175, 120, 255), Java2DFrameRenderer::runeShape));
         rows.put(EnemyLook.ECLIPSE, Row.of(new Color(125, 70, 200), EnemyShapes::crescentShape));
         rows.put(EnemyLook.MIRAGE, Row.of(new Color(185, 155, 255), EnemyShapes::twinDiamondShape));
@@ -180,7 +187,7 @@ final class EnemyLooks {
         rows.put(EnemyLook.HERALD, Row.of(new Color(255, 205, 60), EnemyShapes::sweptArrowShape));
         rows.put(EnemyLook.TALOS, Row.of(new Color(205, 135, 60), EnemyShapes::giantShape)
                 .withDetail(new Color(200, 25, 30), s -> new Rectangle2D.Float(-s * 0.07f, -s * 0.35f, s * 0.14f, s * 1.2f)));
-        rows.put(EnemyLook.MINOTAUR, Row.of(new Color(115, 60, 35), EnemyShapes::bullHeadShape)
+        rows.put(EnemyLook.MINOTAUR, Row.of(new Color(160, 92, 55), EnemyShapes::bullHeadShape)
                 .withDetail(new Color(235, 225, 200), EnemyShapes::hornsShape));
         rows.put(EnemyLook.BRONZE_BULL, Row.of(new Color(190, 120, 50), EnemyShapes::bullHeadShape)
                 .withDetail(new Color(110, 65, 25), EnemyShapes::hornsShape));
@@ -198,7 +205,7 @@ final class EnemyLooks {
                 .withDetail(new Color(95, 150, 240), EnemyShapes::rainStreaksShape));
         rows.put(EnemyLook.LIGHTNING, Row.of(new Color(255, 235, 120), EnemyLooks::sidewaysBolt)
                 .withDetail(Color.WHITE, s -> sidewaysBolt(s * 0.45f)));
-        rows.put(EnemyLook.THUNDER, Row.of(new Color(70, 80, 118), EnemyShapes::thunderheadShape)
+        rows.put(EnemyLook.THUNDER, Row.of(new Color(108, 120, 172), EnemyShapes::thunderheadShape)
                 .withDetail(new Color(255, 225, 80), s -> AffineTransform.getTranslateInstance(0, s * 0.55f)
                         .createTransformedShape(EnemyShapes.boltShape(s * 0.6f))));
         rows.put(EnemyLook.HORNET, Row.of(new Color(235, 115, 30), EnemyShapes::hornetShape)

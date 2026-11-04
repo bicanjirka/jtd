@@ -193,7 +193,7 @@ final class RiftLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
-            .withGround(BoardGround.of(0x0B0713, GroundMotif.FISSURES, 0x2E1B45))
+            .withGround(BoardGround.of(0x07040C, GroundMotif.FISSURES, 0x180E25))
             .withCustomEnemies(List.of(ECHO))
             .withCustomRankedEnemies(List.of(MIRAGE, HERALD, ECLIPSE, MONOLITH));
 
