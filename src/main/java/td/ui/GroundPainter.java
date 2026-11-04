@@ -2,30 +2,92 @@ package td.ui;
 
 import td.board.BoardGround;
 import td.board.GroundMotif;
+import td.util.ThreadConfined;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.util.Optional;
 
 /**
  * Paints a board's floor and its motif, under everything else on the board. A motif stays background by being made
  * of short or broken marks: paths are dotted lines, so a long unbroken line would read louder than a path.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class GroundPainter {
 
     private static final Stroke MOTIF_STROKE = new BasicStroke(1f);
 
-    private GroundPainter() {
+    private Optional<Painted> painted = Optional.empty();
+
+    /** Everything the image of a ground depends on. */
+    record Layout(BoardGround ground, int scale, int width, int height, double zoomX, double zoomY) {
+
+        /** A board of {@code width} by {@code height} pixels, unzoomed. */
+        static Layout of(BoardGround ground, int scale, int width, int height) {
+            return new Layout(ground, scale, width, height, 1, 1);
+        }
+
+        Layout withZoom(double x, double y) {
+            return new Layout(this.ground, this.scale, this.width, this.height, x, y);
+        }
+
+        int imageWidth() {
+            return Math.max(1, (int) Math.ceil(this.width * this.zoomX));
+        }
+
+        int imageHeight() {
+            return Math.max(1, (int) Math.ceil(this.height * this.zoomY));
+        }
     }
 
-    /** Fills the whole board, so it is also what clears the previous frame. */
-    static void paint(Graphics2D g2, BoardGround ground, int scale, int width, int height) {
+    private record Painted(Layout layout, BufferedImage image) {
+    }
+
+    /**
+     * Fills the whole board, so it is also what clears the previous frame. A motif is too many marks to draw again for
+     * every frame, so they are drawn once into an image the size of the board on screen, which lands on whole pixels.
+     */
+    void paint(Graphics2D g2, BoardGround ground, int scale, int width, int height) {
+        AffineTransform view = g2.getTransform();
+        Layout layout = Layout.of(ground, scale, width, height).withZoom(view.getScaleX(), view.getScaleY());
+        BufferedImage image = this.imageFor(layout, g2.getDeviceConfiguration());
+        g2.setTransform(AffineTransform.getTranslateInstance(Math.round(view.getTranslateX()),
+                Math.round(view.getTranslateY())));
+        g2.drawImage(image, 0, 0, null);
+        g2.setTransform(view);
+    }
+
+    /** The image of {@code layout}: the one it already has, unless the layout changed. */
+    BufferedImage imageFor(Layout layout, GraphicsConfiguration configuration) {
+        if (this.painted.isEmpty() || !this.painted.get().layout().equals(layout)) {
+            this.painted = Optional.of(new Painted(layout, render(layout, configuration)));
+        }
+        return this.painted.get().image();
+    }
+
+    private static BufferedImage render(Layout layout, GraphicsConfiguration configuration) {
+        BufferedImage image = configuration.createCompatibleImage(layout.imageWidth(), layout.imageHeight());
+        Graphics2D g2 = image.createGraphics();
+        try {
+            g2.scale(layout.zoomX(), layout.zoomY());
+            paintGround(g2, layout.ground(), layout.scale(), layout.width(), layout.height());
+        } finally {
+            g2.dispose();
+        }
+        return image;
+    }
+
+    private static void paintGround(Graphics2D g2, BoardGround ground, int scale, int width, int height) {
         g2.setColor(new Color(ground.floorRgb()));
         g2.fillRect(0, 0, width, height);
         if (ground.motif() == GroundMotif.NONE || scale <= 0) {
@@ -40,8 +102,6 @@ final class GroundPainter {
             case FISSURES -> Marks.lines(fissures(scale, width, height));
             case FLAGSTONES -> Marks.lines(flagstones(scale, width, height));
         };
-        Object antialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        Stroke stroke = g2.getStroke();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setStroke(MOTIF_STROKE);
         g2.setColor(halfway(ground.floorRgb(), ground.motifRgb()));
@@ -49,8 +109,6 @@ final class GroundPainter {
         g2.setColor(new Color(ground.motifRgb()));
         g2.draw(marks.lines());
         g2.fill(marks.dots());
-        g2.setStroke(stroke);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialiasing);
     }
 
     private static Color halfway(int fromRgb, int toRgb) {

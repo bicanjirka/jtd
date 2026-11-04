@@ -56,11 +56,13 @@ final class EnemyLooks {
     record Row(Color color, ScaledShape body, Optional<Detail> detail, FadeOutlines fade, float reach) {
 
         private static Row of(Color color, ScaledShape body) {
-            return new Row(color, body, Optional.empty(), (scale, grown) -> List.of(body.at(grown)), reachOf(body));
+            // A fade grows through scales no body stays at, so it asks the plain shape.
+            return new Row(color, new RememberedShape(body), Optional.empty(), (scale, grown) -> List.of(body.at(grown)),
+                    reachOf(body));
         }
 
         private Row withDetail(Color detailColor, ScaledShape detailShape) {
-            return new Row(this.color, this.body, Optional.of(new Detail(detailColor, detailShape)), this.fade,
+            return new Row(this.color, this.body, Optional.of(new Detail(detailColor, new RememberedShape(detailShape))), this.fade,
                     Math.max(this.reach, reachOf(detailShape)));
         }
 

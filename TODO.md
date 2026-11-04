@@ -277,18 +277,6 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
   ladder ending in 0, and no other kind has one. The numbers move, they don't change, so no balance
   check.
 
-## Board visuals
-
-### The ground and the bee rebuild their shapes on every paint
-
-In a dense wave `GroundPainter` takes about half of the board's paint samples on the EDT and `EnemyShapes.beeShape`
-about a quarter, because each rebuilds its shape every frame. Everything `EnemyEffects` paints takes about a tenth. The
-harness doesn't see this, since painting is outside it.
-
-- **Where:** `GroundPainter.paint`, `EnemyShapes.beeShape` and any other `Area`-built body in `EnemyLooks`.
-- **Approach:** keep the ground in an image at the view's zoom, rebuilt when the ground, the size or the zoom changes;
-  remember a body's shape per scale. Profile live with JFR through the Driver before and after.
-
 ## Balance tools
 
 ### What the balance tools cannot see yet
