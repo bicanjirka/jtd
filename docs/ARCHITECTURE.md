@@ -125,7 +125,7 @@ BoardRenderer.buildFrame(gameTime, interpolationAlpha, animationSeconds)   on ga
 | Builder | Describes | Dispatch |
 |---|---|---|
 | `CellFrameBuilder` | the placement or selection highlight | one `CellHighlight` and its cell |
-| `ZoneFrameBuilder` | ground zones, drawn under the enemies | — |
+| `ZoneFrameBuilder` | ground zones as one patch per kind, drawn under the enemies | — |
 | `EnemyFrameBuilder` | bodies, death fades, overlays | `EnemyMobVisitor` |
 | `TowerSpriteFrameBuilder` | tower base and turret head | `TowerVisitor` |
 | `TowerEffectFrameBuilder` | beams, blasts, pulses, auras, cones | `TowerVisitor` |

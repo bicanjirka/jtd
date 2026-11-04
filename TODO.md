@@ -279,15 +279,6 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
 
 ## Board visuals
 
-### Overlapping ground zones look bad
-
-Translucent zone discs stack: several Ward Mines or Blinding Fields on one stretch of path build into a muddy pile of
-discs and edges, which works against the calmer board. The owner wants the look reviewed.
-
-- **Where:** `Java2DFrameRenderer.paintZone` (`ZONE_FILL_ALPHA`, `ZONE_EDGE_ALPHA`), `ZoneFrameBuilder`.
-- **Approach:** review it live on a level whose enemies drop zones, then choose: merge overlapping zones of one kind into
-  one patch with one outline, or cap how opaque a stack gets.
-
 ### The ground and the bee rebuild their shapes on every paint
 
 In a dense wave `GroundPainter` takes about half of the board's paint samples on the EDT and `EnemyShapes.beeShape`

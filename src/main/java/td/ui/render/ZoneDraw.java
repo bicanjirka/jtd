@@ -1,8 +1,8 @@
 package td.ui.render;
 
 /**
- * A patch of ground, drawn under everything that stands on it. {@code life} runs from 1 when it was
- * made to 0 when it ends, and {@code phase} is animation time, so a patch can flicker.
+ * One zone's disc in its patch. {@code radius} is as drawn, already shrunk by an ending zone. {@code fade} runs from 1
+ * while it has time left to 0 when it ends, and {@code phase} is animation time, so what stands on the disc can flicker.
  */
-public record ZoneDraw(Palette palette, float centerX, float centerY, float radius, float life, float phase) {
+public record ZoneDraw(float centerX, float centerY, float radius, float fade, float phase) {
 }

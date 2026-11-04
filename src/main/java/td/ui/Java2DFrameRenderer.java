@@ -45,7 +45,9 @@ import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TurretHeadDraw;
+import td.ui.render.ZoneArcDraw;
 import td.ui.render.ZoneDraw;
+import td.ui.render.ZonePatchDraw;
 import td.wave.PathColor;
 
 import java.awt.AlphaComposite;
@@ -159,8 +161,8 @@ public final class Java2DFrameRenderer {
     private static final float SHELL_STREAK_ALPHA = 0.5f;
     private static final int ZONE_FILL_ALPHA = 80;
     private static final int ZONE_EDGE_ALPHA = 170;
-    /** A zone fades over its last quarter of life. */
-    private static final float ZONE_FADE_SHARE_INVERSE = 4f;
+    /** Round caps, so the arcs of a patch's outline join without a notch where two rims cross. */
+    private static final Stroke ZONE_EDGE_STROKE = new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final int ZONE_FLAMES = 6;
     private static final int ZONE_BUBBLES = 3;
     private static final int ZONE_CRYSTAL_ARMS = 3;
@@ -645,8 +647,8 @@ public final class Java2DFrameRenderer {
         for (CellDraw cell : frame.cells()) {
             this.paintCell(g2, cell, frame);
         }
-        for (ZoneDraw zone : frame.zones()) {
-            this.paintZone(g2, zone);
+        for (ZonePatchDraw patch : frame.zones()) {
+            this.paintZonePatch(g2, patch);
         }
         for (EnemyDraw enemy : frame.enemies()) {
             this.paintEnemy(g2, enemy);
@@ -672,23 +674,38 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * A translucent patch with a pattern of its own: flames that flicker, glossy tar with bubbles,
-     * frost with crossed crystal lines. It fades over its last quarter of life.
+     * A translucent patch with a pattern of its own on each disc: flames that flicker, glossy tar with bubbles, frost
+     * with crossed crystal lines. The discs go on one path and fill once, and the outline's arcs on another and stroke
+     * once, so neither grows darker where its parts overlap.
      */
-    private void paintZone(Graphics2D g2, ZoneDraw zone) {
-        Color base = colorFor(zone.palette());
-        float fade = Math.min(1f, zone.life() * ZONE_FADE_SHARE_INVERSE);
-        float cx = zone.centerX();
-        float cy = zone.centerY();
-        float r = zone.radius();
-        Ellipse2D disc = new Ellipse2D.Float(cx - r, cy - r, r * 2, r * 2);
-        g2.setColor(withAlpha(base, Math.round(ZONE_FILL_ALPHA * fade)));
-        g2.fill(disc);
+    private void paintZonePatch(Graphics2D g2, ZonePatchDraw patch) {
+        Color base = colorFor(patch.palette());
+        Path2D ground = new Path2D.Float(Path2D.WIND_NON_ZERO);
+        for (ZoneDraw zone : patch.discs()) {
+            float r = zone.radius();
+            ground.append(new Ellipse2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2), false);
+        }
+        g2.setColor(withAlpha(base, ZONE_FILL_ALPHA));
+        g2.fill(ground);
         Stroke defaultStroke = g2.getStroke();
-        g2.setStroke(new BasicStroke(1.5f));
-        g2.setColor(withAlpha(base, Math.round(ZONE_EDGE_ALPHA * fade)));
-        g2.draw(disc);
-        switch (zone.palette()) {
+        g2.setStroke(ZONE_EDGE_STROKE);
+        g2.setColor(withAlpha(base, ZONE_EDGE_ALPHA));
+        Path2D edge = new Path2D.Float(Path2D.WIND_NON_ZERO);
+        for (ZoneArcDraw arc : patch.edge()) {
+            float r = arc.radius();
+            edge.append(new Arc2D.Float(arc.centerX() - r, arc.centerY() - r, r * 2, r * 2,
+                    (float) -Math.toDegrees(arc.startRadians()), (float) -Math.toDegrees(arc.sweepRadians()), Arc2D.OPEN), false);
+        }
+        g2.draw(edge);
+        for (ZoneDraw zone : patch.discs()) {
+            this.paintZoneDetail(g2, patch.palette(), zone);
+        }
+        g2.setStroke(defaultStroke);
+    }
+
+    private void paintZoneDetail(Graphics2D g2, Palette look, ZoneDraw zone) {
+        float fade = zone.fade();
+        switch (look) {
             case ZONE_BURNING -> this.paintZoneFlames(g2, zone, fade);
             case ZONE_TAR -> this.paintZoneTarGloss(g2, zone, fade);
             case ZONE_FROST -> this.paintZoneCrystals(g2, zone, fade);
@@ -698,7 +715,6 @@ public final class Java2DFrameRenderer {
             default -> {
             }
         }
-        g2.setStroke(defaultStroke);
     }
 
     private void paintZoneFlames(Graphics2D g2, ZoneDraw zone, float fade) {
