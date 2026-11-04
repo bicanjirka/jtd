@@ -1,6 +1,6 @@
 # Feature Request: Enemy health bar
 
-> **Status: built; its live check on a dense wave comes with the enemy and effect visuals.** Mock: <https://claude.ai/artifact/Ad29S1ti5eq1swojPPQ5tC>, the bars under the
+> **Status: implemented.** Mock: <https://claude.ai/artifact/Ad29S1ti5eq1swojPPQ5tC>, the bars under the
 > enemies, at the game's real sizes. The bar is drawn the way the mock draws it.
 
 ## Summary
