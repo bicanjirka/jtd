@@ -1,6 +1,10 @@
 package td.ui;
 
+import td.economy.StatusTerm;
 import td.level.LevelOutcome;
+import td.ui.render.InfoSheet;
+import td.ui.render.SheetTooltip;
+import td.ui.render.TooltipKey;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.Wave;
@@ -18,6 +22,8 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.font.TextAttribute;
 import java.io.Serial;
@@ -58,6 +64,8 @@ public class PanelWaveInfo extends JPanel {
     /** The layer the preview enemies' tooltips open on, for the rows there are and those still to come. */
     public void setTooltips(TooltipLayer layer) {
         this.tooltips = layer;
+        layer.watchSpots(this.nowHeading, this.nowHeading::spotAt);
+        layer.watchSpots(this.nextHeading, this.nextHeading::spotAt);
         this.nowRows.forEach(row -> row.setTooltips(layer));
         this.nextRows.forEach(row -> row.setTooltips(layer));
     }
@@ -164,6 +172,9 @@ public class PanelWaveInfo extends JPanel {
         private static final int GAP = 4;
         private static final Font TITLE_FONT = Hud.LABEL_FONT.deriveFont(Font.BOLD);
         private static final Font CAPTION_FONT = Hud.CHIP_FONT.deriveFont(Map.of(TextAttribute.TRACKING, 0.12f));
+        private static final int MARK_GAP = 6;
+        private static final int MARK_ICON = 14;
+        private static final int MARK_ICON_GAP = 2;
 
         private final String caption;
         private WavesReadout.Heading heading = new WavesReadout.Heading(Optional.empty(), "", "", List.of());
@@ -175,6 +186,39 @@ public class PanelWaveInfo extends JPanel {
         void show(WavesReadout.Heading shown) {
             this.heading = shown;
             repaint();
+        }
+
+        /** The tooltip of what the round pays, when the pointer is on its mark. */
+        Optional<TooltipSpot> spotAt(Point point) {
+            if (this.heading.mark().isEmpty()) {
+                return Optional.empty();
+            }
+            Rectangle mark = new Rectangle(this.markX(), 0,
+                    getFontMetrics(Hud.LABEL_FONT).stringWidth(this.heading.mark()) + MARK_ICON_GAP + MARK_ICON, HEIGHT);
+            return mark.contains(point)
+                    ? Optional.of(new TooltipSpot(new SheetTooltip(TooltipKey.of("round-pay", this.caption),
+                            new InfoSheet(this.heading.payLines())), mark))
+                    : Optional.empty();
+        }
+
+        /** Where the mark starts: past the skull, the title and the suffix. */
+        private int markX() {
+            int skull = this.heading.skull().isPresent() ? SKULL_SIZE + GAP : 0;
+            Font titleFont = this.heading.skull().isPresent() ? TITLE_FONT : Hud.LABEL_FONT;
+            return skull + getFontMetrics(titleFont).stringWidth(this.heading.title()) + GAP
+                    + getFontMetrics(Hud.LABEL_FONT).stringWidth(this.heading.suffix()) + MARK_GAP;
+        }
+
+        private void paintMark(Graphics2D g2) {
+            String text = this.heading.mark();
+            g2.setFont(Hud.LABEL_FONT);
+            g2.setColor(Hud.FOREGROUND);
+            FontMetrics metrics = g2.getFontMetrics();
+            g2.drawString(text, this.markX(), baseline(metrics, HEIGHT));
+            Graphics2D icon = (Graphics2D) g2.create();
+            icon.translate(this.markX() + metrics.stringWidth(text) + MARK_ICON_GAP, (HEIGHT - MARK_ICON) / 2);
+            TermIconPainter.paint(icon, TermLooks.faceOf(StatusTerm.CASH), MARK_ICON);
+            icon.dispose();
         }
 
         @Override
@@ -203,6 +247,9 @@ public class PanelWaveInfo extends JPanel {
             g2.setFont(Hud.LABEL_FONT);
             g2.setColor(suffixColor(skull));
             g2.drawString(this.heading.suffix(), x, baseline(g2.getFontMetrics(), HEIGHT));
+            if (!this.heading.mark().isEmpty()) {
+                this.paintMark(g2);
+            }
             g2.setFont(CAPTION_FONT);
             g2.setColor(Hud.TEXT_DIM);
             FontMetrics metrics = g2.getFontMetrics();

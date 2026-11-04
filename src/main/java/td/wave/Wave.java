@@ -138,6 +138,11 @@ public class Wave {
         return this.content.hasUnique();
     }
 
+    /** What every enemy of this wave's script pays when killed, before anything they spawn in play. */
+    public int bounty() {
+        return this.content.bounty();
+    }
+
     /**
      * Builds this wave's enemies against the currently installed path. Call once, when the wave
      * starts: each call makes a fresh set.

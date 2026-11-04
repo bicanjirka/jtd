@@ -1,6 +1,8 @@
 package td.ui;
 
 import td.level.LevelOutcome;
+import td.ui.render.SheetLine;
+import td.wave.RoundPay;
 import td.wave.Wave;
 import td.wave.WaveProgress;
 
@@ -27,11 +29,27 @@ record WavesReadout(Heading now, Optional<String> send, Optional<Heading> next) 
      * @param title  the round's number, or what the panel waits for
      * @param suffix after the title: the level's round count, or how the round ended
      * @param waves  one per path; empty for a round that is over
+     * @param pay    what the round pays
      */
-    record Heading(Optional<Skull> skull, String title, String suffix, List<Wave> waves) {
+    record Heading(Optional<Skull> skull, String title, String suffix, List<Wave> waves, RoundPay pay) {
 
         Heading {
             waves = List.copyOf(waves);
+        }
+
+        /** Paying nothing. */
+        Heading(Optional<Skull> skull, String title, String suffix, List<Wave> waves) {
+            this(skull, title, suffix, waves, RoundPay.none());
+        }
+
+        /** What the round pays, to mark beside the suffix; empty for none. */
+        String mark() {
+            return this.skull.map(s -> RoundPayText.mark(this.pay, s.state())).orElse("");
+        }
+
+        /** What hovering the mark says. */
+        List<SheetLine> payLines() {
+            return this.skull.map(s -> RoundPayText.lines(this.pay, s.state())).orElse(List.of());
         }
     }
 
@@ -54,14 +72,15 @@ record WavesReadout(Heading now, Optional<String> send, Optional<Heading> next) 
         RoundStrip.State state = strip.stateAt(round);
         if (state.isOver()) {
             String ended = state == RoundStrip.State.LEAKED ? "leaked" : "cleared";
-            return new Heading(Optional.of(new Skull(strip.kindAt(round), state)), title(round), ended, List.of());
+            return new Heading(Optional.of(new Skull(strip.kindAt(round), state)), title(round), ended, List.of(),
+                    strip.summaryAt(round).pay());
         }
         return round(strip, round, progress.current());
     }
 
     private static Heading round(RoundStrip strip, int round, List<Wave> waves) {
         return new Heading(Optional.of(new Skull(strip.kindAt(round), strip.stateAt(round))), title(round),
-                "/" + strip.count(), waves);
+                "/" + strip.count(), waves, strip.summaryAt(round).pay());
     }
 
     private static String title(int round) {

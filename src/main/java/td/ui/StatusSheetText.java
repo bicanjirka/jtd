@@ -22,10 +22,9 @@ final class StatusSheetText {
     static InfoSheet of(StatusTerm term, StatusReadout readout, RoundStrip rounds) {
         List<SheetLine> more = new ArrayList<>();
         if (term == StatusTerm.WAVE) {
-            more.add(Row.plain(Glyph.DOT, "Rounds started", readout.round() + " / " + readout.rounds()));
             more.add(waveState(readout));
             if (rounds.count() > 0) {
-                more.add(new SheetLine.IconRow("Rounds", IntStream.range(0, rounds.count())
+                more.add(new SheetLine.IconRow("", IntStream.range(0, rounds.count())
                         .mapToObj(round -> roundIcon(rounds, round))
                         .toList()));
             }
@@ -44,10 +43,11 @@ final class StatusSheetText {
 
     private static SheetIcon roundIcon(RoundStrip rounds, int round) {
         IconFace face = RoundSkulls.face(rounds, round);
-        InfoSheet sheet = new InfoSheet(List.of(
+        List<SheetLine> lines = new ArrayList<>(List.of(
                 new SheetLine.IconTitle(face.withBelow(""), "Round " + (round + 1), face.tone(),
                         RoundSkulls.stateName(rounds.stateAt(round))),
                 Row.plain(Glyph.SKULL, "Strongest", RoundSkulls.strongest(rounds.summaryAt(round)))));
-        return new SheetIcon(face, TooltipKey.of("round", Integer.toString(round)), sheet);
+        lines.addAll(RoundPayText.lines(rounds.summaryAt(round).pay(), rounds.stateAt(round)));
+        return new SheetIcon(face, TooltipKey.of("round", Integer.toString(round)), new InfoSheet(lines));
     }
 }

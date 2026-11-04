@@ -76,6 +76,11 @@ public record LoadedLevel(CellGrid cells, BoardGeometry board, List<PathRuntime>
         return this.wavesAt(round).stream().mapToInt(Wave::clearBonus).sum();
     }
 
+    /** What every enemy round {@code round} sends down any path pays when killed. */
+    public int bountyAt(int round) {
+        return this.wavesAt(round).stream().mapToInt(Wave::bounty).sum();
+    }
+
     /** Whether round {@code round} sends a unique enemy down any path. */
     public boolean uniqueAt(int round) {
         return this.wavesAt(round).stream().anyMatch(Wave::hasUnique);

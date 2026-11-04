@@ -374,7 +374,9 @@ final class InfoSheetDocument {
     /** One embedded icon as wide as the pane: the label, then each face where {@link IconRowLayout} puts it. */
     private void iconRow(SheetLine.IconRow row) {
         boolean anyBelow = row.icons().stream().anyMatch(icon -> !icon.face().below().isEmpty());
-        IconRowLayout layout = IconRowLayout.of(row.icons().size(), anyBelow, this.width);
+        IconRowLayout layout = row.label().isEmpty()
+                ? IconRowLayout.unlabelled(row.icons().size(), anyBelow, this.width)
+                : IconRowLayout.of(row.icons().size(), anyBelow, this.width);
         this.hover = new HoverRun.IconRowRun(row, layout);
         this.icon(new PaintedIcon(this.width, layout.height(), g2 -> this.paintIconRow(g2, row, layout)));
         this.hover = null;

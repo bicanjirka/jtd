@@ -28,6 +28,8 @@ final class TooltipPanel extends JPanel {
     static final int MAX_WIDTH = 240;
     /** The least room between a label and the value aligned right of it. */
     static final int VALUE_GAP = 12;
+    /** Text measured to fractions of a pixel wraps in a pane cut to exactly its rounded width. */
+    private static final int TEXT_SLACK = 2;
     private static final Color BACKGROUND = new Color(8, 14, 8);
     private static final float EXPIRED_ALPHA = 0.45f;
 
@@ -85,7 +87,7 @@ final class TooltipPanel extends JPanel {
         View root = this.pane.getUI().getRootView(this.pane);
         int natural = (int) Math.ceil(root.getPreferredSpan(View.X_AXIS));
         boolean aligned = shown.lines().stream().anyMatch(TooltipPanel::alignsAValue);
-        int width = Math.min(inner, Math.max(natural + (aligned ? VALUE_GAP : 0), 1));
+        int width = Math.min(inner, Math.max(natural + (aligned ? VALUE_GAP : TEXT_SLACK), 1));
         if (width < inner) {
             this.pane.setSize(width, 1);
             this.pane.show(shown, this.renderer, width);

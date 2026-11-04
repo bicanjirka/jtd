@@ -8,8 +8,8 @@ import java.util.Map;
 
 /**
  * How brightly each status icon flashes now. Lives flash when they drop, the round when it goes up, and cash when a
- * purchase is refused for want of it; a change in cash or score never flashes, since they change several times a
- * second late in a wave. Values set directly (a level starting or loading) are a new baseline, never a change. The
+ * purchase is refused for want of it or a round pays its clear bonus; any other change in cash or score never
+ * flashes, since they change several times a second late in a wave. Values set directly (a level starting or loading) are a new baseline, never a change. The
  * clock is passed in, so nothing here reads one.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
@@ -41,6 +41,11 @@ final class StatusFlash {
 
     /** Starts the cash flash: something the player tried to buy cost more than they have. */
     void refused(long nowMillis) {
+        this.startedAt.put(StatusTerm.CASH, nowMillis);
+    }
+
+    /** Starts the cash flash: a round just paid its clear bonus. */
+    void bonusPaid(long nowMillis) {
         this.startedAt.put(StatusTerm.CASH, nowMillis);
     }
 

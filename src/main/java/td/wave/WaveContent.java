@@ -5,6 +5,7 @@ import td.enemy.Rank;
 import td.enemy.SpawnParameters;
 import td.util.GameStartupException;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,6 +69,19 @@ public record WaveContent(List<WaveSlot> spawnSequence, float delayTicksPerSlot)
             }
         }
         return highest;
+    }
+
+    /** What every enemy the slots spawn pays when killed, before anything they spawn in play. */
+    public int bounty() {
+        int bounty = 0;
+        for (WaveSlot slot : this.spawnSequence) {
+            switch (slot) {
+                case EnemySlot s -> bounty += Arrays.stream(s.shape().bountyShares(s.definition().price())).sum();
+                case EmptySlot ignored -> {
+                }
+            }
+        }
+        return bounty;
     }
 
     /** Whether any slot spawns a unique enemy. */

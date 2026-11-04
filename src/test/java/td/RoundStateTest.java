@@ -38,6 +38,15 @@ class RoundStateTest {
     }
 
     @Test
+    void jumpingBackForgetsTheBonusesOfTheRoundsToBePlayedAgain() {
+        RoundState played = RoundState.before(3).paidBonus(0, 4).paidBonus(2, 6);
+
+        RoundState jumped = played.jumpedTo(2);
+
+        assertThat(jumped.bonusesPaid()).containsOnlyKeys(0);
+    }
+
+    @Test
     void anEnemyJoiningARunningWaveLeavesItRunning() {
         RoundState running = RoundState.before(0).begun(0L);
 

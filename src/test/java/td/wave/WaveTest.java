@@ -11,6 +11,7 @@ import td.enemy.Rank;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,6 +63,15 @@ class WaveTest {
         assertThat(built.enemySet()).containsExactlyInAnyOrder(simple, armored);
         assertThat(built.enemyCount(simple)).isEqualTo(2);
         assertThat(built.enemyCount(armored)).isEqualTo(1);
+    }
+
+    @Test
+    void aWavesBountyIsWhatItsSpawnedEnemiesPayInEveryShape() {
+        Wave wave = wave("2 simple e elite swarm 5 simple e column 3 armored");
+
+        int spawned = Arrays.stream(wave.spawn()).mapToInt(EnemyMob::getBounty).sum();
+
+        assertThat(wave.bounty()).isEqualTo(spawned);
     }
 
     @Test
