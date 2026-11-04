@@ -13,11 +13,6 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
   Burst are written; the other six towers and the open questions remain before planning.
 - **Board health bar**: an enemy's health and stacked shields shown on the board, reading the way the Info pane
   strip does. Deferred from the restoration rework; no request written yet.
-- **New enemies** (`docs/ideas/enemies-brainstorm.md`): enemies that give each tower a job. Not reviewed yet.
-- **Sniper and Scorcher identity** (`docs/ideas/sniper-and-scorcher-identity.md`): a clear identity for each and a
-  job for every node in their trees. Not reviewed yet.
-- **Astral & Quantum theme** (`docs/ideas/astral-quantum-theme.md`): a science theme that renames what the player
-  reads, recolours a little and changes no rules. Nothing decided.
 
 ## Feature request implementation order
 
@@ -35,8 +30,6 @@ The tower rework, in this order (each needs the ones before it):
    the fire-and-ice rules.
 7. `FEATURE-aura-and-balance-pass.md` (implemented, except the repricing): the Aura, harness pricing, display
    names, the README.
-
-Enemies come after, from `docs/ideas/enemies-brainstorm.md`.
 
 `FEATURE-balance-verification.md` (first version implemented): headless players, a tower lab and a
 balance report with a check for one change, to tune the placeholder entries below with. Its first
@@ -354,18 +347,23 @@ implementation. There is no way to add or edit a level without a code change and
 
 ### No tower denies heals or shields along a whole lane
 
-Curly Path's wave 12 was meant to need anti-sustain, and no wave could: the strong player denied every anti-sustain
-node (Ward, Soul Drain, Tar, the nuke's fallout, the Hexer's hexes, Cauterize, EMP, Nullifier, Shatter Tone) leaks
-the Elite Menders no more often than it does with them, and a free Dead Zone Obelisk on its best cell changes nothing.
-Dead Zone works, but only inside its field: in a duel wave of Elite Menders it is on an enemy for about 140 enemy-ticks
-against 1,100 under heals, so the heals land everywhere else. The answers are either local (a field) or hit-by-hit
-(EMP, Nullifier), and raw damage beats a heal-heavy wave sooner than any of them.
+No wave needs anti-sustain yet. On The Amber Hive (8 seeds) the strong player brings no anti-sustain node to the Brood
+Nurse waves 11, 12 and 15 and does not leak heavily on them, and removing other roles matters far more on the wave
+where it does lose: denied anti-sustain it leaks heavily on wave 16 in 5 seeds of 8 against 4 with nothing denied,
+and denied single-target, area or anti-physical in all 8. Those leaks are mostly Drones and the Warden, not Nurses.
+This shows the waves can be beaten without it, not that denial is weak: the players never price denial (see "What a
+node denies" under Balance tools), and a free Dead Zone Obelisk could not show a gain on waves that already hold.
+
+The earlier measure on the old Curly Path, before the restoration rework: Dead Zone was on an enemy for about 140
+enemy-ticks against 1,100 under heals, since it works only inside its field. The answers are either local (a field) or
+hit-by-hit (EMP, Nullifier), and raw damage beat a heal-heavy wave sooner than any of them.
 
 - **Where:** `PulseTower`'s Ward head (`FieldMode.DEAD_ZONE`, `SILENCE`), `SoulDrain`, the Hexer's Blight and
-  Inversion, `CauterizeMechanic`, `EmpPayload`, the Nullifier.
-- **Approach:** a design pass of its own: one answer that reaches a stretch of path wide enough to matter (a Ley
-  Line's beam carrying Dead Zone, a Sickened that lowers spirit for long enough to shrink every heal), then check
-  Curly Path's wave 12 with `td.balance.WaveCheckReport --checks 12:sustain --parts strong,strip`.
+  Inversion, `CauterizeMechanic`, `EmpPayload`, the Nullifier; `td.balance.Role.ANTI_SUSTAIN`.
+- **Approach:** decide first whether any wave should require it. If one should, a design pass: one answer that reaches
+  a stretch of path wide enough to matter, then prove it on that wave with
+  `td.balance.WaveCheckReport --checks W:sustain --parts strong,strip`. The wave has to pressure the strong player, or
+  the free Obelisk has nothing to improve. Iron Crossing and The Last Hour's Rewind are not measured.
 
 ### Hex of Inversion does not pick an enemy that only regenerates
 
@@ -438,7 +436,7 @@ What it showed and what is left:
 - Flashpoint and Inferno Ring are the weakest last head nodes (2 to 6 lives with a special where Dragon's Breath
   and Combustion save 6 to 11). A retune (Flashpoint +50% crit and 8 Scorched, Inferno Ring without its range cut,
   Pyromancer's Mark +40% magic taken) moved them little: four copies on Zigzag Path save 25.1 and 22.1 lives
-  against Combustion's 28.4 and Dragon's Breath's 25.7 (`docs/ideas/sniper-and-scorcher-identity.md`).
+  against Combustion's 28.4 and Dragon's Breath's 25.7.
 
 - **Where:** the `private static final` constants in `MortarTower`, `CinderTower`, `td.zone.Zone`,
   `td.zone.ZoneEffects`, `td.tower.mortar.ShellType` and the perks under `td.tower.mortar` and
@@ -532,7 +530,7 @@ on-crit-survived shield (30% for 100 ticks) is from the first crit pass.
 - Since the Sniper's retune (Steady Aim kept across targets, fading a stack 3 s after the last shot, Marksman's Eye +20% damage a stack, the Marksman's
   Eye specials keeping its own targeting, stronger specials), four copies on Zigzag Path save 7.1 to 9.3 lives with
   Hollow Point, Fourth Shot, Shatter Shot, Ricochet or Headhunter, and 17.6 with Momentum; before, the first three
-  lost lives. Momentum is still far ahead (`docs/ideas/sniper-and-scorcher-identity.md`, S4).
+  lost lives. Momentum is still far ahead.
 - **Where:** `AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.CRIT_CHANCE` and
   `CRIT_MULTIPLIER`, the Momentum node in `SniperTower`, `CritStreakMechanic`, and
   `WardenEnemy`'s `OnCriticalHitTakenTrigger` ability.
