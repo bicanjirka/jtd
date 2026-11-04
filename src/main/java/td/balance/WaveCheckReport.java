@@ -265,7 +265,8 @@ public final class WaveCheckReport {
         this.printRow("strong leaked    ", strong, rounds, round -> round.pressure().leaked(), "%5.1f");
         this.printRow("competent closest", competent, rounds, round -> round.pressure().closest() * 10, "%5.0f");
         this.printRow("competent leaked ", competent, rounds, round -> round.pressure().leaked(), "%5.1f");
-        this.printRow("strong earned    ", strong, rounds, round -> round.economy().earned(), "%5.0f");
+        this.printRow("strong earned    ", strong, rounds, round -> round.economy().income().bounty(), "%5.0f");
+        this.printRow("strong bonus     ", strong, rounds, round -> round.economy().income().clearBonus(), "%5.0f");
         this.printRow("strong seconds   ", strong, rounds, round -> round.ticks() / 20.0, "%5.0f");
         this.out.println("  strong towers at the end, per play: " + strong.stream()
                 .flatMap(play -> play.towers().stream())

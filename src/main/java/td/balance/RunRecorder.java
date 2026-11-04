@@ -229,8 +229,9 @@ final class RunRecorder {
             this.countDamage(tower);
         }
         int livesLost = Math.max(0, this.livesAtStart - this.engine.getGameWorld().economy().getLives());
-        PlayRecord.RoundEconomy economy = new PlayRecord.RoundEconomy(this.creditsAtStart, this.earned,
-                new PlayRecord.Spending(this.spentOnTowers, this.spentOnUpgrades, this.wanted), livesLost);
+        int clearBonus = this.engine.waveProgress().rounds().get(this.firstRound - 1 + this.rounds.size()).bonusPaid();
+        PlayRecord.RoundEconomy economy = new PlayRecord.RoundEconomy(this.creditsAtStart,
+                new PlayRecord.Income(this.earned, clearBonus), new PlayRecord.Spending(this.spentOnTowers, this.spentOnUpgrades, this.wanted), livesLost);
         PlayRecord.RoundPressure pressure = new PlayRecord.RoundPressure(this.healthIn, this.leaked, this.closest,
                 this.roundDamage);
         this.rounds.add(new PlayRecord.Round(this.firstRound + this.rounds.size(), tick - this.roundStartTick, economy, pressure));

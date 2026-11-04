@@ -55,6 +55,26 @@ class LevelPlayTest {
         return BoardSurvey.of(level);
     }
 
+    /** One round of one Grunt too frail to reach the end, paying {@code bonus} for a clean clear. */
+    private static BoardSurvey oneCleanRound(int bonus) {
+        return BoardSurvey.of(LevelDefinition.of("One Round", 16, 11, List.of(
+                PathDefinition.smoothed(List.of(new Point(-1, 5), new Point(16, 5)),
+                        List.of(new WaveDefinition("simple", Rank.GRUNT).withClearBonus(bonus)), SMOOTHING)))
+                .withStartingCredits(75)
+                .withStartingLives(3));
+    }
+
+    @Test
+    void aCleanRoundRecordsItsClearBonusApartFromItsBounty() {
+        Rules frail = Rules.standard().withEnemyHealthPercent(1).withClearBonusPercent(200);
+
+        PlayRecord play = LevelPlay.play(oneCleanRound(5), NaivePlayer.spec(), SEED, LevelPlay.Pacing.standard(), frail);
+
+        PlayRecord.Income income = play.rounds().getFirst().economy().income();
+        assertThat(income.clearBonus()).isEqualTo(5 * 2);
+        assertThat(income.total()).isEqualTo(income.bounty() + income.clearBonus());
+    }
+
     @Test
     void aSeededPlayRepeatsExactly() {
         BoardSurvey survey = twoLanes();

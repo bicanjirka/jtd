@@ -11,6 +11,7 @@ public final class PlaytestRules {
     private volatile boolean upgradeGatesIgnored;
     private volatile int enemyHealthPercent = 100;
     private volatile int bountyPercent = 100;
+    private volatile int clearBonusPercent = 100;
     private volatile int spawnSpacingPercent = 100;
 
     /** Whether a tower may buy an offered node without its XP or gate condition. */
@@ -46,6 +47,19 @@ public final class PlaytestRules {
             throw new IllegalArgumentException("Bounty percent must not be negative: " + percent);
         }
         this.bountyPercent = percent;
+    }
+
+    /** What a round pays for clearing with no leak, as a share of what it is authored with; 1 normally. */
+    public float clearBonusScale() {
+        return this.clearBonusPercent / PERCENT;
+    }
+
+    /** Rounds that clear from now on pay {@code percent} of their authored clear bonus. */
+    public void setClearBonusPercent(int percent) {
+        if (percent < 0) {
+            throw new IllegalArgumentException("Clear bonus percent must not be negative: " + percent);
+        }
+        this.clearBonusPercent = percent;
     }
 
     /** The gaps between a wave's spawns as a share of the authored ones; 1 normally. */

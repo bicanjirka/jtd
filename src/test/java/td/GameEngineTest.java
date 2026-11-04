@@ -1976,6 +1976,22 @@ class GameEngineTest {
     }
 
     @Test
+    void aClearBonusPercentScalesWhatARoundPays() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.twoPathLevelWith(List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(3)),
+                List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(4))).withCustomEnemies(List.of(WEAKLING)));
+        engine.getGameWorld().playtestRules().setClearBonusPercent(200);
+        DevControls dev = new DevControls(engine.getGameWorld());
+
+        engine.nextWave();
+        dev.killAll();
+        dev.runPending();
+        engine.doTick(1);
+
+        assertThat(engine.waveProgress().rounds()).extracting(RoundSummary::bonusPaid).containsExactly((3 + 4) * 2);
+    }
+
+    @Test
     void aSpawnSpacingPercentStretchesTheGapsBetweenAWavesEnemies() {
         GameEngine authored = FakeGameHost.newBoundEngine();
         authored.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 simple", Rank.GRUNT)), 100));

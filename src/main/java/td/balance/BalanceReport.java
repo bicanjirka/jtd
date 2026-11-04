@@ -393,18 +393,22 @@ public final class BalanceReport {
         this.out.println();
         this.out.println("SWEEP " + knob.name().toLowerCase(Locale.ROOT)
                 + " (the competent player at each value; the level as authored is the standard one)");
-        this.out.printf("  %-12s %-15s %s%n", knob.unit(), "won", "holds enemy health");
+        this.out.printf("  %-12s %-15s %-15s %s%n", knob.unit(), "won", "income", "holds enemy health");
         for (int value : knob.settings()) {
             LevelKnob.Setting setting = knob.at(value);
             List<Long> seeds = LongStream.range(FIRST_SEED, FIRST_SEED + this.options.seeds()).boxed().toList();
-            Estimate won = Estimate.proportion(seeds.parallelStream()
+            List<PlayRecord> plays = seeds.parallelStream()
                     .map(seed -> LevelPlay.play(run.survey(), player, seed, setting.pacing(), setting.rules()))
-                    .toList(), play -> play.result().won());
+                    .toList();
+            Estimate won = Estimate.proportion(plays, play -> play.result().won());
+            Estimate income = Estimate.of(plays.stream().mapToDouble(play -> play.rounds().stream()
+                    .mapToInt(round -> round.economy().income().total()).sum()).toArray());
             Estimate margin = Estimate.of(seeds.parallelStream()
                     .mapToDouble(seed -> Margin.healthPercent(run.survey(), player, seed, setting.pacing(),
                             setting.rules()))
                     .toArray());
-            this.out.printf("  %-12d %-15s %s%n", value, won.formatPercent(), margin.format(0) + "%");
+            this.out.printf("  %-12d %-15s %-15s %s%n", value, won.formatPercent(), income.format(0),
+                    margin.format(0) + "%");
         }
     }
 
@@ -686,34 +690,38 @@ public final class BalanceReport {
 
     private void printEconomy(LevelRun run) {
         double[] idle = run.perRound(COMPETENT, round -> round.economy().creditsAtStart());
-        double[] earned = run.perRound(COMPETENT, round -> round.economy().earned());
+        double[] earned = run.perRound(COMPETENT, round -> round.economy().income().bounty());
+        double[] bonus = run.perRound(COMPETENT, round -> round.economy().income().clearBonus());
+        double[] income = run.perRound(COMPETENT, round -> round.economy().income().total());
         double[] wanted = run.perRound(COMPETENT, round -> round.economy().spent().wanted());
         this.out.println();
         this.out.println("ECONOMY (competent)");
         this.out.println("  idle     " + row(idle, BalanceReport::compact) + "   unspent as the round starts");
         this.out.println("  earned   " + row(earned, BalanceReport::compact) + "   bounty");
+        this.out.println("  bonus    " + row(bonus, BalanceReport::compact) + "   clear bonus");
         this.out.println("  towers   " + row(run.perRound(COMPETENT, round -> round.economy().spent().towers()),
                 BalanceReport::compact) + "   spent on towers");
         this.out.println("  upgrades " + row(run.perRound(COMPETENT, round -> round.economy().spent().upgrades()),
                 BalanceReport::compact) + "   spent on upgrades");
         this.out.println("  wanted   " + row(wanted, BalanceReport::compact)
                 + "   price of what it would buy next, as the round ends");
-        this.out.println("  " + economyVerdict(earned, wanted));
+        this.out.println("  " + economyVerdict(income, wanted));
         double totalEarned = Arrays.stream(earned).filter(v -> !Double.isNaN(v)).sum();
+        double totalBonus = Arrays.stream(bonus).filter(v -> !Double.isNaN(v)).sum();
         double meanIdle = Arrays.stream(idle).filter(v -> !Double.isNaN(v)).average().orElse(0);
-        this.out.printf("  %d starting credits and %.0f bounty over the level; %.0f idle at a round's start on average%n",
-                run.survey().level().startingCredits(), totalEarned, meanIdle);
+        this.out.printf("  %d starting credits, %.0f bounty and %.0f clear bonus over the level; %.0f idle at a round's"
+                + " start on average%n", run.survey().level().startingCredits(), totalEarned, totalBonus, meanIdle);
     }
 
     /**
      * Whether what a round pays keeps up with what the player wants next: the rounds where the purchase it wanted
-     * cost more than two rounds' bounty, when the player waits longest between purchases.
+     * cost more than two rounds' income, when the player waits longest between purchases.
      */
-    static String economyVerdict(double[] earned, double[] wanted) {
-        List<Integer> slow = IntStream.range(0, earned.length)
-                .filter(i -> !Double.isNaN(wanted[i]) && wanted[i] > SLOW_ROUNDS * Math.max(1, earned[i]))
+    static String economyVerdict(double[] income, double[] wanted) {
+        List<Integer> slow = IntStream.range(0, income.length)
+                .filter(i -> !Double.isNaN(wanted[i]) && wanted[i] > SLOW_ROUNDS * Math.max(1, income[i]))
                 .mapToObj(i -> i + 1).toList();
-        return "what it wants next costs more than " + SLOW_ROUNDS + " rounds of bounty in round: "
+        return "what it wants next costs more than " + SLOW_ROUNDS + " rounds of income in round: "
                 + (slow.isEmpty() ? "none" : slow);
     }
 
