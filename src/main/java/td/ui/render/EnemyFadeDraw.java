@@ -6,6 +6,6 @@ package td.ui.render;
  * @param growth       how far the outline has expanded past {@code scale}, in pixels
  * @param fadeProgress {@code 0} when it died, {@code 1} fully faded
  */
-public record EnemyFadeDraw(Palette palette, float x, float y, double facingRadians, float scale,
+public record EnemyFadeDraw(EnemyLook look, float x, float y, double facingRadians, float scale,
                             float growth, float fadeProgress) implements EnemyDraw {
 }

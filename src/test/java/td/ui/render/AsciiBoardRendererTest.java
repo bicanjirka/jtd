@@ -28,8 +28,8 @@ class AsciiBoardRendererTest {
     @Test
     void placesTowersAndEnemiesAtTheirCellWithFadingEnemiesUppercased() {
         TowerSpriteDraw tower1 = new TowerSpriteDraw(Palette.TOWER_SNIPER_BODY, SCALE, 0, false, 15f, 5f, 50f, List.of(), 0f, false, 0f, 0, -1f);
-        EnemyBodyDraw circle = new EnemyBodyDraw(Palette.ENEMY_CIRCLE, 25f, 15f, 0.0, 5f, 1f, RankBadge.NONE, 0f);
-        EnemyFadeDraw fadingSquare = new EnemyFadeDraw(Palette.ENEMY_SQUARE, 5f, 5f, 0.0, 5f, 2f, 0.5f);
+        EnemyBodyDraw circle = new EnemyBodyDraw(EnemyLook.CIRCLE, 25f, 15f, 0.0, 5f, 1f, RankBadge.NONE, 0f);
+        EnemyFadeDraw fadingSquare = new EnemyFadeDraw(EnemyLook.SQUARE, 5f, 5f, 0.0, 5f, 2f, 0.5f);
 
         String ascii = new AsciiBoardRenderer().render(frameOf(List.of(circle, fadingSquare), List.of(tower1)));
 
@@ -38,7 +38,7 @@ class AsciiBoardRendererTest {
 
     @Test
     void anEnemyOutsideTheBoardIsSafelyIgnored() {
-        EnemyBodyDraw offBoard = new EnemyBodyDraw(Palette.ENEMY_TRIANGLE, 999f, 999f, 0.0, 5f, 1f, RankBadge.NONE, 0f);
+        EnemyBodyDraw offBoard = new EnemyBodyDraw(EnemyLook.TRIANGLE, 999f, 999f, 0.0, 5f, 1f, RankBadge.NONE, 0f);
 
         String ascii = new AsciiBoardRenderer().render(frameOf(List.of(offBoard), List.of()));
 

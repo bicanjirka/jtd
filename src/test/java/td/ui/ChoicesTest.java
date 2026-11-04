@@ -20,7 +20,7 @@ class ChoicesTest {
             List.of(term("b", "Ash"), term("a", "delta"), term("a", "Bravo"), term("b", "Cinder")),
             Comparator.comparing(ChoicesTest::type), ChoicesTest::type,
             term -> type(term).equals("a") ? Palette.TERM_FRAME_HEX : Palette.TERM_FRAME_MARK,
-            term -> IconFace.of(term.key(), "", type(term).equals("a") ? Palette.ENEMY_CIRCLE : Palette.ENEMY_GHOST,
+            term -> IconFace.of(term.key(), "", type(term).equals("a") ? Palette.TERM_AURA : Palette.TERM_HASTE,
                     term.title().equals("Ash") ? Palette.TERM_FRAME_BOON : Palette.TERM_FRAME_HEX));
 
     @Test
@@ -35,7 +35,7 @@ class ChoicesTest {
     void aTermRowIsWrittenInItsIconsTone() {
         int cinder = 3;
 
-        assertThat(this.choices.lookAt(cinder).text()).isEqualTo(TermIconPainter.ink(Palette.ENEMY_GHOST));
+        assertThat(this.choices.lookAt(cinder).text()).isEqualTo(TermIconPainter.ink(Palette.TERM_HASTE));
     }
 
     @Test
@@ -61,7 +61,7 @@ class ChoicesTest {
         FakeTerm ash = term("b", "Ash");
         Choices<FakeTerm> some = Choices.ofTerms(List.of(ash, term("b", "Cinder"), term("a", "Bravo")),
                 Comparator.comparing(ChoicesTest::type), ChoicesTest::type, term -> Palette.TERM_FRAME_HEX,
-                term -> IconFace.of(term.key(), "", Palette.ENEMY_CIRCLE, Palette.TERM_FRAME_HEX),
+                term -> IconFace.of(term.key(), "", Palette.TERM_AURA, Palette.TERM_FRAME_HEX),
                 term -> term == ash ? Optional.of("not here") : Optional.empty());
 
         List<Candidate> rows = some.rows();

@@ -15,6 +15,7 @@ import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.EnemyLook;
 import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
 import td.ui.render.HexGlyph;
@@ -180,52 +181,52 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         };
     }
 
-    static Palette paletteFor(BodyArchetype archetype) {
+    static EnemyLook lookFor(BodyArchetype archetype) {
         return switch (archetype) {
-            case CIRCLE -> Palette.ENEMY_CIRCLE;
-            case GHOST -> Palette.ENEMY_GHOST;
-            case SQUARE -> Palette.ENEMY_SQUARE;
-            case TRIANGLE -> Palette.ENEMY_TRIANGLE;
-            case WARDEN -> Palette.ENEMY_WARDEN;
-            case WARDEN_EGG -> Palette.ENEMY_WARDEN_EGG;
-            case MENDER -> Palette.ENEMY_MENDER;
-            case JUGGERNAUT -> Palette.ENEMY_JUGGERNAUT;
-            case MITE -> Palette.ENEMY_MITE;
-            case COURIER -> Palette.ENEMY_COURIER;
-            case SKIRMISHER -> Palette.ENEMY_SKIRMISHER;
-            case SHIELDBEARER -> Palette.ENEMY_SHIELDBEARER;
-            case SALAMANDER -> Palette.ENEMY_SALAMANDER;
-            case YETI -> Palette.ENEMY_YETI;
-            case MAGMA -> Palette.ENEMY_MAGMA;
-            case GOLEM -> Palette.ENEMY_GOLEM;
-            case JAMMER -> Palette.ENEMY_JAMMER;
-            case REAVER -> Palette.ENEMY_REAVER;
-            case COLOSSUS -> Palette.ENEMY_COLOSSUS;
-            case MOLTEN_CORE -> Palette.ENEMY_MOLTEN_CORE;
-            case EMBER -> Palette.ENEMY_EMBER;
-            case MONOLITH -> Palette.ENEMY_MONOLITH;
-            case ECLIPSE -> Palette.ENEMY_ECLIPSE;
-            case MIRAGE -> Palette.ENEMY_MIRAGE;
-            case MIRROR_IMAGE -> Palette.ENEMY_MIRROR_IMAGE;
-            case HERALD -> Palette.ENEMY_HERALD;
-            case TALOS -> Palette.ENEMY_TALOS;
-            case MINOTAUR -> Palette.ENEMY_MINOTAUR;
-            case BRONZE_BULL -> Palette.ENEMY_BRONZE_BULL;
-            case GLASS_SENTINEL -> Palette.ENEMY_GLASS_SENTINEL;
-            case SANDLING -> Palette.ENEMY_SANDLING;
-            case TIMEKEEPER -> Palette.ENEMY_TIMEKEEPER;
-            case KEEPER -> Palette.ENEMY_KEEPER;
-            case GALE -> Palette.ENEMY_GALE;
-            case RAINDROP -> Palette.ENEMY_RAINDROP;
-            case RAINCLOUD -> Palette.ENEMY_RAINCLOUD;
-            case LIGHTNING -> Palette.ENEMY_LIGHTNING;
-            case THUNDER -> Palette.ENEMY_THUNDER;
-            case HORNET -> Palette.ENEMY_HORNET;
-            case COCOON -> Palette.ENEMY_COCOON;
-            case LARVA -> Palette.ENEMY_LARVA;
-            case NURSE -> Palette.ENEMY_NURSE;
-            case HIVE_GUARD -> Palette.ENEMY_HIVE_GUARD;
-            case DRONE -> Palette.ENEMY_DRONE;
+            case CIRCLE -> EnemyLook.CIRCLE;
+            case GHOST -> EnemyLook.GHOST;
+            case SQUARE -> EnemyLook.SQUARE;
+            case TRIANGLE -> EnemyLook.TRIANGLE;
+            case WARDEN -> EnemyLook.WARDEN;
+            case WARDEN_EGG -> EnemyLook.WARDEN_EGG;
+            case MENDER -> EnemyLook.MENDER;
+            case JUGGERNAUT -> EnemyLook.JUGGERNAUT;
+            case MITE -> EnemyLook.MITE;
+            case COURIER -> EnemyLook.COURIER;
+            case SKIRMISHER -> EnemyLook.SKIRMISHER;
+            case SHIELDBEARER -> EnemyLook.SHIELDBEARER;
+            case SALAMANDER -> EnemyLook.SALAMANDER;
+            case YETI -> EnemyLook.YETI;
+            case MAGMA -> EnemyLook.MAGMA;
+            case GOLEM -> EnemyLook.GOLEM;
+            case JAMMER -> EnemyLook.JAMMER;
+            case REAVER -> EnemyLook.REAVER;
+            case COLOSSUS -> EnemyLook.COLOSSUS;
+            case MOLTEN_CORE -> EnemyLook.MOLTEN_CORE;
+            case EMBER -> EnemyLook.EMBER;
+            case MONOLITH -> EnemyLook.MONOLITH;
+            case ECLIPSE -> EnemyLook.ECLIPSE;
+            case MIRAGE -> EnemyLook.MIRAGE;
+            case MIRROR_IMAGE -> EnemyLook.MIRROR_IMAGE;
+            case HERALD -> EnemyLook.HERALD;
+            case TALOS -> EnemyLook.TALOS;
+            case MINOTAUR -> EnemyLook.MINOTAUR;
+            case BRONZE_BULL -> EnemyLook.BRONZE_BULL;
+            case GLASS_SENTINEL -> EnemyLook.GLASS_SENTINEL;
+            case SANDLING -> EnemyLook.SANDLING;
+            case TIMEKEEPER -> EnemyLook.TIMEKEEPER;
+            case KEEPER -> EnemyLook.KEEPER;
+            case GALE -> EnemyLook.GALE;
+            case RAINDROP -> EnemyLook.RAINDROP;
+            case RAINCLOUD -> EnemyLook.RAINCLOUD;
+            case LIGHTNING -> EnemyLook.LIGHTNING;
+            case THUNDER -> EnemyLook.THUNDER;
+            case HORNET -> EnemyLook.HORNET;
+            case COCOON -> EnemyLook.COCOON;
+            case LARVA -> EnemyLook.LARVA;
+            case NURSE -> EnemyLook.NURSE;
+            case HIVE_GUARD -> EnemyLook.HIVE_GUARD;
+            case DRONE -> EnemyLook.DRONE;
         };
     }
 
@@ -255,18 +256,18 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return this.overlayDraws;
     }
 
-    private Void body(Palette palette, DefinedEnemyMob mob, float scale, double facingRadians,
+    private Void body(EnemyLook look, DefinedEnemyMob mob, float scale, double facingRadians,
             Optional<SupportAura> supportAura, List<Trait> traits) {
         if (mob.isDead()) {
             int age = mob.ticksSinceDeath(this.gameTime).orElse(0);
             if (age <= fadeDurationTicks(mob.getRank())) {
                 float fadeProgress = fadeProgress(mob.getRank(), age);
-                this.draws.add(new EnemyFadeDraw(palette, (float) mob.getX(), (float) mob.getY(), facingRadians, scale, age, fadeProgress));
+                this.draws.add(new EnemyFadeDraw(look, (float) mob.getX(), (float) mob.getY(), facingRadians, scale, age, fadeProgress));
             }
         } else if (!mob.isInactive()) {
             float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
             float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
-            this.draws.add(new EnemyBodyDraw(palette, x, y, facingRadians, mob.getDrawScale(), mob.getHealthFraction(),
+            this.draws.add(new EnemyBodyDraw(look, x, y, facingRadians, mob.getDrawScale(), mob.getHealthFraction(),
                     badgeFor(mob.getRank()), this.cloakProgress(mob), this.flicker(mob)));
             this.markers(mob, x, y, scale);
             this.critSpark(mob, x, y);
@@ -480,6 +481,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     public Void visitDefined(DefinedEnemyMob mob) {
-        return this.body(paletteFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians(), mob.supportAura(), mob.traits());
+        return this.body(lookFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians(), mob.supportAura(), mob.traits());
     }
 }
