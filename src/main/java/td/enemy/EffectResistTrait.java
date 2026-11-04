@@ -40,16 +40,4 @@ public record EffectResistTrait(EnemyStat stat, float amount) implements Trait {
                 : TermText.of(kind).plus(" lasts " + TermNumbers.percent(this.amount) + " less on it");
         return new TraitEntry(kind, this.amount, text);
     }
-
-    @Override
-    public TraitMarker marker() {
-        if (this.amount < 1f) {
-            return TraitMarker.EFFECT_RESIST;
-        }
-        return switch (this.stat) {
-            case BURN_RESIST -> TraitMarker.BURN_IMMUNE;
-            case FREEZE_RESIST -> TraitMarker.FREEZE_IMMUNE;
-            default -> TraitMarker.EFFECT_RESIST;
-        };
-    }
 }

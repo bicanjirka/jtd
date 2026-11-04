@@ -71,18 +71,6 @@ public record AdaptiveResist(Optional<DamageType> resisted, float evenArmor, flo
                     + " against this level's damage"));
         }
 
-        @Override
-        public TraitMarker marker() {
-            return markerFor(this.type);
-        }
-
-        static TraitMarker markerFor(DamageType type) {
-            return switch (type) {
-                case PHYSICAL -> TraitMarker.PHYSICAL_RESIST;
-                case MAGIC -> TraitMarker.MAGIC_RESIST;
-            };
-        }
-
         static String labelFor(DamageType type) {
             return switch (type) {
                 case PHYSICAL -> "Armor";

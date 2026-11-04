@@ -126,7 +126,7 @@ BoardRenderer.buildFrame(gameTime, interpolationAlpha, animationSeconds)   on ga
 |---|---|---|
 | `CellFrameBuilder` | the placement or selection highlight | one `CellHighlight` and its cell |
 | `ZoneFrameBuilder` | ground zones, drawn under the enemies | — |
-| `EnemyFrameBuilder` | bodies, death fades, status markers, overlays | `EnemyMobVisitor` |
+| `EnemyFrameBuilder` | bodies, death fades, overlays | `EnemyMobVisitor` |
 | `TowerSpriteFrameBuilder` | tower base and turret head | `TowerVisitor` |
 | `TowerEffectFrameBuilder` | beams, blasts, pulses, auras, cones | `TowerVisitor` |
 | `ProjectileFrameBuilder` | shells and missiles in flight | `ProjectileVisitor` |

@@ -191,7 +191,7 @@ An enemy is made of four kinds of thing, and each belongs to exactly one:
   physical or only magic damage; hovering the Shield or Heal icon lists each source's share and how long it has.
 - **Traits** are what an enemy has that most don't, always on: a resistance or immunity to an effect,
   regeneration, a stat that follows its state (faster or harder to hit when hurt) or adapts to how the
-  level is played. Each draws a marker under the enemy.
+  level is played.
 - **Abilities** are what it does at a moment: a trigger (a timer, a threshold, a hit, a dodge, its death)
   and an action (put an effect on itself or its allies, or spawn enemies).
 - **Effects** are timed statuses on an enemy, from a tower or an ability, shown as markers above it.

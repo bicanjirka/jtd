@@ -123,13 +123,13 @@ public final class TermLooks {
 
     private static TermLook trait(TraitTerm term) {
         return new TermLook(switch (term) {
-            case REGENERATION -> Palette.TRAIT_MARKER_REGENERATION;
-            case ADRENALINE -> Palette.TRAIT_MARKER_HURT_SPEED;
-            case ELUSIVE -> Palette.TRAIT_MARKER_HURT_AGILITY;
-            case ADAPTATION -> Palette.TRAIT_MARKER_PERCENT_RESIST;
+            case REGENERATION -> Palette.TRAIT_ICON_REGENERATION;
+            case ADRENALINE -> Palette.TRAIT_ICON_HURT_SPEED;
+            case ELUSIVE -> Palette.TRAIT_ICON_HURT_AGILITY;
+            case ADAPTATION -> Palette.TRAIT_ICON_PERCENT_RESIST;
             case JAM -> Palette.DISRUPTION;
-            case HIVEMIND -> Palette.TRAIT_MARKER_HIVEMIND;
-            case CRUMBLE -> Palette.TRAIT_MARKER_CRUMBLE;
+            case HIVEMIND -> Palette.TRAIT_ICON_HIVEMIND;
+            case CRUMBLE -> Palette.TRAIT_ICON_CRUMBLE;
         }, Palette.TERM_FRAME_TRAIT);
     }
 
