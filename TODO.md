@@ -307,20 +307,28 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
 
 ## Levels
 
-### The balance report cannot see or sweep the clear bonus
+### The random play test sits on the five-second limit
 
-`RunRecorder` adds up `earned` from kills only, so a clean round's bonus shows in no report row, and no `LevelKnob`
-scales it. The Amber Hive pays a placeholder bonus on every round, still to be tuned.
+`RandomPlayInvariantTest` plays every built-in level on several seeds and takes 5 to 6 seconds on its own, so it can
+fail `mvn verify` on time alone; it asserts nothing wrong when it does.
 
-- **Where:** `td.balance.RunRecorder`, `PlayRecord.RoundEconomy`, `Rules`, `LevelKnob`.
-- **Approach:** record the bonus beside `earned`, then a clear-bonus knob through `PlaytestRules`, swept against
-  `bounty` to find the pairing that pays a clean player what kills paid before.
+- **Where:** `td.balance.RandomPlayInvariantTest` (`SEEDS`, the levels it plays).
+- **Approach:** cover each level on fewer seeds rather than raise the limit.
 
+### A sweep moves one number at a time
+
+`--sweep clear` and `--sweep bounty` each hold the other at the level's own value, so the pairing that pays a clean
+player what kills paid before has to be read across two tables rather than swept.
+
+- **Where:** `td.balance.LevelKnob`, `BalanceReport.printSweep`.
+- **Approach:** when the clear bonuses are tuned, try each table's income column first; add a two-knob grid only if
+  that cannot find the pairing.
 
 ### The three reworked levels are untuned
 
 The Amber Hive, The Storm Ridge and The Last Hour were rebuilt with new enemies, bosses and waves and have only been
-playtested by hand, not measured. Every figure for Curly Path, Zigzag Path or Twisted Hourglass elsewhere in this
+playtested by hand, not measured; the clear bonuses The Amber Hive and The Storm Ridge pay are placeholders too. Every
+figure for Curly Path, Zigzag Path or Twisted Hourglass elsewhere in this
 file was measured on the old levels.
 
 - **Where:** the wave scripts, starting credits and enemy numbers in `td.level.CurlyPathLevel`, `ZigZagPathLevel`,

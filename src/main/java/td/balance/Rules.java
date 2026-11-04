@@ -13,28 +13,38 @@ import td.level.LevelDefinition;
  * @param livesBonus          added to the level's starting lives; negative takes away, down to one
  * @param bountyPercent       what every kill pays, as a percentage of the authored bounty
  * @param spawnSpacingPercent the gaps between a wave's spawns, as a percentage of the authored ones
+ * @param clearBonusPercent   what a round pays for clearing with no leak, as a percentage of the authored bonus
  */
 public record Rules(int enemyHealthPercent, int creditBonus, int livesBonus, int bountyPercent,
-                    int spawnSpacingPercent) {
+                    int spawnSpacingPercent, int clearBonusPercent) {
 
     public static Rules standard() {
-        return new Rules(100, 0, 0, 100, 100);
+        return new Rules(100, 0, 0, 100, 100, 100);
     }
 
     public Rules withEnemyHealthPercent(int percent) {
-        return new Rules(percent, this.creditBonus, this.livesBonus, this.bountyPercent, this.spawnSpacingPercent);
+        return new Rules(percent, this.creditBonus, this.livesBonus, this.bountyPercent, this.spawnSpacingPercent,
+                this.clearBonusPercent);
     }
 
     public Rules withLivesBonus(int bonus) {
-        return new Rules(this.enemyHealthPercent, this.creditBonus, bonus, this.bountyPercent, this.spawnSpacingPercent);
+        return new Rules(this.enemyHealthPercent, this.creditBonus, bonus, this.bountyPercent, this.spawnSpacingPercent,
+                this.clearBonusPercent);
     }
 
     public Rules withBountyPercent(int percent) {
-        return new Rules(this.enemyHealthPercent, this.creditBonus, this.livesBonus, percent, this.spawnSpacingPercent);
+        return new Rules(this.enemyHealthPercent, this.creditBonus, this.livesBonus, percent, this.spawnSpacingPercent,
+                this.clearBonusPercent);
     }
 
     public Rules withSpawnSpacingPercent(int percent) {
-        return new Rules(this.enemyHealthPercent, this.creditBonus, this.livesBonus, this.bountyPercent, percent);
+        return new Rules(this.enemyHealthPercent, this.creditBonus, this.livesBonus, this.bountyPercent, percent,
+                this.clearBonusPercent);
+    }
+
+    public Rules withClearBonusPercent(int percent) {
+        return new Rules(this.enemyHealthPercent, this.creditBonus, this.livesBonus, this.bountyPercent,
+                this.spawnSpacingPercent, percent);
     }
 
     public boolean isStandard() {
@@ -50,5 +60,6 @@ public record Rules(int enemyHealthPercent, int creditBonus, int livesBonus, int
         engine.getGameWorld().playtestRules().setEnemyHealthPercent(this.enemyHealthPercent);
         engine.getGameWorld().playtestRules().setBountyPercent(this.bountyPercent);
         engine.getGameWorld().playtestRules().setSpawnSpacingPercent(this.spawnSpacingPercent);
+        engine.getGameWorld().playtestRules().setClearBonusPercent(this.clearBonusPercent);
     }
 }

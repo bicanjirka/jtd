@@ -353,7 +353,10 @@ public class GameEngine {
     private int clearBonusEarned(RoundState ended) {
         int round = ended.wave() - 1;
         LoadedLevel installed = this.gameWorld.level();
-        return ended.leaked().contains(round) || round >= installed.waveCount() ? 0 : installed.clearBonusAt(round);
+        if (ended.leaked().contains(round) || round >= installed.waveCount()) {
+            return 0;
+        }
+        return Math.round(installed.clearBonusAt(round) * this.gameWorld.playtestRules().clearBonusScale());
     }
 
     private void logIfOver(RoundState before) {

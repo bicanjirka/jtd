@@ -24,6 +24,13 @@ enum LevelKnob {
             return new Setting(Rules.standard().withBountyPercent(value), LevelPlay.Pacing.standard());
         }
     },
+    /** What a round pays for clearing with no leak, as a percentage of the authored bonus. */
+    CLEAR("clear bonus %", List.of(0, 50, 100, 150, 200)) {
+        @Override
+        Setting at(int value) {
+            return new Setting(Rules.standard().withClearBonusPercent(value), LevelPlay.Pacing.standard());
+        }
+    },
     /** Ticks the player waits between a round clearing and calling the next. */
     PAUSE("pause ticks", List.of(0, 30, 60, 180, 600)) {
         @Override

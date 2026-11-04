@@ -303,14 +303,16 @@ final class HtmlReport {
         String player = BalanceReport.COMPETENT;
         double[][] rows = {
                 run.perRound(player, round -> round.economy().creditsAtStart()),
-                run.perRound(player, round -> round.economy().earned()),
+                run.perRound(player, round -> round.economy().income().bounty()),
+                run.perRound(player, round -> round.economy().income().clearBonus()),
                 run.perRound(player, round -> round.economy().spent().towers()),
                 run.perRound(player, round -> round.economy().spent().upgrades()),
                 run.perRound(player, round -> round.economy().spent().wanted())};
-        String[] names = {"idle at the start", "bounty earned", "spent on towers", "spent on upgrades",
+        String[] names = {"idle at the start", "bounty earned", "clear bonus", "spent on towers", "spent on upgrades",
                 "price of what it wants next"};
+        double[] income = run.perRound(player, round -> round.economy().income().total());
         this.html.append("<h3>Economy</h3><p class=\"note\">Per round, averaged over the competent player's plays. ")
-                .append(escape(BalanceReport.economyVerdict(rows[1], rows[4]))).append(".</p><div class=\"card\">")
+                .append(escape(BalanceReport.economyVerdict(income, rows[5]))).append(".</p><div class=\"card\">")
                 .append("<table><tr><th>round</th>");
         for (int r = 1; r <= rows[0].length; r++) {
             this.html.append("<th>").append(r).append("</th>");
