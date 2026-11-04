@@ -8,14 +8,15 @@ import td.damage.Damage;
  * @param landed   the damage that reached health, capped at what was left
  * @param absorbed the units a shield took
  * @param dodged   whether the enemy dodged it, so nothing else about it happened
+ * @param overkill the units past the health that was left, which went nowhere
  */
-public record HitResult(Damage landed, int absorbed, boolean dodged) {
+public record HitResult(Damage landed, int absorbed, boolean dodged, int overkill) {
 
-    private static final HitResult NONE = new HitResult(Damage.none(), 0, false);
-    private static final HitResult DODGED = new HitResult(Damage.none(), 0, true);
+    private static final HitResult NONE = new HitResult(Damage.none(), 0, false, 0);
+    private static final HitResult DODGED = new HitResult(Damage.none(), 0, true, 0);
 
     public HitResult(Damage landed, int absorbed) {
-        this(landed, absorbed, false);
+        this(landed, absorbed, false, 0);
     }
 
     public static HitResult none() {
@@ -24,6 +25,10 @@ public record HitResult(Damage landed, int absorbed, boolean dodged) {
 
     public static HitResult dodge() {
         return DODGED;
+    }
+
+    public HitResult withOverkill(int overkill) {
+        return new HitResult(this.landed, this.absorbed, this.dodged, overkill);
     }
 
     /** What the attacker is credited with: health taken plus what a shield absorbed. */

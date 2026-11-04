@@ -26,7 +26,8 @@ import java.util.Set;
 /**
  * Watches a headless play through the engine's public state, polled after every tick: which enemies walked in,
  * how each walk ended and where, what each round cost and earned, what the towers dealt, which effects the
- * enemies carried and which abilities they used. It reads nothing a renderer could not.
+ * enemies carried and which abilities they used. It reads nothing a renderer could not, but for what a poll cannot
+ * split: what each hit did, which it hears from the tower roster.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 final class RunRecorder {
@@ -50,6 +51,7 @@ final class RunRecorder {
     private final Map<EffectKind, Integer> effectStarts = new EnumMap<>(EffectKind.class);
     private final Map<String, Integer> casts = new LinkedHashMap<>();
     private final List<PlayRecord.Sample> timeline = new ArrayList<>();
+    private final TowerWorkTally towerWork = new TowerWorkTally();
 
     private boolean roundOpen;
     private int roundStartTick;
@@ -73,6 +75,7 @@ final class RunRecorder {
         this.firstRound = engine.getCurrentWaveIndex() + 1;
         this.cleared = this.firstRound - 1;
         engine.getTowers().forEach(tower -> this.damageCounted.put(tower, tower.getDamageDealt()));
+        engine.getGameWorld().towers().addHitListener(this.towerWork);
     }
 
     /** Call after the tick that started a round: the roster now holds only its enemies. */
@@ -133,6 +136,7 @@ final class RunRecorder {
     }
 
     void afterTick(int tick) {
+        this.towerWork.countReach(this.engine.getGameWorld().enemies().getEnemies(), this.engine.getTowers());
         for (EnemyMob mob : this.engine.getGameWorld().enemies().getEnemies()) {
             if (this.ended.contains(mob)) {
                 continue;
@@ -259,6 +263,6 @@ final class RunRecorder {
         return new PlayRecord(play, new PlayRecord.Result(this.startingLives, this.leaks, this.cleared,
                 this.engine.getWaveCount()), this.rounds, new PlayRecord.Log(this.ends, this.actions, towers,
                 new PlayRecord.Watch(new PlayRecord.EffectUse(this.enemyTicks, this.effectTicks, this.effectStarts),
-                        this.casts, this.timeline)));
+                        this.casts, this.timeline, this.towerWork.totals())));
     }
 }

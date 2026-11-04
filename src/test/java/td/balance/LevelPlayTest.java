@@ -127,6 +127,21 @@ class LevelPlayTest {
     }
 
     @Test
+    void aPlaysTowerWorkAddsUpToTheDamageItsRoundsRecordedAndSplitsItByEnemyKind() {
+        PlayRecord played = LevelPlay.play(twoLanes(), NaivePlayer.spec(), SEED, LevelPlay.Pacing.standard());
+
+        long byRound = played.rounds().stream().flatMap(round -> round.pressure().damage().values().stream())
+                .mapToLong(Long::longValue).sum();
+        long credited = played.watch().towers().values().stream().mapToLong(work -> work.hits().credited()).sum();
+        long byKind = played.watch().towers().values().stream()
+                .flatMap(work -> work.damageByKind().values().stream()).mapToLong(Long::longValue).sum();
+
+        assertThat(credited).isPositive().isEqualTo(byRound).isEqualTo(byKind);
+        assertThat(played.watch().towers().values()).anySatisfy(work -> assertThat(work.ticksInReach()).isPositive());
+        assertThat(played.watch().towers().values()).anySatisfy(work -> assertThat(work.hits().overkill()).isPositive());
+    }
+
+    @Test
     void aPlayCountsTheEffectsItsTowersPutOnEnemiesAndTheAbilitiesTheEnemiesUse() {
         BoardSurvey survey = twoLanes();
 
