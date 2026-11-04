@@ -121,7 +121,7 @@ final class LabyrinthLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
-            .withGround(BoardGround.of(0x15110A, GroundMotif.FLAGSTONES, 0x292114))
+            .withGround(BoardGround.of(0x0D0B06, GroundMotif.FLAGSTONES, 0x17130B))
             .withCustomRankedEnemies(List.of(BRONZE_BULL, TALOS, MINOTAUR));
 
     private LabyrinthLevel() {
