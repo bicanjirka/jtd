@@ -159,7 +159,6 @@ public enum Palette {
     STATUS_MARKER_RESONATING,
     STATUS_MARKER_FRACTURED,
     /** Stands in for every effect past the visible marker cap. */
-    STATUS_MARKER_OVERFLOW,
     /** Ice over a frozen enemy, whiter than the slow and freeze markers. */
     FREEZE_CRYSTAL,
     CRIT_SPARK,
@@ -171,18 +170,12 @@ public enum Palette {
     RANK_BADGE_ELITE,
     RANK_BADGE_BOSS,
     /** Trait markers, one role per trait marker plus overflow. */
-    TRAIT_MARKER_PERCENT_RESIST,
-    TRAIT_MARKER_PHYSICAL_RESIST,
-    TRAIT_MARKER_MAGIC_RESIST,
-    TRAIT_MARKER_HURT_SPEED,
-    TRAIT_MARKER_HURT_AGILITY,
-    TRAIT_MARKER_REGENERATION,
-    TRAIT_MARKER_BURN_IMMUNE,
-    TRAIT_MARKER_FREEZE_IMMUNE,
-    TRAIT_MARKER_EFFECT_RESIST,
-    TRAIT_MARKER_HIVEMIND,
-    TRAIT_MARKER_CRUMBLE,
-    TRAIT_MARKER_OVERFLOW,
+    TRAIT_ICON_PERCENT_RESIST,
+    TRAIT_ICON_HURT_SPEED,
+    TRAIT_ICON_HURT_AGILITY,
+    TRAIT_ICON_REGENERATION,
+    TRAIT_ICON_HIVEMIND,
+    TRAIT_ICON_CRUMBLE,
     /** An enemy's disruption ring and the marker on a tower it weakens. */
     DISRUPTION,
     /** The frame of a Control effect. */

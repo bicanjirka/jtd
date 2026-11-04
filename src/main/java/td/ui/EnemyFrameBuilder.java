@@ -1,6 +1,5 @@
 package td.ui;
 
-import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
@@ -8,8 +7,6 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
 import td.enemy.SupportAura;
-import td.enemy.Trait;
-import td.enemy.TraitMarker;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarLook;
@@ -25,46 +22,25 @@ import td.ui.render.HexRuneDraw;
 import td.ui.render.IceCrystalDraw;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
-import td.ui.render.PulseDirection;
 import td.ui.render.RankBadge;
-import td.ui.render.StatusMarkerDraw;
-import td.ui.render.TraitMarkerDraw;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.Set;
 
 /**
- * Describes each enemy's body, markers and effects as draw commands, switching on its
+ * Describes each enemy's body and effects as draw commands, switching on its
  * {@link BodyArchetype}. A live body is interpolated between ticks; a dying one is drawn where it
  * died, since it no longer moves.
  */
 public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
 
-    /** Markers shown before the rest collapse into one overflow marker. */
-    static final int MAX_VISIBLE_MARKERS = 3;
-    // Fractions of body scale, so the row clears a large body; the glyph size is fixed.
-    private static final float MARKER_ROW_OFFSET_FRACTION = 1.6f;
-    private static final float MARKER_SPACING_FRACTION = 1.1f;
-    /**
-     * Pixels from a marker that carries a count to the next one: its count is drawn to its right in
-     * a fixed-size font, so the gap can't shrink with the enemy.
-     */
-    static final float COUNTED_MARKER_SPACING = 24f;
-    /** Marker glyph size, fixed so a marker reads the same on a small or a huge body. */
-    private static final float MARKER_FIXED_SCALE = 4.5f;
-    /** The trait row sits below the body, mirroring the effect row above it. */
-    private static final float TRAIT_MARKER_ROW_OFFSET_FRACTION = 1.6f;
     static final int CRIT_SPARK_DURATION_TICKS = 8;
     /** Fixed, so a crit looks the same on every enemy. */
     private static final float CRIT_SPARK_FIXED_SCALE = 12f;
     static final int MISS_MARK_DURATION_TICKS = 12;
     static final int CLOAK_FADE_DURATION_TICKS = 8;
-    static final int FLICKER_HALF_PERIOD_TICKS = 3;
     /**
      * Shield bubble size relative to the body, drawn at a faint fixed alpha since it marks a
      * lasting state.
@@ -82,13 +58,13 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     // Stronger than a support aura: it threatens the player's towers rather than helping allies.
     private static final float DISRUPTION_RING_ALPHA = 0.35f;
     static final int EFFECT_PULSE_DURATION_TICKS = 8;
-    /** Runes sit in a row over the body, below the markers; their size is fixed, like a marker's. */
+    /** Runes sit in a row over the body; their size is fixed. */
     private static final float RUNE_ROW_OFFSET_FRACTION = 0.6f;
     private static final float RUNE_FIXED_SCALE = 4f;
     private static final float RUNE_SPACING = 11f;
-    /** Pulse ring size relative to the body. */
-    private static final float GAIN_LOSS_PULSE_RADIUS_FRACTION = 1.6f;
-    /** Larger than a status pulse: it marks a new mob, not a change on an existing one. */
+    /** How far a cast with no reach of its own rings out, relative to the body. */
+    private static final float CAST_PULSE_RADIUS_FRACTION = 1.6f;
+    /** Larger than a cast's: it marks a new mob, not a change on an existing one. */
     private static final float SPAWN_BURST_RADIUS_FRACTION = 2.2f;
     /** A bar's width against the body's scale, and the least it may be: a bar under a tiny body must still read. */
     private static final float BAR_WIDTH_SCALE_FRACTION = 1.8f;
@@ -96,7 +72,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** Under the furthest the body's art reaches, with room left for a pulsing body. */
     private static final float BAR_GAP = 3f;
     private final List<EnemyDraw> draws = new ArrayList<>();
-    private final List<StatusMarkerDraw> markerDraws = new ArrayList<>();
     private final List<CritSparkDraw> critSparkDraws = new ArrayList<>();
     private final List<EnemyOverlayDraw> overlayDraws = new ArrayList<>();
     private final int gameTime;
@@ -172,22 +147,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         };
     }
 
-    static Palette traitMarkerPaletteFor(TraitMarker marker) {
-        return switch (marker) {
-            case PERCENT_RESIST -> Palette.TRAIT_MARKER_PERCENT_RESIST;
-            case PHYSICAL_RESIST -> Palette.TRAIT_MARKER_PHYSICAL_RESIST;
-            case MAGIC_RESIST -> Palette.TRAIT_MARKER_MAGIC_RESIST;
-            case HURT_SPEED -> Palette.TRAIT_MARKER_HURT_SPEED;
-            case HURT_AGILITY -> Palette.TRAIT_MARKER_HURT_AGILITY;
-            case REGENERATION -> Palette.TRAIT_MARKER_REGENERATION;
-            case BURN_IMMUNE -> Palette.TRAIT_MARKER_BURN_IMMUNE;
-            case FREEZE_IMMUNE -> Palette.TRAIT_MARKER_FREEZE_IMMUNE;
-            case EFFECT_RESIST -> Palette.TRAIT_MARKER_EFFECT_RESIST;
-            case HIVEMIND -> Palette.TRAIT_MARKER_HIVEMIND;
-            case CRUMBLE -> Palette.TRAIT_MARKER_CRUMBLE;
-        };
-    }
-
     static EnemyLook lookFor(BodyArchetype archetype) {
         return switch (archetype) {
             case CIRCLE -> EnemyLook.CIRCLE;
@@ -251,10 +210,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return this.draws;
     }
 
-    public List<StatusMarkerDraw> buildMarkers() {
-        return this.markerDraws;
-    }
-
     public List<CritSparkDraw> buildCritSparks() {
         return this.critSparkDraws;
     }
@@ -264,7 +219,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     private Void body(EnemyLook look, DefinedEnemyMob mob, float scale, double facingRadians,
-            Optional<SupportAura> supportAura, List<Trait> traits) {
+            Optional<SupportAura> supportAura) {
         if (mob.isDead()) {
             int age = mob.ticksSinceDeath(this.gameTime).orElse(0);
             if (age <= fadeDurationTicks(mob.getRank())) {
@@ -276,13 +231,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
             float cloakProgress = this.cloakProgress(mob);
             this.draws.add(new EnemyBodyDraw(look, x, y, facingRadians, mob.getDrawScale(), badgeFor(mob.getRank()),
-                    cloakProgress, this.flicker(mob)));
-            this.markers(mob, x, y, scale);
+                    cloakProgress));
             this.critSpark(mob, x, y);
             this.missMark(mob, x + scale, y);
             this.overlays(mob, x, y, scale, supportAura);
             this.pulses(mob, x, y, scale);
-            this.traitMarkers(x, y, scale, traits);
             this.bars(mob, look, x, y, scale, cloakProgress);
         }
         return null;
@@ -295,22 +248,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             this.overlayDraws.add(new EnemyBarsDraw(x, y + scale * EnemyLooks.of(look).reach() + BAR_GAP,
                     Math.max(BAR_MIN_WIDTH, scale * BAR_WIDTH_SCALE_FRACTION), 1f - cloakProgress,
                     List.of(new EnemyBarsDraw.Bar(EnemyBarLook.HEALTH, health))));
-        }
-    }
-
-    /** One hollow diamond per trait below the body, capped like the effect row. */
-    private void traitMarkers(float x, float y, float scale, List<Trait> traits) {
-        float markerY = y + scale * TRAIT_MARKER_ROW_OFFSET_FRACTION;
-        float markerX = x - scale;
-        int shown = 0;
-        for (Trait trait : traits) {
-            if (shown == MAX_VISIBLE_MARKERS) {
-                this.overlayDraws.add(new TraitMarkerDraw(Palette.TRAIT_MARKER_OVERFLOW, markerX, markerY, MARKER_FIXED_SCALE));
-                return;
-            }
-            this.overlayDraws.add(new TraitMarkerDraw(traitMarkerPaletteFor(trait.marker()), markerX, markerY, MARKER_FIXED_SCALE));
-            markerX += scale * MARKER_SPACING_FRACTION;
-            shown++;
         }
     }
 
@@ -334,40 +271,21 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                 new EnemyRingDraw(Palette.DISRUPTION, x, y, aura.radius(), DISRUPTION_RING_ALPHA)));
     }
 
-    /**
-     * A ring wherever the mob just gained or lost an effect, cast one, or arrived by an ability
-     * spawn.
-     */
+    /** A ring wherever the mob just cast an effect or arrived by an ability spawn. */
     private void pulses(DefinedEnemyMob mob, float x, float y, float scale) {
-        for (EffectKind kind : EffectKind.values()) {
-            if (kind == EffectKind.INVISIBLE) {
-                continue;
-            }
-            this.addTransitionPulse(x, y, scale, kind,
-                    mob.effectGainedWithin(kind, this.gameTime, EFFECT_PULSE_DURATION_TICKS), PulseDirection.OUTWARD);
-            this.addTransitionPulse(x, y, scale, kind,
-                    mob.effectLostWithin(kind, this.gameTime, EFFECT_PULSE_DURATION_TICKS), PulseDirection.INWARD);
-        }
         mob.lastAbilityCast().ifPresent(cast -> {
             int ticksSince = this.gameTime - cast.tick();
             if (ticksSince >= 0 && ticksSince <= EFFECT_PULSE_DURATION_TICKS) {
                 float progress = (float) ticksSince / EFFECT_PULSE_DURATION_TICKS;
                 // A zero radius would draw an invisible ring.
-                float ringRadius = cast.radius() > 0 ? cast.radius() : scale * GAIN_LOSS_PULSE_RADIUS_FRACTION;
-                this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(cast.kind()), x, y, ringRadius, progress, PulseDirection.OUTWARD));
+                float ringRadius = cast.radius() > 0 ? cast.radius() : scale * CAST_PULSE_RADIUS_FRACTION;
+                this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(cast.kind()), x, y, ringRadius, progress));
             }
         });
         OptionalInt spawned = mob.ticksSinceAbilitySpawn(this.gameTime);
         if (within(spawned, EFFECT_PULSE_DURATION_TICKS)) {
             float progress = (float) spawned.getAsInt() / EFFECT_PULSE_DURATION_TICKS;
-            this.overlayDraws.add(new EffectPulseDraw(Palette.SPAWN_BURST, x, y, scale * SPAWN_BURST_RADIUS_FRACTION, progress, PulseDirection.OUTWARD));
-        }
-    }
-
-    private void addTransitionPulse(float x, float y, float scale, EffectKind kind, OptionalInt since, PulseDirection direction) {
-        if (since.isPresent()) {
-            float progress = (float) since.getAsInt() / EFFECT_PULSE_DURATION_TICKS;
-            this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(kind), x, y, scale * GAIN_LOSS_PULSE_RADIUS_FRACTION, progress, direction));
+            this.overlayDraws.add(new EffectPulseDraw(Palette.SPAWN_BURST, x, y, scale * SPAWN_BURST_RADIUS_FRACTION, progress));
         }
     }
 
@@ -379,7 +297,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         }
     }
 
-    /** Beside the body, since the badge and the effect markers fill the space above it. */
+    /** Beside the body, since the badge and whatever an effect draws fill the space above it. */
     private void missMark(DefinedEnemyMob mob, float rightOfBody, float y) {
         OptionalInt dodged = mob.ticksSinceDodge(this.gameTime);
         if (within(dodged, MISS_MARK_DURATION_TICKS)) {
@@ -415,31 +333,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return lost.isPresent() ? 1f - (float) lost.getAsInt() / CLOAK_FADE_DURATION_TICKS : 0f;
     }
 
-    /** 1 on the dimmed half of a flicker while a tower's field holds an effect on the enemy, else 0. */
-    private float flicker(DefinedEnemyMob mob) {
-        boolean held = mob.activeEffectKinds().stream().anyMatch(EffectKind::isFieldEffect);
-        return held && this.gameTime / FLICKER_HALF_PERIOD_TICKS % 2 == 1 ? 1f : 0f;
-    }
-
-    private void markers(DefinedEnemyMob mob, float x, float y, float scale) {
-        float markerY = y - scale * MARKER_ROW_OFFSET_FRACTION;
-        float markerX = x - scale;
-        int shown = 0;
-        List<MarkerGroup> groups = markerGroups(mob.activeEffectKinds());
-        for (MarkerGroup group : groups) {
-            if (shown == MAX_VISIBLE_MARKERS) {
-                this.markerDraws.add(new StatusMarkerDraw(Palette.STATUS_MARKER_OVERFLOW, markerX, markerY,
-                        MARKER_FIXED_SCALE, groups.size() - MAX_VISIBLE_MARKERS));
-                return;
-            }
-            this.markerDraws.add(new StatusMarkerDraw(markerPaletteFor(group.first()), markerX, markerY,
-                    MARKER_FIXED_SCALE, group.others()));
-            float spacing = scale * MARKER_SPACING_FRACTION;
-            markerX += group.others() > 0 ? Math.max(spacing, COUNTED_MARKER_SPACING) : spacing;
-            shown++;
-        }
-    }
-
     /** A rune for each hex on {@code mob}, in a row centred on {@code (x, y)}. */
     private void runes(DefinedEnemyMob mob, float x, float y) {
         List<HexGlyph> glyphs = mob.activeEffectKinds().stream()
@@ -467,28 +360,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         };
     }
 
-    /** What one marker stands for: the first kind of a category, and how many more of it are active. */
-    record MarkerGroup(EffectKind first, int others) {
-    }
-
-    /**
-     * One marker per effect while they fit, else one per category, counting the other kinds of that
-     * category on the enemy.
-     */
-    static List<MarkerGroup> markerGroups(Set<EffectKind> active) {
-        List<MarkerGroup> groups = new ArrayList<>();
-        if (active.size() <= MAX_VISIBLE_MARKERS) {
-            active.forEach(kind -> groups.add(new MarkerGroup(kind, 0)));
-            return groups;
-        }
-        Map<EffectCategory, List<EffectKind>> byCategory = new EnumMap<>(EffectCategory.class);
-        for (EffectKind kind : active) {
-            byCategory.computeIfAbsent(kind.category(), category -> new ArrayList<>()).add(kind);
-        }
-        byCategory.values().forEach(kinds -> groups.add(new MarkerGroup(kinds.getFirst(), kinds.size() - 1)));
-        return groups;
-    }
-
     static int fadeDurationTicks(Rank rank) {
         return 3 * rank.ordinal() + 6;
     }
@@ -500,6 +371,6 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     public Void visitDefined(DefinedEnemyMob mob) {
-        return this.body(lookFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians(), mob.supportAura(), mob.traits());
+        return this.body(lookFor(mob.archetype()), mob, mob.getBodyScale(), mob.getFacingRadians(), mob.supportAura());
     }
 }

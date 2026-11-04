@@ -7,9 +7,8 @@ import td.stat.StatModifiers;
 import java.util.Optional;
 
 /**
- * A passive, always-on modifier of an enemy's stats. Every method but {@link #marker()} defaults to
- * no effect, so an enemy without traits needs no special case. {@link #marker()} has no default so
- * a new trait cannot compile without a glyph.
+ * A passive, always-on modifier of an enemy's stats. Every method defaults to no effect, so an enemy
+ * without traits needs no special case.
  * <p>
  * One instance is shared by every mob of a definition; per-mob inputs arrive in
  * {@link TraitContext}.
@@ -31,7 +30,4 @@ public interface Trait extends TraitTemplate {
     default boolean readsAllies() {
         return false;
     }
-
-    /** The glyph shown for this trait in the marker row below the mob. */
-    TraitMarker marker();
 }

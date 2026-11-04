@@ -31,9 +31,4 @@ public record CrumbleTrait(float pointsPerSecond) implements Trait {
         return TraitEntry.of(TraitTerm.CRUMBLE,
                 TermText.of("loses " + TermNumbers.number(this.pointsPerSecond) + " health a second"));
     }
-
-    @Override
-    public TraitMarker marker() {
-        return TraitMarker.CRUMBLE;
-    }
 }

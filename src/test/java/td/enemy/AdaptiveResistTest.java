@@ -26,7 +26,6 @@ class AdaptiveResistTest {
 
         assertThat(EnemyFixtures.landedThrough(resist, Damage.magic(100))).isEqualTo(Damage.magic(80));
         assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(100))).isEqualTo(Damage.physical(100));
-        assertThat(resist.marker()).isEqualTo(TraitMarker.MAGIC_RESIST);
     }
 
     @Test
@@ -36,7 +35,6 @@ class AdaptiveResistTest {
         Trait resist = AdaptiveResist.againstDominant(25f).resolvedFor(threeToOne).orElseThrow();
 
         assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(100))).isEqualTo(Damage.physical(89));
-        assertThat(resist.marker()).isEqualTo(TraitMarker.PHYSICAL_RESIST);
     }
 
     @Test

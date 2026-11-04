@@ -670,11 +670,6 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.effectTransitions.ticksSinceGained(kind, gameTime);
     }
 
-    /** How long ago {@code kind} was last gained, if no more than {@code ticks} ago. */
-    public OptionalInt effectGainedWithin(EffectKind kind, int gameTime, int ticks) {
-        return this.effectTransitions.gainedWithin(kind, gameTime, ticks);
-    }
-
     /** How long ago {@code kind} was last lost, if no more than {@code ticks} ago. */
     public OptionalInt effectLostWithin(EffectKind kind, int gameTime, int ticks) {
         return this.effectTransitions.lostWithin(kind, gameTime, ticks);

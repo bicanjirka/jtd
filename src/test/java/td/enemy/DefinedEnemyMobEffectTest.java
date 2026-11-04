@@ -293,11 +293,6 @@ class DefinedEnemyMobEffectTest {
         public TraitEntry entry() {
             return TraitEntry.of(TraitTerm.ADRENALINE, TermText.of("reveals it"));
         }
-
-        @Override
-        public TraitMarker marker() {
-            return TraitMarker.HURT_SPEED;
-        }
     }
 
     @Test

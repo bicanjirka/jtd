@@ -33,9 +33,4 @@ public record HivemindTrait(float resistPerAlly, int mostAllies) implements Trai
                 + " armor and magic resist for every other enemy within " + TermNumbers.cells(TraitContext.ALLY_REACH_CELLS)
                 + ", up to " + this.mostAllies + " of them"));
     }
-
-    @Override
-    public TraitMarker marker() {
-        return TraitMarker.HIVEMIND;
-    }
 }

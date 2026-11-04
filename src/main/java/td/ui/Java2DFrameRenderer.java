@@ -27,7 +27,6 @@ import td.ui.render.PathMarkerBrightness;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
 import td.ui.render.ProjectileDraw;
-import td.ui.render.PulseDirection;
 import td.ui.render.PulseDraw;
 import td.ui.render.RankBadge;
 import td.ui.render.RenderFrame;
@@ -36,11 +35,9 @@ import td.ui.render.SheetLine;
 import td.ui.render.SlotMarkDraw;
 import td.ui.render.SmokeDraw;
 import td.ui.render.SplashDraw;
-import td.ui.render.StatusMarkerDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TowerStatusDraw;
-import td.ui.render.TraitMarkerDraw;
 import td.ui.render.TurretHeadDraw;
 import td.ui.render.ZoneDraw;
 import td.wave.PathColor;
@@ -160,12 +157,9 @@ public final class Java2DFrameRenderer {
     private static final int ZONE_FALLOUT_BLADES = 3;
     /** How far toward white the innermost Stoke core goes. */
     private static final float CINDER_CORE_BRIGHTEN = 0.8f;
-    /** How much of its opacity a body loses on the dimmed half of a flicker. */
-    private static final float FLICKER_DIM = 0.5f;
     private static final int ZONE_WISPS = 4;
     /** A banked missile is drawn this share of a missile in flight. */
     private static final float NEST_MISSILE_SCALE = 0.6f;
-    private static final Font MARKER_COUNT_FONT = Hud.LABEL_FONT.deriveFont(9f);
     private static final Font MISS_MARK_FONT = Hud.LABEL_FONT.deriveFont(10f);
     private static final String MISS_TEXT = "miss";
     private static final float MISS_MARK_RISE = 10f;
@@ -555,7 +549,6 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_PRIORITY -> new Color(255, 150, 60);
             case STATUS_MARKER_RESONATING -> new Color(90, 160, 255);
             case STATUS_MARKER_FRACTURED -> new Color(160, 110, 220);
-            case STATUS_MARKER_OVERFLOW -> Color.WHITE;
             case FREEZE_CRYSTAL -> new Color(220, 245, 255);
             case CRIT_SPARK -> Color.WHITE;
             case MISS_MARK -> new Color(190, 190, 190);
@@ -563,18 +556,14 @@ public final class Java2DFrameRenderer {
             case RANK_BADGE_CHEVRON -> Color.WHITE;
             case RANK_BADGE_ELITE -> new Color(230, 190, 60);
             case RANK_BADGE_BOSS -> new Color(210, 210, 220);
-            case TRAIT_MARKER_PERCENT_RESIST -> new Color(180, 150, 255);
-            case TRAIT_MARKER_PHYSICAL_RESIST, DAMAGE_PHYSICAL -> new Color(230, 150, 70);
-            case TRAIT_MARKER_MAGIC_RESIST, DAMAGE_MAGIC -> new Color(90, 190, 255);
-            case TRAIT_MARKER_HURT_SPEED -> new Color(255, 140, 140);
-            case TRAIT_MARKER_HURT_AGILITY -> new Color(200, 250, 120);
-            case TRAIT_MARKER_REGENERATION -> new Color(110, 220, 120);
-            case TRAIT_MARKER_BURN_IMMUNE -> new Color(255, 150, 90);
-            case TRAIT_MARKER_FREEZE_IMMUNE -> new Color(170, 225, 255);
-            case TRAIT_MARKER_EFFECT_RESIST -> new Color(200, 200, 160);
-            case TRAIT_MARKER_HIVEMIND -> new Color(255, 190, 50);
-            case TRAIT_MARKER_CRUMBLE -> new Color(215, 180, 110);
-            case TRAIT_MARKER_OVERFLOW -> Color.LIGHT_GRAY;
+            case TRAIT_ICON_PERCENT_RESIST -> new Color(180, 150, 255);
+            case DAMAGE_PHYSICAL -> new Color(230, 150, 70);
+            case DAMAGE_MAGIC -> new Color(90, 190, 255);
+            case TRAIT_ICON_HURT_SPEED -> new Color(255, 140, 140);
+            case TRAIT_ICON_HURT_AGILITY -> new Color(200, 250, 120);
+            case TRAIT_ICON_REGENERATION -> new Color(110, 220, 120);
+            case TRAIT_ICON_HIVEMIND -> new Color(255, 190, 50);
+            case TRAIT_ICON_CRUMBLE -> new Color(215, 180, 110);
             case DISRUPTION -> new Color(235, 90, 200);
             case TERM_FRAME_CONTROL -> new Color(90, 170, 255);
             case TERM_FRAME_AFFLICTION -> new Color(255, 120, 60);
@@ -651,9 +640,6 @@ public final class Java2DFrameRenderer {
         }
         for (EnemyDraw enemy : frame.enemies()) {
             this.paintEnemy(g2, enemy);
-        }
-        for (StatusMarkerDraw marker : frame.statusMarkers()) {
-            this.paintStatusMarker(g2, marker);
         }
         for (CritSparkDraw spark : frame.critSparks()) {
             this.paintCritSpark(g2, spark);
@@ -887,7 +873,7 @@ public final class Java2DFrameRenderer {
         g2.translate(body.x(), body.y());
         g2.rotate(body.facingRadians());
         Shape shape = row.body().at(body.scale());
-        float visibility = (1f - body.cloakProgress()) * (1f - FLICKER_DIM * body.flicker());
+        float visibility = 1f - body.cloakProgress();
         g2.setColor(scaleAlpha(row.color(), visibility));
         g2.draw(shape);
         g2.fill(shape);
@@ -1096,20 +1082,6 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
-    /** A small filled diamond for an active status effect. */
-    private void paintStatusMarker(Graphics2D g2, StatusMarkerDraw marker) {
-        AffineTransform save = g2.getTransform();
-        g2.translate(marker.x(), marker.y());
-        g2.setColor(colorFor(marker.palette()));
-        g2.fill(diamondShape(marker.scale()));
-        if (marker.hiddenCount() > 0) {
-            g2.setColor(Color.WHITE);
-            g2.setFont(MARKER_COUNT_FONT);
-            g2.drawString("+" + marker.hiddenCount(), marker.scale() * 1.4f, marker.scale() * 0.8f);
-        }
-        g2.setTransform(save);
-    }
-
     /**
      * A fading four-point sparkle where a critical hit landed, distinct from the five-point star.
      */
@@ -1126,7 +1098,6 @@ public final class Java2DFrameRenderer {
         switch (overlay) {
             case EnemyRingDraw ring -> this.paintEnemyRing(g2, ring);
             case EffectPulseDraw pulse -> this.paintEffectPulse(g2, pulse);
-            case TraitMarkerDraw marker -> this.paintTraitMarker(g2, marker);
             case IceCrystalDraw crystal -> this.paintIceCrystal(g2, crystal);
             case HexRuneDraw rune -> this.paintHexRune(g2, rune);
             case MissMarkDraw miss -> this.paintMissMark(g2, miss);
@@ -1250,12 +1221,12 @@ public final class Java2DFrameRenderer {
         return path;
     }
 
-    /** A hollow diamond for a permanent trait; filled diamonds are timed effects. */
-    private void paintTraitMarker(Graphics2D g2, TraitMarkerDraw marker) {
+    /** A small filled diamond beside a tower for a status it carries. */
+    private void paintTowerStatus(Graphics2D g2, TowerStatusDraw status) {
         AffineTransform save = g2.getTransform();
-        g2.translate(marker.x(), marker.y());
-        g2.setColor(colorFor(marker.palette()));
-        g2.draw(diamondShape(marker.scale()));
+        g2.translate(status.x(), status.y());
+        g2.setColor(colorFor(status.palette()));
+        g2.fill(diamondShape(status.scale()));
         g2.setTransform(save);
     }
 
@@ -1271,14 +1242,9 @@ public final class Java2DFrameRenderer {
         g2.setStroke(defaultStroke);
     }
 
-    /**
-     * A ring growing from nothing (gain, cast, spawn) or shrinking to nothing (loss), fading as it
-     * goes. {@code pulse.radius()} is its full size.
-     */
+    /** A ring growing from nothing as it fades, for a cast or a spawn. */
     private void paintEffectPulse(Graphics2D g2, EffectPulseDraw pulse) {
-        float radius = pulse.direction() == PulseDirection.OUTWARD
-                ? pulse.radius() * pulse.progress()
-                : pulse.radius() * (1f - pulse.progress());
+        float radius = pulse.radius() * pulse.progress();
         if (radius <= 0) {
             return;
         }
@@ -1517,8 +1483,7 @@ public final class Java2DFrameRenderer {
             case FlashDraw flash -> this.paintFlash(g2, flash);
             case ConeDraw cone -> this.paintCone(g2, cone);
             case NestDraw nest -> this.paintNest(g2, nest);
-            case TowerStatusDraw status -> this.paintStatusMarker(g2,
-                    new StatusMarkerDraw(status.palette(), status.x(), status.y(), status.scale()));
+            case TowerStatusDraw status -> this.paintTowerStatus(g2, status);
         }
     }
 

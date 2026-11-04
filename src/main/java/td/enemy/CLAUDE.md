@@ -48,7 +48,7 @@
 ## Traits and abilities
 
 - A `Trait` instance is shared by every mob of a definition, so it holds no per-mob state; per-mob
-  input arrives as `TraitContext`. `Trait.marker()` has no default, on purpose.
+  input arrives as `TraitContext`.
 - A trait changes a mob only through `modifiers(context)` (a `td.stat` bundle), never through a
   new hook on the hit or speed path. Event-shaped behaviour is an ability.
 - A trait that reads `TraitContext.alliesNearby` says so with `readsAllies()`; the mob counts its neighbours each
@@ -161,9 +161,7 @@
    shape's outline unless the row says otherwise. A look without a row fails `mvn verify` by name.
 4. Add its id to `README.md`'s "Wave script ids" table and its row to the enemy table.
 
-A new `Trait` also needs a `TraitMarker` constant and its palette cases in
-`EnemyFrameBuilder.traitMarkerPaletteFor`/`Java2DFrameRenderer.colorFor`, and an `entry()`: the term its icon shows and
-its sentence (an adaptive template describes the most it can reach). A new ability names its `AbilityTerm`.
+A new `Trait` also needs an `entry()`: the term its icon shows and its sentence (an adaptive template describes the most it can reach). A new ability names its `AbilityTerm`.
 
 ## Display
 
