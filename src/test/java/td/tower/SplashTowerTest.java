@@ -496,6 +496,19 @@ class SplashTowerTest {
     }
 
     @Test
+    void hexOfInversionTargetsAnEnemyThatOnlyRegenerates() {
+        SplashTower tower = this.hexerWith("Hex of Inversion");
+        FakeEnemyMob plain = FakeEnemyMob.at(100, 100).withHealth(900);
+        FakeEnemyMob regenerating = FakeEnemyMob.at(100, 130).withHealth(100).thatRegenerates();
+        this.enemies(plain, regenerating);
+
+        tickThroughCooldown(tower, 8);
+
+        assertThat(plain.hasEffect(EffectKind.INVERSION)).isFalse();
+        assertThat(effectsOf(regenerating, EffectKind.INVERSION)).hasSize(1);
+    }
+
+    @Test
     void withNoEnemyThatAppliesEffectsHexOfInversionIsSkipped() {
         SplashTower tower = this.hexerWith("Hex of Inversion");
         FakeEnemyMob plain = FakeEnemyMob.at(100, 100);

@@ -73,4 +73,20 @@ class InversionTest {
         assertThat(blinder.appliesEffects()).isFalse();
         assertThat(EnemyFixtures.plainMob(this.world, 100, 4).appliesEffects()).isFalse();
     }
+
+    @Test
+    void anEnemyRegeneratesOnlyWhenATickWouldBringItHealth() {
+        DefinedEnemyMob regenerating = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("regenerating")
+                .withTraits(List.of(new RegenerationTrait(20f))));
+        DefinedEnemyMob crumbling = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("crumbling")
+                .withTraits(List.of(new CrumbleTrait(20f))));
+        DefinedEnemyMob spiritless = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("spiritless")
+                .withTraits(List.of(new RegenerationTrait(20f)))
+                .withSpirit(-100f));
+
+        assertThat(regenerating.regenerates()).isTrue();
+        assertThat(crumbling.regenerates()).isFalse();
+        assertThat(spiritless.regenerates()).isFalse();
+        assertThat(EnemyFixtures.plainMob(this.world, 100, 4).regenerates()).isFalse();
+    }
 }

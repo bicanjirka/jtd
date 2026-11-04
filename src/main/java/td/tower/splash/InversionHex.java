@@ -9,7 +9,7 @@ import java.util.Optional;
 
 /**
  * Hex of Inversion: what helps the enemy hurts it, and it can't vanish. Picks the enemy closest to
- * leaking that heals, shields or vanishes, without Inversion.
+ * leaking that heals, shields, vanishes or regenerates, without Inversion.
  */
 public final class InversionHex implements Hex {
 
@@ -21,7 +21,7 @@ public final class InversionHex implements Hex {
     @Override
     public Optional<EnemyMob> target(HexScene scene) {
         return new FurthestAlongPathSelector().selectFrom(scene.candidates().stream()
-                .filter(enemy -> enemy.appliesEffects() && !enemy.hasEffect(EffectKind.INVERSION))
+                .filter(enemy -> (enemy.appliesEffects() || enemy.regenerates()) && !enemy.hasEffect(EffectKind.INVERSION))
                 .toList());
     }
 
