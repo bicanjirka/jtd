@@ -15,7 +15,8 @@ keeps the seam honest.
   `TowerSpriteFrameBuilder`, `TowerEffectFrameBuilder`, `ProjectileFrameBuilder`, ...). Builders
   return `null` for "nothing to draw".
 - Ground zones are the one board list drawn under the enemies (`ZoneFrameBuilder`, `RenderFrame.zones`):
-  a zone is a patch, not an enemy overlay or a tower effect.
+  a zone is a patch, not an enemy overlay or a tower effect. Zones of one kind never stack in play, so they draw as one
+  `ZonePatchDraw` with one even fill and one outline; what stands on a disc (a mine's casing, flames) stays per zone.
 - Every colour, shape and stroke for board content lives in `td.ui`, keyed by a role, never by domain
   type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), the rest in `Java2DFrameRenderer`
   (keyed by `Palette`). There are no image assets; all art is vector.

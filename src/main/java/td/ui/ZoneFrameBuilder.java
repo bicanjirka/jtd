@@ -2,25 +2,38 @@ package td.ui;
 
 import td.ui.render.Palette;
 import td.ui.render.ZoneDraw;
+import td.ui.render.ZonePatchDraw;
 import td.zone.Zone;
 import td.zone.ZoneRoster;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
-/** Describes every zone on the board, oldest first, so a newer patch is drawn over an older one. */
+/** Describes the zones on the board as one patch per kind. */
 final class ZoneFrameBuilder {
+
+    /** The last share of a zone's life, over which it shrinks away: a fade would stack where it overlaps its kind. */
+    private static final float ENDING_SHARE = 0.25f;
 
     private ZoneFrameBuilder() {
     }
 
-    static List<ZoneDraw> build(ZoneRoster roster, double animationSeconds) {
-        List<ZoneDraw> draws = new ArrayList<>();
+    static List<ZonePatchDraw> build(ZoneRoster roster, double animationSeconds) {
+        Map<Palette, List<ZoneDraw>> discsByLook = new EnumMap<>(Palette.class);
         for (Zone zone : roster.zones()) {
-            draws.add(new ZoneDraw(paletteFor(zone), (float) zone.x(), (float) zone.y(), zone.radius(),
-                    zone.lifeLeft(), (float) animationSeconds));
+            discsByLook.computeIfAbsent(paletteFor(zone), look -> new ArrayList<>()).add(discOf(zone, animationSeconds));
         }
-        return draws;
+        return discsByLook.entrySet().stream()
+                .map(entry -> new ZonePatchDraw(entry.getKey(), List.copyOf(entry.getValue()),
+                        ZoneOutlineTracer.trace(entry.getValue())))
+                .toList();
+    }
+
+    private static ZoneDraw discOf(Zone zone, double animationSeconds) {
+        float fade = Math.min(1f, zone.lifeLeft() / ENDING_SHARE);
+        return new ZoneDraw((float) zone.x(), (float) zone.y(), zone.radius() * fade, fade, (float) animationSeconds);
     }
 
     private static Palette paletteFor(Zone zone) {
