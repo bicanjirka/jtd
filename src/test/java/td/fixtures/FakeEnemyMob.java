@@ -37,6 +37,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private boolean hitsLandCritical;
     private boolean diesOnHit;
     private boolean appliesEffects;
+    private boolean regenerates;
     private float speed;
     private boolean frozen;
     private boolean freezeDiminished;
@@ -82,6 +83,7 @@ public final class FakeEnemyMob implements EnemyMob {
         this.rank = other.rank;
         this.healthFraction = other.healthFraction;
         this.appliesEffects = other.appliesEffects;
+        this.regenerates = other.regenerates;
         this.speed = other.speed;
         return this;
     }
@@ -113,6 +115,17 @@ public final class FakeEnemyMob implements EnemyMob {
     @Override
     public boolean appliesEffects() {
         return this.appliesEffects;
+    }
+
+    /** This fake itself, now an enemy with regeneration and no ability behind it. */
+    public FakeEnemyMob thatRegenerates() {
+        this.regenerates = true;
+        return this;
+    }
+
+    @Override
+    public boolean regenerates() {
+        return this.regenerates;
     }
 
     /** This fake itself, now of {@code rank}. */

@@ -272,6 +272,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.definition.abilities().stream().anyMatch(ability -> ability.action().appliesEffects());
     }
 
+    @Override
+    public boolean regenerates() {
+        return this.restoredPerTick() > 0f;
+    }
+
     public EnemyDefinition definition() {
         return this.definition;
     }

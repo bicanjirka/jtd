@@ -384,16 +384,6 @@ hit-by-hit (EMP, Nullifier), and raw damage beat a heal-heavy wave sooner than a
   `td.balance.WaveCheckReport --checks W:sustain --parts strong,strip`. The wave has to pressure the strong player, or
   the free Obelisk has nothing to improve. Iron Crossing and The Last Hour's Rewind are not measured.
 
-### Hex of Inversion does not pick an enemy that only regenerates
-
-Since the restoration rework, Inversion turns an enemy's whole regeneration into damage, a trait's included, so an
-enemy that only regenerates (Salamander, the Monolith) is as good a target as one that heals or shields. The Hexer still
-picks only an enemy whose abilities apply effects (`EnemyMob.appliesEffects`), so it never chooses such an enemy.
-
-- **Where:** `InversionHex.target`, and the query it reads on `EnemyTarget`.
-- **Approach:** let the pick also take an enemy whose regeneration is above zero, through a query on the target
-  rather than its definition, then check a level with Salamanders with `td.balance.WaveCheckReport`.
-
 ### Upgrade-tree node numbers are unbalanced placeholders
 
 Every tower's `UpgradeNode`s carry real prices and stat bonuses, but none of them have been played

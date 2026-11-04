@@ -20,4 +20,7 @@ public interface EnemyMob extends EnemyTarget, HitReceiver, EnemyWalk {
 
     /** Whether one of its abilities puts an effect on itself or on others: a heal, a shield, a vanishing. */
     boolean appliesEffects();
+
+    /** Whether a tick would bring it health, from a trait or a heal. */
+    boolean regenerates();
 }
