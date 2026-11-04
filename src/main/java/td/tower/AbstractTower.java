@@ -104,6 +104,7 @@ public abstract class AbstractTower implements Tower {
     // damageDealt is a long read on the EDT; a non-volatile long read may tear.
     protected volatile boolean selected = false;
     protected volatile long damageDealt = 0;
+    private volatile WaveDamageTally waveDamage = WaveDamageTally.none();
     protected volatile int killCount = 0;
     private volatile UpgradeState upgrades = UpgradeState.none();
     private volatile TowerStats stats;
@@ -279,6 +280,10 @@ public abstract class AbstractTower implements Tower {
         this.wither(enemy, attacker);
         if (wasAlive) {
             this.damageDealt += result.credited();
+            if (result.credited() > 0) {
+                this.waveDamage = this.waveDamage.plus(result.credited(), this.context.waves().started(),
+                        this.currentTick);
+            }
             if (enemy.isDead()) {
                 this.killCount++;
                 float bountyBonus = this.stats.bountyBonus();
@@ -1137,7 +1142,10 @@ public abstract class AbstractTower implements Tower {
         InspectionCache cached = this.cachedForUpgrades();
         TowerStats now = this.stats;
         StatModifiers<TowerStat> jam = jamChanges(now);
-        List<TowerStatLine> lines = this.statRows(now, stat -> this.partsOf(stat, jam), !cached.applies().isEmpty());
+        List<TowerStatLine> lines = new ArrayList<>(
+                this.statRows(now, stat -> this.partsOf(stat, jam), !cached.applies().isEmpty()));
+        this.waveDamage.pointsPerSecondIn(this.context.waves().started()).ifPresent(rate -> lines.add(
+                TowerStatLine.fixed(TowerStatRow.WAVE_DPS, TowerStat.DAMAGE, (float) rate)));
         int auras = (int) this.context.towers().all().stream()
                 .filter(other -> !other.buffFor(this).isNone())
                 .count();

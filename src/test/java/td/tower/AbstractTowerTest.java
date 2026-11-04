@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -26,6 +27,7 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.List;
 
@@ -196,6 +198,32 @@ class AbstractTowerTest {
 
         assertThat(tower.getDamageDealt()).isEqualTo(4000);
         assertThat(tower.getKillCount()).isZero();
+    }
+
+    private static List<TowerStatLine> waveDpsRows(Tower tower) {
+        return tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.WAVE_DPS).toList();
+    }
+
+    @Test
+    void hitsAndDamageOverTimeInAWaveShowAsWhatItDealtASecondUntilTheNextWaveStarts() {
+        FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.none());
+        EnemyMob enemy = EnemyFixtures.plainMob(context, 1000, 3);
+        int second = Math.round(TickRate.TICKS_PER_SECOND);
+        context.waves().announce();
+
+        tower.beginTick(1);
+        tower.dealDamage(enemy, Damage.physical(4000));
+        tower.beginTick(1 + second);
+        tower.dealDamage(enemy, Damage.physical(4000));
+        tower.beginTick(1 + 2 * second);
+        tower.dealPeriodicDamage(enemy, Damage.physical(4000));
+
+        assertThat(waveDpsRows(tower)).singleElement().satisfies(row -> assertThat(row.current())
+                .isCloseTo(DamageUnits.inPoints(8000) / 2f, within(0.01f)));
+
+        context.waves().announce();
+
+        assertThat(waveDpsRows(tower)).isEmpty();
     }
 
     @Test
