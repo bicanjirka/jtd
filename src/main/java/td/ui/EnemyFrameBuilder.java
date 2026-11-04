@@ -12,6 +12,8 @@ import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarLook;
 import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
+import td.ui.render.EnemyDotLook;
+import td.ui.render.EnemyDotsDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyLook;
@@ -23,11 +25,14 @@ import td.ui.render.IceCrystalDraw;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
+import td.ui.render.RankBadgeDraw;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 
 /**
  * Describes each enemy's body and effects as draw commands, switching on its
@@ -49,14 +54,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float SHIELD_BUBBLE_ALPHA = 0.5f;
     /** Ice overlay size relative to the body. */
     private static final float FREEZE_CRYSTAL_SCALE_FRACTION = 1.35f;
-    /**
-     * Much fainter than the shield bubble, since an aura ring can be many times the body's size.
-     */
-    private static final float SUPPORT_AURA_RING_ALPHA = 0.12f;
+    private static final float SUPPORT_AURA_RING_ALPHA = 0.25f;
     private static final float SELECTION_RING_SCALE_FRACTION = 1.6f;
     private static final float SELECTION_RING_ALPHA = 0.9f;
-    // Stronger than a support aura: it threatens the player's towers rather than helping allies.
-    private static final float DISRUPTION_RING_ALPHA = 0.35f;
+    // Always on and only a few enemies have it, so it can stay faint: it says which towers are being harmed.
+    private static final float DISRUPTION_RING_ALPHA = 0.2f;
     static final int EFFECT_PULSE_DURATION_TICKS = 8;
     /** Runes sit in a row over the body; their size is fixed. */
     private static final float RUNE_ROW_OFFSET_FRACTION = 0.6f;
@@ -71,9 +73,20 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float BAR_MIN_WIDTH = 8.2f;
     /** Under the furthest the body's art reaches, with room left for a pulsing body. */
     private static final float BAR_GAP = 3f;
+    /** A dot's centre below the body's art, and the bars' top below the dots' centre when there are dots. */
+    private static final float DOT_GAP = 3f;
+    private static final float DOT_TO_BAR_GAP = 3.3f;
+    /** The same on every enemy: a big body's size already says what its rank would. */
+    private static final float RANK_BADGE_SIZE = 3.6f;
+    private static final float RANK_BADGE_GAP = 5f;
+    /** A long tail or antenna shouldn't lift the badge off the body it belongs to. */
+    private static final float RANK_BADGE_REACH_LIMIT = 1.3f;
     private final List<EnemyDraw> draws = new ArrayList<>();
     private final List<CritSparkDraw> critSparkDraws = new ArrayList<>();
     private final List<EnemyOverlayDraw> overlayDraws = new ArrayList<>();
+    /** Read last, so every enemy's badge, runes, dots and bars stay readable over every enemy's effects. */
+    private final List<EnemyOverlayDraw> markDraws = new ArrayList<>();
+    private final List<RankBadgeDraw> badgeDraws = new ArrayList<>();
     private final int gameTime;
     private final double interpolationAlpha;
     private final Optional<EnemyMob> selected;
@@ -215,7 +228,16 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     public List<EnemyOverlayDraw> buildOverlays() {
-        return this.overlayDraws;
+        List<EnemyOverlayDraw> all = new ArrayList<>(this.overlayDraws.size() + this.badgeDraws.size() + this.markDraws.size());
+        all.addAll(this.overlayDraws);
+        all.addAll(this.badgeDraws);
+        all.addAll(this.markDraws);
+        return all;
+    }
+
+    /** The rank badges alone, for a preview that shows a body and its rank and nothing around it. */
+    public List<RankBadgeDraw> buildBadges() {
+        return this.badgeDraws;
     }
 
     private Void body(EnemyLook look, DefinedEnemyMob mob, float scale, double facingRadians,
@@ -230,43 +252,71 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
             float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
             float cloakProgress = this.cloakProgress(mob);
-            this.draws.add(new EnemyBodyDraw(look, x, y, facingRadians, mob.getDrawScale(), badgeFor(mob.getRank()),
-                    cloakProgress));
+            this.draws.add(new EnemyBodyDraw(look, x, y, facingRadians, mob.getDrawScale(), cloakProgress));
+            Set<EffectKind> active = mob.activeEffectKinds();
+            float reach = scale * EnemyLooks.of(look).reach();
             this.critSpark(mob, x, y);
-            this.missMark(mob, x + scale, y);
-            this.overlays(mob, x, y, scale, supportAura);
+            this.overlays(mob, active, x, y, scale, supportAura);
             this.pulses(mob, x, y, scale);
-            this.bars(mob, look, x, y, scale, cloakProgress);
+            this.badge(mob, x, y - Math.min(reach, scale * RANK_BADGE_REACH_LIMIT) - RANK_BADGE_GAP, cloakProgress);
+            this.runes(active, x, y - scale * RUNE_ROW_OFFSET_FRACTION);
+            this.missMark(mob, x + scale, y);
+            float below = y + reach;
+            boolean dotted = this.dots(active, x, below + DOT_GAP, cloakProgress);
+            this.bars(mob, x, dotted ? below + DOT_GAP + DOT_TO_BAR_GAP : below + BAR_GAP, scale, cloakProgress);
         }
         return null;
     }
 
     /** The one place that decides which bars an enemy shows and where, at its still scale, so they ignore a pulse. */
-    private void bars(DefinedEnemyMob mob, EnemyLook look, float x, float y, float scale, float cloakProgress) {
+    private void bars(DefinedEnemyMob mob, float x, float top, float scale, float cloakProgress) {
         float health = mob.getHealthFraction();
         if (health < 1f) {
-            this.overlayDraws.add(new EnemyBarsDraw(x, y + scale * EnemyLooks.of(look).reach() + BAR_GAP,
+            this.markDraws.add(new EnemyBarsDraw(x, top,
                     Math.max(BAR_MIN_WIDTH, scale * BAR_WIDTH_SCALE_FRACTION), 1f - cloakProgress,
                     List.of(new EnemyBarsDraw.Bar(EnemyBarLook.HEALTH, health))));
         }
     }
 
-    /** Static overlays for ongoing states: shield bubble, ice crystals, support-aura and disruption rings. */
-    private void overlays(DefinedEnemyMob mob, float x, float y, float scale, Optional<SupportAura> supportAura) {
-        if (mob.activeEffectKinds().contains(EffectKind.SHIELD)) {
+    private void badge(DefinedEnemyMob mob, float x, float y, float cloakProgress) {
+        RankBadge badge = badgeFor(mob.getRank());
+        if (badge != RankBadge.NONE) {
+            this.badgeDraws.add(new RankBadgeDraw(badge, x, y, RANK_BADGE_SIZE, 1f - cloakProgress));
+        }
+    }
+
+    /** One dot per kind of dot the enemy's effects call for, in a fixed order; whether it drew any. */
+    private boolean dots(Set<EffectKind> active, float x, float y, float cloakProgress) {
+        if (active.isEmpty()) {
+            return false;
+        }
+        Set<EnemyDotLook> dots = EnumSet.noneOf(EnemyDotLook.class);
+        for (EffectKind kind : active) {
+            dotFor(kind).ifPresent(dots::add);
+        }
+        if (dots.isEmpty()) {
+            return false;
+        }
+        this.markDraws.add(new EnemyDotsDraw(x, y, 1f - cloakProgress, List.copyOf(dots)));
+        return true;
+    }
+
+    /** Static overlays for ongoing states: shield bubble, ice crystals, selection, support-aura and disruption rings. */
+    private void overlays(DefinedEnemyMob mob, Set<EffectKind> active, float x, float y, float scale,
+            Optional<SupportAura> supportAura) {
+        if (active.contains(EffectKind.SHIELD)) {
             this.overlayDraws.add(new EnemyRingDraw(Palette.STATUS_MARKER_SHIELD, x, y, scale * SHIELD_BUBBLE_SCALE_FRACTION,
                     SHIELD_BUBBLE_ALPHA * (0.3f + 0.7f * mob.shieldFraction())));
         }
-        if (mob.activeEffectKinds().contains(EffectKind.FREEZE)) {
+        if (active.contains(EffectKind.FREEZE)) {
             this.overlayDraws.add(new IceCrystalDraw(Palette.FREEZE_CRYSTAL, x, y, scale * FREEZE_CRYSTAL_SCALE_FRACTION));
         }
         if (this.selected.isPresent() && this.selected.get() == mob) {
             this.overlayDraws.add(new EnemyRingDraw(Palette.SELECTION, x, y, scale * SELECTION_RING_SCALE_FRACTION,
                     SELECTION_RING_ALPHA));
+            supportAura.ifPresent(aura -> this.overlayDraws.add(
+                    new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));
         }
-        this.runes(mob, x, y - scale * RUNE_ROW_OFFSET_FRACTION);
-        supportAura.ifPresent(aura -> this.overlayDraws.add(
-                new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));
         mob.definition().disruption().ifPresent(aura -> this.overlayDraws.add(
                 new EnemyRingDraw(Palette.DISRUPTION, x, y, aura.radius(), DISRUPTION_RING_ALPHA)));
     }
@@ -293,15 +343,22 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         OptionalInt crit = mob.ticksSinceCriticalHit(this.gameTime);
         if (within(crit, CRIT_SPARK_DURATION_TICKS)) {
             float fadeProgress = (float) crit.getAsInt() / CRIT_SPARK_DURATION_TICKS;
-            this.critSparkDraws.add(new CritSparkDraw(Palette.CRIT_SPARK, x, y, CRIT_SPARK_FIXED_SCALE, fadeProgress));
+            this.critSparkDraws.add(new CritSparkDraw(Palette.CRIT_SPARK, x, y, CRIT_SPARK_FIXED_SCALE,
+                    sparkRotation(mob.id(), this.gameTime - crit.getAsInt()), fadeProgress));
         }
+    }
+
+    /** How a crit's star is turned, from the enemy and the moment alone, so no draw of it can touch a game's results. */
+    private static float sparkRotation(long id, int tick) {
+        long mixed = (id * 0x9E3779B97F4A7C15L) ^ (tick * 0xC2B2AE3D27D4EB4FL);
+        return ((mixed ^ (mixed >>> 29)) & Long.MAX_VALUE) % 628 / 100f;
     }
 
     /** Beside the body, since the badge and whatever an effect draws fill the space above it. */
     private void missMark(DefinedEnemyMob mob, float rightOfBody, float y) {
         OptionalInt dodged = mob.ticksSinceDodge(this.gameTime);
         if (within(dodged, MISS_MARK_DURATION_TICKS)) {
-            this.overlayDraws.add(new MissMarkDraw(rightOfBody, y, (float) dodged.getAsInt() / MISS_MARK_DURATION_TICKS));
+            this.markDraws.add(new MissMarkDraw(rightOfBody, y, (float) dodged.getAsInt() / MISS_MARK_DURATION_TICKS));
         }
     }
 
@@ -334,14 +391,17 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     /** A rune for each hex on {@code mob}, in a row centred on {@code (x, y)}. */
-    private void runes(DefinedEnemyMob mob, float x, float y) {
-        List<HexGlyph> glyphs = mob.activeEffectKinds().stream()
+    private void runes(Set<EffectKind> active, float x, float y) {
+        if (active.isEmpty()) {
+            return;
+        }
+        List<HexGlyph> glyphs = active.stream()
                 .map(EnemyFrameBuilder::runeFor)
                 .flatMap(Optional::stream)
                 .toList();
         float left = x - RUNE_SPACING * (glyphs.size() - 1) / 2f;
         for (int i = 0; i < glyphs.size(); i++) {
-            this.overlayDraws.add(new HexRuneDraw(glyphs.get(i), left + RUNE_SPACING * i, y, RUNE_FIXED_SCALE));
+            this.markDraws.add(new HexRuneDraw(glyphs.get(i), left + RUNE_SPACING * i, y, RUNE_FIXED_SCALE));
         }
     }
 
@@ -357,6 +417,23 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case SYMPATHY -> Optional.of(HexGlyph.SYMPATHY);
             case RECKONING -> Optional.of(HexGlyph.RECKONING);
             default -> Optional.empty();
+        };
+    }
+
+    /** The dot an effect with no picture of its own earns, if it earns one; every kind is decided here. */
+    static Optional<EnemyDotLook> dotFor(EffectKind kind) {
+        return switch (kind) {
+            case VULNERABLE, SUNDERED, FRACTURED, BRITTLE, CRACKED, TARRED, TOLL, CONDEMNED, STILLED, RESONATING,
+                 SATURATED, UNRAVELED -> Optional.of(EnemyDotLook.DEBUFF);
+            case EXPOSED, MARKED, PRIORITY, CHARGED -> Optional.of(EnemyDotLook.SPOTTED);
+            case SPRINTING, HASTENED, SPELLPROOF, UNYIELDING -> Optional.of(EnemyDotLook.BUFF);
+            // Drawn on the enemy.
+            case BURN, SOULFIRE, POISON, BLEEDING, HEAL, SHIELD, CHILL, FREEZE, DAZED, INVISIBLE -> Optional.empty();
+            // A rune.
+            case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING -> Optional.empty();
+            // The Info pane's, or the field on the ground says it.
+            case SCORCHED, SICKENED, REVEALED, UNVEILED, SILENCED, ANCHORED, CORRODED, DRAGGED, UNDERTOW, DEAD_ZONE,
+                 FRAIL, FALLOUT -> Optional.empty();
         };
     }
 

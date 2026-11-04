@@ -20,7 +20,7 @@ keeps the seam honest.
   type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), the rest in `Java2DFrameRenderer`
   (keyed by `Palette`). There are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
-  pulses, ice crystal, hex runes, bars), not a new `RenderFrame` list. Tower transients likewise go
+  pulses, ice crystal, hex runes, dots, badge, bars), not a new `RenderFrame` list. Tower transients likewise go
   into `TowerEffectDraw`. A bar under an enemy is a row in `EnemyFrameBuilder.bars` and a colour in
   `EnemyLooks.barColor`, with no drawing of its own. Invisibility fades the body itself (`EnemyBodyDraw.cloakProgress`).
 - Timed visuals follow one idiom: the entity records the tick something happened
@@ -34,7 +34,10 @@ keeps the seam honest.
 - Exhaustive switches with no `default` (`bodyPaletteFor`, `colorFor`, the sealed draw
   switches): fix a compile error by adding the case, never a `default`. Switching on these
   sealed draw records is fine; switching on `EnemyMob`/`Tower`/`Cell` is not.
-- Rank badges and the `SPECIAL` halo are painted upright (not rotated with facing).
+- Rank badges and the `SPECIAL` halo are painted upright (not rotated with facing). A rank badge is one size on
+  every enemy.
+- An effect with no picture of its own earns at most one dot, by `EnemyFrameBuilder.dotFor`; a dot says only its group,
+  and the Info pane says which effect.
 - Tower bodies are one closed `Shape` each. The sonar head is the one exception, with its own
   `paintSonarSweep`. Toolbar icons reuse `towerBodyShape` via `renderTowerIcon`.
 - A tower's body never turns: only its turret head aims.

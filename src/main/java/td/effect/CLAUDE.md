@@ -114,7 +114,7 @@ The per-tick order around `ActiveEffects.tick()` belongs to `DefinedEnemyMob.doT
 1. An `EffectKind` row with its title and `EffectRule` (a kind that helps its carrier is `.helpsCarrier()`), and its sentence in `EffectSentences`, built from the rule and constants, never typed numbers.
 2. A named `Effect` factory if towers or abilities apply it.
 3. An `EffectTemplate` if abilities author it.
-4. The cases the compiler forces (`EnemyFrameBuilder.markerPaletteFor`, `Java2DFrameRenderer.colorFor`,
+4. The cases the compiler forces (`EnemyFrameBuilder.markerPaletteFor` and `dotFor`, `Java2DFrameRenderer.colorFor`,
    `EffectSentences.of`, `ActiveEffects.magnitude`, `DevEffects.offer`).
 5. An `EffectPictograms` row (else it shows its monogram).
 

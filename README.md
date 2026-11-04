@@ -194,7 +194,7 @@ An enemy is made of four kinds of thing, and each belongs to exactly one:
   level is played.
 - **Abilities** are what it does at a moment: a trigger (a timer, a threshold, a hit, a dodge, its death)
   and an action (put an effect on itself or its allies, or spawn enemies).
-- **Effects** are timed statuses on an enemy, from a tower or an ability, shown as markers above it.
+- **Effects** are timed statuses on an enemy, from a tower or an ability. The main ones are drawn on the enemy; others show as a small dot under it.
 
 From Elite every enemy carries some of each stat, small where it is off its identity; the exceptions are
 plating and insulation (only the enemies built around them), agility on the heaviest (Juggernaut, Wardens, eggs) and resilience
@@ -268,8 +268,9 @@ at all at an even split up to full strength against a one-type defence.
 
 ### Status effects
 
-Towers and enemy abilities put timed effects on enemies. An enemy shows one marker per kind of
-effect it carries; selecting it shows each effect as an icon whose tooltip says what it does.
+Towers and enemy abilities put timed effects on enemies. A burning enemy burns, a frozen one is inside ice and a
+shielded one is inside a bubble. Effects with no picture show as one small dot per group under the enemy: a debuff, a mark
+that sets it up for another tower, or a buff. Selecting an enemy shows each effect as an icon whose tooltip says what it does.
 
 | Effect | Group | Side | What it does |
 |---|---|---|---|
