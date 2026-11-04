@@ -69,6 +69,7 @@ import td.wave.PathBuilder;
 import td.wave.PathCoverage;
 import td.wave.PathDefinition;
 import td.wave.Point;
+import td.wave.RoundPay;
 import td.wave.RoundSummary;
 import td.wave.Vec2;
 import td.wave.WaveDefinition;
@@ -838,8 +839,8 @@ class GameEngineTest {
 
         WaveProgress progress = engine.waveProgress();
 
-        assertThat(progress.rounds()).containsExactly(new RoundSummary(Rank.BOSS, true, false),
-                new RoundSummary(Rank.BOSS, false, false));
+        assertThat(progress.rounds()).extracting(RoundSummary::highestRank).containsExactly(Rank.BOSS, Rank.BOSS);
+        assertThat(progress.rounds()).extracting(RoundSummary::unique).containsExactly(true, false);
     }
 
     @Test
@@ -867,6 +868,39 @@ class GameEngineTest {
 
         assertThat(paid.getCredits() - unpaid.getCredits()).isEqualTo(3 + 4);
         assertThat(paid.getScore() - unpaid.getScore()).isEqualTo(3 + 4);
+    }
+
+    @Test
+    void aRoundReportsWhatItsEnemiesOnEveryPathPayAndWhatItOffersBeforeItStarts() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.twoPathLevelWith(List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(3)),
+                List.of(new WaveDefinition("2 weakling", Rank.GRUNT).withClearBonus(4))).withCustomEnemies(List.of(WEAKLING)));
+
+        RoundPay pay = engine.waveProgress().rounds().getFirst().pay();
+        engine.nextWave();
+
+        int spawned = Arrays.stream(engine.getGameWorld().enemies().getEnemies()).mapToInt(EnemyMob::getBounty).sum();
+        assertThat(pay).isEqualTo(new RoundPay(spawned, 3 + 4, 0));
+    }
+
+    @Test
+    void aRoundReportsTheClearBonusItPaid() {
+        GameEngine engine = clearedFirstRound(List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(3)),
+                List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(4)));
+
+        assertThat(engine.waveProgress().rounds()).extracting(RoundSummary::bonusPaid).containsExactly(3 + 4);
+    }
+
+    @Test
+    void aRoundAnEnemyEscapedReportsNoClearBonusPaid() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT).withClearBonus(5),
+                new WaveDefinition("simple", Rank.GRUNT)), 100));
+
+        engine.nextWave();
+        tickUntilWaveCleared(engine);
+
+        assertThat(engine.waveProgress().rounds()).extracting(RoundSummary::bonusPaid).containsExactly(0, 0);
     }
 
     @Test

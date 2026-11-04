@@ -224,9 +224,13 @@ public class PanelHeader extends JPanel {
         if (next.equals(this.readout) && nextRounds.equals(this.rounds)) {
             return;
         }
+        boolean bonusPaid = nextRounds.bonusesPaid() > this.rounds.bonusesPaid();
         this.readout = next;
         this.rounds = nextRounds;
         this.flash.observe(next, nowMillis());
+        if (bonusPaid) {
+            this.flash.bonusPaid(nowMillis());
+        }
         this.icons.forEach(icon -> icon.show(next));
         this.icon(StatusTerm.WAVE).showRounds(nextRounds, nowMillis());
         this.pulse();

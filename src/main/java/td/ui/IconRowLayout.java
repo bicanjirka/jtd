@@ -9,8 +9,9 @@ import java.util.OptionalInt;
  * @param count      how many faces
  * @param perLine    how many fit on a line
  * @param timeLabels whether every line leaves room for the time label under a face
+ * @param left       where a line's first face starts
  */
-record IconRowLayout(int count, int perLine, boolean timeLabels) {
+record IconRowLayout(int count, int perLine, boolean timeLabels, int left) {
 
     static final int LABEL_WIDTH = 48;
     static final int GAP = 2;
@@ -18,8 +19,17 @@ record IconRowLayout(int count, int perLine, boolean timeLabels) {
 
     /** {@code count} faces beside the label in {@code width} px; with {@code timeLabels}, every line leaves room for one. */
     static IconRowLayout of(int count, boolean timeLabels, int width) {
-        int perLine = Math.max(1, (width - LABEL_WIDTH + GAP) / (TermIconPainter.ROW + GAP));
-        return new IconRowLayout(count, perLine, timeLabels);
+        return from(LABEL_WIDTH, count, timeLabels, width);
+    }
+
+    /** {@code count} faces across all of {@code width} px, with no label beside them. */
+    static IconRowLayout unlabelled(int count, boolean timeLabels, int width) {
+        return from(0, count, timeLabels, width);
+    }
+
+    private static IconRowLayout from(int left, int count, boolean timeLabels, int width) {
+        int perLine = Math.max(1, (width - left + GAP) / (TermIconPainter.ROW + GAP));
+        return new IconRowLayout(count, perLine, timeLabels, left);
     }
 
     int lines() {
@@ -36,7 +46,7 @@ record IconRowLayout(int count, int perLine, boolean timeLabels) {
 
     /** The top-left corner of face {@code index}. */
     Point cell(int index) {
-        return new Point(LABEL_WIDTH + (index % this.perLine) * (TermIconPainter.ROW + GAP),
+        return new Point(this.left + (index % this.perLine) * (TermIconPainter.ROW + GAP),
                 (index / this.perLine) * this.lineHeight());
     }
 

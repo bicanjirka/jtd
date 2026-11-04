@@ -31,6 +31,7 @@ import td.wave.PathBuilder;
 import td.wave.PathCoverage;
 import td.wave.PathDefinition;
 import td.wave.Point;
+import td.wave.RoundPay;
 import td.wave.RoundSummary;
 import td.wave.Wave;
 import td.wave.WaveContent;
@@ -119,17 +120,18 @@ public class GameEngine {
         int count = installed.waveCount();
         if (index > count) {
             // The wave counter can outrun a freshly installed, shorter level.
-            return new WaveProgress(count, roundsOf(installed, state.leaked()), List.of(), List.of());
+            return new WaveProgress(count, roundsOf(installed, state), List.of(), List.of());
         }
         List<Wave> current = index > 0 ? installed.wavesAt(index - 1) : List.of();
         List<Wave> next = index < count ? installed.wavesAt(index) : List.of();
-        return new WaveProgress(index, roundsOf(installed, state.leaked()), current, next);
+        return new WaveProgress(index, roundsOf(installed, state), current, next);
     }
 
-    private static List<RoundSummary> roundsOf(LoadedLevel installed, Set<Integer> leaked) {
+    private static List<RoundSummary> roundsOf(LoadedLevel installed, RoundState state) {
         return IntStream.range(0, installed.waveCount())
                 .mapToObj(round -> new RoundSummary(installed.highestRankAt(round), installed.uniqueAt(round),
-                        leaked.contains(round)))
+                        state.leaked().contains(round)).withPay(new RoundPay(installed.bountyAt(round),
+                        installed.clearBonusAt(round), state.bonusesPaid().getOrDefault(round, 0))))
                 .toList();
     }
 
@@ -329,11 +331,17 @@ public class GameEngine {
         RoundState before = this.round;
         RoundState after = before.settled(this.gameWorld.enemies().aliveCount(), this.gameWorld.enemies().leaks(),
                 this.gameWorld.economy().state().isGameOver(), this.gameWorld.level().waveCount());
-        this.round = after;
-        if (before.phase() == RoundState.Phase.RUNNING && after.phase() != RoundState.Phase.RUNNING
-                && after.phase() != RoundState.Phase.LOST) {
+        boolean roundCleared = before.phase() == RoundState.Phase.RUNNING && after.phase() != RoundState.Phase.RUNNING
+                && after.phase() != RoundState.Phase.LOST;
+        int bonus = roundCleared ? this.clearBonusEarned(after) : 0;
+        // Published with the round's end: whoever the end or the payment wakes reads what the round paid.
+        this.round = bonus > 0 ? after.paidBonus(after.wave() - 1, bonus) : after;
+        if (roundCleared) {
             this.gameWorld.zones().endWave();
-            this.payClearBonus(after);
+            if (bonus > 0) {
+                this.gameWorld.economy().apply(EconomyDelta.clearBonus(bonus));
+                LOG.info("Round {} cleared with no leak, {} bonus credits", after.wave(), bonus);
+            }
             if (after.isWaveReady()) {
                 LOG.info("Wave {} cleared, ready for the next one", after.wave());
             }
@@ -341,18 +349,11 @@ public class GameEngine {
         this.logIfOver(before);
     }
 
-    /** Pays the round that just ended its clear bonus, unless an enemy escaped it. */
-    private void payClearBonus(RoundState ended) {
+    /** What the round that just ended earned for clearing: its bonus, or nothing if an enemy escaped it. */
+    private int clearBonusEarned(RoundState ended) {
         int round = ended.wave() - 1;
         LoadedLevel installed = this.gameWorld.level();
-        if (ended.leaked().contains(round) || round >= installed.waveCount()) {
-            return;
-        }
-        int bonus = installed.clearBonusAt(round);
-        if (bonus > 0) {
-            this.gameWorld.economy().apply(EconomyDelta.clearBonus(bonus));
-            LOG.info("Round {} cleared with no leak, {} bonus credits", ended.wave(), bonus);
-        }
+        return ended.leaked().contains(round) || round >= installed.waveCount() ? 0 : installed.clearBonusAt(round);
     }
 
     private void logIfOver(RoundState before) {

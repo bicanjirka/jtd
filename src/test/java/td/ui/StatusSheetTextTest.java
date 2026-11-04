@@ -10,6 +10,7 @@ import td.ui.render.Palette;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
+import td.wave.RoundPay;
 import td.wave.RoundSummary;
 import td.wave.WaveProgress;
 
@@ -56,15 +57,53 @@ class StatusSheetTextTest {
         assertThat(StatusSheetText.of(StatusTerm.LIVES, PLAYING, RoundStrip.empty()).lines()).hasSize(2);
         assertThat(StatusSheetText.of(StatusTerm.SCORE, PLAYING, RoundStrip.empty()).lines()).hasSize(2);
         assertThat(StatusSheetText.of(StatusTerm.CASH, PLAYING, RoundStrip.empty()).lines()).hasSize(2);
-        assertThat(StatusSheetText.of(StatusTerm.WAVE, PLAYING, RoundStrip.empty()).lines()).hasSize(4);
+        assertThat(StatusSheetText.of(StatusTerm.WAVE, PLAYING, RoundStrip.empty()).lines()).hasSize(3);
     }
 
     @Test
-    void theWaveTooltipCountsRoundsStartedAndSaysWhetherARoundIsInPlay() {
+    void theWaveTooltipSaysWhetherARoundIsInPlay() {
         InfoSheet sheet = StatusSheetText.of(StatusTerm.WAVE, PLAYING, RoundStrip.empty());
 
-        assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Rounds started", "7 / 18"),
-                Row.plain(Glyph.DOT, "Round", "in play"));
+        assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Round", "in play"));
+    }
+
+    /** The phrases of round 2's tooltip, on a level at round {@code index}, whose rounds pay as {@code second} does. */
+    private static List<String> payPhrases(RoundSummary second, int index, boolean waveReady) {
+        List<RoundSummary> rounds = new ArrayList<>(Collections.nCopies(4, new RoundSummary(Rank.GRUNT, false, false)));
+        rounds.set(1, second);
+        RoundStrip strip = RoundStrip.of(new WaveProgress(index, rounds, List.of(), List.of()), waveReady,
+                LevelOutcome.PLAYING);
+        SheetLine.IconRow row = (SheetLine.IconRow) StatusSheetText.of(StatusTerm.WAVE, PLAYING, strip).lines().getLast();
+        return row.icons().get(1).tooltip().lines().stream()
+                .filter(line -> line instanceof Row paying && paying.face().isPresent())
+                .map(line -> ((Row) line).label())
+                .toList();
+    }
+
+    @Test
+    void aRoundToComeSaysItsBountyAboveWhatItOffersForNoLeaks() {
+        RoundSummary round = new RoundSummary(Rank.GRUNT, false, false).withPay(new RoundPay(86, 5, 0));
+
+        assertThat(payPhrases(round, 0, true)).containsExactly("+86 bounty", "+5 if no leaks");
+    }
+
+    @Test
+    void aClearedRoundSaysWhatItPaid() {
+        RoundSummary round = new RoundSummary(Rank.GRUNT, false, false).withPay(new RoundPay(86, 5, 5));
+
+        assertThat(payPhrases(round, 3, true)).containsExactly("+86 bounty", "+5 paid");
+    }
+
+    @Test
+    void aRoundAnEnemyEscapedSaysItsBonusIsLost() {
+        RoundSummary round = new RoundSummary(Rank.GRUNT, false, true).withPay(new RoundPay(86, 5, 0));
+
+        assertThat(payPhrases(round, 3, true)).containsExactly("+86 bounty", "+5 lost");
+    }
+
+    @Test
+    void aRoundThatPaysNothingHasNoPayLines() {
+        assertThat(payPhrases(new RoundSummary(Rank.GRUNT, false, false), 0, true)).isEmpty();
     }
 
     @Test

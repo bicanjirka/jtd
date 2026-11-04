@@ -7,6 +7,7 @@ import td.level.LevelOutcome;
 import td.ui.RoundStrip.State;
 import td.ui.WavesReadout.Heading;
 import td.ui.WavesReadout.Skull;
+import td.wave.RoundPay;
 import td.wave.RoundSummary;
 import td.wave.Wave;
 import td.wave.WaveContent;
@@ -57,6 +58,37 @@ class WavesReadoutTest {
         assertThat(readout.send()).isEmpty();
         assertThat(readout.next()).contains(new Heading(Optional.of(new Skull(RoundSkulls.Kind.PLAIN, State.AHEAD)),
                 "Round 3", "/4", this.next));
+    }
+
+    @Test
+    void aRoundMarksItsBountyAndTheClearBonusItOffersBesideItsRoundCount() {
+        List<RoundSummary> rounds = new ArrayList<>(Collections.nCopies(4, GRUNTS));
+        rounds.set(0, GRUNTS.withPay(new RoundPay(86, 7, 0)));
+
+        Heading next = WavesReadout.of(this.progress(0, rounds), true, LevelOutcome.PLAYING).next().orElseThrow();
+
+        assertThat(next.suffix()).isEqualTo("/4");
+        assertThat(next.mark()).isEqualTo("86+7");
+        assertThat(next.payLines()).hasSize(2);
+    }
+
+    @Test
+    void aClearedRoundMarksTheBonusItPaidAndALeakedOneOnlyItsBounty() {
+        List<RoundSummary> rounds = new ArrayList<>(Collections.nCopies(4, GRUNTS));
+        rounds.set(1, GRUNTS.withPay(new RoundPay(86, 7, 7)));
+        rounds.set(0, new RoundSummary(Rank.GRUNT, false, true).withPay(new RoundPay(86, 7, 0)));
+
+        Heading cleared = WavesReadout.of(this.progress(2, rounds), true, LevelOutcome.PLAYING).now();
+        Heading leaked = WavesReadout.of(this.progress(1, rounds), true, LevelOutcome.PLAYING).now();
+
+        assertThat(cleared.suffix()).isEqualTo("cleared");
+        assertThat(cleared.mark()).isEqualTo("86+7");
+        assertThat(leaked.mark()).isEqualTo("86");
+    }
+
+    @Test
+    void aRoundThatPaysNothingHasNoMark() {
+        assertThat(RoundPayText.mark(RoundPay.none(), State.AHEAD)).isEmpty();
     }
 
     @Test

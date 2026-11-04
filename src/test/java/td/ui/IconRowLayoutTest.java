@@ -11,6 +11,15 @@ class IconRowLayoutTest {
     private static final int INFO_PANE_WIDTH = 184;
 
     @Test
+    void anUnlabelledRowStartsAtTheEdgeAndFitsMoreOnALine() {
+        IconRowLayout labelled = IconRowLayout.of(20, false, 228);
+        IconRowLayout unlabelled = IconRowLayout.unlabelled(20, false, 228);
+
+        assertThat(unlabelled.cell(0).x).isZero();
+        assertThat(unlabelled.perLine()).isGreaterThan(labelled.perLine());
+    }
+
+    @Test
     void sixFacesFitBesideTheLabelInTheInfoPane() {
         IconRowLayout layout = IconRowLayout.of(6, false, INFO_PANE_WIDTH);
 

@@ -85,6 +85,11 @@ record RoundStrip(List<RoundSummary> rounds, List<RoundStrip.State> states) {
         return this.states.get(round);
     }
 
+    /** What the rounds have paid for clearing with no leak, so far. */
+    int bonusesPaid() {
+        return this.rounds.stream().mapToInt(RoundSummary::bonusPaid).sum();
+    }
+
     /** The round the player faces: the current one, else the last one over, else the first. */
     int focus() {
         int current = this.states.indexOf(State.CURRENT);

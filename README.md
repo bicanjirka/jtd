@@ -43,7 +43,8 @@ it in full while you place it. The click that builds a tower selects it, as does
 tower later: the side panel shows its stats and its own upgrade
 tree — four slots, `core`/`base`/`head`/`special`, drawn whole as a talent tree.
 Start each wave yourself when you are ready — waves do not auto-advance. A level may pay bonus credits, scored
-alike, for each round cleared with no enemy leaked.
+alike, for each round cleared with no enemy leaked: the Waves panel marks a round's bounty and bonus (`24+5`), and the
+cash icon flashes when the bonus pays. Hover that mark, or a round's skull in the Wave popup, for what each one means.
 
 ### Controls
 

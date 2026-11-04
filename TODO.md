@@ -307,15 +307,6 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
 
 ## Levels
 
-### The round clear bonus is invisible until it is paid
-
-A round cleared with no enemy leaked pays its waves' clear bonus, but nothing on screen says a round carries one or
-that it was just paid: the credits simply rise.
-
-- **Where:** `td.ui.PanelWaveInfo` / `td.ui.WavesReadout` for the coming round, the status readout for the payment.
-- **Approach:** show `LoadedLevel.clearBonusAt` for the next round beside its enemies, and flash the credits when it
-  is paid; one live `run-jtd` pass for the panel text.
-
 ### The balance report cannot see or sweep the clear bonus
 
 `RunRecorder` adds up `earned` from kills only, so a clean round's bonus shows in no report row, and no `LevelKnob`

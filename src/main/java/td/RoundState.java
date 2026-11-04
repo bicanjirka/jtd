@@ -2,7 +2,9 @@ package td;
 
 import td.level.LevelOutcome;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,8 +16,9 @@ import java.util.stream.Collectors;
  * @param wave         waves started so far; the next to start is {@code wave + 1}
  * @param leaked       0-based rounds an enemy escaped
  * @param leaksAtStart the roster's leak count when the running round started
+ * @param bonusesPaid  the clear bonus each 0-based round paid; a round that paid none is absent
  */
-record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart) {
+record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart, Map<Integer, Integer> bonusesPaid) {
 
     enum Phase {
         /** Between waves, the board clear: the next wave may start. */
@@ -30,11 +33,12 @@ record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart)
 
     RoundState {
         leaked = Set.copyOf(leaked);
+        bonusesPaid = Map.copyOf(bonusesPaid);
     }
 
     /** Nothing played yet, with wave {@code wave + 1} next. */
     static RoundState before(int wave) {
-        return new RoundState(wave, Phase.READY, Set.of(), 0L);
+        return new RoundState(wave, Phase.READY, Set.of(), 0L, Map.of());
     }
 
     boolean isWaveReady() {
@@ -55,7 +59,7 @@ record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart)
 
     /** The next wave is out; {@code leaks} is the roster's count now. */
     RoundState begun(long leaks) {
-        return new RoundState(this.wave + 1, Phase.RUNNING, this.leaked, leaks);
+        return new RoundState(this.wave + 1, Phase.RUNNING, this.leaked, leaks, this.bonusesPaid);
     }
 
     /**
@@ -97,7 +101,16 @@ record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart)
     /** Debug: wave {@code next} (1-based) starts next, and the rounds from it on have not been played. */
     RoundState jumpedTo(int next) {
         Set<Integer> earlier = this.leaked.stream().filter(round -> round < next - 1).collect(Collectors.toSet());
-        return new RoundState(next - 1, Phase.READY, earlier, this.leaksAtStart);
+        Map<Integer, Integer> paid = new HashMap<>(this.bonusesPaid);
+        paid.keySet().removeIf(round -> round >= next - 1);
+        return new RoundState(next - 1, Phase.READY, earlier, this.leaksAtStart, paid);
+    }
+
+    /** Round {@code round} (0-based) paid {@code bonus} for clearing with no leak. */
+    RoundState paidBonus(int round, int bonus) {
+        Map<Integer, Integer> paid = new HashMap<>(this.bonusesPaid);
+        paid.put(round, bonus);
+        return new RoundState(this.wave, this.phase, this.leaked, this.leaksAtStart, paid);
     }
 
     /** Marks the running round as one an enemy escaped, if one has since it started. */
@@ -107,10 +120,10 @@ record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart)
         }
         Set<Integer> more = new HashSet<>(this.leaked);
         more.add(this.wave - 1);
-        return new RoundState(this.wave, this.phase, more, this.leaksAtStart);
+        return new RoundState(this.wave, this.phase, more, this.leaksAtStart, this.bonusesPaid);
     }
 
     private RoundState in(Phase next) {
-        return new RoundState(this.wave, next, this.leaked, this.leaksAtStart);
+        return new RoundState(this.wave, next, this.leaked, this.leaksAtStart, this.bonusesPaid);
     }
 }

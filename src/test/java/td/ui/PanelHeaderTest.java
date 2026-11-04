@@ -71,6 +71,17 @@ class PanelHeaderTest {
     }
 
     @Test
+    void aRoundPayingItsClearBonusFlashesTheCashIcon() {
+        this.header.show(progress(3, 18), true, LevelOutcome.PLAYING, new EconomyState(100, 0, 5));
+        WaveProgress paid = new WaveProgress(3, List.of(new RoundSummary(Rank.GRUNT, false, false).withBonusPaid(5)),
+                List.of(), List.of());
+
+        this.header.show(paid, true, LevelOutcome.PLAYING, new EconomyState(105, 5, 5));
+
+        assertThat(this.header.icon(StatusTerm.CASH).flash()).isPositive();
+    }
+
+    @Test
     void theFirstNumbersOfALevelAreABaselineAndFlashNothing() {
         this.header.show(progress(9, 18), false, LevelOutcome.PLAYING, new EconomyState(100, 0, 2));
         this.header.reset();
