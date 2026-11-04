@@ -44,6 +44,10 @@ final class MobMoments {
         DAMAGE_TAKEN,
         CRITICAL_HIT,
         DODGE,
+        /** A hit landed on a shield. */
+        SHIELD_HIT,
+        /** A hit broke the last shield it met. */
+        SHIELD_BROKEN,
         /** Recorded once: a dead mob takes no further hits. */
         DEATH,
         ABILITY_SPAWN

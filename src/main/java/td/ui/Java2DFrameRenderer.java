@@ -9,8 +9,10 @@ import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
+import td.ui.render.EnemyBurstDraw;
 import td.ui.render.EnemyDotsDraw;
 import td.ui.render.EnemyDraw;
+import td.ui.render.EnemyEggDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.EnemyOverlayDraw;
@@ -1112,6 +1114,8 @@ public final class Java2DFrameRenderer {
             case EnemyBarsDraw bars -> this.paintEnemyBars(g2, bars);
             case EnemyDotsDraw dots -> this.paintEnemyDots(g2, dots);
             case RankBadgeDraw badge -> this.paintRankBadge(g2, badge);
+            case EnemyEggDraw egg -> EnemyEffects.paintEgg(g2, egg);
+            case EnemyBurstDraw burst -> EnemyEffects.paintBurst(g2, burst);
         }
     }
 
@@ -1249,7 +1253,7 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
-    /** A thin ring around an enemy: a shield bubble or aura reach. */
+    /** A thin ring around an enemy: its selection or an aura's reach. */
     private void paintEnemyRing(Graphics2D g2, EnemyRingDraw ring) {
         if (ring.radius() <= 0) {
             return;

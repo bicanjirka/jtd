@@ -12,9 +12,12 @@ import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarLook;
 import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
+import td.ui.render.EnemyBurstDraw;
+import td.ui.render.EnemyBurstLook;
 import td.ui.render.EnemyDotLook;
 import td.ui.render.EnemyDotsDraw;
 import td.ui.render.EnemyDraw;
+import td.ui.render.EnemyEggDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.EnemyOverlayDraw;
@@ -46,12 +49,25 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float CRIT_SPARK_FIXED_SCALE = 12f;
     static final int MISS_MARK_DURATION_TICKS = 12;
     static final int CLOAK_FADE_DURATION_TICKS = 8;
+    static final int SHIELD_FLASH_DURATION_TICKS = 4;
+    static final int SHIELD_POP_DURATION_TICKS = 7;
     /**
-     * Shield bubble size relative to the body, drawn at a faint fixed alpha since it marks a
-     * lasting state.
+     * A body reaching further than this share of its scale is treated as larger by what must wrap around it; up to
+     * here a square's corners still fit an egg made for its scale.
      */
-    private static final float SHIELD_BUBBLE_SCALE_FRACTION = 1.3f;
-    private static final float SHIELD_BUBBLE_ALPHA = 0.5f;
+    private static final float HULL_REACH = 1.41f;
+    private static final float EGG_WIDTH_FRACTION = 1.5f;
+    private static final float EGG_HEIGHT_FRACTION = 1.72f;
+    private static final float EGG_MARGIN = 2.5f;
+    /** How far the egg's bottom sits from the centre, against its top. */
+    private static final float EGG_BOTTOM_SHARE = 0.92f;
+    /** How close the selection ring keeps to what it snaps around. */
+    private static final float SELECTION_RING_MARGIN = 2f;
+    /** The least of its width a shield's bar shows, so even a sliver of shield can be seen. */
+    private static final float SHIELD_BAR_MIN_FILL = 0.08f;
+    /** Enemies on one board can have nearby ids; the multiplier spreads their particle timing apart. */
+    private static final float SEED_SPREAD = 3.7f;
+    private static final int SEED_WRAP = 4096;
     /** Ice overlay size relative to the body. */
     private static final float FREEZE_CRYSTAL_SCALE_FRACTION = 1.35f;
     private static final float SUPPORT_AURA_RING_ALPHA = 0.25f;
@@ -90,16 +106,18 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private final int gameTime;
     private final double interpolationAlpha;
     private final Optional<EnemyMob> selected;
+    private final float animationSeconds;
 
     public EnemyFrameBuilder(int gameTime, double interpolationAlpha) {
-        this(gameTime, interpolationAlpha, Optional.empty());
+        this(gameTime, interpolationAlpha, Optional.empty(), 0.0);
     }
 
-    /** Also rings {@code selected}, the enemy the player is inspecting. */
-    public EnemyFrameBuilder(int gameTime, double interpolationAlpha, Optional<EnemyMob> selected) {
+    /** Also rings {@code selected}, the enemy the player is inspecting; emissions run on {@code animationSeconds}. */
+    public EnemyFrameBuilder(int gameTime, double interpolationAlpha, Optional<EnemyMob> selected, double animationSeconds) {
         this.gameTime = gameTime;
         this.interpolationAlpha = interpolationAlpha;
         this.selected = selected;
+        this.animationSeconds = (float) animationSeconds;
     }
 
     private static float lerp(double from, double to, double alpha) {
@@ -255,13 +273,35 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             this.draws.add(new EnemyBodyDraw(look, x, y, facingRadians, mob.getDrawScale(), cloakProgress));
             Set<EffectKind> active = mob.activeEffectKinds();
             float reach = scale * EnemyLooks.of(look).reach();
+            float seed = mob.id() % SEED_WRAP * SEED_SPREAD + 1f;
+            float hull = Math.max(scale, reach / HULL_REACH);
+            float eggX = hull * EGG_WIDTH_FRACTION + EGG_MARGIN;
+            float eggY = hull * EGG_HEIGHT_FRACTION + EGG_MARGIN;
+            float above = Math.min(reach, scale * RANK_BADGE_REACH_LIMIT);
+            float beneath = reach;
+            float ringRadius = scale * SELECTION_RING_SCALE_FRACTION;
+            if (active.contains(EffectKind.FREEZE)) {
+                this.overlayDraws.add(new IceCrystalDraw(Palette.FREEZE_CRYSTAL, x, y, scale * FREEZE_CRYSTAL_SCALE_FRACTION));
+            }
+            if (active.contains(EffectKind.SHIELD)) {
+                this.overlayDraws.add(new EnemyEggDraw(x, y, eggX, eggY, this.shieldFlash(mob), seed, this.animationSeconds,
+                        1f - cloakProgress));
+                above = Math.max(above, eggY);
+                beneath = Math.max(beneath, eggY * EGG_BOTTOM_SHARE);
+                ringRadius = Math.max(ringRadius, Math.max(eggX, eggY) + SELECTION_RING_MARGIN);
+            }
+            OptionalInt broken = mob.ticksSinceShieldBroken(this.gameTime);
+            if (within(broken, SHIELD_POP_DURATION_TICKS)) {
+                this.overlayDraws.add(new EnemyBurstDraw(EnemyBurstLook.SHIELD_POP, x, y, eggX, eggY,
+                        (float) broken.getAsInt() / SHIELD_POP_DURATION_TICKS, seed, 1f - cloakProgress));
+            }
             this.critSpark(mob, x, y);
-            this.overlays(mob, active, x, y, scale, supportAura);
+            this.overlays(mob, x, y, ringRadius, supportAura);
             this.pulses(mob, x, y, scale);
-            this.badge(mob, x, y - Math.min(reach, scale * RANK_BADGE_REACH_LIMIT) - RANK_BADGE_GAP, cloakProgress);
+            this.badge(mob, x, y - above - RANK_BADGE_GAP, cloakProgress);
             this.runes(active, x, y - scale * RUNE_ROW_OFFSET_FRACTION);
             this.missMark(mob, x + scale, y);
-            float below = y + reach;
+            float below = y + beneath;
             boolean dotted = this.dots(active, x, below + DOT_GAP, cloakProgress);
             this.bars(mob, x, dotted ? below + DOT_GAP + DOT_TO_BAR_GAP : below + BAR_GAP, scale, cloakProgress);
         }
@@ -271,11 +311,27 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** The one place that decides which bars an enemy shows and where, at its still scale, so they ignore a pulse. */
     private void bars(DefinedEnemyMob mob, float x, float top, float scale, float cloakProgress) {
         float health = mob.getHealthFraction();
-        if (health < 1f) {
-            this.markDraws.add(new EnemyBarsDraw(x, top,
-                    Math.max(BAR_MIN_WIDTH, scale * BAR_WIDTH_SCALE_FRACTION), 1f - cloakProgress,
-                    List.of(new EnemyBarsDraw.Bar(EnemyBarLook.HEALTH, health))));
+        boolean hurt = health < 1f;
+        boolean shielded = mob.hasEffect(EffectKind.SHIELD);
+        if (!hurt && !shielded) {
+            return;
         }
+        EnemyBarsDraw.Bar healthBar = new EnemyBarsDraw.Bar(EnemyBarLook.HEALTH, health);
+        List<EnemyBarsDraw.Bar> bars = !shielded ? List.of(healthBar)
+                : hurt ? List.of(this.shieldBar(mob), healthBar) : List.of(this.shieldBar(mob));
+        this.markDraws.add(new EnemyBarsDraw(x, top, Math.max(BAR_MIN_WIDTH, scale * BAR_WIDTH_SCALE_FRACTION),
+                1f - cloakProgress, bars));
+    }
+
+    /** All its shields on the health bar's scale, so the two compare directly. */
+    private EnemyBarsDraw.Bar shieldBar(DefinedEnemyMob mob) {
+        float share = mob.shieldGauge().remaining() / mob.getMaxHealthPoints();
+        return new EnemyBarsDraw.Bar(EnemyBarLook.SHIELD, Math.clamp(share, SHIELD_BAR_MIN_FILL, 1f));
+    }
+
+    private float shieldFlash(DefinedEnemyMob mob) {
+        OptionalInt hit = mob.ticksSinceShieldHit(this.gameTime);
+        return within(hit, SHIELD_FLASH_DURATION_TICKS) ? 1f - (float) hit.getAsInt() / SHIELD_FLASH_DURATION_TICKS : 0f;
     }
 
     private void badge(DefinedEnemyMob mob, float x, float y, float cloakProgress) {
@@ -301,19 +357,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return true;
     }
 
-    /** Static overlays for ongoing states: shield bubble, ice crystals, selection, support-aura and disruption rings. */
-    private void overlays(DefinedEnemyMob mob, Set<EffectKind> active, float x, float y, float scale,
-            Optional<SupportAura> supportAura) {
-        if (active.contains(EffectKind.SHIELD)) {
-            this.overlayDraws.add(new EnemyRingDraw(Palette.STATUS_MARKER_SHIELD, x, y, scale * SHIELD_BUBBLE_SCALE_FRACTION,
-                    SHIELD_BUBBLE_ALPHA * (0.3f + 0.7f * mob.shieldFraction())));
-        }
-        if (active.contains(EffectKind.FREEZE)) {
-            this.overlayDraws.add(new IceCrystalDraw(Palette.FREEZE_CRYSTAL, x, y, scale * FREEZE_CRYSTAL_SCALE_FRACTION));
-        }
+    /** The rings around an enemy: its selection and support aura while selected, and always its disruption. */
+    private void overlays(DefinedEnemyMob mob, float x, float y, float selectionRadius, Optional<SupportAura> supportAura) {
         if (this.selected.isPresent() && this.selected.get() == mob) {
-            this.overlayDraws.add(new EnemyRingDraw(Palette.SELECTION, x, y, scale * SELECTION_RING_SCALE_FRACTION,
-                    SELECTION_RING_ALPHA));
+            this.overlayDraws.add(new EnemyRingDraw(Palette.SELECTION, x, y, selectionRadius, SELECTION_RING_ALPHA));
             supportAura.ifPresent(aura -> this.overlayDraws.add(
                     new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));
         }

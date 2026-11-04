@@ -24,6 +24,7 @@ final class EnemyLooks {
     /** How closely a curve is followed when measuring a shape's reach at scale one; read while the table builds. */
     private static final double REACH_FLATNESS = 0.001;
     private static final Map<EnemyLook, Row> ROWS = checkedComplete(rows());
+    private static final Color SHIELD_BAR = new Color(0xFF, 0xDC, 0x78);
     private static final Color HEALTH_BAR = new Color(0xE8, 0xE4, 0xDA);
     private static final Color DEBUFF_DOT = new Color(0xE8, 0xA0, 0xC8);
     private static final Color SPOTTED_DOT = new Color(0xF0, 0xD0, 0x60);
@@ -74,6 +75,7 @@ final class EnemyLooks {
 
     static Color barColor(EnemyBarLook look) {
         return switch (look) {
+            case SHIELD -> SHIELD_BAR;
             case HEALTH -> HEALTH_BAR;
         };
     }

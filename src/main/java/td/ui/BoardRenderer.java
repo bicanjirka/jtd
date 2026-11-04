@@ -63,7 +63,7 @@ public final class BoardRenderer {
         }
 
         Optional<EnemyMob> selected = inspection.isPresent() ? this.world.enemySelection().selectedAlive() : Optional.empty();
-        EnemyFrameBuilder enemyFrameBuilder = new EnemyFrameBuilder(gameTime, interpolationAlpha, selected);
+        EnemyFrameBuilder enemyFrameBuilder = new EnemyFrameBuilder(gameTime, interpolationAlpha, selected, animationSeconds);
         for (EnemyMob enemy : this.world.enemies().getEnemies()) {
             enemy.accept(enemyFrameBuilder);
         }
