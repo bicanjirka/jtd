@@ -181,6 +181,8 @@ public final class Java2DFrameRenderer {
     /** How deep the wave's band is, as a share of the cone's full reach. */
     private static final float CINDER_CONE_BAND_FRACTION = 0.35f;
 
+    private final GroundPainter groundPainter = new GroundPainter();
+
     private static Shape markerShape(PathMarkerShape shape, float size) {
         return switch (shape) {
             case DOT -> circleShape(size);
@@ -638,7 +640,7 @@ public final class Java2DFrameRenderer {
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
         // paint() skips super.paint(), so the ground's fill is what clears the previous frame.
-        GroundPainter.paint(g2, frame.ground(), frame.scale(), frame.maxX(), frame.maxY());
+        this.groundPainter.paint(g2, frame.ground(), frame.scale(), frame.maxX(), frame.maxY());
 
         frame.cellGrid().ifPresent(grid -> this.paintCellGrid(g2, grid, frame));
         for (PathMarkerDraw marker : frame.pathMarkers()) {
