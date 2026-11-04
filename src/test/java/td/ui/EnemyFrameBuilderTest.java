@@ -27,6 +27,8 @@ import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarLook;
 import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
+import td.ui.render.EnemyDotLook;
+import td.ui.render.EnemyDotsDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyLook;
@@ -38,11 +40,15 @@ import td.ui.render.IceCrystalDraw;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
+import td.ui.render.RankBadgeDraw;
 import td.util.GameWorld;
 import td.wave.Path;
 import td.wave.Vec2;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -71,6 +77,30 @@ class EnemyFrameBuilderTest {
         EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, 0.0);
         enemy.accept(builder);
         return builder.buildOverlays();
+    }
+
+    private static RankBadgeDraw badgeOf(EnemyMob enemy) {
+        return badgeOf(enemy, 0);
+    }
+
+    private static RankBadgeDraw badgeOf(EnemyMob enemy, int gameTime) {
+        return overlaysOf(enemy, gameTime).stream()
+                .filter(RankBadgeDraw.class::isInstance)
+                .map(RankBadgeDraw.class::cast)
+                .findFirst().orElseThrow();
+    }
+
+    private static EnemyDotsDraw dotsOf(EnemyMob enemy) {
+        return overlaysOf(enemy, 0).stream()
+                .filter(EnemyDotsDraw.class::isInstance)
+                .map(EnemyDotsDraw.class::cast)
+                .findFirst().orElseThrow();
+    }
+
+    private static CritSparkDraw critSparkOf(EnemyMob enemy, int gameTime) {
+        EnemyFrameBuilder builder = new EnemyFrameBuilder(gameTime, 0.0);
+        enemy.accept(builder);
+        return builder.buildCritSparks().getFirst();
     }
 
     private static List<EnemyBarsDraw> barsOf(EnemyMob enemy, int gameTime) {
@@ -221,25 +251,88 @@ class EnemyFrameBuilderTest {
     }
 
     @Test
-    void aGruntSpawnsWithNoBadgeAtAll() {
-        GameWorld context = contextWithStraightPath();
-        EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
+    void aGruntCarriesNoBadge() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
 
-        assertThat(bodyDrawAt(enemy, 0, 0.0).badge()).isEqualTo(RankBadge.NONE);
+        assertThat(overlaysOf(enemy, 0)).noneMatch(RankBadgeDraw.class::isInstance);
     }
 
     @Test
-    void everyNonGruntRankMapsToItsOwnDistinctBadge() {
+    void everyOtherRankCarriesItsOwnBadgeAtOneSizeJustAboveTheBody() {
         GameWorld context = contextWithStraightPath();
 
-        assertThat(bodyDrawAt(EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), Rank.SOLDIER), 0, 0.0).badge())
-                .isEqualTo(RankBadge.ONE_CHEVRON);
-        assertThat(bodyDrawAt(EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), Rank.VETERAN), 0, 0.0).badge())
-                .isEqualTo(RankBadge.TWO_CHEVRON);
-        assertThat(bodyDrawAt(EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), Rank.ELITE), 0, 0.0).badge())
-                .isEqualTo(RankBadge.STAR);
-        assertThat(bodyDrawAt(EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(50, 3), Rank.BOSS), 0, 0.0).badge())
-                .isEqualTo(RankBadge.SKULL);
+        List<RankBadgeDraw> badges = List.of(Rank.SOLDIER, Rank.VETERAN, Rank.ELITE, Rank.BOSS).stream()
+                .map(rank -> badgeOf(EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("plain"), rank)))
+                .toList();
+
+        assertThat(badges).extracting(RankBadgeDraw::badge)
+                .containsExactly(RankBadge.ONE_CHEVRON, RankBadge.TWO_CHEVRON, RankBadge.STAR, RankBadge.SKULL);
+        assertThat(badges).extracting(RankBadgeDraw::size).containsOnly(badges.getFirst().size());
+    }
+
+    @Test
+    void aBadgeFadesWithACloakedBody() {
+        EnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(), EnemyFixtures.simpleDefinition("plain"), Rank.ELITE);
+        enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
+        enemy.doTick(0);
+
+        assertThat(badgeOf(enemy, EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS).alpha()).isZero();
+    }
+
+    @Test
+    void dotsComeOncePerKindInAFixedOrderWhateverTheEffects() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        enemy.applyEffect(Effect.exposed(50, DamageSink.none()));
+        enemy.applyEffect(Effect.vulnerable(1, 50, DamageSink.none()));
+        enemy.applyEffect(Effect.sundered(1, 50, DamageSink.none()));
+
+        assertThat(dotsOf(enemy).dots()).containsExactly(EnemyDotLook.DEBUFF, EnemyDotLook.SPOTTED);
+    }
+
+    @Test
+    void anEffectWithAPictureOfItsOwnEarnsNoDot() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        enemy.applyEffect(Effect.burn(Damage.magic(10), 50, DamageSink.none()));
+
+        assertThat(overlaysOf(enemy, 0)).noneMatch(EnemyDotsDraw.class::isInstance);
+    }
+
+    @Test
+    void dotsSitBetweenTheBodyAndTheBars() {
+        DefinedEnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(), EnemyFixtures.simpleDefinition("plain"));
+        enemy.doDamage(Damage.physical(1));
+        enemy.applyEffect(Effect.exposed(50, DamageSink.none()));
+
+        float dotY = dotsOf(enemy).y();
+
+        assertThat(dotY).isGreaterThan((float) enemy.getY() + enemy.getBodyScale());
+        assertThat(barsOf(enemy, 0).getFirst().y()).isGreaterThan(dotY);
+    }
+
+    @Test
+    void aCritSparkKeepsItsRotationForItsWholeLife() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 500, 3);
+        enemy.doDamage(Damage.physical(10), AttackProfile.critChance(1f));
+        enemy.doTick(1);
+
+        CritSparkDraw first = critSparkOf(enemy, 1);
+        CritSparkDraw later = critSparkOf(enemy, 1 + EnemyFrameBuilder.CRIT_SPARK_DURATION_TICKS);
+
+        assertThat(later.rotation()).isEqualTo(first.rotation());
+    }
+
+    @Test
+    void laterCritsTurnTheirSparksDifferently() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
+        Set<Float> rotations = new HashSet<>();
+
+        for (int tick = 1; tick <= 12; tick++) {
+            enemy.doDamage(Damage.physical(1), AttackProfile.critChance(1f));
+            enemy.doTick(tick);
+            rotations.add(critSparkOf(enemy, tick).rotation());
+        }
+
+        assertThat(rotations).hasSizeGreaterThan(1);
     }
 
     @Test
@@ -493,18 +586,21 @@ class EnemyFrameBuilderTest {
     }
 
     @Test
-    void aDefinitionWithARadiusAbilityYieldsASupportAuraRingAtItsAuthoredRadius() {
+    void aSupportAuraRingShowsAtItsAuthoredRadiusOnlyWhileItsEnemyIsSelected() {
         GameWorld context = contextWithStraightPath();
         EnemyMob shrouder = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("shrouder")
                 .withAbilities(List.of(new Ability(AbilityTerm.SHROUD, new PeriodicTrigger(40),
                         new ApplyEffectAction(new InvisibleTemplate(60), new RadiusTarget(100f))))));
+        EnemyFrameBuilder selected = new EnemyFrameBuilder(0, 0.0, Optional.of(shrouder));
 
-        List<EnemyOverlayDraw> overlays = overlaysOf(shrouder, 0);
+        shrouder.accept(selected);
 
-        assertThat(overlays).hasSize(1);
-        EnemyRingDraw ring = (EnemyRingDraw) overlays.getFirst();
-        assertThat(ring.radius()).isEqualTo(100f);
-        assertThat(ring.palette()).isEqualTo(Palette.STATUS_MARKER_INVISIBLE);
+        assertThat(overlaysOf(shrouder, 0)).isEmpty();
+        assertThat(selected.buildOverlays()).filteredOn(EnemyRingDraw.class::isInstance).map(EnemyRingDraw.class::cast)
+                .anySatisfy(ring -> {
+                    assertThat(ring.radius()).isEqualTo(100f);
+                    assertThat(ring.palette()).isEqualTo(Palette.STATUS_MARKER_INVISIBLE);
+                });
     }
 
     @Test

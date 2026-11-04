@@ -220,9 +220,9 @@ first step of this work, before `FEATURE-enemy-health-bar.md`, and it changes no
   body's size allows. So a strong and a weak tower's full pools look alike, and a stopped bleeding enemy shows no sign of
   it on the board. Both are accepted.
 - The crit spark and `miss` text stay, since they report events. `miss` stays as it is, unless the live pass shows too many
-  words on a dodging swarm. Every crit spark is the same size and colour, and the view never learns a crit's damage. Each
-  crit picks its own star, from 4 to 6 points and a rotation, kept for that spark's life and derived from the enemy and the
-  moment, so it can't touch game results. A second crit during a spark replaces it, as today.
+  words on a dodging swarm. Every crit spark is the same star, size and colour, and the view never learns a crit's damage.
+  Each crit has its own rotation, kept for that spark's life and derived from the enemy and the moment, so it can't touch
+  game results. A second crit during a spark replaces it, as today.
 - The selection ring stays at its size on a plain enemy and snaps to just outside the egg or ice while they show.
 - The rank badge sits just above the body and moves above the egg or ice while they show, with flames and stars passing
   behind it. Hex runes stay where they are, drawn over effects. If a badge is hard to read on flames at real size, that

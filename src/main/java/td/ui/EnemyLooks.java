@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.ui.render.EnemyBarLook;
+import td.ui.render.EnemyDotLook;
 import td.ui.render.EnemyLook;
 
 import java.awt.Color;
@@ -24,6 +25,9 @@ final class EnemyLooks {
     private static final double REACH_FLATNESS = 0.001;
     private static final Map<EnemyLook, Row> ROWS = checkedComplete(rows());
     private static final Color HEALTH_BAR = new Color(0xE8, 0xE4, 0xDA);
+    private static final Color DEBUFF_DOT = new Color(0xE8, 0xA0, 0xC8);
+    private static final Color SPOTTED_DOT = new Color(0xF0, 0xD0, 0x60);
+    private static final Color BUFF_DOT = new Color(0xA8, 0xC8, 0xFF);
 
     private EnemyLooks() {
     }
@@ -71,6 +75,14 @@ final class EnemyLooks {
     static Color barColor(EnemyBarLook look) {
         return switch (look) {
             case HEALTH -> HEALTH_BAR;
+        };
+    }
+
+    static Color dotColor(EnemyDotLook look) {
+        return switch (look) {
+            case DEBUFF -> DEBUFF_DOT;
+            case SPOTTED -> SPOTTED_DOT;
+            case BUFF -> BUFF_DOT;
         };
     }
 

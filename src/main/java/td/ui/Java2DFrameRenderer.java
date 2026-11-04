@@ -9,6 +9,7 @@ import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
+import td.ui.render.EnemyDotsDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.EnemyLook;
@@ -29,6 +30,7 @@ import td.ui.render.PathMarkerShape;
 import td.ui.render.ProjectileDraw;
 import td.ui.render.PulseDraw;
 import td.ui.render.RankBadge;
+import td.ui.render.RankBadgeDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.RingDraw;
 import td.ui.render.SheetLine;
@@ -136,15 +138,17 @@ public final class Java2DFrameRenderer {
 
     private static final int SONAR_TRAIL_STEPS = 4;
     private static final int SONAR_TRAIL_ALPHA = 150;
-    /** Badge size and offset relative to body scale; smaller badges were unreadable. */
-    private static final float RANK_BADGE_SIZE_FRACTION = 0.6f;
-    private static final float RANK_BADGE_OFFSET_FRACTION = 1.7f;
-    private static final float RANK_BADGE_CHEVRON_SPACING_FRACTION = 0.55f;
+    /** How far apart a badge's two chevrons sit, as a share of its size. */
+    private static final float RANK_BADGE_CHEVRON_SPACING = 0.92f;
+    private static final float ENEMY_DOT_RADIUS = 1.3f;
+    private static final float ENEMY_DOT_SPACING = 4.1f;
     /** Set on screen at the default window; below that zoom a bar shrinks with the board. */
     private static final float ENEMY_BAR_HEIGHT = 1.64f;
     private static final float ENEMY_BAR_GAP = 0.82f;
     private static final float ENEMY_BAR_TRACK_MARGIN = 0.82f;
     private static final Color ENEMY_BAR_TRACK = new Color(0, 0, 0, 191);
+    private static final int EFFECT_PULSE_ALPHA = 130;
+    private static final float EFFECT_PULSE_STROKE_WIDTH = 1.2f;
     private static final float PROJECTILE_SIZE = 5f;
     private static final float SHELL_STREAK_ALPHA = 0.5f;
     private static final int ZONE_FILL_ALPHA = 80;
@@ -641,11 +645,11 @@ public final class Java2DFrameRenderer {
         for (EnemyDraw enemy : frame.enemies()) {
             this.paintEnemy(g2, enemy);
         }
-        for (CritSparkDraw spark : frame.critSparks()) {
-            this.paintCritSpark(g2, spark);
-        }
         for (EnemyOverlayDraw overlay : frame.enemyOverlays()) {
             this.paintEnemyOverlay(g2, overlay);
+        }
+        for (CritSparkDraw spark : frame.critSparks()) {
+            this.paintCritSpark(g2, spark);
         }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
             this.paintTowerSprite(g2, sprite, frame.scale());
@@ -846,10 +850,13 @@ public final class Java2DFrameRenderer {
         };
     }
 
-    /** Draws enemy bodies alone, for the wave preview. */
-    public void paintEnemies(Graphics2D g2, List<EnemyDraw> enemies) {
+    /** Draws enemy bodies and their rank badges alone, for the wave preview. */
+    public void paintEnemies(Graphics2D g2, List<EnemyDraw> enemies, List<RankBadgeDraw> badges) {
         for (EnemyDraw enemy : enemies) {
             this.paintEnemy(g2, enemy);
+        }
+        for (RankBadgeDraw badge : badges) {
+            this.paintRankBadge(g2, badge);
         }
     }
 
@@ -883,14 +890,16 @@ public final class Java2DFrameRenderer {
             g2.fill(detail.shape().at(body.scale()));
         }
         g2.setTransform(save);
-        this.paintRankBadge(g2, body);
     }
 
     /** Drawn upright above the body, never rotated with it. */
-    private void paintRankBadge(Graphics2D g2, EnemyBodyDraw body) {
+    private void paintRankBadge(Graphics2D g2, RankBadgeDraw badge) {
         AffineTransform save = g2.getTransform();
-        g2.translate(body.x(), body.y() - body.scale() * RANK_BADGE_OFFSET_FRACTION);
-        this.paintRankBadgeGlyph(g2, body.badge(), body.scale() * RANK_BADGE_SIZE_FRACTION);
+        Composite composite = g2.getComposite();
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, badge.alpha()));
+        g2.translate(badge.x(), badge.y());
+        this.paintRankBadgeGlyph(g2, badge.badge(), badge.size());
+        g2.setComposite(composite);
         g2.setTransform(save);
     }
 
@@ -901,7 +910,7 @@ public final class Java2DFrameRenderer {
         switch (badge) {
             case ONE_CHEVRON -> this.paintUprightChevron(g2, badgeSize);
             case TWO_CHEVRON -> {
-                float spacing = badgeSize * RANK_BADGE_CHEVRON_SPACING_FRACTION / RANK_BADGE_SIZE_FRACTION;
+                float spacing = badgeSize * RANK_BADGE_CHEVRON_SPACING;
                 g2.translate(0, -spacing / 2);
                 this.paintUprightChevron(g2, badgeSize);
                 g2.translate(0, spacing);
@@ -1082,14 +1091,13 @@ public final class Java2DFrameRenderer {
         g2.setTransform(save);
     }
 
-    /**
-     * A fading four-point sparkle where a critical hit landed, distinct from the five-point star.
-     */
+    /** A fading four-point sparkle where a critical hit landed, distinct from the five-point star, turned its own way. */
     private void paintCritSpark(Graphics2D g2, CritSparkDraw spark) {
         AffineTransform save = g2.getTransform();
         g2.translate(spark.x(), spark.y());
         g2.setColor(withAlpha(colorFor(spark.palette()), Math.round((1f - spark.fadeProgress()) * 255f)));
         float sparkScale = spark.scale() * (1f + spark.fadeProgress());
+        g2.rotate(spark.rotation());
         g2.fill(starShape(4, sparkScale, sparkScale * 0.25f));
         g2.setTransform(save);
     }
@@ -1102,6 +1110,8 @@ public final class Java2DFrameRenderer {
             case HexRuneDraw rune -> this.paintHexRune(g2, rune);
             case MissMarkDraw miss -> this.paintMissMark(g2, miss);
             case EnemyBarsDraw bars -> this.paintEnemyBars(g2, bars);
+            case EnemyDotsDraw dots -> this.paintEnemyDots(g2, dots);
+            case RankBadgeDraw badge -> this.paintRankBadge(g2, badge);
         }
     }
 
@@ -1118,6 +1128,15 @@ public final class Java2DFrameRenderer {
             g2.setColor(scaleAlpha(EnemyLooks.barColor(bar.look()), bars.alpha()));
             g2.fill(new Rectangle2D.Float(left, bars.y() + i * (ENEMY_BAR_HEIGHT + ENEMY_BAR_GAP),
                     bars.width() * bar.fill(), ENEMY_BAR_HEIGHT));
+        }
+    }
+
+    private void paintEnemyDots(Graphics2D g2, EnemyDotsDraw dots) {
+        float left = dots.x() - ENEMY_DOT_SPACING * (dots.dots().size() - 1) / 2f;
+        for (int i = 0; i < dots.dots().size(); i++) {
+            g2.setColor(scaleAlpha(EnemyLooks.dotColor(dots.dots().get(i)), dots.alpha()));
+            g2.fill(new Ellipse2D.Float(left + ENEMY_DOT_SPACING * i - ENEMY_DOT_RADIUS, dots.y() - ENEMY_DOT_RADIUS,
+                    ENEMY_DOT_RADIUS * 2, ENEMY_DOT_RADIUS * 2));
         }
     }
 
@@ -1242,15 +1261,15 @@ public final class Java2DFrameRenderer {
         g2.setStroke(defaultStroke);
     }
 
-    /** A ring growing from nothing as it fades, for a cast or a spawn. */
+    /** A ring growing from nothing as it fades, for a cast or a spawn; quiet, since many can fire at once. */
     private void paintEffectPulse(Graphics2D g2, EffectPulseDraw pulse) {
         float radius = pulse.radius() * pulse.progress();
         if (radius <= 0) {
             return;
         }
         Stroke defaultStroke = g2.getStroke();
-        g2.setColor(withAlpha(colorFor(pulse.palette()), Math.round((1f - pulse.progress()) * 255)));
-        g2.setStroke(new BasicStroke(2.0f));
+        g2.setColor(withAlpha(colorFor(pulse.palette()), Math.round((1f - pulse.progress()) * EFFECT_PULSE_ALPHA)));
+        g2.setStroke(new BasicStroke(EFFECT_PULSE_STROKE_WIDTH));
         g2.draw(new Ellipse2D.Float(pulse.centerX() - radius, pulse.centerY() - radius, radius * 2, radius * 2));
         g2.setStroke(defaultStroke);
     }
