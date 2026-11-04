@@ -121,7 +121,8 @@ background copies, budget, upgraded copies).
 A tower's info pane shows Range, then how it deals damage: a hit tower its Physical or Magic damage (/hit), Fire
 rate (/s) and DPS (/target: damage times fire rate times the average crit, before the target's defences; for the Scorcher, the burn
 its waves keep going on one target), the Radar
-its Sweep time in place of a fire rate, the Obelisk its damage a second; then every other stat off its default
+its Sweep time in place of a fire rate, the Obelisk its damage a second, a placed tower its Wave DPS (what it really
+dealt this wave, over the span from its first damage to its last, once that span reaches a second); then every other stat off its default
 (Critical damage whenever it can crit, Effect duration whenever it applies an effect), and what a Beacon gives.
 A changed value is green or red for better or worse, with an arrow for which way it moved; hovering a row says what
 the stat does and what made it. An upgrade's hover shows each change and what the row it moves would become

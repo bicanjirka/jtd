@@ -26,6 +26,8 @@ public enum TowerStatRow implements StatTerm {
     MAGIC_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
     /** Points a second on one target from a burn kept going, before its defences. */
     BURN_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
+    /** Points a second it really dealt this wave, on everything it reached. */
+    WAVE_DPS("Wave DPS", "Damage per second this wave", StatUnit.DAMAGE_PER_SECOND, StatDirection.HIGHER),
     /** In cells a second. */
     PROJECTILE_SPEED("Proj speed", "Projectile speed", StatUnit.CELLS_PER_SECOND, StatDirection.HIGHER),
     /** A share of the standard projectile's size. */
@@ -72,7 +74,7 @@ public enum TowerStatRow implements StatTerm {
     public StatGroup group() {
         return switch (this) {
             case PHYSICAL_DAMAGE, MAGIC_DAMAGE, PHYSICAL_FIELD_DAMAGE, MAGIC_FIELD_DAMAGE, FIRE_RATE, SWEEP_TIME,
-                 PHYSICAL_DPS, MAGIC_DPS, BURN_DPS -> StatGroup.DAMAGE;
+                 PHYSICAL_DPS, MAGIC_DPS, BURN_DPS, WAVE_DPS -> StatGroup.DAMAGE;
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatGroup.DELIVERY;
         };
     }
@@ -93,6 +95,8 @@ public enum TowerStatRow implements StatTerm {
                     + "extra hits from upgrades, and misses");
             case BURN_DPS -> TermText.of("what one target takes from its ").plus(EffectKind.BURN)
                     .plus(" while it stays in the flame, once the waves have built that up, before its defences");
+            case WAVE_DPS -> TermText.of("what it really dealt this wave, to every enemy and after their defences, "
+                    + "from its first damage to its last");
             case PROJECTILE_SPEED -> TermText.of("how fast its shots fly");
             case PROJECTILE_SIZE -> TermText.of("how big its shots are, as a share of the usual");
         };

@@ -474,17 +474,6 @@ A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
 
-### The DPS row undersells splash towers
-
-`FEATURE-stat-presentation.md` (decision 8) gives every tower with a Fire rate a `DPS /target` row: hit damage ×
-fire rate × average crit, before armor. The Mortar and the Burst show one target's share of a shot that hits a crowd,
-and no fixed number can say how big that crowd is. Players compare towers by the headline number, so these look like
-poor buys.
-
-- **Where:** `AbstractTower.landHit` (the one place damage is credited), `AbstractTower.inspect`.
-- **Approach:** a placed tower also shows the damage per second it really dealt this wave, reset when a wave starts.
-  It covers what the sheet formula can't (splash count, procs, armor, overkill) in the same format.
-
 ## Enemy features
 
 ### Enemy traits/abilities numbers are unbalanced placeholders
