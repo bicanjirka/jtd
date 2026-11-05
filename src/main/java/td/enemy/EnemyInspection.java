@@ -102,7 +102,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
 
     private static EffectState activeState(ActiveEffects live, EffectKind kind) {
         return EffectState.of(kind, live.remainingTicks(kind)).withStacks(live.stacks(kind))
-                .withLevel(kind == EffectKind.CHILL ? live.chillLevel() : 0f)
+                .withLevel(live.slowNow(kind))
                 .withClockTicks(live.clockTicks(kind))
                 .withFullness(live.fullness(kind))
                 .withShares(live.find(kind).map(EnemyInspection::sharesOf).orElse(List.of()));

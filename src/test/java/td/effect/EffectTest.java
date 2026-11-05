@@ -22,12 +22,11 @@ class EffectTest {
     }
 
     @Test
-    void aChillIsALevelOfFadingContributions() {
+    void aChillIsASlowOfTheStrengthItCameWith() {
         Effect chill = Effect.chill(0.4f, 100, DamageSink.none());
 
-        assertThat(chill.dynamics()).isInstanceOf(EffectDynamics.ChillLevel.class);
-        assertThat(chill.fuelLevel()).isEqualTo(0.4f);
-        assertThat(chill.ticksToFade()).isEqualTo(100);
+        assertThat(chill.slowStrength()).isEqualTo(0.4f);
+        assertThat(chill.fuelLevel()).isZero();
         assertThat(chill.damagePerTick()).isEqualTo(Damage.none());
     }
 

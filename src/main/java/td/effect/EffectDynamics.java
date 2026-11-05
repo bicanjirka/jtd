@@ -35,22 +35,8 @@ public sealed interface EffectDynamics {
         }
     }
 
-    /** A chill: one fading contribution per application. */
-    record ChillLevel(List<FuelContribution> fuel) implements EffectDynamics {
-
-        public ChillLevel {
-            fuel = List.copyOf(fuel);
-        }
-
-        public ChillLevel withFuel(List<FuelContribution> fuel) {
-            return new ChillLevel(fuel);
-        }
-
-        /** Every contribution fading {@code factor} times as slowly. */
-        public ChillLevel withDurationScaledBy(float factor) {
-            return new ChillLevel(this.fuel.stream()
-                    .map(c -> new FuelContribution(c.sink(), c.amount(), c.decayPerTick() / factor)).toList());
-        }
+    /** A slow whose strength each application brings: the share of base speed it takes away. */
+    record Slow(float strength) implements EffectDynamics {
     }
 
     /**

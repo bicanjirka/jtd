@@ -16,7 +16,7 @@ import java.util.Optional;
 
 /** Every kind of effect, each one row: its {@link EffectRule}. */
 public enum EffectKind implements Term {
-    CHILL("Chill", EffectRule.of(EffectCategory.SOFT_CC).resistedBy(EnemyStat.CHILL_RESIST).asALevel()
+    CHILL("Chill", EffectRule.of(EffectCategory.SOFT_CC).resistedBy(EnemyStat.CHILL_RESIST)
             .tagged(EffectTag.SHARED_BY_SYMPATHY)),
     BURN("Burn", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).resistedBy(EnemyStat.BURN_RESIST).asAPool()
             .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f)).tagged(EffectTag.BURNING)),
@@ -82,7 +82,7 @@ public enum EffectKind implements Term {
     SILENCED("Silence", EffectRule.of(EffectCategory.SOFT_CC).tagged(EffectTag.FIELD)),
     /** Can't be sped up, and its speed is held to three quarters of its base. */
     ANCHORED("Anchor", EffectRule.of(EffectCategory.SOFT_CC)
-            .perStack(EnemyStat.MOVE_SPEED, StatModifier.capAtShareOfBase(0.75f)).tagged(EffectTag.FIELD)),
+            .slowingBy(0.25f).tagged(EffectTag.FIELD)),
     /** Each stack lowers magic resist by ten. */
     UNRAVELED("Unravel", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)
             .perStack(EnemyStat.MAGIC_RESIST, -10f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
@@ -96,9 +96,9 @@ public enum EffectKind implements Term {
      */
     CORRODED("Corrode", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
             .perStack(EnemyStat.ARMOR, -3f).perStack(EnemyStat.MAGIC_RESIST, -3f).tagged(EffectTag.FIELD)),
-    /** The field's slow, a point of speed in a hundred a stack; it is no chill, and nothing resists it. */
+    /** The field's slow, a point of speed in a hundred a stack. */
     DRAGGED("Drag", EffectRule.of(EffectCategory.SOFT_CC).stackingOnASharedClock(DragStrength.MOST)
-            .perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(-0.01f)).tagged(EffectTag.FIELD)),
+            .slowingBy(0.01f).tagged(EffectTag.FIELD)),
     /** Arc Discharge's mark: each stack adds 5% damage taken from every source, up to four. */
     CONDEMNED("Condemn", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(4)
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.05f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.05f)),
@@ -116,7 +116,7 @@ public enum EffectKind implements Term {
             .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(5f))
             .perStack(EnemyStat.INSULATION, -DamageUnits.ofPoints(5f))),
     /** Stuck in tar: a plain slow. */
-    TARRED("Tar", EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(0.6f))),
+    TARRED("Tar", EffectRule.of(EffectCategory.DEBUFF).slowingBy(0.4f)),
     /** Takes physical damage for every cell it travels; a stopped enemy takes none. */
     BLEEDING("Bleed", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME)),
     /** A third fuel pool: it stacks with burn and poison, burns what is immune to fire and marks resilience and spirit. */
@@ -208,7 +208,7 @@ public enum EffectKind implements Term {
      */
     public boolean isDecaying() {
         return switch (this.rule.stacking()) {
-            case LEVEL, POOL, EARNED -> true;
+            case POOL, EARNED -> true;
             case REFRESH, SHARED_CLOCK, PER_SOURCE -> false;
         };
     }
@@ -238,7 +238,7 @@ public enum EffectKind implements Term {
     public int maxStacks() {
         return switch (this.rule.stacking()) {
             case SHARED_CLOCK, EARNED -> this.rule.stackCap();
-            case REFRESH, LEVEL, POOL, PER_SOURCE -> 0;
+            case REFRESH, POOL, PER_SOURCE -> 0;
         };
     }
 

@@ -521,7 +521,7 @@ What it showed and what is left:
 ### Effect and specialization numbers are unbalanced placeholders
 
 Every number the effect-interactions and specialization work introduced was chosen to be plausible,
-not tuned: vulnerable (+15% per stack, cap 3, 4 s), the chill cap (80%), poison's damage (10% of weapon
+not tuned: vulnerable (+15% per stack, cap 3, 4 s), poison's damage (10% of weapon
 damage per tick, 4 s) and the half-second
 stack interval of burning and poisoned, revealed (3 s from Wide Band, 2 s from Resonant Field II),
 Momentum's cooldown cut and 5 s, the shatter and explosion share and radius, shrapnel's ring width and

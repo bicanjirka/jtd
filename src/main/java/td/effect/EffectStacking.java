@@ -8,8 +8,6 @@ public enum EffectStacking {
     SHARED_CLOCK,
     /** Stacks that wear off one at a time. */
     EARNED,
-    /** A decaying level made of one contribution per application (chill). */
-    LEVEL,
     /** A decaying fuel pool (burn, poison, Soulfire). */
     POOL,
     /** One share per source that add up; a recast from the same source refreshes its own share. */
