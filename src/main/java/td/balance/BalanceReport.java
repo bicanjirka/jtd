@@ -8,7 +8,6 @@ import td.effect.EffectKind;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
 import td.tower.TowerFactory;
-import td.util.TickRate;
 import td.wave.Point;
 
 import java.io.IOException;
@@ -83,7 +82,7 @@ public final class BalanceReport {
 
     private static final long FIRST_SEED = 20261013L;
     /** How many enemy kinds a tower's work names. */
-    private static final int TOP_KINDS = 3;
+    static final int TOP_KINDS = 3;
     private static final Path STORE = Path.of("target", "balance");
 
     private final Options options;
@@ -758,15 +757,10 @@ public final class BalanceReport {
         this.out.println("TOWER WORK (competent, all plays: damage; lost to shields and overkill; "
                 + "enemy-seconds in reach; damage per enemy-second in reach; whom)");
         run.towerWork(COMPETENT).forEach((type, work) -> {
-            long damage = work.hits().credited();
-            double secondsInReach = work.ticksInReach() / (double) TickRate.TICKS_PER_SECOND;
-            String whom = work.damageByKind().entrySet().stream()
-                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(TOP_KINDS)
-                    .map(entry -> String.format("%s %.0f%%", entry.getKey(), 100.0 * entry.getValue() / Math.max(1, damage)))
-                    .collect(Collectors.joining(", "));
             this.out.printf("  %-9s %8.0f dmg  shields %2.0f%%  overkill %2.0f%%  %7.0f s  %6.1f/s  %s%n", type.displayName(),
-                    DamageUnits.inPoints(damage), work.hits().shieldShare() * 100, work.hits().overkillShare() * 100,
-                    secondsInReach, secondsInReach == 0 ? 0 : DamageUnits.inPoints(damage) / secondsInReach, whom);
+                    DamageUnits.inPoints(work.hits().credited()), work.hits().shieldShare() * 100,
+                    work.hits().overkillShare() * 100, work.secondsInReach(), work.pointsPerSecondInReach(),
+                    work.topKinds(TOP_KINDS));
         });
     }
 

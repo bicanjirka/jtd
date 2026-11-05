@@ -2,6 +2,7 @@ package td.balance;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
@@ -11,10 +12,13 @@ import td.fixtures.WorldFixtures;
 import td.tower.Tower;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class TowerWorkTallyTest {
 
@@ -55,6 +59,30 @@ class TowerWorkTallyTest {
 
         assertThat(this.workOf(tower).damageByKind())
                 .containsEntry(plain.definition().id(), 300L).containsEntry(other.definition().id(), 250L);
+    }
+
+    @Test
+    void itsRateIsWhatItIsCreditedWithOverItsTimeInReach() {
+        int oneSecond = Math.round(TickRate.TICKS_PER_SECOND);
+        PlayRecord.TowerWork work = new PlayRecord.TowerWork(new PlayRecord.HitTotals(1000, 0, 0), 2L * oneSecond, Map.of());
+
+        assertThat(work.secondsInReach()).isEqualTo(2.0);
+        assertThat(work.pointsPerSecondInReach()).isCloseTo(DamageUnits.inPoints(1000) / 2.0, within(0.001));
+    }
+
+    @Test
+    void noTimeInReachIsARateOfNothing() {
+        PlayRecord.TowerWork work = new PlayRecord.TowerWork(new PlayRecord.HitTotals(1000, 0, 0), 0, Map.of());
+
+        assertThat(work.pointsPerSecondInReach()).isZero();
+    }
+
+    @Test
+    void itNamesTheKindsItWasCreditedMostOnWithTheirShares() {
+        PlayRecord.TowerWork work = new PlayRecord.TowerWork(new PlayRecord.HitTotals(1000, 0, 0), 1,
+                Map.of("small", 100L, "large", 600L, "middle", 300L));
+
+        assertThat(work.topKinds(2)).isEqualTo("large 60%, middle 30%");
     }
 
     @Test
