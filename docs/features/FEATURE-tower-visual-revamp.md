@@ -280,6 +280,10 @@ ripples and spin, the Radar's sweep).
 - Renaming Spotter Uplink touches its term, texts and tests; its node id stays so saved games load.
 - Removing slot pips removes the only on-board hint of how far a tower is upgraded per slot; the
   foundation has to carry that.
+- **The Hexer's hexes get rethought here**: simplifying the effects removes what the Rime and Ash hexes
+  do to freezes, chills and fuel pools, so until then they are one hex that gives negative Tenacity. This
+  feature rethinks the hexes as a whole, which goes beyond "visuals only" above, and the hex colours and
+  overlays depend on the result.
 
 ## Decisions made
 
