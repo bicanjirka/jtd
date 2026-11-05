@@ -284,7 +284,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.TARRED, durationTicks, sink);
     }
 
-    /** Crit chance taken doubles while it lasts. */
+    /** Crits find it more often and hit it harder while it lasts. */
     public static Effect exposed(int durationTicks, DamageSink sink) {
         return timed(EffectKind.EXPOSED, durationTicks, sink);
     }

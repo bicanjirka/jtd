@@ -187,7 +187,7 @@ An enemy is made of four kinds of thing, and each belongs to exactly one:
 - **Stats** are the numbers every enemy has, zero or not: Move speed (cells/s), Armor and Magic resist (a hit
   keeps `100 / (100 + armor)` of itself), Plating and Insulation (dmg every physical or magic hit loses; Flat
   penetration ignores them), Resilience (against crits; 100 is crit-immune, below zero crits land harder), Agility
-  (aimed shots miss), Physical, Magic and Damage over time taken (%), Spirit (what its regeneration restores and its shields hold),
+  (aimed shots miss; below zero crits land more often), Physical, Magic and Damage over time taken (%), Spirit (what its regeneration restores and its shields hold),
   Regeneration (hp/s; below zero it crumbles, losing health on its own) and the Chill, Burn and Freeze resists (%).
   The info pane lists the ones off their default, each with its unit and, where the number alone says little, what
   it does (`Armor 30 -23% dmg`); hovering a row explains it and, live, what made it. Nothing is drawn on the board
@@ -208,7 +208,7 @@ on the Wardens, whose shield answers crits.
 |------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Simple     | circle        | Plain mob, no special ability, and no stats up to Veteran. From Elite, adaptive armor and a little of every stat; at Boss, +30 resilience |
 | Armored    | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10 and 20% freeze resist; immune to critical hits. From Veteran it resists chill; from Elite, thick plating, a physical shield once below half health, and ward mines laid along its path; at Boss rank, calls three armored reinforcements every three seconds |
-| Fast       | triangle      | Speeds up as it loses health; -20 resilience, so crits land harder. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
+| Fast       | triangle      | Speeds up as it loses health; -20 agility, so crits land more often. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
 | Ghost      | sheet with eyes, floating | +20 armor. Turns invisible to single-target towers for ~10s the first time it's hit (~15s from Veteran; area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it; at Boss rank it fades out for 3s of every 10 |
 | Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone and, when it dies, heals and shields every ally near it; from Elite, adaptive armor; at Boss rank, the death blast is a heal alone. |
 | Jammer     | disc with four antennae, spinning | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield and its casing blunts magic hits (2 insulation, 4 at Boss). |
@@ -280,7 +280,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 |---|---|---|---|
 | Chill | Control | Debuff | Slows by its level, up to 80%, and fades. |
 | Burn | Affliction | Debuff | Damage over time that fades; a top-up adds less the fuller it is, up to x2 its strongest application; it adds a stack of Scorch every 0.5 s while it lasts, and every tower can see and aim at it. |
-| Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; within 10 s, each fresh one lasts 100%, 50%, 25%, then none. |
+| Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; Agility -100, so it can't dodge and crits find it more often; within 10 s, each fresh one lasts 100%, 50%, 25%, then none. |
 | Shield | Boon | Buff | Takes a hit before armor does, until its amount is spent or it runs out; more Spirit makes it hold more, shields from different sources add up, and damage that ticks goes past it. |
 | Invisibility | Boon | Buff | Towers can't aim at it, though damage on an area still reaches it. |
 | Heal | Boon | Buff | Adds to its Regeneration while it lasts; heals from different sources add up. |
@@ -290,12 +290,12 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sunder | Weakness | Debuff | Each stack: Armor -5, up to 10 stacks. |
-| Expose | Mark | Debuff | Resilience -50: crits find it more often and hit it harder. |
+| Expose | Mark | Debuff | Agility and Resilience -50: crits find it more often and hit it harder. |
 | Mark | Mark | Debuff | The next hit on it is a crit, which spends this. |
 | Priority | Mark | Debuff | Physical damage taken and Magic damage taken +15%, and a tower that picks one target picks it. |
 | Resonance | Weakness | Debuff | Each stack: Magic damage taken +8%, up to 3 stacks. |
 | Fracture | Weakness | Debuff | Each stack: Resilience -10, up to 5; it loses a stack every 1 s. |
-| Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; within 10 s, each fresh one lasts 100%, 80%, 60%, 40%, 20%, then none. |
+| Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; Agility -100, so it can't dodge and crits find it more often; within 10 s, each fresh one lasts 100%, 80%, 60%, 40%, 20%, then none. |
 | Saturation | Weakness | Debuff | Each stack makes a Burst's blasts hit it harder. |
 | Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
 | Doom | Hex | Debuff | When it ends, it takes a share of all the damage it took while it lasted. |
@@ -390,8 +390,8 @@ freeze in frost bursts a burn.
 Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
 own Critical damage (150%, the Sniper 200%). A guaranteed crit lands whenever the enemy's
-resilience is below 100; at 100 nothing crits. Negative resilience makes crits likelier and harder;
-Exposed takes 50 resilience. Armor and magic resist never go below 0.
+resilience is below 100; at 100 nothing crits. Negative resilience makes crits hit harder, and negative agility makes them land more often;
+Exposed takes 50 agility and 50 resilience. Armor and magic resist never go below 0.
 
 An enemy with agility can dodge a hit aimed at it alone: the Sniper's shot and its Ricochet bounces,
 and the Sonar beam's hit. The chance is `agility / (agility + 100)` (25 dodges 20%, 100 dodges 50%),

@@ -25,8 +25,9 @@ final class EffectSentences {
                     + TermNumbers.times(PoolTuning.standard().capFactor()) + " its strongest application; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
                             + " while it lasts, and every tower can see and aim at it");
-            case FREEZE -> TermText.of("stops it where it stands and keeps its abilities from firing; within "
-                    + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts " + ladder(kind));
+            case FREEZE -> TermText.of("stops it where it stands and keeps its abilities from firing; ")
+                    .plus(stoppedAgility(kind)).plus("; within "
+                            + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts " + ladder(kind));
             case SHIELD -> TermText.of("takes a hit before armor does, until its amount is spent or it runs out; more ")
                     .plus(EnemyStat.SPIRIT).plus(" makes it hold more, shields from different sources add up, and damage that"
                             + " ticks goes past it");
@@ -50,7 +51,7 @@ final class EffectSentences {
                     .plus(", up to " + kind.maxStacks() + "; once nothing adds more, it loses a stack every "
                             + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
             case SUNDERED -> stacked(kind, EnemyStat.ARMOR);
-            case EXPOSED -> changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE)
+            case EXPOSED -> changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.AGILITY, EnemyStat.RESILIENCE)
                     .plus(": crits find it more often and hit it harder");
             case MARKED -> TermText.of("the next hit on it is a crit, which spends this");
             case PRIORITY -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
@@ -65,8 +66,8 @@ final class EffectSentences {
                     .plus(", up to " + kind.maxStacks() + "; it loses a stack every "
                             + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
             case DAZED -> TermText.of("stops it and keeps its abilities from firing, like ").plus(EffectKind.FREEZE)
-                    .plus("; within " + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts "
-                            + ladder(kind));
+                    .plus("; ").plus(stoppedAgility(kind)).plus("; within " + seconds(DiminishingReturns.WINDOW_TICKS)
+                            + ", each fresh one lasts " + ladder(kind));
             case SATURATED -> TermText.of("each stack makes a Burst's blasts hit it harder");
             case CHARGED -> TermText.of("the next hit on it from another tower lands "
                     + TermNumbers.percent(Effect.CHARGE_DISCHARGE_SHARE)
@@ -137,6 +138,12 @@ final class EffectSentences {
                     EnemyStat.MOVE_SPEED).plus("; ").plus(EffectKind.FREEZE).plus(" and ")
                     .plus(EffectKind.DAZED).plus(" still stop it");
         };
+    }
+
+    /** "Agility -100, so it can't dodge and crits find it more often", the value read from {@code kind}'s rule. */
+    private static TermText stoppedAgility(EffectKind kind) {
+        return changes(TermNumbers.signed(kind.rule().perStack().get(EnemyStat.AGILITY).setTo()), EnemyStat.AGILITY)
+                .plus(", so it can't dodge and crits find it more often");
     }
 
     /** "each stack: Armor -5, up to 3 stacks", the change read from {@code kind}'s rule. */

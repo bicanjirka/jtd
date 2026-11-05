@@ -36,13 +36,16 @@ public enum EnemyStat implements StatKey, StatTerm {
             StatGroup.DAMAGE_TAKEN, "the share of every magic hit it takes, after magic resist"),
     /**
      * Each point removes 1% of an attacker's crit chance and crit bonus; below zero each point adds
-     * 1% to both; 100 is crit-immune.
+     * 1% to the bonus alone; 100 is crit-immune.
      */
     RESILIENCE(0f, -100f, 100f, "Resilience", "Resilience", StatUnit.POINTS, StatDirection.LOWER, StatGroup.DEFENCE,
-            "shrinks the crit chance and crit damage of hits on it; below zero it grows them"),
-    /** An aimed hit misses with chance {@code agility / (agility + 100)}, after the attacker's accuracy. */
-    AGILITY(0f, 0f, Float.MAX_VALUE, "Agility", "Agility", StatUnit.POINTS, StatDirection.LOWER, StatGroup.DEFENCE,
-            "the chance to dodge an aimed hit, less the accuracy of the tower; each point is worth less than the one before"),
+            "shrinks the crit chance and crit damage of hits on it; below zero it grows the crit damage alone"),
+    /**
+     * An aimed hit misses with chance {@code agility / (agility + 100)}, after the attacker's accuracy; below zero each
+     * point adds 1% to an attacker's crit chance.
+     */
+    AGILITY(0f, -100f, Float.MAX_VALUE, "Agility", "Agility", StatUnit.POINTS, StatDirection.LOWER, StatGroup.DEFENCE,
+            "the chance to dodge an aimed hit, less the accuracy of the tower, each point worth less than the one before; below zero, more crit chance on hits on it"),
     /** Multiplies damage that ticks (a burn, a poison, a field), whatever its type. */
     PERIODIC_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE, "DoT taken", "Damage over time taken", StatUnit.PERCENT,
             StatDirection.HIGHER, StatGroup.DAMAGE_TAKEN, "the share of damage that ticks it takes, whatever its type"),
@@ -160,9 +163,7 @@ public enum EnemyStat implements StatKey, StatTerm {
             case ARMOR, MAGIC_RESIST -> value > 0f
                     ? Optional.of(TermNumbers.signedPercent(StatCurves.mitigationMultiplier(value) - 1f) + " dmg")
                     : Optional.empty();
-            case AGILITY -> value > 0f
-                    ? Optional.of("dodges " + TermNumbers.percent(StatCurves.dodgeChance(value)))
-                    : Optional.empty();
+            case AGILITY -> agilityMeaning(value);
             case RESILIENCE -> resilienceMeaning(value);
             case SPIRIT -> value == 0f ? Optional.empty()
                     : Optional.of(TermNumbers.signedPercent(value / FULL) + " recovery");
@@ -171,10 +172,21 @@ public enum EnemyStat implements StatKey, StatTerm {
         };
     }
 
+    private static Optional<String> agilityMeaning(float value) {
+        if (value == 0f) {
+            return Optional.empty();
+        }
+        return Optional.of(value > 0f ? "dodges " + TermNumbers.percent(StatCurves.dodgeChance(value))
+                : TermNumbers.signedPercent(-value / FULL) + " crit chance");
+    }
+
     private static Optional<String> resilienceMeaning(float value) {
         if (value >= FULL) {
             return Optional.of("immune");
         }
-        return value == 0f ? Optional.empty() : Optional.of(TermNumbers.signedPercent(-value / FULL) + " crits");
+        if (value == 0f) {
+            return Optional.empty();
+        }
+        return Optional.of(TermNumbers.signedPercent(-value / FULL) + (value > 0f ? " crits" : " crit"));
     }
 }

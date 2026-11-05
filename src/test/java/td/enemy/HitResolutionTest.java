@@ -110,16 +110,45 @@ class HitResolutionTest {
     }
 
     @Test
-    void negativeResilienceRaisesBothTheCritChanceAndTheCritBonus() {
-        StatView brittle = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, -50f));
+    void negativeResilienceRaisesTheCritBonusAndNotTheCritChance() {
+        StatView soft = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.RESILIENCE, -50f));
         AttackProfile attacker = AttackProfile.critChance(0.2f).withCritMultiplier(2f);
 
-        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, () -> 0.29);
-        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, brittle, () -> 0.31);
+        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, soft, () -> 0.19);
+        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, soft, () -> 0.21);
 
-        // the chance rises from 20% to 30%, the bonus from +100% to +150%
+        // the bonus rises from +100% to +150%
         assertThat(justInside).isEqualTo(new Damage(2500, DamageType.PHYSICAL, true));
         assertThat(justOutside).isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void negativeAgilityRaisesTheCritChanceAndNotTheCritBonus() {
+        StatView clumsy = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.AGILITY, -50f));
+        AttackProfile attacker = AttackProfile.critChance(0.2f).withCritMultiplier(2f);
+
+        Damage justInside = HitResolution.resolve(Damage.physical(1000), attacker, clumsy, () -> 0.29);
+        Damage justOutside = HitResolution.resolve(Damage.physical(1000), attacker, clumsy, () -> 0.31);
+
+        // the chance rises from 20% to 30%
+        assertThat(justInside).isEqualTo(new Damage(2000, DamageType.PHYSICAL, true));
+        assertThat(justOutside).isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void aTowerWithNoCritChanceStaysWithoutOneOnAnyAgility() {
+        StatView clumsy = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.AGILITY, -100f));
+
+        assertThat(HitResolution.resolve(Damage.physical(1000), AttackProfile.critChance(0f), clumsy, () -> 0.0))
+                .isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void negativeAgilityDodgesNothing() {
+        StatView clumsy = stats(BaseStats.defaults(EnemyStat.class).with(EnemyStat.AGILITY, -50f));
+        AttackProfile aimed = AttackProfile.none().asAimed();
+
+        assertThat(HitResolution.dodges(aimed, clumsy, () -> 0.0)).isFalse();
     }
 
     @Test

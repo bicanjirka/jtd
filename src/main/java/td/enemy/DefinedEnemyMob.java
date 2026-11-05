@@ -604,11 +604,6 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.stats.value(EnemyStat.SPIRIT);
     }
 
-    @Override
-    public boolean freezeDiminished() {
-        return this.diminishedFactors().containsKey(EffectKind.FREEZE);
-    }
-
     public void breakShield(float fraction) {
         this.activeEffects.weakenShield(fraction);
         this.stats.invalidate();

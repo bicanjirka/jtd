@@ -7,7 +7,7 @@ import td.zone.Zone;
 import java.util.List;
 
 /**
- * The Fast mob ({@code t}): faster the more it is hurt, and reckless, so crits land harder on it. From Elite it
+ * The Fast mob ({@code t}): faster the more it is hurt, and reckless, so crits find it more often. From Elite it
  * bolts once badly hurt; at Veteran and Elite it throws down ground, once badly hurt, that speeds up the enemies who cross
  * it and keeps slows off them until the wave is over; at Boss rank it calls a brood of spawnlings, heals itself when left
  * alone and no longer takes crits; the spawnlings are a definition of their own.
@@ -22,14 +22,14 @@ final class FastEnemy {
                 .startingAt(EnemyDefinition.of("fast", "Fast mob", 90, 2, 1.28f, BodyArchetype.TRIANGLE)
                         .withDescription("Reckless: the more it is hurt, the faster it runs.")
                         .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
-                        .withResilience(-20f)
+                        .withAgility(-20f)
                         .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f)))),
                         RankGrowth.of(15f))
                 .thenAt(Rank.VETERAN, e -> e
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.5f))))
                         .withAdditionalAbilities(List.of(hasteGround(0.5f, 1.5f))))
                 .thenAt(Rank.ELITE, e -> e
-                        .withStats(10f, 10f, 0f, 0f, -20f, 10f, 10f)
+                        .withStats(10f, 10f, 0f, 0f, 0f, -20f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.8f))))
                         .withAdditionalAbilities(List.of(hasteGround(0.75f, 2f),
                                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.SECOND_WIND,
@@ -48,7 +48,7 @@ final class FastEnemy {
                 .build());
         catalog.register(EnemyDefinition.of("fastSpawn", "Frenzy Spawnling", 210, 1, 1.28f, BodyArchetype.TRIANGLE)
                 .withDescription("Born of an enraged Fast boss; it tends its kin as it dies.")
-                .withResilience(-20f)
+                .withAgility(-20f)
                 .withTraits(List.of(new HurtSpeedTrait(1.4f)))
                 .withAbilities(List.of(new Ability(AbilityTerm.LAST_RITES, new OnDeathTrigger(),
                         new ApplyEffectAction(new HealTemplate(1f, 40), new RadiusTarget(150f))))));

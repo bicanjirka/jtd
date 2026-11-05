@@ -83,19 +83,6 @@ public sealed interface HitCondition {
         }
     }
 
-    /** A target that is stopped. */
-    record TargetStopped() implements HitCondition {
-        @Override
-        public boolean holds(HitContext context) {
-            return context.target().isStopped();
-        }
-
-        @Override
-        public TermText describe() {
-            return TermText.of("against an enemy with ").plus(ProcText.kinds(EffectKind.stopping(), "or"));
-        }
-    }
-
     /** A target under any of {@code kinds}. */
     record TargetHasAnyOf(Set<EffectKind> kinds) implements HitCondition {
         @Override

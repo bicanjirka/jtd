@@ -138,7 +138,7 @@ class GameEngineTest {
     }
 
     @Test
-    void anExposedCritImmuneEnemyCanBeCrittedAtHalfChance() {
+    void anExposedCritImmuneEnemyCanBeCrittedAtTheChanceItsAgilityAndResilienceLeave() {
         EnemyDefinition immune = EnemyDefinition.of("immune", "Immune", 1_000_000, 1, 0f, BodyArchetype.CIRCLE)
                 .withResilience(100f);
         EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(), immune);
@@ -149,7 +149,23 @@ class GameEngineTest {
         int exposedCrits = critsIn(exposed, 2000);
 
         assertThat(plainCrits).isZero();
-        assertThat(exposedCrits).isBetween(120, 280);
+        // 20% over half resilience, grown half again by the agility it lost: 300 of 2000.
+        assertThat(exposedCrits).isBetween(220, 380);
+    }
+
+    @Test
+    void aStoppedEnemyIsCritTwiceAsOften() {
+        EnemyDefinition plainEnemy = EnemyDefinition.of("plain", "Plain", 1_000_000, 1, 0f, BodyArchetype.CIRCLE);
+        EnemyMob frozen = spawnOnly(FakeGameHost.newBoundEngine(), plainEnemy);
+        EnemyMob dazed = spawnOnly(FakeGameHost.newBoundEngine(), plainEnemy);
+        frozen.applyEffect(Effect.freeze(1_000_000, DamageSink.none()));
+        dazed.applyEffect(Effect.dazed(1_000_000, DamageSink.none()));
+
+        int frozenCrits = critsIn(frozen, 2000);
+        int dazedCrits = critsIn(dazed, 2000);
+
+        assertThat(frozenCrits).isBetween(700, 900);
+        assertThat(dazedCrits).isBetween(700, 900);
     }
 
     @Test

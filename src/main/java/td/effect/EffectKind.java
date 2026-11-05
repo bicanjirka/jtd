@@ -21,7 +21,7 @@ public enum EffectKind implements Term {
     BURN("Burn", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).resistedBy(EnemyStat.BURN_RESIST).asAPool()
             .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f)).tagged(EffectTag.BURNING)),
     FREEZE("Freeze", EffectRule.of(EffectCategory.HARD_CC).resistedBy(EnemyStat.FREEZE_RESIST)
-            .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.setTo(0f))
+            .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.setTo(-100f))
             .tagged(EffectTag.STOPS)),
     SHIELD("Shield", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
     INVISIBLE("Invisibility", EffectRule.of(EffectCategory.STEALTH).perStack(EnemyStat.STEALTH, StatModifier.setTo(1f)).helpsCarrier()),
@@ -41,8 +41,8 @@ public enum EffectKind implements Term {
     /** Each stack lowers armor by five. */
     SUNDERED("Sunder", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(10)
             .perStack(EnemyStat.ARMOR, -5f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
-    /** Takes fifty resilience: crits come more often and hit harder. */
-    EXPOSED("Expose", EffectRule.of(EffectCategory.SPOTTED).perStack(EnemyStat.RESILIENCE, -50f)
+    /** Takes fifty agility and fifty resilience: crits come more often and hit harder. */
+    EXPOSED("Expose", EffectRule.of(EffectCategory.SPOTTED).perStack(EnemyStat.AGILITY, -50f).perStack(EnemyStat.RESILIENCE, -50f)
             .tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
     /** The next hit lands as a guaranteed crit and spends the mark. */
     MARKED("Mark", EffectRule.of(EffectCategory.SPOTTED)),
@@ -57,7 +57,7 @@ public enum EffectKind implements Term {
             .perStack(EnemyStat.RESILIENCE, -10f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** Stops the enemy and its abilities, like a freeze. */
     DAZED("Daze", EffectRule.of(EffectCategory.HARD_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f))
-            .perStack(EnemyStat.AGILITY, StatModifier.setTo(0f)).tagged(EffectTag.STOPS)),
+            .perStack(EnemyStat.AGILITY, StatModifier.setTo(-100f)).tagged(EffectTag.STOPS)),
     /** Each stack makes the Splash's blasts hit it harder; it is the Splash's own rhythm, not a stat. */
     SATURATED("Saturation", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)),
     /** The next hit from another tower discharges it for extra magic, credited to the tower that charged it. */
