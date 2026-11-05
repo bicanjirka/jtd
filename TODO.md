@@ -299,6 +299,66 @@ suite 4.5 s) are out of date: the last full run's slowest test took 2.5 s and it
   over the whole lab. A profile found `RunRecorder.afterTick` (16-20%) and `EnemyCatalog.builtIn` (about 6%) as savings,
   about a quarter at most, which isn't enough alone.
 
+### The lab can't read a line past about 3.33x, and upgrades look overpriced
+
+Measured 2026-11-05 and not acted on: game prices and the lab are unchanged. Upgrade prices are a guess, and the
+competent player spends little on upgrades early and buys few distinct nodes. Today's game on the three levels, 4 seeds:
+
+| Level | Holds | With no upgrades | Spent on upgrades (early / middle / late) | Nodes in every play |
+|---|---:|---:|---|---:|
+| The Amber Hive | 89 ±8% | 67 ±3% | 10% / 43% / 73% | 12 |
+| The Storm Ridge | 96 ±8% | 58 ±5% | 19% / 33% / 70% | 10 |
+| The Last Hour | 23 ±2% | 26 ±2% | 0% / 39% / 56% | 3 |
+
+**The ceiling.** `TowerLab.DUEL_SHARE` tunes the bare tower to land 0.3 of a duel wave, and a share can't pass 1, so a
+whole line reads at most about 3.33x. Once a line is there, the next node's factor reads about 1.00: Dragon's Breath
+takes its line from 47 to 86 lives saved on The Amber Hive (army of one of each tower), and the player sees no gain. `NODE_FACTOR_CAP` is a second,
+separate limit on what the player believes. Lines the lab read at 3x or more, ranked against lives saved: 0.73 and 0.33
+on the first two levels.
+
+**One-change tests**, The Amber Hive only, 3 seeds, so a lead and not a result:
+
+| Change | Holds | Spent on upgrades (early / middle / late) |
+|---|---:|---|
+| Today | 89 ±11% | 10% / 43% / 73% |
+| Every node at half price | 115 ±20% | 58% / 70% / 71% |
+| No XP requirements (purpose gates stayed) | 100 ±0% | 10% / 43% / 73% |
+| `DUEL_SHARE` 0.1 | 101 ±1% | 4% / 59% / 68% |
+
+**Fair prices**, from `td.PurchaseHarness` (`0,1,2 8 all 3`), in percent of the tower's list price. The harness closes
+with this table, but the levels disagree (Head II reads 74, 33 and 254), so the means give a direction, not prices. Awaken and
+Transcendent do nothing alone, so the lines they open have to pay for them. Only 10-19 lines of about 160 per level beat
+another tower, which saves 28, 5.2 and 3.6 lives per 100 credits on the three levels.
+
+| Tier | Now | Fair (mean) |
+|---|---:|---:|
+| Head I / II / III / IV | 100 / 150 / 250 / 400 | 70 / 120 / 44 / 117 |
+| Extra I / II / III / IV | 80 / 120 / 200 / 300 | 30 / 25 / 11 / 5 |
+| Special | 400 | 23 |
+| Range I / II / III | 60 / 120 / 200 | 33 / 23 / -12 |
+| Attune / Awaken / Transcendent | 80 / 100 / 400 | 22 / 0 / 0 |
+
+Its limits: a fixed army bought in advance with gates ignored, so it overwhelms (over 1,000 lives lost) and a copy
+probably looks better than it would late in a real game. Noise is up to a few lives (Attune and Awaken, which should
+read about nothing, spread by ±3.5 on The Amber Hive), so only 39%, 18% and 34% of lines stand clear of it.
+
+**Rejected: a fixed baseline for damage ratios** (one long straight path, a stacked crowd of plain enemies that never
+die). Against lives saved with an army of one of each tower, 6 seeds, on the first two levels, its ratios did no better
+than today's duels: rank within a tower 0.73 against 0.79, then 0.75 against 0.75, and a fair price from either is off
+by 2-3x. A damage ratio can't give a price: Absolute Zero is worth
+about 650 credits by lives saved and lists at 444, while its ratio of 223x implies about 7,000. It did rank the strongest
+lines better (0.85 and 0.82), which the ceiling explains, and it adds a second environment and hand-made Scorcher and
+Aura rules.
+
+- **Where:** `TowerLab.DUEL_SHARE`, `UpgradeTier`'s percents, `td.PurchaseHarness`, `td.FairPriceTable`.
+- **Approach:** compare four setups with today on all three levels through `BalanceReport --seeds 4 --levels 0,1,2`,
+  about 8 minutes each: `DUEL_SHARE` 0.1; every node at half price; the tiers below; the tiers below with `DUEL_SHARE`
+  0.1. Measured tiers, with small floors where the mean reads about nothing: Range 35 / 25 / 25, Attune 20, Awaken 20,
+  Transcendent 50, Head 70 / 120 / 50 / 115, Extra 30 / 25 / 15 / 15, Special 25. Try each setup through a temporary edit
+  that is never committed. Keep the ceiling fix if it holds on all three levels. Change prices only if the player then
+  upgrades earlier and holds more; the levels will need retuning, since they were tuned at today's prices. The Last Hour
+  holds far too little for prices to be its main problem, so judge it apart.
+
 ### What the balance tools cannot see yet
 
 `docs/plans/shipped/balance-verification-review.md` ranks these; each is a gap in `td.balance`, not in the game.
