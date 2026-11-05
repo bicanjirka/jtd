@@ -96,9 +96,6 @@ public interface HitReceiver {
     /** Its spirit now: {@code 0} at neutral, down to {@code -100}. */
     float spirit();
 
-    /** Whether repeated freezing has made its next freeze last less than a full one. */
-    boolean freezeDiminished();
-
     /** Active effect kinds, in a stable order. */
     Set<EffectKind> activeEffectKinds();
 

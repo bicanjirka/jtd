@@ -1,30 +1,28 @@
 package td.tower.splash;
 
-import td.effect.EffectKind;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerStat;
 import td.tower.TowerTerm;
 
 /**
- * Lightning Rod: an arc with nowhere to go returns to the primary at full strength, and arcs on a
- * frozen or Dazed enemy deal more crit damage.
+ * Lightning Rod: an arc with nowhere to go returns to the primary at full strength, and arcs deal more
+ * crit damage.
  */
 public final class LightningRodMechanic implements SplashMechanic {
 
     private static final int RETURNS = 3;
-    private static final float STOPPED_CRIT_DAMAGE = 0.5f;
+    private static final float CRIT_DAMAGE = 0.5f;
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {
-        return spec.withArcs(spec.arcs().withReturns(RETURNS).withStoppedCritDamage(STOPPED_CRIT_DAMAGE));
+        return spec.withArcs(spec.arcs().withReturns(RETURNS).withCritDamage(CRIT_DAMAGE));
     }
 
     @Override
     public TermText describe() {
         return TermText.of("an ").plus(TowerTerm.ARC)
                 .plus(" with nowhere to go returns to the primary at full strength, up to " + RETURNS + " times; an ")
-                .plus(TowerTerm.ARC).plus(" on an enemy with ").plus(EffectKind.DAZED)
-                .plus(" gets ").plus(TowerStat.CRIT_MULTIPLIER).plus(" " + TermNumbers.signedPercent(STOPPED_CRIT_DAMAGE));
+                .plus(TowerTerm.ARC).plus(" gets ").plus(TowerStat.CRIT_MULTIPLIER).plus(" " + TermNumbers.signedPercent(CRIT_DAMAGE));
     }
 }

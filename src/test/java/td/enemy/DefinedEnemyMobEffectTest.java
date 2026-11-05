@@ -32,19 +32,6 @@ class DefinedEnemyMobEffectTest {
     }
 
     @Test
-    void afterAFreezeTheNextOneIsDiminishedButAnEnemyNeverFrozenIsNot() {
-        GameWorld context = newContext();
-        context.setPath(LevelFixtures.straightPath(1, 0, 100));
-        EnemyMob frozenOnce = EnemyFixtures.plainMob(context, 50, 3);
-        EnemyMob fresh = EnemyFixtures.plainMob(context, 50, 4);
-
-        frozenOnce.applyEffect(Effect.freeze(10, DamageSink.none()));
-
-        assertThat(frozenOnce.freezeDiminished()).isTrue();
-        assertThat(fresh.freezeDiminished()).isFalse();
-    }
-
-    @Test
     void aSlowReducesTheDistanceCoveredInOneTick() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));

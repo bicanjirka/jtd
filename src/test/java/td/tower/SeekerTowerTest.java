@@ -242,28 +242,6 @@ class SeekerTowerTest {
     }
 
     @Test
-    void frostbiteMakesHitsOnAFrozenOrFreezeDiminishedEnemyGuaranteedCritsAndNoOther() {
-        SeekerTower tower = this.seekerWith("Frostbite");
-        FakeEnemyMob fresh = FakeEnemyMob.at(100, 100);
-        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
-        frozen.reportFrozen();
-        FakeEnemyMob worn = FakeEnemyMob.at(100, 100);
-        worn.reportFreezeDiminished();
-
-        for (FakeEnemyMob enemy : new FakeEnemyMob[]{fresh, frozen, worn}) {
-            this.context.enemies().setEnemies(new EnemyMob[]{enemy});
-            for (int t = 1; t <= 50; t++) {
-                tower.doTick(t);
-            }
-            TowerFixtures.flyProjectilesToCompletion(this.context);
-        }
-
-        assertThat(fresh.attackers().getFirst().guaranteedCrit()).isFalse();
-        assertThat(frozen.attackers().getFirst().guaranteedCrit()).isTrue();
-        assertThat(worn.attackers().getFirst().guaranteedCrit()).isTrue();
-    }
-
-    @Test
     void aFreezeLastsAsLongAsTheTowersFreezeDuration() {
         SeekerTower tower = this.seekerGiven(TowerModifiers.freezeDuration(15));
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);

@@ -153,7 +153,10 @@ public record EnemyDefinition(
         return this.withBase(EnemyStat.RESILIENCE, points);
     }
 
-    /** An aimed hit misses with chance {@code agility / (agility + 100)}, after the attacker's accuracy. */
+    /**
+     * An aimed hit misses with chance {@code agility / (agility + 100)}, after the attacker's accuracy; below zero, crits
+     * find it more often.
+     */
     public EnemyDefinition withAgility(float points) {
         return this.withBase(EnemyStat.AGILITY, points);
     }

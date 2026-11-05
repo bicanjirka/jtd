@@ -538,9 +538,7 @@ public final class SplashTower extends AbstractTower {
             float bonus = arcs.critBonus() + (fullySaturated ? arcs.saturatedCritBonus() : 0f);
             attack = attack.withCritChance(Math.min(1f, attack.critChance() + bonus));
         }
-        if (target.isStopped()) {
-            attack = attack.withCritDamageBonus(arcs.stoppedCritDamage());
-        }
+        attack = attack.withCritDamageBonus(arcs.critDamage());
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.ARC, 0f, shot);
         boolean critical = this.dealDamage(target,
                 Damage.magic(Math.round(shot.damage() * share * adjustment.damageFactor())), adjustment.applyTo(attack));

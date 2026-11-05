@@ -15,11 +15,11 @@ package td.tower.splash;
  * @param longDaze           whether that Daze lasts {@link #LONG_DAZE_SECONDS} instead
  * @param forks              whether the third jump forks into two arcs
  * @param returns            how many times an arc with nowhere to go returns to the primary
- * @param stoppedCritDamage  extra crit damage on an arc into a frozen or Dazed enemy
+ * @param critDamage         extra crit damage on an arc
  */
 public record ArcSpec(boolean active, int extraJumps, int minimumJumps, float share, boolean canCrit,
                       float critBonus, float saturatedCritBonus, float dazeSeconds, boolean longDaze, boolean forks,
-                      int returns, float stoppedCritDamage) {
+                      int returns, float critDamage) {
 
     public static final int BASE_JUMPS = 2;
     public static final float BASE_SHARE = 0.5f;
@@ -57,65 +57,65 @@ public record ArcSpec(boolean active, int extraJumps, int minimumJumps, float sh
     public ArcSpec withMoreJumps(int jumps) {
         return new ArcSpec(this.active, this.extraJumps + jumps, this.minimumJumps, this.share, this.canCrit,
                 this.critBonus, this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.stoppedCritDamage);
+                this.critDamage);
     }
 
     public ArcSpec withMinimumJumps(int minimumJumps) {
         return new ArcSpec(this.active, this.extraJumps, Math.max(this.minimumJumps, minimumJumps), this.share,
                 this.canCrit, this.critBonus, this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks,
-                this.returns, this.stoppedCritDamage);
+                this.returns, this.critDamage);
     }
 
     public ArcSpec withShareAtLeast(float share) {
         return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, Math.max(this.share, share), this.canCrit,
                 this.critBonus, this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.stoppedCritDamage);
+                this.critDamage);
     }
 
     public ArcSpec thatCrit() {
         return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, true, this.critBonus,
                 this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.stoppedCritDamage);
+                this.critDamage);
     }
 
     public ArcSpec withCritBonus(float critBonus) {
         return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit,
                 this.critBonus + critBonus, this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks,
-                this.returns, this.stoppedCritDamage);
+                this.returns, this.critDamage);
     }
 
     public ArcSpec withSaturatedCritBonus(float bonus) {
         return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
                 this.saturatedCritBonus + bonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.stoppedCritDamage);
+                this.critDamage);
     }
 
     public ArcSpec withDaze(float seconds) {
         return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
                 this.saturatedCritBonus, Math.max(this.dazeSeconds, seconds), this.longDaze, this.forks, this.returns,
-                this.stoppedCritDamage);
+                this.critDamage);
     }
 
     /** An arc crit's Daze, whenever it has one, lasts {@link #LONG_DAZE_SECONDS}. */
     public ArcSpec withLongDaze() {
         return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
-                this.saturatedCritBonus, this.dazeSeconds, true, this.forks, this.returns, this.stoppedCritDamage);
+                this.saturatedCritBonus, this.dazeSeconds, true, this.forks, this.returns, this.critDamage);
     }
 
     public ArcSpec thatForks() {
         return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
-                this.saturatedCritBonus, this.dazeSeconds, this.longDaze, true, this.returns, this.stoppedCritDamage);
+                this.saturatedCritBonus, this.dazeSeconds, this.longDaze, true, this.returns, this.critDamage);
     }
 
     public ArcSpec withReturns(int returns) {
         return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
                 this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, Math.max(this.returns, returns),
-                this.stoppedCritDamage);
+                this.critDamage);
     }
 
-    public ArcSpec withStoppedCritDamage(float bonus) {
+    public ArcSpec withCritDamage(float bonus) {
         return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
                 this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.stoppedCritDamage + bonus);
+                this.critDamage + bonus);
     }
 }

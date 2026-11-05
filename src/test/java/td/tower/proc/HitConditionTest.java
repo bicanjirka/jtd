@@ -55,15 +55,6 @@ class HitConditionTest {
     }
 
     @Test
-    void aStoppedConditionHoldsOnAnEnemyThatCannotMove() {
-        FakeEnemyMob frozen = FakeEnemyMob.at(0, 0);
-        frozen.reportFrozen();
-
-        assertThat(new HitCondition.TargetStopped().holds(hitOn(frozen))).isTrue();
-        assertThat(new HitCondition.TargetStopped().holds(anyHit())).isFalse();
-    }
-
-    @Test
     void anEffectConditionHoldsWhenTheTargetCarriesAnyOfItsKinds() {
         HitCondition marked = new HitCondition.TargetHasAnyOf(Set.of(EffectKind.MARKED, EffectKind.EXPOSED));
         FakeEnemyMob exposed = FakeEnemyMob.at(0, 0);

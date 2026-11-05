@@ -1,6 +1,5 @@
 package td.tower;
 
-import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
@@ -25,7 +24,6 @@ import td.tower.seeker.ArcaneWarheadMechanic;
 import td.tower.seeker.BrittleMechanic;
 import td.tower.seeker.BroodMechanic;
 import td.tower.seeker.EmpPayload;
-import td.tower.seeker.FrostbiteMechanic;
 import td.tower.seeker.FrozenLedger;
 import td.tower.seeker.FullRackMechanic;
 import td.tower.seeker.Impact;
@@ -130,6 +128,7 @@ public final class SeekerTower extends AbstractTower {
             .after(BRITTLE);
     private static final UpgradeNode FROSTBITE = UpgradeTier.HEAD_4.node("seeker.head.deep_freeze.4b", "Frostbite",
             PRICE)
+            .withModifiers(TowerModifiers.critChance(0.5f))
             .after(BRITTLE);
     private static final UpgradeNode ARCANE_PAYLOAD = UpgradeTier.EXTRA_1.node("seeker.extra.mixed_payloads.1",
             "Arcane Payload", PRICE);
@@ -172,7 +171,6 @@ public final class SeekerTower extends AbstractTower {
             .with(DEEP_FREEZE_2.id(), ShatterMechanic::new)
             .with(BRITTLE.id(), BrittleMechanic::new)
             .with(ABSOLUTE_ZERO.id(), AbsoluteZeroMechanic::new)
-            .with(FROSTBITE.id(), FrostbiteMechanic::new)
             .with(ARCANE_PAYLOAD.id(), () -> new PayloadMechanic(new ArcanePayload()))
             .with(EMP_PAYLOAD.id(), () -> new PayloadMechanic(new EmpPayload()))
             .with(TRACER_PAYLOAD.id(), () -> new PayloadMechanic(new TracerPayload()))
@@ -329,7 +327,7 @@ public final class SeekerTower extends AbstractTower {
         for (SeekerMechanic mechanic : this.mechanics.all()) {
             factor *= mechanic.damageFactor(target);
         }
-        boolean critical = this.strike(target, Damage.magic(Math.round(this.damageCurrent() * factor)), spec, adjustment);
+        boolean critical = this.strike(target, Damage.magic(Math.round(this.damageCurrent() * factor)), adjustment);
         boolean freezes = load.isEmpty() || load.get().payload().freezes();
         if (load.isEmpty()) {
             this.freezeAround(target, 1f, spec);
@@ -348,20 +346,13 @@ public final class SeekerTower extends AbstractTower {
         }
     }
 
-    /**
-     * A hit of {@code damage}. With Frostbite, a hit on a frozen enemy, or one whose freezes are
-     * diminished, is a guaranteed crit.
-     */
-    private void strike(EnemyMob enemy, Damage damage, SeekerSpec spec) {
-        this.strike(enemy, damage, spec, HitAdjustment.none());
+    /** A hit of {@code damage}. */
+    private void strike(EnemyMob enemy, Damage damage) {
+        this.strike(enemy, damage, HitAdjustment.none());
     }
 
-    private boolean strike(EnemyMob enemy, Damage damage, SeekerSpec spec, HitAdjustment adjustment) {
-        AttackProfile attack = adjustment.applyTo(this.stats().attack());
-        if (spec.frostbite() && (enemy.hasEffect(EffectKind.FREEZE) || enemy.freezeDiminished())) {
-            attack = attack.withGuaranteedCrit();
-        }
-        return this.dealDamage(enemy, damage, attack);
+    private boolean strike(EnemyMob enemy, Damage damage, HitAdjustment adjustment) {
+        return this.dealDamage(enemy, damage, adjustment.applyTo(this.stats().attack()));
     }
 
     private int freezeTicks() {
@@ -402,20 +393,20 @@ public final class SeekerTower extends AbstractTower {
     }
 
     /** Hits every other enemy within {@code radiusCells} of {@code center} for {@code share} of the damage, as magic. */
-    private List<EnemyMob> burst(EnemyMob center, float share, float radiusCells, SeekerSpec spec) {
+    private List<EnemyMob> burst(EnemyMob center, float share, float radiusCells) {
         float radius = radiusCells * this.context.getBoard().scale();
         Damage damage = Damage.magic(Math.round(this.damageCurrent() * share));
         List<EnemyMob> hit = InRangeTargetQuery.everyone((int) center.getX(), (int) center.getY(), radius)
                 .matching(this.context.enemies()).stream()
                 .filter(enemy -> enemy != center)
                 .toList();
-        hit.forEach(enemy -> this.strike(enemy, damage, spec));
+        hit.forEach(enemy -> this.strike(enemy, damage));
         return hit;
     }
 
     /** A frozen enemy shatters: whatever stands near it takes a share of the Seeker's damage. */
     private void shatter(EnemyMob shattered, SeekerSpec spec) {
-        this.burst(shattered, spec.shatter().share(), SHATTER_RADIUS_CELLS, spec);
+        this.burst(shattered, spec.shatter().share(), SHATTER_RADIUS_CELLS);
     }
 
     /** Deep Freeze II: a frozen enemy this tower kills shatters. */
@@ -512,7 +503,7 @@ public final class SeekerTower extends AbstractTower {
 
         @Override
         public List<EnemyMob> burst(EnemyMob center, float share, float radiusCells) {
-            return SeekerTower.this.burst(center, share, radiusCells, SeekerTower.this.spec(SeekerTower.this.mechanics.all()));
+            return SeekerTower.this.burst(center, share, radiusCells);
         }
 
         @Override

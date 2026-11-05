@@ -35,9 +35,8 @@ public final class HitResolution {
      * crit chance is above zero, so attackers without crit leave the sequence untouched.
      */
     public static Damage raw(Damage incoming, AttackProfile attacker, StatView stats, RandomSource random) {
-        float resilience = stats.value(EnemyStat.RESILIENCE);
-        boolean rolledCrit = !incoming.critical() && attacker.delivery() == Delivery.HIT && resilience < 100f
-                && rollsCrit(attacker, resilience, random);
+        boolean rolledCrit = !incoming.critical() && attacker.delivery() == Delivery.HIT
+                && rollsCrit(attacker, stats, random);
         int amount = rolledCrit ? Math.round(incoming.amount() * critFactor(attacker, stats)) : incoming.amount();
         return new Damage(amount, incoming.type(), incoming.critical() || rolledCrit);
     }
@@ -126,17 +125,20 @@ public final class HitResolution {
         return StatCurves.dodgeChance(agility);
     }
 
-    /** Whether a hit from {@code attacker} would roll a critical against {@code stats}. */
+    /**
+     * Whether a hit from {@code attacker} would roll a critical against {@code stats}: its chance, shrunk by resilience
+     * above zero and grown by agility below zero. Nothing crits a target at full resilience.
+     */
     public static boolean rollsCrit(AttackProfile attacker, StatView stats, RandomSource random) {
         float resilience = stats.value(EnemyStat.RESILIENCE);
-        return resilience < 100f && rollsCrit(attacker, resilience, random);
-    }
-
-    private static boolean rollsCrit(AttackProfile attacker, float resilience, RandomSource random) {
+        if (resilience >= 100f) {
+            return false;
+        }
         if (attacker.guaranteedCrit()) {
             return true;
         }
-        float chance = attacker.critChance() * (1f - resilience / 100f);
+        float chance = attacker.critChance() * (1f - Math.max(resilience, 0f) / 100f)
+                * (1f - Math.min(stats.value(EnemyStat.AGILITY), 0f) / 100f);
         return chance > 0f && random.nextDouble() < chance;
     }
 

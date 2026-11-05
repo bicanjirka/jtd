@@ -182,7 +182,7 @@ public final class SniperTower extends AbstractTower {
             .after(MARKSMANS_EYE_1);
     private static final UpgradeNode SHATTER_SHOT = UpgradeTier.SPECIAL.node("sniper.special.shatter_shot",
             "Shatter Shot", PRICE)
-            .withHitBonus(HitBonus.when(new HitCondition.TargetStopped(), HitAdjustment.critChance(1f).plus(HitAdjustment.critMultiplier(1f))))
+            .withModifiers(TowerModifiers.critChance(0.15f).plus(TowerModifiers.critMultiplier(0.5f)))
             .after(MARKSMANS_EYE_1);
 
     private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, FOCUSED_OPTICS_3,

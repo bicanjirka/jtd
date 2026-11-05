@@ -40,7 +40,6 @@ public final class FakeEnemyMob implements EnemyMob {
     private boolean regenerates;
     private float speed;
     private boolean frozen;
-    private boolean freezeDiminished;
     private float spirit;
     private int dispels;
     private int buffDispels;
@@ -256,16 +255,6 @@ public final class FakeEnemyMob implements EnemyMob {
     @Override
     public float spirit() {
         return this.spirit;
-    }
-
-    /** Reports its freezes as diminished, without any real ladder. */
-    public void reportFreezeDiminished() {
-        this.freezeDiminished = true;
-    }
-
-    @Override
-    public boolean freezeDiminished() {
-        return this.freezeDiminished;
     }
 
     @Override
