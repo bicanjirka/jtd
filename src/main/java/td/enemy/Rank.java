@@ -6,16 +6,23 @@ package td.enemy;
  */
 public enum Rank {
 
-    GRUNT(1.0f),
-    SOLDIER(1.3f),
-    VETERAN(1.7f),
-    ELITE(2.2f),
-    BOSS(3.0f);
+    GRUNT(1.0f, 1.5f),
+    SOLDIER(1.3f, 1f),
+    VETERAN(1.7f, 0.67f),
+    ELITE(2.2f, 0.5f),
+    BOSS(3.0f, 0.33f);
 
     private final float scoreMultiplier;
+    private final float freezeDrain;
 
-    Rank(float scoreMultiplier) {
+    Rank(float scoreMultiplier, float freezeDrain) {
         this.scoreMultiplier = scoreMultiplier;
+        this.freezeDrain = freezeDrain;
+    }
+
+    /** How fast walking wins back time frozen: seconds of it for every second walked. */
+    public float freezeDrain() {
+        return this.freezeDrain;
     }
 
 

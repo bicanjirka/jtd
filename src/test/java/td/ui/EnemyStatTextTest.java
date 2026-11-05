@@ -221,11 +221,12 @@ class EnemyStatTextTest {
     }
 
     @Test
-    void aFreezeWhoseDiminishingReturnsRunStaysFadedAndSaysWhatTheNextLasts() {
+    void aFreezeWhoseMeterRunsStaysFadedAndSaysWhatTheNextLasts() {
         DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.freeze(1, DamageSink.none()));
-        mob.doTick(10);
-        mob.doTick(11);
+        mob.applyEffect(Effect.freeze(20, DamageSink.none()));
+        for (int tick = 1; tick <= 21; tick++) {
+            mob.doTick(tick);
+        }
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
 

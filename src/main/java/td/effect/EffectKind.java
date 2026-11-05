@@ -189,6 +189,11 @@ public enum EffectKind implements Term {
         return this.modifiersByStacks.get(Math.max(0, Math.min(this.modifiersByStacks.size() - 1, stacks)));
     }
 
+    /** Whether a reapplication leaves one that is active as it is. */
+    public boolean isNotRenewed() {
+        return this.rule.tags().contains(EffectTag.NOT_RENEWED);
+    }
+
     /** Whether this kind stops the enemy where it stands and keeps it from casting. */
     public boolean stopsEnemy() {
         return this.rule.tags().contains(EffectTag.STOPS);

@@ -201,9 +201,8 @@ final class EnemyStatText {
         if (effect.level() > 0f) {
             rows.add(Row.plain(Glyph.DOT, "Slows", TermNumbers.percent(effect.level())));
         }
-        effect.nextShare().ifPresent(share -> rows.add(SheetLine.Sentence.of(TermText.of(share > 0
-                ? "the next one lasts " + TermNumbers.percent((float) share) : "the next one is kept out")
-                .asSentence())));
+        effect.nextShare().ifPresent(share -> rows.add(SheetLine.Sentence.of(
+                TermText.of("the next one lasts " + TermNumbers.percent((float) share)).asSentence())));
         return rows;
     }
 

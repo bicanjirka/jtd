@@ -61,10 +61,10 @@
 - `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
   `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
   it (e.g. `"armor"`, which a later rank step replaces).
-- Every enemy diminishes hard-CC durations; there is no opt-in.
+- Every enemy has a `FreezeMeter`, draining at its rank's `Rank.freezeDrain()`; there is no opt-in.
 - `DefinedEnemyMob.applyEffect` keeps out what a trait makes it immune to, and scales what doesn't help it
-  (`Side.DEBUFF`) by `StatCurves.durationFactor(tenacity)` and diminishing returns before `ActiveEffects` sees it; scaling
-  never leaves less than a tick. The one exception is `INVERSION`: it turns a shield into one hit, credited to its caster, before anything else.
+  (`Side.DEBUFF`) by `StatCurves.durationFactor(tenacity)`, and a freeze by its meter too, before `ActiveEffects` sees it.
+  Scaling never leaves less than a tick, but a freeze that would last under one doesn't land. The one exception is `INVERSION`: it turns a shield into one hit, credited to its caster, before anything else.
 - Regeneration is restored on the mob's own tick, worth `StatCurves.restoreFactor(spirit)` times the stat, with the
   part of a unit carried (`MobHealth.regenerationDue`). Under `INVERSION` the same units are dealt to it as magic
   through the hex's sink instead. A heal only adds to the stat.

@@ -50,7 +50,7 @@ public record IconFace(String pictogram, String monogram, Palette tone, Palette 
                 this.elapsed, this.bar, ward, this.faded, this.below);
     }
 
-    /** Painted at a third of its alpha: only its diminishing returns are left. */
+    /** Painted at a third of its alpha: only what it leaves behind is left. */
     public IconFace asFaded() {
         return new IconFace(this.pictogram, this.monogram, this.tone, this.frame, this.corner, this.numeral,
                 this.elapsed, this.bar, this.ward, true, this.below);

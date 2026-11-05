@@ -25,8 +25,8 @@ final class EffectSentences {
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
                             + " while it lasts, and every tower can see and aim at it");
             case FREEZE -> TermText.of("stops it where it stands and keeps its abilities from firing; ")
-                    .plus(stoppedAgility(kind)).plus("; within "
-                            + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts " + ladder(kind));
+                    .plus(stoppedAgility(kind)).plus("; time under it shortens the next one, and walking wins that back, "
+                            + "more slowly at higher rank");
             case SHIELD -> TermText.of("takes a hit before armor does, until its amount is spent or it runs out; more ")
                     .plus(EnemyStat.SPIRIT).plus(" makes it hold more, shields from different sources add up, and damage that"
                             + " ticks goes past it");
@@ -65,8 +65,7 @@ final class EffectSentences {
                     .plus(", up to " + kind.maxStacks() + "; it loses a stack every "
                             + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
             case DAZED -> TermText.of("stops it and keeps its abilities from firing, like ").plus(EffectKind.FREEZE)
-                    .plus("; ").plus(stoppedAgility(kind)).plus("; within " + seconds(DiminishingReturns.WINDOW_TICKS)
-                            + ", each fresh one lasts " + ladder(kind));
+                    .plus("; ").plus(stoppedAgility(kind));
             case SATURATED -> TermText.of("each stack makes a Burst's blasts hit it harder");
             case CHARGED -> TermText.of("the next hit on it from another tower lands "
                     + TermNumbers.percent(Effect.CHARGE_DISCHARGE_SHARE)
@@ -166,13 +165,6 @@ final class EffectSentences {
 
     private static String seconds(int ticks) {
         return TermNumbers.seconds(ticks / TickRate.TICKS_PER_SECOND);
-    }
-
-    /** "100%, 50%, 25%, then none" from a diminishing-returns ladder. */
-    private static String ladder(EffectKind kind) {
-        List<String> steps = DiminishingReturns.stepsOf(kind).stream().filter(step -> step > 0f)
-                .map(TermNumbers::percent).toList();
-        return String.join(", ", steps) + ", then none";
     }
 
     private static TermText earned(EffectKind pool) {

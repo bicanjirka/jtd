@@ -1,8 +1,8 @@
 package td.effect;
 
 /**
- * What an effect does to its target, for grouping. It decides which kinds diminish and how the
- * inspector labels a kind; it never changes an effect's numbers.
+ * What an effect does to its target, for grouping. It decides how the inspector labels a kind; it never changes an
+ * effect's numbers.
  */
 public enum EffectCategory {
     /** Stops the target outright. */
