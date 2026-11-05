@@ -9,17 +9,16 @@ import java.util.Set;
 
 /**
  * What a tower has made of the burn or poison pool it feeds, carried by the pool: how much it holds,
- * how fast it marks the enemy, what freezing it does and what it does to the enemy's stats while it
- * burns. A pool two towers feed holds the stronger of each.
+ * how fast it marks the enemy and what it does to the enemy's stats while it burns. A pool two towers
+ * feed holds the stronger of each.
  *
- * @param capFactor        the most a pool holds, as a multiple of its strongest application
- * @param stackRate        how many times as fast it earns the marks a pool earns
- * @param freezeBurstShare the share of what is left of it that lands at once when a freeze puts it out
- * @param carried          what the enemy's stats suffer while it burns
+ * @param capFactor the most a pool holds, as a multiple of its strongest application
+ * @param stackRate how many times as fast it earns the marks a pool earns
+ * @param carried   what the enemy's stats suffer while it burns
  */
-public record PoolTuning(float capFactor, int stackRate, float freezeBurstShare, StatModifiers<EnemyStat> carried) {
+public record PoolTuning(float capFactor, int stackRate, StatModifiers<EnemyStat> carried) {
 
-    private static final PoolTuning STANDARD = new PoolTuning(2f, 1, 0.5f, StatModifiers.none());
+    private static final PoolTuning STANDARD = new PoolTuning(2f, 1, StatModifiers.none());
 
     /** What every pool is, unless a tower tunes it. */
     public static PoolTuning standard() {
@@ -27,26 +26,22 @@ public record PoolTuning(float capFactor, int stackRate, float freezeBurstShare,
     }
 
     public PoolTuning withCapFactor(float capFactor) {
-        return new PoolTuning(capFactor, this.stackRate, this.freezeBurstShare, this.carried);
+        return new PoolTuning(capFactor, this.stackRate, this.carried);
     }
 
     public PoolTuning withStackRate(int stackRate) {
-        return new PoolTuning(this.capFactor, stackRate, this.freezeBurstShare, this.carried);
-    }
-
-    public PoolTuning withFreezeBurstShare(float freezeBurstShare) {
-        return new PoolTuning(this.capFactor, this.stackRate, freezeBurstShare, this.carried);
+        return new PoolTuning(this.capFactor, stackRate, this.carried);
     }
 
     /** This tuning, also carrying {@code more}: they add up. */
     public PoolTuning withCarried(StatModifiers<EnemyStat> more) {
-        return new PoolTuning(this.capFactor, this.stackRate, this.freezeBurstShare, this.carried.plus(more));
+        return new PoolTuning(this.capFactor, this.stackRate, this.carried.plus(more));
     }
 
     /** The stronger of each setting of this and {@code other}. */
     PoolTuning strongerWith(PoolTuning other) {
         return new PoolTuning(Math.max(this.capFactor, other.capFactor), Math.max(this.stackRate, other.stackRate),
-                Math.max(this.freezeBurstShare, other.freezeBurstShare), strongerCarried(this.carried, other.carried));
+                strongerCarried(this.carried, other.carried));
     }
 
     /** Per stat, the modifier whose flat amount is the larger either way. */

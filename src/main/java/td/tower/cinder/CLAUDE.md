@@ -9,7 +9,7 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   has set alight: Stoke steps live there and go when the burn has been out longer than the grace. Soulfire is a
   second pool the same ignition applies beside the ordinary burn, with the same level; Combustion reads an
   enemy's burning pools together. What its pools do to an enemy (hold more, mark faster, cauterize, heat,
-  mark for magic, burst at a freeze) is a `PoolTuning` the pool carries, never state the Cinder keeps on the
-  enemy; a Thermal Shock's chill and an
+  mark for magic) is a `PoolTuning` the pool carries, never state the Cinder keeps on the
+  enemy; a Thermal Shock and an
   Everburn top-up are the Cinder's own work in `tendBurning`. Bellows reads the attack speed in what the tower
   receives (`TowerStats.received()`), so it needs no Aura-specific code.

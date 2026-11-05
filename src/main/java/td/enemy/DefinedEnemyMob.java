@@ -351,13 +351,13 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /**
-     * Turns health back to what it was {@code windowTicks} ago, if that was more: a heal, so what keeps heals out keeps
-     * it out, and under Inversion what it would give back is dealt to it as magic instead.
+     * Turns health back towards what it was {@code windowTicks} ago, if that was more: a heal, so worth what spirit
+     * makes it, and under Inversion what it would give back is dealt to it as magic instead.
      */
     void rewind(int windowTicks) {
         int before = this.health.current();
-        int gain = this.health.ticksAgo(windowTicks) - before;
-        if (gain <= 0 || this.isDead() || this.activeEffects.keptOutBy(EffectKind.HEAL).isPresent()) {
+        int gain = Math.round((this.health.ticksAgo(windowTicks) - before) * this.restoreFactor());
+        if (gain <= 0 || this.isDead()) {
             return;
         }
         Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
@@ -522,8 +522,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             return;
         }
         ladder.ifPresent(steps -> steps.recordAt(this.ticksSinceSpawn, active));
-        this.activeEffects.apply(scaled, this.observer);
-        this.observer.dealt();
+        this.activeEffects.apply(scaled);
         this.stats.invalidate();
         if (this.observer.isOn()) {
             this.observer.effectApplied(EffectStates.of(this.activeEffects), effect.kind(),
@@ -651,6 +650,11 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     public EnemyInspection.Fate fate() {
         return this.fate;
+    }
+
+    @Override
+    public boolean wasKilled() {
+        return this.fate == EnemyInspection.Fate.KILLED;
     }
 
     /** This mob was replaced by its own spawn: it is gone, but neither killed nor leaked. */

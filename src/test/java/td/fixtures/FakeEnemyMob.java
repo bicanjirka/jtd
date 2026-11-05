@@ -50,6 +50,8 @@ public final class FakeEnemyMob implements EnemyMob {
     private double velocityX;
     private double velocityY;
     private boolean valid = true;
+    private boolean leaked;
+    private final Set<EffectKind> immunities = EnumSet.noneOf(EffectKind.class);
     private Rank rank = Rank.GRUNT;
     private float healthFraction = 1f;
 
@@ -327,7 +329,15 @@ public final class FakeEnemyMob implements EnemyMob {
 
     @Override
     public void applyEffect(Effect effect) {
-        this.appliedEffects.add(effect);
+        if (!this.immunities.contains(effect.kind())) {
+            this.appliedEffects.add(effect);
+        }
+    }
+
+    /** From now on {@code kind} doesn't take hold on it. */
+    public FakeEnemyMob immuneTo(EffectKind kind) {
+        this.immunities.add(kind);
+        return this;
     }
 
     @Override
@@ -368,6 +378,17 @@ public final class FakeEnemyMob implements EnemyMob {
     @Override
     public boolean isDead() {
         return !this.valid;
+    }
+
+    @Override
+    public boolean wasKilled() {
+        return !this.valid && !this.leaked;
+    }
+
+    /** Ends its walk as a leak, not a kill. */
+    public void leak() {
+        this.valid = false;
+        this.leaked = true;
     }
 
     @Override

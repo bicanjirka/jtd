@@ -54,7 +54,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.FREEZE, durationTicks, sink);
     }
 
-    /** Stops the enemy for {@code durationTicks}; unlike a freeze, it puts out nothing. */
+    /** Stops the enemy for {@code durationTicks}. */
     public static Effect dazed(int durationTicks, DamageSink sink) {
         return timed(EffectKind.DAZED, durationTicks, sink);
     }
@@ -65,8 +65,8 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     /**
-     * A second pool of its own, so it stacks with a burn: damage that also slows in proportion to the
-     * pool, and each stack it earns lowers spirit by one for good.
+     * A second pool of its own, so it stacks with a burn: damage, and each stack it earns lowers spirit
+     * by one for good.
      */
     public static Effect poison(Damage damagePerTick, int durationTicks, DamageSink sink) {
         return pool(EffectKind.POISON, damagePerTick, durationTicks, sink);
@@ -103,7 +103,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.SPRINTING, durationTicks, sink);
     }
 
-    /** Twice as fast while active, and slows cannot take hold. */
+    /** Twice as fast while active. */
     public static Effect hastened(int durationTicks, DamageSink sink) {
         return timed(EffectKind.HASTENED, durationTicks, sink);
     }
@@ -118,7 +118,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.UNYIELDING, durationTicks, sink);
     }
 
-    /** Targetable again while active, even through invisibility. */
+    /** Targetable again while active, even through invisibility, which it also keeps out. */
     public static Effect revealed(int durationTicks, DamageSink sink) {
         return timed(EffectKind.REVEALED, durationTicks, sink);
     }
@@ -226,7 +226,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return stacking(EffectKind.UNRAVELED, stacks, durationTicks, sink);
     }
 
-    /** A frozen enemy takes extra physical damage while it lasts. */
+    /** Extra physical damage taken while it lasts. */
     public static Effect brittle(int durationTicks, DamageSink sink) {
         return timed(EffectKind.BRITTLE, durationTicks, sink);
     }
@@ -246,11 +246,6 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return stacking(EffectKind.DRAGGED, stacks, durationTicks, sink);
     }
 
-    /** The field's drag counts as a chill for a freeze for {@code durationTicks}: the field's Undertow. */
-    public static Effect undertow(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.UNDERTOW, durationTicks, sink);
-    }
-
     /** {@code stacks} more of Arc Discharge's extra damage taken, on one clock of {@code durationTicks}. */
     public static Effect condemned(int stacks, int durationTicks, DamageSink sink) {
         return stacking(EffectKind.CONDEMNED, stacks, durationTicks, sink);
@@ -261,19 +256,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.STILLED, durationTicks, sink);
     }
 
-    /** A revealed enemy can't be shrouded or fade for {@code durationTicks}. */
-    public static Effect unveiled(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.UNVEILED, durationTicks, sink);
-    }
-
-    /** No heal or shield takes hold for {@code durationTicks}. */
+    /** Heals, shields and rewinds are worth nothing for {@code durationTicks}. */
     public static Effect deadZone(int durationTicks, DamageSink sink) {
         return timed(EffectKind.DEAD_ZONE, durationTicks, sink);
-    }
-
-    /** No heal takes hold for {@code durationTicks}; a shield still can. */
-    public static Effect fallout(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.FALLOUT, durationTicks, sink);
     }
 
     /** {@code stacks} more of extra damage taken from every source, held for {@code durationTicks}. */
@@ -520,20 +505,6 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
         return new Effect(this.kind, Math.round(this.remainingTicks * factor), Math.round(this.authoredDurationTicks * factor),
                 this.sink, this.origin, scaled);
-    }
-
-    /** This pool at {@code factor} times its strength: its damage and everything already in it. */
-    Effect withPoolScaledBy(float factor) {
-        return this.withDynamics(this.poolFamily().withPoolScaledBy(factor));
-    }
-
-    /** The same effect lasting {@code ticks} longer, authored time included. */
-    Effect withExtraTicks(int ticks) {
-        if (this.isLasting()) {
-            return this;
-        }
-        return new Effect(this.kind, this.remainingTicks + ticks, this.authoredDurationTicks + ticks, this.sink, this.origin,
-                this.retimed(left -> left + ticks));
     }
 
     /**

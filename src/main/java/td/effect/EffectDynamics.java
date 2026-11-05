@@ -82,12 +82,6 @@ public sealed interface EffectDynamics {
         public FuelPool withTuning(PoolTuning tuning) {
             return new FuelPool(this.perTick, this.fuel, this.peakL0, this.stackClock, tuning);
         }
-
-        /** This pool at {@code factor} times its strength: its damage and everything already in it. */
-        public FuelPool withPoolScaledBy(float factor) {
-            return new FuelPool(this.perTick.scaledBy(factor), this.fuel.stream().map(c -> c.scaledTo(c.amount() * factor)).toList(),
-                    this.peakL0 * factor, this.stackClock, this.tuning);
-        }
     }
 
     /** Regeneration added while it lasts: one share per source, which together add up. */

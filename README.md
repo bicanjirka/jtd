@@ -138,7 +138,7 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 | Scorcher | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
 | Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
 | Radar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
-| Obelisk | 25    | Support, a kill box. Short range; a field that drags everything inside 15% and deals a little magic damage to it every tick, ghosts included and with no visible enemy needed, the damage a quarter less for every other field overlapping it. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it stronger. One head holds enemies longer (Gravity: a deeper drag, Dazes, a wider field, a well or Stasis), the other denies them (Ward: reveal, silence, no heals, True Sight or Purge); an extra line makes them take more damage and builds Toll faster. A special Condemns the strongest enemy inside, bosses first, for every tower to turn on; drains spirit; or links two Obelisks with a Ley Line. Reveals nothing until Ward is bought |
+| Obelisk | 25    | Support, a kill box. Short range; a field that drags everything inside 15% and deals a little magic damage to it every tick, ghosts included and with no visible enemy needed, the damage a quarter less for every other field overlapping it. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it stronger. One head holds enemies longer (Gravity: a deeper drag, Dazes, a wider field, a well or Stasis), the other denies them (Ward: reveal, silence, worthless heals, True Sight or Purge); an extra line makes them take more damage and builds Toll faster. A special Condemns the strongest enemy inside, bosses first, for every tower to turn on; drains spirit; or links two Obelisks with a Ley Line. Reveals nothing until Ward is bought |
 | Beacon | 20    | Passive: gives the towers in its range Damage and Range +20% and Disruption taken x0.5; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds Fire rate and Critical damage; the other widens its reach, then raises Buff duration and Effect duration. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
 
 The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Hive, Radar, Obelisk and Beacon
@@ -224,10 +224,10 @@ on the Wardens, whose shield answers crits.
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
 | The Warden | large spiked crest with a gold gem | A boss: armor and magic resist, and plating, all lower with each hatching; periodically calls three Elite Drones, hardens for every ally near it (Hivemind), shields itself and nearby allies, and shields itself again whenever it survives a critical hit, so its escort has to be cleared before it can be worn down. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. If any stage escapes, the level is lost, however many lives are left. The final round of The Amber Hive — a level-authored enemy. |
 | Sandling   | small grain of sand, path-facing | Quick (1.5 cells/s) and a little nimble, and it crumbles: it loses health on its own (negative regeneration), faster with rank, so it lasts about as long as it takes to cross the board. Slow it and it never arrives; a heal it is given holds it together. Appears on The Last Hour — a level-authored enemy, like the Drone. |
-| Timekeeper | brass clock face, spinning | Every seven seconds it turns the health of every other enemy within about 3 cells back to what it was two or three seconds before (Rewind), further with rank. A rewind is a heal: Dead Zone and Fallout keep it out, Inversion turns it into damage, and a freeze, a daze or a silence stops the cast. Appears on The Last Hour. |
+| Timekeeper | brass clock face, spinning | Every seven seconds it turns the health of every other enemy within about 3 cells back to what it was two or three seconds before (Rewind), further with rank. A rewind is a heal: it gives back what Spirit makes it worth, nothing under Dead Zone, Inversion turns it into damage, and a freeze, a daze or a silence stops the cast. Appears on The Last Hour. |
 | Glass Sentinel | glass crystal | Slow, with 8 plating and 8 insulation that blunt every small hit of either type (up to 22 at Boss) and -60 resilience, so crits shatter it: it asks for big hits, crits, Cracked or flat penetration. Appears on The Last Hour. |
 | Sand Reaver | sand-coloured barbed arrowhead, path-facing | Speeds up as it's hurt, shrugs off a flat point of every hit, crit immune from Elite, shields itself once badly wounded, and falls apart into two Sandlings on death. Appears on The Last Hour. |
-| The Keeper of Hours | glass hourglass with falling sand, swaying | A boss: every six seconds it turns its health back to what it was three seconds before (Rewind), every ten it calls a Veteran Timekeeper that turns it back further, once below half it calls six Sandlings, and once nearly dead it turns the glass one last time, eight seconds back. Time runs slow around it: it jams the towers near it. Stop it casting (freeze, Daze, Silence), keep heals out (Dead Zone, Fallout), Invert it, or outpace it. If it escapes, the level is lost. The last round of The Last Hour. |
+| The Keeper of Hours | glass hourglass with falling sand, swaying | A boss: every six seconds it turns its health back to what it was three seconds before (Rewind), every ten it calls a Veteran Timekeeper that turns it back further, once below half it calls six Sandlings, and once nearly dead it turns the glass one last time, eight seconds back. Time runs slow around it: it jams the towers near it. Stop it casting (freeze, Daze, Silence), make heals worth nothing (Dead Zone), Invert it, or outpace it. If it escapes, the level is lost. The last round of The Last Hour. |
 | Drone      | striped bee, buzzing | A Simple mob with Hivemind: +4 armor and magic resist for every other enemy within 1.5 cells, up to five, so a pack is far tougher than its members alone; area damage breaks it up. On the Simple's ladder. Appears on The Amber Hive — a level-authored enemy, like the Reaver. |
 | Hive Guard | amber beetle, striding | A Simple mob with three times the health at half the speed, a point of plating and a stronger Hivemind (+9 a neighbour, up to four). On the Simple's ladder. Appears on The Amber Hive. |
 | Brood Nurse | cream honeycomb cell with an amber cross | A Mender in the hive's colours, on the Mender's ladder; from Veteran it also wards every other ally near it with a shield that stops any damage. Appears on The Amber Hive. |
@@ -278,15 +278,15 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 
 | Effect | Group | Side | What it does |
 |---|---|---|---|
-| Chill | Control | Debuff | Slows by its level, up to 80%, and fades; at its most it takes 50% off the damage of Burn and Soulfire. |
-| Burn | Affliction | Debuff | Damage over time that fades; a top-up adds less the fuller it is, up to x2 its strongest application; it adds a stack of Scorch every 0.5 s while it lasts, and Freeze puts it out, landing at least 50% of what is left at once. |
-| Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; it removes Chill and lasts longer by its level, and puts out Burn and Soulfire; within 10 s, each fresh one lasts 100%, 50%, 25%, then none. |
+| Chill | Control | Debuff | Slows by its level, up to 80%, and fades. |
+| Burn | Affliction | Debuff | Damage over time that fades; a top-up adds less the fuller it is, up to x2 its strongest application; it adds a stack of Scorch every 0.5 s while it lasts, and every tower can see and aim at it. |
+| Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; within 10 s, each fresh one lasts 100%, 50%, 25%, then none. |
 | Shield | Boon | Buff | Takes a hit before armor does, until its amount is spent or it runs out; more Spirit makes it hold more, shields from different sources add up, and damage that ticks goes past it. |
 | Invisibility | Boon | Buff | Towers can't aim at it, though damage on an area still reaches it. |
 | Heal | Boon | Buff | Adds to its Regeneration while it lasts; heals from different sources add up. |
 | Vulnerable | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +15%, up to 3 stacks. |
-| Reveal | Mark | Debuff | Every tower can see and aim at it, and it counts as having Expose. |
-| Poison | Affliction | Debuff | Damage over time that fades, and a slow of up to 30% while it is full; it adds a stack of Sicken every 0.5 s while it lasts. |
+| Reveal | Mark | Debuff | Every tower can see and aim at it, and it can't gain Invisibility. |
+| Poison | Affliction | Debuff | Damage over time that fades; it adds a stack of Sicken every 0.5 s while it lasts. |
 | Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sunder | Weakness | Debuff | Each stack: Armor -5, up to 10 stacks. |
@@ -295,37 +295,34 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Priority | Mark | Debuff | Physical damage taken and Magic damage taken +15%, and a tower that picks one target picks it. |
 | Resonance | Weakness | Debuff | Each stack: Magic damage taken +8%, up to 3 stacks. |
 | Fracture | Weakness | Debuff | Each stack: Resilience -10, up to 5; it loses a stack every 1 s. |
-| Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze, but leaves its Burn and Chill; within 10 s, each fresh one lasts 100%, 80%, 60%, 40%, 20%, then none. |
+| Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; within 10 s, each fresh one lasts 100%, 80%, 60%, 40%, 20%, then none. |
 | Saturation | Weakness | Debuff | Each stack makes a Burst's blasts hit it harder. |
 | Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
 | Doom | Hex | Debuff | When it ends, it takes a share of all the damage it took while it lasted. |
 | Blight | Hex | Debuff | It has Poison for as long as this lasts. |
 | Contagion | Hex | Debuff | When it dies, its hexes and debuffs jump to the enemies nearest it. |
-| Rime | Hex | Debuff | A Freeze on it buys x2 the extra time from Chill, and lands all of its Burn or Soulfire at once instead of putting it out; Ash replaces it. |
-| Ash | Hex | Debuff | Its Burn, Poison and Soulfire hold x2 as much and add their stacks x2 as fast; it takes only 25% of a Chill, and Freeze can't take hold; Rime replaces it. |
-| Inversion | Hex | Debuff | Its Regeneration deals it damage instead of restoring health, a Shield it receives strikes it instead, and it can't gain Invisibility. |
+| Rime | Hex | Debuff | A coven's hex, with no rule of its own. |
+| Ash | Hex | Debuff | A coven's hex, with no rule of its own. |
+| Inversion | Hex | Debuff | Its Regeneration deals it damage instead of restoring health, and a Shield it receives strikes it instead. |
 | Sympathy | Hex | Debuff | Once a second, its Chill, Vulnerable, Sunder, Expose and Unravel are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower. |
 | Reckoning | Hex | Debuff | When it dies, each Doom from the same tower near it releases at once and starts again. |
 | Silence | Control | Debuff | Its abilities don't fire; abilities on death and auras still do. |
 | Anchor | Control | Debuff | It can't be sped up, and its Move speed is held to at most 75% of its base. |
 | Unravel | Weakness | Debuff | Each stack: Magic resist -10, up to 5 stacks. |
-| Brittle | Weakness | Debuff | While it has Freeze: Physical damage taken +30%. |
+| Brittle | Weakness | Debuff | Physical damage taken +30%. |
 | Toll | Weakness | Debuff | Time spent in an Obelisk's field, a stack a second; it sets how strongly the field holds it, and goes soon after it leaves. |
 | Corrode | Weakness | Debuff | Each stack: Armor and Magic resist -3, up to 15 stacks. |
 | Drag | Control | Debuff | Each stack: Move speed -1%, up to 50 stacks; it is no Chill, and nothing resists it. |
-| Undertow | Control | Debuff | A Freeze counts it as 25% Chill. |
 | Condemn | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +5%, up to 4 stacks. |
 | Stasis | Weakness | Debuff | While it also has Daze, the field holding it takes its Toll away. |
-| Unveil | Mark | Debuff | It can't gain Invisibility. |
-| Dead Zone | Weakness | Debuff | Heal and Shield can't take hold. |
-| Fallout | Weakness | Debuff | Heal can't take hold; Shield still can. |
+| Dead Zone | Weakness | Debuff | Spirit -100, so Heal and Shield are worth nothing. |
 | Frail | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +2%, up to 15 stacks. |
 | Crack | Weakness | Debuff | Plating -5 and Insulation -5. |
-| Tar | Weakness | Debuff | Move speed x0.6; a Burn or Soulfire it catches starts at x2, and a Freeze lasts 1 s longer. |
+| Tar | Weakness | Debuff | Move speed x0.6. |
 | Bleed | Affliction | Debuff | Physical damage for every cell it travels; standing still, it takes none. |
-| Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; nothing resists it, it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and Freeze puts it out. |
+| Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; nothing resists it, it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and every tower can see and aim at it. |
 | Sprint | Boon | Buff | Move speed +60%. |
-| Hasten | Boon | Buff | Twice the speed, and no slow (Chill, Tar, Drag, Anchor) can take hold; a Freeze or Daze still stops it. |
+| Hasten | Boon | Buff | Move speed x2; Freeze and Daze still stop it. |
 
 #### Tower terms
 
@@ -346,7 +343,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Napalm Shell | Buff | A shell whose blast is magic and leaves flames that apply Burn. |
 | Tar Shell | Buff | A shell that leaves tar applying Tar and Poison. |
 | Cryo Shell | Buff | A shell that leaves frost applying Chill, and Freeze to an enemy that stays. |
-| Nuke Shell | Buff | A shell that hits far harder and wider and leaves Fallout. |
+| Nuke Shell | Buff | A shell that hits far harder and wider and leaves Dead Zone. |
 | Cryo Missile | Buff | A missile that applies Freeze. |
 | Arcane Missile | Buff | A missile that applies Unravel instead of Freeze. |
 | EMP Missile | Buff | A missile that removes Shield and Heal and applies Silence. |
@@ -367,7 +364,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Shrapnel | Buff | Fragments that fly past a shell's blast. |
 | Bomblet | Buff | A small bomb a shell drops on the path. |
 
-Stacks wear off one per second once nothing adds more, and every other debuff runs out on its own clock, whatever the enemy's spirit. A frozen enemy cannot burn, and freezing an enemy puts out its burn, landing half of what was left at once, but keeps its Scorched stacks. Hexes bend this: Rimed and Ashen change what a freeze does, and Inverted keeps an enemy from turning invisible. Nothing else cancels anything.
+Stacks wear off one per second once nothing adds more, and every other debuff runs out on its own clock, whatever the enemy's spirit. Effects don't change one another, with two exceptions: a pool earns its marks while it lasts, and a Reveal keeps Invisibility out.
 
 ### Ground zones
 
@@ -380,9 +377,9 @@ freeze in frost bursts a burn.
 | Zone           | Made by                    | What it does to enemies inside |
 |----------------|----------------------------|--------------------------------|
 | Burning ground | Mortar's Napalm            | Burns them |
-| Tar            | Mortar's Tar               | Poisons them and leaves them Tarred (slowed 40%; a burn starts at double, a freeze lasts a second longer) |
+| Tar            | Mortar's Tar               | Poisons them and leaves them Tarred (slowed 40%) |
 | Frost ground   | Mortar's Cryo Shells       | Chills them, and freezes one that stays 2 s |
-| Fallout        | Mortar's Tactical Nuke     | Drains their spirit and keeps heals from taking hold                    |
+| Fallout        | Mortar's Tactical Nuke     | Drains their spirit and leaves them in a Dead Zone                       |
 | Mine           | Splash, from Range III     | The first enemy to step on it sets it off as one blast, and it is gone; it lasts 10 s, a Splash keeps 3 |
 | Cursed cloud   | Hexer's Mastery            | Gives every enemy inside the debuffs the hexed enemy that died there carried, for as long as they had left |
 | Healing ground | Mender, from Soldier       | Heals them; it lasts 5 s |
@@ -394,7 +391,7 @@ Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a 
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
 own Critical damage (150%, the Sniper 200%). A guaranteed crit lands whenever the enemy's
 resilience is below 100; at 100 nothing crits. Negative resilience makes crits likelier and harder;
-Exposed and Revealed take 50 resilience. Armor and magic resist never go below 0.
+Exposed takes 50 resilience. Armor and magic resist never go below 0.
 
 An enemy with agility can dodge a hit aimed at it alone: the Sniper's shot and its Ricochet bounces,
 and the Sonar beam's hit. The chance is `agility / (agility + 100)` (25 dodges 20%, 100 dodges 50%),

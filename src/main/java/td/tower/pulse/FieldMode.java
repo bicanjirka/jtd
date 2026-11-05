@@ -13,11 +13,11 @@ import java.util.Set;
 public enum FieldMode {
     /** Every enemy inside is Silenced. */
     SILENCE,
-    /** Nothing inside can be healed or shielded. */
+    /** Heals and shields are worth nothing inside. */
     DEAD_ZONE,
     /** Armor and magic resist are lowered inside, more the longer the enemy stays. */
     CORROSION,
-    /** Enemies inside are Anchored, and the drag counts as a chill for a freeze. */
+    /** Enemies inside are Anchored. */
     UNDERTOW,
     /** Enemies inside take extra damage from every source, more the longer they stay. */
     FRAIL,
@@ -48,7 +48,7 @@ public enum FieldMode {
             case SILENCE -> Set.of(EffectKind.SILENCED);
             case DEAD_ZONE -> Set.of(EffectKind.DEAD_ZONE);
             case CORROSION -> Set.of(EffectKind.CORRODED);
-            case UNDERTOW -> Set.of(EffectKind.ANCHORED, EffectKind.UNDERTOW);
+            case UNDERTOW -> Set.of(EffectKind.ANCHORED);
             case FRAIL -> Set.of(EffectKind.FRAIL);
             case SOUL_DRAIN, PURGE -> Set.of();
         };
@@ -71,15 +71,14 @@ public enum FieldMode {
                     .plus(" " + TermNumbers.signed(resistAt(FieldStrength.ENTRY)) + " on entry, "
                             + TermNumbers.signed(resistAt(FieldStrength.FULL)) + " at full ")
                     .plus(EffectKind.TOLL).plus(", stopping at 0");
-            case UNDERTOW -> TermText.of("enemies inside gain ").plus(EffectKind.ANCHORED).plus(" and ")
-                    .plus(EffectKind.UNDERTOW);
+            case UNDERTOW -> TermText.of("enemies inside gain ").plus(EffectKind.ANCHORED);
             case FRAIL -> TermText.of("enemies inside gain ").plus(EffectKind.FRAIL)
                     .plus(": ").plus(EnemyStat.PHYSICAL_DAMAGE_TAKEN).plus(" and ").plus(EnemyStat.MAGIC_DAMAGE_TAKEN)
                     .plus(" " + TermNumbers.signedPercent(damageTakenAt(FieldStrength.ENTRY)) + " on entry, "
                             + TermNumbers.signedPercent(damageTakenAt(FieldStrength.FULL)) + " at full ")
                     .plus(EffectKind.TOLL);
             case SOUL_DRAIN -> TermText.of("each second inside: ").plus(EnemyStat.SPIRIT)
-                    .plus(" " + TermNumbers.signed(-SOUL_DRAIN_SPIRIT_PER_SECOND) + ", so every debuff on the enemy, the field's own included, wears off slower and heals land weaker");
+                    .plus(" " + TermNumbers.signed(-SOUL_DRAIN_SPIRIT_PER_SECOND) + ", so heals and shields are worth less");
             case PURGE -> TermText.of("an enemy loses every buff and ").plus(EffectKind.SHIELD)
                     .plus(" as it comes in");
         };

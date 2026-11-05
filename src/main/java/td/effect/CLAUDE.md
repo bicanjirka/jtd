@@ -13,62 +13,50 @@
   shares. `ActiveEffects` exposes queries only, never its map.
 - `CHILL` is a level (the share of speed lost, up to a cap) made of one `FuelContribution` per
   application, each fading linearly on its own slope. An application only adds what fits under the
-  cap. It also cuts a burn's damage, most at the cap. `FREEZE` is a hard stop.
+  cap. `FREEZE` is a hard stop.
 - `BURN` and `POISON` are each a decaying fuel pool of one `FuelContribution` per application, each
   with its own sink (`EffectKind.isFuelPool()`). Tick damage is apportioned across contributors
   (largest remainder), so every tower gets credit for its share. Damage lands in a pulse a few times
   a second carrying the whole window's worth; the pool still decays every tick, and pulses ride the
   stack clock, so `STACK_INTERVAL_TICKS` must stay a multiple of the pulse interval. A top-up adds
-  `L0 * (1 - fuel / lmax)`, and nothing to a pool over its cap (the cap shrinks when Ash ends). A pool ends when a tick would round to zero. The two kinds are separate
+  `L0 * (1 - fuel / lmax)`, and nothing to a pool over its cap. A pool ends when a tick would round to zero. The two kinds are separate
   pools, so they stack with each other. A pool earns a stack of its lasting mark (`SCORCHED` for
   burn, `SICKENED` for poison, `EffectInteractions.earnedBy`) when it starts and another every
   `STACK_INTERVAL_TICKS` while it lasts, up to their cap; a top-up earns none.
 - `SCORCHED` and `SICKENED` are real effects that only `ActiveEffects` creates. Each stack lowers
   `RESILIENCE` or `SPIRIT` by one. They outlast the pool, are never cleared by another effect
-  (a freeze puts out the burn, not its mark) and, once no active pool earns them, lose a stack every
+  and, once no active pool earns them, lose a stack every
   `STACK_DECAY_INTERVAL_TICKS`.
 - A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`, `RESONATING`,
   `FRACTURED`, `SATURATED`) stacks on the enemy, whichever tower applied them, on one shared clock
   that any application refreshes; a full stack only refreshes. An application may raise the cap
   (`Effect.withStackCap`), and the stack keeps the highest cap any application brought. `FRACTURED` has no clock: it loses a stack at
   a time like `SCORCHED`. A `faultLine` Fractured
-  (a higher cap) loses none while the enemy is exposed (or revealed); one such
+  (a higher cap) loses none while the enemy has `EXPOSED`; one such
   application makes the whole effect so until it wears off.
 - Every timer counts down one tick per tick; nothing about the enemy paces it. Only resistance and
   diminishing returns change how long an effect lasts, and only as it is applied.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
-- A field effect (`SILENCED`, `ANCHORED`, `CORRODED`, `DRAGGED`, `UNDERTOW`, `DEAD_ZONE`, `FRAIL`) is an
+- A field effect (`SILENCED`, `ANCHORED`, `CORRODED`, `DRAGGED`, `DEAD_ZONE`, `FRAIL`) is an
   ordinary timed effect the tower that holds the field refreshes every tick, so it ends a while after
   the enemy leaves. A field effect with a number holds it in stacks:
   `CORRODED` and `FRAIL` in `FieldStrength`, `DRAGGED` in points of speed (`DragStrength`, capped at
   `MOST`). A field tops the stacks up to the strength it gives, so of two fields the stronger holds,
   and lowers (`loseStacks`) only what it gave itself. `TOLL` is a stack debuff on one shared clock
-  (every stack goes when it runs out), never paced itself. `UNVEILED` keeps `INVISIBLE` out.
-  `DEAD_ZONE` keeps `HEAL` and `SHIELD` out, and `FALLOUT` (a ground zone's) only `HEAL`, through
-  `EffectInteractions`' held-off table, which unlike a block strips nothing already there. `BRITTLE` counts
-  only while `FREEZE` is active (`EffectInteractions`' requires table).
+  (every stack goes when it runs out), never paced itself. `DEAD_ZONE` sets `SPIRIT` to its floor, so heals,
+  shields and rewinds are worth nothing and nothing is kept out or stripped; a fallout zone applies it too.
 - A pool earns `SICKENED` itself, but a tower can also add it (`Effect.sickened`): the stacks add up
   to the whole of spirit, and wear off one at a time.
 - A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
-  `INVERSION` is the one hex the enemy itself reads: its regeneration is dealt through the hex's sink,
-  and `INVISIBLE` is an `EffectInteractions` row it blocks and removes.
-- `SOULFIRE` is a third fuel pool beside burn and poison (`EffectKind.isBurning()` covers it and burn): a
-  freeze puts it out and lands part of it, a chill cools it, and it earns `SCORCHED` and `SICKENED` both.
-  Nothing resists it, so it burns what is burn-immune.
+  `INVERSION` is the one hex the enemy itself reads: its regeneration is dealt through the hex's sink.
+- `SOULFIRE` is a third fuel pool beside burn and poison (`EffectKind.isBurning()` covers it and burn), and it
+  earns `SCORCHED` and `SICKENED` both. Nothing resists it, so it burns what is burn-immune.
 - A tower tunes the pool it feeds through `PoolTuning`, carried by the pool: how much it holds, how fast it
-  marks, how much of it a freeze lands, and the stat modifiers it carries while it burns (Cauterize, Heat
+  marks, and the stat modifiers it carries while it burns (Cauterize, Heat
   and the magic mark are such modifiers). Two towers on one pool leave it the stronger of each setting,
   and what it carries only lasts while the pool does.
-- A freeze always lands part of the burn it puts out at once (`burstPool`, its remaining pool
-  `fuel / (1 - alpha)`); a burn pool above `BURN_REVEAL_FUEL` sets `STEALTH` to 0 like a reveal, without
-  exposing the enemy. What `TARRED` does to a burn it catches and a freeze it suffers is read at `apply`
-  from `EffectInteractions`' tables.
-- Two hexes bend fire and ice, each a row in one of `EffectInteractions`' tables keyed only on the
-  kind being active: what `RIME` does to a freeze and `ASH` to pools and chills (the pool clock still counts
-  down by one, since pulses ride it). An `UNDERTOW` (a flag beside the field's drag) counts as part of
-  a chill for a freeze. `ASH` keeping out `FREEZE`, and `RIME`/`ASH` replacing each other, are
-  `EffectInteractions` rows too.
+- A burning pool sets `STEALTH` to 0 like a reveal, through its rule.
 - What a curse carries on from a dead enemy is `EffectKind.spreadsWithCurse()`: the debuffs that
   weaken an enemy, copied with their own sink and time left, never the marks a tower leaves for
   itself.
@@ -76,9 +64,8 @@
   damage; the mob pays its share of that hit through the charge's own sink, so the charger is
   credited.
 - Effects change a mob only through `contributeTo(StatAccumulator)`, which applies each kind's
-  `modifiersAt(stacks)`, the chill level, the pools' rules and what burning pools carry. Damage-taken
-  rows **add**; revealed sets `STEALTH` to 0, which beats invisibility's 1; exposed or revealed take 50
-  `RESILIENCE` once; every stat is floored by its range. A heal adds its amount to `REGENERATION`: it is
+  `modifiersAt(stacks)`, the chill level and what burning pools carry. Damage-taken
+  rows **add**; revealed sets `STEALTH` to 0, which beats invisibility's 1; every stat is floored by its range. A heal adds its amount to `REGENERATION`: it is
   `PER_SOURCE`, one `HealShare` per `Effect.origin` (`Effect.from`), shares from different sources adding up, a
   recast refreshing its own share (the larger amount, the later end), each running out on its own clock. A
   shield is `PER_SOURCE` the same way, one `ShieldShare` per source, a recast topping its own share up. Its points
@@ -91,11 +78,10 @@
   `EffectKind.resistedBy()` names the resisting stat. Every kind in `EffectCategory.HARD_CC`
   diminishes, on every enemy, each on its own ladder (`DiminishingReturns.of(kind)`, per mob, only
   a fresh application climbs a step): Dazed
-  stops an enemy like a freeze but has no `EffectInteractions` rows: it keeps burn and chill.
-- `EffectInteractions` is the one table of how an active kind acts on another: what it keeps out (a
-  frozen enemy cannot burn) and what applying it consumes (freezing removes a burn, and a chill,
-  which also makes the freeze last longer by the chill's level; shrouding removes a reveal). Add a rule there, never a
-  condition in `ActiveEffects`.
+  stops an enemy like a freeze.
+- `EffectInteractions` is the one place for how an active kind acts on another: what a pool earns, and what a
+  kind keeps out (a reveal keeps `INVISIBLE` out and strips nothing). Add a rule there, never a condition in
+  `ActiveEffects`.
 - `EffectKind.category()` groups kinds for diminishing returns and the inspector; it never changes
   numbers.
 - `EffectTemplate` (sealed) is the authored form an ability carries. Only kinds an enemy ability

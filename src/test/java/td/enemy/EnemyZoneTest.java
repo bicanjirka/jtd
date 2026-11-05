@@ -40,27 +40,23 @@ class EnemyZoneTest {
     }
 
     @Test
-    void hasteGroundSpeedsUpWhatCrossesItAndShakesOffASlow() {
+    void hasteGroundSpeedsUpWhatCrossesIt() {
         DefinedEnemyMob runner = this.anEnemy();
-        runner.applyEffect(Effect.chill(0.5f, 100, DamageSink.none()));
         this.world.zones().add(Zone.haste(runner.getX(), runner.getY(), CELL, Zone.UNTIL_WAVE_END, ZoneOwner.nobody()));
 
         this.world.zones().doTick(1);
 
         assertThat(runner.hasEffect(EffectKind.HASTENED)).isTrue();
-        assertThat(runner.hasEffect(EffectKind.CHILL)).isFalse();
     }
 
     @Test
-    void aHastenedEnemyTakesNoSlowButAFreezeStillStopsIt() {
+    void aFreezeStillStopsAHastenedEnemy() {
         DefinedEnemyMob runner = this.anEnemy();
         runner.applyEffect(Effect.hastened(20, DamageSink.none()));
 
-        runner.applyEffect(Effect.chill(0.5f, 100, DamageSink.none()));
         runner.applyEffect(Effect.freeze(20, DamageSink.none()));
 
-        assertThat(runner.hasEffect(EffectKind.CHILL)).isFalse();
-        assertThat(runner.hasEffect(EffectKind.FREEZE)).isTrue();
+        assertThat(runner.getSpeed()).isZero();
     }
 
     @Test

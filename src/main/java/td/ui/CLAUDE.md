@@ -26,7 +26,7 @@ keeps the seam honest.
   `EnemyLooks.barColor`, with no drawing of its own. Invisibility fades the body itself (`EnemyBodyDraw.cloakProgress`). `EnemyEffects` alone paints
   what an effect draws on an enemy, one draw record per effect and every particle a pure function of the clock and the
   enemy's seed, so nothing is stored and frame cost doesn't grow with particles. Emissions run on the wall clock; bursts
-  follow game time, since they report an event. A cloaked enemy's art fades with it, except a burn strong enough to reveal it.
+  follow game time, since they report an event. A cloaked enemy's art fades with it, except a burn, which reveals it.
 - Timed visuals follow one idiom: the entity records the tick something happened
   (`ticksSinceDeath`, `ticksSinceCriticalHit`, `effectLostWithin`), answered as an
   `OptionalInt` that is empty when it never happened, and the frame builder turns it into a 0..1

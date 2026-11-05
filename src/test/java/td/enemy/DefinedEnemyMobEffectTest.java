@@ -257,18 +257,16 @@ class DefinedEnemyMobEffectTest {
     }
 
     @Test
-    void aRevealedEnemyIsExposedAndHidesAgainWhenItIsShroudedAgain() {
+    void aRevealedEnemyStaysInSightOfACloakCastOnIt() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFixtures.plainMob(context, 100000, 3);
         enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
         enemy.applyEffect(Effect.revealed(100, DamageSink.none()));
-        boolean visibleWhileRevealed = enemy.canBeTargeted();
 
         enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
 
-        assertThat(visibleWhileRevealed).isTrue();
-        assertThat(enemy.canBeTargeted()).isFalse();
-        assertThat(enemy.activeEffectKinds()).doesNotContain(EffectKind.REVEALED);
+        assertThat(enemy.canBeTargeted()).isTrue();
+        assertThat(enemy.activeEffectKinds()).contains(EffectKind.REVEALED);
     }
 
     @Test

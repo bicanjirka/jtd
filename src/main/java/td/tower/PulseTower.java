@@ -421,7 +421,6 @@ public final class PulseTower extends AbstractTower {
         int drag = this.holds.toward(enemy, EffectKind.DRAGGED, spec.hold().dragAt(strength, fromCentre));
         this.applyEffect(enemy, sink -> Effect.dragged(drag, FieldMode.LINGER_TICKS, sink));
         if (modes.has(FieldMode.UNDERTOW)) {
-            this.applyEffect(enemy, sink -> Effect.undertow(FieldMode.LINGER_TICKS, sink));
             this.applyEffect(enemy, sink -> Effect.anchored(FieldMode.LINGER_TICKS, sink));
         }
         if (modes.has(FieldMode.SILENCE)) {
@@ -448,13 +447,10 @@ public final class PulseTower extends AbstractTower {
         this.show(enemy, spec.sight());
     }
 
-    /** Ward's sight: revealed while inside and a while after, and with True Sight not to be shrouded meanwhile. */
+    /** Ward's sight: revealed while inside and a while after. */
     private void show(EnemyMob enemy, SightSpec sight) {
         if (!sight.reveals()) {
             return;
-        }
-        if (sight.unveils()) {
-            this.applyEffect(enemy, sink -> Effect.unveiled(sight.revealTicks(), sink));
         }
         this.reveal(enemy, sight.revealTicks());
     }
@@ -619,9 +615,9 @@ public final class PulseTower extends AbstractTower {
     private static String insideText(FieldMode mode) {
         return switch (mode) {
             case SILENCE -> "silenced";
-            case DEAD_ZONE -> "no heals or shields";
+            case DEAD_ZONE -> "heals and shields worth nothing";
             case CORROSION -> "armor and resist lowered";
-            case UNDERTOW -> "anchored, drag chills";
+            case UNDERTOW -> "anchored";
             case FRAIL -> "take more damage";
             case SOUL_DRAIN -> "spirit drained";
             case PURGE -> "buffs stripped on entry";

@@ -5,7 +5,6 @@ import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.stat.EnemyStat;
 import td.stat.StatAccumulator;
-import td.stat.StatModifier;
 import td.util.ThreadConfined;
 import td.util.TickRate;
 
@@ -28,8 +27,6 @@ import java.util.Set;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class ActiveEffects {
 
-    /** Caps a fuel pool at this multiple of the strongest single application ever taken. */
-    private static final float POOL_LMAX_MULTIPLIER = 2f;
     /**
      * Per-tick decay {@code alpha = e^(POOL_DECAY_EXPONENT / authoredDurationTicks)} leaves about
      * 5% of the fuel when the authored duration ends.
@@ -40,20 +37,12 @@ public final class ActiveEffects {
 
     /** The most speed a chill takes away, so stacked chills never freeze. */
     static final float MAX_CHILL = 0.8f;
-    /** The most speed a full poison pool takes away; weaker than a chill, and it stacks with it. */
-    static final float POISON_MAX_SLOW = 0.3f;
-    /** How much of a burn's damage a full chill takes away. */
-    static final float BURN_CHILL_DAMPENING = 0.5f;
 
     /** A stack debuff loses a stack this often: one per second, half as fast as a pool earns them. */
     public static final int STACK_DECAY_INTERVAL_TICKS = 20;
 
-    /** A burn pool reveals an invisible enemy while it holds more than this, in damage units a tick. */
-    private static final float BURN_REVEAL_FUEL = 30f;
     private static final EffectKind[] BURNING_KINDS = {EffectKind.BURN, EffectKind.SOULFIRE};
     private static final PoolTuning NO_TUNING = PoolTuning.standard();
-    /** What a burning pool above {@link #BURN_REVEAL_FUEL} does to stealth. */
-    private static final StatModifier REVEALED = StatModifier.setTo(0f);
 
     private final Map<EffectKind, Effect> active = new EnumMap<>(EffectKind.class);
     /** Per kind, progress that is not yet a whole step: towards a stack debuff's next lost stack, or a bleed's next unit. */
@@ -79,46 +68,13 @@ public final class ActiveEffects {
     }
 
     /**
-     * Applies {@code effect} unless an active effect keeps its kind out (see
-     * {@link EffectInteractions}); applying it also removes the kinds it consumes. How a freeze and a
-     * fire are bent by what is already there (chill, Rime, Tar) is read from {@link EffectInteractions}.
+     * Applies {@code effect} unless an active effect keeps its kind out (see {@link EffectInteractions}).
      */
     public void apply(Effect effect) {
-        this.apply(effect, PeriodicDamageListener.none());
-    }
-
-    /** {@link #apply(Effect)}, telling {@code listener} about the burn a freeze lands at once. */
-    public void apply(Effect effect, PeriodicDamageListener listener) {
-        Set<EffectKind> kinds = this.active.keySet();
-        if (EffectInteractions.blocks(kinds, effect.kind())) {
+        if (EffectInteractions.blocks(this.active.keySet(), effect.kind())) {
             return;
         }
         Effect incoming = effect;
-        if (effect.kind() == EffectKind.FREEZE) {
-            Effect chill = this.active.get(EffectKind.CHILL);
-            float lengthFactor = EffectInteractions.freezeLengthFactor(kinds, chill == null ? 0f : chillLevel(chill));
-            if (lengthFactor != 1f) {
-                incoming = incoming.withDurationScaledBy(lengthFactor);
-            }
-            int extraTicks = EffectInteractions.freezeExtraTicks(kinds);
-            if (extraTicks > 0) {
-                incoming = incoming.withExtraTicks(extraTicks);
-            }
-            for (EffectKind fire : EffectKind.values()) {
-                Effect burning = fire.isBurning() ? this.active.get(fire) : null;
-                if (burning != null) {
-                    listener.dealing(fire);
-                    burstPool(burning, EffectInteractions.freezeBurstShare(kinds, burning.tuning().freezeBurstShare()));
-                }
-            }
-        }
-        if (effect.kind().isBurning() && !this.active.containsKey(effect.kind())) {
-            float startFactor = EffectInteractions.fireStartFactor(kinds);
-            if (startFactor != 1f) {
-                incoming = incoming.withPoolScaledBy(startFactor);
-            }
-        }
-        EffectInteractions.removedBy(effect.kind()).forEach(this.active::remove);
         switch (incoming.kind().rule().stacking()) {
             case LEVEL -> this.applyChill(incoming);
             case POOL -> this.applyPool(incoming);
@@ -152,9 +108,7 @@ public final class ActiveEffects {
         if (headroom <= 0f) {
             return;
         }
-        FuelContribution authored = incoming.fuel().getFirst();
-        float taken = EffectInteractions.chillTaken(this.active.keySet());
-        FuelContribution contribution = taken != 1f ? authored.scaledTo(authored.amount() * taken) : authored;
+        FuelContribution contribution = incoming.fuel().getFirst();
         FuelContribution added = contribution.amount() <= headroom ? contribution : contribution.scaledTo(headroom);
         if (existing == null) {
             this.active.put(EffectKind.CHILL, incoming.withFuel(List.of(added), 0f));
@@ -183,7 +137,7 @@ public final class ActiveEffects {
         float incomingL0 = incoming.damagePerTick().amount();
         float peakL0 = Math.max(existing.peakL0(), incomingL0);
         PoolTuning tuning = existing.tuning().strongerWith(incoming.tuning());
-        float lmax = tuning.capFactor() * peakL0 * this.poolFactor();
+        float lmax = tuning.capFactor() * peakL0;
         // A negative share would drain the pool and over-pay the others, whose shares are dealt in full.
         float deltaL = Math.max(0f, incomingL0 * (1f - existing.fuelLevel() / lmax));
         List<FuelContribution> fuel = new ArrayList<>(existing.fuel());
@@ -273,11 +227,6 @@ public final class ActiveEffects {
                 : new ShieldGauge(DamageUnits.inPoints(shield.shieldRemaining()), DamageUnits.inPoints(shield.shieldMax()));
     }
 
-    /** Whether crits find this enemy more often: it is exposed, or revealed, which exposes it. */
-    private boolean isExposed() {
-        return EffectInteractions.isActiveOrImplied(EffectKind.EXPOSED, this.active.keySet());
-    }
-
     public boolean has(EffectKind kind) {
         return this.active.containsKey(kind);
     }
@@ -356,7 +305,7 @@ public final class ActiveEffects {
         return switch (kind.rule().stacking()) {
             case LEVEL -> OptionalDouble.of(chillLevel(effect) / MAX_CHILL);
             case POOL -> OptionalDouble.of(Math.min(1f,
-                    effect.fuelLevel() / (effect.tuning().capFactor() * effect.peakL0() * this.poolFactor())));
+                    effect.fuelLevel() / (effect.tuning().capFactor() * effect.peakL0())));
             case REFRESH, SHARED_CLOCK, EARNED, PER_SOURCE -> OptionalDouble.empty();
         };
     }
@@ -386,39 +335,29 @@ public final class ActiveEffects {
 
     /**
      * Adds every active effect's stat modifiers: each kind's {@link EffectKind#modifiersAt} for its
-     * stacks (when what it needs is there), the chill level on speed, the pools' own rules, a heal's
-     * regeneration, and what the burning pools carry. Being exposed or revealed counts once however
-     * many apply. Nothing here allocates.
+     * stacks, the chill level on speed, a heal's regeneration, and what the burning pools carry.
+     * Nothing here allocates.
      */
     public void contributeTo(StatAccumulator<EnemyStat> accumulator) {
-        Set<EffectKind> kinds = this.active.keySet();
         this.burningTuning().carried().applyTo(accumulator);
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
-            this.contribute(entry.getKey(), entry.getValue(), kinds, accumulator);
-        }
-        if (!this.active.containsKey(EffectKind.EXPOSED) && EffectInteractions.isActiveOrImplied(EffectKind.EXPOSED, kinds)) {
-            EffectKind.EXPOSED.modifiersAt(1).applyTo(accumulator);
+            this.contribute(entry.getKey(), entry.getValue(), accumulator);
         }
     }
 
-    private void contribute(EffectKind kind, Effect effect, Set<EffectKind> kinds,
-                            StatAccumulator<EnemyStat> accumulator) {
-        if (!EffectInteractions.contributes(kind, kinds)) {
-            return;
-        }
+    private static void contribute(EffectKind kind, Effect effect, StatAccumulator<EnemyStat> accumulator) {
         switch (kind.rule().stacking()) {
             case SHARED_CLOCK, EARNED -> kind.modifiersAt(effect.stacks()).applyTo(accumulator);
-            case REFRESH -> kind.modifiersAt(1).applyTo(accumulator);
+            case REFRESH, POOL -> kind.modifiersAt(1).applyTo(accumulator);
             case LEVEL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
-            case POOL -> this.contributePool(kind, effect, kinds, accumulator);
             // Of the per-source kinds only a heal gives regeneration; a shield's is zero.
             case PER_SOURCE -> accumulator.addFlat(EnemyStat.REGENERATION, effect.healPerTick());
         }
     }
 
     /**
-     * What the active {@code kind} alone adds to the stats now, for a breakdown: its own modifiers, what the burning
-     * pools carry when it is the first burning kind, and the implied Expose when it is a Reveal.
+     * What the active {@code kind} alone adds to the stats now, for a breakdown: its own modifiers, and what the burning
+     * pools carry when it is the first burning kind.
      */
     public void contributionOf(EffectKind kind, StatAccumulator<EnemyStat> accumulator) {
         Effect effect = this.active.get(kind);
@@ -433,22 +372,7 @@ public final class ActiveEffects {
                 break;
             }
         }
-        this.contribute(kind, effect, this.active.keySet(), accumulator);
-        if (kind == EffectKind.REVEALED && !this.active.containsKey(EffectKind.EXPOSED)) {
-            EffectKind.EXPOSED.modifiersAt(1).applyTo(accumulator);
-        }
-    }
-
-    /** A burning pool that holds enough reveals the enemy; a poison slows by how full it is. */
-    private void contributePool(EffectKind kind, Effect pool, Set<EffectKind> kinds,
-                                StatAccumulator<EnemyStat> accumulator) {
-        if (kind.isBurning() && pool.fuelLevel() > BURN_REVEAL_FUEL) {
-            accumulator.add(EnemyStat.STEALTH, REVEALED);
-        }
-        if (kind == EffectKind.POISON && !kinds.contains(EffectKind.HASTENED)) {
-            float share = pool.fuelLevel() / (POOL_LMAX_MULTIPLIER * pool.peakL0());
-            accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - POISON_MAX_SLOW * Math.min(1f, share));
-        }
+        contribute(kind, effect, accumulator);
     }
 
     /** What every fire on the enemy has made of it together: the stronger of each setting. */
@@ -480,7 +404,6 @@ public final class ActiveEffects {
     /** {@link #tick(float)}, telling {@code listener} which effect deals each part of the tick's damage. */
     public void tick(float cellsMoved, PeriodicDamageListener listener) {
         List<EffectKind> expired = new ArrayList<>();
-        float burnFactor = 1f - BURN_CHILL_DAMPENING * this.chillLevel() / MAX_CHILL;
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();
@@ -490,7 +413,7 @@ public final class ActiveEffects {
                 case EffectDynamics.ChillLevel _ -> tickChill(effect);
                 case EffectDynamics.FuelPool _ -> {
                     listener.dealing(kind);
-                    yield this.tickPool(effect, kind.isBurning() ? burnFactor : 1f);
+                    yield this.tickPool(effect);
                 }
                 case EffectDynamics.Distance distance -> {
                     listener.dealing(kind);
@@ -532,11 +455,11 @@ public final class ActiveEffects {
 
     /**
      * Lets a stack debuff fall one stack each time its progress fills; ends at no
-     * stacks. A Fault Line Fractured holds while the enemy is exposed, and a mark holds while a pool
+     * stacks. A Fault Line Fractured holds while the enemy has Expose, and a mark holds while a pool
      * that earns it is still active.
      */
     private Optional<Effect> decayStacks(Effect debuff) {
-        if (debuff.faultLine() && this.isExposed() || EffectInteractions.isEarnedBy(debuff.kind(), this.active.keySet())) {
+        if (debuff.faultLine() && this.active.containsKey(EffectKind.EXPOSED) || EffectInteractions.isEarnedBy(debuff.kind(), this.active.keySet())) {
             return Optional.of(debuff);
         }
         int slot = debuff.kind().ordinal();
@@ -565,13 +488,12 @@ public final class ActiveEffects {
 
     /**
      * On a pulse tick, deals what the pool would have dealt over the next {@code POOL_PULSE_TICKS}
-     * ticks, rounded and times {@code damageFactor}, split by share. Every tick decays every
-     * contribution by the same {@code alpha}, which decays the total exactly, and lets the stack
-     * clock run. Ends once a tick would round to zero damage before the factor, since exponential
-     * decay never reaches zero. Pulses ride the stack clock, which is a multiple of the pulse
-     * interval, so a pool always pulses on its first tick.
+     * ticks, rounded and split by share. Every tick decays every contribution by the same
+     * {@code alpha}, which decays the total exactly, and lets the stack clock run. Ends once a tick
+     * would round to zero damage, since exponential decay never reaches zero. Pulses ride the stack
+     * clock, which is a multiple of the pulse interval, so a pool always pulses on its first tick.
      */
-    private Optional<Effect> tickPool(Effect effect, float damageFactor) {
+    private Optional<Effect> tickPool(Effect effect) {
         List<FuelContribution> contributions = effect.fuel();
         float total = effect.fuelLevel();
         if (Math.round(total) <= 0) {
@@ -579,7 +501,7 @@ public final class ActiveEffects {
         }
         double alpha = Math.exp(POOL_DECAY_EXPONENT / effect.authoredDurationTicks());
         if (effect.stackClock() % POOL_PULSE_TICKS == 0) {
-            int damage = Math.round(total * (float) windowFactor(alpha) * damageFactor);
+            int damage = Math.round(total * (float) windowFactor(alpha));
             if (damage > 0) {
                 int[] shares = apportionPoolDamage(contributions, total, damage);
                 DamageType type = effect.damagePerTick().type();
@@ -593,9 +515,9 @@ public final class ActiveEffects {
         List<FuelContribution> decayed = contributions.stream()
                 .map(c -> c.decayedBy((float) alpha))
                 .toList();
-        // The clock always counts down by one, as pulses ride it; Ash only earns stacks more often.
+        // The clock always counts down by one, as pulses ride it; a faster stack rate only earns more often.
         int clock = effect.stackClock() - 1;
-        int stackInterval = Math.max(1, Effect.STACK_INTERVAL_TICKS / (this.poolFactor() * effect.tuning().stackRate()));
+        int stackInterval = Math.max(1, Effect.STACK_INTERVAL_TICKS / effect.tuning().stackRate());
         if (clock % stackInterval == 0) {
             this.earnStack(effect.kind());
         }
@@ -603,26 +525,6 @@ public final class ActiveEffects {
             clock = Effect.STACK_INTERVAL_TICKS;
         }
         return Optional.of(effect.withFuel(decayed, effect.peakL0()).withStackClock(clock));
-    }
-
-    /** How much more a pool holds, and how much faster it earns stacks. */
-    private int poolFactor() {
-        return EffectInteractions.poolFactor(this.active.keySet());
-    }
-
-    /** Lands {@code share} of everything {@code pool} would still have dealt, at once, each contributor its part. */
-    private static void burstPool(Effect pool, float share) {
-        float total = pool.fuelLevel();
-        int damage = Math.round(share * pool.remainingPoolDamage());
-        if (damage <= 0) {
-            return;
-        }
-        int[] shares = apportionPoolDamage(pool.fuel(), total, damage);
-        for (int i = 0; i < pool.fuel().size(); i++) {
-            if (shares[i] > 0) {
-                pool.fuel().get(i).sink().apply(new Damage(shares[i], pool.damagePerTick().type()));
-            }
-        }
     }
 
     /** The pool's total over one pulse window as a multiple of its level now: {@code 1 + a + a^2 + ...}. */

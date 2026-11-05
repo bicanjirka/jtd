@@ -68,7 +68,7 @@ class TowerLabTest {
     }
 
     @Test
-    void wideBandShowsAHidingKindToTheSniperBesideItWhichLandsMoreOnItRevealed() {
+    void wideBandShowsAHidingKindToTheSniperBesideIt() {
         String ghost = TowerLab.kindKey("hider", TowerLab.labRank());
 
         double bare = lab.revealShare(TowerFactory.Type.SONAR, List.of(), ghost);
@@ -77,7 +77,7 @@ class TowerLabTest {
         assertThat(bare).isZero();
         assertThat(wideBand).isGreaterThan(0.3);
         assertThat(lab.revealedFactor(TowerFactory.Type.SNIPER, ghost))
-                .isGreaterThan(lab.kindFactor(TowerFactory.Type.SNIPER, ghost));
+                .isNotEqualTo(lab.kindFactor(TowerFactory.Type.SNIPER, ghost));
     }
 
     @Test

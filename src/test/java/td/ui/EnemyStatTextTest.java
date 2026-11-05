@@ -162,15 +162,15 @@ class EnemyStatTextTest {
     @Test
     void anImmunityAnEffectCausesNamesThatEffect() {
         DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.freeze(30, DamageSink.none()));
+        mob.applyEffect(Effect.revealed(30, DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
 
-        SheetIcon burn = iconOf(sheet, "Traits", "effect.burn");
-        assertThat(burn.face().ward()).isEqualTo(IconFace.Ward.IMMUNE);
-        assertThat(burn.tooltip().lines()).anySatisfy(line -> assertThat(line).isInstanceOfSatisfying(
+        SheetIcon cloak = iconOf(sheet, "Traits", "effect.invisible");
+        assertThat(cloak.face().ward()).isEqualTo(IconFace.Ward.IMMUNE);
+        assertThat(cloak.tooltip().lines()).anySatisfy(line -> assertThat(line).isInstanceOfSatisfying(
                 SheetLine.Sentence.class, sentence -> assertThat(sentence.text().mentions())
-                        .contains(EffectKind.FREEZE)));
+                        .contains(EffectKind.REVEALED)));
     }
 
     @Test

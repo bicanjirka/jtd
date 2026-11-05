@@ -458,7 +458,7 @@ class MortarTowerTest {
         this.context.zones().doTick(1);
 
         assertThat(fallout.x()).isEqualTo(target.getX());
-        assertThat(target.activeEffectKinds()).contains(EffectKind.SICKENED, EffectKind.FALLOUT);
+        assertThat(target.activeEffectKinds()).contains(EffectKind.SICKENED, EffectKind.DEAD_ZONE);
     }
 
     @Test

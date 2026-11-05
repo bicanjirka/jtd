@@ -115,13 +115,13 @@ class ObservedEnemyTest {
     @Test
     void anEffectKeptOutIsReportedUnchangedWithWhatKeepsItOut() {
         DefinedEnemyMob mob = this.observed(this.world, plain());
-        mob.applyEffect(Effect.freeze(100, DamageSink.none()));
+        mob.applyEffect(Effect.revealed(100, DamageSink.none()));
 
-        mob.applyEffect(Effect.burn(Damage.magic(100), 40, DamageSink.none()));
+        mob.applyEffect(Effect.invisible(40, DamageSink.none()));
 
         MobEvent.EffectChanged unchanged = this.events.changes(MobEvent.Change.UNCHANGED).getFirst();
-        assertThat(unchanged.kind()).isEqualTo(EffectKind.BURN);
-        assertThat(unchanged.cause()).isEqualTo("kept-out-by:" + EffectKind.FREEZE.title());
+        assertThat(unchanged.kind()).isEqualTo(EffectKind.INVISIBLE);
+        assertThat(unchanged.cause()).isEqualTo("kept-out-by:" + EffectKind.REVEALED.title());
     }
 
     @Test

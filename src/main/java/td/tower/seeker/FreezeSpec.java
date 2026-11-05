@@ -5,7 +5,7 @@ package td.tower.seeker;
  * turns brittle.
  *
  * @param areaCells      the radius, in cells, around the impact that freezes too; {@code 0} for the target only
- * @param brittle        whether a frozen enemy takes extra physical damage
+ * @param brittle        whether a freeze that lands also leaves the enemy taking extra physical damage
  */
 public record FreezeSpec(float areaCells, boolean brittle) {
 

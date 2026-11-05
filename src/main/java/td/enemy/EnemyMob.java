@@ -11,6 +11,9 @@ public interface EnemyMob extends EnemyTarget, HitReceiver, EnemyWalk {
 
     int getHealth();
 
+    /** Whether it died to damage: a leak or a hatch also ends a walk, but neither is a kill. */
+    boolean wasKilled();
+
     /** Health left as a share of the maximum, from {@code 0} to {@code 1}. */
     float getHealthFraction();
 
