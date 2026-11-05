@@ -72,7 +72,7 @@ public class PanelDev extends JPanel {
     private static final float RANK_BADGE_SIZE = 4.5f;
     private static final float PATH_CHEVRON_SIZE = 4f;
     private static final Color PROBLEM = new Color(255, 140, 120);
-    private static final Color MUTED = new Color(150, 170, 150);
+    private static final Color MUTED = Hud.TEXT_PROSE;
     private static final String CARD_PREVIEW = "preview";
     private static final String CARD_PROBLEM = "problem";
     private static final String CARD_NOTHING = "nothing";

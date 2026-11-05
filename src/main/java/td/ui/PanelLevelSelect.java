@@ -59,8 +59,8 @@ public class PanelLevelSelect extends JPanel {
     private static final Color CARD_HOVER_BACKGROUND = Hud.FILL_HOVER;
     private static final Color STAT_BORDER = Hud.BORDER_IDLE;
     private static final Color STAT_LABEL = Hud.BORDER_HOVER;
-    private static final Color PREVIEW_BACKGROUND = new Color(6, 9, 6);
-    private static final Color PREVIEW_GRID_DOT = new Color(22, 30, 22);
+    private static final Color PREVIEW_BACKGROUND = new Color(20, 20, 20);
+    private static final Color PREVIEW_GRID_DOT = new Color(35, 35, 36);
     private static final int CARD_BORDER = 2;
     private static final int CHIP_INSET = 8;
     private static final int KEYED_CARDS = 9;

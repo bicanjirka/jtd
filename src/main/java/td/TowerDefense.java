@@ -46,7 +46,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
@@ -818,12 +817,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         contentCardLayout = new CardLayout();
         getContentPane().setLayout(contentCardLayout);
         gamePanel.setLayout(new GridBagLayout());
-        gamePanel.setBackground(new Color(0, 0, 0));
+        gamePanel.setBackground(Hud.BACKGROUND);
 
         boardPanel.setLayout(new GridBagLayout());
 
-        boardPanel.setBackground(new Color(0, 0, 0));
-        boardPanel.setForeground(new Color(220, 255, 220));
+        boardPanel.setBackground(Hud.BACKGROUND);
+        boardPanel.setForeground(Hud.FOREGROUND);
         boardPanel.setBorder(Hud.outlineBorder());
         boardPanel.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
@@ -862,7 +861,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         gridBagConstraints.weightx = 0.1;
         gridBagConstraints.weighty = 0.1;
         JPanel boardRoom = new JPanel(new BoardFitLayout(boardPanel));
-        boardRoom.setBackground(new Color(0, 0, 0));
+        boardRoom.setBackground(Hud.BACKGROUND);
         boardRoom.add(boardPanel);
         gamePanel.add(boardRoom, gridBagConstraints);
 

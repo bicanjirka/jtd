@@ -8,8 +8,8 @@ The code holds the live values: `Hud`, `Java2DFrameRenderer.colorFor`, `EnemyLoo
 `BoardGround`. A table here is for deciding. When a table and the code disagree on a value, the code is right and the
 table gets fixed.
 
-> **Chrome ships with `FEATURE-hud-identity.md`.** Until then the interface is still green-tinted and section 4's
-> chrome table is the target. Everything else here is true today.
+> **Level cards ship with `FEATURE-hud-identity.md`.** Until then section 5's level table is the target. Everything else
+> here is true today.
 
 ## 1. The idea
 
@@ -65,6 +65,9 @@ text, which had more contrast than it needs (19.4:1).
 | Text, dim | `#A9A9AC` | 8.3:1 | Captions, stat names |
 | Text, prose | `#ACACAF` | 8.5:1 | Sentences |
 | Text | `#EAEAEF` | 16.1:1 | Everything read first, values included |
+
+A painter's own states (the upgrade tree's nodes, a text field's fill, the Info pane's bars) sit between these steps and stay
+private to that painter. They are greys too; a new control uses the ramp.
 
 | Signal | Value | Contrast | Means |
 |---|---|---|---|

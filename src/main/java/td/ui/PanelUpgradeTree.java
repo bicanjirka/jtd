@@ -20,7 +20,6 @@ import td.util.ThreadConfined;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -67,7 +66,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private transient Optional<ConfirmPopup> confirmation = Optional.empty();
 
     public PanelUpgradeTree() {
-        this.setBackground(Color.BLACK);
+        this.setBackground(Hud.BACKGROUND);
         this.setBorder(Hud.panelBorder("Upgrades"));
         this.setPreferredSize(new Dimension(UpgradeTreeLayout.WIDTH, UpgradeTreeLayout.HEIGHT));
         MouseAdapter mouse = new MouseAdapter() {

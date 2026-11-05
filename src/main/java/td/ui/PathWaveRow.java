@@ -11,7 +11,6 @@ import td.wave.Wave;
 
 import javax.swing.JPanel;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -78,7 +77,7 @@ final class PathWaveRow extends JPanel {
 
     private void initComponents() {
         setLayout(new GridBagLayout());
-        setBackground(Color.BLACK);
+        setBackground(Hud.BACKGROUND);
         setFocusable(false);
 
         this.swatch.setPreferredSize(new Dimension(SWATCH_WIDTH, SWATCH_HEIGHT));

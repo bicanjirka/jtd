@@ -6,7 +6,6 @@ import td.util.ThreadConfined;
 
 import javax.swing.JPanel;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -87,7 +86,7 @@ public class PanelGameConsole extends JPanel {
 
     private void initComponents() {
         this.setLayout(new GridBagLayout());
-        this.setBackground(new Color(0, 0, 0));
+        this.setBackground(Hud.BACKGROUND);
         this.setFocusable(false);
         Dimension size = new Dimension(WIDTH, 402);
         this.setMaximumSize(new Dimension(WIDTH, 2147483647));

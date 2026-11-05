@@ -214,7 +214,7 @@ public final class TermIconPainter {
         if (!face.below().isEmpty()) {
             g.setFont(LABEL_FONT);
             float width = g.getFontMetrics().stringWidth(face.below());
-            g.setColor(new Color(220, 255, 220));
+            g.setColor(Hud.FOREGROUND);
             g.drawString(face.below(), (size - width) / 2f, size + LABEL - 1f);
         }
     }

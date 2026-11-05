@@ -42,13 +42,13 @@ class InfoSheetDocumentTest {
     }
 
     @Test
-    void aValueBetterThanItsBaseIsGreenAWorseOnePinkAndAnUnchangedOneTheValueColour() throws BadLocationException {
+    void onlyAValueWorseThanItsBaseTakesAColour() throws BadLocationException {
         StyledDocument doc = layOut(
                 Row.plain(Glyph.RING, "Range", "3.2 → 3.7").withTrend(Trend.BETTER),
                 Row.plain(Glyph.CHEVRON, "Fire rate", "0.5 → 0.4/s").withTrend(Trend.WORSE),
                 Row.plain(Glyph.DOT, "Targets", "first"));
 
-        assertThat(colourOf(doc, "3.2 → 3.7")).isEqualTo(new Color(140, 255, 140));
+        assertThat(colourOf(doc, "3.2 → 3.7")).isEqualTo(Hud.FOREGROUND);
         assertThat(colourOf(doc, "0.5 → 0.4/s")).isEqualTo(new Color(255, 120, 120));
         assertThat(colourOf(doc, "first")).isEqualTo(Hud.FOREGROUND);
     }

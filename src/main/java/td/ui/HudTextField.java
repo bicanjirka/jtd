@@ -23,9 +23,9 @@ final class HudTextField extends JTextField {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final Color FIELD_BACKGROUND = new Color(14, 22, 14);
-    private static final Color SELECTION = new Color(46, 66, 46);
-    private static final Color GHOST = new Color(100, 130, 100);
+    private static final Color FIELD_BACKGROUND = new Color(29, 29, 30);
+    private static final Color SELECTION = Hud.FILL_PRESSED;
+    private static final Color GHOST = new Color(128, 128, 131);
 
     private String ghost = "";
     private String chip = "";

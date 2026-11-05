@@ -272,18 +272,18 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
         setLayout(new GridBagLayout());
 
-        setBackground(new Color(0, 0, 0));
+        setBackground(Hud.BACKGROUND);
         setBorder(Hud.panelBorder("Info"));
-        setForeground(new Color(220, 255, 220));
+        setForeground(Hud.FOREGROUND);
         setMaximumSize(new Dimension(200, 2147483647));
         setMinimumSize(new Dimension(200, 150));
         setPreferredSize(new Dimension(200, 300));
-        jScrollPane1.setBackground(new Color(0, 0, 0));
+        jScrollPane1.setBackground(Hud.BACKGROUND);
         jScrollPane1.setBorder(null);
-        jScrollPane1.setForeground(new Color(220, 255, 220));
-        sheetPane.setBackground(new Color(0, 0, 0));
+        jScrollPane1.setForeground(Hud.FOREGROUND);
+        sheetPane.setBackground(Hud.BACKGROUND);
         sheetPane.setBorder(null);
-        sheetPane.setForeground(new Color(220, 255, 220));
+        sheetPane.setForeground(Hud.FOREGROUND);
         jScrollPane1.setViewportView(sheetPane);
         sheetPane.addComponentListener(new ComponentAdapter() {
             @Override
