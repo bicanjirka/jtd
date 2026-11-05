@@ -135,7 +135,7 @@ final class HtmlReport {
         Arrays.stream(EffectKind.values()).filter(kind -> use.starts().containsKey(kind))
                 .sorted(java.util.Comparator.comparingDouble(use::uptime).reversed())
                 .forEach(kind -> this.html.append("<tr><td>").append(BalanceReport.name(kind)).append("</td><td>")
-                        .append(String.format("%.1f%%", use.uptime(kind) * 100)).append("</td></tr>"));
+                        .append(String.format(Locale.ROOT, "%.1f%%", use.uptime(kind) * 100)).append("</td></tr>"));
         this.html.append("</table></div><div class=\"card\"><table><tr><th>never triggered</th><th></th></tr>");
         this.coverageRow("effects", run.effectsNeverStarted().stream().map(BalanceReport::name).toList());
         this.coverageRow("enemy abilities", run.abilitiesNeverUsed());
@@ -158,20 +158,20 @@ final class HtmlReport {
         this.html.append("<div class=\"tiles\">");
         this.tile("Difficulty", difficulty.startsWith("IN BAND") ? "good"
                         : difficulty.startsWith("TOO HARD") ? "critical" : "serious",
-                head(difficulty), String.format("competent holds %.0f%% (%.0f-%.0f); wins %s", margin.value(),
+                head(difficulty), String.format(Locale.ROOT, "competent holds %.0f%% (%.0f-%.0f); wins %s", margin.value(),
                         margin.low(), margin.high(), run.winRate(BalanceReport.COMPETENT).formatPercent()));
         this.tile("Positioning", positioning.startsWith("MATTERS") ? "good" : "serious", head(positioning),
-                String.format("chosen cells %.0f%%, random cells %.0f%%", margin.value(),
+                String.format(Locale.ROOT, "chosen cells %.0f%%, random cells %.0f%%", margin.value(),
                         run.margin(BalanceReport.RANDOM_CELLS).value()));
         this.tile("Upgrades", upgrades.startsWith("MATTERS") ? "good" : "serious", head(upgrades),
-                String.format("with %.0f%%, without %.0f%%", margin.value(),
+                String.format(Locale.ROOT, "with %.0f%%, without %.0f%%", margin.value(),
                         run.margin(BalanceReport.NO_UPGRADES).value()));
         Map<TowerFactory.Type, Double> shares = run.damageShares(BalanceReport.COMPETENT);
         TowerFactory.Type top = shares.entrySet().stream().max(Map.Entry.comparingByValue()).map(Map.Entry::getKey)
                 .orElse(TowerFactory.Type.SNIPER);
         double topShare = shares.getOrDefault(top, 0.0);
         this.tile("Top tower", topShare > 0.5 ? "serious" : "good", top.displayName(),
-                String.format("lands %.0f%% of the competent player's damage", topShare * 100));
+                String.format(Locale.ROOT, "lands %.0f%% of the competent player's damage", topShare * 100));
         int layouts = run.winningLayouts().size();
         this.tile("Ways to win", layouts > 1 ? "good" : "serious",
                 layouts + (layouts == 1 ? " layout" : " layouts"), "winning builds that share under half their towers");
@@ -209,15 +209,15 @@ final class HtmlReport {
         int height = players.size() * (bar + gap) + 28;
         double scale = (width - left - 60) / max;
         StringBuilder svg = new StringBuilder();
-        svg.append(String.format("<svg width=\"%d\" height=\"%d\" role=\"img\" aria-label=\"margins by player\">",
+        svg.append(String.format(Locale.ROOT, "<svg width=\"%d\" height=\"%d\" role=\"img\" aria-label=\"margins by player\">",
                 width, height));
-        svg.append(String.format("<rect x=\"%.1f\" y=\"0\" width=\"%.1f\" height=\"%d\" fill=\"var(--good)\""
+        svg.append(String.format(Locale.ROOT, "<rect x=\"%.1f\" y=\"0\" width=\"%.1f\" height=\"%d\" fill=\"var(--good)\""
                         + " opacity=\".12\"><title>target band: %.0f-%.0f%%</title></rect>", left + BalanceReport.MARGIN_LOW
                         * scale, (BalanceReport.MARGIN_HIGH - BalanceReport.MARGIN_LOW) * scale, height - 20,
                 BalanceReport.MARGIN_LOW, BalanceReport.MARGIN_HIGH));
         for (int tick = 0; tick <= max; tick += 100) {
             double x = left + tick * scale;
-            svg.append(String.format("<line x1=\"%.1f\" x2=\"%.1f\" y1=\"0\" y2=\"%d\" stroke=\"var(--grid)\"/>"
+            svg.append(String.format(Locale.ROOT, "<line x1=\"%.1f\" x2=\"%.1f\" y1=\"0\" y2=\"%d\" stroke=\"var(--grid)\"/>"
                     + "<text x=\"%.1f\" y=\"%d\" text-anchor=\"middle\">%d%%</text>", x, x, height - 20, x,
                     height - 6, tick));
         }
@@ -227,15 +227,15 @@ final class HtmlReport {
             int y = i * (bar + gap) + 4;
             String fill = player.equals(BalanceReport.COMPETENT) ? "var(--accent)" : "var(--gray)";
             double w = Math.max(2, margin.value() * scale);
-            svg.append(String.format("<text class=\"label\" x=\"%d\" y=\"%d\" text-anchor=\"end\">%s</text>",
+            svg.append(String.format(Locale.ROOT, "<text class=\"label\" x=\"%d\" y=\"%d\" text-anchor=\"end\">%s</text>",
                     left - 8, y + bar - 5, player));
-            svg.append(String.format("<path d=\"M%d,%d h%.1f a4,4 0 0 1 4,4 v%d a4,4 0 0 1 -4,4 h%.1f z\" fill=\"%s\">"
+            svg.append(String.format(Locale.ROOT, "<path d=\"M%d,%d h%.1f a4,4 0 0 1 4,4 v%d a4,4 0 0 1 -4,4 h%.1f z\" fill=\"%s\">"
                             + "<title>%s: holds %.0f%% (%.0f-%.0f), wins %s</title></path>", left, y, w - 4, bar - 8,
                     -(w - 4), fill, player, margin.value(), margin.low(), margin.high(),
                     run.winRate(player).formatPercent()));
-            svg.append(String.format("<line x1=\"%.1f\" x2=\"%.1f\" y1=\"%d\" y2=\"%d\" stroke=\"var(--ink2)\"/>",
+            svg.append(String.format(Locale.ROOT, "<line x1=\"%.1f\" x2=\"%.1f\" y1=\"%d\" y2=\"%d\" stroke=\"var(--ink2)\"/>",
                     left + margin.low() * scale, left + margin.high() * scale, y + bar / 2, y + bar / 2));
-            svg.append(String.format("<text class=\"label\" x=\"%.1f\" y=\"%d\">%.0f%%</text>",
+            svg.append(String.format(Locale.ROOT, "<text class=\"label\" x=\"%.1f\" y=\"%d\">%.0f%%</text>",
                     left + Math.max(w, margin.high() * scale) + 6, y + bar - 5, margin.value()));
         }
         svg.append("</svg>");
@@ -261,12 +261,12 @@ final class HtmlReport {
         double max = Double.isNaN(fixedMax) ? Arrays.stream(values).filter(v -> !Double.isNaN(v)).max().orElse(1)
                 : fixedMax;
         max = max <= 0 ? 1 : max;
-        StringBuilder svg = new StringBuilder(String.format("<svg width=\"%d\" height=\"%d\" role=\"img\""
+        StringBuilder svg = new StringBuilder(String.format(Locale.ROOT, "<svg width=\"%d\" height=\"%d\" role=\"img\""
                 + " aria-label=\"%s\">", width, height, title));
         for (int g = 0; g <= 4; g++) {
             double y = 16 + plot - plot * g / 4.0;
-            String label = share ? String.format("%.0f%%", g * 25.0) : BalanceReport.compact(max * g / 4);
-            svg.append(String.format("<line x1=\"40\" x2=\"%d\" y1=\"%.1f\" y2=\"%.1f\" stroke=\"var(--grid)\"/>"
+            String label = share ? String.format(Locale.ROOT, "%.0f%%", g * 25.0) : BalanceReport.compact(max * g / 4);
+            svg.append(String.format(Locale.ROOT, "<line x1=\"40\" x2=\"%d\" y1=\"%.1f\" y2=\"%.1f\" stroke=\"var(--grid)\"/>"
                     + "<text x=\"36\" y=\"%.1f\" text-anchor=\"end\">%s</text>", width, y, y, y + 4, label));
         }
         for (int r = 0; r < rounds; r++) {
@@ -276,20 +276,20 @@ final class HtmlReport {
             double y = 16 + plot - h;
             boolean leaked = leaks.length > r && leaks[r] > 0.05;
             String fill = leaked ? "var(--critical)" : "var(--accent)";
-            svg.append(String.format("<rect x=\"%.1f\" y=\"%.1f\" width=\"%d\" height=\"%.1f\" rx=\"2\" fill=\"%s\">"
+            svg.append(String.format(Locale.ROOT, "<rect x=\"%.1f\" y=\"%.1f\" width=\"%d\" height=\"%.1f\" rx=\"2\" fill=\"%s\">"
                             + "<title>round %d: %s%s</title></rect>", x, y, column - 4, h, fill, r + 1,
-                    share ? String.format("%.0f%%", v * 100) : BalanceReport.compact(v),
-                    leaked ? String.format(", %.1f leaks", leaks[r]) : ""));
+                    share ? String.format(Locale.ROOT, "%.0f%%", v * 100) : BalanceReport.compact(v),
+                    leaked ? String.format(Locale.ROOT, ", %.1f leaks", leaks[r]) : ""));
             if (leaked) {
-                svg.append(String.format("<text class=\"label\" x=\"%.1f\" y=\"%.1f\" text-anchor=\"middle\">%.0f"
+                svg.append(String.format(Locale.ROOT, "<text class=\"label\" x=\"%.1f\" y=\"%.1f\" text-anchor=\"middle\">%.0f"
                         + "</text>", x + (column - 4) / 2.0, y - 3, Math.max(1, leaks[r])));
             }
             if (rounds <= 20 || r % 2 == 0) {
-                svg.append(String.format("<text x=\"%.1f\" y=\"%d\" text-anchor=\"middle\">%d</text>",
+                svg.append(String.format(Locale.ROOT, "<text x=\"%.1f\" y=\"%d\" text-anchor=\"middle\">%d</text>",
                         x + (column - 4) / 2.0, 16 + plot + 14, r + 1));
             }
         }
-        svg.append(String.format("<text x=\"40\" y=\"%d\">%s</text></svg>", height - 4, title));
+        svg.append(String.format(Locale.ROOT, "<text x=\"40\" y=\"%d\">%s</text></svg>", height - 4, title));
         this.html.append("<div class=\"card\">").append(svg);
         if (leaks.length > 0) {
             this.html.append("<div class=\"legend\"><span class=\"sw\" style=\"background:var(--critical)\"></span>"
@@ -349,27 +349,27 @@ final class HtmlReport {
         int plot = 90;
         double last = samples.getLast().tick();
         double max = share ? 1 : Math.max(1, samples.stream().mapToDouble(value).max().orElse(1));
-        StringBuilder svg = new StringBuilder(String.format("<svg width=\"100%%\" viewBox=\"0 0 %d %d\" role=\"img\""
+        StringBuilder svg = new StringBuilder(String.format(Locale.ROOT, "<svg width=\"100%%\" viewBox=\"0 0 %d %d\" role=\"img\""
                 + " aria-label=\"%s\">", width + 50, plot + 36, title));
         int round = 0;
         for (PlayRecord.Sample sample : samples) {
             if (sample.round() != round) {
                 round = sample.round();
                 double x = 40 + width * sample.tick() / last;
-                svg.append(String.format("<line x1=\"%.1f\" x2=\"%.1f\" y1=\"8\" y2=\"%d\" stroke=\"var(--grid)\"/>",
+                svg.append(String.format(Locale.ROOT, "<line x1=\"%.1f\" x2=\"%.1f\" y1=\"8\" y2=\"%d\" stroke=\"var(--grid)\"/>",
                         x, x, 8 + plot));
             }
         }
         StringBuilder points = new StringBuilder();
         for (PlayRecord.Sample sample : samples) {
-            points.append(String.format("%.1f,%.1f ", 40 + width * sample.tick() / last,
+            points.append(String.format(Locale.ROOT, "%.1f,%.1f ", 40 + width * sample.tick() / last,
                     8 + plot - plot * value.applyAsDouble(sample) / max));
         }
-        svg.append(String.format("<polyline points=\"%s\" fill=\"none\" stroke=\"var(--accent)\""
+        svg.append(String.format(Locale.ROOT, "<polyline points=\"%s\" fill=\"none\" stroke=\"var(--accent)\""
                 + " stroke-width=\"1.5\"/>", points.toString().trim()));
-        svg.append(String.format("<text x=\"36\" y=\"14\" text-anchor=\"end\">%s</text>",
+        svg.append(String.format(Locale.ROOT, "<text x=\"36\" y=\"14\" text-anchor=\"end\">%s</text>",
                 share ? "100%" : BalanceReport.compact(max)));
-        svg.append(String.format("<text x=\"40\" y=\"%d\">%s</text></svg>", plot + 30, title));
+        svg.append(String.format(Locale.ROOT, "<text x=\"40\" y=\"%d\">%s</text></svg>", plot + 30, title));
         this.html.append("<div class=\"card\">").append(svg).append("</div>");
     }
 
@@ -381,14 +381,14 @@ final class HtmlReport {
         int width = level.width() * cell;
         int height = level.height() * cell;
         double pixel = (double) cell / survey.scale();
-        StringBuilder svg = new StringBuilder(String.format("<svg width=\"%d\" height=\"%d\" role=\"img\""
+        StringBuilder svg = new StringBuilder(String.format(Locale.ROOT, "<svg width=\"%d\" height=\"%d\" role=\"img\""
                 + " aria-label=\"%s\"><rect width=\"%d\" height=\"%d\" fill=\"var(--surface)\"/>", width,
                 height + 16, escape(title), width, height));
         for (int x = 0; x < level.width(); x++) {
             for (int y = 0; y < level.height(); y++) {
                 double value = values.getOrDefault(new Point(x, y), 0.0);
                 double t = max <= 0 ? 0 : value / max;
-                svg.append(String.format("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"%s\""
+                svg.append(String.format(Locale.ROOT, "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"%s\""
                                 + " stroke=\"var(--surface)\" stroke-width=\"1\"><title>(%d,%d) %s</title></rect>",
                         x * cell, y * cell, cell, cell, sequential(t), x, y, BalanceReport.compact(value)));
             }
@@ -397,12 +397,12 @@ final class HtmlReport {
             StringBuilder points = new StringBuilder();
             List<Vec2> samples = survey.samples(path);
             for (int i = 0; i < samples.size(); i += 2) {
-                points.append(String.format("%.1f,%.1f ", samples.get(i).x() * pixel, samples.get(i).y() * pixel));
+                points.append(String.format(Locale.ROOT, "%.1f,%.1f ", samples.get(i).x() * pixel, samples.get(i).y() * pixel));
             }
             svg.append("<polyline points=\"").append(points).append("\" fill=\"none\" stroke=\"var(--ink2)\""
                     + " stroke-opacity=\".55\" stroke-width=\"").append(cell > SMALL_CELL ? 2 : 1).append("\"/>");
         }
-        svg.append(String.format("<text x=\"0\" y=\"%d\">%s</text></svg>", height + 12, escape(title)));
+        svg.append(String.format(Locale.ROOT, "<text x=\"0\" y=\"%d\">%s</text></svg>", height + 12, escape(title)));
         this.html.append("<div class=\"card\">").append(svg).append("</div>");
     }
 
@@ -412,7 +412,7 @@ final class HtmlReport {
             return "var(--surface)";
         }
         int step = (int) Math.ceil(Math.min(1, t) * STEPS);
-        return String.format("color-mix(in oklab, var(--deep) %d%%, var(--surface))", 8 + step * 92 / STEPS);
+        return String.format(Locale.ROOT, "color-mix(in oklab, var(--deep) %d%%, var(--surface))", 8 + step * 92 / STEPS);
     }
 
     /** Blue above 1, red below, the neutral midpoint at 1; a factor of 2 or 0 is the full pole. */
@@ -420,7 +420,7 @@ final class HtmlReport {
         double t = Math.clamp(factor - 1, -1.0, 1.0);
         int step = (int) Math.round(Math.abs(t) * 4) * 25;
         String pole = t >= 0 ? "var(--accent)" : "var(--neg)";
-        return step == 0 ? "var(--mid)" : String.format("color-mix(in oklab, %s %d%%, var(--mid))", pole, step);
+        return step == 0 ? "var(--mid)" : String.format(Locale.ROOT, "color-mix(in oklab, %s %d%%, var(--mid))", pole, step);
     }
 
     private static Map<Point, Double> deaths(LevelRun run) {
@@ -465,10 +465,10 @@ final class HtmlReport {
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             double share = shares.getOrDefault(type, 0.0);
             this.html.append("<tr><td>").append(type.displayName()).append("</td><td>")
-                    .append(String.format("%.0f%%", share * 100)).append("</td><td style=\"text-align:left\">")
-                    .append(String.format("<svg width=\"220\" height=\"12\"><rect width=\"%.1f\" height=\"12\""
+                    .append(String.format(Locale.ROOT, "%.0f%%", share * 100)).append("</td><td style=\"text-align:left\">")
+                    .append(String.format(Locale.ROOT, "<svg width=\"220\" height=\"12\"><rect width=\"%.1f\" height=\"12\""
                             + " rx=\"3\" fill=\"var(--accent)\"/></svg>", Math.max(1, share * 220)))
-                    .append("</td><td>").append(String.format("%.1f", counts.getOrDefault(type, 0.0)))
+                    .append("</td><td>").append(String.format(Locale.ROOT, "%.1f", counts.getOrDefault(type, 0.0)))
                     .append("</td>").append(workCells(work.get(type), counts.getOrDefault(type, 0.0) * plays))
                     .append("</tr>");
         }
@@ -481,7 +481,7 @@ final class HtmlReport {
             return "<td></td><td></td><td></td><td></td><td></td>";
         }
         double secondsEach = towersOverAllPlays == 0 ? 0 : work.secondsInReach() / towersOverAllPlays;
-        return String.format("<td>%.1f</td><td>%.0f</td><td>%.0f%%</td><td>%.0f%%</td><td style=\"text-align:left\">%s</td>",
+        return String.format(Locale.ROOT, "<td>%.1f</td><td>%.0f</td><td>%.0f%%</td><td>%.0f%%</td><td style=\"text-align:left\">%s</td>",
                 work.pointsPerSecondInReach(), secondsEach, work.hits().shieldShare() * 100, work.hits().overkillShare() * 100,
                 escape(work.topKinds(BalanceReport.TOP_KINDS)));
     }
@@ -496,7 +496,7 @@ final class HtmlReport {
             }
             this.html.append("<tr><td>").append(player).append("</td>");
             for (double share : run.upgradeShareByThird(player)) {
-                this.html.append("<td>").append(Double.isNaN(share) ? "-" : String.format("%.0f%%", share * 100))
+                this.html.append("<td>").append(Double.isNaN(share) ? "-" : String.format(Locale.ROOT, "%.0f%%", share * 100))
                         .append("</td>");
             }
             this.html.append("</tr>");
@@ -516,7 +516,7 @@ final class HtmlReport {
             for (TowerFactory.Type type : TowerLab.damageDealers()) {
                 double factor = lab.kindFactor(type, key);
                 this.html.append("<td class=\"heat\" style=\"background:").append(diverging(factor)).append("\">")
-                        .append(String.format("%.2f", factor)).append("</td>");
+                        .append(String.format(Locale.ROOT, "%.2f", factor)).append("</td>");
             }
             this.html.append("</tr>");
         }
@@ -537,7 +537,7 @@ final class HtmlReport {
                             : BalanceReport.marginText(run.margin(BalanceReport.alone(type))))
                     .append("</td><td>").append(BalanceReport.marginText(run.margin(BalanceReport.banned(type))))
                     .append("</td><td>")
-                    .append(String.format("x%.2f (%.2f-%.2f)", ratio.value(), ratio.low(), ratio.high()))
+                    .append(String.format(Locale.ROOT, "x%.2f (%.2f-%.2f)", ratio.value(), ratio.low(), ratio.high()))
                     .append("</td></tr>");
         }
         this.html.append("</table></div>");

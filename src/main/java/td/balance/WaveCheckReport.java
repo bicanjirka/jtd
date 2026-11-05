@@ -186,7 +186,7 @@ public final class WaveCheckReport {
         PlayerSpec strong = StrongPlayer.spec(BalanceReport.STRONG, labs);
         PlayerSpec competent = CompetentPlayer.spec(BalanceReport.COMPETENT, labs, CompetentPlayer.Style.standard());
         int rounds = level.paths().getFirst().waves().size();
-        this.out.printf("=== %s: %d credits, %d lives, %d rounds; %d seeds ===%n", level.name(),
+        this.out.printf(Locale.ROOT, "=== %s: %d credits, %d lives, %d rounds; %d seeds ===%n", level.name(),
                 level.startingCredits(), level.startingLives(), rounds, this.options.seeds());
 
         List<PlayRecord> strongPlays = List.of();
@@ -200,7 +200,7 @@ public final class WaveCheckReport {
         if (before > 0) {
             strongPlays.parallelStream().forEach(play -> Saves.write(level, before, play.play().seed(),
                     LevelPlay.saveBefore(survey, play.actions(), play.play().seed(), before)));
-            this.out.printf("%nkept the strong plays' games before wave %d in %s%n", before,
+            this.out.printf(Locale.ROOT, "%nkept the strong plays' games before wave %d in %s%n", before,
                     Saves.file(level, before, FIRST_SEED).getParent());
         }
         if (this.options.parts().contains(Part.REPLAYED)) {
@@ -224,7 +224,7 @@ public final class WaveCheckReport {
         if (this.options.parts().contains(Part.STRIP)) {
             this.printStrip(survey, lab, strongPlays);
         }
-        this.out.printf("%n(%.0fs)%n", (System.nanoTime() - started) / 1e9);
+        this.out.printf(Locale.ROOT, "%n(%.0fs)%n", (System.nanoTime() - started) / 1e9);
     }
 
     private List<PlayRecord> plays(BoardSurvey survey, PlayerSpec player) {
@@ -243,12 +243,12 @@ public final class WaveCheckReport {
 
     private void printMargin(String what, int[] margins) {
         Estimate estimate = Estimate.of(Arrays.stream(margins).asDoubleStream().toArray());
-        this.out.printf("%n%s: %s%%  per seed %s%n", what, estimate.format(0), Arrays.toString(margins));
+        this.out.printf(Locale.ROOT, "%n%s: %s%%  per seed %s%n", what, estimate.format(0), Arrays.toString(margins));
     }
 
     private void printPlays(LevelDefinition level, List<PlayRecord> strong, List<PlayRecord> competent) {
         this.out.println();
-        this.out.printf("strong wins %d of %d at authored health; competent %d of %d%n",
+        this.out.printf(Locale.ROOT, "strong wins %d of %d at authored health; competent %d of %d%n",
                 strong.stream().filter(play -> play.result().won()).count(), strong.size(),
                 competent.stream().filter(play -> play.result().won()).count(), competent.size());
         this.out.println("strong loses in round: " + lossRounds(strong));
@@ -260,7 +260,7 @@ public final class WaveCheckReport {
         this.out.println("PRESSURE BY ROUND (closest: how far the furthest enemy got, 0-9; leaked: per play)");
         int rounds = level.paths().getFirst().waves().size();
         this.out.println("  round            " + IntStream.rangeClosed(1, rounds)
-                .mapToObj(round -> String.format("%5d", round)).collect(Collectors.joining()));
+                .mapToObj(round -> String.format(Locale.ROOT, "%5d", round)).collect(Collectors.joining()));
         this.printRow("strong closest   ", strong, rounds, round -> round.pressure().closest() * 10, "%5.0f");
         this.printRow("strong leaked    ", strong, rounds, round -> round.pressure().leaked(), "%5.1f");
         this.printRow("competent closest", competent, rounds, round -> round.pressure().closest() * 10, "%5.0f");
@@ -272,7 +272,7 @@ public final class WaveCheckReport {
                 .flatMap(play -> play.towers().stream())
                 .collect(Collectors.groupingBy(PlayRecord.TowerLog::type, Collectors.counting()))
                 .entrySet().stream().sorted(Map.Entry.comparingByKey())
-                .map(entry -> String.format("%s %.1f", entry.getKey().displayName(),
+                .map(entry -> String.format(Locale.ROOT, "%s %.1f", entry.getKey().displayName(),
                         entry.getValue() / (double) strong.size()))
                 .collect(Collectors.joining(", ")));
         this.printRolesBrought(strong);
@@ -286,7 +286,7 @@ public final class WaveCheckReport {
                 .collect(Collectors.groupingBy(end -> end.round() + ":" + TowerLab.kindKey(end.foe().kind(),
                         end.foe().rank()), Collectors.counting()))
                 .entrySet().stream().sorted(Map.Entry.comparingByKey())
-                .map(entry -> String.format("r%s %.1f", entry.getKey(), entry.getValue() / (double) plays.size()))
+                .map(entry -> String.format(Locale.ROOT, "r%s %.1f", entry.getKey(), entry.getValue() / (double) plays.size()))
                 .collect(Collectors.joining(", "));
     }
 
@@ -302,8 +302,8 @@ public final class WaveCheckReport {
     private void printRolesBrought(List<PlayRecord> strong) {
         for (Map.Entry<Integer, Set<Role>> check : new java.util.TreeMap<>(this.options.checks()).entrySet()) {
             int wave = check.getKey();
-            this.out.printf("  strong brings to wave %d: %s%n", wave, check.getValue().stream()
-                    .map(role -> String.format("%s %d/%d (leaking heavily there without it %d, with it %d)",
+            this.out.printf(Locale.ROOT, "  strong brings to wave %d: %s%n", wave, check.getValue().stream()
+                    .map(role -> String.format(Locale.ROOT, "%s %d/%d (leaking heavily there without it %d, with it %d)",
                             role.label(), strong.stream().filter(play -> brings(play, wave, role)).count(),
                             strong.size(),
                             strong.stream().filter(play -> !brings(play, wave, role) && leakedIn(play, wave) >= HEAVY)
@@ -334,7 +334,7 @@ public final class WaveCheckReport {
                 sums[round.number() - 1] += value.applyAsDouble(round) / plays.size();
             }
         }
-        this.out.println("  " + label + Arrays.stream(sums).mapToObj(sum -> String.format(format, sum))
+        this.out.println("  " + label + Arrays.stream(sums).mapToObj(sum -> String.format(Locale.ROOT, format, sum))
                 .collect(Collectors.joining()));
     }
 
@@ -370,28 +370,28 @@ public final class WaveCheckReport {
         this.out.println();
         this.out.println("ROLE BANS (strong player denied the role: share of seeds leaking heavily each round)");
         this.out.println("  round          " + IntStream.rangeClosed(1, rounds)
-                .mapToObj(round -> String.format("%4d", round)).collect(Collectors.joining()));
-        this.out.println(String.format("  %-15s", "nothing denied") + IntStream.rangeClosed(1, rounds)
-                .mapToObj(round -> String.format("%4.0f", 100 * share(unbanned, play -> leakedIn(play, round) >= HEAVY)))
+                .mapToObj(round -> String.format(Locale.ROOT, "%4d", round)).collect(Collectors.joining()));
+        this.out.println(String.format(Locale.ROOT, "  %-15s", "nothing denied") + IntStream.rangeClosed(1, rounds)
+                .mapToObj(round -> String.format(Locale.ROOT, "%4.0f", 100 * share(unbanned, play -> leakedIn(play, round) >= HEAVY)))
                 .collect(Collectors.joining()) + "   first heavy leak: " + firstLeaks(unbanned));
-        banned.forEach((role, plays) -> this.out.println(String.format("  %-15s", "no-" + role.label())
-                + IntStream.rangeClosed(1, rounds).mapToObj(round -> String.format("%4.0f",
+        banned.forEach((role, plays) -> this.out.println(String.format(Locale.ROOT, "  %-15s", "no-" + role.label())
+                + IntStream.rangeClosed(1, rounds).mapToObj(round -> String.format(Locale.ROOT, "%4.0f",
                         100 * share(plays, play -> leakedIn(play, round) >= HEAVY)))
                         .collect(Collectors.joining())
                 + "   first heavy leak: " + firstLeaks(plays)));
         Map<CompetentPlayer.Style, List<PlayRecord>> restOf = new java.util.HashMap<>();
         for (Map.Entry<Integer, Set<Role>> check : new java.util.TreeMap<>(this.options.checks()).entrySet()) {
             int wave = check.getKey();
-            this.out.printf("  wave %d asks for %s%n", wave,
+            this.out.printf(Locale.ROOT, "  wave %d asks for %s%n", wave,
                     check.getValue().stream().map(Role::label).collect(Collectors.joining(" and ")));
             for (Role role : check.getValue()) {
                 double breaks = share(banned.get(role), play -> firstHeavyLeak(play) == wave);
-                this.out.printf("    a) denied %s, first heavy leak there: %.0f%% %s%n", role.label(), 100 * breaks,
+                this.out.printf(Locale.ROOT, "    a) denied %s, first heavy leak there: %.0f%% %s%n", role.label(), 100 * breaks,
                         verdict(breaks >= MOST));
             }
             if (!strong.isEmpty()) {
                 double holds = share(strong, play -> leakedIn(play, wave) < HEAVY);
-                this.out.printf("    b) strong holds it: %.0f%% %s%n", 100 * holds, verdict(holds >= MOST));
+                this.out.printf(Locale.ROOT, "    b) strong holds it: %.0f%% %s%n", 100 * holds, verdict(holds >= MOST));
             }
             for (Role role : Role.values()) {
                 if (!check.getValue().contains(role)) {
@@ -400,7 +400,7 @@ public final class WaveCheckReport {
                             : restOf.computeIfAbsent(rest, style -> this.plays(survey, StrongPlayer.spec(
                                     "no-" + role.label() + "-but", labs, style)));
                     double breaks = share(plays, play -> firstHeavyLeak(play) == wave);
-                    this.out.printf("    c) denied %s instead%s, first heavy leak there: %.0f%% %s%n", role.label(),
+                    this.out.printf(Locale.ROOT, "    c) denied %s instead%s, first heavy leak there: %.0f%% %s%n", role.label(),
                             plays == banned.get(role) ? "" : " (but what wave " + wave + " asks for)", 100 * breaks,
                             verdict(breaks < MOST));
                 }
@@ -450,16 +450,16 @@ public final class WaveCheckReport {
         for (Map.Entry<Integer, Set<Role>> check : waves.entrySet()) {
             int wave = check.getKey();
             double full = this.stripShare(survey, strong, wave, Set.of(), Optional.empty());
-            this.out.printf("  wave %d, full army %3.0f%%%n", wave, 100 * full);
+            this.out.printf(Locale.ROOT, "  wave %d, full army %3.0f%%%n", wave, 100 * full);
             for (Role role : check.getValue()) {
                 double without = this.stripShare(survey, strong, wave, Set.of(role), Optional.empty());
                 Optional<Kit> kit = Kit.of(role, lab);
                 if (kit.isPresent()) {
                     double with = this.stripShare(survey, strong, wave, Set.of(), kit);
-                    this.out.printf("    without %-14s %3.0f%% %s   given %s %3.0f%% %s%n", role.label(), 100 * without,
+                    this.out.printf(Locale.ROOT, "    without %-14s %3.0f%% %s   given %s %3.0f%% %s%n", role.label(), 100 * without,
                             verdict(without >= MOST), kit.get().name(), 100 * with, verdict(with <= 1 - MOST));
                 } else {
-                    this.out.printf("    without %-14s %3.0f%% %s   (full army %s)%n", role.label(), 100 * without,
+                    this.out.printf(Locale.ROOT, "    without %-14s %3.0f%% %s   (full army %s)%n", role.label(), 100 * without,
                             verdict(without >= MOST), verdict(full <= 1 - MOST));
                 }
             }

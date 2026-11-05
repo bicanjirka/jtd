@@ -186,7 +186,7 @@ public final class BalanceReport {
                 this.printSweep(run, knob);
             }
         }
-        this.out.printf("%n(%d seeds per player, %.0fs)%n", this.options.seeds(), (System.nanoTime() - started) / 1e9);
+        this.out.printf(Locale.ROOT, "%n(%d seeds per player, %.0fs)%n", this.options.seeds(), (System.nanoTime() - started) / 1e9);
         ResultTable table = ResultTable.of(runs);
         if (!this.options.save().isEmpty()) {
             this.out.println("Saved to " + table.save(STORE.resolve(this.options.save() + ".tsv")));
@@ -338,7 +338,7 @@ public final class BalanceReport {
 
     private void printLevel(LevelRun run) {
         LevelDefinition level = run.survey().level();
-        this.out.printf("%n=== %s: %d credits, %d lives, %d rounds, %d paths ===%n", level.name(),
+        this.out.printf(Locale.ROOT, "%n=== %s: %d credits, %d lives, %d rounds, %d paths ===%n", level.name(),
                 level.startingCredits(), level.startingLives(), level.paths().getFirst().waves().size(),
                 level.paths().size());
         this.printDifficulty(run);
@@ -361,7 +361,7 @@ public final class BalanceReport {
         this.out.println("  effects on enemies, share of enemy time (times one took hold per play): "
                 + Arrays.stream(EffectKind.values()).filter(kind -> use.starts().containsKey(kind))
                 .sorted(Comparator.comparingDouble(use::uptime).reversed())
-                .map(kind -> String.format("%s %.0f%% (%.0f)", name(kind), use.uptime(kind) * 100,
+                .map(kind -> String.format(Locale.ROOT, "%s %.0f%% (%.0f)", name(kind), use.uptime(kind) * 100,
                         use.starts().get(kind) / (double) Math.max(1, plays)))
                 .collect(Collectors.joining(", ")));
         List<EffectKind> neverStarted = run.effectsNeverStarted();
@@ -369,7 +369,7 @@ public final class BalanceReport {
                 : neverStarted.stream().map(BalanceReport::name).collect(Collectors.joining(", "))));
         String used = run.abilityUses(COMPETENT).entrySet().stream()
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-                .map(entry -> String.format("%s %.1f", entry.getKey(), entry.getValue()))
+                .map(entry -> String.format(Locale.ROOT, "%s %.1f", entry.getKey(), entry.getValue()))
                 .collect(Collectors.joining(", "));
         this.out.println("  enemy abilities used per play: " + (used.isEmpty() ? "none" : used));
         List<String> neverUsed = run.abilitiesNeverUsed();
@@ -377,7 +377,7 @@ public final class BalanceReport {
                 : String.join(", ", neverUsed)));
         Map<TowerFactory.Type, List<String>> neverBought = run.nodesNeverBought();
         this.out.println("  nodes no play bought, of each tower's tree: " + Arrays.stream(TowerFactory.Type.values())
-                .map(type -> String.format("%s %d/%d", type.displayName(), neverBought.get(type).size(),
+                .map(type -> String.format(Locale.ROOT, "%s %d/%d", type.displayName(), neverBought.get(type).size(),
                         run.lab().profile(type).nodeFactors().size()))
                 .collect(Collectors.joining(", ")));
     }
@@ -396,7 +396,7 @@ public final class BalanceReport {
         this.out.println();
         this.out.println("SWEEP " + knob.name().toLowerCase(Locale.ROOT)
                 + " (the competent player at each value; the level as authored is the standard one)");
-        this.out.printf("  %-12s %-15s %-15s %s%n", knob.unit(), "won", "income", "holds enemy health");
+        this.out.printf(Locale.ROOT, "  %-12s %-15s %-15s %s%n", knob.unit(), "won", "income", "holds enemy health");
         for (int value : knob.settings()) {
             LevelKnob.Setting setting = knob.at(value);
             List<Long> seeds = LongStream.range(FIRST_SEED, FIRST_SEED + this.options.seeds()).boxed().toList();
@@ -410,7 +410,7 @@ public final class BalanceReport {
                     .mapToDouble(seed -> Margin.healthPercent(run.survey(), player, seed, setting.pacing(),
                             setting.rules()))
                     .toArray());
-            this.out.printf("  %-12d %-15s %-15s %s%n", value, won.formatPercent(), income.format(0),
+            this.out.printf(Locale.ROOT, "  %-12d %-15s %-15s %s%n", value, won.formatPercent(), income.format(0),
                     margin.format(0) + "%");
         }
     }
@@ -420,15 +420,15 @@ public final class BalanceReport {
         List<List<PlayRecord>> layouts = run.winningLayouts();
         int wins = layouts.stream().mapToInt(List::size).sum();
         this.out.println();
-        this.out.printf("FUN - %d winning layout%s among %d winning plays (plays sharing under %.0f%% of their towers"
+        this.out.printf(Locale.ROOT, "FUN - %d winning layout%s among %d winning plays (plays sharing under %.0f%% of their towers"
                 + " differ)%n", layouts.size(), layouts.size() == 1 ? "" : "s", wins, LevelRun.SAME_LAYOUT * 100);
-        layouts.stream().limit(MOST_LAYOUTS).forEach(group -> this.out.printf("  %d play%s (%s): %s%n", group.size(),
+        layouts.stream().limit(MOST_LAYOUTS).forEach(group -> this.out.printf(Locale.ROOT, "  %d play%s (%s): %s%n", group.size(),
                 group.size() == 1 ? "" : "s", group.stream().map(play -> play.play().player()).distinct()
                         .collect(Collectors.joining(", ")), mix(group.getFirst())));
         if (!run.margins().containsKey(banned(TowerFactory.Type.SNIPER))) {
             this.out.println("  (--variety plays each tower alone and banned too, which is what finds other ways)");
         }
-        this.out.printf("  the competent player buys something in %s of rounds, and goes at most %s rounds without"
+        this.out.printf(Locale.ROOT, "  the competent player buys something in %s of rounds, and goes at most %s rounds without"
                         + " buying%n", run.roundsWithAPurchase(COMPETENT).formatPercent(),
                 run.longestWithoutAPurchase(COMPETENT).format(1));
     }
@@ -447,17 +447,17 @@ public final class BalanceReport {
         }
         this.out.println();
         this.out.println("VARIETY (margins of the competent player with only one tower type, and with one banned)");
-        this.out.printf("  %-10s %-12s %-12s %s%n", "tower", "alone", "banned", "banned against the full choice");
+        this.out.printf(Locale.ROOT, "  %-10s %-12s %-12s %s%n", "tower", "alone", "banned", "banned against the full choice");
         List<String> carriers = new ArrayList<>();
         List<String> holdsAlone = new ArrayList<>();
         List<String> spare = new ArrayList<>();
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             String aloneMargin = type == TowerFactory.Type.AURA ? "-" : marginText(run.margin(alone(type)));
             Estimate ratio = run.marginRatio(banned(type), COMPETENT);
-            this.out.printf("  %-10s %-12s %-12s x%.2f (%.2f-%.2f)%n", type.displayName(), aloneMargin,
+            this.out.printf(Locale.ROOT, "  %-10s %-12s %-12s x%.2f (%.2f-%.2f)%n", type.displayName(), aloneMargin,
                     marginText(run.margin(banned(type))), ratio.value(), ratio.low(), ratio.high());
             if (ratio.high() < 1 / MATTERS) {
-                carriers.add(String.format("%s (x%.2f without it)", type.displayName(), ratio.value()));
+                carriers.add(String.format(Locale.ROOT, "%s (x%.2f without it)", type.displayName(), ratio.value()));
             } else if (ratio.low() > 1 / MATTERS) {
                 spare.add(type.displayName());
             }
@@ -474,26 +474,26 @@ public final class BalanceReport {
     private void printDifficulty(LevelRun run) {
         this.out.println();
         this.out.println("DIFFICULTY - " + difficultyVerdict(run));
-        this.out.printf("  %-13s %-15s %-13s %-13s %s%n", "player", "won", "lives lost", "leaks", "holds enemy health");
+        this.out.printf(Locale.ROOT, "  %-13s %-15s %-13s %-13s %s%n", "player", "won", "lives lost", "leaks", "holds enemy health");
         for (String player : shownPlayers(run)) {
-            this.out.printf("  %-13s %-15s %-13s %-13s %s%n", player, run.winRate(player).formatPercent(),
+            this.out.printf(Locale.ROOT, "  %-13s %-15s %-13s %-13s %s%n", player, run.winRate(player).formatPercent(),
                     run.livesLost(player).format(1), run.leaks(player).format(1), run.margin(player).format(0) + "%");
         }
-        this.out.printf("  target: competent wins %.0f-%.0f%% and holds %.0f-%.0f%%; naive wins under %.0f%%%n",
+        this.out.printf(Locale.ROOT, "  target: competent wins %.0f-%.0f%% and holds %.0f-%.0f%%; naive wins under %.0f%%%n",
                 WIN_LOW * 100, WIN_HIGH * 100, MARGIN_LOW, MARGIN_HIGH, NAIVE_WIN_HIGH * 100);
         Estimate margin = run.margin(COMPETENT);
         if (margin.low() > MARGIN_HIGH || margin.high() < MARGIN_LOW) {
             double middle = (MARGIN_LOW + MARGIN_HIGH) / 2;
-            this.out.printf("  to put the competent player at %.0f%%, scale every enemy's health by x%.2f (or make the"
+            this.out.printf(Locale.ROOT, "  to put the competent player at %.0f%%, scale every enemy's health by x%.2f (or make the"
                     + " level that much harder another way)%n", middle, margin.value() / middle);
         }
         this.printLossRounds("naive", run.lossRounds(NAIVE));
         this.printLossRounds("competent", run.lossRounds(COMPETENT));
-        this.out.printf("  the competent player's own actions, played back as they were, hold %s%n",
+        this.out.printf(Locale.ROOT, "  the competent player's own actions, played back as they were, hold %s%n",
                 run.margin(REPLAYED).format(0) + "%");
         if (run.has(STRONG)) {
             Estimate gap = run.marginRatio(STRONG, COMPETENT);
-            this.out.printf("  rehearsing each round holds x%.2f (%.2f-%.2f) the competent player's margin: what its"
+            this.out.printf(Locale.ROOT, "  rehearsing each round holds x%.2f (%.2f-%.2f) the competent player's margin: what its"
                     + " rules miss%n", gap.value(), gap.low(), gap.high());
         }
     }
@@ -519,10 +519,10 @@ public final class BalanceReport {
         String verdict;
         if (margin.low() > MARGIN_HIGH) {
             verdict = "TOO EASY";
-            notes.add(String.format("a competent player holds %.1fx the enemy health", margin.value() / 100));
+            notes.add(String.format(Locale.ROOT, "a competent player holds %.1fx the enemy health", margin.value() / 100));
         } else if (margin.high() < MARGIN_LOW || won.high() < WIN_LOW) {
             verdict = "TOO HARD";
-            notes.add(String.format("a competent player wins %.0f%%", won.value() * 100));
+            notes.add(String.format(Locale.ROOT, "a competent player wins %.0f%%", won.value() * 100));
         } else if (won.low() > WIN_HIGH) {
             verdict = "EASY";
             notes.add("a competent player always wins");
@@ -530,7 +530,7 @@ public final class BalanceReport {
             verdict = "IN BAND";
         }
         if (naive.low() > NAIVE_WIN_HIGH) {
-            notes.add(String.format("a careless player wins %.0f%%", naive.value() * 100));
+            notes.add(String.format(Locale.ROOT, "a careless player wins %.0f%%", naive.value() * 100));
         }
         return verdict + (notes.isEmpty() ? "" : ": " + String.join("; ", notes));
     }
@@ -539,11 +539,11 @@ public final class BalanceReport {
         Estimate ratio = run.marginRatio(COMPETENT, RANDOM_CELLS);
         this.out.println();
         this.out.println("POSITIONING - " + mattersVerdict(ratio));
-        this.out.printf("  on its chosen cells the competent player holds %s, on random cells that reach a path %s:%n",
+        this.out.printf(Locale.ROOT, "  on its chosen cells the competent player holds %s, on random cells that reach a path %s:%n",
                 run.margin(COMPETENT).format(0) + "%", run.margin(RANDOM_CELLS).format(0) + "%");
-        this.out.printf("  chosen cells are worth x%.2f (%.2f-%.2f); random cells still win %s%n", ratio.value(),
+        this.out.printf(Locale.ROOT, "  chosen cells are worth x%.2f (%.2f-%.2f); random cells still win %s%n", ratio.value(),
                 ratio.low(), ratio.high(), run.winRate(RANDOM_CELLS).formatPercent());
-        this.out.printf("  the five best cells of two tower types overlap %.0f%% (lower: each tower has places of its"
+        this.out.printf(Locale.ROOT, "  the five best cells of two tower types overlap %.0f%% (lower: each tower has places of its"
                 + " own)%n", bestCellOverlap(run.lab()) * 100);
     }
 
@@ -557,13 +557,13 @@ public final class BalanceReport {
             return "not measured";
         }
         if (ratio.low() > MATTERS) {
-            return String.format("MATTERS (x%.2f)", ratio.value());
+            return String.format(Locale.ROOT, "MATTERS (x%.2f)", ratio.value());
         }
         if (ratio.high() < 1 / MATTERS) {
-            return String.format("BACKFIRES (x%.2f)", ratio.value());
+            return String.format(Locale.ROOT, "BACKFIRES (x%.2f)", ratio.value());
         }
         if (ratio.low() > 1 || ratio.high() < 1) {
-            return String.format("matters a little (x%.2f)", ratio.value());
+            return String.format(Locale.ROOT, "matters a little (x%.2f)", ratio.value());
         }
         return "NO DIFFERENCE the seeds can show";
     }
@@ -592,27 +592,27 @@ public final class BalanceReport {
         Estimate ratio = run.marginRatio(COMPETENT, NO_UPGRADES);
         this.out.println();
         this.out.println("UPGRADES - " + mattersVerdict(ratio));
-        this.out.printf("  buying upgrades the competent player holds %s, building only %s: x%.2f (%.2f-%.2f)%n",
+        this.out.printf(Locale.ROOT, "  buying upgrades the competent player holds %s, building only %s: x%.2f (%.2f-%.2f)%n",
                 run.margin(COMPETENT).format(0) + "%", run.margin(NO_UPGRADES).format(0) + "%", ratio.value(),
                 ratio.low(), ratio.high());
         Map<String, Double> picks = run.nodePickRates(COMPETENT);
         String top = picks.entrySet().stream().sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-                .limit(8).map(entry -> String.format("%s %.0f%%", entry.getKey(), entry.getValue() * 100))
+                .limit(8).map(entry -> String.format(Locale.ROOT, "%s %.0f%%", entry.getKey(), entry.getValue() * 100))
                 .collect(Collectors.joining(", "));
         this.out.println("  bought most: " + (top.isEmpty() ? "nothing" : top));
         long always = picks.values().stream().filter(rate -> rate >= 0.999).count();
-        this.out.printf("  %d nodes bought in every play, %d in some, every other never%n", always, picks.size() - always);
+        this.out.printf(Locale.ROOT, "  %d nodes bought in every play, %d in some, every other never%n", always, picks.size() - always);
         double[] byThird = run.upgradeShareByThird(COMPETENT);
-        this.out.printf("  share of spending on upgrades, early / middle / late rounds: %s%n", thirds(byThird));
+        this.out.printf(Locale.ROOT, "  share of spending on upgrades, early / middle / late rounds: %s%n", thirds(byThird));
         if (run.has(STRONG)) {
-            this.out.printf("  the strong player's: %s%n", thirds(run.upgradeShareByThird(STRONG)));
+            this.out.printf(Locale.ROOT, "  the strong player's: %s%n", thirds(run.upgradeShareByThird(STRONG)));
             this.out.println("  picked far more often by one player than the other (strong / competent): "
                     + pickGaps(picks, run.nodePickRates(STRONG)));
         }
     }
 
     private static String thirds(double[] shares) {
-        return Arrays.stream(shares).mapToObj(share -> Double.isNaN(share) ? "-" : String.format("%.0f%%", share * 100))
+        return Arrays.stream(shares).mapToObj(share -> Double.isNaN(share) ? "-" : String.format(Locale.ROOT, "%.0f%%", share * 100))
                 .collect(Collectors.joining(" / "));
     }
 
@@ -625,7 +625,7 @@ public final class BalanceReport {
                 .sorted(Comparator.comparingDouble((String node) ->
                         -Math.abs(strong.getOrDefault(node, 0.0) - competent.getOrDefault(node, 0.0))))
                 .limit(8)
-                .map(node -> String.format("%s %.0f%%/%.0f%%", node, strong.getOrDefault(node, 0.0) * 100,
+                .map(node -> String.format(Locale.ROOT, "%s %.0f%%/%.0f%%", node, strong.getOrDefault(node, 0.0) * 100,
                         competent.getOrDefault(node, 0.0) * 100))
                 .collect(Collectors.joining(", "));
         return gaps.isEmpty() ? "none" : gaps;
@@ -639,7 +639,7 @@ public final class BalanceReport {
         this.out.println();
         this.out.println("PRESSURE BY ROUND (competent unless named; closest: how far the furthest enemy got, 0-9)");
         this.out.println("  round    " + row(IntStream.rangeClosed(1, closest.length).asDoubleStream().toArray(),
-                v -> String.format("%.0f", v)));
+                v -> String.format(Locale.ROOT, "%.0f", v)));
         this.out.println("  closest  " + row(closest, BalanceReport::digit));
         this.out.println("  leaks    " + row(leaked, BalanceReport::count));
         this.out.println("  naive    " + row(naiveLeaked, BalanceReport::count) + "   leaks of the naive player");
@@ -668,7 +668,7 @@ public final class BalanceReport {
     }
 
     private static String row(double[] values, java.util.function.DoubleFunction<String> format) {
-        return Arrays.stream(values).mapToObj(v -> String.format("%5s", Double.isNaN(v) ? "-" : format.apply(v)))
+        return Arrays.stream(values).mapToObj(v -> String.format(Locale.ROOT, "%5s", Double.isNaN(v) ? "-" : format.apply(v)))
                 .collect(Collectors.joining());
     }
 
@@ -677,18 +677,18 @@ public final class BalanceReport {
     }
 
     private static String count(double value) {
-        return value < 0.05 ? "." : value < 9.5 ? String.format("%.0f", Math.max(1, value)) : "9+";
+        return value < 0.05 ? "." : value < 9.5 ? String.format(Locale.ROOT, "%.0f", Math.max(1, value)) : "9+";
     }
 
     /** A number in at most four characters: {@code 950}, {@code 1.2k}, {@code 34k}, {@code 1.2M}. */
     static String compact(double value) {
         if (value < 1000) {
-            return String.format("%.0f", value);
+            return String.format(Locale.ROOT, "%.0f", value);
         }
         if (value < 1_000_000) {
-            return value < 10_000 ? String.format("%.1fk", value / 1000) : String.format("%.0fk", value / 1000);
+            return value < 10_000 ? String.format(Locale.ROOT, "%.1fk", value / 1000) : String.format(Locale.ROOT, "%.0fk", value / 1000);
         }
-        return String.format("%.1fM", value / 1_000_000);
+        return String.format(Locale.ROOT, "%.1fM", value / 1_000_000);
     }
 
     private void printEconomy(LevelRun run) {
@@ -712,7 +712,7 @@ public final class BalanceReport {
         double totalEarned = Arrays.stream(earned).filter(v -> !Double.isNaN(v)).sum();
         double totalBonus = Arrays.stream(bonus).filter(v -> !Double.isNaN(v)).sum();
         double meanIdle = Arrays.stream(idle).filter(v -> !Double.isNaN(v)).average().orElse(0);
-        this.out.printf("  %d starting credits, %.0f bounty and %.0f clear bonus over the level; %.0f idle at a round's"
+        this.out.printf(Locale.ROOT, "  %d starting credits, %.0f bounty and %.0f clear bonus over the level; %.0f idle at a round's"
                 + " start on average%n", run.survey().level().startingCredits(), totalEarned, totalBonus, meanIdle);
     }
 
@@ -734,7 +734,7 @@ public final class BalanceReport {
         this.out.println();
         this.out.println("TOWERS (competent: share of the damage landed, and towers standing at the end)");
         this.out.println("  " + Arrays.stream(TowerFactory.Type.values())
-                .map(type -> String.format("%s %.0f%% (%.1f)", type.displayName(), shares.getOrDefault(type, 0.0) * 100,
+                .map(type -> String.format(Locale.ROOT, "%s %.0f%% (%.1f)", type.displayName(), shares.getOrDefault(type, 0.0) * 100,
                         counts.getOrDefault(type, 0.0)))
                 .collect(Collectors.joining(", ")));
         List<String> unused = Arrays.stream(TowerFactory.Type.values())
@@ -743,10 +743,10 @@ public final class BalanceReport {
             this.out.println("  never built: " + String.join(", ", unused));
         }
         shares.entrySet().stream().filter(entry -> entry.getValue() > 0.5).findFirst().ifPresent(
-                entry -> this.out.printf("  the %s lands over half of all damage%n", entry.getKey().displayName()));
+                entry -> this.out.printf(Locale.ROOT, "  the %s lands over half of all damage%n", entry.getKey().displayName()));
         String leaks = run.leaksByKind(COMPETENT).entrySet().stream()
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-                .map(entry -> String.format("%s %.1f", entry.getKey(), entry.getValue())).collect(Collectors.joining(", "));
+                .map(entry -> String.format(Locale.ROOT, "%s %.1f", entry.getKey(), entry.getValue())).collect(Collectors.joining(", "));
         this.out.println("  leaks per play by kind: " + (leaks.isEmpty() ? "none" : leaks));
         this.printTowerWork(run);
     }
@@ -757,7 +757,7 @@ public final class BalanceReport {
         this.out.println("TOWER WORK (competent, all plays: damage; lost to shields and overkill; "
                 + "enemy-seconds in reach; damage per enemy-second in reach; whom)");
         run.towerWork(COMPETENT).forEach((type, work) -> {
-            this.out.printf("  %-9s %8.0f dmg  shields %2.0f%%  overkill %2.0f%%  %7.0f s  %6.1f/s  %s%n", type.displayName(),
+            this.out.printf(Locale.ROOT, "  %-9s %8.0f dmg  shields %2.0f%%  overkill %2.0f%%  %7.0f s  %6.1f/s  %s%n", type.displayName(),
                     DamageUnits.inPoints(work.hits().credited()), work.hits().shieldShare() * 100,
                     work.hits().overkillShare() * 100, work.secondsInReach(), work.pointsPerSecondInReach(),
                     work.topKinds(TOP_KINDS));
@@ -768,15 +768,15 @@ public final class BalanceReport {
         TowerLab lab = run.lab();
         this.out.println();
         this.out.println("COUNTERS (lab duels: the share of a wave a tower brings down, against the plain mob's as 1.00)");
-        this.out.printf("  %-16s", "");
-        TowerLab.damageDealers().forEach(type -> this.out.printf("%9s", type.displayName()));
+        this.out.printf(Locale.ROOT, "  %-16s", "");
+        TowerLab.damageDealers().forEach(type -> this.out.printf(Locale.ROOT, "%9s", type.displayName()));
         this.out.println();
         for (String key : lab.levelRanks()) {
-            this.out.printf("  %-16s", key);
+            this.out.printf(Locale.ROOT, "  %-16s", key);
             List<TowerFactory.Type> answers = new ArrayList<>();
             for (TowerFactory.Type type : TowerLab.damageDealers()) {
                 double factor = lab.kindFactor(type, key);
-                this.out.printf("%9.2f", factor);
+                this.out.printf(Locale.ROOT, "%9.2f", factor);
                 if (factor >= ANSWERS) {
                     answers.add(type);
                 }
@@ -788,9 +788,9 @@ public final class BalanceReport {
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             lab.profile(type).nodeFactors().forEach((node, factor) -> {
                 if (factor >= 1.75) {
-                    outliers.add(String.format("%s x%.2f", node, factor));
+                    outliers.add(String.format(Locale.ROOT, "%s x%.2f", node, factor));
                 } else if (factor < 0.9) {
-                    outliers.add(String.format("%s x%.2f", node, factor));
+                    outliers.add(String.format(Locale.ROOT, "%s x%.2f", node, factor));
                 }
             });
         }
@@ -806,7 +806,7 @@ public final class BalanceReport {
         List<String> nodes = new ArrayList<>();
         for (TowerFactory.Type type : TowerLab.damageDealers()) {
             lab.sight(type).revealShares().forEach((node, byKind) -> nodes.add(node + " " + byKind.entrySet().stream()
-                    .map(entry -> String.format("%s %.2f", entry.getKey(), entry.getValue()))
+                    .map(entry -> String.format(Locale.ROOT, "%s %.2f", entry.getKey(), entry.getValue()))
                     .collect(Collectors.joining(", "))));
         }
         return nodes.isEmpty() ? "no node reveals" : String.join("; ", nodes);
@@ -819,13 +819,13 @@ public final class BalanceReport {
         for (TowerFactory.Type type : TowerLab.damageDealers()) {
             TowerLab.Partnering partners = lab.profile(type).partners();
             if (partners.supportGain() >= SUPPORTS) {
-                towers.add(String.format("%s +%.0f%%", type.displayName(), partners.supportGain() * 100));
+                towers.add(String.format(Locale.ROOT, "%s +%.0f%%", type.displayName(), partners.supportGain() * 100));
             }
             partners.supportSteps().entrySet().stream().filter(entry -> entry.getValue() >= SUPPORTS)
                     .forEach(nodes::add);
         }
         String bestNodes = nodes.stream().sorted(Map.Entry.<String, Double>comparingByValue().reversed()).limit(6)
-                .map(entry -> String.format("%s +%.0f%%", entry.getKey(), entry.getValue() * 100))
+                .map(entry -> String.format(Locale.ROOT, "%s +%.0f%%", entry.getKey(), entry.getValue() * 100))
                 .collect(Collectors.joining(", "));
         return (towers.isEmpty() ? "no bare tower" : String.join(", ", towers))
                 + (bestNodes.isEmpty() ? "" : "; nodes " + bestNodes);

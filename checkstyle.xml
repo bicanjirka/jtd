@@ -95,5 +95,11 @@
             <property name="ignoreComments" value="true"/>
             <property name="message" value="Tower code never asks which node it owns; use stats, the spec, procs or hit bonuses."/>
         </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="defaultLocaleFormat"/>
+            <property name="format" value="(String\.format|\.printf)\((?!Locale\.)|\.formatted\("/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Pass Locale.ROOT when formatting: the system locale can turn a decimal point into a comma."/>
+        </module>
     </module>
 </module>
