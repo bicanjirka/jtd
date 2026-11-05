@@ -51,7 +51,7 @@ class SympathyCopierTest {
     }
 
     @Test
-    void aChillIsToppedUpToTheCarriersLevelAndNoFurtherAndAnExposedOneIsNotRefreshed() {
+    void aWeakerChillIsReplacedByTheCarriersAndAnExposedOneIsNotRefreshed() {
         FakeEnemyMob carrier = FakeEnemyMob.at(0, 0);
         FakeEnemyMob other = FakeEnemyMob.at(10, 0);
         give(carrier, Effect.chill(0.5f, 100, DamageSink.none()));
@@ -63,9 +63,19 @@ class SympathyCopierTest {
 
         assertThat(copies).singleElement().satisfies(copy -> {
             assertThat(copy.kind()).isEqualTo(EffectKind.CHILL);
-            assertThat(copy.fuelLevel()).isCloseTo(0.3f, within(0.001f));
-            assertThat(copy.ticksToFade()).isEqualTo(100);
+            assertThat(copy.slowStrength()).isCloseTo(0.5f, within(0.001f));
+            assertThat(copy.remainingTicks()).isEqualTo(100);
         });
+    }
+
+    @Test
+    void aChillAtLeastAsStrongAsTheCarriersIsLeftAlone() {
+        FakeEnemyMob carrier = FakeEnemyMob.at(0, 0);
+        FakeEnemyMob other = FakeEnemyMob.at(10, 0);
+        give(carrier, Effect.chill(0.5f, 100, DamageSink.none()));
+        give(other, Effect.chill(0.5f, 10, DamageSink.none()));
+
+        assertThat(SympathyCopier.missingFrom(carrier, other)).isEmpty();
     }
 
     @Test

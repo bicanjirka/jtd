@@ -41,13 +41,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     public static final int LASTING_TICKS = Integer.MAX_VALUE;
     private static final EffectDynamics FLAG = new EffectDynamics.Flag();
 
-    /**
-     * Slows in proportion to its level: {@code amount} at first (0.5 is half speed), decaying
-     * linearly to nothing over {@code durationTicks}.
-     */
-    public static Effect chill(float amount, int durationTicks, DamageSink sink) {
-        return of(EffectKind.CHILL, durationTicks, sink,
-                new EffectDynamics.ChillLevel(List.of(new FuelContribution(sink, amount, amount / durationTicks))));
+    /** Takes {@code strength} of base speed away for {@code durationTicks} (0.5 is half speed). */
+    public static Effect chill(float strength, int durationTicks, DamageSink sink) {
+        return of(EffectKind.CHILL, durationTicks, sink, new EffectDynamics.Slow(strength));
     }
 
     public static Effect freeze(int durationTicks, DamageSink sink) {
@@ -346,18 +342,13 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return this.withDynamics(shield);
     }
 
-    /** How many ticks a chill lasts before its last share has faded; {@code 0} for any other kind. */
-    public int ticksToFade() {
-        if (this.kind != EffectKind.CHILL) {
-            return 0;
-        }
-        int ticks = 0;
-        for (FuelContribution contribution : this.fuel()) {
-            if (contribution.decayPerTick() > 0f) {
-                ticks = Math.max(ticks, (int) Math.ceil(contribution.amount() / contribution.decayPerTick()));
-            }
-        }
-        return ticks;
+    /** The share of base speed this slow takes away at full strength; {@code 0f} for a kind that doesn't slow. */
+    public float slowStrength() {
+        return switch (this.dynamics) {
+            case EffectDynamics.Slow slow -> slow.strength();
+            case EffectDynamics.Stacks stacks -> this.kind.rule().slowPerStack() * stacks.stacks();
+            default -> this.kind.rule().slowPerStack();
+        };
     }
 
     /**
@@ -371,7 +362,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return (float) (this.fuelLevel() / (1.0 - Math.exp(-3.0 / this.authoredDurationTicks)));
     }
 
-    /** The level's current total; {@code 0f} for kinds without one. */
+    /** A pool's current total; {@code 0f} for any other kind. */
     public float fuelLevel() {
         float total = 0f;
         for (FuelContribution contribution : this.fuel()) {
@@ -380,10 +371,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return total;
     }
 
-    /** A chill's or a pool's contributions, one per application; empty for any other family. */
+    /** A pool's contributions, one per application; empty for any other family. */
     public List<FuelContribution> fuel() {
         return switch (this.dynamics) {
-            case EffectDynamics.ChillLevel chill -> chill.fuel();
             case EffectDynamics.FuelPool pool -> pool.fuel();
             default -> List.of();
         };
@@ -492,17 +482,13 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
 
     /**
      * Both the remaining and the authored duration times {@code factor}, rounded. A shorter authored
-     * duration also makes a pool decay faster, so its total damage shrinks with it, and a chill
-     * lasts as many times longer as its decay is slower.
+     * duration also makes a pool decay faster, so its total damage shrinks with it.
      */
     public Effect withDurationScaledBy(float factor) {
         if (this.isLasting() && factor > 0f) {
             return this;
         }
-        EffectDynamics scaled = switch (this.dynamics) {
-            case EffectDynamics.ChillLevel chill -> chill.withDurationScaledBy(factor);
-            default -> this.retimed(ticks -> Math.round(ticks * factor));
-        };
+        EffectDynamics scaled = this.retimed(ticks -> Math.round(ticks * factor));
         return new Effect(this.kind, Math.round(this.remainingTicks * factor), Math.round(this.authoredDurationTicks * factor),
                 this.sink, this.origin, scaled);
     }
@@ -547,12 +533,11 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
-    /** Carries a chill's or a pool's level forward after decay or a top-up. A pool's {@code peakL0} only grows. */
+    /** Carries a pool's level forward after decay or a top-up. Its {@code peakL0} only grows. */
     Effect withFuel(List<FuelContribution> fuel, float peakL0) {
         return switch (this.dynamics) {
-            case EffectDynamics.ChillLevel chill -> this.withDynamics(chill.withFuel(fuel));
             case EffectDynamics.FuelPool pool -> this.withDynamics(pool.withFuel(fuel, peakL0));
-            default -> throw this.wrongFamily("a chill or a pool");
+            default -> throw this.wrongFamily("a pool");
         };
     }
 

@@ -18,11 +18,13 @@ import java.util.Set;
  * @param stacking   how applications combine
  * @param stackCap   the most stacks it holds; 1 for a kind that does not stack
  * @param perStack   what each stack does to the enemy's stats
+ * @param slowPerStack the share of base speed each stack takes away; {@code 0} for a kind whose strength comes with
+ *                   each application, or that doesn't slow
  * @param tags       the yes/no rules that ask for it
  * @param side       whom it works for, seen from the enemy that carries it
  */
 public record EffectRule(EffectCategory category, Optional<EnemyStat> resistedBy, EffectStacking stacking, int stackCap,
-                         StatModifiers<EnemyStat> perStack, Set<EffectTag> tags, Side side) {
+                         StatModifiers<EnemyStat> perStack, float slowPerStack, Set<EffectTag> tags, Side side) {
 
     public EffectRule {
         tags = tags.isEmpty() ? Set.of() : Set.copyOf(tags);
@@ -31,12 +33,12 @@ public record EffectRule(EffectCategory category, Optional<EnemyStat> resistedBy
     /** A kind of {@code category} that refreshes, does nothing to stats and has no tags. */
     public static EffectRule of(EffectCategory category) {
         return new EffectRule(category, Optional.empty(), EffectStacking.REFRESH, 1,
-                StatModifiers.none(), Set.of(), Side.DEBUFF);
+                StatModifiers.none(), 0f, Set.of(), Side.DEBUFF);
     }
 
     public EffectRule resistedBy(EnemyStat stat) {
         return new EffectRule(this.category, Optional.of(stat), this.stacking, this.stackCap, this.perStack,
-                this.tags, this.side);
+                this.slowPerStack, this.tags, this.side);
     }
 
     public EffectRule stackingOnASharedClock(int cap) {
@@ -45,10 +47,6 @@ public record EffectRule(EffectCategory category, Optional<EnemyStat> resistedBy
 
     public EffectRule earnedUpTo(int cap) {
         return this.stackingAs(EffectStacking.EARNED, cap);
-    }
-
-    public EffectRule asALevel() {
-        return this.stackingAs(EffectStacking.LEVEL, 1);
     }
 
     public EffectRule asAPool() {
@@ -66,23 +64,30 @@ public record EffectRule(EffectCategory category, Optional<EnemyStat> resistedBy
 
     public EffectRule perStack(EnemyStat stat, StatModifier modifier) {
         return new EffectRule(this.category, this.resistedBy, this.stacking, this.stackCap,
-                this.perStack.and(stat, modifier), this.tags, this.side);
+                this.perStack.and(stat, modifier), this.slowPerStack, this.tags, this.side);
+    }
+
+    /** Each stack, or the kind if it has none, takes {@code share} of base speed away. */
+    public EffectRule slowingBy(float share) {
+        return new EffectRule(this.category, this.resistedBy, this.stacking, this.stackCap, this.perStack, share,
+                this.tags, this.side);
     }
 
     public EffectRule tagged(EffectTag... tags) {
         Set<EffectTag> all = this.tags.isEmpty() ? EnumSet.noneOf(EffectTag.class) : EnumSet.copyOf(this.tags);
         all.addAll(Set.of(tags));
         return new EffectRule(this.category, this.resistedBy, this.stacking, this.stackCap, this.perStack,
-                all, this.side);
+                this.slowPerStack, all, this.side);
     }
 
     /** This kind, working for the enemy that carries it. */
     public EffectRule helpsCarrier() {
         return new EffectRule(this.category, this.resistedBy, this.stacking, this.stackCap, this.perStack,
-                this.tags, Side.BUFF);
+                this.slowPerStack, this.tags, Side.BUFF);
     }
 
     private EffectRule stackingAs(EffectStacking stacking, int cap) {
-        return new EffectRule(this.category, this.resistedBy, stacking, cap, this.perStack, this.tags, this.side);
+        return new EffectRule(this.category, this.resistedBy, stacking, cap, this.perStack, this.slowPerStack,
+                this.tags, this.side);
     }
 }

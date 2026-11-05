@@ -200,7 +200,7 @@ final class EnemyStatText {
         for (EnemyInspection.ShareState share : effect.shares()) {
             rows.add(kind == EffectKind.SHIELD ? shieldShareRow(share) : healShareRow(share));
         }
-        if (kind == EffectKind.CHILL) {
+        if (effect.level() > 0f) {
             rows.add(Row.plain(Glyph.DOT, "Slows", TermNumbers.percent(effect.level())));
         }
         effect.nextShare().ifPresent(share -> rows.add(SheetLine.Sentence.of(TermText.of(share > 0

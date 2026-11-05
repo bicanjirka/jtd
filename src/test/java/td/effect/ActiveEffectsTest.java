@@ -61,18 +61,112 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aChillSlowsInProportionToItsLevelAndFadesLinearly() {
+    void aSlowHoldsItsStrengthThenFadesOverTheEndOfItsTime() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.4f, 100, DamageSink.none()));
+        int duration = 2 * ActiveEffects.SLOW_FADE_TICKS;
+        effects.apply(Effect.chill(0.4f, duration, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.6f, within(0.001f));
 
-        tickTimes(effects, 50);
-        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.8f, within(0.001f));
+        tickTimes(effects, ActiveEffects.SLOW_FADE_TICKS);
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.6f, within(0.001f));
 
-        tickTimes(effects, 50);
+        tickTimes(effects, ActiveEffects.SLOW_FADE_TICKS / 2);
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.8f, within(0.001f));
+        assertThat(effects.activeKinds()).containsExactly(EffectKind.CHILL);
+
+        tickTimes(effects, ActiveEffects.SLOW_FADE_TICKS - ActiveEffects.SLOW_FADE_TICKS / 2);
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isEqualTo(1f);
         assertThat(effects.activeKinds()).isEmpty();
+    }
+
+    @Test
+    void aSlowShorterThanTheFadeFadesOverItsWholeLength() {
+        ActiveEffects effects = new ActiveEffects();
+        int duration = ActiveEffects.SLOW_FADE_TICKS / 2;
+        effects.apply(Effect.chill(0.4f, duration, DamageSink.none()));
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.6f, within(0.001f));
+
+        tickTimes(effects, 1);
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED))
+                .isCloseTo(1f - 0.4f * (duration - 1) / duration, within(0.001f));
+    }
+
+    @Test
+    void aRefreshedSlowStaysFull() {
+        ActiveEffects effects = new ActiveEffects();
+        for (int i = 0; i < 3 * ActiveEffects.SLOW_FADE_TICKS; i++) {
+            effects.apply(Effect.tarred(ActiveEffects.SLOW_FADE_TICKS, DamageSink.none()));
+
+            assertThat(resolved(effects, EnemyStat.MOVE_SPEED))
+                    .isCloseTo(1f - EffectKind.TARRED.rule().slowPerStack(), within(0.001f));
+
+            effects.tick();
+        }
+    }
+
+    @Test
+    void aWeakerSlowOfOneKindIsIgnoredWhileTheStrongerRunsAndNeverStretchesIt() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.chill(0.6f, 20, DamageSink.none()));
+
+        effects.apply(Effect.chill(0.1f, 160, DamageSink.none()));
+
+        assertThat(effects.find(EffectKind.CHILL).orElseThrow().slowStrength()).isEqualTo(0.6f);
+        assertThat(effects.remainingTicks(EffectKind.CHILL)).hasValue(20);
+    }
+
+    @Test
+    void aStrongerSlowOfOneKindReplacesTheWeakerTailAndAll() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.chill(0.1f, 160, DamageSink.none()));
+
+        effects.apply(Effect.chill(0.6f, 20, DamageSink.none()));
+
+        assertThat(effects.find(EffectKind.CHILL).orElseThrow().slowStrength()).isEqualTo(0.6f);
+        assertThat(effects.remainingTicks(EffectKind.CHILL)).hasValue(20);
+    }
+
+    @Test
+    void ofTwoEqualSlowsOfOneKindTheLongerHolds() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.chill(0.3f, 40, DamageSink.none()));
+
+        effects.apply(Effect.chill(0.3f, 10, DamageSink.none()));
+        assertThat(effects.remainingTicks(EffectKind.CHILL)).hasValue(40);
+
+        effects.apply(Effect.chill(0.3f, 80, DamageSink.none()));
+        assertThat(effects.remainingTicks(EffectKind.CHILL)).hasValue(80);
+    }
+
+    @Test
+    void ofSlowsOfDifferentKindsOnlyTheStrongestApplies() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.chill(0.7f, 100, DamageSink.none()));
+        effects.apply(Effect.tarred(100, DamageSink.none()));
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.3f, within(0.001f));
+    }
+
+    @Test
+    void aSlowBeatsASpeedGainHoweverWeak() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.hastened(100, DamageSink.none()));
+        effects.apply(Effect.sprinting(100, DamageSink.none()));
+        effects.apply(Effect.chill(0.05f, 100, DamageSink.none()));
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.95f, within(0.001f));
+    }
+
+    @Test
+    void aStackedSlowTakesItsShareForEveryStack() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.dragged(20, 100, DamageSink.none()));
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED))
+                .isCloseTo(1f - 20 * EffectKind.DRAGGED.rule().slowPerStack(), within(0.001f));
     }
 
     private static void tickTimes(ActiveEffects effects, int times) {
@@ -215,29 +309,6 @@ class ActiveEffectsTest {
         assertThat(firstTower).containsExactly(Damage.magic(46));
         assertThat(secondTower).containsExactly(Damage.magic(18));
         assertThat(thirdTower).containsExactly(Damage.magic(8));
-    }
-
-    @Test
-    void chillsAddUpButNeverPastTheCapSoTheyNeverFreeze() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.5f, 100, DamageSink.none()));
-        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.5f, within(0.001f));
-
-        effects.apply(Effect.chill(0.5f, 100, DamageSink.none()));
-
-        assertThat(effects.chillLevel()).isCloseTo(0.8f, within(0.001f));
-        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.2f, within(0.001f));
-    }
-
-    @Test
-    void aChillHeldAtTheCapIsOnlyRefilledByWhatHasDecayed() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.chill(0.8f, 80, DamageSink.none()));
-        tickTimes(effects, 20); // 0.8 - 20 * 0.01 = 0.6
-
-        effects.apply(Effect.chill(0.8f, 80, DamageSink.none()));
-
-        assertThat(effects.chillLevel()).isCloseTo(0.8f, within(0.001f));
     }
 
     @Test
@@ -777,14 +848,6 @@ class ActiveEffectsTest {
 
         assertThat(left).isEqualTo(3);
         assertThat(effects.has(EffectKind.TOLL)).isFalse();
-    }
-
-    @Test
-    void aChillFadesInAsManyTicksAsItsSlowestShareTakes() {
-        Effect chill = Effect.chill(0.4f, 80, DamageSink.none());
-
-        assertThat(chill.ticksToFade()).isEqualTo(80);
-        assertThat(Effect.freeze(80, DamageSink.none()).ticksToFade()).isZero();
     }
 
     @Test

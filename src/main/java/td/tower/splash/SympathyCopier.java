@@ -11,7 +11,8 @@ import java.util.Optional;
 /**
  * What a Sympathy carrier shares: the effects of {@code from} that {@code to} lacks. Each copy
  * tops {@code to} up to what {@code from} has, never past it, with {@code from}'s own time left, so
- * two enemies sharing back and forth settle at the same debuffs instead of climbing.
+ * two enemies sharing back and forth settle at the same debuffs instead of climbing. A chill is copied whole, only
+ * onto a weaker one.
  */
 public final class SympathyCopier {
 
@@ -39,7 +40,7 @@ public final class SympathyCopier {
                     .map(stacks -> Effect.unraveled(stacks, source.remainingTicks(), source.sink()));
             case EXPOSED -> to.hasEffect(EffectKind.EXPOSED) ? Optional.empty()
                     : Optional.of(Effect.exposed(source.remainingTicks(), source.sink()));
-            case CHILL -> missingChill(source, to);
+            case CHILL -> strongerChill(source, to);
             default -> Optional.empty();
         };
     }
@@ -49,13 +50,10 @@ public final class SympathyCopier {
         return missing > 0 ? Optional.of(missing) : Optional.empty();
     }
 
-    private static Optional<Effect> missingChill(Effect source, EnemyMob to) {
-        float held = (float) to.activeEffects().stream()
+    private static Optional<Effect> strongerChill(Effect source, EnemyMob to) {
+        boolean weaker = to.activeEffects().stream()
                 .filter(effect -> effect.kind() == EffectKind.CHILL)
-                .mapToDouble(Effect::fuelLevel)
-                .sum();
-        float missing = source.fuelLevel() - held;
-        return missing > 0f && source.ticksToFade() > 0
-                ? Optional.of(Effect.chill(missing, source.ticksToFade(), source.sink())) : Optional.empty();
+                .allMatch(effect -> effect.slowStrength() < source.slowStrength());
+        return weaker ? Optional.of(source) : Optional.empty();
     }
 }

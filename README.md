@@ -278,7 +278,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 
 | Effect | Group | Side | What it does |
 |---|---|---|---|
-| Chill | Control | Debuff | Slows by its level, up to 80%, and fades. |
+| Chill | Control | Debuff | Slows by what its source gives; the strongest slow holds, no speed gain beats it, and speed comes back over its last 0.5 s. |
 | Burn | Affliction | Debuff | Damage over time that fades; a top-up adds less the fuller it is, up to x2 its strongest application; it adds a stack of Scorch every 0.5 s while it lasts, and every tower can see and aim at it. |
 | Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; Agility -100, so it can't dodge and crits find it more often; within 10 s, each fresh one lasts 100%, 50%, 25%, then none. |
 | Shield | Boon | Buff | Takes a hit before armor does, until its amount is spent or it runs out; more Spirit makes it hold more, shields from different sources add up, and damage that ticks goes past it. |
@@ -307,22 +307,22 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Sympathy | Hex | Debuff | Once a second, its Chill, Vulnerable, Sunder, Expose and Unravel are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower. |
 | Reckoning | Hex | Debuff | When it dies, each Doom from the same tower near it releases at once and starts again. |
 | Silence | Control | Debuff | Its abilities don't fire; abilities on death and auras still do. |
-| Anchor | Control | Debuff | It can't be sped up, and its Move speed is held to at most 75% of its base. |
+| Anchor | Control | Debuff | Slows by 25%; the strongest slow holds, no speed gain beats it, and speed comes back over its last 0.5 s. |
 | Unravel | Weakness | Debuff | Each stack: Magic resist -10, up to 5 stacks. |
 | Brittle | Weakness | Debuff | Physical damage taken +30%. |
 | Toll | Weakness | Debuff | Time spent in an Obelisk's field, a stack a second; it sets how strongly the field holds it, and goes soon after it leaves. |
 | Corrode | Weakness | Debuff | Each stack: Armor and Magic resist -3, up to 15 stacks. |
-| Drag | Control | Debuff | Each stack: Move speed -1%, up to 50 stacks; it is no Chill, and nothing resists it. |
+| Drag | Control | Debuff | Slows by 1% a stack, up to 50 stacks; the strongest slow holds, no speed gain beats it, and speed comes back over its last 0.5 s. |
 | Condemn | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +5%, up to 4 stacks. |
 | Stasis | Weakness | Debuff | While it also has Daze, the field holding it takes its Toll away. |
 | Dead Zone | Weakness | Debuff | Spirit -100, so Heal and Shield are worth nothing. |
 | Frail | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +2%, up to 15 stacks. |
 | Crack | Weakness | Debuff | Plating -5 and Insulation -5. |
-| Tar | Weakness | Debuff | Move speed x0.6. |
+| Tar | Weakness | Debuff | Slows by 40%; the strongest slow holds, no speed gain beats it, and speed comes back over its last 0.5 s. |
 | Bleed | Affliction | Debuff | Physical damage for every cell it travels; standing still, it takes none. |
 | Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; nothing resists it, it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and every tower can see and aim at it. |
-| Sprint | Boon | Buff | Move speed +60%. |
-| Hasten | Boon | Buff | Move speed x2; Freeze and Daze still stop it. |
+| Sprint | Boon | Buff | Move speed +60%; any slow cancels it. |
+| Hasten | Boon | Buff | Move speed x2; any slow cancels it, and Freeze and Daze still stop it. |
 
 #### Tower terms
 
@@ -371,8 +371,8 @@ Stacks wear off one per second once nothing adds more, and every other debuff ru
 A tower can leave a patch of ground that keeps working after the shot that made it. A zone pulses
 twice a second on every enemy inside (hidden ones too), credited to the tower that made it, and the
 pulse never crits. Two zones of one kind never stack: an enemy standing in both takes one pulse.
-Zones combine only through what they leave on the enemy, so tar then fire burns at double and a
-freeze in frost bursts a burn.
+Zones combine only through what they leave on the enemy: the strongest slow holds, and a burn keeps
+burning through a freeze.
 
 | Zone           | Made by                    | What it does to enemies inside |
 |----------------|----------------------------|--------------------------------|
@@ -383,7 +383,7 @@ freeze in frost bursts a burn.
 | Mine           | Splash, from Range III     | The first enemy to step on it sets it off as one blast, and it is gone; it lasts 10 s, a Splash keeps 3 |
 | Cursed cloud   | Hexer's Mastery            | Gives every enemy inside the debuffs the hexed enemy that died there carried, for as long as they had left |
 | Healing ground | Mender, from Soldier       | Heals them; it lasts 5 s |
-| Haste ground   | Fast, from Veteran         | Hastens them (twice the speed, no slow) for a second after each pulse; it lasts until the wave is over |
+| Haste ground   | Fast, from Veteran         | Hastens them (twice the speed, unless slowed) for a second after each pulse; it lasts until the wave is over |
 | Ward mine      | Armored, from Elite        | Armed a second after it is laid; the first enemy to step on it gets a Shield, and it is gone; it lasts 8 s |
 | Blinding field | Juggernaut, from Veteran   | Works on towers, not enemies: every tower inside misses 75% of its hits, whatever hits them again; fields never stack, the strongest counts; it lasts until the wave is over |
 

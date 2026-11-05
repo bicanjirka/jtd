@@ -100,7 +100,7 @@ class EnemyInspectionTest {
     }
 
     @Test
-    void aSpeedBreakdownRecordsChillAsAMultiplier() {
+    void aSpeedBreakdownRecordsChillAsAHoldOnItsBase() {
         DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.chill(0.4f, 100, DamageSink.none()));
 
@@ -109,7 +109,7 @@ class EnemyInspectionTest {
         assertThat(speed.added()).isEmpty();
         assertThat(speed.scaled()).hasSize(1);
         assertThat(speed.scaled().getFirst().source().mentions()).containsExactly(EffectKind.CHILL);
-        assertThat(speed.scaled().getFirst().modifier().multiply()).isCloseTo(0.6f, within(0.001f));
+        assertThat(speed.scaled().getFirst().modifier().capShareOfBase()).isCloseTo(0.6f, within(0.001f));
     }
 
     @Test

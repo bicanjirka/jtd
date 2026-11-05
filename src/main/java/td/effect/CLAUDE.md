@@ -1,19 +1,21 @@
 # `td.effect`
 
 - `Effect` is one effect-level record (kind, time, sink, origin) plus one `EffectDynamics` family:
-  flag, stacks, chill level, fuel pool, heal, shield pool or distance. A family carries
+  flag, stacks, slow, fuel pool, heal, shield pool or distance. A family carries
   only its own data. This package never depends on `td.enemy`: the producer binds a `DamageSink` when
   it creates the effect.
 - Each `EffectKind` is one row holding its `EffectRule`: category, resistance, stacking
-  (`EffectStacking`), stack cap, what each stack does to stats, and tags.
+  (`EffectStacking`), stack cap, what each stack does to stats, how much of base speed it takes away, and tags.
   Every classification method reads the rule. `ActiveEffects` keeps one live effect per kind and
-  combines applications by the rule's stacking: a refresh keeps the stronger and the longer, a level
-  or a pool adds up, stacks add to their cap, and a per-source kind keeps one share per source on its own clock
+  combines applications by the rule's stacking: a refresh keeps the stronger and the longer, a pool
+  adds up, stacks add to their cap, and a per-source kind keeps one share per source on its own clock
   (`SourceShares`): the effect's time is always its last share's, and anything that changes the time changes the
   shares. `ActiveEffects` exposes queries only, never its map.
-- `CHILL` is a level (the share of speed lost, up to a cap) made of one `FuelContribution` per
-  application, each fading linearly on its own slope. An application only adds what fits under the
-  cap. `FREEZE` is a hard stop.
+- A slow (`Effect.slowStrength()`: `CHILL`, whose strength each application brings, and `TARRED`, `ANCHORED`, `DRAGGED`
+  by their rule's `slowPerStack`) holds speed to a share of base through `capAtShareOfBase`, so the strongest applies,
+  across kinds too, and it beats any speed gain. It fades over its last `SLOW_FADE_TICKS`, or its whole length if shorter;
+  a slow refreshed each pulse never gets there. Of one kind a weaker slow is ignored while the stronger runs, and a
+  stronger one replaces it, weaker tail and all. `FREEZE` is a hard stop.
 - `BURN` and `POISON` are each a decaying fuel pool of one `FuelContribution` per application, each
   with its own sink (`EffectKind.isFuelPool()`). Tick damage is apportioned across contributors
   (largest remainder), so every tower gets credit for its share. Damage lands in a pulse a few times
@@ -64,7 +66,7 @@
   damage; the mob pays its share of that hit through the charge's own sink, so the charger is
   credited.
 - Effects change a mob only through `contributeTo(StatAccumulator)`, which applies each kind's
-  `modifiersAt(stacks)`, the chill level and what burning pools carry. Damage-taken
+  `modifiersAt(stacks)`, a slow's hold on speed and what burning pools carry. Damage-taken
   rows **add**; revealed sets `STEALTH` to 0, which beats invisibility's 1; every stat is floored by its range. A heal adds its amount to `REGENERATION`: it is
   `PER_SOURCE`, one `HealShare` per `Effect.origin` (`Effect.from`), shares from different sources adding up, a
   recast refreshing its own share (the larger amount, the later end), each running out on its own clock. A

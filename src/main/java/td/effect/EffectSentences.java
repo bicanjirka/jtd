@@ -19,8 +19,7 @@ final class EffectSentences {
     /** {@code kind}'s sentence, every number read from its rule, the interaction tables or its constants. */
     static TermText of(EffectKind kind) {
         return switch (kind) {
-            case CHILL -> TermText.of("slows by its level, up to " + TermNumbers.percent(ActiveEffects.MAX_CHILL)
-                    + ", and fades");
+            case CHILL -> slowing("slows by what its source gives");
             case BURN -> TermText.of("damage over time that fades; a top-up adds less the fuller it is, up to "
                     + TermNumbers.times(PoolTuning.standard().capFactor()) + " its strongest application; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
@@ -85,10 +84,7 @@ final class EffectSentences {
             case RECKONING -> TermText.of("when it dies, each ").plus(EffectKind.DOOM)
                     .plus(" from the same tower near it releases at once and starts again");
             case SILENCED -> TermText.of("its abilities don't fire; abilities on death and auras still do");
-            case ANCHORED -> TermText.of("it can't be sped up, and its ").plus(EnemyStat.MOVE_SPEED)
-                    .plus(" is held to at most "
-                            + TermNumbers.percent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).capShareOfBase())
-                            + " of its base");
+            case ANCHORED -> slowing("slows by " + TermNumbers.percent(kind.rule().slowPerStack()));
             case UNRAVELED -> stacked(kind, EnemyStat.MAGIC_RESIST);
             case BRITTLE -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                     EnemyStat.PHYSICAL_DAMAGE_TAKEN);
@@ -98,11 +94,8 @@ final class EffectSentences {
                     .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.ARMOR)), EnemyStat.ARMOR,
                             EnemyStat.MAGIC_RESIST))
                     .plus(", up to " + kind.maxStacks() + " stacks");
-            case DRAGGED -> TermText.of("each stack: ")
-                    .plus(changes(TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED)
-                            .percentAdd()), EnemyStat.MOVE_SPEED))
-                    .plus(", up to " + kind.maxStacks() + " stacks; it is no ").plus(EffectKind.CHILL)
-                    .plus(", and nothing resists it");
+            case DRAGGED -> slowing("slows by " + TermNumbers.percent(kind.rule().slowPerStack()) + " a stack, up to "
+                    + kind.maxStacks() + " stacks");
             case CONDEMNED -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
@@ -119,8 +112,7 @@ final class EffectSentences {
                     EnemyStat.PLATING)
                     .plus(" and ").plus(changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind,
                             EnemyStat.INSULATION))), EnemyStat.INSULATION));
-            case TARRED -> changes(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply()),
-                    EnemyStat.MOVE_SPEED);
+            case TARRED -> slowing("slows by " + TermNumbers.percent(kind.rule().slowPerStack()));
             case BLEEDING -> TermText.of("physical damage for every cell it travels; standing still, it takes none");
             case SOULFIRE -> TermText.of("damage over time in a pool of its own beside ").plus(EffectKind.BURN)
                     .plus(" and ").plus(EffectKind.POISON).plus("; nothing resists it, it adds a stack of ")
@@ -128,16 +120,22 @@ final class EffectSentences {
                             + " while it lasts, and every tower can see and aim at it");
             case SPRINTING -> changes(
                     TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd()),
-                    EnemyStat.MOVE_SPEED);
+                    EnemyStat.MOVE_SPEED).plus("; any slow cancels it");
             case SPELLPROOF -> stacked(kind, EnemyStat.MAGIC_RESIST);
             case UNYIELDING -> TermText.join(", ", List.of(
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE),
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)), EnemyStat.SPIRIT),
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.MAGIC_RESIST)), EnemyStat.MAGIC_RESIST)));
             case HASTENED -> changes(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply()),
-                    EnemyStat.MOVE_SPEED).plus("; ").plus(EffectKind.FREEZE).plus(" and ")
+                    EnemyStat.MOVE_SPEED).plus("; any slow cancels it, and ").plus(EffectKind.FREEZE).plus(" and ")
                     .plus(EffectKind.DAZED).plus(" still stop it");
         };
+    }
+
+    /** {@code what}, then the rule every slow keeps. */
+    private static TermText slowing(String what) {
+        return TermText.of(what + "; the strongest slow holds, no speed gain beats it, and speed comes back over its last "
+                + seconds(ActiveEffects.SLOW_FADE_TICKS));
     }
 
     /** "Agility -100, so it can't dodge and crits find it more often", the value read from {@code kind}'s rule. */

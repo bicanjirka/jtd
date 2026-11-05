@@ -21,8 +21,8 @@ import java.util.Set;
 /**
  * The effects active on one enemy, at most one per {@link EffectKind}. Reapplying a kind keeps the
  * stronger one and the longer remaining duration, so a weak top-up never cuts short a strong
- * effect. The decaying kinds and the stacking kinds combine differently: see {@link #applyChill},
- * {@link #applyPool} and {@link #applyStacks}.
+ * effect, and of two slows of one kind the stronger holds while it runs. The decaying kinds and the stacking kinds
+ * combine differently: see {@link #applyPool} and {@link #applyStacks}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class ActiveEffects {
@@ -35,8 +35,8 @@ public final class ActiveEffects {
     /** A pool deals its damage in a pulse this often: four times a second. */
     private static final int POOL_PULSE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 4f);
 
-    /** The most speed a chill takes away, so stacked chills never freeze. */
-    static final float MAX_CHILL = 0.8f;
+    /** Speed comes back over this last stretch of a slow's own time. */
+    public static final int SLOW_FADE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
 
     /** A stack debuff loses a stack this often: one per second, half as fast as a pool earns them. */
     public static final int STACK_DECAY_INTERVAL_TICKS = 20;
@@ -53,13 +53,21 @@ public final class ActiveEffects {
         return stronger.withRemainingTicks(Math.max(a.remainingTicks(), b.remainingTicks()));
     }
 
+    /** Of two slows of one kind, the stronger with its own time, so a weak long one can't stretch it; of equals, the longer. */
+    private static Effect strongerSlowOf(Effect held, Effect incoming) {
+        if (held.slowStrength() != incoming.slowStrength()) {
+            return held.slowStrength() > incoming.slowStrength() ? held : incoming;
+        }
+        return held.remainingTicks() >= incoming.remainingTicks() ? held : incoming;
+    }
+
     /** How hard an effect bites, in a unit specific to its family; only compared within one kind. */
     private static float magnitude(Effect effect) {
         return switch (effect.dynamics()) {
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
             case EffectDynamics.Flag _ -> 1f;
             case EffectDynamics.Stacks stacks -> stacks.stacks();
-            case EffectDynamics.ChillLevel _ -> effect.fuelLevel();
+            case EffectDynamics.Slow slow -> slow.strength();
             case EffectDynamics.FuelPool pool -> pool.perTick().amount();
             case EffectDynamics.HealOverTime heal -> heal.perTick();
             case EffectDynamics.ShieldPool shield -> shield.remaining();
@@ -76,7 +84,6 @@ public final class ActiveEffects {
         }
         Effect incoming = effect;
         switch (incoming.kind().rule().stacking()) {
-            case LEVEL -> this.applyChill(incoming);
             case POOL -> this.applyPool(incoming);
             case SHARED_CLOCK, EARNED -> this.applyStacks(incoming);
             case PER_SOURCE -> {
@@ -88,35 +95,21 @@ public final class ActiveEffects {
                 // A hold renewed before it ends would never end: its diminishing returns only count fresh holds.
                 boolean holding = existing != null && incoming.kind().category() == EffectCategory.HARD_CC;
                 this.active.put(incoming.kind(), existing == null ? incoming
-                        : holding ? existing : strongerOf(existing, incoming));
+                        : holding ? existing
+                        : incoming.slowStrength() > 0f ? strongerSlowOf(existing, incoming)
+                        : strongerOf(existing, incoming));
             }
         }
     }
 
-    private static float chillLevel(Effect chill) {
-        return Math.min(MAX_CHILL, chill.fuelLevel());
-    }
-
-    /**
-     * {@code CHILL} is a level that adds up, up to {@value #MAX_CHILL}, and decays linearly: each
-     * application keeps the slope it came with. An application only adds what fits under the cap,
-     * so a chill held at the cap is refilled only by what has decayed.
-     */
-    private void applyChill(Effect incoming) {
-        Effect existing = this.active.get(EffectKind.CHILL);
-        float headroom = MAX_CHILL - (existing == null ? 0f : existing.fuelLevel());
-        if (headroom <= 0f) {
-            return;
+    /** The share of base speed {@code effect} takes away now: its strength, fading over the end of its own time. */
+    private static float slowNow(Effect effect) {
+        float strength = effect.slowStrength();
+        if (strength <= 0f) {
+            return 0f;
         }
-        FuelContribution contribution = incoming.fuel().getFirst();
-        FuelContribution added = contribution.amount() <= headroom ? contribution : contribution.scaledTo(headroom);
-        if (existing == null) {
-            this.active.put(EffectKind.CHILL, incoming.withFuel(List.of(added), 0f));
-            return;
-        }
-        List<FuelContribution> fuel = new ArrayList<>(existing.fuel());
-        fuel.add(added);
-        this.active.put(EffectKind.CHILL, existing.withFuel(List.copyOf(fuel), 0f));
+        int fadeTicks = Math.clamp(effect.authoredDurationTicks(), 1, SLOW_FADE_TICKS);
+        return strength * Math.min(1f, (float) effect.remainingTicks() / fadeTicks);
     }
 
     /**
@@ -294,8 +287,8 @@ public final class ActiveEffects {
     }
 
     /**
-     * How full a fading level or pool is, from 0 to 1: a chill's level over its cap, a pool's fuel over what a
-     * top-up can fill it to. Empty for every other kind.
+     * How full a pool or a chill is, from 0 to 1: a pool's fuel over what a top-up can fill it to, a chill's slow now.
+     * Empty for every other kind.
      */
     public OptionalDouble fullness(EffectKind kind) {
         Effect effect = this.active.get(kind);
@@ -303,10 +296,13 @@ public final class ActiveEffects {
             return OptionalDouble.empty();
         }
         return switch (kind.rule().stacking()) {
-            case LEVEL -> OptionalDouble.of(chillLevel(effect) / MAX_CHILL);
             case POOL -> OptionalDouble.of(Math.min(1f,
                     effect.fuelLevel() / (effect.tuning().capFactor() * effect.peakL0())));
-            case REFRESH, SHARED_CLOCK, EARNED, PER_SOURCE -> OptionalDouble.empty();
+            case REFRESH -> switch (effect.dynamics()) {
+                case EffectDynamics.Slow _ -> OptionalDouble.of(slowNow(effect));
+                default -> OptionalDouble.empty();
+            };
+            case SHARED_CLOCK, EARNED, PER_SOURCE -> OptionalDouble.empty();
         };
     }
 
@@ -322,10 +318,10 @@ public final class ActiveEffects {
         return OptionalInt.of(Math.max(effect.authoredDurationTicks(), effect.remainingTicks()));
     }
 
-    /** How much speed the active chill takes away, from {@code 0} to {@value #MAX_CHILL}. */
-    public float chillLevel() {
-        Effect chill = this.active.get(EffectKind.CHILL);
-        return chill == null ? 0f : chillLevel(chill);
+    /** The share of base speed the active {@code kind} takes away now; {@code 0f} if it isn't active or doesn't slow. */
+    public float slowNow(EffectKind kind) {
+        Effect effect = this.active.get(kind);
+        return effect == null ? 0f : slowNow(effect);
     }
 
     /** Whether no effect is active, so the stats this object contributes cannot change on a tick. */
@@ -335,7 +331,7 @@ public final class ActiveEffects {
 
     /**
      * Adds every active effect's stat modifiers: each kind's {@link EffectKind#modifiersAt} for its
-     * stacks, the chill level on speed, a heal's regeneration, and what the burning pools carry.
+     * stacks, a slow's hold on speed, a heal's regeneration, and what the burning pools carry.
      * Nothing here allocates.
      */
     public void contributeTo(StatAccumulator<EnemyStat> accumulator) {
@@ -349,9 +345,12 @@ public final class ActiveEffects {
         switch (kind.rule().stacking()) {
             case SHARED_CLOCK, EARNED -> kind.modifiersAt(effect.stacks()).applyTo(accumulator);
             case REFRESH, POOL -> kind.modifiersAt(1).applyTo(accumulator);
-            case LEVEL -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - chillLevel(effect));
             // Of the per-source kinds only a heal gives regeneration; a shield's is zero.
             case PER_SOURCE -> accumulator.addFlat(EnemyStat.REGENERATION, effect.healPerTick());
+        }
+        float slow = slowNow(effect);
+        if (slow > 0f) {
+            accumulator.capAtShareOfBase(EnemyStat.MOVE_SPEED, 1f - slow);
         }
     }
 
@@ -394,7 +393,7 @@ public final class ActiveEffects {
 
     /**
      * Applies one tick of damage-over-time, then counts every duration down and removes what
-     * expired. A decaying level fades instead of counting down.
+     * expired.
      * {@code cellsMoved} is how far the enemy walked this tick, which a bleed turns into damage.
      */
     public void tick(float cellsMoved) {
@@ -410,7 +409,6 @@ public final class ActiveEffects {
             Optional<Effect> next = switch (effect.dynamics()) {
                 case EffectDynamics.Stacks _ when kind.isStackDebuff() ->
                         this.decayStacks(effect);
-                case EffectDynamics.ChillLevel _ -> tickChill(effect);
                 case EffectDynamics.FuelPool _ -> {
                     listener.dealing(kind);
                     yield this.tickPool(effect);
@@ -475,15 +473,6 @@ public final class ActiveEffects {
         }
         this.progress[slot] = gathered;
         return Optional.of(debuff.withStacks(stacks, debuff.remainingTicks()));
-    }
-
-    /** A tick of linear decay on every contribution; ends when all of them have run out. */
-    private static Optional<Effect> tickChill(Effect effect) {
-        List<FuelContribution> remaining = effect.fuel().stream()
-                .map(FuelContribution::decayedLinearly)
-                .filter(c -> c.amount() > 0f)
-                .toList();
-        return remaining.isEmpty() ? Optional.empty() : Optional.of(effect.withFuel(remaining, 0f));
     }
 
     /**
