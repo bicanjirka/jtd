@@ -5,9 +5,8 @@ import td.tower.targeting.Viewpoint;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -15,7 +14,8 @@ import java.util.Set;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class PingTracker {
 
-    private final Set<EnemyMob> passed = Collections.newSetFromMap(new IdentityHashMap<>());
+    /** In the order the beam passed them, which settles who a ping picks among enemies alike. */
+    private final Set<EnemyMob> passed = new LinkedHashSet<>();
 
     public void pass(EnemyMob enemy) {
         this.passed.add(enemy);

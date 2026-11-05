@@ -279,17 +279,6 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
 
 ## Balance tools
 
-### A play's result depends on identity-hash order
-
-A seeded play repeats exactly from run to run of the same build, but a change that plays no part in the game can still
-move it: one `System.identityHashCode(new Object())` per tick in the recorder took a competent play on The Amber Hive
-from 8.0 to 8.5 leaks over two seeds. So `BalanceReport --compare` can show a small difference between builds that play
-alike.
-
-- **Where:** not found yet. Candidates are the `IdentityHashMap`s the simulation iterates: `CinderTower.burning`,
-  `ZoneRoster`'s `touched`, `Zone.pulsesInside`, the `struck` set in `SplashTower`.
-- **Approach:** make whichever one's order reaches a hit or a roll keep insertion order, then repeat that experiment.
-
 ### What the balance tools cannot see yet
 
 `docs/plans/shipped/balance-verification-review.md` ranks these; each is a gap in `td.balance`, not in the game.
