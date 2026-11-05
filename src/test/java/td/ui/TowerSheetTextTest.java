@@ -128,8 +128,8 @@ class TowerSheetTextTest {
     void damageIsNamedAndColouredByItsType() {
         InfoSheet seeker = shopSheet(TowerFactory.Type.SEEKER);
 
-        assertThat(row(seeker, "Magic damage").tone()).contains(Palette.DAMAGE_MAGIC);
-        assertThat(row(shopSheet(TowerFactory.Type.SNIPER), "Phys damage").tone()).contains(Palette.DAMAGE_PHYSICAL);
+        assertThat(row(seeker, "Magic dmg").tone()).contains(Palette.DAMAGE_MAGIC);
+        assertThat(row(shopSheet(TowerFactory.Type.SNIPER), "Phys dmg").tone()).contains(Palette.DAMAGE_PHYSICAL);
     }
 
     @Test
@@ -144,7 +144,7 @@ class TowerSheetTextTest {
 
         InfoSheet sheet = TowerSheetText.status(sniper.inspect());
 
-        assertThat(labels(sheet)).contains("Fire rate", "DPS", "Crit chance", "Crit damage");
+        assertThat(labels(sheet)).contains("Fire rate", "DPS", "Crit chance", "Crit dmg");
     }
 
     @Test
@@ -165,7 +165,7 @@ class TowerSheetTextTest {
 
         InfoSheet sheet = liveStatus(sniper);
 
-        assertThat(row(sheet, "Phys damage")).extracting(Row::trend, Row::arrow)
+        assertThat(row(sheet, "Phys dmg")).extracting(Row::trend, Row::arrow)
                 .containsExactly(Trend.BETTER, SheetLine.Arrow.UP);
         assertThat(row(sheet, "Fire rate").trend()).isEqualTo(Trend.NONE);
         assertThat(iconRow(sheet, "Buffs").icons()).hasSize(1);
@@ -183,7 +183,7 @@ class TowerSheetTextTest {
         assertThat(row(sheet, "Range")).extracting(Row::trend, Row::arrow)
                 .containsExactly(Trend.WORSE, SheetLine.Arrow.DOWN);
         assertThat(row(sheet, "Fire rate")).extracting(Row::trend, Row::unit).containsExactly(Trend.WORSE, "/s");
-        assertThat(row(sheet, "Phys damage").trend()).isEqualTo(Trend.NONE);
+        assertThat(row(sheet, "Phys dmg").trend()).isEqualTo(Trend.NONE);
     }
 
     @Test

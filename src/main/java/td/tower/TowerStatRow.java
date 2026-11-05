@@ -12,11 +12,11 @@ import java.util.Locale;
 /** A row a tower works out from its stats rather than reads off one: how much and how often it deals. */
 public enum TowerStatRow implements StatTerm {
     /** In hundredths of a point a hit. */
-    PHYSICAL_DAMAGE("Phys damage", "Physical damage", StatUnit.DAMAGE_PER_HIT, StatDirection.HIGHER),
-    MAGIC_DAMAGE("Magic damage", "Magic damage", StatUnit.DAMAGE_PER_HIT, StatDirection.HIGHER),
+    PHYSICAL_DAMAGE("Phys dmg", "Physical damage", StatUnit.DAMAGE_PER_HIT, StatDirection.HIGHER),
+    MAGIC_DAMAGE("Magic dmg", "Magic damage", StatUnit.DAMAGE_PER_HIT, StatDirection.HIGHER),
     /** In points a second, for a tower that deals damage while an enemy stays in its field. */
-    PHYSICAL_FIELD_DAMAGE("Phys damage", "Physical damage", StatUnit.DAMAGE_PER_SECOND, StatDirection.HIGHER),
-    MAGIC_FIELD_DAMAGE("Magic damage", "Magic damage", StatUnit.DAMAGE_PER_SECOND, StatDirection.HIGHER),
+    PHYSICAL_FIELD_DAMAGE("Phys dmg", "Physical damage", StatUnit.DAMAGE_PER_SECOND, StatDirection.HIGHER),
+    MAGIC_FIELD_DAMAGE("Magic dmg", "Magic damage", StatUnit.DAMAGE_PER_SECOND, StatDirection.HIGHER),
     /** Attacks a second. */
     FIRE_RATE("Fire rate", "Fire rate", StatUnit.PER_SECOND, StatDirection.HIGHER),
     /** Seconds a turn of a sweeping head takes. */
@@ -90,9 +90,8 @@ public enum TowerStatRow implements StatTerm {
                     + "before magic resist and insulation");
             case FIRE_RATE -> TermText.of("how many attacks it makes each second");
             case SWEEP_TIME -> TermText.of("how long its beam takes to turn once around");
-            case PHYSICAL_DPS, MAGIC_DPS -> TermText.of("damage times fire rate times the average crit, on one "
-                    + "target before its defences; it leaves out splash on others, effects and damage over time, "
-                    + "extra hits from upgrades, and misses");
+            case PHYSICAL_DPS, MAGIC_DPS -> TermText.of("damage x fire rate x average crit on one target, before its "
+                    + "defences; it leaves out splash, effects, damage over time, extra hits and misses");
             case BURN_DPS -> TermText.of("what one target takes from its ").plus(EffectKind.BURN)
                     .plus(" while it stays in the flame, once the waves have built that up, before its defences");
             case WAVE_DPS -> TermText.of("what it really dealt this wave, to every enemy and after their defences, "

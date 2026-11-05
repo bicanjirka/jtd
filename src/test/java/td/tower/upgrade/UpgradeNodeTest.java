@@ -75,7 +75,7 @@ class UpgradeNodeTest {
 
         assertThat(node.effects().statRows()).singleElement().satisfies(bonus -> {
             assertThat(bonus.given()).isTrue();
-            assertThat(bonus.stat().changeText(bonus.change()).plain()).isEqualTo("Critical damage +50%");
+            assertThat(bonus.stat().changeText(bonus.change()).plain()).isEqualTo("Crit damage +50%");
         });
     }
 

@@ -81,7 +81,7 @@ public record HitAdjustment(float damage, float critChance, float critMultiplier
         return adjusted;
     }
 
-    /** "Damage +40%", "Critical chance +50%": each non-zero part, its stat named, joined with ", ". */
+    /** "Damage +40%", "Crit chance +50%": each non-zero part, its stat named, joined with ", ". */
     public TermText describe() {
         List<TermText> parts = new ArrayList<>();
         part(parts, TowerStat.DAMAGE, this.damage);

@@ -10,7 +10,7 @@ import java.util.Optional;
  */
 public interface StatTerm extends Term {
 
-    /** The row's name: whole words, the full name when that is short. */
+    /** The row's name: the full name when that is short. */
     String shortName();
 
     /** How a stored value becomes the number and unit the player reads. */

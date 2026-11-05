@@ -125,21 +125,21 @@ rate (/s) and DPS (/target: damage times fire rate times the average crit, befor
 its waves keep going on one target), the Radar
 its Sweep time in place of a fire rate, the Obelisk its damage a second, a placed tower its Wave DPS (what it really
 dealt this wave, over the span from its first damage to its last, once that span reaches a second); then every other stat off its default
-(Critical damage whenever it can crit, Effect duration whenever it applies an effect), and what a Beacon gives.
+(Crit damage whenever it can crit, Effect duration whenever it applies an effect), and what a Beacon gives.
 A changed value has an arrow for which way it moved, and is red only when that is worse; hovering a row says what
 the stat does and what made it. An upgrade's hover shows each change and what the row it moves would become
 (`Fire rate +25% 1.3 → 1.6 /s`).
 
 | Tower  | Price | Behaviour                                                                                                                                           |
 |--------|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path; each shot builds on the last, whichever enemy it hits, so the longer it keeps firing, the likelier it crits; a stack fades 3 s after its last shot, one at a time (Critical damage 200%) |
+| Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path; each shot builds on the last, whichever enemy it hits, so the longer it keeps firing, the likelier it crits; a stack fades 3 s after its last shot, one at a time (Crit damage 200%) |
 | Burst  | 15    | Instant blast on a random target in range, physical damage falling off with distance; attuned, it aims at the most crowded group and Saturates what it hits. Forks into the Stormcaller (lightning arcs on past the blast) or the Hexer (every 4th shot casts a hex) |
 | Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider. One head adds heavier shells and nukes, the other shrapnel and bombs along the path, and a ballistics line speeds the shell up, leads the target, widens the blast and fires salvos. Its specials turn every third shell into a Napalm, Tar or Cryo shell that leaves burning, tarred or frozen ground |
 | Scorcher | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
 | Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
 | Radar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
 | Obelisk | 25    | Support, a kill box. Short range; a field that drags everything inside 15% and deals a little magic damage to it every tick, ghosts included and with no visible enemy needed, the damage a quarter less for every other field overlapping it. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it stronger. One head holds enemies longer (Gravity: a deeper drag, Dazes, a wider field, a well or Stasis), the other denies them (Ward: reveal, silence, worthless heals, True Sight or Purge); an extra line makes them take more damage and builds Toll faster. A special Condemns the strongest enemy inside, bosses first, for every tower to turn on; drains spirit; or links two Obelisks with a Ley Line. Reveals nothing until Ward is bought |
-| Beacon | 20    | Passive: gives the towers in its range Damage and Range +20% and Disruption taken x0.5; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds Fire rate and Critical damage; the other widens its reach, then raises Buff duration and Effect duration. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
+| Beacon | 20    | Passive: gives the towers in its range Damage and Range +20% and Jam taken x0.5; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds Fire rate and Crit damage; the other widens its reach, then raises Buff duration and Effect duration. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
 
 The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Hive, Radar, Obelisk and Beacon
 (keys `q` `w` `e` `r` `t` `y` `u` `i`, in that order). A Burst that forks is called a Stormcaller or a Hexer.
@@ -186,10 +186,10 @@ An enemy is made of four kinds of thing, and each belongs to exactly one:
 
 - **Stats** are the numbers every enemy has, zero or not: Move speed (cells/s), Armor and Magic resist (a hit
   keeps `100 / (100 + armor)` of itself), Plating and Insulation (dmg every physical or magic hit loses; Flat
-  penetration ignores them), Resilience (against crits; 100 is crit-immune, below zero crits land harder), Agility
-  (aimed shots miss; below zero crits land more often), Physical, Magic and Damage over time taken (%), Spirit (what its regeneration restores and its shields hold),
-  Regeneration (hp/s; below zero it crumbles, losing health on its own) and Tenacity (how long what doesn't help it lasts: `100 / (100 + t)` of its time above
-  zero, `1 - t / 100` below; it cuts a pool's damage with its time). An immunity is a trait of its own: that effect never takes hold.
+  penetration ignores them), Resilience (against crits; 100 is crit-immune, a negative value makes crits stronger), Agility
+  (aimed shots miss; a negative value means no dodges and more crits), Physical, Magic and Damage over time taken (%), Spirit (what its regeneration restores and its shields hold),
+  Regeneration (hp/s; at a negative value it crumbles, losing health on its own) and Tenacity (how long its debuffs last: `100 / (100 + t)` of their time at a positive
+  value, `1 - t / 100` at a negative one; it cuts a pool's damage with its time). An immunity is a trait of its own: that effect never takes hold.
   The info pane lists the ones off their default, each with its unit and, where the number alone says little, what
   it does (`Armor 30 -23% dmg`); hovering a row explains it and, live, what made it. Nothing is drawn on the board
   for them. Under a selected enemy's health bar a strip shows what its shields hold, tinted where a shield takes only
@@ -208,7 +208,7 @@ on the Wardens, whose shield answers crits.
 | Enemy      | Looks like    | Behaviour                                                                                                                                                                                                                                                                                                         |
 |------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Simple     | circle        | Plain mob, no special ability, and no stats up to Veteran. From Elite, adaptive armor and a little of every stat; at Boss, +30 resilience |
-| Armored    | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10; immune to critical hits. From Veteran, +33 tenacity; from Elite, thick plating, a physical shield once below half health, and ward mines laid along its path; at Boss rank, calls three armored reinforcements every three seconds |
+| Armored    | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10; immune to crits. From Veteran, +33 tenacity; from Elite, thick plating, a physical shield once below half health, and ward mines laid along its path; at Boss rank, calls three armored reinforcements every three seconds |
 | Fast       | triangle      | Speeds up as it loses health; -20 agility, so crits land more often. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
 | Ghost      | sheet with eyes, floating | +20 armor. Turns invisible to single-target towers for ~10s the first time it's hit (~15s from Veteran; area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it; at Boss rank it fades out for 3s of every 10 |
 | Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone and, when it dies, heals and shields every ally near it; from Elite, adaptive armor; at Boss rank, the death blast is a heal alone. |
@@ -223,7 +223,7 @@ on the Wardens, whose shield answers crits.
 | Golem      | hexagon       | Slow, swaying and heavily armored: +35 armor, +40 resilience, so crits rarely land. Once below 50% health it hardens into a shield that holds until broken (40 points, then 80, 160, 300 and 600 at Boss). When it dies it splits into two smaller Golemites with its defences and a quarter of its health. From Elite, 50 armor, 60 resilience, +20 magic resist and 2 plating (65, 80, 35 and 4 at Boss). |
 | Skirmisher | diamond       | Nimble: 40 agility, rising to 80 with rank, so it dodges some aimed shots; +20 resilience. From Soldier it sprints off for 1.5 s after every dodge; from Elite it gets harder to hit the more it is hurt; at Boss rank it also vanishes for a moment after every dodge. |
 | Empty      | —             | Not a real enemy — a spacer that opens a timing gap inside a wave                                                                                                                                                                                                                                                 |
-| The Warden | large spiked crest with a gold gem | A boss: armor and magic resist, and plating, all lower with each hatching; periodically calls three Elite Drones, hardens for every ally near it (Hivemind), shields itself and nearby allies, and shields itself again whenever it survives a critical hit, so its escort has to be cleared before it can be worn down. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. If any stage escapes, the level is lost, however many lives are left. The final round of The Amber Hive — a level-authored enemy. |
+| The Warden | large spiked crest with a gold gem | A boss: armor and magic resist, and plating, all lower with each hatching; periodically calls three Elite Drones, hardens for every ally near it (Hivemind), shields itself and nearby allies, and shields itself again whenever it survives a crit, so its escort has to be cleared before it can be worn down. On death it leaves behind a stationary egg that hatches back into a weaker Warden if not destroyed in time — the fight only ends once an egg is defeated before it hatches. If any stage escapes, the level is lost, however many lives are left. The final round of The Amber Hive — a level-authored enemy. |
 | Sandling   | small grain of sand, path-facing | Quick (1.5 cells/s) and a little nimble, and it crumbles: it loses health on its own (negative regeneration), faster with rank, so it lasts about as long as it takes to cross the board. Slow it and it never arrives; a heal it is given holds it together. Appears on The Last Hour — a level-authored enemy, like the Drone. |
 | Timekeeper | brass clock face, spinning | Every seven seconds it turns the health of every other enemy within about 3 cells back to what it was two or three seconds before (Rewind), further with rank. A rewind is a heal: it gives back what Spirit makes it worth, nothing under Dead Zone, Inversion turns it into damage, and a freeze, a daze or a silence stops the cast. Appears on The Last Hour. |
 | Glass Sentinel | glass crystal | Slow, with 8 plating and 8 insulation that blunt every small hit of either type (up to 22 at Boss) and -60 resilience, so crits shatter it: it asks for big hits, crits, Cracked or flat penetration. Appears on The Last Hour. |
@@ -281,8 +281,8 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 |---|---|---|---|
 | Chill | Control | Debuff | Slows by what its source gives; the strongest slow holds, no speed gain beats it, and speed comes back over its last 0.5 s. |
 | Burn | Affliction | Debuff | Damage over time that fades; a top-up adds less the fuller it is, up to x2 its strongest application; it adds a stack of Scorch every 0.5 s while it lasts, and every tower can see and aim at it. |
-| Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; Agility -100, so it can't dodge and crits find it more often; time under it shortens the next one, and walking wins that back, more slowly at higher rank. |
-| Shield | Boon | Buff | Takes a hit before armor does, until its amount is spent or it runs out; more Spirit makes it hold more, shields from different sources add up, and damage that ticks goes past it. |
+| Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; Agility -100, so no dodges and more crits on it; time under it shortens the next one, and walking wins that back, more slowly at higher rank. |
+| Shield | Boon | Buff | Takes a hit before armor does, until its amount is spent or it runs out; more Spirit makes it hold more, shields from different sources add up, and damage over time goes past it. |
 | Invisibility | Boon | Buff | Towers can't aim at it, though damage on an area still reaches it. |
 | Heal | Boon | Buff | Adds to its Regeneration while it lasts; heals from different sources add up. |
 | Vulnerable | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +15%, up to 3 stacks. |
@@ -291,18 +291,18 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sunder | Weakness | Debuff | Each stack: Armor -5, up to 10 stacks. |
-| Expose | Mark | Debuff | Agility and Resilience -50: crits find it more often and hit it harder. |
+| Expose | Mark | Debuff | Agility and Resilience -50: more and stronger crits on it. |
 | Mark | Mark | Debuff | The next hit on it is a crit, which spends this. |
 | Priority | Mark | Debuff | Physical damage taken and Magic damage taken +15%, and a tower that picks one target picks it. |
 | Resonance | Weakness | Debuff | Each stack: Magic damage taken +8%, up to 3 stacks. |
 | Fracture | Weakness | Debuff | Each stack: Resilience -10, up to 5; it loses a stack every 1 s. |
-| Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; Agility -100, so it can't dodge and crits find it more often. |
+| Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; Agility -100, so no dodges and more crits on it. |
 | Saturation | Weakness | Debuff | Each stack makes a Burst's blasts hit it harder. |
 | Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
 | Doom | Hex | Debuff | When it ends, it takes a share of all the damage it took while it lasted. |
 | Blight | Hex | Debuff | It has Poison for as long as this lasts. |
 | Contagion | Hex | Debuff | When it dies, its hexes and debuffs jump to the enemies nearest it. |
-| Malaise | Hex | Debuff | Tenacity -50. |
+| Malaise | Hex | Debuff | Tenacity -50: its debuffs last longer. |
 | Inversion | Hex | Debuff | Its Regeneration deals it damage instead of restoring health, and a Shield it receives strikes it instead. |
 | Sympathy | Hex | Debuff | Once a second, its Chill, Vulnerable, Sunder, Expose and Unravel are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower. |
 | Reckoning | Hex | Debuff | When it dies, each Doom from the same tower near it releases at once and starts again. |
@@ -387,10 +387,10 @@ burning through a freeze.
 | Ward mine      | Armored, from Elite        | Armed a second after it is laid; the first enemy to step on it gets a Shield, and it is gone; it lasts 8 s |
 | Blinding field | Juggernaut, from Veteran   | Works on towers, not enemies: every tower inside misses 75% of its hits, whatever hits them again; fields never stack, the strongest counts; it lasts until the wave is over |
 
-Only a hit can crit: a shot, a blast, a beam pass. Damage that ticks (a burn, a poison, a field)
+Only a hit can crit: a shot, a blast, a beam pass. Damage over time (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
-own Critical damage (150%, the Sniper 200%). A guaranteed crit lands whenever the enemy's
-resilience is below 100; at 100 nothing crits. Negative resilience makes crits hit harder, and negative agility makes them land more often;
+own Crit damage (150%, the Sniper 200%). A guaranteed crit lands whenever the enemy's
+resilience is below 100; at 100 nothing crits. Negative resilience makes crits hit harder, and negative agility multiplies their chance (-50 turns 20% into 30%);
 Exposed takes 50 agility and 50 resilience. Armor and magic resist never go below 0.
 
 An enemy with agility can dodge a hit aimed at it alone: the Sniper's shot and its Ricochet bounces,
