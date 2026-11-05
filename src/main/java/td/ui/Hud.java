@@ -6,6 +6,7 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonModel;
 import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -217,14 +218,14 @@ public final class Hud {
         return new RoundRectangle2D.Float(inset, inset, w, h, arc, arc);
     }
 
-    private static Color borderFor(ControlFace face, ButtonModel model, boolean enabled) {
+    static Color borderFor(ControlFace face, ButtonModel model, boolean enabled) {
         boolean hot = model.isRollover() || model.isPressed();
         if (face.accent().isEmpty()) {
             if (!enabled) {
                 return BORDER_DISABLED;
             }
             if (model.isSelected()) {
-                return FOREGROUND;
+                return face.selectedBorder().orElse(FOREGROUND);
             }
             return hot ? BORDER_HOVER : BORDER_IDLE;
         }
@@ -253,6 +254,17 @@ public final class Hud {
             return TEXT_DISABLED;
         }
         return face.accent().map(accent -> face.dimmed() ? withAlpha(accent, DIM_CHIP) : accent).orElse(FOREGROUND);
+    }
+
+    /** The colour a loaded level gives the HUD: its card colour, in the tint that reads as small text. */
+    public static Color voiceOf(PathColor cardColor) {
+        return TextTint.of(colorOf(cardColor));
+    }
+
+    /** Recolours the title of a {@link #panelBorder}: panels are built once, and each level has its own voice. */
+    public static void setPanelTitleColor(JComponent panel, Color color) {
+        ((TitledBorder) panel.getBorder()).setTitleColor(color);
+        panel.repaint();
     }
 
     public static Color colorOf(PathColor color) {

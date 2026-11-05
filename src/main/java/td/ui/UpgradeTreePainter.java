@@ -66,7 +66,7 @@ final class UpgradeTreePainter {
     }
 
     /** The XP line: its words and how full its bar is. */
-    record XpLine(String text, float share) {
+    record XpLine(String text, float share, Color fill) {
     }
 
     /** The footer's words; a warning is red, words about the hovered node bold. */
@@ -97,7 +97,6 @@ final class UpgradeTreePainter {
     private static final Color RING_TRACK = new Color(47, 47, 48);
     private static final Color BADGE_FILL = new Color(7, 21, 32);
     private static final Color XP_TRACK = new Color(36, 36, 37);
-    private static final Color XP_FILL = new Color(216, 216, 220);
     private static final float HOVER_FILL = 0.12f;
     private static final float HOVER_BORDER = 0.35f;
     private static final Font XP_FONT = new Font(Font.DIALOG, Font.PLAIN, 10);
@@ -456,7 +455,7 @@ final class UpgradeTreePainter {
         float barLeft = Math.min(left + metrics.stringWidth(xp.text()) + 8f, right - 30f);
         g.setColor(XP_TRACK);
         g.fill(new Rectangle2D.Float(barLeft, XP_BASELINE - 5f, right - barLeft, 3f));
-        g.setColor(XP_FILL);
+        g.setColor(xp.fill());
         g.fill(new Rectangle2D.Float(barLeft, XP_BASELINE - 5f, (right - barLeft) * Math.clamp(xp.share(), 0f, 1f), 3f));
     }
 

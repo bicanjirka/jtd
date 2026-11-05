@@ -6,6 +6,7 @@ import td.util.ThreadConfined;
 
 import javax.swing.JPanel;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -69,6 +70,14 @@ public class PanelGameConsole extends JPanel {
         this.panelUpgradeTree.setTower(null);
         this.panelUpgradeTree.setVisible(false);
         this.panelWaveInfo.setVisible(true);
+    }
+
+    /** The loaded level's colour on the panel titles and the XP bar. */
+    public void setVoice(Color voice) {
+        Hud.setPanelTitleColor(this.panelTowerInfo, voice);
+        Hud.setPanelTitleColor(this.panelWaveInfo, voice);
+        Hud.setPanelTitleColor(this.panelUpgradeTree, voice);
+        this.panelUpgradeTree.setXpFill(voice);
     }
 
     public void setLevelEnded(boolean ended) {

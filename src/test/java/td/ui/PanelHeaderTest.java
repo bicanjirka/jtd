@@ -11,7 +11,9 @@ import td.wave.RoundSummary;
 import td.wave.WaveProgress;
 
 import javax.swing.AbstractButton;
+import javax.swing.JLabel;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.util.ArrayList;
@@ -167,5 +169,28 @@ class PanelHeaderTest {
             }
         }
         return found;
+    }
+
+    @Test
+    void aVoiceColoursTheTitleAndTheSelectedSpeedButtonsBorder() {
+        Color voice = new Color(10, 20, 30);
+
+        this.header.setVoice(voice);
+
+        List<Component> found = new ArrayList<>();
+        collect(this.header, found);
+        assertThat(found).filteredOn(JLabel.class::isInstance)
+                .anySatisfy(label -> assertThat(label.getForeground()).isEqualTo(voice));
+        assertThat(found).filteredOn(HudToggleButton.class::isInstance)
+                .allSatisfy(button -> assertThat(((HudToggleButton) button).face().selectedBorder()).contains(voice));
+    }
+
+    private static void collect(Container parent, List<Component> into) {
+        for (Component child : parent.getComponents()) {
+            into.add(child);
+            if (child instanceof Container inner) {
+                collect(inner, into);
+            }
+        }
     }
 }

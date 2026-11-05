@@ -46,6 +46,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
@@ -351,6 +352,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.panelTowerSelector.stopPlacing();
         this.latestFrame = null;
         this.header.reset();
+        this.showVoiceOf(level);
         this.engine.loadLevel(level);
         this.contentCardLayout.show(getContentPane(), CARD_GAME);
         this.gameBoard.recalculateBoard(level.width(), level.height());
@@ -365,6 +367,14 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.setSpeed(TickSpeed.NORMAL);
         this.gameLoop.start();
         this.requestFocusInWindow();
+    }
+
+    private void showVoiceOf(LevelDefinition level) {
+        Color voice = Hud.voiceOf(level.cardColor());
+        this.header.setVoice(voice);
+        this.gameConsole.setVoice(voice);
+        Hud.setPanelTitleColor(this.panelTowerSelector, voice);
+        Hud.setPanelTitleColor(this.panelDev, voice);
     }
 
     /** The single route back to the menu. Confirms first while the level is still in progress. */
