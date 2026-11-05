@@ -319,7 +319,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Frail | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +2%, up to 15 stacks. |
 | Crack | Weakness | Debuff | Plating -5 and Insulation -5. |
 | Tar | Weakness | Debuff | Slows by 40%; only the strongest slow counts, and speed comes back over its last 0.5 s. |
-| Bleed | Affliction | Debuff | Physical damage for every cell it travels; standing still, it takes none. |
+| Bleed | Affliction | Debuff | Physical damage for every cell it travels, ignoring Armor and Plating; standing still, it takes none. |
 | Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and every tower can see and aim at it. |
 | Sprint | Boon | Buff | Move speed +60%. |
 | Hasten | Boon | Buff | Move speed x2; Freeze and Daze still stop it. |

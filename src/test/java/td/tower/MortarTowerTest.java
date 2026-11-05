@@ -1,8 +1,10 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.Delivery;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -627,6 +629,26 @@ class MortarTowerTest {
 
         assertThat(ring.activeEffectKinds()).contains(EffectKind.BLEEDING);
         assertThat(target.activeEffectKinds()).doesNotContain(EffectKind.BLEEDING);
+    }
+
+    @Test
+    void aBleedLandsAsPeriodicDamagePastArmorAndPlating() {
+        MortarTower tower = this.towerWith("Shrapnel Storm");
+        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE;
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob ring = this.enemyAt(tower, OUT, radius + 20).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, ring});
+        this.pathBelow(tower);
+        this.landAShell(tower);
+        Effect bleed = ring.activeEffects().stream()
+                .filter(effect -> effect.kind() == EffectKind.BLEEDING).findFirst().orElseThrow();
+
+        bleed.sink().apply(Damage.physical(100));
+
+        AttackProfile dealtBy = ring.attackers().getLast();
+        assertThat(dealtBy.delivery()).isEqualTo(Delivery.PERIODIC);
+        assertThat(dealtBy.penetrate(DamageType.PHYSICAL, 50f, false)).isZero();
+        assertThat(dealtBy.penetrateFlatReduction(200f, false)).isZero();
     }
 
     @Test

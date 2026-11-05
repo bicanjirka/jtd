@@ -257,7 +257,8 @@ public final class DevControls implements EconomyListener {
             return problem.get();
         }
         return this.onSelectedEnemy("Applying " + kind.title(), this.as("dev:effect", mob -> {
-            DamageSink sink = damage -> mob.doDamage(damage, this.attack);
+            AttackProfile dealtBy = kind == EffectKind.BLEEDING ? this.attack.pastArmorAndPlating() : this.attack;
+            DamageSink sink = damage -> mob.doDamage(damage, dealtBy);
             DevEffects.enemyEffects(kind, values, sink, this.origin).forEach(effect -> mob.applyEffect(effect, this.origin));
             if (kind.category() == EffectCategory.HEX && mob.hasEffect(kind)) {
                 this.hexCaster.record(mob, kind);

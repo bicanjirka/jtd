@@ -462,8 +462,7 @@ public final class SniperTower extends AbstractTower {
 
         @Override
         public boolean execute(EnemyMob target) {
-            AttackProfile finisher = AttackProfile.none().withArmorPenetration(1f, 0f)
-                    .withFlatPenetration(1f).asPeriodic();
+            AttackProfile finisher = AttackProfile.none().pastArmorAndPlating().asPeriodic();
             SniperTower.this.dealDamage(target, Damage.physical(EXECUTION_DAMAGE), finisher);
             return target.isDead();
         }

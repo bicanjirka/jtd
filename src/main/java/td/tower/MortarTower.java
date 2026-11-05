@@ -446,9 +446,14 @@ public final class MortarTower extends AbstractTower {
             }
             if (shrapnel.bleeds()) {
                 int perCell = Math.round(this.damageCurrent() * BLEED_SHARE_PER_CELL * shrapnel.scale());
-                this.applyEffect(enemy, sink -> Effect.bleeding(perCell, BLEED_TICKS, sink));
+                this.applyEffect(enemy, _ -> Effect.bleeding(perCell, BLEED_TICKS, bled -> this.dealBleed(enemy, bled)));
             }
         }
+    }
+
+    /** A bleed lands in pieces too small for plating to leave anything of, so it goes past what the enemy wears. */
+    private boolean dealBleed(EnemyMob enemy, Damage damage) {
+        return this.dealDamage(enemy, damage, this.stats().attack().pastArmorAndPlating().asPeriodic());
     }
 
     /** Small blasts along the path: scattered around the impact, or in a line ahead of it. */
