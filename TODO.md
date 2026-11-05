@@ -11,8 +11,8 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
-- **HUD identity** (`docs/features/FEATURE-hud-identity.md`): a neutral HUD, level cards coloured from their level, and
-  a colour only for problems. Draft, for later; pick an option first.
+- **HUD identity** (`docs/features/FEATURE-hud-identity.md`): the Graphite neutral HUD, level cards drawn from their
+  level, a colour only for problems, and no green left in the chrome. One question open, then ready to implement.
 
 ## Feature request implementation order
 

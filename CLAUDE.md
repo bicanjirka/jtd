@@ -171,4 +171,4 @@ frame build reads them.
 
 One look on every OS. Every control is a `HudButton`/`HudToggleButton` and paints itself;
 nothing inherits the platform look-and-feel. Panel borders come from `Hud`. Prefer a glyph
-(`►`) over drawn artwork for a simple control.
+(`►`) over drawn artwork for a simple control. Before choosing a colour, read `docs/UI.md`.
