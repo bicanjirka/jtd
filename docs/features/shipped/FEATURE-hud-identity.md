@@ -1,7 +1,7 @@
 # Feature Request: HUD identity
 
-> **Status: one question open, then ready to implement.** The review and the options, as real screenshots of the game:
-> <https://claude.ai/artifact/29BfwEsGcojNEeP4UC7vp8>. The colours, values and rules: [`docs/UI.md`](../UI.md).
+**Status: implemented.** The review and the options, as real screenshots of the game:
+<https://claude.ai/artifact/29BfwEsGcojNEeP4UC7vp8>. The colours, values and rules: [`docs/UI.md`](../../UI.md).
 
 ## Summary
 
@@ -49,6 +49,9 @@ keeps doing so.
   - The Base upgrade slot becomes near-white (`#E1E1E6`) on the tree and on the tower. Core, Head and Special keep their
     blue, amber and violet.
 - **Green stays as an identity:** the Sniper, healing and regeneration, and the revamp's upgrade arrow.
+- **The loaded level gives the HUD one colour, in four small places:** the game title, the panel titles, the selected
+  speed button's border and the XP bar take the level's card colour, in its text tint. Every panel stays Graphite, and
+  the card's colour carries on into the game.
 
 ### Out of scope
 
@@ -61,7 +64,7 @@ keeps doing so.
 
 ## Interconnections
 
-- **`docs/UI.md`** is the palette later features choose from. Its chrome table becomes true when this ships.
+- **`docs/UI.md`** is the palette later features choose from.
 - **`FEATURE-tower-visual-revamp.md`** keeps the towers' own colours and adds a green upgrade arrow, which the colour
   rule leaves room for. It also removes the slot pips, after which the Base slot's colour appears only on the tree. With
   the chrome neutral, four towers' pure primaries (Sniper, Burst, Sonar, Pulse) become the loudest colours on screen.
@@ -88,20 +91,11 @@ keeps doing so.
   channels. Each grey now keeps today's contrast.
 - **Level card colours** as listed above: a choice per level, because three warm levels would otherwise look the same.
 - **The remaining green goes from the chrome,** including the Base slot's identity colour.
+- **The level gives the HUD a voice.** Graphite alone removes the console but says nothing of its own. These four colours
+  follow the loaded level rather than being constants, unlike every other HUD colour. Chosen while implementing, as the
+  recommended answer to the one open question: reverting its commit returns to a fully constant HUD.
+- **A card's colour must be one of its lanes',** which the level record enforces. The text tint is computed, so its values
+  differ a little from the first mock's.
 - Split from the enemy and effect work, and done after it.
 - The space theme is dropped: no indigo, no renames, no nebula. Levels already have identities of their own, and it
   would fight them.
-
-## Open questions
-
-1. **Does the loaded level give the HUD one colour?** Graphite on its own removes the console and is calm, but it says
-   nothing of its own, which is the cost its option always listed.
-   - ⭐ **Yes, in four small places:** the game title, the panel titles, the selected speed button's border and the XP
-     bar take the level's card colour, in its text tint. Every panel stays Graphite, and the card's colour carries on into
-     the game. These colours follow the loaded level rather than being constants, unlike every other HUD colour.
-   - **No:** every HUD colour stays a constant, and only the towers, the enemies and the board carry colour.
-
----
-
-*After implementation, update this document rather than deleting it: mark it implemented, prune resolved open
-questions, and move it to `docs/features/shipped/`.*
