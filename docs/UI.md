@@ -124,7 +124,7 @@ hard to tell from its neighbours, and "open" means it has room.
 | 90–120 | Yellow | Sonar, daze, shields | Busy |
 | 120–150 | Green, lime | Sniper, healing, regeneration, poison, blight | Busy, and split between tower and heal |
 | 150–180 | Mint | Mender, haste | **Open** |
-| 180–210 | Teal | A few enemies, The Last Hour's glass lane | **Open: the most room in the game** |
+| 180–210 | Teal | A few enemies, The Last Hour's glass lane, Malaise | **Open: the most room in the game** |
 | 210–240 | Sky | **Core slot**, frost, freeze | Some room, but it reads as cold |
 | 240–270 | Blue | Stormcaller, Seeker, **magic damage**, control | Crowded, and reads as magic |
 | 270–300 | Periwinkle | Chill, silence, several enemies, The Storm Ridge's lanes | Some room, no tower yet |

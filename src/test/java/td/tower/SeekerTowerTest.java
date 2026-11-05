@@ -104,6 +104,34 @@ class SeekerTowerTest {
         assertThat(immune.activeEffectKinds()).doesNotContain(EffectKind.FREEZE, EffectKind.BRITTLE);
     }
 
+    @Test
+    void brittleDoesNotComeWithAFreezeOnAnEnemyAlreadyFrozen() {
+        SeekerTower tower = this.seekerWith("Brittle");
+        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
+        frozen.applyEffect(Effect.freeze(100, DamageSink.none()));
+        this.context.enemies().setEnemies(new EnemyMob[]{frozen});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(frozen.hits()).isNotEmpty();
+        assertThat(frozen.activeEffectKinds()).doesNotContain(EffectKind.BRITTLE);
+    }
+
+    @Test
+    void aMissileOnAnEnemyAlreadyFrozenCountsNoDeed() {
+        SeekerTower tower = this.attunedTower();
+        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
+        frozen.applyEffect(Effect.freeze(100, DamageSink.none()));
+        this.context.enemies().setEnemies(new EnemyMob[]{frozen});
+        tower.beginTick(1);
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(tower.experience().deeds()).isZero();
+    }
+
     /** Ticks {@code tower} until it has launched {@code missiles}, then flies them all. */
     private void fireAndFly(SeekerTower tower, int missiles) {
         int launched = 0;

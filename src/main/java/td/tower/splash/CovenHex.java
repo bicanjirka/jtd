@@ -67,7 +67,8 @@ public final class CovenHex implements Hex {
     public TermText describe() {
         TermText onCast = this.addedOnCast == EffectKind.CHILL
                 ? TermText.of("applies " + TermNumbers.percent(RIME_CHILL) + " ").plus(EffectKind.CHILL)
-                : TermText.of("applies a small ").plus(EffectKind.BURN);
+                : TermText.of("applies ").plus(EffectKind.BURN).plus(" from " + TermNumbers.percent(ASH_BURN_SHARE)
+                        + " of the damage");
         return TermText.of(EffectKind.MALAISE, onCast.plus(" when cast; ").plus(EffectKind.MALAISE.describe()));
     }
 }

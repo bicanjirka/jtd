@@ -609,6 +609,28 @@ class CinderTowerTest {
     }
 
     @Test
+    void twoCindersThatBurnedTheSameEnemyShockOnce() {
+        CinderTower first = this.towerAt(3, 3);
+        CinderTower second = this.towerAt(3, 3);
+        UpgradePaths.buy(first, this.context, "Thermal Shock");
+        UpgradePaths.buy(second, this.context, "Thermal Shock");
+        FakeEnemyMob dying = FakeEnemyMob.at(150, 112);
+        FakeEnemyMob neighbour = FakeEnemyMob.at(150, 130);
+        this.context.enemies().setEnemies(new EnemyMob[]{dying});
+        for (int t = 1; t <= 1 + TRAVEL; t++) {
+            first.doTick(t);
+            second.doTick(t);
+        }
+        this.context.enemies().setEnemies(new EnemyMob[]{dying, neighbour});
+
+        dying.invalidate();
+        first.doTick(2 + TRAVEL);
+        second.doTick(2 + TRAVEL);
+
+        assertThat(neighbour.hits()).hasSize(1);
+    }
+
+    @Test
     void thermalShockDoesNotFireOnALeak() {
         CinderTower tower = this.towerAt(3, 3);
         UpgradePaths.buy(tower, this.context, "Thermal Shock");

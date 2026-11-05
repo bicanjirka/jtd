@@ -73,7 +73,8 @@ final class EffectSentences {
             case DOOM -> TermText.of("when it ends, it takes a share of all the damage it took while it lasted");
             case BLIGHT -> TermText.of("it has ").plus(EffectKind.POISON).plus(" for as long as this lasts");
             case CONTAGION -> TermText.of("when it dies, its hexes and debuffs jump to the enemies nearest it");
-            case MALAISE -> changes(TermNumbers.signed(perStack(kind, EnemyStat.TENACITY)), EnemyStat.TENACITY);
+            case MALAISE -> changes(TermNumbers.signed(perStack(kind, EnemyStat.TENACITY)), EnemyStat.TENACITY)
+                    .plus(": what weakens it lasts longer");
             case INVERSION -> TermText.of("its ").plus(EnemyStat.REGENERATION)
                     .plus(" deals it damage instead of restoring health, and a ").plus(EffectKind.SHIELD)
                     .plus(" it receives strikes it instead");

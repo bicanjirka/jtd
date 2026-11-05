@@ -21,7 +21,7 @@ public final class BrittleMechanic implements SeekerMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("an enemy it gives ").plus(EffectKind.FREEZE).plus(" gains ").plus(EffectKind.BRITTLE)
-                .plus(" for as long");
+        return TermText.of("a ").plus(EffectKind.FREEZE).plus(" it lands also gives ").plus(EffectKind.BRITTLE)
+                .plus(" for the tower's full ").plus(EffectKind.FREEZE).plus(" time");
     }
 }

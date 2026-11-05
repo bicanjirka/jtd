@@ -501,14 +501,16 @@ public final class CinderTower extends AbstractTower {
         }
     }
 
-    /** What is left of the burn {@code dead} carried, at {@code share}, lands on its neighbours, and they are chilled. */
+    /**
+     * What is left of the burn {@code dead} carried, at {@code share}, lands on its neighbours, and they are chilled.
+     * The shock spends the burn, so another Cinder that burned the same enemy has nothing left to land.
+     */
     private void shock(EnemyMob dead, float share) {
-        for (Effect pool : dead.activeEffects()) {
-            if (pool.kind() == EffectKind.BURN) {
-                this.burstOnto(dead, Math.round(pool.remainingPoolDamage() * share), THERMAL_SHOCK_RADIUS_CELLS);
-                this.chillAround(dead);
-            }
-        }
+        dead.activeEffects().stream().filter(effect -> effect.kind() == EffectKind.BURN).findFirst().ifPresent(pool -> {
+            this.burstOnto(dead, Math.round(pool.remainingPoolDamage() * share), THERMAL_SHOCK_RADIUS_CELLS);
+            this.chillAround(dead);
+            dead.loseStacks(EffectKind.BURN, 1);
+        });
     }
 
     private void chillAround(EnemyMob centre) {
