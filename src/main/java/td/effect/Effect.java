@@ -314,7 +314,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.PRIORITY, durationTicks, sink);
     }
 
-    private static Effect stacking(EffectKind kind, int stacks, int durationTicks, DamageSink sink) {
+    static Effect stacking(EffectKind kind, int stacks, int durationTicks, DamageSink sink) {
         return of(kind, durationTicks, sink, new EffectDynamics.Stacks(stacks, 0, false));
     }
 
