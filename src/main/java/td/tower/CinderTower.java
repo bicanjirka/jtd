@@ -58,8 +58,8 @@ import td.zone.ZoneOwner;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -191,8 +191,8 @@ public final class CinderTower extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
     private final OwnedMechanics<CinderMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final List<FlameWave> inFlightWaves = new ArrayList<>();
-    /** The enemies this tower has set alight and still tracks, by identity. */
-    private final Map<EnemyMob, Burning> burning = new IdentityHashMap<>();
+    /** The enemies this tower has set alight and still tracks, first alight first. */
+    private final Map<EnemyMob, Burning> burning = new LinkedHashMap<>();
     private final ZoneOwner zoneOwner = this::applyEffect;
     private final FireClock clock = new FireClock(COOLDOWN_MAX);
     private int tickNow;

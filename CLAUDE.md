@@ -117,6 +117,9 @@ frame build reads them.
   exempt.
 - Randomness comes from an injected `RandomSource` (`GameWorld.random()`), never
   `Math.random()`, so headless balance runs reproduce.
+- What the simulation iterates keeps a fixed order (`List`, `LinkedHashMap`, `EnumMap`). A `HashSet`, `HashMap` or
+  `IdentityHashMap` of objects or enums only answers membership: its order moves with changes that play no part in
+  the game, and order reaches who is hit and so the shared random.
 - Services: constructor injection into `final` fields; one constructor, no init step.
   Interfaces of 1-5 methods; the wide domain interfaces in `TODO.md` are the known exceptions.
 - Streams to transform, `reduce` to combine.
