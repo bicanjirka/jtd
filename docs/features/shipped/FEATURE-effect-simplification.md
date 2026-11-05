@@ -1,7 +1,12 @@
 # Feature Request: Effect Simplification
 
-**Status:** finalized 2026-11-05, ready to implement. Every number in "What this feature adds" is a starting point that
-nothing has measured.
+**Status: implemented.** Decided while building it: Reveal on an already invisible enemy strips nothing, and the cloak
+resumes after; Daze immunity also goes on the reborn twins, the two weaker Warden stages and the two hatching eggs;
+Brittle only comes with a Freeze that landed; fallout ground keeps its Sickened stacks; Thermal Shock fires on a kill, not
+a leak, for Burn only, once per enemy, from every Cinder tracking it; of one kind a stronger shorter slow loses the
+weaker tail; only Fast moved to negative Agility. Chill's own numbers are left for the designer. The Freeze cap holds in
+the long run: a try every tick can hold an enemy for a long first stretch, bounded by the freeze's authored length in
+seconds of meter.
 
 ## Summary
 
