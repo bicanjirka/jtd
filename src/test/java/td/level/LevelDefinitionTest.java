@@ -6,6 +6,7 @@ import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
+import td.wave.PathColor;
 import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.WaveDefinition;
@@ -29,7 +30,7 @@ class LevelDefinitionTest {
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredPaths() {
         List<PathDefinition> paths = new ArrayList<>(List.of(pathWithRounds(1)));
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, paths, List.of(), List.of(), 100, 5, BoardGround.plain());
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5, paths);
 
         paths.add(pathWithRounds(1));
 
@@ -38,7 +39,7 @@ class LevelDefinitionTest {
 
     @Test
     void theStoredPathsCannotBeMutatedThroughTheirAccessor() {
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5, List.of(pathWithRounds(1)), List.of(), List.of(), 100, 5, BoardGround.plain());
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5, List.of(pathWithRounds(1)));
 
         assertThatThrownBy(() -> level.paths().add(pathWithRounds(1)))
                 .isInstanceOf(UnsupportedOperationException.class);
@@ -46,21 +47,21 @@ class LevelDefinitionTest {
 
     @Test
     void aLevelNeedsAtLeastOnePath() {
-        assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5, List.of(), List.of(), List.of(), 100, 5, BoardGround.plain()))
+        assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5, List.of(), List.of(), List.of(), 100, 5, BoardGround.plain(), PathColor.DEFAULT))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void everyPathMustDefineTheSameNumberOfWaves() {
-        assertThatThrownBy(() -> new LevelDefinition("Test", "", 5, 5,
-                List.of(pathWithRounds(3), pathWithRounds(2)), List.of(), List.of(), 100, 5, BoardGround.plain()))
+        assertThatThrownBy(() -> LevelDefinition.of("Test", 5, 5,
+                List.of(pathWithRounds(3), pathWithRounds(2))))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void pathsWithMatchingRoundCountsAreAccepted() {
-        LevelDefinition level = new LevelDefinition("Test", "", 5, 5,
-                List.of(pathWithRounds(3), pathWithRounds(3)), List.of(), List.of(), 100, 5, BoardGround.plain());
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5,
+                List.of(pathWithRounds(3), pathWithRounds(3)));
 
         assertThat(level.paths()).hasSize(2);
     }
@@ -136,5 +137,26 @@ class LevelDefinitionTest {
 
         assertThatThrownBy(() -> level.customRankedEnemies().add(ranked))
                 .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void aLevelsCardTakesItsFirstLanesColourUnlessItNamesAnother() {
+        PathColor first = PathColor.of(10, 20, 30);
+        PathColor second = PathColor.of(40, 50, 60);
+        List<PathDefinition> paths = List.of(pathWithRounds(1).withColor(first), pathWithRounds(1).withColor(second));
+
+        LevelDefinition plain = LevelDefinition.of("Test", 5, 5, paths);
+        LevelDefinition named = plain.withCardColor(second);
+
+        assertThat(plain.cardColor()).isEqualTo(first);
+        assertThat(named.cardColor()).isEqualTo(second);
+    }
+
+    @Test
+    void aCardColourNoLaneWearsIsRejected() {
+        LevelDefinition level = LevelDefinition.of("Test", 5, 5, List.of(pathWithRounds(1).withColor(PathColor.of(10, 20, 30))));
+
+        assertThatThrownBy(() -> level.withCardColor(PathColor.of(40, 50, 60)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

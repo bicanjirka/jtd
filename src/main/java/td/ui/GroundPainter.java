@@ -87,7 +87,7 @@ final class GroundPainter {
         return image;
     }
 
-    private static void paintGround(Graphics2D g2, BoardGround ground, int scale, int width, int height) {
+    static void paintGround(Graphics2D g2, BoardGround ground, int scale, int width, int height) {
         g2.setColor(new Color(ground.floorRgb()));
         g2.fillRect(0, 0, width, height);
         if (ground.motif() == GroundMotif.NONE || scale <= 0) {

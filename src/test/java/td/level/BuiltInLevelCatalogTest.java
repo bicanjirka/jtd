@@ -22,6 +22,13 @@ class BuiltInLevelCatalogTest {
         assertThat(names).isNotEmpty().doesNotHaveDuplicates().allSatisfy(name -> assertThat(name).isNotBlank());
     }
 
+    @Test
+    void noTwoBuiltInLevelsWearTheSameCardColour() {
+        List<LevelDefinition> levels = new BuiltInLevelCatalog().levels();
+
+        assertThat(levels.stream().map(LevelDefinition::cardColor).toList()).doesNotHaveDuplicates();
+    }
+
     /** A quadratic or arc corner never bulges past the corners it rounds, however far it pulls. */
     @Test
     void everyBuiltInPathsCurveStaysWithinItsOwnCorners() {

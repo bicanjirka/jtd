@@ -75,6 +75,7 @@ final class IronCrossingLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
+            .withCardColor(RUSH_COLOR)
             .withGround(BoardGround.of(0x08090C, GroundMotif.PLATES, 0x14171D))
             .withCustomEnemies(List.of(ColossusEnemy.ember()))
             .withCustomRankedEnemies(ColossusEnemy.chain());

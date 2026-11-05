@@ -3,6 +3,7 @@ package td.level;
 import td.board.BoardGround;
 import td.enemy.EnemyDefinition;
 import td.enemy.RankedEnemy;
+import td.wave.PathColor;
 import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.WaveDefinition;
@@ -29,7 +30,8 @@ public record LevelDefinition(
         List<RankedEnemy> customRankedEnemies,
         int startingCredits,
         int startingLives,
-        BoardGround ground) {
+        BoardGround ground,
+        PathColor cardColor) {
 
     public LevelDefinition {
         paths = List.copyOf(paths);
@@ -46,47 +48,57 @@ public record LevelDefinition(
                                 + roundCount + " and " + path.waves().size());
             }
         }
+        if (paths.stream().noneMatch(path -> path.color().equals(cardColor))) {
+            throw new IllegalArgumentException("A level's card colour must be one of its lanes', had " + cardColor);
+        }
     }
 
     /**
      * The required shape: name, board size and paths, with the default economy ($100, 5 lives), no
-     * description, no custom enemies and a plain ground. Add the rest with the {@code withX} copies.
+     * description, no custom enemies, a plain ground and the first lane's colour on its card. Add the rest with the {@code withX} copies.
      */
     public static LevelDefinition of(String name, int width, int height, List<PathDefinition> paths) {
-        return new LevelDefinition(name, "", width, height, paths, List.of(), List.of(), 100, 5, BoardGround.plain());
+        return new LevelDefinition(name, "", width, height, paths, List.of(), List.of(), 100, 5, BoardGround.plain(),
+                paths.getFirst().color());
     }
 
     public LevelDefinition withDescription(String description) {
         return new LevelDefinition(this.name, description, this.width, this.height, this.paths,
-                this.customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, this.ground);
+                this.customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, this.ground, this.cardColor);
     }
 
     public LevelDefinition withStartingCredits(int startingCredits) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                this.customEnemies, this.customRankedEnemies, startingCredits, this.startingLives, this.ground);
+                this.customEnemies, this.customRankedEnemies, startingCredits, this.startingLives, this.ground, this.cardColor);
     }
 
     public LevelDefinition withStartingLives(int startingLives) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                this.customEnemies, this.customRankedEnemies, this.startingCredits, startingLives, this.ground);
+                this.customEnemies, this.customRankedEnemies, this.startingCredits, startingLives, this.ground, this.cardColor);
     }
 
     /** Single-rank enemies this level adds to its catalog. */
     public LevelDefinition withCustomEnemies(List<EnemyDefinition> customEnemies) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, this.ground);
+                customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, this.ground, this.cardColor);
     }
 
     /** Ranked enemies this level adds to its catalog. */
     public LevelDefinition withCustomRankedEnemies(List<RankedEnemy> customRankedEnemies) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                this.customEnemies, customRankedEnemies, this.startingCredits, this.startingLives, this.ground);
+                this.customEnemies, customRankedEnemies, this.startingCredits, this.startingLives, this.ground, this.cardColor);
     }
 
     /** What the board is painted on. */
     public LevelDefinition withGround(BoardGround ground) {
         return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
-                this.customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, ground);
+                this.customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, ground, this.cardColor);
+    }
+
+    /** The lane colour that stands for this level on its card and in the HUD. */
+    public LevelDefinition withCardColor(PathColor cardColor) {
+        return new LevelDefinition(this.name, this.description, this.width, this.height, this.paths,
+                this.customEnemies, this.customRankedEnemies, this.startingCredits, this.startingLives, this.ground, cardColor);
     }
 
     /** A level with one unsmoothed path. */

@@ -12,7 +12,6 @@ import td.ui.render.Palette;
 import td.ui.render.RankBadge;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
-import td.wave.PathColor;
 import td.wave.WaveScriptSuggestions.Result;
 
 import javax.swing.AbstractAction;
@@ -654,8 +653,7 @@ public class PanelDev extends JPanel {
         if (this.world == null || path >= this.world.level().pathCount()) {
             return Hud.FOREGROUND;
         }
-        PathColor color = this.world.level().paths().get(path).color();
-        return new Color(color.r(), color.g(), color.b());
+        return Hud.colorOf(this.world.level().paths().get(path).color());
     }
 
     /**
