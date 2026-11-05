@@ -11,6 +11,7 @@ import td.economy.SellRefund;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.enemy.HitResult;
@@ -74,11 +75,6 @@ public abstract class AbstractTower implements Tower {
 
     /** Ticks per second at normal speed, from the one place the tick rate is defined. */
     protected static final float TICKS_PER_SECOND = TickRate.TICKS_PER_SECOND;
-    /** How long a vulnerability lasts from its latest application. */
-    private static final float VULNERABLE_SECONDS = 4f;
-    private static final float SUNDERED_SECONDS = 5f;
-    private static final float RESONATING_SECONDS = 4f;
-    private static final float UNRAVELED_SECONDS = 5f;
     // Shared, since an empty catalogue never brings a mechanic to hold.
     private static final OwnedMechanics<Mechanic> NO_MECHANICS = new OwnedMechanics<>(MechanicCatalogue.empty());
 
@@ -310,7 +306,7 @@ public abstract class AbstractTower implements Tower {
         if (every > 0 && attacker.delivery() == Delivery.HIT && !enemy.isDead()
                 && (long) this.currentTick - this.lastWitherTick >= every) {
             this.lastWitherTick = this.currentTick;
-            this.applyStacks(enemy, EffectKind.VULNERABLE, 1);
+            this.applyStacks(enemy, StackingDebuff.VULNERABLE, 1);
         }
     }
 
@@ -367,14 +363,8 @@ public abstract class AbstractTower implements Tower {
      * Adds {@code stacks} of a stacking debuff to {@code target}, on the debuff's own clock; the
      * stacks belong to the enemy, not this tower.
      */
-    protected void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
-        this.applyEffect(target, sink -> switch (kind) {
-            case VULNERABLE -> Effect.vulnerable(stacks, Math.round(VULNERABLE_SECONDS * TICKS_PER_SECOND), sink);
-            case SUNDERED -> Effect.sundered(stacks, Math.round(SUNDERED_SECONDS * TICKS_PER_SECOND), sink);
-            case RESONATING -> Effect.resonating(stacks, Math.round(RESONATING_SECONDS * TICKS_PER_SECOND), sink);
-            case UNRAVELED -> Effect.unraveled(stacks, Math.round(UNRAVELED_SECONDS * TICKS_PER_SECOND), sink);
-            default -> throw new IllegalArgumentException(kind + " is not a stacking debuff");
-        });
+    protected void applyStacks(EnemyMob target, StackingDebuff debuff, int stacks) {
+        this.applyEffect(target, sink -> debuff.effect(stacks, sink));
     }
 
     /**
@@ -914,7 +904,7 @@ public abstract class AbstractTower implements Tower {
 
     private Optional<Term> appliedBy(ProcPayload payload) {
         return switch (payload) {
-            case ProcPayload.ApplyStacks stacks -> Optional.of(stacks.kind());
+            case ProcPayload.ApplyStacks stacks -> Optional.of(stacks.debuff().kind());
             case ProcPayload.Charge charge -> Optional.of(EffectKind.CHARGED);
             default -> Optional.empty();
         };
@@ -1181,8 +1171,8 @@ public abstract class AbstractTower implements Tower {
     private final class TowerProcActions implements ProcActions {
 
         @Override
-        public void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
-            AbstractTower.this.applyStacks(target, kind, stacks);
+        public void applyStacks(EnemyMob target, StackingDebuff debuff, int stacks) {
+            AbstractTower.this.applyStacks(target, debuff, stacks);
         }
 
         @Override

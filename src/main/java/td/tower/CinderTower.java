@@ -8,6 +8,7 @@ import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.PoolTuning;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.term.TermNumbers;
@@ -401,7 +402,7 @@ public final class CinderTower extends AbstractTower {
             this.applyEffect(enemy, sink -> Effect.scorched(spec.critScorch()));
         }
         if (spec.searing() && (!alreadyBurning || gameTime - entry.lastVulnerableTick >= spec.searingIntervalTicks())) {
-            this.applyStacks(enemy, EffectKind.VULNERABLE, 1);
+            this.applyStacks(enemy, StackingDebuff.VULNERABLE, 1);
             entry.lastVulnerableTick = gameTime;
         }
         if (spec.combustion().isActive()) {
