@@ -34,7 +34,7 @@ import java.util.stream.IntStream;
  * what each tier should cost closes the report. Every run is seeded, so a table can be compared with
  * the next one. A tool run on demand, not a test: it takes minutes.
  * <p>
- * Usage: {@code PurchaseHarness [levelIndexes] [seeds] [towerType] [armyCopies]}, with levels such as {@code 0,1,2}. The
+ * Usage: {@code PurchaseHarness [levelIndexes] [seeds] [towerType|all] [armyCopies]}, with levels such as {@code 0,1,2}. The
  * price of "another copy" rises with the copies already built, so a larger army measures it at the price a real build
  * pays.
  */
@@ -48,6 +48,7 @@ public final class PurchaseHarness {
     private static final int UNLIMITED_LIVES = 1_000_000;
     private static final int TICK_BUDGET = 60_000;
     private static final double PER_HUNDRED_CREDITS = 100.0;
+    private static final String EVERY_TOWER = "all";
 
     private final int seeds;
     private final int armyCopies;
@@ -61,7 +62,7 @@ public final class PurchaseHarness {
         List<Integer> levelIndexes = args.length > 0
                 ? Arrays.stream(args[0].split(",")).map(Integer::parseInt).toList() : List.of(0);
         int seeds = args.length > 1 ? Integer.parseInt(args[1]) : DEFAULT_SEEDS;
-        Optional<TowerFactory.Type> only = args.length > 2
+        Optional<TowerFactory.Type> only = args.length > 2 && !args[2].equals(EVERY_TOWER)
                 ? Optional.of(TowerFactory.Type.valueOf(args[2].toUpperCase(Locale.ROOT))) : Optional.empty();
         int armyCopies = args.length > 3 ? Integer.parseInt(args[3]) : 1;
         List<LevelDefinition> all = new BuiltInLevelCatalog().levels();

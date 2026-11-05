@@ -108,7 +108,7 @@ add several each.
 Two older harnesses remain. `td.PurchaseHarness` compares purchases: on each level asked for, with an army
 of one tower of every type, it reports the lives saved per 100 credits by another copy of a tower and by each
 upgrade node, over many seeded runs (`mvn -q compile exec:java -Dexec.mainClass=td.PurchaseHarness
--Dexec.args="0,1,2 12 sniper 4"`: levels, seeds, tower, and how many of each tower the base army has; a bigger
+-Dexec.args="0,1,2 12 all 4"`: levels, seeds, a tower or all of them, and how many of each tower the base army has; a bigger
 army prices "another copy" at what a real build pays). It also gives each line's fair price, the price at which
 it saves as many lives per credit as another tower, and closes with what a node at each tier should cost as a
 percent of its tower's list price. `td.BuildHarness` compares builds of one tower
