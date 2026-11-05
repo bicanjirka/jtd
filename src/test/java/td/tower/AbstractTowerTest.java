@@ -8,6 +8,7 @@ import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.fixtures.EnemyFixtures;
@@ -718,7 +719,7 @@ class AbstractTowerTest {
     @Test
     void anOnHitProcThatAppliesStacksPutsThemOnTheEnemyHit() {
         FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none())
-                .withBaseProcs(List.of(Proc.onHit(new ProcPayload.ApplyStacks(EffectKind.VULNERABLE, 2))));
+                .withBaseProcs(List.of(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.VULNERABLE, 2))));
         FakeEnemyMob target = FakeEnemyMob.at(0, 0);
 
         tower.reportHit(target);

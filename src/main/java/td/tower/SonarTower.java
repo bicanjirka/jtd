@@ -5,6 +5,7 @@ import td.damage.DamageType;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.stat.StatPart;
@@ -132,7 +133,7 @@ public final class SonarTower extends AbstractTower {
             PRICE);
     private static final UpgradeNode HARMONICS = UpgradeTier.EXTRA_2.node("sonar.extra.frequency.2", "Harmonics",
             PRICE)
-            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(EffectKind.RESONATING, 1))
+            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.RESONATING, 1))
                     .when(new ProcCondition.HitKindIn(Set.of(HitKind.BEAM))))
             .after(ULTRASOUND);
     private static final UpgradeNode PURE_TONE = UpgradeTier.EXTRA_3.node("sonar.extra.frequency.3", "Pure Tone",

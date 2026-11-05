@@ -3,7 +3,7 @@ package td.tower.proc;
 import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
-import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.fixtures.FakeEnemyMob;
 import td.tower.TowerModifiers;
 import td.tower.TowerStatus;
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ProcRunnerTest {
 
-    private static final ProcPayload VULNERABLE = new ProcPayload.ApplyStacks(EffectKind.VULNERABLE, 1);
+    private static final ProcPayload VULNERABLE = new ProcPayload.ApplyStacks(StackingDebuff.VULNERABLE, 1);
 
     private final RecordingProcActions actions = new RecordingProcActions();
     private final FakeEnemyMob target = FakeEnemyMob.at(0, 0);

@@ -3,7 +3,7 @@ package td.tower;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
-import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.enemy.Rank;
@@ -138,7 +138,7 @@ public final class SniperTower extends AbstractTower {
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode SUNDER_ROUNDS = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4b",
             "Sunder Rounds", PRICE)
-            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(EffectKind.SUNDERED, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
+            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .after(MARKSMANS_EYE_3);
     private static final UpgradeNode TRADECRAFT_1 = UpgradeTier.EXTRA_1.node("sniper.extra.tradecraft.1",
             "Tradecraft", PRICE);
@@ -172,7 +172,7 @@ public final class SniperTower extends AbstractTower {
             .after(FOCUSED_OPTICS_1);
     private static final UpgradeNode HOLLOW_POINT = UpgradeTier.SPECIAL.node("sniper.special.hollow_point",
             "Hollow Point", PRICE)
-            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(EffectKind.VULNERABLE, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
+            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.VULNERABLE, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .after(MARKSMANS_EYE_1);
     // The id keeps its old word so saved games still load the node.
     private static final UpgradeNode FOURTH_SHOT = UpgradeTier.SPECIAL.node("sniper.special.fifth_shot",

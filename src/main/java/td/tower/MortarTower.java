@@ -4,6 +4,7 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
@@ -386,7 +387,7 @@ public final class MortarTower extends AbstractTower {
             this.hit(enemy, landing.type().damageType(), landing.damage() * falloff * centreFactor, HitKind.BLAST);
             this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
             if (enemy == centre) {
-                this.applyStacks(enemy, EffectKind.SUNDERED, spec.centre().sunderStacks());
+                this.applyStacks(enemy, StackingDebuff.SUNDERED, spec.centre().sunderStacks());
             }
         }
         return hit;

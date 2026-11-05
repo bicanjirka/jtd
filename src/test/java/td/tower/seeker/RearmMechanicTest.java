@@ -1,7 +1,7 @@
 package td.tower.seeker;
 
 import org.junit.jupiter.api.Test;
-import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
 
@@ -25,7 +25,7 @@ class RearmMechanicTest {
         }
 
         @Override
-        public void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
+        public void applyStacks(EnemyMob target, StackingDebuff debuff, int stacks) {
         }
 
         @Override

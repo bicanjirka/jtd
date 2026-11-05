@@ -1,6 +1,6 @@
 package td.tower.proc;
 
-import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.tower.TowerStatus;
 
@@ -13,8 +13,8 @@ final class RecordingProcActions implements ProcActions {
     private final List<String> calls = new ArrayList<>();
 
     @Override
-    public void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
-        this.calls.add("stacks " + kind + " " + stacks);
+    public void applyStacks(EnemyMob target, StackingDebuff debuff, int stacks) {
+        this.calls.add("stacks " + debuff + " " + stacks);
     }
 
     @Override

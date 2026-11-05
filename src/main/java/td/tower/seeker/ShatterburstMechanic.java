@@ -1,6 +1,7 @@
 package td.tower.seeker;
 
 import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.term.Term;
 import td.term.TermNumbers;
@@ -26,7 +27,7 @@ public final class ShatterburstMechanic implements SeekerMechanic {
         }
         for (EnemyMob enemy : actions.burst(impact.target(), SHARE, RADIUS_CELLS)) {
             actions.silence(enemy, SILENCE_TICKS);
-            actions.applyStacks(enemy, EffectKind.UNRAVELED, 1);
+            actions.applyStacks(enemy, StackingDebuff.UNRAVELED, 1);
         }
     }
 

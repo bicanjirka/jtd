@@ -1,6 +1,7 @@
 package td.tower.proc;
 
 import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.term.TermNumbers;
 import td.term.TermText;
@@ -28,17 +29,17 @@ public sealed interface ProcPayload {
         return this.describe();
     }
 
-    /** {@code stacks} of the stacking debuff {@code kind}. */
-    record ApplyStacks(EffectKind kind, int stacks) implements ProcPayload {
+    /** {@code stacks} of {@code debuff}. */
+    record ApplyStacks(StackingDebuff debuff, int stacks) implements ProcPayload {
         @Override
         public void run(Optional<EnemyMob> target, ProcActions actions) {
-            target.filter(enemy -> !enemy.isDead()).ifPresent(enemy -> actions.applyStacks(enemy, this.kind, this.stacks));
+            target.filter(enemy -> !enemy.isDead()).ifPresent(enemy -> actions.applyStacks(enemy, this.debuff, this.stacks));
         }
 
         @Override
         public TermText describe() {
-            return this.stacks == 1 ? TermText.of("applies a stack of ").plus(this.kind)
-                    : TermText.of("applies " + this.stacks + " stacks of ").plus(this.kind);
+            return this.stacks == 1 ? TermText.of("applies a stack of ").plus(this.debuff.kind())
+                    : TermText.of("applies " + this.stacks + " stacks of ").plus(this.debuff.kind());
         }
     }
 

@@ -1,6 +1,6 @@
 package td.tower.seeker;
 
-import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 
 /** What a payload may make the Seeker do to the enemy its missile reached. */
@@ -9,8 +9,8 @@ public interface PayloadActions {
     /** Freezes {@code target} as a missile does, for {@code strength} times as long. */
     void freeze(EnemyMob target, float strength);
 
-    /** Adds {@code stacks} of the stacking debuff {@code kind} to {@code target}. */
-    void applyStacks(EnemyMob target, EffectKind kind, int stacks);
+    /** Adds {@code stacks} of {@code debuff} to {@code target}. */
+    void applyStacks(EnemyMob target, StackingDebuff debuff, int stacks);
 
     /** Silences {@code target} for {@code ticks}. */
     void silence(EnemyMob target, int ticks);

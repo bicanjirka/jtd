@@ -5,6 +5,7 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
@@ -536,8 +537,8 @@ public final class SeekerTower extends AbstractTower {
         }
 
         @Override
-        public void applyStacks(EnemyMob target, EffectKind kind, int stacks) {
-            SeekerTower.this.applyStacks(target, kind, stacks);
+        public void applyStacks(EnemyMob target, StackingDebuff debuff, int stacks) {
+            SeekerTower.this.applyStacks(target, debuff, stacks);
         }
 
         @Override
