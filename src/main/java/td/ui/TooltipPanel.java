@@ -82,6 +82,8 @@ final class TooltipPanel extends JPanel {
     private void layOut(InfoSheet shown) {
         Insets insets = this.getInsets();
         int inner = MAX_WIDTH - insets.left - insets.right;
+        // A size pinned by the last layout would be read back below as this sheet's height.
+        this.pane.setPreferredSize(null);
         this.pane.setSize(inner, 1);
         this.pane.show(shown, this.renderer, inner);
         View root = this.pane.getUI().getRootView(this.pane);

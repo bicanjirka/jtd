@@ -36,6 +36,29 @@ class TooltipPanelTest {
     }
 
     @Test
+    void anOpenTooltipTakesTheHeightOfWhatItShowsNext() {
+        Row line = Row.plain(Glyph.DOT, "Range", "4");
+        InfoSheet longer = new InfoSheet(List.of(line, line, line, line));
+        TooltipPanel opened = showing(line);
+        TooltipPanel fresh = new TooltipPanel();
+        fresh.show(longer);
+
+        opened.show(longer);
+
+        assertThat(opened.getHeight()).isEqualTo(fresh.getHeight());
+    }
+
+    @Test
+    void theExpiredNoteMakesRoomForItself() {
+        TooltipPanel panel = showing(Row.plain(Glyph.DOT, "Range", "4"));
+        int before = panel.getHeight();
+
+        panel.showExpired();
+
+        assertThat(panel.getHeight()).isGreaterThan(before);
+    }
+
+    @Test
     void everyStatRowStaysOnOneLine() {
         List<String> wrapped = new ArrayList<>();
 
