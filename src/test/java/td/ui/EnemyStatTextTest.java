@@ -328,6 +328,13 @@ class EnemyStatTextTest {
     }
 
     @Test
+    void negativeAgilityReadsAsWhatItMultipliesCritChanceBy() {
+        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("clumsy").withAgility(-50f));
+
+        assertThat(row(sheet, "Agility").orElseThrow().meaning()).isEqualTo("x1.5 crit chance");
+    }
+
+    @Test
     void theLiveViewCountsTheHitsAnEnemyDodged() {
         GameWorld lucky = WorldFixtures.newWorld(() -> 0.0);
         DefinedEnemyMob nimble = EnemyFixtures.liveMob(lucky, EnemyFixtures.simpleDefinition("nimble").withAgility(25f));

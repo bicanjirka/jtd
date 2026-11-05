@@ -17,9 +17,9 @@ public enum EnemyStat implements StatKey, StatTerm {
 
     /** Physical mitigation: a hit is multiplied by {@code 100 / (100 + armor)}. */
     ARMOR(0f, 0f, Float.MAX_VALUE, "Armor", "Armor", StatUnit.POINTS, StatDirection.LOWER, StatGroup.DEFENCE,
-            "cuts physical damage; each point is worth less than the one before"),
+            "cuts physical damage; each extra point adds less"),
     MAGIC_RESIST(0f, 0f, Float.MAX_VALUE, "Magic resist", "Magic resist", StatUnit.POINTS, StatDirection.LOWER, StatGroup.DEFENCE,
-            "cuts magic damage; each point is worth less than the one before"),
+            "cuts magic damage; each extra point adds less"),
     /** Points every physical hit loses after mitigation. */
     PLATING(0f, 0f, Float.MAX_VALUE, "Plating", "Plating", StatUnit.LOSS_PER_HIT, StatDirection.LOWER, StatGroup.DEFENCE,
             "takes a fixed amount off every physical hit, after armor"),
@@ -39,27 +39,27 @@ public enum EnemyStat implements StatKey, StatTerm {
      * 1% to the bonus alone; 100 is crit-immune.
      */
     RESILIENCE(0f, -100f, 100f, "Resilience", "Resilience", StatUnit.POINTS, StatDirection.LOWER, StatGroup.DEFENCE,
-            "shrinks the crit chance and crit damage of hits on it; below zero it grows the crit damage alone"),
+            "positive value: fewer and weaker crits on it, none at 100; negative value: stronger crits"),
     /**
      * An aimed hit misses with chance {@code agility / (agility + 100)}, after the attacker's accuracy; below zero each
-     * point adds 1% to an attacker's crit chance.
+     * point raises an attacker's crit chance by 1% of itself.
      */
     AGILITY(0f, -100f, Float.MAX_VALUE, "Agility", "Agility", StatUnit.POINTS, StatDirection.LOWER, StatGroup.DEFENCE,
-            "the chance to dodge an aimed hit, less the accuracy of the tower, each point worth less than the one before; below zero, more crit chance on hits on it"),
+            "positive value: chance to dodge aimed hits, lower against accurate towers; negative value: no dodges and more crits on it"),
     /** Multiplies damage that ticks (a burn, a poison, a field), whatever its type. */
     PERIODIC_DAMAGE_TAKEN(1f, 0.1f, Float.MAX_VALUE, "DoT taken", "Damage over time taken", StatUnit.PERCENT,
-            StatDirection.HIGHER, StatGroup.DAMAGE_TAKEN, "the share of damage that ticks it takes, whatever its type"),
+            StatDirection.HIGHER, StatGroup.DAMAGE_TAKEN, "the share of damage over time it takes, whatever its type"),
     /** What the enemy's regeneration restores and its shields hold is scaled by {@code StatCurves.restoreFactor}. */
     SPIRIT(0f, -100f, Float.MAX_VALUE, "Spirit", "Spirit", StatUnit.POINTS, StatDirection.LOWER, StatGroup.HEALING,
-            "makes its regeneration and shields stronger; below zero weaker, and at -100 worth nothing"),
+            "positive value: stronger regeneration and shields; negative value: weaker, and worth nothing at -100"),
     REGENERATION(0f, -Float.MAX_VALUE, Float.MAX_VALUE, "Regeneration", "Regeneration", StatUnit.HP_PER_SECOND,
-            StatDirection.LOWER, StatGroup.HEALING, "health it gains back every second; below zero, health it loses"),
+            StatDirection.LOWER, StatGroup.HEALING, "positive value: health it regains each second; negative value: health it loses each second"),
     /** Scales how long everything that doesn't help the enemy lasts on it: see {@link StatCurves#durationFactor}. */
     TENACITY(0f, -100f, Float.MAX_VALUE, "Tenacity", "Tenacity", StatUnit.POINTS, StatDirection.LOWER, StatGroup.RESISTS,
-            "above zero, what doesn't help it runs out sooner; below zero, later"),
+            "positive value: its debuffs end sooner; negative value: they last longer"),
     /** At {@code 1} towers cannot target the enemy. */
     STEALTH(0f, 0f, 1f, "Stealth", "Stealth", StatUnit.PERCENT, StatDirection.LOWER, StatGroup.RESISTS,
-            "at full towers cannot aim at it");
+            "at full, towers can't aim at it");
 
     private static final float FULL = 100f;
 
@@ -165,7 +165,7 @@ public enum EnemyStat implements StatKey, StatTerm {
             case SPIRIT -> value == 0f ? Optional.empty()
                     : Optional.of(TermNumbers.signedPercent(value / FULL) + " recovery");
             case TENACITY -> value == 0f ? Optional.empty()
-                    : Optional.of("debuffs " + TermNumbers.percent(StatCurves.durationFactor(value)));
+                    : Optional.of("debuff time " + TermNumbers.percent(StatCurves.durationFactor(value)));
             case PLATING, INSULATION, MOVE_SPEED, PHYSICAL_DAMAGE_TAKEN, MAGIC_DAMAGE_TAKEN, PERIODIC_DAMAGE_TAKEN,
                  REGENERATION, STEALTH -> Optional.empty();
         };
@@ -176,16 +176,16 @@ public enum EnemyStat implements StatKey, StatTerm {
             return Optional.empty();
         }
         return Optional.of(value > 0f ? "dodges " + TermNumbers.percent(StatCurves.dodgeChance(value))
-                : TermNumbers.signedPercent(-value / FULL) + " crit chance");
+                : TermNumbers.times(1f - value / FULL) + " crit chance");
     }
 
     private static Optional<String> resilienceMeaning(float value) {
         if (value >= FULL) {
-            return Optional.of("immune");
+            return Optional.of("crit immune");
         }
         if (value == 0f) {
             return Optional.empty();
         }
-        return Optional.of(TermNumbers.signedPercent(-value / FULL) + (value > 0f ? " crits" : " crit"));
+        return Optional.of(TermNumbers.signedPercent(-value / FULL) + (value > 0f ? " crits" : " crit dmg"));
     }
 }

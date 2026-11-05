@@ -38,15 +38,15 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.DAMAGE, Shows.IN_CORE_ROW, true),
     BRACKET_DAMAGE_STEP(0f, 0f, Float.MAX_VALUE, StatUnit.SIGNED_PERCENT, "Bracketing", "Bracketing step",
             StatDirection.HIGHER, StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
-    CRIT_CHANCE(0f, 0f, 1f, StatUnit.PERCENT, "Crit chance", "Critical chance", StatDirection.HIGHER, StatGroup.CRIT,
+    CRIT_CHANCE(0f, 0f, 1f, StatUnit.PERCENT, "Crit chance", "Crit chance", StatDirection.HIGHER, StatGroup.CRIT,
             Shows.OFF_DEFAULT, true),
-    CRIT_MULTIPLIER(AttackProfile.DEFAULT_CRIT_MULTIPLIER, 1f, Float.MAX_VALUE, StatUnit.PERCENT, "Crit damage",
-            "Critical damage", StatDirection.HIGHER, StatGroup.CRIT, Shows.WHILE_IT_CRITS, true),
+    CRIT_MULTIPLIER(AttackProfile.DEFAULT_CRIT_MULTIPLIER, 1f, Float.MAX_VALUE, StatUnit.PERCENT, "Crit dmg",
+            "Crit damage", StatDirection.HIGHER, StatGroup.CRIT, Shows.WHILE_IT_CRITS, true),
     AIM_STACKS(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Steady Aim", "Steady Aim stacks", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, false),
     ARMOR_PENETRATION(0f, 0f, 1f, StatUnit.PERCENT, "Armor pen", "Armor penetration", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, true),
-    ARMOR_PENETRATION_FLAT(0f, 0f, Float.MAX_VALUE, StatUnit.POINTS, "Armor pierce", "Armor ignored",
+    ARMOR_PENETRATION_FLAT(0f, 0f, Float.MAX_VALUE, StatUnit.POINTS, "Armor ignored", "Armor ignored",
             StatDirection.HIGHER, StatGroup.CRIT, Shows.OFF_DEFAULT, true),
     MAGIC_PENETRATION(0f, 0f, 1f, StatUnit.PERCENT, "Magic pen", "Magic penetration", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, true),
@@ -63,7 +63,7 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     STOKE_STEP(0f, 0f, Float.MAX_VALUE, StatUnit.SIGNED_PERCENT, "Stoke step", "Stoke step", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    STOKE_GRACE(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Stoke grace", "Stoke kept after leaving",
+    STOKE_GRACE(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Stoke lingers", "Stoke lingers",
             StatDirection.HIGHER, StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     BURN_POOL_CAP(0f, 1f, Float.MAX_VALUE, StatUnit.PERCENT, "Burn cap", "Burn pool cap", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
@@ -71,13 +71,13 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     FREEZE_DURATION(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Freeze time", "Freeze duration", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    SATURATION_CAP(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Saturation", "Saturation cap", StatDirection.HIGHER,
+    SATURATION_CAP(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Sat cap", "Saturation cap", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     SATURATION_INNER_STACKS(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Inner sat", "Saturation in the inner half",
             StatDirection.HIGHER, StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     TOLL_CAP(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Toll cap", "Toll cap", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    TOLL_RATE(0f, 0f, Float.MAX_VALUE, StatUnit.PER_SECOND, "Toll rate", "Toll a second", StatDirection.HIGHER,
+    TOLL_RATE(0f, 0f, Float.MAX_VALUE, StatUnit.PER_SECOND, "Toll rate", "Toll rate", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     TOLL_LINGER(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Toll lingers", "Toll lingers", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
@@ -102,9 +102,9 @@ public enum TowerStat implements StatKey, StatTerm {
     BOUNTY(0f, 0f, Float.MAX_VALUE, StatUnit.SIGNED_PERCENT, "Bounty bonus", "Bounty bonus", StatDirection.HIGHER,
             StatGroup.ECONOMY, Shows.OFF_DEFAULT, true),
     /** The share of an enemy's disruption that reaches the tower. */
-    DISRUPTION_TAKEN(1f, 0f, 1f, StatUnit.PERCENT, "Jam taken", "Disruption taken", StatDirection.LOWER,
+    DISRUPTION_TAKEN(1f, 0f, 1f, StatUnit.PERCENT, "Jam taken", "Jam taken", StatDirection.LOWER,
             StatGroup.ECONOMY, Shows.OFF_DEFAULT, true),
-    AURA_POWER(0f, 0f, Float.MAX_VALUE, StatUnit.PERCENT, "Buff power", "Buff strength", StatDirection.HIGHER,
+    AURA_POWER(0f, 0f, Float.MAX_VALUE, StatUnit.PERCENT, "Buff power", "Buff power", StatDirection.HIGHER,
             StatGroup.GIVES, Shows.OFF_DEFAULT, false);
 
     /** No tower stat is read in pixels, so its words never need the board's cell size. */
@@ -204,27 +204,27 @@ public enum TowerStat implements StatKey, StatTerm {
     public TermText describe() {
         return switch (this) {
             case RANGE -> TermText.of("how far from its centre it reaches");
-            case DEAD_ZONE -> TermText.of("how close to it an enemy is too close to aim at");
-            case AREA_RADIUS -> TermText.of("how far from where a shot lands its blast reaches");
-            case BLAST_EDGE -> TermText.of("the share of full damage the edge of a blast deals");
+            case DEAD_ZONE -> TermText.of("enemies closer than this can't be aimed at");
+            case AREA_RADIUS -> TermText.of("how far a blast reaches from where a shot lands");
+            case BLAST_EDGE -> TermText.of("the share of full damage a blast deals at its edge");
             case CONE_WIDTH -> TermText.of("how wide its cone of fire is");
             case DAMAGE -> TermText.of("what one hit deals, before the target's defences");
             case ATTACK_SPEED -> TermText.of("how often it attacks");
             case BRACKET_DAMAGE_STEP -> TermText.of("extra damage each shot in a row on one spot adds");
-            case CRIT_CHANCE -> TermText.of("the chance a hit is critical");
-            case CRIT_MULTIPLIER -> TermText.of("what a critical hit deals, as a share of a normal one");
+            case CRIT_CHANCE -> TermText.of("the chance a hit crits");
+            case CRIT_MULTIPLIER -> TermText.of("what a crit deals, as a share of a normal hit");
             case AIM_STACKS -> TermText.format("how many stacks of {} it can hold", TowerTerm.STEADY_AIM);
             case ARMOR_PENETRATION -> TermText.of("the share of armor its hits ignore");
             case ARMOR_PENETRATION_FLAT -> TermText.of("points of armor its hits ignore, after the share");
             case MAGIC_PENETRATION -> TermText.of("the share of magic resist its hits ignore");
             case FLAT_PENETRATION -> TermText.of("the share of plating and insulation its hits ignore");
             case ACCURACY -> TermText.of("points of agility its aimed hits ignore");
-            case EFFECT_DURATION -> TermText.of("how long what it puts on enemies lasts, as a share of the usual");
+            case EFFECT_DURATION -> TermText.of("how long its effects on enemies last, as a share of the usual");
             case BUFF_DURATION -> TermText.of("how long its own timed buffs last, as a share of the usual");
-            case BURN_DURATION -> TermText.format("how long a {} it lights lasts", EffectKind.BURN);
+            case BURN_DURATION -> TermText.format("how long a {} it causes lasts", EffectKind.BURN);
             case STOKE_STEP -> TermText.format("what each second of {} adds to its damage", TowerTerm.STOKE);
-            case STOKE_GRACE -> TermText.format("how long {} holds after a target leaves", TowerTerm.STOKE);
-            case BURN_POOL_CAP -> TermText.format("how much {} one enemy can hold, as a share of one", EffectKind.BURN);
+            case STOKE_GRACE -> TermText.format("how long {} stays once an enemy leaves", TowerTerm.STOKE);
+            case BURN_POOL_CAP -> TermText.format("how much {} one enemy can hold, as a share of a single {}", EffectKind.BURN, EffectKind.BURN);
             case BURN_MARK_RATE -> TermText.format("how fast it builds {}, as a share of the usual",
                     EffectKind.SCORCHED);
             case FREEZE_DURATION -> TermText.format("how long a {} it causes lasts", EffectKind.FREEZE);
@@ -236,16 +236,16 @@ public enum TowerStat implements StatKey, StatTerm {
             case TOLL_LINGER -> TermText.format("how long {} stays once an enemy leaves", EffectKind.TOLL);
             case WITHER_INTERVAL -> TermText.format("the pause between its hits that leave {}",
                     EffectKind.VULNERABLE);
-            case PROJECTILE_SPEED -> TermText.of("how fast its shots fly");
+            case PROJECTILE_SPEED -> TermText.of("how fast its shots fly, as a share of the usual");
             case PROJECTILE_SIZE -> TermText.of("how big its shots are, as a share of the usual");
             case WAVE_SPEED -> TermText.of("how fast its flame wave travels, as a share of the usual");
             case NEST_CAPACITY -> TermText.of("how many missiles it can store");
             case MISSILES_PER_LAUNCH -> TermText.of("how many missiles one shot launches");
             case PING_COUNT -> TermText.format("how many enemies one {} marks", TowerTerm.PING);
             case BOUNTY -> TermText.of("extra cash for each kill it makes");
-            case DISRUPTION_TAKEN -> TermText.format("the share of an enemy's {} that reaches it",
+            case DISRUPTION_TAKEN -> TermText.format("the share of {} it takes from enemies",
                     TowerTerm.JAMMED);
-            case AURA_POWER -> TermText.format("how strong what its {} gives is, as a share of the usual",
+            case AURA_POWER -> TermText.format("how strong its {} buffs are, as a share of the usual",
                     TowerTerm.AURA);
         };
     }

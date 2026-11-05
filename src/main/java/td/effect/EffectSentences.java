@@ -28,8 +28,8 @@ final class EffectSentences {
                     .plus(stoppedAgility(kind)).plus("; time under it shortens the next one, and walking wins that back, "
                             + "more slowly at higher rank");
             case SHIELD -> TermText.of("takes a hit before armor does, until its amount is spent or it runs out; more ")
-                    .plus(EnemyStat.SPIRIT).plus(" makes it hold more, shields from different sources add up, and damage that"
-                            + " ticks goes past it");
+                    .plus(EnemyStat.SPIRIT).plus(" makes it hold more, shields from different sources add up, and damage over"
+                            + " time goes past it");
             case INVISIBLE -> TermText.of("towers can't aim at it, though damage on an area still reaches it");
             case HEAL -> TermText.of("adds to its ").plus(EnemyStat.REGENERATION)
                     .plus(" while it lasts; heals from different sources add up");
@@ -51,7 +51,7 @@ final class EffectSentences {
                             + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
             case SUNDERED -> stacked(kind, EnemyStat.ARMOR);
             case EXPOSED -> changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.AGILITY, EnemyStat.RESILIENCE)
-                    .plus(": crits find it more often and hit it harder");
+                    .plus(": more and stronger crits on it");
             case MARKED -> TermText.of("the next hit on it is a crit, which spends this");
             case PRIORITY -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                     EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN)
@@ -74,7 +74,7 @@ final class EffectSentences {
             case BLIGHT -> TermText.of("it has ").plus(EffectKind.POISON).plus(" for as long as this lasts");
             case CONTAGION -> TermText.of("when it dies, its hexes and debuffs jump to the enemies nearest it");
             case MALAISE -> changes(TermNumbers.signed(perStack(kind, EnemyStat.TENACITY)), EnemyStat.TENACITY)
-                    .plus(": what weakens it lasts longer");
+                    .plus(": its debuffs last longer");
             case INVERSION -> TermText.of("its ").plus(EnemyStat.REGENERATION)
                     .plus(" deals it damage instead of restoring health, and a ").plus(EffectKind.SHIELD)
                     .plus(" it receives strikes it instead");
@@ -138,10 +138,10 @@ final class EffectSentences {
                 + seconds(ActiveEffects.SLOW_FADE_TICKS));
     }
 
-    /** "Agility -100, so it can't dodge and crits find it more often", the value read from {@code kind}'s rule. */
+    /** "Agility -100, so no dodges and more crits on it", the value read from {@code kind}'s rule. */
     private static TermText stoppedAgility(EffectKind kind) {
         return changes(TermNumbers.signed(kind.rule().perStack().get(EnemyStat.AGILITY).setTo()), EnemyStat.AGILITY)
-                .plus(", so it can't dodge and crits find it more often");
+                .plus(", so no dodges and more crits on it");
     }
 
     /** "each stack: Armor -5, up to 3 stacks", the change read from {@code kind}'s rule. */
