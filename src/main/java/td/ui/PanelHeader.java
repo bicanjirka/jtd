@@ -18,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -49,6 +50,7 @@ public class PanelHeader extends JPanel {
 
     private final List<StatusIcon> icons = Arrays.stream(StatusTerm.values()).map(StatusIcon::new).toList();
     private final StatusFlash flash = new StatusFlash();
+    private final JLabel title = new JLabel();
     private final HudToggleButton pause = speedButton("❚❚", GameKey.PAUSE);
     private final HudToggleButton play = speedButton("▶", GameKey.PLAY);
     private final HudToggleButton fast = speedButton("▶▶", GameKey.FAST);
@@ -75,9 +77,9 @@ public class PanelHeader extends JPanel {
         this.setFocusable(false);
         this.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Hud.BORDER_IDLE));
 
-        JLabel title = new JLabel(titleText);
-        title.setFont(new Font("Dialog", Font.BOLD, 16));
-        title.setForeground(Hud.FOREGROUND);
+        this.title.setText(titleText);
+        this.title.setFont(new Font("Dialog", Font.BOLD, 16));
+        this.title.setForeground(Hud.FOREGROUND);
         // A grid bag centres each icon in the strip's height; a flow layout would hang them from the top.
         JPanel status = new JPanel(new GridBagLayout());
         status.setOpaque(false);
@@ -87,7 +89,7 @@ public class PanelHeader extends JPanel {
         JPanel aboveBoard = new JPanel(new TitleAndCentre());
         aboveBoard.setOpaque(false);
         this.menu.setFace(ControlFace.button().withChip(GameKey.MENU.chip()));
-        aboveBoard.add(title);
+        aboveBoard.add(this.title);
         aboveBoard.add(status);
         aboveBoard.add(this.menu);
         this.add(aboveBoard, BorderLayout.CENTER);
@@ -259,6 +261,13 @@ public class PanelHeader extends JPanel {
 
     private static long nowMillis() {
         return System.nanoTime() / 1_000_000L;
+    }
+
+    /** The loaded level's colour on the title and on the border of the selected speed button. */
+    public void setVoice(Color voice) {
+        this.title.setForeground(voice);
+        List.of(this.pause, this.play, this.fast, this.superFast)
+                .forEach(button -> button.setFace(button.face().withSelectedBorder(voice)));
     }
 
     /** Selects the button of {@code speed}; none for a rate between the presets, as the dev panel can dial. */

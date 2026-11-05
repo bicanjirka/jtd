@@ -99,6 +99,8 @@ hue (section 6).
 
 **Levels.** Each level has one card colour, from its own lanes (`withCardColor`, the first lane's by default), and its floor.
 Text on the card uses the text tint, which `TextTint` computes: the lane colour lightened only as far as 7:1.
+In play the tint is the level's voice, in four small places and no others: the game title, the panel titles, the selected
+speed button's border and the XP bar. Every panel stays Graphite.
 
 | Level | Card lane | Lane colour | Text tint | Floor |
 |---|---|---|---|---|

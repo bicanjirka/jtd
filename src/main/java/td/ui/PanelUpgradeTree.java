@@ -20,6 +20,7 @@ import td.util.ThreadConfined;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -56,6 +57,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private static final int HIT_SLACK = 2;
 
     private final transient Map<UpgradeTree, UpgradeTreeLayout> layouts = new IdentityHashMap<>();
+    private Color xpFill = Hud.FOREGROUND;
     private transient GameWorld context;
     private transient Tower tower;
     private boolean levelEnded = false;
@@ -118,6 +120,11 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         this.tower = tower;
         this.hovered = Optional.empty();
         this.refresh();
+    }
+
+    public void setXpFill(Color fill) {
+        this.xpFill = fill;
+        this.repaint();
     }
 
     public void setLevelEnded(boolean ended) {
@@ -198,7 +205,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         // With no node waiting on XP, the bar fills toward the next rank.
         int toward = next.map(UpgradeNode::xp).orElseGet(() -> Arrays.stream(TowerRank.values())
                 .mapToInt(TowerRank::xp).filter(rank -> rank > xp).findFirst().orElse(xp));
-        return new XpLine(UpgradeSheetText.xpLabel(xp, next), toward == 0 ? 1f : xp / (float) toward);
+        return new XpLine(UpgradeSheetText.xpLabel(xp, next), toward == 0 ? 1f : xp / (float) toward, this.xpFill);
     }
 
     private Footer footer() {

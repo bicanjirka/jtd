@@ -13,29 +13,34 @@ import java.util.Optional;
  *                without the control making room for it, so nothing moves when it comes and goes
  * @param accent  a tile's colour; empty for a button
  * @param dimmed  whether a tile's border and chip are dimmed
+ * @param selectedBorder a selected button's border; empty for the plain text colour
  */
-record ControlFace(String chip, boolean overlay, Optional<Color> accent, boolean dimmed) {
+record ControlFace(String chip, boolean overlay, Optional<Color> accent, boolean dimmed, Optional<Color> selectedBorder) {
 
     static ControlFace button() {
-        return new ControlFace("", false, Optional.empty(), false);
+        return new ControlFace("", false, Optional.empty(), false, Optional.empty());
     }
 
     static ControlFace tile(Color accent) {
-        return new ControlFace("", false, Optional.of(accent), false);
+        return new ControlFace("", false, Optional.of(accent), false, Optional.empty());
     }
 
     /** A chip the control always shows and makes room for. */
     ControlFace withChip(String label) {
-        return new ControlFace(label, false, this.accent, this.dimmed);
+        return new ControlFace(label, false, this.accent, this.dimmed, this.selectedBorder);
     }
 
     /** A chip drawn over the face for a moment; empty takes it away. */
     ControlFace withOverlayChip(String label) {
-        return new ControlFace(label, true, this.accent, this.dimmed);
+        return new ControlFace(label, true, this.accent, this.dimmed, this.selectedBorder);
     }
 
     ControlFace withDimmed(boolean dim) {
-        return new ControlFace(this.chip, this.overlay, this.accent, dim);
+        return new ControlFace(this.chip, this.overlay, this.accent, dim, this.selectedBorder);
+    }
+
+    ControlFace withSelectedBorder(Color border) {
+        return new ControlFace(this.chip, this.overlay, this.accent, this.dimmed, Optional.of(border));
     }
 
     /** Whether the control widens to fit its chip beside its text. */
