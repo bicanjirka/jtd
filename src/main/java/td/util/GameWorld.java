@@ -163,10 +163,6 @@ public class GameWorld {
         this.level = this.level.withBoard(board);
     }
 
-    public Path getPath() {
-        return this.level.pathAt(0);
-    }
-
     /** Single-threaded worlds only; see {@link #setBoard}. */
     public void setPath(Path path) {
         this.level = this.level.withSinglePath(path);

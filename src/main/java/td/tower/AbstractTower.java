@@ -834,11 +834,6 @@ public abstract class AbstractTower implements Tower {
         return "";
     }
 
-    /** Whether this tower stands on the board, rather than being a shop preview. */
-    protected boolean isPlaced() {
-        return this.context.towers().all().contains(this);
-    }
-
     /**
      * Every buff and debuff this tower carries now, buffs first. Game loop only: reads statuses and mechanic state.
      */

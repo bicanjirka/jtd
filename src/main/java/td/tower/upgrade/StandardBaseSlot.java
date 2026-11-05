@@ -45,7 +45,7 @@ public final class StandardBaseSlot {
         UpgradeNode attune = UpgradeTier.ATTUNE.node(ATTUNE_ID, "Attune", listPrice)
                 .withEffects(mechanics.attune().withNote("unlocks head levels I and II"));
         UpgradeNode awaken = UpgradeTier.AWAKEN.node(AWAKEN_ID, "Awaken", listPrice)
-                .withEffects(mechanics.awaken().withNote(levelThrees.length == 0 ? "unlocks a special"
+                .withEffects(NodeEffects.none().withNote(levelThrees.length == 0 ? "unlocks a special"
                         : "unlocks a special and head level III"));
         if (levelThrees.length == 0) {
             return List.of(range1, range2, attune, awaken);

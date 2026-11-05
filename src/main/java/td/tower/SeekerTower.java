@@ -426,10 +426,6 @@ public final class SeekerTower extends AbstractTower {
         return this.currentTarget;
     }
 
-    int getFreezeDurationTicks() {
-        return this.freezeTicks();
-    }
-
     public TurretAim getTurretAim() {
         return this.turretAim;
     }

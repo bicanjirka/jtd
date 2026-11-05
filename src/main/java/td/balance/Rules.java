@@ -47,10 +47,6 @@ public record Rules(int enemyHealthPercent, int creditBonus, int livesBonus, int
                 this.spawnSpacingPercent, percent);
     }
 
-    public boolean isStandard() {
-        return this.equals(standard());
-    }
-
     LevelDefinition applyTo(LevelDefinition level) {
         return level.withStartingCredits(Math.max(0, level.startingCredits() + this.creditBonus))
                 .withStartingLives(Math.max(1, level.startingLives() + this.livesBonus));
