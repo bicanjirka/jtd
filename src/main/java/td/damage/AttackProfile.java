@@ -78,6 +78,11 @@ public record AttackProfile(float critChance, float critMultiplier, float armorP
                 this.accuracy, this.aimed);
     }
 
+    /** The same attack, ignoring all of the target's armor and plating. */
+    public AttackProfile pastArmorAndPlating() {
+        return this.withArmorPenetration(1f, 0f).withFlatPenetration(1f);
+    }
+
     /** The same attack as periodic damage: it never crits. */
     public AttackProfile asPeriodic() {
         return new AttackProfile(this.critChance, this.critMultiplier, this.armorPenetration,

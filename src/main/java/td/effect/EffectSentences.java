@@ -116,7 +116,8 @@ final class EffectSentences {
                     .plus(" and ").plus(changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind,
                             EnemyStat.INSULATION))), EnemyStat.INSULATION));
             case TARRED -> slowing("slows by " + TermNumbers.percent(kind.rule().slowPerStack()));
-            case BLEEDING -> TermText.of("physical damage for every cell it travels; standing still, it takes none");
+            case BLEEDING -> TermText.of("physical damage for every cell it travels, ignoring ").plus(EnemyStat.ARMOR)
+                    .plus(" and ").plus(EnemyStat.PLATING).plus("; standing still, it takes none");
             case SOULFIRE -> TermText.of("damage over time in a pool of its own beside ").plus(EffectKind.BURN)
                     .plus(" and ").plus(EffectKind.POISON).plus("; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
