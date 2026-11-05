@@ -1,13 +1,16 @@
 package td.balance;
 
+import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.enemy.Rank;
 import td.tower.TowerFactory;
+import td.util.TickRate;
 import td.wave.Point;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Everything one play left behind: how it ended, each round, and its log. Built once by
@@ -150,6 +153,24 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
             Map<String, Long> kinds = new HashMap<>(this.damageByKind);
             other.damageByKind.forEach((kind, damage) -> kinds.merge(kind, damage, Long::sum));
             return new TowerWork(this.hits.plus(other.hits), this.ticksInReach + other.ticksInReach, kinds);
+        }
+
+        /** Enemy-seconds in reach, summed over every enemy and every tower. */
+        public double secondsInReach() {
+            return this.ticksInReach / (double) TickRate.TICKS_PER_SECOND;
+        }
+
+        /** Points it is credited with per enemy-second in reach: how strong it is for the time it had. */
+        public double pointsPerSecondInReach() {
+            return this.ticksInReach == 0 ? 0 : DamageUnits.inPoints(this.hits.credited()) / this.secondsInReach();
+        }
+
+        /** The {@code count} enemy kinds it was credited most on, most first, each with its share of the damage. */
+        public String topKinds(int count) {
+            return this.damageByKind.entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(count)
+                    .map(entry -> String.format("%s %.0f%%", entry.getKey(), 100.0 * entry.getValue() / Math.max(1, this.hits.credited())))
+                    .collect(Collectors.joining(", "));
         }
     }
 

@@ -454,8 +454,14 @@ final class HtmlReport {
     private void towerShares(LevelRun run) {
         Map<TowerFactory.Type, Double> shares = run.damageShares(BalanceReport.COMPETENT);
         Map<TowerFactory.Type, Double> counts = run.towerCounts(BalanceReport.COMPETENT);
-        this.html.append("<h3>Who lands the damage (competent)</h3><div class=\"card\"><table><tr><th>tower</th>"
-                + "<th>share of damage</th><th></th><th>towers at the end</th></tr>");
+        Map<TowerFactory.Type, PlayRecord.TowerWork> work = run.towerWork(BalanceReport.COMPETENT);
+        int plays = run.playsOf(BalanceReport.COMPETENT).size();
+        this.html.append("<h3>Who lands the damage (competent)</h3><p class=\"note\">Little damage for its time in reach"
+                + " says a tower is weak; little time in reach says it is badly placed. Time in reach is enemy-seconds per"
+                + " play, over the towers standing at the end, so a tower sold along the way makes it read high.</p>"
+                + "<div class=\"card\"><table><tr><th>tower</th>"
+                + "<th>share of damage</th><th></th><th>towers at the end</th><th>dmg / s in reach</th>"
+                + "<th>s in reach, each</th><th>to shields</th><th>overkill</th><th style=\"text-align:left\">whom</th></tr>");
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             double share = shares.getOrDefault(type, 0.0);
             this.html.append("<tr><td>").append(type.displayName()).append("</td><td>")
@@ -463,9 +469,21 @@ final class HtmlReport {
                     .append(String.format("<svg width=\"220\" height=\"12\"><rect width=\"%.1f\" height=\"12\""
                             + " rx=\"3\" fill=\"var(--accent)\"/></svg>", Math.max(1, share * 220)))
                     .append("</td><td>").append(String.format("%.1f", counts.getOrDefault(type, 0.0)))
-                    .append("</td></tr>");
+                    .append("</td>").append(workCells(work.get(type), counts.getOrDefault(type, 0.0) * plays))
+                    .append("</tr>");
         }
         this.html.append("</table></div>");
+    }
+
+    /** The cells saying how a tower's time went; blank for one that dealt nothing, which they could only mislead on. */
+    private static String workCells(PlayRecord.TowerWork work, double towersOverAllPlays) {
+        if (work == null || work.hits().credited() == 0) {
+            return "<td></td><td></td><td></td><td></td><td></td>";
+        }
+        double secondsEach = towersOverAllPlays == 0 ? 0 : work.secondsInReach() / towersOverAllPlays;
+        return String.format("<td>%.1f</td><td>%.0f</td><td>%.0f%%</td><td>%.0f%%</td><td style=\"text-align:left\">%s</td>",
+                work.pointsPerSecondInReach(), secondsEach, work.hits().shieldShare() * 100, work.hits().overkillShare() * 100,
+                escape(work.topKinds(BalanceReport.TOP_KINDS)));
     }
 
     private void upgradePhases(LevelRun run) {
