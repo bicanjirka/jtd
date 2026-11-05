@@ -25,12 +25,13 @@ class HurtSpeedTraitTest {
     }
 
     @Test
-    void anySlowCancelsTheGain() {
+    void aSlowLeavesItsShareOfTheGain() {
         this.hasty.doDamage(Damage.physical(this.hasty.getHealth() / 2));
+        float hurried = this.hasty.getSpeed();
 
         this.hasty.applyEffect(Effect.chill(0.01f, 100, DamageSink.none()));
 
-        assertThat(this.hasty.getSpeed()).isCloseTo(this.hasty.definition().baseSpeed() * 0.99f, within(1e-4f));
+        assertThat(this.hasty.getSpeed()).isCloseTo(hurried * 0.99f, within(1e-4f));
     }
 
     @Test

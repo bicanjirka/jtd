@@ -212,7 +212,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.SILENCED, durationTicks, sink);
     }
 
-    /** Can't be sped up and is held to three quarters of its base speed for {@code durationTicks}. */
+    /** Its speed is held to a share of its base, whatever raises it, for {@code durationTicks}. */
     public static Effect anchored(int durationTicks, DamageSink sink) {
         return timed(EffectKind.ANCHORED, durationTicks, sink);
     }
@@ -342,7 +342,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return this.withDynamics(shield);
     }
 
-    /** The share of base speed this slow takes away at full strength; {@code 0f} for a kind that doesn't slow. */
+    /** The share of speed this slow takes away at full strength; {@code 0f} for a kind that doesn't slow. */
     public float slowStrength() {
         return switch (this.dynamics) {
             case EffectDynamics.Slow slow -> slow.strength();

@@ -151,13 +151,58 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aSlowBeatsASpeedGainHoweverWeak() {
+    void aSlowTakesItsShareOfASpeedGain() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.hastened(100, DamageSink.none()));
-        effects.apply(Effect.sprinting(100, DamageSink.none()));
-        effects.apply(Effect.chill(0.05f, 100, DamageSink.none()));
+        float hastened = resolved(effects, EnemyStat.MOVE_SPEED);
 
-        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.95f, within(0.001f));
+        effects.apply(Effect.chill(0.25f, 100, DamageSink.none()));
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(hastened * 0.75f, within(0.001f));
+    }
+
+    @Test
+    void anAnchorHoldsAGainToItsCeilingOnBase() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.hastened(100, DamageSink.none()));
+
+        effects.apply(Effect.anchored(100, DamageSink.none()));
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED))
+                .isCloseTo(1f - EffectKind.ANCHORED.rule().slowPerStack(), within(0.001f));
+    }
+
+    @Test
+    void aSlowWeakerThanAnAnchorAddsNothingToIt() {
+        float ceiling = 1f - EffectKind.ANCHORED.rule().slowPerStack();
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.anchored(100, DamageSink.none()));
+
+        effects.apply(Effect.chill((1f - ceiling) / 2f, 100, DamageSink.none()));
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(ceiling, within(0.001f));
+    }
+
+    @Test
+    void aSlowStrongerThanAnAnchorGoesBelowIt() {
+        float ceiling = 1f - EffectKind.ANCHORED.rule().slowPerStack();
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.anchored(100, DamageSink.none()));
+
+        effects.apply(Effect.chill(1f - ceiling / 2f, 100, DamageSink.none()));
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(ceiling / 2f, within(0.001f));
+    }
+
+    @Test
+    void anAnchorFadesOverTheEndOfItsTime() {
+        float slow = EffectKind.ANCHORED.rule().slowPerStack();
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.anchored(2 * ActiveEffects.SLOW_FADE_TICKS, DamageSink.none()));
+
+        tickTimes(effects, ActiveEffects.SLOW_FADE_TICKS + ActiveEffects.SLOW_FADE_TICKS / 2);
+
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(1f - slow / 2f, within(0.001f));
     }
 
     @Test

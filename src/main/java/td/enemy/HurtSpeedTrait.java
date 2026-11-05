@@ -21,6 +21,6 @@ public record HurtSpeedTrait(float maxMultiplier) implements Trait {
     @Override
     public TraitEntry entry() {
         return TraitEntry.of(TraitTerm.ADRENALINE, TermText.of("moves faster as it is hurt, up to "
-                + TermNumbers.times(this.maxMultiplier) + " its speed near death, unless slowed"));
+                + TermNumbers.times(this.maxMultiplier) + " its speed near death"));
     }
 }
