@@ -11,6 +11,8 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
+- **Slows shouldn't erase speed gains:** a slow caps speed at a share of base, so even a tiny one cancels a whole Haste;
+  try the slow as a share of current speed, with only Anchor keeping the cap, and measure how fast enemies change. Not started.
 
 ## Feature request implementation order
 
