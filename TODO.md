@@ -62,6 +62,14 @@ Findings from the architecture audits of 2026-09-17, highest-severity first. The
 group and the external audit's critical/high/moderate findings have landed; what remains is
 listed below.
 
+### A hard-control kind without a ladder fails in play
+
+`DiminishingReturns.of` handles only some kinds and throws on the rest, while the mob asks it for every kind in the
+hard-control category. A new kind in that category compiles, then throws the first time it is applied.
+
+- **Where:** `td.effect.DiminishingReturns.of`, `td.enemy.DefinedEnemyMob.ladderFor`.
+- **Approach:** make the ladder part of what a hard-control kind must declare, so a kind without one can't be built.
+
 ### A command queue would make the simulation a true single writer
 
 Not a defect - an option, recorded with the condition that would make it worth taking.
