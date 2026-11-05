@@ -239,6 +239,9 @@ ripples and spin, the Radar's sweep).
 
 ## Interconnections
 
+- `docs/UI.md` holds what each colour already means. `FEATURE-hud-identity.md` makes the chrome neutral, which leaves the
+  pure primaries of the Sniper, Burst, Sonar and Pulse as the loudest colours on screen. The revamp is the place to
+  soften them; a softer Sniper green lands on healing's, so each new value gets the guide's checks.
 - `FEATURE-effect-icons-and-terms.md` (implemented) set the icon style this art follows and made
   primed shots and attack-speed buffs named tower buffs; their head cues draw from the same state.
 - `FEATURE-effect-visuals.md` set the enemy marker colours; the hex overlay and the execution mark sit

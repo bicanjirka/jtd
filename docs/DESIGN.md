@@ -12,11 +12,11 @@ for edits that keep the existing structure.
 | `docs/DESIGN.md` (this file) | How to choose a design, and why | read before a structural choice |
 | `docs/adr/` | One record per decision: what was decided, why, what was rejected | before reversing a structure |
 | `docs/ARCHITECTURE.md` | The system as it is now: its parts, a tick, a frame, the threads | for orientation |
+| `docs/UI.md` | What colours mean, what is taken, and how to pick one | read before choosing a colour |
 | `checkstyle.xml`, `checkstyle-imports.xml` | Rules a tool can check | every `mvn verify` |
 
-A future UI guide (visual language, components, layout) and a UX guide (the player's flows) follow
-the same shape as this one. A `CLAUDE.md` rule wins over this guide; if they disagree, one of them is
-stale and gets fixed in the same commit.
+A future UX guide (the player's flows) follows the same shape as this one. A `CLAUDE.md` rule wins over
+this guide; if they disagree, one of them is stale and gets fixed in the same commit.
 
 The principles come from structured design (Yourdon and Constantine, *Structured Design*), Parnas'
 information hiding, Fowler's *Refactoring*, Beck's *Tidy First?* and the practice this codebase
