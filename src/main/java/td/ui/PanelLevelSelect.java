@@ -2,7 +2,6 @@ package td.ui;
 
 import td.level.LevelDefinition;
 import td.wave.PathBuilder;
-import td.wave.PathColor;
 import td.wave.PathDefinition;
 import td.wave.Vec2;
 
@@ -59,8 +58,8 @@ public class PanelLevelSelect extends JPanel {
     private static final Color CARD_HOVER_BACKGROUND = Hud.FILL_HOVER;
     private static final Color STAT_BORDER = Hud.BORDER_IDLE;
     private static final Color STAT_LABEL = Hud.BORDER_HOVER;
-    private static final Color PREVIEW_BACKGROUND = new Color(20, 20, 20);
-    private static final Color PREVIEW_GRID_DOT = new Color(35, 35, 36);
+    /** Cell size the floor's motif is drawn at: finer than the board's, since the preview is smaller. */
+    private static final int PREVIEW_MOTIF_SCALE = 16;
     private static final int CARD_BORDER = 2;
     private static final int CHIP_INSET = 8;
     private static final int KEYED_CARDS = 9;
@@ -68,8 +67,6 @@ public class PanelLevelSelect extends JPanel {
     private static final int CARDS_PER_ROW = 6;
     private static final float HOVER_LIGHTEN = 0.35f;
 
-    /** Cycled by card index. */
-    private static final Color[] ACCENTS = {Color.GREEN, Color.RED, Color.ORANGE, Color.CYAN, Color.MAGENTA, new Color(235, 200, 120)};
 
     private final List<LevelDefinition> levels;
     private final transient Consumer<LevelDefinition> onLevelSelected;
@@ -124,7 +121,8 @@ public class PanelLevelSelect extends JPanel {
 
     private static JPanel buildCard(LevelDefinition level, int index, Hyphenator hyphenator,
             Consumer<LevelDefinition> onLevelSelected) {
-        Color accent = ACCENTS[index % ACCENTS.length];
+        Color accent = Hud.colorOf(level.cardColor());
+        Color textTint = TextTint.of(accent);
 
         JPanel card = new JPanel(new BorderLayout()) {
             @Serial
@@ -150,7 +148,7 @@ public class PanelLevelSelect extends JPanel {
         card.setBorder(BorderFactory.createLineBorder(accent, CARD_BORDER));
         card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        PathPreview preview = new PathPreview(level, accent);
+        PathPreview preview = new PathPreview(level);
         card.add(preview, BorderLayout.NORTH);
 
         JPanel body = new JPanel(new BorderLayout());
@@ -158,7 +156,7 @@ public class PanelLevelSelect extends JPanel {
         body.setBorder(new EmptyBorder(18, 14, 14, 14));
 
         // Wraps rather than truncates: a narrow card still shows the whole name.
-        JTextArea name = wrappingText(level.name(), new Font("SansSerif", Font.BOLD, 19), accent);
+        JTextArea name = wrappingText(level.name(), new Font("SansSerif", Font.BOLD, 19), textTint);
         name.setBorder(new EmptyBorder(0, 0, 8, 0));
         body.add(name, BorderLayout.NORTH);
 
@@ -176,9 +174,9 @@ public class PanelLevelSelect extends JPanel {
         stats.setBorder(BorderFactory.createCompoundBorder(
                 new EmptyBorder(12, 0, 12, 0),
                 BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(STAT_BORDER, 1), new EmptyBorder(6, 10, 6, 10))));
-        stats.add(buildStat("WAVES", String.valueOf(level.paths().getFirst().waves().size()), accent));
-        stats.add(buildStat("CREDITS", "$" + level.startingCredits(), accent));
-        stats.add(buildStat("LIVES", String.valueOf(level.startingLives()), accent));
+        stats.add(buildStat("WAVES", String.valueOf(level.paths().getFirst().waves().size()), textTint));
+        stats.add(buildStat("CREDITS", "$" + level.startingCredits(), textTint));
+        stats.add(buildStat("LIVES", String.valueOf(level.startingLives()), textTint));
         south.add(stats);
 
         JLabel prompt = new JLabel("CLICK TO DEPLOY", SwingConstants.CENTER);
@@ -225,7 +223,7 @@ public class PanelLevelSelect extends JPanel {
     }
 
     /** One row of the stats box: the label on the left, its value on the right. */
-    private static JPanel buildStat(String label, String value, Color accent) {
+    private static JPanel buildStat(String label, String value, Color valueColor) {
         JPanel stat = new JPanel(new BorderLayout());
         stat.setOpaque(false);
 
@@ -235,7 +233,7 @@ public class PanelLevelSelect extends JPanel {
 
         JLabel valueText = new JLabel(value, SwingConstants.RIGHT);
         valueText.setFont(new Font("SansSerif", Font.BOLD, 15));
-        valueText.setForeground(accent);
+        valueText.setForeground(valueColor);
 
         stat.add(labelText, BorderLayout.WEST);
         stat.add(valueText, BorderLayout.EAST);
@@ -325,11 +323,9 @@ public class PanelLevelSelect extends JPanel {
         private static final long serialVersionUID = 1L;
 
         private final LevelDefinition level;
-        private final Color accent;
 
-        PathPreview(LevelDefinition level, Color accent) {
+        PathPreview(LevelDefinition level) {
             this.level = level;
-            this.accent = accent;
             this.setOpaque(true);
             this.setPreferredSize(new Dimension(200, 150));
         }
@@ -394,15 +390,7 @@ public class PanelLevelSelect extends JPanel {
             int width = this.getWidth();
             int height = this.getHeight();
 
-            g2.setColor(PREVIEW_BACKGROUND);
-            g2.fillRect(0, 0, width, height);
-
-            g2.setColor(PREVIEW_GRID_DOT);
-            for (int x = 6; x < width; x += 20) {
-                for (int y = 6; y < height; y += 20) {
-                    g2.fillRect(x, y, 1, 1);
-                }
-            }
+            GroundPainter.paintGround(g2, this.level.ground(), PREVIEW_MOTIF_SCALE, width, height);
 
             List<PathDefinition> paths = this.level.paths();
             List<List<Vec2>> everyPathsPoints = paths.stream()
@@ -415,11 +403,7 @@ public class PanelLevelSelect extends JPanel {
                 if (mapped.size() < 2) {
                     continue;
                 }
-                // An uncoloured path takes the card's accent rather than flat white.
-                PathColor pathColor = paths.get(i).color();
-                Color strokeColor = pathColor.equals(PathColor.DEFAULT)
-                        ? this.accent
-                        : new Color(pathColor.r(), pathColor.g(), pathColor.b());
+                Color strokeColor = Hud.colorOf(paths.get(i).color());
 
                 GeneralPath outline = new GeneralPath();
                 outline.moveTo(mapped.getFirst().x, mapped.getFirst().y);

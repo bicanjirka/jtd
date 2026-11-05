@@ -1,5 +1,7 @@
 package td.ui;
 
+import td.wave.PathColor;
+
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonModel;
@@ -251,6 +253,10 @@ public final class Hud {
             return TEXT_DISABLED;
         }
         return face.accent().map(accent -> face.dimmed() ? withAlpha(accent, DIM_CHIP) : accent).orElse(FOREGROUND);
+    }
+
+    public static Color colorOf(PathColor color) {
+        return new Color(color.r(), color.g(), color.b());
     }
 
     static Color withAlpha(Color color, float alpha) {

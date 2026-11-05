@@ -8,9 +8,6 @@ The code holds the live values: `Hud`, `Java2DFrameRenderer.colorFor`, `EnemyLoo
 `BoardGround`. A table here is for deciding. When a table and the code disagree on a value, the code is right and the
 table gets fixed.
 
-> **Level cards ship with `FEATURE-hud-identity.md`.** Until then section 5's level table is the target. Everything else
-> here is true today.
-
 ## 1. The idea
 
 **The interface is the instrument; the level and the things on it are the colour.** Chrome is quiet and belongs to no
@@ -100,15 +97,16 @@ private to that painter. They are greys too; a new control uses the ramp.
 today's pure green is 12.6 from it. Softening the primaries needs each new value checked against everything else in its
 hue (section 6).
 
-**Levels.** Each level has one card colour, from its own lanes, and its floor. Text on the card uses the text tint.
+**Levels.** Each level has one card colour, from its own lanes (`withCardColor`, the first lane's by default), and its floor.
+Text on the card uses the text tint, which `TextTint` computes: the lane colour lightened only as far as 7:1.
 
 | Level | Card lane | Lane colour | Text tint | Floor |
 |---|---|---|---|---|
 | The Amber Hive | Honey | `#F0AF28` | same (10.0:1) | `#100B04` |
-| The Storm Ridge | Thunder | `#5F73EB` | `#96A5F5` (8.3:1) | `#06090E` |
+| The Storm Ridge | Thunder | `#5F73EB` | `#8796F0` (7.0:1) | `#06090E` |
 | The Last Hour | Glass | `#8CD7E1` | same (11.9:1) | `#070C0E` |
-| Iron Crossing | Rush | `#EB5F2D` | `#F0825A` (7.4:1) | `#08090C` |
-| The Rift | Violet | `#A05AE6` | `#BE91F0` (7.8:1) | `#07040C` |
+| Iron Crossing | Rush | `#EB5F2D` | `#EF7C53` (7.1:1) | `#08090C` |
+| The Rift | Violet | `#A05AE6` | `#B985EC` (7.0:1) | `#07040C` |
 | The Labyrinth | Stone | `#C8AA78` | same (8.7:1) | `#0D0B06` |
 
 ## 6. What each hue already means
