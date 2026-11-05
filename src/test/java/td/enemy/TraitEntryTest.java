@@ -9,21 +9,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TraitEntryTest {
 
     @Test
-    void aFullResistanceIsTheEffectFullyResisted() {
-        TraitEntry entry = EffectResistTrait.immuneTo(EffectKind.FREEZE).entry();
+    void anImmunityNamesTheEffectItKeepsOut() {
+        TraitEntry entry = new ImmunityTrait(EffectKind.FREEZE).entry();
 
         assertThat(entry.term()).isEqualTo(EffectKind.FREEZE);
         assertThat(entry.immune()).isTrue();
         assertThat(entry.text().plain()).isEqualTo("immune to Freeze");
-    }
-
-    @Test
-    void aPartialResistanceKeepsItsShare() {
-        TraitEntry entry = EffectResistTrait.resisting(EffectKind.CHILL, 0.25f).entry();
-
-        assertThat(entry.immune()).isFalse();
-        assertThat(entry.resisted()).isEqualTo(0.25f);
-        assertThat(entry.text().plain()).isEqualTo("Chill lasts 25% less on it");
     }
 
     @Test

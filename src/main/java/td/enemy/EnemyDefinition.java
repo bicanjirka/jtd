@@ -161,6 +161,11 @@ public record EnemyDefinition(
         return this.withBase(EnemyStat.AGILITY, points);
     }
 
+    /** How long what doesn't help it lasts on it, in points: see {@link td.stat.StatCurves#durationFactor}. */
+    public EnemyDefinition withTenacity(float points) {
+        return this.withBase(EnemyStat.TENACITY, points);
+    }
+
     /**
      * Scales the heals and shields it receives by {@code 1 + spirit / 100} and paces its debuffs; below zero
      * both work against it.

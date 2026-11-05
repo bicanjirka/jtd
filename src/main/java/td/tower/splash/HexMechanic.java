@@ -44,7 +44,7 @@ public final class HexMechanic implements SplashMechanic {
 
     @Override
     public Set<Term> applies() {
-        return Set.of(this.hex.kind());
+        return this.hex.applies();
     }
 
     @Override

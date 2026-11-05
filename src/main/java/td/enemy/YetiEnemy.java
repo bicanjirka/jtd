@@ -23,12 +23,9 @@ final class YetiEnemy {
                         .withArmor(15f)
                         .withMagicResist(15f)
                         .withIdentifiedTraits(List.of(
-                                IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                                IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.5f)))),
+                                IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
+                                IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.CHILL)))),
                         RankGrowth.of(20f))
-                .thenAt(Rank.VETERAN, e -> e
-                        .withAdditionalTraits(List.of(
-                                IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.75f)))))
                 .thenAt(Rank.ELITE, e -> e
                         .withStats(20f, 20f, 2f, 2f, 20f, 5f, 15f)
                         .withAdditionalAbilities(List.of(hunker(6f))))

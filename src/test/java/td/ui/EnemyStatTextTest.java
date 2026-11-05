@@ -13,11 +13,11 @@ import td.enemy.AbilityTerm;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
-import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMark;
 import td.enemy.HealthThresholdTrigger;
+import td.enemy.ImmunityTrait;
 import td.enemy.Rank;
 import td.enemy.SelfTarget;
 import td.fixtures.EnemyFixtures;
@@ -148,7 +148,7 @@ class EnemyStatTextTest {
     @Test
     void traitsAbilitiesAndImmunitiesShareTheTraitsRow() {
         DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("hunkered")
-                .withTraits(List.of(EffectResistTrait.immuneTo(EffectKind.FREEZE)))
+                .withTraits(List.of(new ImmunityTrait(EffectKind.FREEZE)))
                 .withAbilities(List.of(new Ability(AbilityTerm.HUNKER, new HealthThresholdTrigger(0.5f),
                         new ApplyEffectAction(new ShieldTemplate(10f, 100), new SelfTarget())))));
 
@@ -252,7 +252,7 @@ class EnemyStatTextTest {
     @Test
     void thePreviewShowsStatsTraitsAndTheRoleSentenceButNoBuffsOrDebuffs() {
         InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("resistant")
-                .withTraits(List.of(EffectResistTrait.resisting(EffectKind.CHILL, 0.5f))).withDescription("Shrugs off cold."));
+                .withTraits(List.of(new ImmunityTrait(EffectKind.CHILL))).withDescription("Shrugs off cold."));
 
         assertThat(icons(sheet, "Traits")).isNotEmpty();
         assertThat(icons(sheet, "Buffs")).isEmpty();

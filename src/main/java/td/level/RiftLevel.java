@@ -13,12 +13,12 @@ import td.enemy.AbilityTerm;
 import td.enemy.AdaptiveResist;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
-import td.enemy.EffectResistTrait;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.IdentifiedAbility;
 import td.enemy.IdentifiedTrait;
+import td.enemy.ImmunityTrait;
 import td.enemy.LeaveZoneAction;
 import td.enemy.OnDodgeTrigger;
 import td.enemy.OnFirstDamageTakenTrigger;
@@ -109,8 +109,9 @@ final class RiftLevel {
                     .withIdentifiedTraits(List.of(
                             IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(50f)),
                             IdentifiedTrait.anonymous(new RegenerationTrait(10f)),
-                            IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                            IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL))))
+                            IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
+                            IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.CHILL)),
+                            IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                     .withIdentifiedAbilities(List.of(
                             IdentifiedAbility.anonymous(new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(40),
                                     new ApplyEffectAction(new HealTemplate(4f, 40), new SelfTarget()))),

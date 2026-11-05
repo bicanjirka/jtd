@@ -8,10 +8,8 @@ public enum HexGlyph {
     BLIGHT,
     /** Three linked dots: it spreads to its neighbours. */
     CONTAGION,
-    /** A snowflake: frost. */
-    RIME,
-    /** A flame: fire. */
-    ASH,
+    /** A star of three strokes: what ails it doesn't let go. */
+    MALAISE,
     /** A triangle turned on its head: what helps it hurts it. */
     INVERSION,
     /** Two linked rings: what one suffers, all suffer. */

@@ -139,7 +139,7 @@ public final class DevEffects {
             case FRACTURED -> one(List.of(stacks(kind)), in -> Effect.fractured(in.whole(0), in.sink()));
             case SCORCHED -> one(List.of(stacks(kind)), in -> Effect.scorched(in.whole(0)));
             case SICKENED -> one(List.of(stacks(kind)), in -> Effect.sickened(in.whole(0)));
-            case RIME, ASH, INVERSION, DOOM, CONTAGION, SYMPATHY, RECKONING -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
+            case MALAISE, INVERSION, DOOM, CONTAGION, SYMPATHY, RECKONING -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
             case BLIGHT -> new Builds<>(List.of(SECONDS, DAMAGE_PER_SECOND), in -> List.of(Effect.hex(kind, in.ticks(0), in.sink()),
                     Effect.poison(in.magicPerTick(1), in.ticks(0), in.sink())));
             case STILLED -> new Refuses<>("needs an Obelisk field");

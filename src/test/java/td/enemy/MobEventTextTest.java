@@ -93,9 +93,9 @@ class MobEventTextTest {
     }
 
     @Test
-    void aShortenedEffectShowsBothFactorsAndWhatIsLeft() {
-        assertThat(line(new MobEvent.EffectShortened(EffectKind.FREEZE, 0.5f, 0.25f, 8)))
-                .isEqualTo(PREFIX + "EFFECT " + EffectKind.FREEZE.title() + " shortened resist=x0.50 dr=x0.25 length=8t");
+    void aRetimedEffectShowsItsFactorAndWhatIsLeft() {
+        assertThat(line(new MobEvent.EffectRetimed(EffectKind.FREEZE, 0.5f, 8)))
+                .isEqualTo(PREFIX + "EFFECT " + EffectKind.FREEZE.title() + " retimed x0.50 length=8t");
     }
 
     @Test

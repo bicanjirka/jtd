@@ -4,7 +4,7 @@
   flag, stacks, slow, fuel pool, heal, shield pool or distance. A family carries
   only its own data. This package never depends on `td.enemy`: the producer binds a `DamageSink` when
   it creates the effect.
-- Each `EffectKind` is one row holding its `EffectRule`: category, resistance, stacking
+- Each `EffectKind` is one row holding its `EffectRule`: category, stacking
   (`EffectStacking`), stack cap, what each stack does to stats, how much of base speed it takes away, and tags.
   Every classification method reads the rule. `ActiveEffects` keeps one live effect per kind and
   combines applications by the rule's stacking: a refresh keeps the stronger and the longer, a pool
@@ -36,7 +36,7 @@
   a time like `SCORCHED`. A `faultLine` Fractured
   (a higher cap) loses none while the enemy has `EXPOSED`; one such
   application makes the whole effect so until it wears off.
-- Every timer counts down one tick per tick; nothing about the enemy paces it. Only resistance and
+- Every timer counts down one tick per tick; nothing about the enemy paces it. Only tenacity and
   diminishing returns change how long an effect lasts, and only as it is applied.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
@@ -50,10 +50,10 @@
   shields and rewinds are worth nothing and nothing is kept out or stripped; a fallout zone applies it too.
 - A pool earns `SICKENED` itself, but a tower can also add it (`Effect.sickened`): the stacks add up
   to the whole of spirit, and wear off one at a time.
-- A `HEX` kind carries no stat of its own; the tower that cast it watches it and pays it out.
+- A `HEX` kind carries no stat of its own but `MALAISE`'s tenacity; the tower that cast it watches it and pays it out.
   `INVERSION` is the one hex the enemy itself reads: its regeneration is dealt through the hex's sink.
 - `SOULFIRE` is a third fuel pool beside burn and poison (`EffectKind.isBurning()` covers it and burn), and it
-  earns `SCORCHED` and `SICKENED` both. Nothing resists it, so it burns what is burn-immune.
+  earns `SCORCHED` and `SICKENED` both. It is its own kind, so it burns what is burn-immune.
 - A tower tunes the pool it feeds through `PoolTuning`, carried by the pool: how much it holds, how fast it
   marks, and the stat modifiers it carries while it burns (Cauterize, Heat
   and the magic mark are such modifiers). Two towers on one pool leave it the stronger of each setting,
@@ -75,9 +75,9 @@
   ending soonest first, each worth the `worth` the mob passes (its spirit's `StatCurves.restoreFactor`), and at no
   worth every share the hit meets breaks. Cauterize lowers `SPIRIT`.
   The mob applies regeneration to itself, capped at max health; `Damage` can't be negative.
-- Resistance and diminishing returns only shorten an authored duration, never change an effect's
-  curve: `duration = authored * (1 - resist[kind]) * freezeStep`, and under one tick is blocked.
-  `EffectKind.resistedBy()` names the resisting stat. Every kind in `EffectCategory.HARD_CC`
+- Tenacity and diminishing returns only scale an authored duration, never change an effect's
+  curve: `duration = authored * durationFactor(tenacity) * freezeStep`, never under a tick. Only an immunity keeps
+  a kind out, or a ladder's last step. Every kind in `EffectCategory.HARD_CC`
   diminishes, on every enemy, each on its own ladder (`DiminishingReturns.of(kind)`, per mob, only
   a fresh application climbs a step): Dazed
   stops an enemy like a freeze.

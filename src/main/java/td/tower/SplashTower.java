@@ -670,6 +670,12 @@ public final class SplashTower extends AbstractTower {
         }
 
         @Override
+        public void burn(EnemyMob target, float weaponShare, int ticks) {
+            Damage perTick = Damage.magic(Math.round(SplashTower.this.damageCurrent() * weaponShare));
+            SplashTower.this.applyEffect(target, sink -> Effect.burn(perTick, ticks, sink));
+        }
+
+        @Override
         public void chill(EnemyMob target, float amount, int ticks) {
             SplashTower.this.applyEffect(target, sink -> Effect.chill(amount, ticks, sink));
         }

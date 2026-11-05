@@ -466,15 +466,29 @@ class SplashTowerTest {
     }
 
     @Test
-    void rimeCovenAddsHexOfRimeWhichChillsAsItIsCast() {
+    void rimeCovenAddsMalaiseAndChillsAsItIsCast() {
         SplashTower tower = this.upgradedTower("Rime Coven");
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
         this.enemies(enemy);
 
         tickThroughCooldown(tower, 16);
 
-        assertThat(effectsOf(enemy, EffectKind.RIME)).hasSize(1);
+        assertThat(effectsOf(enemy, EffectKind.MALAISE)).hasSize(1);
         assertThat(effectsOf(enemy, EffectKind.CHILL)).hasSize(1);
+        assertThat(effectsOf(enemy, EffectKind.BURN)).isEmpty();
+    }
+
+    @Test
+    void ashCovenAddsMalaiseAndBurnsAsItIsCast() {
+        SplashTower tower = this.upgradedTower("Ash Coven");
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.enemies(enemy);
+
+        tickThroughCooldown(tower, 16);
+
+        assertThat(effectsOf(enemy, EffectKind.MALAISE)).hasSize(1);
+        assertThat(effectsOf(enemy, EffectKind.BURN)).hasSize(1);
+        assertThat(effectsOf(enemy, EffectKind.CHILL)).isEmpty();
     }
 
     private SplashTower hexerWith(String special) {

@@ -23,9 +23,10 @@
 - Stat, trait, ability, effect, each thing is exactly one:
   - A **base stat** is a number every enemy has on its sheet. It is authored with its named method
     (`withArmor`, `withMagicResist`, `withPlating`, `withInsulation`, `withResilience`,
-    `withAgility`, `withSpirit`; plating and insulation in points), and a rank step replaces it. A step that authors
-    most of them uses `withStats`, which sets all seven, so it repeats the inherited ones. Never a trait.
-  - A **trait** is passive identity an enemy has or hasn't: an effect resistance, regeneration, a stat
+    `withAgility`, `withSpirit`, `withTenacity`; plating and insulation in points), and a rank step replaces it. A step
+    that authors most of them uses `withStats`, which sets all seven but tenacity, so it repeats the inherited ones.
+    Tenacity comes from an enemy's identity, never from rank. Never a trait.
+  - A **trait** is passive identity an enemy has or hasn't: an immunity (`ImmunityTrait`, naming any kind), regeneration, a stat
     that follows its state or adapts to the level. A trait that only adds a constant to a stat is a
     base stat instead.
   - An **ability** is a trigger and an action: it happens at a moment.
@@ -61,9 +62,9 @@
   `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
   it (e.g. `"armor"`, which a later rank step replaces).
 - Every enemy diminishes hard-CC durations; there is no opt-in.
-- `DefinedEnemyMob.applyEffect` shortens the effect by its resistance and freeze diminishing
-  returns before `ActiveEffects` sees it; there is no separate immunity check. The one exception
-  is `INVERSION`: it turns a shield into one hit, credited to its caster, before anything else.
+- `DefinedEnemyMob.applyEffect` keeps out what a trait makes it immune to, and scales what doesn't help it
+  (`Side.DEBUFF`) by `StatCurves.durationFactor(tenacity)` and diminishing returns before `ActiveEffects` sees it; scaling
+  never leaves less than a tick. The one exception is `INVERSION`: it turns a shield into one hit, credited to its caster, before anything else.
 - Regeneration is restored on the mob's own tick, worth `StatCurves.restoreFactor(spirit)` times the stat, with the
   part of a unit carried (`MobHealth.regenerationDue`). Under `INVERSION` the same units are dealt to it as magic
   through the hex's sink instead. A heal only adds to the stat.

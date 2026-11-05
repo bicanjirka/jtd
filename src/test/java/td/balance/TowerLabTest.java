@@ -7,8 +7,8 @@ import td.effect.InvisibleTemplate;
 import td.enemy.Ability;
 import td.enemy.AbilityTerm;
 import td.enemy.ApplyEffectAction;
-import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
+import td.enemy.ImmunityTrait;
 import td.enemy.OnFirstDamageTakenTrigger;
 import td.enemy.Rank;
 import td.enemy.SelfTarget;
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TowerLabTest {
 
     private static final EnemyDefinition FIREPROOF = EnemyFixtures.simpleDefinition("fireproof")
-            .withTraits(List.of(EffectResistTrait.immuneTo(EffectKind.BURN)));
+            .withTraits(List.of(new ImmunityTrait(EffectKind.BURN)));
     private static final EnemyDefinition HIDER = EnemyFixtures.simpleDefinition("hider").withArmor(20f)
             .withAbilities(List.of(new Ability(AbilityTerm.FADE, new OnFirstDamageTakenTrigger(),
                     new ApplyEffectAction(new InvisibleTemplate(300), new SelfTarget()))));

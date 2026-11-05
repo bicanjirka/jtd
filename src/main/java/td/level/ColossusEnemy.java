@@ -5,12 +5,12 @@ import td.enemy.Ability;
 import td.enemy.AbilitySpawnShape;
 import td.enemy.AbilityTerm;
 import td.enemy.BodyArchetype;
-import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.IdentifiedAbility;
 import td.enemy.IdentifiedTrait;
+import td.enemy.ImmunityTrait;
 import td.enemy.LeaveZoneAction;
 import td.enemy.OnDeathTrigger;
 import td.enemy.PeriodicTrigger;
@@ -38,7 +38,7 @@ final class ColossusEnemy {
         return EnemyDefinition.of("ember", "Ember", 160, 1, 1.7f, BodyArchetype.EMBER)
                 .withDescription("A burning shard of a Molten Core, quick and fireproof.")
                 .withAgility(20f)
-                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN))));
+                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN))));
     }
 
     /** The core first, so the shell's reforge names a registered id. */
@@ -51,8 +51,9 @@ final class ColossusEnemy {
                 .withDescription("A walking foundry in an iron shell. Break the shell and what is inside comes out running.")
                 .withMovement(new SwingMovement((float) Math.toRadians(10.0), 60, SwingCurve.SMOOTH))
                 .withStats(35f, 10f, 15f, 0f, 100f, 0f, 0f)
+                .withTenacity(100f)
                 .withIdentifiedTraits(List.of(
-                        IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.FREEZE, 0.5f))))
+                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                 .withIdentifiedAbilities(List.of(
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.WARD_MINE, new PeriodicTrigger(60),
                                 LeaveZoneAction.wardMine(0.6f, 240, 150f))),
@@ -69,8 +70,9 @@ final class ColossusEnemy {
                 .withStats(0f, 60f, 0f, 4f, 60f, 0f, 0f)
                 .withIdentifiedTraits(List.of(
                         IdentifiedTrait.anonymous(new HurtSpeedTrait(1.5f)),
-                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
-                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE))))
+                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
+                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
+                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                 .withIdentifiedAbilities(List.of(
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.HEALING_POOL, new PeriodicTrigger(30),
                                 LeaveZoneAction.healingGround(1f, 120, 1f))),

@@ -88,25 +88,24 @@ class ObservedEnemyTest {
     }
 
     @Test
-    void resistanceShortensAnEffectAndTheTraceSaysByHowMuch() {
-        DefinedEnemyMob mob = this.observed(this.world,
-                plain().withTraits(List.of(EffectResistTrait.resisting(EffectKind.FREEZE, 0.5f))));
+    void tenacityRetimesAnEffectAndTheTraceSaysByHowMuch() {
+        DefinedEnemyMob mob = this.observed(this.world, plain().withTenacity(100f));
 
         mob.applyEffect(Effect.freeze(100, DamageSink.none()));
 
         assertThat(this.events.of(MobEvent.EffectRequested.class))
                 .containsExactly(new MobEvent.EffectRequested(EffectKind.FREEZE, "-", 100));
-        assertThat(this.events.of(MobEvent.EffectShortened.class))
-                .containsExactly(new MobEvent.EffectShortened(EffectKind.FREEZE, 0.5f, 1f, 50));
+        assertThat(this.events.of(MobEvent.EffectRetimed.class))
+                .containsExactly(new MobEvent.EffectRetimed(EffectKind.FREEZE, 0.5f, 50));
         assertThat(this.events.changes(MobEvent.Change.GAINED).getFirst().after().remaining()).isEqualTo(OptionalInt.of(50));
     }
 
     @Test
-    void anEffectThatWouldLastUnderATickIsReportedBlocked() {
+    void anEffectAnImmunityKeepsOutIsReportedBlocked() {
         DefinedEnemyMob mob = this.observed(this.world,
-                plain().withTraits(List.of(EffectResistTrait.resisting(EffectKind.FREEZE, 0.99f))));
+                plain().withTraits(List.of(new ImmunityTrait(EffectKind.FREEZE))));
 
-        mob.applyEffect(Effect.freeze(1, DamageSink.none()));
+        mob.applyEffect(Effect.freeze(100, DamageSink.none()));
 
         assertThat(this.events.of(MobEvent.EffectBlocked.class)).hasSize(1);
         assertThat(this.events.changes(MobEvent.Change.GAINED)).isEmpty();

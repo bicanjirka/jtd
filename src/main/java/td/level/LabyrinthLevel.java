@@ -10,13 +10,13 @@ import td.enemy.Ability;
 import td.enemy.AbilityTerm;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
-import td.enemy.EffectResistTrait;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.IdentifiedAbility;
 import td.enemy.IdentifiedTrait;
+import td.enemy.ImmunityTrait;
 import td.enemy.OnceTrigger;
 import td.enemy.PeriodicTrigger;
 import td.enemy.Rank;
@@ -57,7 +57,7 @@ final class LabyrinthLevel {
                     .withHealthAndPrice(fast.baseHealth() / 2, fast.price())
                     .withPlating(3f)
                     .withAdditionalTraits(List.of(IdentifiedTrait.named("bronze",
-                            EffectResistTrait.immuneTo(EffectKind.BURN)))));
+                            new ImmunityTrait(EffectKind.BURN)))));
 
     /**
      * The bronze guardian: a body that breaks easily under a crit, inside a shield too big to shoot through and
@@ -69,6 +69,7 @@ final class LabyrinthLevel {
                             + "and the shield never stops.")
                     .withMovement(new SwingMovement((float) Math.toRadians(8.0), 40, SwingCurve.SMOOTH))
                     .withStats(30f, 30f, 0f, 0f, -60f, 0f, 0f)
+                    .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                     .withIdentifiedAbilities(List.of(
                             IdentifiedAbility.anonymous(new Ability(AbilityTerm.BRONZE_SHELL, new OnceTrigger(1),
                                     new ApplyEffectAction(ShieldTemplate.untilBroken(6000f), new SelfTarget()))),
@@ -84,11 +85,10 @@ final class LabyrinthLevel {
                     .withDescription("Born of a queen and a bull, kept at the heart of the maze. It knows every turn.")
                     .withMovement(new StrideMovement((float) Math.toRadians(12.0), 18))
                     .withStats(40f, 15f, 8f, 0f, 60f, 0f, 40f)
+                    .withTenacity(100f)
                     .withDisruption(new DisruptionAura(110f, 0.35f, 0.8f))
                     .withIdentifiedTraits(List.of(
-                            IdentifiedTrait.anonymous(new HurtSpeedTrait(1.6f)),
-                            IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.FREEZE, 0.5f)),
-                            IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.CHILL, 0.5f))))
+                            IdentifiedTrait.anonymous(new HurtSpeedTrait(1.6f))))
                     .withIdentifiedAbilities(List.of(
                             IdentifiedAbility.anonymous(new Ability(AbilityTerm.CHARGE, new PeriodicTrigger(200),
                                     new ApplyEffectAction(new SprintTemplate(30), new SelfTarget()))),

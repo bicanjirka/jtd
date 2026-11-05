@@ -164,8 +164,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case DOOM -> Palette.STATUS_MARKER_DOOM;
             case BLIGHT -> Palette.STATUS_MARKER_BLIGHT;
             case CONTAGION -> Palette.STATUS_MARKER_CONTAGION;
-            case RIME -> Palette.STATUS_MARKER_RIME;
-            case ASH -> Palette.STATUS_MARKER_ASH;
+            case MALAISE -> Palette.STATUS_MARKER_MALAISE;
             case INVERSION -> Palette.STATUS_MARKER_INVERSION;
             case SYMPATHY -> Palette.STATUS_MARKER_SYMPATHY;
             case RECKONING -> Palette.STATUS_MARKER_RECKONING;
@@ -533,8 +532,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case DOOM -> Optional.of(HexGlyph.DOOM);
             case BLIGHT -> Optional.of(HexGlyph.BLIGHT);
             case CONTAGION -> Optional.of(HexGlyph.CONTAGION);
-            case RIME -> Optional.of(HexGlyph.RIME);
-            case ASH -> Optional.of(HexGlyph.ASH);
+            case MALAISE -> Optional.of(HexGlyph.MALAISE);
             case INVERSION -> Optional.of(HexGlyph.INVERSION);
             case SYMPATHY -> Optional.of(HexGlyph.SYMPATHY);
             case RECKONING -> Optional.of(HexGlyph.RECKONING);
@@ -552,7 +550,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             // Drawn on the enemy.
             case BURN, SOULFIRE, POISON, BLEEDING, HEAL, SHIELD, CHILL, FREEZE, DAZED, INVISIBLE -> Optional.empty();
             // A rune.
-            case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING -> Optional.empty();
+            case DOOM, BLIGHT, CONTAGION, MALAISE, INVERSION, SYMPATHY, RECKONING -> Optional.empty();
             // The Info pane's, or the field on the ground says it.
             case SCORCHED, SICKENED, REVEALED, SILENCED, ANCHORED, CORRODED, DRAGGED, DEAD_ZONE,
                  FRAIL -> Optional.empty();

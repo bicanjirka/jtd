@@ -1,6 +1,5 @@
 package td.enemy;
 
-import td.effect.EffectKind;
 import td.effect.ShieldTemplate;
 
 import java.util.List;
@@ -26,9 +25,7 @@ final class JuggernautEnemy {
                         .withMovement(new RotorMovement((float) Math.toRadians(1.5)))
                         .withPlating(25f)
                         .withMagicResist(15f)
-                        .withIdentifiedTraits(List.of(
-                                IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.FREEZE, 0.3f)),
-                                IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.CHILL, 0.3f)))),
+                        .withTenacity(43f),
                         RankGrowth.of(20f))
                 .thenAt(Rank.VETERAN, e -> e.withPlating(30f)
                         .withAdditionalAbilities(List.of(blast(2f))))

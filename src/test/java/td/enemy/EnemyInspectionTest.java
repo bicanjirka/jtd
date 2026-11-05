@@ -117,7 +117,7 @@ class EnemyInspectionTest {
         EnemyDefinition definition = EnemyFixtures.simpleDefinition("bracer")
                 .withAbilities(List.of(new Ability(AbilityTerm.BRACE, new HealthThresholdTrigger(0.5f),
                         new ApplyEffectAction(new ShieldTemplate(10f, 100), new SelfTarget()))))
-                .withTraits(List.of(EffectResistTrait.immuneTo(EffectKind.FREEZE)));
+                .withTraits(List.of(new ImmunityTrait(EffectKind.FREEZE)));
 
         EnemyInspection inspection = EnemyFixtures.liveMob(this.world, definition).inspect();
 
@@ -131,7 +131,7 @@ class EnemyInspectionTest {
         assertThat(StatRows.shows(EnemyStat.ARMOR, EnemyStat.ARMOR.defaultBase(), EnemyStat.ARMOR.defaultBase()))
                 .isFalse();
         assertThat(StatRows.shows(EnemyStat.ARMOR, 10f, 10f)).isTrue();
-        assertThat(StatRows.shows(EnemyStat.FREEZE_RESIST, 1f, 1f)).isTrue();
+        assertThat(StatRows.shows(EnemyStat.TENACITY, 10f, 10f)).isTrue();
         assertThat(StatRows.shows(EnemyStat.STEALTH, 1f, 1f)).isFalse();
     }
 }

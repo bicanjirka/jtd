@@ -15,11 +15,10 @@ import java.util.OptionalDouble;
 public record IconFace(String pictogram, String monogram, Palette tone, Palette frame, String corner, String numeral,
                        float elapsed, OptionalDouble bar, Ward ward, boolean faded, String below) {
 
-    /** What keeps the term out: nothing, all of it, or a share. */
+    /** What keeps the term out: nothing, or all of it. */
     public enum Ward {
         NONE,
-        IMMUNE,
-        RESISTED
+        IMMUNE
     }
 
     public static IconFace of(String pictogram, String monogram, Palette tone, Palette frame) {

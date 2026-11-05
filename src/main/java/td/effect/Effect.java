@@ -481,16 +481,16 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     /**
-     * Both the remaining and the authored duration times {@code factor}, rounded. A shorter authored
-     * duration also makes a pool decay faster, so its total damage shrinks with it.
+     * Both the remaining and the authored duration times {@code factor}, rounded and never below a tick. A shorter
+     * authored duration also makes a pool decay faster, so its total damage shrinks with it.
      */
     public Effect withDurationScaledBy(float factor) {
         if (this.isLasting() && factor > 0f) {
             return this;
         }
         EffectDynamics scaled = this.retimed(ticks -> Math.round(ticks * factor));
-        return new Effect(this.kind, Math.round(this.remainingTicks * factor), Math.round(this.authoredDurationTicks * factor),
-                this.sink, this.origin, scaled);
+        return new Effect(this.kind, Math.max(1, Math.round(this.remainingTicks * factor)),
+                Math.max(1, Math.round(this.authoredDurationTicks * factor)), this.sink, this.origin, scaled);
     }
 
     /**
