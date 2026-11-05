@@ -612,18 +612,6 @@ public final class PulseTower extends AbstractTower {
         return "all in range";
     }
 
-    private static String insideText(FieldMode mode) {
-        return switch (mode) {
-            case SILENCE -> "silenced";
-            case DEAD_ZONE -> "heals and shields worth nothing";
-            case CORROSION -> "armor and resist lowered";
-            case UNDERTOW -> "anchored";
-            case FRAIL -> "take more damage";
-            case SOUL_DRAIN -> "spirit drained";
-            case PURGE -> "buffs stripped on entry";
-        };
-    }
-
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitPulseTower(this);
     }

@@ -18,9 +18,4 @@ public final class FieldStrength {
     public static int at(int toll) {
         return Math.min(MOST, ENTRY + toll);
     }
-
-    /** The factor one stack multiplies by, so that {@link #FULL} stacks multiply by {@code atFull}. */
-    static float perStackOf(float atFull) {
-        return (float) Math.pow(atFull, 1.0 / FULL);
-    }
 }

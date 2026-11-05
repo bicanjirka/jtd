@@ -31,11 +31,6 @@ public record WaveProgress(int index, List<RoundSummary> rounds, List<Wave> curr
     }
 
     /** 1-based, as the HUD shows it. */
-    public int currentNumber() {
-        return this.index;
-    }
-
-    /** 1-based, as the HUD shows it. */
     public int nextNumber() {
         return this.index + 1;
     }

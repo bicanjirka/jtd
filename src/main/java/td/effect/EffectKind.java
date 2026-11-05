@@ -76,10 +76,10 @@ public enum EffectKind implements Term {
     /** When the target dies, the Hexer's Dooms near it release at once and start again. */
     RECKONING("Reckoning", EffectRule.of(EffectCategory.HEX)),
     /** Its abilities don't fire; death abilities and auras still do. */
-    SILENCED("Silence", EffectRule.of(EffectCategory.SOFT_CC).tagged(EffectTag.FIELD)),
+    SILENCED("Silence", EffectRule.of(EffectCategory.SOFT_CC)),
     /** Can't be sped up, and its speed is held to three quarters of its base. */
     ANCHORED("Anchor", EffectRule.of(EffectCategory.SOFT_CC)
-            .slowingBy(0.25f).tagged(EffectTag.FIELD)),
+            .slowingBy(0.25f)),
     /** Each stack lowers magic resist by ten. */
     UNRAVELED("Unravel", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)
             .perStack(EnemyStat.MAGIC_RESIST, -10f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
@@ -92,10 +92,10 @@ public enum EffectKind implements Term {
      * field's full strength.
      */
     CORRODED("Corrode", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.ARMOR, -3f).perStack(EnemyStat.MAGIC_RESIST, -3f).tagged(EffectTag.FIELD)),
+            .perStack(EnemyStat.ARMOR, -3f).perStack(EnemyStat.MAGIC_RESIST, -3f)),
     /** The field's slow, a point of speed in a hundred a stack. */
     DRAGGED("Drag", EffectRule.of(EffectCategory.SOFT_CC).stackingOnASharedClock(DragStrength.MOST)
-            .slowingBy(0.01f).tagged(EffectTag.FIELD)),
+            .slowingBy(0.01f)),
     /** Arc Discharge's mark: each stack adds 5% damage taken from every source, up to four. */
     CONDEMNED("Condemn", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(4)
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.05f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.05f)),
@@ -103,11 +103,10 @@ public enum EffectKind implements Term {
     STILLED("Stasis", EffectRule.of(EffectCategory.DEBUFF)),
     /** Spirit at its lowest while it lasts, so heals, shields and rewinds are worth nothing. */
     DEAD_ZONE("Dead Zone", EffectRule.of(EffectCategory.DEBUFF)
-            .perStack(EnemyStat.SPIRIT, StatModifier.setTo(-100f)).tagged(EffectTag.FIELD)),
+            .perStack(EnemyStat.SPIRIT, StatModifier.setTo(-100f))),
     /** Takes extra damage from every source while the enemy is in the field and a while after: 20% at full strength. */
     FRAIL("Frail", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.02f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.02f)
-            .tagged(EffectTag.FIELD)),
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.02f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.02f)),
     /** Takes five points of plating and five of insulation. */
     CRACKED("Crack", EffectRule.of(EffectCategory.DEBUFF)
             .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(5f))
@@ -249,10 +248,5 @@ public enum EffectKind implements Term {
     /** Whether a Sympathy carrier shares this kind with the hexed enemies near it. */
     public boolean sharedBySympathy() {
         return this.rule.tags().contains(EffectTag.SHARED_BY_SYMPATHY);
-    }
-
-    /** Whether a tower's field holds this kind on the enemies inside it, refreshing it every tick. */
-    public boolean isFieldEffect() {
-        return this.rule.tags().contains(EffectTag.FIELD);
     }
 }
