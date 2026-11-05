@@ -17,7 +17,6 @@ class EffectRuleTest {
         assertThat(rule.stackCap()).isEqualTo(1);
         assertThat(rule.perStack().isNone()).isTrue();
         assertThat(rule.tags()).isEmpty();
-        assertThat(rule.resistedBy()).isEmpty();
     }
 
     @Test

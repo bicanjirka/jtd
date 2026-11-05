@@ -1,6 +1,5 @@
 package td.enemy;
 
-import td.effect.EffectKind;
 import td.effect.ShieldTemplate;
 import td.util.TickRate;
 
@@ -25,9 +24,7 @@ final class ArmoredEnemy {
                         .withArmor(25f)
                         .withMagicResist(25f)
                         .withPlating(2f)
-                        .withResilience(100f)
-                        .withIdentifiedTraits(List.of(
-                                IdentifiedTrait.named("freeze", EffectResistTrait.resisting(EffectKind.FREEZE, 0.2f)))),
+                        .withResilience(100f),
                         RankGrowth.of(14f))
                 .thenAt(Rank.SOLDIER, e -> e
                         .withArmor(33f)
@@ -36,8 +33,7 @@ final class ArmoredEnemy {
                         .withArmor(43f)
                         .withMagicResist(43f)
                         .withPlating(3f)
-                        .withAdditionalTraits(List.of(
-                                IdentifiedTrait.named("chill", EffectResistTrait.resisting(EffectKind.CHILL, 0.25f)))))
+                        .withTenacity(33f))
                 .thenAt(Rank.ELITE, e -> e
                         .withStats(67f, 67f, 8f, 0f, 100f, 5f, 10f)
                         .withAdditionalAbilities(List.of(brace(150f), wardMine(120f))))

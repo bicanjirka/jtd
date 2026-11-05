@@ -67,9 +67,7 @@ final class StatLooks {
             case MAGIC_DAMAGE_TAKEN -> StatLook.toned(Glyph.CRACKED_SHIELD, Palette.DAMAGE_MAGIC);
             case PERIODIC_DAMAGE_TAKEN -> StatLook.plain(Glyph.CRACKED_SHIELD);
             case SPIRIT, REGENERATION -> StatLook.toned(Glyph.PLUS, Palette.STATUS_MARKER_HEAL);
-            case CHILL_RESIST -> StatLook.warded(EffectKind.CHILL);
-            case BURN_RESIST -> StatLook.warded(EffectKind.BURN);
-            case FREEZE_RESIST -> StatLook.warded(EffectKind.FREEZE);
+            case TENACITY -> StatLook.plain(Glyph.HOLLOW_DIAMOND);
             case STEALTH -> StatLook.face(TermLooks.faceOf(EffectKind.INVISIBLE));
         };
     }
@@ -135,11 +133,6 @@ final class StatLooks {
 
         static StatLook face(IconFace face) {
             return new StatLook(Glyph.DOT, Optional.empty(), Optional.of(face));
-        }
-
-        /** An effect's face with the ward a trait icon puts on what keeps that effect out. */
-        static StatLook warded(EffectKind kind) {
-            return face(TermLooks.faceOf(kind).withWard(IconFace.Ward.RESISTED));
         }
 
         /** The colour a mention of the stat writes its word in. */

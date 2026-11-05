@@ -31,7 +31,7 @@ class TermWordingTest {
     private static final List<String> FORBIDDEN_WORDS = List.of("chilled", "chills", "burning", "burns", "burned",
             "frozen", "freezes", "shielded", "healing", "revealed", "reveals", "poisoned", "scorched", "sickened",
             "sundered", "exposed", "exposes", "marked", "marks", "resonating", "fractured", "dazed", "dazes",
-            "saturated", "saturates", "charged", "doomed", "blighted", "contagious", "rimed", "ashen", "inverted",
+            "saturated", "saturates", "charged", "doomed", "blighted", "contagious", "inverted",
             "sympathetic", "reckoned", "silenced", "silences", "anchored", "unraveled", "unravels", "corroded",
             "dragged", "condemned", "condemns", "stilled", "unveiled", "cracked", "cracks", "tarred", "bleeding",
             "bleeds", "sprinting", "sprints");

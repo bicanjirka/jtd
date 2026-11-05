@@ -1,6 +1,7 @@
 package td.enemy;
 
 import td.damage.DamageMix;
+import td.effect.EffectKind;
 import td.stat.EnemyStat;
 import td.stat.StatModifiers;
 
@@ -24,6 +25,11 @@ public interface Trait extends TraitTemplate {
     /** What this trait adds to the mob's stat sheet; re-read whenever the sheet resolves. */
     default StatModifiers<EnemyStat> modifiers(TraitContext context) {
         return StatModifiers.none();
+    }
+
+    /** Whether {@code kind} can never take hold on an enemy with this trait. */
+    default boolean keepsOut(EffectKind kind) {
+        return false;
     }
 
     /** Whether it reads {@link TraitContext#alliesNearby()}, which the mob counts only when a trait asks. */

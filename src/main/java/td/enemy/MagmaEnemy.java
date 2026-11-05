@@ -34,13 +34,11 @@ final class MagmaEnemy {
                         .withResilience(70f)
                         .withSpirit(30f)
                         .withIdentifiedTraits(List.of(
-                                IdentifiedTrait.named("burn", EffectResistTrait.resisting(EffectKind.BURN, 0.75f))))
+                                IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN))))
                         .withIdentifiedAbilities(List.of(spellWard(15), lastStand())), RankGrowth.of(20f))
                 .thenAt(Rank.SOLDIER, e -> e
                         .withAdditionalAbilities(List.of(spellWard(30))))
                 .thenAt(Rank.VETERAN, e -> e
-                        .withAdditionalTraits(List.of(
-                                IdentifiedTrait.named("burn", EffectResistTrait.immuneTo(EffectKind.BURN))))
                         .withAdditionalAbilities(List.of(spellWard(50), pool(0.35f, 1f, 0.5f))))
                 .thenAt(Rank.ELITE, e -> e
                         .withStats(10f, 45f, 0f, 0f, 85f, 10f, 45f)

@@ -7,12 +7,12 @@ import td.enemy.Ability;
 import td.enemy.AbilityTerm;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
-import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.HivemindTrait;
 import td.enemy.IdentifiedAbility;
 import td.enemy.IdentifiedTrait;
+import td.enemy.ImmunityTrait;
 import td.enemy.OnCriticalHitTakenTrigger;
 import td.enemy.OnDeathTrigger;
 import td.enemy.OnceTrigger;
@@ -54,8 +54,9 @@ final class WardenEnemy {
                         egg("wardenEgg2", "Warden's Egg",
                                 "Sealed in amber, it hatches into a weaker Warden if not destroyed in time.",
                                 new Shell(100f, 4f, 0f),
-                                List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
-                                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE))))
+                                List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
+                                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
+                                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                                 .withAbilities(hatchInto("warden3")),
                         warden("warden2", "The Weakened Warden", 8250,
                                 "guardian of the hive, worn down from its last hatching", new Shell(6f, 4f, 0f),
@@ -63,9 +64,10 @@ final class WardenEnemy {
                         egg("wardenEgg1", "Warden's Egg",
                                 "Sealed in amber, it hatches into a weaker Warden if not destroyed in time.",
                                 new Shell(400f, 12f, 100f),
-                                List.of(IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
-                                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.FREEZE)),
-                                        IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.CHILL))))
+                                List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
+                                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
+                                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.CHILL)),
+                                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                                 .withAbilities(hatchInto("warden2")),
                         warden("warden", "The Warden", 13500, "guardian of the hive, crested in gold", new Shell(10f, 8f, 0f),
                                 "wardenEgg1"))
@@ -118,7 +120,8 @@ final class WardenEnemy {
                 .withDescription("A " + lead + ".")
                 .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
                 .withStats(shell.resist(), shell.resist(), shell.plating(), 0f, shell.resilience(), 0f, 0f)
-                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new HivemindTrait(5f, 6))))
+                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new HivemindTrait(5f, 6)),
+                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                 .withIdentifiedAbilities(List.copyOf(abilities));
     }
 }

@@ -21,6 +21,14 @@ public final class StatCurves {
         return Math.max(0f, 1f + spirit / CURVE);
     }
 
+    /**
+     * How long what doesn't help the enemy lasts on it, as a share of what was authored: {@code 100 / (100 + tenacity)}
+     * above zero, {@code 1 - tenacity / 100} below.
+     */
+    public static float durationFactor(float tenacity) {
+        return tenacity >= 0f ? CURVE / (CURVE + tenacity) : 1f - tenacity / CURVE;
+    }
+
     /** {@code agility / (agility + 100)}: each point matters less than the one before, and it never reaches 1. */
     public static float dodgeChance(float agility) {
         float effective = Math.max(0f, agility);

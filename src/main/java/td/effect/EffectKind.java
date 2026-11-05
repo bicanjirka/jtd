@@ -12,15 +12,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 /** Every kind of effect, each one row: its {@link EffectRule}. */
 public enum EffectKind implements Term {
-    CHILL("Chill", EffectRule.of(EffectCategory.SOFT_CC).resistedBy(EnemyStat.CHILL_RESIST)
+    CHILL("Chill", EffectRule.of(EffectCategory.SOFT_CC)
             .tagged(EffectTag.SHARED_BY_SYMPATHY)),
-    BURN("Burn", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).resistedBy(EnemyStat.BURN_RESIST).asAPool()
+    BURN("Burn", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool()
             .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f)).tagged(EffectTag.BURNING)),
-    FREEZE("Freeze", EffectRule.of(EffectCategory.HARD_CC).resistedBy(EnemyStat.FREEZE_RESIST)
+    FREEZE("Freeze", EffectRule.of(EffectCategory.HARD_CC)
             .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.setTo(-100f))
             .tagged(EffectTag.STOPS)),
     SHIELD("Shield", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
@@ -69,9 +68,8 @@ public enum EffectKind implements Term {
     /** When the target dies, its hexes and debuffs jump to the enemies nearest it. */
     CONTAGION("Contagion", EffectRule.of(EffectCategory.HEX)),
     /** One side of the Hexer's coven. */
-    RIME("Rime", EffectRule.of(EffectCategory.HEX)),
+    MALAISE("Malaise", EffectRule.of(EffectCategory.HEX).perStack(EnemyStat.TENACITY, -50f)),
     /** The other side of the Hexer's coven. */
-    ASH("Ash", EffectRule.of(EffectCategory.HEX)),
     /** Heals and shields it receives are dealt to it as damage instead. */
     INVERSION("Inversion", EffectRule.of(EffectCategory.HEX)),
     /** Once a second its Vulnerable, Sundered, Exposed and chill are copied to the Hexer's other hexed enemies nearby. */
@@ -132,12 +130,6 @@ public enum EffectKind implements Term {
     /** A last stand: far more resilience, spirit and magic resist. */
     UNYIELDING("Unyielding", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.RESILIENCE, 100f)
             .perStack(EnemyStat.SPIRIT, 100f).perStack(EnemyStat.MAGIC_RESIST, 100f).helpsCarrier());
-
-    /** The kind {@code resistance} shortens; throws for a stat that resists no kind. */
-    public static EffectKind resistedThrough(EnemyStat resistance) {
-        return Arrays.stream(values()).filter(kind -> kind.resistedBy().equals(Optional.of(resistance))).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(resistance + " resists no effect"));
-    }
 
     /** The most stacks any stacking kind reaches, so a cap an application raises (Fault Line) still has a bundle. */
     private static final int MOST_STACKS = 100;
@@ -258,10 +250,5 @@ public enum EffectKind implements Term {
     /** Whether a tower's field holds this kind on the enemies inside it, refreshing it every tick. */
     public boolean isFieldEffect() {
         return this.rule.tags().contains(EffectTag.FIELD);
-    }
-
-    /** The resistance that shortens this kind; empty for kinds an enemy cannot resist. */
-    public Optional<EnemyStat> resistedBy() {
-        return this.rule.resistedBy();
     }
 }

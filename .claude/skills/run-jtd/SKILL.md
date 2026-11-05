@@ -54,7 +54,7 @@ on `quit` or end of input.
 | `enemies` | One line per enemy: alive index, `#id` (the one its trace lines carry), catalog id, rank, health, board px, effects, fate. |
 | `trace [#id]` | Prints this run's `OBSERVE` lines from its session log: every observed enemy's, or one id's. |
 | `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `armored` for Armored) at the path start. |
-| `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `resonating`, `fractured`, `dazed`, `saturated`, `charged`, `doom`, `blight`, `contagion`, `rime`, `ash`, `sprinting`) on every alive enemy. |
+| `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `resonating`, `fractured`, `dazed`, `saturated`, `charged`, `doom`, `blight`, `contagion`, `malaise`, `sprinting`) on every alive enemy. |
 | `kill` | Deals lethal damage to every enemy through the real hit path, so on-death abilities fire. |
 | `setcredits <n>`, `setlives <n>` | Economy cheats. |
 | `waitfor ticks <n> [ms]` | Waits until the game clock advances `n` ticks (20 per second; pausing stops it). |

@@ -53,10 +53,8 @@ final class EffectPictograms {
             Map.entry("effect.blight", "F M4.5 19.5C4.5 10 10 4 20 3.5C20 13.5 14 19.5 4.5 19.5Z ; X M4.5 19.5L15.2 8.8 ; K O15.2 13.4 1.5 ; K O10.4 16.2 1.1 ; K O16.6 7.2 0.9"),
             // Contagion
             Map.entry("effect.contagion", "F O12 12 4.6 ; S M12 7V3.6 M12 17V20.4 M7.67 9.5L4.72 7.8 M16.33 14.5L19.28 16.2 M7.67 14.5L4.72 16.2 M16.33 9.5L19.28 7.8 ; F O12 3.2 1.7 O12 20.8 1.7 O4.38 7.6 1.7 O19.62 16.4 1.7 O4.38 16.4 1.7 O19.62 7.6 1.7"),
-            // Rime
-            Map.entry("effect.rime", "F M3 3.5H21V6.4H3Z ; F M4.4 6.4L6.6 14.4L8.8 6.4Z M9.8 6.4L12 20.6L14.2 6.4Z M15.2 6.4L17.4 16.2L19.6 6.4Z"),
-            // Ash
-            Map.entry("effect.ash", "F M2.8 20.6C4.6 15.6 8 13.6 12 13.6C16 13.6 19.4 15.6 21.2 20.6Z ; F O8.2 9 1.4 ; F O12.8 5.4 1.1 ; F O16.6 10.2 1.5 ; F O11.4 10.8 0.8"),
+            // Malaise
+            Map.entry("effect.malaise", "S O12 12 8.5 ; S M12 6.5V12L16 14.5"),
             // Inversion
             Map.entry("effect.inversion", "S M18.6 9.4A7.2 7.2 0 0 0 5.6 8.2 M5.4 14.6A7.2 7.2 0 0 0 18.4 15.8 ; F M3.4 5.4L5.2 11L9.6 7.4Z M20.6 18.6L18.8 13L14.4 16.6Z"),
             // Sympathy

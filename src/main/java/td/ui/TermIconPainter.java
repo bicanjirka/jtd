@@ -194,10 +194,7 @@ public final class TermIconPainter {
         g.setStroke(new BasicStroke(3.4f * k, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g.draw(line);
         g.setColor(Java2DFrameRenderer.colorFor(Palette.TERM_IMMUNE));
-        g.setStroke(face.ward() == IconFace.Ward.IMMUNE
-                ? new BasicStroke(1.7f * k, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
-                : new BasicStroke(1.7f * k, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 1f,
-                        new float[]{2.2f * k, 1.6f * k}, 0f));
+        g.setStroke(new BasicStroke(1.7f * k, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g.draw(line);
     }
 

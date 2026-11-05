@@ -50,9 +50,9 @@ final class PerkPictograms {
             // Hex
             Map.entry("splash.head.hex.1", "=tower.hex"),
             // Rime Coven
-            Map.entry("splash.head.hex.4a", "=effect.rime"),
+            Map.entry("splash.head.hex.4a", "F M3 3.5H21V6.4H3Z ; F M4.4 6.4L6.6 14.4L8.8 6.4Z M9.8 6.4L12 20.6L14.2 6.4Z M15.2 6.4L17.4 16.2L19.6 6.4Z"),
             // Ash Coven
-            Map.entry("splash.head.hex.4b", "=effect.ash"),
+            Map.entry("splash.head.hex.4b", "F M2.8 20.6C4.6 15.6 8 13.6 12 13.6C16 13.6 19.4 15.6 21.2 20.6Z ; F O8.2 9 1.4 ; F O12.8 5.4 1.1 ; F O16.6 10.2 1.5 ; F O11.4 10.8 0.8"),
             // Hex of Inversion
             Map.entry("splash.special.inversion", "=effect.inversion"),
             // Hex of Sympathy

@@ -74,7 +74,7 @@ final class EffectSentences {
             case DOOM -> TermText.of("when it ends, it takes a share of all the damage it took while it lasted");
             case BLIGHT -> TermText.of("it has ").plus(EffectKind.POISON).plus(" for as long as this lasts");
             case CONTAGION -> TermText.of("when it dies, its hexes and debuffs jump to the enemies nearest it");
-            case RIME, ASH -> TermText.of("a coven's hex, with no rule of its own");
+            case MALAISE -> changes(TermNumbers.signed(perStack(kind, EnemyStat.TENACITY)), EnemyStat.TENACITY);
             case INVERSION -> TermText.of("its ").plus(EnemyStat.REGENERATION)
                     .plus(" deals it damage instead of restoring health, and a ").plus(EffectKind.SHIELD)
                     .plus(" it receives strikes it instead");
@@ -115,7 +115,7 @@ final class EffectSentences {
             case TARRED -> slowing("slows by " + TermNumbers.percent(kind.rule().slowPerStack()));
             case BLEEDING -> TermText.of("physical damage for every cell it travels; standing still, it takes none");
             case SOULFIRE -> TermText.of("damage over time in a pool of its own beside ").plus(EffectKind.BURN)
-                    .plus(" and ").plus(EffectKind.POISON).plus("; nothing resists it, it adds a stack of ")
+                    .plus(" and ").plus(EffectKind.POISON).plus("; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
                             + " while it lasts, and every tower can see and aim at it");
             case SPRINTING -> changes(

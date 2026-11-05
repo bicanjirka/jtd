@@ -19,7 +19,6 @@ import td.enemy.AbilityTerm;
 import td.enemy.AdaptiveResist;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
-import td.enemy.EffectResistTrait;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyInspection;
@@ -28,6 +27,7 @@ import td.enemy.EnemyObservation;
 import td.enemy.HitResult;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.IdentifiedTrait;
+import td.enemy.ImmunityTrait;
 import td.enemy.OnceTrigger;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
@@ -232,18 +232,8 @@ class GameEngineTest {
     }
 
     @Test
-    void aHalfFreezeResistHalvesAFreeze() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT,
-                EffectResistTrait.resisting(EffectKind.FREEZE, 0.5f));
-
-        int frozen = freezeFor(enemy, 20, new int[] {0});
-
-        assertThat(frozen).isEqualTo(10);
-    }
-
-    @Test
-    void fullFreezeResistBlocksAFreezeOutright() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, EffectResistTrait.immuneTo(EffectKind.FREEZE));
+    void anImmunityKeepsAFreezeOut() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new ImmunityTrait(EffectKind.FREEZE));
 
         int frozen = freezeFor(enemy, 20, new int[] {0});
 
@@ -362,15 +352,6 @@ class GameEngineTest {
         freezeFor(elite, 20, clock);
 
         assertThat(freezeFor(elite, 20, clock)).isEqualTo(10);
-    }
-
-    @Test
-    void halfBurnResistRoughlyHalvesTotalBurnDamage() {
-        int unresisted = totalBurnDamage(spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT));
-        int resisted = totalBurnDamage(spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT,
-                EffectResistTrait.resisting(EffectKind.BURN, 0.5f)));
-
-        assertThat((float) resisted / unresisted).isCloseTo(0.5f, within(0.1f));
     }
 
     private static int totalBurnDamage(EnemyMob enemy) {
@@ -2034,7 +2015,7 @@ class GameEngineTest {
 
     @Test
     void soulfireBurnsAnEnemyThatIsImmuneToBurn() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, EffectResistTrait.immuneTo(EffectKind.BURN));
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new ImmunityTrait(EffectKind.BURN));
 
         enemy.applyEffect(Effect.burn(Damage.magic(100), 60, DamageSink.none()));
         boolean burned = enemy.activeEffectKinds().contains(EffectKind.BURN);

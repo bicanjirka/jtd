@@ -21,7 +21,7 @@ final class SalamanderEnemy {
                         .withMovement(new StrideMovement((float) Math.toRadians(25.0), 8))
                         .withDescription("A fire-proof walker that slowly regrows what it loses.")
                         .withIdentifiedTraits(List.of(
-                                IdentifiedTrait.anonymous(EffectResistTrait.immuneTo(EffectKind.BURN)),
+                                IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
                                 regrowth(1f))), RankGrowth.of(15f))
                 .thenAt(Rank.VETERAN, e -> e.withAdditionalTraits(List.of(regrowth(2f))))
                 .thenAt(Rank.ELITE, e -> e

@@ -124,8 +124,6 @@ final class EnemyStatText {
             IconFace face = TermLooks.faceOf(entry.term());
             if (entry.immune()) {
                 face = face.withWard(IconFace.Ward.IMMUNE);
-            } else if (entry.resisted() > 0f) {
-                face = face.withWard(IconFace.Ward.RESISTED);
             }
             icons.add(new SheetIcon(face, TooltipKey.ofTerm("trait", i, entry.term()),
                     TermSheets.of(entry.term(), entry.text(), List.of())));

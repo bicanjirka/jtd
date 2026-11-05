@@ -54,12 +54,9 @@ public enum EnemyStat implements StatKey, StatTerm {
             "makes its regeneration and shields stronger; below zero weaker, and at -100 worth nothing"),
     REGENERATION(0f, -Float.MAX_VALUE, Float.MAX_VALUE, "Regeneration", "Regeneration", StatUnit.HP_PER_SECOND,
             StatDirection.LOWER, StatGroup.HEALING, "health it gains back every second; below zero, health it loses"),
-    CHILL_RESIST(0f, 0f, 1f, "Chill resist", "Chill resist", StatUnit.PERCENT, StatDirection.LOWER, StatGroup.RESISTS,
-            "cuts how long that effect lasts on it; at full it never takes hold"),
-    BURN_RESIST(0f, 0f, 1f, "Burn resist", "Burn resist", StatUnit.PERCENT, StatDirection.LOWER, StatGroup.RESISTS,
-            "cuts how long that effect lasts on it; at full it never takes hold"),
-    FREEZE_RESIST(0f, 0f, 1f, "Freeze resist", "Freeze resist", StatUnit.PERCENT, StatDirection.LOWER,
-            StatGroup.RESISTS, "cuts how long that effect lasts on it; at full it never takes hold"),
+    /** Scales how long everything that doesn't help the enemy lasts on it: see {@link StatCurves#durationFactor}. */
+    TENACITY(0f, -100f, Float.MAX_VALUE, "Tenacity", "Tenacity", StatUnit.POINTS, StatDirection.LOWER, StatGroup.RESISTS,
+            "above zero, what doesn't help it runs out sooner; below zero, later"),
     /** At {@code 1} towers cannot target the enemy. */
     STEALTH(0f, 0f, 1f, "Stealth", "Stealth", StatUnit.PERCENT, StatDirection.LOWER, StatGroup.RESISTS,
             "at full towers cannot aim at it");
@@ -167,7 +164,9 @@ public enum EnemyStat implements StatKey, StatTerm {
             case RESILIENCE -> resilienceMeaning(value);
             case SPIRIT -> value == 0f ? Optional.empty()
                     : Optional.of(TermNumbers.signedPercent(value / FULL) + " recovery");
-            case PLATING, INSULATION, CHILL_RESIST, BURN_RESIST, FREEZE_RESIST, MOVE_SPEED, PHYSICAL_DAMAGE_TAKEN, MAGIC_DAMAGE_TAKEN, PERIODIC_DAMAGE_TAKEN,
+            case TENACITY -> value == 0f ? Optional.empty()
+                    : Optional.of("debuffs " + TermNumbers.percent(StatCurves.durationFactor(value)));
+            case PLATING, INSULATION, MOVE_SPEED, PHYSICAL_DAMAGE_TAKEN, MAGIC_DAMAGE_TAKEN, PERIODIC_DAMAGE_TAKEN,
                  REGENERATION, STEALTH -> Optional.empty();
         };
     }

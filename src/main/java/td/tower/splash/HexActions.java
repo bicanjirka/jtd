@@ -12,6 +12,9 @@ public interface HexActions {
     /** Poisons {@code target} for {@code ticks}, each tick {@code weaponShare} of the Hexer's damage, as magic. */
     void poison(EnemyMob target, float weaponShare, int ticks);
 
-    /** Chills {@code target} by {@code amount}, fading over {@code ticks}. */
+    /** Burns {@code target} for {@code ticks}, each tick {@code weaponShare} of the Hexer's damage, as magic. */
+    void burn(EnemyMob target, float weaponShare, int ticks);
+
+    /** Slows {@code target} by {@code amount} for {@code ticks}. */
     void chill(EnemyMob target, float amount, int ticks);
 }

@@ -2,10 +2,12 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.term.Term;
 import td.term.TermText;
 import td.util.TickRate;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * One hex in the Hexer's pool: the curse it puts on, whom it picks, and how it casts. Stateless:
@@ -20,6 +22,11 @@ public interface Hex {
     Optional<EnemyMob> target(HexScene scene);
 
     void cast(EnemyMob target, HexSpec spec, HexActions actions);
+
+    /** What it puts on an enemy. */
+    default Set<Term> applies() {
+        return Set.of(this.kind());
+    }
 
     /** Its mention, with what it does on this tower. */
     TermText describe();

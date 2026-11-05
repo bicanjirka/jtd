@@ -25,6 +25,7 @@ import td.stat.StatPart;
 import td.stat.StatRecorder;
 import td.stat.StatSheet;
 import td.stat.StatView;
+import td.term.Side;
 import td.term.TermText;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -32,6 +33,7 @@ import td.util.TickRate;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -40,6 +42,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The one concrete {@link EnemyMob}: behaviour comes entirely from its {@link EnemyDefinition}'s
@@ -58,6 +61,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final GameWorld gameWorld;
     private final EnemyDefinition definition;
     private final List<Trait> traits;
+    private final Set<EffectKind> immunities;
     private final boolean readsAllies;
     private final Rank rank;
     private final int price;
@@ -95,6 +99,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.id = gameWorld.enemies().recordBirth();
         this.definition = definition;
         this.traits = definition.traitsFor(gameWorld.damageTally().mix());
+        this.immunities = Arrays.stream(EffectKind.values())
+                .filter(kind -> this.traits.stream().anyMatch(trait -> trait.keepsOut(kind)))
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(EffectKind.class)));
         this.readsAllies = this.traits.stream().anyMatch(Trait::readsAllies);
         this.rank = rank;
         this.price = Math.round(spawnParameters.price() * gameWorld.playtestRules().bountyScale());
@@ -467,7 +474,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /**
-     * Applies the effect with its duration shortened by this mob's resistance to its kind and, for
+     * Applies the effect unless this mob is immune to its kind, with its duration scaled by this mob's tenacity and, for
      * hard crowd control, by diminishing returns. One that would last under a tick is blocked. Under
      * Inversion a shield comes in as one hit.
      */
@@ -490,7 +497,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.strikeInsteadOfShielding(effect, inversion.get());
             return;
         }
-        this.applyResisted(effect);
+        this.applyRetimed(effect);
     }
 
     /**
@@ -501,25 +508,31 @@ public final class DefinedEnemyMob implements EnemyMob {
         inversion.sink().apply(Damage.magic(Math.round(shield.shieldRemaining())));
     }
 
-    private void applyResisted(Effect effect) {
-        float resisted = effect.kind().resistedBy().map(stat -> 1f - this.stats.value(stat)).orElse(1f);
+    private void applyRetimed(Effect effect) {
+        if (this.immunities.contains(effect.kind())) {
+            if (this.observer.isOn()) {
+                this.observer.report(new MobEvent.EffectBlocked(effect.kind(), "immune"));
+            }
+            return;
+        }
+        float tenacity = effect.kind().side() == Side.DEBUFF
+                ? StatCurves.durationFactor(this.stats.value(EnemyStat.TENACITY)) : 1f;
         Optional<DiminishingReturns> ladder = this.ladderFor(effect.kind());
         boolean active = this.activeEffects.has(effect.kind());
         float diminished = 1f;
         if (ladder.isPresent()) {
             diminished = ladder.get().factorAt(this.ticksSinceSpawn, active);
         }
-        float factor = resisted * diminished;
-        Effect scaled = factor < 1f ? effect.withDurationScaledBy(factor) : effect;
-        if (factor < 1f && this.observer.isOn()) {
-            this.observer.report(new MobEvent.EffectShortened(effect.kind(), resisted, diminished,
-                    scaled.remainingTicks()));
-        }
-        if (factor < 1f && scaled.authoredDurationTicks() < 1) {
+        if (diminished <= 0f) {
             if (this.observer.isOn()) {
                 this.observer.report(new MobEvent.EffectBlocked(effect.kind(), "would last under a tick"));
             }
             return;
+        }
+        float factor = tenacity * diminished;
+        Effect scaled = factor != 1f ? effect.withDurationScaledBy(factor) : effect;
+        if (factor != 1f && this.observer.isOn()) {
+            this.observer.report(new MobEvent.EffectRetimed(effect.kind(), factor, scaled.remainingTicks()));
         }
         ladder.ifPresent(steps -> steps.recordAt(this.ticksSinceSpawn, active));
         this.activeEffects.apply(scaled);

@@ -18,8 +18,7 @@ public final class StatRows {
             case MOVE_SPEED -> true;
             case STEALTH -> false;
             case ARMOR, MAGIC_RESIST, PLATING, INSULATION, PHYSICAL_DAMAGE_TAKEN, MAGIC_DAMAGE_TAKEN, RESILIENCE,
-                 AGILITY, PERIODIC_DAMAGE_TAKEN, SPIRIT, REGENERATION, CHILL_RESIST, BURN_RESIST,
-                 FREEZE_RESIST -> offDefault;
+                 AGILITY, PERIODIC_DAMAGE_TAKEN, SPIRIT, REGENERATION, TENACITY -> offDefault;
         };
     }
 }

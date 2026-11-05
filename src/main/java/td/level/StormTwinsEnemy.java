@@ -7,12 +7,12 @@ import td.enemy.AbilitySpawnShape;
 import td.enemy.AbilityTerm;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
-import td.enemy.EffectResistTrait;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.IdentifiedAbility;
 import td.enemy.IdentifiedTrait;
+import td.enemy.ImmunityTrait;
 import td.enemy.KinFallenTrigger;
 import td.enemy.LeaveZoneAction;
 import td.enemy.OnDodgeTrigger;
@@ -51,8 +51,9 @@ final class StormTwinsEnemy {
                 .withDescription("The slow half of the storm. It shakes the towers near it, and it never comes alone.")
                 .withMovement(new PulseMovement(0.06f, 40, 20))
                 .withStats(35f, 0f, 6f, 0f, 60f, 0f, 0f)
+                .withTenacity(100f)
                 .withDisruption(new DisruptionAura(120f, 0.3f, 0.6f))
-                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.FREEZE, 0.5f))))
+                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                 .withIdentifiedAbilities(List.of(
                         bond("lightning", "lightningReborn"),
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.THUNDERCLAP, new HealthThresholdTrigger(0.5f),
@@ -64,9 +65,10 @@ final class StormTwinsEnemy {
                 .withDescription("The quick half of the storm. Strike it where it will be, not where it is.")
                 .withMovement(new PathDirectionalMovement())
                 .withStats(0f, 40f, 0f, 5f, 0f, 30f, 0f)
+                .withTenacity(100f)
                 .withIdentifiedTraits(List.of(
                         IdentifiedTrait.anonymous(new HurtSpeedTrait(1.4f)),
-                        IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.CHILL, 0.5f))))
+                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                 .withIdentifiedAbilities(List.of(
                         bond("thunder", "thunderReborn"),
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.SIDESTEP, new OnDodgeTrigger(),
@@ -78,8 +80,9 @@ final class StormTwinsEnemy {
                 .withDescription("Called back by the Lightning, louder than before.")
                 .withMovement(new PulseMovement(0.1f, 30, 10))
                 .withStats(50f, 0f, 8f, 0f, 60f, 0f, 0f)
+                .withTenacity(100f)
                 .withDisruption(new DisruptionAura(140f, 0.45f, 0.8f))
-                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.FREEZE, 0.5f))));
+                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))));
     }
 
     private static EnemyDefinition lightningReborn() {
@@ -87,9 +90,10 @@ final class StormTwinsEnemy {
                 .withDescription("Called back by the Thunder, quicker than before.")
                 .withMovement(new PathDirectionalMovement())
                 .withStats(0f, 55f, 0f, 7f, 0f, 40f, 0f)
+                .withTenacity(100f)
                 .withIdentifiedTraits(List.of(
                         IdentifiedTrait.anonymous(new HurtSpeedTrait(1.5f)),
-                        IdentifiedTrait.anonymous(EffectResistTrait.resisting(EffectKind.CHILL, 0.5f))));
+                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))));
     }
 
     /** Calls {@code rebornId} back where this twin stands, worth no bounty, once its kin has been down long enough. */

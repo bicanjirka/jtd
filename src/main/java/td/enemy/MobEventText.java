@@ -43,8 +43,8 @@ public final class MobEventText {
             case MobEvent.Killed killed -> "KILLED by=" + killed.by() + " overkill=" + points(killed.overkill());
             case MobEvent.EffectRequested requested -> "EFFECT " + requested.kind().title() + " requested from="
                     + requested.from() + " length=" + requested.ticks() + "t";
-            case MobEvent.EffectShortened shortened -> "EFFECT " + shortened.kind().title() + " shortened resist="
-                    + factor(shortened.resisted()) + " dr=" + factor(shortened.diminished()) + " length=" + shortened.ticks() + "t";
+            case MobEvent.EffectRetimed retimed -> "EFFECT " + retimed.kind().title() + " retimed "
+                    + factor(retimed.factor()) + " length=" + retimed.ticks() + "t";
             case MobEvent.EffectBlocked blocked -> "EFFECT " + blocked.kind().title() + " blocked: " + blocked.why();
             case MobEvent.EffectInverted inverted -> "EFFECT " + inverted.kind().title() + " inverted: " + inverted.into();
             case MobEvent.EffectChanged changed -> "EFFECT " + changed.kind().title() + " " + change(changed)

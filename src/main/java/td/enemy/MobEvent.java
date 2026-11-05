@@ -31,12 +31,12 @@ public sealed interface MobEvent {
     record Killed(String by, int overkill) implements MobEvent {
     }
 
-    /** An effect arriving, before resistance, diminishing returns or anything active decides what it does. */
+    /** An effect arriving, before immunity, tenacity, diminishing returns or anything active decides what it does. */
     record EffectRequested(EffectKind kind, String from, int ticks) implements MobEvent {
     }
 
-    /** Resistance and diminishing returns cut an effect to {@code ticks}. */
-    record EffectShortened(EffectKind kind, float resisted, float diminished, int ticks) implements MobEvent {
+    /** Tenacity and diminishing returns made an effect last {@code factor} of what was authored: {@code ticks}. */
+    record EffectRetimed(EffectKind kind, float factor, int ticks) implements MobEvent {
     }
 
     record EffectBlocked(EffectKind kind, String why) implements MobEvent {
