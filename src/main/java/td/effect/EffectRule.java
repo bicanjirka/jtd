@@ -12,7 +12,7 @@ import java.util.Set;
  * What one effect kind is: its category, how it stacks, what each stack does, and its
  * tags. Each {@code withX}-style method is a copy.
  *
- * @param category   the group for diminishing returns and the inspector
+ * @param category   the group for the inspector
  * @param stacking   how applications combine
  * @param stackCap   the most stacks it holds; 1 for a kind that does not stack
  * @param perStack   what each stack does to the enemy's stats

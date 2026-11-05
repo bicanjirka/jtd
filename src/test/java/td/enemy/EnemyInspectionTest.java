@@ -12,6 +12,7 @@ import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
 import td.stat.StatBreakdown;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,17 +46,29 @@ class EnemyInspectionTest {
     }
 
     @Test
-    void aFreezeThatEndedStaysFadedWhileItsDiminishingReturnsRun() {
+    void aFreezeThatEndedStaysFadedWhileItsMeterRuns() {
         DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.freeze(3, DamageSink.none()));
-        for (int tick = 1; tick <= 6; tick++) {
+        int oneSecond = Math.round(TickRate.TICKS_PER_SECOND);
+        mob.applyEffect(Effect.freeze(oneSecond, DamageSink.none()));
+        for (int tick = 1; tick <= oneSecond; tick++) {
             mob.doTick(tick);
         }
 
         EffectState freeze = stateOf(mob, EffectKind.FREEZE);
 
         assertThat(freeze.faded()).isTrue();
-        assertThat(freeze.nextShare().orElseThrow()).isEqualTo(0.5);
+        assertThat(freeze.nextShare().orElseThrow()).isCloseTo(0.5, within(0.001));
+    }
+
+    @Test
+    void aFreezeLeavesTheListOnceItsMeterEmpties() {
+        DefinedEnemyMob mob = this.anEnemy();
+        mob.applyEffect(Effect.freeze(1, DamageSink.none()));
+        for (int tick = 1; tick <= 3; tick++) {
+            mob.doTick(tick);
+        }
+
+        assertThat(mob.inspect().effects()).extracting(EffectState::kind).doesNotContain(EffectKind.FREEZE);
     }
 
     @Test

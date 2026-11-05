@@ -92,8 +92,7 @@ public final class ActiveEffects {
             }
             case REFRESH -> {
                 Effect existing = this.active.get(incoming.kind());
-                // A hold renewed before it ends would never end: its diminishing returns only count fresh holds.
-                boolean holding = existing != null && incoming.kind().category() == EffectCategory.HARD_CC;
+                boolean holding = existing != null && incoming.kind().isNotRenewed();
                 this.active.put(incoming.kind(), existing == null ? incoming
                         : holding ? existing
                         : incoming.slowStrength() > 0f ? strongerSlowOf(existing, incoming)
@@ -322,6 +321,16 @@ public final class ActiveEffects {
     public float slowNow(EffectKind kind) {
         Effect effect = this.active.get(kind);
         return effect == null ? 0f : slowNow(effect);
+    }
+
+    /** Whether a kind that stops the enemy is active. */
+    public boolean isStopped() {
+        for (EffectKind kind : EffectKind.stopping()) {
+            if (this.active.containsKey(kind)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Whether no effect is active, so the stats this object contributes cannot change on a tick. */

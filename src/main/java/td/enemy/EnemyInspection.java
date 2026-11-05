@@ -23,7 +23,7 @@ import java.util.Set;
 
 /**
  * An immutable snapshot of one enemy for display: identity, health, every resolved stat, active
- * effects, the kinds they keep out, diminishing returns, one line per trait, and what became
+ * effects, the kinds they keep out, what the next freeze lasts, one line per trait, and what became
  * of it. Taken on the thread
  * that owns the mob and read anywhere.
  *
@@ -74,13 +74,12 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                 breakdowns.put(stat, mob.breakdown(stat));
             }
         }
-        Map<EffectKind, Float> diminished = mob.diminishedFactors();
         Set<EffectKind> active = live.activeKinds();
         List<EffectState> effects = new ArrayList<>();
         for (EffectKind kind : mob.effectKindsByGain()) {
             EffectState state = active.contains(kind) ? activeState(live, kind) : EffectState.faded(kind);
-            Float nextShare = diminished.get(kind);
-            effects.add(nextShare == null ? state : state.withNextShare(nextShare));
+            OptionalDouble nextShare = kind == EffectKind.FREEZE ? mob.nextFreezeShare() : OptionalDouble.empty();
+            effects.add(nextShare.isPresent() ? state.withNextShare((float) nextShare.getAsDouble()) : state);
         }
         List<Immunity> immunities = live.blockedKinds().stream()
                 .map(kind -> new Immunity(kind, live.keptOutBy(kind))).toList();
@@ -166,7 +165,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                     OptionalDouble.empty(), false, OptionalDouble.empty(), List.of());
         }
 
-        /** A kind that ended but whose diminishing returns still run. */
+        /** A freeze that ended while its meter still runs. */
         public static EffectState faded(EffectKind kind) {
             return new EffectState(kind, OptionalInt.empty(), 0, 0f, OptionalInt.empty(),
                     OptionalDouble.empty(), true, OptionalDouble.empty(), List.of());

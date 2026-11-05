@@ -60,14 +60,6 @@ Findings from the architecture audits of 2026-09-17, highest-severity first. The
 group and the external audit's critical/high/moderate findings have landed; what remains is
 listed below.
 
-### A hard-control kind without a ladder fails in play
-
-`DiminishingReturns.of` handles only some kinds and throws on the rest, while the mob asks it for every kind in the
-hard-control category. A new kind in that category compiles, then throws the first time it is applied.
-
-- **Where:** `td.effect.DiminishingReturns.of`, `td.enemy.DefinedEnemyMob.ladderFor`.
-- **Approach:** make the ladder part of what a hard-control kind must declare, so a kind without one can't be built.
-
 ### A command queue would make the simulation a true single writer
 
 Not a defect - an option, recorded with the condition that would make it worth taking.
@@ -264,24 +256,6 @@ same, so a new keyword has to be taught to both. Ranks are string constants and 
   waiting for its member count), and `WaveScriptSuggestions` asks it instead of `positionAfter`.
   `WaveScriptSuggestionsTest` and `WaveScriptTest` must pass unchanged: the behaviour stays. Done when
   a new keyword is one row plus the grammar.
-
-### A hard crowd-control kind's diminishing-returns ladder is a switch that throws in play
-
-**Trigger:** adding the next `EffectCategory.HARD_CC` kind. (Design review F14.)
-
-`DiminishingReturns.of(kind)` and `stepsOf(kind)` switch on the kind: Freeze and Daze have ladders,
-and `of`'s `default` throws. A new hard crowd-control kind without a case compiles and passes every
-test that doesn't apply it, then throws the first time it lands on an enemy in play.
-
-- **Where:** `td.effect.DiminishingReturns` (`FREEZE_STEPS`, `DAZED_STEPS`, `of`, `stepsOf`),
-  `EffectRule` (its factory and `withX` copies), the `FREEZE` and `DAZED` rows of `EffectKind`,
-  `EffectSentences` (reads `stepsOf`), `effect/CLAUDE.md` ("Adding a kind").
-- **Approach:** the ladder becomes rule data: a fluent `EffectRule.diminishing(float... steps)`
-  (stored as a `List<Float>`, empty by default), set on the `FREEZE` and `DAZED` rows with today's
-  steps. `DiminishingReturns.of` takes the rule's steps, `EffectSentences` reads the rule, and the
-  switches and `stepsOf` go. A rule every entry keeps, in `EffectKindTest`: every `HARD_CC` kind has a
-  ladder ending in 0, and no other kind has one. The numbers move, they don't change, so no balance
-  check.
 
 ## Balance tools
 

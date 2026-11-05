@@ -37,7 +37,7 @@
   (a higher cap) loses none while the enemy has `EXPOSED`; one such
   application makes the whole effect so until it wears off.
 - Every timer counts down one tick per tick; nothing about the enemy paces it. Only tenacity and
-  diminishing returns change how long an effect lasts, and only as it is applied.
+  the freeze meter change how long an effect lasts, and only as it is applied.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
 - A field effect (`SILENCED`, `ANCHORED`, `CORRODED`, `DRAGGED`, `DEAD_ZONE`, `FRAIL`) is an
@@ -75,17 +75,14 @@
   ending soonest first, each worth the `worth` the mob passes (its spirit's `StatCurves.restoreFactor`), and at no
   worth every share the hit meets breaks. Cauterize lowers `SPIRIT`.
   The mob applies regeneration to itself, capped at max health; `Damage` can't be negative.
-- Tenacity and diminishing returns only scale an authored duration, never change an effect's
-  curve: `duration = authored * durationFactor(tenacity) * freezeStep`, never under a tick. Only an immunity keeps
-  a kind out, or a ladder's last step. Every kind in `EffectCategory.HARD_CC`
-  diminishes, on every enemy, each on its own ladder (`DiminishingReturns.of(kind)`, per mob, only
-  a fresh application climbs a step): Dazed
-  stops an enemy like a freeze.
+- Tenacity and the freeze meter only scale an authored duration, never change an effect's curve:
+  `duration = authored * durationFactor(tenacity)`, and `* FreezeMeter.nextShare()` for `FREEZE`; never under a tick,
+  though a freeze that would last under one doesn't land. Only an immunity keeps a kind out. `FREEZE` isn't renewed
+  while it holds (`EffectTag.NOT_RENEWED`); `DAZED` refreshes like any other kind and has no meter.
 - `EffectInteractions` is the one place for how an active kind acts on another: what a pool earns, and what a
   kind keeps out (a reveal keeps `INVISIBLE` out and strips nothing). Add a rule there, never a condition in
   `ActiveEffects`.
-- `EffectKind.category()` groups kinds for diminishing returns and the inspector; it never changes
-  numbers.
+- `EffectKind.category()` groups kinds for the inspector; it never changes numbers.
 - `EffectTemplate` (sealed) is the authored form an ability carries. Only kinds an enemy ability
   applies have one; the rest are applied by towers.
 - `ShieldTemplate` can be restricted to one `DamageType` (`physicalOnly`/`magicOnly`).

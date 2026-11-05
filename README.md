@@ -281,7 +281,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 |---|---|---|---|
 | Chill | Control | Debuff | Slows by what its source gives; the strongest slow holds, no speed gain beats it, and speed comes back over its last 0.5 s. |
 | Burn | Affliction | Debuff | Damage over time that fades; a top-up adds less the fuller it is, up to x2 its strongest application; it adds a stack of Scorch every 0.5 s while it lasts, and every tower can see and aim at it. |
-| Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; Agility -100, so it can't dodge and crits find it more often; within 10 s, each fresh one lasts 100%, 50%, 25%, then none. |
+| Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; Agility -100, so it can't dodge and crits find it more often; time under it shortens the next one, and walking wins that back, more slowly at higher rank. |
 | Shield | Boon | Buff | Takes a hit before armor does, until its amount is spent or it runs out; more Spirit makes it hold more, shields from different sources add up, and damage that ticks goes past it. |
 | Invisibility | Boon | Buff | Towers can't aim at it, though damage on an area still reaches it. |
 | Heal | Boon | Buff | Adds to its Regeneration while it lasts; heals from different sources add up. |
@@ -296,7 +296,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Priority | Mark | Debuff | Physical damage taken and Magic damage taken +15%, and a tower that picks one target picks it. |
 | Resonance | Weakness | Debuff | Each stack: Magic damage taken +8%, up to 3 stacks. |
 | Fracture | Weakness | Debuff | Each stack: Resilience -10, up to 5; it loses a stack every 1 s. |
-| Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; Agility -100, so it can't dodge and crits find it more often; within 10 s, each fresh one lasts 100%, 80%, 60%, 40%, 20%, then none. |
+| Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; Agility -100, so it can't dodge and crits find it more often. |
 | Saturation | Weakness | Debuff | Each stack makes a Burst's blasts hit it harder. |
 | Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
 | Doom | Hex | Debuff | When it ends, it takes a share of all the damage it took while it lasted. |

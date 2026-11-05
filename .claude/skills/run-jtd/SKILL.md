@@ -87,7 +87,7 @@ EOF
 
 The dev panel's Observe makes an enemy write one `OBSERVE t=<tick> #<id> <Name> <Rank> <EVENT> ...` line
 per event to the session log until its `END`: `START` (a full stat snapshot), `HIT`/`PERIODIC` with every
-reduction step, `DODGE`, `EFFECT` (requested, shortened, blocked, gained, refreshed, stacks, ended...),
+reduction step, `DODGE`, `EFFECT` (requested, retimed, blocked, gained, refreshed, stacks, ended...),
 `HEAL`, `CAST`, `SPAWN`/`HATCH`, `KILLED`, `END` with totals. What it spawns or hatches into is observed
 too. Turn it on with `key alt+m` on a selected enemy (`clickenemy` first), or `key alt+shift+s` before
 spawning from the panel's script box (`key alt+s`, `type 2 armored`, `key enter`); `key alt+shift+m`

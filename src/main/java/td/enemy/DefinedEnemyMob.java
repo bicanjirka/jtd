@@ -8,11 +8,11 @@ import td.damage.DamageUnits;
 import td.damage.Delivery;
 import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
-import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.effect.EffectTransitions;
+import td.effect.FreezeMeter;
 import td.effect.ShieldGauge;
 import td.enemy.MobMoments.Moment;
 import td.stat.BaseStats;
@@ -34,10 +34,8 @@ import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -73,7 +71,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final PathMotion motion;
     private final MobMoments moments = new MobMoments();
     private final MobHealth health;
-    private final Map<EffectKind, DiminishingReturns> diminishing = new EnumMap<>(EffectKind.class);
+    private final FreezeMeter freezeMeter;
     private final StatSheet stats;
     private final BaseStats<EnemyStat> base;
     private final long id;
@@ -104,6 +102,7 @@ public final class DefinedEnemyMob implements EnemyMob {
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(EffectKind.class)));
         this.readsAllies = this.traits.stream().anyMatch(Trait::readsAllies);
         this.rank = rank;
+        this.freezeMeter = new FreezeMeter(rank.freezeDrain());
         this.price = Math.round(spawnParameters.price() * gameWorld.playtestRules().bountyScale());
         // Divided after the spawn shape's multiplier, which the wave already applied to the health.
         int healthPoints = Math.round(spawnParameters.health() / definition.healthDivisor()
@@ -422,13 +421,15 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /**
-     * Every kind that is active or whose diminishing returns run, ordered by the tick it was last gained (oldest
+     * Every kind that is active, and a freeze while its meter runs, ordered by the tick it was last gained (oldest
      * first, ties in kind order).
      */
     List<EffectKind> effectKindsByGain() {
         Set<EffectKind> kinds = EnumSet.noneOf(EffectKind.class);
         kinds.addAll(this.activeEffects.activeKinds());
-        kinds.addAll(this.diminishedFactors().keySet());
+        if (this.freezeMeter.isRunning()) {
+            kinds.add(EffectKind.FREEZE);
+        }
         return this.effectTransitions.inGainedOrder(kinds);
     }
 
@@ -474,8 +475,8 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /**
-     * Applies the effect unless this mob is immune to its kind, with its duration scaled by this mob's tenacity and, for
-     * hard crowd control, by diminishing returns. One that would last under a tick is blocked. Under
+     * Applies the effect unless this mob is immune to its kind, with its duration scaled by this mob's tenacity and,
+     * for a freeze, its meter. A freeze that would last under a tick doesn't land. Under
      * Inversion a shield comes in as one hit.
      */
     public void applyEffect(Effect effect) {
@@ -517,24 +518,19 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         float tenacity = effect.kind().side() == Side.DEBUFF
                 ? StatCurves.durationFactor(this.stats.value(EnemyStat.TENACITY)) : 1f;
-        Optional<DiminishingReturns> ladder = this.ladderFor(effect.kind());
-        boolean active = this.activeEffects.has(effect.kind());
-        float diminished = 1f;
-        if (ladder.isPresent()) {
-            diminished = ladder.get().factorAt(this.ticksSinceSpawn, active);
-        }
-        if (diminished <= 0f) {
+        boolean freeze = effect.kind() == EffectKind.FREEZE;
+        float factor = tenacity * (freeze ? this.freezeMeter.nextShare() : 1f);
+        // No floor for a freeze: one-tick stops with one-tick gaps would hold any rank half the time.
+        if (freeze && effect.authoredDurationTicks() * factor < 1f) {
             if (this.observer.isOn()) {
                 this.observer.report(new MobEvent.EffectBlocked(effect.kind(), "would last under a tick"));
             }
             return;
         }
-        float factor = tenacity * diminished;
         Effect scaled = factor != 1f ? effect.withDurationScaledBy(factor) : effect;
         if (factor != 1f && this.observer.isOn()) {
             this.observer.report(new MobEvent.EffectRetimed(effect.kind(), factor, scaled.remainingTicks()));
         }
-        ladder.ifPresent(steps -> steps.recordAt(this.ticksSinceSpawn, active));
         this.activeEffects.apply(scaled);
         this.stats.invalidate();
         if (this.observer.isOn()) {
@@ -543,26 +539,9 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
     }
 
-    /** Hard crowd control climbs its own ladder of diminishing returns; nothing else has one. */
-    private Optional<DiminishingReturns> ladderFor(EffectKind kind) {
-        if (kind.category() != EffectCategory.HARD_CC) {
-            return Optional.empty();
-        }
-        return Optional.of(this.diminishing.computeIfAbsent(kind, DiminishingReturns::of));
-    }
-
-    /**
-     * For each kind whose diminishing returns are running, the share of its duration the next fresh
-     * application would get, in kind order.
-     */
-    Map<EffectKind, Float> diminishedFactors() {
-        Map<EffectKind, Float> factors = new EnumMap<>(EffectKind.class);
-        this.diminishing.forEach((kind, ladder) -> {
-            if (ladder.stepAt(this.ticksSinceSpawn) > 0) {
-                factors.put(kind, ladder.factorAt(this.ticksSinceSpawn, false));
-            }
-        });
-        return factors;
+    /** The share of its authored time the next freeze would last, while the time already spent frozen tells. */
+    OptionalDouble nextFreezeShare() {
+        return this.freezeMeter.isRunning() ? OptionalDouble.of(this.freezeMeter.nextShare()) : OptionalDouble.empty();
     }
 
     public float reductionAgainst(DamageType type) {
@@ -928,6 +907,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         }
         // Read before tick(): an effect in its last tick must still slow this tick's movement.
         float speed = this.stats.value(EnemyStat.MOVE_SPEED);
+        this.freezeMeter.tick(this.activeEffects.has(EffectKind.FREEZE), !this.activeEffects.isStopped());
         boolean healthChanged = this.regenerate();
         if (healthChanged || !this.activeEffects.isEmpty()) {
             this.tickEffects(speed);

@@ -11,7 +11,6 @@ import td.damage.DamageUnits;
 import td.economy.EconomyLedger;
 import td.economy.EconomyState;
 import td.effect.DamageSink;
-import td.effect.DiminishingReturns;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.Ability;
@@ -64,6 +63,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameStartupException;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
+import td.util.TickRate;
 import td.wave.Path;
 import td.wave.PathBuilder;
 import td.wave.PathCoverage;
@@ -232,53 +232,110 @@ class GameEngineTest {
     }
 
     @Test
-    void anImmunityKeepsAFreezeOut() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new ImmunityTrait(EffectKind.FREEZE));
-
-        int frozen = freezeFor(enemy, 20, new int[] {0});
-
-        assertThat(frozen).isZero();
-    }
-
-    @Test
-    void repeatedFreshFreezesOnADiminishingEnemyLastFullHalfQuarterThenNotAtAll() {
+    void timeFrozenShortensTheNextFreeze() {
         EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
         int[] clock = {0};
+        int authored = Math.round(TickRate.TICKS_PER_SECOND);
 
-        List<Integer> durations = List.of(freezeFor(enemy, 20, clock), freezeFor(enemy, 20, clock),
-                freezeFor(enemy, 20, clock), freezeFor(enemy, 20, clock));
+        int first = freezeFor(enemy, authored, clock);
+        int second = freezeFor(enemy, authored, clock);
 
-        assertThat(durations).containsExactly(20, 10, 5, 0);
+        assertThat(first).isEqualTo(authored);
+        assertThat(second).isEqualTo(authored / 2);
     }
 
     @Test
-    void aFreezeReappliedWhileFrozenDoesNotSpendADiminishingStep() {
+    void walkingWinsTheTimeFrozenBack() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
+        int[] clock = {0};
+        int authored = Math.round(TickRate.TICKS_PER_SECOND);
+        freezeFor(enemy, authored, clock);
+
+        for (int i = 0; i < authored; i++) {
+            enemy.doTick(++clock[0]);
+        }
+
+        assertThat(freezeFor(enemy, authored, clock)).isEqualTo(authored);
+    }
+
+    @Test
+    void aFreezeReappliedWhileFrozenIsNotRenewed() {
         EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
         int[] clock = {0};
         enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
         enemy.doTick(++clock[0]);
 
         enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
-        ticksFrozen(enemy, clock);
 
-        assertThat(freezeFor(enemy, 20, clock)).isEqualTo(10);
+        assertThat(ticksFrozen(enemy, clock)).isEqualTo(19);
     }
 
     @Test
-    void aFreezeRenewedBeforeEveryThawStillDiminishesAndLetsTheEnemyGo() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
-        enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
-        int frozen = 0;
+    void underFreezesEveryTickAnEnemyStaysFrozenNoLongerThanItsRankAllows() {
+        int authored = 10;
+        for (Rank rank : Rank.values()) {
+            EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), rank);
+            int frozen = 0;
+            int walked = 0;
 
-        for (int t = 1; t <= 100; t++) {
-            if (t % 5 == 0) {
-                enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
+            for (int t = 1; t <= 40_000; t++) {
+                enemy.applyEffect(Effect.freeze(authored, DamageSink.none()));
+                boolean isFrozen = enemy.activeEffectKinds().contains(EffectKind.FREEZE);
+                enemy.doTick(t);
+                frozen += isFrozen ? 1 : 0;
+                walked += isFrozen ? 0 : 1;
+
+                // What the meter holds can't outgrow the point where a freeze would last under a tick.
+                assertThat(frozen).isLessThanOrEqualTo(Math.round(
+                        rank.freezeDrain() * walked + authored * TickRate.TICKS_PER_SECOND) + authored);
             }
-            enemy.doTick(t);
-            frozen += enemy.activeEffectKinds().contains(EffectKind.FREEZE) ? 1 : 0;
+
+            float cap = rank.freezeDrain() / (1f + rank.freezeDrain());
+            assertThat((float) frozen / (frozen + walked)).isLessThan(cap + 0.02f).isGreaterThan(cap / 2f);
+        }
+    }
+
+    @Test
+    void aDazeHasNoLimitOnHowOftenItLands() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
+        int[] clock = {0};
+
+        List<Integer> durations = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            durations.add(dazeFor(enemy, 20, clock));
         }
 
-        assertThat(frozen).isLessThanOrEqualTo(20 + 10 + 5);
+        assertThat(durations).containsOnly(20);
+    }
+
+    @Test
+    void aDazeRefreshesKeepingTheLonger() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
+        int[] clock = {0};
+        enemy.applyEffect(Effect.dazed(5, DamageSink.none()));
+
+        assertThat(dazeFor(enemy, 20, clock)).isEqualTo(20);
+    }
+
+    @Test
+    void aDazeNeitherFillsNorDrainsTheFreezeMeter() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
+        int[] clock = {0};
+        int authored = Math.round(TickRate.TICKS_PER_SECOND);
+        freezeFor(enemy, authored, clock);
+
+        dazeFor(enemy, 4 * authored, clock);
+
+        assertThat(freezeFor(enemy, authored, clock)).isEqualTo(authored / 2);
+    }
+
+    @Test
+    void anImmunityKeepsAFreezeOut() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new ImmunityTrait(EffectKind.FREEZE));
+
+        int frozen = freezeFor(enemy, 20, new int[] {0});
+
+        assertThat(frozen).isZero();
     }
 
     /** Dazes {@code enemy} and returns how many ticks it stayed Dazed. */
@@ -293,32 +350,6 @@ class GameEngineTest {
     }
 
     @Test
-    void repeatedFreshDazesLastEveryFifthLessUntilTheSixthDoesNotLand() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
-        int[] clock = {0};
-
-        List<Integer> durations = new ArrayList<>();
-        for (int i = 0; i < 6; i++) {
-            durations.add(dazeFor(enemy, 20, clock));
-        }
-
-        assertThat(durations).containsExactly(20, 16, 12, 8, 4, 0);
-    }
-
-    @Test
-    void freezesAndDazesClimbSeparateLadders() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
-        int[] clock = {0};
-        freezeFor(enemy, 20, clock);
-        freezeFor(enemy, 20, clock);
-
-        int dazed = dazeFor(enemy, 20, clock);
-
-        assertThat(dazed).isEqualTo(20);
-        assertThat(freezeFor(enemy, 20, clock)).isEqualTo(5);
-    }
-
-    @Test
     void aDazedEnemyStopsButKeepsItsBurnAndItsChill() {
         EnemyMob enemy = spawnOnly(FakeGameHost.newBoundEngine(), WEAKLING);
         enemy.applyEffect(Effect.burn(Damage.magic(1), 40, DamageSink.none()));
@@ -328,30 +359,6 @@ class GameEngineTest {
 
         assertThat(enemy.activeEffectKinds()).contains(EffectKind.BURN, EffectKind.CHILL, EffectKind.DAZED);
         assertThat(enemy.getSpeed()).isZero();
-    }
-
-    @Test
-    void freezeDiminishingResetsTenSecondsAfterTheLastFreeze() {
-        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
-        int[] clock = {0};
-        freezeFor(enemy, 20, clock);
-        freezeFor(enemy, 20, clock);
-
-        while (clock[0] < DiminishingReturns.WINDOW_TICKS + 30) {
-            enemy.doTick(++clock[0]);
-        }
-
-        assertThat(freezeFor(enemy, 20, clock)).isEqualTo(20);
-    }
-
-    @Test
-    void anEliteDiminishesFreezesWithoutTheTrait() {
-        EnemyMob elite = spawnStill(FakeGameHost.newBoundEngine(), Rank.ELITE);
-        int[] clock = {0};
-
-        freezeFor(elite, 20, clock);
-
-        assertThat(freezeFor(elite, 20, clock)).isEqualTo(10);
     }
 
     private static int totalBurnDamage(EnemyMob enemy) {
