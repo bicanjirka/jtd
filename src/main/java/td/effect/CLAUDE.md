@@ -5,17 +5,18 @@
   only its own data. This package never depends on `td.enemy`: the producer binds a `DamageSink` when
   it creates the effect.
 - Each `EffectKind` is one row holding its `EffectRule`: category, stacking
-  (`EffectStacking`), stack cap, what each stack does to stats, how much of base speed it takes away, and tags.
+  (`EffectStacking`), stack cap, what each stack does to stats, how much of speed it takes away, and tags.
   Every classification method reads the rule. `ActiveEffects` keeps one live effect per kind and
   combines applications by the rule's stacking: a refresh keeps the stronger and the longer, a pool
   adds up, stacks add to their cap, and a per-source kind keeps one share per source on its own clock
   (`SourceShares`): the effect's time is always its last share's, and anything that changes the time changes the
   shares. `ActiveEffects` exposes queries only, never its map.
-- A slow (`Effect.slowStrength()`: `CHILL`, whose strength each application brings, and `TARRED`, `ANCHORED`, `DRAGGED`
-  by their rule's `slowPerStack`) holds speed to a share of base through `capAtShareOfBase`, so the strongest applies,
-  across kinds too, and it beats any speed gain. It fades over its last `SLOW_FADE_TICKS`, or its whole length if shorter;
-  a slow refreshed each pulse never gets there. Of one kind a weaker slow is ignored while the stronger runs, and a
-  stronger one replaces it, weaker tail and all. `FREEZE` is a hard stop.
+- A slow (`Effect.slowStrength()`: `CHILL`, whose strength each application brings, and `TARRED`, `DRAGGED` by their
+  rule's `slowPerStack`) takes a share of the speed its carrier has, gains included, and only the strongest counts,
+  across kinds too. `ANCHORED` (`EffectTag.SPEED_CEILING`) is no such share: it holds speed to a share of base through
+  `capAtShareOfBase`, the one answer to a speed gain. Each fades over its last `SLOW_FADE_TICKS`, or its whole length if
+  shorter; one refreshed each pulse never gets there. Of one kind a weaker slow is ignored while the stronger runs, and
+  a stronger one replaces it, weaker tail and all. `FREEZE` is a hard stop.
 - `BURN` and `POISON` are each a decaying fuel pool of one `FuelContribution` per application, each
   with its own sink (`EffectKind.isFuelPool()`). Tick damage is apportioned across contributors
   (largest remainder), so every tower gets credit for its share. Damage lands in a pulse a few times

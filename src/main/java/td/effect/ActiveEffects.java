@@ -101,7 +101,7 @@ public final class ActiveEffects {
         }
     }
 
-    /** The share of base speed {@code effect} takes away now: its strength, fading over the end of its own time. */
+    /** The share of speed {@code effect} takes away now: its strength, fading over the end of its own time. */
     private static float slowNow(Effect effect) {
         float strength = effect.slowStrength();
         if (strength <= 0f) {
@@ -317,7 +317,7 @@ public final class ActiveEffects {
         return OptionalInt.of(Math.max(effect.authoredDurationTicks(), effect.remainingTicks()));
     }
 
-    /** The share of base speed the active {@code kind} takes away now; {@code 0f} if it isn't active or doesn't slow. */
+    /** The share of speed the active {@code kind} takes away now; {@code 0f} if it isn't active or doesn't slow. */
     public float slowNow(EffectKind kind) {
         Effect effect = this.active.get(kind);
         return effect == null ? 0f : slowNow(effect);
@@ -340,13 +340,20 @@ public final class ActiveEffects {
 
     /**
      * Adds every active effect's stat modifiers: each kind's {@link EffectKind#modifiersAt} for its
-     * stacks, a slow's hold on speed, a heal's regeneration, and what the burning pools carry.
-     * Nothing here allocates.
+     * stacks, a ceiling on speed, the strongest slow's share of speed, a heal's regeneration, and what
+     * the burning pools carry. Nothing here allocates.
      */
     public void contributeTo(StatAccumulator<EnemyStat> accumulator) {
         this.burningTuning().carried().applyTo(accumulator);
+        float strongestSlow = 0f;
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             this.contribute(entry.getKey(), entry.getValue(), accumulator);
+            if (!entry.getKey().isSpeedCeiling()) {
+                strongestSlow = Math.max(strongestSlow, slowNow(entry.getValue()));
+            }
+        }
+        if (strongestSlow > 0f) {
+            accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - strongestSlow);
         }
     }
 
@@ -357,15 +364,21 @@ public final class ActiveEffects {
             // Of the per-source kinds only a heal gives regeneration; a shield's is zero.
             case PER_SOURCE -> accumulator.addFlat(EnemyStat.REGENERATION, effect.healPerTick());
         }
-        float slow = slowNow(effect);
-        if (slow > 0f) {
-            accumulator.capAtShareOfBase(EnemyStat.MOVE_SPEED, 1f - slow);
+        if (kind.isSpeedCeiling()) {
+            accumulator.capAtShareOfBase(EnemyStat.MOVE_SPEED, 1f - slowNow(effect));
         }
     }
 
+    /** The slow that counts now: of equals, the first in kind order. */
+    private Optional<Effect> strongestSlow() {
+        return this.active.values().stream()
+                .filter(effect -> !effect.kind().isSpeedCeiling() && slowNow(effect) > 0f)
+                .reduce((a, b) -> slowNow(b) > slowNow(a) ? b : a);
+    }
+
     /**
-     * What the active {@code kind} alone adds to the stats now, for a breakdown: its own modifiers, and what the burning
-     * pools carry when it is the first burning kind.
+     * What the active {@code kind} alone adds to the stats now, for a breakdown: its own modifiers, its slow if that is
+     * the one that counts, and what the burning pools carry when it is the first burning kind.
      */
     public void contributionOf(EffectKind kind, StatAccumulator<EnemyStat> accumulator) {
         Effect effect = this.active.get(kind);
@@ -381,6 +394,8 @@ public final class ActiveEffects {
             }
         }
         contribute(kind, effect, accumulator);
+        this.strongestSlow().filter(effect::equals)
+                .ifPresent(slow -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - slowNow(slow)));
     }
 
     /** What every fire on the enemy has made of it together: the stronger of each setting. */

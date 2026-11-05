@@ -77,9 +77,9 @@ public enum EffectKind implements Term {
     RECKONING("Reckoning", EffectRule.of(EffectCategory.HEX)),
     /** Its abilities don't fire; death abilities and auras still do. */
     SILENCED("Silence", EffectRule.of(EffectCategory.SOFT_CC)),
-    /** Can't be sped up, and its speed is held to three quarters of its base. */
+    /** Its speed is held to a share of its base, whatever raises it. */
     ANCHORED("Anchor", EffectRule.of(EffectCategory.SOFT_CC)
-            .slowingBy(0.25f)),
+            .slowingBy(0.25f).tagged(EffectTag.SPEED_CEILING)),
     /** Each stack lowers magic resist by ten. */
     UNRAVELED("Unravel", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)
             .perStack(EnemyStat.MAGIC_RESIST, -10f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
@@ -190,6 +190,11 @@ public enum EffectKind implements Term {
     /** Whether a reapplication leaves one that is active as it is. */
     public boolean isNotRenewed() {
         return this.rule.tags().contains(EffectTag.NOT_RENEWED);
+    }
+
+    /** Whether this kind's slow holds speed to a share of base instead of taking a share of what it finds. */
+    public boolean isSpeedCeiling() {
+        return this.rule.tags().contains(EffectTag.SPEED_CEILING);
     }
 
     /** Whether this kind stops the enemy where it stands and keeps it from casting. */

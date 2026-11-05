@@ -84,7 +84,10 @@ final class EffectSentences {
             case RECKONING -> TermText.of("when it dies, each ").plus(EffectKind.DOOM)
                     .plus(" from the same tower near it releases at once and starts again");
             case SILENCED -> TermText.of("its abilities don't fire; abilities on death and auras still do");
-            case ANCHORED -> slowing("slows by " + TermNumbers.percent(kind.rule().slowPerStack()));
+            case ANCHORED -> TermText.of("holds ").plus(EnemyStat.MOVE_SPEED)
+                    .plus(" to at most " + TermNumbers.percent(1f - kind.rule().slowPerStack())
+                            + " of its base, whatever raises it, and it comes back over its last "
+                            + seconds(ActiveEffects.SLOW_FADE_TICKS));
             case UNRAVELED -> stacked(kind, EnemyStat.MAGIC_RESIST);
             case BRITTLE -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                     EnemyStat.PHYSICAL_DAMAGE_TAKEN);
@@ -120,21 +123,21 @@ final class EffectSentences {
                             + " while it lasts, and every tower can see and aim at it");
             case SPRINTING -> changes(
                     TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd()),
-                    EnemyStat.MOVE_SPEED).plus("; any slow cancels it");
+                    EnemyStat.MOVE_SPEED);
             case SPELLPROOF -> stacked(kind, EnemyStat.MAGIC_RESIST);
             case UNYIELDING -> TermText.join(", ", List.of(
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE),
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)), EnemyStat.SPIRIT),
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.MAGIC_RESIST)), EnemyStat.MAGIC_RESIST)));
             case HASTENED -> changes(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply()),
-                    EnemyStat.MOVE_SPEED).plus("; any slow cancels it, and ").plus(EffectKind.FREEZE).plus(" and ")
+                    EnemyStat.MOVE_SPEED).plus("; ").plus(EffectKind.FREEZE).plus(" and ")
                     .plus(EffectKind.DAZED).plus(" still stop it");
         };
     }
 
     /** {@code what}, then the rule every slow keeps. */
     private static TermText slowing(String what) {
-        return TermText.of(what + "; the strongest slow holds, no speed gain beats it, and speed comes back over its last "
+        return TermText.of(what + "; only the strongest slow counts, and speed comes back over its last "
                 + seconds(ActiveEffects.SLOW_FADE_TICKS));
     }
 

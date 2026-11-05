@@ -113,16 +113,18 @@ class EnemyInspectionTest {
     }
 
     @Test
-    void aSpeedBreakdownRecordsChillAsAHoldOnItsBase() {
+    void aSpeedBreakdownListsOnlyTheSlowThatCounts() {
         DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.chill(0.4f, 100, DamageSink.none()));
+        mob.applyEffect(Effect.tarred(100, DamageSink.none()));
+        float strongest = EffectKind.TARRED.rule().slowPerStack() + 0.1f;
+        mob.applyEffect(Effect.chill(strongest, 100, DamageSink.none()));
 
         StatBreakdown speed = mob.inspect().breakdowns().get(EnemyStat.MOVE_SPEED);
 
         assertThat(speed.added()).isEmpty();
         assertThat(speed.scaled()).hasSize(1);
         assertThat(speed.scaled().getFirst().source().mentions()).containsExactly(EffectKind.CHILL);
-        assertThat(speed.scaled().getFirst().modifier().capShareOfBase()).isCloseTo(0.6f, within(0.001f));
+        assertThat(speed.scaled().getFirst().modifier().multiply()).isCloseTo(1f - strongest, within(0.001f));
     }
 
     @Test

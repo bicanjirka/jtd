@@ -16,7 +16,7 @@ import java.util.Set;
  * @param stacking   how applications combine
  * @param stackCap   the most stacks it holds; 1 for a kind that does not stack
  * @param perStack   what each stack does to the enemy's stats
- * @param slowPerStack the share of base speed each stack takes away; {@code 0} for a kind whose strength comes with
+ * @param slowPerStack the share of speed each stack takes away; {@code 0} for a kind whose strength comes with
  *                   each application, or that doesn't slow
  * @param tags       the yes/no rules that ask for it
  * @param side       whom it works for, seen from the enemy that carries it
@@ -60,7 +60,7 @@ public record EffectRule(EffectCategory category, EffectStacking stacking, int s
                 this.perStack.and(stat, modifier), this.slowPerStack, this.tags, this.side);
     }
 
-    /** Each stack, or the kind if it has none, takes {@code share} of base speed away. */
+    /** Each stack, or the kind if it has none, takes {@code share} of speed away. */
     public EffectRule slowingBy(float share) {
         return new EffectRule(this.category, this.stacking, this.stackCap, this.perStack, share,
                 this.tags, this.side);

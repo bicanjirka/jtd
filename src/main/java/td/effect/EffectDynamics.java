@@ -35,7 +35,7 @@ public sealed interface EffectDynamics {
         }
     }
 
-    /** A slow whose strength each application brings: the share of base speed it takes away. */
+    /** A slow whose strength each application brings: the share of speed it takes away. */
     record Slow(float strength) implements EffectDynamics {
     }
 
