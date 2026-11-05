@@ -12,6 +12,7 @@ import td.util.ThreadConfined;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -47,7 +48,7 @@ public final class PurchaseHarness {
         int levelIndex = args.length > 0 ? Integer.parseInt(args[0]) : 0;
         int seeds = args.length > 1 ? Integer.parseInt(args[1]) : DEFAULT_SEEDS;
         Optional<TowerFactory.Type> only = args.length > 2
-                ? Optional.of(TowerFactory.Type.valueOf(args[2].toUpperCase(java.util.Locale.ROOT))) : Optional.empty();
+                ? Optional.of(TowerFactory.Type.valueOf(args[2].toUpperCase(Locale.ROOT))) : Optional.empty();
         int armyCopies = args.length > 3 ? Integer.parseInt(args[3]) : 1;
         LevelDefinition level = new BuiltInLevelCatalog().levels().get(levelIndex).withStartingLives(UNLIMITED_LIVES);
         new PurchaseHarness(seeds, armyCopies).report(level, only);
@@ -55,9 +56,9 @@ public final class PurchaseHarness {
 
     private void report(LevelDefinition level, Optional<TowerFactory.Type> only) {
         double baseline = this.meanLeaks(level, (engine, army, spare) -> 0);
-        System.out.printf("=== Purchase report: %s, %d seeds, army of %d of each tower ===%n", level.name(), this.seeds,
+        System.out.printf(Locale.ROOT, "=== Purchase report: %s, %d seeds, army of %d of each tower ===%n", level.name(), this.seeds,
                 this.armyCopies);
-        System.out.printf("Lives lost with no purchase: %.1f%n", baseline);
+        System.out.printf(Locale.ROOT, "Lives lost with no purchase: %.1f%n", baseline);
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             if (only.isPresent() && only.get() != type) {
                 continue;
@@ -175,10 +176,10 @@ public final class PurchaseHarness {
 
         String format(double copyValue) {
             if (this.cost <= 0) {
-                return String.format("  %-34s cannot be bought", this.label);
+                return String.format(Locale.ROOT, "  %-34s cannot be bought", this.label);
             }
-            String versus = copyValue > 0 ? String.format("%5.2fx", this.value() / copyValue) : "    - ";
-            return String.format("  %-34s cost %5d  lives lost %7.1f  saved %7.1f  value %6.2f  vs copy %s",
+            String versus = copyValue > 0 ? String.format(Locale.ROOT, "%5.2fx", this.value() / copyValue) : "    - ";
+            return String.format(Locale.ROOT, "  %-34s cost %5d  lives lost %7.1f  saved %7.1f  value %6.2f  vs copy %s",
                     this.label, this.cost, this.leaks, this.baseline - this.leaks, this.value(), versus);
         }
     }

@@ -9,6 +9,7 @@ import td.wave.Point;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -78,7 +79,7 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
 
         /** An ability of {@code kind} that puts {@code effect} on itself or its allies. */
         public static String castKey(String kindKey, EffectKind effect) {
-            return kindKey + " casts " + effect.name().toLowerCase(java.util.Locale.ROOT);
+            return kindKey + " casts " + effect.name().toLowerCase(Locale.ROOT);
         }
 
         /** An ability that brings {@code child} onto the board, whichever enemy has it. */
@@ -169,7 +170,7 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
         public String topKinds(int count) {
             return this.damageByKind.entrySet().stream()
                     .sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(count)
-                    .map(entry -> String.format("%s %.0f%%", entry.getKey(), 100.0 * entry.getValue() / Math.max(1, this.hits.credited())))
+                    .map(entry -> String.format(Locale.ROOT, "%s %.0f%%", entry.getKey(), 100.0 * entry.getValue() / Math.max(1, this.hits.credited())))
                     .collect(Collectors.joining(", "));
         }
     }

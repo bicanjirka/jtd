@@ -76,7 +76,7 @@ public final class BuildHarness {
         UpgradeTree tree = this.sampleTower().upgradeTree();
         List<UpgradeNode> nodes = tree.nodes();
         Result baseline = this.measure(List.of(), this.copiesFor(List.of()));
-        System.out.printf("=== Build report: %s, %d seeds, %d x %s among %d of each other tower ===%n", this.level.name(),
+        System.out.printf(Locale.ROOT, "=== Build report: %s, %d seeds, %d x %s among %d of each other tower ===%n", this.level.name(),
                 this.seeds, this.copies, this.type.displayName(), this.background);
         System.out.println(Result.header());
         System.out.println(baseline.format("plain", baseline));
@@ -256,7 +256,7 @@ public final class BuildHarness {
     private record Result(double livesLost, double damage, double kills, int cost, int copies) {
 
         static String header() {
-            return String.format("  %-62s %3s %6s %9s %7s %10s %7s %8s", "build", "n", "cost", "lives lost", "saved",
+            return String.format(Locale.ROOT, "  %-62s %3s %6s %9s %7s %10s %7s %8s", "build", "n", "cost", "lives lost", "saved",
                     "dmg dealt", "kills", "per 100");
         }
 
@@ -265,7 +265,7 @@ public final class BuildHarness {
         }
 
         String format(String label, Result baseline) {
-            return String.format("  %-62s %3d %6d %9.1f %7.1f %10.0f %7.1f %8.2f",
+            return String.format(Locale.ROOT, "  %-62s %3d %6d %9.1f %7.1f %10.0f %7.1f %8.2f",
                     label.length() > 62 ? label.substring(0, 62) : label, this.copies, this.cost, this.livesLost, baseline.livesLost - this.livesLost, this.damage, this.kills,
                     this.value(baseline));
         }

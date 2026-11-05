@@ -110,7 +110,7 @@ public final class PerformanceHarness {
         Arrays.sort(bytes);
         long allocP99Kb = percentile(bytes, 0.99) / BYTES_PER_KB;
         boolean allocOk = allocP99Kb <= FRAME_ALLOC_P99_BUDGET_KB;
-        System.out.printf("%-13s p50 %6d KB  p99 %6d KB  max %6d KB  budget p99 %d KB %s%n", "Frame alloc",
+        System.out.printf(Locale.ROOT, "%-13s p50 %6d KB  p99 %6d KB  max %6d KB  budget p99 %d KB %s%n", "Frame alloc",
                 percentile(bytes, 0.50) / BYTES_PER_KB, allocP99Kb, bytes[bytes.length - 1] / BYTES_PER_KB,
                 FRAME_ALLOC_P99_BUDGET_KB, verdict(allocOk));
         recording.ifPresent(ProfileRecording::stopAndReport);
@@ -219,7 +219,7 @@ public final class PerformanceHarness {
         Arrays.sort(nanos);
         double p99Millis = percentile(nanos, 0.99) / NANOS_PER_MILLI;
         boolean ok = p99Millis <= p99BudgetMillis;
-        System.out.printf("%-13s p50 %6.3f ms  p99 %6.3f ms  max %6.3f ms  budget p99 %.1f ms %s%n", label,
+        System.out.printf(Locale.ROOT, "%-13s p50 %6.3f ms  p99 %6.3f ms  max %6.3f ms  budget p99 %.1f ms %s%n", label,
                 percentile(nanos, 0.50) / NANOS_PER_MILLI, p99Millis, nanos[nanos.length - 1] / NANOS_PER_MILLI,
                 p99BudgetMillis, verdict(ok));
         return ok;

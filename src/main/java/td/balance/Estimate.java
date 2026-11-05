@@ -2,6 +2,7 @@ package td.balance;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
 
@@ -63,11 +64,11 @@ public record Estimate(double value, double low, double high, int n) {
 
     /** {@code 12.3 ±1.4}, at {@code decimals} places. */
     public String format(int decimals) {
-        return String.format("%." + decimals + "f ±%." + decimals + "f", this.value, (this.high - this.low) / 2);
+        return String.format(Locale.ROOT, "%." + decimals + "f ±%." + decimals + "f", this.value, (this.high - this.low) / 2);
     }
 
     /** As a percentage with its interval: {@code 74% (61-84)}. */
     public String formatPercent() {
-        return String.format("%3.0f%% (%.0f-%.0f)", this.value * 100, this.low * 100, this.high * 100);
+        return String.format(Locale.ROOT, "%3.0f%% (%.0f-%.0f)", this.value * 100, this.low * 100, this.high * 100);
     }
 }

@@ -80,7 +80,7 @@ final class ProfileRecording {
         long cut = samples.stream().filter(event -> event.getStackTrace() != null && event.getStackTrace().isTruncated())
                 .count();
         if (cut > 0) {
-            System.out.printf("%d of %d CPU stacks were cut short, so their phase reads as other; rerun with "
+            System.out.printf(Locale.ROOT, "%d of %d CPU stacks were cut short, so their phase reads as other; rerun with "
                     + "MAVEN_OPTS=-XX:FlightRecorderOptions:stackdepth=256%n", cut, samples.size());
         }
         List<RecordedEvent> collections = ofType(events, GARBAGE_COLLECTION);
@@ -88,7 +88,7 @@ final class ProfileRecording {
                 / NANOS_PER_MILLI;
         double longestMillis = collections.stream().mapToLong(event -> event.getLong("longestPause")).max().orElse(0L)
                 / NANOS_PER_MILLI;
-        System.out.printf("GC: %d collections, %.1f ms paused, longest %.2f ms%n", collections.size(), pausedMillis,
+        System.out.printf(Locale.ROOT, "GC: %d collections, %.1f ms paused, longest %.2f ms%n", collections.size(), pausedMillis,
                 longestMillis);
     }
 
@@ -103,7 +103,7 @@ final class ProfileRecording {
         long all = totals.values().stream().reduce(0L, Long::sum);
         System.out.println("-- " + title + " (total " + all + ")");
         totals.entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(ROWS)
-                .forEach(entry -> System.out.printf("%8d  %5.1f%%  %s%n", entry.getValue(),
+                .forEach(entry -> System.out.printf(Locale.ROOT, "%8d  %5.1f%%  %s%n", entry.getValue(),
                         all == 0 ? 0.0 : 100.0 * entry.getValue() / all, entry.getKey()));
     }
 
@@ -129,7 +129,7 @@ final class ProfileRecording {
             System.out.println("   " + phase + ", with all it calls (share of the " + phase + ")");
             inclusive.getOrDefault(phase, Map.of()).entrySet().stream()
                     .sorted(Map.Entry.<String, Long>comparingByValue().reversed()).limit(ROWS)
-                    .forEach(entry -> System.out.printf("%8d  %5.1f%%  %s%n", entry.getValue(),
+                    .forEach(entry -> System.out.printf(Locale.ROOT, "%8d  %5.1f%%  %s%n", entry.getValue(),
                             all == 0 ? 0.0 : 100.0 * entry.getValue() / all, entry.getKey()));
         }
     }

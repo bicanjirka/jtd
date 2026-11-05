@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -221,7 +222,7 @@ public final class ResultTable {
                     double was = entry.getValue()[0] / scale;
                     double now = later[0] / scale;
                     if (Math.abs(now - was) > LAB_TOLERANCE * Math.max(Math.abs(was), 1e-9)) {
-                        labLines.add(String.format("  lab %-50s %8.2f -> %8.2f%n", key.metric(), was, now));
+                        labLines.add(String.format(Locale.ROOT, "  lab %-50s %8.2f -> %8.2f%n", key.metric(), was, now));
                     }
                 } else {
                     played.add(change(key, entry.getValue(), later));
@@ -243,7 +244,7 @@ public final class ResultTable {
                 out.append("  lab numbers that moved\n");
                 labLines.stream().limit(MOST_CHANGES).forEach(out::append);
                 if (labLines.size() > MOST_CHANGES) {
-                    out.append(String.format("  ... and %d more%n", labLines.size() - MOST_CHANGES));
+                    out.append(String.format(Locale.ROOT, "  ... and %d more%n", labLines.size() - MOST_CHANGES));
                 }
             }
         }
@@ -277,7 +278,7 @@ public final class ResultTable {
 
     private static String line(Change change) {
         String label = change.key().player() + " " + change.key().metric();
-        return String.format("  %s %-32s %-17s %-17s %+.2f (%+.2f..%+.2f)%n", change.real() ? "*" : " ",
+        return String.format(Locale.ROOT, "  %s %-32s %-17s %-17s %+.2f (%+.2f..%+.2f)%n", change.real() ? "*" : " ",
                 label.length() > 32 ? label.substring(0, 32) : label, change.before().format(2),
                 change.after().format(2), change.difference().value(), change.difference().low(),
                 change.difference().high());
