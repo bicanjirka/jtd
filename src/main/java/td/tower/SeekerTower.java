@@ -393,7 +393,7 @@ public final class SeekerTower extends AbstractTower {
     private void freeze(EnemyMob enemy, float strength, SeekerSpec spec) {
         int ticks = Math.round(this.freezeTicks() * strength);
         this.applyEffect(enemy, sink -> Effect.freeze(ticks, sink));
-        if (spec.freeze().brittle()) {
+        if (spec.freeze().brittle() && enemy.hasEffect(EffectKind.FREEZE)) {
             this.applyEffect(enemy, sink -> Effect.brittle(ticks, sink));
         }
         if (spec.shatter().onThaw() && enemy.hasEffect(EffectKind.FREEZE)) {

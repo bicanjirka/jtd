@@ -29,7 +29,7 @@ public enum TowerTerm implements Term {
     NAPALM_SHELL("Napalm Shell", Side.BUFF, "a shell whose blast is magic and leaves flames that apply {}", EffectKind.BURN),
     TAR_SHELL("Tar Shell", Side.BUFF, "a shell that leaves tar applying {} and {}", EffectKind.TARRED, EffectKind.POISON),
     CRYO_SHELL("Cryo Shell", Side.BUFF, "a shell that leaves frost applying {}, and {} to an enemy that stays", EffectKind.CHILL, EffectKind.FREEZE),
-    NUKE_SHELL("Nuke Shell", Side.BUFF, "a shell that hits far harder and wider and leaves {}", EffectKind.FALLOUT),
+    NUKE_SHELL("Nuke Shell", Side.BUFF, "a shell that hits far harder and wider and leaves {}", EffectKind.DEAD_ZONE),
     CRYO_MISSILE("Cryo Missile", Side.BUFF, "a missile that applies {}", EffectKind.FREEZE),
     ARCANE_MISSILE("Arcane Missile", Side.BUFF, "a missile that applies {} instead of {}", EffectKind.UNRAVELED, EffectKind.FREEZE),
     EMP_MISSILE("EMP Missile", Side.BUFF, "a missile that removes {} and {} and applies {}", EffectKind.SHIELD, EffectKind.HEAL, EffectKind.SILENCED),

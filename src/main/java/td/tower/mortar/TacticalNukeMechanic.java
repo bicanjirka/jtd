@@ -23,7 +23,7 @@ public final class TacticalNukeMechanic implements MortarMechanic {
 
     @Override
     public Set<Term> applies() {
-        return Set.of(EffectKind.FALLOUT);
+        return Set.of(EffectKind.DEAD_ZONE, EffectKind.SICKENED);
     }
 
     @Override

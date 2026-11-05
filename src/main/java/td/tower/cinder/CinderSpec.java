@@ -17,20 +17,20 @@ import td.tower.targeting.Viewpoint;
  * @param look          the colour of its waves
  * @param searingIntervalTicks how often at most a wave that hits a burning enemy, and every ignition, makes it Vulnerable;
  *                             0 for never
- * @param thermalShock  whether a burning enemy that freezes chills its neighbours
+ * @param thermalShock  how much of what is left of a dead enemy's burn lands on its neighbours, who are chilled; 0 for none
  * @param critScorch    how many Scorched stacks a critical ignition adds
  * @param combustion    what a burn grown hotter than one wave could make it does to its neighbours
  * @param everburnFloor the share of its strongest application a pool never decays below in range, 0 for none
- * @param tuning        what its pools hold, how fast they mark, what a freeze does to them and what they cost
+ * @param tuning        what its pools hold, how fast they mark and what they cost
  */
 public record CinderSpec(Reach reach, boolean ring, StokeSpec stoke, boolean bellows, boolean soulfire, LingerSpec linger, FlameLook look,
-                         int searingIntervalTicks, boolean thermalShock, int critScorch, CombustionSpec combustion,
+                         int searingIntervalTicks, float thermalShock, int critScorch, CombustionSpec combustion,
                          float everburnFloor, PoolTuning tuning) {
 
     /** The nearest visible enemy in range, an ordinary cone, a plain burn and no passives. */
     public static CinderSpec from(Viewpoint view) {
         return new CinderSpec(Reach.visible(view), false, StokeSpec.none(), false, false,
-                LingerSpec.none(), FlameLook.ORANGE, 0, false, 0, CombustionSpec.none(), 0f,
+                LingerSpec.none(), FlameLook.ORANGE, 0, 0f, 0, CombustionSpec.none(), 0f,
                 PoolTuning.standard());
     }
 
@@ -81,9 +81,9 @@ public record CinderSpec(Reach reach, boolean ring, StokeSpec stoke, boolean bel
                 this.combustion, this.everburnFloor, this.tuning);
     }
 
-    public CinderSpec withThermalShock() {
+    public CinderSpec withThermalShock(float share) {
         return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, this.soulfire, this.linger, this.look, this.searingIntervalTicks, true, this.critScorch,
+                this.bellows, this.soulfire, this.linger, this.look, this.searingIntervalTicks, share, this.critScorch,
                 this.combustion, this.everburnFloor, this.tuning);
     }
 

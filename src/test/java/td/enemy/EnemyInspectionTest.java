@@ -78,10 +78,10 @@ class EnemyInspectionTest {
     @Test
     void anEffectKeptOutNamesWhatKeepsItOut() {
         DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.freeze(30, DamageSink.none()));
+        mob.applyEffect(Effect.revealed(30, DamageSink.none()));
 
         assertThat(mob.inspect().immunities()).contains(
-                new EnemyInspection.Immunity(EffectKind.BURN, Optional.of(EffectKind.FREEZE)));
+                new EnemyInspection.Immunity(EffectKind.INVISIBLE, Optional.of(EffectKind.REVEALED)));
     }
 
     @Test

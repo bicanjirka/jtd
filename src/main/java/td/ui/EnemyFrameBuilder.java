@@ -176,12 +176,9 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case TOLL -> Palette.STATUS_MARKER_TOLL;
             case CORRODED -> Palette.STATUS_MARKER_CORRODED;
             case DRAGGED -> Palette.STATUS_MARKER_DRAGGED;
-            case UNDERTOW -> Palette.STATUS_MARKER_UNDERTOW;
             case CONDEMNED -> Palette.STATUS_MARKER_CONDEMNED;
             case STILLED -> Palette.STATUS_MARKER_STILLED;
-            case UNVEILED -> Palette.STATUS_MARKER_UNVEILED;
             case DEAD_ZONE -> Palette.STATUS_MARKER_DEAD_ZONE;
-            case FALLOUT -> Palette.STATUS_MARKER_FALLOUT;
             case FRAIL -> Palette.STATUS_MARKER_FRAIL;
             case CRACKED -> Palette.STATUS_MARKER_CRACKED;
             case TARRED -> Palette.STATUS_MARKER_TARRED;
@@ -329,13 +326,12 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             beneath = Math.max(beneath, EnemyEffects.iceBeneath(iceVariant, iceScale));
             ringRadius = Math.max(ringRadius, EnemyEffects.iceReach(iceVariant, iceScale) + SELECTION_RING_MARGIN);
         }
-        // A burn strong enough to reveal an enemy keeps showing on one still cloaked: the rule gives it away, not the art.
-        float fireVisibility = mob.isHidden() ? visibility : 1f;
+        // A burn reveals, so its art never fades with the cloak.
         if (active.contains(EffectKind.BURN)) {
-            this.emit(EnemyEmissionLook.BURN, x, y, hull, this.fullness(mob, EffectKind.BURN), seed, fireVisibility);
+            this.emit(EnemyEmissionLook.BURN, x, y, hull, this.fullness(mob, EffectKind.BURN), seed, 1f);
         }
         if (active.contains(EffectKind.SOULFIRE)) {
-            this.emit(EnemyEmissionLook.SOULFIRE, x, y, hull, this.fullness(mob, EffectKind.SOULFIRE), seed, fireVisibility);
+            this.emit(EnemyEmissionLook.SOULFIRE, x, y, hull, this.fullness(mob, EffectKind.SOULFIRE), seed, 1f);
         }
         float healing = this.healingAmount(mob);
         if (healing > 0f) {
@@ -558,8 +554,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             // A rune.
             case DOOM, BLIGHT, CONTAGION, RIME, ASH, INVERSION, SYMPATHY, RECKONING -> Optional.empty();
             // The Info pane's, or the field on the ground says it.
-            case SCORCHED, SICKENED, REVEALED, UNVEILED, SILENCED, ANCHORED, CORRODED, DRAGGED, UNDERTOW, DEAD_ZONE,
-                 FRAIL, FALLOUT -> Optional.empty();
+            case SCORCHED, SICKENED, REVEALED, SILENCED, ANCHORED, CORRODED, DRAGGED, DEAD_ZONE,
+                 FRAIL -> Optional.empty();
         };
     }
 

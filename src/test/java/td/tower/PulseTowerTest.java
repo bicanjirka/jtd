@@ -272,7 +272,7 @@ class PulseTowerTest {
     }
 
     @Test
-    void undertowDeepensTheDragWithTollAnchorsAndCountsAsAChill() {
+    void undertowDeepensTheDragWithTollAndAnchors() {
         PulseTower tower = this.pulseWith("Undertow");
         FakeEnemyMob fresh = FakeEnemyMob.at(tower.getX(), tower.getY());
         FakeEnemyMob tolled = FakeEnemyMob.at(tower.getX(), tower.getY());
@@ -283,7 +283,6 @@ class PulseTowerTest {
 
         assertThat(tolled.effectStacks(EffectKind.DRAGGED)).isGreaterThan(fresh.effectStacks(EffectKind.DRAGGED));
         assertThat(has(tolled, EffectKind.ANCHORED)).isTrue();
-        assertThat(has(tolled, EffectKind.UNDERTOW)).isTrue();
     }
 
     @Test
@@ -354,7 +353,6 @@ class PulseTowerTest {
         tower.doTick(1);
 
         assertThat(applied(inside, EffectKind.REVEALED)).hasSize(1);
-        assertThat(has(inside, EffectKind.UNVEILED)).isFalse();
         assertThat(has(outside, EffectKind.REVEALED)).isFalse();
     }
 
@@ -385,7 +383,7 @@ class PulseTowerTest {
     }
 
     @Test
-    void trueSightRevealsLongerThanAFieldLingersAndUnveilsMeanwhile() {
+    void trueSightRevealsLongerThanAFieldLingers() {
         PulseTower tower = this.pulseWith("True Sight");
         FakeEnemyMob enemy = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
         this.board.enemies().setEnemies(new EnemyMob[]{enemy});
@@ -394,7 +392,6 @@ class PulseTowerTest {
 
         int revealed = applied(enemy, EffectKind.REVEALED).getFirst().remainingTicks();
         assertThat(revealed).isGreaterThan(FieldMode.LINGER_TICKS);
-        assertThat(applied(enemy, EffectKind.UNVEILED)).singleElement().extracting(Effect::remainingTicks).isEqualTo(revealed);
     }
 
     @Test

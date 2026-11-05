@@ -69,8 +69,8 @@
   through the hex's sink instead. A heal only adds to the stat.
 - Regeneration below zero is a crumble (`CrumbleTrait`): lost on the mob's own tick at the stat's raw value, spirit
   playing no part, and a crumble to nothing is a kill. A rewind (`RewindAction`) reads `MobHealth`'s history, written
-  every few ticks as far back as `RewindAction.LONGEST_TICKS`, and counts as a heal: kept out like one, inverted like
-  one.
+  every few ticks as far back as `RewindAction.LONGEST_TICKS`, and counts as a heal: worth what spirit makes it, and
+  inverted like one.
 - What an ability puts on others comes from that ability on that mob (`AbilityState.source`, `Effect.from`), so a
   per-source kind such as a heal adds up across casters and only refreshes on a recast.
 - An ability that leaves ground behind it is a `LeaveZoneAction` (`td.zone` does the rest); never a new mob or a

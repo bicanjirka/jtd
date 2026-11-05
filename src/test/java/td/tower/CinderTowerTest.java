@@ -17,6 +17,7 @@ import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
+import td.tower.cinder.ThermalShockMechanic;
 import td.util.GameWorld;
 import td.util.RandomSource;
 import td.util.TickRate;
@@ -570,21 +571,58 @@ class CinderTowerTest {
     }
 
     @Test
-    void thermalShockAndThePyromancersMarkTuneThePoolAndShockChillsNeighboursOfAFrozenBurningEnemy() {
+    void thermalShockLandsWhatIsLeftOfADeadEnemysBurnOnItsNeighboursAndChillsThem() {
         CinderTower tower = this.towerAt(3, 3);
         UpgradePaths.buy(tower, this.context, "Thermal Shock");
-        FakeEnemyMob target = FakeEnemyMob.at(150, 112);
+        FakeEnemyMob dying = FakeEnemyMob.at(150, 112);
         FakeEnemyMob neighbour = FakeEnemyMob.at(150, 130);
-        this.context.enemies().setEnemies(new EnemyMob[]{target, neighbour});
+        this.context.enemies().setEnemies(new EnemyMob[]{dying});
         tickThrough(tower, 1, 1 + TRAVEL);
-        float burstShare = burns(target).getFirst().tuning().freezeBurstShare();
+        Effect burn = burns(dying).getFirst();
+        this.context.enemies().setEnemies(new EnemyMob[]{dying, neighbour});
 
-        target.expire(EffectKind.BURN);
-        target.reportFrozen();
+        dying.invalidate();
         tower.doTick(2 + TRAVEL);
 
-        assertThat(burstShare).isGreaterThan(PoolTuning.standard().freezeBurstShare());
+        assertThat(neighbour.hits()).singleElement().extracting(Damage::amount)
+                .isEqualTo(Math.round(burn.remainingPoolDamage() * ThermalShockMechanic.BURST_SHARE));
         assertThat(neighbour.activeEffectKinds()).contains(EffectKind.CHILL);
+    }
+
+    @Test
+    void thermalShockFiresOnceForEachDeath() {
+        CinderTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Thermal Shock");
+        FakeEnemyMob dying = FakeEnemyMob.at(150, 112);
+        FakeEnemyMob neighbour = FakeEnemyMob.at(150, 130);
+        this.context.enemies().setEnemies(new EnemyMob[]{dying});
+        tickThrough(tower, 1, 1 + TRAVEL);
+        this.context.enemies().setEnemies(new EnemyMob[]{dying, neighbour});
+        dying.invalidate();
+
+        tower.doTick(2 + TRAVEL);
+        int hitsAfterTheShock = neighbour.hits().size();
+        tower.doTick(3 + TRAVEL);
+
+        assertThat(hitsAfterTheShock).isEqualTo(1);
+        assertThat(neighbour.hits()).hasSize(1);
+    }
+
+    @Test
+    void thermalShockDoesNotFireOnALeak() {
+        CinderTower tower = this.towerAt(3, 3);
+        UpgradePaths.buy(tower, this.context, "Thermal Shock");
+        FakeEnemyMob leaving = FakeEnemyMob.at(150, 112);
+        FakeEnemyMob neighbour = FakeEnemyMob.at(150, 130);
+        this.context.enemies().setEnemies(new EnemyMob[]{leaving});
+        tickThrough(tower, 1, 1 + TRAVEL);
+        this.context.enemies().setEnemies(new EnemyMob[]{leaving, neighbour});
+
+        leaving.leak();
+        tower.doTick(2 + TRAVEL);
+
+        assertThat(neighbour.hits()).isEmpty();
+        assertThat(neighbour.activeEffectKinds()).doesNotContain(EffectKind.CHILL);
     }
 
     @Test

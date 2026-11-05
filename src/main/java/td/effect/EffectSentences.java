@@ -7,7 +7,6 @@ import td.term.TermText;
 import td.util.TickRate;
 
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -21,17 +20,13 @@ final class EffectSentences {
     static TermText of(EffectKind kind) {
         return switch (kind) {
             case CHILL -> TermText.of("slows by its level, up to " + TermNumbers.percent(ActiveEffects.MAX_CHILL)
-                    + ", and fades; at its most it takes " + TermNumbers.percent(ActiveEffects.BURN_CHILL_DAMPENING)
-                    + " off the damage of ").plus(kinds(EffectKind::isBurning, " and "));
+                    + ", and fades");
             case BURN -> TermText.of("damage over time that fades; a top-up adds less the fuller it is, up to "
                     + TermNumbers.times(PoolTuning.standard().capFactor()) + " its strongest application; it adds a stack of ")
-                    .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS) + " while it lasts, and ")
-                    .plus(EffectKind.FREEZE).plus(" puts it out, landing at least "
-                            + TermNumbers.percent(EffectInteractions.FREEZE_BURST_FLOOR) + " of what is left at once");
-            case FREEZE -> TermText.of("stops it where it stands and keeps its abilities from firing; it removes ")
-                    .plus(EffectKind.CHILL).plus(" and lasts longer by its level, and puts out ")
-                    .plus(kinds(EffectKind::isBurning, " and ")).plus("; within "
-                            + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts " + ladder(kind));
+                    .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
+                            + " while it lasts, and every tower can see and aim at it");
+            case FREEZE -> TermText.of("stops it where it stands and keeps its abilities from firing; within "
+                    + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts " + ladder(kind));
             case SHIELD -> TermText.of("takes a hit before armor does, until its amount is spent or it runs out; more ")
                     .plus(EnemyStat.SPIRIT).plus(" makes it hold more, shields from different sources add up, and damage that"
                             + " ticks goes past it");
@@ -42,10 +37,9 @@ final class EffectSentences {
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
                     .plus(", up to " + kind.maxStacks() + " stacks");
-            case REVEALED -> TermText.of("every tower can see and aim at it, and it counts as having ")
-                    .plus(EffectKind.EXPOSED);
-            case POISON -> TermText.of("damage over time that fades, and a slow of up to "
-                    + TermNumbers.percent(ActiveEffects.POISON_MAX_SLOW) + " while it is full; it adds a stack of ")
+            case REVEALED -> TermText.of("every tower can see and aim at it, and it can't gain ")
+                    .plus(EffectKind.INVISIBLE);
+            case POISON -> TermText.of("damage over time that fades; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS) + " while it lasts");
             case SCORCHED -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE))
@@ -71,7 +65,6 @@ final class EffectSentences {
                     .plus(", up to " + kind.maxStacks() + "; it loses a stack every "
                             + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
             case DAZED -> TermText.of("stops it and keeps its abilities from firing, like ").plus(EffectKind.FREEZE)
-                    .plus(", but leaves its ").plus(EffectKind.BURN).plus(" and ").plus(EffectKind.CHILL)
                     .plus("; within " + seconds(DiminishingReturns.WINDOW_TICKS) + ", each fresh one lasts "
                             + ladder(kind));
             case SATURATED -> TermText.of("each stack makes a Burst's blasts hit it harder");
@@ -81,22 +74,10 @@ final class EffectSentences {
             case DOOM -> TermText.of("when it ends, it takes a share of all the damage it took while it lasted");
             case BLIGHT -> TermText.of("it has ").plus(EffectKind.POISON).plus(" for as long as this lasts");
             case CONTAGION -> TermText.of("when it dies, its hexes and debuffs jump to the enemies nearest it");
-            case RIME -> TermText.of("a ").plus(EffectKind.FREEZE).plus(" on it buys "
-                    + TermNumbers.times(EffectInteractions.freezeLengthFactor(EnumSet.of(EffectKind.RIME), 1f) - 1f)
-                    + " the extra time from ").plus(EffectKind.CHILL).plus(", and lands all of its ")
-                    .plus(kinds(EffectKind::isBurning, " or ")).plus(" at once instead of putting it out; ")
-                    .plus(EffectKind.ASH).plus(" replaces it");
-            case ASH -> TermText.of("its ").plus(kinds(EffectKind::isFuelPool, " and ")).plus(" hold "
-                    + TermNumbers.times(EffectInteractions.poolFactor(EnumSet.of(EffectKind.ASH)))
-                    + " as much and add their stacks "
-                    + TermNumbers.times(EffectInteractions.poolFactor(EnumSet.of(EffectKind.ASH)))
-                    + " as fast; it takes only "
-                    + TermNumbers.percent(EffectInteractions.chillTaken(EnumSet.of(EffectKind.ASH))) + " of a ")
-                    .plus(EffectKind.CHILL).plus(", and ").plus(EffectKind.FREEZE)
-                    .plus(" can't take hold; ").plus(EffectKind.RIME).plus(" replaces it");
+            case RIME, ASH -> TermText.of("a coven's hex, with no rule of its own");
             case INVERSION -> TermText.of("its ").plus(EnemyStat.REGENERATION)
-                    .plus(" deals it damage instead of restoring health, a ").plus(EffectKind.SHIELD)
-                    .plus(" it receives strikes it instead, and it can't gain ").plus(EffectKind.INVISIBLE);
+                    .plus(" deals it damage instead of restoring health, and a ").plus(EffectKind.SHIELD)
+                    .plus(" it receives strikes it instead");
             case SYMPATHY -> TermText.of("once a second, its ")
                     .plus(kinds(EffectKind::sharedBySympathy, " and "))
                     .plus(" are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower");
@@ -108,9 +89,8 @@ final class EffectSentences {
                             + TermNumbers.percent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).capShareOfBase())
                             + " of its base");
             case UNRAVELED -> stacked(kind, EnemyStat.MAGIC_RESIST);
-            case BRITTLE -> TermText.of("while it has ").plus(EffectKind.FREEZE).plus(": ")
-                    .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
-                            EnemyStat.PHYSICAL_DAMAGE_TAKEN));
+            case BRITTLE -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
+                    EnemyStat.PHYSICAL_DAMAGE_TAKEN);
             case TOLL -> TermText.of("time spent in an Obelisk's field, a stack a second; it sets how strongly the "
                     + "field holds it, and goes soon after it leaves");
             case CORRODED -> TermText.of("each stack: ")
@@ -122,20 +102,14 @@ final class EffectSentences {
                             .percentAdd()), EnemyStat.MOVE_SPEED))
                     .plus(", up to " + kind.maxStacks() + " stacks; it is no ").plus(EffectKind.CHILL)
                     .plus(", and nothing resists it");
-            case UNDERTOW -> TermText.of("a ").plus(EffectKind.FREEZE).plus(" counts it as "
-                    + TermNumbers.percent(EffectInteractions.freezeLengthFactor(EnumSet.of(EffectKind.UNDERTOW), 0f) - 1f)
-                    + " ").plus(EffectKind.CHILL);
             case CONDEMNED -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
                     .plus(", up to " + kind.maxStacks() + " stacks");
             case STILLED -> TermText.of("while it also has ").plus(EffectKind.DAZED)
                     .plus(", the field holding it takes its ").plus(EffectKind.TOLL).plus(" away");
-            case UNVEILED -> TermText.of("it can't gain ").plus(EffectKind.INVISIBLE);
-            case DEAD_ZONE -> TermText.of(EffectKind.HEAL).plus(" and ").plus(EffectKind.SHIELD)
-                    .plus(" can't take hold");
-            case FALLOUT -> TermText.of(EffectKind.HEAL).plus(" can't take hold; ").plus(EffectKind.SHIELD)
-                    .plus(" still can");
+            case DEAD_ZONE -> changes(TermNumbers.signed(kind.rule().perStack().get(EnemyStat.SPIRIT).setTo()), EnemyStat.SPIRIT)
+                    .plus(", so ").plus(EffectKind.HEAL).plus(" and ").plus(EffectKind.SHIELD).plus(" are worth nothing");
             case FRAIL -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
@@ -145,15 +119,12 @@ final class EffectSentences {
                     .plus(" and ").plus(changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind,
                             EnemyStat.INSULATION))), EnemyStat.INSULATION));
             case TARRED -> changes(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply()),
-                    EnemyStat.MOVE_SPEED).plus("; a ").plus(kinds(EffectKind::isBurning, " or ")).plus(" it catches starts at "
-                    + TermNumbers.times(EffectInteractions.fireStartFactor(EnumSet.of(EffectKind.TARRED))) + ", and a ")
-                    .plus(EffectKind.FREEZE).plus(" lasts "
-                            + seconds(EffectInteractions.freezeExtraTicks(EnumSet.of(EffectKind.TARRED))) + " longer");
+                    EnemyStat.MOVE_SPEED);
             case BLEEDING -> TermText.of("physical damage for every cell it travels; standing still, it takes none");
             case SOULFIRE -> TermText.of("damage over time in a pool of its own beside ").plus(EffectKind.BURN)
                     .plus(" and ").plus(EffectKind.POISON).plus("; nothing resists it, it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
-                            + " while it lasts, and ").plus(EffectKind.FREEZE).plus(" puts it out");
+                            + " while it lasts, and every tower can see and aim at it");
             case SPRINTING -> changes(
                     TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd()),
                     EnemyStat.MOVE_SPEED);
@@ -163,7 +134,7 @@ final class EffectSentences {
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)), EnemyStat.SPIRIT),
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.MAGIC_RESIST)), EnemyStat.MAGIC_RESIST)));
             case HASTENED -> changes(TermNumbers.times(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).multiply()),
-                    EnemyStat.MOVE_SPEED).plus(", and no slow can take hold; ").plus(EffectKind.FREEZE).plus(" and ")
+                    EnemyStat.MOVE_SPEED).plus("; ").plus(EffectKind.FREEZE).plus(" and ")
                     .plus(EffectKind.DAZED).plus(" still stop it");
         };
     }

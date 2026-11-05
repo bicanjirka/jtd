@@ -115,15 +115,12 @@ public final class DevEffects {
             case HASTENED -> timed(Effect::hastened);
             case UNYIELDING -> timed(Effect::unyielding);
             case REVEALED -> timed(Effect::revealed);
-            case UNVEILED -> timed(Effect::unveiled);
             case SILENCED -> timed(Effect::silenced);
             case ANCHORED -> timed(Effect::anchored);
-            case UNDERTOW -> timed(Effect::undertow);
             case BRITTLE -> timed(Effect::brittle);
             case CRACKED -> timed(Effect::cracked);
             case TARRED -> timed(Effect::tarred);
             case DEAD_ZONE -> timed(Effect::deadZone);
-            case FALLOUT -> timed(Effect::fallout);
             case EXPOSED -> timed(Effect::exposed);
             case MARKED -> timed(Effect::marked);
             case PRIORITY -> timed(Effect::priority);

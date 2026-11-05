@@ -91,6 +91,19 @@ class SeekerTowerTest {
                 .isEqualTo(effectOn(target, EffectKind.FREEZE).remainingTicks());
     }
 
+    @Test
+    void brittleLandsOnlyWithAFreezeThatLands() {
+        SeekerTower tower = this.seekerWith("Brittle");
+        FakeEnemyMob immune = FakeEnemyMob.at(100, 100).immuneTo(EffectKind.FREEZE);
+        this.context.enemies().setEnemies(new EnemyMob[]{immune});
+
+        tower.doTick(1);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(immune.hits()).isNotEmpty();
+        assertThat(immune.activeEffectKinds()).doesNotContain(EffectKind.FREEZE, EffectKind.BRITTLE);
+    }
+
     /** Ticks {@code tower} until it has launched {@code missiles}, then flies them all. */
     private void fireAndFly(SeekerTower tower, int missiles) {
         int launched = 0;

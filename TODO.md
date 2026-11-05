@@ -488,8 +488,7 @@ The Mortar's and Cinder's prices, damage, cooldowns, radii and node bonuses come
 plausible, not tuned: a zone's radius, length and pulse (twice a second), tar's 40% slow and poison
 share, frost's chill and the 2 s before it freezes, fallout's Sickened stacks, napalm's and tar's damage
 share of the Mortar, how much shrapnel, bomblets and bleeding do, the nuke's flash, Lingering Flames'
-patch, the burn level above which a fire reveals an invisible enemy, and the Cinder's Thermal Shock
-chill. Nothing has been played against waves, and the Mortar's slow shell is untested against fast
+patch, and the Cinder's Thermal Shock radius and chill. Nothing has been played against waves, and the Mortar's slow shell is untested against fast
 enemies.
 
 The Cinder had a pass with `td.BuildHarness` (40 seeds, the three built-in levels): Soulfire now burns every wave
@@ -513,7 +512,7 @@ What it showed and what is left:
 
 - **Where:** the `private static final` constants in `MortarTower`, `CinderTower`, `td.zone.Zone`,
   `td.zone.ZoneEffects`, `td.tower.mortar.ShellType` and the perks under `td.tower.mortar` and
-  `td.tower.cinder`, and `ActiveEffects.BURN_REVEAL_FUEL`.
+  `td.tower.cinder`.
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries. The zone roster
   has no cap; `td.PerformanceHarness zones` (Barrage of Napalm and Lingering Flames on every tower) peaks at
   67 zones and sits at about a fifth of the tick budget, so a cap is not needed yet. Re-run it after raising
@@ -522,14 +521,14 @@ What it showed and what is left:
 ### Effect and specialization numbers are unbalanced placeholders
 
 Every number the effect-interactions and specialization work introduced was chosen to be plausible,
-not tuned: vulnerable (+15% per stack, cap 3, 4 s), the chill cap (80%), how far a chill cuts a burn (half
-at the cap), poison's damage (10% of weapon damage per tick, 4 s), its slow (up to 30%) and the half-second
+not tuned: vulnerable (+15% per stack, cap 3, 4 s), the chill cap (80%), poison's damage (10% of weapon
+damage per tick, 4 s) and the half-second
 stack interval of burning and poisoned, revealed (3 s from Wide Band, 2 s from Resonant Field II),
 Momentum's cooldown cut and 5 s, the shatter and explosion share and radius, shrapnel's ring width and
 share, Warding Field's 10% chance, Withering Field's interval, Long Reach II's scaling, and Splash's three
 blasts. Burning's resilience loss (-1 per stack) and poisoned's spirit loss (-1 per stack) grow without
-limit up to their stat floors of -100. Scorched and Sickened hold while a pool that earns them is active, then lose a stack per second at neutral
-spirit (one per 20 ticks, `ActiveEffects.STACK_DECAY_INTERVAL_TICKS`); at -100 spirit they never wear off.
+limit up to their stat floors of -100. Scorched and Sickened hold while a pool that earns them is active, then lose a stack per second
+(one per 20 ticks, `ActiveEffects.STACK_DECAY_INTERVAL_TICKS`).
 A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s of steady burning.
 
 - Cracked takes a flat 5 points of plating and insulation (its `EffectKind.CRACKED` row), a starting value.

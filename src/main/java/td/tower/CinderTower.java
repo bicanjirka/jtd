@@ -446,7 +446,8 @@ public final class CinderTower extends AbstractTower {
 
     /**
      * Keeps track of the enemies it burns: forgets the ones whose fire has been out too long, tops up
-     * pools Everburn holds, and lets Thermal Shock chill the neighbours of one that froze while it burned.
+     * pools Everburn holds, and lets Thermal Shock land what is left of the burn on one that dies. Each entry
+     * goes the tick it is seen dead, so a death the shock itself causes shocks once and the chain ends.
      */
     private void tendBurning(CinderSpec spec) {
         Iterator<Map.Entry<EnemyMob, Burning>> entries = this.burning.entrySet().iterator();
@@ -457,20 +458,18 @@ public final class CinderTower extends AbstractTower {
             boolean onFire = enemy.hasEffect(EffectKind.BURN) || enemy.hasEffect(EffectKind.SOULFIRE);
             if (enemy.isDead()) {
                 entries.remove();
+                if (spec.thermalShock() > 0f && enemy.wasKilled()) {
+                    this.shock(enemy, spec.thermalShock());
+                }
                 continue;
             }
             if (onFire) {
                 entry.lastBurningTick = this.tickNow;
-                entry.wasBurning = true;
                 if (spec.everburnFloor() > 0f) {
                     this.holdPools(enemy, spec);
                 }
                 continue;
             }
-            if (entry.wasBurning && spec.thermalShock() && enemy.hasEffect(EffectKind.FREEZE)) {
-                this.chillAround(enemy);
-            }
-            entry.wasBurning = false;
             if (this.tickNow - entry.lastBurningTick > this.stats().value(TowerStat.STOKE_GRACE)) {
                 entries.remove();
             }
@@ -502,11 +501,21 @@ public final class CinderTower extends AbstractTower {
         }
     }
 
-    private void chillAround(EnemyMob frozen) {
+    /** What is left of the burn {@code dead} carried, at {@code share}, lands on its neighbours, and they are chilled. */
+    private void shock(EnemyMob dead, float share) {
+        for (Effect pool : dead.activeEffects()) {
+            if (pool.kind() == EffectKind.BURN) {
+                this.burstOnto(dead, Math.round(pool.remainingPoolDamage() * share), THERMAL_SHOCK_RADIUS_CELLS);
+                this.chillAround(dead);
+            }
+        }
+    }
+
+    private void chillAround(EnemyMob centre) {
         float radius = THERMAL_SHOCK_RADIUS_CELLS * this.context.getBoard().scale();
-        for (EnemyMob other : InRangeTargetQuery.everyone((int) frozen.getX(), (int) frozen.getY(), radius)
+        for (EnemyMob other : InRangeTargetQuery.everyone((int) centre.getX(), (int) centre.getY(), radius)
                 .matching(this.context.enemies())) {
-            if (other != frozen) {
+            if (other != centre) {
                 this.applyEffect(other, sink -> Effect.chill(THERMAL_SHOCK_CHILL, THERMAL_SHOCK_CHILL_TICKS, sink));
             }
         }
@@ -572,7 +581,6 @@ public final class CinderTower extends AbstractTower {
         private int steps;
         private int lastBurningTick;
         private int lastVulnerableTick = Integer.MIN_VALUE / 2;
-        private boolean wasBurning;
         private boolean hot;
 
         private Burning(int tick) {

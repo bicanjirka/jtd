@@ -7,6 +7,8 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
+import td.stat.EnemyStat;
+import td.stat.StatCurves;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -74,7 +76,7 @@ class RewindTest {
     }
 
     @Test
-    void whatKeepsHealsOutKeepsARewindOut() {
+    void aRewindIsWorthNothingAtTheLowestSpirit() {
         DefinedEnemyMob keeper = this.rewinding(new SelfTarget());
         int full = keeper.getHealth();
         keeper.applyEffect(Effect.deadZone(LONG, DamageSink.none()));
@@ -82,6 +84,20 @@ class RewindTest {
         this.hurtBeforeTheWindowThenCast(keeper, full / 2);
 
         assertThat(keeper.getHealth()).isEqualTo(full - full / 2);
+    }
+
+    @Test
+    void aRewindGivesBackWhatSpiritMakesItWorth() {
+        DefinedEnemyMob keeper = this.rewinding(new SelfTarget());
+        int full = keeper.getHealth();
+        int lost = full / 2;
+        keeper.applyEffect(Effect.sickened(50));
+
+        this.hurtBeforeTheWindowThenCast(keeper, lost);
+
+        float worth = StatCurves.restoreFactor(keeper.stats().value(EnemyStat.SPIRIT));
+        assertThat(worth).isBetween(0f, 1f);
+        assertThat(keeper.getHealth()).isEqualTo(full - lost + Math.round(lost * worth));
     }
 
     @Test

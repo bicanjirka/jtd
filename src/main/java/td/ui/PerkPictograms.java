@@ -96,7 +96,7 @@ final class PerkPictograms {
             // Ward
             Map.entry("pulse.head.ward.1", "=effect.revealed"),
             // True Sight
-            Map.entry("pulse.head.ward.4a", "=effect.unveiled"),
+            Map.entry("pulse.head.ward.4a", "S M3 14.6C6.6 9.6 17.4 9.6 21 14.6C17.4 19.6 6.6 19.6 3 14.6Z ; F O12 14.6 2.6 ; S M12 2.6V6 M5.4 4.6L7.2 7.6 M18.6 4.6L16.8 7.6"),
             // Purge
             Map.entry("pulse.head.ward.4b", "F M11 3.4L4.2 6V11.2C4.2 13.8 5.2 16 6.8 17.6L9.6 12.8L8.6 8.4Z ; F M13 3.4L19.8 6V11.2C19.8 13.8 18.8 16 17.2 17.6L14.4 12.8L15.4 8.4Z ; F M7.8 19.2L10.6 14.4H13.4L16.2 19.2C15 20.2 13.6 21 12 21.6C10.4 21 9 20.2 7.8 19.2Z"),
             // Bite

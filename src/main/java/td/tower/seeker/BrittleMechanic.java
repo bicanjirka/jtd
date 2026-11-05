@@ -6,7 +6,7 @@ import td.term.TermText;
 
 import java.util.Set;
 
-/** Brittle: a frozen enemy takes extra physical damage. */
+/** Brittle: a freeze that lands also leaves the enemy taking extra physical damage. */
 public final class BrittleMechanic implements SeekerMechanic {
 
     @Override
@@ -21,6 +21,7 @@ public final class BrittleMechanic implements SeekerMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("an enemy with ").plus(EffectKind.FREEZE).plus(" gains ").plus(EffectKind.BRITTLE);
+        return TermText.of("an enemy it gives ").plus(EffectKind.FREEZE).plus(" gains ").plus(EffectKind.BRITTLE)
+                .plus(" for as long");
     }
 }

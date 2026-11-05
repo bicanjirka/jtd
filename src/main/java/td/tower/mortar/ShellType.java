@@ -87,8 +87,8 @@ public enum ShellType {
                     .plus(" and ").plus(EffectKind.POISON);
             case CRYO -> TermText.of("it leaves frost " + this.zoneText() + " that applies ").plus(EffectKind.CHILL)
                     .plus(", and ").plus(EffectKind.FREEZE).plus(" to an enemy that stays");
-            case NUKE -> TermText.of("it leaves ").plus(EffectKind.FALLOUT)
-                    .plus(" over " + TermNumbers.percent(this.zone.orElseThrow().blastShare()) + " of the blast for "
+            case NUKE -> TermText.of("it leaves fallout that applies ").plus(EffectKind.DEAD_ZONE).plus(" and ")
+                    .plus(EffectKind.SICKENED).plus(" over " + TermNumbers.percent(this.zone.orElseThrow().blastShare()) + " of the blast for "
                             + TermNumbers.seconds(this.zone.orElseThrow().lifetimeTicks() / (float) TickRate.TICKS_PER_SECOND));
         };
     }

@@ -4,7 +4,7 @@ package td.effect;
 public enum EffectTag {
     /** Stops the enemy where it stands and keeps it from casting. */
     STOPS,
-    /** A fire: the pools a freeze puts out and a chill cools. */
+    /** A fire: a pool that reveals its carrier. */
     BURNING,
     /** A curse carries it on to the next enemy when its carrier dies. */
     SPREADS_WITH_CURSE,
