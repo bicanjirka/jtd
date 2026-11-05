@@ -8,7 +8,6 @@ import javax.swing.GroupLayout;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -36,7 +35,7 @@ public class GameBoard extends JPanel {
 
     public void paint(Graphics g) {
         // The zoomed frame can stop a pixel short of the component's edge.
-        g.setColor(Color.BLACK);
+        g.setColor(Hud.BACKGROUND);
         g.fillRect(0, 0, this.getWidth(), this.getHeight());
         Graphics2D g2 = (Graphics2D) g.create();
         try {

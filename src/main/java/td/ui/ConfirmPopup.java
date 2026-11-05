@@ -35,7 +35,7 @@ public final class ConfirmPopup extends JPanel {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final Color BACKGROUND = new Color(8, 14, 8);
+    private static final Color BACKGROUND = Hud.RAISED;
 
     private final transient JLayeredPane layer;
     private final transient Runnable onConfirm;

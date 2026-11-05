@@ -27,8 +27,8 @@ import java.io.Serial;
 public class BoardOverlays {
 
     private static final Color BANNER_FILL = new Color(0, 0, 0, 210);
-    private static final Color BANNER_EDGE = new Color(120, 200, 120);
-    private static final Color BANNER_TEXT = new Color(220, 255, 220);
+    private static final Color BANNER_EDGE = new Color(189, 189, 193);
+    private static final Color BANNER_TEXT = Hud.FOREGROUND;
     private static final int CORNER_RADIUS = 14;
 
     private final JPanel lostPanel;

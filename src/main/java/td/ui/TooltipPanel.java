@@ -30,7 +30,7 @@ final class TooltipPanel extends JPanel {
     static final int VALUE_GAP = 12;
     /** Text measured to fractions of a pixel wraps in a pane cut to exactly its rounded width. */
     private static final int TEXT_SLACK = 2;
-    private static final Color BACKGROUND = new Color(8, 14, 8);
+    private static final Color BACKGROUND = Hud.RAISED;
     private static final float EXPIRED_ALPHA = 0.45f;
 
     @Serial

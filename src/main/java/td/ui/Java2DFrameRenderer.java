@@ -95,14 +95,14 @@ public final class Java2DFrameRenderer {
     /** A free cell the credits can't build the tower on yet: amber, apart from the red of a cell nothing builds on. */
     private static final Color CELL_SHORT = new Color(255, 170, 60);
     private static final Color CELL_RANGE = new Color(250, 250, 210, 150);
-    /** The HUD's dark grey-green, so the dev grid reads as part of the panel chrome. */
-    private static final Color CELL_GRID_LINE = new Color(48, 60, 48);
+    /** The HUD's own border, so the dev grid reads as part of the panel chrome. */
+    private static final Color CELL_GRID_LINE = Hud.BORDER_DISABLED;
     /** A Ley Line's width, and the dash it is drawn with once the player has pinned it. */
     private static final float LEY_LINE_STROKE = 2f;
     private static final float[] LEY_LINE_DASH = {6f, 5f};
-    private static final Color CELL_BLOCKED = new Color(26, 34, 26);
+    private static final Color CELL_BLOCKED = new Color(39, 39, 40);
     /** An info-panel glyph for a stat nothing on the board marks. */
-    private static final Color UNMARKED_GLYPH = new Color(150, 170, 150);
+    private static final Color UNMARKED_GLYPH = Hud.TEXT_PROSE;
     private static final float HOLLOW_GLYPH_STROKE_WIDTH = 1.3f;
     /** A dot is a small mark, not a body. */
     private static final float DOT_GLYPH_SIZE_FRACTION = 0.4f;
@@ -451,7 +451,7 @@ public final class Java2DFrameRenderer {
             case TOWER_AURA_RALLY -> new Color(255, 170, 60);
             case TOWER_AURA_MENTEE -> new Color(255, 215, 90);
             case TOWER_UPGRADE_CORE -> new Color(127, 212, 255);
-            case TOWER_UPGRADE_BASE -> new Color(140, 255, 140);
+            case TOWER_UPGRADE_BASE -> new Color(225, 225, 230);
             case TOWER_UPGRADE_HEAD -> new Color(255, 200, 60);
             case TOWER_UPGRADE_SPECIAL -> new Color(200, 100, 255);
             case TOWER_TRANSCENDENT -> new Color(255, 205, 70);
@@ -584,25 +584,25 @@ public final class Java2DFrameRenderer {
             case TERM_FRAME_WEAKNESS -> new Color(185, 120, 255);
             case TERM_FRAME_HEX -> new Color(255, 80, 200);
             case TERM_FRAME_MARK -> new Color(255, 210, 80);
-            case TERM_FRAME_BOON -> new Color(90, 220, 120);
+            case TERM_FRAME_BOON -> new Color(203, 203, 207);
             case TERM_FRAME_TRAIT -> new Color(170, 178, 190);
             case TERM_FRAME_ABILITY -> new Color(215, 160, 90);
-            case TERM_FRAME_TOWER_BUFF -> new Color(100, 230, 200);
+            case TERM_FRAME_TOWER_BUFF -> new Color(217, 217, 221);
             case TERM_FRAME_TOWER_DEBUFF -> new Color(235, 90, 200);
-            case TERM_FRAME_MECHANIC -> new Color(200, 210, 200);
-            case TERM_FRAME_STATUS -> new Color(150, 172, 150);
-            case TERM_STATUS_WAVE -> new Color(200, 230, 200);
+            case TERM_FRAME_MECHANIC -> new Color(216, 216, 220);
+            case TERM_FRAME_STATUS -> new Color(173, 173, 176);
+            case TERM_STATUS_WAVE -> new Color(231, 231, 236);
             case TERM_STATUS_LIVES -> new Color(255, 110, 130);
             case TERM_STATUS_SCORE -> new Color(255, 210, 80);
-            case TERM_STATUS_CASH -> new Color(110, 220, 110);
+            case TERM_STATUS_CASH -> new Color(205, 205, 209);
             case ROUND_SKULL -> new Color(226, 220, 200);
             case ROUND_SKULL_VETERAN -> new Color(130, 200, 255);
             case ROUND_SKULL_ELITE -> new Color(255, 196, 60);
             case ROUND_SKULL_BOSS -> new Color(200, 120, 255);
             case ROUND_SKULL_UNIQUE -> new Color(255, 70, 150);
-            case ROUND_CLEARED -> new Color(105, 112, 105);
+            case ROUND_CLEARED -> new Color(116, 116, 118);
             case ROUND_LEAKED -> new Color(225, 70, 70);
-            case ROUND_CURRENT -> new Color(200, 230, 200);
+            case ROUND_CURRENT -> new Color(231, 231, 236);
             case TERM_IMMUNE -> new Color(255, 96, 86);
             case TERM_SPAWN -> new Color(220, 200, 160);
             case TERM_FRENZY -> new Color(255, 140, 60);
@@ -616,9 +616,9 @@ public final class Java2DFrameRenderer {
             case TERM_LEY_LINE -> new Color(255, 170, 40);
             case TERM_INTERFERENCE -> new Color(200, 140, 90);
             case TERM_SHRAPNEL -> new Color(190, 160, 120);
-            case TERM_BASE_PERK -> new Color(200, 230, 200);
+            case TERM_BASE_PERK -> new Color(231, 231, 236);
             case SELECTION -> new Color(255, 255, 255);
-            case UPGRADE_GATE_MET -> new Color(140, 255, 140);
+            case UPGRADE_GATE_MET -> Hud.FOREGROUND;
             case UPGRADE_GATE_UNMET -> new Color(255, 120, 120);
         };
     }

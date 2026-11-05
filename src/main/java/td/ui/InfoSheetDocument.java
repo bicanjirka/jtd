@@ -38,15 +38,14 @@ import java.util.Optional;
 final class InfoSheetDocument {
 
     private static final Color VALUE_COLOR = Hud.FOREGROUND;
-    private static final Color PROSE_COLOR = new Color(150, 170, 150);
+    private static final Color PROSE_COLOR = Hud.TEXT_PROSE;
     private static final Color LABEL_COLOR = PROSE_COLOR;
-    private static final Color GLOSS_COLOR = new Color(118, 140, 118);
+    private static final Color GLOSS_COLOR = Hud.TEXT_GLOSS;
     private static final Color GONE_COLOR = new Color(255, 120, 120);
-    private static final Color BETTER_COLOR = new Color(140, 255, 140);
     private static final Color WORSE_COLOR = GONE_COLOR;
-    private static final Color BAR_BACKGROUND = new Color(12, 22, 12);
-    private static final Color BAR_FILL = new Color(52, 122, 52);
-    private static final Color BAR_FILL_GONE = new Color(60, 66, 60);
+    private static final Color BAR_BACKGROUND = new Color(28, 28, 29);
+    private static final Color BAR_FILL = new Color(113, 113, 115);
+    private static final Color BAR_FILL_GONE = new Color(70, 70, 71);
     private static final Font BAR_FONT = new Font(Font.DIALOG, Font.PLAIN, 10);
     private static final int GLYPH_BOX = 11;
     private static final float GLYPH_SIZE = 4.2f;
@@ -243,8 +242,7 @@ final class InfoSheetDocument {
         this.mark(row.glyph(), row.tone(), row.face());
         this.insert(" " + row.label(), colored(LABEL_COLOR));
         Color valueColor = switch (row.trend()) {
-            case NONE -> VALUE_COLOR;
-            case BETTER -> BETTER_COLOR;
+            case NONE, BETTER -> VALUE_COLOR;
             case WORSE -> WORSE_COLOR;
         };
         if (!row.value().isEmpty()) {

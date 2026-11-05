@@ -62,7 +62,7 @@ keeps the seam honest.
   override `paintComponent` without calling `super`, so the look-and-feel paints nothing but its
   listeners still work. A control varies only by its foreground (text) colour and its `ControlFace`: a
   button (a command: square, neutral border) or a tile (something to buy or pick: rounded, bordered in its
-  accent), and its key chip. Neutrals are `Hud`'s green-tinted greys everywhere, the upgrade tree and the
+  accent), and its key chip. Neutrals are `Hud`'s greys everywhere, the upgrade tree and the
   level cards included; hover brightens a border on every control.
 - Every component is `@ThreadConfined(EVENT_DISPATCH_THREAD)`. Nothing here is touched from tick
   code; per-frame cosmetics run on the EDT render pulse (`TowerDefense.repaintPublishedFrame`).

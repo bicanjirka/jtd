@@ -79,25 +79,25 @@ final class UpgradeTreePainter {
     private static final Color DROP = new Color(255, 90, 90);
     private static final Color SHORT = Hud.SHORT;
     private static final Color WARN = new Color(255, 138, 138);
-    // The neutrals are the HUD's green-tinted greys, darkest for what is locked out.
-    private static final Color LINK_IDLE = new Color(50, 66, 50);
-    private static final Color LINK_OUT = new Color(30, 40, 30);
+    // The neutrals are the HUD's greys, darkest for what is locked out.
+    private static final Color LINK_IDLE = new Color(67, 67, 68);
+    private static final Color LINK_OUT = new Color(44, 44, 45);
     private static final Color ROOT_IDLE = Hud.BORDER_IDLE;
     private static final Color DIAMOND_IDLE = Hud.CHIP_BORDER;
-    private static final Color DIAMOND_OUT = new Color(38, 50, 38);
-    private static final Color SEALED_BORDER = new Color(64, 84, 64);
-    private static final Color SEALED_FILL = new Color(14, 20, 14);
-    private static final Color SEALED_INK = new Color(112, 138, 112);
-    private static final Color OUT_BORDER = new Color(38, 50, 38);
-    private static final Color OUT_FILL = new Color(10, 14, 10);
-    private static final Color OUT_HATCH = new Color(20, 28, 20);
-    private static final Color OUT_INK = new Color(64, 82, 64);
-    private static final Color BUY_FILL = new Color(12, 22, 12);
-    private static final Color WAIT_FILL = new Color(5, 8, 5);
-    private static final Color RING_TRACK = new Color(32, 44, 32);
+    private static final Color DIAMOND_OUT = new Color(53, 53, 54);
+    private static final Color SEALED_BORDER = new Color(84, 84, 86);
+    private static final Color SEALED_FILL = new Color(27, 27, 28);
+    private static final Color SEALED_INK = new Color(138, 138, 141);
+    private static final Color OUT_BORDER = new Color(53, 53, 54);
+    private static final Color OUT_FILL = new Color(23, 23, 23);
+    private static final Color OUT_HATCH = new Color(33, 33, 34);
+    private static final Color OUT_INK = new Color(83, 83, 85);
+    private static final Color BUY_FILL = new Color(28, 28, 29);
+    private static final Color WAIT_FILL = new Color(19, 19, 19);
+    private static final Color RING_TRACK = new Color(47, 47, 48);
     private static final Color BADGE_FILL = new Color(7, 21, 32);
-    private static final Color XP_TRACK = new Color(20, 32, 20);
-    private static final Color XP_FILL = new Color(155, 224, 155);
+    private static final Color XP_TRACK = new Color(36, 36, 37);
+    private static final Color XP_FILL = new Color(216, 216, 220);
     private static final float HOVER_FILL = 0.12f;
     private static final float HOVER_BORDER = 0.35f;
     private static final Font XP_FONT = new Font(Font.DIALOG, Font.PLAIN, 10);
@@ -224,7 +224,7 @@ final class UpgradeTreePainter {
         Shape diamond = AffineTransform.getRotateInstance(Math.PI / 4, choice.x(), choice.y())
                 .createTransformedShape(new Rectangle2D.Float(choice.x() - DIAMOND / 2, choice.y() - DIAMOND / 2, DIAMOND,
                         DIAMOND));
-        g.setColor(Color.BLACK);
+        g.setColor(Hud.BACKGROUND);
         g.fill(diamond);
         g.setColor(picked ? head : DIAMOND_IDLE);
         g.draw(diamond);
@@ -259,7 +259,7 @@ final class UpgradeTreePainter {
         Shape diamond = AffineTransform.getRotateInstance(Math.PI / 4, fork.x(), fork.y())
                 .createTransformedShape(new Rectangle2D.Float(fork.x() - FORK_DIAMOND / 2, fork.y() - FORK_DIAMOND / 2,
                         FORK_DIAMOND, FORK_DIAMOND));
-        g.setColor(Color.BLACK);
+        g.setColor(Hud.BACKGROUND);
         g.fill(diamond);
         g.setColor(junction == Look.LOCKED_OUT ? DIAMOND_OUT : DIAMOND_IDLE);
         g.setStroke(new BasicStroke(1.5f));
@@ -489,7 +489,7 @@ final class UpgradeTreePainter {
             case OWNED -> blend(slot, 0.27f);
             case BUYABLE, SHORT_OF_CASH -> BUY_FILL;
             case WAITING -> WAIT_FILL;
-            case NEEDS_PREVIOUS -> Color.BLACK;
+            case NEEDS_PREVIOUS -> Hud.BACKGROUND;
             case SEALED -> SEALED_FILL;
             case LOCKED_OUT -> OUT_FILL;
         };

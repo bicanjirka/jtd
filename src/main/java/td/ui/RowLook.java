@@ -11,7 +11,7 @@ import java.awt.Graphics2D;
 /** How one choice shows in a list row and on its button: its icon, its title's colour and its hint's. */
 record RowLook(Icon icon, Color text, Color hint) {
 
-    private static final Color DIM = new Color(105, 112, 105);
+    private static final Color DIM = new Color(116, 116, 118);
     private static final float DIM_ICON_ALPHA = 0.35f;
 
     /** The same row greyed out, for a choice that can't be taken. */

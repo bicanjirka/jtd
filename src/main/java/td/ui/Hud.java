@@ -32,20 +32,26 @@ import java.awt.geom.RoundRectangle2D;
  */
 public final class Hud {
 
-    static final Color BACKGROUND = Color.BLACK;
-    static final Color FOREGROUND = new Color(220, 255, 220);
+    public static final Color BACKGROUND = new Color(13, 14, 16);
+    public static final Color FOREGROUND = new Color(234, 234, 239);
     static final Font LABEL_FONT = new Font("Dialog", Font.PLAIN, 11);
     static final Font GLYPH_FONT = new Font("Dialog", Font.PLAIN, 14);
-    static final Color BORDER_IDLE = new Color(78, 104, 78);
-    static final Color BORDER_DISABLED = new Color(48, 60, 48);
-    static final Color BORDER_HOVER = new Color(127, 160, 127);
-    static final Color TEXT_DISABLED = new Color(96, 112, 96);
+    static final Color BORDER_IDLE = new Color(103, 103, 105);
+    static final Color BORDER_DISABLED = new Color(62, 62, 63);
+    static final Color BORDER_HOVER = new Color(158, 158, 161);
+    static final Color TEXT_DISABLED = new Color(113, 113, 115);
     /** Secondary text: captions, hints, what is not the value itself. */
-    static final Color TEXT_DIM = new Color(143, 168, 143);
-    static final Color FILL_HOVER = new Color(26, 38, 26);
-    private static final Color FILL_PRESSED = new Color(46, 66, 46);
-    static final Color FILL_SELECTED = new Color(38, 56, 38);
-    static final Color CHIP_BORDER = new Color(111, 143, 111);
+    static final Color TEXT_DIM = new Color(169, 169, 172);
+    /** Sentences. */
+    static final Color TEXT_PROSE = new Color(172, 172, 175);
+    /** Fine print beside a value. */
+    static final Color TEXT_GLOSS = new Color(141, 141, 144);
+    /** What floats above a panel: tooltips and popups. */
+    static final Color RAISED = new Color(23, 23, 23);
+    static final Color FILL_HOVER = new Color(41, 41, 42);
+    static final Color FILL_PRESSED = new Color(66, 66, 67);
+    static final Color FILL_SELECTED = new Color(57, 57, 58);
+    static final Color CHIP_BORDER = new Color(141, 141, 144);
     /** A price the player can't pay now. */
     static final Color SHORT = new Color(255, 107, 107);
     static final Font CHIP_FONT = new Font("Dialog", Font.BOLD, 8);

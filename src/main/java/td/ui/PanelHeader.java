@@ -18,7 +18,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -72,7 +71,7 @@ public class PanelHeader extends JPanel {
 
     public PanelHeader(String titleText) {
         this.setLayout(new BorderLayout());
-        this.setBackground(Color.BLACK);
+        this.setBackground(Hud.BACKGROUND);
         this.setFocusable(false);
         this.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Hud.BORDER_IDLE));
 

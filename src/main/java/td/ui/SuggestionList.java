@@ -39,8 +39,8 @@ final class SuggestionList extends JComponent {
 
     private static final int ROW_HEIGHT = 16;
     private static final int PADDING = 6;
-    private static final Color SELECTED_FILL = new Color(46, 66, 46);
-    private static final Color HINT = new Color(150, 170, 150);
+    private static final Color SELECTED_FILL = Hud.FILL_PRESSED;
+    private static final Color HINT = Hud.TEXT_PROSE;
     private static final int ICON_GAP = 4;
 
     /** Each row's look, by its place in the list. */
