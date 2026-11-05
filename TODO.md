@@ -285,6 +285,20 @@ test that doesn't apply it, then throws the first time it lands on an enemy in p
 
 ## Balance tools
 
+### `TowerLabTest` can time out
+
+Its class setup runs the whole lab, which takes kinds from the built-in catalog, so new content slows a test whose own
+level has two enemies. `measureASmallLevel` takes 8-10 s on a cold JVM against the 5 s limit, so the test fails every
+time when run alone and sometimes in `mvn verify` (once in 5 full runs), where its 5 tests then don't run. A longer
+`@Timeout` on that setup would stop the failures, but no test uses one today and it deviates from the 5 s rule. Two of
+its tests also name built-in nodes. The comments in `junit-platform.properties` (slowest test 0.9 s) and `pom.xml` (whole
+suite 4.5 s) are out of date: the last full run's slowest test took 2.5 s and its classes added up to about 26 s.
+
+- **Where:** `TowerLabTest`, `TowerLab.probedKinds`.
+- **Approach:** each test measures only its own tower and node, on definitions built in the test, with no shared setup
+  over the whole lab. A profile found `RunRecorder.afterTick` (16-20%) and `EnemyCatalog.builtIn` (about 6%) as savings,
+  about a quarter at most, which isn't enough alone.
+
 ### What the balance tools cannot see yet
 
 `docs/plans/shipped/balance-verification-review.md` ranks these; each is a gap in `td.balance`, not in the game.
