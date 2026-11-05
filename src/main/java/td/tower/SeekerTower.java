@@ -334,13 +334,13 @@ public final class SeekerTower extends AbstractTower {
         } else {
             load.get().payload().deliver(target, load.get().strength(), this.actions);
         }
-        boolean frozenNow = freezes && target.hasEffect(EffectKind.FREEZE);
-        if (frozenNow) {
+        boolean froze = freezes && !wasFrozen && target.hasEffect(EffectKind.FREEZE);
+        if (froze) {
             this.countDeedOfAttack();
         }
         this.streak.landed(target);
         this.report(target, HitKind.MISSILE, critical, target.isDead());
-        Impact impact = new Impact(target, suffering, frozenNow && !wasFrozen, rearmed);
+        Impact impact = new Impact(target, suffering, froze, rearmed);
         for (SeekerMechanic mechanic : this.mechanics.all()) {
             mechanic.react(impact, this.actions);
         }
@@ -378,16 +378,20 @@ public final class SeekerTower extends AbstractTower {
     }
 
     /**
-     * Freezes {@code enemy} for {@code strength} times the freeze time, and with Brittle leaves it
-     * brittle for as long; with a thaw shatter, watches it.
+     * Freezes {@code enemy} for {@code strength} times the freeze time. A freeze that lands (one already
+     * holding is not renewed) leaves it brittle for that authored time, and a thaw shatter watches it.
      */
     private void freeze(EnemyMob enemy, float strength, SeekerSpec spec) {
         int ticks = Math.round(this.freezeTicks() * strength);
+        boolean wasFrozen = enemy.hasEffect(EffectKind.FREEZE);
         this.applyEffect(enemy, sink -> Effect.freeze(ticks, sink));
-        if (spec.freeze().brittle() && enemy.hasEffect(EffectKind.FREEZE)) {
+        if (wasFrozen || !enemy.hasEffect(EffectKind.FREEZE)) {
+            return;
+        }
+        if (spec.freeze().brittle()) {
             this.applyEffect(enemy, sink -> Effect.brittle(ticks, sink));
         }
-        if (spec.shatter().onThaw() && enemy.hasEffect(EffectKind.FREEZE)) {
+        if (spec.shatter().onThaw()) {
             this.frozen.record(enemy);
         }
     }

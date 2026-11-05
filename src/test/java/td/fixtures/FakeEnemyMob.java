@@ -234,6 +234,9 @@ public final class FakeEnemyMob implements EnemyMob {
     @Override
     public void loseStacks(EffectKind kind, int stacks) {
         this.lostStacks.merge(kind, stacks, Integer::sum);
+        if (this.effectStacks(kind) == 0) {
+            this.appliedEffects.removeIf(effect -> effect.kind() == kind);
+        }
     }
 
     @Override

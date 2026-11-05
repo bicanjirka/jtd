@@ -8,7 +8,7 @@ public enum HexGlyph {
     BLIGHT,
     /** Three linked dots: it spreads to its neighbours. */
     CONTAGION,
-    /** A star of three strokes: what ails it doesn't let go. */
+    /** A clock: what weakens it lasts longer. */
     MALAISE,
     /** A triangle turned on its head: what helps it hurts it. */
     INVERSION,

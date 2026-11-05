@@ -851,6 +851,16 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void losingAStackEndsAPool() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.burn(Damage.magic(100), 30, DamageSink.none()));
+
+        effects.loseStacks(EffectKind.BURN, 1);
+
+        assertThat(effects.has(EffectKind.BURN)).isFalse();
+    }
+
+    @Test
     void consumingAnEffectEndsItOnceAndTellsWhetherThereWasOne() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.marked(100, DamageSink.none()));

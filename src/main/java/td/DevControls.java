@@ -263,7 +263,7 @@ public final class DevControls implements EconomyListener {
                 this.hexCaster.record(mob, kind);
             }
             this.report(mob.hasEffect(kind) ? "Applied " + kind.title()
-                    : kind.title() + " didn't take hold: resisted, immune or kept out");
+                    : kind.title() + " didn't take hold: immune or kept out");
         }));
     }
 

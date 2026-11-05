@@ -21,7 +21,7 @@ public enum EffectKind implements Term {
             .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f)).tagged(EffectTag.BURNING)),
     FREEZE("Freeze", EffectRule.of(EffectCategory.HARD_CC)
             .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.setTo(-100f))
-            .tagged(EffectTag.STOPS)),
+            .tagged(EffectTag.STOPS, EffectTag.NOT_RENEWED)),
     SHIELD("Shield", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
     INVISIBLE("Invisibility", EffectRule.of(EffectCategory.STEALTH).perStack(EnemyStat.STEALTH, StatModifier.setTo(1f)).helpsCarrier()),
     HEAL("Heal", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
@@ -67,9 +67,8 @@ public enum EffectKind implements Term {
     BLIGHT("Blight", EffectRule.of(EffectCategory.HEX)),
     /** When the target dies, its hexes and debuffs jump to the enemies nearest it. */
     CONTAGION("Contagion", EffectRule.of(EffectCategory.HEX)),
-    /** One side of the Hexer's coven. */
+    /** Lowers tenacity: what weakens the target lasts longer on it. */
     MALAISE("Malaise", EffectRule.of(EffectCategory.HEX).perStack(EnemyStat.TENACITY, -50f)),
-    /** The other side of the Hexer's coven. */
     /** Heals and shields it receives are dealt to it as damage instead. */
     INVERSION("Inversion", EffectRule.of(EffectCategory.HEX)),
     /** Once a second its Vulnerable, Sundered, Exposed and chill are copied to the Hexer's other hexed enemies nearby. */

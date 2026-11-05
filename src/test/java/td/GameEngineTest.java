@@ -263,11 +263,13 @@ class GameEngineTest {
         EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT);
         int[] clock = {0};
         enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
-        enemy.doTick(++clock[0]);
+        for (int i = 0; i < 5; i++) {
+            enemy.doTick(++clock[0]);
+        }
 
         enemy.applyEffect(Effect.freeze(20, DamageSink.none()));
 
-        assertThat(ticksFrozen(enemy, clock)).isEqualTo(19);
+        assertThat(ticksFrozen(enemy, clock)).isEqualTo(15);
     }
 
     @Test

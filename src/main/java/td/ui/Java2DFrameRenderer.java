@@ -523,7 +523,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_DOOM -> new Color(190, 90, 255);
             case STATUS_MARKER_BLIGHT -> new Color(140, 200, 60);
             case STATUS_MARKER_CONTAGION -> new Color(210, 120, 170);
-            case STATUS_MARKER_MALAISE -> new Color(225, 120, 215);
+            case STATUS_MARKER_MALAISE -> new Color(60, 180, 170);
             case STATUS_MARKER_INVERSION -> new Color(255, 70, 120);
             case STATUS_MARKER_SYMPATHY -> new Color(120, 150, 255);
             case STATUS_MARKER_RECKONING -> new Color(255, 200, 60);
@@ -1214,13 +1214,10 @@ public final class Java2DFrameRenderer {
                 path.append(new Ellipse2D.Float(-s * 1.3f, s * 0.7f, s * 0.6f, s * 0.6f), false);
             }
             case MALAISE -> {
-                for (int i = 0; i < 3; i++) {
-                    double angle = Math.PI / 3 * i;
-                    float dx = (float) Math.cos(angle) * s;
-                    float dy = (float) Math.sin(angle) * s;
-                    path.moveTo(-dx, -dy);
-                    path.lineTo(dx, dy);
-                }
+                path.append(new Ellipse2D.Float(-s, -s, s * 2, s * 2), false);
+                path.moveTo(0, -s * 0.65f);
+                path.lineTo(0, 0);
+                path.lineTo(s * 0.5f, 0);
             }
             case INVERSION -> {
                 path.moveTo(-s, -s);
