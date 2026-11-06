@@ -10,6 +10,6 @@
   throws a plain illegal-argument error: this is authored code, not loaded content.
 - Per-level enemies are registered into that level's fresh `EnemyCatalog` before its waves are
   parsed, so wave tokens name them like built-ins.
-- Each built-in level lives in its own package-private holder class (`CurlyPathLevel`, ...),
+- Each built-in level lives in its own package-private holder class (`AmberHiveLevel`, ...),
   together with any enemy only that level uses. `BuiltInLevelCatalog.levels()` just lists them.
   Level content belongs there and in `README.md`, not here.

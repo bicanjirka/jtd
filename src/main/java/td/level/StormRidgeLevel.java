@@ -33,7 +33,7 @@ import java.util.stream.Stream;
  * so a defence has to hold the length of a lane rather than one corner of it; clouds burst into rain; and at the end
  * the storm's twins, one down each lane, who have to fall close together.
  */
-final class ZigZagPathLevel {
+final class StormRidgeLevel {
 
     private static final String LEVEL_NAME = "The Storm Ridge";
     private static final String LEVEL_DESCRIPTION = "Two lanes cross the ridge as the storm breaks. Lightning strikes "
@@ -139,7 +139,7 @@ final class ZigZagPathLevel {
             .withCustomEnemies(List.of(RAINDROP))
             .withCustomRankedEnemies(Stream.concat(Stream.of(RAINCLOUD, GALE), StormTwinsEnemy.pair().stream()).toList());
 
-    private ZigZagPathLevel() {
+    private StormRidgeLevel() {
     }
 
     /** When it dies, it bursts into {@code drops} raindrops. */

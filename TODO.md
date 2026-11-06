@@ -370,8 +370,8 @@ playtested by hand, not measured; the clear bonuses The Amber Hive and The Storm
 figure for Curly Path, Zigzag Path or Twisted Hourglass elsewhere in this
 file was measured on the old levels.
 
-- **Where:** the wave scripts, starting credits and enemy numbers in `td.level.CurlyPathLevel`, `ZigZagPathLevel`,
-  `TwistedHourglassLevel`, `WardenEnemy`, `StormTwinsEnemy` and `KeeperEnemy`.
+- **Where:** the wave scripts, starting credits and enemy numbers in `td.level.AmberHiveLevel`, `StormRidgeLevel`,
+  `LastHourLevel`, `WardenEnemy`, `StormTwinsEnemy` and `KeeperEnemy`.
 - **Approach:** after the playtests, `BalanceReport --levels 0,1,2 --seeds 12 --strong --variety`; retune by wave
   composition first, then the bosses' numbers. Check that the bosses' counters (AoE against Hivemind, a kill zone
   where the storm's lanes cross, a freeze, silence or heal denial against Rewind) show in the reports' purchases.
@@ -540,7 +540,7 @@ single hit), making the Warden's armor mechanically inert regardless of which to
   Shieldbearer's ally shield (20 to 320 points by rank) and the Reaver's panic shield (10% of its health).
 - **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `ArmorTrait`,
   `HurtSpeedTrait`, `FlatResistTrait`.
-- **Approach:** play Curly Path through to the Warden encounter (and the other two levels,
+- **Approach:** play The Amber Hive through to the Warden encounter (and the other two levels,
   once they get their own late-game content) repeatedly, adjusting values until the chain and
   the migrated traits feel meaningfully tuned rather than placeholder guesses - no code or
   architecture change needed, every number here is already a named constant. `td.balance.BalanceReport`

@@ -40,7 +40,7 @@ import java.util.List;
  * health back; Glass Sentinels shrug off small hits and shatter under crits; and at the end the Keeper of Hours,
  * who turns back what was done to it unless it is stopped from casting.
  */
-final class TwistedHourglassLevel {
+final class LastHourLevel {
 
     private static final String LEVEL_NAME = "The Last Hour";
     private static final String LEVEL_DESCRIPTION = "Sand falls through the waist of the glass, and the hour runs out "
@@ -204,7 +204,7 @@ final class TwistedHourglassLevel {
             // What the Reaver and the Keeper call, before them.
             .withCustomRankedEnemies(List.of(SANDLING, TIMEKEEPER, GLASS_SENTINEL, REAVER, KeeperEnemy.keeper()));
 
-    private TwistedHourglassLevel() {
+    private LastHourLevel() {
     }
 
     /** Loses {@code pointsPerSecond} health a second, replacing what an earlier rank lost. */
