@@ -9,6 +9,7 @@ public final class PlaytestRules {
     private static final float PERCENT = 100f;
 
     private volatile boolean upgradeGatesIgnored;
+    private volatile boolean livesUnlimited;
     private volatile int enemyHealthPercent = 100;
     private volatile int bountyPercent = 100;
     private volatile int clearBonusPercent = 100;
@@ -21,6 +22,15 @@ public final class PlaytestRules {
 
     public void setUpgradeGatesIgnored(boolean ignored) {
         this.upgradeGatesIgnored = ignored;
+    }
+
+    /** Whether a leak takes no lives. It still costs its score. */
+    public boolean livesUnlimited() {
+        return this.livesUnlimited;
+    }
+
+    public void setLivesUnlimited(boolean unlimited) {
+        this.livesUnlimited = unlimited;
     }
 
     /** Every enemy's health as a share of what it is authored with, spawns included; 1 normally. */

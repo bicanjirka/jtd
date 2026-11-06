@@ -171,7 +171,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.devControls = new DevControls(this.gameWorld);
         this.boardRenderer = new BoardRenderer(this.gameWorld, this.engine::cellHighlight);
         this.gameWorld.economy().addEconomyListener(this);
-        this.gameWorld.economy().addEconomyListener(this.devControls);
         this.gameWorld.playtestHooks().add(this.devControls::doTick);
         this.gameBoard = new GameBoard(this, this.gameWorld);
         initComponents();
@@ -552,6 +551,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
 
     private void updateInfo() {
+        this.header.setCheats(this.gameWorld.playtestRules().livesUnlimited(), this.gameWorld.economy().freeBuild());
         this.header.show(this.engine.waveProgress(), this.engine.isWaveReady(), this.engine.outcome(),
                 this.gameWorld.economy().state());
     }

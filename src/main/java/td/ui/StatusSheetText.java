@@ -29,6 +29,12 @@ final class StatusSheetText {
                         .toList()));
             }
         }
+        if (term == StatusTerm.LIVES && readout.cheats().livesUnlimited()) {
+            more.add(Row.plain(Glyph.DOT, "Infinite lives", readout.lives() + " held"));
+        }
+        if (term == StatusTerm.CASH && readout.cheats().freeBuild()) {
+            more.add(Row.plain(Glyph.DOT, "Free build", "on"));
+        }
         List<SheetLine> lines = new ArrayList<>(TermSheets.of(term, term.describe(), more).lines());
         lines.set(0, TermSheets.title(term, readout.value(term)));
         return new InfoSheet(lines);

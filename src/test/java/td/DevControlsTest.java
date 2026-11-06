@@ -40,7 +40,6 @@ class DevControlsTest {
     private final DevControls dev = new DevControls(this.world);
 
     DevControlsTest() {
-        this.world.economy().addEconomyListener(this.dev);
         this.world.playtestHooks().add(this.dev::doTick);
     }
 
@@ -70,14 +69,93 @@ class DevControlsTest {
     }
 
     @Test
-    void freeBuildKeepsCreditsAtAMillionThroughAPurchase() {
+    void aLeakUnderInfiniteLivesStillCostsItsScore() {
+        this.engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("simple", Rank.GRUNT)), 100));
+        this.dev.setInfiniteLives(true);
+        this.engine.nextWave();
+
+        tickUntilClear();
+
+        assertThat(this.world.economy().getScore()).isNegative();
+    }
+
+    @Test
+    void infiniteLivesCarriesNoCountIntoTheNextLevel() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.setLives(20);
+        this.dev.setInfiniteLives(true);
+
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100).withStartingLives(3));
+
+        assertThat(this.world.economy().getLives()).isEqualTo(3);
+    }
+
+    @Test
+    void freeBuildBuildsWithNoCashAndWhatTheGamePaysMeanwhileIsStillThereOnceItIsOff() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.setCredits(0);
         this.dev.setFreeBuild(true);
 
         Tower tower = this.placeSniper(1, 1);
+        this.dev.spawnWave("simple", Rank.GRUNT, 0);
+        this.dev.runPending();
+        int bounty = this.world.enemies().getEnemies()[0].getBounty();
+        this.dev.killAll();
+        this.dev.runPending();
+        this.dev.setFreeBuild(false);
 
         assertThat(tower).isNotNull();
-        assertThat(this.world.economy().getCredits()).isEqualTo(DevControls.FREE_BUILD_CREDITS);
+        assertThat(this.world.economy().getCredits()).isEqualTo(bounty);
+    }
+
+    @Test
+    void creditsTypedDuringFreeBuildStayAsTyped() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.setFreeBuild(true);
+
+        this.dev.setCredits(4321);
+
+        assertThat(this.world.economy().getCredits()).isEqualTo(4321);
+    }
+
+    @Test
+    void duringFreeBuildSellingATowerPaysNothing() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        Tower tower = this.placeSniper(1, 1);
+        int credits = this.world.economy().getCredits();
+        this.dev.setFreeBuild(true);
+
+        int shown = tower.getSellPrice();
+        this.world.towers().sell(tower);
+
+        assertThat(shown).isZero();
+        assertThat(this.world.economy().getCredits()).isEqualTo(credits);
+    }
+
+    @Test
+    void duringFreeBuildADowngradePaysNothing() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 1000));
+        UpgradeNode node = UpgradeNode.of("plain", UpgradeSlot.HEAD, "Plain", 40);
+        Tower tower = FakeTower.offering(this.world, 1, 1, UpgradeTree.of(node));
+        tower.buyUpgrade(node);
+        int credits = this.world.economy().getCredits();
+        this.dev.setFreeBuild(true);
+
+        boolean downgraded = tower.downgrade(node);
+
+        assertThat(downgraded).isTrue();
+        assertThat(this.world.economy().getCredits()).isEqualTo(credits);
+    }
+
+    @Test
+    void aTowerBuiltDuringFreeBuildSellsAtItsPriceOnceItIsOff() {
+        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
+        this.dev.setFreeBuild(true);
+        Tower tower = this.placeSniper(1, 1);
+
+        this.dev.setFreeBuild(false);
+
+        assertThat(tower.getSellPrice()).isPositive();
     }
 
     @Test

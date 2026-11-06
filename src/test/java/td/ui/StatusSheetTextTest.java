@@ -53,7 +53,22 @@ class StatusSheetTextTest {
     }
 
     @Test
-    void onlyTheWaveTooltipHasLiveRows() {
+    void theLivesTooltipOpensWithInfinityAndSaysWhatIsHeldWhileLivesAreUnlimited() {
+        InfoSheet sheet = StatusSheetText.of(StatusTerm.LIVES, PLAYING.withCheats(new StatusCheats(true, false)), RoundStrip.empty());
+
+        assertThat(((SheetLine.IconTitle) sheet.lines().getFirst()).value()).isEqualTo("∞");
+        assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Infinite lives", "5 held"));
+    }
+
+    @Test
+    void theCashTooltipSaysSoDuringFreeBuild() {
+        InfoSheet sheet = StatusSheetText.of(StatusTerm.CASH, PLAYING.withCheats(new StatusCheats(false, true)), RoundStrip.empty());
+
+        assertThat(sheet.lines()).contains(Row.plain(Glyph.DOT, "Free build", "on"));
+    }
+
+    @Test
+    void withNoCheatOnOnlyTheWaveTooltipHasLiveRows() {
         assertThat(StatusSheetText.of(StatusTerm.LIVES, PLAYING, RoundStrip.empty()).lines()).hasSize(2);
         assertThat(StatusSheetText.of(StatusTerm.SCORE, PLAYING, RoundStrip.empty()).lines()).hasSize(2);
         assertThat(StatusSheetText.of(StatusTerm.CASH, PLAYING, RoundStrip.empty()).lines()).hasSize(2);

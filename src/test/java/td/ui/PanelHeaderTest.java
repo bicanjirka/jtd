@@ -159,6 +159,42 @@ class PanelHeaderTest {
         assertThat(eleven).isEqualTo(score);
     }
 
+    @Test
+    void whileLivesAreUnlimitedTheBarShowsInfinityInsteadOfHeartsThroughLaterNumbers() {
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 5));
+
+        this.header.setCheats(true, false);
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 5));
+        this.header.show(progress(2, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 5));
+
+        StatusReadout readout = this.header.icon(StatusTerm.LIVES).readout();
+        assertThat(readout.value(StatusTerm.LIVES)).isEqualTo("∞");
+        assertThat(readout.hearts()).isEmpty();
+    }
+
+    @Test
+    void turningUnlimitedLivesOffBringsTheHeartsBack() {
+        this.header.setCheats(true, false);
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 5));
+
+        this.header.setCheats(false, false);
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 5));
+
+        assertThat(this.header.icon(StatusTerm.LIVES).readout().hearts()).hasValue(5);
+    }
+
+    @Test
+    void duringFreeBuildTheCashIconGrowsForItsTagAndStillSaysTheRealCash() {
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(60, 0, 5));
+        int plain = this.header.icon(StatusTerm.CASH).getPreferredSize().width;
+
+        this.header.setCheats(false, true);
+        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(60, 0, 5));
+
+        assertThat(this.header.icon(StatusTerm.CASH).getPreferredSize().width).isGreaterThan(plain);
+        assertThat(this.header.icon(StatusTerm.CASH).readout().value(StatusTerm.CASH)).isEqualTo("60");
+    }
+
     private static List<AbstractButton> buttons(Container root) {
         List<AbstractButton> found = new ArrayList<>();
         for (Component child : root.getComponents()) {

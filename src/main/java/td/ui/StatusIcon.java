@@ -22,7 +22,7 @@ import java.util.OptionalInt;
 
 /**
  * One status bar entry: the term's framed face, then what it counts. The round is a skull per round, as many as fit,
- * then how many more follow, the current one pulsing and a skull cracking as its round ends; the lives a heart each (a number when there are too many or none), the score and the cash a bold number. The pointer
+ * then how many more follow, the current one pulsing and a skull cracking as its round ends; the lives a heart each (a number when there are too many or none, an infinity while a leak takes none), the score and the cash a bold number, the cash with a tag during free build. The pointer
  * over it brightens it, and a flash brightens the face.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
@@ -55,6 +55,11 @@ final class StatusIcon extends JComponent {
     private static final int HOVER_ALPHA = 36;
     private static final int FLASH_ALPHA = 150;
     private static final int ARC = 6;
+    private static final Font INFINITY_FONT = Hud.LABEL_FONT.deriveFont(Font.BOLD, 20f);
+    private static final String FREE_TAG = "FREE";
+    private static final int FREE_TAG_GAP = 5;
+    private static final int FREE_TAG_PADDING = 3;
+    private static final int FREE_TAG_HEIGHT = 13;
 
     private final StatusTerm term;
     private StatusReadout readout = StatusReadout.empty();
@@ -96,8 +101,13 @@ final class StatusIcon extends JComponent {
         return switch (this.term) {
             case WAVE -> this.roundsWidth();
             case LIVES -> Math.max(number, this.readout.hearts().orElse(0) * (HEART_SIZE + HEART_GAP) - HEART_GAP);
-            case SCORE, CASH -> number;
+            case SCORE -> number;
+            case CASH -> this.readout.cheats().freeBuild() ? number + FREE_TAG_GAP + this.freeTagWidth() : number;
         };
+    }
+
+    private int freeTagWidth() {
+        return this.getFontMetrics(Hud.PRICE_FONT).stringWidth(FREE_TAG) + 2 * FREE_TAG_PADDING;
     }
 
     private int roundsWidth() {
@@ -199,7 +209,8 @@ final class StatusIcon extends JComponent {
         switch (this.term) {
             case WAVE -> this.paintRounds(g2, x);
             case LIVES -> this.paintLives(g2, x);
-            case SCORE, CASH -> this.paintNumber(g2, x);
+            case SCORE -> this.paintNumber(g2, x);
+            case CASH -> this.paintCash(g2, x);
         }
         g2.dispose();
     }
@@ -291,6 +302,10 @@ final class StatusIcon extends JComponent {
     }
 
     private void paintLives(Graphics2D g2, int x) {
+        if (this.readout.cheats().livesUnlimited()) {
+            this.paintValue(g2, x, INFINITY_FONT, Java2DFrameRenderer.colorFor(Palette.TERM_STATUS_LIVES));
+            return;
+        }
         OptionalInt hearts = this.readout.hearts();
         if (hearts.isEmpty()) {
             this.paintNumber(g2, x);
@@ -310,10 +325,29 @@ final class StatusIcon extends JComponent {
     }
 
     private void paintNumber(Graphics2D g2, int x) {
-        g2.setFont(VALUE_FONT);
+        this.paintValue(g2, x, VALUE_FONT, Hud.FOREGROUND);
+    }
+
+    private void paintValue(Graphics2D g2, int x, Font font, Color color) {
+        g2.setFont(font);
         FontMetrics metrics = g2.getFontMetrics();
-        g2.setColor(Hud.FOREGROUND);
+        g2.setColor(color);
         g2.drawString(this.readout.value(this.term), x,
                 (this.getHeight() - metrics.getHeight()) / 2 + metrics.getAscent());
+    }
+
+    private void paintCash(Graphics2D g2, int x) {
+        this.paintNumber(g2, x);
+        if (!this.readout.cheats().freeBuild()) {
+            return;
+        }
+        int left = x + this.getFontMetrics(VALUE_FONT).stringWidth(this.readout.value(this.term)) + FREE_TAG_GAP;
+        int top = (this.getHeight() - FREE_TAG_HEIGHT) / 2;
+        g2.setColor(Hud.FOREGROUND);
+        g2.fillRoundRect(left, top, this.freeTagWidth(), FREE_TAG_HEIGHT, ARC, ARC);
+        g2.setFont(Hud.PRICE_FONT);
+        FontMetrics metrics = g2.getFontMetrics();
+        g2.setColor(Hud.BACKGROUND);
+        g2.drawString(FREE_TAG, left + FREE_TAG_PADDING, top + (FREE_TAG_HEIGHT - metrics.getHeight()) / 2 + metrics.getAscent());
     }
 }

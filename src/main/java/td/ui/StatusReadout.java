@@ -6,7 +6,7 @@ import java.util.OptionalInt;
 
 /**
  * What the status bar shows at one moment: the round, the level's rounds and whether the next may start, and the
- * economy's lives, score and cash.
+ * economy's lives, score and cash, and which dev panel cheats are on.
  *
  * @param round     rounds started so far
  * @param rounds    rounds in the level
@@ -14,10 +14,22 @@ import java.util.OptionalInt;
  * @param levelOver whether the level has been won or lost
  */
 record StatusReadout(int round, int rounds, boolean waveReady, boolean levelOver, int lives, int score,
-                     int credits) {
+                     int credits, StatusCheats cheats) {
 
     /** Up to this many lives the bar shows a heart each; more, or none, it shows the number. */
     static final int MAX_HEARTS = 10;
+
+    private static final String INFINITY = "∞";
+
+    /** With no cheat on. */
+    StatusReadout(int round, int rounds, boolean waveReady, boolean levelOver, int lives, int score, int credits) {
+        this(round, rounds, waveReady, levelOver, lives, score, credits, StatusCheats.none());
+    }
+
+    StatusReadout withCheats(StatusCheats shown) {
+        return new StatusReadout(this.round, this.rounds, this.waveReady, this.levelOver, this.lives, this.score,
+                this.credits, shown);
+    }
 
     /** Before any level: nothing counted. */
     static StatusReadout empty() {
@@ -28,7 +40,7 @@ record StatusReadout(int round, int rounds, boolean waveReady, boolean levelOver
     String value(StatusTerm term) {
         return switch (term) {
             case WAVE -> this.round + "/" + this.rounds;
-            case LIVES -> Integer.toString(this.lives);
+            case LIVES -> this.cheats.livesUnlimited() ? INFINITY : Integer.toString(this.lives);
             case SCORE -> Integer.toString(this.score);
             case CASH -> Integer.toString(this.credits);
         };
@@ -36,6 +48,8 @@ record StatusReadout(int round, int rounds, boolean waveReady, boolean levelOver
 
     /** How many hearts show the lives, when there are few enough to count; empty when the number is shown instead. */
     OptionalInt hearts() {
-        return this.lives >= 1 && this.lives <= MAX_HEARTS ? OptionalInt.of(this.lives) : OptionalInt.empty();
+        return !this.cheats.livesUnlimited() && this.lives >= 1 && this.lives <= MAX_HEARTS
+                ? OptionalInt.of(this.lives)
+                : OptionalInt.empty();
     }
 }

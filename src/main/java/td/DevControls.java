@@ -4,8 +4,6 @@ import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.economy.EconomyDelta;
-import td.economy.EconomyListener;
-import td.economy.EconomyState;
 import td.effect.DamageSink;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
@@ -36,10 +34,7 @@ import java.util.stream.IntStream;
  * which keeps the simulation single-threaded and works while paused. The economy is thread-safe,
  * so credits and lives change at once.
  */
-public final class DevControls implements EconomyListener {
-
-    /** Free build holds credits here, so every price is affordable and spending never shows. */
-    static final int FREE_BUILD_CREDITS = 1_000_000;
+public final class DevControls {
 
     private static final EnemyMobVisitor<DefinedEnemyMob> AS_DEFINED = mob -> mob;
 
@@ -53,13 +48,10 @@ public final class DevControls implements EconomyListener {
 
     private volatile DevSelection selection = DevSelection.none();
     private volatile Report report = new Report(0L, "");
-    private volatile boolean infiniteLives;
-    private volatile int livesFloor;
-    private volatile boolean freeBuild;
     private volatile long spawnSeed;
     private volatile boolean observeSpawns;
 
-    /** Register it with the world's economy listeners and {@link GameWorld#playtestHooks() playtest hooks}. */
+    /** Register it with the world's {@link GameWorld#playtestHooks() playtest hooks}. */
     public DevControls(GameWorld world) {
         this.world = world;
         this.hexCaster = new DevHexCaster(world, this.attack);
@@ -77,23 +69,16 @@ public final class DevControls implements EconomyListener {
         this.world.economy().apply(EconomyDelta.credits(credits - this.world.economy().getCredits()));
     }
 
-    /** With infinite lives on, this also becomes the count they are topped back up to. */
     public void setLives(int lives) {
-        this.livesFloor = lives;
         this.world.economy().apply(EconomyDelta.lives(lives - this.world.economy().getLives()));
     }
 
-    /** Lives lost while this is on come straight back, so the level never ends in a loss. */
     public void setInfiniteLives(boolean on) {
-        this.livesFloor = Math.max(1, this.world.economy().getLives());
-        this.infiniteLives = on;
+        this.world.playtestRules().setLivesUnlimited(on);
     }
 
     public void setFreeBuild(boolean on) {
-        this.freeBuild = on;
-        if (on) {
-            this.topUp(this.world.economy().state());
-        }
+        this.world.economy().setFreeBuild(on);
     }
 
     public void setUpgradeGatesIgnored(boolean ignored) {
@@ -112,24 +97,6 @@ public final class DevControls implements EconomyListener {
         }
         this.world.playtestRules().setEnemyHealthPercent(percent);
         return "New enemies get " + percent + "% health";
-    }
-
-    /**
-     * Runs on whichever thread changed the economy, so a leak is refunded before the tick that
-     * caused it checks for a loss.
-     */
-    @Override
-    public void economyChanged(EconomyState state) {
-        this.topUp(state);
-    }
-
-    private void topUp(EconomyState state) {
-        if (this.infiniteLives && state.lives() < this.livesFloor) {
-            this.world.economy().apply(EconomyDelta.lives(this.livesFloor - state.lives()));
-        }
-        if (this.freeBuild && state.credits() < FREE_BUILD_CREDITS) {
-            this.world.economy().apply(EconomyDelta.credits(FREE_BUILD_CREDITS - state.credits()));
-        }
     }
 
     /**

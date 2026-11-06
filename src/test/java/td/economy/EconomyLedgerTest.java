@@ -77,6 +77,88 @@ class EconomyLedgerTest {
     }
 
     @Test
+    void duringFreeBuildAPaymentBeyondTheCreditsGoesThroughUnchargedAndNotifiesLikeAnyPurchase() {
+        List<String> heard = new ArrayList<>();
+        ledger.startEconomy(10, 5);
+        ledger.setFreeBuild(true);
+        ledger.addEconomyListener(new EconomyListener() {
+            @Override
+            public void economyChanged(EconomyState state) {
+                heard.add("changed");
+            }
+
+            @Override
+            public void paymentRefused() {
+                heard.add("refused");
+            }
+        });
+
+        boolean payable = ledger.canPay(40);
+        boolean paid = ledger.doPay(40);
+
+        assertThat(payable).isTrue();
+        assertThat(paid).isTrue();
+        assertThat(ledger.getCredits()).isEqualTo(10);
+        assertThat(heard).containsExactly("changed");
+    }
+
+    @Test
+    void aPriceIsShortOfWhatTheCreditsLackAndOfNothingWhenCoveredOrDuringFreeBuild() {
+        ledger.startEconomy(10, 5);
+
+        int lacking = ledger.shortOf(40);
+        int covered = ledger.shortOf(10);
+        ledger.setFreeBuild(true);
+
+        assertThat(lacking).isEqualTo(30);
+        assertThat(covered).isZero();
+        assertThat(ledger.shortOf(40)).isZero();
+    }
+
+    @Test
+    void refundsAreOwedInFullExceptDuringFreeBuild() {
+        int normally = ledger.refundOf(40);
+
+        ledger.setFreeBuild(true);
+
+        assertThat(normally).isEqualTo(40);
+        assertThat(ledger.refundOf(40)).isZero();
+    }
+
+    @Test
+    void turningFreeBuildOffChargesAgainAndTheCreditsAreAsTheyWere() {
+        ledger.startEconomy(100, 5);
+        ledger.setFreeBuild(true);
+        ledger.doPay(40);
+        ledger.apply(EconomyDelta.kill(7));
+
+        ledger.setFreeBuild(false);
+        boolean paid = ledger.doPay(40);
+
+        assertThat(paid).isTrue();
+        assertThat(ledger.getCredits()).isEqualTo(67);
+    }
+
+    @Test
+    void aLevelStartingLeavesFreeBuildOn() {
+        ledger.setFreeBuild(true);
+
+        ledger.startEconomy(0, 5);
+
+        assertThat(ledger.freeBuild()).isTrue();
+    }
+
+    @Test
+    void switchingFreeBuildTellsTheListenersSoPricesShowAgain() {
+        List<EconomyState> heard = new ArrayList<>();
+        ledger.addEconomyListener(heard::add);
+
+        ledger.setFreeBuild(true);
+
+        assertThat(heard).containsExactly(ledger.state());
+    }
+
+    @Test
     void applyingALeakNotifiesEconomyListenersExactlyOnce() {
         AtomicInteger economyChangedCalls = new AtomicInteger();
         ledger.addEconomyListener(state -> economyChangedCalls.incrementAndGet());
