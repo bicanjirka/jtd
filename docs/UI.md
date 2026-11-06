@@ -107,11 +107,11 @@ speed button and the XP bar. Every panel stays Graphite.
 | Level | Card lane | Lane colour | Text tint | Floor |
 |---|---|---|---|---|
 | The Amber Hive | Honey | `#F0AF28` | same (10.0:1) | `#100B04` |
-| The Storm Ridge | Thunder | `#5F73EB` | `#8796F0` (7.0:1) | `#06090E` |
-| The Last Hour | Glass | `#8CD7E1` | same (11.9:1) | `#070C0E` |
-| Iron Crossing | Rush | `#EB5F2D` | `#EF7C53` (7.1:1) | `#08090C` |
-| The Rift | Violet | `#A05AE6` | `#B985EC` (7.0:1) | `#07040C` |
 | The Labyrinth | Stone | `#C8AA78` | same (8.7:1) | `#0D0B06` |
+| The Last Hour | Glass | `#8CD7E1` | same (11.9:1) | `#070C0E` |
+| The Storm Ridge | Thunder | `#5F73EB` | `#8796F0` (7.0:1) | `#06090E` |
+| The Rift | Violet | `#A05AE6` | `#B985EC` (7.0:1) | `#07040C` |
+| Iron Crossing | Rush | `#EB5F2D` | `#EF7C53` (7.1:1) | `#08090C` |
 
 ## 6. What each hue already means
 

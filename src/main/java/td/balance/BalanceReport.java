@@ -131,7 +131,7 @@ public final class BalanceReport {
 
         static Options parse(String[] args) {
             int seeds = 20;
-            List<Integer> levels = List.of(0, 1, 2);
+            List<Integer> levels = List.of(0, 2, 3);
             Set<Extra> extras = EnumSet.noneOf(Extra.class);
             String save = "";
             String compare = "";
