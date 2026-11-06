@@ -13,9 +13,9 @@ import java.util.Optional;
  *                without the control making room for it, so nothing moves when it comes and goes
  * @param accent  a tile's colour; empty for a button
  * @param dimmed  whether a tile's border and chip are dimmed
- * @param selectedBorder a selected button's border; empty for the plain text colour
+ * @param selectedColor a selected button's fill and border; empty for the plain text colour
  */
-record ControlFace(String chip, boolean overlay, Optional<Color> accent, boolean dimmed, Optional<Color> selectedBorder) {
+record ControlFace(String chip, boolean overlay, Optional<Color> accent, boolean dimmed, Optional<Color> selectedColor) {
 
     static ControlFace button() {
         return new ControlFace("", false, Optional.empty(), false, Optional.empty());
@@ -27,20 +27,20 @@ record ControlFace(String chip, boolean overlay, Optional<Color> accent, boolean
 
     /** A chip the control always shows and makes room for. */
     ControlFace withChip(String label) {
-        return new ControlFace(label, false, this.accent, this.dimmed, this.selectedBorder);
+        return new ControlFace(label, false, this.accent, this.dimmed, this.selectedColor);
     }
 
     /** A chip drawn over the face for a moment; empty takes it away. */
     ControlFace withOverlayChip(String label) {
-        return new ControlFace(label, true, this.accent, this.dimmed, this.selectedBorder);
+        return new ControlFace(label, true, this.accent, this.dimmed, this.selectedColor);
     }
 
     ControlFace withDimmed(boolean dim) {
-        return new ControlFace(this.chip, this.overlay, this.accent, dim, this.selectedBorder);
+        return new ControlFace(this.chip, this.overlay, this.accent, dim, this.selectedColor);
     }
 
-    ControlFace withSelectedBorder(Color border) {
-        return new ControlFace(this.chip, this.overlay, this.accent, this.dimmed, Optional.of(border));
+    ControlFace withSelectedColor(Color color) {
+        return new ControlFace(this.chip, this.overlay, this.accent, this.dimmed, Optional.of(color));
     }
 
     /** Whether the control widens to fit its chip beside its text. */

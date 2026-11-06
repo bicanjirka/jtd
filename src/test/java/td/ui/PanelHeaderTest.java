@@ -172,7 +172,7 @@ class PanelHeaderTest {
     }
 
     @Test
-    void aVoiceColoursTheTitleAndTheSelectedSpeedButtonsBorder() {
+    void aVoiceColoursTheTitleAndTheSelectedSpeedButton() {
         Color voice = new Color(10, 20, 30);
 
         this.header.setVoice(voice);
@@ -182,7 +182,7 @@ class PanelHeaderTest {
         assertThat(found).filteredOn(JLabel.class::isInstance)
                 .anySatisfy(label -> assertThat(label.getForeground()).isEqualTo(voice));
         assertThat(found).filteredOn(HudToggleButton.class::isInstance)
-                .allSatisfy(button -> assertThat(((HudToggleButton) button).face().selectedBorder()).contains(voice));
+                .allSatisfy(button -> assertThat(((HudToggleButton) button).face().selectedColor()).contains(voice));
     }
 
     private static void collect(Container parent, List<Component> into) {

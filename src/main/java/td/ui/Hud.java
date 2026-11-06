@@ -116,7 +116,8 @@ public final class Hud {
     /**
      * Draws a control: a flat fill reacting to the mouse, its border, its icon or else its text, centred, and its
      * key chip in the top-left corner. A button is square with a neutral border; a tile has rounded corners and its
-     * accent for a border. Hover brightens the border, selected thickens a tile's. A button with an icon and a
+     * accent for a border. Hover brightens the border; selected thickens a tile's, and fills a button with its colour
+     * under dark text, which no hover can be mistaken for. A button with an icon and a
      * row-style text (one with a tab) paints the icon first and the row beside it. Text keeps clear of a chip when
      * there is room beside it.
      */
@@ -132,7 +133,7 @@ public final class Hud {
         g2.setColor(BACKGROUND);
         g2.fillRect(0, 0, width, height);
         boolean thick = face.isTile() && enabled && model.isSelected();
-        g2.setColor(fillFor(model, enabled));
+        g2.setColor(fillFor(face, model, enabled));
         g2.fill(outline(face, width, height, 0f));
         g2.setColor(borderFor(face, model, enabled));
         g2.setStroke(new BasicStroke(thick ? 2f : 1f));
@@ -140,12 +141,13 @@ public final class Hud {
 
         Icon icon = iconFor(button, enabled);
         String text = button.getText();
+        Color ink = inkFor(face, model, enabled, button.getForeground());
         if (icon != null && text != null && text.indexOf('	') >= 0) {
             icon.paintIcon(button, g2, ROW_PADDING, (height - icon.getIconHeight()) / 2);
             int taken = ROW_PADDING + icon.getIconWidth() + ICON_GAP;
             Graphics2D row = (Graphics2D) g2.create();
             row.translate(taken, 0);
-            paintCentredText(row, button, width - taken, height, enabled);
+            paintCentredText(row, button, width - taken, height, ink);
             row.dispose();
         } else if (icon != null) {
             icon.paintIcon(button, g2, (width - icon.getIconWidth()) / 2, (height - icon.getIconHeight()) / 2);
@@ -153,14 +155,14 @@ public final class Hud {
             int clear = face.hasChip() ? chipRoom(button, face.chip()) : 0;
             int textWidth = text == null ? 0 : button.getFontMetrics(button.getFont()).stringWidth(text);
             if (clear > 0 && textWidth <= width - 2 * clear) {
-                paintCentredText(g2, button, width, height, enabled);
+                paintCentredText(g2, button, width, height, ink);
             } else if (clear > 0 && textWidth <= width - clear - CHIP_GAP) {
                 Graphics2D beside = (Graphics2D) g2.create();
                 beside.translate(clear, 0);
-                paintCentredText(beside, button, width - clear - CHIP_GAP, height, enabled);
+                paintCentredText(beside, button, width - clear - CHIP_GAP, height, ink);
                 beside.dispose();
             } else {
-                paintCentredText(g2, button, width, height, enabled);
+                paintCentredText(g2, button, width, height, ink);
             }
         }
         if (face.hasChip()) {
@@ -225,7 +227,7 @@ public final class Hud {
                 return BORDER_DISABLED;
             }
             if (model.isSelected()) {
-                return face.selectedBorder().orElse(FOREGROUND);
+                return face.selectedColor().orElse(FOREGROUND);
             }
             return hot ? BORDER_HOVER : BORDER_IDLE;
         }
@@ -282,7 +284,7 @@ public final class Hud {
                 Math.round(a.getBlue() + (b.getBlue() - a.getBlue()) * t));
     }
 
-    private static Color fillFor(ButtonModel model, boolean enabled) {
+    static Color fillFor(ControlFace face, ButtonModel model, boolean enabled) {
         if (!enabled) {
             return BACKGROUND;
         }
@@ -290,9 +292,18 @@ public final class Hud {
             return FILL_PRESSED;
         }
         if (model.isSelected()) {
-            return FILL_SELECTED;
+            return face.isTile() ? FILL_SELECTED : face.selectedColor().orElse(FOREGROUND);
         }
         return model.isRollover() ? FILL_HOVER : BACKGROUND;
+    }
+
+    /** The text colour on {@link #fillFor}: {@code plain}, unless the fill is a selected button's own colour. */
+    static Color inkFor(ControlFace face, ButtonModel model, boolean enabled, Color plain) {
+        if (!enabled) {
+            return TEXT_DISABLED;
+        }
+        boolean held = model.isPressed() && model.isArmed();
+        return model.isSelected() && !face.isTile() && !held ? BACKGROUND : plain;
     }
 
     private static Icon iconFor(AbstractButton button, boolean enabled) {
@@ -306,7 +317,7 @@ public final class Hud {
      * Centred text, or with a tab, a row like the info pane's: the part before it on the left, and the
      * part after it on the right.
      */
-    private static void paintCentredText(Graphics2D g2, AbstractButton button, int width, int height, boolean enabled) {
+    private static void paintCentredText(Graphics2D g2, AbstractButton button, int width, int height, Color ink) {
         String text = button.getText();
         if (text == null || text.isEmpty()) {
             return;
@@ -314,7 +325,7 @@ public final class Hud {
         g2.setFont(button.getFont());
         FontMetrics metrics = g2.getFontMetrics();
         int baseline = (height - metrics.getHeight()) / 2 + metrics.getAscent();
-        g2.setColor(enabled ? button.getForeground() : TEXT_DISABLED);
+        g2.setColor(ink);
         int tab = text.indexOf('	');
         if (tab < 0) {
             g2.drawString(text, (width - metrics.stringWidth(text)) / 2, baseline);

@@ -263,11 +263,11 @@ public class PanelHeader extends JPanel {
         return System.nanoTime() / 1_000_000L;
     }
 
-    /** The loaded level's colour on the title and on the border of the selected speed button. */
+    /** The loaded level's colour on the title and on the selected speed button. */
     public void setVoice(Color voice) {
         this.title.setForeground(voice);
         List.of(this.pause, this.play, this.fast, this.superFast)
-                .forEach(button -> button.setFace(button.face().withSelectedBorder(voice)));
+                .forEach(button -> button.setFace(button.face().withSelectedColor(voice)));
     }
 
     /** Selects the button of {@code speed}; none for a rate between the presets, as the dev panel can dial. */
