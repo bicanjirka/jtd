@@ -60,6 +60,7 @@ public class PanelHeader extends JPanel {
     private TooltipLayer tooltips = null;
     private StatusReadout readout = StatusReadout.empty();
     private RoundStrip rounds = RoundStrip.empty();
+    private StatusCheats cheats = StatusCheats.none();
     private Runnable onPlay = () -> {
     };
     private Runnable onPause = () -> {
@@ -218,7 +219,16 @@ public class PanelHeader extends JPanel {
     /** Shows the level's progress and the economy; skips what has not changed. */
     public void show(WaveProgress progress, boolean waveReady, LevelOutcome outcome, EconomyState state) {
         this.show(new StatusReadout(progress.index(), progress.count(), waveReady, outcome.isOver(), state.lives(),
-                state.score(), state.credits()), RoundStrip.of(progress, waveReady, outcome));
+                state.score(), state.credits()).withCheats(this.cheats),
+                RoundStrip.of(progress, waveReady, outcome));
+    }
+
+    /**
+     * Which dev panel cheats the next {@link #show} shows: they stay on with the panel hidden, so the bar is where they
+     * show.
+     */
+    public void setCheats(boolean livesUnlimited, boolean freeBuild) {
+        this.cheats = new StatusCheats(livesUnlimited, freeBuild);
     }
 
     private void show(StatusReadout next, RoundStrip nextRounds) {

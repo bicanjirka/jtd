@@ -14,3 +14,5 @@
   kills, `kill(bounty)` for 1:1, `leak(penalty)`) applied through `apply`, which fires exactly
   one notification. A new kind of event is a new `EconomyDelta`
   factory, never a new mutating method on the ledger.
+- Free build is a mode, not an event, so its switch is a method here. Game and UI code asks `canPay`, `shortOf` and
+  `refundOf`, which answer for it, and never compares a price to `credits()`. The balance tools' players never turn it on.

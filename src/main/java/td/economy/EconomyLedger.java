@@ -18,6 +18,26 @@ public class EconomyLedger {
     private final List<EconomyListener> listeners = new CopyOnWriteArrayList<>();
 
     private volatile EconomyState economy = EconomyState.startingWith(0, 5);
+    private volatile boolean freeBuild;
+
+    /**
+     * While on, payments go through uncharged and refunds pay nothing, so the credits move only by what the game
+     * pays. A level starting or loading leaves it as it is.
+     */
+    public void setFreeBuild(boolean on) {
+        this.freeBuild = on;
+        LOG.debug("Free build {}", on);
+        this.fireEconomyChangedEvent(this.economy);
+    }
+
+    public boolean freeBuild() {
+        return this.freeBuild;
+    }
+
+    /** What is really paid back of {@code owed}: all of it, or nothing during free build. */
+    public int refundOf(int owed) {
+        return this.freeBuild ? 0 : owed;
+    }
 
     /**
      * Seeds the level's starting credits and lives, notifying like any change. Assigns inside the
@@ -65,11 +85,23 @@ public class EconomyLedger {
     }
 
     public boolean canPay(int amount) {
-        return this.economy.canAfford(amount);
+        return this.freeBuild || this.economy.canAfford(amount);
     }
 
-    /** Pays {@code amount} if the credits cover it; a refusal tells the listeners, since something went unbought. */
+    /** How much cash {@code amount} is short of; 0 when {@link #canPay} says it can be paid. */
+    public int shortOf(int amount) {
+        return this.freeBuild ? 0 : Math.max(0, amount - this.economy.credits());
+    }
+
+    /**
+     * Pays {@code amount} if the credits cover it, or uncharged during free build; a refusal tells the listeners, since
+     * something went unbought. A free payment notifies like a charged one: buying moves what the next one costs.
+     */
     public boolean doPay(int amount) {
+        if (this.freeBuild) {
+            this.fireEconomyChangedEvent(this.economy);
+            return true;
+        }
         boolean paid;
         EconomyState updated;
         synchronized (this) {

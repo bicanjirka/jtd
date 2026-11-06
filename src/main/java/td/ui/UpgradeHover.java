@@ -13,11 +13,11 @@ import java.util.List;
 /** What a click on the hovered node would do: buy its path, or, on an owned node, downgrade it. */
 sealed interface UpgradeHover {
 
-    /** The path a left click buys, and the credits there are to pay for it. */
-    record Buying(UpgradePath path, int credits) implements UpgradeHover {
+    /** The path a left click buys, and how much cash it is short of; 0 when it can be paid. */
+    record Buying(UpgradePath path, int shortBy) implements UpgradeHover {
 
         boolean affordable() {
-            return this.credits >= this.path.total();
+            return this.shortBy == 0;
         }
 
         /** Whether a click buys it now. */
@@ -38,7 +38,8 @@ sealed interface UpgradeHover {
         UpgradeTree tree = tower.upgradeTree();
         UpgradeState owned = tower.upgrades();
         if (!owned.owns(node.id())) {
-            return new Buying(tree.planPath(node, tower, world), world.economy().getCredits());
+            UpgradePath path = tree.planPath(node, tower, world);
+            return new Buying(path, world.economy().shortOf(path.total()));
         }
         UpgradeRemoval removal = tree.removalFor(node, tower, world);
         return new Downgrading(removal, tower.refundFor(removal), tree.newlyLockedOut(removal.kept(), owned));

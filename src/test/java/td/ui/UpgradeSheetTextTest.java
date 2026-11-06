@@ -254,6 +254,20 @@ class UpgradeSheetTextTest {
     }
 
     @Test
+    void duringFreeBuildAPathTheCashDoesNotCoverIsStillOneClickBuys() {
+        FakeTower fresh = this.choosing();
+        this.world.economy().startEconomy(1, 5);
+        this.world.economy().setFreeBuild(true);
+
+        UpgradeHover hover = UpgradeHover.of(STEADY, fresh, this.world);
+        InfoSheet sheet = this.sheet(fresh, STEADY);
+
+        assertThat(UpgradeSheetText.footerWarns(Optional.of(hover))).isFalse();
+        assertThat(sheet.lines()).contains(SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET,
+                TermText.of("Click to buy all 2")));
+    }
+
+    @Test
     void aBlockedPathNamesTheStepThatStopsIt() {
         this.world.economy().startEconomy(1000, 5);
         FakeTower novice = FakeTower.offering(this.world, 4, 4, CHOICES);

@@ -200,10 +200,14 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Three quarters of everything paid: the tower at the price it was bought for, and every
-     * upgrade bought for it.
+     * What selling it pays back of everything paid: the tower at the price it was bought for, and
+     * every upgrade bought for it. Nothing during free build.
      */
     public int getSellPrice() {
+        return this.context.economy().refundOf(this.shareOfAllPaid());
+    }
+
+    private int shareOfAllPaid() {
         int upgradesPaid = this.upgrades().owned().stream().mapToInt(UpgradeNode::price).sum();
         return SellRefund.of(this.price + upgradesPaid);
     }
@@ -706,7 +710,7 @@ public abstract class AbstractTower implements Tower {
     @Override
     public int refundFor(UpgradeRemoval removal) {
         int keptPaid = removal.kept().owned().stream().mapToInt(UpgradeNode::price).sum();
-        return this.getSellPrice() - SellRefund.of(this.price + keptPaid);
+        return this.context.economy().refundOf(this.shareOfAllPaid() - SellRefund.of(this.price + keptPaid));
     }
 
     @Override

@@ -137,7 +137,7 @@ final class UpgradeSheetText {
                 if (path.block().isPresent()) {
                     yield text + " · blocked: " + reasonWord(path.block().get().reason());
                 }
-                yield buying.affordable() ? text : text + " · short $" + (path.total() - buying.credits());
+                yield buying.affordable() ? text : text + " · short $" + buying.shortBy();
             }
             case UpgradeHover.Downgrading downgrading -> "Right-click: downgrade " + downgrading.removal().removed().size()
                     + " · +$" + downgrading.refund();
@@ -178,7 +178,7 @@ final class UpgradeSheetText {
                     TermText.of("Blocked: " + block.at().displayName() + " " + reasonPhrase(block.reason()))));
         } else if (!buying.affordable()) {
             lines.add(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
-                    TermText.of("Short $" + (path.total() - buying.credits()))));
+                    TermText.of("Short $" + buying.shortBy())));
         } else {
             lines.add(SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET,
                     TermText.of(path.steps().size() == 1 ? "Click to buy" : "Click to buy all " + path.steps().size())));

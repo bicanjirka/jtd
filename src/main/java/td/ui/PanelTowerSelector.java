@@ -111,7 +111,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         }
 
         this.context.economy().addEconomyListener(this);
-        this.showPrices(this.context.economy().state());
+        this.showPrices();
     }
 
     /** Once {@link #doInit} made the buttons: each one's hover is a tooltip of the tower it builds, at today's price. */
@@ -142,7 +142,7 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     /** May run on the game-loop thread. */
     public void economyChanged(EconomyState state) {
         SwingUtilities.invokeLater(() -> {
-            this.showPrices(state);
+            this.showPrices();
             if (this.tooltips != null) {
                 this.tooltips.refreshButtons();
             }
@@ -150,10 +150,10 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     }
 
     /** Each tower's price now, red and its tile dimmed while it costs more than the cash. */
-    private void showPrices(EconomyState state) {
+    private void showPrices() {
         for (int i = 0; i < this.buttons.length; i++) {
             int price = this.context.towers().priceOf(this.towerTypes.get(i));
-            boolean affordable = state.canAfford(price);
+            boolean affordable = this.context.economy().canPay(price);
             this.buttons[i].setFace(this.buttons[i].face().withDimmed(!affordable));
             this.prices[i].setText("$" + price);
             this.prices[i].setForeground(affordable ? Hud.FOREGROUND : Hud.SHORT);

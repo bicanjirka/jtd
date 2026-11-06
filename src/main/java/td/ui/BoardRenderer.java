@@ -57,7 +57,7 @@ public final class BoardRenderer {
         LoadedLevel level = this.world.level();
 
         List<CellDraw> cells = new ArrayList<>();
-        CellDraw highlighted = CellFrameBuilder.build(this.highlight.get(), level.cells(), this.world.economy().getCredits());
+        CellDraw highlighted = CellFrameBuilder.build(this.highlight.get(), level.cells(), this.world.economy());
         if (highlighted != null) {
             cells.add(highlighted);
         }
