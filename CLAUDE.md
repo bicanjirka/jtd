@@ -31,6 +31,9 @@ violation. They are not restated here.
   numbers → the live game (`run-jtd` Driver) only for Swing wiring: input routing, panel text
   and layout. Never re-check live what a test already asserts.
 - One live `run-jtd` pass per feature, after its last phase, in the same session.
+- To find out why something happens at runtime, when the IDE is open: the debugger (`idea` MCP server, the
+  `ij-debugger` skill), not debug code added and reverted. In a live game, a logpoint that suspends nothing;
+  `run-jtd` has the attach recipe. Enemies have Observe traces first.
 - A test for UI text builds its input the way the panel does, not through a convenient factory.
 - Performance budget (p99, the built-in level with the most buildable cells, every one a tower): tick ≤ 1 ms,
   frame build ≤ 1 ms, ≤ 512 KB allocated per frame build. `td.PerformanceHarness` exits non-zero

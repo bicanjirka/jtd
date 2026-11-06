@@ -1,6 +1,6 @@
 ---
 name: run-jtd
-description: Build, run and drive jTD (the Swing tower-defense app) to check what tests can't - Swing wiring (clicks, hover, panel text and layout) in the live window, and board visuals rendered headless - and trace what happens to an enemy tick by tick (every hit and its reduction steps, effect, heal, cast and its end) in a live game. Use when asked to start jTD, screenshot it, click something in it, visually verify a UI or board-rendering change, or find out why an enemy behaved as it did in play.
+description: Build, run and drive jTD (the Swing tower-defense app) to check what tests can't - Swing wiring (clicks, hover, panel text and layout) in the live window, and board visuals rendered headless - and trace what happens to an enemy tick by tick (every hit and its reduction steps, effect, heal, cast and its end) in a live game, or attach the IDE debugger to one. Use when asked to start jTD, screenshot it, click something in it, visually verify a UI or board-rendering change, or find out why an enemy or tower behaved as it did in play.
 ---
 
 ## Pick the cheapest check
@@ -107,6 +107,37 @@ trace
 quit
 EOF
 ```
+
+## Debugging a live game
+
+For a runtime fact that a trace doesn't record, with the IDE open. Follow the `ij-debugger` skill (logpoint
+first, side-effect-free expressions, `execute_tool` when the IDE exposes it); what follows is what jTD adds.
+
+Give the Driver a debug port and enough ticks to attach before it quits. A long `waitfor` needs its own
+`ms`, or it gives up at the default. Start it in the background:
+
+```bash
+cat <<'EOF' | java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:5055 -cp "$CP" Driver
+level 0
+setlives 1000
+spawn armored
+waitfor ticks 500 40000
+enemies
+quit
+EOF
+```
+
+1. Set the logpoint first: `suspendPolicy: NONE`, a `logExpression`, and a `condition` such as
+   `gameTime % 40 == 0` on anything that runs every tick.
+2. Find the JVM's PID by the port in its command line (`Get-CimInstance Win32_Process -Filter "Name='java.exe'"`),
+   then `xdebug_attach_to_process`.
+3. Read with `xdebug_control_session` `DRAIN_EVENTS`. It still works after the game has quit.
+4. Remove your breakpoints: `xdebug_remove_breakpoints` with `owner: agent`. They outlive the session.
+
+A logpoint keeps the game at its normal tick rate. A breakpoint with `suspendPolicy: ALL` stops the game clock
+and the EDT together, so the window freezes and timing-dependent behaviour changes: use it only for a state
+no logpoint can show, and prefer a test, where nothing runs against the clock. Measure performance with
+`td.PerformanceHarness` or JFR, never under a debugger.
 
 ## PreviewBoard - a board scene, headless
 

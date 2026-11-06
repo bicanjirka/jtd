@@ -32,3 +32,9 @@ Read when a Driver or preview step misbehaves. Each item cost a past session a r
 - **The pointer stays where the last run left it.** A run that starts over a preview slot opens its
   tooltip at once, and a later `hover` that ends inside that tooltip keeps it open. Start with
   `pointer 300 300` before hovering.
+- **An IDE call that reports a timeout may still be running.** A debug launch or `build_project` came back
+  "timed out" after about a minute, whatever `timeout` it was given, and the session started anyway. A launch
+  can also be waiting on the IDE's run confirmation, which the user has to click. Check
+  `xdebug_get_debugger_status` before trying again; a second launch starts a second JVM.
+- **An IDE build writes into `target/classes` and `target/test-classes`,** the folders Maven and the Driver's
+  classpath use. A debug launch from the IDE compiles first, so those classes can change under a Driver run.
