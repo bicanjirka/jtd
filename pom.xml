@@ -86,7 +86,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.6</version>
                 <configuration>
-                    <!-- Test budget: the whole suite measured at about 4.5 s. -->
+                    <!-- Test budget: the whole suite measured at about 11 s. -->
                     <forkedProcessTimeoutInSeconds>60</forkedProcessTimeoutInSeconds>
                 </configuration>
             </plugin>
