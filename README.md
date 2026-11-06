@@ -458,24 +458,25 @@ Six levels ship with the game, each on a ground of its own: **The Amber Hive** (
 lane loops once at the entrance, sweeps around a wide bend and hooks inward to leave over the top edge, 16 waves: a
 brood that is only strong together - Drones and Hive Guards harden for every ally beside them, so area damage that
 breaks a pack up comes first; Larvae spin Cocoons that hatch into Hornets if they are let walk; Brood Nurses heal and
-ward - and the Warden at the end, who calls Drones to its side), **The Storm Ridge** (a smaller,
-16×11 board in the rain where a long blue road hooks back on itself and a short yellow lane cuts across it twice, 12
-waves per lane, 4 lives: Gales shove whatever walks beside them further along, Rainclouds burst into Raindrops, and
-at the end the storm's twins, the Thunder down the road and the Lightning down the lane, who have to fall close
-together) and **The Last Hour** (a tight, 9×15 portrait board over
+ward - and the Warden at the end, who calls Drones to its side), **The Labyrinth** (a 9×9 board where one lane
+winds through every cell but the 3×3 at its heart, so nine towers are all there is: three rounds - a long one that
+pays for the defence, a round of Bosses around Talos, whose shield needs a tower's answer to shields, and the
+Minotaur), **The Last Hour** (a tight, 9×15 portrait board over
 wind-rippled sand where three Bezier lanes - dusk, glass and sand - twist through a pinched waist so the layout reads
 as an hourglass, glass and sand crossing at its middle, 12 waves per lane: Sandlings crumble on their own, so what
 holds them back is worth more than what hits them; Timekeepers turn their allies' health back; Glass Sentinels
 shrug off small hits and shatter under crits; and at the end the Keeper of Hours, who turns back what was done to it
-unless it is stopped from casting, kept from healing or Inverted) and **Iron Crossing** (an 18×13
+unless it is stopped from casting, kept from healing or Inverted), **The Storm Ridge** (a
+16×11 board in the rain where a long blue road hooks back on itself and a short yellow lane cuts across it twice, 12
+waves per lane, 4 lives: Gales shove whatever walks beside them further along, Rainclouds burst into Raindrops, and
+at the end the storm's twins, the Thunder down the road and the Lightning down the lane, who have to fall close
+together), **The Rift** (a 17×15 board: lanes
+that start and end at a tear in the middle of the board, one of them silent for the first rounds, 12 waves per lane, 3
+lives, and one round in which a single enemy walks alone) and **Iron Crossing** (an 18×13
 board, the hardest: a long steel lane winds Golems, Juggernauts, Magma and their support back and forth
 while a short rush lane of Couriers, Skirmishers, Ghosts and Mite swarms knifes straight through it
 three times, 15 waves per lane, 3 lives, and the Iron Colossus at the end: break its shell with magic, then catch the
-Molten Core inside with physical damage before it runs) and **The Rift** (a 17×15 board, the hardest: lanes
-that start and end at a tear in the middle of the board, one of them silent for the first rounds, 12 waves per lane, 3
-lives, and one round in which a single enemy walks alone) and **The Labyrinth** (a 9×9 board where one lane
-winds through every cell but the 3×3 at its heart, so nine towers are all there is: three rounds - a long one that
-pays for the defence, a round of Bosses around Talos, whose shield needs a tower's answer to shields, and the Minotaur). A level can define more than one enemy path, each with its own color, waves
+Molten Core inside with physical damage before it runs). A level can define more than one enemy path, each with its own color, waves
 and pace; every built-in level but The Amber Hive and The Labyrinth does. A lane may start or end inside the board, run faster or
 slower than the others (`PathDefinition.withSpeed`) and send nothing in a round (a wave of just `e`). A level's
 paths all run the same number of waves as synchronized rounds - starting a round spawns every

@@ -332,7 +332,7 @@ lines better (0.85 and 0.82), which the ceiling explains, and it adds a second e
 Aura rules.
 
 - **Where:** `TowerLab.DUEL_SHARE`, `UpgradeTier`'s percents, `td.PurchaseHarness`, `td.FairPriceTable`.
-- **Approach:** compare four setups with today on all three levels through `BalanceReport --seeds 4 --levels 0,1,2`,
+- **Approach:** compare four setups with today on all three levels through `BalanceReport --seeds 4 --levels 0,2,3`,
   about 8 minutes each: `DUEL_SHARE` 0.1; every node at half price; the tiers below; the tiers below with `DUEL_SHARE`
   0.1. Measured tiers, with small floors where the mean reads about nothing: Range 35 / 25 / 25, Attune 20, Awaken 20,
   Transcendent 50, Head 70 / 120 / 50 / 115, Extra 30 / 25 / 15 / 15, Special 25. Try each setup through a temporary edit
@@ -372,7 +372,7 @@ file was measured on the old levels.
 
 - **Where:** the wave scripts, starting credits and enemy numbers in `td.level.AmberHiveLevel`, `StormRidgeLevel`,
   `LastHourLevel`, `WardenEnemy`, `StormTwinsEnemy` and `KeeperEnemy`.
-- **Approach:** after the playtests, `BalanceReport --levels 0,1,2 --seeds 12 --strong --variety`; retune by wave
+- **Approach:** after the playtests, `BalanceReport --levels 0,2,3 --seeds 12 --strong --variety`; retune by wave
   composition first, then the bosses' numbers. Check that the bosses' counters (AoE against Hivemind, a kill zone
   where the storm's lanes cross, a freeze, silence or heal denial against Rewind) show in the reports' purchases.
 
