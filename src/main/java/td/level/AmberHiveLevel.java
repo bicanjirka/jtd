@@ -41,7 +41,7 @@ import java.util.stream.Stream;
  * harden for every ally beside them, so a defence has to break the pack apart; its larvae spin cocoons and hatch into
  * hornets if they are let walk; and at the end the Warden, who calls the brood to its side.
  */
-final class CurlyPathLevel {
+final class AmberHiveLevel {
 
     private static final String LEVEL_NAME = "The Amber Hive";
     private static final String LEVEL_DESCRIPTION = "A trail coils through a comb of amber cells. The brood marches "
@@ -186,7 +186,7 @@ final class CurlyPathLevel {
             .withCustomRankedEnemies(Stream.concat(Stream.of(DRONE, HIVE_GUARD, NURSE, HORNET, COCOON, LARVA),
                     WardenEnemy.chain().stream()).toList());
 
-    private CurlyPathLevel() {
+    private AmberHiveLevel() {
     }
 
     private static EnemyDefinition warding(EnemyDefinition nurse, float points) {
