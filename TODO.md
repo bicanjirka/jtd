@@ -259,19 +259,26 @@ same, so a new keyword has to be taught to both. Ranks are string constants and 
 
 ## Balance tools
 
-### `TowerLabTest` can time out
+### No test runs the whole lab
 
-Its class setup runs the whole lab, which takes kinds from the built-in catalog, so new content slows a test whose own
-level has two enemies. `measureASmallLevel` takes 8-10 s on a cold JVM against the 5 s limit, so the test fails every
-time when run alone and sometimes in `mvn verify` (once in 5 full runs), where its 5 tests then don't run. A longer
-`@Timeout` on that setup would stop the failures, but no test uses one today and it deviates from the 5 s rule. Two of
-its tests also name built-in nodes. The comments in `junit-platform.properties` (slowest test 0.9 s) and `pom.xml` (whole
-suite 4.5 s) are out of date: the last full run's slowest test took 2.5 s and its classes added up to about 26 s.
+`TowerLabTest` runs each measurement alone, because `TowerLab.of` on even a small level takes most of a test's limit, and
+more as content grows. So a mistake in how `of` puts the measurements together shows only when a balance tool runs.
 
-- **Where:** `TowerLabTest`, `TowerLab.probedKinds`.
-- **Approach:** each test measures only its own tower and node, on definitions built in the test, with no shared setup
-  over the whole lab. A profile found `RunRecorder.afterTick` (16-20%) and `EnemyCatalog.builtIn` (about 6%) as savings,
-  about a quarter at most, which isn't enough alone.
+- **Where:** `TowerLab.of`.
+- **Approach:** a test of `of` needs the lab to cost far less on a small level: it takes every kind from the built-in
+  catalog, whatever the level sends. Measuring only what the level sends would also change the numbers the balance tools
+  compare, so judge that with them. A profile found `RunRecorder.afterTick` (16-20%) and `EnemyCatalog.builtIn` (about
+  6%) as savings, about a quarter at most, which isn't enough alone.
+
+### Keeping a hiding kind revealed lowers what the lab says a Sniper lands on it
+
+On a small test level a Sniper's factor against a kind that turns invisible when hit is 0.96, and 0.89 with every enemy
+kept revealed, so the lab rates a reveal as a loss for that partner. Perhaps a hit enemy that vanishes sends the next shot
+to a fresh one, where a revealed one takes shots it no longer needs. Not looked into, and not checked on a built-in level.
+
+- **Where:** `TowerLab.Duel.revealedFactor`, `TowerLab.revealedFactor` and what reads it in `CompetentPlayer`.
+- **Approach:** trace one duel of each with a debugger logpoint on the Sniper's shots. If it is overkill, decide whether
+  a duel at a health that low is the right measure of a reveal.
 
 ### The lab can't read a line past about 3.33x, and upgrades look overpriced
 

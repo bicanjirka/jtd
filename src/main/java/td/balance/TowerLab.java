@@ -156,6 +156,12 @@ public final class TowerLab {
         static Partnering none() {
             return new Partnering(0, 0, Map.of());
         }
+
+        /** The share more each partner lands beside a tower owning {@code owned}; never below none. */
+        double supportGainOwning(Collection<String> owned) {
+            return Math.max(0, this.supportGain
+                    + owned.stream().mapToDouble(node -> this.supportSteps.getOrDefault(node, 0.0)).sum());
+        }
     }
 
     /**
@@ -178,6 +184,110 @@ public final class TowerLab {
 
         static Sight none() {
             return new Sight(Map.of(), Map.of());
+        }
+
+        /** How much of the hiding kind {@code key} a tower owning {@code owned} shows: the most any owned node's line shows. */
+        double revealShareOwning(Collection<String> owned, String key) {
+            return owned.stream().filter(this.revealShares::containsKey)
+                    .mapToDouble(node -> this.revealShares.get(node).getOrDefault(key, 0.0)).max().orElse(0.0);
+        }
+    }
+
+    /**
+     * One tower on one cell against duel waves whose enemies each have {@code health}, and what it brings down of a
+     * plain wave, which the rest are compared with.
+     */
+    record Duel(LevelDefinition level, TowerFactory.Type type, Point cell, double health, double plainShare) {
+
+        /** A duel at the health that has the bare tower bring down {@link #DUEL_SHARE} of a plain wave. */
+        static Duel calibrated(LevelDefinition level, TowerFactory.Type type, Point cell) {
+            return at(level, type, cell, calibrate(level, type, cell));
+        }
+
+        static Duel at(LevelDefinition level, TowerFactory.Type type, Point cell, double health) {
+            return new Duel(level, type, cell, health,
+                    Math.max(1e-6, duelShare(level, PLAIN, LAB_RANK, health, type, cell, Optional.empty(), false)));
+        }
+
+        /** What the bare tower brings down of the kind {@code key}, over what it brings down of the plain one. */
+        double kindFactor(String key) {
+            return this.factorAgainst(key, false);
+        }
+
+        /** {@link #kindFactor} with every enemy of the kind kept revealed. */
+        double revealedFactor(String key) {
+            return this.factorAgainst(key, true);
+        }
+
+        private double factorAgainst(String key, boolean revealAll) {
+            String[] parts = key.split(AT);
+            return duelShare(this.level, parts[0], Rank.valueOf(parts[1]), this.health, this.type, this.cell,
+                    Optional.empty(), revealAll) / this.plainShare;
+        }
+
+        /** What the tower owning {@code node}'s whole line brings down of a plain wave, over what it does bare. */
+        double lineFactor(UpgradeNode node) {
+            return duelShare(this.level, PLAIN, LAB_RANK, this.health, this.type, this.cell, Optional.of(node), false)
+                    / this.plainShare;
+        }
+    }
+
+    /**
+     * What a tower on one cell adds to the partners of a {@link #BOX} around it: the share more each lands in a probe
+     * round, on average. A tower that only deals damage adds nothing; a slow, a mark or a debuff shows here and
+     * nowhere else.
+     */
+    static final class SupportTrial {
+
+        private final LevelDefinition probes;
+        private final List<Placement> box;
+        private final List<Placement> hosts;
+        private final TowerFactory.Type type;
+        private final Point cell;
+        private final double[] alone;
+
+        private SupportTrial(LevelDefinition probes, List<Placement> box, List<Placement> hosts, TowerFactory.Type type,
+                             Point cell) {
+            this.probes = probes;
+            this.box = box;
+            this.hosts = hosts;
+            this.type = type;
+            this.cell = cell;
+            this.alone = boxDamage(probes, box, hosts, type, cell, Optional.empty(), false);
+        }
+
+        /** The trial for {@code type} on {@code cell}; none where no partner finds a cell that reaches a path. */
+        static Optional<SupportTrial> around(BoardSurvey survey, LevelDefinition probes, TowerFactory.Type type, Point cell) {
+            List<Placement> box = boxAround(survey, cell);
+            return box.isEmpty() ? Optional.empty()
+                    : Optional.of(new SupportTrial(probes, box, hostFor(survey, type, cell, box), type, cell));
+        }
+
+        /** The share more each partner lands beside the tower owning {@code line}; never below none. */
+        double gainOwning(Optional<UpgradeNode> line) {
+            return boxGain(this.alone, boxDamage(this.probes, this.box, this.hosts, this.type, this.cell, line, true));
+        }
+    }
+
+    /**
+     * What a tower on one cell shows of one hiding kind to the partner beside it, between what the partner lands
+     * beside the bare tower and what it lands with every enemy kept revealed.
+     */
+    record RevealTrial(LevelDefinition duel, Point partnerCell, TowerFactory.Type type, Point cell, double unseen, double seen) {
+
+        static RevealTrial of(LevelDefinition level, String key, Point partnerCell, TowerFactory.Type type, Point cell) {
+            String[] parts = key.split(AT);
+            LevelDefinition duel = duelLevel(level, parts[0], Rank.valueOf(parts[1]), PROBE_HEALTH);
+            return new RevealTrial(duel, partnerCell, type, cell,
+                    partnerDamage(duel, partnerCell, type, cell, Optional.empty(), false),
+                    partnerDamage(duel, partnerCell, type, cell, Optional.empty(), true));
+        }
+
+        /** From 0 no more than the bare tower to 1 as much as if every enemy stayed revealed. */
+        double shareOwning(UpgradeNode line) {
+            double with = partnerDamage(this.duel, this.partnerCell, this.type, this.cell, Optional.of(line), false);
+            return this.seen - this.unseen <= HIDING_MATTERS * this.seen ? 1.0
+                    : Math.clamp((with - this.unseen) / (this.seen - this.unseen), 0.0, 1.0);
         }
     }
 
@@ -232,29 +342,25 @@ public final class TowerLab {
     private static TypeProfile profileOf(BoardSurvey survey, LevelDefinition plainProbes, TowerFactory.Type type,
                                          Point cell, List<String> kinds) {
         LevelDefinition level = survey.level();
-        double health = calibrate(level, type, cell);
-        double plainShare = Math.max(1e-6, duelShare(level, PLAIN, LAB_RANK, health, type, cell, Optional.empty(), false));
+        Duel duel = Duel.calibrated(level, type, cell);
         Map<String, Double> kindFactors = new LinkedHashMap<>();
         for (String key : kinds) {
-            String[] parts = key.split(AT);
-            kindFactors.put(key, duelShare(level, parts[0], Rank.valueOf(parts[1]), health, type, cell,
-                    Optional.empty(), false) / plainShare);
+            kindFactors.put(key, duel.kindFactor(key));
         }
         Tower sample = sampleOf(plainProbes, type, cell);
         Map<String, Double> wholeLines = new LinkedHashMap<>();
         for (UpgradeNode node : sample.upgradeTree().nodes()) {
-            wholeLines.put(node.id(), duelShare(level, PLAIN, LAB_RANK, health, type, cell, Optional.of(node), false)
-                    / plainShare);
+            wholeLines.put(node.id(), duel.lineFactor(node));
         }
         double alone = Math.max(1, damageOf(plainProbes, type, cell, List.of(), Optional.empty(), FIRST_SEED));
         double beaconGain = besideCell(survey, cell)
                 .map(beacon -> damageOf(plainProbes, type, cell, List.of(new Placement(TowerFactory.Type.AURA, beacon)),
                         Optional.empty(), FIRST_SEED) / alone - 1)
                 .orElse(0.0);
-        List<Placement> box = boxAround(survey, cell);
-        Partnering partners = box.isEmpty() ? new Partnering(beaconGain, 0, Map.of())
-                : supportOf(plainProbes, sample, cell, box, hostFor(survey, type, cell, box), beaconGain);
-        return new TypeProfile(health, kindFactors, factorsFromLines(sample, wholeLines), partners);
+        Partnering partners = SupportTrial.around(survey, plainProbes, type, cell)
+                .map(trial -> supportOf(trial, sample, beaconGain))
+                .orElseGet(() -> new Partnering(beaconGain, 0, Map.of()));
+        return new TypeProfile(duel.health(), kindFactors, factorsFromLines(sample, wholeLines), partners);
     }
 
     /**
@@ -268,45 +374,37 @@ public final class TowerLab {
             return Sight.none();
         }
         LevelDefinition level = survey.level();
-        double health = profile.duelHealth();
-        double plainShare = Math.max(1e-6, duelShare(level, PLAIN, LAB_RANK, health, type, cell, Optional.empty(), false));
+        Duel duel = Duel.at(level, type, cell, profile.duelHealth());
         Map<String, Double> revealedFactors = new LinkedHashMap<>();
         for (String key : hiding) {
-            String[] parts = key.split(AT);
-            revealedFactors.put(key, duelShare(level, parts[0], Rank.valueOf(parts[1]), health, type, cell,
-                    Optional.empty(), true) / plainShare);
+            revealedFactors.put(key, duel.revealedFactor(key));
         }
         Optional<Point> partnerCell = besideCell(survey, cell);
-        List<UpgradeNode> revealing = sampleOf(plainProbes, type, cell).upgradeTree().nodes().stream()
-                .filter(node -> reveals(plainProbes, type, cell, node)).toList();
+        List<UpgradeNode> revealing = nodesApplying(plainProbes, type, cell, EffectKind.REVEALED);
         if (partnerCell.isEmpty() || revealing.isEmpty()) {
             return new Sight(revealedFactors, Map.of());
         }
         Map<String, Map<String, Double>> shares = new LinkedHashMap<>();
         for (String key : hiding) {
-            String[] parts = key.split(AT);
-            LevelDefinition duel = duelLevel(level, parts[0], Rank.valueOf(parts[1]), PROBE_HEALTH);
-            double unseen = partnerDamage(duel, partnerCell.get(), type, cell, Optional.empty(), false);
-            double seen = partnerDamage(duel, partnerCell.get(), type, cell, Optional.empty(), true);
+            RevealTrial trial = RevealTrial.of(level, key, partnerCell.get(), type, cell);
             for (UpgradeNode node : revealing) {
-                double with = partnerDamage(duel, partnerCell.get(), type, cell, Optional.of(node), false);
-                double share = seen - unseen <= HIDING_MATTERS * seen ? 1.0
-                        : Math.clamp((with - unseen) / (seen - unseen), 0.0, 1.0);
-                shares.computeIfAbsent(node.id(), id -> new LinkedHashMap<>()).put(key, share);
+                shares.computeIfAbsent(node.id(), id -> new LinkedHashMap<>()).put(key, trial.shareOwning(node));
             }
         }
         return new Sight(revealedFactors, shares);
     }
 
-    /** Whether {@code type} owning {@code node}'s line says it reveals. */
-    private static boolean reveals(LevelDefinition lab, TowerFactory.Type type, Point cell, UpgradeNode node) {
-        Tower sample = sampleOf(lab, type, cell);
-        buyLine(sample, node);
-        return sample.applies().stream().anyMatch(applied -> applied.term().equals(EffectKind.REVEALED));
+    /** The nodes whose whole line has {@code type} say it applies {@code kind}. */
+    static List<UpgradeNode> nodesApplying(LevelDefinition lab, TowerFactory.Type type, Point cell, EffectKind kind) {
+        return sampleOf(lab, type, cell).upgradeTree().nodes().stream().filter(node -> {
+            Tower sample = sampleOf(lab, type, cell);
+            buyLine(sample, node);
+            return sample.applies().stream().anyMatch(applied -> applied.term().equals(kind));
+        }).toList();
     }
 
     /** The kinds among {@code keys} that can turn themselves or their allies invisible. */
-    private static List<String> hidingKinds(LevelDefinition level, List<String> keys) {
+    static List<String> hidingKinds(LevelDefinition level, List<String> keys) {
         EnemyCatalog catalog = catalogOf(level);
         return keys.stream().filter(key -> {
             String[] parts = key.split(AT);
@@ -321,19 +419,12 @@ public final class TowerLab {
         }).toList();
     }
 
-    /**
-     * What {@code sample}'s type on {@code cell}, bare and with each whole line, adds to the partners in {@code box}:
-     * the share more each lands in a probe round, on average. A tower that only deals damage adds nothing; a slow,
-     * a mark or a debuff shows here and nowhere else.
-     */
-    private static Partnering supportOf(LevelDefinition probes, Tower sample, Point cell, List<Placement> box,
-                                        List<Placement> hosts, double beaconGain) {
-        TowerFactory.Type type = sample.getType();
-        double[] alone = boxDamage(probes, box, hosts, type, cell, Optional.empty(), false);
-        double bare = boxGain(alone, boxDamage(probes, box, hosts, type, cell, Optional.empty(), true));
+    /** What {@code sample}'s type adds to its partners, bare and with each whole line. */
+    private static Partnering supportOf(SupportTrial trial, Tower sample, double beaconGain) {
+        double bare = trial.gainOwning(Optional.empty());
         Map<String, Double> wholeLines = new LinkedHashMap<>();
         for (UpgradeNode node : sample.upgradeTree().nodes()) {
-            wholeLines.put(node.id(), boxGain(alone, boxDamage(probes, box, hosts, type, cell, Optional.of(node), true)));
+            wholeLines.put(node.id(), trial.gainOwning(Optional.of(node)));
         }
         Map<String, Double> steps = new LinkedHashMap<>();
         for (UpgradeNode node : sample.upgradeTree().nodes()) {
@@ -475,7 +566,7 @@ public final class TowerLab {
     }
 
     /** Every buildable cell's damage for each path alone; 0 where the tower reaches no path. */
-    private static Map<Point, double[]> cellValuesOf(BoardSurvey survey, TowerFactory.Type type) {
+    static Map<Point, double[]> cellValuesOf(BoardSurvey survey, TowerFactory.Type type) {
         int paths = survey.pathCount();
         List<LevelDefinition> labs = IntStream.range(0, paths)
                 .mapToObj(path -> probeLevel(survey.level(), PLAIN, path)).toList();
@@ -595,9 +686,7 @@ public final class TowerLab {
      * from 0 to 1: the most any owned node's line shows.
      */
     public double revealShare(TowerFactory.Type type, Collection<String> owned, String key) {
-        Map<String, Map<String, Double>> shares = this.sights.get(type).revealShares();
-        return owned.stream().filter(shares::containsKey)
-                .mapToDouble(node -> shares.get(node).getOrDefault(key, 0.0)).max().orElse(0.0);
+        return this.sights.get(type).revealShareOwning(owned, key);
     }
 
     /**
@@ -667,9 +756,7 @@ public final class TowerLab {
      * {@link #beaconGain}.
      */
     public double supportGain(TowerFactory.Type type, Collection<String> owned) {
-        Partnering partners = this.profiles.get(type).partners();
-        return Math.max(0, partners.supportGain()
-                + owned.stream().mapToDouble(node -> partners.supportSteps().getOrDefault(node, 0.0)).sum());
+        return this.profiles.get(type).partners().supportGainOwning(owned);
     }
 
     /**
@@ -795,7 +882,7 @@ public final class TowerLab {
      * Every enemy a round can send: the catalog's kinds but those only ever spawned by another enemy (eggs,
      * reinforcements, broods), unless a round of this level sends one itself.
      */
-    private static List<String> probedKinds(LevelDefinition level) {
+    static List<String> probedKinds(LevelDefinition level) {
         EnemyCatalog catalog = catalogOf(level);
         Set<String> spawned = new LinkedHashSet<>();
         for (String id : catalog.ids()) {

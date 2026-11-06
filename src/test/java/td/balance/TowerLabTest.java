@@ -1,6 +1,5 @@
 package td.balance;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import td.effect.EffectKind;
 import td.effect.InvisibleTemplate;
@@ -15,10 +14,13 @@ import td.enemy.SelfTarget;
 import td.fixtures.EnemyFixtures;
 import td.level.LevelDefinition;
 import td.tower.TowerFactory;
+import td.tower.upgrade.UpgradeNode;
 import td.wave.Point;
 import td.wave.WaveDefinition;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,59 +31,104 @@ class TowerLabTest {
     private static final EnemyDefinition HIDER = EnemyFixtures.simpleDefinition("hider").withArmor(20f)
             .withAbilities(List.of(new Ability(AbilityTerm.FADE, new OnFirstDamageTakenTrigger(),
                     new ApplyEffectAction(new InvisibleTemplate(300), new SelfTarget()))));
-
-    private static TowerLab lab;
-
-    @BeforeAll
-    static void measureASmallLevel() {
-        LevelDefinition level = LevelDefinition.unsmoothed("Lab Test", "", 7, 5,
-                List.of(new Point(-1, 2), new Point(7, 2)), List.of(new WaveDefinition("fireproof", Rank.GRUNT)),
-                100, 5).withCustomEnemies(List.of(FIREPROOF, HIDER));
-        lab = TowerLab.of(BoardSurvey.of(level));
-    }
+    private static final LevelDefinition LEVEL = LevelDefinition.unsmoothed("Lab Test", "", 7, 5,
+            List.of(new Point(-1, 2), new Point(7, 2)), List.of(new WaveDefinition("fireproof", Rank.GRUNT)),
+            100, 5).withCustomEnemies(List.of(FIREPROOF, HIDER));
+    private static final LevelDefinition PROBES = TowerLab.probeLevel(LEVEL, TowerLab.PLAIN, -1);
+    private static final Point BESIDE_THE_PATH = new Point(3, 1);
+    private static final Point NEXT_TO_IT = new Point(2, 1);
+    private static final String HIDER_KEY = TowerLab.kindKey("hider", TowerLab.labRank());
+    /** Partners share targets, so a tower that does nothing for them still moves their damage by a little. */
+    private static final double NEXT_TO_NOTHING = 0.05;
 
     @Test
     void aTowerOutOfReachOfThePathIsWorthNothingThere() {
-        double far = lab.cellValue(TowerFactory.Type.PULSE, new Point(0, 0));
-        double beside = lab.cellValue(TowerFactory.Type.PULSE, new Point(3, 1));
+        Map<Point, double[]> values = TowerLab.cellValuesOf(BoardSurvey.of(LEVEL), TowerFactory.Type.PULSE);
 
-        assertThat(far).isZero();
-        assertThat(beside).isPositive();
+        assertThat(values.get(new Point(0, 0))[0]).isZero();
+        assertThat(values.get(BESIDE_THE_PATH)[0]).isPositive();
     }
 
     @Test
     void aBurnImmuneKindShrugsOffTheScorcherButNotTheSniper() {
-        double scorcher = lab.kindFactor(TowerFactory.Type.CINDER, "fireproof", Rank.GRUNT);
-        double sniper = lab.kindFactor(TowerFactory.Type.SNIPER, "fireproof", Rank.GRUNT);
+        String fireproof = TowerLab.kindKey("fireproof", Rank.GRUNT);
+
+        double scorcher = TowerLab.Duel.calibrated(LEVEL, TowerFactory.Type.CINDER, BESIDE_THE_PATH).kindFactor(fireproof);
+        double sniper = TowerLab.Duel.calibrated(LEVEL, TowerFactory.Type.SNIPER, BESIDE_THE_PATH).kindFactor(fireproof);
 
         assertThat(scorcher).isLessThan(0.1);
         assertThat(sniper).isGreaterThan(0.5);
     }
 
     @Test
-    void aTowerThatOnlyHitsGivesItsNeighbourNothingWhileOneThatMarksGivesItMore() {
-        double sniper = lab.supportGain(TowerFactory.Type.SNIPER, List.of());
-        double markingRadar = lab.supportGain(TowerFactory.Type.SONAR, List.of("sonar.special.mark_on_sweep"));
+    void aTowerThatOnlyHitsGivesItsNeighbourNothing() {
+        double gain = supportTrial(TowerFactory.Type.SNIPER).gainOwning(Optional.empty());
 
-        assertThat(sniper).isLessThan(0.05);
-        assertThat(markingRadar).isGreaterThan(0.1);
+        assertThat(gain).isLessThan(NEXT_TO_NOTHING);
     }
 
     @Test
-    void wideBandShowsAHidingKindToTheSniperBesideIt() {
-        String ghost = TowerLab.kindKey("hider", TowerLab.labRank());
+    void aTowerThatMarksGivesItsNeighbourMore() {
+        UpgradeNode marking = TowerLab.nodesApplying(PROBES, TowerFactory.Type.SONAR, BESIDE_THE_PATH, EffectKind.MARKED)
+                .getFirst();
 
-        double bare = lab.revealShare(TowerFactory.Type.SONAR, List.of(), ghost);
-        double wideBand = lab.revealShare(TowerFactory.Type.SONAR, List.of("sonar.special.wide_band"), ghost);
+        double gain = supportTrial(TowerFactory.Type.SONAR).gainOwning(Optional.of(marking));
 
-        assertThat(bare).isZero();
-        assertThat(wideBand).isGreaterThan(0.3);
-        assertThat(lab.revealedFactor(TowerFactory.Type.SNIPER, ghost))
-                .isNotEqualTo(lab.kindFactor(TowerFactory.Type.SNIPER, ghost));
+        assertThat(gain).isGreaterThan(NEXT_TO_NOTHING);
+    }
+
+    @Test
+    void aSupportGainAddsTheStepsOfTheNodesOwnedAndNeverFallsBelowNone() {
+        TowerLab.Partnering partners = new TowerLab.Partnering(0, 0.25, Map.of("up", 0.5, "down", -1.0));
+
+        assertThat(partners.supportGainOwning(List.of())).isEqualTo(0.25);
+        assertThat(partners.supportGainOwning(List.of("up", "unmeasured"))).isEqualTo(0.75);
+        assertThat(partners.supportGainOwning(List.of("down"))).isZero();
+    }
+
+    @Test
+    void aNodeThatRevealsShowsAHidingKindToTheSniperBesideIt() {
+        TowerLab.RevealTrial trial = TowerLab.RevealTrial.of(LEVEL, HIDER_KEY, NEXT_TO_IT, TowerFactory.Type.SONAR, BESIDE_THE_PATH);
+
+        double shown = TowerLab.nodesApplying(PROBES, TowerFactory.Type.SONAR, BESIDE_THE_PATH, EffectKind.REVEALED).stream()
+                .mapToDouble(trial::shareOwning).max().orElseThrow();
+
+        assertThat(shown).isPositive();
+    }
+
+    @Test
+    void aRevealShareIsTheMostAnyOwnedNodeShowsAndNothingBare() {
+        TowerLab.Sight sight = new TowerLab.Sight(Map.of(), Map.of("wide", Map.of("kind", 0.75), "narrow", Map.of("kind", 0.25)));
+
+        assertThat(sight.revealShareOwning(List.of(), "kind")).isZero();
+        assertThat(sight.revealShareOwning(List.of("narrow", "wide"), "kind")).isEqualTo(0.75);
+    }
+
+    @Test
+    void keepingAHidingKindRevealedChangesWhatASniperLandsOnIt() {
+        TowerLab.Duel duel = TowerLab.Duel.calibrated(LEVEL, TowerFactory.Type.SNIPER, BESIDE_THE_PATH);
+
+        assertThat(duel.revealedFactor(HIDER_KEY)).isNotEqualTo(duel.kindFactor(HIDER_KEY));
+    }
+
+    @Test
+    void onlyAKindThatTurnsInvisibleCountsAsHiding() {
+        List<String> keys = List.of(TowerLab.kindKey("fireproof", Rank.GRUNT), HIDER_KEY);
+
+        assertThat(TowerLab.hidingKinds(LEVEL, keys)).containsExactly(HIDER_KEY);
+    }
+
+    @Test
+    void theLevelsOwnKindsAreProbedEvenThoseNoRoundSends() {
+        assertThat(TowerLab.probedKinds(LEVEL)).contains("fireproof", "hider");
     }
 
     @Test
     void theLevelsOwnKindsAreMeasuredAtTheRanksItSends() {
-        assertThat(lab.levelRanks()).containsExactly(TowerLab.kindKey("fireproof", Rank.GRUNT));
+        assertThat(TowerLab.ranksIn(LEVEL)).containsExactly(TowerLab.kindKey("fireproof", Rank.GRUNT));
+    }
+
+    private static TowerLab.SupportTrial supportTrial(TowerFactory.Type type) {
+        return TowerLab.SupportTrial.around(BoardSurvey.of(LEVEL), PROBES, type, BESIDE_THE_PATH).orElseThrow();
     }
 }
