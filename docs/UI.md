@@ -51,7 +51,7 @@ text, which had more contrast than it needs (19.4:1).
 | Background | `#0D0E10` | | Window, panels, cards |
 | Raised | `#171717` | 1.1:1 | Tooltips, popups |
 | Hover fill | `#29292A` | 1.3:1 | A control under the pointer |
-| Selected fill | `#39393A` | 1.7:1 | A chosen toggle |
+| Selected fill | `#39393A` | 1.7:1 | A chosen tile |
 | Pressed fill | `#424243` | 1.9:1 | A control held down |
 | Border, disabled | `#3E3E3F` | 1.8:1 | |
 | Border | `#676769` | 3.4:1 | Every panel and control outline |
@@ -62,6 +62,8 @@ text, which had more contrast than it needs (19.4:1).
 | Text, dim | `#A9A9AC` | 8.3:1 | Captions, stat names |
 | Text, prose | `#ACACAF` | 8.5:1 | Sentences |
 | Text | `#EAEAEF` | 16.1:1 | Everything read first, values included |
+
+A chosen button inverts: Text as its fill, Background as its text. A tile says it is chosen with its accent border instead.
 
 A painter's own states (the upgrade tree's nodes, a text field's fill, the Info pane's bars) sit between these steps and stay
 private to that painter. They are greys too; a new control uses the ramp.
@@ -99,8 +101,8 @@ hue (section 6).
 
 **Levels.** Each level has one card colour, from its own lanes (`withCardColor`, the first lane's by default), and its floor.
 Text on the card uses the text tint, which `TextTint` computes: the lane colour lightened only as far as 7:1.
-In play the tint is the level's voice, in four small places and no others: the game title, the panel titles, the selected
-speed button's border and the XP bar. Every panel stays Graphite.
+In play the tint is the level's voice, in four places and no others: the game title, the panel titles, the selected
+speed button and the XP bar. Every panel stays Graphite.
 
 | Level | Card lane | Lane colour | Text tint | Floor |
 |---|---|---|---|---|
