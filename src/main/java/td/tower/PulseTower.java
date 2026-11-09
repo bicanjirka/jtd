@@ -170,7 +170,8 @@ public final class PulseTower extends AbstractTower {
     /** A pin the player asked for off the game loop, taken up at the next relink. */
     private final AtomicReference<Optional<PulseTower>> pinRequest = new AtomicReference<>(Optional.empty());
     private Optional<PulseTower> lineHost = Optional.empty();
-    private Optional<PulseTower> pinnedHost = Optional.empty();
+    // Read off the game loop when a game is saved between waves.
+    private volatile Optional<PulseTower> pinnedHost = Optional.empty();
     private Optional<CastLine> castLine = Optional.empty();
     private List<PulseTower> castersHere = List.of();
     private boolean lineBusy;
@@ -563,6 +564,21 @@ public final class PulseTower extends AbstractTower {
     /** Whether {@code tower} is an Obelisk that casts a Ley Line. */
     public static boolean castsLeyLine(Tower tower) {
         return tower.accept(AS_FIELD).filter(field -> field.spec(field.mechanics.all()).line().casts()).isPresent();
+    }
+
+    /**
+     * The Obelisk {@code caster}'s Ley Line is pinned to, with a pin asked for and not yet taken up counted as taken:
+     * what a saved game keeps. Empty for a line left to the field, and for any tower but an Obelisk.
+     */
+    public static Optional<Tower> leyLinePinOf(Tower caster) {
+        return caster.accept(AS_FIELD).flatMap(field -> {
+            Optional<PulseTower> requested = field.pinRequest.get();
+            Optional<PulseTower> pinned = field.pinnedHost;
+            if (requested.isEmpty()) {
+                return pinned;
+            }
+            return pinned.equals(requested) ? Optional.empty() : requested;
+        }).map(Tower.class::cast);
     }
 
     /** {@link #pinLeyLine} for {@code caster}, if it is an Obelisk; {@code false} for any other tower. */

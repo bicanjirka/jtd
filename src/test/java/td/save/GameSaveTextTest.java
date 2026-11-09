@@ -28,4 +28,33 @@ class GameSaveTextTest {
         });
         assertThat(GameSaveText.write(read.save().orElseThrow())).isEqualTo(text);
     }
+
+    @Test
+    void everyFactOfAGameBetweenRoundsReadsBackAsWritten() {
+        String text = """
+                level Curly Path
+                wave 9
+                economy 120 3400 5
+                seed -4116902350129335519
+                leaked 3 7
+                bonus 0 40
+                bonus 2 55
+                damage 1250000 480000
+                tower PULSE 4 7 400 12 123456 40 paid=97 xp+=0.25 base.attune
+                tower PULSE 9 7 0 0 0 0 paid=112
+                pin 4 7 9 7
+                """;
+
+        GameSave save = GameSaveText.read(text).save().orElseThrow();
+
+        assertThat(save.seed()).isEqualTo(-4116902350129335519L);
+        assertThat(save.history().leaked()).containsExactlyInAnyOrder(3, 7);
+        assertThat(save.history().bonusesPaid()).containsEntry(0, 40).containsEntry(2, 55);
+        assertThat(save.damage().magic()).isEqualTo(480000L);
+        assertThat(save.towers().getFirst().paid()).hasValue(97);
+        assertThat(save.towers().getFirst().tally().xpCarried()).isEqualTo(0.25f);
+        assertThat(save.towers().getFirst().nodes()).containsExactly("base.attune");
+        assertThat(save.pins()).singleElement().satisfies(pin -> assertThat(pin.host().x()).isEqualTo(9));
+        assertThat(GameSaveText.write(save)).isEqualTo(text);
+    }
 }
