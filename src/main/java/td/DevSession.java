@@ -56,17 +56,21 @@ final class DevSession {
         this.panel.showMessage(next == 0 ? "No level in play" : "Wave " + next + " is next");
     }
 
+    /** Between waves, the board as it is; during a wave, the wave as it was sent. */
     void save(String levelName) {
-        Optional<GameSave> save = this.engine.save();
+        Optional<GameSave> board = this.engine.save();
+        Optional<GameSave> save = board.or(this.engine::checkpoint);
         if (save.isEmpty()) {
-            this.panel.showMessage("Save between waves");
+            this.panel.showMessage("No level in play");
             return;
         }
         Path file = saveFile(levelName);
         try {
             Files.createDirectories(file.getParent());
             Files.writeString(file, GameSaveText.write(save.get()));
-            this.panel.showMessage("Saved before wave " + save.get().nextWave() + " to " + file);
+            int wave = save.get().nextWave();
+            this.panel.showMessage((board.isPresent() ? "Saved the board before wave " + wave
+                    : "Saved wave " + wave + " as it was sent") + " to " + file);
         } catch (IOException e) {
             LOG.warn("Could not save the game to {}", file, e);
             this.panel.showMessage("Could not save: " + e.getMessage());

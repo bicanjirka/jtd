@@ -1,10 +1,9 @@
 # Feature Request: Wave checkpoints
 
-## Where we are
-
-Refined over two rounds. Every question is settled, and it is ready for planning. The decision behind it is
-recorded in [ADR 0021](../adr/0021-a-wave-starts-from-its-save.md). ADR 0011 becomes "Superseded by
-0021" when this ships.
+**Status: implemented.** Clean wave ends, ready towers, the checkpoint taken at each send, restart from the
+header, `Z` and the banners, full refunds with their `$` mark, and the dev panel's save all shipped as this
+document describes. The decision behind it is [ADR 0021](../../adr/0021-a-wave-starts-from-its-save.md), which
+supersedes ADR 0011.
 
 ## Summary
 

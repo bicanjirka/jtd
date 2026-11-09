@@ -188,13 +188,14 @@ flowchart LR
   `td.PerformanceHarness` times ticks and frame builds against the budget in root `CLAUDE.md`.
 - **The dev panel.** `td.DevControls` behind `PanelDev` queues every cheat for the game-loop
   thread.
-- **Saves.** `td.save` writes a game between rounds as text, and the balance tools start plays
-  from saves.
+- **Saves.** `td.save` writes a game between waves as text, complete enough to replay the next
+  wave tick for tick. The engine keeps one as each wave is sent, the checkpoint a restart puts
+  back, and the balance tools start plays from saves.
 - **Previews.** The `run-jtd` skill's `PreviewBoard` and `PreviewEnemy` render a board or an enemy
   to PNG, headless.
 - Logs: one file per run under `logs/`. Tests log quietly.
 - Records: [0010](adr/0010-balance-is-measured-by-players.md),
-  [0011](adr/0011-saves-hold-only-between-rounds.md),
+  [0021](adr/0021-a-wave-starts-from-its-save.md),
   [0016](adr/0016-upgrade-node-ids-are-permanent.md),
   [0009](adr/0009-logging-and-one-fatal-boundary.md).
 

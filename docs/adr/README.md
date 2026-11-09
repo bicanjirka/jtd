@@ -48,7 +48,7 @@ Each alternative, with why it lost.
 | [0008](0008-values-that-combine-have-an-algebra.md) | Values that combine have an algebra | Accepted |
 | [0009](0009-logging-and-one-fatal-boundary.md) | Logging setup, and one fatal start-up boundary | Accepted |
 | [0010](0010-balance-is-measured-by-players.md) | Balance is measured by headless players on the real level | Accepted |
-| [0011](0011-saves-hold-only-between-rounds.md) | A saved game holds only what exists between rounds | Accepted |
+| [0011](0011-saves-hold-only-between-rounds.md) | A saved game holds only what exists between rounds | Superseded by 0021 |
 | [0012](0012-rules-in-checkstyle-and-lean-docs.md) | Checkable rules live in Checkstyle; `CLAUDE.md` files hold constraints only | Accepted |
 | [0013](0013-style-stated-in-repo.md) | The code style is stated in this repository, not by reference | Accepted |
 | [0014](0014-narrow-factories-and-shared-fixtures.md) | Wide records grow through narrow factories; tests share fixtures | Accepted |
@@ -58,4 +58,4 @@ Each alternative, with why it lost.
 | [0018](0018-board-looks-are-role-tables.md) | Board looks are tables per role, not switches in the painter | Accepted, enemy looks implemented |
 | [0019](0019-edt-commands-are-requests.md) | An EDT command to the engine is a request the next tick applies | Accepted |
 | [0020](0020-design-docs-family.md) | Design principles, decisions and the overview live in separate documents | Accepted |
-| [0021](0021-a-wave-starts-from-its-save.md) | A wave starts from its save: clean wave ends, ready towers, saves replay tick for tick | Accepted, not yet implemented |
+| [0021](0021-a-wave-starts-from-its-save.md) | A wave starts from its save: clean wave ends, ready towers, saves replay tick for tick | Accepted |

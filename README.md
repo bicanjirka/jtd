@@ -59,6 +59,7 @@ Every button shows its key on a chip in its top-left corner.
 | `d` `f` `g`                     | Normal, fast, super fast speed; each also sends the next wave if it is waiting                       |
 | `Delete`                        | Sell the selected tower                                                                              |
 | `m`                             | Back to the level-select menu (asks to confirm mid-level)                                            |
+| `z`                             | Restart the last wave sent, back to how it was sent (asks to confirm)                                |
 | `Enter`                         | Confirm a question                                                                                   |
 | `1`–`9` on the menu             | Start that level                                                                                     |
 | `Ctrl`+`Shift`+`D`              | Open or close the dev panel (playtesting controls; hold `Alt` to see their keys)                     |
@@ -66,7 +67,7 @@ Every button shows its key on a chip in its top-left corner.
 Mouse: move to preview placement, click to place or to select a placed tower. In the Upgrades panel,
 hovering a node shows what it does and what a click would do; a click buys it with every node it
 needs first, in one payment or not at all, and a right-click on an owned node downgrades it (after a
-confirmation) with every node that depends on it. Click a moving enemy, invisible ones too (when not placing a
+confirmation, unless all of it refunds in full) with every node that depends on it. Click a moving enemy, invisible ones too (when not placing a
 tower), to inspect it: the side panel shows its live health, stats, effects and traits, updating even while paused,
 and keeps a "Killed" or "Leaked" line after it's gone until your next click. Hovering an enemy in
 the wave preview opens a tooltip of the stats that enemy type spawns with.
