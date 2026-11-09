@@ -1,5 +1,7 @@
 package td.ui;
 
+import td.term.Term;
+import td.ui.render.AffixPipsDraw;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CellDraw;
@@ -156,6 +158,9 @@ public final class Java2DFrameRenderer {
     private static final float ENEMY_BAR_GAP = 0.82f;
     private static final float ENEMY_BAR_TRACK_MARGIN = 0.82f;
     private static final Color ENEMY_BAR_TRACK = new Color(0, 0, 0, 191);
+    /** Opaque, so a pictogram's knock-outs read as holes rather than tinted ink. */
+    private static final Color AFFIX_PIP_DISC = new Color(13, 14, 16);
+    private static final float AFFIX_PIP_SYMBOL_SHARE = 0.8f;
     private static final int EFFECT_PULSE_ALPHA = 130;
     private static final float EFFECT_PULSE_STROKE_WIDTH = 1.2f;
     private static final float PROJECTILE_SIZE = 5f;
@@ -575,6 +580,7 @@ public final class Java2DFrameRenderer {
             case TRAIT_ICON_REGENERATION -> new Color(110, 220, 120);
             case TRAIT_ICON_HIVEMIND -> new Color(255, 190, 50);
             case TRAIT_ICON_CRUMBLE -> new Color(215, 180, 110);
+            case AFFIXED -> new Color(0, 195, 145);
             case DISRUPTION -> new Color(235, 90, 200);
             case TERM_FRAME_CONTROL -> new Color(90, 170, 255);
             case TERM_FRAME_AFFLICTION -> new Color(255, 120, 60);
@@ -871,13 +877,13 @@ public final class Java2DFrameRenderer {
         };
     }
 
-    /** Draws enemy bodies and their rank badges alone, for the wave preview. */
-    public void paintEnemies(Graphics2D g2, List<EnemyDraw> enemies, List<RankBadgeDraw> badges) {
+    /** Draws enemy bodies and their rank badges and affix pips alone, for the wave preview. */
+    public void paintEnemies(Graphics2D g2, List<EnemyDraw> enemies, List<EnemyOverlayDraw> badges) {
         for (EnemyDraw enemy : enemies) {
             this.paintEnemy(g2, enemy);
         }
-        for (RankBadgeDraw badge : badges) {
-            this.paintRankBadge(g2, badge);
+        for (EnemyOverlayDraw badge : badges) {
+            this.paintEnemyOverlay(g2, badge);
         }
     }
 
@@ -923,6 +929,28 @@ public final class Java2DFrameRenderer {
         this.paintRankBadgeGlyph(g2, badge.badge(), badge.size());
         g2.setComposite(composite);
         g2.setTransform(save);
+    }
+
+    /** Each pip a dark disc with its affix's pictogram in one colour, so the shape alone tells them apart. */
+    private void paintAffixPips(Graphics2D g2, AffixPipsDraw pips) {
+        Color ink = scaleAlpha(colorFor(Palette.AFFIXED), pips.alpha());
+        Color disc = scaleAlpha(AFFIX_PIP_DISC, pips.alpha());
+        float radius = pips.size();
+        for (int i = 0; i < pips.affixes().size(); i++) {
+            float cx = pips.x() + i * pips.step();
+            g2.setColor(disc);
+            g2.fill(new Ellipse2D.Float(cx - radius, pips.y() - radius, radius * 2, radius * 2));
+            Term affix = pips.affixes().get(i);
+            Graphics2D symbol = (Graphics2D) g2.create();
+            try {
+                float side = radius * AFFIX_PIP_SYMBOL_SHARE * 2;
+                symbol.translate(cx - side / 2, pips.y() - side / 2);
+                symbol.scale(side / Pictogram.UNIT, side / Pictogram.UNIT);
+                PictogramCatalogue.of(affix.key()).ifPresent(art -> TermIconPainter.paintLayers(symbol, art, ink, disc));
+            } finally {
+                symbol.dispose();
+            }
+        }
     }
 
     /** A rank badge centred on the origin, as above an enemy on the board. */
@@ -1139,6 +1167,7 @@ public final class Java2DFrameRenderer {
             case EnemyBarsDraw bars -> this.paintEnemyBars(g2, bars);
             case EnemyDotsDraw dots -> this.paintEnemyDots(g2, dots);
             case RankBadgeDraw badge -> this.paintRankBadge(g2, badge);
+            case AffixPipsDraw pips -> this.paintAffixPips(g2, pips);
             case EnemyEggDraw egg -> EnemyEffects.paintEgg(g2, egg);
             case EnemyBurstDraw burst -> EnemyEffects.paintBurst(g2, burst);
             case EnemyEmissionDraw emission -> EnemyEffects.paintEmission(g2, emission);

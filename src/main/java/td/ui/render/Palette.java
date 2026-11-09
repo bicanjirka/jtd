@@ -172,6 +172,8 @@ public enum Palette {
     TRAIT_ICON_REGENERATION,
     TRAIT_ICON_HIVEMIND,
     TRAIT_ICON_CRUMBLE,
+    /** Every affix: its pips over an enemy and its icon. */
+    AFFIXED,
     /** An enemy's disruption ring and the marker on a tower it weakens. */
     DISRUPTION,
     /** The frame of a Control effect. */

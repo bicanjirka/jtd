@@ -21,7 +21,7 @@ keeps the seam honest.
   type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), the rest in `Java2DFrameRenderer`
   (keyed by `Palette`). There are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
-  pulses, hex runes, dots, badge, bars, egg, bursts, tints, ice, emissions), not a new `RenderFrame` list. Tower transients likewise go
+  pulses, hex runes, dots, badge, affix pips, bars, egg, bursts, tints, ice, emissions), not a new `RenderFrame` list. Tower transients likewise go
   into `TowerEffectDraw`. A bar under an enemy is a row in `EnemyFrameBuilder.bars` and a colour in
   `EnemyLooks.barColor`, with no drawing of its own. Invisibility fades the body itself (`EnemyBodyDraw.cloakProgress`). `EnemyEffects` alone paints
   what an effect draws on an enemy, one draw record per effect and every particle a pure function of the clock and the

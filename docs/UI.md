@@ -77,6 +77,7 @@ private to that painter. They are greys too; a new control uses the ramp.
 | Base slot | `#E1E1E6` | 14.8:1 | Upgrades in the Base slot. Deliberately close to text: the foundation |
 | Head slot | `#FFC83C` | 12.5:1 | Upgrades in the Head slot |
 | Special slot | `#C864FF` | 6.2:1 | Upgrades in the Special slot. A border and shape colour, not for small text |
+| Affixed | `#00C391` | 8.5:1 | An enemy's affixes: its pips on the board and their icons. One colour for all of them; the pictogram says which. Nearest is the Mender, 10.2 |
 
 ## 5. Identities
 
@@ -125,7 +126,7 @@ hard to tell from its neighbours, and "open" means it has room.
 | 60–90 | Amber, gold, brown | Pulse, Mortar, **Head slot**, **physical damage**, score, ranks, many enemies | **The most crowded** |
 | 90–120 | Yellow | Sonar, daze, shields | Busy |
 | 120–150 | Green, lime | Sniper, healing, regeneration, poison, blight | Busy, and split between tower and heal |
-| 150–180 | Mint | Mender, haste | **Open** |
+| 150–180 | Mint | Mender, haste, **affixes** | Open |
 | 180–210 | Teal | A few enemies, The Last Hour's glass lane, Malaise | **Open: the most room in the game** |
 | 210–240 | Sky | **Core slot**, frost, freeze | Some room, but it reads as cold |
 | 240–270 | Blue | Stormcaller, Seeker, **magic damage**, control | Crowded, and reads as magic |

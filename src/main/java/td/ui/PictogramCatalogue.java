@@ -27,7 +27,7 @@ final class PictogramCatalogue {
     private static Map<String, Pictogram> build() {
         Map<String, Pictogram> byKey = new HashMap<>();
         Stream.of(EffectPictograms.SPECS, TowerTermPictograms.SPECS, EnemyTermPictograms.SPECS, PerkPictograms.SPECS,
-                StatusPictograms.SPECS)
+                StatusPictograms.SPECS, AffixPictograms.SPECS)
                 .flatMap(List::stream)
                 .forEach(entry -> byKey.put(entry.getKey(), Pictogram.parse(entry.getValue(),
                         key -> Objects.requireNonNull(byKey.get(key), () -> "No earlier pictogram " + key))));

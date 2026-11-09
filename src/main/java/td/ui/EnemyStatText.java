@@ -3,6 +3,7 @@ package td.ui;
 import td.damage.DamageType;
 import td.economy.StatusTerm;
 import td.effect.EffectKind;
+import td.enemy.Affix;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMark;
 import td.enemy.StatRows;
@@ -118,6 +119,10 @@ final class EnemyStatText {
 
     private static List<SheetIcon> traitIcons(EnemyInspection inspection) {
         List<SheetIcon> icons = new ArrayList<>();
+        for (Affix affix : inspection.affixes()) {
+            icons.add(new SheetIcon(TermLooks.faceOf(affix), TooltipKey.ofTerm("affix", affix),
+                    TermSheets.of(affix, affix.describe(), List.of())));
+        }
         List<TraitEntry> traits = inspection.traitEntries();
         for (int i = 0; i < traits.size(); i++) {
             TraitEntry entry = traits.get(i);

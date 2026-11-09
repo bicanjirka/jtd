@@ -11,9 +11,12 @@ import td.effect.EffectKind;
 import td.effect.InvisibleTemplate;
 import td.enemy.Ability;
 import td.enemy.AbilityTerm;
+import td.enemy.Affix;
+import td.enemy.AffixContext;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
+import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.PathDirectionalMovement;
 import td.enemy.PeriodicTrigger;
@@ -25,6 +28,7 @@ import td.enemy.StrideMovement;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
+import td.ui.render.AffixPipsDraw;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarLook;
@@ -278,6 +282,49 @@ class EnemyFrameBuilderTest {
         assertThat(badges).extracting(RankBadgeDraw::badge)
                 .containsExactly(RankBadge.ONE_CHEVRON, RankBadge.TWO_CHEVRON, RankBadge.STAR, RankBadge.SKULL);
         assertThat(badges).extracting(RankBadgeDraw::size).containsOnly(badges.getFirst().size());
+    }
+
+    private static List<AffixPipsDraw> pipsOf(EnemyMob enemy) {
+        return overlaysOf(enemy, 0).stream().filter(AffixPipsDraw.class::isInstance).map(AffixPipsDraw.class::cast)
+                .toList();
+    }
+
+    private static EnemyDefinition withAffixes(Affix... affixes) {
+        return EnemyFixtures.simpleDefinition("plain").withAffixes(List.of(affixes), new AffixContext(Rank.GRUNT, 1f));
+    }
+
+    @Test
+    void anAffixedEnemyCarriesOnePipPerAffixInTheOrderWritten() {
+        EnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(), withAffixes(Affix.WITHERED, Affix.HULKING));
+
+        assertThat(pipsOf(enemy)).singleElement()
+                .satisfies(pips -> assertThat(pips.affixes()).containsExactly(Affix.WITHERED, Affix.HULKING));
+    }
+
+    @Test
+    void aPlainEnemyCarriesNoPips() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+
+        assertThat(pipsOf(enemy)).isEmpty();
+    }
+
+    @Test
+    void aHiddenEnemyShowsNoPips() {
+        EnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(), withAffixes(Affix.ARMORED));
+        enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
+
+        assertThat(pipsOf(enemy)).isEmpty();
+    }
+
+    @Test
+    void theBadgeAndThePipsShareOneRowCentredOverTheBody() {
+        EnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(), withAffixes(Affix.ARMORED), Rank.ELITE);
+
+        RankBadgeDraw badge = badgeOf(enemy);
+        AffixPipsDraw pips = pipsOf(enemy).getFirst();
+
+        assertThat(pips.y()).isEqualTo(badge.y());
+        assertThat((badge.x() + pips.x()) / 2).isCloseTo((float) enemy.getX(), within(1e-3f));
     }
 
     @Test
