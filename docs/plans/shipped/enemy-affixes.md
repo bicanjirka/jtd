@@ -1,4 +1,4 @@
-# Plan: Enemy affixes (`docs/features/FEATURE-enemy-affixes.md`)
+# Plan: Enemy affixes (`docs/features/shipped/FEATURE-enemy-affixes.md`)
 
 **Status:** planned 2026-11-09. Not started.
 

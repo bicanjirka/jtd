@@ -1,5 +1,6 @@
 import td.effect.EffectKind;
 import td.enemy.AbilityTerm;
+import td.enemy.Affix;
 import td.enemy.TraitTerm;
 import td.term.Term;
 import td.tower.AbstractTower;
@@ -53,6 +54,7 @@ public class PreviewIcons {
         sections.add(terms("Tower terms", Arrays.asList(TowerTerm.values())));
         sections.add(terms("Traits", Arrays.asList(TraitTerm.values())));
         sections.add(terms("Abilities", Arrays.asList(AbilityTerm.values())));
+        sections.add(terms("Affixes", Arrays.asList(Affix.values())));
         sections.add(terms("Status", Arrays.asList(td.economy.StatusTerm.values())));
         sections.add(lines());
         render(sections, out);
