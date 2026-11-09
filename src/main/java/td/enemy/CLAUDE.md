@@ -135,7 +135,8 @@
   definition records it: `title()` reads the affixes, `sizeMultiplier()` multiplies theirs. Rows apply in declared
   order whatever order was written, so one that measures health measures what an earlier one added; the title keeps
   the written order.
-- What a row adds is anonymous, so it stacks with the enemy's own traits and abilities and never replaces a rank step.
+- What a row adds carries its affix as its id (`IdentifiedTrait.of(affix, ...)`), so it stacks with the enemy's own
+  traits and abilities, never replaces a rank step, and shows only as the affix's own row on the sheet.
 - A row measures itself against `AffixContext`: the rank, or one member's health, so it means as much on a swarm
   member as on a boss. Spawns don't inherit affixes.
 
