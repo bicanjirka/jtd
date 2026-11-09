@@ -133,8 +133,8 @@ class GameEngineTest {
     @Test
     void anExposedEnemyIsCritMoreOften() {
         EnemyDefinition dummy = EnemyDefinition.of("dummy", "Dummy", 1_000_000, 1, 0f, BodyArchetype.CIRCLE);
-        EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(), dummy);
-        EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(), dummy);
+        EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), dummy);
+        EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), dummy);
         exposed.applyEffect(Effect.exposed(1_000_000, DamageSink.none()));
 
         int plainCrits = critsIn(plain, 2000);
@@ -148,8 +148,8 @@ class GameEngineTest {
     void anExposedCritImmuneEnemyCanBeCrittedAtTheChanceItsAgilityAndResilienceLeave() {
         EnemyDefinition immune = EnemyDefinition.of("immune", "Immune", 1_000_000, 1, 0f, BodyArchetype.CIRCLE)
                 .withResilience(100f);
-        EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(), immune);
-        EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(), immune);
+        EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), immune);
+        EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), immune);
         exposed.applyEffect(Effect.exposed(1_000_000, DamageSink.none()));
 
         int plainCrits = critsIn(plain, 2000);
@@ -163,8 +163,8 @@ class GameEngineTest {
     @Test
     void aStoppedEnemyIsCritTwiceAsOften() {
         EnemyDefinition plainEnemy = EnemyDefinition.of("plain", "Plain", 1_000_000, 1, 0f, BodyArchetype.CIRCLE);
-        EnemyMob frozen = spawnOnly(FakeGameHost.newBoundEngine(), plainEnemy);
-        EnemyMob dazed = spawnOnly(FakeGameHost.newBoundEngine(), plainEnemy);
+        EnemyMob frozen = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), plainEnemy);
+        EnemyMob dazed = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), plainEnemy);
         frozen.applyEffect(Effect.freeze(1_000_000, DamageSink.none()));
         dazed.applyEffect(Effect.dazed(1_000_000, DamageSink.none()));
 
