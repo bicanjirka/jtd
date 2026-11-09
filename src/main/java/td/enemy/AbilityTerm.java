@@ -52,7 +52,9 @@ public enum AbilityTerm implements Term {
     BLINDING_BURST("Blinding Burst", "blinds the towers near it as it dies, until the wave is over"),
     THUNDERCLAP("Thunderclap", "blinds the towers near it once badly hurt, until the wave is over"),
     SPELL_WARD("Spell Ward", "gives the enemies near it magic resist once badly hurt"),
-    LAST_STAND("Last Stand", "turns almost proof against magic and crits once nearly dead");
+    LAST_STAND("Last Stand", "turns almost proof against magic and crits once nearly dead"),
+    COMMAND("Command", "lowers the damage the allies near it take"),
+    VENGEANCE("Vengeance", "hurries the allies near it on as it dies");
 
     private final String title;
     private final String sentence;

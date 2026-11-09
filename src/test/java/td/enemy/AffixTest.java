@@ -8,6 +8,7 @@ import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.List;
 
@@ -17,8 +18,10 @@ import static org.assertj.core.api.Assertions.within;
 class AffixTest {
 
     private static final AffixContext WHOLE = new AffixContext(Rank.GRUNT, 1f);
+    private static final Damage LETHAL = Damage.physical(1_000_000_000);
+    private static final int SECONDS_3 = Math.round(3 * TickRate.TICKS_PER_SECOND);
 
-    private final GameWorld world = WorldFixtures.newWorld();
+    private final GameWorld world = WorldFixtures.newWorldOnStraightPath();
     private final EnemyDefinition grub = EnemyFixtures.simpleDefinition("grub").withDisplayName("Grub");
 
     @Test
@@ -115,6 +118,43 @@ class AffixTest {
 
         assertThat(withered.baseSpeed()).isGreaterThan(this.grub.baseSpeed());
         assertThat(mob.getHealth()).isLessThan(before);
+    }
+
+    @Test
+    void anAllyBesideACommanderIsGivenResolveAndLosesItAfterTheCommanderFalls() {
+        DefinedEnemyMob commander = EnemyFixtures.liveMob(this.world, this.grub.withAffixes(List.of(Affix.COMMANDING), WHOLE));
+        DefinedEnemyMob ally = EnemyFixtures.liveMob(this.world, this.grub);
+
+        EnemyFixtures.tickEnemies(this.world, 1, SECONDS_3);
+        boolean heldWhileItLived = ally.hasEffect(EffectKind.RESOLVE);
+        commander.doDamage(LETHAL);
+        EnemyFixtures.tickEnemies(this.world, SECONDS_3 + 1, 3 * SECONDS_3);
+
+        assertThat(heldWhileItLived).isTrue();
+        assertThat(commander.hasEffect(EffectKind.RESOLVE)).isFalse();
+        assertThat(ally.hasEffect(EffectKind.RESOLVE)).isFalse();
+    }
+
+    @Test
+    void anAllyBesideAVengefulEnemySprintsAsItDiesAndOneOutOfReachDoesNot() {
+        DefinedEnemyMob vengeful = EnemyFixtures.liveMob(this.world, this.grub.withAffixes(List.of(Affix.VENGEFUL), WHOLE));
+        DefinedEnemyMob near = EnemyFixtures.liveMob(this.world, this.grub);
+        DefinedEnemyMob far = EnemyFixtures.liveMob(this.world, this.grub.withBaseSpeed(20f));
+        EnemyFixtures.tickEnemies(this.world, 1, 20);
+
+        vengeful.doDamage(LETHAL);
+        EnemyFixtures.tickEnemies(this.world, 21, 21);
+
+        assertThat(near.hasEffect(EffectKind.SPRINTING)).isTrue();
+        assertThat(far.hasEffect(EffectKind.SPRINTING)).isFalse();
+    }
+
+    @Test
+    void aCommandersAndAVengefulEnemysReachIsTheRingTheBoardDraws() {
+        assertThat(this.grub.withAffixes(List.of(Affix.COMMANDING), WHOLE).supportAura())
+                .hasValueSatisfying(aura -> assertThat(aura.kind()).isEqualTo(EffectKind.RESOLVE));
+        assertThat(this.grub.withAffixes(List.of(Affix.VENGEFUL), WHOLE).supportAura())
+                .hasValueSatisfying(aura -> assertThat(aura.kind()).isEqualTo(EffectKind.SPRINTING));
     }
 
     private static float regeneration(EnemyDefinition definition) {

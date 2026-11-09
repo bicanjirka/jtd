@@ -185,7 +185,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case SOULFIRE -> Palette.STATUS_MARKER_SOULFIRE;
             case SPRINTING, HASTENED -> Palette.STATUS_MARKER_SPRINTING;
             case SPELLPROOF -> Palette.STATUS_MARKER_SPELLPROOF;
-            case UNYIELDING -> Palette.STATUS_MARKER_UNYIELDING;
+            case UNYIELDING, RESOLVE -> Palette.STATUS_MARKER_UNYIELDING;
         };
     }
 
@@ -546,7 +546,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case VULNERABLE, SUNDERED, FRACTURED, BRITTLE, CRACKED, TARRED, TOLL, CONDEMNED, STILLED, RESONATING,
                  SATURATED, UNRAVELED -> Optional.of(EnemyDotLook.DEBUFF);
             case EXPOSED, MARKED, PRIORITY, CHARGED -> Optional.of(EnemyDotLook.SPOTTED);
-            case SPRINTING, HASTENED, SPELLPROOF, UNYIELDING -> Optional.of(EnemyDotLook.BUFF);
+            case SPRINTING, HASTENED, SPELLPROOF, UNYIELDING, RESOLVE -> Optional.of(EnemyDotLook.BUFF);
             // Drawn on the enemy.
             case BURN, SOULFIRE, POISON, BLEEDING, HEAL, SHIELD, CHILL, FREEZE, DAZED, INVISIBLE -> Optional.empty();
             // A rune.

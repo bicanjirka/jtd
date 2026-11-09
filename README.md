@@ -324,6 +324,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and every tower can see and aim at it. |
 | Sprint | Boon | Buff | Move speed +60%. |
 | Hasten | Boon | Buff | Move speed x2; Freeze and Daze still stop it. |
+| Resolve | Boon | Buff | Each stack: Physical damage taken and Magic damage taken -1%, as many stacks as the ally that gives it has to give. |
 
 #### Tower terms
 
@@ -440,6 +441,8 @@ member's share is its own; Hulking counts first, so the others measure its extra
 | Regenerating | `regenerating` | Restores 2% of its health every second |
 | Shielded | `shielded` | A shield worth 30% of its health once below half of it |
 | Withered | `withered` | 130% of its speed, but loses 2% of its health every second, so what holds it back kills it; never with Regenerating |
+| Commanding | `commanding` | While it lives, the allies near it have Resolve: 10% less damage taken at Grunt, up to 30% at Boss; it fades soon after the Commander falls |
+| Vengeful | `vengeful` | As it dies, the allies near it Sprint: 1.5 s at Grunt, up to 4 s at Boss |
 
 ### Wave script ids
 
