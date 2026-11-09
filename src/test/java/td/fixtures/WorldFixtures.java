@@ -1,6 +1,7 @@
 package td.fixtures;
 
 import td.board.BoardGeometry;
+import td.enemy.EnemyCatalog;
 import td.util.GameWorld;
 import td.util.RandomSource;
 import td.util.RecordingGameHost;
@@ -66,6 +67,13 @@ public final class WorldFixtures {
     /** {@link #newWorldOnStraightPath()} for a test that controls a roll. */
     public static GameWorld newWorldOnStraightPath(RandomSource random) {
         return onStraightPath(newWorldOnBoard(random, BoardFixtures.SCALE, 1000, 1000));
+    }
+
+    /** {@link #newWorldOnStraightPath()} on a level whose enemies come from {@code catalog}. */
+    public static GameWorld newWorldOnStraightPath(EnemyCatalog catalog) {
+        GameWorld world = newWorldOnStraightPath();
+        world.installLevel(world.level().withCatalog(catalog));
+        return world;
     }
 
     private static GameWorld onStraightPath(GameWorld world) {

@@ -160,13 +160,10 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
 ### Nothing finds production code that only tests call
 
 The build has no dead-code check, and IntelliJ's on-the-fly inspection counts a test's call as a use, so
-a method only its own test calls looks alive. Two such members are left on purpose: `GameWorld.setEnemyCatalog`
-is a mutator only `BuiltInEnemiesTest` uses, and `WaveDefinition.withSpeedMultiplier` is an authoring knob no
-level sets (the path's multiplier does the same job).
+a method only its own test calls looks alive.
 
-- **Where:** `GameWorld.setEnemyCatalog`, `WaveDefinition.speedMultiplier`.
-- **Approach:** for `setEnemyCatalog`, give `WorldFixtures` a world built on a level's catalog and delete the
-  setter. Drop the wave's multiplier unless a level wants one before the revamp. To find more, run IntelliJ's
+- **Where:** the whole of `src/main/java`.
+- **Approach:** to find such members, run IntelliJ's
   whole-project inspection *Unused declaration* with its entry point option "When entry points are in test sources, mark callees as used" unchecked; most of what
   it lists are read-only seams tests watch a tower through (`getSplashRadius`, `spotOf`), which stay.
 
