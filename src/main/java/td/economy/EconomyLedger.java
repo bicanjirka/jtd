@@ -35,8 +35,8 @@ public class EconomyLedger {
     }
 
     /** What is really paid back of {@code owed}: all of it, or nothing during free build. */
-    public int refundOf(int owed) {
-        return this.freeBuild ? 0 : owed;
+    public Refund refundOf(Refund owed) {
+        return this.freeBuild ? Refund.none() : owed;
     }
 
     /**

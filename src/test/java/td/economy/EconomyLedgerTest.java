@@ -117,12 +117,13 @@ class EconomyLedgerTest {
 
     @Test
     void refundsAreOwedInFullExceptDuringFreeBuild() {
-        int normally = ledger.refundOf(40);
+        Refund owed = new Refund(40, 30);
+        Refund normally = ledger.refundOf(owed);
 
         ledger.setFreeBuild(true);
 
-        assertThat(normally).isEqualTo(40);
-        assertThat(ledger.refundOf(40)).isZero();
+        assertThat(normally).isEqualTo(owed);
+        assertThat(ledger.refundOf(owed)).isEqualTo(Refund.none());
     }
 
     @Test
