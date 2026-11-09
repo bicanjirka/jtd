@@ -53,7 +53,7 @@ import td.util.PathRuntime;
 import td.util.ThreadConfined;
 import td.util.TickRate;
 import td.wave.Vec2;
-import td.wave.WaveAnnouncer;
+import td.wave.WaveClock;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -302,8 +302,8 @@ public abstract class AbstractTower implements Tower {
 
     /** The break between waves now running, counted by the waves started; none while a wave is out. */
     private OptionalLong currentBreak() {
-        WaveAnnouncer waves = this.context.waves();
-        return waves.betweenWaves() ? OptionalLong.of(waves.started()) : OptionalLong.empty();
+        WaveClock clock = this.context.waves().clock();
+        return clock.out() ? OptionalLong.empty() : OptionalLong.of(clock.started());
     }
 
     /**
