@@ -3,6 +3,7 @@ package td.fixtures;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
@@ -14,16 +15,16 @@ import td.enemy.Rank;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * An {@link EnemyMob} placed at a chosen point, which a real mob's path cannot do. It records
  * every hit and effect and absorbs nothing, so a recorded hit is exactly what was dealt; its
- * health never drops, so it dies only through {@link #invalidate()}.
+ * health never drops, so it dies only through {@link #invalidate()}. What it applies goes into a real
+ * {@link ActiveEffects}, which answers every effect query, so stacking and caps are the game's; time never
+ * runs on it, so an effect ends only through {@link #expire}, a dispel or lost stacks.
  */
 public final class FakeEnemyMob implements EnemyMob {
 
@@ -32,9 +33,9 @@ public final class FakeEnemyMob implements EnemyMob {
     private final boolean hidden;
     private final List<Damage> hits = new ArrayList<>();
     private final List<Effect> appliedEffects = new ArrayList<>();
+    private final ActiveEffects live = new ActiveEffects();
     private final List<AttackProfile> attackers = new ArrayList<>();
     private final List<Float> shieldBreaks = new ArrayList<>();
-    private final Map<EffectKind, Integer> lostStacks = new EnumMap<>(EffectKind.class);
     private boolean hitsLandCritical;
     private boolean diesOnHit;
     private boolean appliesEffects;
@@ -198,6 +199,7 @@ public final class FakeEnemyMob implements EnemyMob {
         this.hitsLandCritical = true;
     }
 
+    /** Every effect applied to it that took hold, in order, whether or not it still runs. */
     public List<Effect> appliedEffects() {
         return List.copyOf(this.appliedEffects);
     }
@@ -222,7 +224,8 @@ public final class FakeEnemyMob implements EnemyMob {
 
     @Override
     public void dispelBuffs() {
-        this.appliedEffects.removeIf(effect -> effect.kind().category() == EffectCategory.BUFF);
+        this.live.activeKinds().stream().filter(kind -> kind.category() == EffectCategory.BUFF)
+                .forEach(this.live::consume);
         this.buffDispels++;
     }
 
@@ -231,18 +234,15 @@ public final class FakeEnemyMob implements EnemyMob {
         return this.buffDispels;
     }
 
-    /** Records the loss, which {@link #effectStacks} takes off what the effects of {@code kind} put on it. */
     @Override
     public void loseStacks(EffectKind kind, int stacks) {
-        this.lostStacks.merge(kind, stacks, Integer::sum);
-        if (this.effectStacks(kind) == 0) {
-            this.appliedEffects.removeIf(effect -> effect.kind() == kind);
-        }
+        this.live.loseStacks(kind, stacks);
     }
 
     @Override
     public void dispelRestoratives() {
-        this.appliedEffects.removeIf(effect -> effect.kind() == EffectKind.SHIELD || effect.kind() == EffectKind.HEAL);
+        this.live.consume(EffectKind.SHIELD);
+        this.live.consume(EffectKind.HEAL);
         this.dispels++;
     }
 
@@ -277,7 +277,7 @@ public final class FakeEnemyMob implements EnemyMob {
 
     @Override
     public List<Effect> activeEffects() {
-        return List.copyOf(this.appliedEffects);
+        return this.live.effects();
     }
 
     /** Every hit it recorded, added up. */
@@ -288,21 +288,12 @@ public final class FakeEnemyMob implements EnemyMob {
 
     /** Ends every effect of {@code kind} on it, as if it had run out. */
     public void expire(EffectKind kind) {
-        this.appliedEffects.removeIf(effect -> effect.kind() == kind);
+        this.live.consume(kind);
     }
 
-    /** The stacks every effect of {@code kind} put on it, added up to the highest cap among them. */
     @Override
     public int effectStacks(EffectKind kind) {
-        int stacks = 0;
-        int cap = 0;
-        for (Effect effect : this.appliedEffects) {
-            if (effect.kind() == kind) {
-                stacks += effect.stacks();
-                cap = Math.max(cap, effect.effectiveStackCap());
-            }
-        }
-        return Math.max(0, Math.min(stacks, cap) - this.lostStacks.getOrDefault(kind, 0));
+        return this.live.stacks(kind);
     }
 
     @Override
@@ -324,6 +315,7 @@ public final class FakeEnemyMob implements EnemyMob {
     public void applyEffect(Effect effect) {
         if (!this.immunities.contains(effect.kind())) {
             this.appliedEffects.add(effect);
+            this.live.apply(effect);
         }
     }
 
@@ -339,7 +331,7 @@ public final class FakeEnemyMob implements EnemyMob {
         if (this.frozen) {
             kinds.add(EffectKind.FREEZE);
         }
-        this.appliedEffects.forEach(effect -> kinds.add(effect.kind()));
+        kinds.addAll(this.live.activeKinds());
         return kinds;
     }
 

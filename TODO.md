@@ -144,14 +144,6 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
 - **Where the visitor is still a cast:** `DevControls` (observing, clearing effects, healing) and the balance
   tools' `RunRecorder` and `TowerWorkTally` (definition id, abilities cast) visit an `EnemyMob` only to reach
   `DefinedEnemyMob`. Each needs the real mob, not a query every mob should answer, so they stay until sealing.
-- **`FakeEnemyMob` answers effects from a real `ActiveEffects`** (design review F18), done with the
-  fakes' question above. Today the fake keeps its own simplified record of applied effects, so a change
-  to stacking, caps or refreshing in `ActiveEffects` never reaches the tests that use the fake. Keep the
-  record of what was applied for assertions, but answer every effect query from an `ActiveEffects` built
-  the way `DefinedEnemyMob` builds one (`effect` does not depend on `enemy`, so the fake may hold one).
-  Proof: change the stack cap rule in `ActiveEffects` and see a test on the fake fail. Some tests may
-  rely on the simplified model; rewrite them on `EnemyFixtures.liveMob`, never by editing an expected
-  value.
 
 ## Design follow-ups, each done with the change that touches it
 
