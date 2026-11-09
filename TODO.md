@@ -236,7 +236,21 @@ a tower must be built after its price is charged and before `TowerRoster.add`. O
 - **Approach:** the least: move the duty into `createTower`'s Javadoc, its one place of use, and delete
   the `tower/CLAUDE.md` lines. Better, if that change touches the constructors anyway: pass the price
   paid into `createTower`, so the order can't be got wrong (the toolbar's preview passes the list
-  price).
+  price). That also lets a tower rebuilt from a save be built at its saved price, so `AbstractTower.price`
+  can be `final` again and `restore(TowerRecord)` stops setting it.
+
+### A tower's fight state is written twice and reset by hand
+
+**Trigger:** each tower's turn in `FEATURE-tower-visual-revamp.md`, which edits its leaf class anyway.
+
+A leaf tower's fight state (its `FireClock`, targets, counters, stores) starts in its field initialisers
+and is set again, to the same values, in `endFight()`. Only `tower/CLAUDE.md` says that a new field a
+fight changes resets there, so a field that misses it carries one wave into the next.
+
+- **Where:** the leaf towers' fight fields and `endFight()` overrides; the rule in `tower/CLAUDE.md`.
+- **Approach:** gather each leaf's fight fields into a small `*Fight` holder that its constructor and
+  `endFight()` both build with `new`, so a new fight field is reset by being in it. Delete the
+  `tower/CLAUDE.md` rule once every leaf has one.
 
 ### The wave-script suggestions parse the grammar a second time; ranks are a token switch
 

@@ -85,7 +85,8 @@ flowchart LR
   builds each frame.
 - `EconomyLedger` is written from both threads, computes under its lock, and fires outside it.
 - The engine's round state crosses as one `RoundState`, and the dev panel's round commands are
-  requests the tick applies ([0019](adr/0019-edt-commands-are-requests.md)). The hover and
+  requests the tick applies ([0019](adr/0019-edt-commands-are-requests.md)); a rebuild of the level
+  stops the loop instead ([0022](adr/0022-rebuilding-the-level-stops-the-loop.md)). The hover and
   selection highlight crosses as one `CellHighlight`, which `TowerPlacement` publishes.
 - Records: [0007](adr/0007-owner-publishes-snapshots.md).
 

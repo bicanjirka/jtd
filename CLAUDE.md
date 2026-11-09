@@ -99,7 +99,8 @@ frame build reads them.
 - Publish finished objects: fill a local, then assign. A concurrent collection doesn't make
   `clear()` + `addAll()` atomic.
 - An EDT command that changes game state is a request the next tick consumes
-  (`requestNextWave`), never a write into engine state.
+  (`requestNextWave`), never a write into engine state. A rebuild of the level (load, restart) is the
+  exception: it stops the loop through `TowerDefense.rebuildThen`, since it writes the cells (ADR 0022).
 - `Threads.assertEventDispatchThread()` / `assertNotEventDispatchThread()` at thread-sensitive
   entry points.
 - `GameLoop.stop()` joins without bound: never call it on the EDT. Level teardown goes through
