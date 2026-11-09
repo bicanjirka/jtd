@@ -32,6 +32,11 @@ public interface Trait extends TraitTemplate {
         return false;
     }
 
+    /** The share of its time {@code kind} lasts on an enemy with this trait, as it is applied. */
+    default float durationShare(EffectKind kind) {
+        return 1f;
+    }
+
     /** Whether it reads {@link TraitContext#alliesNearby()}, which the mob counts only when a trait asks. */
     default boolean readsAllies() {
         return false;

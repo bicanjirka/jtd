@@ -33,8 +33,10 @@ import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -59,6 +61,8 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final EnemyDefinition definition;
     private final List<Trait> traits;
     private final Set<EffectKind> immunities;
+    /** Only the kinds a trait shortens. */
+    private final Map<EffectKind, Float> durationShares;
     private final boolean readsAllies;
     private final Rank rank;
     private final int price;
@@ -99,6 +103,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.immunities = Arrays.stream(EffectKind.values())
                 .filter(kind -> this.traits.stream().anyMatch(trait -> trait.keepsOut(kind)))
                 .collect(Collectors.toCollection(() -> EnumSet.noneOf(EffectKind.class)));
+        this.durationShares = durationSharesOf(this.traits);
         this.readsAllies = this.traits.stream().anyMatch(Trait::readsAllies);
         this.rank = rank;
         this.freezeMeter = new FreezeMeter(rank.freezeDrain());
@@ -120,6 +125,17 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.stage = this.delay > 0 ? LifeStage.WAITING : LifeStage.LIVE;
         this.entryOrdinal = this.stage == LifeStage.LIVE ? gameWorld.enemies().recordEntry() : 0;
         this.onBoard = true;
+    }
+
+    private static Map<EffectKind, Float> durationSharesOf(List<Trait> traits) {
+        Map<EffectKind, Float> shares = new EnumMap<>(EffectKind.class);
+        for (EffectKind kind : EffectKind.values()) {
+            float share = traits.stream().map(trait -> trait.durationShare(kind)).reduce(1f, (a, b) -> a * b);
+            if (share != 1f) {
+                shares.put(kind, share);
+            }
+        }
+        return shares;
     }
 
     private static float bodyScaleFor(BodyArchetype archetype, int scale, Rank rank) {
@@ -520,7 +536,8 @@ public final class DefinedEnemyMob implements EnemyMob {
         float tenacity = effect.kind().side() == Side.DEBUFF
                 ? StatCurves.durationFactor(this.stats.value(EnemyStat.TENACITY)) : 1f;
         boolean freeze = effect.kind() == EffectKind.FREEZE;
-        float factor = tenacity * (freeze ? this.freezeMeter.nextShare() : 1f);
+        float factor = tenacity * (freeze ? this.freezeMeter.nextShare() : 1f)
+                * this.durationShares.getOrDefault(effect.kind(), 1f);
         // No floor for a freeze: one-tick stops with one-tick gaps would hold any rank half the time.
         if (freeze && effect.authoredDurationTicks() * factor < 1f) {
             if (this.observer.isOn()) {
