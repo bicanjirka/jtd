@@ -229,19 +229,19 @@ too.
 
 ### A tower's price is recorded by a constructor duty
 
-**Trigger:** the next change to `TowerFactory`.
+**Trigger:** the next change to the leaf towers' constructors.
 
 `AbstractTower`'s constructor reads `TowerRoster.priceOf`, which grows with each copy on the board, so
-a tower must be built after its price is charged and before `TowerRoster.add`. Only
-`tower/CLAUDE.md` says so; `TowerPlacement` keeps the order by hand.
+a tower must be built after its price is charged and before `TowerRoster.add`. Only `createTower`'s
+Javadoc says so; `TowerPlacement` keeps the order by hand.
 
 - **Where:** `TowerFactory.createTower`, `AbstractTower`'s constructor (the price field),
-  `TowerPlacement`'s place branch, the first rule in `tower/CLAUDE.md`.
-- **Approach:** the least: move the duty into `createTower`'s Javadoc, its one place of use, and delete
-  the `tower/CLAUDE.md` lines. Better, if that change touches the constructors anyway: pass the price
-  paid into `createTower`, so the order can't be got wrong (the toolbar's preview passes the list
-  price). That also lets a tower rebuilt from a save be built at its saved price, so `AbstractTower.price`
-  can be `final` again and `restore(TowerRecord)` stops setting it.
+  `TowerPlacement`'s place branch.
+- **Approach:** when a change touches the leaf constructors anyway: pass the price paid into `createTower`,
+  so the order can't be got wrong (the toolbar's preview passes the list price). That also lets a tower
+  rebuilt from a save be built at its saved price, so `AbstractTower.price` can be `final` again and
+  `restore(TowerRecord)` stops setting it. Tests build towers with `new` in about 200 places: route them
+  through a `TowerFixtures` factory first, so the new parameter lands in one place.
 
 ### A tower's fight state is written twice and reset by hand
 
