@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 
 /**
  * An adjective a wave script puts before an enemy, each one generic twist on top of what its type and rank make
- * it. A row changes the definition once, when the script is parsed; what it adds is anonymous, so it stacks with
+ * it. A row changes the definition once, when the script is parsed; what it adds is identified by the affix, so it stacks with
  * the enemy's own traits and abilities and never replaces a rank step. Rows apply in the order declared here:
  * Hulking first, so a share of health measures the hulking health, and Exalted next, so it doubles only the
  * enemy's own sheet.
@@ -65,7 +65,7 @@ public enum Affix implements Term {
     ARMORED("Armored") {
         @Override
         EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
-            return definition.withAdditionalTraits(List.of(IdentifiedTrait.anonymous(PHYSICAL_ARMOR)));
+            return definition.withAdditionalTraits(List.of(IdentifiedTrait.of(this, PHYSICAL_ARMOR)));
         }
 
         @Override
@@ -88,7 +88,7 @@ public enum Affix implements Term {
     REGENERATING("Regenerating") {
         @Override
         EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
-            return definition.withAdditionalTraits(List.of(IdentifiedTrait.anonymous(
+            return definition.withAdditionalTraits(List.of(IdentifiedTrait.of(this,
                     new RegenerationTrait(context.memberHealthPoints(definition) * REGENERATING_SHARE))));
         }
 
@@ -105,7 +105,7 @@ public enum Affix implements Term {
     SHIELDED("Shielded") {
         @Override
         EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
-            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.PANIC,
+            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.of(this, new Ability(AbilityTerm.PANIC,
                     new HealthThresholdTrigger(SHIELDED_BELOW),
                     new ApplyEffectAction(ShieldTemplate.untilBroken(context.memberHealthPoints(definition) * SHIELDED_SHARE),
                             new SelfTarget())))));
@@ -121,7 +121,7 @@ public enum Affix implements Term {
         @Override
         EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
             return definition.withBaseSpeed(definition.baseSpeed() * WITHERED_SPEED)
-                    .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(
+                    .withAdditionalTraits(List.of(IdentifiedTrait.of(this,
                             new CrumbleTrait(context.memberHealthPoints(definition) * WITHERED_SHARE))));
         }
 
@@ -139,7 +139,7 @@ public enum Affix implements Term {
     COMMANDING("Commanding") {
         @Override
         EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
-            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.COMMAND,
+            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.of(this, new Ability(AbilityTerm.COMMAND,
                     new PeriodicTrigger(COMMAND_INTERVAL_TICKS),
                     new ApplyEffectAction(new ResolveTemplate(commandStacks(context.rank()), COMMAND_HOLD_TICKS),
                             new RadiusTarget(AFFIX_REACH))))));
@@ -155,7 +155,7 @@ public enum Affix implements Term {
     VENGEFUL("Vengeful") {
         @Override
         EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
-            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.VENGEANCE,
+            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.of(this, new Ability(AbilityTerm.VENGEANCE,
                     new OnDeathTrigger(), new ApplyEffectAction(new SprintTemplate(vengeanceTicks(context.rank())),
                             new RadiusTarget(AFFIX_REACH))))));
         }

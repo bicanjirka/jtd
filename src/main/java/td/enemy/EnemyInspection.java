@@ -35,8 +35,8 @@ import java.util.Set;
  * @param baseStats    every stat before traits and effects
  * @param immunities   what it cannot take now, and what keeps it out
  * @param affixes      the affixes its script gave it, in the order written
- * @param traitEntries every trait as a term, with its sentence
- * @param abilityEntries every ability as a term, with its sentence
+ * @param traitEntries every trait of its own as a term, with its sentence; an affix's shows as the affix
+ * @param abilityEntries every ability of its own as a term, with its sentence; an affix's shows as the affix
  * @param breakdowns   what each shown stat is made of
  * @param marks        memory towers keep about it
  * @param livesOnLeak  the lives it takes if it leaks; {@link EnemyDefinition#ALL_LIVES} for every one left
@@ -86,14 +86,16 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         List<Immunity> immunities = live.blockedKinds().stream()
                 .map(kind -> new Immunity(kind, live.keptOutBy(kind))).toList();
         List<TraitEntry> traitEntries = new ArrayList<>(
-                definition.traitSlots().stream().map(slot -> slot.template().entry()).toList());
+                definition.traitSlots().stream().filter(slot -> !slot.id().fromAffix())
+                        .map(slot -> slot.template().entry()).toList());
         float cellSize = mob.cellSize();
         definition.disruption().ifPresent(aura -> traitEntries
                 .add(TraitEntry.of(TraitTerm.JAM, AbilityText.jam(aura, cellSize))));
         EnemyCatalog catalog = mob.enemyCatalog();
         AbilityText.Words words = new AbilityText.Words(cellSize,
                 id -> catalog.contains(id) ? catalog.get(id).displayName() : id);
-        List<AbilityEntry> abilityEntries = definition.abilities().stream()
+        List<AbilityEntry> abilityEntries = definition.abilitySlots().stream().filter(slot -> !slot.id().fromAffix())
+                .map(IdentifiedAbility::ability)
                 .map(ability -> new AbilityEntry(ability.term(), AbilityText.of(ability, words))).toList();
         return new EnemyInspection(definition.title(), definition.description(), mob.getRank(), mob.archetype(),
                 (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects,

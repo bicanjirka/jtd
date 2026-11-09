@@ -138,6 +138,19 @@ class EnemyInspectionTest {
     }
 
     @Test
+    void whatAnAffixAddsShowsAsTheAffixAloneBesideTheEnemysOwnEntries() {
+        EnemyDefinition affixed = EnemyFixtures.simpleDefinition("grub")
+                .withTraits(List.of(new ImmunityTrait(EffectKind.FREEZE)))
+                .withAffixes(List.of(Affix.REGENERATING, Affix.SHIELDED), new AffixContext(Rank.GRUNT, 1f));
+
+        EnemyInspection inspection = EnemyFixtures.liveMob(this.world, affixed).inspect();
+
+        assertThat(inspection.traitEntries()).extracting(TraitEntry::term).containsExactly(EffectKind.FREEZE);
+        assertThat(inspection.abilityEntries()).isEmpty();
+        assertThat(inspection.affixes()).containsExactly(Affix.REGENERATING, Affix.SHIELDED);
+    }
+
+    @Test
     void abilitiesAndTraitsBecomeNamedEntries() {
         EnemyDefinition definition = EnemyFixtures.simpleDefinition("bracer")
                 .withAbilities(List.of(new Ability(AbilityTerm.BRACE, new HealthThresholdTrigger(0.5f),
