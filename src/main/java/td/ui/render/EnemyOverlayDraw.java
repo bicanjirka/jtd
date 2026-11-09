@@ -5,5 +5,5 @@ package td.ui.render;
  * {@link EnemyDraw}, which is only a body or a corpse.
  */
 public sealed interface EnemyOverlayDraw permits EnemyRingDraw, EffectPulseDraw, EnemyIceDraw,
-        HexRuneDraw, MissMarkDraw, EnemyBarsDraw, EnemyDotsDraw, RankBadgeDraw, EnemyEggDraw, EnemyBurstDraw, EnemyEmissionDraw, EnemyTintDraw {
+        HexRuneDraw, MissMarkDraw, EnemyBarsDraw, EnemyDotsDraw, RankBadgeDraw, AffixPipsDraw, EnemyEggDraw, EnemyBurstDraw, EnemyEmissionDraw, EnemyTintDraw {
 }

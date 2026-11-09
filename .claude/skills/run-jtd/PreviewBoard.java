@@ -18,6 +18,9 @@ import td.ui.render.RenderFrame;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.TickRate;
+import td.wave.Wave;
+import td.wave.WaveContent;
+import td.wave.WaveScript;
 import td.zone.Zone;
 import td.zone.ZoneKind;
 
@@ -81,6 +84,7 @@ public class PreviewBoard {
             case "place" -> placeTower(rest.trim());
             case "upgrade" -> upgradeTower(rest.trim());
             case "spawn" -> spawnEnemy(rest.trim());
+            case "script" -> spawnScript(rest.trim());
             case "effect" -> applyEffect(rest.trim());
             case "zone" -> addZone(rest.trim());
             case "wave" -> startWave();
@@ -170,6 +174,16 @@ public class PreviewBoard {
         EnemyMob mob = catalog.spawn(id, world, 0, definition.baseHealth(), definition.price(), rank);
         world.enemies().add(mob);
         System.out.println("OK spawn " + id + " at rank " + rank);
+    }
+
+    /** {@code script <wave script>}: spawns it on the first path as the dev panel's spawn box does, Grunt by default. */
+    private static void spawnScript(String script) {
+        GameWorld world = engine.getGameWorld();
+        WaveContent content = WaveScript.parse(script, Rank.GRUNT, world.getEnemyCatalog());
+        for (EnemyMob mob : new Wave(world, content, 1, 0, 1f).spawn()) {
+            world.enemies().add(mob);
+        }
+        System.out.println("OK script " + content.enemyCount() + " enemies");
     }
 
     /** {@code effect <kind> [ticks]}: puts the effect on every enemy, as a tower would. */

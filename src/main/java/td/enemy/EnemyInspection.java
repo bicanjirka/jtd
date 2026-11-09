@@ -34,6 +34,7 @@ import java.util.Set;
  * @param dodges       how many hits it has dodged
  * @param baseStats    every stat before traits and effects
  * @param immunities   what it cannot take now, and what keeps it out
+ * @param affixes      the affixes its script gave it, in the order written
  * @param traitEntries every trait as a term, with its sentence
  * @param abilityEntries every ability as a term, with its sentence
  * @param breakdowns   what each shown stat is made of
@@ -44,7 +45,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                               int maxHealth, int bounty, Map<EnemyStat, Float> stats, List<EffectState> effects,
                               Fate fate,
                               int dodges, Map<EnemyStat, Float> baseStats, List<Immunity> immunities,
-                              List<TraitEntry> traitEntries, List<AbilityEntry> abilityEntries,
+                              List<Affix> affixes, List<TraitEntry> traitEntries, List<AbilityEntry> abilityEntries,
                               Map<EnemyStat, StatBreakdown> breakdowns, List<EnemyMark> marks, int livesOnLeak) {
 
     public EnemyInspection {
@@ -52,6 +53,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         effects = List.copyOf(effects);
         baseStats = Collections.unmodifiableMap(new EnumMap<>(baseStats));
         immunities = List.copyOf(immunities);
+        affixes = List.copyOf(affixes);
         traitEntries = List.copyOf(traitEntries);
         abilityEntries = List.copyOf(abilityEntries);
         breakdowns = breakdowns.isEmpty() ? Map.of() : Collections.unmodifiableMap(new EnumMap<>(breakdowns));
@@ -95,7 +97,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                 .map(ability -> new AbilityEntry(ability.term(), AbilityText.of(ability, words))).toList();
         return new EnemyInspection(definition.title(), definition.description(), mob.getRank(), mob.archetype(),
                 (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects,
-                mob.fate(), mob.dodges(), baseStats, immunities, traitEntries,
+                mob.fate(), mob.dodges(), baseStats, immunities, definition.affixes(), traitEntries,
                 abilityEntries, breakdowns, List.of(), definition.livesOnLeak());
     }
 
@@ -118,7 +120,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
     public EnemyInspection withMarks(List<EnemyMark> marks) {
         return new EnemyInspection(this.name, this.description, this.rank, this.archetype, this.health,
                 this.maxHealth, this.bounty, this.stats, this.effects,
-                this.fate, this.dodges, this.baseStats, this.immunities, this.traitEntries,
+                this.fate, this.dodges, this.baseStats, this.immunities, this.affixes, this.traitEntries,
                 this.abilityEntries, this.breakdowns, marks, this.livesOnLeak);
     }
 

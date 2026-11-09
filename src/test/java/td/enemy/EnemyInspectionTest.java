@@ -128,6 +128,16 @@ class EnemyInspectionTest {
     }
 
     @Test
+    void anInspectionCarriesTheAffixesInTheOrderWritten() {
+        EnemyDefinition affixed = EnemyFixtures.simpleDefinition("grub")
+                .withAffixes(List.of(Affix.WITHERED, Affix.HULKING), new AffixContext(Rank.GRUNT, 1f));
+
+        EnemyInspection inspection = EnemyFixtures.liveMob(this.world, affixed).inspect();
+
+        assertThat(inspection.affixes()).containsExactly(Affix.WITHERED, Affix.HULKING);
+    }
+
+    @Test
     void abilitiesAndTraitsBecomeNamedEntries() {
         EnemyDefinition definition = EnemyFixtures.simpleDefinition("bracer")
                 .withAbilities(List.of(new Ability(AbilityTerm.BRACE, new HealthThresholdTrigger(0.5f),

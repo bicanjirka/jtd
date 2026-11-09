@@ -1,12 +1,15 @@
 package td.ui;
 
 import td.effect.EffectKind;
+import td.enemy.Affix;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
 import td.enemy.Rank;
 import td.enemy.SupportAura;
+import td.term.Term;
+import td.ui.render.AffixPipsDraw;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarLook;
@@ -110,6 +113,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** The same on every enemy: a big body's size already says what its rank would. */
     private static final float RANK_BADGE_SIZE = 3.6f;
     private static final float RANK_BADGE_GAP = 5f;
+    private static final float AFFIX_PIP_SIZE = RANK_BADGE_SIZE;
+    private static final float AFFIX_PIP_STEP = 8.4f;
     /** A long tail or antenna shouldn't lift the badge off the body it belongs to. */
     private static final float RANK_BADGE_REACH_LIMIT = 1.3f;
     private final List<EnemyDraw> draws = new ArrayList<>();
@@ -117,7 +122,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private final List<EnemyOverlayDraw> overlayDraws = new ArrayList<>();
     /** Read last, so every enemy's badge, runes, dots and bars stay readable over every enemy's effects. */
     private final List<EnemyOverlayDraw> markDraws = new ArrayList<>();
-    private final List<RankBadgeDraw> badgeDraws = new ArrayList<>();
+    private final List<EnemyOverlayDraw> badgeDraws = new ArrayList<>();
     private final int gameTime;
     private final double interpolationAlpha;
     private final Optional<EnemyMob> selected;
@@ -264,8 +269,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return all;
     }
 
-    /** The rank badges alone, for a preview that shows a body and its rank and nothing around it. */
-    public List<RankBadgeDraw> buildBadges() {
+    /** The rank badges and affix pips alone, for a preview that shows a body and what it is and nothing around it. */
+    public List<EnemyOverlayDraw> buildBadges() {
         return this.badgeDraws;
     }
 
@@ -408,10 +413,19 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return within(hit, SHIELD_FLASH_DURATION_TICKS) ? 1f - (float) hit.getAsInt() / SHIELD_FLASH_DURATION_TICKS : 0f;
     }
 
+    /** The rank badge and the affix pips as one row centred over the body; a hidden enemy shows no affixes. */
     private void badge(DefinedEnemyMob mob, float x, float y, float visibility) {
         RankBadge badge = badgeFor(mob.getRank());
+        List<Affix> affixes = mob.isHidden() ? List.of() : mob.definition().affixes();
+        int marks = (badge != RankBadge.NONE ? 1 : 0) + affixes.size();
+        float left = x - (marks - 1) * AFFIX_PIP_STEP / 2f;
         if (badge != RankBadge.NONE) {
-            this.badgeDraws.add(new RankBadgeDraw(badge, x, y, RANK_BADGE_SIZE, visibility));
+            this.badgeDraws.add(new RankBadgeDraw(badge, left, y, RANK_BADGE_SIZE, visibility));
+            left += AFFIX_PIP_STEP;
+        }
+        if (!affixes.isEmpty()) {
+            this.badgeDraws.add(new AffixPipsDraw(left, y, AFFIX_PIP_SIZE, AFFIX_PIP_STEP, visibility,
+                    List.<Term>copyOf(affixes)));
         }
     }
 

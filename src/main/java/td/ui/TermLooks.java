@@ -4,6 +4,7 @@ import td.economy.StatusTerm;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.AbilityTerm;
+import td.enemy.Affix;
 import td.enemy.TraitTerm;
 import td.term.Side;
 import td.term.Term;
@@ -65,6 +66,7 @@ public final class TermLooks {
         Arrays.stream(TraitTerm.values()).forEach(term -> looks.put(term.key(), trait(term)));
         Arrays.stream(AbilityTerm.values()).forEach(term -> looks.put(term.key(), ability(term)));
         Arrays.stream(StatusTerm.values()).forEach(term -> looks.put(term.key(), status(term)));
+        Arrays.stream(Affix.values()).forEach(affix -> looks.put(affix.key(), affix()));
         return Map.copyOf(looks);
     }
 
@@ -131,6 +133,11 @@ public final class TermLooks {
             case HIVEMIND -> Palette.TRAIT_ICON_HIVEMIND;
             case CRUMBLE -> Palette.TRAIT_ICON_CRUMBLE;
         }, Palette.TERM_FRAME_TRAIT);
+    }
+
+    /** One tone for every affix: the pips on the board say an enemy has one, and their shapes say which. */
+    private static TermLook affix() {
+        return new TermLook(Palette.AFFIXED, Palette.TERM_FRAME_TRAIT);
     }
 
     private static TermLook ability(AbilityTerm term) {
