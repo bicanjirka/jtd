@@ -52,8 +52,8 @@ final class WaveScriptGrammar {
     }
 
     private Parsed<Head> head(Cursor at) {
-        if (!at.holds(WaveScript.HEAD_END)) {
-            return new Parsed<>(new Head(SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT, this.fallbackRank, List.of()),
+        if (!at.holds(WaveScript.HEAD_END) || !at.upTo(WaveScript.HEAD_END).stream().allMatch(WaveScriptGrammar::isHeadWord)) {
+            return new Parsed<>(new Head(SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT, this.fallbackRank, List.of(), false),
                     at);
         }
         Parsed<Float> spacing = spacing(at);
@@ -64,7 +64,7 @@ final class WaveScriptGrammar {
             throw end.fail("A head holds only w<n>, a rank and affixes, in that order, and ends with '"
                     + WaveScript.HEAD_END + "'");
         }
-        return new Parsed<>(new Head(spacing.value(), rank.value().orElse(this.fallbackRank), affixes.value()),
+        return new Parsed<>(new Head(spacing.value(), rank.value().orElse(this.fallbackRank), affixes.value(), true),
                 end.next());
     }
 
@@ -158,7 +158,8 @@ final class WaveScriptGrammar {
         }
         String token = at.peek();
         if (token.equals(WaveScript.HEAD_END)) {
-            throw at.fail("A script has one head, so one '" + WaveScript.HEAD_END + "'");
+            throw at.fail(head.written() ? "A script has one head, so one '" + WaveScript.HEAD_END + "'"
+                    : "A head opens the script: move it before the first slot");
         }
         if (WaveScript.isSpacingToken(token)) {
             throw at.fail("Spacing token '" + token + "' belongs in the head: end the head with '" + WaveScript.HEAD_END
@@ -243,6 +244,11 @@ final class WaveScriptGrammar {
         }
     }
 
+    /** Whether {@code token} may stand in a head: a spacing, a rank or an affix. */
+    private static boolean isHeadWord(String token) {
+        return WaveScript.isSpacingToken(token) || WaveScript.isRankToken(token) || Affix.of(token).isPresent();
+    }
+
     private static boolean isRank(Cursor at) {
         return !at.atEnd() && WaveScript.isRankToken(at.peek());
     }
@@ -266,8 +272,8 @@ final class WaveScriptGrammar {
     private record Parsed<T>(T value, Cursor rest) {
     }
 
-    /** What a script's head sets for every slot; its affixes add to a slot's own. */
-    private record Head(float ticksPerSlot, Rank rank, List<Affix> affixes) {
+    /** What a script's head sets for every slot; its affixes add to a slot's own. {@code written}: not the defaults. */
+    private record Head(float ticksPerSlot, Rank rank, List<Affix> affixes, boolean written) {
     }
 
     /** What an item says before the token it spawns. */
@@ -295,6 +301,12 @@ final class WaveScriptGrammar {
         /** Whether {@code token} stands here or anywhere after. */
         boolean holds(String token) {
             return this.tokens.subList(this.index, this.tokens.size()).contains(token);
+        }
+
+        /** The tokens from here to the first {@code token}, which it must hold. */
+        List<String> upTo(String token) {
+            List<String> rest = this.tokens.subList(this.index, this.tokens.size());
+            return rest.subList(0, rest.indexOf(token));
         }
 
         boolean atEnd() {
