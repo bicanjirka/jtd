@@ -32,7 +32,7 @@ final class KeeperEnemy {
 
     /** Registered after the Sandling and the Timekeeper, which it calls. */
     static RankedEnemy keeper() {
-        return RankedEnemy.unique(EnemyDefinition.of("keeper", "The Keeper of Hours", 6000, 50, 0.45f, BodyArchetype.KEEPER)
+        return RankedEnemy.unique(EnemyDefinition.of("keeperOfHours", "The Keeper of Hours", 6000, 50, 0.45f, BodyArchetype.KEEPER)
                 .withDescription("It has turned the glass before. It will turn it again - unless the sand is held still.")
                 .withMovement(new SwingMovement((float) Math.toRadians(14.0), 50, SwingCurve.SMOOTH))
                 .withStats(20f, 20f, 2f, 2f, 40f, 0f, 0f)

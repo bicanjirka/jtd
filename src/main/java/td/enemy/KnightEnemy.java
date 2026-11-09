@@ -6,19 +6,19 @@ import td.util.TickRate;
 import java.util.List;
 
 /**
- * The Armored mob ({@code armored}): armor and magic resist, plating, immune to crits, heavy enough to shrug off
+ * The Knight ({@code knight}): armor and magic resist, plating, immune to crits, heavy enough to shrug off
  * some of a freeze, and at Boss rank it calls reinforcements. Those are a definition of their own, not the ladder's
  * boss, because a boss that reinforces with itself would be a spawn cycle. From Elite it lays mines along its path that
  * shield the first enemy to step on them.
  */
-final class ArmoredEnemy {
+final class KnightEnemy {
 
-    private ArmoredEnemy() {
+    private KnightEnemy() {
     }
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("armored", "Armored mob", 120, 2, 1.28f, BodyArchetype.SQUARE)
+                .startingAt(EnemyDefinition.of("knight", "Knight", 120, 2, 1.28f, BodyArchetype.SQUARE)
                         .withDescription("Heavy plates blunt physical hits; magic goes through.")
                         .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
                         .withArmor(25f)
@@ -41,10 +41,10 @@ final class ArmoredEnemy {
                         .withStats(100f, 100f, 10f, 0f, 100f, 5f, 20f)
                         .withAdditionalAbilities(List.of(brace(300f), wardMine(240f), IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE,
                                 new PeriodicTrigger(Math.round(3 * TickRate.TICKS_PER_SECOND)),
-                                new SpawnEnemiesAction("armoredSpawn", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
+                                new SpawnEnemiesAction("squire", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
                 .build());
-        catalog.register(EnemyDefinition.of("armoredSpawn", "Armored Reinforcement", 150, 1, 1.28f, BodyArchetype.SQUARE)
-                .withDescription("Called in by an Armored boss to hold the line.")
+        catalog.register(EnemyDefinition.of("squire", "Squire", 150, 1, 1.28f, BodyArchetype.SQUARE)
+                .withDescription("Called in by a Knight boss to hold the line.")
                 .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
                 .withArmor(25f)
                 .withMagicResist(25f)

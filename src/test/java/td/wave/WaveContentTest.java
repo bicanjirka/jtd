@@ -12,8 +12,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WaveContentTest {
 
     private final EnemyCatalog catalog = EnemyCatalog.builtIn();
-    private final EnemyDefinition simple = this.catalog.get("simple");
-    private final EnemyDefinition armored = this.catalog.get("armored");
+    private final EnemyDefinition simple = this.catalog.get("walker");
+    private final EnemyDefinition armored = this.catalog.get("knight");
 
     @Test
     void aNormalSlotCountsAsOneMember() {

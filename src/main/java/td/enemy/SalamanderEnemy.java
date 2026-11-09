@@ -17,7 +17,7 @@ final class SalamanderEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("lizard", "Salamander", 135, 3, 1.28f, BodyArchetype.SALAMANDER)
+                .startingAt(EnemyDefinition.of("salamander", "Salamander", 135, 3, 1.28f, BodyArchetype.SALAMANDER)
                         .withMovement(new StrideMovement((float) Math.toRadians(25.0), 8))
                         .withDescription("A fire-proof walker that slowly regrows what it loses.")
                         .withIdentifiedTraits(List.of(

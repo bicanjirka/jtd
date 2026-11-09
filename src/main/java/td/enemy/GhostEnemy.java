@@ -5,7 +5,7 @@ import td.effect.InvisibleTemplate;
 import java.util.List;
 
 /**
- * The Ghost mob ({@code ghost}): half there, so physical hits pass partly through; vanishes from towers the first time
+ * The Ghost ({@code ghost}): half there, so physical hits pass partly through; vanishes from towers the first time
  * it is hit, for longer from Veteran; from Elite it is hard to hit and shrouds its allies; at Boss it fades out on
  * its own now and then.
  */
@@ -19,7 +19,7 @@ final class GhostEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("ghost", "Ghost mob", 150, 3, 1.28f, BodyArchetype.GHOST)
+                .startingAt(EnemyDefinition.of("ghost", "Ghost", 150, 3, 1.28f, BodyArchetype.GHOST)
                         // A sheet that floats rather than walks.
                         .withMovement(new SwingMovement((float) Math.toRadians(12.0), 45, SwingCurve.SMOOTH))
                         .withDescription("Half there: hard to hit and hard to see, but area damage finds it.")

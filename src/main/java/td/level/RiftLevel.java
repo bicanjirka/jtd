@@ -56,18 +56,18 @@ final class RiftLevel {
     private static final int STARTING_LIVES = 3;
 
     /** What a Mirage leaves where a shot missed it: no bounty, and stronger behind a stronger Mirage. */
-    private static final EnemyDefinition ECHO = EnemyDefinition.of("echo", "Mirror Image", 30, 1, 1.6f,
+    private static final EnemyDefinition ECHO = EnemyDefinition.of("mirrorImage", "Mirror Image", 30, 1, 1.6f,
                     BodyArchetype.MIRROR_IMAGE)
             .withDescription("What was left where a shot missed a Mirage.");
 
     /** A Skirmisher that turns every dodge into one more enemy, so aimed shots feed it and area damage starves it. */
-    private static final RankedEnemy MIRAGE = EnemyCatalog.builtIn().ranked("dodger").cloneAs("mirage",
+    private static final RankedEnemy MIRAGE = EnemyCatalog.builtIn().ranked("skirmisher").cloneAs("mirage",
             (rank, dodger) -> dodger
                     .withDisplayName("Mirage")
                     .withArchetype(BodyArchetype.MIRAGE)
                     .withDescription("Nimble, and never quite where the shot went.")
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("mirror", new Ability(AbilityTerm.MIRROR_IMAGE,
-                            new OnDodgeTrigger(), new SpawnEnemiesAction("echo",
+                            new OnDodgeTrigger(), new SpawnEnemiesAction("mirrorImage",
                                     new AbilitySpawnShape(1, 0.8f, echoHealth(rank), 0f, 0.0), false))))));
 
     /** A Courier whose first wound lays haste ground under everything behind it, so the first hit had better kill. */
@@ -130,19 +130,19 @@ final class RiftLevel {
                             new Point(8, 7), new Point(11, 7), new Point(11, 4), new Point(5, 4), new Point(5, 10),
                             new Point(14, 10), new Point(14, 1), new Point(2, 1), new Point(2, 13), new Point(17, 13)),
                     List.of(
-                            new WaveDefinition("6 simple e 2 armored e 4 simple", Rank.GRUNT),
-                            new WaveDefinition("4 simple eclipse 4 simple e 2 armored", Rank.GRUNT),
-                            new WaveDefinition("column 4 armored e golem e 6 simple", Rank.GRUNT),
-                            new WaveDefinition("mirage e 5 simple e mirage e 3 armored", Rank.GRUNT),
-                            new WaveDefinition("eclipse column 6 simple e golem e 2 yeti", Rank.SOLDIER),
-                            new WaveDefinition("shield column 4 armored e eclipse ghost e 4 simple", Rank.SOLDIER),
-                            new WaveDefinition("2 mirage e magma e eclipse column 6 simple e titan", Rank.SOLDIER),
+                            new WaveDefinition("6 walker e 2 knight e 4 walker", Rank.GRUNT),
+                            new WaveDefinition("4 walker eclipse 4 walker e 2 knight", Rank.GRUNT),
+                            new WaveDefinition("column 4 knight e golem e 6 walker", Rank.GRUNT),
+                            new WaveDefinition("mirage e 5 walker e mirage e 3 knight", Rank.GRUNT),
+                            new WaveDefinition("eclipse column 6 walker e golem e 2 yeti", Rank.SOLDIER),
+                            new WaveDefinition("shieldbearer column 4 knight e eclipse ghost e 4 walker", Rank.SOLDIER),
+                            new WaveDefinition("2 mirage e magma e eclipse column 6 walker e juggernaut", Rank.SOLDIER),
                             new WaveDefinition("e", Rank.GRUNT),
-                            new WaveDefinition("eclipse 2 ghost e titan shield e 2 golem e jammer", Rank.VETERAN),
-                            new WaveDefinition("line 3 mirage e eclipse column 6 armored e 2 magma", Rank.VETERAN),
-                            new WaveDefinition("eclipse column 4 ghost e 2 titan shield e veteran golem e column 10 simple", Rank.SOLDIER),
-                            new WaveDefinition("elite eclipse column 6 armored e titan shield e 3 mirage e jammer e "
-                                    + "column 10 simple", Rank.VETERAN)),
+                            new WaveDefinition("eclipse 2 ghost e juggernaut shieldbearer e 2 golem e jammer", Rank.VETERAN),
+                            new WaveDefinition("line 3 mirage e eclipse column 6 knight e 2 magma", Rank.VETERAN),
+                            new WaveDefinition("eclipse column 4 ghost e 2 juggernaut shieldbearer e veteran golem e column 10 walker", Rank.SOLDIER),
+                            new WaveDefinition("elite eclipse column 6 knight e juggernaut shieldbearer e 3 mirage e jammer e "
+                                    + "column 10 walker", Rank.VETERAN)),
                     SMOOTHING)
             .withColor(VIOLET_COLOR);
 
@@ -151,18 +151,18 @@ final class RiftLevel {
     private static final PathDefinition DASH_PATH = PathDefinition.smoothed(
                     List.of(new Point(8, 7), new Point(-1, 7)),
                     List.of(
-                            new WaveDefinition("3 fast", Rank.GRUNT),
-                            new WaveDefinition("herald e 3 fast", Rank.GRUNT),
+                            new WaveDefinition("3 runner", Rank.GRUNT),
+                            new WaveDefinition("herald e 3 runner", Rank.GRUNT),
                             new WaveDefinition("swarm 8 mite e herald", Rank.GRUNT),
-                            new WaveDefinition("2 herald e 4 fast", Rank.GRUNT),
-                            new WaveDefinition("drip 3 herald e 3 fast", Rank.SOLDIER),
+                            new WaveDefinition("2 herald e 4 runner", Rank.GRUNT),
+                            new WaveDefinition("drip 3 herald e 3 runner", Rank.SOLDIER),
                             new WaveDefinition("mirage e swarm 12 mite", Rank.SOLDIER),
-                            new WaveDefinition("drip 4 herald e 3 fast e mirage", Rank.SOLDIER),
+                            new WaveDefinition("drip 4 herald e 3 runner e mirage", Rank.SOLDIER),
                             new WaveDefinition("monolith", Rank.BOSS),
                             new WaveDefinition("swarm 12 mite e drip 3 herald", Rank.VETERAN),
-                            new WaveDefinition("2 mirage e eclipse 3 fast", Rank.VETERAN),
-                            new WaveDefinition("drip 5 herald e veteran fast e swarm 12 mite", Rank.SOLDIER),
-                            new WaveDefinition("elite herald e veteran 2 herald e elite fast e 2 mirage", Rank.VETERAN)),
+                            new WaveDefinition("2 mirage e eclipse 3 runner", Rank.VETERAN),
+                            new WaveDefinition("drip 5 herald e veteran runner e swarm 12 mite", Rank.SOLDIER),
+                            new WaveDefinition("elite herald e veteran 2 herald e elite runner e 2 mirage", Rank.VETERAN)),
                     SMOOTHING)
             .withColor(CYAN_COLOR)
             .withSpeed(1.1f);
@@ -176,14 +176,14 @@ final class RiftLevel {
                             new WaveDefinition("e", Rank.GRUNT),
                             new WaveDefinition("e", Rank.GRUNT),
                             new WaveDefinition("e", Rank.GRUNT),
-                            new WaveDefinition("drip 6 simple e 2 armored", Rank.GRUNT),
-                            new WaveDefinition("eclipse 3 armored e 2 simple", Rank.SOLDIER),
+                            new WaveDefinition("drip 6 walker e 2 knight", Rank.GRUNT),
+                            new WaveDefinition("eclipse 3 knight e 2 walker", Rank.SOLDIER),
                             new WaveDefinition("2 yeti e golem", Rank.SOLDIER),
                             new WaveDefinition("e", Rank.GRUNT),
-                            new WaveDefinition("3 lizard e magma", Rank.SOLDIER),
-                            new WaveDefinition("titan shield e mender 3 armored", Rank.SOLDIER),
+                            new WaveDefinition("3 salamander e magma", Rank.SOLDIER),
+                            new WaveDefinition("juggernaut shieldbearer e mender 3 knight", Rank.SOLDIER),
                             new WaveDefinition("eclipse 2 ghost e 2 yeti", Rank.VETERAN),
-                            new WaveDefinition("elite eclipse column 4 armored e titan", Rank.VETERAN)),
+                            new WaveDefinition("elite eclipse column 4 knight e juggernaut", Rank.VETERAN)),
                     SMOOTHING)
             .withColor(GOLD_COLOR)
             .withSpeed(0.85f);

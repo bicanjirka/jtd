@@ -5,7 +5,7 @@ import td.enemy.Rank;
 /**
  * One authored wave. Health and bounty come from each enemy's definition at its rank.
  *
- * @param enemies         space-separated tokens, e.g. {@code "3 armored e 4 simple"}
+ * @param enemies         space-separated tokens, e.g. {@code "3 knight e 4 walker"}
  * @param rank            the default rank; a slot may override it
  * @param speedMultiplier pace, multiplied with the path's; {@code 1x} by default
  * @param clearBonus      credits paid when the round this wave belongs to clears with no enemy leaked; none by

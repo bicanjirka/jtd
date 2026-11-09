@@ -66,7 +66,7 @@ import java.util.stream.LongStream;
 public final class TowerLab {
 
     /** The kind every other is compared with: the plain mob. */
-    public static final String PLAIN = "simple";
+    public static final String PLAIN = "walker";
     private static final String AT = "@";
     /** Probes and duels are fought at this rank: armor and resistances have grown in. */
     private static final Rank LAB_RANK = Rank.VETERAN;

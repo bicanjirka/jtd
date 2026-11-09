@@ -94,7 +94,7 @@ public class PanelDev extends JPanel {
 
     private final HudTextField credits = new HudTextField("10000", 6);
     private final HudTextField lives = new HudTextField("20", 4);
-    private final HudTextField script = new HudTextField("3 simple", 14);
+    private final HudTextField script = new HudTextField("3 walker", 14);
     private final HudTextField jumpTo = new HudTextField("1", 3);
     private final HudTextField xp = new HudTextField("150", 4);
     private final HudTextField enemyHealth = new HudTextField("100", 4);

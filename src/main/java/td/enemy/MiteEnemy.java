@@ -24,9 +24,9 @@ final class MiteEnemy {
                 .thenAt(Rank.BOSS, e -> e
                         .withStats(5f, 5f, 0f, 0f, 15f, 35f, 15f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.BROOD, new OnDeathTrigger(),
-                                new SpawnEnemiesAction("miteBrood", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
+                                new SpawnEnemiesAction("miteBroodling", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
                 .build());
-        catalog.register(EnemyDefinition.of("miteBrood", "Mite Broodling", 23, 1, 1.7f, BodyArchetype.MITE)
+        catalog.register(EnemyDefinition.of("miteBroodling", "Mite Broodling", 23, 1, 1.7f, BodyArchetype.MITE)
                 .withDescription("What a dying Mite boss leaves behind.")
                 .withAgility(25f));
     }

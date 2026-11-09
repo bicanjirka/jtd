@@ -53,7 +53,7 @@ on `quit` or end of input.
 | `clickenemy [n]` | Clicks where the `n`-th alive enemy is now and prints its effects. |
 | `enemies` | One line per enemy: alive index, `#id` (the one its trace lines carry), catalog id, rank, health, board px, effects, fate. |
 | `trace [#id]` | Prints this run's `OBSERVE` lines from its session log: every observed enemy's, or one id's. |
-| `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `armored` for Armored) at the path start. |
+| `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `knight` for the Knight) at the path start. |
 | `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `resonating`, `fractured`, `dazed`, `saturated`, `charged`, `doom`, `blight`, `contagion`, `malaise`, `sprinting`) on every alive enemy. |
 | `kill` | Deals lethal damage to every enemy through the real hit path, so on-death abilities fire. |
 | `setcredits <n>`, `setlives <n>` | Economy cheats. |
@@ -73,7 +73,7 @@ on `quit` or end of input.
 cat <<'EOF' | java -cp "$CP" Driver
 level 0
 setlives 1000
-spawn armored elite
+spawn knight elite
 waitfor ticks 40
 clickenemy 0
 list SheetPane   # the Info pane's index, which moves whenever a panel is added
@@ -90,7 +90,7 @@ per event to the session log until its `END`: `START` (a full stat snapshot), `H
 reduction step, `DODGE`, `EFFECT` (requested, retimed, blocked, gained, refreshed, stacks, ended...),
 `HEAL`, `CAST`, `SPAWN`/`HATCH`, `KILLED`, `END` with totals. What it spawns or hatches into is observed
 too. Turn it on with `key alt+m` on a selected enemy (`clickenemy` first), or `key alt+shift+s` before
-spawning from the panel's script box (`key alt+s`, `type 2 armored`, `key enter`); `key alt+shift+m`
+spawning from the panel's script box (`key alt+s`, `type 2 knight`, `key enter`); `key alt+shift+m`
 writes a snapshot of every observed enemy. Then `trace` or `trace #12`. While anything is observed the
 game may run slower: a trace never drops a line.
 
@@ -100,7 +100,7 @@ level 0
 key ctrl+shift+d
 key alt+shift+s
 key alt+s
-type armored
+type knight
 key enter
 waitfor ticks 200
 trace
@@ -120,7 +120,7 @@ Give the Driver a debug port and enough ticks to attach before it quits. A long 
 cat <<'EOF' | java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=127.0.0.1:5055 -cp "$CP" Driver
 level 0
 setlives 1000
-spawn armored
+spawn knight
 waitfor ticks 500 40000
 enemies
 quit
@@ -157,7 +157,7 @@ cat <<'EOF' | java -cp "$CP" PreviewBoard
 level 0
 credits 5000
 place sniper 6 11
-spawn simple elite
+spawn walker elite
 tick 60
 render .claude/skills/run-jtd/shots/scene.png
 quit

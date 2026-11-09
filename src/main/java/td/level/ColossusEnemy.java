@@ -47,7 +47,7 @@ final class ColossusEnemy {
     }
 
     private static EnemyDefinition colossus() {
-        return EnemyDefinition.of("colossus", "The Iron Colossus", 5000, 40, 0.45f, BodyArchetype.COLOSSUS)
+        return EnemyDefinition.of("ironColossus", "The Iron Colossus", 5000, 40, 0.45f, BodyArchetype.COLOSSUS)
                 .withDescription("A walking foundry in an iron shell. Break the shell and what is inside comes out running.")
                 .withMovement(new SwingMovement((float) Math.toRadians(10.0), 60, SwingCurve.SMOOTH))
                 .withStats(35f, 10f, 15f, 0f, 100f, 0f, 0f)
@@ -58,7 +58,7 @@ final class ColossusEnemy {
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.WARD_MINE, new PeriodicTrigger(60),
                                 LeaveZoneAction.wardMine(0.6f, 240, 150f))),
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(300),
-                                new SpawnEnemiesAction("armored", 2, false).atRank(Rank.SOLDIER))),
+                                new SpawnEnemiesAction("knight", 2, false).atRank(Rank.SOLDIER))),
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.REFORGE, new HealthThresholdTrigger(0.5f),
                                 new SpawnEnemiesAction("moltenCore", 1, true)))));
     }

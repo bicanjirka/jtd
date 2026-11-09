@@ -49,8 +49,8 @@ final class AmberHiveLevel {
     private static final int STARTING_CREDITS = 60;
     private static final int STARTING_LIVES = 5;
 
-    /** A Simple mob that never walks alone: tougher for every ally beside it. */
-    private static final RankedEnemy DRONE = EnemyCatalog.builtIn().ranked("simple").cloneAs("drone",
+    /** A Walker that never walks alone: tougher for every ally beside it. */
+    private static final RankedEnemy DRONE = EnemyCatalog.builtIn().ranked("walker").cloneAs("drone",
             simple -> simple
                     .withDisplayName("Drone")
                     .withArchetype(BodyArchetype.DRONE)
@@ -59,7 +59,7 @@ final class AmberHiveLevel {
                     .withAdditionalTraits(List.of(IdentifiedTrait.named("hivemind", new HivemindTrait(4f, 5)))));
 
     /** A slow, thick-shelled drone that hardens far more in company. */
-    private static final RankedEnemy HIVE_GUARD = EnemyCatalog.builtIn().ranked("simple").cloneAs("hiveguard",
+    private static final RankedEnemy HIVE_GUARD = EnemyCatalog.builtIn().ranked("walker").cloneAs("hiveGuard",
             simple -> simple
                     .withDisplayName("Hive Guard")
                     .withArchetype(BodyArchetype.HIVE_GUARD)
@@ -74,7 +74,7 @@ final class AmberHiveLevel {
      * The hive's Menders: from Veteran they also ward the allies near them with a shield that takes every damage type,
      * so the answer is to deny heals and shields, or to reach the nurse first.
      */
-    private static final RankedEnemy NURSE = EnemyCatalog.builtIn().ranked("mender").cloneAs("nurse",
+    private static final RankedEnemy NURSE = EnemyCatalog.builtIn().ranked("mender").cloneAs("broodNurse",
             (rank, mender) -> {
                 EnemyDefinition nurse = mender
                         .withDisplayName("Brood Nurse")
@@ -122,7 +122,7 @@ final class AmberHiveLevel {
             .build();
 
     /** A soft grub that crawls a while, then spins a cocoon where it stands. */
-    private static final RankedEnemy LARVA = EnemyCatalog.builtIn().ranked("simple").cloneAs("larva",
+    private static final RankedEnemy LARVA = EnemyCatalog.builtIn().ranked("walker").cloneAs("larva",
             simple -> simple
                     .withDisplayName("Larva")
                     .withArchetype(BodyArchetype.LARVA)
@@ -147,31 +147,31 @@ final class AmberHiveLevel {
                     List.of(
                             new WaveDefinition("column 8 drone 2 e column 6 drone", Rank.GRUNT).withClearBonus(5),
                             new WaveDefinition("3 larva 2 e column 6 drone e 3 larva", Rank.GRUNT).withClearBonus(5),
-                            new WaveDefinition("column 6 drone e hiveguard e column 6 drone e hiveguard", Rank.GRUNT)
+                            new WaveDefinition("column 6 drone e hiveGuard e column 6 drone e hiveGuard", Rank.GRUNT)
                                     .withClearBonus(5),
-                            new WaveDefinition("nurse column 6 drone 2 e nurse column 6 drone e 2 hiveguard", Rank.SOLDIER)
+                            new WaveDefinition("broodNurse column 6 drone 2 e broodNurse column 6 drone e 2 hiveGuard", Rank.SOLDIER)
                                     .withClearBonus(5),
                             new WaveDefinition("drip 6 larva e swarm 12 mite e drip 4 larva", Rank.SOLDIER).withClearBonus(5),
-                            new WaveDefinition("2 hiveguard nurse 2 hiveguard 2 e column 8 drone", Rank.SOLDIER)
+                            new WaveDefinition("2 hiveGuard broodNurse 2 hiveGuard 2 e column 8 drone", Rank.SOLDIER)
                                     .withClearBonus(5),
                             new WaveDefinition("line 3 hornet 2 e column 8 drone 2 e line 3 hornet", Rank.SOLDIER)
                                     .withClearBonus(5),
-                            new WaveDefinition("w30 6 larva e 3 hiveguard nurse e 6 larva", Rank.VETERAN).withClearBonus(5),
-                            new WaveDefinition("swarm 12 mite e column 10 drone e swarm 12 mite e veteran nurse column 10 drone",
+                            new WaveDefinition("w30 6 larva e 3 hiveGuard broodNurse e 6 larva", Rank.VETERAN).withClearBonus(5),
+                            new WaveDefinition("swarm 12 mite e column 10 drone e swarm 12 mite e veteran broodNurse column 10 drone",
                                     Rank.SOLDIER).withClearBonus(5),
-                            new WaveDefinition("elite hiveguard 2 nurse e column 8 drone e 4 hornet", Rank.VETERAN)
+                            new WaveDefinition("elite hiveGuard 2 broodNurse e column 8 drone e 4 hornet", Rank.VETERAN)
                                     .withClearBonus(5),
-                            new WaveDefinition("drip 8 larva e elite nurse column 12 drone e drip 6 larva", Rank.VETERAN)
+                            new WaveDefinition("drip 8 larva e elite broodNurse column 12 drone e drip 6 larva", Rank.VETERAN)
                                     .withClearBonus(5),
-                            new WaveDefinition("column 12 drone e 2 elite hiveguard elite nurse e column 12 drone e 6 hornet",
+                            new WaveDefinition("column 12 drone e 2 elite hiveGuard elite broodNurse e column 12 drone e 6 hornet",
                                     Rank.VETERAN).withClearBonus(5),
                             new WaveDefinition("line 4 hornet e line 4 hornet e elite hornet e swarm 12 mite e line 4 hornet",
                                     Rank.VETERAN).withClearBonus(5),
-                            new WaveDefinition("column 3 hiveguard 2 nurse e column 12 drone e drip 8 larva", Rank.ELITE)
+                            new WaveDefinition("column 3 hiveGuard 2 broodNurse e column 12 drone e drip 8 larva", Rank.ELITE)
                                     .withClearBonus(5),
-                            new WaveDefinition("column 12 drone e boss nurse 2 hiveguard e 8 hornet e drip 8 larva", Rank.ELITE)
+                            new WaveDefinition("column 12 drone e boss broodNurse 2 hiveGuard e 8 hornet e drip 8 larva", Rank.ELITE)
                                     .withClearBonus(5),
-                            new WaveDefinition("warden 8 e elite column 10 drone e elite nurse e column 10 drone", Rank.BOSS)
+                            new WaveDefinition("warden 8 e elite column 10 drone e elite broodNurse e column 10 drone", Rank.BOSS)
                                     .withClearBonus(5)),
                     SMOOTHING)
             .withColor(HONEY_COLOR);

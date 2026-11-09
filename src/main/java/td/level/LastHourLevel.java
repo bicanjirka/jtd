@@ -82,7 +82,7 @@ final class LastHourLevel {
 
     /** Glass: thick against every small hit, either type, and shattering under a crit. */
     private static final RankedEnemy GLASS_SENTINEL = RankedEnemy
-            .startingAt(EnemyDefinition.of("sentinel", "Glass Sentinel", 260, 4, 0.8f, BodyArchetype.GLASS_SENTINEL)
+            .startingAt(EnemyDefinition.of("glassSentinel", "Glass Sentinel", 260, 4, 0.8f, BodyArchetype.GLASS_SENTINEL)
                     .withDescription("Cut from the glass itself. A small hit only rings on it; a hard one shatters it.")
                     .withMovement(new SwingMovement((float) Math.toRadians(6.0), 40, SwingCurve.SMOOTH))
                     .withStats(0f, 0f, 8f, 8f, -60f, 0f, 0f), RankGrowth.of(16f))
@@ -100,7 +100,7 @@ final class LastHourLevel {
 
     /** A brute of packed sand that runs faster as it is hurt and falls apart into Sandlings. */
     private static final RankedEnemy REAVER = RankedEnemy
-            .startingAt(EnemyDefinition.of("reaver", "Sand Reaver", 750, 6, 1.28f, BodyArchetype.REAVER)
+            .startingAt(EnemyDefinition.of("sandReaver", "Sand Reaver", 750, 6, 1.28f, BodyArchetype.REAVER)
                     .withDescription("Sand packed hard into a brute. It runs faster as it is hurt, and when it falls, "
                             + "it falls apart.")
                     .withMovement(new PathDirectionalMovement())
@@ -135,18 +135,18 @@ final class LastHourLevel {
                             new Point(-1, 1), new Point(7, 1), new Point(7, 5),
                             new Point(5, 7), new Point(2, 9), new Point(2, 15)),
                     List.of(
-                            new WaveDefinition("swarm 8 sandling e 4 simple", Rank.GRUNT),
-                            new WaveDefinition("column 4 armored e swarm 8 sandling", Rank.GRUNT),
-                            new WaveDefinition("timekeeper column 5 simple e swarm 8 sandling", Rank.GRUNT),
-                            new WaveDefinition("2 sentinel e column 6 simple", Rank.SOLDIER),
-                            new WaveDefinition("swarm 12 sandling e timekeeper 4 fast", Rank.SOLDIER),
-                            new WaveDefinition("timekeeper 2 sentinel e column 6 armored", Rank.SOLDIER),
+                            new WaveDefinition("swarm 8 sandling e 4 walker", Rank.GRUNT),
+                            new WaveDefinition("column 4 knight e swarm 8 sandling", Rank.GRUNT),
+                            new WaveDefinition("timekeeper column 5 walker e swarm 8 sandling", Rank.GRUNT),
+                            new WaveDefinition("2 glassSentinel e column 6 walker", Rank.SOLDIER),
+                            new WaveDefinition("swarm 12 sandling e timekeeper 4 runner", Rank.SOLDIER),
+                            new WaveDefinition("timekeeper 2 glassSentinel e column 6 knight", Rank.SOLDIER),
                             new WaveDefinition("swarm 12 sandling e swarm 12 sandling", Rank.VETERAN),
-                            new WaveDefinition("3 sentinel timekeeper e 4 fast", Rank.VETERAN),
-                            new WaveDefinition("elite timekeeper column 8 simple e swarm 12 sandling", Rank.VETERAN),
-                            new WaveDefinition("drip 6 courier e 2 timekeeper 2 sentinel", Rank.VETERAN),
-                            new WaveDefinition("swarm 12 sandling e timekeeper column 6 armored", Rank.ELITE),
-                            new WaveDefinition("6 e elite timekeeper swarm 12 sandling e 2 elite sentinel", Rank.VETERAN)),
+                            new WaveDefinition("3 glassSentinel timekeeper e 4 runner", Rank.VETERAN),
+                            new WaveDefinition("elite timekeeper column 8 walker e swarm 12 sandling", Rank.VETERAN),
+                            new WaveDefinition("drip 6 courier e 2 timekeeper 2 glassSentinel", Rank.VETERAN),
+                            new WaveDefinition("swarm 12 sandling e timekeeper column 6 knight", Rank.ELITE),
+                            new WaveDefinition("6 e elite timekeeper swarm 12 sandling e 2 elite glassSentinel", Rank.VETERAN)),
                     SMOOTHING)
             .withColor(GLASS_COLOR);
 
@@ -157,18 +157,18 @@ final class LastHourLevel {
                             new Point(2, -1), new Point(2, 5), new Point(5, 7),
                             new Point(7, 9), new Point(7, 13), new Point(-1, 13)),
                     List.of(
-                            new WaveDefinition("6 simple e swarm 6 sandling", Rank.GRUNT),
-                            new WaveDefinition("sentinel e 4 simple", Rank.GRUNT),
-                            new WaveDefinition("swarm 10 sandling e 2 fast", Rank.GRUNT),
-                            new WaveDefinition("timekeeper column 6 armored", Rank.SOLDIER),
-                            new WaveDefinition("3 sentinel e swarm 8 sandling", Rank.SOLDIER),
+                            new WaveDefinition("6 walker e swarm 6 sandling", Rank.GRUNT),
+                            new WaveDefinition("glassSentinel e 4 walker", Rank.GRUNT),
+                            new WaveDefinition("swarm 10 sandling e 2 runner", Rank.GRUNT),
+                            new WaveDefinition("timekeeper column 6 knight", Rank.SOLDIER),
+                            new WaveDefinition("3 glassSentinel e swarm 8 sandling", Rank.SOLDIER),
                             new WaveDefinition("drip 4 courier e swarm 12 sandling", Rank.SOLDIER),
-                            new WaveDefinition("2 timekeeper column 6 simple e sentinel", Rank.VETERAN),
-                            new WaveDefinition("golem e timekeeper column 6 armored", Rank.VETERAN),
-                            new WaveDefinition("swarm 12 sandling e 3 sentinel", Rank.VETERAN),
-                            new WaveDefinition("elite sentinel 2 sentinel e swarm 12 sandling", Rank.VETERAN),
-                            new WaveDefinition("3 sentinel e timekeeper swarm 12 sandling", Rank.ELITE),
-                            new WaveDefinition("8 e swarm 12 sandling e elite timekeeper 4 armored", Rank.VETERAN)),
+                            new WaveDefinition("2 timekeeper column 6 walker e glassSentinel", Rank.VETERAN),
+                            new WaveDefinition("golem e timekeeper column 6 knight", Rank.VETERAN),
+                            new WaveDefinition("swarm 12 sandling e 3 glassSentinel", Rank.VETERAN),
+                            new WaveDefinition("elite glassSentinel 2 glassSentinel e swarm 12 sandling", Rank.VETERAN),
+                            new WaveDefinition("3 glassSentinel e timekeeper swarm 12 sandling", Rank.ELITE),
+                            new WaveDefinition("8 e swarm 12 sandling e elite timekeeper 4 knight", Rank.VETERAN)),
                     SMOOTHING)
             .withColor(SAND_COLOR);
 
@@ -181,16 +181,16 @@ final class LastHourLevel {
                     List.of(
                             new WaveDefinition("3 sandling", Rank.GRUNT),
                             new WaveDefinition("swarm 6 sandling", Rank.GRUNT),
-                            new WaveDefinition("reaver", Rank.GRUNT),
-                            new WaveDefinition("swarm 10 sandling e reaver", Rank.SOLDIER),
-                            new WaveDefinition("2 reaver", Rank.SOLDIER),
+                            new WaveDefinition("sandReaver", Rank.GRUNT),
+                            new WaveDefinition("swarm 10 sandling e sandReaver", Rank.SOLDIER),
+                            new WaveDefinition("2 sandReaver", Rank.SOLDIER),
                             new WaveDefinition("timekeeper swarm 10 sandling", Rank.SOLDIER),
-                            new WaveDefinition("reaver e swarm 10 sandling", Rank.VETERAN),
-                            new WaveDefinition("2 reaver timekeeper", Rank.VETERAN),
-                            new WaveDefinition("elite reaver e swarm 12 sandling", Rank.VETERAN),
-                            new WaveDefinition("2 timekeeper column 6 armored", Rank.VETERAN),
-                            new WaveDefinition("2 reaver e swarm 12 sandling", Rank.ELITE),
-                            new WaveDefinition("keeper e 2 timekeeper", Rank.ELITE)),
+                            new WaveDefinition("sandReaver e swarm 10 sandling", Rank.VETERAN),
+                            new WaveDefinition("2 sandReaver timekeeper", Rank.VETERAN),
+                            new WaveDefinition("elite sandReaver e swarm 12 sandling", Rank.VETERAN),
+                            new WaveDefinition("2 timekeeper column 6 knight", Rank.VETERAN),
+                            new WaveDefinition("2 sandReaver e swarm 12 sandling", Rank.ELITE),
+                            new WaveDefinition("keeperOfHours e 2 timekeeper", Rank.ELITE)),
                     SMOOTHING)
             .withColor(DUSK_COLOR);
 

@@ -24,7 +24,7 @@ never in the constructor: that keeps a level load a single `LoadedLevel` publica
 `spawn()` call builds a fresh set, so calling it twice puts two copies on the board. For
 counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
-- A leading `w<number>` (`w30 3 c`) sets the ticks one slot of spacing is worth, default
+- A leading `w<number>` (`w30 3 walker`) sets the ticks one slot of spacing is worth, default
   `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`; it carries on `WaveContent`. It must be the first token and
   positive, and no enemy id may look like it.
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
@@ -34,8 +34,8 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
   resist on any armor it has), `flank` (2 members at opposite sides), `swarm n` (half size, health/bounty split,
   scattered), `line n` (spread across), `column n` / `drip n` (spaced tighter / looser than one
   slot).
-- A count applies to the next token: `3 s e 4 c`. Placed before a rank/shape keyword, it repeats
-  the whole slot (`3 elite swarm 4 c`); placed right after a shape keyword, it is the member
+- A count applies to the next token: `3 knight e 4 walker`. Placed before a rank/shape keyword, it repeats
+  the whole slot (`3 elite swarm 4 walker`); placed right after a shape keyword, it is the member
   count.
 - Errors (`GameStartupException`): an unknown token, a rank after a shape, a rank right before
   `e`, two ranks in a row, a missing or forbidden member count, a repeat count over
