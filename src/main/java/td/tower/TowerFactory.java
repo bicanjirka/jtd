@@ -7,6 +7,12 @@ import td.util.GameWorld;
  * a new constant without its class does not compile.
  */
 public class TowerFactory {
+
+    /**
+     * A new tower of {@code t} at cell {@code x}, {@code y}. It records {@link TowerRoster#priceOf} as what it was
+     * bought for, and that price grows with each copy on the board: so for a tower that is bought, charge that price
+     * first, call this, and only then {@link TowerRoster#add} it.
+     */
     public static Tower createTower(Type t, GameWorld c, int x, int y) {
         return switch (t) {
             case SNIPER -> new SniperTower(c, x, y);

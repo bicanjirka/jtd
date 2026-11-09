@@ -4,8 +4,6 @@
 
 - `AbstractTower` holds shared state; leaves are `final`, constructed only via `TowerFactory`,
   and their constructor just calls `super(...)` (derived board fields are already `final`).
-- A tower records its price from `TowerRoster.priceOf` in its constructor (each copy on the board
-  costs more), so build it after charging that price and before `TowerRoster.add`.
 - A tower's class name names the behaviour, not the shape. Its UI name is `TowerFactory.Type.displayName()`, chosen
   separately and display only: the constant, the class, the node ids and the hotkey keep the class's word.
 - Every hit goes through `AbstractTower.dealDamage`, never `enemy.doDamage`. It accumulates the
