@@ -24,7 +24,6 @@ import td.enemy.SpawnEnemiesAction;
 import td.stat.DisruptionAura;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * The storm's twins, a boss in two bodies on two lanes that ask for opposite damage: the Thunder, slow and plated
@@ -99,6 +98,6 @@ final class StormTwinsEnemy {
     /** Calls {@code rebornId} back where this twin stands, worth no bounty, once its kin has been down long enough. */
     private static IdentifiedAbility bond(String kinId, String rebornId) {
         return IdentifiedAbility.anonymous(new Ability(AbilityTerm.BOND, new KinFallenTrigger(kinId, BOND_TICKS),
-                new SpawnEnemiesAction(rebornId, new AbilitySpawnShape(1, 1f, 1f, 0f, 0.0, Optional.empty()), false)));
+                new SpawnEnemiesAction(rebornId, new AbilitySpawnShape(1, 1f, 1f, 0f, 0.0), false)));
     }
 }

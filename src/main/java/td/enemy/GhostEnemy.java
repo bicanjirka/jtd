@@ -5,7 +5,7 @@ import td.effect.InvisibleTemplate;
 import java.util.List;
 
 /**
- * The Ghost mob ({@code g}): half there, so physical hits pass partly through; vanishes from towers the first time
+ * The Ghost mob ({@code ghost}): half there, so physical hits pass partly through; vanishes from towers the first time
  * it is hit, for longer from Veteran; from Elite it is hard to hit and shrouds its allies; at Boss it fades out on
  * its own now and then.
  */

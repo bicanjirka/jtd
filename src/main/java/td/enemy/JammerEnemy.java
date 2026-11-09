@@ -6,7 +6,7 @@ import td.stat.DisruptionAura;
 import java.util.List;
 
 /**
- * The Jammer ({@code j}): slows and blinds every tower near it, its casing shrugs off magic, and it jams wider and
+ * The Jammer ({@code jammer}): slows and blinds every tower near it, its casing shrugs off magic, and it jams wider and
  * harder with rank; from Elite its casing blunts a little of every magic hit and it keeps a static charge that soaks
  * magic hits.
  */

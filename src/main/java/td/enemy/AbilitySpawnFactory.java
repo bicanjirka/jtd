@@ -21,10 +21,7 @@ final class AbilitySpawnFactory {
         Rank rank = ranked.spawnRank(spawn.rank().orElse(caster.getRank()));
         AbilitySpawnShape shape = spawn.shape();
         EnemyDefinition baseDefinition = ranked.definitionFor(rank);
-        EnemyDefinition shaped = shape.traitOverride()
-                .map(trait -> baseDefinition.withAdditionalTraits(List.of(trait)))
-                .orElse(baseDefinition);
-        EnemyDefinition definition = caster.livesOnLeak() == 0 ? shaped.withLivesOnLeak(0) : shaped;
+        EnemyDefinition definition = caster.livesOnLeak() == 0 ? baseDefinition.withLivesOnLeak(0) : baseDefinition;
         int health = Math.round(definition.baseHealth() * shape.healthMultiplier());
         int price = Math.round(definition.price() * shape.bountyMultiplier());
         return IntStream.range(0, shape.members())

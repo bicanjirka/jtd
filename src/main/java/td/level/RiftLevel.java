@@ -41,7 +41,6 @@ import td.wave.smoothing.ArcCornerSmoothing;
 import td.zone.Zone;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * The Rift: every lane touches a tear in the middle of the board. Two lanes pour out of it - one spiralling the long
@@ -69,7 +68,7 @@ final class RiftLevel {
                     .withDescription("Nimble, and never quite where the shot went.")
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("mirror", new Ability(AbilityTerm.MIRROR_IMAGE,
                             new OnDodgeTrigger(), new SpawnEnemiesAction("echo",
-                                    new AbilitySpawnShape(1, 0.8f, echoHealth(rank), 0f, 0.0, Optional.empty()), false))))));
+                                    new AbilitySpawnShape(1, 0.8f, echoHealth(rank), 0f, 0.0), false))))));
 
     /** A Courier whose first wound lays haste ground under everything behind it, so the first hit had better kill. */
     private static final RankedEnemy HERALD = EnemyCatalog.builtIn().ranked("courier").cloneAs("herald",

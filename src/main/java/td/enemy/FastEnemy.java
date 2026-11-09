@@ -7,7 +7,7 @@ import td.zone.Zone;
 import java.util.List;
 
 /**
- * The Fast mob ({@code t}): faster the more it is hurt, and reckless, so crits find it more often. From Elite it
+ * The Fast mob ({@code fast}): faster the more it is hurt, and reckless, so crits find it more often. From Elite it
  * bolts once badly hurt; at Veteran and Elite it throws down ground, once badly hurt, that speeds up the enemies who cross
  * it and keeps slows off them until the wave is over; at Boss rank it calls a brood of spawnlings, heals itself when left
  * alone and no longer takes crits; the spawnlings are a definition of their own.
