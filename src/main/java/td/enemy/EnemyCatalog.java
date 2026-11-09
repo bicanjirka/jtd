@@ -25,9 +25,9 @@ public final class EnemyCatalog {
     /** A fresh catalog, never shared, so one level's registrations never leak into the next. */
     public static EnemyCatalog builtIn() {
         EnemyCatalog catalog = new EnemyCatalog();
-        SimpleEnemy.registerIn(catalog);
-        ArmoredEnemy.registerIn(catalog);
-        FastEnemy.registerIn(catalog);
+        WalkerEnemy.registerIn(catalog);
+        KnightEnemy.registerIn(catalog);
+        RunnerEnemy.registerIn(catalog);
         GhostEnemy.registerIn(catalog);
         MenderEnemy.registerIn(catalog);
         JammerEnemy.registerIn(catalog);

@@ -6,7 +6,7 @@ import td.effect.ShieldTemplate;
 import java.util.List;
 
 /**
- * The Mender mob ({@code mender}): heals the allies near it, takes heals well itself (its spirit grows with rank), from
+ * The Mender ({@code mender}): heals the allies near it, takes heals well itself (its spirit grows with rank), from
  * Veteran heals itself when left alone and leaves a last
  * blessing of healing and a shield on the allies around it when it dies; at Boss the blessing is a heal alone.
  */
@@ -19,7 +19,7 @@ final class MenderEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("mender", "Mender mob", 90, 3, 1.28f, BodyArchetype.MENDER)
+                .startingAt(EnemyDefinition.of("mender", "Mender", 90, 3, 1.28f, BodyArchetype.MENDER)
                         // "other" is load-bearing: a radius target excludes the caster.
                         .withDescription("Keeps the rest of its wave on its feet.")
                         .withMovement(new SwingMovement())

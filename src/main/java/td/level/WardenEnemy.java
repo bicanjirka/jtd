@@ -45,32 +45,32 @@ final class WardenEnemy {
         return Stream.of(
                         // Protection, not health, is what makes a hatch likely: the first egg shrugs off all but the
                         // heaviest hits and each later one gives something up, until the last can simply be shot.
-                        egg("wardenEgg3", "Warden's Final Egg",
+                        egg("wardensFinalEgg", "Warden's Final Egg",
                                 "The last egg, sealed in amber: destroy it to end the encounter.",
                                 new Shell(25f, 1f, 0f), List.of()),
                         // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
-                        warden("warden3", "The Exhausted Warden", 5100, "guardian of the hive, barely standing",
-                                new Shell(2f, 2f, 0f), "wardenEgg3"),
-                        egg("wardenEgg2", "Warden's Egg",
+                        warden("exhaustedWarden", "The Exhausted Warden", 5100, "guardian of the hive, barely standing",
+                                new Shell(2f, 2f, 0f), "wardensFinalEgg"),
+                        egg("wardensSecondEgg", "Warden's Second Egg",
                                 "Sealed in amber, it hatches into a weaker Warden if not destroyed in time.",
                                 new Shell(100f, 4f, 0f),
                                 List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
-                                .withAbilities(hatchInto("warden3")),
-                        warden("warden2", "The Weakened Warden", 8250,
+                                .withAbilities(hatchInto("exhaustedWarden")),
+                        warden("weakenedWarden", "The Weakened Warden", 8250,
                                 "guardian of the hive, worn down from its last hatching", new Shell(6f, 4f, 0f),
-                                "wardenEgg2"),
-                        egg("wardenEgg1", "Warden's Egg",
+                                "wardensSecondEgg"),
+                        egg("wardensFirstEgg", "Warden's First Egg",
                                 "Sealed in amber, it hatches into a weaker Warden if not destroyed in time.",
                                 new Shell(400f, 12f, 100f),
                                 List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.CHILL)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
-                                .withAbilities(hatchInto("warden2")),
+                                .withAbilities(hatchInto("weakenedWarden")),
                         warden("warden", "The Warden", 13500, "guardian of the hive, crested in gold", new Shell(10f, 8f, 0f),
-                                "wardenEgg1"))
+                                "wardensFirstEgg"))
                 .map(RankedEnemy::unique)
                 .toList();
     }

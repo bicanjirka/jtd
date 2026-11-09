@@ -3,17 +3,17 @@ package td.enemy;
 import java.util.List;
 
 /**
- * The Simple mob ({@code simple}): no abilities and, up to Veteran, nothing but health. From Elite an armor that hardens
+ * The Walker ({@code walker}): no abilities and, up to Veteran, nothing but health. From Elite an armor that hardens
  * against what hurts it most and a little of every stat, and at Boss a steadiness that blunts crits.
  */
-final class SimpleEnemy {
+final class WalkerEnemy {
 
-    private SimpleEnemy() {
+    private WalkerEnemy() {
     }
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("simple", "Simple mob", 75, 2, 1.28f, BodyArchetype.CIRCLE)
+                .startingAt(EnemyDefinition.of("walker", "Walker", 75, 2, 1.28f, BodyArchetype.CIRCLE)
                         .withDescription("The plain foot soldier of every wave."), RankGrowth.of(20f))
                 .thenAt(Rank.ELITE, e -> e
                         .withStats(10f, 10f, 0f, 0f, 10f, 5f, 10f)

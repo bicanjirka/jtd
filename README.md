@@ -208,9 +208,9 @@ on the Wardens, whose shield answers crits.
 
 | Enemy      | Looks like    | Behaviour                                                                                                                                                                                                                                                                                                         |
 |------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Simple     | circle        | Plain mob, no special ability, and no stats up to Veteran. From Elite, adaptive armor and a little of every stat; at Boss, +30 resilience |
-| Armored    | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10; immune to crits. From Veteran, +33 tenacity; from Elite, thick plating, a physical shield once below half health, and ward mines laid along its path; at Boss rank, calls three armored reinforcements every three seconds |
-| Fast       | triangle      | Speeds up as it loses health; -20 agility, so crits land more often. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
+| Walker     | circle        | Plain mob, no special ability, and no stats up to Veteran. From Elite, adaptive armor and a little of every stat; at Boss, +30 resilience |
+| Knight     | square        | +25 armor and magic resist, rising with rank, plating from 2 to 10; immune to crits. From Veteran, +33 tenacity; from Elite, thick plating, a physical shield once below half health, and ward mines laid along its path; at Boss rank, calls three Squires every three seconds |
+| Runner     | triangle      | Speeds up as it loses health; -20 agility, so crits land more often. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
 | Ghost      | sheet with eyes, floating | +20 armor. Turns invisible to single-target towers for ~10s the first time it's hit (~15s from Veteran; area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it; at Boss rank it fades out for 3s of every 10 |
 | Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone and, when it dies, heals and shields every ally near it; from Elite, adaptive armor; at Boss rank, the death blast is a heal alone. |
 | Jammer     | disc with four antennae, spinning | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield and its casing blunts magic hits (2 insulation, 4 at Boss). |
@@ -230,10 +230,10 @@ on the Wardens, whose shield answers crits.
 | Glass Sentinel | glass crystal | Slow, with 8 plating and 8 insulation that blunt every small hit of either type (up to 22 at Boss) and -60 resilience, so crits shatter it: it asks for big hits, crits, Cracked or flat penetration. Appears on The Last Hour. |
 | Sand Reaver | sand-coloured barbed arrowhead, path-facing | Speeds up as it's hurt, shrugs off a flat point of every hit, crit immune from Elite, shields itself once badly wounded, and falls apart into two Sandlings on death. Appears on The Last Hour. |
 | The Keeper of Hours | glass hourglass with falling sand, swaying | A boss: every six seconds it turns its health back to what it was three seconds before (Rewind), every ten it calls a Veteran Timekeeper that turns it back further, once below half it calls six Sandlings, and once nearly dead it turns the glass one last time, eight seconds back. Time runs slow around it: it jams the towers near it. Stop it casting (freeze, Daze, Silence), make heals worth nothing (Dead Zone), Invert it, or outpace it. If it escapes, the level is lost. The last round of The Last Hour. |
-| Drone      | striped bee, buzzing | A Simple mob with Hivemind: +4 armor and magic resist for every other enemy within 1.5 cells, up to five, so a pack is far tougher than its members alone; area damage breaks it up. On the Simple's ladder. Appears on The Amber Hive — a level-authored enemy, like the Reaver. |
-| Hive Guard | amber beetle, striding | A Simple mob with three times the health at half the speed, a point of plating and a stronger Hivemind (+9 a neighbour, up to four). On the Simple's ladder. Appears on The Amber Hive. |
+| Drone      | striped bee, buzzing | A Walker with Hivemind: +4 armor and magic resist for every other enemy within 1.5 cells, up to five, so a pack is far tougher than its members alone; area damage breaks it up. On the Walker's ladder. Appears on The Amber Hive — a level-authored enemy, like the Reaver. |
+| Hive Guard | amber beetle, striding | A Walker with three times the health at half the speed, a point of plating and a stronger Hivemind (+9 a neighbour, up to four). On the Walker's ladder. Appears on The Amber Hive. |
 | Brood Nurse | cream honeycomb cell with an amber cross | A Mender in the hive's colours, on the Mender's ladder; from Veteran it also wards every other ally near it with a shield that stops any damage. Appears on The Amber Hive. |
-| Larva      | pale grub, wriggling | A soft, slow Simple mob that spins itself into a Cocoon where it stands after nine seconds, unless it is killed first. On the Simple's ladder. Appears on The Amber Hive. |
+| Larva      | pale grub, wriggling | A soft, slow Walker that spins itself into a Cocoon where it stands after nine seconds, unless it is killed first. On the Walker's ladder. Appears on The Amber Hive. |
 | Cocoon     | silk-wound ovoid | Stationary, armored and plated but soft to crits (-40 resilience); it hatches into a Hornet after six seconds unless it is broken open. Appears on The Amber Hive. |
 | Hornet     | orange hornet with black bands, path-facing | Quick (2 cells/s), nimble and faster as it is hurt, with -20 resilience; from Veteran it sprints after every dodge. What a Cocoon hatches into, and sent on its own in later rounds. Appears on The Amber Hive. |
 | Raincloud  | grey cloud with falling rain, pulsing | Slow, +15 magic resist; bursts into Raindrops when it dies, more with rank (3 to 8). From Elite it leaves rain behind it that heals the enemies who stand in it. Appears on The Storm Ridge — a level-authored enemy. |
@@ -241,14 +241,14 @@ on the Wardens, whose shield answers crits.
 | Gale       | three-bladed whirlwind, spinning | Every four seconds it shoves every other enemy within 1.5 cells 1.2 cells further along its path (Gust), further and wider with rank, never past the end; 15 agility. Kill it first, or hold the whole lane. Appears on The Storm Ridge. |
 | The Thunder | wide storm cloud with a lightning bolt, rumbling | A boss, the slow half of the storm's twins: armor, plating and resilience that blunt physical hits, +100 tenacity, immune to Daze, and a rumble that jams the towers near it; once badly hurt it blinds the towers near it until the wave is over (Thunderclap). Bond: if the Lightning falls and the Thunder still stands six seconds later, it calls the Lightning back, reborn - quicker, harder to hit and worth no bounty. If any twin escapes, the level is lost. The last round of The Storm Ridge. |
 | The Lightning | white-hot lightning bolt, path-facing | A boss, the quick half of the twins: magic resist and insulation that blunt magic hits, agility, +100 tenacity, immune to Daze, faster as it is hurt and a sprint after every dodge. Its Bond calls the Thunder back, reborn - louder and more heavily plated - if the Thunder falls first and stays down six seconds. Bring both down close together. |
-| The Iron Colossus | riveted octagon with a furnace slit, swaying | A boss in an iron shell: armor and heavy plating blunt physical hits, crit immune, +100 tenacity, immune to Daze. It lays ward mines that shield the escorts behind it and calls two Armored escorts from time to time. Once badly hurt it reforges into the Molten Core. If it or the Core escapes, the level is lost. The final wave of Iron Crossing — a level-authored enemy. |
+| The Iron Colossus | riveted octagon with a furnace slit, swaying | A boss in an iron shell: armor and heavy plating blunt physical hits, crit immune, +100 tenacity, immune to Daze. It lays ward mines that shield the escorts behind it and calls two Knight escorts from time to time. Once badly hurt it reforges into the Molten Core. If it or the Core escapes, the level is lost. The final wave of Iron Crossing — a level-authored enemy. |
 | The Molten Core | blazing star with a white-hot heart, pulsing | What the Colossus melts down into: no armor or plating but high magic resist and a casing that blunts magic hits, immune to burn, freeze and Daze, and faster the more it is hurt. It leaves pools behind it that heal the escorts who stand in them, and bursts into four Embers when it dies. |
 | Ember      | tiny flame | A quick, nimble, burn-immune shard of the Molten Core; each one that gets through costs a life. |
 | Mirage     | two overlapping diamonds | A Skirmisher that leaves a Mirror Image behind every time it dodges: a fragile copy that pays no bounty and grows tougher with the Mirage's rank. Appears on The Rift — a level-authored enemy. |
 | Herald     | swept golden arrow, path-facing | A Courier that lays haste ground until the wave is over the moment it is first hurt, speeding everything behind it. Appears on The Rift. |
 | Eclipse    | violet crescent, spinning | Every few seconds hides every other ally near it from aimed shots, longer with rank; never itself. Appears on The Rift. |
 | The Monolith | standing stone with a glowing rune | A lone, very slow boss: crit immune, immune to freeze, chill and Daze, armor that hardens against the damage type that hurts it most, regeneration, a heal whenever it is left alone, a stone-skin shield at two thirds and at one third of its health, and a last stand once nearly dead. If it escapes, the level is lost. Walks alone in one round of The Rift. |
-| Bronze Bull | horned bull's head, striding | A Fast mob cast in bronze: half its health, a little plating and immune to burn, on the Fast's ladder and abilities. Appears on The Labyrinth — a level-authored enemy. |
+| Bronze Bull | horned bull's head, striding | A Runner cast in bronze: half its health, a little plating and immune to burn, on the Runner's ladder and abilities. Appears on The Labyrinth — a level-authored enemy. |
 | Talos      | bronze giant with a vein of ichor, swaying | A boss: the bronze guardian. A body that crits cut deep (-60 resilience) inside a huge shield that holds until broken, recast again and again; shooting through it is hopeless, so it asks for a tower that strips, pierces, blocks or inverts shields. If it escapes, the level is lost. Round 2 of The Labyrinth. |
 | The Minotaur | large horned bull's head, striding | A boss: thick hide (armor, plating, resilience), +100 tenacity, a bellow that jams the towers near it, a charge every ten seconds, faster the more it bleeds, and a bloodlust once badly hurt that heals it and sends it running. If it escapes, the level is lost. The last round of The Labyrinth. |
 
@@ -256,19 +256,19 @@ on the Wardens, whose shield answers crits.
 
 Every enemy spawns at one of five named ranks — **Grunt, Soldier, Veteran, Elite, Boss** — shown
 as a badge on its body rather than as a number. A wave declares the rank its slots default to;
-any slot can name a different rank inline, before the enemy id (`elite c`) or before a spawn
-shape (`elite swarm 4 c`). Each rank's health and bounty grow from the Grunt's on one pattern:
-health climbs a quadratic curve to the enemy's Boss factor (20 times the Grunt for the Simple mob,
+any slot can name a different rank inline, before the enemy id (`elite walker`) or before a spawn
+shape (`elite swarm 4 walker`). Each rank's health and bounty grow from the Grunt's on one pattern:
+health climbs a quadratic curve to the enemy's Boss factor (20 times the Grunt for the Walker,
 12 to 20 for the others, lower where an enemy's traits already grow with rank), so each rank adds
 more than the one before and Elite and Boss stand out; bounty grows only with the square root of
-health, so a tougher rank asks for more damage per credit (a Simple mob has 75, 164, 431, 877 and
+health, so a tougher rank asks for more damage per credit (a Walker has 75, 164, 431, 877 and
 1500 health and pays 2, 3, 5, 7 and 9). An enemy can still write a rank's health and bounty by
 hand. A kill's score is weighted by
 rank too — a Boss-rank kill is worth disproportionately more than a Grunt-rank one of the same
 bounty. Every enemy defines all five ranks, and gains traits or abilities as it climbs, except the
 spawnlings, which are one rank each, and the Warden chain, which is unique: every stage and egg is a
 Boss whatever rank its wave asks for (a non-`boss` rank keyword before it fails the level load), and
-the reinforcements a Warden calls come three at a time as Elites, every five seconds. Elite and Boss Simple and Mender enemies carry adaptive
+the reinforcements a Warden calls come three at a time as Elites, every five seconds. Elite and Boss Walkers and Menders carry adaptive
 armor: it resists whichever damage type (physical or magic) has landed most this level, from not
 at all at an even split up to full strength against a one-type defence.
 
@@ -384,8 +384,8 @@ burning through a freeze.
 | Mine           | Splash, from Range III     | The first enemy to step on it sets it off as one blast, and it is gone; it lasts 10 s, a Splash keeps 3 |
 | Cursed cloud   | Hexer's Mastery            | Gives every enemy inside the debuffs the hexed enemy that died there carried, for as long as they had left |
 | Healing ground | Mender, from Soldier       | Heals them; it lasts 5 s |
-| Haste ground   | Fast, from Veteran         | Hastens them (twice the speed) for a second after each pulse; it lasts until the wave is over |
-| Ward mine      | Armored, from Elite        | Armed a second after it is laid; the first enemy to step on it gets a Shield, and it is gone; it lasts 8 s |
+| Haste ground   | Runner, from Veteran       | Hastens them (twice the speed) for a second after each pulse; it lasts until the wave is over |
+| Ward mine      | Knight, from Elite         | Armed a second after it is laid; the first enemy to step on it gets a Shield, and it is gone; it lasts 8 s |
 | Blinding field | Juggernaut, from Veteran   | Works on towers, not enemies: every tower inside misses 75% of its hits, whatever hits them again; fields never stack, the strongest counts; it lasts until the wave is over |
 
 Only a hit can crit: a shot, a blast, a beam pass. Damage over time (a burn, a poison, a field)
@@ -406,8 +406,8 @@ the next one a guaranteed crit, and Focused Optics II's Frenzy also starts on a 
 ### Spawn shapes
 
 A wave's script can shape how a slot spawns, not just what it spawns — write the shape's
-keyword before the enemy id (`plated warden`), or before a member count and the enemy id for
-the shapes that take one (`swarm 4 c`):
+keyword before the enemy id (`flank walker`), or before a member count and the enemy id for
+the shapes that take one (`swarm 4 walker`):
 
 | Shape   | Keyword  | What one slot produces                                                |
 |---------|----------|-------------------------------------------------------------------------|
@@ -419,7 +419,7 @@ the shapes that take one (`swarm 4 c`):
 | Column  | `column` | *N* enemies in a tight single file, closer together than *N* separate spawns |
 | Drip    | `drip`   | *N* enemies stretched over more time than *N* separate spawns           |
 
-A wave's script can also open with `w<number>` (`w30 8 c`), which sets how many ticks one
+A wave's script can also open with `w<number>` (`w30 8 walker`), which sets how many ticks one
 slot of spacing is worth. The default is 22.4; a bigger number spreads the wave out, a smaller one
 packs it tighter.
 
@@ -429,29 +429,29 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 
 | Token     | Enemy                                                    |
 |-----------|----------------------------------------------------------|
-| `simple`  | Simple                                                   |
-| `armored` | Armored (reduced damage)                                 |
-| `fast`    | Fast (faster when hurt; Boss spawns a brood)         |
+| `walker`  | Walker                                                   |
+| `knight`  | Knight (reduced damage)                                  |
+| `runner`  | Runner (faster when hurt; Boss spawns a brood)           |
 | `ghost`   | Ghost (turns invisible when first hit; Elite+ shrouds)   |
 | `mender`  | Mender (heals allies)                                    |
 | `jammer`  | Jammer (weakens nearby towers; in no wave yet)           |
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
 | `warden`  | the Warden boss chain (The Amber Hive only)              |
-| `drone`, `hiveguard`, `nurse`, `larva`, `cocoon`, `hornet` | The Amber Hive's own enemies (The Amber Hive only) |
-| `cloud`, `drop`, `gale`, `thunder`, `lightning` | The Storm Ridge's own enemies (The Storm Ridge only) |
-| `sandling`, `timekeeper`, `sentinel`, `reaver`, `keeper` | The Last Hour's own enemies (The Last Hour only) |
-| `colossus` | the Iron Colossus boss (Iron Crossing only)             |
+| `drone`, `hiveGuard`, `broodNurse`, `larva`, `cocoon`, `hornet` | The Amber Hive's own enemies (The Amber Hive only) |
+| `raincloud`, `raindrop`, `gale`, `thunder`, `lightning` | The Storm Ridge's own enemies (The Storm Ridge only) |
+| `sandling`, `timekeeper`, `glassSentinel`, `sandReaver`, `keeperOfHours` | The Last Hour's own enemies (The Last Hour only) |
+| `ironColossus` | the Iron Colossus boss (Iron Crossing only)         |
 | `mirage`, `herald`, `eclipse`, `monolith` | The Rift's own enemies (The Rift only) |
-| `bull`, `talos`, `minotaur` | The Labyrinth's own enemies (The Labyrinth only) |
-| `titan`  | Juggernaut (slow, huge plating)                       |
+| `bronzeBull`, `talos`, `minotaur` | The Labyrinth's own enemies (The Labyrinth only) |
+| `juggernaut` | Juggernaut (slow, huge plating)                       |
 | `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
 | `courier` | Courier (very fast, fragile, high bounty)                |
-| `shield` | Shieldbearer (physical-only shield for allies)      |
-| `lizard` | Salamander (burn-immune)                              |
+| `shieldbearer` | Shieldbearer (physical-only shield for allies)      |
+| `salamander` | Salamander (burn-immune)                              |
 | `yeti`    | Yeti (immune to freeze and chill)                        |
 | `magma`   | Magma (slow, burn-proof; its trail heals)                |
-| `golem`   | Golem (slow, heavily armored; shields itself when hurt) |
-| `dodger` | Skirmisher (nimble: dodges aimed shots)               |
+| `golem`   | Golem (slow, heavily armored; shields itself when hurt)  |
+| `skirmisher` | Skirmisher (nimble: dodges aimed shots)               |
 
 ### Levels
 
