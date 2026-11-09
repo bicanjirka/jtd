@@ -14,6 +14,7 @@ import td.tower.SonarTower;
 import td.tower.SplashTower;
 import td.ui.render.BeamDraw;
 import td.ui.render.Palette;
+import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerStatusDraw;
@@ -172,11 +173,27 @@ class TowerEffectFrameBuilderTest {
     }
 
     @Test
+    void aTowerNoWaveHasUsedWearsTheRefundMarkUntilOneHas() {
+        GameWorld context = WorldFixtures.newWorld();
+        SniperTower tower = new SniperTower(context, 0, 0);
+        TowerEffectFrameBuilder unused = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        unused.addStatus(tower);
+
+        tower.markUsed();
+        TowerEffectFrameBuilder used = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        used.addStatus(tower);
+
+        assertThat(unused.build()).singleElement().isInstanceOf(RefundMarkDraw.class);
+        assertThat(used.build()).isEmpty();
+    }
+
+    @Test
     void aDisruptedTowerWearsAMarkerInTheDisruptionColourAndAnUndisruptedOneNone() {
         GameWorld context = WorldFixtures.newWorld();
         SniperTower jammed = new SniperTower(context, 0, 0);
         SniperTower clear = new SniperTower(context, 10, 10);
         context.disruptions().add(jammed.getX(), jammed.getY(), new DisruptionAura(20f, 0.3f, 0.2f));
+        clear.markUsed();
         jammed.beginTick(0);
         clear.beginTick(0);
 

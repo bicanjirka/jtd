@@ -301,7 +301,9 @@ class BoardRendererTest {
     void aCinderTowerWithNoInFlightWaveYieldsNoConeDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.towers().add(new CinderTower(context, 1, 1));
+        CinderTower tower = new CinderTower(context, 1, 1);
+        tower.markUsed();
+        context.towers().add(tower);
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
@@ -313,6 +315,7 @@ class BoardRendererTest {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         CinderTower tower = new CinderTower(context, 1, 1);
+        tower.markUsed();
         context.towers().add(tower);
         EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         context.enemies().setEnemies(new EnemyMob[]{enemy});

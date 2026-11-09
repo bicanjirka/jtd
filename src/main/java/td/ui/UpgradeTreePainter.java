@@ -386,6 +386,10 @@ final class UpgradeTreePainter {
                 symbol.dispose();
             }
         }
+        if (state.unused()) {
+            // Where a sealed node's badge goes: an owned node never shows one.
+            CashMark.paint(g, spot.x() + half - 10 + BADGE / 2f, spot.y() - half - 6 + BADGE / 2f, BADGE);
+        }
         if (!state.look().showsPrice()) {
             return;
         }

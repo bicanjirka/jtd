@@ -282,8 +282,42 @@ class UpgradeSheetTextTest {
     }
 
     @Test
+    void downgradingWhatNoWaveHasUsedRefundsItInFullAndTheFooterSaysSo() {
+        FakeTower fresh = this.choosing("Attune", "Focused Optics");
+        Optional<UpgradeHover> hover = Optional.of(UpgradeHover.of(OPTICS, fresh, this.world));
+
+        InfoSheet sheet = UpgradeSheetText.downgradeConfirmation((UpgradeHover.Downgrading) hover.get(), CHOICES);
+
+        assertThat(sheet.lines()).contains(Row.toned(Glyph.CASH, Palette.TERM_STATUS_CASH, "Refund 100%",
+                "+$" + OPTICS.price()));
+        assertThat(sheet.lines()).noneMatch(line -> line instanceof Row row && row.label().equals("Refund 75%"));
+        assertThat(UpgradeSheetText.footer(hover)).endsWith(" · full");
+        assertThat(UpgradeSheetText.footerWarns(hover)).isFalse();
+    }
+
+    @Test
+    void aDowngradeTakingUsedAndUnusedNodesListsEachRefundApart() {
+        FakeTower tower = this.choosing("Attune");
+        tower.markUsed();
+        tower.buyUpgrade(OPTICS);
+        UpgradeNode attune = CHOICES.nodes().stream().filter(n -> n.displayName().equals("Attune")).findFirst()
+                .orElseThrow();
+        Optional<UpgradeHover> hover = Optional.of(UpgradeHover.of(attune, tower, this.world));
+        UpgradeHover.Downgrading downgrading = (UpgradeHover.Downgrading) hover.get();
+
+        InfoSheet sheet = UpgradeSheetText.downgradeConfirmation(downgrading, CHOICES);
+
+        assertThat(sheet.lines()).containsSubsequence(
+                Row.toned(Glyph.CASH, Palette.TERM_STATUS_CASH, "Refund 100%", "+$" + OPTICS.price()),
+                Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund 75%",
+                        "+$" + (downgrading.refund() - OPTICS.price())));
+        assertThat(UpgradeSheetText.footer(hover)).doesNotContain("full");
+    }
+
+    @Test
     void anOwnedNodesHoverListsWhatADowngradeTakesAndRefundsAndWhatReopens() {
         FakeTower chosen = this.choosing("Attune", "Focused Optics");
+        chosen.markUsed();
         UpgradeHover.Downgrading downgrading = (UpgradeHover.Downgrading) UpgradeHover.of(OPTICS, chosen, this.world);
 
         InfoSheet sheet = UpgradeSheetText.downgradeConfirmation(downgrading, CHOICES);

@@ -21,6 +21,7 @@ import td.ui.render.LeyLineDraw;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDraw;
+import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.TowerEffectDraw;
@@ -42,6 +43,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final double[] AURA_PHASE_OFFSETS = {0.0, 0.5};
 
     private static final float STATUS_MARKER_SCALE_FRACTION = 0.12f;
+    private static final float REFUND_MARK_SCALE_FRACTION = 0.3f;
 
     /** The aim laser's opacity with no Steady Aim stack, and how much each stack adds. */
     private static final float LASER_BASE_ALPHA = 0.2f;
@@ -109,9 +111,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /** A marker in the tower's top-right corner while an enemy disrupts it. */
     public void addStatus(Tower tower) {
+        float x = tower.getBoardX() + this.scale * 0.85f;
+        float y = tower.getBoardY() + this.scale * 0.15f;
         if (tower.isDisrupted()) {
-            this.draws.add(new TowerStatusDraw(Palette.DISRUPTION, tower.getBoardX() + this.scale * 0.85f,
-                    tower.getBoardY() + this.scale * 0.15f, this.scale * STATUS_MARKER_SCALE_FRACTION));
+            this.draws.add(new TowerStatusDraw(Palette.DISRUPTION, x, y, this.scale * STATUS_MARKER_SCALE_FRACTION));
+        } else if (tower.use().anyUnused()) {
+            this.draws.add(new RefundMarkDraw(x, y, this.scale * REFUND_MARK_SCALE_FRACTION));
         }
     }
 
