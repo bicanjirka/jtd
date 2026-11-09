@@ -11,8 +11,6 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
-- **Enemy affixes** (`docs/features/FEATURE-enemy-affixes.md`, plan `docs/plans/enemy-affixes.md`): adjectives a
-  wave script puts on an enemy, ten in v1. Planned, not started.
 - **Splitting affix**: splits into smaller copies on death; waits for a rule on what affixed spawns inherit.
 - **Mending affix**: heals the allies near it.
 - **Jamming affix**: weakens the towers near it, the Jammer's aura on any enemy.
@@ -547,6 +545,20 @@ single hit), making the Warden's armor mechanically inert regardless of which to
   architecture change needed, every number here is already a named constant. `td.balance.BalanceReport`
   and the dev panel (`README.md`) make this cheap to actually do: its wave script box spawns the Warden chain's
   stages on demand without playing up to them first.
+
+### Affix numbers are unbalanced placeholders, and their pips crowd a swarm
+
+Every affix number (Hulking's health, speed and size, Elusive's agility per rank, the health shares of
+Regenerating, Shielded and Withered, Commanding's Resolve per rank and reach, Vengeful's Sprint per rank)
+is a starting value, and no built-in level but Iron Crossing uses an affix yet. On the board, a `swarm 12`
+of affixed enemies shows a rank badge and up to two pips on every member, which reads busy over small
+bodies. In the wave preview, a big body's badge row can lose its top: a pip is a little taller than a chevron.
+
+- **Where:** `td.enemy.Affix` (its constants and per-rank switches), `EnemyFrameBuilder.badge`,
+  `PanelEnemy.BADGE_REACH`.
+- **Approach:** tune the numbers with `td.balance.WaveCheckReport` once levels carry affixed waves. For the
+  pips, try smaller pips on a body under some scale before anything cleverer; for the preview, size the
+  room above a body from the badge row's real reach rather than a fixed count of body scales.
 
 ### Critical-damage numbers are unbalanced placeholders
 
