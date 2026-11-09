@@ -188,7 +188,7 @@ public class GameEngine {
                 // Deterministic per level, path and round across runs and JVMs: String.hashCode is
                 // specified by the JLS.
                 long scatterSeed = ((long) level.name().hashCode() * 31L + pathIndex) * 31L + round;
-                float speedMultiplier = pathDefinition.speedMultiplier() * wd.speedMultiplier();
+                float speedMultiplier = pathDefinition.speedMultiplier();
                 WaveContent content;
                 try {
                     content = WaveScript.parse(wd.enemies(), catalog);

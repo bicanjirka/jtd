@@ -75,8 +75,8 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 - A level has 1+ `PathDefinition`s (`of`/`smoothed` + `withColor`/`withSpeed`), and every path
   has the same wave count (enforced). Round *N* spawns every path's wave *N* together
   (`LoadedLevel.wavesAt`), and it clears when the summed alive count reaches zero.
-- A mob binds to its path by `SpawnParameters.pathIndex`, resolved once in its constructor. Path
-  and wave speed multipliers fold into `SpawnParameters.speedMultiplier()`; no new mechanism.
+- A mob binds to its path by `SpawnParameters.pathIndex`, resolved once in its constructor. A path's
+  speed multiplier folds into `SpawnParameters.speedMultiplier()`; no new mechanism.
 - A round's clear bonus is the sum of its waves' `WaveDefinition.clearBonus`, one per path
   (`LoadedLevel.clearBonusAt`); the engine pays it only when no enemy leaked during the round.
 - `EnemyMob.getProgression()` is a fraction of the mob's own path length, so "furthest along"

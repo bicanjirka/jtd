@@ -96,8 +96,7 @@ class BuiltInEnemiesTest {
         for (EnemyCatalog catalog : catalogs()) {
             for (String id : catalog.ids()) {
                 for (Rank rank : Rank.values()) {
-                    GameWorld world = WorldFixtures.newWorldOnStraightPath();
-                    world.setEnemyCatalog(catalog);
+                    GameWorld world = WorldFixtures.newWorldOnStraightPath(catalog);
                     EnemyDefinition definition = catalog.get(id, rank);
                     EnemyMob mob = catalog.spawn(id, world, 0, definition.baseHealth(), definition.price(), rank);
                     world.enemies().add(mob);

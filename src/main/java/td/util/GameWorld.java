@@ -188,9 +188,4 @@ public class GameWorld {
         return this.level.catalog();
     }
 
-    /** Single-threaded worlds only; see {@link #setBoard}. */
-    public void setEnemyCatalog(EnemyCatalog enemyCatalog) {
-        this.level = this.level.withCatalog(enemyCatalog);
-    }
-
 }
