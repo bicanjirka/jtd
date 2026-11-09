@@ -25,8 +25,8 @@ never in the constructor: that keeps a level load a single `LoadedLevel` publica
 `spawn()` call builds a fresh set, so calling it twice puts two copies on the board. For
 counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
-- An optional **head**, ended by `:`, holds the wave's defaults in slot order: `w<number>`, then a
-  rank (`w30 soldier: 3 walker`). The first `:` ends it; a token ending in `:` reads as the word and
+- An optional **head**, ended by `:`, holds the wave's defaults in slot order: `w<number>`, a
+  rank, then affixes (`w30 soldier armored: 3 walker`). The first `:` ends it; a token ending in `:` reads as the word and
   the `:`. `w<number>` sets the ticks one slot of spacing is worth, default
   `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`, and carries on `WaveContent`; it is positive, stands
   only in a head, and no enemy id may look like it. A level wave whose head names no rank is Grunt:
@@ -34,10 +34,15 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
   override the head's rank for that slot. A unique enemy is Boss whatever the default; any
   rank keyword but `boss` before it is an error.
-- **Shape keywords** go before the enemy: `plated` (1 member, stacks a physical-only adaptive
-  resist on any armor it has), `flank` (2 members at opposite sides), `swarm n` (half size, health/bounty split,
+- **Shape keywords** go before the enemy: `flank` (2 members at opposite sides), `swarm n` (half size, health/bounty split,
   scattered), `line n` (spread across), `column n` / `drip n` (spaced tighter / looser than one
   slot).
+- **Affix words** (`td.enemy.Affix`) go after the rank and shape, right before the enemy, and add
+  to the head's. The grammar applies them to the slot's definition when it builds the slot, measured
+  against the slot's rank and one member's health. At most `WaveScript.MAX_AFFIXES` a slot, head
+  included; none twice, none that `Affix.excludes` another, none on a unique enemy, none whose
+  `problemWith` objects.
+- A shape says how a slot spawns, never what the enemy is: that is an affix.
 - A count applies to the next token: `3 knight e 4 walker`. Placed before a rank/shape keyword, it repeats
   the whole slot (`3 elite swarm 4 walker`); placed right after a shape keyword, it is the member
   count.
@@ -56,8 +61,8 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
 - `WaveContent.enemyCount()` counts **members**, not slots (it seeds the alive count). Spacers
   keep their slot for timing but aren't counted.
-- Health and bounty come from the slot's resolved `EnemyDefinition` × shape multipliers. A shape's
-  trait override is composed onto the definition before any mob is built.
+- Health and bounty come from the slot's resolved `EnemyDefinition` × shape multipliers, size from
+  the shape's times the definition's affixes'.
 - Formation scatter uses `RandomSource.seeded(scatterSeed * 31 + slotIndex)`, never
   `GameWorld.random()`. `scatterSeed` comes from the level name and wave index, so formations
   reproduce.

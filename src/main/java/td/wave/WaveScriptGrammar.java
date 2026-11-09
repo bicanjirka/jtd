@@ -1,5 +1,7 @@
 package td.wave;
 
+import td.enemy.Affix;
+import td.enemy.AffixContext;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.Rank;
@@ -18,13 +20,14 @@ import java.util.stream.Stream;
  * read and the cursor after it, so no rule remembers anything between calls.
  * <pre>
  * script := head? item*
- * head   := spacing? rank? ':'
- * item   := count* rank? count* (shape count*)? (enemy | 'e')
+ * head   := spacing? rank? affix* ':'
+ * item   := count* rank? count* (shape count*)? affix* (enemy | 'e')
  * </pre>
  * The head holds the wave's defaults, and is the only place a spacing may stand; a script without one takes the
  * fallback rank. A token ending in {@code :} reads as the word and then the {@code :}, and the first {@code :} ends
- * the head. The last count before the shape (or enemy) repeats the slot; the last one after a shape is its member
- * count. A count left over at the end of the script repeats nothing.
+ * the head. A slot's rank replaces the head's, and its affixes add to the head's. The last count before the shape
+ * (or enemy) repeats the slot; the last one after a shape is its member count. A count left over at the end of the
+ * script repeats nothing.
  */
 final class WaveScriptGrammar {
 
@@ -50,15 +53,19 @@ final class WaveScriptGrammar {
 
     private Parsed<Head> head(Cursor at) {
         if (!at.holds(WaveScript.HEAD_END)) {
-            return new Parsed<>(new Head(SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT, this.fallbackRank), at);
+            return new Parsed<>(new Head(SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT, this.fallbackRank, List.of()),
+                    at);
         }
         Parsed<Float> spacing = spacing(at);
         Parsed<Optional<Rank>> rank = rank(spacing.rest());
-        Cursor end = rank.rest();
+        Parsed<List<Affix>> affixes = affixes(rank.rest(), List.of());
+        Cursor end = affixes.rest();
         if (!end.peek().equals(WaveScript.HEAD_END)) {
-            throw end.fail("A head holds only w<n> and a rank, in that order, and ends with '" + WaveScript.HEAD_END + "'");
+            throw end.fail("A head holds only w<n>, a rank and affixes, in that order, and ends with '"
+                    + WaveScript.HEAD_END + "'");
         }
-        return new Parsed<>(new Head(spacing.value(), rank.value().orElse(this.fallbackRank)), end.next());
+        return new Parsed<>(new Head(spacing.value(), rank.value().orElse(this.fallbackRank), affixes.value()),
+                end.next());
     }
 
     private Parsed<Float> spacing(Cursor at) {
@@ -84,31 +91,68 @@ final class WaveScriptGrammar {
         Parsed<OptionalInt> memberCount = shape.value().isPresent()
                 ? count(shape.rest())
                 : new Parsed<>(OptionalInt.empty(), shape.rest());
-        Cursor target = memberCount.rest();
-        if (shape.value().isPresent() && isRank(target)) {
-            throw target.fail("Rank token '" + target.peek() + "' follows spawn-type token '"
+        Cursor afterShape = memberCount.rest();
+        if (shape.value().isPresent() && isRank(afterShape)) {
+            throw afterShape.fail("Rank token '" + afterShape.peek() + "' follows spawn-type token '"
                     + shape.value().get().token() + "' - a rank token must come before the spawn-type token it shapes, not after");
         }
-        if (shape.value().isPresent() && isShape(target)) {
-            throw target.fail("Spawn-type token '" + target.peek() + "' follows '" + shape.value().get().token()
+        if (shape.value().isPresent() && isShape(afterShape)) {
+            throw afterShape.fail("Spawn-type token '" + afterShape.peek() + "' follows '" + shape.value().get().token()
                     + "' with no enemy id between them");
+        }
+        Parsed<List<Affix>> affixes = affixes(afterShape, head.affixes());
+        Cursor target = affixes.rest();
+        if (!affixes.value().isEmpty() && (isRank(target) || isShape(target))) {
+            throw target.fail("'" + target.peek() + "' follows an affix - affixes go right before the enemy id,"
+                    + " after its rank and spawn type");
         }
         int slotRepeat = countAfterRank.value().orElse(leadingCount.value().orElse(1));
         if (slotRepeat > WaveScript.MAX_REPEAT) {
             throw target.fail("Repeat count " + slotRepeat + " is more than the most a slot may repeat, "
                     + WaveScript.MAX_REPEAT);
         }
-        return slot(target, head, slotRepeat, rank.value(), shape.value(), memberCount.value());
+        return slot(target, head, new Words(slotRepeat, rank.value(),
+                shape.value().map(keyword -> new ShapeWords(keyword, memberCount.value())), affixes.value()));
     }
 
-    private Parsed<List<WaveSlot>> slot(Cursor at, Head head, int slotRepeat, Optional<Rank> rank,
-                                        Optional<ShapeKeyword> shape, OptionalInt memberCount) {
-        if (at.atEnd()) {
-            if (shape.isPresent()) {
-                throw at.fail("Wave ends with spawn-type token '" + shape.get().token() + "' and no enemy id");
+    /**
+     * The affix words from here on, each checked against {@code held} (the head's) and the ones read before it; the
+     * result holds only the ones read here.
+     */
+    private static Parsed<List<Affix>> affixes(Cursor at, List<Affix> held) {
+        List<Affix> read = new ArrayList<>();
+        Cursor here = at;
+        while (!here.atEnd() && Affix.of(here.peek()).isPresent()) {
+            Affix affix = Affix.of(here.peek()).orElseThrow();
+            List<Affix> carried = Stream.concat(held.stream(), read.stream()).toList();
+            if (carried.contains(affix)) {
+                throw here.fail("Affix '" + affix.word() + "' is on this slot already");
             }
-            if (rank.isPresent()) {
-                throw at.fail("Wave ends with rank token '" + rank.get() + "' and no enemy id");
+            if (carried.size() >= WaveScript.MAX_AFFIXES) {
+                throw here.fail("A slot carries at most " + WaveScript.MAX_AFFIXES + " affixes, the head's included");
+            }
+            for (Affix other : carried) {
+                if (affix.excludes(other)) {
+                    throw here.fail("Affix '" + affix.word() + "' cannot go with '" + other.word() + "'");
+                }
+            }
+            read.add(affix);
+            here = here.next();
+        }
+        return new Parsed<>(List.copyOf(read), here);
+    }
+
+    private Parsed<List<WaveSlot>> slot(Cursor at, Head head, Words words) {
+        if (at.atEnd()) {
+            if (!words.affixes().isEmpty()) {
+                throw at.fail("Wave ends with affix '" + words.affixes().getLast().word() + "' and no enemy id");
+            }
+            if (words.shape().isPresent()) {
+                throw at.fail("Wave ends with spawn-type token '" + words.shape().get().keyword().token()
+                        + "' and no enemy id");
+            }
+            if (words.rank().isPresent()) {
+                throw at.fail("Wave ends with rank token '" + words.rank().get() + "' and no enemy id");
             }
             return new Parsed<>(List.of(), at);
         }
@@ -121,32 +165,49 @@ final class WaveScriptGrammar {
                     + "', e.g. '" + token + WaveScript.HEAD_END + " 3 walker'");
         }
         if (token.equals(WaveScript.EMPTY_TOKEN)) {
-            if (shape.isPresent()) {
-                throw at.fail("The spacer 'e' cannot follow spawn-type token '" + shape.get().token() + "'");
+            if (words.shape().isPresent()) {
+                throw at.fail("The spacer 'e' cannot follow spawn-type token '" + words.shape().get().keyword().token()
+                        + "'");
             }
-            if (rank.isPresent()) {
-                throw at.fail("The spacer 'e' cannot follow rank token '" + rank.get() + "'");
+            if (words.rank().isPresent()) {
+                throw at.fail("The spacer 'e' cannot follow rank token '" + words.rank().get() + "'");
             }
-            return new Parsed<>(repeated(new EmptySlot(), slotRepeat), at.next());
+            if (!words.affixes().isEmpty()) {
+                throw at.fail("The spacer 'e' cannot follow affix '" + words.affixes().getLast().word() + "'");
+            }
+            return new Parsed<>(repeated(new EmptySlot(), words.repeat()), at.next());
         }
         if (this.catalog.contains(token)) {
-            return new Parsed<>(repeated(enemySlot(at, head, rank, shape, memberCount), slotRepeat), at.next());
+            return new Parsed<>(repeated(enemySlot(at, head, words), words.repeat()), at.next());
         }
         throw at.fail("Unrecognized wave token '" + token
-                + "': expected a spawn-type or rank keyword (" + WaveScript.RESERVED_TOKENS
+                + "': expected a spawn-type, rank or affix keyword (" + WaveScript.RESERVED_TOKENS
                 + "), a repeat count, or an id registered in the enemy catalog (" + this.catalog.ids() + ")");
     }
 
-    private WaveSlot enemySlot(Cursor at, Head head, Optional<Rank> rank, Optional<ShapeKeyword> shape,
-                               OptionalInt memberCount) {
+    private WaveSlot enemySlot(Cursor at, Head head, Words words) {
         RankedEnemy enemy = this.catalog.ranked(at.peek());
-        if (enemy.isUnique() && rank.isPresent() && rank.get() != Rank.BOSS) {
-            throw at.fail("'" + at.peek() + "' is unique and comes only at Boss rank, not " + rank.get());
+        if (enemy.isUnique() && words.rank().isPresent() && words.rank().get() != Rank.BOSS) {
+            throw at.fail("'" + at.peek() + "' is unique and comes only at Boss rank, not " + words.rank().get());
         }
-        Rank requested = rank.orElse(head.rank());
+        List<Affix> affixes = Stream.concat(head.affixes().stream(), words.affixes().stream()).toList();
+        if (enemy.isUnique() && !affixes.isEmpty()) {
+            throw at.fail("'" + at.peek() + "' is unique and takes no affix");
+        }
+        Rank requested = words.rank().orElse(head.rank());
+        Rank rank = enemy.effectiveRank(requested);
         EnemyDefinition definition = enemy.definitionFor(requested);
-        SpawnShape spawnShape = shape.map(keyword -> shapeFor(at, keyword, memberCount)).orElse(SpawnShape.normal());
-        return new EnemySlot(definition, enemy.effectiveRank(requested), spawnShape, enemy.isUnique());
+        for (Affix affix : affixes) {
+            Optional<String> problem = affix.problemWith(definition);
+            if (problem.isPresent()) {
+                throw at.fail("Affix '" + affix.word() + "' cannot go on '" + at.peek() + "': " + problem.get());
+            }
+        }
+        SpawnShape spawnShape = words.shape().map(shape -> shapeFor(at, shape.keyword(), shape.members()))
+                .orElse(SpawnShape.normal());
+        EnemyDefinition affixed = affixes.isEmpty() ? definition : definition.withAffixes(affixes,
+                new AffixContext(rank, spawnShape.healthMultiplier() / definition.healthDivisor()));
+        return new EnemySlot(affixed, rank, spawnShape, enemy.isUnique());
     }
 
     private static List<WaveSlot> repeated(WaveSlot slot, int times) {
@@ -205,8 +266,16 @@ final class WaveScriptGrammar {
     private record Parsed<T>(T value, Cursor rest) {
     }
 
-    /** What a script's head sets for every slot. */
-    private record Head(float ticksPerSlot, Rank rank) {
+    /** What a script's head sets for every slot; its affixes add to a slot's own. */
+    private record Head(float ticksPerSlot, Rank rank, List<Affix> affixes) {
+    }
+
+    /** What an item says before the token it spawns. */
+    private record Words(int repeat, Optional<Rank> rank, Optional<ShapeWords> shape, List<Affix> affixes) {
+    }
+
+    /** A spawn-type keyword and the member count written after it, if any. */
+    private record ShapeWords(ShapeKeyword keyword, OptionalInt members) {
     }
 
     /** A position in the non-blank tokens, with a trailing ':' split off as a token of its own; moving it makes a new one. */

@@ -93,7 +93,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                 id -> catalog.contains(id) ? catalog.get(id).displayName() : id);
         List<AbilityEntry> abilityEntries = definition.abilities().stream()
                 .map(ability -> new AbilityEntry(ability.term(), AbilityText.of(ability, words))).toList();
-        return new EnemyInspection(definition.displayName(), definition.description(), mob.getRank(), mob.archetype(),
+        return new EnemyInspection(definition.title(), definition.description(), mob.getRank(), mob.archetype(),
                 (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects,
                 mob.fate(), mob.dodges(), baseStats, immunities, traitEntries,
                 abilityEntries, breakdowns, List.of(), definition.livesOnLeak());

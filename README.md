@@ -412,7 +412,6 @@ the shapes that take one (`swarm 4 walker`):
 | Shape   | Keyword  | What one slot produces                                                |
 |---------|----------|-------------------------------------------------------------------------|
 | Normal  | (none)   | One enemy on the path centre                                            |
-| Plated | `plated`| One enemy with extra physical-only armor, on top of any armor it already has: from +25 armor rising to +400 armor as the level's landed damage leans fully physical — no size, speed, health or bounty change |
 | Swarm   | `swarm`  | *N* enemies at 50% size, scattered off-path, sharing one spawn's bounty and health |
 | Line    | `line`   | *N* enemies spread evenly across the path's width, abreast              |
 | Flank   | `flank`  | Two enemies hugging opposite edges of the path                          |
@@ -422,6 +421,18 @@ the shapes that take one (`swarm 4 walker`):
 A wave's script can also open with a head that sets `w<number>` (`w30: 8 walker`, or `w30 soldier:
 8 walker` with a rank), how many ticks one slot of spacing is worth. The default is 22.4; a bigger number spreads the wave out, a smaller one
 packs it tighter.
+
+### Affixes
+
+An affix is an adjective a wave script writes right before the enemy id (`3 elite swarm 4 armored
+mite`), or in the head for every slot of the wave (`soldier armored: 8 walker`). Each gives the enemy
+one twist on top of its type and rank, and its name reads in front of the enemy's ("Armored Knight").
+A slot carries at most two, the head's included, and a boss chain takes none. No affix changes the
+bounty.
+
+| Affix   | Keyword   | What it does                                                                     |
+|---------|-----------|----------------------------------------------------------------------------------|
+| Armored | `armored` | Armor against physical damage on top of its own: +25, rising to +400 as the level's landed damage leans physical |
 
 ### Wave script ids
 

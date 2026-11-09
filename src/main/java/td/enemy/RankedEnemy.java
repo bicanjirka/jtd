@@ -111,25 +111,18 @@ public final class RankedEnemy {
      */
     public RankedEnemy cloneAs(String newId, BiFunction<Rank, EnemyDefinition, EnemyDefinition> adjust) {
         if (this.unique) {
-            return unique(adjust.apply(Rank.BOSS, withId(this.definitionFor(Rank.BOSS), newId)));
+            return unique(adjust.apply(Rank.BOSS, this.definitionFor(Rank.BOSS).withId(newId)));
         }
         Iterator<Map.Entry<Rank, EnemyDefinition>> ranks = this.definitionsByRank.entrySet().iterator();
         Map.Entry<Rank, EnemyDefinition> grunt = ranks.next();
-        Builder builder = RankedEnemy.startingAt(adjust.apply(grunt.getKey(), withId(grunt.getValue(), newId)));
+        Builder builder = RankedEnemy.startingAt(adjust.apply(grunt.getKey(), grunt.getValue().withId(newId)));
         while (ranks.hasNext()) {
             Map.Entry<Rank, EnemyDefinition> entry = ranks.next();
             Rank rank = entry.getKey();
-            EnemyDefinition renamed = withId(entry.getValue(), newId);
+            EnemyDefinition renamed = entry.getValue().withId(newId);
             builder.thenAt(rank, ignored -> adjust.apply(rank, renamed));
         }
         return builder.build();
-    }
-
-    private static EnemyDefinition withId(EnemyDefinition source, String newId) {
-        return new EnemyDefinition(newId, source.displayName(), source.description(), source.baseHealth(),
-                source.price(), source.baseSpeed(), source.healthDivisor(), source.archetype(),
-                source.movement(), source.traitSlots(), source.abilitySlots(), source.baseStats(),
-                source.disruption(), source.livesOnLeak());
     }
 
     @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)

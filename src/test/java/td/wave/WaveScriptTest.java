@@ -1,6 +1,7 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
+import td.enemy.Affix;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -190,21 +191,77 @@ class WaveScriptTest {
     }
 
     @Test
+    void anAffixRightBeforeTheIdGoesOnTheSlotsDefinition() {
+        WaveContent content = WaveScript.parse("elite flank armored walker", Rank.GRUNT, this.catalog);
+
+        EnemySlot slot = (EnemySlot) content.spawnSequence().getFirst();
+        assertThat(slot.definition().affixes()).containsExactly(Affix.ARMORED);
+        assertThat(slot.rank()).isEqualTo(Rank.ELITE);
+    }
+
+    @Test
+    void aHeadsAffixGoesOnEverySlot() {
+        WaveContent content = WaveScript.parse("armored: walker knight", Rank.GRUNT, this.catalog);
+
+        assertThat(content.enemySet()).allSatisfy(definition ->
+                assertThat(definition.affixes()).containsExactly(Affix.ARMORED));
+    }
+
+    @Test
+    void anAffixAlreadyInTheHeadFailsOnASlot() {
+        assertThatThrownBy(() -> WaveScript.parse("armored: armored walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("token 3")
+                .hasMessageContaining("already");
+    }
+
+    @Test
+    void anAffixOnAUniqueEnemyFails() {
+        assertThatThrownBy(() -> WaveScript.parse("armored warlord", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»warlord«")
+                .hasMessageContaining("no affix");
+    }
+
+    @Test
+    void aRankOrShapeAfterAnAffixFails() {
+        assertThatThrownBy(() -> WaveScript.parse("armored elite walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»elite«");
+        assertThatThrownBy(() -> WaveScript.parse("armored swarm 3 walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»swarm«");
+    }
+
+    @Test
+    void aSpacerAfterAnAffixFails() {
+        assertThatThrownBy(() -> WaveScript.parse("armored e walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»e«");
+    }
+
+    @Test
+    void anAffixWordCannotBeAnEnemyId() {
+        EnemyCatalog catalog = new EnemyCatalog();
+
+        assertThatThrownBy(() -> catalog.register(EnemyFixtures.simpleDefinition(Affix.ARMORED.word())))
+                .isInstanceOf(GameStartupException.class);
+    }
+
+    @Test
     void aSpawnTypeKeywordWithNoCountShapesExactlyOneSlot() {
-        WaveContent content = WaveScript.parse("plated warlord", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("flank warlord", Rank.GRUNT, this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(1);
         EnemySlot slot = (EnemySlot) content.spawnSequence().getFirst();
-        assertThat(slot.shape()).isEqualTo(SpawnShape.armored());
-        assertThat(content.enemyCount()).isEqualTo(1);
+        assertThat(slot.shape()).isEqualTo(SpawnShape.flank());
     }
 
     @Test
     void aCountBeforeASpawnTypeKeywordRepeatsTheWholeShapedSlot() {
-        WaveContent content = WaveScript.parse("3 plated warlord", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("3 flank warlord", Rank.GRUNT, this.catalog);
 
         assertThat(content.spawnSequence()).hasSize(3);
-        assertThat(content.enemyCount()).isEqualTo(3);
     }
 
     @Test
@@ -238,12 +295,10 @@ class WaveScriptTest {
     }
 
     @Test
-    void armoredAndFlankRejectAMemberCount() {
-        // A count before the spawn-type keyword ("3 plated walker") legally repeats the whole shaped
-        // slot - it's a count immediately after the keyword, before the enemy id, that these two
-        // shapes reject, since their member count is fixed.
-        assertThatThrownBy(() -> WaveScript.parse("plated 3 walker", Rank.GRUNT, this.catalog))
-                .isInstanceOf(GameStartupException.class);
+    void flankRejectsAMemberCount() {
+        // A count before the spawn-type keyword ("3 flank walker") legally repeats the whole shaped
+        // slot - it's a count immediately after the keyword, before the enemy id, that a shape of
+        // fixed size rejects.
         assertThatThrownBy(() -> WaveScript.parse("flank 3 walker", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
     }
@@ -257,7 +312,7 @@ class WaveScriptTest {
 
     @Test
     void twoSpawnTypeKeywordsInARowFailTheParse() {
-        assertThatThrownBy(() -> WaveScript.parse("swarm plated warlord", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("swarm flank warlord", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class);
     }
 

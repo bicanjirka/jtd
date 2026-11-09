@@ -57,7 +57,7 @@
 - A trait slot holds a `TraitTemplate`: a plain `Trait` resolves to itself, an adaptive one
   (`AdaptiveResist`) reads `GameWorld.damageTally()`. The mob resolves every slot once, in its
   constructor (`EnemyDefinition.traitsFor`), and keeps that list. Spawn-time variation is a new
-  template, never a new `EnemyDefinition` component.
+  template, never a new `EnemyDefinition` component; an affix is authored, and the definition carries it.
 - `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
   `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
   it (e.g. `"armor"`, which a later rank step replaces).
@@ -120,8 +120,6 @@
   them. It returns a `HitResult`; callers credit `credited()`, and
   `doDamage` is its `landed()`. A dodge (`HitResult.dodge()`) changes nothing else, not even the
   idle timer.
-- A spawn shape's trait override is composed into the definition before the mob is built. There
-  is no separate multiplier mechanism.
 - Spawn delay: the mob starts inactive iff its *converted* tick delay is > 0.
 - A formation offset is rotated once, by the spawn point's facing, and stored as final
   `offsetX`/`offsetY`. Never recompute it from the current tangent (members pivot and jump at
@@ -130,6 +128,16 @@
 - Reaching the path's end is a despawn through the normal death/fade path, with the position left where it was.
 - A mob never settles its own walk: it sets its fate and reports the walk, and `WalkSettlement` pays the kill or
   charges the leak (score by rank, lives held to what is left, the playtest rules).
+
+## Affixes
+
+- An `Affix` row changes a definition once, when the wave script is parsed (`EnemyDefinition.withAffixes`), and the
+  definition records it: `title()` reads the affixes, `sizeMultiplier()` multiplies theirs. Rows apply in declared
+  order whatever order was written, so one that measures health measures what an earlier one added; the title keeps
+  the written order.
+- What a row adds is anonymous, so it stacks with the enemy's own traits and abilities and never replaces a rank step.
+- A row measures itself against `AffixContext`: the rank, or one member's health, so it means as much on a swarm
+  member as on a boss. Spawns don't inherit affixes.
 
 ## Roster
 
