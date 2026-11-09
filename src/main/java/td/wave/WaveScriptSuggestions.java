@@ -5,11 +5,11 @@ import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * What could be typed at the caret of a wave script, following the order {@link WaveScript} accepts
@@ -19,8 +19,7 @@ public final class WaveScriptSuggestions {
 
     private static final Pattern COUNT = Pattern.compile("\\d+");
     private static final String SPACING_STEM = "w";
-    private static final List<String> RANKS = WaveScript.RESERVED_TOKENS.stream()
-            .filter(WaveScript::isRankToken).sorted(Comparator.comparing(WaveScript::rankFor)).toList();
+    private static final List<String> RANKS = Stream.of(RankKeyword.values()).map(RankKeyword::token).toList();
     private static final List<String> SHAPES = WaveScript.RESERVED_TOKENS.stream()
             .filter(WaveScript::isShapeToken).sorted().toList();
 
@@ -139,9 +138,9 @@ public final class WaveScriptSuggestions {
         if (before.first() && WaveScript.isSpacingToken(token)) {
             return position.withHeadOpen(true);
         }
-        if (WaveScript.isRankToken(token)) {
-            return position.withHeadOpen(headSoFar && before.rank().isEmpty())
-                    .withRank(Optional.of(WaveScript.rankFor(token)));
+        Optional<RankKeyword> rank = RankKeyword.of(token);
+        if (rank.isPresent()) {
+            return position.withHeadOpen(headSoFar && before.rank().isEmpty()).withRank(rank.map(RankKeyword::rank));
         }
         if (WaveScript.isShapeToken(token)) {
             return position.withShape(WaveScript.takesMemberCount(token) ? ShapeState.AWAITING_COUNT : ShapeState.READY);
