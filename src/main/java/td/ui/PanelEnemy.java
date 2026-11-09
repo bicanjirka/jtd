@@ -48,8 +48,8 @@ public class PanelEnemy extends JPanel {
     private static final int MOB_SIZE = 24;
     /** The board cell a full slot previews its mob on: a body is a fraction of a cell, so this sets the art's size. */
     private static final int CELL_SIZE = 40;
-    /** How many body scales a mob spans from its feet to the top of its rank badge. */
-    private static final float BADGE_REACH = 3f;
+    /** The widest a body may be, as a share of its slot, so neighbours don't overlap. */
+    private static final float WIDEST_BODY_SHARE = 0.25f;
     private static final int BASELINE_GAP = 1;
     private static final int COUNT_HEIGHT = 10;
     static final int HEIGHT = MOB_SIZE + COUNT_HEIGHT;
@@ -113,12 +113,12 @@ public class PanelEnemy extends JPanel {
     private void rebuildEnemies() {
         this.enemies.clear();
         int cell = this.slotWidth * CELL_SIZE / SLOT_WIDTH;
-        float room = this.slotWidth * MOB_SIZE / (float) (SLOT_WIDTH * BADGE_REACH);
         for (int nr = 0; nr < this.definitions.size(); nr++) {
             EnemyDefinition definition = this.definitions.get(nr);
             Rank rank = this.ranks.get(nr);
             this.contextLocal.setBoard(BoardGeometry.of(cell, 0, 0));
             float body = previewMob(definition, rank, this.contextLocal).getBodyScale();
+            float room = Math.min(this.slotWidth * WIDEST_BODY_SHARE, roomUnderTheTop(definition, body));
             // A body grows with rank and wears its badge above it; past the mob line the badge is cut off, so it stops there.
             if (body > room) {
                 this.contextLocal.setBoard(BoardGeometry.of(Math.max(1, Math.round(cell * room / body)), 0, 0));
@@ -130,6 +130,15 @@ public class PanelEnemy extends JPanel {
             enemy.doTick(0);
             this.enemies.add(enemy);
         }
+    }
+
+    /** The biggest body of {@code definition}'s shape that fits with its badge row under the top of the strip. */
+    private static float roomUnderTheTop(EnemyDefinition definition, float body) {
+        float height = MOB_SIZE - BASELINE_GAP;
+        float row = EnemyFrameBuilder.badgeRowTop(definition.archetype(), 0f);
+        float needed = body + EnemyFrameBuilder.badgeRowTop(definition.archetype(), body);
+        // What a body needs grows in step with it, past the row's own height.
+        return needed <= height ? body : body * (height - row) / (needed - row);
     }
 
     /**

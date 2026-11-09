@@ -115,6 +115,9 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float RANK_BADGE_GAP = 5f;
     private static final float AFFIX_PIP_SIZE = RANK_BADGE_SIZE;
     private static final float AFFIX_PIP_STEP = 8.4f;
+    /** Pips shrink with a body smaller than this, so a swarm's members aren't buried under them. */
+    private static final float AFFIX_PIP_FULL_BODY_SCALE = 6f;
+    private static final float AFFIX_PIP_LEAST_SHARE = 0.5f;
     /** A long tail or antenna shouldn't lift the badge off the body it belongs to. */
     private static final float RANK_BADGE_REACH_LIMIT = 1.3f;
     private final List<EnemyDraw> draws = new ArrayList<>();
@@ -192,6 +195,16 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case SPELLPROOF -> Palette.STATUS_MARKER_SPELLPROOF;
             case UNYIELDING, RESOLVE -> Palette.STATUS_MARKER_UNYIELDING;
         };
+    }
+
+    /** How far over a body of {@code scale} and {@code archetype} the top of its badge row stands, from its centre. */
+    static float badgeRowTop(BodyArchetype archetype, float scale) {
+        // A pip's radius and a badge's reach are both at most the badge size.
+        return badgeLift(scale * EnemyLooks.of(lookFor(archetype)).reach(), scale) + RANK_BADGE_GAP + RANK_BADGE_SIZE;
+    }
+
+    private static float badgeLift(float reach, float scale) {
+        return Math.min(reach, scale * RANK_BADGE_REACH_LIMIT);
     }
 
     static EnemyLook lookFor(BodyArchetype archetype) {
@@ -301,7 +314,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         float eggY = hull + Math.min(hull * EGG_HEIGHT_SHARE, EGG_MOST_HEIGHT) + EGG_MARGIN;
         float iceScale = hull <= ICE_FULL_GROWTH_RADIUS ? hull
                 : ICE_FULL_GROWTH_RADIUS + (hull - ICE_FULL_GROWTH_RADIUS) * ICE_LATER_GROWTH;
-        float above = Math.min(reach, scale * RANK_BADGE_REACH_LIMIT);
+        float above = badgeLift(reach, scale);
         float beneath = reach;
         float ringRadius = scale * SELECTION_RING_SCALE_FRACTION;
         double facing = active.contains(EffectKind.DAZED)
@@ -363,7 +376,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         this.critSpark(mob, x, y);
         this.overlays(mob, x, y, ringRadius, supportAura);
         this.pulses(mob, x, y, scale);
-        this.badge(mob, x, y - above - RANK_BADGE_GAP, visibility);
+        this.badge(mob, scale, x, y - above - RANK_BADGE_GAP, visibility);
         this.runes(active, x, y - scale * RUNE_ROW_OFFSET_FRACTION);
         this.missMark(mob, x + scale, y);
         float below = y + beneath;
@@ -413,18 +426,24 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return within(hit, SHIELD_FLASH_DURATION_TICKS) ? 1f - (float) hit.getAsInt() / SHIELD_FLASH_DURATION_TICKS : 0f;
     }
 
-    /** The rank badge and the affix pips as one row centred over the body; a hidden enemy shows no affixes. */
-    private void badge(DefinedEnemyMob mob, float x, float y, float visibility) {
+    /**
+     * The rank badge and the affix pips as one row centred over the body; a hidden enemy shows no affixes. The badge
+     * keeps its size on every body, the pips shrink with a small one.
+     */
+    private void badge(DefinedEnemyMob mob, float scale, float x, float y, float visibility) {
         RankBadge badge = badgeFor(mob.getRank());
         List<Affix> affixes = mob.isHidden() ? List.of() : mob.definition().affixes();
-        int marks = (badge != RankBadge.NONE ? 1 : 0) + affixes.size();
-        float left = x - (marks - 1) * AFFIX_PIP_STEP / 2f;
-        if (badge != RankBadge.NONE) {
+        float share = Math.clamp(scale / AFFIX_PIP_FULL_BODY_SCALE, AFFIX_PIP_LEAST_SHARE, 1f);
+        float pipStep = AFFIX_PIP_STEP * share;
+        boolean ranked = badge != RankBadge.NONE;
+        float badgeToPips = ranked && !affixes.isEmpty() ? (AFFIX_PIP_STEP + pipStep) / 2f : 0f;
+        float width = badgeToPips + Math.max(0, affixes.size() - 1) * pipStep;
+        float left = x - width / 2f;
+        if (ranked) {
             this.badgeDraws.add(new RankBadgeDraw(badge, left, y, RANK_BADGE_SIZE, visibility));
-            left += AFFIX_PIP_STEP;
         }
         if (!affixes.isEmpty()) {
-            this.badgeDraws.add(new AffixPipsDraw(left, y, AFFIX_PIP_SIZE, AFFIX_PIP_STEP, visibility,
+            this.badgeDraws.add(new AffixPipsDraw(left + badgeToPips, y, AFFIX_PIP_SIZE * share, pipStep, visibility,
                     List.<Term>copyOf(affixes)));
         }
     }

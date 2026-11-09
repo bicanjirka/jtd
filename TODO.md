@@ -564,19 +564,14 @@ single hit), making the Warden's armor mechanically inert regardless of which to
   and the dev panel (`README.md`) make this cheap to actually do: its wave script box spawns the Warden chain's
   stages on demand without playing up to them first.
 
-### Affix numbers are unbalanced placeholders, and their pips crowd a swarm
+### Affix numbers are unbalanced placeholders
 
 Every affix number (Hulking's health, speed and size, Elusive's agility per rank, the health shares of
 Regenerating, Shielded and Withered, Commanding's Resolve per rank and reach, Vengeful's Sprint per rank)
-is a starting value, and the built-in waves that carry one were never rebalanced for it. On the board, a `swarm 12`
-of affixed enemies shows a rank badge and up to two pips on every member, which reads busy over small
-bodies. In the wave preview, a big body's badge row can lose its top: a pip is a little taller than a chevron.
+is a starting value, and the built-in waves that carry one were never rebalanced for it.
 
-- **Where:** `td.enemy.Affix` (its constants and per-rank switches), `EnemyFrameBuilder.badge`,
-  `PanelEnemy.BADGE_REACH`.
-- **Approach:** tune the numbers and the affixed waves together with `td.balance.WaveCheckReport`. For the
-  pips, try smaller pips on a body under some scale before anything cleverer; for the preview, size the
-  room above a body from the badge row's real reach rather than a fixed count of body scales.
+- **Where:** `td.enemy.Affix` (its constants and per-rank switches).
+- **Approach:** tune the numbers and the affixed waves together with `td.balance.WaveCheckReport`.
 
 ### Critical-damage numbers are unbalanced placeholders
 
