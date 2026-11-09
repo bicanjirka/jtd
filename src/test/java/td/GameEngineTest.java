@@ -2080,6 +2080,27 @@ class GameEngineTest {
     }
 
     @Test
+    void aSaveWithTwoTowersOnOneCellKeepsTheFirstAsSavedAndNamesTheSecond() {
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT),
+                new WaveDefinition("simple", Rank.GRUNT)), 100);
+        GameEngine loaded = FakeGameHost.newBoundEngine();
+        loaded.loadLevel(level);
+        TowerTally first = TowerTally.of(10, 1, 100L, 1);
+
+        Optional<String> problem = loaded.restore(GameSave.of(level.name(), 1, new EconomyState(50, 0, 5), List.of(
+                TowerSave.of(TowerFactory.Type.SNIPER, new Point(1, 1), List.of(), first).withPaid(77),
+                TowerSave.of(TowerFactory.Type.SONAR, new Point(1, 1), List.of(), TowerTally.of(999, 9, 9999L, 9))
+                        .withPaid(5))));
+
+        assertThat(problem).hasValueSatisfying(text -> assertThat(text).contains("1,1"));
+        assertThat(loaded.getTowers()).singleElement().satisfies(tower -> {
+            assertThat(tower.getType()).isEqualTo(TowerFactory.Type.SNIPER);
+            assertThat(tower.record().tally()).isEqualTo(first);
+            assertThat(tower.record().paid()).isEqualTo(77);
+        });
+    }
+
+    @Test
     void anEndedLevelIgnoresTicksWavesPlacementAndUpgrades() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(

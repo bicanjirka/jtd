@@ -100,7 +100,9 @@ public final class GameSaveText {
         DamageMix damage = DamageMix.none();
         List<TowerSave> towers = new ArrayList<>();
         List<LeyLinePin> pins = new ArrayList<>();
-        for (String raw : text.split("\n")) {
+        // A Windows editor may save the text with a byte order mark, which strip() keeps.
+        String unmarked = text.startsWith("﻿") ? text.substring(1) : text;
+        for (String raw : unmarked.split("\n")) {
             String line = raw.strip();
             if (line.isEmpty()) {
                 continue;

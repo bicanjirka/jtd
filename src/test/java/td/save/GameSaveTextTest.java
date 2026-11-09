@@ -17,6 +17,16 @@ class GameSaveTextTest {
     }
 
     @Test
+    void aSaveWithAByteOrderMarkReadsAsWithout() {
+        String text = "level Curly Path\nwave 17\neconomy 120 3400 5\n";
+
+        GameSaveText.Read read = GameSaveText.read("﻿" + text);
+
+        assertThat(read.save()).isEqualTo(GameSaveText.read(text).save());
+        assertThat(read.save()).isPresent();
+    }
+
+    @Test
     void aLevelNameWithSpacesAndATowerWithNoUpgradesReadBack() {
         String text = "level Twisted Hourglass\nwave 4\neconomy 50 0 5\ntower MORTAR 3 2 0 0 0 0\n";
 
