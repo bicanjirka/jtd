@@ -11,6 +11,20 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
+- **Enemy affixes** (`docs/features/FEATURE-enemy-affixes.md`, plan `docs/plans/enemy-affixes.md`): adjectives a
+  wave script puts on an enemy, ten in v1. Planned, not started.
+- **Splitting affix**: splits into smaller copies on death; waits for a rule on what affixed spawns inherit.
+- **Mending affix**: heals the allies near it.
+- **Jamming affix**: weakens the towers near it, the Jammer's aura on any enemy.
+- **Enraged affix**: faster the more it is hurt.
+- **Escorted affix**: arrives with plain bodyguards of its kind.
+- **Timeless affix**: turns its own health back from time to time.
+- **Volatile affix**: shoves the allies near it further along as it dies.
+- **Emboldened affix**: tougher the further along the path it gets.
+- **Coldblooded affix**: a freeze wears off it fast.
+- **Greedy affix**: a leak also costs credits.
+- **Plated affix**: plating (flat reduction per physical hit) as an affix, beside Armored.
+- **Immunity affixes**: immune to one effect kind (burn, freeze, slows).
 
 ## Feature request implementation order
 
