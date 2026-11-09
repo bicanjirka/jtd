@@ -11,7 +11,6 @@ import td.wave.RoundSummary;
 import td.wave.WaveProgress;
 
 import javax.swing.AbstractButton;
-import javax.swing.JLabel;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -19,13 +18,14 @@ import java.awt.Container;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalInt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(EventDispatchThreadExtension.class)
 class PanelHeaderTest {
 
-    private final PanelHeader header = new PanelHeader("Tower Defense v1");
+    private final PanelHeader header = new PanelHeader();
 
     private static WaveProgress progress(int index, int count) {
         return new WaveProgress(index, Collections.nCopies(count, new RoundSummary(Rank.GRUNT, false, false)), List.of(),
@@ -120,11 +120,25 @@ class PanelHeaderTest {
     }
 
     @Test
-    void everySpeedButtonAndTheMenuButtonShowTheirKeysOnChips() {
+    void everySpeedButtonAndTheMenuAndRestartButtonsShowTheirKeysOnChips() {
         List<String> chips = PanelHeaderTest.buttons(this.header).stream().map(PanelHeaderTest::chipOf).toList();
 
         assertThat(chips).containsExactlyInAnyOrder(GameKey.PAUSE.chip(), GameKey.PLAY.chip(), GameKey.FAST.chip(),
-                GameKey.SUPER_FAST.chip(), GameKey.MENU.chip());
+                GameKey.SUPER_FAST.chip(), GameKey.MENU.chip(), GameKey.RESTART.chip());
+    }
+
+    @Test
+    void theRestartButtonReportsItsClickOnlyOnceThereIsAWaveToRestart() {
+        List<String> clicked = new ArrayList<>();
+        this.header.onRestart(() -> clicked.add("restart"));
+        AbstractButton restart = PanelHeaderTest.buttons(this.header).stream()
+                .filter(button -> chipOf(button).equals(GameKey.RESTART.chip())).findFirst().orElseThrow();
+
+        restart.doClick();
+        this.header.setRestartWave(OptionalInt.of(7));
+        restart.doClick();
+
+        assertThat(clicked).containsExactly("restart");
     }
 
     private List<String> selectedTexts() {
@@ -208,15 +222,13 @@ class PanelHeaderTest {
     }
 
     @Test
-    void aVoiceColoursTheTitleAndTheSelectedSpeedButton() {
+    void aVoiceColoursTheSelectedSpeedButton() {
         Color voice = new Color(10, 20, 30);
 
         this.header.setVoice(voice);
 
         List<Component> found = new ArrayList<>();
         collect(this.header, found);
-        assertThat(found).filteredOn(JLabel.class::isInstance)
-                .anySatisfy(label -> assertThat(label.getForeground()).isEqualTo(voice));
         assertThat(found).filteredOn(HudToggleButton.class::isInstance)
                 .allSatisfy(button -> assertThat(((HudToggleButton) button).face().selectedColor()).contains(voice));
     }

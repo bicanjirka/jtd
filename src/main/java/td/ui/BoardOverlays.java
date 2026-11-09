@@ -17,8 +17,8 @@ import java.awt.event.ActionEvent;
 import java.io.Serial;
 
 /**
- * The win and lose banners over the board, each with a "Back to menu" button. Both are added once
- * and toggled with {@link #showLost}, {@link #showWon} and {@link #reset}.
+ * The win and lose banners over the board, each with a button that plays the last wave again and a "Back to menu"
+ * button. Both are added once and toggled with {@link #showLost}, {@link #showWon} and {@link #reset}.
  * <p>
  * A banner is small and anchored to the top so the final board stays visible and its towers stay
  * selectable.
@@ -31,22 +31,26 @@ public class BoardOverlays {
     private static final Color BANNER_TEXT = Hud.FOREGROUND;
     private static final int CORNER_RADIUS = 14;
 
+    private final HudButton retry = new HudButton("Retry wave");
+    private final HudButton replay = new HudButton("Replay wave");
     private final JPanel lostPanel;
     private final JPanel wonPanel;
 
     private Runnable onBackToMenu = () -> {
     };
+    private Runnable onPlayAgain = () -> {
+    };
 
     public BoardOverlays() {
-        this.lostPanel = buildOverlay("Game Over!");
-        this.wonPanel = buildOverlay("Congratulations!");
+        this.lostPanel = buildOverlay("Game Over!", this.retry);
+        this.wonPanel = buildOverlay("Congratulations!", this.replay);
     }
 
     /**
      * A transparent layer over the board holding the plate. It keeps the board's grid constraints:
      * at the plate's size, the shared cell would collapse and take the board with it.
      */
-    private JPanel buildOverlay(String text) {
+    private JPanel buildOverlay(String text, HudButton playAgain) {
         JPanel layer = new JPanel(new GridBagLayout());
         layer.setOpaque(false);
 
@@ -61,13 +65,21 @@ public class BoardOverlays {
         labelConstraints.insets = new Insets(12, 24, 0, 24);
         plate.add(label, labelConstraints);
 
+        JPanel buttons = new JPanel(new GridBagLayout());
+        buttons.setOpaque(false);
+        playAgain.setFace(ControlFace.button().withChip(GameKey.RESTART.chip()));
+        playAgain.addActionListener(evt -> this.onPlayAgain.run());
+        GridBagConstraints each = new GridBagConstraints();
+        each.insets = new Insets(0, 4, 0, 4);
+        buttons.add(playAgain, each);
         HudButton backToMenu = new HudButton("Back to menu");
         backToMenu.setFace(ControlFace.button().withChip(GameKey.MENU.chip()));
         backToMenu.addActionListener(this::backToMenuActionPerformed);
+        buttons.add(backToMenu, each);
         GridBagConstraints buttonConstraints = new GridBagConstraints();
         buttonConstraints.gridy = 1;
-        buttonConstraints.insets = new Insets(8, 24, 12, 24);
-        plate.add(backToMenu, buttonConstraints);
+        buttonConstraints.insets = new Insets(8, 20, 12, 20);
+        plate.add(buttons, buttonConstraints);
 
         GridBagConstraints plateConstraints = new GridBagConstraints();
         plateConstraints.weighty = 1;
@@ -88,11 +100,20 @@ public class BoardOverlays {
         this.onBackToMenu = r;
     }
 
-    public void showLost() {
+    /** What the retry and replay buttons run: the last wave sent, played again. */
+    public void onPlayAgain(Runnable r) {
+        this.onPlayAgain = r;
+    }
+
+    /** The lose banner, offering to retry {@code wave}. */
+    public void showLost(int wave) {
+        this.retry.setText("Retry wave " + wave);
         this.lostPanel.setVisible(true);
     }
 
-    public void showWon() {
+    /** The win banner, offering to replay {@code wave}. */
+    public void showWon(int wave) {
+        this.replay.setText("Replay wave " + wave);
         this.wonPanel.setVisible(true);
     }
 

@@ -16,6 +16,7 @@ public enum GameKey {
     SUPER_FAST(KeyEvent.VK_G, "G"),
     SELL(KeyEvent.VK_DELETE, "Del"),
     MENU(KeyEvent.VK_M, "M"),
+    RESTART(KeyEvent.VK_Z, "Z"),
     CONFIRM(KeyEvent.VK_ENTER, "↵"),
     CANCEL(KeyEvent.VK_ESCAPE, "Esc");
 
