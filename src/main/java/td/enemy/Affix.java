@@ -192,6 +192,17 @@ public enum Affix implements Term {
         public TermText describe() {
             return COLDBLOODED_FREEZE.entry().text();
         }
+    },
+    STEADFAST("Steadfast") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withAdditionalTraits(List.of(IdentifiedTrait.of(this, STEADFAST_DAZE)));
+        }
+
+        @Override
+        public TermText describe() {
+            return STEADFAST_DAZE.entry().text();
+        }
     };
 
     private static final float HULKING_HEALTH = 2.5f;
@@ -206,6 +217,7 @@ public enum Affix implements Term {
     private static final float WITHERED_SPEED = 1.3f;
     private static final float WITHERED_SHARE = 0.02f;
     private static final ShortenedEffectTrait COLDBLOODED_FREEZE = new ShortenedEffectTrait(EffectKind.FREEZE, 0.5f);
+    private static final ShortenedEffectTrait STEADFAST_DAZE = new ShortenedEffectTrait(EffectKind.DAZED, 1f / 3f);
     private static final float AFFIX_REACH = 80f;
     private static final int COMMAND_INTERVAL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     // Outlasts the interval, so an ally in reach stays covered and loses it soon after the commander falls.
