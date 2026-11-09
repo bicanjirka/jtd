@@ -110,7 +110,8 @@ public final class DevControls {
         }
         WaveContent content;
         try {
-            content = WaveScript.parse(script, defaultRank, level.catalog());
+            // Enemies spawned for testing cost no lives when they escape, and the preview says so.
+            content = WaveScript.parse(script, defaultRank, level.catalog()).withLivesOnLeak(0);
         } catch (GameStartupException e) {
             // Typed input, so a script that doesn't parse is reported, not fatal.
             return WaveScriptCheck.problem(e.getMessage());
@@ -133,7 +134,7 @@ public final class DevControls {
 
     /**
      * Queues {@code script}'s enemies on path {@code pathIndex}, alongside whatever wave is
-     * running.
+     * running. They take no lives if they escape.
      *
      * @return what happened, or why nothing did
      */

@@ -8,7 +8,8 @@ import java.util.stream.IntStream;
 
 /**
  * Builds the mobs a spawn ability creates: at the caster's position, on its path and at its rank unless the ability
- * fixes one, each member delayed by the shape's spacing so they don't stack.
+ * fixes one, each member delayed by the shape's spacing so they don't stack. A caster that takes no lives on a leak
+ * spawns ones that take none either.
  */
 final class AbilitySpawnFactory {
 
@@ -20,9 +21,10 @@ final class AbilitySpawnFactory {
         Rank rank = ranked.spawnRank(spawn.rank().orElse(caster.getRank()));
         AbilitySpawnShape shape = spawn.shape();
         EnemyDefinition baseDefinition = ranked.definitionFor(rank);
-        EnemyDefinition definition = shape.traitOverride()
+        EnemyDefinition shaped = shape.traitOverride()
                 .map(trait -> baseDefinition.withAdditionalTraits(List.of(trait)))
                 .orElse(baseDefinition);
+        EnemyDefinition definition = caster.livesOnLeak() == 0 ? shaped.withLivesOnLeak(0) : shaped;
         int health = Math.round(definition.baseHealth() * shape.healthMultiplier());
         int price = Math.round(definition.price() * shape.bountyMultiplier());
         return IntStream.range(0, shape.members())

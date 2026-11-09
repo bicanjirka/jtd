@@ -251,6 +251,18 @@ class DefinedEnemyMobAbilityTest {
     }
 
     @Test
+    void aCasterThatTakesNoLivesSpawnsEnemiesThatTakeNone() {
+        this.world.getEnemyCatalog().register(EnemyFixtures.simpleDefinition("guard"));
+        DefinedEnemyMob caller = EnemyFixtures.liveMob(this.world,
+                casting("caller", new OnceTrigger(1), new SpawnEnemiesAction("guard", 1, false)).withLivesOnLeak(0));
+
+        caller.doTick(1);
+
+        assertThat(this.world.enemies().getEnemies()).filteredOn(mob -> mob != caller)
+                .extracting(EnemyMob::livesOnLeak).containsExactly(0);
+    }
+
+    @Test
     void aZoneAbilityLeavesItsZoneWhereTheCasterStandsAsWideAsItsCells() {
         DefinedEnemyMob blinder = EnemyFixtures.liveMob(this.world,
                 casting("blinder", new OnDeathTrigger(), LeaveZoneAction.blindingField(2f, 0.5f)));

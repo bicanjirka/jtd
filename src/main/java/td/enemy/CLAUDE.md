@@ -92,7 +92,7 @@
   `ticksSinceDeath(gameTime)` is 0: exactly once, never during the fade. Until that capture, a dead
   mob's `ticksSinceDeath` is empty, like any moment that hasn't happened.
 - `AbilitySpawnFactory` builds an ability spawn at the caster's position, on the caster's
-  path and at the caster's rank. It uses `AbilitySpawnShape` (not `td.wave.SpawnShape`);
+  path and at the caster's rank; a caster that takes no lives on a leak spawns ones that take none. It uses `AbilitySpawnShape` (not `td.wave.SpawnShape`);
   `delaySpacingSlots` staggers members so they don't stack. `consumesSelf` is only defined for
   one member. Spawns call `recordAbilitySpawn` and casts call `recordAbilityCast`; the UI draws
   rings from both.

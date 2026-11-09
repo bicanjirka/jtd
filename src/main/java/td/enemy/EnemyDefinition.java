@@ -188,7 +188,6 @@ public record EnemyDefinition(
                 this.abilitySlots, this.baseStats, Optional.of(aura), this.livesOnLeak);
     }
 
-    /** A rank step's usual change: new health and bounty, everything else kept. */
     /** Takes {@code lives} if it reaches the end of the path; {@link #ALL_LIVES} ends the level. */
     public EnemyDefinition withLivesOnLeak(int lives) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
@@ -196,6 +195,7 @@ public record EnemyDefinition(
                 this.abilitySlots, this.baseStats, this.disruption, lives);
     }
 
+    /** A rank step's usual change: new health and bounty, everything else kept. */
     public EnemyDefinition withHealthAndPrice(int baseHealth, int price) {
         return new EnemyDefinition(this.id, this.displayName, this.description, baseHealth, price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
