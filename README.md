@@ -445,6 +445,7 @@ member's share is its own; Hulking counts first, so the others measure its extra
 | Vengeful | `vengeful` | As it dies, the allies near it Sprint: 1.5 s at Grunt, up to 4 s at Boss |
 | Taunting | `taunting` | Every tower that picks one target aims at it while it is in range; an enemy carrying Priority still comes first |
 | Coldblooded | `coldblooded` | A Freeze on it lasts half as long |
+| Steadfast | `steadfast` | A Daze on it lasts a third as long |
 
 ### Wave script ids
 

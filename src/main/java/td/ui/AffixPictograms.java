@@ -31,7 +31,9 @@ final class AffixPictograms {
             // Taunting: a target
             Map.entry("affix.taunting", "S O12 12 8.4 ; F O12 12 3.6"),
             // Coldblooded: a snowflake
-            Map.entry("affix.coldblooded", "S M12 2.6V21.4 M3.9 7.3L20.1 16.7 M3.9 16.7L20.1 7.3"));
+            Map.entry("affix.coldblooded", "S M12 2.6V21.4 M3.9 7.3L20.1 16.7 M3.9 16.7L20.1 7.3"),
+            // Steadfast: a mountain
+            Map.entry("affix.steadfast", "F M1.8 20.4L8.6 7.8L12.4 14.2L15.6 9.2L22.2 20.4Z"));
 
     private AffixPictograms() {
     }
