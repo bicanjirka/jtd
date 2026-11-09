@@ -13,8 +13,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
 import java.io.Serial;
+import java.util.OptionalInt;
 
 /**
  * The win and lose banners over the board, each with a button that plays the last wave again and a "Back to menu"
@@ -74,7 +74,7 @@ public class BoardOverlays {
         buttons.add(playAgain, each);
         HudButton backToMenu = new HudButton("Back to menu");
         backToMenu.setFace(ControlFace.button().withChip(GameKey.MENU.chip()));
-        backToMenu.addActionListener(this::backToMenuActionPerformed);
+        backToMenu.addActionListener(evt -> this.onBackToMenu.run());
         buttons.add(backToMenu, each);
         GridBagConstraints buttonConstraints = new GridBagConstraints();
         buttonConstraints.gridy = 1;
@@ -105,25 +105,26 @@ public class BoardOverlays {
         this.onPlayAgain = r;
     }
 
-    /** The lose banner, offering to retry {@code wave}. */
-    public void showLost(int wave) {
-        this.retry.setText("Retry wave " + wave);
+    /** The lose banner, offering to retry {@code wave} if there is one to retry. */
+    public void showLost(OptionalInt wave) {
+        offer(this.retry, "Retry wave ", wave);
         this.lostPanel.setVisible(true);
     }
 
-    /** The win banner, offering to replay {@code wave}. */
-    public void showWon(int wave) {
-        this.replay.setText("Replay wave " + wave);
+    /** The win banner, offering to replay {@code wave} if there is one to replay. */
+    public void showWon(OptionalInt wave) {
+        offer(this.replay, "Replay wave ", wave);
         this.wonPanel.setVisible(true);
+    }
+
+    private static void offer(HudButton button, String words, OptionalInt wave) {
+        button.setVisible(wave.isPresent());
+        wave.ifPresent(number -> button.setText(words + number));
     }
 
     public void reset() {
         this.lostPanel.setVisible(false);
         this.wonPanel.setVisible(false);
-    }
-
-    private void backToMenuActionPerformed(ActionEvent evt) {
-        this.onBackToMenu.run();
     }
 
     /**

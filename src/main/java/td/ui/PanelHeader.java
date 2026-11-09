@@ -25,7 +25,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
-import java.awt.event.ActionEvent;
 import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
@@ -100,10 +99,10 @@ public class PanelHeader extends JPanel {
 
         this.setPreferredSize(new Dimension(0, STRIP_HEIGHT));
         this.setMinimumSize(new Dimension(0, STRIP_HEIGHT));
-        this.play.addActionListener(this::playClicked);
-        this.pause.addActionListener(this::pauseClicked);
-        this.fast.addActionListener(this::fastClicked);
-        this.superFast.addActionListener(this::superFastClicked);
+        this.play.addActionListener(evt -> this.onPlay.run());
+        this.pause.addActionListener(evt -> this.onPause.run());
+        this.fast.addActionListener(evt -> this.onFast.run());
+        this.superFast.addActionListener(evt -> this.onSuperFast.run());
         this.menu.addActionListener(evt -> this.onMenu.run());
         this.restart.addActionListener(evt -> this.onRestart.run());
     }
@@ -329,21 +328,5 @@ public class PanelHeader extends JPanel {
 
     public void onSuperFast(Runnable r) {
         this.onSuperFast = r;
-    }
-
-    private void playClicked(ActionEvent evt) {
-        this.onPlay.run();
-    }
-
-    private void pauseClicked(ActionEvent evt) {
-        this.onPause.run();
-    }
-
-    private void fastClicked(ActionEvent evt) {
-        this.onFast.run();
-    }
-
-    private void superFastClicked(ActionEvent evt) {
-        this.onSuperFast.run();
     }
 }

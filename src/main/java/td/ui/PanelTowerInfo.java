@@ -25,7 +25,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.Serial;
@@ -59,6 +58,9 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private static final long serialVersionUID = 1L;
 
     private final Java2DFrameRenderer glyphRenderer = new Java2DFrameRenderer();
+    private final SheetPane sheetPane = new SheetPane();
+    private final HudButton sellButton = new HudButton("Sell");
+    private final HudToggleButton pinToggle = new HudToggleButton();
 
     private GameWorld context;
     private Tower selectedTower;
@@ -71,13 +73,9 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
     private Consumer<Boolean> onPinToggled = pinning -> {
     };
     private TooltipLayer tooltips;
-    private HudButton sellButton;
-    private HudToggleButton pinToggle;
-    private JScrollPane jScrollPane1;
-    private SheetPane sheetPane;
 
     public PanelTowerInfo() {
-        initComponents();
+        this.layOut();
     }
 
     /** The layer whose tooltips this pane's mentions and icons open. */
@@ -280,73 +278,57 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         SwingUtilities.invokeLater(this::updateInterface);
     }
 
-    private void initComponents() {
-        GridBagConstraints gridBagConstraints;
+    /** The sheet in a borderless scroll pane filling the panel, the pin toggle and the Sell button under it. */
+    private void layOut() {
+        this.setLayout(new GridBagLayout());
+        this.setBackground(Hud.BACKGROUND);
+        this.setBorder(Hud.panelBorder("Info"));
+        this.setForeground(Hud.FOREGROUND);
+        this.setMaximumSize(new Dimension(200, Integer.MAX_VALUE));
+        this.setMinimumSize(new Dimension(200, 150));
+        this.setPreferredSize(new Dimension(200, 300));
 
-        jScrollPane1 = new JScrollPane();
-        sheetPane = new SheetPane();
-        sellButton = new HudButton("Sell");
-        pinToggle = new HudToggleButton();
-
-        setLayout(new GridBagLayout());
-
-        setBackground(Hud.BACKGROUND);
-        setBorder(Hud.panelBorder("Info"));
-        setForeground(Hud.FOREGROUND);
-        setMaximumSize(new Dimension(200, 2147483647));
-        setMinimumSize(new Dimension(200, 150));
-        setPreferredSize(new Dimension(200, 300));
-        jScrollPane1.setBackground(Hud.BACKGROUND);
-        jScrollPane1.setBorder(null);
-        jScrollPane1.setForeground(Hud.FOREGROUND);
-        sheetPane.setBackground(Hud.BACKGROUND);
-        sheetPane.setBorder(null);
-        sheetPane.setForeground(Hud.FOREGROUND);
-        jScrollPane1.setViewportView(sheetPane);
-        sheetPane.addComponentListener(new ComponentAdapter() {
+        JScrollPane scroll = new JScrollPane(this.sheetPane);
+        scroll.setBackground(Hud.BACKGROUND);
+        scroll.setBorder(null);
+        scroll.setForeground(Hud.FOREGROUND);
+        this.sheetPane.setBackground(Hud.BACKGROUND);
+        this.sheetPane.setBorder(null);
+        this.sheetPane.setForeground(Hud.FOREGROUND);
+        this.sheetPane.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent evt) {
-                textPaneResized();
+                PanelTowerInfo.this.textPaneResized();
             }
         });
+        GridBagConstraints fill = new GridBagConstraints();
+        fill.gridx = 0;
+        fill.gridy = 0;
+        fill.fill = GridBagConstraints.BOTH;
+        fill.weightx = 0.01;
+        fill.weighty = 0.01;
+        this.add(scroll, fill);
 
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = GridBagConstraints.BOTH;
-        gridBagConstraints.weightx = 0.01;
-        gridBagConstraints.weighty = 0.01;
-        add(jScrollPane1, gridBagConstraints);
+        this.pinToggle.setText("Pin line");
+        this.pinToggle.setVisible(false);
+        this.pinToggle.addActionListener(evt -> this.onPinToggled.accept(this.pinToggle.isSelected()));
+        this.add(this.pinToggle, row(1));
 
-        pinToggle.setText("Pin line");
-        pinToggle.setVisible(false);
-        pinToggle.addActionListener(evt -> this.onPinToggled.accept(this.pinToggle.isSelected()));
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.WEST;
-        gridBagConstraints.weightx = 0.01;
-        add(pinToggle, gridBagConstraints);
-
-        sellButton.setText("Sell");
-        sellButton.setForeground(SELL_TEXT_COLOR);
-        sellButton.setFace(ControlFace.button().withChip(GameKey.SELL.chip()));
-        sellButton.addActionListener(this::onSellClicked);
-
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.WEST;
-        gridBagConstraints.weightx = 0.01;
-        add(sellButton, gridBagConstraints);
-
+        this.sellButton.setForeground(SELL_TEXT_COLOR);
+        this.sellButton.setFace(ControlFace.button().withChip(GameKey.SELL.chip()));
+        this.sellButton.addActionListener(evt -> this.sellCurrentTower());
+        this.add(this.sellButton, row(2));
     }
 
-    private void onSellClicked(ActionEvent evt) {
-        this.sellCurrentTower();
+    /** A full-width row under the sheet. */
+    private static GridBagConstraints row(int gridy) {
+        GridBagConstraints row = new GridBagConstraints();
+        row.gridx = 0;
+        row.gridy = gridy;
+        row.fill = GridBagConstraints.HORIZONTAL;
+        row.anchor = GridBagConstraints.WEST;
+        row.weightx = 0.01;
+        return row;
     }
 
 }

@@ -43,7 +43,7 @@ record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart,
 
     /** Nothing played yet, with wave {@code wave + 1} next. */
     static RoundState before(int wave) {
-        return new RoundState(wave, Phase.READY, Set.of(), 0L, Map.of());
+        return between(wave, Set.of(), Map.of());
     }
 
     boolean isWaveReady() {
