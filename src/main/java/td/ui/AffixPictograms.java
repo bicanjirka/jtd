@@ -33,7 +33,9 @@ final class AffixPictograms {
             // Coldblooded: a snowflake
             Map.entry("affix.coldblooded", "S M12 2.6V21.4 M3.9 7.3L20.1 16.7 M3.9 16.7L20.1 7.3"),
             // Steadfast: a mountain
-            Map.entry("affix.steadfast", "F M1.8 20.4L8.6 7.8L12.4 14.2L15.6 9.2L22.2 20.4Z"));
+            Map.entry("affix.steadfast", "F M1.8 20.4L8.6 7.8L12.4 14.2L15.6 9.2L22.2 20.4Z"),
+            // Plated: overlapping scales
+            Map.entry("affix.plated", "F M2.6 4H21.4V9.6H2.6Z M2.6 11.2H21.4V16.8H2.6Z ; F M6.4 18.4H17.6L12 22.2Z"));
 
     private AffixPictograms() {
     }

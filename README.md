@@ -436,7 +436,7 @@ member's share is its own; Hulking counts first, so the others measure its extra
 |---------|-----------|----------------------------------------------------------------------------------|
 | Hulking | `hulking` | x2.5 health but 75% of its speed, and a bigger body |
 | Exalted | `exalted` | Stronger in every stat it has off its default (not speed): a strength twice as far from it, a weakness half as far; a load fails if it has none |
-| Armored | `armored` | Armor against physical damage on top of its own: +25, rising to +400 as the level's landed damage leans physical |
+| Armored | `armored` | Armor against physical damage on top of its own: +25, rising to +400 as the level's landed damage leans physical; never with Plated |
 | Elusive | `elusive` | Dodges aimed shots: +15 agility at Grunt, rising to +40 at Boss |
 | Regenerating | `regenerating` | Restores 2% of its health every second |
 | Shielded | `shielded` | A shield worth 30% of its health once below half of it |
@@ -446,6 +446,7 @@ member's share is its own; Hulking counts first, so the others measure its extra
 | Taunting | `taunting` | Every tower that picks one target aims at it while it is in range; an enemy carrying Priority still comes first |
 | Coldblooded | `coldblooded` | A Freeze on it lasts half as long |
 | Steadfast | `steadfast` | A Daze on it lasts a third as long |
+| Plated | `plated` | Plating on top of its own, a fixed loss on every physical hit: +5, rising to +30 as the level's landed damage leans physical; never with Armored |
 
 ### Wave script ids
 
