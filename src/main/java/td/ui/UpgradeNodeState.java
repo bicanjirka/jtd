@@ -18,6 +18,12 @@ import java.util.Optional;
  */
 record UpgradeNodeState(UpgradeNode node, Look look, float ring, Optional<UpgradeNode> sealedBy, boolean unused) {
 
+    UpgradeNodeState {
+        if (unused && look != Look.OWNED) {
+            throw new IllegalArgumentException("Only an owned node can be unused: " + node.id() + " is " + look);
+        }
+    }
+
     /** One look per state, checked in this order: the first that applies wins. */
     enum Look {
         OWNED,

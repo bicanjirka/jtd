@@ -1,6 +1,7 @@
 package td.save;
 
 import td.tower.TowerFactory;
+import td.tower.TowerRecord;
 import td.tower.TowerTally;
 import td.tower.TowerUse;
 import td.wave.Point;
@@ -24,6 +25,11 @@ public record TowerSave(TowerFactory.Type type, Point cell, List<String> nodes, 
 
     public static TowerSave of(TowerFactory.Type type, Point cell, List<String> nodes, TowerTally tally) {
         return new TowerSave(type, cell, nodes, tally, OptionalInt.empty(), TowerUse.used());
+    }
+
+    /** What the tower carries, built at {@code todaysPrice} when the save is from before prices were kept. */
+    public TowerRecord record(int todaysPrice) {
+        return new TowerRecord(this.tally, this.paid.orElse(todaysPrice), this.use);
     }
 
     public TowerSave withPaid(int price) {

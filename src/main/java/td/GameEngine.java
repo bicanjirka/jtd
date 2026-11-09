@@ -19,6 +19,7 @@ import td.save.TowerSave;
 import td.tower.PulseTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.TowerRecord;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameHost;
 import td.util.GameStartupException;
@@ -509,9 +510,7 @@ public class GameEngine {
         BoardGeometry board = this.gameWorld.getBoard();
         List<Tower> built = this.gameWorld.towers().all();
         List<TowerSave> towers = built.stream()
-                .map(tower -> TowerSave.of(tower.getType(), cellOf(board, tower),
-                        tower.upgrades().owned().stream().map(UpgradeNode::id).toList(), tower.tally())
-                        .withPaid(tower.paid()).withUse(tower.use()))
+                .map(tower -> saveOf(board, tower))
                 .toList();
         List<LeyLinePin> pins = built.stream()
                 .flatMap(caster -> PulseTower.leyLinePinOf(caster).stream()
@@ -523,6 +522,13 @@ public class GameEngine {
                 .withHistory(new RoundHistory(state.leaked(), state.bonusesPaid()))
                 .withDamage(this.gameWorld.damageTally().mix())
                 .withPins(pins));
+    }
+
+    private static TowerSave saveOf(BoardGeometry board, Tower tower) {
+        TowerRecord record = tower.record();
+        return TowerSave.of(tower.getType(), cellOf(board, tower),
+                tower.upgrades().owned().stream().map(UpgradeNode::id).toList(), record.tally())
+                .withPaid(record.paid()).withUse(record.use());
     }
 
     private static Point cellOf(BoardGeometry board, Tower tower) {
@@ -640,7 +646,7 @@ public class GameEngine {
                 missing.add(where + ": upgrade " + id + " (not on offer)");
             }
         }
-        tower.restore(saved.tally(), saved.paid().orElse(tower.paid()), saved.use());
+        tower.restore(saved.record(tower.record().paid()));
         return missing;
     }
 
