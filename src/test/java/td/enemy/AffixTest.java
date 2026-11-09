@@ -99,13 +99,16 @@ class AffixTest {
     }
 
     @Test
-    void exaltedDoublesHowFarEachStatIsFromItsDefaultAndLeavesSpeed() {
-        EnemyDefinition sheet = this.grub.withArmor(10f).withAgility(-20f);
+    void exaltedDoublesAStrengthHalvesAWeaknessAndLeavesSpeed() {
+        EnemyDefinition sheet = this.grub.withArmor(10f).withAgility(-20f).withBase(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 1.2f)
+                .withBase(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.8f);
 
         EnemyDefinition exalted = sheet.withAffixes(List.of(Affix.EXALTED), WHOLE);
 
         assertThat(exalted.baseStats().value(EnemyStat.ARMOR)).isEqualTo(20f);
-        assertThat(exalted.baseStats().value(EnemyStat.AGILITY)).isEqualTo(-40f);
+        assertThat(exalted.baseStats().value(EnemyStat.AGILITY)).isEqualTo(-10f);
+        assertThat(exalted.baseStats().value(EnemyStat.PHYSICAL_DAMAGE_TAKEN)).isCloseTo(1.1f, within(1e-6f));
+        assertThat(exalted.baseStats().value(EnemyStat.MAGIC_DAMAGE_TAKEN)).isCloseTo(0.6f, within(1e-6f));
         assertThat(exalted.baseStats().value(EnemyStat.MAGIC_RESIST)).isEqualTo(EnemyStat.MAGIC_RESIST.defaultBase());
         assertThat(exalted.baseSpeed()).isEqualTo(sheet.baseSpeed());
     }
