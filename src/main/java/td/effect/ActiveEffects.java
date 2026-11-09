@@ -34,6 +34,8 @@ public final class ActiveEffects {
     private static final double POOL_DECAY_EXPONENT = -3.0;
     /** A pool deals its damage in a pulse this often: four times a second. */
     private static final int POOL_PULSE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 4f);
+    /** A beat this close to whole pulse windows is one: a rate's period carries float noise. */
+    private static final double WHOLE_WINDOWS_TOLERANCE = 1e-4;
 
     /** Speed comes back over this last stretch of a slow's own time. */
     public static final int SLOW_FADE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
@@ -142,7 +144,8 @@ public final class ActiveEffects {
     /**
      * What a pool deals each second once it has settled under a top-up of {@code level} every {@code ticksBetween}
      * ticks: each top-up then adds exactly what the pool lost since the last. A top-up decays unseen until the next
-     * pulse, which on average takes half a window, and that part is never dealt.
+     * pulse, which on average takes half a window, and that part is never dealt. A beat of whole pulse windows lands
+     * every top-up just before a pulse, since a pool pulses on its first tick, so then nothing goes unseen.
      *
      * @param level         what each top-up carries, a tick
      * @param durationTicks the duration the pool decays by
@@ -153,7 +156,9 @@ public final class ActiveEffects {
         double keptBetween = Math.pow(alpha, ticksBetween);
         double afterTopUp = level / (1.0 - keptBetween + keptBetween / capFactor);
         double dealtBetween = afterTopUp * (1.0 - keptBetween) / (1.0 - alpha);
-        double keptUntilPulse = Math.pow(alpha, (POOL_PULSE_TICKS - 1) / 2.0);
+        double windows = ticksBetween / POOL_PULSE_TICKS;
+        boolean inTimeWithPulses = Math.abs(windows - Math.rint(windows)) < WHOLE_WINDOWS_TOLERANCE;
+        double keptUntilPulse = inTimeWithPulses ? 1.0 : Math.pow(alpha, (POOL_PULSE_TICKS - 1) / 2.0);
         return (float) (dealtBetween * keptUntilPulse * TickRate.TICKS_PER_SECOND / ticksBetween);
     }
 

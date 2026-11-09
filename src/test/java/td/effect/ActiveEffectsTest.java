@@ -225,6 +225,40 @@ class ActiveEffectsTest {
         int between = 21;
         int duration = 60;
         int level = 1000;
+
+        float dealtPerSecond = settledPoolDealtPerSecond(level, duration, between);
+
+        assertThat(ActiveEffects.settledPoolPerSecond(level, duration, PoolTuning.standard().capFactor(), between))
+                .isCloseTo(dealtPerSecond, within(dealtPerSecond * 0.01f));
+    }
+
+    @Test
+    void aPoolToppedUpInTimeWithItsPulsesDealsWhatItsSettledFormulaGives() {
+        int duration = 20;
+        int level = 1000;
+        int between = 4 * pulseTicks();
+
+        float dealtPerSecond = settledPoolDealtPerSecond(level, duration, between);
+
+        assertThat(ActiveEffects.settledPoolPerSecond(level, duration, PoolTuning.standard().capFactor(), between))
+                .isCloseTo(dealtPerSecond, within(dealtPerSecond * 0.01f));
+    }
+
+    /** The ticks between two pulses: the first pulse is on the pool's first tick. */
+    private static int pulseTicks() {
+        List<Damage> received = new ArrayList<>();
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.burn(Damage.magic(1000), 1000, recordingSink(received)));
+        int ticks = 0;
+        do {
+            effects.tick();
+            ticks++;
+        } while (received.size() < 2);
+        return ticks - 1;
+    }
+
+    /** What a burn topped up every {@code between} ticks deals a second once it has settled. */
+    private static float settledPoolDealtPerSecond(int level, int duration, int between) {
         int beats = 20;
         List<Damage> received = new ArrayList<>();
         ActiveEffects effects = new ActiveEffects();
@@ -235,12 +269,8 @@ class ActiveEffectsTest {
             effects.apply(Effect.burn(Damage.magic(level), duration, recordingSink(received)));
             tickTimes(effects, between);
         }
-
         float seconds = beats * between / TickRate.TICKS_PER_SECOND;
-        float dealtPerSecond = received.stream().mapToInt(Damage::amount).sum() / seconds;
-
-        assertThat(ActiveEffects.settledPoolPerSecond(level, duration, PoolTuning.standard().capFactor(), between))
-                .isCloseTo(dealtPerSecond, within(dealtPerSecond * 0.01f));
+        return received.stream().mapToInt(Damage::amount).sum() / seconds;
     }
 
     @Test

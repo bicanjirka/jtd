@@ -413,16 +413,6 @@ implementation. There is no way to add or edit a level without a code change and
 
 ## Tower features
 
-### The Scorcher's DPS row reads low when its waves keep time with the burn's pulses
-
-The settled formula takes a top-up to wait half a pulse window on average. A wave period that is a whole number of
-pulses lands every top-up on a pulse, so nothing decays unseen and the pool deals more than the row says, most on a short
-burn. Any other whole period visits every phase and the formula holds.
-
-- **Where:** `ActiveEffects.settledPoolPerSecond` (`keptUntilPulse`).
-- **Approach:** drop the wait when the period is a multiple of `POOL_PULSE_TICKS`, against a simulated pool at such a
-  period.
-
 ### No tower denies heals or shields along a whole lane
 
 No wave needs anti-sustain yet. On The Amber Hive (8 seeds) the strong player brings no anti-sustain node to the Brood
