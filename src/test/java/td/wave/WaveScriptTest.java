@@ -90,11 +90,18 @@ class WaveScriptTest {
     }
 
     @Test
-    void aSlotBeforeTheHeadEndFailsAtItsFirstToken() {
-        assertThatThrownBy(() -> WaveScript.parse("soldier 2 walker: knight", Rank.GRUNT, this.catalog))
+    void aHeadWrittenAfterASlotFailsAtItsOwnWordNotTheScriptsFirst() {
+        assertThatThrownBy(() -> WaveScript.parse("3 walker e w30: 2 walker", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
-                .hasMessageContaining("»2«")
-                .hasMessageContaining("A head holds only");
+                .hasMessageContaining("»w30«");
+    }
+
+    @Test
+    void aHeadEndAfterASlotSaysTheHeadOpensTheScript() {
+        assertThatThrownBy(() -> WaveScript.parse("walker soldier: knight", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»:«")
+                .hasMessageContaining("A head opens the script");
     }
 
     @Test

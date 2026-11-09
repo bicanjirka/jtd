@@ -287,20 +287,6 @@ token, even on a slot that already holds `WaveScript.MAX_AFFIXES` of them, holds
   `WaveScriptSuggestionsTest` and `WaveScriptTest` must pass unchanged: the behaviour stays. Done when
   a new keyword is one row plus the grammar.
 
-### A head written after the first slot is blamed on the script's first token
-
-`WaveScriptGrammar.head` treats the script as headed when a `:` stands anywhere in it (`Cursor.holds`), then
-reads the head from the first token. So `3 walker e w30: 2 walker` fails at `3` with "A head holds only
-w<n>, a rank and affixes, in that order", while what is wrong is the `w30:` written after the slots. The
-error names the right rule but marks the wrong token, so the dev panel's script box underlines `3`.
-
-- **Where:** `WaveScriptGrammar.head` and `Cursor.holds`; the `HEAD_END` case in `WaveScriptGrammar.slot`
-  already fails at a misplaced `:`, but with "A script has one head".
-- **Approach:** read a head only while the tokens before the first `:` are all head words (spacing, rank,
-  affix); otherwise parse no head, and let `slot` meet the `:` and fail there with "A head opens the script:
-  move it before the first slot". Add the `WaveScriptTest` case first (the failing token is the `w30`, not
-  `3`), and keep the case where a head word stands alone before `:` working.
-
 ## Balance tools
 
 ### No test runs the whole lab
