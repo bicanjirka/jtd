@@ -318,7 +318,7 @@ public final class DevControls {
         if (tower.isPresent()) {
             return DevSelection.tower(tower.get().displayName());
         }
-        return this.selectedEnemy().map(mob -> DevSelection.enemy("#" + mob.id() + " " + mob.definition().displayName(),
+        return this.selectedEnemy().map(mob -> DevSelection.enemy("#" + mob.id() + " " + mob.definition().title(),
                         mob.isObserved()))
                 .orElse(DevSelection.none());
     }
