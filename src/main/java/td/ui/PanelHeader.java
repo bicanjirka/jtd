@@ -14,7 +14,6 @@ import td.util.ThreadConfined;
 import td.wave.WaveProgress;
 
 import javax.swing.BorderFactory;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import java.awt.BorderLayout;
@@ -22,7 +21,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -32,9 +30,10 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
- * The strip across the top of the game: the title and the menu button, the status icons centred between them and the
+ * The strip across the top of the game: the menu and restart buttons, the status icons centred between them and the
  * speed buttons, and the speed buttons above the console. The speed buttons are a radio showing the speed it is told;
  * a click only reports, so what a click does and which one is selected stay with the owner. It shows the numbers it
  * is given.
@@ -50,12 +49,12 @@ public class PanelHeader extends JPanel {
 
     private final List<StatusIcon> icons = Arrays.stream(StatusTerm.values()).map(StatusIcon::new).toList();
     private final StatusFlash flash = new StatusFlash();
-    private final JLabel title = new JLabel();
     private final HudToggleButton pause = speedButton("❚❚", GameKey.PAUSE);
     private final HudToggleButton play = speedButton("▶", GameKey.PLAY);
     private final HudToggleButton fast = speedButton("▶▶", GameKey.FAST);
     private final HudToggleButton superFast = speedButton("▶▶▶", GameKey.SUPER_FAST);
     private final HudButton menu = new HudButton("Menu");
+    private final HudButton restart = new HudButton("↺");
 
     private TooltipLayer tooltips = null;
     private StatusReadout readout = StatusReadout.empty();
@@ -71,28 +70,31 @@ public class PanelHeader extends JPanel {
     };
     private Runnable onMenu = () -> {
     };
+    private Runnable onRestart = () -> {
+    };
+    private OptionalInt restartWave = OptionalInt.empty();
 
-    public PanelHeader(String titleText) {
+    public PanelHeader() {
         this.setLayout(new BorderLayout());
         this.setBackground(Hud.BACKGROUND);
         this.setFocusable(false);
         this.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Hud.BORDER_IDLE));
 
-        this.title.setText(titleText);
-        this.title.setFont(new Font("Dialog", Font.BOLD, 16));
-        this.title.setForeground(Hud.FOREGROUND);
         // A grid bag centres each icon in the strip's height; a flow layout would hang them from the top.
         JPanel status = new JPanel(new GridBagLayout());
         status.setOpaque(false);
         GridBagConstraints each = new GridBagConstraints();
         each.insets = new Insets(0, ICON_GAP / 2, 0, ICON_GAP / 2);
         this.icons.forEach(icon -> status.add(icon, each));
-        JPanel aboveBoard = new JPanel(new TitleAndCentre());
+        JPanel aboveBoard = new JPanel(new ButtonsAndCentre());
         aboveBoard.setOpaque(false);
         this.menu.setFace(ControlFace.button().withChip(GameKey.MENU.chip()));
-        aboveBoard.add(this.title);
-        aboveBoard.add(status);
+        this.restart.setFont(Hud.GLYPH_FONT);
+        this.restart.setFace(ControlFace.button().withChip(GameKey.RESTART.chip()));
+        this.restart.setEnabled(false);
         aboveBoard.add(this.menu);
+        aboveBoard.add(this.restart);
+        aboveBoard.add(status);
         this.add(aboveBoard, BorderLayout.CENTER);
         this.add(speedButtons(), BorderLayout.EAST);
 
@@ -103,16 +105,17 @@ public class PanelHeader extends JPanel {
         this.fast.addActionListener(this::fastClicked);
         this.superFast.addActionListener(this::superFastClicked);
         this.menu.addActionListener(evt -> this.onMenu.run());
+        this.restart.addActionListener(evt -> this.onRestart.run());
     }
 
     /**
-     * The title at the left with the menu button after it, and the status group centred in the space between the menu
-     * button and the right edge, where the speed buttons begin; never squeezed.
+     * The menu and restart buttons at the left, and the status group centred in the space between them and the right
+     * edge, where the speed buttons begin; never squeezed.
      */
-    private static final class TitleAndCentre implements LayoutManager {
+    private static final class ButtonsAndCentre implements LayoutManager {
 
         private static final int MARGIN = 10;
-        private static final int MENU_GAP = 10;
+        private static final int BUTTON_GAP = 4;
 
         @Override
         public void addLayoutComponent(String name, Component component) {
@@ -124,11 +127,11 @@ public class PanelHeader extends JPanel {
 
         @Override
         public Dimension preferredLayoutSize(Container parent) {
-            Dimension title = parent.getComponent(0).getPreferredSize();
-            Dimension status = parent.getComponent(1).getPreferredSize();
-            Dimension menu = parent.getComponent(2).getPreferredSize();
-            return new Dimension(MARGIN + title.width + MENU_GAP + menu.width + status.width,
-                    Math.max(Math.max(title.height, status.height), menu.height));
+            Dimension menu = parent.getComponent(0).getPreferredSize();
+            Dimension restart = parent.getComponent(1).getPreferredSize();
+            Dimension status = parent.getComponent(2).getPreferredSize();
+            return new Dimension(MARGIN + menu.width + BUTTON_GAP + restart.width + status.width,
+                    Math.max(Math.max(menu.height, status.height), restart.height));
         }
 
         @Override
@@ -138,16 +141,17 @@ public class PanelHeader extends JPanel {
 
         @Override
         public void layoutContainer(Container parent) {
-            Component title = parent.getComponent(0);
-            Component status = parent.getComponent(1);
-            Component menu = parent.getComponent(2);
-            Dimension titleSize = title.getPreferredSize();
-            Dimension statusSize = status.getPreferredSize();
+            Component menu = parent.getComponent(0);
+            Component restart = parent.getComponent(1);
+            Component status = parent.getComponent(2);
             Dimension menuSize = menu.getPreferredSize();
-            title.setBounds(MARGIN, (parent.getHeight() - titleSize.height) / 2, titleSize.width, titleSize.height);
-            int menuX = MARGIN + titleSize.width + MENU_GAP;
-            menu.setBounds(menuX, (parent.getHeight() - menuSize.height) / 2, menuSize.width, menuSize.height);
-            int free = menuX + menuSize.width;
+            Dimension restartSize = restart.getPreferredSize();
+            Dimension statusSize = status.getPreferredSize();
+            menu.setBounds(MARGIN, (parent.getHeight() - menuSize.height) / 2, menuSize.width, menuSize.height);
+            int restartX = MARGIN + menuSize.width + BUTTON_GAP;
+            restart.setBounds(restartX, (parent.getHeight() - restartSize.height) / 2, restartSize.width,
+                    restartSize.height);
+            int free = restartX + restartSize.width;
             int centred = free + (parent.getWidth() - free - statusSize.width) / 2;
             status.setBounds(Math.max(centred, free), (parent.getHeight() - statusSize.height) / 2,
                     statusSize.width, statusSize.height);
@@ -184,7 +188,7 @@ public class PanelHeader extends JPanel {
 
     /**
      * Each icon's hover is a tooltip of what it counts and its value now, opening under it; each speed button's, what
-     * it does; the menu button's, where it goes.
+     * it does; the menu button's, where it goes; the restart button's, which wave it puts back.
      */
     public void setTooltips(TooltipLayer tooltips) {
         for (StatusIcon icon : this.icons) {
@@ -199,6 +203,9 @@ public class PanelHeader extends JPanel {
                 "The fastest speed. Sends the next wave if it is waiting."));
         tooltips.watchBelow(this.menu, () -> tooltip("Menu",
                 "Back to the level select. Asks first while the level is still being played."));
+        tooltips.watchBelow(this.restart, () -> this.restartWave.isPresent()
+                ? tooltip("Restart wave " + this.restartWave.getAsInt(), "Back to how it was sent.")
+                : tooltip("Restart wave", "Puts a wave back as it was sent, once one has been sent."));
         this.tooltips = tooltips;
     }
 
@@ -273,9 +280,8 @@ public class PanelHeader extends JPanel {
         return System.nanoTime() / 1_000_000L;
     }
 
-    /** The loaded level's colour on the title and on the selected speed button. */
+    /** The loaded level's colour on the selected speed button. */
     public void setVoice(Color voice) {
-        this.title.setForeground(voice);
         List.of(this.pause, this.play, this.fast, this.superFast)
                 .forEach(button -> button.setFace(button.face().withSelectedColor(voice)));
     }
@@ -293,6 +299,16 @@ public class PanelHeader extends JPanel {
         for (HudToggleButton button : List.of(this.pause, this.play, this.fast, this.superFast)) {
             button.setEnabled(enabled);
         }
+    }
+
+    /** The wave the restart button puts back, or none: it goes dim until a wave has been sent. */
+    public void setRestartWave(OptionalInt wave) {
+        this.restartWave = wave;
+        this.restart.setEnabled(wave.isPresent());
+    }
+
+    public void onRestart(Runnable r) {
+        this.onRestart = r;
     }
 
     public void onMenu(Runnable r) {

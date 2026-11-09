@@ -70,6 +70,7 @@ import java.io.InputStream;
 import java.io.Serial;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -115,7 +116,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private final BoardRenderer boardRenderer;
     private final Java2DFrameRenderer frameRenderer = new Java2DFrameRenderer();
     private final AsciiBoardRenderer asciiBoardRenderer = new AsciiBoardRenderer();
-    private final PanelHeader header = new PanelHeader(NAME + " v" + VERSION);
+    private final PanelHeader header = new PanelHeader();
     private final PanelGameConsole gameConsole = new PanelGameConsole();
     private final BoardOverlays boardOverlays = new BoardOverlays();
     private final String statusMessage = welcomeText();
@@ -145,7 +146,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private volatile boolean levelLoaded = false;
 
     private TooltipLayer tooltips;
-    private Optional<ConfirmPopup> abandonQuestion = Optional.empty();
+    private Optional<ConfirmPopup> openQuestion = Optional.empty();
     private CardLayout contentCardLayout;
     private JPanel gamePanel;
     private PanelLevelSelect panelLevelSelect;
@@ -164,7 +165,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         Threads.assertEventDispatchThread("TowerDefense construction");
         this.setLayout(null);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setTitle(NAME);
+        this.setTitle(NAME + " v" + VERSION);
         this.setFocusable(true);
         this.engine = new GameEngine(this);
         this.gameWorld = this.engine.getGameWorld();
@@ -187,6 +188,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.header.onSuperFast(() -> this.playAt(TickSpeed.SUPER_FAST));
         this.header.onMenu(this::requestReturnToMenu);
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
+        this.header.onRestart(this::requestRestartWave);
+        this.boardOverlays.onPlayAgain(this::requestRestartWave);
         this.gameConsole.getTowerInfo().onPinToggled(pinning -> {
             if (pinning) {
                 this.engine.startPinningLeyLine();
@@ -383,7 +386,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
         if (this.engine.outcome().isOver()) {
             this.returnToMenu();
-        } else if (this.abandonQuestion.filter(ConfirmPopup::isOpen).isEmpty()) {
+        } else if (this.openQuestion.filter(ConfirmPopup::isOpen).isEmpty()) {
             this.askToAbandonLevel();
         }
     }
@@ -422,11 +425,54 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         InfoSheet question = new InfoSheet(List.of(
                 new SheetLine.Title(SheetLine.Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, "Back to menu", ""),
                 new SheetLine.Prose(TermText.of("Abandon this level and return to the menu?"))));
+        this.openQuestion = Optional.of(ConfirmPopup.open(this.getLayeredPane(), this.boardCentre(), question, "Abandon",
+                ConfirmPopup.IRREVERSIBLE, this::returnToMenu, () -> this.setSpeed(previousSpeed)));
+    }
+
+    /** Asks whether to put the last wave sent back as it was sent, if one was sent and nothing else is asking. */
+    private void requestRestartWave() {
+        if (this.levelLoaded && this.engine.checkpoint().isPresent()
+                && this.openQuestion.filter(ConfirmPopup::isOpen).isEmpty()) {
+            this.askToRestartWave(this.engine.checkpoint().get().nextWave());
+        }
+    }
+
+    /** Pauses while the question is open, and plays on at the speed it had once answered. */
+    private void askToRestartWave(int wave) {
+        TickSpeed previousSpeed = this.currentSpeed;
+        this.setSpeed(TickSpeed.PAUSED);
+        this.tooltips.closeAll();
+        InfoSheet question = new InfoSheet(List.of(
+                new SheetLine.Title(SheetLine.Glyph.CHEVRON, Palette.TERM_STATUS_WAVE, "Restart wave " + wave, ""),
+                new SheetLine.Prose(TermText.of("Put the game back as it was when wave " + wave
+                        + " was sent? What was bought since is refunded."))));
+        this.openQuestion = Optional.of(ConfirmPopup.open(this.getLayeredPane(), this.boardCentre(), question,
+                "Restart", ConfirmPopup.IRREVERSIBLE, () -> this.restartWave(previousSpeed),
+                () -> this.setSpeed(previousSpeed)));
+    }
+
+    private void restartWave(TickSpeed speed) {
+        // Restarting tears the level down and rebuilds it, so no tick may run meanwhile.
+        this.stopLoopThen(() -> {
+            Optional<String> problem = this.engine.restartWave();
+            this.levelLoaded = true;
+            this.tooltips.closeAll();
+            this.boardOverlays.reset();
+            this.gameConsole.setLevelEnded(false);
+            this.unSelectTower();
+            this.panelTowerSelector.stopPlacing();
+            this.gameLoop.start();
+            this.setSpeed(speed.isPaused() ? this.lastPlaySpeed : speed);
+            this.setWavePreview();
+            this.updateInfo();
+            problem.ifPresent(this.panelDev::showMessage);
+        });
+    }
+
+    private Rectangle boardCentre() {
         Rectangle board = SwingUtilities.convertRectangle(this.gameBoard.getParent(), this.gameBoard.getBounds(),
                 this.getLayeredPane());
-        Rectangle centre = new Rectangle((int) board.getCenterX(), (int) board.getCenterY() - 60, 1, 1);
-        this.abandonQuestion = Optional.of(ConfirmPopup.open(this.getLayeredPane(), centre, question, "Abandon",
-                ConfirmPopup.IRREVERSIBLE, this::returnToMenu, () -> this.setSpeed(previousSpeed)));
+        return new Rectangle((int) board.getCenterX(), (int) board.getCenterY() - 60, 1, 1);
     }
 
     public void setInfoText(String s) {
@@ -576,13 +622,17 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
             }
             case WON -> {
                 this.gameConsole.setLevelEnded(true);
-                this.boardOverlays.showWon();
+                this.boardOverlays.showWon(this.lastWaveSent());
             }
             case LOST -> {
                 this.gameConsole.setLevelEnded(true);
-                this.boardOverlays.showLost();
+                this.boardOverlays.showLost(this.lastWaveSent());
             }
         }
+    }
+
+    private int lastWaveSent() {
+        return this.engine.checkpoint().map(GameSave::nextWave).orElse(this.engine.waveProgress().index());
     }
 
     public void startLevel() {
@@ -632,6 +682,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void syncTransportButtons() {
         this.header.showSpeed(this.currentSpeed);
         this.header.setSpeedEnabled(!this.levelLoaded || !this.engine.outcome().isOver());
+        this.header.setRestartWave(this.levelLoaded
+                ? this.engine.checkpoint().map(sent -> OptionalInt.of(sent.nextWave())).orElse(OptionalInt.empty())
+                : OptionalInt.empty());
     }
 
     /** Paints the last published frame; reads no simulation state. */
@@ -764,11 +817,12 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
      * question whether to leave, which pauses the game for as long as it is open.
      */
     private void gameKeyPressed(GameKey key) {
-        if (!this.levelLoaded || this.abandonQuestion.filter(ConfirmPopup::isOpen).isPresent()) {
+        if (!this.levelLoaded || this.openQuestion.filter(ConfirmPopup::isOpen).isPresent()) {
             return;
         }
         switch (key) {
             case MENU -> this.requestReturnToMenu();
+            case RESTART -> this.requestRestartWave();
             case CANCEL -> {
                 if (this.engine.isPlacingTower()) {
                     this.engine.cancelPlacing();
