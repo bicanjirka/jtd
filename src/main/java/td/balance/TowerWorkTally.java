@@ -1,6 +1,5 @@
 package td.balance;
 
-import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.tower.Tower;
@@ -50,7 +49,7 @@ final class TowerWorkTally implements TowerHitListener {
     void countReach(EnemyMob[] enemies, List<Tower> towers) {
         List<EnemyMob> walking = new ArrayList<>();
         for (EnemyMob mob : enemies) {
-            if (!mob.isDead() && !mob.accept(DefinedEnemyMob::isInactive)) {
+            if (!mob.isDead() && !mob.isInactive()) {
                 walking.add(mob);
             }
         }

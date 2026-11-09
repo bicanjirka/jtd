@@ -127,15 +127,16 @@
   `offsetX`/`offsetY`. Never recompute it from the current tangent (members pivot and jump at
   corners). `clampOntoBoard` clamps only while the centreline is on the board, so enemies can
   still walk in from, and out to, off-screen.
-- Reaching the path's end is a despawn through the normal death/fade path, charged as
-  `EconomyDelta.leak`, with the position left where it was.
+- Reaching the path's end is a despawn through the normal death/fade path, with the position left where it was.
+- A mob never settles its own walk: it sets its fate and reports the walk, and `WalkSettlement` pays the kill or
+  charges the leak (score by rank, lives held to what is left, the playtest rules).
 
 ## Roster
 
 - Depend on `EnemyRegistry` (read-only) unless you mutate.
-- `reportDeath(walk)` decrements the alive count and tells every `WalkEndListener` the walk
-  ended (towers earn XP from it); `replace()` (a hatch) does neither, so a hatch earns no bounty
-  and does not shorten the wave.
+- `reportEnded(walk)`, once the mob's fate is set, decrements the alive count, counts a leak and tells every
+  `WalkEndListener` the walk ended (the economy settles it, towers earn XP from it); `replace()` (a hatch) does
+  none of that, so a hatch earns no bounty and does not shorten the wave.
 - A mob takes its `entryOrdinal` from `recordEntry()` the moment it goes live (after its spawn
   delay), not when it is built. `walkedWithin` covers only the path walked since it appeared.
 - Dead mobs stay in the list for their fade: use `aliveCount()` for "is the wave over".

@@ -9,6 +9,7 @@ import td.enemy.EnemyObservation;
 import td.enemy.EnemyRoster;
 import td.enemy.EnemySelection;
 import td.enemy.ObserveLog;
+import td.enemy.WalkSettlement;
 import td.projectile.ProjectileRoster;
 import td.stat.DisruptionField;
 import td.tower.ExperienceAwarder;
@@ -61,6 +62,7 @@ public class GameWorld {
         this.zones = new ZoneRoster(this.enemies);
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
         this.enemyObservation = new EnemyObservation(ObserveLog.toSessionLog(), this.towers::attackerName);
+        this.enemies.addWalkEndListener(new WalkSettlement(this.economy, this.playtestRules));
         this.enemies.addWalkEndListener(new ExperienceAwarder(this.towers));
     }
 

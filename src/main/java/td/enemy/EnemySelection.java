@@ -19,11 +19,10 @@ public final class EnemySelection {
     /** A click this close to a body's edge, relative to its radius, still picks it. */
     private static final float CLICK_RADIUS_FACTOR = 1.5f;
     private static final float MIN_CLICK_RADIUS = 12f;
-    private static final EnemyMobVisitor<DefinedEnemyMob> AS_DEFINED = mob -> mob;
     private static final Request NONE = new Request.None();
 
     private final AtomicReference<Request> pending = new AtomicReference<>(NONE);
-    private DefinedEnemyMob selected;
+    private EnemyMob selected;
 
     /** From any thread: select the enemy nearest to this board pixel, or clear if none is near. */
     public void requestAt(int boardX, int boardY) {
@@ -66,10 +65,9 @@ public final class EnemySelection {
     }
 
     private void selectNearest(EnemyMob[] roster, int x, int y) {
-        DefinedEnemyMob nearest = null;
+        EnemyMob nearest = null;
         double nearestDistance2 = Double.MAX_VALUE;
-        for (EnemyMob enemy : roster) {
-            DefinedEnemyMob mob = enemy.accept(AS_DEFINED);
+        for (EnemyMob mob : roster) {
             if (mob.isDead() || mob.isInactive()) {
                 continue;
             }
