@@ -80,6 +80,16 @@ public record EnemyDefinition(
                 .collect(Collectors.joining(" "));
     }
 
+    /** Whether one of its affixes draws every single-target tower's aim; asked for every enemy in range each tick. */
+    public boolean taunts() {
+        for (Affix affix : this.affixes) {
+            if (affix.taunts()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** What its affixes scale its body by. */
     public float sizeMultiplier() {
         return this.affixes.stream().map(Affix::sizeMultiplier).reduce(1f, (a, b) -> a * b);
