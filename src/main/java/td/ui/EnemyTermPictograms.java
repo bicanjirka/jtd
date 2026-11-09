@@ -11,8 +11,8 @@ final class EnemyTermPictograms {
             Map.entry("trait.regeneration", "S M19.6 12A7.6 7.6 0 1 1 15.2 5.2 ; F M13.6 2.2L19.8 4.6L15 8.8Z ; F M10.7 8.4H13.3V10.7H15.6V13.3H13.3V15.6H10.7V13.3H8.4V10.7H10.7Z"),
             // Adrenaline
             Map.entry("trait.adrenaline", "F M8.6 21C3.6 17.4 1.8 14.4 1.8 12A3.5 3.5 0 0 1 8.6 10.8A3.5 3.5 0 0 1 15.4 12C15.4 14.4 13.6 17.4 8.6 21Z ; S M13.6 9.6L20.6 2.6 M15.2 2.4H20.8V8"),
-            // Elusive
-            Map.entry("trait.elusive", "F O9.6 12.6 2.4 ; S M2.6 19.4C9.6 19.4 13.6 6 20.4 6 ; F M21.8 6L17.2 2.8V9.2Z"),
+            // Skittish
+            Map.entry("trait.skittish", "F O9.6 12.6 2.4 ; S M2.6 19.4C9.6 19.4 13.6 6 20.4 6 ; F M21.8 6L17.2 2.8V9.2Z"),
             // Adaptation
             Map.entry("trait.adaptation", "S M12 2.6L19.6 5.4V11C19.6 15.8 16.4 19.4 12 21.2C7.6 19.4 4.4 15.8 4.4 11V5.4Z ; T M15.4 10.6A3.6 3.6 0 0 0 8.8 9.8 M8.6 13.4A3.6 3.6 0 0 0 15.2 14.2 ; F M8 7.6L8.8 10.6L11.4 9.2Z M16 16.4L15.2 13.4L12.6 14.8Z"),
             // Hivemind

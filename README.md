@@ -428,11 +428,18 @@ An affix is an adjective a wave script writes right before the enemy id (`3 elit
 mite`), or in the head for every slot of the wave (`soldier armored: 8 walker`). Each gives the enemy
 one twist on top of its type and rank, and its name reads in front of the enemy's ("Armored Knight").
 A slot carries at most two, the head's included, and a boss chain takes none. No affix changes the
-bounty.
+bounty. An affix that measures health measures what one member of the slot is sent with, so a swarm
+member's share is its own; Hulking counts first, so the others measure its extra health.
 
 | Affix   | Keyword   | What it does                                                                     |
 |---------|-----------|----------------------------------------------------------------------------------|
+| Hulking | `hulking` | x2.5 health but 75% of its speed, and a bigger body |
+| Exalted | `exalted` | Every stat it has off its default (not speed) twice as far from it; a load fails if it has none |
 | Armored | `armored` | Armor against physical damage on top of its own: +25, rising to +400 as the level's landed damage leans physical |
+| Elusive | `elusive` | Dodges aimed shots: +15 agility at Grunt, rising to +40 at Boss |
+| Regenerating | `regenerating` | Restores 2% of its health every second |
+| Shielded | `shielded` | A shield worth 30% of its health once below half of it |
+| Withered | `withered` | 130% of its speed, but loses 2% of its health every second, so what holds it back kills it; never with Regenerating |
 
 ### Wave script ids
 

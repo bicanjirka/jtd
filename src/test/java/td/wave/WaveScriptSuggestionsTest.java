@@ -50,7 +50,7 @@ class WaveScriptSuggestionsTest {
     @Test
     void theSpacingTokenIsOnlyOfferedFirst() {
         assertThat(this.at("w")).contains("w");
-        assertThat(this.at("alpha w")).isEmpty();
+        assertThat(this.at("alpha w")).doesNotContain("w");
     }
 
     @Test

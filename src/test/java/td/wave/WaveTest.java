@@ -82,6 +82,14 @@ class WaveTest {
     }
 
     @Test
+    void anAffixThatGrowsTheBodyGrowsEveryMemberOfTheSlot() {
+        EnemyMob plain = wave("swarm 2 walker").spawn()[0];
+        EnemyMob hulking = wave("swarm 2 hulking walker").spawn()[0];
+
+        assertThat(hulking.getBodyScale()).isGreaterThan(plain.getBodyScale());
+    }
+
+    @Test
     void anAffixedSlotSpawnsItsAffixedDefinition() {
         DefinedEnemyMob affixed = (DefinedEnemyMob) wave("armored walker").spawn()[0];
 
