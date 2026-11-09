@@ -206,7 +206,7 @@ public record EnemyDefinition(
     }
 
     /** Authors the base of {@code stat} before any trait or effect modifies it; a later step replaces it. */
-    private EnemyDefinition withBase(EnemyStat stat, float base) {
+    EnemyDefinition withBase(EnemyStat stat, float base) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
                 this.abilitySlots, this.baseStats.with(stat, base), this.disruption, this.livesOnLeak, this.affixes);

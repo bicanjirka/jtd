@@ -241,6 +241,39 @@ class WaveScriptTest {
     }
 
     @Test
+    void aHeadsAffixesAddToASlotsOwnInTheOrderWritten() {
+        WaveContent content = WaveScript.parse("withered: hulking walker", Rank.GRUNT, this.catalog);
+
+        EnemySlot slot = (EnemySlot) content.spawnSequence().getFirst();
+        assertThat(slot.definition().affixes()).containsExactly(Affix.WITHERED, Affix.HULKING);
+    }
+
+    @Test
+    void aThirdAffixFailsAtItsToken() {
+        assertThatThrownBy(() -> WaveScript.parse("hulking: armored withered walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»withered«")
+                .hasMessageContaining("at most");
+    }
+
+    @Test
+    void twoAffixesThatUndoEachOtherFail() {
+        assertThatThrownBy(() -> WaveScript.parse("regenerating withered walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»withered«");
+    }
+
+    @Test
+    void anAffixThatHasNothingToDoOnTheEnemyFailsAtItsId() {
+        EnemyCatalog catalog = new EnemyCatalog();
+        catalog.register(EnemyFixtures.simpleDefinition("grub"));
+
+        assertThatThrownBy(() -> WaveScript.parse("exalted grub", Rank.GRUNT, catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»grub«");
+    }
+
+    @Test
     void anAffixWordCannotBeAnEnemyId() {
         EnemyCatalog catalog = new EnemyCatalog();
 

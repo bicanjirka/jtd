@@ -9,7 +9,7 @@ import java.util.Locale;
 public enum TraitTerm implements Term {
     REGENERATION("Regeneration", "heals itself over time"),
     ADRENALINE("Adrenaline", "moves faster the more it is hurt"),
-    ELUSIVE("Elusive", "dodges more the more it is hurt"),
+    SKITTISH("Skittish", "dodges more the more it is hurt"),
     ADAPTATION("Adaptation", "resists whichever damage type has hit its kind most this level"),
     JAM("Jam", "weakens the towers near it"),
     HIVEMIND("Hivemind", "grows tougher for every ally near it"),

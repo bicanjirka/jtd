@@ -125,7 +125,7 @@ public final class TermLooks {
         return new TermLook(switch (term) {
             case REGENERATION -> Palette.TRAIT_ICON_REGENERATION;
             case ADRENALINE -> Palette.TRAIT_ICON_HURT_SPEED;
-            case ELUSIVE -> Palette.TRAIT_ICON_HURT_AGILITY;
+            case SKITTISH -> Palette.TRAIT_ICON_HURT_AGILITY;
             case ADAPTATION -> Palette.TRAIT_ICON_PERCENT_RESIST;
             case JAM -> Palette.DISRUPTION;
             case HIVEMIND -> Palette.TRAIT_ICON_HIVEMIND;

@@ -19,7 +19,7 @@ public record HurtAgilityTrait(float maxAgility) implements Trait {
 
     @Override
     public TraitEntry entry() {
-        return TraitEntry.of(TraitTerm.ELUSIVE, TermText.of("gains agility as it is hurt, up to "
+        return TraitEntry.of(TraitTerm.SKITTISH, TermText.of("gains agility as it is hurt, up to "
                 + TermNumbers.signed(Math.round(this.maxAgility)) + " near death"));
     }
 }
