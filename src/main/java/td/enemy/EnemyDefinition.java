@@ -303,8 +303,8 @@ public record EnemyDefinition(
     }
 
     /**
-     * Adds traits by id: one whose id matches an existing trait replaces it in place, the rest are
-     * appended.
+     * Adds traits by id: one whose id matches a trait it had before replaces it in place, the rest are
+     * appended, so several added at once under one id all stay.
      */
     public EnemyDefinition withAdditionalTraits(List<IdentifiedTrait> additions) {
         return withIdentifiedTraits(compose(this.traitSlots, additions, IdentifiedTrait::id));
@@ -335,7 +335,7 @@ public record EnemyDefinition(
         List<T> result = new ArrayList<>(existing);
         for (T addition : additions) {
             TraitId id = idOf.apply(addition);
-            int index = indexOfId(result, id, idOf);
+            int index = indexOfId(existing, id, idOf);
             if (index >= 0) {
                 result.set(index, addition);
             } else {

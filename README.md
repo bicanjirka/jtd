@@ -444,8 +444,10 @@ member's share is its own; Hulking counts first, so the others measure its extra
 | Commanding | `commanding` | While it lives, the allies near it have Resolve: 10% less damage taken at Grunt, up to 30% at Boss; it fades soon after the Commander falls |
 | Vengeful | `vengeful` | As it dies, the allies near it Sprint: 1.5 s at Grunt, up to 4 s at Boss |
 | Taunting | `taunting` | Every tower that picks one target aims at it while it is in range; an enemy carrying Priority still comes first |
-| Coldblooded | `coldblooded` | A Freeze on it lasts half as long |
+| Coldblooded | `coldblooded` | A Freeze on it lasts half as long; never with Unstoppable |
 | Steadfast | `steadfast` | A Daze on it lasts a third as long |
+| Fireproof | `fireproof` | Immune to Burn, so it never builds Scorch from one; Soulfire still burns it |
+| Unstoppable | `unstoppable` | Immune to every slow: Chill, Tar, Drag and Anchor; a Freeze or a Daze still stops it; never with Coldblooded |
 | Plated | `plated` | Plating on top of its own, a fixed loss on every physical hit: +5, rising to +30 as the level's landed damage leans physical; never with Armored |
 
 ### Wave script ids

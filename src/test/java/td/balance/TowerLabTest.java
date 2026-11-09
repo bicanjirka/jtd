@@ -26,13 +26,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TowerLabTest {
 
-    private static final EnemyDefinition FIREPROOF = EnemyFixtures.simpleDefinition("fireproof")
+    private static final EnemyDefinition FIREPROOF = EnemyFixtures.simpleDefinition("salamandrine")
             .withTraits(List.of(new ImmunityTrait(EffectKind.BURN)));
     private static final EnemyDefinition HIDER = EnemyFixtures.simpleDefinition("hider").withArmor(20f)
             .withAbilities(List.of(new Ability(AbilityTerm.FADE, new OnFirstDamageTakenTrigger(),
                     new ApplyEffectAction(new InvisibleTemplate(300), new SelfTarget()))));
     private static final LevelDefinition LEVEL = LevelDefinition.unsmoothed("Lab Test", "", 7, 5,
-            List.of(new Point(-1, 2), new Point(7, 2)), List.of(new WaveDefinition("fireproof")),
+            List.of(new Point(-1, 2), new Point(7, 2)), List.of(new WaveDefinition("salamandrine")),
             100, 5).withCustomEnemies(List.of(FIREPROOF, HIDER));
     private static final LevelDefinition PROBES = TowerLab.probeLevel(LEVEL, TowerLab.PLAIN, -1);
     private static final Point BESIDE_THE_PATH = new Point(3, 1);
@@ -51,7 +51,7 @@ class TowerLabTest {
 
     @Test
     void aBurnImmuneKindShrugsOffTheScorcherButNotTheSniper() {
-        String fireproof = TowerLab.kindKey("fireproof", Rank.GRUNT);
+        String fireproof = TowerLab.kindKey("salamandrine", Rank.GRUNT);
 
         double scorcher = TowerLab.Duel.calibrated(LEVEL, TowerFactory.Type.CINDER, BESIDE_THE_PATH).kindFactor(fireproof);
         double sniper = TowerLab.Duel.calibrated(LEVEL, TowerFactory.Type.SNIPER, BESIDE_THE_PATH).kindFactor(fireproof);
@@ -113,19 +113,19 @@ class TowerLabTest {
 
     @Test
     void onlyAKindThatTurnsInvisibleCountsAsHiding() {
-        List<String> keys = List.of(TowerLab.kindKey("fireproof", Rank.GRUNT), HIDER_KEY);
+        List<String> keys = List.of(TowerLab.kindKey("salamandrine", Rank.GRUNT), HIDER_KEY);
 
         assertThat(TowerLab.hidingKinds(LEVEL, keys)).containsExactly(HIDER_KEY);
     }
 
     @Test
     void theLevelsOwnKindsAreProbedEvenThoseNoRoundSends() {
-        assertThat(TowerLab.probedKinds(LEVEL)).contains("fireproof", "hider");
+        assertThat(TowerLab.probedKinds(LEVEL)).contains("salamandrine", "hider");
     }
 
     @Test
     void theLevelsOwnKindsAreMeasuredAtTheRanksItSends() {
-        assertThat(TowerLab.ranksIn(LEVEL)).containsExactly(TowerLab.kindKey("fireproof", Rank.GRUNT));
+        assertThat(TowerLab.ranksIn(LEVEL)).containsExactly(TowerLab.kindKey("salamandrine", Rank.GRUNT));
     }
 
     private static TowerLab.SupportTrial supportTrial(TowerFactory.Type type) {

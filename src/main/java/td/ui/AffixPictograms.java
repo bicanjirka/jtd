@@ -35,7 +35,11 @@ final class AffixPictograms {
             // Steadfast: a mountain
             Map.entry("affix.steadfast", "F M1.8 20.4L8.6 7.8L12.4 14.2L15.6 9.2L22.2 20.4Z"),
             // Plated: overlapping scales
-            Map.entry("affix.plated", "F M2.6 4H21.4V9.6H2.6Z M2.6 11.2H21.4V16.8H2.6Z ; F M6.4 18.4H17.6L12 22.2Z"));
+            Map.entry("affix.plated", "F M2.6 4H21.4V9.6H2.6Z M2.6 11.2H21.4V16.8H2.6Z ; F M6.4 18.4H17.6L12 22.2Z"),
+            // Fireproof: a flame struck through
+            Map.entry("affix.fireproof", "F M12 2.4C16 7 18.4 10.4 18.4 14.6A6.4 6.4 0 0 1 5.6 14.6C5.6 10.4 8 7 12 2.4Z ; X M3.4 20.6L20.6 3.4 ; S M3.4 20.6L20.6 3.4"),
+            // Unstoppable: a ram's charge
+            Map.entry("affix.unstoppable", "F M2.4 8.4H12.6V4L21.6 12L12.6 20V15.6H2.4Z"));
 
     private AffixPictograms() {
     }

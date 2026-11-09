@@ -20,7 +20,7 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Volatile affix**: shoves the allies near it further along as it dies.
 - **Emboldened affix**: tougher the further along the path it gets.
 - **Greedy affix**: a leak also costs credits.
-- **Immunity affixes**: immune to one effect kind (burn, freeze, slows).
+- **Immunity affixes**: immune to freeze, beside Fireproof (burn) and Unstoppable (slows).
 
 ## Feature request implementation order
 

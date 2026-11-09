@@ -46,6 +46,17 @@ class EnemyDefinitionTest {
     }
 
     @Test
+    void additionsMadeTogetherUnderOneIdAllStay() {
+        Trait first = new RegenerationTrait(1f);
+        Trait second = new HurtSpeedTrait(1.2f);
+
+        EnemyDefinition result = this.base.withAdditionalTraits(
+                List.of(IdentifiedTrait.named("pair", first), IdentifiedTrait.named("pair", second)));
+
+        assertThat(result.traitsFor(DamageMix.none())).containsExactly(first, second);
+    }
+
+    @Test
     void aNamedAbilityAdditionReplacesTheEarlierEntryWithTheSameId() {
         Ability weakHeal = new Ability(AbilityTerm.GUARD, new OnceTrigger(10), new ApplyEffectAction(new ShieldTemplate(0.3f, 100), new SelfTarget()));
         Ability strongHeal = new Ability(AbilityTerm.GUARD, new OnceTrigger(20), new ApplyEffectAction(new ShieldTemplate(0.5f, 100), new SelfTarget()));
