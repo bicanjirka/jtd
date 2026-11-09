@@ -6,7 +6,7 @@ import td.effect.ShieldTemplate;
 import java.util.List;
 
 /**
- * The Mender mob ({@code m}): heals the allies near it, takes heals well itself (its spirit grows with rank), from
+ * The Mender mob ({@code mender}): heals the allies near it, takes heals well itself (its spirit grows with rank), from
  * Veteran heals itself when left alone and leaves a last
  * blessing of healing and a shield on the allies around it when it dies; at Boss the blessing is a heal alone.
  */

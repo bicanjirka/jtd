@@ -3,7 +3,7 @@ package td.enemy;
 import java.util.List;
 
 /**
- * The Simple mob ({@code c}): no abilities and, up to Veteran, nothing but health. From Elite an armor that hardens
+ * The Simple mob ({@code simple}): no abilities and, up to Veteran, nothing but health. From Elite an armor that hardens
  * against what hurts it most and a little of every stat, and at Boss a steadiness that blunts crits.
  */
 final class SimpleEnemy {

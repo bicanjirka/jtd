@@ -6,7 +6,7 @@ import td.util.TickRate;
 import java.util.List;
 
 /**
- * The Armored mob ({@code s}): armor and magic resist, plating, immune to crits, heavy enough to shrug off
+ * The Armored mob ({@code armored}): armor and magic resist, plating, immune to crits, heavy enough to shrug off
  * some of a freeze, and at Boss rank it calls reinforcements. Those are a definition of their own, not the ladder's
  * boss, because a boss that reinforces with itself would be a spawn cycle. From Elite it lays mines along its path that
  * shield the first enemy to step on them.

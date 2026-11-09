@@ -2,19 +2,16 @@ package td.enemy;
 
 import td.util.GameStartupException;
 
-import java.util.Optional;
-
 /**
- * How a {@link SpawnEnemiesAction} spawns: member count, per-member multipliers, time spacing and
- * an optional trait. Not the wave's spawn shape, because an ability spawn has no slot on the path
- * to lay a formation out against. {@link #normal()} is a single ordinary spawn.
+ * How a {@link SpawnEnemiesAction} spawns: member count, per-member multipliers and time spacing.
+ * Not the wave's spawn shape, because an ability spawn has no slot on the path to lay a formation
+ * out against. {@link #normal()} is a single ordinary spawn.
  * <p>
  * Health and bounty multipliers apply per member rather than splitting a total. Members are spaced
  * in time by {@code delaySpacingSlots}, so they don't arrive stacked on one pixel.
  */
 public record AbilitySpawnShape(int members, float sizeMultiplier, float healthMultiplier,
-                                 float bountyMultiplier, double delaySpacingSlots,
-                                 Optional<IdentifiedTrait> traitOverride) {
+                                 float bountyMultiplier, double delaySpacingSlots) {
 
     /** Catches a mistyped count at construction. */
     public static final int MAX_MEMBERS = 12;
@@ -25,7 +22,7 @@ public record AbilitySpawnShape(int members, float sizeMultiplier, float healthM
     private static final double BROOD_DELAY_SPACING_SLOTS = 2.0;
 
     private static final AbilitySpawnShape NORMAL =
-            new AbilitySpawnShape(1, 1f, 1f, 1f, 0.0, Optional.empty());
+            new AbilitySpawnShape(1, 1f, 1f, 1f, 0.0);
 
     public AbilitySpawnShape {
         if (members < 1 || members > MAX_MEMBERS) {
@@ -34,9 +31,9 @@ public record AbilitySpawnShape(int members, float sizeMultiplier, float healthM
         }
     }
 
-    /** Only time spacing; every multiplier {@code 1f}, no trait. */
+    /** Only time spacing; every multiplier {@code 1f}. */
     public AbilitySpawnShape(int members, double delaySpacingSlots) {
-        this(members, 1f, 1f, 1f, delaySpacingSlots, Optional.empty());
+        this(members, 1f, 1f, 1f, delaySpacingSlots);
     }
 
     public static AbilitySpawnShape normal() {
@@ -46,6 +43,6 @@ public record AbilitySpawnShape(int members, float sizeMultiplier, float healthM
     /** A shrunken, time-spaced brood of reinforcements. */
     public static AbilitySpawnShape brood(int members, float healthMultiplier, float bountyMultiplier) {
         return new AbilitySpawnShape(members, BROOD_SIZE_MULTIPLIER, healthMultiplier, bountyMultiplier,
-                BROOD_DELAY_SPACING_SLOTS, Optional.empty());
+                BROOD_DELAY_SPACING_SLOTS);
     }
 }
