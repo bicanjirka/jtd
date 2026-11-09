@@ -3,25 +3,24 @@ package td.wave;
 import td.enemy.Affix;
 import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
+import td.wave.WaveScriptGrammar.NextWords;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
- * What could be typed at the caret of a wave script, following the order {@link WaveScript} accepts
- * its tokens in. It reads the tokens before the caret, never reports a problem: the parser does.
+ * What could be typed at the caret of a wave script: what {@link WaveScriptGrammar} accepts after the tokens before
+ * the caret. It never reports a problem: the parser does, and past one it offers nothing.
  */
 public final class WaveScriptSuggestions {
 
-    private static final Pattern COUNT = Pattern.compile("\\d+");
     private static final String SPACING_STEM = "w";
-    private static final List<String> RANKS = Stream.of(RankKeyword.values()).map(RankKeyword::token).toList();
-    private static final List<String> SHAPES = WaveScript.RESERVED_TOKENS.stream()
-            .filter(WaveScript::isShapeToken).sorted().toList();
+    private static final List<ShapeKeyword> SHAPES = Stream.of(ShapeKeyword.values())
+            .sorted(Comparator.comparing(ShapeKeyword::token)).toList();
 
     private WaveScriptSuggestions() {
     }
@@ -66,9 +65,8 @@ public final class WaveScriptSuggestions {
         int end = text.indexOf(' ', at) < 0 ? text.length() : text.indexOf(' ', at);
         String prefix = text.substring(start, at).toLowerCase(Locale.ROOT);
 
-        Position position = positionAfter(text.substring(0, start), catalog);
         List<Candidate> candidates = new ArrayList<>();
-        for (Candidate candidate : candidatesAt(position, catalog)) {
+        for (Candidate candidate : candidatesAt(text.substring(0, start), catalog)) {
             if (candidate.text().equals(prefix)) {
                 candidates.addFirst(candidate);
             } else if (candidate.text().startsWith(prefix)) {
@@ -78,108 +76,43 @@ public final class WaveScriptSuggestions {
         return new Result(start, end, candidates);
     }
 
-    private static List<Candidate> candidatesAt(Position position, EnemyCatalog catalog) {
-        List<Candidate> all = new ArrayList<>();
-        if (position.shape() == ShapeState.AWAITING_COUNT) {
-            return all;
+    private static List<Candidate> candidatesAt(String typed, EnemyCatalog catalog) {
+        NextWords next;
+        try {
+            next = new WaveScriptGrammar(Rank.GRUNT, catalog).next(typed.split(" "));
+        } catch (WaveScriptGrammar.ScriptFault fault) {
+            // The script box marks the fault; nothing typed after it can mend it.
+            return List.of();
         }
-        if (position.first()) {
+        List<Candidate> all = new ArrayList<>();
+        if (next.accepts(NextWords.Kind.SPACING)) {
             all.add(Candidate.stem(SPACING_STEM, "ticks per slot, e.g. w30:"));
         }
-        if (position.headOpen()) {
+        if (next.accepts(NextWords.Kind.HEAD_END)) {
             all.add(Candidate.token(WaveScript.HEAD_END, "ends the head"));
         }
-        if (position.shape() == ShapeState.NONE) {
-            if (position.rank().isEmpty()) {
-                for (String rank : RANKS) {
-                    all.add(Candidate.token(rank, "rank"));
-                }
-                all.add(Candidate.token(WaveScript.EMPTY_TOKEN, "spacer"));
-            }
-            for (String shape : SHAPES) {
-                all.add(Candidate.token(shape, WaveScript.takesMemberCount(shape) ? "shape, needs a count" : "shape"));
+        if (next.accepts(NextWords.Kind.RANK)) {
+            for (RankKeyword rank : RankKeyword.values()) {
+                all.add(Candidate.token(rank.token(), "rank"));
             }
         }
-        for (Affix affix : Affix.values()) {
+        if (next.accepts(NextWords.Kind.SPACER)) {
+            all.add(Candidate.token(WaveScript.EMPTY_TOKEN, "spacer"));
+        }
+        if (next.accepts(NextWords.Kind.SHAPE)) {
+            for (ShapeKeyword shape : SHAPES) {
+                all.add(Candidate.token(shape.token(), shape.takesMemberCount() ? "shape, needs a count" : "shape"));
+            }
+        }
+        for (Affix affix : next.affixes()) {
             all.add(Candidate.token(affix.word(), "affix"));
         }
-        boolean belowBoss = position.rank().filter(rank -> rank != Rank.BOSS).isPresent();
         for (String id : catalog.ids()) {
             boolean unique = catalog.ranked(id).isUnique();
-            if (!(unique && belowBoss)) {
+            if (next.accepts(unique ? NextWords.Kind.UNIQUE_ENEMY : NextWords.Kind.ENEMY)) {
                 all.add(Candidate.token(id, unique ? "enemy, boss only" : "enemy"));
             }
         }
         return all;
-    }
-
-    /** What the tokens already typed leave pending. */
-    private static Position positionAfter(String typed, EnemyCatalog catalog) {
-        Position position = new Position(true, false, Optional.empty(), ShapeState.NONE);
-        for (String token : typed.split(" ")) {
-            if (token.isBlank()) {
-                continue;
-            }
-            boolean endsHead = token.endsWith(WaveScript.HEAD_END);
-            String word = endsHead ? token.substring(0, token.length() - WaveScript.HEAD_END.length()) : token;
-            if (!word.isEmpty()) {
-                position = after(position, word, catalog);
-            }
-            if (endsHead) {
-                position = new Position(false, false, Optional.empty(), ShapeState.NONE);
-            }
-        }
-        return position;
-    }
-
-    private static Position after(Position before, String token, EnemyCatalog catalog) {
-        boolean headSoFar = before.first() || before.headOpen();
-        Position position = before.withFirst(false).withHeadOpen(false);
-        if (before.first() && WaveScript.isSpacingToken(token)) {
-            return position.withHeadOpen(true);
-        }
-        Optional<RankKeyword> rank = RankKeyword.of(token);
-        if (rank.isPresent()) {
-            return position.withHeadOpen(headSoFar && before.rank().isEmpty()).withRank(rank.map(RankKeyword::rank));
-        }
-        if (WaveScript.isShapeToken(token)) {
-            return position.withShape(WaveScript.takesMemberCount(token) ? ShapeState.AWAITING_COUNT : ShapeState.READY);
-        }
-        if (Affix.of(token).isPresent()) {
-            // Only the enemy, or more affixes, may follow an affix.
-            return position.withHeadOpen(headSoFar).withShape(ShapeState.READY);
-        }
-        if (token.equals(WaveScript.EMPTY_TOKEN) || catalog.contains(token)) {
-            return position.withRank(Optional.empty()).withShape(ShapeState.NONE);
-        }
-        if (position.shape() == ShapeState.AWAITING_COUNT && COUNT.matcher(token).matches()) {
-            return position.withShape(ShapeState.READY);
-        }
-        return position;
-    }
-
-    /** Where the slot's shape keyword stands: none yet, waiting for its member count, or done. */
-    private enum ShapeState {
-        NONE, AWAITING_COUNT, READY
-    }
-
-    /** {@code headOpen}: every token so far could be a head's, so a {@code :} may end it here. */
-    private record Position(boolean first, boolean headOpen, Optional<Rank> rank, ShapeState shape) {
-
-        Position withFirst(boolean first) {
-            return new Position(first, this.headOpen, this.rank, this.shape);
-        }
-
-        Position withHeadOpen(boolean headOpen) {
-            return new Position(this.first, headOpen, this.rank, this.shape);
-        }
-
-        Position withRank(Optional<Rank> rank) {
-            return new Position(this.first, this.headOpen, rank, this.shape);
-        }
-
-        Position withShape(ShapeState shape) {
-            return new Position(this.first, this.headOpen, this.rank, shape);
-        }
     }
 }

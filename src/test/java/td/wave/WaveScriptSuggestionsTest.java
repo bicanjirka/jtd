@@ -89,8 +89,29 @@ class WaveScriptSuggestionsTest {
     }
 
     @Test
-    void aSpacingTokenIsNotTheSlotThatFollowsIt() {
-        assertThat(this.at("w30 b")).contains("boss", "brute");
+    void afterASpacingOnlyTheHeadsWordsFollow() {
+        assertThat(this.at("w30 b")).contains("boss").doesNotContain("brute");
+    }
+
+    @Test
+    void aSlotThatCarriesTheMostAffixesIsOfferedNoMore() {
+        assertThat(this.at("armored hulking ")).doesNotContain("elusive").contains("alpha");
+        assertThat(this.at("armored: hulking ")).doesNotContain("elusive").contains("alpha");
+    }
+
+    @Test
+    void anAffixThatExcludesOneTheSlotCarriesIsNotOffered() {
+        assertThat(this.at("regenerating ")).doesNotContain("withered", "regenerating").contains("armored");
+    }
+
+    @Test
+    void anEnemyThatTakesNoAffixIsLeftOutAfterOne() {
+        assertThat(this.at("armored lo")).isEmpty();
+    }
+
+    @Test
+    void nothingIsOfferedPastAFault() {
+        assertThat(this.at("elite elite ")).isEmpty();
     }
 
     @Test

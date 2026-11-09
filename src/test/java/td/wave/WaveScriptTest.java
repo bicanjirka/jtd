@@ -442,24 +442,26 @@ class WaveScriptTest {
     }
 
     @Test
-    void aCountAfterARankTokenWinsOverOneBeforeIt() {
-        WaveContent content = WaveScript.parse("2 elite 3 walker", Rank.GRUNT, this.catalog);
-
-        assertThat(content.spawnSequence()).hasSize(3);
+    void aRepeatCountAfterARankFailsAtTheCount() {
+        assertThatThrownBy(() -> WaveScript.parse("elite 3 walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»3«")
+                .hasMessageContaining("goes first in its slot");
     }
 
     @Test
-    void ofConsecutiveCountsOnlyTheLastOneRepeats() {
-        WaveContent content = WaveScript.parse("2 3 walker", Rank.GRUNT, this.catalog);
-
-        assertThat(content.enemyCount(this.simple)).isEqualTo(3);
+    void twoCountsInARowFailAtTheSecond() {
+        assertThatThrownBy(() -> WaveScript.parse("2 3 walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»3«");
     }
 
     @Test
-    void aCountLeftAtTheEndOfTheScriptRepeatsNothing() {
-        WaveContent content = WaveScript.parse("walker 3", Rank.GRUNT, this.catalog);
-
-        assertThat(content.spawnSequence()).hasSize(1);
+    void aCountLeftAtTheEndOfTheScriptFails() {
+        assertThatThrownBy(() -> WaveScript.parse("walker 3", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("ends early")
+                .hasMessageContaining("count 3");
     }
 
     @Test

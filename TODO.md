@@ -256,34 +256,6 @@ fight changes resets there, so a field that misses it carries one wave into the 
   `endFight()` both build with `new`, so a new fight field is reset by being in it. Delete the
   `tower/CLAUDE.md` rule once every leaf has one.
 
-### The wave-script suggestions parse the grammar a second time; ranks are a token switch
-
-**Trigger:** the next change to the wave-script grammar: a new keyword, rank or token. (Design review
-F10 and F11.) It already fired: the script head and affixes were taught to both copies instead, which made
-this bigger. Do it before the next grammar change, not with it.
-
-`WaveScriptSuggestions.positionAfter` walks the typed tokens with its own small state machine
-(`Position`, `ShapeState`) to know what may come next. `WaveScriptGrammar`, the real parser, knows the
-same, so a new keyword has to be taught to both. Ranks are string constants and three switches in
-`WaveScript` (`isRankToken`, `rankFor`, and `rankToken` for writing a head), while spawn shapes are rows of
-the `ShapeKeyword` enum and affixes rows of `Affix`. The copy has already drifted: `positionAfter` tracks a
-head with `headOpen` but not the affixes a slot carries, so the suggestions offer every affix after any
-token, even on a slot that already holds `WaveScript.MAX_AFFIXES` of them, holds that one, or holds one it
-`excludes`; the grammar rejects each of those when the script is checked.
-
-- **Where:** `td.wave.WaveScriptSuggestions` (`positionAfter`, `after`, `Position`, `RANKS`, `SHAPES`, the
-  affix loop in `candidates`), `WaveScriptGrammar` (`head`, `affixes`), `WaveScript` (`isRankToken`,
-  `rankFor`, `rankToken`, the rank `*_TOKEN` constants, `RESERVED_TOKENS`),
-  `ShapeKeyword` as the model, `wave/CLAUDE.md`.
-- **Approach:** ranks first, it is small: a package-private `RankKeyword` enum shaped like
-  `ShapeKeyword` (token, `Rank`, `of(String)`), which `isRankToken`, `rankFor` and the suggestions'
-  `RANKS` read. Then the grammar answers what is pending after a typed prefix (whether a head can still
-  end, a rank seen, a shape waiting for its member count, the affixes the slot carries with the head's), and
-  `WaveScriptSuggestions` asks it instead of `positionAfter`, offering an affix only where
-  `WaveScriptGrammar.affixes` would accept it. Add a suggestions test for a full slot first; it fails today.
-  `WaveScriptSuggestionsTest` and `WaveScriptTest` must pass unchanged: the behaviour stays. Done when
-  a new keyword is one row plus the grammar.
-
 ## Balance tools
 
 ### No test runs the whole lab
