@@ -58,3 +58,4 @@ Each alternative, with why it lost.
 | [0018](0018-board-looks-are-role-tables.md) | Board looks are tables per role, not switches in the painter | Accepted, enemy looks implemented |
 | [0019](0019-edt-commands-are-requests.md) | An EDT command to the engine is a request the next tick applies | Accepted |
 | [0020](0020-design-docs-family.md) | Design principles, decisions and the overview live in separate documents | Accepted |
+| [0021](0021-a-wave-starts-from-its-save.md) | A wave starts from its save: clean wave ends, ready towers, saves replay tick for tick | Accepted, not yet implemented |

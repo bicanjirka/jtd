@@ -11,6 +11,9 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
+- **Wave checkpoints** (`docs/features/FEATURE-wave-checkpoints.md`): clean wave ends, ready towers, a replayable
+  checkpoint, restart and retry, full refund for unused buys. Refined; ready for planning.
+- **P pauses**: P as a pause key beside Space. Not yet decided.
 
 ## Feature request implementation order
 
