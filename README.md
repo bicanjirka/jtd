@@ -435,7 +435,7 @@ member's share is its own; Hulking counts first, so the others measure its extra
 | Affix   | Keyword   | What it does                                                                     |
 |---------|-----------|----------------------------------------------------------------------------------|
 | Hulking | `hulking` | x2.5 health but 75% of its speed, and a bigger body |
-| Exalted | `exalted` | Every stat it has off its default (not speed) twice as far from it; a load fails if it has none |
+| Exalted | `exalted` | Stronger in every stat it has off its default (not speed): a strength twice as far from it, a weakness half as far; a load fails if it has none |
 | Armored | `armored` | Armor against physical damage on top of its own: +25, rising to +400 as the level's landed damage leans physical |
 | Elusive | `elusive` | Dodges aimed shots: +15 agility at Grunt, rising to +40 at Boss |
 | Regenerating | `regenerating` | Restores 2% of its health every second |

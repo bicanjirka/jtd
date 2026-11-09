@@ -47,19 +47,21 @@ public enum Affix implements Term {
         @Override
         EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
             return exaltedStats().reduce(definition, (exalted, stat) -> exalted.withBase(stat,
-                    stat.defaultBase() + 2f * (definition.baseStats().value(stat) - stat.defaultBase())), (a, b) -> b);
+                    exaltedBase(stat, definition.baseStats().value(stat))), (a, b) -> b);
         }
 
         @Override
         public Optional<String> problemWith(EnemyDefinition definition) {
             return exaltedStats().anyMatch(stat -> definition.baseStats().value(stat) != stat.defaultBase())
                     ? Optional.empty()
-                    : Optional.of("it has no stat off its default to double");
+                    : Optional.of("it has no stat off its default to raise");
         }
 
         @Override
         public TermText describe() {
-            return TermText.of("is twice as far from the usual in every stat it has, but not in its speed");
+            return TermText.of("is stronger in every stat it has off the usual, but not in its speed: each strength "
+                    + TermNumbers.times(EXALTED_STRENGTH) + " as far from it, each weakness "
+                    + TermNumbers.times(EXALTED_WEAKNESS) + " as far");
         }
     },
     ARMORED("Armored") {
@@ -184,6 +186,8 @@ public enum Affix implements Term {
     private static final float HULKING_HEALTH = 2.5f;
     private static final float HULKING_SPEED = 0.75f;
     private static final float HULKING_SIZE = 1.4f;
+    private static final float EXALTED_STRENGTH = 2f;
+    private static final float EXALTED_WEAKNESS = 0.5f;
     private static final AdaptiveResist PHYSICAL_ARMOR = AdaptiveResist.against(DamageType.PHYSICAL, 25f, 400f);
     private static final float REGENERATING_SHARE = 0.02f;
     private static final float SHIELDED_BELOW = 0.5f;
@@ -275,6 +279,18 @@ public enum Affix implements Term {
             case BOSS -> 4f;
         };
         return Math.round(seconds * TickRate.TICKS_PER_SECOND);
+    }
+
+    /** {@code base} made stronger for the enemy: a strength pushed further from the default, a weakness pulled back. */
+    private static float exaltedBase(EnemyStat stat, float base) {
+        float offset = base - stat.defaultBase();
+        float factor = switch (stat.direction()) {
+            case LOWER -> offset < 0f ? EXALTED_WEAKNESS : EXALTED_STRENGTH;
+            case HIGHER -> offset > 0f ? EXALTED_WEAKNESS : EXALTED_STRENGTH;
+            // Neither way is stronger, so there is nothing to raise.
+            case NEUTRAL -> 1f;
+        };
+        return stat.defaultBase() + offset * factor;
     }
 
     /** Every stat but speed: health is no stat, and a doubled speed would be a different affix. */
