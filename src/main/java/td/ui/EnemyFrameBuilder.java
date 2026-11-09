@@ -270,7 +270,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     /** The rank badges and affix pips alone, for a preview that shows a body and what it is and nothing around it. */
-    public List<EnemyOverlayDraw> buildBadges() {
+    public List<EnemyOverlayDraw> buildBadgeRows() {
         return this.badgeDraws;
     }
 
