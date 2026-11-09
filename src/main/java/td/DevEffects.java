@@ -133,6 +133,7 @@ public final class DevEffects {
             case SATURATED -> stacking(kind, Effect::saturated);
             case TOLL -> stacking(kind, Effect::toll);
             case SPELLPROOF -> stacking(kind, Effect::spellproof);
+            case RESOLVE -> stacking(kind, Effect::resolve);
             case CORRODED -> stacking(kind, Effect::corroded);
             case DRAGGED -> stacking(kind, Effect::dragged);
             case FRAIL -> stacking(kind, Effect::frail);

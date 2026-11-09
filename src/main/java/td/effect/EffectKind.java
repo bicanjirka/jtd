@@ -127,7 +127,11 @@ public enum EffectKind implements Term {
             .perStack(EnemyStat.MAGIC_RESIST, 1f).helpsCarrier()),
     /** A last stand: far more resilience, spirit and magic resist. */
     UNYIELDING("Unyielding", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.RESILIENCE, 100f)
-            .perStack(EnemyStat.SPIRIT, 100f).perStack(EnemyStat.MAGIC_RESIST, 100f).helpsCarrier());
+            .perStack(EnemyStat.SPIRIT, 100f).perStack(EnemyStat.MAGIC_RESIST, 100f).helpsCarrier()),
+    /** Less damage taken of either type, a stack a point; an application holds it at its own stacks. */
+    RESOLVE("Resolve", EffectRule.of(EffectCategory.BUFF).stackingOnASharedClock(100)
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, -0.01f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, -0.01f)
+            .helpsCarrier());
 
     /** The most stacks any stacking kind reaches, so a cap an application raises (Fault Line) still has a bundle. */
     private static final int MOST_STACKS = 100;

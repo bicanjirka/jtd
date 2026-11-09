@@ -97,6 +97,8 @@ final class EffectPictograms {
             Map.entry("effect.spellproof", "S M12 2.5C8 2.5 4.5 6 4.5 10.2C4.5 14 7 16.6 9 18V21.5H15V18C17 16.6 19.5 14 19.5 10.2C19.5 6 16 2.5 12 2.5Z ; F O12 10 2.4"),
             // Unyielding
             Map.entry("effect.unyielding", "F M12 2.5L20 6V12C20 16.8 16.6 20.2 12 21.8C7.4 20.2 4 16.8 4 12V6Z ; K M12 6.4V17.4 M7.6 11.6H16.4"),
+            // Resolve
+            Map.entry("effect.resolve", "S M6 2.5V21.5 ; F M6.8 3.5H19.5L16.4 8L19.5 12.5H6.8Z"),
             // Haste
             Map.entry("effect.hastened", "F M4 5.6L9.4 12L4 18.4H6.6L12 12L6.6 5.6Z M10 5.6L15.4 12L10 18.4H12.6L18 12L12.6 5.6Z M16 5.6L21.4 12L16 18.4H18.6L24 12L18.6 5.6Z"));
 

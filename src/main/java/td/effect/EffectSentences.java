@@ -126,6 +126,10 @@ final class EffectSentences {
                     TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd()),
                     EnemyStat.MOVE_SPEED);
             case SPELLPROOF -> stacked(kind, EnemyStat.MAGIC_RESIST);
+            case RESOLVE -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
+                            EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
+                    .plus(", as many stacks as the ally that gives it has to give");
             case UNYIELDING -> TermText.join(", ", List.of(
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE),
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)), EnemyStat.SPIRIT),

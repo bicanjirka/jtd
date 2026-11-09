@@ -2,11 +2,14 @@ package td.enemy;
 
 import td.damage.DamageType;
 import td.effect.EffectKind;
+import td.effect.ResolveTemplate;
 import td.effect.ShieldTemplate;
+import td.effect.SprintTemplate;
 import td.stat.EnemyStat;
 import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
+import td.util.TickRate;
 
 import java.util.List;
 import java.util.Locale;
@@ -132,6 +135,38 @@ public enum Affix implements Term {
             return TermText.of("moves at " + TermNumbers.percent(WITHERED_SPEED) + " of its speed but loses "
                     + TermNumbers.percent(WITHERED_SHARE) + " of its health every second, so what holds it back kills it");
         }
+    },
+    COMMANDING("Commanding") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.COMMAND,
+                    new PeriodicTrigger(COMMAND_INTERVAL_TICKS),
+                    new ApplyEffectAction(new ResolveTemplate(commandStacks(context.rank()), COMMAND_HOLD_TICKS),
+                            new RadiusTarget(AFFIX_REACH))))));
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.format("gives the allies near it {}, " + TermNumbers.percent(commandStacks(Rank.GRUNT) / 100f)
+                    + " less damage taken at Grunt, up to " + TermNumbers.percent(commandStacks(Rank.BOSS) / 100f)
+                    + " at Boss, while it lives", EffectKind.RESOLVE);
+        }
+    },
+    VENGEFUL("Vengeful") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.VENGEANCE,
+                    new OnDeathTrigger(), new ApplyEffectAction(new SprintTemplate(vengeanceTicks(context.rank())),
+                            new RadiusTarget(AFFIX_REACH))))));
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.format("as it dies, sends the allies near it into a {} for "
+                    + TermNumbers.seconds(vengeanceTicks(Rank.GRUNT) / TickRate.TICKS_PER_SECOND) + " at Grunt, up to "
+                    + TermNumbers.seconds(vengeanceTicks(Rank.BOSS) / TickRate.TICKS_PER_SECOND) + " at Boss",
+                    EffectKind.SPRINTING);
+        }
     };
 
     private static final float HULKING_HEALTH = 2.5f;
@@ -143,6 +178,10 @@ public enum Affix implements Term {
     private static final float SHIELDED_SHARE = 0.3f;
     private static final float WITHERED_SPEED = 1.3f;
     private static final float WITHERED_SHARE = 0.02f;
+    private static final float AFFIX_REACH = 80f;
+    private static final int COMMAND_INTERVAL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    // Outlasts the interval, so an ally in reach stays covered and loses it soon after the commander falls.
+    private static final int COMMAND_HOLD_TICKS = Math.round(2 * TickRate.TICKS_PER_SECOND);
 
     private final String title;
 
@@ -196,6 +235,27 @@ public enum Affix implements Term {
             case ELITE -> 30f;
             case BOSS -> 40f;
         };
+    }
+
+    private static int commandStacks(Rank rank) {
+        return switch (rank) {
+            case GRUNT -> 10;
+            case SOLDIER -> 15;
+            case VETERAN -> 20;
+            case ELITE -> 25;
+            case BOSS -> 30;
+        };
+    }
+
+    private static int vengeanceTicks(Rank rank) {
+        float seconds = switch (rank) {
+            case GRUNT -> 1.5f;
+            case SOLDIER -> 2f;
+            case VETERAN -> 2.5f;
+            case ELITE -> 3f;
+            case BOSS -> 4f;
+        };
+        return Math.round(seconds * TickRate.TICKS_PER_SECOND);
     }
 
     /** Every stat but speed: health is no stat, and a doubled speed would be a different affix. */

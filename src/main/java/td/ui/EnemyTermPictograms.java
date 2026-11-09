@@ -112,7 +112,11 @@ final class EnemyTermPictograms {
             // Charge
             Map.entry("ability.charge", "F M3 9.6C3 6.4 4.4 4.2 6.6 3.2C5.8 5 6 6.6 7.4 7.6H16.6C18 6.6 18.2 5 17.4 3.2C19.6 4.2 21 6.4 21 9.6C21 13.2 18.6 15.4 16.2 16.2L12 21L7.8 16.2C5.4 15.4 3 13.2 3 9.6Z ; K O9 11 1.2 O15 11 1.2"),
             // Bloodlust
-            Map.entry("ability.bloodlust", "F M12 2.4C12 2.4 5.6 9.6 5.6 14.2A6.4 6.4 0 0 0 18.4 14.2C18.4 9.6 12 2.4 12 2.4Z ; K M10.8 10.6H13.2V13.2H15.8V15.6H13.2V18.2H10.8V15.6H8.2V13.2H10.8Z"));
+            Map.entry("ability.bloodlust", "F M12 2.4C12 2.4 5.6 9.6 5.6 14.2A6.4 6.4 0 0 0 18.4 14.2C18.4 9.6 12 2.4 12 2.4Z ; K M10.8 10.6H13.2V13.2H15.8V15.6H13.2V18.2H10.8V15.6H8.2V13.2H10.8Z"),
+            // Command: a standard raised over the allies near it
+            Map.entry("ability.command", "=effect.resolve"),
+            // Vengeance: a skull with a dash of speed behind it
+            Map.entry("ability.vengeance", "F O12 10 6.5 ; K O9.6 9.6 1.5 M14.4 8.1A1.5 1.5 0 1 1 14.4 11.1A1.5 1.5 0 1 1 14.4 8.1Z ; F M9 15.5H15V20H9Z ; S M2.5 6H5.5 M2 10H4.5 M2.5 14H5.5"));
 
     private EnemyTermPictograms() {
     }

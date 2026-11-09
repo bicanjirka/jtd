@@ -109,6 +109,14 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return stacking(EffectKind.SPELLPROOF, stacks, durationTicks, sink);
     }
 
+    /**
+     * {@code stacks} of less damage taken, which its own applications hold at {@code stacks} however often they
+     * come: the cap is what it brings.
+     */
+    public static Effect resolve(int stacks, int durationTicks, DamageSink sink) {
+        return stacking(EffectKind.RESOLVE, stacks, durationTicks, sink).withStackCap(stacks);
+    }
+
     /** Far more resilience, spirit and magic resist while active. */
     public static Effect unyielding(int durationTicks, DamageSink sink) {
         return timed(EffectKind.UNYIELDING, durationTicks, sink);
