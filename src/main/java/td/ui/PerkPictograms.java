@@ -16,7 +16,7 @@ final class PerkPictograms {
             // Transcendent
             Map.entry("base.transcendent", "F M3.4 18.6L4.6 7.4L8.8 12.4L12 4.6L15.2 12.4L19.4 7.4L20.6 18.6Z ; T M3.4 21H20.6"),
             // Focused Optics
-            Map.entry("sniper.head.focused_optics.1", "F M2.6 9.6H14.4V14.4H2.6Z M14.4 7.6H19.4L21.4 9.6V14.4L19.4 16.4H14.4Z ; F M5.4 14.4H8.6V18H5.4Z ; X M17.6 9.4V14.6"),
+            Map.entry("sniper.head.focused_optics.1", "S O10 10 6.8 ; F M14.6 16.8L16.8 14.6L21.8 19.6L19.6 21.8Z ; T M10 6V14 M6 10H14"),
             // Railgun
             Map.entry("sniper.head.focused_optics.4a", "S M2 12H19.4 ; S O7 12 3 O14.4 12 3 ; F M22 12L18.4 8.8V15.2Z"),
             // Executioner
@@ -120,7 +120,7 @@ final class PerkPictograms {
             // Frostbite
             Map.entry("seeker.head.deep_freeze.4b", "S M10.4 4V20 M3.47 8L17.33 16 M3.47 16L17.33 8 ; F M18.6 1.8L19.8 5.4L23.4 6.6L19.8 7.8L18.6 11.4L17.4 7.8L13.8 6.6L17.4 5.4Z"),
             // Mixed Payloads
-            Map.entry("seeker.extra.mixed_payloads.1", "F M5.6 3.6H18.4A2.6 2.6 0 0 1 18.4 8.8H5.6A2.6 2.6 0 0 1 5.6 3.6Z M5.6 9.4H18.4A2.6 2.6 0 0 1 18.4 14.6H5.6A2.6 2.6 0 0 1 5.6 9.4Z M5.6 15.2H18.4A2.6 2.6 0 0 1 18.4 20.4H5.6A2.6 2.6 0 0 1 5.6 15.2Z ; K O6.6 6.2 1 O6.6 12 1 O6.6 17.8 1"),
+            Map.entry("seeker.extra.mixed_payloads.1", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M15.2 16.6L16 18.6L18 19.4L16 20.2L15.2 22.2L14.4 20.2L12.4 19.4L14.4 18.6Z ; F M21 11.8L18 15.8H20L19.2 19.2L22.4 14.8H20.4Z"),
             // Arcane Warhead
             Map.entry("seeker.special.arcane_warhead", "=tower.arcane_missile"),
             // Nullifier
