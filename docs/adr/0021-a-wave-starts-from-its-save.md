@@ -1,6 +1,6 @@
 # 0021. A wave starts from its save
 
-- Status: Accepted, not yet implemented
+- Status: Accepted
 - Date: 2026-11-09
 
 ## Context

@@ -1,6 +1,6 @@
 # 0011. A saved game holds only what exists between rounds
 
-- Status: Accepted
+- Status: Superseded by [0021](0021-a-wave-starts-from-its-save.md)
 - Date: 2026-10-20
 
 ## Context
