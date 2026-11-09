@@ -17,7 +17,7 @@ class WaveAnnouncerTest {
         announcer.addListener(firstCalls::incrementAndGet);
         announcer.addListener(secondCalls::incrementAndGet);
 
-        announcer.announce();
+        announcer.announce(0);
 
         assertThat(firstCalls).hasValue(1);
         assertThat(secondCalls).hasValue(1);
@@ -30,7 +30,7 @@ class WaveAnnouncerTest {
         announcer.addListener(listener);
         announcer.removeListener(listener);
 
-        announcer.announce();
+        announcer.announce(0);
 
         assertThat(calls).hasValue(0);
     }

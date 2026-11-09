@@ -22,7 +22,7 @@ class TurretAimTest {
 
     @Test
     void oneTickTurnsTowardTheDesiredAngleByAtMostTheMaxStep() {
-        TurretAim aim = new TurretAim(MAX_TURN);
+        TurretAim aim = new TurretAim(MAX_TURN, 0);
 
         aim.tick(Math.PI / 2); // far away in one step, unambiguous shorter direction
 
@@ -31,7 +31,7 @@ class TurretAimTest {
 
     @Test
     void repeatedTicksEventuallyReachAndHoldTheDesiredAngle() {
-        TurretAim aim = new TurretAim(MAX_TURN);
+        TurretAim aim = new TurretAim(MAX_TURN, 0);
         double target = 1.0;
 
         for (int i = 0; i < 100; i++) {
@@ -46,7 +46,7 @@ class TurretAimTest {
 
     @Test
     void turnsTheShorterWayAroundWhenTheDesiredAngleIsJustPastTheWrapBoundary() {
-        TurretAim aim = new TurretAim(MAX_TURN);
+        TurretAim aim = new TurretAim(MAX_TURN, 0);
         double justUnderPi = Math.PI - 0.05;
         for (int i = 0; i < 50; i++) {
             aim.tick(justUnderPi);
@@ -64,7 +64,7 @@ class TurretAimTest {
 
     @Test
     void radiansAtInterpolatesBetweenThePreviousAndCurrentTickAtTheGivenAlpha() {
-        TurretAim aim = new TurretAim(MAX_TURN);
+        TurretAim aim = new TurretAim(MAX_TURN, 0);
         aim.tick(MAX_TURN * 10); // first tick: previous=0, current=MAX_TURN (clamped)
 
         assertThat(aim.radiansAt(0.0)).isCloseTo(0.0, within(1e-9));
@@ -74,7 +74,7 @@ class TurretAimTest {
 
     @Test
     void skippingTickAfterConvergingLeavesTheHeadingFrozenSoInterpolationIsSteady() {
-        TurretAim aim = new TurretAim(MAX_TURN);
+        TurretAim aim = new TurretAim(MAX_TURN, 0);
         double target = MAX_TURN * 5;
         for (int i = 0; i < 20; i++) {
             aim.tick(target); // converges well before 20 ticks (target / MAX_TURN = 5 ticks)
@@ -89,7 +89,35 @@ class TurretAimTest {
 
     @Test
     void rejectsNonPositiveMaxTurnRate() {
-        assertThatThrownBy(() -> new TurretAim(0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new TurretAim(-1)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TurretAim(0, 0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new TurretAim(-1, 0)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void settlingTurnsTowardTheRestPoseAtTheCappedRateAndStaysThere() {
+        TurretAim aim = new TurretAim(MAX_TURN, 0);
+        for (int i = 0; i < 100; i++) {
+            aim.tick(1.0);
+        }
+
+        aim.settle();
+        double afterOne = aim.currentRadians();
+        for (int i = 0; i < 100; i++) {
+            aim.settle();
+        }
+
+        assertThat(afterOne).isCloseTo(1.0 - MAX_TURN, within(1e-9));
+        assertThat(aim.currentRadians()).isCloseTo(0, within(1e-9));
+    }
+
+    @Test
+    void restingFacesTheRestPoseAtOnceWithNoTurnToBlend() {
+        TurretAim aim = new TurretAim(MAX_TURN, 0.5);
+        aim.tick(2.0);
+
+        aim.rest();
+
+        assertThat(aim.radiansAt(0.0)).isCloseTo(0.5, within(1e-9));
+        assertThat(aim.radiansAt(1.0)).isCloseTo(0.5, within(1e-9));
     }
 }

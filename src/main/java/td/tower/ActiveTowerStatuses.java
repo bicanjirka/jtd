@@ -45,6 +45,11 @@ final class ActiveTowerStatuses {
         return this.held.removeIf(h -> terms.contains(h.status().term()));
     }
 
+    /** Drops every status. */
+    void clear() {
+        this.held.clear();
+    }
+
     /** Spends one shot of every shot status, dropping those with none left; whether anything changed. */
     boolean spendShot() {
         boolean changed = false;

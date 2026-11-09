@@ -28,29 +28,29 @@ public final class OwnedMechanics<P extends Mechanic> {
     }
 
     /** Adds what {@code node} brings; call it once, when the node is bought. */
-    public void add(UpgradeNode node) {
+    public synchronized void add(UpgradeNode node) {
         List<P> brought = this.catalogue.mechanicsOf(node);
         if (brought.isEmpty()) {
             return;
         }
         Held<P> now = this.held;
-        List<String> from = new ArrayList<>(now.from());
+        List<UpgradeNode> from = new ArrayList<>(now.from());
         List<P> mechanics = new ArrayList<>(now.mechanics());
         brought.forEach(mechanic -> {
-            from.add(node.id());
+            from.add(node);
             mechanics.add(mechanic);
         });
         this.held = new Held<>(from, mechanics);
     }
 
     /** Drops what {@code removed} brought; the mechanics of every other node stay, with their state. */
-    public void remove(Collection<UpgradeNode> removed) {
+    public synchronized void remove(Collection<UpgradeNode> removed) {
         Set<String> ids = removed.stream().map(UpgradeNode::id).collect(Collectors.toSet());
         Held<P> now = this.held;
-        List<String> from = new ArrayList<>();
+        List<UpgradeNode> from = new ArrayList<>();
         List<P> mechanics = new ArrayList<>();
         for (int i = 0; i < now.from().size(); i++) {
-            if (!ids.contains(now.from().get(i))) {
+            if (!ids.contains(now.from().get(i).id())) {
                 from.add(now.from().get(i));
                 mechanics.add(now.mechanics().get(i));
             }
@@ -61,13 +61,34 @@ public final class OwnedMechanics<P extends Mechanic> {
         this.held = new Held<>(from, mechanics);
     }
 
+    /**
+     * Replaces every mechanic with a new one from the same node, in the same order, so none keeps what it counted.
+     * Built from what is held rather than from the owned nodes, so a node bought on another thread meanwhile is kept.
+     */
+    public synchronized void renew() {
+        Held<P> now = this.held;
+        List<UpgradeNode> from = new ArrayList<>();
+        List<P> mechanics = new ArrayList<>();
+        UpgradeNode last = null;
+        for (UpgradeNode node : now.from()) {
+            if (node != last) {
+                for (P mechanic : this.catalogue.mechanicsOf(node)) {
+                    from.add(node);
+                    mechanics.add(mechanic);
+                }
+                last = node;
+            }
+        }
+        this.held = new Held<>(from, mechanics);
+    }
+
     /** The mechanics owned now. Read it once per action, so every step of it sees the same mechanics. */
     public List<P> all() {
         return this.held.mechanics();
     }
 
     /** Each mechanic beside the id of the node that brought it. */
-    private record Held<P>(List<String> from, List<P> mechanics) {
+    private record Held<P>(List<UpgradeNode> from, List<P> mechanics) {
 
         private Held {
             from = List.copyOf(from);

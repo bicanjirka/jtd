@@ -72,6 +72,8 @@ public class GameEngine {
     // Pair with the wave list only through waveProgress().
     private volatile RoundState round = RoundState.before(0);
     private volatile boolean startWave = false;
+    // Game loop: the time of the tick running, which a wave started in it starts its clock at.
+    private int tickTime = 0;
 
     public GameEngine(GameHost host) {
         this(new GameWorld(host));
@@ -221,6 +223,7 @@ public class GameEngine {
         this.startWave = false;
         this.requests.clear();
         this.round = RoundState.before(0);
+        this.gameWorld.waves().reset();
     }
 
     /**
@@ -252,6 +255,8 @@ public class GameEngine {
         RoundState state = this.round;
         if (state.canBegin(installed.waveCount())) {
             this.startWave = false;
+            this.clearBoard();
+            this.gameWorld.zones().startWave(this.tickTime);
             List<Wave> starting = installed.wavesAt(state.wave());
             List<EnemyMob> spawned = new ArrayList<>();
             int totalEnemies = 0;
@@ -261,7 +266,7 @@ public class GameEngine {
             }
             this.round = state.begun(this.gameWorld.enemies().leaks());
             this.gameWorld.enemies().setEnemies(spawned.toArray(new EnemyMob[0]));
-            this.gameWorld.startWave(starting);
+            this.gameWorld.startWave(starting, this.tickTime);
             LOG.info("Round {}/{} started, {} paths, {} enemies", state.wave() + 1, installed.waveCount(),
                     starting.size(), totalEnemies);
             return true;
@@ -280,6 +285,7 @@ public class GameEngine {
             return false;
         }
         LOG.debug("doTick t={}", time);
+        this.tickTime = time;
         this.gameWorld.enemyObservation().beginTick(time);
         boolean waveStarted = false;
         if (this.startWave) {
@@ -338,6 +344,8 @@ public class GameEngine {
         this.round = bonus > 0 ? after.paidBonus(after.wave() - 1, bonus) : after;
         if (roundCleared) {
             this.gameWorld.zones().endWave();
+            this.gameWorld.towers().all().forEach(Tower::endWave);
+            this.gameWorld.waves().ended();
             if (bonus > 0) {
                 this.gameWorld.economy().apply(EconomyDelta.clearBonus(bonus));
                 LOG.info("Round {} cleared with no leak, {} bonus credits", after.wave(), bonus);
@@ -519,6 +527,7 @@ public class GameEngine {
         }
         this.gameWorld.economy().startEconomy(save.economy().credits(), save.economy().lives());
         this.gameWorld.economy().apply(EconomyDelta.score(save.economy().score()));
+        this.clearBoard();
         LOG.info("Game loaded: {} before wave {}, {} towers", save.level(), save.nextWave(), save.towers().size());
         if (missing.isEmpty()) {
             return Optional.empty();
@@ -568,7 +577,7 @@ public class GameEngine {
             }
             RoundState before = this.round;
             this.gameWorld.enemies().clear();
-            this.gameWorld.zones().endWave();
+            this.clearBoard();
             this.round = before.skipped(this.gameWorld.enemies().leaks());
             if (!this.nextWave()) {
                 this.round = this.round.won();
@@ -593,11 +602,22 @@ public class GameEngine {
                 return;
             }
             this.gameWorld.enemies().clear();
-            this.gameWorld.zones().endWave();
+            this.clearBoard();
             this.startWave = false;
             this.round = this.round.jumpedTo(next);
         });
         return next;
+    }
+
+    /**
+     * Leaves the board as a wave starts from: no shot in flight, no zone, and every tower ready. The towers'
+     * state is the game loop's, so this runs on it, or while no loop runs.
+     */
+    private void clearBoard() {
+        this.gameWorld.projectiles().clear();
+        this.gameWorld.zones().clear();
+        this.gameWorld.towers().all().forEach(Tower::readyForWave);
+        this.gameWorld.waves().ended();
     }
 
     /** Debug: grants credits through the normal economy path. */

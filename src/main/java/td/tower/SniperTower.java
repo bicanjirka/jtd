@@ -205,11 +205,11 @@ public final class SniperTower extends AbstractTower {
             .with(SPOTTER_UPLINK.id(), SpotterUplinkMechanic::new)
             .with(RICOCHET.id(), RicochetMechanic::new);
 
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
-    private final AimFocus focus = new AimFocus();
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final ShotActions actions = new Actions();
     private final OwnedMechanics<SniperMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
-    private final FireClock clock = new FireClock(COOLDOWN_MAX);
+    private AimFocus focus = new AimFocus();
+    private FireClock clock = new FireClock(COOLDOWN_MAX);
     private SniperShot shotInFlight;
     private TowerStats statsInFlight;
     private EnemyMob currentTarget;
@@ -267,7 +267,23 @@ public final class SniperTower extends AbstractTower {
         this.clock.advance(this.attackRate());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
+        } else if (this.betweenWaves()) {
+            this.turretAim.settle();
         }
+    }
+
+    @Override
+    protected void endFight() {
+        this.focus = new AimFocus();
+        this.clock = new FireClock(COOLDOWN_MAX);
+        this.shotInFlight = null;
+        this.statsInFlight = null;
+        this.currentTarget = null;
+    }
+
+    @Override
+    protected void takeRestPose() {
+        this.turretAim.rest();
     }
 
     /** One shot: shaped by the owned mechanics, landed, settled and reacted to, and the wait that follows. */

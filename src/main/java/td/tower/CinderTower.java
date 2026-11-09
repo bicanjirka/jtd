@@ -189,13 +189,13 @@ public final class CinderTower extends AbstractTower {
             .with(THERMAL_SHOCK.id(), ThermalShockMechanic::new)
             .with(PYROMANCERS_MARK.id(), PyromancersMarkMechanic::new);
 
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<CinderMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final List<FlameWave> inFlightWaves = new ArrayList<>();
     /** The enemies this tower has set alight and still tracks, first alight first. */
     private final Map<EnemyMob, Burning> burning = new LinkedHashMap<>();
     private final ZoneOwner zoneOwner = this::applyEffect;
-    private final FireClock clock = new FireClock(COOLDOWN_MAX);
+    private FireClock clock = new FireClock(COOLDOWN_MAX);
     private int tickNow;
 
     public CinderTower(GameWorld context, int x, int y) {
@@ -277,8 +277,11 @@ public final class CinderTower extends AbstractTower {
         List<EnemyMob> inRange = spec.reach().matching(this.context.enemies());
         Optional<EnemyMob> nearest = PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY))
                 .selectFrom(inRange);
-        nearest.ifPresent(enemy -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(),
-                enemy.getY())));
+        if (nearest.isPresent()) {
+            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, nearest.get().getX(), nearest.get().getY()));
+        } else if (this.betweenWaves()) {
+            this.turretAim.settle();
+        }
 
         if (this.clock.isReady() && this.hasEnemyAhead(spec)) {
             this.fire(spec, nearest.orElse(null), gameTime);
@@ -288,6 +291,18 @@ public final class CinderTower extends AbstractTower {
 
         this.advanceWaves(spec, gameTime);
         this.tendBurning(spec);
+    }
+
+    @Override
+    protected void endFight() {
+        this.inFlightWaves.clear();
+        this.burning.clear();
+        this.clock = new FireClock(COOLDOWN_MAX);
+    }
+
+    @Override
+    protected void takeRestPose() {
+        this.turretAim.rest();
     }
 
     /** Whether a wave fired at the turret's current heading would reach at least one enemy. */

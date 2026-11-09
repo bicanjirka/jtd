@@ -213,13 +213,13 @@ public final class SplashTower extends AbstractTower {
             .with(SYMPATHY.id(), () -> HexMechanic.adding(new SympathyHex()))
             .with(RECKONING.id(), () -> HexMechanic.adding(new ReckoningHex()));
 
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<SplashMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final TargetSelector randomAim;
     private final Hexing hexing = new Hexing();
-    private final HexTurn hexTurn = new HexTurn();
-    private final HexKeeper hexKeeper = new HexKeeper(this.hexing);
-    private final FireClock clock = new FireClock(COOLDOWN_MAX);
+    private HexTurn hexTurn = new HexTurn();
+    private HexKeeper hexKeeper = new HexKeeper(this.hexing);
+    private FireClock clock = new FireClock(COOLDOWN_MAX);
     private List<Blast> blasts = List.of();
     private List<Trace> arcs = List.of();
     private List<Trace> casts = List.of();
@@ -281,7 +281,7 @@ public final class SplashTower extends AbstractTower {
         this.currentTick = gameTime;
         List<SplashMechanic> owned = this.mechanics.all();
         if (!this.hexKeeper.isEmpty()) {
-            this.hexKeeper.doTick(gameTime, this.spec(owned).hexes());
+            this.hexKeeper.doTick(this.context.waves().tickOfWave(gameTime), this.spec(owned).hexes());
         }
         if (this.clock.isReady()) {
             SplashSpec spec = this.spec(owned);
@@ -296,7 +296,25 @@ public final class SplashTower extends AbstractTower {
         this.clock.advance(this.attackRate());
         if (this.aimedAt != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.aimedAt.getX(), this.aimedAt.getY()));
+        } else if (this.betweenWaves()) {
+            this.turretAim.settle();
         }
+    }
+
+    /** Its mines go with the wave, like every zone. */
+    @Override
+    protected void endFight() {
+        this.hexTurn = new HexTurn();
+        this.hexKeeper = new HexKeeper(this.hexing);
+        this.clock = new FireClock(COOLDOWN_MAX);
+        this.aimedAt = null;
+        this.shotsFired = 0;
+        this.mines.clear();
+    }
+
+    @Override
+    protected void takeRestPose() {
+        this.turretAim.rest();
     }
 
     /**

@@ -53,9 +53,12 @@ import td.tower.SonarTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.TowerModifiers;
 import td.tower.TowerStatLine;
 import td.tower.TowerStatRow;
+import td.tower.TowerStatus;
 import td.tower.TowerTally;
+import td.tower.TowerTerm;
 import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -78,6 +81,7 @@ import td.wave.smoothing.PathSmoothing;
 import td.wave.smoothing.QuadraticBezierSmoothing;
 import td.zone.Zone;
 import td.zone.ZoneKind;
+import td.zone.ZoneOwner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -406,10 +410,7 @@ class GameEngineTest {
         engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
         engine.startPlacing(TowerFactory.Type.SONAR, SonarTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
-        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
         Tower sonar = towerOfType(engine, TowerFactory.Type.SONAR);
-        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
         UpgradePaths.buy(sonar, engine.getGameWorld(), "Mark on Sweep");
         engine.nextWave();
         int tick = 0;
@@ -418,6 +419,9 @@ class GameEngineTest {
             engine.doTick(++tick);
             enemy = engine.getGameWorld().enemies().getEnemies()[0];
         } while (!enemy.hasEffect(EffectKind.MARKED));
+        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
+        engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
+        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
         long before = sniper.getDamageDealt();
 
         while (sniper.getDamageDealt() == before) {
@@ -1487,6 +1491,41 @@ class GameEngineTest {
         tickUntilWaveCleared(engine);
 
         assertThat(aura.experience().xp()).isZero();
+    }
+
+    @Test
+    void aStatusATowerHoldsEndsWithTheWaveHoweverLongItHadLeft() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT)), 100));
+        Tower sniper = placeSniper(engine, 0, 0);
+        engine.nextWave();
+        sniper.receiveStatus(TowerStatus.timed(TowerTerm.HASTE, TowerModifiers.attackSpeed(1f), 1_000_000));
+        engine.doTick(1);
+        boolean heldInTheWave = sniper.conditions().stream().anyMatch(state -> state.term() == TowerTerm.HASTE);
+
+        tickUntilWaveCleared(engine);
+
+        assertThat(heldInTheWave).isTrue();
+        assertThat(sniper.conditions()).noneMatch(state -> state.term() == TowerTerm.HASTE);
+    }
+
+    @Test
+    void aWaveEndsWithEveryZoneFadingAndStartsOnBareGround() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT),
+                new WaveDefinition("simple", Rank.GRUNT)), 100));
+        engine.nextWave();
+        Zone zone = Zone.haste(10, 10, 10f, 1_000_000, ZoneOwner.nobody());
+        engine.getGameWorld().zones().add(zone);
+        float fullLife = zone.lifeLeft();
+
+        tickUntilWaveCleared(engine);
+        engine.doTick(5000);
+        float clearing = zone.lifeLeft();
+        engine.nextWave();
+
+        assertThat(clearing).isLessThan(fullLife);
+        assertThat(engine.getGameWorld().zones().zones()).isEmpty();
     }
 
     @Test

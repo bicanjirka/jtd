@@ -176,6 +176,7 @@ class SonarTowerTest {
     void theTurretHeadPointsWhereTheBeamIs() {
         SonarTower tower = tower();
         this.enemies();
+        this.context.waves().announce(0);
 
         tower.doTick(1);
 
@@ -326,6 +327,7 @@ class SonarTowerTest {
         FakeEnemyMob outer = FakeEnemyMob.ghostAt(TOWER_X + range * 0.9f, TOWER_Y);
         FakeEnemyMob inner = FakeEnemyMob.ghostAt(TOWER_X + range * 0.5f, TOWER_Y);
         this.enemies(outer, inner);
+        this.context.waves().announce(0);
 
         run(tower, revolutionOf(tower));
 
@@ -429,5 +431,20 @@ class SonarTowerTest {
         awakened.accept(sprites);
 
         assertThat(sprites.build()).extracting(TowerSpriteDraw::transcendent).containsExactly(true, false);
+    }
+
+    @Test
+    void betweenWavesWithNothingInReachTheBeamTurnsToRestAndSweepsNoFurther() {
+        SonarTower tower = tower();
+        this.context.waves().announce(0);
+        run(tower, QUARTER_TURN);
+        this.context.waves().ended();
+
+        run(tower, TICKS_PER_REVOLUTION);
+        double rested = tower.sweepRadiansAt(1);
+        run(tower, QUARTER_TURN);
+
+        assertThat(TurretAim.normalizeRadians(rested)).isCloseTo(0, within(1e-9));
+        assertThat(tower.sweepRadiansAt(1)).isCloseTo(rested, within(1e-9));
     }
 }

@@ -14,14 +14,20 @@ public final class TurretAim {
     private static final double TWO_PI = Math.PI * 2;
 
     private final double maxTurnRadiansPerTick;
-    private double previousRadians = 0;
-    private double currentRadians = 0;
+    /** Where it faces with nothing to aim at between waves, and faces as each wave starts. */
+    private final double restRadians;
+    private double previousRadians;
+    private double currentRadians;
 
-    public TurretAim(double maxTurnRadiansPerTick) {
+    /** Facing {@code restRadians}, its rest pose. */
+    public TurretAim(double maxTurnRadiansPerTick, double restRadians) {
         if (maxTurnRadiansPerTick <= 0) {
             throw new IllegalArgumentException("maxTurnRadiansPerTick must be positive: " + maxTurnRadiansPerTick);
         }
         this.maxTurnRadiansPerTick = maxTurnRadiansPerTick;
+        this.restRadians = restRadians;
+        this.previousRadians = restRadians;
+        this.currentRadians = restRadians;
     }
 
     /**
@@ -54,6 +60,17 @@ public final class TurretAim {
         this.previousRadians = this.currentRadians;
         double step = clamp(normalizeRadians(desiredRadians - this.currentRadians), this.maxTurnRadiansPerTick);
         this.currentRadians = this.currentRadians + step;
+    }
+
+    /** One step toward the rest pose, as {@link #tick(double)} turns toward a target. */
+    public void settle() {
+        this.tick(this.restRadians);
+    }
+
+    /** Faces the rest pose at once. */
+    public void rest() {
+        this.previousRadians = this.restRadians;
+        this.currentRadians = this.restRadians;
     }
 
     /** The heading between the last two ticks, blended the shorter way around. */

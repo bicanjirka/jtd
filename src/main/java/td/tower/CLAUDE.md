@@ -22,6 +22,13 @@
   times in 20 ticks, a second hit in the tick the remembered tenths reach a whole). A shot that waits
   longer or shorter than the base spends more or less than one period. The Sonar divides its seconds per
   revolution by the rate instead, and no counter that carries an attack rate may round to a tick.
+- Every wave starts with every tower ready (ADR 0021): `endWave()` at the clear and `readyForWave()` at the send drop
+  what the wave built up. Shared state resets in `AbstractTower`, mechanics are renewed, and each tower's own fight state
+  (its `FireClock`, targets, counters, stores) resets in `endFight()`. A new field a fight changes resets there; ready is
+  what waiting with nothing in reach leaves (a full nest), never what the wait's length leaves.
+- A turret or beam starts at `restHeading()` (toward the nearest path point) and, between waves with nothing to aim at,
+  `settle()`s back to it; `takeRestPose()` snaps it there as a wave starts. A beat on a clock counts
+  `waves().tickOfWave(gameTime)`, never the bare game time, so a loaded game beats on the same ticks.
 - Each tower's own constraints are in its sub-package's `CLAUDE.md` (`td/tower/sonar/`, `splash/`,
   `seeker/`, `pulse/`, `mortar/`, `cinder/`, `aura/`): read it before editing that tower's leaf class here.
 - A tower whose fork renames it overrides `displayName()`; the id and `TowerFactory.Type` stay.

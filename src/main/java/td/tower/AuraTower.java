@@ -322,6 +322,12 @@ public final class AuraTower extends AbstractTower {
         return buffed;
     }
 
+    /** Rally is ready again; who is Chosen follows the XP, which a wave's end keeps. */
+    @Override
+    protected void endFight() {
+        this.rallyReadyAt = 0;
+    }
+
     /**
      * Chosen follows whoever has the most XP, and the buffs are derived, so a change of hero republishes
      * the stats; Rally watches its spot.

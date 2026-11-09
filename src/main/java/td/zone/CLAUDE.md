@@ -4,7 +4,7 @@
   ones included, through its `ZoneOwner` (the tower that made it), so what it does is credited to
   that tower and is periodic: it never crits. A zone outlives its tower; once the tower is sold the
   credit is simply dropped.
-- Every zone pulses on the same shared ticks and once on the tick it is made, so two
+- Every zone pulses on the same shared ticks, counted from the wave's start, and once on the tick it is made, so two
   zones of one kind never stack: an enemy standing in both takes the pulse of the one made first.
   Zones combine only through the effects they leave on an enemy, never zone against zone.
 - `ZoneRoster.doTick` runs after projectiles and before towers, so a shell that lands this tick
@@ -15,8 +15,9 @@
 - Enemies leave zones too (`LeaveZoneAction`), owned by `ZoneOwner.nobody()`, one owner per zone and so one
   source per zone: healing ground, haste ground and ward
   mines help the enemies inside, and a blinding field works on towers instead (`ZoneRoster.disruptionAt`, the strongest
-  one counts, never a sum). `Zone.UNTIL_WAVE_END` lasts until `ZoneRoster.endWave()`, which `GameEngine` calls whenever a
-  wave ends or is skipped. A ward mine is armed a moment after it is laid, so the enemy that laid it walks off first.
+  one counts, never a sum). `Zone.UNTIL_WAVE_END` lasts until the wave is over. At a wave's clear
+  `ZoneRoster.endWave()` fades every zone out over a moment, one laid after too; `startWave` leaves bare ground, so no
+  zone ever reaches the next wave. A ward mine is armed a moment after it is laid, so the enemy that laid it walks off first.
 - A cursed cloud carries the effects it re-applies to everything inside each pulse, with the time they had
   left when the enemy died, so they hold while an enemy stays and run out once it leaves.
 - `ZoneEffects.touch` is one pulse of a kind on one enemy; a zone adds only what depends on how long an

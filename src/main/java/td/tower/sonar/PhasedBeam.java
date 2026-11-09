@@ -52,6 +52,14 @@ public final class PhasedBeam implements SonarBeam {
     }
 
     @Override
+    public void settle(double restRadians) {
+        double step = Math.atan2(Math.sin(restRadians - this.heading), Math.cos(restRadians - this.heading));
+        this.heading += Math.clamp(step, -SETTLE_RADIANS_PER_TICK, SETTLE_RADIANS_PER_TICK);
+        this.hitting = false;
+        this.completedRevolution = false;
+    }
+
+    @Override
     public float strikeShare(double bearing) {
         return this.hitting && angularDistance(bearing, this.heading) <= HALF_WIDTH_RADIANS ? 1f : 0f;
     }
@@ -75,6 +83,6 @@ public final class PhasedBeam implements SonarBeam {
         if (next.equals(this.spec)) {
             return this;
         }
-        return next.phased() ? new PhasedBeam(this.heading, next) : SpinningBeam.of(next);
+        return next.phased() ? new PhasedBeam(this.heading, next) : SpinningBeam.of(next, this.heading);
     }
 }
