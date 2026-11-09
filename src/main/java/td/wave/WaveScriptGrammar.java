@@ -216,9 +216,8 @@ final class WaveScriptGrammar {
     }
 
     private static Parsed<Optional<Rank>> rank(Cursor at) {
-        return isRank(at)
-                ? new Parsed<>(Optional.of(WaveScript.rankFor(at.peek())), at.next())
-                : new Parsed<>(Optional.empty(), at);
+        Optional<Rank> rank = at.atEnd() ? Optional.empty() : RankKeyword.of(at.peek()).map(RankKeyword::rank);
+        return new Parsed<>(rank, rank.isPresent() ? at.next() : at);
     }
 
     private static Parsed<Optional<ShapeKeyword>> shape(Cursor at) {
@@ -246,11 +245,11 @@ final class WaveScriptGrammar {
 
     /** Whether {@code token} may stand in a head: a spacing, a rank or an affix. */
     private static boolean isHeadWord(String token) {
-        return WaveScript.isSpacingToken(token) || WaveScript.isRankToken(token) || Affix.of(token).isPresent();
+        return WaveScript.isSpacingToken(token) || RankKeyword.of(token).isPresent() || Affix.of(token).isPresent();
     }
 
     private static boolean isRank(Cursor at) {
-        return !at.atEnd() && WaveScript.isRankToken(at.peek());
+        return !at.atEnd() && RankKeyword.of(at.peek()).isPresent();
     }
 
     private static boolean isShape(Cursor at) {

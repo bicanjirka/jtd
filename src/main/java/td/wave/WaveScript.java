@@ -34,11 +34,6 @@ public final class WaveScript {
     static final String EMPTY_TOKEN = "e";
     static final String HEAD_END = ":";
 
-    private static final String GRUNT_TOKEN = "grunt";
-    private static final String SOLDIER_TOKEN = "soldier";
-    private static final String VETERAN_TOKEN = "veteran";
-    private static final String ELITE_TOKEN = "elite";
-    private static final String BOSS_TOKEN = "boss";
     private static final String SPACING_PREFIX = "w";
     private static final Pattern SPACING_TOKEN = Pattern.compile("w\\d+(\\.\\d+)?");
 
@@ -46,7 +41,8 @@ public final class WaveScript {
      * Tokens recognized before any catalog lookup; the catalog rejects ids that collide with them.
      */
     public static final Set<String> RESERVED_TOKENS = Stream.of(
-                    Stream.of(EMPTY_TOKEN, GRUNT_TOKEN, SOLDIER_TOKEN, VETERAN_TOKEN, ELITE_TOKEN, BOSS_TOKEN),
+                    Stream.of(EMPTY_TOKEN),
+                    Stream.of(RankKeyword.values()).map(RankKeyword::token),
                     Stream.of(ShapeKeyword.values()).map(ShapeKeyword::token),
                     Stream.of(Affix.values()).map(Affix::word))
             .flatMap(tokens -> tokens).collect(Collectors.toUnmodifiableSet());
@@ -90,36 +86,8 @@ public final class WaveScript {
         return ShapeKeyword.of(token).filter(ShapeKeyword::takesMemberCount).isPresent();
     }
 
-    static boolean isRankToken(String token) {
-        return switch (token) {
-            case GRUNT_TOKEN, SOLDIER_TOKEN, VETERAN_TOKEN, ELITE_TOKEN, BOSS_TOKEN -> true;
-            default -> false;
-        };
-    }
-
     /** {@code slots} under a head that sets {@code rank}. */
     public static String headed(Rank rank, String slots) {
-        return rankToken(rank) + HEAD_END + " " + slots;
-    }
-
-    static String rankToken(Rank rank) {
-        return switch (rank) {
-            case GRUNT -> GRUNT_TOKEN;
-            case SOLDIER -> SOLDIER_TOKEN;
-            case VETERAN -> VETERAN_TOKEN;
-            case ELITE -> ELITE_TOKEN;
-            case BOSS -> BOSS_TOKEN;
-        };
-    }
-
-    static Rank rankFor(String token) {
-        return switch (token) {
-            case GRUNT_TOKEN -> Rank.GRUNT;
-            case SOLDIER_TOKEN -> Rank.SOLDIER;
-            case VETERAN_TOKEN -> Rank.VETERAN;
-            case ELITE_TOKEN -> Rank.ELITE;
-            case BOSS_TOKEN -> Rank.BOSS;
-            default -> throw new IllegalStateException("Not a rank token: " + token);
-        };
+        return RankKeyword.tokenFor(rank) + HEAD_END + " " + slots;
     }
 }
