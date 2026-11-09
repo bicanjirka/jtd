@@ -139,8 +139,8 @@ final class RiftLevel {
                             new WaveDefinition("soldier: 2 mirage e magma e eclipse column 6 walker e juggernaut"),
                             new WaveDefinition("e"),
                             new WaveDefinition("veteran: eclipse 2 ghost e juggernaut shieldbearer e 2 golem e jammer"),
-                            new WaveDefinition("veteran: line 3 mirage e eclipse column 6 knight e 2 magma"),
-                            new WaveDefinition("soldier: eclipse column 4 ghost e 2 juggernaut shieldbearer e veteran golem e column 10 walker"),
+                            new WaveDefinition("veteran: line 3 elusive mirage e eclipse column 6 knight e 2 magma"),
+                            new WaveDefinition("soldier: eclipse column 4 ghost e 2 juggernaut shieldbearer e veteran exalted golem e column 10 walker"),
                             new WaveDefinition("veteran: elite eclipse column 6 knight e juggernaut shieldbearer e 3 mirage e jammer e "
                                     + "column 10 walker")),
                     SMOOTHING)
@@ -182,7 +182,7 @@ final class RiftLevel {
                             new WaveDefinition("e"),
                             new WaveDefinition("soldier: 3 salamander e magma"),
                             new WaveDefinition("soldier: juggernaut shieldbearer e mender 3 knight"),
-                            new WaveDefinition("veteran: eclipse 2 ghost e 2 yeti"),
+                            new WaveDefinition("veteran: eclipse 2 ghost e 2 regenerating yeti"),
                             new WaveDefinition("veteran: elite eclipse column 4 knight e juggernaut")),
                     SMOOTHING)
             .withColor(GOLD_COLOR)

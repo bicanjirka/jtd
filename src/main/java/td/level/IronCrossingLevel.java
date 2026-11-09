@@ -40,7 +40,7 @@ final class IronCrossingLevel {
                             new WaveDefinition("veteran: golem e juggernaut e column 6 walker"),
                             new WaveDefinition("veteran: juggernaut e jammer e line 3 knight e mender"),
                             new WaveDefinition("veteran: 2 yeti e shieldbearer armored knight e golem"),
-                            new WaveDefinition("veteran: elite magma e column 4 knight e mender e 6 walker"),
+                            new WaveDefinition("veteran: elite magma e commanding knight column 3 knight e mender e 6 walker"),
                             new WaveDefinition("veteran: elite juggernaut shieldbearer e elite golem e armored knight e column 8 walker"),
                             new WaveDefinition("veteran: ironColossus 2 e juggernaut shieldbearer mender e elite knight e column 6 walker")),
                     SMOOTHING)
@@ -63,8 +63,8 @@ final class IronCrossingLevel {
                             new WaveDefinition("veteran: drip 5 courier e line 3 skirmisher"),
                             new WaveDefinition("veteran: elite runner e swarm 12 mite e 2 soldier ghost"),
                             new WaveDefinition("veteran: line 3 skirmisher e elite ghost e swarm 12 mite"),
-                            new WaveDefinition("veteran: drip 6 courier e elite runner"),
-                            new WaveDefinition("veteran: swarm 12 mite elite ghost swarm 12 mite e line 3 skirmisher"),
+                            new WaveDefinition("veteran: drip 6 courier e elite withered runner"),
+                            new WaveDefinition("veteran: swarm 12 mite elite vengeful ghost swarm 12 mite e line 3 skirmisher"),
                             new WaveDefinition("veteran: boss runner e elite swarm 12 mite e elite skirmisher e 2 elite ghost")),
                     SMOOTHING)
             .withColor(RUSH_COLOR);

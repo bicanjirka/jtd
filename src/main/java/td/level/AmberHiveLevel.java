@@ -152,7 +152,7 @@ final class AmberHiveLevel {
                             new WaveDefinition("soldier: broodNurse column 6 drone 2 e broodNurse column 6 drone e 2 hiveGuard")
                                     .withClearBonus(5),
                             new WaveDefinition("soldier: drip 6 larva e swarm 12 mite e drip 4 larva").withClearBonus(5),
-                            new WaveDefinition("soldier: 2 hiveGuard broodNurse 2 hiveGuard 2 e column 8 drone")
+                            new WaveDefinition("soldier: 2 taunting hiveGuard broodNurse 2 hiveGuard 2 e column 8 drone")
                                     .withClearBonus(5),
                             new WaveDefinition("soldier: line 3 hornet 2 e column 8 drone 2 e line 3 hornet")
                                     .withClearBonus(5),
@@ -166,7 +166,7 @@ final class AmberHiveLevel {
                             new WaveDefinition("veteran: line 4 hornet e line 4 hornet e elite hornet e swarm 12 mite e line 4 hornet").withClearBonus(5),
                             new WaveDefinition("elite: column 3 hiveGuard 2 broodNurse e column 12 drone e drip 8 larva")
                                     .withClearBonus(5),
-                            new WaveDefinition("elite: column 12 drone e boss broodNurse 2 hiveGuard e 8 hornet e drip 8 larva")
+                            new WaveDefinition("elite: column 12 drone e boss commanding broodNurse 2 hiveGuard e 8 hornet e drip 8 larva")
                                     .withClearBonus(5),
                             new WaveDefinition("boss: warden 8 e elite column 10 drone e elite broodNurse e column 10 drone")
                                     .withClearBonus(5)),
