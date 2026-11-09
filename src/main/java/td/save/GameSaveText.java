@@ -185,7 +185,7 @@ public final class GameSaveText {
                 Long.parseLong(words[6]), Integer.parseInt(words[7])).withXpCarried(carried);
         TowerSave tower = TowerSave.of(type.get(),
                 new Point(Integer.parseInt(words[2]), Integer.parseInt(words[3])), nodes, tally)
-                .withUse(new TowerUse(towerUsed, towerUsed ? unused : Set.copyOf(nodes)));
+                .withUse(new TowerUse(towerUsed, unused));
         return Optional.of(paid.isPresent() ? tower.withPaid(paid.getAsInt()) : tower);
     }
 

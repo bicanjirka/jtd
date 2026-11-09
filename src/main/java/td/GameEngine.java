@@ -314,9 +314,6 @@ public class GameEngine {
         this.gameWorld.zones().doTick(time);
         this.gameWorld.playtestHooks().doTick(time);
         List<Tower> towers = this.gameWorld.towers().all();
-        if (this.round.phase() == RoundState.Phase.RUNNING) {
-            towers.forEach(Tower::markUsed);
-        }
         boolean emissionChanged = false;
         for (Tower tower : towers) {
             emissionChanged |= tower.beginTick(time) && tower.emitsBuffs();

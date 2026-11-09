@@ -18,6 +18,12 @@ public final class WorldFixtures {
     private WorldFixtures() {
     }
 
+    /** A wave starts and ends: everything bought before it has now been used. */
+    public static void passAWave(GameWorld world) {
+        world.waves().announce(0);
+        world.waves().ended();
+    }
+
     public static GameWorld newWorld() {
         return new GameWorld(new RecordingGameHost());
     }

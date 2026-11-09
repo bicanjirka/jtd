@@ -53,6 +53,7 @@ import td.util.PathRuntime;
 import td.util.ThreadConfined;
 import td.util.TickRate;
 import td.wave.Vec2;
+import td.wave.WaveAnnouncer;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -61,6 +62,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -113,8 +115,8 @@ public abstract class AbstractTower implements Tower {
     // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
     private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
     private final ActiveTowerStatuses statuses = new ActiveTowerStatuses();
-    // Bought on the EDT, used up by the tick thread while a wave runs.
-    private final AtomicReference<TowerUse> use = new AtomicReference<>(TowerUse.unused());
+    // Bought and downgraded on the EDT, read wherever a refund is worked out.
+    private final AtomicReference<PurchaseStamps> purchases;
     // Downgraded on the EDT, forgotten by the tick thread at the start of the tower's next turn.
     private final AtomicReference<List<UpgradeNode>> removedSinceTick = new AtomicReference<>(List.of());
     private volatile InspectionCache inspectionCache;
@@ -157,6 +159,7 @@ public abstract class AbstractTower implements Tower {
                 Set.of());
         this.authored = this.stats;
         this.restHeading = restHeadingOf(context, this.centerX, this.centerY);
+        this.purchases = new AtomicReference<>(PurchaseStamps.built(this.currentBreak()));
     }
 
     /** Toward the nearest point of any path, so a turret at rest loses little time turning to its first target. */
@@ -278,7 +281,7 @@ public abstract class AbstractTower implements Tower {
      * of what has not.
      */
     private int shareOf(List<UpgradeNode> owned) {
-        TowerUse now = this.use.get();
+        TowerUse now = this.use();
         int usedPaid = now.towerUsed() ? this.price : 0;
         int unusedPaid = now.towerUsed() ? 0 : this.price;
         for (UpgradeNode node : owned) {
@@ -293,14 +296,13 @@ public abstract class AbstractTower implements Tower {
 
     @Override
     public TowerUse use() {
-        return this.use.get();
+        return this.purchases.get().useAfter(this.context.waves().started());
     }
 
-    @Override
-    public void markUsed() {
-        if (this.use.get() != TowerUse.used()) {
-            this.use.set(TowerUse.used());
-        }
+    /** The break between waves now running, counted by the waves started; none while a wave is out. */
+    private OptionalLong currentBreak() {
+        WaveAnnouncer waves = this.context.waves();
+        return waves.betweenWaves() ? OptionalLong.of(waves.started()) : OptionalLong.empty();
     }
 
     /**
@@ -694,7 +696,7 @@ public abstract class AbstractTower implements Tower {
 
     @Override
     public void restore(TowerTally tally, int paid, TowerUse use) {
-        this.use.set(use);
+        this.purchases.set(PurchaseStamps.of(use, this.upgrades().owned(), this.context.waves().started()));
         this.experience.restore(tally.xp(), tally.deeds());
         this.damageDealt = tally.damageDealt();
         this.killCount = tally.kills();
@@ -802,7 +804,8 @@ public abstract class AbstractTower implements Tower {
         for (UpgradeNode node : bought) {
             this.ownedMechanics().add(node);
             nextState = nextState.with(node);
-            this.use.updateAndGet(now -> now.withBought(node));
+            OptionalLong inBreak = this.currentBreak();
+            this.purchases.updateAndGet(now -> now.withBought(node, inBreak));
         }
         this.publishStats(nextState);
         this.upgrades = nextState;
@@ -830,7 +833,7 @@ public abstract class AbstractTower implements Tower {
         this.publishStats(removal.kept());
         this.upgrades = removal.kept();
         this.removedSinceTick.accumulateAndGet(removal.removed(), AbstractTower::concatenated);
-        removal.removed().forEach(gone -> this.use.updateAndGet(now -> now.withRemoved(gone)));
+        removal.removed().forEach(gone -> this.purchases.updateAndGet(now -> now.withRemoved(gone)));
         for (Tower t : this.context.towers().all()) {
             t.recalculateStats();
         }

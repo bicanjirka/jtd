@@ -179,7 +179,7 @@ class TowerEffectFrameBuilderTest {
         TowerEffectFrameBuilder unused = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
         unused.addStatus(tower);
 
-        tower.markUsed();
+        WorldFixtures.passAWave(context);
         TowerEffectFrameBuilder used = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
         used.addStatus(tower);
 
@@ -193,7 +193,7 @@ class TowerEffectFrameBuilderTest {
         SniperTower jammed = new SniperTower(context, 0, 0);
         SniperTower clear = new SniperTower(context, 10, 10);
         context.disruptions().add(jammed.getX(), jammed.getY(), new DisruptionAura(20f, 0.3f, 0.2f));
-        clear.markUsed();
+        WorldFixtures.passAWave(context);
         jammed.beginTick(0);
         clear.beginTick(0);
 
