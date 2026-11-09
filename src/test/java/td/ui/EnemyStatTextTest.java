@@ -10,6 +10,8 @@ import td.effect.EffectKind;
 import td.effect.ShieldTemplate;
 import td.enemy.Ability;
 import td.enemy.AbilityTerm;
+import td.enemy.Affix;
+import td.enemy.AffixContext;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
@@ -143,6 +145,21 @@ class EnemyStatTextTest {
                 .contains(Row.plain(Glyph.DOT, "Base", "25"), Row.plain(Glyph.DOT, "Now", String.valueOf(now)));
         assertThat(breakdown.lines()).contains(Row.faced(TermLooks.faceOf(EffectKind.SUNDERED),
                 EffectKind.SUNDERED.title() + " \u00d72", "-" + (25 - now)));
+    }
+
+    @Test
+    void anAffixsTooltipListsWhatItAddedEachWithItsOwnTooltip() {
+        DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("shielded")
+                .withAffixes(List.of(Affix.SHIELDED), new AffixContext(Rank.GRUNT, 1f)));
+
+        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
+
+        InfoSheet affixSheet = iconOf(sheet, "Traits", Affix.SHIELDED.key()).tooltip();
+        assertThat(icons(sheet, "Traits")).extracting(icon -> icon.face().pictogram())
+                .containsExactly(Affix.SHIELDED.key());
+        assertThat(icons(affixSheet, "Adds")).singleElement()
+                .satisfies(icon -> assertThat(icon.face().pictogram()).isEqualTo(AbilityTerm.PANIC.key()))
+                .satisfies(icon -> assertThat(icon.tooltip().lines()).isNotEmpty());
     }
 
     @Test

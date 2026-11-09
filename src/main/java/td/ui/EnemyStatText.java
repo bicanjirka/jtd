@@ -3,7 +3,7 @@ package td.ui;
 import td.damage.DamageType;
 import td.economy.StatusTerm;
 import td.effect.EffectKind;
-import td.enemy.Affix;
+import td.enemy.AbilityEntry;
 import td.enemy.EnemyInspection;
 import td.enemy.EnemyMark;
 import td.enemy.StatRows;
@@ -119,25 +119,14 @@ final class EnemyStatText {
 
     private static List<SheetIcon> traitIcons(EnemyInspection inspection) {
         List<SheetIcon> icons = new ArrayList<>();
-        for (Affix affix : inspection.affixes()) {
-            icons.add(new SheetIcon(TermLooks.faceOf(affix), TooltipKey.ofTerm("affix", affix),
-                    TermSheets.of(affix, affix.describe(), List.of())));
+        for (EnemyInspection.AffixEntry entry : inspection.affixes()) {
+            List<SheetIcon> added = entryIcons(entry.traits(), entry.abilities());
+            List<SheetLine> more = added.isEmpty() ? List.of() : List.of(new SheetLine.IconRow("Adds", added));
+            icons.add(new SheetIcon(TermLooks.faceOf(entry.affix()), TooltipKey.ofTerm("affix", entry.affix()),
+                    TermSheets.of(entry.affix(), entry.affix().describe(), more)));
         }
         List<TraitEntry> traits = inspection.traitEntries();
-        for (int i = 0; i < traits.size(); i++) {
-            TraitEntry entry = traits.get(i);
-            IconFace face = TermLooks.faceOf(entry.term());
-            if (entry.immune()) {
-                face = face.withWard(IconFace.Ward.IMMUNE);
-            }
-            icons.add(new SheetIcon(face, TooltipKey.ofTerm("trait", i, entry.term()),
-                    TermSheets.of(entry.term(), entry.text(), List.of())));
-        }
-        for (int i = 0; i < inspection.abilityEntries().size(); i++) {
-            var entry = inspection.abilityEntries().get(i);
-            icons.add(new SheetIcon(TermLooks.faceOf(entry.term()), TooltipKey.ofTerm("ability", i, entry.term()),
-                    TermSheets.of(entry.term(), entry.text(), List.of())));
-        }
+        icons.addAll(entryIcons(traits, inspection.abilityEntries()));
         for (EnemyInspection.Immunity immunity : inspection.immunities()) {
             boolean shown = traits.stream().anyMatch(entry -> entry.immune() && entry.term() == immunity.kind());
             if (immunity.keptOutBy().isEmpty() || shown) {
@@ -148,6 +137,26 @@ final class EnemyStatText {
                     TooltipKey.ofTerm("immune", kind),
                     TermSheets.of(kind, TermText.format("immune to {} while it has {}", kind,
                             immunity.keptOutBy().get()), List.of())));
+        }
+        return icons;
+    }
+
+    /** One icon per trait, then per ability, each opening its sentence. */
+    private static List<SheetIcon> entryIcons(List<TraitEntry> traits, List<AbilityEntry> abilities) {
+        List<SheetIcon> icons = new ArrayList<>();
+        for (int i = 0; i < traits.size(); i++) {
+            TraitEntry entry = traits.get(i);
+            IconFace face = TermLooks.faceOf(entry.term());
+            if (entry.immune()) {
+                face = face.withWard(IconFace.Ward.IMMUNE);
+            }
+            icons.add(new SheetIcon(face, TooltipKey.ofTerm("trait", i, entry.term()),
+                    TermSheets.of(entry.term(), entry.text(), List.of())));
+        }
+        for (int i = 0; i < abilities.size(); i++) {
+            AbilityEntry entry = abilities.get(i);
+            icons.add(new SheetIcon(TermLooks.faceOf(entry.term()), TooltipKey.ofTerm("ability", i, entry.term()),
+                    TermSheets.of(entry.term(), entry.text(), List.of())));
         }
         return icons;
     }

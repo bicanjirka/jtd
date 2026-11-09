@@ -134,11 +134,11 @@ class EnemyInspectionTest {
 
         EnemyInspection inspection = EnemyFixtures.liveMob(this.world, affixed).inspect();
 
-        assertThat(inspection.affixes()).containsExactly(Affix.WITHERED, Affix.HULKING);
+        assertThat(inspection.affixes()).extracting(EnemyInspection.AffixEntry::affix).containsExactly(Affix.WITHERED, Affix.HULKING);
     }
 
     @Test
-    void whatAnAffixAddsShowsAsTheAffixAloneBesideTheEnemysOwnEntries() {
+    void whatAnAffixAddsIsListedUnderTheAffixNotBesideTheEnemysOwnEntries() {
         EnemyDefinition affixed = EnemyFixtures.simpleDefinition("grub")
                 .withTraits(List.of(new ImmunityTrait(EffectKind.FREEZE)))
                 .withAffixes(List.of(Affix.REGENERATING, Affix.SHIELDED), new AffixContext(Rank.GRUNT, 1f));
@@ -147,7 +147,12 @@ class EnemyInspectionTest {
 
         assertThat(inspection.traitEntries()).extracting(TraitEntry::term).containsExactly(EffectKind.FREEZE);
         assertThat(inspection.abilityEntries()).isEmpty();
-        assertThat(inspection.affixes()).containsExactly(Affix.REGENERATING, Affix.SHIELDED);
+        assertThat(inspection.affixes()).extracting(EnemyInspection.AffixEntry::affix)
+                .containsExactly(Affix.REGENERATING, Affix.SHIELDED);
+        assertThat(inspection.affixes().getFirst().traits()).extracting(TraitEntry::term)
+                .containsExactly(TraitTerm.REGENERATION);
+        assertThat(inspection.affixes().getLast().abilities()).extracting(AbilityEntry::term)
+                .containsExactly(AbilityTerm.PANIC);
     }
 
     @Test
