@@ -32,7 +32,7 @@ final class EffectPictograms {
             // Sunder
             Map.entry("effect.sundered", "F M10.6 2.9L3.8 5.6V11C3.8 15.6 6.6 19.3 10.6 21L9.2 15.4L11.2 11.4L9.6 7.3Z ; F M13.4 3.6L20.2 6.3V11.7C20.2 16.3 17.4 20 13.4 21.7L12.4 15.9L14.4 11.9L12.8 7.8Z"),
             // Expose
-            Map.entry("effect.exposed", "S O12 12 9 ; F M12 5.2L13.6 10.4L18.8 12L13.6 13.6L12 18.8L10.4 13.6L5.2 12L10.4 10.4Z"),
+            Map.entry("effect.exposed", "S O10.4 13.6 7.2 ; K M17 0L19.2 4.8L24 7L19.2 9.2L17 14L14.8 9.2L10 7L14.8 4.8Z ; F M17 1.6L18.5 5.5L22.4 7L18.5 8.5L17 12.4L15.5 8.5L11.6 7L15.5 5.5Z"),
             // Mark
             Map.entry("effect.marked", "E M12 21.8C12 21.8 4.6 14.4 4.6 9.2A7.4 7.4 0 0 1 19.4 9.2C19.4 14.4 12 21.8 12 21.8Z O12 9.2 2.7"),
             // Priority
@@ -94,9 +94,9 @@ final class EffectPictograms {
             // Sprint
             Map.entry("effect.sprinting", "F M8.4 5.6L14.8 12L8.4 18.4H4.6L11 12L4.6 5.6Z M15 5.6L21.4 12L15 18.4H11.2L17.6 12L11.2 5.6Z"),
             // Spellproof
-            Map.entry("effect.spellproof", "S M12 2.5C8 2.5 4.5 6 4.5 10.2C4.5 14 7 16.6 9 18V21.5H15V18C17 16.6 19.5 14 19.5 10.2C19.5 6 16 2.5 12 2.5Z ; F O12 10 2.4"),
+            Map.entry("effect.spellproof", "S M12 3.2L19 5.9V11C19 15.6 16 19 12 20.6C8 19 5 15.6 5 11V5.9Z ; F M12 6.8L13.1 10.6L16.8 11.6L13.1 12.6L12 16.4L10.9 12.6L7.2 11.6L10.9 10.6Z"),
             // Unyielding
-            Map.entry("effect.unyielding", "F M12 2.5L20 6V12C20 16.8 16.6 20.2 12 21.8C7.4 20.2 4 16.8 4 12V6Z ; K M12 6.4V17.4 M7.6 11.6H16.4"),
+            Map.entry("effect.unyielding", "F M12 2.5L20 6V12C20 16.8 16.6 20.2 12 21.8C7.4 20.2 4 16.8 4 12V6Z ; K M12 6.2L16.4 11.2H13.6V17.4H10.4V11.2H7.6Z"),
             // Resolve
             Map.entry("effect.resolve", "S M6 2.5V21.5 ; F M6.8 3.5H19.5L16.4 8L19.5 12.5H6.8Z"),
             // Haste

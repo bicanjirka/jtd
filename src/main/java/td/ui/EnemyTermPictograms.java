@@ -10,15 +10,15 @@ final class EnemyTermPictograms {
             // Regeneration
             Map.entry("trait.regeneration", "S M19.6 12A7.6 7.6 0 1 1 15.2 5.2 ; F M13.6 2.2L19.8 4.6L15 8.8Z ; F M10.7 8.4H13.3V10.7H15.6V13.3H13.3V15.6H10.7V13.3H8.4V10.7H10.7Z"),
             // Adrenaline
-            Map.entry("trait.adrenaline", "F M8.6 21C3.6 17.4 1.8 14.4 1.8 12A3.5 3.5 0 0 1 8.6 10.8A3.5 3.5 0 0 1 15.4 12C15.4 14.4 13.6 17.4 8.6 21Z ; S M13.6 9.6L20.6 2.6 M15.2 2.4H20.8V8"),
+            Map.entry("trait.adrenaline", "F M14.6 19C9.6 15.4 7.8 12.4 7.8 10A3.5 3.5 0 0 1 14.6 8.8A3.5 3.5 0 0 1 21.4 10C21.4 12.4 19.6 15.4 14.6 19Z ; S M2.4 8.4H5.4 M1.8 12.4H4.6 M2.4 16.4H5.6"),
             // Skittish
-            Map.entry("trait.skittish", "F O9.6 12.6 2.4 ; S M2.6 19.4C9.6 19.4 13.6 6 20.4 6 ; F M21.8 6L17.2 2.8V9.2Z"),
+            Map.entry("trait.skittish", "D O10.4 13.6 4.4 ; S M2 13.6H15.4 ; F M21.6 13.6L15.6 10V17.2Z ; F O16.6 5.4 3.4"),
             // Adaptation
             Map.entry("trait.adaptation", "S M12 2.6L19.6 5.4V11C19.6 15.8 16.4 19.4 12 21.2C7.6 19.4 4.4 15.8 4.4 11V5.4Z ; T M15.4 10.6A3.6 3.6 0 0 0 8.8 9.8 M8.6 13.4A3.6 3.6 0 0 0 15.2 14.2 ; F M8 7.6L8.8 10.6L11.4 9.2Z M16 16.4L15.2 13.4L12.6 14.8Z"),
             // Hivemind
             Map.entry("trait.hivemind", "F M7 3.4L10.6 5.5V9.7L7 11.8L3.4 9.7V5.5Z M17 3.4L20.6 5.5V9.7L17 11.8L13.4 9.7V5.5Z M12 12.2L15.6 14.3V18.5L12 20.6L8.4 18.5V14.3Z"),
             // Crumble
-            Map.entry("trait.crumble", "F M5 6.4L9.4 4.4L11.6 8.4L7.6 10.6Z M13.4 5.6L18.4 6.8L17 11.2L12.8 9.8Z ; D M6.4 14.2L9.4 13.2L10.4 16L7.4 17Z M13.6 14.6L16.4 14.6L16 17.4L13.4 17.2Z ; D O11.6 20.4 1 O17.6 20.2 0.8 O5.6 20.6 0.7"),
+            Map.entry("trait.crumble", "F M3.6 3.6H17.4V9.4L14.8 11.2L16 14L12.4 15.4L10.6 13.6L7.8 16.2H3.6Z ; F M16.4 16L19.6 15.2L20.4 18.4L17.2 19.2Z M10.4 18.2L13 18L12.8 20.6L10.2 20.8Z M19.6 10.4L21.8 11L21.2 13.2L19 12.6Z"),
             // Jam
             Map.entry("trait.jam", "F O12 12 2.4 ; S M7.6 8A5.8 5.8 0 0 0 7.6 16 M16.4 8A5.8 5.8 0 0 1 16.4 16 ; T M4 4.8A10 10 0 0 0 4 19.2 M20 4.8A10 10 0 0 1 20 19.2"),
             // Brace
@@ -60,7 +60,7 @@ final class EnemyTermPictograms {
             // Fade
             Map.entry("ability.fade", "S M3 9.6C7 14.6 17 14.6 21 9.6 ; T M6 12.6L4.6 15 M12 14.2V17 M18 12.6L19.4 15 ; F O6 19.6 0.9 O10 20.8 0.8 O14.6 20.4 0.9 O18.6 19.4 0.7"),
             // Shroud
-            Map.entry("ability.shroud", "F M12 2.8C7.4 2.8 4.8 7.2 4.8 12V21.2H19.2V12C19.2 7.2 16.6 2.8 12 2.8Z ; K M12 8.2C9.8 8.2 8.6 10.4 8.6 12.6C8.6 14.8 10 16.2 12 16.2C14 16.2 15.4 14.8 15.4 12.6C15.4 10.4 14.2 8.2 12 8.2Z"),
+            Map.entry("ability.shroud", "S O12 12 9.6 ; S M6.6 11.2C9 14.2 15 14.2 17.4 11.2 ; T M8.4 13.4L7.4 15 M12 14.4V16.2 M15.6 13.4L16.6 15"),
             // Phase
             Map.entry("ability.phase", "F M12 3C7.6 3 5 6.4 5 10.6V20.6L7.4 18.8L9.8 20.8L12 19Z ; S M12 3C16.4 3 19 6.4 19 10.6V20.6L16.6 18.8L14.2 20.8L12 19 ; K O9 9.8 1.3"),
             // Vanish
@@ -81,13 +81,13 @@ final class EnemyTermPictograms {
             // Gust
             Map.entry("ability.gust", "S M2.6 7.4H13.4A2.8 2.8 0 1 0 10.6 4.6 M2.6 12H17.8 M2.6 16.6H12.2A2.8 2.8 0 1 1 9.4 19.4 ; F M18.4 8.4L22.4 12L18.4 15.6Z"),
             // Bond
-            Map.entry("ability.bond", "S O8.2 12 5.6 ; S O15.8 12 5.6 ; F M10.6 12A1.4 1.4 0 1 0 13.4 12A1.4 1.4 0 1 0 10.6 12Z"),
+            Map.entry("ability.bond", "F O7 7.6 2.8 ; F M2.2 20V15.4C2.2 13 4.4 11.4 7 11.4C9.6 11.4 11.8 13 11.8 15.4V20Z ; D O17 7.6 2.8 ; D M12.2 20V15.4C12.2 13 14.4 11.4 17 11.4C19.6 11.4 21.8 13 21.8 15.4V20Z"),
             // Rewind
             Map.entry("ability.rewind", "S M19.6 12A7.6 7.6 0 1 1 15.2 5.2 ; F M13.6 2.2L19.8 4.6L15 8.8Z ; T M12 8V12.6L14.8 14.4"),
             // Last Ward
             Map.entry("ability.last_ward", "F M5.8 20.6V10C5.8 6.4 8.6 3.4 12 3.4C15.4 3.4 18.2 6.4 18.2 10V20.6Z ; K M12 6.4L16 8V11.4C16 14 14.4 15.8 12 16.8C9.6 15.8 8 14 8 11.4V8Z ; T M2.6 21.4H21.4"),
             // Healing Pool
-            Map.entry("ability.healing_pool", "S O12 15 8.2 ; F M10.6 9.6H13.4V13.6H17.4V16.4H13.4V20.4H10.6V16.4H6.6V13.6H10.6Z"),
+            Map.entry("ability.healing_pool", "F M2.6 18.6C2.6 16.4 6.8 15 12 15C17.2 15 21.4 16.4 21.4 18.6C21.4 20.8 17.2 22 12 22C6.8 22 2.6 20.8 2.6 18.6Z ; F M10.6 2.6H13.4V6.6H17.4V9.4H13.4V13.4H10.6V9.4H6.6V6.6H10.6Z"),
             // Haste Field
             Map.entry("ability.haste_field", "S O12 12 9.6 ; F M6.4 7.6L11 12L6.4 16.4H8.8L13.4 12L8.8 7.6Z M11.6 7.6L16.2 12L11.6 16.4H14L18.6 12L14 7.6Z"),
             // Ward Mine
@@ -99,9 +99,9 @@ final class EnemyTermPictograms {
             // Stone Skin
             Map.entry("ability.stone_skin", "F M12 2.5L20.2 7.2V16.8L12 21.5L3.8 16.8V7.2Z ; X M9.6 6.4L11.4 10L9 13.2L10.8 17.6 M14.6 8.6L13.2 12L15.4 15"),
             // Spell Ward
-            Map.entry("ability.spell_ward", "S M12 2.5C8 2.5 4.5 6 4.5 10.2C4.5 14 7 16.6 9 18V21.5H15V18C17 16.6 19.5 14 19.5 10.2C19.5 6 16 2.5 12 2.5Z ; T M1.8 9.6H3.6 M1.8 13H3.6 M20.4 9.6H22.2 M20.4 13H22.2"),
+            Map.entry("ability.spell_ward", "S O12 12 9.6 ; F M12 6.4L16.6 8.2V11.4C16.6 14.4 14.6 16.6 12 17.6C9.4 16.6 7.4 14.4 7.4 11.4V8.2Z ; K M12 8.6L12.8 10.8L15 11.6L12.8 12.4L12 14.6L11.2 12.4L9 11.6L11.2 10.8Z"),
             // Last Stand
-            Map.entry("ability.last_stand", "F M12 2.5L20 6V12C20 16.8 16.6 20.2 12 21.8C7.4 20.2 4 16.8 4 12V6Z ; K M12 6.4V17.4 M7.6 11.6H16.4 ; T M12 0.8V2"),
+            Map.entry("ability.last_stand", "=effect.unyielding"),
             Map.entry("ability.hatch", "F M5.2 14L7.6 12L9.8 14.4L12 11.8L14.2 14.4L16.4 12L18.8 14C18.8 18.2 15.8 21.4 12 21.4C8.2 21.4 5.2 18.2 5.2 14Z ; F M6.6 8.8L8.8 7L11.2 9.4L13.4 7L15.6 8.8C14.8 5 13 2.2 11.2 2.2C9.2 2.2 7.4 4.6 6.6 8.8Z"),
             // Reforge
             Map.entry("ability.reforge", "F M12 2.2C10.4 4.6 8.6 6.6 8.6 8.6A3.4 3.4 0 0 0 15.4 8.6C15.4 6.6 13.6 4.6 12 2.2Z ; F M3 13.2H21V15.6H16.4L18 20.4H6L7.6 15.6H3Z"),
