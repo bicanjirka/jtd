@@ -58,8 +58,9 @@
   (`AdaptiveResist`) reads `GameWorld.damageTally()`. The mob resolves every slot once, in its
   constructor (`EnemyDefinition.traitsFor`), and keeps that list. Spawn-time variation is a new
   template, never a new `EnemyDefinition` component; an affix is authored, and the definition carries it.
-- `withAdditionalTraits`/`withAdditionalAbilities` replace an entry with the same
-  `TraitId.named(...)` id and stack anonymous ones. Name an entry only when a later step replaces
+- `withAdditionalTraits`/`withAdditionalAbilities` replace an entry the definition already had with the same
+  `TraitId.named(...)` id and stack anonymous ones; entries added in one call never replace each other, so an affix
+  may add several. Name an entry only when a later step replaces
   it (e.g. `"armor"`, which a later rank step replaces).
 - Every enemy has a `FreezeMeter`, draining at its rank's `Rank.freezeDrain()`; there is no opt-in.
 - `DefinedEnemyMob.applyEffect` keeps out what a trait makes it immune to, and scales what doesn't help it

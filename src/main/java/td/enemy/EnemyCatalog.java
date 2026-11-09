@@ -59,7 +59,7 @@ public final class EnemyCatalog {
         if (WaveScript.isReserved(id)) {
             throw new GameStartupException(
                     "Enemy id '" + id + "' collides with a reserved wave-script token " + WaveScript.RESERVED_TOKENS
-                            + " or the w<number> spacing token");
+                            + ", the w<number> spacing token or a count");
         }
         if (this.rankedEnemies.containsKey(id)) {
             throw new GameStartupException("Duplicate enemy definition id '" + id + "'");

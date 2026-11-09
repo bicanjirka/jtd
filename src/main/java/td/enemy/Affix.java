@@ -194,6 +194,11 @@ public enum Affix implements Term {
         }
 
         @Override
+        public boolean excludes(Affix other) {
+            return other == UNSTOPPABLE;
+        }
+
+        @Override
         public TermText describe() {
             return COLDBLOODED_FREEZE.entry().text();
         }
@@ -224,6 +229,36 @@ public enum Affix implements Term {
         public TermText describe() {
             return PHYSICAL_PLATING.entry().text();
         }
+    },
+    FIREPROOF("Fireproof") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withAdditionalTraits(List.of(IdentifiedTrait.of(this, new ImmunityTrait(EffectKind.BURN))));
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.format("immune to {}, but not to {}", EffectKind.BURN, EffectKind.SOULFIRE);
+        }
+    },
+    UNSTOPPABLE("Unstoppable") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withAdditionalTraits(UNSTOPPABLE_KEEPS_OUT.stream()
+                    .map(kind -> IdentifiedTrait.of(this, new ImmunityTrait(kind))).toList());
+        }
+
+        @Override
+        public boolean excludes(Affix other) {
+            return other == COLDBLOODED;
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.format("immune to every slow: {}, {}, {} and {}; a {} or a {} still stops it",
+                    EffectKind.CHILL, EffectKind.TARRED, EffectKind.DRAGGED, EffectKind.ANCHORED, EffectKind.FREEZE,
+                    EffectKind.DAZED);
+        }
     };
 
     private static final float HULKING_HEALTH = 2.5f;
@@ -240,6 +275,8 @@ public enum Affix implements Term {
     private static final float WITHERED_SHARE = 0.02f;
     private static final ShortenedEffectTrait COLDBLOODED_FREEZE = new ShortenedEffectTrait(EffectKind.FREEZE, 0.5f);
     private static final ShortenedEffectTrait STEADFAST_DAZE = new ShortenedEffectTrait(EffectKind.DAZED, 1f / 3f);
+    private static final List<EffectKind> UNSTOPPABLE_KEEPS_OUT = List.of(EffectKind.CHILL, EffectKind.TARRED,
+            EffectKind.DRAGGED, EffectKind.ANCHORED);
     private static final float AFFIX_REACH = 80f;
     private static final int COMMAND_INTERVAL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     // Outlasts the interval, so an ally in reach stays covered and loses it soon after the commander falls.
