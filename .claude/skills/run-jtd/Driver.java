@@ -8,7 +8,11 @@ import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.level.LevelDefinition;
+import td.util.GameStartupException;
 import td.util.GameWorld;
+import td.wave.Wave;
+import td.wave.WaveContent;
+import td.wave.WaveScript;
 
 import javax.imageio.ImageIO;
 import java.awt.AWTException;
@@ -126,6 +130,7 @@ public class Driver {
             case "setcredits" -> setCredits(rest.trim());
             case "setlives" -> setLives(rest.trim());
             case "spawn" -> spawnEnemy(rest.trim());
+            case "script" -> spawnScript(rest.trim());
             case "effect" -> applyEffect(rest.trim());
             case "kill" -> killEnemies();
             case "sleep" -> Thread.sleep(Long.parseLong(rest.trim()));
@@ -851,6 +856,23 @@ public class Driver {
         EnemyMob mob = catalog.spawn(id, context, 0, definition.baseHealth(), definition.price(), rank);
         context.enemies().add(mob);
         System.out.println("OK spawn " + id + " at rank " + rank);
+    }
+
+    // Spawns a wave script on the first path as the dev panel's spawn box does, Grunt by default, so a
+    // head, affixes and shapes reach the live game: script <wave script>. A bad script prints the problem.
+    private static void spawnScript(String script) throws Exception {
+        GameWorld context = getGameWorld();
+        WaveContent content;
+        try {
+            content = WaveScript.parse(script, Rank.GRUNT, context.getEnemyCatalog());
+        } catch (GameStartupException e) {
+            System.out.println("ERROR script: " + e.getMessage());
+            return;
+        }
+        for (EnemyMob mob : new Wave(context, content, 1, 0, 1f).spawn()) {
+            context.enemies().add(mob);
+        }
+        System.out.println("OK script " + content.enemyCount() + " enemies");
     }
 
     // Puts an effect on every alive enemy, as a tower would: effect <kind> [ticks].
