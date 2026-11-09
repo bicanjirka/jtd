@@ -182,9 +182,9 @@ public final class SonarTower extends AbstractTower {
 
     private final OwnedMechanics<SonarMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final SonarActions actions = new Actions();
-    private final PingTracker pings = new PingTracker();
+    private PingTracker pings = new PingTracker();
     private final List<SonarHit> recentHits = new ArrayList<>();
-    private SonarBeam beam = SpinningBeam.of(BASE_BEAM);
+    private SonarBeam beam = SpinningBeam.of(BASE_BEAM, this.restHeading());
     private BeamSpec beamSpec = BASE_BEAM;
     private List<EnemyMob> pinged = List.of();
     private int lastRevolutionAt = Integer.MIN_VALUE;
@@ -232,8 +232,12 @@ public final class SonarTower extends AbstractTower {
         this.beamSpec = spec.beam();
         this.beam = this.beam.reshaped(spec.beam());
         List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
-        this.beam.advance(spec.beam().phased() ? this.focusBearing(inReach) : OptionalDouble.empty());
         this.recentHits.removeIf(hit -> gameTime - hit.tick() >= HIT_FLASH_TICKS);
+        if (inReach.isEmpty() && this.betweenWaves()) {
+            this.beam.settle(this.restHeading());
+            return;
+        }
+        this.beam.advance(spec.beam().phased() ? this.focusBearing(inReach) : OptionalDouble.empty());
 
         for (EnemyMob enemy : inReach) {
             float share = this.beam.strikeShare(this.bearingOf(enemy));
@@ -245,6 +249,19 @@ public final class SonarTower extends AbstractTower {
             this.beginShot();
             this.completeRevolution(spec, owned, gameTime);
         }
+    }
+
+    @Override
+    protected void endFight() {
+        this.pings = new PingTracker();
+        this.pinged = List.of();
+    }
+
+    /** A beam starting its first revolution from rest. */
+    @Override
+    protected void takeRestPose() {
+        this.beam = SpinningBeam.of(BASE_BEAM, this.restHeading());
+        this.beamSpec = BASE_BEAM;
     }
 
     private double bearingOf(EnemyMob enemy) {

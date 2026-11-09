@@ -44,6 +44,12 @@ public final class TowerExperience {
         this.snapshot = new Snapshot(xp, TowerRank.of(xp) == TowerRank.of(0) ? -1 : 0, deeds, -1);
     }
 
+    /** Forgets when the last deed was, so the next wave's first deed counts whenever it comes. */
+    void endWave() {
+        Snapshot before = this.snapshot;
+        this.snapshot = new Snapshot(before.xp(), before.rankedUpAt(), before.deeds(), -1);
+    }
+
     /** A deed done by an attack: a second one in the same tick (another enemy it hit) doesn't count. */
     void countDeedOfAttack(int tick) {
         this.countDeedAfter(tick, 1);

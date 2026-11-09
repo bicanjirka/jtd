@@ -4,6 +4,7 @@ import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
 import td.stat.DisruptionPenalty;
 import td.tower.targeting.InRangeTargetQuery;
+import td.util.ThreadConfined;
 import td.util.TickRate;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * is made. Two zones of one kind never stack: an enemy standing in both takes the pulse of the one
  * that was there first.
  */
+@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class ZoneRoster {
 
     /** Zones pulse together this often: twice a second. */
@@ -27,12 +29,19 @@ public final class ZoneRoster {
 
     private final EnemyRegistry enemies;
     private final List<Zone> zones = new CopyOnWriteArrayList<>();
+    // Game loop: from a wave's clear until the next starts, every zone fades, a shell landing late included.
+    private boolean clearing = false;
+    // The tick the wave out started on, which every pulse counts from.
+    private int waveStart = 0;
 
     public ZoneRoster(EnemyRegistry enemies) {
         this.enemies = enemies;
     }
 
     public void add(Zone zone) {
+        if (this.clearing) {
+            zone.clear();
+        }
         this.zones.add(zone);
     }
 
@@ -48,11 +57,21 @@ public final class ZoneRoster {
 
     public void clear() {
         this.zones.clear();
+        this.clearing = false;
+        this.waveStart = 0;
     }
 
-    /** Takes off the board every zone that was to last until the wave is over. */
+    /** The wave is over: every zone fades out over a moment, and one made after fades too. */
     public void endWave() {
-        this.zones.removeIf(Zone::lastsUntilWaveEnd);
+        this.clearing = true;
+        this.zones.forEach(Zone::clear);
+    }
+
+    /** A wave starts on tick {@code gameTime} on bare ground: what the last left is gone, and pulses count from now. */
+    public void startWave(int gameTime) {
+        this.zones.clear();
+        this.clearing = false;
+        this.waveStart = gameTime;
     }
 
     /**
@@ -82,7 +101,8 @@ public final class ZoneRoster {
                 if (zone.isArmed()) {
                     this.stepOn(zone);
                 }
-            } else if (zone.kind() != ZoneKind.BLINDING_FIELD && (zone.ageTicks() == 0 || gameTime % PULSE_TICKS == 0)) {
+            } else if (zone.kind() != ZoneKind.BLINDING_FIELD && (zone.ageTicks() == 0
+                    || (gameTime - this.waveStart) % PULSE_TICKS == 0)) {
                 this.pulse(zone, touched);
             }
             zone.age();

@@ -212,7 +212,7 @@ class AbstractTowerTest {
         FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.none());
         EnemyMob enemy = EnemyFixtures.plainMob(context, 1000, 3);
         int second = Math.round(TickRate.TICKS_PER_SECOND);
-        context.waves().announce();
+        context.waves().announce(0);
 
         tower.beginTick(1);
         tower.dealDamage(enemy, Damage.physical(4000));
@@ -224,7 +224,7 @@ class AbstractTowerTest {
         assertThat(waveDpsRows(tower)).singleElement().satisfies(row -> assertThat(row.current())
                 .isCloseTo(DamageUnits.inPoints(8000) / 2f, within(0.01f)));
 
-        context.waves().announce();
+        context.waves().announce(0);
 
         assertThat(waveDpsRows(tower)).isEmpty();
     }

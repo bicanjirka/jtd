@@ -453,7 +453,7 @@ class PulseTowerTest {
         tower.doTick(2);
         tower.doTick(3);
         float widened = tower.getFieldRadius();
-        this.board.waves().announce();
+        this.board.waves().announce(0);
         tower.doTick(4);
 
         assertThat(widened).isCloseTo(tower.rangeReal() * 1.1f, within(0.01f));

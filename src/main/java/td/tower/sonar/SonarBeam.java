@@ -1,5 +1,7 @@
 package td.tower.sonar;
 
+import td.util.TickRate;
+
 import java.util.OptionalDouble;
 
 /**
@@ -19,6 +21,12 @@ public interface SonarBeam {
      * the main beam, a share for a second one, {@code 0} when no beam crosses it.
      */
     float strikeShare(double bearing);
+
+    /** How fast a beam turns to its rest pose once a wave is over. */
+    double SETTLE_RADIANS_PER_TICK = Math.PI / TickRate.TICKS_PER_SECOND;
+
+    /** Turns one tick toward {@code restRadians}, hitting nothing: what a beam does between waves. */
+    void settle(double restRadians);
 
     /** Whether the last tick finished a revolution, or a held beam's ping period. */
     boolean completedRevolution();

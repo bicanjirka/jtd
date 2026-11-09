@@ -123,13 +123,13 @@ public class GameWorld {
      * Seeds the roster's alive count with the total across every path's starting wave, then
      * announces the start - in that order, so listeners never see a stale count.
      */
-    public void startWave(List<Wave> starting) {
+    public void startWave(List<Wave> starting, int gameTime) {
         int total = 0;
         for (Wave w : starting) {
             total += w.enemyCount();
         }
         this.enemies.setCount(total);
-        this.waves.announce();
+        this.waves.announce(gameTime);
     }
 
     /**

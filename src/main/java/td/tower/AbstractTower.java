@@ -49,8 +49,10 @@ import td.tower.upgrade.UpgradeRemoval;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
+import td.util.PathRuntime;
 import td.util.ThreadConfined;
 import td.util.TickRate;
+import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -91,7 +93,8 @@ public abstract class AbstractTower implements Tower {
     /** The authored stats resolved with nothing on them: what every row's base reads from. */
     private final TowerStats authored;
     private final TowerFactory.Type type;
-    private final int price;
+    /** Where a turret faces while nothing is in reach, fixed by where the tower stands. */
+    private final double restHeading;
     private final TowerExperience experience = new TowerExperience();
     /** Who this tower's hits come from, so an effect can tell them from another tower's. */
     private final AttackOrigin origin = AttackOrigin.fresh();
@@ -105,6 +108,8 @@ public abstract class AbstractTower implements Tower {
     private volatile UpgradeState upgrades = UpgradeState.none();
     private volatile TowerStats stats;
     private volatile boolean removed = false;
+    // Read on the EDT for the sell price; a load sets it to what the saved game paid.
+    private volatile int price;
     // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
     private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
     private final ActiveTowerStatuses statuses = new ActiveTowerStatuses();
@@ -149,6 +154,65 @@ public abstract class AbstractTower implements Tower {
         this.stats = TowerStats.of(base, StatModifiers.none(), StatModifiers.none(), DisruptionPenalty.none(), scale,
                 Set.of());
         this.authored = this.stats;
+        this.restHeading = restHeadingOf(context, this.centerX, this.centerY);
+    }
+
+    /** Toward the nearest point of any path, so a turret at rest loses little time turning to its first target. */
+    private static double restHeadingOf(GameWorld context, int x, int y) {
+        Vec2 nearest = null;
+        double best = Double.MAX_VALUE;
+        for (PathRuntime path : context.level().paths()) {
+            for (Vec2 point : path.path().points()) {
+                double dx = point.x() - x;
+                double dy = point.y() - y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = point;
+                }
+            }
+        }
+        return nearest == null ? 0d : TurretAim.angleTo(x, y, nearest.x(), nearest.y());
+    }
+
+    /** The heading a turret or beam rests at between waves and starts each wave at. */
+    protected final double restHeading() {
+        return this.restHeading;
+    }
+
+    /**
+     * The wave is over: drops everything it built up (statuses, shot counts, mechanic state and the tower's own fight
+     * state), leaving the tower as waiting with nothing in reach leaves it. A turret keeps its pose and settles.
+     */
+    @Override
+    public final void endWave() {
+        this.shotsBegun = 0;
+        this.lastWitherTick = Integer.MIN_VALUE;
+        this.statuses.clear();
+        this.disruption = DisruptionPenalty.none();
+        this.experience.endWave();
+        this.ownedMechanics().renew();
+        this.endFight();
+        this.refreshStatusLayer();
+    }
+
+    /** {@link #endWave()}, with the turret or beam at its rest pose: how every tower starts a wave. */
+    @Override
+    public final void readyForWave() {
+        this.endWave();
+        this.takeRestPose();
+    }
+
+    /** Hook dropping the tower's own fight state: its clock, targets, counters and stores; a no-op by default. */
+    protected void endFight() {
+    }
+
+    /** Hook putting a turret or beam at {@link #restHeading()} at once; a no-op by default. */
+    protected void takeRestPose() {
+    }
+
+    /** Whether no wave is out, so a turret with nothing to aim at turns to its rest pose. */
+    protected final boolean betweenWaves() {
+        return this.context.waves().betweenWaves();
     }
 
     /** The stats as authored, before any upgrade or buff. */

@@ -153,9 +153,9 @@ public final class PulseTower extends AbstractTower {
             .with(LEY_LINE.id(), LeyLineMechanic::new);
 
     private final OwnedMechanics<PulseMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
-    private final TollTracker tollTracker = new TollTracker();
-    private final FieldHolds holds = new FieldHolds();
-    private final FireClock clock = new FireClock(0);
+    private TollTracker tollTracker = new TollTracker();
+    private FieldHolds holds = new FieldHolds();
+    private FireClock clock = new FireClock(0);
     private boolean fire = false;
     private int highestToll;
     private float fieldRadius;
@@ -222,7 +222,7 @@ public final class PulseTower extends AbstractTower {
         int shots = inside.isEmpty() ? 0 : this.clock.shotsDue();
         List<EnemyMob> wasInside = this.previouslyInside;
         this.countDeaths(spec, inside);
-        boolean beat = gameTime % TICKS_PER_SECOND == 0;
+        boolean beat = this.context.waves().tickOfWave(gameTime) % TICKS_PER_SECOND == 0;
         if (beat) {
             this.interference = this.interferenceNow();
             this.relink(spec);
@@ -266,6 +266,21 @@ public final class PulseTower extends AbstractTower {
         if (spec.zap().isActive() && beat && !inside.isEmpty()) {
             this.zap(spec.zap(), spec, gameTime);
         }
+    }
+
+    /** The Ley Line, its pin and the field's links stay: the next beat works them out again. */
+    @Override
+    protected void endFight() {
+        this.tollTracker = new TollTracker();
+        this.holds = new FieldHolds();
+        this.clock = new FireClock(0);
+        this.fire = false;
+        this.highestToll = 0;
+        this.lastZapTick = Integer.MIN_VALUE;
+        this.previouslyInside = List.of();
+        this.previouslyOnLines = List.of();
+        this.deathsThisWave = 0;
+        this.lineBusy = false;
     }
 
     private static List<EnemyMob> concat(List<EnemyMob> first, List<EnemyMob> second) {
@@ -404,7 +419,7 @@ public final class PulseTower extends AbstractTower {
                 this.applyEffect(enemy, sink -> Effect.stilled(hold.stasisTicks(), sink));
             }
         } else if (enemy.hasEffect(EffectKind.STILLED) && enemy.hasEffect(EffectKind.DAZED)
-                && gameTime % hold.ticksPerToll() == 0) {
+                && this.context.waves().tickOfWave(gameTime) % hold.ticksPerToll() == 0) {
             enemy.loseStacks(EffectKind.TOLL, 1);
         }
     }

@@ -179,14 +179,14 @@ public final class SeekerTower extends AbstractTower {
 
     private static final int COOLDOWN_MAX = 45;
 
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<SeekerMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
-    private final TargetStreak streak = new TargetStreak();
-    private final SeekerNest nest = new SeekerNest();
+    private TargetStreak streak = new TargetStreak();
+    private SeekerNest nest = new SeekerNest();
     private final ProjectileStats missile = ProjectileStats.of(MISSILE_SPEED);
     private final SeekerActions actions = new Actions();
-    private final FrozenLedger frozen = new FrozenLedger();
-    private final FireClock clock = new FireClock(COOLDOWN_MAX);
+    private FrozenLedger frozen = new FrozenLedger();
+    private FireClock clock = new FireClock(COOLDOWN_MAX);
     private int missilesLaunched;
     private EnemyMob currentTarget;
 
@@ -269,7 +269,31 @@ public final class SeekerTower extends AbstractTower {
         this.clock.advance(this.attackRate());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
+        } else if (this.betweenWaves()) {
+            this.turretAim.settle();
         }
+    }
+
+    /** A nest that waited with nothing in reach is full, so it starts full. */
+    @Override
+    protected void endFight() {
+        this.streak = new TargetStreak();
+        this.frozen = new FrozenLedger();
+        this.clock = new FireClock(COOLDOWN_MAX);
+        this.missilesLaunched = 0;
+        this.currentTarget = null;
+        this.nest = new SeekerNest();
+        NestSpec nest = this.nest(this.spec(this.mechanics.all()));
+        if (nest.isActive()) {
+            while (this.nest.hasRoom(nest)) {
+                this.nest.load();
+            }
+        }
+    }
+
+    @Override
+    protected void takeRestPose() {
+        this.turretAim.rest();
     }
 
     @Override

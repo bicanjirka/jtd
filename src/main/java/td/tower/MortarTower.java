@@ -200,12 +200,12 @@ public final class MortarTower extends AbstractTower {
             .with(TAR.id(), () -> new ShellTypeMechanic(ShellType.TAR))
             .with(CRYO_SHELLS.id(), () -> new ShellTypeMechanic(ShellType.CRYO));
 
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK);
+    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<MortarMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
-    private final BracketTracker bracketing = new BracketTracker();
+    private BracketTracker bracketing = new BracketTracker();
     private final ZoneOwner zoneOwner = this::applyEffect;
     private final List<BlastMark> blastMarks = new ArrayList<>();
-    private final FireClock clock = new FireClock(COOLDOWN_MAX);
+    private FireClock clock = new FireClock(COOLDOWN_MAX);
     private volatile NukeFlash nukeFlash;
     private int shellsFired;
     private int tickNow;
@@ -270,7 +270,24 @@ public final class MortarTower extends AbstractTower {
         this.clock.advance(this.attackRate());
         if (this.currentTarget != null) {
             this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
+        } else if (this.betweenWaves()) {
+            this.turretAim.settle();
         }
+    }
+
+    @Override
+    protected void endFight() {
+        this.bracketing = new BracketTracker();
+        this.clock = new FireClock(COOLDOWN_MAX);
+        this.shellsFired = 0;
+        this.salvoLeft = 0;
+        this.salvoGap = 0;
+        this.currentTarget = null;
+    }
+
+    @Override
+    protected void takeRestPose() {
+        this.turretAim.rest();
     }
 
     private void fireAt(EnemyMob target, MortarSpec spec) {

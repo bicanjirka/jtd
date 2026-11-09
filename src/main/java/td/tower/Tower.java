@@ -30,6 +30,15 @@ public interface Tower {
     void doTick(int gameTime);
 
     /**
+     * Game loop, when the wave's last enemy is gone: ends everything the wave built up in this tower. Its turret
+     * keeps its pose and turns to rest over the next ticks.
+     */
+    void endWave();
+
+    /** Game loop, as a wave starts: {@link #endWave()}, with the turret at rest, so every wave starts alike. */
+    void readyForWave();
+
+    /**
      * Start of the tower's turn: expires its timed statuses and re-reads its disruption, republishing stats only on a
      * change.
      *

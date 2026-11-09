@@ -661,4 +661,14 @@ class SeekerTowerTest {
         assertThat(tower.conditions()).extracting(TowerBuffState::term).contains(TowerTerm.ARCANE_MISSILE);
         assertThat(tower.progress()).singleElement().satisfies(progress -> assertThat(progress.count()).isEqualTo(2));
     }
+
+    @Test
+    void aWaveStartsWithTheNestFullHoweverLittleTimeItHadToLoad() {
+        SeekerTower tower = this.attunedTower();
+        this.context.enemies().setEnemies(new EnemyMob[]{});
+
+        tower.readyForWave();
+
+        assertThat(tower.getNestStored()).isEqualTo(nestCapacity(tower)).isPositive();
+    }
 }

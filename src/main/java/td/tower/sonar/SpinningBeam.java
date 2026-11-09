@@ -17,8 +17,15 @@ public final class SpinningBeam implements SonarBeam {
         this.spec = spec;
     }
 
-    public static SpinningBeam of(BeamSpec spec) {
-        return new SpinningBeam(SonarSweep.perRevolution(spec.secondsPerRevolution(), TickRate.TICKS_PER_SECOND), spec);
+    /** Pointing at {@code radians}. */
+    public static SpinningBeam of(BeamSpec spec, double radians) {
+        return new SpinningBeam(SonarSweep.perRevolution(spec.secondsPerRevolution(), TickRate.TICKS_PER_SECOND)
+                .startingAt(radians), spec);
+    }
+
+    @Override
+    public void settle(double restRadians) {
+        this.sweep.turnToward(restRadians, SETTLE_RADIANS_PER_TICK);
     }
 
     @Override

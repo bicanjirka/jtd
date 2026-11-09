@@ -38,8 +38,14 @@ public final class Zone {
     private final List<Effect> carried;
     private final DisruptionPenalty penalty;
     private final Map<EnemyMob, Integer> pulsesInside = new IdentityHashMap<>();
+    /** How long the ground takes to clear once a wave is over. */
+    static final int SETTLE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
+
     private int ageTicks;
     private boolean triggered;
+    /** The age it began to clear at, once the wave is over; {@code -1} before. */
+    private int clearingSince = -1;
+    private float lifeAtClearing;
 
     /**
      * @param radius   pixels
@@ -120,7 +126,18 @@ public final class Zone {
 
     /** How much of its life is left, from 1 when it was made to 0 when it ends. */
     public float lifeLeft() {
-        return Math.max(0f, 1f - (float) this.ageTicks / this.lifetimeTicks);
+        if (this.clearingSince >= 0) {
+            return this.lifeAtClearing * Math.max(0f, 1f - (float) (this.ageTicks - this.clearingSince) / SETTLE_TICKS);
+        }
+        return this.lastsUntilWaveEnd() ? 1f : Math.max(0f, 1f - (float) this.ageTicks / this.lifetimeTicks);
+    }
+
+    /** The wave is over: it fades out over the settle, whatever life it had left. */
+    void clear() {
+        if (this.clearingSince < 0) {
+            this.lifeAtClearing = this.lifeLeft();
+            this.clearingSince = this.ageTicks;
+        }
     }
 
     /** What the towers within {@code radius} suffer; nothing for any kind but a blinding field. */
@@ -153,7 +170,8 @@ public final class Zone {
     }
 
     boolean isExpired() {
-        return this.triggered || this.ageTicks >= this.lifetimeTicks;
+        return this.triggered || this.ageTicks >= this.lifetimeTicks
+                || (this.clearingSince >= 0 && this.ageTicks - this.clearingSince >= SETTLE_TICKS);
     }
 
     /** A mine goes off for {@code by}, once, and is spent. */

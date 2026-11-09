@@ -179,14 +179,41 @@ class ZoneRosterTest {
     }
 
     @Test
-    void aZoneThatLastsTheWaveEndsOnlyWithTheWave() {
+    void aZoneThatLastsTheWaveFadesOutOnlyOnceTheWaveEnds() {
         this.world.zones().add(Zone.haste(100, 100, RADIUS, Zone.UNTIL_WAVE_END, this.owner));
 
         this.tick(0, 10 * LIFETIME);
         int beforeTheWaveEnds = this.world.zones().zones().size();
         this.world.zones().endWave();
+        this.tick(10 * LIFETIME, 10 * LIFETIME + Zone.SETTLE_TICKS);
 
         assertThat(beforeTheWaveEnds).isEqualTo(1);
+        assertThat(this.world.zones().zones()).isEmpty();
+    }
+
+    @Test
+    void onceTheWaveEndsEveryZoneFadesOutOverTheSettleWhateverLifeItHadLeft() {
+        Zone lasting = Zone.haste(100, 100, RADIUS, 1000 * LIFETIME, this.owner);
+        this.world.zones().add(lasting);
+        this.tick(0, 1);
+        float before = lasting.lifeLeft();
+
+        this.world.zones().endWave();
+        this.tick(1, 1 + Zone.SETTLE_TICKS / 2);
+        float halfway = lasting.lifeLeft();
+        this.tick(1 + Zone.SETTLE_TICKS / 2, 1 + Zone.SETTLE_TICKS);
+
+        assertThat(halfway).isLessThan(before).isGreaterThan(0f);
+        assertThat(this.world.zones().zones()).isEmpty();
+    }
+
+    @Test
+    void aZoneMadeAfterTheWaveEndedFadesToo() {
+        this.world.zones().endWave();
+
+        this.world.zones().add(Zone.haste(100, 100, RADIUS, 1000 * LIFETIME, this.owner));
+        this.tick(0, Zone.SETTLE_TICKS);
+
         assertThat(this.world.zones().zones()).isEmpty();
     }
 
