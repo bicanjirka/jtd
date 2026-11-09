@@ -75,6 +75,8 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 // Inspired by HexTD
 
@@ -363,7 +365,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.panelDev.refresh();
         this.fitDevPanel();
         this.setLocationRelativeTo(null);
-        this.startLevel();
+        this.setWavePreview();
         this.gameTime = 0;
         this.levelLoaded = true;
         this.setSpeed(TickSpeed.NORMAL);
@@ -419,53 +421,65 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
     /** Pauses while the question is open, and restores the speed on Cancel. */
     private void askToAbandonLevel() {
+        this.ask(new InfoSheet(List.of(
+                new SheetLine.Title(SheetLine.Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, "Back to menu", ""),
+                new SheetLine.Prose(TermText.of("Abandon this level and return to the menu?")))),
+                "Abandon", speed -> this.returnToMenu());
+    }
+
+    /**
+     * Pauses while {@code question} is open over the board. Confirming runs {@code onConfirm} with the speed the game
+     * had; Cancel plays on at it.
+     */
+    private void ask(InfoSheet question, String confirm, Consumer<TickSpeed> onConfirm) {
         TickSpeed previousSpeed = this.currentSpeed;
         this.setSpeed(TickSpeed.PAUSED);
         this.tooltips.closeAll();
-        InfoSheet question = new InfoSheet(List.of(
-                new SheetLine.Title(SheetLine.Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, "Back to menu", ""),
-                new SheetLine.Prose(TermText.of("Abandon this level and return to the menu?"))));
-        this.openQuestion = Optional.of(ConfirmPopup.open(this.getLayeredPane(), this.boardCentre(), question, "Abandon",
-                ConfirmPopup.IRREVERSIBLE, this::returnToMenu, () -> this.setSpeed(previousSpeed)));
+        this.openQuestion = Optional.of(ConfirmPopup.open(this.getLayeredPane(), this.boardCentre(), question, confirm,
+                ConfirmPopup.IRREVERSIBLE, () -> onConfirm.accept(previousSpeed), () -> this.setSpeed(previousSpeed)));
     }
 
     /** Asks whether to put the last wave sent back as it was sent, if one was sent and nothing else is asking. */
     private void requestRestartWave() {
-        if (this.levelLoaded && this.engine.checkpoint().isPresent()
-                && this.openQuestion.filter(ConfirmPopup::isOpen).isEmpty()) {
-            this.askToRestartWave(this.engine.checkpoint().get().nextWave());
+        OptionalInt wave = this.lastWaveSent();
+        if (this.levelLoaded && wave.isPresent() && this.openQuestion.filter(ConfirmPopup::isOpen).isEmpty()) {
+            this.ask(new InfoSheet(List.of(
+                    new SheetLine.Title(SheetLine.Glyph.CHEVRON, Palette.TERM_STATUS_WAVE,
+                            "Restart wave " + wave.getAsInt(), ""),
+                    new SheetLine.Prose(TermText.of("Put the game back as it was when wave " + wave.getAsInt()
+                            + " was sent? What was bought since is refunded.")))),
+                    "Restart", this::restartWave);
         }
     }
 
-    /** Pauses while the question is open, and plays on at the speed it had once answered. */
-    private void askToRestartWave(int wave) {
-        TickSpeed previousSpeed = this.currentSpeed;
-        this.setSpeed(TickSpeed.PAUSED);
-        this.tooltips.closeAll();
-        InfoSheet question = new InfoSheet(List.of(
-                new SheetLine.Title(SheetLine.Glyph.CHEVRON, Palette.TERM_STATUS_WAVE, "Restart wave " + wave, ""),
-                new SheetLine.Prose(TermText.of("Put the game back as it was when wave " + wave
-                        + " was sent? What was bought since is refunded."))));
-        this.openQuestion = Optional.of(ConfirmPopup.open(this.getLayeredPane(), this.boardCentre(), question,
-                "Restart", ConfirmPopup.IRREVERSIBLE, () -> this.restartWave(previousSpeed),
-                () -> this.setSpeed(previousSpeed)));
+    /** Puts the last wave sent back, then plays on at {@code speed}, or at the last speed played if paused. */
+    private void restartWave(TickSpeed speed) {
+        this.rebuildThen(this.engine::restartWave, problem -> {
+            this.setSpeed(speed.isPaused() ? this.lastPlaySpeed : speed);
+            problem.ifPresent(this.panelDev::showMessage);
+        });
     }
 
-    private void restartWave(TickSpeed speed) {
-        // Restarting tears the level down and rebuilds it, so no tick may run meanwhile.
+    /**
+     * Tears the level down for {@code rebuild} to put a game back, with no tick running meanwhile, then shows the game
+     * it put back and hands {@code report} what of it is missing.
+     */
+    private void rebuildThen(Supplier<Optional<String>> rebuild, Consumer<Optional<String>> report) {
         this.stopLoopThen(() -> {
-            Optional<String> problem = this.engine.restartWave();
+            Optional<String> problem = rebuild.get();
             this.levelLoaded = true;
             this.tooltips.closeAll();
-            this.boardOverlays.reset();
-            this.gameConsole.setLevelEnded(false);
+            if (!this.engine.outcome().isOver()) {
+                this.boardOverlays.reset();
+                this.gameConsole.setLevelEnded(false);
+            }
             this.unSelectTower();
             this.panelTowerSelector.stopPlacing();
             this.gameLoop.start();
-            this.setSpeed(speed.isPaused() ? this.lastPlaySpeed : speed);
             this.setWavePreview();
             this.updateInfo();
-            problem.ifPresent(this.panelDev::showMessage);
+            this.syncTransportButtons();
+            report.accept(problem);
         });
     }
 
@@ -491,16 +505,8 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     }
 
     private void restoreGame(GameSave save) {
-        // Restoring tears the level down and rebuilds it, so no tick may run meanwhile.
-        this.stopLoopThen(() -> {
-            Optional<String> problem = this.engine.restore(save);
-            this.levelLoaded = true;
-            this.gameLoop.start();
-            this.setWavePreview();
-            this.updateInfo();
-            this.syncTransportButtons();
-            this.panelDev.showMessage(problem.orElse("Loaded: wave " + save.nextWave() + " is next"));
-        });
+        this.rebuildThen(() -> this.engine.restore(save),
+                problem -> this.panelDev.showMessage(problem.orElse("Loaded: wave " + save.nextWave() + " is next")));
     }
 
     /** Opens or closes the dev panel. The cell grid shows only while the panel is open. */
@@ -631,12 +637,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         }
     }
 
-    private int lastWaveSent() {
-        return this.engine.checkpoint().map(GameSave::nextWave).orElse(this.engine.waveProgress().index());
-    }
-
-    public void startLevel() {
-        this.setWavePreview();
+    /** The wave a restart puts back: the last one sent, if the checkpoint still holds it. */
+    private OptionalInt lastWaveSent() {
+        return this.engine.checkpoint().map(sent -> OptionalInt.of(sent.nextWave())).orElse(OptionalInt.empty());
     }
 
     /** One logic tick, on the game-loop thread, a single step included. */
@@ -682,9 +685,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private void syncTransportButtons() {
         this.header.showSpeed(this.currentSpeed);
         this.header.setSpeedEnabled(!this.levelLoaded || !this.engine.outcome().isOver());
-        this.header.setRestartWave(this.levelLoaded
-                ? this.engine.checkpoint().map(sent -> OptionalInt.of(sent.nextWave())).orElse(OptionalInt.empty())
-                : OptionalInt.empty());
+        this.header.setRestartWave(this.levelLoaded ? this.lastWaveSent() : OptionalInt.empty());
     }
 
     /** Paints the last published frame; reads no simulation state. */

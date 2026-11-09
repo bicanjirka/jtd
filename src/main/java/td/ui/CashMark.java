@@ -25,12 +25,10 @@ final class CashMark {
     private CashMark() {
     }
 
-    /** The coin's knock-out strokes that lie inside its ring: the {@code $}, its ring left out. */
+    /** The credits coin's own dollar strokes. */
     private static Shape dollar() {
         Path2D.Float strokes = new Path2D.Float();
-        PictogramCatalogue.of("status.cash").orElseThrow().layers().stream()
-                .filter(layer -> layer.op() == Pictogram.Op.KNOCK_OUT_STROKE)
-                .filter(layer -> layer.shape().getBounds2D().getWidth() < Pictogram.UNIT / 2)
+        PictogramCatalogue.of("mark.cash").orElseThrow().layers()
                 .forEach(layer -> strokes.append(layer.shape(), false));
         return strokes;
     }

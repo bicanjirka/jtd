@@ -30,6 +30,10 @@ final class StatusPictograms {
             + "X M6.4 8.1H17.6 ; K O12 5.4 1.1";
     private static final String CRACK = "X M13.2 2.2L11.2 5.6L13.4 7.4L11.6 9.8";
 
+    private static final String DOLLAR = "M15 9.6C15 8 13.6 7.4 12 7.4C10.2 7.4 9 8.3 9 9.8C9 11.4 10.6 11.9 12 12.1"
+            + "C13.6 12.4 15.2 12.9 15.2 14.4C15.2 15.9 13.8 16.8 12 16.8C10.2 16.8 8.8 16 8.8 14.5"
+            + " M12 5.8V7.4 M12 16.8V18.4";
+
     static final List<Map.Entry<String, String>> SPECS = specs();
 
     private StatusPictograms() {
@@ -44,7 +48,9 @@ final class StatusPictograms {
                 // Score: a five-pointed star
                 Map.entry("status.score", "F M12 2.6L14.9 8.9L21.6 9.6L16.6 14.1L18.1 20.8L12 17.4L5.9 20.8L7.4 14.1L2.4 9.6L9.1 8.9Z"),
                 // Cash: a coin with a rim and a bar
-                Map.entry("status.cash", "F O12 12 9.8 ; X O12 12 7.6 ; X M15 9.6C15 8 13.6 7.4 12 7.4C10.2 7.4 9 8.3 9 9.8C9 11.4 10.6 11.9 12 12.1C13.6 12.4 15.2 12.9 15.2 14.4C15.2 15.9 13.8 16.8 12 16.8C10.2 16.8 8.8 16 8.8 14.5 ; X M12 5.8V7.4 M12 16.8V18.4")));
+                Map.entry("status.cash", "F O12 12 9.8 ; X O12 12 7.6 ; X " + DOLLAR),
+                // What sells back in full: the coin's dollar, bare
+                Map.entry("mark.cash", "S " + DOLLAR)));
         // A bare skull; a helmet; horns and a glare; a crown and a glare; horns, a jewelled crown and a glare
         skull(specs, SKULL, CRANIUM + " ; " + ROUND_EYES);
         skull(specs, SKULL_VETERAN, CRANIUM + " ; " + HELMET + " ; " + ROUND_EYES);
