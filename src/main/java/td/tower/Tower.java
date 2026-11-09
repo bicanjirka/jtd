@@ -1,6 +1,7 @@
 package td.tower;
 
 import td.damage.AttackOrigin;
+import td.economy.Refund;
 import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
@@ -58,7 +59,13 @@ public interface Tower {
     /** What the info panel shows: stats as authored and now, behaviours, kills, damage and upgrades. */
     TowerInspection inspect();
 
-    int getSellPrice();
+    /** What selling it pays back now. */
+    Refund sellRefund();
+
+    /** What selling it pays back now, in all. */
+    default int getSellPrice() {
+        return this.sellRefund().total();
+    }
 
     /** Range in cells, before upgrades and buffs. */
     float baseRange();
@@ -208,7 +215,7 @@ public interface Tower {
      * What a downgrade that takes {@code removal} away gives back: what selling would pay less, so that
      * downgrading and then selling pays what selling would have.
      */
-    int refundFor(UpgradeRemoval removal);
+    Refund refundFor(UpgradeRemoval removal);
 
     /**
      * Removes {@code node} and every owned node that depends on it ({@link UpgradeTree#removalFor}), and

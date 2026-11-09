@@ -7,7 +7,7 @@ import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.damage.Delivery;
 import td.economy.EconomyDelta;
-import td.economy.SellRefund;
+import td.economy.Refund;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -272,7 +272,8 @@ public abstract class AbstractTower implements Tower {
      * What selling it pays back of everything paid: the tower at the price it was bought for, and
      * every upgrade bought for it. Nothing during free build.
      */
-    public int getSellPrice() {
+    @Override
+    public Refund sellRefund() {
         return this.context.economy().refundOf(this.shareOf(this.upgrades().owned()));
     }
 
@@ -280,7 +281,7 @@ public abstract class AbstractTower implements Tower {
      * What selling the tower with {@code owned} gives back of what was paid: the share of what has been used, and all
      * of what has not.
      */
-    private int shareOf(List<UpgradeNode> owned) {
+    private Refund shareOf(List<UpgradeNode> owned) {
         TowerUse now = this.use();
         int usedPaid = now.towerUsed() ? this.price : 0;
         int unusedPaid = now.towerUsed() ? 0 : this.price;
@@ -291,7 +292,7 @@ public abstract class AbstractTower implements Tower {
                 usedPaid += node.price();
             }
         }
-        return SellRefund.of(usedPaid) + unusedPaid;
+        return Refund.of(unusedPaid, usedPaid);
     }
 
     @Override
@@ -817,9 +818,9 @@ public abstract class AbstractTower implements Tower {
 
 
     @Override
-    public int refundFor(UpgradeRemoval removal) {
+    public Refund refundFor(UpgradeRemoval removal) {
         return this.context.economy().refundOf(this.shareOf(this.upgrades().owned())
-                - this.shareOf(removal.kept().owned()));
+                .minus(this.shareOf(removal.kept().owned())));
     }
 
     @Override
@@ -828,7 +829,7 @@ public abstract class AbstractTower implements Tower {
         if (removal.isEmpty()) {
             return false;
         }
-        int refund = this.refundFor(removal);
+        int refund = this.refundFor(removal).total();
         this.ownedMechanics().remove(removal.removed());
         this.publishStats(removal.kept());
         this.upgrades = removal.kept();

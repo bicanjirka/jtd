@@ -2,6 +2,7 @@ package td.ui;
 
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
+import td.economy.Refund;
 import td.economy.SellRefund;
 import td.term.TermText;
 import td.tower.PulseTower;
@@ -86,12 +87,12 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         layer.watchButton(this.pinToggle, () -> Optional.of(new SheetTooltip(TooltipKey.of("tower", "pin"),
                 PIN_TOOLTIP)));
         layer.watchButton(this.sellButton, () -> Optional.ofNullable(this.selectedTower)
-                .map(tower -> new SheetTooltip(TooltipKey.of("tower", "sell"), sellTooltip(tower.use().allUnused()))));
+                .map(tower -> new SheetTooltip(TooltipKey.of("tower", "sell"), sellTooltip(tower.sellRefund().isFull()))));
     }
 
     /** "Sell ( $120 )", or "Sell ( $120 · full )" for a tower no wave has run with, which sells for all it cost. */
-    static String sellText(int price, boolean inFull) {
-        return "Sell ( $" + price + (inFull ? " · full" : "") + " )";
+    private static String sellText(Refund refund) {
+        return "Sell ( $" + refund.total() + (refund.isFull() ? " · full" : "") + " )";
     }
 
     private static InfoSheet sellTooltip(boolean inFull) {
@@ -208,7 +209,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
         if (this.selectedTower != null) {
             this.sellButton.setEnabled(!this.levelEnded);
-            this.sellButton.setText(sellText(this.selectedTower.getSellPrice(), this.selectedTower.use().allUnused()));
+            this.sellButton.setText(sellText(this.selectedTower.sellRefund()));
             this.replaceSheet(TowerSheetText.status(this.selectedTower.inspect()));
         }
     }

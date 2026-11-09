@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.economy.Refund;
 import td.tower.Tower;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradePath;
@@ -26,26 +27,11 @@ sealed interface UpgradeHover {
         }
     }
 
-    /**
-     * What a right-click takes away, what it refunds, which of what goes no wave has used (refunded in full) and which
-     * locked-out nodes it opens again.
-     */
-    record Downgrading(UpgradeRemoval removal, int refund, List<UpgradeNode> unused, List<UpgradeNode> reopens)
-            implements UpgradeHover {
+    /** What a right-click takes away, what it refunds and which locked-out nodes it opens again. */
+    record Downgrading(UpgradeRemoval removal, Refund refund, List<UpgradeNode> reopens) implements UpgradeHover {
 
         public Downgrading {
-            unused = List.copyOf(unused);
             reopens = List.copyOf(reopens);
-        }
-
-        /** The part of the refund that gives back all that was paid. */
-        int refundInFull() {
-            return Math.min(this.refund, this.unused.stream().mapToInt(UpgradeNode::price).sum());
-        }
-
-        /** Whether all of what goes refunds in full, so there is nothing to ask. */
-        boolean allInFull() {
-            return this.unused.size() == this.removal.removed().size();
         }
     }
 
@@ -57,8 +43,6 @@ sealed interface UpgradeHover {
             return new Buying(path, world.economy().shortOf(path.total()));
         }
         UpgradeRemoval removal = tree.removalFor(node, tower, world);
-        return new Downgrading(removal, tower.refundFor(removal),
-                removal.removed().stream().filter(tower.use()::isUnused).toList(),
-                tree.newlyLockedOut(removal.kept(), owned));
+        return new Downgrading(removal, tower.refundFor(removal), tree.newlyLockedOut(removal.kept(), owned));
     }
 }

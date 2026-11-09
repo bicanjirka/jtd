@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.economy.Refund;
 import td.economy.SellRefund;
 import td.term.TermNumbers;
 import td.term.TermText;
@@ -119,7 +120,7 @@ final class UpgradeSheetText {
 
     /** "Downgrade ( +$29 )", the confirmation's button. */
     static String downgradeButton(UpgradeHover.Downgrading downgrading) {
-        return "Downgrade ( +$" + downgrading.refund() + " )";
+        return "Downgrade ( +$" + downgrading.refund().total() + " )";
     }
 
     /**
@@ -141,7 +142,7 @@ final class UpgradeSheetText {
                 yield buying.affordable() ? text : text + " · short $" + buying.shortBy();
             }
             case UpgradeHover.Downgrading downgrading -> "Right-click: downgrade " + downgrading.removal().removed().size()
-                    + " · +$" + downgrading.refund() + (downgrading.allInFull() ? " · full" : "");
+                    + " · +$" + downgrading.refund().total() + (downgrading.refund().isFull() ? " · full" : "");
         };
     }
 
@@ -149,7 +150,7 @@ final class UpgradeSheetText {
     static boolean footerWarns(Optional<UpgradeHover> hover) {
         return hover.map(h -> switch (h) {
             case UpgradeHover.Buying buying -> !buying.buys();
-            case UpgradeHover.Downgrading downgrading -> !downgrading.allInFull();
+            case UpgradeHover.Downgrading downgrading -> !downgrading.refund().isFull();
         }).orElse(false);
     }
 
@@ -196,13 +197,13 @@ final class UpgradeSheetText {
         List<SheetLine> lines = new ArrayList<>();
         downgrading.removal().removed().forEach(node -> lines.add(Row.plain(Glyph.DOT, node.displayName(),
                 TermNumbers.cash(node.price()))));
-        int inFull = downgrading.refundInFull();
-        if (!downgrading.unused().isEmpty()) {
-            lines.add(Row.toned(Glyph.CASH, Palette.TERM_STATUS_CASH, "Refund 100%", "+$" + inFull));
+        Refund refund = downgrading.refund();
+        if (refund.inFull() > 0) {
+            lines.add(Row.toned(Glyph.CASH, Palette.TERM_STATUS_CASH, "Refund 100%", "+$" + refund.inFull()));
         }
-        if (!downgrading.allInFull()) {
+        if (refund.inFull() == 0 || refund.shared() > 0) {
             lines.add(Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund " + Math.round(SellRefund.SHARE * 100) + "%",
-                    "+$" + (downgrading.refund() - inFull)));
+                    "+$" + refund.shared()));
         }
         List<String> reopened = lineNames(downgrading.reopens(), tree);
         if (!reopened.isEmpty()) {

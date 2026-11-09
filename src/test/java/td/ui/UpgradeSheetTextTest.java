@@ -310,7 +310,7 @@ class UpgradeSheetTextTest {
         assertThat(sheet.lines()).containsSubsequence(
                 Row.toned(Glyph.CASH, Palette.TERM_STATUS_CASH, "Refund 100%", "+$" + OPTICS.price()),
                 Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund 75%",
-                        "+$" + (downgrading.refund() - OPTICS.price())));
+                        "+$" + downgrading.refund().shared()));
         assertThat(UpgradeSheetText.footer(hover)).doesNotContain("full");
     }
 
@@ -324,12 +324,13 @@ class UpgradeSheetTextTest {
 
         assertThat(sheet.lines()).containsSubsequence(
                 Row.plain(Glyph.DOT, "Focused Optics", "$" + OPTICS.price()),
-                Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund 75%", "+$" + downgrading.refund()),
+                Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund 75%", "+$" + downgrading.refund().total()),
                 Row.plain(Glyph.LOCK, "Reopens", ""),
                 Row.plain(Glyph.DOT, "Marksman's Eye", ""));
         assertThat(UpgradeSheetText.footer(Optional.of(downgrading)))
-                .isEqualTo("Right-click: downgrade 1 · +$" + downgrading.refund());
-        assertThat(UpgradeSheetText.downgradeButton(downgrading)).isEqualTo("Downgrade ( +$" + downgrading.refund() + " )");
+                .isEqualTo("Right-click: downgrade 1 · +$" + downgrading.refund().total());
+        assertThat(UpgradeSheetText.downgradeButton(downgrading))
+                .isEqualTo("Downgrade ( +$" + downgrading.refund().total() + " )");
     }
 
     @Test

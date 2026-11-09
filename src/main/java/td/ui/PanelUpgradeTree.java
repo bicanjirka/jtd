@@ -247,7 +247,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
      */
     private void askToDowngrade(UpgradeNode node) {
         switch (UpgradeHover.of(node, this.tower, this.context)) {
-            case UpgradeHover.Downgrading downgrading when downgrading.allInFull() -> {
+            case UpgradeHover.Downgrading downgrading when downgrading.refund().isFull() -> {
                 this.tower.downgrade(node);
                 this.refresh();
             }
