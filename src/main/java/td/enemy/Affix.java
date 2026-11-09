@@ -170,8 +170,8 @@ public enum Affix implements Term {
     },
     TAUNTING("Taunting") {
         @Override
-        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
-            return definition;
+        public boolean taunts() {
+            return true;
         }
 
         @Override
@@ -226,6 +226,11 @@ public enum Affix implements Term {
         return 1f;
     }
 
+    /** Whether a tower that picks one target must aim at an enemy carrying it. */
+    public boolean taunts() {
+        return false;
+    }
+
     /** Whether one slot may not carry both, because together they undo each other. */
     public boolean excludes(Affix other) {
         return false;
@@ -236,8 +241,10 @@ public enum Affix implements Term {
         return Optional.empty();
     }
 
-    /** {@code definition} with this affix's change; {@link EnemyDefinition#withAffixes} records it. */
-    abstract EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context);
+    /** {@code definition} with this affix's change, if any; {@link EnemyDefinition#withAffixes} records it. */
+    EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+        return definition;
+    }
 
     private static float elusiveAgility(Rank rank) {
         return switch (rank) {

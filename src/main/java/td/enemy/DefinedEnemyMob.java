@@ -686,7 +686,7 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     @Override
     public boolean taunts() {
-        return this.definition.affixes().contains(Affix.TAUNTING);
+        return this.definition.taunts();
     }
 
     /**

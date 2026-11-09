@@ -61,6 +61,15 @@ class AffixTest {
     }
 
     @Test
+    void onlyATauntingAffixMakesAnEnemyTaunt() {
+        EnemyDefinition taunting = this.grub.withAffixes(List.of(Affix.ARMORED, Affix.TAUNTING), WHOLE);
+        EnemyDefinition armored = this.grub.withAffixes(List.of(Affix.ARMORED), WHOLE);
+
+        assertThat(EnemyFixtures.liveMob(this.world, taunting).taunts()).isTrue();
+        assertThat(EnemyFixtures.liveMob(this.world, armored).taunts()).isFalse();
+    }
+
+    @Test
     void hulkingRaisesHealthLowersSpeedAndGrowsTheBodyButNotTheBounty() {
         EnemyDefinition hulking = this.grub.withAffixes(List.of(Affix.HULKING), WHOLE);
 
