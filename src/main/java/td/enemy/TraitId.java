@@ -25,13 +25,18 @@ public sealed interface TraitId {
 
     /** Whether an affix added it, rather than the enemy's own type and rank. */
     default boolean fromAffix() {
-        return this instanceof FromAffix;
+        return false;
     }
 
     record Named(String name) implements TraitId {
     }
 
     record FromAffix(Affix affix) implements TraitId {
+
+        @Override
+        public boolean fromAffix() {
+            return true;
+        }
     }
 
     record Anonymous(Object token) implements TraitId {
