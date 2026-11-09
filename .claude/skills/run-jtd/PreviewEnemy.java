@@ -77,7 +77,7 @@ public class PreviewEnemy {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(Color.BLACK);
         g2.fillRect(0, 0, size, size);
-        new Java2DFrameRenderer().paintEnemies(g2, frameBuilder.build(), frameBuilder.buildBadges());
+        new Java2DFrameRenderer().paintEnemies(g2, frameBuilder.build(), frameBuilder.buildBadgeRows());
         g2.dispose();
 
         File outFile = new File(outputPath);

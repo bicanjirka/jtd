@@ -158,7 +158,7 @@ public class PanelEnemy extends JPanel {
         for (EnemyMob e : this.enemies) {
             e.accept(frameBuilder);
         }
-        this.frameRenderer.paintEnemies(g2, frameBuilder.build(), frameBuilder.buildBadges());
+        this.frameRenderer.paintEnemies(g2, frameBuilder.build(), frameBuilder.buildBadgeRows());
 
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2.setColor(Hud.FOREGROUND);
