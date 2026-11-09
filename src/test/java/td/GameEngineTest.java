@@ -1630,7 +1630,8 @@ class GameEngineTest {
         Optional<String> problem = loaded.restore(GameSaveText.read(GameSaveText.write(save)).save().orElseThrow());
 
         assertThat(problem).isEmpty();
-        assertThat(loaded.getTowers()).extracting(Tower::paid).containsExactly(caster.paid(), host.paid());
+        assertThat(loaded.getTowers()).extracting(tower -> tower.record().paid())
+                .containsExactly(caster.record().paid(), host.record().paid());
         assertThat(save.pins()).hasSize(1);
         assertThat(loaded.save()).contains(save);
     }

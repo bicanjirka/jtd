@@ -53,7 +53,7 @@ class PanelTowerInfoTest {
         WorldFixtures.passAWave(this.world);
         this.info.setTower(this.tower);
 
-        assertThat(fresh).isEqualTo("Sell ( $" + this.tower.paid() + " · full )");
+        assertThat(fresh).isEqualTo("Sell ( $" + this.tower.record().paid() + " · full )");
         assertThat(this.sellButtonText()).isEqualTo("Sell ( $" + this.tower.getSellPrice() + " )");
     }
 

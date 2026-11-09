@@ -145,23 +145,14 @@ public interface Tower {
 
     int getKillCount();
 
-    /** What it has earned and done so far. */
-    default TowerTally tally() {
-        return TowerTally.of(this.experience().xp(), this.experience().deeds(), this.getDamageDealt(),
-                this.getKillCount());
-    }
+    /** What it carries into the next wave: what it earned, what it was bought for, what of it is used. */
+    TowerRecord record();
 
-    /**
-     * Takes up {@code tally} in place of its own, {@code paid} as what it was bought for, and {@code use} as what of
-     * it has been used: for a tower just rebuilt from a saved game.
-     */
-    void restore(TowerTally tally, int paid, TowerUse use);
+    /** Takes up {@code record} in place of its own: for a tower just rebuilt from a saved game. */
+    void restore(TowerRecord record);
 
     /** What of it has been used, and so what sells back in full. */
     TowerUse use();
-
-    /** What the tower itself was bought for, its upgrades aside. */
-    int paid();
 
     /** Every buff and debuff this tower carries now, buffs first. Game loop only. */
     default List<TowerBuffState> conditions() {
