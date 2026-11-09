@@ -1,5 +1,6 @@
 package td.wave;
 
+import td.enemy.Affix;
 import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
 import td.enemy.SpawnParameters;
@@ -18,16 +19,16 @@ import java.util.stream.Stream;
  * <strong>A count applies to the token right after it.</strong> Before an id or {@code e} it
  * repeats the slot; before a rank or shape keyword it repeats the whole slot. After a shape keyword
  * it sets that slot's member count: required for {@code swarm}, {@code line}, {@code column} and
- * {@code drip}, rejected for {@code plated} and {@code flank}.
+ * {@code drip}, rejected for {@code flank}. {@link Affix} words go right before the id.
  * <p>
  * A head, ended by {@code :}, holds the wave's defaults: {@code w<number>} (such as {@code w30}),
  * how many ticks one slot of spacing is worth in place of
  * {@link SpawnParameters#DEFAULT_DELAY_TICKS_PER_SLOT}, then the rank every slot takes unless it
- * names its own ({@code w30 soldier: 3 walker}).
+ * names its own, then affixes every slot carries besides its own ({@code w30 soldier armored: 3 walker}).
  */
 public final class WaveScript {
 
-    /** Catches a typo like {@code 99999 c} at parse time, before it builds a slot for every repeat. */
+    /** Catches a typo like {@code 99999 walker} at parse time, before it builds a slot for every repeat. */
     public static final int MAX_REPEAT = 100;
 
     static final String EMPTY_TOKEN = "e";
@@ -44,9 +45,14 @@ public final class WaveScript {
     /**
      * Tokens recognized before any catalog lookup; the catalog rejects ids that collide with them.
      */
-    public static final Set<String> RESERVED_TOKENS = Stream.concat(
-            Stream.of(EMPTY_TOKEN, GRUNT_TOKEN, SOLDIER_TOKEN, VETERAN_TOKEN, ELITE_TOKEN, BOSS_TOKEN),
-            Stream.of(ShapeKeyword.values()).map(ShapeKeyword::token)).collect(Collectors.toUnmodifiableSet());
+    public static final Set<String> RESERVED_TOKENS = Stream.of(
+                    Stream.of(EMPTY_TOKEN, GRUNT_TOKEN, SOLDIER_TOKEN, VETERAN_TOKEN, ELITE_TOKEN, BOSS_TOKEN),
+                    Stream.of(ShapeKeyword.values()).map(ShapeKeyword::token),
+                    Stream.of(Affix.values()).map(Affix::word))
+            .flatMap(tokens -> tokens).collect(Collectors.toUnmodifiableSet());
+
+    /** How many affixes one slot may carry, its head's included. */
+    public static final int MAX_AFFIXES = 2;
 
     private WaveScript() {
     }

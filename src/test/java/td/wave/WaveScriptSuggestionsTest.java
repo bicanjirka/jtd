@@ -71,6 +71,12 @@ class WaveScriptSuggestionsTest {
     }
 
     @Test
+    void anAffixIsOfferedBeforeTheEnemyAndOnlyTheEnemyOrAnotherAffixAfterIt() {
+        assertThat(this.at("elite ")).contains("armored");
+        assertThat(this.at("elite armored ")).contains("alpha").doesNotContain("swarm", "e");
+    }
+
+    @Test
     void theSpacingTokenIsAStemTheTicksFinish() {
         assertThat(WaveScriptSuggestions.suggest("w", 1, this.catalog).best()).get()
                 .extracting(Candidate::complete).isEqualTo(false);
@@ -94,7 +100,7 @@ class WaveScriptSuggestionsTest {
 
     @Test
     void aShapeWithAFixedSizeGoesStraightToTheEnemy() {
-        assertThat(this.at("plated ")).containsExactlyInAnyOrder("alpha", "alder", "brute", "lord");
+        assertThat(this.at("flank ")).contains("alpha", "alder", "brute", "lord").doesNotContain("swarm", "elite");
     }
 
     @Test

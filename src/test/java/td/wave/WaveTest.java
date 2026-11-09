@@ -2,7 +2,7 @@ package td.wave;
 
 import org.junit.jupiter.api.Test;
 import td.board.BoardGeometry;
-import td.damage.Damage;
+import td.enemy.Affix;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
@@ -82,39 +82,10 @@ class WaveTest {
     }
 
     @Test
-    void anArmoredSlotAttachesADefensiveTraitWithNoOtherChange() {
-        DefinedEnemyMob normal = (DefinedEnemyMob) wave("walker").spawn()[0];
-        DefinedEnemyMob armored = (DefinedEnemyMob) wave("plated walker").spawn()[0];
+    void anAffixedSlotSpawnsItsAffixedDefinition() {
+        DefinedEnemyMob affixed = (DefinedEnemyMob) wave("armored walker").spawn()[0];
 
-        assertThat(armored.getBodyScale()).isEqualTo(normal.getBodyScale());
-        assertThat(armored.getSpeed()).isEqualTo(normal.getSpeed());
-        assertThat(armored.getBounty()).isEqualTo(normal.getBounty());
-        assertThat(armored.getHealth()).isEqualTo(normal.getHealth());
-
-        int normalHealthBefore = normal.getHealth();
-        int armoredHealthBefore = armored.getHealth();
-        normal.doDamage(Damage.physical(1000));
-        armored.doDamage(Damage.physical(1000));
-
-        int normalLoss = normalHealthBefore - normal.getHealth();
-        int armoredLoss = armoredHealthBefore - armored.getHealth();
-        assertThat(armoredLoss).isLessThan(normalLoss);
-    }
-
-    @Test
-    void anArmoredSlotsTraitComposesWithTheDefinitionsOwnResistance() {
-        // percent resist and the shape's flat resist compose: they carry different trait ids
-        DefinedEnemyMob plainArmored = (DefinedEnemyMob) wave("knight").spawn()[0];
-        DefinedEnemyMob armoredArmored = (DefinedEnemyMob) wave("plated knight").spawn()[0];
-        int plainHealthBefore = plainArmored.getHealth();
-        int armoredHealthBefore = armoredArmored.getHealth();
-
-        plainArmored.doDamage(Damage.physical(1000));
-        armoredArmored.doDamage(Damage.physical(1000));
-
-        int plainLoss = plainHealthBefore - plainArmored.getHealth();
-        int armoredLoss = armoredHealthBefore - armoredArmored.getHealth();
-        assertThat(armoredLoss).isLessThan(plainLoss);
+        assertThat(affixed.definition().affixes()).containsExactly(Affix.ARMORED);
     }
 
     @Test

@@ -1,5 +1,6 @@
 package td.wave;
 
+import td.enemy.Affix;
 import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
 
@@ -100,6 +101,9 @@ public final class WaveScriptSuggestions {
                 all.add(Candidate.token(shape, WaveScript.takesMemberCount(shape) ? "shape, needs a count" : "shape"));
             }
         }
+        for (Affix affix : Affix.values()) {
+            all.add(Candidate.token(affix.word(), "affix"));
+        }
         boolean belowBoss = position.rank().filter(rank -> rank != Rank.BOSS).isPresent();
         for (String id : catalog.ids()) {
             boolean unique = catalog.ranked(id).isUnique();
@@ -141,6 +145,10 @@ public final class WaveScriptSuggestions {
         }
         if (WaveScript.isShapeToken(token)) {
             return position.withShape(WaveScript.takesMemberCount(token) ? ShapeState.AWAITING_COUNT : ShapeState.READY);
+        }
+        if (Affix.of(token).isPresent()) {
+            // Only the enemy, or more affixes, may follow an affix.
+            return position.withHeadOpen(headSoFar).withShape(ShapeState.READY);
         }
         if (token.equals(WaveScript.EMPTY_TOKEN) || catalog.contains(token)) {
             return position.withRank(Optional.empty()).withShape(ShapeState.NONE);

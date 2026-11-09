@@ -39,9 +39,9 @@ final class IronCrossingLevel {
                             new WaveDefinition("veteran: magma e shieldbearer column 3 knight e 2 salamander"),
                             new WaveDefinition("veteran: golem e juggernaut e column 6 walker"),
                             new WaveDefinition("veteran: juggernaut e jammer e line 3 knight e mender"),
-                            new WaveDefinition("veteran: 2 yeti e shieldbearer plated knight e golem"),
+                            new WaveDefinition("veteran: 2 yeti e shieldbearer armored knight e golem"),
                             new WaveDefinition("veteran: elite magma e column 4 knight e mender e 6 walker"),
-                            new WaveDefinition("veteran: elite juggernaut shieldbearer e elite golem e plated knight e column 8 walker"),
+                            new WaveDefinition("veteran: elite juggernaut shieldbearer e elite golem e armored knight e column 8 walker"),
                             new WaveDefinition("veteran: ironColossus 2 e juggernaut shieldbearer mender e elite knight e column 6 walker")),
                     SMOOTHING)
             .withColor(STEEL_COLOR);

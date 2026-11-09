@@ -45,6 +45,7 @@ class TermWordingTest {
         List<String> titles = new ArrayList<>();
         Arrays.stream(EffectKind.values()).map(Term::title).forEach(titles::add);
         Arrays.stream(TraitTerm.values()).map(Term::title).forEach(titles::add);
+        Arrays.stream(Affix.values()).map(Term::title).forEach(titles::add);
         List<String> towerTitles = Arrays.stream(TowerTerm.values()).map(Term::title).toList();
         List<String> violations = new ArrayList<>();
 
@@ -95,6 +96,9 @@ class TermWordingTest {
         }
         for (TraitTerm term : TraitTerm.values()) {
             corpus.add(new Source("trait " + term, term.describe(), false));
+        }
+        for (Affix affix : Affix.values()) {
+            corpus.add(new Source("affix " + affix, affix.describe(), false));
         }
         for (AbilityTerm term : AbilityTerm.values()) {
             corpus.add(new Source("ability " + term, term.describe(), false));

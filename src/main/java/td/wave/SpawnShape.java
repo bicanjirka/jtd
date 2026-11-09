@@ -1,39 +1,24 @@
 package td.wave;
 
-import td.damage.DamageType;
-import td.enemy.AdaptiveResist;
-import td.enemy.IdentifiedTrait;
 import td.util.GameStartupException;
 
-import java.util.Optional;
-
 /**
- * How one wave slot spawns, composed from independent parts: per-mob multipliers, an optional
- * trait, a {@link SpawnSpread} formation, and delay spacing between members. {@link #normal()} is
- * one plain mob.
- * <p>
- * {@code traitOverride} is added to the spawned definition by id, so a shape can change what an
- * enemy is, not just scale it.
+ * How one wave slot spawns, composed from independent parts: per-mob multipliers, a
+ * {@link SpawnSpread} formation, and delay spacing between members. {@link #normal()} is one plain
+ * mob. A shape changes how a slot spawns, never what the enemy is: that is an affix.
  */
 public record SpawnShape(int members, float sizeMultiplier, float speedMultiplier, float healthMultiplier,
-                          float bountyMultiplier, Optional<IdentifiedTrait> traitOverride, SpawnSpread spread,
+                          float bountyMultiplier, SpawnSpread spread,
                           double delaySpacingSlots) {
 
-    /** Catches a typo like {@code swarm 300 c} at parse time. */
+    /** Catches a typo like {@code swarm 300 walker} at parse time. */
     public static final int MAX_MEMBERS = 12;
 
     private static final double COLUMN_SPACING_SLOTS = 0.3;
     private static final double DRIP_SPACING_SLOTS = 2.0;
-    private static final float ARMORED_EVEN_ARMOR = 25f;
-    private static final float ARMORED_FULL_ARMOR = 400f;
-    // Anonymous, so it always stacks with whatever armor the enemy already has.
-    private static final IdentifiedTrait ARMORED_TRAIT = IdentifiedTrait.anonymous(
-            AdaptiveResist.against(DamageType.PHYSICAL, ARMORED_EVEN_ARMOR, ARMORED_FULL_ARMOR));
 
     private static final SpawnShape NORMAL =
-            new SpawnShape(1, 1f, 1f, 1f, 1f, Optional.empty(), SpawnSpread.NONE, 0.0);
-    private static final SpawnShape ARMORED =
-            new SpawnShape(1, 1f, 1f, 1f, 1f, Optional.of(ARMORED_TRAIT), SpawnSpread.NONE, 0.0);
+            new SpawnShape(1, 1f, 1f, 1f, 1f, SpawnSpread.NONE, 0.0);
 
     public SpawnShape {
         if (members < 1 || members > MAX_MEMBERS) {
@@ -46,32 +31,24 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
         return NORMAL;
     }
 
-    /**
-     * Adds physical-only armor on top of any armor the enemy already has, harder the more of the
-     * level's landed damage was physical.
-     */
-    public static SpawnShape armored() {
-        return ARMORED;
-    }
-
     public static SpawnShape swarm(int members) {
-        return new SpawnShape(members, 0.5f, 1f, 1f / members, 1f, Optional.empty(), SpawnSpread.SCATTERED, 0.0);
+        return new SpawnShape(members, 0.5f, 1f, 1f / members, 1f, SpawnSpread.SCATTERED, 0.0);
     }
 
     public static SpawnShape line(int members) {
-        return new SpawnShape(members, 1f, 1f, 1f, 1f, Optional.empty(), SpawnSpread.EVEN, 0.0);
+        return new SpawnShape(members, 1f, 1f, 1f, 1f, SpawnSpread.EVEN, 0.0);
     }
 
     public static SpawnShape flank() {
-        return new SpawnShape(2, 1f, 1f, 1f, 1f, Optional.empty(), SpawnSpread.EDGES, 0.0);
+        return new SpawnShape(2, 1f, 1f, 1f, 1f, SpawnSpread.EDGES, 0.0);
     }
 
     public static SpawnShape column(int members) {
-        return new SpawnShape(members, 1f, 1f, 1f, 1f, Optional.empty(), SpawnSpread.NONE, COLUMN_SPACING_SLOTS);
+        return new SpawnShape(members, 1f, 1f, 1f, 1f, SpawnSpread.NONE, COLUMN_SPACING_SLOTS);
     }
 
     public static SpawnShape drip(int members) {
-        return new SpawnShape(members, 1f, 1f, 1f, 1f, Optional.empty(), SpawnSpread.NONE, DRIP_SPACING_SLOTS);
+        return new SpawnShape(members, 1f, 1f, 1f, 1f, SpawnSpread.NONE, DRIP_SPACING_SLOTS);
     }
 
     /**

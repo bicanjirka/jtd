@@ -6,7 +6,6 @@ import java.util.stream.Stream;
 
 /** A wave script's spawn-type keyword: the shape it gives its slot, and whether it takes a member count. */
 enum ShapeKeyword {
-    PLATED("plated", false, members -> SpawnShape.armored()),
     FLANK("flank", false, members -> SpawnShape.flank()),
     SWARM("swarm", true, SpawnShape::swarm),
     LINE("line", true, SpawnShape::line),

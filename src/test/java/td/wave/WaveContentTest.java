@@ -17,7 +17,7 @@ class WaveContentTest {
 
     @Test
     void aNormalSlotCountsAsOneMember() {
-        WaveContent content = new WaveContent(List.of(new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.normal())));
+        WaveContent content = new WaveContent(List.of(new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.normal(), false)));
 
         assertThat(content.enemyCount()).isEqualTo(1);
         assertThat(content.enemyCount(this.simple)).isEqualTo(1);
@@ -25,7 +25,7 @@ class WaveContentTest {
 
     @Test
     void aShapedSlotCountsItsMemberCountNotOne() {
-        WaveContent content = new WaveContent(List.of(new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.swarm(4))));
+        WaveContent content = new WaveContent(List.of(new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.swarm(4), false)));
 
         assertThat(content.enemyCount()).isEqualTo(4);
         assertThat(content.enemyCount(this.simple)).isEqualTo(4);
@@ -34,9 +34,9 @@ class WaveContentTest {
     @Test
     void memberCountsSumAcrossMultipleShapedSlotsOfTheSameDefinition() {
         WaveContent content = new WaveContent(List.of(
-                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.swarm(3)),
-                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.line(2)),
-                new EnemySlot(this.armored, Rank.GRUNT, SpawnShape.armored())));
+                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.swarm(3), false),
+                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.line(2), false),
+                new EnemySlot(this.armored, Rank.GRUNT, SpawnShape.normal(), false)));
 
         assertThat(content.enemyCount()).isEqualTo(6);
         assertThat(content.enemyCount(this.simple)).isEqualTo(5);
@@ -46,7 +46,7 @@ class WaveContentTest {
     @Test
     void anEmptySlotContributesNoMembers() {
         WaveContent content = new WaveContent(List.of(
-                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.swarm(3)),
+                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.swarm(3), false),
                 new EmptySlot()));
 
         assertThat(content.enemyCount()).isEqualTo(3);
@@ -55,15 +55,15 @@ class WaveContentTest {
     @Test
     void enemySetListsEachDefinitionOnceRegardlessOfItsMemberCount() {
         WaveContent content = new WaveContent(List.of(
-                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.swarm(4)),
-                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.normal())));
+                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.swarm(4), false),
+                new EnemySlot(this.simple, Rank.GRUNT, SpawnShape.normal(), false)));
 
         assertThat(content.enemySet()).containsExactly(this.simple);
     }
 
     @Test
     void rankForReturnsTheEffectiveRankOfTheSlotThatSpawnsADefinition() {
-        WaveContent content = new WaveContent(List.of(new EnemySlot(this.simple, Rank.VETERAN, SpawnShape.normal())));
+        WaveContent content = new WaveContent(List.of(new EnemySlot(this.simple, Rank.VETERAN, SpawnShape.normal(), false)));
 
         assertThat(content.rankFor(this.simple)).isEqualTo(Rank.VETERAN);
     }

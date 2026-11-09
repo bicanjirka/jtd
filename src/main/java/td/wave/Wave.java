@@ -82,9 +82,9 @@ public class Wave {
     }
 
     /**
-     * Builds every member of one shaped slot: health and bounty scaled and split here, size and
-     * speed passed on to the mob, and the shape's trait applied to the definition first. Members
-     * are spaced by {@link SpawnShape#delaySpacingSlots()}.
+     * Builds every member of one shaped slot: health and bounty scaled and split here, size (the
+     * shape's and the affixes') and speed passed on to the mob. Members are spaced by
+     * {@link SpawnShape#delaySpacingSlots()}.
      * <p>
      * Formation offsets draw from a random source seeded by the wave and slot, not the world's,
      * which tower targeting also uses - otherwise a formation would depend on firing order.
@@ -92,9 +92,7 @@ public class Wave {
     private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay,
                                                 float delayTicksPerSlot, long scatterSeed, int pathIndex,
                                                 float speedMultiplier) {
-        EnemyDefinition definition = enemySlot.shape().traitOverride()
-                .map(trait -> enemySlot.definition().withAdditionalTraits(List.of(trait)))
-                .orElse(enemySlot.definition());
+        EnemyDefinition definition = enemySlot.definition();
         Rank rank = enemySlot.rank();
         SpawnShape shape = enemySlot.shape();
         int health = Math.max(1, Math.round(definition.baseHealth() * shape.healthMultiplier()));
@@ -106,7 +104,7 @@ public class Wave {
             double slotPosition = delay + i * shape.delaySpacingSlots();
             Vec2 localOffset = shape.spread().offsetFor(i, shape.members(), maxRadius, scatter);
             SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, delayTicksPerSlot,
-                    definition.baseSpeed(), health, bountyShares[i], shape.sizeMultiplier(),
+                    definition.baseSpeed(), health, bountyShares[i], shape.sizeMultiplier() * definition.sizeMultiplier(),
                     shape.speedMultiplier() * speedMultiplier, localOffset, pathIndex);
             members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, rank));
         }

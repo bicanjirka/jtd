@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A data-driven enemy type at one {@link Rank}: id, base stats, body, and the {@link Trait}s and
@@ -30,6 +32,7 @@ import java.util.function.Function;
  * @param baseStats     authored stat bases; speed comes from {@code baseSpeed}, not from here
  * @param disruption    what it does to towers near it, if anything
  * @param livesOnLeak   the lives it takes if it reaches the end of the path, {@link #ALL_LIVES} for every one left
+ * @param affixes       the affixes a wave script put on it, in the order written; already applied to the rest
  */
 public record EnemyDefinition(
         String id,
@@ -45,7 +48,8 @@ public record EnemyDefinition(
         List<IdentifiedAbility> abilitySlots,
         BaseStats<EnemyStat> baseStats,
         Optional<DisruptionAura> disruption,
-        int livesOnLeak) {
+        int livesOnLeak,
+        List<Affix> affixes) {
 
     /**
      * A {@code livesOnLeak} that ends the level: more than any level starts with, yet finite, so a play given lives
@@ -56,6 +60,7 @@ public record EnemyDefinition(
     public EnemyDefinition {
         traitSlots = List.copyOf(traitSlots);
         abilitySlots = List.copyOf(abilitySlots);
+        affixes = List.copyOf(affixes);
     }
 
     /**
@@ -66,7 +71,33 @@ public record EnemyDefinition(
             BodyArchetype archetype) {
         return new EnemyDefinition(id, displayName, "", baseHealth, price, baseSpeed, 1f,
                 archetype, new FixedMovement(), List.of(), List.of(), BaseStats.defaults(EnemyStat.class), Optional.empty(),
-                1);
+                1, List.of());
+    }
+
+    /** The affixes' titles in the order written, then the noun: {@code "Hulking Taunting Walker"}. */
+    public String title() {
+        return Stream.concat(this.affixes.stream().map(Affix::title), Stream.of(this.displayName))
+                .collect(Collectors.joining(" "));
+    }
+
+    /** What its affixes scale its body by. */
+    public float sizeMultiplier() {
+        return this.affixes.stream().map(Affix::sizeMultiplier).reduce(1f, (a, b) -> a * b);
+    }
+
+    /**
+     * Applies {@code written} and records it. The affixes apply in their declared order, whatever the order written,
+     * so one that measures health measures what an earlier one added; the title keeps the written order.
+     */
+    public EnemyDefinition withAffixes(List<Affix> written, AffixContext context) {
+        EnemyDefinition applied = written.stream().sorted()
+                .reduce(this, (definition, affix) -> affix.applyTo(definition, context), (a, b) -> b);
+        List<Affix> affixes = new ArrayList<>(this.affixes);
+        affixes.addAll(written);
+        return new EnemyDefinition(applied.id, applied.displayName, applied.description, applied.baseHealth,
+                applied.price, applied.baseSpeed, applied.healthDivisor, applied.archetype, applied.movement,
+                applied.traitSlots, applied.abilitySlots, applied.baseStats, applied.disruption, applied.livesOnLeak,
+                affixes);
     }
 
     /** The traits one mob spawned against {@code mix} carries, each slot resolved once. */
@@ -178,66 +209,73 @@ public record EnemyDefinition(
     private EnemyDefinition withBase(EnemyStat stat, float base) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats.with(stat, base), this.disruption, this.livesOnLeak);
+                this.abilitySlots, this.baseStats.with(stat, base), this.disruption, this.livesOnLeak, this.affixes);
     }
 
     /** Weakens every tower within the aura's radius while this enemy is alive on the board. */
     public EnemyDefinition withDisruption(DisruptionAura aura) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, Optional.of(aura), this.livesOnLeak);
+                this.abilitySlots, this.baseStats, Optional.of(aura), this.livesOnLeak, this.affixes);
     }
 
     /** Takes {@code lives} if it reaches the end of the path; {@link #ALL_LIVES} ends the level. */
     public EnemyDefinition withLivesOnLeak(int lives) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption, lives);
+                this.abilitySlots, this.baseStats, this.disruption, lives, this.affixes);
     }
 
     /** A rank step's usual change: new health and bounty, everything else kept. */
     public EnemyDefinition withHealthAndPrice(int baseHealth, int price) {
         return new EnemyDefinition(this.id, this.displayName, this.description, baseHealth, price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
+    }
+
+    /** The same enemy under another wave-script id; a clone starts here. */
+    public EnemyDefinition withId(String id) {
+        return new EnemyDefinition(id, this.displayName, this.description, this.baseHealth, this.price,
+                this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
     }
 
     public EnemyDefinition withDisplayName(String displayName) {
         return new EnemyDefinition(this.id, displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
     }
 
     /** Pixels per tick; {@code 0} never moves. */
     public EnemyDefinition withBaseSpeed(float baseSpeed) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
     }
 
     public EnemyDefinition withDescription(String description) {
         return new EnemyDefinition(this.id, this.displayName, description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
     }
 
     public EnemyDefinition withHealthDivisor(float healthDivisor) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, healthDivisor, this.archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
     }
 
     /** The body it is drawn as; a clone wears its own look this way. */
     public EnemyDefinition withArchetype(BodyArchetype archetype) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, archetype, this.movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
     }
 
     public EnemyDefinition withMovement(MovementBehavior movement) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, movement, this.traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
     }
 
     /**
@@ -251,7 +289,7 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedTraits(List<IdentifiedTrait> traitSlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, traitSlots,
-                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+                this.abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
     }
 
     /**
@@ -269,7 +307,7 @@ public record EnemyDefinition(
     public EnemyDefinition withIdentifiedAbilities(List<IdentifiedAbility> abilitySlots) {
         return new EnemyDefinition(this.id, this.displayName, this.description, this.baseHealth, this.price,
                 this.baseSpeed, this.healthDivisor, this.archetype, this.movement, this.traitSlots,
-                abilitySlots, this.baseStats, this.disruption, this.livesOnLeak);
+                abilitySlots, this.baseStats, this.disruption, this.livesOnLeak, this.affixes);
     }
 
     /** Adds abilities by id, like {@link #withAdditionalTraits}. */
