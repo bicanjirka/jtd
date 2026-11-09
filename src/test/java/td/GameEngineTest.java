@@ -1638,7 +1638,7 @@ class GameEngineTest {
 
     @Test
     void aStatusATowerHoldsEndsWithTheWaveHoweverLongItHadLeft() {
-        GameEngine engine = FakeGameHost.newBoundEngine();
+        GameEngine engine = FakeGameHost.newBoundEngine(() -> 0.99);
         engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT)), 100));
         Tower sniper = placeSniper(engine, 0, 0);
         engine.nextWave();
