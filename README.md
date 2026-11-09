@@ -55,7 +55,7 @@ Every button shows its key on a chip in its top-left corner.
 | `q` `w` `e` `r` `t` `y` `u` `i` | Select tower 1–8 for placement                                                                       |
 | `Esc`                           | Cancel tower placement; cancel a question                                                            |
 | `1`–`8`                         | Buy the selected tower's next upgrade step: 1 Core, 2 Range, 3 extra line, 4/5 the branches, 6–8 specials |
-| `Space`                         | Pause; while paused or between waves, play on at the last speed and send the next wave               |
+| `Space` or `P`                  | Pause; while paused or between waves, play on at the last speed and send the next wave               |
 | `d` `f` `g`                     | Normal, fast, super fast speed; each also sends the next wave if it is waiting                       |
 | `Delete`                        | Sell the selected tower                                                                              |
 | `m`                             | Back to the level-select menu (asks to confirm mid-level)                                            |

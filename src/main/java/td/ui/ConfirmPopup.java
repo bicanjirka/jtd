@@ -127,8 +127,8 @@ public final class ConfirmPopup extends JPanel {
 
     /** Enter confirms and Esc cancels, and neither goes further: they mean nothing else while a question is open. */
     private boolean keyPressed(KeyEvent event) {
-        boolean enter = event.getKeyCode() == GameKey.CONFIRM.keyCode() || event.getKeyChar() == '\n';
-        boolean esc = event.getKeyCode() == GameKey.CANCEL.keyCode() || event.getKeyChar() == KeyEvent.VK_ESCAPE;
+        boolean enter = GameKey.CONFIRM.answersTo(event.getKeyCode()) || event.getKeyChar() == '\n';
+        boolean esc = GameKey.CANCEL.answersTo(event.getKeyCode()) || event.getKeyChar() == KeyEvent.VK_ESCAPE;
         if (event.getID() == KeyEvent.KEY_PRESSED) {
             if (enter) {
                 this.confirm();
