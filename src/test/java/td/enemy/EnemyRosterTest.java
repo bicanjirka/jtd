@@ -48,10 +48,12 @@ class EnemyRosterTest {
     }
 
     @Test
-    void reportingADeathDecrementsTheAliveCount() {
+    void reportingAnEndedWalkDecrementsTheAliveCount() {
         roster.setCount(3);
+        FakeEnemyMob killed = FakeEnemyMob.at(0, 0);
+        killed.invalidate();
 
-        roster.reportDeath(anEnemy());
+        roster.reportEnded(killed);
 
         assertThat(roster.aliveCount()).isEqualTo(2);
     }

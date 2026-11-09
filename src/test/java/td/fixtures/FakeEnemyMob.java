@@ -6,6 +6,7 @@ import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
+import td.enemy.EnemyInspection;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyMobVisitor;
 import td.enemy.HitResult;
@@ -373,8 +374,31 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public boolean wasKilled() {
-        return !this.valid && !this.leaked;
+    public EnemyInspection.Fate fate() {
+        if (this.valid) {
+            return EnemyInspection.Fate.ALIVE;
+        }
+        return this.leaked ? EnemyInspection.Fate.LEAKED : EnemyInspection.Fate.KILLED;
+    }
+
+    @Override
+    public int livesOnLeak() {
+        return 1;
+    }
+
+    @Override
+    public boolean isInactive() {
+        return false;
+    }
+
+    @Override
+    public float getBodyScale() {
+        return 1f;
+    }
+
+    @Override
+    public EnemyInspection inspect() {
+        throw new UnsupportedOperationException("FakeEnemyMob has no definition to inspect");
     }
 
     /** Ends its walk as a leak, not a kill. */

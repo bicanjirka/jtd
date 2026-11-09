@@ -1,7 +1,9 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.enemy.EnemyInspection;
 import td.enemy.EnemyWalk;
+import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
@@ -20,6 +22,21 @@ class ExperienceAwarderTest {
             @Override
             public int getBounty() {
                 return bounty;
+            }
+
+            @Override
+            public Rank getRank() {
+                return Rank.GRUNT;
+            }
+
+            @Override
+            public EnemyInspection.Fate fate() {
+                return EnemyInspection.Fate.KILLED;
+            }
+
+            @Override
+            public int livesOnLeak() {
+                return 1;
             }
 
             @Override

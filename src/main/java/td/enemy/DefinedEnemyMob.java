@@ -6,7 +6,6 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.damage.Delivery;
-import td.economy.EconomyDelta;
 import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectCategory;
@@ -259,6 +258,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.health.fraction();
     }
 
+    @Override
     public boolean isInactive() {
         return this.stage == LifeStage.WAITING;
     }
@@ -287,6 +287,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.definition;
     }
 
+    @Override
     public float getBodyScale() {
         return this.bodyScale;
     }
@@ -635,13 +636,14 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.activeEffects.stacks(kind);
     }
 
+    @Override
     public EnemyInspection.Fate fate() {
         return this.fate;
     }
 
     @Override
-    public boolean wasKilled() {
-        return this.fate == EnemyInspection.Fate.KILLED;
+    public int livesOnLeak() {
+        return this.definition.livesOnLeak();
     }
 
     /** This mob was replaced by its own spawn: it is gone, but neither killed nor leaked. */
@@ -649,7 +651,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         this.fate = EnemyInspection.Fate.HATCHED;
     }
 
-    /** A snapshot of this mob for display. */
+    @Override
     public EnemyInspection inspect() {
         return EnemyInspection.of(this);
     }
@@ -776,9 +778,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private void kill() {
         this.die();
         this.fate = EnemyInspection.Fate.KILLED;
-        int score = Math.round(this.price * this.rank.scoreMultiplier());
-        this.gameWorld.economy().apply(EconomyDelta.kill(this.price, score));
-        this.gameWorld.enemies().reportDeath(this);
+        this.gameWorld.enemies().reportEnded(this);
     }
 
     /**
@@ -1082,10 +1082,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private void leak() {
         this.die();
         this.fate = EnemyInspection.Fate.LEAKED;
-        int lives = this.gameWorld.playtestRules().livesUnlimited() ? 0
-                : Math.min(this.definition.livesOnLeak(), Math.max(1, this.gameWorld.economy().getLives()));
-        this.gameWorld.economy().apply(EconomyDelta.leak(this.price, lives));
-        this.gameWorld.enemies().reportLeak(this);
+        this.gameWorld.enemies().reportEnded(this);
     }
 
     private void die() {

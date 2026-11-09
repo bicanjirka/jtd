@@ -149,7 +149,7 @@ final class RunRecorder {
                 }
             }
             this.watch(mob, foe);
-            EnemyInspection.Fate fate = mob.accept(DefinedEnemyMob::fate);
+            EnemyInspection.Fate fate = mob.fate();
             if (fate == EnemyInspection.Fate.KILLED || fate == EnemyInspection.Fate.LEAKED) {
                 this.end(mob, foe, fate == EnemyInspection.Fate.LEAKED);
             }
@@ -166,7 +166,7 @@ final class RunRecorder {
         long health = 0;
         double furthest = 0;
         for (EnemyMob mob : this.engine.getGameWorld().enemies().getEnemies()) {
-            if (!mob.isDead() && !mob.accept(DefinedEnemyMob::isInactive)) {
+            if (!mob.isDead() && !mob.isInactive()) {
                 health += Math.round(mob.getHealthFraction() * mob.accept(DefinedEnemyMob::getMaxHealthPoints));
                 furthest = Math.max(furthest, mob.getProgression() / PROGRESS_SCALE);
             }
@@ -183,10 +183,10 @@ final class RunRecorder {
 
     /** Counts the effects {@code mob} carries and starts, and an ability it cast this tick, death casts included. */
     private void watch(EnemyMob mob, PlayRecord.Foe foe) {
-        if (mob.accept(DefinedEnemyMob::isInactive)) {
+        if (mob.isInactive()) {
             return;
         }
-        Set<EffectKind> held = mob.accept(DefinedEnemyMob::activeEffectKinds);
+        Set<EffectKind> held = mob.activeEffectKinds();
         if (!mob.isDead()) {
             this.enemyTicks++;
             held.forEach(kind -> this.effectTicks.merge(kind, 1L, Long::sum));
@@ -215,7 +215,7 @@ final class RunRecorder {
                 new PlayRecord.Spot(mob.getX(), mob.getY(), progress)));
         if (leak) {
             // Lives, not enemies: one that ends the level costs every life the level starts with.
-            int lives = Math.min(this.startingLives, mob.accept(defined -> defined.definition().livesOnLeak()));
+            int lives = Math.min(this.startingLives, mob.livesOnLeak());
             this.leaked += lives;
             this.leaks += lives;
         } else {

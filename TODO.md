@@ -114,15 +114,6 @@ position and the visitor, `AuraTower` wants position and type.
 - **Approach:** as for `Tower`: split along the lines its consumers already use (a hit, an effect, a
   query a bonus reads) when one is actually hurt by the width.
 
-### Settle a finished walk outside the mob
-
-`DefinedEnemyMob.kill` and `leak` pay the bounty, charge the lives and report the walk themselves, so
-the mob knows the economy's rules.
-
-- **Where:** `DefinedEnemyMob.kill`/`leak`, `EnemyRoster.reportDeath`.
-- **Approach:** `EnemyWalk` carries its fate, score and lives on leak; a `WalkSettlement` listener in
-  `economy` applies them.
-
 ### `td.util` mixes leaves and the world
 
 `td.util` holds small leaf helpers beside `GameWorld` and `GameHost`, so importing a helper looks the
@@ -150,9 +141,9 @@ test classes, so the hand-written `EnemyMob` and `AbstractTower` fakes would sto
   builders.
 - **Approach:** only if the fakes go away first (tests built on real mobs/towers from
   `td.fixtures`). `Projectile` has no fakes but alone would leave two dispatch styles.
-- **Where the visitor is a cast:** `DevControls` and `EnemySelection` visit an `EnemyMob` only to
-  reach `DefinedEnemyMob`'s fate and inspection. Lift `fate()` and the inspection onto `EnemyMob`
-  (`EnemyInspection` is already built from the mob's parts).
+- **Where the visitor is still a cast:** `DevControls` (observing, clearing effects, healing) and the balance
+  tools' `RunRecorder` and `TowerWorkTally` (definition id, abilities cast) visit an `EnemyMob` only to reach
+  `DefinedEnemyMob`. Each needs the real mob, not a query every mob should answer, so they stay until sealing.
 - **`FakeEnemyMob` answers effects from a real `ActiveEffects`** (design review F18), done with the
   fakes' question above. Today the fake keeps its own simplified record of applied effects, so a change
   to stacking, caps or refreshing in `ActiveEffects` never reaches the tests that use the fake. Keep the

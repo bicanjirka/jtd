@@ -70,18 +70,15 @@ public class EnemyRoster implements EnemyRegistry, EnemySpawner {
         return this.count.get();
     }
 
-    /** The mob stays listed for its death fade. Its walk is over, killed or leaked. */
-    public void reportDeath(EnemyWalk walk) {
+    /** The mob stays listed for its death fade. Its walk is over, killed or leaked, as its fate says. */
+    public void reportEnded(EnemyWalk walk) {
+        if (walk.fate() == EnemyInspection.Fate.LEAKED) {
+            this.leaks.incrementAndGet();
+        }
         this.count.decrementAndGet();
         for (WalkEndListener listener : this.walkEndListeners) {
             listener.walkEnded(walk);
         }
-    }
-
-    /** {@link #reportDeath} for a mob that reached the end of its path. */
-    public void reportLeak(EnemyWalk walk) {
-        this.leaks.incrementAndGet();
-        this.reportDeath(walk);
     }
 
     /** Mobs that have reached the end of their path so far, in every wave: compare two readings. */
