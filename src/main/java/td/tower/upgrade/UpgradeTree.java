@@ -353,16 +353,6 @@ public record UpgradeTree(List<UpgradeNode> nodes, List<ExclusiveChoice> choices
     }
 
     /**
-     * The other members of {@code node}'s choice in {@code offered}: what buying it would lock
-     * out, or would leave fewer picks for. Empty for a node in no choice.
-     */
-    public List<UpgradeNode> rivalsOnOffer(UpgradeNode node, List<UpgradeNode> offered) {
-        return this.choiceOf(node)
-                .map(choice -> offered.stream().filter(n -> !n.equals(node) && choice.contains(n.id())).toList())
-                .orElse(List.of());
-    }
-
-    /**
      * Whether buying {@code node} uses its choice's last pick, locking out for good the members
      * still unowned. False for a node in no choice, and for a special while a second slot is left.
      */

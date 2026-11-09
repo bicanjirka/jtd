@@ -6,6 +6,7 @@ import td.enemy.BodyArchetype;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.Rank;
+import td.enemy.RankedEnemy;
 import td.enemy.SpawnParameters;
 import td.fixtures.EnemyFixtures;
 import td.util.GameStartupException;
@@ -20,7 +21,7 @@ class WaveScriptTest {
     /** The built-in enemies and a unique one of the test's own. */
     private static EnemyCatalog catalogWithAWarlord() {
         EnemyCatalog catalog = EnemyCatalog.builtIn();
-        catalog.registerUnique(EnemyFixtures.simpleDefinition("warlord"));
+        catalog.register(RankedEnemy.unique(EnemyFixtures.simpleDefinition("warlord")));
         return catalog;
     }
     private final EnemyDefinition simple = this.catalog.get("walker");

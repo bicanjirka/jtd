@@ -50,11 +50,6 @@ public final class EffectTransitions {
         return this.gainedWithin(kind, gameTime, Integer.MAX_VALUE);
     }
 
-    /** Empty if never lost. */
-    public OptionalInt ticksSinceLost(EffectKind kind, int gameTime) {
-        return this.lostWithin(kind, gameTime, Integer.MAX_VALUE);
-    }
-
     /** How long ago {@code kind} was last gained, if no more than {@code ticks} ago. */
     public OptionalInt gainedWithin(EffectKind kind, int gameTime, int ticks) {
         return within(this.gainedTick.get(kind), gameTime, ticks);

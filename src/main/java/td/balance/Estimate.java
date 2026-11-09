@@ -57,11 +57,6 @@ public record Estimate(double value, double low, double high, int n) {
         return proportion((int) items.stream().filter(hit).count(), items.size());
     }
 
-    /** Whether the two intervals do not overlap: a difference the sample can stand behind. */
-    public boolean differsFrom(Estimate other) {
-        return this.high < other.low || other.high < this.low;
-    }
-
     /** {@code 12.3 ±1.4}, at {@code decimals} places. */
     public String format(int decimals) {
         return String.format(Locale.ROOT, "%." + decimals + "f ±%." + decimals + "f", this.value, (this.high - this.low) / 2);

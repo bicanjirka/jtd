@@ -3,6 +3,7 @@ package td.wave;
 import org.junit.jupiter.api.Test;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
+import td.enemy.RankedEnemy;
 import td.fixtures.EnemyFixtures;
 import td.wave.WaveScriptSuggestions.Candidate;
 
@@ -20,7 +21,7 @@ class WaveScriptSuggestionsTest {
         catalog.register(EnemyFixtures.simpleDefinition("alder"));
         catalog.register(EnemyFixtures.simpleDefinition("brute"));
         EnemyDefinition lord = EnemyFixtures.simpleDefinition("lord");
-        catalog.registerUnique(lord);
+        catalog.register(RankedEnemy.unique(lord));
         return catalog;
     }
 

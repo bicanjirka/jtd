@@ -407,10 +407,6 @@ public final class SniperTower extends AbstractTower {
         return this.currentTarget;
     }
 
-    public boolean wasLastShotCritical() {
-        return this.lastShot != null && this.lastShot.critical();
-    }
-
     /** The last shot fired, for drawing its trace; empty before the first. */
     public Optional<ShotTrace> lastShot() {
         return Optional.ofNullable(this.lastShot);

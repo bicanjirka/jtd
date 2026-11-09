@@ -29,12 +29,6 @@ class SniperShotTest {
     }
 
     @Test
-    void aCritChanceBonusAddsAndStaysAProbability() {
-        assertThat(plain().withCritChanceBonus(0.2f).attack().critChance()).isCloseTo(0.5f, within(1e-6f));
-        assertThat(plain().withCritChanceBonus(2f).attack().critChance()).isEqualTo(1f);
-    }
-
-    @Test
     void attackSpeedBonusesAdd() {
         float combined = plain().withAttackSpeedBonus(0.25f).withAttackSpeedBonus(0.5f).attackSpeedBonus();
 

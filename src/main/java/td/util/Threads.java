@@ -24,17 +24,6 @@ public final class Threads {
 
     /**
      * @param what the guarded operation, as named in the error
-     * @throws IllegalStateException off the game-loop thread
-     */
-    public static void assertGameLoop(String what) {
-        if (!onGameLoop()) {
-            throw new IllegalStateException(
-                    what + " must run on the " + GAME_LOOP + " thread, but ran on " + current());
-        }
-    }
-
-    /**
-     * @param what the guarded operation, as named in the error
      * @throws IllegalStateException off the EDT
      */
     public static void assertEventDispatchThread(String what) {

@@ -133,7 +133,7 @@ class EnemyCatalogTest {
     @Test
     void aUniqueEnemySpawnsAsABossWhateverRankIsAskedFor() {
         EnemyCatalog catalog = new EnemyCatalog();
-        catalog.registerUnique(EnemyFixtures.simpleDefinition("warlord"));
+        catalog.register(RankedEnemy.unique(EnemyFixtures.simpleDefinition("warlord")));
 
         EnemyMob spawned = catalog.spawn("warlord", WorldFixtures.newWorld(), 0, 100, 5, Rank.GRUNT);
 
@@ -143,7 +143,7 @@ class EnemyCatalogTest {
     @Test
     void aUniqueEnemyThatLeaksTakesEveryLife() {
         EnemyCatalog catalog = new EnemyCatalog();
-        catalog.registerUnique(EnemyFixtures.simpleDefinition("warlord"));
+        catalog.register(RankedEnemy.unique(EnemyFixtures.simpleDefinition("warlord")));
 
         assertThat(catalog.ranked("warlord").definitionFor(Rank.BOSS).livesOnLeak()).isEqualTo(EnemyDefinition.ALL_LIVES);
     }

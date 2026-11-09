@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Uses threads named like the JDK's and the loop's, so no EDT is started. */
 class ThreadsTest {
@@ -24,16 +23,6 @@ class ThreadsTest {
         t.start();
         t.join();
         return thrown.get();
-    }
-
-    @Test
-    void theGameLoopAssertionPassesOnTheLoopThreadAndFailsEverywhereElse() throws InterruptedException {
-        assertThatThrownBy(() -> Threads.assertGameLoop("doTick"))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("doTick")
-                .hasMessageContaining("game-loop");
-
-        assertThat(runNamed(Threads.GAME_LOOP, () -> Threads.assertGameLoop("doTick"))).isNull();
     }
 
     @Test

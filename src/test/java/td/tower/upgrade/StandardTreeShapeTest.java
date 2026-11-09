@@ -178,14 +178,6 @@ class StandardTreeShapeTest {
     }
 
     @Test
-    void aChoiceOnOfferNamesItsRivalsAndANodeOutsideAChoiceHasNone() {
-        List<UpgradeNode> offered = this.offeredAfter(base(StandardBaseSlot.ATTUNE_ID));
-
-        assertThat(TREE.rivalsOnOffer(A1, offered)).containsExactly(B1);
-        assertThat(TREE.rivalsOnOffer(X1, offered)).isEmpty();
-    }
-
-    @Test
     void onlyAPickThatSpendsItsChoiceLocksItsRivalsOutForGood() {
         UpgradeState awakened = state(base(StandardBaseSlot.ATTUNE_ID), base(StandardBaseSlot.AWAKEN_ID));
 

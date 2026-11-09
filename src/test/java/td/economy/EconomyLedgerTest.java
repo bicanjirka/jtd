@@ -223,16 +223,4 @@ class EconomyLedgerTest {
 
         assertThat(ledger.getCredits()).isEqualTo(threads * eventsPerThread);
     }
-
-    @Test
-    void removedListenerStopsReceivingEvents() {
-        AtomicInteger economyChangedCalls = new AtomicInteger();
-        EconomyListener listener = state -> economyChangedCalls.incrementAndGet();
-        ledger.addEconomyListener(listener);
-        ledger.removeEconomyListener(listener);
-
-        ledger.apply(EconomyDelta.score(5));
-
-        assertThat(economyChangedCalls).hasValue(0);
-    }
 }

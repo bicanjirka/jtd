@@ -81,26 +81,18 @@ class DamageTest {
     }
 
     @Test
-    void asCriticalMarksTheHitAndAppliesTheGivenMultiplier() {
-        Damage crit = Damage.physical(1000).asCritical(2.5f);
-
-        assertThat(crit.critical()).isTrue();
-        assertThat(crit.amount()).isEqualTo(2500);
-    }
-
-    @Test
     void scaledByPreservesTheCriticalFlag() {
-        assertThat(Damage.physical(1000).asCritical(1.5f).scaledBy(0.5f).critical()).isTrue();
+        assertThat(new Damage(1500, DamageType.PHYSICAL, true).scaledBy(0.5f).critical()).isTrue();
     }
 
     @Test
     void cappedAtPreservesTheCriticalFlag() {
-        assertThat(Damage.physical(1000).asCritical(1.5f).cappedAt(500).critical()).isTrue();
+        assertThat(new Damage(1500, DamageType.PHYSICAL, true).cappedAt(500).critical()).isTrue();
     }
 
     @Test
     void combiningTwoNonZeroDamagesIsCriticalIfEitherSideWas() {
-        Damage crit = Damage.physical(10).asCritical(1.5f);
+        Damage crit = new Damage(15, DamageType.PHYSICAL, true);
         Damage normal = Damage.physical(10);
 
         assertThat(crit.plus(normal).critical()).isTrue();
