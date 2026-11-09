@@ -71,6 +71,11 @@ public enum Affix implements Term {
         }
 
         @Override
+        public boolean excludes(Affix other) {
+            return other == PLATED;
+        }
+
+        @Override
         public TermText describe() {
             return PHYSICAL_ARMOR.entry().text();
         }
@@ -203,6 +208,22 @@ public enum Affix implements Term {
         public TermText describe() {
             return STEADFAST_DAZE.entry().text();
         }
+    },
+    PLATED("Plated") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withAdditionalTraits(List.of(IdentifiedTrait.of(this, PHYSICAL_PLATING)));
+        }
+
+        @Override
+        public boolean excludes(Affix other) {
+            return other == ARMORED;
+        }
+
+        @Override
+        public TermText describe() {
+            return PHYSICAL_PLATING.entry().text();
+        }
     };
 
     private static final float HULKING_HEALTH = 2.5f;
@@ -211,6 +232,7 @@ public enum Affix implements Term {
     private static final float EXALTED_STRENGTH = 2f;
     private static final float EXALTED_WEAKNESS = 0.5f;
     private static final AdaptiveResist PHYSICAL_ARMOR = AdaptiveResist.against(DamageType.PHYSICAL, 25f, 400f);
+    private static final AdaptiveResist PHYSICAL_PLATING = AdaptiveResist.perHitAgainst(DamageType.PHYSICAL, 5f, 30f);
     private static final float REGENERATING_SHARE = 0.02f;
     private static final float SHIELDED_BELOW = 0.5f;
     private static final float SHIELDED_SHARE = 0.3f;

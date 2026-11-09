@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.Damage;
 import td.damage.DamageMix;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.fixtures.EnemyFixtures;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,6 +47,18 @@ class AdaptiveResistTest {
             Trait resist = PLATING.resolvedFor(mix).orElseThrow();
             assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(100))).isEqualTo(Damage.physical(80));
         }
+    }
+
+    @Test
+    void aPerHitResistTakesItsPointsOffEveryHitOfItsTypeInsteadOfAShare() {
+        Trait resist = AdaptiveResist.perHitAgainst(DamageType.PHYSICAL, 5f, 5f).resolvedFor(DamageMix.none())
+                .orElseThrow();
+
+        assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(DamageUnits.ofPoints(100))))
+                .isEqualTo(Damage.physical(DamageUnits.ofPoints(95)));
+        assertThat(EnemyFixtures.landedThrough(resist, Damage.physical(DamageUnits.ofPoints(30))))
+                .isEqualTo(Damage.physical(DamageUnits.ofPoints(25)));
+        assertThat(EnemyFixtures.landedThrough(resist, Damage.magic(100))).isEqualTo(Damage.magic(100));
     }
 
     @Test
