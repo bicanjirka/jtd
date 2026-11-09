@@ -241,9 +241,16 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         }
     }
 
-    /** The confirmation beside the node; the list and the refund are worked out again when it is confirmed. */
+    /**
+     * The confirmation beside the node; the list and the refund are worked out again when it is confirmed. What all
+     * refunds in full is nothing to ask about.
+     */
     private void askToDowngrade(UpgradeNode node) {
         switch (UpgradeHover.of(node, this.tower, this.context)) {
+            case UpgradeHover.Downgrading downgrading when downgrading.allInFull() -> {
+                this.tower.downgrade(node);
+                this.refresh();
+            }
             case UpgradeHover.Downgrading downgrading -> this.askToDowngrade(node, downgrading);
             case UpgradeHover.Buying buying -> {
             }

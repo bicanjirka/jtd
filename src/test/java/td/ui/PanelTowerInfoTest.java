@@ -11,6 +11,7 @@ import td.ui.render.SheetLine;
 import td.ui.render.TowerSheet;
 import td.util.GameWorld;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,5 +43,22 @@ class PanelTowerInfoTest {
         this.info.showTowerSheet(new TowerSheet(this.tower.getX() + 1, this.tower.getY(), sheet("Other")));
 
         assertThat(this.info.shownSheet()).isEqualTo(TowerSheetText.status(this.tower.inspect()));
+    }
+
+    @Test
+    void theSellButtonSaysATowerNoWaveHasUsedSellsInFullAndStopsSayingItOnceOneHas() {
+        this.info.setTower(this.tower);
+        String fresh = this.sellButtonText();
+
+        this.tower.markUsed();
+        this.info.setTower(this.tower);
+
+        assertThat(fresh).isEqualTo("Sell ( $" + this.tower.paid() + " · full )");
+        assertThat(this.sellButtonText()).isEqualTo("Sell ( $" + this.tower.getSellPrice() + " )");
+    }
+
+    private String sellButtonText() {
+        return Arrays.stream(this.info.getComponents()).filter(HudButton.class::isInstance).map(HudButton.class::cast)
+                .map(HudButton::getText).filter(text -> text.startsWith("Sell")).findFirst().orElseThrow();
     }
 }

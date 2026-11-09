@@ -236,7 +236,9 @@ public sealed interface SheetLine {
         /** A plus: what heals. */
         PLUS,
         /** A dot with a short trail: what flies. */
-        COMET
+        COMET,
+        /** The credits icon's bare {@code $}: what sells back in full. */
+        CASH
     }
 
     /** Which way a value moved from its base. */

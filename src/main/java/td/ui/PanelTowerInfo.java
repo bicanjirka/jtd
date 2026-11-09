@@ -2,6 +2,7 @@ package td.ui;
 
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
+import td.economy.SellRefund;
 import td.term.TermText;
 import td.tower.PulseTower;
 import td.tower.Tower;
@@ -84,6 +85,22 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
         layer.watch(this.sheetPane);
         layer.watchButton(this.pinToggle, () -> Optional.of(new SheetTooltip(TooltipKey.of("tower", "pin"),
                 PIN_TOOLTIP)));
+        layer.watchButton(this.sellButton, () -> Optional.ofNullable(this.selectedTower)
+                .map(tower -> new SheetTooltip(TooltipKey.of("tower", "sell"), sellTooltip(tower.use().allUnused()))));
+    }
+
+    /** "Sell ( $120 )", or "Sell ( $120 · full )" for a tower no wave has run with, which sells for all it cost. */
+    static String sellText(int price, boolean inFull) {
+        return "Sell ( $" + price + (inFull ? " · full" : "") + " )";
+    }
+
+    private static InfoSheet sellTooltip(boolean inFull) {
+        String why = inFull ? "No wave has run with this tower yet, so selling it gives back all it cost."
+                : "Selling gives back " + Math.round(SellRefund.SHARE * 100)
+                        + "% of what a wave has used, and all of what was bought since the last wave ran.";
+        return new InfoSheet(List.of(
+                new SheetLine.Title(SheetLine.Glyph.CASH, Palette.TERM_STATUS_CASH, "Sell", ""),
+                new SheetLine.Prose(TermText.of(why))));
     }
 
     public void setTower(Tower t) {
@@ -191,7 +208,7 @@ public class PanelTowerInfo extends JPanel implements EconomyListener {
 
         if (this.selectedTower != null) {
             this.sellButton.setEnabled(!this.levelEnded);
-            this.sellButton.setText("Sell ( $" + this.selectedTower.getSellPrice() + " )");
+            this.sellButton.setText(sellText(this.selectedTower.getSellPrice(), this.selectedTower.use().allUnused()));
             this.replaceSheet(TowerSheetText.status(this.selectedTower.inspect()));
         }
     }

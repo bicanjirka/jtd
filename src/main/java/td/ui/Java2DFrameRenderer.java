@@ -35,6 +35,7 @@ import td.ui.render.ProjectileDraw;
 import td.ui.render.PulseDraw;
 import td.ui.render.RankBadge;
 import td.ui.render.RankBadgeDraw;
+import td.ui.render.RefundMarkDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.RingDraw;
 import td.ui.render.SheetLine;
@@ -1005,6 +1006,7 @@ public final class Java2DFrameRenderer {
             case BROKEN_RING -> g2.draw(new Arc2D.Float(-size * 0.8f, -size * 0.8f, size * 1.6f, size * 1.6f, 120f, 300f,
                     Arc2D.OPEN));
             case WEDGE -> g2.fill(new Arc2D.Float(-size, -size * 0.6f, size * 2f, size * 2f, 55f, 70f, Arc2D.PIE));
+            case CASH -> CashMark.paint(g2, 0f, 0f, size * 2f);
             case PIERCE -> {
                 g2.draw(new Line2D.Float(size * 0.2f, -size * 0.8f, size * 0.2f, size * 0.8f));
                 g2.draw(new Line2D.Float(-size * 0.9f, 0f, size * 0.8f, 0f));
@@ -1506,6 +1508,7 @@ public final class Java2DFrameRenderer {
             case ConeDraw cone -> this.paintCone(g2, cone);
             case NestDraw nest -> this.paintNest(g2, nest);
             case TowerStatusDraw status -> this.paintTowerStatus(g2, status);
+            case RefundMarkDraw mark -> CashMark.paint(g2, mark.x(), mark.y(), mark.height());
         }
     }
 
