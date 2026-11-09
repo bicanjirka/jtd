@@ -167,6 +167,18 @@ public enum Affix implements Term {
                     + TermNumbers.seconds(vengeanceTicks(Rank.BOSS) / TickRate.TICKS_PER_SECOND) + " at Boss",
                     EffectKind.SPRINTING);
         }
+    },
+    TAUNTING("Taunting") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition;
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.format("every tower that picks one target aims at it while it is in range, unless an "
+                    + "enemy there carries {}", EffectKind.PRIORITY);
+        }
     };
 
     private static final float HULKING_HEALTH = 2.5f;

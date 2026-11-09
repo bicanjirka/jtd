@@ -29,6 +29,9 @@ public interface EnemyTarget {
     /** Whether stealth keeps towers from picking this mob as a target. */
     boolean isHidden();
 
+    /** Whether a tower that picks one target must aim at it while it is in range, unless one carries a priority. */
+    boolean taunts();
+
     /** Whether a tower may pick this mob as the target of a shot, an aim or a trigger. */
     default boolean canBeTargeted() {
         return this.validTarget() && !this.isHidden();

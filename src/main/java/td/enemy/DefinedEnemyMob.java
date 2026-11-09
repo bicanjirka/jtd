@@ -684,6 +684,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.stats.value(EnemyStat.STEALTH) >= 1f;
     }
 
+    @Override
+    public boolean taunts() {
+        return this.definition.affixes().contains(Affix.TAUNTING);
+    }
+
     /**
      * Applies a hit through {@link HitResolution}, paying the bounty if it kills. A no-op on a dead
      * mob, so only the first of several same-tick hits counts as the kill. A dodged hit changes nothing

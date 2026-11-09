@@ -54,6 +54,28 @@ class PreferringSelectorTest {
     }
 
     @Test
+    void aTauntingEnemyBeatsTheOneTheInnerSelectorWouldPick() {
+        EnemyMob strong = FakeEnemyMob.at(0, 0).withHealth(9000);
+        EnemyMob taunter = FakeEnemyMob.at(0, 0).withHealth(10).taunting();
+
+        Optional<EnemyMob> selected = PreferringSelector.priority(new HighestHealthSelector())
+                .selectFrom(List.of(strong, taunter));
+
+        assertThat(selected).contains(taunter);
+    }
+
+    @Test
+    void aPriorityEnemyBeatsATauntingOne() {
+        EnemyMob taunter = FakeEnemyMob.at(0, 0).withHealth(9000).taunting();
+        EnemyMob marked = prioritised(10);
+
+        Optional<EnemyMob> selected = PreferringSelector.priority(new HighestHealthSelector())
+                .selectFrom(List.of(taunter, marked));
+
+        assertThat(selected).contains(marked);
+    }
+
+    @Test
     void selectingFromNoCandidatesReturnsEmpty() {
         assertThat(PreferringSelector.priority(new HighestHealthSelector()).selectFrom(List.of())).isEmpty();
     }

@@ -464,6 +464,31 @@ class GameEngineTest {
     }
 
     @Test
+    void aSingleTargetTowerShootsATauntingEnemyOverThePlainOneItWouldPick() {
+        GameEngine engine = FakeGameHost.newBoundEngine(() -> 0.0);
+        EnemyDefinition dummy = EnemyDefinition.of("dummy", "Dummy", 1_000_000, 1, 1.28f, BodyArchetype.CIRCLE);
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("dummy taunting dummy")), 100_000)
+                .withCustomEnemies(List.of(dummy)));
+        engine.nextWave();
+        int t = 1;
+        for (; Arrays.stream(engine.getGameWorld().enemies().getEnemies()).filter(EnemyMob::validTarget).count() < 2; t++) {
+            engine.doTick(t);
+        }
+        engine.startPlacing(TowerFactory.Type.SEEKER, 0f);
+        engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
+
+        for (int end = t + 300; t <= end; t++) {
+            engine.doTick(t);
+        }
+
+        EnemyMob[] enemies = engine.getGameWorld().enemies().getEnemies();
+        EnemyMob plain = enemies[0].taunts() ? enemies[1] : enemies[0];
+        EnemyMob taunter = enemies[0].taunts() ? enemies[0] : enemies[1];
+        assertThat(taunter.getHealthFraction()).isLessThan(1f);
+        assertThat(plain.getHealthFraction()).isEqualTo(1f);
+    }
+
+    @Test
     void aSnipersDodgedShotStillRunsItsDodgeProcs() {
         GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SNIPER);
         Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
