@@ -629,9 +629,12 @@ public class GameEngine {
         if (!this.gameWorld.cells().contains(saved.cell().x(), saved.cell().y())) {
             return List.of(where + " (off the board)");
         }
+        Cell cell = this.gameWorld.cells().at(saved.cell().x(), saved.cell().y());
+        if (cell.hasTower()) {
+            return List.of(where + " (another tower is on the cell)");
+        }
         this.placement.start(saved.type(), 0f);
         this.placement.mouseClicked(saved.cell().x() * scale + scale / 2, saved.cell().y() * scale + scale / 2);
-        Cell cell = this.gameWorld.cells().at(saved.cell().x(), saved.cell().y());
         if (!cell.hasTower()) {
             return List.of(where + " (the cell takes no tower)");
         }
