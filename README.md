@@ -443,6 +443,7 @@ member's share is its own; Hulking counts first, so the others measure its extra
 | Withered | `withered` | 130% of its speed, but loses 2% of its health every second, so what holds it back kills it; never with Regenerating |
 | Commanding | `commanding` | While it lives, the allies near it have Resolve: 10% less damage taken at Grunt, up to 30% at Boss; it fades soon after the Commander falls |
 | Vengeful | `vengeful` | As it dies, the allies near it Sprint: 1.5 s at Grunt, up to 4 s at Boss |
+| Taunting | `taunting` | Every tower that picks one target aims at it while it is in range; an enemy carrying Priority still comes first |
 
 ### Wave script ids
 

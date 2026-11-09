@@ -40,6 +40,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private boolean diesOnHit;
     private boolean appliesEffects;
     private boolean regenerates;
+    private boolean taunting;
     private float speed;
     private boolean frozen;
     private float spirit;
@@ -87,6 +88,7 @@ public final class FakeEnemyMob implements EnemyMob {
         this.healthFraction = other.healthFraction;
         this.appliesEffects = other.appliesEffects;
         this.regenerates = other.regenerates;
+        this.taunting = other.taunting;
         this.speed = other.speed;
         return this;
     }
@@ -358,6 +360,17 @@ public final class FakeEnemyMob implements EnemyMob {
     @Override
     public boolean isHidden() {
         return this.hidden;
+    }
+
+    /** This fake itself, now an enemy that single-target towers must aim at. */
+    public FakeEnemyMob taunting() {
+        this.taunting = true;
+        return this;
+    }
+
+    @Override
+    public boolean taunts() {
+        return this.taunting;
     }
 
     @Override

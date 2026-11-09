@@ -21,9 +21,13 @@ public final class PreferringSelector implements TargetSelector {
         this.inner = inner;
     }
 
-    /** A tower that picks one target picks the enemy carrying a priority while it is in range. */
+    /**
+     * A tower that picks one target picks the enemy carrying a priority while it is in range, else one that taunts,
+     * else what {@code inner} picks: the player's priority beats a taunt.
+     */
     public static PreferringSelector priority(TargetSelector inner) {
-        return new PreferringSelector(enemy -> enemy.hasEffect(EffectKind.PRIORITY), inner);
+        return new PreferringSelector(enemy -> enemy.hasEffect(EffectKind.PRIORITY),
+                new PreferringSelector(EnemyMob::taunts, inner));
     }
 
     /** Aims at a frozen enemy first. */
