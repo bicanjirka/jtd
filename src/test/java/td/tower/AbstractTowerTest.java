@@ -45,7 +45,7 @@ class AbstractTowerTest {
     @Test
     void sellPriceIsSeventyFivePercentOfPriceRoundedHalfUp() {
         SniperTower tower = new SniperTower(context, 0, 0);
-        tower.markUsed();
+        WorldFixtures.passAWave(this.context);
 
         assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * SniperTower.PRICE));
     }
@@ -59,7 +59,7 @@ class AbstractTowerTest {
 
         tower.buyUpgrade(first);
         tower.buyUpgrade(second);
-        tower.markUsed();
+        WorldFixtures.passAWave(this.context);
 
         int paid = SniperTower.PRICE + first.price() + second.price();
         assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * paid));
@@ -81,7 +81,7 @@ class AbstractTowerTest {
     void aNodeBoughtSinceTheLastWaveSellsBackInFullBesideTheShareOfWhatWasUsed() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        tower.markUsed();
+        WorldFixtures.passAWave(this.context);
         UpgradeNode fresh = tower.offeredUpgrades(this.context).get(0);
 
         tower.buyUpgrade(fresh);
@@ -95,7 +95,7 @@ class AbstractTowerTest {
     void downgradingANodeBoughtSinceTheLastWaveGivesBackAllItCost() {
         this.context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(this.context, 0, 0);
-        tower.markUsed();
+        WorldFixtures.passAWave(this.context);
         UpgradeNode fresh = tower.offeredUpgrades(this.context).get(0);
         tower.buyUpgrade(fresh);
         int before = this.context.economy().getCredits();

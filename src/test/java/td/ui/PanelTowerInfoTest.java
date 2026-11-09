@@ -50,7 +50,7 @@ class PanelTowerInfoTest {
         this.info.setTower(this.tower);
         String fresh = this.sellButtonText();
 
-        this.tower.markUsed();
+        WorldFixtures.passAWave(this.world);
         this.info.setTower(this.tower);
 
         assertThat(fresh).isEqualTo("Sell ( $" + this.tower.paid() + " · full )");

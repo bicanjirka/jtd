@@ -153,9 +153,6 @@ public interface Tower {
     /** What of it has been used, and so what sells back in full. */
     TowerUse use();
 
-    /** Game loop, every tick a wave runs: all of it has now been used. */
-    void markUsed();
-
     /** What the tower itself was bought for, its upgrades aside. */
     int paid();
 

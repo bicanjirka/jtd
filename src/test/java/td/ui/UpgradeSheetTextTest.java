@@ -298,7 +298,7 @@ class UpgradeSheetTextTest {
     @Test
     void aDowngradeTakingUsedAndUnusedNodesListsEachRefundApart() {
         FakeTower tower = this.choosing("Attune");
-        tower.markUsed();
+        WorldFixtures.passAWave(this.world);
         tower.buyUpgrade(OPTICS);
         UpgradeNode attune = CHOICES.nodes().stream().filter(n -> n.displayName().equals("Attune")).findFirst()
                 .orElseThrow();
@@ -317,7 +317,7 @@ class UpgradeSheetTextTest {
     @Test
     void anOwnedNodesHoverListsWhatADowngradeTakesAndRefundsAndWhatReopens() {
         FakeTower chosen = this.choosing("Attune", "Focused Optics");
-        chosen.markUsed();
+        WorldFixtures.passAWave(this.world);
         UpgradeHover.Downgrading downgrading = (UpgradeHover.Downgrading) UpgradeHover.of(OPTICS, chosen, this.world);
 
         InfoSheet sheet = UpgradeSheetText.downgradeConfirmation(downgrading, CHOICES);

@@ -8,6 +8,7 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.LevelFixtures;
+import td.fixtures.WorldFixtures;
 import td.projectile.CannonballProjectile;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
@@ -302,7 +303,7 @@ class BoardRendererTest {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         CinderTower tower = new CinderTower(context, 1, 1);
-        tower.markUsed();
+        WorldFixtures.passAWave(context);
         context.towers().add(tower);
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
@@ -315,7 +316,7 @@ class BoardRendererTest {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         CinderTower tower = new CinderTower(context, 1, 1);
-        tower.markUsed();
+        WorldFixtures.passAWave(context);
         context.towers().add(tower);
         EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         context.enemies().setEnemies(new EnemyMob[]{enemy});

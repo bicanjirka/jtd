@@ -37,6 +37,7 @@ import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeTower;
 import td.fixtures.LevelFixtures;
 import td.fixtures.UpgradePaths;
+import td.fixtures.WorldFixtures;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.projectile.CannonballProjectile;
@@ -1372,7 +1373,7 @@ class GameEngineTest {
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         placeSniper(engine, 0, 0);
         placeSniper(engine, 1, 0);
-        engine.getTowers().forEach(Tower::markUsed);
+        WorldFixtures.passAWave(engine.getGameWorld());
         int creditsAfterBuilds = engine.getGameWorld().economy().getCredits();
 
         engine.getGameWorld().towers().sell(engine.cells().at(1, 0).getTower());
@@ -1386,7 +1387,7 @@ class GameEngineTest {
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         placeSniper(engine, 0, 0);
         placeSniper(engine, 1, 0);
-        engine.getTowers().forEach(Tower::markUsed);
+        WorldFixtures.passAWave(engine.getGameWorld());
         engine.getGameWorld().towers().sell(engine.cells().at(0, 0).getTower());
         int creditsAfterSale = engine.getGameWorld().economy().getCredits();
 
@@ -1592,16 +1593,13 @@ class GameEngineTest {
     }
 
     @Test
-    void aTowerBoughtWhileAWaveIsPausedStaysUnusedUntilItsNextTickRuns() {
+    void aTowerBoughtWhileAWaveIsOutIsUsedAtOnceEvenWithTheGamePaused() {
         GameEngine engine = engineAfterAWave(7);
         engine.requestNextWave();
         engine.doTick(3001);
 
         Tower bought = placeTower(engine, TowerFactory.Type.SONAR, 0, 3);
-        boolean unusedBeforeATick = bought.use().allUnused();
-        engine.doTick(3002);
 
-        assertThat(unusedBeforeATick).isTrue();
         assertThat(bought.use().anyUnused()).isFalse();
     }
 
