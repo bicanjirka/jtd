@@ -145,10 +145,16 @@ public interface Tower {
     }
 
     /**
-     * Takes up {@code tally} in place of its own, and {@code paid} as what it was bought for: for a tower just
-     * rebuilt from a saved game.
+     * Takes up {@code tally} in place of its own, {@code paid} as what it was bought for, and {@code use} as what of
+     * it has been used: for a tower just rebuilt from a saved game.
      */
-    void restore(TowerTally tally, int paid);
+    void restore(TowerTally tally, int paid, TowerUse use);
+
+    /** What of it has been used, and so what sells back in full. */
+    TowerUse use();
+
+    /** Game loop, every tick a wave runs: all of it has now been used. */
+    void markUsed();
 
     /** What the tower itself was bought for, its upgrades aside. */
     int paid();

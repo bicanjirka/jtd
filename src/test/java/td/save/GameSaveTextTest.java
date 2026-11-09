@@ -40,8 +40,8 @@ class GameSaveTextTest {
                 bonus 0 40
                 bonus 2 55
                 damage 1250000 480000
-                tower PULSE 4 7 400 12 123456 40 paid=97 xp+=0.25 base.attune
-                tower PULSE 9 7 0 0 0 0 paid=112
+                tower PULSE 4 7 400 12 123456 40 paid=97 xp+=0.25 base.attune +base.awaken
+                tower PULSE 9 7 0 0 0 0 paid=112 unused=tower base.attune
                 pin 4 7 9 7
                 """;
 
@@ -53,7 +53,9 @@ class GameSaveTextTest {
         assertThat(save.damage().magic()).isEqualTo(480000L);
         assertThat(save.towers().getFirst().paid()).hasValue(97);
         assertThat(save.towers().getFirst().tally().xpCarried()).isEqualTo(0.25f);
-        assertThat(save.towers().getFirst().nodes()).containsExactly("base.attune");
+        assertThat(save.towers().getFirst().nodes()).containsExactly("base.attune", "base.awaken");
+        assertThat(save.towers().getFirst().use().unusedNodes()).containsExactly("base.awaken");
+        assertThat(save.towers().getLast().use().allUnused()).isTrue();
         assertThat(save.pins()).singleElement().satisfies(pin -> assertThat(pin.host().x()).isEqualTo(9));
         assertThat(GameSaveText.write(save)).isEqualTo(text);
     }

@@ -45,6 +45,7 @@ class AbstractTowerTest {
     @Test
     void sellPriceIsSeventyFivePercentOfPriceRoundedHalfUp() {
         SniperTower tower = new SniperTower(context, 0, 0);
+        tower.markUsed();
 
         assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * SniperTower.PRICE));
     }
@@ -58,9 +59,51 @@ class AbstractTowerTest {
 
         tower.buyUpgrade(first);
         tower.buyUpgrade(second);
+        tower.markUsed();
 
         int paid = SniperTower.PRICE + first.price() + second.price();
         assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * paid));
+    }
+
+    @Test
+    void aTowerNoWaveHasRunWithSellsBackEverythingPaidForItAndItsUpgrades() {
+        this.context.economy().startEconomy(1000, 5);
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        UpgradeNode first = tower.offeredUpgrades(this.context).get(0);
+
+        tower.buyUpgrade(first);
+
+        assertThat(tower.use().allUnused()).isTrue();
+        assertThat(tower.getSellPrice()).isEqualTo(SniperTower.PRICE + first.price());
+    }
+
+    @Test
+    void aNodeBoughtSinceTheLastWaveSellsBackInFullBesideTheShareOfWhatWasUsed() {
+        this.context.economy().startEconomy(1000, 5);
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        tower.markUsed();
+        UpgradeNode fresh = tower.offeredUpgrades(this.context).get(0);
+
+        tower.buyUpgrade(fresh);
+
+        assertThat(tower.use().isUnused(fresh)).isTrue();
+        assertThat(tower.use().allUnused()).isFalse();
+        assertThat(tower.getSellPrice()).isEqualTo((int) Math.round(0.75 * SniperTower.PRICE) + fresh.price());
+    }
+
+    @Test
+    void downgradingANodeBoughtSinceTheLastWaveGivesBackAllItCost() {
+        this.context.economy().startEconomy(1000, 5);
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        tower.markUsed();
+        UpgradeNode fresh = tower.offeredUpgrades(this.context).get(0);
+        tower.buyUpgrade(fresh);
+        int before = this.context.economy().getCredits();
+
+        tower.downgrade(fresh);
+
+        assertThat(this.context.economy().getCredits() - before).isEqualTo(fresh.price());
+        assertThat(tower.use().anyUnused()).isFalse();
     }
 
     @Test

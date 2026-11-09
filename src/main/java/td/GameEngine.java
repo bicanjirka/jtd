@@ -314,6 +314,9 @@ public class GameEngine {
         this.gameWorld.zones().doTick(time);
         this.gameWorld.playtestHooks().doTick(time);
         List<Tower> towers = this.gameWorld.towers().all();
+        if (this.round.phase() == RoundState.Phase.RUNNING) {
+            towers.forEach(Tower::markUsed);
+        }
         boolean emissionChanged = false;
         for (Tower tower : towers) {
             emissionChanged |= tower.beginTick(time) && tower.emitsBuffs();
@@ -511,7 +514,7 @@ public class GameEngine {
         List<TowerSave> towers = built.stream()
                 .map(tower -> TowerSave.of(tower.getType(), cellOf(board, tower),
                         tower.upgrades().owned().stream().map(UpgradeNode::id).toList(), tower.tally())
-                        .withPaid(tower.paid()))
+                        .withPaid(tower.paid()).withUse(tower.use()))
                 .toList();
         List<LeyLinePin> pins = built.stream()
                 .flatMap(caster -> PulseTower.leyLinePinOf(caster).stream()
@@ -640,7 +643,7 @@ public class GameEngine {
                 missing.add(where + ": upgrade " + id + " (not on offer)");
             }
         }
-        tower.restore(saved.tally(), saved.paid().orElse(tower.paid()));
+        tower.restore(saved.tally(), saved.paid().orElse(tower.paid()), saved.use());
         return missing;
     }
 

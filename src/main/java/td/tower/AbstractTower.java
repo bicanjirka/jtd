@@ -113,6 +113,8 @@ public abstract class AbstractTower implements Tower {
     // Sampled by the tick thread; also read when the EDT republishes stats after a purchase.
     private volatile DisruptionPenalty disruption = DisruptionPenalty.none();
     private final ActiveTowerStatuses statuses = new ActiveTowerStatuses();
+    // Bought on the EDT, used up by the tick thread while a wave runs.
+    private final AtomicReference<TowerUse> use = new AtomicReference<>(TowerUse.unused());
     // Downgraded on the EDT, forgotten by the tick thread at the start of the tower's next turn.
     private final AtomicReference<List<UpgradeNode>> removedSinceTick = new AtomicReference<>(List.of());
     private volatile InspectionCache inspectionCache;
@@ -268,12 +270,37 @@ public abstract class AbstractTower implements Tower {
      * every upgrade bought for it. Nothing during free build.
      */
     public int getSellPrice() {
-        return this.context.economy().refundOf(this.shareOfAllPaid());
+        return this.context.economy().refundOf(this.shareOf(this.upgrades().owned()));
     }
 
-    private int shareOfAllPaid() {
-        int upgradesPaid = this.upgrades().owned().stream().mapToInt(UpgradeNode::price).sum();
-        return SellRefund.of(this.price + upgradesPaid);
+    /**
+     * What selling the tower with {@code owned} gives back of what was paid: the share of what has been used, and all
+     * of what has not.
+     */
+    private int shareOf(List<UpgradeNode> owned) {
+        TowerUse now = this.use.get();
+        int usedPaid = now.towerUsed() ? this.price : 0;
+        int unusedPaid = now.towerUsed() ? 0 : this.price;
+        for (UpgradeNode node : owned) {
+            if (now.isUnused(node)) {
+                unusedPaid += node.price();
+            } else {
+                usedPaid += node.price();
+            }
+        }
+        return SellRefund.of(usedPaid) + unusedPaid;
+    }
+
+    @Override
+    public TowerUse use() {
+        return this.use.get();
+    }
+
+    @Override
+    public void markUsed() {
+        if (this.use.get() != TowerUse.used()) {
+            this.use.set(TowerUse.used());
+        }
     }
 
     /**
@@ -666,7 +693,8 @@ public abstract class AbstractTower implements Tower {
     }
 
     @Override
-    public void restore(TowerTally tally, int paid) {
+    public void restore(TowerTally tally, int paid, TowerUse use) {
+        this.use.set(use);
         this.experience.restore(tally.xp(), tally.deeds());
         this.damageDealt = tally.damageDealt();
         this.killCount = tally.kills();
@@ -774,6 +802,7 @@ public abstract class AbstractTower implements Tower {
         for (UpgradeNode node : bought) {
             this.ownedMechanics().add(node);
             nextState = nextState.with(node);
+            this.use.updateAndGet(now -> now.withBought(node));
         }
         this.publishStats(nextState);
         this.upgrades = nextState;
@@ -786,8 +815,8 @@ public abstract class AbstractTower implements Tower {
 
     @Override
     public int refundFor(UpgradeRemoval removal) {
-        int keptPaid = removal.kept().owned().stream().mapToInt(UpgradeNode::price).sum();
-        return this.context.economy().refundOf(this.shareOfAllPaid() - SellRefund.of(this.price + keptPaid));
+        return this.context.economy().refundOf(this.shareOf(this.upgrades().owned())
+                - this.shareOf(removal.kept().owned()));
     }
 
     @Override
@@ -801,6 +830,7 @@ public abstract class AbstractTower implements Tower {
         this.publishStats(removal.kept());
         this.upgrades = removal.kept();
         this.removedSinceTick.accumulateAndGet(removal.removed(), AbstractTower::concatenated);
+        removal.removed().forEach(gone -> this.use.updateAndGet(now -> now.withRemoved(gone)));
         for (Tower t : this.context.towers().all()) {
             t.recalculateStats();
         }
