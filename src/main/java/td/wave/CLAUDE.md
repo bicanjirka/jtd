@@ -74,4 +74,5 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 - `PathColor` is level content (RGB, no AWT), not a `Palette` role.
 
 `WaveAnnouncer`/`WaveStartListener` is the wave-start hub (`CopyOnWriteArrayList`, fired on
-`game-loop`).
+`game-loop`). Where the game is in its waves (the count started, whether one is out, its start tick) is one
+`WaveClock` behind one `volatile`; a reader needing two of them reads `clock()` once.
