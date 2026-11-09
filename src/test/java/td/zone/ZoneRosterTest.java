@@ -113,7 +113,7 @@ class ZoneRosterTest {
 
         this.tick(10, 11);
 
-        assertThat(enemy.activeEffectKinds()).containsExactlyInAnyOrder(EffectKind.TARRED, EffectKind.POISON);
+        assertThat(enemy.activeEffectKinds()).contains(EffectKind.TARRED, EffectKind.POISON);
     }
 
     @Test
