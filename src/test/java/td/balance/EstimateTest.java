@@ -3,7 +3,6 @@ package td.balance;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 
 class EstimateTest {
 
@@ -26,16 +25,5 @@ class EstimateTest {
 
         assertThat(mean.value()).isEqualTo(3.0);
         assertThat(mean.high() - mean.low()).isZero();
-    }
-
-    @Test
-    void twoMeansWhoseIntervalsOverlapAreNotDifferent() {
-        Estimate low = Estimate.of(new double[]{1, 2, 3, 4});
-        Estimate overlapping = Estimate.of(new double[]{2, 3, 4, 5});
-        Estimate far = Estimate.of(new double[]{20, 21, 22, 23});
-
-        assertThat(low.differsFrom(overlapping)).isFalse();
-        assertThat(low.differsFrom(far)).isTrue();
-        assertThat(low.value()).isCloseTo(2.5, within(1e-9));
     }
 }

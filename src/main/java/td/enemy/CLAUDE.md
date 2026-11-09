@@ -13,7 +13,7 @@
   definition of its own, never the boss's ladder, which would be a spawn cycle.
 - A ladder is authored contiguously upward from `Rank.GRUNT`; a gap or a backward step is a
   `GameStartupException`, and asking for an unauthored rank falls back to the highest authored one.
-  A unique enemy (`EnemyCatalog.registerUnique`) has no ladder: it is Boss rank only, whatever is asked
+  A unique enemy (`RankedEnemy.unique`) has no ladder: it is Boss rank only, whatever is asked
   for, and so is the rank its mobs carry (`RankedEnemy.spawnRank`). A spawn ability that must not
   inherit a Boss caster's rank fixes one (`SpawnEnemiesAction.atRank`).
   A built-in ladder derives its health and bounty from a `RankGrowth` (`startingAt(grunt, growth)`)

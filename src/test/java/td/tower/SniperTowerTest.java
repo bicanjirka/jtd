@@ -71,7 +71,7 @@ class SniperTowerTest {
 
         tower.doTick(1);
 
-        assertThat(tower.wasLastShotCritical()).isTrue();
+        assertThat(tower.lastShot()).hasValueSatisfying(shot -> assertThat(shot.critical()).isTrue());
         assertThat(target.attackers().getFirst().critChance()).isEqualTo(tower.critChance());
     }
 

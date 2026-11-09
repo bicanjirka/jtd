@@ -63,9 +63,4 @@ public record Damage(int amount, DamageType type, boolean critical) {
     public Damage cappedAt(int max) {
         return new Damage(Math.min(this.amount, max), this.type, this.critical);
     }
-
-    /** Marks the hit critical and multiplies it; a hit is rolled critical at most once. */
-    public Damage asCritical(float multiplier) {
-        return new Damage(Math.round(this.amount * multiplier), this.type, true);
-    }
 }

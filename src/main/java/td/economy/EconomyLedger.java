@@ -122,10 +122,6 @@ public class EconomyLedger {
         this.listeners.add(l);
     }
 
-    public void removeEconomyListener(EconomyListener l) {
-        this.listeners.remove(l);
-    }
-
     private void fireEconomyChangedEvent(EconomyState state) {
         for (EconomyListener l : this.listeners) {
             l.economyChanged(state);

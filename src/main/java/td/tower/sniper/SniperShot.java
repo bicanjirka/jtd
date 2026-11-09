@@ -41,11 +41,6 @@ public record SniperShot(DamageType type, float damageFactor, AttackProfile atta
                 this.pierce);
     }
 
-    /** Adds {@code bonus} to the crit chance, which stays a probability. */
-    public SniperShot withCritChanceBonus(float bonus) {
-        return this.withAttack(attack -> attack.withCritChance(Math.min(1f, attack.critChance() + bonus)));
-    }
-
     /** Attack-speed bonuses add. */
     public SniperShot withAttackSpeedBonus(float bonus) {
         return new SniperShot(this.type, this.damageFactor, this.attack, this.attackSpeedBonus + bonus, this.pierce);
