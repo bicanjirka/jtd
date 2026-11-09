@@ -36,6 +36,7 @@ public final class WaveScript {
 
     private static final String SPACING_PREFIX = "w";
     private static final Pattern SPACING_TOKEN = Pattern.compile("w\\d+(\\.\\d+)?");
+    private static final Pattern COUNT_TOKEN = Pattern.compile("\\d+");
 
     /**
      * Tokens recognized before any catalog lookup; the catalog rejects ids that collide with them.
@@ -53,9 +54,13 @@ public final class WaveScript {
     private WaveScript() {
     }
 
-    /** Whether {@code id} is a reserved keyword or has the shape of a spacing token, so no enemy may take it. */
+    /** Whether {@code id} is a reserved keyword or has the shape of a spacing token or a count, so no enemy may take it. */
     public static boolean isReserved(String id) {
-        return RESERVED_TOKENS.contains(id) || isSpacingToken(id);
+        return RESERVED_TOKENS.contains(id) || isSpacingToken(id) || isCountToken(id);
+    }
+
+    static boolean isCountToken(String token) {
+        return COUNT_TOKEN.matcher(token).matches();
     }
 
     static boolean isSpacingToken(String token) {
@@ -74,16 +79,11 @@ public final class WaveScript {
 
     /** {@code fallbackRank} is the rank of a script whose head names none. */
     public static WaveContent parse(String script, Rank fallbackRank, EnemyCatalog catalog) {
-        return new WaveScriptGrammar(fallbackRank, catalog).script(script.split(" "));
-    }
-
-    static boolean isShapeToken(String token) {
-        return ShapeKeyword.of(token).isPresent();
-    }
-
-    /** Whether the shape keyword {@code token} takes a member count (the others forbid one). */
-    static boolean takesMemberCount(String token) {
-        return ShapeKeyword.of(token).filter(ShapeKeyword::takesMemberCount).isPresent();
+        try {
+            return new WaveScriptGrammar(fallbackRank, catalog).script(script.split(" "));
+        } catch (WaveScriptGrammar.ScriptFault fault) {
+            throw fault.asStartupFailure();
+        }
     }
 
     /** {@code slots} under a head that sets {@code rank}. */

@@ -26,8 +26,8 @@ never in the constructor: that keeps a level load a single `LoadedLevel` publica
 counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
 - An optional **head**, ended by `:`, holds the wave's defaults in slot order: `w<number>`, a
-  rank, then affixes (`w30 soldier armored: 3 walker`). The first `:` ends it; a token ending in `:` reads as the word and
-  the `:`. `w<number>` sets the ticks one slot of spacing is worth, default
+  rank, then affixes (`w30 soldier armored: 3 walker`). A script has a head only when every token before its first
+  `:` is a head word; a token ending in `:` reads as the word and the `:`. `w<number>` sets the ticks one slot of spacing is worth, default
   `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`, and carries on `WaveContent`; it is positive, stands
   only in a head, and no enemy id may look like it. A level wave whose head names no rank is Grunt:
   the head is the only place a wave's rank is written.
@@ -43,16 +43,19 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
   included; none twice, none that `Affix.excludes` another, none on a unique enemy, none whose
   `problemWith` objects.
 - A shape says how a slot spawns, never what the enemy is: that is an affix.
-- A count applies to the next token: `3 knight e 4 walker`. Placed before a rank/shape keyword, it repeats
-  the whole slot (`3 elite swarm 4 walker`); placed right after a shape keyword, it is the member
-  count.
+- A slot takes at most two counts: one first, which repeats the whole slot (`3 knight e 4 walker`,
+  `3 elite swarm 4 walker`), and one right after a shape keyword, its member count. A count anywhere else fails,
+  so no enemy id may be all digits.
 - Errors (`GameStartupException`): an unknown token, anything but a spacing and a rank in a head,
-  a second `:`, a spacing outside a head, a rank after a shape, a rank right before
-  `e`, two ranks in a row, a missing or forbidden member count, a repeat count over
-  `WaveScript.MAX_REPEAT`. Blank tokens are skipped. An error
+  a second `:`, a head after a slot, a spacing outside a head, a rank after a shape, a rank right before
+  `e`, two ranks in a row, a count out of place or left at the end, a missing or forbidden member count, a repeat
+  count over `WaveScript.MAX_REPEAT`. Blank tokens are skipped. An error
   marks the offending token in the script, and a level's load adds its level, path and wave.
 - `WaveScriptGrammar` parses: each rule takes an immutable cursor and returns what it
-  read with the cursor after it. A spawn-type keyword is one `ShapeKeyword` row.
+  read with the cursor after it, and a broken rule throws its checked `ScriptFault`. A spawn-type keyword is one
+  `ShapeKeyword` row, a rank one `RankKeyword` row.
+- `WaveScriptSuggestions` asks `WaveScriptGrammar.next` what the same rules accept after the typed tokens; it never
+  reads the script itself. A new keyword is its row plus the rule that reads it, and `next` answers for it.
 - Reserved tokens are matched before catalog lookup, and `EnemyCatalog.register` rejects ids that
   collide with them. Built-in and per-level ids resolve identically.
 - A new enemy id gets a row in `README.md`'s "Wave script ids" table.

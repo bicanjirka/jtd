@@ -178,6 +178,15 @@ class EnemyCatalogTest {
     }
 
     @Test
+    void registeringAnIdThatReadsAsACountFails() {
+        EnemyCatalog catalog = new EnemyCatalog();
+
+        assertThatThrownBy(() -> catalog.register(EnemyFixtures.simpleDefinition("42")))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("42");
+    }
+
+    @Test
     void registeringAnIdThatCollidesWithAReservedWaveScriptTokenFails() {
         EnemyCatalog catalog = new EnemyCatalog();
 

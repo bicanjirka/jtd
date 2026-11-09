@@ -162,7 +162,7 @@ final class RiftLevel {
                             new WaveDefinition("veteran: swarm 12 mite e drip 3 herald"),
                             new WaveDefinition("veteran: 2 mirage e eclipse 3 runner"),
                             new WaveDefinition("soldier: drip 5 herald e veteran runner e swarm 12 mite"),
-                            new WaveDefinition("veteran: elite herald e veteran 2 herald e elite runner e 2 mirage")),
+                            new WaveDefinition("veteran: elite herald e 2 veteran herald e elite runner e 2 mirage")),
                     SMOOTHING)
             .withColor(CYAN_COLOR)
             .withSpeed(1.1f);
