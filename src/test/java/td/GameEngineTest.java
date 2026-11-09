@@ -1372,6 +1372,7 @@ class GameEngineTest {
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         placeSniper(engine, 0, 0);
         placeSniper(engine, 1, 0);
+        engine.getTowers().forEach(Tower::markUsed);
         int creditsAfterBuilds = engine.getGameWorld().economy().getCredits();
 
         engine.getGameWorld().towers().sell(engine.cells().at(1, 0).getTower());
@@ -1385,6 +1386,7 @@ class GameEngineTest {
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         placeSniper(engine, 0, 0);
         placeSniper(engine, 1, 0);
+        engine.getTowers().forEach(Tower::markUsed);
         engine.getGameWorld().towers().sell(engine.cells().at(0, 0).getTower());
         int creditsAfterSale = engine.getGameWorld().economy().getCredits();
 
@@ -1571,6 +1573,36 @@ class GameEngineTest {
         assertThat(engine.getTowers()).noneMatch(tower -> tower.getType() == TowerFactory.Type.SONAR);
         assertThat(again).containsExactlyElementsOf(first);
         assertThat(engine.checkpoint()).isPresent();
+    }
+
+    @Test
+    void aTowerIsUsedOnceAWaveRunsWithItAndOneBoughtInTheBreakAfterIsNot() {
+        GameEngine engine = engineAfterAWave(7);
+        Tower fought = engine.cells().at(0, 1).getTower();
+
+        Tower bought = placeTower(engine, TowerFactory.Type.SONAR, 0, 3);
+        engine.requestNextWave();
+        engine.doTick(3001);
+        GameSave sent = engine.checkpoint().orElseThrow();
+
+        assertThat(fought.use().anyUnused()).isFalse();
+        assertThat(bought.use().anyUnused()).isFalse();
+        assertThat(sent.towers().getLast().use().allUnused()).isTrue();
+        assertThat(sent.towers().getFirst().use().anyUnused()).isFalse();
+    }
+
+    @Test
+    void aTowerBoughtWhileAWaveIsPausedStaysUnusedUntilItsNextTickRuns() {
+        GameEngine engine = engineAfterAWave(7);
+        engine.requestNextWave();
+        engine.doTick(3001);
+
+        Tower bought = placeTower(engine, TowerFactory.Type.SONAR, 0, 3);
+        boolean unusedBeforeATick = bought.use().allUnused();
+        engine.doTick(3002);
+
+        assertThat(unusedBeforeATick).isTrue();
+        assertThat(bought.use().anyUnused()).isFalse();
     }
 
     @Test

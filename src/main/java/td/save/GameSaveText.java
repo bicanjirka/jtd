@@ -4,6 +4,7 @@ import td.damage.DamageMix;
 import td.economy.EconomyState;
 import td.tower.TowerFactory;
 import td.tower.TowerTally;
+import td.tower.TowerUse;
 import td.wave.Point;
 
 import java.util.ArrayList;
@@ -33,7 +34,8 @@ import java.util.Set;
  * The economy line is credits, score and lives. {@code leaked} lists the 0-based rounds an enemy escaped, and a
  * {@code bonus} line is a round and the clear bonus it paid. {@code damage} is the physical and magic damage landed. A
  * tower line is its type, cell, XP, deeds, damage dealt, kills, then {@code key=value} facts (what it was bought for,
- * the fraction of XP carried), then the upgrades it owns in the order bought. A {@code pin} line is the cell of an
+ * {@code unused=tower} for a tower no wave has run with, the fraction of XP carried), then the upgrades it owns in the
+ * order bought, a {@code +} before each one bought since the last wave ran. A {@code pin} line is the cell of an
  * Obelisk and of the one its Ley Line is pinned to. Every line but level, wave and economy may be left out.
  */
 public final class GameSaveText {
@@ -69,10 +71,15 @@ public final class GameSaveText {
                     .append(tower.cell().y()).append(' ').append(tally.xp()).append(' ').append(tally.deeds())
                     .append(' ').append(tally.damageDealt()).append(' ').append(tally.kills());
             tower.paid().ifPresent(paid -> text.append(" paid=").append(paid));
+            if (!tower.use().towerUsed()) {
+                text.append(" unused=tower");
+            }
             if (tally.xpCarried() != 0f) {
                 text.append(" xp+=").append(tally.xpCarried());
             }
-            tower.nodes().forEach(node -> text.append(' ').append(node));
+            tower.nodes().forEach(node -> text.append(' ')
+                    .append(tower.use().towerUsed() && tower.use().unusedNodes().contains(node) ? "+" : "")
+                    .append(node));
             text.append('\n');
         }
         for (LeyLinePin pin : save.pins()) {
@@ -157,12 +164,19 @@ public final class GameSaveText {
         }
         OptionalInt paid = OptionalInt.empty();
         float carried = 0f;
+        boolean towerUsed = true;
         List<String> nodes = new ArrayList<>();
+        Set<String> unused = new HashSet<>();
         for (String word : List.of(words).subList(TOWER_FIELDS, words.length)) {
             if (word.startsWith("paid=")) {
                 paid = OptionalInt.of(Integer.parseInt(word.substring("paid=".length())));
             } else if (word.startsWith("xp+=")) {
                 carried = Float.parseFloat(word.substring("xp+=".length()));
+            } else if (word.equals("unused=tower")) {
+                towerUsed = false;
+            } else if (word.startsWith("+")) {
+                nodes.add(word.substring(1));
+                unused.add(word.substring(1));
             } else {
                 nodes.add(word);
             }
@@ -170,7 +184,8 @@ public final class GameSaveText {
         TowerTally tally = TowerTally.of(Integer.parseInt(words[4]), Integer.parseInt(words[5]),
                 Long.parseLong(words[6]), Integer.parseInt(words[7])).withXpCarried(carried);
         TowerSave tower = TowerSave.of(type.get(),
-                new Point(Integer.parseInt(words[2]), Integer.parseInt(words[3])), nodes, tally);
+                new Point(Integer.parseInt(words[2]), Integer.parseInt(words[3])), nodes, tally)
+                .withUse(new TowerUse(towerUsed, towerUsed ? unused : Set.copyOf(nodes)));
         return Optional.of(paid.isPresent() ? tower.withPaid(paid.getAsInt()) : tower);
     }
 
