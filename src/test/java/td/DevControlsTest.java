@@ -57,7 +57,7 @@ class DevControlsTest {
     @Test
     void withInfiniteLivesALeakOnTheLastLifeComesBackAndTheLevelGoesOn() {
         this.engine.loadLevel(LevelFixtures.biggerLevelWith(
-                List.of(new WaveDefinition("walker", Rank.GRUNT), new WaveDefinition("walker", Rank.GRUNT)), 100)
+                List.of(new WaveDefinition("walker"), new WaveDefinition("walker")), 100)
                 .withStartingLives(1));
         this.dev.setInfiniteLives(true);
         this.engine.nextWave();
@@ -70,7 +70,7 @@ class DevControlsTest {
 
     @Test
     void aLeakUnderInfiniteLivesStillCostsItsScore() {
-        this.engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        this.engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker")), 100));
         this.dev.setInfiniteLives(true);
         this.engine.nextWave();
 

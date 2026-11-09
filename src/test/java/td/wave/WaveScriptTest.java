@@ -28,7 +28,7 @@ class WaveScriptTest {
 
     @Test
     void aLeadingSpacingTokenSetsTheWavesSpacingAndSpawnsNothing() {
-        WaveContent content = WaveScript.parse("w30 2 walker", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("w30: 2 walker", Rank.GRUNT, this.catalog);
 
         assertThat(content.delayTicksPerSlot()).isEqualTo(30f);
         assertThat(content.enemyCount()).isEqualTo(2);
@@ -42,10 +42,57 @@ class WaveScriptTest {
     }
 
     @Test
-    void aSpacingTokenAfterAnyOtherTokenIsRejected() {
-        assertThatThrownBy(() -> WaveScript.parse("walker w30 walker", Rank.GRUNT, this.catalog))
+    void aSpacingTokenOutsideAHeadFailsAtThatToken() {
+        assertThatThrownBy(() -> WaveScript.parse("w30 walker", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
-                .hasMessageContaining("first token");
+                .hasMessageContaining("»w30«")
+                .hasMessageContaining("head");
+    }
+
+    @Test
+    void aHeadsRankIsTheRankOfEverySlotThatNamesNone() {
+        WaveContent content = WaveScript.parse("soldier: walker knight", Rank.GRUNT, this.catalog);
+
+        assertThat(content.enemySet()).containsExactly(this.catalog.get("walker", Rank.SOLDIER),
+                this.catalog.get("knight", Rank.SOLDIER));
+    }
+
+    @Test
+    void aSlotsOwnRankBeatsTheHeads() {
+        WaveContent content = WaveScript.parse("soldier: elite walker knight", Rank.GRUNT, this.catalog);
+
+        assertThat(content.enemySet()).containsExactly(this.catalog.get("walker", Rank.ELITE),
+                this.catalog.get("knight", Rank.SOLDIER));
+    }
+
+    @Test
+    void aLevelsWaveWithNoRankInItsHeadIsGrunt() {
+        WaveContent content = WaveScript.parse("w30: walker", this.catalog);
+
+        assertThat(content.enemySet()).containsExactly(this.catalog.get("walker", Rank.GRUNT));
+    }
+
+    @Test
+    void aHeadsEndMayStandApartFromItsLastWord() {
+        WaveContent apart = WaveScript.parse("w30 soldier : walker", Rank.GRUNT, this.catalog);
+
+        assertThat(apart.delayTicksPerSlot()).isEqualTo(30f);
+        assertThat(apart.enemySet()).containsExactly(this.catalog.get("walker", Rank.SOLDIER));
+    }
+
+    @Test
+    void aSecondHeadEndFails() {
+        assertThatThrownBy(() -> WaveScript.parse("soldier: walker: knight", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("one head");
+    }
+
+    @Test
+    void aSlotBeforeTheHeadEndFailsAtItsFirstToken() {
+        assertThatThrownBy(() -> WaveScript.parse("soldier 2 walker: knight", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»2«")
+                .hasMessageContaining("A head holds only");
     }
 
     @Test
@@ -57,7 +104,7 @@ class WaveScriptTest {
 
     @Test
     void aSpacingOfZeroIsRejected() {
-        assertThatThrownBy(() -> WaveScript.parse("w0 walker", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("w0: walker", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
                 .hasMessageContaining("greater than zero");
     }

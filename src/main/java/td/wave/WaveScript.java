@@ -13,16 +13,17 @@ import java.util.stream.Stream;
  * Parses a wave's token string into {@link WaveContent} against an {@link EnemyCatalog}, so
  * level-defined enemies resolve like built-ins. {@link #RESERVED_TOKENS} are recognized before any
  * lookup. Anything else that is not a registered id or a count fails with
- * {@link GameStartupException}.
+ * {@link GameStartupException}. {@link WaveScriptGrammar} states the grammar.
  * <p>
  * <strong>A count applies to the token right after it.</strong> Before an id or {@code e} it
  * repeats the slot; before a rank or shape keyword it repeats the whole slot. After a shape keyword
  * it sets that slot's member count: required for {@code swarm}, {@code line}, {@code column} and
  * {@code drip}, rejected for {@code plated} and {@code flank}.
  * <p>
- * A leading {@code w<number>} (such as {@code w30}) sets how many ticks one slot of spacing is
- * worth, in place of {@link SpawnParameters#DEFAULT_DELAY_TICKS_PER_SLOT}. It may only be the first
- * token.
+ * A head, ended by {@code :}, holds the wave's defaults: {@code w<number>} (such as {@code w30}),
+ * how many ticks one slot of spacing is worth in place of
+ * {@link SpawnParameters#DEFAULT_DELAY_TICKS_PER_SLOT}, then the rank every slot takes unless it
+ * names its own ({@code w30 soldier: 3 walker}).
  */
 public final class WaveScript {
 
@@ -30,6 +31,7 @@ public final class WaveScript {
     public static final int MAX_REPEAT = 100;
 
     static final String EMPTY_TOKEN = "e";
+    static final String HEAD_END = ":";
 
     private static final String GRUNT_TOKEN = "grunt";
     private static final String SOLDIER_TOKEN = "soldier";
@@ -63,12 +65,14 @@ public final class WaveScript {
         return Float.parseFloat(spacingToken.substring(SPACING_PREFIX.length()));
     }
 
-    public static WaveContent parse(String tokens, Rank defaultRank, EnemyCatalog catalog) {
-        return parse(tokens.split(" "), defaultRank, catalog);
+    /** A level's wave: Grunt unless the head names a rank. */
+    public static WaveContent parse(String script, EnemyCatalog catalog) {
+        return parse(script, Rank.GRUNT, catalog);
     }
 
-    public static WaveContent parse(String[] tokens, Rank defaultRank, EnemyCatalog catalog) {
-        return new WaveScriptGrammar(defaultRank, catalog).script(tokens);
+    /** {@code fallbackRank} is the rank of a script whose head names none. */
+    public static WaveContent parse(String script, Rank fallbackRank, EnemyCatalog catalog) {
+        return new WaveScriptGrammar(fallbackRank, catalog).script(script.split(" "));
     }
 
     static boolean isShapeToken(String token) {
@@ -84,6 +88,21 @@ public final class WaveScript {
         return switch (token) {
             case GRUNT_TOKEN, SOLDIER_TOKEN, VETERAN_TOKEN, ELITE_TOKEN, BOSS_TOKEN -> true;
             default -> false;
+        };
+    }
+
+    /** {@code slots} under a head that sets {@code rank}. */
+    public static String headed(Rank rank, String slots) {
+        return rankToken(rank) + HEAD_END + " " + slots;
+    }
+
+    static String rankToken(Rank rank) {
+        return switch (rank) {
+            case GRUNT -> GRUNT_TOKEN;
+            case SOLDIER -> SOLDIER_TOKEN;
+            case VETERAN -> VETERAN_TOKEN;
+            case ELITE -> ELITE_TOKEN;
+            case BOSS -> BOSS_TOKEN;
         };
     }
 

@@ -19,7 +19,6 @@ import td.enemy.IdentifiedTrait;
 import td.enemy.ImmunityTrait;
 import td.enemy.OnceTrigger;
 import td.enemy.PeriodicTrigger;
-import td.enemy.Rank;
 import td.enemy.RankedEnemy;
 import td.enemy.SelfTarget;
 import td.enemy.StrideMovement;
@@ -111,9 +110,9 @@ final class LabyrinthLevel {
                                     + "2 soldier ghost 6 soldier walker soldier golem e 4 soldier runner 6 veteran walker "
                                     + "3 veteran knight veteran mender 2 veteran ghost 6 veteran walker veteran golem e "
                                     + "4 veteran runner veteran magma 6 veteran walker 2 veteran knight e 4 elite walker elite golem elite knight "
-                                    + "4 elite walker elite magma", Rank.GRUNT),
-                            new WaveDefinition("w220 2 magma 3 golem 4 bronzeBull e talos e 4 bronzeBull 3 golem 2 magma", Rank.BOSS),
-                            new WaveDefinition("4 bronzeBull e 2 golem e minotaur e 4 bronzeBull", Rank.ELITE)))
+                                    + "4 elite walker elite magma"),
+                            new WaveDefinition("w220 boss: 2 magma 3 golem 4 bronzeBull e talos e 4 bronzeBull 3 golem 2 magma"),
+                            new WaveDefinition("elite: 4 bronzeBull e 2 golem e minotaur e 4 bronzeBull")))
             .withColor(STONE_COLOR);
 
     static final LevelDefinition DEFINITION = LevelDefinition

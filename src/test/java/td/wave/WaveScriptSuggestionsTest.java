@@ -54,6 +54,23 @@ class WaveScriptSuggestionsTest {
     }
 
     @Test
+    void theHeadEndIsOfferedAfterTheHeadsWords() {
+        assertThat(this.at("w30 soldier ")).contains(":");
+        assertThat(this.at("w30 ")).contains(":");
+    }
+
+    @Test
+    void theHeadEndIsNotOfferedOnceASlotHasBegun() {
+        assertThat(this.at("2 ")).doesNotContain(":");
+        assertThat(this.at("alpha ")).doesNotContain(":");
+    }
+
+    @Test
+    void theSpacingTokenIsNotOfferedAfterTheHead() {
+        assertThat(this.at("soldier: ")).doesNotContain("w").contains("alpha");
+    }
+
+    @Test
     void theSpacingTokenIsAStemTheTicksFinish() {
         assertThat(WaveScriptSuggestions.suggest("w", 1, this.catalog).best()).get()
                 .extracting(Candidate::complete).isEqualTo(false);

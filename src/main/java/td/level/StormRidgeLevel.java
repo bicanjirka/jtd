@@ -88,21 +88,21 @@ final class StormRidgeLevel {
                             new Point(-1, 2), new Point(13, 2), new Point(13, 5), new Point(2, 5),
                             new Point(2, 8), new Point(16, 8)),
                     List.of(
-                            new WaveDefinition("6 raincloud e 4 walker", Rank.GRUNT).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("column 4 knight e 2 raincloud e 4 walker", Rank.GRUNT).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("gale column 5 walker 2 e gale column 5 walker", Rank.GRUNT)
+                            new WaveDefinition("6 raincloud e 4 walker").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("column 4 knight e 2 raincloud e 4 walker").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("gale column 5 walker 2 e gale column 5 walker")
                                     .withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("3 raincloud e golem e 3 raincloud", Rank.SOLDIER).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("gale column 6 knight e 2 raincloud", Rank.SOLDIER).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("jammer 4 raincloud e gale column 6 walker", Rank.SOLDIER).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("2 golem e gale column 6 knight e 3 raincloud", Rank.VETERAN).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("w30 6 raincloud e 2 gale column 6 walker", Rank.VETERAN).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("juggernaut gale e column 6 knight e 4 raincloud", Rank.VETERAN).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("elite raincloud 3 raincloud e 2 gale column 8 knight", Rank.VETERAN)
+                            new WaveDefinition("soldier: 3 raincloud e golem e 3 raincloud").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("soldier: gale column 6 knight e 2 raincloud").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("soldier: jammer 4 raincloud e gale column 6 walker").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("veteran: 2 golem e gale column 6 knight e 3 raincloud").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("w30 veteran: 6 raincloud e 2 gale column 6 walker").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("veteran: juggernaut gale e column 6 knight e 4 raincloud").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("veteran: elite raincloud 3 raincloud e 2 gale column 8 knight")
                                     .withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("elite gale column 8 knight e elite jammer 4 raincloud e golem", Rank.VETERAN)
+                            new WaveDefinition("veteran: elite gale column 8 knight e elite jammer 4 raincloud e golem")
                                     .withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("thunder e column 6 knight e elite gale e 4 raincloud", Rank.ELITE)
+                            new WaveDefinition("elite: thunder e column 6 knight e elite gale e 4 raincloud")
                                     .withClearBonus(CLEAR_BONUS)),
                     SMOOTHING)
             .withColor(THUNDER_COLOR);
@@ -114,19 +114,19 @@ final class StormRidgeLevel {
                             new Point(12, -1), new Point(12, 2), new Point(9, 10), new Point(7, 10),
                             new Point(3, 2), new Point(3, -1)),
                     List.of(
-                            new WaveDefinition("3 runner e swarm 6 raindrop", Rank.GRUNT).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("drip 3 courier e 3 runner", Rank.GRUNT).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("swarm 8 raindrop e gale 3 runner", Rank.GRUNT).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("drip 4 courier e raincloud", Rank.SOLDIER).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("line 3 skirmisher e swarm 10 raindrop", Rank.SOLDIER).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("gale 4 runner e drip 3 courier", Rank.SOLDIER).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("swarm 12 raindrop e gale e swarm 12 raindrop", Rank.VETERAN).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("line 3 skirmisher e 2 raincloud e drip 4 courier", Rank.VETERAN).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("gale 4 runner e gale 4 runner", Rank.VETERAN).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("drip 5 courier e swarm 12 raindrop e line 3 skirmisher", Rank.VETERAN)
+                            new WaveDefinition("3 runner e swarm 6 raindrop").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("drip 3 courier e 3 runner").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("swarm 8 raindrop e gale 3 runner").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("soldier: drip 4 courier e raincloud").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("soldier: line 3 skirmisher e swarm 10 raindrop").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("soldier: gale 4 runner e drip 3 courier").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("veteran: swarm 12 raindrop e gale e swarm 12 raindrop").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("veteran: line 3 skirmisher e 2 raincloud e drip 4 courier").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("veteran: gale 4 runner e gale 4 runner").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("veteran: drip 5 courier e swarm 12 raindrop e line 3 skirmisher")
                                     .withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("elite runner e gale 4 courier e swarm 12 mite", Rank.VETERAN).withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("24 e lightning e swarm 10 raindrop", Rank.ELITE).withClearBonus(CLEAR_BONUS)),
+                            new WaveDefinition("veteran: elite runner e gale 4 courier e swarm 12 mite").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("elite: 24 e lightning e swarm 10 raindrop").withClearBonus(CLEAR_BONUS)),
                     SMOOTHING)
             .withColor(LIGHTNING_COLOR);
 

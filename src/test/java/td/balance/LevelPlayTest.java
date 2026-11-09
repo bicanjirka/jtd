@@ -28,27 +28,26 @@ class LevelPlayTest {
                 PathDefinition.smoothed(List.of(new Point(-1, 2), new Point(13, 2), new Point(13, 5), new Point(2, 5),
                                 new Point(2, 8), new Point(16, 8)),
                 List.of(
-                    new WaveDefinition("walker e walker e walker e walker e 4 walker e 3 knight", Rank.GRUNT),
-                    new WaveDefinition("5 walker e 4 walker e 2 knight", Rank.GRUNT),
-                    new WaveDefinition("knight e knight e knight e 4 walker e knight e knight", Rank.SOLDIER),
-                    new WaveDefinition("runner e runner e runner e runner e 4 walker e 2 knight e runner", Rank.SOLDIER),
-                    new WaveDefinition("3 knight 2 e 3 walker 2 e 4 knight 2 e 4 walker", Rank.SOLDIER),
-                    new WaveDefinition("ghost e ghost e ghost e 3 knight e 3 walker e ghost", Rank.VETERAN),
-                    new WaveDefinition("2 ghost 2 runner 2 knight 2 walker 2 e 2 ghost 2 runner 4 walker", Rank.VETERAN),
-                    new WaveDefinition("10 walker e 5 knight e 3 runner e ghost e 8 walker e 4 knight e 2 ghost",
-                                        Rank.ELITE)),
+                    new WaveDefinition("walker e walker e walker e walker e 4 walker e 3 knight"),
+                    new WaveDefinition("5 walker e 4 walker e 2 knight"),
+                    new WaveDefinition("soldier: knight e knight e knight e 4 walker e knight e knight"),
+                    new WaveDefinition("soldier: runner e runner e runner e runner e 4 walker e 2 knight e runner"),
+                    new WaveDefinition("soldier: 3 knight 2 e 3 walker 2 e 4 knight 2 e 4 walker"),
+                    new WaveDefinition("veteran: ghost e ghost e ghost e 3 knight e 3 walker e ghost"),
+                    new WaveDefinition("veteran: 2 ghost 2 runner 2 knight 2 walker 2 e 2 ghost 2 runner 4 walker"),
+                    new WaveDefinition("elite: 10 walker e 5 knight e 3 runner e ghost e 8 walker e 4 knight e 2 ghost")),
                 SMOOTHING),
                 PathDefinition.smoothed(List.of(new Point(12, -1), new Point(12, 2), new Point(9, 10), new Point(7, 10),
                                 new Point(3, 2), new Point(3, -1)),
                 List.of(
-                    new WaveDefinition("walker e walker e walker e 4 walker e 3 knight", Rank.GRUNT),
-                    new WaveDefinition("5 walker e 4 walker e 2 knight", Rank.GRUNT),
-                    new WaveDefinition("knight e knight e knight e 4 walker e knight e knight", Rank.SOLDIER),
-                    new WaveDefinition("runner e runner e runner e 4 walker e 2 knight e runner", Rank.SOLDIER),
-                    new WaveDefinition("3 knight 2 e 3 walker 2 e 4 knight 2 e 4 walker", Rank.SOLDIER),
-                    new WaveDefinition("ghost e ghost e ghost e 3 knight e 3 walker e ghost", Rank.VETERAN),
-                    new WaveDefinition("2 ghost 2 runner 2 knight 2 e 2 ghost 2 runner 4 walker", Rank.VETERAN),
-                    new WaveDefinition("10 walker e 5 knight e ghost e 8 walker e 4 knight e ghost", Rank.ELITE)),
+                    new WaveDefinition("walker e walker e walker e 4 walker e 3 knight"),
+                    new WaveDefinition("5 walker e 4 walker e 2 knight"),
+                    new WaveDefinition("soldier: knight e knight e knight e 4 walker e knight e knight"),
+                    new WaveDefinition("soldier: runner e runner e runner e 4 walker e 2 knight e runner"),
+                    new WaveDefinition("soldier: 3 knight 2 e 3 walker 2 e 4 knight 2 e 4 walker"),
+                    new WaveDefinition("veteran: ghost e ghost e ghost e 3 knight e 3 walker e ghost"),
+                    new WaveDefinition("veteran: 2 ghost 2 runner 2 knight 2 e 2 ghost 2 runner 4 walker"),
+                    new WaveDefinition("elite: 10 walker e 5 knight e ghost e 8 walker e 4 knight e ghost")),
                 SMOOTHING)))
                 .withStartingCredits(75)
                 .withStartingLives(3);
@@ -59,7 +58,7 @@ class LevelPlayTest {
     private static BoardSurvey oneCleanRound(int bonus) {
         return BoardSurvey.of(LevelDefinition.of("One Round", 16, 11, List.of(
                 PathDefinition.smoothed(List.of(new Point(-1, 5), new Point(16, 5)),
-                        List.of(new WaveDefinition("walker", Rank.GRUNT).withClearBonus(bonus)), SMOOTHING)))
+                        List.of(new WaveDefinition("walker").withClearBonus(bonus)), SMOOTHING)))
                 .withStartingCredits(75)
                 .withStartingLives(3));
     }

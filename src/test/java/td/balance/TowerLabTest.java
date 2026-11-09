@@ -32,7 +32,7 @@ class TowerLabTest {
             .withAbilities(List.of(new Ability(AbilityTerm.FADE, new OnFirstDamageTakenTrigger(),
                     new ApplyEffectAction(new InvisibleTemplate(300), new SelfTarget()))));
     private static final LevelDefinition LEVEL = LevelDefinition.unsmoothed("Lab Test", "", 7, 5,
-            List.of(new Point(-1, 2), new Point(7, 2)), List.of(new WaveDefinition("fireproof", Rank.GRUNT)),
+            List.of(new Point(-1, 2), new Point(7, 2)), List.of(new WaveDefinition("fireproof")),
             100, 5).withCustomEnemies(List.of(FIREPROOF, HIDER));
     private static final LevelDefinition PROBES = TowerLab.probeLevel(LEVEL, TowerLab.PLAIN, -1);
     private static final Point BESIDE_THE_PATH = new Point(3, 1);

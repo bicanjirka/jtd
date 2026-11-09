@@ -17,36 +17,52 @@ import java.util.stream.Stream;
  * The wave script as a grammar of rules over an immutable {@link Cursor}; each rule returns what it
  * read and the cursor after it, so no rule remembers anything between calls.
  * <pre>
- * script := spacing? item*
+ * script := head? item*
+ * head   := spacing? rank? ':'
  * item   := count* rank? count* (shape count*)? (enemy | 'e')
  * </pre>
- * The last count before the shape (or enemy) repeats the slot; the last one after a shape is its member count. A
- * count left over at the end of the script repeats nothing.
+ * The head holds the wave's defaults, and is the only place a spacing may stand; a script without one takes the
+ * fallback rank. A token ending in {@code :} reads as the word and then the {@code :}, and the first {@code :} ends
+ * the head. The last count before the shape (or enemy) repeats the slot; the last one after a shape is its member
+ * count. A count left over at the end of the script repeats nothing.
  */
 final class WaveScriptGrammar {
 
-    private final Rank defaultRank;
+    private final Rank fallbackRank;
     private final EnemyCatalog catalog;
 
-    WaveScriptGrammar(Rank defaultRank, EnemyCatalog catalog) {
-        this.defaultRank = defaultRank;
+    WaveScriptGrammar(Rank fallbackRank, EnemyCatalog catalog) {
+        this.fallbackRank = fallbackRank;
         this.catalog = catalog;
     }
 
     WaveContent script(String[] tokens) {
-        Parsed<Float> spacing = spacing(Cursor.over(tokens));
+        Parsed<Head> head = head(Cursor.over(tokens));
         List<WaveSlot> slots = new ArrayList<>();
-        Cursor at = spacing.rest();
+        Cursor at = head.rest();
         while (!at.atEnd()) {
-            Parsed<List<WaveSlot>> item = item(at);
+            Parsed<List<WaveSlot>> item = item(at, head.value());
             slots.addAll(item.value());
             at = item.rest();
         }
-        return new WaveContent(slots, spacing.value());
+        return new WaveContent(slots, head.value().ticksPerSlot());
+    }
+
+    private Parsed<Head> head(Cursor at) {
+        if (!at.holds(WaveScript.HEAD_END)) {
+            return new Parsed<>(new Head(SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT, this.fallbackRank), at);
+        }
+        Parsed<Float> spacing = spacing(at);
+        Parsed<Optional<Rank>> rank = rank(spacing.rest());
+        Cursor end = rank.rest();
+        if (!end.peek().equals(WaveScript.HEAD_END)) {
+            throw end.fail("A head holds only w<n> and a rank, in that order, and ends with '" + WaveScript.HEAD_END + "'");
+        }
+        return new Parsed<>(new Head(spacing.value(), rank.value().orElse(this.fallbackRank)), end.next());
     }
 
     private Parsed<Float> spacing(Cursor at) {
-        if (at.atEnd() || !WaveScript.isSpacingToken(at.peek())) {
+        if (!WaveScript.isSpacingToken(at.peek())) {
             return new Parsed<>(SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT, at);
         }
         float ticks = WaveScript.spacingTicks(at.peek());
@@ -56,7 +72,7 @@ final class WaveScriptGrammar {
         return new Parsed<>(ticks, at.next());
     }
 
-    private Parsed<List<WaveSlot>> item(Cursor at) {
+    private Parsed<List<WaveSlot>> item(Cursor at, Head head) {
         Parsed<OptionalInt> leadingCount = count(at);
         Parsed<Optional<Rank>> rank = rank(leadingCount.rest());
         Parsed<OptionalInt> countAfterRank = count(rank.rest());
@@ -82,11 +98,11 @@ final class WaveScriptGrammar {
             throw target.fail("Repeat count " + slotRepeat + " is more than the most a slot may repeat, "
                     + WaveScript.MAX_REPEAT);
         }
-        return slot(target, slotRepeat, rank.value(), shape.value(), memberCount.value());
+        return slot(target, head, slotRepeat, rank.value(), shape.value(), memberCount.value());
     }
 
-    private Parsed<List<WaveSlot>> slot(Cursor at, int slotRepeat, Optional<Rank> rank, Optional<ShapeKeyword> shape,
-                                        OptionalInt memberCount) {
+    private Parsed<List<WaveSlot>> slot(Cursor at, Head head, int slotRepeat, Optional<Rank> rank,
+                                        Optional<ShapeKeyword> shape, OptionalInt memberCount) {
         if (at.atEnd()) {
             if (shape.isPresent()) {
                 throw at.fail("Wave ends with spawn-type token '" + shape.get().token() + "' and no enemy id");
@@ -97,8 +113,12 @@ final class WaveScriptGrammar {
             return new Parsed<>(List.of(), at);
         }
         String token = at.peek();
+        if (token.equals(WaveScript.HEAD_END)) {
+            throw at.fail("A script has one head, so one '" + WaveScript.HEAD_END + "'");
+        }
         if (WaveScript.isSpacingToken(token)) {
-            throw at.fail("Spacing token '" + token + "' must be the first token of the wave");
+            throw at.fail("Spacing token '" + token + "' belongs in the head: end the head with '" + WaveScript.HEAD_END
+                    + "', e.g. '" + token + WaveScript.HEAD_END + " 3 walker'");
         }
         if (token.equals(WaveScript.EMPTY_TOKEN)) {
             if (shape.isPresent()) {
@@ -110,19 +130,20 @@ final class WaveScriptGrammar {
             return new Parsed<>(repeated(new EmptySlot(), slotRepeat), at.next());
         }
         if (this.catalog.contains(token)) {
-            return new Parsed<>(repeated(enemySlot(at, rank, shape, memberCount), slotRepeat), at.next());
+            return new Parsed<>(repeated(enemySlot(at, head, rank, shape, memberCount), slotRepeat), at.next());
         }
         throw at.fail("Unrecognized wave token '" + token
                 + "': expected a spawn-type or rank keyword (" + WaveScript.RESERVED_TOKENS
                 + "), a repeat count, or an id registered in the enemy catalog (" + this.catalog.ids() + ")");
     }
 
-    private WaveSlot enemySlot(Cursor at, Optional<Rank> rank, Optional<ShapeKeyword> shape, OptionalInt memberCount) {
+    private WaveSlot enemySlot(Cursor at, Head head, Optional<Rank> rank, Optional<ShapeKeyword> shape,
+                               OptionalInt memberCount) {
         RankedEnemy enemy = this.catalog.ranked(at.peek());
         if (enemy.isUnique() && rank.isPresent() && rank.get() != Rank.BOSS) {
             throw at.fail("'" + at.peek() + "' is unique and comes only at Boss rank, not " + rank.get());
         }
-        Rank requested = rank.orElse(this.defaultRank);
+        Rank requested = rank.orElse(head.rank());
         EnemyDefinition definition = enemy.definitionFor(requested);
         SpawnShape spawnShape = shape.map(keyword -> shapeFor(at, keyword, memberCount)).orElse(SpawnShape.normal());
         return new EnemySlot(definition, enemy.effectiveRank(requested), spawnShape, enemy.isUnique());
@@ -173,22 +194,38 @@ final class WaveScriptGrammar {
         if (!keyword.takesMemberCount()) {
             if (memberCount.isPresent()) {
                 throw at.fail("Spawn type '" + keyword.token() + "' has a fixed member count and cannot take one;"
-                        + " to repeat it, put the count before the keyword, e.g. '3 " + keyword.token() + " c'");
+                        + " to repeat it, put the count before the keyword, e.g. '3 " + keyword.token() + " walker'");
             }
             return keyword.shape(1);
         }
         return keyword.shape(memberCount.orElseThrow(() -> at.fail("Spawn type '" + keyword.token()
-                + "' needs a member count, e.g. '" + keyword.token() + " 3 c'")));
+                + "' needs a member count, e.g. '" + keyword.token() + " 3 walker'")));
     }
 
     private record Parsed<T>(T value, Cursor rest) {
     }
 
-    /** A position in the non-blank tokens; moving it makes a new one. */
+    /** What a script's head sets for every slot. */
+    private record Head(float ticksPerSlot, Rank rank) {
+    }
+
+    /** A position in the non-blank tokens, with a trailing ':' split off as a token of its own; moving it makes a new one. */
     private record Cursor(List<String> tokens, int index) {
 
         static Cursor over(String[] tokens) {
-            return new Cursor(Stream.of(tokens).filter(token -> !token.isBlank()).toList(), 0);
+            return new Cursor(Stream.of(tokens).filter(token -> !token.isBlank()).flatMap(Cursor::splitHeadEnd)
+                    .toList(), 0);
+        }
+
+        private static Stream<String> splitHeadEnd(String token) {
+            return token.length() > WaveScript.HEAD_END.length() && token.endsWith(WaveScript.HEAD_END)
+                    ? Stream.of(token.substring(0, token.length() - WaveScript.HEAD_END.length()), WaveScript.HEAD_END)
+                    : Stream.of(token);
+        }
+
+        /** Whether {@code token} stands here or anywhere after. */
+        boolean holds(String token) {
+            return this.tokens.subList(this.index, this.tokens.size()).contains(token);
         }
 
         boolean atEnd() {

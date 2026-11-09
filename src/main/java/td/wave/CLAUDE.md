@@ -18,17 +18,21 @@
 
 ## Wave script
 
-Space-separated tokens, parsed by `WaveScript.parse(tokens, defaultRank, catalog)` into a
+Space-separated tokens, parsed by `WaveScript.parse(script, catalog)` (or with a fallback rank, for
+the dev panel) into a
 `WaveContent` without needing `GameWorld`. `Wave.spawn()` builds the mobs when the wave starts,
 never in the constructor: that keeps a level load a single `LoadedLevel` publication. Each
 `spawn()` call builds a fresh set, so calling it twice puts two copies on the board. For
 counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
-- A leading `w<number>` (`w30 3 walker`) sets the ticks one slot of spacing is worth, default
-  `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`; it carries on `WaveContent`. It must be the first token and
-  positive, and no enemy id may look like it.
+- An optional **head**, ended by `:`, holds the wave's defaults in slot order: `w<number>`, then a
+  rank (`w30 soldier: 3 walker`). The first `:` ends it; a token ending in `:` reads as the word and
+  the `:`. `w<number>` sets the ticks one slot of spacing is worth, default
+  `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`, and carries on `WaveContent`; it is positive, stands
+  only in a head, and no enemy id may look like it. A level wave whose head names no rank is Grunt:
+  the head is the only place a wave's rank is written.
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
-  override the wave's default rank for that slot. A unique enemy is Boss whatever the default; any
+  override the head's rank for that slot. A unique enemy is Boss whatever the default; any
   rank keyword but `boss` before it is an error.
 - **Shape keywords** go before the enemy: `plated` (1 member, stacks a physical-only adaptive
   resist on any armor it has), `flank` (2 members at opposite sides), `swarm n` (half size, health/bounty split,
@@ -37,7 +41,8 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 - A count applies to the next token: `3 knight e 4 walker`. Placed before a rank/shape keyword, it repeats
   the whole slot (`3 elite swarm 4 walker`); placed right after a shape keyword, it is the member
   count.
-- Errors (`GameStartupException`): an unknown token, a rank after a shape, a rank right before
+- Errors (`GameStartupException`): an unknown token, anything but a spacing and a rank in a head,
+  a second `:`, a spacing outside a head, a rank after a shape, a rank right before
   `e`, two ranks in a row, a missing or forbidden member count, a repeat count over
   `WaveScript.MAX_REPEAT`. Blank tokens are skipped. An error
   marks the offending token in the script, and a level's load adds its level, path and wave.

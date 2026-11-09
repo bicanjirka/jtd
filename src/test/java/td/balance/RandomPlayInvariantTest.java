@@ -78,7 +78,7 @@ class RandomPlayInvariantTest {
         Deque<EnemyDefinition> open = new ArrayDeque<>();
         for (PathDefinition path : level.paths()) {
             for (WaveDefinition wave : path.waves()) {
-                open.addAll(WaveScript.parse(wave.enemies(), wave.rank(), catalog).enemySet());
+                open.addAll(WaveScript.parse(wave.enemies(), catalog).enemySet());
             }
         }
         Set<String> seen = new HashSet<>();
