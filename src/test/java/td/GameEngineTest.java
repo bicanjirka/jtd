@@ -113,7 +113,7 @@ class GameEngineTest {
     }
 
     private static EnemyMob spawnOnly(GameEngine engine, EnemyDefinition definition) {
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition(definition.id(), Rank.GRUNT)), 100)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition(definition.id())), 100)
                 .withCustomEnemies(List.of(definition)));
         engine.nextWave();
         return engine.getGameWorld().enemies().getEnemies()[0];
@@ -384,7 +384,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
                 .withDisruption(new DisruptionAura(1000f, 0.3f, 0.2f));
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("jam")), 1000)
                 .withCustomEnemies(List.of(jammer)));
         engine.startPlacing(TowerFactory.Type.AURA, AuraTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
@@ -408,7 +408,7 @@ class GameEngineTest {
     void onceASonarHasMarkedAnEnemyTheSnipersNextShotIsAGuaranteedCrit() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyDefinition dummy = EnemyDefinition.of("dummy", "Dummy", 1_000_000, 1, 0f, BodyArchetype.CIRCLE);
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("dummy", Rank.GRUNT)), 100_000)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("dummy")), 100_000)
                 .withCustomEnemies(List.of(dummy)));
         engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
         engine.startPlacing(TowerFactory.Type.SONAR, SonarTower.RANGE);
@@ -440,7 +440,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine(() -> 0.0);
         EnemyDefinition nimble = EnemyDefinition.of("nimble", "Nimble", 1_000_000, 1, 0f, BodyArchetype.CIRCLE)
                 .withAgility(50f);
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("nimble", Rank.GRUNT)), 100_000)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("nimble")), 100_000)
                 .withCustomEnemies(List.of(nimble)));
         engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
         engine.startPlacing(type, 0f);
@@ -497,7 +497,7 @@ class GameEngineTest {
     @Test
     void aClickWhilePinningLinksTheSelectedObelisksLeyLineToTheObeliskClickedAndKeepsItSelected() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100_000));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker")), 100_000));
         engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
         engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(0));
@@ -538,7 +538,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
                 .withDisruption(new DisruptionAura(1000f, 0.3f, 0.2f));
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("jam")), 1000)
                 .withCustomEnemies(List.of(jammer)));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
@@ -560,7 +560,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
                 .withDisruption(new DisruptionAura(1000f, 0.3f, 0.6f));
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam")), 1000)
                 .withCustomEnemies(List.of(jammer)));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(6), BoardFixtures.cellCenter(5));
@@ -581,7 +581,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
                 .withDisruption(new DisruptionAura(1000f, 0.3f, 0.6f));
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam")), 1000)
                 .withCustomEnemies(List.of(jammer)));
         engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(5), BoardFixtures.cellCenter(5));
@@ -598,7 +598,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
                 .withDisruption(new DisruptionAura(50f, 0.3f, 0.6f));
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam", Rank.GRUNT)), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam")), 1000)
                 .withCustomEnemies(List.of(jammer)));
         GameWorld world = engine.getGameWorld();
         FakeTower near = FakeTower.offering(world, 0, 1, UpgradeTree.none());
@@ -744,7 +744,7 @@ class GameEngineTest {
     @Test
     void loadingALevelReplacesEveryPartOfTheWorldInOneVisibleStep() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         engine.nextWave();
 
         engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(), 50));
@@ -760,7 +760,7 @@ class GameEngineTest {
     @Test
     void damageThatLandsIsTalliedByType() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         engine.nextWave();
         EnemyMob enemy = engine.getGameWorld().enemies().getEnemies()[0];
 
@@ -776,7 +776,7 @@ class GameEngineTest {
         EnemyDefinition adapter = EnemyFixtures.simpleDefinition("adapter").withHealthAndPrice(100_000, 1)
                 .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(50f))));
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("adapter", Rank.GRUNT)), 100)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("adapter")), 100)
                 .withCustomEnemies(List.of(adapter)));
         engine.nextWave();
         engine.getGameWorld().enemies().getEnemies()[0].doDamage(Damage.physical(10));
@@ -791,7 +791,7 @@ class GameEngineTest {
     @Test
     void loadingALevelStartsANewDamageTally() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         engine.nextWave();
         engine.getGameWorld().enemies().getEnemies()[0].doDamage(Damage.magic(10));
 
@@ -805,7 +805,7 @@ class GameEngineTest {
         EnemyDefinition tankySquare = EnemyDefinition.of("tankySquare", "Tanky Square", 100, 5, 1.28f,
                 BodyArchetype.SQUARE);
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("tankySquare", Rank.GRUNT)), 100)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("tankySquare")), 100)
                 .withCustomEnemies(List.of(tankySquare)));
 
         assertThat(engine.getGameWorld().getEnemyCatalog().ids()).contains("tankySquare");
@@ -817,8 +817,8 @@ class GameEngineTest {
     void waveProgressReportsAnIndexAndCountThatBelongToTheSameLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(
-                new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("knight", Rank.GRUNT)), 100));
+                new WaveDefinition("walker"),
+                new WaveDefinition("knight")), 100));
 
         engine.nextWave();
 
@@ -834,8 +834,8 @@ class GameEngineTest {
     void waveProgressNamesEachRoundsHighestRankCountingASlotThatOutranksItsWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(
-                new WaveDefinition("walker e elite walker", Rank.GRUNT),
-                new WaveDefinition("knight", Rank.SOLDIER)), 100));
+                new WaveDefinition("walker e elite walker"),
+                new WaveDefinition("soldier: knight")), 100));
 
         WaveProgress progress = engine.waveProgress();
 
@@ -846,8 +846,8 @@ class GameEngineTest {
     void aRoundSendingAUniqueEnemyIsABossRoundWithAUniqueEnemyWhateverItsDefaultRank() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(
-                new WaveDefinition("warlord e elite walker", Rank.GRUNT),
-                new WaveDefinition("boss walker", Rank.GRUNT)), 100)
+                new WaveDefinition("warlord e elite walker"),
+                new WaveDefinition("boss walker")), 100)
                 .withCustomRankedEnemies(List.of(RankedEnemy.unique(EnemyFixtures.simpleDefinition("warlord")))));
 
         WaveProgress progress = engine.waveProgress();
@@ -859,8 +859,8 @@ class GameEngineTest {
     @Test
     void aRoundAnEnemyEscapedIsMarkedLeakedOnceItIsOver() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker"),
+                new WaveDefinition("walker")), 100));
 
         engine.nextWave();
         tickUntilWaveCleared(engine);
@@ -871,10 +871,10 @@ class GameEngineTest {
 
     @Test
     void aRoundClearedWithNoLeakPaysEveryPathsClearBonusAsCreditsAndScore() {
-        GameEngine plain = clearedFirstRound(List.of(new WaveDefinition("weakling", Rank.GRUNT)),
-                List.of(new WaveDefinition("weakling", Rank.GRUNT)));
-        GameEngine rewarded = clearedFirstRound(List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(3)),
-                List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(4)));
+        GameEngine plain = clearedFirstRound(List.of(new WaveDefinition("weakling")),
+                List.of(new WaveDefinition("weakling")));
+        GameEngine rewarded = clearedFirstRound(List.of(new WaveDefinition("weakling").withClearBonus(3)),
+                List.of(new WaveDefinition("weakling").withClearBonus(4)));
 
         EconomyLedger paid = rewarded.getGameWorld().economy();
         EconomyLedger unpaid = plain.getGameWorld().economy();
@@ -886,8 +886,8 @@ class GameEngineTest {
     @Test
     void aRoundReportsWhatItsEnemiesOnEveryPathPayAndWhatItOffersBeforeItStarts() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.twoPathLevelWith(List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(3)),
-                List.of(new WaveDefinition("2 weakling", Rank.GRUNT).withClearBonus(4))).withCustomEnemies(List.of(WEAKLING)));
+        engine.loadLevel(LevelFixtures.twoPathLevelWith(List.of(new WaveDefinition("weakling").withClearBonus(3)),
+                List.of(new WaveDefinition("2 weakling").withClearBonus(4))).withCustomEnemies(List.of(WEAKLING)));
 
         RoundPay pay = engine.waveProgress().rounds().getFirst().pay();
         engine.nextWave();
@@ -898,8 +898,8 @@ class GameEngineTest {
 
     @Test
     void aRoundReportsTheClearBonusItPaid() {
-        GameEngine engine = clearedFirstRound(List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(3)),
-                List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(4)));
+        GameEngine engine = clearedFirstRound(List.of(new WaveDefinition("weakling").withClearBonus(3)),
+                List.of(new WaveDefinition("weakling").withClearBonus(4)));
 
         assertThat(engine.waveProgress().rounds()).extracting(RoundSummary::bonusPaid).containsExactly(3 + 4);
     }
@@ -907,8 +907,8 @@ class GameEngineTest {
     @Test
     void aRoundAnEnemyEscapedReportsNoClearBonusPaid() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT).withClearBonus(5),
-                new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker").withClearBonus(5),
+                new WaveDefinition("walker")), 100));
 
         engine.nextWave();
         tickUntilWaveCleared(engine);
@@ -919,8 +919,8 @@ class GameEngineTest {
     @Test
     void aRoundAnEnemyEscapedPaysNoClearBonus() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT).withClearBonus(5),
-                new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker").withClearBonus(5),
+                new WaveDefinition("walker")), 100));
 
         engine.nextWave();
         tickUntilWaveCleared(engine);
@@ -932,8 +932,8 @@ class GameEngineTest {
     @Test
     void aDebugSkippedRoundPaysNoClearBonus() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT).withClearBonus(5),
-                new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker").withClearBonus(5),
+                new WaveDefinition("walker")), 100));
         engine.nextWave();
 
         engine.requestSkipWave();
@@ -958,8 +958,8 @@ class GameEngineTest {
     @Test
     void loadingALevelForgetsWhichRoundsLeaked() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("walker", Rank.GRUNT)), 100);
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker"),
+                new WaveDefinition("walker")), 100);
         engine.loadLevel(level);
         engine.nextWave();
         tickUntilWaveCleared(engine);
@@ -973,7 +973,7 @@ class GameEngineTest {
     @Test
     void waveProgressOnTheLastWaveOffersNoNextWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
 
         engine.nextWave();
 
@@ -987,8 +987,8 @@ class GameEngineTest {
     void waveProgressSurvivesALevelWithFewerWavesThanTheOneBeforeIt() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(
-                new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("knight", Rank.GRUNT)), 100));
+                new WaveDefinition("walker"),
+                new WaveDefinition("knight")), 100));
         engine.nextWave();
 
         engine.getGameWorld().installLevel(engine.getGameWorld().level().withCatalog(
@@ -1127,8 +1127,8 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         // A second wave, so clearing the first means "next wave ready", not "won".
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("weakling", Rank.GRUNT),
-                        new WaveDefinition("weakling", Rank.GRUNT)), 100)
+                List.of(new WaveDefinition("weakling"),
+                        new WaveDefinition("weakling")), 100)
                 .withCustomEnemies(List.of(WEAKLING)));
 
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
@@ -1153,8 +1153,8 @@ class GameEngineTest {
         // A swarm of 3 must cost 3 kills to clear, not 1.
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("swarm 3 weakling", Rank.GRUNT),
-                        new WaveDefinition("weakling", Rank.GRUNT)), 100)
+                List.of(new WaveDefinition("swarm 3 weakling"),
+                        new WaveDefinition("weakling")), 100)
                 .withCustomEnemies(List.of(WEAKLING)));
 
         engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
@@ -1185,8 +1185,8 @@ class GameEngineTest {
     void eachMemberOfALineAtFullHealthPaysAFullBounty() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("line 3 weakling", Rank.GRUNT),
-                        new WaveDefinition("weakling", Rank.GRUNT)), 100)
+                List.of(new WaveDefinition("line 3 weakling"),
+                        new WaveDefinition("weakling")), 100)
                 .withCustomEnemies(List.of(WEAKLING)));
         engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
@@ -1204,8 +1204,8 @@ class GameEngineTest {
     void startingARoundSpawnsBothPathsWavesInOneCall() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.twoPathLevelWith(
-                List.of(new WaveDefinition("walker", Rank.GRUNT)),
-                List.of(new WaveDefinition("2 walker", Rank.GRUNT))));
+                List.of(new WaveDefinition("walker")),
+                List.of(new WaveDefinition("2 walker"))));
 
         assertThat(engine.nextWave()).isTrue();
 
@@ -1217,8 +1217,8 @@ class GameEngineTest {
         // Only path A's enemy is in range; the round must wait for path B's to leak.
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.twoPathLevelWith(
-                List.of(new WaveDefinition("walker", Rank.GRUNT), new WaveDefinition("walker", Rank.GRUNT)),
-                List.of(new WaveDefinition("walker", Rank.GRUNT), new WaveDefinition("walker", Rank.GRUNT))));
+                List.of(new WaveDefinition("walker"), new WaveDefinition("walker")),
+                List.of(new WaveDefinition("walker"), new WaveDefinition("walker"))));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1)); // in range of path A's row (y=2) only
         engine.getGameWorld().playtestRules().setEnemyHealthPercent(50);
@@ -1278,7 +1278,7 @@ class GameEngineTest {
     void aWaveThatDoesNotParseNamesItsLevelPathAndWave() {
         List<Point> corners = List.of(new Point(0, 1), new Point(12, 1));
         LevelDefinition level = LevelDefinition.singlePath("Broken", "", 14, 10, corners,
-                List.of(new WaveDefinition("walker", Rank.GRUNT), new WaveDefinition("nonsense", Rank.GRUNT)), 100, 5,
+                List.of(new WaveDefinition("walker"), new WaveDefinition("nonsense")), 100, 5,
                 PathSmoothing.none());
         GameEngine engine = FakeGameHost.newBoundEngine();
 
@@ -1303,8 +1303,8 @@ class GameEngineTest {
     void aMortarShellTravelsThenSplashesAnInRangeEnemyCreditingThePlayer() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("weakling", Rank.GRUNT),
-                        new WaveDefinition("weakling", Rank.GRUNT)), 100)
+                List.of(new WaveDefinition("weakling"),
+                        new WaveDefinition("weakling")), 100)
                 .withCustomEnemies(List.of(WEAKLING)));
 
         engine.startPlacing(TowerFactory.Type.MORTAR, MortarTower.RANGE);
@@ -1326,7 +1326,7 @@ class GameEngineTest {
     @Test
     void enemyReachingTheEndOfThePathCostsALife() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         int initialLives = engine.getGameWorld().economy().getLives();
 
         engine.nextWave();
@@ -1416,7 +1416,7 @@ class GameEngineTest {
     @Test
     void everyTowerAnEnemyReachedEarnsItsBountyAsXpNotJustTheOneThatKilledIt() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 1000));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker")), 1000));
         Tower first = placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
         Tower second = placeTower(engine, TowerFactory.Type.SNIPER, 2, 3);
         engine.nextWave();
@@ -1432,7 +1432,7 @@ class GameEngineTest {
     @Test
     void aLeakedEnemyPaysTheSameXpAsAKilledOne() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker", Rank.BOSS)), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("boss: walker")), 1000)
                 .withStartingLives(50));
         Tower tower = placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
         engine.nextWave();
@@ -1447,7 +1447,7 @@ class GameEngineTest {
     @Test
     void anEnemyWhoseWalkNeverCameWithinRangePaysNoXp() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 1000));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker")), 1000));
         Tower farAway = placeTower(engine, TowerFactory.Type.SNIPER, 15, 12);
         engine.nextWave();
 
@@ -1459,7 +1459,7 @@ class GameEngineTest {
     @Test
     void anEnemyAlreadyWalkingWhenTheTowerWasBuiltPaysItNoXp() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker", Rank.BOSS)), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("boss: walker")), 1000)
                 .withStartingLives(50));
         engine.nextWave();
         engine.doTick(1);
@@ -1473,7 +1473,7 @@ class GameEngineTest {
     @Test
     void anAuraEarnsAnEnemysXpOnceWhenTheTowersItBuffsEarnIt() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 1000));
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker")), 1000));
         placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
         placeTower(engine, TowerFactory.Type.SNIPER, 2, 1);
         Tower aura = placeTower(engine, TowerFactory.Type.AURA, 1, 0);
@@ -1488,7 +1488,7 @@ class GameEngineTest {
     @Test
     void anAuraWithNoTowerToBuffEarnsNothingFromEnemiesPassingItsRange() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker", Rank.BOSS)), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("boss: walker")), 1000)
                 .withStartingLives(50));
         Tower aura = placeTower(engine, TowerFactory.Type.AURA, 1, 1);
         engine.nextWave();
@@ -1498,8 +1498,8 @@ class GameEngineTest {
         assertThat(aura.experience().xp()).isZero();
     }
 
-    private static final List<WaveDefinition> CHECKPOINT_WAVES = List.of(new WaveDefinition("6 walker", Rank.GRUNT),
-            new WaveDefinition("8 knight", Rank.ELITE), new WaveDefinition("walker", Rank.GRUNT));
+    private static final List<WaveDefinition> CHECKPOINT_WAVES = List.of(new WaveDefinition("6 walker"),
+            new WaveDefinition("elite: 8 knight"), new WaveDefinition("walker"));
 
     /** An engine on its own luck, a few towers of every kind built and a wave played and cleared. */
     private static GameEngine engineAfterAWave(long seed) {
@@ -1639,7 +1639,7 @@ class GameEngineTest {
     @Test
     void aStatusATowerHoldsEndsWithTheWaveHoweverLongItHadLeft() {
         GameEngine engine = FakeGameHost.newBoundEngine(() -> 0.99);
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         Tower sniper = placeSniper(engine, 0, 0);
         engine.nextWave();
         sniper.receiveStatus(TowerStatus.timed(TowerTerm.HASTE, TowerModifiers.attackSpeed(1f), 1_000_000));
@@ -1655,8 +1655,8 @@ class GameEngineTest {
     @Test
     void aWaveEndsWithEveryZoneFadingAndStartsOnBareGround() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker"),
+                new WaveDefinition("walker")), 100));
         engine.nextWave();
         Zone zone = Zone.haste(10, 10, 10f, 1_000_000, ZoneOwner.nobody());
         engine.getGameWorld().zones().add(zone);
@@ -1674,8 +1674,8 @@ class GameEngineTest {
     @Test
     void jumpingToAWaveClearsTheBoardAndMakesItTheNextToStart() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("2 walker", Rank.GRUNT), new WaveDefinition("3 walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker"),
+                new WaveDefinition("2 walker"), new WaveDefinition("3 walker")), 100));
         engine.nextWave();
 
         int next = engine.requestJumpToWave(3);
@@ -1705,7 +1705,7 @@ class GameEngineTest {
     @Test
     void reloadingALevelClearsEnemiesStillAliveFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         engine.nextWave();
         assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty();
 
@@ -1783,11 +1783,11 @@ class GameEngineTest {
     @Test
     void reloadingALevelRewindsTheWaveCounterAndReArmsTheFirstWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         engine.nextWave();
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
 
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
 
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(0);
         assertThat(engine.isWaveReady()).isTrue();
@@ -1796,10 +1796,10 @@ class GameEngineTest {
     @Test
     void aWaveRequestedButNotYetStartedDoesNotCarryIntoTheNextLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         engine.requestNextWave();
 
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
 
         assertThat(engine.doTick(1)).isFalse();
         assertThat(engine.getCurrentWaveIndex()).isZero();
@@ -1833,7 +1833,7 @@ class GameEngineTest {
     void enemiesSpawnedWhileTheNextWaveWaitsHoldItBackUntilTheyAreGone() {
         EnemyDefinition post = EnemyDefinition.of("post", "Post", 100, 1, 0f, BodyArchetype.SQUARE);
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100)
                 .withCustomEnemies(List.of(post)));
         DevControls dev = new DevControls(engine.getGameWorld());
         dev.spawnWave("post", Rank.GRUNT, 0);
@@ -1853,7 +1853,7 @@ class GameEngineTest {
     @Test
     void anEnemyFromTheSpawnBoxThatLeaksCostsNoLife() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         DevControls dev = new DevControls(engine.getGameWorld());
         int initialLives = engine.getGameWorld().economy().getLives();
         dev.spawnWave("walker", Rank.GRUNT, 0);
@@ -1871,8 +1871,8 @@ class GameEngineTest {
     void debugSkippingAWaveClearsItAndStartsTheNextOneImmediately() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("walker", Rank.GRUNT),
-                        new WaveDefinition("walker", Rank.GRUNT)), 100));
+                List.of(new WaveDefinition("walker"),
+                        new WaveDefinition("walker")), 100));
         engine.nextWave();
         assertThat(engine.getCurrentWaveIndex()).isEqualTo(1);
 
@@ -1887,7 +1887,7 @@ class GameEngineTest {
     @Test
     void debugSkippingTheFinalWaveClearsTheBoardAndWinsTheLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         engine.nextWave();
         assertThat(engine.getGameWorld().enemies().getEnemies()).isNotEmpty();
 
@@ -1902,7 +1902,7 @@ class GameEngineTest {
     @Test
     void debugSkippingAWaveCostsNoLivesAndPaysNoCredits() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100));
         engine.nextWave();
         int livesBefore = engine.getGameWorld().economy().getLives();
         int creditsBefore = engine.getGameWorld().economy().getCredits();
@@ -1927,7 +1927,7 @@ class GameEngineTest {
     @Test
     void killingTheLastWavesLastEnemyWinsTheLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("weakling", Rank.GRUNT)), 100)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("weakling")), 100)
                 .withCustomEnemies(List.of(WEAKLING)));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
@@ -1945,7 +1945,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyDefinition mother = EnemyDefinition.of("mother", "Mother", 1, 7, 1.28f, BodyArchetype.CIRCLE)
                 .withAbilities(EnemyFixtures.definitionThatSpawns("mother", "child").abilities());
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("mother", Rank.GRUNT)), 100)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("mother")), 100)
                 .withCustomEnemies(List.of(mother, EnemyFixtures.simpleDefinition("child"))));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(1));
@@ -1965,7 +1965,7 @@ class GameEngineTest {
     void clearingAWaveThatIsNotTheLastReArmsTheNextInsteadOfWinning() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("walker", Rank.GRUNT), new WaveDefinition("walker", Rank.GRUNT)), 100));
+                List.of(new WaveDefinition("walker"), new WaveDefinition("walker")), 100));
 
         engine.nextWave();
         for (int t = 1; t <= 200 && !engine.isWaveReady(); t++) {
@@ -1980,7 +1980,7 @@ class GameEngineTest {
     void losingTheLastLifeLosesTheLevelBeforeItsLastWave() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("walker", Rank.GRUNT), new WaveDefinition("walker", Rank.GRUNT)), 100)
+                List.of(new WaveDefinition("walker"), new WaveDefinition("walker")), 100)
                 .withStartingLives(1));
 
         engine.nextWave();
@@ -1993,7 +1993,7 @@ class GameEngineTest {
     @Test
     void theLastEnemyLeakingTheLastLifeLosesRatherThanWins() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100)
                 .withStartingLives(1));
 
         engine.nextWave();
@@ -2006,8 +2006,8 @@ class GameEngineTest {
     void anEnemyThatTakesEveryLifeLosesTheLevelWhenItLeaksWithLivesToSpare() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyDefinition fatal = WEAKLING.withLivesOnLeak(EnemyDefinition.ALL_LIVES);
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("weakling", Rank.GRUNT),
-                        new WaveDefinition("weakling", Rank.GRUNT)), 100)
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("weakling"),
+                        new WaveDefinition("weakling")), 100)
                 .withCustomEnemies(List.of(fatal)));
 
         engine.nextWave();
@@ -2018,8 +2018,8 @@ class GameEngineTest {
 
     @Test
     void aGameSavedBetweenRoundsLoadsIntoAnotherEngineWithTheSameTowersEconomyAndNextWave() {
-        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("walker", Rank.GRUNT), new WaveDefinition("walker", Rank.GRUNT)), 100_000);
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker"),
+                new WaveDefinition("walker"), new WaveDefinition("walker")), 100_000);
         GameEngine saved = FakeGameHost.newBoundEngine();
         saved.loadLevel(level);
         saved.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
@@ -2051,8 +2051,8 @@ class GameEngineTest {
 
     @Test
     void aSaveNamingAnUpgradeTheTreeNoLongerHasLoadsTheRestAndNamesWhatItCouldNotRebuild() {
-        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("walker", Rank.GRUNT)), 100_000);
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker"),
+                new WaveDefinition("walker")), 100_000);
         GameEngine saved = FakeGameHost.newBoundEngine();
         saved.loadLevel(level);
         saved.startPlacing(TowerFactory.Type.SONAR, SonarTower.RANGE);
@@ -2080,8 +2080,8 @@ class GameEngineTest {
 
     @Test
     void aSaveNamingACellOffTheBoardLoadsTheRestAndNamesTheTowerItCouldNotRebuild() {
-        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("walker", Rank.GRUNT)), 100);
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker"),
+                new WaveDefinition("walker")), 100);
         GameEngine loaded = FakeGameHost.newBoundEngine();
         loaded.loadLevel(level);
         TowerTally untried = TowerTally.of(0, 0, 0L, 0);
@@ -2098,8 +2098,8 @@ class GameEngineTest {
 
     @Test
     void aSaveWithTwoTowersOnOneCellKeepsTheFirstAsSavedAndNamesTheSecond() {
-        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT),
-                new WaveDefinition("walker", Rank.GRUNT)), 100);
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker"),
+                new WaveDefinition("walker")), 100);
         GameEngine loaded = FakeGameHost.newBoundEngine();
         loaded.loadLevel(level);
         TowerTally first = TowerTally.of(10, 1, 100L, 1);
@@ -2121,7 +2121,7 @@ class GameEngineTest {
     void anEndedLevelIgnoresTicksWavesPlacementAndUpgrades() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
-                List.of(new WaveDefinition("walker", Rank.GRUNT), new WaveDefinition("walker", Rank.GRUNT)), 100)
+                List.of(new WaveDefinition("walker"), new WaveDefinition("walker")), 100)
                 .withStartingLives(1));
         engine.nextWave();
         int lastTick = tickUntilOver(engine, 200);
@@ -2141,7 +2141,7 @@ class GameEngineTest {
     @Test
     void reloadingAnEndedLevelPlaysAgain() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker", Rank.GRUNT)), 100);
+        LevelDefinition level = LevelFixtures.levelWith(List.of(new WaveDefinition("walker")), 100);
         engine.loadLevel(level);
         engine.nextWave();
         engine.requestSkipWave();
@@ -2174,7 +2174,7 @@ class GameEngineTest {
     @Test
     void anEnemyHealthPercentScalesEveryEnemyTheNextRoundBrings() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker", Rank.GRUNT)), 100));
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker")), 100));
         engine.getGameWorld().playtestRules().setEnemyHealthPercent(150);
 
         engine.nextWave();
@@ -2187,9 +2187,9 @@ class GameEngineTest {
     @Test
     void aBountyPercentScalesWhatEveryEnemyTheNextRoundBringsPays() {
         GameEngine authored = FakeGameHost.newBoundEngine();
-        authored.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker", Rank.GRUNT)), 100));
+        authored.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker")), 100));
         GameEngine doubled = FakeGameHost.newBoundEngine();
-        doubled.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker", Rank.GRUNT)), 100));
+        doubled.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker")), 100));
         doubled.getGameWorld().playtestRules().setBountyPercent(200);
 
         authored.nextWave();
@@ -2204,8 +2204,8 @@ class GameEngineTest {
     @Test
     void aClearBonusPercentScalesWhatARoundPays() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.twoPathLevelWith(List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(3)),
-                List.of(new WaveDefinition("weakling", Rank.GRUNT).withClearBonus(4))).withCustomEnemies(List.of(WEAKLING)));
+        engine.loadLevel(LevelFixtures.twoPathLevelWith(List.of(new WaveDefinition("weakling").withClearBonus(3)),
+                List.of(new WaveDefinition("weakling").withClearBonus(4))).withCustomEnemies(List.of(WEAKLING)));
         engine.getGameWorld().playtestRules().setClearBonusPercent(200);
         DevControls dev = new DevControls(engine.getGameWorld());
 
@@ -2220,9 +2220,9 @@ class GameEngineTest {
     @Test
     void aSpawnSpacingPercentStretchesTheGapsBetweenAWavesEnemies() {
         GameEngine authored = FakeGameHost.newBoundEngine();
-        authored.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker", Rank.GRUNT)), 100));
+        authored.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker")), 100));
         GameEngine spaced = FakeGameHost.newBoundEngine();
-        spaced.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker", Rank.GRUNT)), 100));
+        spaced.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("2 walker")), 100));
         spaced.getGameWorld().playtestRules().setSpawnSpacingPercent(300);
         authored.nextWave();
         spaced.nextWave();
@@ -2257,7 +2257,7 @@ class GameEngineTest {
     @Test
     void aTowersHitOnAnObservedEnemyIsNamedAfterTheTowerAndItsCell() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition(WEAKLING.id(), Rank.GRUNT)), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition(WEAKLING.id())), 1000)
                 .withCustomEnemies(List.of(WEAKLING)));
         Tower tower = placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
         engine.nextWave();

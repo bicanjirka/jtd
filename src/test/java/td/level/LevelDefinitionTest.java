@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import td.board.BoardGround;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
-import td.enemy.Rank;
 import td.enemy.RankedEnemy;
 import td.wave.PathColor;
 import td.wave.PathDefinition;
@@ -22,7 +21,7 @@ class LevelDefinitionTest {
     private static PathDefinition pathWithRounds(int roundCount) {
         List<WaveDefinition> waves = new ArrayList<>();
         for (int i = 0; i < roundCount; i++) {
-            waves.add(new WaveDefinition("walker", Rank.GRUNT));
+            waves.add(new WaveDefinition("walker"));
         }
         return PathDefinition.of(List.of(new Point(0, 0), new Point(1, 0)), waves);
     }
@@ -69,11 +68,11 @@ class LevelDefinitionTest {
     @Test
     void unsmoothedBuildsASinglePathLevelWithNoSmoothing() {
         LevelDefinition level = LevelDefinition.unsmoothed("Test", "", 5, 5,
-                List.of(new Point(0, 0), new Point(1, 0)), List.of(new WaveDefinition("walker", Rank.GRUNT)), 100, 5);
+                List.of(new Point(0, 0), new Point(1, 0)), List.of(new WaveDefinition("walker")), 100, 5);
 
         assertThat(level.paths()).hasSize(1);
         assertThat(level.paths().getFirst().corners()).containsExactly(new Point(0, 0), new Point(1, 0));
-        assertThat(level.paths().getFirst().waves()).containsExactly(new WaveDefinition("walker", Rank.GRUNT));
+        assertThat(level.paths().getFirst().waves()).containsExactly(new WaveDefinition("walker"));
     }
 
     @Test

@@ -283,7 +283,7 @@ class WaveTest {
         this.setStraightHorizontalPath();
 
         int[] normal = activationTicks(wave("walker walker").spawn());
-        int[] doubled = activationTicks(wave("w44.8 walker walker").spawn());
+        int[] doubled = activationTicks(wave("w44.8: walker walker").spawn());
 
         assertThat(normal[0]).isZero();
         assertThat(normal[1]).isGreaterThan(0);

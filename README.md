@@ -255,8 +255,8 @@ on the Wardens, whose shield answers crits.
 ### Rank
 
 Every enemy spawns at one of five named ranks — **Grunt, Soldier, Veteran, Elite, Boss** — shown
-as a badge on its body rather than as a number. A wave declares the rank its slots default to;
-any slot can name a different rank inline, before the enemy id (`elite walker`) or before a spawn
+as a badge on its body rather than as a number. A wave's script can name the rank its slots default to in its head
+(`soldier: 8 walker`), and is Grunt when it names none; any slot can name a different rank inline, before the enemy id (`elite walker`) or before a spawn
 shape (`elite swarm 4 walker`). Each rank's health and bounty grow from the Grunt's on one pattern:
 health climbs a quadratic curve to the enemy's Boss factor (20 times the Grunt for the Walker,
 12 to 20 for the others, lower where an enemy's traits already grow with rank), so each rank adds
@@ -419,8 +419,8 @@ the shapes that take one (`swarm 4 walker`):
 | Column  | `column` | *N* enemies in a tight single file, closer together than *N* separate spawns |
 | Drip    | `drip`   | *N* enemies stretched over more time than *N* separate spawns           |
 
-A wave's script can also open with `w<number>` (`w30 8 walker`), which sets how many ticks one
-slot of spacing is worth. The default is 22.4; a bigger number spreads the wave out, a smaller one
+A wave's script can also open with a head that sets `w<number>` (`w30: 8 walker`, or `w30 soldier:
+8 walker` with a rank), how many ticks one slot of spacing is worth. The default is 22.4; a bigger number spreads the wave out, a smaller one
 packs it tighter.
 
 ### Wave script ids

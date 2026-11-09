@@ -191,7 +191,7 @@ public class GameEngine {
                 float speedMultiplier = pathDefinition.speedMultiplier() * wd.speedMultiplier();
                 WaveContent content;
                 try {
-                    content = WaveScript.parse(wd.enemies(), wd.rank(), catalog);
+                    content = WaveScript.parse(wd.enemies(), catalog);
                 } catch (GameStartupException e) {
                     throw new GameStartupException(
                             "Level '" + level.name() + "', path " + (pathIndex + 1) + ", wave " + (round + 1) + ": "

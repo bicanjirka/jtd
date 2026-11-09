@@ -1,7 +1,6 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
-import td.enemy.Rank;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,22 +22,22 @@ class PathDefinitionTest {
 
     @Test
     void mutatingTheListPassedInDoesNotChangeTheStoredWaves() {
-        List<WaveDefinition> waves = new ArrayList<>(List.of(new WaveDefinition("walker", Rank.GRUNT)));
+        List<WaveDefinition> waves = new ArrayList<>(List.of(new WaveDefinition("walker")));
         PathDefinition path = PathDefinition.of(List.of(new Point(0, 0), new Point(1, 0)), waves);
 
-        waves.add(new WaveDefinition("knight", Rank.GRUNT));
+        waves.add(new WaveDefinition("knight"));
 
-        assertThat(path.waves()).containsExactly(new WaveDefinition("walker", Rank.GRUNT));
+        assertThat(path.waves()).containsExactly(new WaveDefinition("walker"));
     }
 
     @Test
     void theStoredCornersAndWavesCannotBeMutatedThroughTheirAccessors() {
         PathDefinition path = PathDefinition.of(
-                List.of(new Point(0, 0), new Point(1, 0)), List.of(new WaveDefinition("walker", Rank.GRUNT)));
+                List.of(new Point(0, 0), new Point(1, 0)), List.of(new WaveDefinition("walker")));
 
         assertThatThrownBy(() -> path.corners().add(new Point(2, 0)))
                 .isInstanceOf(UnsupportedOperationException.class);
-        assertThatThrownBy(() -> path.waves().add(new WaveDefinition("knight", Rank.GRUNT)))
+        assertThatThrownBy(() -> path.waves().add(new WaveDefinition("knight")))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 

@@ -84,7 +84,10 @@ public final class WaveScriptSuggestions {
             return all;
         }
         if (position.first()) {
-            all.add(Candidate.stem(SPACING_STEM, "ticks per slot, e.g. w30"));
+            all.add(Candidate.stem(SPACING_STEM, "ticks per slot, e.g. w30:"));
+        }
+        if (position.headOpen()) {
+            all.add(Candidate.token(WaveScript.HEAD_END, "ends the head"));
         }
         if (position.shape() == ShapeState.NONE) {
             if (position.rank().isEmpty()) {
@@ -109,26 +112,41 @@ public final class WaveScriptSuggestions {
 
     /** What the tokens already typed leave pending. */
     private static Position positionAfter(String typed, EnemyCatalog catalog) {
-        Position position = new Position(true, Optional.empty(), ShapeState.NONE);
+        Position position = new Position(true, false, Optional.empty(), ShapeState.NONE);
         for (String token : typed.split(" ")) {
             if (token.isBlank()) {
                 continue;
             }
-            boolean leading = position.first();
-            position = position.withFirst(false);
-            if (leading && WaveScript.isSpacingToken(token)) {
-                continue;
+            boolean endsHead = token.endsWith(WaveScript.HEAD_END);
+            String word = endsHead ? token.substring(0, token.length() - WaveScript.HEAD_END.length()) : token;
+            if (!word.isEmpty()) {
+                position = after(position, word, catalog);
             }
-            if (WaveScript.isRankToken(token)) {
-                position = position.withRank(Optional.of(WaveScript.rankFor(token)));
-            } else if (WaveScript.isShapeToken(token)) {
-                position = position.withShape(
-                        WaveScript.takesMemberCount(token) ? ShapeState.AWAITING_COUNT : ShapeState.READY);
-            } else if (token.equals(WaveScript.EMPTY_TOKEN) || catalog.contains(token)) {
-                position = position.withRank(Optional.empty()).withShape(ShapeState.NONE);
-            } else if (position.shape() == ShapeState.AWAITING_COUNT && COUNT.matcher(token).matches()) {
-                position = position.withShape(ShapeState.READY);
+            if (endsHead) {
+                position = new Position(false, false, Optional.empty(), ShapeState.NONE);
             }
+        }
+        return position;
+    }
+
+    private static Position after(Position before, String token, EnemyCatalog catalog) {
+        boolean headSoFar = before.first() || before.headOpen();
+        Position position = before.withFirst(false).withHeadOpen(false);
+        if (before.first() && WaveScript.isSpacingToken(token)) {
+            return position.withHeadOpen(true);
+        }
+        if (WaveScript.isRankToken(token)) {
+            return position.withHeadOpen(headSoFar && before.rank().isEmpty())
+                    .withRank(Optional.of(WaveScript.rankFor(token)));
+        }
+        if (WaveScript.isShapeToken(token)) {
+            return position.withShape(WaveScript.takesMemberCount(token) ? ShapeState.AWAITING_COUNT : ShapeState.READY);
+        }
+        if (token.equals(WaveScript.EMPTY_TOKEN) || catalog.contains(token)) {
+            return position.withRank(Optional.empty()).withShape(ShapeState.NONE);
+        }
+        if (position.shape() == ShapeState.AWAITING_COUNT && COUNT.matcher(token).matches()) {
+            return position.withShape(ShapeState.READY);
         }
         return position;
     }
@@ -138,18 +156,23 @@ public final class WaveScriptSuggestions {
         NONE, AWAITING_COUNT, READY
     }
 
-    private record Position(boolean first, Optional<Rank> rank, ShapeState shape) {
+    /** {@code headOpen}: every token so far could be a head's, so a {@code :} may end it here. */
+    private record Position(boolean first, boolean headOpen, Optional<Rank> rank, ShapeState shape) {
 
         Position withFirst(boolean first) {
-            return new Position(first, this.rank, this.shape);
+            return new Position(first, this.headOpen, this.rank, this.shape);
+        }
+
+        Position withHeadOpen(boolean headOpen) {
+            return new Position(this.first, headOpen, this.rank, this.shape);
         }
 
         Position withRank(Optional<Rank> rank) {
-            return new Position(this.first, rank, this.shape);
+            return new Position(this.first, this.headOpen, rank, this.shape);
         }
 
         Position withShape(ShapeState shape) {
-            return new Position(this.first, this.rank, shape);
+            return new Position(this.first, this.headOpen, this.rank, shape);
         }
     }
 }
