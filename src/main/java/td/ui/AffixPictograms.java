@@ -29,7 +29,9 @@ final class AffixPictograms {
             // Vengeful: allies hurried on
             Map.entry("affix.vengeful", "F M1.6 4H6.4L14.4 12L6.4 20H1.6L9.6 12Z M9.6 4H14.4L22.4 12L14.4 20H9.6L17.6 12Z"),
             // Taunting: a target
-            Map.entry("affix.taunting", "S O12 12 8.4 ; F O12 12 3.6"));
+            Map.entry("affix.taunting", "S O12 12 8.4 ; F O12 12 3.6"),
+            // Coldblooded: a snowflake
+            Map.entry("affix.coldblooded", "S M12 2.6V21.4 M3.9 7.3L20.1 16.7 M3.9 16.7L20.1 7.3"));
 
     private AffixPictograms() {
     }

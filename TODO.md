@@ -19,7 +19,6 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Timeless affix**: turns its own health back from time to time.
 - **Volatile affix**: shoves the allies near it further along as it dies.
 - **Emboldened affix**: tougher the further along the path it gets.
-- **Coldblooded affix**: a freeze wears off it fast.
 - **Greedy affix**: a leak also costs credits.
 - **Plated affix**: plating (flat reduction per physical hit) as an affix, beside Armored.
 - **Immunity affixes**: immune to one effect kind (burn, freeze, slows).

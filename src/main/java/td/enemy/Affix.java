@@ -181,6 +181,17 @@ public enum Affix implements Term {
             return TermText.format("every tower that picks one target aims at it while it is in range, unless an "
                     + "enemy there carries {}", EffectKind.PRIORITY);
         }
+    },
+    COLDBLOODED("Coldblooded") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withAdditionalTraits(List.of(IdentifiedTrait.of(this, COLDBLOODED_FREEZE)));
+        }
+
+        @Override
+        public TermText describe() {
+            return COLDBLOODED_FREEZE.entry().text();
+        }
     };
 
     private static final float HULKING_HEALTH = 2.5f;
@@ -194,6 +205,7 @@ public enum Affix implements Term {
     private static final float SHIELDED_SHARE = 0.3f;
     private static final float WITHERED_SPEED = 1.3f;
     private static final float WITHERED_SHARE = 0.02f;
+    private static final ShortenedEffectTrait COLDBLOODED_FREEZE = new ShortenedEffectTrait(EffectKind.FREEZE, 0.5f);
     private static final float AFFIX_REACH = 80f;
     private static final int COMMAND_INTERVAL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     // Outlasts the interval, so an ally in reach stays covered and loses it soon after the commander falls.
