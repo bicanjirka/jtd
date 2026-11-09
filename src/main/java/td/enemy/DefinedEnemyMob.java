@@ -176,7 +176,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     MobLabel label() {
-        return new MobLabel(this.id, this.definition.displayName(), this.rank, this.health.max());
+        return new MobLabel(this.id, this.definition.title(), this.rank, this.health.max());
     }
 
     /** Its health, every stat, its traits and its effects, for its trace. */

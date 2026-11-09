@@ -52,6 +52,15 @@ class AffixTest {
     }
 
     @Test
+    void aTraceNamesTheEnemyWithItsAffixes() {
+        EnemyDefinition affixed = this.grub.withAffixes(List.of(Affix.ARMORED), WHOLE);
+
+        DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, affixed);
+
+        assertThat(mob.label().name()).isEqualTo(affixed.title());
+    }
+
+    @Test
     void hulkingRaisesHealthLowersSpeedAndGrowsTheBodyButNotTheBounty() {
         EnemyDefinition hulking = this.grub.withAffixes(List.of(Affix.HULKING), WHOLE);
 
