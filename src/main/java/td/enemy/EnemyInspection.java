@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * An immutable snapshot of one enemy for display: identity, health, every resolved stat, active
@@ -34,9 +35,9 @@ import java.util.Set;
  * @param dodges       how many hits it has dodged
  * @param baseStats    every stat before traits and effects
  * @param immunities   what it cannot take now, and what keeps it out
- * @param affixes      the affixes its script gave it, in the order written
- * @param traitEntries every trait of its own as a term, with its sentence; an affix's shows as the affix
- * @param abilityEntries every ability of its own as a term, with its sentence; an affix's shows as the affix
+ * @param affixes      the affixes its script gave it, in the order written, each with what it added
+ * @param traitEntries every trait of its own as a term, with its sentence; an affix's is under its affix
+ * @param abilityEntries every ability of its own as a term, with its sentence; an affix's is under its affix
  * @param breakdowns   what each shown stat is made of
  * @param marks        memory towers keep about it
  * @param livesOnLeak  the lives it takes if it leaks; {@link EnemyDefinition#ALL_LIVES} for every one left
@@ -45,7 +46,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                               int maxHealth, int bounty, Map<EnemyStat, Float> stats, List<EffectState> effects,
                               Fate fate,
                               int dodges, Map<EnemyStat, Float> baseStats, List<Immunity> immunities,
-                              List<Affix> affixes, List<TraitEntry> traitEntries, List<AbilityEntry> abilityEntries,
+                              List<AffixEntry> affixes, List<TraitEntry> traitEntries, List<AbilityEntry> abilityEntries,
                               Map<EnemyStat, StatBreakdown> breakdowns, List<EnemyMark> marks, int livesOnLeak) {
 
     public EnemyInspection {
@@ -85,22 +86,33 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         }
         List<Immunity> immunities = live.blockedKinds().stream()
                 .map(kind -> new Immunity(kind, live.keptOutBy(kind))).toList();
-        List<TraitEntry> traitEntries = new ArrayList<>(
-                definition.traitSlots().stream().filter(slot -> !slot.id().fromAffix())
-                        .map(slot -> slot.template().entry()).toList());
+        Predicate<TraitId> ownSlot = id -> !id.fromAffix();
+        List<TraitEntry> traitEntries = new ArrayList<>(traitEntries(definition, ownSlot));
         float cellSize = mob.cellSize();
         definition.disruption().ifPresent(aura -> traitEntries
                 .add(TraitEntry.of(TraitTerm.JAM, AbilityText.jam(aura, cellSize))));
         EnemyCatalog catalog = mob.enemyCatalog();
         AbilityText.Words words = new AbilityText.Words(cellSize,
                 id -> catalog.contains(id) ? catalog.get(id).displayName() : id);
-        List<AbilityEntry> abilityEntries = definition.abilitySlots().stream().filter(slot -> !slot.id().fromAffix())
-                .map(IdentifiedAbility::ability)
-                .map(ability -> new AbilityEntry(ability.term(), AbilityText.of(ability, words))).toList();
+        List<AbilityEntry> abilityEntries = abilityEntries(definition, ownSlot, words);
+        List<AffixEntry> affixes = definition.affixes().stream()
+                .map(affix -> new AffixEntry(affix, traitEntries(definition, TraitId.of(affix)::equals),
+                        abilityEntries(definition, TraitId.of(affix)::equals, words))).toList();
         return new EnemyInspection(definition.title(), definition.description(), mob.getRank(), mob.archetype(),
                 (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects,
-                mob.fate(), mob.dodges(), baseStats, immunities, definition.affixes(), traitEntries,
+                mob.fate(), mob.dodges(), baseStats, immunities, affixes, traitEntries,
                 abilityEntries, breakdowns, List.of(), definition.livesOnLeak());
+    }
+
+    private static List<TraitEntry> traitEntries(EnemyDefinition definition, Predicate<TraitId> slotsBy) {
+        return definition.traitSlots().stream().filter(slot -> slotsBy.test(slot.id()))
+                .map(slot -> slot.template().entry()).toList();
+    }
+
+    private static List<AbilityEntry> abilityEntries(EnemyDefinition definition, Predicate<TraitId> slotsBy,
+                                                     AbilityText.Words words) {
+        return definition.abilitySlots().stream().filter(slot -> slotsBy.test(slot.id())).map(IdentifiedAbility::ability)
+                .map(ability -> new AbilityEntry(ability.term(), AbilityText.of(ability, words))).toList();
     }
 
     private static EffectState activeState(ActiveEffects live, EffectKind kind) {
@@ -124,6 +136,15 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                 this.maxHealth, this.bounty, this.stats, this.effects,
                 this.fate, this.dodges, this.baseStats, this.immunities, this.affixes, this.traitEntries,
                 this.abilityEntries, this.breakdowns, marks, this.livesOnLeak);
+    }
+
+    /** An affix, with the traits and abilities it added to this enemy and what they do at its rank. */
+    public record AffixEntry(Affix affix, List<TraitEntry> traits, List<AbilityEntry> abilities) {
+
+        public AffixEntry {
+            traits = List.copyOf(traits);
+            abilities = List.copyOf(abilities);
+        }
     }
 
     /** An effect kind this enemy cannot take now, and what keeps it out. */
