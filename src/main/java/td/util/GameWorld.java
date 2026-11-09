@@ -31,7 +31,10 @@ import java.util.List;
  */
 public class GameWorld {
 
-    private final RandomSource random;
+    private final RandomSource injected;
+    // Swapped as each wave starts, on the game loop; read through the one handle below, which holders keep.
+    private volatile RandomSource wave;
+    private final RandomSource random = () -> this.wave.nextDouble();
     private final EconomyLedger economy = new EconomyLedger();
     private final EnemyRoster enemies;
     private final TowerRoster towers;
@@ -52,7 +55,8 @@ public class GameWorld {
 
     /** For a run that has to be reproducible. */
     public GameWorld(GameHost mainApp, RandomSource random) {
-        this.random = random;
+        this.injected = random;
+        this.wave = random;
         this.enemies = new EnemyRoster();
         this.zones = new ZoneRoster(this.enemies);
         this.towers = new TowerRoster(mainApp, this.economy, this::getBoard);
@@ -114,9 +118,19 @@ public class GameWorld {
         return this.disruptions;
     }
 
-    /** The only source of randomness in the simulation. */
+    /** The only source of randomness in the simulation; the same handle whatever wave draws from it. */
     public RandomSource random() {
         return this.random;
+    }
+
+    /** A seed for a new game, from the injected source. */
+    public long newGameSeed() {
+        return this.injected.newGameSeed();
+    }
+
+    /** From now on {@link #random()} draws from a stream started at {@code seed}. */
+    public void reseed(long seed) {
+        this.wave = this.injected.reseeded(seed);
     }
 
     /**

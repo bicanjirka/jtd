@@ -36,6 +36,11 @@ record RoundState(int wave, Phase phase, Set<Integer> leaked, long leaksAtStart,
         bonusesPaid = Map.copyOf(bonusesPaid);
     }
 
+    /** Between rounds with wave {@code wave + 1} next, the rounds before it played as {@code leaked} and {@code paid} say. */
+    static RoundState between(int wave, Set<Integer> leaked, Map<Integer, Integer> paid) {
+        return new RoundState(wave, Phase.READY, leaked, 0L, paid);
+    }
+
     /** Nothing played yet, with wave {@code wave + 1} next. */
     static RoundState before(int wave) {
         return new RoundState(wave, Phase.READY, Set.of(), 0L, Map.of());

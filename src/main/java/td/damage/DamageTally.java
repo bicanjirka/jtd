@@ -18,6 +18,11 @@ public final class DamageTally {
         return this.mix;
     }
 
+    /** Takes up a saved game's mix in place of this one. */
+    public void restore(DamageMix saved) {
+        this.mix = saved;
+    }
+
     public void clear() {
         this.mix = DamageMix.none();
     }

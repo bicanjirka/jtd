@@ -91,8 +91,7 @@ public final class LevelPlay {
 
     /** {@code save} with the economy's lives set to {@code lives}. */
     private static GameSave withLives(GameSave save, int lives) {
-        return new GameSave(save.level(), save.nextWave(),
-                new EconomyState(save.economy().credits(), save.economy().score(), lives), save.towers());
+        return save.withEconomy(new EconomyState(save.economy().credits(), save.economy().score(), lives));
     }
 
     /** A save of a play whose lives never run out, with the lives the real play would have left of {@code lives}. */

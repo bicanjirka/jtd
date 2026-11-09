@@ -13,6 +13,8 @@ import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.save.GameSave;
+import td.save.LeyLinePin;
+import td.save.RoundHistory;
 import td.save.TowerSave;
 import td.tower.PulseTower;
 import td.tower.Tower;
@@ -74,6 +76,10 @@ public class GameEngine {
     private volatile boolean startWave = false;
     // Game loop: the time of the tick running, which a wave started in it starts its clock at.
     private int tickTime = 0;
+    // Drawn as a level starts and taken from a save; each wave's luck comes from it and the wave's number.
+    private volatile long gameSeed = 0L;
+    // The game as the last wave was sent, published whole as it is sent.
+    private volatile Optional<GameSave> checkpoint = Optional.empty();
 
     public GameEngine(GameHost host) {
         this(new GameWorld(host));
@@ -198,6 +204,7 @@ public class GameEngine {
         markUnbuildableCells(grid, pathRuntimes, scale);
 
         this.levelName = level.name();
+        this.gameSeed = this.gameWorld.newGameSeed();
         this.gameWorld.installLevel(new LoadedLevel(grid,
                 BoardGeometry.of(scale, width, height), pathRuntimes, catalog, level.ground()));
 
@@ -224,6 +231,7 @@ public class GameEngine {
         this.requests.clear();
         this.round = RoundState.before(0);
         this.gameWorld.waves().reset();
+        this.checkpoint = Optional.empty();
     }
 
     /**
@@ -255,8 +263,10 @@ public class GameEngine {
         RoundState state = this.round;
         if (state.canBegin(installed.waveCount())) {
             this.startWave = false;
+            this.checkpoint = this.save();
             this.clearBoard();
             this.gameWorld.zones().startWave(this.tickTime);
+            this.gameWorld.reseed(waveSeed(this.gameSeed, state.wave()));
             List<Wave> starting = installed.wavesAt(state.wave());
             List<EnemyMob> spawned = new ArrayList<>();
             int totalEnemies = 0;
@@ -272,6 +282,11 @@ public class GameEngine {
             return true;
         }
         return false;
+    }
+
+    /** The seed wave {@code round} (0-based) draws its luck from: the game's, and the wave's own number. */
+    private static long waveSeed(long gameSeed, int round) {
+        return gameSeed * 31L + round;
     }
 
     /**
@@ -483,25 +498,67 @@ public class GameEngine {
         return this.placement.mouseClicked(boardX, boardY);
     }
 
-    /** The game as it stands between rounds, to load later: empty while a round runs or once the level is over. */
+    /**
+     * The game as it stands between rounds, to load later: empty while a round runs or once the level is over. Any
+     * thread; on the game loop as a wave is sent.
+     */
     public Optional<GameSave> save() {
         if (!this.isWaveReady() || !this.gameWorld.level().isLoaded()) {
             return Optional.empty();
         }
         BoardGeometry board = this.gameWorld.getBoard();
-        List<TowerSave> towers = this.gameWorld.towers().all().stream()
-                .map(tower -> new TowerSave(tower.getType(),
-                        new Point(board.cellX(tower.getX()), board.cellY(tower.getY())),
-                        tower.upgrades().owned().stream().map(UpgradeNode::id).toList(), tower.tally()))
+        List<Tower> built = this.gameWorld.towers().all();
+        List<TowerSave> towers = built.stream()
+                .map(tower -> TowerSave.of(tower.getType(), cellOf(board, tower),
+                        tower.upgrades().owned().stream().map(UpgradeNode::id).toList(), tower.tally())
+                        .withPaid(tower.paid()))
                 .toList();
-        return Optional.of(new GameSave(this.levelName, this.round.wave() + 1, this.gameWorld.economy().state(), towers));
+        List<LeyLinePin> pins = built.stream()
+                .flatMap(caster -> PulseTower.leyLinePinOf(caster).stream()
+                        .map(host -> new LeyLinePin(cellOf(board, caster), cellOf(board, host))))
+                .toList();
+        RoundState state = this.round;
+        return Optional.of(GameSave.of(this.levelName, state.wave() + 1, this.gameWorld.economy().state(), towers)
+                .withSeed(this.gameSeed)
+                .withHistory(new RoundHistory(state.leaked(), state.bonusesPaid()))
+                .withDamage(this.gameWorld.damageTally().mix())
+                .withPins(pins));
+    }
+
+    private static Point cellOf(BoardGeometry board, Tower tower) {
+        return new Point(board.cellX(tower.getX()), board.cellY(tower.getY()));
     }
 
     /**
-     * Puts {@code save}'s game on the board in place of the one running: its towers, its economy, and its wave next.
-     * The towers are rebuilt in the order they were built, so each records the price it was bought for, and own
-     * their upgrades whatever the gates. What can't be rebuilt any more, since the level or a tower changed after the
-     * save, is left out and named: a game that loads only in part must not pass for the saved one.
+     * The game as the last wave was sent, its purchases in the break before it included: what restarting the wave puts
+     * back. Empty before the first wave of a level, and after a load or a jump until the next wave is sent.
+     */
+    public Optional<GameSave> checkpoint() {
+        return this.checkpoint;
+    }
+
+    /**
+     * Puts the last wave sent back as it was sent: everything bought since goes and its money comes back, and the wave
+     * replays the same luck. Like {@link #restore}, it tears the board down, so no tick may run meanwhile.
+     *
+     * @return why it could not, or what of it is missing; empty once all of it is back
+     */
+    public Optional<String> restartWave() {
+        Optional<GameSave> sent = this.checkpoint;
+        if (sent.isEmpty()) {
+            return Optional.of("No wave has been sent yet");
+        }
+        Optional<String> problem = this.restore(sent.get());
+        this.checkpoint = sent;
+        return problem;
+    }
+
+    /**
+     * Puts {@code save}'s game on the board in place of the one running: its towers, its economy, the rounds played,
+     * its luck, and its wave next. The towers are rebuilt in the order they were built, own their upgrades whatever
+     * the gates, and record what the save says they were bought for. What can't be rebuilt any more, since the level
+     * or a tower changed after the save, is left out and named: a game that loads only in part must not pass for the
+     * saved one.
      *
      * @return why it could not load, or what of it is missing; empty once all of it loaded
      */
@@ -514,17 +571,20 @@ public class GameEngine {
             return Optional.of("The level has no wave " + save.nextWave());
         }
         this.unloadCurrentLevel();
-        this.round = RoundState.before(save.nextWave() - 1);
+        this.round = RoundState.between(save.nextWave() - 1, save.history().leaked(), save.history().bonusesPaid());
+        this.gameSeed = save.seed();
+        this.gameWorld.damageTally().restore(save.damage());
         PlaytestRules rules = this.gameWorld.playtestRules();
         boolean gatesIgnored = rules.upgradeGatesIgnored();
         rules.setUpgradeGatesIgnored(true);
         this.gameWorld.economy().startEconomy(REBUILD_CREDITS, save.economy().lives());
         List<String> missing;
         try {
-            missing = save.towers().stream().flatMap(saved -> this.rebuild(saved).stream()).toList();
+            missing = new ArrayList<>(save.towers().stream().flatMap(saved -> this.rebuild(saved).stream()).toList());
         } finally {
             rules.setUpgradeGatesIgnored(gatesIgnored);
         }
+        save.pins().forEach(pin -> this.repin(pin).ifPresent(missing::add));
         this.gameWorld.economy().startEconomy(save.economy().credits(), save.economy().lives());
         this.gameWorld.economy().apply(EconomyDelta.score(save.economy().score()));
         this.clearBoard();
@@ -536,6 +596,24 @@ public class GameEngine {
                 + String.join("; ", missing);
         LOG.warn(problem);
         return Optional.of(problem);
+    }
+
+    /** Pins a rebuilt Obelisk's Ley Line again; names the pin if it could not be. */
+    private Optional<String> repin(LeyLinePin pin) {
+        CellGrid grid = this.gameWorld.cells();
+        Optional<Tower> caster = towerOn(grid, pin.caster());
+        Optional<Tower> host = towerOn(grid, pin.host());
+        if (caster.isPresent() && host.isPresent() && PulseTower.pinLeyLine(caster.get(), host.get())) {
+            return Optional.empty();
+        }
+        return Optional.of("Ley Line pin " + pin.caster().x() + "," + pin.caster().y() + " to " + pin.host().x() + ","
+                + pin.host().y());
+    }
+
+    private static Optional<Tower> towerOn(CellGrid grid, Point cell) {
+        return grid.contains(cell.x(), cell.y()) && grid.at(cell.x(), cell.y()).hasTower()
+                ? Optional.of(grid.at(cell.x(), cell.y()).getTower())
+                : Optional.empty();
     }
 
     /** Builds {@code saved} again with its upgrades; returns what of it could not be. */
@@ -562,7 +640,7 @@ public class GameEngine {
                 missing.add(where + ": upgrade " + id + " (not on offer)");
             }
         }
-        tower.restore(saved.tally());
+        tower.restore(saved.tally(), saved.paid().orElse(tower.paid()));
         return missing;
     }
 
@@ -605,6 +683,7 @@ public class GameEngine {
             this.clearBoard();
             this.startWave = false;
             this.round = this.round.jumpedTo(next);
+            this.checkpoint = Optional.empty();
         });
         return next;
     }

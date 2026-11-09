@@ -66,6 +66,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameStartupException;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
+import td.util.RandomSource;
 import td.util.TickRate;
 import td.wave.Path;
 import td.wave.PathBuilder;
@@ -86,6 +87,7 @@ import td.zone.ZoneOwner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -1493,6 +1495,116 @@ class GameEngineTest {
         assertThat(aura.experience().xp()).isZero();
     }
 
+    private static final List<WaveDefinition> CHECKPOINT_WAVES = List.of(new WaveDefinition("6 simple", Rank.GRUNT),
+            new WaveDefinition("8 armored", Rank.ELITE), new WaveDefinition("simple", Rank.GRUNT));
+
+    /** An engine on its own luck, a few towers of every kind built and a wave played and cleared. */
+    private static GameEngine engineAfterAWave(long seed) {
+        GameEngine engine = FakeGameHost.newBoundEngine(RandomSource.seeded(seed));
+        engine.loadLevel(LevelFixtures.levelWith(CHECKPOINT_WAVES, 100_000));
+        placeTower(engine, TowerFactory.Type.SNIPER, 0, 1);
+        placeTower(engine, TowerFactory.Type.SPLASH, 1, 1);
+        placeTower(engine, TowerFactory.Type.MORTAR, 2, 1);
+        placeTower(engine, TowerFactory.Type.SEEKER, 3, 1);
+        placeTower(engine, TowerFactory.Type.PULSE, 4, 1);
+        placeTower(engine, TowerFactory.Type.CINDER, 1, 3);
+        placeTower(engine, TowerFactory.Type.AURA, 2, 3);
+        engine.nextWave();
+        tickUntilWaveCleared(engine);
+        return engine;
+    }
+
+    /** Sends the next wave on tick {@code from} and plays it out: each tick's board, economy and tallies, as text. */
+    private static List<String> playedWave(GameEngine engine, int from) {
+        engine.requestNextWave();
+        List<String> ticks = new ArrayList<>();
+        for (int t = from; t < from + 3000 && (t == from || engine.getGameWorld().enemies().aliveCount() > 0); t++) {
+            engine.doTick(t);
+            StringBuilder line = new StringBuilder(engine.getGameWorld().economy().state().toString());
+            for (Tower tower : engine.getTowers()) {
+                line.append(' ').append(tower.getDamageDealt()).append('/').append(tower.experience().xp());
+            }
+            for (EnemyMob enemy : engine.getGameWorld().enemies().getEnemies()) {
+                line.append(String.format(Locale.ROOT, " %.3f,%.3f", enemy.getX(), enemy.getY()));
+            }
+            ticks.add(line.toString());
+        }
+        return ticks;
+    }
+
+    @Test
+    void aCheckpointPlaysItsWaveTickForTickAsThePlayThatWentOnFromIt() {
+        GameEngine played = engineAfterAWave(7);
+        for (int t = 2000; t < 2037; t++) {
+            played.doTick(t);
+        }
+        placeTower(played, TowerFactory.Type.SONAR, 0, 3);
+
+        List<String> wentOn = playedWave(played, 3001);
+        GameSave sent = played.checkpoint().orElseThrow();
+        GameEngine loaded = FakeGameHost.newBoundEngine(RandomSource.seeded(99));
+        loaded.loadLevel(LevelFixtures.levelWith(CHECKPOINT_WAVES, 100_000));
+        Optional<String> problem = loaded.restore(GameSaveText.read(GameSaveText.write(sent)).save().orElseThrow());
+        for (int t = 1; t < 14; t++) {
+            loaded.doTick(t);
+        }
+        List<String> replayed = playedWave(loaded, 50);
+
+        assertThat(problem).isEmpty();
+        assertThat(wentOn).hasSizeGreaterThan(10);
+        assertThat(replayed).containsExactlyElementsOf(wentOn);
+    }
+
+    @Test
+    void restartingAWavePutsBackTheGameAsItWasSentAndReplaysTheSameLuck() {
+        GameEngine engine = engineAfterAWave(7);
+        GameSave beforeSending = engine.save().orElseThrow();
+        List<String> first = playedWave(engine, 3001);
+        placeTower(engine, TowerFactory.Type.SONAR, 0, 3);
+
+        Optional<String> problem = engine.restartWave();
+        GameSave restarted = engine.save().orElseThrow();
+        List<String> again = playedWave(engine, 9001);
+
+        assertThat(problem).isEmpty();
+        assertThat(restarted).isEqualTo(beforeSending);
+        assertThat(engine.getTowers()).noneMatch(tower -> tower.getType() == TowerFactory.Type.SONAR);
+        assertThat(again).containsExactlyElementsOf(first);
+        assertThat(engine.checkpoint()).isPresent();
+    }
+
+    @Test
+    void thereIsNoWaveToRestartBeforeTheFirstIsSent() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(CHECKPOINT_WAVES, 100));
+
+        assertThat(engine.checkpoint()).isEmpty();
+        assertThat(engine.restartWave()).isPresent();
+    }
+
+    @Test
+    void aSavedGameKeepsWhatEachTowerWasBoughtForAndThePinnedLeyLines() {
+        GameEngine saved = FakeGameHost.newBoundEngine();
+        saved.loadLevel(LevelFixtures.levelWith(CHECKPOINT_WAVES, 100_000));
+        saved.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+        Tower first = placeTower(saved, TowerFactory.Type.PULSE, 0, 1);
+        Tower caster = placeTower(saved, TowerFactory.Type.PULSE, 1, 1);
+        Tower host = placeTower(saved, TowerFactory.Type.PULSE, 2, 1);
+        UpgradePaths.buy(caster, saved.getGameWorld(), "Ley Line");
+        PulseTower.pinLeyLine(caster, host);
+        saved.getGameWorld().towers().sell(first);
+        GameSave save = saved.save().orElseThrow();
+        GameEngine loaded = FakeGameHost.newBoundEngine();
+        loaded.loadLevel(LevelFixtures.levelWith(CHECKPOINT_WAVES, 100_000));
+
+        Optional<String> problem = loaded.restore(GameSaveText.read(GameSaveText.write(save)).save().orElseThrow());
+
+        assertThat(problem).isEmpty();
+        assertThat(loaded.getTowers()).extracting(Tower::paid).containsExactly(caster.paid(), host.paid());
+        assertThat(save.pins()).hasSize(1);
+        assertThat(loaded.save()).contains(save);
+    }
+
     @Test
     void aStatusATowerHoldsEndsWithTheWaveHoweverLongItHadLeft() {
         GameEngine engine = FakeGameHost.newBoundEngine();
@@ -1909,8 +2021,8 @@ class GameEngineTest {
         GameEngine loaded = FakeGameHost.newBoundEngine();
         loaded.loadLevel(level);
 
-        Optional<String> problem = loaded.restore(new GameSave(save.level(), save.nextWave(), save.economy(),
-                List.of(new TowerSave(tower.type(), tower.cell(), renamed, tower.tally()))));
+        Optional<String> problem = loaded.restore(GameSave.of(save.level(), save.nextWave(), save.economy(),
+                List.of(TowerSave.of(tower.type(), tower.cell(), renamed, tower.tally()))));
 
         assertThat(problem).hasValueSatisfying(text -> assertThat(text).contains("renamed.node")
                 .contains(chain.getLast().id()));
@@ -1924,11 +2036,11 @@ class GameEngineTest {
                 new WaveDefinition("simple", Rank.GRUNT)), 100);
         GameEngine loaded = FakeGameHost.newBoundEngine();
         loaded.loadLevel(level);
-        TowerTally untried = new TowerTally(0, 0, 0L, 0);
+        TowerTally untried = TowerTally.of(0, 0, 0L, 0);
 
-        Optional<String> problem = loaded.restore(new GameSave(level.name(), 1, new EconomyState(50, 0, 5), List.of(
-                new TowerSave(TowerFactory.Type.SNIPER, new Point(99, 1), List.of(), untried),
-                new TowerSave(TowerFactory.Type.SNIPER, new Point(1, 1), List.of(), untried))));
+        Optional<String> problem = loaded.restore(GameSave.of(level.name(), 1, new EconomyState(50, 0, 5), List.of(
+                TowerSave.of(TowerFactory.Type.SNIPER, new Point(99, 1), List.of(), untried),
+                TowerSave.of(TowerFactory.Type.SNIPER, new Point(1, 1), List.of(), untried))));
 
         assertThat(problem).hasValueSatisfying(text -> assertThat(text).contains("99,1"));
         assertThat(loaded.getTowers()).hasSize(1);

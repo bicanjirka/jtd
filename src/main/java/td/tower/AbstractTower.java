@@ -660,10 +660,23 @@ public abstract class AbstractTower implements Tower {
     }
 
     @Override
-    public void restore(TowerTally tally) {
+    public TowerTally tally() {
+        return TowerTally.of(this.experience.xp(), this.experience.deeds(), this.damageDealt, this.killCount)
+                .withXpCarried(this.xpRemainder);
+    }
+
+    @Override
+    public void restore(TowerTally tally, int paid) {
         this.experience.restore(tally.xp(), tally.deeds());
         this.damageDealt = tally.damageDealt();
         this.killCount = tally.kills();
+        this.xpRemainder = tally.xpCarried();
+        this.price = paid;
+    }
+
+    @Override
+    public int paid() {
+        return this.price;
     }
 
     /** No upgrades by default. */
