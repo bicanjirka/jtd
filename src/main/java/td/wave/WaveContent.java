@@ -29,6 +29,15 @@ public record WaveContent(List<WaveSlot> spawnSequence, float delayTicksPerSlot)
         this(spawnSequence, SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT);
     }
 
+    /** This wave with every enemy taking {@code lives} if it reaches the end of the path. */
+    public WaveContent withLivesOnLeak(int lives) {
+        List<WaveSlot> slots = this.spawnSequence.stream().<WaveSlot>map(slot -> switch (slot) {
+            case EnemySlot s -> new EnemySlot(s.definition().withLivesOnLeak(lives), s.rank(), s.shape(), s.unique());
+            case EmptySlot empty -> empty;
+        }).toList();
+        return new WaveContent(slots, this.delayTicksPerSlot);
+    }
+
     /** Distinct enemy definitions in first-seen order, without the spacer. */
     public Set<EnemyDefinition> enemySet() {
         Set<EnemyDefinition> set = new LinkedHashSet<>();

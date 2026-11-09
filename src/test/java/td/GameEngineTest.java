@@ -1851,6 +1851,23 @@ class GameEngineTest {
     }
 
     @Test
+    void anEnemyFromTheSpawnBoxThatLeaksCostsNoLife() {
+        GameEngine engine = FakeGameHost.newBoundEngine();
+        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("simple", Rank.GRUNT)), 100));
+        DevControls dev = new DevControls(engine.getGameWorld());
+        int initialLives = engine.getGameWorld().economy().getLives();
+        dev.spawnWave("simple", Rank.GRUNT, 0);
+
+        dev.runPending();
+        for (int t = 1; t <= 200; t++) {
+            engine.doTick(t);
+        }
+
+        assertThat(engine.getGameWorld().enemies().leaks()).isEqualTo(1);
+        assertThat(engine.getGameWorld().economy().getLives()).isEqualTo(initialLives);
+    }
+
+    @Test
     void debugSkippingAWaveClearsItAndStartsTheNextOneImmediately() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(
