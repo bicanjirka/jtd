@@ -328,6 +328,17 @@ class EnemyFrameBuilderTest {
     }
 
     @Test
+    void pipsShrinkOverASmallBodyWhileTheBadgeKeepsItsSize() {
+        GameWorld bigBoard = WorldFixtures.newWorldOnBoard(64, 1001, 1001);
+        bigBoard.setPath(new Path(List.of(new Vec2(5, 5), new Vec2(105, 5))));
+        EnemyMob small = EnemyFixtures.liveMob(contextWithStraightPath(), withAffixes(Affix.ARMORED), Rank.ELITE);
+        EnemyMob big = EnemyFixtures.liveMob(bigBoard, withAffixes(Affix.ARMORED), Rank.ELITE);
+
+        assertThat(pipsOf(small).getFirst().size()).isLessThan(pipsOf(big).getFirst().size());
+        assertThat(badgeOf(small).size()).isEqualTo(badgeOf(big).size());
+    }
+
+    @Test
     void aBadgeFadesWithACloakedBody() {
         EnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(), EnemyFixtures.simpleDefinition("plain"), Rank.ELITE);
         enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
