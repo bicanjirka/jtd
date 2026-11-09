@@ -98,7 +98,7 @@ final class StormRidgeLevel {
                             new WaveDefinition("veteran: 2 golem e gale column 6 knight e 3 raincloud").withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("w30 veteran: 6 raincloud e 2 gale column 6 walker").withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("veteran: juggernaut gale e column 6 knight e 4 raincloud").withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("veteran: elite raincloud 3 raincloud e 2 gale column 8 knight")
+                            new WaveDefinition("veteran: elite hulking raincloud 3 raincloud e 2 gale column 8 knight")
                                     .withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("veteran: elite gale column 8 knight e elite jammer 4 raincloud e golem")
                                     .withClearBonus(CLEAR_BONUS),
@@ -122,7 +122,7 @@ final class StormRidgeLevel {
                             new WaveDefinition("soldier: gale 4 runner e drip 3 courier").withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("veteran: swarm 12 raindrop e gale e swarm 12 raindrop").withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("veteran: line 3 skirmisher e 2 raincloud e drip 4 courier").withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("veteran: gale 4 runner e gale 4 runner").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("veteran: gale 4 runner e gale 4 elusive runner").withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("veteran: drip 5 courier e swarm 12 raindrop e line 3 skirmisher")
                                     .withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("veteran: elite runner e gale 4 courier e swarm 12 mite").withClearBonus(CLEAR_BONUS),

@@ -142,7 +142,7 @@ final class LastHourLevel {
                             new WaveDefinition("soldier: swarm 12 sandling e timekeeper 4 runner"),
                             new WaveDefinition("soldier: timekeeper 2 glassSentinel e column 6 knight"),
                             new WaveDefinition("veteran: swarm 12 sandling e swarm 12 sandling"),
-                            new WaveDefinition("veteran: 3 glassSentinel timekeeper e 4 runner"),
+                            new WaveDefinition("veteran: 3 shielded glassSentinel timekeeper e 4 runner"),
                             new WaveDefinition("veteran: elite timekeeper column 8 walker e swarm 12 sandling"),
                             new WaveDefinition("veteran: drip 6 courier e 2 timekeeper 2 glassSentinel"),
                             new WaveDefinition("elite: swarm 12 sandling e timekeeper column 6 knight"),
