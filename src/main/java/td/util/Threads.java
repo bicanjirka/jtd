@@ -14,10 +14,6 @@ public final class Threads {
     private Threads() {
     }
 
-    public static boolean onGameLoop() {
-        return GAME_LOOP.equals(Thread.currentThread().getName());
-    }
-
     public static boolean onEventDispatchThread() {
         return Thread.currentThread().getName().startsWith(EDT_PREFIX);
     }
