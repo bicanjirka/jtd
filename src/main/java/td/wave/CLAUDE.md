@@ -41,7 +41,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
   to the head's. The grammar applies them to the slot's definition when it builds the slot, measured
   against the slot's rank and one member's health. At most `WaveScript.MAX_AFFIXES` a slot, head
   included; none twice, none that `Affix.excludes` another, none on a unique enemy, none whose
-  `problemWith` objects.
+  `problemWith` objects, and none that `actsOnAllies` on a swarm.
 - A shape says how a slot spawns, never what the enemy is: that is an affix.
 - A slot takes at most two counts: one first, which repeats the whole slot (`3 knight e 4 walker`,
   `3 elite swarm 4 walker`), and one right after a shape keyword, its member count. A count anywhere else fails,

@@ -8,7 +8,6 @@ import java.util.Locale;
 /** An ability an enemy fires, named for the player. */
 public enum AbilityTerm implements Term {
     BRACE("Brace", "shields itself against physical hits once badly hurt"),
-    CAPACITOR("Capacitor", "builds a charge that shields it against magic, again and again"),
     BULWARK("Bulwark", "shields itself against magic once badly hurt"),
     SHIELD_WALL("Shield Wall", "shields the allies near it against physical hits"),
     GUARD("Guard", "shields itself against physical hits, again and again"),

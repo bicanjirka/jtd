@@ -23,8 +23,6 @@ final class EnemyTermPictograms {
             Map.entry("trait.jam", "F O12 12 2.4 ; S M7.6 8A5.8 5.8 0 0 0 7.6 16 M16.4 8A5.8 5.8 0 0 1 16.4 16 ; T M4 4.8A10 10 0 0 0 4 19.2 M20 4.8A10 10 0 0 1 20 19.2"),
             // Brace
             Map.entry("ability.brace", "F M12 2.5L20 5.5V11C20 16 16.5 19.8 12 21.5C7.5 19.8 4 16 4 11V5.5Z ; K M10.8 6.4H13.2V13.2H10.8Z ; K O12 16.4 1.4"),
-            // Capacitor
-            Map.entry("ability.capacitor", "F M12 2.5L20 5.5V11C20 16 16.5 19.8 12 21.5C7.5 19.8 4 16 4 11V5.5Z ; K M13.4 5.4L9 12.6H12L10.6 18.6L15.2 10.8H12.2Z"),
             // Bulwark
             Map.entry("ability.bulwark", "F M5.6 2.8H18.4V14.6C18.4 18.2 15.6 20.6 12 21.6C8.4 20.6 5.6 18.2 5.6 14.6Z ; K M11 5.6H13V18.4H11Z M8 10.8H16V12.8H8Z"),
             // Shield Wall

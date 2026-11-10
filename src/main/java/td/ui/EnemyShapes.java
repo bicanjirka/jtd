@@ -70,7 +70,7 @@ final class EnemyShapes {
     }
 
     /** A disc with four antennae, broadcasting. */
-    static Shape jammerShape(float scale) {
+    static Shape relayShape(float scale) {
         Area jammer = new Area(Java2DFrameRenderer.circleShape(scale * 0.68f));
         jammer.add(new Area(Java2DFrameRenderer.starShape(4, scale * 1.15f, scale * 0.22f)));
         return jammer;

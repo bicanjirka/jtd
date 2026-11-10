@@ -163,7 +163,6 @@ final class EnemyLooks {
                 .withDetail(new Color(95, 62, 30), s -> new Rectangle2D.Float(-s * 0.2f, -s * 0.95f, s * 0.4f, s * 1.9f)));
         rows.put(EnemyLook.COURIER, Row.of(new Color(170, 255, 80), EnemyLooks::triangle).withFade(EnemyLooks::crossingTriangles));
         rows.put(EnemyLook.SKIRMISHER, Row.of(new Color(80, 220, 200), Java2DFrameRenderer::diamondShape));
-        rows.put(EnemyLook.SHIELDBEARER, Row.of(new Color(90, 150, 255), EnemyShapes::crossShape));
         rows.put(EnemyLook.SALAMANDER, Row.of(new Color(255, 120, 30), EnemyShapes::lizardShape)
                 .withDetail(new Color(255, 215, 60), s -> new Ellipse2D.Float(-s * 0.6f, -s * 0.1f, s * 1.2f, s * 0.2f)));
         rows.put(EnemyLook.YETI, Row.of(new Color(200, 235, 255), s -> star(16, s, s * 0.84f))
@@ -172,8 +171,8 @@ final class EnemyLooks {
                 .withDetail(new Color(255, 170, 60), s -> circle(s * 0.4f)));
         rows.put(EnemyLook.GOLEM, Row.of(new Color(150, 140, 125), s -> star(6, s, s * 0.87f))
                 .withDetail(new Color(85, 76, 66), EnemyShapes::crackShape));
-        rows.put(EnemyLook.JAMMER, Row.of(new Color(230, 70, 190), EnemyShapes::jammerShape)
-                .withDetail(new Color(255, 225, 250), s -> circle(s * 0.3f)));
+        rows.put(EnemyLook.RELAY, Row.of(new Color(40, 185, 170), EnemyShapes::relayShape)
+                .withDetail(new Color(215, 250, 245), s -> circle(s * 0.3f)));
         rows.put(EnemyLook.REAVER, Row.of(new Color(205, 150, 70), EnemyShapes::barbShape));
         rows.put(EnemyLook.COLOSSUS, Row.of(new Color(95, 105, 128), s -> star(8, s, s * 0.93f))
                 .withDetail(new Color(255, 140, 40), s -> new RoundRectangle2D.Float(-s * 0.6f, -s * 0.16f, s * 1.2f, s * 0.32f,

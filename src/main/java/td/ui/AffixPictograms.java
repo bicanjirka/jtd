@@ -28,6 +28,12 @@ final class AffixPictograms {
             Map.entry("affix.commanding", "F M4.6 2.4H7.2V21.6H4.6Z M7.2 3.4H20.6L17 8.2L20.6 13H7.2Z"),
             // Vengeful: allies hurried on
             Map.entry("affix.vengeful", "F M1.6 4H6.4L14.4 12L6.4 20H1.6L9.6 12Z M9.6 4H14.4L22.4 12L14.4 20H9.6L17.6 12Z"),
+            // Warding: shields raised for the allies around it
+            Map.entry("affix.warding", "=ability.shield_wall"),
+            // Mending: a healing cross
+            Map.entry("affix.mending", "=ability.mend"),
+            // Jamming: a broadcast that jams the towers around it
+            Map.entry("affix.jamming", "=trait.jam"),
             // Taunting: a target
             Map.entry("affix.taunting", "S O12 12 8.4 ; F O12 12 3.6"),
             // Coldblooded: an ice cube struck through

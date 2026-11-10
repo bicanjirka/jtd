@@ -30,11 +30,10 @@ public final class EnemyCatalog {
         RunnerEnemy.registerIn(catalog);
         GhostEnemy.registerIn(catalog);
         MenderEnemy.registerIn(catalog);
-        JammerEnemy.registerIn(catalog);
+        RelayEnemy.registerIn(catalog);
         JuggernautEnemy.registerIn(catalog);
         MiteEnemy.registerIn(catalog);
         CourierEnemy.registerIn(catalog);
-        ShieldbearerEnemy.registerIn(catalog);
         SalamanderEnemy.registerIn(catalog);
         MagmaEnemy.registerIn(catalog);
         GolemEnemy.registerIn(catalog);

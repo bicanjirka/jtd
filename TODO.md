@@ -11,16 +11,6 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
-- **Splitting affix**: splits into smaller copies on death; waits for a rule on what affixed spawns inherit.
-- **Mending affix**: heals the allies near it.
-- **Jamming affix**: weakens the towers near it, the Jammer's aura on any enemy.
-- **Enraged affix**: faster the more it is hurt.
-- **Escorted affix**: arrives with plain bodyguards of its kind.
-- **Timeless affix**: turns its own health back from time to time.
-- **Volatile affix**: shoves the allies near it further along as it dies.
-- **Emboldened affix**: tougher the further along the path it gets.
-- **Greedy affix**: a leak also costs credits.
-- **Immunity affixes**: immune to freeze, beside Fireproof (burn) and Unstoppable (slows).
 
 ## Feature request implementation order
 
@@ -526,7 +516,7 @@ single hit), making the Warden's armor mechanically inert regardless of which to
   Spawnling's death heal (0.5 a tick for 2 s).
 - Shields are absorb pools with starting values: the Warden's magic self-shield (10% of the stage's
   health), its half-health ally shield (60 points) and crit-survived shield (3% of the stage's health), the
-  Shieldbearer's ally shield (20 to 320 points by rank) and the Reaver's panic shield (10% of its health).
+  Warding affix's ally shield (40 to 640 points by rank) and the Reaver's panic shield (10% of its health).
 - **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `ArmorTrait`,
   `HurtSpeedTrait`, `FlatResistTrait`.
 - **Approach:** play The Amber Hive through to the Warden encounter (and the other two levels,

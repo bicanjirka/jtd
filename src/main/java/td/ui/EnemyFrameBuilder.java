@@ -220,12 +220,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case MITE -> EnemyLook.MITE;
             case COURIER -> EnemyLook.COURIER;
             case SKIRMISHER -> EnemyLook.SKIRMISHER;
-            case SHIELDBEARER -> EnemyLook.SHIELDBEARER;
             case SALAMANDER -> EnemyLook.SALAMANDER;
             case YETI -> EnemyLook.YETI;
             case MAGMA -> EnemyLook.MAGMA;
             case GOLEM -> EnemyLook.GOLEM;
-            case JAMMER -> EnemyLook.JAMMER;
+            case RELAY -> EnemyLook.RELAY;
             case REAVER -> EnemyLook.REAVER;
             case COLOSSUS -> EnemyLook.COLOSSUS;
             case MOLTEN_CORE -> EnemyLook.MOLTEN_CORE;

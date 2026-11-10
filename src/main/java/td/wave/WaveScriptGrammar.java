@@ -282,7 +282,9 @@ final class WaveScriptGrammar {
         if (carried.isEmpty() && words.rank().filter(rank -> rank != Rank.BOSS).isEmpty()) {
             kinds.add(NextWords.Kind.UNIQUE_ENEMY);
         }
-        return new NextWords(kinds, allowedAffixes(carried));
+        boolean swarm = shape.filter(written -> written.keyword() == ShapeKeyword.SWARM).isPresent();
+        return new NextWords(kinds, allowedAffixes(carried).stream()
+                .filter(affix -> !swarm || !affix.actsOnAllies()).toList());
     }
 
     private WaveSlot enemySlot(Cursor at, Head head, Words words) throws ScriptFault {
@@ -297,7 +299,12 @@ final class WaveScriptGrammar {
         Rank requested = words.rank().orElse(head.rank());
         Rank rank = enemy.effectiveRank(requested);
         EnemyDefinition definition = enemy.definitionFor(requested);
+        boolean swarm = words.shape().filter(shape -> shape.keyword() == ShapeKeyword.SWARM).isPresent();
         for (Affix affix : affixes) {
+            if (swarm && affix.actsOnAllies()) {
+                throw at.fail("Affix '" + affix.word() + "' works on the allies near it, so it cannot go on a swarm,"
+                        + " whose every member would cast it");
+            }
             Optional<String> problem = affix.problemWith(definition);
             if (problem.isPresent()) {
                 throw at.fail("Affix '" + affix.word() + "' cannot go on '" + at.peek() + "': " + problem.get());
