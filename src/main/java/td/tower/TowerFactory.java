@@ -37,7 +37,7 @@ public class TowerFactory {
         PULSE(PulseTower.PRICE, 'u', "Obelisk"),
         AURA(AuraTower.PRICE, 'i', "Beacon");
 
-        private static final int COPY_SURCHARGE_PERCENT = 15;
+        private static final double COPY_PRICE_GROWTH = 1.25;
 
         /** The list price: what the first copy costs and what upgrade prices are multiples of. */
         public final int price;
@@ -55,9 +55,12 @@ public class TowerFactory {
             return this.displayName;
         }
 
-        /** The price with {@code copiesOnBoard} of this type already built: +15% each, rounded half up. */
+        /**
+         * The price with {@code copiesOnBoard} of this type already built: each copy multiplies the one before it by
+         * the same growth, so the surcharge compounds, rounded half up.
+         */
         public int priceFor(int copiesOnBoard) {
-            return (this.price * (100 + COPY_SURCHARGE_PERCENT * copiesOnBoard) + 50) / 100;
+            return Math.toIntExact(Math.round(this.price * Math.pow(COPY_PRICE_GROWTH, copiesOnBoard)));
         }
     }
 

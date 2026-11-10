@@ -426,8 +426,10 @@ first trees (an unquantified "+X" in the source doc became +25%, an unquantified
 against the bounty arithmetic in `docs/features/shipped/FEATURE-xp-and-purpose-gates.md`, not against play.
 Feature 7's balance pass sets the final numbers.
 
-`td.PurchaseHarness` measures them: lives saved per 100 credits, on Twisted Hourglass with 12 seeds. The +15%
-per-copy surcharge is the limit on copies, and the harness now measures it at a realistic price. With an army of one
+`td.PurchaseHarness` measures them: lives saved per 100 credits, on Twisted Hourglass with 12 seeds. The
+per-copy surcharge is the limit on copies, and the harness now measures it at a realistic price. The copy figures
+below were measured at +15% of the list price per copy; the surcharge now compounds at x1.25 per copy, so remeasure
+them before repricing. With an army of one
 of each tower a copy is the best buy for all but the Aura and the Hive (a Sniper copy saves 27 lives per 100 credits
 for $17; an upgrade node saves 0.02x to 0.6x of that). With an army of four of each (`-Dexec.args="2 12 sniper 4"`)
 a copy costs 1.6x and saves little: a Sniper copy 2.1 (nodes 0.1x to 4.9x of it), a Burst, Radar or Hive copy
