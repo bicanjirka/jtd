@@ -160,7 +160,7 @@ public final class DefinedEnemyMob implements EnemyMob {
             case MINOTAUR -> 19f;
             // So it always reads as the biggest thing on the board.
             case WARDEN -> 22f;
-            case SQUARE, TRIANGLE, GHOST, COURIER, SKIRMISHER, JAMMER, REAVER, MIRAGE, HERALD, DRONE, NURSE, MENDER, SHIELDBEARER ->
+            case SQUARE, TRIANGLE, GHOST, COURIER, SKIRMISHER, RELAY, REAVER, MIRAGE, HERALD, DRONE, NURSE, MENDER ->
                     radiusAtRank(rank, 6f, 6.6f, 7.4f, 8.6f, 11f);
             case HORNET, TIMEKEEPER -> radiusAtRank(rank, 6.2f, 6.8f, 7.6f, 9.4f, 13f);
             case JUGGERNAUT, BRONZE_BULL, GALE -> radiusAtRank(rank, 7f, 7.6f, 8.6f, 11f, 16f);

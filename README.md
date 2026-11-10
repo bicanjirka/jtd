@@ -145,7 +145,7 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Hive, Radar, Obelisk and Beacon
 (keys `q` `w` `e` `r` `t` `y` `u` `i`, in that order). A Burst that forks is called a Stormcaller or a Hexer.
 
-An attack-speed bonus adds to the attacks a second, so +100% is twice as fast; bonuses add up, and a Jammer
+An attack-speed bonus adds to the attacks a second, so +100% is twice as fast; bonuses add up, and a Jamming enemy
 takes 30% away and shrinks range by 0.6 cells. The rate need not be a whole number of ticks: a tower remembers
 what is left over, so +10% on the Obelisk, which hits every tick, gives 22 hits in 20 ticks and a second hit in
 the tick the fractions add up. The Radar spins faster instead. No tower runs more than ten times faster than its
@@ -214,11 +214,10 @@ on the Wardens, whose shield answers crits.
 | Runner     | triangle      | Speeds up as it loses health; -20 agility, so crits land more often. From Veteran, once badly hurt, it throws down haste ground that lasts until the wave is over; from Elite it also sprints once below half health; at Boss rank, no haste ground, crit immune, calls three spawnlings once below half health and heals itself when left alone |
 | Ghost      | sheet with eyes, floating | +20 armor. Turns invisible to single-target towers for ~10s the first time it's hit (~15s from Veteran; area damage still reaches it); at Elite and Boss rank, also permanently shrouds every other ally near it; at Boss rank it fades out for 3s of every 10 |
 | Mender     | cross         | Deals no damage of its own; periodically restores health to every other ally near it; +20 spirit, rising to 60 at Boss. From Veteran it heals itself when left alone and, when it dies, heals and shields every ally near it; from Elite, adaptive armor; at Boss rank, the death blast is a heal alone. |
-| Jammer     | disc with four antennae, spinning | Jams every tower near it: they fire more slowly and see less far while it's in range (drawn as a pink ring; affected towers show a pink marker). A tower in a Beacon's range takes half of it. +20 magic resist; its reach and strength grow from Veteran, and from Elite it keeps a magic-only shield and its casing blunts magic hits (2 insulation, 4 at Boss). |
+| Relay      | disc with four antennae, spinning | A fragile signal post: +10 magic resist, little health. The first time it is hurt it calls two Walkers of its rank; from Veteran it calls two more once below half health; from Elite, three each time, and four at Boss. Kill it in one blow, or fight what it calls. |
 | Juggernaut | square with an inset plate | Slow, with plating that blunts a huge flat chunk of every physical hit; magic, Cracked and Sundered get past it. +15 magic resist and +43 tenacity. From Veteran, when it dies it blinds the towers within 2 cells (4 from Elite) until the wave is over; from Elite, crit immune; at Boss rank, a large magic shield once below half health. |
 | Mite       | circle        | Tiny and quick, with 10 agility rising 5 a rank to 25 at Elite and 35 at Boss; meant for a `swarm 12 mite`. at Boss rank it bursts into three broodlings when it dies. |
 | Courier    | triangle      | Very fast and fragile, with a high bounty, and nimble (25 agility, 35 from Veteran, 50 at Boss) enough to dodge an aimed shot now and then. From Elite it sprints when first hit; at Boss rank, after every dodge too. |
-| Shieldbearer | cross         | +30 armor, and spirit from Veteran that makes the shields it gets hold more. Periodically shields every other ally near it against physical damage only; magic goes straight through. From Elite it shields itself too and has a little plating; at Boss rank, in a wider reach. |
 | Salamander | lizard, wriggling as it walks | Immune to burn, so a Cinder-only defence does nothing; Soulfire still burns it. Regenerates 1 health a second (a trait), doubling at Veteran, Elite and Boss. From Elite, +25 magic resist and a burst of healing once below 30% health. |
 | Yeti       | shaggy ball with eyes, lumbering | Immune to freeze and chill; Dazed still stops it. +15 armor and magic resist. From Elite its fur blunts 2 points of every hit and it heals once below 40% health; at Boss rank, +50 resilience. |
 | Magma      | jagged boulder with a glowing core | Slow, pulsing and immune to burn. +30 magic resist, 30 spirit, 10 agility, 70 resilience (85 from Elite, 95 at Boss), so crits rarely land. Once below 65% health it gives every other enemy within 3 cells +15 magic resist for 15 s (+30 from Soldier, +50 from Veteran); below 5% it gains +100 resilience, spirit and magic resist for 10 s. From Veteran, every 1.5 s it drops a pool that heals the enemies in it (0.35 health a tick, 0.6 from Elite, 1 at Boss), until it falls below half health (a quarter at Boss). From Elite, +10 armor, 45 magic resist and 45 spirit (+15, 60 and 60 at Boss). |
@@ -429,7 +428,8 @@ packs it tighter.
 An affix is an adjective a wave script writes right before the enemy id (`3 elite swarm 4 armored
 mite`), or in the head for every slot of the wave (`soldier armored: 8 walker`). Each gives the enemy
 one twist on top of its type and rank, and its name reads in front of the enemy's ("Armored Knight").
-A slot carries at most two, the head's included, and a boss chain takes none. No affix changes the
+A slot carries at most two, the head's included, and a boss chain takes none. An affix that works on the allies
+near it (Commanding, Vengeful, Warding, Mending, Jamming) never goes on a swarm, whose every member would cast it. No affix changes the
 bounty. An affix that measures health measures what one member of the slot is sent with, so a swarm
 member's share is its own; Hulking counts first, so the others measure its extra health.
 
@@ -444,6 +444,9 @@ member's share is its own; Hulking counts first, so the others measure its extra
 | Withered | `withered` | 130% of its speed, but loses 2% of its health every second, so what holds it back kills it; never with Regenerating |
 | Commanding | `commanding` | While it lives, the allies near it have Resolve: 10% less damage taken at Grunt, up to 30% at Boss; it fades soon after the Commander falls |
 | Vengeful | `vengeful` | As it dies, the allies near it Sprint: 1.5 s at Grunt, up to 4 s at Boss |
+| Warding | `warding` | Every 5 s, the allies near it get a Shield against physical hits only: 40 points at Grunt, up to 640 at Boss; magic goes straight through |
+| Mending | `mending` | While it lives, the allies near it Heal, more with rank; less than a Mender heals |
+| Jamming | `jamming` | Jams the towers near it: they fire 30% slower and see 0.6 cells less far at Grunt, up to 50% and a cell at Boss |
 | Taunting | `taunting` | Every tower that picks one target aims at it while it is in range; an enemy carrying Priority still comes first |
 | Coldblooded | `coldblooded` | A Freeze on it lasts half as long; never with Unstoppable |
 | Steadfast | `steadfast` | A Daze on it lasts a third as long |
@@ -462,7 +465,7 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 | `runner`  | Runner (faster when hurt; Boss spawns a brood)           |
 | `ghost`   | Ghost (turns invisible when first hit; Elite+ shrouds)   |
 | `mender`  | Mender (heals allies)                                    |
-| `jammer`  | Jammer (weakens nearby towers; in no wave yet)           |
+| `relay`   | Relay (calls Walkers when hurt)                          |
 | `e`       | spacer: takes a spawn slot, spawns nothing               |
 | `warden`  | the Warden boss chain (The Amber Hive only)              |
 | `drone`, `hiveGuard`, `broodNurse`, `larva`, `cocoon`, `hornet` | The Amber Hive's own enemies (The Amber Hive only) |
@@ -474,7 +477,6 @@ A wave script names enemies by these ids; the full grammar is in `src/main/java/
 | `juggernaut` | Juggernaut (slow, huge plating)                       |
 | `mite`    | Mite (tiny, one hit; send in a `swarm`)                  |
 | `courier` | Courier (very fast, fragile, high bounty)                |
-| `shieldbearer` | Shieldbearer (physical-only shield for allies)      |
 | `salamander` | Salamander (burn-immune)                              |
 | `yeti`    | Yeti (immune to freeze and chill)                        |
 | `magma`   | Magma (slow, burn-proof; its trail heals)                |

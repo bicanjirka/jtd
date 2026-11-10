@@ -94,13 +94,13 @@ final class StormRidgeLevel {
                                     .withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("soldier: 3 raincloud e golem e 3 raincloud").withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("soldier: gale column 6 knight e 2 raincloud").withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("soldier: jammer 4 raincloud e gale column 6 walker").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("soldier: jamming raincloud 4 raincloud e gale column 6 walker").withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("veteran: 2 golem e gale column 6 knight e 3 raincloud").withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("w30 veteran: 6 raincloud e 2 gale column 6 walker").withClearBonus(CLEAR_BONUS),
+                            new WaveDefinition("w30 veteran: mending raincloud 5 raincloud e 2 gale column 6 walker").withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("veteran: juggernaut gale e column 6 knight e 4 raincloud").withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("veteran: elite hulking raincloud 3 raincloud e 2 gale column 8 knight")
                                     .withClearBonus(CLEAR_BONUS),
-                            new WaveDefinition("veteran: elite gale column 8 knight e elite jammer 4 raincloud e golem")
+                            new WaveDefinition("veteran: elite gale column 8 knight e elite jamming raincloud 4 raincloud e golem")
                                     .withClearBonus(CLEAR_BONUS),
                             new WaveDefinition("elite: thunder e column 6 knight e elite gale e 4 raincloud")
                                     .withClearBonus(CLEAR_BONUS)),

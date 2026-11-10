@@ -171,6 +171,38 @@ class AffixTest {
     }
 
     @Test
+    void anAllyBesideAWardingEnemyIsShieldedAgainstPhysicalHitsOnly() {
+        EnemyFixtures.liveMob(this.world, this.grub.withAffixes(List.of(Affix.WARDING), WHOLE));
+        DefinedEnemyMob ally = EnemyFixtures.liveMob(this.world, this.grub);
+        EnemyFixtures.tickEnemies(this.world, 1, 2 * SECONDS_3);
+        int before = ally.getHealth();
+
+        ally.doDamage(Damage.magic(1));
+
+        assertThat(ally.hasEffect(EffectKind.SHIELD)).isTrue();
+        assertThat(ally.getHealth()).isLessThan(before);
+    }
+
+    @Test
+    void anAllyBesideAMendingEnemyIsHealed() {
+        EnemyFixtures.liveMob(this.world, this.grub.withAffixes(List.of(Affix.MENDING), WHOLE));
+        DefinedEnemyMob ally = EnemyFixtures.liveMob(this.world, this.grub);
+
+        EnemyFixtures.tickEnemies(this.world, 1, SECONDS_3);
+
+        assertThat(ally.hasEffect(EffectKind.HEAL)).isTrue();
+    }
+
+    @Test
+    void jammingGivesTheEnemyAJamUnlessItJamsAlready() {
+        EnemyDefinition jamming = this.grub.withAffixes(List.of(Affix.JAMMING), WHOLE);
+
+        assertThat(jamming.disruption()).isPresent();
+        assertThat(Affix.JAMMING.problemWith(this.grub)).isEmpty();
+        assertThat(Affix.JAMMING.problemWith(jamming)).isPresent();
+    }
+
+    @Test
     void aCommandersAndAVengefulEnemysReachIsTheRingTheBoardDraws() {
         assertThat(this.grub.withAffixes(List.of(Affix.COMMANDING), WHOLE).supportAura())
                 .hasValueSatisfying(aura -> assertThat(aura.kind()).isEqualTo(EffectKind.RESOLVE));

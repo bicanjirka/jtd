@@ -282,6 +282,19 @@ class WaveScriptTest {
     }
 
     @Test
+    void anAffixThatWorksOnAlliesFailsOnASwarmButGoesOnAnyOtherShape() {
+        assertThatThrownBy(() -> WaveScript.parse("swarm 4 commanding walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»walker«")
+                .hasMessageContaining("swarm");
+
+        WaveContent content = WaveScript.parse("line 4 commanding walker", Rank.GRUNT, this.catalog);
+
+        assertThat(content.enemySet()).allSatisfy(definition ->
+                assertThat(definition.affixes()).containsExactly(Affix.COMMANDING));
+    }
+
+    @Test
     void anAffixWordCannotBeAnEnemyId() {
         EnemyCatalog catalog = new EnemyCatalog();
 

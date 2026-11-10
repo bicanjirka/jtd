@@ -2,9 +2,11 @@ package td.enemy;
 
 import td.damage.DamageType;
 import td.effect.EffectKind;
+import td.effect.HealTemplate;
 import td.effect.ResolveTemplate;
 import td.effect.ShieldTemplate;
 import td.effect.SprintTemplate;
+import td.stat.DisruptionAura;
 import td.stat.EnemyStat;
 import td.term.Term;
 import td.term.TermNumbers;
@@ -158,6 +160,11 @@ public enum Affix implements Term {
                     + " less damage taken at Grunt, up to " + TermNumbers.percent(commandStacks(Rank.BOSS) / 100f)
                     + " at Boss, while it lives", EffectKind.RESOLVE);
         }
+
+        @Override
+        public boolean actsOnAllies() {
+            return true;
+        }
     },
     VENGEFUL("Vengeful") {
         @Override
@@ -173,6 +180,73 @@ public enum Affix implements Term {
                     + TermNumbers.seconds(vengeanceTicks(Rank.GRUNT) / TickRate.TICKS_PER_SECOND) + " at Grunt, up to "
                     + TermNumbers.seconds(vengeanceTicks(Rank.BOSS) / TickRate.TICKS_PER_SECOND) + " at Boss",
                     EffectKind.SPRINTING);
+        }
+
+        @Override
+        public boolean actsOnAllies() {
+            return true;
+        }
+    },
+    WARDING("Warding") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.of(this, new Ability(AbilityTerm.SHIELD_WALL,
+                    new PeriodicTrigger(WARD_INTERVAL_TICKS),
+                    new ApplyEffectAction(ShieldTemplate.physicalOnly(wardPoints(context.rank()), WARD_HOLD_TICKS),
+                            new RadiusTarget(WARD_REACH))))));
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.format("gives the allies near it a {} against physical hits from time to time, worth "
+                    + TermNumbers.whole(wardPoints(Rank.GRUNT)) + " at Grunt, up to "
+                    + TermNumbers.whole(wardPoints(Rank.BOSS)) + " at Boss; magic goes straight through", EffectKind.SHIELD);
+        }
+
+        @Override
+        public boolean actsOnAllies() {
+            return true;
+        }
+    },
+    MENDING("Mending") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withAdditionalAbilities(List.of(IdentifiedAbility.of(this, new Ability(AbilityTerm.MEND,
+                    new PeriodicTrigger(MEND_INTERVAL_TICKS),
+                    new ApplyEffectAction(new HealTemplate(mendPerTick(context.rank()), MEND_HOLD_TICKS),
+                            new RadiusTarget(AFFIX_REACH))))));
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.format("gives the allies near it a {} while it lives, stronger with rank", EffectKind.HEAL);
+        }
+
+        @Override
+        public boolean actsOnAllies() {
+            return true;
+        }
+    },
+    JAMMING("Jamming") {
+        @Override
+        EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
+            return definition.withDisruption(jam(context.rank()));
+        }
+
+        @Override
+        public Optional<String> problemWith(EnemyDefinition definition) {
+            return definition.disruption().isPresent() ? Optional.of("it jams towers already") : Optional.empty();
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.of("jams the towers near it: they fire more slowly and see less far while it is in range, "
+                    + "more so with rank");
+        }
+
+        @Override
+        public boolean actsOnAllies() {
+            return true;
         }
     },
     TAUNTING("Taunting") {
@@ -281,6 +355,12 @@ public enum Affix implements Term {
     private static final int COMMAND_INTERVAL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     // Outlasts the interval, so an ally in reach stays covered and loses it soon after the commander falls.
     private static final int COMMAND_HOLD_TICKS = Math.round(2 * TickRate.TICKS_PER_SECOND);
+    private static final float WARD_REACH = 100f;
+    private static final int WARD_INTERVAL_TICKS = Math.round(5 * TickRate.TICKS_PER_SECOND);
+    private static final int WARD_HOLD_TICKS = Math.round(3 * TickRate.TICKS_PER_SECOND);
+    private static final int MEND_INTERVAL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    // Outlasts the interval, as Command's does.
+    private static final int MEND_HOLD_TICKS = Math.round(2 * TickRate.TICKS_PER_SECOND);
 
     private final String title;
 
@@ -318,6 +398,14 @@ public enum Affix implements Term {
         return false;
     }
 
+    /**
+     * Whether it works on the allies near it, so no swarm may carry it: each member would cast it, and what allies get
+     * from several casters adds up.
+     */
+    public boolean actsOnAllies() {
+        return false;
+    }
+
     /** Whether one slot may not carry both, because together they undo each other. */
     public boolean excludes(Affix other) {
         return false;
@@ -350,6 +438,36 @@ public enum Affix implements Term {
             case VETERAN -> 20;
             case ELITE -> 25;
             case BOSS -> 30;
+        };
+    }
+
+    private static float wardPoints(Rank rank) {
+        return switch (rank) {
+            case GRUNT -> 40f;
+            case SOLDIER -> 80f;
+            case VETERAN -> 160f;
+            case ELITE -> 320f;
+            case BOSS -> 640f;
+        };
+    }
+
+    /** What the heal restores a tick; less than a Mender's own, which is the healer. */
+    private static float mendPerTick(Rank rank) {
+        return switch (rank) {
+            case GRUNT -> 0.1f;
+            case SOLDIER -> 0.25f;
+            case VETERAN -> 0.5f;
+            case ELITE -> 1f;
+            case BOSS -> 2f;
+        };
+    }
+
+    private static DisruptionAura jam(Rank rank) {
+        return switch (rank) {
+            case GRUNT, SOLDIER -> new DisruptionAura(100f, 0.3f, 0.6f);
+            case VETERAN -> new DisruptionAura(115f, 0.35f, 0.7f);
+            case ELITE -> new DisruptionAura(125f, 0.4f, 0.8f);
+            case BOSS -> new DisruptionAura(140f, 0.5f, 1f);
         };
     }
 

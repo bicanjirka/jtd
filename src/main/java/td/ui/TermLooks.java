@@ -143,7 +143,7 @@ public final class TermLooks {
     private static TermLook ability(AbilityTerm term) {
         return new TermLook(switch (term) {
             case BRONZE_SHELL, BRACE, SHIELD_WALL, GUARD, AEGIS, HARDEN, PANIC, STONE_SKIN, WARD, LAST_WARD, WARD_MINE -> Palette.STATUS_MARKER_SHIELD;
-            case CAPACITOR, BULWARK, ARCANE_WARD -> Palette.STATUS_MARKER_CHARGED;
+            case BULWARK, ARCANE_WARD -> Palette.STATUS_MARKER_CHARGED;
             case MEND, RECOVER, REWIND, LAST_RITES, SHED_SKIN, HUNKER, HEALING_POOL, BLOODLUST -> Palette.STATUS_MARKER_HEAL;
             case BOLT, SIDESTEP, SECOND_WIND, HASTE_FIELD, CHARGE, GUST, VENGEANCE -> Palette.STATUS_MARKER_SPRINTING;
             case BLINDING_BURST, THUNDERCLAP -> Palette.DISRUPTION;
