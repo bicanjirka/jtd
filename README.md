@@ -152,7 +152,8 @@ the tick the fractions add up. The Radar spins faster instead. No tower runs mor
 base, or slower than a quarter of it.
 
 The price is the first copy's: each copy of a tower already on the board makes the next one cost
-15% more, and the shop shows the current price. Selling refunds three quarters of what the tower
+25% more than the one before it (compounding: the 10th copy costs about 7.5 times the first), and the
+shop shows the current price. Selling refunds three quarters of what the tower
 and its upgrades cost.
 
 Every tower, the Aura included, has its own upgrade tree of four slots, shown in place of the

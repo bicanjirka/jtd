@@ -1379,7 +1379,7 @@ class GameEngineTest {
     }
 
     @Test
-    void eachCopyOfATowerAlreadyOnTheBoardRaisesTheNextOnesPriceByFifteenPercent() {
+    void eachCopyOfATowerAlreadyOnTheBoardRaisesTheNextOnesPriceByAQuarterOfThePrevious() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
@@ -1387,8 +1387,8 @@ class GameEngineTest {
         placeSniper(engine, 1, 0);
         placeSniper(engine, 2, 0);
 
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - 15 - 17 - 20);
-        assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SNIPER)).isEqualTo(22);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - 15 - 19 - 23);
+        assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SNIPER)).isEqualTo(29);
         assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SPLASH)).isEqualTo(SplashTower.PRICE);
     }
 
@@ -1403,7 +1403,7 @@ class GameEngineTest {
 
         engine.getGameWorld().towers().sell(engine.cells().at(1, 0).getTower());
 
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuilds + 13);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuilds + 14);
     }
 
     @Test
@@ -1418,8 +1418,8 @@ class GameEngineTest {
 
         placeSniper(engine, 0, 0);
 
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterSale - 17);
-        assertThat(creditsAfterSale).isEqualTo(100 - 15 - 17 + 11);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterSale - 19);
+        assertThat(creditsAfterSale).isEqualTo(100 - 15 - 19 + 11);
     }
 
     @Test
