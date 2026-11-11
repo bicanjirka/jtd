@@ -1,36 +1,79 @@
-# jTD — a Swing tower defense game
+# jTD: a Swing tower defense game
 
 A desktop tower-defense game written in plain Java and Swing. Enemies walk a fixed path
 across a grid board; you spend credits placing towers on the buildable cells beside it and
 try to kill everything before it laps the path and costs you a life.
 
-All of the artwork is vector — every enemy, tower, beam and path marker is a
+All of the artwork is vector: every enemy, tower, beam and path marker is a
 `java.awt.Shape` built and painted in code. There are no image assets in the project.
 
-## Requirements
+![A level in play](docs/screenshots/game.png)
 
-- **JDK 25** (the build targets release 25)
-- **Maven 3.9+**
+## Why it exists
 
-## Build and run
+jTD began as a hobby project in my first year at university, when I was learning Java. Today it
+is how I learn agentic coding with Claude Code, in a way that is fun and rewarding.
+
+## Tech stack
+
+- **Java 25**, Swing and Java2D, with no game framework
+- **Maven 3.9+**, shaded into one runnable jar
+- **JUnit 5.12** and **AssertJ 3.27**, with hand-written fakes and no mocking library
+- **SLF4J 2.0** with **Logback 1.5**
+- **Spotless** (formatting) and **Checkstyle 14.1** (style and package boundaries), both run by
+  `mvn verify`; **PIT** for mutation testing, run on demand
+
+## Build, run and test
+
+Needs JDK 25 and Maven 3.9+.
 
 ```bash
 mvn package               # build target/jTD.jar
 java -jar target/jTD.jar  # run the game
-```
-
-The jar is shaded, so it bundles its SLF4J/Logback dependencies and needs no extra classpath.
-
-Other useful commands:
-
-```bash
-mvn verify        # rules check + test suite — the standing check before a commit
-mvn test          # run the test suite
-mvn -q compile    # fast syntax/type check
+mvn verify                # formatting, Checkstyle and the whole test suite
 
 # run a single test
 mvn test -Dtest=GameEngineTest#placingATowerOnABuildableCellChargesCreditsAndOccupiesTheCell
 ```
+
+The jar is shaded, so it bundles its SLF4J/Logback dependencies and needs no extra classpath.
+
+## Design notes
+
+- **The engine is headless.** `GameEngine` and the domain packages own all game state and input
+  semantics and never touch Swing. The game, the tests and the balance tools drive the same engine;
+  `GameHost` is its only channel to the UI ([ADR 0002](docs/adr/0002-headless-engine.md)).
+- **Two threads, and only immutable snapshots cross between them.** The `game-loop` thread runs the
+  simulation and builds each frame. The Swing thread only paints the finished frame. Related fields
+  cross as one immutable snapshot behind one `volatile`, and a click that changes game state is a
+  request the next tick picks up, never a write into engine state
+  ([0007](docs/adr/0007-owner-publishes-snapshots.md), [0019](docs/adr/0019-edt-commands-are-requests.md)).
+- **Frames are described, then painted.** `BoardRenderer` turns a tick into AWT-free draw records,
+  and `Java2DFrameRenderer` alone turns them into pixels. The same frame can also be printed as
+  text for debug logs ([0003](docs/adr/0003-frames-are-described-then-painted.md)).
+- **Runs reproduce.** A tick always runs in the same order (enemies, projectiles, zones, towers),
+  randomness comes from an injected seeded source, and whatever the simulation iterates keeps a
+  fixed order. A save between waves holds enough to replay the next wave tick for tick
+  ([0021](docs/adr/0021-a-wave-starts-from-its-save.md)).
+- **Balance is measured, not guessed.** `td.balance.BalanceReport` plays every level headlessly
+  with simulated players over many seeds and reports each margin with its 95% interval
+  ([0010](docs/adr/0010-balance-is-measured-by-players.md)).
+- **A performance budget with a harness that checks it.** `td.PerformanceHarness` fills the level
+  that has the most buildable cells with towers. It exits with an error when the 99th-percentile tick
+  or frame build takes longer than 1 ms, or when a frame build allocates more than 512 KB.
+- **Decisions are written down.** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) is the overview,
+  [`docs/adr/`](docs/adr/README.md) holds the decision records, and Checkstyle enforces the rules
+  that can be checked mechanically.
+
+## How it is built
+
+[Claude Code](https://claude.com/claude-code) writes the code and commits every change, so nearly
+every commit is co-authored with it. I steer it and review its design decisions, aiming for clean
+code and a clean architecture. The `CLAUDE.md` files hold the constraints it works under.
+
+## Licence
+
+[Apache License 2.0](LICENSE).
 
 ## Playing
 
