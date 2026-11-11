@@ -1,21 +1,13 @@
 # jTD — Tower Defense
 
-Swing tower-defense game. Java 25, Maven. Runtime deps: SLF4J + Logback. Tests: JUnit 5 + AssertJ.
+Swing tower-defense game.
 Before a structural choice (a new type, package, interface, listener, switch, parameter, state
 field or text format), read `docs/DESIGN.md`. Before reversing a structure, check `docs/adr/` for
 the decision behind it. `docs/ARCHITECTURE.md` is an overview of the system as it is now.
 
 ```bash
 mvn verify                # Spotless + Checkstyle + tests - run before every commit
-mvn -q compile            # fast type check
-mvn spotless:apply        # fix formatting
-mvn test -Dtest=GameEngineTest#someSentenceName
-mvn package && java -jar target/jTD.jar
 mvn -q compile exec:java -Dexec.mainClass=td.PerformanceHarness   # performance budget; add -Dexec.args=zones for the ground-zone loadout, --jfr to profile it (target/perf.jfr; top CPU and allocation per phase)
-mvn -q compile exec:java -Dexec.mainClass=td.balance.BalanceReport -Dexec.args="--save before"   # balance per level; then --compare before; also --seeds N --levels 0,2 --strong --variety --sweep lives|bounty|clear|pause|spacing --html
-mvn -q compile exec:java -Dexec.mainClass=td.balance.WaveCheckReport -Dexec.args="--level 0 --checks 6:single,12:control+sustain --strip 17"   # one level wave by wave: strong margin, pressure, role bans, strip; --parts strong,margin,bounty,bans,strip; --save-before 17 then --from 17 replays only the late waves
-mvn -q compile exec:java -Dexec.mainClass=td.PurchaseHarness -Dexec.args="0,1,2 12 all 4"   # purchases compared, with each line's fair price and a table of fair prices per tier: levels, seeds, tower or all, copies of each tower in the army
-mvn -q compile exec:java -Dexec.mainClass=td.BuildHarness -Dexec.args="2 40 cinder 4 2 1500 1"   # builds of one tower compared: level, seeds, tower, copies, background copies, budget, upgraded copies
 mvn test-compile pitest:mutationCoverage -Dpit.targetClasses='td.tower.*' -Dpit.targetTests='td.tower.*'   # mutation testing on demand, never in verify: narrow both to the package you changed; report in target/pit-reports/index.html
 ```
 
@@ -170,9 +162,3 @@ frame build reads them.
 - Expected numbers come from the test's own input or the mechanic's formula, never from content.
 - Each test proves one behaviour no other test proves. A mechanic its unit test covers gets an
   integration test only for wiring the unit test cannot see.
-
-## UI
-
-One look on every OS. Every control is a `HudButton`/`HudToggleButton` and paints itself;
-nothing inherits the platform look-and-feel. Panel borders come from `Hud`. Prefer a glyph
-(`►`) over drawn artwork for a simple control. Before choosing a colour, read `docs/UI.md`.

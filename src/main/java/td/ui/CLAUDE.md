@@ -57,6 +57,10 @@ keeps the seam honest.
 
 ## Swing
 
+- One look on every OS: nothing inherits the platform look-and-feel. A simple command control takes a
+  text glyph (`▶`); any other icon is painted from vectors (a `Pictogram` through `TermIconPainter`, or a
+  `PaintedIcon`) so it stays sharp at every HiDPI scale; only a tower tile shows an image, the tower's
+  own board sprite rendered through the pipeline. Before choosing a colour, read `docs/UI.md`.
 - Every control is a `HudButton`/`HudToggleButton`, every text input a `HudTextField` (Swing's
   basic UI, never the platform's), and every border comes from `Hud`. Controls
   override `paintComponent` without calling `super`, so the look-and-feel paints nothing but its
