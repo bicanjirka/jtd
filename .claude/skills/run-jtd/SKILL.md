@@ -20,7 +20,7 @@ seen, and prefer `ssboard` crops. When a step misbehaves, read `GOTCHAS.md` in t
 ```bash
 mvn -q package -DskipTests
 mvn -q dependency:build-classpath -Dmdep.outputFile=target/runtime-classpath.txt
-javac -cp target/classes -d .claude/skills/run-jtd .claude/skills/run-jtd/*.java
+javac -cp target/classes -d .claude/skills/run-jtd .claude/skills/run-jtd/*.java .claude/skills/run-jtd/td/ui/*.java
 CP="target/classes;.claude/skills/run-jtd;$(cat target/runtime-classpath.txt)"
 ```
 
@@ -179,3 +179,34 @@ write a scratch class that registers it with `EnemyCatalog.cloneAndAdjust` and r
 `java -cp "$CP" PreviewIcons [out.png]` (default `shots/icons.png`). A contact sheet of every effect, tower
 term, trait, ability, affix and perk-line face, each at 40 px and at 20 px with its title under it. Use it to check a
 new pictogram or look; the live states (stacks, time sweep, bar, ward) are covered by `TermIconPainterTest`.
+
+## PreviewUpgrades - the upgrade review board
+
+`java -Djava.awt.headless=true -cp "$CP" td.ui.PreviewUpgrades [outDir]` (default `target/upgrade-board`), from the
+repository root. It is in package `td.ui` to reach the Upgrades panel's package-private parts. It writes three things:
+
+- `index.html` (from `upgrade-board.html` here) shows every tower's Upgrades panel, painted by the game on a fresh
+  tower, and hovering a node shows its real sheet. Each tower with a `docs/features/FEATURE-next-gen-<type>-tower.md`
+  (`<type>` is the `TowerFactory.Type` constant in lower case) also gets an interactive mock of its tier tree. A node's
+  hover lists a sheet for each name its text uses: the doc's Terms row, another node, the passive, or the game
+  term as it reads today. The notes list every name the tree's text uses, a count of what a player must learn; a
+  forked tree counts them per side. A fork gate's mock shows a side's tree dimmed while its fork node is hovered, has
+  Jump to buttons that meet the gate and pick a side; from the fork's tier up, the nodes both sides share sit in a
+  column of their own.
+- `sheets/<type>.png` holds each panel and its sheets. Publish them beside the page.
+- `ledger.md` lists what retiring nodes leaves unused. A node is retired when its tower has a next-gen doc and no
+  row's Replaces names it. For mechanics, procs, hit bonuses, capabilities, targeting, stats, terms and node
+  pictograms, the ledger lists each one that only retired nodes still bring. A term the doc's text mentions counts as
+  used. The page shows the same list per tower.
+
+The doc's tables can sit under any heading level, and are found by their heading:
+
+| Heading | Columns |
+|---|---|
+| Bare tower | Stat, Value, Today (the old value, shown struck), Replaces. Write the row `Passive` as `Name: what it does`; a name that is a term's title gives the passive its glyph. |
+| Tiers | Tier (`0`, `I`, `II`...), Gate (`XP 60`, other text, or `-`; above Tier 0, `-` draws a "Gate not set" gate the mock can still meet), Unlock (`$20` or `-`), Colour (one hex, or two for a left-to-right blend), Fork (optional: a cluster of that tier drawn in its gate as a fork gate; every row after a member, directly or not, belongs to that side and shows only once it is picked or hovered). A tier with no rows draws as "not designed yet". |
+| Upgrade tree | Tier, Node, Kind (`stat` square / `ability` round), Cluster (rows sharing a name form one pick-one cluster), After (node or cluster names), Glyph (a node id from any tree, or a term's title), Colour, Cost (`3 Sparks`), Replaces (old node ids it carries over), Does and Notes (`<br>` splits lines). |
+| Terms (optional) | Term, Glyph (blank for a game term's own), Means. A new name, or a game term's new meaning. |
+| Open questions | A numbered list; `**Topic.**` starts an item. |
+
+The tool stops at an unknown tier, kind, glyph, After or Replaces, and names the file and row.

@@ -1,0 +1,1228 @@
+<title>Next-gen Upgrade Panels</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a review board in the game's own HUD greys; each tower is a bench with the live panel beside its next-gen mock, notes trailing. Single dark look on purpose: the panels are the game's dark chrome. */
+:root {
+  color-scheme: dark;
+  --bg: #0D0E10;
+  --raised: #171717;
+  --fill: #1d1e21;
+  --hover: #29292A;
+  --line: #3E3E3F;
+  --border: #676769;
+  --fg: #EAEAEF;
+  --dim: #A9A9AC;
+  --gloss: #8D8D90;
+  --off: #717173;
+  --rose: #FF6B6B;
+  --core: #7FD4FF;
+  --gold: #E8C468;
+  --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --game: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: .01em; }
+h1 { font-size: 30px; font-weight: 700; }
+h2 { font-size: 22px; font-weight: 600; }
+h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+p { margin: 0; }
+.lede { color: var(--dim); max-width: 70ch; margin-top: 8px; }
+code, .mono { font-family: var(--mono); font-size: 12px; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); margin-top: 20px; }
+.bar-in { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding-block: 10px; }
+.towers { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 420px; min-width: 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border: 1px solid var(--border); border-radius: 3px; color: var(--fg); text-decoration: none; font-size: 12px; background: var(--raised); }
+.chip:hover { background: var(--hover); border-color: #9E9EA1; }
+.chip:focus-visible, button:focus-visible, .hot:focus-visible, .nn:focus-visible { outline: 2px solid var(--core); outline-offset: 2px; }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--off); }
+.chip.refined .dot { background: var(--gold); }
+.toggles { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.seg span { font-size: 11px; color: var(--gloss); padding: 3px 8px; border-right: 1px solid var(--line); background: var(--bg); }
+.seg button { font: 12px var(--body); color: var(--dim); background: var(--raised); border: 0; padding: 3px 9px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: #39393A; color: var(--fg); }
+
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px 24px; margin-top: 22px; color: var(--dim); font-size: 13px; }
+.legend div { display: flex; gap: 10px; align-items: flex-start; }
+.sw { flex: none; width: 22px; height: 22px; border: 1.5px solid var(--border); background: var(--fill); margin-top: 1px; }
+.sw.round { border-radius: 50%; border-color: #8fd18a; background: color-mix(in srgb, #8fd18a 18%, var(--fill)); }
+.sw.cl { width: 30px; border-style: dashed; border-radius: 5px; background: transparent; }
+.sw.lock { filter: grayscale(1); opacity: .55; border-radius: 50%; border-color: #8fd18a; }
+
+section.tower { margin-top: 44px; scroll-margin-top: 70px; }
+.thead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.thead .tag { font-size: 12px; color: var(--gold); font-family: var(--mono); }
+.thead .tag.off { color: var(--gloss); }
+.bench { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 372px), 1fr)); gap: 22px; margin-top: 16px; align-items: start; }
+.col { min-width: 0; display: grid; gap: 10px; align-content: start; }
+.cap { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cap small { color: var(--gloss); font-size: 12px; }
+.frame { overflow-x: auto; overflow-y: hidden; }
+
+/* current panel */
+.old { position: relative; width: 360px; height: 504px; background-repeat: no-repeat; border-radius: 2px; }
+.hot { position: absolute; cursor: pointer; border-radius: 4px; }
+.hot.round { border-radius: 50%; }
+.hot:hover, .hot.flag { box-shadow: 0 0 0 2px var(--gold); }
+
+.grid6 { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 372px), 1fr)); gap: 30px 22px; margin-top: 16px; }
+
+/* tooltip, the game's look */
+#tip, #sub { position: fixed; z-index: 60; display: none; }
+#sub { z-index: 61; }
+#tip.on, #sub.on { display: block; }
+#tip .img { background-repeat: no-repeat; border-radius: 2px; box-shadow: 0 8px 28px rgba(0,0,0,.6); }
+.gt { width: 288px; background: var(--raised); border: 1px solid var(--border); padding: 6px 8px 7px; font: 13px/1.38 var(--game); color: var(--fg); box-shadow: 0 8px 28px rgba(0,0,0,.6); }
+.gt .tt { display: flex; align-items: center; gap: 7px; }
+.gt .face { width: 22px; height: 22px; border: 1.5px solid; display: grid; place-items: center; flex: none; }
+.gt .face.r { border-radius: 50%; }
+.gt .face i { width: 16px; height: 16px; display: block; -webkit-mask-size: contain; mask-size: contain; }
+.gt .name { font-weight: 700; font-size: 14px; flex: 1; }
+.gt .val { color: var(--fg); }
+.gt .row { display: flex; gap: 6px; color: var(--dim); }
+.gt .row b { font-weight: 400; color: var(--fg); margin-left: auto; }
+.gt .x { color: var(--rose); }
+.gt .ok { color: var(--fg); }
+.gt p { margin-top: 4px; }
+.gt hr { border: 0; border-top: 1px solid var(--border); margin: 6px 0; }
+.gt .note { color: var(--gloss); font-style: italic; font-size: 12px; margin-top: 3px; }
+.gt .note::before { content: "? "; font-style: normal; color: var(--gold); }
+.gt .act { color: var(--dim); margin-top: 2px; }
+.tipwrap { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; max-width: calc(100vw - 16px); }
+.terms { display: grid; gap: 6px; width: 250px; flex: none; }
+.gt.term { width: 250px; }
+.gt .badge { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--gloss); border: 1px solid var(--line); border-radius: 2px; padding: 0 4px; white-space: nowrap; }
+.gt .badge.new { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 50%, transparent); }
+.gt .was { color: var(--gloss); font-size: 12px; margin-top: 4px; }
+.gt .was b { font-weight: 400; color: var(--dim); }
+.tm { cursor: help; white-space: nowrap; color: var(--fg); border-bottom: 1px dotted var(--gloss); }
+.tm:hover { border-bottom-color: var(--gold); }
+.tm i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; margin-right: 2px; background: currentColor; -webkit-mask-size: contain; mask-size: contain; }
+
+/* next-gen panel */
+.np { position: relative; width: 360px; background: var(--bg); border: 1px solid var(--border); border-radius: 3px; font-family: var(--game); user-select: none; }
+.np .ttl { position: absolute; left: 8px; top: -9px; background: var(--bg); padding: 0 4px; font-size: 13px; color: var(--fg); }
+.np > svg { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.np .xp { position: absolute; left: 14px; right: 14px; top: 14px; display: flex; gap: 10px; align-items: center; font-size: 13px; }
+.np .xp .track { flex: 1; height: 4px; background: #242427; border-radius: 2px; overflow: hidden; }
+.np .xp .track i { display: block; height: 100%; background: var(--fg); width: 0; transition: width .3s; }
+.np .foot { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-size: 12px; color: var(--dim); }
+.np .foot.warn { color: var(--rose); }
+.band { position: absolute; border-radius: 3px; border: 1px solid; transition: filter .5s, background .5s; }
+.band.locked { filter: grayscale(1) brightness(.75); }
+.band .num { position: absolute; left: 0; top: 0; bottom: 0; width: 22px; display: grid; place-items: center; font: 600 13px var(--display); border-right: 1px solid; }
+.band .empty { position: absolute; inset: 0 0 0 22px; display: grid; place-items: center; color: var(--off); font-size: 12px; font-style: italic; }
+.gate { position: absolute; left: 22px; right: 0; bottom: 0; height: 22px; display: flex; align-items: center; gap: 7px; padding: 0 6px; font-size: 11.5px; color: var(--dim); border-top: 1px solid #2a2a2c; }
+.gate .gtrack { flex: 1; height: 3px; background: #2a2a2c; border-radius: 2px; overflow: hidden; }
+.gate .gtrack i { display: block; height: 100%; background: var(--dim); }
+.gate button { font: 11px var(--game); color: var(--fg); background: var(--hover); border: 1px solid var(--border); border-radius: 2px; padding: 1px 6px; cursor: pointer; pointer-events: auto; }
+.gate button.buy { border-color: var(--gold); color: var(--gold); }
+.gate .lk { width: 11px; height: 11px; flex: none; color: var(--dim); }
+.band.open .gate { color: var(--gloss); }
+.clu { position: absolute; border: 1.5px dashed var(--border); border-radius: 6px; transition: filter .5s; }
+.clu.owned { border-style: solid; border-color: #9E9EA1; }
+.clu .cn { position: absolute; left: 50%; transform: translateX(-50%); top: -8px; background: var(--bg); padding: 0 4px; font-size: 10px; color: var(--gloss); white-space: nowrap; }
+.nn { position: absolute; display: grid; place-items: center; border: 2px solid #555558; background: #161618; cursor: pointer; transition: filter .5s, opacity .3s, box-shadow .15s; border-radius: 3px; }
+.nn.ab { border-radius: 50%; }
+.nn i { width: 62%; height: 62%; display: block; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; background: #8a8a8e; }
+.nn.avail { border-color: #9E9EA1; }
+.nn.avail i { background: var(--fg); }
+.nn.ab.avail { border-color: var(--h); background: color-mix(in srgb, var(--h) 14%, #161618); }
+.nn.ab.avail i { background: var(--h); }
+.nn.own { border-color: var(--fg); background: #2a2a2d; }
+.nn.own i { background: var(--fg); }
+.nn.ab.own { border-color: var(--h); background: color-mix(in srgb, var(--h) 42%, #161618); }
+.nn.ab.own i { background: #fff; }
+.nn.own::after { content: "✓"; position: absolute; right: -6px; bottom: -6px; width: 13px; height: 13px; border-radius: 50%; background: var(--fg); color: var(--bg); font: 700 9px/13px var(--game); text-align: center; }
+.nn.ab.own::after { background: var(--h); }
+.nn.dorm { opacity: .38; }
+.nn.pv, .clu.pv { opacity: .45; filter: grayscale(.5); }
+.band .veil { position: absolute; inset: 0 0 22px 22px; display: grid; place-items: center; color: var(--gloss); font-size: 12px; font-style: italic; text-align: center; padding: 0 8px; }
+.band .lane { position: absolute; top: 6px; border-left: 1px dashed #3a3a3e; }
+.band .lanel { position: absolute; top: 2px; font-size: 9.5px; color: var(--off); text-transform: uppercase; letter-spacing: .06em; }
+.sidejump { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 8px; font-size: 12px; color: var(--gloss); }
+.sidejump button { font: 11px var(--game); color: var(--fg); background: var(--hover); border: 1px solid var(--border); border-radius: 2px; padding: 2px 7px; cursor: pointer; }
+.sidejump button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.nn.dorm::after { content: "z"; background: var(--off); }
+.nn.alt { opacity: .55; border-style: dashed; }
+.nn.hl { box-shadow: 0 0 0 2px var(--fg), 0 0 12px rgba(255,255,255,.25); }
+.nn.path { box-shadow: 0 0 0 2px var(--gold); }
+.locked .nn, .locked.nn { filter: grayscale(1); opacity: .6; }
+.lnk { fill: none; stroke: #4a4a4d; stroke-width: 2; stroke-linejoin: round; transition: stroke .15s; }
+.halo { fill: none; stroke: var(--bg); stroke-width: 5; stroke-linejoin: round; }
+.lnk.own { stroke: #9E9EA1; }
+.lnk.lit { stroke: var(--gold); }
+.fitline { stroke: var(--rose); stroke-dasharray: 4 4; stroke-width: 1; opacity: .7; }
+.fitlabel { fill: var(--rose); font: 10px var(--game); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+@keyframes rise { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
+.band .glow { position: absolute; inset: 0; border-radius: 3px; background: linear-gradient(0deg, color-mix(in srgb, var(--h) 40%, transparent), transparent 70%); opacity: 0; pointer-events: none; }
+.band.unlocking .glow { animation: rise .7s ease-out, fade 1.4s ease-in .2s forwards; opacity: 1; }
+@keyframes fade { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .band.unlocking .glow { animation: none; opacity: 0; } .band, .nn, .clu { transition: none; } }
+
+.stats { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.stat { font-size: 12px; border: 1px solid var(--line); border-radius: 3px; padding: 1px 7px; color: var(--dim); background: var(--raised); }
+.stat b { color: var(--fg); font-weight: 500; font-variant-numeric: tabular-nums; }
+.stat s { color: var(--off); }
+.passive { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--dim); background: var(--raised); border: 1px solid var(--line); border-radius: 3px; padding: 8px 10px; }
+.passive i { flex: none; width: 18px; height: 18px; -webkit-mask-size: contain; mask-size: contain; margin-top: 2px; }
+.passive strong { color: var(--fg); font-weight: 600; }
+
+.abil { background: var(--bg); border: 1px solid var(--border); border-radius: 3px; padding: 10px 10px 8px; font-family: var(--game); position: relative; }
+.abil .ttl { position: absolute; left: 8px; top: -9px; background: var(--bg); padding: 0 4px; font-size: 13px; }
+.abil .none { color: var(--off); font-size: 12px; font-style: italic; padding: 4px 0; }
+.ar { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; padding: 3px 0; }
+.ar i { width: 16px; height: 16px; -webkit-mask-size: contain; mask-size: contain; }
+.ar small { display: block; color: var(--gloss); font-size: 11px; }
+/* An ability bar: one cell per unit, as long as the cost plus the spare; the fill runs across all of them. */
+.ub { position: relative; display: flex; width: calc(var(--units) * 24px); height: 16px; border: 1px solid var(--h); border-radius: 2px; overflow: hidden; background: #161618; }
+.ub .u { flex: 1; display: grid; place-items: center; position: relative; z-index: 1; }
+.ub .u + .u { border-left: 1px solid color-mix(in srgb, var(--h) 70%, #000); }
+.ub .u.spare { background: repeating-linear-gradient(135deg, transparent 0 3px, rgba(255,255,255,.05) 3px 5px); }
+.ub .u i { width: 12px; height: 12px; display: block; background: var(--h); opacity: .28; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.ub b { position: absolute; inset: 0 auto 0 0; width: calc(var(--fill) * 100%); background: color-mix(in srgb, var(--h) 62%, transparent); transition: width .25s; }
+.ar.cast .ub b { background: #fff; }
+.abil .acts label { display: inline-flex; gap: 4px; align-items: center; color: var(--dim); }
+.abil .acts { display: flex; gap: 8px; align-items: center; margin-top: 6px; font-size: 11px; color: var(--gloss); flex-wrap: wrap; }
+.abil button { font: 11px var(--game); color: var(--fg); background: var(--hover); border: 1px solid var(--border); border-radius: 2px; padding: 2px 7px; cursor: pointer; }
+
+.notes { display: grid; gap: 14px; align-content: start; }
+.notes ol, .notes ul { margin: 6px 0 0; padding-left: 18px; color: var(--dim); font-size: 13px; display: grid; gap: 5px; }
+.notes li strong { color: var(--fg); font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.oc { font-size: 12px; padding: 1px 7px; border-radius: 3px; border: 1px solid var(--line); color: var(--dim); background: var(--raised); cursor: default; }
+.oc.kept { border-color: #5d7d5a; color: var(--fg); }
+.oc.gone { text-decoration: line-through; color: var(--off); }
+.oc:hover { border-color: var(--gold); }
+.oc.tm { border-bottom-style: solid; cursor: help; }
+.oc.tm.new { border-color: color-mix(in srgb, var(--gold) 55%, transparent); color: var(--fg); }
+.oc.tm.node { border-style: dashed; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 13px; color: var(--dim); margin-top: 6px; }
+.kv span:nth-child(odd) { color: var(--fg); white-space: nowrap; }
+
+.dead { display: grid; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--dim); }
+.dead b { display: block; font-weight: 500; color: var(--gloss); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.dead code { font-size: 11px; color: var(--fg); word-break: break-all; }
+.foot-note { color: var(--gloss); font-size: 12px; margin-top: 30px; }
+</style>
+
+<div class="wrap" style="padding-block:28px 0">
+  <h1>Next-gen Upgrade Panels</h1>
+  <p class="lede">Every tower's Upgrades panel as the game paints it today, with each node's real hover sheet. A tower with a next-gen feature doc also gets its new tree, read from that doc's tables: tiers that climb from the bottom, each opened by a gate. The mock is live. Click a node to buy it, right-click to downgrade it, and use <em>Meet gate</em> to open the next tier.</p>
+</div>
+
+<div class="bar">
+  <div class="wrap bar-in" style="padding-block:10px">
+    <nav class="towers" id="nav" aria-label="Towers"></nav>
+    <div class="toggles">
+      <div class="seg" role="group" aria-label="Tier unlock">
+        <span>Tier unlock</span>
+        <button id="unlock-auto" aria-pressed="true">Free, automatic</button>
+        <button id="unlock-paid" aria-pressed="false">Paid click</button>
+      </div>
+      <div class="seg" role="group" aria-label="Game phase">
+        <span>Phase</span>
+        <button id="phase-between" aria-pressed="true">Between waves</button>
+        <button id="phase-wave" aria-pressed="false">Wave running</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" style="padding-block:0 64px">
+  <div class="legend">
+    <div><span class="sw"></span><p><strong style="color:var(--fg)">Square: a stat node.</strong> It changes a number or improves something the tower already has.</p></div>
+    <div><span class="sw round"></span><p><strong style="color:var(--fg)">Round: an ability node.</strong> It adds a new ability or skill and takes the tier's colour, so shape and colour both say it.</p></div>
+    <div><span class="sw cl"></span><p><strong style="color:var(--fg)">Dashed frame: a cluster.</strong> Bought once, you keep one member. Switching is free between waves.</p></div>
+    <div><span class="sw lock"></span><p><strong style="color:var(--fg)">Grey band: a locked tier.</strong> Its gate sits on the tier's floor and shows what is missing.</p></div>
+  </div>
+  <div id="towers"></div>
+
+  <p class="foot-note">Generated by <code>td.ui.PreviewUpgrades</code> (run-jtd). Current panels come from a fresh tower on The Amber Hive with gates on, painted headless by the game's own <code>PanelUpgradeTree</code> and <code>TooltipPanel</code>. Each next-gen tree is read from the tables in <code>docs/features/FEATURE-next-gen-&lt;tower&gt;-tower.md</code>; the full dead-code list is in <code>ledger.md</code> beside this page.</p>
+</div>
+
+<div id="tip" role="tooltip"></div>
+
+<script>
+const OLD = /*OLD*/null;
+const G = /*GLYPHS*/null;
+const TERMS = /*TERMS*/null;
+const K = 1.2;
+
+const DESIGNS = /*DESIGNS*/null;
+for (const d of Object.values(DESIGNS)) {
+  d.xpName = d.xpName || 'Recruit';
+  // A tier above the first with no gate in its doc still needs one, so the mock can open it.
+  d.tiers.forEach((t, i) => { if (i > 0 && !t.placeholder && !t.gate) t.gate = { text: 'Gate not set' }; });
+  for (const t of d.tiers) t.xp = t.gate && t.gate.xp != null ? t.gate.xp : null;
+  // A cluster comes after what its members come after, so it is placed and linked like a node.
+  for (const t of d.tiers) for (const it of (t.items || [])) if (it.cluster && !it.requires) {
+    const reqs = [...new Set(it.members.flatMap(m => m.requires || []))];
+    if (reqs.length) it.requires = reqs;
+  }
+  // A fork gate: its cluster is drawn in the gate, and every row after one of its members, directly or not, is that
+  // member's side.
+  d.sideOf = {};
+  const ft = d.tiers.find(t => t.fork);
+  if (!ft) continue;
+  const fc = ft.items.find(it => it.cluster === ft.fork);
+  fc.fork = true;
+  d.fork = { tier: ft.id, item: fc, cluster: fc.cluster, members: fc.members };
+  for (const m of fc.members) d.sideOf[m.id] = m.id;
+  const all = d.tiers.flatMap(t => t.items || []).filter(it => it !== fc);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const it of all) {
+      const id = it.cluster || it.id;
+      if (d.sideOf[id]) continue;
+      const reqs = it.cluster ? it.members.flatMap(m => m.requires || []) : (it.requires || []);
+      const side = reqs.map(r => d.sideOf[r]).find(Boolean);
+      if (side) { d.sideOf[id] = side; if (it.cluster) it.members.forEach(m => { d.sideOf[m.id] = side; }); changed = true; }
+    }
+  }
+}
+
+/* ---------- state ---------- */
+const settings = { paid: false, wave: false };
+const sims = {};
+
+/* ---------- tooltip ---------- */
+/* Two layers: the sheet of what is hovered, and the sheet of a name hovered in any text. Both stay open while the
+   pointer is on them, so a name inside a sheet can be hovered too; leaving starts a short grace before they close. */
+const tip = document.getElementById('tip');
+const sub = document.createElement('div');
+sub.id = 'sub'; sub.setAttribute('role', 'tooltip');
+document.body.appendChild(sub);
+let tipTimer = 0, subTimer = 0;
+function place(el, anchor) {
+  const r = anchor.getBoundingClientRect();
+  const tw = el.offsetWidth, th = el.offsetHeight;
+  let x = r.right + 10;
+  if (x + tw > innerWidth - 8) x = r.left - tw - 10;
+  if (x < 8) x = Math.max(8, Math.min(innerWidth - tw - 8, r.left));
+  let y = r.top;
+  if (x === r.left || (x < r.right && x + tw > r.left)) y = r.bottom + 8;
+  y = Math.max(8, Math.min(innerHeight - th - 8, y));
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+}
+function showTip(anchor, html) {
+  clearTimeout(tipTimer);
+  if (sub.fromTip) hideSub(true);
+  tip.innerHTML = html;
+  tip.style.pointerEvents = tip.querySelector('.tm') ? 'auto' : 'none';
+  tip.classList.add('on');
+  place(tip, anchor);
+}
+function hideTip(now) {
+  clearTimeout(tipTimer);
+  const close = () => { tip.classList.remove('on'); if (sub.fromTip) hideSub(true); };
+  if (now === true) close(); else tipTimer = setTimeout(close, 220);
+}
+function showSub(mention) {
+  clearTimeout(subTimer);
+  sub.fromTip = tip.contains(mention) || (sub.fromTip && sub.contains(mention));
+  if (sub.fromTip) clearTimeout(tipTimer);
+  const sim = sims[mention.dataset.t];
+  if (!sim) return;
+  sub.innerHTML = termSheet(sim.book, mention.dataset.term);
+  sub.classList.add('on');
+  place(sub, mention.closest('#tip, #sub') || mention);
+}
+function hideSub(now) {
+  clearTimeout(subTimer);
+  if (now === true) sub.classList.remove('on'); else subTimer = setTimeout(() => sub.classList.remove('on'), 220);
+}
+tip.addEventListener('pointerenter', () => clearTimeout(tipTimer));
+tip.addEventListener('pointerleave', e => { if (!sub.contains(e.relatedTarget)) hideTip(); });
+sub.addEventListener('pointerenter', () => { clearTimeout(subTimer); if (sub.fromTip) clearTimeout(tipTimer); });
+sub.addEventListener('pointerleave', e => {
+  if (tip.contains(e.relatedTarget)) { hideSub(); return; }
+  hideSub();
+  if (sub.fromTip) hideTip();
+});
+document.addEventListener('pointerover', e => {
+  const m = e.target.closest && e.target.closest('.tm');
+  if (m && !sub.contains(m)) showSub(m);
+});
+document.addEventListener('pointerout', e => {
+  const m = e.target.closest && e.target.closest('.tm');
+  if (m && !m.contains(e.relatedTarget) && !sub.contains(e.relatedTarget)) hideSub();
+});
+
+/* ---------- terms: every name the text uses gets its own sheet ---------- */
+const plainName = html => html.replace(/<[^>]+>/g, '');
+const reEscape = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/* What a tower's doc means by each name, most specific first: its Terms rows, its nodes, its passive, the game. */
+function termBook(type, d) {
+  const book = new Map();
+  book.type = type;
+  for (const [name, t] of Object.entries(TERMS)) book.set(name, { name, glyph: name, lines: [t.text], badge: 'As today' });
+  const changed = (name, entry) => {
+    const today = TERMS[name];
+    book.set(name, Object.assign(entry, today ? { badge: 'Changed', today: today.text } : { badge: 'New' }));
+  };
+  if (d.passive.name && d.passive.text) changed(plainName(d.passive.name), { name: plainName(d.passive.name), glyph: d.passive.glyph, lines: [d.passive.text], kind: 'Passive' });
+  for (const t of d.tiers) for (const it of (t.items || [])) for (const n of (it.members || [it])) {
+    book.set(plainName(n.name), { name: plainName(n.name), glyph: n.glyph, lines: n.lines, badge: `Node · Tier ${t.label || '0'}`, hue: n.hue || t.hue });
+  }
+  for (const t of (d.terms || [])) changed(plainName(t.name), { name: plainName(t.name), glyph: t.glyph, lines: t.lines });
+  const names = [...book.keys()].sort((a, b) => b.length - a.length).map(reEscape);
+  book.re = names.length ? new RegExp(`\\b(${names.join('|')})s?\\b`, 'g') : null;
+  return book;
+}
+/* Wraps each name in html as a mention, outside tags and code; collects the names into found, skipping self. */
+function markTerms(html, book, found, self) {
+  if (!book.re) return html;
+  let inCode = 0;
+  return html.split(/(<[^>]+>)/).map(part => {
+    if (part.startsWith('<')) { if (/^<code/.test(part)) inCode++; if (/^<\/code/.test(part)) inCode--; return part; }
+    if (inCode) return part;
+    return part.replace(book.re, (m, name) => {
+      if (name === self) return m;
+      const t = book.get(name);
+      if (found && !found.includes(name)) found.push(name);
+      const g = t.glyph && G[t.glyph] ? `<i style="-webkit-mask-image:url(${G[t.glyph]});mask-image:url(${G[t.glyph]})"></i>` : '';
+      return `<span class="tm" data-t="${book.type}" data-term="${name}">${g}${m}</span>`;
+    });
+  }).join('');
+}
+function termSheet(book, name) {
+  const t = book.get(name);
+  const hue = t.hue || '#9E9EA1';
+  const face = t.glyph && G[t.glyph] ? `<span class="face" style="border-color:${hue};background:color-mix(in srgb, ${hue} 18%, #111)"><i style="background:#EAEAEF;-webkit-mask-image:url(${G[t.glyph]});mask-image:url(${G[t.glyph]})"></i></span>` : '';
+  const badge = t.kind ? `${t.kind} · ${t.badge}` : t.badge;
+  let h = `<div class="gt term"><div class="tt">${face}<span class="name">${t.name}</span><span class="badge ${t.badge === 'New' || t.badge === 'Changed' ? 'new' : ''}">${badge}</span></div>`;
+  h += t.lines.map(l => `<p>${markTerms(l, book, null, name)}</p>`).join('');
+  if (t.today) h += `<div class="was"><b>Today:</b> ${t.today}</div>`;
+  return h + '</div>';
+}
+/* Every name the tree's Does text and the passive use: what a player must learn beyond the node in front of them. */
+function vocabulary(sim, keep = () => true) {
+  const found = [];
+  const d = sim.d;
+  if (d.passive.text) markTerms(d.passive.text, sim.book, found, plainName(d.passive.name || ''));
+  for (const t of d.tiers) for (const it of (t.items || [])) for (const n of (it.members || [it])) {
+    if (keep(n)) for (const l of n.lines) markTerms(l, sim.book, found, plainName(n.name));
+  }
+  return found;
+}
+/* The names list, split by side for a forked tree: what each side's player must learn, shared names included. */
+function namesHtml(k) {
+  const sim = sims[k], d = sim.d;
+  const cls = n => { const b = sim.book.get(n).badge; return b === 'New' || b === 'Changed' ? 'new' : b.startsWith('Node') ? 'node' : ''; };
+  const chips = names => `<div class="chips">${names.map(n => `<span class="oc tm ${cls(n)}" data-t="${k}" data-term="${n}">${n}</span>`).join('')}</div>`;
+  const help = '<p style="color:var(--gloss);font-size:12px;margin-top:2px">What its Does text and passive name. Gold: new or changed; dashed: another node. Hover one for its sheet.</p>';
+  if (!d.fork) { const names = vocabulary(sim); return `<div><h3>Names the tree uses · ${names.length}</h3>${help}${chips(names)}</div>`; }
+  const shared = vocabulary(sim, n => !d.sideOf[n.id]);
+  const sides = d.fork.members.map(m => {
+    const own = vocabulary(sim, n => d.sideOf[n.id] === m.id).filter(n => !shared.includes(n));
+    return `<p style="margin-top:8px;font-size:12px"><b>${m.name}</b> · ${shared.length + own.length} in all, ${own.length} its own</p>${chips(own)}`;
+  }).join('');
+  return `<div><h3>Names the tree uses</h3>${help}<p style="margin-top:8px;font-size:12px"><b>Both sides</b> · ${shared.length}</p>${chips(shared)}${sides}</div>`;
+}
+function jumpBox(type) {
+  const sim = sims[type], d = sim.d, box = document.createElement('div');
+  box.className = 'sidejump';
+  box.innerHTML = `<span>Jump to</span>${d.fork.members.map(m => `<button type="button" data-side="${m.id}">${m.name}</button>`).join('')}<button type="button" data-side="">No side</button>`;
+  box.querySelectorAll('button').forEach(btn => { btn.onclick = () => {
+    const t = tierDef(sim, d.fork.tier);
+    if (btn.dataset.side) { sim.met[t.id] = true; if (t.xp != null) sim.xp = Math.max(sim.xp, t.xp); sim.open[t.id] = true; delete sim.ready[t.id]; }
+    pickSide(type, btn.dataset.side || null);
+  }; });
+  sim.jump = box;
+  return box;
+}
+function paintJump(type) {
+  const sim = sims[type];
+  if (!sim.jump) return;
+  const cur = sim.pick[sim.d.fork.cluster] || '';
+  sim.jump.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.side === cur)));
+}
+function withTerms(book, mainHtml, found) {
+  if (!found.length) return mainHtml;
+  return `<div class="tipwrap">${mainHtml}<div class="terms">${found.map(n => termSheet(book, n)).join('')}</div></div>`;
+}
+
+/* ---------- current panels ---------- */
+function oldPanel(t) {
+  const el = document.createElement('div');
+  el.className = 'old';
+  const url = `sheets/${t.type}.png`;
+  el.style.backgroundImage = `url(${url})`;
+  el.style.backgroundSize = `${t.sw * K}px ${t.sh * K}px`;
+  el.style.backgroundPosition = '0 0';
+  el.style.width = t.w * K + 'px';
+  el.style.height = t.h * K + 'px';
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', `${t.name} upgrade panel today`);
+  for (const n of t.nodes) {
+    const h = document.createElement('div');
+    h.className = 'hot' + (n.r ? ' round' : '');
+    h.tabIndex = 0;
+    h.dataset.node = n.id;
+    h.setAttribute('aria-label', `${n.name}: ${n.alt}`);
+    Object.assign(h.style, { left: n.x * K + 'px', top: n.y * K + 'px', width: n.s * K + 'px', height: n.s * K + 'px' });
+    const html = `<div class="img" style="width:${n.tw * K}px;height:${n.th * K}px;background-image:url(${url});background-size:${t.sw * K}px ${t.sh * K}px;background-position:-${n.tx * K}px -${n.ty * K}px"></div>`;
+    const on = () => showTip(h, html);
+    h.addEventListener('pointerenter', on);
+    h.addEventListener('focus', on);
+    h.addEventListener('click', on);
+    h.addEventListener('pointerleave', hideTip);
+    h.addEventListener('blur', hideTip);
+    el.appendChild(h);
+  }
+  return el;
+}
+
+/* ---------- next-gen layout (deterministic, bottom-up) ---------- */
+// The mock is exactly as wide as today's panel; a tier that needs more room grows upward, never sideways.
+const U = { W: OLD[0].w, FIT: OLD[0].h, PAD: 8, LABEL: 22, NODE: 30, ROW: 48, PT: 16, PB: 8, GATE: 22, FGATE: 46, EMPTY: 40, GAP: 10, CP: 5, CG: 6, XP: 40, FOOT: 26, TG: 7 };
+const X0 = U.PAD + U.LABEL + 6, X1 = U.W - U.PAD - 6;
+
+const itemWidth = it => it.cluster ? it.members.length * U.NODE + (it.members.length - 1) * U.CG + 2 * U.CP : U.NODE;
+const rowWidth = row => row.reduce((s, it) => s + itemWidth(it), 0) + U.GAP * Math.max(0, row.length - 1);
+
+/* Splits items, already in left-to-right order, into the fewest lines that fit the band, as even as they go. */
+function wrap(order, lo = X0, hi = X1) {
+  const room = hi - lo;
+  if (rowWidth(order) <= room) return [order];
+  const fill = limit => {
+    const lines = [[]];
+    for (const it of order) {
+      const line = lines[lines.length - 1];
+      if (line.length && rowWidth([...line, it]) > limit) lines.push([it]); else line.push(it);
+    }
+    return lines;
+  };
+  const fewest = fill(room).length;
+  for (let limit = Math.ceil(rowWidth(order) / fewest); limit < room; limit += 4) {
+    const lines = fill(limit);
+    if (lines.length === fewest) return lines;
+  }
+  return fill(room);
+}
+
+/* Places one line's items near where they want to be, without overlap, inside the band. */
+function placeLine(line, wanted, lo = X0, hi = X1) {
+  // A parent outside the band (another column) pulls its child only to the band's edge.
+  const want = new Map(line.map(it => [it, Math.min(hi - itemWidth(it) / 2, Math.max(lo + itemWidth(it) / 2, wanted.get(it)))]));
+  const order = [...line].sort((a, b) => want.get(a) - want.get(b));
+  const at = new Map();
+  let edge = -Infinity;
+  for (const it of order) {
+    const w = itemWidth(it);
+    const x = Math.max(want.get(it), edge + U.GAP + w / 2);
+    at.set(it, x); edge = x + w / 2;
+  }
+  const drift = order.reduce((s, it) => s + (want.get(it) - at.get(it)), 0) / order.length;
+  order.forEach(it => at.set(it, at.get(it) + drift));
+  const left = Math.min(...order.map(it => at.get(it) - itemWidth(it) / 2));
+  const right = Math.max(...order.map(it => at.get(it) + itemWidth(it) / 2));
+  const shift = left < lo ? lo - left : right > hi ? hi - right : 0;
+  order.forEach(it => at.set(it, at.get(it) + shift));
+  return at;
+}
+
+/* side: the fork member whose side shows, or null. height: the panel's height, so every side shares one floor. */
+function layoutDesign(d, side = null, height = 0) {
+  const pos = {};              // id -> {x, y, w, tier, kind:'node'|'cluster'}; hidden for a row another side owns
+  const memberOf = {};
+  for (const t of d.tiers) for (const it of (t.items || [])) if (it.cluster) for (const m of it.members) memberOf[m.id] = it.cluster;
+  const shows = it => { const sd = d.sideOf[it.cluster || it.id]; return !it.fork && (!sd || sd === side); };
+  const gateH = t => !t.gate ? 0 : d.fork && d.fork.tier === t.id ? U.FGATE : U.GATE;
+  const tierInfo = d.tiers.map(t => {
+    if (t.placeholder) return { t, rows: [] };
+    const items = t.items.filter(shows);
+    if (!items.length) return { t, rows: [], items, veiled: true };
+    const ids = new Set(items.map(i => i.cluster || i.id));
+    const key = id => memberOf[id] && ids.has(memberOf[id]) ? memberOf[id] : id;
+    const depth = {};
+    const dep = it => {
+      const id = it.cluster || it.id;
+      if (depth[id] !== undefined) return depth[id];
+      const local = (it.requires || []).map(key).filter(r => ids.has(r));
+      depth[id] = local.length ? 1 + Math.max(...local.map(r => dep(items.find(i => (i.cluster || i.id) === r)))) : 0;
+      return depth[id];
+    };
+    items.forEach(dep);
+    const nRows = Math.max(...Object.values(depth)) + 1;
+    const rows = Array.from({ length: nRows }, (_, r) => items.filter(i => depth[i.cluster || i.id] === r));
+    return { t, rows, items };
+  });
+  // Bottom-up: tier 0 sits lowest, and so does each tier's first line. A line's place depends on the ones below
+  // it, so lines are placed first and the panel's height follows from how many there are.
+  let y = 0;   // distance above the panel's floor, growing upward
+  // Two columns from the fork's tier up: what both sides share on the left, the side on the right.
+  const forkAt = d.fork ? d.tiers.findIndex(t => t.id === d.fork.tier) : -1;
+  const columns = forkAt >= 0;
+  const XS = X0 + 2 * U.NODE + U.GAP + 4;
+  const shared = it => !d.sideOf[it.cluster || it.id];
+  const feedsShared = it => d.tiers.some(t => (t.items || []).some(o => shared(o) && (o.requires || []).includes(it.id)));
+  for (const ti of tierInfo) {
+    ti.bottomUp = y;
+    ti.gh = gateH(ti.t);
+    if (d.fork && d.fork.tier === ti.t.id) {
+      const it = d.fork.item, w = itemWidth(it), x = Math.min(X1 - w / 2 - 2, (XS + U.GAP + X1) / 2), up = y + U.FGATE / 2;
+      pos[it.cluster] = { x, up, w, tier: ti.t.id, kind: 'cluster', item: it };
+      it.members.forEach((m, i) => {
+        pos[m.id] = { x: x - w / 2 + U.CP + U.NODE / 2 + i * (U.NODE + U.CG), up, w: U.NODE, tier: ti.t.id, kind: 'node', item: m, cluster: it.cluster };
+      });
+    }
+    if (ti.t.placeholder) { ti.h = U.EMPTY; y += ti.h + U.TG; continue; }
+    if (ti.veiled) { ti.h = U.EMPTY + ti.gh; y += ti.h + U.TG; continue; }
+    let lineNo = 0;
+    const base = y + ti.gh + U.PB + U.ROW / 2;
+    const split = columns && d.tiers.indexOf(ti.t) >= forkAt;
+    if (split) ti.split = XS + U.GAP / 2;
+    const placeIn = (row, lo, hi, first) => {
+      const parentX = it => {
+        const ps = (it.requires || []).map(id => pos[id]).filter(Boolean);
+        return ps.length ? ps.reduce((s, p) => s + p.x, 0) / ps.length : null;
+      };
+      let free = row.filter(it => parentX(it) === null);
+      if (columns) free = [...free.filter(feedsShared), ...free.filter(it => !feedsShared(it))];
+      const groups = {};
+      row.forEach(it => { const k = (it.requires || []).join('|'); (groups[k] = groups[k] || []).push(it); });
+      const want = new Map();
+      row.forEach((it, i) => {
+        const px = parentX(it);
+        if (px === null) {
+          want.set(it, lo + (free.indexOf(it) + 0.5) * (hi - lo) / free.length);
+        } else {
+          const g = groups[(it.requires || []).join('|')];
+          const k = g.indexOf(it);
+          want.set(it, px + (k - (g.length - 1) / 2) * (itemWidth(it) + U.GAP) + i * 1e-6);
+        }
+      });
+      const order = [...row].sort((a, b) => want.get(a) - want.get(b));
+      let n = 0;
+      for (const line of wrap(order, lo, hi)) {
+        const at = placeLine(line, want, lo, hi);
+        const up = base + (first + n) * U.ROW;
+        n++;
+        for (const it of line) {
+          const x = at.get(it), w = itemWidth(it);
+          if (it.cluster) {
+            pos[it.cluster] = { x, up, w, tier: ti.t.id, kind: 'cluster', item: it };
+            it.members.forEach((m, i) => {
+              pos[m.id] = { x: x - w / 2 + U.CP + U.NODE / 2 + i * (U.NODE + U.CG), up, w: U.NODE, tier: ti.t.id, kind: 'node', item: m, cluster: it.cluster };
+            });
+          } else {
+            pos[it.id] = { x, up, w, tier: ti.t.id, kind: 'node', item: it };
+          }
+        }
+      }
+      return n;
+    };
+    for (const row of ti.rows) {
+      if (split) {
+        const a = row.filter(shared), b = row.filter(it => !shared(it));
+        lineNo += Math.max(a.length ? placeIn(a, X0, XS, lineNo) : 0, b.length ? placeIn(b, XS + U.GAP, X1, lineNo) : 0);
+      } else {
+        lineNo += placeIn(row, X0, X1, lineNo);
+      }
+    }
+    ti.h = U.PT + lineNo * U.ROW + U.PB + ti.gh;
+    y += ti.h + U.TG;
+  }
+  const H = Math.max(height, U.XP + (y - U.TG) + U.FOOT);
+  for (const t of d.tiers) for (const it of (t.items || [])) {
+    if (it.cluster && !pos[it.cluster]) pos[it.cluster] = { hidden: true, tier: t.id, kind: 'cluster', item: it };
+    for (const n of (it.members || [it])) if (!pos[n.id]) pos[n.id] = { hidden: true, tier: t.id, kind: 'node', item: n, cluster: it.cluster };
+  }
+  const floor = H - U.FOOT;
+  for (const ti of tierInfo) { ti.bottom = floor - ti.bottomUp; ti.top = ti.bottom - ti.h; }
+  for (const p of Object.values(pos)) if (!p.hidden) p.y = floor - p.up;
+  return { H, tierInfo, pos, forkMembers: new Set(d.fork ? d.fork.members.map(m => m.id) : []) };
+}
+
+/* ---------- links ---------- */
+/* Routes every link as up, across, up. A link leaves a cluster's frame where the frame is nearest its child, and
+   enters a cluster's frame where the frame is nearest its parent, so many links run straight. The across part runs
+   in a gap just above the parent's row or just below the child's, on a level of its own; of those routes each link
+   takes the one that crosses fewest other links and passes behind fewest nodes, shortest links first. */
+function routeLinks(L, items) {
+  const box = p => p.kind === 'cluster' ? { l: p.x - p.w / 2 + 6, r: p.x + p.w / 2 - 6 } : { l: p.x, r: p.x };
+  const clamp = (v, b) => Math.min(b.r, Math.max(b.l, v));
+  // what a link must not pass behind: nodes, and cluster frames, which read as the cluster's own
+  const nodes = Object.entries(L.pos).filter(([, p]) => !p.hidden)
+    .map(([id, p]) => [id, { x: p.x, y: p.y, hw: (p.kind === 'cluster' ? p.w : U.NODE) / 2, hh: U.NODE / 2 + (p.kind === 'cluster' ? U.CP : 0) }]);
+  const wanted = [];
+  for (const it of items) for (const r of (it.requires || [])) {
+    const to = it.cluster || it.id, p = L.pos[r], c = L.pos[to];
+    if (!p || p.hidden) continue;
+    // a side's column already says a node belongs to it
+    if (L.forkMembers && L.forkMembers.has(r)) continue;
+    const y0 = p.y - U.NODE / 2 - (p.kind === 'cluster' ? U.CP : 0), y1 = c.y + U.NODE / 2 + (c.kind === 'cluster' ? U.CP : 0);
+    // pick the exit and entry so the vertical parts line up when the boxes overlap
+    let x0 = clamp(c.x, box(p)), x1 = clamp(x0, box(c));
+    x0 = clamp(x1, box(p));
+    const own = new Set([r, to, p.cluster, c.cluster, ...(p.item.members || []).map(m => m.id), ...(c.item.members || []).map(m => m.id)].filter(Boolean));
+    wanted.push({ from: r, to, x0, y0, x1, y1, own });
+  }
+  wanted.sort((a, b) => (a.y0 - a.y1) - (b.y0 - b.y1) || Math.abs(a.x0 - a.x1) - Math.abs(b.x0 - b.x1));
+  const placed = [];   // segments: [x0, y0, x1, y1, from]
+  const behind = (sg, own) => nodes.filter(([id, p]) => !own.has(id) && (sg[0] === sg[2]
+    ? Math.abs(sg[0] - p.x) < p.hw + 1 && Math.max(sg[1], sg[3]) > p.y - p.hh && Math.min(sg[1], sg[3]) < p.y + p.hh
+    : Math.abs(sg[1] - p.y) < p.hh + 1 && Math.max(sg[0], sg[2]) > p.x - p.hw && Math.min(sg[0], sg[2]) < p.x + p.hw)).length;
+  const meets = (a, b) => {
+    const av = a[0] === a[2], bv = b[0] === b[2];
+    if (av !== bv) {
+      const v = av ? a : b, h = av ? b : a;
+      return v[0] > Math.min(h[0], h[2]) + .5 && v[0] < Math.max(h[0], h[2]) - .5 && h[1] > Math.min(v[1], v[3]) + .5 && h[1] < Math.max(v[1], v[3]) - .5 ? 1 : 0;
+    }
+    const k = av ? 0 : 1, j = av ? 1 : 0;
+    if (Math.abs(a[k] - b[k]) > 2.5) return 0;
+    const o = Math.min(Math.max(a[j], a[j + 2]), Math.max(b[j], b[j + 2])) - Math.max(Math.min(a[j], a[j + 2]), Math.min(b[j], b[j + 2]));
+    return o > 1 ? 3 : 0;
+  };
+  // gutters a detour can climb: the gaps beside every node and frame
+  const gutters = [...new Set(nodes.flatMap(([, p]) => [p.x - p.hw - U.GAP / 2, p.x + p.hw + U.GAP / 2]).map(Math.round))]
+    .filter(x => x > X0 - U.GAP && x < X1 + U.GAP);
+  const scoreOf = (sg, w) => {
+    let score = 0;
+    for (const a of sg) {
+      score += 10 * behind(a, w.own);
+      for (const b of placed) if (b[4] !== w.from) score += 4 * meets(a, b);
+    }
+    // a bend and a long way round each cost a little, so a plain route wins a tie
+    return score + .5 * sg.length + sg.reduce((t, a) => t + Math.abs(a[2] - a[0]) + Math.abs(a[3] - a[1]), 0) / 400;
+  };
+  const out = [];
+  for (const w of wanted) {
+    const near = [0, 1, 2, 3].flatMap(k => [w.y0 - 5 - 4 * k]), far = [0, 1, 2, 3].flatMap(k => [w.y1 + 5 + 4 * k]);
+    const routes = [];
+    if (Math.abs(w.x0 - w.x1) < .5) routes.push([[w.x0, w.y0, w.x0, w.y1]]);
+    else for (const ly of [...near, ...far]) routes.push([[w.x0, w.y0, w.x0, ly], [w.x0, ly, w.x1, ly], [w.x1, ly, w.x1, w.y1]]);
+    for (const xm of gutters) for (const l1 of near) for (const l2 of far) {
+      if (l2 >= l1) continue;
+      routes.push([[w.x0, w.y0, w.x0, l1], [w.x0, l1, xm, l1], [xm, l1, xm, l2], [xm, l2, w.x1, l2], [w.x1, l2, w.x1, w.y1]]
+        .filter(a => Math.abs(a[0] - a[2]) + Math.abs(a[1] - a[3]) > .5));
+    }
+    let best = null;
+    for (const sg of routes) { const score = scoreOf(sg, w); if (!best || score < best.score) best = { score, sg }; }
+    best.sg.forEach(a => placed.push([...a, w.from]));
+    out.push({ from: w.from, to: w.to, d: `M${w.x0} ${w.y0} ` + best.sg.map(a => a[0] === a[2] ? `V${a[3]}` : `H${a[2]}`).join(' ') });
+  }
+  return out;
+}
+
+/* ---------- next-gen render + simulation ---------- */
+function mask(el, key) {
+  const u = `url(${G[key]})`;
+  el.style.webkitMaskImage = u; el.style.maskImage = u;
+}
+
+function sideNow(sim) { return sim.preview || (sim.d.fork && sim.pick[sim.d.fork.cluster]) || null; }
+function isFork(sim, id) { return !!sim.d.fork && clusterOf(sim, id) === sim.d.fork.cluster; }
+function newPanel(type, d) {
+  const sim = sims[type] = sims[type] || { d, book: termBook(type, d), xp: 0, open: { t0: true }, ready: {}, met: {}, owned: new Set(), pick: {}, charge: {}, preview: null };
+  sim.el = {};
+  const sides = d.fork ? [null, ...d.fork.members.map(m => m.id)] : [null];
+  const height = Math.max(...sides.map(sd => layoutDesign(d, sd).H));
+  const L = sim.L = layoutDesign(d, sideNow(sim), height);
+  const root = document.createElement('div');
+  root.className = 'np';
+  root.style.width = U.W * K + 'px';
+  root.style.height = L.H * K + 'px';
+  root.innerHTML = `<div class="ttl">Upgrades</div><div class="xp"><span class="xpt"></span><span class="track"><i></i></span></div><div class="foot"></div>`;
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${U.W} ${L.H}`);
+  svg.setAttribute('width', U.W * K); svg.setAttribute('height', L.H * K);
+  const px = v => v * K + 'px';
+
+  for (const ti of L.tierInfo) {
+    const t = ti.t;
+    const band = document.createElement('div');
+    band.className = 'band';
+    const hue = t.hue || '#6a6a6e';
+    band.style.setProperty('--h', hue);
+    Object.assign(band.style, { left: px(U.PAD), top: px(ti.top), width: px(U.W - 2 * U.PAD), height: px(ti.h) });
+    band.style.borderColor = t.placeholder ? '#2a2a2c' : `color-mix(in srgb, ${hue} 45%, #2a2a2c)`;
+    band.style.background = t.placeholder ? 'transparent' : t.grad
+      ? `linear-gradient(90deg, color-mix(in srgb, ${t.grad[0]} 9%, transparent), color-mix(in srgb, ${t.grad[1]} 9%, transparent))`
+      : `color-mix(in srgb, ${hue} 8%, transparent)`;
+    band.innerHTML = `<div class="glow"></div><div class="num" style="color:${t.placeholder ? 'var(--off)' : hue};border-color:${t.placeholder ? '#2a2a2c' : `color-mix(in srgb, ${hue} 35%, #2a2a2c)`}">${t.label}</div>`;
+    if (t.placeholder) band.insertAdjacentHTML('beforeend', `<div class="empty">Tier ${t.label}: not designed yet</div>`);
+    if (ti.veiled) band.insertAdjacentHTML('beforeend', `<div class="veil" style="bottom:${px(ti.gh)}">Pick ${d.fork.members.map(m => m.name).join(' or ')} to reveal Tier ${t.label}</div>`);
+    if (ti.split) {
+      const side = sideNow(sim);
+      band.insertAdjacentHTML('beforeend', `<div class="lane" style="left:${px(ti.split - U.PAD)};bottom:${px(ti.gh + 4)}"></div><div class="lanel" style="left:${px(U.LABEL + 4)}">Both</div><div class="lanel" style="left:${px(ti.split - U.PAD + 5)}">${side ? plainName(nodeOf(sim, side).name) : 'Side'}</div>`);
+    }
+    if (t.gate) {
+      const g = document.createElement('div');
+      g.className = 'gate';
+      if (ti.gh !== U.GATE) {
+        const f = L.pos[d.fork.cluster];
+        Object.assign(g.style, { height: px(ti.gh), right: px(U.W - U.PAD - (f.x - f.w / 2) + 6) });
+      }
+      band.appendChild(g);
+      sim.el['gate_' + t.id] = g;
+    }
+    root.appendChild(band);
+    sim.el['band_' + t.id] = band;
+  }
+  // links
+  const allItems = L.tierInfo.flatMap(ti => ti.t.placeholder ? [] : ti.items);
+  const links = [];
+  for (const { from, to, d: dd } of routeLinks(L, allItems)) {
+    const halo = document.createElementNS(svgNS, 'path');
+    halo.setAttribute('d', dd); halo.setAttribute('class', 'halo');
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', dd); path.setAttribute('class', 'lnk');
+    svg.append(halo, path);
+    links.push({ from, to, path });
+  }
+  sim.links = links;
+  if (L.H > U.FIT) {
+    const y = L.H - U.FIT;
+    svg.insertAdjacentHTML('beforeend', `<line class="fitline" x1="0" x2="${U.W}" y1="${y}" y2="${y}"/><text class="fitlabel" x="${U.W - 4}" y="${y - 3}" text-anchor="end">today's panel height</text>`);
+  }
+  root.appendChild(svg);
+  // clusters then nodes
+  for (const [id, p] of Object.entries(L.pos)) {
+    if (p.kind !== 'cluster' || p.hidden) continue;
+    const c = document.createElement('div');
+    c.className = 'clu';
+    const h = U.NODE + 2 * U.CP;
+    Object.assign(c.style, { left: px(p.x - p.w / 2), top: px(p.y - h / 2), width: px(p.w), height: px(h) });
+    c.innerHTML = `<span class="cn">${p.item.name}</span>`;
+    root.appendChild(c);
+    sim.el['clu_' + id] = c;
+  }
+  for (const [id, p] of Object.entries(L.pos)) {
+    if (p.kind !== 'node' || p.hidden) continue;
+    const n = p.item;
+    const b = document.createElement('div');
+    b.className = 'nn' + (n.kind === 'ability' ? ' ab' : '');
+    b.tabIndex = 0;
+    b.setAttribute('role', 'button');
+    b.setAttribute('aria-label', `${n.name}. ${n.lines.join(' ')}`);
+    const tier = d.tiers.find(t => t.id === p.tier);
+    b.style.setProperty('--h', n.hue || tier.hue);
+    Object.assign(b.style, { left: px(p.x - U.NODE / 2), top: px(p.y - U.NODE / 2), width: px(U.NODE), height: px(U.NODE) });
+    const i = document.createElement('i');
+    mask(i, n.glyph);
+    b.appendChild(i);
+    b.addEventListener('pointerenter', () => { preview(type, id, true); hover(type, id, true); });
+    b.addEventListener('focus', () => hover(type, id, true));
+    b.addEventListener('pointerleave', () => { hover(type, id, false); preview(type, id, false); });
+    b.addEventListener('blur', () => hover(type, id, false));
+    b.addEventListener('click', e => { act(type, id, false); hover(type, id, true); });
+    b.addEventListener('contextmenu', e => { e.preventDefault(); act(type, id, true); hover(type, id, true); });
+    b.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(type, id, false); hover(type, id, true); }
+      if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); act(type, id, true); hover(type, id, true); }
+    });
+    root.appendChild(b);
+    sim.el[id] = b;
+  }
+  sim.root = root;
+  return root;
+}
+
+/* Hovering a side the tower hasn't picked shows its tree, dimmed. Fork nodes sit at the same place in every
+   side's layout, so the panel can be rebuilt under the pointer. */
+function preview(type, id, on) {
+  const sim = sims[type];
+  if (!isFork(sim, id)) return;
+  const want = on && sim.pick[sim.d.fork.cluster] !== id ? id : null;
+  if (sim.preview === want) return;
+  sim.preview = want;
+  rebuild(type);
+}
+function rebuild(type) {
+  const sim = sims[type], old = sim.root;
+  newPanel(type, sim.d);
+  old.replaceWith(sim.root);
+  paint(type);
+  paintAbilities(type);
+  paintJump(type);
+}
+/* Sells back what a side bought: every row after that fork member. */
+function clearSide(sim, side) {
+  for (const [id, sd] of Object.entries(sim.d.sideOf)) {
+    if (sd !== side || id === side) continue;
+    sim.owned.delete(id); delete sim.pick[id]; delete sim.charge[id];
+  }
+}
+function pickSide(type, id) {
+  const sim = sims[type], c = sim.d.fork.cluster, cur = sim.pick[c];
+  if (cur === id) return;
+  if (cur) clearSide(sim, cur);
+  if (id) sim.pick[c] = id; else delete sim.pick[c];
+  sim.preview = null;
+  rebuild(type);
+}
+function tierOf(sim, id) { return sim.L.pos[id].tier; }
+function gateMet(sim, t) { return !!sim.met[t.id] || (t.xp != null && sim.xp >= t.xp); }
+function gateText(sim, t) { return t.xp != null ? `XP ${Math.min(sim.xp, t.xp)}/${t.xp}` : t.gate.text; }
+function price(t, sep = ' for ') { return t.cost != null ? `${sep}$${t.cost}` : ''; }
+const LOCK = '<svg class="lk" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 5.5V4a2.5 2.5 0 0 1 5 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="5.5" width="8" height="5.5" rx="1" fill="currentColor"/></svg>';
+function nodeOf(sim, id) { return sim.L.pos[id].item; }
+function clusterOf(sim, id) { return sim.L.pos[id].cluster; }
+function isOpen(sim, tid) { return !!sim.open[tid]; }
+function has(sim, ref) {
+  const p = sim.L.pos[ref];
+  if (p.kind === 'cluster') return sim.pick[ref] !== undefined;
+  if (p.cluster) return sim.pick[p.cluster] === ref;
+  return sim.owned.has(ref);
+}
+function owns(sim, id) {   // bought, maybe dormant
+  const c = clusterOf(sim, id);
+  return c ? sim.pick[c] === id : sim.owned.has(id);
+}
+function active(sim, id) {
+  if (!owns(sim, id)) return false;
+  return (nodeOf(sim, id).requires || []).every(r => has(sim, r) && (sim.L.pos[r].kind === 'cluster' || active(sim, r)));
+}
+function reqsMet(sim, id) { return (nodeOf(sim, id).requires || []).every(r => has(sim, r)); }
+function ancestors(sim, id, out = new Set()) {
+  for (const r of (nodeOf(sim, id).requires || [])) {
+    out.add(r);
+    const p = sim.L.pos[r];
+    if (p.kind === 'node') ancestors(sim, r, out);
+  }
+  return out;
+}
+function dependents(sim, ref) {
+  const out = [];
+  for (const [id, p] of Object.entries(sim.L.pos)) {
+    if (p.kind !== 'node') continue;
+    if ((p.item.requires || []).includes(ref)) out.push(id, ...dependents(sim, id));
+  }
+  return out;
+}
+function tierDef(sim, tid) { return sim.d.tiers.find(t => t.id === tid); }
+
+function verdict(sim, id) {
+  const n = nodeOf(sim, id), tid = tierOf(sim, id), t = tierDef(sim, tid), c = clusterOf(sim, id);
+  if (!isOpen(sim, tid)) {
+    if (sim.ready[tid]) return { warn: true, text: `Tier ${t.label} is ready: unlock it${price(t)}` };
+    return { warn: true, text: `Tier ${t.label} locked: ${gateText(sim, t)}` };
+  }
+  if (isFork(sim, id)) {
+    const cur = sim.pick[c];
+    if (cur && settings.wave) return { warn: true, text: 'Switching sides waits for the wave to end' };
+    if (cur === id) return { text: 'Your side · Right-click: give it up, selling its upgrades back' };
+    if (cur) return { text: `Click: switch to ${n.name}; the ${nodeOf(sim, cur).name}'s upgrades sell back` };
+    return { text: `Click: become a ${n.name}` };
+  }
+  if (c && sim.pick[c] !== undefined && sim.pick[c] !== id) {
+    if (settings.wave) return { warn: true, text: 'Switching waits for the wave to end' };
+    return { text: `Click: switch to ${n.name} (free)` };
+  }
+  if (owns(sim, id)) {
+    if (settings.wave) return { warn: true, text: 'Downgrades wait for the wave to end' };
+    return { text: active(sim, id) ? 'Right-click: downgrade' : 'Dormant: its side is not chosen · Right-click: downgrade' };
+  }
+  if (!reqsMet(sim, id)) {
+    const missing = (n.requires || []).filter(r => !has(sim, r)).map(r => sim.L.pos[r].item.name);
+    return { warn: true, text: `Needs ${missing.join(', ')}` };
+  }
+  return { text: c ? `Click: buy the cluster, keep ${n.name}` : `Click: buy ${n.name}` };
+}
+
+function tipHtml(sim, id) {
+  const n = nodeOf(sim, id), tid = tierOf(sim, id), t = tierDef(sim, tid), c = clusterOf(sim, id);
+  const hue = n.hue || t.hue;
+  const ab = n.kind === 'ability';
+  const kind = isFork(sim, id) ? `Fork · ${sim.L.pos[c].item.name}` : c ? `Cluster pick · ${sim.L.pos[c].item.name}` : ab ? 'Ability' : 'Stat';
+  const tierName = t.label ? `Tier ${t.label}` : 'Tier 0';
+  let h = `<div class="gt"><div class="tt"><span class="face ${ab ? 'r' : ''}" style="border-color:${hue};background:color-mix(in srgb, ${hue} 18%, #111)"><i style="background:${ab ? hue : '#EAEAEF'};-webkit-mask-image:url(${G[n.glyph]});mask-image:url(${G[n.glyph]})"></i></span><span class="name" style="color:${ab ? hue : 'var(--fg)'}">${n.name}</span><span class="val">$?</span></div>`;
+  h += `<div class="row">${ab ? '●' : '■'} ${kind}<b>${tierName}</b></div>`;
+  if (t.gate) h += `<div class="row ${gateMet(sim, t) ? 'ok' : 'x'}">${gateMet(sim, t) ? '✔' : '✘'} ${gateText(sim, t)}<b style="color:var(--gloss)">Tier ${t.label} gate</b></div>`;
+  if (n.cost) h += `<div class="row">◆ Casts at <b>${n.cost} ${n.currency}</b>, holds ${n.cost + 1}</div>`;
+  if (n.requires) h += `<div class="row">➤ After<b>${n.requires.map(r => sim.L.pos[r].item.name).join(', ')}</b></div>`;
+  const found = [], self = plainName(n.name);
+  h += n.lines.map(l => `<p>${markTerms(l, sim.book, found, self)}</p>`).join('');
+  if (n.notes && n.notes.length) h += '<hr>' + n.notes.map(x => `<div class="note">${markTerms(x, sim.book, found, self)}</div>`).join('');
+  const v = verdict(sim, id);
+  h += `<hr><div class="act ${v.warn ? 'x' : ''}">${v.warn ? '✘ ' : ''}${v.text}</div></div>`;
+  return withTerms(sim.book, h, found);
+}
+
+function hover(type, id, on) {
+  const sim = sims[type];
+  sim.hovered = on ? id : null;
+  paint(type);
+  if (on) showTip(sim.el[id], tipHtml(sim, id)); else hideTip();
+}
+
+function act(type, id, right) {
+  const sim = sims[type];
+  const tid = tierOf(sim, id), c = clusterOf(sim, id);
+  if (!isOpen(sim, tid)) return;
+  if (isFork(sim, id)) {
+    if (sim.pick[c] && settings.wave) return;
+    if (right) { if (sim.pick[c] === id) pickSide(type, null); } else pickSide(type, id);
+    hover(type, id, true);
+    return;
+  }
+  if (right) {
+    if (settings.wave || !owns(sim, id)) return;
+    const ref = c || id;
+    if (c) delete sim.pick[c]; else sim.owned.delete(id);
+    for (const dep of dependents(sim, ref)) { sim.owned.delete(dep); const dc = clusterOf(sim, dep); if (dc) delete sim.pick[dc]; }
+  } else if (c) {
+    if (sim.pick[c] === id) return;
+    if (sim.pick[c] !== undefined && settings.wave) return;
+    if (!reqsMet(sim, id)) return;
+    sim.pick[c] = id;
+  } else {
+    if (owns(sim, id) || !reqsMet(sim, id)) return;
+    sim.owned.add(id);
+  }
+  paint(type);
+  paintAbilities(type);
+}
+
+function meetGate(type, tid) {
+  const sim = sims[type], t = tierDef(sim, tid);
+  sim.met[tid] = true;
+  if (t.xp != null) sim.xp = Math.max(sim.xp, t.xp);
+  for (const tt of sim.d.tiers) if (tt.gate && gateMet(sim, tt) && !sim.open[tt.id]) {
+    if (settings.paid) sim.ready[tt.id] = true; else unlock(type, tt.id);
+  }
+  paint(type);
+}
+function unlock(type, tid) {
+  const sim = sims[type];
+  sim.open[tid] = true; delete sim.ready[tid];
+  const band = sim.el['band_' + tid];
+  band.classList.remove('unlocking'); void band.offsetWidth; band.classList.add('unlocking');
+  paint(type);
+}
+
+function paint(type) {
+  const sim = sims[type], d = sim.d;
+  const next = d.tiers.find(t => t.xp != null && !sim.open[t.id]);
+  sim.root.querySelector('.xpt').textContent = `XP ${sim.xp} · ${d.xpName}`;
+  sim.root.querySelector('.track i').style.width = next ? `${Math.min(100, sim.xp / next.xp * 100)}%` : '100%';
+  for (const ti of sim.L.tierInfo) {
+    const t = ti.t, band = sim.el['band_' + t.id];
+    const open = t.placeholder ? false : isOpen(sim, t.id);
+    band.classList.toggle('locked', !open);
+    band.classList.toggle('open', open);
+    const g = sim.el['gate_' + t.id];
+    if (g) {
+      const pct = t.xp != null ? Math.min(100, sim.xp / t.xp * 100) : 0;
+      if (open) g.innerHTML = `<span>✔ ${t.gate.text}${settings.paid ? ` · unlocked${price(t)}` : ''}</span>`;
+      else if (sim.ready[t.id]) g.innerHTML = `<span>✔ ${t.gate.text}</span><span class="gtrack"><i style="width:100%"></i></span><button class="buy" data-unlock="${t.id}">Unlock${price(t, ' · ')}</button>`;
+      else g.innerHTML = `${LOCK}<span>${gateText(sim, t)}</span><span class="gtrack"><i style="width:${pct}%"></i></span><button data-gate="${t.id}" title="Simulates reaching the gate">Meet gate</button>`;
+      const btn = g.querySelector('button');
+      if (btn) btn.onclick = () => btn.dataset.unlock ? unlock(type, btn.dataset.unlock) : meetGate(type, btn.dataset.gate);
+    }
+  }
+  const lit = sim.hovered ? ancestors(sim, sim.hovered) : new Set();
+  const pv = id => !!sim.preview && sim.d.sideOf[id] === sim.preview && id !== sim.preview;
+  for (const [id, p] of Object.entries(sim.L.pos)) {
+    if (p.hidden) continue;
+    if (p.kind === 'cluster') {
+      sim.el['clu_' + id].classList.toggle('pv', pv(id));
+      sim.el['clu_' + id].classList.toggle('owned', sim.pick[id] !== undefined);
+      sim.el['clu_' + id].style.filter = isOpen(sim, p.tier) ? '' : 'grayscale(1)';
+      continue;
+    }
+    const b = sim.el[id];
+    const open = isOpen(sim, p.tier);
+    const own = owns(sim, id);
+    const c = p.cluster;
+    b.classList.toggle('locked', !open);
+    b.classList.toggle('own', own);
+    b.classList.toggle('dorm', own && !active(sim, id));
+    b.classList.toggle('alt', !!c && sim.pick[c] !== undefined && !own);
+    b.classList.toggle('avail', open && !own && reqsMet(sim, id));
+    b.classList.toggle('hl', sim.hovered === id);
+    b.classList.toggle('path', lit.has(id));
+    b.classList.toggle('pv', pv(id));
+  }
+  for (const l of sim.links) {
+    l.path.classList.toggle('own', has(sim, l.from) && has(sim, l.to));
+    l.path.classList.toggle('lit', sim.hovered === l.to && true || (lit.has(l.to) && lit.has(l.from)));
+  }
+  const foot = sim.root.querySelector('.foot');
+  if (sim.hovered) {
+    const v = verdict(sim, sim.hovered);
+    foot.textContent = v.text; foot.classList.toggle('warn', !!v.warn);
+  } else {
+    foot.textContent = settings.wave ? 'Click: buy · switch and downgrade wait for the wave' : 'Click: buy or switch · Right-click: downgrade';
+    foot.classList.remove('warn');
+  }
+}
+
+/* ---------- abilities readout (Burst) ---------- */
+function abilitiesBox(type) {
+  const box = document.createElement('div');
+  box.className = 'abil';
+  box.innerHTML = `<div class="ttl">Tower pane · Abilities</div><div class="rows"></div><div class="acts"><button type="button" data-f=".25">Base shot: 50 damage</button><button type="button" data-f=".5">Passive: half</button><button type="button" data-f="2">Passive: boss</button><button type="button" data-w="1">Wave starts</button><label><input type="checkbox" checked data-t> Target in range</label><span>What the tower earns goes into every bar at once.</span></div>`;
+  box.querySelectorAll('button').forEach(btn => { btn.onclick = () => {
+    const sim = sims[type];
+    for (const id of abilityIds(sim)) {
+      if (btn.dataset.w) sim.charge[id] = 1;
+      else sim.charge[id] = Math.min(nodeOf(sim, id).cost + 1, chargeOf(sim, id) + Number(btn.dataset.f));
+    }
+    castReady(sim);
+    paintAbilities(type);
+    setTimeout(() => paintAbilities(type), 650);
+  }; });
+  box.querySelector('[data-t]').onchange = e => {
+    const sim = sims[type];
+    sim.noTarget = !e.target.checked;
+    castReady(sim);
+    paintAbilities(type);
+    setTimeout(() => paintAbilities(type), 650);
+  };
+  sims[type].abil = box;
+  const rowsEl = box.querySelector('.rows');
+  rowsEl.addEventListener('pointerover', e => {
+    const row = e.target.closest('.ar');
+    if (row) showTip(row, tipHtml(sims[type], row.dataset.node));
+  });
+  rowsEl.addEventListener('pointerleave', hideTip);
+  paintAbilities(type);
+  return box;
+}
+function abilityIds(sim) { return Object.keys(sim.L.pos).filter(id => sim.L.pos[id].kind === 'node' && !sim.L.pos[id].hidden && nodeOf(sim, id).cost && active(sim, id)); }
+/* A wave starts with 1 unit in every bar; a bar holds its cost plus 1 and casts at its cost while a target is near. */
+function chargeOf(sim, id) { return sim.charge[id] ?? 1; }
+function castReady(sim) {
+  if (sim.noTarget) return;
+  for (const id of abilityIds(sim)) {
+    const n = nodeOf(sim, id);
+    if (chargeOf(sim, id) >= n.cost - 1e-9) {
+      sim.charge[id] = chargeOf(sim, id) - n.cost;
+      sim.cast = sim.cast || {};
+      sim.cast[id] = Date.now();
+    }
+  }
+}
+function unitText(x, cur) {
+  const q = Math.floor(x * 4 + 1e-9), whole = Math.floor(q / 4), part = ['', '¼', '½', '¾'][q % 4];
+  const num = whole && part ? `${whole}${part}` : whole ? `${whole}` : part || '0';
+  return `${num} ${q === 4 ? cur : cur + 's'}`;
+}
+function paintAbilities(type) {
+  const sim = sims[type];
+  if (!sim.abil) return;
+  const ids = abilityIds(sim);
+  const rows = sim.abil.querySelector('.rows');
+  if (!ids.length) { rows.innerHTML = '<div class="none">Pick a side, then buy an ability, to see it charge here.</div>'; return; }
+  rows.innerHTML = ids.map(id => {
+    const n = nodeOf(sim, id), f = chargeOf(sim, id), units = n.cost + 1;
+    const cur = n.currency.replace(/s$/, ''), term = sim.book.get(cur), cg = term && term.glyph && G[term.glyph];
+    const casting = sim.cast && sim.cast[id] && Date.now() - sim.cast[id] < 600;
+    const waiting = !casting && f >= n.cost - 1e-9;
+    const cells = Array.from({ length: units }, (_, i) => `<span class="u${i >= n.cost ? ' spare' : ''}">${cg ? `<i style="-webkit-mask-image:url(${cg});mask-image:url(${cg})"></i>` : ''}</span>`).join('');
+    const bar = `<span class="ub" style="--units:${units};--fill:${Math.min(f, units) / units}">${cells}<b></b></span>`;
+    const state = casting ? 'cast!' : waiting ? 'waiting for a target' : '';
+    return `<div class="ar ${casting ? 'cast' : ''}" data-node="${id}" style="--h:${n.hue}"><i style="background:${n.hue};-webkit-mask-image:url(${G[n.glyph]});mask-image:url(${G[n.glyph]})"></i><span>${n.name}${state ? ` · ${state}` : ''}<small>${unitText(f, cur)} of ${n.cost}</small></span>${bar}</div>`;
+  }).join('');
+}
+
+/* ---------- page ---------- */
+const order = ['sniper', 'splash', 'mortar', 'cinder', 'seeker', 'sonar', 'pulse', 'aura'];
+const byType = Object.fromEntries(OLD.map(t => [t.type, t]));
+const nav = document.getElementById('nav');
+for (const k of order) {
+  const t = byType[k];
+  const a = document.createElement('a');
+  a.className = 'chip' + (DESIGNS[k] ? ' refined' : '');
+  a.href = '#' + k;
+  a.innerHTML = `<span class="dot"></span>${t.name}`;
+  a.title = DESIGNS[k] ? 'Refining: both panels' : 'Current panel only';
+  nav.appendChild(a);
+}
+const host = document.getElementById('towers');
+let restGrid = null;
+for (const k of order) {
+  const t = byType[k], d = DESIGNS[k];
+  if (d) {
+    const s = document.createElement('section');
+    s.className = 'tower'; s.id = k;
+    s.innerHTML = `<div class="thead"><h2>${t.name}</h2><span class="tag">${d.status}</span><code style="color:var(--gloss)">FEATURE-next-gen-${k}-tower.md</code></div>`;
+    const bench = document.createElement('div'); bench.className = 'bench';
+    const c1 = document.createElement('div'); c1.className = 'col';
+    c1.innerHTML = `<div class="cap"><h3>Today</h3><small>${t.nodes.length} nodes · hover any node</small></div>`;
+    const f1 = document.createElement('div'); f1.className = 'frame'; f1.appendChild(oldPanel(t)); c1.appendChild(f1);
+    const c2 = document.createElement('div'); c2.className = 'col';
+    c2.innerHTML = `<div class="cap"><h3>Next-gen</h3><small>click to buy · right-click to downgrade</small></div>`;
+    const f2 = document.createElement('div'); f2.className = 'frame'; f2.style.paddingTop = '10px'; f2.appendChild(newPanel(k, d)); c2.appendChild(f2);
+    if (d.fork) c2.appendChild(jumpBox(k));
+    if (d.tiers.some(tt => (tt.items || []).some(it => (it.members || [it]).some(n => n.cost)))) { const ab = abilitiesBox(k); ab.style.marginTop = '10px'; c2.appendChild(ab); }
+    const c3 = document.createElement('div'); c3.className = 'col notes';
+    const passiveTerms = [];
+    const stats = d.base.map(([a, b, was]) => `<span class="stat">${a} <b>${b}</b>${was ? ` <s>${was}</s>` : ''}</span>`).join('');
+    const kept = t.nodes.filter(n => d.carried[n.id]);
+    const unplaced = t.nodes.filter(n => !d.carried[n.id]);
+    const deadBy = {};
+    for (const x of d.dead) (deadBy[x.kind] = deadBy[x.kind] || []).push(x.name);
+    const hue0 = d.tiers[0].hue;
+    c3.innerHTML = `
+      <div><h3>Bare tower</h3><div class="stats" style="margin-top:6px">${stats}</div></div>
+      ${d.passive.name ? `<div class="passive">${d.passive.glyph ? `<i style="background:${hue0};-webkit-mask-image:url(${G[d.passive.glyph]});mask-image:url(${G[d.passive.glyph]})"></i>` : ''}<p><strong>Passive: ${d.passive.name}.</strong> ${markTerms(d.passive.text, sims[k].book, passiveTerms, plainName(d.passive.name))}</p></div>` : ''}
+      ${namesHtml(k)}
+      <div><h3>Open questions</h3><ol>${d.questions.map(([a, b]) => `<li><strong>${a}.</strong> ${b}</li>`).join('')}</ol></div>
+      <div><h3>Carried over</h3><div class="kv">${kept.map(n => `<span>${n.name}</span><span>${d.carried[n.id]}</span>`).join('')}</div></div>
+      <div><h3>Not carried over · ${unplaced.length}</h3><p style="color:var(--gloss);font-size:12px;margin-top:2px">No row's Replaces names these. Place them in a later tier or let them retire. Hover a name to find it on today's panel.</p><div class="chips">${unplaced.map(n => `<span class="oc" data-node="${n.id}">${n.name}</span>`).join('')}</div></div>
+      <div><h3>Unused once these retire</h3>${d.dead.length ? `<div class="dead">${Object.entries(deadBy).map(([kind, names]) => `<div><b>${kind}</b>${names.map(x => `<code>${x}</code>`).join(' · ')}</div>`).join('')}</div>` : '<p style="color:var(--gloss);font-size:12px;margin-top:4px">Nothing.</p>'}</div>`;
+    c3.querySelectorAll('.oc').forEach(ch => {
+      const spot = () => s.querySelector(`.old .hot[data-node="${CSS.escape(ch.dataset.node)}"]`);
+      ch.addEventListener('pointerenter', () => spot() && spot().classList.add('flag'));
+      ch.addEventListener('pointerleave', () => spot() && spot().classList.remove('flag'));
+    });
+    bench.append(c1, c2, c3);
+    s.appendChild(bench);
+    host.appendChild(s);
+    paint(k);
+    if (d.fork) paintJump(k);
+  } else {
+    if (!restGrid) {
+      const s = document.createElement('section');
+      s.className = 'tower'; s.id = 'rest';
+      s.innerHTML = `<div class="thead"><h2>Not refined yet</h2><span class="tag off">current panel only</span></div>`;
+      restGrid = document.createElement('div'); restGrid.className = 'grid6';
+      s.appendChild(restGrid); host.appendChild(s);
+    }
+    const c = document.createElement('div'); c.className = 'col'; c.id = k;
+    c.style.scrollMarginTop = '70px';
+    c.innerHTML = `<div class="cap"><h3 style="color:var(--fg)">${t.name}</h3><small>${t.nodes.length} nodes · $${t.price}</small></div>`;
+    const f = document.createElement('div'); f.className = 'frame'; f.appendChild(oldPanel(t)); c.appendChild(f);
+    restGrid.appendChild(c);
+  }
+}
+
+function setToggle(on, off, key, val) {
+  document.getElementById(on).setAttribute('aria-pressed', 'true');
+  document.getElementById(off).setAttribute('aria-pressed', 'false');
+  settings[key] = val;
+  Object.keys(sims).forEach(paint);
+}
+document.getElementById('unlock-auto').onclick = () => {
+  setToggle('unlock-auto', 'unlock-paid', 'paid', false);
+  for (const k of Object.keys(sims)) for (const tid of Object.keys(sims[k].ready)) unlock(k, tid);
+};
+document.getElementById('unlock-paid').onclick = () => setToggle('unlock-paid', 'unlock-auto', 'paid', true);
+document.getElementById('phase-between').onclick = () => setToggle('phase-between', 'phase-wave', 'wave', false);
+document.getElementById('phase-wave').onclick = () => setToggle('phase-wave', 'phase-between', 'wave', true);
+addEventListener('scroll', () => hideTip(true), { passive: true });
+// A rebuild under the pointer replaces the hovered fork node, so its pointerleave never comes: end a preview the
+// pointer is no longer on.
+addEventListener('pointermove', e => {
+  for (const k of Object.keys(sims)) {
+    const sim = sims[k];
+    if (sim.preview && sim.el[sim.preview] !== e.target.closest('.nn')) { hover(k, sim.preview, false); preview(k, sim.preview, false); }
+  }
+}, { passive: true });
+</script>
