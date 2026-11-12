@@ -30,11 +30,11 @@ final class PowerBench {
     private static final int LANE_HEIGHT = 3;
     private static final int UNLIMITED_LIVES = 1_000_000;
     private static final int TICK_BUDGET = 40_000;
-    private static final int SEEDS = 3;
+    private static final int SEEDS = 4;
     private static final long FIRST_SEED = 1L;
     /** Above this a loadout is taken to never get through: the enemy is immune to it. */
     private static final double MOST = 500_000;
-    private static final double TOLERANCE = 0.03;
+    private static final double TOLERANCE = 0.01;
     /** A cell this near a lane is one a tower would be built on. */
     private static final double BESIDE_CELLS = 1.6;
 

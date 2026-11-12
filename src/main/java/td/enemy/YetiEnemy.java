@@ -17,7 +17,7 @@ final class YetiEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("yeti", "Yeti", 165, 3, 1.1f, BodyArchetype.YETI)
+                .startingAt(EnemyDefinition.of("yeti", "Yeti", 125, 3, 1.1f, BodyArchetype.YETI)
                         .withMovement(new SwingMovement((float) Math.toRadians(10.0), 30, SwingCurve.SMOOTH))
                         .withDescription("Thick fur against cold and blows alike.")
                         .withArmor(15f)
@@ -25,7 +25,7 @@ final class YetiEnemy {
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
                                 IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.CHILL)))),
-                        RankGrowth.of(20f))
+                        RankGrowth.stepped(204, 636, 1250, 3256).paying(5, 9, 17, 28))
                 .thenAt(Rank.ELITE, e -> e
                         .withStats(20f, 20f, 2f, 2f, 20f, 5f, 15f)
                         .withAdditionalAbilities(List.of(hunker(6f))))

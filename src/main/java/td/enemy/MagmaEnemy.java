@@ -8,10 +8,11 @@ import td.util.TickRate;
 import java.util.List;
 
 /**
- * The Magma ({@code magma}): the fire-proof counterpart of the Yeti, slow and heavy. It shrugs off most burn and from
- * Veteran all of it, resists magic and almost never takes a crit. Once badly hurt it wards the enemies around it
- * against magic, and nearly dead it turns almost proof against magic and crits for a while. From Veteran it leaves pools
- * of molten rock behind it that mend whatever stands in them, until it is too hurt to keep up.
+ * The Magma ({@code magma}): the fire-proof counterpart of the Yeti, slow and heavy. It cannot burn, resists magic
+ * more than anything else of its rank and almost never takes a crit. From Soldier, once badly hurt, it wards the
+ * enemies around it against magic; from Veteran, nearly dead, it turns almost proof against magic and crits for a
+ * while, and it leaves pools of molten rock behind it that mend whatever stands in them, until it is too hurt to keep
+ * up.
  */
 final class MagmaEnemy {
 
@@ -26,7 +27,7 @@ final class MagmaEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("magma", "Magma", 190, 4, 0.8f, BodyArchetype.MAGMA)
+                .startingAt(EnemyDefinition.of("magma", "Magma", 179, 3, 0.8f, BodyArchetype.MAGMA)
                         .withDescription("A slow, fire-proof hulk of molten rock.")
                         .withMovement(new PulseMovement(0.12f, 40, 20))
                         .withMagicResist(30f)
@@ -35,16 +36,18 @@ final class MagmaEnemy {
                         .withSpirit(30f)
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN))))
-                        .withIdentifiedAbilities(List.of(spellWard(15), lastStand())), RankGrowth.of(20f))
+                        , RankGrowth.stepped(385, 869, 2095, 3600).paying(5, 8, 17, 36))
                 .thenAt(Rank.SOLDIER, e -> e
+                        .withMagicResist(35f)
                         .withAdditionalAbilities(List.of(spellWard(30))))
                 .thenAt(Rank.VETERAN, e -> e
-                        .withAdditionalAbilities(List.of(spellWard(50), pool(0.35f, 1f, 0.5f))))
+                        .withMagicResist(45f)
+                        .withAdditionalAbilities(List.of(spellWard(50), lastStand(), pool(0.35f, 1f, 0.5f))))
                 .thenAt(Rank.ELITE, e -> e
-                        .withStats(10f, 45f, 0f, 0f, 85f, 10f, 45f)
+                        .withStats(10f, 60f, 0f, 0f, 85f, 10f, 45f)
                         .withAdditionalAbilities(List.of(pool(0.6f, 1.25f, 0.5f))))
                 .thenAt(Rank.BOSS, e -> e
-                        .withStats(15f, 60f, 0f, 0f, 95f, 10f, 60f)
+                        .withStats(15f, 75f, 0f, 0f, 95f, 10f, 60f)
                         .withAdditionalAbilities(List.of(pool(1f, 1.5f, 0.25f))))
                 .build());
     }

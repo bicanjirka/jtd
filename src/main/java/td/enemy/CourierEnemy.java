@@ -15,9 +15,9 @@ final class CourierEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("courier", "Courier", 45, 5, 3.0f, BodyArchetype.COURIER)
+                .startingAt(EnemyDefinition.of("courier", "Courier", 29, 5, 3.0f, BodyArchetype.COURIER)
                         .withDescription("Fast and fragile, it slips past slow towers.")
-                        .withAgility(25f), RankGrowth.of(12f))
+                        .withAgility(25f), RankGrowth.stepped(47, 196, 649, 1155).paying(6, 10, 13, 17))
                 .thenAt(Rank.VETERAN, e -> e.withAgility(35f))
                 .thenAt(Rank.ELITE, e -> e
                         .withStats(5f, 5f, 0f, 0f, 15f, 35f, 10f)

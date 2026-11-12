@@ -7,13 +7,11 @@ import java.util.List;
 /**
  * The Golem ({@code golem}): a slow stone hulk with heavy armor. It shrugs off crits, and once badly hurt it hardens
  * into a shield that holds until broken and grows with rank. From Elite it is plated and tougher against magic too.
- * When it dies it splits into two smaller Golemites with its defences and little health, a definition of their own
+ * From Veteran, when it dies it splits into two smaller Golemites with its defences and little health, a definition of their own
  * because a golem that spawns golems would be a cycle.
  */
 final class GolemEnemy {
 
-    // Shared, so a Golemite keeps the same share of its Golem's health at every rank.
-    private static final RankGrowth GROWTH = RankGrowth.of(20f);
 
     private GolemEnemy() {
     }
@@ -24,23 +22,23 @@ final class GolemEnemy {
                         .withDescription("A chunk of a broken Golem: as hard, but far easier to break.")
                         .withMovement(new SwingMovement((float) Math.toRadians(15.0), 30, SwingCurve.SMOOTH))
                         .withArmor(35f)
-                        .withResilience(40f), GROWTH)
+                        .withResilience(40f), RankGrowth.of(12f))
                 .thenAt(Rank.ELITE, e -> e
                         .withStats(50f, 20f, 2f, 0f, 60f, 0f, 0f))
                 .thenAt(Rank.BOSS, e -> e
                         .withStats(65f, 35f, 4f, 0f, 80f, 0f, 0f))
                 .build());
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("golem", "Golem", 220, 4, 0.7f, BodyArchetype.GOLEM)
+                .startingAt(EnemyDefinition.of("golem", "Golem", 219, 3, 0.7f, BodyArchetype.GOLEM)
                         .withDescription("Slow, stone-skinned and hard to crack.")
                         .withMovement(new SwingMovement((float) Math.toRadians(15.0), 50, SwingCurve.SMOOTH))
                         .withArmor(35f)
                         .withResilience(40f)
-                        .withIdentifiedAbilities(List.of(stoneShield(40), split())), GROWTH)
+                        .withIdentifiedAbilities(List.of(stoneShield(40))), RankGrowth.stepped(359, 818, 2826, 6391).paying(5, 5, 11, 22))
                 .thenAt(Rank.SOLDIER, e -> e
                         .withAdditionalAbilities(List.of(stoneShield(80))))
                 .thenAt(Rank.VETERAN, e -> e
-                        .withAdditionalAbilities(List.of(stoneShield(160))))
+                        .withAdditionalAbilities(List.of(stoneShield(160), split())))
                 .thenAt(Rank.ELITE, e -> e
                         .withStats(50f, 20f, 2f, 0f, 60f, 0f, 0f)
                         .withAdditionalAbilities(List.of(stoneShield(300))))

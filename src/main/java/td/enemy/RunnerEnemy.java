@@ -19,12 +19,12 @@ final class RunnerEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("runner", "Runner", 90, 2, 1.28f, BodyArchetype.TRIANGLE)
+                .startingAt(EnemyDefinition.of("runner", "Runner", 89, 2, 1.28f, BodyArchetype.TRIANGLE)
                         .withDescription("Reckless: the more it is hurt, the faster it runs.")
                         .withMovement(new RotorMovement((float) Math.toRadians(-5.0)))
                         .withAgility(-20f)
                         .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f)))),
-                        RankGrowth.of(15f))
+                        RankGrowth.stepped(150, 244, 760, 2455).paying(4, 6, 12, 17))
                 .thenAt(Rank.VETERAN, e -> e
                         .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.5f))))
                         .withAdditionalAbilities(List.of(hasteGround(0.5f, 1.5f))))

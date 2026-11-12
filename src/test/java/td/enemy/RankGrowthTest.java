@@ -3,6 +3,7 @@ package td.enemy;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,6 +48,42 @@ class RankGrowthTest {
         assertThat(ladder.definitionFor(Rank.VETERAN).baseHealth()).isEqualTo(999);
         assertThat(ladder.definitionFor(Rank.VETERAN).price()).isEqualTo(50);
         assertThat(ladder.definitionFor(Rank.ELITE).baseHealth()).isEqualTo(1000);
+    }
+
+    @Test
+    void aSharperCurveKeepsTheLowRanksCloserToTheGruntAndTheBossWhereItWas() {
+        RankGrowth sharper = GROWTH.bending(3f);
+
+        assertThat(sharper.healthAt(100, Rank.SOLDIER)).isEqualTo(125);
+        assertThat(sharper.healthAt(100, Rank.VETERAN)).isEqualTo(300);
+        assertThat(sharper.healthAt(100, Rank.BOSS)).isEqualTo(1700);
+    }
+
+    @Test
+    void healthWrittenRankByRankTakesTheCurvesPlaceAboveTheGrunt() {
+        RankGrowth stepped = RankGrowth.stepped(130, 310, 720, 1500).paying(5, 6, 7, 8);
+        RankedEnemy ladder = RankedEnemy.startingAt(EnemyDefinition.of("x", "X", 100, 4, 1f, BodyArchetype.CIRCLE),
+                stepped).build();
+
+        assertThat(Arrays.stream(Rank.values()).map(rank -> ladder.definitionFor(rank).baseHealth()))
+                .containsExactly(100, 130, 310, 720, 1500);
+        assertThat(Arrays.stream(Rank.values()).map(rank -> ladder.definitionFor(rank).price()))
+                .containsExactly(4, 5, 6, 7, 8);
+    }
+
+    @Test
+    void bountyWrittenRankByRankLeavesHealthOnItsCurve() {
+        RankGrowth paying = GROWTH.paying(9, 10, 11, 12);
+
+        assertThat(paying.healthAt(100, Rank.ELITE)).isEqualTo(1000);
+        assertThat(paying.bountyAt(4, Rank.GRUNT)).isEqualTo(4);
+        assertThat(paying.bountyAt(4, Rank.ELITE)).isEqualTo(11);
+    }
+
+    @Test
+    void aLadderWrittenForOnlySomeRanksIsRejected() {
+        assertThatThrownBy(() -> new RankGrowth(17f, 2f, List.of(1, 2), List.of()))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

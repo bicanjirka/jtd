@@ -20,20 +20,19 @@ final class JuggernautEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("juggernaut", "Juggernaut", 450, 6, 0.64f, BodyArchetype.JUGGERNAUT)
+                .startingAt(EnemyDefinition.of("juggernaut", "Juggernaut", 286, 6, 0.64f, BodyArchetype.JUGGERNAUT)
                         .withDescription("A slow fortress whose plating swallows small hits.")
                         .withMovement(new RotorMovement((float) Math.toRadians(1.5)))
                         .withPlating(25f)
-                        .withMagicResist(15f)
                         .withTenacity(43f),
-                        RankGrowth.of(20f))
+                        RankGrowth.stepped(455, 845, 2504, 7485).paying(8, 14, 28, 46))
                 .thenAt(Rank.VETERAN, e -> e.withPlating(30f)
                         .withAdditionalAbilities(List.of(blast(2f))))
                 .thenAt(Rank.ELITE, e -> e
-                        .withStats(15f, 15f, 30f, 0f, 100f, 0f, 10f)
+                        .withStats(15f, 0f, 30f, 0f, 100f, 0f, 10f)
                         .withAdditionalAbilities(List.of(blast(4f))))
                 .thenAt(Rank.BOSS, e -> e
-                        .withStats(25f, 20f, 40f, 0f, 100f, 0f, 20f)
+                        .withStats(25f, 10f, 40f, 0f, 100f, 0f, 20f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.BULWARK,
                                 new HealthThresholdTrigger(0.5f),
                                 new ApplyEffectAction(ShieldTemplate.magicOnly(1500f, 200), new SelfTarget()))))))

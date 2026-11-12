@@ -18,7 +18,9 @@
   inherit a Boss caster's rank fixes one (`SpawnEnemiesAction.atRank`).
   A built-in ladder derives its health and bounty from a `RankGrowth` (`startingAt(grunt, growth)`)
   for the ranks it skips up to `BOSS`; a rank step's `withHealthAndPrice` overrides both for that
-  rank alone. A unique enemy that leaks ends the level (`EnemyDefinition.ALL_LIVES`). Every
+  rank alone. A growth is a curve (`of`, `bending`) or health written rank by rank (`stepped`), and writes its bounty
+  rank by rank with `paying`. Only the enemy every other is weighed against grows by a curve; the others' health and
+  bounty are what `td.balance.EnemyPowerReport` says their weight asks for, never a guess. A unique enemy that leaks ends the level (`EnemyDefinition.ALL_LIVES`). Every
   enemy gains something of its identity from Elite on.
 - Stat, trait, ability, effect, each thing is exactly one:
   - A **base stat** is a number every enemy has on its sheet. It is authored with its named method
