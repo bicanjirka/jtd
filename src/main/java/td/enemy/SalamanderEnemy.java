@@ -7,8 +7,8 @@ import java.util.List;
 
 /**
  * The Salamander ({@code salamander}): immune to burn, so a Cinder-only defence does nothing; Soulfire still burns
- * it. It regrows what it loses, faster with rank; from Elite its hide turns some magic and it sheds its wounds once
- * badly hurt.
+ * it. It regrows what it loses, faster with rank; from Veteran its hide hardens against whichever damage type the
+ * level has dealt most, and from Elite it sheds its wounds once badly hurt.
  */
 final class SalamanderEnemy {
 
@@ -17,22 +17,27 @@ final class SalamanderEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("salamander", "Salamander", 135, 3, 1.28f, BodyArchetype.SALAMANDER)
+                .startingAt(EnemyDefinition.of("salamander", "Salamander", 94, 3, 1.28f, BodyArchetype.SALAMANDER)
                         .withMovement(new StrideMovement((float) Math.toRadians(25.0), 8))
                         .withDescription("A fire-proof walker that slowly regrows what it loses.")
                         .withIdentifiedTraits(List.of(
                                 IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
-                                regrowth(1f))), RankGrowth.of(15f))
-                .thenAt(Rank.VETERAN, e -> e.withAdditionalTraits(List.of(regrowth(2f))))
+                                regrowth(1f))), RankGrowth.stepped(164, 501, 1259, 3132).paying(5, 8, 15, 25))
+                .thenAt(Rank.VETERAN, e -> e.withAdditionalTraits(List.of(regrowth(2f), hide(25f))))
                 .thenAt(Rank.ELITE, e -> e
-                        .withStats(10f, 25f, 0f, 0f, 10f, 10f, 15f)
-                        .withAdditionalTraits(List.of(regrowth(4f)))
+                        .withStats(10f, 10f, 0f, 0f, 10f, 10f, 15f)
+                        .withAdditionalTraits(List.of(regrowth(4f), hide(50f)))
                         .withAdditionalAbilities(List.of(shed(4f))))
                 .thenAt(Rank.BOSS, e -> e
-                        .withStats(15f, 30f, 0f, 0f, 20f, 10f, 25f)
-                        .withAdditionalTraits(List.of(regrowth(8f)))
+                        .withStats(15f, 15f, 0f, 0f, 20f, 10f, 25f)
+                        .withAdditionalTraits(List.of(regrowth(8f), hide(67f)))
                         .withAdditionalAbilities(List.of(shed(8f))))
                 .build());
+    }
+
+    /** A hide that hardens against whichever damage type the level has dealt most. */
+    private static IdentifiedTrait hide(float fullArmor) {
+        return IdentifiedTrait.named("hide", AdaptiveResist.againstDominant(fullArmor));
     }
 
     private static IdentifiedTrait regrowth(float pointsPerSecond) {

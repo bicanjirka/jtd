@@ -65,7 +65,7 @@ final class AmberHiveLevel {
                     .withArchetype(BodyArchetype.HIVE_GUARD)
                     .withDescription("A beetle in amber chitin. Alone it is slow; in a crowd it is a wall.")
                     .withMovement(new StrideMovement((float) Math.toRadians(5.0), 20))
-                    .withHealthAndPrice(simple.baseHealth() * 3, simple.price() * 2)
+                    .withHealthAndPrice(Math.round(simple.baseHealth() * 2.8f), simple.price() * 2)
                     .withBaseSpeed(simple.baseSpeed() / 2f)
                     .withPlating(1f)
                     .withAdditionalTraits(List.of(IdentifiedTrait.named("hivemind", new HivemindTrait(9f, 4)))));
@@ -90,13 +90,13 @@ final class AmberHiveLevel {
 
     /** What a cocoon breaks open into: quick and nimble, faster still once it is hurt. */
     private static final RankedEnemy HORNET = RankedEnemy
-            .startingAt(EnemyDefinition.of("hornet", "Hornet", 110, 4, 2.0f, BodyArchetype.HORNET)
+            .startingAt(EnemyDefinition.of("hornet", "Hornet", 69, 3, 2.0f, BodyArchetype.HORNET)
                     .withDescription("What the cocoon was keeping. It does not walk the coil; it flies it.")
                     .withMovement(new PathDirectionalMovement())
                     .withAgility(25f)
                     .withResilience(-20f)
                     .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f)))),
-                    RankGrowth.of(14f))
+                    RankGrowth.stepped(117, 359, 880, 1902).paying(5, 8, 17, 27))
             .thenAt(Rank.SOLDIER, e -> e.withAgility(30f))
             .thenAt(Rank.VETERAN, e -> e
                     .withAgility(35f)

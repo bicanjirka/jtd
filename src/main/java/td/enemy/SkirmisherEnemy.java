@@ -17,10 +17,10 @@ final class SkirmisherEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("skirmisher", "Skirmisher", 90, 2, 1.6f, BodyArchetype.SKIRMISHER)
+                .startingAt(EnemyDefinition.of("skirmisher", "Skirmisher", 86, 3, 1.6f, BodyArchetype.SKIRMISHER)
                         .withDescription("Nimble and hard to pin down with aimed shots.")
                         .withResilience(20f)
-                        .withAgility(40f), RankGrowth.of(14f))
+                        .withAgility(40f), RankGrowth.stepped(120, 371, 958, 1949).paying(4, 8, 15, 25))
                 .thenAt(Rank.SOLDIER, e -> e
                         .withAgility(50f)
                         .withAdditionalAbilities(List.of(IdentifiedAbility.anonymous(new Ability(AbilityTerm.SIDESTEP, new OnDodgeTrigger(),

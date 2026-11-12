@@ -71,21 +71,21 @@ final class LastHourLevel {
             .startingAt(EnemyDefinition.of("timekeeper", "Timekeeper", 130, 3, 1.0f, BodyArchetype.TIMEKEEPER)
                     .withDescription("Keeps the hour for the others: whatever they lose, it gives back.")
                     .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
-                    .withIdentifiedAbilities(List.of(rewindAround(60))), RankGrowth.of(14f))
-            .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(rewindAround(70))))
-            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(rewindAround(80))))
+                    .withIdentifiedAbilities(List.of(rewindAround(50))), RankGrowth.stepped(210, 600, 1300, 2400).paying(4, 10, 26, 40))
+            .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(rewindAround(40))))
+            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(rewindAround(50))))
             .thenAt(Rank.ELITE, e -> e
                     .withStats(10f, 20f, 0f, 0f, 0f, 10f, 20f)
-                    .withAdditionalAbilities(List.of(rewindAround(100))))
-            .thenAt(Rank.BOSS, e -> e.withAdditionalAbilities(List.of(rewindAround(120))))
+                    .withAdditionalAbilities(List.of(rewindAround(60))))
+            .thenAt(Rank.BOSS, e -> e.withAdditionalAbilities(List.of(rewindAround(80))))
             .build();
 
     /** Glass: thick against every small hit, either type, and shattering under a crit. */
     private static final RankedEnemy GLASS_SENTINEL = RankedEnemy
-            .startingAt(EnemyDefinition.of("glassSentinel", "Glass Sentinel", 260, 4, 0.8f, BodyArchetype.GLASS_SENTINEL)
+            .startingAt(EnemyDefinition.of("glassSentinel", "Glass Sentinel", 156, 4, 0.8f, BodyArchetype.GLASS_SENTINEL)
                     .withDescription("Cut from the glass itself. A small hit only rings on it; a hard one shatters it.")
                     .withMovement(new SwingMovement((float) Math.toRadians(6.0), 40, SwingCurve.SMOOTH))
-                    .withStats(0f, 0f, 8f, 8f, -60f, 0f, 0f), RankGrowth.of(16f))
+                    .withStats(0f, 0f, 8f, 8f, -60f, 0f, 0f), RankGrowth.stepped(230, 680, 2578, 4332).paying(5, 9, 24, 40))
             .thenAt(Rank.SOLDIER, e -> e.withPlating(10f).withInsulation(10f))
             .thenAt(Rank.VETERAN, e -> e.withPlating(13f).withInsulation(13f))
             .thenAt(Rank.ELITE, e -> e.withStats(10f, 10f, 16f, 16f, -60f, 0f, 10f))
@@ -100,7 +100,7 @@ final class LastHourLevel {
 
     /** A brute of packed sand that runs faster as it is hurt and falls apart into Sandlings. */
     private static final RankedEnemy REAVER = RankedEnemy
-            .startingAt(EnemyDefinition.of("sandReaver", "Sand Reaver", 750, 6, 1.28f, BodyArchetype.REAVER)
+            .startingAt(EnemyDefinition.of("sandReaver", "Sand Reaver", 110, 6, 1.28f, BodyArchetype.REAVER)
                     .withDescription("Sand packed hard into a brute. It runs faster as it is hurt, and when it falls, "
                             + "it falls apart.")
                     .withMovement(new PathDirectionalMovement())
@@ -109,21 +109,21 @@ final class LastHourLevel {
                     .withInsulation(1f)
                     .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f))))
                     .withIdentifiedAbilities(List.of(
-                            panicShield(100f),
+                            panicShield(35f),
                             IdentifiedAbility.named("splitOnDeath",
                                     new Ability(AbilityTerm.SPLIT, new OnDeathTrigger(), new SpawnEnemiesAction("sandling", 2, false))))),
-                    RankGrowth.of(14f))
+                    RankGrowth.stepped(190, 560, 1250, 2100).paying(10, 15, 18, 18))
             .thenAt(Rank.SOLDIER, e -> e
-                    .withAdditionalAbilities(List.of(panicShield(180f))))
+                    .withAdditionalAbilities(List.of(panicShield(63f))))
             .thenAt(Rank.VETERAN, e -> e
-                    .withAdditionalAbilities(List.of(panicShield(320f))))
+                    .withAdditionalAbilities(List.of(panicShield(112f))))
             .thenAt(Rank.ELITE, e -> e
                     .withStats(10f, 10f, 1f, 1f, 100f, 5f, 10f)
-                    .withAdditionalAbilities(List.of(panicShield(580f))))
+                    .withAdditionalAbilities(List.of(panicShield(200f))))
             .thenAt(Rank.BOSS, e -> e
                     .withStats(15f, 15f, 1f, 1f, 100f, 5f, 20f)
                     .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.6f))))
-                    .withAdditionalAbilities(List.of(panicShield(1050f))))
+                    .withAdditionalAbilities(List.of(panicShield(370f))))
             .build();
 
     private static final QuadraticBezierSmoothing SMOOTHING = new QuadraticBezierSmoothing(0.28, 12);

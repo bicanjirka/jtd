@@ -18,14 +18,14 @@ final class KnightEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("knight", "Knight", 120, 2, 1.28f, BodyArchetype.SQUARE)
+                .startingAt(EnemyDefinition.of("knight", "Knight", 91, 3, 1.28f, BodyArchetype.SQUARE)
                         .withDescription("Heavy plates blunt physical hits; magic goes through.")
                         .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
                         .withArmor(25f)
                         .withMagicResist(25f)
                         .withPlating(2f)
                         .withResilience(100f),
-                        RankGrowth.of(14f))
+                        RankGrowth.stepped(157, 381, 808, 1628).paying(5, 8, 15, 15))
                 .thenAt(Rank.SOLDIER, e -> e
                         .withArmor(33f)
                         .withMagicResist(33f))

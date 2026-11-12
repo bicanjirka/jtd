@@ -103,11 +103,13 @@ final class ProbeRig implements IntConsumer {
         this.hold(mobs, time);
         double strength = this.strength();
         this.burnStrength += strength / BURN_INTERVAL_TICKS;
-        this.fire(PowerProbe.SHOT, HEAVY_HIT_POINTS, strength, mobs,
-                target -> target.takeHit(Damage.physical(DamageUnits.ofPoints(HEAVY_HIT_POINTS)), SHOT));
-        this.fire(PowerProbe.BOLT, HEAVY_HIT_POINTS, strength, mobs,
-                target -> target.takeHit(Damage.magic(DamageUnits.ofPoints(HEAVY_HIT_POINTS)), BOLT));
-        this.fire(PowerProbe.BLAST, BLAST_HIT_POINTS, strength, mobs, target -> this.blast(target, mobs));
+        float heavy = HEAVY_HIT_POINTS * this.loadout.hitScale();
+        float small = BLAST_HIT_POINTS * this.loadout.hitScale();
+        this.fire(PowerProbe.SHOT, heavy, strength, mobs,
+                target -> target.takeHit(Damage.physical(DamageUnits.ofPoints(heavy)), SHOT));
+        this.fire(PowerProbe.BOLT, heavy, strength, mobs,
+                target -> target.takeHit(Damage.magic(DamageUnits.ofPoints(heavy)), BOLT));
+        this.fire(PowerProbe.BLAST, small, strength, mobs, target -> this.blast(target, mobs, small));
         if (time % BURN_INTERVAL_TICKS == 0) {
             this.burn(mobs, this.burnStrength);
             this.burnStrength = 0;
@@ -150,12 +152,12 @@ final class ProbeRig implements IntConsumer {
         this.owed.put(probe, due >= 1.0 ? 1.0 : due);
     }
 
-    private void blast(EnemyMob centre, EnemyMob[] mobs) {
+    private void blast(EnemyMob centre, EnemyMob[] mobs, float hitPoints) {
         double x = centre.getX();
         double y = centre.getY();
         for (EnemyMob mob : mobs) {
             if (mob.validTarget() && Math.hypot(mob.getX() - x, mob.getY() - y) <= this.blastRadius) {
-                mob.takeHit(Damage.physical(DamageUnits.ofPoints(BLAST_HIT_POINTS)), BLAST);
+                mob.takeHit(Damage.physical(DamageUnits.ofPoints(hitPoints)), BLAST);
             }
         }
     }
@@ -190,9 +192,10 @@ final class ProbeRig implements IntConsumer {
 
     /**
      * What a rig lands: each probe's raw damage a second before the enemy's defences, what holds the enemies back, and
-     * whether every enemy is kept revealed.
+     * whether every enemy is kept revealed. A hit is {@code hitScale} times its size, as the hits of upgraded towers
+     * are, at the same damage a second.
      */
-    record Loadout(Map<PowerProbe, Double> perSecond, Hold hold, boolean reveals) {
+    record Loadout(Map<PowerProbe, Double> perSecond, Hold hold, boolean reveals, float hitScale) {
 
         Loadout {
             Map<PowerProbe, Double> copy = new EnumMap<>(PowerProbe.class);
@@ -201,7 +204,7 @@ final class ProbeRig implements IntConsumer {
         }
 
         static Loadout none() {
-            return new Loadout(new EnumMap<>(PowerProbe.class), Hold.NONE, false);
+            return new Loadout(new EnumMap<>(PowerProbe.class), Hold.NONE, false, 1f);
         }
 
         static Loadout only(PowerProbe probe, double perSecond) {
@@ -212,21 +215,25 @@ final class ProbeRig implements IntConsumer {
             Map<PowerProbe, Double> more = new EnumMap<>(PowerProbe.class);
             more.putAll(this.perSecond);
             more.put(probe, perSecond);
-            return new Loadout(more, this.hold, this.reveals);
+            return new Loadout(more, this.hold, this.reveals, this.hitScale);
         }
 
         Loadout holding(Hold hold) {
-            return new Loadout(this.perSecond, hold, this.reveals);
+            return new Loadout(this.perSecond, hold, this.reveals, this.hitScale);
         }
 
         Loadout revealing() {
-            return new Loadout(this.perSecond, this.hold, true);
+            return new Loadout(this.perSecond, this.hold, true, this.hitScale);
+        }
+
+        Loadout hitting(float hitScale) {
+            return new Loadout(this.perSecond, this.hold, this.reveals, hitScale);
         }
 
         Loadout scaledBy(double factor) {
             Map<PowerProbe, Double> scaled = new EnumMap<>(PowerProbe.class);
             this.perSecond.forEach((probe, value) -> scaled.put(probe, value * factor));
-            return new Loadout(scaled, this.hold, this.reveals);
+            return new Loadout(scaled, this.hold, this.reveals, this.hitScale);
         }
 
         double intensity(PowerProbe probe) {

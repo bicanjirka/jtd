@@ -82,11 +82,11 @@ final class RiftLevel {
 
     /** Hides the allies around it from aimed shots every few seconds, but never itself. */
     private static final RankedEnemy ECLIPSE = RankedEnemy
-            .startingAt(EnemyDefinition.of("eclipse", "Eclipse", 110, 3, 1.1f, BodyArchetype.ECLIPSE)
+            .startingAt(EnemyDefinition.of("eclipse", "Eclipse", 140, 2, 1.1f, BodyArchetype.ECLIPSE)
                     .withDescription("A shard of the dark inside the rift. Its company keeps vanishing.")
                     .withMovement(new RotorMovement((float) Math.toRadians(4.0)))
                     .withMagicResist(20f)
-                    .withIdentifiedAbilities(List.of(eclipse(30))), RankGrowth.of(14f))
+                    .withIdentifiedAbilities(List.of(eclipse(30))), RankGrowth.stepped(173, 600, 1192, 2257).paying(4, 5, 12, 20))
             .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(eclipse(40))))
             .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(eclipse(50))))
             .thenAt(Rank.ELITE, e -> e

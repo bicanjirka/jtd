@@ -50,13 +50,13 @@ final class StormRidgeLevel {
 
     /** A slow cloud that bursts into rain when it dies, and from Elite leaves rain behind it that heals. */
     private static final RankedEnemy RAINCLOUD = RankedEnemy
-            .startingAt(EnemyDefinition.of("raincloud", "Raincloud", 170, 3, 0.9f, BodyArchetype.RAINCLOUD)
+            .startingAt(EnemyDefinition.of("raincloud", "Raincloud", 100, 2, 0.9f, BodyArchetype.RAINCLOUD)
                     .withDescription("Heavy with rain. Burst it, and the rain still comes down the lane.")
                     .withMovement(new PulseMovement(0.1f, 30, 10))
                     .withMagicResist(15f)
-                    .withIdentifiedAbilities(List.of(downpour(3))), RankGrowth.of(14f))
-            .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(downpour(4))))
-            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(downpour(5))))
+                    .withIdentifiedAbilities(List.of(downpour(2))), RankGrowth.stepped(200, 800, 2000, 4000).paying(2, 3, 9, 9))
+            .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(downpour(3))))
+            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(downpour(4))))
             .thenAt(Rank.ELITE, e -> e
                     .withStats(0f, 25f, 0f, 1f, 0f, 10f, 20f)
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("rain", new Ability(AbilityTerm.HEALING_POOL,
@@ -70,13 +70,13 @@ final class StormRidgeLevel {
                     .withDescription("The wind at the storm's back. Whatever walks beside it walks faster than it should.")
                     .withMovement(new RotorMovement((float) Math.toRadians(9.0)))
                     .withAgility(15f)
-                    .withIdentifiedAbilities(List.of(gust(1.5f, 1.2f))), RankGrowth.of(14f))
-            .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(gust(1.6f, 1.5f))))
-            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(gust(1.8f, 1.8f))))
+                    .withIdentifiedAbilities(List.of(gust(1.5f, 1.2f))), RankGrowth.stepped(130, 400, 800, 1500).paying(5, 5, 24, 40))
+            .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(gust(1.5f, 1.2f))))
+            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(gust(1.5f, 1.3f))))
             .thenAt(Rank.ELITE, e -> e
                     .withStats(5f, 15f, 0f, 0f, 0f, 30f, 10f)
-                    .withAdditionalAbilities(List.of(gust(2.0f, 2.2f))))
-            .thenAt(Rank.BOSS, e -> e.withAdditionalAbilities(List.of(gust(2.4f, 3.0f))))
+                    .withAdditionalAbilities(List.of(gust(1.6f, 1.5f))))
+            .thenAt(Rank.BOSS, e -> e.withAdditionalAbilities(List.of(gust(2.0f, 2.0f))))
             .build();
 
     private static final ArcCornerSmoothing SMOOTHING = new ArcCornerSmoothing(0.4, 10);
