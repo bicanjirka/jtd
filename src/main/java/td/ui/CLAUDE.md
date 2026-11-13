@@ -42,6 +42,14 @@ keeps the seam honest.
   every enemy.
 - An effect with no picture of its own earns at most one dot, by `EnemyFrameBuilder.dotFor`; a dot says only its group,
   and the Info pane says which effect.
+- What stands on the board is lit from the top left and shows its side down the screen; what lies on the ground
+  (zone patches, path marks, range circles) stays flat. A tower body and a mine go through `paintStanding` with the
+  three `Tones` of their colour.
+- An enemy body is painted by `EnemySprites` alone, from its `EnemyLooks.Form` (height, hover, cap, raised detail,
+  glint, glow): the stack of parts is drawn once into a kept picture per look, size, heading step and zoom, so a new
+  part costs nothing a frame. What changes with every step (the hop, the hover, a glow) is a function of the body's
+  place, never of a clock, and is the only thing painted live. Whatever sits on a body's top follows
+  `EnemySprites.lift`.
 - Tower bodies are one closed `Shape` each. The sonar head is the one exception, with its own
   `paintSonarSweep`. Toolbar icons reuse `towerBodyShape` via `renderTowerIcon`.
 - A tower's body never turns: only its turret head aims.

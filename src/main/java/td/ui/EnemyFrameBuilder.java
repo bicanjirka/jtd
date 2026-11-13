@@ -314,8 +314,9 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         float eggY = hull + Math.min(hull * EGG_HEIGHT_SHARE, EGG_MOST_HEIGHT) + EGG_MARGIN;
         float iceScale = hull <= ICE_FULL_GROWTH_RADIUS ? hull
                 : ICE_FULL_GROWTH_RADIUS + (hull - ICE_FULL_GROWTH_RADIUS) * ICE_LATER_GROWTH;
-        float above = badgeLift(reach, scale);
-        float beneath = reach;
+        EnemyLooks.Form form = EnemyLooks.of(look).form();
+        float above = badgeLift(reach + scale * form.rise(), scale);
+        float beneath = reach + scale * form.height();
         float ringRadius = scale * SELECTION_RING_SCALE_FRACTION;
         double facing = active.contains(EffectKind.DAZED)
                 ? facingRadians + Math.sin(this.animationSeconds * DAZE_SWAY_RATE + seed) * DAZE_SWAY_RADIANS
