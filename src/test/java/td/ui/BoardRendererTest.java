@@ -23,11 +23,11 @@ import td.tower.upgrade.UpgradeSlot;
 import td.ui.render.CellGridDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.EnemyFadeDraw;
-import td.ui.render.Palette;
 import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.SheetLine;
 import td.ui.render.SlotMarkDraw;
+import td.ui.render.TowerLook;
 import td.ui.render.TowerSheet;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
@@ -65,7 +65,7 @@ class BoardRendererTest {
 
         assertThat(frame.towerSprites()).hasSize(1);
         TowerSpriteDraw sprite = frame.towerSprites().getFirst();
-        assertThat(sprite.palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
+        assertThat(sprite.look()).isEqualTo(TowerLook.SNIPER);
         assertThat(sprite.selected()).isTrue();
     }
 
@@ -82,7 +82,7 @@ class BoardRendererTest {
         TowerSheet sheet = frame.towerSheet().orElseThrow();
         assertThat(sheet.x()).isEqualTo(tower.getX());
         assertThat(sheet.y()).isEqualTo(tower.getY());
-        assertThat(sheet.sheet().lines().getFirst()).isInstanceOf(SheetLine.Title.class);
+        assertThat(sheet.sheet().lines().getFirst()).isInstanceOf(SheetLine.TowerHeader.class);
     }
 
     @Test
@@ -134,7 +134,7 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         assertThat(frame.towerHeads()).hasSize(1);
-        assertThat(frame.towerHeads().getFirst().palette()).isEqualTo(Palette.TOWER_SNIPER_BODY);
+        assertThat(frame.towerHeads().getFirst().look()).isEqualTo(TowerLook.SNIPER);
     }
 
     @Test
@@ -214,7 +214,7 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         TowerSpriteDraw sprite = frame.towerSprites().stream()
-                .filter(s -> s.palette() == Palette.TOWER_AURA_BODY)
+                .filter(s -> s.look() == TowerLook.AURA)
                 .findFirst().orElseThrow();
         assertThat(sprite.enchantPulse()).isGreaterThan(0f);
     }

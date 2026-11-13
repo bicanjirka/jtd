@@ -9,7 +9,7 @@ import java.util.List;
  * of the way round, and its last base pip is gold. {@code rank} pips (0 for a Recruit) show its
  * XP tier; {@code rankUpProgress} runs 0..1 through the glow after a rank-up, {@code -1} outside it.
  */
-public record TowerSpriteDraw(Palette palette, int boardX, int boardY, boolean selected,
+public record TowerSpriteDraw(TowerLook look, int boardX, int boardY, boolean selected,
                               float centerX, float centerY, float rangeReal,
                               List<SlotMarkDraw> slotMarks, float enchantPulse,
                               boolean transcendent, float haloTurn, int rank, float rankUpProgress) {

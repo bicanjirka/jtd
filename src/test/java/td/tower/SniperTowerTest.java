@@ -15,7 +15,6 @@ import td.fixtures.WorldFixtures;
 import td.stat.StatModifiers;
 import td.tower.sniper.AimFocus;
 import td.ui.TowerSpriteFrameBuilder;
-import td.ui.render.Palette;
 import td.ui.render.TurretHeadDraw;
 import td.util.GameWorld;
 
@@ -282,7 +281,6 @@ class SniperTowerTest {
         transcended.accept(sprites);
         awakened.accept(sprites);
 
-        assertThat(sprites.buildHeads()).extracting(TurretHeadDraw::palette)
-                .containsExactly(Palette.TOWER_SNIPER_GOLD_BARREL, Palette.TOWER_SNIPER_BODY);
+        assertThat(sprites.buildHeads()).extracting(TurretHeadDraw::gilded).containsExactly(true, false);
     }
 }

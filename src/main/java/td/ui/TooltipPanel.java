@@ -106,6 +106,7 @@ final class TooltipPanel extends JPanel {
     private static boolean alignsAValue(SheetLine line) {
         return switch (line) {
             case SheetLine.EnemyHeader header -> !header.rank().isEmpty();
+            case SheetLine.TowerHeader header -> !header.value().isEmpty();
             case SheetLine.Title title -> !title.value().isEmpty();
             case SheetLine.IconTitle title -> !title.value().isEmpty();
             case SheetLine.Row row -> !row.value().isEmpty();

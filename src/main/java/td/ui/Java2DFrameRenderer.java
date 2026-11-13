@@ -45,6 +45,7 @@ import td.ui.render.SlotMarkDraw;
 import td.ui.render.SmokeDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.TowerEffectDraw;
+import td.ui.render.TowerLook;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TurretHeadDraw;
@@ -74,13 +75,11 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Turns a {@link RenderFrame} into {@code Graphics2D} calls: the only class that does, and the only
- * painter of board content, with colours and shapes keyed off {@link Palette} and {@link EnemyLooks}.
+ * painter of board content, with colours and shapes keyed off {@link Palette}, {@link EnemyLooks} and {@link TowerLooks}.
  * <p>
  * {@code Panel*} components use AWT for layout and previews but never paint board content;
  * {@link #paintEnemies}, {@link #renderTowerIcon} and the {@code paint*Glyph} methods exist for
@@ -89,11 +88,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Java2DFrameRenderer {
 
     private static final Color CELL_OK = Color.GRAY;
-    // A body's shape depends only on its palette and size, and some are constructive-area operations far too
-    // slow to repeat for every tower on every paint. Sizes follow the cell size, so the map stays small.
-    private static final Map<TowerBodyKey, Shape> TOWER_BODIES = new ConcurrentHashMap<>();
-    // Stroking a body's outline on every paint cost more than building it did.
-    private static final Map<TowerBodyKey, Shape> TOWER_BODY_OUTLINES = new ConcurrentHashMap<>();
     private static final Color CELL_NOK = Color.RED;
     /** A free cell the credits can't build the tower on yet: amber, apart from the red of a cell nothing builds on. */
     private static final Color CELL_SHORT = new Color(255, 170, 60);
@@ -258,38 +252,6 @@ public final class Java2DFrameRenderer {
     }
 
 
-    /**
-     * One flat symbol per tower, naming what it does. Each is one closed {@link Shape}, painted the
-     * same way at any size.
-     */
-    private static Shape towerBodyShape(Palette palette, float size) {
-        return TOWER_BODIES.computeIfAbsent(new TowerBodyKey(palette, size),
-                key -> builtTowerBodyShape(key.palette(), key.size()));
-    }
-
-    /** The body's outline at the default stroke, as an area to fill. */
-    private static Shape towerBodyOutline(Palette palette, float size) {
-        return TOWER_BODY_OUTLINES.computeIfAbsent(new TowerBodyKey(palette, size),
-                key -> new BasicStroke().createStrokedShape(towerBodyShape(key.palette(), key.size())));
-    }
-
-    private record TowerBodyKey(Palette palette, float size) {
-    }
-
-    private static Shape builtTowerBodyShape(Palette palette, float size) {
-        return switch (palette) {
-            case TOWER_SNIPER_BODY -> triangleShape(size, true);
-            case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY, TOWER_HEXER_BODY -> ringShape(size, 0.55f);
-            case TOWER_PULSE_BODY -> starShape(5, size, size * 0.45f);
-            case TOWER_AURA_BODY -> pulsarShape(size);
-            case TOWER_MORTAR_BODY -> diamondShape(size);
-            case TOWER_SEEKER_BODY -> kiteShape(size);
-            case TOWER_CINDER_BODY -> flameShape(size);
-            default -> throw new IllegalStateException("Not a tower body palette: " + palette);
-        };
-    }
-
-
     /** A rotated square. */
     static Shape diamondShape(float size) {
         GeneralPath p = new GeneralPath();
@@ -297,27 +259,6 @@ public final class Java2DFrameRenderer {
         p.lineTo(size, 0);
         p.lineTo(0, size);
         p.lineTo(-size, 0);
-        p.closePath();
-        return p;
-    }
-
-    /** A concave arrowhead. */
-    private static Shape kiteShape(float size) {
-        GeneralPath p = new GeneralPath();
-        p.moveTo(size, 0);
-        p.lineTo(-size * 0.6f, -size * 0.7f);
-        p.lineTo(-size * 0.2f, 0);
-        p.lineTo(-size * 0.6f, size * 0.7f);
-        p.closePath();
-        return p;
-    }
-
-    /** A teardrop. */
-    private static Shape flameShape(float size) {
-        GeneralPath p = new GeneralPath();
-        p.moveTo(0, -size);
-        p.curveTo(size * 0.9f, -size * 0.2f, size * 0.6f, size * 0.5f, 0, size);
-        p.curveTo(-size * 0.6f, size * 0.5f, -size * 0.9f, -size * 0.2f, 0, -size);
         p.closePath();
         return p;
     }
@@ -349,13 +290,6 @@ public final class Java2DFrameRenderer {
         return ring;
     }
 
-    /** A bright core inside a detached ring. */
-    private static Shape pulsarShape(float size) {
-        Area pulsar = new Area(ringShape(size, 0.72f));
-        pulsar.add(new Area(circleShape(size * 0.36f)));
-        return pulsar;
-    }
-
     static Shape starShape(int points, float outerRadius, float innerRadius) {
         GeneralPath p = new GeneralPath();
         for (int i = 0; i < points * 2; i++) {
@@ -373,28 +307,8 @@ public final class Java2DFrameRenderer {
         return p;
     }
 
-    /**
-     * Aiming heads are drawn pointing along {@code +X}, so rotating the graphics aims them.
-     * Spinning heads must reach past their base's outline, or the spin is invisible.
-     */
-    private static Shape turretHeadShape(Palette palette, float size) {
-        return switch (palette) {
-            case TOWER_SNIPER_BODY, TOWER_SNIPER_GOLD_BARREL ->
-                    new Rectangle2D.Float(0, -size * 0.22f, size * 1.3f, size * 0.44f);
-            case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY, TOWER_HEXER_BODY ->
-                    new Rectangle2D.Float(0, -size * 0.42f, size * 0.95f, size * 0.84f);
-            case TOWER_PULSE_BODY -> {
-                Shape moon = starShape(5, size * 0.9f, size * 0.9f * 0.45f);
-                yield AffineTransform.getTranslateInstance(size * 2.0, 0).createTransformedShape(moon);
-            }
-            case TOWER_AURA_BODY -> circleShape(size);
-            case TOWER_MORTAR_BODY, TOWER_SEEKER_BODY, TOWER_CINDER_BODY -> headArrowShape(size);
-            default -> throw new IllegalStateException("Not a tower head palette: " + palette);
-        };
-    }
-
     /** A forward arrowhead along {@code +X}. */
-    private static Shape headArrowShape(float size) {
+    static Shape headArrowShape(float size) {
         GeneralPath p = new GeneralPath();
         p.moveTo(size * 1.3f, 0);
         p.lineTo(0, -size * 0.5f);
@@ -405,15 +319,15 @@ public final class Java2DFrameRenderer {
 
     static Color colorFor(Palette palette) {
         return switch (palette) {
-            case TOWER_SNIPER_BODY -> Color.GREEN;
-            case TOWER_SPLASH_BODY -> Color.RED;
-            case TOWER_STORMCALLER_BODY -> new Color(80, 150, 255);
-            case TOWER_HEXER_BODY -> new Color(170, 80, 230);
-            case TOWER_PULSE_BODY -> Color.ORANGE;
-            case TOWER_AURA_BODY -> Color.WHITE;
-            case TOWER_MORTAR_BODY -> new Color(139, 90, 43);
-            case TOWER_SEEKER_BODY -> new Color(80, 180, 255);
-            case TOWER_CINDER_BODY -> new Color(255, 90, 30);
+            case TOWER_SNIPER_BODY -> TowerLooks.color(TowerLook.SNIPER);
+            case TOWER_SPLASH_BODY -> TowerLooks.color(TowerLook.SPLASH);
+            case TOWER_STORMCALLER_BODY -> TowerLooks.color(TowerLook.STORMCALLER);
+            case TOWER_HEXER_BODY -> TowerLooks.color(TowerLook.HEXER);
+            case TOWER_PULSE_BODY -> TowerLooks.color(TowerLook.PULSE);
+            case TOWER_AURA_BODY -> TowerLooks.color(TowerLook.AURA);
+            case TOWER_MORTAR_BODY -> TowerLooks.color(TowerLook.MORTAR);
+            case TOWER_SEEKER_BODY -> TowerLooks.color(TowerLook.SEEKER);
+            case TOWER_CINDER_BODY -> TowerLooks.color(TowerLook.CINDER);
             case TOWER_AURA_RING -> Color.WHITE;
             case TOWER_AURA_LINK -> withAlpha(Color.WHITE, 60);
             case TOWER_AURA_LINK_REACH -> withAlpha(new Color(120, 200, 255), 80);
@@ -430,7 +344,6 @@ public final class Java2DFrameRenderer {
             case TOWER_SNIPER_LASER -> new Color(255, 60, 60);
             case TOWER_SNIPER_SILVER -> new Color(170, 210, 255);
             case TOWER_SNIPER_TRACER -> Color.WHITE;
-            case TOWER_SNIPER_GOLD_BARREL -> new Color(255, 205, 70);
             case TOWER_SPLASH_BEAM -> Color.RED;
             case TOWER_SPLASH_FLASH -> withAlpha(new Color(255, 245, 210), 170);
             case TOWER_SPLASH_DETONATION -> new Color(255, 200, 90);
@@ -1016,10 +929,15 @@ public final class Java2DFrameRenderer {
         }
     }
 
+    /** A tower's body as an info-panel glyph, centred on the origin. */
+    void paintTowerGlyph(Graphics2D g2, TowerLook look, float size) {
+        g2.setColor(TowerLooks.color(look));
+        g2.fill(TowerLooks.body(look, size));
+    }
+
     /**
      * An info-panel row's glyph centred on the origin: the board's own marks (trait and effect
-     * diamonds, crit spark, slot pip, tower body), or a neutral mark for a stat nothing on the
-     * board marks. {@link SheetLine.Glyph#TOWER_BODY} takes its shape from {@code tone}.
+     * diamonds, crit spark, slot pip), or a neutral mark for a stat nothing on the board marks.
      */
     void paintRowGlyph(Graphics2D g2, SheetLine.Glyph glyph, Optional<Palette> tone, float size) {
         g2.setColor(tone.map(Java2DFrameRenderer::colorFor).orElse(UNMARKED_GLYPH));
@@ -1040,7 +958,6 @@ public final class Java2DFrameRenderer {
                 g2.fill(lockBodyShape(size * 0.75f));
                 g2.draw(lockShackleShape(size * 0.75f));
             }
-            case TOWER_BODY -> g2.fill(towerBodyShape(tone.orElseThrow(), size));
             case RING_CENTRE -> {
                 g2.draw(circleShape(size * 0.8f));
                 g2.fill(circleShape(size * 0.25f));
@@ -1323,19 +1240,19 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * Renders one tower's symbol as a toolbar icon, with the same {@link #towerBodyShape} as the
+     * Renders one tower's symbol as a toolbar icon, with the same body as the
      * board so the two cannot drift.
      * <p>
      * One solid colour and no turret head, since a two-tone glyph smudges at icon size. Transparent
      * background; the control paints its own face.
      */
-    public BufferedImage renderTowerIcon(Palette palette, int size) {
+    public BufferedImage renderTowerIcon(TowerLook look, int size) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.translate(size / 2.0, size / 2.0);
-        g2.setColor(colorFor(palette));
-        g2.fill(towerBodyShape(palette, size * ICON_BODY_SIZE_FRACTION));
+        g2.setColor(TowerLooks.color(look));
+        g2.fill(TowerLooks.body(look, size * ICON_BODY_SIZE_FRACTION));
         g2.dispose();
         return image;
     }
@@ -1353,7 +1270,7 @@ public final class Java2DFrameRenderer {
             this.paintTranscendentHalo(g2, sprite.haloTurn(), bodySize);
         }
         this.paintEnchantHalo(g2, sprite.enchantPulse(), bodySize);
-        this.paintTowerBody(g2, sprite.palette(), bodySize);
+        this.paintTowerBody(g2, sprite.look(), bodySize);
         this.paintSlotPips(g2, sprite.slotMarks(), sprite.transcendent(), bodySize);
         this.paintSlotReadyChevrons(g2, sprite.slotMarks(), bodySize);
         this.paintRankPips(g2, sprite.rank(), bodySize);
@@ -1485,15 +1402,15 @@ public final class Java2DFrameRenderer {
     }
 
     /** Draws a tower body at the origin; the caller has translated to the tower's centre. */
-    private void paintTowerBody(Graphics2D g2, Palette palette, float size) {
-        Color color = colorFor(palette);
+    private void paintTowerBody(Graphics2D g2, TowerLook look, float size) {
+        Color color = TowerLooks.color(look);
         Tones tones = Tones.of(color);
-        Shape body = towerBodyShape(palette, size);
+        Shape body = TowerLooks.body(look, size);
         paintStanding(g2, body, tones, 0, size * TOWER_HEIGHT);
         g2.setColor(tones.shade());
         g2.fill(body);
         g2.setColor(color);
-        g2.fill(towerBodyOutline(palette, size));
+        g2.fill(TowerLooks.bodyOutline(look, size));
     }
 
     private void paintTurretHead(Graphics2D g2, TurretHeadDraw head, int scale) {
@@ -1501,14 +1418,13 @@ public final class Java2DFrameRenderer {
         g2.translate(head.centerX(), head.centerY());
         g2.rotate(head.headingRadians());
         float size = scale * TOWER_HEAD_SIZE_FRACTION * head.scale();
-        this.paintHeadShape(g2, head.palette(), size);
+        Color color = head.gilded() ? colorFor(Palette.TOWER_TRANSCENDENT) : TowerLooks.color(head.look());
+        this.paintHeadShape(g2, TowerLooks.head(head.look(), size), color);
         g2.setTransform(save);
     }
 
     /** Draws a head at the origin; the caller has translated and rotated. */
-    private void paintHeadShape(Graphics2D g2, Palette palette, float size) {
-        Shape shape = turretHeadShape(palette, size);
-        Color color = colorFor(palette);
+    private void paintHeadShape(Graphics2D g2, Shape shape, Color color) {
         g2.setColor(withAlpha(color, 200));
         g2.fill(shape);
         g2.setColor(color);
