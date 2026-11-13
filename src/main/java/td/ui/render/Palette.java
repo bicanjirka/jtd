@@ -5,6 +5,7 @@ package td.ui.render;
  * colours.
  */
 public enum Palette {
+    /** A tower's tone in text and icons: the colour of its {@link TowerLook}. */
     TOWER_SNIPER_BODY,
     TOWER_SPLASH_BODY,
     /** A Splash forked to Arc. */
@@ -39,8 +40,6 @@ public enum Palette {
     TOWER_SNIPER_SILVER,
     /** A Transcendent Sniper's tracer. */
     TOWER_SNIPER_TRACER,
-    /** A Transcendent Sniper's barrel. */
-    TOWER_SNIPER_GOLD_BARREL,
     TOWER_SPLASH_BEAM,
     /** A blast's first flash. */
     TOWER_SPLASH_FLASH,

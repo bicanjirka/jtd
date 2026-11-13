@@ -26,6 +26,7 @@ import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
 import td.ui.render.SheetLine.Trend;
+import td.ui.render.TowerLook;
 import td.util.GameHost;
 import td.util.GameWorld;
 
@@ -98,7 +99,7 @@ class TowerSheetTextTest {
     void theShopOpensWithTheTowersOwnGlyphItsNameAndItsPrice() {
         InfoSheet sheet = shopSheet(TowerFactory.Type.SPLASH);
 
-        assertThat(sheet.lines().getFirst()).isEqualTo(new SheetLine.Title(Glyph.TOWER_BODY, Palette.TOWER_SPLASH_BODY,
+        assertThat(sheet.lines().getFirst()).isEqualTo(new SheetLine.TowerHeader(TowerLook.SPLASH,
                 TowerFactory.Type.SPLASH.displayName() + " tower", "$" + TowerFactory.Type.SPLASH.price));
     }
 
@@ -111,7 +112,7 @@ class TowerSheetTextTest {
 
         int nextCopy = this.world.towers().priceOf(TowerFactory.Type.SPLASH);
         assertThat(nextCopy).isGreaterThan(TowerFactory.Type.SPLASH.price);
-        assertThat(((SheetLine.Title) sheet.lines().getFirst()).value()).isEqualTo("$" + nextCopy);
+        assertThat(((SheetLine.TowerHeader) sheet.lines().getFirst()).value()).isEqualTo("$" + nextCopy);
     }
 
     @Test
@@ -149,7 +150,7 @@ class TowerSheetTextTest {
 
         InfoSheet sheet = TowerSheetText.status(mortar.inspect());
 
-        assertThat(sheet.lines().getFirst()).isEqualTo(new SheetLine.Title(Glyph.TOWER_BODY, Palette.TOWER_MORTAR_BODY,
+        assertThat(sheet.lines().getFirst()).isEqualTo(new SheetLine.TowerHeader(TowerLook.MORTAR,
                 "Mortar tower", ""));
         assertThat(sheet.lines()).noneMatch(SheetLine.Prose.class::isInstance);
     }

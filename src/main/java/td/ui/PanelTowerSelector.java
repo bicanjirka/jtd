@@ -8,6 +8,7 @@ import td.tower.TowerFactory;
 import td.tower.TowerInspection;
 import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
+import td.ui.render.TowerLook;
 import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -103,10 +104,10 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
             this.shopTowers[i] = tower.inspect();
             this.towerRanges[i] = tower.baseRange();
 
-            BufferedImage icon = iconRenderer.renderTowerIcon(TowerSpriteFrameBuilder.bodyPaletteFor(type), ICON_SIZE);
+            TowerLook look = TowerSpriteFrameBuilder.lookFor(type);
+            BufferedImage icon = iconRenderer.renderTowerIcon(look, ICON_SIZE);
             this.buttons[i].setIcon(new SharpImageIcon(icon));
-            this.buttons[i].setFace(ControlFace.tile(
-                    Java2DFrameRenderer.colorFor(TowerSpriteFrameBuilder.bodyPaletteFor(type)))
+            this.buttons[i].setFace(ControlFace.tile(TowerLooks.color(look))
                     .withChip(String.valueOf(Character.toUpperCase(type.placementKey))));
         }
 

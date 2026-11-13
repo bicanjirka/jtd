@@ -15,6 +15,7 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeSlot;
 import td.ui.render.Palette;
 import td.ui.render.SlotMarkDraw;
+import td.ui.render.TowerLook;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TurretHeadDraw;
 import td.util.GameWorld;
@@ -52,7 +53,20 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         this.animationSeconds = animationSeconds;
     }
 
-    /** A tower type's body colour role. No {@code default}, so a new type fails to compile here. */
+    /** A tower type's look. No {@code default}, so a new type fails to compile here. */
+    public static TowerLook lookFor(TowerFactory.Type type) {
+        return switch (type) {
+            case SNIPER -> TowerLook.SNIPER;
+            case SPLASH -> TowerLook.SPLASH;
+            case PULSE -> TowerLook.PULSE;
+            case AURA -> TowerLook.AURA;
+            case MORTAR -> TowerLook.MORTAR;
+            case SEEKER -> TowerLook.SEEKER;
+            case CINDER -> TowerLook.CINDER;
+        };
+    }
+
+    /** A tower type's tone in text and icons, the colour of its look. */
     public static Palette bodyPaletteFor(TowerFactory.Type type) {
         return switch (type) {
             case SNIPER -> Palette.TOWER_SNIPER_BODY;
@@ -111,10 +125,10 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     private void sprite(Tower tower) {
-        this.sprite(tower, bodyPaletteFor(tower.getType()));
+        this.sprite(tower, lookFor(tower.getType()));
     }
 
-    private void sprite(Tower tower, Palette body) {
+    private void sprite(Tower tower, TowerLook body) {
         this.draws.add(new TowerSpriteDraw(body, tower.getBoardX(), tower.getBoardY(),
                 tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
                 this.slotMarksFor(tower), this.enchantPulseFor(tower),
@@ -135,7 +149,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     private void headWithScale(Tower tower, double headingRadians, float scale) {
-        this.headDraws.add(new TurretHeadDraw(bodyPaletteFor(tower.getType()), tower.getX(), tower.getY(),
+        this.headDraws.add(new TurretHeadDraw(lookFor(tower.getType()), false, tower.getX(), tower.getY(),
                 (float) headingRadians, scale));
     }
 
@@ -143,21 +157,21 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     public Void visitSniperTower(SniperTower tower) {
         this.sprite(tower);
         double heading = tower.getTurretAim().radiansAt(this.interpolationAlpha);
-        Palette barrel = tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID) ? Palette.TOWER_SNIPER_GOLD_BARREL
-                : bodyPaletteFor(tower.getType());
-        this.headDraws.add(new TurretHeadDraw(barrel, tower.getX(), tower.getY(), (float) heading, 1f));
+        boolean gilded = tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID);
+        this.headDraws.add(new TurretHeadDraw(lookFor(tower.getType()), gilded, tower.getX(), tower.getY(),
+                (float) heading, 1f));
         return null;
     }
 
     /** The body takes the colour of what the fork made it. */
     public Void visitSplashTower(SplashTower tower) {
-        Palette body = switch (tower.fork()) {
-            case NONE -> Palette.TOWER_SPLASH_BODY;
-            case STORMCALLER -> Palette.TOWER_STORMCALLER_BODY;
-            case HEXER -> Palette.TOWER_HEXER_BODY;
+        TowerLook body = switch (tower.fork()) {
+            case NONE -> TowerLook.SPLASH;
+            case STORMCALLER -> TowerLook.STORMCALLER;
+            case HEXER -> TowerLook.HEXER;
         };
         this.sprite(tower, body);
-        this.headDraws.add(new TurretHeadDraw(body, tower.getX(), tower.getY(),
+        this.headDraws.add(new TurretHeadDraw(body, false, tower.getX(), tower.getY(),
                 (float) tower.getTurretAim().radiansAt(this.interpolationAlpha), 1f));
         return null;
     }

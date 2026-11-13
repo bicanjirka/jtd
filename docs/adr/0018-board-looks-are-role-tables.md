@@ -1,6 +1,6 @@
 # 0018. Board looks are tables per role, not switches in the painter
 
-- Status: Accepted, enemy looks implemented
+- Status: Accepted, enemy and tower looks implemented
 - Date: 2026-10-28
 
 ## Context

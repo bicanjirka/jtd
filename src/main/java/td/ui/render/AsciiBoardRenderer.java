@@ -21,16 +21,15 @@ public final class AsciiBoardRenderer {
         }
     }
 
-    private static char towerChar(Palette palette) {
-        return switch (palette) {
-            case TOWER_SNIPER_BODY -> '1';
-            case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY, TOWER_HEXER_BODY -> '2';
-            case TOWER_PULSE_BODY -> '4';
-            case TOWER_AURA_BODY -> 'A';
-            case TOWER_MORTAR_BODY -> 'M';
-            case TOWER_SEEKER_BODY -> 'K';
-            case TOWER_CINDER_BODY -> 'N';
-            default -> UNKNOWN;
+    private static char towerChar(TowerLook look) {
+        return switch (look) {
+            case SNIPER -> '1';
+            case SPLASH, STORMCALLER, HEXER -> '2';
+            case PULSE -> '4';
+            case AURA -> 'A';
+            case MORTAR -> 'M';
+            case SEEKER -> 'K';
+            case CINDER -> 'N';
         };
     }
 
@@ -55,7 +54,7 @@ public final class AsciiBoardRenderer {
         }
 
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
-            place(grid, sprite.boardX() / scale, sprite.boardY() / scale, towerChar(sprite.palette()));
+            place(grid, sprite.boardX() / scale, sprite.boardY() / scale, towerChar(sprite.look()));
         }
         for (EnemyDraw enemy : frame.enemies()) {
             switch (enemy) {

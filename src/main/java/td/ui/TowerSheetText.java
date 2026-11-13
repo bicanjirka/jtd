@@ -112,8 +112,8 @@ final class TowerSheetText {
                 .withGloss("", GIVEN)));
     }
 
-    private static SheetLine.Title title(TowerInspection tower, String value) {
-        return new SheetLine.Title(Glyph.TOWER_BODY, TowerSpriteFrameBuilder.bodyPaletteFor(tower.type()),
+    private static SheetLine.TowerHeader title(TowerInspection tower, String value) {
+        return new SheetLine.TowerHeader(TowerSpriteFrameBuilder.lookFor(tower.type()),
                 tower.name() + " tower", value);
     }
 

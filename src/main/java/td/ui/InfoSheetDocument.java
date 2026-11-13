@@ -97,6 +97,7 @@ final class InfoSheetDocument {
     private void append(SheetLine line) {
         switch (line) {
             case SheetLine.EnemyHeader header -> this.header(header);
+            case SheetLine.TowerHeader header -> this.towerHeader(header);
             case SheetLine.Title title -> this.title(title);
             case SheetLine.HealthBar bar -> this.healthBar(bar);
             case SheetLine.StatTitle title -> this.statTitle(title);
@@ -140,14 +141,23 @@ final class InfoSheetDocument {
         this.insert(" " + header.rank(), rank);
     }
 
+    private void towerHeader(SheetLine.TowerHeader header) {
+        this.icon(new PaintedIcon(BODY_BOX, BODY_BOX, g2 -> this.renderer.paintTowerGlyph(g2, header.body(), BODY_SIZE)));
+        this.boldNameAndValue(header.name(), header.value());
+    }
+
     private void title(SheetLine.Title title) {
         this.icon(new PaintedIcon(BODY_BOX, BODY_BOX,
                 g2 -> this.renderer.paintRowGlyph(g2, title.glyph(), Optional.of(title.tone()), BODY_SIZE)));
+        this.boldNameAndValue(title.name(), title.value());
+    }
+
+    private void boldNameAndValue(String nameText, String value) {
         SimpleAttributeSet name = new SimpleAttributeSet();
         StyleConstants.setBold(name, true);
-        this.insert(" " + title.name(), name);
-        if (!title.value().isEmpty()) {
-            this.insert("\t" + title.value(), colored(VALUE_COLOR));
+        this.insert(" " + nameText, name);
+        if (!value.isEmpty()) {
+            this.insert("\t" + value, colored(VALUE_COLOR));
         }
     }
 

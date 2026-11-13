@@ -164,8 +164,9 @@
 2. A `TowerFactory.Type` constant and its `createTower` branch.
 3. A `TowerVisitor` method; the compiler then leads to `TowerSpriteFrameBuilder` and
    `TowerEffectFrameBuilder`.
-4. `Palette` constants plus cases in `TowerSpriteFrameBuilder.bodyPaletteFor` and
-   `Java2DFrameRenderer`'s `towerBodyShape`/`turretHeadShape`/`colorFor`.
+4. A `TowerLook` and its row in `TowerLooks` (colour, body, head), the cases in
+   `TowerSpriteFrameBuilder.lookFor` and `bodyPaletteFor`, and that tone's `Palette` constant, whose
+   `colorFor` case reads the row.
 5. `upgradeTree()`: `UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, levelThrees...))` with two
    `HEAD` chains built from `UpgradeTier` steps and 1-3 `UpgradeTier.SPECIAL` nodes, plus an
    `ExclusiveChoice` per choice.

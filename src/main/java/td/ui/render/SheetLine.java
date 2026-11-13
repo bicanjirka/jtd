@@ -17,10 +17,11 @@ public sealed interface SheetLine {
     record EnemyHeader(EnemyLook body, RankBadge badge, String name, String rank) implements SheetLine {
     }
 
-    /**
-     * A glyph and a bold name, with a value on the right: a tower and its price, or an upgrade
-     * node and its price.
-     */
+    /** A tower's body glyph and bold name, with a value on the right such as its price. */
+    record TowerHeader(TowerLook body, String name, String value) implements SheetLine {
+    }
+
+    /** A glyph and a bold name, with a value on the right, such as an upgrade node and its price. */
     record Title(Glyph glyph, Palette tone, String name, String value) implements SheetLine {
     }
 
@@ -211,8 +212,6 @@ public sealed interface SheetLine {
         CROSS,
         /** An exclusive choice: what a pick locks out, or what a made one was chosen over. */
         LOCK,
-        /** The body shape of the tower whose body palette is the row's tone. */
-        TOWER_BODY,
         /** A ring with a dot at its centre: a blast around where a shot lands. */
         RING_CENTRE,
         /** A ring with a gap: what lies too close to reach. */

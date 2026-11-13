@@ -18,8 +18,10 @@ keeps the seam honest.
   a zone is a patch, not an enemy overlay or a tower effect. Zones of one kind never stack in play, so they draw as one
   `ZonePatchDraw` with one even fill and one outline; what stands on a disc (a mine's casing, flames) stays per zone.
 - Every colour, shape and stroke for board content lives in `td.ui`, keyed by a role, never by domain
-  type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), the rest in `Java2DFrameRenderer`
-  (keyed by `Palette`). There are no image assets; all art is vector.
+  type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), a tower's body, head and colour in
+  its `TowerLooks` row (keyed by `TowerLook`), the rest in `Java2DFrameRenderer` (keyed by `Palette`). A
+  tower's colour in text is a `Palette` tone (`bodyPaletteFor`) whose `colorFor` case reads its row. There
+  are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
   pulses, hex runes, dots, badge, affix pips, bars, egg, bursts, tints, ice, emissions), not a new `RenderFrame` list. Tower transients likewise go
   into `TowerEffectDraw`. A bar under an enemy is a row in `EnemyFrameBuilder.bars` and a colour in
@@ -35,7 +37,7 @@ keeps the seam honest.
   state.
 - `Panel*` previews reuse `Java2DFrameRenderer`'s paint methods (`PanelEnemy` →
   `paintEnemies`) rather than drawing their own copy.
-- Exhaustive switches with no `default` (`bodyPaletteFor`, `colorFor`, the sealed draw
+- Exhaustive switches with no `default` (`lookFor`, `bodyPaletteFor`, `colorFor`, the sealed draw
   switches): fix a compile error by adding the case, never a `default`. Switching on these
   sealed draw records is fine; switching on `EnemyMob`/`Tower`/`Cell` is not.
 - Rank badges and the `SPECIAL` halo are painted upright (not rotated with facing). A rank badge is one size on
@@ -50,7 +52,7 @@ keeps the seam honest.
   part costs nothing a frame. What changes with every step (the hop, the hover, a glow) is a function of the body's
   place, never of a clock, and is the only thing painted live. Whatever sits on a body's top follows
   `EnemySprites.lift`.
-- Tower bodies are one closed `Shape` each. Toolbar icons reuse `towerBodyShape` via `renderTowerIcon`.
+- Tower bodies are one closed `Shape` each. Toolbar icons reuse `TowerLooks.body` via `renderTowerIcon`.
 - A tower's body never turns: only its turret head aims.
 
 ## Two clocks
