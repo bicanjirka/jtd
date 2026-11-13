@@ -16,6 +16,8 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
 
     private static final double COLUMN_SPACING_SLOTS = 0.3;
     private static final double DRIP_SPACING_SLOTS = 2.0;
+    private static final float SWARM_HEALTH_EASE = 3f;
+    private static final float SWARM_SMALLEST_SIZE = 0.5f;
 
     private static final SpawnShape NORMAL =
             new SpawnShape(1, 1f, 1f, 1f, 1f, SpawnSpread.NONE, 0.0);
@@ -31,8 +33,14 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
         return NORMAL;
     }
 
+    /**
+     * A member's health falls slower than the swarm grows, so a bigger swarm is more health in all, and its body
+     * shrinks with the root of its health: the area a player sees is the health there is to remove.
+     */
     public static SpawnShape swarm(int members) {
-        return new SpawnShape(members, 0.5f, 1f, 1f / members, 1f, SpawnSpread.SCATTERED, 0.0);
+        float health = (1f + SWARM_HEALTH_EASE) / (members + SWARM_HEALTH_EASE);
+        float size = Math.max(SWARM_SMALLEST_SIZE, (float) Math.sqrt(health));
+        return new SpawnShape(members, size, 1f, health, 1f, SpawnSpread.SCATTERED, 0.0);
     }
 
     public static SpawnShape line(int members) {
@@ -52,9 +60,9 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
     }
 
     /**
-     * The slot pays for the health it sends: a member at full health is worth a full bounty, and a swarm, whose
-     * members split one spawn's health, splits one spawn's bounty, the remainder going to the first members so
-     * the shares sum exactly. Fixed at spawn, so kill order never changes the payout.
+     * The slot pays for the health it sends: a member at full health is worth a full bounty, and a member sent
+     * with a share of it is worth that share, the remainder going to the first members so the shares sum
+     * exactly. Fixed at spawn, so kill order never changes the payout.
      */
     public int[] bountyShares(int price) {
         int total = Math.round(price * this.bountyMultiplier * this.members * this.healthMultiplier);

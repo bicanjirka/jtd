@@ -457,7 +457,7 @@ the shapes that take one (`swarm 4 walker`):
 | Shape   | Keyword  | What one slot produces                                                |
 |---------|----------|-------------------------------------------------------------------------|
 | Normal  | (none)   | One enemy on the path centre                                            |
-| Swarm   | `swarm`  | *N* enemies at 50% size, scattered off-path, sharing one spawn's bounty and health |
+| Swarm   | `swarm`  | *N* smaller, weaker enemies scattered off-path: each has 4/(*N*+3) of the health and bounty (half at five), so a bigger swarm is more of both in all, and shrinks with it, never under half size |
 | Line    | `line`   | *N* enemies spread evenly across the path's width, abreast              |
 | Flank   | `flank`  | Two enemies hugging opposite edges of the path                          |
 | Column  | `column` | *N* enemies in a tight single file, closer together than *N* separate spawns |

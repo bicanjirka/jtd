@@ -34,7 +34,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
   override the head's rank for that slot. A unique enemy is Boss whatever the default; any
   rank keyword but `boss` before it is an error.
-- **Shape keywords** go before the enemy: `flank` (2 members at opposite sides), `swarm n` (half size, health/bounty split,
+- **Shape keywords** go before the enemy: `flank` (2 members at opposite sides), `swarm n` (smaller and weaker the more members, the swarm more health and bounty in all,
   scattered), `line n` (spread across), `column n` / `drip n` (spaced tighter / looser than one
   slot).
 - **Affix words** (`td.enemy.Affix`) go after the rank and shape, right before the enemy, and add

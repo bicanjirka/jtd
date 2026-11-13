@@ -76,6 +76,7 @@ import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.RoundPay;
 import td.wave.RoundSummary;
+import td.wave.SpawnShape;
 import td.wave.Vec2;
 import td.wave.WaveDefinition;
 import td.wave.WaveProgress;
@@ -1201,8 +1202,8 @@ class GameEngineTest {
             engine.doTick(t);
         }
 
-        // member bounty shares sum to exactly one normal spawn's bounty
-        assertThat(engine.getGameWorld().economy().getScore()).isEqualTo(scoreBefore + 7);
+        int swarmBounty = Arrays.stream(SpawnShape.swarm(3).bountyShares(WEAKLING.price())).sum();
+        assertThat(engine.getGameWorld().economy().getScore()).isEqualTo(scoreBefore + swarmBounty);
         assertThat(engine.isWaveReady()).isTrue();
     }
 
