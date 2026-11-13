@@ -30,13 +30,9 @@
   `RESILIENCE` or `SPIRIT` by one. They outlast the pool, are never cleared by another effect
   and, once no active pool earns them, lose a stack every
   `STACK_DECAY_INTERVAL_TICKS`.
-- A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`, `RESONATING`,
-  `FRACTURED`, `SATURATED`) stacks on the enemy, whichever tower applied them, on one shared clock
+- A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`, `SATURATED`) stacks on the enemy, whichever tower applied them, on one shared clock
   that any application refreshes; a full stack only refreshes. An application may raise the cap
-  (`Effect.withStackCap`), and the stack keeps the highest cap any application brought. `FRACTURED` has no clock: it loses a stack at
-  a time like `SCORCHED`. A `faultLine` Fractured
-  (a higher cap) loses none while the enemy has `EXPOSED`; one such
-  application makes the whole effect so until it wears off.
+  (`Effect.withStackCap`), and the stack keeps the highest cap any application brought.
 - Every timer counts down one tick per tick; nothing about the enemy paces it. Only tenacity and
   the freeze meter change how long an effect lasts, and only as it is applied.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only

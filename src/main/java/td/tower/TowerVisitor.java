@@ -9,8 +9,6 @@ public interface TowerVisitor<R> {
 
     R visitSplashTower(SplashTower tower);
 
-    R visitSonarTower(SonarTower tower);
-
     R visitPulseTower(PulseTower tower);
 
     R visitAuraTower(AuraTower tower);

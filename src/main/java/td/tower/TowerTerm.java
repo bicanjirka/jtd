@@ -43,7 +43,6 @@ public enum TowerTerm implements Term {
     INTERFERENCE("Interference", Side.DEBUFF, "other Obelisk fields overlapping this one take some of its damage away"),
     STOKE("Stoke", Side.DEBUFF, "each wave on an enemy with this tower's {} raises that {} a step; the steps go when it ends", EffectKind.BURN, EffectKind.BURN),
     KINSHIP("Kinship", Side.BUFF, "towers a Beacon buffs earn more XP for each other tower type in range"),
-    PING("Ping", Side.BUFF, "each revolution, the Radar applies {} to the enemy with the most health its beam passes", EffectKind.EXPOSED),
     SHATTER("Shatter", Side.BUFF, "an enemy with {} breaks apart and hurts the enemies around it", EffectKind.FREEZE),
     ARC("Arc", Side.BUFF, "lightning that jumps from a blast to enemies past its edge, as magic"),
     HEX("Hex", Side.BUFF, "a curse a Burst casts instead of a blast; each kind does its own thing"),

@@ -125,25 +125,4 @@ class FireRateTest {
             assertThat(run.shots()).as("bonus %s", bonus).isEqualTo(expectedShots(TICKS, rateOf(bonus), run.period()));
         }
     }
-
-    private static long sonarPasses(float bonus) {
-        GameWorld world = board();
-        SonarTower tower = new SonarTower(world, 3, 3);
-        tower.grantStatus(TowerStatus.timed(TowerTerm.HASTE, TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2));
-        FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 10, tower.getY() + 10);
-        world.enemies().setEnemies(new EnemyMob[]{target});
-        for (int t = 1; t <= TICKS; t++) {
-            tower.doTick(t);
-        }
-        return target.hits().size();
-    }
-
-    @Test
-    void aSonarSpinsFasterByItsAttackSpeed() {
-        long base = sonarPasses(0f);
-        long buffed = sonarPasses(1f);
-
-        assertThat(base).isBetween(19L, 21L);
-        assertThat(buffed).isBetween(39L, 41L);
-    }
 }

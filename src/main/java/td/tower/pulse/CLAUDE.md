@@ -15,3 +15,5 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   and applies its own rules to the enemies on every line it casts or hosts, without damage or Toll. Event Horizon counts the deaths of enemies that were inside the
   tick before and resets on the wave announcer; the tower subscribes lazily and unsubscribes in
   `doCleanup`.
+- A turning beam hits what `SonarSweep` swept since the last tick (half-open), never the instantaneous angle, and
+  the head is drawn from the same angle that decides hits. A beam is pure geometry: bearings, never enemies.

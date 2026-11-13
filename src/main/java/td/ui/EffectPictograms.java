@@ -37,10 +37,6 @@ final class EffectPictograms {
             Map.entry("effect.marked", "E M12 21.8C12 21.8 4.6 14.4 4.6 9.2A7.4 7.4 0 0 1 19.4 9.2C19.4 14.4 12 21.8 12 21.8Z O12 9.2 2.7"),
             // Priority
             Map.entry("effect.priority", "S O12 12 6.8 ; S M12 2.2V6.6 M12 17.4V21.8 M2.2 12H6.6 M17.4 12H21.8 ; F O12 12 2"),
-            // Resonance
-            Map.entry("effect.resonating", "S M7.5 3V10.5A4.5 4.5 0 0 0 16.5 10.5V3 M12 15V21.5 ; T M19.6 7.2A6 6 0 0 1 19.6 13.8 M4.4 7.2A6 6 0 0 0 4.4 13.8"),
-            // Fracture
-            Map.entry("effect.fractured", "F@-40 O4.6 9.9 2.4 O4.6 14.1 2.4 M4.6 10.4H11.4L10.6 11.4L11.6 12.2L10.8 13.6H4.6Z ; F@-40 O19.4 9.9 2.4 O19.4 14.1 2.4 M19.4 10.4H13L12.2 11.4L13.2 12.2L12.4 13.6H19.4Z"),
             // Daze
             Map.entry("effect.dazed", "T M3 13A9 4.2 0 1 0 21 13A9 4.2 0 1 0 3 13Z ; F M6 8.3L6.9 10.6L9.2 11.5L6.9 12.4L6 14.7L5.1 12.4L2.8 11.5L5.1 10.6Z ; F M13 3.6L14.1 6.4L16.9 7.5L14.1 8.6L13 11.4L11.9 8.6L9.1 7.5L11.9 6.4Z ; F M18.6 14L19.4 15.9L21.3 16.7L19.4 17.5L18.6 19.4L17.8 17.5L15.9 16.7L17.8 15.9Z"),
             // Saturation

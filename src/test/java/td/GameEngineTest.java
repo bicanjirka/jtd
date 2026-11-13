@@ -50,7 +50,6 @@ import td.tower.AuraTower;
 import td.tower.MortarTower;
 import td.tower.PulseTower;
 import td.tower.SniperTower;
-import td.tower.SonarTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
@@ -405,36 +404,6 @@ class GameEngineTest {
         assertThat(tower.getRangeReal()).isEqualTo(fullRange);
     }
 
-    @Test
-    void onceASonarHasMarkedAnEnemyTheSnipersNextShotIsAGuaranteedCrit() {
-        GameEngine engine = FakeGameHost.newBoundEngine();
-        EnemyDefinition dummy = EnemyDefinition.of("dummy", "Dummy", 1_000_000, 1, 0f, BodyArchetype.CIRCLE);
-        engine.loadLevel(LevelFixtures.levelWith(List.of(new WaveDefinition("dummy")), 100_000)
-                .withCustomEnemies(List.of(dummy)));
-        engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
-        engine.startPlacing(TowerFactory.Type.SONAR, SonarTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
-        Tower sonar = towerOfType(engine, TowerFactory.Type.SONAR);
-        UpgradePaths.buy(sonar, engine.getGameWorld(), "Mark on Sweep");
-        engine.nextWave();
-        int tick = 0;
-        EnemyMob enemy;
-        do {
-            engine.doTick(++tick);
-            enemy = engine.getGameWorld().enemies().getEnemies()[0];
-        } while (!enemy.hasEffect(EffectKind.MARKED));
-        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
-        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
-        long before = sniper.getDamageDealt();
-
-        while (sniper.getDamageDealt() == before) {
-            engine.doTick(++tick);
-        }
-
-        assertThat(sniper.getDamageDealt() - before)
-                .isEqualTo(DamageUnits.ofPoints(SniperTower.DAMAGE_POINTS * SniperTower.CRIT_MULTIPLIER));
-    }
 
     /** A still enemy with plenty of agility in an engine whose every roll succeeds, beside a tower of {@code type}. */
     private static GameEngine engineWithANimbleDummyBeside(TowerFactory.Type type) {
@@ -502,23 +471,6 @@ class GameEngineTest {
         assertThat(fireRate(sniper).current()).isGreaterThan(fireRate(sniper).base());
     }
 
-    @Test
-    void aDodgedSonarHitStillCountsForThePing() {
-        GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SONAR);
-        Tower sonar = towerOfType(engine, TowerFactory.Type.SONAR);
-        sonar.earnXp(1_000_000);
-        sonar.buyUpgrade(sonar.upgradeTree().nodes().stream()
-                .filter(n -> n.id().equals(StandardBaseSlot.ATTUNE_ID)).findFirst().orElseThrow());
-        engine.nextWave();
-        EnemyMob enemy = engine.getGameWorld().enemies().getEnemies()[0];
-
-        for (int t = 1; t <= 200 && !enemy.hasEffect(EffectKind.EXPOSED); t++) {
-            engine.doTick(t);
-        }
-
-        assertThat(enemy.hasEffect(EffectKind.EXPOSED)).isTrue();
-        assertThat(sonar.getDamageDealt()).isZero();
-    }
 
     @Test
     void aClickWhilePinningLinksTheSelectedObelisksLeyLineToTheObeliskClickedAndKeepsItSelected() {
@@ -1567,7 +1519,7 @@ class GameEngineTest {
         for (int t = 2000; t < 2037; t++) {
             played.doTick(t);
         }
-        placeTower(played, TowerFactory.Type.SONAR, 0, 3);
+        placeTower(played, TowerFactory.Type.SNIPER, 0, 3);
 
         List<String> wentOn = playedWave(played, 3001);
         GameSave sent = played.checkpoint().orElseThrow();
@@ -1589,7 +1541,7 @@ class GameEngineTest {
         GameEngine engine = engineAfterAWave(7);
         GameSave beforeSending = engine.save().orElseThrow();
         List<String> first = playedWave(engine, 3001);
-        placeTower(engine, TowerFactory.Type.SONAR, 0, 3);
+        Tower bought = placeTower(engine, TowerFactory.Type.SNIPER, 0, 3);
 
         Optional<String> problem = engine.restartWave();
         GameSave restarted = engine.save().orElseThrow();
@@ -1597,7 +1549,7 @@ class GameEngineTest {
 
         assertThat(problem).isEmpty();
         assertThat(restarted).isEqualTo(beforeSending);
-        assertThat(engine.getTowers()).noneMatch(tower -> tower.getType() == TowerFactory.Type.SONAR);
+        assertThat(engine.getTowers()).doesNotContain(bought);
         assertThat(again).containsExactlyElementsOf(first);
         assertThat(engine.checkpoint()).isPresent();
     }
@@ -1607,7 +1559,7 @@ class GameEngineTest {
         GameEngine engine = engineAfterAWave(7);
         Tower fought = engine.cells().at(0, 1).getTower();
 
-        Tower bought = placeTower(engine, TowerFactory.Type.SONAR, 0, 3);
+        Tower bought = placeTower(engine, TowerFactory.Type.SNIPER, 0, 3);
         engine.requestNextWave();
         engine.doTick(3001);
         GameSave sent = engine.checkpoint().orElseThrow();
@@ -1624,7 +1576,7 @@ class GameEngineTest {
         engine.requestNextWave();
         engine.doTick(3001);
 
-        Tower bought = placeTower(engine, TowerFactory.Type.SONAR, 0, 3);
+        Tower bought = placeTower(engine, TowerFactory.Type.SNIPER, 0, 3);
 
         assertThat(bought.use().anyUnused()).isFalse();
     }
@@ -2050,12 +2002,12 @@ class GameEngineTest {
         saved.loadLevel(level);
         saved.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
         saved.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(1));
-        saved.startPlacing(TowerFactory.Type.SONAR, SonarTower.RANGE);
+        saved.startPlacing(TowerFactory.Type.SPLASH, SplashTower.RANGE);
         saved.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
-        Tower sonar = towerOfType(saved, TowerFactory.Type.SONAR);
-        sonar.earnXp(1_000_000);
+        Tower burst = towerOfType(saved, TowerFactory.Type.SPLASH);
+        burst.earnXp(1_000_000);
         for (String node : List.of("Attune", "Awaken")) {
-            sonar.buyUpgrade(sonar.upgradeTree().nodes().stream()
+            burst.buyUpgrade(burst.upgradeTree().nodes().stream()
                     .filter(n -> n.displayName().equals(node)).findFirst().orElseThrow());
         }
         saved.requestJumpToWave(3);
@@ -2081,13 +2033,13 @@ class GameEngineTest {
                 new WaveDefinition("walker")), 100_000);
         GameEngine saved = FakeGameHost.newBoundEngine();
         saved.loadLevel(level);
-        saved.startPlacing(TowerFactory.Type.SONAR, SonarTower.RANGE);
+        saved.startPlacing(TowerFactory.Type.SPLASH, SplashTower.RANGE);
         saved.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
-        Tower sonar = towerOfType(saved, TowerFactory.Type.SONAR);
-        sonar.earnXp(1_000_000);
-        List<UpgradeNode> chain = List.of("Attune", "Awaken").stream().map(name -> sonar.upgradeTree().nodes().stream()
+        Tower burst = towerOfType(saved, TowerFactory.Type.SPLASH);
+        burst.earnXp(1_000_000);
+        List<UpgradeNode> chain = List.of("Attune", "Awaken").stream().map(name -> burst.upgradeTree().nodes().stream()
                 .filter(n -> n.displayName().equals(name)).findFirst().orElseThrow()).toList();
-        chain.forEach(sonar::buyUpgrade);
+        chain.forEach(burst::buyUpgrade);
         GameSave save = saved.save().orElseThrow();
         TowerSave tower = save.towers().getFirst();
         List<String> renamed = tower.nodes().stream()
@@ -2132,7 +2084,7 @@ class GameEngineTest {
 
         Optional<String> problem = loaded.restore(GameSave.of(level.name(), 1, new EconomyState(50, 0, 5), List.of(
                 TowerSave.of(TowerFactory.Type.SNIPER, new Point(1, 1), List.of(), first).withPaid(77),
-                TowerSave.of(TowerFactory.Type.SONAR, new Point(1, 1), List.of(), TowerTally.of(999, 9, 9999L, 9))
+                TowerSave.of(TowerFactory.Type.SPLASH, new Point(1, 1), List.of(), TowerTally.of(999, 9, 9999L, 9))
                         .withPaid(5))));
 
         assertThat(problem).hasValueSatisfying(text -> assertThat(text).contains("1,1"));

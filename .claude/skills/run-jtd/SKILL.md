@@ -44,7 +44,7 @@ on `quit` or end of input.
 | `clickat <x> <y>` | `pointer` to window pixel (x, y), then a left click there: for a popup with no index, such as the script field's suggestion list. |
 | `rclickat <x> <y>` | `pointer` to window pixel (x, y), then a right click there. |
 | `text <n>` | Prints a text component's full content. Use it on the Info pane instead of a screenshot. |
-| `key <c>` | Presses a key or chord through `Robot`: `q w e r t y u i` build a tower, `space` pause (or play on and send the waiting wave), `d f g` normal/fast/super fast (each sends a waiting wave), `delete` sells the selected tower, `m` menu; `ctrl+shift+d` opens the dev panel; `alt+<letter>` runs a dev panel control (`alt+h` lists them in the Info pane). A part is one character or a `KeyEvent` name without `VK_` (`enter`, `esc`, `tab`, `space`, `delete`, `period`, `comma`, `left`, `f5`); an unknown name prints `ERROR` and presses nothing. |
+| `key <c>` | Presses a key or chord through `Robot`: `q w e r t y u` build a tower, `space` pause (or play on and send the waiting wave), `d f g` normal/fast/super fast (each sends a waiting wave), `delete` sells the selected tower, `m` menu; `ctrl+shift+d` opens the dev panel; `alt+<letter>` runs a dev panel control (`alt+h` lists them in the Info pane). A part is one character or a `KeyEvent` name without `VK_` (`enter`, `esc`, `tab`, `space`, `delete`, `period`, `comma`, `left`, `f5`); an unknown name prints `ERROR` and presses nothing. |
 | `keydown <k>`, `keyup <k>` | Holds one key down or lets it go, for what shows only while a key is held: `keydown alt`, `ss`, `keyup alt` for the dev panel's chips. |
 | `focus` | Prints what has the keyboard focus: a field, or the frame (the board's keys). |
 | `type <text>` | Replaces the focused text field's content, such as a dev panel field after `key alt+s`; `key enter` then applies it. |
@@ -55,7 +55,7 @@ on `quit` or end of input.
 | `trace [#id]` | Prints this run's `OBSERVE` lines from its session log: every observed enemy's, or one id's. |
 | `spawn <id> [rank]` | Spawns a catalog id (a wave token, such as `knight` for the Knight) at the path start. |
 | `script <wave script>` | Spawns a wave script on the first path as the dev spawn box does, Grunt by default, so a head, affixes and shapes show (`script soldier armored: 2 shielded knight`). A bad script prints `ERROR` and the problem. |
-| `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `resonating`, `fractured`, `dazed`, `saturated`, `charged`, `doom`, `blight`, `contagion`, `malaise`, `sprinting`) on every alive enemy. |
+| `effect <kind> [ticks]` | Puts an effect (`chill`, `burn`, `poison`, `freeze`, `shield`, `invisible`, `heal`, `vulnerable`, `revealed`, `sundered`, `exposed`, `marked`, `priority`, `dazed`, `saturated`, `charged`, `doom`, `blight`, `contagion`, `malaise`, `sprinting`) on every alive enemy. |
 | `kill` | Deals lethal damage to every enemy through the real hit path, so on-death abilities fire. |
 | `setcredits <n>`, `setlives <n>` | Economy cheats. |
 | `waitfor ticks <n> [ms]` | Waits until the game clock advances `n` ticks (20 per second; pausing stops it). |
@@ -205,7 +205,7 @@ The doc's tables can sit under any heading level, and are found by their heading
 |---|---|
 | Bare tower | Stat, Value, Today (the old value, shown struck), Replaces. Write the row `Passive` as `Name: what it does`; a name that is a term's title gives the passive its glyph. |
 | Tiers | Tier (`0`, `I`, `II`...), Gate (`XP 60`, other text, or `-`; above Tier 0, `-` draws a "Gate not set" gate the mock can still meet), Unlock (`$20` or `-`), Colour (one hex, or two for a left-to-right blend), Fork (optional: a cluster of that tier drawn in its gate as a fork gate; every row after a member, directly or not, belongs to that side and shows only once it is picked or hovered). A tier with no rows draws as "not designed yet". |
-| Upgrade tree | Tier, Node, Kind (`stat` square / `ability` round), Cluster (rows sharing a name form one pick-one cluster), After (node or cluster names), Glyph (a node id from any tree, or a term's title), Colour, Cost (`3 Sparks`), Replaces (old node ids it carries over), Does and Notes (`<br>` splits lines). |
+| Upgrade tree | Tier, Node, Kind (`stat` square / `ability` round), Cluster (rows sharing a name form one pick-one cluster), After (node or cluster names), Glyph (a node id from any tree, a term's title, or a node pictogram key kept after its tower left, such as `sonar.special.wide_band`), Colour, Cost (`3 Sparks`), Replaces (old node ids it carries over), Does and Notes (`<br>` splits lines). |
 | Terms (optional) | Term, Glyph (blank for a game term's own), Means. A new name, or a game term's new meaning. |
 | Open questions | A numbered list; `**Topic.**` starts an item. |
 

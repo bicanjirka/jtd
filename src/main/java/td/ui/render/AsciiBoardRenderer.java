@@ -25,7 +25,6 @@ public final class AsciiBoardRenderer {
         return switch (palette) {
             case TOWER_SNIPER_BODY -> '1';
             case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY, TOWER_HEXER_BODY -> '2';
-            case TOWER_SONAR_BODY -> '3';
             case TOWER_PULSE_BODY -> '4';
             case TOWER_AURA_BODY -> 'A';
             case TOWER_MORTAR_BODY -> 'M';

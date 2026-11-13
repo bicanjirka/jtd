@@ -17,7 +17,6 @@ public class TowerFactory {
         return switch (t) {
             case SNIPER -> new SniperTower(c, x, y);
             case SPLASH -> new SplashTower(c, x, y);
-            case SONAR -> new SonarTower(c, x, y);
             case PULSE -> new PulseTower(c, x, y);
             case AURA -> new AuraTower(c, x, y);
             case MORTAR -> new MortarTower(c, x, y);
@@ -33,9 +32,8 @@ public class TowerFactory {
         MORTAR(MortarTower.PRICE, 'e', "Mortar"),
         CINDER(CinderTower.PRICE, 'r', "Scorcher"),
         SEEKER(SeekerTower.PRICE, 't', "Hive"),
-        SONAR(SonarTower.PRICE, 'y', "Radar"),
-        PULSE(PulseTower.PRICE, 'u', "Obelisk"),
-        AURA(AuraTower.PRICE, 'i', "Beacon");
+        PULSE(PulseTower.PRICE, 'y', "Obelisk"),
+        AURA(AuraTower.PRICE, 'u', "Beacon");
 
         private static final double COPY_PRICE_GROWTH = 1.25;
 

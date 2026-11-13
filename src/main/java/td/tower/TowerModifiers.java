@@ -163,10 +163,6 @@ public final class TowerModifiers {
         return flat(TowerStat.MISSILES_PER_LAUNCH, missiles);
     }
 
-    public static StatModifiers<TowerStat> pingCount(int pings) {
-        return flat(TowerStat.PING_COUNT, pings);
-    }
-
     public static StatModifiers<TowerStat> aimStacks(int stacks) {
         return flat(TowerStat.AIM_STACKS, stacks);
     }

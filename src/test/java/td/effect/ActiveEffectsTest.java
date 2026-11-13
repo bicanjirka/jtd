@@ -753,20 +753,6 @@ class ActiveEffectsTest {
         return new StatSheet(base, effects::contributeTo).value(stat);
     }
 
-    @Test
-    void faultLineLetsFracturedFallToMinusAHundredAndHoldWhileExposed() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.fractured(4, DamageSink.none()));
-        effects.apply(Effect.fractured(1, DamageSink.none()).withFaultLine());
-        effects.apply(Effect.fractured(9, DamageSink.none()));
-        effects.apply(Effect.exposed(30, DamageSink.none()));
-
-        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-100f);
-        tickTimes(effects, 25);
-        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-100f);
-        tickTimes(effects, 25);
-        assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-90f);
-    }
 
     private static float fuelOf(ActiveEffects effects, EffectKind pool) {
         return effects.effects().stream().filter(effect -> effect.kind() == pool).findFirst()

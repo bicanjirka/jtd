@@ -1,4 +1,4 @@
-# `td.tower` (+ `targeting`, `upgrade`, `proc`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`, `sonar`, `splash`)
+# `td.tower` (+ `targeting`, `upgrade`, `proc`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`, `splash`)
 
 ## Towers
 
@@ -13,13 +13,13 @@
 - After `doCleanup` (sell or teardown), `dealDamage` is a no-op, because a burn the tower applied
   keeps ticking. A tower that subscribes to anything unsubscribes in `doCleanup`.
 - Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.
-- A tower that hits every tick passes `coolDownMax = 0`; one whose cadence is not a cooldown (the Sonar's
-  spin) also overrides `cadence()`.
+- A tower that hits every tick passes `coolDownMax = 0`; one whose cadence is not a cooldown also overrides
+  `cadence()`.
 - Every tower's cadence is its `FireClock` run at `attackRate()`, never a cooldown counted in whole
   ticks: the clock keeps the fraction a rate leaves over, so a buff is exact (a 10% faster Pulse hits 22
   times in 20 ticks, a second hit in the tick the remembered tenths reach a whole). A shot that waits
-  longer or shorter than the base spends more or less than one period. The Sonar divides its seconds per
-  revolution by the rate instead, and no counter that carries an attack rate may round to a tick.
+  longer or shorter than the base spends more or less than one period. No counter that carries an attack rate
+  may round to a tick.
 - Every wave starts with every tower ready (ADR 0021): `endWave()` at the clear and `readyForWave()` at the send drop
   what the wave built up. Shared state resets in `AbstractTower`, mechanics are renewed, and each tower's own fight state
   (its `FireClock`, targets, counters, stores) resets in `endFight()`. A new field a fight changes resets there; ready is
@@ -27,7 +27,7 @@
 - A turret or beam starts at `restHeading()` (toward the nearest path point) and, between waves with nothing to aim at,
   `settle()`s back to it; `takeRestPose()` snaps it there as a wave starts. A beat on a clock counts
   `waves().tickOfWave(gameTime)`, never the bare game time, so a loaded game beats on the same ticks.
-- Each tower's own constraints are in its sub-package's `CLAUDE.md` (`td/tower/sonar/`, `splash/`,
+- Each tower's own constraints are in its sub-package's `CLAUDE.md` (`splash/`,
   `seeker/`, `pulse/`, `mortar/`, `cinder/`, `aura/`): read it before editing that tower's leaf class here.
 - A tower whose fork renames it overrides `displayName()`; the id and `TowerFactory.Type` stay.
 - A missile's speed and size are a tower stat (`ProjectileStats`), shown as `TowerStatRow.PROJECTILE_SPEED`
@@ -60,8 +60,7 @@
   `recalculateStats()` runs on every tower whenever the roster or any upgrade changes, and in the
   towers phase whenever a tower that `emitsBuffs()` republished in `beginTick`.
 - Author bonuses with `TowerModifiers`. Attack speed is a fraction that adds: `rate = 1 + Σ`, held
-  to `[-0.75, 9]`. Every tower's cadence is its `FireClock` advanced by `attackRate()`; the Sonar
-  divides its seconds per revolution by it.
+  to `[-0.75, 9]`. Every tower's cadence is its `FireClock` advanced by `attackRate()`.
 - Enemy disruption reaches a tower only through `GameWorld.disruptions()`, sampled at its centre in
   `beginTick`, and folds in as negative attack speed and range in cells, times `DISRUPTION_TAKEN`. Blinding fields
   (`GameWorld.zones().disruptionAt`) add to it a miss chance: `AbstractTower.landHit` rolls it for every hit, and a miss

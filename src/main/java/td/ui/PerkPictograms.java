@@ -129,18 +129,10 @@ final class PerkPictograms {
             Map.entry("seeker.special.hunters_mark", "=tower.focus"),
             // Rapid Array
             Map.entry("sonar.head.rapid_array.1", "S O12 12 8.8 ; F M12 12V3.2A8.8 8.8 0 0 1 19.6 7.6Z ; F O12 12 1.6"),
-            // Twin Beam
-            Map.entry("sonar.head.rapid_array.4a", "S O12 12 8.8 ; F M12 12V3.2A8.8 8.8 0 0 1 19.6 7.6Z M12 12V20.8A8.8 8.8 0 0 1 4.4 16.4Z"),
-            // Phased Array
-            Map.entry("sonar.head.rapid_array.4b", "F O4.6 13 1.5 O8.6 13 1.5 O12.6 13 1.5 O4.6 17 1.5 O8.6 17 1.5 O12.6 17 1.5 O4.6 21 1.5 O8.6 21 1.5 O12.6 21 1.5 ; S M12.6 10.6L20.4 2.8 ; T M15.6 10.6L21.6 4.6 M10 8.2L16 2.2"),
             // Long Reach
             Map.entry("sonar.head.long_reach.1", "S M3.2 8.4C4.8 15.2 10 19.6 17.2 20.4 ; S M3.2 8.4L17.2 20.4 ; T M10.2 14.4L16.6 8 ; F O17.4 7.2 2 ; F M9 20.6H14V22.4H9Z"),
-            // Horizon
-            Map.entry("sonar.head.long_reach.4a", "F M5.6 16.6A6.4 6.4 0 0 1 18.4 16.6Z ; S M2 16.6H22 ; T M12 4.6V7.4 M4.4 8.4L6.4 10.4 M19.6 8.4L17.6 10.4 M4.6 20H19.4"),
             // Fault Line
             Map.entry("sonar.head.long_reach.4b", "S M2 12.6L6.2 10.2L9.4 14.6L13 9L16.4 13.8L19.4 10.6L22 12.4 ; T M2 18H8.6 M15.4 18H22 M2 6H7 M17 6H22"),
-            // Frequency
-            Map.entry("sonar.extra.frequency.1", "S M2 12C3.6 5.6 6.4 5.6 8 12S12.4 18.4 14 12S18.4 5.6 20 12C20.6 14.4 21.2 15.6 22 15.6"),
             // Mark on Sweep
             Map.entry("sonar.special.mark_on_sweep", "=effect.marked"),
             // Wide Band
