@@ -83,10 +83,10 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 
 | Tier | Gate | Unlock | Colour |
 |---|---|---|---|
-| 0 | - | - | #e07a3a |
+| 0 | - | - | #ea862a |
 | I | XP 60 | $20 | #f0a040 |
-| II | XP 120 | - | |
-| III | XP 200 | - | |
+| II | XP 120 | - | #f5c081 |
+| III | XP 200 | - | #fadaa8 |
 
 ### Upgrade tree
 
@@ -126,29 +126,32 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 
 ### Look
 
-A squat flamethrower nozzle on a round tank. Keeps its orange, softened (`FEATURE-next-gen-tower-looks.md`); the
-foundation grows a step richer per tier.
+A flamethrower nozzle on a round tank. It keeps its orange, moved to `#ea862a` so it stands clear of the Burst.
+Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `scorcher` and `stream`.
 
-- **Foundation by tier** (proposed in the bundle review, for the art sheet to try):
+| Tier | Foundation |
+|---|---|
+| 0 | one round orange fuel tank; no plinth |
+| I | one round plinth step; the tank, and a second, smaller tank behind it, joined by a hose |
+| II | two steps; a square iron grate over glowing coals, the tank on it and a small tank at each back corner |
+| III | three steps; a squat octagonal iron furnace with an orange band, a vent at each of four corners, two tanks at its back |
 
-  | Tier | Foundation |
-  |---|---|
-  | 0 | one round fuel tank under the nozzle |
-  | I | two tanks joined by a hose |
-  | II | the tanks on a brazier stand over a grate |
-  | III | a squat furnace with the tanks at its back, its vents glowing while it streams |
-
-  With Soulfire the metal blackens and the glow turns violet, from the same shapes.
-- **The stream** is a flame cone, licking and flickering from the nozzle to its range, hottest (yellow-white) at the
-  nozzle and red at its tips; its Core reads as a brighter band down the middle. It plays the whole stream and stops
-  sharply at the reload, so the board shows when it fires.
-- **Reload**: the nozzle glows down from red to dark and a pilot flame flickers at its tip.
-- **White Flame**: the core of the stream burns white, in either kind of fire.
-- **Soulfire** changes the whole look: a dark violet flame with a pale, soul-coloured core, slower and heavier, as if
-  it burns the soul rather than the body. The tower's nozzle and foundation take the soul colour.
-- **Dragon's Breath**: a thinner, long stream with a short breath between.
+- **Head**: the nozzle, turning to its aim: a pale orange pipe 0.25 of a cell long with a flared tip, and a small
+  still pilot flame at the tip while it does not stream. A range node lengthens the pipe to 0.31.
+- **The stream** is a flame cone from the nozzle to its range, three nested tongues with ragged tips: an outer red
+  one over the whole cone, an orange one over three quarters of it, and a yellow-white one at the nozzle. The
+  **Core** reads as that inner tongue reaching most of the range. The ragged edges are redrawn every few ticks, which
+  is all the flicker it needs. It plays the whole stream and stops sharply at the reload.
+- **Reload**: the nozzle's tip is red-hot as the stream stops and cools to iron over the reload; the pilot flame
+  returns.
+- **The furnace's vents** are dark red at rest and yellow in a glow while it streams.
+- **White Flame**: the inner tongue burns white, in either kind of fire.
+- **Soulfire** changes the whole look from the same shapes: the metal turns violet-black `#3d3650` with a pale
+  violet edge, the plinth takes a violet tint, the hot parts turn pale violet `#b9a0ff`, and the flame is dark violet
+  with a pale, soul-coloured core.
+- **Dragon's Breath**: a cone a third as wide and half again as long, with a short breath between.
 - **A burning enemy** keeps today's burn marker; a Soulfire enemy its own.
-- **Flashover**: tongues of flame leap from a hot enemy in the stream to the ones beside it.
+- **Flashover**: a tongue of flame leaps from a hot enemy in the stream to each one beside it.
 
 ## Interconnections
 

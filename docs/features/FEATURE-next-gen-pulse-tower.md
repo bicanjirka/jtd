@@ -114,8 +114,8 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 |---|---|---|---|
 | 0 | - | - | #8f86b8 |
 | I | XP 60 | $20 | #a89fd2 |
-| II | XP 120 | - | |
-| III | XP 200 | - | |
+| II | XP 120 | - | #c6c0e1 |
+| III | XP 200 | - | #e2dad8 |
 
 ### Upgrade tree
 
@@ -127,9 +127,9 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 | I | Ward | ability | | | pulse.head.ward.2 | | | pulse.head.ward.2 | An enemy in the field is Silenced while inside. | Today's Null Field. Against casters: Menders, shielders, a boss's calls. |
 | I | Quick Toll | stat | | | pulse.extra.bite.3 | | | pulse.extra.bite.3 | Toll builds a stack every 0.75 s, from 1 s | Today's Resonant Coils. At 0.5 s it doubled everything Toll drives. Name is a proposal. |
 | I | Deep Pull | stat | | | pulse.head.gravity.1 | | | pulse.head.gravity.1 | Drag +2% for each Toll stack | 30% to 40% at 5 stacks. Today's Undertow as a plain number. Name is a proposal. |
-| II | Burden | ability | The stone | | pulse.head.gravity.1 | #7a6a52 | | | Drag +3% for each Toll stack, and the field's slow may reach 75%, from 50%. | The steady weight: an earthen rune. Only inside the field, and two fields' drags never add, so more stones hold a longer stretch, not a deeper one. The Toll road into Deep Toll. |
-| II | Gravity | ability | The stone | | pulse.head.gravity.4b | #4d6fb8 | | pulse.head.gravity.2 | An enemy a second inside the field is Dazed for 0.75 s, once a visit. | The hard stop: a deep blue rune. Today's Snare and Stasis as one rule. It reads time inside, not Toll, so a Runner is stopped too. After a beat inside, not at the edge; a row of stones Dazes once for each. What the Aerie's freeze and the Scorcher's Thermal Shock read. |
-| II | Umbra | ability | The stone | Sundial | sonar.head.long_reach.4b | #3a3550 | | | The shadow's hit deals double damage to an enemy in the field. | The shadow's bite: an eclipsed rune. Against an Elite, a Boss and the Relay. Name is a proposal. |
+| II | Burden | ability | The stone | | pulse.head.gravity.1 | #c9a56c | | | Drag +3% for each Toll stack, and the field's slow may reach 75%, from 50%. | The steady weight: an earthen rune. Only inside the field, and two fields' drags never add, so more stones hold a longer stretch, not a deeper one. The Toll road into Deep Toll. |
+| II | Gravity | ability | The stone | | pulse.head.gravity.4b | #7d9be6 | | pulse.head.gravity.2 | An enemy a second inside the field is Dazed for 0.75 s, once a visit. | The hard stop: a deep blue rune. Today's Snare and Stasis as one rule. It reads time inside, not Toll, so a Runner is stopped too. After a beat inside, not at the edge; a row of stones Dazes once for each. What the Aerie's freeze and the Scorcher's Thermal Shock read. |
+| II | Umbra | ability | The stone | Sundial | sonar.head.long_reach.4b | #bcaaf0 | | | The shadow's hit deals double damage to an enemy in the field. | The shadow's bite: an eclipsed rune. Against an Elite, a Boss and the Relay. Name is a proposal. |
 | II | Hum II | stat | | | pulse.special.arc_discharge | | | | Damage +5 a second | |
 | II | Deep Shadow | stat | | Sundial | sonar.head.rapid_array.1 | | | | The shadow's hit is Shadow damage. | Name is a proposal. Shadow passes insulation (Terms), so the shadow's hit gets through a Relay as the field's small damage can't. Unweighed: it was +16 ($18). |
 | II | Wide Field II | stat | | | base.range | | | base.range.2 | Range +0.5 cells | In Tier I it put Tier I a quarter over the reference. |
@@ -159,32 +159,48 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 ### Look
 
 A dark standing stone, square in plan, with a pyramidion at its tip that holds one rune. Calmer than today's spinning
-star and three ripple rings (`FEATURE-next-gen-tower-looks.md`); the foundation grows a step per tier, four steps (the last two proposed in the bundle review): a bare stone (Tier 0),
-the stone on a plinth (I), the plinth ringed by three small stones (II), and a taller stone in a full ring of standing
-stones, a henge (III).
+star and three ripple rings. Its colour is `#8f86b8`; the stone's top is a darker step of it and its face, turned
+to the player, darker still. It is the tallest thing on the board for its width. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `obelisk` and `rune`.
+[Its fields and the Sundial](next-gen-art/grounds.png) are on the grounds sheet.
 
-- **The rune names the stone.** A plain stone carries a faint rune of its tier's colour. Burden carves an earthen rune
-  of a weight pressing down, a bar over a downward chevron; Gravity a deep blue rune of a spiral drawn inward; Umbra a
-  dark rune of an eclipsed disc, a ring with a darker disc over it. The rune is the only part that glows, and it glows
-  brighter, not bigger, while an enemy at full Toll is inside.
-- **The field is a ground zone**, drawn as the Mortar's and the healing grounds are (`ZonePatchDraw`): every Obelisk
-  field of one look is one patch of ground with one even fill and one outline around them all, so overlapping fields
-  read as one stretch of held path, not a stack of circles. Fields of different picks are different patches.
-  Nothing in a field moves while it holds nobody.
-- **Toll shows on the enemy, not the field**: each stack it gains sends one small ripple out from the enemy, and its
-  marker fills toward full. Motion means a stack landed.
-- **The Sundial** is a soft shadow on the ground that turns once from the stone's foot and fades, darker at the stone
-  and fading toward its tip, like a sundial's. It moves only while it turns (1 s of every 3) and only while an
-  enemy is within its reach, so the stone stands still between turns and over an empty path. A hit it lands flashes on the enemy, small, like the Sniper's.
-- **Ward**: a thin rune circle traces the patch's outline.
-- **Burden**: the patch reads heavier, a denser fill that settles toward the path, with no motion of its own.
-- **Gravity**: the field's patch darkens toward each stone. A Daze keeps today's mark.
-- **Umbra**: the shadow darkens as it crosses the patch, and a hit it lands there flashes larger.
-- **Silence gets a mark over the enemy**, from every source of it (Ward, the Aerie's Shade, the Hexer): a small icon
-  above its head while it lasts, so the board shows which enemy can't cast. Today Silence shows only in the enemy's
-  pane.
-- **Knell**: the rune flashes and one ring runs out to the patch's edge on each ring. **Deep Toll**: the rune glows
-  hotter past 5 stacks inside.
+| Tier | Foundation |
+|---|---|
+| 0 | the bare stone: a square, a smaller square on it, and a four-faced pyramidion lit from the top left; no plinth |
+| I | the stone on one square plinth step |
+| II | two steps; three small stones on the lower step, north, south-east and south-west |
+| III | three steps; a larger stone in a henge: eight small stones round the lowest step |
+
+- **The rune names the stone.** It sits on the pyramidion and is the only part that glows:
+
+  | Stone | Rune | Glow | Field |
+  |---|---|---|---|
+  | plain | an upright bar with a short crossbar | the tier's colour | `#8f86b8` |
+  | Burden | a bar over a downward chevron | earthen `#c9a56c` | `#7a6a52`, a denser fill |
+  | Gravity | a spiral drawn inward | deep blue `#7d9be6` | `#4d6fb8`, darkening toward each stone |
+  | Umbra | a pale ring with a dark disc over it, an eclipse | pale violet `#bcaaf0` round a dark disc `#2a2540` | `#5a4f8a` |
+
+  The glow colours are lighter than the drafts' rune colours, which were too dark to read on the stone (Umbra's
+  `#3a3550` stood at 1.6:1 on the floor). The rune glows brighter, not bigger, while an enemy at full Toll is inside.
+- **The field is a ground zone**, drawn as the Mortar's and the healing grounds are: every Obelisk field of one look
+  is one patch of ground with one even, faint fill and one outline around them all, so overlapping fields read as
+  one stretch of held path, not a stack of circles. Fields of different picks are different patches. Nothing in a
+  field moves while it holds nobody.
+- **Toll shows on the enemy, not the field** ([marks](next-gen-art/marks.png)): five segments round the enemy in
+  Toll's marker colour fill as the stacks land, bolder at full, and each stack gained sends one thin ripple out from
+  the enemy. Motion means a stack landed.
+- **The Sundial** turns once from the stone's foot and fades. The floors are near-black, so it cannot be a dark
+  shadow: it is a cool violet veil, strongest at the stone and fading to nothing at its tip 4 cells out, with a
+  lighter line along its leading edge. It moves only while it turns (1 s of every 3) and only while an enemy is
+  within its reach, so the stone stands still between turns and over an empty path. A hit it lands flashes on the
+  enemy, small, like the Sniper's.
+- **Ward**: a thin dashed rune circle, in Silence's colour, runs just inside the patch's outline.
+- **Burden**: the patch reads heavier, a fill twice as dense, with no motion of its own.
+- **Gravity**: the patch darkens toward each stone. A Daze keeps today's mark.
+- **Umbra**: the veil is darker and bluer where it crosses the patch, and a hit it lands there flashes larger.
+- **Silence gets a mark over the enemy**, from every source of it (Ward, the Aerie's Shade, the Hexer): a small
+  struck-out speech mark above its head while it lasts, so the board shows which enemy can't cast.
+- **Knell**: the rune flashes white and one ring in the rune's colour runs out to the patch's edge on each ring.
+  **Deep Toll**: the rune glows hotter past 5 stacks inside.
 
 ## Interconnections
 

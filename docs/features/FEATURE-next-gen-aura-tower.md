@@ -103,8 +103,8 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 |---|---|---|---|
 | 0 | - | - | #d8b866 |
 | I | XP 60 | $20 | #ecd48c |
-| II | XP 120 | - | |
-| III | XP 200 | - | |
+| II | XP 120 | - | #f2e3b3 |
+| III | XP 200 | - | #f8ecc2 |
 
 ### Upgrade tree
 
@@ -141,24 +141,28 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
-A lantern on a short stone post, seen from above: a round post, a small glass lantern, a warm pale gold. It is the
-quietest tower on the board, the opposite of today's two breathing rings, pulsing head and line to every tower it
-buffs (`FEATURE-next-gen-tower-looks.md`); the foundation grows a step per tier, four steps (the second proposed in the bundle review): a lantern on a post
-(Tier 0), the post on a stone base with a little roof over the lantern (I), a small tower (II), a lighthouse with a
-gallery round its lamp (III).
+A lantern on a stone post, in a warm pale gold, `#d8b866`. It is the quietest tower on the board,
+the opposite of today's two breathing rings, pulsing head and line to every tower it buffs. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `beacon`.
 
-- **The light** is a steady glow on the lantern, never a ring on the ground. Selecting the Beacon shows its circle
-  and a faint tick on each Lit tower; nothing else draws a line between towers.
-- **A reveal is the one motion**: when a hidden enemy enters the light, a short ray reaches from the lantern to it and
-  fades. The enemy keeps today's Reveal mark.
-- **The Spotlight**: a narrow beam from the lantern follows the enemy it holds, faint and steady; the enemy keeps
-  today's Priority mark.
-- **Lessons**: none on the board; the XP shows in the pane. With Kinship, the lantern's glass shows one pane in the
-  colour of each tower type in its light.
-- **Daylight**: the glow turns whiter, and an enemy aura that meets the light's edge is drawn cut off there.
-  **Glare**: a glint on each Exposed enemy.
-- **Prism**: the lantern's glass turns to coloured panes, one per Lit type, as with Kinship; each mark on the
-  enemies keeps its own look.
+| Tier | Foundation |
+|---|---|
+| 0 | a round stone post with a gold diamond lantern on it; no plinth |
+| I | one octagonal plinth step; the lantern becomes an octagon of eight glass panes under a small square roof |
+| II | two steps; the post widens into a small round tower under the lantern |
+| III | three steps; a lighthouse: a taller tower with a gallery round its lamp, eight rail posts on it, and a white finial |
+
+- **The light** is a steady soft glow on the lantern, a quarter of a cell wide, never a ring on the ground. It does
+  not pulse. Selecting the Beacon shows its circle and a small gold lantern mark in the bottom-left corner of each
+  Lit tower ([icons](next-gen-art/icons.png)); nothing else draws a line between towers.
+- **A reveal is the one motion**: when a hidden enemy enters the light, a short pale ray reaches from the lantern to
+  it and fades. The enemy keeps today's Reveal mark.
+- **The Spotlight**: a narrow, faint wedge of light from the lantern follows the enemy it holds, steady; the enemy
+  keeps today's Priority mark.
+- **Lessons**: none on the board; the XP shows in the pane.
+- **Kinship and Prism**: the lantern's panes take the colour of each tower type in its light, one pane a type,
+  repeating round the octagon. At Tier 0 the single glass takes the first type's colour.
+- **Daylight**: the glow turns whiter and stronger, and an enemy aura that meets the light's edge is drawn cut off
+  there. **Glare**: a white four-point glint on each Exposed enemy.
 
 ## Interconnections
 

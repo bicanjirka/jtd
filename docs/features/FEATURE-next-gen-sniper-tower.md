@@ -54,10 +54,10 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 
 | Tier | Gate | Unlock | Colour |
 |---|---|---|---|
-| 0 | - | - | #8fd18a |
+| 0 | - | - | #a6d674 |
 | I | XP 60 | $20 | #5cc8b0 |
-| II | XP 120 | - | |
-| III | XP 200 | - | |
+| II | XP 120 | - | #93dbcb |
+| III | XP 200 | - | #c9e8ce |
 
 ### Upgrade tree
 
@@ -92,32 +92,38 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
-A watchtower with a long rifle. Keeps its triangle and its green, softened (`FEATURE-next-gen-tower-looks.md`).
+A watchtower with a long rifle. It keeps its triangle and its green, softened to `#a6d674`
+(`FEATURE-next-gen-tower-looks.md`, "Palette"). Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `sniper`.
 
 | Tier | Foundation |
 |---|---|
-| 0 | a triangle, as today, more opaque |
-| I | two triangles, one pointing up and one down |
-| II | a hexagon |
-| III | a hexagon made of triangles |
+| 0 | a green triangular platform, point north, with a dark inset deck; no plinth |
+| I | the platform on one hexagonal plinth step, a round post at each of its three corners |
+| II | two steps; a second, darker triangle under the first, point south, so the plan reads as a six-pointed star |
+| III | three steps; posts on all six points, and a hexagonal turret ring at the centre under the rifle |
 
-- **The foundation is a watchtower seen from above**, its tiers growing as the table says.
-- **Head**: a long rifle barrel, recognisably a sniper's (a scope is welcome). It recoils when it fires and settles
-  back as it reloads. Steady Aim shows on the head: the scope's glint brightens with each stack.
-- **Shot**: the tracer flies, over about 3 frames from the muzzle to the enemy, fast but visible as travel. It is
-  slimmer than today's line, whiter at its head and greener at its tail, and fades well inside the reload. A crit's
-  bullet stays white. Its damage lands when the tracer arrives (`FEATURE-next-gen-shot-flight.md`, 1).
-- **The Fourth Shot** is a primed shot and has a head cue; primed shots combine on the head, each readable beside the
-  others.
+- **Head**: the rifle, turning to its aim. A pale green barrel reaching 0.30 of a cell from the pivot (0.37 with
+  Long Barrel, the one change a range node makes), a green receiver, and a scope beside the barrel with its lens at
+  the front. On the shot the whole rifle slides back 0.05 of a cell behind a muzzle flash, and eases forward over the
+  reload. Nothing else on it moves.
+- **Steady Aim** is the lens: dark with no stack, brighter with each one, and at full a four-point sparkle over it.
+- **Primed shots and buffs** each sit on their own part of the rifle, so any of them read together:
 
-Looks the request asked for that return in Tiers II and III:
+  | Cue | Where | Look |
+  |---|---|---|
+  | Fourth Shot | the muzzle | a white diamond in a white glow |
+  | Silver Round | the front third of the barrel | silver-blue `#aad2ff`, a white glint on it |
+  | Hollow Point | the middle of the barrel | a band in Physical orange `#e69646`, wider than the barrel |
+  | Frenzy | the breech | the barrel jitters sideways each tick, three short red sparks `#ff6b5a` |
+  | Headhunter | the lens | an orange-red ring `#ff7850` round it and a line through it, while aiming at an Elite or a Boss |
 
-- The Fourth Shot has its own shot; a Silver Round has its own line and a loaded head (a silver tip, a glint), and a
-  Hollow Point gets its own the same way.
-- Frenzy has a "firing faster" look (the barrel shakes, red sparks).
-- An execution draws its own moment on the enemy it kills (a white shatter).
-- Ricochet's bullet hops to the next enemy on an arc.
-- The head changes while it aims at an Elite or a Boss (Headhunter).
+- **Shot**: the tracer flies, over about 3 frames from the muzzle to the enemy. It is slim (a pixel at the board's
+  1x), white at its head and green toward its tail, the tail fading; a crit's bullet stays white from head to tail.
+  Its damage lands when the tracer arrives (`FEATURE-next-gen-shot-flight.md`, 1).
+- **The Fourth Shot's** bullet is the white one inside a wider, fainter white bolt. **A Silver Round's** line has a
+  silver-blue tail, **a Hollow Point's** an orange one.
+- **Ricochet**: the bullet hops to the next enemy on one green arc.
+- **An execution** draws its moment on the enemy it kills: eight white shards flying out of a thin white ring.
 
 Looks kept in case their node returns: Spotter's light red aiming laser to a target past 1x range; Charged Shot's head
 cue; a very faint ring at 2/3 of the range (today's Tradecraft II).

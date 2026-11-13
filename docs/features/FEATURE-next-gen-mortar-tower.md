@@ -84,8 +84,8 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 |---|---|---|---|
 | 0 | - | - | #c39062 |
 | I | XP 60 | $20 | #e0b070 |
-| II | XP 120 | - | |
-| III | XP 200 | - | |
+| II | XP 120 | - | #ebcba1 |
+| III | XP 200 | - | #f5e0b8 |
 
 ### Upgrade tree
 
@@ -133,27 +133,36 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
-A squat mortar with a short, wide barrel. Keeps its brown, softened (`FEATURE-next-gen-tower-looks.md`); the
-foundation grows a step richer per tier.
+A squat mortar with a short, wide barrel. It keeps its brown, `#c39062`. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `mortar`.
 
-- **Foundation by tier** (proposed in the bundle review, for the art sheet to try):
+| Tier | Foundation |
+|---|---|
+| 0 | a round brown base with an iron turntable on it; no plinth |
+| I | one octagonal plinth step; a ring of ten sandbags round the base |
+| II | two steps; the sandbags round a riveted iron turntable with a brass ring |
+| III | three steps; a small bastion: an octagonal stone wall with eight merlons round a dark yard, three shells racked along the wall, the turntable inside |
 
-  | Tier | Foundation |
+- **Head**: the barrel, turning to its aim: short and wide (0.21 of a cell long, 0.135 wide), a lighter muzzle band,
+  and the bore open at its tip. A range node lengthens it to 0.25.
+- **Reload**: on the shot the barrel slides back 0.05 of a cell behind a flash and the bore is empty; it slides out
+  again over the reload. The draft's other idea, an arc growing round the barrel, is dropped: one cue is enough.
+- **The loaded shell** sits in the bore from half the reload on, in its kind's look. With a Volley, a tray behind the
+  breech holds three shells in a row.
+- **Shell kinds**, each the same drawing in the bore, in the pane's magazine and in flight:
+
+  | Kind | Look |
   |---|---|
-  | 0 | a squat round iron base under the short barrel |
-  | I | the base in a ring of sandbags |
-  | II | a riveted turntable on a stone pad, the sandbags behind it |
-  | III | a small bastion: the turntable inside a stone wall with a rack of shells along it |
+  | Normal | a dark iron ball `#7b8496` with a pale glint |
+  | Heavy | a quarter larger, a bright band `#f2d28a` across it |
+  | Nuke | half again as large, pale `#e8e8dc` with a dark triangle, in a yellow-green hazard glow `#c8f04a` |
+  | Napalm | red-orange `#ff7a2a` with a yellow core; a flame trail in flight |
+  | Tar | black `#241d2a` and glossy, a pale violet rim and one white glint |
+  | Cryo | pale blue `#aae6ff` with a white four-point star; a frost trail in flight |
+  | Flare | a white-yellow four-point spark in a small glow; a short trail in flight |
 
-- **Shell kinds** (proposed): a Normal is a dark iron ball; a Heavy is larger, with a bright band; a Nuke larger
-  still, with a hazard glow; a Napalm shell is red-orange with a flame trail, a Tar shell black and glossy, a Cryo
-  shell pale blue with a frost trail, a Flare a white-yellow spark with a short trail. Each is the same kind in the
-  barrel, in the pane's magazine and in flight.
-- **Reload**: the barrel rises slowly as it reloads (or a thin arc grows around it), so the board shows when it fires.
-- **The loaded shell** sits visibly in the barrel while it reloads, in its kind's look. With a Volley, three shells
-  sit in a row.
-- **Shot**: a lobbed projectile (`FEATURE-next-gen-shot-flight.md`) in its kind's look. The 100% zone is drawn as a
-  white ring at the centre, the 50% edge fainter, as the Burst's; a Nuke's 75% zone sits between them.
+- **Shot**: a lobbed projectile (`FEATURE-next-gen-shot-flight.md`) in its kind's look, with the same grey veil for
+  a shadow as the Burst's stone. The 100% zone is a white ring at the centre, the 50% edge fainter; a Nuke's 75% zone
+  is a yellow-green ring between them.
 - **The magazine** in the tower pane: a row of slots, front first; the loading slot (or three, with a Volley) is
   marked loaded. Under it, one strip split into the kinds' colours with each kind's chance ("Normal 60%, Heavy
   40%"). A node's hover shows the chance it changes on this tower ("Heavy 18% → 31%"). Rich Mix's chances are what
@@ -161,8 +170,8 @@ foundation grows a step richer per tier.
 - **Fusion** merges the two Heavies in the pane visibly; the Nuke keeps today's flash.
 - **Concussion**: today's daze on every enemy hit. **Shrapnel**: fragments flying out over the blast, then today's
   bleed marker.
-- **Payload grounds** keep today's burning ground, tar and frost ground.
-- **A flare** burns as a faint, flickering light on the ground; it must stay calm beside the payload grounds.
+- **Payload grounds** keep today's burning ground, tar, frost ground and fallout ([grounds](next-gen-art/grounds.png)).
+- **A flare** burns as one small spark in a faint, wide glow on the ground, calm beside the payload grounds.
 
 ## Interconnections
 
