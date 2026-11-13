@@ -178,7 +178,7 @@ instead of a combinator. A next-gen tree builds from small, plain pieces the pla
    as they need (final review). No Stormcaller node moves.
 9. ✅ **The tier's look in the panel.** Each tier's row shows, at its left, a small picture of the tower's foundation
    at that tier, grey while locked: the player sees what the tower grows into (final review, autonomously). The art
-   pass draws the thumbnails.
+   pass drew the thumbnails, with every tier colour: `next-gen-art/icons.png`.
 10. ✅ **Identity picks and "one node, one change".** Soulfire (burns the immune, Flame +10%, half a magic resist),
     Dragon's Breath (length, reload, Flame), Ruby (×2 damage, holds the freeze-immune), Shade (Shadow damage, Silence
     after the thaw), Burden (deeper drag, a higher cap) and Lance (range for width) each carry two or three changes.

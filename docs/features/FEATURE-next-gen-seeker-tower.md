@@ -64,10 +64,10 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 
 | Tier | Gate | Unlock | Colour |
 |---|---|---|---|
-| 0 | - | - | #6fb6e8 |
+| 0 | - | - | #5cc4e2 |
 | I | XP 60 | $20 | #8fd0f2 |
-| II | XP 120 | - | |
-| III | XP 200 | - | |
+| II | XP 120 | - | #b5e0f6 |
+| III | XP 200 | - | #daeae3 |
 
 ### Upgrade tree
 
@@ -82,7 +82,7 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 | I | Feeding | ability | | | seeker.head.twin_warhead.4b | | | seeker.head.twin_warhead.4b | Each freeze takes 0.25 s off the next load, never below half its time. | The request's node, on every freeze: a Ruby's, a Shade's and a released missile's too. Today's Rearm (a freeze launches a missile) made gentler. Seconds, not a share, so it grows with every faster load: +19% alone at a 1.6 s load, +24% at 1.3 s; beside a Release, +45% and +63% (open question 7). Name is a proposal. |
 | I | Swift Wings | stat | | | seeker.special.hunters_mark | | | | Missile speed +50% | A fast enemy walks out of range before a slow missile lands. Name is a proposal. |
 | II | Ruby | ability | Second missile | | seeker.special.arcane_warhead | #d0405a | | | Adds Ruby missiles to the nest, one in three: a Ruby deals ×2 damage, and its freeze also holds what is freeze-immune. | The crystal hive: the tower turns ruby. Against the Yeti, the Molten Core, the Monolith and the Warden; ×2 is the Mortar's Heavy, and it gets through more of a shield. |
-| II | Shade | ability | Second missile | | Silence | #8fd8a0 | | seeker.extra.mixed_payloads.2 | Adds Shade missiles to the nest, one in three: a Shade deals Shadow damage, which goes past Shield and insulation, and its freeze leaves its enemy Silenced as long again after it thaws. | The shadow spire: the tower turns dark with a pale green glow. Against the shielded and casters: Menders, shielders, the Timekeeper, a boss's calls. Today's EMP Payload's Silence. |
+| II | Shade | ability | Second missile | | Silence | #a6e8c8 | | seeker.extra.mixed_payloads.2 | Adds Shade missiles to the nest, one in three: a Shade deals Shadow damage, which goes past Shield and insulation, and its freeze leaves its enemy Silenced as long again after it thaws. | The shadow spire: the tower turns dark with a pale green glow. Against the shielded and casters: Menders, shielders, the Timekeeper, a boss's calls. Today's EMP Payload's Silence. |
 | II | Sharp Sting | stat | | | seeker.head.deep_freeze.2 | | | seeker.head.deep_freeze.2 | Damage +10 | Name is a proposal. |
 | I | Wide Comb II | stat | | | seeker.head.twin_warhead.1 | | | | Nest +2 missiles | |
 | II | Long Flight II | stat | | | base.range | | | base.range.2 | Range +1 cell | |
@@ -112,44 +112,42 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
-A small spire with its missiles circling it: the nest. Keeps its blue, softened (`FEATURE-next-gen-tower-looks.md`); the
-foundation grows a step richer per tier. There is no turning head: the moving part is the nest.
+A crystal spire with its missiles circling it: the nest. It keeps a blue, moved to `#5cc4e2` so it stands clear of
+the Stormcaller. There is no turning head: the moving part is the nest. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `aerie`, `nest` and `missile`.
 
-- **Foundation by tier** (proposed in the bundle review, for the art sheet to try):
+| Tier | Foundation | Ruby | Shade |
+|---|---|---|---|
+| 0 | a dark blue hexagonal base with a hexagonal crystal spire on it; no plinth | | |
+| I | one round plinth step; a perch ring floating round the spire | | |
+| II | two steps; a taller spire with four ice shards at its foot | the spire, the shards and the perch ring in ruby red `#d0405a` | dark stone `#3c4050`, three pale green slits in the spire's top, a pale green perch ring `#a6e8c8` |
+| III | three steps; a six-pointed crystal star for a spire, six shards, three perch arms each ending in a small ring | a ruby cluster, from the same shapes | a dark tower with a crown of six pale green points round its top, in a green glow |
 
-  | Tier | Foundation | Ruby | Shade |
-  |---|---|---|---|
-  | 0 | a slim spire on a round base | | |
-  | I | the spire with a perch ring halfway up | | |
-  | II | a taller spire with ice crystals at its foot | red crystal facets | dark stone with pale green slits |
-  | III | a tall crystal spire with three perches | a ruby cluster | a dark tower with a pale green crown |
-
-- **The nest circles the tower.** Every stored missile is drawn orbiting the spire on one even ring, spaced evenly, in
-  its kind's colour (Frost blue, Ruby red, Shade's wisp). They are the missiles themselves, one for one, not an effect:
-  the missile that flies is the one that left its place on the ring. A new missile joins the ring as it loads, and the
-  others spread to make room; a missile that flies home takes its place on the ring again.
+- **The nest circles the tower.** Every stored missile is drawn on one even ring just outside the foundation
+  (0.06 of a cell past its edge) at the height of the perch, so a missile on the far half of the ring passes
+  behind the spire and one on the near half in front of it. They are spaced evenly, in its kind's look: a Frost missile a blue dart, a Ruby a red
+  diamond shard, a Shade a pale green wisp with a dark eye and a fading tail. They are the missiles themselves, one
+  for one, not an effect: the missile that flies is the one that left its place on the ring. A new missile joins the
+  ring as it loads, and the others spread to make room; a missile that flies home takes its place again. The ring
+  holds still while no enemy is in range, and its path is not drawn.
 - **A missile flies like an aircraft.** It leaves the ring along its orbit, turns toward its enemy on a smooth curve,
   never a jump in heading, and speeds up gradually to its top speed (the Missile speed stat). In flight it keeps
   turning after its enemy as the enemy moves, and turns harder the nearer it gets, so it never circles a fast enemy.
   It never misses: it always reaches its enemy, or turns to a new one (Retarget).
-- **The Release cue**: once the next freeze will set off a Release, the ring brightens, as the Sniper's head cues the
-  Fourth Shot. It dims when the Release fires.
+- **The Release cue**: once the next freeze will set off a Release, the ring's path shows as a thin line in the
+  missiles' colour, each missile wears a small halo, and the perch ring turns near-white in a glow. All of it goes
+  when the Release fires.
 - **Swarm**: seven missiles appear on the ring at once and peel off one after another in a fan across the board.
   **Hatching**: its missiles join the ring one by one and leave it as usual.
 - **Ruby and Shade change the look less than a fork does.** The Burst's Stormcaller and Hexer become other towers;
   the Aerie stays a spire with its nest, and its identity shows in the spire's material and glow and in its missiles.
-- **One freeze look in three colours.** Today a frozen enemy wears an ice tint over its own body (`EnemyTintLook.FREEZE`,
-  `Palette.FREEZE_CRYSTAL`) and bursts into ice shards as it thaws (`EnemyBurstLook.ICE_SHARDS`). Ruby and Shade reuse
-  both shapes, recoloured: the plain freeze stays ice, a Ruby freeze is ruby red, a Shade freeze is smoky dark ice with
-  a pale green edge. The shape says "frozen", the colour says which missile froze it.
-- **Ruby**: the spire takes on ruby crystal, Ruby missiles are red shards, and a Ruby freeze is the freeze's crystal in
-  ruby red; it thaws into red shards.
-- **Shade**: the spire darkens, with a pale green glow (Minas Morgul), Shade missiles are wisps that
-  pass through a shield's bubble, and a Shade freeze is the freeze's crystal in smoky dark ice, thawing into dark
-  shards; its Silence after the thaw keeps
-  today's mark.
-- **Ice Wake**: a faint ring of frost on the ground around the ice block while it lasts; the chilled enemies show
-  today's chill. **Shatter**: the ice breaks into shards that fly out over the enemies around it.
+- **One freeze look in three colours** ([marks](next-gen-art/marks.png)). Today a frozen enemy wears an ice block
+  over its own body and bursts into ice shards as it thaws. Ruby and Shade reuse both shapes, recoloured: the plain
+  freeze stays ice, a Ruby freeze is the block in ruby red with a pale pink rim, a Shade freeze is smoky dark ice
+  with a pale green rim. They thaw into red shards and into dark shards with a green edge. The shape says "frozen",
+  the colour says which missile froze it. A Shade's Silence after the thaw wears the Silence mark.
+- **Ice Wake**: a faint dashed ring of frost on the ground round the ice block while it lasts
+  ([grounds](next-gen-art/grounds.png)); the chilled enemies show today's chill. **Shatter**: the ice breaks into
+  shards that fly out over the enemies around it.
 
 ## Interconnections
 

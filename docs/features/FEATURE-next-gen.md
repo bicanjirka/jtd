@@ -1,7 +1,7 @@
 # Feature bundle: Next-gen towers
 
-**Status:** draft, reviewed whole twice on 2026-11-13, its last tower questions answered on 2026-11-14, and
-ready for planning: no tower question is left; the art pass is listed below. The
+**Status:** draft, reviewed whole twice on 2026-11-13, its last questions answered on 2026-11-14, and ready for
+planning: no doc has an open question left; the art is drawn in the raised view the user chose (`next-gen-art/`). The
 root of the bundle: it began as the tower visual revamp, whose request is kept in the appendix, and grew to take in
 the towers' mechanics too.
 
@@ -124,26 +124,27 @@ The final review's own answers are under "Settled in the final review", after th
 
 ## The look of the bundle
 
-The original goal: towers that level up many steps in how they look, on a board that is calmer than today's. What
-each part of that asks, where it is written, and what is still open:
+The original goal: towers that level up many steps in how they look, on a board that is calmer than today's. Every
+piece is drawn (the art pass, 2026-11-13) and written into the doc that owns it; the sheets are in `next-gen-art/`:
 
-| Piece | Sniper | Burst | Mortar | Scorcher | Aerie | Obelisk | Beacon |
-|---|---|---|---|---|---|---|---|
-| Foundation, four tiers | written | proposed | proposed | proposed | proposed | written, a step proposed | written, a step proposed |
-| Identity look (fork or pick) | | written (Stormcaller, Hexer) | | written (Soulfire) | written (Ruby, Shade) | written (three runes) | |
-| Head and its firing cue | written | proposed (the arm, the coil, the brew) | written | written | none: the nest | none: the rune | the lantern |
-| Shot or cast | written | written; fork-coloured stones proposed | proposed (shell kinds) | written (stream) | written (missile flight) | written (Sundial) | none |
-| Buff cues on the head | written | proposed (a full ability glows) | written (loaded shell) | | written (Release ring) | written (rune glow) | |
-| Upgrade looks (nodes that show) | written | written | written | written | written | written | written |
-| Ground it leaves | | | written | | written (Ice Wake) | written (field patch) | |
+| Piece | Sniper | Burst | Mortar | Scorcher | Aerie | Obelisk | Beacon | Sheet |
+|---|---|---|---|---|---|---|---|---|
+| Foundation, four tiers | drawn | drawn (thrower; Stormcaller and Hexer I to III) | drawn | drawn | drawn | drawn | drawn | [catalogue](next-gen-art/catalogue.png), [board](next-gen-art/board.png) |
+| Identity look (fork or pick) | | drawn (Stormcaller, Hexer) | | drawn (Soulfire) | drawn (Ruby, Shade) | drawn (three runes) | | catalogue, board |
+| Moving part and its firing cue | the rifle | the arm, the coil's ball, the brew | the barrel | the nozzle | the nest | the rune | the lantern's glow | [heads](next-gen-art/heads.png) |
+| Shot or cast | drawn | drawn, fork-coloured stones too | drawn (seven shell kinds) | drawn (stream) | drawn (missile flight) | drawn (Sundial) | drawn (reveal ray, Spotlight) | [shots](next-gen-art/shots.png) |
+| Buff cues on the moving part | drawn (five, combining) | drawn (a full ability glows) | drawn (loaded shell, Volley) | drawn (hot nozzle, vents) | drawn (Release) | drawn (rune glow, Knell) | drawn (panes, Daylight) | heads |
+| Upgrade looks (nodes that show) | written | written | written | written | written | written | written | heads, shots |
+| Ground it leaves | | | drawn (flare; payload grounds as today) | | drawn (Ice Wake) | drawn (five field patches) | | [grounds](next-gen-art/grounds.png) |
 
-"Proposed" rows were added in this review, marked as proposals in their docs, for the user to accept or redraw.
-
-Shared looks, owned by `FEATURE-next-gen-tower-looks.md`: the art direction (how rich a tower is drawn, its footprint,
-one tier grammar or each tower its own), the tier unlock moment, the one upgrade arrow, the enemy marks the new
-debuffs need (Silence over the head, Toll, the hexes, Ruby and Shade freezes), the seven toolbar icons, the palette and the
-tier colours. The earlier art mock, "jTD Tower Revamp Previews" (https://claude.ai/artifact/So7xnUnVE6o6f3iUhmyUYH:
-instruments around a core, a grounded workshop, and freeform against shared tier shapes), stays as inspiration.
+Shared looks, owned by `FEATURE-next-gen-tower-looks.md` and decided there under "Art direction": the raised view
+(the user, 2026-11-13; [directions](next-gen-art/directions.png)), flat parts in three tones lit from the top left,
+one plinth step per tier in the tower's own plan shape, a footprint that grows from 0.55 to 0.80 of a cell, the tier
+unlock, the one upgrade arrow, the enemy marks ([marks](next-gen-art/marks.png)), the seven toolbar icons, the
+palette and the tier colours ([icons](next-gen-art/icons.png)). The enemies, the ground zones, the shells and
+today's towers already stand in the same look in the game ([theme](next-gen-art/theme.png); looks, "The rest of
+the board"). The earlier art mock, "jTD Tower Revamp Previews"
+(https://claude.ai/artifact/So7xnUnVE6o6f3iUhmyUYH), stays as inspiration.
 
 ## Shared between towers
 
@@ -207,7 +208,8 @@ level scripts that expect it, the README's tower table, `td/tower/sonar/` (its b
    questions) follow run-jtd's `SKILL.md`, "PreviewUpgrades".
 2. After each round, `td.ui.PreviewUpgrades` rebuilds the review board (today's panel with its real hovers beside the
    new tree, live) and `ledger.md`. Published board: https://claude.ai/artifact/1o1xr7PS8Wxmwjr3MRd32M
-3. Draw the tower's art sheet and get it approved (Decisions for the whole bundle).
+3. Build the tower's look from its sheets in `next-gen-art/` (its Look section names them). A look that
+   changes is drawn on a sheet again first.
 4. Plan, then implement in phases with a commit each.
 5. Close it: delete what the ledger lists for the tower. Terms, stats and procs can have users outside upgrades
    (enemies, statuses), so search before deleting them.
@@ -217,8 +219,8 @@ level scripts that expect it, the README's tower table, `td/tower/sonar/` (its b
 - **Balance**: first every bare tower roughly equal per credit, then tiers and prices, in
   `FEATURE-balance-after-next-gen-towers.md`. The placeholder entries in `TODO.md` ("Upgrade-tree node numbers", the
   lab's ceiling) are judged then.
-- **Final art pass**: one `PreviewBoard` sheet of all seven towers at every tier and identity side by side, the
-  toolbar icons, and `td.PerformanceHarness` on a board full of Tier III towers.
+- **Final art pass**: the built towers rendered through `PreviewBoard` beside `next-gen-art/board.png`, at every
+  tier and identity, the toolbar icons, and `td.PerformanceHarness` on a board full of Tier III towers.
 - **Final sweep**: the ledger with every tower converted, then a manual pass over effects, glyphs, traits, statuses
   and `Palette` entries nothing reaches any more.
 - **Docs**: the README's tower tables and hotkeys, `docs/UI.md`, `docs/ARCHITECTURE.md`, and the `CLAUDE.md` lines the
@@ -311,7 +313,7 @@ reopened.
 | Question | Answer | Why |
 |---|---|---|
 | Identity picks and "one node, one change" (tiers, 10) | They are the rule's one exception. | Each was shaped over several review rounds; splitting them adds nodes to trees the bundle wants shorter. |
-| The tier's look in the panel (tiers, 9) | Each tier's row shows a small picture of the foundation at that tier, grey while locked. | The foundation is what a tier buys on the board, and the art must read at icon size anyway. The art pass draws the thumbnails. |
+| The tier's look in the panel (tiers, 9) | Each tier's row shows a small picture of the foundation at that tier, grey while locked. | The foundation is what a tier buys on the board, and the art must read at icon size anyway. Drawn on `next-gen-art/icons.png`. |
 | Passive stacks on the enemy (looks, 7) | No mark for Static or Soulbrand stacks. | A whole wave would wear one; the discharge and the flying soul are the visible moments. |
 | Range nodes (looks, 8) | The tier alone changes the foundation; a range node lengthens the barrel or nozzle a little. | A second thing that raises the foundation would blur the one cue every tower shares. |
 | The Burst's turning head (Burst, 5) | None: the thrower itself moves. | It throws at random enemies, so a head that turned would jump with every throw: motion that means nothing. |
@@ -361,16 +363,10 @@ Reported, not tuned; the balance pass or the user decides.
 
 ## Open questions that change the plan
 
-Only the art pass; each tower's plan also carries its fair prices.
+None. What each plan still carries:
 
-### Before the first art sheet
-
-1. **The art sheets.** Every tower at four tiers, its identity looks, heads, shots, marks, grounds and toolbar icons
-   are drawn in the art pass that follows this review, with two directions side by side where a choice is open, the
-   footprint among them (`FEATURE-next-gen-tower-looks.md`, question 4; each tower's Look).
-
-### Before each tower is planned
-
+- **The looks**: what the raised view asks of the board, towers painted back to front and enemy marks painted over
+  them (`FEATURE-next-gen-tower-looks.md`, question 9).
 - **Each tower**: `tree_calc.py`'s fair prices into its Cost column before its plan (Answered by the user, second
   round).
 

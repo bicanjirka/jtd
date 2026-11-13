@@ -1,6 +1,8 @@
 # Feature Request: Next-gen Tower Looks
 
-**Status:** draft, 2026-11-10, reviewed with the whole bundle 2026-11-13. Part of `FEATURE-next-gen.md`, whose appendix
+**Status:** draft, 2026-11-10, reviewed with the whole bundle 2026-11-13; the art pass drew it the same day
+(`next-gen-art/`) in the raised view the user chose, and the enemies and ground zones already in the game were
+moved into the same look ("The rest of the board"). Part of `FEATURE-next-gen.md`, whose appendix
 holds the visual request as given; this doc owns its "all towers" parts, keyed to tiers.
 
 ## Summary
@@ -68,6 +70,105 @@ Every tower is drawn by `TowerSpriteFrameBuilder` (sprite and head) and `TowerEf
   holding two primed shots shows both.
 - **A tier unlock** is a moment on the board: the tower grows into its new foundation (open question 2).
 
+### Art direction
+
+Decided by drawing, in the art pass of 2026-11-13. The sheets are the specification, and each tower's Look section
+names its own parts:
+
+| Sheet | Shows |
+|---|---|
+| [board](next-gen-art/board.png) | all seven towers at four tiers and every identity look on Iron Crossing, painted over the game's own frame at 0.5x, 1x and 2.5x |
+| [catalogue](next-gen-art/catalogue.png) | every tower and identity at Tiers 0 to III, large and at the board's two sizes, with its part count |
+| [directions](next-gen-art/directions.png) | the two choices as decided: the raised view against the plan view, a growing against a constant footprint |
+| [heads](next-gen-art/heads.png) | every moving part, its firing and reload cue, every buff on the head, and the tier unlock frame by frame |
+| [shots](next-gen-art/shots.png) | shots and casts in flight |
+| [marks](next-gen-art/marks.png) | the enemy marks, on the game's own enemies |
+| [grounds](next-gen-art/grounds.png) | the Obelisk's fields and Sundial, the payload grounds, the flare, Ice Wake |
+| [icons](next-gen-art/icons.png) | the seven toolbar icons, the upgrade arrow, the Lit mark, the panel's tier thumbnails, the tier colours |
+| [theme](next-gen-art/theme.png) | what the game paints today in the same look: every enemy, every ground zone, today's towers |
+
+`next-gen-art/README.md` says how the sheets are rendered and how a look is built from its parts.
+
+- **A tower is a stack of flat parts.** Each part is one closed shape with a height, in one colour of three tones:
+  the body tone on its top, a lighter rim along the top's top-left edge, and the shade tone on its side. That is the
+  whole shading: one light from the top left on everything that stands on the board, no gradient but a glow.
+- **Raised view** (the user, 2026-11-13). The board is seen from the south and above: a part's top is lifted
+  straight up the screen by 0.42 of its height, and its side shows below the top as a wall. Towers stand up, and a
+  Tier III tower reaches up to half a cell into the cell above its own. What follows from that:
+  - Towers are painted back to front, the northern rows first, so a tower covers the foot of nothing in front of it.
+  - Inside one foundation the same holds: what stands north of the tower's centre (a henge stone, a post, the far
+    half of a wall or of a ring) is painted before the centre, what stands south of it after.
+  - A tower's cell is still its own square on the ground: placing, selecting and range are measured from the cell,
+    never from the art above it.
+  - A tall tower can cover an enemy on the path just north of it. Enemy bars, marks and rank badges are painted
+    over the towers, so a covered enemy still shows where it is and how it fares.
+  - What lies on the ground stays flat: the field patches, the payload grounds, the Sundial, the shadows, range
+    circles and path marks.
+- **The plinth is the tier.** Under every tower lie as many plinth steps as its tier: none at Tier 0, three at
+  Tier III. The steps are stone in a grey that leans toward the tower's colour, in the tower's own plan shape (a
+  hexagon under the Sniper, a square under the Obelisk, an octagon under the Mortar and the Beacon, a circle under the
+  rest), and the top step is paved in a dark tone of the tower's colour so the tower, not the stone, carries the
+  colour. Above the plinth each tower grows in its own way, as its Look section says.
+- **The footprint grows with the tier**: 0.55, 0.63, 0.72 and 0.80 of a cell across for Tiers 0 to III. Each plinth
+  step is 0.045 of a cell wide, a pixel and a half at the board's own scale, so the steps can be counted at 1x and
+  above; at the smallest zoom (16 px cells) they cannot, and the size is what still tells the tier. That is why the
+  constant footprint lost (question 4).
+- **Moving parts keep their size.** A barrel or a nozzle may reach past the foundation (the Sniper's rifle 0.30 of a
+  cell from the centre, 0.37 with Long Barrel) and is drawn pale, since it crosses the dark floor.
+- **Shadows.** A soft dark ellipse lies on the ground under every foundation, down and to the right. On the floors, which are
+  near-black, it barely shows, and that is accepted: it is there for the lighter ground (path marks, zones, a
+  highlighted cell). Anything that must read as a shadow on the floor itself, the lobbed shots' shadows and the
+  Sundial, is a cool grey or violet veil lighter than the floor, never a dark one.
+- **The tier unlock** takes half a second on the tick clock: the new foundation spreads out from the tower's centre
+  over the old one, and one ring in the new tier's colour runs out past the cell's edge and fades. Then the tower is
+  still again.
+- **The upgrade arrow** is one green up arrow (`#6ee08a`, dark outline) in the cell's top-left corner; the Jammed
+  marker keeps the top right, a Beacon's Lit mark the bottom left.
+- **What it costs.** A Tier III foundation is 17 to 37 parts (the catalogue prints each count), so a foundation
+  cannot be one draw command a part: a board of Tier III towers would carry thousands. A foundation never moves, so
+  the frame names it once (which look, which tier) and the painter keeps its picture. Painting 200 Tier III towers
+  part by part took 39 ms a frame in the art lab; from one kept picture a tower, 0.7 ms. The picture is rendered
+  from the vector parts when first needed and again when the zoom changes; it is not an image asset. A head is 5 to
+  10 parts that turn, drawn as today. What stays expensive is what multiplies with play, not with towers: the
+  Aerie's missiles (each one a command, seven with Swarm), the Scorcher's stream (three shapes, rebuilt every few
+  ticks), Arc hops and Flashover tongues. None is heavier than today's effects of the same kind.
+
+### The rest of the board
+
+The raised view would leave the towers standing among flat enemies, so what the game already paints was moved into
+the same look on 2026-11-13, in the renderer itself ([theme](next-gen-art/theme.png)):
+
+- **Enemies are built as the towers are**: a small stack of lit parts. Every body has a side that falls down the
+  screen, a top with a lit rim along its top-left edge and a shaded far edge, and a shadow cast on the ground to its
+  lower right, whichever way it turns. On that, each look gets what suits it:
+  - a **cap**, a smaller copy of the body risen above it, so the Walker is a domed pawn, the Knight a stepped block,
+    the Juggernaut, the Golem and the Colossus heavy tiered slabs;
+  - a **raised detail**: a Warden's or a Magma's core, a Minotaur's horns, a Templar's gem stand off the body as
+    parts of their own;
+  - **height** to its weight: a Courier or a Sandling is nearly flat, a Monolith and a Keeper stand as tall as a
+    Tier 0 tower;
+  - a **glint** on what is smooth (the Walker, a Mite, a Cocoon, glass);
+  - **flyers hover**: a Ghost, a Hornet, a Drone, the storm's clouds and bolts are thin bodies above a pale shadow on
+    the ground.
+- **Enemies move as they walk.** A walker lifts off the ground once a stride and a flyer sways on its hover; a hot
+  core (Warden, Magma, Molten Core, Relay, Ember, the Monolith's rune) breathes a soft glow. All three follow the
+  place the enemy has reached, not a clock, so an enemy that is frozen, stunned or paused holds still.
+- An enemy's bars sit under its side, its rank badge above whatever rises from it, and a tint (poison, chill,
+  freeze) rides on its top. A cloaking enemy fades whole.
+- **Ground zones stay flat patches**, and what stands on them follows the light: burning ground carries tongues of
+  flame that rise up the screen, each with a hotter heart; frost ground carries shards of ice with a lit left face;
+  a mine's casing stands on its patch. Tar was near-black on near-black floors and is now a violet-grey that shows.
+  Fallout, the cursed cloud and the healing, haste, ward and blinding grounds keep their look.
+- **Shells** are lit balls: a shaded edge at the bottom right and a glint at the top left.
+- **Today's towers** stand too, until each is replaced by its next-gen look: the same side and rim under the old
+  flat shape.
+- It paints faster than the flat enemies did. A body is drawn once into a kept picture (for its look, size, one
+  of 64 headings and the zoom) and placed pixel for pixel after that: 300 bodies took 0.9 ms a frame in the art lab,
+  against 6.0 ms for the old flat shapes. The frame build is unchanged. Not yet profiled in a live game.
+- Left as they are, because they are flat by nature or leave with the bundle: path marks and the floor, range and
+  selection marks, rank badges and affix pips, the freeze block (already lit from above), today's missiles, beams
+  and rings, and today's toolbar icons.
+
 ### A calmer board
 
 - Gone: slot pips, per-slot ready chevrons, the enchant halo, the Transcendent halo, the gold Transcendent barrel, and
@@ -84,30 +185,77 @@ Every tower is drawn by `TowerSpriteFrameBuilder` (sprite and head) and `TowerEf
 ### Enemy marks the new towers need
 
 Next-gen moves most of its look onto the towers, but some new debuffs need a mark on the enemy, beside today's
-markers and in their style:
+markers and in their style. All are drawn on [the marks sheet](next-gen-art/marks.png):
 
-| Mark | From | Needs |
+| Mark | From | Look |
 |---|---|---|
-| Silence | the Obelisk's Ward, the Aerie's Shade, the Hexer's Choking Blight | a small icon above the head while it lasts: new for every source |
-| Toll | the Obelisk, the Beacon's Prism | today's marker, filling toward full; one small ripple per stack gained |
-| Blight | the Hexer | its overlay thickens as the slow grows |
-| A hexed enemy | the Hexer | an overlay that reads as a curse, replacing or growing out of today's rune row |
-| Ruby freeze | the Aerie | today's freeze crystal and thaw shards, recoloured ruby red |
-| Shade freeze | the Aerie | today's freeze crystal and thaw shards, recoloured smoky dark with a pale green edge |
-| Static, Soulbrand stacks | the Stormcaller, the Hexer | none (open question 7) |
+| Silence | the Obelisk's Ward, the Aerie's Shade, the Hexer's Choking Blight | a small struck-out speech mark above the head, in Silence's marker colour, while it lasts: new for every source |
+| Toll | the Obelisk, the Beacon's Prism | five segments round the enemy in Toll's marker colour, one lit per stack, all five bolder at full; one thin ripple runs out per stack gained |
+| A hexed enemy | the Hexer | three arcs of a broken rune circle round the enemy in the hex's marker colour, and the hex's sign over its head (Doom a downward triangle, Blight a drop, Inversion two opposed arrowheads); it replaces today's rune row |
+| Blight | the Hexer | the same, its arcs thickening and a tint filling the circle as the slow grows |
+| Ruby freeze | the Aerie | today's freeze block in ruby red with a pale pink rim; it thaws into red shards |
+| Shade freeze | the Aerie | today's freeze block in smoky dark ice with a pale green rim; it thaws into dark shards with a green edge |
+| Glare | the Beacon | a white four-point glint on an Exposed enemy |
+| Static, Soulbrand stacks | the Stormcaller, the Hexer | none (question 7) |
 | Frailty, Drag | the Obelisk | none: both are Toll's, and Toll shows |
 
 ### Toolbar icons
 
-- A new icon per tower that matches its new board look: at most two colours, a simple, distinctive silhouette
-  (foundation plus head, or one of them), as plain as today's. Seven icons: the Radar's goes.
+- A new icon per tower that matches its new board look: two colours, the tower's own and one lighter tone of it for
+  the moving part, on a simple silhouette. Seven icons, drawn on [the icons sheet](next-gen-art/icons.png): the
+  Radar's goes.
+
+  | Tower | Icon |
+  |---|---|
+  | Sniper | the triangle as an outline, the rifle laid across it past one corner |
+  | Burst | seven stones in a ring, the throwing arm in the middle |
+  | Mortar | a ring with the wide barrel across it, its bore open |
+  | Scorcher | the round tank with the nozzle reaching out of it |
+  | Aerie | the spire's hexagon in its perch ring, one missile on the ring |
+  | Obelisk | the square stone with its pyramidion's two lit faces |
+  | Beacon | the octagonal lantern, every other pane lit |
+
 - The shop sells the base tower, so forks and identities (Stormcaller, Hexer, Ruby, Shade) don't get toolbar icons.
 
 ### Palette
 
-The tower colours have been in the game since its start; every one is reviewed and softened to fit the new look,
-through `docs/UI.md`'s checks. Each tower also gets its tier colours for the Upgrades panel; the drafts set Tier 0 and
-Tier I only (open question 6).
+Every tower colour is softened to fit the new look and checked by `docs/UI.md`'s rules: at least 3:1 on the lightest
+floor, and at least 10 (CIEDE2000) from every other tower.
+
+| Tower | Colour | On the floor | Nearest tower | Note |
+|---|---|---|---|---|
+| Sniper | `#a6d674` | 11.7:1 | Beacon, 20.4 | 10.0 from the healing ground's green: the softest green that keeps that distance |
+| Burst | `#e2746c` | 6.5:1 | Mortar, 19.1 | 5.1 from Problem red, which is only ever text |
+| Stormcaller | `#8496ff` | 7.3:1 | Hexer, 14.1 | moved toward indigo, away from the Aerie |
+| Hexer | `#b88ae8` | 7.3:1 | Obelisk, 11.1 | |
+| Mortar | `#c39062` | 7.0:1 | Scorcher, 10.8 | 8.6 from Physical orange, which is text and numbers |
+| Scorcher | `#ea862a` | 7.4:1 | Mortar, 10.8 | 4.9 from Physical orange; moved away from the Burst, which it sat 9.2 from |
+| Aerie | `#5cc4e2` | 9.8:1 | Stormcaller, 22.9 | moved into the open hues toward cyan; 9.8 from Magic blue |
+| Obelisk | `#8f86b8` | 5.9:1 | Hexer, 11.1 | the stone itself is a darker step, `#625c86`, at 3.4:1 |
+| Beacon | `#d8b866` | 10.2:1 | Mortar, 15.2 | |
+
+The three misses against text colours (Burst, Mortar, Scorcher) are accepted: a tower's art and a line of text are
+never read against each other. Identity colours: Ruby `#d0405a`, Shade's glow `#a6e8c8` (moved from `#8fd8a0`, which
+sat 4.2 from the Sniper), Soulfire's metal `#3d3650` with a pale violet `#b9a0ff`.
+
+**Tier colours**, for the Upgrades panel's rows and the unlock ring. Each ramp runs from the tower's colour toward a
+pale, slightly warm tint of itself, so a higher tier reads lighter and no two towers' Tier III meet:
+
+| Tower | Tier 0 | Tier I | Tier II | Tier III |
+|---|---|---|---|---|
+| Sniper | `#a6d674` | `#5cc8b0` | `#93dbcb` | `#c9e8ce` |
+| Burst | `#e2746c` | the fork's | the fork's | the fork's |
+| Stormcaller | | `#8496ff` | `#c0c9ff` | `#e0dee8` |
+| Hexer | | `#b88ae8` | `#dbc3f3` | `#eddce2` |
+| Mortar | `#c39062` | `#e0b070` | `#ebcba1` | `#f5e0b8` |
+| Scorcher | `#ea862a` | `#f0a040` | `#f5c081` | `#fadaa8` |
+| Aerie | `#5cc4e2` | `#8fd0f2` | `#b5e0f6` | `#daeae3` |
+| Obelisk | `#8f86b8` | `#a89fd2` | `#c6c0e1` | `#e2dad8` |
+| Beacon | `#d8b866` | `#ecd48c` | `#f2e3b3` | `#f8ecc2` |
+
+All stand at 6:1 or more on the panel's background. Neighbouring tiers of one tower are 6 to 15 apart, under the
+guide's 10 in places: they are rows of one ordered list, each with its name, never told apart by colour alone. The
+Beacon's Tiers II and III are the closest (2.6) and may be pulled apart when the panel is built.
 
 ## Interconnections
 
@@ -150,8 +298,10 @@ Tier I only (open question 6).
 - New toolbar icons, at most two colours, none for forks or identities.
 - Look tables before new art.
 - Ranks go (the user, 2026-11-13): no `TowerRank`, no diamonds, no rank-up glow.
-- Ranks go (the user, 2026-11-13): no `TowerRank`, no diamonds, no rank-up glow.
-- Every tower's art is approved on a `PreviewBoard` sheet before it is coded (`FEATURE-next-gen.md`).
+- The art direction, the palette, the tier colours, the enemy marks and the toolbar icons are drawn and decided
+  (the art pass, 2026-11-13; "Art direction"). A tower's plan builds what its sheets show; a look that changes
+  later is drawn on a sheet again before it is coded.
+- A foundation is named once in the frame and its picture kept by the painter; no image assets.
 
 ## Open questions
 
@@ -160,18 +310,22 @@ Tier I only (open question 6).
 1. ✅ **XP ranks.** Dropped (the user, 2026-11-13: "drop, redone by the visual revamp anyway"). The tier is the
    tower's rank, and the foundation shows it. The rank diamonds and the rank-up glow go, and the pane shows XP
    toward the next gate.
-2. ✅ **The tier unlock on the board.** The first option (the user, 2026-11-13); the art pass draws it.
+2. ✅ **The tier unlock on the board.** The first option (the user, 2026-11-13), drawn frame by frame on
+   [the heads sheet](next-gen-art/heads.png).
    - ⭐ The tower grows: the new foundation builds up out of the old one over about half a second on the tick clock,
      with one ring of the tier's colour running out and fading. Motion that means something happened.
    - A flash, then the new foundation.
    - Only the new foundation appearing.
-3. ✅ **How richly a tower is drawn.** The first option (the user, 2026-11-13); the art pass draws it. Today a tower is one flat shape at alpha 130 with an outline.
+3. ✅ **How richly a tower is drawn.** The first option (the user, 2026-11-13), drawn on every sheet. Today a tower is one flat shape at alpha 130 with an outline.
    - ⭐ Flat vector with tonal shading: each colour in two or three tones (shade, body, highlight), one light from the
      top left on every tower, and a soft contact shadow under the foundation. Still no gradients but glows, still no
      image assets.
    - Flat as today, only more opaque, and richer by shape alone.
-4. **A tower's footprint.** The user (2026-11-13): yes to the growing footprint, "try it visually and evaluate";
-   the art pass draws both. Pips, chevrons and halos no longer need room around the tower.
+4. ✅ **A tower's footprint.** It grows (the user, 2026-11-13: "try it visually and evaluate"). Both are drawn on
+   [the directions sheet](next-gen-art/directions.png), rows B and B2. At 1x and above both read; at the smallest
+   zoom the plinth steps are under a pixel each and only the growing footprint still tells a Tier III tower from
+   a Tier I. A constant footprint also makes a bare $15 tower as large as a finished one. The cost: a Tier III
+   tower fills 0.80 of its cell, and the Aerie's nest ring then runs along the cell's edge.
    - ⭐ The foundation grows with the tier, from about 0.55 of a cell at Tier 0 to about 0.8 at Tier III, so the tier
      also reads as size; the head stays a quarter of a cell.
    - The same size at every tier (0.42 today, or larger for all), the tier read by shape alone.
@@ -182,7 +336,7 @@ Tier I only (open question 6).
      equals the tier, so any tower's tier reads the same way at a glance.
    - Wholly freeform: four shapes per tower to learn, the most character.
    - Wholly shared: one silhouette per tower with the same tier rings on all, the easiest to read.
-6. ✅ **Tier colours for Tiers II and III.** The first option (the user, 2026-11-13); the art pass sets the values. Each draft's Tier I colour is a lighter, warmer step of its Tier 0.
+6. ✅ **Tier colours for Tiers II and III.** The first option (the user, 2026-11-13); the values are in "Palette". Each draft's Tier I colour is a lighter, warmer step of its Tier 0.
    - ⭐ Continue that ramp for Tiers II and III per tower, set with the palette review (`docs/UI.md`'s checks).
    - One shared colour per tier for every tower (a bronze, silver, gold ladder): readable across towers, but the
      towers' panels lose their own colour.
@@ -192,3 +346,9 @@ Tier I only (open question 6).
 8. ✅ **Range nodes.** The request had range upgrades make a tower read bigger or taller; next-gen ties the
    foundation to the tier. The tier alone changes the foundation; a range node lengthens the head's barrel or nozzle
    a little where the tower has one, and the selection circle shows the reach (final review, autonomously).
+9. ✅ **Plan view or raised view.** Raised (the user, 2026-11-13: "I prefer B, a raised view"), drawn against the plan
+   view on [the directions sheet](next-gen-art/directions.png). The towers stand up: the coil, the spire, the
+   Obelisk and the lighthouse read at once, and Tier III looks like a prize. What it asks of the board is under "Art
+   direction": back-to-front painting, enemy marks over the towers, a cell that stays the tower's own square. The
+   enemies and the ground zones were moved into the same look so the towers do not stand among flat pieces ("The
+   rest of the board").

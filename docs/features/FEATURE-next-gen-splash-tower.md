@@ -47,10 +47,10 @@ shown and no tuning number is written in it.
 
 | Tier | Gate | Unlock | Colour | Fork |
 |---|---|---|---|---|
-| 0 | - | - | #e98a6a | |
-| I | XP 60 | $20 | #79a6ff #b88ae8 | Stormcaller or Hexer |
-| II | XP 120 | - | | |
-| III | XP 200 | - | | |
+| 0 | - | - | #e2746c | |
+| I | XP 60 | $20 | #8496ff #b88ae8 | Stormcaller or Hexer |
+| II | XP 120 | - | #c0c9ff #dbc3f3 | |
+| III | XP 200 | - | #e0dee8 #eddce2 | |
 
 ### Upgrade tree
 
@@ -59,9 +59,9 @@ shown and no tuning number is written in it.
 | 0 | Long Throw | stat | | | base.range | | | base.range | Range +0.7 cells | |
 | 0 | Wide Charge | stat | | | splash.extra.blast_engineering.1 | | | splash.extra.blast_engineering.1 | Splash 1.0 cell at 100% of base damage<br>Splash edge 1.75 cells at 50% | The Mortar's Normal blast; its Heavies and Nukes stay the wider ones. |
 | 0 | Flint Stones | stat | | | Sunder | | | | Armor penetration +10 on the base shot | |
-| I | Stormcaller | ability | Stormcaller or Hexer | | splash.head.arc.1 | #79a6ff | | | Passive, Static: every enemy its base shot or Arc damages (past plating, shield and the rest) carries a stack, one per Stormcaller that hit it.<br>At 10% health or less it discharges 15 magic damage per stack into that enemy alone. A thin, quiet spark runs to each Stormcaller that tagged it and gives it Sparks: a quarter of a Spark for an enemy under 150 max health, a half under 500, 1 Spark under 1500, and 2 from 1500 up. | Was Ground Fault. "Charge" is taken by the Charged effect, so the currency is called Sparks here. |
+| I | Stormcaller | ability | Stormcaller or Hexer | | splash.head.arc.1 | #8496ff | | | Passive, Static: every enemy its base shot or Arc damages (past plating, shield and the rest) carries a stack, one per Stormcaller that hit it.<br>At 10% health or less it discharges 15 magic damage per stack into that enemy alone. A thin, quiet spark runs to each Stormcaller that tagged it and gives it Sparks: a quarter of a Spark for an enemy under 150 max health, a half under 500, 1 Spark under 1500, and 2 from 1500 up. | Was Ground Fault. "Charge" is taken by the Charged effect, so the currency is called Sparks here. |
 | I | Hexer | ability | Stormcaller or Hexer | | splash.head.hex.1 | #b88ae8 | | | Passive, Soulbrand: every enemy its base shot damages carries a stack, one per Hexer that hit it.<br>When it dies it bursts for 10 magic damage per stack within 1 cell; the burst tags nothing. Its soul flies to each Hexer that tagged it and gives it Souls: a quarter of a Soul for an enemy under 150 max health, a half under 500, 1 Soul under 1500, and 2 from 1500 up. | Was Soul Tithe. |
-| I | Arc | ability | | Stormcaller | Arc | #79a6ff | 2 Sparks | splash.head.arc.1 | Once full, the next base shot carries an Arc. | The Stormcaller's core: most of its nodes change the Arc. |
+| I | Arc | ability | | Stormcaller | Arc | #8496ff | 2 Sparks | splash.head.arc.1 | Once full, the next base shot carries an Arc. | The Stormcaller's core: most of its nodes change the Arc. |
 | I | Hex of Doom | ability | Hex | Hexer | Doom | #b88ae8 | 2 Souls | splash.head.hex.1 | Curses one enemy with Doom. | The damage hex. |
 | I | Hex of Blight | ability | Hex | Hexer | Blight | #b88ae8 | 2 Souls | splash.head.hex.2 | Curses one enemy with Blight, one without it first. | The mass-control hex: it spreads before it deepens. Today's Blight is Poison only, and its popup never says how long it lasts. |
 | II | Deep Doom | stat | | Hex of Doom | Doom | #b88ae8 | | | Doom returns 45% of the damage, up from 30%. | |
@@ -72,14 +72,14 @@ shown and no tuning number is written in it.
 | III | Hex of Inversion | ability | | Hexer | splash.special.inversion | #b88ae8 | 3 Souls | splash.special.inversion | Curses one enemy that heals, shields, vanishes or regenerates with Inversion. | Kept from today's tree: a counter with a target of its own. |
 | III | Choking Blight | stat | | Hex of Blight | Silence | #b88ae8 | | | Blight also Silences its enemy while it lasts. | |
 | III | Twin Hex | stat | | Hex | splash.head.hex.1 | #b88ae8 | | | Each hex curses 2 enemies. | Name is a proposal. |
-| II | Chain Lightning | stat | Arc's path | Arc | splash.head.arc.4a | #79a6ff | | splash.head.arc.4a | Arc jumps 3 more times. | Spread: the mass pick. |
-| II | Wild Arc | stat | Arc's path | Arc | splash.head.arc.4b | #79a6ff | | splash.head.arc.4b | Arc may jump to an enemy it already hit. | Focus: with few enemies near, it zigzags between them, or strikes a lone one again and again. Today's Lightning Rod, renamed to its new meaning. Name is a proposal. |
-| II | Conductor | stat | | Arc | splash.head.arc.2 | #79a6ff | | splash.head.arc.2 | Arc's jumps can crit: Crit chance 15%, rolled per jump. | |
-| II | Short Circuit | stat | | Arc | splash.head.arc.3 | #79a6ff | | | Arc turns Armor against its enemy. | Armor raises Arc's damage by the share it would cut from a physical hit: Armor / (100 + Armor), so +30% at Armor 43 and never double. Magic resist and insulation still apply. Plating went: it added its points to each hit, up to five times a small jump, and magic already passes plating. A node of its own, not the Arc's nature (open question 1). |
-| III | Thunderclap | ability | Storm | Stormcaller | splash.special.thunderclap | #79a6ff | 3 Sparks | splash.special.thunderclap | Once full, discharges into every enemy in range for 40% of base damage as magic. | The mass pick; it looked good on big waves. |
-| III | Thunderstrike | ability | Storm | Stormcaller | splash.special.thunderstrike | #79a6ff | 3 Sparks | splash.special.thunderstrike | Once full, calls lightning onto the healthiest enemy in range for 200% of base damage as magic. | The boss pick: 28, or 42 with Heavy Stones. Thunderclap (40% to each enemy in range) matches it from 5 enemies up. |
-| III | High Voltage | stat | | Arc | Arc | #79a6ff | | | Arc's jumps deal 60% of base damage, up from 40%. | |
-| III | Feedback | stat | | Conductor | splash.special.static_charge | #79a6ff | | | An Arc crit gives half a Spark. | One sentence for the loop crit, Spark, Arc. A whole Spark gave back about half of each Arc's cost and added about 40%. The Stormcaller's counterpart to Soul Harvest. |
+| II | Chain Lightning | stat | Arc's path | Arc | splash.head.arc.4a | #8496ff | | splash.head.arc.4a | Arc jumps 3 more times. | Spread: the mass pick. |
+| II | Wild Arc | stat | Arc's path | Arc | splash.head.arc.4b | #8496ff | | splash.head.arc.4b | Arc may jump to an enemy it already hit. | Focus: with few enemies near, it zigzags between them, or strikes a lone one again and again. Today's Lightning Rod, renamed to its new meaning. Name is a proposal. |
+| II | Conductor | stat | | Arc | splash.head.arc.2 | #8496ff | | splash.head.arc.2 | Arc's jumps can crit: Crit chance 15%, rolled per jump. | |
+| II | Short Circuit | stat | | Arc | splash.head.arc.3 | #8496ff | | | Arc turns Armor against its enemy. | Armor raises Arc's damage by the share it would cut from a physical hit: Armor / (100 + Armor), so +30% at Armor 43 and never double. Magic resist and insulation still apply. Plating went: it added its points to each hit, up to five times a small jump, and magic already passes plating. A node of its own, not the Arc's nature (open question 1). |
+| III | Thunderclap | ability | Storm | Stormcaller | splash.special.thunderclap | #8496ff | 3 Sparks | splash.special.thunderclap | Once full, discharges into every enemy in range for 40% of base damage as magic. | The mass pick; it looked good on big waves. |
+| III | Thunderstrike | ability | Storm | Stormcaller | splash.special.thunderstrike | #8496ff | 3 Sparks | splash.special.thunderstrike | Once full, calls lightning onto the healthiest enemy in range for 200% of base damage as magic. | The boss pick: 28, or 42 with Heavy Stones. Thunderclap (40% to each enemy in range) matches it from 5 enemies up. |
+| III | High Voltage | stat | | Arc | Arc | #8496ff | | | Arc's jumps deal 60% of base damage, up from 40%. | |
+| III | Feedback | stat | | Conductor | splash.special.static_charge | #8496ff | | | An Arc crit gives half a Spark. | One sentence for the loop crit, Spark, Arc. A whole Spark gave back about half of each Arc's cost and added about 40%. The Stormcaller's counterpart to Soul Harvest. |
 | III | Quick Hands | stat | | | splash.extra.blast_engineering.2 | | | | Attacks every 0.85 s, down from 1 s. | For either fork. Name is a proposal. |
 | II | Heavy Stones | stat | | | splash.extra.blast_engineering.3 | | | | Damage +7 | For either fork. +50%: every ability is a share of base damage, so this node raises them all. |
 | II | Long Throw II | stat | | | base.range | | | | Range +1 cell | For either fork. |
@@ -102,43 +102,46 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
-The earlier idea of a hole in the ground is dropped. The tower is still defined by its split: an electric contraption
-(goblin engineering, if the game leans fantasy) and a witch's or shaman's hex tower.
+The earlier idea of a hole in the ground is dropped. The tower is defined by its split: a cheap stone thrower that
+becomes an electric contraption, a tesla coil, or a witch's cauldron. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `thrower`, `stormcaller` and `hexer`.
 
-- **Foundation**: a cheap stone thrower, its shape a step richer per tier. Its art and colours are retuned with the
-  other towers (`FEATURE-next-gen-tower-looks.md`).
-- **A fork changes the look completely**: the Stormcaller becomes the electric contraption, a tesla coil; the Hexer
-  the hex tower, a witch's cauldron (both from the request). Each keeps its fork colour and keeps its tier readable
-  in its own way. The fork is picked at Tier I's gate, so the plain stone thrower is Tier 0's alone.
-- **Foundation by tier** (proposed in the bundle review, for the art sheet to try):
+- **A fork changes the look completely.** The fork is picked at Tier I's gate, so the plain stone thrower is Tier 0's
+  alone. Colours: the thrower `#e2746c`, the Stormcaller `#8496ff`, the Hexer `#b88ae8`.
 
   | Tier | Stone thrower | Stormcaller | Hexer |
   |---|---|---|---|
-  | 0 | a ring of stacked stones around a short throwing arm | | |
-  | I | | the stone ring with a copper coil standing in it | the stone ring holding a small cauldron |
-  | II | | a taller coil with one crown ring, on a riveted plate | the cauldron on a tripod, rune stones around it |
-  | III | | a tall tesla coil with two crown rings and a ring of insulators | a hut of bones and hide over the cauldron, a rune circle at its foot |
+  | 0 | a ring of nine stacked stones, two courses, round a dark pit; an A-frame holds a throwing arm that lies back to the south-west with a stone in its cup; no plinth | | |
+  | I | | one round plinth step; the stone ring, one course, with a three-turn copper coil standing in it and a blue ball on top | one step; the stone ring holding an iron cauldron of violet brew, three bubbles on it |
+  | II | | two steps; an octagonal riveted iron plate, a four-turn coil, one blue crown ring round its top | two steps; the cauldron raised on a tripod, a rune stone between each pair of legs |
+  | III | | three steps; the plate, six white insulators round a five-turn coil, two crown rings and the ball | three steps; a rune circle on the top step, the rune stones, and three bone tusks arching round the cauldron |
 
-- **The moving part** (question 5): the throwing arm flicks on each throw; the coil's crown sparks once, and the brew
-  bubbles up once. Nothing moves between throws.
-- **A full ability waiting for a target**: the coil's crown or the cauldron's brew glows steadily until it casts.
-- **Shot**: a stone thrown on a high arc at the (random) target, exploding where it lands. The 100% zone is drawn as
-  today's white ring at the centre; the 50% edge reads fainter. It is unguided: it lands where its target stood
-  when it was thrown (`FEATURE-next-gen-shot-flight.md`, 2).
-- **Static** discharging has its own visual on the enemy; a thin, quiet spark, less loud than the other arc
-  effects, runs to each Stormcaller that tagged it.
-- **Soulbrand**: the dead enemy's soul flies from where it died to each Hexer that tagged it.
-- **Arc**: the charged shot looks different; the chain hops from enemy to enemy with visible pauses, and every crit
-  has a visual.
-- **Wild Arc**: the zigzag reads as one lightning bouncing back and forth.
-- **Thunderclap**: a discharge from the contraption over everything in range. **Thunderstrike**: a bolt from above
-  onto its enemy.
-- **Blight**: its overlay thickens as the slow grows.
-- **Contagion**: a jumping hex flies visibly from the dead enemy to the next.
+  The Hexer's Tier III was a hut of bones and hide in the draft; a roof would hide the brew, which is the part that
+  moves, so the tusks stand in for it.
+- **The moving part** (no turning head, question 5): the thrower's arm flicks forward on each throw and lies back
+  as it reloads, a new stone appearing in its cup at half the reload; the coil's ball sparks once, four short jagged
+  lines; the brew throws up one big bubble and three drops. Nothing moves between throws.
+- **A full ability waiting for a target**: the coil's ball turns white in a steady blue glow; the brew turns pale
+  and glows violet. Steady, not pulsing, until it casts.
+- **Shot**: a stone thrown on a high arc at the (random) target, with a soft grey veil under it on the ground for a
+  shadow (the floors are near-black, so a dark shadow would not show). The 100% zone is a white ring at the centre,
+  the 50% edge a fainter one. It is unguided: it lands where its target stood when it was thrown
+  (`FEATURE-next-gen-shot-flight.md`, 2). A forked tower's stone takes the fork's colour; the Arc's charged stone is
+  near-white in a blue glow.
+- **Static** discharging has its own visual on the enemy; a thin, quiet spark, a third the width of an Arc's hop,
+  runs to each Stormcaller that tagged it.
+- **Soulbrand**: the dead enemy's soul, a pale wisp with a fading tail, flies from where it died to each Hexer that
+  tagged it.
+- **Arc**: the chain hops from enemy to enemy with visible pauses, each hop a white bolt in a blue halo, the hop
+  before it fading; a crit's hop is twice as thick.
+- **Wild Arc**: the zigzag reads as one lightning bouncing back and forth between two enemies.
+- **Thunderclap**: one ring at the range's edge and short bolts from the coil out to it. **Thunderstrike**: a thick
+  bolt from above the board onto its enemy, a white ring where it lands.
+- **Hex casts** fly as curses: a dark-hearted bolt with a wisp behind it, in the colour of its effect's marker
+  (Doom, Blight, Inversion), so a curse in flight and the curse it leaves match.
+- **A hexed enemy** wears three arcs of a broken rune circle in the hex's colour, and the hex's sign over its head
+  ([marks](next-gen-art/marks.png)). **Blight**: the arcs thicken and a tint fills the circle as the slow grows.
+- **Contagion**: the hex flies visibly, as a curse, from the dead enemy to the next.
 - **Ready abilities**: the board shows at most which abilities wait, full, for a target; the ability bars stay in the pane.
-- **Hex casts** fly like a curse (a shadow bolt, or a Terraria-style projectile), each hex in its own colour: the
-  colour of its effect's marker today (Doom, Blight, Inversion), so a curse in flight and the curse it leaves match. A
-  hexed enemy wears an overlay that reads as a curse, replacing or growing out of today's rune row.
 
 ## Interconnections
 
