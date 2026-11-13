@@ -15,9 +15,9 @@ P = dict(
     bar=200.0, soul_harvest=2.0,
     static=15.0, static_below=0.1, soulbrand=10.0, soulbrand_reach=1.0,
     arc_cost=2.0, arc_jumps=3, arc_share=0.4, chain=3, high_voltage=0.6, conductor=0.15, crit_damage=1.5,
-    feedback=0.5, thunder_cost=3.0, thunderclap=0.25, thunderstrike=2.5,
+    feedback=0.5, thunder_cost=3.0, thunderclap=0.4, thunderstrike=2.0,
     hex_cost=2.0, hex_seconds=4.0, doom=0.3, deep_doom=0.45, vulnerable=0.15,
-    blight_share=0.04, blight_slow=0.3, cloud_reach=1.0, twin=2,
+    blight_share=0.03, blight_slow=0.3, cloud_reach=1.0, twin=2,
 )
 
 NODES = {

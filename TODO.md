@@ -8,9 +8,9 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 
 ## Feature ideas
 
-- **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
-  shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
-  Burst are written; the other six towers and the open questions remain before planning.
+- **Next-gen towers** (`docs/features/FEATURE-next-gen.md`): every tower's art, passive, upgrade tree and prices
+  redone on a new tier system, with shared features for tiers, looks, shot flight and abilities; the Radar leaves.
+  Draft: every doc written to Tiers III and reviewed as a whole; ready for planning, with its open questions.
 - **Balance after the next-gen towers** (`docs/features/FEATURE-balance-after-next-gen-towers.md`): the second pass,
   played by the built towers: the game's absolute difficulty, the floor and ceiling in play, lives, the bosses.
   Request written; waits for the towers.
@@ -165,7 +165,7 @@ Each entry names its trigger: do it in the same work, as its own commits, not be
 
 ### A board look is a switch in the painter, not a table row (ADR 0018)
 
-**Trigger:** the tower looks with `FEATURE-tower-visual-revamp.md`. (Design review F16-A.) Enemy bodies
+**Trigger:** the tower looks with `FEATURE-next-gen-tower-looks.md`. (Design review F16-A.) Enemy bodies
 are done: `EnemyLook` and `EnemyLooks` are the pattern to follow.
 
 `td.ui.render.Palette` is one flat enum for every other look: tower bodies and heads, markers, terms,
@@ -195,8 +195,8 @@ look change edits the painter.
 
 ### An attack can read the stats its shot already spent
 
-**Trigger:** the next change to how a tower attacks; at the latest the visual revamp's delayed hits
-(a Sniper hit landing when its tracer arrives, the Burst's lobbed ball, Ricochet bounces in flight).
+**Trigger:** the next change to how a tower attacks; at the latest `FEATURE-next-gen-shot-flight.md`'s delayed hits
+(a Sniper hit landing when its tracer arrives, the Burst's lobbed stone, chain hops in flight).
 (Design review F15b.)
 
 `AbstractTower.beginShot()` spends the tower's next-shot charges (a `TowerStatus` granted with
@@ -236,7 +236,7 @@ Javadoc says so; `TowerPlacement` keeps the order by hand.
 
 ### A tower's fight state is written twice and reset by hand
 
-**Trigger:** each tower's turn in `FEATURE-tower-visual-revamp.md`, which edits its leaf class anyway.
+**Trigger:** each tower's turn in the next-gen bundle (`FEATURE-next-gen.md`), which edits its leaf class anyway.
 
 A leaf tower's fight state (its `FireClock`, targets, counters, stores) starts in its field initialisers
 and is set again, to the same values, in `endFight()`. Only `tower/CLAUDE.md` says that a new field a
@@ -571,3 +571,16 @@ on-crit-survived shield (30% for 100 ticks) is from the first crit pass.
   `WardenEnemy`'s `OnCriticalHitTakenTrigger` ability.
 - **Approach:** raise the five other Sniper specials until a build with each saves about what Momentum's does,
   checking each with `td.BuildHarness`; every number here is a named constant.
+
+## Interface
+
+### An open tooltip may not grow when its content changes
+
+Reported with the tower visual revamp: with the pointer still on an upgrade node after buying it, the open tooltip
+takes the next node's sheet (`TooltipLayer.refreshButtons` -> `TooltipPanel.show`), and a longer text was clipped to
+the old size. `TooltipPanel.layOut` sets a new size now, so the bug may be gone, or only its placement may be stale.
+
+- **Where:** `TooltipLayer.refreshButtons`, `TooltipPanel.show`/`layOut`, `TooltipPlacement`.
+- **Approach:** reproduce with the run-jtd Driver (hover a node with a short sheet whose next node's is longer, buy it
+  with the pointer still there, screenshot). If it still clips or runs off the window, place the panel again after
+  `show` changes its size, so it grows and stays inside the window. A live pane's tooltip follows the same path.

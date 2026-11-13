@@ -1007,7 +1007,7 @@ Implement it in every template (texts from appendix C, "Trait entries"):
 | `EffectResistTrait` | term: the `EffectKind` whose `resistedBy()` is `this.stat`; resisted: `this.amount`; text per appendix C |
 | `RegenerationTrait` | `TraitEntry.of(TraitTerm.REGENERATION, …)` |
 | `HurtSpeedTrait` | `TraitTerm.ADRENALINE` |
-| `HurtAgilityTrait` | `TraitTerm.ELUSIVE` |
+| `HurtAgilityTrait` | `TraitTerm.SKITTISH` |
 | `AdaptiveResist` | `TraitTerm.ADAPTATION`, the most it can reach |
 | `AdaptiveResist.Adapted` | `TraitTerm.ADAPTATION`, what it settled on |
 
