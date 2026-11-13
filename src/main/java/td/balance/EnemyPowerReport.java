@@ -50,7 +50,7 @@ import java.util.function.DoubleFunction;
  */
 public final class EnemyPowerReport {
 
-    private static final String BASELINE = TowerLab.PLAIN;
+    static final String BASELINE = TowerLab.PLAIN;
     private static final Path STORE = Path.of("target", "balance", "enemy-power.tsv");
     /** How far above the Walker an enemy may stand at the low ranks before it needs a weakness. */
     private static final double BLIND_LIMIT = 1.75;
@@ -65,7 +65,7 @@ public final class EnemyPowerReport {
     private static final double FIT_LEAST = 0.1;
     private static final double FIT_MOST = 10;
     private static final int FIT_STEPS = 9;
-    private static final LevelDefinition NO_CONTENT = PowerBench.lane(
+    static final LevelDefinition NO_CONTENT = PowerBench.lane(
             LevelDefinition.of("None", 1, 1, List.of(PathDefinition.of(
                     List.of(new Point(0, 0), new Point(1, 0)), List.of(new WaveDefinition("e"))))), "e");
 
@@ -194,7 +194,7 @@ public final class EnemyPowerReport {
         return scale -> ProbeRig.Loadout.only(probe, scale).hitting(hitScaleAt(rank));
     }
 
-    private static String group(String kind, Rank rank) {
+    static String group(String kind, Rank rank) {
         int count = groupAt(rank);
         return WaveScript.headed(rank, count == 1 ? kind : "column " + count + " " + kind);
     }
