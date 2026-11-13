@@ -73,7 +73,7 @@ rank asks for more damage per credit.
 
 Every other enemy's health is written rank by rank (`RankGrowth.stepped`) so that it weighs its target number of
 Walkers at every rank: `--fit kind=target` solves the health. Targets in use: Runner 1.2, Courier 1.3, Knight,
-Ghost, Salamander and Skirmisher 1.5, Relay 1.6, Mender, Magma, Golem and Yeti 1.7, Juggernaut 2.8 (its answer is
+Ghost, Salamander and Skirmisher 1.5, Relay and Templar 1.6, Mender, Magma, Golem and Yeti 1.7, Juggernaut 2.8 (its answer is
 magic).
 
 **Bounty = the Walker's bounty at that rank × blind power − what its spawns pay**, rounded (`paying`; the report's
@@ -88,15 +88,15 @@ Regenerate it with the first command above; these are the lines that are not `ok
 
 | Enemy | Blind | Why it stands |
 | --- | --- | --- |
-| Sand Reaver | 4.5 at Grunt, 3.1 at Elite | a brute by design; no answer brings it under the limit. **Open decision.** |
+| Sand Reaver | 4.5 at Grunt, 3.1 at Elite | the game's one brute, allowed over the limit |
 | Juggernaut, Soldier | 2.6, countered 1.65 | its answer (magic) is clear at every other rank; a margin of the measure |
 | Glass Sentinel, Raincloud, Hornet | 1.77 to 1.83 at one or two ranks (Hornet 2.20 at Elite) | within a few hundredths of the limit |
-| Warden | about 22 | unique boss; its round is a wall for the in-code players too, before this pass and after it. **Open decision.** |
+| Warden | about 22 | unique boss, left as authored and played by hand |
 | Minotaur | about 7 | unique boss, left as authored |
 
-Gaps no enemy fills: nothing is built round **insulation** (the Relay and the Glass Sentinel carry some), and nothing
-is **magic-resistant without also being armored or heavy** (the Magma is both). Both need a new enemy; see
-`features/FEATURE-balance-before-next-gen-towers.md`.
+Each damage type has a classic that blunts it and is ordinary to the other: the Juggernaut's plating against
+physical, the Relay's insulation and the Templar's magic resist against magic. Plating and insulation take a flat
+loss from every hit, so a heavy hit goes through them; magic resist takes a share, so only the other type does.
 
 ## A wave's strength and a level's economy
 
@@ -134,20 +134,19 @@ and the towers in code today are stronger than it. Read how room moves through a
 
 | Level | Gates (round: what it checks) |
 | --- | --- |
-| Iron Crossing | 6: the first Veteran on the long lane · 10: armor and plating · 13: an Elite Magma under a commander · 15: the Colossus |
+| Iron Crossing | 6: the first Veteran on the long lane · 10: armor and plating · 13: an Elite Magma under a commander, with Templars: magic resist · 15: the Colossus |
 | The Storm Ridge | 6: the first jamming Raincloud · 8: a mending cloud over a column · 10: an Elite cloud and Gale-pushed Knights · 12: the twins |
 | The Amber Hive | 5: a Veteran larva rush · 9: swarms round an Elite Brood Nurse · 12: Elite Hive Guards and Elite drones · 16: the Warden |
 | The Rift | 5: the third lane opens · 9: jamming Ghosts behind a Juggernaut · 12: all three lanes at once |
 | The Last Hour | 4: Soldiers on three lanes · 8: Timekeepers on every lane · 11: an Elite on every lane · 12: the Keeper |
 
 The Labyrinth is three long rounds that pay while they run; the report counts a round's pay only once it is over, so
-its rooms there mean little and its waves were left alone, except that its middle round is headed Elite: that is what
+its rooms there mean little and its waves are proved in play, not by the report. Its middle round is headed Elite: that is what
 Boss weighed before the rank ladder was steepened. For the same reason the Warden calls two Elite Drones at a time, not
 three, and its round's escort is Elite.
 
-The Warden's round stands far under its level's line (room about 0.3), and the players in code lose it every time,
-as they did before this pass. It is the one round the method flags and does not fix: the Warden's numbers are a
-boss's, and bosses are not tuned here.
+The Warden's round stands far under its level's line (room about 0.3), and the players in code lose it every time.
+It is the one round the method flags and does not fix: the Warden stays as authored and is played by hand.
 
 ### Tuning a wave
 

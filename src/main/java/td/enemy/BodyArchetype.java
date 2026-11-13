@@ -21,6 +21,7 @@ public enum BodyArchetype {
     GOLEM,
     SKIRMISHER,
     RELAY,
+    TEMPLAR,
     REAVER,
     COLOSSUS,
     MOLTEN_CORE,

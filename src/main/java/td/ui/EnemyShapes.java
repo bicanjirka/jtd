@@ -76,6 +76,18 @@ final class EnemyShapes {
         return jammer;
     }
 
+    /** A heater shield, flat along the top and coming to a point below. */
+    static Shape heaterShieldShape(float scale) {
+        GeneralPath p = new GeneralPath();
+        p.moveTo(-scale * 0.85f, -scale * 0.9f);
+        p.lineTo(scale * 0.85f, -scale * 0.9f);
+        p.lineTo(scale * 0.85f, scale * 0.05f);
+        p.quadTo(scale * 0.75f, scale * 0.7f, 0, scale * 1.05f);
+        p.quadTo(-scale * 0.75f, scale * 0.7f, -scale * 0.85f, scale * 0.05f);
+        p.closePath();
+        return p;
+    }
+
     /** A barbed arrowhead, point forward. */
     static Shape barbShape(float scale) {
         GeneralPath p = new GeneralPath();
