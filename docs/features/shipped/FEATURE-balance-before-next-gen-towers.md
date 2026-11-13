@@ -1,5 +1,7 @@
 # Feature Request: Balance work that can be done before the next-gen towers
 
+**Status: implemented** (2026-11-13).
+
 ## Summary
 
 Enemies, bounties and waves are now held to one measured scale (`docs/BALANCE.md`). This request closes what that

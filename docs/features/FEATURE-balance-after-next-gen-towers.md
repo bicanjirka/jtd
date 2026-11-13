@@ -47,8 +47,8 @@ Out of scope: new towers, new enemies, new levels.
 
 - `FEATURE-next-gen.md` and every next-gen tower doc: this pass starts when their towers are in code and does not
   change their designs; a tower that breaches the floor or the ceiling goes back to its own doc.
-- `FEATURE-balance-before-next-gen-towers.md`: the new enemies, the boss measure and The Labyrinth should land first,
-  so this pass tunes the final roster once.
+- `shipped/FEATURE-balance-before-next-gen-towers.md`: the roster this pass tunes, final: the Templar, the insulated
+  Relay, reinforcements on a timer that pay nothing. The Warden and The Labyrinth are proved in play.
 - `TODO.md`, "Waves and clear bonuses are tuned on paper, not in play": this request closes it.
 
 ## Constraints and open risks
