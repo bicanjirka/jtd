@@ -15,6 +15,7 @@ public enum EnemyLook {
     SKIRMISHER,
     SALAMANDER,
     YETI,
+    TEMPLAR,
     MAGMA,
     GOLEM,
     RELAY,

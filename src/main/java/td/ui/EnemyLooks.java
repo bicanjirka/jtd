@@ -173,6 +173,8 @@ final class EnemyLooks {
                 .withDetail(new Color(85, 76, 66), EnemyShapes::crackShape));
         rows.put(EnemyLook.RELAY, Row.of(new Color(40, 185, 170), EnemyShapes::relayShape)
                 .withDetail(new Color(215, 250, 245), s -> circle(s * 0.3f)));
+        rows.put(EnemyLook.TEMPLAR, Row.of(new Color(236, 230, 214), EnemyShapes::heaterShieldShape)
+                .withDetail(new Color(125, 85, 205), s -> Java2DFrameRenderer.diamondShape(s * 0.42f)));
         rows.put(EnemyLook.REAVER, Row.of(new Color(205, 150, 70), EnemyShapes::barbShape));
         rows.put(EnemyLook.COLOSSUS, Row.of(new Color(95, 105, 128), s -> star(8, s, s * 0.93f))
                 .withDetail(new Color(255, 140, 40), s -> new RoundRectangle2D.Float(-s * 0.6f, -s * 0.16f, s * 1.2f, s * 0.32f,

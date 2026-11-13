@@ -39,6 +39,7 @@ public final class EnemyCatalog {
         GolemEnemy.registerIn(catalog);
         YetiEnemy.registerIn(catalog);
         SkirmisherEnemy.registerIn(catalog);
+        TemplarEnemy.registerIn(catalog);
         return catalog;
     }
 

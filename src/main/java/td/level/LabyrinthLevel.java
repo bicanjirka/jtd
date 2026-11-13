@@ -107,10 +107,10 @@ final class LabyrinthLevel {
                             new Point(-1, 0)),
                     List.of(
                             new WaveDefinition("10 walker 3 knight 8 walker 4 runner e 6 soldier walker 3 soldier knight "
-                                    + "2 soldier ghost 6 soldier walker soldier golem e 4 soldier runner 6 veteran walker "
-                                    + "3 veteran knight veteran mender 2 veteran ghost 6 veteran walker veteran golem e "
+                                    + "2 soldier ghost 2 soldier templar 4 soldier walker soldier yeti soldier golem e 4 soldier runner 6 veteran walker "
+                                    + "3 veteran knight veteran mender 2 veteran ghost 2 veteran templar 4 veteran walker veteran yeti veteran golem e "
                                     + "4 veteran runner veteran magma 6 veteran walker 2 veteran knight e 4 elite walker elite golem elite knight "
-                                    + "4 elite walker elite magma"),
+                                    + "3 elite walker elite templar elite magma"),
                             new WaveDefinition("w220 elite: 2 magma 3 golem 4 bronzeBull e talos e 4 bronzeBull 3 golem 2 magma"),
                             new WaveDefinition("elite: 4 unstoppable bronzeBull e 2 golem e minotaur e 4 vengeful bronzeBull")))
             .withColor(STONE_COLOR);

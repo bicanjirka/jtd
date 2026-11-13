@@ -133,13 +133,13 @@ final class RiftLevel {
                             new WaveDefinition("6 walker e 2 knight e 4 walker"),
                             new WaveDefinition("4 walker eclipse 4 walker e 2 knight"),
                             new WaveDefinition("column 4 knight e 2 golem e 6 walker"),
-                            new WaveDefinition("mirage e 5 walker e mirage e 3 knight"),
+                            new WaveDefinition("mirage e relay 4 walker e mirage e 3 knight"),
                             new WaveDefinition("soldier: eclipse column 6 walker e golem e 2 yeti"),
                             new WaveDefinition("soldier: warding armored knight column 4 knight e eclipse ghost e 4 walker"),
                             new WaveDefinition("soldier: 2 mirage e magma e eclipse column 6 walker e juggernaut").withClearBonus(10),
                             new WaveDefinition("e"),
                             new WaveDefinition("veteran: eclipse 2 ghost e juggernaut warding armored knight e golem e jamming ghost").withClearBonus(60),
-                            new WaveDefinition("veteran: line 3 elusive mirage e eclipse column 4 knight e magma"),
+                            new WaveDefinition("veteran: line 3 elusive mirage e eclipse column 4 knight e magma e relay"),
                             new WaveDefinition("soldier: eclipse column 4 ghost e 2 juggernaut warding armored knight e veteran exalted golem e column 10 walker").withClearBonus(95),
                             new WaveDefinition("veteran: eclipse column 4 knight e warding armored knight e 2 mirage e jamming ghost e column 8 walker")),
                     SMOOTHING)
@@ -176,13 +176,13 @@ final class RiftLevel {
                             new WaveDefinition("e"),
                             new WaveDefinition("e"),
                             new WaveDefinition("drip 6 walker e 2 knight"),
-                            new WaveDefinition("soldier: eclipse 3 knight e 2 walker"),
+                            new WaveDefinition("soldier: eclipse 3 knight e 2 templar"),
                             new WaveDefinition("soldier: 2 yeti e golem"),
                             new WaveDefinition("e"),
                             new WaveDefinition("soldier: 2 salamander e magma"),
                             new WaveDefinition("soldier: juggernaut warding armored knight e mender 2 knight"),
                             new WaveDefinition("veteran: eclipse 2 ghost e 2 regenerating yeti"),
-                            new WaveDefinition("veteran: eclipse column 4 knight e golem")),
+                            new WaveDefinition("veteran: eclipse column 4 knight e templar")),
                     SMOOTHING)
             .withColor(GOLD_COLOR)
             .withSpeed(0.85f);
