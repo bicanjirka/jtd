@@ -225,7 +225,11 @@ keys until those towers are built.
 - **Final art pass**: the built towers rendered through `PreviewBoard` beside `next-gen-art/board.png`, at every
   tier and identity, the toolbar icons, and `td.PerformanceHarness` on a board full of Tier III towers.
 - **Final sweep**: the ledger with every tower converted, then a manual pass over effects, glyphs, traits, statuses
-  and `Palette` entries nothing reaches any more.
+  and `Palette` entries nothing reaches any more. The Radar left four tower-agnostic pieces with no node using them:
+  `ProcPayload.BreakShield`, `HitScaling.PerRangeShare`, `ProcCondition.TargetHasAnyOf` and `HitKind.BEAM` (the
+  Sundial may take the last); keep each a built tower uses, delete the rest. The Radar's node pictograms
+  (`sonar.*` in `PerkPictograms`) go once the Obelisk and the Beacon are built, or are renamed to the nodes that
+  use them.
 - **Docs**: the README's tower tables and hotkeys, `docs/UI.md`, `docs/ARCHITECTURE.md`, and the `CLAUDE.md` lines the
   new system makes false (`td/tower/CLAUDE.md`'s "Upgrade tree" section first).
 
