@@ -20,7 +20,8 @@
   for the ranks it skips up to `BOSS`; a rank step's `withHealthAndPrice` overrides both for that
   rank alone. A growth is a curve (`of`, `bending`) or health written rank by rank (`stepped`), and writes its bounty
   rank by rank with `paying`. Only the enemy every other is weighed against grows by a curve; the others' health and
-  bounty are what `td.balance.EnemyPowerReport` says their weight asks for, never a guess. A unique enemy that leaks ends the level (`EnemyDefinition.ALL_LIVES`). Every
+  bounty are what `td.balance.EnemyPowerReport` says their weight asks for, never a guess. A reinforcement a caller
+  sends on a timer spawns `unpaid()`, so what a round pays is bounded; the Warden's Drones are the one exception. A unique enemy that leaks ends the level (`EnemyDefinition.ALL_LIVES`). Every
   enemy gains something of its identity from Elite on.
 - Stat, trait, ability, effect, each thing is exactly one:
   - A **base stat** is a number every enemy has on its sheet. It is authored with its named method

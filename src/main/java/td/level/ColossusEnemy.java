@@ -58,7 +58,7 @@ final class ColossusEnemy {
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.WARD_MINE, new PeriodicTrigger(60),
                                 LeaveZoneAction.wardMine(0.6f, 240, 150f))),
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(300),
-                                new SpawnEnemiesAction("knight", 2, false).atRank(Rank.SOLDIER))),
+                                new SpawnEnemiesAction("knight", new AbilitySpawnShape(2, 0.0).unpaid(), false).atRank(Rank.SOLDIER))),
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.REFORGE, new HealthThresholdTrigger(0.5f),
                                 new SpawnEnemiesAction("moltenCore", 1, true)))));
     }

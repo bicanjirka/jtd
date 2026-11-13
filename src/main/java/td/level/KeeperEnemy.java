@@ -41,7 +41,7 @@ final class KeeperEnemy {
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.REWIND, new PeriodicTrigger(120),
                                 new RewindAction(60, new SelfTarget()))),
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(200),
-                                new SpawnEnemiesAction("timekeeper", 1, false).atRank(Rank.VETERAN))),
+                                new SpawnEnemiesAction("timekeeper", AbilitySpawnShape.normal().unpaid(), false).atRank(Rank.VETERAN))),
                         IdentifiedAbility.anonymous(new Ability(AbilityTerm.SWARM, new HealthThresholdTrigger(0.5f),
                                 new SpawnEnemiesAction("sandling", AbilitySpawnShape.brood(6, 1f, 1f), false)
                                         .atRank(Rank.SOLDIER))),

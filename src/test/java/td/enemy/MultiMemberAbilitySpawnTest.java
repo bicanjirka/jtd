@@ -42,4 +42,19 @@ class MultiMemberAbilitySpawnTest {
         assertThat(third.isInactive()).isFalse();
         assertThat(third.validTarget()).isTrue();
     }
+
+    @Test
+    void anUnpaidSpawnPaysNoBountyWhateverItsDefinitionPays() {
+        GameWorld world = WorldFixtures.newWorldOnStraightPath();
+        world.getEnemyCatalog().register(EnemyFixtures.simpleDefinition("spawnling"));
+        DefinedEnemyMob spawner = EnemyFixtures.liveMob(world, EnemyFixtures.simpleDefinition("spawner")
+                .withAbilities(List.of(new Ability(AbilityTerm.GUARD, new OnceTrigger(1),
+                        new SpawnEnemiesAction("spawnling", AbilitySpawnShape.normal().unpaid(), false)))));
+
+        spawner.doTick(1);
+
+        DefinedEnemyMob spawned = (DefinedEnemyMob) world.enemies().getEnemies()[1];
+        assertThat(world.getEnemyCatalog().get("spawnling").price()).isPositive();
+        assertThat(spawned.getBounty()).isZero();
+    }
 }

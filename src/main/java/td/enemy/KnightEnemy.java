@@ -41,7 +41,7 @@ final class KnightEnemy {
                         .withStats(100f, 100f, 10f, 0f, 100f, 5f, 20f)
                         .withAdditionalAbilities(List.of(brace(300f), wardMine(240f), IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE,
                                 new PeriodicTrigger(Math.round(3 * TickRate.TICKS_PER_SECOND)),
-                                new SpawnEnemiesAction("squire", AbilitySpawnShape.brood(3, 1f, 1f), false))))))
+                                new SpawnEnemiesAction("squire", AbilitySpawnShape.brood(3, 1f, 1f).unpaid(), false))))))
                 .build());
         catalog.register(EnemyDefinition.of("squire", "Squire", 150, 1, 1.28f, BodyArchetype.SQUARE)
                 .withDescription("Called in by a Knight boss to hold the line.")

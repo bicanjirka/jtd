@@ -40,6 +40,11 @@ public record AbilitySpawnShape(int members, float sizeMultiplier, float healthM
         return NORMAL;
     }
 
+    /** This shape with members that pay nothing when killed. */
+    public AbilitySpawnShape unpaid() {
+        return new AbilitySpawnShape(this.members, this.sizeMultiplier, this.healthMultiplier, 0f, this.delaySpacingSlots);
+    }
+
     /** A shrunken, time-spaced brood of reinforcements. */
     public static AbilitySpawnShape brood(int members, float healthMultiplier, float bountyMultiplier) {
         return new AbilitySpawnShape(members, BROOD_SIZE_MULTIPLIER, healthMultiplier, bountyMultiplier,
