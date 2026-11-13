@@ -45,7 +45,7 @@ final class LastHourLevel {
     private static final String LEVEL_NAME = "The Last Hour";
     private static final String LEVEL_DESCRIPTION = "Sand falls through the waist of the glass, and the hour runs out "
             + "with it. Hold the sand still - and never let the Keeper turn it back.";
-    private static final int STARTING_CREDITS = 100;
+    private static final int STARTING_CREDITS = 120;
     private static final int STARTING_LIVES = 4;
 
     /**
@@ -137,15 +137,15 @@ final class LastHourLevel {
                     List.of(
                             new WaveDefinition("swarm 8 sandling e 4 walker"),
                             new WaveDefinition("column 4 knight e swarm 8 sandling"),
-                            new WaveDefinition("timekeeper column 5 walker e swarm 8 sandling"),
-                            new WaveDefinition("soldier: 2 glassSentinel e column 6 walker"),
+                            new WaveDefinition("timekeeper column 5 walker e swarm 8 sandling").withClearBonus(15),
+                            new WaveDefinition("soldier: glassSentinel e column 6 walker").withClearBonus(30),
                             new WaveDefinition("soldier: swarm 12 sandling e timekeeper 4 runner"),
                             new WaveDefinition("soldier: timekeeper 2 glassSentinel e column 6 knight"),
-                            new WaveDefinition("veteran: swarm 12 sandling e swarm 12 sandling"),
-                            new WaveDefinition("veteran: 3 shielded glassSentinel timekeeper e 4 runner"),
-                            new WaveDefinition("veteran: elite timekeeper column 8 walker e swarm 12 sandling"),
-                            new WaveDefinition("veteran: drip 6 courier e 2 timekeeper 2 glassSentinel"),
-                            new WaveDefinition("elite: swarm 12 sandling e timekeeper column 6 knight"),
+                            new WaveDefinition("veteran: swarm 12 sandling e swarm 12 sandling").withClearBonus(40),
+                            new WaveDefinition("veteran: shielded glassSentinel glassSentinel timekeeper e 3 runner").withClearBonus(75),
+                            new WaveDefinition("veteran: elite timekeeper column 6 walker e swarm 12 sandling").withClearBonus(60),
+                            new WaveDefinition("veteran: drip 6 courier e 2 timekeeper 2 glassSentinel").withClearBonus(100),
+                            new WaveDefinition("veteran: swarm 12 sandling e elite timekeeper column 6 knight").withClearBonus(95),
                             new WaveDefinition("veteran: 6 e elite timekeeper swarm 12 sandling e 2 elite glassSentinel")),
                     SMOOTHING)
             .withColor(GLASS_COLOR);
@@ -160,14 +160,14 @@ final class LastHourLevel {
                             new WaveDefinition("6 walker e swarm 6 sandling"),
                             new WaveDefinition("glassSentinel e 4 walker"),
                             new WaveDefinition("swarm 10 sandling e 2 runner"),
-                            new WaveDefinition("soldier: timekeeper column 6 knight"),
+                            new WaveDefinition("soldier: timekeeper column 4 walker"),
                             new WaveDefinition("soldier: 3 glassSentinel e swarm 8 sandling"),
                             new WaveDefinition("soldier: drip 4 courier e swarm 12 sandling"),
-                            new WaveDefinition("veteran: 2 timekeeper column 6 walker e glassSentinel"),
-                            new WaveDefinition("veteran: golem e timekeeper column 6 knight"),
-                            new WaveDefinition("veteran: swarm 12 sandling e 3 glassSentinel"),
-                            new WaveDefinition("veteran: elite glassSentinel 2 glassSentinel e swarm 12 sandling"),
-                            new WaveDefinition("elite: 3 glassSentinel e timekeeper swarm 12 sandling"),
+                            new WaveDefinition("veteran: timekeeper column 6 walker e glassSentinel"),
+                            new WaveDefinition("veteran: timekeeper column 6 knight"),
+                            new WaveDefinition("veteran: swarm 12 sandling e 2 glassSentinel"),
+                            new WaveDefinition("veteran: elite glassSentinel e swarm 12 sandling"),
+                            new WaveDefinition("veteran: elite glassSentinel 2 glassSentinel e timekeeper swarm 12 sandling"),
                             new WaveDefinition("veteran: 8 e swarm 12 sandling e elite timekeeper 4 knight")),
                     SMOOTHING)
             .withColor(SAND_COLOR);
@@ -184,12 +184,12 @@ final class LastHourLevel {
                             new WaveDefinition("sandReaver"),
                             new WaveDefinition("soldier: swarm 10 sandling e sandReaver"),
                             new WaveDefinition("soldier: 2 sandReaver"),
-                            new WaveDefinition("soldier: timekeeper swarm 10 sandling"),
-                            new WaveDefinition("veteran: sandReaver e swarm 10 sandling"),
-                            new WaveDefinition("veteran: 2 sandReaver timekeeper"),
+                            new WaveDefinition("soldier: timekeeper swarm 10 sandling e sandReaver"),
+                            new WaveDefinition("veteran: soldier sandReaver e swarm 10 sandling"),
+                            new WaveDefinition("veteran: soldier sandReaver timekeeper"),
+                            new WaveDefinition("veteran: 2 sandReaver e swarm 12 sandling"),
+                            new WaveDefinition("veteran: timekeeper column 4 knight"),
                             new WaveDefinition("veteran: elite sandReaver e swarm 12 sandling"),
-                            new WaveDefinition("veteran: 2 timekeeper column 6 knight"),
-                            new WaveDefinition("elite: 2 sandReaver e swarm 12 sandling"),
                             new WaveDefinition("elite: keeperOfHours e 2 timekeeper")),
                     SMOOTHING)
             .withColor(DUSK_COLOR);

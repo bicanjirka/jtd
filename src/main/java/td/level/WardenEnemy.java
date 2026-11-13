@@ -103,7 +103,7 @@ final class WardenEnemy {
                                           String eggId) {
         List<IdentifiedAbility> abilities = new ArrayList<>(List.of(
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(100),
-                        new SpawnEnemiesAction("drone", 3, false).atRank(Rank.ELITE))),
+                        new SpawnEnemiesAction("drone", 2, false).atRank(Rank.ELITE))),
                 // Its plating only answers physical hits, so its own shield covers the other type.
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.ARCANE_WARD, new PeriodicTrigger(400),
                         new ApplyEffectAction(ShieldTemplate.magicOnly(health * 0.1f, 100), new SelfTarget()))),
