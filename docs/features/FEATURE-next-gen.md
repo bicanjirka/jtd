@@ -37,7 +37,7 @@ Beacon. The Radar leaves the game ("The last three towers").
 | `FEATURE-next-gen-pulse-tower.md` | The Obelisk, with the Radar's beam as its Sundial | tiers, looks | Tiers 0 to III, sixth round |
 | `FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | Tiers 0 to III, third round |
 | `FEATURE-balance-after-next-gen-towers.md` | The second balance pass, played by the built towers | every tower above in code | written; waits |
-| (none) | The Radar (`sonar`) leaves the game: "The last three towers" below | | verdict |
+| (none) | The Radar (`sonar`) leaves the game: "The last three towers" below | | done |
 
 A tower doc is named by its `TowerFactory.Type` constant in lower case, so the review board finds it.
 
@@ -62,8 +62,9 @@ flowchart TD
     K --> Z[Close: balance pass, final art and code sweep, docs]
 ```
 
-- **The Radar goes first**, before the tiers feature moves the trees, so no Radar tree is carried over. Its beam
-  geometry (`SonarSweep`, `SpinningBeam`) stays in the code until the Obelisk takes it.
+- **The Radar goes first**, before the tiers feature moves the trees, so no Radar tree is carried over. Done
+  2026-11-13: its sweep geometry (`SonarSweep`) waits in `td/tower/pulse/` for the Obelisk. `SpinningBeam` went with
+  it, being made of the Radar's twin and phased beams; the Sundial builds its one beam on `SonarSweep`.
 - **The look tables refactor** (`TODO.md`, "A board look is a switch in the painter") moves no pixel, so it can run
   beside the tiers work.
 - **The five towers after the Burst**, each reusing what the one before built: the Mortar reuses the Burst's blast
@@ -196,10 +197,12 @@ The verdict:
   elsewhere. What reads as this game's own is three ideas inside them: Toll (time held makes it worse), Kinship (a
   mixed cluster learns faster) and a beam whose cadence is its turn. Each is a passive or a signature in the new docs.
 
-What retiring the Radar touches, for the plan: the shop and its hotkeys (the Obelisk moves to `y`, the Beacon to `u`),
+Retiring the Radar (done 2026-11-13) took the shop and its hotkeys (the Obelisk moved to `y`, the Beacon to `u`),
 `TowerFactory.Type.SONAR` and everything a `TowerVisitor` reaches, the balance players' roles (`td.balance.Role`),
-level scripts that expect it, the README's tower table, `td/tower/sonar/` (its beam geometry moves to
-`td/tower/pulse/`), and the terms only it uses (Ping, Mark, Resonating, Fractured; Expose stays for Glare).
+the README's tower table, `td/tower/sonar/` (its sweep geometry moved to `td/tower/pulse/`), and the terms only it
+used (Ping, Resonating, Fractured). Expose stays for Glare, and Mark for the Sniper and the Aerie. The Radar's node
+pictograms that the Obelisk's and the Beacon's drafts name as glyphs stay in `PerkPictograms` under their `sonar.*`
+keys until those towers are built.
 
 ## Working on a tower
 

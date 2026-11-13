@@ -127,7 +127,6 @@ public final class DevEffects {
             case CHARGED -> one(List.of(SECONDS), in -> Effect.charged(in.ticks(0), in.origin(), in.sink()));
             case VULNERABLE -> stacking(kind, Effect::vulnerable);
             case SUNDERED -> stacking(kind, Effect::sundered);
-            case RESONATING -> stacking(kind, Effect::resonating);
             case UNRAVELED -> stacking(kind, Effect::unraveled);
             case CONDEMNED -> stacking(kind, Effect::condemned);
             case SATURATED -> stacking(kind, Effect::saturated);
@@ -137,7 +136,6 @@ public final class DevEffects {
             case CORRODED -> stacking(kind, Effect::corroded);
             case DRAGGED -> stacking(kind, Effect::dragged);
             case FRAIL -> stacking(kind, Effect::frail);
-            case FRACTURED -> one(List.of(stacks(kind)), in -> Effect.fractured(in.whole(0), in.sink()));
             case SCORCHED -> one(List.of(stacks(kind)), in -> Effect.scorched(in.whole(0)));
             case SICKENED -> one(List.of(stacks(kind)), in -> Effect.sickened(in.whole(0)));
             case MALAISE, INVERSION, DOOM, CONTAGION, SYMPATHY, RECKONING -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
@@ -166,7 +164,7 @@ public final class DevEffects {
                     new DisruptionAura(JAM_REACH_CELLS * in.scale(), in.value(1) / 100f, in.value(2))));
             case STEADY_AIM, CRIT_STREAK, FOCUS, BRACKETING, NEST, EVENT_HORIZON, INTERFERENCE, STOKE -> new Refuses<>(KEPT_BY_THE_TOWER);
             case NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, NUKE_SHELL, CRYO_MISSILE, ARCANE_MISSILE, EMP_MISSILE, TRACER_MISSILE,
-                    PING, SHATTER, ARC, HEX, SHRAPNEL, BOMBLET -> new Refuses<>(FROM_AN_UPGRADE);
+                    SHATTER, ARC, HEX, SHRAPNEL, BOMBLET -> new Refuses<>(FROM_AN_UPGRADE);
             case AURA, KINSHIP -> new Refuses<>("comes from a Beacon");
             case LEY_LINE -> new Refuses<>("comes from two Obelisks");
         };

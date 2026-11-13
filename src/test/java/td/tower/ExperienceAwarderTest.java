@@ -120,7 +120,7 @@ class ExperienceAwarderTest {
         this.place(new MortarTower(this.world, 2, 3));
         this.place(new PulseTower(this.world, 4, 3));
         this.place(new SeekerTower(this.world, 2, 2));
-        this.place(new SonarTower(this.world, 4, 4));
+        this.place(new CinderTower(this.world, 4, 4));
 
         this.awarder.walkEnded(walkNear(100, sniper));
 
@@ -135,7 +135,7 @@ class ExperienceAwarderTest {
         this.place(new MortarTower(this.world, 2, 3));
         this.place(new PulseTower(this.world, 4, 3));
         this.place(new SeekerTower(this.world, 2, 2));
-        this.place(new SonarTower(this.world, 4, 4));
+        this.place(new CinderTower(this.world, 4, 4));
 
         this.awarder.walkEnded(walkNear(100, sniper));
 
@@ -158,7 +158,7 @@ class ExperienceAwarderTest {
         this.auraWith(3, 3, "Tutelage", "Shared Lessons");
         SniperTower near = this.place(new SniperTower(this.world, 3, 2));
         SplashTower beside = this.place(new SplashTower(this.world, 3, 4));
-        SonarTower outside = this.place(new SonarTower(this.world, 15, 15));
+        CinderTower outside = this.place(new CinderTower(this.world, 15, 15));
 
         this.awarder.walkEnded(walkNear(100, near));
 

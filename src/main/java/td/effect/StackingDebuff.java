@@ -9,7 +9,6 @@ import td.util.TickRate;
 public enum StackingDebuff {
     VULNERABLE(EffectKind.VULNERABLE, 4f),
     SUNDERED(EffectKind.SUNDERED, 5f),
-    RESONATING(EffectKind.RESONATING, 4f),
     UNRAVELED(EffectKind.UNRAVELED, 5f);
 
     private final EffectKind kind;

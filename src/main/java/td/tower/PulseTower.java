@@ -660,11 +660,6 @@ public final class PulseTower extends AbstractTower {
         }
 
         @Override
-        public Float visitSonarTower(SonarTower tower) {
-            return 0f;
-        }
-
-        @Override
         public Float visitPulseTower(PulseTower tower) {
             return tower.fieldRadius;
         }
@@ -699,11 +694,6 @@ public final class PulseTower extends AbstractTower {
 
         @Override
         public Optional<PulseTower> visitSplashTower(SplashTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<PulseTower> visitSonarTower(SonarTower tower) {
             return Optional.empty();
         }
 

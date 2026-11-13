@@ -8,7 +8,6 @@ import td.tower.MortarTower;
 import td.tower.PulseTower;
 import td.tower.SeekerTower;
 import td.tower.SniperTower;
-import td.tower.SonarTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerVisitor;
@@ -49,14 +48,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float LASER_BASE_ALPHA = 0.2f;
     private static final float LASER_ALPHA_PER_STACK = 0.15f;
     private static final float SILVER_WIDTH_FACTOR = 1.5f;
-    private static final float PING_RING_ALPHA = 0.6f;
-    private static final float HELD_BEAM_ALPHA = 0.35f;
     /** How bright a Ley Line is drawn while no enemy stands on it. */
     private static final float LEY_LINE_IDLE_ALPHA = 0.45f;
-    /** The crosshair's ring and arms, as fractions of a cell. */
-    private static final float CROSSHAIR_RADIUS_FRACTION = 0.45f;
-    private static final float CROSSHAIR_ARM_FRACTION = 0.65f;
-    private static final float CROSSHAIR_ALPHA = 0.8f;
     /** How long a blast's detonation and its arcs stay drawn. */
     private static final float DETONATION_TICKS = 8f;
     /** The detonation's first flash lasts this share of it. */
@@ -234,46 +227,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             x = nextX;
             y = nextY;
         }
-    }
-
-    /**
-     * A fading beam to each enemy recently caught, blue once the beam deals magic; the ring each
-     * revolution sends out; a crosshair over each enemy it pinged; and a held beam's line. A
-     * spinning scan line is not drawn: the turret head shows it.
-     */
-    public Void visitSonarTower(SonarTower tower) {
-        for (SonarTower.SonarHit hit : tower.getRecentHits()) {
-            Palette palette = hit.type() == DamageType.MAGIC ? Palette.TOWER_SONAR_MAGIC_BEAM : Palette.TOWER_SONAR_BEAM;
-            this.draws.add(BeamDraw.solid(palette, tower.getX(), tower.getY(), hit.x(), hit.y(),
-                    beamWidth(tower.hitFade(hit, this.gameTime))));
-        }
-        float ping = tower.pingRingProgress(this.gameTime);
-        if (ping >= 0f) {
-            this.draws.add(new RingDraw(Palette.TOWER_SONAR_PING, tower.getX(), tower.getY(),
-                    ping * tower.getRangeReal(), PING_RING_ALPHA * (1f - ping)));
-        }
-        for (EnemyMob pinged : tower.pinged()) {
-            if (!pinged.isDead()) {
-                this.crosshair((float) pinged.getX(), (float) pinged.getY());
-            }
-        }
-        if (tower.holdsBeam()) {
-            double heading = tower.sweepRadiansAt(this.interpolationAlpha);
-            float range = tower.getRangeReal();
-            this.draws.add(new BeamDraw(Palette.TOWER_SONAR_BEAM, tower.getX(), tower.getY(),
-                    (float) (tower.getX() + Math.cos(heading) * range), (float) (tower.getY() + Math.sin(heading) * range),
-                    2f, HELD_BEAM_ALPHA));
-        }
-        return null;
-    }
-
-    /** A ring with a cross through it, centred on {@code (x, y)}. */
-    private void crosshair(float x, float y) {
-        float arm = this.scale * CROSSHAIR_ARM_FRACTION;
-        this.draws.add(new RingDraw(Palette.TOWER_SONAR_CROSSHAIR, x, y, this.scale * CROSSHAIR_RADIUS_FRACTION,
-                CROSSHAIR_ALPHA));
-        this.draws.add(new BeamDraw(Palette.TOWER_SONAR_CROSSHAIR, x - arm, y, x + arm, y, 1f, CROSSHAIR_ALPHA));
-        this.draws.add(new BeamDraw(Palette.TOWER_SONAR_CROSSHAIR, x, y - arm, x, y + arm, 1f, CROSSHAIR_ALPHA));
     }
 
     /** The field's faint disc, and rings rippling out of the tower faster the more Toll its enemies hold. */

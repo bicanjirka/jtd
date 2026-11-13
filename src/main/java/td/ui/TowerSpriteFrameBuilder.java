@@ -6,7 +6,6 @@ import td.tower.MortarTower;
 import td.tower.PulseTower;
 import td.tower.SeekerTower;
 import td.tower.SniperTower;
-import td.tower.SonarTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
@@ -58,7 +57,6 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return switch (type) {
             case SNIPER -> Palette.TOWER_SNIPER_BODY;
             case SPLASH -> Palette.TOWER_SPLASH_BODY;
-            case SONAR -> Palette.TOWER_SONAR_BODY;
             case PULSE -> Palette.TOWER_PULSE_BODY;
             case AURA -> Palette.TOWER_AURA_BODY;
             case MORTAR -> Palette.TOWER_MORTAR_BODY;
@@ -161,19 +159,6 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         this.sprite(tower, body);
         this.headDraws.add(new TurretHeadDraw(body, tower.getX(), tower.getY(),
                 (float) tower.getTurretAim().radiansAt(this.interpolationAlpha), 1f));
-        return null;
-    }
-
-    public Void visitSonarTower(SonarTower tower) {
-        this.sprite(tower);
-        // The head is the scan: it must point exactly where the beam is, or the tower appears
-        // to shoot enemies it is not facing.
-        double heading = tower.sweepRadiansAt(this.interpolationAlpha);
-        this.head(tower, heading);
-        if (tower.twinBeamShare() > 0f) {
-            // The second head is as much smaller as its beam is weaker.
-            this.headWithScale(tower, heading + Math.PI, tower.twinBeamShare());
-        }
         return null;
     }
 

@@ -104,11 +104,6 @@ class TowerStatCatalogueTest {
         }
 
         @Override
-        public AbstractTower visitSonarTower(SonarTower tower) {
-            return tower;
-        }
-
-        @Override
         public AbstractTower visitPulseTower(PulseTower tower) {
             return tower;
         }

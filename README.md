@@ -80,7 +80,7 @@ code and a clean architecture. The `CLAUDE.md` files hold the constraints it wor
 The game opens on a level-select screen. Pick a level to start it; each level brings its own
 board size, path, wave list, starting credits and starting lives.
 
-Buy a tower from the toolbar (or with its key, `q`–`i`), then click a buildable
+Buy a tower from the toolbar (or with its key, `q`–`u`), then click a buildable
 cell to place it; hovering a toolbar button opens a tooltip of the tower, and the side panel shows
 it in full while you place it. The click that builds a tower selects it, as does clicking a placed
 tower later: the side panel shows its stats and its own upgrade
@@ -95,7 +95,7 @@ Every button shows its key on a chip in its top-left corner.
 
 | Key                             | Action                                                                                               |
 |---------------------------------|------------------------------------------------------------------------------------------------------|
-| `q` `w` `e` `r` `t` `y` `u` `i` | Select tower 1–8 for placement                                                                       |
+| `q` `w` `e` `r` `t` `y` `u`     | Select tower 1–7 for placement                                                                       |
 | `Esc`                           | Cancel tower placement; cancel a question                                                            |
 | `1`–`8`                         | Buy the selected tower's next upgrade step: 1 Core, 2 Range, 3 extra line, 4/5 the branches, 6–8 specials |
 | `Space` or `P`                  | Pause; while paused or between waves, play on at the last speed and send the next wave               |
@@ -166,8 +166,7 @@ background copies, budget, upgraded copies).
 
 A tower's info pane shows Range, then how it deals damage: a hit tower its Physical or Magic damage (/hit), Fire
 rate (/s) and DPS (/target: damage times fire rate times the average crit, before the target's defences; for the Scorcher, the burn
-its waves keep going on one target), the Radar
-its Sweep time in place of a fire rate, the Obelisk its damage a second, a placed tower its Wave DPS (what it really
+its waves keep going on one target), the Obelisk its damage a second, a placed tower its Wave DPS (what it really
 dealt this wave, over the span from its first damage to its last, once that span reaches a second); then every other stat off its default
 (Crit damage whenever it can crit, Effect duration whenever it applies an effect), and what a Beacon gives.
 A changed value has an arrow for which way it moved, and is red only when that is worse; hovering a row says what
@@ -181,17 +180,16 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 | Mortar | 30    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider. One head adds heavier shells and nukes, the other shrapnel and bombs along the path, and a ballistics line speeds the shell up, leads the target, widens the blast and fires salvos. Its specials turn every third shell into a Napalm, Tar or Cryo shell that leaves burning, tarred or frozen ground |
 | Scorcher | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
 | Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
-| Radar  | 20    | Long range; a beam sweeps around it once every 3s, hitting everything it passes; once attuned, each sweep Exposes the healthiest enemy it passed |
 | Obelisk | 25    | Support, a kill box. Short range; a field that drags everything inside 15% and deals a little magic damage to it every tick, ghosts included and with no visible enemy needed, the damage a quarter less for every other field overlapping it. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it stronger. One head holds enemies longer (Gravity: a deeper drag, Dazes, a wider field, a well or Stasis), the other denies them (Ward: reveal, silence, worthless heals, True Sight or Purge); an extra line makes them take more damage and builds Toll faster. A special Condemns the strongest enemy inside, bosses first, for every tower to turn on; drains spirit; or links two Obelisks with a Ley Line. Reveals nothing until Ward is bought |
 | Beacon | 20    | Passive: gives the towers in its range Damage and Range +20% and Jam taken x0.5; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds Fire rate and Crit damage; the other widens its reach, then raises Buff duration and Effect duration. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
 
-The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Hive, Radar, Obelisk and Beacon
-(keys `q` `w` `e` `r` `t` `y` `u` `i`, in that order). A Burst that forks is called a Stormcaller or a Hexer.
+The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Hive, Obelisk and Beacon
+(keys `q` `w` `e` `r` `t` `y` `u`, in that order). A Burst that forks is called a Stormcaller or a Hexer.
 
 An attack-speed bonus adds to the attacks a second, so +100% is twice as fast; bonuses add up, and a Jamming enemy
 takes 30% away and shrinks range by 0.6 cells. The rate need not be a whole number of ticks: a tower remembers
 what is left over, so +10% on the Obelisk, which hits every tick, gives 22 hits in 20 ticks and a second hit in
-the tick the fractions add up. The Radar spins faster instead. No tower runs more than ten times faster than its
+the tick the fractions add up. No tower runs more than ten times faster than its
 base, or slower than a quarter of it.
 
 The price is the first copy's: each copy of a tower already on the board makes the next one cost
@@ -339,8 +337,6 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Expose | Mark | Debuff | Agility and Resilience -50: more and stronger crits on it. |
 | Mark | Mark | Debuff | The next hit on it is a crit, which spends this. |
 | Priority | Mark | Debuff | Physical damage taken and Magic damage taken +15%, and a tower that picks one target picks it. |
-| Resonance | Weakness | Debuff | Each stack: Magic damage taken +8%, up to 3 stacks. |
-| Fracture | Weakness | Debuff | Each stack: Resilience -10, up to 5; it loses a stack every 1 s. |
 | Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; Agility -100, so no dodges and more crits on it. |
 | Saturation | Weakness | Debuff | Each stack makes a Burst's blasts hit it harder. |
 | Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
@@ -403,7 +399,6 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Interference | Debuff | Other Obelisk fields overlapping this one take some of its damage away. |
 | Stoke | Debuff | Each wave on an enemy with this tower's Burn raises that Burn a step; the steps go when it ends. |
 | Kinship | Buff | Towers a Beacon buffs earn more XP for each other tower type in range. |
-| Ping | Buff | Each revolution, the Radar applies Expose to the enemy with the most health its beam passes. |
 | Shatter | Buff | An enemy with Freeze breaks apart and hurts the enemies around it. |
 | Arc | Buff | Lightning that jumps from a blast to enemies past its edge, as magic. |
 | Hex | Buff | A curse a Burst casts instead of a blast; each kind does its own thing. |
@@ -439,10 +434,10 @@ own Crit damage (150%, the Sniper 200%). A guaranteed crit lands whenever the en
 resilience is below 100; at 100 nothing crits. Negative resilience makes crits hit harder, and negative agility multiplies their chance (-50 turns 20% into 30%);
 Exposed takes 50 agility and 50 resilience. Armor and magic resist never go below 0.
 
-An enemy with agility can dodge a hit aimed at it alone: the Sniper's shot and its Ricochet bounces,
-and the Sonar beam's hit. The chance is `agility / (agility + 100)` (25 dodges 20%, 100 dodges 50%),
+An enemy with agility can dodge a hit aimed at it alone: the Sniper's shot and its Ricochet bounces.
+The chance is `agility / (agility + 100)` (25 dodges 20%, 100 dodges 50%),
 after the tower's accuracy, which cancels agility point for point. A dodged hit deals nothing, can't
-crit and sets off nothing a hit would; a dodged Sonar hit still counts for its ping. Area damage,
+crit and sets off nothing a hit would. Area damage,
 damage over time, the Railgun's line, arcs and missiles are never dodged, and neither is a
 guaranteed crit, so a Marked enemy can't dodge. A frozen or Dazed enemy can't dodge at all. The
 Sniper's Steady Aim stacks add 10 accuracy each from Attune; with Marksman's Eye a dodged shot makes

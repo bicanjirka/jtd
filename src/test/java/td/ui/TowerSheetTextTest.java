@@ -74,12 +74,12 @@ class TowerSheetTextTest {
     void theToolbarTooltipShowsEveryRowTheShopDoes() {
         TowerInspection tower = TowerInspection.of(TowerFactory.Type.MORTAR, 10, List.of(
                 TowerStatLine.fixed(TowerStat.RANGE, TowerStat.RANGE, 3),
-                TowerStatLine.fixed(TowerStatRow.SWEEP_TIME, TowerStat.ATTACK_SPEED, 2),
+                TowerStatLine.fixed(TowerStatRow.FIRE_RATE, TowerStat.ATTACK_SPEED, 2),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, 4)));
 
         InfoSheet tooltip = TowerSheetText.shopTooltip(tower);
 
-        assertThat(labels(tooltip)).containsExactly("Range", "Sweep time", "Proj speed");
+        assertThat(labels(tooltip)).containsExactly("Range", "Fire rate", "Proj speed");
         assertThat(labels(TowerSheetText.shop(tower))).isEqualTo(labels(tooltip));
     }
 
@@ -132,10 +132,6 @@ class TowerSheetTextTest {
         assertThat(row(shopSheet(TowerFactory.Type.SNIPER), "Phys dmg").tone()).contains(Palette.DAMAGE_PHYSICAL);
     }
 
-    @Test
-    void aSonarShowsASweepTimeAndNoFireRateOrDps() {
-        assertThat(labels(shopSheet(TowerFactory.Type.SONAR))).contains("Sweep time").doesNotContain("Fire rate", "DPS");
-    }
 
     @Test
     void aTowerThatFiresShowsItsDpsAndOneThatCritsShowsItsCritDamage() {

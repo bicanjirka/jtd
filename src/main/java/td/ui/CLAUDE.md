@@ -50,8 +50,7 @@ keeps the seam honest.
   part costs nothing a frame. What changes with every step (the hop, the hover, a glow) is a function of the body's
   place, never of a clock, and is the only thing painted live. Whatever sits on a body's top follows
   `EnemySprites.lift`.
-- Tower bodies are one closed `Shape` each. The sonar head is the one exception, with its own
-  `paintSonarSweep`. Toolbar icons reuse `towerBodyShape` via `renderTowerIcon`.
+- Tower bodies are one closed `Shape` each. Toolbar icons reuse `towerBodyShape` via `renderTowerIcon`.
 - A tower's body never turns: only its turret head aims.
 
 ## Two clocks

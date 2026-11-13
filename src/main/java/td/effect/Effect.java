@@ -33,8 +33,6 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     static final int STACK_INTERVAL_TICKS = 10;
     /** A discharged charge lands this share of the hit that discharged it. */
     public static final float CHARGE_DISCHARGE_SHARE = 0.3f;
-    /** How deep a Fractured that Fault Line left falls: resilience -100. */
-    public static final int FAULT_LINE_STACK_CAP = 10;
     /** Spirit runs from 0 down to -100, so a hundred stacks of Sickened is all there is to lose. */
     private static final int SICKENED_STACK_CAP = 100;
     /** A duration that never runs out: the effect holds until it breaks, something removes it, or its carrier dies. */
@@ -132,7 +130,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
      * stacks. Made by {@code ActiveEffects} as a pool earns them, never by a tower.
      */
     static Effect stackDebuff(EffectKind kind, int stacks) {
-        return of(kind, 0, DamageSink.none(), new EffectDynamics.Stacks(stacks, 0, false));
+        return of(kind, 0, DamageSink.none(), new EffectDynamics.Stacks(stacks, 0));
     }
 
     /**
@@ -159,21 +157,6 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     /** {@code stacks} more points of lost armor, five each, on one shared clock. */
     public static Effect sundered(int stacks, int durationTicks, DamageSink sink) {
         return stacking(EffectKind.SUNDERED, stacks, durationTicks, sink);
-    }
-
-    /** {@code stacks} more steps of magic damage taken, on one shared clock. */
-    public static Effect resonating(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.RESONATING, stacks, durationTicks, sink);
-    }
-
-    /** {@code stacks} more steps of lost resilience; each wears off on its own, so there is no clock. */
-    public static Effect fractured(int stacks, DamageSink sink) {
-        return stacking(EffectKind.FRACTURED, stacks, 0, sink);
-    }
-
-    /** This Fractured as Fault Line leaves it: it falls twice as far, and holds while the enemy is exposed. */
-    public Effect withFaultLine() {
-        return this.withDynamics(this.stacksFamily().withFaultLine());
     }
 
     /** This stacking effect allowed up to {@code stackCap} stacks instead of its kind's cap. */
@@ -304,7 +287,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     static Effect stacking(EffectKind kind, int stacks, int durationTicks, DamageSink sink) {
-        return of(kind, durationTicks, sink, new EffectDynamics.Stacks(stacks, 0, false));
+        return of(kind, durationTicks, sink, new EffectDynamics.Stacks(stacks, 0));
     }
 
     private static Effect timed(EffectKind kind, int durationTicks, DamageSink sink) {
@@ -424,14 +407,6 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return switch (this.dynamics) {
             case EffectDynamics.Stacks stacks -> stacks.stackCap();
             default -> 0;
-        };
-    }
-
-    /** Whether it is a Fractured that recovers nothing while the enemy is exposed. */
-    public boolean faultLine() {
-        return switch (this.dynamics) {
-            case EffectDynamics.Stacks stacks -> stacks.faultLine();
-            default -> false;
         };
     }
 

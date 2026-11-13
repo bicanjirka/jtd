@@ -208,7 +208,7 @@ lands ticks after the shot widens the gap: by then the live stats may have chang
 too.
 
 - **Where:** `AbstractTower.beginShot`; its callers in `SniperTower`, `SplashTower`, `MortarTower`,
-  `CinderTower`, `PulseTower`, `SeekerTower` and `SonarTower`; the rule in `tower/CLAUDE.md` that
+  `CinderTower`, `PulseTower` and `SeekerTower`; the rule in `tower/CLAUDE.md` that
   starts "Every attack starts with `beginShot()`".
 - **Approach:** `beginShot()` returns a `Shot` record (the attack's `TowerStats` and its shot
   number). Every attack path takes it, and anything in flight (a projectile, a delayed hit) stores it,
@@ -437,7 +437,7 @@ Shot) saved nothing until the Sniper's retune; see the crit entry below.
 - Frenzy and Momentum's haste stack since the stat-driven plan (up to +200% attack speed); check the
   Focused Optics chain with Momentum.
 - **Where:** `UpgradeTier`'s price multiples, and the `private static final UpgradeNode` constants in every
-  leaf under `td.tower` (`SniperTower`/`SplashTower`/`SonarTower`/`PulseTower`/`MortarTower`/`SeekerTower`/
+  leaf under `td.tower` (`SniperTower`/`SplashTower`/`PulseTower`/`MortarTower`/`SeekerTower`/
   `CinderTower`/`AuraTower`).
 - **Approach:** play each of the built-in levels with every node bought at least once, and adjust price/stat-bonus/
   condition-threshold values until each node feels like a meaningful, roughly-comparable-in-power choice rather than

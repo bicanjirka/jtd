@@ -56,14 +56,6 @@ final class EffectSentences {
             case PRIORITY -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                     EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN)
                     .plus(", and a tower that picks one target picks it");
-            case RESONATING -> TermText.of("each stack: ")
-                    .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.MAGIC_DAMAGE_TAKEN)),
-                            EnemyStat.MAGIC_DAMAGE_TAKEN))
-                    .plus(", up to " + kind.maxStacks() + " stacks");
-            case FRACTURED -> TermText.of("each stack: ")
-                    .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE))
-                    .plus(", up to " + kind.maxStacks() + "; it loses a stack every "
-                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
             case DAZED -> TermText.of("stops it and keeps its abilities from firing, like ").plus(EffectKind.FREEZE)
                     .plus("; ").plus(stoppedAgility(kind));
             case SATURATED -> TermText.of("each stack makes a Burst's blasts hit it harder");

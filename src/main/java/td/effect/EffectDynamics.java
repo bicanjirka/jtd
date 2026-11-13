@@ -18,20 +18,15 @@ public sealed interface EffectDynamics {
     record Flag() implements EffectDynamics {
     }
 
-    /** A stack count, its cap ({@code 0} for its kind's own), and whether Fault Line holds it. */
-    record Stacks(int stacks, int stackCap, boolean faultLine) implements EffectDynamics {
+    /** A stack count and its cap ({@code 0} for its kind's own). */
+    record Stacks(int stacks, int stackCap) implements EffectDynamics {
 
         public Stacks withStacks(int stacks) {
-            return new Stacks(stacks, this.stackCap, this.faultLine);
+            return new Stacks(stacks, this.stackCap);
         }
 
         public Stacks withStackCap(int stackCap) {
-            return new Stacks(this.stacks, stackCap, this.faultLine);
-        }
-
-        /** As Fault Line leaves a Fractured: it falls twice as far, and holds while the enemy is exposed. */
-        public Stacks withFaultLine() {
-            return new Stacks(this.stacks, Effect.FAULT_LINE_STACK_CAP, true);
+            return new Stacks(this.stacks, stackCap);
         }
     }
 

@@ -11,7 +11,6 @@ public enum Palette {
     TOWER_STORMCALLER_BODY,
     /** A Splash forked to Hex. */
     TOWER_HEXER_BODY,
-    TOWER_SONAR_BODY,
     TOWER_PULSE_BODY,
     TOWER_AURA_BODY,
     TOWER_MORTAR_BODY,
@@ -65,13 +64,6 @@ public enum Palette {
     TOWER_SPLASH_CAST,
     /** The rune over an enemy carrying a hex. */
     HEX_RUNE,
-    TOWER_SONAR_BEAM,
-    /** A Sonar hit once its beam deals magic. */
-    TOWER_SONAR_MAGIC_BEAM,
-    /** The ring a Sonar sends out each revolution. */
-    TOWER_SONAR_PING,
-    /** The crosshair over the enemies a Sonar pinged. */
-    TOWER_SONAR_CROSSHAIR,
     TOWER_PULSE_RING,
     TOWER_PULSE_RIPPLE,
     TOWER_PULSE_RIPPLE_WARD,
@@ -152,8 +144,6 @@ public enum Palette {
     STATUS_MARKER_EXPOSED,
     STATUS_MARKER_MARKED,
     STATUS_MARKER_PRIORITY,
-    STATUS_MARKER_RESONATING,
-    STATUS_MARKER_FRACTURED,
     /** Stands in for every effect past the visible marker cap. */
     /** Ice over a frozen enemy, whiter than the slow and freeze markers. */
     FREEZE_CRYSTAL,

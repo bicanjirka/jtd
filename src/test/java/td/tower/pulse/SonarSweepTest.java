@@ -1,4 +1,4 @@
-package td.tower.sonar;
+package td.tower.pulse;
 
 import org.junit.jupiter.api.Test;
 

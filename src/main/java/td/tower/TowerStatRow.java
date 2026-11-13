@@ -19,8 +19,6 @@ public enum TowerStatRow implements StatTerm {
     MAGIC_FIELD_DAMAGE("Magic dmg", "Magic damage", StatUnit.DAMAGE_PER_SECOND, StatDirection.HIGHER),
     /** Attacks a second. */
     FIRE_RATE("Fire rate", "Fire rate", StatUnit.PER_SECOND, StatDirection.HIGHER),
-    /** Seconds a turn of a sweeping head takes. */
-    SWEEP_TIME("Sweep time", "Sweep time", StatUnit.SECONDS, StatDirection.LOWER),
     /** Points a second on one target, before its defences. */
     PHYSICAL_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
     MAGIC_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
@@ -73,7 +71,7 @@ public enum TowerStatRow implements StatTerm {
     @Override
     public StatGroup group() {
         return switch (this) {
-            case PHYSICAL_DAMAGE, MAGIC_DAMAGE, PHYSICAL_FIELD_DAMAGE, MAGIC_FIELD_DAMAGE, FIRE_RATE, SWEEP_TIME,
+            case PHYSICAL_DAMAGE, MAGIC_DAMAGE, PHYSICAL_FIELD_DAMAGE, MAGIC_FIELD_DAMAGE, FIRE_RATE,
                  PHYSICAL_DPS, MAGIC_DPS, BURN_DPS, WAVE_DPS -> StatGroup.DAMAGE;
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatGroup.DELIVERY;
         };
@@ -89,7 +87,6 @@ public enum TowerStatRow implements StatTerm {
             case MAGIC_FIELD_DAMAGE -> TermText.of("what it deals each second to every enemy in its field, "
                     + "before magic resist and insulation");
             case FIRE_RATE -> TermText.of("how many attacks it makes each second");
-            case SWEEP_TIME -> TermText.of("how long its beam takes to turn once around");
             case PHYSICAL_DPS, MAGIC_DPS -> TermText.of("damage x fire rate x average crit on one target, before its "
                     + "defences; it leaves out splash, effects, damage over time, extra hits and misses");
             case BURN_DPS -> TermText.of("what one target takes from its ").plus(EffectKind.BURN)

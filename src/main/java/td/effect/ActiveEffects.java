@@ -174,16 +174,14 @@ public final class ActiveEffects {
     /**
      * A stacking kind adds up to {@link EffectKind#maxStacks()} on the enemy, whichever tower applied
      * them, on one clock that every application refreshes. A full stack only refreshes. An effect
-     * allowed more stacks keeps that cap, and once Fault Line has touched a Fractured, it stays that
-     * way, until it wears off.
+     * allowed more stacks keeps that cap until it wears off.
      */
     private void applyStacks(Effect incoming) {
         Effect existing = this.active.get(incoming.kind());
-        Effect next = existing != null && existing.faultLine() ? incoming.withFaultLine() : incoming;
-        int cap = Math.max(next.effectiveStackCap(), existing == null ? 0 : existing.effectiveStackCap());
+        int cap = Math.max(incoming.effectiveStackCap(), existing == null ? 0 : existing.effectiveStackCap());
         int stacks = Math.min(cap, (existing == null ? 0 : existing.stacks()) + incoming.stacks());
         int remaining = Math.max(existing == null ? 0 : existing.remainingTicks(), incoming.remainingTicks());
-        this.active.put(incoming.kind(), next.withStackCap(cap).withStacks(stacks, remaining));
+        this.active.put(incoming.kind(), incoming.withStackCap(cap).withStacks(stacks, remaining));
     }
 
     /** Takes {@code fraction} of what every shield has left; a shield that is gone stays gone. */
@@ -482,11 +480,10 @@ public final class ActiveEffects {
 
     /**
      * Lets a stack debuff fall one stack each time its progress fills; ends at no
-     * stacks. A Fault Line Fractured holds while the enemy has Expose, and a mark holds while a pool
-     * that earns it is still active.
+     * stacks. A mark holds while a pool that earns it is still active.
      */
     private Optional<Effect> decayStacks(Effect debuff) {
-        if (debuff.faultLine() && this.active.containsKey(EffectKind.EXPOSED) || EffectInteractions.isEarnedBy(debuff.kind(), this.active.keySet())) {
+        if (EffectInteractions.isEarnedBy(debuff.kind(), this.active.keySet())) {
             return Optional.of(debuff);
         }
         int slot = debuff.kind().ordinal();

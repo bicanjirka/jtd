@@ -22,6 +22,7 @@ import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.render.IconFace;
+import td.ui.render.Palette;
 import td.util.GameHost;
 import td.util.GameWorld;
 
@@ -259,8 +260,8 @@ public final class PreviewUpgrades {
     }
 
     /**
-     * The glyph key for {@code ref}, painted once as a white mask: a node id of {@code tower}'s tree or any tree, or a
-     * term's title. Empty when nothing matches.
+     * The glyph key for {@code ref}, painted once as a white mask: a node id of {@code tower}'s tree or any tree, a
+     * term's title, or a node pictogram's key whose tower has left the game. Empty when nothing matches.
      */
     String glyph(String ref, Tower tower) {
         String clean = ref.trim();
@@ -283,13 +284,20 @@ public final class PreviewUpgrades {
         }
         if (face == null) {
             Term term = this.termsByTitle.get(clean.toLowerCase(Locale.ROOT));
-            if (term == null) {
+            face = term != null ? TermLooks.faceOf(term) : keptPictogramFace(clean);
+            if (face == null) {
                 return "";
             }
-            face = TermLooks.faceOf(term);
         }
         this.glyphs.put(clean, mask(face));
         return clean;
+    }
+
+    /** A face for a node pictogram kept after its tower left, painted by its key alone; null when there is none. */
+    static IconFace keptPictogramFace(String key) {
+        return PictogramCatalogue.of(key).isPresent()
+                ? IconFace.of(key, TermLooks.monogram(key), Palette.TERM_BASE_PERK, Palette.TERM_BASE_PERK)
+                : null;
     }
 
     /** Each game term the docs' text names, by title: its glyph and what it does today. */
@@ -772,6 +780,9 @@ public final class PreviewUpgrades {
                                 node.tier().level());
                         break;
                     }
+                }
+                if (face == null) {
+                    face = keptPictogramFace(ref);
                 }
             }
             if (face != null && face.pictogram() != null) {

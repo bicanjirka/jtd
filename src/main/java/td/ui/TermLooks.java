@@ -105,7 +105,6 @@ public final class TermLooks {
             case INTERFERENCE -> new TermLook(Palette.TERM_INTERFERENCE, Palette.TERM_FRAME_TOWER_DEBUFF);
             case STOKE -> new TermLook(Palette.TOWER_CINDER_CONE, Palette.TERM_FRAME_MECHANIC);
             case KINSHIP -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_MECHANIC);
-            case PING -> new TermLook(Palette.TOWER_SONAR_PING, Palette.TERM_FRAME_MECHANIC);
             case SHATTER -> new TermLook(Palette.FREEZE_CRYSTAL, Palette.TERM_FRAME_MECHANIC);
             case ARC -> new TermLook(Palette.TOWER_SPLASH_ARC, Palette.TERM_FRAME_MECHANIC);
             case HEX -> new TermLook(Palette.HEX_RUNE, Palette.TERM_FRAME_MECHANIC);

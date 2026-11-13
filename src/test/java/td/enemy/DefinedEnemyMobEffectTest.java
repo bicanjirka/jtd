@@ -235,7 +235,7 @@ class DefinedEnemyMobEffectTest {
         critImmune.applyEffect(Effect.marked(100, DamageSink.none()));
 
         Damage blocked = critImmune.doDamage(Damage.physical(1000), AttackProfile.none());
-        critImmune.applyEffect(Effect.fractured(5, DamageSink.none()));
+        critImmune.applyEffect(Effect.scorched(1));
         Damage opened = critImmune.doDamage(Damage.physical(1000), AttackProfile.none());
 
         assertThat(blocked.critical()).isFalse();

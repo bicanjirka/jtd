@@ -69,10 +69,10 @@ class TowerLabTest {
 
     @Test
     void aTowerThatMarksGivesItsNeighbourMore() {
-        UpgradeNode marking = TowerLab.nodesApplying(PROBES, TowerFactory.Type.SONAR, BESIDE_THE_PATH, EffectKind.MARKED)
+        UpgradeNode marking = TowerLab.nodesApplying(PROBES, TowerFactory.Type.SEEKER, BESIDE_THE_PATH, EffectKind.MARKED)
                 .getFirst();
 
-        double gain = supportTrial(TowerFactory.Type.SONAR).gainOwning(Optional.of(marking));
+        double gain = supportTrial(TowerFactory.Type.SEEKER).gainOwning(Optional.of(marking));
 
         assertThat(gain).isGreaterThan(NEXT_TO_NOTHING);
     }
@@ -88,9 +88,9 @@ class TowerLabTest {
 
     @Test
     void aNodeThatRevealsShowsAHidingKindToTheSniperBesideIt() {
-        TowerLab.RevealTrial trial = TowerLab.RevealTrial.of(LEVEL, HIDER_KEY, NEXT_TO_IT, TowerFactory.Type.SONAR, BESIDE_THE_PATH);
+        TowerLab.RevealTrial trial = TowerLab.RevealTrial.of(LEVEL, HIDER_KEY, NEXT_TO_IT, TowerFactory.Type.SEEKER, BESIDE_THE_PATH);
 
-        double shown = TowerLab.nodesApplying(PROBES, TowerFactory.Type.SONAR, BESIDE_THE_PATH, EffectKind.REVEALED).stream()
+        double shown = TowerLab.nodesApplying(PROBES, TowerFactory.Type.SEEKER, BESIDE_THE_PATH, EffectKind.REVEALED).stream()
                 .mapToDouble(trial::shareOwning).max().orElseThrow();
 
         assertThat(shown).isPositive();

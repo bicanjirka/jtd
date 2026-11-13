@@ -85,12 +85,11 @@ private to that painter. They are greys too; a new control uses the ramp.
 
 | Tower | Value | On the lightest floor | Nearest | Note |
 |---|---|---|---|---|
-| Sniper | `#00FF00` | 14.3:1 | Sonar, 23.4 | Pure primary. See the warning below |
+| Sniper | `#00FF00` | 14.3:1 | Aura, 33.3 | Pure primary. See the warning below |
 | Burst | `#FF0000` | 4.9:1 | Cinder, 9.1 | Pure primary, and the closest pair of all |
 | Stormcaller | `#5096FF` | 6.7:1 | Seeker, 10.2 | |
 | Hexer | `#AA50E6` | 4.7:1 | Stormcaller, 28.5 | |
-| Sonar | `#FFFF00` | 18.2:1 | Pulse, 16.6 | Pure primary |
-| Pulse | `#FFC800` | 12.6:1 | Sonar, 16.6 | Pure primary |
+| Pulse | `#FFC800` | 12.6:1 | Aura, 30.9 | Pure primary |
 | Aura | `#FFFFFF` | 19.6:1 | Seeker, 29.9 | |
 | Mortar | `#8B5A2B` | 3.4:1 | Cinder, 25.1 | Barely above the 3:1 floor in section 7 |
 | Seeker | `#50B4FF` | 8.7:1 | Stormcaller, 10.2 | |
@@ -124,7 +123,7 @@ hard to tell from its neighbours, and "open" means it has room.
 | 0–30 | Red, rose | **Problem**, lives, Burst, mines, marked | Crowded, and reserved: red says something is wrong |
 | 30–60 | Orange | Cinder, burn, ash, damage over time | Busy |
 | 60–90 | Amber, gold, brown | Pulse, Mortar, **Head slot**, **physical damage**, score, ranks, many enemies | **The most crowded** |
-| 90–120 | Yellow | Sonar, daze, shields | Busy |
+| 90–120 | Yellow | Daze, shields | Busy |
 | 120–150 | Green, lime | Sniper, healing, regeneration, poison, blight | Busy, and split between tower and heal |
 | 150–180 | Mint | Mender, haste, **affixes** | Open |
 | 180–210 | Teal | A few enemies, The Last Hour's glass lane, Malaise | **Open: the most room in the game** |

@@ -136,7 +136,7 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 | III | Knell | ability | Payoff | | pulse.head.gravity.3 | | | | While an enemy with 5 or more Toll stacks is inside, the stone rings once a second: every enemy in the field takes 20 magic damage. | A crowd: each ring hits everyone inside. One beat for the stone, not one for each enemy at full Toll, so it grows with the crowd, never with its square. It rings for an enemy that walks in already full. |
 | III | Deep Toll | ability | Payoff | | pulse.extra.bite.4 | | | pulse.extra.bite.4 | Toll builds to 10 in this field, from 5. | The one that stays: a boss walks deeper into Toll than anything else, and Frailty and Drag grow with it. Its stacks are ordinary ones and fade outside as any do. |
 | III | Deep Pull II | stat | | | pulse.head.gravity.1 | | | | Drag +2% for each Toll stack | |
-| III | Swift Shadow | stat | | Sundial | sonar.head.rapid_array.3 | | | | The shadow turns every 2 s, from 3 s. | Name is a proposal. |
+| III | Swift Shadow | stat | | Sundial | sonar.head.rapid_array.1 | | | | The shadow turns every 2 s, from 3 s. | Name is a proposal. |
 
 ### Terms
 
@@ -206,9 +206,9 @@ to the player, darker still. It is the tallest thing on the board for its width.
 
 - `FEATURE-next-gen-upgrade-tiers.md` (its node rules), `FEATURE-next-gen-tower-looks.md`. The Sundial needs no ability
   bar from `FEATURE-next-gen-tower-abilities.md`: it is a rhythm, like a tower's fire rate.
-- **The Radar leaves** (`FEATURE-next-gen.md`). Its geometry comes here: `SonarSweep` (the arc swept since the last
-  tick, never the instantaneous angle) and `SpinningBeam`. `td/tower/sonar/CLAUDE.md`'s constraint moves into
-  `td/tower/pulse/CLAUDE.md`. Twin Beam, Horizon, Ping, Expose, Mark, Resonating, Fractured, Phased Array, Fault Line
+- **The Radar has left** (`FEATURE-next-gen.md`). Its geometry is here: `SonarSweep` (the arc swept since the last
+  tick, never the instantaneous angle), and its constraint is in `td/tower/pulse/CLAUDE.md`. `SpinningBeam` went with
+  the Radar; the Sundial wraps `SonarSweep` in a beam of its own. Twin Beam, Horizon, Ping, Expose, Mark, Resonating, Fractured, Phased Array, Fault Line
   and the frequency line stay behind. The shadow's hit is aimed (`asAimed()`, through `landHit`), so it can be
   dodged, as the Sniper's shot can; the field's own damage is an area and never is.
 - **Ground zones**: the field joins `ZonePatchDraw` as a patch of its own kind, though it is a tower's range, not a

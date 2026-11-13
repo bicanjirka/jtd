@@ -139,14 +139,6 @@ public final class Java2DFrameRenderer {
     /** Turret head size relative to a cell. */
     private static final float TOWER_HEAD_SIZE_FRACTION = 0.24f;
 
-    private static final float SONAR_ARC_DEGREES = 62f;
-    /**
-     * Wedge radius relative to the head size; keeps the wedge just inside the cell at any scale.
-     */
-    private static final float SONAR_RADIUS_FACTOR = 1.85f;
-
-    private static final int SONAR_TRAIL_STEPS = 4;
-    private static final int SONAR_TRAIL_ALPHA = 150;
     /** How far apart a badge's two chevrons sit, as a share of its size. */
     private static final float RANK_BADGE_CHEVRON_SPACING = 1f;
     private static final float RANK_BADGE_CHEVRON_RISE = 0.4f;
@@ -288,7 +280,6 @@ public final class Java2DFrameRenderer {
         return switch (palette) {
             case TOWER_SNIPER_BODY -> triangleShape(size, true);
             case TOWER_SPLASH_BODY, TOWER_STORMCALLER_BODY, TOWER_HEXER_BODY -> ringShape(size, 0.55f);
-            case TOWER_SONAR_BODY -> spiralShape(size);
             case TOWER_PULSE_BODY -> starShape(5, size, size * 0.45f);
             case TOWER_AURA_BODY -> pulsarShape(size);
             case TOWER_MORTAR_BODY -> diamondShape(size);
@@ -358,37 +349,6 @@ public final class Java2DFrameRenderer {
         return ring;
     }
 
-    /**
-     * An Archimedean spiral stroked into a closed ribbon, so it fills as a line rather than a blob.
-     */
-    private static Shape spiralShape(float size) {
-        int turns = 2;
-        int steps = 64 * turns;
-        // Thin relative to the gap between consecutive turns (which is maxRadius/turns): at a
-        // toolbar icon's size a thicker ribbon closes those gaps and the spiral reads as a disc.
-        float strokeWidth = size * 0.16f;
-        // Stop short of `size` so the stroke's own width stays inside the tower's footprint.
-        float maxRadius = size - strokeWidth / 2;
-        GeneralPath p = new GeneralPath();
-        for (int i = 0; i <= steps; i++) {
-            double t = (double) i / steps;
-            double angle = t * turns * 2 * Math.PI;
-            double radius = maxRadius * t;
-            float x = (float) (Math.cos(angle) * radius);
-            float y = (float) (Math.sin(angle) * radius);
-            if (i == 0) {
-                p.moveTo(x, y);
-            } else {
-                p.lineTo(x, y);
-            }
-        }
-        Shape ribbon = new BasicStroke(strokeWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND).createStrokedShape(p);
-        // Area, not the stroked outline directly: filling that outline under the default
-        // non-zero winding rule floods the region the spiral encloses and the symbol comes out
-        // as a plain disc. Area resolves it to the ribbon actually swept.
-        return new Area(ribbon);
-    }
-
     /** A bright core inside a detached ring. */
     private static Shape pulsarShape(float size) {
         Area pulsar = new Area(ringShape(size, 0.72f));
@@ -415,8 +375,7 @@ public final class Java2DFrameRenderer {
 
     /**
      * Aiming heads are drawn pointing along {@code +X}, so rotating the graphics aims them.
-     * Spinning heads must reach past their base's outline, or the spin is invisible. The sonar head
-     * is not handled here: it has {@link #paintSonarSweep}.
+     * Spinning heads must reach past their base's outline, or the spin is invisible.
      */
     private static Shape turretHeadShape(Palette palette, float size) {
         return switch (palette) {
@@ -444,22 +403,12 @@ public final class Java2DFrameRenderer {
         return p;
     }
 
-    /**
-     * One band of the sweep's trail. {@link Arc2D} angles are y-up, so the trail behind the beam
-     * has negative angles.
-     */
-    private static Shape sonarWedge(float radius, float fromDegrees, float extentDegrees) {
-        return new Arc2D.Float(-radius, -radius, radius * 2, radius * 2,
-                fromDegrees, extentDegrees, Arc2D.PIE);
-    }
-
     static Color colorFor(Palette palette) {
         return switch (palette) {
             case TOWER_SNIPER_BODY -> Color.GREEN;
             case TOWER_SPLASH_BODY -> Color.RED;
             case TOWER_STORMCALLER_BODY -> new Color(80, 150, 255);
             case TOWER_HEXER_BODY -> new Color(170, 80, 230);
-            case TOWER_SONAR_BODY -> Color.YELLOW;
             case TOWER_PULSE_BODY -> Color.ORANGE;
             case TOWER_AURA_BODY -> Color.WHITE;
             case TOWER_MORTAR_BODY -> new Color(139, 90, 43);
@@ -497,10 +446,6 @@ public final class Java2DFrameRenderer {
             case TOWER_HEXER_DETONATION_DARK -> new Color(70, 20, 110);
             case TOWER_SPLASH_CAST -> new Color(200, 120, 255);
             case HEX_RUNE -> new Color(225, 170, 255);
-            case TOWER_SONAR_BEAM -> Color.YELLOW;
-            case TOWER_SONAR_MAGIC_BEAM -> new Color(90, 150, 255);
-            case TOWER_SONAR_PING -> new Color(255, 240, 150);
-            case TOWER_SONAR_CROSSHAIR -> new Color(255, 120, 60);
             case TOWER_PULSE_RING -> withAlpha(Color.ORANGE, 80);
             case TOWER_PULSE_RIPPLE -> new Color(205, 205, 215);
             case TOWER_PULSE_RIPPLE_WARD -> new Color(180, 110, 255);
@@ -578,8 +523,6 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_EXPOSED -> new Color(255, 215, 80);
             case STATUS_MARKER_MARKED -> new Color(255, 80, 80);
             case STATUS_MARKER_PRIORITY -> new Color(255, 150, 60);
-            case STATUS_MARKER_RESONATING -> new Color(90, 160, 255);
-            case STATUS_MARKER_FRACTURED -> new Color(160, 110, 220);
             case CRIT_SPARK -> Color.WHITE;
             case MISS_MARK -> new Color(190, 190, 190);
             case FREEZE_CRYSTAL -> new Color(220, 245, 255);
@@ -1558,34 +1501,8 @@ public final class Java2DFrameRenderer {
         g2.translate(head.centerX(), head.centerY());
         g2.rotate(head.headingRadians());
         float size = scale * TOWER_HEAD_SIZE_FRACTION * head.scale();
-        if (head.palette() == Palette.TOWER_SONAR_BODY) {
-            this.paintSonarSweep(g2, size);
-        } else {
-            this.paintHeadShape(g2, head.palette(), size);
-        }
+        this.paintHeadShape(g2, head.palette(), size);
         g2.setTransform(save);
-    }
-
-    /**
-     * The sonar head: sub-wedges of decreasing alpha behind a bright edge, approximating the
-     * angular gradient Java2D lacks. Translucent, so the body shows through.
-     */
-    private void paintSonarSweep(Graphics2D g2, float size) {
-        Color color = colorFor(Palette.TOWER_SONAR_BODY);
-        float radius = size * SONAR_RADIUS_FACTOR;
-        float stepDegrees = SONAR_ARC_DEGREES / SONAR_TRAIL_STEPS;
-
-        for (int step = 0; step < SONAR_TRAIL_STEPS; step++) {
-            int alpha = Math.round(SONAR_TRAIL_ALPHA * (SONAR_TRAIL_STEPS - step) / (float) SONAR_TRAIL_STEPS);
-            g2.setColor(withAlpha(color, alpha));
-            g2.fill(sonarWedge(radius, -(step + 1) * stepDegrees, stepDegrees));
-        }
-
-        Stroke previous = g2.getStroke();
-        g2.setColor(color);
-        g2.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.draw(new Line2D.Float(0, 0, radius, 0));
-        g2.setStroke(previous);
     }
 
     /** Draws a head at the origin; the caller has translated and rotated. */

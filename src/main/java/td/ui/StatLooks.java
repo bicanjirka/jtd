@@ -97,7 +97,7 @@ final class StatLooks {
             case TOLL_CAP, TOLL_RATE, TOLL_LINGER -> StatLook.face(TermLooks.faceOf(EffectKind.TOLL));
             case WITHER_INTERVAL -> StatLook.face(TermLooks.faceOf(EffectKind.VULNERABLE));
             case PROJECTILE_SPEED, PROJECTILE_SIZE, WAVE_SPEED -> StatLook.plain(Glyph.COMET);
-            case NEST_CAPACITY, MISSILES_PER_LAUNCH, PING_COUNT -> StatLook.plain(Glyph.PIP);
+            case NEST_CAPACITY, MISSILES_PER_LAUNCH -> StatLook.plain(Glyph.PIP);
             case BOUNTY -> StatLook.face(TermLooks.faceOf(StatusTerm.CASH));
             case DISRUPTION_TAKEN -> StatLook.toned(Glyph.FILLED_DIAMOND, Palette.DISRUPTION);
             case AURA_POWER -> StatLook.toned(Glyph.RING, Palette.TERM_AURA);
@@ -108,7 +108,7 @@ final class StatLooks {
         return switch (row) {
             case PHYSICAL_DAMAGE, PHYSICAL_FIELD_DAMAGE -> StatLook.toned(Glyph.DOT, Palette.DAMAGE_PHYSICAL);
             case MAGIC_DAMAGE, MAGIC_FIELD_DAMAGE -> StatLook.toned(Glyph.DOT, Palette.DAMAGE_MAGIC);
-            case FIRE_RATE, SWEEP_TIME, WAVE_DPS -> StatLook.plain(Glyph.CHEVRON);
+            case FIRE_RATE, WAVE_DPS -> StatLook.plain(Glyph.CHEVRON);
             case PHYSICAL_DPS -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
             case MAGIC_DPS, BURN_DPS -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_MAGIC);
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatLook.plain(Glyph.COMET);

@@ -48,12 +48,6 @@ public enum EffectKind implements Term {
     /** Takes extra damage from every tower, and single-target towers aim at it. */
     PRIORITY("Priority", EffectRule.of(EffectCategory.SPOTTED)
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.15f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.15f)),
-    /** Each stack raises the magic damage taken. */
-    RESONATING("Resonance", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)
-            .perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.08f).tagged(EffectTag.SPREADS_WITH_CURSE)),
-    /** Each stack lowers resilience by ten, and wears off one stack at a time. */
-    FRACTURED("Fracture", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(5)
-            .perStack(EnemyStat.RESILIENCE, -10f).tagged(EffectTag.SPREADS_WITH_CURSE)),
     /** Stops the enemy and its abilities, like a freeze. */
     DAZED("Daze", EffectRule.of(EffectCategory.HARD_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f))
             .perStack(EnemyStat.AGILITY, StatModifier.setTo(-100f)).tagged(EffectTag.STOPS)),
@@ -231,8 +225,7 @@ public enum EffectKind implements Term {
     }
 
     /**
-     * Whether this kind is a count of stacks that wear off one at a time. A pool earns {@code SCORCHED} and {@code SICKENED}; a tower applies
-     * {@code FRACTURED}.
+     * Whether this kind is a count of stacks that wear off one at a time. A pool earns {@code SCORCHED} and {@code SICKENED}.
      */
     public boolean isStackDebuff() {
         return this.rule.stacking() == EffectStacking.EARNED;
