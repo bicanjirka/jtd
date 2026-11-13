@@ -5,6 +5,7 @@ import td.util.GameStartupException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
 class SpawnShapeTest {
 
@@ -22,14 +23,36 @@ class SpawnShapeTest {
     }
 
     @Test
-    void swarmSplitsSizeAndHealthAcrossItsMembersButKeepsFullBounty() {
-        SpawnShape shape = SpawnShape.swarm(4);
+    void aSwarmOfOneIsOneWholeEnemyScattered() {
+        SpawnShape shape = SpawnShape.swarm(1);
 
-        assertThat(shape.members()).isEqualTo(4);
-        assertThat(shape.sizeMultiplier()).isEqualTo(0.5f);
-        assertThat(shape.healthMultiplier()).isEqualTo(0.25f);
+        assertThat(shape.members()).isEqualTo(1);
+        assertThat(shape.sizeMultiplier()).isEqualTo(1f);
+        assertThat(shape.healthMultiplier()).isEqualTo(1f);
         assertThat(shape.bountyMultiplier()).isEqualTo(1f);
         assertThat(shape.spread()).isEqualTo(SpawnSpread.SCATTERED);
+    }
+
+    @Test
+    void aBiggerSwarmHasWeakerMembersButMoreHealthInAll() {
+        for (int members = 2; members <= SpawnShape.MAX_MEMBERS; members++) {
+            SpawnShape smaller = SpawnShape.swarm(members - 1);
+            SpawnShape bigger = SpawnShape.swarm(members);
+
+            assertThat(bigger.healthMultiplier()).isLessThan(smaller.healthMultiplier());
+            assertThat(bigger.healthMultiplier() * members).isGreaterThan(smaller.healthMultiplier() * (members - 1));
+        }
+    }
+
+    @Test
+    void aSwarmMembersBodyCoversAsMuchAsItsShareOfHealthAndNeverLessThanHalfItsSize() {
+        for (int members = 1; members <= SpawnShape.MAX_MEMBERS; members++) {
+            SpawnShape shape = SpawnShape.swarm(members);
+            float size = shape.sizeMultiplier();
+
+            assertThat(size).isGreaterThanOrEqualTo(0.5f);
+            assertThat(size * size).isCloseTo(shape.healthMultiplier(), within(1e-4f));
+        }
     }
 
     @Test
@@ -78,8 +101,8 @@ class SpawnShapeTest {
     }
 
     @Test
-    void bountySharesSumToExactlyOneNormalSpawnsBountyEvenWhenItDoesNotDivideEvenly() {
-        int[] shares = SpawnShape.swarm(3).bountyShares(10);
+    void bountySharesSumToExactlyTheHealthSentEvenWhenItDoesNotDivideEvenly() {
+        int[] shares = sharingOneSpawnsHealth(3).bountyShares(10);
 
         assertThat(shares).hasSize(3);
         assertThat(shares).containsExactly(4, 3, 3);
@@ -99,9 +122,13 @@ class SpawnShapeTest {
     @Test
     void bountySharesSumExactlyAcrossEveryMemberCountUpToTheMaximum() {
         for (int members = 1; members <= SpawnShape.MAX_MEMBERS; members++) {
-            int[] shares = SpawnShape.swarm(members).bountyShares(37);
+            int[] shares = sharingOneSpawnsHealth(members).bountyShares(37);
             assertThat(sum(shares)).isEqualTo(37);
         }
+    }
+
+    private static SpawnShape sharingOneSpawnsHealth(int members) {
+        return new SpawnShape(members, 1f, 1f, 1f / members, 1f, SpawnSpread.NONE, 0.0);
     }
 
     private static int sum(int[] values) {

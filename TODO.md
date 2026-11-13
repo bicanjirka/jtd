@@ -502,6 +502,16 @@ A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s
 
 ## Enemy features
 
+### A swarm's scatter ignores how big its members are
+
+A swarm's members scatter within one fixed radius whatever their size, so a small swarm of a big-bodied enemy
+overlaps into one clump: its members are larger than a big swarm's and get no more room. The body size is right
+(it shows the health there is to remove); the room is what is missing.
+
+- **Where:** `Wave` (the radius it hands `SpawnSpread.offsetFor`), `SpawnShape.swarm`.
+- **Approach:** widen the scatter radius with the member's size instead of shrinking the bodies, held to what the
+  path's width allows. Judge it on a `PreviewBoard` render of a small and a full swarm of every body.
+
 ### Enemy traits/abilities numbers are unbalanced placeholders
 
 Every number introduced by the data-driven enemy model - `ArmorTrait`/

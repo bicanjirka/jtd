@@ -97,16 +97,12 @@ class WaveTest {
     }
 
     @Test
-    void aSwarmSlotSplitsBountyExactlyAcrossItsMembersSummingToOneNormalSpawn() {
+    void aSwarmSlotPaysEachMemberItsShapesShareOfOneNormalSpawnsBounty() {
         EnemyMob normal = wave("walker").spawn()[0];
         EnemyMob[] swarm = wave("swarm 3 walker").spawn();
 
-        assertThat(swarm).hasSize(3);
-        int totalBounty = 0;
-        for (EnemyMob member : swarm) {
-            totalBounty += member.getBounty();
-        }
-        assertThat(totalBounty).isEqualTo(normal.getBounty());
+        assertThat(swarm).extracting(EnemyMob::getBounty)
+                .containsExactly(Arrays.stream(SpawnShape.swarm(3).bountyShares(normal.getBounty())).boxed().toArray(Integer[]::new));
     }
 
     @Test
