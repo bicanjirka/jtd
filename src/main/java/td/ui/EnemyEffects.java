@@ -392,7 +392,8 @@ final class EnemyEffects {
     static void paintTint(Graphics2D g2, EnemyTintDraw tint) {
         AffineTransform save = g2.getTransform();
         Stroke stroke = g2.getStroke();
-        g2.translate(tint.x(), tint.y());
+        // The tint lies on the body's top, which hops and hovers with it.
+        g2.translate(tint.x(), tint.y() - EnemySprites.lift(tint.body(), tint.x(), tint.y(), tint.scale()));
         g2.rotate(tint.facingRadians());
         Shape body = EnemyLooks.of(tint.body()).body().at(tint.scale());
         switch (tint.tint()) {

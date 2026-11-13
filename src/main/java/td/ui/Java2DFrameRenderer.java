@@ -163,15 +163,30 @@ public final class Java2DFrameRenderer {
     private static final float AFFIX_PIP_SYMBOL_SHARE = 0.8f;
     private static final int EFFECT_PULSE_ALPHA = 130;
     private static final float EFFECT_PULSE_STROKE_WIDTH = 1.2f;
+    /** How tall a tower's body stands, as a share of its size. */
+    private static final float TOWER_HEIGHT = 0.3f;
+    private static final float STANDING_ONE_STEP_HEIGHT = 3f;
+    /** The lit rim's width, as a share of the height it belongs to. */
+    private static final float STANDING_RIM = 0.3f;
+    private static final float STANDING_RIM_MIN = 1f;
     private static final float PROJECTILE_SIZE = 5f;
     private static final float SHELL_STREAK_ALPHA = 0.5f;
+    /** How much of a shell's radius the lit part keeps; the rest is its shaded edge, bottom right. */
+    private static final float SHELL_LIT_SHARE = 0.78f;
+    private static final float SHELL_GLINT_SHARE = 0.28f;
     private static final int ZONE_FILL_ALPHA = 80;
     private static final int ZONE_EDGE_ALPHA = 170;
     /** Round caps, so the arcs of a patch's outline join without a notch where two rims cross. */
     private static final Stroke ZONE_EDGE_STROKE = new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
     private static final int ZONE_FLAMES = 6;
     private static final int ZONE_BUBBLES = 3;
-    private static final int ZONE_CRYSTAL_ARMS = 3;
+    private static final int ZONE_CRYSTALS = 5;
+    private static final Tones ZONE_ICE = Tones.of(new Color(170, 225, 255));
+    private static final Color ZONE_FLAME_OUTER = new Color(255, 130, 40);
+    private static final Color ZONE_FLAME_HEART = new Color(255, 220, 90);
+    private static final Tones ZONE_MINE_CASING = Tones.of(new Color(72, 74, 88));
+    private static final Color ZONE_MINE_LIT = new Color(255, 70, 70);
+    private static final Color ZONE_MINE_UNLIT = new Color(110, 30, 30);
     private static final int ZONE_FALLOUT_BLADES = 3;
     /** How far toward white the innermost Stoke core goes. */
     private static final float CINDER_CORE_BRIGHTEN = 0.8f;
@@ -494,7 +509,7 @@ public final class Java2DFrameRenderer {
             case TOWER_PULSE_WELL -> withAlpha(new Color(20, 30, 120), 60);
             case TOWER_MORTAR_RANGING -> new Color(255, 190, 90);
             case ZONE_BURNING -> new Color(255, 120, 30);
-            case ZONE_TAR -> new Color(35, 28, 25);
+            case ZONE_TAR -> new Color(98, 82, 116);
             case ZONE_FROST -> new Color(170, 225, 255);
             case ZONE_FALLOUT -> new Color(150, 220, 60);
             case ZONE_MINE -> new Color(255, 60, 60);
@@ -722,6 +737,7 @@ public final class Java2DFrameRenderer {
         }
     }
 
+    /** Tongues of flame that rise up the screen, each an outer flame with a hotter heart, flickering. */
     private void paintZoneFlames(Graphics2D g2, ZoneDraw zone, float fade) {
         for (int i = 0; i < ZONE_FLAMES; i++) {
             double angle = i * 2 * Math.PI / ZONE_FLAMES + i;
@@ -730,9 +746,23 @@ public final class Java2DFrameRenderer {
             float size = zone.radius() * (0.12f + 0.12f * flicker);
             float fx = zone.centerX() + (float) Math.cos(angle) * distance;
             float fy = zone.centerY() + (float) Math.sin(angle) * distance;
-            g2.setColor(withAlpha(new Color(255, 200, 60), Math.round(200 * flicker * fade)));
-            g2.fill(new Ellipse2D.Float(fx - size, fy - size * 1.4f, size * 2, size * 2.8f));
+            int alpha = Math.round(230 * (0.45f + 0.55f * flicker) * fade);
+            g2.setColor(withAlpha(ZONE_FLAME_OUTER, alpha));
+            g2.fill(flameTongue(fx, fy, size));
+            g2.setColor(withAlpha(ZONE_FLAME_HEART, alpha));
+            g2.fill(flameTongue(fx, fy, size * 0.55f));
         }
+    }
+
+    /** A flame standing on {@code baseY}: round at its foot, drawn up to a point. */
+    private static Shape flameTongue(float x, float baseY, float size) {
+        Path2D.Float tongue = new Path2D.Float();
+        tongue.moveTo(x, baseY - size * 2.6f);
+        tongue.quadTo(x + size * 1.3f, baseY - size * 0.9f, x + size * 0.75f, baseY - size * 0.2f);
+        tongue.quadTo(x, baseY + size * 0.5f, x - size * 0.75f, baseY - size * 0.2f);
+        tongue.quadTo(x - size * 1.3f, baseY - size * 0.9f, x, baseY - size * 2.6f);
+        tongue.closePath();
+        return tongue;
     }
 
     private void paintZoneTarGloss(Graphics2D g2, ZoneDraw zone, float fade) {
@@ -759,15 +789,23 @@ public final class Java2DFrameRenderer {
         }
     }
 
-    /** A dark casing with a red light that blinks. */
+    /** A dark casing standing on the ground, with a red light that blinks. */
     private void paintZoneMine(Graphics2D g2, ZoneDraw zone, float fade) {
         float r = zone.radius() * 0.45f;
-        g2.setColor(withAlpha(new Color(40, 40, 50), Math.round(230 * fade)));
-        g2.fill(new Ellipse2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2));
+        Composite composite = g2.getComposite();
+        AffineTransform save = g2.getTransform();
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.clamp(fade, 0f, 1f)));
+        g2.translate(zone.centerX(), zone.centerY());
+        Shape casing = new Ellipse2D.Float(-r, -r, r * 2, r * 2);
+        paintStanding(g2, casing, ZONE_MINE_CASING, 0, r * 0.45f);
+        g2.setColor(ZONE_MINE_CASING.body());
+        g2.fill(casing);
         boolean lit = Math.sin(zone.phase() * 8) > 0;
         float light = r * 0.4f;
-        g2.setColor(withAlpha(lit ? new Color(255, 70, 70) : new Color(110, 30, 30), Math.round(255 * fade)));
-        g2.fill(new Ellipse2D.Float(zone.centerX() - light, zone.centerY() - light, light * 2, light * 2));
+        g2.setColor(lit ? ZONE_MINE_LIT : ZONE_MINE_UNLIT);
+        g2.fill(new Ellipse2D.Float(-light, -light, light * 2, light * 2));
+        g2.setTransform(save);
+        g2.setComposite(composite);
     }
 
     /** Wisps that drift round the middle. */
@@ -783,15 +821,39 @@ public final class Java2DFrameRenderer {
         }
     }
 
+    /** Shards of ice standing on the frost, each lit on its left face. */
     private void paintZoneCrystals(Graphics2D g2, ZoneDraw zone, float fade) {
-        g2.setColor(withAlpha(new Color(235, 250, 255), Math.round(170 * fade)));
-        float r = zone.radius() * 0.7f;
-        for (int i = 0; i < ZONE_CRYSTAL_ARMS; i++) {
-            double angle = i * Math.PI / ZONE_CRYSTAL_ARMS;
-            float dx = (float) Math.cos(angle) * r;
-            float dy = (float) Math.sin(angle) * r;
-            g2.draw(new Line2D.Float(zone.centerX() - dx, zone.centerY() - dy, zone.centerX() + dx, zone.centerY() + dy));
+        Composite composite = g2.getComposite();
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.clamp(fade, 0f, 1f)));
+        for (int i = 0; i < ZONE_CRYSTALS; i++) {
+            double angle = i * 2 * Math.PI / ZONE_CRYSTALS + 0.6;
+            float distance = zone.radius() * (i % 2 == 0 ? 0.55f : 0.22f);
+            float x = zone.centerX() + (float) Math.cos(angle) * distance;
+            float y = zone.centerY() + (float) Math.sin(angle) * distance;
+            float size = zone.radius() * (0.16f + 0.05f * (i % 3));
+            g2.setColor(ZONE_ICE.shade());
+            g2.fill(iceShard(x, y, size, 1f));
+            g2.setColor(ZONE_ICE.body());
+            g2.fill(iceShard(x, y, size, 0f));
+            g2.setColor(ZONE_ICE.highlight());
+            g2.fill(iceShard(x, y, size, -1f));
         }
+        g2.setComposite(composite);
+    }
+
+    /** One face of a shard whose foot is at {@code x, y}: the left face, the right face, or both as one. */
+    private static Shape iceShard(float x, float y, float size, float face) {
+        Path2D.Float shard = new Path2D.Float();
+        shard.moveTo(x + size * 0.1f, y - size * 2.2f);
+        if (face >= 0f) {
+            shard.lineTo(x + size * 0.6f, y - size * 0.6f);
+        }
+        shard.lineTo(x, y + size * 0.3f);
+        if (face <= 0f) {
+            shard.lineTo(x - size * 0.55f, y - size * 0.5f);
+        }
+        shard.closePath();
+        return shard;
     }
 
     /** One-pixel lines on each cell's right and bottom edge only, so neighbours share one line. */
@@ -903,21 +965,30 @@ public final class Java2DFrameRenderer {
     }
 
     private void paintEnemyBody(Graphics2D g2, EnemyBodyDraw body) {
-        EnemyLooks.Row row = EnemyLooks.of(body.look());
-        AffineTransform save = g2.getTransform();
-        g2.translate(body.x(), body.y());
-        g2.rotate(body.facingRadians());
-        Shape shape = row.body().at(body.scale());
-        float visibility = 1f - body.cloakProgress();
-        g2.setColor(scaleAlpha(row.color(), visibility));
-        g2.draw(shape);
-        g2.fill(shape);
-        if (row.detail().isPresent()) {
-            EnemyLooks.Detail detail = row.detail().get();
-            g2.setColor(scaleAlpha(detail.color(), visibility));
-            g2.fill(detail.shape().at(body.scale()));
+        EnemySprites.paint(g2, body);
+    }
+
+    /**
+     * What makes a flat shape stand on the board, painted under its top: its side, falling straight down the screen
+     * whichever way the shape faces, and a lit rim along its top-left edge. The caller is at the shape's centre.
+     */
+    private static void paintStanding(Graphics2D g2, Shape top, Tones tones, double facingRadians, float height) {
+        AffineTransform centre = g2.getTransform();
+        g2.setColor(tones.shade());
+        // A low side is one copy of the top; a taller one needs a copy between, or a thin shape would leave a gap.
+        int steps = height > STANDING_ONE_STEP_HEIGHT ? 2 : 1;
+        for (int step = steps; step >= 1; step--) {
+            g2.translate(0, height * step / steps);
+            g2.rotate(facingRadians);
+            g2.fill(top);
+            g2.setTransform(centre);
         }
-        g2.setTransform(save);
+        float rim = Math.max(STANDING_RIM_MIN, height * STANDING_RIM);
+        g2.setColor(tones.highlight());
+        g2.translate(-rim, -rim);
+        g2.rotate(facingRadians);
+        g2.fill(top);
+        g2.setTransform(centre);
     }
 
     /** Drawn upright above the body, never rotated with it. */
@@ -1473,8 +1544,11 @@ public final class Java2DFrameRenderer {
     /** Draws a tower body at the origin; the caller has translated to the tower's centre. */
     private void paintTowerBody(Graphics2D g2, Palette palette, float size) {
         Color color = colorFor(palette);
-        g2.setColor(withAlpha(color, 130));
-        g2.fill(towerBodyShape(palette, size));
+        Tones tones = Tones.of(color);
+        Shape body = towerBodyShape(palette, size);
+        paintStanding(g2, body, tones, 0, size * TOWER_HEIGHT);
+        g2.setColor(tones.shade());
+        g2.fill(body);
         g2.setColor(color);
         g2.fill(towerBodyOutline(palette, size));
     }
@@ -1647,7 +1721,16 @@ public final class Java2DFrameRenderer {
             g2.draw(new Line2D.Float(shell.tailX(), shell.tailY(), shell.x(), shell.y()));
             g2.setStroke(defaultStroke);
         }
-        this.paintFilledCircle(g2, shell.palette(), shell.x(), shell.y(), radius);
+        Tones tones = Tones.of(colorFor(shell.palette()));
+        g2.setColor(tones.shade());
+        g2.fill(new Ellipse2D.Float(shell.x() - radius, shell.y() - radius, radius * 2, radius * 2));
+        float lit = radius * SHELL_LIT_SHARE;
+        float shift = radius - lit;
+        g2.setColor(tones.body());
+        g2.fill(new Ellipse2D.Float(shell.x() - radius, shell.y() - radius, lit * 2 + shift, lit * 2 + shift));
+        float glint = radius * SHELL_GLINT_SHARE;
+        g2.setColor(tones.highlight());
+        g2.fill(new Ellipse2D.Float(shell.x() - radius * 0.62f, shell.y() - radius * 0.62f, glint * 2, glint * 2));
     }
 
     private void paintMissile(Graphics2D g2, MissileDraw missile) {
