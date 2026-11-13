@@ -11,10 +11,6 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
-- **Balance before the next-gen towers** (`docs/features/FEATURE-balance-before-next-gen-towers.md`): what the
-  measured pass over enemies, bounties and waves left open: reinforcements on a timer pay nothing, a sturdier
-  insulated Relay, more magic resist on the Magma, the Yeti and the Relay on more levels, and the Templar, a classic
-  magic-resist enemy. Decided; in progress.
 - **Balance after the next-gen towers** (`docs/features/FEATURE-balance-after-next-gen-towers.md`): the second pass,
   played by the built towers: the game's absolute difficulty, the floor and ceiling in play, lives, the bosses.
   Request written; waits for the towers.
