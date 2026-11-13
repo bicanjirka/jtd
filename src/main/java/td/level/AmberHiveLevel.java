@@ -46,7 +46,7 @@ final class AmberHiveLevel {
     private static final String LEVEL_NAME = "The Amber Hive";
     private static final String LEVEL_DESCRIPTION = "A trail coils through a comb of amber cells. The brood marches "
             + "together - pick it apart, or it will not fall. The Warden walks last.";
-    private static final int STARTING_CREDITS = 60;
+    private static final int STARTING_CREDITS = 80;
     private static final int STARTING_LIVES = 5;
 
     /** A Walker that never walks alone: tougher for every ally beside it. */
@@ -145,31 +145,22 @@ final class AmberHiveLevel {
                             new Point(13, 3), new Point(11, 4), new Point(10, 6), new Point(10, 8),
                             new Point(6, 8), new Point(6, 3), new Point(7, 2), new Point(11, 2), new Point(11, -1)),
                     List.of(
-                            new WaveDefinition("column 8 drone 2 e column 6 drone").withClearBonus(5),
-                            new WaveDefinition("3 larva 2 e column 6 drone e 3 larva").withClearBonus(5),
-                            new WaveDefinition("column 6 drone e hiveGuard e column 6 drone e hiveGuard")
-                                    .withClearBonus(5),
-                            new WaveDefinition("soldier: broodNurse column 6 drone 2 e broodNurse column 6 drone e 2 hiveGuard")
-                                    .withClearBonus(5),
-                            new WaveDefinition("soldier: drip 6 larva e swarm 12 mite e drip 4 larva").withClearBonus(5),
-                            new WaveDefinition("soldier: 2 taunting hiveGuard broodNurse 2 hiveGuard 2 e column 8 drone")
-                                    .withClearBonus(5),
-                            new WaveDefinition("soldier: line 3 hornet 2 e column 8 drone 2 e line 3 hornet")
-                                    .withClearBonus(5),
-                            new WaveDefinition("w30 veteran: 6 larva e 3 hiveGuard broodNurse e 6 larva").withClearBonus(5),
-                            new WaveDefinition("soldier: swarm 12 mite e column 10 drone e swarm 12 mite e veteran broodNurse column 10 drone").withClearBonus(5),
-                            new WaveDefinition("veteran: elite hiveGuard 2 broodNurse e column 8 drone e 4 hornet")
-                                    .withClearBonus(5),
-                            new WaveDefinition("veteran: drip 8 larva e elite broodNurse column 12 drone e drip 6 larva")
-                                    .withClearBonus(5),
-                            new WaveDefinition("veteran: column 12 drone e 2 elite hiveGuard elite broodNurse e column 12 drone e 6 hornet").withClearBonus(5),
-                            new WaveDefinition("veteran: line 4 hornet e line 4 hornet e elite hornet e swarm 12 mite e line 4 hornet").withClearBonus(5),
-                            new WaveDefinition("elite: column 3 hiveGuard 2 broodNurse e column 12 drone e drip 8 larva")
-                                    .withClearBonus(5),
-                            new WaveDefinition("elite: column 12 drone e boss commanding broodNurse 2 hiveGuard e 8 hornet e drip 8 larva")
-                                    .withClearBonus(5),
-                            new WaveDefinition("boss: warden 8 e elite column 10 drone e elite broodNurse e column 10 drone")
-                                    .withClearBonus(5)),
+                            new WaveDefinition("column 8 drone 2 e column 6 drone"),
+                            new WaveDefinition("soldier: 3 larva 2 e column 6 drone e 3 larva"),
+                            new WaveDefinition("w12 soldier: column 6 drone e hiveGuard e column 6 drone e hiveGuard"),
+                            new WaveDefinition("w12 soldier: broodNurse column 8 drone 2 e broodNurse column 8 drone e 3 hiveGuard"),
+                            new WaveDefinition("veteran: drip 6 larva e swarm 12 mite e drip 4 larva"),
+                            new WaveDefinition("w12 veteran: 2 taunting hiveGuard broodNurse 2 hiveGuard 2 e column 8 drone"),
+                            new WaveDefinition("w12 veteran: line 4 hornet 2 e column 10 drone 2 e line 4 hornet e swarm 12 mite"),
+                            new WaveDefinition("w12 veteran: 6 larva e 3 hiveGuard broodNurse e 6 larva e swarm 12 mite e 4 hornet"),
+                            new WaveDefinition("veteran: swarm 12 mite e column 10 drone e swarm 12 mite e elite broodNurse column 10 drone"),
+                            new WaveDefinition("w12 veteran: 2 elite hiveGuard 2 broodNurse e column 10 drone e 6 hornet e swarm 12 mite e elite column 6 drone"),
+                            new WaveDefinition("veteran: drip 8 larva e elite broodNurse elite column 6 drone e column 8 drone e drip 6 larva e 4 elite larva e elite line 3 hornet"),
+                            new WaveDefinition("w12 veteran: column 12 drone e 3 elite hiveGuard elite broodNurse e elite column 6 drone e 6 hornet e elite line 3 hornet").withClearBonus(10),
+                            new WaveDefinition("w12 veteran: line 4 hornet e elite line 4 hornet e 2 elite hornet e swarm 12 mite e line 4 hornet e elite line 4 hornet"),
+                            new WaveDefinition("w12 elite: column 3 hiveGuard 2 broodNurse e column 12 drone e drip 8 larva e line 4 hornet"),
+                            new WaveDefinition("w12 elite: column 12 drone e boss commanding broodNurse 2 hiveGuard e 8 hornet e drip 8 larva e swarm 12 mite"),
+                            new WaveDefinition("elite: warden 8 e column 10 drone e broodNurse e column 10 drone")),
                     SMOOTHING)
             .withColor(HONEY_COLOR);
 

@@ -52,7 +52,7 @@ final class RiftLevel {
     private static final String LEVEL_NAME = "The Rift";
     private static final String LEVEL_DESCRIPTION = "Something has torn the board open. Nothing comes from where you "
             + "expect it to.";
-    private static final int STARTING_CREDITS = 175;
+    private static final int STARTING_CREDITS = 155;
     private static final int STARTING_LIVES = 3;
 
     /** What a Mirage leaves where a shot missed it: no bounty, and stronger behind a stronger Mirage. */
@@ -132,17 +132,16 @@ final class RiftLevel {
                     List.of(
                             new WaveDefinition("6 walker e 2 knight e 4 walker"),
                             new WaveDefinition("4 walker eclipse 4 walker e 2 knight"),
-                            new WaveDefinition("column 4 knight e golem e 6 walker"),
+                            new WaveDefinition("column 4 knight e 2 golem e 6 walker"),
                             new WaveDefinition("mirage e 5 walker e mirage e 3 knight"),
                             new WaveDefinition("soldier: eclipse column 6 walker e golem e 2 yeti"),
                             new WaveDefinition("soldier: warding armored knight column 4 knight e eclipse ghost e 4 walker"),
-                            new WaveDefinition("soldier: 2 mirage e magma e eclipse column 6 walker e juggernaut"),
+                            new WaveDefinition("soldier: 2 mirage e magma e eclipse column 6 walker e juggernaut").withClearBonus(10),
                             new WaveDefinition("e"),
-                            new WaveDefinition("veteran: eclipse 2 ghost e juggernaut warding armored knight e 2 golem e jamming ghost"),
-                            new WaveDefinition("veteran: line 3 elusive mirage e eclipse column 6 knight e 2 magma"),
-                            new WaveDefinition("soldier: eclipse column 4 ghost e 2 juggernaut warding armored knight e veteran exalted golem e column 10 walker"),
-                            new WaveDefinition("veteran: elite eclipse column 6 knight e juggernaut warding armored knight e 3 mirage e jamming ghost e "
-                                    + "column 10 walker")),
+                            new WaveDefinition("veteran: eclipse 2 ghost e juggernaut warding armored knight e golem e jamming ghost").withClearBonus(60),
+                            new WaveDefinition("veteran: line 3 elusive mirage e eclipse column 4 knight e magma"),
+                            new WaveDefinition("soldier: eclipse column 4 ghost e 2 juggernaut warding armored knight e veteran exalted golem e column 10 walker").withClearBonus(95),
+                            new WaveDefinition("veteran: eclipse column 4 knight e warding armored knight e 2 mirage e jamming ghost e column 8 walker")),
                     SMOOTHING)
             .withColor(VIOLET_COLOR);
 
@@ -153,16 +152,16 @@ final class RiftLevel {
                     List.of(
                             new WaveDefinition("3 runner"),
                             new WaveDefinition("herald e 3 runner"),
-                            new WaveDefinition("swarm 8 mite e herald"),
-                            new WaveDefinition("2 herald e 4 runner"),
+                            new WaveDefinition("swarm 8 mite e 2 herald e 2 runner"),
+                            new WaveDefinition("2 herald e 5 runner e courier"),
                             new WaveDefinition("soldier: drip 3 herald e 3 runner"),
                             new WaveDefinition("soldier: mirage e swarm 12 mite"),
                             new WaveDefinition("soldier: drip 4 herald e 3 runner e mirage"),
                             new WaveDefinition("boss: monolith"),
-                            new WaveDefinition("veteran: swarm 12 mite e drip 3 herald"),
-                            new WaveDefinition("veteran: 2 mirage e eclipse 3 runner"),
+                            new WaveDefinition("veteran: swarm 12 mite e drip 2 herald"),
+                            new WaveDefinition("veteran: mirage e eclipse 3 runner"),
                             new WaveDefinition("soldier: drip 5 herald e veteran runner e swarm 12 mite"),
-                            new WaveDefinition("veteran: elite herald e 2 veteran herald e elite runner e 2 mirage")),
+                            new WaveDefinition("veteran: 2 herald e elite runner e mirage")),
                     SMOOTHING)
             .withColor(CYAN_COLOR)
             .withSpeed(1.1f);
@@ -180,10 +179,10 @@ final class RiftLevel {
                             new WaveDefinition("soldier: eclipse 3 knight e 2 walker"),
                             new WaveDefinition("soldier: 2 yeti e golem"),
                             new WaveDefinition("e"),
-                            new WaveDefinition("soldier: 3 salamander e magma"),
-                            new WaveDefinition("soldier: juggernaut warding armored knight e mender 3 knight"),
+                            new WaveDefinition("soldier: 2 salamander e magma"),
+                            new WaveDefinition("soldier: juggernaut warding armored knight e mender 2 knight"),
                             new WaveDefinition("veteran: eclipse 2 ghost e 2 regenerating yeti"),
-                            new WaveDefinition("veteran: elite eclipse column 4 knight e juggernaut")),
+                            new WaveDefinition("veteran: eclipse column 4 knight e golem")),
                     SMOOTHING)
             .withColor(GOLD_COLOR)
             .withSpeed(0.85f);

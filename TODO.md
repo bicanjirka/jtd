@@ -11,6 +11,13 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Tower visual revamp** (`docs/features/FEATURE-tower-visual-revamp.md`): every tower drawn as a foundation that
   shows its upgrades and a head that aims and fires, a calmer board, shots with flight. Draft: the Sniper and the
   Burst are written; the other six towers and the open questions remain before planning.
+- **Balance before the next-gen towers** (`docs/features/FEATURE-balance-before-next-gen-towers.md`): what the
+  measured pass over enemies, bounties and waves left open: reinforcements on a timer pay nothing, a sturdier
+  insulated Relay, more magic resist on the Magma, the Yeti and the Relay on more levels, and the Templar, a classic
+  magic-resist enemy. Decided; in progress.
+- **Balance after the next-gen towers** (`docs/features/FEATURE-balance-after-next-gen-towers.md`): the second pass,
+  played by the built towers: the game's absolute difficulty, the floor and ceiling in play, lives, the bosses.
+  Request written; waits for the towers.
 
 ## Feature request implementation order
 
@@ -350,18 +357,19 @@ player what kills paid before has to be read across two tables rather than swept
 - **Approach:** when the clear bonuses are tuned, try each table's income column first; add a two-knob grid only if
   that cannot find the pairing.
 
-### The three reworked levels are untuned
+### Waves and clear bonuses are tuned on paper, not in play
 
-The Amber Hive, The Storm Ridge and The Last Hour were rebuilt with new enemies, bosses and waves and have only been
-playtested by hand, not measured; the clear bonuses The Amber Hive and The Storm Ridge pay are placeholders too. Every
-figure for Curly Path, Zigzag Path or Twisted Hourglass elsewhere in this
-file was measured on the old levels.
+Every level's waves, starting credits and clear bonuses were set with `td.balance.WavePowerReport`, which prices a
+round against the paper tools' reference tower, so that each level's room follows one line with its gates below it
+(`docs/BALANCE.md`). No tower of the next generation has played them, and the bosses' rounds are estimates: the
+Warden's round asks for several times the credits the level has paid by then, and The Labyrinth's three long rounds
+pay while they run, which the report does not count.
 
-- **Where:** the wave scripts, starting credits and enemy numbers in `td.level.AmberHiveLevel`, `StormRidgeLevel`,
-  `LastHourLevel`, `WardenEnemy`, `StormTwinsEnemy` and `KeeperEnemy`.
-- **Approach:** after the playtests, `BalanceReport --levels 0,2,3 --seeds 12 --strong --variety`; retune by wave
-  composition first, then the bosses' numbers. Check that the bosses' counters (AoE against Hivemind, a kill zone
-  where the storm's lanes cross, a freeze, silence or heal denial against Rewind) show in the reports' purchases.
+- **Where:** the wave scripts, starting credits and clear bonuses in `td.level.*Level`; `WardenEnemy`,
+  `StormTwinsEnemy`, `KeeperEnemy` and the other bosses' numbers.
+- **Approach:** once the next-gen towers are in code, `BalanceReport --seeds 12 --strong --variety` per level and the
+  second pass in `docs/features/FEATURE-balance-after-next-gen-towers.md`: set the absolute difficulty, then the
+  bosses, then the clear bonuses again.
 
 ### The level-select screen fits six levels
 
@@ -511,12 +519,14 @@ the new-tower-numbers entry above) - 15 was negligible against any of them (0.37
 single hit), making the Warden's armor mechanically inert regardless of which tower fought it.
 
 - Heals are starting values from the stat-driven plan, meant to be visibly significant: the Mender's ally
-  heal (0.125 to 2 points a tick by rank) and self-heal (0.35 to 1.4), the Warden's neglect heal (15% of the
+  heal (0.15 to 2 points a tick by rank) and self-heal (0.35 to 1.4), the Warden's neglect heal (15% of the
   stage's health over 5 s), the Frenzied boss's threshold heal (1 a tick for 10 s) and the Frenzy
   Spawnling's death heal (0.5 a tick for 2 s).
 - Shields are absorb pools with starting values: the Warden's magic self-shield (10% of the stage's
   health), its half-health ally shield (60 points) and crit-survived shield (3% of the stage's health), the
-  Warding affix's ally shield (40 to 640 points by rank) and the Reaver's panic shield (10% of its health).
+  Warding affix's ally shield (40 to 640 points by rank) and the Reaver's panic shield (35 to 370 points by rank).
+- Every ranked enemy's health and bounty are no longer placeholders: they are weighed against the Walker
+  (`docs/BALANCE.md`). The numbers inside a trait or an ability, and every unique boss's, still are.
 - **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `ArmorTrait`,
   `HurtSpeedTrait`, `FlatResistTrait`.
 - **Approach:** play The Amber Hive through to the Warden encounter (and the other two levels,
