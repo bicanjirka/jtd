@@ -15,6 +15,7 @@ import td.enemy.SelfTarget;
 import td.fixtures.EnemyFixtures;
 import td.level.LevelDefinition;
 import td.stat.DisruptionAura;
+import td.wave.PathDefinition;
 import td.wave.Point;
 import td.wave.WaveDefinition;
 
@@ -44,6 +45,32 @@ class PowerBenchTest {
                 DamageMix.none(), 1L);
 
         assertThat(outcome.leaked()).isTrue();
+    }
+
+    @Test
+    void aLaterSpawnLengthensTheStreamNotTheWalk() {
+        PowerBench.Passage one = PowerBench.passage(PowerBench.lane(CONTENT, "plain"));
+        PowerBench.Passage two = PowerBench.passage(PowerBench.lane(CONTENT, "plain 3 e plain"));
+
+        assertThat(two.walkTicks()).isEqualTo(one.walkTicks());
+        assertThat(two.streamTicks()).isGreaterThan(one.streamTicks());
+    }
+
+    @Test
+    void aRoundThatSendsNothingHasNoPassage() {
+        assertThat(PowerBench.passage(PowerBench.lane(CONTENT, "e")).empty()).isTrue();
+    }
+
+    @Test
+    void oneLaneOfARoundLeavesTheOtherLanesEmpty() {
+        LevelDefinition twoLanes = LevelDefinition.of("Two", 3, 5, List.of(
+                        PathDefinition.of(List.of(new Point(-1, 1), new Point(3, 1)), List.of(new WaveDefinition("plain"))),
+                        PathDefinition.of(List.of(new Point(-1, 3), new Point(3, 3)), List.of(new WaveDefinition("plain")))))
+                .withCustomEnemies(List.of(PLAIN));
+
+        LevelDefinition alone = PowerBench.oneLane(twoLanes, 0, 1);
+
+        assertThat(alone.paths()).extracting(path -> path.waves().getFirst().enemies()).containsExactly("e", "plain");
     }
 
     @Test

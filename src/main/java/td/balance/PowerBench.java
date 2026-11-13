@@ -3,6 +3,7 @@ package td.balance;
 import td.GameEngine;
 import td.cell.CellGrid;
 import td.damage.DamageMix;
+import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.util.GameHost;
@@ -14,6 +15,7 @@ import td.wave.Vec2;
 import td.wave.WaveDefinition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.DoubleFunction;
 
@@ -37,6 +39,7 @@ final class PowerBench {
     private static final double TOLERANCE = 0.01;
     /** A cell this near a lane is one a tower would be built on. */
     private static final double BESIDE_CELLS = 1.6;
+    private static final String NOTHING = "e";
 
     private PowerBench() {
     }
@@ -57,14 +60,54 @@ final class PowerBench {
 
     /** {@code level} with only its round {@code round}, on every lane it has. */
     static LevelDefinition oneRound(LevelDefinition level, int round) {
-        List<PathDefinition> paths = level.paths().stream()
+        return rebuilt(level, level.paths().stream()
                 .map(path -> path.withWaves(List.of(new WaveDefinition(path.waves().get(round).enemies()))))
-                .toList();
+                .toList());
+    }
+
+    /** {@code level} with only what its round {@code round} sends down lane {@code lane}. */
+    static LevelDefinition oneLane(LevelDefinition level, int round, int lane) {
+        List<PathDefinition> paths = new ArrayList<>();
+        for (int i = 0; i < level.paths().size(); i++) {
+            PathDefinition path = level.paths().get(i);
+            paths.add(path.withWaves(List.of(new WaveDefinition(i == lane ? path.waves().get(round).enemies() : NOTHING))));
+        }
+        return rebuilt(level, paths);
+    }
+
+    private static LevelDefinition rebuilt(LevelDefinition level, List<PathDefinition> paths) {
         return LevelDefinition.of(level.name(), level.width(), level.height(), paths)
                 .withCustomEnemies(level.customEnemies())
                 .withCustomRankedEnemies(level.customRankedEnemies())
+                .withCardColor(level.cardColor())
+                .withGround(level.ground())
                 .withStartingCredits(0)
                 .withStartingLives(UNLIMITED_LIVES);
+    }
+
+    /** Lets {@code level}'s first round walk through with nothing in its way. */
+    static Passage passage(LevelDefinition level) {
+        GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(FIRST_SEED));
+        engine.loadLevel(level);
+        engine.requestNextWave();
+        int tick = 1;
+        int firstLeak = 0;
+        int lastSpawn = 1;
+        engine.doTick(tick);
+        long waiting = waiting(engine);
+        while (tick < TICK_BUDGET && !engine.isWaveReady() && !engine.outcome().isOver()) {
+            tick++;
+            engine.doTick(tick);
+            if (firstLeak == 0 && engine.getGameWorld().enemies().leaks() > 0) {
+                firstLeak = tick;
+            }
+            long still = waiting(engine);
+            if (still < waiting) {
+                lastSpawn = tick;
+            }
+            waiting = still;
+        }
+        return new Passage(firstLeak, firstLeak == 0 ? 0 : lastSpawn);
     }
 
     /**
@@ -118,6 +161,10 @@ final class PowerBench {
         return new Outcome(leaked, tick, engine.getGameWorld().economy().getCredits());
     }
 
+    private static long waiting(GameEngine engine) {
+        return Arrays.stream(engine.getGameWorld().enemies().getEnemies()).filter(EnemyMob::isInactive).count();
+    }
+
     /** The centres of the buildable cells beside a lane: where a defence would stand. */
     private static List<Vec2> emplacements(GameEngine engine) {
         int scale = engine.getGameWorld().getBoard().scale();
@@ -145,5 +192,18 @@ final class PowerBench {
      * @param credits what the kills paid
      */
     record Outcome(boolean leaked, int ticks, int credits) {
+    }
+
+    /**
+     * How a round walks a board nothing defends.
+     *
+     * @param walkTicks   when its first enemy got through; none when it sends nothing
+     * @param streamTicks when the last of it walked in
+     */
+    record Passage(int walkTicks, int streamTicks) {
+
+        boolean empty() {
+            return this.walkTicks == 0;
+        }
     }
 }
