@@ -78,7 +78,8 @@ magic).
 
 **Bounty = the Walker's bounty at that rank × blind power − what its spawns pay**, rounded (`paying`; the report's
 `fair` column). Within a rank it is linear in power; up the ranks it is sublinear because the Walker's is. The
-Courier is the deliberate exception: it pays far more than it weighs, as a prize for catching it. Reinforcements a
+Courier is the deliberate exception: it pays far more than it weighs, as a prize for catching it. A bounty never
+falls as rank rises, so the Relay, whose calls pay more of its share the higher it stands, holds its Soldier bounty. Reinforcements a
 caller sends on a timer pay nothing, so what a round pays is bounded; the Warden's Drones still pay.
 
 ### Where the table stands
