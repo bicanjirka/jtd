@@ -84,6 +84,8 @@ public enum Palette {
     PROJECTILE_TAR,
     PROJECTILE_FROST,
     PROJECTILE_NUKE,
+    /** The veil a lobbed shot casts on the ground: lighter than the floors, which are near black. */
+    PROJECTILE_SHADOW,
     /** The white flash and expanding ring a nuke lands in. */
     TOWER_MORTAR_NUKE_FLASH,
     PROJECTILE_MISSILE,

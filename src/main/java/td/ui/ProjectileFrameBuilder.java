@@ -23,12 +23,23 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
     /** A puff's radius in pixels when fresh, and how opaque it starts. */
     private static final float SMOKE_RADIUS = 2f;
     private static final float SMOKE_ALPHA = 0.5f;
+    /**
+     * The one pull on every lobbed shot, in cells per tick per tick: a shot that flies longer climbs higher,
+     * so every lob arcs alike whatever its speed and distance.
+     */
+    private static final float LOB_PULL_CELLS = 0.03f;
+    /** No lob climbs higher than this, in cells, so a slow shell stays on the board. */
+    private static final float LOB_TOP_CELLS = 2f;
+    /** At its peak the shadow is this much smaller than on the ground. */
+    private static final float SHADOW_SHRINK = 0.45f;
 
     private final List<ProjectileDraw> draws = new ArrayList<>();
     private final double interpolationAlpha;
+    private final int scale;
 
-    public ProjectileFrameBuilder(double interpolationAlpha) {
+    public ProjectileFrameBuilder(double interpolationAlpha, int scale) {
         this.interpolationAlpha = interpolationAlpha;
+        this.scale = scale;
     }
 
     private static float lerp(double from, double to, double alpha) {
@@ -59,13 +70,35 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         return this.draws;
     }
 
+    /**
+     * A lobbed shot flies its arc as if thrown up and pulled down: its peak grows with the square of its
+     * flight time.
+     */
+    private float peakOf(CannonballProjectile projectile) {
+        double ticks = projectile.distance() / projectile.stats().speed();
+        return (float) Math.min(LOB_TOP_CELLS * this.scale, LOB_PULL_CELLS * this.scale * ticks * ticks / 8);
+    }
+
+    /** How high a lob with this {@code peak} is over its ground point at {@code x, y}. */
+    private static float liftAt(CannonballProjectile projectile, float peak, double x, double y) {
+        double distance = projectile.distance();
+        double flown = distance > 0 ? Math.min(1, projectile.flownAt(x, y) / distance) : 1;
+        return (float) (peak * 4 * flown * (1 - flown));
+    }
+
     @Override
     public Void visitCannonball(CannonballProjectile projectile) {
         float x = lerp(projectile.getPrevX(), projectile.getX(), this.interpolationAlpha);
         float y = lerp(projectile.getPrevY(), projectile.getY(), this.interpolationAlpha);
+        float peak = this.peakOf(projectile);
+        float lift = liftAt(projectile, peak, x, y);
+        float shadowScale = peak > 0 ? 1f - SHADOW_SHRINK * lift / peak : 1f;
         boolean streak = projectile.stats().streak();
-        this.draws.add(new CannonballDraw(paletteFor(projectile.look()), x, y, projectile.stats().size(),
-                streak ? (float) projectile.getPrevX() : x, streak ? (float) projectile.getPrevY() : y));
+        float tailX = streak ? (float) projectile.getPrevX() : x;
+        float tailY = streak ? (float) projectile.getPrevY()
+                - liftAt(projectile, peak, projectile.getPrevX(), projectile.getPrevY()) : y - lift;
+        this.draws.add(new CannonballDraw(paletteFor(projectile.look()), x, y, lift, shadowScale,
+                projectile.stats().size(), tailX, tailY));
         return null;
     }
 

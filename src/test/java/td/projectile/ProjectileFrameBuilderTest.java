@@ -1,6 +1,7 @@
 package td.projectile;
 
 import org.junit.jupiter.api.Test;
+import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.ui.ProjectileFrameBuilder;
 import td.ui.render.CannonballDraw;
@@ -22,7 +23,7 @@ class ProjectileFrameBuilderTest {
         });
         shell.doTick(1); // prevX/Y = (0,0), x/y = (10,0)
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0.5);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0.5, BoardFixtures.SCALE);
         shell.accept(builder);
         List<ProjectileDraw> draws = builder.build();
 
@@ -32,13 +33,48 @@ class ProjectileFrameBuilderTest {
         assertThat(draw.y()).isEqualTo(0f);
     }
 
+    /** How high {@code shell} is drawn once it has flown {@code ticks} ticks. */
+    private static float liftAfter(CannonballProjectile shell, int ticks) {
+        for (int t = 1; t <= ticks; t++) {
+            shell.doTick(t);
+        }
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
+        shell.accept(builder);
+        return ((CannonballDraw) builder.build().getFirst()).lift();
+    }
+
+    private static CannonballProjectile lob(float distance, float speed) {
+        return new CannonballProjectile(0, 0, distance, 0, speed, (x, y) -> {
+        });
+    }
+
+    @Test
+    void aShellLeavesFromTheGroundAndIsHighestHalfwayOver() {
+        float lifted = liftAfter(lob(200, 10f), 5);
+        float halfway = liftAfter(lob(200, 10f), 10);
+        float leaving = liftAfter(lob(200, 10f), 0);
+
+        assertThat(leaving).isZero();
+        assertThat(lifted).isPositive();
+        assertThat(halfway).isGreaterThan(lifted);
+        assertThat(liftAfter(lob(200, 10f), 15)).isCloseTo(lifted, within(0.01f));
+    }
+
+    @Test
+    void aSlowerShellClimbsHigherOverTheSameGround() {
+        float fast = liftAfter(lob(100, 10f), 5);
+        float slow = liftAfter(lob(100, 5f), 10);
+
+        assertThat(slow).isGreaterThan(fast);
+    }
+
     @Test
     void aSpecialShellIsDrawnInItsLookAtItsSize() {
         CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f).withSize(2f),
                 ShellLook.FROST, (x, y) -> {
                 });
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
         shell.accept(builder);
 
         CannonballDraw draw = (CannonballDraw) builder.build().getFirst();
@@ -55,7 +91,7 @@ class ProjectileFrameBuilderTest {
 
         missile.doTick(1); // moves straight toward (0, 100), i.e. facing +Y
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
         missile.accept(builder);
         MissileDraw draw = (MissileDraw) builder.build().getLast();
 
@@ -73,7 +109,7 @@ class ProjectileFrameBuilderTest {
             missile.doTick(t);
         }
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
         missile.accept(builder);
         List<ProjectileDraw> draws = builder.build();
 

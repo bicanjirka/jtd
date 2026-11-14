@@ -139,6 +139,9 @@ public final class Java2DFrameRenderer {
     /** How much of a shell's radius the lit part keeps; the rest is its shaded edge, bottom right. */
     private static final float SHELL_LIT_SHARE = 0.78f;
     private static final float SHELL_GLINT_SHARE = 0.28f;
+    /** A shell's shadow on the ground, as wide as this many of the shell's radius and this much as tall. */
+    private static final float SHELL_SHADOW_WIDTH = 1.4f;
+    private static final float SHELL_SHADOW_FLATTENING = 0.55f;
     private static final int ZONE_FILL_ALPHA = 80;
     private static final int ZONE_EDGE_ALPHA = 170;
     /** Round caps, so the arcs of a patch's outline join without a notch where two rims cross. */
@@ -360,6 +363,7 @@ public final class Java2DFrameRenderer {
             case PROJECTILE_TAR -> new Color(75, 60, 90);
             case PROJECTILE_FROST -> new Color(170, 225, 255);
             case PROJECTILE_NUKE -> new Color(245, 245, 235);
+            case PROJECTILE_SHADOW -> new Color(0x6a, 0x70, 0x84, 150);
             case TOWER_MORTAR_NUKE_FLASH -> new Color(255, 255, 240);
             case PROJECTILE_MISSILE -> new Color(80, 180, 255);
             case PROJECTILE_SMOKE -> new Color(190, 200, 210);
@@ -1408,25 +1412,32 @@ public final class Java2DFrameRenderer {
         }
     }
 
+    /** The shadow on the ground, then the shell over it, lifted along its arc. */
     private void paintShell(Graphics2D g2, CannonballDraw shell) {
         float radius = PROJECTILE_SIZE * shell.size();
-        if (shell.tailX() != shell.x() || shell.tailY() != shell.y()) {
+        float shadowX = radius * SHELL_SHADOW_WIDTH * shell.shadowScale();
+        float shadowY = shadowX * SHELL_SHADOW_FLATTENING;
+        g2.setColor(colorFor(Palette.PROJECTILE_SHADOW));
+        g2.fill(new Ellipse2D.Float(shell.x() - shadowX, shell.y() - shadowY, shadowX * 2, shadowY * 2));
+        float x = shell.x();
+        float y = shell.y() - shell.lift();
+        if (shell.tailX() != x || shell.tailY() != y) {
             Stroke defaultStroke = g2.getStroke();
             g2.setColor(scaleAlpha(colorFor(shell.palette()), SHELL_STREAK_ALPHA));
             g2.setStroke(new BasicStroke(radius, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g2.draw(new Line2D.Float(shell.tailX(), shell.tailY(), shell.x(), shell.y()));
+            g2.draw(new Line2D.Float(shell.tailX(), shell.tailY(), x, y));
             g2.setStroke(defaultStroke);
         }
         Tones tones = Tones.of(colorFor(shell.palette()));
         g2.setColor(tones.shade());
-        g2.fill(new Ellipse2D.Float(shell.x() - radius, shell.y() - radius, radius * 2, radius * 2));
+        g2.fill(new Ellipse2D.Float(x - radius, y - radius, radius * 2, radius * 2));
         float lit = radius * SHELL_LIT_SHARE;
         float shift = radius - lit;
         g2.setColor(tones.body());
-        g2.fill(new Ellipse2D.Float(shell.x() - radius, shell.y() - radius, lit * 2 + shift, lit * 2 + shift));
+        g2.fill(new Ellipse2D.Float(x - radius, y - radius, lit * 2 + shift, lit * 2 + shift));
         float glint = radius * SHELL_GLINT_SHARE;
         g2.setColor(tones.highlight());
-        g2.fill(new Ellipse2D.Float(shell.x() - radius * 0.62f, shell.y() - radius * 0.62f, glint * 2, glint * 2));
+        g2.fill(new Ellipse2D.Float(x - radius * 0.62f, y - radius * 0.62f, glint * 2, glint * 2));
     }
 
     private void paintMissile(Graphics2D g2, MissileDraw missile) {
