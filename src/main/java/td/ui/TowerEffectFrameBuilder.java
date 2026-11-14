@@ -315,16 +315,16 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 DARK_RING_ALPHA * progress * (1f - progress) * 4f));
     }
 
-    /** The colours of a Splash's shot and blast: the fork it took tints both like its body. */
-    private record BlastLook(Palette beam, Palette flash, Palette detonation, Palette detonationDark) {
+    /** The colours of a Burst's blast: the fork it took tints it like its body. */
+    private record BlastLook(Palette flash, Palette detonation, Palette detonationDark) {
 
         static BlastLook of(SplashTower.Fork fork) {
             return switch (fork) {
-                case NONE -> new BlastLook(Palette.TOWER_SPLASH_BEAM, Palette.TOWER_SPLASH_FLASH,
+                case NONE -> new BlastLook(Palette.TOWER_SPLASH_FLASH,
                         Palette.TOWER_SPLASH_DETONATION, Palette.TOWER_SPLASH_DETONATION_DARK);
-                case STORMCALLER -> new BlastLook(Palette.TOWER_STORMCALLER_BEAM, Palette.TOWER_STORMCALLER_FLASH,
+                case STORMCALLER -> new BlastLook(Palette.TOWER_STORMCALLER_FLASH,
                         Palette.TOWER_STORMCALLER_DETONATION, Palette.TOWER_STORMCALLER_DETONATION_DARK);
-                case HEXER -> new BlastLook(Palette.TOWER_HEXER_BEAM, Palette.TOWER_HEXER_FLASH,
+                case HEXER -> new BlastLook(Palette.TOWER_HEXER_FLASH,
                         Palette.TOWER_HEXER_DETONATION, Palette.TOWER_HEXER_DETONATION_DARK);
             };
         }

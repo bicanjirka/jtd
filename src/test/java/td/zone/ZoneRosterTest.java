@@ -1,7 +1,6 @@
 package td.zone;
 
 import org.junit.jupiter.api.Test;
-import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -151,13 +150,14 @@ class ZoneRosterTest {
         FakeEnemyMob first = FakeEnemyMob.at(100, 100);
         FakeEnemyMob second = FakeEnemyMob.at(105, 100);
         List<EnemyMob> by = new ArrayList<>();
-        this.world.zones().add(Zone.mine(100, 100, 10, LIFETIME, this.owner, (mine, enemy) -> by.add(enemy)));
+        this.world.zones().add(Zone.wardMine(100, 100, 10, LIFETIME, this.owner, (mine, enemy) -> by.add(enemy)));
         this.world.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(500, 500)});
-        this.tick(1, 4);
+        int armed = Math.round(TickRate.TICKS_PER_SECOND) + 1;
+        this.tick(0, armed);
         this.world.enemies().setEnemies(new EnemyMob[]{first, second});
 
-        this.tick(4, 5);
-        this.tick(5, 20);
+        this.tick(armed, armed + 1);
+        this.tick(armed + 1, armed + 20);
 
         assertThat(by).containsExactly(first);
         assertThat(this.world.zones().zones()).isEmpty();
@@ -221,66 +221,14 @@ class ZoneRosterTest {
     void aMineIsLookedAtEveryTickNotOnlyOnAPulse() {
         FakeEnemyMob walker = FakeEnemyMob.at(500, 500);
         int[] goneOff = {0};
-        this.world.zones().add(Zone.mine(100, 100, 10, LIFETIME, this.owner, (mine, enemy) -> goneOff[0]++));
+        this.world.zones().add(Zone.wardMine(100, 100, 10, LIFETIME, this.owner, (mine, enemy) -> goneOff[0]++));
         this.world.enemies().setEnemies(new EnemyMob[]{walker});
-        this.tick(1, 3);
+        int armed = Math.round(TickRate.TICKS_PER_SECOND) + 1;
+        this.tick(0, armed + 2);
 
         walker.moveTo(100, 100);
-        this.tick(3, 4);
+        this.tick(armed + 2, armed + 3);
 
         assertThat(goneOff[0]).isEqualTo(1);
-    }
-
-    @Test
-    void aCursedCloudGivesEveryEnemyInsideTheEffectsItCarries() {
-        FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
-        FakeEnemyMob outside = FakeEnemyMob.at(100 + 5 * RADIUS, 100);
-        this.world.enemies().setEnemies(new EnemyMob[]{inside, outside});
-        this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
-                List.of(Effect.vulnerable(2, 80, DamageSink.none()))));
-
-        this.tick(1, 2);
-
-        assertThat(inside.activeEffectKinds()).contains(EffectKind.VULNERABLE);
-        assertThat(outside.activeEffectKinds()).isEmpty();
-    }
-
-    @Test
-    void aCursedCloudCountsTheDebuffsItCarriesDownWithItsOwnAge() {
-        FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
-        this.world.enemies().setEnemies(new EnemyMob[]{inside});
-        this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
-                List.of(Effect.vulnerable(2, 40, DamageSink.none()))));
-
-        this.tick(1, LIFETIME);
-
-        List<Effect> given = inside.appliedEffects();
-        assertThat(given).isNotEmpty();
-        assertThat(given).allMatch(effect -> effect.remainingTicks() <= 40);
-        assertThat(given.getLast().remainingTicks()).isLessThan(given.getFirst().remainingTicks());
-    }
-
-    @Test
-    void aCursedCloudStopsGivingADebuffOnceItsTimeIsUp() {
-        FakeEnemyMob inside = FakeEnemyMob.at(100, 100);
-        this.world.enemies().setEnemies(new EnemyMob[]{inside});
-        this.world.zones().add(Zone.cloud(100, 100, RADIUS, LIFETIME, this.owner,
-                List.of(Effect.vulnerable(2, 40, DamageSink.none()))));
-        this.tick(1, 41);
-        int givenWhileItLasted = inside.appliedEffects().size();
-
-        this.tick(41, LIFETIME);
-
-        assertThat(inside.appliedEffects()).hasSize(givenWhileItLasted);
-    }
-
-    @Test
-    void aTowerCanTakeAZoneOffTheBoard() {
-        Zone zone = this.zone(ZoneKind.TAR);
-        this.world.zones().add(zone);
-
-        this.world.zones().remove(zone);
-
-        assertThat(this.world.zones().zones()).isEmpty();
     }
 }

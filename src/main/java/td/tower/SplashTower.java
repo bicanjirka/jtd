@@ -246,7 +246,6 @@ public final class SplashTower extends AbstractTower {
     private final List<Blast> blasts = new ArrayList<>();
     private final List<Bolt> bolts = new ArrayList<>();
     private int tickNow;
-    private int lastThrowTick = Integer.MIN_VALUE / 2;
 
     public SplashTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SPLASH, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
@@ -330,7 +329,6 @@ public final class SplashTower extends AbstractTower {
         Vec2 to = new Vec2(target.getX(), target.getY());
         this.stones.add(new Stone(to, stats, charged, new Flight(this.tickNow,
                 this.tickNow + this.flightTicks(from, to, STONE_CELLS_PER_TICK))));
-        this.lastThrowTick = this.tickNow;
         this.clock.spend();
     }
 
@@ -571,11 +569,6 @@ public final class SplashTower extends AbstractTower {
         return List.copyOf(this.stones);
     }
 
-    /** The Arc's jumps on their way. */
-    public List<Hop> hopsInFlight() {
-        return this.hops.stream().map(PendingHop::hop).toList();
-    }
-
     /** The curses on their way. */
     public List<Curse> cursesInFlight() {
         return this.curses.stream().map(PendingCurse::curse).toList();
@@ -594,11 +587,6 @@ public final class SplashTower extends AbstractTower {
     /** The bolts that struck in the last few ticks: the Arc's jumps and the casts. */
     public List<Bolt> recentBolts() {
         return List.copyOf(this.bolts);
-    }
-
-    /** How many ticks ago it last threw. */
-    public int ticksSinceThrow(int gameTime) {
-        return gameTime - this.lastThrowTick;
     }
 
     public float getCoolDownFraction() {

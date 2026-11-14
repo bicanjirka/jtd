@@ -93,7 +93,6 @@ final class StatLooks {
             case STOKE_STEP, STOKE_GRACE -> StatLook.face(TermLooks.faceOf(TowerTerm.STOKE));
             case BURN_MARK_RATE -> StatLook.face(TermLooks.faceOf(EffectKind.SCORCHED));
             case FREEZE_DURATION -> StatLook.face(TermLooks.faceOf(EffectKind.FREEZE));
-            case SATURATION_CAP, SATURATION_INNER_STACKS -> StatLook.face(TermLooks.faceOf(EffectKind.SATURATED));
             case TOLL_CAP, TOLL_RATE, TOLL_LINGER -> StatLook.face(TermLooks.faceOf(EffectKind.TOLL));
             case WITHER_INTERVAL -> StatLook.face(TermLooks.faceOf(EffectKind.VULNERABLE));
             case PROJECTILE_SPEED, PROJECTILE_SIZE, WAVE_SPEED -> StatLook.plain(Glyph.COMET);

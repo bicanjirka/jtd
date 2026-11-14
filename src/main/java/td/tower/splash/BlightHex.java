@@ -22,7 +22,8 @@ public final class BlightHex implements Hex {
     /** The slow it has grown to when it ends, as it was cast. */
     private static final float SLOW_AT_END = 0.3f;
     private static final float POISON_SHARE = 0.03f;
-    private static final float SLOW_PER_TICK = SLOW_AT_END / (SECONDS * TickRate.TICKS_PER_SECOND);
+    /** How much its slow grows a tick, as cast. */
+    public static final float SLOW_PER_TICK = SLOW_AT_END / (SECONDS * TickRate.TICKS_PER_SECOND);
 
     @Override
     public EffectKind kind() {

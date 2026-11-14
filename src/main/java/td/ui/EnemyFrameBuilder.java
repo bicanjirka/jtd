@@ -165,15 +165,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case MARKED -> Palette.STATUS_MARKER_MARKED;
             case PRIORITY -> Palette.STATUS_MARKER_PRIORITY;
             case DAZED -> Palette.STATUS_MARKER_DAZED;
-            case SATURATED -> Palette.STATUS_MARKER_SATURATED;
             case CHARGED -> Palette.STATUS_MARKER_CHARGED;
             case DOOM -> Palette.STATUS_MARKER_DOOM;
             case BLIGHT -> Palette.STATUS_MARKER_BLIGHT;
-            case CONTAGION -> Palette.STATUS_MARKER_CONTAGION;
-            case MALAISE -> Palette.STATUS_MARKER_MALAISE;
             case INVERSION -> Palette.STATUS_MARKER_INVERSION;
-            case SYMPATHY -> Palette.STATUS_MARKER_SYMPATHY;
-            case RECKONING -> Palette.STATUS_MARKER_RECKONING;
             case SILENCED -> Palette.STATUS_MARKER_SILENCED;
             case ANCHORED -> Palette.STATUS_MARKER_ANCHORED;
             case UNRAVELED -> Palette.STATUS_MARKER_UNRAVELED;
@@ -563,11 +558,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return switch (kind) {
             case DOOM -> Optional.of(HexGlyph.DOOM);
             case BLIGHT -> Optional.of(HexGlyph.BLIGHT);
-            case CONTAGION -> Optional.of(HexGlyph.CONTAGION);
-            case MALAISE -> Optional.of(HexGlyph.MALAISE);
             case INVERSION -> Optional.of(HexGlyph.INVERSION);
-            case SYMPATHY -> Optional.of(HexGlyph.SYMPATHY);
-            case RECKONING -> Optional.of(HexGlyph.RECKONING);
             default -> Optional.empty();
         };
     }
@@ -576,13 +567,13 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     static Optional<EnemyDotLook> dotFor(EffectKind kind) {
         return switch (kind) {
             case VULNERABLE, SUNDERED, BRITTLE, CRACKED, TARRED, TOLL, CONDEMNED, STILLED,
-                 SATURATED, UNRAVELED -> Optional.of(EnemyDotLook.DEBUFF);
+                 UNRAVELED -> Optional.of(EnemyDotLook.DEBUFF);
             case EXPOSED, MARKED, PRIORITY, CHARGED -> Optional.of(EnemyDotLook.SPOTTED);
             case SPRINTING, HASTENED, SPELLPROOF, UNYIELDING, RESOLVE -> Optional.of(EnemyDotLook.BUFF);
             // Drawn on the enemy.
             case BURN, SOULFIRE, POISON, BLEEDING, HEAL, SHIELD, CHILL, FREEZE, DAZED, INVISIBLE -> Optional.empty();
             // A rune.
-            case DOOM, BLIGHT, CONTAGION, MALAISE, INVERSION, SYMPATHY, RECKONING -> Optional.empty();
+            case DOOM, BLIGHT, INVERSION -> Optional.empty();
             // The Info pane's, or the field on the ground says it.
             case SCORCHED, SICKENED, REVEALED, SILENCED, ANCHORED, CORRODED, DRAGGED, DEAD_ZONE,
                  FRAIL -> Optional.empty();

@@ -35,7 +35,6 @@ public final class Zone {
     private final int strength;
     private final ZoneOwner owner;
     private final ZoneTrigger trigger;
-    private final List<Effect> carried;
     private final DisruptionPenalty penalty;
     private final Map<EnemyMob, Integer> pulsesInside = new IdentityHashMap<>();
     /** How long the ground takes to clear once a wave is over. */
@@ -53,11 +52,11 @@ public final class Zone {
      */
     public Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, int strength, ZoneOwner owner) {
         this(kind, x, y, radius, lifetimeTicks, strength, owner, (mine, by) -> {
-        }, List.of(), DisruptionPenalty.none());
+        }, DisruptionPenalty.none());
     }
 
     private Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, int strength, ZoneOwner owner,
-                 ZoneTrigger trigger, List<Effect> carried, DisruptionPenalty penalty) {
+                 ZoneTrigger trigger, DisruptionPenalty penalty) {
         this.kind = kind;
         this.x = x;
         this.y = y;
@@ -66,46 +65,31 @@ public final class Zone {
         this.strength = strength;
         this.owner = owner;
         this.trigger = trigger;
-        this.carried = List.copyOf(carried);
         this.penalty = penalty;
-    }
-
-    /** A mine that {@code trigger} goes off the first time an enemy steps within {@code radius} of it. */
-    public static Zone mine(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner, ZoneTrigger trigger) {
-        return new Zone(ZoneKind.MINE, x, y, radius, lifetimeTicks, 0, owner, trigger, List.of(),
-                DisruptionPenalty.none());
     }
 
     /** A mine that {@code trigger} sets off, armed a moment after it is laid, for the enemy that steps on it. */
     public static Zone wardMine(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner,
                                 ZoneTrigger trigger) {
-        return new Zone(ZoneKind.WARD_MINE, x, y, radius, lifetimeTicks, 0, owner, trigger, List.of(),
-                DisruptionPenalty.none());
+        return new Zone(ZoneKind.WARD_MINE, x, y, radius, lifetimeTicks, 0, owner, trigger, DisruptionPenalty.none());
     }
 
     /** Ground that heals {@code unitsPerTick} (in damage units) each tick, for as long as an enemy stands on it. */
     public static Zone healing(double x, double y, float radius, int lifetimeTicks, int unitsPerTick, ZoneOwner owner) {
         return new Zone(ZoneKind.HEALING_GROUND, x, y, radius, lifetimeTicks, unitsPerTick, owner, (mine, by) -> {
-        }, List.of(), DisruptionPenalty.none());
+        }, DisruptionPenalty.none());
     }
 
     public static Zone haste(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner) {
         return new Zone(ZoneKind.HASTE_GROUND, x, y, radius, lifetimeTicks, 0, owner, (mine, by) -> {
-        }, List.of(), DisruptionPenalty.none());
+        }, DisruptionPenalty.none());
     }
 
     /** A field that jams every tower within {@code radius} by {@code penalty}. */
     public static Zone blinding(double x, double y, float radius, int lifetimeTicks, DisruptionPenalty penalty,
                                 ZoneOwner owner) {
         return new Zone(ZoneKind.BLINDING_FIELD, x, y, radius, lifetimeTicks, 0, owner, (mine, by) -> {
-        }, List.of(), penalty);
-    }
-
-    /** A cloud that gives every enemy inside the {@code carried} effects. */
-    public static Zone cloud(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner,
-                             List<Effect> carried) {
-        return new Zone(ZoneKind.CURSED_CLOUD, x, y, radius, lifetimeTicks, 0, owner, (mine, by) -> {
-        }, carried, DisruptionPenalty.none());
+        }, penalty);
     }
 
     public ZoneKind kind() {
@@ -186,7 +170,6 @@ public final class Zone {
     void touch(EnemyMob enemy) {
         int pulses = this.pulsesInside.merge(enemy, 1, Integer::sum);
         ZoneEffects.touch(this.kind, this.strength, this.owner, enemy);
-        this.carried.stream().flatMap(effect -> effect.afterTicks(this.ageTicks).stream()).forEach(enemy::applyEffect);
         if (this.kind == ZoneKind.FROST_GROUND && pulses >= FROST_PULSES_TO_FREEZE) {
             this.pulsesInside.put(enemy, 0);
             this.owner.applyEffect(enemy, sink -> Effect.freeze(FROST_FREEZE_TICKS, sink));

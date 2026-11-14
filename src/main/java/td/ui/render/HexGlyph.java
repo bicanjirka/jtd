@@ -6,14 +6,6 @@ public enum HexGlyph {
     DOOM,
     /** A drop: poison. */
     BLIGHT,
-    /** Three linked dots: it spreads to its neighbours. */
-    CONTAGION,
-    /** A clock: what weakens it lasts longer. */
-    MALAISE,
     /** A triangle turned on its head: what helps it hurts it. */
-    INVERSION,
-    /** Two linked rings: what one suffers, all suffer. */
-    SYMPATHY,
-    /** A ring with spokes: a burst when it dies. */
-    RECKONING
+    INVERSION
 }

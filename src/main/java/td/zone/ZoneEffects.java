@@ -46,7 +46,7 @@ public final class ZoneEffects {
             case FROST_GROUND -> owner.applyEffect(enemy, sink -> Effect.chill(FROST_CHILL, FROST_CHILL_TICKS, sink));
             case HEALING_GROUND -> owner.applyEffect(enemy, sink -> Effect.heal(strength, BOON_TICKS, sink));
             case HASTE_GROUND -> owner.applyEffect(enemy, sink -> Effect.hastened(BOON_TICKS, sink));
-            case MINE, CURSED_CLOUD, WARD_MINE, BLINDING_FIELD -> {
+            case WARD_MINE, BLINDING_FIELD -> {
             }
             case FALLOUT -> {
                 owner.applyEffect(enemy, sink -> Effect.sickened(FALLOUT_SICKENED_STACKS));

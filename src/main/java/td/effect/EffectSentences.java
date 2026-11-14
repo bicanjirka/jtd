@@ -6,9 +6,7 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.util.TickRate;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
 
 /** What each effect kind says about itself, every number read from its rule, the interaction tables or its constants. */
 final class EffectSentences {
@@ -58,23 +56,15 @@ final class EffectSentences {
                     .plus(", and a tower that picks one target picks it");
             case DAZED -> TermText.of("stops it and keeps its abilities from firing, like ").plus(EffectKind.FREEZE)
                     .plus("; ").plus(stoppedAgility(kind));
-            case SATURATED -> TermText.of("each stack makes a Burst's blasts hit it harder");
             case CHARGED -> TermText.of("the next hit on it from another tower lands "
                     + TermNumbers.percent(Effect.CHARGE_DISCHARGE_SHARE)
                     + " of that hit again as magic, twice that on a crit, for the tower that applied it");
             case DOOM -> TermText.of("when it ends, it takes a share of all the damage it took while it lasted");
-            case BLIGHT -> TermText.of("it has ").plus(EffectKind.POISON).plus(" for as long as this lasts");
-            case CONTAGION -> TermText.of("when it dies, its hexes and debuffs jump to the enemies nearest it");
-            case MALAISE -> changes(TermNumbers.signed(perStack(kind, EnemyStat.TENACITY)), EnemyStat.TENACITY)
-                    .plus(": its debuffs last longer");
+            case BLIGHT -> TermText.of("it has ").plus(EffectKind.POISON)
+                    .plus(" for as long as this lasts, and a slow that grows to its strongest as it ends");
             case INVERSION -> TermText.of("its ").plus(EnemyStat.REGENERATION)
                     .plus(" deals it damage instead of restoring health, and a ").plus(EffectKind.SHIELD)
                     .plus(" it receives strikes it instead");
-            case SYMPATHY -> TermText.of("once a second, its ")
-                    .plus(kinds(EffectKind::sharedBySympathy, " and "))
-                    .plus(" are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower");
-            case RECKONING -> TermText.of("when it dies, each ").plus(EffectKind.DOOM)
-                    .plus(" from the same tower near it releases at once and starts again");
             case SILENCED -> TermText.of("its abilities don't fire; abilities on death and auras still do");
             case ANCHORED -> TermText.of("holds ").plus(EnemyStat.MOVE_SPEED)
                     .plus(" to at most " + TermNumbers.percent(1f - kind.rule().slowPerStack())
@@ -170,10 +160,6 @@ final class EffectSentences {
 
     private static TermText earned(EffectKind pool) {
         return list(EffectInteractions.earnedBy(pool), " and ");
-    }
-
-    private static TermText kinds(Predicate<EffectKind> filter, String last) {
-        return list(Arrays.stream(EffectKind.values()).filter(filter).toList(), last);
     }
 
     /** "A", "A and B", "A, B and C": mentions with {@code last} before the final one. */

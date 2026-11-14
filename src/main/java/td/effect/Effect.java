@@ -174,13 +174,6 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return this.stackCap() > 0 ? this.stackCap() : this.kind.maxStacks();
     }
 
-    /**
-     * {@code stacks} more Saturation, on one shared clock any blast that catches the enemy refreshes;
-     * the stacks all go when it runs out.
-     */
-    public static Effect saturated(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.SATURATED, stacks, durationTicks, sink);
-    }
 
     /**
      * The next hit from any attacker other than {@code origin} discharges it, dealing extra magic

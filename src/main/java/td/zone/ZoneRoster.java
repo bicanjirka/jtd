@@ -50,11 +50,6 @@ public final class ZoneRoster {
         return Collections.unmodifiableList(this.zones);
     }
 
-    /** Takes {@code zone} off the board, as a tower does with a mine it replaces. */
-    public void remove(Zone zone) {
-        this.zones.remove(zone);
-    }
-
     public void clear() {
         this.zones.clear();
         this.clearing = false;
@@ -97,7 +92,7 @@ public final class ZoneRoster {
         Map<EnemyMob, Set<ZoneKind>> touched = new IdentityHashMap<>();
         List<Zone> ended = new ArrayList<>();
         for (Zone zone : this.zones) {
-            if (zone.kind() == ZoneKind.MINE || zone.kind() == ZoneKind.WARD_MINE) {
+            if (zone.kind() == ZoneKind.WARD_MINE) {
                 if (zone.isArmed()) {
                     this.stepOn(zone);
                 }

@@ -70,7 +70,7 @@ final class PerkPictograms {
             // Agony
             Map.entry("splash.agony", "=effect.vulnerable"),
             // Contagion
-            Map.entry("splash.contagion", "=effect.contagion"),
+            Map.entry("splash.contagion", "F O12 12 4.6 ; S M12 7V3.6 M12 17V20.4 M7.67 9.5L4.72 7.8 M16.33 14.5L19.28 16.2 M7.67 14.5L4.72 16.2 M16.33 9.5L19.28 7.8 ; F O12 3.2 1.7 O12 20.8 1.7 O4.38 7.6 1.7 O19.62 16.4 1.7 O4.38 16.4 1.7 O19.62 7.6 1.7"),
             // Chain Lightning
             Map.entry("splash.chain_lightning", "S M3 3.4L8.8 10L5.6 12.8L11.4 20.6 ; S M8.8 10L15 9L13 13L20.8 15.2 ; S M15 9L20.6 3.4 ; F O11.4 20.6 1.6 O20.8 15.2 1.6 O20.6 3.4 1.6"),
             // Wild Arc

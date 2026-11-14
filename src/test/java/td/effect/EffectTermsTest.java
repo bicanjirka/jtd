@@ -4,9 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.stat.EnemyStat;
 import td.term.TermNumbers;
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,12 +38,5 @@ class EffectTermsTest {
 
         assertThat(kind.describe().plain()).contains(TermNumbers.signedPercent(perStack))
                 .contains(kind.maxStacks() + " stacks");
-    }
-
-    @Test
-    void sympathyNamesEveryKindItShares() {
-        List<EffectKind> shared = Arrays.stream(EffectKind.values()).filter(EffectKind::sharedBySympathy).toList();
-
-        assertThat(EffectKind.SYMPATHY.describe().mentions()).containsExactlyElementsOf(shared);
     }
 }
