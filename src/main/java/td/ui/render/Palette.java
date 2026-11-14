@@ -27,12 +27,11 @@ public enum Palette {
     TOWER_UPGRADE_TIER_3,
     /** The one mark on a tower that has an upgrade it can buy now. */
     TOWER_UPGRADE_READY,
-    TOWER_SNIPER_BEAM,
     /** The Sniper's aim line, brighter with each Steady Aim stack. */
     TOWER_SNIPER_LASER,
     /** A Silver Rounds shot. */
     TOWER_SNIPER_SILVER,
-    /** A Transcendent Sniper's tracer. */
+    /** A bullet's head, and the whole streak of one that crit. */
     TOWER_SNIPER_TRACER,
     TOWER_SPLASH_BEAM,
     /** A blast's first flash. */

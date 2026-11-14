@@ -47,6 +47,7 @@ import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TowerStatusDraw;
+import td.ui.render.TracerDraw;
 import td.ui.render.ZoneArcDraw;
 import td.ui.render.ZoneDraw;
 import td.ui.render.ZonePatchDraw;
@@ -93,6 +94,10 @@ public final class Java2DFrameRenderer {
     private static final Color CELL_GRID_LINE = Hud.BORDER_DISABLED;
     /** A Ley Line's width, and the dash it is drawn with once the player has pinned it. */
     private static final float LEY_LINE_STROKE = 2f;
+    /** A tracer is drawn in this many pieces; its back end at this share of the opacity and width of its head. */
+    private static final int TRACER_PIECES = 6;
+    private static final float TRACER_TAIL_ALPHA = 0.25f;
+    private static final float TRACER_TAIL_WIDTH = 0.65f;
     private static final float[] LEY_LINE_DASH = {6f, 5f};
     private static final Color CELL_BLOCKED = new Color(39, 39, 40);
     /** An info-panel glyph for a stat nothing on the board marks. */
@@ -310,7 +315,6 @@ public final class Java2DFrameRenderer {
             case TOWER_UPGRADE_TIER_1 -> new Color(255, 200, 60);
             case TOWER_UPGRADE_TIER_2 -> new Color(200, 100, 255);
             case TOWER_UPGRADE_READY -> new Color(0x6e, 0xe0, 0x8a);
-            case TOWER_SNIPER_BEAM -> Color.GREEN;
             case TOWER_SNIPER_LASER -> new Color(255, 60, 60);
             case TOWER_SNIPER_SILVER -> new Color(170, 210, 255);
             case TOWER_SNIPER_TRACER -> Color.WHITE;
@@ -1272,6 +1276,7 @@ public final class Java2DFrameRenderer {
     private void paintTowerEffect(Graphics2D g2, TowerEffectDraw effect) {
         switch (effect) {
             case BeamDraw beam -> this.paintBeam(g2, beam);
+            case TracerDraw tracer -> this.paintTracer(g2, tracer);
             case LeyLineDraw line -> this.paintLeyLine(g2, line);
             case SplashDraw splash ->
                     this.paintFilledCircle(g2, splash.palette(), splash.centerX(), splash.centerY(), splash.radius());
@@ -1358,6 +1363,26 @@ public final class Java2DFrameRenderer {
         g2.setStroke(defaultStroke);
     }
 
+
+    /** The streak in short pieces, each brighter, wider and nearer the head colour than the one behind it. */
+    private void paintTracer(Graphics2D g2, TracerDraw tracer) {
+        Stroke defaultStroke = g2.getStroke();
+        Color tail = colorFor(tracer.tail());
+        Color head = colorFor(tracer.head());
+        float dx = tracer.toX() - tracer.fromX();
+        float dy = tracer.toY() - tracer.fromY();
+        for (int i = 0; i < TRACER_PIECES; i++) {
+            float share = i / (TRACER_PIECES - 1f);
+            float a = (float) i / TRACER_PIECES;
+            float b = (i + 1f) / TRACER_PIECES;
+            g2.setColor(scaleAlpha(Hud.mix(tail, head, share), tracer.alpha() * (TRACER_TAIL_ALPHA + (1f - TRACER_TAIL_ALPHA) * share)));
+            g2.setStroke(new BasicStroke(tracer.strokeWidth() * (TRACER_TAIL_WIDTH + (1f - TRACER_TAIL_WIDTH) * share),
+                    BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL));
+            g2.draw(new Line2D.Float(tracer.fromX() + dx * a, tracer.fromY() + dy * a,
+                    tracer.fromX() + dx * b, tracer.fromY() + dy * b));
+        }
+        g2.setStroke(defaultStroke);
+    }
 
     private void paintLeyLine(Graphics2D g2, LeyLineDraw line) {
         Stroke defaultStroke = g2.getStroke();

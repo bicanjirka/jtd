@@ -17,6 +17,7 @@ import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerStatusDraw;
+import td.ui.render.TracerDraw;
 import td.util.GameWorld;
 import td.wave.Path;
 import td.wave.Vec2;
@@ -26,7 +27,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Covers aura link beams and the disruption marker; the other effects are covered by {@code BoardRendererTest}. */
+/** Covers the tower effects {@code BoardRendererTest} leaves out. */
 class TowerEffectFrameBuilderTest {
 
     private static SplashTower splashWith(GameWorld context, String... nodes) {
@@ -144,6 +145,49 @@ class TowerEffectFrameBuilderTest {
 
         assertThat(builder.build()).singleElement().isInstanceOfSatisfying(TowerStatusDraw.class,
                 marker -> assertThat(marker.palette()).isEqualTo(Palette.DISRUPTION));
+    }
+
+    private static List<TracerDraw> tracersOf(SniperTower sniper, GameWorld context, int gameTime, double alpha) {
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, gameTime, alpha, 0.0);
+        sniper.accept(builder);
+        return builder.build().stream().filter(TracerDraw.class::isInstance).map(TracerDraw.class::cast).toList();
+    }
+
+    @Test
+    void aBulletsStreakRunsTowardItsEnemyAndReachesItOnlyAsItLands() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower sniper = new SniperTower(context, 3, 3);
+        FakeEnemyMob target = FakeEnemyMob.at(sniper.getX() + 100, sniper.getY());
+        context.enemies().setEnemies(new EnemyMob[]{target});
+        sniper.doTick(1);
+        int landsAt = sniper.bulletsInFlight().getFirst().landsAt();
+
+        TracerDraw fired = tracersOf(sniper, context, 1, 0.0).getFirst();
+        TracerDraw arriving = tracersOf(sniper, context, landsAt - 1, 0.99).getFirst();
+
+        assertThat(fired.toX()).isLessThan(arriving.toX());
+        assertThat(arriving.toX()).isLessThanOrEqualTo((float) target.getX());
+        assertThat(arriving.toX()).isGreaterThan((float) target.getX() - 2f);
+    }
+
+    @Test
+    void theStreakALandedBulletLeavesFadesLongBeforeTheReloadEnds() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower sniper = new SniperTower(context, 3, 3);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(sniper.getX() + 100, sniper.getY())});
+        sniper.doTick(1);
+        int landsAt = sniper.bulletsInFlight().getFirst().landsAt();
+        int tick = 2;
+        for (; tick <= landsAt; tick++) {
+            sniper.doTick(tick);
+        }
+        List<TracerDraw> landed = tracersOf(sniper, context, landsAt, 0.0);
+        for (; tracersOf(sniper, context, tick, 0.0).size() == 1; tick++) {
+            sniper.doTick(tick);
+        }
+
+        assertThat(landed).singleElement().extracting(TracerDraw::alpha).isEqualTo(1f);
+        assertThat(sniper.getCoolDownFraction()).isGreaterThan(0.5f);
     }
 
     @Test

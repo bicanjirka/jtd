@@ -12,6 +12,7 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -106,6 +107,26 @@ final class TowerSprites {
             int facing = Math.floorMod((int) Math.round(heading / (2 * Math.PI) * FACINGS), FACINGS);
             place(g2, board, plain, sprite(look, tier, facing, scale, device), centerX, centerY);
         }
+    }
+
+    /**
+     * Where a shot leaves {@code look}'s head turned to {@code heading}, in board pixels: the head's far end
+     * at its middle height, lifted as the head is drawn. A look with no head shoots from the top of its
+     * foundation.
+     */
+    static Point2D.Float muzzle(TowerLook look, int tier, float centerX, float centerY, int scale, double heading) {
+        double top = TowerFoundations.of(look, Math.clamp(tier, 0, TowerFoundations.TIERS - 1)).top();
+        double reach = 0;
+        double height = 0;
+        for (TowerFoundations.Part part : TowerFoundations.head(look).orElse(List.of())) {
+            double far = part.shape().getBounds2D().getMaxX();
+            if (far > reach) {
+                reach = far;
+                height = part.z0() + part.height() / 2;
+            }
+        }
+        return new Point2D.Float((float) (centerX + Math.cos(heading) * reach * scale),
+                (float) (centerY + Math.sin(heading) * reach * scale - LIFT * (top + height) * scale));
     }
 
     private static void place(Graphics2D g2, AffineTransform board, boolean plain, Sprite sprite, float x, float y) {
