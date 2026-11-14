@@ -11,7 +11,9 @@ import td.tower.Tower;
 import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
 import td.tower.mortar.BlastMark;
+import td.tower.splash.Passive;
 import td.ui.render.BeamDraw;
+import td.ui.render.CannonballDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.LeyLineDraw;
@@ -26,6 +28,7 @@ import td.ui.render.TowerLook;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
 import td.util.GameWorld;
+import td.wave.Vec2;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -49,6 +52,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     /** A bullet's streak is this share of the way from muzzle to enemy, and this wide, in cells. */
     private static final float TRACER_LENGTH = 0.45f;
     private static final float TRACER_WIDTH_CELLS = 0.028f;
+    /** How much of its way a curse, spark or soul in flight trails behind it. */
+    private static final float STREAK_SHARE = 0.25f;
     /** How long the streak a bullet leaves stays drawn once it has arrived: far less than a reload. */
     private static final float TRACER_FADE_TICKS = 4f;
     /** The Fourth Shot's bolt round its bullet: wider and fainter. */
@@ -230,10 +235,23 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * Each blast as a detonation that spreads as a ring to its edge and darkens as it grows, and each bolt that struck
-     * as jagged lightning.
+     * Each stone on its lob with its shadow under it, each blast as a detonation that spreads as a ring to its edge and
+     * darkens as it grows, each bolt that struck as jagged lightning, and each curse, spark and soul as a streak flying
+     * to where it lands.
      */
     public Void visitSplashTower(SplashTower tower) {
+        int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
+        for (SplashTower.Stone stone : tower.stonesInFlight()) {
+            this.stone(tower, tier, stone);
+        }
+        for (SplashTower.Curse curse : tower.cursesInFlight()) {
+            this.streak(Palette.TOWER_SPLASH_CAST, curse.from(), new Vec2(curse.target().getX(), curse.target().getY()),
+                    curse.flight());
+        }
+        for (SplashTower.Wisp wisp : tower.wispsInFlight()) {
+            Palette tone = wisp.passive() == Passive.STATIC ? Palette.TOWER_SPLASH_ARC : Palette.TOWER_SPLASH_CAST;
+            this.streak(tone, wisp.from(), new Vec2(tower.getX(), tower.getY()), wisp.flight());
+        }
         BlastLook look = BlastLook.of(tower.fork());
         for (SplashTower.Blast blast : tower.recentBlasts()) {
             float progress = (this.gameTime - blast.tick()) / DETONATION_TICKS;
@@ -250,11 +268,41 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                         (float) bolt.to().y(), i, 1f - progress);
             }
         }
-        for (SplashTower.Curse curse : tower.cursesInFlight()) {
-            this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_CAST, (float) curse.from().x(), (float) curse.from().y(),
-                    (float) curse.target().getX(), (float) curse.target().getY(), 2f, 1f));
-        }
         return null;
+    }
+
+    /** How far along its way something flying is now, between the last two ticks. */
+    private double flown(SplashTower.Flight flight) {
+        double now = this.gameTime + this.interpolationAlpha;
+        return Math.clamp((now - flight.firedAt()) / Math.max(1, flight.landsAt() - flight.firedAt()), 0, 1);
+    }
+
+    /**
+     * A stone over its point on the ground, lifted on the one lob every thrown shot shares, from the height of the arm
+     * that threw it.
+     */
+    private void stone(SplashTower tower, int tier, SplashTower.Stone stone) {
+        double flown = this.flown(stone.flight());
+        double heading = Math.atan2(stone.to().y() - tower.getY(), stone.to().x() - tower.getX());
+        Point2D.Float muzzle = TowerSprites.muzzle(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
+                TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale, heading);
+        float x = (float) (muzzle.x + (stone.to().x() - muzzle.x) * flown);
+        float y = (float) (tower.getY() + (stone.to().y() - tower.getY()) * flown);
+        float released = (float) ((y - (muzzle.y + (stone.to().y() - muzzle.y) * flown)));
+        float peak = ProjectileFrameBuilder.lobPeak(stone.flight().landsAt() - stone.flight().firedAt(), this.scale);
+        float lift = ProjectileFrameBuilder.lobLift(peak, flown) + released;
+        Palette tone = stone.charged() ? Palette.TOWER_SPLASH_ARC : Palette.PROJECTILE_CANNONBALL;
+        this.draws.add(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(lift - released, peak), 1f, x,
+                y - lift));
+    }
+
+    /** Something flying straight to where it lands, its streak trailing behind its head. */
+    private void streak(Palette tone, Vec2 from, Vec2 to, SplashTower.Flight flight) {
+        double flown = this.flown(flight);
+        double tail = Math.max(0, flown - STREAK_SHARE);
+        this.draws.add(new TracerDraw(tone, tone, (float) (from.x() + (to.x() - from.x()) * tail),
+                (float) (from.y() + (to.y() - from.y()) * tail), (float) (from.x() + (to.x() - from.x()) * flown),
+                (float) (from.y() + (to.y() - from.y()) * flown), TRACER_WIDTH_CELLS * this.scale, 1f));
     }
 
     private void detonation(float centerX, float centerY, float edge, float progress, BlastLook look) {

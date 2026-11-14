@@ -1276,6 +1276,7 @@ public final class Java2DFrameRenderer {
         switch (effect) {
             case BeamDraw beam -> this.paintBeam(g2, beam);
             case TracerDraw tracer -> this.paintTracer(g2, tracer);
+            case CannonballDraw stone -> this.paintShell(g2, stone);
             case LeyLineDraw line -> this.paintLeyLine(g2, line);
             case SplashDraw splash ->
                     this.paintFilledCircle(g2, splash.palette(), splash.centerX(), splash.centerY(), splash.radius());

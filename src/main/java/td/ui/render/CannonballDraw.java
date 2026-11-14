@@ -7,5 +7,5 @@ package td.ui.render;
  * line to where it was drawn a tick ago; without one the tail is the head.
  */
 public record CannonballDraw(Palette palette, float x, float y, float lift, float shadowScale, float size,
-                             float tailX, float tailY) implements ProjectileDraw {
+                             float tailX, float tailY) implements ProjectileDraw, TowerEffectDraw {
 }

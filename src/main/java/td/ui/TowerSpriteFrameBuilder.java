@@ -111,7 +111,12 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return tower.accept(BODY_LOOK);
     }
 
-    private static TowerLook bodyLookOf(SplashTower tower) {
+    /** The pose a Burst is in: its arm reloading, and charged while an ability is full and waits. */
+    static TowerPose poseOf(SplashTower tower) {
+        return poseOfReload(tower.getCoolDownFraction()).with(TowerCue.CHARGED, tower.holdsAFullAbility());
+    }
+
+    static TowerLook bodyLookOf(SplashTower tower) {
         return switch (tower.fork()) {
             case NONE -> TowerLook.SPLASH;
             case STORMCALLER -> TowerLook.STORMCALLER;
@@ -209,7 +214,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /** The body takes the look of what the fork made it. */
     public Void visitSplashTower(SplashTower tower) {
-        this.sprite(tower, bodyLookOf(tower), poseOfReload(tower.getCoolDownFraction()));
+        this.sprite(tower, bodyLookOf(tower), poseOf(tower));
         return null;
     }
 
