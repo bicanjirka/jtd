@@ -62,6 +62,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -126,6 +127,9 @@ public abstract class AbstractTower implements Tower {
     // What the statuses add, published for the EDT's republish; the live list stays on the tick thread.
     private volatile StatusLayer statusLayer = StatusLayer.NONE;
     private volatile TierRise tierRise = TierRise.none();
+    // The tick of this tower's first turn when it was placed in play; empty for one a save brought back.
+    private volatile OptionalInt placedAtTick = OptionalInt.empty();
+    private volatile boolean restored;
     private int currentTick;
     // The highest open tier at this tower's last turn; -1 before its first, so a tower built or loaded high has not risen.
     private int seenTier = -1;
@@ -647,7 +651,20 @@ public abstract class AbstractTower implements Tower {
         if (this.seenTier >= 0 && open > this.seenTier) {
             this.tierRise = new TierRise(this.seenTier, open, gameTime);
         }
+        if (this.seenTier < 0 && !this.restored) {
+            this.placedAtTick = OptionalInt.of(gameTime);
+        }
         this.seenTier = open;
+    }
+
+    @Override
+    public OptionalInt ticksSincePlaced(int gameTime, int window) {
+        OptionalInt placed = this.placedAtTick;
+        if (placed.isEmpty()) {
+            return OptionalInt.empty();
+        }
+        int ticks = gameTime - placed.getAsInt();
+        return ticks >= 0 && ticks <= window ? OptionalInt.of(ticks) : OptionalInt.empty();
     }
 
     @Override
@@ -705,6 +722,7 @@ public abstract class AbstractTower implements Tower {
         this.killCount = tally.kills();
         this.xpRemainder = tally.xpCarried();
         this.price = record.paid();
+        this.restored = true;
     }
 
     /** No upgrades by default. */

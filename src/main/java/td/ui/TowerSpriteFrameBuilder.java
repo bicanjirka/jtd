@@ -15,7 +15,9 @@ import td.tower.TurretAim;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.render.Palette;
+import td.ui.render.TowerCue;
 import td.ui.render.TowerLook;
+import td.ui.render.TowerPose;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
 import td.util.TickRate;
@@ -25,11 +27,23 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.OptionalInt;
 
-/** Describes each tower: its look, the tier its foundation shows, where its head aims and whether it can upgrade. */
+/**
+ * Describes each tower: its look, the tier its foundation shows, the pose its moving part is in, where its head aims
+ * and whether it can upgrade. A tower's pose is built in its own visit method, from what that tower publishes.
+ */
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /** A tier's rise takes half a second on the tick clock, so it pauses and speeds with the game. */
     private static final int RISE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2);
+    /** A placed tower settles onto its cell a little faster than a tier rises. */
+    private static final int SETTLE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 0.35f);
+    /** Neighbours' lights run this far apart, a cell to the next, so a row of towers never breathes as one. */
+    private static final float LIFE_OFFSET_SECONDS = 0.83f;
+    /** The life clock starts over this often, so it keeps its precision in a float through a long game. */
+    private static final double LIFE_WRAP_SECONDS = 3600.0;
+    /** A head with nothing to aim at scans slowly, this far to either side of where it rests. */
+    private static final double SCAN_RADIANS = Math.toRadians(7);
+    private static final double SCAN_SECONDS = 5.2;
     /** Back to front: the northern rows first, so a tower covers the foot of nothing in front of it. */
     private static final Comparator<TowerSpriteDraw> BACK_TO_FRONT = Comparator.comparingDouble(TowerSpriteDraw::centerY)
             .thenComparingDouble(TowerSpriteDraw::centerX);
@@ -69,11 +83,13 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     private final GameWorld world;
     private final int gameTime;
     private final double interpolationAlpha;
+    private final double animationSeconds;
 
-    public TowerSpriteFrameBuilder(GameWorld world, int gameTime, double interpolationAlpha) {
+    public TowerSpriteFrameBuilder(GameWorld world, int gameTime, double interpolationAlpha, double animationSeconds) {
         this.world = world;
         this.gameTime = gameTime;
         this.interpolationAlpha = interpolationAlpha;
+        this.animationSeconds = animationSeconds;
     }
 
     /** A tower type's look. No {@code default}, so a new type fails to compile here. */
@@ -115,6 +131,11 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         };
     }
 
+    /** The pose of a tower that fires on a reload: thrown back by the shot, easing forward as the reload runs. */
+    static TowerPose poseOfReload(float coolDownFraction) {
+        return coolDownFraction <= 0f ? TowerPose.idle() : TowerPose.idle().reloading(1f - coolDownFraction);
+    }
+
     /** An upgrade tier's colour role, for its perk icons; a tier above the last takes the last's. */
     static Palette tierPaletteFor(int tier) {
         return TIER_PALETTES[Math.min(tier, TIER_PALETTES.length - 1)];
@@ -136,59 +157,76 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return this.draws;
     }
 
-    /** A tower whose head, if its look has one, never turns. */
-    private void sprite(Tower tower) {
-        this.sprite(tower, lookFor(tower.getType()), 0.0);
+    /** A tower that does not aim. */
+    private void sprite(Tower tower, TowerLook body, TowerPose pose) {
+        this.sprite(tower, body, pose, 0.0);
     }
 
-    private void sprite(Tower tower, TowerLook body, double headingRadians) {
+    private void sprite(Tower tower, TowerLook body, TowerPose pose, double headingRadians) {
         UpgradeTree tree = tower.upgradeTree();
         TierRise rise = tower.tierRise();
-        OptionalInt ticks = rise.ticksSince(this.gameTime, RISE_TICKS);
-        float progress = ticks.isPresent()
-                ? Math.min(1f, (ticks.getAsInt() + (float) this.interpolationAlpha) / RISE_TICKS) : -1f;
-        this.draws.add(new TowerSpriteDraw(body, tree.highestOpenTier(tower, this.world), tower.getBoardX(),
+        float lifeSeconds = this.lifeSeconds(tower);
+        this.draws.add(new TowerSpriteDraw(body, tree.highestOpenTier(tower, this.world), pose, tower.getBoardX(),
                 tower.getBoardY(), tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
-                (float) headingRadians, this.upgradeReady(tower), rise.from(), progress < 1f ? progress : -1f));
+                (float) headingRadians, this.upgradeReady(tower), rise.from(),
+                this.progress(rise.ticksSince(this.gameTime, RISE_TICKS), RISE_TICKS),
+                this.progress(tower.ticksSincePlaced(this.gameTime, SETTLE_TICKS), SETTLE_TICKS), lifeSeconds));
     }
 
-    private void aimed(Tower tower, TurretAim aim) {
-        this.sprite(tower, lookFor(tower.getType()), aim.radiansAt(this.interpolationAlpha));
+    /** How far a moment that began {@code ticks} ago has run, 0..1; 1 when it is over or never began. */
+    private float progress(OptionalInt ticks, int window) {
+        return ticks.isPresent() ? Math.min(1f, (ticks.getAsInt() + (float) this.interpolationAlpha) / window) : 1f;
+    }
+
+    /** The wall clock {@code tower}'s own lights and idle motion run on. */
+    private float lifeSeconds(Tower tower) {
+        return (float) ((this.animationSeconds
+                + (tower.getBoardX() * 7 + tower.getBoardY() * 13) * LIFE_OFFSET_SECONDS) % LIFE_WRAP_SECONDS);
+    }
+
+    /** {@code resting} is a head with nothing to aim at: it scans slowly about its heading until it has. */
+    private void aimed(Tower tower, TowerPose pose, TurretAim aim, boolean resting) {
+        double scan = resting ? SCAN_RADIANS * Math.sin(2 * Math.PI * this.lifeSeconds(tower) / SCAN_SECONDS) : 0.0;
+        this.sprite(tower, lookFor(tower.getType()), pose, aim.radiansAt(this.interpolationAlpha) + scan);
     }
 
     public Void visitSniperTower(SniperTower tower) {
-        this.aimed(tower, tower.getTurretAim());
+        TowerPose pose = poseOfReload(tower.getCoolDownFraction()).withStacks(tower.steadyAimStacks().orElse(0));
+        this.aimed(tower, pose, tower.getTurretAim(), tower.getCurrentTarget() == null);
         return null;
     }
 
     /** The body takes the look of what the fork made it. */
     public Void visitSplashTower(SplashTower tower) {
-        this.sprite(tower, bodyLookOf(tower), tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        this.sprite(tower, bodyLookOf(tower), poseOfReload(tower.getCoolDownFraction()));
         return null;
     }
 
     public Void visitPulseTower(PulseTower tower) {
-        this.sprite(tower);
+        boolean struck = tower.ticksSinceZap(this.gameTime) < tower.zapFlashTicks();
+        this.sprite(tower, TowerLook.PULSE, struck ? TowerPose.idle().fired() : TowerPose.idle());
         return null;
     }
 
     public Void visitAuraTower(AuraTower tower) {
-        this.sprite(tower);
+        this.sprite(tower, TowerLook.AURA, TowerPose.idle());
         return null;
     }
 
     public Void visitMortarTower(MortarTower tower) {
-        this.aimed(tower, tower.getTurretAim());
+        this.aimed(tower, poseOfReload(tower.getCoolDownFraction()), tower.getTurretAim(),
+                tower.getCoolDownFraction() <= 0f);
         return null;
     }
 
     public Void visitSeekerTower(SeekerTower tower) {
-        this.sprite(tower);
+        this.sprite(tower, TowerLook.SEEKER, TowerPose.idle());
         return null;
     }
 
     public Void visitCinderTower(CinderTower tower) {
-        this.aimed(tower, tower.getTurretAim());
+        TowerPose pose = TowerPose.idle().with(TowerCue.STREAMING, !tower.getInFlightWaves().isEmpty());
+        this.aimed(tower, pose, tower.getTurretAim(), false);
         return null;
     }
 }

@@ -27,7 +27,7 @@ class AsciiBoardRendererTest {
 
     @Test
     void placesTowersAndEnemiesAtTheirCellWithFadingEnemiesUppercased() {
-        TowerSpriteDraw tower1 = new TowerSpriteDraw(TowerLook.SNIPER, 0, SCALE, 0, false, 15f, 5f, 50f, 0f, false, 0, -1f);
+        TowerSpriteDraw tower1 = TowerSpriteDraw.still(TowerLook.SNIPER, 0, SCALE, 0, 15f, 5f, 50f);
         EnemyBodyDraw circle = new EnemyBodyDraw(EnemyLook.CIRCLE, 25f, 15f, 0.0, 5f, 0f);
         EnemyFadeDraw fadingSquare = new EnemyFadeDraw(EnemyLook.SQUARE, 5f, 5f, 0.0, 5f, 2f, 0.5f);
 

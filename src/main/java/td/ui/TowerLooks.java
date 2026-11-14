@@ -84,16 +84,24 @@ final class TowerLooks {
                 storm));
         rows.put(TowerLook.HEXER, new Row(new Color(0xb88ae8), TowerLooks::splashBody,
                 ramp(0xe2746c, 0xb88ae8, 0xdbc3f3, 0xeddce2)));
-        rows.put(TowerLook.PULSE, new Row(new Color(0x8f86b8), s -> Java2DFrameRenderer.starShape(5, s, s * 0.45f),
-                ramp(0x8f86b8, 0xa89fd2, 0xc6c0e1, 0xe2dad8)));
+        Row pulse = new Row(new Color(0x8f86b8), s -> Java2DFrameRenderer.starShape(5, s, s * 0.45f),
+                ramp(0x8f86b8, 0xa89fd2, 0xc6c0e1, 0xe2dad8));
+        rows.put(TowerLook.PULSE, pulse);
+        // A rune changes the stone's mark, never its colour.
+        rows.put(TowerLook.BURDEN, pulse);
+        rows.put(TowerLook.GRAVITY, pulse);
+        rows.put(TowerLook.UMBRA, pulse);
         rows.put(TowerLook.AURA, new Row(new Color(0xd8b866), TowerLooks::pulsar,
                 ramp(0xd8b866, 0xecd48c, 0xf2e3b3, 0xf8ecc2)));
         rows.put(TowerLook.MORTAR, new Row(new Color(0xc39062), Java2DFrameRenderer::diamondShape,
                 ramp(0xc39062, 0xe0b070, 0xebcba1, 0xf5e0b8)));
-        rows.put(TowerLook.SEEKER, new Row(new Color(0x5cc4e2), TowerLooks::kite,
-                ramp(0x5cc4e2, 0x8fd0f2, 0xb5e0f6, 0xdaeae3)));
-        rows.put(TowerLook.CINDER, new Row(new Color(0xea862a), TowerLooks::flame,
-                ramp(0xea862a, 0xf0a040, 0xf5c081, 0xfadaa8)));
+        List<Color> seeker = ramp(0x5cc4e2, 0x8fd0f2, 0xb5e0f6, 0xdaeae3);
+        rows.put(TowerLook.SEEKER, new Row(new Color(0x5cc4e2), TowerLooks::kite, seeker));
+        rows.put(TowerLook.RUBY, new Row(new Color(0xd0405a), TowerLooks::kite, seeker));
+        rows.put(TowerLook.SHADE, new Row(new Color(0xa6e8c8), TowerLooks::kite, seeker));
+        List<Color> cinder = ramp(0xea862a, 0xf0a040, 0xf5c081, 0xfadaa8);
+        rows.put(TowerLook.CINDER, new Row(new Color(0xea862a), TowerLooks::flame, cinder));
+        rows.put(TowerLook.SOULFIRE, new Row(new Color(0xb9a0ff), TowerLooks::flame, cinder));
         return rows;
     }
 

@@ -25,11 +25,11 @@ public final class AsciiBoardRenderer {
         return switch (look) {
             case SNIPER -> '1';
             case SPLASH, STORMCALLER, HEXER -> '2';
-            case PULSE -> '4';
+            case PULSE, BURDEN, GRAVITY, UMBRA -> '4';
             case AURA -> 'A';
             case MORTAR -> 'M';
-            case SEEKER -> 'K';
-            case CINDER -> 'N';
+            case SEEKER, RUBY, SHADE -> 'K';
+            case CINDER, SOULFIRE -> 'N';
         };
     }
 

@@ -33,6 +33,7 @@ import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -856,5 +857,29 @@ class AbstractTowerTest {
         tower.beginTick(10);
 
         assertThat(tower.tierRise()).isEqualTo(TierRise.none());
+    }
+
+    @Test
+    void aTowerPlacedInPlayCountsItsTicksFromItsFirstTurnUntilTheWindowCloses() {
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none());
+
+        OptionalInt before = tower.ticksSincePlaced(10, 5);
+        tower.beginTick(10);
+        tower.beginTick(11);
+
+        assertThat(before).isEmpty();
+        assertThat(tower.ticksSincePlaced(13, 5)).hasValue(3);
+        assertThat(tower.ticksSincePlaced(16, 5)).isEmpty();
+    }
+
+    @Test
+    void aTowerASaveBroughtBackWasNotPlacedNow() {
+        FakeTower built = FakeTower.offering(this.context, 0, 0, UpgradeTree.none());
+        FakeTower loaded = FakeTower.offering(this.context, 1, 0, UpgradeTree.none());
+
+        loaded.restore(built.record());
+        loaded.beginTick(10);
+
+        assertThat(loaded.ticksSincePlaced(11, 5)).isEmpty();
     }
 }
