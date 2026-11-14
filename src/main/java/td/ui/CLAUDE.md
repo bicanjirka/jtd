@@ -18,8 +18,9 @@ keeps the seam honest.
   a zone is a patch, not an enemy overlay or a tower effect. Zones of one kind never stack in play, so they draw as one
   `ZonePatchDraw` with one even fill and one outline; what stands on a disc (a mine's casing, flames) stays per zone.
 - Every colour, shape and stroke for board content lives in `td.ui`, keyed by a role, never by domain
-  type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), a tower's body, head and colour in
-  its `TowerLooks` row (keyed by `TowerLook`), the rest in `Java2DFrameRenderer` (keyed by `Palette`). A
+  type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), a tower's colour, icon body and tier
+  colours in its `TowerLooks` row and its foundation and head in its `TowerFoundations` row (both keyed by
+  `TowerLook`), the rest in `Java2DFrameRenderer` (keyed by `Palette`). A
   tower's colour in text is a `Palette` tone (`bodyPaletteFor`) whose `colorFor` case reads its row. There
   are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
@@ -45,22 +46,25 @@ keeps the seam honest.
 - An effect with no picture of its own earns at most one dot, by `EnemyFrameBuilder.dotFor`; a dot says only its group,
   and the Info pane says which effect.
 - What stands on the board is lit from the top left and shows its side down the screen; what lies on the ground
-  (zone patches, path marks, range circles) stays flat. A tower body and a mine go through `paintStanding` with the
-  three `Tones` of their colour.
+  (zone patches, path marks, range circles, a tower's shadow) stays flat. A mine goes through `paintStanding` with the
+  three `Tones` of its colour.
 - An enemy body is painted by `EnemySprites` alone, from its `EnemyLooks.Form` (height, hover, cap, raised detail,
   glint, glow): the stack of parts is drawn once into a kept picture per look, size, heading step and zoom, so a new
   part costs nothing a frame. What changes with every step (the hop, the hover, a glow) is a function of the body's
   place, never of a clock, and is the only thing painted live. Whatever sits on a body's top follows
   `EnemySprites.lift`.
-- Tower bodies are one closed `Shape` each. Toolbar icons reuse `TowerLooks.body` via `renderTowerIcon`.
-- A tower's body never turns: only its turret head aims.
+- A tower is painted by `TowerSprites` alone: its foundation for its look and tier, and the head of a look that
+  aims, each drawn once into a kept picture (a head per heading step) and placed whole. Towers are painted back to
+  front, after the enemies, and the enemy overlays after them, so a covered enemy's bars and marks still show.
+- A foundation never turns: only a head aims. A tier above the last wears the last tier's foundation.
+- Toolbar icons and the Upgrades panel's thumbnails reuse `TowerLooks.body`.
 
 ## Two clocks
 
 - `interpolationAlpha` (between the last two ticks) for anything backed by per-tick domain state:
   enemy/projectile position, turret heading, a Cinder wave's travel. It respects pause and
   fast-forward.
-- `animationSeconds` (wall clock) for pure cosmetics: spinning heads, the aura pulse, path
+- `animationSeconds` (wall clock) for pure cosmetics: the aura's rings, path
   chevrons. It keeps running while paused.
 - Dead enemies are drawn without interpolation.
 

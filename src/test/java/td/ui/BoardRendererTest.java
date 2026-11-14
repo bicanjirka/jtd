@@ -15,6 +15,7 @@ import td.tower.CinderTower;
 import td.tower.SniperTower;
 import td.tower.TowerFactory;
 import td.tower.TowerTerm;
+import td.tower.upgrade.UpgradeNode;
 import td.ui.render.CellGridDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.EnemyFadeDraw;
@@ -120,15 +121,36 @@ class BoardRendererTest {
     }
 
     @Test
-    void aPlacedTowerYieldsATurretHeadDrawWithItsBodyPalette() {
+    void aTowerStandsOnTheFoundationOfTheHighestTierItHasOpen() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.towers().add(new SniperTower(context, 1, 1));
+        SniperTower tower = new SniperTower(context, 1, 1);
+        context.towers().add(tower);
+        UpgradeNode upper = tower.upgradeTree().nodes().stream().filter(node -> node.tier() > 0).findFirst().orElseThrow();
+        UpgradePaths.buy(tower, context, upper.displayName());
+        int open = tower.upgradeTree().highestOpenTier(tower, context);
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
-        assertThat(frame.towerHeads()).hasSize(1);
-        assertThat(frame.towerHeads().getFirst().look()).isEqualTo(TowerLook.SNIPER);
+        assertThat(open).isPositive();
+        assertThat(frame.towerSprites().getFirst().tier()).isEqualTo(open);
+    }
+
+    @Test
+    void towersAreDescribedBackToFrontWhateverOrderTheyWereBuiltIn() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        SniperTower south = new SniperTower(context, 1, 3);
+        SniperTower north = new SniperTower(context, 2, 1);
+        SniperTower middle = new SniperTower(context, 1, 2);
+        context.towers().add(south);
+        context.towers().add(north);
+        context.towers().add(middle);
+
+        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
+
+        assertThat(frame.towerSprites()).extracting(TowerSpriteDraw::boardY)
+                .containsExactly(north.getBoardY(), middle.getBoardY(), south.getBoardY());
     }
 
     @Test

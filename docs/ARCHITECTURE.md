@@ -128,7 +128,7 @@ BoardRenderer.buildFrame(gameTime, interpolationAlpha, animationSeconds)   on ga
 | `CellFrameBuilder` | the placement or selection highlight | one `CellHighlight` and its cell |
 | `ZoneFrameBuilder` | ground zones as one patch per kind, drawn under the enemies | — |
 | `EnemyFrameBuilder` | bodies, death fades, overlays | `EnemyMobVisitor` |
-| `TowerSpriteFrameBuilder` | tower base and turret head | `TowerVisitor` |
+| `TowerSpriteFrameBuilder` | tower look, tier, head heading, upgrade arrow | `TowerVisitor` |
 | `TowerEffectFrameBuilder` | beams, blasts, pulses, auras, cones | `TowerVisitor` |
 | `ProjectileFrameBuilder` | shells and missiles in flight | `ProjectileVisitor` |
 | `PathMarkerFrameBuilder` | the path trail and moving chevrons | geometry only |

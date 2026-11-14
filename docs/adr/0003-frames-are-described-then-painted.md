@@ -13,11 +13,12 @@ build or check without a display.
   dispatching through that type's visitor. `Java2DFrameRenderer` alone turns records into pixels.
 - `AsciiBoardRenderer` is a second, real backend (it logs board state at `DEBUG`). It keeps the
   seam honest: if a frame can't be described without AWT, the change is in the wrong place.
-- There are no image assets. Every enemy, tower, effect and path marker is a `Shape` built in code.
-  A tower is a static base plus a turret head. An aiming head reads its `TurretAim`, interpolated
-  like enemy positions; a spinning head is a pure function of the animation clock. Each tower base
-  is one closed `Shape`, so every tower goes through the same fill-then-outline paint with no
-  per-tower special case.
+- There are no image assets. Every enemy, tower, effect and path marker is built in code from
+  vector shapes. A tower is a foundation that never moves plus, for a look that aims, a head that
+  reads its `TurretAim`, interpolated like enemy positions. Amended 2026-11-14 for the next-gen
+  looks: a foundation is a stack of lit parts per tier (`TowerFoundations`), drawn once from those
+  vectors into a picture the painter keeps (`TowerSprites`), as an enemy body is; the frame names
+  only the look and the tier. Before, each base was one closed `Shape` with one shared paint.
 - Status-effect markers are their own `RenderFrame` list, not another kind of `EnemyDraw`.
   `EnemyDraw`'s contract is that an enemy is either a live body or a fading corpse, never both and
   never neither, and a marker is neither.
