@@ -154,12 +154,12 @@
 2. A `TowerFactory.Type` constant and its `createTower` branch.
 3. A `TowerVisitor` method; the compiler then leads to `TowerSpriteFrameBuilder` and
    `TowerEffectFrameBuilder`.
-4. A `TowerLook`, its row in `TowerLooks` (colour, icon body, a colour per tier) and in `TowerFoundations` (a
-   foundation per tier, a head if it aims), the cases in
+4. A `TowerLook`, its row in `TowerLooks` (colour, a colour per tier), in `TowerIcons` (its toolbar mark) and in
+   `TowerFoundations` (a foundation per tier and pose, a head if it aims), the cases in
    `TowerSpriteFrameBuilder.lookFor` and `bodyPaletteFor`, and that tone's `Palette` constant, whose
    `colorFor` case reads the row.
 5. `upgradeTree()`: `UpgradeTree.of(RangeNodes.of(PRICE, RANGE))` with an Attune node in tier 0 for the tower's own
    mechanic, then the tower's nodes by tier and its clusters.
 6. `targetingLabel()` and `baseApplies()`, and, for the shop only, a `description()` saying what no row does.
-7. `README.md`'s tower table. The toolbar icon is its `TowerLooks` body, so it needs no art of its own.
+7. `README.md`'s tower table.
 8. A `CLAUDE.md` in the tower's sub-package for its own constraints, and its name in this file's pointer.

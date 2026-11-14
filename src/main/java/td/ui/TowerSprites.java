@@ -85,6 +85,12 @@ final class TowerSprites {
     private static final float SWEEP_ALPHA = 0.75f;
     private static final double SWEEP_HALF_WIDTH = Math.toRadians(16);
 
+    /** Where a head points in a still picture, and the room a tower takes in one, in cells. */
+    private static final double STILL_HEADING = Math.toRadians(-35);
+    private static final double STILL_ROOM_CELLS = 2.0;
+    private static final double DRAINED_LIGHT = 0.62;
+    private static final double DRAINED_ALPHA = 0.75;
+
     private static final Map<Key, Sprite> SPRITES = new ConcurrentHashMap<>();
     private static final AtomicLong KEPT_PIXELS = new AtomicLong();
 
@@ -151,6 +157,44 @@ final class TowerSprites {
     static void paint(Graphics2D g2, TowerLook look, int tier, TowerPose pose, float centerX, float centerY, int scale,
                       double heading) {
         paintTower(g2, look, tier, pose, centerX, centerY, scale, heading, 1f, 1f);
+    }
+
+    /**
+     * {@code look} at {@code tier} at rest, for a panel: centred on the pen, a cell {@code cell} wide. {@code drained}
+     * takes its colour away, for a tier not reached yet.
+     */
+    static void paintStill(Graphics2D g2, TowerLook look, int tier, double cell, boolean drained) {
+        AffineTransform pen = g2.getTransform();
+        if (!drained) {
+            g2.scale(cell, cell);
+            paintTower(g2, look, tier, TowerPose.idle(), 0f, 0f, 1, STILL_HEADING, 1f, 1f);
+            g2.setTransform(pen);
+            return;
+        }
+        double device = cell * Math.max(1.0, pen.getScaleX());
+        int side = (int) Math.ceil(device * STILL_ROOM_CELLS);
+        BufferedImage picture = new BufferedImage(side, side, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = picture.createGraphics();
+        g.translate(side / 2.0, side / 2.0);
+        g.scale(device, device);
+        paintTower(g, look, tier, TowerPose.idle(), 0f, 0f, 1, STILL_HEADING, 1f, 1f);
+        g.dispose();
+        drain(picture);
+        g2.scale(cell / device, cell / device);
+        g2.drawImage(picture, -side / 2, -side / 2, null);
+        g2.setTransform(pen);
+    }
+
+    private static void drain(BufferedImage picture) {
+        for (int y = 0; y < picture.getHeight(); y++) {
+            for (int x = 0; x < picture.getWidth(); x++) {
+                int argb = picture.getRGB(x, y);
+                int grey = (int) ((0.3 * ((argb >> 16) & 0xff) + 0.59 * ((argb >> 8) & 0xff) + 0.11 * (argb & 0xff))
+                        * DRAINED_LIGHT);
+                int alpha = (int) ((argb >>> 24) * DRAINED_ALPHA);
+                picture.setRGB(x, y, alpha << 24 | grey << 16 | grey << 8 | grey);
+            }
+        }
     }
 
     /**

@@ -318,86 +318,9 @@ final class TowerArtSheets4 {
 
     // ---- toolbar icons, the upgrade arrow, panel thumbnails -------------------------------------------------
 
-    /** A toolbar icon in cell units: one silhouette in the tower's colour, one lighter tone for its moving part. */
+    /** A toolbar icon in cell units, as the game paints it. */
     static void icon(Graphics2D g, String id) {
-        int rgb = switch (id) {
-            case "sniper" -> TowerArt.SNIPER;
-            case "burst" -> TowerArt.BURST;
-            case "mortar" -> TowerArt.MORTAR;
-            case "scorcher" -> TowerArt.SCORCHER;
-            case "aerie" -> TowerArt.AERIE;
-            case "obelisk" -> TowerArt.OBELISK;
-            default -> TowerArt.BEACON;
-        };
-        Color body = TowerArt.col(rgb);
-        Color light = TowerArt.mix(body, Color.WHITE, 0.62);
-        g.setColor(body);
-        switch (id) {
-            case "sniper" -> {
-                g.fill(TowerArt.minus(TowerArt.ngon(0, 0.06, 3, 0.40, -90), TowerArt.ngon(0, 0.06, 3, 0.20, -90)));
-                g.setColor(light);
-                g.fill(TowerArt.rot(TowerArt.box(0.14, 0, 0.62, 0.075), -40));
-                g.fill(TowerArt.circ(0, 0, 0.085));
-            }
-            case "burst" -> {
-                for (int i = 0; i < 7; i++) {
-                    g.fill(TowerArt.at(TowerArt.ngon(0, 0, 6, 0.115, i * 20), i * 360.0 / 7, 0.30));
-                }
-                g.setColor(light);
-                g.fill(TowerArt.rot(TowerArt.box(0.09, 0, 0.26, 0.07), 140));
-                g.fill(TowerArt.circ(0, 0, 0.09));
-            }
-            case "mortar" -> {
-                g.fill(TowerArt.minus(TowerArt.circ(0, 0, 0.40), TowerArt.circ(0, 0, 0.27)));
-                g.setColor(light);
-                g.fill(TowerArt.rot(TowerArt.minus(TowerArt.box(0.1, 0, 0.42, 0.30), TowerArt.circ(0.2, 0, 0.085)), -40));
-            }
-            case "scorcher" -> {
-                g.fill(TowerArt.circ(-0.08, 0.08, 0.30));
-                g.setColor(light);
-                g.fill(TowerArt.rot(TowerArt.mv(TowerArt.poly(0, -0.045, 0.3, -0.045, 0.42, -0.11, 0.42, 0.11, 0.3, 0.045, 0, 0.045), -0.02, 0), -40));
-                g.fill(TowerArt.circ(-0.08, 0.08, 0.1));
-            }
-            case "aerie" -> {
-                g.fill(TowerArt.minus(TowerArt.circ(0, 0, 0.33), TowerArt.circ(0, 0, 0.25)));
-                g.fill(TowerArt.ngon(0, 0, 6, 0.16, 0));
-                g.setColor(light);
-                g.fill(TowerArt.at(TowerArt.rot(TowerArt.poly(0.12, 0, -0.08, 0.075, -0.04, 0, -0.08, -0.075), 90), -50, 0.40));
-                g.fill(TowerArt.ngon(0, 0, 6, 0.07, 30));
-            }
-            case "obelisk" -> {
-                g.fill(TowerArt.box(0, 0, 0.62, 0.62));
-                g.setColor(light);
-                g.fill(TowerArt.poly(0, 0, -0.2, -0.2, 0.2, -0.2));
-                g.fill(TowerArt.poly(0, 0, -0.2, -0.2, -0.2, 0.2));
-                g.setColor(TowerArt.PAPER_GAP);
-                TowerArtSheets3.stroke(g, 0.035);
-                g.draw(TowerArt.box(0, 0, 0.4, 0.4));
-            }
-            default -> {
-                g.fill(TowerArt.ngon(0, 0, 8, 0.40, 22.5));
-                g.setColor(light);
-                for (int i = 0; i < 8; i += 2) {
-                    double a0 = 22.5 + i * 45;
-                    g.fill(TowerArt.poly(TowerArt.cos(a0) * 0.31, TowerArt.sin(a0) * 0.31, TowerArt.cos(a0 + 45) * 0.31, TowerArt.sin(a0 + 45) * 0.31, 0, 0));
-                }
-                g.fill(TowerArt.ngon(0, 0, 4, 0.12, 0));
-            }
-        }
-    }
-
-    static BufferedImage grey(BufferedImage src) {
-        BufferedImage out = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < src.getHeight(); y++) {
-            for (int x = 0; x < src.getWidth(); x++) {
-                int argb = src.getRGB(x, y);
-                int a = argb >>> 24;
-                int l = (int) (0.3 * ((argb >> 16) & 255) + 0.59 * ((argb >> 8) & 255) + 0.11 * (argb & 255));
-                l = (int) (l * 0.62);
-                out.setRGB(x, y, ((int) (a * 0.75) << 24) | (l << 16) | (l << 8) | l);
-            }
-        }
-        return out;
+        td.ui.TowerArtGame.paintIcon(g, TowerArt.look(id, TowerArt.State.idle()));
     }
 
     static void icons() throws Exception {
@@ -468,11 +391,10 @@ final class TowerArtSheets4 {
                 g.fill(new java.awt.geom.Rectangle2D.Double(cx, ry, 150, 34));
                 g.setColor(locked ? new Color(0x3e3e3f) : tier);
                 g.fill(new java.awt.geom.Rectangle2D.Double(cx, ry, 3, 34));
-                BufferedImage thumb = new BufferedImage(34, 34, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D tg = TowerArtSheets.pen(thumb);
-                TowerArtSheets.tower(tg, ids[i], t, TowerArt.State.idle(), 17, 23, 25);
-                tg.dispose();
-                g.drawImage(locked ? grey(thumb) : thumb, (int) cx + 8, (int) ry, null);
+                java.awt.geom.AffineTransform pen = g.getTransform();
+                g.translate((int) cx + 25, (int) ry + 23);
+                td.ui.TowerArtGame.paintThumbnail(g, TowerArt.look(ids[i], TowerArt.State.idle()), t, 25, locked);
+                g.setTransform(pen);
                 TowerArtSheets.text(g, TowerArtSheets.TIER_NAMES[t], cx + 48, ry + 15, locked ? new Color(0x717173) : tier, 12, true);
                 TowerArtSheets.text(g, locked ? "locked" : String.format("#%06x", tier.getRGB() & 0xffffff), cx + 48, ry + 28,
                         TowerArtSheets.GLOSS, 10, false);

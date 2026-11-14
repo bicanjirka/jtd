@@ -18,9 +18,9 @@ keeps the seam honest.
   a zone is a patch, not an enemy overlay or a tower effect. Zones of one kind never stack in play, so they draw as one
   `ZonePatchDraw` with one even fill and one outline; what stands on a disc (a mine's casing, flames) stays per zone.
 - Every colour, shape and stroke for board content lives in `td.ui`, keyed by a role, never by domain
-  type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), a tower's colour, icon body and tier
-  colours in its `TowerLooks` row and its foundation and head in its `TowerFoundations` row (both keyed by
-  `TowerLook`), the rest in `Java2DFrameRenderer` (keyed by `Palette`). A
+  type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), a tower's colour and tier
+  colours in its `TowerLooks` row, its icon in its `TowerIcons` row and its foundation and head in its
+  `TowerFoundations` row (all keyed by `TowerLook`), the rest in `Java2DFrameRenderer` (keyed by `Palette`). A
   tower's colour in text is a `Palette` tone (`bodyPaletteFor`) whose `colorFor` case reads its row. There
   are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
@@ -53,11 +53,24 @@ keeps the seam honest.
   part costs nothing a frame. What changes with every step (the hop, the hover, a glow) is a function of the body's
   place, never of a clock, and is the only thing painted live. Whatever sits on a body's top follows
   `EnemySprites.lift`.
-- A tower is painted by `TowerSprites` alone: its foundation for its look and tier, and the head of a look that
-  aims, each drawn once into a kept picture (a head per heading step) and placed whole. Towers are painted back to
-  front, after the enemies, and the enemy overlays after them, so a covered enemy's bars and marks still show.
+- A tower is painted by `TowerSprites` alone: its foundation for its look, tier and `TowerPose`, the head of a look
+  that aims, and the parts that stand in front of that head, each drawn once into a kept picture (a head per heading
+  step) and placed whole. Towers are painted back to front, after the enemies, and the enemy overlays after them, so
+  a covered enemy's bars and marks still show.
 - A foundation never turns: only a head aims. A tier above the last wears the last tier's foundation.
-- Toolbar icons and the Upgrades panel's thumbnails reuse `TowerLooks.body`.
+- What a tower holds or is doing reaches its picture only through its `TowerPose`, built in that tower's visit method
+  in `TowerSpriteFrameBuilder` and read in its look's builder in `TowerFoundations`: a new cue is a `TowerCue`
+  constant, an identity a `TowerLook` row. Never a new draw record, a field on `TowerSpriteDraw` or a painter branch
+  for one tower. A pose is snapped to a few steps, so the kept pictures stay few.
+- A look whose body is the same in every pose is `Row.aiming`; any other is `Row.posed`.
+- Only a tower's idle lights (`Build.light`), a tier's rise and a placed tower settling are painted live. A live
+  stroke or size is a share of `scale`, never a pixel constant: the art sheets paint with a scale of 1.
+- Idle life runs on the wall clock and is one small light or a slow scan; a moment (a shot, a reload, a rise, a
+  placement) runs on the tick clock.
+- The toolbar icon and the Info pane's glyph are the look's `TowerIcons` row; a tier's thumbnail in the Upgrades
+  panel is that tier's foundation (`TowerSprites.paintStill`), drained of colour while locked.
+- The art sheets in `docs/features/next-gen-art` are rendered from these tables. After a change to a look, render
+  them again and explain every sheet that changed.
 - A lobbed shot's position is its point on the ground; how high it is drawn comes from the one arc in
   `ProjectileFrameBuilder`, never from the shot or its tower.
 

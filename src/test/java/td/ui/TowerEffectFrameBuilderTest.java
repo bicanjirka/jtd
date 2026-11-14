@@ -16,6 +16,8 @@ import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.TowerEffectDraw;
+import td.ui.render.TowerLook;
+import td.ui.render.TowerPose;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
 import td.util.GameWorld;
@@ -168,6 +170,23 @@ class TowerEffectFrameBuilderTest {
         assertThat(fired.toX()).isLessThan(arriving.toX());
         assertThat(arriving.toX()).isLessThanOrEqualTo((float) target.getX());
         assertThat(arriving.toX()).isGreaterThan((float) target.getX() - 2f);
+    }
+
+    @Test
+    void aBulletLeavesFromTheMuzzleOfTheRifleAsItIsPosedNotAsItRests() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower sniper = new SniperTower(context, 3, 3);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(sniper.getX() + 100, sniper.getY())});
+        sniper.doTick(1);
+        TowerPose recoiled = TowerSpriteFrameBuilder.poseOf(sniper);
+
+        TracerDraw fired = tracersOf(sniper, context, 1, 0.0).getFirst();
+
+        float posedMuzzle = TowerSprites.muzzle(TowerLook.SNIPER, 0, recoiled, sniper.getX(), sniper.getY(),
+                BoardFixtures.SCALE, 0.0).x;
+        float restingMuzzle = TowerSprites.muzzle(TowerLook.SNIPER, 0, TowerPose.idle(), sniper.getX(), sniper.getY(),
+                BoardFixtures.SCALE, 0.0).x;
+        assertThat(fired.fromX()).isEqualTo(posedMuzzle).isNotEqualTo(restingMuzzle);
     }
 
     @Test

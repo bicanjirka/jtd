@@ -136,6 +136,11 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return coolDownFraction <= 0f ? TowerPose.idle() : TowerPose.idle().reloading(1f - coolDownFraction);
     }
 
+    /** The pose a Sniper's rifle is in: where it draws its barrel is where its bullets leave from. */
+    static TowerPose poseOf(SniperTower tower) {
+        return poseOfReload(tower.getCoolDownFraction()).withStacks(tower.steadyAimStacks().orElse(0));
+    }
+
     /** An upgrade tier's colour role, for its perk icons; a tier above the last takes the last's. */
     static Palette tierPaletteFor(int tier) {
         return TIER_PALETTES[Math.min(tier, TIER_PALETTES.length - 1)];
@@ -191,8 +196,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitSniperTower(SniperTower tower) {
-        TowerPose pose = poseOfReload(tower.getCoolDownFraction()).withStacks(tower.steadyAimStacks().orElse(0));
-        this.aimed(tower, pose, tower.getTurretAim(), tower.getCurrentTarget() == null);
+        this.aimed(tower, poseOf(tower), tower.getTurretAim(), tower.getCurrentTarget() == null);
         return null;
     }
 
