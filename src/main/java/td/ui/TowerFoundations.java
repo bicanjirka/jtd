@@ -1,6 +1,9 @@
 package td.ui;
 
+import td.ui.render.LoadedShell;
+import td.ui.render.TowerCue;
 import td.ui.render.TowerLook;
+import td.ui.render.TowerPose;
 import td.util.ThreadConfined;
 
 import java.awt.Color;
@@ -15,20 +18,23 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleFunction;
-import java.util.function.IntFunction;
 
 /**
- * The table of tower foundations: one row per {@link TowerLook}, checked complete when this class loads. A foundation is
- * a stack of flat parts in cell units (the cell's centre at 0,0, a cell 1 wide, north up), each with a height; it never
- * moves, and it grows a step with every tier. A look that aims also has a head, built at the foundation's top.
+ * The table of tower foundations: one row per {@link TowerLook}, checked complete when this class loads. A tower is a
+ * stack of flat parts in cell units (the cell's centre at 0,0, a cell 1 wide, north up), each with a height. Its body
+ * never turns and grows a step with every tier; a look that aims also has a head, built at the body's top along
+ * {@code +X}. What a tower holds or has just done is its {@link TowerPose}, and every part that shows it is built here
+ * from the pose, so the picture of a moment is the same wherever it is drawn.
  */
 final class TowerFoundations {
 
     /** The tiers a foundation is drawn at; a tier above the last wears the last's. */
     static final int TIERS = 4;
+    /** A pose's recoil and reload are built at this many even steps, so the pictures kept of them stay few. */
+    static final int POSE_STEPS = 4;
 
     private static final double[] FOOTPRINT = {0.275, 0.315, 0.36, 0.40};
     private static final double PLINTH_STEP = 0.045;
@@ -36,11 +42,20 @@ final class TowerFoundations {
     private static final Color PLINTH_STONE = new Color(0x50535e);
     private static final Color PAVING_DARK = new Color(0x101014);
     private static final Color GUNMETAL = new Color(0x59626a);
-    private static final Color SHELL_IRON = new Color(0x7b8496);
-    private static final Color SHELL_GLINT = new Color(0xc4cad6);
+    private static final Color SHADE_STONE = new Color(0x5a6470);
+    private static final Color SHADE_LIGHT = new Color(0xa6e8c8);
+    private static final Color SOUL_STONE = new Color(0x7a54d8);
+    private static final Color SOUL_FLAME = new Color(0xb9a0ff);
+    private static final Color LANTERN_LIGHT = new Color(0xffe9a8);
+    private static final Color DAYLIGHT = new Color(0xfffdf0);
+    /** Where each of a discharge's sparks leaves the crown, in degrees. */
+    private static final double[] SPARK_BEARINGS = {36, 124, 215, 294};
+    /** Past this many built poses every one is dropped and built again as it is needed. */
+    private static final int KEPT_POSES = 2048;
 
     private static final Map<TowerLook, Row> ROWS = checkedComplete(rows());
-    private static final Map<TowerLook, List<Foundation>> BUILT = built();
+    private static final Map<TowerLook, List<Foundation>> IDLE = idle();
+    private static final Map<Posed, Foundation> POSED = new ConcurrentHashMap<>();
 
     private TowerFoundations() {
     }
@@ -54,6 +69,18 @@ final class TowerFoundations {
         GLOW,
         /** A thin stroke. */
         LINE
+    }
+
+    /** How a light lives while its tower only stands there. */
+    enum Life {
+        /** A soft glow that swells and fades slowly. */
+        BREATH,
+        /** A small flame that never holds still. */
+        FLICKER,
+        /** A four-point star that flashes once in a while. */
+        GLINT,
+        /** A pale ray that turns round its centre. */
+        SWEEP
     }
 
     /** One part: a shape whose foot stands {@code z0} up, {@code height} tall, in its three tones or one colour. */
@@ -74,36 +101,120 @@ final class TowerFoundations {
         Part withShape(Shape shape) {
             return new Part(this.kind, shape, this.z0, this.height, this.tones, this.color, this.width);
         }
+    }
 
-        /** The same part standing {@code dz} higher. */
-        Part raisedBy(double dz) {
-            return new Part(this.kind, this.shape, this.z0 + dz, this.height, this.tones, this.color, this.width);
+    /**
+     * A light on a tower that stays alive while the tower is idle: where it sits ({@code z} up), how far it reaches and
+     * how it lives. One on a head turns with it.
+     */
+    record Light(Life life, double x, double y, double z, double radius, Color color, boolean turning) {
+
+        static Light of(Life life, double x, double y, double z, double radius, Color color) {
+            return new Light(life, x, y, z, radius, color, false);
+        }
+
+        /** The same light on a head. */
+        Light asTurning() {
+            return new Light(this.life, this.x, this.y, this.z, this.radius, this.color, true);
         }
     }
 
     /**
-     * A foundation's parts in paint order, back to front; {@code top} is where its head stands and {@code footprint}
-     * its radius on the ground.
+     * A tower built for one tier and pose. {@code parts} are its body in paint order, back to front, and {@code head}
+     * the parts it aims, along {@code +X}, already standing at {@code top}; empty for a look that does not aim.
+     * {@code front} is what of an aiming look's body stands south of its centre: it is painted over the head, so a
+     * barrel turned south passes behind a post or a wall that stands nearer. {@code footprint} is the tower's radius
+     * on the ground, {@code nest} how high a ring round it circles, and {@code muzzle} and {@code muzzleHeight} where
+     * a shot leaves it: how far out along its aim and how high.
      */
-    record Foundation(List<Part> parts, double top, double footprint) {
+    record Foundation(List<Part> parts, List<Part> head, List<Part> front, List<Light> lights, double top,
+                      double footprint, double nest, double muzzle, double muzzleHeight) {
 
         Foundation {
             parts = List.copyOf(parts);
+            head = List.copyOf(head);
+            front = List.copyOf(front);
+            lights = List.copyOf(lights);
+        }
+
+        /** What {@code build} came to; its muzzle is the far end of the head's furthest solid part. */
+        static Foundation of(Build build) {
+            List<Part> front = build.head.isEmpty() ? List.of() : List.copyOf(build.front);
+            if (build.head.isEmpty()) {
+                build.finish();
+            }
+            double muzzle = 0;
+            double height = build.top;
+            for (Part part : build.head) {
+                double far = part.shape().getBounds2D().getMaxX();
+                if (part.kind() == Kind.SOLID && far > muzzle) {
+                    muzzle = far;
+                    height = part.z0() + part.height() / 2;
+                }
+            }
+            return new Foundation(build.parts, build.head, front, build.lights, build.top, build.footprint, build.nest,
+                    muzzle, height);
+        }
+
+        boolean aims() {
+            return !this.head.isEmpty();
         }
     }
 
-    /** A look's foundation at each tier, and the head it turns, if it aims. */
-    private record Row(IntFunction<Build> foundation, Optional<List<Part>> head) {
+    /** Builds a look at a tier in a pose. */
+    @FunctionalInterface
+    private interface Builder {
+        Build at(int tier, TowerPose pose);
     }
 
-    /** The foundation {@code look} stands on at {@code tier}. */
+    /** A look's builder; {@code stillBody} when its body is the same in every pose, so only its head is built again. */
+    private record Row(Builder builder, boolean stillBody) {
+
+        static Row aiming(Builder builder) {
+            return new Row(builder, true);
+        }
+
+        static Row posed(Builder builder) {
+            return new Row(builder, false);
+        }
+    }
+
+    private record Posed(TowerLook look, int tier, TowerPose pose) {
+    }
+
+    /** {@code look} at {@code tier}, at rest. */
     static Foundation of(TowerLook look, int tier) {
-        return BUILT.get(look).get(Math.clamp(tier, 0, TIERS - 1));
+        return IDLE.get(look).get(Math.clamp(tier, 0, TIERS - 1));
     }
 
-    /** The head {@code look} aims, its parts' heights counted from the foundation's top, pointing along {@code +X}. */
-    static Optional<List<Part>> head(TowerLook look) {
-        return ROWS.get(look).head();
+    /** {@code look} at {@code tier} in {@code pose}. */
+    static Foundation of(TowerLook look, int tier, TowerPose pose) {
+        TowerPose snapped = pose.snapped(POSE_STEPS);
+        int shown = Math.clamp(tier, 0, TIERS - 1);
+        if (snapped.equals(TowerPose.idle())) {
+            return IDLE.get(look).get(shown);
+        }
+        Posed key = new Posed(look, shown, snapped);
+        Foundation kept = POSED.get(key);
+        if (kept != null) {
+            return kept;
+        }
+        if (POSED.size() > KEPT_POSES) {
+            POSED.clear();
+        }
+        Foundation built = Foundation.of(ROWS.get(look).builder().at(shown, snapped));
+        POSED.putIfAbsent(key, built);
+        return built;
+    }
+
+    /** Whether {@code look}'s body is the same in every pose. */
+    static boolean stillBody(TowerLook look) {
+        return ROWS.get(look).stillBody();
+    }
+
+    /** The radius a tower of {@code tier} takes on the ground, in cells. */
+    static double footprint(int tier) {
+        return FOOTPRINT[Math.clamp(tier, 0, TIERS - 1)];
     }
 
     static <V> Map<TowerLook, V> checkedComplete(Map<TowerLook, V> rows) {
@@ -115,13 +226,12 @@ final class TowerFoundations {
         return rows;
     }
 
-    private static Map<TowerLook, List<Foundation>> built() {
+    private static Map<TowerLook, List<Foundation>> idle() {
         Map<TowerLook, List<Foundation>> built = new EnumMap<>(TowerLook.class);
         ROWS.forEach((look, row) -> {
             List<Foundation> tiers = new ArrayList<>(TIERS);
             for (int tier = 0; tier < TIERS; tier++) {
-                Build build = row.foundation().apply(tier).finish();
-                tiers.add(new Foundation(build.parts, build.top, build.footprint));
+                tiers.add(Foundation.of(row.builder().at(tier, TowerPose.idle())));
             }
             built.put(look, List.copyOf(tiers));
         });
@@ -130,15 +240,21 @@ final class TowerFoundations {
 
     private static Map<TowerLook, Row> rows() {
         Map<TowerLook, Row> rows = new EnumMap<>(TowerLook.class);
-        rows.put(TowerLook.SNIPER, new Row(TowerFoundations::sniper, Optional.of(sniperHead())));
-        rows.put(TowerLook.SPLASH, new Row(tier -> tier == 0 ? thrower() : stormcaller(tier), Optional.empty()));
-        rows.put(TowerLook.STORMCALLER, new Row(tier -> stormcaller(Math.max(1, tier)), Optional.empty()));
-        rows.put(TowerLook.HEXER, new Row(tier -> hexer(Math.max(1, tier)), Optional.empty()));
-        rows.put(TowerLook.MORTAR, new Row(TowerFoundations::mortar, Optional.of(mortarHead())));
-        rows.put(TowerLook.CINDER, new Row(TowerFoundations::scorcher, Optional.of(scorcherHead())));
-        rows.put(TowerLook.SEEKER, new Row(TowerFoundations::aerie, Optional.empty()));
-        rows.put(TowerLook.PULSE, new Row(TowerFoundations::obelisk, Optional.empty()));
-        rows.put(TowerLook.AURA, new Row(TowerFoundations::beacon, Optional.empty()));
+        rows.put(TowerLook.SNIPER, Row.aiming(TowerFoundations::sniper));
+        rows.put(TowerLook.SPLASH, Row.posed((tier, pose) -> tier == 0 ? thrower(pose) : stormcaller(tier, pose)));
+        rows.put(TowerLook.STORMCALLER, Row.posed((tier, pose) -> stormcaller(Math.max(1, tier), pose)));
+        rows.put(TowerLook.HEXER, Row.posed((tier, pose) -> hexer(Math.max(1, tier), pose)));
+        rows.put(TowerLook.MORTAR, Row.aiming(TowerFoundations::mortar));
+        rows.put(TowerLook.CINDER, Row.posed((tier, pose) -> scorcher(tier, pose, false)));
+        rows.put(TowerLook.SOULFIRE, Row.posed((tier, pose) -> scorcher(tier, pose, true)));
+        rows.put(TowerLook.SEEKER, Row.posed((tier, pose) -> aerie(tier, pose, TowerLook.SEEKER)));
+        rows.put(TowerLook.RUBY, Row.posed((tier, pose) -> aerie(tier, pose, TowerLook.RUBY)));
+        rows.put(TowerLook.SHADE, Row.posed((tier, pose) -> aerie(tier, pose, TowerLook.SHADE)));
+        rows.put(TowerLook.PULSE, Row.posed((tier, pose) -> obelisk(tier, pose, TowerLook.PULSE)));
+        rows.put(TowerLook.BURDEN, Row.posed((tier, pose) -> obelisk(tier, pose, TowerLook.BURDEN)));
+        rows.put(TowerLook.GRAVITY, Row.posed((tier, pose) -> obelisk(tier, pose, TowerLook.GRAVITY)));
+        rows.put(TowerLook.UMBRA, Row.posed((tier, pose) -> obelisk(tier, pose, TowerLook.UMBRA)));
+        rows.put(TowerLook.AURA, Row.posed(TowerFoundations::beacon));
         return rows;
     }
 
@@ -271,7 +387,10 @@ final class TowerFoundations {
         private final List<Part> parts = new ArrayList<>();
         /** What stands south of the tower's centre: painted last, over everything behind it. */
         private final List<Part> front = new ArrayList<>();
+        private final List<Part> head = new ArrayList<>();
+        private final List<Light> lights = new ArrayList<>();
         private double top;
+        private double nest;
         private double bodyRadius;
         private double footprint;
 
@@ -292,6 +411,21 @@ final class TowerFoundations {
 
         Build line(Shape s, double z, Color c, double w) {
             this.parts.add(Part.line(s, z, c, w));
+            return this;
+        }
+
+        /** A light that lives while the tower idles, {@code r} across at its fullest. */
+        Build light(Life life, double x, double y, double z, double r, Color c) {
+            this.lights.add(Light.of(life, x, y, z, r, c));
+            return this;
+        }
+
+        /** {@code turning}'s parts and lights become this tower's head: what it aims, built along {@code +X}. */
+        Build aim(Build turning) {
+            this.head.addAll(turning.parts);
+            for (Light light : turning.lights) {
+                this.lights.add(light.asTurning());
+            }
             return this;
         }
 
@@ -355,7 +489,7 @@ final class TowerFoundations {
 
     // ---- Sniper: a watchtower of triangles ---------------------------------------------------------------------------
 
-    private static Build sniper(int tier) {
+    private static Build sniper(int tier, TowerPose pose) {
         Color green = colour(TowerLook.SNIPER);
         Tones body = Tones.of(green);
         Color deck = mix(green, new Color(0x16241a), 0.66);
@@ -389,22 +523,58 @@ final class TowerFoundations {
             b.flat(ngon(0, 0, 6, r * 0.27, 0), z, deck);
         }
         b.top = z;
-        return b;
+        return b.aim(sniperHead(z, pose));
     }
 
-    /** The rifle on its swivel, a scope over it. */
-    private static List<Part> sniperHead() {
+    /** The rifle on its swivel, a scope over it; each thing it holds sits on its own part. */
+    private static Build sniperHead(double z, TowerPose pose) {
         Color green = colour(TowerLook.SNIPER);
         Tones steel = Tones.of(mix(green, Color.WHITE, 0.55));
         Tones gunmetal = Tones.of(GUNMETAL);
-        double len = 0.30;
+        double len = pose.has(TowerCue.LONG_BARREL) ? 0.37 : 0.30;
+        double back = pose.recoil() * 0.05;
+        double shake = pose.has(TowerCue.FRENZY) ? 0.014 : 0;
+        double lensX = 0.09 - back;
+        double lensY = -0.05 + shake;
         Build h = new Build();
-        h.solid(circ(0, 0, 0.058), 0, 0.03, gunmetal);
-        h.solid(box((0.04 + len) / 2, 0, len - 0.04, 0.034), 0.03, 0.03, steel);
-        h.solid(box(-0.015, 0, 0.13, 0.072), 0.03, 0.04, Tones.of(green));
-        h.solid(box(0.035, -0.05, 0.10, 0.028), 0.05, 0.03, gunmetal);
-        h.flat(circ(0.09, -0.05, 0.017), 0.08, mix(new Color(0x2c4030), new Color(0xf2fff0), 0.3));
-        return List.copyOf(h.parts);
+        h.solid(circ(0, 0, 0.058), z, 0.03, gunmetal);
+        h.solid(box((0.04 + len) / 2 - back, shake, len - 0.04, 0.034), z + 0.03, 0.03, steel);
+        if (pose.has(TowerCue.SILVER_ROUND)) {
+            h.solid(box(len - 0.05 - back, shake, 0.10, 0.04), z + 0.03, 0.034, tones(0xaad2ff));
+            h.flat(circ(len - 0.03 - back, shake - 0.006, 0.012), z + 0.07, Color.WHITE);
+        }
+        if (pose.has(TowerCue.HOLLOW_POINT)) {
+            h.solid(box(len * 0.55 - back, shake, 0.03, 0.058), z + 0.03, 0.036, tones(0xe69646));
+        }
+        h.solid(box(-0.015 - back, shake, 0.13, 0.072), z + 0.03, 0.04, Tones.of(green));
+        h.solid(box(0.035 - back, lensY, 0.10, 0.028), z + 0.05, 0.03, gunmetal);
+        int stacks = Math.min(3, pose.stacks());
+        h.flat(circ(lensX, lensY, 0.017), z + 0.08, mix(new Color(0x2c4030), new Color(0xf2fff0), 0.3 + 0.23 * stacks));
+        if (stacks >= 3) {
+            h.glow(lensX, lensY, 0.06, z + 0.08, alpha(new Color(0xf2fff0), 0.8));
+            h.flat(star(lensX, lensY, 4, 0.042, 0.008, 0), z + 0.08, Color.WHITE);
+        } else {
+            h.light(Life.GLINT, lensX, lensY, z + 0.08, 0.075, Color.WHITE);
+        }
+        if (pose.has(TowerCue.HEADHUNTER)) {
+            Color hunt = new Color(0xff7850);
+            h.line(circ(lensX, lensY, 0.04), z + 0.08, hunt, 0.014);
+            h.line(open(lensX - 0.06, lensY, lensX + 0.06, lensY), z + 0.08, hunt, 0.01);
+        }
+        if (pose.has(TowerCue.FOURTH_SHOT)) {
+            h.glow(len - back, shake, 0.085, z + 0.07, alpha(Color.WHITE, 0.85));
+            h.flat(ngon(len - back, shake, 4, 0.03, 0), z + 0.07, Color.WHITE);
+        }
+        if (pose.has(TowerCue.FRENZY)) {
+            Color spark = new Color(0xff6b5a);
+            h.line(open(-0.07, -0.05, -0.12, -0.09), z + 0.08, spark, 0.014);
+            h.line(open(-0.08, 0.04, -0.14, 0.07), z + 0.08, spark, 0.014);
+            h.line(open(0.0, 0.055, -0.02, 0.105), z + 0.08, spark, 0.014);
+        }
+        if (pose.flash()) {
+            h.glow(len + 0.02, 0, 0.09, z + 0.07, alpha(new Color(0xf4ffe8), 0.9));
+        }
+        return h;
     }
 
     // ---- Burst: the stone thrower, and its two forks -----------------------------------------------------------------
@@ -425,8 +595,8 @@ final class TowerFoundations {
         b.around(mark);
     }
 
-    /** A ring of stones round a throwing arm, cocked back with a stone in its cup. */
-    private static Build thrower() {
+    /** A ring of stones round a throwing arm: cocked back with a stone in its cup, flicked over as it throws. */
+    private static Build thrower(TowerPose pose) {
         Color burst = colour(TowerLook.SPLASH);
         Tones wood = Tones.of(burst);
         Build b = plinth(0, burst, r -> circ(0, 0, r));
@@ -436,15 +606,22 @@ final class TowerFoundations {
         b.solid(box(0, -0.075, 0.05, 0.045), 0, 0.14, wood);
         b.solid(box(0, 0.075, 0.05, 0.045), 0, 0.14, wood);
         b.solid(box(0, 0, 0.026, 0.17), 0.12, 0.02, tones(0x6a5a52));
-        b.solid(rot(box(0.085, 0, 0.17, 0.034), 140), 0.14, 0.03, wood);
-        b.solid(at(circ(0, 0, 0.046), 140, 0.17), 0.14, 0.03, Tones.of(wood.shade()));
-        b.solid(at(ngon(0, 0, 6, 0.032, 10), 140, 0.17), 0.17, 0.03, tones(0xd8c8c0));
+        if (pose.flash()) {
+            b.solid(rot(box(0.045, 0, 0.09, 0.034), -40), 0.2, 0.03, wood);
+            b.solid(at(circ(0, 0, 0.04), -40, 0.095), 0.26, 0.02, Tones.of(wood.shade()));
+        } else {
+            b.solid(rot(box(0.085, 0, 0.17, 0.034), 140), 0.14, 0.03, wood);
+            b.solid(at(circ(0, 0, 0.046), 140, 0.17), 0.14, 0.03, Tones.of(wood.shade()));
+            if (pose.reload() > 0.5) {
+                b.solid(at(ngon(0, 0, 6, 0.032, 10), 140, 0.17), 0.17, 0.03, tones(0xd8c8c0));
+            }
+        }
         b.top = 0.2;
         return b;
     }
 
-    /** A copper coil, taller with every tier, a ball at its top. */
-    private static Build stormcaller(int tier) {
+    /** A copper coil, taller with every tier, a ball at its top that sparks as it throws. */
+    private static Build stormcaller(int tier, TowerPose pose) {
         Color storm = colour(TowerLook.STORMCALLER);
         Tones copper = tones(0xc98a5c);
         Tones iron = tones(0x596074);
@@ -485,13 +662,27 @@ final class TowerFoundations {
             b.solid(ring(0, 0, wide - 0.03, wide - 0.06), z + 0.04, 0.03, blue);
             z += 0.06;
         }
-        b.solid(circ(0, 0, 0.048), z, 0.05, blue);
+        boolean charged = pose.has(TowerCue.CHARGED);
+        if (charged) {
+            b.glow(0, 0, 0.26, z, alpha(storm, 0.75));
+        } else {
+            b.light(Life.BREATH, 0, 0, z + 0.05, 0.17, storm);
+        }
+        b.solid(circ(0, 0, 0.048), z, 0.05, charged ? tones(0xe8eeff) : blue);
+        if (pose.flash()) {
+            b.glow(0, 0, 0.2, z + 0.05, alpha(new Color(0xdfe8ff), 0.8));
+            for (double a : SPARK_BEARINGS) {
+                b.line(open(cos(a) * 0.05, sin(a) * 0.05, cos(a + 22) * 0.11, sin(a + 22) * 0.11,
+                        cos(a - 8) * 0.15, sin(a - 8) * 0.15, cos(a + 10) * 0.21, sin(a + 10) * 0.21), z + 0.05,
+                        new Color(0xe6edff), 0.016);
+            }
+        }
         b.top = z;
         return b;
     }
 
-    /** An iron cauldron of brew; standing stones and tusks come with the tiers. */
-    private static Build hexer(int tier) {
+    /** An iron cauldron of brew that bubbles up as it casts; standing stones and tusks come with the tiers. */
+    private static Build hexer(int tier, TowerPose pose) {
         Color hex = colour(TowerLook.HEXER);
         Tones iron = tones(0x555062);
         Tones bone = tones(0xe6dcc4);
@@ -523,10 +714,22 @@ final class TowerFoundations {
         double lift = tier >= 2 ? 0.10 : 0;
         b.solid(circ(0, 0, pot), z + lift, 0.14, iron);
         z += lift + 0.14;
-        b.flat(circ(0, 0, pot * 0.8), z, brew);
+        boolean charged = pose.has(TowerCue.CHARGED);
+        b.flat(circ(0, 0, pot * 0.8), z, charged ? lit : brew);
+        if (charged) {
+            b.glow(0, 0, pot * 1.7, z, alpha(hex, 0.75));
+        } else {
+            b.light(Life.BREATH, 0, 0, z, pot * 1.25, hex);
+        }
         b.flat(circ(-0.045, -0.02, 0.026), z, lit);
         b.flat(circ(0.04, 0.045, 0.018), z, lit);
         b.flat(circ(0.05, -0.05, 0.012), z, lit);
+        if (pose.flash()) {
+            b.solid(circ(0.01, 0, 0.07), z, 0.04, Tones.of(lit));
+            b.flat(circ(-pot * 1.1, -0.06, 0.02), z, lit);
+            b.flat(circ(pot * 0.95, -0.12, 0.016), z, lit);
+            b.flat(circ(0.05, pot * 1.2, 0.018), z, lit);
+        }
         if (tier == 3) {
             Shape tusk = minus(circ(0, 0, 0.105), circ(0.04, 0, 0.11));
             int mark = b.mark();
@@ -542,7 +745,7 @@ final class TowerFoundations {
     // ---- Mortar ------------------------------------------------------------------------------------------------------
 
     /** A squat drum on sandbags, then on an iron ring, then inside a crenellated wall with shells stacked. */
-    private static Build mortar(int tier) {
+    private static Build mortar(int tier, TowerPose pose) {
         Color mortar = colour(TowerLook.MORTAR);
         Tones iron = tones(0x5a6070);
         Tones brown = Tones.of(mortar);
@@ -561,7 +764,7 @@ final class TowerFoundations {
             b.flat(ngon(0, 0, 8, r * 0.78, 22.5), z, new Color(0x2a2622));
             mark = b.mark();
             for (int i = 0; i < 3; i++) {
-                shell(b, cos(118 + i * 22) * r * 0.62, sin(118 + i * 22) * r * 0.62, 0.028, z);
+                shell(b, LoadedShell.NORMAL, cos(118 + i * 22) * r * 0.62, sin(118 + i * 22) * r * 0.62, 0.028, z);
             }
             b.around(mark);
         } else if (tier >= 1) {
@@ -583,41 +786,95 @@ final class TowerFoundations {
             b.solid(circ(0, 0, base * 0.68), z, 0.02, iron);
         }
         b.top = z;
-        return b;
+        return b.aim(mortarHead(z + 0.02, pose));
     }
 
-    /** The wide barrel on its trunnions, a shell loaded in its open bore. */
-    private static List<Part> mortarHead() {
+    /** The wide barrel on its trunnions, thrown back by a shot, the next shell showing in its open bore once loaded. */
+    private static Build mortarHead(double z, TowerPose pose) {
         Tones brown = Tones.of(mix(colour(TowerLook.MORTAR), Color.WHITE, 0.12));
         Tones iron = tones(0x6a7080);
-        double z = 0.02;
-        double len = 0.21;
+        double len = (pose.has(TowerCue.LONG_BARREL) ? 0.25 : 0.21) - pose.recoil() * 0.05;
+        boolean volley = pose.has(TowerCue.VOLLEY);
         Build h = new Build();
         h.solid(box(0, 0, 0.055, 0.2), z, 0.05, iron);
         h.solid(box(len / 2 - 0.04, 0, len + 0.04, 0.135), z, 0.10, brown);
         h.solid(box(len - 0.015, 0, 0.04, 0.16), z, 0.11, Tones.of(brown.highlight()));
         h.flat(ell(len - 0.05, 0, 0.042, 0.05), z + 0.11, new Color(0x17130f));
-        shell(h, len - 0.05, 0, 0.034, z + 0.11);
-        return List.copyOf(h.parts);
+        if (volley) {
+            h.solid(box(-0.10, 0, 0.05, 0.17), z, 0.04, iron);
+        }
+        if (pose.flash()) {
+            h.glow(len + 0.02, 0, 0.13, z + 0.11, alpha(new Color(0xffe6b0), 0.9));
+        }
+        if (pose.reload() >= 0.5) {
+            shell(h, pose.shell(), len - 0.05, 0, 0.034, z + 0.11);
+            if (volley) {
+                for (int i = -1; i <= 1; i++) {
+                    shell(h, pose.shell(), -0.10, i * 0.052, 0.022, z + 0.04);
+                }
+            }
+            h.light(Life.GLINT, len - 0.06, -0.01, z + 0.13, 0.06, Color.WHITE);
+        }
+        return h;
     }
 
-    /** A plain shell: a lit iron ball. */
-    private static void shell(Build b, double x, double y, double r, double z) {
-        b.solid(circ(x, y, r), z, 0.02, Tones.of(SHELL_IRON));
-        b.flat(circ(x - r * 0.3, y - r * 0.3, r * 0.3), z + 0.02, SHELL_GLINT);
+    /** A shell of {@code kind} on its own, {@code r} across, lying at the origin. */
+    static List<Part> shell(LoadedShell kind, double r) {
+        Build b = new Build();
+        shell(b, kind, 0, 0, r, 0);
+        return List.copyOf(b.parts);
+    }
+
+    /** One shell kind: the same drawing in the barrel, on the tray and on its own. */
+    private static void shell(Build b, LoadedShell kind, double x, double y, double r, double z) {
+        switch (kind) {
+            case NORMAL -> {
+                b.solid(circ(x, y, r), z, 0.02, tones(0x7b8496));
+                b.flat(circ(x - r * 0.3, y - r * 0.3, r * 0.3), z + 0.02, new Color(0xc4cad6));
+            }
+            case HEAVY -> {
+                b.solid(circ(x, y, r * 1.25), z, 0.02, tones(0x7b8496));
+                b.flat(box(x, y, r * 2.3, r * 0.5), z + 0.02, new Color(0xf2d28a));
+            }
+            case NUKE -> {
+                b.glow(x, y, r * 3.2, z, alpha(new Color(0xc8f04a), 0.7));
+                b.solid(circ(x, y, r * 1.5), z, 0.02, tones(0xe8e8dc));
+                b.flat(ngon(x, y, 3, r * 0.9, -90), z + 0.02, new Color(0x2a2a20));
+            }
+            case NAPALM -> {
+                b.solid(circ(x, y, r), z, 0.02, tones(0xff7a2a));
+                b.flat(circ(x - r * 0.2, y - r * 0.2, r * 0.4), z + 0.02, new Color(0xffd34d));
+            }
+            case TAR -> {
+                b.solid(circ(x, y, r), z, 0.02, new Tones(new Color(0x4b3c5a), new Color(0x241d2a), new Color(0x6a5a80)));
+                b.flat(circ(x - r * 0.3, y - r * 0.35, r * 0.28), z + 0.02, new Color(0xf0eaff));
+            }
+            case CRYO -> {
+                b.solid(circ(x, y, r), z, 0.02, tones(0xaae6ff));
+                b.flat(star(x, y, 4, r * 0.7, r * 0.2, 0), z + 0.02, Color.WHITE);
+            }
+            case FLARE -> {
+                b.glow(x, y, r * 2.4, z, alpha(new Color(0xfff2a8), 0.8));
+                b.flat(star(x, y, 4, r * 1.2, r * 0.32, 45), z + 0.02, new Color(0xfffbe0));
+            }
+        }
     }
 
     // ---- Scorcher ----------------------------------------------------------------------------------------------------
 
-    /** A fuel tank, then a tank and its reserve, then a grated firebox, then an armoured furnace. */
-    private static Build scorcher(int tier) {
-        Color scorcher = colour(TowerLook.CINDER);
-        Tones metal = Tones.of(scorcher);
-        Tones iron = tones(0x565a66);
-        Color hot = new Color(0xffb347);
-        Build b = plinth(tier, scorcher, r -> ngon(0, 0, 16, r, 0));
+    /**
+     * A fuel tank, then a tank and its reserve, then a grated firebox, then an armoured furnace whose vents glow while
+     * it pours. {@code soul} is the dark metal that burns violet.
+     */
+    private static Build scorcher(int tier, TowerPose pose, boolean soul) {
+        Tones metal = soul ? new Tones(new Color(0x1f1b2a), new Color(0x3d3650), new Color(0x8a78c0))
+                : Tones.of(colour(TowerLook.CINDER));
+        Tones iron = tones(soul ? 0x3a3648 : 0x565a66);
+        Color hot = soul ? SOUL_FLAME : new Color(0xffb347);
+        Build b = plinth(tier, soul ? SOUL_STONE : colour(TowerLook.CINDER), r -> ngon(0, 0, 16, r, 0));
         double r = b.bodyRadius;
         double z = b.top;
+        boolean streaming = pose.has(TowerCue.STREAMING);
         if (tier == 0) {
             b.solid(circ(0, 0, r * 0.74), z, 0.16, metal);
             b.line(circ(0, 0, r * 0.5), z + 0.16, metal.shade(), 0.016);
@@ -631,7 +888,7 @@ final class TowerFoundations {
             z += 0.16;
         } else if (tier == 2) {
             double g = r * 0.80;
-            b.flat(box(0, 0, g * 2, g * 2), z, new Color(0x5a1e10));
+            b.flat(box(0, 0, g * 2, g * 2), z, soul ? new Color(0x2a1c4a) : new Color(0x5a1e10));
             for (int i = 0; i < 5; i++) {
                 b.flat(circ(-g * 0.7 + i * g * 0.35, (i % 2 == 0 ? -1 : 1) * g * 0.72, 0.022), z, hot);
             }
@@ -648,8 +905,13 @@ final class TowerFoundations {
             b.solid(ngon(0, 0, 8, r, 22.5), z, 0.22, iron);
             z += 0.22;
             b.line(ngon(0, 0, 8, r * 0.86, 22.5), z, metal.body(), 0.028);
+            Color lit = soul ? new Color(0xd9c8ff) : new Color(0xffd34d);
+            Color cold = soul ? new Color(0x4a3a80) : new Color(0x8a3418);
             for (int i = 0; i < 4; i++) {
-                b.flat(at(box(0, 0, 0.045, 0.12), 45 + i * 90, r * 0.60), z, new Color(0x8a3418));
+                b.flat(at(box(0, 0, 0.045, 0.12), 45 + i * 90, r * 0.60), z, streaming ? lit : cold);
+                if (streaming) {
+                    b.glow(cos(45 + i * 90) * r * 0.60, sin(45 + i * 90) * r * 0.60, 0.09, z, alpha(hot, 0.7));
+                }
             }
             b.solid(circ(-0.105, 0.12, 0.08), z, 0.10, metal);
             b.solid(circ(0.105, 0.12, 0.08), z, 0.10, metal);
@@ -657,58 +919,68 @@ final class TowerFoundations {
             z += 0.05;
         }
         b.top = z;
-        return b;
-    }
-
-    /** The nozzle on its swivel, a pilot flame at its mouth. */
-    private static List<Part> scorcherHead() {
-        Tones metal = Tones.of(colour(TowerLook.CINDER));
-        Tones iron = tones(0x565a66);
-        double len = 0.25;
+        double len = (pose.has(TowerCue.LONG_BARREL) ? 0.31 : 0.25) + (pose.has(TowerCue.DRAGONS_BREATH) ? 0.03 : 0);
+        Color pilot = soul ? new Color(0xd5e6ff) : new Color(0xffd34d);
+        Color tip = streaming ? new Color(0xfff2c0)
+                : mix(soul ? SOUL_FLAME : new Color(0xff5a2a), iron.body(), pose.reload());
         Build h = new Build();
-        h.solid(circ(0, 0, 0.066), 0, 0.03, iron);
-        h.solid(box(len / 2, 0, len, 0.05), 0.03, 0.03, Tones.of(metal.highlight()));
-        h.solid(poly(len - 0.01, -0.028, len + 0.065, -0.055, len + 0.065, 0.055, len - 0.01, 0.028), 0.03, 0.035,
-                Tones.of(iron.body()));
-        h.flat(poly(len + 0.065, -0.014, len + 0.105, 0, len + 0.065, 0.014), 0.065, new Color(0xffd34d));
-        return List.copyOf(h.parts);
+        h.solid(circ(0, 0, 0.066), z, 0.03, iron);
+        h.solid(box(len / 2, 0, len, 0.05), z + 0.03, 0.03, Tones.of(metal.highlight()));
+        h.solid(poly(len - 0.01, -0.028, len + 0.065, -0.055, len + 0.065, 0.055, len - 0.01, 0.028), z + 0.03, 0.035,
+                Tones.of(tip));
+        if (!streaming) {
+            h.flat(poly(len + 0.065, -0.014, len + 0.105, 0, len + 0.065, 0.014), z + 0.065, pilot);
+            h.light(Life.FLICKER, len + 0.085, 0, z + 0.065, 0.06, pilot);
+        }
+        return b.aim(h);
     }
 
     // ---- Aerie -------------------------------------------------------------------------------------------------------
 
-    /** A crystal spire on a hexagonal perch, taller with every tier; a nest ring, shards and arms come with the tiers. */
-    private static Build aerie(int tier) {
-        Color tint = colour(TowerLook.SEEKER);
-        Tones crystal = Tones.of(tint);
-        Tones stone = stone(tint);
-        Color lit = crystal.highlight();
-        Build b = plinth(tier, tint, r -> ngon(0, 0, 12, r, 15));
+    /**
+     * A crystal spire on a hexagonal perch, taller with every tier; a nest ring, shards and arms come with the tiers.
+     * {@code look} picks the crystal: the plain one, red, or smoky dark with a pale green light.
+     */
+    private static Build aerie(int tier, TowerPose pose, TowerLook look) {
+        boolean shade = look == TowerLook.SHADE;
+        Color tint = colour(look == TowerLook.RUBY ? TowerLook.RUBY : TowerLook.SEEKER);
+        Tones crystal = shade ? new Tones(new Color(0x1d1f26), new Color(0x3c4050), new Color(0x7a8496)) : Tones.of(tint);
+        Tones stone = shade ? tones(0x4a4e5a) : stone(tint);
+        Color lit = shade ? SHADE_LIGHT : Tones.of(tint).highlight();
+        Tones bright = shade ? Tones.of(SHADE_LIGHT) : crystal;
+        Build b = plinth(tier, shade ? SHADE_STONE : tint, r -> ngon(0, 0, 12, r, 15));
         double r = b.bodyRadius;
         double z = b.top;
-        b.solid(ngon(0, 0, 6, r * 0.78, 30), z, 0.08, Tones.of(mix(tint, new Color(0x10202c), 0.5)));
+        boolean release = pose.has(TowerCue.RELEASE_READY);
+        b.solid(ngon(0, 0, 6, r * 0.78, 30), z, 0.08, shade ? stone : Tones.of(mix(tint, new Color(0x10202c), 0.5)));
         z += 0.08;
         if (tier >= 2) {
             int shards = tier == 3 ? 6 : 4;
             int mark = b.mark();
             for (int i = 0; i < shards; i++) {
                 double a = (tier == 3 ? 0 : 45) + i * 360.0 / shards;
-                b.solid(at(poly(-0.05, 0, 0, -0.026, 0.06, 0, 0, 0.026), a, r * 0.52), z, 0.13, Tones.of(lit));
+                b.solid(at(poly(-0.05, 0, 0, -0.026, 0.06, 0, 0, 0.026), a, r * 0.52), z, 0.13,
+                        shade ? crystal : Tones.of(Tones.of(tint).highlight()));
             }
             b.around(mark);
         }
         if (tier >= 1) {
+            if (release) {
+                b.glow(0, 0, 0.30, z + 0.2, alpha(lit, 0.7));
+            }
             int mark = b.mark();
-            b.solid(ring(0, 0, 0.185, 0.15), z + 0.2, 0.025, crystal);
+            b.solid(ring(0, 0, 0.185, 0.15), z + 0.2, 0.025, release ? Tones.of(mix(lit, Color.WHITE, 0.5)) : bright);
             b.around(mark);
         }
         if (tier == 3) {
             int mark = b.mark();
             for (int i = 0; i < 3; i++) {
                 b.solid(rot(box(0.17, 0, 0.16, 0.03), -90 + i * 120), z + 0.3, 0.025, stone);
-                b.solid(at(ring(0, 0, 0.048, 0.026), -90 + i * 120, 0.25), z + 0.3, 0.03, crystal);
+                b.solid(at(ring(0, 0, 0.048, 0.026), -90 + i * 120, 0.25), z + 0.3, 0.03, bright);
             }
             b.around(mark);
         }
+        b.nest = z + 0.2;
         double height = 0.45 + 0.15 * tier;
         if (tier == 3) {
             b.solid(star(0, 0, 6, 0.14, 0.09, 0), z, height, crystal);
@@ -716,15 +988,30 @@ final class TowerFoundations {
             b.solid(ngon(0, 0, 6, 0.10 + 0.008 * tier, 0), z, height, crystal);
         }
         z += height;
-        b.flat(ngon(0, 0, 6, 0.045, 30), z, mix(lit, Color.WHITE, 0.55));
+        if (shade) {
+            for (int i = 0; i < 3; i++) {
+                b.flat(rot(box(0.045, 0, 0.05, 0.012), 30 + i * 120), z, SHADE_LIGHT);
+            }
+            if (tier == 3) {
+                b.glow(0, 0, 0.16, z, alpha(SHADE_LIGHT, 0.6));
+                for (int i = 0; i < 6; i++) {
+                    b.flat(at(poly(-0.02, -0.016, 0.03, 0, -0.02, 0.016), i * 60, 0.105), z, SHADE_LIGHT);
+                }
+            }
+        }
+        b.flat(ngon(0, 0, 6, 0.045, 30), z, shade ? SHADE_LIGHT : mix(lit, Color.WHITE, 0.55));
+        b.light(Life.BREATH, 0, 0, z, 0.15, lit);
         b.top = z;
         return b;
     }
 
     // ---- Obelisk -----------------------------------------------------------------------------------------------------
 
-    /** A dark stone with a pyramidion and a glowing rune; standing stones ring it from Tier II. */
-    private static Build obelisk(int tier) {
+    /**
+     * A dark stone with a pyramidion and a glowing rune; standing stones ring it from Tier II. {@code look} picks the
+     * rune, the only part of the stone that glows.
+     */
+    private static Build obelisk(int tier, TowerPose pose, TowerLook look) {
         Tones dark = new Tones(new Color(0x48446c), new Color(0x6a6490), new Color(0xa39ad0));
         Build b = plinth(tier, colour(TowerLook.PULSE), r -> box(0, 0, r * 1.72, r * 1.72));
         double z = b.top;
@@ -757,27 +1044,69 @@ final class TowerFoundations {
         b.flat(poly(0, 0, half, -half, half, half), z, dark.body());
         b.flat(poly(0, 0, -half, half, half, half), z, dark.shade());
         b.top = z;
-        rune(b, z, TowerLooks.tierColor(TowerLook.PULSE, tier));
+        rune(b, look, z, tier, pose);
         return b;
     }
 
-    /** The one glowing part of the stone, in its tier's colour: a cross. */
-    private static void rune(Build b, double z, Color c) {
+    /** The rune brightens when the stone's store is full and flashes as it strikes. It never grows. */
+    private static void rune(Build b, TowerLook look, double z, int tier, TowerPose pose) {
+        boolean charged = pose.has(TowerCue.CHARGED);
+        Color c = switch (look) {
+            case BURDEN -> new Color(0xc9a56c);
+            case GRAVITY -> new Color(0x7d9be6);
+            case UMBRA -> new Color(0xbcaaf0);
+            default -> TowerLooks.tierColor(TowerLook.PULSE, tier);
+        };
+        Color ink = mix(c, Color.WHITE, pose.flash() ? 0.8 : charged ? 0.45 : 0);
+        b.glow(0, 0, 0.15, z, alpha(c, pose.flash() ? 1.0 : (charged ? 1.0 : 0.55) * 0.9));
+        if (!charged && !pose.flash()) {
+            b.light(Life.BREATH, 0, 0, z, 0.2, c);
+        }
         double scale = 1.5;
         double w = 0.016 * scale;
-        b.glow(0, 0, 0.15, z, alpha(c, 0.55 * 0.9));
-        b.line(open(0, -0.045 * scale, 0, 0.045 * scale), z, c, w);
-        b.line(open(-0.03 * scale, -0.012 * scale, 0.03 * scale, -0.012 * scale), z, c, w);
+        int first = b.mark();
+        switch (look) {
+            case BURDEN -> {
+                b.line(open(-0.045, -0.04, 0.045, -0.04), z, ink, w);
+                b.line(open(-0.04, -0.005, 0, 0.04, 0.04, -0.005), z, ink, w);
+            }
+            case GRAVITY -> {
+                Path2D.Double spiral = new Path2D.Double();
+                for (int i = 0; i <= 24; i++) {
+                    double a = i * 30;
+                    double r = 0.052 - 0.045 * i / 24.0;
+                    if (i == 0) {
+                        spiral.moveTo(cos(a) * r, sin(a) * r);
+                    } else {
+                        spiral.lineTo(cos(a) * r, sin(a) * r);
+                    }
+                }
+                b.line(spiral, z, ink, w * 0.8);
+            }
+            case UMBRA -> {
+                b.line(circ(0, 0, 0.042), z, ink, w);
+                b.flat(circ(0.012, 0.012, 0.036), z, new Color(0x2a2540));
+            }
+            default -> {
+                b.line(open(0, -0.045, 0, 0.045), z, ink, w);
+                b.line(open(-0.03, -0.012, 0.03, -0.012), z, ink, w);
+            }
+        }
+        AffineTransform larger = AffineTransform.getScaleInstance(scale, scale);
+        for (int i = first; i < b.parts.size(); i++) {
+            b.parts.set(i, b.parts.get(i).withShape(larger.createTransformedShape(b.parts.get(i).shape())));
+        }
     }
 
     // ---- Beacon ------------------------------------------------------------------------------------------------------
 
-    /** A post with a lantern, rising to a lighthouse with eight panes. */
-    private static Build beacon(int tier) {
+    /** A post with a lantern, rising to a lighthouse with eight panes; a pane takes the colour of a look it is lit by. */
+    private static Build beacon(int tier, TowerPose pose) {
         Color beacon = colour(TowerLook.AURA);
         Tones gold = Tones.of(beacon);
         Tones stone = stone(beacon);
-        Color light = new Color(0xffe9a8);
+        boolean day = pose.has(TowerCue.DAYLIGHT);
+        Color light = day ? DAYLIGHT : LANTERN_LIGHT;
         Build b = plinth(tier, beacon, r -> ngon(0, 0, 8, r, 22.5));
         double r = b.bodyRadius;
         double z = b.top;
@@ -792,10 +1121,11 @@ final class TowerFoundations {
                 b.flat(at(circ(0, 0, 0.014), i * 45, post), z, gold.highlight());
             }
         }
-        b.glow(0, 0, tier == 0 ? 0.25 : 0.30, z, alpha(light, 0.5));
+        b.glow(0, 0, tier == 0 ? 0.25 : 0.30, z, alpha(light, day ? 0.75 : 0.5));
         if (tier == 0) {
             b.solid(ngon(0, 0, 4, 0.105, 0), z, 0.08, gold);
             b.flat(ngon(0, 0, 4, 0.06, 0), z + 0.08, light);
+            b.light(Life.BREATH, 0, 0, z + 0.08, 0.2, light);
         } else {
             double pane = tier == 1 ? 0.125 : 0.14;
             b.solid(ngon(0, 0, 8, pane + 0.012, 22.5), z, 0.06, gold);
@@ -803,7 +1133,8 @@ final class TowerFoundations {
             for (int i = 0; i < 8; i++) {
                 double a0 = 22.5 + i * 45;
                 double a1 = a0 + 45;
-                Color glass = i % 2 == 0 ? light : mix(light, beacon, 0.35);
+                Color glass = pose.panes().isEmpty() ? (i % 2 == 0 ? light : mix(light, beacon, 0.35))
+                        : colour(pose.panes().get(i % pose.panes().size()));
                 b.flat(poly(cos(a0) * pane, sin(a0) * pane, cos(a1) * pane, sin(a1) * pane,
                         cos(a1) * 0.05, sin(a1) * 0.05, cos(a0) * 0.05, sin(a0) * 0.05), z, glass);
                 b.line(open(cos(a0) * pane, sin(a0) * pane, cos(a0) * 0.05, sin(a0) * 0.05), z, gold.shade(), 0.01);
@@ -812,6 +1143,7 @@ final class TowerFoundations {
             if (tier == 3) {
                 b.flat(circ(0, 0, 0.018), z + 0.05, Color.WHITE);
             }
+            b.light(Life.SWEEP, 0, 0, z, pane * 3.4, light);
         }
         b.top = z;
         return b;

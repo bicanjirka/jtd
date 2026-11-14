@@ -14,6 +14,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 /**
  * One tower on the board. Concrete types are reached only through {@link TowerVisitor}.
@@ -118,6 +119,12 @@ public interface Tower {
 
     /** The last rise of its highest open tier, stamped at the start of the tower's turn. */
     TierRise tierRise();
+
+    /**
+     * Ticks since the tower's first turn after it was placed, if that was no more than {@code window} ticks before
+     * {@code gameTime}. Empty for a tower a save brought back: it was not placed now.
+     */
+    OptionalInt ticksSincePlaced(int gameTime, int window);
 
     /** Adds a finished walk's bounty to this tower's XP. */
     void earnXp(int bounty);

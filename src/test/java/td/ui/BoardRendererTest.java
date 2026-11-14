@@ -23,6 +23,7 @@ import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.SheetLine;
 import td.ui.render.TowerLook;
+import td.ui.render.TowerPose;
 import td.ui.render.TowerSheet;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
@@ -31,6 +32,7 @@ import td.util.RecordingGameHost;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class BoardRendererTest {
 
@@ -151,8 +153,33 @@ class BoardRendererTest {
         TowerSpriteDraw settled = rendererFor(context).buildFrame(200, 0.0, 0.0).towerSprites().getFirst();
 
         assertThat(rising.risenFrom()).isZero();
-        assertThat(rising.riseProgress()).isBetween(0f, 1f);
-        assertThat(settled.riseProgress()).isEqualTo(-1f);
+        assertThat(rising.riseProgress()).isStrictlyBetween(0f, 1f);
+        assertThat(settled.riseProgress()).isEqualTo(1f);
+    }
+
+    @Test
+    void aTowerJustPlacedIsDrawnSettlingOntoItsCellUntilItStands() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        SniperTower tower = new SniperTower(context, 1, 1);
+        context.towers().add(tower);
+        tower.beginTick(100);
+
+        TowerSpriteDraw settling = rendererFor(context).buildFrame(102, 0.0, 0.0).towerSprites().getFirst();
+        TowerSpriteDraw standing = rendererFor(context).buildFrame(200, 0.0, 0.0).towerSprites().getFirst();
+
+        assertThat(settling.buildProgress()).isStrictlyBetween(0f, 1f);
+        assertThat(standing.buildProgress()).isEqualTo(1f);
+    }
+
+    @Test
+    void aTowerMidReloadIsPosedThrownBackAndAReadyOneAtRest() {
+        TowerPose reloading = TowerSpriteFrameBuilder.poseOfReload(0.8f);
+        TowerPose ready = TowerSpriteFrameBuilder.poseOfReload(0f);
+
+        assertThat(reloading.recoil()).isPositive();
+        assertThat(reloading.reload()).isCloseTo(0.2f, within(1e-6f));
+        assertThat(ready).isSameAs(TowerPose.idle());
     }
 
     @Test

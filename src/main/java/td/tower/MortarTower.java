@@ -525,6 +525,11 @@ public final class MortarTower extends AbstractTower {
         return this.blastRadius(this.stats(), 1f);
     }
 
+    /** How much of the reload is still to run: 1 as a shell leaves, 0 once the next is ready. */
+    public float getCoolDownFraction() {
+        return this.clock.remaining();
+    }
+
     public TurretAim getTurretAim() {
         return this.turretAim;
     }
