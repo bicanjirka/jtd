@@ -217,7 +217,6 @@ public enum Palette {
     /** Haste's tone. */
     TERM_HASTE,
     /** Patience's tone. */
-    TERM_PATIENCE,
     /** Fourth Shot's tone. */
     TERM_FOURTH_SHOT,
     /** Tar Shell's tone. */

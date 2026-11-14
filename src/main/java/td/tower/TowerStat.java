@@ -48,8 +48,6 @@ public enum TowerStat implements StatKey, StatTerm {
             StatDirection.HIGHER, StatGroup.CRIT, Shows.OFF_DEFAULT, false),
     ARMOR_PENETRATION(0f, 0f, 1f, StatUnit.PERCENT, "Armor pen", "Armor penetration", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, true),
-    ARMOR_PENETRATION_FLAT(0f, 0f, Float.MAX_VALUE, StatUnit.POINTS, "Armor ignored", "Armor ignored",
-            StatDirection.HIGHER, StatGroup.CRIT, Shows.OFF_DEFAULT, true),
     MAGIC_PENETRATION(0f, 0f, 1f, StatUnit.PERCENT, "Magic pen", "Magic penetration", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, true),
     MAGIC_PENETRATION_FLAT(0f, 0f, Float.MAX_VALUE, StatUnit.POINTS, "Magic ignored", "Magic resist ignored",
@@ -218,7 +216,6 @@ public enum TowerStat implements StatKey, StatTerm {
             case AIM_STACKS -> TermText.format("how many stacks of {} it can hold", TowerTerm.STEADY_AIM);
             case AIM_STACKS_PER_SHOT -> TermText.format("how many stacks of {} each shot adds", TowerTerm.STEADY_AIM);
             case ARMOR_PENETRATION -> TermText.of("the share of armor its hits ignore");
-            case ARMOR_PENETRATION_FLAT -> TermText.of("points of armor its hits ignore, after the share");
             case MAGIC_PENETRATION -> TermText.of("the share of magic resist its hits ignore");
             case MAGIC_PENETRATION_FLAT -> TermText.of("points of magic resist its hits ignore, after the share");
             case FLAT_PENETRATION -> TermText.of("the share of plating and insulation its hits ignore");

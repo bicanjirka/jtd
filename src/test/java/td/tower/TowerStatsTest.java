@@ -19,11 +19,10 @@ class TowerStatsTest {
 
     @Test
     void aTowersPenetrationStatsShowOnItsAttack() {
-        TowerStats stats = of(TowerModifiers.armorPenetrationFlat(30f).plus(TowerModifiers.magicPenetration(0.25f))
+        TowerStats stats = of(TowerModifiers.magicPenetration(0.25f)
                 .plus(TowerModifiers.armorPenetration(0.5f)).plus(TowerModifiers.flatPenetration(1f)),
                 DisruptionPenalty.none());
 
-        assertThat(stats.attack().armorPenetrationFlat()).isEqualTo(30f);
         assertThat(stats.attack().magicPenetration()).isEqualTo(0.25f);
         assertThat(stats.attack().armorPenetration()).isEqualTo(0.5f);
         assertThat(stats.attack().flatPenetration()).isEqualTo(1f);
@@ -33,12 +32,10 @@ class TowerStatsTest {
     void aTowersAttackCapabilitiesShowOnItsAttack() {
         TowerStats plain = of(StatModifiers.none(), DisruptionPenalty.none());
         TowerStats capable = TowerStats.of(BASE, StatModifiers.none(), StatModifiers.none(), DisruptionPenalty.none(), 10,
-                Set.of(TowerCapability.GUARANTEED_CRIT, TowerCapability.CRITS_PIERCE_SHIELDS));
+                Set.of(TowerCapability.GUARANTEED_CRIT));
 
         assertThat(plain.attack().guaranteedCrit()).isFalse();
-        assertThat(plain.attack().critsPierceShields()).isFalse();
         assertThat(capable.attack().guaranteedCrit()).isTrue();
-        assertThat(capable.attack().critsPierceShields()).isTrue();
     }
 
     @Test

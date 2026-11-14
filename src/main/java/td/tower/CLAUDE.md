@@ -68,7 +68,7 @@
 - A kill this tower makes runs `onKill(EnemyMob)` (the mob still carries the effects it died
   under); a kill made from inside the hook triggers nothing.
 - A temporary or next-shot self-buff is a `TowerStatus` granted with `grantStatus` (another tower's
-  with `receiveStatus`): the same `TowerTerm` restarts unless it keeps a running copy, different terms stack. A named buff, debuff or
+  with `receiveStatus`): the same `TowerTerm` restarts, different terms stack. A named buff, debuff or
   mechanic is a `TowerTerm` (title, side, sentence from effect mentions).
   Every attack starts with `beginShot()`, which spends shot charges and returns the stats for that
   attack; use them, not `damageCurrent()`. A hit that lands ticks after its shot (a bullet, a shell)
@@ -132,7 +132,7 @@
   owned node that sets one decides), `withCapability`. Every attacking tower applies
   `hitAdjustment(...)` to each hit it computes and reports each landed attack with `report(...)` after
   its mechanics settled it; hit bonuses add. A hit aimed at one enemy is `asAimed()` and lands through `landHit`;
-  a dodge is reported with `reportDodge(...)` instead, never settled by mechanics that answer a landed hit.
+  a dodge is never reported nor settled by mechanics that answer a landed hit.
 - Never check `owns(...)` in tower code; Checkstyle rejects it.
 - A node that adds a mechanic brings a `*Mechanic` class, in the tower's own package. A static `MechanicCatalogue`
   says which mechanics each node brings, and the tower's `OwnedMechanics`, which it hands over through

@@ -14,11 +14,6 @@ public sealed interface ProcTrigger {
         return false;
     }
 
-    /** Whether it fires when the target dodges an attack, which no other trigger sees. */
-    default boolean firesOnDodge() {
-        return false;
-    }
-
     /** The shots between two firings of a shot trigger; 0 for every other trigger. */
     default int shotInterval() {
         return 0;
@@ -68,19 +63,6 @@ public sealed interface ProcTrigger {
         @Override
         public TermText describe(TermText noun) {
             return noun.isEmpty() ? TermText.of("a kill") : TermText.of("a ").plus(noun).plus(" that kills");
-        }
-    }
-
-    /** An aimed attack the target dodged. */
-    record OnDodge() implements ProcTrigger {
-        @Override
-        public boolean firesOnDodge() {
-            return true;
-        }
-
-        @Override
-        public TermText describe(TermText noun) {
-            return TermText.of("a dodged ").plus(noun.isEmpty() ? TermText.of("shot") : noun);
         }
     }
 

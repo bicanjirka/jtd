@@ -294,7 +294,6 @@ public final class SniperTower extends AbstractTower {
         }
         HitResult hit = this.land(bullet.shot().aimed(), target, bullet.stats());
         if (hit.dodged()) {
-            this.reportDodge(target, HitKind.DIRECT);
             this.lastShot = this.traceOf(bullet, false);
         } else {
             this.settle(new ShotResult(target, hit.critical(), target.isDead()), bullet, this.mechanics.all());

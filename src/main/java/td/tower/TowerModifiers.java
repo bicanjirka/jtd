@@ -43,10 +43,6 @@ public final class TowerModifiers {
         return flat(TowerStat.ARMOR_PENETRATION, fraction);
     }
 
-    public static StatModifiers<TowerStat> armorPenetrationFlat(float points) {
-        return flat(TowerStat.ARMOR_PENETRATION_FLAT, points);
-    }
-
     public static StatModifiers<TowerStat> magicPenetration(float fraction) {
         return flat(TowerStat.MAGIC_PENETRATION, fraction);
     }

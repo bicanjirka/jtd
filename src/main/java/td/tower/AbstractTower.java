@@ -588,15 +588,6 @@ public abstract class AbstractTower implements Tower {
         ProcRunner.onOutcome(procs, new AttackOutcome(target, kind, critical, killed), this.procActions);
     }
 
-    /** Tells the procs that {@code target} dodged an attack of {@code kind}: only an on-dodge proc fires. */
-    protected final void reportDodge(EnemyMob target, HitKind kind) {
-        List<Proc> procs = this.procs();
-        if (procs.isEmpty()) {
-            return;
-        }
-        ProcRunner.onDodge(procs, new AttackOutcome(target, kind, false, false), this.procActions);
-    }
-
     private List<HitBonus> hitBonuses() {
         this.arm();
         return this.armedBonuses;

@@ -104,7 +104,7 @@ class SniperTowerTest {
         SniperTower tower = new SniperTower(this.world, 3, 3);
         FakeEnemyMob target = this.onlyTarget();
         float times = 3f;
-        tower.grantStatus(TowerStatus.nextShots(TowerTerm.CHARGED_SHOT, 1, TowerModifiers.damageTimes(times)));
+        tower.grantStatus(TowerStatus.nextShots(TowerTerm.HASTE, 1, TowerModifiers.damageTimes(times)));
         int charged = tower.damageCurrent();
 
         landFirstShot(tower);
