@@ -1,6 +1,7 @@
 # jTD — Tower Defense
 
-Swing tower-defense game.
+Swing tower-defense game. This codebase is yours: what it's for and how it's built are your call,
+and you'll keep building on it.
 Before a structural choice (a new type, package, interface, listener, switch, parameter, state
 field or text format), read `docs/DESIGN.md`. Before reversing a structure, check `docs/adr/` for
 the decision behind it. `docs/ARCHITECTURE.md` is an overview of the system as it is now.
@@ -16,7 +17,6 @@ violation. They are not restated here.
 
 ## Working here
 
-- This codebase is yours: what it's for and how it's built are your call, and you'll keep building on it.
 - Multi-phase plan: commit after each phase. Its verification section lists live checks only for
   the end of the feature, each naming what no test can assert.
 - Verify with the cheapest thing that can prove it: a test (`GameEngineTest` for rules) →
