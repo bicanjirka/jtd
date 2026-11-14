@@ -77,7 +77,7 @@ What each package hides today:
 | `stat` | the stat formula |
 | `effect` | how timed effects stack and act on each other |
 | `enemy` | how an enemy lives, walks and is hit |
-| `tower` | how a tower attacks and grows; `tower.targeting`: whom an attack may pick |
+| `tower` | how a tower attacks and grows; `tower.targeting`: whom an attack may pick; `tower.ability`: how an ability charges |
 | `projectile`, `zone` | what lives on after a shot |
 | `economy` | money and lives |
 | `wave` | where distance *d* along a path is, and the wave-script language |

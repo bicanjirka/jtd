@@ -2,6 +2,7 @@ package td.ui;
 
 import td.term.TermText;
 import td.ui.render.SheetLine;
+import td.ui.render.SheetTooltip;
 
 /** What a run of a laid-out sheet is about, stored as its {@link HoverKey} attribute; one object per run. */
 sealed interface HoverRun {
@@ -14,7 +15,7 @@ sealed interface HoverRun {
     record IconRowRun(SheetLine.IconRow row, IconRowLayout layout) implements HoverRun {
     }
 
-    /** A row that opens a tooltip. */
-    record RowRun(SheetLine.Row row) implements HoverRun {
+    /** A whole line that opens a tooltip: a row, an ability's bar. */
+    record RowRun(SheetTooltip tooltip) implements HoverRun {
     }
 }

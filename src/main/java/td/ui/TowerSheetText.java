@@ -12,6 +12,9 @@ import td.tower.NodeWords;
 import td.tower.TowerBuffState;
 import td.tower.TowerInspection;
 import td.tower.TowerStatLine;
+import td.tower.ability.Ability;
+import td.tower.ability.AbilityBar;
+import td.tower.ability.AbilityState;
 import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeLine;
 import td.tower.upgrade.UpgradeNode;
@@ -22,6 +25,7 @@ import td.ui.render.SheetIcon;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
+import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 import td.util.TickRate;
 
@@ -31,7 +35,7 @@ import java.util.Optional;
 
 /**
  * Turns a {@link TowerInspection} into the tower pane: stat rows, what it gives, then icon rows (Perks, Buffs,
- * Debuffs, Applies), then its record. The shop shows the tower as authored; the status shows it as it is now.
+ * Debuffs, Applies) with the abilities and their bars after the Perks, then its record. The shop shows the tower as authored; the status shows it as it is now.
  * Pure: no Swing, no live tower.
  */
 final class TowerSheetText {
@@ -78,7 +82,10 @@ final class TowerSheetText {
         return new InfoSheet(lines);
     }
 
-    /** A placed tower: current stats, whom it targets, its perks, buffs, debuffs and applies, then its record. */
+    /**
+     * A placed tower: current stats, whom it targets, its perks, its abilities with their bars, buffs, debuffs and
+     * applies, then its record.
+     */
     static InfoSheet status(TowerInspection tower) {
         List<SheetLine> lines = new ArrayList<>();
         lines.add(title(tower, ""));
@@ -87,6 +94,7 @@ final class TowerSheetText {
         gives(tower, lines);
         targets(tower).ifPresent(lines::add);
         iconRow("Perks", perkIcons(tower)).ifPresent(lines::add);
+        tower.abilities().forEach(ability -> lines.add(abilityRow(ability)));
         iconRow("Buffs", conditionIcons(tower, Side.BUFF)).ifPresent(lines::add);
         iconRow("Debuffs", conditionIcons(tower, Side.DEBUFF)).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
@@ -159,6 +167,22 @@ final class TowerSheetText {
             }
         }
         return Optional.ofNullable(found);
+    }
+
+    /** An ability and its bar; its hover gives the bar in units, what a cast costs and what the ability does. */
+    private static SheetLine.AbilityRow abilityRow(AbilityState state) {
+        Ability ability = state.ability();
+        AbilityBar bar = state.bar();
+        IconFace face = TermLooks.faceOf(ability.term());
+        IconFace currency = TermLooks.faceOf(ability.currency());
+        float fill = bar.fill().inUnits();
+        List<SheetLine> rows = new ArrayList<>();
+        rows.add(Row.faced(currency, ability.currency().title(),
+                TermNumbers.number(fill) + " / " + TermNumbers.whole(bar.capacity())));
+        rows.add(Row.plain(Glyph.DOT, "Cost", TermNumbers.whole(bar.cost())));
+        InfoSheet hover = TermSheets.of(ability.term(), ability.term().describe(), rows);
+        return new SheetLine.AbilityRow(face, ability.term().title(), currency, bar.capacity(), bar.cost(), fill,
+                new SheetTooltip(TooltipKey.ofTerm("ability", ability.term()), hover));
     }
 
     private static List<SheetIcon> conditionIcons(TowerInspection tower, Side side) {

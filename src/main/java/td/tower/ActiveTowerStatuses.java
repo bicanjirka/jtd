@@ -15,8 +15,8 @@ final class ActiveTowerStatuses {
     private final List<Held> held = new ArrayList<>();
 
     /**
-     * Grants {@code status} at {@code nowTick}: a running copy is left alone if the status keeps it,
-     * otherwise replaced. A timed status lasts its duration times {@code buffLength}; a shot status
+     * Grants {@code status} at {@code nowTick}: a running copy of a status that adds takes its shots on top,
+     * any other is replaced. A timed status lasts its duration times {@code buffLength}; a shot status
      * its shots, times {@code buffLength} when it is lengthened.
      */
     void grant(TowerStatus status, int nowTick, float buffLength) {
@@ -25,7 +25,10 @@ final class ActiveTowerStatuses {
                 ? new Held(status, 0, status.lengthened() ? Math.round(status.shots() * buffLength) : status.shots(), 0)
                 : new Held(status, nowTick + Math.round(status.durationTicks() * buffLength), 0,
                         Math.round(status.durationTicks() * buffLength));
-        if (running >= 0) {
+        if (running >= 0 && status.adds() && status.shots() > 0) {
+            Held queued = this.held.get(running);
+            this.held.set(running, new Held(queued.status(), 0, queued.shotsLeft() + next.shotsLeft(), 0));
+        } else if (running >= 0) {
             this.held.set(running, next);
         } else {
             this.held.add(next);

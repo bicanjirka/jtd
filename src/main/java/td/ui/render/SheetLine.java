@@ -167,6 +167,25 @@ public sealed interface SheetLine {
         }
     }
 
+    /**
+     * An ability: its face and name, and on the right its bar, one cell per unit it holds when full, each with a faint
+     * picture of the currency behind it. A costlier ability's bar is longer.
+     *
+     * @param currency the currency's face, drawn faint in every cell
+     * @param capacity how many units the bar holds
+     * @param cost     how many of them one cast takes
+     * @param fill     what it holds now, in units
+     * @param tooltip  what hovering it opens: its numbers
+     */
+    record AbilityRow(IconFace face, String name, IconFace currency, int capacity, int cost, float fill,
+                      SheetTooltip tooltip) implements SheetLine {
+
+        @Override
+        public Optional<InfoSheet> tooltipFor(TooltipKey key) {
+            return this.tooltip.key().equals(key) ? Optional.of(this.tooltip.sheet()) : Optional.empty();
+        }
+    }
+
     /** A face, a bold name in the face's tone, and a value on the right: the head of a tooltip. */
     record IconTitle(IconFace face, String name, Palette tone, String value) implements SheetLine {
     }

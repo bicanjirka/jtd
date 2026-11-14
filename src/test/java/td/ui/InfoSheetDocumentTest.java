@@ -10,6 +10,7 @@ import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
 import td.ui.render.SheetLine.Trend;
+import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 
 import javax.swing.Icon;
@@ -86,5 +87,20 @@ class InfoSheetDocumentTest {
         IconRowLayout layout = IconRowLayout.of(7, false, 166);
         assertThat(attributes.getAttribute(HoverKey.INSTANCE)).isInstanceOf(HoverRun.IconRowRun.class);
         assertThat(icon.getIconHeight()).isEqualTo(layout.height());
+    }
+
+    @Test
+    void anAbilityRowHoversAsOneLineToItsEnd() {
+        IconFace face = TermLooks.faceOf(EffectKind.CHILL);
+        SheetTooltip tooltip = new SheetTooltip(TooltipKey.of("ability", "bolt"), new InfoSheet(List.of()));
+
+        StyledDocument doc = layOutLines(new SheetLine.AbilityRow(face, "Bolt", face, 3, 2, 1f, tooltip),
+                Row.plain(Glyph.DOT, "Targets", "first"));
+
+        Object bar = doc.getCharacterElement(0).getAttributes().getAttribute(HoverKey.INSTANCE);
+        Object end = doc.getCharacterElement(1).getAttributes().getAttribute(HoverKey.INSTANCE);
+        Object next = doc.getCharacterElement(2).getAttributes().getAttribute(HoverKey.INSTANCE);
+        assertThat(bar).isEqualTo(new HoverRun.RowRun(tooltip)).isSameAs(end);
+        assertThat(next).isNull();
     }
 }

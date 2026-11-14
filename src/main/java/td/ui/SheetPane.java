@@ -176,7 +176,7 @@ final class SheetPane extends JTextPane {
             Rectangle2D end = this.modelToView2D(Math.max(paragraph.getStartOffset(), paragraph.getEndOffset() - 1));
             Rectangle bounds = start.createUnion(end).getBounds();
             bounds.width = Math.max(bounds.width, this.getWidth() - bounds.x);
-            return new HoverTarget.Row(run.row(), bounds);
+            return new HoverTarget.Row(run.tooltip(), bounds);
         } catch (BadLocationException e) {
             throw new IllegalStateException("A run of the sheet lies outside its document", e);
         }

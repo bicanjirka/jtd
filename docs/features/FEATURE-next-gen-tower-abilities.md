@@ -1,6 +1,9 @@
 # Feature Request: Next-gen Tower Abilities
 
-**Status:** draft, 2026-11-10, reviewed with the whole bundle 2026-11-13; no open question left. Part of `FEATURE-next-gen.md`; from the
+**Status:** implemented 2026-11-14, the shared mechanism: bars, currency, casts in order, queued primed shots and the
+pane's Abilities list (`td.tower.ability`). No built tower owns an ability yet: the Burst wires its Sparks, Souls and
+casts in its own feature, and with them the board's cue for a full ability waiting. Drafted 2026-11-10, reviewed with the
+whole bundle 2026-11-13. Part of `FEATURE-next-gen.md`; from the
 request's Burst notes, written so any tower can use it. The Burst's Stormcaller and Hexer are its only users: the
 other towers' "ability" nodes are counts (the Fourth Shot, the Aerie's Release) or rhythms (the Sundial), with no bar.
 

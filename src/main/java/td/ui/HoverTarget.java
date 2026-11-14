@@ -3,7 +3,7 @@ package td.ui;
 import td.term.TermText;
 import td.ui.render.InfoSheet;
 import td.ui.render.SheetIcon;
-import td.ui.render.SheetLine;
+import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 
 import java.awt.Rectangle;
@@ -76,8 +76,8 @@ sealed interface HoverTarget {
         }
     }
 
-    /** A whole row that opens a tooltip. */
-    record Row(SheetLine.Row row, Rectangle bounds) implements HoverTarget {
+    /** A whole line that opens a tooltip. */
+    record Row(SheetTooltip tooltip, Rectangle bounds) implements HoverTarget {
 
         public Row {
             bounds = new Rectangle(bounds);
@@ -85,12 +85,12 @@ sealed interface HoverTarget {
 
         @Override
         public TooltipKey key() {
-            return this.row.tooltip().orElseThrow().key();
+            return this.tooltip.key();
         }
 
         @Override
         public InfoSheet sheet() {
-            return this.row.tooltip().orElseThrow().sheet();
+            return this.tooltip.sheet();
         }
     }
 }

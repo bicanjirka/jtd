@@ -1,6 +1,8 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.effect.EffectKind;
+import td.fixtures.FakeAbilityMechanic;
 import td.fixtures.FakeTower;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
@@ -18,6 +20,9 @@ import td.tower.TowerStat;
 import td.tower.TowerStatLine;
 import td.tower.TowerStatRow;
 import td.tower.TowerTerm;
+import td.tower.ability.AbilityUnits;
+import td.tower.upgrade.Mechanic;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.render.InfoSheet;
@@ -293,5 +298,25 @@ class TowerSheetTextTest {
 
         assertThat(applies.icons()).anyMatch(icon -> icon.tooltip().lines().stream()
                 .anyMatch(line -> line.toString().contains("Napalm: ")));
+    }
+
+    @Test
+    void eachAbilityShowsItsBarOneUnitLongerThanItsCostAndItsHoverReadsTheFillInUnits() {
+        UpgradeNode bolt = UpgradeNode.of("test.bolt", "Bolt", 0);
+        FakeTower tower = FakeTower.offering(this.world, 0, 0, UpgradeTree.none().with(bolt),
+                MechanicCatalogue.<Mechanic>empty().with(bolt.id(), () -> FakeAbilityMechanic.of(TowerTerm.HOLLOW_POINT, EffectKind.CHARGED, 2)));
+        this.world.economy().startEconomy(100, 5);
+        tower.buyUpgrade(bolt);
+        tower.earn(AbilityUnits.of(0.25f));
+
+        InfoSheet sheet = TowerSheetText.status(tower.inspect().withConditions(tower.conditions())
+                .withProgress(tower.progress()).withAbilities(tower.abilities()));
+
+        SheetLine.AbilityRow ability = sheet.lines().stream().filter(SheetLine.AbilityRow.class::isInstance)
+                .map(SheetLine.AbilityRow.class::cast).findFirst().orElseThrow();
+        assertThat(ability.name()).isEqualTo(TowerTerm.HOLLOW_POINT.title());
+        assertThat(ability.capacity()).isEqualTo(3);
+        assertThat(ability.cost()).isEqualTo(2);
+        assertThat(row(ability.tooltip().sheet(), EffectKind.CHARGED.title()).value()).isEqualTo("1.3 / 3");
     }
 }

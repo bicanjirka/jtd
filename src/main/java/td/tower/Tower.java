@@ -6,6 +6,7 @@ import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.stat.StatModifiers;
+import td.tower.ability.AbilityState;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeRemoval;
 import td.tower.upgrade.UpgradeState;
@@ -182,6 +183,11 @@ public interface Tower {
 
     /** How far each counting node it owns is toward its next go. Game loop only. */
     default List<NodeProgress> progress() {
+        return List.of();
+    }
+
+    /** Every ability it owns, in the order they were bought, each with its bar. Game loop only. */
+    default List<AbilityState> abilities() {
         return List.of();
     }
 
