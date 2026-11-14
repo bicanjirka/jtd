@@ -227,8 +227,8 @@ public class PreviewBoard {
     }
 
     /**
-     * Buys the named node for the tower at a cell through the real mechanism, so its gate must be
-     * cleared first (tick a fight); a refusal prints why.
+     * Buys the named node for the tower at a cell, with every node and tier unlock it needs, through the real
+     * mechanism, so its tier's XP must be met first (tick a fight, or {@code gates off}); a refusal prints why.
      */
     private static void upgradeTower(String args) {
         String[] parts = args.split("\s+", 3);
@@ -236,14 +236,12 @@ public class PreviewBoard {
         String name = parts[2];
         UpgradeNode node = tower.upgradeTree().nodes().stream().filter(n -> n.displayName().equals(name))
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("no node named " + name));
-        boolean offered = tower.offeredUpgrades(engine.getGameWorld()).contains(node);
-        if (tower.buyUpgrade(node)) {
+        var path = tower.upgradeTree().planPath(node, tower, engine.getGameWorld());
+        if (tower.buyPath(node)) {
             System.out.println("OK upgrade " + name);
         } else {
-            System.out.println("FAILED upgrade " + name + ": " + (offered
-                    ? node.xpProgress(tower) + ", " + node.gate().progress(tower, engine.getGameWorld())
-                            + ", credits " + engine.getGameWorld().economy().getCredits()
-                    : "not offered"));
+            System.out.println("FAILED upgrade " + name + ": " + path.block().map(block -> block.at().displayName()
+                    + " " + block.reason()).orElse("credits " + engine.getGameWorld().economy().getCredits()));
         }
     }
 

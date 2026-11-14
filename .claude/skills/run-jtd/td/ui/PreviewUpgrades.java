@@ -1,5 +1,7 @@
 package td.ui;
 
+import java.util.Optional;
+import td.tower.upgrade.UpgradeState;
 import td.GameEngine;
 import td.economy.EconomyDelta;
 import td.economy.StatusTerm;
@@ -184,7 +186,7 @@ public final class PreviewUpgrades {
         pg.dispose();
 
         UpgradeTree tree = tower.upgradeTree();
-        UpgradeTreeLayout layout = UpgradeTreeLayout.of(tree);
+        UpgradeTreeLayout layout = UpgradeTreeLayout.of(tree, UpgradeState.none(), Optional.empty(), Set.of());
         float s = Math.min(1.15f, Math.min(w / (float) UpgradeTreeLayout.WIDTH, h / (float) UpgradeTreeLayout.HEIGHT));
         float ox = (w - UpgradeTreeLayout.WIDTH * s) / 2f;
         float oy = (h - UpgradeTreeLayout.HEIGHT * s) / 2f;
@@ -231,14 +233,17 @@ public final class PreviewUpgrades {
         for (int i = 0; i < tree.nodes().size(); i++) {
             UpgradeNode node = tree.nodes().get(i);
             UpgradeTreeLayout.Spot spot = layout.spots().get(node);
-            float size = spot.size() * s;
+            if (spot == null) {
+                continue;
+            }
+            float size = spot.width() * s;
             Map<String, Object> n = new LinkedHashMap<>();
             n.put("id", node.id());
             n.put("name", node.displayName());
             n.put("x", round(ox + spot.x() * s - size / 2));
             n.put("y", round(oy + spot.y() * s - size / 2));
             n.put("s", round(size));
-            n.put("r", spot.round());
+            n.put("r", !tower.wordsOf(node).sentences().isEmpty());
             n.put("tx", places.get(i)[0] / ZOOM);
             n.put("ty", places.get(i)[1] / ZOOM);
             n.put("tw", tips.get(i).getWidth() / ZOOM);
@@ -278,7 +283,7 @@ public final class PreviewUpgrades {
             UpgradeTree tree = candidate.upgradeTree();
             UpgradeNode node = tree.node(clean).orElse(null);
             if (node != null) {
-                face = TermLooks.faceOfLine(candidate.getType(), tree.artNodeOf(node), node.tier().level());
+                face = TermLooks.faceOfLine(candidate.getType(), tree.artNodeOf(node), tree.levelOf(node));
                 break;
             }
         }
@@ -490,7 +495,7 @@ public final class PreviewUpgrades {
         words.sentences().forEach(sentence -> sentence.mentions().stream()
                 .filter(term -> this.termsByTitle.containsValue(term))
                 .forEach(term -> items.add(new Item("Terms", term.title()))));
-        String pictogram = TermLooks.faceOfLine(tower.getType(), tree.artNodeOf(node), node.tier().level()).pictogram();
+        String pictogram = TermLooks.faceOfLine(tower.getType(), tree.artNodeOf(node), tree.levelOf(node)).pictogram();
         if (pictogram != null && !pictogram.isEmpty() && PictogramCatalogue.of(pictogram).isPresent()) {
             boolean termFace = this.termsByTitle.values().stream()
                     .anyMatch(term -> pictogram.equals(TermLooks.faceOf(term).pictogram()));
@@ -777,7 +782,7 @@ public final class PreviewUpgrades {
                     UpgradeNode node = candidate.upgradeTree().node(ref).orElse(null);
                     if (node != null) {
                         face = TermLooks.faceOfLine(candidate.getType(), candidate.upgradeTree().artNodeOf(node),
-                                node.tier().level());
+                                candidate.upgradeTree().levelOf(node));
                         break;
                     }
                 }
