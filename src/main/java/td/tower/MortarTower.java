@@ -1,7 +1,7 @@
 package td.tower;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
-import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.StackingDebuff;
@@ -283,21 +283,24 @@ public final class MortarTower extends AbstractTower {
     }
 
     private void fireAt(EnemyMob target, MortarSpec spec) {
-        this.beginShot();
+        Shell shell = new Shell(spec.shells().typeOf(this.shellsFired + 1), this.beginShot());
         this.shellsFired++;
-        ShellType type = spec.shells().typeOf(this.shellsFired);
-        Vec2 aim = this.aimPoint(target, spec);
+        Vec2 aim = this.aimPoint(target, spec, shell.stats());
         this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, aim.x(), aim.y(),
-                this.shellStats(type), type.look(), (x, y) -> this.onImpact(x, y, type)));
+                this.shellStats(shell), shell.type().look(), (x, y) -> this.onImpact(x, y, shell)));
+    }
+
+    /** What was fired: the kind of shell, and the stats it lands with however the Mortar changes meanwhile. */
+    private record Shell(ShellType type, TowerStats stats) {
     }
 
     /** Where the shell is sent: the enemy where it stands, or with Predictive Fire where it will be on landing. */
-    private Vec2 aimPoint(EnemyMob target, MortarSpec spec) {
+    private Vec2 aimPoint(EnemyMob target, MortarSpec spec, TowerStats shot) {
         Vec2 aim = new Vec2(target.getX(), target.getY());
         if (!spec.leadsTarget()) {
             return aim;
         }
-        float speed = SHELL_SPEED * this.stats().value(TowerStat.PROJECTILE_SPEED);
+        float speed = SHELL_SPEED * shot.value(TowerStat.PROJECTILE_SPEED);
         for (int i = 0; i < PREDICTION_PASSES; i++) {
             int flightTicks = (int) Math.ceil(Math.hypot(aim.x() - this.centerX, aim.y() - this.centerY) / speed);
             aim = target.positionAfter(flightTicks);
@@ -306,22 +309,31 @@ public final class MortarTower extends AbstractTower {
     }
 
     /** The shell as it flies and is drawn: its speed and size are stats, and its size follows how hard it hits. */
-    private ProjectileStats shellStats(ShellType type) {
+    private ProjectileStats shellStats(Shell shell) {
+        TowerStats shot = shell.stats();
         float size = Math.min(MAX_SHELL_SIZE, SHELL_SIZE_PER_DAMAGE_ROOT
-                * (float) Math.sqrt((double) this.damageCurrent() / this.damageBase));
-        float typeSize = type == ShellType.NUKE ? NUKE_SHELL_SIZE : 1f;
-        float speedScale = this.stats().value(TowerStat.PROJECTILE_SPEED);
+                * (float) Math.sqrt((double) shot.damage() / this.damageBase));
+        float typeSize = shell.type() == ShellType.NUKE ? NUKE_SHELL_SIZE : 1f;
+        float speedScale = shot.value(TowerStat.PROJECTILE_SPEED);
         return ProjectileStats.of(SHELL_SPEED * speedScale)
-                .withSize(size * this.stats().value(TowerStat.PROJECTILE_SIZE) * typeSize)
+                .withSize(size * shot.value(TowerStat.PROJECTILE_SIZE) * typeSize)
                 .withStreak(speedScale > 1f);
     }
 
-    private float blastRadius(float stepScale) {
-        return this.stats().value(TowerStat.AREA_RADIUS) * this.context.getBoard().scale() * stepScale;
+    private float blastRadius(TowerStats shot, float stepScale) {
+        return shot.value(TowerStat.AREA_RADIUS) * this.context.getBoard().scale() * stepScale;
     }
 
-    /** One shell's landing: where, what it carries, and how wide and hard it hits after Bracketing. */
-    private record Landing(Vec2 at, ShellType type, MortarSpec spec, Strength strength) {
+    /** One shell's landing: where, what was fired, and how wide and hard it hits after Bracketing. */
+    private record Landing(Vec2 at, Shell shell, MortarSpec spec, Strength strength) {
+
+        ShellType type() {
+            return this.shell.type();
+        }
+
+        TowerStats stats() {
+            return this.shell.stats();
+        }
 
         double x() {
             return this.at.x();
@@ -348,18 +360,18 @@ public final class MortarTower extends AbstractTower {
     private record Strength(int step, float radius, float damage) {
     }
 
-    private void onImpact(double x, double y, ShellType type) {
+    private void onImpact(double x, double y, Shell shell) {
         MortarSpec spec = this.spec(this.mechanics.all());
         int scale = this.context.getBoard().scale();
         int step = this.bracketing.land(x, y, spec.bracket(), scale);
-        if (step > 0) {
-        }
+        ShellType type = shell.type();
+        TowerStats shot = shell.stats();
         boolean nuke = type == ShellType.NUKE;
-        float radius = this.blastRadius((1f + step * spec.bracket().radiusStep())
+        float radius = this.blastRadius(shot, (1f + step * spec.bracket().radiusStep())
                 * (nuke ? spec.nuke().radiusFactor() : 1f));
-        float damage = this.damageCurrent() * (1f + step * this.stats().value(TowerStat.BRACKET_DAMAGE_STEP))
+        float damage = shot.damage() * (1f + step * shot.value(TowerStat.BRACKET_DAMAGE_STEP))
                 * (nuke ? spec.nuke().damageFactor() : 1f);
-        Landing landing = new Landing(new Vec2(x, y), type, spec, new Strength(step, radius, damage));
+        Landing landing = new Landing(new Vec2(x, y), shell, spec, new Strength(step, radius, damage));
         List<EnemyMob> hit = this.blast(landing);
         this.dazeAround(landing, hit);
         if (spec.shrapnel().active()) {
@@ -373,12 +385,12 @@ public final class MortarTower extends AbstractTower {
         }
         this.blastMarks.add(new BlastMark(new Vec2(x, y), radius, this.tickNow + 1, type.look()));
         type.zone().ifPresent(zone -> this.context.zones().add(new Zone(zone.kind(), x, y,
-                zone.radius(scale, radius), this.lengthened(zone.lifetimeTicks()), this.zoneStrength(zone.damageShare(), 1f),
+                zone.radius(scale, radius), this.lengthened(zone.lifetimeTicks()), zoneStrength(shot, zone.damageShare(), 1f),
                 this.zoneOwner)));
     }
 
-    private int zoneStrength(float damageShare, float scale) {
-        return Math.round(this.damageCurrent() * damageShare * scale);
+    private static int zoneStrength(TowerStats shot, float damageShare, float scale) {
+        return Math.round(shot.damage() * damageShare * scale);
     }
 
     /** The main blast: damage with falloff and Cracked on everything inside, the centre hit harder. */
@@ -392,7 +404,7 @@ public final class MortarTower extends AbstractTower {
         for (EnemyMob enemy : hit) {
             float falloff = falloff(landing.x(), landing.y(), landing.radius(), enemy, spec.flatCore());
             float centreFactor = enemy == centre ? spec.centre().damageFactor() : 1f;
-            this.hit(enemy, landing.type().damageType(), landing.damage() * falloff * centreFactor, HitKind.BLAST);
+            this.hit(landing, enemy, landing.damage() * falloff * centreFactor, HitKind.BLAST);
             this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
             if (enemy == centre) {
                 this.applyStacks(enemy, StackingDebuff.SUNDERED, spec.centre().sunderStacks());
@@ -401,11 +413,15 @@ public final class MortarTower extends AbstractTower {
         return hit;
     }
 
-    /** One hit of {@code amount} on {@code enemy}, with the hit bonuses for its kind, reported to the procs. */
-    private void hit(EnemyMob enemy, DamageType type, float amount, HitKind kind) {
-        HitAdjustment adjustment = this.hitAdjustment(enemy, kind, 0f, this.stats());
-        boolean critical = this.dealDamage(enemy, Damage.of(type, Math.round(amount * adjustment.damageFactor())),
-                adjustment.applyTo(this.stats().attack()));
+    /**
+     * One hit of {@code amount} on {@code enemy} in the landing shell's damage type, with the hit bonuses for
+     * its kind, reported to the procs.
+     */
+    private void hit(Landing landing, EnemyMob enemy, float amount, HitKind kind) {
+        HitAdjustment adjustment = this.hitAdjustment(enemy, kind, 0f, landing.stats());
+        boolean critical = this.dealDamage(enemy,
+                Damage.of(landing.type().damageType(), Math.round(amount * adjustment.damageFactor())),
+                adjustment.applyTo(landing.stats().attack()));
         this.report(enemy, kind, critical, enemy.isDead());
     }
 
@@ -446,22 +462,18 @@ public final class MortarTower extends AbstractTower {
             if (alreadyHit.contains(enemy)) {
                 continue;
             }
-            this.hit(enemy, landing.type().damageType(), piece, HitKind.SHRAPNEL);
+            this.hit(landing, enemy, piece, HitKind.SHRAPNEL);
             this.applyEffect(enemy, sink -> Effect.cracked(crackedTicks, sink));
             if (shrapnel.carriesShell()) {
                 landing.type().zone().ifPresent(zone -> ZoneEffects.touch(zone.kind(),
-                        this.zoneStrength(zone.damageShare(), shrapnel.scale()), this.zoneOwner, enemy));
+                        zoneStrength(landing.stats(), zone.damageShare(), shrapnel.scale()), this.zoneOwner, enemy));
             }
             if (shrapnel.bleeds()) {
-                int perCell = Math.round(this.damageCurrent() * BLEED_SHARE_PER_CELL * shrapnel.scale());
-                this.applyEffect(enemy, _ -> Effect.bleeding(perCell, BLEED_TICKS, bled -> this.dealBleed(enemy, bled)));
+                int perCell = Math.round(landing.stats().damage() * BLEED_SHARE_PER_CELL * shrapnel.scale());
+                AttackProfile bleed = landing.stats().attack().pastArmorAndPlating().asPeriodic();
+                this.applyEffect(enemy, _ -> Effect.bleeding(perCell, BLEED_TICKS, bled -> this.dealDamage(enemy, bled, bleed)));
             }
         }
-    }
-
-    /** A bleed lands in pieces too small for plating to leave anything of, so it goes past what the enemy wears. */
-    private boolean dealBleed(EnemyMob enemy, Damage damage) {
-        return this.dealDamage(enemy, damage, this.stats().attack().pastArmorAndPlating().asPeriodic());
     }
 
     /** Small blasts along the path: scattered around the impact, or in a line ahead of it. */
@@ -475,12 +487,11 @@ public final class MortarTower extends AbstractTower {
         }
         List<Path> paths = this.context.level().paths().stream().map(PathRuntime::path).toList();
         float radius = bomblets.radiusCells() * scale;
-        float damage = Math.round(this.damageCurrent() * bomblets.damageShare());
+        float damage = Math.round(landing.stats().damage() * bomblets.damageShare());
         for (Vec2 at : PathLine.along(paths, landing.x(), landing.y(), offsets)) {
             for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(at.x()), (int) Math.round(at.y()), radius)
                     .matching(this.context.enemies())) {
-                this.hit(enemy, landing.type().damageType(), damage * falloff(at.x(), at.y(), radius, enemy, 0f),
-                        HitKind.BLAST);
+                this.hit(landing, enemy, damage * falloff(at.x(), at.y(), radius, enemy, 0f), HitKind.BLAST);
                 this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
             }
             this.blastMarks.add(new BlastMark(at, radius, this.tickNow + 1, landing.type().look()));
@@ -511,7 +522,7 @@ public final class MortarTower extends AbstractTower {
 
     /** The blast's radius in pixels before Bracketing. */
     float getSplashRadius() {
-        return this.blastRadius(1f);
+        return this.blastRadius(this.stats(), 1f);
     }
 
     public TurretAim getTurretAim() {
@@ -547,7 +558,7 @@ public final class MortarTower extends AbstractTower {
 
     @Override
     protected List<TowerStatLine> ownStats(TowerStats stats) {
-        ProjectileStats shell = this.shellStats(ShellType.PLAIN);
+        ProjectileStats shell = this.shellStats(new Shell(ShellType.PLAIN, stats));
         float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
         return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, cellsPerSecond),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, shell.size()));

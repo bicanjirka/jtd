@@ -70,6 +70,20 @@ class MortarTowerTest {
     }
 
     @Test
+    void aShellLandsWithTheStatsItWasFiredWithThoughTheChargeItSpentIsGone() {
+        MortarTower tower = this.towerAt(3, 3);
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+        tower.grantStatus(TowerStatus.nextShots(TowerTerm.CHARGED_SHOT, 1, TowerModifiers.damageTimes(3f)));
+        int charged = tower.damageCurrent();
+
+        this.landAShell(tower);
+
+        assertThat(tower.damageCurrent()).isLessThan(charged);
+        assertThat(target.onlyHitAmount()).isEqualTo(charged);
+    }
+
+    @Test
     void firingLaunchesExactlyOneShellAtTheTarget() {
         MortarTower tower = this.towerAt(3, 3);
         this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});

@@ -77,7 +77,7 @@ public final class BoardRenderer {
             effectFrameBuilder.addStatus(tower);
         }
 
-        ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(interpolationAlpha);
+        ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(interpolationAlpha, level.board().scale());
         for (Projectile projectile : this.world.projectiles().getProjectiles()) {
             projectile.accept(projectileFrameBuilder);
         }
