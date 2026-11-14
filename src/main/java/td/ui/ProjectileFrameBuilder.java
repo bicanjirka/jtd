@@ -75,15 +75,29 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
      * flight time.
      */
     private float peakOf(CannonballProjectile projectile) {
-        double ticks = projectile.distance() / projectile.stats().speed();
-        return (float) Math.min(LOB_TOP_CELLS * this.scale, LOB_PULL_CELLS * this.scale * ticks * ticks / 8);
+        return lobPeak(projectile.distance() / projectile.stats().speed(), this.scale);
+    }
+
+    /** How high a lob that flies {@code ticks} climbs at its peak, in pixels. */
+    static float lobPeak(double ticks, int scale) {
+        return (float) Math.min(LOB_TOP_CELLS * scale, LOB_PULL_CELLS * scale * ticks * ticks / 8);
+    }
+
+    /** How high a lob with this {@code peak} is once it has flown {@code flown} of its way. */
+    static float lobLift(float peak, double flown) {
+        double share = Math.clamp(flown, 0, 1);
+        return (float) (peak * 4 * share * (1 - share));
+    }
+
+    /** How small a lob's shadow is at {@code lift} under this {@code peak}. */
+    static float lobShadowScale(float lift, float peak) {
+        return peak > 0 ? 1f - SHADOW_SHRINK * lift / peak : 1f;
     }
 
     /** How high a lob with this {@code peak} is over its ground point at {@code x, y}. */
     private static float liftAt(CannonballProjectile projectile, float peak, double x, double y) {
         double distance = projectile.distance();
-        double flown = distance > 0 ? Math.min(1, projectile.flownAt(x, y) / distance) : 1;
-        return (float) (peak * 4 * flown * (1 - flown));
+        return lobLift(peak, distance > 0 ? projectile.flownAt(x, y) / distance : 1);
     }
 
     @Override
@@ -92,7 +106,7 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         float y = lerp(projectile.getPrevY(), projectile.getY(), this.interpolationAlpha);
         float peak = this.peakOf(projectile);
         float lift = liftAt(projectile, peak, x, y);
-        float shadowScale = peak > 0 ? 1f - SHADOW_SHRINK * lift / peak : 1f;
+        float shadowScale = lobShadowScale(lift, peak);
         boolean streak = projectile.stats().streak();
         float tailX = streak ? (float) projectile.getPrevX() : x;
         float tailY = streak ? (float) projectile.getPrevY()

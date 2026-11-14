@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
@@ -11,6 +12,8 @@ import td.tower.AuraTower;
 import td.tower.MortarTower;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
+import td.tower.TowerModifiers;
+import td.ui.render.CannonballDraw;
 import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
@@ -68,6 +71,46 @@ class TowerEffectFrameBuilderTest {
         assertThat(ringsIn(storm, Palette.TOWER_SPLASH_DETONATION)).isEmpty();
         assertThat(ringsIn(hex, Palette.TOWER_HEXER_DETONATION)).hasSize(1);
         assertThat(ringsIn(hex, Palette.TOWER_SPLASH_DETONATION)).isEmpty();
+    }
+
+    @Test
+    void aStoneHalfwayIsDrawnOverItsShadowBetweenTheTowerAndWhereItLands() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SplashTower splash = splashWith(context);
+        FakeEnemyMob target = FakeEnemyMob.at(splash.getX() + 2 * BoardFixtures.SCALE, splash.getY());
+        context.enemies().setEnemies(new EnemyMob[]{target});
+        splash.doTick(1);
+        SplashTower.Flight flight = splash.stonesInFlight().getFirst().flight();
+        int halfway = (flight.firedAt() + flight.landsAt()) / 2;
+
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, halfway, 0.0, 0.0);
+        splash.accept(builder);
+        List<CannonballDraw> stones = builder.build().stream().filter(CannonballDraw.class::isInstance)
+                .map(CannonballDraw.class::cast).toList();
+
+        assertThat(stones).singleElement().satisfies(stone -> {
+            assertThat(stone.lift()).isPositive();
+            assertThat(stone.x()).isBetween((float) splash.getX(), (float) target.getX());
+        });
+    }
+
+    @Test
+    void aBurstWearsTheChargedCueWhileAFullAbilityWaitsForATarget() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SplashTower splash = TowerFixtures.buffed(splashWith(context, "Thunderstrike"), context,
+                TowerModifiers.damageTimes(1000f));
+        FakeEnemyMob target = FakeEnemyMob.at(splash.getX() + BoardFixtures.SCALE, splash.getY());
+        context.enemies().setEnemies(new EnemyMob[]{target});
+        splash.doTick(1);
+        boolean chargedBefore = TowerSpriteFrameBuilder.poseOf(splash).has(TowerCue.CHARGED);
+
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.ghostAt(target.getX(), target.getY())});
+        for (int tick = 2; !splash.stonesInFlight().isEmpty(); tick++) {
+            splash.doTick(tick);
+        }
+
+        assertThat(chargedBefore).isFalse();
+        assertThat(TowerSpriteFrameBuilder.poseOf(splash).has(TowerCue.CHARGED)).isTrue();
     }
 
     private static AuraTower auraWith(GameWorld context, String... nodes) {
