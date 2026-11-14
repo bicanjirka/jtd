@@ -97,6 +97,13 @@ flowchart TD
 - **Every tower's art is drawn and approved before it is coded**: a `PreviewBoard` sheet of the tower at every tier,
   with its identity looks and its buffs on the head, at the smallest and the largest board scale, beside the other
   towers.
+- **A redone tower's node ids follow its new node names** (`sniper.fourth_shot`, not the old tree's
+  `sniper.special.fifth_shot`), carried-over nodes included, renamed in the tower's own implementation. The rule to
+  keep a surviving node's id (`td/tower/CLAUDE.md`, ADR 0023) exists only so saves keep loading, and each tower's
+  rework raises `GameSaveText.FORMAT` anyway, so an old id protects nothing and only misleads. Rename every place that
+  names an id: the tower's nodes, `PerkPictograms` keys, `td.balance.Role`, and the docs' Glyph and Replaces columns.
+  Once a tower is built, its doc's Replaces column names each row's own id, or `PreviewUpgrades` reads the node as
+  retired.
 - The ADRs the bundle writes: one superseding ADR 0016 (node ids), one naming the Mortar's magazine as build state a
   save keeps (beside ADR 0021).
 
@@ -214,7 +221,8 @@ keys until those towers are built.
    new tree, live) and `ledger.md`. Published board: https://claude.ai/artifact/1o1xr7PS8Wxmwjr3MRd32M
 3. Build the tower's look from its sheets in `next-gen-art/` (its Look section names them). A look that
    changes is drawn on a sheet again first.
-4. Plan, then implement in phases with a commit each.
+4. Plan, then implement in phases with a commit each, giving every node an id after its new name (see "Decisions for
+   the whole bundle").
 5. Close it: delete what the ledger lists for the tower. Terms, stats and procs can have users outside upgrades
    (enemies, statuses), so search before deleting them.
 

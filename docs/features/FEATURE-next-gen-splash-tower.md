@@ -68,7 +68,7 @@ shown and no tuning number is written in it.
 | II | Blight Cloud | stat | | Hex of Blight | Blight | #b88ae8 | | | Blight also curses every enemy within 1 cell of its target. | Mass control instead of a deeper slow, from Tier II, so Blight wins a crowd as soon as Doom wins one enemy with Deep Doom. Name is a proposal. |
 | II | Agony | stat | | Hex | Vulnerable | #b88ae8 | | | A hexed enemy is Vulnerable while its hex lasts. | For either hex: Doom pays out more, Blight turns control into damage. |
 | II | Contagion | stat | | Hex | Contagion | #b88ae8 | | splash.head.hex.3 | When a hexed enemy dies, its hex jumps to the nearest enemy without one, as it is. | Replaces Restless Doom and today's Spreading Curse. A jump carries the hex as it is (Decisions made). |
-| III | Soul Harvest | stat | | Hexer | sniper.special.shatter_shot | #b88ae8 | | | The base shot earns Souls twice as fast: 1 Soul per 100 damage. | The Soul economy's one tuning node. Name is a proposal. |
+| III | Soul Harvest | stat | | Hexer | sniper.killshot | #b88ae8 | | | The base shot earns Souls twice as fast: 1 Soul per 100 damage. | The Soul economy's one tuning node. Name is a proposal. |
 | III | Hex of Inversion | ability | | Hexer | splash.special.inversion | #b88ae8 | 3 Souls | splash.special.inversion | Curses one enemy that heals, shields, vanishes or regenerates with Inversion. | Kept from today's tree: a counter with a target of its own. |
 | III | Choking Blight | stat | | Hex of Blight | Silence | #b88ae8 | | | Blight also Silences its enemy while it lasts. | |
 | III | Twin Hex | stat | | Hex | splash.head.hex.1 | #b88ae8 | | | Each hex curses 2 enemies. | Name is a proposal. |
