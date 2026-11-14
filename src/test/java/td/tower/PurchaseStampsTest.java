@@ -2,7 +2,6 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 
 import java.util.List;
 import java.util.OptionalLong;
@@ -12,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PurchaseStampsTest {
 
-    private static final UpgradeNode NODE = UpgradeTier.HEAD_1.node("a.1", "A", 10);
+    private static final UpgradeNode NODE = UpgradeNode.of("a.1", "A", 10);
 
     @Test
     void whatWasBoughtInABreakIsUnusedUntilTheNextWaveStarts() {

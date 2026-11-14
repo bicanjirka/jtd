@@ -1,13 +1,12 @@
 package td;
 
 import td.tower.TowerFactory;
-import td.tower.upgrade.UpgradeTier;
 
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +34,7 @@ final class FairPriceTable {
      * @param steps the ids of the nodes in the line, its own included
      * @param saved the lives the whole line saved
      */
-    record MeasuredLine(TowerFactory.Type tower, UpgradeTier tier, Set<String> steps, double saved) {
+    record MeasuredLine(TowerFactory.Type tower, int tier, Set<String> steps, double saved) {
     }
 
     /** The lives a credit saves on another tower, over every type; empty when another tower saves none. */
@@ -54,8 +53,8 @@ final class FairPriceTable {
      * For each tier, the mean fair price of a node at that tier, as a percent of its tower's list price. Unfloored: a
      * negative price is noise around nothing, and averaging cancels it.
      */
-    Map<UpgradeTier, Double> tierPercents(List<MeasuredLine> lines) {
-        return lines.stream().collect(Collectors.groupingBy(MeasuredLine::tier, () -> new EnumMap<>(UpgradeTier.class),
+    Map<Integer, Double> tierPercents(List<MeasuredLine> lines) {
+        return lines.stream().collect(Collectors.groupingBy(MeasuredLine::tier, TreeMap::new,
                 Collectors.averagingDouble(line -> this.stepPrice(line, lines) / line.tower().priceFor(0) * PERCENT)));
     }
 

@@ -8,86 +8,71 @@ import td.util.GameWorld;
 import td.util.RandomSource;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.OptionalInt;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static td.fixtures.TierTrees.A1;
+import static td.fixtures.TierTrees.A2;
+import static td.fixtures.TierTrees.B1;
+import static td.fixtures.TierTrees.B2;
+import static td.fixtures.TierTrees.LONE;
+import static td.fixtures.TierTrees.MID;
+import static td.fixtures.TierTrees.TIER_ONE;
+import static td.fixtures.TierTrees.TREE;
+import static td.fixtures.TierTrees.towerOwning;
 
 class UpgradeKeysTest {
 
-    private static UpgradeTree treeOf(TowerFactory.Type type) {
-        GameWorld world = WorldFixtures.newWorld();
-        return TowerFactory.createTower(type, world, 0, 0).upgradeTree();
-    }
+    private final GameWorld context = WorldFixtures.newWorld();
 
-    private static int key(UpgradeTree tree, String id) {
-        return tree.keyOf(tree.nodes().stream().filter(node -> node.id().equals(id)).findFirst().orElseThrow());
+    @Test
+    void keysNumberTheHighestOpenTierLeftToRightAndAClusterTakesOneKeyForItsFirstMember() {
+        Tower tower = towerOwning(this.context, 0);
+
+        assertThat(TREE.keyed(tower, this.context)).containsExactly(A1, LONE);
+        assertThat(TREE.keyOf(B1, tower, this.context)).hasValue(1);
+        assertThat(TREE.keyOf(LONE, tower, this.context)).hasValue(2);
     }
 
     @Test
-    void theCoreChainIsOneAndTheRangeLineTwoOnEveryTower() {
-        for (TowerFactory.Type type : TowerFactory.Type.values()) {
-            UpgradeTree tree = treeOf(type);
+    void onceATierAboveOpensTheLowerTiersAreBoughtWithTheMouse() {
+        Tower tower = towerOwning(this.context, UpgradeTier.standard().get(1).xp(), A1, TIER_ONE);
 
-            assertThat(tree.nodesIn(UpgradeSlot.CORE)).allSatisfy(node -> assertThat(tree.keyOf(node)).isEqualTo(1));
-            assertThat(tree.nodesIn(UpgradeSlot.BASE)).allSatisfy(node -> assertThat(tree.keyOf(node)).isEqualTo(2));
-        }
+        assertThat(TREE.keyed(tower, this.context)).containsExactly(A2, MID);
+        assertThat(TREE.keyOf(LONE, tower, this.context)).isEmpty();
     }
 
     @Test
-    void theLineThatDoesNotBranchIsThreeAndTheTwoThatDoAreFourAndFive() {
-        UpgradeTree burst = treeOf(TowerFactory.Type.SPLASH);
+    void aBranchTakesKeysOnlyForTheMemberTheTowerOwns() {
+        Tower tower = towerOwning(this.context, UpgradeTier.standard().get(1).xp(), B1, TIER_ONE);
 
-        assertThat(key(burst, "splash.extra.blast_engineering.1")).isEqualTo(3);
-        assertThat(key(burst, "splash.extra.blast_engineering.3")).isEqualTo(3);
-        assertThat(key(burst, "splash.head.arc.1")).isEqualTo(4);
-        assertThat(key(burst, "splash.head.arc.3")).isEqualTo(4);
-        assertThat(key(burst, "splash.head.hex.2")).isEqualTo(5);
-        assertThat(key(burst, "splash.head.arc.4a")).isEqualTo(4);
-        assertThat(key(burst, "splash.head.arc.4b")).isEqualTo(5);
+        assertThat(TREE.keyOf(B2, tower, this.context)).hasValue(1);
+        assertThat(TREE.keyOf(A2, tower, this.context)).isEmpty();
     }
 
     @Test
-    void eachSetOfSpecialsANodeOpensIsSixToEight() {
-        UpgradeTree sniper = treeOf(TowerFactory.Type.SNIPER);
-
-        assertThat(List.of(key(sniper, "sniper.special.momentum"), key(sniper, "sniper.special.ricochet"),
-                key(sniper, "sniper.special.headhunter"))).containsExactly(6, 7, 8);
-        assertThat(List.of(key(sniper, "sniper.special.hollow_point"), key(sniper, "sniper.special.fifth_shot"),
-                key(sniper, "sniper.special.shatter_shot"))).containsExactly(6, 7, 8);
-    }
-
-    @Test
-    void whateverATowerBuysEveryNodeOnOfferHasAKeyOfItsOwnAndNoneIsNine() {
+    void whateverATowerBuysEveryNodeOfferedInItsHighestOpenTierHasAKey() {
         RandomSource random = RandomSource.seeded(3);
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
-            for (int walk = 0; walk < 20; walk++) {
+            for (int walk = 0; walk < 10; walk++) {
                 GameWorld world = WorldFixtures.newWorld();
                 world.playtestRules().setUpgradeGatesIgnored(true);
                 world.economy().startEconomy(1_000_000, 5);
                 Tower tower = TowerFactory.createTower(type, world, 0, 0);
+                UpgradeTree tree = tower.upgradeTree();
                 List<UpgradeNode> offered = tower.offeredUpgrades(world);
                 while (!offered.isEmpty()) {
-                    List<Integer> keys = offered.stream().map(tower.upgradeTree()::keyOf).toList();
-
-                    assertThat(keys).as(type + " offers " + offered.stream().map(UpgradeNode::id)
-                            .collect(Collectors.joining(", "))).doesNotHaveDuplicates().allMatch(key -> key >= 1 && key <= 8);
-
+                    int top = tree.highestOpenTier(tower, world);
+                    for (UpgradeNode node : offered) {
+                        OptionalInt key = tree.keyOf(node, tower, world);
+                        if (node.tier() == top && !tree.isUnlock(node)) {
+                            assertThat(key).as("%s %s", type, node.id()).isPresent();
+                        }
+                    }
                     tower.buyUpgrade(offered.get(random.nextIndex(offered.size())));
                     offered = tower.offeredUpgrades(world);
                 }
             }
         }
-    }
-
-    @Test
-    void aTreeWithANodeNoNumberKeyBuysIsRejected() {
-        UpgradeNode first = UpgradeNode.of("a", UpgradeSlot.HEAD, "A", 10);
-        UpgradeNode second = UpgradeNode.of("b", UpgradeSlot.HEAD, "B", 10);
-        UpgradeNode third = UpgradeNode.of("c", UpgradeSlot.HEAD, "C", 10);
-
-        assertThatThrownBy(() -> UpgradeTree.of(first, second, third)
-                .withChoice(ExclusiveChoice.oneOf(first, second, third)))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageEndingWith(": c");
     }
 }

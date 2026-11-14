@@ -5,8 +5,7 @@ import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.tower.proc.Proc;
 import td.tower.proc.ProcPayload;
-import td.tower.upgrade.ExclusiveChoice;
-import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
@@ -19,22 +18,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** How a tower buys a whole path at once, and downgrades a node with everything that depends on it. */
 class UpgradeOwnershipTest {
 
-    private static final int LIST_PRICE = 10;
+    private static final int PRICE = 10;
 
-    private static final UpgradeNode A1 = UpgradeTier.HEAD_1.node("a.1", "A", LIST_PRICE);
-    private static final UpgradeNode A2 = UpgradeTier.HEAD_2.node("a.2", "A II", LIST_PRICE).after(A1);
-    private static final UpgradeNode A3 = UpgradeTier.HEAD_3.node("a.3", "A III", LIST_PRICE).after(A2);
-    private static final UpgradeNode B1 = UpgradeTier.HEAD_1.node("b.1", "B", LIST_PRICE);
-    private static final UpgradeNode S1 = UpgradeTier.SPECIAL.node("s.1", "S1", LIST_PRICE);
-    private static final UpgradeNode S2 = UpgradeTier.SPECIAL.node("s.2", "S2", LIST_PRICE);
-    private static final UpgradeNode S3 = UpgradeTier.SPECIAL.node("s.3", "S3", LIST_PRICE);
-    private static final UpgradeNode HASTY = UpgradeTier.EXTRA_1.node("x.1", "Hasty", LIST_PRICE)
+    private static final UpgradeNode A1 = UpgradeNode.of("a.1", "A", PRICE);
+    private static final UpgradeNode B1 = UpgradeNode.of("b.1", "B", PRICE);
+    private static final UpgradeNode A2 = UpgradeNode.of("a.2", "A II", PRICE).inTier(1).after(A1);
+    private static final UpgradeNode HASTY = UpgradeNode.of("x.1", "Hasty", PRICE)
             .withProc(Proc.everyNthShot(1, new ProcPayload.GrantStatus(
                     TowerStatus.timed(TowerTerm.HASTE, TowerModifiers.attackSpeed(1f), 1_000))));
-    private static final List<UpgradeNode> SHARED = StandardBaseSlot.nodes(LIST_PRICE, 4f, A3);
-    private static final UpgradeTree TREE = UpgradeTree.of(SHARED).with(A1, A2, A3, B1, S1, S2, S3, HASTY)
-            .withChoice(ExclusiveChoice.oneOf(A1, B1))
-            .withChoice(ExclusiveChoice.specials(S1, S2, S3));
+    private static final UpgradeTree TREE = UpgradeTree.of(A1, B1, A2, HASTY)
+            .withCluster(UpgradeCluster.of("Roots", A1, B1));
 
     private final GameWorld context = WorldFixtures.newWorld();
 
@@ -49,7 +42,7 @@ class UpgradeOwnershipTest {
 
         assertThat(bought).isTrue();
         assertThat(tower.upgrades().owned()).extracting(UpgradeNode::displayName)
-                .containsExactlyInAnyOrder("Attune", "A", "A II");
+                .containsExactlyInAnyOrder(UpgradeTier.nameOf(1), "A", "A II");
         assertThat(this.context.economy().getCredits()).isEqualTo(1_000 - total);
     }
 
@@ -86,18 +79,7 @@ class UpgradeOwnershipTest {
         boolean downgraded = tower.downgrade(A1);
 
         assertThat(downgraded).isTrue();
-        assertThat(tower.upgrades().owned()).extracting(UpgradeNode::displayName).containsExactly("Attune");
-    }
-
-    @Test
-    void downgradingTranscendentRemovesTheLaterOfTwoSpecials() {
-        FakeTower tower = this.towerOwning(S1, A3, core(StandardBaseSlot.TRANSCENDENT_ID), S2);
-
-        tower.downgrade(core(StandardBaseSlot.TRANSCENDENT_ID));
-
-        assertThat(tower.upgrades().owns(S1.id())).isTrue();
-        assertThat(tower.upgrades().owns(S2.id())).isFalse();
-        assertThat(tower.upgrades().owns(A3.id())).isTrue();
+        assertThat(tower.upgrades().owned()).extracting(UpgradeNode::displayName).containsExactly(UpgradeTier.nameOf(1));
     }
 
     @Test
@@ -111,7 +93,7 @@ class UpgradeOwnershipTest {
 
     @Test
     void whatATowerOffersFollowsEachPurchaseAndDowngradeAfterBeingAsked() {
-        FakeTower tower = this.towerOwning(core(StandardBaseSlot.ATTUNE_ID));
+        FakeTower tower = this.towerOwning(TREE.unlockOf(1).orElseThrow());
         List<UpgradeNode> before = tower.offeredUpgrades(this.context);
 
         tower.buyUpgrade(A1);
@@ -145,7 +127,7 @@ class UpgradeOwnershipTest {
         boolean downgraded = tower.downgrade(A2);
 
         assertThat(downgraded).isFalse();
-        assertThat(tower.upgrades().owned()).hasSize(2);
+        assertThat(tower.upgrades().owned()).containsExactly(A1);
         assertThat(this.context.economy().getCredits()).isEqualTo(credits);
     }
 
@@ -171,10 +153,6 @@ class UpgradeOwnershipTest {
             assertThat(tower.buyPath(target)).as(target.displayName()).isTrue();
         }
         return tower;
-    }
-
-    private static UpgradeNode core(String id) {
-        return SHARED.stream().filter(n -> n.id().equals(id)).findFirst().orElseThrow();
     }
 
     private FakeTower tower() {

@@ -118,19 +118,6 @@ class SeekerTowerTest {
         assertThat(frozen.activeEffectKinds()).doesNotContain(EffectKind.BRITTLE);
     }
 
-    @Test
-    void aMissileOnAnEnemyAlreadyFrozenCountsNoDeed() {
-        SeekerTower tower = this.attunedTower();
-        FakeEnemyMob frozen = FakeEnemyMob.at(100, 100);
-        frozen.applyEffect(Effect.freeze(100, DamageSink.none()));
-        this.context.enemies().setEnemies(new EnemyMob[]{frozen});
-        tower.beginTick(1);
-
-        tower.doTick(1);
-        TowerFixtures.flyProjectilesToCompletion(this.context);
-
-        assertThat(tower.experience().deeds()).isZero();
-    }
 
     /** Ticks {@code tower} until it has launched {@code missiles}, then flies them all. */
     private void fireAndFly(SeekerTower tower, int missiles) {
@@ -496,18 +483,6 @@ class SeekerTowerTest {
         assertThat(this.context.projectiles().getProjectiles()).hasSize(3);
     }
 
-    @Test
-    void aFreezeThatLandsCountsAsADeedOnceAttuned() {
-        SeekerTower tower = this.attunedTower();
-        FakeEnemyMob target = FakeEnemyMob.at(100, 100);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
-        tower.beginTick(1);
-
-        tower.doTick(1);
-        TowerFixtures.flyProjectilesToCompletion(this.context);
-
-        assertThat(tower.experience().deeds()).isEqualTo(1);
-    }
 
     private static int nestCapacity(SeekerTower tower) {
         return Math.round(tower.stats().value(TowerStat.NEST_CAPACITY));
@@ -535,7 +510,7 @@ class SeekerTowerTest {
 
     @Test
     void broodsSalvoSpreadsAcrossDifferentTargets() {
-        SeekerTower tower = this.seekerWith("Brood");
+        SeekerTower tower = this.seekerWith("Attune", "Brood");
         this.context.enemies().setEnemies(new EnemyMob[]{});
         int tick = tickUntilNestHolds(tower, 1, nestCapacity(tower));
         FakeEnemyMob first = FakeEnemyMob.at(100, 100).movingAt(3f);

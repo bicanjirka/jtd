@@ -59,9 +59,7 @@ import td.tower.TowerStatRow;
 import td.tower.TowerStatus;
 import td.tower.TowerTally;
 import td.tower.TowerTerm;
-import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameStartupException;
 import td.util.GameWorld;
@@ -484,10 +482,7 @@ class GameEngineTest {
         engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(6), BoardFixtures.cellCenter(0));
         PulseTower caster = (PulseTower) engine.getGameWorld().towers().all().getFirst();
-        for (String node : List.of("Attune", "Awaken", "Ley Line")) {
-            caster.buyUpgrade(caster.upgradeTree().nodes().stream().filter(n -> n.displayName().equals(node))
-                    .findFirst().orElseThrow());
-        }
+        UpgradePaths.buy(caster, engine.getGameWorld(), "Ley Line");
         caster.setSelected(true);
         engine.doTick(20);
         float autoTo = caster.getLeyLine().orElseThrow().toY();
@@ -1050,13 +1045,13 @@ class GameEngineTest {
                 .orElseThrow();
         tower.setSelected(true);
         int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
+        List<UpgradeNode> keyed = tower.upgradeTree().keyed(tower, engine.getGameWorld());
 
         engine.buyUpgradeForSelected(2);
         engine.buyUpgradeForSelected(1);
 
         assertThat(engine.getGameWorld().economy().getCredits()).isLessThan(creditsBeforeUpgrade);
-        assertThat(tower.upgrades().owns(StandardBaseSlot.RANGE_ID)).isTrue();
-        assertThat(tower.upgrades().owns(StandardBaseSlot.ATTUNE_ID)).isTrue();
+        assertThat(tower.upgrades().owned()).containsExactly(keyed.get(1), keyed.get(0));
     }
 
     @Test
@@ -1383,12 +1378,12 @@ class GameEngineTest {
         Tower secondCopy = placeSniper(engine, 1, 0);
         secondCopy.setSelected(true);
         int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
+        UpgradeNode second = secondCopy.upgradeTree().keyed(secondCopy, engine.getGameWorld()).get(1);
 
         engine.buyUpgradeForSelected(2);
 
-        assertThat(secondCopy.upgrades().owns(StandardBaseSlot.RANGE_ID)).isTrue();
-        assertThat(engine.getGameWorld().economy().getCredits())
-                .isEqualTo(creditsBeforeUpgrade - UpgradeTier.RANGE_1.price(SniperTower.PRICE));
+        assertThat(secondCopy.upgrades().owned()).containsExactly(second);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsBeforeUpgrade - second.price());
     }
 
     @Test
@@ -2006,10 +2001,7 @@ class GameEngineTest {
         saved.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
         Tower burst = towerOfType(saved, TowerFactory.Type.SPLASH);
         burst.earnXp(1_000_000);
-        for (String node : List.of("Attune", "Awaken")) {
-            burst.buyUpgrade(burst.upgradeTree().nodes().stream()
-                    .filter(n -> n.displayName().equals(node)).findFirst().orElseThrow());
-        }
+        burst.buyPath(UpgradePaths.named(burst, "Arc"));
         saved.requestJumpToWave(3);
         saved.applyRequests();
         GameSave save = saved.save().orElseThrow();
@@ -2037,9 +2029,9 @@ class GameEngineTest {
         saved.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
         Tower burst = towerOfType(saved, TowerFactory.Type.SPLASH);
         burst.earnXp(1_000_000);
-        List<UpgradeNode> chain = List.of("Attune", "Awaken").stream().map(name -> burst.upgradeTree().nodes().stream()
-                .filter(n -> n.displayName().equals(name)).findFirst().orElseThrow()).toList();
-        chain.forEach(burst::buyUpgrade);
+        List<UpgradeNode> chain = List.of(UpgradePaths.named(burst, "Wide Charge"),
+                UpgradePaths.named(burst, "Shaped Charge"));
+        burst.buyPath(chain.getLast());
         GameSave save = saved.save().orElseThrow();
         TowerSave tower = save.towers().getFirst();
         List<String> renamed = tower.nodes().stream()
@@ -2062,7 +2054,7 @@ class GameEngineTest {
                 new WaveDefinition("walker")), 100);
         GameEngine loaded = FakeGameHost.newBoundEngine();
         loaded.loadLevel(level);
-        TowerTally untried = TowerTally.of(0, 0, 0L, 0);
+        TowerTally untried = TowerTally.of(0, 0L, 0);
 
         Optional<String> problem = loaded.restore(GameSave.of(level.name(), 1, new EconomyState(50, 0, 5), List.of(
                 TowerSave.of(TowerFactory.Type.SNIPER, new Point(99, 1), List.of(), untried),
@@ -2080,11 +2072,11 @@ class GameEngineTest {
                 new WaveDefinition("walker")), 100);
         GameEngine loaded = FakeGameHost.newBoundEngine();
         loaded.loadLevel(level);
-        TowerTally first = TowerTally.of(10, 1, 100L, 1);
+        TowerTally first = TowerTally.of(10, 100L, 1);
 
         Optional<String> problem = loaded.restore(GameSave.of(level.name(), 1, new EconomyState(50, 0, 5), List.of(
                 TowerSave.of(TowerFactory.Type.SNIPER, new Point(1, 1), List.of(), first).withPaid(77),
-                TowerSave.of(TowerFactory.Type.SPLASH, new Point(1, 1), List.of(), TowerTally.of(999, 9, 9999L, 9))
+                TowerSave.of(TowerFactory.Type.SPLASH, new Point(1, 1), List.of(), TowerTally.of(999, 9999L, 9))
                         .withPaid(5))));
 
         assertThat(problem).hasValueSatisfying(text -> assertThat(text).contains("1,1"));

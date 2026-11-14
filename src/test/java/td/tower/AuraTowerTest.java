@@ -34,7 +34,7 @@ class AuraTowerTest {
         SniperTower neighbour = new SniperTower(this.context, 0, 0);
         this.context.towers().add(neighbour);
         this.addClusterFiller();
-        AuraTower aura = this.auraWith("Awaken");
+        AuraTower aura = this.auraWith();
         int damageBeforeUpgrade = neighbour.damageCurrent();
 
         UpgradePaths.buy(aura, this.context, "Amplifying Core");
@@ -53,7 +53,7 @@ class AuraTowerTest {
 
     @Test
     void onAmplifyingCoreKinshipStrengthensTheBuffForEachOtherTowerTypeInRange() {
-        AuraTower aura = this.auraWith("Amplifying Core");
+        AuraTower aura = this.auraWith("Attune", "Amplifying Core");
         SniperTower sniper = new SniperTower(this.context, 0, 0);
         this.context.towers().add(sniper);
         float alone = aura.buffFor(sniper).get(TowerStat.DAMAGE).percentAdd();
@@ -82,7 +82,7 @@ class AuraTowerTest {
 
     @Test
     void broadcastWidensTheAurasOwnReach() {
-        AuraTower aura = this.auraWith("Awaken");
+        AuraTower aura = this.auraWith();
         float before = aura.getRangeReal();
 
         UpgradePaths.buy(aura, this.context, "Broadcast");

@@ -125,11 +125,6 @@ public final class FakeTower extends AbstractTower {
         this.report(target, HitKind.DIRECT, false, false);
     }
 
-    /** Does its job once, as an attack would. */
-    public void performDeedOfAttack() {
-        this.countDeedOfAttack();
-    }
-
     @Override
     public void doTick(int gameTime) {
     }

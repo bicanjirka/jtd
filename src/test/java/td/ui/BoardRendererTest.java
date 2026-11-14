@@ -8,18 +8,16 @@ import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.LevelFixtures;
+import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.projectile.CannonballProjectile;
-import td.tower.AuraTower;
 import td.tower.CinderTower;
 import td.tower.SniperTower;
-import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerRank;
 import td.tower.TowerTerm;
-import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.ui.render.CellGridDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.EnemyFadeDraw;
@@ -162,7 +160,7 @@ class BoardRendererTest {
     }
 
     @Test
-    void aFundedFreshTowersCoreSlotIsMarkedReadyButHeadIsNotYetLocked() {
+    void aFundedFreshTowerMarksItsFirstTierReadyAndNoTierAbove() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.economy().startEconomy(1000, 5);
@@ -171,52 +169,44 @@ class BoardRendererTest {
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
-        assertThat(marks.get(UpgradeSlot.CORE.ordinal()).ready()).isTrue();
-        assertThat(marks.get(UpgradeSlot.HEAD.ordinal()).ready()).isFalse();
-        assertThat(marks.get(UpgradeSlot.SPECIAL.ordinal()).ready()).isFalse();
+        assertThat(marks.getFirst().ready()).isTrue();
+        assertThat(marks.subList(1, marks.size())).noneMatch(SlotMarkDraw::ready);
     }
 
     @Test
-    void buyingTwoHeadNodesShowsTwoPipsInTheHeadSlotAndOneInCore() {
+    void buyingTwoNodesOfATierShowsTwoPipsInThatTiersMark() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.economy().startEconomy(1000, 5);
         SniperTower tower = new SniperTower(context, 1, 1);
         context.towers().add(tower);
-        tower.earnXp(1_000);
-        tower.buyUpgrade(coreNode(tower, StandardBaseSlot.ATTUNE_ID));
-        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(0));
-        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.HEAD).get(1));
+        List<UpgradeNode> keyed = tower.upgradeTree().keyed(tower, context);
+        tower.buyUpgrade(keyed.get(0));
+        tower.buyUpgrade(keyed.get(1));
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
         List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
-        assertThat(marks.get(UpgradeSlot.CORE.ordinal()).level()).isEqualTo(1);
-        assertThat(marks.get(UpgradeSlot.HEAD.ordinal()).level()).isEqualTo(2);
-        assertThat(marks.get(UpgradeSlot.SPECIAL.ordinal()).level()).isZero();
+        assertThat(marks).extracting(SlotMarkDraw::level).startsWith(2).containsOnlyOnce(2);
+        assertThat(marks.subList(1, marks.size())).allMatch(mark -> mark.level() == 0);
     }
 
     @Test
-    void owningASpecialNodeGivesTheSpriteAPositiveEnchantPulse() {
+    void owningANodeOfTheTopTierEnchantsAndCrownsTheSprite() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.economy().startEconomy(1000, 5);
-        // its special root is gated on a cluster of 2 towers, reachable without combat
-        AuraTower tower = new AuraTower(context, 1, 1);
+        SniperTower tower = new SniperTower(context, 1, 1);
         context.towers().add(tower);
-        context.towers().add(new SniperTower(context, 0, 0));
-        context.towers().add(new SniperTower(context, 2, 2));
-        tower.earnXp(1_000);
-        tower.buyUpgrade(coreNode(tower, StandardBaseSlot.ATTUNE_ID));
-        tower.buyUpgrade(coreNode(tower, StandardBaseSlot.AWAKEN_ID));
-        tower.buyUpgrade(tower.upgradeTree().nodesIn(UpgradeSlot.SPECIAL).getFirst());
+        UpgradeTree tree = tower.upgradeTree();
+        int top = tree.tiers().size() - 1;
+        UpgradeNode crowning = tree.nodes().stream().filter(node -> node.tier() == top).findFirst().orElseThrow();
+        UpgradePaths.buy(tower, context, crowning.displayName());
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
-        TowerSpriteDraw sprite = frame.towerSprites().stream()
-                .filter(s -> s.look() == TowerLook.AURA)
-                .findFirst().orElseThrow();
+        TowerSpriteDraw sprite = frame.towerSprites().getFirst();
         assertThat(sprite.enchantPulse()).isGreaterThan(0f);
+        assertThat(sprite.crowned()).isTrue();
     }
 
     @Test
@@ -345,10 +335,6 @@ class BoardRendererTest {
         assertThat(frame.projectiles().getFirst()).isInstanceOf(ProjectileDraw.class);
     }
 
-    private static UpgradeNode coreNode(Tower tower, String id) {
-        return tower.upgradeTree().nodesIn(UpgradeSlot.CORE).stream().filter(n -> n.id().equals(id)).findFirst().orElseThrow();
-    }
-
     @Test
     void aSelectedEnemysSheetCarriesWhatTowersRememberOfIt() {
         GameEngine engine = newEngine();
@@ -359,7 +345,7 @@ class BoardRendererTest {
         CinderTower cinder = new CinderTower(context, (int) (enemy.getX() / scale) + 1, (int) (enemy.getY() / scale));
         context.towers().add(cinder);
         context.economy().startEconomy(1000, 5);
-        cinder.buyUpgrade(coreNode(cinder, StandardBaseSlot.ATTUNE_ID));
+        cinder.buyUpgrade(UpgradePaths.named(cinder, "Attune"));
         for (int t = 1; t <= 400 && cinder.marksOn(enemy).isEmpty(); t++) {
             cinder.doTick(t);
         }

@@ -39,7 +39,6 @@ import td.tower.proc.ProcRunner;
 import td.tower.upgrade.Mechanic;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeDecision;
 import td.tower.upgrade.UpgradeLine;
@@ -47,6 +46,7 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradePath;
 import td.tower.upgrade.UpgradeRemoval;
 import td.tower.upgrade.UpgradeState;
+import td.tower.upgrade.UpgradeSwitch;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.PathRuntime;
@@ -194,7 +194,6 @@ public abstract class AbstractTower implements Tower {
         this.lastWitherTick = Integer.MIN_VALUE;
         this.statuses.clear();
         this.disruption = DisruptionPenalty.none();
-        this.experience.endWave();
         this.ownedMechanics().renew();
         this.endFight();
         this.refreshStatusLayer();
@@ -663,23 +662,6 @@ public abstract class AbstractTower implements Tower {
         this.experience.earn(whole, this.currentTick);
     }
 
-    /**
-     * Counts one deed of this tower's purpose, done by an attack: further calls in the same tick
-     * (one per enemy the attack hit) don't add. Counting starts once Attune is owned.
-     */
-    protected void countDeedOfAttack() {
-        if (this.upgrades.owns(StandardBaseSlot.ATTUNE_ID)) {
-            this.experience.countDeedOfAttack(this.currentTick);
-        }
-    }
-
-    /** Counts one deed done over time, at most once a second. Counting starts once Attune is owned. */
-    protected void countDeedOfSecond() {
-        if (this.upgrades.owns(StandardBaseSlot.ATTUNE_ID)) {
-            this.experience.countDeedOfSecond(this.currentTick);
-        }
-    }
-
     public boolean reached(EnemyWalk walk) {
         return walk.entryOrdinal() > this.entriesBeforeBuilt
                 && walk.walkedWithin(this.centerX, this.centerY, this.stats.reachReal());
@@ -691,7 +673,7 @@ public abstract class AbstractTower implements Tower {
 
     @Override
     public TowerRecord record() {
-        TowerTally tally = TowerTally.of(this.experience.xp(), this.experience.deeds(), this.damageDealt,
+        TowerTally tally = TowerTally.of(this.experience.xp(), this.damageDealt,
                 this.killCount).withXpCarried(this.xpRemainder);
         return new TowerRecord(tally, this.price, this.use());
     }
@@ -700,7 +682,7 @@ public abstract class AbstractTower implements Tower {
     public void restore(TowerRecord record) {
         TowerTally tally = record.tally();
         this.purchases.set(PurchaseStamps.of(record.use(), this.upgrades().owned(), this.context.waves().started()));
-        this.experience.restore(tally.xp(), tally.deeds());
+        this.experience.restore(tally.xp());
         this.damageDealt = tally.damageDealt();
         this.killCount = tally.kills();
         this.xpRemainder = tally.xpCarried();
@@ -776,7 +758,7 @@ public abstract class AbstractTower implements Tower {
     }
 
     public boolean buyUpgrade(UpgradeNode node) {
-        if (!this.upgradeTree().offers(node, this, this.context) || !node.gateMet(this, this.context)) {
+        if (!this.upgradeTree().offers(node, this, this.context)) {
             return false;
         }
         if (!this.context.economy().doPay(node.price())) {
@@ -823,7 +805,7 @@ public abstract class AbstractTower implements Tower {
     @Override
     public boolean downgrade(UpgradeNode node) {
         UpgradeRemoval removal = this.upgradeTree().removalFor(node, this, this.context);
-        if (removal.isEmpty()) {
+        if (removal.isEmpty() || !UpgradeTree.changesAllowed(this.context)) {
             return false;
         }
         int refund = this.refundFor(removal).total();
@@ -832,6 +814,36 @@ public abstract class AbstractTower implements Tower {
         this.upgrades = removal.kept();
         this.removedSinceTick.accumulateAndGet(removal.removed(), AbstractTower::concatenated);
         removal.removed().forEach(gone -> this.purchases.updateAndGet(now -> now.withRemoved(gone)));
+        for (Tower t : this.context.towers().all()) {
+            t.recalculateStats();
+        }
+        this.context.economy().apply(EconomyDelta.credits(refund));
+        return true;
+    }
+
+    @Override
+    public Refund refundFor(UpgradeSwitch change) {
+        List<UpgradeNode> owned = this.upgrades().owned();
+        return this.context.economy().refundOf(this.shareOf(owned)
+                .minus(this.shareOf(owned.stream().filter(node -> !change.sold().contains(node)).toList())));
+    }
+
+    @Override
+    public boolean switchTo(UpgradeNode member) {
+        Optional<UpgradeSwitch> change = this.upgradeTree().switchFor(member, this, this.context);
+        if (change.isEmpty() || !UpgradeTree.changesAllowed(this.context)) {
+            return false;
+        }
+        UpgradeSwitch switched = change.get();
+        int refund = this.refundFor(switched).total();
+        List<UpgradeNode> gone = concatenated(List.of(switched.from()), switched.sold());
+        this.ownedMechanics().remove(gone);
+        this.ownedMechanics().add(switched.to());
+        this.publishStats(switched.kept());
+        this.upgrades = switched.kept();
+        this.removedSinceTick.accumulateAndGet(gone, AbstractTower::concatenated);
+        switched.sold().forEach(sold -> this.purchases.updateAndGet(now -> now.withRemoved(sold)));
+        this.purchases.updateAndGet(now -> now.withSwitched(switched.from(), switched.to()));
         for (Tower t : this.context.towers().all()) {
             t.recalculateStats();
         }

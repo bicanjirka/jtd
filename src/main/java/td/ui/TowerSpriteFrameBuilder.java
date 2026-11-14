@@ -10,9 +10,8 @@ import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerVisitor;
-import td.tower.upgrade.StandardBaseSlot;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTree;
 import td.ui.render.Palette;
 import td.ui.render.SlotMarkDraw;
 import td.ui.render.TowerLook;
@@ -36,8 +35,39 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     private static final double TOWER_AURA_PULSE_RADIANS_PER_SECOND = 2.4;
     private static final float TOWER_AURA_PULSE_MIN_SCALE = 0.8f;
     private static final float TOWER_AURA_PULSE_MAX_SCALE = 1.25f;
-    private static final double TRANSCENDENT_HALO_SECONDS_PER_TURN = 12.0;
+    private static final double CROWN_HALO_SECONDS_PER_TURN = 12.0;
     private static final int RANK_UP_GLOW_TICKS = 30;
+    private static final TowerVisitor<TowerLook> BODY_LOOK = new TowerVisitor<>() {
+        public TowerLook visitSniperTower(SniperTower tower) {
+            return TowerLook.SNIPER;
+        }
+
+        public TowerLook visitSplashTower(SplashTower tower) {
+            return bodyLookOf(tower);
+        }
+
+        public TowerLook visitPulseTower(PulseTower tower) {
+            return TowerLook.PULSE;
+        }
+
+        public TowerLook visitAuraTower(AuraTower tower) {
+            return TowerLook.AURA;
+        }
+
+        public TowerLook visitMortarTower(MortarTower tower) {
+            return TowerLook.MORTAR;
+        }
+
+        public TowerLook visitSeekerTower(SeekerTower tower) {
+            return TowerLook.SEEKER;
+        }
+
+        public TowerLook visitCinderTower(CinderTower tower) {
+            return TowerLook.CINDER;
+        }
+    };
+    private static final Palette[] TIER_PALETTES = {Palette.TOWER_UPGRADE_TIER_0, Palette.TOWER_UPGRADE_TIER_1,
+        Palette.TOWER_UPGRADE_TIER_2, Palette.TOWER_UPGRADE_TIER_3};
 
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
     private final List<TurretHeadDraw> headDraws = new ArrayList<>();
@@ -66,6 +96,19 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         };
     }
 
+    /** The look {@code tower}'s body wears now: its type's, or what its fork made it. */
+    static TowerLook bodyLookOf(Tower tower) {
+        return tower.accept(BODY_LOOK);
+    }
+
+    private static TowerLook bodyLookOf(SplashTower tower) {
+        return switch (tower.fork()) {
+            case NONE -> TowerLook.SPLASH;
+            case STORMCALLER -> TowerLook.STORMCALLER;
+            case HEXER -> TowerLook.HEXER;
+        };
+    }
+
     /** A tower type's tone in text and icons, the colour of its look. */
     public static Palette bodyPaletteFor(TowerFactory.Type type) {
         return switch (type) {
@@ -79,38 +122,36 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         };
     }
 
-    /** An upgrade slot's colour role, for its pips, chevrons and info rows. */
-    static Palette slotPaletteFor(UpgradeSlot slot) {
-        return switch (slot) {
-            case CORE -> Palette.TOWER_UPGRADE_CORE;
-            case BASE -> Palette.TOWER_UPGRADE_BASE;
-            case HEAD -> Palette.TOWER_UPGRADE_HEAD;
-            case SPECIAL -> Palette.TOWER_UPGRADE_SPECIAL;
-        };
+    /** An upgrade tier's colour role, for its pips, chevrons and perk icons; a tier above the last takes the last's. */
+    static Palette tierPaletteFor(int tier) {
+        return TIER_PALETTES[Math.min(tier, TIER_PALETTES.length - 1)];
     }
 
-    /**
-     * One mark per slot, in order: how many nodes are owned, and whether an affordable, ungated
-     * node is offered.
-     */
+    /** Whether {@code tower} has its top tier open: it wears the crown's halo. */
+    static boolean crowned(Tower tower, GameWorld world) {
+        UpgradeTree tree = tower.upgradeTree();
+        return tree.tiers().size() > 1 && tree.highestOpenTier(tower, world) == tree.tiers().size() - 1;
+    }
+
+    /** One mark per tier, bottom first: how many nodes are owned, and whether an affordable node of it is offered. */
     private List<SlotMarkDraw> slotMarksFor(Tower tower) {
         List<UpgradeNode> offered = tower.offeredUpgrades(this.world);
-        List<SlotMarkDraw> marks = new ArrayList<>(UpgradeSlot.values().length);
-        for (UpgradeSlot slot : UpgradeSlot.values()) {
+        int tiers = tower.upgradeTree().tiers().size();
+        List<SlotMarkDraw> marks = new ArrayList<>(tiers);
+        for (int tier = 0; tier < tiers; tier++) {
             boolean ready = false;
             for (int i = 0; i < offered.size() && !ready; i++) {
                 UpgradeNode node = offered.get(i);
-                ready = node.slot() == slot && node.gateMet(tower, this.world)
-                        && this.world.economy().canPay(node.price());
+                ready = node.tier() == tier && this.world.economy().canPay(node.price());
             }
-            marks.add(new SlotMarkDraw(slotPaletteFor(slot), tower.upgrades().countIn(slot), ready));
+            marks.add(new SlotMarkDraw(tierPaletteFor(tier), tower.upgrades().countInTier(tier), ready));
         }
         return marks;
     }
 
-    /** {@code 0} without a {@code SPECIAL} upgrade; otherwise the aura's pulse phase. */
+    /** {@code 0} without an upgrade in its top tier; otherwise the aura's pulse phase. */
     private float enchantPulseFor(Tower tower) {
-        if (tower.upgrades().countIn(UpgradeSlot.SPECIAL) == 0) {
+        if (tower.upgrades().countInTier(tower.upgradeTree().tiers().size() - 1) == 0) {
             return 0f;
         }
         return (float) (0.5 + 0.5 * Math.sin(this.animationSeconds * TOWER_AURA_PULSE_RADIANS_PER_SECOND));
@@ -132,8 +173,8 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         this.draws.add(new TowerSpriteDraw(body, tower.getBoardX(), tower.getBoardY(),
                 tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
                 this.slotMarksFor(tower), this.enchantPulseFor(tower),
-                tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID),
-                (float) (this.animationSeconds / TRANSCENDENT_HALO_SECONDS_PER_TURN % 1.0),
+                crowned(tower, this.world),
+                (float) (this.animationSeconds / CROWN_HALO_SECONDS_PER_TURN % 1.0),
                 tower.experience().rank().ordinal(), this.rankUpProgressFor(tower)));
     }
 
@@ -153,11 +194,11 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
                 (float) headingRadians, scale));
     }
 
-    /** A Transcendent Sniper's barrel turns gold. */
+    /** A crowned Sniper's barrel turns gold. */
     public Void visitSniperTower(SniperTower tower) {
         this.sprite(tower);
         double heading = tower.getTurretAim().radiansAt(this.interpolationAlpha);
-        boolean gilded = tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID);
+        boolean gilded = crowned(tower, this.world);
         this.headDraws.add(new TurretHeadDraw(lookFor(tower.getType()), gilded, tower.getX(), tower.getY(),
                 (float) heading, 1f));
         return null;
@@ -165,11 +206,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /** The body takes the colour of what the fork made it. */
     public Void visitSplashTower(SplashTower tower) {
-        TowerLook body = switch (tower.fork()) {
-            case NONE -> TowerLook.SPLASH;
-            case STORMCALLER -> TowerLook.STORMCALLER;
-            case HEXER -> TowerLook.HEXER;
-        };
+        TowerLook body = bodyLookOf(tower);
         this.sprite(tower, body);
         this.headDraws.add(new TurretHeadDraw(body, false, tower.getX(), tower.getY(),
                 (float) tower.getTurretAim().radiansAt(this.interpolationAlpha), 1f));

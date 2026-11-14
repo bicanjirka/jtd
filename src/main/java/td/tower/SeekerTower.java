@@ -48,15 +48,11 @@ import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.TargetPriority;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotMechanics;
-import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.MechanicCatalogue;
-import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.PurposeCondition;
-import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.RangeNodes;
+import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -92,79 +88,76 @@ public final class SeekerTower extends AbstractTower {
     /** How far a shatter reaches. */
     private static final float SHATTER_RADIUS_CELLS = 1.5f;
 
-    private static final TermText FREEZE_DEED = TermText.format("times {} landed", EffectKind.FREEZE);
-    private static final int FREEZES_NEEDED = 25;
 
-    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none().withRangeThree(0.1f, NodeEffects.none());
+    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 24);
 
-    private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeTier.HEAD_1.node("seeker.head.twin_warhead.1",
-            "Twin Warhead", PRICE)
+    private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeNode.of("seeker.head.twin_warhead.1", "Twin Warhead", 30)
             .withModifiers(TowerModifiers.attackSpeed(0.3f).plus(TowerModifiers.nestCapacity(1)));
-    private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeTier.HEAD_2.node("seeker.head.twin_warhead.2",
-            "Twin Warhead II", PRICE)
+    private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeNode.of("seeker.head.twin_warhead.2", "Twin Warhead II", 45)
             .withModifiers(TowerModifiers.missilesPerLaunch(1))
-            .after(TWIN_WARHEAD_1);
-    private static final UpgradeNode BROOD = UpgradeTier.HEAD_3.node("seeker.head.twin_warhead.3", "Brood", PRICE)
-            .withGate(new PurposeCondition(FREEZE_DEED, FREEZES_NEEDED))
+            .after(TWIN_WARHEAD_1)
+            .inTier(1);
+    private static final UpgradeNode BROOD = UpgradeNode.of("seeker.head.twin_warhead.3", "Brood", 75)
             .withModifiers(TowerModifiers.nestCapacity(2))
-            .after(TWIN_WARHEAD_2);
-    private static final UpgradeNode SHATTERBURST = UpgradeTier.HEAD_4.node("seeker.head.twin_warhead.4a",
-            "Shatterburst", PRICE)
-            .after(BROOD);
-    private static final UpgradeNode REARM = UpgradeTier.HEAD_4.node("seeker.head.twin_warhead.4b", "Rearm", PRICE)
-            .after(BROOD);
-    private static final UpgradeNode DEEP_FREEZE_1 = UpgradeTier.HEAD_1.node("seeker.head.deep_freeze.1",
-            "Deep Freeze", PRICE)
+            .after(TWIN_WARHEAD_2)
+            .inTier(2);
+    private static final UpgradeNode SHATTERBURST = UpgradeNode.of("seeker.head.twin_warhead.4a", "Shatterburst", 120)
+            .after(BROOD)
+            .inTier(3);
+    private static final UpgradeNode REARM = UpgradeNode.of("seeker.head.twin_warhead.4b", "Rearm", 120)
+            .after(BROOD)
+            .inTier(3);
+    private static final UpgradeNode DEEP_FREEZE_1 = UpgradeNode.of("seeker.head.deep_freeze.1", "Deep Freeze", 30)
             .withModifiers(TowerModifiers.freezeDuration(15));
-    private static final UpgradeNode DEEP_FREEZE_2 = UpgradeTier.HEAD_2.node("seeker.head.deep_freeze.2",
-            "Deep Freeze II", PRICE)
+    private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.head.deep_freeze.2", "Deep Freeze II", 45)
             .withModifiers(TowerModifiers.damage(12f).plus(TowerModifiers.critChance(0.1f)))
-            .after(DEEP_FREEZE_1);
-    private static final UpgradeNode BRITTLE = UpgradeTier.HEAD_3.node("seeker.head.deep_freeze.3", "Brittle", PRICE)
-            .withGate(new PurposeCondition(FREEZE_DEED, FREEZES_NEEDED))
-            .after(DEEP_FREEZE_2);
-    private static final UpgradeNode ABSOLUTE_ZERO = UpgradeTier.HEAD_4.node("seeker.head.deep_freeze.4a",
-            "Absolute Zero", PRICE)
-            .after(BRITTLE);
-    private static final UpgradeNode FROSTBITE = UpgradeTier.HEAD_4.node("seeker.head.deep_freeze.4b", "Frostbite",
-            PRICE)
+            .after(DEEP_FREEZE_1)
+            .inTier(1);
+    private static final UpgradeNode BRITTLE = UpgradeNode.of("seeker.head.deep_freeze.3", "Brittle", 75)
+            .after(DEEP_FREEZE_2)
+            .inTier(2);
+    private static final UpgradeNode ABSOLUTE_ZERO = UpgradeNode.of("seeker.head.deep_freeze.4a", "Absolute Zero", 120)
+            .after(BRITTLE)
+            .inTier(3);
+    private static final UpgradeNode FROSTBITE = UpgradeNode.of("seeker.head.deep_freeze.4b", "Frostbite", 120)
             .withModifiers(TowerModifiers.critChance(0.5f))
-            .after(BRITTLE);
-    private static final UpgradeNode ARCANE_PAYLOAD = UpgradeTier.EXTRA_1.node("seeker.extra.mixed_payloads.1",
-            "Arcane Payload", PRICE);
-    private static final UpgradeNode EMP_PAYLOAD = UpgradeTier.EXTRA_2.node("seeker.extra.mixed_payloads.2",
-            "EMP Payload", PRICE)
-            .after(ARCANE_PAYLOAD);
-    private static final UpgradeNode TRACER_PAYLOAD = UpgradeTier.EXTRA_3.node("seeker.extra.mixed_payloads.3",
-            "Tracer Payload", PRICE)
-            .after(EMP_PAYLOAD);
-    private static final UpgradeNode FULL_RACK = UpgradeTier.EXTRA_4.node("seeker.extra.mixed_payloads.4",
-            "Full Rack", PRICE)
-            .after(TRACER_PAYLOAD);
-    private static final UpgradeNode ARCANE_WARHEAD = UpgradeTier.SPECIAL.node("seeker.special.arcane_warhead",
-            "Arcane Warhead", PRICE);
-    private static final UpgradeNode NULLIFIER = UpgradeTier.SPECIAL.node("seeker.special.nullifier", "Nullifier",
-            PRICE)
+            .after(BRITTLE)
+            .inTier(3);
+    private static final UpgradeNode ARCANE_PAYLOAD = UpgradeNode.of("seeker.extra.mixed_payloads.1", "Arcane Payload", 24);
+    private static final UpgradeNode EMP_PAYLOAD = UpgradeNode.of("seeker.extra.mixed_payloads.2", "EMP Payload", 36)
+            .after(ARCANE_PAYLOAD)
+            .inTier(1);
+    private static final UpgradeNode TRACER_PAYLOAD = UpgradeNode.of("seeker.extra.mixed_payloads.3", "Tracer Payload", 60)
+            .after(EMP_PAYLOAD)
+            .inTier(2);
+    private static final UpgradeNode FULL_RACK = UpgradeNode.of("seeker.extra.mixed_payloads.4", "Full Rack", 90)
+            .after(TRACER_PAYLOAD)
+            .inTier(3);
+    private static final UpgradeNode ARCANE_WARHEAD = UpgradeNode.of("seeker.special.arcane_warhead", "Arcane Warhead", 120)
+            .inTier(2);
+    private static final UpgradeNode NULLIFIER = UpgradeNode.of("seeker.special.nullifier", "Nullifier", 120)
             .withHitBonus(HitBonus.when(new HitCondition.TargetHasAnyOf(Set.of(EffectKind.SHIELD)),
                     HitAdjustment.damage(0.5f)))
-            .withProc(Proc.onHit(new ProcPayload.Dispel()).when(new ProcCondition.HitKindIn(Set.of(HitKind.MISSILE))));
-    private static final UpgradeNode HUNTERS_MARK = UpgradeTier.SPECIAL.node("seeker.special.hunters_mark",
-            "Hunter's Mark", PRICE)
+            .withProc(Proc.onHit(new ProcPayload.Dispel()).when(new ProcCondition.HitKindIn(Set.of(HitKind.MISSILE))))
+            .inTier(2);
+    private static final UpgradeNode HUNTERS_MARK = UpgradeNode.of("seeker.special.hunters_mark", "Hunter's Mark", 120)
             .withTargeting(TargetPriority.HIGHEST_RANK)
-            .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.FOCUS, 5), HitAdjustment.damage(0.2f)));
+            .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.FOCUS, 5), HitAdjustment.damage(0.2f)))
+            .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, BROOD, BRITTLE))
-            .with(TWIN_WARHEAD_1, TWIN_WARHEAD_2, BROOD, SHATTERBURST, REARM, DEEP_FREEZE_1, DEEP_FREEZE_2, BRITTLE,
-                    ABSOLUTE_ZERO, FROSTBITE, ARCANE_PAYLOAD, EMP_PAYLOAD, TRACER_PAYLOAD, FULL_RACK,
-                    ARCANE_WARHEAD, NULLIFIER, HUNTERS_MARK)
-            .withChoice(ExclusiveChoice.oneOf(TWIN_WARHEAD_1, DEEP_FREEZE_1))
-            .withChoice(ExclusiveChoice.oneOf(SHATTERBURST, REARM))
-            .withChoice(ExclusiveChoice.oneOf(ABSOLUTE_ZERO, FROSTBITE))
-            .withChoice(ExclusiveChoice.specials(ARCANE_WARHEAD, NULLIFIER, HUNTERS_MARK));
+    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE))
+            .with(ATTUNE, TWIN_WARHEAD_1, DEEP_FREEZE_1, ARCANE_PAYLOAD,
+                    TWIN_WARHEAD_2, DEEP_FREEZE_2, EMP_PAYLOAD,
+                    BROOD, BRITTLE, ARCANE_WARHEAD, NULLIFIER, TRACER_PAYLOAD,
+                    SHATTERBURST, REARM, ABSOLUTE_ZERO, FROSTBITE, HUNTERS_MARK, FULL_RACK)
+            .withCluster(UpgradeCluster.of("Warhead", TWIN_WARHEAD_1, DEEP_FREEZE_1))
+            .withCluster(UpgradeCluster.of("Special", ARCANE_WARHEAD, NULLIFIER))
+            .withCluster(UpgradeCluster.of("Mastery", SHATTERBURST, REARM))
+            .withCluster(UpgradeCluster.of("Mastery", ABSOLUTE_ZERO, FROSTBITE));
 
     private static final MechanicCatalogue<SeekerMechanic> MECHANICS = MechanicCatalogue.<SeekerMechanic>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, NestMechanic::new)
-            .with(StandardBaseSlot.RANGE_3_ID, OverTheHorizonMechanic::new)
+            .with(ATTUNE.id(), NestMechanic::new)
+            .with(RangeNodes.RANGE_3_ID, OverTheHorizonMechanic::new)
             .with(BROOD.id(), BroodMechanic::new)
             .with(SHATTERBURST.id(), ShatterburstMechanic::new)
             .with(REARM.id(), RearmMechanic::new)
@@ -360,7 +353,6 @@ public final class SeekerTower extends AbstractTower {
         }
         boolean froze = freezes && !wasFrozen && target.hasEffect(EffectKind.FREEZE);
         if (froze) {
-            this.countDeedOfAttack();
         }
         this.streak.landed(target);
         this.report(target, HitKind.MISSILE, critical, target.isDead());

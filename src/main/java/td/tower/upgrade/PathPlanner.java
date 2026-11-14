@@ -9,8 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Works out one {@link UpgradePath}: gathers what the target lacks, prerequisites first, on a state that
- * assumes each gathered step bought, then judges the steps in order the way a purchase would.
+ * Works out one {@link UpgradePath}: gathers what the target lacks, prerequisites first, on a state that assumes each
+ * gathered step bought, puts the unlocks of the paid tiers on the way before them, then judges the steps in order the
+ * way a purchase would.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 final class PathPlanner {
@@ -40,48 +41,28 @@ final class PathPlanner {
         if (owned.owns(this.target.id())) {
             return this.blocked(UpgradePath.Reason.OWNED);
         }
-        if (!this.tree.nodes().contains(this.target)) {
+        if (this.tree.node(this.target.id()).filter(this.target::equals).isEmpty()) {
             return this.blocked(UpgradePath.Reason.UNREACHABLE);
         }
         if (this.tree.isLockedOut(this.target, owned)) {
             return this.blocked(UpgradePath.Reason.LOCKED_OUT);
         }
         this.gather(this.target);
-        List<UpgradeNode> ordered = this.schedule(owned);
+        List<UpgradeNode> ordered = new ArrayList<>();
+        int top = this.steps.stream().mapToInt(UpgradeNode::tier).max().orElse(0);
+        for (int tier = 1; tier <= top; tier++) {
+            this.tree.unlockOf(tier).filter(unlock -> !owned.owns(unlock.id()) && !this.steps.contains(unlock))
+                    .ifPresent(ordered::add);
+        }
+        ordered.addAll(this.steps);
         UpgradeState state = owned;
         for (UpgradeNode step : ordered) {
+            UpgradeState before = state;
+            this.judge(step, before).ifPresent(reason -> this.blockAt(step, reason));
             state = state.with(step);
         }
         return new UpgradePath(this.target, ordered, Optional.ofNullable(this.block),
                 this.tree.newlyLockedOut(owned, state));
-    }
-
-    /**
-     * The gathered steps in an order they can be bought in: each time the first one whose prerequisites and
-     * gate hold on what comes before it, since a gate (Transcendent's head III) can need a step gathered after
-     * it. When none can go next, the path is blocked at the first whose prerequisites hold, and the rest follow
-     * in the gathered order.
-     */
-    private List<UpgradeNode> schedule(UpgradeState owned) {
-        List<UpgradeNode> pending = new ArrayList<>(this.steps);
-        List<UpgradeNode> ordered = new ArrayList<>();
-        UpgradeState state = owned;
-        while (!pending.isEmpty()) {
-            UpgradeState before = state;
-            Optional<UpgradeNode> next = pending.stream().filter(step -> this.judge(step, before).isEmpty()).findFirst();
-            if (next.isEmpty()) {
-                UpgradeNode stuck = pending.stream().filter(step -> this.judge(step, before)
-                        .filter(reason -> reason == UpgradePath.Reason.XP || reason == UpgradePath.Reason.GATE).isPresent())
-                        .findFirst().orElse(pending.getFirst());
-                this.judge(stuck, before).ifPresent(reason -> this.blockAt(stuck, reason));
-                ordered.addAll(pending);
-                return ordered;
-            }
-            ordered.add(next.get());
-            pending.remove(next.get());
-            state = state.with(next.get());
-        }
-        return ordered;
     }
 
     private UpgradePath blocked(UpgradePath.Reason reason) {
@@ -108,24 +89,33 @@ final class PathPlanner {
         }
     }
 
-    /** An exclusive pick the player didn't click, on another line: the path must not make that choice for them. */
+    /**
+     * A cluster's pick the player didn't click, off the target's line: the path must not make it for them. A pick the
+     * target's line starts from, or whose branch the target belongs to, is the player's by clicking the target.
+     */
     private boolean offTheTargetsLine(UpgradeNode node) {
-        return this.tree.choiceOf(node).isPresent() && !this.tree.firstOf(node).equals(this.tree.firstOf(this.target));
+        if (this.tree.clusterOf(node).isEmpty() || this.tree.firstOf(this.target).equals(node)) {
+            return false;
+        }
+        Optional<UpgradeNode> member = this.tree.branchOf(this.target);
+        while (member.isPresent()) {
+            if (member.get().equals(node)) {
+                return false;
+            }
+            member = this.tree.branchOf(member.get());
+        }
+        return true;
     }
 
     private Optional<UpgradePath.Reason> judge(UpgradeNode step, UpgradeState state) {
-        boolean waived = this.context.playtestRules().upgradeGatesIgnored();
         if (this.tree.isLockedOut(step, state)) {
             return Optional.of(UpgradePath.Reason.LOCKED_OUT);
         }
-        if (!step.requires().isSatisfied(this.tower, state, this.context)) {
-            return Optional.of(UpgradePath.Reason.UNREACHABLE);
-        }
-        if (!waived && !step.xpMet(this.tower)) {
+        if (!this.tree.xpMet(step.tier(), this.tower, this.context)) {
             return Optional.of(UpgradePath.Reason.XP);
         }
-        if (!waived && !step.gate().isSatisfied(this.tower, state, this.context)) {
-            return Optional.of(UpgradePath.Reason.GATE);
+        if (!this.tree.isUnlock(step) && !step.requires().isSatisfied(this.tower, state, this.context)) {
+            return Optional.of(UpgradePath.Reason.UNREACHABLE);
         }
         return Optional.empty();
     }

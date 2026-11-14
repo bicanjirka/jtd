@@ -8,18 +8,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UpgradeStateTest {
 
-    private static final UpgradeNode RANGE = UpgradeNode.of("range", UpgradeSlot.BASE, "Range", 10).withModifiers(TowerModifiers.rangePercent(0.15f));
-    private static final UpgradeNode HEAD_LV1 = UpgradeNode.of("head.a.1", UpgradeSlot.HEAD, "A1", 10)
+    private static final UpgradeNode RANGE = UpgradeNode.of("range", "Range", 10)
+            .withModifiers(TowerModifiers.rangePercent(0.15f));
+    private static final UpgradeNode FIRST = UpgradeNode.of("head.a.1", "A1", 10)
             .withModifiers(TowerModifiers.damagePercent(0.25f));
-    private static final UpgradeNode HEAD_LV2 = UpgradeNode.of("head.a.2", UpgradeSlot.HEAD, "A2", 20)
+    private static final UpgradeNode SECOND = UpgradeNode.of("head.a.2", "A2", 20).inTier(1)
             .withModifiers(TowerModifiers.damagePercent(0.25f));
 
     @Test
-    void noneOwnsNothingAndHasNoTipInAnySlot() {
+    void noneOwnsNothingAndAddsNothing() {
         UpgradeState state = UpgradeState.none();
 
         assertThat(state.owns(RANGE.id())).isFalse();
-        assertThat(state.tip(UpgradeSlot.BASE)).isEmpty();
+        assertThat(state.countInTier(0)).isZero();
         assertThat(state.totalModifiers()).isEqualTo(StatModifiers.none());
     }
 
@@ -34,22 +35,16 @@ class UpgradeStateTest {
     }
 
     @Test
-    void tipIsTheMostRecentlyAddedNodeInThatSlot() {
-        UpgradeState state = UpgradeState.none().with(HEAD_LV1).with(HEAD_LV2);
+    void countInTierCountsOnlyTheOwnedNodesOfThatTier() {
+        UpgradeState state = UpgradeState.none().with(FIRST).with(RANGE).with(SECOND);
 
-        assertThat(state.tip(UpgradeSlot.HEAD)).contains(HEAD_LV2);
-    }
-
-    @Test
-    void inSlotListsEveryOwnedNodeInThatSlotInPurchaseOrder() {
-        UpgradeState state = UpgradeState.none().with(HEAD_LV1).with(RANGE).with(HEAD_LV2);
-
-        assertThat(state.inSlot(UpgradeSlot.HEAD)).containsExactly(HEAD_LV1, HEAD_LV2);
+        assertThat(state.countInTier(0)).isEqualTo(2);
+        assertThat(state.countInTier(1)).isEqualTo(1);
     }
 
     @Test
     void totalBuffCombinesEveryOwnedNodesStatBonusAdditively() {
-        UpgradeState state = UpgradeState.none().with(HEAD_LV1).with(HEAD_LV2);
+        UpgradeState state = UpgradeState.none().with(FIRST).with(SECOND);
 
         assertThat(state.totalModifiers()).isEqualTo(TowerModifiers.damagePercent(0.5f));
     }

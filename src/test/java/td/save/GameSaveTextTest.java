@@ -8,7 +8,7 @@ class GameSaveTextTest {
 
     @Test
     void aTowerLineMissingItsTallyIsAProblemNotASave() {
-        String text = "level Curly Path\nwave 17\neconomy 120 3400 5\ntower SNIPER 6 11 400\n";
+        String text = "format 2\nlevel Curly Path\nwave 17\neconomy 120 3400 5\ntower SNIPER 6 11 400\n";
 
         GameSaveText.Read read = GameSaveText.read(text);
 
@@ -17,8 +17,18 @@ class GameSaveTextTest {
     }
 
     @Test
+    void aSaveOfAnotherFormatIsAProblemNotASave() {
+        String text = "format 1\nlevel Curly Path\nwave 17\neconomy 120 3400 5\n";
+
+        GameSaveText.Read read = GameSaveText.read(text);
+
+        assertThat(read.save()).isEmpty();
+        assertThat(read.problem()).contains("format 1");
+    }
+
+    @Test
     void aSaveWithAByteOrderMarkReadsAsWithout() {
-        String text = "level Curly Path\nwave 17\neconomy 120 3400 5\n";
+        String text = "format 2\nlevel Curly Path\nwave 17\neconomy 120 3400 5\n";
 
         GameSaveText.Read read = GameSaveText.read("﻿" + text);
 
@@ -28,7 +38,7 @@ class GameSaveTextTest {
 
     @Test
     void aLevelNameWithSpacesAndATowerWithNoUpgradesReadBack() {
-        String text = "level Twisted Hourglass\nwave 4\neconomy 50 0 5\ntower MORTAR 3 2 0 0 0 0\n";
+        String text = "format 2\nlevel Twisted Hourglass\nwave 4\neconomy 50 0 5\ntower MORTAR 3 2 0 0 0\n";
 
         GameSaveText.Read read = GameSaveText.read(text);
 
@@ -42,6 +52,7 @@ class GameSaveTextTest {
     @Test
     void everyFactOfAGameBetweenRoundsReadsBackAsWritten() {
         String text = """
+                format 2
                 level Curly Path
                 wave 9
                 economy 120 3400 5
@@ -50,8 +61,8 @@ class GameSaveTextTest {
                 bonus 0 40
                 bonus 2 55
                 damage 1250000 480000
-                tower PULSE 4 7 400 12 123456 40 paid=97 xp+=0.25 base.attune +base.awaken
-                tower PULSE 9 7 0 0 0 0 paid=112 unused=tower base.attune
+                tower PULSE 4 7 400 123456 40 paid=97 xp+=0.25 base.attune +base.awaken
+                tower PULSE 9 7 0 0 0 paid=112 unused=tower base.attune
                 pin 4 7 9 7
                 """;
 

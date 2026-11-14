@@ -51,6 +51,16 @@ record PurchaseStamps(OptionalLong tower, Map<String, Long> nodes) {
         return new PurchaseStamps(this.tower, next);
     }
 
+    /** {@code to} taking a switched-away {@code from}'s place, bought when {@code from} was. */
+    PurchaseStamps withSwitched(UpgradeNode from, UpgradeNode to) {
+        Map<String, Long> next = new HashMap<>(this.nodes);
+        Long stamp = next.remove(from.id());
+        if (stamp != null) {
+            next.put(to.id(), stamp);
+        }
+        return new PurchaseStamps(this.tower, next);
+    }
+
     /** What is unused once {@code started} waves have started: what was bought in the break after the last one. */
     TowerUse useAfter(long started) {
         if (this.tower.isPresent() && this.tower.getAsLong() == started) {

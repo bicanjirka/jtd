@@ -39,7 +39,7 @@ public final class TermLooks {
     /** The face of a perk line of {@code type} whose art is {@code artNode}'s, at {@code level}; 0 shows no numeral. */
     public static IconFace faceOfLine(TowerFactory.Type type, UpgradeNode artNode, int level) {
         IconFace face = IconFace.of(artNode.id(), monogram(artNode.displayName()), perkTone(type, artNode),
-                TowerSpriteFrameBuilder.slotPaletteFor(artNode.slot()));
+                TowerSpriteFrameBuilder.tierPaletteFor(artNode.tier()));
         return level > 0 ? face.withNumeral(NUMERALS[level]) : face;
     }
 

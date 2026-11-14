@@ -1,31 +1,31 @@
 package td.tower.upgrade;
 
 import td.stat.StatModifiers;
-import td.tower.Tower;
 import td.tower.TowerCapability;
 import td.tower.TowerStat;
 import td.tower.proc.HitBonus;
 import td.tower.proc.Proc;
 import td.tower.targeting.TargetPriority;
-import td.util.GameWorld;
 
 
 /**
- * One node in a tower's upgrade tree. Hooks and prerequisites match nodes by their {@code id},
- * unique within one tree, since a branching graph can reconverge.
+ * One upgrade in a tower's tree. Hooks and prerequisites match nodes by their {@code id}, unique within one tree.
  * <p>
- * {@code requires} decides whether the node is offered at all, from the nodes the tower owns alone: a tower keeps
- * what it offers until those change. Once offered, it is bought when the
- * tower has {@code xp} XP and its {@code gate} (a purpose or layout condition) is met: see
- * {@link #gateMet}. The UI hides an unreachable node and shows a gated one with its progress.
+ * It sits in {@code tier}, which must be open before it is bought; {@code requires} names the nodes it comes after.
+ * Once both hold, it costs only its {@code price}.
  */
-public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int price, NodeEffects effects,
-                          UpgradeCondition requires, UpgradeCondition gate, int xp, UpgradeTier tier) {
+public record UpgradeNode(String id, String displayName, int price, NodeEffects effects, UpgradeCondition requires,
+                          int tier) {
 
-    /** A node gated on price alone; add the rest with the {@code withX} copies. */
-    public static UpgradeNode of(String id, UpgradeSlot slot, String displayName, int price) {
-        return new UpgradeNode(id, slot, displayName, price, NodeEffects.none(), UpgradeCondition.always(),
-                UpgradeCondition.always(), 0, UpgradeTier.startOf(slot));
+    public UpgradeNode {
+        if (tier < 0) {
+            throw new IllegalArgumentException("No tier below 0: " + id);
+        }
+    }
+
+    /** A node of tier 0 that needs nothing before it; add the rest with the {@code withX} copies. */
+    public static UpgradeNode of(String id, String displayName, int price) {
+        return new UpgradeNode(id, displayName, price, NodeEffects.none(), UpgradeCondition.always(), 0);
     }
 
     /** This node with {@code modifiers} added to what it does to its tower's stats. */
@@ -56,33 +56,19 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
 
     /** This node with {@code effects} as everything it does. */
     public UpgradeNode withEffects(NodeEffects effects) {
-        return new UpgradeNode(this.id, this.slot, this.displayName, this.price, effects, this.requires,
-                this.gate, this.xp, this.tier);
+        return new UpgradeNode(this.id, this.displayName, this.price, effects, this.requires, this.tier);
     }
 
-    /** This node at {@code tier}, the step of its line it is built from. */
-    public UpgradeNode withTier(UpgradeTier tier) {
-        return new UpgradeNode(this.id, this.slot, this.displayName, this.price, this.effects, this.requires,
-                this.gate, this.xp, tier);
+    /** This node in {@code tier}. */
+    public UpgradeNode inTier(int tier) {
+        return new UpgradeNode(this.id, this.displayName, this.price, this.effects, this.requires, tier);
     }
 
     public UpgradeNode withRequires(UpgradeCondition requires) {
-        return new UpgradeNode(this.id, this.slot, this.displayName, this.price, this.effects, requires,
-                this.gate, this.xp, this.tier);
+        return new UpgradeNode(this.id, this.displayName, this.price, this.effects, requires, this.tier);
     }
 
-    public UpgradeNode withGate(UpgradeCondition gate) {
-        return new UpgradeNode(this.id, this.slot, this.displayName, this.price, this.effects, this.requires,
-                gate, this.xp, this.tier);
-    }
-
-    /** The XP a tower needs before it can buy this node. */
-    public UpgradeNode withXp(int xp) {
-        return new UpgradeNode(this.id, this.slot, this.displayName, this.price, this.effects, this.requires,
-                this.gate, xp, this.tier);
-    }
-
-    /** This node, offered only once {@code previous} (the level before it in its line) is owned too. */
+    /** This node, offered only once {@code previous}, the node it does nothing without, is owned too. */
     public UpgradeNode after(UpgradeNode previous) {
         return this.withRequires(this.requires.and(UpgradeCondition.owns(previous.id())));
     }
@@ -90,23 +76,5 @@ public record UpgradeNode(String id, UpgradeSlot slot, String displayName, int p
     /** This node with {@code note} as the words for what its data can't say. */
     public UpgradeNode withNote(String note) {
         return this.withEffects(this.effects.withNote(note));
-    }
-
-    /**
-     * Whether {@code tower} has this node's XP and meets its gate, or playtesting ignores both:
-     * price aside, it may buy it.
-     */
-    public boolean gateMet(Tower tower, GameWorld context) {
-        return context.playtestRules().upgradeGatesIgnored()
-                || (this.xpMet(tower) && this.gate.isSatisfied(tower, context));
-    }
-
-    public boolean xpMet(Tower tower) {
-        return tower.experience().xp() >= this.xp;
-    }
-
-    /** Progress toward its XP, e.g. {@code "XP 120/150"}. */
-    public String xpProgress(Tower tower) {
-        return "XP " + Math.min(tower.experience().xp(), this.xp) + "/" + this.xp;
     }
 }

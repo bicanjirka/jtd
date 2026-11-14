@@ -24,12 +24,12 @@ public enum Palette {
     TOWER_AURA_LINK_CHOSEN,
     TOWER_AURA_RALLY,
     TOWER_AURA_MENTEE,
-    /** Slot marks, one role per upgrade slot. */
-    TOWER_UPGRADE_CORE,
-    TOWER_UPGRADE_BASE,
-    TOWER_UPGRADE_HEAD,
-    TOWER_UPGRADE_SPECIAL,
-    /** A Transcendent tower's halo ring and pip. */
+    /** Tier marks on the board and perk icon frames, one role per upgrade tier from the bottom. */
+    TOWER_UPGRADE_TIER_0,
+    TOWER_UPGRADE_TIER_1,
+    TOWER_UPGRADE_TIER_2,
+    TOWER_UPGRADE_TIER_3,
+    /** A crowned tower's halo ring and pip: its top tier open. */
     TOWER_TRANSCENDENT,
     /** A tower's rank pips, its rank-up glow and its XP row. */
     TOWER_RANK,

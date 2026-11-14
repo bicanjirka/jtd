@@ -91,7 +91,7 @@
         </module>
         <module name="RegexpSinglelineJava">
             <property name="id" value="nodeOwnership"/>
-            <property name="format" value="upgrades(\(\))?\.owns\((?!StandardBaseSlot\.)"/>
+            <property name="format" value="upgrades(\(\))?\.owns\("/>
             <property name="ignoreComments" value="true"/>
             <property name="message" value="Tower code never asks which node it owns; use stats, the spec, procs or hit bonuses."/>
         </module>

@@ -5,9 +5,9 @@ import td.economy.SellRefund;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerRank;
-import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradePath;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.render.InfoSheet;
 import td.ui.render.Palette;
@@ -16,11 +16,11 @@ import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /** The words for an upgrade node: its hover sheet, the panel's footer and the downgrade confirmation. Pure. */
 final class UpgradeSheetText {
@@ -29,13 +29,15 @@ final class UpgradeSheetText {
     static final String IDLE_FOOTER = "Click: buy · Right-click: downgrade";
     /** The footer once the level is over and nothing can be bought or downgraded. */
     static final String ENDED_FOOTER = "Level over";
+    /** Why a switch or a downgrade waits while a wave is out. */
+    static final String BETWEEN_WAVES = "Changes between waves";
 
     private UpgradeSheetText() {
     }
 
     /**
-     * The node's face, name and price; a ✔/✘ line for its XP and one for its gate; the Core step it waits for;
-     * what it locks out or leaves for a later pick; then what it adds: its value rows and its sentences.
+     * The node's face, name and price; what its tier still needs; what a tier's unlock opens; the cluster it is one
+     * of; then what it adds: its value rows and its sentences.
      */
     static InfoSheet hover(UpgradeOffer offer) {
         return new InfoSheet(lines(offer, true));
@@ -50,12 +52,20 @@ final class UpgradeSheetText {
                 lines.addAll(lines(offer, buying.path().steps().isEmpty()));
                 lines.addAll(pathLines(buying, tree));
             }
+            case UpgradeHover.Switching switching -> {
+                lines.addAll(lines(offer, false));
+                lines.add(new SheetLine.Divider());
+                lines.addAll(switchLines(switching));
+                lines.add(switching.allowed()
+                        ? SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET, TermText.of("Click to switch"))
+                        : SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, TermText.of(BETWEEN_WAVES)));
+            }
             case UpgradeHover.Downgrading downgrading -> {
                 lines.addAll(lines(offer, false));
                 lines.add(new SheetLine.Divider());
                 lines.addAll(downgradeLines(downgrading, tree));
                 lines.add(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
-                        TermText.of("Right-click to downgrade")));
+                        TermText.of(downgrading.allowed() ? "Right-click to downgrade" : BETWEEN_WAVES)));
             }
         }
         return new InfoSheet(lines);
@@ -65,22 +75,17 @@ final class UpgradeSheetText {
         UpgradeNode node = offer.node();
         List<SheetLine> lines = new ArrayList<>();
         lines.add(new SheetLine.IconTitle(offer.face(), node.displayName(), offer.face().tone(), TermNumbers.cash(node.price())));
-        if (node.xp() > 0) {
-            lines.add(gate(offer.xpMet(), TermText.of(offer.xpProgress())));
+        if (!offer.tierOpen()) {
+            lines.add(gate(false, TermText.of(offer.tierNeed())));
         }
-        if (!node.gate().equals(UpgradeCondition.always())) {
-            lines.add(gate(offer.conditionMet(), offer.conditionProgress()));
+        if (offer.unlock()) {
+            lines.add(SheetLine.Sentence.of(TermText.of("Opens " + UpgradeTier.nameOf(node.tier())
+                    + ": every upgrade in it then costs only credits.")));
         }
-        offer.sealedBy().ifPresent(core -> lines.add(Row.toned(Glyph.LOCK, Palette.TOWER_UPGRADE_CORE, "Opens with",
-                core.displayName())));
-        // The rivals get rows of their own: "Locks out" and a long name don't fit one line together.
-        if (offer.inChoice() && offer.lastPick()) {
-            if (rivals) {
-                lines.add(Row.plain(Glyph.LOCK, "Locks out", ""));
-                offer.rivals().forEach(rival -> lines.add(Row.plain(Glyph.DOT, rival.displayName(), "")));
-            }
-        } else if (offer.inChoice() && offer.nextPickWaits()) {
-            lines.add(Row.plain(Glyph.LOCK, "Next pick", "Transcendent"));
+        // The rivals get rows of their own: a cluster's name and a long member's don't fit one line together.
+        if (offer.inCluster() && rivals) {
+            lines.add(Row.plain(Glyph.LOCK, "One of " + offer.cluster().orElse(""), ""));
+            offer.rivals().forEach(rival -> lines.add(Row.plain(Glyph.DOT, rival.displayName(), "")));
         }
         lines.add(new SheetLine.Gap());
         offer.addsTo().ifPresent(first -> lines.add(SheetLine.Sentence.of(TermText.of("Adds to " + first + ":"))));
@@ -118,6 +123,20 @@ final class UpgradeSheetText {
         return new InfoSheet(lines);
     }
 
+    /** What the switch confirmation lists: the member it replaces, what is sold back and the refund. */
+    static InfoSheet switchConfirmation(UpgradeHover.Switching switching) {
+        List<SheetLine> lines = new ArrayList<>();
+        lines.add(new SheetLine.Title(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET,
+                "Switch to " + switching.change().to().displayName(), ""));
+        lines.addAll(switchLines(switching));
+        return new InfoSheet(lines);
+    }
+
+    /** "Switch ( +$12 )", the confirmation's button. */
+    static String switchButton(UpgradeHover.Switching switching) {
+        return "Switch ( +$" + switching.refund().total() + " )";
+    }
+
     /** "Downgrade ( +$29 )", the confirmation's button. */
     static String downgradeButton(UpgradeHover.Downgrading downgrading) {
         return "Downgrade ( +$" + downgrading.refund().total() + " )";
@@ -141,17 +160,39 @@ final class UpgradeSheetText {
                 }
                 yield buying.affordable() ? text : text + " · short $" + buying.shortBy();
             }
+            case UpgradeHover.Switching switching when !switching.allowed() -> BETWEEN_WAVES;
+            case UpgradeHover.Switching switching -> switching.change().sold().isEmpty() ? "Click: switch · free"
+                    : "Click: switch · sells " + switching.change().sold().size() + " · +$" + switching.refund().total();
+            case UpgradeHover.Downgrading downgrading when !downgrading.allowed() -> BETWEEN_WAVES;
             case UpgradeHover.Downgrading downgrading -> "Right-click: downgrade " + downgrading.removal().removed().size()
                     + " · +$" + downgrading.refund().total() + (downgrading.refund().isFull() ? " · full" : "");
         };
     }
 
-    /** Whether the footer for {@code hover} warns: a path that a click won't buy, or a downgrade that loses money. */
+    /**
+     * Whether the footer for {@code hover} warns: a path that a click won't buy, a change that waits for the wave's
+     * end, or a downgrade that loses money.
+     */
     static boolean footerWarns(Optional<UpgradeHover> hover) {
         return hover.map(h -> switch (h) {
             case UpgradeHover.Buying buying -> !buying.buys();
-            case UpgradeHover.Downgrading downgrading -> !downgrading.refund().isFull();
+            case UpgradeHover.Switching switching -> !switching.allowed();
+            case UpgradeHover.Downgrading downgrading -> !downgrading.allowed() || !downgrading.refund().isFull();
         }).orElse(false);
+    }
+
+    /** What a switch sells back, and the refund. */
+    private static List<SheetLine> switchLines(UpgradeHover.Switching switching) {
+        List<SheetLine> lines = new ArrayList<>();
+        lines.add(Row.plain(Glyph.CHEVRON, "Replaces", switching.change().from().displayName()));
+        if (switching.change().sold().isEmpty()) {
+            return lines;
+        }
+        lines.add(Row.plain(Glyph.CROSS, "Sells back", ""));
+        switching.change().sold().forEach(node -> lines.add(Row.plain(Glyph.DOT, node.displayName(),
+                TermNumbers.cash(node.price()))));
+        lines.addAll(refundLines(switching.refund()));
+        return lines;
     }
 
     private static List<SheetLine> pathLines(UpgradeHover.Buying buying, UpgradeTree tree) {
@@ -197,18 +238,23 @@ final class UpgradeSheetText {
         List<SheetLine> lines = new ArrayList<>();
         downgrading.removal().removed().forEach(node -> lines.add(Row.plain(Glyph.DOT, node.displayName(),
                 TermNumbers.cash(node.price()))));
-        Refund refund = downgrading.refund();
+        lines.addAll(refundLines(downgrading.refund()));
+        List<String> reopened = lineNames(downgrading.reopens(), tree);
+        if (!reopened.isEmpty()) {
+            lines.add(Row.plain(Glyph.LOCK, "Reopens", ""));
+            reopened.forEach(name -> lines.add(Row.plain(Glyph.DOT, name, "")));
+        }
+        return lines;
+    }
+
+    private static List<SheetLine> refundLines(Refund refund) {
+        List<SheetLine> lines = new ArrayList<>();
         if (refund.inFull() > 0) {
             lines.add(Row.toned(Glyph.CASH, Palette.TERM_STATUS_CASH, "Refund 100%", "+$" + refund.inFull()));
         }
         if (refund.inFull() == 0 || refund.shared() > 0) {
             lines.add(Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund " + Math.round(SellRefund.SHARE * 100) + "%",
                     "+$" + refund.shared()));
-        }
-        List<String> reopened = lineNames(downgrading.reopens(), tree);
-        if (!reopened.isEmpty()) {
-            lines.add(Row.plain(Glyph.LOCK, "Reopens", ""));
-            reopened.forEach(name -> lines.add(Row.plain(Glyph.DOT, name, "")));
         }
         return lines;
     }
@@ -230,7 +276,6 @@ final class UpgradeSheetText {
             case CHOOSE_FIRST -> "is a choice to make first";
             case UNREACHABLE -> "can't be reached";
             case XP -> "needs more XP";
-            case GATE -> "has an unmet gate";
         };
     }
 
@@ -241,7 +286,6 @@ final class UpgradeSheetText {
             case CHOOSE_FIRST -> "choose first";
             case UNREACHABLE -> "unreachable";
             case XP -> "XP";
-            case GATE -> "gate";
         };
     }
 
@@ -251,16 +295,36 @@ final class UpgradeSheetText {
     }
 
     /**
-     * Beside the XP bar: "XP 120 / 150 to Weak Spot" toward the next node waiting on XP, or the rank
-     * once none is: "XP 340 · Hero".
+     * Beside the XP bar: "XP 40 / 60 to Tier I" toward the next tier XP opens, or the rank once none is left:
+     * "XP 340 · Hero".
      */
-    static String xpLabel(int xp, Optional<UpgradeNode> nextXpGate) {
-        return nextXpGate.map(node -> "XP " + xp + " / " + node.xp() + " to " + node.displayName())
-                .orElse("XP " + xp + " · " + TermNumbers.titleCase(TowerRank.of(xp)));
+    static String xpLabel(int xp, UpgradeTree tree) {
+        OptionalInt next = nextTier(tree, xp);
+        return next.isPresent()
+                ? "XP " + xp + " / " + tree.tiers().get(next.getAsInt()).xp() + " to " + UpgradeTier.nameOf(next.getAsInt())
+                : "XP " + xp + " · " + TermNumbers.titleCase(TowerRank.of(xp));
     }
 
-    /** The offered node with the least XP still ahead of {@code xp}: the next one XP opens. */
-    static Optional<UpgradeNode> nextXpGate(List<UpgradeNode> offered, int xp) {
-        return offered.stream().filter(node -> node.xp() > xp).min(Comparator.comparingInt(UpgradeNode::xp));
+    /** The lowest tier whose XP is still ahead of {@code xp}. */
+    static OptionalInt nextTier(UpgradeTree tree, int xp) {
+        for (int tier = 1; tier < tree.tiers().size(); tier++) {
+            if (tree.tiers().get(tier).xp() > xp) {
+                return OptionalInt.of(tier);
+            }
+        }
+        return OptionalInt.empty();
+    }
+
+    /** A gate band's words: the tier's name once open; else its XP, or that it waits for its unlock. */
+    static String bandLabel(UpgradeTree tree, int tier, int xp, boolean open) {
+        String name = UpgradeTier.nameOf(tier);
+        if (open) {
+            return name;
+        }
+        int needed = tree.tiers().get(tier).xp();
+        if (xp < needed) {
+            return name + " · XP " + xp + " / " + needed;
+        }
+        return tree.unlockOf(tier).isPresent() ? name + " · unlock" : name;
     }
 }

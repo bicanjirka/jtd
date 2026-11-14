@@ -10,22 +10,17 @@ import td.term.Term;
 import td.tower.AbstractTower;
 import td.tower.TowerFactory;
 import td.tower.TowerTerm;
-import td.tower.upgrade.UpgradeTier;
 import td.util.GameHost;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PictogramCatalogueTest {
-
-    private static final Set<UpgradeTier> ART_TIERS = Set.of(UpgradeTier.RANGE_1, UpgradeTier.ATTUNE,
-            UpgradeTier.HEAD_1, UpgradeTier.EXTRA_1, UpgradeTier.HEAD_4, UpgradeTier.SPECIAL);
 
     @Test
     void everyTermHasAPictogram() {
@@ -45,7 +40,7 @@ class PictogramCatalogueTest {
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             AbstractTower tower = (AbstractTower) TowerFactory.createTower(type, new GameWorld(GameHost.noOp()), 0, 0);
             tower.upgradeTree().nodes().stream()
-                    .filter(node -> ART_TIERS.contains(node.tier()))
+                    .filter(node -> tower.upgradeTree().artNodeOf(node).equals(node))
                     .filter(node -> PictogramCatalogue.of(node.id()).isEmpty())
                     .forEach(node -> missing.add(type + " " + node.id()));
         }

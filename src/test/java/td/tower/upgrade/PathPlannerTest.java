@@ -1,150 +1,96 @@
 package td.tower.upgrade;
 
 import org.junit.jupiter.api.Test;
-import td.fixtures.FakeTower;
+import td.fixtures.TierTrees;
 import td.fixtures.WorldFixtures;
 import td.tower.Tower;
 import td.util.GameWorld;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static td.fixtures.TierTrees.A1;
+import static td.fixtures.TierTrees.A2;
+import static td.fixtures.TierTrees.A3;
+import static td.fixtures.TierTrees.ALL_XP;
+import static td.fixtures.TierTrees.B1;
+import static td.fixtures.TierTrees.B2;
+import static td.fixtures.TierTrees.TIER_ONE;
+import static td.fixtures.TierTrees.TOP;
+import static td.fixtures.TierTrees.TREE;
+import static td.fixtures.TierTrees.towerOwning;
 
 /** How a path to a node is planned: its steps, what stops it and what it locks out. */
 class PathPlannerTest {
 
-    private static final int LIST_PRICE = 10;
-
-    private static final UpgradeNode A1 = UpgradeTier.HEAD_1.node("a.1", "A", LIST_PRICE);
-    private static final UpgradeNode A2 = UpgradeTier.HEAD_2.node("a.2", "A II", LIST_PRICE).after(A1);
-    private static final UpgradeNode A3 = UpgradeTier.HEAD_3.node("a.3", "A III", LIST_PRICE).after(A2);
-    private static final UpgradeNode B1 = UpgradeTier.HEAD_1.node("b.1", "B", LIST_PRICE);
-    private static final UpgradeNode B2 = UpgradeTier.HEAD_2.node("b.2", "B II", LIST_PRICE).after(B1);
-    private static final UpgradeNode FOR_A = UpgradeTier.SPECIAL.node("s.a", "For A", LIST_PRICE).after(A1);
-    private static final UpgradeNode FREE = UpgradeTier.SPECIAL.node("s.free", "Free", LIST_PRICE);
-    private static final UpgradeNode OTHER = UpgradeTier.SPECIAL.node("s.other", "Other", LIST_PRICE);
-    private static final List<UpgradeNode> SHARED = StandardBaseSlot.nodes(LIST_PRICE, 4f, A3);
-
-    private static final UpgradeTree TREE = UpgradeTree.of(SHARED)
-            .with(A1, A2, A3, B1, B2, FOR_A, FREE, OTHER)
-            .withChoice(ExclusiveChoice.oneOf(A1, B1))
-            .withChoice(ExclusiveChoice.specials(FOR_A, FREE, OTHER));
-
     private final GameWorld context = WorldFixtures.newWorld();
 
     @Test
-    void aPathGathersTheCoreStepsAndTheLineBeforeItsTargetInAnOrderThatCanBeBought() {
-        Tower tower = this.towerOwning();
-        tower.earnXp(1_000);
+    void aPathGathersTheUnlocksAndTheLineBeforeItsTargetInAnOrderThatCanBeBought() {
+        Tower tower = towerOwning(this.context, ALL_XP);
 
         UpgradePath path = TREE.planPath(A3, tower, this.context);
 
-        assertThat(path.steps()).extracting(UpgradeNode::displayName)
-                .containsExactlyInAnyOrder("Attune", "Awaken", "A", "A II", "A III").endsWith("A III");
+        assertThat(path.steps()).containsExactly(TIER_ONE, A1, A2, A3);
         assertThat(path.isOpen()).isTrue();
         assertThat(path.total()).isEqualTo(path.steps().stream().mapToInt(UpgradeNode::price).sum());
     }
 
     @Test
     void aPathSkipsWhatIsOwnedAlready() {
-        UpgradePath path = TREE.planPath(A3, this.towerOwning(core(StandardBaseSlot.ATTUNE_ID), A1), this.context);
+        UpgradePath path = TREE.planPath(A3, towerOwning(this.context, ALL_XP, A1, TIER_ONE), this.context);
 
-        assertThat(path.steps()).extracting(UpgradeNode::displayName).containsExactlyInAnyOrder("Awaken", "A II", "A III");
+        assertThat(path.steps()).containsExactly(A2, A3);
     }
 
     @Test
     void theFirstStepShortOfXpBlocksThePath() {
-        UpgradePath path = TREE.planPath(A3, this.towerOwning(), this.context);
+        UpgradePath path = TREE.planPath(A3, towerOwning(this.context, 0), this.context);
 
         assertThat(path.isOpen()).isFalse();
-        assertThat(path.block()).contains(new UpgradePath.Block(A2, UpgradePath.Reason.XP));
+        assertThat(path.block()).contains(new UpgradePath.Block(TIER_ONE, UpgradePath.Reason.XP));
     }
 
     @Test
-    void aGateIsJudgedAsIfTheEarlierStepsWereOwned() {
-        UpgradeNode gated = UpgradeTier.EXTRA_1.node("g", "Gated", LIST_PRICE).after(A2)
-                .withGate(UpgradeCondition.owns(A2.id()));
-        UpgradeTree tree = UpgradeTree.of(SHARED).with(A1, A2, A3, gated);
-        Tower tower = this.towerOwning(core(StandardBaseSlot.ATTUNE_ID), A1);
-        tower.earnXp(1_000);
+    void aStepInATierWhoseXpIsShortBlocksThePathAtThatStep() {
+        int xp = UpgradeTier.standard().get(1).xp();
 
-        UpgradePath path = tree.planPath(gated, tower, this.context);
+        UpgradePath path = TREE.planPath(TOP, towerOwning(this.context, xp, A1, TIER_ONE), this.context);
 
-        assertThat(path.steps()).containsExactly(A2, gated);
+        assertThat(path.block()).contains(new UpgradePath.Block(A3, UpgradePath.Reason.XP));
+    }
+
+    @Test
+    void aPathToAClusterMembersFollowUpMakesThatPick() {
+        UpgradePath path = TREE.planPath(B2, towerOwning(this.context, ALL_XP), this.context);
+
+        assertThat(path.steps()).containsExactly(TIER_ONE, B1, B2);
         assertThat(path.isOpen()).isTrue();
     }
 
     @Test
-    void aStepWhoseGateNeedsAStepGatheredAfterItIsBoughtAfterThatStep() {
-        UpgradeNode one = UpgradeTier.HEAD_1.node("z.1", "Z", LIST_PRICE);
-        UpgradeNode two = UpgradeTier.HEAD_2.node("z.2", "Z II", LIST_PRICE).after(one);
-        UpgradeNode three = UpgradeTier.HEAD_3.node("z.3", "Z III", LIST_PRICE).after(two);
-        UpgradeNode four = UpgradeTier.HEAD_4.node("z.4", "Z IV", LIST_PRICE).after(three);
-        List<UpgradeNode> shared = StandardBaseSlot.nodes(LIST_PRICE, 4f, three);
-        UpgradeTree tree = UpgradeTree.of(shared).with(one, two, three, four, FREE);
-        Tower tower = FakeTower.owning(this.context, 0, 0, new UpgradeState(List.of(
-                shared.stream().filter(n -> n.id().equals(StandardBaseSlot.ATTUNE_ID)).findFirst().orElseThrow(),
-                shared.stream().filter(n -> n.id().equals(StandardBaseSlot.AWAKEN_ID)).findFirst().orElseThrow(),
-                one, two, FREE)));
-        tower.earnXp(1_000);
+    void aPathNeverMakesAClusterPickOffItsTargetsLine() {
+        UpgradeNode afterBoth = UpgradeNode.of("both", "Both", 5).inTier(1).after(A1);
+        UpgradeNode lone = UpgradeNode.of("lone.after", "Lone After", 5).inTier(1)
+                .withRequires(UpgradeCondition.owns(afterBoth.id()).and(UpgradeCondition.owns(B1.id())));
+        UpgradeTree tree = UpgradeTree.of(A1, B1, afterBoth, lone).withCluster(TierTrees.ROOTS);
 
-        UpgradePath path = tree.planPath(four, tower, this.context);
+        UpgradePath path = tree.planPath(lone, towerOwning(this.context, ALL_XP), this.context);
 
-        assertThat(path.isOpen()).isTrue();
-        assertThat(path.steps()).extracting(UpgradeNode::displayName).containsExactly("Z III", "Transcendent", "Z IV");
+        assertThat(path.block()).contains(new UpgradePath.Block(B1, UpgradePath.Reason.CHOOSE_FIRST));
+        assertThat(path.steps()).doesNotContain(B1);
     }
 
     @Test
-    void anUnmetGateBlocksThePathAtItsStep() {
-        UpgradeNode transcendent = core(StandardBaseSlot.TRANSCENDENT_ID);
-        Tower tower = this.towerOwning(core(StandardBaseSlot.ATTUNE_ID), core(StandardBaseSlot.AWAKEN_ID), A1, A2, FREE);
-        tower.earnXp(1_000);
-
-        UpgradePath path = TREE.planPath(transcendent, tower, this.context);
-
-        assertThat(path.block()).contains(new UpgradePath.Block(transcendent, UpgradePath.Reason.GATE));
-    }
-
-    @Test
-    void aPathNeverMakesAnExclusivePickOffItsTargetsLine() {
-        Tower tower = this.towerOwning();
-        tower.earnXp(1_000);
-
-        UpgradePath path = TREE.planPath(FOR_A, tower, this.context);
-
-        assertThat(path.block()).contains(new UpgradePath.Block(A1, UpgradePath.Reason.CHOOSE_FIRST));
-        assertThat(path.steps()).doesNotContain(A1);
-    }
-
-    @Test
-    void aPathToANodeARivalClosedIsLockedOut() {
-        UpgradePath path = TREE.planPath(B2, this.towerOwning(core(StandardBaseSlot.ATTUNE_ID), A1), this.context);
+    void aPathToANodeBehindTheOtherPickIsLockedOut() {
+        UpgradePath path = TREE.planPath(B2, towerOwning(this.context, ALL_XP, A1), this.context);
 
         assertThat(path.steps()).isEmpty();
         assertThat(path.block()).contains(new UpgradePath.Block(B2, UpgradePath.Reason.LOCKED_OUT));
     }
 
     @Test
-    void aSecondSpecialsPathBuysTranscendentFirst() {
-        Tower tower = this.towerOwning(core(StandardBaseSlot.ATTUNE_ID), core(StandardBaseSlot.AWAKEN_ID), FREE);
-
-        UpgradePath path = TREE.planPath(OTHER, tower, this.context);
-
-        assertThat(path.steps()).extracting(UpgradeNode::displayName).containsExactly("Transcendent", "Other");
-    }
-
-    @Test
     void aPathNamesWhatItsPicksLockOut() {
-        UpgradePath path = TREE.planPath(A2, this.towerOwning(), this.context);
+        UpgradePath path = TREE.planPath(A2, towerOwning(this.context, ALL_XP), this.context);
 
         assertThat(path.locksOut()).containsExactly(B1, B2);
-    }
-
-    private Tower towerOwning(UpgradeNode... owned) {
-        return FakeTower.owning(this.context, 0, 0, new UpgradeState(List.of(owned)));
-    }
-
-    private static UpgradeNode core(String id) {
-        return SHARED.stream().filter(n -> n.id().equals(id)).findFirst().orElseThrow();
     }
 }

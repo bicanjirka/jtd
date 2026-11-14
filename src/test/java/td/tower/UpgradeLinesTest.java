@@ -1,78 +1,46 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
-import td.fixtures.UpgradePaths;
-import td.fixtures.WorldFixtures;
 import td.tower.upgrade.UpgradeLine;
-import td.util.GameWorld;
+import td.tower.upgrade.UpgradeState;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static td.fixtures.TierTrees.A1;
+import static td.fixtures.TierTrees.A2;
+import static td.fixtures.TierTrees.LONE;
+import static td.fixtures.TierTrees.S1;
+import static td.fixtures.TierTrees.TIER_ONE;
+import static td.fixtures.TierTrees.TREE;
+import static td.fixtures.TierTrees.state;
 
 class UpgradeLinesTest {
 
-    private final GameWorld world = WorldFixtures.newWorld();
-
-    private SniperTower sniper(String... names) {
-        SniperTower tower = new SniperTower(this.world, 3, 3);
-        UpgradePaths.buy(tower, this.world, names);
-        return tower;
-    }
-
-    private static List<UpgradeLine> linesOf(SniperTower tower) {
-        return tower.upgradeTree().lines(tower.upgrades());
-    }
-
-    private static UpgradeLine lineOf(SniperTower tower, String firstNodeName) {
-        return linesOf(tower).stream().filter(line -> line.first().displayName().equals(firstNodeName)).findFirst()
+    private static UpgradeLine lineOf(UpgradeState owned, String firstNodeName) {
+        return TREE.lines(owned).stream().filter(line -> line.first().displayName().equals(firstNodeName)).findFirst()
                 .orElseThrow();
     }
 
     @Test
     void aChainsOwnedNodesFormOneLineAtItsFurthestLevel() {
-        SniperTower tower = this.sniper("Focused Optics", "Focused Optics II");
-
-        UpgradeLine line = lineOf(tower, "Focused Optics");
+        UpgradeLine line = lineOf(state(A1, TIER_ONE, A2), A1.displayName());
 
         assertThat(line.level()).isEqualTo(2);
-        assertThat(line.artNode().displayName()).isEqualTo("Focused Optics");
-        assertThat(line.owned()).hasSize(2);
+        assertThat(line.artNode()).isEqualTo(A1);
+        assertThat(line.owned()).containsExactly(A1, A2);
     }
 
     @Test
-    void theExtraLineKeepsOneArtToLevelFour() {
-        SniperTower tower = this.sniper("Tradecraft", "Tradecraft II");
-
-        UpgradeLine line = lineOf(tower, "Tradecraft");
-
-        assertThat(line.level()).isEqualTo(2);
-        assertThat(line.artNode().displayName()).isEqualTo("Tradecraft");
+    void aClusterMemberWithNothingAfterItIsALineOfItsOwn() {
+        assertThat(lineOf(state(A1, TIER_ONE, S1), S1.displayName()).owned()).containsExactly(S1);
     }
 
     @Test
-    void awakenAndTranscendentContinueAttune() {
-        SniperTower tower = this.sniper("Awaken");
+    void linesKeepTheOrderTheirFirstNodeWasBoughtAndATiersUnlockIsNone() {
+        List<String> firsts = TREE.lines(state(LONE, TIER_ONE, A1)).stream().map(line -> line.first().displayName())
+                .toList();
 
-        UpgradeLine line = lineOf(tower, "Attune");
-
-        assertThat(line.owned()).extracting(node -> node.displayName()).containsExactly("Attune", "Awaken");
-        assertThat(line.level()).isEqualTo(2);
-    }
-
-    @Test
-    void eachSpecialIsALineOfItsOwn() {
-        SniperTower tower = this.sniper("Focused Optics", "Momentum");
-
-        assertThat(lineOf(tower, "Momentum").owned()).hasSize(1);
-    }
-
-    @Test
-    void linesKeepTheOrderTheirFirstNodeWasBought() {
-        SniperTower tower = this.sniper("Focused Optics", "Range");
-
-        List<String> firsts = linesOf(tower).stream().map(line -> line.first().displayName()).toList();
-
-        assertThat(firsts).containsExactly("Attune", "Focused Optics", "Range");
+        assertThat(firsts).containsExactly(LONE.displayName(), A1.displayName());
     }
 }

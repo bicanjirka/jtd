@@ -113,7 +113,6 @@ class TermWordingTest {
                 String label = type + " " + node.displayName();
                 tower.wordsOf(node).sentences()
                         .forEach(text -> corpus.add(new Source(label, text, true)));
-                corpus.add(new Source(label + " gate", node.gate().describe(), true));
             }
             for (AppliedEffect applied : tower.applies()) {
                 for (AppliedEffect.Source how : applied.sources()) {

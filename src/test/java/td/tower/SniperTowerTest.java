@@ -126,15 +126,6 @@ class SniperTowerTest {
         assertThat(aim.remainingTicks().orElseThrow()).isLessThanOrEqualTo(AimFocus.STACK_TICKS);
     }
 
-    @Test
-    void steadyAimShotsCountAsTheDeedOfTheTowerOncePerShot() {
-        SniperTower tower = this.sniperWith("Attune");
-        FakeEnemyMob target = this.onlyTarget();
-
-        this.fireShots(tower, target, 4);
-
-        assertThat(tower.experience().deeds()).isEqualTo(3);
-    }
 
     @Test
     void aShotGivenTheMagicCapabilityLandsAsMagicAndTheNextAsItWas() {
@@ -273,9 +264,10 @@ class SniperTowerTest {
     }
 
     @Test
-    void aTranscendedSnipersBarrelTurnsGold() {
-        SniperTower transcended = this.sniperWith("Transcendent");
-        SniperTower awakened = this.sniperWith("Awaken");
+    void aSniperWithItsTopTierOpenHasAGoldBarrel() {
+        SniperTower transcended = this.sniperWith();
+        transcended.buyPath(transcended.upgradeTree().unlockOf(1).orElseThrow());
+        SniperTower awakened = new SniperTower(this.world, 3, 3);
         TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(this.world, 0, 0.0, 0.0);
 
         transcended.accept(sprites);

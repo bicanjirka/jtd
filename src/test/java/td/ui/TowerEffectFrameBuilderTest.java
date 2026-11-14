@@ -40,7 +40,7 @@ class TowerEffectFrameBuilderTest {
         SniperTower far = new SniperTower(context, 100, 100);
         context.towers().add(far);
 
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
         aura.accept(builder);
 
         List<BeamDraw> linkBeams = linkBeamsIn(builder.build());
@@ -60,7 +60,7 @@ class TowerEffectFrameBuilderTest {
     private static List<TowerEffectDraw> firedBy(GameWorld context, SplashTower splash) {
         context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(splash.getX() + 30, splash.getY())});
         splash.doTick(1);
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 1, 0.0, 0.0);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 1, 0.0, 0.0);
         splash.accept(builder);
         return builder.build();
     }
@@ -93,7 +93,7 @@ class TowerEffectFrameBuilderTest {
     }
 
     private static List<TowerEffectDraw> drawnBy(GameWorld context, AuraTower aura) {
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
         aura.accept(builder);
         return builder.build();
     }
@@ -164,7 +164,7 @@ class TowerEffectFrameBuilderTest {
         AuraTower aura = new AuraTower(context, 0, 0);
         context.towers().add(aura);
 
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
         aura.accept(builder);
 
         assertThat(linkBeamsIn(builder.build())).isEmpty();
@@ -174,11 +174,11 @@ class TowerEffectFrameBuilderTest {
     void aTowerNoWaveHasUsedWearsTheRefundMarkUntilOneHas() {
         GameWorld context = WorldFixtures.newWorld();
         SniperTower tower = new SniperTower(context, 0, 0);
-        TowerEffectFrameBuilder unused = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        TowerEffectFrameBuilder unused = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
         unused.addStatus(tower);
 
         WorldFixtures.passAWave(context);
-        TowerEffectFrameBuilder used = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        TowerEffectFrameBuilder used = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
         used.addStatus(tower);
 
         assertThat(unused.build()).singleElement().isInstanceOf(RefundMarkDraw.class);
@@ -195,7 +195,7 @@ class TowerEffectFrameBuilderTest {
         jammed.beginTick(0);
         clear.beginTick(0);
 
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context.getBoard().scale(), 0, 0.0, 0.0);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
         builder.addStatus(jammed);
         builder.addStatus(clear);
 
@@ -215,7 +215,7 @@ class TowerEffectFrameBuilderTest {
         attuned.doTick(1);
         plain.doTick(1);
 
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(BoardFixtures.SCALE, 1, 0.0, 0.0);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 1, 0.0, 0.0);
         attuned.accept(builder);
         plain.accept(builder);
 
@@ -239,7 +239,7 @@ class TowerEffectFrameBuilderTest {
             mortar.doTick(t);
             context.projectiles().doTick(t);
             if (mortar.getRangingMarker().isPresent() && mortar.getRangingMarker().get().step() == radii.size()) {
-                TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(BoardFixtures.SCALE, t, 1.0, 0.0);
+                TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, t, 1.0, 0.0);
                 mortar.accept(builder);
                 RingDraw ring = (RingDraw) builder.build().getFirst();
                 assertThat(ring.palette()).isEqualTo(Palette.TOWER_MORTAR_RANGING);
@@ -257,7 +257,7 @@ class TowerEffectFrameBuilderTest {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         MortarTower mortar = new MortarTower(context, 3, 3);
 
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(BoardFixtures.SCALE, 0, 0.0, 0.0);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
         mortar.accept(builder);
 
         assertThat(builder.build()).isEmpty();
@@ -296,9 +296,9 @@ class TowerEffectFrameBuilderTest {
             }
         }
 
-        TowerEffectFrameBuilder during = new TowerEffectFrameBuilder(BoardFixtures.SCALE, landedAt + 2, 0.0, 0.0);
+        TowerEffectFrameBuilder during = new TowerEffectFrameBuilder(context, landedAt + 2, 0.0, 0.0);
         mortar.accept(during);
-        TowerEffectFrameBuilder after = new TowerEffectFrameBuilder(BoardFixtures.SCALE, landedAt + 12, 0.0, 0.0);
+        TowerEffectFrameBuilder after = new TowerEffectFrameBuilder(context, landedAt + 12, 0.0, 0.0);
         mortar.accept(after);
 
         assertThat(during.build()).extracting(draw -> draw.getClass().getSimpleName()).contains("FlashDraw", "RingDraw");

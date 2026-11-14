@@ -1,6 +1,5 @@
 package td.tower.upgrade;
 
-import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -32,10 +31,5 @@ record OwnsNodeCondition(String nodeId) implements UpgradeCondition {
     @Override
     public Set<String> mentionedNodes() {
         return Set.of(this.nodeId);
-    }
-
-    @Override
-    public TermText describe() {
-        return TermText.of("requires " + this.nodeId);
     }
 }
