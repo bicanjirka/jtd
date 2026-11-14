@@ -1,6 +1,5 @@
 package td.ui;
 
-import td.damage.DamageType;
 import td.enemy.EnemyMob;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
@@ -10,6 +9,7 @@ import td.tower.SeekerTower;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
+import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
 import td.tower.mortar.BlastMark;
 import td.ui.render.BeamDraw;
@@ -52,6 +52,16 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float TRACER_WIDTH_CELLS = 0.028f;
     /** How long the streak a bullet leaves stays drawn once it has arrived: far less than a reload. */
     private static final float TRACER_FADE_TICKS = 4f;
+    /** The Fourth Shot's bolt round its bullet: wider and fainter. */
+    private static final float BOLT_WIDTH_CELLS = 0.09f;
+    private static final float BOLT_ALPHA = 0.35f;
+    /** How far a ricochet's arc bows out, as a share of the hop's length. */
+    private static final float HOP_BOW = 0.25f;
+    private static final float EXECUTION_TICKS = 10f;
+    private static final float EXECUTION_RING_CELLS = 0.3f;
+    private static final float EXECUTION_SHARD_FLIGHT_CELLS = 0.5f;
+    private static final float EXECUTION_SHARD_CELLS = 0.12f;
+    private static final int EXECUTION_SHARDS = 8;
     /** How bright a Ley Line is drawn while no enemy stands on it. */
     private static final float LEY_LINE_IDLE_ALPHA = 0.45f;
     /** How long a blast's detonation and its arcs stay drawn. */
@@ -124,42 +134,104 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * Each bullet as a streak flying from the muzzle to its enemy, white at its head; and the streak the last one
-     * left, fading fast.
+     * Each bullet as a streak flying from the muzzle to its enemy, white at its head, and the streak the last one left,
+     * fading fast; each ricochet as a green streak on an arc from enemy to enemy; and an execution as a ring that
+     * bursts into shards.
      */
     public Void visitSniperTower(SniperTower tower) {
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
         for (SniperTower.Bullet bullet : tower.bulletsInFlight()) {
-            float toX = (float) bullet.target().getX();
-            float toY = (float) bullet.target().getY();
-            float flown = Math.min(1f, (this.gameTime - bullet.firedAt() + (float) this.interpolationAlpha)
-                    / (bullet.landsAt() - bullet.firedAt()));
-            this.tracer(tower, tier, toX, toY, flown, bullet.sureCrit(), bullet.shot().type(), 1f);
+            this.tracer(tower, tier, (float) bullet.target().getX(), (float) bullet.target().getY(),
+                    this.flown(bullet), bullet.sureCrit(), bullet.shot().rounds(), 1f);
         }
         Optional<SniperTower.ShotTrace> shot = tower.lastShot();
         if (shot.isPresent()) {
             SniperTower.ShotTrace trace = shot.get();
             float age = (this.gameTime - trace.landedAt() + (float) this.interpolationAlpha) / TRACER_FADE_TICKS;
             if (age < 1f) {
-                this.tracer(tower, tier, trace.toX(), trace.toY(), 1f, trace.critical(), trace.type(), 1f - age);
+                this.tracer(tower, tier, trace.toX(), trace.toY(), 1f, trace.critical(), trace.shot().rounds(), 1f - age);
             }
         }
+        for (SniperTower.Hop hop : tower.hopsInFlight()) {
+            this.hop(hop, this.flown(hop.bullet()));
+        }
+        tower.lastExecution().ifPresent(this::execution);
         return null;
+    }
+
+    /** How far {@code bullet} has flown, 0..1. */
+    private float flown(SniperTower.Bullet bullet) {
+        return Math.min(1f, (this.gameTime - bullet.firedAt() + (float) this.interpolationAlpha)
+                / (bullet.landsAt() - bullet.firedAt()));
     }
 
     /** A streak {@code flown} of the way from the Sniper's muzzle to {@code toX, toY}. */
     private void tracer(SniperTower tower, int tier, float toX, float toY, float flown, boolean critical,
-                        DamageType type, float alpha) {
+                        List<TowerTerm> rounds, float alpha) {
         double heading = Math.atan2(toY - tower.getY(), toX - tower.getX());
         Point2D.Float muzzle = TowerSprites.muzzle(TowerLook.SNIPER, tier, TowerSpriteFrameBuilder.poseOf(tower),
                 tower.getX(), tower.getY(), this.scale, heading);
         float from = Math.max(0f, flown - TRACER_LENGTH);
-        Palette tail = critical ? Palette.TOWER_SNIPER_TRACER
-                : type == DamageType.MAGIC ? Palette.TOWER_SNIPER_SILVER : Palette.TOWER_SNIPER_BODY;
-        this.draws.add(new TracerDraw(tail, Palette.TOWER_SNIPER_TRACER,
-                muzzle.x + (toX - muzzle.x) * from, muzzle.y + (toY - muzzle.y) * from,
-                muzzle.x + (toX - muzzle.x) * flown, muzzle.y + (toY - muzzle.y) * flown,
+        Palette tail = rounds.contains(TowerTerm.SILVER_ROUND) ? Palette.TOWER_SNIPER_SILVER
+                : rounds.contains(TowerTerm.HOLLOW_POINT) ? Palette.DAMAGE_PHYSICAL
+                : critical ? Palette.TOWER_SNIPER_TRACER : Palette.TOWER_SNIPER_BODY;
+        float fromX = muzzle.x + (toX - muzzle.x) * from;
+        float fromY = muzzle.y + (toY - muzzle.y) * from;
+        float headX = muzzle.x + (toX - muzzle.x) * flown;
+        float headY = muzzle.y + (toY - muzzle.y) * flown;
+        if (rounds.contains(TowerTerm.FOURTH_SHOT)) {
+            this.draws.add(new TracerDraw(Palette.TOWER_SNIPER_TRACER, Palette.TOWER_SNIPER_TRACER, fromX, fromY, headX,
+                    headY, BOLT_WIDTH_CELLS * this.scale, alpha * BOLT_ALPHA));
+        }
+        this.draws.add(new TracerDraw(tail, Palette.TOWER_SNIPER_TRACER, fromX, fromY, headX, headY,
                 TRACER_WIDTH_CELLS * this.scale, alpha));
+    }
+
+    /** A ricochet {@code flown} of the way along its arc, which bows out to one side of the straight line. */
+    private void hop(SniperTower.Hop hop, float flown) {
+        float fromX = (float) hop.from().x();
+        float fromY = (float) hop.from().y();
+        float toX = (float) hop.bullet().target().getX();
+        float toY = (float) hop.bullet().target().getY();
+        float bowX = (fromX + toX) / 2f - (toY - fromY) * HOP_BOW;
+        float bowY = (fromY + toY) / 2f + (toX - fromX) * HOP_BOW;
+        float tail = Math.max(0f, flown - TRACER_LENGTH);
+        float middle = (tail + flown) / 2f;
+        float[] points = {tail, middle, flown};
+        for (int i = 0; i < points.length - 1; i++) {
+            float a = points[i];
+            float b = points[i + 1];
+            this.draws.add(new TracerDraw(Palette.TOWER_SNIPER_BODY, Palette.TOWER_SNIPER_BODY,
+                    bezier(fromX, bowX, toX, a), bezier(fromY, bowY, toY, a),
+                    bezier(fromX, bowX, toX, b), bezier(fromY, bowY, toY, b), TRACER_WIDTH_CELLS * this.scale, 1f));
+        }
+    }
+
+    private static float bezier(float from, float bow, float to, float t) {
+        float rest = 1f - t;
+        return rest * rest * from + 2f * rest * t * bow + t * t * to;
+    }
+
+    /** A thin white ring on the enemy an execution killed, bursting into shards that fly out as it fades. */
+    private void execution(SniperTower.Execution execution) {
+        float progress = (this.gameTime - execution.tick() + (float) this.interpolationAlpha) / EXECUTION_TICKS;
+        if (progress >= 1f) {
+            return;
+        }
+        float x = (float) execution.at().x();
+        float y = (float) execution.at().y();
+        float fade = 1f - progress;
+        this.draws.add(new RingDraw(Palette.TOWER_SNIPER_TRACER, x, y, EXECUTION_RING_CELLS * this.scale, fade));
+        float inner = (EXECUTION_RING_CELLS + EXECUTION_SHARD_FLIGHT_CELLS * progress) * this.scale;
+        float outer = inner + EXECUTION_SHARD_CELLS * this.scale;
+        for (int i = 0; i < EXECUTION_SHARDS; i++) {
+            double angle = 2 * Math.PI * i / EXECUTION_SHARDS;
+            float cos = (float) Math.cos(angle);
+            float sin = (float) Math.sin(angle);
+            this.draws.add(new TracerDraw(Palette.TOWER_SNIPER_TRACER, Palette.TOWER_SNIPER_TRACER,
+                    x + cos * inner, y + sin * inner, x + cos * outer, y + sin * outer,
+                    TRACER_WIDTH_CELLS * this.scale, fade));
+        }
     }
 
     /**

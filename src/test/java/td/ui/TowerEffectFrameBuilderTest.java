@@ -15,6 +15,7 @@ import td.ui.render.BeamDraw;
 import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
+import td.ui.render.TowerCue;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerPose;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /** Covers the tower effects {@code BoardRendererTest} leaves out. */
 class TowerEffectFrameBuilderTest {
@@ -246,6 +248,53 @@ class TowerEffectFrameBuilderTest {
         mortar.accept(builder);
 
         assertThat(builder.build()).isEmpty();
+    }
+
+    @Test
+    void theRifleShowsAFourthShotOnlyWhileTheNextShotIsOne() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower sniper = new SniperTower(context, 3, 3);
+        UpgradePaths.buy(sniper, context, "Fourth Shot");
+        FakeEnemyMob target = FakeEnemyMob.at(sniper.getX() + 60, sniper.getY());
+        context.enemies().setEnemies(new EnemyMob[]{target});
+        int tick = 0;
+        boolean primedEarly = false;
+        while (sniper.bulletsInFlight().size() + target.hits().size() < 3) {
+            primedEarly |= TowerSpriteFrameBuilder.poseOf(sniper).has(TowerCue.FOURTH_SHOT);
+            sniper.doTick(++tick);
+        }
+        boolean primed = TowerSpriteFrameBuilder.poseOf(sniper).has(TowerCue.FOURTH_SHOT);
+        while (sniper.bulletsInFlight().size() + target.hits().size() < 4) {
+            sniper.doTick(++tick);
+        }
+
+        assertThat(primedEarly).isFalse();
+        assertThat(primed).isTrue();
+        assertThat(TowerSpriteFrameBuilder.poseOf(sniper).has(TowerCue.FOURTH_SHOT)).isFalse();
+    }
+
+    @Test
+    void aRicochetFliesFromTheEnemyItHoppedFromOnAnArcNotAStraightLine() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower sniper = new SniperTower(context, 3, 3);
+        UpgradePaths.buy(sniper, context, "Ricochet");
+        FakeEnemyMob aimed = FakeEnemyMob.at(sniper.getX() + 60, sniper.getY());
+        aimed.landEveryHitCritical();
+        FakeEnemyMob beside = FakeEnemyMob.at(aimed.getX() + 40, aimed.getY());
+        context.enemies().setEnemies(new EnemyMob[]{aimed, beside});
+        int tick = 0;
+        while (sniper.hopsInFlight().isEmpty()) {
+            sniper.doTick(++tick);
+        }
+        SniperTower.Hop hop = sniper.hopsInFlight().getFirst();
+        int midFlight = (hop.bullet().firedAt() + hop.bullet().landsAt()) / 2;
+
+        List<TracerDraw> streak = tracersOf(sniper, context, midFlight, 0.0).stream()
+                .filter(tracer -> tracer.tail() == Palette.TOWER_SNIPER_BODY).toList();
+
+        assertThat(streak).isNotEmpty();
+        assertThat(streak.getFirst().fromX()).isGreaterThan((float) aimed.getX());
+        assertThat(streak.getLast().toY()).isNotCloseTo((float) aimed.getY(), within(1f));
     }
 
     private static List<BeamDraw> beamsIn(List<TowerEffectDraw> draws, Palette palette) {

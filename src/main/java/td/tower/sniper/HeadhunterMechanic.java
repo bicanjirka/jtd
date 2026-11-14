@@ -1,6 +1,7 @@
 package td.tower.sniper;
 
 import td.damage.DamageUnits;
+import td.enemy.EnemyMob;
 import td.enemy.Rank;
 import td.term.TermNumbers;
 import td.term.TermText;
@@ -14,10 +15,12 @@ public final class HeadhunterMechanic implements SniperMechanic {
 
     @Override
     public SniperShot shape(SniperShot shot, ShotContext context) {
-        if (context.target().getRank().compareTo(HUNTED_FROM) < 0) {
-            return shot;
-        }
-        return shot.withBonusDamage(DamageUnits.ofPoints(BONUS_POINTS));
+        return this.hunts(context.target()) ? shot.withBonusDamage(DamageUnits.ofPoints(BONUS_POINTS)) : shot;
+    }
+
+    @Override
+    public boolean hunts(EnemyMob target) {
+        return target.getRank().compareTo(HUNTED_FROM) >= 0;
     }
 
     @Override

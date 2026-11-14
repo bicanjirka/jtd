@@ -91,6 +91,10 @@ final class ActiveTowerStatuses {
         return all;
     }
 
+    boolean holds(TowerTerm term) {
+        return this.indexOf(term) >= 0;
+    }
+
     private int indexOf(TowerTerm term) {
         for (int i = 0; i < this.held.size(); i++) {
             if (this.held.get(i).status().term() == term) {
