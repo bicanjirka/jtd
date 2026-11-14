@@ -31,9 +31,6 @@ final class TowerArtSheets2 {
         if (only.isEmpty() || only.contains("board")) {
             board();
         }
-        if (only.isEmpty() || only.contains("directions")) {
-            directions();
-        }
         TowerArtSheets3.run(only);
     }
 
@@ -116,8 +113,6 @@ final class TowerArtSheets2 {
     static void board() throws Exception {
         level("walker", "knight", "walker", "walker:elite", "walker", "knight", "walker");
         tick(140);
-        TowerArt.dir = TowerArt.Dir.RAISED;
-        TowerArt.radius = TowerArt.GROW;
         BufferedImage half = boardWithTowers(0.5);
         BufferedImage one = boardWithTowers(1.0);
         BufferedImage big = crop(boardWithTowers(2.5), 2.5, 0.5, 1.5, 8.5, 6.5);
@@ -139,40 +134,5 @@ final class TowerArtSheets2 {
         g.drawImage(ids, 40 + big.getWidth(), y, null);
         g.dispose();
         TowerArtSheets.save(img, "board.png");
-    }
-
-    static void directions() throws Exception {
-        level("walker", "knight", "walker");
-        tick(120);
-        String[] names = {"B. Raised view, footprint grows with the tier (0.55 to 0.80 of a cell): the chosen direction",
-            "B2. Raised view, one footprint for every tier (0.68 of a cell): not taken",
-            "A. Plan view, seen from straight above: not taken"};
-        TowerArt.Dir[] dirs = {TowerArt.Dir.RAISED, TowerArt.Dir.RAISED, TowerArt.Dir.PLAN};
-        double[][] radii = {TowerArt.GROW, TowerArt.CONSTANT, TowerArt.GROW};
-        BufferedImage img = null;
-        Graphics2D g = null;
-        int y = 44;
-        for (int i = 0; i < 3; i++) {
-            TowerArt.dir = dirs[i];
-            TowerArt.radius = radii[i];
-            BufferedImage half = crop(boardWithTowers(0.5), 0.5, 0.5, 1.0, 8.5, 6.5);
-            BufferedImage one = crop(boardWithTowers(1.0), 1.0, 0.5, 1.0, 8.5, 6.5);
-            BufferedImage big = crop(boardWithTowers(2.5), 2.5, 0.5, 1.0, 8.5, 6.5);
-            if (img == null) {
-                img = TowerArtSheets.image(20 + half.getWidth() + 16 + one.getWidth() + 16 + big.getWidth() + 20,
-                        44 + 3 * (big.getHeight() + 36), TowerArtSheets.PAPER);
-                g = TowerArtSheets.pen(img);
-                TowerArtSheets.title(g, "The two choices, as decided: raised over plan, a growing over a constant footprint", 20, 26);
-            }
-            TowerArtSheets.text(g, names[i], 20, y + 12, TowerArtSheets.TEXT, 12, true);
-            g.drawImage(half, 20, y + 22, null);
-            g.drawImage(one, 20 + half.getWidth() + 16, y + 22, null);
-            g.drawImage(big, 20 + half.getWidth() + 16 + one.getWidth() + 16, y + 22, null);
-            y += big.getHeight() + 36;
-        }
-        TowerArt.dir = TowerArt.Dir.RAISED;
-        TowerArt.radius = TowerArt.GROW;
-        g.dispose();
-        TowerArtSheets.save(img, "directions.png");
     }
 }
