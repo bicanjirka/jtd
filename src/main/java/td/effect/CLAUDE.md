@@ -1,7 +1,7 @@
 # `td.effect`
 
 - `Effect` is one effect-level record (kind, time, sink, origin) plus one `EffectDynamics` family:
-  flag, stacks, slow, fuel pool, heal, shield pool or distance. A family carries
+  flag, stacks, slow, growing slow, fuel pool, heal, shield pool or distance. A family carries
   only its own data. This package never depends on `td.enemy`: the producer binds a `DamageSink` when
   it creates the effect.
 - Each `EffectKind` is one row holding its `EffectRule`: category, stacking
@@ -12,10 +12,11 @@
   (`SourceShares`): the effect's time is always its last share's, and anything that changes the time changes the
   shares. `ActiveEffects` exposes queries only, never its map.
 - A slow (`Effect.slowStrength()`: `CHILL`, whose strength each application brings, and `TARRED`, `DRAGGED` by their
-  rule's `slowPerStack`) takes a share of the speed its carrier has, gains included, and only the strongest counts,
+  rule's `slowPerStack`, and `BLIGHT`'s `GrowingSlow`) takes a share of the speed its carrier has, gains included, and only the strongest counts,
   across kinds too. `ANCHORED` (`EffectTag.SPEED_CEILING`) is no such share: it holds speed to a share of base through
   `capAtShareOfBase`, the one answer to a speed gain. Each fades over its last `SLOW_FADE_TICKS`, or its whole length if
-  shorter; one refreshed each pulse never gets there. Of one kind a weaker slow is ignored while the stronger runs, and
+  shorter; one refreshed each pulse never gets there. A growing slow is the exception: it grows by the tick it has run,
+  from its start, never under its floor, and ends at its strongest, so what lengthens it makes it grow further. Of one kind a weaker slow is ignored while the stronger runs, and
   a stronger one replaces it, weaker tail and all. `FREEZE` is a hard stop.
 - `BURN` and `POISON` are each a decaying fuel pool of one `FuelContribution` per application, each
   with its own sink (`EffectKind.isFuelPool()`). Tick damage is apportioned across contributors
@@ -47,7 +48,7 @@
   shields and rewinds are worth nothing and nothing is kept out or stripped; a fallout zone applies it too.
 - A pool earns `SICKENED` itself, but a tower can also add it (`Effect.sickened`): the stacks add up
   to the whole of spirit, and wear off one at a time.
-- A `HEX` kind carries no stat of its own but `MALAISE`'s tenacity; the tower that cast it watches it and pays it out.
+- A `HEX` kind carries no stat of its own but `MALAISE`'s tenacity and `BLIGHT`'s growing slow; the tower that cast it watches it and pays it out.
   `INVERSION` is the one hex the enemy itself reads: its regeneration is dealt through the hex's sink.
 - `SOULFIRE` is a third fuel pool beside burn and poison (`EffectKind.isBurning()` covers it and burn), and it
   earns `SCORCHED` and `SICKENED` both. It is its own kind, so it burns what is burn-immune.

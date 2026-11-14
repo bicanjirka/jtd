@@ -19,6 +19,9 @@ public interface EnemyMob extends EnemyTarget, HitReceiver, EnemyWalk {
     /** Whether it is still waiting out its spawn delay, not yet on the board. */
     boolean isInactive();
 
+    /** Its health when whole, in points. */
+    int getMaxHealthPoints();
+
     /** Health left as a share of the maximum, from {@code 0} to {@code 1}. */
     float getHealthFraction();
 

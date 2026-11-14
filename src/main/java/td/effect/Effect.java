@@ -198,6 +198,14 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(kind, durationTicks, sink);
     }
 
+    /**
+     * The Blight hex: a slow that grows, from {@code start}, by {@code slowPerTick} with every tick it runs, never below
+     * {@code floor}. What lengthens or shortens it as it is applied changes how far it grows.
+     */
+    public static Effect blight(int durationTicks, float slowPerTick, float start, float floor, DamageSink sink) {
+        return of(EffectKind.BLIGHT, durationTicks, sink, new EffectDynamics.GrowingSlow(slowPerTick, start, floor));
+    }
+
     /** Its abilities don't fire for {@code durationTicks}. */
     public static Effect silenced(int durationTicks, DamageSink sink) {
         return timed(EffectKind.SILENCED, durationTicks, sink);
@@ -331,6 +339,14 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     /** This shield holding {@code shield}'s shares. */
     Effect withShield(EffectDynamics.ShieldPool shield) {
         return this.withDynamics(shield);
+    }
+
+    /** The share of speed a growing slow takes away now, from the time it has run; {@code 0f} for any other family. */
+    public float grownSlow() {
+        return switch (this.dynamics) {
+            case EffectDynamics.GrowingSlow growing -> growing.strengthAfter(this.authoredDurationTicks - this.remainingTicks);
+            default -> 0f;
+        };
     }
 
     /** The share of speed this slow takes away at full strength; {@code 0f} for a kind that doesn't slow. */

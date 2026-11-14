@@ -49,7 +49,8 @@ public record TowerStats(ResolvedStats<TowerStat> values, float rangeReal, float
         AttackProfile attack = AttackProfile.critChance(values.value(TowerStat.CRIT_CHANCE))
                 .withAccuracy(values.value(TowerStat.ACCURACY))
                 .withCritMultiplier(values.value(TowerStat.CRIT_MULTIPLIER))
-                .withArmorPenetration(values.value(TowerStat.ARMOR_PENETRATION), 0f)
+                .withArmorPenetration(values.value(TowerStat.ARMOR_PENETRATION),
+                        values.value(TowerStat.ARMOR_PENETRATION_FLAT))
                 .withMagicPenetration(values.value(TowerStat.MAGIC_PENETRATION),
                         values.value(TowerStat.MAGIC_PENETRATION_FLAT))
                 .withFlatPenetration(values.value(TowerStat.FLAT_PENETRATION));

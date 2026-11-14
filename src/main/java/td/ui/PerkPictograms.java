@@ -49,32 +49,54 @@ final class PerkPictograms {
             Map.entry("sniper.silver_round", "=tower.silver_round"),
             // Long Barrel II
             Map.entry("base.range.2", "=base.range"),
+            // Wide Charge
+            Map.entry("splash.wide_charge", "F O10.4 14.2 6.8 ; S M15 9.6C16 7.6 17.2 6 19 5.2 ; F M20.4 1.8L21.1 3.7L23 4.4L21.1 5.1L20.4 7L19.7 5.1L17.8 4.4L19.7 3.7Z ; K O8 11.8 1.6"),
+            // Flint Stones
+            Map.entry("splash.flint_stones", "=effect.sundered"),
+            // Stormcaller
+            Map.entry("splash.stormcaller", "=tower.static"),
+            // Hexer
+            Map.entry("splash.hexer", "=tower.soulbrand"),
             // Arc
-            Map.entry("splash.head.arc.1", "=tower.arc"),
+            Map.entry("splash.arc", "=tower.arc"),
+            // Hex of Doom
+            Map.entry("splash.hex_of_doom", "=effect.doom"),
+            // Hex of Blight
+            Map.entry("splash.hex_of_blight", "=effect.blight"),
+            // Deep Doom
+            Map.entry("splash.deep_doom", "=effect.doom"),
+            // Blight Cloud
+            Map.entry("splash.blight_cloud", "=effect.blight"),
+            // Agony
+            Map.entry("splash.agony", "=effect.vulnerable"),
+            // Contagion
+            Map.entry("splash.contagion", "=effect.contagion"),
             // Chain Lightning
-            Map.entry("splash.head.arc.4a", "S M3 3.4L8.8 10L5.6 12.8L11.4 20.6 ; S M8.8 10L15 9L13 13L20.8 15.2 ; S M15 9L20.6 3.4 ; F O11.4 20.6 1.6 O20.8 15.2 1.6 O20.6 3.4 1.6"),
-            // Lightning Rod
-            Map.entry("splash.head.arc.4b", "S M14.6 21.4V8.4 M11.2 21.4H18 ; F O14.6 5.6 2.6 ; F M7.6 2.4L3 10H6.2L4.6 15.4L10 7.8H6.8Z"),
-            // Hex
-            Map.entry("splash.head.hex.1", "=tower.hex"),
-            // Rime Coven
-            Map.entry("splash.head.hex.4a", "F M3 3.5H21V6.4H3Z ; F M4.4 6.4L6.6 14.4L8.8 6.4Z M9.8 6.4L12 20.6L14.2 6.4Z M15.2 6.4L17.4 16.2L19.6 6.4Z"),
-            // Ash Coven
-            Map.entry("splash.head.hex.4b", "F M2.8 20.6C4.6 15.6 8 13.6 12 13.6C16 13.6 19.4 15.6 21.2 20.6Z ; F O8.2 9 1.4 ; F O12.8 5.4 1.1 ; F O16.6 10.2 1.5 ; F O11.4 10.8 0.8"),
+            Map.entry("splash.chain_lightning", "S M3 3.4L8.8 10L5.6 12.8L11.4 20.6 ; S M8.8 10L15 9L13 13L20.8 15.2 ; S M15 9L20.6 3.4 ; F O11.4 20.6 1.6 O20.8 15.2 1.6 O20.6 3.4 1.6"),
+            // Wild Arc
+            Map.entry("splash.wild_arc", "S M14.6 21.4V8.4 M11.2 21.4H18 ; F O14.6 5.6 2.6 ; F M7.6 2.4L3 10H6.2L4.6 15.4L10 7.8H6.8Z"),
+            // Soul Harvest
+            Map.entry("splash.soul_harvest", "=sniper.killshot"),
             // Hex of Inversion
-            Map.entry("splash.special.inversion", "=effect.inversion"),
-            // Hex of Sympathy
-            Map.entry("splash.special.sympathy", "=effect.sympathy"),
-            // Hex of Reckoning
-            Map.entry("splash.special.reckoning", "=effect.reckoning"),
-            // Blast Engineering
-            Map.entry("splash.extra.blast_engineering.1", "F O10.4 14.2 6.8 ; S M15 9.6C16 7.6 17.2 6 19 5.2 ; F M20.4 1.8L21.1 3.7L23 4.4L21.1 5.1L20.4 7L19.7 5.1L17.8 4.4L19.7 3.7Z ; K O8 11.8 1.6"),
+            Map.entry("splash.hex_of_inversion", "=effect.inversion"),
+            // Choking Blight
+            Map.entry("splash.choking_blight", "=effect.silenced"),
+            // Twin Hex
+            Map.entry("splash.twin_hex", "=tower.hex"),
             // Thunderclap
-            Map.entry("splash.special.thunderclap", "F M13.4 3L8.4 12.4H11.6L10.4 21L15.8 10.8H12.6Z ; S M6.4 8A6 6 0 0 0 6.4 16 M17.6 8A6 6 0 0 1 17.6 16 ; T M3 5.4A9.6 9.6 0 0 0 3 18.6 M21 5.4A9.6 9.6 0 0 1 21 18.6"),
-            // Static Charge
-            Map.entry("splash.special.static_charge", "=effect.charged"),
+            Map.entry("splash.thunderclap", "F M13.4 3L8.4 12.4H11.6L10.4 21L15.8 10.8H12.6Z ; S M6.4 8A6 6 0 0 0 6.4 16 M17.6 8A6 6 0 0 1 17.6 16 ; T M3 5.4A9.6 9.6 0 0 0 3 18.6 M21 5.4A9.6 9.6 0 0 1 21 18.6"),
             // Thunderstrike
-            Map.entry("splash.special.thunderstrike", "F M6.4 13C4.4 13 3 11.6 3 9.8C3 8 4.4 6.6 6.2 6.6C6.8 4.4 8.8 3 11.2 3C14 3 16.2 5 16.6 7.6C18.8 7.6 20.6 9.2 20.6 11.2C20.6 13 19.2 13 17.4 13Z ; F M12.8 13.8L9.4 18.6H12L10.8 22.4L15.6 16.6H12.8L14.6 13.8Z"),
+            Map.entry("splash.thunderstrike", "F M6.4 13C4.4 13 3 11.6 3 9.8C3 8 4.4 6.6 6.2 6.6C6.8 4.4 8.8 3 11.2 3C14 3 16.2 5 16.6 7.6C18.8 7.6 20.6 9.2 20.6 11.2C20.6 13 19.2 13 17.4 13Z ; F M12.8 13.8L9.4 18.6H12L10.8 22.4L15.6 16.6H12.8L14.6 13.8Z"),
+            // High Voltage
+            Map.entry("splash.high_voltage", "=tower.arc"),
+            // Feedback
+            Map.entry("splash.feedback", "=effect.charged"),
+            // Heavy Stones
+            Map.entry("splash.heavy_stones", "=sniper.heavy_rounds"),
+            // Quick Hands
+            Map.entry("splash.quick_hands", "=tower.haste"),
+            // Piercing Stones
+            Map.entry("splash.piercing_stones", "=effect.sundered"),
             // Siege Rounds
             Map.entry("mortar.head.siege_rounds.1", "F O12 13 7.6 ; K O9.2 10.2 2 ; F M10 3.4H14V5.8H10Z"),
             // Tactical Nuke

@@ -251,6 +251,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /** Full health in points, after every divisor and spawn-shape multiplier. */
+    @Override
     public int getMaxHealthPoints() {
         return this.health.max() / DamageUnits.PER_POINT;
     }

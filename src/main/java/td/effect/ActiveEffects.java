@@ -74,6 +74,7 @@ public final class ActiveEffects {
             case EffectDynamics.HealOverTime heal -> heal.perTick();
             case EffectDynamics.ShieldPool shield -> shield.remaining();
             case EffectDynamics.Distance distance -> distance.perCell().amount();
+            case EffectDynamics.GrowingSlow _ -> slowNow(effect);
         };
     }
 
@@ -105,6 +106,13 @@ public final class ActiveEffects {
 
     /** The share of speed {@code effect} takes away now: its strength, fading over the end of its own time. */
     private static float slowNow(Effect effect) {
+        return switch (effect.dynamics()) {
+            case EffectDynamics.GrowingSlow growing -> effect.grownSlow();
+            default -> fadingSlowNow(effect);
+        };
+    }
+
+    private static float fadingSlowNow(Effect effect) {
         float strength = effect.slowStrength();
         if (strength <= 0f) {
             return 0f;
@@ -301,7 +309,7 @@ public final class ActiveEffects {
             case POOL -> OptionalDouble.of(Math.min(1f,
                     effect.fuelLevel() / (effect.tuning().capFactor() * effect.peakL0())));
             case REFRESH -> switch (effect.dynamics()) {
-                case EffectDynamics.Slow _ -> OptionalDouble.of(slowNow(effect));
+                case EffectDynamics.Slow _, EffectDynamics.GrowingSlow _ -> OptionalDouble.of(slowNow(effect));
                 default -> OptionalDouble.empty();
             };
             case SHARED_CLOCK, EARNED, PER_SOURCE -> OptionalDouble.empty();

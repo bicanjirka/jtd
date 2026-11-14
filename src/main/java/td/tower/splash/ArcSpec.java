@@ -1,121 +1,64 @@
 package td.tower.splash;
 
+import td.tower.ability.AbilityUnits;
+
 /**
- * How the Stormcaller's arcs run past the blast. Each {@code withX} is a copy, and every change
- * holds whatever order the mechanics were bought in: jumps add up, the share and the bonuses only grow.
+ * How a charged stone's Arc runs. Each {@code withX} is a copy, and every change holds whatever order the mechanics
+ * were bought in: jumps and refunds add up, the share and the crit chance only grow.
  *
- * @param active             whether the blast arcs at all
- * @param extraJumps         jumps on top of the base two
- * @param minimumJumps       the fewest jumps it makes, whatever else it has
- * @param share              each arc's damage, a share of the blast's
- * @param canCrit            whether an arc may crit
- * @param critBonus          extra crit chance on an arc
- * @param saturatedCritBonus extra crit chance on an arc into a fully Saturated enemy
- * @param dazeSeconds        how long an arc crit Dazes its target; {@code 0} for not at all
- * @param longDaze           whether that Daze lasts {@link #LONG_DAZE_SECONDS} instead
- * @param forks              whether the third jump forks into two arcs
- * @param returns            how many times an arc with nowhere to go returns to the primary
- * @param critDamage         extra crit damage on an arc
+ * @param jumps        how many times it jumps
+ * @param share        each jump's damage, a share of base damage
+ * @param revisits     whether it may jump to an enemy it already hit
+ * @param critChance   the chance each jump crits
+ * @param shortCircuit whether the enemy's armor raises a jump's damage
+ * @param critRefund   what a jump's crit gives back of the tower's currency
  */
-public record ArcSpec(boolean active, int extraJumps, int minimumJumps, float share, boolean canCrit,
-                      float critBonus, float saturatedCritBonus, float dazeSeconds, boolean longDaze, boolean forks,
-                      int returns, float critDamage) {
+public record ArcSpec(int jumps, float share, boolean revisits, float critChance, boolean shortCircuit,
+                      AbilityUnits critRefund) {
 
-    public static final int BASE_JUMPS = 2;
-    public static final float BASE_SHARE = 0.5f;
-    public static final float LONG_DAZE_SECONDS = 1f;
-    /** How far an arc jumps from an enemy, in cells, and how much further per Saturation stack it carries. */
-    private static final float REACH_CELLS = 1.5f;
-    private static final float REACH_CELLS_PER_STACK = 0.5f;
+    public static final int JUMPS = 3;
+    public static final float SHARE = 0.4f;
+    /** How far a jump reaches from where it is, in cells. */
+    public static final float REACH_CELLS = 1.5f;
 
-    public static ArcSpec none() {
-        return new ArcSpec(false, 0, 0, 0f, false, 0f, 0f, 0f, false, false, 0, 0f);
+    /** The Arc as its node gives it. */
+    public static ArcSpec bare() {
+        return new ArcSpec(JUMPS, SHARE, false, 0f, false, AbilityUnits.none());
     }
 
-    /** Arc: two jumps at half the blast, as magic, that can't crit yet. */
-    public static ArcSpec arcs() {
-        return new ArcSpec(true, 0, 0, BASE_SHARE, false, 0f, 0f, 0f, false, false, 0, 0f);
+    public ArcSpec withMoreJumps(int more) {
+        return new ArcSpec(this.jumps + more, this.share, this.revisits, this.critChance, this.shortCircuit,
+                this.critRefund);
     }
 
-    public int jumps() {
-        return Math.max(this.minimumJumps, BASE_JUMPS + this.extraJumps);
+    public ArcSpec withShareAtLeast(float atLeast) {
+        return new ArcSpec(this.jumps, Math.max(this.share, atLeast), this.revisits, this.critChance,
+                this.shortCircuit, this.critRefund);
     }
 
-    /** How long an arc crit Dazes; {@code 0} when it doesn't. */
-    public float daze() {
-        if (this.dazeSeconds <= 0f) {
-            return 0f;
-        }
-        return this.longDaze ? LONG_DAZE_SECONDS : this.dazeSeconds;
+    public ArcSpec revisiting() {
+        return new ArcSpec(this.jumps, this.share, true, this.critChance, this.shortCircuit, this.critRefund);
     }
 
-    /** How far, in cells before the blast radius bonus, an arc jumps from an enemy with {@code stacks} Saturation. */
-    public static float reachCells(int stacks) {
-        return REACH_CELLS + REACH_CELLS_PER_STACK * stacks;
+    public ArcSpec withCritChanceAtLeast(float chance) {
+        return new ArcSpec(this.jumps, this.share, this.revisits, Math.max(this.critChance, chance),
+                this.shortCircuit, this.critRefund);
     }
 
-    public ArcSpec withMoreJumps(int jumps) {
-        return new ArcSpec(this.active, this.extraJumps + jumps, this.minimumJumps, this.share, this.canCrit,
-                this.critBonus, this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.critDamage);
+    public ArcSpec shortCircuiting() {
+        return new ArcSpec(this.jumps, this.share, this.revisits, this.critChance, true, this.critRefund);
     }
 
-    public ArcSpec withMinimumJumps(int minimumJumps) {
-        return new ArcSpec(this.active, this.extraJumps, Math.max(this.minimumJumps, minimumJumps), this.share,
-                this.canCrit, this.critBonus, this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks,
-                this.returns, this.critDamage);
+    public ArcSpec withCritRefund(AbilityUnits refund) {
+        return new ArcSpec(this.jumps, this.share, this.revisits, this.critChance, this.shortCircuit,
+                this.critRefund.plus(refund));
     }
 
-    public ArcSpec withShareAtLeast(float share) {
-        return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, Math.max(this.share, share), this.canCrit,
-                this.critBonus, this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.critDamage);
-    }
-
-    public ArcSpec thatCrit() {
-        return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, true, this.critBonus,
-                this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.critDamage);
-    }
-
-    public ArcSpec withCritBonus(float critBonus) {
-        return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit,
-                this.critBonus + critBonus, this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks,
-                this.returns, this.critDamage);
-    }
-
-    public ArcSpec withSaturatedCritBonus(float bonus) {
-        return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
-                this.saturatedCritBonus + bonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.critDamage);
-    }
-
-    public ArcSpec withDaze(float seconds) {
-        return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
-                this.saturatedCritBonus, Math.max(this.dazeSeconds, seconds), this.longDaze, this.forks, this.returns,
-                this.critDamage);
-    }
-
-    /** An arc crit's Daze, whenever it has one, lasts {@link #LONG_DAZE_SECONDS}. */
-    public ArcSpec withLongDaze() {
-        return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
-                this.saturatedCritBonus, this.dazeSeconds, true, this.forks, this.returns, this.critDamage);
-    }
-
-    public ArcSpec thatForks() {
-        return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
-                this.saturatedCritBonus, this.dazeSeconds, this.longDaze, true, this.returns, this.critDamage);
-    }
-
-    public ArcSpec withReturns(int returns) {
-        return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
-                this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, Math.max(this.returns, returns),
-                this.critDamage);
-    }
-
-    public ArcSpec withCritDamage(float bonus) {
-        return new ArcSpec(this.active, this.extraJumps, this.minimumJumps, this.share, this.canCrit, this.critBonus,
-                this.saturatedCritBonus, this.dazeSeconds, this.longDaze, this.forks, this.returns,
-                this.critDamage + bonus);
+    /**
+     * How much harder a jump hits an enemy that cuts {@code physicalReduction} from a physical hit: by that share with
+     * Short Circuit, so never double; not at all without it.
+     */
+    public float factorAgainst(float physicalReduction) {
+        return this.shortCircuit ? 1f + Math.max(0f, physicalReduction) : 1f;
     }
 }

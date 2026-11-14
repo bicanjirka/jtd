@@ -25,7 +25,7 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.REACH, Shows.OFF_DEFAULT, false),
     AREA_RADIUS(0f, 0f, Float.MAX_VALUE, StatUnit.CELLS, "Blast radius", "Blast radius", StatDirection.HIGHER,
             StatGroup.REACH, Shows.OFF_DEFAULT, false),
-    BLAST_EDGE(0f, 0f, 1f, StatUnit.PERCENT, "Blast edge", "Blast edge damage", StatDirection.HIGHER,
+    BLAST_EDGE(0f, 0f, Float.MAX_VALUE, StatUnit.CELLS, "Blast edge", "Blast edge", StatDirection.HIGHER,
             StatGroup.REACH, Shows.OFF_DEFAULT, false),
     /** The cone's full width. */
     CONE_WIDTH(0f, 0f, (float) (2 * Math.PI), StatUnit.DEGREES, "Cone width", "Cone width", StatDirection.NEUTRAL,
@@ -48,6 +48,8 @@ public enum TowerStat implements StatKey, StatTerm {
             StatDirection.HIGHER, StatGroup.CRIT, Shows.OFF_DEFAULT, false),
     ARMOR_PENETRATION(0f, 0f, 1f, StatUnit.PERCENT, "Armor pen", "Armor penetration", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, true),
+    ARMOR_PENETRATION_FLAT(0f, 0f, Float.MAX_VALUE, StatUnit.POINTS, "Armor ignored", "Armor ignored",
+            StatDirection.HIGHER, StatGroup.CRIT, Shows.OFF_DEFAULT, true),
     MAGIC_PENETRATION(0f, 0f, 1f, StatUnit.PERCENT, "Magic pen", "Magic penetration", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, true),
     MAGIC_PENETRATION_FLAT(0f, 0f, Float.MAX_VALUE, StatUnit.POINTS, "Magic ignored", "Magic resist ignored",
@@ -205,8 +207,8 @@ public enum TowerStat implements StatKey, StatTerm {
         return switch (this) {
             case RANGE -> TermText.of("how far from its centre it reaches");
             case DEAD_ZONE -> TermText.of("enemies closer than this can't be aimed at");
-            case AREA_RADIUS -> TermText.of("how far a blast reaches from where a shot lands");
-            case BLAST_EDGE -> TermText.of("the share of full damage a blast deals at its edge");
+            case AREA_RADIUS -> TermText.of("how far a blast reaches from where a shot lands at full damage");
+            case BLAST_EDGE -> TermText.of("how far its weaker edge reaches from where a shot lands");
             case CONE_WIDTH -> TermText.of("how wide its cone of fire is");
             case DAMAGE -> TermText.of("what one hit deals, before the target's defences");
             case ATTACK_SPEED -> TermText.of("how often it attacks");
@@ -216,6 +218,7 @@ public enum TowerStat implements StatKey, StatTerm {
             case AIM_STACKS -> TermText.format("how many stacks of {} it can hold", TowerTerm.STEADY_AIM);
             case AIM_STACKS_PER_SHOT -> TermText.format("how many stacks of {} each shot adds", TowerTerm.STEADY_AIM);
             case ARMOR_PENETRATION -> TermText.of("the share of armor its hits ignore");
+            case ARMOR_PENETRATION_FLAT -> TermText.of("points of armor its hits ignore, after the share");
             case MAGIC_PENETRATION -> TermText.of("the share of magic resist its hits ignore");
             case MAGIC_PENETRATION_FLAT -> TermText.of("points of magic resist its hits ignore, after the share");
             case FLAT_PENETRATION -> TermText.of("the share of plating and insulation its hits ignore");

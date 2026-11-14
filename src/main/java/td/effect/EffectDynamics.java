@@ -189,4 +189,19 @@ public sealed interface EffectDynamics {
     /** Damage for every cell walked: a bleed. */
     record Distance(Damage perCell) implements EffectDynamics {
     }
+
+    /**
+     * A slow that grows with the time it has run, so whatever shortens or lengthens it changes how far it grows.
+     *
+     * @param perTick the share of speed it takes away more with every tick it has run
+     * @param start   the share it starts from
+     * @param floor   the share it never drops below, held from what it replaced
+     */
+    record GrowingSlow(float perTick, float start, float floor) implements EffectDynamics {
+
+        /** The share of speed it takes away after {@code elapsedTicks}. */
+        public float strengthAfter(int elapsedTicks) {
+            return Math.max(this.floor, this.start + this.perTick * elapsedTicks);
+        }
+    }
 }

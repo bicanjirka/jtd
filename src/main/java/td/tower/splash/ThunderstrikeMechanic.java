@@ -1,35 +1,35 @@
 package td.tower.splash;
 
-import td.effect.EffectKind;
-import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
+import td.tower.ability.Ability;
+import td.tower.ability.AbilityCharge;
 
-import java.util.Set;
+import java.util.Optional;
 
-/** Thunderstrike: every sixth shot calls lightning onto the healthiest enemy in range. */
+/** Thunderstrike: once its Sparks are in, the Stormcaller calls lightning onto the healthiest enemy in range. */
 public final class ThunderstrikeMechanic implements SplashMechanic {
 
-    public static final int INTERVAL = 6;
-    private static final float FACTOR = 4f;
+    private static final int COST = 3;
+    private static final float FACTOR = 2f;
+
+    private final AbilityCharge charge = new AbilityCharge(Ability.of(TowerTerm.THUNDERSTRIKE, TowerTerm.SPARK, COST));
 
     @Override
-    public SplashShot shape(SplashShot shot, ShotContext context) {
-        return context.shotNumber() % INTERVAL == 0 ? shot.withThunderstrike(FACTOR) : shot;
+    public Optional<AbilityCharge> ability() {
+        return Optional.of(this.charge);
     }
 
     @Override
-    public Set<Term> applies() {
-        return Set.of(EffectKind.DAZED);
+    public boolean cast(CastActions actions) {
+        return actions.thunderstrike(FACTOR);
     }
 
     @Override
     public TermText describe() {
-        return TermText.of("every " + TermNumbers.ordinal(INTERVAL)
-                + " shot calls lightning onto the enemy in range with the most health: " + TermNumbers.times(FACTOR)
-                + " the blast as magic, counted as a crit, and ").plus(EffectKind.DAZED)
-                .plus(" for " + TermNumbers.seconds(SplashShot.DAZE_SECONDS) + "; the shot's ").plus(TowerTerm.ARC)
-                .plus(" starts there at full damage");
+        return TermText.of("costs " + COST + " ").plus(TowerTerm.SPARK).plus("s: a ").plus(TowerTerm.THUNDERSTRIKE)
+                .plus(" onto the enemy in range with the most health, for " + TermNumbers.percent(FACTOR)
+                        + " of base damage as magic");
     }
 }

@@ -1,48 +1,34 @@
 package td.tower.splash;
 
-import td.effect.EffectKind;
-import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
-import td.util.ThreadConfined;
+import td.tower.ability.Ability;
+import td.tower.ability.AbilityCharge;
 
-import java.util.Set;
+import java.util.Optional;
 
-/**
- * Thunderclap: after a crit, the next shot discharges into every enemy in range. Its own crits
- * don't arm it again.
- */
-@ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
+/** Thunderclap: once its Sparks are in, the Stormcaller discharges into every enemy in range. */
 public final class ThunderclapMechanic implements SplashMechanic {
 
-    private static final float SHARE = 0.5f;
+    private static final int COST = 3;
+    private static final float SHARE = 0.4f;
 
-    private boolean armed;
+    private final AbilityCharge charge = new AbilityCharge(Ability.of(TowerTerm.THUNDERCLAP, TowerTerm.SPARK, COST));
 
     @Override
-    public SplashShot shape(SplashShot shot, ShotContext context) {
-        if (!this.armed) {
-            return shot;
-        }
-        this.armed = false;
-        return shot.thatDischarges(SHARE);
+    public Optional<AbilityCharge> ability() {
+        return Optional.of(this.charge);
     }
 
     @Override
-    public void react(ShotResult result) {
-        this.armed |= result.critical();
-    }
-
-    @Override
-    public Set<Term> applies() {
-        return Set.of(EffectKind.DAZED);
+    public boolean cast(CastActions actions) {
+        return actions.thunderclap(SHARE);
     }
 
     @Override
     public TermText describe() {
-        return TermText.of("after a crit, the next shot also sends an ").plus(TowerTerm.ARC)
-                .plus(" into every enemy in range at " + TermNumbers.percent(SHARE) + ", and applies ")
-                .plus(EffectKind.DAZED).plus(" to each one it crits");
+        return TermText.of("costs " + COST + " ").plus(TowerTerm.SPARK).plus("s: a ").plus(TowerTerm.THUNDERCLAP)
+                .plus(" into every enemy in range for " + TermNumbers.percent(SHARE) + " of base damage as magic");
     }
 }

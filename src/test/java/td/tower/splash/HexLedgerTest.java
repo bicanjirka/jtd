@@ -23,7 +23,7 @@ class HexLedgerTest {
     @Test
     void aHexStillRunningIsWatchedQuietly() {
         HexLedger ledger = new HexLedger();
-        ledger.record(doomed(), EffectKind.DOOM);
+        ledger.record(doomed(), EffectKind.DOOM, 80);
 
         assertThat(ledger.settle()).isEmpty();
         assertThat(ledger.isEmpty()).isFalse();
@@ -34,7 +34,7 @@ class HexLedgerTest {
         HexLedger ledger = new HexLedger();
         FakeEnemyMob enemy = doomed();
         enemy.doDamage(Damage.physical(500), AttackProfile.none());
-        ledger.record(enemy, EffectKind.DOOM);
+        ledger.record(enemy, EffectKind.DOOM, 80);
         enemy.doDamage(Damage.physical(300), AttackProfile.none());
         enemy.doDamage(Damage.magic(200), AttackProfile.none());
 
@@ -45,49 +45,30 @@ class HexLedgerTest {
     }
 
     @Test
-    void anEnemyThatDiedIsReportedOnceWithEveryHexItCarriedAndTheirJumps() {
+    void anEnemyThatIsGoneIsReportedOnceWithEveryHexItCarriedAndHowLongEachWasCastFor() {
         HexLedger ledger = new HexLedger();
         FakeEnemyMob enemy = doomed();
         enemy.dieOnAnyHit();
-        ledger.record(enemy, EffectKind.DOOM);
-        ledger.record(enemy, EffectKind.CONTAGION, 1);
+        ledger.record(enemy, EffectKind.DOOM, 80);
+        ledger.record(enemy, EffectKind.BLIGHT, 40);
         enemy.doDamage(Damage.physical(1), AttackProfile.none());
 
-        assertThat(ledger.settle()).containsExactly(new HexEvent.Died(enemy, List.of(
-                new HexEvent.CarriedHex(EffectKind.DOOM, 0), new HexEvent.CarriedHex(EffectKind.CONTAGION, 1))));
+        assertThat(ledger.settle()).containsExactly(new HexEvent.Gone(enemy, List.of(
+                new HexEvent.CarriedHex(EffectKind.DOOM, 80), new HexEvent.CarriedHex(EffectKind.BLIGHT, 40))));
         assertThat(ledger.isEmpty()).isTrue();
     }
 
     @Test
-    void carriersAreTheLivingEnemiesWithThatHexAndHexedIsEveryLivingOneOnce() {
-        HexLedger ledger = new HexLedger();
-        FakeEnemyMob first = doomed();
-        FakeEnemyMob second = doomed();
-        FakeEnemyMob dead = doomed();
-        ledger.record(first, EffectKind.DOOM);
-        ledger.record(first, EffectKind.SYMPATHY);
-        ledger.record(second, EffectKind.DOOM);
-        ledger.record(dead, EffectKind.SYMPATHY);
-        dead.invalidate();
-
-        assertThat(ledger.carriers(EffectKind.SYMPATHY)).containsExactly(first);
-        assertThat(ledger.carriers(EffectKind.DOOM)).containsExactly(first, second);
-        assertThat(ledger.hexed()).containsExactly(first, second);
-    }
-
-    @Test
-    void restartingAHexCountsOutWhatItStoredAndStartsTheCountAgainFromNow() {
+    void recastingAHexOnAnEnemyStartsItsCountAgainFromNow() {
         HexLedger ledger = new HexLedger();
         FakeEnemyMob enemy = doomed();
-        ledger.record(enemy, EffectKind.DOOM);
+        ledger.record(enemy, EffectKind.DOOM, 80);
         enemy.doDamage(Damage.physical(400), AttackProfile.none());
-
-        long first = ledger.restart(enemy, EffectKind.DOOM);
+        ledger.record(enemy, EffectKind.DOOM, 80);
         enemy.doDamage(Damage.physical(100), AttackProfile.none());
-        long second = ledger.restart(enemy, EffectKind.DOOM);
 
-        assertThat(first).isEqualTo(400);
-        assertThat(second).isEqualTo(100);
-        assertThat(ledger.restart(enemy, EffectKind.SYMPATHY)).isZero();
+        enemy.expire(EffectKind.DOOM);
+
+        assertThat(ledger.settle()).containsExactly(new HexEvent.Ended(enemy, EffectKind.DOOM, 100));
     }
 }

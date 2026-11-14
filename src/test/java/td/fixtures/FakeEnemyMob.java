@@ -56,6 +56,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private final Set<EffectKind> immunities = EnumSet.noneOf(EffectKind.class);
     private Rank rank = Rank.GRUNT;
     private float healthFraction = 1f;
+    private int maxHealthPoints = 100;
 
     private FakeEnemyMob(double x, double y, int progression, int health, boolean hidden) {
         this.x = x;
@@ -86,6 +87,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private FakeEnemyMob likeThis(FakeEnemyMob other) {
         this.rank = other.rank;
         this.healthFraction = other.healthFraction;
+        this.maxHealthPoints = other.maxHealthPoints;
         this.appliesEffects = other.appliesEffects;
         this.regenerates = other.regenerates;
         this.taunting = other.taunting;
@@ -143,6 +145,17 @@ public final class FakeEnemyMob implements EnemyMob {
     public FakeEnemyMob atHealthFraction(float healthFraction) {
         this.healthFraction = healthFraction;
         return this;
+    }
+
+    /** This fake itself, now {@code points} of health when whole. */
+    public FakeEnemyMob withMaxHealthPoints(int points) {
+        this.maxHealthPoints = points;
+        return this;
+    }
+
+    @Override
+    public int getMaxHealthPoints() {
+        return this.maxHealthPoints;
     }
 
     @Override

@@ -11,7 +11,6 @@ import td.tower.AuraTower;
 import td.tower.MortarTower;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
-import td.ui.render.BeamDraw;
 import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
@@ -41,31 +40,32 @@ class TowerEffectFrameBuilderTest {
         return splash;
     }
 
-    /** What the Splash draws on the tick it fires at one enemy standing in range. */
+    /** What the Splash draws on the tick its first stone lands by one enemy standing in range. */
     private static List<TowerEffectDraw> firedBy(GameWorld context, SplashTower splash) {
         context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(splash.getX() + 30, splash.getY())});
-        splash.doTick(1);
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 1, 0.0, 0.0);
+        int tick = 1;
+        splash.doTick(tick);
+        while (!splash.stonesInFlight().isEmpty()) {
+            splash.doTick(++tick);
+        }
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, tick, 0.0, 0.0);
         splash.accept(builder);
         return builder.build();
     }
 
     @Test
-    void aSplashDrawsItsShotAndBlastInTheColourOfItsFork() {
+    void aSplashDrawsItsBlastInTheColourOfItsFork() {
         GameWorld plainWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         GameWorld stormWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         GameWorld hexWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
 
         List<TowerEffectDraw> plain = firedBy(plainWorld, splashWith(plainWorld));
-        List<TowerEffectDraw> storm = firedBy(stormWorld, splashWith(stormWorld, "Arc"));
-        List<TowerEffectDraw> hex = firedBy(hexWorld, splashWith(hexWorld, "Hex"));
+        List<TowerEffectDraw> storm = firedBy(stormWorld, splashWith(stormWorld, "Stormcaller"));
+        List<TowerEffectDraw> hex = firedBy(hexWorld, splashWith(hexWorld, "Hexer"));
 
-        assertThat(beamsIn(plain, Palette.TOWER_SPLASH_BEAM)).hasSize(1);
         assertThat(ringsIn(plain, Palette.TOWER_SPLASH_DETONATION)).hasSize(1);
-        assertThat(beamsIn(storm, Palette.TOWER_STORMCALLER_BEAM)).hasSize(1);
         assertThat(ringsIn(storm, Palette.TOWER_STORMCALLER_DETONATION)).hasSize(1);
         assertThat(ringsIn(storm, Palette.TOWER_SPLASH_DETONATION)).isEmpty();
-        assertThat(beamsIn(hex, Palette.TOWER_HEXER_BEAM)).hasSize(1);
         assertThat(ringsIn(hex, Palette.TOWER_HEXER_DETONATION)).hasSize(1);
         assertThat(ringsIn(hex, Palette.TOWER_SPLASH_DETONATION)).isEmpty();
     }
@@ -295,14 +295,6 @@ class TowerEffectFrameBuilderTest {
         assertThat(streak).isNotEmpty();
         assertThat(streak.getFirst().fromX()).isGreaterThan((float) aimed.getX());
         assertThat(streak.getLast().toY()).isNotCloseTo((float) aimed.getY(), within(1f));
-    }
-
-    private static List<BeamDraw> beamsIn(List<TowerEffectDraw> draws, Palette palette) {
-        return draws.stream()
-                .filter(BeamDraw.class::isInstance)
-                .map(BeamDraw.class::cast)
-                .filter(beam -> beam.palette() == palette)
-                .toList();
     }
 
     @Test

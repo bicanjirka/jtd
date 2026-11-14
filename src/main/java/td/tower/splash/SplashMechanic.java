@@ -2,24 +2,19 @@ package td.tower.splash;
 
 import td.tower.upgrade.Mechanic;
 
-
 /**
- * What one owned node does to the Splash. A mechanic may change how it blasts and what the blast
- * carries, reshape a shot before it is fired, and react to how it landed. Every hook does nothing
- * by default, so a mechanic implements only its own.
+ * What one owned node does to the Burst. A mechanic may change what its passive, its Arc and its hexes are like, and,
+ * when it brings an ability, cast it. Every hook does nothing by default, so a mechanic implements only its own.
  */
 public interface SplashMechanic extends Mechanic {
 
-    /** How the Splash blasts and what the blast carries, as this mechanic changes it. */
+    /** What the Burst's fork, Arc and hexes are like, as this mechanic changes them. */
     default SplashSpec refineSpec(SplashSpec spec) {
         return spec;
     }
 
-    default SplashShot shape(SplashShot shot, ShotContext context) {
-        return shot;
+    /** Casts this mechanic's ability through {@code actions}; whether it found a target and cast. */
+    default boolean cast(CastActions actions) {
+        return false;
     }
-
-    default void react(ShotResult result) {
-    }
-
 }
