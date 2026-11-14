@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.TowerFixtures;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 
@@ -86,7 +87,8 @@ class FireRateTest {
 
     private static Run sniperShots(float bonus) {
         GameWorld world = board();
-        SniperTower tower = new SniperTower(world, 3, 3);
+        // without Steady Aim, whose stacks speed each shot beyond the rate
+        SniperTower tower = TowerFixtures.buffed(new SniperTower(world, 3, 3), world, TowerModifiers.aimStacks(-100));
         tower.grantStatus(TowerStatus.timed(TowerTerm.HASTE, TowerModifiers.attackSpeed(bonus), Integer.MAX_VALUE / 2));
         FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 10, tower.getY());
         world.enemies().setEnemies(new EnemyMob[]{target});

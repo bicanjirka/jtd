@@ -21,9 +21,11 @@ final class TowerTermPictograms {
             Map.entry("tower.charged_shot", "F M4.6 21V10.5C4.6 7.2 6.1 4.8 7.6 3.2C9.1 4.8 10.6 7.2 10.6 10.5V21Z ; X M4.6 13.2H10.6 ; F M18 2.6L12.8 11.8H16.4L15 21.4L20.8 10.4H17.2Z"),
             // Patience
             Map.entry("tower.patience", "S M5.6 2.8H18.4 M5.6 21.2H18.4 M7.4 2.8C7.4 8 12 10 12 12C12 14 7.4 16 7.4 21.2 M16.6 2.8C16.6 8 12 10 12 12C12 14 16.6 16 16.6 21.2 ; F M9.2 21.2C9.4 18.6 11 17.4 12 16.8C13 17.4 14.6 18.6 14.8 21.2Z M9.6 6.6H14.4C13.8 8.4 12.8 9.4 12 10C11.2 9.4 10.2 8.4 9.6 6.6Z"),
-            // Deadeye Round
-            Map.entry("tower.deadeye_round", "T O12 12 9.6 ; F M9.6 20.6V10C9.6 6.6 11 4.2 12 2.6C13 4.2 14.4 6.6 14.4 10V20.6Z ; X M9.6 13.4H14.4"),
+            // Fourth Shot
+            Map.entry("tower.fourth_shot", "T O12 12 9.6 ; F M9.6 20.6V10C9.6 6.6 11 4.2 12 2.6C13 4.2 14.4 6.6 14.4 10V20.6Z ; X M9.6 13.4H14.4"),
             // Silver Round
+            // Hollow Point
+            Map.entry("tower.hollow_point", "F M8.6 21.2V10.2C8.6 6.6 10.2 4 12 2.6C13.8 4 15.4 6.6 15.4 10.2V21.2Z ; K O12 6.6 1.7 ; X M8.6 13.6H15.4"),
             Map.entry("tower.silver_round", "F M5.8 21V10C5.8 6.6 7.3 4.2 8.3 2.6C9.3 4.2 10.8 6.6 10.8 10V21Z ; X M5.8 13.4H10.8 ; F M17 3.4L18.2 7.3L22.1 8.5L18.2 9.7L17 13.6L15.8 9.7L11.9 8.5L15.8 7.3Z ; F M18.2 15.6L18.8 17.4L20.6 18L18.8 18.6L18.2 20.4L17.6 18.6L15.8 18L17.6 17.4Z"),
             // Bracketing
             Map.entry("tower.bracketing", "F O4.4 19.4 1.6 ; S O9.8 14 2.8 ; S O16.8 7.2 4.6 ; F O16.8 7.2 1.6"),

@@ -33,13 +33,13 @@ public final class AimFocus {
 
     /**
      * Locks onto {@code next} for one shot and returns what that shot is fired under; the shot after
-     * it builds on this one, up to {@code stackCap}.
+     * it builds on this one by {@code gain} stacks, up to {@code stackCap}.
      */
-    public AimLock lock(EnemyMob next, int stackCap) {
+    public AimLock lock(EnemyMob next, int stackCap, int gain) {
         boolean fresh = next != this.target;
         this.target = next;
         AimLock lock = new AimLock(Math.min(stackCap, this.stacks), fresh);
-        this.stacks = Math.min(stackCap, this.stacks + 1);
+        this.stacks = Math.min(stackCap, this.stacks + gain);
         this.ticksSinceShot = 0;
         return lock;
     }

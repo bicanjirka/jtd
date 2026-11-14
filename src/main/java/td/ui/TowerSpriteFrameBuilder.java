@@ -138,7 +138,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /** The pose a Sniper's rifle is in: where it draws its barrel is where its bullets leave from. */
     static TowerPose poseOf(SniperTower tower) {
-        return poseOfReload(tower.getCoolDownFraction()).withStacks(tower.steadyAimStacks().orElse(0));
+        return poseOfReload(tower.getCoolDownFraction()).withStacks(tower.steadyAimStacks());
     }
 
     /** An upgrade tier's colour role, for its perk icons; a tier above the last takes the last's. */

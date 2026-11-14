@@ -12,9 +12,8 @@ public interface ShotActions {
     boolean execute(EnemyMob target);
 
     /**
-     * Bounces the shot that just landed from {@code from} to the nearest enemy next to it, up to
-     * {@code bounces} times, each for {@code share} of the Sniper's damage; each bounce may crit.
-     * "Next to" is within {@code reachCells} of the enemy last struck.
+     * Sends the shot that just landed on from {@code from} to the nearest other enemy within {@code reachCells}, if
+     * there is one. The hop deals the shot's damage when it arrives and can't crit.
      */
-    void ricochet(EnemyMob from, int bounces, float share, float reachCells);
+    void ricochet(EnemyMob from, float reachCells);
 }

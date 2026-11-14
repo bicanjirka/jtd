@@ -14,13 +14,13 @@ class SniperShotTest {
     }
 
     @Test
-    void aPlainShotIsPhysicalAtFullDamageWithNoExtraSpeedAndHitsOne() {
+    void aPlainShotIsPhysicalAtFullDamageWithNoExtraSpeedOrBonus() {
         SniperShot shot = plain();
 
         assertThat(shot.type()).isEqualTo(DamageType.PHYSICAL);
         assertThat(shot.damageFactor()).isEqualTo(1f);
         assertThat(shot.attackSpeedBonus()).isZero();
-        assertThat(shot.piercing()).isFalse();
+        assertThat(shot.bonusDamage()).isZero();
     }
 
     @Test
@@ -33,5 +33,12 @@ class SniperShotTest {
         float combined = plain().withAttackSpeedBonus(0.25f).withAttackSpeedBonus(0.5f).attackSpeedBonus();
 
         assertThat(combined).isCloseTo(0.75f, within(1e-6f));
+    }
+
+    @Test
+    void bonusDamageIsAddedBeforeTheFactor() {
+        SniperShot shot = plain().withBonusDamage(10f).withBonusDamage(30f).scaledBy(1.5f);
+
+        assertThat(shot.amountOn(60f)).isEqualTo(150);
     }
 }

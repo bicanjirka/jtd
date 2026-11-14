@@ -8,7 +8,7 @@ class GameSaveTextTest {
 
     @Test
     void aTowerLineMissingItsTallyIsAProblemNotASave() {
-        String text = "format 2\nlevel Curly Path\nwave 17\neconomy 120 3400 5\ntower SNIPER 6 11 400\n";
+        String text = "format 3\nlevel Curly Path\nwave 17\neconomy 120 3400 5\ntower SNIPER 6 11 400\n";
 
         GameSaveText.Read read = GameSaveText.read(text);
 
@@ -28,7 +28,7 @@ class GameSaveTextTest {
 
     @Test
     void aSaveWithAByteOrderMarkReadsAsWithout() {
-        String text = "format 2\nlevel Curly Path\nwave 17\neconomy 120 3400 5\n";
+        String text = "format 3\nlevel Curly Path\nwave 17\neconomy 120 3400 5\n";
 
         GameSaveText.Read read = GameSaveText.read("﻿" + text);
 
@@ -38,7 +38,7 @@ class GameSaveTextTest {
 
     @Test
     void aLevelNameWithSpacesAndATowerWithNoUpgradesReadBack() {
-        String text = "format 2\nlevel Twisted Hourglass\nwave 4\neconomy 50 0 5\ntower MORTAR 3 2 0 0 0\n";
+        String text = "format 3\nlevel Twisted Hourglass\nwave 4\neconomy 50 0 5\ntower MORTAR 3 2 0 0 0\n";
 
         GameSaveText.Read read = GameSaveText.read(text);
 
@@ -52,7 +52,7 @@ class GameSaveTextTest {
     @Test
     void everyFactOfAGameBetweenRoundsReadsBackAsWritten() {
         String text = """
-                format 2
+                format 3
                 level Curly Path
                 wave 9
                 economy 120 3400 5

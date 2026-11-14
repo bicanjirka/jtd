@@ -457,22 +457,6 @@ class GameEngineTest {
     }
 
     @Test
-    void aSnipersDodgedShotStillRunsItsDodgeProcs() {
-        GameEngine engine = engineWithANimbleDummyBeside(TowerFactory.Type.SNIPER);
-        Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
-        UpgradePaths.buy(sniper, engine.getGameWorld(), "Focused Optics II");
-        engine.nextWave();
-
-        for (int t = 1; t <= 5; t++) {
-            engine.doTick(t);
-        }
-
-        assertThat(sniper.getDamageDealt()).isZero();
-        assertThat(fireRate(sniper).current()).isGreaterThan(fireRate(sniper).base());
-    }
-
-
-    @Test
     void aClickWhilePinningLinksTheSelectedObelisksLeyLineToTheObeliskClickedAndKeepsItSelected() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker")), 100_000));

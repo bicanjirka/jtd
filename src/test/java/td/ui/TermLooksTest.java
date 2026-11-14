@@ -68,9 +68,9 @@ class TermLooksTest {
 
     @Test
     void aLineFaceShowsItsLevelAsARomanNumeral() {
-        UpgradeNode attune = nodeOf(TowerFactory.Type.SNIPER, "Attune");
+        UpgradeNode node = UpgradeNode.of("test.line", "Line", 1);
 
-        assertThat(TermLooks.faceOfLine(TowerFactory.Type.SNIPER, attune, 3).numeral()).isEqualTo("III");
-        assertThat(TermLooks.faceOfLine(TowerFactory.Type.SNIPER, attune, 0).numeral()).isEmpty();
+        assertThat(TermLooks.faceOfLine(TowerFactory.Type.SNIPER, node, 3).numeral()).isEqualTo("III");
+        assertThat(TermLooks.faceOfLine(TowerFactory.Type.SNIPER, node, 0).numeral()).isEmpty();
     }
 }

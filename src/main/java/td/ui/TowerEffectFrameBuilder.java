@@ -32,7 +32,6 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 /**
  * Describes each tower's transient effect - beam, splash, pulse, cone, or an aura's ring - as draw
@@ -48,8 +47,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float REFUND_MARK_SCALE_FRACTION = 0.3f;
 
     /** The aim laser's opacity with no Steady Aim stack, and how much each stack adds. */
-    private static final float LASER_BASE_ALPHA = 0.2f;
-    private static final float LASER_ALPHA_PER_STACK = 0.15f;
     /** A bullet's streak is this share of the way from muzzle to enemy, and this wide, in cells. */
     private static final float TRACER_LENGTH = 0.45f;
     private static final float TRACER_WIDTH_CELLS = 0.028f;
@@ -127,23 +124,14 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * The aim laser, brighter with each Steady Aim stack; each bullet as a streak flying from the
-     * muzzle to its enemy, white at its head; and the streak the last one left, fading fast.
+     * Each bullet as a streak flying from the muzzle to its enemy, white at its head; and the streak the last one
+     * left, fading fast.
      */
     public Void visitSniperTower(SniperTower tower) {
-        EnemyMob target = tower.getCurrentTarget();
-        OptionalInt stacks = tower.steadyAimStacks();
-        if (target != null && !target.isDead() && stacks.isPresent()) {
-            float alpha = Math.min(1f, LASER_BASE_ALPHA + LASER_ALPHA_PER_STACK * stacks.getAsInt());
-            this.draws.add(new BeamDraw(Palette.TOWER_SNIPER_LASER, tower.getX(), tower.getY(),
-                    (float) target.getX(), (float) target.getY(), 1f, alpha));
-        }
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
         for (SniperTower.Bullet bullet : tower.bulletsInFlight()) {
-            float toX = bullet.piercing() ? (float) (tower.getX() + Math.cos(bullet.heading()) * bullet.reach())
-                    : (float) bullet.target().getX();
-            float toY = bullet.piercing() ? (float) (tower.getY() + Math.sin(bullet.heading()) * bullet.reach())
-                    : (float) bullet.target().getY();
+            float toX = (float) bullet.target().getX();
+            float toY = (float) bullet.target().getY();
             float flown = Math.min(1f, (this.gameTime - bullet.firedAt() + (float) this.interpolationAlpha)
                     / (bullet.landsAt() - bullet.firedAt()));
             this.tracer(tower, tier, toX, toY, flown, bullet.sureCrit(), bullet.shot().type(), 1f);

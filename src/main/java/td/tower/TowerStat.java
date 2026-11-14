@@ -44,12 +44,16 @@ public enum TowerStat implements StatKey, StatTerm {
             "Crit damage", StatDirection.HIGHER, StatGroup.CRIT, Shows.WHILE_IT_CRITS, true),
     AIM_STACKS(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Steady Aim", "Steady Aim stacks", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, false),
+    AIM_STACKS_PER_SHOT(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Aim a shot", "Steady Aim stacks a shot",
+            StatDirection.HIGHER, StatGroup.CRIT, Shows.OFF_DEFAULT, false),
     ARMOR_PENETRATION(0f, 0f, 1f, StatUnit.PERCENT, "Armor pen", "Armor penetration", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, true),
     ARMOR_PENETRATION_FLAT(0f, 0f, Float.MAX_VALUE, StatUnit.POINTS, "Armor ignored", "Armor ignored",
             StatDirection.HIGHER, StatGroup.CRIT, Shows.OFF_DEFAULT, true),
     MAGIC_PENETRATION(0f, 0f, 1f, StatUnit.PERCENT, "Magic pen", "Magic penetration", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, true),
+    MAGIC_PENETRATION_FLAT(0f, 0f, Float.MAX_VALUE, StatUnit.POINTS, "Magic ignored", "Magic resist ignored",
+            StatDirection.HIGHER, StatGroup.CRIT, Shows.OFF_DEFAULT, true),
     FLAT_PENETRATION(0f, 0f, 1f, StatUnit.PERCENT, "Flat pen", "Flat penetration", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, true),
     /** Agility points an aimed hit ignores. */
@@ -212,9 +216,11 @@ public enum TowerStat implements StatKey, StatTerm {
             case CRIT_CHANCE -> TermText.of("the chance a hit crits");
             case CRIT_MULTIPLIER -> TermText.of("what a crit deals, as a share of a normal hit");
             case AIM_STACKS -> TermText.format("how many stacks of {} it can hold", TowerTerm.STEADY_AIM);
+            case AIM_STACKS_PER_SHOT -> TermText.format("how many stacks of {} each shot adds", TowerTerm.STEADY_AIM);
             case ARMOR_PENETRATION -> TermText.of("the share of armor its hits ignore");
             case ARMOR_PENETRATION_FLAT -> TermText.of("points of armor its hits ignore, after the share");
             case MAGIC_PENETRATION -> TermText.of("the share of magic resist its hits ignore");
+            case MAGIC_PENETRATION_FLAT -> TermText.of("points of magic resist its hits ignore, after the share");
             case FLAT_PENETRATION -> TermText.of("the share of plating and insulation its hits ignore");
             case ACCURACY -> TermText.of("points of agility its aimed hits ignore");
             case EFFECT_DURATION -> TermText.of("how long its effects on enemies last, as a share of the usual");

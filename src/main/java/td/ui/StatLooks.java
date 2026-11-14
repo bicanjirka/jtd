@@ -82,9 +82,9 @@ final class StatLooks {
             case ATTACK_SPEED -> StatLook.plain(Glyph.CHEVRON);
             case BRACKET_DAMAGE_STEP -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
             case CRIT_CHANCE, CRIT_MULTIPLIER -> StatLook.toned(Glyph.SPARK, Palette.CRIT_SPARK);
-            case AIM_STACKS -> StatLook.face(TermLooks.faceOf(TowerTerm.STEADY_AIM));
+            case AIM_STACKS, AIM_STACKS_PER_SHOT -> StatLook.face(TermLooks.faceOf(TowerTerm.STEADY_AIM));
             case ARMOR_PENETRATION, ARMOR_PENETRATION_FLAT -> StatLook.toned(Glyph.PIERCE, Palette.DAMAGE_PHYSICAL);
-            case MAGIC_PENETRATION -> StatLook.toned(Glyph.PIERCE, Palette.DAMAGE_MAGIC);
+            case MAGIC_PENETRATION, MAGIC_PENETRATION_FLAT -> StatLook.toned(Glyph.PIERCE, Palette.DAMAGE_MAGIC);
             case FLAT_PENETRATION -> StatLook.plain(Glyph.PIERCE);
             case ACCURACY -> StatLook.plain(Glyph.CROSSHAIR_FILLED);
             case EFFECT_DURATION -> StatLook.plain(Glyph.FILLED_DIAMOND);

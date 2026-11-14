@@ -7,8 +7,7 @@ import td.tower.targeting.Viewpoint;
 import java.util.Optional;
 
 /**
- * Whom the Sniper may shoot and whom it picks, reshaped by each mechanic it owns. Each {@code withX} is a
- * copy.
+ * Whom the Sniper may shoot and whom it picks.
  *
  * @param reach the enemies it may shoot
  * @param aim   whom a special makes it pick; empty for the enemy furthest along the path
@@ -20,10 +19,6 @@ public record SniperSpec(Reach reach, Optional<SniperAim> aim) {
     /** The visible enemies in range, the one furthest along the path first. */
     public static SniperSpec from(Viewpoint view) {
         return new SniperSpec(Reach.visible(view), Optional.empty());
-    }
-
-    public SniperSpec withReach(Reach reach) {
-        return new SniperSpec(reach, this.aim);
     }
 
     /** Picks as {@code aim} says, unless a mechanic bought earlier already chose: the first special decides. */

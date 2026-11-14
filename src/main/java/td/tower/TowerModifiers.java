@@ -51,6 +51,10 @@ public final class TowerModifiers {
         return flat(TowerStat.MAGIC_PENETRATION, fraction);
     }
 
+    public static StatModifiers<TowerStat> magicPenetrationFlat(float points) {
+        return flat(TowerStat.MAGIC_PENETRATION_FLAT, points);
+    }
+
     public static StatModifiers<TowerStat> flatPenetration(float fraction) {
         return flat(TowerStat.FLAT_PENETRATION, fraction);
     }
@@ -165,6 +169,10 @@ public final class TowerModifiers {
 
     public static StatModifiers<TowerStat> aimStacks(int stacks) {
         return flat(TowerStat.AIM_STACKS, stacks);
+    }
+
+    public static StatModifiers<TowerStat> aimStacksPerShot(int stacks) {
+        return flat(TowerStat.AIM_STACKS_PER_SHOT, stacks);
     }
 
     public static StatModifiers<TowerStat> auraPower(float fraction) {

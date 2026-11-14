@@ -35,8 +35,8 @@ public final class DevEffects {
     private static final DevField DAMAGE_PER_CELL = new DevField("Dmg/cell", 5f, 0.1f, 100_000f);
     private static final DevField ATTACK_SPEED = new DevField("Speed %", 50f, 1f, 900f);
     private static final DevField DAMAGE_TIMES = new DevField("Damage ×", 3f, 1f, 100f);
-    private static final DevField CRIT_DAMAGE = new DevField("Crit +%", 150f, 1f, 1000f);
-    private static final DevField MAGIC_PIERCE = new DevField("Pierce %", 25f, 1f, 100f);
+    private static final DevField MAGIC_IGNORED = new DevField("Ignored", 50f, 1f, 500f);
+    private static final DevField DAMAGE_PERCENT = new DevField("Damage +%", 33f, 1f, 1000f);
     private static final DevField ATTACK_SPEED_LOST = new DevField("Slow %", 30f, 1f, 75f);
     private static final DevField RANGE_LOST = new DevField("Range -", 1f, 0f, 20f);
     /** A stack field starts at the cap, or at this many for a kind that holds more. */
@@ -156,10 +156,12 @@ public final class DevEffects {
             case CHARGED_SHOT -> status(List.of(SHOTS, DAMAGE_TIMES), in -> TowerStatus.nextShots(term, in.whole(0),
                     TowerModifiers.damageTimes(in.value(1)).plus(TowerModifiers.armorPenetration(1f))
                             .plus(TowerModifiers.flatPenetration(1f))));
-            case DEADEYE_ROUND -> status(List.of(SHOTS, CRIT_DAMAGE), in -> TowerStatus.nextShots(term, in.whole(0),
-                    TowerModifiers.critMultiplier(in.value(1) / 100f)).withCapability(TowerCapability.GUARANTEED_CRIT));
-            case SILVER_ROUND -> status(List.of(SHOTS, MAGIC_PIERCE), in -> TowerStatus.nextShots(term, in.whole(0),
-                    TowerModifiers.magicPenetration(in.value(1) / 100f)).withCapability(TowerCapability.MAGIC_DAMAGE));
+            case FOURTH_SHOT -> status(List.of(SHOTS), in -> TowerStatus.nextShots(term, in.whole(0),
+                    StatModifiers.<TowerStat>none()).withCapability(TowerCapability.GUARANTEED_CRIT));
+            case SILVER_ROUND -> status(List.of(SHOTS, MAGIC_IGNORED), in -> TowerStatus.nextShots(term, in.whole(0),
+                    TowerModifiers.magicPenetrationFlat(in.value(1))).withCapability(TowerCapability.MAGIC_DAMAGE));
+            case HOLLOW_POINT -> status(List.of(SHOTS, DAMAGE_PERCENT), in -> TowerStatus.nextShots(term, in.whole(0),
+                    TowerModifiers.damagePercent(in.value(1) / 100f)));
             case JAMMED -> new Builds<>(List.of(SECONDS, ATTACK_SPEED_LOST, RANGE_LOST), in -> new TowerGrant.Jam(in.ticks(0),
                     new DisruptionAura(JAM_REACH_CELLS * in.scale(), in.value(1) / 100f, in.value(2))));
             case STEADY_AIM, CRIT_STREAK, FOCUS, BRACKETING, NEST, EVENT_HORIZON, INTERFERENCE, STOKE -> new Refuses<>(KEPT_BY_THE_TOWER);

@@ -131,8 +131,8 @@ class AbstractTowerTest {
         this.context.towers().add(alone);
         this.context.towers().add(new AuraTower(this.context, 0, 0));
 
-        UpgradePaths.buy(buffed, this.context, "Range");
-        UpgradePaths.buy(alone, this.context, "Range");
+        UpgradePaths.buy(buffed, this.context, "Long Barrel");
+        UpgradePaths.buy(alone, this.context, "Long Barrel");
 
         assertThat(buffed.stats().range()).isCloseTo(alone.stats().range() * (1f + AuraTower.DEFAULT_POWER), within(1e-5f));
     }
@@ -700,7 +700,7 @@ class AbstractTowerTest {
     void aNodeNotYetOwnedPreviewsTheRowItMovesOnTheLastingStats() {
         SniperTower tower = new SniperTower(this.context, 0, 0);
         this.context.towers().add(tower);
-        UpgradeNode range = UpgradePaths.named(tower, "Range");
+        UpgradeNode range = UpgradePaths.named(tower, "Long Barrel");
 
         UpgradeBonus bonus = tower.wordsOf(range).stats().getFirst();
 
@@ -789,7 +789,7 @@ class AbstractTowerTest {
     @Test
     void aStatusAnEveryNthShotProcGrantsIsInThatShotsStats() {
         Proc everySecond = Proc.everyNthShot(2, new ProcPayload.GrantStatus(
-                TowerStatus.nextShots(TowerTerm.DEADEYE_ROUND, 1, TowerModifiers.critChance(0.5f))));
+                TowerStatus.nextShots(TowerTerm.FOURTH_SHOT, 1, TowerModifiers.critChance(0.5f))));
         FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none()).withBaseProcs(List.of(everySecond));
 
         TowerStats first = tower.beginShot();

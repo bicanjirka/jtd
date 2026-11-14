@@ -51,7 +51,8 @@ public record TowerStats(ResolvedStats<TowerStat> values, float rangeReal, float
                 .withCritMultiplier(values.value(TowerStat.CRIT_MULTIPLIER))
                 .withArmorPenetration(values.value(TowerStat.ARMOR_PENETRATION),
                         values.value(TowerStat.ARMOR_PENETRATION_FLAT))
-                .withMagicPenetration(values.value(TowerStat.MAGIC_PENETRATION), 0f)
+                .withMagicPenetration(values.value(TowerStat.MAGIC_PENETRATION),
+                        values.value(TowerStat.MAGIC_PENETRATION_FLAT))
                 .withFlatPenetration(values.value(TowerStat.FLAT_PENETRATION));
         if (capabilities.contains(TowerCapability.GUARANTEED_CRIT)) {
             attack = attack.withGuaranteedCrit();
