@@ -37,6 +37,20 @@ class ActiveTowerStatusesTest {
     }
 
     @Test
+    void aPrimedShotGrantedAgainWhileItWaitsQueuesOneMoreAndEachShotSpendsOne() {
+        TowerStatus primed = TowerStatus.primedShot(TowerTerm.HOLLOW_POINT, TowerModifiers.damage(1f));
+        this.statuses.grant(primed, 0, 1f);
+        this.statuses.grant(primed, 0, 1f);
+
+        this.statuses.spendShot();
+        boolean secondStillQueued = this.statuses.holds(TowerTerm.HOLLOW_POINT);
+        this.statuses.spendShot();
+
+        assertThat(secondStillQueued).isTrue();
+        assertThat(this.statuses.holds(TowerTerm.HOLLOW_POINT)).isFalse();
+    }
+
+    @Test
     void aShotStatusIsLengthenedOnlyWhenItSaysSo() {
         ActiveTowerStatuses lengthened = new ActiveTowerStatuses();
         lengthened.grant(FRENZY.lengthenedByBuffs(), 0, 2f);

@@ -26,6 +26,15 @@
         <allow pkg="td.util"/>
         <disallow pkg="td"/>
     </subpackage>
+    <subpackage name="tower">
+        <subpackage name="ability">
+            <allow pkg="td.tower.ability"/>
+            <allow pkg="td.damage"/>
+            <allow pkg="td.term"/>
+            <allow pkg="td.util"/>
+            <disallow pkg="td"/>
+        </subpackage>
+    </subpackage>
     <subpackage name="effect">
         <disallow pkg="td.tower"/>
         <disallow pkg="td.enemy"/>

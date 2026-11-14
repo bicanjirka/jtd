@@ -18,6 +18,7 @@ import javax.swing.text.StyledDocument;
 import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -67,6 +68,11 @@ final class InfoSheetDocument {
     private static final int ICON_LABEL_FONT_SIZE = 10;
     private static final int TITLE_GAP = 6;
     private static final int ARROW_BOX = 9;
+    private static final int UNIT_WIDTH = 22;
+    private static final int UNIT_GLYPH = 11;
+    private static final int FILL_ALPHA = 150;
+    private static final float UNIT_GLYPH_ALPHA = 0.45f;
+    private static final Color UNIT_MARK = new Color(70, 70, 72);
     private static final float ARROW_SIZE = 3.2f;
     /** A value ending exactly at the pane's edge wraps on rounding, so the column stops short. */
     private static final int EDGE_MARGIN = 4;
@@ -110,6 +116,7 @@ final class InfoSheetDocument {
             case SheetLine.Sentence sentence -> this.sentence(sentence);
             case SheetLine.IconTitle title -> this.iconTitle(title);
             case SheetLine.IconRow row -> this.iconRow(row);
+            case SheetLine.AbilityRow ability -> this.abilityRow(ability);
             case SheetLine.Divider divider -> {
                 this.icon(new PaintedIcon(this.width, DIVIDER_HEIGHT, g2 -> {
                     g2.setColor(Hud.BORDER_IDLE);
@@ -124,6 +131,7 @@ final class InfoSheetDocument {
             }
         }
         this.insert("\n", new SimpleAttributeSet());
+        this.hover = null;
     }
 
     private void header(SheetLine.EnemyHeader header) {
@@ -248,7 +256,7 @@ final class InfoSheetDocument {
      * dim and small, and the arrow of which way it moved.
      */
     private void row(SheetLine.Row row) {
-        this.hover = row.tooltip().isPresent() ? new HoverRun.RowRun(row) : null;
+        this.hover = row.tooltip().map(HoverRun.RowRun::new).orElse(null);
         this.mark(row.glyph(), row.tone(), row.face());
         this.insert(" " + row.label(), colored(LABEL_COLOR));
         Color valueColor = switch (row.trend()) {
@@ -377,6 +385,50 @@ final class InfoSheetDocument {
 
     private static double textWidth(Font font, String text) {
         return font.getStringBounds(text, new FontRenderContext(null, true, true)).getWidth();
+    }
+
+    /** One embedded icon as wide as the pane, the face and name, the bar at the right edge; the line's end hovers too. */
+    private void abilityRow(SheetLine.AbilityRow ability) {
+        this.hover = new HoverRun.RowRun(ability.tooltip());
+        Font nameFont = this.metrics.getFont();
+        this.icon(new PaintedIcon(this.width, TermIconPainter.ROW, g2 -> {
+            g2.translate(-this.width / 2.0, -TermIconPainter.ROW / 2.0);
+            Graphics2D face = (Graphics2D) g2.create();
+            TermIconPainter.paint(face, ability.face(), TermIconPainter.ROW);
+            face.dispose();
+            paintCentredText(g2, ability.name(), nameFont, LABEL_COLOR, TermIconPainter.ROW + TITLE_GAP);
+            int barWidth = ability.capacity() * UNIT_WIDTH;
+            g2.translate(this.width - barWidth, (TermIconPainter.ROW - BAR_HEIGHT) / 2.0);
+            paintAbilityBar(g2, ability, barWidth);
+        }));
+    }
+
+    /**
+     * The bar with its top-left corner at the origin: the fill in the ability's colour, the currency's picture faint in
+     * each unit's cell, a mark between cells and a brighter one where the cost is in.
+     */
+    private static void paintAbilityBar(Graphics2D g2, SheetLine.AbilityRow ability, int barWidth) {
+        g2.setColor(BAR_BACKGROUND);
+        g2.fill(new Rectangle2D.Float(0, 0, barWidth, BAR_HEIGHT));
+        Color tone = TermIconPainter.ink(ability.face().tone());
+        g2.setColor(new Color(tone.getRed(), tone.getGreen(), tone.getBlue(), FILL_ALPHA));
+        float filled = Math.clamp(ability.fill() / ability.capacity(), 0f, 1f);
+        g2.fill(new Rectangle2D.Float(0, 0, barWidth * filled, BAR_HEIGHT));
+        IconFace unit = ability.currency();
+        for (int i = 0; i < ability.capacity(); i++) {
+            Graphics2D cell = (Graphics2D) g2.create();
+            cell.translate(i * UNIT_WIDTH + (UNIT_WIDTH - UNIT_GLYPH) / 2.0, (BAR_HEIGHT - UNIT_GLYPH) / 2.0);
+            cell.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, UNIT_GLYPH_ALPHA));
+            TermIconPainter.paintBareSymbol(cell, unit, UNIT_GLYPH, Hud.FOREGROUND, BAR_BACKGROUND);
+            cell.dispose();
+        }
+        g2.setStroke(new BasicStroke(1f));
+        for (int i = 1; i < ability.capacity(); i++) {
+            g2.setColor(i == ability.cost() ? Hud.FOREGROUND : UNIT_MARK);
+            g2.draw(new Line2D.Float(i * UNIT_WIDTH + 0.5f, 1, i * UNIT_WIDTH + 0.5f, BAR_HEIGHT - 1));
+        }
+        g2.setColor(Hud.BORDER_IDLE);
+        g2.draw(new Rectangle2D.Float(0.5f, 0.5f, barWidth - 1, BAR_HEIGHT - 1));
     }
 
     /** One embedded icon as wide as the pane: the label, then each face where {@link IconRowLayout} puts it. */

@@ -1,4 +1,4 @@
-# `td.tower` (+ `targeting`, `upgrade`, `proc`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`, `splash`)
+# `td.tower` (+ `targeting`, `upgrade`, `proc`, `ability`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`, `splash`)
 
 ## Towers
 
@@ -79,6 +79,18 @@
 - `dealDamage` sends the hit with `TowerStats.attack()`; a special shot passes a one-off profile.
   Damage that ticks goes through `dealPeriodicDamage` and never crits. The hit that starts a pool
   scales it by `potencyOfHit`.
+
+## Abilities
+
+- An ability that charges up (`td.tower.ability`) is an `Ability` (its term, its currency's term, a whole cost) in an
+  `AbilityCharge` that the node's mechanic holds and hands out through `Mechanic.ability()`. Living with the mechanic,
+  its bar starts over whenever the mechanics are renewed, so every wave starts it at one unit (ADR 0021).
+- The tower earns through `earnAbilities`, which fills every owned ability's bar at once, and casts through
+  `castReadyAbilities`, which tries each full one in purchase order and pays only for a cast that found a target. A
+  cast never takes the place of the normal attack. Never fill or spend a bar another way.
+- Every number of an ability is authored in units (`AbilityUnits.whole`, `of`, `forDamage`); the finer count the
+  value keeps is never shown or tuned.
+- A cast that primes the next shot grants `TowerStatus.primedShot`: casts queue, and each shot spends one.
 
 ## Experience
 

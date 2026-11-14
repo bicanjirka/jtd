@@ -53,7 +53,7 @@ violation. They are not restated here.
 math, the ground a board is painted on) · `cell` (squares, buildability) · `damage` · `economy` ·
 `effect` (timed status effects) · `enemy` · `level` · `projectile` · `save` (a game between rounds, as
 text) · `stat` (enemy stat sheet) · `term` (the game's vocabulary: terms and the text that mentions them) ·
-`tower` (+ `targeting`, `upgrade`, `proc`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`,
+`tower` (+ `targeting`, `upgrade`, `proc`, `ability`, `aura`, `cinder`, `mortar`, `pulse`, `seeker`, `sniper`,
 `splash`) · `ui` (+ `render`) ·
 `util` (`GameWorld`, `GameHost`, `Threads`) · `wave` (path geometry, wave scripts) · `zone` (ground
 zones that keep working after the shot that made them). `GameEngine`,

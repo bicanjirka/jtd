@@ -3,6 +3,7 @@ package td.tower.upgrade;
 import td.term.Term;
 import td.term.TermText;
 import td.tower.TowerBuffState;
+import td.tower.ability.AbilityCharge;
 
 import java.util.Optional;
 import java.util.Set;
@@ -12,6 +13,11 @@ public interface Mechanic {
 
     /** A buff this mechanic's state gives the tower now, if any. */
     default Optional<TowerBuffState> condition() {
+        return Optional.empty();
+    }
+
+    /** The ability this mechanic gives its tower, charging up; renewing the mechanic starts its bar over. */
+    default Optional<AbilityCharge> ability() {
         return Optional.empty();
     }
 

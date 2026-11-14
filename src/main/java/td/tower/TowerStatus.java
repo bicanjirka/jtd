@@ -12,7 +12,8 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * A buff a tower holds for a time or for its next shots. Granting the same term again restarts it. A timed status lasts longer with the tower's buff duration; a shot status
+ * A buff a tower holds for a time or for its next shots. Granting the same term again restarts it, or adds to a primed
+ * shot. A timed status lasts longer with the tower's buff duration; a shot status
  * only when it says so.
  *
  * @param term          what identifies it, so granting it again restarts it rather than stacking
@@ -21,9 +22,10 @@ import java.util.Set;
  * @param shots         how many shots a shot status lasts; 0 for a timed status
  * @param lengthened    whether a shot status's shots grow with the tower's buff duration
  * @param capabilities  what it lets the tower do while it lasts
+ * @param adds          whether granting it again adds its shots to a running copy instead of restarting it
  */
 public record TowerStatus(TowerTerm term, StatModifiers<TowerStat> modifiers, int durationTicks, int shots,
-                          boolean lengthened, Set<TowerCapability> capabilities) {
+                          boolean lengthened, Set<TowerCapability> capabilities, boolean adds) {
 
     public TowerStatus {
         capabilities = capabilities.isEmpty() ? Set.of() : Set.copyOf(capabilities);
@@ -31,12 +33,20 @@ public record TowerStatus(TowerTerm term, StatModifiers<TowerStat> modifiers, in
 
     /** Lasts {@code durationTicks}, lengthened by buff duration; restarts when granted again. */
     public static TowerStatus timed(TowerTerm term, StatModifiers<TowerStat> modifiers, int durationTicks) {
-        return new TowerStatus(term, modifiers, durationTicks, 0, true, Set.of());
+        return new TowerStatus(term, modifiers, durationTicks, 0, true, Set.of(), false);
     }
 
     /** Lasts until {@code shots} shots have begun with it; not lengthened; restarts when granted again. */
     public static TowerStatus nextShots(TowerTerm term, int shots, StatModifiers<TowerStat> modifiers) {
-        return new TowerStatus(term, modifiers, 0, shots, false, Set.of());
+        return new TowerStatus(term, modifiers, 0, shots, false, Set.of(), false);
+    }
+
+    /**
+     * Primes the next shot: one shot, not lengthened. Granted again while it waits, it primes one more, and each shot
+     * spends one, so repeated casts queue up.
+     */
+    public static TowerStatus primedShot(TowerTerm term, StatModifiers<TowerStat> modifiers) {
+        return new TowerStatus(term, modifiers, 0, 1, false, Set.of(), true);
     }
 
     /**
@@ -59,7 +69,7 @@ public record TowerStatus(TowerTerm term, StatModifiers<TowerStat> modifiers, in
     /** This shot status, its shots lengthened by buff duration. */
     public TowerStatus lengthenedByBuffs() {
         return new TowerStatus(this.term, this.modifiers, this.durationTicks, this.shots, true,
-                this.capabilities);
+                this.capabilities, this.adds);
     }
 
     /** This status, also granting {@code capability} while it lasts. */
@@ -68,6 +78,6 @@ public record TowerStatus(TowerTerm term, StatModifiers<TowerStat> modifiers, in
                 : EnumSet.copyOf(this.capabilities);
         all.add(capability);
         return new TowerStatus(this.term, this.modifiers, this.durationTicks, this.shots,
-                this.lengthened, all);
+                this.lengthened, all, this.adds);
     }
 }

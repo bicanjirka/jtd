@@ -95,7 +95,8 @@ public final class BoardRenderer {
 
         Optional<TowerSheet> towerSheet = this.world.towers().all().stream().filter(Tower::isSelected).findFirst()
                 .map(tower -> new TowerSheet(tower.getX(), tower.getY(), TowerSheetText.status(tower.inspect()
-                        .withConditions(tower.conditions()).withProgress(tower.progress()))));
+                        .withConditions(tower.conditions()).withProgress(tower.progress())
+                        .withAbilities(tower.abilities()))));
 
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, ZoneFrameBuilder.build(this.world.zones(), animationSeconds), enemyFrameBuilder.build(), enemyFrameBuilder.buildCritSparks(),

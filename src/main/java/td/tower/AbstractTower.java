@@ -26,6 +26,9 @@ import td.term.Side;
 import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
+import td.tower.ability.AbilityCharge;
+import td.tower.ability.AbilityState;
+import td.tower.ability.AbilityUnits;
 import td.tower.proc.AttackOutcome;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
@@ -67,6 +70,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * What every tower shares: position, price, current stats, upgrades, and damage and kill
@@ -498,7 +502,7 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Grants {@code status} now: the same id restarts unless it keeps a running copy, and different ids
+     * Grants {@code status} now: the same id restarts, or a primed shot queues one more, and different ids
      * stack. A timed status, and a shot status that says so, lasts longer with the buff duration.
      */
     protected final void grantStatus(TowerStatus status) {
@@ -544,6 +548,40 @@ public abstract class AbstractTower implements Tower {
             }
         }
         return false;
+    }
+
+    /**
+     * Puts {@code earned} into every owned ability's bar at once: the abilities charge together from one currency, not
+     * from a pool they share.
+     */
+    protected final void earnAbilities(AbilityUnits earned) {
+        for (Mechanic mechanic : this.ownedMechanics().all()) {
+            mechanic.ability().ifPresent(charge -> charge.earn(earned));
+        }
+    }
+
+    /**
+     * Casts every owned ability whose cost is in, in the order they were bought: {@code cast} tries one and says
+     * whether it found a target and cast. Only a cast pays its cost; one with no target waits, full, for the next try.
+     *
+     * @param owned the tower's mechanics, read once for this action
+     */
+    protected final <M extends Mechanic> void castReadyAbilities(List<M> owned, Predicate<M> cast) {
+        for (M mechanic : owned) {
+            Optional<AbilityCharge> charge = mechanic.ability().filter(AbilityCharge::isReady);
+            if (charge.isPresent() && cast.test(mechanic)) {
+                charge.get().spend();
+            }
+        }
+    }
+
+    /** Every owned ability, in the order bought, with its bar now. Game loop only. */
+    @Override
+    public final List<AbilityState> abilities() {
+        return this.ownedMechanics().all().stream()
+                .flatMap(mechanic -> mechanic.ability().stream())
+                .map(AbilityCharge::state)
+                .toList();
     }
 
     /** How many attacks this tower has begun, the one beginning now included. */
