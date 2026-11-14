@@ -137,6 +137,25 @@ class BoardRendererTest {
     }
 
     @Test
+    void aTowerWhoseTierRoseAMomentAgoIsDrawnRisingFromItsOldTierUntilTheRiseEnds() {
+        GameEngine engine = newEngine();
+        GameWorld context = engine.getGameWorld();
+        SniperTower tower = new SniperTower(context, 1, 1);
+        context.towers().add(tower);
+        tower.beginTick(100);
+        UpgradeNode upper = tower.upgradeTree().nodes().stream().filter(node -> node.tier() > 0).findFirst().orElseThrow();
+        UpgradePaths.buy(tower, context, upper.displayName());
+        tower.beginTick(101);
+
+        TowerSpriteDraw rising = rendererFor(context).buildFrame(102, 0.0, 0.0).towerSprites().getFirst();
+        TowerSpriteDraw settled = rendererFor(context).buildFrame(200, 0.0, 0.0).towerSprites().getFirst();
+
+        assertThat(rising.risenFrom()).isZero();
+        assertThat(rising.riseProgress()).isBetween(0f, 1f);
+        assertThat(settled.riseProgress()).isEqualTo(-1f);
+    }
+
+    @Test
     void towersAreDescribedBackToFrontWhateverOrderTheyWereBuiltIn() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();

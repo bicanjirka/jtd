@@ -7,6 +7,7 @@ import td.tower.PulseTower;
 import td.tower.SeekerTower;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
+import td.tower.TierRise;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerVisitor;
@@ -17,14 +18,18 @@ import td.ui.render.Palette;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.OptionalInt;
 
 /** Describes each tower: its look, the tier its foundation shows, where its head aims and whether it can upgrade. */
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
+    /** A tier's rise takes half a second on the tick clock, so it pauses and speeds with the game. */
+    private static final int RISE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2);
     /** Back to front: the northern rows first, so a tower covers the foot of nothing in front of it. */
     private static final Comparator<TowerSpriteDraw> BACK_TO_FRONT = Comparator.comparingDouble(TowerSpriteDraw::centerY)
             .thenComparingDouble(TowerSpriteDraw::centerX);
@@ -144,9 +149,13 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     private void sprite(Tower tower, TowerLook body, double headingRadians) {
         UpgradeTree tree = tower.upgradeTree();
+        TierRise rise = tower.tierRise();
+        OptionalInt ticks = rise.ticksSince(this.gameTime, RISE_TICKS);
+        float progress = ticks.isPresent()
+                ? Math.min(1f, (ticks.getAsInt() + (float) this.interpolationAlpha) / RISE_TICKS) : -1f;
         this.draws.add(new TowerSpriteDraw(body, tree.highestOpenTier(tower, this.world), tower.getBoardX(),
                 tower.getBoardY(), tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
-                (float) headingRadians, this.upgradeReady(tower)));
+                (float) headingRadians, this.upgradeReady(tower), rise.from(), progress < 1f ? progress : -1f));
     }
 
     private void aimed(Tower tower, TurretAim aim) {

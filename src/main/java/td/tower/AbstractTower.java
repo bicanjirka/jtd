@@ -125,7 +125,10 @@ public abstract class AbstractTower implements Tower {
     private final ProcActions procActions = new TowerProcActions();
     // What the statuses add, published for the EDT's republish; the live list stays on the tick thread.
     private volatile StatusLayer statusLayer = StatusLayer.NONE;
+    private volatile TierRise tierRise = TierRise.none();
     private int currentTick;
+    // The highest open tier at this tower's last turn; -1 before its first, so a tower built or loaded high has not risen.
+    private int seenTier = -1;
     private int shotsBegun;
     // The bonuses and procs of the upgrades last seen, so a hit with none allocates nothing.
     private UpgradeState armedFrom;
@@ -614,6 +617,7 @@ public abstract class AbstractTower implements Tower {
     @Override
     public boolean beginTick(int gameTime) {
         this.currentTick = gameTime;
+        this.noteTier(gameTime);
         boolean republished = false;
         if (this.statuses.expire(gameTime)) {
             this.refreshStatusLayer();
@@ -635,6 +639,20 @@ public abstract class AbstractTower implements Tower {
             republished = true;
         }
         return republished;
+    }
+
+    // XP and a paid unlock both open a tier, on different threads; watching the result catches either.
+    private void noteTier(int gameTime) {
+        int open = this.upgradeTree().highestOpenTier(this, this.context);
+        if (this.seenTier >= 0 && open > this.seenTier) {
+            this.tierRise = new TierRise(this.seenTier, open, gameTime);
+        }
+        this.seenTier = open;
+    }
+
+    @Override
+    public TierRise tierRise() {
+        return this.tierRise;
     }
 
     public boolean isDisrupted() {

@@ -832,4 +832,29 @@ class AbstractTowerTest {
 
         assertThat(adjustment).isSameAs(HitAdjustment.none());
     }
+
+    @Test
+    void aTierThatXpOpensBetweenTwoTurnsIsStampedAsARiseAtTheSecond() {
+        UpgradeNode node = UpgradeNode.of("n", "N", 5).inTier(1);
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.of(node).withTiers(FREE_AT_150));
+        tower.beginTick(10);
+        tower.earnXp(150);
+
+        TierRise before = tower.tierRise();
+        tower.beginTick(11);
+
+        assertThat(before).isEqualTo(TierRise.none());
+        assertThat(tower.tierRise()).isEqualTo(new TierRise(0, 1, 11));
+    }
+
+    @Test
+    void aTowerWhoseTierIsAlreadyOpenAtItsFirstTurnHasNotRisen() {
+        UpgradeNode node = UpgradeNode.of("n", "N", 5).inTier(1);
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.of(node).withTiers(FREE_AT_150));
+        tower.earnXp(150);
+
+        tower.beginTick(10);
+
+        assertThat(tower.tierRise()).isEqualTo(TierRise.none());
+    }
 }
