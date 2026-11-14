@@ -120,12 +120,6 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return TIER_PALETTES[Math.min(tier, TIER_PALETTES.length - 1)];
     }
 
-    /** Whether {@code tower} has its top tier open. */
-    static boolean crowned(Tower tower, GameWorld world) {
-        UpgradeTree tree = tower.upgradeTree();
-        return tree.tiers().size() > 1 && tree.highestOpenTier(tower, world) == tree.tiers().size() - 1;
-    }
-
     /** Whether {@code tower} can buy an upgrade or a tier's unlock now. */
     private boolean upgradeReady(Tower tower) {
         List<UpgradeNode> offered = tower.offeredUpgrades(this.world);

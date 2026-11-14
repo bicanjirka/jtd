@@ -27,6 +27,8 @@ import static org.assertj.core.api.Assertions.within;
  */
 class SniperTowerTest {
 
+    private static final int FLIGHT_WINDOW_TICKS = 5;
+
     private final GameWorld world = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
     private int clock;
 
@@ -48,6 +50,13 @@ class SniperTowerTest {
         tower.doTick(this.clock);
     }
 
+    /** Fires at tick 1 and ticks on until the bullet has landed, well inside one reload. */
+    private static void landFirstShot(SniperTower tower) {
+        for (int tick = 1; tick <= FLIGHT_WINDOW_TICKS; tick++) {
+            tower.doTick(tick);
+        }
+    }
+
     private void fireShots(SniperTower tower, FakeEnemyMob target, int shots) {
         while (target.hits().size() < shots) {
             this.tick(tower);
@@ -59,17 +68,63 @@ class SniperTowerTest {
     }
 
     @Test
-    void doTickRecordsWhetherTheShotThatJustFiredWasACriticalHit() {
+    void theLastShotRecordsWhetherItWasACriticalHit() {
         GameWorld alwaysCrits = WorldFixtures.newWorldOnBoard(() -> 0.0, BoardFixtures.SCALE, 20, 20);
         SniperTower tower = new SniperTower(alwaysCrits, 3, 3);
         FakeEnemyMob target = FakeEnemyMob.at(100, 100);
         target.landEveryHitCritical();
         alwaysCrits.enemies().setEnemies(new EnemyMob[]{target});
 
-        tower.doTick(1);
+        landFirstShot(tower);
 
         assertThat(tower.lastShot()).hasValueSatisfying(shot -> assertThat(shot.critical()).isTrue());
         assertThat(target.attackers().getFirst().critChance()).isEqualTo(tower.critChance());
+    }
+
+    @Test
+    void aShotLandsOnlyWhenItsBulletArrives() {
+        SniperTower tower = new SniperTower(this.world, 3, 3);
+        FakeEnemyMob target = this.onlyTarget();
+
+        tower.doTick(1);
+        int landsAt = tower.bulletsInFlight().getFirst().landsAt();
+        for (int tick = 2; tick < landsAt; tick++) {
+            tower.doTick(tick);
+        }
+        List<Damage> beforeArrival = target.hits();
+        tower.doTick(landsAt);
+
+        assertThat(landsAt).isGreaterThan(2);
+        assertThat(beforeArrival).isEmpty();
+        assertThat(target.hits()).hasSize(1);
+        assertThat(tower.bulletsInFlight()).isEmpty();
+    }
+
+    @Test
+    void aBulletLandsWithTheStatsItWasFiredWithThoughTheChargeItSpentIsGone() {
+        SniperTower tower = new SniperTower(this.world, 3, 3);
+        FakeEnemyMob target = this.onlyTarget();
+        float times = 3f;
+        tower.grantStatus(TowerStatus.nextShots(TowerTerm.CHARGED_SHOT, 1, TowerModifiers.damageTimes(times)));
+        int charged = tower.damageCurrent();
+
+        landFirstShot(tower);
+
+        assertThat(tower.damageCurrent()).isLessThan(charged);
+        assertThat(target.onlyHitAmount()).isEqualTo(charged);
+    }
+
+    @Test
+    void aBulletWhoseTargetDiesOnTheWayIsLost() {
+        SniperTower tower = new SniperTower(this.world, 3, 3);
+        FakeEnemyMob target = this.onlyTarget();
+
+        tower.doTick(1);
+        target.invalidate();
+        landFirstShot(tower);
+
+        assertThat(target.hits()).isEmpty();
+        assertThat(tower.bulletsInFlight()).isEmpty();
     }
 
     @Test
@@ -145,7 +200,7 @@ class SniperTowerTest {
         prioritised.applyEffect(Effect.priority(100, DamageSink.none()));
         this.world.enemies().setEnemies(new EnemyMob[]{furthest, prioritised});
 
-        tower.doTick(1);
+        landFirstShot(tower);
 
         assertThat(prioritised.hits()).hasSize(1);
         assertThat(furthest.hits()).isEmpty();
@@ -158,7 +213,7 @@ class SniperTowerTest {
         FakeEnemyMob distant = FakeEnemyMob.at(tower.getX() + 100, tower.getY()).withProgression(1);
         this.world.enemies().setEnemies(new EnemyMob[]{close, distant});
 
-        tower.doTick(1);
+        landFirstShot(tower);
 
         assertThat(close.hits()).isEmpty();
         assertThat(distant.hits()).hasSize(1);
@@ -174,7 +229,7 @@ class SniperTowerTest {
             close.applyEffect(Effect.marked(100, DamageSink.none()));
             board.enemies().setEnemies(new EnemyMob[]{close});
 
-            tower.doTick(1);
+            landFirstShot(tower);
 
             assertThat(close.hits()).as(String.join(" then ", order)).isEmpty();
         }
@@ -186,7 +241,7 @@ class SniperTowerTest {
         FakeEnemyMob close = FakeEnemyMob.at(tower.getX() + 40, tower.getY()).withProgression(50);
         this.world.enemies().setEnemies(new EnemyMob[]{close});
 
-        tower.doTick(1);
+        landFirstShot(tower);
 
         assertThat(close.hits()).hasSize(1);
     }
@@ -201,7 +256,7 @@ class SniperTowerTest {
         FakeEnemyMob beside = FakeEnemyMob.at(tower.getX() + 100, tower.getY() + 2 * scale);
         this.world.enemies().setEnemies(new EnemyMob[]{first, aimed, pastRange, beside});
 
-        tower.doTick(1);
+        landFirstShot(tower);
 
         assertThat(first.onlyHitAmount()).isEqualTo(tower.damageCurrent());
         assertThat(aimed.onlyHitAmount()).isLessThan(first.onlyHitAmount());
@@ -216,8 +271,8 @@ class SniperTowerTest {
         FakeEnemyMob target = FakeEnemyMob.at(railgun.getX() + 60, railgun.getY());
         this.world.enemies().setEnemies(new EnemyMob[]{target});
 
-        railgun.doTick(1);
-        plain.doTick(1);
+        landFirstShot(railgun);
+        landFirstShot(plain);
 
         assertThat(railgun.lastShot()).hasValueSatisfying(trace -> {
             assertThat(trace.toX()).isGreaterThan(railgun.getX() + railgun.getRangeReal());
@@ -238,7 +293,7 @@ class SniperTowerTest {
         FakeEnemyMob faraway = FakeEnemyMob.at(aimed.getX(), aimed.getY() + 300);
         this.world.enemies().setEnemies(new EnemyMob[]{aimed, first, second, faraway});
 
-        tower.doTick(1);
+        landFirstShot(tower);
 
         assertThat(aimed.onlyHitAmount()).isEqualTo(tower.damageCurrent());
         assertThat(first.onlyHitAmount()).isLessThan(aimed.onlyHitAmount());
@@ -255,7 +310,7 @@ class SniperTowerTest {
         marked.applyEffect(Effect.marked(100, DamageSink.none()));
         this.world.enemies().setEnemies(new EnemyMob[]{unmarked, marked});
 
-        tower.doTick(1);
+        landFirstShot(tower);
 
         assertThat(marked.hits()).hasSize(1);
         assertThat(unmarked.hits()).isEmpty();

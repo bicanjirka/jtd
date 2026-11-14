@@ -71,7 +71,8 @@
   with `receiveStatus`): the same `TowerTerm` restarts unless it keeps a running copy, different terms stack. A named buff, debuff or
   mechanic is a `TowerTerm` (title, side, sentence from effect mentions).
   Every attack starts with `beginShot()`, which spends shot charges and returns the stats for that
-  attack; use them, not `damageCurrent()`.
+  attack; use them, not `damageCurrent()`. A hit that lands ticks after its shot (a bullet, a shell)
+  carries those stats to where it lands and never reads the live ones there.
 - How long a tower's effects and timed buffs last is a stat (`EFFECT_DURATION`, `BUFF_DURATION`).
   Every effect goes through `applyEffect`, which scales it; what a tower leaves on the ground takes
   its lifetime through `lengthened(ticks)`.

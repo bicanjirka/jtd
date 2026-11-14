@@ -23,9 +23,12 @@ import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.TowerEffectDraw;
+import td.ui.render.TowerLook;
 import td.ui.render.TowerStatusDraw;
+import td.ui.render.TracerDraw;
 import td.util.GameWorld;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +50,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     /** The aim laser's opacity with no Steady Aim stack, and how much each stack adds. */
     private static final float LASER_BASE_ALPHA = 0.2f;
     private static final float LASER_ALPHA_PER_STACK = 0.15f;
-    private static final float SILVER_WIDTH_FACTOR = 1.5f;
+    /** A bullet's streak is this share of the way from muzzle to enemy, and this wide, in cells. */
+    private static final float TRACER_LENGTH = 0.45f;
+    private static final float TRACER_WIDTH_CELLS = 0.028f;
+    /** How long the streak a bullet leaves stays drawn once it has arrived: far less than a reload. */
+    private static final float TRACER_FADE_TICKS = 4f;
     /** How bright a Ley Line is drawn while no enemy stands on it. */
     private static final float LEY_LINE_IDLE_ALPHA = 0.45f;
     /** How long a blast's detonation and its arcs stay drawn. */
@@ -120,8 +127,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * The aim laser, brighter with each Steady Aim stack, and the last shot's trace to where it
-     * really ended, thinning as the Sniper reloads.
+     * The aim laser, brighter with each Steady Aim stack; each bullet as a streak flying from the
+     * muzzle to its enemy, white at its head; and the streak the last one left, fading fast.
      */
     public Void visitSniperTower(SniperTower tower) {
         EnemyMob target = tower.getCurrentTarget();
@@ -131,26 +138,40 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.draws.add(new BeamDraw(Palette.TOWER_SNIPER_LASER, tower.getX(), tower.getY(),
                     (float) target.getX(), (float) target.getY(), 1f, alpha));
         }
-        float width = beamWidth(tower.getCoolDownFraction());
+        int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
+        for (SniperTower.Bullet bullet : tower.bulletsInFlight()) {
+            float toX = bullet.piercing() ? (float) (tower.getX() + Math.cos(bullet.heading()) * bullet.reach())
+                    : (float) bullet.target().getX();
+            float toY = bullet.piercing() ? (float) (tower.getY() + Math.sin(bullet.heading()) * bullet.reach())
+                    : (float) bullet.target().getY();
+            float flown = Math.min(1f, (this.gameTime - bullet.firedAt() + (float) this.interpolationAlpha)
+                    / (bullet.landsAt() - bullet.firedAt()));
+            this.tracer(tower, tier, toX, toY, flown, bullet.sureCrit(), bullet.shot().type(), 1f);
+        }
         Optional<SniperTower.ShotTrace> shot = tower.lastShot();
-        if (shot.isPresent() && width > 0f) {
+        if (shot.isPresent()) {
             SniperTower.ShotTrace trace = shot.get();
-            boolean silver = trace.type() == DamageType.MAGIC;
-            this.draws.add(BeamDraw.solid(this.tracePalette(tower, trace), tower.getX(), tower.getY(),
-                    trace.toX(), trace.toY(), silver ? width * SILVER_WIDTH_FACTOR : width));
+            float age = (this.gameTime - trace.landedAt() + (float) this.interpolationAlpha) / TRACER_FADE_TICKS;
+            if (age < 1f) {
+                this.tracer(tower, tier, trace.toX(), trace.toY(), 1f, trace.critical(), trace.type(), 1f - age);
+            }
         }
         return null;
     }
 
-    private Palette tracePalette(SniperTower tower, SniperTower.ShotTrace trace) {
-        if (trace.critical()) {
-            return Palette.CRIT_SPARK;
-        }
-        if (trace.type() == DamageType.MAGIC) {
-            return Palette.TOWER_SNIPER_SILVER;
-        }
-        return TowerSpriteFrameBuilder.crowned(tower, this.world) ? Palette.TOWER_SNIPER_TRACER
-                : Palette.TOWER_SNIPER_BEAM;
+    /** A streak {@code flown} of the way from the Sniper's muzzle to {@code toX, toY}. */
+    private void tracer(SniperTower tower, int tier, float toX, float toY, float flown, boolean critical,
+                        DamageType type, float alpha) {
+        double heading = Math.atan2(toY - tower.getY(), toX - tower.getX());
+        Point2D.Float muzzle = TowerSprites.muzzle(TowerLook.SNIPER, tier, tower.getX(), tower.getY(), this.scale,
+                heading);
+        float from = Math.max(0f, flown - TRACER_LENGTH);
+        Palette tail = critical ? Palette.TOWER_SNIPER_TRACER
+                : type == DamageType.MAGIC ? Palette.TOWER_SNIPER_SILVER : Palette.TOWER_SNIPER_BODY;
+        this.draws.add(new TracerDraw(tail, Palette.TOWER_SNIPER_TRACER,
+                muzzle.x + (toX - muzzle.x) * from, muzzle.y + (toY - muzzle.y) * from,
+                muzzle.x + (toX - muzzle.x) * flown, muzzle.y + (toY - muzzle.y) * flown,
+                TRACER_WIDTH_CELLS * this.scale, alpha));
     }
 
     /**

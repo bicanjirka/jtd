@@ -463,7 +463,9 @@ class GameEngineTest {
         UpgradePaths.buy(sniper, engine.getGameWorld(), "Focused Optics II");
         engine.nextWave();
 
-        engine.doTick(1);
+        for (int t = 1; t <= 5; t++) {
+            engine.doTick(t);
+        }
 
         assertThat(sniper.getDamageDealt()).isZero();
         assertThat(fireRate(sniper).current()).isGreaterThan(fireRate(sniper).base());
