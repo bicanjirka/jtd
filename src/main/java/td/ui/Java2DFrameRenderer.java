@@ -460,7 +460,7 @@ public final class Java2DFrameRenderer {
             case TERM_FRENZY -> new Color(255, 140, 60);
             case TERM_HASTE -> new Color(255, 220, 90);
             case TERM_PATIENCE -> new Color(230, 200, 140);
-            case TERM_DEADEYE -> new Color(255, 90, 90);
+            case TERM_FOURTH_SHOT -> new Color(255, 90, 90);
             case TERM_TAR_SHELL -> new Color(130, 110, 150);
             case TERM_NUKE_SHELL -> new Color(230, 240, 150);
             case TERM_EVENT_HORIZON -> new Color(120, 110, 255);

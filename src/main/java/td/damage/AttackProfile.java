@@ -99,6 +99,14 @@ public record AttackProfile(float critChance, float critMultiplier, float armorP
                 this.accuracy, this.aimed);
     }
 
+    /** The same attack, unable to crit however it was primed. */
+    public AttackProfile withoutCrits() {
+        return new AttackProfile(0f, this.critMultiplier, this.armorPenetration,
+                this.armorPenetrationFlat, this.magicPenetration, this.magicPenetrationFlat, this.flatPenetration,
+                this.delivery, false, this.glancingArmorPenetrationFlat, this.glancingFlatPenetration,
+                this.critsPierceShields, this.origin, this.accuracy, this.aimed);
+    }
+
     /** Adds {@code bonus} to the crit multiplier, so several sources stack instead of overwriting. */
     public AttackProfile withCritDamageBonus(float bonus) {
         return this.withCritMultiplier(this.critMultiplier + bonus);

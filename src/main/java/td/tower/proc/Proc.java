@@ -47,7 +47,7 @@ public record Proc(ProcTrigger trigger, List<ProcCondition> conditions, ProcPayl
         return new Proc(this.trigger, next, this.payload);
     }
 
-    /** "a crit shot applies a stack of [Sunder]", "every 4th shot is a [Deadeye Round]". */
+    /** "a crit shot applies a stack of [Sunder]", "every 4th shot is a [Fourth Shot]". */
     public TermText describe() {
         Set<HitKind> kinds = EnumSet.noneOf(HitKind.class);
         this.conditions.forEach(condition -> kinds.addAll(condition.hitKinds()));

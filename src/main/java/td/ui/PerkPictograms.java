@@ -15,20 +15,16 @@ final class PerkPictograms {
             Map.entry("base.awaken", "S M2.2 12C6 5.6 18 5.6 21.8 12C18 18.4 6 18.4 2.2 12Z ; F O12 12 3.4 ; T M12 2.4V4.6 M5.6 4.2L6.8 6 M18.4 4.2L17.2 6"),
             // Transcendent
             Map.entry("base.transcendent", "F M3.4 18.6L4.6 7.4L8.8 12.4L12 4.6L15.2 12.4L19.4 7.4L20.6 18.6Z ; T M3.4 21H20.6"),
-            // Focused Optics
+            // Heavy Rounds
             Map.entry("sniper.head.focused_optics.1", "S O10 10 6.8 ; F M14.6 16.8L16.8 14.6L21.8 19.6L19.6 21.8Z ; T M10 6V14 M6 10H14"),
-            // Railgun
-            Map.entry("sniper.head.focused_optics.4a", "S M2 12H19.4 ; S O7 12 3 O14.4 12 3 ; F M22 12L18.4 8.8V15.2Z"),
             // Executioner
             Map.entry("sniper.head.focused_optics.4b", "S M3.6 20.6L14 8.2 ; F M10.8 2.8C15.6 3 19.8 6.6 20.8 11.4L13.8 12.6L10.6 9.6Z"),
-            // Marksman's Eye
+            // Keen Eye
             Map.entry("sniper.head.marksmans_eye.1", "S M2.4 12C6 6.2 18 6.2 21.6 12C18 17.8 6 17.8 2.4 12Z ; S O12 12 3.4 ; T M12 6.4V17.6 M6.4 12H17.6"),
             // Unbroken Aim
             Map.entry("sniper.head.marksmans_eye.4a", "S M3.6 12C3.6 9.4 5.4 7.8 7.6 7.8C11.4 7.8 12.6 16.2 16.4 16.2C18.6 16.2 20.4 14.6 20.4 12C20.4 9.4 18.6 7.8 16.4 7.8C12.6 7.8 11.4 16.2 7.6 16.2C5.4 16.2 3.6 14.6 3.6 12Z"),
-            // Sunder Rounds
+            // Sundering Crits
             Map.entry("sniper.head.marksmans_eye.4b", "=effect.sundered"),
-            // Tradecraft
-            Map.entry("sniper.extra.tradecraft.1", "F M2.4 8.8C5.4 7.2 9.2 7.6 12 9C14.8 7.6 18.6 7.2 21.6 8.8C21.8 13 19.6 16 16.6 16C14.6 16 13.2 14.6 12 13.2C10.8 14.6 9.4 16 7.4 16C4.4 16 2.2 13 2.4 8.8Z ; K M5.2 11.2C6.2 10.2 8.4 10.2 9.6 11.6C8.6 12.8 6.4 13 5.2 11.2Z M18.8 11.2C17.8 10.2 15.6 10.2 14.4 11.6C15.4 12.8 17.6 13 18.8 11.2Z"),
             // Momentum
             Map.entry("sniper.special.momentum", "F O15.4 12 5.4 ; T M1.8 8.6H8 M3.4 12H8.6 M1.8 15.4H8 ; K M13.4 9.4A3 3 0 0 1 17.8 9.6"),
             // Ricochet
@@ -36,11 +32,24 @@ final class PerkPictograms {
             // Headhunter
             Map.entry("sniper.special.headhunter", "F M4.4 17.6L3.4 7.6L8.4 11.6L12 4.8L15.6 11.6L20.6 7.6L19.6 17.6Z ; F M4.4 19.2H19.6V21.4H4.4Z ; K O12 13.2 1.8"),
             // Hollow Point
-            Map.entry("sniper.special.hollow_point", "F M8.6 21.2V10.2C8.6 6.6 10.2 4 12 2.6C13.8 4 15.4 6.6 15.4 10.2V21.2Z ; K O12 6.6 1.7 ; X M8.6 13.6H15.4"),
+            Map.entry("sniper.special.hollow_point", "=tower.hollow_point"),
             // Fourth Shot
             Map.entry("sniper.special.fifth_shot", "F M2.8 6.4H5V17.6H2.8Z M7 6.4H9.2V17.6H7Z M11.2 6.4H13.4V17.6H11.2Z ; F M18.4 4.6L19.8 9.8L21.8 12L19.8 14.2L18.4 19.4L17 14.2L15 12L17 9.8Z"),
-            // Shatter Shot
+            // Killshot
             Map.entry("sniper.special.shatter_shot", "=tower.shatter"),
+            // Rifling
+            Map.entry("sniper.rifling", "=tower.shatter"),
+            Map.entry("sniper.heavy_rounds", "=sniper.head.focused_optics.1"),
+            // Heavy Rounds II
+            Map.entry("sniper.heavy_rounds.2", "=sniper.head.focused_optics.1"),
+            // Deep Breath
+            Map.entry("sniper.deep_breath", "=tower.steady_aim"),
+            // Frenzy
+            Map.entry("sniper.head.focused_optics.2", "=tower.frenzy"),
+            // Silver Round
+            Map.entry("sniper.extra.tradecraft.3", "=tower.silver_round"),
+            // Long Barrel II
+            Map.entry("base.range.2", "=base.range"),
             // Arc
             Map.entry("splash.head.arc.1", "=tower.arc"),
             // Chain Lightning

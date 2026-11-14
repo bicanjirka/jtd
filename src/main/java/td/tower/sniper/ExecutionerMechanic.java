@@ -4,17 +4,15 @@ import td.enemy.Rank;
 import td.term.TermNumbers;
 import td.term.TermText;
 
-/**
- * Executioner: a shot that leaves a non-boss enemy under a sliver of health kills it, and counts
- * as a crit for what triggers off one.
- */
+/** Executioner: a crit that leaves an enemy below Elite under a sliver of health kills it. */
 public final class ExecutionerMechanic implements SniperMechanic {
 
     private static final float EXECUTE_BELOW = 0.15f;
+    private static final Rank SPARED_FROM = Rank.ELITE;
 
     @Override
     public ShotResult settle(ShotResult result, ShotActions actions) {
-        if (result.killed() || result.target().getRank() == Rank.BOSS
+        if (!result.critical() || result.killed() || result.target().getRank().compareTo(SPARED_FROM) >= 0
                 || result.target().getHealthFraction() >= EXECUTE_BELOW) {
             return result;
         }
@@ -23,7 +21,7 @@ public final class ExecutionerMechanic implements SniperMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("a shot that leaves an enemy other than a boss under " + TermNumbers.percent(EXECUTE_BELOW)
-                + " health kills it; an execution counts as a crit");
+        return TermText.of("a crit that leaves an enemy other than an Elite or a Boss under "
+                + TermNumbers.percent(EXECUTE_BELOW) + " health kills it");
     }
 }

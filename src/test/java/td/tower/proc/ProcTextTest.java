@@ -42,12 +42,12 @@ class ProcTextTest {
 
     @Test
     void aOneShotStatusOnACountedShotIsThatShot() {
-        TowerStatus fifth = TowerStatus.nextShots(TowerTerm.DEADEYE_ROUND, 1, TowerModifiers.critMultiplier(0.5f))
+        TowerStatus fifth = TowerStatus.nextShots(TowerTerm.FOURTH_SHOT, 1, TowerModifiers.critMultiplier(0.5f))
                 .withCapability(TowerCapability.GUARANTEED_CRIT);
 
         TermText text = Proc.everyNthShot(5, new ProcPayload.GrantStatus(fifth)).describe();
 
-        assertThat(text.plain()).isEqualTo("every 5th shot is a Deadeye Round");
+        assertThat(text.plain()).isEqualTo("every 5th shot is a " + TowerTerm.FOURTH_SHOT.title());
         assertThat(text.spans()).anySatisfy(span -> assertThat(span).isInstanceOfSatisfying(TermText.Mention.class,
                 mention -> assertThat(mention.meaning()).isEqualTo(fifth.describe())));
     }

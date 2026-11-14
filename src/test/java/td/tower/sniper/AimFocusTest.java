@@ -15,7 +15,7 @@ class AimFocusTest {
     private void lockTimes(int shots) {
         FakeEnemyMob target = FakeEnemyMob.at(0, 0);
         for (int i = 0; i < shots; i++) {
-            this.focus.lock(target, 5);
+            this.focus.lock(target, 5, 1);
         }
     }
 
@@ -27,7 +27,7 @@ class AimFocusTest {
 
     @Test
     void theFirstShotIsFreshAndHasNoStacks() {
-        AimLock lock = this.focus.lock(FakeEnemyMob.at(0, 0), 3);
+        AimLock lock = this.focus.lock(FakeEnemyMob.at(0, 0), 3, 1);
 
         assertThat(lock).isEqualTo(new AimLock(0, true));
     }
@@ -35,11 +35,11 @@ class AimFocusTest {
     @Test
     void everyShotAddsAStackUpToTheCap() {
         FakeEnemyMob target = FakeEnemyMob.at(0, 0);
-        this.focus.lock(target, 2);
+        this.focus.lock(target, 2, 1);
 
-        AimLock second = this.focus.lock(target, 2);
-        AimLock third = this.focus.lock(target, 2);
-        AimLock fourth = this.focus.lock(target, 2);
+        AimLock second = this.focus.lock(target, 2, 1);
+        AimLock third = this.focus.lock(target, 2, 1);
+        AimLock fourth = this.focus.lock(target, 2, 1);
 
         assertThat(second).isEqualTo(new AimLock(1, false));
         assertThat(third).isEqualTo(new AimLock(2, false));
@@ -49,10 +49,10 @@ class AimFocusTest {
     @Test
     void aimingAtAnotherLivingEnemyIsFreshButKeepsTheStacks() {
         FakeEnemyMob first = FakeEnemyMob.at(0, 0);
-        this.focus.lock(first, 3);
-        this.focus.lock(first, 3);
+        this.focus.lock(first, 3, 1);
+        this.focus.lock(first, 3, 1);
 
-        AimLock other = this.focus.lock(FakeEnemyMob.at(5, 5), 3);
+        AimLock other = this.focus.lock(FakeEnemyMob.at(5, 5), 3, 1);
 
         assertThat(other).isEqualTo(new AimLock(2, true));
     }
@@ -60,11 +60,11 @@ class AimFocusTest {
     @Test
     void theStacksOutliveAKilledTarget() {
         FakeEnemyMob first = FakeEnemyMob.at(0, 0);
-        this.focus.lock(first, 3);
-        this.focus.lock(first, 3);
+        this.focus.lock(first, 3, 1);
+        this.focus.lock(first, 3, 1);
         first.invalidate();
 
-        AimLock next = this.focus.lock(FakeEnemyMob.at(5, 5), 3);
+        AimLock next = this.focus.lock(FakeEnemyMob.at(5, 5), 3, 1);
 
         assertThat(next).isEqualTo(new AimLock(2, true));
     }
@@ -72,8 +72,8 @@ class AimFocusTest {
     @Test
     void theStacksTheNextShotHasAreTheOnesBuiltSoFar() {
         FakeEnemyMob target = FakeEnemyMob.at(0, 0);
-        this.focus.lock(target, 3);
-        this.focus.lock(target, 3);
+        this.focus.lock(target, 3, 1);
+        this.focus.lock(target, 3, 1);
 
         int stacks = this.focus.stacks();
 
@@ -114,5 +114,16 @@ class AimFocusTest {
         this.advance(5 * STACK_TICKS);
 
         assertThat(this.focus.stacks()).isZero();
+    }
+
+    @Test
+    void aShotAddsAsManyStacksAsItsGainUpToTheCap() {
+        FakeEnemyMob target = FakeEnemyMob.at(0, 0);
+        this.focus.lock(target, 3, 2);
+
+        AimLock second = this.focus.lock(target, 3, 2);
+
+        assertThat(second.stacks()).isEqualTo(2);
+        assertThat(this.focus.stacks()).isEqualTo(3);
     }
 }

@@ -79,7 +79,15 @@ class TermWordingTest {
 
     @Test
     void theCorpusCoversEveryKindOfText() {
-        assertThat(corpus()).hasSizeGreaterThan(500);
+        List<String> labels = corpus().stream().map(Source::label).toList();
+        List<String> kinds = new ArrayList<>(List.of("effect ", "trait ", "affix ", "ability ", "tower term "));
+        for (TowerFactory.Type type : TowerFactory.Type.values()) {
+            kinds.add(type + " shop");
+        }
+
+        assertThat(kinds).allMatch(kind -> labels.stream().anyMatch(label -> label.startsWith(kind)));
+        assertThat(labels).anyMatch(label -> label.endsWith(" description"))
+                .anyMatch(label -> label.endsWith(" trait")).anyMatch(label -> label.endsWith(" ability"));
     }
 
     private static List<String> plainSpans(TermText text) {

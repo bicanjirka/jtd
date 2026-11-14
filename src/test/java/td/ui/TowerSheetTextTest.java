@@ -36,6 +36,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TowerSheetTextTest {
 
+    private static final UpgradeNode LINE = UpgradeNode.of("test.line", "Line", 1)
+            .withModifiers(TowerModifiers.damage(1f));
+    private static final UpgradeNode LINE_2 = UpgradeNode.of("test.line.2", "Line II", 1)
+            .withModifiers(TowerModifiers.damage(1f)).after(LINE);
+
     private final GameWorld world = WorldFixtures.newWorld();
 
     /** As the toolbar builds it: a tower in a throwaway world, never placed, at the live price. */
@@ -48,6 +53,11 @@ class TowerSheetTextTest {
         Tower tower = TowerFactory.createTower(type, this.world, x, y);
         this.world.towers().add(tower);
         return tower;
+    }
+
+    /** A tower whose tree is one line of two nodes. */
+    private Tower lineTower() {
+        return FakeTower.offering(this.world, 0, 0, UpgradeTree.of(List.of(LINE)).with(LINE_2));
     }
 
     private static List<String> labels(InfoSheet sheet) {
@@ -207,7 +217,7 @@ class TowerSheetTextTest {
     void anUpgradeShowsInTheStatsItRaisesWhileTheUpgradesPanelNamesIt() {
         this.world.economy().startEconomy(1000, 5);
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        UpgradeNode range = UpgradePaths.named(sniper, "Range");
+        UpgradeNode range = UpgradePaths.named(sniper, "Long Barrel");
 
         sniper.buyUpgrade(range);
 
@@ -229,25 +239,23 @@ class TowerSheetTextTest {
 
     @Test
     void eachOwnedLineIsOnePerkIconAtItsLevel() {
-        Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        UpgradePaths.buy(sniper, this.world, "Focused Optics II");
+        Tower tower = this.lineTower();
+        UpgradePaths.buy(tower, this.world, LINE_2.displayName());
 
-        InfoSheet sheet = liveStatus(sniper);
+        InfoSheet sheet = liveStatus(tower);
 
         SheetLine.IconRow perks = iconRow(sheet, "Perks");
         assertThat(perks.icons()).extracting(icon -> icon.face().numeral()).contains("II");
-        assertThat(perks.icons().stream().filter(icon -> icon.key().id().contains(UpgradePaths.named(sniper, "Focused Optics").id())))
-                .hasSize(1);
+        assertThat(perks.icons().stream().filter(icon -> icon.key().id().contains(LINE.id()))).hasSize(1);
     }
 
     @Test
     void aPerkTooltipListsTheLinesNodesAndWhatTheyWereChosenOver() {
-        Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        UpgradePaths.buy(sniper, this.world, "Focused Optics II");
+        Tower tower = this.lineTower();
+        UpgradePaths.buy(tower, this.world, LINE_2.displayName());
 
-        String optics = UpgradePaths.named(sniper, "Focused Optics").id();
-        List<SheetLine> tooltip = iconRow(liveStatus(sniper), "Perks").icons().stream()
-                .filter(icon -> icon.key().id().contains(optics)).findFirst().orElseThrow().tooltip().lines();
+        List<SheetLine> tooltip = iconRow(liveStatus(tower), "Perks").icons().stream()
+                .filter(icon -> icon.key().id().contains(LINE.id())).findFirst().orElseThrow().tooltip().lines();
 
         assertThat(tooltip.getFirst()).isInstanceOf(SheetLine.IconTitle.class);
         assertThat(tooltip.stream().filter(Row.class::isInstance).filter(line -> ((Row) line).glyph() == Glyph.PIP))
@@ -257,8 +265,8 @@ class TowerSheetTextTest {
     @Test
     void aCountingPerkShowsItsProgress() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        UpgradePaths.buy(sniper, this.world, "Focused Optics");
-        String id = UpgradePaths.named(sniper, "Focused Optics").id();
+        UpgradePaths.buy(sniper, this.world, "Fourth Shot");
+        String id = UpgradePaths.named(sniper, "Fourth Shot").id();
 
         InfoSheet sheet = TowerSheetText.status(sniper.inspect().withProgress(List.of(new NodeProgress(id, 2, 4))));
 

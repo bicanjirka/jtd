@@ -19,7 +19,7 @@ final class RecordingShotActions implements ShotActions {
     }
 
     @Override
-    public void ricochet(EnemyMob from, int bounces, float share, float reachCells) {
+    public void ricochet(EnemyMob from, float reachCells) {
         this.ricochets.add(from);
     }
 }

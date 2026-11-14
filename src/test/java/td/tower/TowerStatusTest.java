@@ -8,7 +8,7 @@ class TowerStatusTest {
 
     @Test
     void aOneShotStatusSaysWhatItDoesAndThatTheShotSpendsIt() {
-        TowerStatus status = TowerStatus.nextShots(TowerTerm.DEADEYE_ROUND, 1, TowerModifiers.critMultiplier(1.5f));
+        TowerStatus status = TowerStatus.nextShots(TowerTerm.FOURTH_SHOT, 1, TowerModifiers.critMultiplier(1.5f));
 
         assertThat(status.describe().plain()).endsWith("; spent by the next shot").contains("150%");
     }

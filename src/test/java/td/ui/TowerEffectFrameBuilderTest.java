@@ -159,7 +159,7 @@ class TowerEffectFrameBuilderTest {
     void aBulletsStreakRunsTowardItsEnemyAndReachesItOnlyAsItLands() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         SniperTower sniper = new SniperTower(context, 3, 3);
-        FakeEnemyMob target = FakeEnemyMob.at(sniper.getX() + 100, sniper.getY());
+        FakeEnemyMob target = FakeEnemyMob.at(sniper.getX() + 60, sniper.getY());
         context.enemies().setEnemies(new EnemyMob[]{target});
         sniper.doTick(1);
         int landsAt = sniper.bulletsInFlight().getFirst().landsAt();
@@ -176,7 +176,7 @@ class TowerEffectFrameBuilderTest {
     void aBulletLeavesFromTheMuzzleOfTheRifleAsItIsPosedNotAsItRests() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         SniperTower sniper = new SniperTower(context, 3, 3);
-        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(sniper.getX() + 100, sniper.getY())});
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(sniper.getX() + 60, sniper.getY())});
         sniper.doTick(1);
         TowerPose recoiled = TowerSpriteFrameBuilder.poseOf(sniper);
 
@@ -193,7 +193,7 @@ class TowerEffectFrameBuilderTest {
     void theStreakALandedBulletLeavesFadesLongBeforeTheReloadEnds() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         SniperTower sniper = new SniperTower(context, 3, 3);
-        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(sniper.getX() + 100, sniper.getY())});
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(sniper.getX() + 60, sniper.getY())});
         sniper.doTick(1);
         int landsAt = sniper.bulletsInFlight().getFirst().landsAt();
         int tick = 2;
@@ -207,26 +207,6 @@ class TowerEffectFrameBuilderTest {
 
         assertThat(landed).singleElement().extracting(TracerDraw::alpha).isEqualTo(1f);
         assertThat(sniper.getCoolDownFraction()).isGreaterThan(0.5f);
-    }
-
-    @Test
-    void anAttunedSnipersAimLaserIsFaintAndBrightensWithItsSteadyAimStack() {
-        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
-        SniperTower attuned = new SniperTower(context, 3, 3);
-        attuned.earnXp(1_000);
-        context.economy().startEconomy(1_000, 5);
-        attuned.buyUpgrade(UpgradePaths.named(attuned, "Attune"));
-        SniperTower plain = new SniperTower(context, 3, 3);
-        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(attuned.getX() + 40, attuned.getY())});
-        attuned.doTick(1);
-        plain.doTick(1);
-
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 1, 0.0, 0.0);
-        attuned.accept(builder);
-        plain.accept(builder);
-
-        assertThat(beamsIn(builder.build(), Palette.TOWER_SNIPER_LASER)).singleElement()
-                .extracting(BeamDraw::alpha).isEqualTo(0.2f + 0.15f);
     }
 
     @Test
