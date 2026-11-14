@@ -29,26 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** Covers aura link beams and the disruption marker; the other effects are covered by {@code BoardRendererTest}. */
 class TowerEffectFrameBuilderTest {
 
-    @Test
-    void anAuraTowerDrawsALinkBeamToEachTowerItBuffsAndNoOthers() {
-        GameWorld context = WorldFixtures.newWorld();
-        AuraTower aura = new AuraTower(context, 0, 0);
-        context.towers().add(aura);
-        SniperTower near = new SniperTower(context, 0, 0);
-        context.towers().add(near);
-        // far outside the aura's range
-        SniperTower far = new SniperTower(context, 100, 100);
-        context.towers().add(far);
-
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
-        aura.accept(builder);
-
-        List<BeamDraw> linkBeams = linkBeamsIn(builder.build());
-        assertThat(linkBeams).hasSize(1);
-        assertThat(linkBeams.getFirst().toX()).isEqualTo((float) near.getX());
-        assertThat(linkBeams.getFirst().toY()).isEqualTo((float) near.getY());
-    }
-
     private static SplashTower splashWith(GameWorld context, String... nodes) {
         SplashTower splash = new SplashTower(context, 3, 3);
         context.towers().add(splash);
@@ -104,31 +84,6 @@ class TowerEffectFrameBuilderTest {
     }
 
     @Test
-    void anAuraWithBroadcastDrawsItsLinksInTheReachColour() {
-        GameWorld context = WorldFixtures.newWorld();
-        AuraTower aura = auraWith(context, "Broadcast");
-        context.towers().add(new SniperTower(context, 0, 0));
-
-        List<TowerEffectDraw> draws = drawnBy(context, aura);
-
-        assertThat(beamsIn(draws, Palette.TOWER_AURA_LINK_REACH)).hasSize(1);
-        assertThat(beamsIn(draws, Palette.TOWER_AURA_LINK)).isEmpty();
-    }
-
-    @Test
-    void anAuraWithChosenDrawsItsLinkInTheChosenColour() {
-        GameWorld context = WorldFixtures.newWorld();
-        AuraTower aura = auraWith(context, "Chosen");
-        context.towers().add(new SniperTower(context, 0, 0));
-        context.towers().add(new SniperTower(context, 0, 0));
-        context.towers().all().get(1).earnXp(50);
-
-        List<TowerEffectDraw> draws = drawnBy(context, aura);
-
-        assertThat(beamsIn(draws, Palette.TOWER_AURA_LINK_CHOSEN)).hasSize(1);
-    }
-
-    @Test
     void theApprenticeWearsAMentoringRing() {
         GameWorld context = WorldFixtures.newWorld();
         AuraTower aura = auraWith(context, "Tutelage", "Shared Lessons", "Apprentice");
@@ -156,18 +111,6 @@ class TowerEffectFrameBuilderTest {
 
         assertThat(unselected).isZero();
         assertThat(selected).isEqualTo(1);
-    }
-
-    @Test
-    void anAuraTowerWithNothingInRangeDrawsNoLinkBeams() {
-        GameWorld context = WorldFixtures.newWorld();
-        AuraTower aura = new AuraTower(context, 0, 0);
-        context.towers().add(aura);
-
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
-        aura.accept(builder);
-
-        assertThat(linkBeamsIn(builder.build())).isEmpty();
     }
 
     @Test
@@ -223,7 +166,6 @@ class TowerEffectFrameBuilderTest {
                 .extracting(BeamDraw::alpha).isEqualTo(0.2f + 0.15f);
     }
 
-
     @Test
     void anAttunedMortarRingsItsLastLandingAndTheRingDrawsInWithEachStep() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
@@ -263,20 +205,11 @@ class TowerEffectFrameBuilderTest {
         assertThat(builder.build()).isEmpty();
     }
 
-
     private static List<BeamDraw> beamsIn(List<TowerEffectDraw> draws, Palette palette) {
         return draws.stream()
                 .filter(BeamDraw.class::isInstance)
                 .map(BeamDraw.class::cast)
                 .filter(beam -> beam.palette() == palette)
-                .toList();
-    }
-
-    private static List<BeamDraw> linkBeamsIn(List<TowerEffectDraw> draws) {
-        return draws.stream()
-                .filter(BeamDraw.class::isInstance)
-                .map(BeamDraw.class::cast)
-                .filter(beam -> beam.palette() == Palette.TOWER_AURA_LINK)
                 .toList();
     }
 

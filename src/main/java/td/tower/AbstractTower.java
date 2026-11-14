@@ -649,7 +649,7 @@ public abstract class AbstractTower implements Tower {
         return this.experience;
     }
 
-    /** Runs on the game-loop thread, so the rank-up is stamped with this tower's own tick. */
+    /** Runs on the game-loop thread, the only one that earns. */
     public void earnXp(int bounty) {
         this.earnXp(bounty, 0f);
     }
@@ -659,7 +659,7 @@ public abstract class AbstractTower implements Tower {
         float exact = bounty * (1f + bonus) + this.xpRemainder;
         int whole = (int) Math.floor(exact + 1e-4f);
         this.xpRemainder = Math.max(0f, exact - whole);
-        this.experience.earn(whole, this.currentTick);
+        this.experience.earn(whole);
     }
 
     public boolean reached(EnemyWalk walk) {

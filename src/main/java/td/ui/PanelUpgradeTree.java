@@ -3,7 +3,6 @@ package td.ui;
 import td.economy.EconomyListener;
 import td.economy.EconomyState;
 import td.tower.Tower;
-import td.tower.TowerRank;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.UpgradeTreeLayout.Spot;
@@ -30,7 +29,6 @@ import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.Serial;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -257,9 +255,8 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         int xp = this.tower.experience().xp();
         UpgradeTree tree = this.tower.upgradeTree();
         OptionalInt next = UpgradeSheetText.nextTier(tree, xp);
-        // With no tier waiting on XP, the bar fills toward the next rank.
-        int toward = next.isPresent() ? tree.tiers().get(next.getAsInt()).xp() : Arrays.stream(TowerRank.values())
-                .mapToInt(TowerRank::xp).filter(rank -> rank > xp).findFirst().orElse(xp);
+        // With no tier waiting on XP, the bar stays full.
+        int toward = next.isPresent() ? tree.tiers().get(next.getAsInt()).xp() : xp;
         return new XpLine(UpgradeSheetText.xpLabel(xp, tree), toward == 0 ? 1f : xp / (float) toward, this.xpFill);
     }
 

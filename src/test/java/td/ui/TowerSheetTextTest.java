@@ -194,13 +194,13 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void theStatusShowsTheTowersXpAndTheRankItOpened() {
+    void theStatusShowsTheTowersXp() {
         FakeTower tower = FakeTower.offering(this.world, 0, 0, UpgradeTree.none());
         tower.earnXp(160);
 
         InfoSheet sheet = TowerSheetText.status(tower.inspect());
 
-        assertThat(row(sheet, "XP")).isEqualTo(Row.toned(Glyph.FILLED_DIAMOND, Palette.TOWER_RANK, "XP", "160 · Expert"));
+        assertThat(row(sheet, "XP")).isEqualTo(Row.plain(Glyph.FILLED_DIAMOND, "XP", "160"));
     }
 
     @Test

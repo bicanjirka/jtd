@@ -40,7 +40,7 @@ keeps the seam honest.
 - Exhaustive switches with no `default` (`lookFor`, `bodyPaletteFor`, `colorFor`, the sealed draw
   switches): fix a compile error by adding the case, never a `default`. Switching on these
   sealed draw records is fine; switching on `EnemyMob`/`Tower`/`Cell` is not.
-- Rank badges and the `SPECIAL` halo are painted upright (not rotated with facing). A rank badge is one size on
+- Rank badges are painted upright (not rotated with facing). A rank badge is one size on
   every enemy.
 - An effect with no picture of its own earns at most one dot, by `EnemyFrameBuilder.dotFor`; a dot says only its group,
   and the Info pane says which effect.

@@ -14,17 +14,13 @@ import td.projectile.CannonballProjectile;
 import td.tower.CinderTower;
 import td.tower.SniperTower;
 import td.tower.TowerFactory;
-import td.tower.TowerRank;
 import td.tower.TowerTerm;
-import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTree;
 import td.ui.render.CellGridDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.SheetLine;
-import td.ui.render.SlotMarkDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerSheet;
 import td.ui.render.TowerSpriteDraw;
@@ -147,20 +143,19 @@ class BoardRendererTest {
     }
 
     @Test
-    void aTowerWithNothingBoughtYieldsEmptySlotMarksAndNoEnchantPulse() {
+    void aTowerThatCannotPayForAnythingShowsNoUpgradeArrow() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
+        context.economy().startEconomy(0, 5);
         context.towers().add(new SniperTower(context, 1, 1));
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
-        TowerSpriteDraw sprite = frame.towerSprites().getFirst();
-        assertThat(sprite.slotMarks()).extracting(SlotMarkDraw::level).containsExactly(0, 0, 0, 0);
-        assertThat(sprite.enchantPulse()).isZero();
+        assertThat(frame.towerSprites().getFirst().upgradeReady()).isFalse();
     }
 
     @Test
-    void aFundedFreshTowerMarksItsFirstTierReadyAndNoTierAbove() {
+    void aFundedTowerWithAnUpgradeOnOfferShowsTheUpgradeArrow() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         context.economy().startEconomy(1000, 5);
@@ -168,62 +163,7 @@ class BoardRendererTest {
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
 
-        List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
-        assertThat(marks.getFirst().ready()).isTrue();
-        assertThat(marks.subList(1, marks.size())).noneMatch(SlotMarkDraw::ready);
-    }
-
-    @Test
-    void buyingTwoNodesOfATierShowsTwoPipsInThatTiersMark() {
-        GameEngine engine = newEngine();
-        GameWorld context = engine.getGameWorld();
-        context.economy().startEconomy(1000, 5);
-        SniperTower tower = new SniperTower(context, 1, 1);
-        context.towers().add(tower);
-        List<UpgradeNode> keyed = tower.upgradeTree().keyed(tower, context);
-        tower.buyUpgrade(keyed.get(0));
-        tower.buyUpgrade(keyed.get(1));
-
-        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
-
-        List<SlotMarkDraw> marks = frame.towerSprites().getFirst().slotMarks();
-        assertThat(marks).extracting(SlotMarkDraw::level).startsWith(2).containsOnlyOnce(2);
-        assertThat(marks.subList(1, marks.size())).allMatch(mark -> mark.level() == 0);
-    }
-
-    @Test
-    void owningANodeOfTheTopTierEnchantsAndCrownsTheSprite() {
-        GameEngine engine = newEngine();
-        GameWorld context = engine.getGameWorld();
-        SniperTower tower = new SniperTower(context, 1, 1);
-        context.towers().add(tower);
-        UpgradeTree tree = tower.upgradeTree();
-        int top = tree.tiers().size() - 1;
-        UpgradeNode crowning = tree.nodes().stream().filter(node -> node.tier() == top).findFirst().orElseThrow();
-        UpgradePaths.buy(tower, context, crowning.displayName());
-
-        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);
-
-        TowerSpriteDraw sprite = frame.towerSprites().getFirst();
-        assertThat(sprite.enchantPulse()).isGreaterThan(0f);
-        assertThat(sprite.crowned()).isTrue();
-    }
-
-    @Test
-    void aTowerShowsItsRankAndGlowsForAMomentAfterRankingUp() {
-        GameEngine engine = newEngine();
-        GameWorld context = engine.getGameWorld();
-        SniperTower tower = new SniperTower(context, 1, 1);
-        context.towers().add(tower);
-        tower.beginTick(100);
-        tower.earnXp(160);
-
-        TowerSpriteDraw justRanked = rendererFor(context).buildFrame(110, 0.0, 0.0).towerSprites().getFirst();
-        TowerSpriteDraw later = rendererFor(context).buildFrame(200, 0.0, 0.0).towerSprites().getFirst();
-
-        assertThat(justRanked.rank()).isEqualTo(TowerRank.EXPERT.ordinal());
-        assertThat(justRanked.rankUpProgress()).isBetween(0f, 1f);
-        assertThat(later.rankUpProgress()).isEqualTo(-1f);
+        assertThat(frame.towerSprites().getFirst().upgradeReady()).isTrue();
     }
 
     @Test

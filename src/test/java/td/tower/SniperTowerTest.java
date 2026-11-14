@@ -14,8 +14,6 @@ import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.StatModifiers;
 import td.tower.sniper.AimFocus;
-import td.ui.TowerSpriteFrameBuilder;
-import td.ui.render.TurretHeadDraw;
 import td.util.GameWorld;
 
 import java.util.List;
@@ -261,18 +259,5 @@ class SniperTowerTest {
 
         assertThat(marked.hits()).hasSize(1);
         assertThat(unmarked.hits()).isEmpty();
-    }
-
-    @Test
-    void aSniperWithItsTopTierOpenHasAGoldBarrel() {
-        SniperTower transcended = this.sniperWith();
-        transcended.buyPath(transcended.upgradeTree().unlockOf(1).orElseThrow());
-        SniperTower awakened = new SniperTower(this.world, 3, 3);
-        TowerSpriteFrameBuilder sprites = new TowerSpriteFrameBuilder(this.world, 0, 0.0, 0.0);
-
-        transcended.accept(sprites);
-        awakened.accept(sprites);
-
-        assertThat(sprites.buildHeads()).extracting(TurretHeadDraw::gilded).containsExactly(true, false);
     }
 }
