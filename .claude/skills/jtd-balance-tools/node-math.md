@@ -9,8 +9,8 @@ and the commit body names the numbers that moved and why.
 1. **Everything in earlier tiers is bought.** In an earlier cluster, the member best for the build being weighed.
    A node of the same tier outside the node's own cluster is weighed both ways and given as a range
    ("+25-32%": with and without Heavy Rounds II).
-2. **Passives at their steady state.** The Sniper's Steady Aim is at its max stacks (8 with Deep Breath, 5
-   without), so its attack speed and crit chance are always on.
+2. **Passives at their steady state.** The Sniper's Steady Aim is at its cap (higher with Deep
+   Breath), so its attack speed and crit chance are always on.
 3. **Measure damage a second against the target the node is for**, relative to the same build without the node:
    "+20%". A bonus against Elites and Bosses is weighed against an Elite or a Boss, a crowd node in a crowd.
 4. **Enemy numbers come from the code**, never from memory: `src/main/java/td/enemy/*Enemy.java` (`withArmor`,
@@ -63,15 +63,15 @@ attack speed in the base (`--attack-speed 0`), as the passive's stacks may not b
 
 - **A path is one cell wide**, so a blast reaches enemies in proportion to its radius, never its area: a blast 1.5
   times wider hits 1.5 times as many. `area_sim.py cover` gives the cells of path a set of zones covers.
-- **The default crowd** is Walkers at a wave's default spacing (`SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`,
-  22.4 ticks: about 1.43 cells apart at 1.28 cells/s), so about 0.7 enemies a cell. Denser waves, slowed enemies and
+- **The default crowd** is Walkers at a wave's default spacing (`SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`):
+  `paper.py` derives how far apart they walk (`SPACING`) and how many stand on a cell (`DENSITY`). Denser waves, slowed enemies and
   corners scale area damage up linearly.
 - **Grounds** (burn, poison, tar, frost, fallout) are sequences: pulses twice a second, a pool topped up by
   `L0 · (1 - level / (2 · L0))` and decaying over its authored duration, a freeze after 4 pulses in a row inside.
   Simulate them with `area_sim.py ground`; never take "the pool holds its level" as the steady state.
 - **A weighted magazine** (or any queue drawn by weight with an order rule): `area_sim.py magazine`. A "never the
   same kind twice" rule inflates small weights.
-- **Enemy health** for a stream: the Walker's ladder, 75, 138, 458, 1175 and 2400 (`WalkerEnemy`); every other
+- **Enemy health** for a stream: the Walker's ladder (`WalkerEnemy`; `paper.py` holds the factors it uses); every other
   enemy's is written rank by rank to its weight against it. Weigh anything that earns from deaths at 75, 300 and
   1000 health.
 
@@ -89,9 +89,9 @@ attack speed in the base (`--attack-speed 0`), as the passive's stacks may not b
 - **Node prices follow each node's worth** (`tree_calc.py prices`), the same however many copies stand. "/$"
   divides by the tower's price alone, "/$ all" by the tower, its nodes and its unlocks; say which. A tree that
   multiplies damage about as much as another's keeps the bare towers' ratio.
-- **Defences**: run plain, a Knight (armor 25, plating 2) and a Juggernaut (plating 25) at least. Small hits lose most
-  to plating; a tower's own Crack lowers it for every hit after the first. A Knight's resilience of 100 stops every
-  crit, a sure one too.
+- **Defences**: run plain, a Knight (armor and a little plating) and a Juggernaut (heavy plating) at least. Small hits
+  lose most to plating; a tower's own Crack lowers it for every hit after the first. A Knight's resilience stops
+  every crit, a sure one too.
 
 ## The tree calculator
 

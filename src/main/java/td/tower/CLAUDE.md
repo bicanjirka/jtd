@@ -28,7 +28,7 @@
   `settle()`s back to it; `takeRestPose()` snaps it there as a wave starts. A beat on a clock counts
   `waves().tickOfWave(gameTime)`, never the bare game time, so a loaded game beats on the same ticks.
 - Each tower's own constraints are in its sub-package's `CLAUDE.md` (`splash/`,
-  `seeker/`, `pulse/`, `mortar/`, `cinder/`, `aura/`): read it before editing that tower's leaf class here.
+  `seeker/`, `pulse/`, `mortar/`, `cinder/`, `aura/`, `sniper/`): read it before editing that tower's leaf class here.
 - A tower whose fork renames it overrides `displayName()`; the id and `TowerFactory.Type` stay.
 - A missile's speed and size are a tower stat (`ProjectileStats`), shown as `TowerStatRow.PROJECTILE_SPEED`
   (cells a second, so it holds at any board scale) and `PROJECTILE_SIZE`, and drawn from the same record.
