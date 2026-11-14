@@ -84,7 +84,7 @@ Buy a tower from the toolbar (or with its key, `q`–`u`), then click a buildabl
 cell to place it; hovering a toolbar button opens a tooltip of the tower, and the side panel shows
 it in full while you place it. The click that builds a tower selects it, as does clicking a placed
 tower later: the side panel shows its stats and its own upgrade
-tree — four slots, `core`/`base`/`head`/`special`, drawn whole as a talent tree.
+tree — four tiers, drawn whole as rows climbing from the bottom.
 Start each wave yourself when you are ready — waves do not auto-advance. A level may pay bonus credits, scored
 alike, for each round cleared with no enemy leaked: the Waves panel marks a round's bounty and bonus (`24+5`), and the
 cash icon flashes when the bonus pays. Hover that mark, or a round's skull in the Wave popup, for what each one means.
@@ -97,7 +97,7 @@ Every button shows its key on a chip in its top-left corner.
 |---------------------------------|------------------------------------------------------------------------------------------------------|
 | `q` `w` `e` `r` `t` `y` `u`     | Select tower 1–7 for placement                                                                       |
 | `Esc`                           | Cancel tower placement; cancel a question                                                            |
-| `1`–`8`                         | Buy the selected tower's next upgrade step: 1 Core, 2 Range, 3 extra line, 4/5 the branches, 6–8 specials |
+| `1`–`6`                         | Buy an upgrade in the selected tower's highest open tier, left to right; a cluster takes one key, each fork side its own |
 | `Space` or `P`                  | Pause; while paused or between waves, play on at the last speed and send the next wave               |
 | `d` `f` `g`                     | Normal, fast, super fast speed; each also sends the next wave if it is waiting                       |
 | `Delete`                        | Sell the selected tower                                                                              |
@@ -110,7 +110,8 @@ Every button shows its key on a chip in its top-left corner.
 Mouse: move to preview placement, click to place or to select a placed tower. In the Upgrades panel,
 hovering a node shows what it does and what a click would do; a click buys it with every node it
 needs first, in one payment or not at all, and a right-click on an owned node downgrades it (after a
-confirmation, unless all of it refunds in full) with every node that depends on it. Click a moving enemy, invisible ones too (when not placing a
+confirmation, unless all of it refunds in full) with every node that depends on it. Between waves, a click on a
+cluster's other member switches to it. Click a moving enemy, invisible ones too (when not placing a
 tower), to inspect it: the side panel shows its live health, stats, effects and traits, updating even while paused,
 and keeps a "Killed" or "Leaked" line after it's gone until your next click. Hovering an enemy in
 the wave preview opens a tooltip of the stats that enemy type spawns with.
@@ -197,30 +198,28 @@ The price is the first copy's: each copy of a tower already on the board makes t
 shop shows the current price. Selling refunds three quarters of what the tower
 and its upgrades cost.
 
-Every tower, the Aura included, has its own upgrade tree of four slots, shown in place of the
-wave preview once the tower is selected. `core` holds the chain Attune -> Awaken -> Transcendent and
-`base` three Range steps: Attune opens the first two levels of `head`, Awaken opens level III and
-a special, and Transcendent (once a special and a level III head are owned) opens Range III and a
-second special. `head` offers two chains that exclude each other; `special` offers one to three
-specializations, of which a tower keeps one, or two once Transcendent. Past the first steps a
-node also needs XP: every tower an enemy reached earns its bounty as XP when its walk ends,
-killed or leaked (an Aura earns with the towers it buffs), and a few nodes need towers built
-nearby. A downgrade takes a node back with everything that needs it, refunds three quarters of what
+Every tower, the Aura included, has its own upgrade tree of four tiers, shown in place of the
+wave preview once the tower is selected. A tier opens with XP (Tier I at 60, Tier II at 120, Tier III at 200), and
+Tier I also asks a one-off unlock payment; every tower an enemy reached earns its bounty as XP when its walk ends,
+killed or leaked (an Aura earns with the towers it buffs). Once a tier is open its upgrades cost only credits. In a
+tier an upgrade stands alone, follows one it needs (in the same tier or the one below), or belongs to a cluster:
+one framed set of which a tower keeps one active, switched for free between waves, which sells back what came
+after the old one. Attune, in Tier 0, gives each tower its own mechanic. The Burst picks Arc or Hex at Tier
+I's gate, which makes it a Stormcaller or a Hexer; picking the other side later works only between waves and sells
+the old side's upgrades. A downgrade takes a node back with everything that needs it, refunds three quarters of what
 they cost (selling afterwards pays what selling would have) and reopens the choices they made. Upgrade
-prices are multiples of the tower's price. Pips on the board show each slot's
-level, and a tower with a special glows. Silver diamonds beside a tower show its rank, earned
-with XP: Seasoned at 50, Expert at 150, Hero at 300. The Upgrades panel's XP bar ticks where the
-next node waits. The Beacon draws a faint line to every tower it's
+prices are multiples of the tower's price. Pips on the board show how many upgrades a tower owns in each tier, in
+that tier's colour, and a tower whose top tier is open wears a crown. Silver diamonds beside a tower show its rank,
+earned with XP: Seasoned at 50, Expert at 150, Hero at 300. The Upgrades panel's XP bar ticks where the
+next tier opens. The Beacon draws a faint line to every tower it's
 currently amplifying, coloured for its reach or its chosen hero, a ring on the tower it mentors, and
 (while it is selected) the path spot its Rally watches.
 
 ```mermaid
-flowchart LR
-    attune[Attune] --> awaken[Awaken] --> trans[Transcendent<br/>XP 300]
-    attune -.opens.-> o1[head I, II<br/>extra I, II]
-    awaken -.opens.-> o2[head III, extra III<br/>Range II, a special]
-    o2 -->|own a head III and a special| trans
-    trans -.opens.-> o3[head IV-A or IV-B, extra IV<br/>Range III, a second special]
+flowchart BT
+    t0[Tier 0<br/>Attune, Range, the tower's own] -->|XP 60 and the unlock| t1[Tier I]
+    t1 -->|XP 120| t2[Tier II]
+    t2 -->|XP 200| t3[Tier III]
 ```
 
 ### Enemies

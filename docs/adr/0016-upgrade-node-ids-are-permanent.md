@@ -1,6 +1,6 @@
 # 0016. Upgrade node ids are permanent
 
-- Status: Accepted
+- Status: Superseded by 0023
 - Date: 2026-10-25
 
 ## Context

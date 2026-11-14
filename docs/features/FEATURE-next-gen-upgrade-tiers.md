@@ -1,6 +1,7 @@
 # Feature Request: Next-gen Upgrade Tiers
 
-**Status:** draft, 2026-11-10, reviewed with the whole bundle 2026-11-13; final review the same day. Part of `FEATURE-next-gen.md`; from the
+**Status:** implemented 2026-11-14 (every tower moved onto tiers with its current nodes; the towers' own next-gen
+trees follow in their docs). Draft 2026-11-10, reviewed with the whole bundle 2026-11-13. Part of `FEATURE-next-gen.md`; from the
 handwritten notes of the visual request (in git history with `FEATURE-tower-visual-revamp.md`).
 
 ## Summary
@@ -60,10 +61,6 @@ Head and Special slots go. The goal is a more linear path through a tower and si
   links and frames than today. Glyphs may stay the same as today's or close to them.
 - **The panel** reads bottom to top. Where every upgrade sits is worked out from the tree, never configured per tower.
   The whole tree can be hovered from the start, as today. A tier whose every node is bought folds into one thin
-  row. Number keys 1-6 buy in the highest open tier, left to right; a cluster's key buys it and takes its first
-  member; lower tiers are bought with the mouse.
-- **The panel's look is reviewed with it.** If the new tree stands taller than today's panel, its graphics,
-  margins and overall look and feel are reviewed as a whole, not patched row by row (the user, 2026-11-13). A tier whose every node is bought folds into one thin
   row. Number keys 1-6 buy in the highest open tier, left to right; a cluster's key buys it and takes its first
   member; lower tiers are bought with the mouse.
 - **The panel's look is reviewed with it.** If the new tree stands taller than today's panel, its graphics,

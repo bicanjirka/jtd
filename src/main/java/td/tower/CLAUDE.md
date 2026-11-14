@@ -95,42 +95,31 @@
 - `ExperienceAwarder` runs on a tick for every finished walk, so it stays a pass or two over the towers, never
   a pass over towers inside a pass over towers inside a pass over the reached ones.
 - `TowerExperience` publishes XP and the rank-up tick as one snapshot; only the game loop earns.
-- A tower's deed (the moment it does its job, which its `PurposeCondition` on head III counts) goes
-  through `countDeedOfAttack()` (one per attack, however many enemies it hit) or
-  `countDeedOfSecond()` (a continuous effect, once a second). Both count only once Attune is owned.
 
 ## Upgrade tree
 
-- Slots `CORE` and `BASE` (always `StandardBaseSlot.nodes`: Attune -> Awaken -> Transcendent, and the
-  Range line), `HEAD` (two chains, plus an extra node that excludes nothing) and `SPECIAL` (one
-  set of up to three, or one set per chain). Core nodes keep their `base.` ids, which saves store. Content per tower comes from
-  `docs/features/shipped/FEATURE-tower-specialization-abilities.md` and the tower-rework feature requests.
-- Build a node at its step: `UpgradeTier.HEAD_2.node(id, name, PRICE)` sets its slot, its price
-  (a multiple of the list price), its XP (the gate table) and the Core node that opens it;
-  `after(previous)` adds its line. Then `withModifiers`/`withGate`. `requires`
-  decides whether a node is offered. Once offered it needs its `xp` and its `gate`, a purpose or
-  layout condition (`always()`, `ClusterCondition`, `TranscendentCondition`) whose `progress()`
-  feeds the UI. `UpgradeNode.gateMet` is the one check for both: never test `gate()` alone.
-- Exclusivity is an `ExclusiveChoice` on the tree (`oneOf` for chain roots and IV-A | IV-B,
-  `specials` for a special set), never `slotEmpty` in `requires`: the tree enforces it and the
-  panel draws it. Pass `StandardBaseSlot.nodes` a tree's level III heads; without any, the tree
-  has no Transcendent and no Range III.
-- A node's number key comes from its place in the tree (`UpgradeTree.keyOf`): 1 the Core chain, 2 Range,
-  3 the extra line, 4 and 5 a choice's two sides, 6-8 a special set. A tree that leaves a node
-  without a key (a three-way head choice, four specials opened alike) is rejected.
+- A tree is tiers (`UpgradeTier`: the XP that opens it and an unlock price; `standard()` for every tower). A paid
+  tier's unlock is a node the tree makes (`tier.N`), bought like any other and on every path that crosses it.
+  `xpMet`/`isOpen` are the one check for a tier: never compare XP to a tier's number elsewhere.
+- Build a node with `UpgradeNode.of(id, name, PRICE)`, then `inTier(n)` and `after(previous)` for a follow-up in the
+  same tier or a later one. A node with nothing before it and nothing after is an orphan. `RangeNodes.of` builds the
+  Range line every tower shares.
+- One-of choices are an `UpgradeCluster` on the tree (`withCluster`), never a condition in `requires`: members share
+  a tier and a price, one is active, and switching between waves sells what followed the old one
+  (`switchFor`). A tower whose identity is a fork has one `withFork` cluster, picked at its tier's gate, which
+  renames the tower; the tree rejects a fork in tier 0.
+- Keys 1 to `UpgradeTree.KEYS` buy left to right in the highest open tier (`keyed`); a cluster takes one key, and
+  each fork side its own until picked. `UpgradeTreeCatalogueTest` rejects a built-in tier with more.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel shows every node's.
-- A mechanic says what it adds (`describe()`), built from its own constants; a node carries no note but the
-  Core chain's structural text. A node's hover lists `Tower.bonusesOf(node)`: the node's data rows,
-  then its mechanics' words. A number a mechanic's words quote lives in the mechanic, or in the delegate or effect
+- A mechanic says what it adds (`describe()`), built from its own constants; a node carries no note. A node's hover
+  lists `Tower.bonusesOf(node)`: the node's data rows, then its mechanics' words. A number a mechanic's words quote lives in the mechanic, or in the delegate or effect
   rule it describes, never in the tower class.
 - `buyUpgrade` (one node) and `buyPath` (a node with every node it needs, one charge) are the only ways in,
   and `downgrade` the only way out; all three are check-and-act (they return `false` without effect).
   Don't pre-check affordability. It publishes `TowerStats` before `UpgradeState`.
-- A shipped node's id never changes, even when its slot or name does: saved games store the ids a tower owns
-  (`TowerSave.nodes`). The Core chain keeps its `base.*` ids.
-- Pass `StandardBaseSlot.nodes` the tower's base range (Range nodes add a share of it, in cells) and a
-  `BaseSlotMechanics` for what Attune, Awaken and Range III add to a tower.
+- Saves store the ids a tower owns (`TowerSave.nodes`): keep a surviving node's id, and raise
+  `GameSaveText.FORMAT` when a change moves, removes or re-gates nodes (ADR 0023).
 - A node is data: `withModifiers` (its own stats, flat, through `TowerModifiers`), `withEmission`
   (what an aura gives). A number a node changes is a
   `TowerStat` when the tower has it from the start or it belongs to the Attune mechanic; any other
@@ -143,7 +132,7 @@
   `hitAdjustment(...)` to each hit it computes and reports each landed attack with `report(...)` after
   its mechanics settled it; hit bonuses add. A hit aimed at one enemy is `asAimed()` and lands through `landHit`;
   a dodge is reported with `reportDodge(...)` instead, never settled by mechanics that answer a landed hit.
-- Never check `owns(...)` in tower code except for the Core chain; Checkstyle rejects it.
+- Never check `owns(...)` in tower code; Checkstyle rejects it.
 - A node that adds a mechanic brings a `*Mechanic` class, in the tower's own package. A static `MechanicCatalogue`
   says which mechanics each node brings, and the tower's `OwnedMechanics`, which it hands over through
   `ownedMechanics()`, builds its own as nodes are bought and downgraded. Mechanics run in
@@ -164,12 +153,11 @@
 2. A `TowerFactory.Type` constant and its `createTower` branch.
 3. A `TowerVisitor` method; the compiler then leads to `TowerSpriteFrameBuilder` and
    `TowerEffectFrameBuilder`.
-4. A `TowerLook` and its row in `TowerLooks` (colour, body, head), the cases in
+4. A `TowerLook` and its row in `TowerLooks` (colour, body, head, a colour per tier), the cases in
    `TowerSpriteFrameBuilder.lookFor` and `bodyPaletteFor`, and that tone's `Palette` constant, whose
    `colorFor` case reads the row.
-5. `upgradeTree()`: `UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, levelThrees...))` with two
-   `HEAD` chains built from `UpgradeTier` steps and 1-3 `UpgradeTier.SPECIAL` nodes, plus an
-   `ExclusiveChoice` per choice.
+5. `upgradeTree()`: `UpgradeTree.of(RangeNodes.of(PRICE, RANGE))` with an Attune node in tier 0 for the tower's own
+   mechanic, then the tower's nodes by tier and its clusters.
 6. `targetingLabel()` and `baseApplies()`, and, for the shop only, a `description()` saying what no row does.
 7. `README.md`'s tower table. The toolbar icon reuses the board paint code, so it needs no art.
 8. A `CLAUDE.md` in the tower's sub-package for its own constraints, and its name in this file's pointer.
