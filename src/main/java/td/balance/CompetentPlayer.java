@@ -4,7 +4,6 @@ import td.damage.DamageUnits;
 import td.enemy.EnemyDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
@@ -505,7 +504,7 @@ final class CompetentPlayer implements Player {
             }
             List<UpgradeNode> line = tree.pathTo(target).stream().filter(step -> !owned.owns(step.id())).toList();
             if (line.isEmpty() || !buyableNow.contains(line.getFirst())
-                    || !line.stream().allMatch(step -> turn.gateMet(tower, step) && !spent(tree, step, owned)
+                    || !line.stream().allMatch(step -> turn.gateMet(tower, step) && !tree.isLockedOut(step, owned)
                             && !this.style.bannedNodes().contains(step.id()))) {
                 continue;
             }
@@ -564,14 +563,5 @@ final class CompetentPlayer implements Player {
         Damage then = this.armyDamage(turn, kinds);
         this.seen = before;
         return then.plus(now.times(-1));
-    }
-
-    /** Whether owning {@code step} is already ruled out by a choice the tower made. */
-    private static boolean spent(UpgradeTree tree, UpgradeNode step, UpgradeState owned) {
-        return tree.choiceOf(step).map(choice -> picksUsed(choice, owned) >= choice.picks()).orElse(false);
-    }
-
-    private static long picksUsed(ExclusiveChoice choice, UpgradeState owned) {
-        return choice.nodeIds().stream().filter(owned::owns).count();
     }
 }

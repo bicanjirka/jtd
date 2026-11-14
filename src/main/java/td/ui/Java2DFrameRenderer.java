@@ -334,10 +334,10 @@ public final class Java2DFrameRenderer {
             case TOWER_AURA_LINK_CHOSEN -> withAlpha(new Color(255, 215, 90), 110);
             case TOWER_AURA_RALLY -> new Color(255, 170, 60);
             case TOWER_AURA_MENTEE -> new Color(255, 215, 90);
-            case TOWER_UPGRADE_CORE -> new Color(127, 212, 255);
-            case TOWER_UPGRADE_BASE -> new Color(225, 225, 230);
-            case TOWER_UPGRADE_HEAD -> new Color(255, 200, 60);
-            case TOWER_UPGRADE_SPECIAL -> new Color(200, 100, 255);
+            case TOWER_UPGRADE_TIER_3 -> new Color(127, 212, 255);
+            case TOWER_UPGRADE_TIER_0 -> new Color(225, 225, 230);
+            case TOWER_UPGRADE_TIER_1 -> new Color(255, 200, 60);
+            case TOWER_UPGRADE_TIER_2 -> new Color(200, 100, 255);
             case TOWER_TRANSCENDENT -> new Color(255, 205, 70);
             case TOWER_RANK -> new Color(205, 215, 235);
             case TOWER_SNIPER_BEAM -> Color.GREEN;
@@ -1266,12 +1266,12 @@ public final class Java2DFrameRenderer {
         AffineTransform save = g2.getTransform();
         g2.translate(sprite.centerX(), sprite.centerY());
         float bodySize = scale * TOWER_BODY_SIZE_FRACTION;
-        if (sprite.transcendent()) {
+        if (sprite.crowned()) {
             this.paintTranscendentHalo(g2, sprite.haloTurn(), bodySize);
         }
         this.paintEnchantHalo(g2, sprite.enchantPulse(), bodySize);
         this.paintTowerBody(g2, sprite.look(), bodySize);
-        this.paintSlotPips(g2, sprite.slotMarks(), sprite.transcendent(), bodySize);
+        this.paintSlotPips(g2, sprite.slotMarks(), sprite.crowned(), bodySize);
         this.paintSlotReadyChevrons(g2, sprite.slotMarks(), bodySize);
         this.paintRankPips(g2, sprite.rank(), bodySize);
         if (sprite.rankUpProgress() >= 0f) {
@@ -1328,17 +1328,17 @@ public final class Java2DFrameRenderer {
         float radius = bodySize * ENCHANT_HALO_RADIUS_FRACTION;
         Stroke previousStroke = g2.getStroke();
         g2.setStroke(new BasicStroke(ENCHANT_HALO_STROKE_WIDTH));
-        g2.setColor(withAlpha(colorFor(Palette.TOWER_UPGRADE_SPECIAL), Math.round(80 + pulse * 150)));
+        g2.setColor(withAlpha(colorFor(Palette.TOWER_UPGRADE_TIER_2), Math.round(80 + pulse * 150)));
         g2.draw(new Ellipse2D.Float(-radius, -radius, radius * 2, radius * 2));
         g2.setStroke(previousStroke);
     }
 
     /**
-     * Pips below a tower, one per owned node, grouped by slot with a gap between groups. A
-     * Transcendent tower's last Core pip, Transcendent's own, is a gold diamond: the head's pips
-     * are gold too, so the shape tells them apart.
+     * Pips below a tower, one per owned node, grouped by tier with a gap between groups. A
+     * crowned tower's last top-tier pip is a gold diamond: another tier's pips may be gold too, so the shape tells
+     * them apart.
      */
-    private void paintSlotPips(Graphics2D g2, List<SlotMarkDraw> marks, boolean transcendent, float bodySize) {
+    private void paintSlotPips(Graphics2D g2, List<SlotMarkDraw> marks, boolean crowned, float bodySize) {
         List<Color> pipColors = new ArrayList<>();
         int crownIndex = -1;
         for (SlotMarkDraw mark : marks) {
@@ -1352,7 +1352,7 @@ public final class Java2DFrameRenderer {
             for (int i = 0; i < mark.level(); i++) {
                 pipColors.add(color);
             }
-            if (transcendent && mark.palette() == Palette.TOWER_UPGRADE_CORE) {
+            if (crowned && mark == marks.getLast()) {
                 crownIndex = pipColors.size() - 1;
                 pipColors.set(crownIndex, colorFor(Palette.TOWER_TRANSCENDENT));
             }

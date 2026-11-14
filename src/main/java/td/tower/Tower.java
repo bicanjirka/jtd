@@ -9,6 +9,7 @@ import td.stat.StatModifiers;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeRemoval;
 import td.tower.upgrade.UpgradeState;
+import td.tower.upgrade.UpgradeSwitch;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 
@@ -183,15 +184,15 @@ public interface Tower {
     /** What {@code node} says to the player: its value rows and its sentences. */
     NodeWords wordsOf(UpgradeNode node);
 
-    /** Unowned nodes whose prerequisites are met. */
+    /** What it may buy now, money aside ({@link UpgradeTree#offered}). */
     default List<UpgradeNode> offeredUpgrades(GameWorld context) {
         return this.upgradeTree().offered(this, context);
     }
 
     /**
-     * Pays for {@code node} and adds it to the owned nodes. Returns {@code false} with no effect if
-     * the node is not in this tree, is owned, is gated, or is unaffordable. It checks and charges
-     * in one call, so don't check affordability first.
+     * Pays for {@code node}, an upgrade or a tier's unlock, and adds it to the owned nodes. Returns {@code false} with no
+     * effect if the tree does not offer it or it is unaffordable. It checks and charges in one call, so don't check
+     * affordability first.
      */
     boolean buyUpgrade(UpgradeNode node);
 
@@ -210,7 +211,18 @@ public interface Tower {
 
     /**
      * Removes {@code node} and every owned node that depends on it ({@link UpgradeTree#removalFor}), and
-     * refunds {@link #refundFor} them. Returns {@code false} with no effect for a node it doesn't own.
+     * refunds {@link #refundFor} them. Returns {@code false} with no effect for a node it doesn't own, and while a wave
+     * is out ({@link UpgradeTree#changesAllowed}).
      */
     boolean downgrade(UpgradeNode node);
+
+    /** What switching to {@code member} gives back: what selling the upgrades it sells would pay. */
+    Refund refundFor(UpgradeSwitch change);
+
+    /**
+     * Makes {@code member} its cluster's or fork's active one in place of the member owned now, for nothing, and sells
+     * what came after the old member ({@link UpgradeTree#switchFor}). Returns {@code false} with no effect unless
+     * another member is owned, and while a wave is out.
+     */
+    boolean switchTo(UpgradeNode member);
 }

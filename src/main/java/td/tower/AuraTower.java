@@ -19,15 +19,11 @@ import td.tower.aura.SharedLessonsMechanic;
 import td.tower.aura.TutelageMechanic;
 import td.tower.mortar.PathLine;
 import td.tower.targeting.InRangeTargetQuery;
-import td.tower.upgrade.BaseSlotMechanics;
-import td.tower.upgrade.BuffedTowersCondition;
-import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.MechanicCatalogue;
-import td.tower.upgrade.NeighbourOfTypeCondition;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.RangeNodes;
+import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.PathRuntime;
@@ -55,58 +51,56 @@ public final class AuraTower extends AbstractTower {
 
     /** The share of a jammer's effect that still reaches a tower in range. */
     private static final float DISRUPTION_LEFT = 0.5f;
-    /** What the aura must buff before its third head level is offered; Keen Edge also needs an aura beside it. */
-    private static final int HEAD_THREE_BUFFED_TOWERS = 4;
     /** Rally: the spot's size, what stepping on it gives, for how long, and how soon it can be used again. */
 
-    private static final UpgradeNode AMPLIFYING_CORE_1 = UpgradeTier.HEAD_1.node("aura.head.amplifying_core.1",
-            "Amplifying Core", PRICE)
+    private static final UpgradeNode AMPLIFYING_CORE_1 = UpgradeNode.of("aura.head.amplifying_core.1", "Amplifying Core", 20)
             .withModifiers(TowerModifiers.auraPower(0.1f));
-    private static final UpgradeNode AMPLIFYING_CORE_2 = UpgradeTier.HEAD_2.node("aura.head.amplifying_core.2",
-            "Amplifying Core II", PRICE)
+    private static final UpgradeNode AMPLIFYING_CORE_2 = UpgradeNode.of("aura.head.amplifying_core.2", "Amplifying Core II", 30)
             .after(AMPLIFYING_CORE_1)
             .withModifiers(TowerModifiers.auraPower(0.1f))
-            .withEmission(TowerModifiers.attackSpeed(0.1f));
-    private static final UpgradeNode KEEN_EDGE = UpgradeTier.HEAD_3.node("aura.head.amplifying_core.3", "Keen Edge",
-            PRICE)
-            .withGate(new BuffedTowersCondition(HEAD_THREE_BUFFED_TOWERS)
-                    .and(new NeighbourOfTypeCondition(TowerFactory.Type.AURA)))
+            .withEmission(TowerModifiers.attackSpeed(0.1f))
+            .inTier(1);
+    private static final UpgradeNode KEEN_EDGE = UpgradeNode.of("aura.head.amplifying_core.3", "Keen Edge", 50)
             .withEmission(TowerModifiers.critMultiplier(0.5f))
-            .after(AMPLIFYING_CORE_2);
-    private static final UpgradeNode BROADCAST_1 = UpgradeTier.HEAD_1.node("aura.head.broadcast.1",
-            "Broadcast", PRICE)
+            .after(AMPLIFYING_CORE_2)
+            .inTier(2);
+    private static final UpgradeNode BROADCAST_1 = UpgradeNode.of("aura.head.broadcast.1", "Broadcast", 20)
             .withModifiers(TowerModifiers.range(0.45f));
-    private static final UpgradeNode BROADCAST_2 = UpgradeTier.HEAD_2.node("aura.head.broadcast.2",
-            "Broadcast II", PRICE)
+    private static final UpgradeNode BROADCAST_2 = UpgradeNode.of("aura.head.broadcast.2", "Broadcast II", 30)
             .after(BROADCAST_1)
-            .withEmission(TowerModifiers.buffDuration(1f).plus(TowerModifiers.disruptionTaken(0.5f)));
-    private static final UpgradeNode CONDUIT = UpgradeTier.HEAD_3.node("aura.head.broadcast.3", "Conduit", PRICE)
-            .withGate(new BuffedTowersCondition(HEAD_THREE_BUFFED_TOWERS))
+            .withEmission(TowerModifiers.buffDuration(1f).plus(TowerModifiers.disruptionTaken(0.5f)))
+            .inTier(1);
+    private static final UpgradeNode CONDUIT = UpgradeNode.of("aura.head.broadcast.3", "Conduit", 50)
             .withEmission(TowerModifiers.effectDuration(0.3f))
-            .after(BROADCAST_2);
-    private static final UpgradeNode TUTELAGE_1 = UpgradeTier.EXTRA_1.node("aura.extra.tutelage.1", "Tutelage", PRICE);
-    private static final UpgradeNode SHARED_LESSONS = UpgradeTier.EXTRA_2.node("aura.extra.tutelage.2",
-            "Shared Lessons", PRICE)
-            .after(TUTELAGE_1);
-    private static final UpgradeNode APPRENTICE = UpgradeTier.EXTRA_3.node("aura.extra.tutelage.3", "Apprentice",
-            PRICE)
-            .after(SHARED_LESSONS);
-    private static final UpgradeNode WITHERING_FIELD = UpgradeTier.SPECIAL.node("aura.special.withering_field",
-            "Withering Field", PRICE)
-            .withEmission(TowerModifiers.witherEvery(200));
-    private static final UpgradeNode CHOSEN = UpgradeTier.SPECIAL.node("aura.special.chosen", "Chosen", PRICE);
-    private static final UpgradeNode RALLY = UpgradeTier.SPECIAL.node("aura.special.rally", "Rally", PRICE);
+            .after(BROADCAST_2)
+            .inTier(2);
+    private static final UpgradeNode TUTELAGE_1 = UpgradeNode.of("aura.extra.tutelage.1", "Tutelage", 16);
+    private static final UpgradeNode SHARED_LESSONS = UpgradeNode.of("aura.extra.tutelage.2", "Shared Lessons", 24)
+            .after(TUTELAGE_1)
+            .inTier(1);
+    private static final UpgradeNode APPRENTICE = UpgradeNode.of("aura.extra.tutelage.3", "Apprentice", 40)
+            .after(SHARED_LESSONS)
+            .inTier(2);
+    private static final UpgradeNode WITHERING_FIELD = UpgradeNode.of("aura.special.withering_field", "Withering Field", 80)
+            .withEmission(TowerModifiers.witherEvery(200))
+            .inTier(3);
+    private static final UpgradeNode CHOSEN = UpgradeNode.of("aura.special.chosen", "Chosen", 80)
+            .inTier(3);
+    private static final UpgradeNode RALLY = UpgradeNode.of("aura.special.rally", "Rally", 80)
+            .inTier(3);
 
-    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none();
+    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 16);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS))
-            .with(AMPLIFYING_CORE_1, AMPLIFYING_CORE_2, KEEN_EDGE, BROADCAST_1, BROADCAST_2, CONDUIT, TUTELAGE_1, SHARED_LESSONS, APPRENTICE,
+    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE).subList(0, 2))
+            .with(ATTUNE, AMPLIFYING_CORE_1, BROADCAST_1, TUTELAGE_1,
+                    AMPLIFYING_CORE_2, BROADCAST_2, SHARED_LESSONS,
+                    KEEN_EDGE, CONDUIT, APPRENTICE,
                     WITHERING_FIELD, CHOSEN, RALLY)
-            .withChoice(ExclusiveChoice.oneOf(AMPLIFYING_CORE_1, BROADCAST_1))
-            .withChoice(ExclusiveChoice.oneOf(WITHERING_FIELD, CHOSEN, RALLY));
+            .withCluster(UpgradeCluster.of("Core", AMPLIFYING_CORE_1, BROADCAST_1))
+            .withCluster(UpgradeCluster.of("Special", WITHERING_FIELD, CHOSEN, RALLY));
 
     private static final MechanicCatalogue<AuraMechanic> MECHANICS = MechanicCatalogue.<AuraMechanic>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, KinshipMechanic::new)
+            .with(ATTUNE.id(), KinshipMechanic::new)
             .with(BROADCAST_1.id(), FarKinshipMechanic::new)
             .with(AMPLIFYING_CORE_1.id(), KinshipStrengthMechanic::new)
             .with(TUTELAGE_1.id(), TutelageMechanic::new)

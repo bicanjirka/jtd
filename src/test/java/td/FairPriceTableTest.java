@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import td.FairPriceTable.MeasuredCopy;
 import td.FairPriceTable.MeasuredLine;
 import td.tower.TowerFactory;
-import td.tower.upgrade.UpgradeTier;
 
 import java.util.List;
 import java.util.Set;
@@ -47,27 +46,27 @@ class FairPriceTableTest {
     @Test
     void aNodeIsPricedOnWhatItAddsToTheLineBeforeIt() {
         FairPriceTable table = new FairPriceTable(1);
-        MeasuredLine first = new MeasuredLine(TOWER, UpgradeTier.HEAD_1, Set.of("a"), 2);
-        MeasuredLine second = new MeasuredLine(TOWER, UpgradeTier.HEAD_2, Set.of("a", "b"), 5);
+        MeasuredLine first = new MeasuredLine(TOWER, 0, Set.of("a"), 2);
+        MeasuredLine second = new MeasuredLine(TOWER, 1, Set.of("a", "b"), 5);
 
-        assertThat(table.tierPercents(List.of(first, second)).get(UpgradeTier.HEAD_2)).isCloseTo(percent(3), within(NEAR));
+        assertThat(table.tierPercents(List.of(first, second)).get(1)).isCloseTo(percent(3), within(NEAR));
     }
 
     @Test
     void aTierIsTheMeanOfItsNodesEvenWhereNoiseMadeOneNegative() {
         FairPriceTable table = new FairPriceTable(1);
-        MeasuredLine gain = new MeasuredLine(TOWER, UpgradeTier.HEAD_1, Set.of("a"), 4);
-        MeasuredLine loss = new MeasuredLine(TOWER, UpgradeTier.HEAD_1, Set.of("b"), -2);
+        MeasuredLine gain = new MeasuredLine(TOWER, 0, Set.of("a"), 4);
+        MeasuredLine loss = new MeasuredLine(TOWER, 0, Set.of("b"), -2);
 
-        assertThat(table.tierPercents(List.of(gain, loss)).get(UpgradeTier.HEAD_1)).isCloseTo(percent(1), within(NEAR));
+        assertThat(table.tierPercents(List.of(gain, loss)).get(0)).isCloseTo(percent(1), within(NEAR));
     }
 
     @Test
     void aLineOfAnotherTowerIsNotPartOfThisOneEvenWithTheSameNodeIds() {
         FairPriceTable table = new FairPriceTable(1);
-        MeasuredLine other = new MeasuredLine(OTHER_TOWER, UpgradeTier.ATTUNE, Set.of("base"), 8);
-        MeasuredLine own = new MeasuredLine(TOWER, UpgradeTier.HEAD_1, Set.of("base", "head"), 5);
+        MeasuredLine other = new MeasuredLine(OTHER_TOWER, 0, Set.of("base"), 8);
+        MeasuredLine own = new MeasuredLine(TOWER, 1, Set.of("base", "head"), 5);
 
-        assertThat(table.tierPercents(List.of(other, own)).get(UpgradeTier.HEAD_1)).isCloseTo(percent(5), within(NEAR));
+        assertThat(table.tierPercents(List.of(other, own)).get(1)).isCloseTo(percent(5), within(NEAR));
     }
 }

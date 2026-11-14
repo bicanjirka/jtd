@@ -297,19 +297,6 @@ class MortarTowerTest {
         assertThat(tower.getRangingMarker().orElseThrow().step()).isEqualTo(1);
     }
 
-    @Test
-    void everyBracketedShellCountsAsADeedAndTheFirstDoesNot() {
-        MortarTower tower = this.attunedTower();
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
-
-        this.landAShell(tower);
-        int afterTheFirst = tower.experience().deeds();
-        this.tick += 5;
-        this.landAShell(tower);
-
-        assertThat(afterTheFirst).isZero();
-        assertThat(tower.experience().deeds()).isEqualTo(1);
-    }
 
     @Test
     void heavyShellFliesSlowerAndDazesWhatItLandsWithinHalfACellOf() {
@@ -354,7 +341,7 @@ class MortarTowerTest {
 
     @Test
     void withTwoSpecialsOwnedTheyTakeTurnsAndEveryThirdShellIsPlain() {
-        MortarTower tower = this.towerWith("Napalm", "Transcendent", "Cryo Shells");
+        MortarTower tower = this.towerWith("Napalm", "Cryo Shells");
         this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
 
         for (int i = 0; i < 8; i++) {
@@ -414,7 +401,7 @@ class MortarTowerTest {
 
     @Test
     void longBatteryWidensTheDeadZoneAndMoreRangeNeverMovesIt() {
-        MortarTower tower = this.towerWith("Transcendent");
+        MortarTower tower = this.towerWith();
         this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, 2 * SCALE, 0)});
         tower.doTick(1);
         boolean shelledBefore = !this.context.projectiles().getProjectiles().isEmpty();
@@ -526,7 +513,7 @@ class MortarTowerTest {
     @Test
     void shrapnelReachGrowsWithEachBracketingStepBeyondTheWideningOfTheBlast() {
         MortarTower tower = this.towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Fragmentation Rounds");
+        UpgradePaths.buy(tower, this.context, "Attune", "Fragmentation Rounds");
         float ring = 1.75f * MortarTower.SPLASH_RADIUS_BASE * SCALE;
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         FakeEnemyMob far = this.enemyAt(tower, OUT, ring + 0.2f * SCALE).hidden();

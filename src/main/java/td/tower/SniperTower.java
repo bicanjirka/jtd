@@ -40,15 +40,12 @@ import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.TargetPriority;
 import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotMechanics;
-import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.PurposeCondition;
-import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.RangeNodes;
+import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -87,115 +84,109 @@ public final class SniperTower extends AbstractTower {
     private static final ProcPayload FRENZY = new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.FRENZY, 3,
             TowerModifiers.attackSpeed(1f)).keepingARunningOne().lengthenedByBuffs());
 
-    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
-            .withAttune(NodeEffects.none()
-                    .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 0),
-                            HitAdjustment.critChance(0.1f).plus(HitAdjustment.accuracy(10f)))))
-            .withRangeThree(OVERWATCH_RANGE_BONUS, NodeEffects.none().withModifiers(TowerModifiers.deadZone(2f)));
+    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 12)
+            .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 0),
+                    HitAdjustment.critChance(0.1f).plus(HitAdjustment.accuracy(10f))));
 
-    private static final TermText AIM_DEED = TermText.format("shots with {}", TowerTerm.STEADY_AIM);
-    private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeTier.HEAD_1.node("sniper.head.focused_optics.1",
-            "Focused Optics", PRICE)
+    private static final UpgradeNode FOCUSED_OPTICS_1 = UpgradeNode.of("sniper.head.focused_optics.1", "Focused Optics", 15)
             .withHitBonus(HitBonus.when(new HitCondition.FreshTarget(), HitAdjustment.critChance(0.5f)))
             .withHitBonus(HitBonus.when(new HitCondition.FocusAtLeast(TowerTerm.STEADY_AIM, 1), HitAdjustment.attackSpeed(0.25f)));
-    private static final UpgradeNode FOCUSED_OPTICS_2 = UpgradeTier.HEAD_2.node("sniper.head.focused_optics.2",
-            "Focused Optics II", PRICE)
+    private static final UpgradeNode FOCUSED_OPTICS_2 = UpgradeNode.of("sniper.head.focused_optics.2", "Focused Optics II", 23)
             .withModifiers(TowerModifiers.damage(16f))
             .withProc(Proc.onCrit(FRENZY))
             .withProc(Proc.onDodge(FRENZY))
-            .after(FOCUSED_OPTICS_1);
-    private static final UpgradeNode FOCUSED_OPTICS_3 = UpgradeTier.HEAD_3.node("sniper.head.focused_optics.3",
-            "Focused Optics III", PRICE)
+            .after(FOCUSED_OPTICS_1)
+            .inTier(1);
+    private static final UpgradeNode FOCUSED_OPTICS_3 = UpgradeNode.of("sniper.head.focused_optics.3", "Focused Optics III", 38)
             .withModifiers(TowerModifiers.damage(12f))
-            .withGate(new PurposeCondition(AIM_DEED, 20))
-            .after(FOCUSED_OPTICS_2);
-    private static final UpgradeNode RAILGUN = UpgradeTier.HEAD_4.node("sniper.head.focused_optics.4a", "Railgun",
-            PRICE)
-            .after(FOCUSED_OPTICS_3);
-    private static final UpgradeNode EXECUTIONER = UpgradeTier.HEAD_4.node("sniper.head.focused_optics.4b",
-            "Executioner", PRICE)
+            .after(FOCUSED_OPTICS_2)
+            .inTier(2);
+    private static final UpgradeNode RAILGUN = UpgradeNode.of("sniper.head.focused_optics.4a", "Railgun", 60)
+            .after(FOCUSED_OPTICS_3)
+            .inTier(3);
+    private static final UpgradeNode EXECUTIONER = UpgradeNode.of("sniper.head.focused_optics.4b", "Executioner", 60)
             .withHitBonus(HitBonus.when(new HitCondition.All(List.of(new HitCondition.TargetRankAtLeast(Rank.BOSS),
                     new HitCondition.TargetHealthBelow(0.25f))), HitAdjustment.damage(0.5f)))
-            .after(FOCUSED_OPTICS_3);
-    private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeTier.HEAD_1.node("sniper.head.marksmans_eye.1",
-            "Marksman's Eye", PRICE)
+            .after(FOCUSED_OPTICS_3)
+            .inTier(3);
+    private static final UpgradeNode MARKSMANS_EYE_1 = UpgradeNode.of("sniper.head.marksmans_eye.1", "Marksman's Eye", 15)
             .withModifiers(TowerModifiers.aimStacks(2))
             .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 0), HitAdjustment.damage(0.2f)))
             .withProc(Proc.onDodge(new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.PATIENCE, 1,
                     StatModifiers.none()).withCapability(TowerCapability.GUARANTEED_CRIT))));
-    private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeTier.HEAD_2.node("sniper.head.marksmans_eye.2",
-            "Marksman's Eye II", PRICE)
+    private static final UpgradeNode MARKSMANS_EYE_2 = UpgradeNode.of("sniper.head.marksmans_eye.2", "Marksman's Eye II", 23)
             .withModifiers(TowerModifiers.attackSpeed(0.25f).plus(TowerModifiers.armorPenetrationFlat(30f)))
-            .after(MARKSMANS_EYE_1);
-    private static final UpgradeNode MARKSMANS_EYE_3 = UpgradeTier.HEAD_3.node("sniper.head.marksmans_eye.3",
-            "Marksman's Eye III", PRICE)
-            .withGate(new PurposeCondition(AIM_DEED, 20))
+            .after(MARKSMANS_EYE_1)
+            .inTier(1);
+    private static final UpgradeNode MARKSMANS_EYE_3 = UpgradeNode.of("sniper.head.marksmans_eye.3", "Marksman's Eye III", 38)
             .withCapability(TowerCapability.CRITS_PIERCE_SHIELDS)
-            .after(MARKSMANS_EYE_2);
-    private static final UpgradeNode UNBROKEN_AIM = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4a",
-            "Unbroken Aim", PRICE)
+            .after(MARKSMANS_EYE_2)
+            .inTier(2);
+    private static final UpgradeNode UNBROKEN_AIM = UpgradeNode.of("sniper.head.marksmans_eye.4a", "Unbroken Aim", 60)
             .withModifiers(TowerModifiers.aimStacks(2))
-            .after(MARKSMANS_EYE_3);
-    private static final UpgradeNode SUNDER_ROUNDS = UpgradeTier.HEAD_4.node("sniper.head.marksmans_eye.4b",
-            "Sunder Rounds", PRICE)
+            .after(MARKSMANS_EYE_3)
+            .inTier(3);
+    private static final UpgradeNode SUNDER_ROUNDS = UpgradeNode.of("sniper.head.marksmans_eye.4b", "Sunder Rounds", 60)
             .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
-            .after(MARKSMANS_EYE_3);
-    private static final UpgradeNode TRADECRAFT_1 = UpgradeTier.EXTRA_1.node("sniper.extra.tradecraft.1",
-            "Tradecraft", PRICE);
-    private static final UpgradeNode TRADECRAFT_2 = UpgradeTier.EXTRA_2.node("sniper.extra.tradecraft.2",
-            "Tradecraft II", PRICE)
+            .after(MARKSMANS_EYE_3)
+            .inTier(3);
+    private static final UpgradeNode TRADECRAFT_1 = UpgradeNode.of("sniper.extra.tradecraft.1", "Tradecraft", 12);
+    private static final UpgradeNode TRADECRAFT_2 = UpgradeNode.of("sniper.extra.tradecraft.2", "Tradecraft II", 18)
             .withHitBonus(HitBonus.when(new HitCondition.BeyondRangeShare(2f / 3f), HitAdjustment.damage(0.25f)))
-            .after(TRADECRAFT_1);
-    private static final UpgradeNode SILVER_ROUNDS = UpgradeTier.EXTRA_3.node("sniper.extra.tradecraft.3",
-            "Silver Rounds", PRICE)
+            .after(TRADECRAFT_1)
+            .inTier(1);
+    private static final UpgradeNode SILVER_ROUNDS = UpgradeNode.of("sniper.extra.tradecraft.3", "Silver Rounds", 30)
             .withProc(Proc.everyNthShot(3, new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.SILVER_ROUND, 1,
                     TowerModifiers.magicPenetration(0.25f)).withCapability(TowerCapability.MAGIC_DAMAGE))))
-            .after(TRADECRAFT_2);
-    private static final UpgradeNode SPOTTER_UPLINK = UpgradeTier.EXTRA_4.node("sniper.extra.tradecraft.4",
-            "Spotter Uplink", PRICE)
-            .after(SILVER_ROUNDS);
-    private static final UpgradeNode MOMENTUM = UpgradeTier.SPECIAL.node("sniper.special.momentum", "Momentum", PRICE)
+            .after(TRADECRAFT_2)
+            .inTier(2);
+    private static final UpgradeNode SPOTTER_UPLINK = UpgradeNode.of("sniper.extra.tradecraft.4", "Spotter Uplink", 45)
+            .after(SILVER_ROUNDS)
+            .inTier(3);
+    private static final UpgradeNode MOMENTUM = UpgradeNode.of("sniper.special.momentum", "Momentum", 60)
             .withTargeting(TargetPriority.HIGHEST_RANK)
             .withProc(Proc.onCrit(new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.CHARGED_SHOT, 1,
                     TowerModifiers.damageTimes(3f).plus(TowerModifiers.armorPenetration(1f))
                             .plus(TowerModifiers.flatPenetration(1f))))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
             .withProc(Proc.onKill(new ProcPayload.GrantStatus(TowerStatus.timed(TowerTerm.HASTE,
                     TowerModifiers.attackSpeed(1f), 100))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
-            .after(FOCUSED_OPTICS_1);
-    private static final UpgradeNode RICOCHET = UpgradeTier.SPECIAL.node("sniper.special.ricochet", "Ricochet", PRICE)
+            .after(FOCUSED_OPTICS_1)
+            .inTier(2);
+    private static final UpgradeNode RICOCHET = UpgradeNode.of("sniper.special.ricochet", "Ricochet", 60)
             .withTargeting(TargetPriority.MOST_NEIGHBOURS)
-            .after(FOCUSED_OPTICS_1);
-    private static final UpgradeNode HEADHUNTER = UpgradeTier.SPECIAL.node("sniper.special.headhunter", "Headhunter",
-            PRICE)
+            .after(FOCUSED_OPTICS_1)
+            .inTier(2);
+    private static final UpgradeNode HEADHUNTER = UpgradeNode.of("sniper.special.headhunter", "Headhunter", 60)
             .withTargeting(TargetPriority.HIGHEST_RANK)
             .withHitBonus(HitBonus.when(new HitCondition.TargetRankAtLeast(Rank.ELITE), HitAdjustment.damage(0.75f)))
-            .after(FOCUSED_OPTICS_1);
-    private static final UpgradeNode HOLLOW_POINT = UpgradeTier.SPECIAL.node("sniper.special.hollow_point",
-            "Hollow Point", PRICE)
+            .after(FOCUSED_OPTICS_1)
+            .inTier(3);
+    private static final UpgradeNode HOLLOW_POINT = UpgradeNode.of("sniper.special.hollow_point", "Hollow Point", 60)
             .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.VULNERABLE, 1)).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))))
-            .after(MARKSMANS_EYE_1);
+            .after(MARKSMANS_EYE_1)
+            .inTier(2);
     // The id keeps its old word so saved games still load the node.
-    private static final UpgradeNode FOURTH_SHOT = UpgradeTier.SPECIAL.node("sniper.special.fifth_shot",
-            "Fourth Shot", PRICE)
+    private static final UpgradeNode FOURTH_SHOT = UpgradeNode.of("sniper.special.fifth_shot", "Fourth Shot", 60)
             .withProc(Proc.everyNthShot(4, new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.DEADEYE_ROUND, 1,
                     TowerModifiers.critMultiplier(1.5f)).withCapability(TowerCapability.GUARANTEED_CRIT))))
-            .after(MARKSMANS_EYE_1);
-    private static final UpgradeNode SHATTER_SHOT = UpgradeTier.SPECIAL.node("sniper.special.shatter_shot",
-            "Shatter Shot", PRICE)
+            .after(MARKSMANS_EYE_1)
+            .inTier(2);
+    private static final UpgradeNode SHATTER_SHOT = UpgradeNode.of("sniper.special.shatter_shot", "Shatter Shot", 60)
             .withModifiers(TowerModifiers.critChance(0.15f).plus(TowerModifiers.critMultiplier(0.5f)))
-            .after(MARKSMANS_EYE_1);
+            .after(MARKSMANS_EYE_1)
+            .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, FOCUSED_OPTICS_3,
-            MARKSMANS_EYE_3))
-            .with(FOCUSED_OPTICS_1, FOCUSED_OPTICS_2, FOCUSED_OPTICS_3, RAILGUN, EXECUTIONER, MARKSMANS_EYE_1,
-                    MARKSMANS_EYE_2, MARKSMANS_EYE_3, UNBROKEN_AIM, SUNDER_ROUNDS, TRADECRAFT_1, TRADECRAFT_2,
-                    SILVER_ROUNDS, SPOTTER_UPLINK, MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FOURTH_SHOT,
-                    SHATTER_SHOT)
-            .withChoice(ExclusiveChoice.oneOf(FOCUSED_OPTICS_1, MARKSMANS_EYE_1))
-            .withChoice(ExclusiveChoice.oneOf(RAILGUN, EXECUTIONER))
-            .withChoice(ExclusiveChoice.oneOf(UNBROKEN_AIM, SUNDER_ROUNDS))
-            .withChoice(ExclusiveChoice.specials(MOMENTUM, RICOCHET, HEADHUNTER, HOLLOW_POINT, FOURTH_SHOT,
-                    SHATTER_SHOT));
+    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE, OVERWATCH_RANGE_BONUS,
+                    NodeEffects.none().withModifiers(TowerModifiers.deadZone(2f))))
+            .with(ATTUNE, FOCUSED_OPTICS_1, MARKSMANS_EYE_1, TRADECRAFT_1,
+                    FOCUSED_OPTICS_2, MARKSMANS_EYE_2, TRADECRAFT_2,
+                    FOCUSED_OPTICS_3, MOMENTUM, RICOCHET, MARKSMANS_EYE_3, HOLLOW_POINT, FOURTH_SHOT, SILVER_ROUNDS,
+                    RAILGUN, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, SUNDER_ROUNDS, SHATTER_SHOT, SPOTTER_UPLINK)
+            .withCluster(UpgradeCluster.of("Discipline", FOCUSED_OPTICS_1, MARKSMANS_EYE_1))
+            .withCluster(UpgradeCluster.of("Special", MOMENTUM, RICOCHET))
+            .withCluster(UpgradeCluster.of("Special", HOLLOW_POINT, FOURTH_SHOT))
+            .withCluster(UpgradeCluster.of("Mastery", RAILGUN, EXECUTIONER))
+            .withCluster(UpgradeCluster.of("Mastery", UNBROKEN_AIM, SUNDER_ROUNDS));
 
     private static final MechanicCatalogue<SniperMechanic> MECHANICS = MechanicCatalogue.<SniperMechanic>empty()
             .with(FOCUSED_OPTICS_3.id(), WeakSpotMechanic::new)
@@ -311,7 +302,6 @@ public final class SniperTower extends AbstractTower {
             this.settle(new ShotResult(target, hit.critical(), target.isDead()), shot, owned);
         }
         if (lock.stacks() > 0) {
-            this.countDeedOfAttack();
         }
         double rate = this.attackRate();
         this.clock.spend(rate / (rate + shot.attackSpeedBonus()));
@@ -412,9 +402,10 @@ public final class SniperTower extends AbstractTower {
         return Optional.ofNullable(this.lastShot);
     }
 
-    /** How many Steady Aim stacks the next shot has, whichever enemy it hits; empty without Attune. */
+    /** How many Steady Aim stacks the next shot has, whichever enemy it hits; empty while no bonus counts them. */
     public OptionalInt steadyAimStacks() {
-        if (!this.upgrades().owns(StandardBaseSlot.ATTUNE_ID)) {
+        if (this.upgrades().hitBonuses().stream()
+                .noneMatch(bonus -> bonus.scaling().focusCounter().filter(TowerTerm.STEADY_AIM::equals).isPresent())) {
             return OptionalInt.empty();
         }
         return OptionalInt.of(Math.min(this.aimStackCap(), this.focus.stacks()));

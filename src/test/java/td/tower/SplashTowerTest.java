@@ -119,7 +119,7 @@ class SplashTowerTest {
     }
 
     @Test
-    void aBlastHitsASaturatedEnemyHarderAndAPrimaryAlreadySaturatedIsADeed() {
+    void aBlastHitsASaturatedEnemyHarder() {
         SplashTower tower = this.upgradedTower("Attune");
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
         saturate(enemy, 2);
@@ -128,7 +128,6 @@ class SplashTowerTest {
         tower.doTick(0);
 
         assertThat(enemy.onlyHitAmount()).isGreaterThan(this.full);
-        assertThat(tower.experience().deeds()).isEqualTo(1);
     }
 
     @Test
@@ -173,7 +172,7 @@ class SplashTowerTest {
 
     @Test
     void arcJumpsFromTheOutermostCaughtEnemyToTheNearestOneBeyondAtHalfTheBlastAsMagic() {
-        SplashTower tower = this.upgradedTower("Arc");
+        SplashTower tower = this.upgradedTower("Attune", "Arc");
         FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
         FakeEnemyMob outermost = FakeEnemyMob.ghostAt(100, 100 + this.radius - 2);
         FakeEnemyMob beyond = FakeEnemyMob.ghostAt(100, 100 + this.radius + 30);
@@ -192,12 +191,12 @@ class SplashTowerTest {
 
     @Test
     void anArcCarriesHalfACellFurtherFromAnEnemyForEachSaturationStack() {
-        SplashTower plain = this.upgradedTower("Arc");
+        SplashTower plain = this.upgradedTower("Attune", "Arc");
         FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
         FakeEnemyMob gap = FakeEnemyMob.ghostAt(100, 100 + 2.5 * BoardFixtures.SCALE);
         this.enemies(centre, gap);
         plain.doTick(0);
-        SplashTower saturated = this.upgradedTower("Arc");
+        SplashTower saturated = this.upgradedTower("Attune", "Arc");
         FakeEnemyMob soaked = FakeEnemyMob.at(100, 100);
         saturate(soaked, 2);
         FakeEnemyMob reached = FakeEnemyMob.ghostAt(100, 100 + 2.5 * BoardFixtures.SCALE);
@@ -211,8 +210,8 @@ class SplashTowerTest {
 
     @Test
     void conductorLetsArcsCritAndJumpOnceMore() {
-        SplashTower plain = this.upgradedTower("Arc");
-        SplashTower conductor = this.upgradedTower("Conductor");
+        SplashTower plain = this.upgradedTower("Attune", "Arc");
+        SplashTower conductor = this.upgradedTower("Attune", "Conductor");
         FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
         List<FakeEnemyMob> line = List.of(FakeEnemyMob.ghostAt(100, 160), FakeEnemyMob.ghostAt(100, 190),
                 FakeEnemyMob.ghostAt(100, 220), FakeEnemyMob.ghostAt(100, 250));
@@ -227,7 +226,7 @@ class SplashTowerTest {
 
     @Test
     void overloadDazesWhatAnArcCrits() {
-        SplashTower tower = this.upgradedTower("Overload");
+        SplashTower tower = this.upgradedTower("Attune", "Overload");
         FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
         FakeEnemyMob struck = FakeEnemyMob.ghostAt(100, 160);
         struck.landEveryHitCritical();
@@ -240,7 +239,7 @@ class SplashTowerTest {
 
     @Test
     void chainLightningArcsAtFullDamageAndItsThirdJumpForks() {
-        SplashTower tower = this.upgradedTower("Chain Lightning");
+        SplashTower tower = this.upgradedTower("Attune", "Chain Lightning");
         FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
         FakeEnemyMob first = FakeEnemyMob.ghostAt(100, 160);
         FakeEnemyMob second = FakeEnemyMob.ghostAt(100, 190);
@@ -271,8 +270,8 @@ class SplashTowerTest {
 
     @Test
     void potencyAddsAJumpAndRaisesTheArcShare() {
-        SplashTower plain = this.upgradedTower("Arc", "Shaped Charge");
-        SplashTower potent = this.upgradedTower("Arc", "Shaped Charge", "Potency");
+        SplashTower plain = this.upgradedTower("Attune", "Arc", "Shaped Charge");
+        SplashTower potent = this.upgradedTower("Attune", "Arc", "Shaped Charge", "Potency");
         FakeEnemyMob centre = FakeEnemyMob.at(100, 100);
         List<FakeEnemyMob> line = List.of(FakeEnemyMob.ghostAt(100, 170), FakeEnemyMob.ghostAt(100, 200),
                 FakeEnemyMob.ghostAt(100, 230), FakeEnemyMob.ghostAt(100, 260));
@@ -287,7 +286,7 @@ class SplashTowerTest {
     }
 
     private SplashTower stormcallerWith(String special) {
-        return this.upgradedTower("Overload", special);
+        return this.upgradedTower("Attune", "Overload", special);
     }
 
     @Test
@@ -620,7 +619,7 @@ class SplashTowerTest {
     @Test
     void theForkNamesTheTower() {
         SplashTower plain = this.tower();
-        SplashTower stormcaller = this.upgradedTower("Arc");
+        SplashTower stormcaller = this.upgradedTower("Attune", "Arc");
         SplashTower hexer = this.upgradedTower("Hex");
 
         assertThat(List.of(plain.inspect().name(), stormcaller.inspect().name(), hexer.inspect().name()))
@@ -654,7 +653,7 @@ class SplashTowerTest {
 
     @Test
     void withoutRangeThreeABlastLeavesNoMine() {
-        SplashTower tower = this.upgradedTower("Transcendent");
+        SplashTower tower = this.upgradedTower();
         this.enemies(FakeEnemyMob.at(100, 100));
 
         tickThroughCooldown(tower, 8);

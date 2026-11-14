@@ -1,6 +1,5 @@
 package td.tower.upgrade;
 
-import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -15,11 +14,6 @@ final class AlwaysCondition implements UpgradeCondition {
     @Override
     public boolean isSatisfied(Tower tower, UpgradeState owned, GameWorld context) {
         return true;
-    }
-
-    @Override
-    public TermText describe() {
-        return TermText.of("money only");
     }
 
     @Override

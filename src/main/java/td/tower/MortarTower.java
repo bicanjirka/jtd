@@ -41,15 +41,12 @@ import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotMechanics;
-import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.PurposeCondition;
-import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.RangeNodes;
+import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.PathRuntime;
@@ -110,81 +107,76 @@ public final class MortarTower extends AbstractTower {
     private static final float BOMBLET_SPACING_CELLS = 0.8f;
     private static final float BOMBLET_SCATTER_CELLS = 0.8f;
 
-    private static final TermText BRACKET_DEED = TermText.format("shells with {}", TowerTerm.BRACKETING);
-    private static final int BRACKETED_SHELLS_NEEDED = 15;
 
-    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
-            .withRangeThree(0.3f, NodeEffects.none().withModifiers(TowerModifiers.deadZone(1f)));
+    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 24);
 
-    private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeTier.HEAD_1.node("mortar.head.siege_rounds.1",
-            "Siege Rounds", PRICE)
+    private static final UpgradeNode SIEGE_ROUNDS_1 = UpgradeNode.of("mortar.head.siege_rounds.1", "Siege Rounds", 30)
             .withModifiers(TowerModifiers.damage(9.6f).plus(TowerModifiers.bracketDamageStep(0.05f)));
-    private static final UpgradeNode SIEGE_ROUNDS_2 = UpgradeTier.HEAD_2.node("mortar.head.siege_rounds.2",
-            "Siege Rounds II", PRICE)
+    private static final UpgradeNode SIEGE_ROUNDS_2 = UpgradeNode.of("mortar.head.siege_rounds.2", "Siege Rounds II", 45)
             .withModifiers(TowerModifiers.damage(8f).plus(TowerModifiers.critChance(0.1f))
                     .plus(TowerModifiers.areaRadius(0.4375f)))
-            .after(SIEGE_ROUNDS_1);
-    private static final UpgradeNode HEAVY_SHELL = UpgradeTier.HEAD_3.node("mortar.head.siege_rounds.3",
-            "Heavy Shell", PRICE)
+            .after(SIEGE_ROUNDS_1)
+            .inTier(1);
+    private static final UpgradeNode HEAVY_SHELL = UpgradeNode.of("mortar.head.siege_rounds.3", "Heavy Shell", 75)
             .withModifiers(TowerModifiers.damage(16f).plus(TowerModifiers.attackSpeed(-0.2f))
                     .plus(TowerModifiers.projectileSpeed(-0.25f)).plus(TowerModifiers.projectileSize(0.3f)))
-            .withGate(new PurposeCondition(BRACKET_DEED, BRACKETED_SHELLS_NEEDED))
-            .after(SIEGE_ROUNDS_2);
-    private static final UpgradeNode TACTICAL_NUKE = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4a",
-            "Tactical Nuke", PRICE)
-            .after(HEAVY_SHELL);
-    private static final UpgradeNode BUNKER_BUSTER = UpgradeTier.HEAD_4.node("mortar.head.siege_rounds.4b",
-            "Bunker Buster", PRICE)
+            .after(SIEGE_ROUNDS_2)
+            .inTier(2);
+    private static final UpgradeNode TACTICAL_NUKE = UpgradeNode.of("mortar.head.siege_rounds.4a", "Tactical Nuke", 120)
+            .after(HEAVY_SHELL)
+            .inTier(3);
+    private static final UpgradeNode BUNKER_BUSTER = UpgradeNode.of("mortar.head.siege_rounds.4b", "Bunker Buster", 120)
             .withModifiers(TowerModifiers.areaRadius(-0.525f))
-            .after(HEAVY_SHELL);
+            .after(HEAVY_SHELL)
+            .inTier(3);
 
-    private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeTier.HEAD_1.node(
-            "mortar.head.fragmentation_rounds.1", "Fragmentation Rounds", PRICE);
-    private static final UpgradeNode FRAGMENTATION_ROUNDS_2 = UpgradeTier.HEAD_2.node(
-            "mortar.head.fragmentation_rounds.2", "Fragmentation Rounds II", PRICE)
-            .after(FRAGMENTATION_ROUNDS_1);
-    private static final UpgradeNode CLUSTER_SHELL = UpgradeTier.HEAD_3.node("mortar.head.fragmentation_rounds.3",
-            "Cluster Shell", PRICE)
-            .withGate(new PurposeCondition(BRACKET_DEED, BRACKETED_SHELLS_NEEDED))
-            .after(FRAGMENTATION_ROUNDS_2);
-    private static final UpgradeNode CARPET_BOMBING = UpgradeTier.HEAD_4.node("mortar.head.fragmentation_rounds.4a",
-            "Carpet Bombing", PRICE)
-            .after(CLUSTER_SHELL);
-    private static final UpgradeNode SHRAPNEL_STORM = UpgradeTier.HEAD_4.node("mortar.head.fragmentation_rounds.4b",
-            "Shrapnel Storm", PRICE)
-            .after(CLUSTER_SHELL);
+    private static final UpgradeNode FRAGMENTATION_ROUNDS_1 = UpgradeNode.of("mortar.head.fragmentation_rounds.1", "Fragmentation Rounds", 30);
+    private static final UpgradeNode FRAGMENTATION_ROUNDS_2 = UpgradeNode.of("mortar.head.fragmentation_rounds.2", "Fragmentation Rounds II", 45)
+            .after(FRAGMENTATION_ROUNDS_1)
+            .inTier(1);
+    private static final UpgradeNode CLUSTER_SHELL = UpgradeNode.of("mortar.head.fragmentation_rounds.3", "Cluster Shell", 75)
+            .after(FRAGMENTATION_ROUNDS_2)
+            .inTier(2);
+    private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.head.fragmentation_rounds.4a", "Carpet Bombing", 120)
+            .after(CLUSTER_SHELL)
+            .inTier(3);
+    private static final UpgradeNode SHRAPNEL_STORM = UpgradeNode.of("mortar.head.fragmentation_rounds.4b", "Shrapnel Storm", 120)
+            .after(CLUSTER_SHELL)
+            .inTier(3);
 
-    private static final UpgradeNode RIFLED_BARREL = UpgradeTier.EXTRA_1.node("mortar.extra.ballistics.1",
-            "Rifled Barrel", PRICE)
+    private static final UpgradeNode RIFLED_BARREL = UpgradeNode.of("mortar.extra.ballistics.1", "Rifled Barrel", 24)
             .withModifiers(TowerModifiers.projectileSpeed(0.4f).plus(TowerModifiers.projectileSize(-0.3f)));
-    private static final UpgradeNode PREDICTIVE_FIRE = UpgradeTier.EXTRA_2.node("mortar.extra.ballistics.2",
-            "Predictive Fire", PRICE)
-            .after(RIFLED_BARREL);
-    private static final UpgradeNode AIRBURST = UpgradeTier.EXTRA_3.node("mortar.extra.ballistics.3", "Airburst",
-            PRICE)
+    private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.extra.ballistics.2", "Predictive Fire", 36)
+            .after(RIFLED_BARREL)
+            .inTier(1);
+    private static final UpgradeNode AIRBURST = UpgradeNode.of("mortar.extra.ballistics.3", "Airburst", 60)
             .withModifiers(TowerModifiers.areaRadius(0.4375f))
-            .after(PREDICTIVE_FIRE);
-    private static final UpgradeNode BARRAGE = UpgradeTier.EXTRA_4.node("mortar.extra.ballistics.4", "Barrage",
-            PRICE)
-            .after(AIRBURST);
+            .after(PREDICTIVE_FIRE)
+            .inTier(2);
+    private static final UpgradeNode BARRAGE = UpgradeNode.of("mortar.extra.ballistics.4", "Barrage", 90)
+            .after(AIRBURST)
+            .inTier(3);
 
-    private static final UpgradeNode NAPALM = UpgradeTier.SPECIAL.node("mortar.special.napalm", "Napalm", PRICE);
-    private static final UpgradeNode TAR = UpgradeTier.SPECIAL.node("mortar.special.tar", "Tar", PRICE);
-    private static final UpgradeNode CRYO_SHELLS = UpgradeTier.SPECIAL.node("mortar.special.cryo_shells",
-            "Cryo Shells", PRICE);
+    private static final UpgradeNode NAPALM = UpgradeNode.of("mortar.special.napalm", "Napalm", 120)
+            .inTier(2);
+    private static final UpgradeNode TAR = UpgradeNode.of("mortar.special.tar", "Tar", 120)
+            .inTier(2);
+    private static final UpgradeNode CRYO_SHELLS = UpgradeNode.of("mortar.special.cryo_shells", "Cryo Shells", 120)
+            .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, HEAVY_SHELL,
-                    CLUSTER_SHELL))
-            .with(SIEGE_ROUNDS_1, SIEGE_ROUNDS_2, HEAVY_SHELL, TACTICAL_NUKE, BUNKER_BUSTER,
-                    FRAGMENTATION_ROUNDS_1, FRAGMENTATION_ROUNDS_2, CLUSTER_SHELL, CARPET_BOMBING, SHRAPNEL_STORM,
-                    RIFLED_BARREL, PREDICTIVE_FIRE, AIRBURST, BARRAGE, NAPALM, TAR, CRYO_SHELLS)
-            .withChoice(ExclusiveChoice.oneOf(SIEGE_ROUNDS_1, FRAGMENTATION_ROUNDS_1))
-            .withChoice(ExclusiveChoice.oneOf(TACTICAL_NUKE, BUNKER_BUSTER))
-            .withChoice(ExclusiveChoice.oneOf(CARPET_BOMBING, SHRAPNEL_STORM))
-            .withChoice(ExclusiveChoice.specials(NAPALM, TAR, CRYO_SHELLS));
+    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE, 0.3f,
+                    NodeEffects.none().withModifiers(TowerModifiers.deadZone(1f))))
+            .with(ATTUNE, SIEGE_ROUNDS_1, FRAGMENTATION_ROUNDS_1, RIFLED_BARREL,
+                    SIEGE_ROUNDS_2, FRAGMENTATION_ROUNDS_2, PREDICTIVE_FIRE,
+                    HEAVY_SHELL, CLUSTER_SHELL, NAPALM, TAR, AIRBURST,
+                    TACTICAL_NUKE, BUNKER_BUSTER, CARPET_BOMBING, SHRAPNEL_STORM, CRYO_SHELLS, BARRAGE)
+            .withCluster(UpgradeCluster.of("Rounds", SIEGE_ROUNDS_1, FRAGMENTATION_ROUNDS_1))
+            .withCluster(UpgradeCluster.of("Special", NAPALM, TAR))
+            .withCluster(UpgradeCluster.of("Mastery", TACTICAL_NUKE, BUNKER_BUSTER))
+            .withCluster(UpgradeCluster.of("Mastery", CARPET_BOMBING, SHRAPNEL_STORM));
 
     private static final MechanicCatalogue<MortarMechanic> MECHANICS = MechanicCatalogue.<MortarMechanic>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, BracketingMechanic::new)
+            .with(ATTUNE.id(), BracketingMechanic::new)
             .with(HEAVY_SHELL.id(), HeavyShellMechanic::new)
             .with(TACTICAL_NUKE.id(), TacticalNukeMechanic::new)
             .with(BUNKER_BUSTER.id(), BunkerBusterMechanic::new)
@@ -361,7 +353,6 @@ public final class MortarTower extends AbstractTower {
         int scale = this.context.getBoard().scale();
         int step = this.bracketing.land(x, y, spec.bracket(), scale);
         if (step > 0) {
-            this.countDeedOfAttack();
         }
         boolean nuke = type == ShellType.NUKE;
         float radius = this.blastRadius((1f + step * spec.bracket().radiusStep())

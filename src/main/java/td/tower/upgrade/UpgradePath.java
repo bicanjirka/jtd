@@ -5,8 +5,8 @@ import java.util.Optional;
 
 /**
  * What buying {@code target} with everything it needs first would take: the steps in the order they
- * are bought ({@code target} last), the first thing that stops it, and the nodes it would lock out for
- * good. Bought whole or not at all.
+ * are bought ({@code target} last), the first thing that stops it, and the nodes it would lock out. Bought whole
+ * or not at all.
  */
 public record UpgradePath(UpgradeNode target, List<UpgradeNode> steps, Optional<Block> block,
                           List<UpgradeNode> locksOut) {
@@ -15,16 +15,14 @@ public record UpgradePath(UpgradeNode target, List<UpgradeNode> steps, Optional<
     public enum Reason {
         /** The target is owned already. */
         OWNED,
-        /** A rival pick closed the step for good. */
+        /** Another member of the step's cluster is the active one. */
         LOCKED_OUT,
-        /** The step is an exclusive pick off the target's own line: the player makes that choice first. */
+        /** The step is a cluster's pick off the target's own line: the player makes that choice first. */
         CHOOSE_FIRST,
         /** Nothing on the way opens the step. */
         UNREACHABLE,
-        /** The tower lacks the step's XP. */
-        XP,
-        /** The step's gate (a deed, towers nearby, a special and a head III) is unmet. */
-        GATE
+        /** The tower lacks the XP of the step's tier. */
+        XP
     }
 
     /** What stops a path, and at which of its steps (or the node it needed). */

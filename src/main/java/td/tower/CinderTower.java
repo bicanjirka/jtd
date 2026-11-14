@@ -39,15 +39,12 @@ import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotMechanics;
-import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.PurposeCondition;
-import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.RangeNodes;
+import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -96,85 +93,82 @@ public final class CinderTower extends AbstractTower {
     /** A hot enemy must cool under this share before it can burst again. */
     private static final float COOLED_SHARE = 0.5f;
 
-    private static final TermText STOKE_DEED = TermText.format("waves that raise {}", TowerTerm.STOKE);
-    private static final int STOKES_NEEDED = 45;
 
-    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
-            .withRangeThree(0.2f, NodeEffects.none().withModifiers(TowerModifiers.waveSpeed(1f)));
+    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 22);
+    private static final UpgradeNode AWAKEN = UpgradeNode.of("base.awaken", "Awaken", 28).inTier(1);
 
-    private static final UpgradeNode WHITE_FLAME_1 = UpgradeTier.HEAD_1.node("cinder.head.white_flame.1",
-            "White Flame", PRICE)
+    private static final UpgradeNode WHITE_FLAME_1 = UpgradeNode.of("cinder.head.white_flame.1", "White Flame", 28)
             .withModifiers(TowerModifiers.damage(0.6f).plus(TowerModifiers.stokeStep(0.05f)));
-    private static final UpgradeNode WHITE_FLAME_2 = UpgradeTier.HEAD_2.node("cinder.head.white_flame.2",
-            "White Flame II", PRICE)
+    private static final UpgradeNode WHITE_FLAME_2 = UpgradeNode.of("cinder.head.white_flame.2", "White Flame II", 42)
             .withModifiers(TowerModifiers.damage(1f).plus(TowerModifiers.critChance(0.1f))
                     .plus(TowerModifiers.burnDuration(-15)))
-            .after(WHITE_FLAME_1);
-    private static final UpgradeNode SOULFIRE = UpgradeTier.HEAD_3.node("cinder.head.white_flame.3", "Soulfire",
-            PRICE)
-            .withGate(new PurposeCondition(STOKE_DEED, STOKES_NEEDED))
-            .after(WHITE_FLAME_2);
-    private static final UpgradeNode FLASHPOINT = UpgradeTier.HEAD_4.node("cinder.head.white_flame.4a",
-            "Flashpoint", PRICE)
+            .after(WHITE_FLAME_1)
+            .inTier(1);
+    private static final UpgradeNode SOULFIRE = UpgradeNode.of("cinder.head.white_flame.3", "Soulfire", 70)
+            .after(WHITE_FLAME_2)
+            .inTier(2);
+    private static final UpgradeNode FLASHPOINT = UpgradeNode.of("cinder.head.white_flame.4a", "Flashpoint", 112)
             .withModifiers(TowerModifiers.critChance(0.5f).plus(TowerModifiers.critMultiplier(1.5f)))
-            .after(SOULFIRE);
-    private static final UpgradeNode COMBUSTION = UpgradeTier.HEAD_4.node("cinder.head.white_flame.4b",
-            "Combustion", PRICE)
+            .after(SOULFIRE)
+            .inTier(3);
+    private static final UpgradeNode COMBUSTION = UpgradeNode.of("cinder.head.white_flame.4b", "Combustion", 112)
             .withModifiers(TowerModifiers.burnPoolCap(2f))
-            .after(SOULFIRE);
+            .after(SOULFIRE)
+            .inTier(3);
 
-    private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeTier.HEAD_1.node("cinder.head.wide_nozzle.1",
-            "Wide Nozzle", PRICE)
+    private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeNode.of("cinder.head.wide_nozzle.1", "Wide Nozzle", 28)
             .withModifiers(TowerModifiers.range(0.55f).plus(TowerModifiers.coneWidth(0.21f))
                     .plus(TowerModifiers.stokeGrace(40)));
-    private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeTier.HEAD_2.node("cinder.head.wide_nozzle.2",
-            "Wide Nozzle II", PRICE)
+    private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeNode.of("cinder.head.wide_nozzle.2", "Wide Nozzle II", 42)
             .withModifiers(TowerModifiers.range(0.44f).plus(TowerModifiers.attackSpeed(0.2f))
                     .plus(TowerModifiers.coneWidth(0.182f)))
-            .after(WIDE_NOZZLE_1);
-    private static final UpgradeNode LINGERING_FLAMES = UpgradeTier.HEAD_3.node("cinder.head.wide_nozzle.3",
-            "Lingering Flames", PRICE)
-            .withGate(new PurposeCondition(STOKE_DEED, STOKES_NEEDED))
-            .after(WIDE_NOZZLE_2);
-    private static final UpgradeNode INFERNO_RING = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4a",
-            "Inferno Ring", PRICE)
-            .after(LINGERING_FLAMES);
-    private static final UpgradeNode DRAGONS_BREATH = UpgradeTier.HEAD_4.node("cinder.head.wide_nozzle.4b",
-            "Dragon's Breath", PRICE)
+            .after(WIDE_NOZZLE_1)
+            .inTier(1);
+    private static final UpgradeNode LINGERING_FLAMES = UpgradeNode.of("cinder.head.wide_nozzle.3", "Lingering Flames", 70)
+            .after(WIDE_NOZZLE_2)
+            .inTier(2);
+    private static final UpgradeNode INFERNO_RING = UpgradeNode.of("cinder.head.wide_nozzle.4a", "Inferno Ring", 112)
+            .after(LINGERING_FLAMES)
+            .inTier(3);
+    private static final UpgradeNode DRAGONS_BREATH = UpgradeNode.of("cinder.head.wide_nozzle.4b", "Dragon's Breath", 112)
             .withModifiers(TowerModifiers.range(0.66f).plus(TowerModifiers.attackSpeed(2f)).plus(TowerModifiers.damage(-0.45f))
                     .plus(TowerModifiers.burnPoolCap(2f)))
-            .after(LINGERING_FLAMES);
+            .after(LINGERING_FLAMES)
+            .inTier(3);
 
-    private static final UpgradeNode KINDLING = UpgradeTier.EXTRA_1.node("cinder.extra.fuel.1", "Kindling", PRICE)
+    private static final UpgradeNode KINDLING = UpgradeNode.of("cinder.extra.fuel.1", "Kindling", 22)
             .withModifiers(TowerModifiers.burnMarkRate(1f));
-    private static final UpgradeNode CAUTERIZE = UpgradeTier.EXTRA_2.node("cinder.extra.fuel.2", "Cauterize", PRICE)
-            .after(KINDLING);
-    private static final UpgradeNode HEAT = UpgradeTier.EXTRA_3.node("cinder.extra.fuel.3", "Heat", PRICE)
-            .after(CAUTERIZE);
-    private static final UpgradeNode EVERBURN = UpgradeTier.EXTRA_4.node("cinder.extra.fuel.4", "Everburn", PRICE)
-            .after(HEAT);
+    private static final UpgradeNode CAUTERIZE = UpgradeNode.of("cinder.extra.fuel.2", "Cauterize", 34)
+            .after(KINDLING)
+            .inTier(1);
+    private static final UpgradeNode HEAT = UpgradeNode.of("cinder.extra.fuel.3", "Heat", 56)
+            .after(CAUTERIZE)
+            .inTier(2);
+    private static final UpgradeNode EVERBURN = UpgradeNode.of("cinder.extra.fuel.4", "Everburn", 84)
+            .after(HEAT)
+            .inTier(3);
 
-    private static final UpgradeNode SEARING_FLAME = UpgradeTier.SPECIAL.node("cinder.special.searing_flame",
-            "Searing Flame", PRICE);
-    private static final UpgradeNode THERMAL_SHOCK = UpgradeTier.SPECIAL.node("cinder.special.thermal_shock",
-            "Thermal Shock", PRICE);
-    private static final UpgradeNode PYROMANCERS_MARK = UpgradeTier.SPECIAL.node("cinder.special.pyromancers_mark",
-            "Pyromancer's Mark", PRICE);
+    private static final UpgradeNode SEARING_FLAME = UpgradeNode.of("cinder.special.searing_flame", "Searing Flame", 112)
+            .inTier(2);
+    private static final UpgradeNode THERMAL_SHOCK = UpgradeNode.of("cinder.special.thermal_shock", "Thermal Shock", 112)
+            .inTier(2);
+    private static final UpgradeNode PYROMANCERS_MARK = UpgradeNode.of("cinder.special.pyromancers_mark", "Pyromancer's Mark", 112)
+            .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, SOULFIRE,
-                    LINGERING_FLAMES))
-            .with(WHITE_FLAME_1, WHITE_FLAME_2, SOULFIRE, FLASHPOINT, COMBUSTION,
-                    WIDE_NOZZLE_1, WIDE_NOZZLE_2, LINGERING_FLAMES, INFERNO_RING, DRAGONS_BREATH,
-                    KINDLING, CAUTERIZE, HEAT, EVERBURN,
-                    SEARING_FLAME, THERMAL_SHOCK, PYROMANCERS_MARK)
-            .withChoice(ExclusiveChoice.oneOf(WHITE_FLAME_1, WIDE_NOZZLE_1))
-            .withChoice(ExclusiveChoice.oneOf(FLASHPOINT, COMBUSTION))
-            .withChoice(ExclusiveChoice.oneOf(INFERNO_RING, DRAGONS_BREATH))
-            .withChoice(ExclusiveChoice.specials(SEARING_FLAME, THERMAL_SHOCK, PYROMANCERS_MARK));
+    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE, 0.2f,
+                    NodeEffects.none().withModifiers(TowerModifiers.waveSpeed(1f))))
+            .with(ATTUNE, WHITE_FLAME_1, WIDE_NOZZLE_1, KINDLING,
+                    AWAKEN, WHITE_FLAME_2, WIDE_NOZZLE_2, CAUTERIZE,
+                    SOULFIRE, LINGERING_FLAMES, SEARING_FLAME, THERMAL_SHOCK, HEAT,
+                    FLASHPOINT, COMBUSTION, INFERNO_RING, DRAGONS_BREATH, PYROMANCERS_MARK, EVERBURN)
+            .withCluster(UpgradeCluster.of("Flame", WHITE_FLAME_1, WIDE_NOZZLE_1))
+            .withCluster(UpgradeCluster.of("Special", SEARING_FLAME, THERMAL_SHOCK))
+            .withCluster(UpgradeCluster.of("Mastery", FLASHPOINT, COMBUSTION))
+            .withCluster(UpgradeCluster.of("Mastery", INFERNO_RING, DRAGONS_BREATH));
 
     private static final MechanicCatalogue<CinderMechanic> MECHANICS = MechanicCatalogue.<CinderMechanic>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, StokeMechanic::new)
-            .with(StandardBaseSlot.AWAKEN_ID, BellowsMechanic::new)
+            .with(ATTUNE.id(), StokeMechanic::new)
+            .with(AWAKEN.id(), BellowsMechanic::new)
             .with(WHITE_FLAME_1.id(), WhiteFlameMechanic::new)
             .with(SOULFIRE.id(), SoulfireMechanic::new)
             .with(FLASHPOINT.id(), FlashpointMechanic::new)
@@ -378,7 +372,6 @@ public final class CinderTower extends AbstractTower {
                 }
             }
             if (stoked) {
-                this.countDeedOfAttack();
             }
             if (travelled >= 1f) {
                 waves.remove();

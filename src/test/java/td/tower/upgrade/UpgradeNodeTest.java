@@ -25,7 +25,7 @@ class UpgradeNodeTest {
 
     @Test
     void ofStartsWithNoBuffNoPrerequisiteAndNoExtraEffect() {
-        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Name", 10);
+        UpgradeNode node = UpgradeNode.of("id", "Name", 10);
 
         assertThat(node.effects().modifiers()).isEqualTo(StatModifiers.none());
         assertThat(node.requires()).isEqualTo(UpgradeCondition.always());
@@ -34,16 +34,15 @@ class UpgradeNodeTest {
 
     @Test
     void bonusesListEveryNonZeroBuffAxisWithASignedPercentage() {
-        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Veteran", 30)
-                .withModifiers(TowerModifiers.damagePercent(0.3f).plus(TowerModifiers.rangePercent(0.1f)).plus(TowerModifiers.bounty(0.25f)).plus(TowerModifiers.critChance(0.15f)))
-                .withXp(150);
+        UpgradeNode node = UpgradeNode.of("id", "Veteran", 30)
+                .withModifiers(TowerModifiers.damagePercent(0.3f).plus(TowerModifiers.rangePercent(0.1f)).plus(TowerModifiers.bounty(0.25f)).plus(TowerModifiers.critChance(0.15f)));
 
         assertThat(words(node)).containsExactly("Range +10%", "Damage +30%", "Crit chance +15%", "Bounty bonus +25%");
     }
 
     @Test
     void theExtraEffectIsASentenceApartFromTheBuffAxes() {
-        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Siege", 35)
+        UpgradeNode node = UpgradeNode.of("id", "Siege", 35)
                 .withModifiers(TowerModifiers.damagePercent(0.35f))
                 .withNote("+30% splash radius");
 
@@ -53,7 +52,7 @@ class UpgradeNodeTest {
 
     @Test
     void aNegativeAxisIsABonusWithAMinusSign() {
-        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.SPECIAL, "Concussive", 35)
+        UpgradeNode node = UpgradeNode.of("id", "Concussive", 35)
                 .withModifiers(TowerModifiers.attackSpeed(-0.5f))
                 .withNote("blast applies slow");
 
@@ -63,14 +62,14 @@ class UpgradeNodeTest {
 
     @Test
     void aRangeNodeReadsInCells() {
-        UpgradeNode range = StandardBaseSlot.nodes(10, 4.0f).getFirst();
+        UpgradeNode range = RangeNodes.of(10, 4.0f).getFirst();
 
         assertThat(words(range)).containsExactly("Range +0.6 cells");
     }
 
     @Test
     void anEmissionRowSaysWhatNearbyTowersGet() {
-        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.HEAD, "Keen Edge", 10)
+        UpgradeNode node = UpgradeNode.of("id", "Keen Edge", 10)
                 .withEmission(TowerModifiers.critMultiplier(0.5f));
 
         assertThat(node.effects().statRows()).singleElement().satisfies(bonus -> {
@@ -91,7 +90,7 @@ class UpgradeNodeTest {
 
     @Test
     void aNodeThatSetsTheTargetSaysWhomItAimsAt() {
-        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.SPECIAL, "Hunter", 10).withTargeting(TargetPriority.HIGHEST_RANK);
+        UpgradeNode node = UpgradeNode.of("id", "Hunter", 10).withTargeting(TargetPriority.HIGHEST_RANK);
 
         assertThat(node.effects().statRows()).isEmpty();
         assertThat(sentences(node)).containsExactly("targets highest rank");
@@ -99,7 +98,7 @@ class UpgradeNodeTest {
 
     @Test
     void aNodesHitBonusesAndProcsAreItsSentences() {
-        UpgradeNode node = UpgradeNode.of("id", UpgradeSlot.SPECIAL, "Hunter", 10)
+        UpgradeNode node = UpgradeNode.of("id", "Hunter", 10)
                 .withHitBonus(HitBonus.when(new HitCondition.TargetRankAtLeast(Rank.ELITE), HitAdjustment.damage(0.75f)))
                 .withProc(Proc.onKill(new ProcPayload.GrantStatus(TowerStatus.timed(TowerTerm.HASTE,
                         TowerModifiers.attackSpeed(1f), 100))).when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT))));

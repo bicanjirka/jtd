@@ -8,6 +8,7 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.UpgradeTreeLayout.Spot;
 import td.ui.UpgradeTreePainter.Footer;
+import td.ui.UpgradeTreePainter.Gates;
 import td.ui.UpgradeTreePainter.Highlight;
 import td.ui.UpgradeTreePainter.Mark;
 import td.ui.UpgradeTreePainter.XpLine;
@@ -31,17 +32,21 @@ import java.awt.event.MouseEvent;
 import java.io.Serial;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
 
 /**
- * The selected tower's whole upgrade tree as a talent tree over a faint rook (see {@link UpgradeTreeLayout}),
- * under a slim XP line, every node in the look of its state. Hovering a node opens its sheet and marks what a
- * click does: a left click buys the node with every node it needs, all or nothing; a right-click on an owned
- * node asks to downgrade it with everything that depends on it. Replaces the wave preview while a tower is
- * selected, and never scrolls: the tree scales to the room it has.
+ * The selected tower's whole upgrade tree, its tiers climbing from the bottom (see {@link UpgradeTreeLayout}), under a
+ * slim XP line, every node in the look of its state. Hovering a node opens its sheet and marks what a click does: a
+ * left click buys the node with every node it needs, all or nothing, or takes a cluster's other member in the owned
+ * one's place; a right-click on an owned node asks to downgrade it with everything that depends on it. A switch and a
+ * downgrade wait for the wave's end. Replaces the wave preview while a tower is selected, and never scrolls: the tree
+ * scales to the room it has.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelUpgradeTree extends JPanel implements EconomyListener {
@@ -56,13 +61,13 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private static final int MIN_HEIGHT = 240;
     private static final int HIT_SLACK = 2;
 
-    private final transient Map<UpgradeTree, UpgradeTreeLayout> layouts = new IdentityHashMap<>();
     private Color xpFill = Hud.FOREGROUND;
     private transient GameWorld context;
     private transient Tower tower;
     private boolean levelEnded = false;
     private transient TooltipLayer tooltips;
     private transient Map<UpgradeNode, UpgradeNodeState> states = Map.of();
+    private transient Optional<UpgradeTreeLayout> layout = Optional.empty();
     private transient Optional<UpgradeNode> hovered = Optional.empty();
     private transient Optional<UpgradeHover> hover = Optional.empty();
     private transient Optional<ConfirmPopup> confirmation = Optional.empty();
@@ -145,15 +150,21 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     public void refresh() {
         if (this.tower == null) {
             this.states = Map.of();
+            this.layout = Optional.empty();
             this.hover = Optional.empty();
             this.repaint();
             return;
         }
+        UpgradeTree tree = this.tower.upgradeTree();
         Map<UpgradeNode, UpgradeNodeState> next = new LinkedHashMap<>();
-        for (UpgradeNode node : this.tower.upgradeTree().nodes()) {
+        for (int tier = 0; tier < tree.tiers().size(); tier++) {
+            tree.unlockOf(tier).ifPresent(unlock -> next.put(unlock, UpgradeNodeState.of(unlock, this.tower, this.context)));
+        }
+        for (UpgradeNode node : tree.nodes()) {
             next.put(node, UpgradeNodeState.of(node, this.tower, this.context));
         }
         this.states = next;
+        this.relayout();
         this.hover = this.hovered.filter(node -> !this.levelEnded).map(node -> UpgradeHover.of(node, this.tower, this.context));
         this.repaint();
         if (this.tooltips != null) {
@@ -161,23 +172,64 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         }
     }
 
+    /**
+     * Lays the tree out for what the tower owns and the hovered member's branches, then again with every open tier
+     * whose shown nodes are all settled folded thin.
+     */
+    private void relayout() {
+        UpgradeTree tree = this.tower.upgradeTree();
+        Optional<UpgradeNode> preview = this.hovered.filter(node -> tree.clusterOf(node).isPresent());
+        UpgradeTreeLayout full = UpgradeTreeLayout.of(tree, this.tower.upgrades(), preview, Set.of());
+        int open = tree.highestOpenTier(this.tower, this.context);
+        Set<Integer> folded = new LinkedHashSet<>();
+        for (int tier = 0; tier <= open; tier++) {
+            if (this.settled(tier, full)) {
+                folded.add(tier);
+            }
+        }
+        this.layout = Optional.of(folded.isEmpty() ? full
+                : UpgradeTreeLayout.of(tree, this.tower.upgrades(), preview, folded));
+    }
+
+    /** Whether every node {@code tier}'s row shows is owned or a cluster's other pick, and no branch hides in it. */
+    private boolean settled(int tier, UpgradeTreeLayout full) {
+        List<UpgradeNode> shown = full.shownIn(tier);
+        boolean unlocked = this.tower.upgradeTree().isPaidOpen(tier, this.tower.upgrades());
+        boolean hides = full.rows().stream().filter(row -> row.tier() == tier).anyMatch(row -> full.hidden().stream()
+                .anyMatch(spot -> spot.y() >= row.top() && spot.y() <= row.bottom()));
+        return !shown.isEmpty() && unlocked && !hides && shown.stream().allMatch(node -> !full.previewed().contains(node)
+                && (this.states.get(node).look() == UpgradeNodeState.Look.OWNED
+                || this.states.get(node).look() == UpgradeNodeState.Look.SWITCHABLE));
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (this.tower == null || this.states.isEmpty()) {
+        if (this.tower == null || this.states.isEmpty() || this.layout.isEmpty()) {
             return;
         }
         Graphics2D g2 = (Graphics2D) g.create();
         try {
             float scale = this.scale();
-            g2.translate(this.originX(scale), this.originY(scale));
+            g2.translate(this.originX(scale), 0f);
             g2.scale(scale, scale);
             UpgradeTree tree = this.tower.upgradeTree();
-            new UpgradeTreePainter(this.layoutOf(tree), tree, this.tower.getType())
-                    .paint(g2, this.states, this.highlight(), this.xpLine(), this.footer());
+            new UpgradeTreePainter(this.layout.get(), tree, TowerSpriteFrameBuilder.bodyLookOf(this.tower),
+                    this.tower.getType()).paint(g2, this.states, this.highlight(), this.gates(), this.xpLine(),
+                    this.footer());
         } finally {
             g2.dispose();
         }
+    }
+
+    private Gates gates() {
+        UpgradeTree tree = this.tower.upgradeTree();
+        int xp = this.tower.experience().xp();
+        Map<Integer, String> labels = new HashMap<>();
+        for (int tier = 1; tier < tree.tiers().size(); tier++) {
+            labels.put(tier, UpgradeSheetText.bandLabel(tree, tier, xp, tree.isOpen(tier, this.tower, this.context)));
+        }
+        return new Gates(tree.highestOpenTier(this.tower, this.context), labels);
     }
 
     private Highlight highlight() {
@@ -185,27 +237,30 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             return Highlight.none();
         }
         Map<UpgradeNode, Mark> marks = new HashMap<>();
-        UpgradeNode node = this.hovered.get();
         switch (this.hover.get()) {
             case UpgradeHover.Buying buying -> {
                 buying.path().locksOut().forEach(locked -> marks.put(locked, Mark.CRACK));
                 buying.path().steps().forEach(step -> marks.put(step, Mark.PATH));
             }
+            case UpgradeHover.Switching switching -> {
+                marks.put(switching.change().from(), Mark.DROP);
+                switching.change().sold().forEach(sold -> marks.put(sold, Mark.DROP));
+                marks.put(switching.change().to(), Mark.PATH);
+            }
             case UpgradeHover.Downgrading downgrading ->
                     downgrading.removal().removed().forEach(removed -> marks.put(removed, Mark.DROP));
         }
-        this.states.values().stream().filter(state -> state.sealedBy().filter(node::equals).isPresent())
-                .forEach(state -> marks.putIfAbsent(state.node(), Mark.LIT));
         return new Highlight(this.hovered, marks);
     }
 
     private XpLine xpLine() {
         int xp = this.tower.experience().xp();
-        Optional<UpgradeNode> next = UpgradeSheetText.nextXpGate(this.tower.offeredUpgrades(this.context), xp);
-        // With no node waiting on XP, the bar fills toward the next rank.
-        int toward = next.map(UpgradeNode::xp).orElseGet(() -> Arrays.stream(TowerRank.values())
-                .mapToInt(TowerRank::xp).filter(rank -> rank > xp).findFirst().orElse(xp));
-        return new XpLine(UpgradeSheetText.xpLabel(xp, next), toward == 0 ? 1f : xp / (float) toward, this.xpFill);
+        UpgradeTree tree = this.tower.upgradeTree();
+        OptionalInt next = UpgradeSheetText.nextTier(tree, xp);
+        // With no tier waiting on XP, the bar fills toward the next rank.
+        int toward = next.isPresent() ? tree.tiers().get(next.getAsInt()).xp() : Arrays.stream(TowerRank.values())
+                .mapToInt(TowerRank::xp).filter(rank -> rank > xp).findFirst().orElse(xp);
+        return new XpLine(UpgradeSheetText.xpLabel(xp, tree), toward == 0 ? 1f : xp / (float) toward, this.xpFill);
     }
 
     private Footer footer() {
@@ -222,6 +277,9 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             return;
         }
         this.hovered = now;
+        if (this.tower != null) {
+            this.relayout();
+        }
         this.hover = now.filter(node -> this.tower != null && !this.levelEnded)
                 .map(node -> UpgradeHover.of(node, this.tower, this.context));
         this.repaint();
@@ -232,10 +290,14 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         if (node.isEmpty() || this.tower == null || this.levelEnded) {
             return;
         }
-        boolean owned = this.states.get(node.get()).look() == UpgradeNodeState.Look.OWNED;
-        if (SwingUtilities.isRightMouseButton(event) && owned) {
+        UpgradeNodeState.Look look = this.states.get(node.get()).look();
+        boolean allowed = UpgradeTree.changesAllowed(this.context);
+        boolean settled = look == UpgradeNodeState.Look.OWNED || look == UpgradeNodeState.Look.SWITCHABLE;
+        if (SwingUtilities.isRightMouseButton(event) && look == UpgradeNodeState.Look.OWNED && allowed) {
             this.askToDowngrade(node.get());
-        } else if (SwingUtilities.isLeftMouseButton(event) && !owned) {
+        } else if (SwingUtilities.isLeftMouseButton(event) && look == UpgradeNodeState.Look.SWITCHABLE && allowed) {
+            this.askToSwitch(node.get());
+        } else if (SwingUtilities.isLeftMouseButton(event) && !settled) {
             this.tower.buyPath(node.get());
             this.refresh();
         }
@@ -254,7 +316,45 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             case UpgradeHover.Downgrading downgrading -> this.askToDowngrade(node, downgrading);
             case UpgradeHover.Buying buying -> {
             }
+            case UpgradeHover.Switching switching -> {
+            }
         }
+    }
+
+    /** A switch that sells nothing back is nothing to ask about; one that does names what it sells. */
+    private void askToSwitch(UpgradeNode member) {
+        switch (UpgradeHover.of(member, this.tower, this.context)) {
+            case UpgradeHover.Switching switching when switching.change().sold().isEmpty() -> {
+                this.tower.switchTo(member);
+                this.refresh();
+            }
+            case UpgradeHover.Switching switching -> this.askToSwitch(member, switching);
+            case UpgradeHover.Buying buying -> {
+            }
+            case UpgradeHover.Downgrading downgrading -> {
+            }
+        }
+    }
+
+    private void askToSwitch(UpgradeNode member, UpgradeHover.Switching switching) {
+        if (this.tooltips != null) {
+            this.tooltips.closeAll();
+        }
+        this.confirmation.ifPresent(ConfirmPopup::cancel);
+        Tower switched = this.tower;
+        Rectangle anchor = SwingUtilities.convertRectangle(this, this.anchorOf(member),
+                SwingUtilities.getRootPane(this).getLayeredPane());
+        this.confirmation = Optional.of(ConfirmPopup.open(SwingUtilities.getRootPane(this).getLayeredPane(), anchor,
+                UpgradeSheetText.switchConfirmation(switching), UpgradeSheetText.switchButton(switching),
+                ConfirmPopup.IRREVERSIBLE,
+                () -> {
+                    this.confirmation = Optional.empty();
+                    if (!this.levelEnded) {
+                        switched.switchTo(member);
+                    }
+                    this.refresh();
+                },
+                () -> this.confirmation = Optional.empty()));
     }
 
     private void askToDowngrade(UpgradeNode node, UpgradeHover.Downgrading downgrading) {
@@ -287,7 +387,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     }
 
     private Optional<UpgradeNode> nodeAt(Point point) {
-        if (this.tower == null) {
+        if (this.tower == null || this.layout.isEmpty()) {
             return Optional.empty();
         }
         float scale = this.scale();
@@ -295,12 +395,8 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             return Optional.empty();
         }
         float x = (point.x - this.originX(scale)) / scale;
-        float y = (point.y - this.originY(scale)) / scale;
-        return this.layoutOf(this.tower.upgradeTree()).spots().entrySet().stream()
-                .filter(entry -> Math.abs(entry.getValue().x() - x) <= entry.getValue().size() / 2 + HIT_SLACK
-                        && Math.abs(entry.getValue().y() - y) <= entry.getValue().size() / 2 + HIT_SLACK)
-                .map(Map.Entry::getKey)
-                .findFirst();
+        float y = point.y / scale;
+        return this.layout.flatMap(laid -> laid.nodeAt(x, y, HIT_SLACK));
     }
 
     /**
@@ -314,28 +410,27 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
 
     private Rectangle boundsOf(UpgradeNode node) {
         float scale = this.scale();
-        Spot spot = this.layoutOf(this.tower.upgradeTree()).spots().get(node);
-        float size = spot.size() * scale;
-        return new Rectangle(Math.round(this.originX(scale) + (spot.x() * scale) - size / 2),
-                Math.round(this.originY(scale) + (spot.y() * scale) - size / 2), Math.round(size), Math.round(size));
+        Optional<Spot> spot = this.layout.flatMap(laid -> laid.spotOf(node));
+        if (spot.isEmpty()) {
+            return new Rectangle(0, this.getHeight() / 2, 0, 0);
+        }
+        float width = spot.get().width() * scale;
+        float height = spot.get().height() * scale;
+        return new Rectangle(Math.round(this.originX(scale) + (spot.get().x() * scale) - width / 2),
+                Math.round(spot.get().y() * scale - height / 2), Math.round(width), Math.round(height));
     }
 
-    private UpgradeTreeLayout layoutOf(UpgradeTree tree) {
-        return this.layouts.computeIfAbsent(tree, UpgradeTreeLayout::of);
-    }
-
-    /** The whole design fits the panel, never growing past {@link #MAX_SCALE}. */
+    /**
+     * The whole design fits the panel, never growing past {@link #MAX_SCALE}. It sits at the top, under the border's
+     * title, so a tier folding moves only what is below it.
+     */
     private float scale() {
-        float fit = Math.min(this.getWidth() / (float) UpgradeTreeLayout.WIDTH,
-                this.getHeight() / (float) UpgradeTreeLayout.HEIGHT);
+        float height = this.layout.map(UpgradeTreeLayout::height).orElse((float) UpgradeTreeLayout.HEIGHT);
+        float fit = Math.min(this.getWidth() / (float) UpgradeTreeLayout.WIDTH, this.getHeight() / height);
         return Math.min(MAX_SCALE, fit);
     }
 
     private float originX(float scale) {
         return (this.getWidth() - UpgradeTreeLayout.WIDTH * scale) / 2f;
-    }
-
-    private float originY(float scale) {
-        return (this.getHeight() - UpgradeTreeLayout.HEIGHT * scale) / 2f;
     }
 }

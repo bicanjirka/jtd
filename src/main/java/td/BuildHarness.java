@@ -5,7 +5,6 @@ import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameHost;
 import td.util.RandomSource;
@@ -39,7 +38,9 @@ public final class BuildHarness {
     private static final int UNLIMITED_LIVES = 1_000_000;
     private static final int TICK_BUDGET = 60_000;
     private static final double PER_HUNDRED_CREDITS = 100.0;
+    private static final String HEAD_MARK = ".head.";
     private static final String EXTRA_MARK = ".extra.";
+    private static final String SPECIAL_MARK = ".special.";
 
     private final LevelDefinition level;
     private final int seeds;
@@ -94,7 +95,7 @@ public final class BuildHarness {
         List<Row> combos = new ArrayList<>();
         for (UpgradeNode head : this.lastHeads(nodes)) {
             for (UpgradeNode extra : this.withNone(this.lastExtras(nodes))) {
-                for (UpgradeNode special : this.withNone(nodes.stream().filter(n -> n.slot() == UpgradeSlot.SPECIAL).toList())) {
+                for (UpgradeNode special : this.withNone(nodes.stream().filter(n -> n.id().contains(SPECIAL_MARK)).toList())) {
                     List<UpgradeNode> targets = new ArrayList<>(List.of(head));
                     if (extra != null) {
                         targets.add(extra);
@@ -128,7 +129,7 @@ public final class BuildHarness {
 
     /** Head nodes nothing else in the tree builds on, the ends of the head chains. */
     private List<UpgradeNode> lastHeads(List<UpgradeNode> nodes) {
-        return nodes.stream().filter(n -> n.slot() == UpgradeSlot.HEAD && !n.id().contains(EXTRA_MARK))
+        return nodes.stream().filter(n -> n.id().contains(HEAD_MARK))
                 .filter(n -> nodes.stream().noneMatch(other -> other.requires().requiredNodes().contains(n.id())))
                 .toList();
     }

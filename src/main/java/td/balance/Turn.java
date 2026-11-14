@@ -153,16 +153,14 @@ public final class Turn {
         return at.hasTower() ? Optional.of(at.getTower()) : Optional.empty();
     }
 
-    /** Offered nodes {@code tower} could buy right now: XP and gate met, price aside. */
+    /** Offered nodes {@code tower} could buy right now, price aside. */
     public List<UpgradeNode> buyable(Tower tower) {
-        return tower.offeredUpgrades(this.engine.getGameWorld()).stream()
-                .filter(node -> node.gateMet(tower, this.engine.getGameWorld()))
-                .toList();
+        return tower.offeredUpgrades(this.engine.getGameWorld());
     }
 
-    /** Whether {@code tower} has the XP and meets the gate for {@code node}, whether or not it is offered yet. */
+    /** Whether {@code tower} has the XP of {@code node}'s tier, whether or not the node is offered yet. */
     public boolean gateMet(Tower tower, UpgradeNode node) {
-        return node.gateMet(tower, this.engine.getGameWorld());
+        return tower.upgradeTree().xpMet(node.tier(), tower, this.engine.getGameWorld());
     }
 
     /** Builds {@code type} on {@code cell} if it is free and affordable. */

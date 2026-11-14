@@ -137,7 +137,7 @@ final class TowerSheetText {
         List<SheetLine> rows = new ArrayList<>();
         rows.add(new SheetLine.IconTitle(face, line.tip().displayName(), face.tone(), ""));
         for (UpgradeNode node : line.owned()) {
-            Palette slot = TowerSpriteFrameBuilder.slotPaletteFor(node.slot());
+            Palette slot = TowerSpriteFrameBuilder.tierPaletteFor(node.tier());
             NodeWords words = tower.words().get(node.id());
             if (line.owned().size() > 1 && words != null) {
                 rows.add(Row.toned(Glyph.PIP, slot, words.name(), ""));

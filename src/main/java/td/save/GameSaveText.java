@@ -21,6 +21,7 @@ import java.util.Set;
 /**
  * A {@link GameSave} as plain text, one fact a line, so a save can be read and edited by hand:
  * <pre>
+ * format 2
  * level Curly Path
  * wave 17
  * economy 120 3400 5
@@ -28,25 +29,30 @@ import java.util.Set;
  * leaked 3 9
  * bonus 0 40
  * damage 1250000 480000
- * tower SNIPER 6 11 400 12 123456 40 paid=120 xp+=0.25 sniper.head.x.1 sniper.head.x.2
+ * tower SNIPER 6 11 400 123456 40 paid=120 xp+=0.25 sniper.head.x.1 sniper.head.x.2
  * pin 4 7 9 7
  * </pre>
- * The economy line is credits, score and lives. {@code leaked} lists the 0-based rounds an enemy escaped, and a
+ * The format line names the text's version: a save of another version is refused rather than read wrong, since the
+ * upgrades a tower owns are kept by id and ids change between versions. The economy line is credits, score and lives. {@code leaked} lists the 0-based rounds an enemy escaped, and a
  * {@code bonus} line is a round and the clear bonus it paid. {@code damage} is the physical and magic damage landed. A
- * tower line is its type, cell, XP, deeds, damage dealt, kills, then {@code key=value} facts (what it was bought for,
+ * tower line is its type, cell, XP, damage dealt, kills, then {@code key=value} facts (what it was bought for,
  * {@code unused=tower} for a tower no wave has run with, the fraction of XP carried), then the upgrades it owns in the
  * order bought, a {@code +} before each one bought since the last wave ran. A {@code pin} line is the cell of an
- * Obelisk and of the one its Ley Line is pinned to. Every line but level, wave and economy may be left out.
+ * Obelisk and of the one its Ley Line is pinned to. Every line but format, level, wave and economy may
+ * be left out.
  */
 public final class GameSaveText {
 
-    private static final int TOWER_FIELDS = 8;
+    /** The version this game writes and reads. */
+    static final int FORMAT = 2;
+    private static final int TOWER_FIELDS = 7;
 
     private GameSaveText() {
     }
 
     public static String write(GameSave save) {
         StringBuilder text = new StringBuilder()
+                .append("format ").append(FORMAT).append('\n')
                 .append("level ").append(save.level()).append('\n')
                 .append("wave ").append(save.nextWave()).append('\n')
                 .append("economy ").append(save.economy().credits()).append(' ').append(save.economy().score())
@@ -68,7 +74,7 @@ public final class GameSaveText {
         for (TowerSave tower : save.towers()) {
             TowerTally tally = tower.tally();
             text.append("tower ").append(tower.type().name()).append(' ').append(tower.cell().x()).append(' ')
-                    .append(tower.cell().y()).append(' ').append(tally.xp()).append(' ').append(tally.deeds())
+                    .append(tower.cell().y()).append(' ').append(tally.xp())
                     .append(' ').append(tally.damageDealt()).append(' ').append(tally.kills());
             tower.paid().ifPresent(paid -> text.append(" paid=").append(paid));
             if (!tower.use().towerUsed()) {
@@ -92,6 +98,7 @@ public final class GameSaveText {
     /** The save {@code text} describes, or what is wrong with it. */
     public static Read read(String text) {
         String level = "";
+        int format = 0;
         int wave = 0;
         long seed = 0L;
         Optional<EconomyState> economy = Optional.empty();
@@ -113,6 +120,7 @@ public final class GameSaveText {
             }
             try {
                 switch (words[0]) {
+                    case "format" -> format = Integer.parseInt(words[1]);
                     case "level" -> level = line.substring("level".length()).strip();
                     case "wave" -> wave = Integer.parseInt(words[1]);
                     case "seed" -> seed = Long.parseLong(words[1]);
@@ -139,6 +147,9 @@ public final class GameSaveText {
                 return Read.problem("Can't read: " + line);
             }
         }
+        if (format != FORMAT) {
+            return Read.problem("A save of another version of the game: format " + format + ", not " + FORMAT);
+        }
         if (level.isEmpty() || wave < 1 || economy.isEmpty()) {
             return Read.problem("A save needs a level, a wave and an economy line");
         }
@@ -149,7 +160,7 @@ public final class GameSaveText {
     /** How many words a line starting with {@code key} has at least, the key included. */
     private static int fieldsOf(String key) {
         return switch (key) {
-            case "wave", "seed" -> 2;
+            case "format", "wave", "seed" -> 2;
             case "bonus", "damage" -> 3;
             case "economy" -> 4;
             case "pin" -> 5;
@@ -183,8 +194,8 @@ public final class GameSaveText {
                 nodes.add(word);
             }
         }
-        TowerTally tally = TowerTally.of(Integer.parseInt(words[4]), Integer.parseInt(words[5]),
-                Long.parseLong(words[6]), Integer.parseInt(words[7])).withXpCarried(carried);
+        TowerTally tally = TowerTally.of(Integer.parseInt(words[4]), Long.parseLong(words[5]),
+                Integer.parseInt(words[6])).withXpCarried(carried);
         TowerSave tower = TowerSave.of(type.get(),
                 new Point(Integer.parseInt(words[2]), Integer.parseInt(words[3])), nodes, tally)
                 .withUse(new TowerUse(towerUsed, unused));

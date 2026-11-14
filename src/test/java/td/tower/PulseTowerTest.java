@@ -195,26 +195,6 @@ class PulseTowerTest {
         assertThat(tower.getHighestToll()).isEqualTo(enemy.effectStacks(EffectKind.TOLL));
     }
 
-    @Test
-    void timeAtFullTollInsideCountsAsDeedsAndTimeBeforeItNone() {
-        PulseTower tower = this.attunedTower();
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        int t = 0;
-        for (; enemy.effectStacks(EffectKind.TOLL) < tollCap(tower) - 1; t++) {
-            tower.beginTick(t);
-            tower.doTick(t);
-        }
-        int beforeFull = tower.experience().deeds();
-        for (int end = t + 100; t < end; t++) {
-            tower.beginTick(t);
-            tower.doTick(t);
-        }
-
-        assertThat(beforeFull).isZero();
-        assertThat(tower.experience().deeds()).isPositive();
-    }
 
     /** A Pulse at cell (3, 3) of a 32-pixel board. */
     private PulseTower pulseWith(String... nodes) {
@@ -287,7 +267,7 @@ class PulseTowerTest {
 
     @Test
     void snareDazesAnEnemyOnItsFirstTollStackOfAVisitOnly() {
-        PulseTower tower = this.pulseWith("Snare");
+        PulseTower tower = this.pulseWith("Attune", "Snare");
         FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
         this.board.enemies().setEnemies(new EnemyMob[]{enemy});
 
@@ -328,7 +308,7 @@ class PulseTowerTest {
 
     @Test
     void stasisDazesAndStillsAnEnemyAtFullTollWhichLosesTollWhileDazed() {
-        PulseTower tower = this.pulseWith("Stasis");
+        PulseTower tower = this.pulseWith("Attune", "Stasis");
         FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
         fullToll(enemy, tower);
         this.board.enemies().setEnemies(new EnemyMob[]{enemy});

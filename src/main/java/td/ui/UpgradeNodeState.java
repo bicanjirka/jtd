@@ -6,17 +6,16 @@ import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 
-import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * How the Upgrades panel shows one node now, read once per refresh.
  *
- * @param ring     for a node waiting on XP or its gate, how far the tower is toward it, 0 to 1: XP first, then
- *                 the gate; 0 otherwise
- * @param sealedBy the Core step that keeps a sealed node closed; empty otherwise
- * @param unused   for an owned node, whether no wave has run with it yet, so it sells back in full
+ * @param ability whether it adds something the tower couldn't do, rather than changing a number: drawn round
+ * @param key     the number key that buys it now; empty outside the highest open tier
+ * @param unused  for an owned node, whether no wave has run with it yet, so it sells back in full
  */
-record UpgradeNodeState(UpgradeNode node, Look look, float ring, Optional<UpgradeNode> sealedBy, boolean unused) {
+record UpgradeNodeState(UpgradeNode node, Look look, boolean ability, OptionalInt key, boolean unused) {
 
     UpgradeNodeState {
         if (unused && look != Look.OWNED) {
@@ -27,53 +26,56 @@ record UpgradeNodeState(UpgradeNode node, Look look, float ring, Optional<Upgrad
     /** One look per state, checked in this order: the first that applies wins. */
     enum Look {
         OWNED,
-        /** An exclusive pick closed it, or a node it needs. */
+        /** Another member of its cluster is owned: a click takes this one instead. */
+        SWITCHABLE,
+        /** Its tier isn't open: the XP is short, or the tier's unlock isn't bought. */
+        TIER_LOCKED,
+        /** A node it needs can no longer be bought. */
         LOCKED_OUT,
-        /** A Core step the tower lacks keeps it closed. */
-        SEALED,
-        /** It needs the node before it in its line. */
+        /** It needs a node the tower doesn't own yet. */
         NEEDS_PREVIOUS,
-        /** Its XP or its gate is unmet. */
-        WAITING,
         SHORT_OF_CASH,
         BUYABLE;
 
-        /** Whether its price shows under it: the next node of a line, an open special. */
+        /** Whether its price shows under it. */
         boolean showsPrice() {
-            return this == WAITING || this == SHORT_OF_CASH || this == BUYABLE;
+            return this == TIER_LOCKED || this == NEEDS_PREVIOUS || this == SHORT_OF_CASH || this == BUYABLE;
         }
     }
 
     static UpgradeNodeState of(UpgradeNode node, Tower tower, GameWorld world) {
         UpgradeTree tree = tower.upgradeTree();
         UpgradeState owned = tower.upgrades();
+        boolean ability = !tree.isUnlock(node) && !tower.wordsOf(node).sentences().isEmpty();
+        OptionalInt key = owned.owns(node.id()) ? OptionalInt.empty() : tree.keyOf(node, tower, world);
+        Look look = lookOf(node, tower, world, tree, owned);
+        return new UpgradeNodeState(node, look, ability, key, look == Look.OWNED && tower.use().isUnused(node));
+    }
+
+    private static Look lookOf(UpgradeNode node, Tower tower, GameWorld world, UpgradeTree tree, UpgradeState owned) {
         if (owned.owns(node.id())) {
-            return state(node, Look.OWNED, 0f, Optional.empty()).withUnused(tower.use().isUnused(node));
+            return Look.OWNED;
+        }
+        if (tree.switchFor(node, tower, world).isPresent()) {
+            return Look.SWITCHABLE;
+        }
+        if (!tierReached(node, tower, world, tree)) {
+            return Look.TIER_LOCKED;
         }
         if (tree.isLockedOut(node, owned)) {
-            return state(node, Look.LOCKED_OUT, 0f, Optional.empty());
-        }
-        Optional<UpgradeNode> sealedBy = tree.sealedBy(node, tower, world);
-        if (sealedBy.isPresent()) {
-            return state(node, Look.SEALED, 0f, sealedBy);
+            return Look.LOCKED_OUT;
         }
         if (!tree.offers(node, tower, world)) {
-            return state(node, Look.NEEDS_PREVIOUS, 0f, Optional.empty());
+            return Look.NEEDS_PREVIOUS;
         }
-        if (!node.gateMet(tower, world)) {
-            float ring = node.xpMet(tower) ? node.gate().progressShare(tower, world)
-                    : tower.experience().xp() / (float) node.xp();
-            return state(node, Look.WAITING, ring, Optional.empty());
-        }
-        Look look = world.economy().canPay(node.price()) ? Look.BUYABLE : Look.SHORT_OF_CASH;
-        return state(node, look, 0f, Optional.empty());
+        return world.economy().canPay(node.price()) ? Look.BUYABLE : Look.SHORT_OF_CASH;
     }
 
-    private static UpgradeNodeState state(UpgradeNode node, Look look, float ring, Optional<UpgradeNode> sealedBy) {
-        return new UpgradeNodeState(node, look, ring, sealedBy, false);
-    }
-
-    private UpgradeNodeState withUnused(boolean next) {
-        return new UpgradeNodeState(this.node, this.look, this.ring, this.sealedBy, next);
+    /** A tier's unlock stands at the tier's gate, reached with the tier below and the XP. */
+    private static boolean tierReached(UpgradeNode node, Tower tower, GameWorld world, UpgradeTree tree) {
+        if (tree.isUnlock(node)) {
+            return tree.isOpen(node.tier() - 1, tower, world) && tree.xpMet(node.tier(), tower, world);
+        }
+        return tree.isOpen(node.tier(), tower, world);
     }
 }

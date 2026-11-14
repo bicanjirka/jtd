@@ -3,50 +3,49 @@ package td.ui;
 import td.term.TermNumbers;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.UpgradeNodeState.Look;
 import td.ui.UpgradeTreeLayout.Spot;
 import td.ui.render.IconFace;
+import td.ui.render.TowerLook;
 import td.util.ThreadConfined;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
-import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * Paints one tower's upgrade tree in the design units of {@link UpgradeTreeLayout}: the rook, the halo, the links
- * and forks, every node in its look with its ring, badge, key and price, the XP line and the footer. The caller
- * scales the graphics to the panel.
+ * Paints one tower's upgrade tree in the design units of {@link UpgradeTreeLayout}: each tier's row with the tower's
+ * picture at its left, the gate bands, the links and cluster frames, every node in its look with its key and price,
+ * the XP line and the footer. An open tier takes the tower's colour for it, a locked one is grey. A node that changes
+ * a number is a rounded square, one that adds an ability a circle. The caller scales the graphics to the panel.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class UpgradeTreePainter {
 
     /** What the hovered node marks on other nodes. */
     enum Mark {
-        /** A step of the path a click buys. */
+        /** A step of the path a click buys, or the member a switch takes. */
         PATH,
-        /** A node a downgrade takes away. */
+        /** A node a downgrade or a switch takes away. */
         DROP,
         /** A node the hovered path would lock out. */
-        CRACK,
-        /** A node the hovered Core step opens. */
-        LIT
+        CRACK
     }
 
     /** The hovered node and what it marks. */
@@ -73,6 +72,14 @@ final class UpgradeTreePainter {
     record Footer(String text, boolean warns, boolean active) {
     }
 
+    /** How far the tower's tiers are open, and each gate band's words by tier. */
+    record Gates(int openTier, Map<Integer, String> labels) {
+
+        Gates {
+            labels = Map.copyOf(labels);
+        }
+    }
+
     private static final Color FOREGROUND = Hud.FOREGROUND;
     private static final Color DIM_TEXT = Hud.TEXT_DIM;
     private static final Color WHITE = Color.WHITE;
@@ -80,341 +87,333 @@ final class UpgradeTreePainter {
     private static final Color SHORT = Hud.SHORT;
     private static final Color WARN = new Color(255, 138, 138);
     // The neutrals are the HUD's greys, darkest for what is locked out.
+    private static final Color LOCKED = new Color(110, 110, 113);
     private static final Color LINK_IDLE = new Color(67, 67, 68);
     private static final Color LINK_OUT = new Color(44, 44, 45);
-    private static final Color ROOT_IDLE = Hud.BORDER_IDLE;
-    private static final Color DIAMOND_IDLE = Hud.CHIP_BORDER;
-    private static final Color DIAMOND_OUT = new Color(53, 53, 54);
-    private static final Color SEALED_BORDER = new Color(84, 84, 86);
-    private static final Color SEALED_FILL = new Color(27, 27, 28);
-    private static final Color SEALED_INK = new Color(138, 138, 141);
+    private static final Color LOCKED_BORDER = new Color(84, 84, 86);
+    private static final Color LOCKED_FILL = new Color(24, 24, 25);
     private static final Color OUT_BORDER = new Color(53, 53, 54);
     private static final Color OUT_FILL = new Color(23, 23, 23);
     private static final Color OUT_HATCH = new Color(33, 33, 34);
     private static final Color OUT_INK = new Color(83, 83, 85);
     private static final Color BUY_FILL = new Color(28, 28, 29);
-    private static final Color WAIT_FILL = new Color(19, 19, 19);
-    private static final Color RING_TRACK = new Color(47, 47, 48);
-    private static final Color BADGE_FILL = new Color(7, 21, 32);
     private static final Color XP_TRACK = new Color(36, 36, 37);
     private static final float HOVER_FILL = 0.12f;
     private static final float HOVER_BORDER = 0.35f;
+    private static final float ABILITY_BORDER = 0.4f;
+    private static final float PREVIEW_ALPHA = 0.4f;
     private static final Font XP_FONT = new Font(Font.DIALOG, Font.PLAIN, 10);
     private static final Font PRICE_FONT = Hud.PRICE_FONT;
     private static final Font NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 7);
+    private static final Font BAND_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
+    private static final Font FRAME_FONT = new Font(Font.DIALOG, Font.PLAIN, 7);
+    private static final Font PILL_FONT = new Font(Font.DIALOG, Font.BOLD, 9);
     private static final Font FOOTER_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
     private static final Font FOOTER_BOLD = FOOTER_FONT.deriveFont(Font.BOLD);
     /** Under the border's title. */
     private static final float XP_BASELINE = 30f;
     private static final float CORNER = 7f;
-    private static final float RING_GAP = 4.5f;
-    private static final float BADGE = 15f;
-    /** How far in from the box's corner the key chip sits; further on a round node, whose edge curves away. */
     private static final float CHIP_INSET = 3f;
     private static final float ROUND_CHIP_INSET = 5f;
-    private static final float DIAMOND = 12f;
-    private static final float FORK_DIAMOND = 8f;
-    private static final Shape HEAD_BAND = path(new float[][]{{54, 100}, {82, 100}, {82, 112}, {106, 112}, {106, 100},
-            {134, 100}, {134, 112}, {158, 112}, {158, 100}, {186, 100}, {186, 112}, {210, 112}, {210, 100}, {238, 100},
-            {238, 112}, {262, 112}, {262, 100}, {290, 100}, {290, 126}, {274, 136}, {274, 268}, {70, 268}, {70, 136},
-            {54, 126}});
-    private static final Shape NECK = path(new float[][]{{70, 268}, {274, 268}, {274, 328}, {286, 340}, {58, 340},
-            {70, 328}});
-    private static final Shape FOUNDATION = path(new float[][]{{58, 340}, {286, 340}, {286, 386}, {296, 386},
-            {296, 400}, {46, 400}, {46, 386}, {58, 386}});
+    private static final float BADGE = 15f;
+    private static final float THUMB = 18f;
+    private static final float SMALL_THUMB = 11f;
 
     private final UpgradeTreeLayout layout;
     private final UpgradeTree tree;
+    private final TowerLook look;
     private final TowerFactory.Type type;
 
-    UpgradeTreePainter(UpgradeTreeLayout layout, UpgradeTree tree, TowerFactory.Type type) {
+    UpgradeTreePainter(UpgradeTreeLayout layout, UpgradeTree tree, TowerLook look, TowerFactory.Type type) {
         this.layout = layout;
         this.tree = tree;
+        this.look = look;
         this.type = type;
     }
 
-    void paint(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight, XpLine xp, Footer footer) {
+    void paint(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight, Gates gates, XpLine xp,
+               Footer footer) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-        this.paintRook(g, states);
-        this.paintHalo(g, states);
-        this.paintCrownLink(g, states, highlight);
-        this.paintRootChoice(g, states, highlight);
-        this.layout.links().forEach(link -> this.paintLink(g, link.from(), link.to(), states, highlight));
-        this.layout.forks().forEach(fork -> this.paintFork(g, fork, states, highlight));
-        this.layout.spots().forEach((node, spot) -> this.paintNode(g, node, spot, states.get(node), highlight));
-        this.layout.spots().forEach((node, spot) -> this.paintMarks(g, node, spot, states.get(node)));
+        this.layout.rows().forEach(row -> this.paintRow(g, row, gates));
+        this.paintSplit(g, gates);
+        this.layout.frames().forEach(frame -> this.paintFrame(g, frame, gates));
+        this.layout.links().forEach(link -> this.paintLink(g, link, states, highlight, gates));
+        this.layout.hidden().forEach(spot -> paintHidden(g, spot));
+        this.layout.spots().forEach((node, spot) -> this.dimmed(g, node, () -> {
+            UpgradeNodeState state = states.get(node);
+            if (this.tree.isUnlock(node)) {
+                this.paintPill(g, spot, state, highlight, gates);
+            } else {
+                this.paintNode(g, node, spot, state, highlight, gates);
+                this.paintMarks(g, node, spot, state, gates);
+            }
+        }));
         paintXp(g, xp);
-        paintFooter(g, footer);
+        paintFooter(g, footer, this.layout.height());
     }
 
-    private void paintRook(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states) {
-        g.setColor(this.tint(states, UpgradeSlot.HEAD));
-        g.fill(HEAD_BAND);
-        g.setColor(Hud.withAlpha(FOREGROUND, 0.06f));
-        g.fill(NECK);
-        g.setColor(this.tint(states, UpgradeSlot.BASE));
-        g.fill(FOUNDATION);
-    }
-
-    /** A band takes its slot's colour once the tower owns a node there. */
-    private Color tint(Map<UpgradeNode, UpgradeNodeState> states, UpgradeSlot slot) {
-        boolean owns = states.values().stream().anyMatch(s -> s.node().slot() == slot && s.look() == Look.OWNED);
-        return owns ? Hud.withAlpha(slotColor(slot), 0.09f) : Hud.withAlpha(FOREGROUND, 0.06f);
-    }
-
-    /** A ghost until a special can be reached, lit once one is owned. */
-    private void paintHalo(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states) {
-        boolean owned = this.any(states, UpgradeSlot.SPECIAL, Look.OWNED);
-        boolean open = states.values().stream().anyMatch(s -> s.node().slot() == UpgradeSlot.SPECIAL
-                && s.look() != Look.SEALED && s.look() != Look.LOCKED_OUT);
-        Color special = slotColor(UpgradeSlot.SPECIAL);
-        Shape halo = new Ellipse2D.Float(UpgradeTreeLayout.HALO_X - UpgradeTreeLayout.HALO_RX,
-                UpgradeTreeLayout.HALO_Y - UpgradeTreeLayout.HALO_RY, 2 * UpgradeTreeLayout.HALO_RX,
-                2 * UpgradeTreeLayout.HALO_RY);
-        float glow = owned ? 0.18f : open ? 0.08f : 0f;
-        if (glow > 0f) {
-            g.setColor(Hud.withAlpha(special, glow));
-            g.setStroke(new BasicStroke(7f));
-            g.draw(halo);
-        }
-        g.setColor(Hud.withAlpha(special, owned ? 0.6f : open ? 0.4f : 0.12f));
-        g.setStroke(new BasicStroke(1.5f));
-        g.draw(halo);
-    }
-
-    /** Transcendent's tie from the crown of the wall into the halo. */
-    private void paintCrownLink(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight) {
-        Optional<UpgradeNode> crown = this.tree.nodesIn(UpgradeSlot.CORE).stream()
-                .max((a, b) -> Integer.compare(a.tier().level(), b.tier().level()))
-                .filter(node -> node.tier().level() == 3);
-        if (crown.isEmpty()) {
+    /** {@code paint} at the preview's alpha when {@code node} only shows for the hovered member. */
+    private void dimmed(Graphics2D g, UpgradeNode node, Runnable paint) {
+        if (!this.layout.previewed().contains(node)) {
+            paint.run();
             return;
         }
-        Spot spot = this.layout.spots().get(crown.get());
-        boolean owned = states.get(crown.get()).look() == Look.OWNED;
-        Color core = slotColor(UpgradeSlot.CORE);
-        g.setColor(highlight.is(crown.get(), Mark.PATH) ? WHITE : owned ? core : Hud.withAlpha(core, 0.4f));
-        g.setStroke(owned ? new BasicStroke(2f) : dashed(2f));
-        float top = spot.y() - spot.size() / 2;
-        g.draw(new QuadCurve2D.Float(spot.x(), top, spot.x() + 2, UpgradeTreeLayout.HALO_Y + 2,
-                UpgradeTreeLayout.HALO_X - UpgradeTreeLayout.HALO_RX, UpgradeTreeLayout.HALO_Y + 1));
+        Composite was = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, PREVIEW_ALPHA));
+        try {
+            paint.run();
+        } finally {
+            g.setComposite(was);
+        }
     }
 
-    private void paintRootChoice(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight) {
-        if (this.layout.rootChoice().isEmpty()) {
+    /** The tier's faint ground, the tower's picture at its left, and the words of the gate under it. */
+    private void paintRow(Graphics2D g, UpgradeTreeLayout.Row row, Gates gates) {
+        Color tier = this.tierColor(row.tier());
+        boolean open = row.tier() <= gates.openTier();
+        g.setColor(Hud.withAlpha(open ? tier : FOREGROUND, open ? 0.07f : 0.03f));
+        g.fill(new RoundRectangle2D.Float(4f, row.top() + 1f, UpgradeTreeLayout.WIDTH - 8f, row.bottom() - row.top() - 2f,
+                8f, 8f));
+        Graphics2D thumb = (Graphics2D) g.create();
+        try {
+            thumb.translate(UpgradeTreeLayout.THUMB_X, row.centre());
+            thumb.setColor(open ? tier : LOCKED);
+            thumb.fill(TowerLooks.body(this.look, row.folded() ? SMALL_THUMB : THUMB));
+        } finally {
+            thumb.dispose();
+        }
+        if (row.bandBottom() <= row.bottom()) {
             return;
         }
-        UpgradeTreeLayout.RootChoice choice = this.layout.rootChoice().get();
-        boolean picked = choice.members().stream().anyMatch(m -> states.get(m).look() == Look.OWNED);
-        Color head = slotColor(UpgradeSlot.HEAD);
-        g.setStroke(new BasicStroke(2f));
-        for (UpgradeNode member : choice.members()) {
-            Spot spot = this.layout.spots().get(member);
-            boolean mine = states.get(member).look() == Look.OWNED;
-            g.setColor(highlight.is(member, Mark.PATH) ? WHITE : mine ? head : picked ? LINK_OUT : ROOT_IDLE);
-            Path2D.Float route = new Path2D.Float();
-            route.moveTo(choice.x(), choice.y());
-            route.lineTo(choice.x(), spot.y());
-            route.lineTo(spot.x() - spot.size() / 2, spot.y());
-            g.draw(route);
+        float y = (row.bottom() + row.bandBottom()) / 2;
+        boolean bandOpen = row.tier() <= gates.openTier();
+        String label = gates.labels().getOrDefault(row.tier(), UpgradeTier.nameOf(row.tier()));
+        float x = this.tree.unlockOf(row.tier()).isPresent()
+                ? this.layout.spotOf(this.tree.unlockOf(row.tier()).get()).map(s -> s.x() + s.width() / 2 + 6f)
+                        .orElse(46f)
+                : 46f;
+        g.setFont(BAND_FONT);
+        g.setColor(bandOpen ? tier : DIM_TEXT);
+        g.drawString(label, x, y + 3f);
+        float end = x + g.getFontMetrics().stringWidth(label) + 6f;
+        float stop = this.layout.split().filter(split -> row.tier() == this.forkTier()).map(split -> split - 4f)
+                .orElse(UpgradeTreeLayout.WIDTH - 8f);
+        if (end < stop) {
+            g.setColor(Hud.withAlpha(bandOpen ? tier : FOREGROUND, 0.18f));
+            g.setStroke(new BasicStroke(1f));
+            g.draw(new Line2D.Float(end, y, stop, y));
         }
-        Shape diamond = AffineTransform.getRotateInstance(Math.PI / 4, choice.x(), choice.y())
-                .createTransformedShape(new Rectangle2D.Float(choice.x() - DIAMOND / 2, choice.y() - DIAMOND / 2, DIAMOND,
-                        DIAMOND));
+    }
+
+    /** The line between the shared column and the side's, from the fork's band to the top. */
+    private void paintSplit(Graphics2D g, Gates gates) {
+        if (this.layout.split().isEmpty()) {
+            return;
+        }
+        float x = this.layout.split().get();
+        int fork = this.forkTier();
+        float top = this.layout.rows().stream().filter(row -> row.tier() >= fork)
+                .map(UpgradeTreeLayout.Row::top).reduce(Float::min).orElse(0f);
+        float bottom = this.layout.rows().stream().filter(row -> row.tier() == fork)
+                .map(UpgradeTreeLayout.Row::bandBottom).findFirst().orElse(top);
+        g.setColor(Hud.withAlpha(fork <= gates.openTier() ? this.tierColor(fork) : FOREGROUND, 0.25f));
+        g.setStroke(dashed(1f));
+        g.draw(new Line2D.Float(x, top + 3f, x, bottom - 3f));
+    }
+
+    private int forkTier() {
+        return this.tree.fork().flatMap(fork -> this.tree.node(fork.memberIds().getFirst())).map(UpgradeNode::tier)
+                .orElse(Integer.MAX_VALUE);
+    }
+
+    private void paintFrame(Graphics2D g, UpgradeTreeLayout.Frame frame, Gates gates) {
+        int tier = this.tree.node(frame.cluster().memberIds().getFirst()).orElseThrow().tier();
+        Color color = tier <= gates.openTier() ? this.tierColor(tier) : LOCKED;
+        Shape box = new RoundRectangle2D.Float(frame.left(), frame.top(), frame.right() - frame.left(),
+                frame.bottom() - frame.top(), 2 * CORNER + 4f, 2 * CORNER + 4f);
+        g.setColor(Hud.withAlpha(color, 0.5f));
+        g.setStroke(new BasicStroke(1f));
+        g.draw(box);
+        if (frame.bottom() - frame.top() < UpgradeTreeLayout.NODE) {
+            return;
+        }
+        g.setFont(FRAME_FONT);
+        FontMetrics metrics = g.getFontMetrics();
+        String name = frame.cluster().name();
+        float width = metrics.stringWidth(name);
+        float x = frame.left() + 8f;
         g.setColor(Hud.BACKGROUND);
-        g.fill(diamond);
-        g.setColor(picked ? head : DIAMOND_IDLE);
-        g.draw(diamond);
+        g.fill(new Rectangle2D.Float(x - 2f, frame.top() - 4f, width + 4f, 7f));
+        g.setColor(Hud.withAlpha(color, 0.85f));
+        g.drawString(name, x, frame.top() + 2.5f);
     }
 
-    private void paintLink(Graphics2D g, UpgradeNode from, UpgradeNode to, Map<UpgradeNode, UpgradeNodeState> states,
-                           Highlight highlight) {
-        Spot a = this.layout.spots().get(from);
-        Spot b = this.layout.spots().get(to);
-        this.strokeLink(g, a.x(), a.y(), a.size() / 2 + 1, b.x(), b.y(), b.size() / 2 + 1,
-                linkLook(states.get(from).look(), states.get(to).look(), highlight, from, to, slotColor(to.slot())));
-    }
-
-    private void paintFork(Graphics2D g, UpgradeTreeLayout.Fork fork, Map<UpgradeNode, UpgradeNodeState> states,
-                           Highlight highlight) {
-        Spot from = this.layout.spots().get(fork.from());
-        Color head = slotColor(UpgradeSlot.HEAD);
-        Look fromLook = states.get(fork.from()).look();
-        boolean anyOwned = fork.members().stream().anyMatch(m -> states.get(m).look() == Look.OWNED);
-        boolean allOut = fork.members().stream().allMatch(m -> states.get(m).look() == Look.LOCKED_OUT);
-        Optional<UpgradeNode> marked = fork.members().stream()
-                .filter(m -> highlight.is(m, Mark.PATH) || highlight.is(m, Mark.DROP)).findFirst();
-        Look junction = anyOwned ? Look.OWNED : allOut || fromLook == Look.LOCKED_OUT ? Look.LOCKED_OUT : Look.SEALED;
-        UpgradeNode junctionMark = marked.orElse(fork.from());
-        this.strokeLink(g, from.x(), from.y(), from.size() / 2 + 1, fork.x(), fork.y(), FORK_DIAMOND / 2,
-                linkLook(fromLook, junction, highlight, fork.from(), junctionMark, head));
-        for (UpgradeNode member : fork.members()) {
-            Spot spot = this.layout.spots().get(member);
-            this.strokeLink(g, fork.x(), fork.y(), FORK_DIAMOND / 2, spot.x(), spot.y(), spot.size() / 2 + 1,
-                    linkLook(junction, states.get(member).look(), highlight, junctionMark, member, head));
+    private void paintLink(Graphics2D g, UpgradeTreeLayout.Link link, Map<UpgradeNode, UpgradeNodeState> states,
+                           Highlight highlight, Gates gates) {
+        Spot a = this.layout.spots().get(link.from());
+        Spot b = this.layout.spots().get(link.to());
+        Look from = states.get(link.from()).look();
+        Look to = states.get(link.to()).look();
+        Color tier = this.tierColor(link.to().tier());
+        Color color;
+        Stroke stroke = new BasicStroke(2f);
+        if (highlight.is(link.to(), Mark.DROP)) {
+            color = DROP;
+            stroke = dashed(2f);
+        } else if (highlight.is(link.to(), Mark.PATH)) {
+            color = WHITE;
+        } else if (from == Look.OWNED && to == Look.OWNED) {
+            color = tier;
+        } else if (from == Look.LOCKED_OUT || to == Look.LOCKED_OUT) {
+            color = LINK_OUT;
+        } else if (from == Look.OWNED && (to == Look.BUYABLE || to == Look.SHORT_OF_CASH)) {
+            color = Hud.withAlpha(tier, 0.7f);
+            stroke = dashed(2f);
+        } else {
+            color = LINK_IDLE;
         }
-        Shape diamond = AffineTransform.getRotateInstance(Math.PI / 4, fork.x(), fork.y())
-                .createTransformedShape(new Rectangle2D.Float(fork.x() - FORK_DIAMOND / 2, fork.y() - FORK_DIAMOND / 2,
-                        FORK_DIAMOND, FORK_DIAMOND));
-        g.setColor(Hud.BACKGROUND);
-        g.fill(diamond);
-        g.setColor(junction == Look.LOCKED_OUT ? DIAMOND_OUT : DIAMOND_IDLE);
-        g.setStroke(new BasicStroke(1.5f));
-        g.draw(diamond);
-    }
-
-    /** A link's colour and stroke: removed, on the path, owned, broken, opening, or idle. */
-    private record LinkLook(Color color, Stroke stroke) {
-    }
-
-    private static LinkLook linkLook(Look a, Look b, Highlight highlight, UpgradeNode from, UpgradeNode to, Color slot) {
-        boolean fromHeld = a == Look.OWNED || highlight.is(from, Mark.DROP);
-        if (highlight.is(to, Mark.DROP) && fromHeld) {
-            return new LinkLook(DROP, dashed(2f));
-        }
-        if (highlight.is(to, Mark.PATH) && (a == Look.OWNED || highlight.is(from, Mark.PATH))) {
-            return new LinkLook(WHITE, new BasicStroke(2.5f));
-        }
-        if (a == Look.OWNED && b == Look.OWNED) {
-            return new LinkLook(slot, new BasicStroke(2f));
-        }
-        if (a == Look.LOCKED_OUT || b == Look.LOCKED_OUT) {
-            return new LinkLook(LINK_OUT, new BasicStroke(2f));
-        }
-        if (a == Look.OWNED && b.showsPrice()) {
-            return new LinkLook(Hud.withAlpha(slot, 0.73f), dashed(2f));
-        }
-        return new LinkLook(LINK_IDLE, new BasicStroke(2f));
-    }
-
-    private void strokeLink(Graphics2D g, float x1, float y1, float r1, float x2, float y2, float r2, LinkLook look) {
-        double length = Math.hypot(x2 - x1, y2 - y1);
+        double length = Math.hypot(b.x() - a.x(), b.y() - a.y());
+        float r1 = Math.max(a.width(), a.height()) / 2 + 1f;
+        float r2 = Math.max(b.width(), b.height()) / 2 + 1f;
         if (length <= r1 + r2) {
             return;
         }
-        float ux = (float) ((x2 - x1) / length);
-        float uy = (float) ((y2 - y1) / length);
-        g.setColor(look.color());
-        g.setStroke(look.stroke());
-        g.draw(new Line2D.Float(x1 + ux * r1, y1 + uy * r1, x2 - ux * r2, y2 - uy * r2));
+        float ux = (float) ((b.x() - a.x()) / length);
+        float uy = (float) ((b.y() - a.y()) / length);
+        g.setColor(color);
+        g.setStroke(stroke);
+        g.draw(new Line2D.Float(a.x() + ux * r1, a.y() + uy * r1, b.x() - ux * r2, b.y() - uy * r2));
     }
 
-    private void paintNode(Graphics2D g, UpgradeNode node, Spot spot, UpgradeNodeState state, Highlight highlight) {
-        Color slot = slotColor(node.slot());
+    /** Where the branch of a member the tower didn't pick hides: a dashed box with an ellipsis. */
+    private static void paintHidden(Graphics2D g, Spot spot) {
+        g.setColor(LINK_IDLE);
+        g.setStroke(dashed(1f));
+        g.draw(new RoundRectangle2D.Float(spot.x() - spot.width() / 2, spot.y() - spot.height() / 2, spot.width(),
+                spot.height(), 5f, 5f));
+        for (int i = -1; i <= 1; i++) {
+            g.fill(new Ellipse2D.Float(spot.x() + i * 3.5f - 1f, spot.y() - 1f, 2f, 2f));
+        }
+    }
+
+    /** A tier's unlock: its price until bought, a check after. */
+    private void paintPill(Graphics2D g, Spot spot, UpgradeNodeState state, Highlight highlight, Gates gates) {
+        Look look = state.look();
+        Color tier = this.tierColor(state.node().tier());
+        boolean lit = look == Look.OWNED || look == Look.BUYABLE || look == Look.SHORT_OF_CASH;
+        Color color = lit ? tier : LOCKED;
+        boolean hovered = highlight.hovered().filter(state.node()::equals).isPresent();
+        Shape pill = new RoundRectangle2D.Float(spot.x() - spot.width() / 2, spot.y() - spot.height() / 2, spot.width(),
+                spot.height(), spot.height(), spot.height());
+        g.setColor(look == Look.OWNED ? blend(tier, 0.27f) : hovered ? Hud.mix(BUY_FILL, color, HOVER_FILL) : BUY_FILL);
+        g.fill(pill);
+        g.setColor(highlight.is(state.node(), Mark.PATH) ? WHITE : hovered ? Hud.mix(color, WHITE, HOVER_BORDER) : color);
+        g.setStroke(new BasicStroke(1.5f));
+        g.draw(pill);
+        String text = look == Look.OWNED ? "✔" : TermNumbers.cash(state.node().price());
+        g.setColor(look == Look.SHORT_OF_CASH ? SHORT : look == Look.OWNED ? WHITE : color);
+        centred(g, text, PILL_FONT, spot.x(), spot.y() + 3.5f);
+        state.key().ifPresent(key -> Hud.paintChip(g, String.valueOf(key), spot.x() - spot.width() / 2 - 6f,
+                spot.y() - spot.height() / 2 - 2f, Hud.withAlpha(color, 0.6f), color));
+    }
+
+    private void paintNode(Graphics2D g, UpgradeNode node, Spot spot, UpgradeNodeState state, Highlight highlight,
+                           Gates gates) {
+        Color tier = this.tierColor(node.tier());
         Look look = state.look();
         boolean hovered = highlight.hovered().filter(node::equals).isPresent();
-        if (look == Look.WAITING) {
-            paintRing(g, spot, slot, state.ring());
-        }
-        Shape box = shapeOf(spot, 0f);
+        boolean round = state.ability();
+        Shape box = shapeOf(spot, 0f, round);
         if (look == Look.BUYABLE || look == Look.SHORT_OF_CASH) {
             for (int i = 3; i >= 1; i--) {
-                g.setColor(Hud.withAlpha(slot, 0.12f));
-                g.setStroke(new BasicStroke(2f + 2.5f * i));
+                g.setColor(Hud.withAlpha(tier, 0.12f));
+                g.setStroke(new BasicStroke(1.5f + 2f * i));
                 g.draw(box);
             }
         }
-        Color fill = hovered ? Hud.mix(fillOf(look, slot), slot, HOVER_FILL) : fillOf(look, slot);
+        Color fill = hovered ? Hud.mix(fillOf(look, tier), tier, HOVER_FILL) : fillOf(look, tier);
         g.setColor(fill);
         g.fill(box);
         if (look == Look.LOCKED_OUT) {
             paintHatch(g, box, spot);
         }
-        Color ink = inkOf(look, slot);
-        IconFace face = TermLooks.faceOfLine(this.type, this.tree.artNodeOf(node), node.tier().level());
+        Color ink = inkOf(look, tier);
+        IconFace face = TermLooks.faceOfLine(this.type, this.tree.artNodeOf(node), this.tree.levelOf(node));
         Graphics2D symbol = (Graphics2D) g.create();
         try {
-            float inset = spot.size() * 0.08f;
-            symbol.translate(spot.x() - spot.size() / 2 + inset, spot.y() - spot.size() / 2 + inset);
-            float k = (spot.size() - 2 * inset) / TermIconPainter.ROW;
+            float inset = spot.width() * (round ? 0.16f : 0.08f);
+            symbol.translate(spot.x() - spot.width() / 2 + inset, spot.y() - spot.height() / 2 + inset);
+            float k = (spot.width() - 2 * inset) / TermIconPainter.ROW;
             symbol.scale(k, k);
             TermIconPainter.paintBareSymbol(symbol, face, TermIconPainter.ROW, ink, fill);
         } finally {
             symbol.dispose();
         }
-        if (!face.numeral().isEmpty()) {
+        if (!face.numeral().isEmpty() && spot.width() >= UpgradeTreeLayout.NODE - 1f) {
             g.setFont(NUMERAL_FONT);
             g.setColor(ink);
             FontMetrics metrics = g.getFontMetrics();
-            g.drawString(face.numeral(), spot.x() + spot.size() / 2 - 3 - metrics.stringWidth(face.numeral()),
-                    spot.y() + spot.size() / 2 - 3);
+            g.drawString(face.numeral(), spot.x() + spot.width() / 2 - 3 - metrics.stringWidth(face.numeral()),
+                    spot.y() + spot.height() / 2 - 3);
         }
-        g.setColor(hovered ? Hud.mix(borderOf(look, slot), WHITE, HOVER_BORDER) : borderOf(look, slot));
-        g.setStroke(look == Look.NEEDS_PREVIOUS ? dashed(1.5f) : new BasicStroke(2f));
-        g.draw(shapeOf(spot, -1f));
+        Color border = borderOf(look, tier);
+        if (round && look != Look.LOCKED_OUT) {
+            border = Hud.mix(border, WHITE, ABILITY_BORDER);
+        }
+        g.setColor(hovered ? Hud.mix(border, WHITE, HOVER_BORDER) : border);
+        g.setStroke(look == Look.NEEDS_PREVIOUS || look == Look.SWITCHABLE ? dashed(1.5f) : new BasicStroke(2f));
+        g.draw(shapeOf(spot, -1f, round));
         if (highlight.is(node, Mark.PATH) || highlight.is(node, Mark.DROP)) {
             Color edge = highlight.is(node, Mark.PATH) ? WHITE : DROP;
             g.setColor(Hud.withAlpha(edge, 0.35f));
             g.setStroke(new BasicStroke(5f));
-            g.draw(shapeOf(spot, 2.5f));
+            g.draw(shapeOf(spot, 2.5f, round));
             g.setColor(edge);
             g.setStroke(new BasicStroke(2f));
-            g.draw(shapeOf(spot, 2f));
-        }
-        if (highlight.is(node, Mark.LIT)) {
-            g.setColor(slotColor(UpgradeSlot.CORE));
-            g.setStroke(new BasicStroke(1.5f));
-            g.draw(shapeOf(spot, 3f));
+            g.draw(shapeOf(spot, 2f, round));
         }
         if (highlight.is(node, Mark.CRACK)) {
             paintCracks(g, spot);
         }
     }
 
-    /** The badge of a sealed node, the key digit and price of a line's next node. */
-    private void paintMarks(Graphics2D g, UpgradeNode node, Spot spot, UpgradeNodeState state) {
-        float half = spot.size() / 2;
-        Color slot = slotColor(node.slot());
-        if (state.sealedBy().isPresent()) {
-            Color core = slotColor(UpgradeSlot.CORE);
-            Shape badge = new Ellipse2D.Float(spot.x() + half - 10, spot.y() - half - 6, BADGE, BADGE);
-            g.setColor(BADGE_FILL);
-            g.fill(badge);
-            g.setColor(core);
-            g.setStroke(new BasicStroke(1f));
-            g.draw(badge);
-            Graphics2D symbol = (Graphics2D) g.create();
-            try {
-                symbol.translate(spot.x() + half - 8.5, spot.y() - half - 4.5);
-                float k = 12f / TermIconPainter.ROW;
-                symbol.scale(k, k);
-                TermIconPainter.paintBareSymbol(symbol, TermLooks.faceOfLine(this.type, state.sealedBy().get(), 0),
-                        TermIconPainter.ROW, core, BADGE_FILL);
-            } finally {
-                symbol.dispose();
-            }
+    /** The cash mark of an owned node no wave has used, the key chip and the price. */
+    private void paintMarks(Graphics2D g, UpgradeNode node, Spot spot, UpgradeNodeState state, Gates gates) {
+        float half = spot.width() / 2;
+        if (spot.width() < UpgradeTreeLayout.NODE - 1f) {
+            return;
         }
         if (state.unused()) {
-            // Where a sealed node's badge goes: an owned node never shows one.
             CashMark.paint(g, spot.x() + half - 10 + BADGE / 2f, spot.y() - half - 6 + BADGE / 2f, BADGE);
+        }
+        Color tier = this.tierColor(node.tier());
+        if (state.key().isPresent() && this.showsKey(node)) {
+            float inset = state.ability() ? ROUND_CHIP_INSET : CHIP_INSET;
+            Hud.paintChip(g, String.valueOf(state.key().getAsInt()), spot.x() - half + inset, spot.y() - half + inset,
+                    Hud.withAlpha(tier, 0.6f), tier);
         }
         if (!state.look().showsPrice()) {
             return;
         }
-        if (node.slot() != UpgradeSlot.SPECIAL) {
-            float inset = spot.round() ? ROUND_CHIP_INSET : CHIP_INSET;
-            Hud.paintChip(g, String.valueOf(this.tree.keyOf(node)), spot.x() - half + inset, spot.y() - half + inset,
-                    Hud.withAlpha(slot, 0.6f), slot);
-        }
-        Color price = switch (state.look()) {
-            case WAITING -> Hud.withAlpha(slot, 0.53f);
+        g.setColor(switch (state.look()) {
+            case TIER_LOCKED -> LOCKED;
+            case NEEDS_PREVIOUS -> Hud.withAlpha(tier, 0.6f);
             case SHORT_OF_CASH -> SHORT;
-            default -> slot;
-        };
-        g.setColor(price);
+            default -> tier;
+        });
         centred(g, TermNumbers.cash(node.price()), PRICE_FONT, spot.x(), spot.y() + half + 11);
     }
 
-    private static void paintRing(Graphics2D g, Spot spot, Color slot, float share) {
-        float radius = spot.size() / 2 + RING_GAP;
-        Ellipse2D.Float track = new Ellipse2D.Float(spot.x() - radius, spot.y() - radius, 2 * radius, 2 * radius);
-        g.setStroke(new BasicStroke(3f));
-        g.setColor(RING_TRACK);
-        g.draw(track);
-        g.setColor(slot);
-        g.draw(new Arc2D.Float(track.getBounds2D(), 90f, -360f * Math.clamp(share, 0f, 1f), Arc2D.OPEN));
+    /** A cluster's key shows on its first member only, which the key takes. */
+    private boolean showsKey(UpgradeNode node) {
+        return this.tree.isForkSide(node) || this.tree.clusterOf(node)
+                .map(cluster -> cluster.memberIds().getFirst().equals(node.id())).orElse(true);
+    }
+
+    private Color tierColor(int tier) {
+        return TowerLooks.tierColor(this.look, tier);
     }
 
     private static void paintHatch(Graphics2D g, Shape box, Spot spot) {
@@ -423,10 +422,10 @@ final class UpgradeTreePainter {
             hatch.clip(box);
             hatch.setColor(OUT_HATCH);
             hatch.setStroke(new BasicStroke(3f));
-            float left = spot.x() - spot.size() / 2;
-            float top = spot.y() - spot.size() / 2;
-            for (float d = -spot.size(); d < spot.size(); d += 6f) {
-                hatch.draw(new Line2D.Float(left + d, top + spot.size(), left + d + spot.size(), top));
+            float left = spot.x() - spot.width() / 2;
+            float top = spot.y() - spot.height() / 2;
+            for (float d = -spot.width(); d < spot.width(); d += 6f) {
+                hatch.draw(new Line2D.Float(left + d, top + spot.height(), left + d + spot.width(), top));
             }
         } finally {
             hatch.dispose();
@@ -434,9 +433,9 @@ final class UpgradeTreePainter {
     }
 
     private static void paintCracks(Graphics2D g, Spot spot) {
-        float left = spot.x() - spot.size() / 2;
-        float top = spot.y() - spot.size() / 2;
-        float size = spot.size();
+        float left = spot.x() - spot.width() / 2;
+        float top = spot.y() - spot.height() / 2;
+        float size = spot.width();
         g.setColor(DROP);
         g.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         Path2D.Float crack = new Path2D.Float();
@@ -463,10 +462,10 @@ final class UpgradeTreePainter {
         g.fill(new Rectangle2D.Float(barLeft, XP_BASELINE - 5f, (right - barLeft) * Math.clamp(xp.share(), 0f, 1f), 3f));
     }
 
-    private static void paintFooter(Graphics2D g, Footer footer) {
+    private static void paintFooter(Graphics2D g, Footer footer, float height) {
         g.setColor(footer.warns() ? WARN : footer.active() ? WHITE : DIM_TEXT);
         centred(g, footer.text(), footer.active() ? FOOTER_BOLD : FOOTER_FONT, UpgradeTreeLayout.WIDTH / 2f,
-                UpgradeTreeLayout.FOOTER_Y + 9);
+                height - UpgradeTreeLayout.FOOTER + 13f);
     }
 
     private static void centred(Graphics2D g, String text, Font font, float x, float baseline) {
@@ -474,53 +473,45 @@ final class UpgradeTreePainter {
         g.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2f, baseline);
     }
 
-    private boolean any(Map<UpgradeNode, UpgradeNodeState> states, UpgradeSlot slot, Look look) {
-        return states.values().stream().anyMatch(s -> s.node().slot() == slot && s.look() == look);
-    }
-
     /** The node's outline grown by {@code grow} on every side. */
-    private static Shape shapeOf(Spot spot, float grow) {
-        float size = spot.size() + 2 * grow;
+    private static Shape shapeOf(Spot spot, float grow, boolean round) {
+        float size = spot.width() + 2 * grow;
         float left = spot.x() - size / 2;
         float top = spot.y() - size / 2;
-        return spot.round() ? new Ellipse2D.Float(left, top, size, size)
-                : new RoundRectangle2D.Float(left, top, size, size, 2 * (CORNER + grow), 2 * (CORNER + grow));
+        float corner = Math.min(CORNER, size / 4);
+        return round ? new Ellipse2D.Float(left, top, size, size)
+                : new RoundRectangle2D.Float(left, top, size, size, 2 * (corner + grow), 2 * (corner + grow));
     }
 
-    private static Color fillOf(Look look, Color slot) {
+    private static Color fillOf(Look look, Color tier) {
         return switch (look) {
-            case OWNED -> blend(slot, 0.27f);
-            case BUYABLE, SHORT_OF_CASH -> BUY_FILL;
-            case WAITING -> WAIT_FILL;
+            case OWNED -> blend(tier, 0.27f);
+            case BUYABLE, SHORT_OF_CASH, SWITCHABLE -> BUY_FILL;
             case NEEDS_PREVIOUS -> Hud.BACKGROUND;
-            case SEALED -> SEALED_FILL;
+            case TIER_LOCKED -> LOCKED_FILL;
             case LOCKED_OUT -> OUT_FILL;
         };
     }
 
-    private static Color borderOf(Look look, Color slot) {
+    private static Color borderOf(Look look, Color tier) {
         return switch (look) {
-            case OWNED, BUYABLE, SHORT_OF_CASH -> slot;
-            case WAITING -> Hud.withAlpha(slot, 0.53f);
-            case NEEDS_PREVIOUS -> Hud.withAlpha(slot, 0.6f);
-            case SEALED -> SEALED_BORDER;
+            case OWNED, BUYABLE, SHORT_OF_CASH -> tier;
+            case SWITCHABLE -> Hud.withAlpha(tier, 0.7f);
+            case NEEDS_PREVIOUS -> Hud.withAlpha(tier, 0.55f);
+            case TIER_LOCKED -> LOCKED_BORDER;
             case LOCKED_OUT -> OUT_BORDER;
         };
     }
 
-    private static Color inkOf(Look look, Color slot) {
+    private static Color inkOf(Look look, Color tier) {
         return switch (look) {
             case OWNED -> WHITE;
-            case BUYABLE, SHORT_OF_CASH -> slot;
-            case WAITING -> Hud.withAlpha(slot, 0.73f);
-            case NEEDS_PREVIOUS -> Hud.withAlpha(slot, 0.6f);
-            case SEALED -> SEALED_INK;
+            case BUYABLE, SHORT_OF_CASH -> tier;
+            case SWITCHABLE -> Hud.withAlpha(tier, 0.8f);
+            case NEEDS_PREVIOUS -> Hud.withAlpha(tier, 0.6f);
+            case TIER_LOCKED -> LOCKED;
             case LOCKED_OUT -> OUT_INK;
         };
-    }
-
-    static Color slotColor(UpgradeSlot slot) {
-        return Java2DFrameRenderer.colorFor(TowerSpriteFrameBuilder.slotPaletteFor(slot));
     }
 
     /** {@code color} at {@code share} over black, opaque: a translucent fill that hides what is under it. */
@@ -531,15 +522,5 @@ final class UpgradeTreePainter {
 
     private static Stroke dashed(float width) {
         return new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 1f, new float[]{3f, 3f}, 0f);
-    }
-
-    private static Shape path(float[][] points) {
-        Path2D.Float path = new Path2D.Float();
-        path.moveTo(points[0][0], points[0][1]);
-        for (int i = 1; i < points.length; i++) {
-            path.lineTo(points[i][0], points[i][1]);
-        }
-        path.closePath();
-        return path;
     }
 }

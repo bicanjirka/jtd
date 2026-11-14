@@ -9,8 +9,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OwnedMechanicsTest {
 
-    private static final UpgradeNode FIRST = UpgradeNode.of("first", UpgradeSlot.HEAD, "First", 10);
-    private static final UpgradeNode SECOND = UpgradeNode.of("second", UpgradeSlot.HEAD, "Second", 10);
+    private static final UpgradeNode FIRST = UpgradeNode.of("first", "First", 10);
+    private static final UpgradeNode SECOND = UpgradeNode.of("second", "Second", 10);
     private static final MechanicCatalogue<Mechanic> CATALOGUE = MechanicCatalogue.empty()
             .with(FIRST.id(), () -> () -> TermText.of("first"))
             .with(SECOND.id(), () -> () -> TermText.of("second"));

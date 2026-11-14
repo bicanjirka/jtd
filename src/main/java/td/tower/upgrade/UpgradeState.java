@@ -13,10 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * A tower's owned nodes in purchase order, as one immutable snapshot. A slot's current node is
- * derived by {@link #tip(UpgradeSlot)}, so there is no separate index to keep in sync.
- */
+/** A tower's owned nodes, a paid tier's unlock among them, in purchase order, as one immutable snapshot. */
 public record UpgradeState(List<UpgradeNode> owned) {
 
     private static final UpgradeState NONE = new UpgradeState(List.of());
@@ -45,24 +42,15 @@ public record UpgradeState(List<UpgradeNode> owned) {
         return false;
     }
 
-    public int countIn(UpgradeSlot slot) {
+    /** How many owned nodes sit in {@code tier}, its unlock included. */
+    public int countInTier(int tier) {
         int count = 0;
         for (int i = 0; i < this.owned.size(); i++) {
-            if (this.owned.get(i).slot() == slot) {
+            if (this.owned.get(i).tier() == tier) {
                 count++;
             }
         }
         return count;
-    }
-
-    public List<UpgradeNode> inSlot(UpgradeSlot slot) {
-        return this.owned.stream().filter(n -> n.slot() == slot).toList();
-    }
-
-    /** The last node bought in {@code slot}. */
-    public Optional<UpgradeNode> tip(UpgradeSlot slot) {
-        List<UpgradeNode> inSlot = this.inSlot(slot);
-        return inSlot.isEmpty() ? Optional.empty() : Optional.of(inSlot.getLast());
     }
 
     /** What every owned node lets the tower do. */

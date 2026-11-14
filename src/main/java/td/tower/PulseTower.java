@@ -37,15 +37,12 @@ import td.tower.pulse.ZapSpec;
 import td.tower.targeting.HighestRankSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotMechanics;
-import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.PurposeCondition;
-import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.RangeNodes;
+import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.PathRuntime;
@@ -78,64 +75,70 @@ public final class PulseTower extends AbstractTower {
 
     /** How long a zap's bolt stays drawn. */
     private static final int ZAP_FLASH_TICKS = 8;
-    private static final TermText FULL_TOLL_DEED = TermText.format("seconds at full {}", EffectKind.TOLL);
-    private static final int FULL_TOLL_SECONDS_NEEDED = 30;
     /** What every other field overlapping this one takes off its damage, and the least it keeps. */
     private static final float INTERFERENCE_PER_FIELD = 0.25f;
     private static final float INTERFERENCE_FLOOR = 0.25f;
 
-    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
-            .withRangeThree(0.2f, NodeEffects.none().withModifiers(TowerModifiers.tollLinger(20)));
+    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 20);
 
-    private static final UpgradeNode UNDERTOW = UpgradeTier.HEAD_1.node("pulse.head.gravity.1", "Undertow", PRICE);
-    private static final UpgradeNode SNARE = UpgradeTier.HEAD_2.node("pulse.head.gravity.2", "Snare", PRICE)
-            .after(UNDERTOW);
-    private static final UpgradeNode EVENT_HORIZON = UpgradeTier.HEAD_3.node("pulse.head.gravity.3", "Event Horizon",
-            PRICE)
-            .withGate(new PurposeCondition(FULL_TOLL_DEED, FULL_TOLL_SECONDS_NEEDED))
-            .after(SNARE);
-    private static final UpgradeNode GRAVITY_WELL = UpgradeTier.HEAD_4.node("pulse.head.gravity.4a", "Gravity Well",
-            PRICE)
-            .after(EVENT_HORIZON);
-    private static final UpgradeNode STASIS = UpgradeTier.HEAD_4.node("pulse.head.gravity.4b", "Stasis", PRICE)
-            .after(EVENT_HORIZON);
-    private static final UpgradeNode SIGHT = UpgradeTier.HEAD_1.node("pulse.head.ward.1", "Sight", PRICE);
-    private static final UpgradeNode NULL_FIELD = UpgradeTier.HEAD_2.node("pulse.head.ward.2", "Null Field", PRICE)
-            .after(SIGHT);
-    private static final UpgradeNode DEAD_ZONE = UpgradeTier.HEAD_3.node("pulse.head.ward.3", "Dead Zone", PRICE)
-            .withGate(new PurposeCondition(FULL_TOLL_DEED, FULL_TOLL_SECONDS_NEEDED))
-            .after(NULL_FIELD);
-    private static final UpgradeNode TRUE_SIGHT = UpgradeTier.HEAD_4.node("pulse.head.ward.4a", "True Sight", PRICE)
-            .after(DEAD_ZONE);
-    private static final UpgradeNode PURGE = UpgradeTier.HEAD_4.node("pulse.head.ward.4b", "Purge", PRICE)
-            .after(DEAD_ZONE);
-    private static final UpgradeNode FRAILTY = UpgradeTier.EXTRA_1.node("pulse.extra.bite.1", "Frailty", PRICE);
-    private static final UpgradeNode CORROSION = UpgradeTier.EXTRA_2.node("pulse.extra.bite.2", "Corrosion", PRICE)
-            .after(FRAILTY);
-    private static final UpgradeNode RESONANT_COILS = UpgradeTier.EXTRA_3.node("pulse.extra.bite.3", "Resonant Coils",
-            PRICE)
+    private static final UpgradeNode UNDERTOW = UpgradeNode.of("pulse.head.gravity.1", "Undertow", 25);
+    private static final UpgradeNode SNARE = UpgradeNode.of("pulse.head.gravity.2", "Snare", 38)
+            .after(UNDERTOW)
+            .inTier(1);
+    private static final UpgradeNode EVENT_HORIZON = UpgradeNode.of("pulse.head.gravity.3", "Event Horizon", 63)
+            .after(SNARE)
+            .inTier(2);
+    private static final UpgradeNode GRAVITY_WELL = UpgradeNode.of("pulse.head.gravity.4a", "Gravity Well", 100)
+            .after(EVENT_HORIZON)
+            .inTier(3);
+    private static final UpgradeNode STASIS = UpgradeNode.of("pulse.head.gravity.4b", "Stasis", 100)
+            .after(EVENT_HORIZON)
+            .inTier(3);
+    private static final UpgradeNode SIGHT = UpgradeNode.of("pulse.head.ward.1", "Sight", 25);
+    private static final UpgradeNode NULL_FIELD = UpgradeNode.of("pulse.head.ward.2", "Null Field", 38)
+            .after(SIGHT)
+            .inTier(1);
+    private static final UpgradeNode DEAD_ZONE = UpgradeNode.of("pulse.head.ward.3", "Dead Zone", 63)
+            .after(NULL_FIELD)
+            .inTier(2);
+    private static final UpgradeNode TRUE_SIGHT = UpgradeNode.of("pulse.head.ward.4a", "True Sight", 100)
+            .after(DEAD_ZONE)
+            .inTier(3);
+    private static final UpgradeNode PURGE = UpgradeNode.of("pulse.head.ward.4b", "Purge", 100)
+            .after(DEAD_ZONE)
+            .inTier(3);
+    private static final UpgradeNode FRAILTY = UpgradeNode.of("pulse.extra.bite.1", "Frailty", 20);
+    private static final UpgradeNode CORROSION = UpgradeNode.of("pulse.extra.bite.2", "Corrosion", 30)
+            .after(FRAILTY)
+            .inTier(1);
+    private static final UpgradeNode RESONANT_COILS = UpgradeNode.of("pulse.extra.bite.3", "Resonant Coils", 50)
             .withModifiers(TowerModifiers.tollRate(1f))
-            .after(CORROSION);
-    private static final UpgradeNode MELTDOWN = UpgradeTier.EXTRA_4.node("pulse.extra.bite.4", "Meltdown", PRICE)
+            .after(CORROSION)
+            .inTier(2);
+    private static final UpgradeNode MELTDOWN = UpgradeNode.of("pulse.extra.bite.4", "Meltdown", 75)
             .withModifiers(TowerModifiers.tollCap(5))
-            .after(RESONANT_COILS);
-    private static final UpgradeNode ARC_DISCHARGE = UpgradeTier.SPECIAL.node("pulse.special.arc_discharge",
-            "Arc Discharge", PRICE);
-    private static final UpgradeNode SOUL_DRAIN = UpgradeTier.SPECIAL.node("pulse.special.soul_drain", "Soul Drain",
-            PRICE);
-    private static final UpgradeNode LEY_LINE = UpgradeTier.SPECIAL.node("pulse.special.ley_line", "Ley Line", PRICE);
+            .after(RESONANT_COILS)
+            .inTier(3);
+    private static final UpgradeNode ARC_DISCHARGE = UpgradeNode.of("pulse.special.arc_discharge", "Arc Discharge", 100)
+            .inTier(2);
+    private static final UpgradeNode SOUL_DRAIN = UpgradeNode.of("pulse.special.soul_drain", "Soul Drain", 100)
+            .inTier(2);
+    private static final UpgradeNode LEY_LINE = UpgradeNode.of("pulse.special.ley_line", "Ley Line", 100)
+            .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, EVENT_HORIZON,
-            DEAD_ZONE))
-            .with(UNDERTOW, SNARE, EVENT_HORIZON, GRAVITY_WELL, STASIS, SIGHT, NULL_FIELD, DEAD_ZONE, TRUE_SIGHT, PURGE,
-                    FRAILTY, CORROSION, RESONANT_COILS, MELTDOWN, ARC_DISCHARGE, SOUL_DRAIN, LEY_LINE)
-            .withChoice(ExclusiveChoice.oneOf(UNDERTOW, SIGHT))
-            .withChoice(ExclusiveChoice.oneOf(GRAVITY_WELL, STASIS))
-            .withChoice(ExclusiveChoice.oneOf(TRUE_SIGHT, PURGE))
-            .withChoice(ExclusiveChoice.specials(ARC_DISCHARGE, SOUL_DRAIN, LEY_LINE));
+    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE, 0.2f,
+                    NodeEffects.none().withModifiers(TowerModifiers.tollLinger(20))))
+            .with(ATTUNE, UNDERTOW, SIGHT, FRAILTY,
+                    SNARE, NULL_FIELD, CORROSION,
+                    EVENT_HORIZON, DEAD_ZONE, ARC_DISCHARGE, SOUL_DRAIN, RESONANT_COILS,
+                    GRAVITY_WELL, STASIS, TRUE_SIGHT, PURGE, LEY_LINE, MELTDOWN)
+            .withCluster(UpgradeCluster.of("Field", UNDERTOW, SIGHT))
+            .withCluster(UpgradeCluster.of("Special", ARC_DISCHARGE, SOUL_DRAIN))
+            .withCluster(UpgradeCluster.of("Mastery", GRAVITY_WELL, STASIS))
+            .withCluster(UpgradeCluster.of("Mastery", TRUE_SIGHT, PURGE));
 
     private static final MechanicCatalogue<PulseMechanic> MECHANICS = MechanicCatalogue.<PulseMechanic>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, TollMechanic::new)
+            .with(ATTUNE.id(), TollMechanic::new)
             .with(UNDERTOW.id(), UndertowMechanic::new)
             .with(SNARE.id(), SnareMechanic::new)
             .with(EVENT_HORIZON.id(), EventHorizonMechanic::new)
@@ -258,7 +261,6 @@ public final class PulseTower extends AbstractTower {
         this.clock.advance(this.attackRate());
         this.highestToll = highest;
         if (toll.isActive() && highest >= toll.cap()) {
-            this.countDeedOfSecond();
         }
         for (EnemyMob enemy : onLines) {
             this.holdInside(enemy, spec, beat, 1f, !this.previouslyOnLines.contains(enemy));

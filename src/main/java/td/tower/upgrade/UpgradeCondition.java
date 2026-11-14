@@ -1,6 +1,5 @@
 package td.tower.upgrade;
 
-import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -8,12 +7,11 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Whether a node is available to a tower, evaluated on each call. Independent of price, which is
+ * Which nodes a node comes after, evaluated on each call. Independent of price and tier, which are
  * checked separately.
  * <p>
- * {@link #always()} is the identity. {@link #owns(String)} and {@link #slotEmpty(UpgradeSlot)}
- * compose with {@link #and} and {@link #or} into prerequisites. Exclusivity between nodes is an
- * {@link ExclusiveChoice}, not a condition.
+ * {@link #always()} is the identity. {@link #owns(String)} composes with {@link #and} and {@link #or} into
+ * prerequisites. Exclusivity between nodes is an {@link UpgradeCluster}, not a condition.
  */
 public interface UpgradeCondition {
 
@@ -23,10 +21,6 @@ public interface UpgradeCondition {
 
     static UpgradeCondition owns(String nodeId) {
         return new OwnsNodeCondition(nodeId);
-    }
-
-    static UpgradeCondition slotEmpty(UpgradeSlot slot) {
-        return new SlotEmptyCondition(slot);
     }
 
     /** Whether {@code tower} would meet this condition if it owned {@code owned} instead of what it owns. */
@@ -69,19 +63,6 @@ public interface UpgradeCondition {
      */
     default boolean lockedOut(Predicate<String> nodeLockedOut) {
         return false;
-    }
-
-    /** A short description of the gate, e.g. {@code "10 kills"}. */
-    TermText describe();
-
-    /** Progress toward the gate, e.g. {@code "7/10 kills"}. Defaults to {@link #describe()}. */
-    default TermText progress(Tower tower, GameWorld context) {
-        return this.describe();
-    }
-
-    /** How far {@code tower} is toward this condition, 0 to 1, for a progress ring. Met or not by default. */
-    default float progressShare(Tower tower, GameWorld context) {
-        return this.isSatisfied(tower, context) ? 1f : 0f;
     }
 
     default UpgradeCondition and(UpgradeCondition other) {

@@ -641,8 +641,7 @@ public class GameEngine {
         Tower tower = cell.getTower();
         List<String> missing = new ArrayList<>();
         for (String id : saved.nodes()) {
-            Optional<UpgradeNode> node = tower.upgradeTree().nodes().stream()
-                    .filter(candidate -> candidate.id().equals(id)).findFirst();
+            Optional<UpgradeNode> node = tower.upgradeTree().node(id);
             if (node.isEmpty()) {
                 missing.add(where + ": upgrade " + id + " (no such upgrade)");
             } else if (!tower.buyUpgrade(node.get())) {
@@ -714,20 +713,22 @@ public class GameEngine {
     }
 
     /**
-     * Buys the selected tower's offered upgrade whose key is {@code number}
-     * ({@link td.tower.upgrade.UpgradeTree#keyOf(td.tower.upgrade.UpgradeNode)}). A no-op if nothing is
-     * selected or nothing on offer has that key.
+     * Buys for the selected tower what key {@code number} buys in its highest open tier
+     * ({@link td.tower.upgrade.UpgradeTree#keyed}). A no-op if nothing is selected, the key buys nothing, or that is not
+     * on offer.
      */
     public void buyUpgradeForSelected(int number) {
-        if (this.outcome().isOver()) {
+        if (this.outcome().isOver() || number < 1) {
             return;
         }
         this.gameWorld.towers().all().stream()
                 .filter(Tower::isSelected)
                 .findFirst()
-                .ifPresent(tower -> tower.offeredUpgrades(this.gameWorld).stream()
-                        .filter(node -> tower.upgradeTree().keyOf(node) == number)
-                        .findFirst()
-                        .ifPresent(tower::buyUpgrade));
+                .ifPresent(tower -> {
+                    List<UpgradeNode> keyed = tower.upgradeTree().keyed(tower, this.gameWorld);
+                    if (number <= keyed.size()) {
+                        tower.buyUpgrade(keyed.get(number - 1));
+                    }
+                });
     }
 }

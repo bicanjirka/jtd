@@ -12,7 +12,6 @@ import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerVisitor;
 import td.tower.mortar.BlastMark;
-import td.tower.upgrade.StandardBaseSlot;
 import td.ui.render.BeamDraw;
 import td.ui.render.ConeDraw;
 import td.ui.render.FlashDraw;
@@ -25,6 +24,7 @@ import td.ui.render.RingDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerStatusDraw;
+import td.util.GameWorld;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,14 +79,16 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final double RIPPLE_CYCLES_PER_SECOND = 0.6;
     private static final double RIPPLE_SPEEDUP_PER_TOLL = 0.4;
 
+    private final GameWorld world;
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final int scale;
     private final int gameTime;
     private final double interpolationAlpha;
     private final double animationSeconds;
 
-    public TowerEffectFrameBuilder(int scale, int gameTime, double interpolationAlpha, double animationSeconds) {
-        this.scale = scale;
+    public TowerEffectFrameBuilder(GameWorld world, int gameTime, double interpolationAlpha, double animationSeconds) {
+        this.world = world;
+        this.scale = world.level().board().scale();
         this.gameTime = gameTime;
         this.interpolationAlpha = interpolationAlpha;
         this.animationSeconds = animationSeconds;
@@ -147,7 +149,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         if (trace.type() == DamageType.MAGIC) {
             return Palette.TOWER_SNIPER_SILVER;
         }
-        return tower.upgrades().owns(StandardBaseSlot.TRANSCENDENT_ID) ? Palette.TOWER_SNIPER_TRACER
+        return TowerSpriteFrameBuilder.crowned(tower, this.world) ? Palette.TOWER_SNIPER_TRACER
                 : Palette.TOWER_SNIPER_BEAM;
     }
 

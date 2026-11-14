@@ -28,25 +28,5 @@ class TowerExperienceTest {
         assertThat(experience.ticksSinceRankUp(25)).isEqualTo(5);
     }
 
-    @Test
-    void anAttackThatHitsSeveralEnemiesIsOneDeed() {
-        TowerExperience experience = new TowerExperience();
 
-        experience.countDeedOfAttack(5);
-        experience.countDeedOfAttack(5);
-        experience.countDeedOfAttack(6);
-
-        assertThat(experience.deeds()).isEqualTo(2);
-    }
-
-    @Test
-    void aDeedDoneOverTimeCountsAtMostOnceASecond() {
-        TowerExperience experience = new TowerExperience();
-
-        for (int tick = 0; tick < 50; tick++) {
-            experience.countDeedOfSecond(tick);
-        }
-
-        assertThat(experience.deeds()).isEqualTo(3);
-    }
 }

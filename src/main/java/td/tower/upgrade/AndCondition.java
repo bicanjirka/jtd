@@ -1,6 +1,5 @@
 package td.tower.upgrade;
 
-import td.term.TermText;
 import td.tower.Tower;
 import td.util.GameWorld;
 
@@ -39,15 +38,5 @@ record AndCondition(UpgradeCondition left, UpgradeCondition right) implements Up
     @Override
     public boolean lockedOut(Predicate<String> nodeLockedOut) {
         return this.left.lockedOut(nodeLockedOut) || this.right.lockedOut(nodeLockedOut);
-    }
-
-    @Override
-    public TermText describe() {
-        return this.left.describe().plus(" and ").plus(this.right.describe());
-    }
-
-    @Override
-    public TermText progress(Tower tower, GameWorld context) {
-        return this.left.progress(tower, context).plus(", ").plus(this.right.progress(tower, context));
     }
 }

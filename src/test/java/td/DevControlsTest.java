@@ -23,7 +23,7 @@ import td.tower.TowerBuffState;
 import td.tower.TowerFactory;
 import td.tower.TowerTerm;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeSlot;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.wave.WaveDefinition;
@@ -135,7 +135,7 @@ class DevControlsTest {
     @Test
     void duringFreeBuildADowngradePaysNothing() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 1000));
-        UpgradeNode node = UpgradeNode.of("plain", UpgradeSlot.HEAD, "Plain", 40);
+        UpgradeNode node = UpgradeNode.of("plain", "Plain", 40);
         Tower tower = FakeTower.offering(this.world, 1, 1, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         int credits = this.world.economy().getCredits();
@@ -257,8 +257,9 @@ class DevControlsTest {
     @Test
     void ignoringGatesLetsATowerBuyANodeBeforeItHasTheXp() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 1000));
-        UpgradeNode needsXp = UpgradeNode.of("gated", UpgradeSlot.HEAD, "Gated", 10).withXp(50);
-        Tower tower = FakeTower.offering(this.world, 1, 1, UpgradeTree.of(needsXp));
+        UpgradeNode needsXp = UpgradeNode.of("gated", "Gated", 10).inTier(1);
+        Tower tower = FakeTower.offering(this.world, 1, 1, UpgradeTree.of(needsXp)
+                .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(50, 0))));
         boolean gated = tower.buyUpgrade(needsXp);
 
         this.dev.setUpgradeGatesIgnored(true);

@@ -7,7 +7,6 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
-import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
 import td.tower.proc.HitCondition;
@@ -60,16 +59,13 @@ import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.RandomSelector;
 import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
-import td.tower.upgrade.BaseSlotMechanics;
-import td.tower.upgrade.ExclusiveChoice;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.PurposeCondition;
-import td.tower.upgrade.StandardBaseSlot;
+import td.tower.upgrade.RangeNodes;
+import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -105,96 +101,94 @@ public final class SplashTower extends AbstractTower {
     private static final int COOLDOWN_MAX = 19;
     /** Saturation fades this long after the last blast that caught the enemy. */
     private static final float SATURATION_SECONDS = 1.5f;
-    private static final TermText SATURATED_BLAST_DEED = TermText.format("blasts on {}", EffectKind.SATURATED);
     /** How far above its target a Thunderstrike's bolt is drawn from. */
     private static final float THUNDERSTRIKE_HEIGHT_CELLS = 2f;
     private static final TargetSelector THUNDERSTRIKE_AIM = PreferringSelector.priority(new HighestHealthSelector());
-    private static final int SATURATED_BLASTS_NEEDED = 45;
     private static final float CLOUD_RADIUS_CELLS = 1.5f;
     private static final int CLOUD_TICKS = 80;
 
-    private static final BaseSlotMechanics BASE_MECHANICS = BaseSlotMechanics.none()
-            .withAttune(NodeEffects.none()
-                    .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.BLAST)),
-                            new HitScaling.PerStackOf(EffectKind.SATURATED), HitAdjustment.damage(0.05f))))
-            .withRangeThree(0.1f, NodeEffects.none().withModifiers(TowerModifiers.areaRadius(0.15f)));
+    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 12)
+            .withHitBonus(HitBonus.of(new HitCondition.HitKindIn(Set.of(HitKind.BLAST)),
+                    new HitScaling.PerStackOf(EffectKind.SATURATED), HitAdjustment.damage(0.05f)));
 
-    private static final UpgradeNode ARC = UpgradeTier.HEAD_1.node("splash.head.arc.1", "Arc", PRICE);
-    private static final UpgradeNode CONDUCTOR = UpgradeTier.HEAD_2.node("splash.head.arc.2", "Conductor", PRICE)
+    private static final UpgradeNode ARC = UpgradeNode.of("splash.head.arc.1", "Arc", 15)
+            .inTier(1);
+    private static final UpgradeNode CONDUCTOR = UpgradeNode.of("splash.head.arc.2", "Conductor", 23)
             .withModifiers(TowerModifiers.critChance(0.1f))
-            .after(ARC);
-    private static final UpgradeNode OVERLOAD = UpgradeTier.HEAD_3.node("splash.head.arc.3", "Overload", PRICE)
-            .withGate(new PurposeCondition(SATURATED_BLAST_DEED, SATURATED_BLASTS_NEEDED))
-            .after(CONDUCTOR);
-    private static final UpgradeNode CHAIN_LIGHTNING = UpgradeTier.HEAD_4.node("splash.head.arc.4a",
-            "Chain Lightning", PRICE)
-            .after(OVERLOAD);
-    private static final UpgradeNode LIGHTNING_ROD = UpgradeTier.HEAD_4.node("splash.head.arc.4b", "Lightning Rod",
-            PRICE)
-            .after(OVERLOAD);
-    private static final UpgradeNode HEX = UpgradeTier.HEAD_1.node("splash.head.hex.1", "Hex", PRICE);
-    private static final UpgradeNode WITCHS_BREW = UpgradeTier.HEAD_2.node("splash.head.hex.2", "Witch's Brew",
-            PRICE)
-            .after(HEX);
-    private static final UpgradeNode SPREADING_CURSE = UpgradeTier.HEAD_3.node("splash.head.hex.3",
-            "Spreading Curse", PRICE)
-            .withGate(new PurposeCondition(SATURATED_BLAST_DEED, SATURATED_BLASTS_NEEDED))
-            .after(WITCHS_BREW);
-    private static final UpgradeNode RIME_COVEN = UpgradeTier.HEAD_4.node("splash.head.hex.4a", "Rime Coven",
-            PRICE)
-            .after(SPREADING_CURSE);
-    private static final UpgradeNode ASH_COVEN = UpgradeTier.HEAD_4.node("splash.head.hex.4b", "Ash Coven", PRICE)
-            .after(SPREADING_CURSE);
-    private static final UpgradeNode INVERSION = UpgradeTier.SPECIAL.node("splash.special.inversion",
-            "Hex of Inversion", PRICE)
-            .after(HEX);
-    private static final UpgradeNode SYMPATHY = UpgradeTier.SPECIAL.node("splash.special.sympathy",
-            "Hex of Sympathy", PRICE)
-            .after(HEX);
-    private static final UpgradeNode RECKONING = UpgradeTier.SPECIAL.node("splash.special.reckoning",
-            "Hex of Reckoning", PRICE)
-            .after(HEX);
+            .after(ARC)
+            .inTier(1);
+    private static final UpgradeNode OVERLOAD = UpgradeNode.of("splash.head.arc.3", "Overload", 38)
+            .after(CONDUCTOR)
+            .inTier(2);
+    private static final UpgradeNode CHAIN_LIGHTNING = UpgradeNode.of("splash.head.arc.4a", "Chain Lightning", 60)
+            .after(OVERLOAD)
+            .inTier(3);
+    private static final UpgradeNode LIGHTNING_ROD = UpgradeNode.of("splash.head.arc.4b", "Lightning Rod", 60)
+            .after(OVERLOAD)
+            .inTier(3);
+    private static final UpgradeNode HEX = UpgradeNode.of("splash.head.hex.1", "Hex", 15)
+            .inTier(1);
+    private static final UpgradeNode WITCHS_BREW = UpgradeNode.of("splash.head.hex.2", "Witch's Brew", 23)
+            .after(HEX)
+            .inTier(1);
+    private static final UpgradeNode SPREADING_CURSE = UpgradeNode.of("splash.head.hex.3", "Spreading Curse", 38)
+            .after(WITCHS_BREW)
+            .inTier(2);
+    private static final UpgradeNode RIME_COVEN = UpgradeNode.of("splash.head.hex.4a", "Rime Coven", 60)
+            .after(SPREADING_CURSE)
+            .inTier(3);
+    private static final UpgradeNode ASH_COVEN = UpgradeNode.of("splash.head.hex.4b", "Ash Coven", 60)
+            .after(SPREADING_CURSE)
+            .inTier(3);
+    private static final UpgradeNode INVERSION = UpgradeNode.of("splash.special.inversion", "Hex of Inversion", 60)
+            .after(HEX)
+            .inTier(2);
+    private static final UpgradeNode SYMPATHY = UpgradeNode.of("splash.special.sympathy", "Hex of Sympathy", 60)
+            .after(HEX)
+            .inTier(2);
+    private static final UpgradeNode RECKONING = UpgradeNode.of("splash.special.reckoning", "Hex of Reckoning", 60)
+            .after(HEX)
+            .inTier(3);
     private static final UpgradeCondition A_CHAIN = UpgradeCondition.owns(ARC.id()).or(UpgradeCondition.owns(HEX.id()));
-    private static final UpgradeNode WIDE_CHARGE = UpgradeTier.EXTRA_1.node("splash.extra.blast_engineering.1",
-            "Wide Charge", PRICE)
+    private static final UpgradeNode WIDE_CHARGE = UpgradeNode.of("splash.extra.blast_engineering.1", "Wide Charge", 12)
             .withModifiers(TowerModifiers.areaRadius(0.375f).plus(TowerModifiers.blastEdge(0.25f)));
-    private static final UpgradeNode SHAPED_CHARGE = UpgradeTier.EXTRA_2.node("splash.extra.blast_engineering.2",
-            "Shaped Charge", PRICE)
+    private static final UpgradeNode SHAPED_CHARGE = UpgradeNode.of("splash.extra.blast_engineering.2", "Shaped Charge", 18)
             .withModifiers(TowerModifiers.saturationInnerStacks(1).plus(TowerModifiers.saturationCap(1)))
-            .after(WIDE_CHARGE);
-    private static final UpgradeNode POTENCY = UpgradeTier.EXTRA_3.node("splash.extra.blast_engineering.3",
-            "Potency", PRICE)
+            .after(WIDE_CHARGE)
+            .inTier(1);
+    private static final UpgradeNode POTENCY = UpgradeNode.of("splash.extra.blast_engineering.3", "Potency", 30)
             .withRequires(A_CHAIN)
-            .after(SHAPED_CHARGE);
-    private static final UpgradeNode MASTERY = UpgradeTier.EXTRA_4.node("splash.extra.blast_engineering.4",
-            "Mastery", PRICE)
-            .after(POTENCY);
+            .after(SHAPED_CHARGE)
+            .inTier(2);
+    private static final UpgradeNode MASTERY = UpgradeNode.of("splash.extra.blast_engineering.4", "Mastery", 45)
+            .after(POTENCY)
+            .inTier(3);
 
-    private static final UpgradeNode THUNDERCLAP = UpgradeTier.SPECIAL.node("splash.special.thunderclap",
-            "Thunderclap", PRICE)
-            .after(ARC);
-    private static final UpgradeNode STATIC_CHARGE = UpgradeTier.SPECIAL.node("splash.special.static_charge",
-            "Static Charge", PRICE)
+    private static final UpgradeNode THUNDERCLAP = UpgradeNode.of("splash.special.thunderclap", "Thunderclap", 60)
+            .after(ARC)
+            .inTier(2);
+    private static final UpgradeNode STATIC_CHARGE = UpgradeNode.of("splash.special.static_charge", "Static Charge", 60)
             .withProc(Proc.onHit(new ProcPayload.Charge(60)).when(new ProcCondition.HitKindIn(Set.of(HitKind.ARC))))
-            .after(ARC);
-    private static final UpgradeNode THUNDERSTRIKE = UpgradeTier.SPECIAL.node("splash.special.thunderstrike",
-            "Thunderstrike", PRICE)
-            .after(ARC);
+            .after(ARC)
+            .inTier(2);
+    private static final UpgradeNode THUNDERSTRIKE = UpgradeNode.of("splash.special.thunderstrike", "Thunderstrike", 60)
+            .after(ARC)
+            .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(StandardBaseSlot.nodes(PRICE, RANGE, BASE_MECHANICS, OVERLOAD,
-            SPREADING_CURSE))
-            .with(ARC, CONDUCTOR, OVERLOAD, CHAIN_LIGHTNING, LIGHTNING_ROD, HEX, WITCHS_BREW, SPREADING_CURSE,
-                    RIME_COVEN, ASH_COVEN, WIDE_CHARGE, SHAPED_CHARGE, POTENCY, MASTERY, THUNDERCLAP, STATIC_CHARGE,
-                    THUNDERSTRIKE, INVERSION, SYMPATHY, RECKONING)
-            .withChoice(ExclusiveChoice.oneOf(ARC, HEX))
-            .withChoice(ExclusiveChoice.oneOf(CHAIN_LIGHTNING, LIGHTNING_ROD))
-            .withChoice(ExclusiveChoice.oneOf(RIME_COVEN, ASH_COVEN))
-            .withChoice(ExclusiveChoice.specials(THUNDERCLAP, STATIC_CHARGE, THUNDERSTRIKE))
-            .withChoice(ExclusiveChoice.specials(INVERSION, SYMPATHY, RECKONING));
+    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE, 0.1f,
+                    NodeEffects.none().withModifiers(TowerModifiers.areaRadius(0.15f))))
+            .with(ATTUNE, WIDE_CHARGE, ARC, HEX, SHAPED_CHARGE, CONDUCTOR, WITCHS_BREW,
+                    POTENCY, OVERLOAD, THUNDERCLAP, STATIC_CHARGE, SPREADING_CURSE, INVERSION, SYMPATHY,
+                    MASTERY, CHAIN_LIGHTNING, LIGHTNING_ROD, THUNDERSTRIKE, RIME_COVEN, ASH_COVEN, RECKONING)
+            .withFork(UpgradeCluster.of("Calling", ARC, HEX))
+            .withCluster(UpgradeCluster.of("Special", THUNDERCLAP, STATIC_CHARGE))
+            .withCluster(UpgradeCluster.of("Special", INVERSION, SYMPATHY))
+            .withCluster(UpgradeCluster.of("Mastery", CHAIN_LIGHTNING, LIGHTNING_ROD))
+            .withCluster(UpgradeCluster.of("Mastery", RIME_COVEN, ASH_COVEN));
 
     private static final MechanicCatalogue<SplashMechanic> MECHANICS = MechanicCatalogue.<SplashMechanic>empty()
-            .with(StandardBaseSlot.ATTUNE_ID, FireControlMechanic::new)
-            .with(StandardBaseSlot.RANGE_3_ID, MinesMechanic::new)
+            .with(ATTUNE.id(), FireControlMechanic::new)
+            .with(RangeNodes.RANGE_3_ID, MinesMechanic::new)
             .with(ARC.id(), ArcMechanic::new)
             .with(CONDUCTOR.id(), ConductorMechanic::new)
             .with(OVERLOAD.id(), OverloadMechanic::new)
@@ -404,7 +398,6 @@ public final class SplashTower extends AbstractTower {
             shot = mechanic.shape(shot, context);
         }
         if (this.saturation(spec).isActive() && primary.hasEffect(EffectKind.SATURATED)) {
-            this.countDeedOfAttack();
         }
         List<Trace> traces = new ArrayList<>();
         Optional<EnemyMob> struck = shot.thunderstrike()
@@ -625,7 +618,7 @@ public final class SplashTower extends AbstractTower {
         SplashSpec spec = this.spec(this.mechanics.all());
         this.countingNode(HEX.id(), this.shotsFired % HexSpec.CAST_EVERY, HexSpec.CAST_EVERY).ifPresent(all::add);
         if (spec.mines().isActive()) {
-            all.add(new NodeProgress(StandardBaseSlot.RANGE_3_ID, this.shotsFired % spec.mines().every(),
+            all.add(new NodeProgress(RangeNodes.RANGE_3_ID, this.shotsFired % spec.mines().every(),
                     spec.mines().every()));
         }
         this.countingNode(THUNDERSTRIKE.id(), this.shotsFired % ThunderstrikeMechanic.INTERVAL,

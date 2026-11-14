@@ -67,13 +67,13 @@ public final class PurchaseHarness {
         int armyCopies = args.length > 3 ? Integer.parseInt(args[3]) : 1;
         List<LevelDefinition> all = new BuiltInLevelCatalog().levels();
         PurchaseHarness harness = new PurchaseHarness(seeds, armyCopies);
-        List<Map<UpgradeTier, Double>> byLevel = levelIndexes.stream()
+        List<Map<Integer, Double>> byLevel = levelIndexes.stream()
                 .map(index -> harness.report(all.get(index).withStartingLives(UNLIMITED_LIVES), only)).toList();
         printTiers(byLevel);
     }
 
     /** Prints one level's purchases; what each tier should cost there, empty when no other tower saves a life. */
-    private Map<UpgradeTier, Double> report(LevelDefinition level, Optional<TowerFactory.Type> only) {
+    private Map<Integer, Double> report(LevelDefinition level, Optional<TowerFactory.Type> only) {
         double baseline = this.meanLeaks(level, (engine, army, spare) -> 0);
         System.out.printf(Locale.ROOT, "=== Purchase report: %s, %d seeds, army of %d of each tower ===%n", level.name(), this.seeds,
                 this.armyCopies);
@@ -112,16 +112,16 @@ public final class PurchaseHarness {
         return table.map(prices -> prices.tierPercents(lines)).orElse(Map.of());
     }
 
-    /** What each tier costs now and should cost on each level, as a percent of its tower's list price. */
-    private static void printTiers(List<Map<UpgradeTier, Double>> byLevel) {
+    /** What a node of each tier should cost on each level, as a percent of its tower's list price. */
+    private static void printTiers(List<Map<Integer, Double>> byLevel) {
         System.out.println();
-        System.out.println("Fair price of a node at each tier, in percent of its tower's list price: now, each level, their mean");
-        for (UpgradeTier tier : UpgradeTier.values()) {
+        System.out.println("Fair price of a node at each tier, in percent of its tower's list price: each level, their mean");
+        byLevel.stream().flatMap(level -> level.keySet().stream()).distinct().sorted().forEach(tier -> {
             List<Double> fair = byLevel.stream().filter(level -> level.containsKey(tier)).map(level -> level.get(tier)).toList();
             String levels = fair.stream().map(percent -> String.format(Locale.ROOT, "%6.0f", percent)).collect(Collectors.joining());
-            System.out.printf(Locale.ROOT, "  %-13s %6d %s  mean %6.0f%n", tier, tier.price(100), levels,
+            System.out.printf(Locale.ROOT, "  %-13s %s  mean %6.0f%n", UpgradeTier.nameOf(tier), levels,
                     fair.stream().mapToDouble(Double::doubleValue).average().orElse(0));
-        }
+        });
     }
 
     private Row row(LevelDefinition level, String label, double baseline, Purchase purchase) {

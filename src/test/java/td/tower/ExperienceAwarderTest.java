@@ -129,7 +129,7 @@ class ExperienceAwarderTest {
 
     @Test
     void broadcastLiftsKinshipsCapAndCountsOneCellFurther() {
-        this.auraWith(3, 3, "Broadcast");
+        this.auraWith(3, 3, "Attune", "Broadcast");
         SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
         this.place(new SplashTower(this.world, 3, 4));
         this.place(new MortarTower(this.world, 2, 3));
@@ -144,7 +144,7 @@ class ExperienceAwarderTest {
 
     @Test
     void tutelageAddsTenPercentOnTopOfKinship() {
-        this.auraWith(3, 3, "Tutelage");
+        this.auraWith(3, 3, "Attune", "Tutelage");
         SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
         this.place(new SplashTower(this.world, 3, 4));
 
@@ -155,7 +155,7 @@ class ExperienceAwarderTest {
 
     @Test
     void sharedLessonsPaysEveryBuffedTowerForWhatAnyOfThemReached() {
-        this.auraWith(3, 3, "Tutelage", "Shared Lessons");
+        this.auraWith(3, 3, "Attune", "Tutelage", "Shared Lessons");
         SniperTower near = this.place(new SniperTower(this.world, 3, 2));
         SplashTower beside = this.place(new SplashTower(this.world, 3, 4));
         CinderTower outside = this.place(new CinderTower(this.world, 15, 15));
@@ -168,7 +168,7 @@ class ExperienceAwarderTest {
 
     @Test
     void withoutSharedLessonsABuffedTowerThatDidNotReachEarnsNothing() {
-        this.auraWith(3, 3, "Tutelage");
+        this.auraWith(3, 3, "Attune", "Tutelage");
         SniperTower near = this.place(new SniperTower(this.world, 3, 2));
         SplashTower beside = this.place(new SplashTower(this.world, 3, 4));
 
@@ -179,7 +179,7 @@ class ExperienceAwarderTest {
 
     @Test
     void theApprenticeTheBuffedTowerWithTheLeastXpEarnsDouble() {
-        this.auraWith(3, 3, "Tutelage", "Shared Lessons", "Apprentice");
+        this.auraWith(3, 3, "Attune", "Tutelage", "Shared Lessons", "Apprentice");
         SniperTower veteran = this.place(new SniperTower(this.world, 3, 2));
         SplashTower novice = this.place(new SplashTower(this.world, 3, 4));
         veteran.earnXp(500);

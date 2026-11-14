@@ -2,6 +2,7 @@ package td.tower.upgrade;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
+import td.fixtures.TierTrees;
 import td.fixtures.WorldFixtures;
 import td.tower.Tower;
 import td.util.GameWorld;
@@ -10,127 +11,180 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static td.fixtures.TierTrees.A1;
+import static td.fixtures.TierTrees.A2;
+import static td.fixtures.TierTrees.A3;
+import static td.fixtures.TierTrees.ALL_XP;
+import static td.fixtures.TierTrees.B1;
+import static td.fixtures.TierTrees.B2;
+import static td.fixtures.TierTrees.LONE;
+import static td.fixtures.TierTrees.MID;
+import static td.fixtures.TierTrees.S1;
+import static td.fixtures.TierTrees.S2;
+import static td.fixtures.TierTrees.TIER_ONE;
+import static td.fixtures.TierTrees.TOP;
+import static td.fixtures.TierTrees.TREE;
+import static td.fixtures.TierTrees.towerOwning;
 
 class UpgradeTreeTest {
 
     private final GameWorld context = WorldFixtures.newWorld();
 
-    private static final UpgradeNode RANGE = UpgradeNode.of("range", UpgradeSlot.BASE, "Range", 10);
-    private static final UpgradeNode AWAKEN = UpgradeNode.of("awaken", UpgradeSlot.BASE, "Awaken", 20);
-    private static final UpgradeNode HEAD_ROOT_A = UpgradeNode.of("head.a.1", UpgradeSlot.HEAD, "Root A", 10)
-            .withRequires(opens(UpgradeSlot.HEAD));
-    private static final UpgradeNode HEAD_A_LV2 = UpgradeNode.of("head.a.2", UpgradeSlot.HEAD, "A lv2", 15)
-            .withRequires(UpgradeCondition.owns(HEAD_ROOT_A.id()));
-    private static final UpgradeNode HEAD_ROOT_B = UpgradeNode.of("head.b.1", UpgradeSlot.HEAD, "Root B", 10)
-            .withRequires(opens(UpgradeSlot.HEAD));
-    private static final UpgradeNode SPECIAL_ROOT = UpgradeNode.of("special.1", UpgradeSlot.SPECIAL, "Special", 10)
-            .withRequires(opens(UpgradeSlot.SPECIAL));
-
-    private static final UpgradeTree TREE = UpgradeTree.of(RANGE, AWAKEN, HEAD_ROOT_A, HEAD_A_LV2, HEAD_ROOT_B,
-            SPECIAL_ROOT);
-
     @Test
-    void offeredListsOnlyBaseNodesBeforeAwakenIsBought() {
-        Tower tower = FakeTower.owning(context, 0, 0, UpgradeState.none());
+    void aNewTowerIsOfferedTierZeroAndNothingAbove() {
+        Tower tower = towerOwning(this.context, 0);
 
-        assertThat(TREE.offered(tower, context)).containsExactly(RANGE, AWAKEN);
+        assertThat(TREE.offered(tower, this.context)).containsExactly(A1, B1, LONE);
     }
 
     @Test
-    void offeredOrdersBySlotThenByDeclarationOrderWithinASlot() {
-        UpgradeState afterAwaken = UpgradeState.none().with(AWAKEN);
-        Tower tower = FakeTower.owning(context, 0, 0, afterAwaken);
+    void aPaidTierOffersItsUnlockOnceItsXpIsMetAndItsNodesOnlyOnceTheUnlockIsBought() {
+        int xp = UpgradeTier.standard().get(1).xp();
+        Tower short1 = towerOwning(this.context, xp - 1, A1);
+        Tower ready = towerOwning(this.context, xp, A1);
+        Tower unlocked = towerOwning(this.context, xp, A1, TIER_ONE);
 
-        assertThat(TREE.offered(tower, context)).containsExactly(RANGE, HEAD_ROOT_A, HEAD_ROOT_B, SPECIAL_ROOT);
+        assertThat(TREE.offered(short1, this.context)).doesNotContain(TIER_ONE, A2, MID);
+        assertThat(TREE.offered(ready, this.context)).contains(TIER_ONE).doesNotContain(A2, MID);
+        assertThat(TREE.offered(unlocked, this.context)).contains(A2, MID).doesNotContain(TIER_ONE);
     }
 
     @Test
-    void choosingOneHeadRootForeclosesTheOtherRootForever() {
-        UpgradeState afterRootA = UpgradeState.none().with(AWAKEN).with(HEAD_ROOT_A);
-        Tower tower = FakeTower.owning(context, 0, 0, afterRootA);
+    void aFreeTierOpensByItselfOnceItsXpIsMet() {
+        int xp = UpgradeTier.standard().get(2).xp();
+        Tower before = towerOwning(this.context, xp - 1, A1, TIER_ONE, A2);
+        Tower after = towerOwning(this.context, xp, A1, TIER_ONE, A2);
 
-        List<UpgradeNode> offered = TREE.offered(tower, context);
-
-        assertThat(offered).contains(HEAD_A_LV2).doesNotContain(HEAD_ROOT_B);
+        assertThat(TREE.isOpen(2, before, this.context)).isFalse();
+        assertThat(TREE.isOpen(2, after, this.context)).isTrue();
+        assertThat(TREE.offered(after, this.context)).contains(A3, S1, S2);
     }
 
     @Test
-    void aChainsNextLevelIsOfferedOnlyOnceItsOwnPredecessorIsOwned() {
-        Tower beforeRootA = FakeTower.owning(context, 0, 0, UpgradeState.none().with(AWAKEN));
-        Tower afterRootA = FakeTower.owning(context, 1, 0, UpgradeState.none().with(AWAKEN).with(HEAD_ROOT_A));
+    void aTierAboveAClosedTierStaysClosedWhateverTheXp() {
+        Tower tower = towerOwning(this.context, ALL_XP, A1);
 
-        assertThat(TREE.offered(beforeRootA, context)).doesNotContain(HEAD_A_LV2);
-        assertThat(TREE.offered(afterRootA, context)).contains(HEAD_A_LV2);
+        assertThat(TREE.highestOpenTier(tower, this.context)).isZero();
+        assertThat(TREE.isOpen(3, tower, this.context)).isFalse();
     }
 
     @Test
-    void anAlreadyOwnedNodeIsNeverOfferedAgain() {
-        UpgradeState afterRange = UpgradeState.none().with(RANGE);
-        Tower tower = FakeTower.owning(context, 0, 0, afterRange);
+    void ignoredGatesWaiveTheXpButNotTheUnlock() {
+        this.context.playtestRules().setUpgradeGatesIgnored(true);
+        Tower tower = towerOwning(this.context, 0, A1);
 
-        assertThat(TREE.offered(tower, context)).doesNotContain(RANGE);
+        assertThat(TREE.offered(tower, this.context)).contains(TIER_ONE).doesNotContain(A2);
+    }
+
+    @Test
+    void owningAClusterMemberTakesTheOtherOutOfTheOffer() {
+        Tower tower = towerOwning(this.context, 0, A1);
+
+        assertThat(TREE.offered(tower, this.context)).containsExactly(LONE);
+        assertThat(TREE.isLockedOut(B1, tower.upgrades())).isTrue();
+    }
+
+    @Test
+    void aNodeBehindAClusterMemberTheTowerDidNotPickIsHidden() {
+        UpgradeState owned = TierTrees.state(A1);
+
+        assertThat(TREE.isHidden(B2, owned)).isTrue();
+        assertThat(TREE.isHidden(A2, owned)).isFalse();
+        assertThat(TREE.branchOf(B2)).contains(B1);
+    }
+
+    @Test
+    void aClusterTakesOnePlaceInItsRowAndTheLinesBehindItShareTheNext() {
+        assertThat(TREE.rows().getFirst().places()).containsExactly(new RowPlace.Group(TierTrees.ROOTS, List.of(A1, B1)),
+                new RowPlace.Lone(LONE));
+        assertThat(TREE.rows().get(1).places()).containsExactly(new RowPlace.Branches(TierTrees.ROOTS,
+                List.of(List.of(new RowPlace.Lone(A2)), List.of(new RowPlace.Lone(B2)))), new RowPlace.Lone(MID));
+    }
+
+    @Test
+    void aPathToAHigherTierBuysThePaidUnlocksFirst() {
+        assertThat(TREE.pathTo(TOP)).containsExactly(TIER_ONE, A1, A2, A3, TOP);
     }
 
     @Test
     void orReconvergesFromEitherBranch() {
-        UpgradeCondition reachableFromEither = UpgradeCondition.owns(HEAD_ROOT_A.id())
-                .or(UpgradeCondition.owns(HEAD_ROOT_B.id()));
-        Tower viaA = FakeTower.owning(context, 0, 0, UpgradeState.none().with(HEAD_ROOT_A));
-        Tower viaB = FakeTower.owning(context, 1, 0, UpgradeState.none().with(HEAD_ROOT_B));
-        Tower viaNeither = FakeTower.owning(context, 2, 0, UpgradeState.none());
+        UpgradeCondition reachableFromEither = UpgradeCondition.owns(A1.id()).or(UpgradeCondition.owns(B1.id()));
+        Tower viaA = FakeTower.owning(this.context, 0, 0, UpgradeState.none().with(A1));
+        Tower viaB = FakeTower.owning(this.context, 1, 0, UpgradeState.none().with(B1));
+        Tower viaNeither = FakeTower.owning(this.context, 2, 0, UpgradeState.none());
 
-        assertThat(reachableFromEither.isSatisfied(viaA, context)).isTrue();
-        assertThat(reachableFromEither.isSatisfied(viaB, context)).isTrue();
-        assertThat(reachableFromEither.isSatisfied(viaNeither, context)).isFalse();
+        assertThat(reachableFromEither.isSatisfied(viaA, this.context)).isTrue();
+        assertThat(reachableFromEither.isSatisfied(viaB, this.context)).isTrue();
+        assertThat(reachableFromEither.isSatisfied(viaNeither, this.context)).isFalse();
     }
 
     @Test
     void aTreeWithADuplicateNodeIdIsRejected() {
-        UpgradeNode duplicate = UpgradeNode.of(RANGE.id(), UpgradeSlot.BASE, "Also range", 5);
+        UpgradeNode duplicate = UpgradeNode.of(A1.id(), "Also A", 5);
 
-        assertThatThrownBy(() -> UpgradeTree.of(RANGE, duplicate))
+        assertThatThrownBy(() -> UpgradeTree.of(A1, duplicate)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aTreeWithANodeAboveItsTopTierIsRejected() {
+        UpgradeNode high = UpgradeNode.of("high", "High", 5).inTier(UpgradeTier.standard().size());
+
+        assertThatThrownBy(() -> UpgradeTree.of(high)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("high");
+    }
+
+    @Test
+    void aNodeThatComesAfterANodeInAHigherTierIsRejected() {
+        UpgradeNode early = UpgradeNode.of("early", "Early", 5).after(MID);
+
+        assertThatThrownBy(() -> UpgradeTree.of(MID, early)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("early");
+    }
+
+    @Test
+    void aClusterWhoseMembersDifferInPriceIsRejected() {
+        UpgradeNode dear = UpgradeNode.of("dear", "Dear", LONE.price() + 1);
+
+        assertThatThrownBy(() -> UpgradeTree.of(LONE, dear).withCluster(UpgradeCluster.of("Pair", LONE, dear)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aForkInTierZeroIsRejected() {
+        assertThatThrownBy(() -> UpgradeTree.of(A1, B1).withFork(UpgradeCluster.of("Sides", A1, B1)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void aTreeWhoseNodesRequireEachOtherIsRejected() {
-        UpgradeNode first = UpgradeNode.of("loop.a", UpgradeSlot.BASE, "Loop A", 10)
-                .withRequires(UpgradeCondition.owns("loop.b"));
-        UpgradeNode second = UpgradeNode.of("loop.b", UpgradeSlot.BASE, "Loop B", 10)
-                .withRequires(UpgradeCondition.owns(AWAKEN.id()).and(UpgradeCondition.owns(first.id())));
+        UpgradeNode first = UpgradeNode.of("loop.a", "Loop A", 10).withRequires(UpgradeCondition.owns("loop.b"));
+        UpgradeNode second = UpgradeNode.of("loop.b", "Loop B", 10)
+                .withRequires(UpgradeCondition.owns(LONE.id()).and(UpgradeCondition.owns(first.id())));
 
-        assertThatThrownBy(() -> UpgradeTree.of(AWAKEN, first, second))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> UpgradeTree.of(LONE, first, second)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("loop.a");
     }
 
     @Test
     void aTreeWhoseNodesRequireEachOtherThroughTheDearerSideOfAnOrIsRejected() {
-        UpgradeNode first = UpgradeNode.of("loop.a", UpgradeSlot.BASE, "Loop A", 10)
-                .withRequires(UpgradeCondition.owns(AWAKEN.id())
-                        .or(UpgradeCondition.owns(RANGE.id()).and(UpgradeCondition.owns("loop.b"))));
-        UpgradeNode second = UpgradeNode.of("loop.b", UpgradeSlot.BASE, "Loop B", 10)
-                .withRequires(UpgradeCondition.owns(first.id()));
+        UpgradeNode first = UpgradeNode.of("loop.a", "Loop A", 10).withRequires(UpgradeCondition.owns(LONE.id())
+                .or(UpgradeCondition.owns(A1.id()).and(UpgradeCondition.owns("loop.b"))));
+        UpgradeNode second = UpgradeNode.of("loop.b", "Loop B", 10).withRequires(UpgradeCondition.owns(first.id()));
 
-        assertThatThrownBy(() -> UpgradeTree.of(RANGE, AWAKEN, first, second))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> UpgradeTree.of(A1, LONE, first, second)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("loop.a");
     }
 
     @Test
-    void xpProgressReadsTheTowersLiveXpCappedAtWhatTheNodeNeeds() {
-        UpgradeNode gated = UpgradeNode.of("gated", UpgradeSlot.HEAD, "Gated", 10).withXp(150);
-        FakeTower learning = FakeTower.owning(context, 0, 0, UpgradeState.none());
-        FakeTower seasoned = FakeTower.owning(context, 1, 0, UpgradeState.none());
-        learning.earnXp(40);
-        seasoned.earnXp(400);
+    void anOwnedNodeIsNeverOfferedAgain() {
+        Tower tower = towerOwning(this.context, 0, LONE);
 
-        assertThat(gated.xpProgress(learning)).isEqualTo("XP 40/150");
-        assertThat(gated.xpProgress(seasoned)).isEqualTo("XP 150/150");
+        assertThat(TREE.offered(tower, this.context)).doesNotContain(LONE);
     }
 
-    /** Awaken owned and {@code slot} still empty, which makes a slot's roots exclude each other. */
-    private static UpgradeCondition opens(UpgradeSlot slot) {
-        return UpgradeCondition.owns(AWAKEN.id()).and(UpgradeCondition.slotEmpty(slot));
+    @Test
+    void aNodeInAClusterOfLaterTiersIsAMemberLikeAnyOther() {
+        assertThat(TREE.clusterOf(S2)).contains(TierTrees.SPECIALS);
+        assertThat(TREE.clusterOf(A2)).isEmpty();
     }
 }

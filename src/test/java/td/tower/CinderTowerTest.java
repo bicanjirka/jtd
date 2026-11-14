@@ -380,20 +380,6 @@ class CinderTowerTest {
         return burns(target).get(1).damagePerTick().amount();
     }
 
-    @Test
-    void everyStokingWaveIsADeedAndTheFirstWaveIsNot() {
-        CinderTower tower = towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Attune");
-        FakeEnemyMob target = FakeEnemyMob.at(150, 112);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
-
-        tickThrough(tower, 1, TRAVEL + 1);
-        int afterTheFirst = tower.experience().deeds();
-        tickThrough(tower, TRAVEL + 2, 2 * CYCLE + TRAVEL);
-
-        assertThat(afterTheFirst).isZero();
-        assertThat(tower.experience().deeds()).isEqualTo(1);
-    }
 
     @Test
     void theStokeGoesWhenTheBurnEndsAndAFreshWaveStartsAgain() {
@@ -439,7 +425,7 @@ class CinderTowerTest {
         tower.earnXp(1_000);
         tower.buyUpgrade(UpgradePaths.named(tower, "Attune"));
         double attuned = tower.getHalfWidthRadians();
-        tower.buyUpgrade(UpgradePaths.named(tower, "Awaken"));
+        tower.buyPath(UpgradePaths.named(tower, "Awaken"));
 
         assertThat(attuned).isEqualTo(base);
         assertThat(tower.getHalfWidthRadians()).isCloseTo(base * 1.2, within(1e-6));
@@ -447,7 +433,7 @@ class CinderTowerTest {
 
     @Test
     void longNozzleMakesTheWaveTravelTwiceAsFast() {
-        CinderTower tower = this.towerWith("Transcendent");
+        CinderTower tower = this.towerWith();
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
         tower.doTick(1);
@@ -464,7 +450,7 @@ class CinderTowerTest {
 
     @Test
     void soulfireBurnsEveryWaveAlongsideTheOrdinaryBurnAndStokeCountsBothKinds() {
-        CinderTower tower = this.towerWith("Soulfire");
+        CinderTower tower = this.towerWith("Attune", "Soulfire");
         FakeEnemyMob target = FakeEnemyMob.at(150, 112);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -667,7 +653,7 @@ class CinderTowerTest {
 
     @Test
     void infernoRingBurnsEnemiesOnEverySideAndKeepsTheRange() {
-        CinderTower tower = this.towerWith("Lingering Flames", "Transcendent");
+        CinderTower tower = this.towerWith("Lingering Flames");
         float rangeBefore = tower.getRangeReal();
         UpgradePaths.buy(tower, this.context, "Inferno Ring");
         FakeEnemyMob ahead = FakeEnemyMob.at(tower.getX() + 40, tower.getY());
@@ -685,7 +671,7 @@ class CinderTowerTest {
 
     @Test
     void dragonsBreathFiresMoreThanTwiceAsOftenForLessDamageAndKeepsStokeFull() {
-        CinderTower tower = this.towerWith("Lingering Flames", "Transcendent");
+        CinderTower tower = this.towerWith("Attune", "Lingering Flames");
         float damageBefore = tower.damageCurrent();
         double rateBefore = tower.attackRate();
         UpgradePaths.buy(tower, this.context, "Dragon's Breath");
