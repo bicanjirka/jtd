@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.RadialGradientPaint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -37,6 +38,13 @@ final class TowerSprites {
     private static final long PIXEL_BUDGET = 8_000_000L;
     private static final int PADDING = 2;
     private static final Color SHADOW = new Color(0, 0, 0, 150);
+    /** How far the new foundation has spread when the rise ends, and how far above the cell's centre it spreads from. */
+    private static final float RISE_SPREAD_CELLS = 1.2f;
+    private static final float RISE_SPREAD_LIFT_CELLS = 0.3f;
+    /** The rise's ring starts inside the foundation and ends past the cell's edge. */
+    private static final float RISE_RING_FROM_CELLS = 0.2f;
+    private static final float RISE_RING_TO_CELLS = 0.8f;
+    private static final float RISE_RING_STROKE = 2f;
 
     private static final Map<Key, Sprite> SPRITES = new ConcurrentHashMap<>();
     private static final AtomicLong KEPT_PIXELS = new AtomicLong();
@@ -60,9 +68,30 @@ final class TowerSprites {
                 tower.centerY() + footprint * 0.16 - footprint * 1.02, footprint * 2.12, footprint * 2.04));
     }
 
-    /** The foundation and, for a look that aims, its head. */
+    /**
+     * The foundation and, for a look that aims, its head. While its tier rises, the new foundation spreads out from
+     * the centre over the old one, and one ring in the new tier's colour runs out past the cell's edge and fades.
+     */
     static void paint(Graphics2D g2, TowerSpriteDraw tower, int scale) {
+        float progress = tower.riseProgress();
+        if (progress < 0f) {
+            paint(g2, tower.look(), tower.tier(), tower.centerX(), tower.centerY(), scale, tower.headingRadians());
+            return;
+        }
+        paint(g2, tower.look(), tower.risenFrom(), tower.centerX(), tower.centerY(), scale, tower.headingRadians());
+        Shape clip = g2.getClip();
+        float spread = scale * RISE_SPREAD_CELLS * progress;
+        float spreadY = tower.centerY() - scale * RISE_SPREAD_LIFT_CELLS;
+        g2.clip(new Ellipse2D.Float(tower.centerX() - spread, spreadY - spread, spread * 2, spread * 2));
         paint(g2, tower.look(), tower.tier(), tower.centerX(), tower.centerY(), scale, tower.headingRadians());
+        g2.setClip(clip);
+        float radius = scale * (RISE_RING_FROM_CELLS + (RISE_RING_TO_CELLS - RISE_RING_FROM_CELLS) * progress);
+        Color tier = TowerLooks.tierColor(tower.look(), tower.tier());
+        Stroke stroke = g2.getStroke();
+        g2.setStroke(new BasicStroke(RISE_RING_STROKE));
+        g2.setColor(new Color(tier.getRed(), tier.getGreen(), tier.getBlue(), Math.round(230 * (1f - progress))));
+        g2.draw(new Ellipse2D.Float(tower.centerX() - radius, tower.centerY() - radius, radius * 2, radius * 2));
+        g2.setStroke(stroke);
     }
 
     /** As {@link #paint(Graphics2D, TowerSpriteDraw, int)}, for a look at a tier on its own. */

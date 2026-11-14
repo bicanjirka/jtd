@@ -116,6 +116,9 @@ public interface Tower {
 
     TowerExperience experience();
 
+    /** The last rise of its highest open tier, stamped at the start of the tower's turn. */
+    TierRise tierRise();
+
     /** Adds a finished walk's bounty to this tower's XP. */
     void earnXp(int bounty);
 
