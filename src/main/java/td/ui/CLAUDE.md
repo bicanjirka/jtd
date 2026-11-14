@@ -58,6 +58,8 @@ keeps the seam honest.
   front, after the enemies, and the enemy overlays after them, so a covered enemy's bars and marks still show.
 - A foundation never turns: only a head aims. A tier above the last wears the last tier's foundation.
 - Toolbar icons and the Upgrades panel's thumbnails reuse `TowerLooks.body`.
+- A lobbed shot's position is its point on the ground; how high it is drawn comes from the one arc in
+  `ProjectileFrameBuilder`, never from the shot or its tower.
 
 ## Two clocks
 
