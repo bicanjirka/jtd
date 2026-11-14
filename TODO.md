@@ -270,7 +270,8 @@ to a fresh one, where a revealed one takes shots it no longer needs. Not looked 
 
 ### The lab can't read a line past about 3.33x, and upgrades look overpriced
 
-Measured 2026-11-05 and not acted on: game prices and the lab are unchanged. Upgrade prices are a guess, and the
+Measured 2026-11-05 on the slot tree, before upgrade tiers replaced it, and not acted on; the per-tier rows below
+name tiers that no longer exist, so re-measure on the tiers before using them. Upgrade prices are a guess, and the
 competent player spends little on upgrades early and buys few distinct nodes. Today's game on the three levels, 4 seeds:
 
 | Level | Holds | With no upgrades | Spent on upgrades (early / middle / late) | Nodes in every play |
@@ -319,7 +320,7 @@ about 650 credits by lives saved and lists at 444, while its ratio of 223x impli
 lines better (0.85 and 0.82), which the ceiling explains, and it adds a second environment and hand-made Scorcher and
 Aura rules.
 
-- **Where:** `TowerLab.DUEL_SHARE`, `UpgradeTier`'s percents, `td.PurchaseHarness`, `td.FairPriceTable`.
+- **Where:** `TowerLab.DUEL_SHARE`, the node prices in each tower's tree, `td.PurchaseHarness`, `td.FairPriceTable`.
 - **Approach:** compare four setups with today on all three levels through `BalanceReport --seeds 4 --levels 0,2,3`,
   about 8 minutes each: `DUEL_SHARE` 0.1; every node at half price; the tiers below; the tiers below with `DUEL_SHARE`
   0.1. Measured tiers, with small floors where the mean reads about nothing: Range 35 / 25 / 25, Attune 20, Awaken 20,
@@ -411,11 +412,9 @@ hit-by-hit (EMP, Nullifier), and raw damage beat a heal-heavy wave sooner than a
 ### Upgrade-tree node numbers are unbalanced placeholders
 
 Every tower's `UpgradeNode`s carry real prices and stat bonuses, but none of them have been played
-against actual waves. Prices start from `UpgradeTier`'s multiples of the tower's list price (the table in
-`docs/features/shipped/FEATURE-tower-progression.md`); the stat bonuses still follow the placeholder rule of the
-first trees (an unquantified "+X" in the source doc became +25%, an unquantified crit bonus +10%). The
-`ClusterCondition` thresholds are unverified guesses, and `UpgradeTier`'s XP table is checked only
-against the bounty arithmetic in `docs/features/shipped/FEATURE-xp-and-purpose-gates.md`, not against play.
+against actual waves. Prices are each node's own; the stat bonuses still follow the placeholder rule of the
+first trees (an unquantified "+X" in the source doc became +25%, an unquantified crit bonus +10%). The tiers' XP and
+unlock price (`UpgradeTier.standard()`) are a first guess, not checked against play.
 Feature 7's balance pass sets the final numbers.
 
 `td.PurchaseHarness` measures them: lives saved per 100 credits, on Twisted Hourglass with 12 seeds. The
@@ -434,11 +433,11 @@ Shot) saved nothing until the Sniper's retune; see the crit entry below.
 
 - Frenzy and Momentum's haste stack since the stat-driven plan (up to +200% attack speed); check the
   Focused Optics chain with Momentum.
-- **Where:** `UpgradeTier`'s price multiples, and the `private static final UpgradeNode` constants in every
+- **Where:** `UpgradeTier.standard()`, and the `private static final UpgradeNode` constants in every
   leaf under `td.tower` (`SniperTower`/`SplashTower`/`PulseTower`/`MortarTower`/`SeekerTower`/
   `CinderTower`/`AuraTower`).
-- **Approach:** play each of the built-in levels with every node bought at least once, and adjust price/stat-bonus/
-  condition-threshold values until each node feels like a meaningful, roughly-comparable-in-power choice rather than
+- **Approach:** play each of the built-in levels with every node bought at least once, and adjust price and stat-bonus
+  values until each node feels like a meaningful, roughly-comparable-in-power choice rather than
   a strictly-better-or-worse one. No code or architecture change needed — every number here is already a named
   constant, not embedded in logic. `td.balance.BalanceReport` (the lab's node factors, `--save` and `--compare`)
   and the dev panel (`README.md`) make this cheap to actually do.

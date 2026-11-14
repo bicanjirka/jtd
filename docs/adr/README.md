@@ -53,10 +53,11 @@ Each alternative, with why it lost.
 | [0013](0013-style-stated-in-repo.md) | The code style is stated in this repository, not by reference | Accepted |
 | [0014](0014-narrow-factories-and-shared-fixtures.md) | Wide records grow through narrow factories; tests share fixtures | Accepted |
 | [0015](0015-stats-drive-buffs-towers-stay-code.md) | Stats drive buffs on both sides; towers stay code | Accepted |
-| [0016](0016-upgrade-node-ids-are-permanent.md) | Upgrade node ids are permanent | Accepted |
+| [0016](0016-upgrade-node-ids-are-permanent.md) | Upgrade node ids are permanent | Superseded by 0023 |
 | [0017](0017-package-cycle-accepted.md) | The domain packages form one cycle through `GameWorld`; only boundaries that hold are enforced | Accepted |
 | [0018](0018-board-looks-are-role-tables.md) | Board looks are tables per role, not switches in the painter | Accepted, enemy and tower looks implemented |
 | [0019](0019-edt-commands-are-requests.md) | An EDT command to the engine is a request the next tick applies | Accepted |
 | [0020](0020-design-docs-family.md) | Design principles, decisions and the overview live in separate documents | Accepted |
 | [0021](0021-a-wave-starts-from-its-save.md) | A wave starts from its save: clean wave ends, ready towers, saves replay tick for tick | Accepted |
 | [0022](0022-rebuilding-the-level-stops-the-loop.md) | Rebuilding the level stops the loop, as an exception to 0019 | Accepted |
+| [0023](0023-saves-load-only-in-their-own-format.md) | A save loads only in its own format | Accepted |
