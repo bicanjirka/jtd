@@ -39,64 +39,54 @@ public final class TowerArtSheets {
         TowerArtSheets2.run(only);
     }
 
-    /** How long a board of Tier III towers takes to paint, layer by layer and from one cached raster a tower. */
+    /** How long the game takes to paint a board of Tier III towers from its kept pictures, still and with its lights. */
     static void bench() {
-        String[] ids = {"sniper", "stormcaller", "hexer", "mortar", "scorcher", "aerie", "obelisk", "beacon"};
+        td.ui.render.TowerLook[] looks = td.ui.render.TowerLook.values();
         int towers = 200;
-        for (TowerArt.Dir d : TowerArt.Dir.values()) {
-            TowerArt.dir = d;
-            BufferedImage board = image(576, 416, FLOOR);
-            Graphics2D g = pen(board);
-            TowerArt.Build[] builds = new TowerArt.Build[ids.length];
-            BufferedImage[] cached = new BufferedImage[ids.length];
-            int parts = 0;
-            for (int i = 0; i < ids.length; i++) {
-                builds[i] = TowerArt.build(ids[i], 3, TowerArt.State.idle());
-                parts += builds[i].count();
-                cached[i] = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D c = pen(cached[i]);
-                TowerArt.paint(c, builds[i], 32, 40, 32);
-                c.dispose();
-            }
-            long layered = 0;
-            long blitted = 0;
-            for (int round = 0; round < 60; round++) {
-                long t0 = System.nanoTime();
-                for (int i = 0; i < towers; i++) {
-                    TowerArt.paint(g, builds[i % ids.length], 16 + (i % 18) * 32, 16 + (i / 18) * 32, 32);
-                }
-                long t1 = System.nanoTime();
-                for (int i = 0; i < towers; i++) {
-                    g.drawImage(cached[i % ids.length], (i % 18) * 32 - 16, (i / 18) * 32 - 24, null);
-                }
-                long t2 = System.nanoTime();
-                if (round >= 20) {
-                    layered += t1 - t0;
-                    blitted += t2 - t1;
-                }
-            }
-            g.dispose();
-            System.out.printf("%s: %d Tier III towers, %.1f parts each: layered %.2f ms a frame, cached raster %.3f ms a frame%n", d, towers,
-                    parts / (double) ids.length, layered / 40 / 1e6, blitted / 40 / 1e6);
-        }
-        TowerArt.dir = TowerArt.Dir.RAISED;
-        java.util.List<td.ui.render.EnemyDraw> bodies = new java.util.ArrayList<>();
-        td.ui.render.EnemyLook[] looks = td.ui.render.EnemyLook.values();
-        for (int i = 0; i < 300; i++) {
-            bodies.add(new td.ui.render.EnemyBodyDraw(looks[i % looks.length], 16 + (i % 18) * 32, 16 + (i / 18) * 24, i * 0.7, 9f, 0f));
-        }
         BufferedImage board = image(576, 416, FLOOR);
         Graphics2D g = pen(board);
+        long still = 0;
+        long live = 0;
+        for (int round = 0; round < 60; round++) {
+            long t0 = System.nanoTime();
+            for (int i = 0; i < towers; i++) {
+                int at = i;
+                cell(g, 16 + (i % 18) * 32, 16 + (i / 18) * 32, 32, () -> td.ui.TowerArtGame.paint(g, looks[at % looks.length], 3,
+                        td.ui.render.TowerPose.idle(), at * 37));
+            }
+            long t1 = System.nanoTime();
+            for (int i = 0; i < towers; i++) {
+                int at = i;
+                double seconds = round / 60.0 + i;
+                cell(g, 16 + (i % 18) * 32, 16 + (i / 18) * 32, 32, () -> td.ui.TowerArtGame.paintLive(g, looks[at % looks.length], 3, 3,
+                        td.ui.render.TowerPose.idle(), at * 37, 1, 1, seconds));
+            }
+            long t2 = System.nanoTime();
+            if (round >= 20) {
+                still += t1 - t0;
+                live += t2 - t1;
+            }
+        }
+        g.dispose();
+        System.out.printf("%d Tier III towers through the game's painter: still %.2f ms a frame, with idle lights %.2f ms a frame%n",
+                towers, still / 40 / 1e6, live / 40 / 1e6);
+        java.util.List<td.ui.render.EnemyDraw> bodies = new java.util.ArrayList<>();
+        td.ui.render.EnemyLook[] enemies = td.ui.render.EnemyLook.values();
+        for (int i = 0; i < 300; i++) {
+            bodies.add(new td.ui.render.EnemyBodyDraw(enemies[i % enemies.length], 16 + (i % 18) * 32, 16 + (i / 18) * 24, i * 0.7, 9f, 0f));
+        }
+        BufferedImage ground = image(576, 416, FLOOR);
+        Graphics2D eg = pen(ground);
         td.ui.Java2DFrameRenderer renderer = new td.ui.Java2DFrameRenderer();
         long spent = 0;
         for (int round = 0; round < 60; round++) {
             long t0 = System.nanoTime();
-            renderer.paintEnemies(g, bodies, java.util.List.of());
+            renderer.paintEnemies(eg, bodies, java.util.List.of());
             if (round >= 20) {
                 spent += System.nanoTime() - t0;
             }
         }
-        g.dispose();
+        eg.dispose();
         System.out.printf("300 standing enemy bodies through the game's renderer: %.2f ms a frame%n", spent / 40 / 1e6);
     }
 
@@ -162,13 +152,13 @@ public final class TowerArtSheets {
         boolean nest = id.equals("aerie") || id.equals("ruby") || id.equals("shade");
         int count = s.has("swarm") ? 7 : s.stacks > 0 ? s.stacks : tier <= 1 ? 1 : tier;
         String kind = id.equals("aerie") ? "frost" : id;
-        double lift = TowerArt.dir.uy * b.nest * px;
+        double lift = TowerArt.LIFT * b.nest() * px;
         if (nest) {
-            cell(g, cx, cy + lift, px, () -> TowerArt.nest(g, count, -60, b.footprint + 0.06, kind, s.has("release"), -1));
+            cell(g, cx, cy + lift, px, () -> TowerArt.nest(g, count, -60, b.footprint() + 0.06, kind, s.has("release"), -1));
         }
         TowerArt.paint(g, b, cx, cy, px);
         if (nest) {
-            cell(g, cx, cy + lift, px, () -> TowerArt.nest(g, count, -60, b.footprint + 0.06, kind, s.has("release"), 1));
+            cell(g, cx, cy + lift, px, () -> TowerArt.nest(g, count, -60, b.footprint() + 0.06, kind, s.has("release"), 1));
         }
     }
 

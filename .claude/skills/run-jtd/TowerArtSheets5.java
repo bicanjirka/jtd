@@ -11,7 +11,7 @@ import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyLook;
 import td.zone.ZoneKind;
 
-/** The game's own pieces beside the new towers: every enemy look, every ground zone, today's towers. Lab code. */
+/** The game's own pieces beside the new towers: every enemy look, every ground zone, the towers. Lab code. */
 final class TowerArtSheets5 {
 
     private TowerArtSheets5() {
@@ -65,13 +65,13 @@ final class TowerArtSheets5 {
         BufferedImage img = TowerArtSheets.image(Math.max(enemies.getWidth(), zones.getWidth() + towers.getWidth() + 20) + 40,
                 enemies.getHeight() + zones.getHeight() + 110, TowerArtSheets.PAPER);
         Graphics2D p = TowerArtSheets.pen(img);
-        TowerArtSheets.title(p, "The game's own pieces in the raised theme (3x): every enemy look, the ground zones, today's towers", 20, 26);
+        TowerArtSheets.title(p, "The game's own pieces in the raised theme (3x): every enemy look, the ground zones, the towers", 20, 26);
         TowerArtSheets.label(p, "Enemy looks, facing east and south-west by turns; the last one is cloaked", 20, 46);
         p.drawImage(enemies, 20, 54, null);
         int y = 54 + enemies.getHeight() + 30;
         TowerArtSheets.label(p, "Ground zones in ZoneKind order, enemies walking the path above them", 20, y - 6);
         p.drawImage(zones, 20, y, null);
-        TowerArtSheets.label(p, "Today's towers, until the next-gen looks replace them", 40 + zones.getWidth(), y - 6);
+        TowerArtSheets.label(p, "The towers at Tier I, as the game paints them", 40 + zones.getWidth(), y - 6);
         p.drawImage(towers, 40 + zones.getWidth(), y, null);
         p.dispose();
         TowerArtSheets.save(img, "theme.png");

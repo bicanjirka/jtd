@@ -68,7 +68,7 @@ final class TowerArtSheets3 {
             TowerArt.Build b = TowerArt.build(id, tier, s.aim(0).cue("stream"));
             AffineTransform save = g.getTransform();
             double len = (s.has("dragon") ? 0.28 : 0.25) + 0.07;
-            g.translate(len + TowerArt.dir.ux * b.top, TowerArt.dir.uy * b.top);
+            g.translate(len, TowerArt.LIFT * b.top());
             TowerArt.stream(g, range, half, look, 11);
             g.setTransform(save);
             TowerArt.paintCell(g, b, PX);
@@ -87,7 +87,7 @@ final class TowerArtSheets3 {
     }
 
     static void heads() throws Exception {
-        BufferedImage img = TowerArtSheets.image(1470, 1560, TowerArtSheets.PAPER);
+        BufferedImage img = TowerArtSheets.image(1470, 1960, TowerArtSheets.PAPER);
         Graphics2D g = TowerArtSheets.pen(img);
         TowerArtSheets.title(g, "Moving parts and their cues, raised view (2.5x). Idle is still; every other tile is a moment that game state causes.", 20, 26);
         double y = 44;
@@ -142,33 +142,54 @@ final class TowerArtSheets3 {
         TowerArtSheets.save(img.getSubimage(0, 0, img.getWidth(), (int) y), "heads.png");
     }
 
-    /** The tier unlock: the new foundation builds out of the old one, one ring of the tier's colour running out. */
+    /** The game's own moving pictures, frame by frame: a tier's unlock, a tower settling onto its cell, an idle tower's lights. */
     static double unlock(Graphics2D g, double y) {
         double[] times = {0, 0.2, 0.4, 0.6, 0.8, 1.0};
-        String[] captions = {"Tier I|before the unlock", "0.1 s|the new step pushes out", "0.2 s|one ring in Tier II's colour", "0.3 s", "0.4 s|the ring fades",
-            "0.5 s|Tier II, still again"};
+        String[] captions = {"Tier I|before the unlock", "0.1 s|a flash, pushing out", "0.2 s|swelling; one ring",
+            "0.3 s|sparks fly out", "0.4 s|the ring fades", "0.5 s|Tier II, still again"};
         Art[] arts = new Art[times.length];
         for (int i = 0; i < times.length; i++) {
             double t = times[i];
             arts[i] = g2 -> {
                 g2.translate(0, 0.2);
-                TowerArt.Build before = TowerArt.build("mortar", 1, st());
-                TowerArt.Build after = TowerArt.build("mortar", 2, st());
-                TowerArt.paintCell(g2, before, PX);
-                if (t > 0) {
-                    Shape clip = g2.getClip();
-                    g2.clip(TowerArt.circ(0, 0, 0.12 + (after.footprint * 1.2 - 0.12) * Math.min(1, t * 1.25)));
-                    TowerArt.paintCell(g2, after, PX);
-                    g2.setClip(clip);
-                }
-                if (t > 0 && t < 1) {
-                    g2.setColor(TowerArt.alpha(TowerArt.TIERS[4][2], 0.9 * (1 - t)));
-                    g2.setStroke(new BasicStroke(0.03f));
-                    g2.draw(TowerArt.circ(0, 0, before.footprint + (0.56 - before.footprint) * t));
-                }
+                td.ui.TowerArtGame.paintLive(g2, td.ui.render.TowerLook.MORTAR, 1, t == 0 ? 1 : 2, td.ui.render.TowerPose.idle(), -35,
+                        t == 0 ? 1 : t, 1, 0);
             };
         }
-        return row(g, y, "The tier unlock, on the tick clock: the Mortar from Tier I to Tier II", null, captions, arts);
+        y = row(g, y, "The tier unlock, on the tick clock: the Mortar from Tier I to Tier II", null, captions, arts);
+        double[] settle = {0.05, 0.25, 0.45, 0.65, 0.85, 1.0};
+        String[] settling = {"Placed|it starts small and faint", "0.09 s|growing out of its cell", "0.16 s|a ring of dust runs out", "0.23 s|a little past its size",
+            "0.30 s|settling back", "0.35 s|standing"};
+        Art[] placed = new Art[settle.length];
+        for (int i = 0; i < settle.length; i++) {
+            double t = settle[i];
+            placed[i] = g2 -> {
+                g2.translate(0, 0.2);
+                td.ui.TowerArtGame.paintLive(g2, td.ui.render.TowerLook.SNIPER, 0, 0, td.ui.render.TowerPose.idle(), -35, 1, t, 0);
+            };
+        }
+        y = row(g, y, "A tower placed, on the tick clock: it settles onto its cell", null, captions(settling), placed);
+        Object[][] alive = {{"sniper", 2, 0.22, "Sniper|the lens glints"}, {"mortar", 2, 0.22, "Mortar|the shell glints"},
+            {"scorcher", 2, 0.3, "Scorcher|a flickering pilot"}, {"stormcaller", 2, 0.85, "Stormcaller|the ball breathes"},
+            {"hexer", 2, 0.85, "Hexer|the brew breathes"}, {"aerie", 2, 0.85, "Aerie|its tip breathes"},
+            {"obelisk", 1, 0.85, "Obelisk|the rune breathes"}, {"beacon", 2, 0.5, "Beacon|a turning ray"},
+            {"beacon", 2, 2.2, "Beacon|a quarter turn later"}, {"obelisk", 1, 2.55, "Obelisk|the breath at its lowest"}};
+        Art[] lights = new Art[alive.length];
+        String[] names = new String[alive.length];
+        for (int i = 0; i < alive.length; i++) {
+            Object[] a = alive[i];
+            names[i] = (String) a[3];
+            lights[i] = g2 -> {
+                g2.translate(0, 0.24);
+                td.ui.render.TowerLook look = TowerArt.look((String) a[0], st());
+                td.ui.TowerArtGame.paintLive(g2, look, (int) a[1], (int) a[1], td.ui.render.TowerPose.idle(), -35, 1, 1, (double) a[2]);
+            };
+        }
+        return row(g, y, "Idle life, on the wall clock: the one part of a still tower that moves", null, names, lights);
+    }
+
+    static String[] captions(String[] lines) {
+        return lines;
     }
 
     // ---- shots and casts -----------------------------------------------------------------------------------
@@ -265,11 +286,10 @@ final class TowerArtSheets3 {
                     g.fill(TowerArt.circ(x - TowerArt.cos(heading) * i * 0.055, y - TowerArt.sin(heading) * i * 0.055, 0.034 - i * 0.005));
                 }
             }
-            TowerArt.Build b = new TowerArt.Build();
-            TowerArt.shell(b, kind, x, y, 0.06, 0);
-            for (TowerArt.Part p : b.parts) {
-                TowerArt.paintPart(g, p, 64);
-            }
+            AffineTransform save = g.getTransform();
+            g.translate(x, y);
+            td.ui.TowerArtGame.paintShell(g, td.ui.render.LoadedShell.valueOf(kind.toUpperCase()), 0.06, 64);
+            g.setTransform(save);
         };
     }
 
@@ -280,11 +300,7 @@ final class TowerArtSheets3 {
                         new Color[] {TowerArt.alpha(rgb, 0.8), TowerArt.alpha(rgb, 0)}));
                 g.fill(TowerArt.circ(x, y, 0.12));
             }
-            TowerArt.Build b = new TowerArt.Build();
-            b.solid(TowerArt.ngon(x, y, 6, 0.07, 10), 0, 0.02, TowerArt.Ramp.of(rgb));
-            for (TowerArt.Part p : b.parts) {
-                TowerArt.paintPart(g, p, 64);
-            }
+            td.ui.TowerArtGame.paintSolid(g, TowerArt.ngon(x, y, 6, 0.07, 10), 0.02, TowerArt.col(rgb), 64);
         };
     }
 
@@ -483,7 +499,7 @@ final class TowerArtSheets3 {
             gg.translate(-1.5, 0.3);
             TowerArt.Build b = TowerArt.build("aerie", 2, st());
             TowerArt.paintCell(gg, b, px);
-            TowerArt.nest(gg, 1, 150, b.footprint + 0.06, "frost", false);
+            TowerArt.nest(gg, 1, 150, b.footprint() + 0.06, "frost", false);
             gg.translate(1.5, -0.3);
             dummy(gg, 1.8, -0.5);
             flight(gg, "frost", new double[] {-1.5, -0.12, -0.6, -0.75, 0.8, -0.2, 1.8, -0.5}, 4);

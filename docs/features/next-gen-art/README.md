@@ -1,64 +1,74 @@
 # Next-gen art sheets
 
-The art for `FEATURE-next-gen.md`, drawn on 2026-11-13 in the raised view. The sheets are what to build; the decisions behind them are in
+The art for `FEATURE-next-gen.md`, in the raised view. The sheets are what to build; the decisions behind them are in
 `../FEATURE-next-gen-tower-looks.md` ("Art direction", "Palette") and in each tower's Look section.
+
+Every tower on a sheet is painted by the game: `td.ui.TowerFoundations` builds it and `td.ui.TowerSprites` paints it.
+The sheets hold no tower drawing of their own, so a sheet cannot show a tower the game would draw differently.
 
 | Sheet | Shows |
 |---|---|
 | `board.png` | All seven towers at Tiers 0 to III and every identity look on Iron Crossing, over the game's own frame, at 0.5x, 1x and 2.5x |
 | `catalogue.png` | Every tower and identity at each tier: 3.5x, 1x and 0.5x, with its part count |
-| `directions.png` | The two choices as decided: raised view B against plan view A, growing footprint B against constant B2 |
-| `heads.png` | Moving parts: idle, firing, reloading, every buff cue, and the tier unlock frame by frame |
+| `directions.png` | Frozen, not rendered again: the two choices as decided, raised view against plan view, growing footprint against constant |
+| `heads.png` | Moving parts: idle, firing, reloading, every cue; then the tier unlock, a placed tower settling and idle life, frame by frame |
 | `shots.png` | Shots and casts in flight |
 | `marks.png` | Enemy marks, on the game's own enemies |
 | `grounds.png` | The Obelisk's field patches and Sundial, today's payload grounds, the flare, Ice Wake |
 | `icons.png` | Toolbar icons, the upgrade arrow, the Lit mark, the panel's tier thumbnails, the tier colours |
-| `theme.png` | What the game itself paints in the same look: every enemy look, every ground zone, today's towers |
+| `theme.png` | What the game itself paints in the same look: every enemy look, every ground zone, the towers at Tier I |
 
 ## Rendering them again
 
-The sheets come from throwaway lab code beside `PreviewBoard`, not from the game. From the repository root, after
-`mvn -q compile` and with `target/runtime-classpath.txt` in place (run-jtd's `SKILL.md`):
+From the repository root, after `mvn -q compile` and with `target/runtime-classpath.txt` in place (run-jtd's
+`SKILL.md`):
 
 ```bash
 CP="target/classes;.claude/skills/run-jtd;$(cat target/runtime-classpath.txt)"
-javac -cp "$CP" -d .claude/skills/run-jtd .claude/skills/run-jtd/TowerArt*.java
+javac -cp "$CP" -d .claude/skills/run-jtd .claude/skills/run-jtd/td/ui/TowerArtGame.java .claude/skills/run-jtd/TowerArt*.java
 java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/features/next-gen-art            # every sheet
 java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/features/next-gen-art heads shots # some of them
 java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/features/next-gen-art bench       # the paint timing
 ```
 
+A change to a tower's look is a change to its builder in `TowerFoundations`; render the sheets after it and read
+`git diff --stat` on the PNGs: every sheet that changed must be one the change explains.
+
+The lab (`TowerArt*.java`) lays the sheets out and still draws what the game does not have yet: shots and casts in
+flight, the stream, the nest's missiles, marks, field patches. `td/ui/TowerArtGame.java` is its one way into the
+game's package-private tables. Once a shot or a mark is in the game, its sheet calls the game for it and the lab's
+drawing is deleted, as the towers' were.
+
 The board, marks, grounds and theme sheets load Iron Crossing in a headless `GameEngine` and paint it through
-`BoardRenderer.buildFrame` and `Java2DFrameRenderer.paint`, then draw the new art on top with plain Java2D shapes.
+`BoardRenderer.buildFrame` and `Java2DFrameRenderer.paint`.
 
 ## Where each look is defined
 
-`TowerArt.java` holds every tower as a list of parts in cell units (the cell's centre at 0,0, a cell 1 wide, north
-at -90 degrees). It is the measured source for the sheets: a radius, an offset or a colour that a doc does not state
-is there.
+`td.ui.TowerFoundations` holds every tower as a list of parts in cell units (the cell's centre at 0,0, a cell 1
+wide, north at -90 degrees). A look is a `TowerLook` row there: a builder from a tier and a `TowerPose` to a build.
+A radius, an offset or a colour that a doc does not state is in the builder.
 
-| Look | In `TowerArt` | Notes |
+| Look | In `TowerFoundations` | Pose it reads |
 |---|---|---|
-| The shared plinth, footprint by tier | `plinth`, `GROW`, `STEP_H` | step 0.045 wide and 0.07 high; the top step paved in a dark tone of the tower's colour |
-| Three tones of a colour | `Ramp.of` | shade 45% toward black, highlight 38% toward white |
-| Plinth stone | `stone` | `#50535e` mixed 24% toward the tower's colour |
-| Sniper and its rifle | `sniper`, `sniperHead` | cues: `long`, `silver`, `hollow`, `fourth`, `frenzy`, `headhunter`; `stacks` is Steady Aim |
-| Burst | `thrower`, `stormcaller`, `hexer`, `stoneRing` | cue `full` is an ability waiting; `fire` is the flick, the spark, the bubble |
-| Mortar, its barrel and shells | `mortar`, `mortarHead`, `shell` | cue `volley`; `shell` draws all seven kinds |
-| Scorcher, its nozzle and stream | `scorcher`, `stream`, `tongue` | look `soulfire`; cues `stream`, `dragon`; stream looks `core`, `white`, `soul` |
-| Aerie, the nest, a missile | `aerie`, `nest`, `missile` | looks `ruby`, `shade`; cue `release` |
-| Obelisk and its rune | `obelisk`, `rune`, `runeColour` | looks `burden`, `gravity`, `umbra`; cue `full` is a full Toll inside |
-| Beacon | `beacon` | `panes` are the Lit types' colours; cue `daylight` |
-| Back-to-front order inside a foundation | `Build.around`, `Build.finish` | parts north of the centre before it, parts south of it last; one that straddles is cut in two |
-| The raised view | `Dir.RAISED`, `paintPart` | a top lifted 0.42 of its height, the side swept below it |
-| Upgrade arrow | `upgradeArrow` | |
-| Tier colours | `TIERS` | |
-| Marks, field patches, icons | `TowerArtSheets4` (`silence`, `toll`, `hex`, `crystal`, `shards`, `patch`, `icon`) | |
-| Tracer, lobbed shots, bolts, curses, the Sundial | `TowerArtSheets3` (`tracer`, `lob`, `blast`, `lightning`, `curse`, `sundial`) | |
+| The shared plinth, footprint by tier | `FOOTPRINT`, `PLINTH_STEP`, `STEP_HEIGHT`, `footprint(tier)` | none |
+| Sniper and its rifle | `sniper` (`Row.aiming`) | `LONG_BARREL`, `SILVER_ROUND`, `HOLLOW_POINT`, `FOURTH_SHOT`, `FRENZY`, `HEADHUNTER`; `stacks` is Steady Aim; recoil, flash |
+| Burst | `thrower`, `stormcaller`, `hexer` | `CHARGED` is an ability waiting; `fired()` and `reloading` drive the arm, the spark, the bubble |
+| Mortar, its barrel and shells | `mortar` (`Row.aiming`), `shell(LoadedShell, r)` | `VOLLEY`, `LONG_BARREL`; `shell` is the round in the bore; recoil, reload |
+| Scorcher and its nozzle | `scorcher` (`CINDER`, `SOULFIRE`) | `STREAMING`, `DRAGONS_BREATH`, `LONG_BARREL`; reload cools the nozzle |
+| Aerie | `aerie` (`SEEKER`, `RUBY`, `SHADE`) | `RELEASE_READY`; `Foundation.nest` is the height of the ring the missiles sit on |
+| Obelisk and its rune | `obelisk` (`PULSE`, `BURDEN`, `GRAVITY`, `UMBRA`) | `CHARGED` is a full Toll inside; `fired()` is the knell |
+| Beacon | `beacon` (`AURA`) | `panes` are the Lit types' looks; `DAYLIGHT` |
+| A living light on a still tower | `Build.light(Life, ...)` | painted live by `TowerSprites`, never part of a kept picture |
+| Back-to-front order inside a foundation | `Foundation.parts`, `head`, `front` | parts south of the head are painted over it |
+| The raised view, the three paint steps | `TowerSprites.paintParts` | |
+| Colours | `td.ui.TowerLooks` | |
+| The stream, a tongue, a nest's missile, the upgrade arrow | lab: `TowerArt` (`stream`, `tongue`, `nest`, `missile`, `upgradeArrow`) | until the game draws them |
+| Marks, field patches, icons | lab: `TowerArtSheets4` (`silence`, `toll`, `hex`, `crystal`, `shards`, `patch`, `icon`) | |
+| Tracer, lobbed shots, bolts, curses, the Sundial | lab: `TowerArtSheets3` (`tracer`, `lob`, `blast`, `lightning`, `curse`, `sundial`) | |
 
 ## How a part is painted
 
-One part is one closed shape with a height and one colour in three tones (`TowerArt.paintPart`):
+One part is one closed shape with a height and one colour in three tones (`TowerSprites.paintParts`):
 
 1. the shape in the shade tone, swept from the part's foot to its top;
 2. the shape in the highlight tone at its top;
@@ -67,16 +77,19 @@ One part is one closed shape with a height and one colour in three tones (`Tower
 
 In the raised view the top of a part of height `h` sits 0.42 x `h` of a cell straight up the screen from its foot,
 and the shade tone fills the wall between them. Flat details (a deck, a pane, a rivet), glows and thin lines have no
-height and no tones. The plan view (`Dir.PLAN`, not taken) shifts the top 0.075 x `h` up and to the left instead.
+height and no tones.
 
 The game's own pieces follow the same light. An enemy body is a stack of parts too (`td.ui.EnemySprites`, shaped by
-its `EnemyLooks.Form`), drawn once into a kept picture and placed pixel for pixel; today's towers and a mine use the
-three tones through `Java2DFrameRenderer.paintStanding`. The game's foundations and heads are ported from `TowerArt`
-into `td.ui.TowerFoundations` and kept as pictures by `td.ui.TowerSprites`, as the enemy bodies are.
+its `EnemyLooks.Form`), drawn once into a kept picture and placed pixel for pixel; a mine uses the
+three tones through `Java2DFrameRenderer.paintStanding`. A tower's foundation, its head at each heading step and its
+front parts are kept as pictures by `td.ui.TowerSprites`, as the enemy bodies are.
 
 ## What the lab measured
 
-200 Tier III towers on a 576 x 416 board, 26 parts a tower on average, painted part by part: 39 ms a frame raised
-(32 ms in plan view). The same towers from one kept picture each: 0.7 ms. A foundation never changes between tier
-unlocks, so its picture is rendered once from the parts (and again when the zoom changes) and the frame carries one
-command for it.
+200 Tier III towers on a 576 x 416 board, 26 parts a tower on average, painted part by part: 39 ms a frame. The
+same towers through the game's painter, from kept pictures (`bench`): 1.5 ms a frame still, 2.9 ms with their idle
+lights. A picture is rendered once for a look, tier, pose and zoom, and the frame carries one command for the tower.
+
+Before the lab's own tower builders were deleted, 1284 builds (12 looks, 4 tiers, aims, cues, shells, panes, runes)
+were compared part for part, lab against game. All matched but 8 Scorcher builds partway through a reload, where the
+game snaps the reload to a quarter before mixing the nozzle tip's colour.
