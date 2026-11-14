@@ -208,8 +208,9 @@ after the old one. Attune, in Tier 0, gives each tower its own mechanic. The Bur
 I's gate, which makes it a Stormcaller or a Hexer; picking the other side later works only between waves and sells
 the old side's upgrades. A downgrade takes a node back with everything that needs it, refunds three quarters of what
 they cost (selling afterwards pays what selling would have) and reopens the choices they made. Upgrade
-prices are multiples of the tower's price. A green arrow in a tower's top-left corner says it can buy an upgrade or
-a tier's unlock now. The Upgrades panel's XP bar ticks where the next tier opens. The Beacon draws a ring on the
+prices are multiples of the tower's price. A tower stands on one plinth step for each tier it has open, and its
+foundation grows wider and richer with each; when a tier opens, the new foundation spreads over the old with a ring
+in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade or a tier's unlock now. The Upgrades panel's XP bar ticks where the next tier opens. The Beacon draws a ring on the
 tower it mentors and (while it is selected) the path spot its Rally watches.
 
 ```mermaid

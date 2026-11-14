@@ -5,6 +5,14 @@
 moved into the same look ("The rest of the board"). Part of `FEATURE-next-gen.md`, whose appendix
 holds the visual request as given; this doc owns its "all towers" parts, keyed to tiers.
 
+**Implemented 2026-11-14 (shared parts and every foundation):** the calm board (the pips, chevrons, halos, gold barrel,
+the Beacon's lines and the XP ranks went; one upgrade arrow), the palette, every tower's foundation at Tiers 0 to III
+and the Stormcaller's and the Hexer's, ported from the art lab in their idle state, the aimed heads of the Sniper,
+the Mortar and the Scorcher, back-to-front painting with enemy marks over the towers, and the tier unlock. Left for
+each tower's own rework: firing and reload cues, buff cues on the head, identity looks not yet in the game (Soulfire,
+Ruby, Shade, the Obelisk's runes), shots in flight, the enemy marks, the toolbar icons and the panel's tier
+thumbnails, and the always-on loops still running (the Beacon's rings, the Aerie's nest).
+
 ## Summary
 
 Make the towers far nicer to look at and the board calmer. Every tower becomes a small piece of art in two parts: a

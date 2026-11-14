@@ -71,8 +71,8 @@ height and no tones. The plan view (`Dir.PLAN`, not taken) shifts the top 0.075 
 
 The game's own pieces follow the same light. An enemy body is a stack of parts too (`td.ui.EnemySprites`, shaped by
 its `EnemyLooks.Form`), drawn once into a kept picture and placed pixel for pixel; today's towers and a mine use the
-three tones through `Java2DFrameRenderer.paintStanding`. The next-gen foundations should be kept the same way as the
-enemy pictures are.
+three tones through `Java2DFrameRenderer.paintStanding`. The game's foundations and heads are ported from `TowerArt`
+into `td.ui.TowerFoundations` and kept as pictures by `td.ui.TowerSprites`, as the enemy bodies are.
 
 ## What the lab measured
 
