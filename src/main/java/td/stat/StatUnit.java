@@ -6,7 +6,7 @@ import td.util.TickRate;
 
 /** How a stored stat value reads: the conversion to what the player sees, then its number and its unit word. */
 public enum StatUnit {
-    CELLS("cells"),
+    CELLS("cells", "cell"),
     /** Stored in ticks. */
     TICKS("s"),
     SECONDS("s"),
@@ -15,8 +15,8 @@ public enum StatUnit {
     /** A fraction added on top, read with its sign: {@code "+10%"}. */
     SIGNED_PERCENT(""),
     POINTS(""),
-    STACKS("stacks"),
-    MISSILES("missiles"),
+    STACKS("stacks", "stack"),
+    MISSILES("missiles", "missile"),
     COUNT(""),
     /** Stored in radians. */
     DEGREES(""),
@@ -35,14 +35,25 @@ public enum StatUnit {
     PIXELS_PER_TICK("cells/s");
 
     private final String word;
+    private final String wordForOne;
 
     StatUnit(String word) {
+        this(word, word);
+    }
+
+    StatUnit(String word, String wordForOne) {
         this.word = word;
+        this.wordForOne = wordForOne;
     }
 
     /** The dim word after the number; empty when the number carries its unit itself. */
     public String word() {
         return this.word;
+    }
+
+    /** The word after {@code shown}, singular for exactly one: {@code "1 stack"}, {@code "-1 cell"}. */
+    public String word(float shown) {
+        return Math.abs(shown) == 1f ? this.wordForOne : this.word;
     }
 
     /** {@code stored} in the unit the player reads; {@code cellPixels} is the board's cell size. */
