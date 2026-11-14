@@ -31,7 +31,7 @@ import java.util.OptionalInt;
 /**
  * The tower toolbar: one tile per {@link TowerFactory.Type}, in enum order, bordered in the tower's colour with its
  * price under it. A tower the player can't afford keeps its colours: its border dims and its price turns red. Icons
- * come from {@link Java2DFrameRenderer#renderTowerIcon}, so they match the board.
+ * come from {@link Java2DFrameRenderer#renderTowerIcon}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelTowerSelector extends JPanel implements EconomyListener {

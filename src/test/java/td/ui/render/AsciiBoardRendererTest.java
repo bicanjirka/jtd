@@ -14,7 +14,7 @@ class AsciiBoardRendererTest {
 
     private static RenderFrame frameOf(List<EnemyDraw> enemies, List<TowerSpriteDraw> towers) {
         return new RenderFrame(SCALE, 3 * SCALE - 1, 2 * SCALE - 1, List.of(), List.of(), enemies, List.of(), towers,
-                List.of(), List.of(), List.of(), List.of(), List.of(), Optional.empty(), Optional.empty(), Optional.empty(),
+                List.of(), List.of(), List.of(), List.of(), Optional.empty(), Optional.empty(), Optional.empty(),
                 BoardGround.plain());
     }
 
@@ -27,7 +27,7 @@ class AsciiBoardRendererTest {
 
     @Test
     void placesTowersAndEnemiesAtTheirCellWithFadingEnemiesUppercased() {
-        TowerSpriteDraw tower1 = new TowerSpriteDraw(TowerLook.SNIPER, SCALE, 0, false, 15f, 5f, 50f, false);
+        TowerSpriteDraw tower1 = new TowerSpriteDraw(TowerLook.SNIPER, 0, SCALE, 0, false, 15f, 5f, 50f, 0f, false);
         EnemyBodyDraw circle = new EnemyBodyDraw(EnemyLook.CIRCLE, 25f, 15f, 0.0, 5f, 0f);
         EnemyFadeDraw fadingSquare = new EnemyFadeDraw(EnemyLook.SQUARE, 5f, 5f, 0.0, 5f, 2f, 0.5f);
 

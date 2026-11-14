@@ -10,29 +10,24 @@ import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerVisitor;
+import td.tower.TurretAim;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.render.Palette;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerSpriteDraw;
-import td.ui.render.TurretHeadDraw;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
-/**
- * Describes each tower's base sprite, the same for every type, and its turret head, which differs:
- * aimed, spinning with elapsed time, or pulsing in size.
- */
+/** Describes each tower: its look, the tier its foundation shows, where its head aims and whether it can upgrade. */
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
-    // Radians/second of a continuously spinning head.
-    private static final double TOWER_FOUR_SPIN_RADIANS_PER_SECOND = -2.0;
-
-    private static final double TOWER_AURA_PULSE_RADIANS_PER_SECOND = 2.4;
-    private static final float TOWER_AURA_PULSE_MIN_SCALE = 0.8f;
-    private static final float TOWER_AURA_PULSE_MAX_SCALE = 1.25f;
+    /** Back to front: the northern rows first, so a tower covers the foot of nothing in front of it. */
+    private static final Comparator<TowerSpriteDraw> BACK_TO_FRONT = Comparator.comparingDouble(TowerSpriteDraw::centerY)
+            .thenComparingDouble(TowerSpriteDraw::centerX);
     private static final TowerVisitor<TowerLook> BODY_LOOK = new TowerVisitor<>() {
         public TowerLook visitSniperTower(SniperTower tower) {
             return TowerLook.SNIPER;
@@ -66,17 +61,14 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         Palette.TOWER_UPGRADE_TIER_2, Palette.TOWER_UPGRADE_TIER_3};
 
     private final List<TowerSpriteDraw> draws = new ArrayList<>();
-    private final List<TurretHeadDraw> headDraws = new ArrayList<>();
     private final GameWorld world;
     private final int gameTime;
     private final double interpolationAlpha;
-    private final double animationSeconds;
 
-    public TowerSpriteFrameBuilder(GameWorld world, int gameTime, double interpolationAlpha, double animationSeconds) {
+    public TowerSpriteFrameBuilder(GameWorld world, int gameTime, double interpolationAlpha) {
         this.world = world;
         this.gameTime = gameTime;
         this.interpolationAlpha = interpolationAlpha;
-        this.animationSeconds = animationSeconds;
     }
 
     /** A tower type's look. No {@code default}, so a new type fails to compile here. */
@@ -141,76 +133,59 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public List<TowerSpriteDraw> build() {
+        this.draws.sort(BACK_TO_FRONT);
         return this.draws;
     }
 
-    public List<TurretHeadDraw> buildHeads() {
-        return this.headDraws;
-    }
-
+    /** A tower whose head, if its look has one, never turns. */
     private void sprite(Tower tower) {
-        this.sprite(tower, lookFor(tower.getType()));
+        this.sprite(tower, lookFor(tower.getType()), 0.0);
     }
 
-    private void sprite(Tower tower, TowerLook body) {
-        this.draws.add(new TowerSpriteDraw(body, tower.getBoardX(), tower.getBoardY(),
-                tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(), this.upgradeReady(tower)));
+    private void sprite(Tower tower, TowerLook body, double headingRadians) {
+        UpgradeTree tree = tower.upgradeTree();
+        this.draws.add(new TowerSpriteDraw(body, tree.highestOpenTier(tower, this.world), tower.getBoardX(),
+                tower.getBoardY(), tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
+                (float) headingRadians, this.upgradeReady(tower)));
     }
 
-    /** A head of constant size. */
-    private void head(Tower tower, double headingRadians) {
-        this.headWithScale(tower, headingRadians, 1.0f);
-    }
-
-    private void headWithScale(Tower tower, double headingRadians, float scale) {
-        this.headDraws.add(new TurretHeadDraw(lookFor(tower.getType()), tower.getX(), tower.getY(),
-                (float) headingRadians, scale));
+    private void aimed(Tower tower, TurretAim aim) {
+        this.sprite(tower, lookFor(tower.getType()), aim.radiansAt(this.interpolationAlpha));
     }
 
     public Void visitSniperTower(SniperTower tower) {
-        this.sprite(tower);
-        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        this.aimed(tower, tower.getTurretAim());
         return null;
     }
 
-    /** The body takes the colour of what the fork made it. */
+    /** The body takes the look of what the fork made it. */
     public Void visitSplashTower(SplashTower tower) {
-        TowerLook body = bodyLookOf(tower);
-        this.sprite(tower, body);
-        this.headDraws.add(new TurretHeadDraw(body, tower.getX(), tower.getY(),
-                (float) tower.getTurretAim().radiansAt(this.interpolationAlpha), 1f));
+        this.sprite(tower, bodyLookOf(tower), tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 
     public Void visitPulseTower(PulseTower tower) {
         this.sprite(tower);
-        this.head(tower, this.animationSeconds * TOWER_FOUR_SPIN_RADIANS_PER_SECOND);
         return null;
     }
 
     public Void visitAuraTower(AuraTower tower) {
         this.sprite(tower);
-        double phase = 0.5 + 0.5 * Math.sin(this.animationSeconds * TOWER_AURA_PULSE_RADIANS_PER_SECOND);
-        float scale = (float) (TOWER_AURA_PULSE_MIN_SCALE + (TOWER_AURA_PULSE_MAX_SCALE - TOWER_AURA_PULSE_MIN_SCALE) * phase);
-        this.headWithScale(tower, 0.0, scale);
         return null;
     }
 
     public Void visitMortarTower(MortarTower tower) {
-        this.sprite(tower);
-        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        this.aimed(tower, tower.getTurretAim());
         return null;
     }
 
     public Void visitSeekerTower(SeekerTower tower) {
         this.sprite(tower);
-        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
         return null;
     }
 
     public Void visitCinderTower(CinderTower tower) {
-        this.sprite(tower);
-        this.head(tower, tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        this.aimed(tower, tower.getTurretAim());
         return null;
     }
 }

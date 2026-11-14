@@ -68,7 +68,7 @@ public final class BoardRenderer {
             enemy.accept(enemyFrameBuilder);
         }
 
-        TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(this.world, gameTime, interpolationAlpha, animationSeconds);
+        TowerSpriteFrameBuilder spriteFrameBuilder = new TowerSpriteFrameBuilder(this.world, gameTime, interpolationAlpha);
         TowerEffectFrameBuilder effectFrameBuilder = new TowerEffectFrameBuilder(this.world, gameTime,
                 interpolationAlpha, animationSeconds);
         for (Tower tower : this.world.towers().all()) {
@@ -98,7 +98,7 @@ public final class BoardRenderer {
 
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, ZoneFrameBuilder.build(this.world.zones(), animationSeconds), enemyFrameBuilder.build(), enemyFrameBuilder.buildCritSparks(),
-                spriteFrameBuilder.build(), spriteFrameBuilder.buildHeads(),
+                spriteFrameBuilder.build(),
                 effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers,
                 enemyFrameBuilder.buildOverlays(), enemySheet, towerSheet, this.cellGrid(level), level.ground());
     }

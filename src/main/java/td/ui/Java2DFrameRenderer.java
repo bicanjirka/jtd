@@ -47,7 +47,6 @@ import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TowerStatusDraw;
-import td.ui.render.TurretHeadDraw;
 import td.ui.render.ZoneArcDraw;
 import td.ui.render.ZoneDraw;
 import td.ui.render.ZonePatchDraw;
@@ -101,8 +100,6 @@ public final class Java2DFrameRenderer {
     private static final float HOLLOW_GLYPH_STROKE_WIDTH = 1.3f;
     /** A dot is a small mark, not a body. */
     private static final float DOT_GLYPH_SIZE_FRACTION = 0.4f;
-    /** Share of a cell a tower body fills. */
-    private static final float TOWER_BODY_SIZE_FRACTION = 0.42f;
 
     /** Small, so the toolbar reads as a row of glyphs. */
     private static final float ICON_BODY_SIZE_FRACTION = 0.25f;
@@ -111,8 +108,6 @@ public final class Java2DFrameRenderer {
     private static final float UPGRADE_ARROW_INSET = 0.15f;
     private static final float UPGRADE_ARROW_OUTLINE = 0.045f;
     private static final Color UPGRADE_ARROW_EDGE = new Color(13, 14, 16);
-    /** Turret head size relative to a cell. */
-    private static final float TOWER_HEAD_SIZE_FRACTION = 0.24f;
 
     /** How far apart a badge's two chevrons sit, as a share of its size. */
     private static final float RANK_BADGE_CHEVRON_SPACING = 1f;
@@ -130,8 +125,6 @@ public final class Java2DFrameRenderer {
     private static final float AFFIX_PIP_SYMBOL_SHARE = 0.8f;
     private static final int EFFECT_PULSE_ALPHA = 130;
     private static final float EFFECT_PULSE_STROKE_WIDTH = 1.2f;
-    /** How tall a tower's body stands, as a share of its size. */
-    private static final float TOWER_HEIGHT = 0.3f;
     private static final float STANDING_ONE_STEP_HEIGHT = 3f;
     /** The lit rim's width, as a share of the height it belongs to. */
     private static final float STANDING_RIM = 0.3f;
@@ -503,20 +496,21 @@ public final class Java2DFrameRenderer {
         for (ZonePatchDraw patch : frame.zones()) {
             this.paintZonePatch(g2, patch);
         }
+        for (TowerSpriteDraw sprite : frame.towerSprites()) {
+            this.paintTowerGround(g2, sprite, frame.scale());
+        }
         for (EnemyDraw enemy : frame.enemies()) {
             this.paintEnemy(g2, enemy);
-        }
-        for (EnemyOverlayDraw overlay : frame.enemyOverlays()) {
-            this.paintEnemyOverlay(g2, overlay);
         }
         for (CritSparkDraw spark : frame.critSparks()) {
             this.paintCritSpark(g2, spark);
         }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
-            this.paintTowerSprite(g2, sprite, frame.scale());
+            TowerSprites.paint(g2, sprite, frame.scale());
         }
-        for (TurretHeadDraw head : frame.towerHeads()) {
-            this.paintTurretHead(g2, head, frame.scale());
+        // A tall tower may stand over an enemy north of it; its bars and marks still show where it is and how it fares.
+        for (EnemyOverlayDraw overlay : frame.enemyOverlays()) {
+            this.paintEnemyOverlay(g2, overlay);
         }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
             if (sprite.upgradeReady()) {
@@ -1222,10 +1216,9 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * Renders one tower's symbol as a toolbar icon, with the same body as the
-     * board so the two cannot drift.
+     * Renders one tower's symbol as a toolbar icon: its look's flat body, in its colour.
      * <p>
-     * One solid colour and no turret head, since a two-tone glyph smudges at icon size. Transparent
+     * One solid colour and no head, since a two-tone glyph smudges at icon size. Transparent
      * background; the control paints its own face.
      */
     public BufferedImage renderTowerIcon(TowerLook look, int size) {
@@ -1239,16 +1232,14 @@ public final class Java2DFrameRenderer {
         return image;
     }
 
-    private void paintTowerSprite(Graphics2D g2, TowerSpriteDraw sprite, int scale) {
+    /** What a tower lays on the ground: its range ring when selected, and its shadow. */
+    private void paintTowerGround(Graphics2D g2, TowerSpriteDraw sprite, int scale) {
         if (sprite.selected()) {
             float r = sprite.rangeReal();
             g2.setColor(Color.PINK);
             g2.draw(new Ellipse2D.Float(sprite.centerX() - r, sprite.centerY() - r, r * 2, r * 2));
         }
-        AffineTransform save = g2.getTransform();
-        g2.translate(sprite.centerX(), sprite.centerY());
-        this.paintTowerBody(g2, sprite.look(), scale * TOWER_BODY_SIZE_FRACTION);
-        g2.setTransform(save);
+        TowerSprites.paintShadow(g2, sprite, scale);
     }
 
     /** One green up arrow in the cell's top-left corner, the same whichever tier the upgrade is in. */
@@ -1276,36 +1267,6 @@ public final class Java2DFrameRenderer {
         g2.setColor(colorFor(Palette.TOWER_UPGRADE_READY));
         g2.fill(arrow);
         g2.setTransform(save);
-    }
-
-    /** Draws a tower body at the origin; the caller has translated to the tower's centre. */
-    private void paintTowerBody(Graphics2D g2, TowerLook look, float size) {
-        Color color = TowerLooks.color(look);
-        Tones tones = Tones.of(color);
-        Shape body = TowerLooks.body(look, size);
-        paintStanding(g2, body, tones, 0, size * TOWER_HEIGHT);
-        g2.setColor(tones.shade());
-        g2.fill(body);
-        g2.setColor(color);
-        g2.fill(TowerLooks.bodyOutline(look, size));
-    }
-
-    private void paintTurretHead(Graphics2D g2, TurretHeadDraw head, int scale) {
-        AffineTransform save = g2.getTransform();
-        g2.translate(head.centerX(), head.centerY());
-        g2.rotate(head.headingRadians());
-        float size = scale * TOWER_HEAD_SIZE_FRACTION * head.scale();
-        Color color = TowerLooks.color(head.look());
-        this.paintHeadShape(g2, TowerLooks.head(head.look(), size), color);
-        g2.setTransform(save);
-    }
-
-    /** Draws a head at the origin; the caller has translated and rotated. */
-    private void paintHeadShape(Graphics2D g2, Shape shape, Color color) {
-        g2.setColor(withAlpha(color, 200));
-        g2.fill(shape);
-        g2.setColor(color);
-        g2.draw(shape);
     }
 
     private void paintTowerEffect(Graphics2D g2, TowerEffectDraw effect) {

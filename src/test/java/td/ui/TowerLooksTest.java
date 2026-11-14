@@ -25,12 +25,11 @@ class TowerLooksTest {
     }
 
     @Test
-    void everyLookDrawsItsBodyAndHead() {
+    void everyLookDrawsItsBody() {
         float size = 10f;
 
         for (TowerLook look : TowerLook.values()) {
             assertThat(TowerLooks.body(look, size).getBounds2D().isEmpty()).as("%s body", look).isFalse();
-            assertThat(TowerLooks.head(look, size).getBounds2D().isEmpty()).as("%s head", look).isFalse();
         }
     }
 }
