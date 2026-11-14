@@ -2015,8 +2015,8 @@ class GameEngineTest {
         saved.mouseClicked(BoardFixtures.cellCenter(1), BoardFixtures.cellCenter(3));
         Tower burst = towerOfType(saved, TowerFactory.Type.SPLASH);
         burst.earnXp(1_000_000);
-        List<UpgradeNode> chain = List.of(UpgradePaths.named(burst, "Wide Charge"),
-                UpgradePaths.named(burst, "Shaped Charge"));
+        List<UpgradeNode> chain = List.of(UpgradePaths.named(burst, "Hexer"),
+                UpgradePaths.named(burst, "Hex of Doom"));
         burst.buyPath(chain.getLast());
         GameSave save = saved.save().orElseThrow();
         TowerSave tower = save.towers().getFirst();

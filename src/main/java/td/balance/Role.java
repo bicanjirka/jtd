@@ -23,18 +23,18 @@ enum Role {
      * its field's own damage too small to answer plating.
      */
     ANTI_PHYSICAL(EnumSet.of(TowerFactory.Type.SEEKER, TowerFactory.Type.CINDER, TowerFactory.Type.MORTAR),
-            Set.of("sniper.silver_round", "sniper.sundering_crits", "splash.head.arc.1",
-                    "splash.head.hex.1", "splash.special.thunderstrike",
+            Set.of("sniper.silver_round", "sniper.sundering_crits", "splash.arc",
+                    "splash.hex_of_doom", "splash.thunderstrike",
                     "pulse.extra.bite.2", "pulse.special.arc_discharge")),
     /** The Obelisk's base drag stays: it comes with every field, and is the least of what holds an enemy. */
     CONTROL(EnumSet.of(TowerFactory.Type.SEEKER),
-            Set.of("pulse.head.gravity.1", "splash.head.arc.3", "splash.special.thunderstrike",
+            Set.of("pulse.head.gravity.1", "splash.hex_of_blight", "splash.thunderstrike",
                     "mortar.head.siege_rounds.3", "mortar.special.tar", "mortar.special.cryo_shells",
-                    "splash.head.hex.4a", "cinder.special.thermal_shock")),
+                    "splash.choking_blight", "cinder.special.thermal_shock")),
     /** Only what is there to deny heals and shields: a line that does it on the side keeps its tower's damage. */
     ANTI_SUSTAIN(EnumSet.noneOf(TowerFactory.Type.class),
             Set.of("pulse.head.ward.1", "pulse.special.soul_drain", "mortar.special.tar",
-                    "mortar.head.siege_rounds.4a", "splash.head.hex.1", "splash.special.inversion",
+                    "mortar.head.siege_rounds.4a", "splash.hex_of_inversion",
                     "cinder.extra.fuel.2", "seeker.extra.mixed_payloads.2", "seeker.special.nullifier"));
 
     private final Set<TowerFactory.Type> types;

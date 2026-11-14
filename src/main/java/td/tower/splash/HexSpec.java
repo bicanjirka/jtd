@@ -1,73 +1,53 @@
 package td.tower.splash;
 
-import td.effect.EffectKind;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 /**
- * The Hexer's hexes and how hard they bite. Each {@code withX} is a copy, and every change holds
- * whatever order the mechanics were bought in.
+ * How the Hexer's hexes bite. Each {@code withX} is a copy, and every change holds whatever order the mechanics were
+ * bought in.
  *
- * @param pool          every hex it owns, in the order bought: the order it takes them in
- * @param cursesPerCast how many enemies one cast curses
  * @param doomShare     the share of the damage taken under Doom it pays out
- * @param blightShare   Blight's poison each tick, a share of the Hexer's damage
- * @param cursedCloud   whether a hexed enemy that dies leaves a cloud that curses what stands in it
+ * @param cloud         whether Blight also curses the enemies around its target
+ * @param agony         whether a hexed enemy is Vulnerable while its hex lasts
+ * @param contagion     whether a hex jumps on from an enemy that dies with it
+ * @param choking       whether Blight also Silences
+ * @param cursesPerCast how many enemies one cast curses
  */
-public record HexSpec(List<Hex> pool, int cursesPerCast, float doomShare, float blightShare, boolean cursedCloud) {
+public record HexSpec(float doomShare, boolean cloud, boolean agony, boolean contagion, boolean choking,
+                      int cursesPerCast) {
 
-    /** How long a hex lasts unless it says otherwise. */
-    public static final float HEX_SECONDS = 6f;
-    /** Every this many shots, a Hexer casts instead of blasting. */
-    public static final int CAST_EVERY = 4;
-    /** How far, in cells before the blast radius bonus, Sympathy shares and Reckoning releases. */
-    public static final float SHARE_CELLS = 2f;
-    static final float DOOM_SHARE = 0.3f;
-    static final float BLIGHT_SHARE = 0.04f;
+    public static final float DOOM_SHARE = 0.3f;
+    /** How far around its target Blight Cloud curses, in cells. */
+    public static final float CLOUD_CELLS = 1f;
+    /** How far a hex jumps from an enemy that died with it, in cells. */
+    public static final float SPREAD_CELLS = 1.5f;
 
-    public HexSpec {
-        pool = List.copyOf(pool);
+    /** The hexes as their nodes give them. */
+    public static HexSpec bare() {
+        return new HexSpec(DOOM_SHARE, false, false, false, false, 1);
     }
 
-    /** No hexes: the Splash isn't a Hexer. */
-    public static HexSpec none() {
-        return new HexSpec(List.of(), 1, DOOM_SHARE, BLIGHT_SHARE, false);
+    public HexSpec withDoomShareAtLeast(float share) {
+        return new HexSpec(Math.max(this.doomShare, share), this.cloud, this.agony, this.contagion, this.choking,
+                this.cursesPerCast);
     }
 
-    public boolean isActive() {
-        return !this.pool.isEmpty();
+    public HexSpec clouded() {
+        return new HexSpec(this.doomShare, true, this.agony, this.contagion, this.choking, this.cursesPerCast);
     }
 
-    /** The hex in the pool that marks an enemy with {@code kind}; empty when it owns none. */
-    public Optional<Hex> hexOf(EffectKind kind) {
-        return this.pool.stream().filter(hex -> hex.kind() == kind).findFirst();
+    public HexSpec agonizing() {
+        return new HexSpec(this.doomShare, this.cloud, true, this.contagion, this.choking, this.cursesPerCast);
     }
 
-    /** The pool with {@code hex} added after the others. */
-    public HexSpec withHex(Hex hex) {
-        List<Hex> grown = new ArrayList<>(this.pool);
-        grown.add(hex);
-        return new HexSpec(grown, this.cursesPerCast, this.doomShare, this.blightShare, this.cursedCloud);
+    public HexSpec contagious() {
+        return new HexSpec(this.doomShare, this.cloud, this.agony, true, this.choking, this.cursesPerCast);
     }
 
-    public HexSpec withCursesPerCast(int cursesPerCast) {
-        return new HexSpec(this.pool, Math.max(this.cursesPerCast, cursesPerCast), this.doomShare, this.blightShare,
-                this.cursedCloud);
+    public HexSpec chokingBlight() {
+        return new HexSpec(this.doomShare, this.cloud, this.agony, this.contagion, true, this.cursesPerCast);
     }
 
-    public HexSpec withDoomShareAtLeast(float doomShare) {
-        return new HexSpec(this.pool, this.cursesPerCast, Math.max(this.doomShare, doomShare), this.blightShare,
-                this.cursedCloud);
-    }
-
-    public HexSpec withBlightShareAtLeast(float blightShare) {
-        return new HexSpec(this.pool, this.cursesPerCast, this.doomShare, Math.max(this.blightShare, blightShare),
-                this.cursedCloud);
-    }
-
-    public HexSpec withCursedCloud() {
-        return new HexSpec(this.pool, this.cursesPerCast, this.doomShare, this.blightShare, true);
+    public HexSpec withCursesPerCastAtLeast(int curses) {
+        return new HexSpec(this.doomShare, this.cloud, this.agony, this.contagion, this.choking,
+                Math.max(this.cursesPerCast, curses));
     }
 }

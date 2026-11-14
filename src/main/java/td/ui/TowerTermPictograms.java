@@ -66,6 +66,18 @@ final class TowerTermPictograms {
             Map.entry("tower.arc", "F O4.6 18.6 2.6 O19.4 5.4 2.6 ; S M6.6 16.8L10.2 15.4L9 11.6L14 10.8L12.8 7.2L17.4 6.8"),
             // Hex
             Map.entry("tower.hex", "S O12 12 9 ; S M12 19.6L5 7.4H19Z ; F O12 11.2 1.8"),
+            // Static
+            Map.entry("tower.static", "=tower.arc"),
+            // Soulbrand
+            Map.entry("tower.soulbrand", "=tower.hex"),
+            // Spark
+            Map.entry("tower.spark", "=effect.charged"),
+            // Soul
+            Map.entry("tower.soul", "=effect.soulfire"),
+            // Thunderclap
+            Map.entry("tower.thunderclap", "F M13.4 3L8.4 12.4H11.6L10.4 21L15.8 10.8H12.6Z ; S M6.4 8A6 6 0 0 0 6.4 16 M17.6 8A6 6 0 0 1 17.6 16 ; T M3 5.4A9.6 9.6 0 0 0 3 18.6 M21 5.4A9.6 9.6 0 0 1 21 18.6"),
+            // Thunderstrike
+            Map.entry("tower.thunderstrike", "F M6.4 13C4.4 13 3 11.6 3 9.8C3 8 4.4 6.6 6.2 6.6C6.8 4.4 8.8 3 11.2 3C14 3 16.2 5 16.6 7.6C18.8 7.6 20.6 9.2 20.6 11.2C20.6 13 19.2 13 17.4 13Z ; F M12.8 13.8L9.4 18.6H12L10.8 22.4L15.6 16.6H12.8L14.6 13.8Z"),
             // Shrapnel
             Map.entry("tower.shrapnel", "F O12 12 2.4 ; F M4.6 4.6L8.6 5.8L5.8 8.6Z M19.4 4.6L18.2 8.6L15.4 5.8Z M19.4 19.4L15.4 18.2L18.2 15.4Z M4.6 19.4L5.8 15.4L8.6 18.2Z ; T M12 7.6V3.4 M12 16.4V20.6 M7.6 12H3.4 M16.4 12H20.6"),
             // Bomblet

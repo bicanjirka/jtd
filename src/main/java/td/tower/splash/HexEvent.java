@@ -4,7 +4,6 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 
 import java.util.List;
-import java.util.Optional;
 
 /** Something that happened to an enemy carrying one of the Hexer's hexes. */
 public sealed interface HexEvent {
@@ -18,27 +17,22 @@ public sealed interface HexEvent {
     }
 
     /**
-     * An enemy carrying the Hexer's hexes died.
+     * An enemy carrying the Hexer's hexes is gone: killed, or out of the fight another way.
      *
      * @param hexes every hex of this Hexer it carried
      */
-    record Died(EnemyMob enemy, List<CarriedHex> hexes) implements HexEvent {
+    record Gone(EnemyMob enemy, List<CarriedHex> hexes) implements HexEvent {
 
-        public Died {
+        public Gone {
             hexes = List.copyOf(hexes);
-        }
-
-        /** The hex of {@code kind} it carried; empty when it carried none. */
-        public Optional<CarriedHex> carried(EffectKind kind) {
-            return this.hexes.stream().filter(hex -> hex.kind() == kind).findFirst();
         }
     }
 
     /**
      * One hex an enemy carried.
      *
-     * @param generation how many times it has jumped from enemy to enemy
+     * @param castTicks how long it was cast for, before the enemy lengthened or shortened it
      */
-    record CarriedHex(EffectKind kind, int generation) {
+    record CarriedHex(EffectKind kind, int castTicks) {
     }
 }

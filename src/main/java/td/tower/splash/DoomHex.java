@@ -5,18 +5,14 @@ import td.enemy.EnemyMob;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.targeting.HighestHealthSelector;
-import td.util.TickRate;
 
+import java.util.List;
 import java.util.Optional;
 
-/**
- * Hex of Doom: when it ends, the enemy takes a share of all the damage it took while hexed. It
- * lasts longer on a Saturated enemy. Picks the healthiest enemy in range without Doom.
- */
+/** Hex of Doom: when it ends, a share of all the damage the enemy took meanwhile hits it again. Picks the healthiest. */
 public final class DoomHex implements Hex {
 
     private static final float SECONDS = 4f;
-    private static final float SECONDS_PER_SATURATION_STACK = 1f;
 
     @Override
     public EffectKind kind() {
@@ -24,27 +20,26 @@ public final class DoomHex implements Hex {
     }
 
     @Override
-    public Optional<EnemyMob> target(HexScene scene) {
-        return new HighestHealthSelector().selectFrom(scene.candidates().stream()
+    public float seconds() {
+        return SECONDS;
+    }
+
+    @Override
+    public Optional<EnemyMob> target(List<EnemyMob> candidates, float cellPixels) {
+        return new HighestHealthSelector().selectFrom(candidates.stream()
                 .filter(enemy -> !enemy.hasEffect(EffectKind.DOOM))
                 .toList());
     }
 
     @Override
-    public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
-        actions.curse(target, EffectKind.DOOM, this.ticksOn(target));
-    }
-
-    @Override
-    public int ticksOn(EnemyMob target) {
-        float seconds = SECONDS + SECONDS_PER_SATURATION_STACK * target.effectStacks(EffectKind.SATURATED);
-        return Math.round(seconds * TickRate.TICKS_PER_SECOND);
+    public void lay(EnemyMob target, int ticks, float grownSlow, HexHand hand) {
+        hand.curse(target, EffectKind.DOOM, ticks);
     }
 
     @Override
     public TermText describe() {
-        return TermText.of(EffectKind.DOOM, TermText.of("when it ends, the enemy takes " + TermNumbers.percent(HexSpec.DOOM_SHARE)
-                + " of all the damage it took while it lasted; it lasts " + TermNumbers.seconds(SECONDS) + ", plus "
-                + TermNumbers.seconds(SECONDS_PER_SATURATION_STACK) + " per stack of ").plus(EffectKind.SATURATED));
+        return TermText.of(EffectKind.DOOM, TermText.of("for " + TermNumbers.seconds(SECONDS) + "; when it ends, "
+                + TermNumbers.percent(HexSpec.DOOM_SHARE) + " of all the damage the enemy took meanwhile hits it again"
+                + " as magic"));
     }
 }

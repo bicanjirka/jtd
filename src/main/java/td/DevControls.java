@@ -61,7 +61,7 @@ public final class DevControls {
 
     /** What the panel keeps going on the board by itself, every tick: its hexes' payouts and its jams. */
     public void doTick(int time) {
-        this.hexCaster.doTick(time);
+        this.hexCaster.doTick();
         this.jammer.doTick();
     }
 

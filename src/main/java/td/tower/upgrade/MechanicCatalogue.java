@@ -22,6 +22,23 @@ public final class MechanicCatalogue<P extends Mechanic> {
         this.byNode = byNode;
     }
 
+    /** The catalogue that lists {@code entries}, each a mechanic one node brings; a node listed twice brings both. */
+    @SafeVarargs
+    public static <P extends Mechanic> MechanicCatalogue<P> of(Entry<? extends P>... entries) {
+        Map<String, List<Supplier<? extends P>>> byNode = new HashMap<>();
+        for (Entry<? extends P> entry : entries) {
+            byNode.computeIfAbsent(entry.nodeId(), id -> new ArrayList<>()).add(entry.mechanic());
+        }
+        Map<String, List<Supplier<? extends P>>> fixed = new HashMap<>();
+        byNode.forEach((id, mechanics) -> fixed.put(id, List.copyOf(mechanics)));
+        return new MechanicCatalogue<>(Map.copyOf(fixed));
+    }
+
+    /** One mechanic the node {@code nodeId} brings. */
+    public static <P extends Mechanic> Entry<P> entry(String nodeId, Supplier<? extends P> mechanic) {
+        return new Entry<>(nodeId, mechanic);
+    }
+
     public static <P extends Mechanic> MechanicCatalogue<P> empty() {
         return new MechanicCatalogue<>(Map.of());
     }
@@ -45,5 +62,14 @@ public final class MechanicCatalogue<P extends Mechanic> {
     /** What {@code node}'s mechanics add, in words, in the order they were added. */
     public List<TermText> describe(UpgradeNode node) {
         return this.mechanicsOf(node).stream().map(Mechanic::describe).toList();
+    }
+
+    /**
+     * One line of a catalogue.
+     *
+     * @param nodeId   the node that brings it
+     * @param mechanic makes a fresh one for each tower
+     */
+    public record Entry<P extends Mechanic>(String nodeId, Supplier<? extends P> mechanic) {
     }
 }

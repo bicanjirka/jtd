@@ -1,6 +1,5 @@
 package td.ui;
 
-import td.enemy.EnemyMob;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
 import td.tower.MortarTower;
@@ -106,10 +105,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         this.gameTime = gameTime;
         this.interpolationAlpha = interpolationAlpha;
         this.animationSeconds = animationSeconds;
-    }
-
-    private static float beamWidth(float coolDownFraction) {
-        return 3.0f * coolDownFraction;
     }
 
     /** Position of {@code seconds} in a repeating {@code [0, 1)} cycle. */
@@ -235,41 +230,40 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * The shot to its target, the blast as a detonation that spreads as a ring and darkens as it
-     * grows, the arcs it carried as jagged lightning, and a cast as a beam to each enemy it cursed.
+     * Each blast as a detonation that spreads as a ring to its edge and darkens as it grows, and each bolt that struck
+     * as jagged lightning.
      */
     public Void visitSplashTower(SplashTower tower) {
-        float progress = tower.ticksSinceShot(this.gameTime) / DETONATION_TICKS;
         BlastLook look = BlastLook.of(tower.fork());
-        for (SplashTower.Blast blast : tower.getBlasts()) {
-            EnemyMob target = blast.primary();
-            this.draws.add(BeamDraw.solid(look.beam(), tower.getX(), tower.getY(),
-                    (float) target.getX(), (float) target.getY(), beamWidth(tower.getCoolDownFraction())));
+        for (SplashTower.Blast blast : tower.recentBlasts()) {
+            float progress = (this.gameTime - blast.tick()) / DETONATION_TICKS;
             if (progress < 1f) {
-                this.detonation(blast.area(), progress, look);
+                this.detonation((float) blast.at().x(), (float) blast.at().y(), blast.edge(), progress, look);
             }
         }
-        if (progress < 1f) {
-            List<SplashTower.Trace> arcs = tower.getArcs();
-            for (int i = 0; i < arcs.size(); i++) {
-                this.lightning(arcs.get(i), i, 1f - progress);
+        List<SplashTower.Bolt> bolts = tower.recentBolts();
+        for (int i = 0; i < bolts.size(); i++) {
+            SplashTower.Bolt bolt = bolts.get(i);
+            float progress = (this.gameTime - bolt.tick()) / DETONATION_TICKS;
+            if (progress < 1f) {
+                this.lightning((float) bolt.from().x(), (float) bolt.from().y(), (float) bolt.to().x(),
+                        (float) bolt.to().y(), i, 1f - progress);
             }
-            for (SplashTower.Trace cast : tower.getCasts()) {
-                this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_CAST, cast.fromX(), cast.fromY(), cast.toX(), cast.toY(),
-                        2f, 1f - progress));
-            }
+        }
+        for (SplashTower.Curse curse : tower.cursesInFlight()) {
+            this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_CAST, (float) curse.from().x(), (float) curse.from().y(),
+                    (float) curse.target().getX(), (float) curse.target().getY(), 2f, 1f));
         }
         return null;
     }
 
-    private void detonation(SplashTower.Blast.Area area, float progress, BlastLook look) {
-        float radius = area.radius() * progress;
+    private void detonation(float centerX, float centerY, float edge, float progress, BlastLook look) {
+        float radius = edge * progress;
         if (progress < FLASH_SHARE) {
-            this.draws.add(new SplashDraw(look.flash(), area.centerX(), area.centerY(),
-                    area.radius() * (FLASH_SHARE + progress)));
+            this.draws.add(new SplashDraw(look.flash(), centerX, centerY, edge * (FLASH_SHARE + progress)));
         }
-        this.draws.add(new RingDraw(look.detonation(), area.centerX(), area.centerY(), radius, 1f - progress));
-        this.draws.add(new RingDraw(look.detonationDark(), area.centerX(), area.centerY(), radius,
+        this.draws.add(new RingDraw(look.detonation(), centerX, centerY, radius, 1f - progress));
+        this.draws.add(new RingDraw(look.detonationDark(), centerX, centerY, radius,
                 DARK_RING_ALPHA * progress * (1f - progress) * 4f));
     }
 
@@ -288,10 +282,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
     }
 
-    /** One arc as a zigzag; which way each segment swings alternates, starting by the arc's order in the shot. */
-    private void lightning(SplashTower.Trace arc, int order, float alpha) {
-        float dx = arc.toX() - arc.fromX();
-        float dy = arc.toY() - arc.fromY();
+    /** One bolt as a zigzag; which way each segment swings alternates, starting by the bolt's order. */
+    private void lightning(float fromX, float fromY, float toX, float toY, int order, float alpha) {
+        float dx = toX - fromX;
+        float dy = toY - fromY;
         float length = (float) Math.hypot(dx, dy);
         if (length == 0f) {
             return;
@@ -299,13 +293,13 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         float swing = Math.min(ARC_MAX_SWING_PIXELS, length * ARC_SWING);
         float normalX = -dy / length * swing;
         float normalY = dx / length * swing;
-        float x = arc.fromX();
-        float y = arc.fromY();
+        float x = fromX;
+        float y = fromY;
         for (int i = 1; i <= ARC_SEGMENTS; i++) {
             float t = (float) i / ARC_SEGMENTS;
             float side = i == ARC_SEGMENTS ? 0f : ((i + order) % 2 == 0 ? 1f : -1f);
-            float nextX = arc.fromX() + dx * t + normalX * side;
-            float nextY = arc.fromY() + dy * t + normalY * side;
+            float nextX = fromX + dx * t + normalX * side;
+            float nextY = fromY + dy * t + normalY * side;
             this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_ARC, x, y, nextX, nextY, 2f, alpha));
             x = nextX;
             y = nextY;

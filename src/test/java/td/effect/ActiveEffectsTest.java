@@ -95,6 +95,28 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void aGrowingSlowGrowsByTheTickItHasRunFromItsStart() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.blight(100, 0.01f, 0.05f, 0f, DamageSink.none()));
+
+        for (int i = 0; i < 10; i++) {
+            effects.tick();
+        }
+
+        assertThat(effects.slowNow(EffectKind.BLIGHT)).isCloseTo(0.05f + 10 * 0.01f, within(0.001f));
+    }
+
+    @Test
+    void aGrowingSlowNeverTakesLessThanItsFloor() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.blight(100, 0.01f, 0f, 0.3f, DamageSink.none()));
+
+        effects.tick();
+
+        assertThat(effects.slowNow(EffectKind.BLIGHT)).isCloseTo(0.3f, within(0.001f));
+    }
+
+    @Test
     void aRefreshedSlowStaysFull() {
         ActiveEffects effects = new ActiveEffects();
         for (int i = 0; i < 3 * ActiveEffects.SLOW_FADE_TICKS; i++) {

@@ -1,22 +1,20 @@
 package td.tower.splash;
 
-import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
 
-/** Chain Lightning: at least six jumps at the blast's full damage, and the third jump forks. */
+/** Chain Lightning: the Arc jumps more times. */
 public final class ChainLightningMechanic implements SplashMechanic {
 
-    private static final int JUMPS = 6;
+    private static final int MORE_JUMPS = 3;
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {
-        return spec.withArcs(spec.arcs().withMinimumJumps(JUMPS).withShareAtLeast(1f).thatForks());
+        return spec.withArc(spec.arc().withMoreJumps(MORE_JUMPS));
     }
 
     @Override
     public TermText describe() {
-        return TermText.of("an ").plus(TowerTerm.ARC).plus(" makes up to " + JUMPS
-                + " jumps at the blast's full damage; the " + TermNumbers.ordinal(ArcPlanner.FORK_JUMP) + " jump forks");
+        return TermText.of(TowerTerm.ARC).plus(" jumps " + MORE_JUMPS + " more times");
     }
 }

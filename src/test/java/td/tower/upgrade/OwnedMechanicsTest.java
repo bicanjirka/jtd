@@ -6,14 +6,15 @@ import td.term.TermText;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static td.tower.upgrade.MechanicCatalogue.entry;
 
 class OwnedMechanicsTest {
 
     private static final UpgradeNode FIRST = UpgradeNode.of("first", "First", 10);
     private static final UpgradeNode SECOND = UpgradeNode.of("second", "Second", 10);
-    private static final MechanicCatalogue<Mechanic> CATALOGUE = MechanicCatalogue.empty()
-            .with(FIRST.id(), () -> () -> TermText.of("first"))
-            .with(SECOND.id(), () -> () -> TermText.of("second"));
+    private static final MechanicCatalogue<Mechanic> CATALOGUE = MechanicCatalogue.of(
+            entry(FIRST.id(), () -> () -> TermText.of("first")),
+            entry(SECOND.id(), () -> () -> TermText.of("second")));
 
     @Test
     void removingANodeDropsOnlyItsMechanicsAndKeepsTheOthersInstances() {
@@ -29,9 +30,9 @@ class OwnedMechanicsTest {
 
     @Test
     void renewingReplacesEveryMechanicWithANewOneInTheSameOrder() {
-        MechanicCatalogue<Mechanic> fresh = MechanicCatalogue.empty()
-                .with(FIRST.id(), () -> new Named("first"))
-                .with(SECOND.id(), () -> new Named("second"));
+        MechanicCatalogue<Mechanic> fresh = MechanicCatalogue.of(
+                entry(FIRST.id(), () -> new Named("first")),
+                entry(SECOND.id(), () -> new Named("second")));
         OwnedMechanics<Mechanic> owned = new OwnedMechanics<>(fresh);
         owned.add(FIRST);
         owned.add(SECOND);

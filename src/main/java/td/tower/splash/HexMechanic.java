@@ -1,45 +1,33 @@
 package td.tower.splash;
 
 import td.term.Term;
-import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
+import td.tower.ability.Ability;
+import td.tower.ability.AbilityCharge;
 
+import java.util.Optional;
 import java.util.Set;
 
-/**
- * A node that adds a hex to the Hexer's pool, and may also make a cast curse more enemies at once.
- */
+/** A hex the Hexer casts once its Souls are in. */
 public final class HexMechanic implements SplashMechanic {
 
     private final Hex hex;
-    private final int cursesPerCast;
-    private final boolean founding;
+    private final AbilityCharge charge;
 
-    private HexMechanic(Hex hex, int cursesPerCast, boolean founding) {
+    public HexMechanic(Hex hex, int cost) {
         this.hex = hex;
-        this.cursesPerCast = cursesPerCast;
-        this.founding = founding;
-    }
-
-    /** Adds {@code hex} to the pool. */
-    public static HexMechanic adding(Hex hex) {
-        return new HexMechanic(hex, 1, false);
-    }
-
-    /** Starts casting, with {@code hex} the first in the pool. */
-    public static HexMechanic founding(Hex hex) {
-        return new HexMechanic(hex, 1, true);
-    }
-
-    /** This mechanic's hex, and a cast curses up to {@code cursesPerCast} enemies. */
-    public HexMechanic andCursing(int cursesPerCast) {
-        return new HexMechanic(this.hex, cursesPerCast, this.founding);
+        this.charge = new AbilityCharge(Ability.of(hex.kind(), TowerTerm.SOUL, cost));
     }
 
     @Override
-    public SplashSpec refineSpec(SplashSpec spec) {
-        return spec.withHexes(spec.hexes().withHex(this.hex).withCursesPerCast(this.cursesPerCast));
+    public Optional<AbilityCharge> ability() {
+        return Optional.of(this.charge);
+    }
+
+    @Override
+    public boolean cast(CastActions actions) {
+        return actions.hex(this.hex);
     }
 
     @Override
@@ -49,12 +37,7 @@ public final class HexMechanic implements SplashMechanic {
 
     @Override
     public TermText describe() {
-        TermText cast = this.founding
-                ? TermText.of("every " + TermNumbers.ordinal(HexSpec.CAST_EVERY) + " shot casts a ").plus(TowerTerm.HEX)
-                        .plus(" instead of a blast; ")
-                : TermText.empty();
-        TermText reach = this.cursesPerCast > 1
-                ? TermText.of("; a cast reaches up to " + this.cursesPerCast + " enemies") : TermText.empty();
-        return cast.plus("adds ").plus(this.hex.describe()).plus(" to the hexes it casts").plus(reach);
+        return TermText.of("costs " + this.charge.ability().cost() + " ").plus(TowerTerm.SOUL)
+                .plus("s: curses one enemy with ").plus(this.hex.describe());
     }
 }

@@ -2,29 +2,24 @@ package td;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
-import td.effect.DamageSink;
-import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
-import td.tower.splash.DoomHex;
 import td.tower.splash.HexCaster;
+import td.tower.splash.HexJump;
 import td.tower.splash.HexKeeper;
 import td.tower.splash.HexSpec;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
-import java.util.function.Function;
-
 /**
  * The dev panel as a Hexer with no tower: the hexes it puts on are paid out by the Hexer's own rules, at a bare
- * Hexer's strength and reach, and what they deal is periodic damage from the panel.
+ * Hexer's strength, and what they deal is periodic damage from the panel.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 final class DevHexCaster implements HexCaster {
 
-    /** A Reckoning starts the Dooms it releases again at a Doom's own length. */
-    private static final HexSpec SPEC = HexSpec.none().withHex(new DoomHex());
+    private static final HexSpec SPEC = HexSpec.bare();
 
     private final GameWorld world;
     private final AttackProfile attack;
@@ -35,18 +30,16 @@ final class DevHexCaster implements HexCaster {
         this.attack = attack;
     }
 
-    /** A hex of {@code kind} the panel just put on {@code enemy}. */
+    /** A hex of {@code kind} the panel just put on {@code enemy}, paid out over the length it was put on for. */
     void record(EnemyMob enemy, EffectKind kind) {
-        this.keeper.record(enemy, kind);
+        enemy.activeEffects().stream().filter(effect -> effect.kind() == kind).findFirst()
+                .ifPresent(effect -> this.keeper.record(enemy, kind, effect.authoredDurationTicks()));
     }
 
-    void doTick(int time) {
-        this.keeper.doTick(time, SPEC);
-    }
-
-    @Override
-    public void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
-        target.applyEffect(effect.apply(damage -> this.dealPeriodicDamage(target, damage)));
+    void doTick() {
+        if (!this.keeper.isEmpty()) {
+            this.keeper.doTick(SPEC);
+        }
     }
 
     @Override
@@ -65,7 +58,7 @@ final class DevHexCaster implements HexCaster {
     }
 
     @Override
-    public void leaveCloud(EnemyMob dead) {
-        throw new IllegalStateException("The panel's hexes leave no cloud: its spec has no Mastery");
+    public void jump(HexJump jump) {
+        throw new IllegalStateException("The panel's hexes never jump: its spec has no Contagion");
     }
 }

@@ -42,8 +42,14 @@ public enum TowerTerm implements Term {
     STOKE("Stoke", Side.DEBUFF, "each wave on an enemy with this tower's {} raises that {} a step; the steps go when it ends", EffectKind.BURN, EffectKind.BURN),
     KINSHIP("Kinship", Side.BUFF, "towers a Beacon buffs earn more XP for each other tower type in range"),
     SHATTER("Shatter", Side.BUFF, "an enemy with {} breaks apart and hurts the enemies around it", EffectKind.FREEZE),
-    ARC("Arc", Side.BUFF, "lightning that jumps from a blast to enemies past its edge, as magic"),
-    HEX("Hex", Side.BUFF, "a curse a Burst casts instead of a blast; each kind does its own thing"),
+    ARC("Arc", Side.BUFF, "lightning a primed stone carries from where it lands, jumping from enemy to enemy as magic"),
+    HEX("Hex", Side.BUFF, "a curse a Hexer casts with its Souls; each kind does its own thing"),
+    STATIC("Static", Side.BUFF, "every enemy its stones or their lightning damage carries a stack, one per Stormcaller; badly hurt, the enemy discharges into itself for each stack and pays each Stormcaller that tagged it in its currency"),
+    SOULBRAND("Soulbrand", Side.BUFF, "every enemy its stones damage carries a stack, one per Hexer; when it dies it bursts for each stack, and pays each Hexer that tagged it in its currency"),
+    SPARK("Spark", Side.BUFF, "the Stormcaller's currency: its stones earn it by the damage they deal, its passive by the enemies that discharge; all of it goes into each of its abilities at once"),
+    SOUL("Soul", Side.BUFF, "the Hexer's currency: its stones earn it by the damage they deal, its passive by the enemies that die; all of it goes into each of its abilities at once"),
+    THUNDERCLAP("Thunderclap", Side.BUFF, "a discharge into every enemy in range, as magic"),
+    THUNDERSTRIKE("Thunderstrike", Side.BUFF, "lightning onto the healthiest enemy in range, as magic"),
     SHRAPNEL("Shrapnel", Side.BUFF, "fragments that fly past a shell's blast"),
     BOMBLET("Bomblet", Side.BUFF, "a small bomb a shell drops on the path");
 

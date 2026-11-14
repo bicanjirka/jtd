@@ -2,13 +2,27 @@ package td.tower.splash;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.targeting.MostNeighboursSelector;
+import td.util.TickRate;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-/** Hex of Blight: poisons the enemy for as long as the hex lasts. Picks the most crowded enemy without Blight. */
+/**
+ * Hex of Blight: poison, and a slow that grows over its time. Picks the most crowded enemy, one without Blight first,
+ * so it spreads before it deepens.
+ */
 public final class BlightHex implements Hex {
+
+    private static final float SECONDS = 4f;
+    /** The slow it has grown to when it ends, as it was cast. */
+    private static final float SLOW_AT_END = 0.3f;
+    private static final float POISON_SHARE = 0.03f;
+    private static final float SLOW_PER_TICK = SLOW_AT_END / (SECONDS * TickRate.TICKS_PER_SECOND);
 
     @Override
     public EffectKind kind() {
@@ -16,21 +30,35 @@ public final class BlightHex implements Hex {
     }
 
     @Override
-    public Optional<EnemyMob> target(HexScene scene) {
-        return new MostNeighboursSelector(scene.blastRadius()).selectFrom(scene.candidates().stream()
-                .filter(enemy -> !enemy.hasEffect(EffectKind.BLIGHT))
-                .toList());
+    public float seconds() {
+        return SECONDS;
     }
 
     @Override
-    public void cast(EnemyMob target, HexSpec spec, HexActions actions) {
-        int ticks = this.ticksOn(target);
-        actions.curse(target, EffectKind.BLIGHT, ticks);
-        actions.poison(target, spec.blightShare(), ticks);
+    public Optional<EnemyMob> target(List<EnemyMob> candidates, float cellPixels) {
+        MostNeighboursSelector crowded = new MostNeighboursSelector(HexSpec.CLOUD_CELLS * cellPixels);
+        Optional<EnemyMob> fresh = crowded.selectFrom(candidates.stream()
+                .filter(enemy -> !enemy.hasEffect(EffectKind.BLIGHT))
+                .toList());
+        return fresh.isPresent() ? fresh : crowded.selectFrom(candidates);
+    }
+
+    @Override
+    public void lay(EnemyMob target, int ticks, float grownSlow, HexHand hand) {
+        hand.blight(target, ticks, SLOW_PER_TICK, grownSlow);
+        hand.poison(target, POISON_SHARE, ticks);
+    }
+
+    @Override
+    public Set<Term> applies() {
+        return Set.of(EffectKind.BLIGHT, EffectKind.POISON);
     }
 
     @Override
     public TermText describe() {
-        return TermText.of(EffectKind.BLIGHT, TermText.of("the enemy has ").plus(EffectKind.POISON).plus(" for as long as it lasts"));
+        return TermText.of(EffectKind.BLIGHT, TermText.of("for " + TermNumbers.seconds(SECONDS) + ": ")
+                .plus(EffectKind.POISON).plus(" of " + TermNumbers.percent(POISON_SHARE)
+                        + " of base damage a tick, and a slow that grows steadily to "
+                        + TermNumbers.percent(SLOW_AT_END) + " at its end; cast again, it starts over and never slows less"));
     }
 }

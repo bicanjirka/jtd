@@ -8,6 +8,7 @@ import td.enemy.Affix;
 import td.enemy.TraitTerm;
 import td.term.Side;
 import td.term.Term;
+import td.tower.SplashTower;
 import td.tower.TowerFactory;
 import td.tower.TowerTerm;
 import td.tower.upgrade.UpgradeNode;
@@ -106,6 +107,8 @@ public final class TermLooks {
             case SHATTER -> new TermLook(Palette.FREEZE_CRYSTAL, Palette.TERM_FRAME_MECHANIC);
             case ARC -> new TermLook(Palette.TOWER_SPLASH_ARC, Palette.TERM_FRAME_MECHANIC);
             case HEX -> new TermLook(Palette.HEX_RUNE, Palette.TERM_FRAME_MECHANIC);
+            case STATIC, SPARK, THUNDERCLAP, THUNDERSTRIKE -> new TermLook(Palette.TOWER_SPLASH_ARC, Palette.TERM_FRAME_MECHANIC);
+            case SOULBRAND, SOUL -> new TermLook(Palette.HEX_RUNE, Palette.TERM_FRAME_MECHANIC);
             case SHRAPNEL -> new TermLook(Palette.TERM_SHRAPNEL, Palette.TERM_FRAME_MECHANIC);
             case BOMBLET -> new TermLook(Palette.TERM_SHRAPNEL, Palette.TERM_FRAME_MECHANIC);
         };
@@ -157,15 +160,11 @@ public final class TermLooks {
             return Palette.TERM_BASE_PERK;
         }
         if (type == TowerFactory.Type.SPLASH) {
-            if (id.startsWith("splash.head.arc.") || id.equals("splash.special.thunderclap")
-                    || id.equals("splash.special.static_charge") || id.equals("splash.special.thunderstrike")) {
-                return Palette.TOWER_STORMCALLER_BODY;
-            }
-            if (id.startsWith("splash.head.hex.") || id.equals("splash.special.inversion")
-                    || id.equals("splash.special.sympathy") || id.equals("splash.special.reckoning")) {
-                return Palette.TOWER_HEXER_BODY;
-            }
-            return Palette.TOWER_SPLASH_BODY;
+            return switch (SplashTower.forkOf(node)) {
+                case NONE -> Palette.TOWER_SPLASH_BODY;
+                case STORMCALLER -> Palette.TOWER_STORMCALLER_BODY;
+                case HEXER -> Palette.TOWER_HEXER_BODY;
+            };
         }
         return TowerSpriteFrameBuilder.bodyPaletteFor(type);
     }
