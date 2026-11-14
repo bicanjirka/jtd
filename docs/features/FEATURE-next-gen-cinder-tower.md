@@ -127,7 +127,23 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 ### Look
 
 A flamethrower nozzle on a round tank. It keeps its orange, moved to `#ea862a` so it stands clear of the Burst.
-Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `scorcher` and `stream`.
+Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.scorcher`, built from a `TowerPose`; the stream is still lab art (`TowerArt.stream`).
+
+**In code** (`FEATURE-next-gen-tower-looks.md`, "Building a tower's look"). The looks are `TowerLook.CINDER` and
+`SOULFIRE`.
+
+| What the tower holds | In the pose |
+|---|---|
+| a stream pouring (white-hot tip, no pilot, glowing vents) | `TowerCue.STREAMING` (sent today, while waves fly) |
+| the nozzle cooling after a stream | `reloading(reloaded)`: not sent today |
+| Dragon's Breath owned | `DRAGONS_BREATH` |
+| a range node owned | `LONG_BARREL` |
+
+- **Soulfire is not wired.** The tower says which fire a flame wave carries, not which the tower took. Add that
+  query to the tower, then return `SOULFIRE` from the body-look visitor, as the Burst's fork does.
+- The stream itself (three tongues, the Core, White Flame, Dragon's Breath's shape) is not in the game: it is a
+  `TowerEffectDraw`, drawn from the posed muzzle. Port `TowerArt.stream` and `tongue`, then make the shots sheet
+  call the game and delete the lab's copy.
 
 | Tier | Foundation |
 |---|---|

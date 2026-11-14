@@ -160,8 +160,21 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 A dark standing stone, square in plan, with a pyramidion at its tip that holds one rune. Calmer than today's spinning
 star and three ripple rings. Its colour is `#8f86b8`; the stone's top is a darker step of it and its face, turned
-to the player, darker still. It is the tallest thing on the board for its width. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `obelisk` and `rune`.
+to the player, darker still. It is the tallest thing on the board for its width. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.obelisk`, built from a `TowerPose`.
 [Its fields and the Sundial](next-gen-art/grounds.png) are on the grounds sheet.
+
+**In code** (`FEATURE-next-gen-tower-looks.md`, "Building a tower's look"). The looks are `TowerLook.PULSE` (the plain
+stone), `BURDEN`, `GRAVITY` and `UMBRA`. Nothing aims.
+
+| What the tower holds | In the pose |
+|---|---|
+| an enemy at full Toll inside | `TowerCue.CHARGED` (the rune glows brighter, not bigger) |
+| the knell | `fired()` (sent today, while a zap shows) |
+
+- **The runes are not wired.** Add a query to the tower for the stone it became, then return the look from the
+  body-look visitor. `PulseTower.getFieldLook()` answers for the old tree's fields and goes with them.
+- **The old ripple rings still run** on the wall clock in `TowerEffectFrameBuilder`. They go with this rework: the
+  breathing rune is the stone's idle life, and the field is a ground zone.
 
 | Tier | Foundation |
 |---|---|

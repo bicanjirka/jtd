@@ -142,7 +142,20 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 ### Look
 
 A lantern on a stone post, in a warm pale gold, `#d8b866`. It is the quietest tower on the board,
-the opposite of today's two breathing rings, pulsing head and line to every tower it buffs. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `beacon`.
+the opposite of today's two breathing rings, pulsing head and line to every tower it buffs. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.beacon`, built from a `TowerPose`.
+
+**In code** (`FEATURE-next-gen-tower-looks.md`, "Building a tower's look"). The look is `TowerLook.AURA`. Nothing aims.
+
+| What the tower holds | In the pose |
+|---|---|
+| the tower types in its light (Kinship, Prism) | `withPanes(List<TowerLook>)`, in a fixed order; a pane a type, repeating round the octagon |
+| Daylight owned | `TowerCue.DAYLIGHT` |
+
+- **The two breathing rings still run** on the wall clock in `TowerEffectFrameBuilder`. They go with this rework:
+  the lamp's slow ray is the Beacon's idle life.
+- The panes' order must not depend on a hash: build the list from the towers in range in a stable order, or the
+  picture changes between frames and the cache fills.
+- The reveal ray, the Spotlight's wedge and Glare are `TowerEffectDraw`s and an enemy mark, not the tower's picture.
 
 | Tier | Foundation |
 |---|---|

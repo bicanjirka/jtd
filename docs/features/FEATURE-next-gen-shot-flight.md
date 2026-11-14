@@ -42,6 +42,26 @@ on an arc, and chains travel hop by hop. Some of this changes when damage lands,
 - **A cast that flies** (a curse, an ability's projectile) can't be dodged and takes effect when it lands.
 - Each tower's own timing is in its doc and goes through `BalanceReport --compare` with the bundle's balance pass.
 
+## Notes from the visual review (2026-11-14)
+
+What is delivered was read and holds; the Burst's stone, the chain hops and the flying casts were left unbuilt on
+purpose. For whoever builds them:
+
+- **Reuse the bullet's shape.** The Sniper keeps each shot as a value with the stats it was fired with and the ticks
+  it flies (`SniperTower.Bullet`, `bulletsInFlight()`), lands it when its tick comes, and leaves a short trace
+  (`lastShot()`). A hop of a chain is the same thing: fired stats, a start tick, a landing tick. The frame builder
+  turns the ticks into 0..1; nothing stores an animation.
+- **Reuse the arc.** Every lob takes its height from the one formula in `ProjectileFrameBuilder`; a shot's position
+  is its point on the ground. The Burst's stone is a lobbed shot with a shadow, as the Mortar's shell is.
+- **Reuse the tracer.** `TracerDraw` is a streak between two points with a head and a tail colour; a bolt or a soul
+  that flies straight is the same record with other colours.
+- **Leave from the muzzle.** A shot starts at `TowerSprites.muzzle(look, tier, pose, ...)` with the tower's real
+  pose. The Sniper's tracer started at the idle muzzle and left a gap to a recoiled barrel.
+- **A flying shell is still a plain lit ball.** `TowerFoundations.shell(LoadedShell, r)` draws the seven kinds and
+  the Mortar's bore uses it; `CannonballDraw` does not yet (the Mortar's doc, "In code").
+- **The shots sheet is still lab art.** Each shot that reaches the game is then drawn on the sheet by the game, and
+  its lab drawing deleted (`next-gen-art/README.md`).
+
 ## Interconnections
 
 - `FEATURE-next-gen-tower-looks.md`: what a shot looks like.
