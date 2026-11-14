@@ -116,8 +116,10 @@ final class UpgradeTreePainter {
     private static final float CHIP_INSET = 3f;
     private static final float ROUND_CHIP_INSET = 5f;
     private static final float BADGE = 15f;
-    private static final float THUMB = 18f;
-    private static final float SMALL_THUMB = 11f;
+    /** A tier's thumbnail is its foundation, a cell this wide, set a little low since a tower stands up from its cell. */
+    private static final float THUMB = 25f;
+    private static final float SMALL_THUMB = 16f;
+    private static final float THUMB_DROP = 0.2f;
 
     private final UpgradeTreeLayout layout;
     private final UpgradeTree tree;
@@ -178,9 +180,9 @@ final class UpgradeTreePainter {
                 8f, 8f));
         Graphics2D thumb = (Graphics2D) g.create();
         try {
-            thumb.translate(UpgradeTreeLayout.THUMB_X, row.centre());
-            thumb.setColor(open ? tier : LOCKED);
-            thumb.fill(TowerLooks.body(this.look, row.folded() ? SMALL_THUMB : THUMB));
+            float cell = row.folded() ? SMALL_THUMB : THUMB;
+            thumb.translate(UpgradeTreeLayout.THUMB_X, row.centre() + cell * THUMB_DROP);
+            TowerSprites.paintStill(thumb, this.look, row.tier(), cell, !open);
         } finally {
             thumb.dispose();
         }

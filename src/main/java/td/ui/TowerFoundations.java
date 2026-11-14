@@ -260,7 +260,7 @@ final class TowerFoundations {
 
     // ---- colour ----------------------------------------------------------------------------------------------------
 
-    private static Color mix(Color a, Color b, double share) {
+    static Color mix(Color a, Color b, double share) {
         return new Color((int) Math.round(a.getRed() + (b.getRed() - a.getRed()) * share),
                 (int) Math.round(a.getGreen() + (b.getGreen() - a.getGreen()) * share),
                 (int) Math.round(a.getBlue() + (b.getBlue() - a.getBlue()) * share));
@@ -285,7 +285,7 @@ final class TowerFoundations {
 
     // ---- shapes, in cell units -------------------------------------------------------------------------------------
 
-    private static Shape circ(double x, double y, double r) {
+    static Shape circ(double x, double y, double r) {
         return new Ellipse2D.Double(x - r, y - r, r * 2, r * 2);
     }
 
@@ -293,12 +293,12 @@ final class TowerFoundations {
         return new Ellipse2D.Double(x - rx, y - ry, rx * 2, ry * 2);
     }
 
-    private static Shape box(double x, double y, double w, double h) {
+    static Shape box(double x, double y, double w, double h) {
         return new Rectangle2D.Double(x - w / 2, y - h / 2, w, h);
     }
 
     /** A regular polygon, its first corner at {@code deg} (0 is east, -90 north). */
-    private static Shape ngon(double x, double y, int n, double r, double deg) {
+    static Shape ngon(double x, double y, int n, double r, double deg) {
         Path2D.Double p = new Path2D.Double();
         for (int i = 0; i < n; i++) {
             double a = Math.toRadians(deg + 360.0 * i / n);
@@ -327,7 +327,7 @@ final class TowerFoundations {
         return p;
     }
 
-    private static Shape poly(double... xy) {
+    static Shape poly(double... xy) {
         Path2D.Double p = new Path2D.Double();
         p.moveTo(xy[0], xy[1]);
         for (int i = 2; i < xy.length; i += 2) {
@@ -350,31 +350,31 @@ final class TowerFoundations {
         return minus(circ(x, y, outer), circ(x, y, inner));
     }
 
-    private static Shape minus(Shape a, Shape b) {
+    static Shape minus(Shape a, Shape b) {
         Area area = new Area(a);
         area.subtract(new Area(b));
         return area;
     }
 
-    private static Shape rot(Shape s, double deg) {
+    static Shape rot(Shape s, double deg) {
         return AffineTransform.getRotateInstance(Math.toRadians(deg)).createTransformedShape(s);
     }
 
-    private static Shape mv(Shape s, double dx, double dy) {
+    static Shape mv(Shape s, double dx, double dy) {
         return AffineTransform.getTranslateInstance(dx, dy).createTransformedShape(s);
     }
 
     /** {@code s} turned {@code deg} and moved {@code r} out along that bearing. */
-    private static Shape at(Shape s, double deg, double r) {
+    static Shape at(Shape s, double deg, double r) {
         double a = Math.toRadians(deg);
         return mv(rot(s, deg), Math.cos(a) * r, Math.sin(a) * r);
     }
 
-    private static double cos(double deg) {
+    static double cos(double deg) {
         return Math.cos(Math.toRadians(deg));
     }
 
-    private static double sin(double deg) {
+    static double sin(double deg) {
         return Math.sin(Math.toRadians(deg));
     }
 

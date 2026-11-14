@@ -3,47 +3,30 @@ package td.ui;
 import td.ui.render.TowerLook;
 
 import java.awt.Color;
-import java.awt.Shape;
-import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /** The table of tower looks: one row per {@link TowerLook}, checked complete when this class loads. */
 final class TowerLooks {
 
     private static final Map<TowerLook, Row> ROWS = checkedComplete(rows());
-    // Some bodies are constructive-area operations far too slow to repeat for every tower on every paint. Sizes
-    // follow the cell size, so the maps stay small.
-    private static final Map<SizedLook, Shape> BODIES = new ConcurrentHashMap<>();
 
     private TowerLooks() {
     }
 
-    /** A shape centred on the origin, at a given size. */
-    @FunctionalInterface
-    interface SizedShape {
-        Shape at(float size);
-    }
-
     /**
-     * A tower's colour and its body: one flat closed symbol naming what it does, for its icons. {@code tiers} colours
-     * its upgrade tiers from the bottom; a tier above the last takes the last's. Its board look is its
-     * {@link TowerFoundations} row.
+     * A tower's colour. {@code tiers} colours its upgrade tiers from the bottom; a tier above the last takes the
+     * last's. Its board look is its {@link TowerFoundations} row, its icon its {@link TowerIcons} row.
      */
-    record Row(Color color, SizedShape body, List<Color> tiers) {
+    record Row(Color color, List<Color> tiers) {
 
         Row {
             tiers = List.copyOf(tiers);
         }
-    }
-
-    private record SizedLook(TowerLook look, float size) {
     }
 
     static Row of(TowerLook look) {
@@ -60,10 +43,6 @@ final class TowerLooks {
         return tiers.get(Math.min(tier, tiers.size() - 1));
     }
 
-    static Shape body(TowerLook look, float size) {
-        return BODIES.computeIfAbsent(new SizedLook(look, size), key -> of(key.look()).body().at(key.size()));
-    }
-
     static Map<TowerLook, Row> checkedComplete(Map<TowerLook, Row> rows) {
         Set<TowerLook> missing = EnumSet.allOf(TowerLook.class);
         missing.removeAll(rows.keySet());
@@ -76,68 +55,30 @@ final class TowerLooks {
     private static Map<TowerLook, Row> rows() {
         Map<TowerLook, Row> rows = new EnumMap<>(TowerLook.class);
         List<Color> storm = ramp(0xe2746c, 0x8496ff, 0xc0c9ff, 0xe0dee8);
-        rows.put(TowerLook.SNIPER, new Row(new Color(0xa6d674), s -> Java2DFrameRenderer.triangleShape(s, true),
-                ramp(0xa6d674, 0x5cc8b0, 0x93dbcb, 0xc9e8ce)));
+        rows.put(TowerLook.SNIPER, new Row(new Color(0xa6d674), ramp(0xa6d674, 0x5cc8b0, 0x93dbcb, 0xc9e8ce)));
         // Before the fork the Burst grows toward the Stormcaller, its first side.
-        rows.put(TowerLook.SPLASH, new Row(new Color(0xe2746c), TowerLooks::splashBody, storm));
-        rows.put(TowerLook.STORMCALLER, new Row(new Color(0x8496ff), TowerLooks::splashBody,
-                storm));
-        rows.put(TowerLook.HEXER, new Row(new Color(0xb88ae8), TowerLooks::splashBody,
-                ramp(0xe2746c, 0xb88ae8, 0xdbc3f3, 0xeddce2)));
-        Row pulse = new Row(new Color(0x8f86b8), s -> Java2DFrameRenderer.starShape(5, s, s * 0.45f),
-                ramp(0x8f86b8, 0xa89fd2, 0xc6c0e1, 0xe2dad8));
+        rows.put(TowerLook.SPLASH, new Row(new Color(0xe2746c), storm));
+        rows.put(TowerLook.STORMCALLER, new Row(new Color(0x8496ff), storm));
+        rows.put(TowerLook.HEXER, new Row(new Color(0xb88ae8), ramp(0xe2746c, 0xb88ae8, 0xdbc3f3, 0xeddce2)));
+        Row pulse = new Row(new Color(0x8f86b8), ramp(0x8f86b8, 0xa89fd2, 0xc6c0e1, 0xe2dad8));
         rows.put(TowerLook.PULSE, pulse);
         // A rune changes the stone's mark, never its colour.
         rows.put(TowerLook.BURDEN, pulse);
         rows.put(TowerLook.GRAVITY, pulse);
         rows.put(TowerLook.UMBRA, pulse);
-        rows.put(TowerLook.AURA, new Row(new Color(0xd8b866), TowerLooks::pulsar,
-                ramp(0xd8b866, 0xecd48c, 0xf2e3b3, 0xf8ecc2)));
-        rows.put(TowerLook.MORTAR, new Row(new Color(0xc39062), Java2DFrameRenderer::diamondShape,
-                ramp(0xc39062, 0xe0b070, 0xebcba1, 0xf5e0b8)));
+        rows.put(TowerLook.AURA, new Row(new Color(0xd8b866), ramp(0xd8b866, 0xecd48c, 0xf2e3b3, 0xf8ecc2)));
+        rows.put(TowerLook.MORTAR, new Row(new Color(0xc39062), ramp(0xc39062, 0xe0b070, 0xebcba1, 0xf5e0b8)));
         List<Color> seeker = ramp(0x5cc4e2, 0x8fd0f2, 0xb5e0f6, 0xdaeae3);
-        rows.put(TowerLook.SEEKER, new Row(new Color(0x5cc4e2), TowerLooks::kite, seeker));
-        rows.put(TowerLook.RUBY, new Row(new Color(0xd0405a), TowerLooks::kite, seeker));
-        rows.put(TowerLook.SHADE, new Row(new Color(0xa6e8c8), TowerLooks::kite, seeker));
+        rows.put(TowerLook.SEEKER, new Row(new Color(0x5cc4e2), seeker));
+        rows.put(TowerLook.RUBY, new Row(new Color(0xd0405a), seeker));
+        rows.put(TowerLook.SHADE, new Row(new Color(0xa6e8c8), seeker));
         List<Color> cinder = ramp(0xea862a, 0xf0a040, 0xf5c081, 0xfadaa8);
-        rows.put(TowerLook.CINDER, new Row(new Color(0xea862a), TowerLooks::flame, cinder));
-        rows.put(TowerLook.SOULFIRE, new Row(new Color(0xb9a0ff), TowerLooks::flame, cinder));
+        rows.put(TowerLook.CINDER, new Row(new Color(0xea862a), cinder));
+        rows.put(TowerLook.SOULFIRE, new Row(new Color(0xb9a0ff), cinder));
         return rows;
     }
 
     private static List<Color> ramp(int... rgbs) {
         return Arrays.stream(rgbs).mapToObj(Color::new).toList();
-    }
-
-    private static Shape splashBody(float size) {
-        return Java2DFrameRenderer.ringShape(size, 0.55f);
-    }
-
-    /** A bright core inside a detached ring. */
-    private static Shape pulsar(float size) {
-        Area pulsar = new Area(Java2DFrameRenderer.ringShape(size, 0.72f));
-        pulsar.add(new Area(Java2DFrameRenderer.circleShape(size * 0.36f)));
-        return pulsar;
-    }
-
-    /** A concave arrowhead. */
-    private static Shape kite(float size) {
-        GeneralPath p = new GeneralPath();
-        p.moveTo(size, 0);
-        p.lineTo(-size * 0.6f, -size * 0.7f);
-        p.lineTo(-size * 0.2f, 0);
-        p.lineTo(-size * 0.6f, size * 0.7f);
-        p.closePath();
-        return p;
-    }
-
-    /** A teardrop. */
-    private static Shape flame(float size) {
-        GeneralPath p = new GeneralPath();
-        p.moveTo(0, -size);
-        p.curveTo(size * 0.9f, -size * 0.2f, size * 0.6f, size * 0.5f, 0, size);
-        p.curveTo(-size * 0.6f, size * 0.5f, -size * 0.9f, -size * 0.2f, 0, -size);
-        p.closePath();
-        return p;
     }
 }

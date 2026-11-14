@@ -24,7 +24,6 @@ import td.ui.render.RingDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
-import td.ui.render.TowerPose;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
 import td.util.GameWorld;
@@ -164,8 +163,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private void tracer(SniperTower tower, int tier, float toX, float toY, float flown, boolean critical,
                         DamageType type, float alpha) {
         double heading = Math.atan2(toY - tower.getY(), toX - tower.getX());
-        Point2D.Float muzzle = TowerSprites.muzzle(TowerLook.SNIPER, tier, TowerPose.idle(), tower.getX(), tower.getY(),
-                this.scale, heading);
+        Point2D.Float muzzle = TowerSprites.muzzle(TowerLook.SNIPER, tier, TowerSpriteFrameBuilder.poseOf(tower),
+                tower.getX(), tower.getY(), this.scale, heading);
         float from = Math.max(0f, flown - TRACER_LENGTH);
         Palette tail = critical ? Palette.TOWER_SNIPER_TRACER
                 : type == DamageType.MAGIC ? Palette.TOWER_SNIPER_SILVER : Palette.TOWER_SNIPER_BODY;

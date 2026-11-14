@@ -19,13 +19,18 @@ build or check without a display.
   looks: a foundation is a stack of lit parts per tier (`TowerFoundations`), drawn once from those
   vectors into a picture the painter keeps (`TowerSprites`), as an enemy body is; the frame names
   only the look and the tier. Before, each base was one closed `Shape` with one shared paint.
+  Amended again the same day: the frame also names a `TowerPose` (the cues a tower holds, its recoil
+  and reload), and the look's builder turns it into parts. A head as one fixed part list had no
+  place for a longer barrel, a loaded shell or a primed shot, and a tower that does not aim had no
+  moving part at all.
 - Status-effect markers are their own `RenderFrame` list, not another kind of `EnemyDraw`.
   `EnemyDraw`'s contract is that an enemy is either a live body or a fading corpse, never both and
   never neither, and a marker is neither.
-- Toolbar icons reuse the tower body shape, so board and icon can't drift apart in shape. They are
-  painted differently on purpose: one flat colour (a translucent fill smudges at icon size), the
-  body only (a head has no target in an icon), on a dark tile (some board colours vanish on light
-  faces).
+- A toolbar icon is a flat mark of its own per look (`TowerIcons`): the tower's silhouette in its
+  colour and its moving part in a lighter tone of it, on a dark tile (some board colours vanish on
+  light faces). Amended 2026-11-14: icons reused the one closed body shape while a tower was one
+  shape; a foundation of lit parts is unreadable at icon size, so the mark is drawn for that size.
+  The Upgrades panel's tier thumbnails are the foundations themselves.
 
 ## Consequences
 - A frame can be built and checked headless (`PreviewBoard`, `td.PerformanceHarness`).

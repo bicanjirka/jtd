@@ -43,6 +43,16 @@ public final class TowerArtGame {
         TowerSprites.paint(g, draw, 1);
     }
 
+    /** The tower's icon, a cell wide, at the pen's origin. */
+    public static void paintIcon(Graphics2D g, TowerLook look) {
+        TowerIcons.paint(g, look, 1);
+    }
+
+    /** The Upgrades panel's thumbnail of a tier: the tower at rest, {@code cell} pixels to a cell, grey when locked. */
+    public static void paintThumbnail(Graphics2D g, TowerLook look, int tier, double cell, boolean locked) {
+        TowerSprites.paintStill(g, look, tier, cell, locked);
+    }
+
     /** A shell of {@code kind} on its own, {@code r} across, at the pen's origin. */
     public static void paintShell(Graphics2D g, LoadedShell kind, double r, double pixels) {
         TowerSprites.paintParts(g, TowerFoundations.shell(kind, r), pixels);

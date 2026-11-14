@@ -6,7 +6,6 @@ import td.ui.render.TowerLook;
 import java.util.EnumMap;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TowerLooksTest {
@@ -22,14 +21,5 @@ class TowerLooksTest {
         assertThatThrownBy(() -> TowerLooks.checkedComplete(rows))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining(TowerLook.MORTAR.name());
-    }
-
-    @Test
-    void everyLookDrawsItsBody() {
-        float size = 10f;
-
-        for (TowerLook look : TowerLook.values()) {
-            assertThat(TowerLooks.body(look, size).getBounds2D().isEmpty()).as("%s body", look).isFalse();
-        }
     }
 }

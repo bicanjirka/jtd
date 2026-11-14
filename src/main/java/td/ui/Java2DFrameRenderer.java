@@ -106,8 +106,8 @@ public final class Java2DFrameRenderer {
     /** A dot is a small mark, not a body. */
     private static final float DOT_GLYPH_SIZE_FRACTION = 0.4f;
 
-    /** Small, so the toolbar reads as a row of glyphs. */
-    private static final float ICON_BODY_SIZE_FRACTION = 0.25f;
+    /** How far a tower's icon reaches from its centre, in its own cells. */
+    private static final float ICON_REACH_CELLS = 0.40f;
     /** The upgrade arrow, as shares of a cell: its size, and its centre's inset from the cell's top-left corner. */
     private static final float UPGRADE_ARROW_SIZE = 0.085f;
     private static final float UPGRADE_ARROW_INSET = 0.15f;
@@ -913,10 +913,9 @@ public final class Java2DFrameRenderer {
         }
     }
 
-    /** A tower's body as an info-panel glyph, centred on the origin. */
+    /** A tower's icon as an info-panel glyph, centred on the origin and reaching {@code size} from it. */
     void paintTowerGlyph(Graphics2D g2, TowerLook look, float size) {
-        g2.setColor(TowerLooks.color(look));
-        g2.fill(TowerLooks.body(look, size));
+        TowerIcons.paint(g2, look, size / ICON_REACH_CELLS);
     }
 
     /**
@@ -1224,18 +1223,15 @@ public final class Java2DFrameRenderer {
     }
 
     /**
-     * Renders one tower's symbol as a toolbar icon: its look's flat body, in its colour.
-     * <p>
-     * One solid colour and no head, since a two-tone glyph smudges at icon size. Transparent
-     * background; the control paints its own face.
+     * Renders one tower's icon for the toolbar: its mark in its colour, the part that moves in a lighter tone.
+     * Transparent background; the control paints its own face.
      */
     public BufferedImage renderTowerIcon(TowerLook look, int size) {
         BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.translate(size / 2.0, size / 2.0);
-        g2.setColor(TowerLooks.color(look));
-        g2.fill(TowerLooks.body(look, size * ICON_BODY_SIZE_FRACTION));
+        TowerIcons.paint(g2, look, size);
         g2.dispose();
         return image;
     }
