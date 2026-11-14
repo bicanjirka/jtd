@@ -48,7 +48,7 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 | Crit damage | ×1.5 | | |
 | Crit chance | 0% | 5% | |
 | Targets | First | | |
-| Passive | Steady Aim: Built in, no Attune. Each shot adds a stack worth +4% attack speed and +2% crit chance, up to 5 stacks. | | base.attune |
+| Passive | Steady Aim: Built in, no Attune. Each shot adds a stack worth +4% attack speed and +2% crit chance, up to 5 stacks. | | |
 
 ### Tiers
 
@@ -63,24 +63,24 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 
 | Tier | Node | Kind | Cluster | After | Glyph | Colour | Cost | Replaces | Does | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 0 | Rifling | stat | | | sniper.special.shatter_shot | | $1 | | Crit chance +5% | |
+| 0 | Rifling | stat | | | sniper.killshot | | $1 | sniper.rifling | Crit chance +5% | |
 | 0 | Long Barrel | stat | | | base.range | | $10 | base.range | Range +1 cell | |
-| 0 | Heavy Rounds | stat | | | sniper.head.focused_optics.1 | | $11 | | Damage +12 | |
-| I | Fourth Shot | ability | | | sniper.special.fifth_shot | | $6 | sniper.special.fifth_shot | Every fourth shot is a sure crit. | Today's Deadeye Round, renamed. |
-| I | Deep Breath | stat | Steady Aim | | Steady Aim | | $5 | | Steady Aim holds 3 more stacks. | |
-| I | Keen Eye | stat | Steady Aim | | sniper.head.marksmans_eye.1 | | $5 | sniper.head.marksmans_eye.1 | Each Steady Aim stack also gives Crit chance +2%. | |
-| I | Killshot | stat | | | sniper.special.shatter_shot | | $7 | sniper.special.shatter_shot | Crit damage ×2.0, up from ×1.5. | Name is a proposal. |
-| II | Frenzy | ability | On crit | | sniper.head.focused_optics.2 | | $10 | sniper.head.focused_optics.2 | A crit grants Frenzy: attack speed +35% for the next 3 shots. | |
-| II | Ricochet | ability | On crit | | sniper.special.ricochet | | $10 | sniper.special.ricochet | A crit also hits the nearest other enemy within 1.5 cells. | |
-| II | Sundering Crits | ability | On crit | | Sunder | | $10 | sniper.head.marksmans_eye.4b | A crit adds 2 stacks of Sunder. | Name is a proposal. |
-| II | Silver Round | ability | Ammo | Fourth Shot | sniper.extra.tradecraft.3 | | $5 | sniper.extra.tradecraft.3 | The Fourth Shot is a Silver Round: magic damage, Magic penetration +50 points. | Against armor: it beats Hollow Point from armor 33 up, and every magic resist in the game today is below 50. Plating does not touch it; insulation does. |
-| II | Hollow Point | ability | Ammo | Fourth Shot | sniper.special.hollow_point | | $5 | sniper.special.hollow_point | The Fourth Shot is a Hollow Point: Damage +33%. | About +11% damage a second over all shots, close to Killshot. A hollow point is a bullet whose hollow tip opens on impact: it hits harder and goes through less, the opposite of the Silver Round. |
+| 0 | Heavy Rounds | stat | | | sniper.heavy_rounds | | $11 | sniper.heavy_rounds | Damage +12 | |
+| I | Fourth Shot | ability | | | sniper.fourth_shot | | $6 | sniper.fourth_shot | Every fourth shot is a sure crit. | Today's Deadeye Round, renamed. |
+| I | Deep Breath | stat | Steady Aim | | Steady Aim | | $5 | sniper.deep_breath | Steady Aim holds 3 more stacks. | |
+| I | Keen Eye | stat | Steady Aim | | sniper.keen_eye | | $5 | sniper.keen_eye | Each Steady Aim stack also gives Crit chance +2%. | |
+| I | Killshot | stat | | | sniper.killshot | | $7 | sniper.killshot | Crit damage ×2.0, up from ×1.5. | Name is a proposal. |
+| II | Frenzy | ability | On crit | | sniper.frenzy | | $10 | sniper.frenzy | A crit grants Frenzy: attack speed +35% for the next 3 shots. | |
+| II | Ricochet | ability | On crit | | sniper.ricochet | | $10 | sniper.ricochet | A crit also hits the nearest other enemy within 1.5 cells. | |
+| II | Sundering Crits | ability | On crit | | Sunder | | $10 | sniper.sundering_crits | A crit adds 2 stacks of Sunder. | Name is a proposal. |
+| II | Silver Round | ability | Ammo | Fourth Shot | sniper.silver_round | | $5 | sniper.silver_round | The Fourth Shot is a Silver Round: magic damage, Magic penetration +50 points. | Against armor: it beats Hollow Point from armor 33 up, and every magic resist in the game today is below 50. Plating does not touch it; insulation does. |
+| II | Hollow Point | ability | Ammo | Fourth Shot | sniper.hollow_point | | $5 | sniper.hollow_point | The Fourth Shot is a Hollow Point: Damage +33%. | About +11% damage a second over all shots, close to Killshot. A hollow point is a bullet whose hollow tip opens on impact: it hits harder and goes through less, the opposite of the Silver Round. |
 | II | Long Barrel II | stat | | | base.range | | $18 | base.range.2 | Range +1 cell | |
-| III | Heavy Rounds II | stat | | | sniper.head.focused_optics.1 | | $23 | | Damage +12 | |
-| III | Executioner | ability | Finisher | | sniper.head.focused_optics.4b | | $6 | sniper.head.focused_optics.4b | A crit that leaves an enemy other than an Elite or a Boss under 15% health kills it. | |
-| III | Headhunter | ability | Finisher | | sniper.special.headhunter | | $6 | sniper.special.headhunter | Damage +14 against Elites and Bosses. | |
-| III | Unbroken Aim | stat | | | sniper.head.marksmans_eye.4a | | $1 | sniper.head.marksmans_eye.4a | Each shot adds 2 Steady Aim stacks. | |
-| III | Momentum | ability | | | sniper.special.momentum | | $9 | sniper.special.momentum | A kill grants Frenzy. | Frenzy reads the same with or without the Frenzy pick (Terms). |
+| III | Heavy Rounds II | stat | | | sniper.heavy_rounds | | $23 | sniper.heavy_rounds.2 | Damage +12 | |
+| III | Executioner | ability | Finisher | | sniper.executioner | | $6 | sniper.executioner | A crit that leaves an enemy other than an Elite or a Boss under 15% health kills it. | |
+| III | Headhunter | ability | Finisher | | sniper.headhunter | | $6 | sniper.headhunter | Damage +14 against Elites and Bosses. | |
+| III | Unbroken Aim | stat | | | sniper.unbroken_aim | | $1 | sniper.unbroken_aim | Each shot adds 2 Steady Aim stacks. | |
+| III | Momentum | ability | | | sniper.momentum | | $9 | sniper.momentum | A kill grants Frenzy. | Frenzy reads the same with or without the Frenzy pick (Terms). |
 
 ### Terms
 
@@ -88,7 +88,7 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 | Term | Glyph | Means |
 |---|---|---|
-| Frenzy | sniper.head.focused_optics.2 | A buff on the tower: attack speed +35% for its next 3 shots. A second Frenzy while one runs starts the 3 shots over; it never adds to them. A crit grants it with the Frenzy pick, a kill with Momentum. |
+| Frenzy | sniper.frenzy | A buff on the tower: attack speed +35% for its next 3 shots. A second Frenzy while one runs starts the 3 shots over; it never adds to them. A crit grants it with the Frenzy pick, a kill with Momentum. |
 
 ### Look
 
