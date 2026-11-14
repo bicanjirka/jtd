@@ -1,5 +1,6 @@
 package td.tower.sniper;
 
+import td.enemy.EnemyMob;
 import td.tower.upgrade.Mechanic;
 
 
@@ -11,6 +12,11 @@ public interface SniperMechanic extends Mechanic {
 
     default SniperShot shape(SniperShot shot, ShotContext context) {
         return shot;
+    }
+
+    /** Whether it singles {@code target} out, which the rifle shows while it aims there. */
+    default boolean hunts(EnemyMob target) {
+        return false;
     }
 
     /** May change what the shot counts as, for the mechanics that follow. */

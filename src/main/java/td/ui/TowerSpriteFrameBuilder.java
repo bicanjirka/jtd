@@ -10,6 +10,7 @@ import td.tower.SplashTower;
 import td.tower.TierRise;
 import td.tower.Tower;
 import td.tower.TowerFactory;
+import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
 import td.tower.TurretAim;
 import td.tower.upgrade.UpgradeNode;
@@ -138,7 +139,13 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /** The pose a Sniper's rifle is in: where it draws its barrel is where its bullets leave from. */
     static TowerPose poseOf(SniperTower tower) {
-        return poseOfReload(tower.getCoolDownFraction()).withStacks(tower.steadyAimStacks());
+        return poseOfReload(tower.getCoolDownFraction()).withStacks(tower.steadyAimStacks())
+                .with(TowerCue.LONG_BARREL, tower.reachesPastItsBase())
+                .with(TowerCue.FOURTH_SHOT, tower.nextShotIs(TowerTerm.FOURTH_SHOT))
+                .with(TowerCue.SILVER_ROUND, tower.nextShotIs(TowerTerm.SILVER_ROUND))
+                .with(TowerCue.HOLLOW_POINT, tower.nextShotIs(TowerTerm.HOLLOW_POINT))
+                .with(TowerCue.FRENZY, tower.frenzied())
+                .with(TowerCue.HEADHUNTER, tower.huntsItsTarget());
     }
 
     /** An upgrade tier's colour role, for its perk icons; a tier above the last takes the last's. */

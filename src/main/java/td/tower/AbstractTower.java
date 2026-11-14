@@ -529,6 +529,23 @@ public abstract class AbstractTower implements Tower {
         this.publishStats(this.upgrades);
     }
 
+    /** Whether it holds a status of {@code term} now. */
+    protected final boolean holdsStatus(TowerTerm term) {
+        return this.statuses.holds(term);
+    }
+
+    /** Whether the next attack is a counted one that a proc makes {@code term}. */
+    protected final boolean primes(TowerTerm term) {
+        for (Proc proc : this.procs()) {
+            int every = proc.trigger().shotInterval();
+            if (every > 0 && (this.shotsBegun + 1) % every == 0
+                    && proc.payload().grantedStatus().filter(status -> status.term() == term).isPresent()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** How many attacks this tower has begun, the one beginning now included. */
     protected final int shotNumber() {
         return this.shotsBegun;
