@@ -514,15 +514,10 @@ overlaps into one clump: its members are larger than a big swarm's and get no mo
 
 ### Enemy traits/abilities numbers are unbalanced placeholders
 
-Every number introduced by the data-driven enemy model - `ArmorTrait`/
-`HurtSpeedTrait`'s migrated Square/Triangle factors, and the Warden/egg chain's health, price,
-ability intervals, shield percentages/radii and `EGG_HATCH_DELAY_TICKS` - was chosen to be
-plausible, not tuned, the same situation the tower-upgrade and new-tower-numbers entries above
-were in before their own balance passes. **One exception:** the Warden's `FlatResistTrait`
-value has been tuned (15 -> 200) against the actual
-per-hit/per-tick damage scale every attack tower deals (150-4000, see the head-to-head data in
-the new-tower-numbers entry above) - 15 was negligible against any of them (0.375%-10% of a
-single hit), making the Warden's armor mechanically inert regardless of which tower fought it.
+Every number introduced by the data-driven enemy model - `HurtSpeedTrait`'s factors, and the
+Warden/egg chain's health, price, ability intervals, shield percentages/radii and
+`EGG_HATCH_DELAY_TICKS` - was chosen to be plausible, not tuned, the same situation the
+tower-upgrade and new-tower-numbers entries above were in before their own balance passes.
 
 - Heals are starting values from the stat-driven plan, meant to be visibly significant: the Mender's ally
   heal (0.15 to 2 points a tick by rank) and self-heal (0.35 to 1.4), the Warden's neglect heal (15% of the
@@ -533,8 +528,7 @@ single hit), making the Warden's armor mechanically inert regardless of which to
   Warding affix's ally shield (40 to 640 points by rank) and the Reaver's panic shield (35 to 370 points by rank).
 - Every ranked enemy's health and bounty are no longer placeholders: they are weighed against the Walker
   (`docs/BALANCE.md`). The numbers inside a trait or an ability, and every unique boss's, still are.
-- **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `ArmorTrait`,
-  `HurtSpeedTrait`, `FlatResistTrait`.
+- **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `HurtSpeedTrait`.
 - **Approach:** play The Amber Hive through to the Warden encounter (and the other two levels,
   once they get their own late-game content) repeatedly, adjusting values until the chain and
   the migrated traits feel meaningfully tuned rather than placeholder guesses - no code or

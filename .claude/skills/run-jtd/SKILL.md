@@ -111,8 +111,9 @@ EOF
 
 ## Debugging a live game
 
-For a runtime fact that a trace doesn't record, with the IDE open. Follow the `ij-debugger` skill (logpoint
-first, side-effect-free expressions, `execute_tool` when the IDE exposes it); what follows is what jTD adds.
+For a runtime fact that a trace doesn't record, with the IDE open. Follow the `ij-debugger` skill when the session
+lists it; its rules hold without it too (logpoint first, side-effect-free expressions, `execute_tool` when the IDE
+exposes it). What follows is what jTD adds.
 
 Give the Driver a debug port and enough ticks to attach before it quits. A long `waitfor` needs its own
 `ms`, or it gives up at the default. Start it in the background:
