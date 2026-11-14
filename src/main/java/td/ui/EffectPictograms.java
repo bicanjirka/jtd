@@ -39,24 +39,14 @@ final class EffectPictograms {
             Map.entry("effect.priority", "S O12 12 6.8 ; S M12 2.2V6.6 M12 17.4V21.8 M2.2 12H6.6 M17.4 12H21.8 ; F O12 12 2"),
             // Daze
             Map.entry("effect.dazed", "T M3 13A9 4.2 0 1 0 21 13A9 4.2 0 1 0 3 13Z ; F M6 8.3L6.9 10.6L9.2 11.5L6.9 12.4L6 14.7L5.1 12.4L2.8 11.5L5.1 10.6Z ; F M13 3.6L14.1 6.4L16.9 7.5L14.1 8.6L13 11.4L11.9 8.6L9.1 7.5L11.9 6.4Z ; F M18.6 14L19.4 15.9L21.3 16.7L19.4 17.5L18.6 19.4L17.8 17.5L15.9 16.7L17.8 15.9Z"),
-            // Saturation
-            Map.entry("effect.saturated", "F O12 12 3.2 ; S M5.6 9.2A7 7 0 0 1 9.2 5.6 M18.4 14.8A7 7 0 0 1 14.8 18.4 ; T M2.6 8.6A10 10 0 0 1 8.6 2.6 M21.4 15.4A10 10 0 0 1 15.4 21.4 M5.6 14.8A7 7 0 0 0 9.2 18.4 M18.4 9.2A7 7 0 0 0 14.8 5.6"),
             // Charge
             Map.entry("effect.charged", "F M14 2L5 13.6H11.2L9.6 22L19 9.8H12.8Z"),
             // Doom
             Map.entry("effect.doom", "F M12 2.6C7.2 2.6 4 6.2 4 10.4C4 13.2 5.4 15.2 7.4 16.2V19.6C7.4 20.4 8 21.2 9 21.2H15C16 21.2 16.6 20.4 16.6 19.6V16.2C18.6 15.2 20 13.2 20 10.4C20 6.2 16.8 2.6 12 2.6Z ; K O8.9 11 2.1 ; K O15.1 11 2.1 ; K M12 13.6L13.3 16H10.7Z ; X M10.6 18.4V21.2 M13.4 18.4V21.2"),
             // Blight
             Map.entry("effect.blight", "F M4.5 19.5C4.5 10 10 4 20 3.5C20 13.5 14 19.5 4.5 19.5Z ; X M4.5 19.5L15.2 8.8 ; K O15.2 13.4 1.5 ; K O10.4 16.2 1.1 ; K O16.6 7.2 0.9"),
-            // Contagion
-            Map.entry("effect.contagion", "F O12 12 4.6 ; S M12 7V3.6 M12 17V20.4 M7.67 9.5L4.72 7.8 M16.33 14.5L19.28 16.2 M7.67 14.5L4.72 16.2 M16.33 9.5L19.28 7.8 ; F O12 3.2 1.7 O12 20.8 1.7 O4.38 7.6 1.7 O19.62 16.4 1.7 O4.38 16.4 1.7 O19.62 7.6 1.7"),
-            // Malaise
-            Map.entry("effect.malaise", "S O12 12 8.5 ; S M12 6.5V12L16 14.5"),
             // Inversion
             Map.entry("effect.inversion", "S M18.6 9.4A7.2 7.2 0 0 0 5.6 8.2 M5.4 14.6A7.2 7.2 0 0 0 18.4 15.8 ; F M3.4 5.4L5.2 11L9.6 7.4Z M20.6 18.6L18.8 13L14.4 16.6Z"),
-            // Sympathy
-            Map.entry("effect.sympathy", "S O8.6 12 5.6 ; S O15.4 12 5.6"),
-            // Reckoning
-            Map.entry("effect.reckoning", "S M12 4V20.5 M7.5 20.5H16.5 M4 7H20 ; T M4 7L2 13 M4 7L6 13 M20 7L18 13 M20 7L22 13 ; F M1.4 13H6.6A2.6 2.4 0 0 1 1.4 13Z M17.4 13H22.6A2.6 2.4 0 0 1 17.4 13Z ; F O12 4 1.6"),
             // Silence
             Map.entry("effect.silenced", "S M4.5 4.5H19.5A1.5 1.5 0 0 1 21 6V14.5A1.5 1.5 0 0 1 19.5 16H11.5L7 20V16H4.5A1.5 1.5 0 0 1 3 14.5V6A1.5 1.5 0 0 1 4.5 4.5Z ; F M7 9H17V11.6H7Z"),
             // Anchor

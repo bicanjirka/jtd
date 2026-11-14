@@ -10,16 +10,13 @@
 - `ZoneRoster.doTick` runs after projectiles and before towers, so a shell that lands this tick
   already pulses. `GameEngine` clears it with the other rosters when a level loads.
 - A mine is looked at every tick, not on a pulse, so nothing walks across it between two; the first enemy
-  inside sets it off through its `ZoneTrigger` and it is spent. A tower that lays mines keeps its own list
-  to replace the oldest and to take them off the board (`ZoneRoster.remove`) when it is sold.
+  inside sets it off through its `ZoneTrigger` and it is spent.
 - Enemies leave zones too (`LeaveZoneAction`), owned by `ZoneOwner.nobody()`, one owner per zone and so one
   source per zone: healing ground, haste ground and ward
   mines help the enemies inside, and a blinding field works on towers instead (`ZoneRoster.disruptionAt`, the strongest
   one counts, never a sum). `Zone.UNTIL_WAVE_END` lasts until the wave is over. At a wave's clear
   `ZoneRoster.endWave()` fades every zone out over a moment, one laid after too; `startWave` leaves bare ground, so no
   zone ever reaches the next wave. A ward mine is armed a moment after it is laid, so the enemy that laid it walks off first.
-- A cursed cloud carries the effects it re-applies to everything inside each pulse, with the time they had
-  left when the enemy died, so they hold while an enemy stays and run out once it leaves.
 - `ZoneEffects.touch` is one pulse of a kind on one enemy; a zone adds only what depends on how long an
   enemy stays (frost's freeze). Anything else that carries a zone's effect without a zone calls it.
 - Fallout drains spirit through `SICKENED` stacks and holds `DEAD_ZONE` on what stands in it.

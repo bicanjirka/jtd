@@ -176,7 +176,7 @@ the same look on 2026-11-13, in the renderer itself ([theme](next-gen-art/theme.
 - **Ground zones stay flat patches**, and what stands on them follows the light: burning ground carries tongues of
   flame that rise up the screen, each with a hotter heart; frost ground carries shards of ice with a lit left face;
   a mine's casing stands on its patch. Tar was near-black on near-black floors and is now a violet-grey that shows.
-  Fallout, the cursed cloud and the healing, haste, ward and blinding grounds keep their look.
+  Fallout and the healing, haste, ward and blinding grounds keep their look.
 - **Shells** are lit balls: a shaded edge at the bottom right and a glint at the top left.
 - It paints faster than the flat enemies did. A body is drawn once into a kept picture (for its look, size, one
   of 64 headings and the zoom) and placed pixel for pixel after that: 300 bodies took 0.9 ms a frame in the art lab,

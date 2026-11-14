@@ -177,7 +177,7 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 | Tower  | Price | Behaviour                                                                                                                                           |
 |--------|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path when its tracer arrives, a moment after it fires; each shot adds a stack of Steady Aim, whichever enemy it hits, so the longer it keeps firing, the faster it fires and the likelier it crits; a stack fades 3 s after its last shot, one at a time. Its tree has no fork: every 4th shot sure to crit, loaded with a Silver Round or a Hollow Point; a crit that starts a Frenzy, ricochets or sunders; an Executioner for the wounded or a Headhunter for elites and bosses |
-| Burst  | 15    | Instant blast on a random target in range, physical damage falling off with distance; attuned, it aims at the most crowded group and Saturates what it hits. Forks into the Stormcaller (lightning arcs on past the blast) or the Hexer (every 4th shot casts a hex) |
+| Burst  | 15    | Throws a stone at a random target in range; it lands where the target stood and bursts, full physical damage in its core and half at its edge. Forks into the Stormcaller (Static and Sparks: Arc, Thunderclap or Thunderstrike) or the Hexer (Soulbrand and Souls: Doom, Blight, Inversion) |
 | Mortar | 30    | Lobs a slow, unguided shell, high over the board, at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider. One head adds heavier shells and nukes, the other shrapnel and bombs along the path, and a ballistics line speeds the shell up, leads the target, widens the blast and fires salvos. Its specials turn every third shell into a Napalm, Tar or Cryo shell that leaves burning, tarred or frozen ground |
 | Scorcher | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
 | Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
@@ -204,7 +204,7 @@ Tier I also asks a one-off unlock payment; every tower an enemy reached earns it
 killed or leaked (an Aura earns with the towers it buffs). Once a tier is open its upgrades cost only credits. In a
 tier an upgrade stands alone, follows one it needs (in the same tier or the one below), or belongs to a cluster:
 one framed set of which a tower keeps one active, switched for free between waves, which sells back what came
-after the old one. Attune, in Tier 0, gives each tower its own mechanic. The Burst picks Arc or Hex at Tier
+after the old one. Attune, in Tier 0, gives each tower its own mechanic. The Burst picks Stormcaller or Hexer at Tier
 I's gate, which makes it a Stormcaller or a Hexer; picking the other side later works only between waves and sells
 the old side's upgrades. A downgrade takes a node back with everything that needs it, refunds three quarters of what
 they cost (selling afterwards pays what selling would have) and reopens the choices they made. Upgrade
@@ -335,14 +335,10 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Mark | Mark | Debuff | The next hit on it is a crit, which spends this. |
 | Priority | Mark | Debuff | Physical damage taken and Magic damage taken +15%, and a tower that picks one target picks it. |
 | Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; Agility -100, so no dodges and more crits on it. |
-| Saturation | Weakness | Debuff | Each stack makes a Burst's blasts hit it harder. |
 | Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
 | Doom | Hex | Debuff | When it ends, it takes a share of all the damage it took while it lasted. |
-| Blight | Hex | Debuff | It has Poison for as long as this lasts. |
-| Contagion | Hex | Debuff | When it dies, its hexes and debuffs jump to the enemies nearest it. |
-| Malaise | Hex | Debuff | Tenacity -50: its debuffs last longer. |
+| Blight | Hex | Debuff | It has Poison for as long as this lasts, and a slow that grows to its strongest as it ends. |
 | Inversion | Hex | Debuff | Its Regeneration deals it damage instead of restoring health, and a Shield it receives strikes it instead. |
-| Sympathy | Hex | Debuff | Once a second, its Chill, Vulnerable, Sunder, Expose and Unravel are copied, up to what it has, to the other enemies nearby that carry a hex from the same tower. |
 | Reckoning | Hex | Debuff | When it dies, each Doom from the same tower near it releases at once and starts again. |
 | Silence | Control | Debuff | Its abilities don't fire; abilities on death and auras still do. |
 | Anchor | Control | Debuff | Holds Move speed to at most 75% of its base, whatever raises it, and it comes back over its last 0.5 s. |
@@ -395,8 +391,14 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Stoke | Debuff | Each wave on an enemy with this tower's Burn raises that Burn a step; the steps go when it ends. |
 | Kinship | Buff | Towers a Beacon buffs earn more XP for each other tower type in range. |
 | Shatter | Buff | An enemy with Freeze breaks apart and hurts the enemies around it. |
-| Arc | Buff | Lightning that jumps from a blast to enemies past its edge, as magic. |
-| Hex | Buff | A curse a Burst casts instead of a blast; each kind does its own thing. |
+| Arc | Buff | Lightning a primed stone carries from where it lands, jumping from enemy to enemy as magic. |
+| Hex | Buff | A curse a Hexer casts with its Souls; each kind does its own thing. |
+| Static | Buff | Every enemy its stones or their lightning damage carries a stack, one per Stormcaller; badly hurt, the enemy discharges into itself for each stack and pays each Stormcaller that tagged it in its currency. |
+| Soulbrand | Buff | Every enemy its stones damage carries a stack, one per Hexer; when it dies it bursts for each stack, and pays each Hexer that tagged it in its currency. |
+| Spark | Buff | The Stormcaller's currency: its stones earn it by the damage they deal, its passive by the enemies that discharge; all of it goes into each of its abilities at once. |
+| Soul | Buff | The Hexer's currency: its stones earn it by the damage they deal, its passive by the enemies that die; all of it goes into each of its abilities at once. |
+| Thunderclap | Buff | A discharge into every enemy in range, as magic. |
+| Thunderstrike | Buff | Lightning onto the healthiest enemy in range, as magic. |
 | Shrapnel | Buff | Fragments that fly past a shell's blast. |
 | Bomblet | Buff | A small bomb a shell drops on the path. |
 
@@ -416,8 +418,6 @@ burning through a freeze.
 | Tar            | Mortar's Tar               | Poisons them and leaves them Tarred (slowed 40%) |
 | Frost ground   | Mortar's Cryo Shells       | Chills them, and freezes one that stays 2 s |
 | Fallout        | Mortar's Tactical Nuke     | Drains their spirit and leaves them in a Dead Zone                       |
-| Mine           | Splash, from Range III     | The first enemy to step on it sets it off as one blast, and it is gone; it lasts 10 s, a Splash keeps 3 |
-| Cursed cloud   | Hexer's Mastery            | Gives every enemy inside the debuffs the hexed enemy that died there carried, for as long as they had left |
 | Healing ground | Mender, from Soldier       | Heals them; it lasts 5 s |
 | Haste ground   | Runner, from Veteran       | Hastens them (twice the speed) for a second after each pulse; it lasts until the wave is over |
 | Ward mine      | Knight, from Elite         | Armed a second after it is laid; the first enemy to step on it gets a Shield, and it is gone; it lasts 8 s |

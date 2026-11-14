@@ -31,7 +31,7 @@
   `RESILIENCE` or `SPIRIT` by one. They outlast the pool, are never cleared by another effect
   and, once no active pool earns them, lose a stack every
   `STACK_DECAY_INTERVAL_TICKS`.
-- A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`, `SATURATED`) stacks on the enemy, whichever tower applied them, on one shared clock
+- A kind with `EffectKind.maxStacks()` above 0 (`VULNERABLE`, `SUNDERED`) stacks on the enemy, whichever tower applied them, on one shared clock
   that any application refreshes; a full stack only refreshes. An application may raise the cap
   (`Effect.withStackCap`), and the stack keeps the highest cap any application brought.
 - Every timer counts down one tick per tick; nothing about the enemy paces it. Only tenacity and
@@ -48,7 +48,7 @@
   shields and rewinds are worth nothing and nothing is kept out or stripped; a fallout zone applies it too.
 - A pool earns `SICKENED` itself, but a tower can also add it (`Effect.sickened`): the stacks add up
   to the whole of spirit, and wear off one at a time.
-- A `HEX` kind carries no stat of its own but `MALAISE`'s tenacity and `BLIGHT`'s growing slow; the tower that cast it watches it and pays it out.
+- A `HEX` kind carries no stat of its own but `BLIGHT`'s growing slow; the tower that cast it watches it and pays it out.
   `INVERSION` is the one hex the enemy itself reads: its regeneration is dealt through the hex's sink.
 - `SOULFIRE` is a third fuel pool beside burn and poison (`EffectKind.isBurning()` covers it and burn), and it
   earns `SCORCHED` and `SICKENED` both. It is its own kind, so it burns what is burn-immune.
@@ -57,9 +57,6 @@
   and the magic mark are such modifiers). Two towers on one pool leave it the stronger of each setting,
   and what it carries only lasts while the pool does.
 - A burning pool sets `STEALTH` to 0 like a reveal, through its rule.
-- What a curse carries on from a dead enemy is `EffectKind.spreadsWithCurse()`: the debuffs that
-  weaken an enemy, copied with their own sink and time left, never the marks a tower leaves for
-  itself.
 - `CHARGED` is spent by a hit from any attacker but the one in its `origin`, never by periodic
   damage; the mob pays its share of that hit through the charge's own sink, so the charger is
   credited.

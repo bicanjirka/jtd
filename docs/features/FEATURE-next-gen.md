@@ -30,7 +30,7 @@ Beacon. The Radar leaves the game ("The last three towers").
 | `FEATURE-next-gen-shot-flight.md` | Hits that land later, arcs, the tracer, chains hop by hop | | Sniper bullet and Mortar arc in code; the rest with the Burst |
 | `FEATURE-next-gen-tower-abilities.md` | Ability bars, currency, casts, the pane's Abilities list | upgrade tiers | implemented; the Burst is its first user |
 | `FEATURE-next-gen-sniper-tower.md` | The Sniper | tiers, looks, shot flight | implemented |
-| `FEATURE-next-gen-splash-tower.md` | The Burst | tiers, looks, shot flight, abilities | Tiers 0 to III |
+| `FEATURE-next-gen-splash-tower.md` | The Burst | tiers, looks, shot flight, abilities | implemented |
 | `FEATURE-next-gen-mortar-tower.md` | The Mortar | tiers, looks, shot flight | Tiers 0 to III |
 | `FEATURE-next-gen-cinder-tower.md` | The Scorcher; the one pool rule for burn, poison and Soulfire | tiers, looks | Tiers 0 to III |
 | `FEATURE-next-gen-seeker-tower.md` | The Aerie (was the Hive) | tiers, looks; the Mortar's weighted draw | Tiers 0 to III, fourth round |

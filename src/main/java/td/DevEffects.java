@@ -13,6 +13,7 @@ import td.tower.TowerModifiers;
 import td.tower.TowerStat;
 import td.tower.TowerStatus;
 import td.tower.TowerTerm;
+import td.tower.splash.BlightHex;
 import td.util.TickRate;
 
 import java.util.List;
@@ -129,7 +130,6 @@ public final class DevEffects {
             case SUNDERED -> stacking(kind, Effect::sundered);
             case UNRAVELED -> stacking(kind, Effect::unraveled);
             case CONDEMNED -> stacking(kind, Effect::condemned);
-            case SATURATED -> stacking(kind, Effect::saturated);
             case TOLL -> stacking(kind, Effect::toll);
             case SPELLPROOF -> stacking(kind, Effect::spellproof);
             case RESOLVE -> stacking(kind, Effect::resolve);
@@ -138,8 +138,9 @@ public final class DevEffects {
             case FRAIL -> stacking(kind, Effect::frail);
             case SCORCHED -> one(List.of(stacks(kind)), in -> Effect.scorched(in.whole(0)));
             case SICKENED -> one(List.of(stacks(kind)), in -> Effect.sickened(in.whole(0)));
-            case MALAISE, INVERSION, DOOM, CONTAGION, SYMPATHY, RECKONING -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
-            case BLIGHT -> new Builds<>(List.of(SECONDS, DAMAGE_PER_SECOND), in -> List.of(Effect.hex(kind, in.ticks(0), in.sink()),
+            case INVERSION, DOOM -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
+            case BLIGHT -> new Builds<>(List.of(SECONDS, DAMAGE_PER_SECOND), in -> List.of(
+                    Effect.blight(in.ticks(0), BlightHex.SLOW_PER_TICK, 0f, 0f, in.sink()),
                     Effect.poison(in.magicPerTick(1), in.ticks(0), in.sink())));
             case STILLED -> new Refuses<>("needs an Obelisk field");
         };

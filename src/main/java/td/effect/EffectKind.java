@@ -15,8 +15,7 @@ import java.util.Locale;
 
 /** Every kind of effect, each one row: its {@link EffectRule}. */
 public enum EffectKind implements Term {
-    CHILL("Chill", EffectRule.of(EffectCategory.SOFT_CC)
-            .tagged(EffectTag.SHARED_BY_SYMPATHY)),
+    CHILL("Chill", EffectRule.of(EffectCategory.SOFT_CC)),
     BURN("Burn", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool()
             .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f)).tagged(EffectTag.BURNING)),
     FREEZE("Freeze", EffectRule.of(EffectCategory.HARD_CC)
@@ -27,22 +26,22 @@ public enum EffectKind implements Term {
     HEAL("Heal", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
     VULNERABLE("Vulnerable", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.15f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.15f)
-            .tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
+            ),
     REVEALED("Reveal", EffectRule.of(EffectCategory.STEALTH)
             .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f))),
-    POISON("Poison", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool().tagged(EffectTag.SPREADS_WITH_CURSE)),
+    POISON("Poison", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool()),
     /** The lasting mark of burning: each stack lowers resilience by one. */
     SCORCHED("Scorch", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100)
-            .perStack(EnemyStat.RESILIENCE, -1f).tagged(EffectTag.SPREADS_WITH_CURSE)),
+            .perStack(EnemyStat.RESILIENCE, -1f)),
     /** The lasting mark of poison: each stack lowers spirit by one. */
     SICKENED("Sicken", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100)
-            .perStack(EnemyStat.SPIRIT, -1f).tagged(EffectTag.SPREADS_WITH_CURSE)),
+            .perStack(EnemyStat.SPIRIT, -1f)),
     /** Each stack lowers armor by five. */
     SUNDERED("Sunder", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(10)
-            .perStack(EnemyStat.ARMOR, -5f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
+            .perStack(EnemyStat.ARMOR, -5f)),
     /** Takes fifty agility and fifty resilience: crits come more often and hit harder. */
     EXPOSED("Expose", EffectRule.of(EffectCategory.SPOTTED).perStack(EnemyStat.AGILITY, -50f).perStack(EnemyStat.RESILIENCE, -50f)
-            .tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
+            ),
     /** The next hit lands as a guaranteed crit and spends the mark. */
     MARKED("Mark", EffectRule.of(EffectCategory.SPOTTED)),
     /** Takes extra damage from every tower, and single-target towers aim at it. */
@@ -51,24 +50,14 @@ public enum EffectKind implements Term {
     /** Stops the enemy and its abilities, like a freeze. */
     DAZED("Daze", EffectRule.of(EffectCategory.HARD_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f))
             .perStack(EnemyStat.AGILITY, StatModifier.setTo(-100f)).tagged(EffectTag.STOPS)),
-    /** Each stack makes the Splash's blasts hit it harder; it is the Splash's own rhythm, not a stat. */
-    SATURATED("Saturation", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)),
     /** The next hit from another tower discharges it for extra magic, credited to the tower that charged it. */
     CHARGED("Charge", EffectRule.of(EffectCategory.SPOTTED)),
     /** When it ends, the target takes a share of all the damage it took while it lasted. */
     DOOM("Doom", EffectRule.of(EffectCategory.HEX)),
     /** The target is poisoned for as long as it lasts. */
     BLIGHT("Blight", EffectRule.of(EffectCategory.HEX)),
-    /** When the target dies, its hexes and debuffs jump to the enemies nearest it. */
-    CONTAGION("Contagion", EffectRule.of(EffectCategory.HEX)),
-    /** Lowers tenacity: what weakens the target lasts longer on it. */
-    MALAISE("Malaise", EffectRule.of(EffectCategory.HEX).perStack(EnemyStat.TENACITY, -50f)),
     /** Heals and shields it receives are dealt to it as damage instead. */
     INVERSION("Inversion", EffectRule.of(EffectCategory.HEX)),
-    /** Once a second its Vulnerable, Sundered, Exposed and chill are copied to the Hexer's other hexed enemies nearby. */
-    SYMPATHY("Sympathy", EffectRule.of(EffectCategory.HEX)),
-    /** When the target dies, the Hexer's Dooms near it release at once and start again. */
-    RECKONING("Reckoning", EffectRule.of(EffectCategory.HEX)),
     /** Its abilities don't fire; death abilities and auras still do. */
     SILENCED("Silence", EffectRule.of(EffectCategory.SOFT_CC)),
     /** Its speed is held to a share of its base, whatever raises it. */
@@ -76,7 +65,7 @@ public enum EffectKind implements Term {
             .slowingBy(0.25f).tagged(EffectTag.SPEED_CEILING)),
     /** Each stack lowers magic resist by ten. */
     UNRAVELED("Unravel", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)
-            .perStack(EnemyStat.MAGIC_RESIST, -10f).tagged(EffectTag.SPREADS_WITH_CURSE, EffectTag.SHARED_BY_SYMPATHY)),
+            .perStack(EnemyStat.MAGIC_RESIST, -10f)),
     /** Takes extra physical damage. */
     BRITTLE("Brittle", EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.3f)),
     /** Time spent in the field: it sets how strongly the field's effects hold, and fades soon after the enemy leaves. */
@@ -239,16 +228,5 @@ public enum EffectKind implements Term {
         };
     }
 
-    /**
-     * Whether a curse carries this kind on to the next enemy when its carrier dies: the debuffs
-     * that weaken an enemy, not the marks a tower leaves for itself.
-     */
-    public boolean spreadsWithCurse() {
-        return this.rule.tags().contains(EffectTag.SPREADS_WITH_CURSE);
-    }
 
-    /** Whether a Sympathy carrier shares this kind with the hexed enemies near it. */
-    public boolean sharedBySympathy() {
-        return this.rule.tags().contains(EffectTag.SHARED_BY_SYMPATHY);
-    }
 }

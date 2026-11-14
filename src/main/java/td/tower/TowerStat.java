@@ -75,10 +75,6 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     FREEZE_DURATION(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Freeze time", "Freeze duration", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    SATURATION_CAP(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Sat cap", "Saturation cap", StatDirection.HIGHER,
-            StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    SATURATION_INNER_STACKS(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Inner sat", "Saturation in the inner half",
-            StatDirection.HIGHER, StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     TOLL_CAP(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Toll cap", "Toll cap", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     TOLL_RATE(0f, 0f, Float.MAX_VALUE, StatUnit.PER_SECOND, "Toll rate", "Toll rate", StatDirection.HIGHER,
@@ -232,9 +228,6 @@ public enum TowerStat implements StatKey, StatTerm {
             case BURN_MARK_RATE -> TermText.format("how fast it builds {}, as a share of the usual",
                     EffectKind.SCORCHED);
             case FREEZE_DURATION -> TermText.format("how long a {} it causes lasts", EffectKind.FREEZE);
-            case SATURATION_CAP -> TermText.format("how many stacks of {} one enemy can hold", EffectKind.SATURATED);
-            case SATURATION_INNER_STACKS -> TermText.format("stacks of {} a hit in the inner half adds",
-                    EffectKind.SATURATED);
             case TOLL_CAP -> TermText.format("how many stacks of {} one enemy can hold", EffectKind.TOLL);
             case TOLL_RATE -> TermText.format("stacks of {} it adds each second", EffectKind.TOLL);
             case TOLL_LINGER -> TermText.format("how long {} stays once an enemy leaves", EffectKind.TOLL);

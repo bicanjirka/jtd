@@ -33,7 +33,6 @@ public enum Palette {
     TOWER_SNIPER_SILVER,
     /** A bullet's head, and the whole streak of one that crit. */
     TOWER_SNIPER_TRACER,
-    TOWER_SPLASH_BEAM,
     /** A blast's first flash. */
     TOWER_SPLASH_FLASH,
     /** A blast's ring as it spreads, bright... */
@@ -43,12 +42,10 @@ public enum Palette {
     /** The Stormcaller's arcs. */
     TOWER_SPLASH_ARC,
     /** The Stormcaller's shot, in the colour of its body... */
-    TOWER_STORMCALLER_BEAM,
     TOWER_STORMCALLER_FLASH,
     TOWER_STORMCALLER_DETONATION,
     TOWER_STORMCALLER_DETONATION_DARK,
     /** ...and the Hexer's. */
-    TOWER_HEXER_BEAM,
     TOWER_HEXER_FLASH,
     TOWER_HEXER_DETONATION,
     TOWER_HEXER_DETONATION_DARK,
@@ -73,8 +70,6 @@ public enum Palette {
     ZONE_TAR,
     ZONE_FROST,
     ZONE_FALLOUT,
-    ZONE_MINE,
-    ZONE_CLOUD,
     ZONE_HEALING,
     ZONE_HASTE,
     ZONE_WARD,
@@ -99,15 +94,10 @@ public enum Palette {
     STATUS_MARKER_BURN,
     STATUS_MARKER_FREEZE,
     STATUS_MARKER_DAZED,
-    STATUS_MARKER_SATURATED,
     STATUS_MARKER_CHARGED,
     STATUS_MARKER_DOOM,
     STATUS_MARKER_BLIGHT,
-    STATUS_MARKER_CONTAGION,
-    STATUS_MARKER_MALAISE,
     STATUS_MARKER_INVERSION,
-    STATUS_MARKER_SYMPATHY,
-    STATUS_MARKER_RECKONING,
     STATUS_MARKER_SILENCED,
     STATUS_MARKER_ANCHORED,
     STATUS_MARKER_UNRAVELED,

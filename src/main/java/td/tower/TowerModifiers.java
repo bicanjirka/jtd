@@ -95,14 +95,6 @@ public final class TowerModifiers {
         return flat(TowerStat.BLAST_EDGE, cells);
     }
 
-    public static StatModifiers<TowerStat> saturationCap(int stacks) {
-        return flat(TowerStat.SATURATION_CAP, stacks);
-    }
-
-    public static StatModifiers<TowerStat> saturationInnerStacks(int stacks) {
-        return flat(TowerStat.SATURATION_INNER_STACKS, stacks);
-    }
-
     public static StatModifiers<TowerStat> projectileSpeed(float fraction) {
         return flat(TowerStat.PROJECTILE_SPEED, fraction);
     }

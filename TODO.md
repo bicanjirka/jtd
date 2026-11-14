@@ -193,19 +193,17 @@ every look change edits the painter.
 
 ### An attack can read the stats its shot already spent
 
-**Trigger:** each tower's own rework in the next-gen bundle (the Burst's lobbed stone and Arc hops, the
-Scorcher, the Aerie, the Obelisk). (Design review F15b.)
+**Trigger:** each tower's own rework in the next-gen bundle (the Scorcher, the Aerie, the Obelisk). (Design review F15b.)
 
 `AbstractTower.beginShot()` spends the tower's next-shot charges (a `TowerStatus` granted with
 `grantStatus`, such as a primed round), republishes the live stats without them, and returns the
-`TowerStats` the attack should use. The Sniper's bullet and the Mortar's shell carry those stats to
-where they land; the Scorcher's waves, the Obelisk's field, the Aerie's missiles and the Burst's mines
+`TowerStats` the attack should use. The Sniper's bullet, the Mortar's shell and the Burst's stone carry those stats to
+where they land; the Scorcher's waves, the Obelisk's field, the Aerie's missiles
 still read the live stats (`damageCurrent()`, `stats()`), which is right only while no charge was
-spent. Only the Sniper grants itself charges today, so nothing is lost in play yet; a hit that lands
+spent. Only the Sniper and the Burst grant themselves charges today, so nothing is lost in play yet; a hit that lands
 ticks after the shot (a missile, a wave) also reads stats that may have changed meanwhile.
 
-- **Where:** the callers of `AbstractTower.beginShot` in `CinderTower`, `PulseTower` and `SeekerTower`,
-  and `SplashTower.explode`.
+- **Where:** the callers of `AbstractTower.beginShot` in `CinderTower`, `PulseTower` and `SeekerTower`.
 - **Approach:** as the Sniper's `Bullet` and the Mortar's `Shell` do: what is in flight keeps the
   `TowerStats` its shot began with and lands with them. One tower per commit, each with a test first on
   the model of `MortarTowerTest.aShellLandsWithTheStatsItWasFiredWithThoughTheChargeItSpentIsGone`.
@@ -489,8 +487,7 @@ not tuned: vulnerable (+15% per stack, cap 3, 4 s), poison's damage (10% of weap
 damage per tick, 4 s) and the half-second
 stack interval of burning and poisoned, revealed (3 s from Wide Band, 2 s from Resonant Field II),
 Momentum's cooldown cut and 5 s, the shatter and explosion share and radius, shrapnel's ring width and
-share, Warding Field's 10% chance, Withering Field's interval, Long Reach II's scaling, and Splash's three
-blasts. Burning's resilience loss (-1 per stack) and poisoned's spirit loss (-1 per stack) grow without
+share, Warding Field's 10% chance, Withering Field's interval, and Long Reach II's scaling. Burning's resilience loss (-1 per stack) and poisoned's spirit loss (-1 per stack) grow without
 limit up to their stat floors of -100. Scorched and Sickened hold while a pool that earns them is active, then lose a stack per second
 (one per 20 ticks, `ActiveEffects.STACK_DECAY_INTERVAL_TICKS`).
 A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s of steady burning.

@@ -158,7 +158,6 @@ public final class Java2DFrameRenderer {
     private static final int ZONE_FALLOUT_BLADES = 3;
     /** How far toward white the innermost Stoke core goes. */
     private static final float CINDER_CORE_BRIGHTEN = 0.8f;
-    private static final int ZONE_WISPS = 4;
     /** A banked missile is drawn this share of a missile in flight. */
     private static final float NEST_MISSILE_SCALE = 0.6f;
     private static final Font MISS_MARK_FONT = Hud.LABEL_FONT.deriveFont(10f);
@@ -321,16 +320,13 @@ public final class Java2DFrameRenderer {
             case TOWER_SNIPER_LASER -> new Color(255, 60, 60);
             case TOWER_SNIPER_SILVER -> new Color(170, 210, 255);
             case TOWER_SNIPER_TRACER -> Color.WHITE;
-            case TOWER_SPLASH_BEAM -> Color.RED;
             case TOWER_SPLASH_FLASH -> withAlpha(new Color(255, 245, 210), 170);
             case TOWER_SPLASH_DETONATION -> new Color(255, 200, 90);
             case TOWER_SPLASH_DETONATION_DARK -> new Color(120, 30, 20);
             case TOWER_SPLASH_ARC -> new Color(170, 210, 255);
-            case TOWER_STORMCALLER_BEAM -> new Color(80, 150, 255);
             case TOWER_STORMCALLER_FLASH -> withAlpha(new Color(210, 230, 255), 170);
             case TOWER_STORMCALLER_DETONATION -> new Color(130, 190, 255);
             case TOWER_STORMCALLER_DETONATION_DARK -> new Color(20, 40, 120);
-            case TOWER_HEXER_BEAM -> new Color(170, 80, 230);
             case TOWER_HEXER_FLASH -> withAlpha(new Color(240, 215, 255), 170);
             case TOWER_HEXER_DETONATION -> new Color(200, 130, 255);
             case TOWER_HEXER_DETONATION_DARK -> new Color(70, 20, 110);
@@ -347,8 +343,6 @@ public final class Java2DFrameRenderer {
             case ZONE_TAR -> new Color(98, 82, 116);
             case ZONE_FROST -> new Color(170, 225, 255);
             case ZONE_FALLOUT -> new Color(150, 220, 60);
-            case ZONE_MINE -> new Color(255, 60, 60);
-            case ZONE_CLOUD -> new Color(170, 80, 230);
             case ZONE_HEALING -> new Color(90, 220, 120);
             case ZONE_HASTE -> new Color(130, 240, 180);
             case ZONE_WARD -> new Color(120, 190, 255);
@@ -375,15 +369,10 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_BURN -> new Color(255, 120, 40);
             case STATUS_MARKER_FREEZE -> new Color(150, 220, 255);
             case STATUS_MARKER_DAZED -> new Color(255, 235, 120);
-            case STATUS_MARKER_SATURATED -> new Color(255, 150, 90);
             case STATUS_MARKER_CHARGED -> new Color(140, 200, 255);
             case STATUS_MARKER_DOOM -> new Color(190, 90, 255);
             case STATUS_MARKER_BLIGHT -> new Color(140, 200, 60);
-            case STATUS_MARKER_CONTAGION -> new Color(210, 120, 170);
-            case STATUS_MARKER_MALAISE -> new Color(60, 180, 170);
             case STATUS_MARKER_INVERSION -> new Color(255, 70, 120);
-            case STATUS_MARKER_SYMPATHY -> new Color(120, 150, 255);
-            case STATUS_MARKER_RECKONING -> new Color(255, 200, 60);
             case STATUS_MARKER_SILENCED -> new Color(170, 120, 255);
             case STATUS_MARKER_ANCHORED -> new Color(150, 150, 170);
             case STATUS_MARKER_UNRAVELED -> new Color(220, 120, 255);
@@ -569,8 +558,7 @@ public final class Java2DFrameRenderer {
             case ZONE_TAR -> this.paintZoneTarGloss(g2, zone, fade);
             case ZONE_FROST -> this.paintZoneCrystals(g2, zone, fade);
             case ZONE_FALLOUT -> this.paintZoneFallout(g2, zone, fade);
-            case ZONE_MINE, ZONE_WARD -> this.paintZoneMine(g2, zone, fade);
-            case ZONE_CLOUD -> this.paintZoneCloud(g2, zone, fade);
+            case ZONE_WARD -> this.paintZoneMine(g2, zone, fade);
             default -> {
             }
         }
@@ -647,18 +635,6 @@ public final class Java2DFrameRenderer {
         g2.setComposite(composite);
     }
 
-    /** Wisps that drift round the middle. */
-    private void paintZoneCloud(Graphics2D g2, ZoneDraw zone, float fade) {
-        for (int i = 0; i < ZONE_WISPS; i++) {
-            double angle = zone.phase() * 0.7 + i * 2 * Math.PI / ZONE_WISPS;
-            float distance = zone.radius() * 0.45f;
-            float size = zone.radius() * 0.28f;
-            float wx = zone.centerX() + (float) Math.cos(angle) * distance;
-            float wy = zone.centerY() + (float) Math.sin(angle) * distance;
-            g2.setColor(withAlpha(new Color(210, 150, 255), Math.round(110 * fade)));
-            g2.fill(new Ellipse2D.Float(wx - size, wy - size, size * 2, size * 2));
-        }
-    }
 
     /** Shards of ice standing on the frost, each lit on its left face. */
     private void paintZoneCrystals(Graphics2D g2, ZoneDraw zone, float fade) {
@@ -1148,40 +1124,11 @@ public final class Java2DFrameRenderer {
                 path.quadTo(s, 0, 0, s);
                 path.quadTo(-s, 0, 0, -s);
             }
-            case CONTAGION -> {
-                path.moveTo(0, -s);
-                path.lineTo(s, s);
-                path.lineTo(-s, s);
-                path.closePath();
-                path.append(new Ellipse2D.Float(-s * 0.3f, -s * 1.3f, s * 0.6f, s * 0.6f), false);
-                path.append(new Ellipse2D.Float(s * 0.7f, s * 0.7f, s * 0.6f, s * 0.6f), false);
-                path.append(new Ellipse2D.Float(-s * 1.3f, s * 0.7f, s * 0.6f, s * 0.6f), false);
-            }
-            case MALAISE -> {
-                path.append(new Ellipse2D.Float(-s, -s, s * 2, s * 2), false);
-                path.moveTo(0, -s * 0.65f);
-                path.lineTo(0, 0);
-                path.lineTo(s * 0.5f, 0);
-            }
             case INVERSION -> {
                 path.moveTo(-s, -s);
                 path.lineTo(s, -s);
                 path.lineTo(0, s);
                 path.closePath();
-            }
-            case SYMPATHY -> {
-                path.append(new Ellipse2D.Float(-s * 1.2f, -s * 0.6f, s * 1.2f, s * 1.2f), false);
-                path.append(new Ellipse2D.Float(0, -s * 0.6f, s * 1.2f, s * 1.2f), false);
-            }
-            case RECKONING -> {
-                path.append(new Ellipse2D.Float(-s * 0.4f, -s * 0.4f, s * 0.8f, s * 0.8f), false);
-                for (int i = 0; i < 4; i++) {
-                    double angle = Math.PI / 4 + Math.PI / 2 * i;
-                    float dx = (float) Math.cos(angle);
-                    float dy = (float) Math.sin(angle);
-                    path.moveTo(dx * s * 0.6f, dy * s * 0.6f);
-                    path.lineTo(dx * s * 1.3f, dy * s * 1.3f);
-                }
             }
         }
         return path;

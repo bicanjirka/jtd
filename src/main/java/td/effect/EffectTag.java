@@ -9,9 +9,5 @@ public enum EffectTag {
     /** Its slow is a ceiling on speed against base, not a share of the speed it finds. */
     SPEED_CEILING,
     /** A fire: a pool that reveals its carrier. */
-    BURNING,
-    /** A curse carries it on to the next enemy when its carrier dies. */
-    SPREADS_WITH_CURSE,
-    /** A Sympathy carrier shares it with the hexed enemies near it. */
-    SHARED_BY_SYMPATHY
+    BURNING
 }
