@@ -74,7 +74,7 @@ class MortarTowerTest {
         MortarTower tower = this.towerAt(3, 3);
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
-        tower.grantStatus(TowerStatus.nextShots(TowerTerm.CHARGED_SHOT, 1, TowerModifiers.damageTimes(3f)));
+        tower.grantStatus(TowerStatus.nextShots(TowerTerm.HASTE, 1, TowerModifiers.damageTimes(3f)));
         int charged = tower.damageCurrent();
 
         this.landAShell(tower);

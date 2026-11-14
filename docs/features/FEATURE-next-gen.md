@@ -29,7 +29,7 @@ Beacon. The Radar leaves the game ("The last three towers").
 | `FEATURE-next-gen-tower-looks.md` | The art direction, foundation by tier with a head, a calm board, enemy marks, toolbar icons, palette | upgrade tiers | every look, pose, cue, icon and thumbnail in code; each tower sends its own cues |
 | `FEATURE-next-gen-shot-flight.md` | Hits that land later, arcs, the tracer, chains hop by hop | | Sniper bullet and Mortar arc in code; the rest with the Burst |
 | `FEATURE-next-gen-tower-abilities.md` | Ability bars, currency, casts, the pane's Abilities list | upgrade tiers | draft |
-| `FEATURE-next-gen-sniper-tower.md` | The Sniper | tiers, looks, shot flight | Tiers 0 to III |
+| `FEATURE-next-gen-sniper-tower.md` | The Sniper | tiers, looks, shot flight | implemented |
 | `FEATURE-next-gen-splash-tower.md` | The Burst | tiers, looks, shot flight, abilities | Tiers 0 to III |
 | `FEATURE-next-gen-mortar-tower.md` | The Mortar | tiers, looks, shot flight | Tiers 0 to III |
 | `FEATURE-next-gen-cinder-tower.md` | The Scorcher; the one pool rule for burn, poison and Soulfire | tiers, looks | Tiers 0 to III |
@@ -230,7 +230,9 @@ keys until those towers are built.
   `ProcPayload.BreakShield`, `HitScaling.PerRangeShare`, `ProcCondition.TargetHasAnyOf` and `HitKind.BEAM` (the
   Sundial may take the last); keep each a built tower uses, delete the rest. The Radar's node pictograms
   (`sonar.*` in `PerkPictograms`) go once the Obelisk and the Beacon are built, or are renamed to the nodes that
-  use them.
+  use them. The Sniper left the hit conditions `FreshTarget`, `FocusAtLeast`, `TargetRankAtLeast`,
+  `TargetHealthBelow`, `BeyondRangeShare` and `All` (with `HitContext.freshTarget`), and on `AttackProfile` the
+  glancing penetration, `critsPierceShields` and the flat armor penetration, which no stat sets any more.
 - **Docs**: the README's tower tables and hotkeys, `docs/UI.md`, `docs/ARCHITECTURE.md`, and the `CLAUDE.md` lines the
   new system makes false (`td/tower/CLAUDE.md`'s "Upgrade tree" section first).
 

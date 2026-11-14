@@ -434,11 +434,8 @@ nothing within the noise of about one life, an Obelisk copy 3.5, a Mortar copy 5
 `FEATURE-aura-and-balance-pass.md` target of 0.7x to 1x). **The Scorcher was the exception** (its copy saved 17 and no node beat 0.6x of that); its tree got a balance pass, see
 the Cinder entry below. Reprice from
 the four-copy table, not the one-copy one; the cheapest nodes (Range at $9 to $18) top it by dividing by a tiny cost,
-so read their rows with the saved column. The Sniper's Marksman's Eye specials (Hollow Point, Fourth Shot, Shatter
-Shot) saved nothing until the Sniper's retune; see the crit entry below.
+so read their rows with the saved column.
 
-- Frenzy and Momentum's haste stack since the stat-driven plan (up to +200% attack speed); check the
-  Focused Optics chain with Momentum.
 - **Where:** `UpgradeTier.standard()`, and the `private static final UpgradeNode` constants in every
   leaf under `td.tower` (`SniperTower`/`SplashTower`/`PulseTower`/`MortarTower`/`SeekerTower`/
   `CinderTower`/`AuraTower`).
@@ -556,24 +553,15 @@ is a starting value, and the built-in waves that carry one were never rebalanced
 
 ### Critical-damage numbers are unbalanced placeholders
 
-Every tower crits for x1.5 (`AttackProfile.DEFAULT_CRIT_MULTIPLIER`) except the Sniper, born with
-5% at x2.0. Crit damage bonuses add to the multiplier, so the Sniper's crit reaches about x3.0
-(Tradecraft's streak +0.5, the Aura's Keen Edge +0.5), and Momentum multiplies a charged shot by 3
-on top: about x9 in one hit. Momentum was x5 (about x15); `td.BuildHarness` (40 seeds, 4 Snipers on
-Zigzag Path and Twisted Hourglass) showed the best builds saving the same lives with it at x3 or x5
-(Railgun with Momentum 9.6 and 10.5, Railgun with Headhunter 9.2), while Momentum on its own went from
-6.6 to 4.1 lives saved on Twisted Hourglass, still the best special by far. The Warden's
-on-crit-survived shield (30% for 100 ticks) is from the first crit pass.
+Every tower crits for x1.5 (`AttackProfile.DEFAULT_CRIT_MULTIPLIER`), the next-gen Sniper too: its crits
+come from Steady Aim's stacks and its tree (Rifling, Keen Eye, Killshot, the Fourth Shot), whose numbers are
+the feature request's paper values and were never measured in play. The Warden's on-crit-survived shield
+(30% for 100 ticks) is from the first crit pass.
 
-- Since the Sniper's retune (Steady Aim kept across targets, fading a stack 3 s after the last shot, Marksman's Eye +20% damage a stack, the Marksman's
-  Eye specials keeping its own targeting, stronger specials), four copies on Zigzag Path save 7.1 to 9.3 lives with
-  Hollow Point, Fourth Shot, Shatter Shot, Ricochet or Headhunter, and 17.6 with Momentum; before, the first three
-  lost lives. Momentum is still far ahead.
-- **Where:** `AttackProfile.DEFAULT_CRIT_MULTIPLIER`, `SniperTower.CRIT_CHANCE` and
-  `CRIT_MULTIPLIER`, the Momentum node in `SniperTower`, `CritStreakMechanic`, and
+- **Where:** `AttackProfile.DEFAULT_CRIT_MULTIPLIER`, the Sniper's constants and nodes in `SniperTower`, and
   `WardenEnemy`'s `OnCriticalHitTakenTrigger` ability.
-- **Approach:** raise the five other Sniper specials until a build with each saves about what Momentum's does,
-  checking each with `td.BuildHarness`; every number here is a named constant.
+- **Approach:** in the bundle's final balancing, measure each Sniper build with `td.BuildHarness`; every number
+  here is a named constant.
 
 ## Interface
 

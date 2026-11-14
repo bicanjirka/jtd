@@ -24,19 +24,6 @@ class ActiveTowerStatusesTest {
     }
 
     @Test
-    void aStatusThatKeepsARunningCopyIsNotRestarted() {
-        TowerStatus keeping = FRENZY.keepingARunningOne();
-        this.statuses.grant(keeping, 0, 1f);
-        this.statuses.spendShot();
-        this.statuses.spendShot();
-
-        this.statuses.grant(keeping, 10, 1f);
-        this.statuses.spendShot();
-
-        assertThat(this.statuses.modifiers().isNone()).isTrue();
-    }
-
-    @Test
     void aShotStatusIsSpentOneShotAtATime() {
         this.statuses.grant(FRENZY, 0, 1f);
 

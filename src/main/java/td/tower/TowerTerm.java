@@ -17,12 +17,9 @@ import java.util.Locale;
 public enum TowerTerm implements Term {
     STEADY_AIM("Steady Aim", Side.BUFF, "each shot adds a stack, kept across targets and kills; " + TermNumbers.seconds(AimFocus.STACK_SECONDS)
             + " after the last shot a stack fades, then the next"),
-    CRIT_STREAK("Crit Streak", Side.BUFF, "crits in a row make the next crit hit harder"),
     FOCUS("Focus", Side.BUFF, "hits on one target build it; it starts over on a new target"),
     FRENZY("Frenzy", Side.BUFF, "faster attacks for the next few shots; a second one starts them over"),
     HASTE("Haste", Side.BUFF, "faster attacks for a while"),
-    CHARGED_SHOT("Charged Shot", Side.BUFF, "the next shot hits far harder and ignores armor and plating"),
-    PATIENCE("Patience", Side.BUFF, "the next shot is a crit"),
     FOURTH_SHOT("Fourth Shot", Side.BUFF, "a shot that is sure to crit"),
     SILVER_ROUND("Silver Round", Side.BUFF, "a shot of magic damage that ignores some magic resist"),
     HOLLOW_POINT("Hollow Point", Side.BUFF, "a shot that hits harder"),

@@ -10,7 +10,6 @@ final class TowerTermPictograms {
             // Steady Aim
             Map.entry("tower.steady_aim", "S O12 12 8.4 ; T M12 3.6V8.4 M12 15.6V20.4 M3.6 12H8.4 M15.6 12H20.4 ; F O12 12 1.7"),
             // Crit Streak
-            Map.entry("tower.crit_streak", "F M9.5 2.6L11.2 8.3L16.9 10L11.2 11.7L9.5 17.4L7.8 11.7L2.1 10L7.8 8.3Z ; F M17.2 12.4L18.3 15.6L21.5 16.7L18.3 17.8L17.2 21L16.1 17.8L12.9 16.7L16.1 15.6Z"),
             // Focus
             Map.entry("tower.focus", "S M3.8 9V3.8H9 M15 3.8H20.2V9 M20.2 15V20.2H15 M9 20.2H3.8V15 ; F O12 12 2.8"),
             // Frenzy
@@ -18,9 +17,7 @@ final class TowerTermPictograms {
             // Haste
             Map.entry("tower.haste", "S O12 13.6 7.6 ; S M12 13.6V9.4 M12 13.6L15 15.4 M18.4 6.4L20 4.8 ; F M9.8 2.4H14.2V4.8H9.8Z"),
             // Charged Shot
-            Map.entry("tower.charged_shot", "F M4.6 21V10.5C4.6 7.2 6.1 4.8 7.6 3.2C9.1 4.8 10.6 7.2 10.6 10.5V21Z ; X M4.6 13.2H10.6 ; F M18 2.6L12.8 11.8H16.4L15 21.4L20.8 10.4H17.2Z"),
             // Patience
-            Map.entry("tower.patience", "S M5.6 2.8H18.4 M5.6 21.2H18.4 M7.4 2.8C7.4 8 12 10 12 12C12 14 7.4 16 7.4 21.2 M16.6 2.8C16.6 8 12 10 12 12C12 14 16.6 16 16.6 21.2 ; F M9.2 21.2C9.4 18.6 11 17.4 12 16.8C13 17.4 14.6 18.6 14.8 21.2Z M9.6 6.6H14.4C13.8 8.4 12.8 9.4 12 10C11.2 9.4 10.2 8.4 9.6 6.6Z"),
             // Fourth Shot
             Map.entry("tower.fourth_shot", "T O12 12 9.6 ; F M9.6 20.6V10C9.6 6.6 11 4.2 12 2.6C13 4.2 14.4 6.6 14.4 10V20.6Z ; X M9.6 13.4H14.4"),
             // Silver Round

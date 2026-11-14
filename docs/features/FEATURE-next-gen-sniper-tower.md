@@ -1,6 +1,6 @@
 # Feature Request: Next-gen Sniper Tower
 
-**Status:** draft, 2026-11-11, reviewed with the whole bundle 2026-11-13. Tiers 0 to III and the look, from the visual
+**Status:** implemented 2026-11-14; drafted 2026-11-11, reviewed with the whole bundle 2026-11-13. Tiers 0 to III and the look, from the visual
 request's Sniper section (`FEATURE-next-gen.md`, appendix) and its handwritten notes, rewritten to the node rules in
 `FEATURE-next-gen-upgrade-tiers.md`. Part of `FEATURE-next-gen.md`.
 

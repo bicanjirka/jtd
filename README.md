@@ -176,7 +176,7 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 
 | Tower  | Price | Behaviour                                                                                                                                           |
 |--------|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path when its tracer arrives, a moment after it fires; each shot builds on the last, whichever enemy it hits, so the longer it keeps firing, the likelier it crits; a stack fades 3 s after its last shot, one at a time (Crit damage 200%) |
+| Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path when its tracer arrives, a moment after it fires; each shot adds a stack of Steady Aim, whichever enemy it hits, so the longer it keeps firing, the faster it fires and the likelier it crits; a stack fades 3 s after its last shot, one at a time. Its tree has no fork: every 4th shot sure to crit, loaded with a Silver Round or a Hollow Point; a crit that starts a Frenzy, ricochets or sunders; an Executioner for the wounded or a Headhunter for elites and bosses |
 | Burst  | 15    | Instant blast on a random target in range, physical damage falling off with distance; attuned, it aims at the most crowded group and Saturates what it hits. Forks into the Stormcaller (lightning arcs on past the blast) or the Hexer (every 4th shot casts a hex) |
 | Mortar | 30    | Lobs a slow, unguided shell, high over the board, at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider. One head adds heavier shells and nukes, the other shrapnel and bombs along the path, and a ballistics line speeds the shell up, leads the target, widens the blast and fires salvos. Its specials turn every third shell into a Napalm, Tar or Cryo shell that leaves burning, tarred or frozen ground |
 | Scorcher | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
@@ -370,13 +370,11 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Term | Side | What it does |
 |---|---|---|
 | Steady Aim | Buff | Each shot adds a stack, kept across targets and kills; 3 s after the last shot a stack fades, then the next. |
-| Crit Streak | Buff | Crits in a row make the next crit hit harder. |
 | Focus | Buff | Hits on one target build it; it starts over on a new target. |
-| Frenzy | Buff | Faster attacks for the next few shots. |
+| Frenzy | Buff | Faster attacks for the next few shots; a second one starts them over. |
 | Haste | Buff | Faster attacks for a while. |
-| Charged Shot | Buff | The next shot hits far harder and ignores armor and plating. |
-| Patience | Buff | The next shot is a crit. |
-| Deadeye Round | Buff | A shot that is a crit and hits harder. |
+| Fourth Shot | Buff | A shot that is sure to crit. |
+| Hollow Point | Buff | A shot that hits harder. |
 | Silver Round | Buff | A shot of magic damage that ignores some magic resist. |
 | Bracketing | Buff | Each shell landing near the last hits harder and wider, a step at a time; a shell elsewhere clears it. |
 | Napalm Shell | Buff | A shell whose blast is magic and leaves flames that apply Burn. |
@@ -427,7 +425,7 @@ burning through a freeze.
 
 Only a hit can crit: a shot, a blast, a beam pass. Damage over time (a burn, a poison, a field)
 never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
-own Crit damage (150%, the Sniper 200%). A guaranteed crit lands whenever the enemy's
+own Crit damage (150% unless an upgrade raises it). A guaranteed crit lands whenever the enemy's
 resilience is below 100; at 100 nothing crits. Negative resilience makes crits hit harder, and negative agility multiplies their chance (-50 turns 20% into 30%);
 Exposed takes 50 agility and 50 resilience. Armor and magic resist never go below 0.
 
@@ -435,10 +433,8 @@ An enemy with agility can dodge a hit aimed at it alone: the Sniper's shot and i
 The chance is `agility / (agility + 100)` (25 dodges 20%, 100 dodges 50%),
 after the tower's accuracy, which cancels agility point for point. A dodged hit deals nothing, can't
 crit and sets off nothing a hit would. Area damage,
-damage over time, the Railgun's line, arcs and missiles are never dodged, and neither is a
-guaranteed crit, so a Marked enemy can't dodge. A frozen or Dazed enemy can't dodge at all. The
-Sniper's Steady Aim stacks add 10 accuracy each from Attune; with Marksman's Eye a dodged shot makes
-the next one a guaranteed crit, and Focused Optics II's Frenzy also starts on a dodged shot.
+damage over time, arcs and missiles are never dodged, and neither is a
+guaranteed crit, so a Marked enemy can't dodge. A frozen or Dazed enemy can't dodge at all.
 
 ### Spawn shapes
 

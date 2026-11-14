@@ -72,7 +72,7 @@ class SplashTowerTest {
     @Test
     void aNextShotDamageStatusLandsOnTheBlastItIsSpentBy() {
         SplashTower tower = this.tower();
-        tower.grantStatus(TowerStatus.nextShots(TowerTerm.CHARGED_SHOT, 1, TowerModifiers.damageTimes(3f)));
+        tower.grantStatus(TowerStatus.nextShots(TowerTerm.HASTE, 1, TowerModifiers.damageTimes(3f)));
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
         this.enemies(enemy);
 

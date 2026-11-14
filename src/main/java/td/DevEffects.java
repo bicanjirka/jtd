@@ -151,11 +151,6 @@ public final class DevEffects {
                     in -> TowerStatus.timed(term, TowerModifiers.attackSpeed(in.value(1) / 100f), in.ticks(0)));
             case FRENZY -> status(List.of(SHOTS, ATTACK_SPEED),
                     in -> TowerStatus.nextShots(term, in.whole(0), TowerModifiers.attackSpeed(in.value(1) / 100f)));
-            case PATIENCE -> status(List.of(SHOTS), in -> TowerStatus.nextShots(term, in.whole(0),
-                    StatModifiers.<TowerStat>none()).withCapability(TowerCapability.GUARANTEED_CRIT));
-            case CHARGED_SHOT -> status(List.of(SHOTS, DAMAGE_TIMES), in -> TowerStatus.nextShots(term, in.whole(0),
-                    TowerModifiers.damageTimes(in.value(1)).plus(TowerModifiers.armorPenetration(1f))
-                            .plus(TowerModifiers.flatPenetration(1f))));
             case FOURTH_SHOT -> status(List.of(SHOTS), in -> TowerStatus.nextShots(term, in.whole(0),
                     StatModifiers.<TowerStat>none()).withCapability(TowerCapability.GUARANTEED_CRIT));
             case SILVER_ROUND -> status(List.of(SHOTS, MAGIC_IGNORED), in -> TowerStatus.nextShots(term, in.whole(0),
@@ -164,7 +159,7 @@ public final class DevEffects {
                     TowerModifiers.damagePercent(in.value(1) / 100f)));
             case JAMMED -> new Builds<>(List.of(SECONDS, ATTACK_SPEED_LOST, RANGE_LOST), in -> new TowerGrant.Jam(in.ticks(0),
                     new DisruptionAura(JAM_REACH_CELLS * in.scale(), in.value(1) / 100f, in.value(2))));
-            case STEADY_AIM, CRIT_STREAK, FOCUS, BRACKETING, NEST, EVENT_HORIZON, INTERFERENCE, STOKE -> new Refuses<>(KEPT_BY_THE_TOWER);
+            case STEADY_AIM, FOCUS, BRACKETING, NEST, EVENT_HORIZON, INTERFERENCE, STOKE -> new Refuses<>(KEPT_BY_THE_TOWER);
             case NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, NUKE_SHELL, CRYO_MISSILE, ARCANE_MISSILE, EMP_MISSILE, TRACER_MISSILE,
                     SHATTER, ARC, HEX, SHRAPNEL, BOMBLET -> new Refuses<>(FROM_AN_UPGRADE);
             case AURA, KINSHIP -> new Refuses<>("comes from a Beacon");

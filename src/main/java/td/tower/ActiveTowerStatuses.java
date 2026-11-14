@@ -21,9 +21,6 @@ final class ActiveTowerStatuses {
      */
     void grant(TowerStatus status, int nowTick, float buffLength) {
         int running = this.indexOf(status.term());
-        if (running >= 0 && status.keepsRunning()) {
-            return;
-        }
         Held next = status.shots() > 0
                 ? new Held(status, 0, status.lengthened() ? Math.round(status.shots() * buffLength) : status.shots(), 0)
                 : new Held(status, nowTick + Math.round(status.durationTicks() * buffLength), 0,
