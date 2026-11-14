@@ -92,24 +92,24 @@ final class TowerLooks {
     private static Map<TowerLook, Row> rows() {
         Map<TowerLook, Row> rows = new EnumMap<>(TowerLook.class);
         List<Color> storm = ramp(0xe2746c, 0x8496ff, 0xc0c9ff, 0xe0dee8);
-        rows.put(TowerLook.SNIPER, new Row(Color.GREEN, s -> Java2DFrameRenderer.triangleShape(s, true),
+        rows.put(TowerLook.SNIPER, new Row(new Color(0xa6d674), s -> Java2DFrameRenderer.triangleShape(s, true),
                 s -> new Rectangle2D.Float(0, -s * 0.22f, s * 1.3f, s * 0.44f),
                 ramp(0xa6d674, 0x5cc8b0, 0x93dbcb, 0xc9e8ce)));
         // Before the fork the Burst grows toward the Stormcaller, its first side.
-        rows.put(TowerLook.SPLASH, new Row(Color.RED, TowerLooks::splashBody, TowerLooks::splashHead, storm));
-        rows.put(TowerLook.STORMCALLER, new Row(new Color(80, 150, 255), TowerLooks::splashBody, TowerLooks::splashHead,
+        rows.put(TowerLook.SPLASH, new Row(new Color(0xe2746c), TowerLooks::splashBody, TowerLooks::splashHead, storm));
+        rows.put(TowerLook.STORMCALLER, new Row(new Color(0x8496ff), TowerLooks::splashBody, TowerLooks::splashHead,
                 storm));
-        rows.put(TowerLook.HEXER, new Row(new Color(170, 80, 230), TowerLooks::splashBody, TowerLooks::splashHead,
+        rows.put(TowerLook.HEXER, new Row(new Color(0xb88ae8), TowerLooks::splashBody, TowerLooks::splashHead,
                 ramp(0xe2746c, 0xb88ae8, 0xdbc3f3, 0xeddce2)));
-        rows.put(TowerLook.PULSE, new Row(Color.ORANGE, s -> Java2DFrameRenderer.starShape(5, s, s * 0.45f),
+        rows.put(TowerLook.PULSE, new Row(new Color(0x8f86b8), s -> Java2DFrameRenderer.starShape(5, s, s * 0.45f),
                 TowerLooks::orbitingStar, ramp(0x8f86b8, 0xa89fd2, 0xc6c0e1, 0xe2dad8)));
-        rows.put(TowerLook.AURA, new Row(Color.WHITE, TowerLooks::pulsar, Java2DFrameRenderer::circleShape,
+        rows.put(TowerLook.AURA, new Row(new Color(0xd8b866), TowerLooks::pulsar, Java2DFrameRenderer::circleShape,
                 ramp(0xd8b866, 0xecd48c, 0xf2e3b3, 0xf8ecc2)));
-        rows.put(TowerLook.MORTAR, new Row(new Color(139, 90, 43), Java2DFrameRenderer::diamondShape,
+        rows.put(TowerLook.MORTAR, new Row(new Color(0xc39062), Java2DFrameRenderer::diamondShape,
                 Java2DFrameRenderer::headArrowShape, ramp(0xc39062, 0xe0b070, 0xebcba1, 0xf5e0b8)));
-        rows.put(TowerLook.SEEKER, new Row(new Color(80, 180, 255), TowerLooks::kite, Java2DFrameRenderer::headArrowShape,
+        rows.put(TowerLook.SEEKER, new Row(new Color(0x5cc4e2), TowerLooks::kite, Java2DFrameRenderer::headArrowShape,
                 ramp(0x5cc4e2, 0x8fd0f2, 0xb5e0f6, 0xdaeae3)));
-        rows.put(TowerLook.CINDER, new Row(new Color(255, 90, 30), TowerLooks::flame, Java2DFrameRenderer::headArrowShape,
+        rows.put(TowerLook.CINDER, new Row(new Color(0xea862a), TowerLooks::flame, Java2DFrameRenderer::headArrowShape,
                 ramp(0xea862a, 0xf0a040, 0xf5c081, 0xfadaa8)));
         return rows;
     }

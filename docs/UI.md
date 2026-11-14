@@ -85,19 +85,18 @@ private to that painter. They are greys too; a new control uses the ramp.
 
 | Tower | Value | On the lightest floor | Nearest | Note |
 |---|---|---|---|---|
-| Sniper | `#00FF00` | 14.3:1 | Aura, 33.3 | Pure primary. See the warning below |
-| Burst | `#FF0000` | 4.9:1 | Cinder, 9.1 | Pure primary, and the closest pair of all |
-| Stormcaller | `#5096FF` | 6.7:1 | Seeker, 10.2 | |
-| Hexer | `#AA50E6` | 4.7:1 | Stormcaller, 28.5 | |
-| Pulse | `#FFC800` | 12.6:1 | Aura, 30.9 | Pure primary |
-| Aura | `#FFFFFF` | 19.6:1 | Seeker, 29.9 | |
-| Mortar | `#8B5A2B` | 3.4:1 | Cinder, 25.1 | Barely above the 3:1 floor in section 7 |
-| Seeker | `#50B4FF` | 8.7:1 | Stormcaller, 10.2 | |
-| Cinder | `#FF5A1E` | 6.3:1 | Burst, 9.1 | |
+| Sniper | `#A6D674` | 11.7:1 | Beacon, 20.4 | 10.0 from the healing ground's green: the softest green that keeps that distance |
+| Burst | `#E2746C` | 6.5:1 | Mortar, 19.1 | 5.1 from Problem red, which is only ever text |
+| Stormcaller | `#8496FF` | 7.3:1 | Hexer, 14.1 | |
+| Hexer | `#B88AE8` | 7.3:1 | Obelisk, 11.1 | |
+| Mortar | `#C39062` | 7.0:1 | Scorcher, 10.8 | 8.6 from Physical orange, which is text and numbers |
+| Scorcher | `#EA862A` | 7.4:1 | Mortar, 10.8 | 4.9 from Physical orange |
+| Aerie | `#5CC4E2` | 9.8:1 | Stormcaller, 22.9 | 9.8 from Magic blue |
+| Obelisk | `#8F86B8` | 5.9:1 | Hexer, 11.1 | |
+| Beacon | `#D8B866` | 10.2:1 | Mortar, 15.2 | |
 
-**Softening a tower is not free.** The obvious Sniper green, `#48D860`, sits 3.1 from the healing zone `#5ADC78`, while
-today's pure green is 12.6 from it. Softening the primaries needs each new value checked against everything else in its
-hue (section 6).
+The three misses against text colours (Burst, Mortar, Scorcher) are accepted: a tower's art and a line of text are
+never read against each other.
 
 **Levels.** Each level has one card colour, from its own lanes (`withCardColor`, the first lane's by default), and its floor.
 Text on the card uses the text tint, which `TextTint` computes: the lane colour lightened only as far as 7:1.
