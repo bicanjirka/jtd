@@ -4,7 +4,6 @@ import td.economy.Refund;
 import td.economy.SellRefund;
 import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.TowerRank;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradePath;
 import td.tower.upgrade.UpgradeTier;
@@ -295,14 +294,13 @@ final class UpgradeSheetText {
     }
 
     /**
-     * Beside the XP bar: "XP 40 / 60 to Tier I" toward the next tier XP opens, or the rank once none is left:
-     * "XP 340 · Hero".
+     * Beside the XP bar: "XP 40 / 60 to Tier I" toward the next tier XP opens, or the XP alone once none is left.
      */
     static String xpLabel(int xp, UpgradeTree tree) {
         OptionalInt next = nextTier(tree, xp);
         return next.isPresent()
                 ? "XP " + xp + " / " + tree.tiers().get(next.getAsInt()).xp() + " to " + UpgradeTier.nameOf(next.getAsInt())
-                : "XP " + xp + " · " + TermNumbers.titleCase(TowerRank.of(xp));
+                : "XP " + xp;
     }
 
     /** The lowest tier whose XP is still ahead of {@code xp}. */

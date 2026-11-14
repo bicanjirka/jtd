@@ -18,21 +18,15 @@ public enum Palette {
     TOWER_SEEKER_BODY,
     TOWER_CINDER_BODY,
     TOWER_AURA_RING,
-    /** A faint line from an aura to a tower it buffs. */
-    TOWER_AURA_LINK,
-    TOWER_AURA_LINK_REACH,
-    TOWER_AURA_LINK_CHOSEN,
     TOWER_AURA_RALLY,
     TOWER_AURA_MENTEE,
-    /** Tier marks on the board and perk icon frames, one role per upgrade tier from the bottom. */
+    /** Perk icon frames, one role per upgrade tier from the bottom. */
     TOWER_UPGRADE_TIER_0,
     TOWER_UPGRADE_TIER_1,
     TOWER_UPGRADE_TIER_2,
     TOWER_UPGRADE_TIER_3,
-    /** A crowned tower's halo ring and pip: its top tier open. */
-    TOWER_TRANSCENDENT,
-    /** A tower's rank pips, its rank-up glow and its XP row. */
-    TOWER_RANK,
+    /** The one mark on a tower that has an upgrade it can buy now. */
+    TOWER_UPGRADE_READY,
     TOWER_SNIPER_BEAM,
     /** The Sniper's aim line, brighter with each Steady Aim stack. */
     TOWER_SNIPER_LASER,

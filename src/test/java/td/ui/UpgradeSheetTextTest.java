@@ -8,7 +8,6 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.NodeWords;
 import td.tower.TowerModifiers;
-import td.tower.TowerRank;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradePath;
 import td.tower.upgrade.UpgradeTier;
@@ -340,11 +339,10 @@ class UpgradeSheetTextTest {
     }
 
     @Test
-    void onceEveryTiersXpIsMetTheLabelNamesTheRank() {
+    void onceEveryTiersXpIsMetTheLabelShowsTheXpAlone() {
         int xp = TREE.tiers().getLast().xp();
 
-        assertThat(UpgradeSheetText.xpLabel(xp, TREE))
-                .isEqualTo("XP " + xp + " · " + TermNumbers.titleCase(TowerRank.of(xp)));
+        assertThat(UpgradeSheetText.xpLabel(xp, TREE)).isEqualTo("XP " + xp);
     }
 
     @Test

@@ -11,7 +11,6 @@ import td.tower.NodeProgress;
 import td.tower.NodeWords;
 import td.tower.TowerBuffState;
 import td.tower.TowerInspection;
-import td.tower.TowerRank;
 import td.tower.TowerStatLine;
 import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeLine;
@@ -91,8 +90,7 @@ final class TowerSheetText {
         iconRow("Buffs", conditionIcons(tower, Side.BUFF)).ifPresent(lines::add);
         iconRow("Debuffs", conditionIcons(tower, Side.DEBUFF)).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
-        lines.add(Row.toned(Glyph.FILLED_DIAMOND, Palette.TOWER_RANK, "XP",
-                TermNumbers.number(tower.xp()) + " · " + TermNumbers.titleCase(TowerRank.of(tower.xp()))));
+        lines.add(Row.plain(Glyph.FILLED_DIAMOND, "XP", TermNumbers.number(tower.xp())));
         lines.add(Row.plain(Glyph.SKULL, "Kills", TermNumbers.number(tower.kills()) + " · "
                 + TermNumbers.number(DamageUnits.inPoints(tower.damageDealt()))).withGloss("dmg", ""));
         return new InfoSheet(lines);

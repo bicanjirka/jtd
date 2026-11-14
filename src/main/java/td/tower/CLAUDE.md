@@ -94,7 +94,7 @@
   (`earnXp(bounty, bonus)`), so a small bonus is never rounded away.
 - `ExperienceAwarder` runs on a tick for every finished walk, so it stays a pass or two over the towers, never
   a pass over towers inside a pass over towers inside a pass over the reached ones.
-- `TowerExperience` publishes XP and the rank-up tick as one snapshot; only the game loop earns.
+- `TowerExperience` publishes XP through one `volatile`; only the game loop earns.
 
 ## Upgrade tree
 

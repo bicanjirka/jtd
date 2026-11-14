@@ -41,7 +41,6 @@ import td.ui.render.RefundMarkDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.RingDraw;
 import td.ui.render.SheetLine;
-import td.ui.render.SlotMarkDraw;
 import td.ui.render.SmokeDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.TowerEffectDraw;
@@ -73,7 +72,6 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -108,28 +106,11 @@ public final class Java2DFrameRenderer {
 
     /** Small, so the toolbar reads as a row of glyphs. */
     private static final float ICON_BODY_SIZE_FRACTION = 0.25f;
-    /** Slot pip radius and spacing, as fractions of the body size. */
-    private static final float SLOT_PIP_RADIUS_FRACTION = 0.11f;
-    private static final float SLOT_PIP_SPACING_FRACTION = 0.3f;
-    private static final float SLOT_PIP_ROW_OFFSET_FRACTION = 0.95f;
-    private static final float SLOT_CHEVRON_SIZE_FRACTION = 0.16f;
-    private static final float SLOT_CHEVRON_ROW_OFFSET_FRACTION = 1.05f;
-    private static final float SLOT_CHEVRON_SPACING_FRACTION = 0.45f;
-    /** Halo radius relative to the body; every body shape stays within its size. */
-    private static final float ENCHANT_HALO_RADIUS_FRACTION = 1.3f;
-    private static final float ENCHANT_HALO_STROKE_WIDTH = 2.0f;
-    /** Outside the enchant halo, so a tower wearing both shows both. */
-    private static final float TRANSCENDENT_HALO_RADIUS_FRACTION = 1.5f;
-    private static final float TRANSCENDENT_HALO_STROKE_WIDTH = 1.6f;
-    private static final int TRANSCENDENT_HALO_DASHES = 8;
-    private static final int TRANSCENDENT_HALO_ALPHA = 200;
-    private static final float TRANSCENDENT_PIP_SCALE = 1.6f;
-    /** Rank pips stack up the body's left side, apart from the slot pips below it. */
-    private static final float RANK_PIP_RADIUS_FRACTION = 0.09f;
-    private static final float RANK_PIP_SPACING_FRACTION = 0.32f;
-    private static final float RANK_PIP_COLUMN_OFFSET_FRACTION = 0.95f;
-    private static final float RANK_UP_GLOW_MAX_RADIUS_FRACTION = 1.9f;
-    private static final float RANK_UP_GLOW_STROKE_WIDTH = 2.5f;
+    /** The upgrade arrow, as shares of a cell: its size, and its centre's inset from the cell's top-left corner. */
+    private static final float UPGRADE_ARROW_SIZE = 0.085f;
+    private static final float UPGRADE_ARROW_INSET = 0.15f;
+    private static final float UPGRADE_ARROW_OUTLINE = 0.045f;
+    private static final Color UPGRADE_ARROW_EDGE = new Color(13, 14, 16);
     /** Turret head size relative to a cell. */
     private static final float TOWER_HEAD_SIZE_FRACTION = 0.24f;
 
@@ -329,17 +310,13 @@ public final class Java2DFrameRenderer {
             case TOWER_SEEKER_BODY -> TowerLooks.color(TowerLook.SEEKER);
             case TOWER_CINDER_BODY -> TowerLooks.color(TowerLook.CINDER);
             case TOWER_AURA_RING -> Color.WHITE;
-            case TOWER_AURA_LINK -> withAlpha(Color.WHITE, 60);
-            case TOWER_AURA_LINK_REACH -> withAlpha(new Color(120, 200, 255), 80);
-            case TOWER_AURA_LINK_CHOSEN -> withAlpha(new Color(255, 215, 90), 110);
             case TOWER_AURA_RALLY -> new Color(255, 170, 60);
             case TOWER_AURA_MENTEE -> new Color(255, 215, 90);
             case TOWER_UPGRADE_TIER_3 -> new Color(127, 212, 255);
             case TOWER_UPGRADE_TIER_0 -> new Color(225, 225, 230);
             case TOWER_UPGRADE_TIER_1 -> new Color(255, 200, 60);
             case TOWER_UPGRADE_TIER_2 -> new Color(200, 100, 255);
-            case TOWER_TRANSCENDENT -> new Color(255, 205, 70);
-            case TOWER_RANK -> new Color(205, 215, 235);
+            case TOWER_UPGRADE_READY -> new Color(0x6e, 0xe0, 0x8a);
             case TOWER_SNIPER_BEAM -> Color.GREEN;
             case TOWER_SNIPER_LASER -> new Color(255, 60, 60);
             case TOWER_SNIPER_SILVER -> new Color(170, 210, 255);
@@ -540,6 +517,11 @@ public final class Java2DFrameRenderer {
         }
         for (TurretHeadDraw head : frame.towerHeads()) {
             this.paintTurretHead(g2, head, frame.scale());
+        }
+        for (TowerSpriteDraw sprite : frame.towerSprites()) {
+            if (sprite.upgradeReady()) {
+                this.paintUpgradeArrow(g2, sprite, frame.scale());
+            }
         }
         for (TowerEffectDraw effect : frame.towerEffects()) {
             this.paintTowerEffect(g2, effect);
@@ -1265,140 +1247,35 @@ public final class Java2DFrameRenderer {
         }
         AffineTransform save = g2.getTransform();
         g2.translate(sprite.centerX(), sprite.centerY());
-        float bodySize = scale * TOWER_BODY_SIZE_FRACTION;
-        if (sprite.crowned()) {
-            this.paintTranscendentHalo(g2, sprite.haloTurn(), bodySize);
-        }
-        this.paintEnchantHalo(g2, sprite.enchantPulse(), bodySize);
-        this.paintTowerBody(g2, sprite.look(), bodySize);
-        this.paintSlotPips(g2, sprite.slotMarks(), sprite.crowned(), bodySize);
-        this.paintSlotReadyChevrons(g2, sprite.slotMarks(), bodySize);
-        this.paintRankPips(g2, sprite.rank(), bodySize);
-        if (sprite.rankUpProgress() >= 0f) {
-            this.paintRankUpGlow(g2, sprite.rankUpProgress(), bodySize);
-        }
+        this.paintTowerBody(g2, sprite.look(), scale * TOWER_BODY_SIZE_FRACTION);
         g2.setTransform(save);
     }
 
-    /** One small diamond per rank above Recruit, stacked upward beside the body. */
-    private void paintRankPips(Graphics2D g2, int rank, float bodySize) {
-        if (rank == 0) {
-            return;
-        }
-        g2.setColor(colorFor(Palette.TOWER_RANK));
-        float radius = bodySize * RANK_PIP_RADIUS_FRACTION;
-        float spacing = bodySize * RANK_PIP_SPACING_FRACTION;
-        float x = -bodySize * RANK_PIP_COLUMN_OFFSET_FRACTION;
-        for (int i = 0; i < rank; i++) {
-            AffineTransform save = g2.getTransform();
-            g2.translate(x, (rank - 1) * spacing / 2f - i * spacing);
-            g2.fill(diamondShape(radius * 1.3f));
-            g2.setTransform(save);
-        }
-    }
-
-    /** A ring that widens and fades as {@code progress} runs from 0 to 1. */
-    private void paintRankUpGlow(Graphics2D g2, float progress, float bodySize) {
-        float radius = bodySize * (0.7f + (RANK_UP_GLOW_MAX_RADIUS_FRACTION - 0.7f) * progress);
-        Stroke previousStroke = g2.getStroke();
-        g2.setStroke(new BasicStroke(RANK_UP_GLOW_STROKE_WIDTH));
-        g2.setColor(withAlpha(colorFor(Palette.TOWER_RANK), Math.round(230 * (1f - progress))));
-        g2.draw(new Ellipse2D.Float(-radius, -radius, radius * 2, radius * 2));
-        g2.setStroke(previousStroke);
-    }
-
-    /** A ring of gold dashes, turned {@code turn} of the way round. */
-    private void paintTranscendentHalo(Graphics2D g2, float turn, float bodySize) {
-        float radius = bodySize * TRANSCENDENT_HALO_RADIUS_FRACTION;
-        Stroke previousStroke = g2.getStroke();
-        g2.setStroke(new BasicStroke(TRANSCENDENT_HALO_STROKE_WIDTH, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(withAlpha(colorFor(Palette.TOWER_TRANSCENDENT), TRANSCENDENT_HALO_ALPHA));
-        double dash = 360.0 / TRANSCENDENT_HALO_DASHES;
-        for (int i = 0; i < TRANSCENDENT_HALO_DASHES; i++) {
-            g2.draw(new Arc2D.Float(-radius, -radius, radius * 2, radius * 2,
-                    (float) (turn * 360.0 + i * dash), (float) (dash * 0.55), Arc2D.OPEN));
-        }
-        g2.setStroke(previousStroke);
-    }
-
-    private void paintEnchantHalo(Graphics2D g2, float pulse, float bodySize) {
-        if (pulse <= 0f) {
-            return;
-        }
-        float radius = bodySize * ENCHANT_HALO_RADIUS_FRACTION;
-        Stroke previousStroke = g2.getStroke();
-        g2.setStroke(new BasicStroke(ENCHANT_HALO_STROKE_WIDTH));
-        g2.setColor(withAlpha(colorFor(Palette.TOWER_UPGRADE_TIER_2), Math.round(80 + pulse * 150)));
-        g2.draw(new Ellipse2D.Float(-radius, -radius, radius * 2, radius * 2));
-        g2.setStroke(previousStroke);
-    }
-
-    /**
-     * Pips below a tower, one per owned node, grouped by tier with a gap between groups. A
-     * crowned tower's last top-tier pip is a gold diamond: another tier's pips may be gold too, so the shape tells
-     * them apart.
-     */
-    private void paintSlotPips(Graphics2D g2, List<SlotMarkDraw> marks, boolean crowned, float bodySize) {
-        List<Color> pipColors = new ArrayList<>();
-        int crownIndex = -1;
-        for (SlotMarkDraw mark : marks) {
-            if (mark.level() == 0) {
-                continue;
-            }
-            if (!pipColors.isEmpty()) {
-                pipColors.add(null);
-            }
-            Color color = colorFor(mark.palette());
-            for (int i = 0; i < mark.level(); i++) {
-                pipColors.add(color);
-            }
-            if (crowned && mark == marks.getLast()) {
-                crownIndex = pipColors.size() - 1;
-                pipColors.set(crownIndex, colorFor(Palette.TOWER_TRANSCENDENT));
-            }
-        }
-        if (pipColors.isEmpty()) {
-            return;
-        }
-        float pipRadius = bodySize * SLOT_PIP_RADIUS_FRACTION;
-        float spacing = bodySize * SLOT_PIP_SPACING_FRACTION;
-        float y = bodySize * SLOT_PIP_ROW_OFFSET_FRACTION;
-        float x = -(pipColors.size() - 1) * spacing / 2f;
-        for (int i = 0; i < pipColors.size(); i++) {
-            Color color = pipColors.get(i);
-            if (color != null) {
-                g2.setColor(color);
-                if (i == crownIndex) {
-                    AffineTransform save = g2.getTransform();
-                    g2.translate(x, y);
-                    g2.fill(diamondShape(pipRadius * TRANSCENDENT_PIP_SCALE));
-                    g2.setTransform(save);
-                } else {
-                    g2.fill(new Ellipse2D.Float(x - pipRadius, y - pipRadius, pipRadius * 2, pipRadius * 2));
-                }
-            }
-            x += spacing;
-        }
-    }
-
-    private void paintSlotReadyChevrons(Graphics2D g2, List<SlotMarkDraw> marks, float bodySize) {
-        List<Palette> ready = marks.stream().filter(SlotMarkDraw::ready).map(SlotMarkDraw::palette).toList();
-        if (ready.isEmpty()) {
-            return;
-        }
-        float size = bodySize * SLOT_CHEVRON_SIZE_FRACTION;
-        float spacing = bodySize * SLOT_CHEVRON_SPACING_FRACTION;
-        float y = -bodySize * SLOT_CHEVRON_ROW_OFFSET_FRACTION;
-        float x = -(ready.size() - 1) * spacing / 2f;
-        Shape upChevron = AffineTransform.getRotateInstance(-Math.PI / 2).createTransformedShape(chevronShape(size));
+    /** One green up arrow in the cell's top-left corner, the same whichever tier the upgrade is in. */
+    private void paintUpgradeArrow(Graphics2D g2, TowerSpriteDraw sprite, int scale) {
         AffineTransform save = g2.getTransform();
-        for (Palette palette : ready) {
-            g2.setColor(colorFor(palette));
-            g2.translate(x, y);
-            g2.fill(upChevron);
-            g2.setTransform(save);
-            x += spacing;
-        }
+        g2.translate(sprite.centerX() - scale * (0.5f - UPGRADE_ARROW_INSET),
+                sprite.centerY() - scale * (0.5f - UPGRADE_ARROW_INSET));
+        g2.scale(scale, scale);
+        float a = UPGRADE_ARROW_SIZE;
+        float shaft = a * 0.36f;
+        Path2D arrow = new Path2D.Float();
+        arrow.moveTo(0, -a);
+        arrow.lineTo(a * 0.9f, 0);
+        arrow.lineTo(shaft, 0);
+        arrow.lineTo(shaft, a * 0.9f);
+        arrow.lineTo(-shaft, a * 0.9f);
+        arrow.lineTo(-shaft, 0);
+        arrow.lineTo(-a * 0.9f, 0);
+        arrow.closePath();
+        Stroke previous = g2.getStroke();
+        g2.setStroke(new BasicStroke(UPGRADE_ARROW_OUTLINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(UPGRADE_ARROW_EDGE);
+        g2.draw(arrow);
+        g2.setStroke(previous);
+        g2.setColor(colorFor(Palette.TOWER_UPGRADE_READY));
+        g2.fill(arrow);
+        g2.setTransform(save);
     }
 
     /** Draws a tower body at the origin; the caller has translated to the tower's centre. */
@@ -1418,7 +1295,7 @@ public final class Java2DFrameRenderer {
         g2.translate(head.centerX(), head.centerY());
         g2.rotate(head.headingRadians());
         float size = scale * TOWER_HEAD_SIZE_FRACTION * head.scale();
-        Color color = head.gilded() ? colorFor(Palette.TOWER_TRANSCENDENT) : TowerLooks.color(head.look());
+        Color color = TowerLooks.color(head.look());
         this.paintHeadShape(g2, TowerLooks.head(head.look(), size), color);
         g2.setTransform(save);
     }

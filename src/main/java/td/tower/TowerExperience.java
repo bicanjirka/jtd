@@ -1,41 +1,24 @@
 package td.tower;
 
 /**
- * One tower's experience: the XP it earned from the bounty of every enemy it reached, and when it last
- * ranked up. XP only climbs. The game loop records; any thread reads the published snapshot.
+ * One tower's experience: the XP it earned from the bounty of every enemy it reached. XP only climbs. The game loop
+ * records; any thread reads it.
  */
 public final class TowerExperience {
 
-    private volatile Snapshot snapshot = new Snapshot(0, -1);
+    private volatile int xp;
 
     public int xp() {
-        return this.snapshot.xp();
+        return this.xp;
     }
 
-    public TowerRank rank() {
-        return TowerRank.of(this.snapshot.xp());
+    /** Adds {@code amount} XP; only the game loop earns, so the read and the write never race. */
+    void earn(int amount) {
+        this.xp = this.xp + amount;
     }
 
-    /** Ticks since the last rank-up, or {@code -1} for a tower still a Recruit. */
-    public int ticksSinceRankUp(int gameTime) {
-        int rankedUpAt = this.snapshot.rankedUpAt();
-        return rankedUpAt < 0 ? -1 : Math.max(0, gameTime - rankedUpAt);
-    }
-
-    /** Adds {@code amount} XP during tick {@code tick}, stamping a rank-up if it crosses a tier. */
-    void earn(int amount, int tick) {
-        Snapshot before = this.snapshot;
-        int xp = before.xp() + amount;
-        boolean rankedUp = TowerRank.of(xp) != TowerRank.of(before.xp());
-        this.snapshot = new Snapshot(xp, rankedUp ? tick : before.rankedUpAt());
-    }
-
-    /** Replaces the XP with a saved game's; a tower past Recruit counts as having ranked up at tick 0. */
+    /** Replaces the XP with a saved game's. */
     void restore(int xp) {
-        this.snapshot = new Snapshot(xp, TowerRank.of(xp) == TowerRank.of(0) ? -1 : 0);
-    }
-
-    /** Correlated, so they cross threads together. */
-    private record Snapshot(int xp, int rankedUpAt) {
+        this.xp = xp;
     }
 }

@@ -278,13 +278,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
     }
 
-    private static Palette linkFor(AuraTower.GrantLook look) {
-        return switch (look) {
-            case PLAIN -> Palette.TOWER_AURA_LINK;
-            case REACH -> Palette.TOWER_AURA_LINK_REACH;
-            case CHOSEN -> Palette.TOWER_AURA_LINK_CHOSEN;
-        };
-    }
 
     public Void visitAuraTower(AuraTower tower) {
         float maxRadius = tower.getRangeReal();
@@ -292,10 +285,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             double phase = phaseFraction(this.animationSeconds, phaseOffset);
             this.draws.add(new RingDraw(Palette.TOWER_AURA_RING, tower.getX(), tower.getY(),
                     (float) (phase * maxRadius), (float) (1.0 - phase)));
-        }
-        Palette link = linkFor(tower.grantLook());
-        for (Tower buffed : tower.buffedTowers()) {
-            this.draws.add(BeamDraw.solid(link, tower.getX(), tower.getY(), buffed.getX(), buffed.getY(), 1.0f));
         }
         Tower apprentice = tower.mentorsApprentice() ? tower.apprentice() : null;
         if (apprentice != null) {
