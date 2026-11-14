@@ -383,6 +383,18 @@ implementation. There is no way to add or edit a level without a code change and
 
 ## Tower features
 
+### Tower cues and identity looks are drawn but nothing in play sends them
+
+Most `TowerCue`s, every `LoadedShell` but the normal one, the Beacon's panes and the looks `SOULFIRE`, `RUBY`,
+`SHADE`, `BURDEN`, `GRAVITY` and `UMBRA` are reached only by the art sheets and by tests: they were built ahead of
+the towers that own them.
+
+**Where:** `td.ui.TowerSpriteFrameBuilder` (each visit method's pose, `BODY_LOOK`), `td.ui.TowerFoundations`.
+
+**Approach:** each tower's next-gen rework sends its own, from the "In code" list in its
+`docs/features/FEATURE-next-gen-<type>-tower.md`. `FEATURE-next-gen-final-visual-review.md` deletes whatever no
+tower sends once all seven are in.
+
 ### No tower denies heals or shields along a whole lane
 
 No wave needs anti-sustain yet. On The Amber Hive (8 seeds) the strong player brings no anti-sustain node to the Brood

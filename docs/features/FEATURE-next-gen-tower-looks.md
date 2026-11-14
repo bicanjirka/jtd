@@ -5,13 +5,15 @@
 moved into the same look ("The rest of the board"). Part of `FEATURE-next-gen.md`, whose appendix
 holds the visual request as given; this doc owns its "all towers" parts, keyed to tiers.
 
-**Implemented 2026-11-14 (shared parts and every foundation):** the calm board (the pips, chevrons, halos, gold barrel,
-the Beacon's lines and the XP ranks went; one upgrade arrow), the palette, every tower's foundation at Tiers 0 to III
-and the Stormcaller's and the Hexer's, ported from the art lab in their idle state, the aimed heads of the Sniper,
-the Mortar and the Scorcher, back-to-front painting with enemy marks over the towers, and the tier unlock. Left for
-each tower's own rework: firing and reload cues, buff cues on the head, identity looks not yet in the game (Soulfire,
-Ruby, Shade, the Obelisk's runes), shots in flight, the enemy marks, the toolbar icons and the panel's tier
-thumbnails, and the always-on loops still running (the Beacon's rings, the Aerie's nest).
+**Implemented 2026-11-14 (everything a tower's rework draws from):** the calm board (the pips, chevrons, halos,
+gold barrel, the Beacon's lines and the XP ranks went; one upgrade arrow), the palette, every tower's foundation at
+Tiers 0 to III, the Stormcaller's and the Hexer's, and every identity look (Soulfire, Ruby, Shade, the three runes),
+each built from a pose: recoil, reload, every cue on the heads sheet, the loaded shell, the Beacon's panes.
+Back-to-front painting with enemy marks over the towers, the tier unlock, a placed tower settling onto its cell, one
+idle light a tower, the two-tone toolbar icons and the panel's tier thumbnails. The art sheets are rendered from the
+game's own tables. Left for each tower's own rework: sending its cues from its state ("Building a tower's look"),
+wiring its identity looks, its shots in flight, its enemy marks, and the always-on loops still running (the Beacon's
+rings, the Obelisk's ripples, the Aerie's nest).
 
 ## Summary
 
@@ -87,13 +89,13 @@ names its own parts:
 |---|---|
 | [board](next-gen-art/board.png) | all seven towers at four tiers and every identity look on Iron Crossing, painted over the game's own frame at 0.5x, 1x and 2.5x |
 | [catalogue](next-gen-art/catalogue.png) | every tower and identity at Tiers 0 to III, large and at the board's two sizes, with its part count |
-| [directions](next-gen-art/directions.png) | the two choices as decided: the raised view against the plan view, a growing against a constant footprint |
-| [heads](next-gen-art/heads.png) | every moving part, its firing and reload cue, every buff on the head, and the tier unlock frame by frame |
+| [directions](next-gen-art/directions.png) | the two choices as decided: the raised view against the plan view, a growing against a constant footprint (a frozen picture: the rejected options have no builder) |
+| [heads](next-gen-art/heads.png) | every moving part, its firing and reload cue, every buff on the head; the tier unlock, a placed tower settling and idle life, frame by frame |
 | [shots](next-gen-art/shots.png) | shots and casts in flight |
 | [marks](next-gen-art/marks.png) | the enemy marks, on the game's own enemies |
 | [grounds](next-gen-art/grounds.png) | the Obelisk's fields and Sundial, the payload grounds, the flare, Ice Wake |
 | [icons](next-gen-art/icons.png) | the seven toolbar icons, the upgrade arrow, the Lit mark, the panel's tier thumbnails, the tier colours |
-| [theme](next-gen-art/theme.png) | what the game paints today in the same look: every enemy, every ground zone, today's towers |
+| [theme](next-gen-art/theme.png) | what the game paints in the same look: every enemy, every ground zone, the towers at Tier I |
 
 `next-gen-art/README.md` says how the sheets are rendered and how a look is built from its parts.
 
@@ -127,17 +129,25 @@ names its own parts:
   near-black, it barely shows, and that is accepted: it is there for the lighter ground (path marks, zones, a
   highlighted cell). Anything that must read as a shadow on the floor itself, the lobbed shots' shadows and the
   Sundial, is a cool grey or violet veil lighter than the floor, never a dark one.
-- **The tier unlock** takes half a second on the tick clock: the new foundation spreads out from the tower's centre
-  over the old one, and one ring in the new tier's colour runs out past the cell's edge and fades. Then the tower is
-  still again.
+- **The tier unlock** takes half a second on the tick clock: a flash, then the new foundation pushes out of the old
+  one from the tower's centre, swelling a little past its size before it settles, while one ring in the new tier's
+  colour runs out past the cell's edge and sparks in that colour fly up and out. Then the tower is still again.
+- **A placed tower settles**: over a third of a second on the tick clock it grows out of its cell from under half
+  its size, overshoots a little and settles back, a thin ring of dust running out from under it. A tower restored
+  from a save does not.
+- **Idle life** (the user, 2026-11-14: "game looking alive is more important"). A tower with nothing to do carries
+  one small living light, on the wall clock: the Sniper's lens and the Mortar's shell glint once in a while, the
+  Scorcher's pilot flame flickers, the Stormcaller's ball, the Hexer's brew, the Aerie's tip and the Obelisk's rune
+  breathe, the Beacon's lamp turns a pale ray. A head with nothing to aim at scans slowly, a few degrees to either
+  side. Neighbouring towers run out of step, so a row never breathes as one.
 - **The upgrade arrow** is one green up arrow (`#6ee08a`, dark outline) in the cell's top-left corner; the Jammed
   marker keeps the top right, a Beacon's Lit mark the bottom left.
 - **What it costs.** A Tier III foundation is 17 to 37 parts (the catalogue prints each count), so a foundation
   cannot be one draw command a part: a board of Tier III towers would carry thousands. A foundation never moves, so
   the frame names it once (which look, which tier) and the painter keeps its picture. Painting 200 Tier III towers
-  part by part took 39 ms a frame in the art lab; from one kept picture a tower, 0.7 ms. The picture is rendered
-  from the vector parts when first needed and again when the zoom changes; it is not an image asset. A head is 5 to
-  10 parts that turn, drawn as today. What stays expensive is what multiplies with play, not with towers: the
+  part by part took 39 ms a frame in the art lab; through the game's painter, from kept pictures, 1.5 ms still and
+  2.9 ms with their idle lights. A picture is rendered from the vector parts when first needed, per look, tier, pose
+  and zoom; it is not an image asset. A head is 5 to 10 parts that turn, kept as one picture per heading step. What stays expensive is what multiplies with play, not with towers: the
   Aerie's missiles (each one a command, seven with Swarm), the Scorcher's stream (three shapes, rebuilt every few
   ticks), Arc hops and Flashover tongues. None is heavier than today's effects of the same kind.
 
@@ -168,8 +178,6 @@ the same look on 2026-11-13, in the renderer itself ([theme](next-gen-art/theme.
   a mine's casing stands on its patch. Tar was near-black on near-black floors and is now a violet-grey that shows.
   Fallout, the cursed cloud and the healing, haste, ward and blinding grounds keep their look.
 - **Shells** are lit balls: a shaded edge at the bottom right and a glint at the top left.
-- **Today's towers** stand too, until each is replaced by its next-gen look: the same side and rim under the old
-  flat shape.
 - It paints faster than the flat enemies did. A body is drawn once into a kept picture (for its look, size, one
   of 64 headings and the zoom) and placed pixel for pixel after that: 300 bodies took 0.9 ms a frame in the art lab,
   against 6.0 ms for the old flat shapes. The frame build is unchanged. Not yet profiled in a live game.
@@ -185,7 +193,8 @@ the same look on 2026-11-13, in the renderer itself ([theme](next-gen-art/theme.
   or a tier it can unlock. One mark, whatever the tier.
 - **XP ranks go**: the tier is the tower's rank and the foundation shows it. The rank diamonds and the rank-up
   glow leave the board, and the pane shows XP toward the next gate (open question 1).
-- Idle towers stay still or nearly so. Motion means something happened: a shot, a reload, a buff, an effect landing.
+- Idle towers are nearly still: each carries one small living light and an aiming head scans slowly ("Art
+  direction", idle life). Any larger motion means something happened: a shot, a reload, a buff, an effect landing.
   Always-on loops (aura rings, ripples, pulsing heads, a nest circling an empty board) are cut back or replaced per
   tower.
 - Kept: the selection range circle, the Jammed marker.
@@ -223,7 +232,10 @@ markers and in their style. All are drawn on [the marks sheet](next-gen-art/mark
   | Obelisk | the square stone with its pyramidion's two lit faces |
   | Beacon | the octagonal lantern, every other pane lit |
 
-- The shop sells the base tower, so forks and identities (Stormcaller, Hexer, Ruby, Shade) don't get toolbar icons.
+- The shop sells the base tower, so forks and identities (Stormcaller, Hexer, Ruby, Shade) don't get toolbar icons;
+  in the Info pane's header they wear their tower's mark in their own colour.
+- In code: a `TowerIcons` row per look. The Upgrades panel's tier thumbnail is that tier's foundation itself, grey
+  while the tier is locked.
 
 ### Palette
 
@@ -264,6 +276,66 @@ pale, slightly warm tint of itself, so a higher tier reads lighter and no two to
 All stand at 6:1 or more on the panel's background. Neighbouring tiers of one tower are 6 to 15 apart, under the
 guide's 10 in places: they are rows of one ordered list, each with its name, never told apart by colour alone. The
 Beacon's Tiers II and III are the closest (2.6) and may be pulled apart when the panel is built.
+
+## Building a tower's look
+
+Written after the review of 2026-11-14, for whoever reworks a tower. Everything a tower's Look section asks for
+already has a place; a rework sends state to it and invents nothing.
+
+```mermaid
+flowchart LR
+    T[Tower<br/>publishes state] --> V[TowerSpriteFrameBuilder<br/>visit method builds a TowerPose]
+    V --> D[TowerSpriteDraw<br/>look, tier, pose, heading]
+    D --> F[TowerFoundations<br/>the look's builder reads the pose]
+    F --> S[TowerSprites<br/>keeps a picture per look, tier, pose]
+```
+
+| To show | Do | Never |
+|---|---|---|
+| A buff, a primed shot, a full store | Add its `TowerCue` to the pose in the tower's visit method: `pose.with(TowerCue.SILVER_ROUND, tower.holdsSilverRound())`. The cue is already drawn. | A new draw record, a field on `TowerSpriteDraw`, a branch in the painter |
+| Recoil and reload | `poseOfReload(tower.getCoolDownFraction())`; a store that refills is `refilling` | A clock of the frame builder's own |
+| A stack count, the loaded shell, the Lit types | `withStacks`, `withShell(LoadedShell)`, `withPanes(List<TowerLook>)` | |
+| An identity (Soulfire, Ruby, Shade, a rune) | Return its `TowerLook` from the body-look visitor, as `bodyLookOf(SplashTower)` does for the fork. The tower needs a query that says which identity it took. | A cue for an identity; a second look table |
+| A cue no sheet has yet | Draw it on the heads sheet first: a `TowerCue` constant, read in the look's builder in `TowerFoundations`, a tile in `TowerArtSheets3`. Then send it. | A cue painted outside the builder |
+| A light on an idle tower | `Build.light(Life, x, y, z, radius, colour)` in the builder | A loop on `animationSeconds` in an effect builder |
+| Something that flies, lands or lies on the ground | `TowerEffectDraw`, `ProjectileFrameBuilder`, a ground zone: not the tower's picture | |
+
+Rules the tables hold, and a test for each (`TowerFoundationsTest`, `TowerPoseTest`):
+
+- Every measure is in cells: the cell's centre at 0,0, a cell 1 wide, north at -90 degrees.
+- A look whose body ignores the pose is `Row.aiming`; if its body reads the pose it must be `Row.posed`, or the body
+  is kept from the idle pose and the cue never shows.
+- A pose is snapped to four steps of recoil and reload before a picture is kept for it. A smoother motion than that
+  is painted live or not at all; do not raise the steps to get it.
+- A shot leaves from `TowerSprites.muzzle(look, tier, pose, ...)` with the tower's real pose
+  (`TowerSpriteFrameBuilder.poseOf`), so a recoiled or longer barrel and its shot stay together.
+- A moment runs on the tick clock (the tower records the tick, the builder turns it into 0..1); idle life runs on
+  the wall clock.
+- After any change to a builder: render the sheets (`next-gen-art/README.md`) and read `git diff --stat` on the
+  PNGs. Only then one `PreviewBoard` render; the live game only for wiring.
+
+### Mistakes found in the review
+
+Each was in the delivered code or its notes, and is fixed unless it says otherwise.
+
+1. **A head was one fixed list of parts per look.** There was no place for a longer barrel, a loaded shell, a lens
+   that brightens or a primed shot, and the picture cache had no key for them. Now the pose.
+2. **A tower that does not aim had no moving part.** The thrower's arm, the coil's ball, the brew, the rune and the
+   lantern were baked into the still foundation. Now their bodies are built from the pose.
+3. **Identity looks had no key.** Soulfire, Ruby, Shade and the three runes are `TowerLook` rows now.
+4. **A sentinel in a draw record** (`-1` for "not rising"). Progress rests at 1 instead; absence is a value.
+5. **A barrel turned south was painted over the wall in front of it.** The head went on top of everything. A
+   foundation now has parts behind the head and parts in front of it (`Foundation.front`).
+6. **The measures lived twice**, in the art lab and in the game, and had begun to drift. The sheets are rendered
+   from the game now; a look is changed in one place.
+7. **The tracer started at the idle muzzle**, so it left a gap to a recoiled barrel. It reads the tower's pose.
+8. **A constant pixel stroke in a live effect.** The sheets paint with one unit to a cell, where a 1.5 px stroke is
+   a cell and a half wide. Every live size is a share of `scale`.
+9. **Icons and thumbnails were left on the old flat shape** while the board changed, so the toolbar showed towers
+   that no longer existed.
+10. **Open, for the tower that owns it:** Frenzy's jitter is a still offset (the Sniper); no tower says which
+    identity it took (the Scorcher, the Aerie, the Obelisk); a flying shell is a plain ball (the Mortar); the old
+    always-on loops still run (the Beacon, the Obelisk, the Aerie).
 
 ## Interconnections
 
@@ -310,6 +382,12 @@ Beacon's Tiers II and III are the closest (2.6) and may be pulled apart when the
   (the art pass, 2026-11-13; "Art direction"). A tower's plan builds what its sheets show; a look that changes
   later is drawn on a sheet again before it is coded.
 - A foundation is named once in the frame and its picture kept by the painter; no image assets.
+- A tower's state reaches its picture as a pose (the review, 2026-11-14): cues, recoil, reload, shell, panes. The
+  look's builder turns the pose into parts.
+- Idle towers carry one small living light, and a placed tower settles in (the user, 2026-11-14); this amends the
+  calm board, which had idle towers wholly still.
+- The art sheets are rendered from the game's tables (the user, 2026-11-14, over a second copy in the lab or a
+  frozen set of pictures); only the directions sheet is frozen.
 
 ## Open questions
 

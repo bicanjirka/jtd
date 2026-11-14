@@ -113,7 +113,22 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 ### Look
 
 A crystal spire with its missiles circling it: the nest. It keeps a blue, moved to `#5cc4e2` so it stands clear of
-the Stormcaller. There is no turning head: the moving part is the nest. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `aerie`, `nest` and `missile`.
+the Stormcaller. There is no turning head: the moving part is the nest. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.aerie`, built from a `TowerPose`; the nest and a missile are still lab art (`TowerArt.nest`, `missile`).
+
+**In code** (`FEATURE-next-gen-tower-looks.md`, "Building a tower's look"). The looks are `TowerLook.SEEKER`,
+`RUBY` and `SHADE`. Nothing aims.
+
+| What the tower holds | In the pose |
+|---|---|
+| the next freeze sets off a Release | `TowerCue.RELEASE_READY` (the ring and the perch brighten) |
+
+- **Ruby and Shade are not wired.** Add a query to the tower for the identity it took, then return the look from
+  the body-look visitor.
+- **The nest is not the tower's picture.** The stored missiles are drawn one for one by `NestDraw`, and today they
+  orbit on game time whether or not an enemy is near. `Foundation.nest` is the height of the ring they sit on:
+  missiles on the far half of the ring are painted before the tower, those on the near half after it. The rework
+  holds the ring still on an empty board and draws the three missile looks (`TowerArt.missile`).
+- The Release cue's halo on each missile and the ring's path belong to the nest, not to the pose.
 
 | Tier | Foundation | Ruby | Shade |
 |---|---|---|---|

@@ -103,7 +103,19 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 ### Look
 
 The earlier idea of a hole in the ground is dropped. The tower is defined by its split: a cheap stone thrower that
-becomes an electric contraption, a tesla coil, or a witch's cauldron. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `.claude/skills/run-jtd/TowerArt.java`, `thrower`, `stormcaller` and `hexer`.
+becomes an electric contraption, a tesla coil, or a witch's cauldron. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.thrower`, `stormcaller` and `hexer`, built from a `TowerPose`.
+
+**In code** (`FEATURE-next-gen-tower-looks.md`, "Building a tower's look"). The looks are `TowerLook.SPLASH`,
+`STORMCALLER` and `HEXER`, picked by `bodyLookOf(SplashTower)` from the fork (wired today). None aims: the body is
+built from the pose.
+
+| What the tower holds | In the pose |
+|---|---|
+| the throw and the reload (arm, spark, bubble) | `poseOfReload(coolDownFraction)` (sent today) |
+| an ability full and waiting for a target | `TowerCue.CHARGED` |
+
+- The arm's new stone, the spark and the bubble all come from the one reload value; no cue of their own.
+- The stone in flight, the Arc's hops and the casts are `FEATURE-next-gen-shot-flight.md`'s and are not built.
 
 - **A fork changes the look completely.** The fork is picked at Tier I's gate, so the plain stone thrower is Tier 0's
   alone. Colours: the thrower `#e2746c`, the Stormcaller `#8496ff`, the Hexer `#b88ae8`.
