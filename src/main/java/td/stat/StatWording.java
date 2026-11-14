@@ -16,7 +16,8 @@ public record StatWording(float cellPixels) {
 
     public StatReading read(StatTerm stat, float value) {
         StatUnit unit = stat.unit();
-        return new StatReading(unit.number(unit.shown(value, this.cellPixels)), unit.word(), stat.inline(value));
+        float shown = unit.shown(value, this.cellPixels);
+        return new StatReading(unit.number(shown), unit.word(shown), stat.inline(value));
     }
 
     /** {@code value} with its unit, as prose quotes it: {@code "4.5 cells"}. */
@@ -32,8 +33,10 @@ public record StatWording(float cellPixels) {
             parts.add("= " + this.value(stat, modifier.setTo()));
         }
         if (modifier.flat() != 0f) {
-            String number = unit.signed(unit.shown(modifier.flat(), this.cellPixels));
-            parts.add(unit.word().isEmpty() ? number : number + " " + unit.word());
+            float shown = unit.shown(modifier.flat(), this.cellPixels);
+            String number = unit.signed(shown);
+            String word = unit.word(shown);
+            parts.add(word.isEmpty() ? number : number + " " + word);
         }
         if (modifier.percentAdd() != 0f) {
             parts.add(TermNumbers.signedPercent(modifier.percentAdd()));
