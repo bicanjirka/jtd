@@ -193,28 +193,22 @@ every look change edits the painter.
 
 ### An attack can read the stats its shot already spent
 
-**Trigger:** the next change to how a tower attacks; at the latest `FEATURE-next-gen-shot-flight.md`'s delayed hits
-(a Sniper hit landing when its tracer arrives, the Burst's lobbed stone, chain hops in flight).
-(Design review F15b.)
+**Trigger:** each tower's own rework in the next-gen bundle (the Burst's lobbed stone and Arc hops, the
+Scorcher, the Aerie, the Obelisk). (Design review F15b.)
 
 `AbstractTower.beginShot()` spends the tower's next-shot charges (a `TowerStatus` granted with
 `grantStatus`, such as a primed round), republishes the live stats without them, and returns the
-`TowerStats` the attack should use. Every attacker but the Sniper and one Burst path ignores that
-return value and reads the live stats (`damageCurrent()`, `stats()`), which is right only while no
-charge was spent. The Burst's blast lost its bonus exactly this way until it was fixed. A hit that
-lands ticks after the shot widens the gap: by then the live stats may have changed for other reasons
-too.
+`TowerStats` the attack should use. The Sniper's bullet and the Mortar's shell carry those stats to
+where they land; the Scorcher's waves, the Obelisk's field, the Aerie's missiles and the Burst's mines
+still read the live stats (`damageCurrent()`, `stats()`), which is right only while no charge was
+spent. Only the Sniper grants itself charges today, so nothing is lost in play yet; a hit that lands
+ticks after the shot (a missile, a wave) also reads stats that may have changed meanwhile.
 
-- **Where:** `AbstractTower.beginShot`; its callers in `SniperTower`, `SplashTower`, `MortarTower`,
-  `CinderTower`, `PulseTower` and `SeekerTower`; the rule in `tower/CLAUDE.md` that
-  starts "Every attack starts with `beginShot()`".
-- **Approach:** `beginShot()` returns a `Shot` record (the attack's `TowerStats` and its shot
-  number). Every attack path takes it, and anything in flight (a projectile, a delayed hit) stores it,
-  so a hit uses the stats it was fired with. The Mortar reads some stats when its shell lands, by its
-  spec: keep that, read from the stored `Shot`. One tower per commit, each with a test first on the
-  model of `SplashTowerTest.aNextShotDamageStatusLandsOnTheBlastItIsSpentBy` (grant a next-shot damage
-  status, fire, assert the hit carries it). When no attack path reads the live stats any more, delete
-  the `tower/CLAUDE.md` rule. Run `td.PerformanceHarness`: one `Shot` per attack is fine.
+- **Where:** the callers of `AbstractTower.beginShot` in `CinderTower`, `PulseTower` and `SeekerTower`,
+  and `SplashTower.explode`.
+- **Approach:** as the Sniper's `Bullet` and the Mortar's `Shell` do: what is in flight keeps the
+  `TowerStats` its shot began with and lands with them. One tower per commit, each with a test first on
+  the model of `MortarTowerTest.aShellLandsWithTheStatsItWasFiredWithThoughTheChargeItSpentIsGone`.
 
 ### A tower's price is recorded by a constructor duty
 

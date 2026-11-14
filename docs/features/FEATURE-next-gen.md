@@ -27,7 +27,7 @@ Beacon. The Radar leaves the game ("The last three towers").
 |---|---|---|---|
 | `FEATURE-next-gen-upgrade-tiers.md` | Tiers, gates, clusters, fork gates, the new Upgrades panel; every tower moved onto tiers | | implemented |
 | `FEATURE-next-gen-tower-looks.md` | The art direction, foundation by tier with a head, a calm board, enemy marks, toolbar icons, palette | upgrade tiers | shared parts and every foundation in code; the rest with each tower |
-| `FEATURE-next-gen-shot-flight.md` | Hits that land later, arcs, the tracer, chains hop by hop | | draft |
+| `FEATURE-next-gen-shot-flight.md` | Hits that land later, arcs, the tracer, chains hop by hop | | Sniper bullet and Mortar arc in code; the rest with the Burst |
 | `FEATURE-next-gen-tower-abilities.md` | Ability bars, currency, casts, the pane's Abilities list | upgrade tiers | draft |
 | `FEATURE-next-gen-sniper-tower.md` | The Sniper | tiers, looks, shot flight | Tiers 0 to III |
 | `FEATURE-next-gen-splash-tower.md` | The Burst | tiers, looks, shot flight, abilities | Tiers 0 to III |

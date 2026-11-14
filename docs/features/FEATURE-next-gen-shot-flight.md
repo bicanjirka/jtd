@@ -1,7 +1,10 @@
 # Feature Request: Next-gen Shot Flight
 
 **Status:** draft, 2026-11-10, reviewed with the whole bundle 2026-11-13; no open question left. Part of `FEATURE-next-gen.md`; the shot
-timing of the visual request in its appendix.
+timing of the visual request in its appendix. **Partly implemented 2026-11-14:** the Sniper's bullet (lands with
+the stats it was fired with, when its tracer arrives) and the Mortar's shell (lands with its fired stats, drawn on
+the shared arc over a shadow). The Burst's stone, chain hops and flying casts come with the Burst and the
+abilities; the shots' upgrade looks (Fourth Shot, Hollow Point, shell kinds) with each tower.
 
 ## Summary
 
