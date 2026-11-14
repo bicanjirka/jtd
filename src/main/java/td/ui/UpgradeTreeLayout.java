@@ -226,7 +226,12 @@ record UpgradeTreeLayout(Map<UpgradeNode, Spot> spots, List<Link> links, List<Fr
                 return;
             }
             this.placeAll(row.places(), LEFT, this.split - GAP, centre, scale, false);
-            row.side().ifPresent(side -> this.placeBranches(side, this.split + GAP, centre, scale, false, false));
+            row.side().ifPresent(side -> {
+                float left = this.split + GAP;
+                float width = widthOf(List.of(side), scale);
+                Scale fitted = scale.squeezed(width <= RIGHT - left ? 1f : (RIGHT - left) / width);
+                this.placeBranches(side, left, centre, fitted, false, false);
+            });
         }
 
         /** The unlock's pill at the band's left; at the fork's tier, the fork's sides in the side column. */

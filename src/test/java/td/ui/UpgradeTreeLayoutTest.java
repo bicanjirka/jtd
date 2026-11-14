@@ -10,8 +10,10 @@ import td.tower.upgrade.UpgradeTree;
 import td.ui.UpgradeTreeLayout.Spot;
 import td.util.GameWorld;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static td.fixtures.TierTrees.A1;
@@ -115,6 +117,21 @@ class UpgradeTreeLayoutTest {
         UpgradeTreeLayout.Row one = layout.rows().stream().filter(row -> row.tier() == 1).findFirst().orElseThrow();
         assertThat(layout.spotOf(left).orElseThrow().y()).isBetween(one.bottom(), one.bandBottom());
         assertThat(layout.spotOf(follow).orElseThrow().x()).isGreaterThan(layout.split().orElseThrow());
+    }
+
+    @Test
+    void aForkSideTooWideForItsColumnIsSqueezedToFitThePanel() {
+        UpgradeNode left = UpgradeNode.of("side.l", "Left", 10).inTier(1);
+        UpgradeNode right = UpgradeNode.of("side.r", "Right", 10).inTier(1);
+        List<UpgradeNode> followers = IntStream.range(0, 8)
+                .mapToObj(i -> UpgradeNode.of("follow." + i, "Follow " + i, 10).inTier(2).after(left)).toList();
+        UpgradeTree tree = UpgradeTree.of(LONE, left, right).with(followers.toArray(UpgradeNode[]::new))
+                .withFork(UpgradeCluster.of("Sides", left, right));
+
+        UpgradeTreeLayout layout = layout(tree, state(left));
+
+        assertThat(followers).allMatch(node -> layout.spotOf(node).isPresent());
+        assertThat(layout.spots().values()).allMatch(spot -> spot.x() + spot.width() / 2 <= UpgradeTreeLayout.WIDTH);
     }
 
     private static UpgradeTreeLayout layout(UpgradeTree tree, UpgradeState owned) {

@@ -381,6 +381,16 @@ implementation. There is no way to add or edit a level without a code change and
 
 ## Tower features
 
+### A wide fork side hides its prices in the Upgrades panel
+
+Past a fork, a side with four slots in a tier (the Stormcaller's and Hexer's Tier II and III) is squeezed to the
+panel's width, and a node squeezed below full size shows no price or key chip; only its hover says what it costs.
+
+- **Where:** `td.ui.UpgradeTreeLayout` (`RIGHT`, `placeRow`'s side column), `td.ui.UpgradeTreePainter` (the price
+  below a full-size node only).
+- **Approach:** a wider panel, or a side column that takes the room of the shared column above the fork's tier when
+  that column holds two nodes; failing that, a price under a squeezed node in a smaller font.
+
 ### Tower cues and identity looks are drawn but nothing in play sends them
 
 Most `TowerCue`s, every `LoadedShell` but the normal one, the Beacon's panes and the looks `SOULFIRE`, `RUBY`,
