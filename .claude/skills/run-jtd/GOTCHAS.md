@@ -38,3 +38,5 @@ Read when a Driver or preview step misbehaves. Each item cost a past session a r
   `xdebug_get_debugger_status` before trying again; a second launch starts a second JVM.
 - **An IDE build writes into `target/classes` and `target/test-classes`,** the folders Maven and the Driver's
   classpath use. A debug launch from the IDE compiles first, so those classes can change under a Driver run.
+- **`key 1` types what the keyboard layout puts on that key.** On a Czech layout the top-row digits type
+  `+ ě š č`..., so an upgrade key buys nothing; press `key numpad1` to `numpad6` instead.

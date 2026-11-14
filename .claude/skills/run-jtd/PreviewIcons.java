@@ -7,7 +7,6 @@ import td.tower.AbstractTower;
 import td.tower.TowerFactory;
 import td.tower.TowerTerm;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeTier;
 import td.ui.TermIconPainter;
 import td.ui.TermLooks;
 import td.ui.render.IconFace;
@@ -24,7 +23,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Headless contact sheet of every term's icon face, at 40 px and at 20 px with its title under it, in a section
@@ -38,8 +36,6 @@ public class PreviewIcons {
     private static final int CELL_W = 150;
     private static final int CELL_H = 62;
     private static final int HEADER = 26;
-    private static final Set<UpgradeTier> ART_TIERS = Set.of(UpgradeTier.RANGE_1, UpgradeTier.ATTUNE,
-            UpgradeTier.HEAD_1, UpgradeTier.EXTRA_1, UpgradeTier.HEAD_4, UpgradeTier.SPECIAL);
 
     private record Entry(String title, IconFace face) {
     }
@@ -70,8 +66,8 @@ public class PreviewIcons {
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             AbstractTower tower = (AbstractTower) TowerFactory.createTower(type, new GameWorld(GameHost.noOp()), 0, 0);
             for (UpgradeNode node : tower.upgradeTree().nodes()) {
-                if (ART_TIERS.contains(node.tier())) {
-                    entries.add(new Entry(node.displayName(), TermLooks.faceOfLine(type, node, node.tier().level())));
+                if (tower.upgradeTree().artNodeOf(node).equals(node)) {
+                    entries.add(new Entry(node.displayName(), TermLooks.faceOfLine(type, node, 1)));
                 }
             }
         }
