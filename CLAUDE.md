@@ -117,6 +117,10 @@ frame build reads them.
 - What the simulation iterates keeps a fixed order (`List`, `LinkedHashMap`, `EnumMap`). A `HashSet`, `HashMap` or
   `IdentityHashMap` of objects or enums only answers membership: its order moves with changes that play no part in
   the game, and order reaches who is hit and so the shared random.
+- A table or catalogue built once (a tower's mechanics per node, a list of entries) is one factory call that
+  lists its entries (`of(entry(...), entry(...))`), never `empty()` followed by a chain of copying `with`
+  calls. `withX` adjusts a value that exists; it doesn't assemble one. A call site that needs a type witness
+  (`Foo.<T>empty()`) to compile has the wrong shape.
 - Services: constructor injection into `final` fields; one constructor, no init step.
   Interfaces of 1-5 methods; the wide domain interfaces in `TODO.md` are the known exceptions.
 - Streams to transform, `reduce` to combine.

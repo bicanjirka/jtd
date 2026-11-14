@@ -38,6 +38,7 @@ Beacon. The Radar leaves the game ("The last three towers").
 | `FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | Tiers 0 to III, third round |
 | `FEATURE-balance-after-next-gen-towers.md` | The second balance pass, played by the built towers | every tower above in code | written; waits |
 | `FEATURE-next-gen-final-visual-review.md` | The visual review of the finished bundle: what to render, what to check on each tower | every tower above in code | written; waits |
+| `FEATURE-next-gen-final-code-review.md` | The code review of the finished bundle: the Sniper's smells as questions for every tower, shared fixes, new rules | every tower above in code | written; waits |
 | (none) | The Radar (`sonar`) leaves the game: "The last three towers" below | | done |
 
 A tower doc is named by its `TowerFactory.Type` constant in lower case, so the review board finds it.
