@@ -178,7 +178,7 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 |--------|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path when its tracer arrives, a moment after it fires; each shot adds a stack of Steady Aim, whichever enemy it hits, so the longer it keeps firing, the faster it fires and the likelier it crits; a stack fades 3 s after its last shot, one at a time. Its tree has no fork: every 4th shot sure to crit, loaded with a Silver Round or a Hollow Point; a crit that starts a Frenzy, ricochets or sunders; an Executioner for the wounded or a Headhunter for elites and bosses |
 | Burst  | 15    | Throws a stone at a random target in range; it lands where the target stood and bursts, full physical damage in its core and half at its edge. Forks into the Stormcaller (Static and Sparks: Arc, Thunderclap or Thunderstrike) or the Hexer (Soulbrand and Souls: Doom, Blight, Inversion) |
-| Mortar | 30    | Lobs a slow, unguided shell, high over the board, at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; the blast does physical damage with falloff and cracks the plating of everything it reaches. Attuned, a shell landing near the last one hits harder and wider. One head adds heavier shells and nukes, the other shrapnel and bombs along the path, and a ballistics line speeds the shell up, leads the target, widens the blast and fires salvos. Its specials turn every third shell into a Napalm, Tar or Cryo shell that leaves burning, tarred or frozen ground |
+| Mortar | 20    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; it lands where the target stood, full physical damage in its core and half at its edge, and cracks the plating of everything it reaches. It fires from a magazine of ten shells, drawn by lot: Normal and, now and then, a Heavy that hits twice as hard. Its tree adds a Payload (Napalm, Tar or Cryo shells that leave burning, tarred or frozen ground), Flares that reveal, a Heavy that Dazes or makes Bleed, a Volley (a Barrage at one target or Carpet Bombing back along the path), and Fusion (two Heavies in a row become a Nuke that leaves Fallout) or Rich Mix (never the same kind twice) |
 | Scorcher | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
 | Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
 | Obelisk | 25    | Support, a kill box. Short range; a field that drags everything inside 15% and deals a little magic damage to it every tick, ghosts included and with no visible enemy needed, the damage a quarter less for every other field overlapping it. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it stronger. One head holds enemies longer (Gravity: a deeper drag, Dazes, a wider field, a well or Stasis), the other denies them (Ward: reveal, silence, worthless heals, True Sight or Purge); an extra line makes them take more damage and builds Toll faster. A special Condemns the strongest enemy inside, bosses first, for every tower to turn on; drains spirit; or links two Obelisks with a Ley Line. Reveals nothing until Ward is bought |
@@ -352,6 +352,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Dead Zone | Weakness | Debuff | Spirit -100, so Heal and Shield are worth nothing. |
 | Frail | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +2%, up to 15 stacks. |
 | Crack | Weakness | Debuff | Plating -5 and Insulation -5. |
+| Deep Crack | Weakness | Debuff | Plating -10 and Insulation -5. |
 | Tar | Weakness | Debuff | Slows by 40%; only the strongest slow counts, and speed comes back over its last 0.5 s. |
 | Bleed | Affliction | Debuff | Physical damage for every cell it travels, ignoring Armor and Plating; standing still, it takes none. |
 | Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and every tower can see and aim at it. |
@@ -372,11 +373,16 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Fourth Shot | Buff | A shot that is sure to crit. |
 | Hollow Point | Buff | A shot that hits harder. |
 | Silver Round | Buff | A shot of magic damage that ignores some magic resist. |
-| Bracketing | Buff | Each shell landing near the last hits harder and wider, a step at a time; a shell elsewhere clears it. |
-| Napalm Shell | Buff | A shell whose blast is magic and leaves flames that apply Burn. |
-| Tar Shell | Buff | A shell that leaves tar applying Tar and Poison. |
-| Cryo Shell | Buff | A shell that leaves frost applying Chill, and Freeze to an enemy that stays. |
-| Nuke Shell | Buff | A shell that hits far harder and wider and leaves Dead Zone. |
+| Magazine | Buff | The shells it has ready, in the order it fires them; a new one at the back draws its kind by lot, each kind as likely as its weight among the kinds it owns. |
+| Heavy | Buff | A shell that hits harder than a Normal one in the same blast, and flies slower. |
+| Nuke | Buff | Two Heavies fused: their damage together in a wider blast that leaves fallout applying Dead Zone, Sicken and Poison. |
+| Payload | Buff | A special shell: half a Normal one's damage, and ground it leaves where it lands. |
+| Napalm | Buff | A payload whose blast is magic and leaves flames that apply Burn. |
+| Tar Shell | Buff | A payload that leaves tar applying Tar and Poison. |
+| Cryo | Buff | A payload that leaves frost applying Chill, and Freeze to an enemy that stays. |
+| Flare | Buff | A shell that leaves a flare lasting until the wave ends; every enemy that enters it gains Reveal. |
+| Barrage | Buff | The front shells loaded together and fired one after another at one target. |
+| Carpet Bombing | Buff | The front shells loaded together and laid along the path, from the target back toward where the enemies come from. |
 | Cryo Missile | Buff | A missile that applies Freeze. |
 | Arcane Missile | Buff | A missile that applies Unravel instead of Freeze. |
 | EMP Missile | Buff | A missile that removes Shield and Heal and applies Silence. |
@@ -399,8 +405,6 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Soul | Buff | The Hexer's currency: its stones earn it by the damage they deal, its passive by the enemies that die; all of it goes into each of its abilities at once. |
 | Thunderclap | Buff | A discharge into every enemy in range, as magic. |
 | Thunderstrike | Buff | Lightning onto the healthiest enemy in range, as magic. |
-| Shrapnel | Buff | Fragments that fly past a shell's blast. |
-| Bomblet | Buff | A small bomb a shell drops on the path. |
 
 Stacks wear off one per second once nothing adds more, and every other debuff runs out on its own clock, whatever the enemy's spirit. Effects don't change one another, with two exceptions: a pool earns its marks while it lasts, and a Reveal keeps Invisibility out.
 
@@ -416,8 +420,9 @@ burning through a freeze.
 |----------------|----------------------------|--------------------------------|
 | Burning ground | Mortar's Napalm            | Burns them |
 | Tar            | Mortar's Tar               | Poisons them and leaves them Tarred (slowed 40%) |
-| Frost ground   | Mortar's Cryo Shells       | Chills them, and freezes one that stays 2 s |
-| Fallout        | Mortar's Tactical Nuke     | Drains their spirit and leaves them in a Dead Zone                       |
+| Frost ground   | Mortar's Cryo              | Chills them, and freezes one that stays 2 s |
+| Fallout        | Mortar's Nuke              | Drains their spirit, poisons them and leaves them in a Dead Zone |
+| Flare          | Mortar's Flare             | Reveals them for 3 s; it lasts until the wave is over, and a Mortar keeps only its newest three |
 | Healing ground | Mender, from Soldier       | Heals them; it lasts 5 s |
 | Haste ground   | Runner, from Veteran       | Hastens them (twice the speed) for a second after each pulse; it lasts until the wave is over |
 | Ward mine      | Knight, from Elite         | Armed a second after it is laid; the first enemy to step on it gets a Shield, and it is gone; it lasts 8 s |

@@ -468,7 +468,8 @@ The Mortar's and Cinder's prices, damage, cooldowns, radii and node bonuses come
 `FEATURE-ground-zones-mortar-and-cinder.md`, and the numbers that doc leaves open were chosen to be
 plausible, not tuned: a zone's radius, length and pulse (twice a second), tar's 40% slow and poison
 share, frost's chill and the 2 s before it freezes, fallout's Sickened stacks, napalm's and tar's damage
-share of the Mortar, how much shrapnel, bomblets and bleeding do, the nuke's flash, Lingering Flames'
+share of the Mortar, how much a Heavy's bleed does, the magazine's weights, each shell kind's flight speed, a
+Volley's gap, reload and spacing, the nuke's flash, Lingering Flames'
 patch, and the Cinder's Thermal Shock radius and chill. Nothing has been played against waves, and the Mortar's slow shell is untested against fast
 enemies.
 
