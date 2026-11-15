@@ -57,7 +57,7 @@ A review, and the fixes it finds. In this order:
    of the painter in a long late-wave fight. Count the distinct poses a real fight makes: `TowerFoundations` and
    `TowerSprites` drop everything they keep when they pass their limits (`KEPT_POSES`, `PIXEL_BUDGET`), and a fight
    that passes them every few seconds redraws its towers again and again.
-7. **Leftovers to delete**: lab drawings of what the game now paints (`TowerArt.stream`, `nest`, `missile`, the
+7. **Leftovers to delete**: lab drawings of what the game now paints (`nest`, `missile`, the
    shots and marks in `TowerArtSheets3` and `4`), a `TowerCue` or `LoadedShell` nothing sends, a `TowerLook` no tower
    wears, the old always-on loops, and any helper kept for the flat towers.
 8. **The whole picture.** A late wave on the fullest level at 1x: can a player still find the enemies, read a

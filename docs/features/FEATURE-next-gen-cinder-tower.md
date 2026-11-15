@@ -1,6 +1,6 @@
 # Feature Request: Next-gen Scorcher Tower
 
-**Status:** draft, 2026-11-12, reviewed with the whole bundle 2026-11-13. Tiers 0 to III and the look, from the visual
+**Status:** implemented 2026-11-15; drafted 2026-11-12, reviewed with the whole bundle 2026-11-13. Tiers 0 to III and the look, from the visual
 request's handwritten Scorcher notes, written to the node rules in `FEATURE-next-gen-upgrade-tiers.md`. Part of
 `FEATURE-next-gen.md`.
 
@@ -92,58 +92,57 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 
 | Tier | Node | Kind | Cluster | After | Glyph | Colour | Cost | Replaces | Does | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 0 | Hot Flame | stat | | | cinder.head.white_flame.2 | | | cinder.head.white_flame.2 | Flame +15 a second | |
-| 0 | Long Stream | stat | | | cinder.extra.fuel.4 | | | | Stream +0.5 s | |
-| 0 | Wide Nozzle | stat | | | cinder.head.wide_nozzle.1 | | | cinder.head.wide_nozzle.1 | Cone +50% | |
+| 0 | Hot Flame | stat | | | cinder.hot_flame | | | cinder.hot_flame | Flame +15 a second | |
+| 0 | Long Stream | stat | | | cinder.long_stream | | | cinder.long_stream | Stream +0.5 s | |
+| 0 | Wide Nozzle | stat | | | cinder.wide_nozzle | | | cinder.wide_nozzle | Cone +50% | |
 | 0 | Long Nozzle | stat | | | base.range | | | base.range | Range +0.5 cells | The one range node outside the Nozzle pick. |
-| I | Core | ability | | | cinder.head.white_flame.4a | | | | The middle quarter of the cone pours 40% more Flame. | The Scorcher's crit: the target sits in the Core, so it is one enemy against the crowd. At twice the Flame it passed the Sniper on one enemy from Tier I. |
-| I | Lance | stat | Nozzle | | base.range | | | base.range.2 | Range +0.65 cells, cone 40% narrower | Further: one enemy, a boss. |
-| I | Fan | stat | Nozzle | | cinder.head.wide_nozzle.2 | | | cinder.head.wide_nozzle.2 | Cone +40% | Wider: a crowd. With -0.5 cells of range it lost to Lance everywhere, since range sets how long every enemy burns; at +60% the Fan builds led the Sniper by 37-43%. |
-| I | Kindling | ability | | | Scorch | | | | Sear gives 10 stacks of Scorch, up from 5. | Utility: the towers around it crit more often. It adds no damage of its own, so the model counts nothing for it. |
-| II | Soulfire | ability | Flame | | Soulfire | | | cinder.head.white_flame.3 | All its fire is Soulfire, Flame +10%; it passes half of a magic resist. | The soul-scorcher: its own look. As a burn with no more Flame it won only on the burn-immune, a counter no price can follow; with half the magic resist passed and no more Flame it priced at $7 against Dragon's Breath's $16. |
-| II | Dragon's Breath | ability | Flame | | cinder.head.wide_nozzle.4b | | | cinder.head.wide_nozzle.4b | The stream runs twice as long and reloads in 1 s, at 65% of the Flame. | The long stream: twice as long as the tower's, then 1 s to breathe. With no reload at 55% it left Bellows nothing to do. |
-| II | White Flame | stat | | | cinder.head.white_flame.1 | | | cinder.head.white_flame.1 | Flame +30 a second | The Tier II damage node; the flame's core burns white, in either kind of fire. |
-| II | Bellows | stat | | | cinder.head.wide_nozzle.3 | | | | Reload -0.5 s | 2 s to 1.5 s, and Dragon's Breath's 1 s to 0.5 s: about 9% to either. At -0.25 s it added 5%; at -0.5 s about 12%, with the Core at +40% and Lance at +0.65 cells to stay under the Sniper. In Tier I it put Lance builds above the Sniper on one enemy; Tier II holds it. |
-| III | Flashover | ability | Burning | | cinder.head.white_flame.4b | | | cinder.head.white_flame.4b | While it streams, an enemy in the cone whose burn holds 100 fuel or more flashes over: every enemy within 1.5 cells of it takes half the Flame too. | The crowd pick, and the uncapped burn's payoff: a hot pool spreads. Passing on a dead enemy's fuel added about 1% to a Scorcher alone, whose burns end before their enemies die. A Dragon's Breath alone never reaches the threshold (its pools settle near 90 fuel); two Scorchers on one crowd pour into the same pools and do, worth +57% on a crowd of 1000, which prices it at $22 against $10 for one. Sensitive to the threshold: at 75 fuel it is worth nearly twice as much. |
-| III | Meltdown | ability | Burning | | cinder.special.pyromancers_mark | | | cinder.special.pyromancers_mark | A burning enemy's armor and plating burn it: each point adds 0.6% to its burn. | The armored pick: the knight cooks in his armor. A pure counter, priced halfway between Walkers (nothing) and a Knight (+11%); with a floor of 5% it outpriced the other two by half. A Sunder stack a second only helped the physical towers around it, about 2% against a Knight. |
-| III | Thermal Shock | ability | Burning | | cinder.special.thermal_shock | | | cinder.special.thermal_shock | The flame pours 35% more Flame into an enemy that is Chilled, Frozen or Dazed. | The pick beside towers that hold enemies, weighed with a quarter of them held. With the Core, ×1.9 on a held target. |
-| III | Hot Flame II | stat | | | cinder.head.white_flame.2 | | | | Flame +15 a second | |
-| III | Long Stream II | stat | | | cinder.extra.fuel.4 | | | | Stream +1 s | At +0.5 s it added 5%; at +1 s about 9%. |
+| I | Core | ability | | | cinder.core | | | cinder.core | The middle quarter of the cone pours 40% more Flame. | The Scorcher's crit: the target sits in the Core, so it is one enemy against the crowd. At twice the Flame it passed the Sniper on one enemy from Tier I. |
+| I | Lance | stat | Nozzle | | base.range.2 | | | base.range.2 | Range +0.65 cells, cone 40% narrower | Further: one enemy, a boss. |
+| I | Fan | stat | Nozzle | | cinder.fan | | | cinder.fan | Cone +40% | Wider: a crowd. With -0.5 cells of range it lost to Lance everywhere, since range sets how long every enemy burns; at +60% the Fan builds led the Sniper by 37-43%. |
+| I | Kindling | ability | | | cinder.kindling | | | cinder.kindling | Sear gives 10 stacks of Scorch, up from 5. | Utility: the towers around it crit more often. It adds no damage of its own, so the model counts nothing for it. |
+| II | Soulfire | ability | Flame | | cinder.soulfire | | | cinder.soulfire | All its fire is Soulfire, Flame +10%; it passes half of a magic resist. | The soul-scorcher: its own look. As a burn with no more Flame it won only on the burn-immune, a counter no price can follow; with half the magic resist passed and no more Flame it priced at $7 against Dragon's Breath's $16. |
+| II | Dragon's Breath | ability | Flame | | cinder.dragons_breath | | | cinder.dragons_breath | The stream runs twice as long and reloads in 1 s, at 65% of the Flame. | The long stream: twice as long as the tower's, then 1 s to breathe. With no reload at 55% it left Bellows nothing to do. |
+| II | White Flame | stat | | | cinder.white_flame | | | cinder.white_flame | Flame +30 a second | The Tier II damage node; the flame's core burns white, in either kind of fire. |
+| II | Bellows | stat | | | cinder.bellows | | | cinder.bellows | Reload -0.5 s | 2 s to 1.5 s, and Dragon's Breath's 1 s to 0.5 s: about 9% to either. At -0.25 s it added 5%; at -0.5 s about 12%, with the Core at +40% and Lance at +0.65 cells to stay under the Sniper. In Tier I it put Lance builds above the Sniper on one enemy; Tier II holds it. |
+| III | Flashover | ability | Burning | | cinder.flashover | | | cinder.flashover | While it streams, an enemy in the cone whose burn holds 100 fuel or more flashes over: every enemy within 1.5 cells of it takes half the Flame too. | The crowd pick, and the uncapped burn's payoff: a hot pool spreads. Passing on a dead enemy's fuel added about 1% to a Scorcher alone, whose burns end before their enemies die. A Dragon's Breath alone never reaches the threshold (its pools settle near 90 fuel); two Scorchers on one crowd pour into the same pools and do, worth +57% on a crowd of 1000, which prices it at $22 against $10 for one. Sensitive to the threshold: at 75 fuel it is worth nearly twice as much. |
+| III | Meltdown | ability | Burning | | cinder.meltdown | | | cinder.meltdown | A burning enemy's armor and plating burn it: each point adds 0.6% to its burn. | The armored pick: the knight cooks in his armor. A pure counter, priced halfway between Walkers (nothing) and a Knight (+11%); with a floor of 5% it outpriced the other two by half. A Sunder stack a second only helped the physical towers around it, about 2% against a Knight. |
+| III | Thermal Shock | ability | Burning | | cinder.thermal_shock | | | cinder.thermal_shock | The flame pours 35% more Flame into an enemy that is Chilled, Frozen or Dazed. | The pick beside towers that hold enemies, weighed with a quarter of them held. With the Core, ×1.9 on a held target. |
+| III | Hot Flame II | stat | | | cinder.hot_flame_2 | | | cinder.hot_flame_2 | Flame +15 a second | |
+| III | Long Stream II | stat | | | cinder.long_stream_2 | | | cinder.long_stream_2 | Stream +1 s | At +0.5 s it added 5%; at +1 s about 9%. |
 
 ### Terms
 
 | Term | Glyph | Means |
 |---|---|---|
-| Flame | cinder.head.white_flame.2 | Fuel a second the stream pours into each enemy in the cone. |
-| Stream | | How long the Scorcher fires before it reloads. It keeps its target the whole stream while that enemy lives and stays in range, and picks the nearest again if it dies or leaves. With no enemy left in range it runs its time out into the air. |
-| Core | cinder.head.white_flame.4a | The middle quarter of the cone's width; the target always stands in it. |
+| Flame | tower.flame | Fuel a second the stream pours into each enemy in the cone. |
+| Stream | tower.stream | How long the Scorcher fires before it reloads. It keeps its target the whole stream while that enemy lives and stays in range, and picks the nearest again if it dies or leaves. With no enemy left in range it runs its time out into the air. |
+| Core | tower.core | The middle quarter of the cone's width; the target always stands in it. |
 | Burn | | An enemy's own pool of fuel. It burns at a rate that grows with the square root of the fuel it holds, so it deals exactly that fuel: 100 fuel in 1.75 s, 400 in 3.5 s, 1600 in 7 s. Fuel added joins the pool, whoever adds it; there is no cap. Each pulse (four a second) meets magic resist and insulation; tenacity shrinks fuel as it comes in. It goes past shields, as all damage over time does. |
 | Soulfire | | A pool like Burn's, by the same rule, that also burns what is burn-immune and earns Sicken as well as Scorch. A Scorcher that pours it burns hotter and passes half of a magic resist. |
-| Dragon's Breath | cinder.head.wide_nozzle.4b | A stream twice as long with a short reload, at a weaker Flame. |
-| Flashover | cinder.head.white_flame.4b | A hot burn in the stream spreads: the enemies beside it take part of the Flame too. |
-| Thermal Shock | cinder.special.thermal_shock | More Flame on an enemy another tower holds. |
-| Meltdown | cinder.special.pyromancers_mark | A burning enemy's armor and plating add to its burn, a share for each point. |
+| Dragon's Breath | tower.dragons_breath | A stream twice as long with a short reload, at a weaker Flame. |
+| Flashover | tower.flashover | A hot burn in the stream spreads: the enemies beside it take part of the Flame too. |
+| Thermal Shock | tower.thermal_shock | More Flame on an enemy another tower holds. |
+| Meltdown | tower.meltdown | A burning enemy's armor and plating add to its burn, a share for each point. |
 
 ### Look
 
 A flamethrower nozzle on a round tank. It keeps its orange, moved to `#ea862a` so it stands clear of the Burst.
-Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.scorcher`, built from a `TowerPose`; the stream is still lab art (`TowerArt.stream`).
+Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.scorcher`, built from a `TowerPose`; the stream's tongues in `TowerEffectFrameBuilder.streamTongues`.
 
 **In code** (`FEATURE-next-gen-tower-looks.md`, "Building a tower's look"). The looks are `TowerLook.CINDER` and
 `SOULFIRE`.
 
 | What the tower holds | In the pose |
 |---|---|
-| a stream pouring (white-hot tip, no pilot, glowing vents) | `TowerCue.STREAMING` (sent today, while waves fly) |
-| the nozzle cooling after a stream | `reloading(reloaded)`: not sent today |
+| a stream pouring (white-hot tip, no pilot, glowing vents) | `TowerCue.STREAMING` |
+| the nozzle cooling after a stream | `poseOfReload(reloadLeft)` |
 | Dragon's Breath owned | `DRAGONS_BREATH` |
 | a range node owned | `LONG_BARREL` |
 
-- **Soulfire is not wired.** The tower says which fire a flame wave carries, not which the tower took. Add that
-  query to the tower, then return `SOULFIRE` from the body-look visitor, as the Burst's fork does.
-- The stream itself (three tongues, the Core, White Flame, Dragon's Breath's shape) is not in the game: it is a
-  `TowerEffectDraw`, drawn from the posed muzzle. Port `TowerArt.stream` and `tongue`, then make the shots sheet
-  call the game and delete the lab's copy.
+- **Soulfire** is the body look `SOULFIRE`, chosen by the body-look visitor from the tower's `streamLook()`.
+- **The stream** is a `StreamDraw` from the posed muzzle: three tongues from `streamTongues`, and a Flashover's small
+  tongue from `flashover`. The art sheets draw both through the game. Dragon's Breath's own shape is not drawn yet
+  (`TODO.md`).
 
 | Tier | Foundation |
 |---|---|
