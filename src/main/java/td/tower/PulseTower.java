@@ -321,6 +321,17 @@ public final class PulseTower extends AbstractTower {
         return this.spec(this.mechanics.all()).sundial().reachCells() * this.context.getBoard().scale();
     }
 
+    /** What share of the shadow's turn is still to come; 0 while it is not turning. */
+    public float shadowShareLeft() {
+        int turn = this.spec(this.mechanics.all()).sundial().turnTicks();
+        return turn == 0 ? 0f : (float) this.shadowLeft / turn;
+    }
+
+    /** Whether its field Silences what stands inside. */
+    public boolean silences() {
+        return this.spec(this.mechanics.all()).silences();
+    }
+
     /** Which stone the identity pick made it. */
     public StoneLook stoneLook() {
         return this.spec(this.mechanics.all()).look();

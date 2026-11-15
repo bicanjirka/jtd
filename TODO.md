@@ -402,15 +402,27 @@ asks that hovering one shell show that shell's damage, blast, flight speed and r
 
 ### Tower cues and identity looks are drawn but nothing in play sends them
 
-Most `TowerCue`s, the Beacon's panes and the looks `RUBY`,
-`SHADE`, `BURDEN`, `GRAVITY` and `UMBRA` are reached only by the art sheets and by tests: they were built ahead of
-the towers that own them.
+Most `TowerCue`s, the Beacon's panes and the looks `RUBY` and
+`SHADE` are reached only by the art sheets and by tests: they were built ahead of the towers that own them.
 
 **Where:** `td.ui.TowerSpriteFrameBuilder` (each visit method's pose, `BODY_LOOK`), `td.ui.TowerFoundations`.
 
 **Approach:** each tower's next-gen rework sends its own, from the "In code" list in its
 `docs/features/FEATURE-next-gen-<type>-tower.md`. `FEATURE-next-gen-final-visual-review.md` deletes whatever no
 tower sends once all seven are in.
+
+### The Obelisk's smallest cues are not drawn
+
+The feature doc's look has three cues the board does not show yet: a thin ripple from an enemy each time it gains a
+stack of Toll, a small flash on an enemy the Sundial's shadow hits (larger inside an Umbra field), and Deep Toll's
+rune glowing hotter while it holds an enemy past a plain field's Toll. The stone, its field, the veil, the knell and
+the Toll ring all draw.
+
+- **Where:** `td.ui.EnemyFrameBuilder` (the Toll ring), `td.ui.TowerEffectFrameBuilder.visitPulseTower`,
+  `td.ui.TowerSpriteFrameBuilder.poseOf(PulseTower, int)`, `td.ui.TowerFoundations.obelisk`.
+- **Approach:** the ripple and the flash follow the timed-visual idiom: the enemy records the tick it last gained a
+  stack and the tower the tick and place of each shadow hit, answered as an `OptionalInt`; Deep Toll's glow is a
+  `TowerCue` the pose sends when `buildsDeepToll()` and the field holds an enemy past the plain cap.
 
 ### Dragon's Breath streams in the Scorcher's own cone
 

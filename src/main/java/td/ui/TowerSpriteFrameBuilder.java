@@ -60,7 +60,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         }
 
         public TowerLook visitPulseTower(PulseTower tower) {
-            return TowerLook.PULSE;
+            return bodyLookOf(tower);
         }
 
         public TowerLook visitAuraTower(AuraTower tower) {
@@ -116,6 +116,22 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     /** The pose a Burst is in: its arm reloading, and charged while an ability is full and waits. */
     static TowerPose poseOf(SplashTower tower) {
         return poseOfReload(tower.getCoolDownFraction()).with(TowerCue.CHARGED, tower.holdsAFullAbility());
+    }
+
+    /** The stone the identity pick made it, which its rune shows. */
+    static TowerLook bodyLookOf(PulseTower tower) {
+        return switch (tower.stoneLook()) {
+            case PLAIN -> TowerLook.PULSE;
+            case BURDEN -> TowerLook.BURDEN;
+            case GRAVITY -> TowerLook.GRAVITY;
+            case UMBRA -> TowerLook.UMBRA;
+        };
+    }
+
+    /** The pose an Obelisk is in: its rune bright while it holds an enemy at full Toll, flashing as it rings. */
+    static TowerPose poseOf(PulseTower tower, int gameTime) {
+        TowerPose pose = TowerPose.idle().with(TowerCue.CHARGED, tower.holdsFullToll());
+        return tower.ticksSinceKnell(gameTime) < KNELL_FLASH_TICKS ? pose.fired() : pose;
     }
 
     static TowerLook bodyLookOf(SplashTower tower) {
@@ -236,8 +252,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitPulseTower(PulseTower tower) {
-        boolean rang = tower.ticksSinceKnell(this.gameTime) < KNELL_FLASH_TICKS;
-        this.sprite(tower, TowerLook.PULSE, rang ? TowerPose.idle().fired() : TowerPose.idle());
+        this.sprite(tower, bodyLookOf(tower), poseOf(tower, this.gameTime));
         return null;
     }
 

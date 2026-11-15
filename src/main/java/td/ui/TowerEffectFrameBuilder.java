@@ -12,21 +12,24 @@ import td.tower.Tower;
 import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
 import td.tower.mortar.BlastMark;
+import td.tower.pulse.StoneLook;
 import td.tower.splash.Passive;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
-import td.ui.render.PulseDraw;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
+import td.ui.render.ShadowDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.StreamDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
+import td.ui.render.WardOutlineDraw;
+import td.ui.render.ZoneDraw;
 import td.util.GameWorld;
 import td.wave.Vec2;
 
@@ -107,10 +110,21 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int STREAM_CORE_TIPS = 5;
     /** How wide a Flashover's tongue spreads either side, in radians. */
     private static final float FLASHOVER_HALF_WIDTH = 0.22f;
+    /** A Ward's rune circle runs just inside its field's outline. */
+    private static final float WARD_INSET_CELLS = 0.07f;
+    /** The knell's ring runs out to the field's edge in this long. */
+    private static final int KNELL_RING_TICKS = 10;
+    /** The Sundial's veil, in cells: narrow at the stone, wider at its tip, with a thin leading edge. */
+    private static final float SHADOW_ROOT_CELLS = 0.07f;
+    private static final float SHADOW_TIP_CELLS = 0.26f;
+    private static final float SHADOW_EDGE_CELLS = 0.03f;
+    /** The veil keeps its strength for most of its turn and fades over the rest. */
+    private static final float SHADOW_FADE_SHARE = 0.3f;
 
 
     private final GameWorld world;
     private final List<TowerEffectDraw> draws = new ArrayList<>();
+    private final List<ZoneDraw> wards = new ArrayList<>();
     private final int scale;
     private final int gameTime;
     private final double interpolationAlpha;
@@ -142,6 +156,9 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     public List<TowerEffectDraw> build() {
+        if (!this.wards.isEmpty()) {
+            this.draws.add(new WardOutlineDraw(ZoneOutlineTracer.trace(this.wards), this.scale));
+        }
         return this.draws;
     }
 
@@ -366,10 +383,25 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
     }
 
-    /** The field's faint disc while it holds anyone. */
+    /** The field itself is a ground patch; over it a Ward's rune circle, the knell's ring and the Sundial's veil. */
     public Void visitPulseTower(PulseTower tower) {
-        if (tower.isHolding()) {
-            this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), tower.getRangeReal()));
+        float x = tower.getX();
+        float y = tower.getY();
+        float field = tower.getRangeReal();
+        if (tower.silences()) {
+            this.wards.add(new ZoneDraw(x, y, field - this.scale * WARD_INSET_CELLS, 1f, 0f));
+        }
+        int rang = tower.ticksSinceKnell(this.gameTime);
+        if (rang < KNELL_RING_TICKS) {
+            float progress = Math.min(1f, (rang + (float) this.interpolationAlpha) / KNELL_RING_TICKS);
+            this.draws.add(new RingDraw(ZoneFrameBuilder.fieldPaletteFor(tower.stoneLook()), x, y, field * progress,
+                    1f - progress));
+        }
+        if (tower.isCastingShadow()) {
+            float alpha = Math.min(1f, tower.shadowShareLeft() / SHADOW_FADE_SHARE);
+            this.draws.add(new ShadowDraw(x, y, (float) tower.shadowRadians(this.interpolationAlpha),
+                    tower.shadowReach(), this.scale * SHADOW_ROOT_CELLS, this.scale * SHADOW_TIP_CELLS,
+                    this.scale * SHADOW_EDGE_CELLS, alpha, field, tower.stoneLook() == StoneLook.UMBRA));
         }
         return null;
     }
