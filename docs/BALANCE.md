@@ -1,8 +1,8 @@
 # Balancing enemies, bounties and waves
 
 How the game's enemies, what they pay, the waves they come in and the towers that meet them are held to one scale,
-and how to check that they still are after a change. The enemy and wave tools use no tower, so they keep working
-while the towers are being redone; the tower bench measures the towers in code.
+and how to check that they still are after a change. The enemy tool uses no tower; the tower bench measures the
+towers in code; the wave tool weighs a round with no tower and prices its defence with what the bench measured.
 
 ```bash
 mvn -q compile exec:java -Dexec.mainClass=td.balance.EnemyPowerReport   # every enemy at every rank; seconds
@@ -15,20 +15,22 @@ mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerPriceWriter   # writes
 `EnemyPowerReport` takes `--kinds golem,yeti`, `--ranks grunt,elite` and `--fit golem=1.7,yeti=1.7`;
 `WavePowerReport` takes `--levels rift,hive`; `TowerBench` takes `--towers sniper,burst`, `--scenarios stream,group`
 and `--quick`; `TowerReport` takes nothing and reads what the bench stored. All store their rows in
-`target/balance/`.
+`target/balance/`. `WavePowerReport` reads the bench's sheets, so it runs after `TowerBench`; with `--levels` it
+prints and stores nothing.
 
 ## The pipeline
 
 Balance is settled in a fixed order, each stage reading what the one before it stored in `target/balance/`:
-enemies, then waves, then towers. A stage stores a tab-separated sheet for the next stage and an HTML page for a
+enemies, then towers, then waves: a level's economy is set against what towers hold, so a tower retune is followed
+by a wave run. A stage stores a tab-separated sheet for the next stage and an HTML page for a
 person (`ReportPage` writes both).
 
 | Stage | Tool | Stores | Page |
 | --- | --- | --- | --- |
 | 1 Enemies | `EnemyPowerReport` (a full run, no `--kinds` or `--ranks`) | `enemy-power.tsv`: one row per enemy and rank, its power on every axis as a multiple of the Walker; `enemy-baseline.tsv`: what the Walker of each rank takes, which turns those multiples into damage a second | `enemies.html` |
-| 2 Waves | `WavePowerReport` | `wave-power.tsv` | |
-| 3 Towers, measured | `TowerBench` (reads `enemy-power.tsv`; with `--towers` it replaces only those towers' rows) | `towers.tsv`: one row per build of each tower, what it holds of each scenario in Walkers; `tower-pairs.tsv`: every two towers side by side; `tower-scenarios.tsv`: the scenarios and what a point of health is worth in each | `tower-bench.html` |
+| 2 Towers, measured | `TowerBench` (reads `enemy-power.tsv`; with `--towers` it replaces only those towers' rows) | `towers.tsv`: one row per build of each tower, what it holds of each scenario in Walkers; `tower-pairs.tsv`: every two towers side by side; `tower-scenarios.tsv`: the scenarios and what a point of health is worth in each | `tower-bench.html` |
 | 3 Towers, judged | `TowerReport` (reads the bench's three sheets; rerun it after every bench run) | `tower-prices.tsv`: one row per tower and node, its price, worth, fair and suggested price and verdict; `tower-stages.tsv`: each tower bought whole to each tier, its cost, power, worth and value | `towers.html` |
+| 4 Waves | `WavePowerReport` (a full run; reads `towers.tsv` and `tower-scenarios.tsv`) | `wave-power.tsv`: one row per level and round, its strength, pay, bank, need, room, the experience a tower has by then, what it asks for and its verdict | `waves.html` |
 
 ## The probe rig
 
@@ -118,35 +120,50 @@ loss from every hit, so a heavy hit goes through them; magic resist takes a shar
 
 ## A wave's strength and a level's economy
 
-`WavePowerReport` plays each round of each level alone, on the level's own board, lane by lane.
+`WavePowerReport` plays each round of each level alone, on the level's own board, lane by lane, with no tower.
 
 - **walkers**: the round's strength: the single-shot damage that holds it, times the seconds it is on the board,
-  counted in Walkers of the lowest rank.
-- **bounty, bonus**: what its kills pay and what clearing it with no leak pays.
+  counted in Walkers of the lowest rank. It is the unit the tower bench counts what a tower holds in.
+- **bounty, bonus**: what its kills pay and what clearing it with no leak pays. **pays** is both per Walker of
+  strength: the pace of the economy. A defence costs about four credits per Walker it holds and keeps holding, so
+  a round that pays two has paid for half of itself; rounds of low ranks pay near three, rounds of Veterans and
+  Elites near one.
 - **bank**: the starting credits and everything earlier rounds paid.
-- **need**: what the cheapest defence that holds the round costs when it is built of the paper tools' reference
-  tower (`.claude/skills/jtd-balance-tools/reference.json`, the Sniper: the single-target ceiling). The defence is
-  filled cell by cell, best cell first, bare towers before tiers. A tower is credited with the share of the lane it
-  reaches while a group walks past, and with the whole time a stream keeps coming. **floor** is the same for the
-  weakest tower.
-- **room**: bank over need. Above 1 the reference defence is affordable.
+- **need**: what the cheapest defence that holds the round costs when it is built of the **yardstick tower**: the
+  average of the judged towers as the bench measured them, bare and bought whole to each tier (its cost and its
+  power, `TowerSheet`). The defence is filled cell by cell, best buy first. A tower holds of a lane what it holds
+  on the bench times how much more of the lane it reaches from its cell than from the bench's; it serves one
+  lane. Once as many towers stand as there are kinds, the next is a copy and pays the copy surcharge, so tiers
+  come in when copies have grown dearer than they are.
+- **room**: bank over need. At 1 the level has paid exactly for a defence of average towers that holds the round.
 - **even**: room over the line the level's own rooms follow from round to round. 1 is a round exactly as tight as
-  its place in the level asks; 0.8 is a gate; 1.3 is a breather.
+  its place in the level asks; under 0.92 the report calls it a gate; beyond 0.7 or 1.3 it warns.
+- **xp**: what a tower that has stood on each lane since the first round has earned before this one: a tower earns
+  the bounty of every enemy it reached that died. **opens** is the tier the richest lane's tower has opened at the
+  standard gates. It is the most a tower can have; it says by which round a gate can be passed at all.
 - **asks for**: the part of a defence the round leans on more than Walkers do: how much more of the mix it takes
   once one kind of damage is removed, or how much less once enemies are revealed or held.
 
-Need is a yardstick, not a forecast. The reference tower's tiers add less damage per credit than a new tower does,
-and the towers in code today are stronger than it. Read how room moves through a level, not where it stands.
+Need is a yardstick, not a forecast. It buys for one round with full hindsight and at the average tower's rate;
+a player buys ahead of what comes, but picks the tower that counters it and lets one tower guard two lanes
+where they cross. Whether a level at these rooms is won and by whom is the play check's to show.
 
 ### The targets
 
-- Room follows one line through a level: about **1.3 in the first round down to 1.0 in the last** (The Last Hour,
-  the hardest level: 1.1 down to 0.7).
-- A **gate** sits about 15% under the line; every level has three or four, one of them its last round.
+- Room follows one line through a level: about **1.4 in the first round down to 1.0 in the last**.
+- A **gate** sits about a tenth under the line; a level has three or four, one of them its last round.
 - No other round is more than about 30% off the line.
-- A **clear bonus** differs from round to round. It is paid where kills alone leave the next round short, most
-  often on the round before a gate, and is never more than 0.6 of that round's bounty, so a leak costs a player
-  something but does not sink them.
+- The **starting credits** buy two to four towers and are tied to the first round: about 1.4 times its need.
+  A first round too strong for that is weakened; the credits are not raised.
+- The economy is paced by **rank**, not by count: a round of many low-rank enemies pays for most of its own
+  defence and the bank runs away from the waves. Low ranks open a level; by its middle a round is Veterans, and
+  its strength grows by Elites.
+- A **clear bonus** is paid only where kills alone leave the next round short, and is never more than 0.6 of that
+  round's bounty. A level whose rooms hold the line on bounties has none.
+
+Iron Crossing is tuned to these on the measured towers: 50 credits, rooms from 1.43 down to 0.85, gates at rounds
+6, 10, 13 and 15, no clear bonus. The other levels were tuned on the paper reference tower the measured towers
+replaced; on the measured yardstick their rooms stand at two to six, and they wait for their own pass (`TODO.md`).
 
 ### The gates
 
@@ -168,14 +185,15 @@ It is the one round the method flags and does not fix: the Warden stays as autho
 
 ### Tuning a wave
 
-Room does not move with how many enemies a wave has, since more enemies pay more. It moves with:
+Room moves little with how many enemies a wave has, since more enemies pay more. It moves with:
 
 - **rank**: a higher rank has more health per credit;
 - **how much arrives at once**: a group needs more than a stream of the same enemies;
 - **the lane**: a short lane is expensive to hold;
 - **the clear bonus and the starting credits**, which add credits and no strength.
 
-Change a wave, run the report for that level, read `even`.
+Change a wave, run the report for that level (`--levels iron`, seconds), read `room` and `even`; a full run
+stores the sheet and the page.
 
 ## What a tower holds
 
@@ -303,8 +321,8 @@ tower is priced the same way, with no change to the tools.
 
 ## What this does not settle
 
-- **How hard the game is.** The targets fix the shape of each level, not its difficulty; that waits for the
-  next-gen towers (`features/FEATURE-balance-after-next-gen-towers.md`).
+- **How hard the game is.** The targets fix the shape of each level against the average tower; whether a level at
+  room 1 is won, and by which builds, is for the play check to show.
 - **Bosses.** Their rows are estimates, and their numbers are as authored.
 - **Lives.** A leak is a loss to the rig; how many leaks a level forgives is not measured.
 - **Whether upgrades are worth buying in play.** The premium is set by rule; whether a player with few cells left

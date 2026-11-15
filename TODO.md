@@ -343,19 +343,19 @@ player what kills paid before has to be read across two tables rather than swept
 - **Approach:** when the clear bonuses are tuned, try each table's income column first; add a two-knob grid only if
   that cannot find the pairing.
 
-### Waves and clear bonuses are tuned on paper, not in play
+### Only Iron Crossing is tuned on the measured towers
 
-Every level's waves, starting credits and clear bonuses were set with `td.balance.WavePowerReport`, which prices a
-round against the paper tools' reference tower, so that each level's room follows one line with its gates below it
-(`docs/BALANCE.md`). No tower of the next generation has played them, and the bosses' rounds are estimates: the
-Warden's round asks for several times the credits the level has paid by then, and The Labyrinth's three long rounds
-pay while they run, which the report does not count.
+Iron Crossing's waves and starting credits follow the room line on the yardstick of measured towers
+(`docs/BALANCE.md`). The other five levels were tuned against the paper reference tower that yardstick replaced:
+measured, their banks are two to six times what their rounds need, their first rounds leave credits for seven or
+more towers, and their bosses' rounds stand far under their lines (the Warden, The Labyrinth's long rounds, The
+Rift's lone walker).
 
-- **Where:** the wave scripts, starting credits and clear bonuses in `td.level.*Level`; `WardenEnemy`,
-  `StormTwinsEnemy`, `KeeperEnemy` and the other bosses' numbers.
-- **Approach:** once the next-gen towers are in code, `BalanceReport --seeds 12 --strong --variety` per level and the
-  second pass in `docs/features/FEATURE-balance-after-next-gen-towers.md`: set the absolute difficulty, then the
-  bosses, then the clear bonuses again.
+- **Where:** the wave scripts, starting credits and clear bonuses in `td.level.*Level` other than
+  `IronCrossingLevel`; `WardenEnemy`, `StormTwinsEnemy`, `KeeperEnemy` and the other bosses' numbers.
+- **Approach:** per level, `WavePowerReport --levels <it>` and the targets in `docs/BALANCE.md`: cut the starting
+  credits to about 1.4 times the first round's need, raise ranks in place of counts until room follows 1.4 down to
+  1.0, drop the clear bonuses the line no longer needs; then the play check.
 
 ### The level-select screen fits six levels
 
