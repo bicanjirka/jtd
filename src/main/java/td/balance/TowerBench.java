@@ -403,7 +403,7 @@ public final class TowerBench {
      * different labels; they are measured once.
      */
     static List<Build> buildsOf(TowerFactory.Type type) {
-        UpgradeTree tree = Turn.place(idleEngine(), type, SUBJECT).orElseThrow().upgradeTree();
+        UpgradeTree tree = treeOf(type);
         Map<String, Build> builds = new LinkedHashMap<>();
         builds.put(BARE, Build.of(BARE, BARE, resolve(type, Set.of())));
         for (UpgradeNode node : tree.nodes()) {
@@ -505,6 +505,11 @@ public final class TowerBench {
         }
         return new Resolved(tower.upgrades().owned().stream().map(UpgradeNode::id).toList(),
                 before - engine.getGameWorld().economy().getCredits());
+    }
+
+    /** The tree a tower of {@code type} is built with. */
+    static UpgradeTree treeOf(TowerFactory.Type type) {
+        return Turn.place(idleEngine(), type, SUBJECT).orElseThrow().upgradeTree();
     }
 
     private static GameEngine idleEngine() {
@@ -653,7 +658,7 @@ public final class TowerBench {
             byKey.put(build.key(), health.subList(next, next + this.scenarios.size()));
             next += this.scenarios.size();
         }
-        UpgradeTree tree = Turn.place(idleEngine(), type, SUBJECT).orElseThrow().upgradeTree();
+        UpgradeTree tree = treeOf(type);
         List<List<String>> rows = new ArrayList<>();
         for (Build build : builds) {
             Optional<UpgradeNode> node = tree.node(build.node());

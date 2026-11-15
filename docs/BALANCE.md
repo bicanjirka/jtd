@@ -8,11 +8,13 @@ while the towers are being redone; the tower bench measures the towers in code.
 mvn -q compile exec:java -Dexec.mainClass=td.balance.EnemyPowerReport   # every enemy at every rank; seconds
 mvn -q compile exec:java -Dexec.mainClass=td.balance.WavePowerReport    # every round of every level; two minutes
 mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerBench         # every build of every tower; a minute
+mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerReport        # prices and verdicts from the bench's sheets; seconds
 ```
 
 `EnemyPowerReport` takes `--kinds golem,yeti`, `--ranks grunt,elite` and `--fit golem=1.7,yeti=1.7`;
 `WavePowerReport` takes `--levels rift,hive`; `TowerBench` takes `--towers sniper,burst`, `--scenarios stream,group`
-and `--quick`. All store their rows in `target/balance/`.
+and `--quick`; `TowerReport` takes nothing and reads what the bench stored. All store their rows in
+`target/balance/`.
 
 ## The pipeline
 
@@ -25,6 +27,7 @@ person (`ReportPage` writes both).
 | 1 Enemies | `EnemyPowerReport` (a full run, no `--kinds` or `--ranks`) | `enemy-power.tsv`: one row per enemy and rank, its power on every axis as a multiple of the Walker; `enemy-baseline.tsv`: what the Walker of each rank takes, which turns those multiples into damage a second | `enemies.html` |
 | 2 Waves | `WavePowerReport` | `wave-power.tsv` | |
 | 3 Towers, measured | `TowerBench` (reads `enemy-power.tsv`; with `--towers` it replaces only those towers' rows) | `towers.tsv`: one row per build of each tower, what it holds of each scenario in Walkers; `tower-pairs.tsv`: every two towers side by side; `tower-scenarios.tsv`: the scenarios and what a point of health is worth in each | `tower-bench.html` |
+| 3 Towers, judged | `TowerReport` (reads the bench's three sheets; rerun it after every bench run) | `tower-prices.tsv`: one row per tower and node, its price, worth, fair and suggested price and verdict; `tower-stages.tsv`: each tower bought whole to each tier, its cost, power, worth and value | `towers.html` |
 
 ## The probe rig
 
@@ -216,9 +219,74 @@ A node's worth alone is its `line` over what that is set against; its worth in a
 `without` one. `tower-pairs.tsv` sets every two towers side by side, bare and bought whole, against what each holds
 alone on the same cells: a synergy above 1 is help, below 1 is two towers in each other's way.
 
+## What a tower is worth
+
+`TowerReport` turns the bench's sheets into prices and verdicts. It measures nothing itself, so it runs in seconds
+and is rerun after every bench run. `towers.html` opens with every verdict that breaks a rule; the console prints
+the same list.
+
+**Power and worth.** A build's **power** is the Walkers of a mixed wave it adds to the bench's two partners: for
+each scenario, what the team holds less what the partners hold without it, weighted by the mix in `TowerSheet`
+(plain enemies one half, the defences the other). It is read beside the partners because a tower alone holds
+nothing of a wave it lets one enemy through. The **going rate** is the power a credit buys of a bare tower, the
+mean over the judged towers. A build's **worth** is its power at that rate, in credits, and its **value** is worth
+over cost: 1 is as good a buy as the average bare tower.
+
+**Tower prices.** A tower's fair price is its bare worth. A price within a fifth of that is right.
+
+**Node prices.** Nodes multiply each other, so what a build loses without a node grows with the build, and those
+losses add up to more than the tree. A node's **worth** is therefore its share of what its tier adds to the tiers
+below it, split among the tier's nodes by what the whole tier loses without each. That is what a player buying tier
+by tier gets, and a tower's node worths add up to its tree. A node others need is not credited with them. Then:
+
+- **fair price** = worth × the tier's **premium**, 1.25 to the power of tier + 1: the copy surcharge of the copy of
+  the tower a player would be buying instead by then. An upgrade takes no cell and no surcharge, so it may cost more
+  than the same power as bare towers.
+- **pace** is the band of prices a tier asks, in tower prices: tier 0 from 0.3 to 0.9, tier I from 0.8 to 1.25,
+  and each later tier half as much again.
+- **suggested price** is the fair price brought inside the pace.
+- A node whose fair price is under its pace is **weak for its tier** and one over it is **strong for its tier**;
+  the verdict says by how much. Such a node needs its numbers changed, not only its price: charging the pace for a
+  weak node makes it a trap, and a strong one is a must-buy at any price inside the pace.
+- A node that moves no build's power by a fortieth is **unmeasured**: a utility the bench's scenarios do not show
+  (a reveal with nothing hidden left to find, a counter to an ability no scenario enemy has). It is listed, and
+  priced at its tier's floor until a scenario shows it. A node that adds to one build and takes from another is
+  unmeasured too, and says so.
+- A node every build holds less with is a **breach**, as is one the whole tree holds a tenth more without.
+
+**Verdicts.**
+
+| Table | Asks | Breaks when |
+| --- | --- | --- |
+| Stages | what a credit buys of each tower bought whole to each tier, by its best build, against the median of the judged towers at that tier | `DOMINANT`: it pays 1.25 times its rivals, or no rival holds more for a credit against 60% of a mixed wave. `WARN weak`: it pays under 0.8 |
+| Roles | the rules in `TowerReport.RULES`, at every tier, by what a credit holds alone | `BREACH`, naming each rival on the wrong side and by how much |
+| Profiles | what a credit holds alone in each scenario over the median tower | no verdict: a row warm everywhere is a tower with no weakness |
+| Nodes | the prices above | `DOMINANT node`: the whole tree loses over a third of its power without it |
+| Clusters and forks | each member in the whole tree bought with it | `DOMINANT pick`: a member a credit of which buys 15% more than any other, and that is behind in no scenario. `WARN weaker pick`: under 0.85 of the best |
+| Synergies | the bench's pairs, by the geometric mean over the paired scenarios | `WARN strong pair` from 2, `WARN clash` to 0.7 |
+
+Roles compare what a **credit** holds, not what a tower holds: towers bought to the same tier cost up to three times
+each other, so the top tower of a role is the one a credit spent on holds the most there. The rules now:
+
+- the Sniper is the top single-target tower (single, stream, boss);
+- against armor and plating the Aerie is the top single-target tower (armored, plated);
+- the Burst before its fork is the weakest area tower, below the Mortar and the Scorcher on a group, and about
+  equal to the Obelisk there;
+- no tower is weaker on one target than the Burst before its fork.
+
+A tower whose tree is not final is measured and listed but **not judged** (`TowerSheet.NOT_JUDGED`): no rate,
+median or rule counts it. Taking it off that list is all it needs to be judged.
+
+**Changing a number.** Change a tower or a node, run `TowerBench --towers <it>` and then `TowerReport`: the bench
+stores each build's cost, so a price change needs it too. A price change moves no power, only cost, and with it
+value, the roles and the price verdicts; a change to what a node does moves its worth, and its neighbours' shares
+with it.
+
 ## What this does not settle
 
 - **How hard the game is.** The targets fix the shape of each level, not its difficulty; that waits for the
   next-gen towers (`features/FEATURE-balance-after-next-gen-towers.md`).
 - **Bosses.** Their rows are estimates, and their numbers are as authored.
 - **Lives.** A leak is a loss to the rig; how many leaks a level forgives is not measured.
+- **Whether upgrades are worth buying in play.** The premium and the pace are set by rule; whether a player with
+  few cells left buys a node over a tower at those prices is for the play check to show.
