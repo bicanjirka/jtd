@@ -35,6 +35,8 @@ import java.util.OptionalInt;
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /** A tier's rise takes half a second on the tick clock, so it pauses and speeds with the game. */
+    /** How long the stone shows a ring of its knell. */
+    private static final int KNELL_FLASH_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 0.4f);
     private static final int RISE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2);
     /** A placed tower settles onto its cell a little faster than a tier rises. */
     private static final int SETTLE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 0.35f);
@@ -234,8 +236,8 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitPulseTower(PulseTower tower) {
-        boolean struck = tower.ticksSinceZap(this.gameTime) < tower.zapFlashTicks();
-        this.sprite(tower, TowerLook.PULSE, struck ? TowerPose.idle().fired() : TowerPose.idle());
+        boolean rang = tower.ticksSinceKnell(this.gameTime) < KNELL_FLASH_TICKS;
+        this.sprite(tower, TowerLook.PULSE, rang ? TowerPose.idle().fired() : TowerPose.idle());
         return null;
     }
 

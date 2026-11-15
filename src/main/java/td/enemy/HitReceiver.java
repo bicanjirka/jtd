@@ -90,8 +90,11 @@ public interface HitReceiver {
     /** Removes every buff it has given itself or been given by an ally. */
     void dispelBuffs();
 
-    /** Takes {@code stacks} off its {@code kind}, ending the effect once none are left. */
-    void loseStacks(EffectKind kind, int stacks);
+    /**
+     * Holds its stack debuff {@code kind} through its next tick, building a stack every {@code ticksPerStack} up to
+     * {@code cap} and losing none; of several holds the quickest and highest count, so they never add up.
+     */
+    void holdStacks(EffectKind kind, int ticksPerStack, int cap);
 
     /** Its spirit now: {@code 0} at neutral, down to {@code -100}. */
     float spirit();

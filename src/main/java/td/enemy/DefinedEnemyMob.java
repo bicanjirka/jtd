@@ -608,10 +608,10 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     @Override
-    public void loseStacks(EffectKind kind, int stacks) {
-        this.activeEffects.loseStacks(kind, stacks);
-        this.stats.invalidate();
-        this.reportEffects("stacks-lost");
+    public void holdStacks(EffectKind kind, int ticksPerStack, int cap) {
+        if (!this.immunities.contains(kind)) {
+            this.activeEffects.hold(kind, ticksPerStack, cap);
+        }
     }
 
     @Override
@@ -758,7 +758,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         if (this.validTarget()) {
             int healthBefore = this.health.current();
             Damage raw = HitResolution.raw(damage, attacker, this.stats, this.gameWorld.random());
-            boolean meetsShields = attacker.delivery() == Delivery.HIT && !(raw.critical() && attacker.critsPierceShields());
+            boolean meetsShields = attacker.delivery() == Delivery.HIT && !attacker.piercesShields(raw.critical());
             boolean shielded = meetsShields && this.activeEffects.has(EffectKind.SHIELD);
             int absorbed = meetsShields ? this.activeEffects.absorb(raw.type(), raw.amount(),
                     this.restoreFactor()) : 0;

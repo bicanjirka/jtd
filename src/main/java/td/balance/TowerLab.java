@@ -19,15 +19,12 @@ import td.enemy.SpawnEnemiesAction;
 import td.level.LevelDefinition;
 import td.tower.Tower;
 import td.tower.TowerFactory;
-import td.tower.pulse.LeyLine;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameHost;
 import td.util.LoadedLevel;
 import td.util.RandomSource;
-import td.wave.Path;
 import td.wave.PathDefinition;
 import td.wave.Point;
-import td.wave.Vec2;
 import td.wave.Wave;
 import td.wave.WaveDefinition;
 import td.wave.WaveScript;
@@ -91,9 +88,6 @@ public final class TowerLab {
      * a change to some other tower never moves those numbers; the cheapest, so a cluster fits anywhere.
      */
     private static final TowerFactory.Type PARTNER = TowerFactory.Type.SNIPER;
-    /** How far, in cells, a Ley Line's host stands from the Obelisk measured: across a path, inside the line's reach. */
-    private static final double HOST_MIN_CELLS = 3;
-    private static final double HOST_MAX_CELLS = 5;
     /**
      * The towers what a tower does for its neighbours is measured on, each on the free cell nearest it that reaches
      * a path: a field or a slow is built around, and a shot, a blast and a shell each gain from it differently.
@@ -242,31 +236,28 @@ public final class TowerLab {
 
         private final LevelDefinition probes;
         private final List<Placement> box;
-        private final List<Placement> hosts;
         private final TowerFactory.Type type;
         private final Point cell;
         private final double[] alone;
 
-        private SupportTrial(LevelDefinition probes, List<Placement> box, List<Placement> hosts, TowerFactory.Type type,
-                             Point cell) {
+        private SupportTrial(LevelDefinition probes, List<Placement> box, TowerFactory.Type type, Point cell) {
             this.probes = probes;
             this.box = box;
-            this.hosts = hosts;
             this.type = type;
             this.cell = cell;
-            this.alone = boxDamage(probes, box, hosts, type, cell, Optional.empty(), false);
+            this.alone = boxDamage(probes, box, type, cell, Optional.empty(), false);
         }
 
         /** The trial for {@code type} on {@code cell}; none where no partner finds a cell that reaches a path. */
         static Optional<SupportTrial> around(BoardSurvey survey, LevelDefinition probes, TowerFactory.Type type, Point cell) {
             List<Placement> box = boxAround(survey, cell);
             return box.isEmpty() ? Optional.empty()
-                    : Optional.of(new SupportTrial(probes, box, hostFor(survey, type, cell, box), type, cell));
+                    : Optional.of(new SupportTrial(probes, box, type, cell));
         }
 
         /** The share more each partner lands beside the tower owning {@code line}; never below none. */
         double gainOwning(Optional<UpgradeNode> line) {
-            return boxGain(this.alone, boxDamage(this.probes, this.box, this.hosts, this.type, this.cell, line, true));
+            return boxGain(this.alone, boxDamage(this.probes, this.box, this.type, this.cell, line, true));
         }
     }
 
@@ -444,16 +435,15 @@ public final class TowerLab {
 
     /**
      * What each partner in {@code box} lands in one probe round, averaged over seeds, alone or with a {@code type}
-     * owning {@code line} on {@code cell} among them; {@code hosts} stand there either way.
+     * owning {@code line} on {@code cell} among them.
      */
-    private static double[] boxDamage(LevelDefinition probes, List<Placement> box, List<Placement> hosts,
-                                      TowerFactory.Type type, Point cell, Optional<UpgradeNode> line, boolean withSubject) {
+    private static double[] boxDamage(LevelDefinition probes, List<Placement> box, TowerFactory.Type type, Point cell,
+                                      Optional<UpgradeNode> line, boolean withSubject) {
         double[] total = new double[box.size()];
         for (long seed = FIRST_SEED; seed < FIRST_SEED + SEEDS; seed++) {
             GameEngine engine = labEngine(probes, seed);
             List<Tower> partners = box.stream()
                     .map(placement -> Turn.place(engine, placement.type(), placement.cell()).orElseThrow()).toList();
-            hosts.forEach(host -> Turn.place(engine, host.type(), host.cell()));
             if (withSubject) {
                 Tower subject = Turn.place(engine, type, cell).orElseThrow();
                 line.ifPresent(node -> buyLine(subject, node));
@@ -464,37 +454,6 @@ public final class TowerLab {
             }
         }
         return total;
-    }
-
-    /**
-     * For an Obelisk, a plain one for its Ley Line to link to: on a free cell at least {@link #HOST_MIN_CELLS} from it
-     * and within the line's reach, the one whose beam crosses the paths most; none for any other tower.
-     */
-    private static List<Placement> hostFor(BoardSurvey survey, TowerFactory.Type type, Point cell, List<Placement> box) {
-        if (type != TowerFactory.Type.PULSE) {
-            return List.of();
-        }
-        Vec2 from = survey.centre(cell);
-        List<Path> paths = IntStream.range(0, survey.pathCount()).mapToObj(i -> new Path(survey.samples(i))).toList();
-        Set<Point> taken = new LinkedHashSet<>(List.of(cell));
-        box.forEach(placement -> taken.add(placement.cell()));
-        return survey.buildable().stream().filter(other -> !taken.contains(other))
-                .filter(other -> {
-                    double cells = Math.hypot(other.x() - cell.x(), other.y() - cell.y());
-                    return cells >= HOST_MIN_CELLS && cells <= HOST_MAX_CELLS;
-                })
-                .map(other -> {
-                    Vec2 to = survey.centre(other);
-                    return new LeyLine((float) from.x(), (float) from.y(), (float) to.x(), (float) to.y())
-                            .scoredOn(paths, survey.scale() / 2.0);
-                })
-                .filter(LeyLine.Scored::touchesAPath)
-                .min(LeyLine.BETTER_FIRST)
-                .map(scored -> new Placement(TowerFactory.Type.PULSE, survey.buildable().stream()
-                        .filter(other -> survey.centre(other).x() == scored.line().toX()
-                                && survey.centre(other).y() == scored.line().toY())
-                        .findFirst().orElseThrow()))
-                .stream().toList();
     }
 
     /**

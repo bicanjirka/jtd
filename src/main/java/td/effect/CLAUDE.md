@@ -11,7 +11,7 @@
   adds up, stacks add to their cap, and a per-source kind keeps one share per source on its own clock
   (`SourceShares`): the effect's time is always its last share's, and anything that changes the time changes the
   shares. `ActiveEffects` exposes queries only, never its map.
-- A slow (`Effect.slowStrength()`: `CHILL`, whose strength each application brings, and `TARRED`, `DRAGGED` by their
+- A slow (`Effect.slowStrength()`: `CHILL` and `DRAGGED`, whose strength each application brings, `TARRED` by its
   rule's `slowPerStack`, and `BLIGHT`'s `GrowingSlow`) takes a share of the speed its carrier has, gains included, and only the strongest counts,
   across kinds too. `ANCHORED` (`EffectTag.SPEED_CEILING`) is no such share: it holds speed to a share of base through
   `capAtShareOfBase`, the one answer to a speed gain. Each fades over its last `SLOW_FADE_TICKS`, or its whole length if
@@ -39,13 +39,11 @@
   the freeze meter change how long an effect lasts, and only as it is applied.
 - `MARKED` is spent by a hit, never by periodic damage: the mob calls `consume(MARKED)`, and only
   when its resilience is below 100.
-- A field effect (`SILENCED`, `ANCHORED`, `CORRODED`, `DRAGGED`, `DEAD_ZONE`, `FRAIL`) is an
-  ordinary timed effect the tower that holds the field refreshes every tick, so it ends a while after
-  the enemy leaves. A field effect with a number holds it in stacks:
-  `CORRODED` and `FRAIL` in `FieldStrength`, `DRAGGED` in points of speed (`DragStrength`, capped at
-  `MOST`). A field tops the stacks up to the strength it gives, so of two fields the stronger holds,
-  and lowers (`loseStacks`) only what it gave itself. `TOLL` is a stack debuff on one shared clock
-  (every stack goes when it runs out), never paced itself. `DEAD_ZONE` sets `SPIRIT` to its floor, so heals,
+- A field effect (`SILENCED`, `ANCHORED`, `DRAGGED`, `DEAD_ZONE`) is an ordinary timed effect the tower that holds
+  the field refreshes every tick, so it ends a while after the enemy leaves; of two fields the stronger holds.
+  `TOLL` is held instead (`hold`): each tick a field holds it, it builds at that field's pace up to that field's cap
+  and loses nothing, and of several fields the quickest pace and the highest cap count, never their sum. Once no
+  field holds it, it decays like any stack debuff. `DEAD_ZONE` sets `SPIRIT` to its floor, so heals,
   shields and rewinds are worth nothing and nothing is kept out or stripped; a fallout zone applies it too.
 - A pool earns `SICKENED` itself, but a tower can also add it (`Effect.sickened`): the stacks add up
   to the whole of spirit, and wear off one at a time.

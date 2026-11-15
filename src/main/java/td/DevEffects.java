@@ -129,20 +129,16 @@ public final class DevEffects {
             case VULNERABLE -> stacking(kind, Effect::vulnerable);
             case SUNDERED -> stacking(kind, Effect::sundered);
             case UNRAVELED -> stacking(kind, Effect::unraveled);
-            case CONDEMNED -> stacking(kind, Effect::condemned);
-            case TOLL -> stacking(kind, Effect::toll);
+            case TOLL -> one(List.of(stacks(kind)), in -> Effect.toll(in.whole(0), kind.maxStacks()));
             case SPELLPROOF -> stacking(kind, Effect::spellproof);
             case RESOLVE -> stacking(kind, Effect::resolve);
-            case CORRODED -> stacking(kind, Effect::corroded);
-            case DRAGGED -> stacking(kind, Effect::dragged);
-            case FRAIL -> stacking(kind, Effect::frail);
+            case DRAGGED -> one(List.of(SECONDS, SLOW), in -> Effect.dragged(in.value(1) / 100f, in.ticks(0), in.sink()));
             case SCORCHED -> one(List.of(stacks(kind)), in -> Effect.scorched(in.whole(0)));
             case SICKENED -> one(List.of(stacks(kind)), in -> Effect.sickened(in.whole(0)));
             case INVERSION, DOOM -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
             case BLIGHT -> new Builds<>(List.of(SECONDS, FUEL), in -> List.of(
                     Effect.blight(in.ticks(0), BlightHex.SLOW_PER_TICK, 0f, 0f, in.sink()),
                     Effect.poison(in.magic(1), in.sink())));
-            case STILLED -> new Refuses<>("needs an Obelisk field");
         };
     }
 
@@ -160,14 +156,13 @@ public final class DevEffects {
                     TowerModifiers.damagePercent(in.value(1) / 100f)));
             case JAMMED -> new Builds<>(List.of(SECONDS, ATTACK_SPEED_LOST, RANGE_LOST), in -> new TowerGrant.Jam(in.ticks(0),
                     new DisruptionAura(JAM_REACH_CELLS * in.scale(), in.value(1) / 100f, in.value(2))));
-            case STEADY_AIM, FOCUS, MAGAZINE, NEST, EVENT_HORIZON, INTERFERENCE -> new Refuses<>(KEPT_BY_THE_TOWER);
+            case STEADY_AIM, FOCUS, MAGAZINE, NEST -> new Refuses<>(KEPT_BY_THE_TOWER);
             case FLAME, STREAM, CORE, DRAGONS_BREATH, FLASHOVER, THERMAL_SHOCK, MELTDOWN,
                     HEAVY_SHELL, NUKE_SHELL, PAYLOAD, NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, FLARE, BARRAGE, CARPET_BOMBING,
                     CRYO_MISSILE, ARCANE_MISSILE, EMP_MISSILE, TRACER_MISSILE,
                     SHATTER, ARC, HEX, STATIC, SOULBRAND, SPARK, SOUL, THUNDERCLAP,
-                    THUNDERSTRIKE -> new Refuses<>(FROM_AN_UPGRADE);
+                    THUNDERSTRIKE, SUNDIAL, FRAILTY, SHADOW -> new Refuses<>(FROM_AN_UPGRADE);
             case AURA, KINSHIP -> new Refuses<>("comes from a Beacon");
-            case LEY_LINE -> new Refuses<>("comes from two Obelisks");
         };
     }
 

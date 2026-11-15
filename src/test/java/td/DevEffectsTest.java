@@ -35,15 +35,6 @@ class DevEffectsTest {
     }
 
     @Test
-    void anUnusableEffectAsksForNothingAndBuildsNothing() {
-        EffectKind unusable = DevEffects.enemyKinds().stream().filter(kind -> DevEffects.whyUnusable(kind).isPresent())
-                .findFirst().orElseThrow();
-
-        assertThat(DevEffects.enemyFields(unusable)).isEmpty();
-        assertThat(DevEffects.enemyEffects(unusable, List.of(), DamageSink.none(), AttackOrigin.none())).isEmpty();
-    }
-
-    @Test
     void everyGrantableTowerTermBuiltFromItsStartingValuesGrantsSomethingAndAStatusCarriesItsOwnTerm() {
         for (TowerTerm term : DevEffects.towerTerms()) {
             if (DevEffects.whyUngrantable(term).isEmpty()) {

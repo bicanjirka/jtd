@@ -448,7 +448,7 @@ The earlier measure on the old Curly Path, before the restoration rework: Dead Z
 enemy-ticks against 1,100 under heals, since it works only inside its field. The answers are either local (a field) or
 hit-by-hit (EMP, Nullifier), and raw damage beat a heal-heavy wave sooner than any of them.
 
-- **Where:** `PulseTower`'s Ward head (`FieldMode.DEAD_ZONE`, `SILENCE`), `SoulDrain`, the Hexer's Blight and
+- **Where:** `PulseTower`'s Ward (`WardMechanic`, Silence in its field), the Hexer's Blight and
   Inversion, `CauterizeMechanic`, `EmpPayload`, the Nullifier; `td.balance.Role.ANTI_SUSTAIN`.
 - **Approach:** decide first whether any wave should require it. If one should, a design pass: one answer that reaches
   a stretch of path wide enough to matter, then prove it on that wave with

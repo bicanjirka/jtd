@@ -128,26 +128,8 @@ final class PerkPictograms {
             Map.entry("mortar.deep_crack", "=effect.cracked"),
             // Quick Reload
             Map.entry("mortar.quick_reload", "S M3.2 19.6C5.4 7 14.6 5 19.4 14.8 ; F O20.4 17.6 2.4 ; T M1.8 21.6H22.2 ; F M3.2 19.6L1.6 16.6L5 17Z"),
-            // Gravity
-            Map.entry("pulse.head.gravity.1", "S M12 12C12 10.6 13.4 10 14.4 10.8C15.8 12 15 14.6 12.8 15C10 15.6 8.4 12.8 9.2 10.4C10.2 7.4 14.4 6.4 17 8.4C20 10.8 19.6 15.8 16.4 18.2C12.4 21.2 6 19.6 4 15C2 10.2 5 4.6 10.2 3.6"),
-            // Gravity Well
-            Map.entry("pulse.head.gravity.4a", "S M2.4 7.6A9.6 3.2 0 1 0 21.6 7.6A9.6 3.2 0 1 0 2.4 7.6Z ; S M6.2 13A5.8 2 0 1 0 17.8 13A5.8 2 0 1 0 6.2 13Z ; F O12 18.8 2.2"),
-            // Stasis
-            Map.entry("pulse.head.gravity.4b", "=effect.stilled"),
-            // Ward
-            Map.entry("pulse.head.ward.1", "=effect.revealed"),
-            // True Sight
-            Map.entry("pulse.head.ward.4a", "S M3 14.6C6.6 9.6 17.4 9.6 21 14.6C17.4 19.6 6.6 19.6 3 14.6Z ; F O12 14.6 2.6 ; S M12 2.6V6 M5.4 4.6L7.2 7.6 M18.6 4.6L16.8 7.6"),
             // Purge
             Map.entry("pulse.head.ward.4b", "F M11 3.4L4.2 6V11.2C4.2 13.8 5.2 16 6.8 17.6L9.6 12.8L8.6 8.4Z ; F M13 3.4L19.8 6V11.2C19.8 13.8 18.8 16 17.2 17.6L14.4 12.8L15.4 8.4Z ; F M7.8 19.2L10.6 14.4H13.4L16.2 19.2C15 20.2 13.6 21 12 21.6C10.4 21 9 20.2 7.8 19.2Z"),
-            // Bite
-            Map.entry("pulse.extra.bite.1", "F M2.6 3.6H21.4V7.4L18.8 12.6L16.4 7.4L14 12.6L12 7.4L10 12.6L7.6 7.4L5.2 12.6L2.6 7.4Z ; F M2.6 20.4H21.4V17.6L19.2 13.6L17 17.6L12 13.4L7 17.6L4.8 13.6L2.6 17.6Z"),
-            // Arc Discharge
-            Map.entry("pulse.special.arc_discharge", "=effect.condemned"),
-            // Soul Drain
-            Map.entry("pulse.special.soul_drain", "F M12 2.4C12 2.4 17 7 17 11.2C17 14.2 14.8 16.2 12 16.2C9.2 16.2 7 14.2 7 11.2C7 9.2 8.4 7.6 9.4 6.8C9.6 8.6 10.4 9.6 11.2 9.8C10.8 7.4 11 4.6 12 2.4Z ; S M6.2 19L12 22.2L17.8 19 ; K O12 11.8 1.6"),
-            // Ley Line
-            Map.entry("pulse.special.ley_line", "=tower.ley_line"),
             // Twin Warhead
             Map.entry("seeker.head.twin_warhead.1", "F M4.4 20.4V9.6C4.4 6.6 5.8 4.4 7.6 2.8C9.4 4.4 10.8 6.6 10.8 9.6V20.4Z M13.2 20.4V9.6C13.2 6.6 14.6 4.4 16.4 2.8C18.2 4.4 19.6 6.6 19.6 9.6V20.4Z ; F M4.4 20.4L2.6 22.2V17.6L4.4 15.8Z M10.8 20.4L12.6 22.2V17.6L10.8 15.8Z M19.6 20.4L21.4 22.2V17.6L19.6 15.8Z ; X M4.4 9.4H10.8 M13.2 9.4H19.6"),
             // Shatterburst
@@ -168,14 +150,8 @@ final class PerkPictograms {
             Map.entry("seeker.special.nullifier", "S M13.2 3.6L20 6.2V11.2C20 15.6 17.2 19 13.2 20.6C9.2 19 6.4 15.6 6.4 11.2V6.2Z ; F@-45 M1.4 10.6H9.8L12.6 12L9.8 13.4H1.4Z"),
             // Hunter's Mark
             Map.entry("seeker.special.hunters_mark", "=tower.focus"),
-            // Rapid Array
-            Map.entry("sonar.head.rapid_array.1", "S O12 12 8.8 ; F M12 12V3.2A8.8 8.8 0 0 1 19.6 7.6Z ; F O12 12 1.6"),
             // Long Reach
             Map.entry("sonar.head.long_reach.1", "S M3.2 8.4C4.8 15.2 10 19.6 17.2 20.4 ; S M3.2 8.4L17.2 20.4 ; T M10.2 14.4L16.6 8 ; F O17.4 7.2 2 ; F M9 20.6H14V22.4H9Z"),
-            // Fault Line
-            Map.entry("sonar.head.long_reach.4b", "S M2 12.6L6.2 10.2L9.4 14.6L13 9L16.4 13.8L19.4 10.6L22 12.4 ; T M2 18H8.6 M15.4 18H22 M2 6H7 M17 6H22"),
-            // Mark on Sweep
-            Map.entry("sonar.special.mark_on_sweep", "=effect.marked"),
             // Wide Band
             Map.entry("sonar.special.wide_band", "F M12 20.4L2.8 9.4A13 13 0 0 1 21.2 9.4Z ; X M7.2 14.6A7 7 0 0 1 16.8 14.6 M4.6 11.6A10.6 10.6 0 0 1 19.4 11.6"),
             // Command Ping
@@ -210,6 +186,34 @@ final class PerkPictograms {
             Map.entry("cinder.hot_flame_2", "=tower.flame"),
             // Long Stream II
             Map.entry("cinder.long_stream_2", "=cinder.long_stream"),
+            // Hum
+            Map.entry("pulse.hum", "F@-40 M7 3.4H17V9.4H7Z M10.9 9.4H13.1V18H10.9Z ; F M4 19.4H14V22H4Z"),
+            // Sundial
+            Map.entry("pulse.sundial", "=tower.sundial"),
+            // Ward
+            Map.entry("pulse.ward", "=effect.silenced"),
+            // Quick Toll
+            Map.entry("pulse.quick_toll", "S O12 12 9 ; S M12 6.4V12L16 14.4"),
+            // Deep Pull
+            Map.entry("pulse.deep_pull", "S M12 12C12 10.6 13.4 10 14.4 10.8C15.8 12 15 14.6 12.8 15C10 15.6 8.4 12.8 9.2 10.4C10.2 7.4 14.4 6.4 17 8.4C20 10.8 19.6 15.8 16.4 18.2C12.4 21.2 6 19.6 4 15C2 10.2 5 4.6 10.2 3.6"),
+            // Burden
+            Map.entry("pulse.burden", "=pulse.deep_pull"),
+            // Gravity
+            Map.entry("pulse.gravity", "S O12 12 9 ; F M8.4 7.4H10.9V16.6H8.4Z M13.1 7.4H15.6V16.6H13.1Z"),
+            // Umbra
+            Map.entry("pulse.umbra", "S O12 12 8.6 ; F O14.6 10.4 6.4"),
+            // Hum II
+            Map.entry("pulse.hum_2", "=pulse.hum"),
+            // Deep Shadow
+            Map.entry("pulse.deep_shadow", "=tower.shadow"),
+            // Knell
+            Map.entry("pulse.knell", "F M12 3.2C8.4 3.2 6.2 6.2 6.2 9.6V14L4 16.8V17.6H20V16.8L17.8 14V9.6C17.8 6.2 15.6 3.2 12 3.2Z ; F O12 19.6 2.2 ; S M12 3.2V1.8 ; S M2 6.4C2.8 4.6 3.8 3.4 5.2 2.6 M22 6.4C21.2 4.6 20.2 3.4 18.8 2.6"),
+            // Deep Toll
+            Map.entry("pulse.deep_toll", "=effect.toll"),
+            // Deep Pull II
+            Map.entry("pulse.deep_pull_2", "=pulse.deep_pull"),
+            // Swift Shadow
+            Map.entry("pulse.swift_shadow", "=tower.sundial"),
             // Amplifying Core
             Map.entry("aura.head.amplifying_core.1", "F M12 7.4L16.6 12L12 16.6L7.4 12Z ; S M12 1.6L9.6 4 M12 1.6L14.4 4 M12 22.4L9.6 20 M12 22.4L14.4 20 M1.6 12L4 9.6 M1.6 12L4 14.4 M22.4 12L20 9.6 M22.4 12L20 14.4"),
             // Broadcast

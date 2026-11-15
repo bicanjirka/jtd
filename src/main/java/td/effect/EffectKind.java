@@ -68,28 +68,17 @@ public enum EffectKind implements Term {
             .perStack(EnemyStat.MAGIC_RESIST, -10f)),
     /** Takes extra physical damage. */
     BRITTLE("Brittle", EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.3f)),
-    /** Time spent in the field: it sets how strongly the field's effects hold, and fades soon after the enemy leaves. */
-    TOLL("Toll", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)),
     /**
-     * Lowers armor and magic resist while the enemy is in the field and a while after, three a stack: thirty each at the
-     * field's full strength.
+     * Time spent in a field, held by the fields it stands in and lost a stack at a time outside every one; each stack
+     * is Frailty, more damage taken from every source.
      */
-    CORRODED("Corrode", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.ARMOR, -3f).perStack(EnemyStat.MAGIC_RESIST, -3f)),
-    /** The field's slow, a point of speed in a hundred a stack. */
-    DRAGGED("Drag", EffectRule.of(EffectCategory.SOFT_CC).stackingOnASharedClock(DragStrength.MOST)
-            .slowingBy(0.01f)),
-    /** Arc Discharge's mark: each stack adds 5% damage taken from every source, up to four. */
-    CONDEMNED("Condemn", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(4)
-            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.05f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.05f)),
-    /** While the enemy is Dazed, the field that stilled it takes its Toll away. */
-    STILLED("Stasis", EffectRule.of(EffectCategory.DEBUFF)),
+    TOLL("Toll", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(10)
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.04f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.04f)),
+    /** The field's slow, as strong as the field that gives it; of two fields the deeper holds. */
+    DRAGGED("Drag", EffectRule.of(EffectCategory.SOFT_CC)),
     /** Spirit at its lowest while it lasts, so heals, shields and rewinds are worth nothing. */
     DEAD_ZONE("Dead Zone", EffectRule.of(EffectCategory.DEBUFF)
             .perStack(EnemyStat.SPIRIT, StatModifier.setTo(-100f))),
-    /** Takes extra damage from every source while the enemy is in the field and a while after: 20% at full strength. */
-    FRAIL("Frail", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(FieldStrength.MOST)
-            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.02f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.02f)),
     /** Takes five points of plating and five of insulation. */
     CRACKED("Crack", EffectRule.of(EffectCategory.DEBUFF)
             .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(5f))

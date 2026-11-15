@@ -116,12 +116,8 @@ public enum Palette {
     STATUS_MARKER_UNRAVELED,
     STATUS_MARKER_BRITTLE,
     STATUS_MARKER_TOLL,
-    STATUS_MARKER_CORRODED,
     STATUS_MARKER_DRAGGED,
-    STATUS_MARKER_CONDEMNED,
-    STATUS_MARKER_STILLED,
     STATUS_MARKER_DEAD_ZONE,
-    STATUS_MARKER_FRAIL,
     STATUS_MARKER_CRACKED,
     STATUS_MARKER_TARRED,
     STATUS_MARKER_BLEEDING,
@@ -227,13 +223,10 @@ public enum Palette {
     /** Nuke Shell's tone. */
     TERM_NUKE_SHELL,
     /** Event Horizon's tone. */
-    TERM_EVENT_HORIZON,
     /** Aura's and Kinship's tone. */
     TERM_AURA,
     /** Ley Line's tone. */
-    TERM_LEY_LINE,
     /** Interference's tone. */
-    TERM_INTERFERENCE,
     /** The magazine's and the Volleys' tone. */
     TERM_MAGAZINE,
     /** The tone of the Range and Attune lines. */

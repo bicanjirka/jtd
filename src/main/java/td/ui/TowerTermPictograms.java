@@ -46,18 +46,12 @@ final class TowerTermPictograms {
             Map.entry("tower.emp_missile", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M19 12.6L14.8 18.2H17.6L16.4 22.2L21 16H18.2Z"),
             // Tracer Missile
             Map.entry("tower.tracer_missile", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F O13.6 19.6 1.3 O17.4 19.6 1.3 O21.2 19.6 1.3"),
-            // Event Horizon
-            Map.entry("tower.event_horizon", "S@-20 M2.4 12A9.6 3.4 0 1 0 21.6 12A9.6 3.4 0 1 0 2.4 12Z ; K O12 12 5.6 ; S O12 12 4.2 ; S@-20 M2.4 12A9.6 3.4 0 0 0 21.6 12"),
             // Rally
             Map.entry("tower.rally", "F M2.6 10.8H5.2V13.2H2.6Z M5.2 11.1H12.8L20.4 5.6V18.4L12.8 12.9H5.2Z ; S M7.4 12.9C7.4 17.4 12.8 17.4 12.8 12.9"),
             // Aura
             Map.entry("tower.aura", "F O12 12 3.4 ; S O12 12 6.8 ; T M12 1.6V3.6 M12 20.4V22.4 M1.6 12H3.6 M20.4 12H22.4 M4.6 4.6L6 6 M18 18L19.4 19.4 M4.6 19.4L6 18 M18 6L19.4 4.6"),
-            // Ley Line
-            Map.entry("tower.ley_line", "F M4.6 12.8L6.4 17.4L4.6 22L2.8 17.4Z M19.4 2L21.2 6.6L19.4 11.2L17.6 6.6Z ; S M6.6 15.4L17.4 8.6 ; F M12 8.6L12.9 11.1L15.4 12L12.9 12.9L12 15.4L11.1 12.9L8.6 12L11.1 11.1Z"),
             // Jammed
             Map.entry("tower.jammed", "F M12 9.4L16.2 21.4H13.6L12 16L10.4 21.4H7.8Z ; S M3.4 6.4L6.4 3.4L9.2 7.8L12 3.4L14.8 7.8L17.6 3.4L20.6 6.4"),
-            // Interference
-            Map.entry("tower.interference", "S M2 9C5 4.6 8 4.6 11 9S17 13.4 22 9 ; S M2 15C5 19.4 8 19.4 11 15S17 10.6 22 15"),
             // Nest
             Map.entry("tower.nest", "F M2.6 13.2H21.4C21.4 18 17.2 21.6 12 21.6C6.8 21.6 2.6 18 2.6 13.2Z ; F M6.4 13.2V8C6.4 6.6 7.2 5.4 8 4.6C8.8 5.4 9.6 6.6 9.6 8V13.2Z M10.4 13.2V6C10.4 4.6 11.2 3.4 12 2.6C12.8 3.4 13.6 4.6 13.6 6V13.2Z M14.4 13.2V8C14.4 6.6 15.2 5.4 16 4.6C16.8 5.4 17.6 6.6 17.6 8V13.2Z ; X M3 13.4H21"),
             // Flame
@@ -74,6 +68,12 @@ final class TowerTermPictograms {
             Map.entry("tower.thermal_shock", "F M8.6 3C8.6 3 13.6 7.6 13.6 12.4A5 5 0 0 1 3.6 12.4C3.6 9.6 5.2 7.8 6.4 6.8C6.8 8.8 7.6 9.8 8.4 10.2C8 7.8 8.2 5 8.6 3Z ; T M17 10V21.6 M12 12.9L22 18.7 M12 18.7L22 12.9"),
             // Meltdown
             Map.entry("tower.meltdown", "S O12 12 9.4 ; F M12 5.4C12 5.4 16.4 9.4 16.4 13A4.4 4.4 0 0 1 7.6 13C7.6 11 8.8 9.6 9.8 8.8C10 10.2 10.6 11 11.4 11.2C11 9.2 11.2 7 12 5.4Z"),
+            // Sundial
+            Map.entry("tower.sundial", "S O12 12 9 ; F M12 12L18.4 5.6A9 9 0 0 1 21 12Z ; F O12 12 1.6"),
+            // Frailty
+            Map.entry("tower.frailty", "S M5.6 3H18.4C18.4 8.6 15.6 12.2 12 12.2C8.4 12.2 5.6 8.6 5.6 3Z M12 12.2V19.6 M7.6 20.6H16.4 ; T M12.4 3.4L10.8 6L13 7.8L11.6 10.4"),
+            // Shadow
+            Map.entry("tower.shadow", "S O12 12 8.8 ; F M12 12V3.2A8.8 8.8 0 0 1 19.6 7.6Z ; F O12 12 1.6"),
             // Kinship
             Map.entry("tower.kinship", "T M12 5.6L5.6 17.6H18.4Z ; F O12 5.4 3 ; F M2.6 15.2H8.6V21.2H2.6Z ; F M18.4 14.4L21.6 20.6H15.2Z"),
             // Shatter

@@ -1,195 +1,157 @@
 package td.tower;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.effect.FieldStrength;
 import td.enemy.EnemyMob;
+import td.enemy.HitResult;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
-import td.tower.pulse.ArcDischargeMechanic;
-import td.tower.pulse.EventHorizonMechanic;
-import td.tower.pulse.FieldHolds;
-import td.tower.pulse.FieldMode;
-import td.tower.pulse.GravityWellMechanic;
-import td.tower.pulse.HoldSpec;
-import td.tower.pulse.LeyLine;
-import td.tower.pulse.LeyLineMechanic;
-import td.tower.pulse.LineSpec;
-import td.tower.pulse.ModeMechanic;
-import td.tower.pulse.ModeSpec;
+import td.tower.pulse.BurdenMechanic;
+import td.tower.pulse.DeepShadowMechanic;
+import td.tower.pulse.DeepTollMechanic;
+import td.tower.pulse.GravityMechanic;
+import td.tower.pulse.GravitySpec;
+import td.tower.pulse.KnellMechanic;
 import td.tower.pulse.PulseMechanic;
 import td.tower.pulse.PulseSpec;
-import td.tower.pulse.SightMechanic;
-import td.tower.pulse.SightSpec;
-import td.tower.pulse.SnareMechanic;
-import td.tower.pulse.StasisMechanic;
-import td.tower.pulse.TollMechanic;
-import td.tower.pulse.TollSpec;
-import td.tower.pulse.TollTracker;
-import td.tower.pulse.TrueSightMechanic;
-import td.tower.pulse.UndertowMechanic;
-import td.tower.pulse.VisitSpec;
-import td.tower.pulse.ZapSpec;
-import td.tower.targeting.HighestRankSelector;
+import td.tower.pulse.SonarSweep;
+import td.tower.pulse.StoneLook;
+import td.tower.pulse.SundialMechanic;
+import td.tower.pulse.SundialSpec;
+import td.tower.pulse.SwiftShadowMechanic;
+import td.tower.pulse.UmbraMechanic;
+import td.tower.pulse.WardMechanic;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.MechanicCatalogue;
-import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.RangeNodes;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
-import td.util.PathRuntime;
 import td.util.ThreadConfined;
-import td.wave.Path;
-import td.wave.WaveStartListener;
+import td.util.TickRate;
 
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Map;
+
+import static td.tower.upgrade.MechanicCatalogue.entry;
 
 /**
- * The field: short range, no cooldown, a little magic damage to every enemy inside every tick, invisible
- * ones included, whether or not a visible one is there to trigger it, and a drag that slows them. It is a
- * kill box: its worth is how long it holds the enemies inside and what it does to them for the other
- * towers. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it
- * stronger. Fields that overlap interfere: each lands less damage.
+ * The Obelisk: a kill box. Every enemy in its field, hidden ones included, takes a little magic damage every tick and
+ * the field's drag, whether or not a visible one is there to trigger it, and builds Toll while inside: each stack
+ * deepens the drag and makes it take more damage from every source. Toll is the enemy's, so fields that overlap add to
+ * the same stacks and the deeper drag holds. Its worth is how long it holds the enemies and how much harder every
+ * tower hits them meanwhile.
  * <p>
- * What each owned node does lives in a {@link PulseMechanic}: the tower reads one spec from them every
+ * What each owned node does lives in its data or in a {@link PulseMechanic}: the tower reads one spec from them every
  * tick.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class PulseTower extends AbstractTower {
 
-    public static final int PRICE = 25;
-    public static final float DAMAGE_POINTS = 1f;
+    public static final int PRICE = 20;
+    /** Damage a second to every enemy in the field. */
+    public static final float DAMAGE_POINTS = 10f;
     public static final float RANGE = 1.5f;
 
-    /** How long a zap's bolt stays drawn. */
-    private static final int ZAP_FLASH_TICKS = 8;
-    /** What every other field overlapping this one takes off its damage, and the least it keeps. */
-    private static final float INTERFERENCE_PER_FIELD = 0.25f;
-    private static final float INTERFERENCE_FLOOR = 0.25f;
+    private static final float BASE_DRAG = 0.1f;
+    private static final float DRAG_PER_TOLL = 0.04f;
+    private static final int TOLL_PACE_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    /** How long what the field holds an enemy to lasts once it leaves. */
+    private static final int LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
+    /** The stone rings on this beat. */
+    private static final int KNELL_EVERY_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    /** The shadow's rhythm is paid on a clock of periods this long, so attack speed quickens it. */
+    private static final int SHADOW_PERIOD_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    private static final float HUM_POINTS = 5f;
 
-    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 20);
+    private static final UpgradeNode WIDE_FIELD = UpgradeNode.of(RangeNodes.RANGE_ID, "Wide Field", 8)
+            .withModifiers(TowerModifiers.range(0.5f));
+    private static final UpgradeNode HUM = UpgradeNode.of("pulse.hum", "Hum", 5)
+            .withModifiers(TowerModifiers.damage(HUM_POINTS));
 
-    private static final UpgradeNode UNDERTOW = UpgradeNode.of("pulse.head.gravity.1", "Undertow", 25);
-    private static final UpgradeNode SNARE = UpgradeNode.of("pulse.head.gravity.2", "Snare", 38)
-            .after(UNDERTOW)
+    private static final UpgradeNode SUNDIAL = UpgradeNode.of("pulse.sundial", "Sundial", 20)
             .inTier(1);
-    private static final UpgradeNode EVENT_HORIZON = UpgradeNode.of("pulse.head.gravity.3", "Event Horizon", 63)
-            .after(SNARE)
-            .inTier(2);
-    private static final UpgradeNode GRAVITY_WELL = UpgradeNode.of("pulse.head.gravity.4a", "Gravity Well", 100)
-            .after(EVENT_HORIZON)
-            .inTier(3);
-    private static final UpgradeNode STASIS = UpgradeNode.of("pulse.head.gravity.4b", "Stasis", 100)
-            .after(EVENT_HORIZON)
-            .inTier(3);
-    private static final UpgradeNode SIGHT = UpgradeNode.of("pulse.head.ward.1", "Sight", 25);
-    private static final UpgradeNode NULL_FIELD = UpgradeNode.of("pulse.head.ward.2", "Null Field", 38)
-            .after(SIGHT)
+    private static final UpgradeNode WARD = UpgradeNode.of("pulse.ward", "Ward", 1)
             .inTier(1);
-    private static final UpgradeNode DEAD_ZONE = UpgradeNode.of("pulse.head.ward.3", "Dead Zone", 63)
-            .after(NULL_FIELD)
-            .inTier(2);
-    private static final UpgradeNode TRUE_SIGHT = UpgradeNode.of("pulse.head.ward.4a", "True Sight", 100)
-            .after(DEAD_ZONE)
-            .inTier(3);
-    private static final UpgradeNode PURGE = UpgradeNode.of("pulse.head.ward.4b", "Purge", 100)
-            .after(DEAD_ZONE)
-            .inTier(3);
-    private static final UpgradeNode FRAILTY = UpgradeNode.of("pulse.extra.bite.1", "Frailty", 20);
-    private static final UpgradeNode CORROSION = UpgradeNode.of("pulse.extra.bite.2", "Corrosion", 30)
-            .after(FRAILTY)
+    private static final UpgradeNode QUICK_TOLL = UpgradeNode.of("pulse.quick_toll", "Quick Toll", 3)
+            .withModifiers(TowerModifiers.tollPace(-Math.round(0.25f * TickRate.TICKS_PER_SECOND)))
             .inTier(1);
-    private static final UpgradeNode RESONANT_COILS = UpgradeNode.of("pulse.extra.bite.3", "Resonant Coils", 50)
-            .withModifiers(TowerModifiers.tollRate(1f))
-            .after(CORROSION)
+    private static final UpgradeNode DEEP_PULL = UpgradeNode.of("pulse.deep_pull", "Deep Pull", 3)
+            .withModifiers(TowerModifiers.dragPerToll(0.02f))
+            .inTier(1);
+
+    private static final UpgradeNode BURDEN = UpgradeNode.of("pulse.burden", "Burden", 16)
+            .withModifiers(TowerModifiers.dragPerToll(0.03f))
             .inTier(2);
-    private static final UpgradeNode MELTDOWN = UpgradeNode.of("pulse.extra.bite.4", "Meltdown", 75)
-            .withModifiers(TowerModifiers.tollCap(5))
-            .after(RESONANT_COILS)
+    private static final UpgradeNode GRAVITY = UpgradeNode.of("pulse.gravity", "Gravity", 16)
+            .inTier(2);
+    private static final UpgradeNode UMBRA = UpgradeNode.of("pulse.umbra", "Umbra", 16)
+            .after(SUNDIAL)
+            .inTier(2);
+    private static final UpgradeNode HUM_2 = UpgradeNode.of("pulse.hum_2", "Hum II", 9)
+            .withModifiers(TowerModifiers.damage(HUM_POINTS))
+            .inTier(2);
+    private static final UpgradeNode DEEP_SHADOW = UpgradeNode.of("pulse.deep_shadow", "Deep Shadow", 18)
+            .after(SUNDIAL)
+            .inTier(2);
+    private static final UpgradeNode WIDE_FIELD_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Wide Field II", 19)
+            .withModifiers(TowerModifiers.range(0.5f))
+            .inTier(2);
+
+    private static final UpgradeNode KNELL = UpgradeNode.of("pulse.knell", "Knell", 21)
             .inTier(3);
-    private static final UpgradeNode ARC_DISCHARGE = UpgradeNode.of("pulse.special.arc_discharge", "Arc Discharge", 100)
-            .inTier(2);
-    private static final UpgradeNode SOUL_DRAIN = UpgradeNode.of("pulse.special.soul_drain", "Soul Drain", 100)
-            .inTier(2);
-    private static final UpgradeNode LEY_LINE = UpgradeNode.of("pulse.special.ley_line", "Ley Line", 100)
+    private static final UpgradeNode DEEP_TOLL = UpgradeNode.of("pulse.deep_toll", "Deep Toll", 21)
+            .inTier(3);
+    private static final UpgradeNode DEEP_PULL_2 = UpgradeNode.of("pulse.deep_pull_2", "Deep Pull II", 14)
+            .withModifiers(TowerModifiers.dragPerToll(0.02f))
+            .inTier(3);
+    private static final UpgradeNode SWIFT_SHADOW = UpgradeNode.of("pulse.swift_shadow", "Swift Shadow", 22)
+            .after(SUNDIAL)
             .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE, 0.2f,
-                    NodeEffects.none().withModifiers(TowerModifiers.tollLinger(20))))
-            .with(ATTUNE, UNDERTOW, SIGHT, FRAILTY,
-                    SNARE, NULL_FIELD, CORROSION,
-                    EVENT_HORIZON, DEAD_ZONE, ARC_DISCHARGE, SOUL_DRAIN, RESONANT_COILS,
-                    GRAVITY_WELL, STASIS, TRUE_SIGHT, PURGE, LEY_LINE, MELTDOWN)
-            .withCluster(UpgradeCluster.of("Field", UNDERTOW, SIGHT))
-            .withCluster(UpgradeCluster.of("Special", ARC_DISCHARGE, SOUL_DRAIN))
-            .withCluster(UpgradeCluster.of("Mastery", GRAVITY_WELL, STASIS))
-            .withCluster(UpgradeCluster.of("Mastery", TRUE_SIGHT, PURGE));
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(WIDE_FIELD, HUM))
+            .with(SUNDIAL, WARD, QUICK_TOLL, DEEP_PULL,
+                    BURDEN, GRAVITY, UMBRA, HUM_2, DEEP_SHADOW, WIDE_FIELD_2,
+                    KNELL, DEEP_TOLL, DEEP_PULL_2, SWIFT_SHADOW)
+            .withCluster(UpgradeCluster.of("The stone", BURDEN, GRAVITY, UMBRA))
+            .withCluster(UpgradeCluster.of("Payoff", KNELL, DEEP_TOLL));
 
-    private static final MechanicCatalogue<PulseMechanic> MECHANICS = MechanicCatalogue.<PulseMechanic>empty()
-            .with(ATTUNE.id(), TollMechanic::new)
-            .with(UNDERTOW.id(), UndertowMechanic::new)
-            .with(SNARE.id(), SnareMechanic::new)
-            .with(EVENT_HORIZON.id(), EventHorizonMechanic::new)
-            .with(GRAVITY_WELL.id(), GravityWellMechanic::new)
-            .with(STASIS.id(), StasisMechanic::new)
-            .with(SIGHT.id(), SightMechanic::new)
-            .with(NULL_FIELD.id(), () -> new ModeMechanic(FieldMode.SILENCE))
-            .with(DEAD_ZONE.id(), () -> new ModeMechanic(FieldMode.DEAD_ZONE))
-            .with(TRUE_SIGHT.id(), TrueSightMechanic::new)
-            .with(PURGE.id(), () -> new ModeMechanic(FieldMode.PURGE))
-            .with(FRAILTY.id(), () -> new ModeMechanic(FieldMode.FRAIL))
-            .with(CORROSION.id(), () -> new ModeMechanic(FieldMode.CORROSION))
-            .with(ARC_DISCHARGE.id(), ArcDischargeMechanic::new)
-            .with(SOUL_DRAIN.id(), () -> new ModeMechanic(FieldMode.SOUL_DRAIN))
-            .with(LEY_LINE.id(), LeyLineMechanic::new);
+    private static final MechanicCatalogue<PulseMechanic> MECHANICS = MechanicCatalogue.of(
+            entry(SUNDIAL.id(), SundialMechanic::new),
+            entry(WARD.id(), WardMechanic::new),
+            entry(BURDEN.id(), BurdenMechanic::new),
+            entry(GRAVITY.id(), GravityMechanic::new),
+            entry(UMBRA.id(), UmbraMechanic::new),
+            entry(DEEP_SHADOW.id(), DeepShadowMechanic::new),
+            entry(KNELL.id(), KnellMechanic::new),
+            entry(DEEP_TOLL.id(), DeepTollMechanic::new),
+            entry(SWIFT_SHADOW.id(), SwiftShadowMechanic::new));
 
     private final OwnedMechanics<PulseMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
-    private TollTracker tollTracker = new TollTracker();
-    private FieldHolds holds = new FieldHolds();
+    /** How many ticks each enemy inside has stood in the field this visit, in the order they came in. */
+    private final Map<EnemyMob, Integer> visits = new LinkedHashMap<>();
     private FireClock clock = new FireClock(0);
-    private boolean fire = false;
-    private int highestToll;
-    private float fieldRadius;
-    private float interference = 1f;
-    private List<Zap> zaps = List.of();
-    private int lastZapTick = Integer.MIN_VALUE;
-    private List<EnemyMob> previouslyInside = List.of();
-    private List<EnemyMob> previouslyOnLines = List.of();
-    private int deathsThisWave;
-    private boolean watchingWaves;
-    private final WaveStartListener waveListener = () -> this.deathsThisWave = 0;
-    /** A pin the player asked for off the game loop, taken up at the next relink. */
-    private final AtomicReference<Optional<PulseTower>> pinRequest = new AtomicReference<>(Optional.empty());
-    private Optional<PulseTower> lineHost = Optional.empty();
-    // Read off the game loop when a game is saved between waves.
-    private volatile Optional<PulseTower> pinnedHost = Optional.empty();
-    private Optional<CastLine> castLine = Optional.empty();
-    private List<PulseTower> castersHere = List.of();
-    private boolean lineBusy;
+    private FireClock shadowClock = new FireClock(SHADOW_PERIOD_TICKS - 1);
+    private SonarSweep shadow = SonarSweep.perRevolution(1, TickRate.TICKS_PER_SECOND);
+    private int shadowLeft;
+    private boolean holding;
+    private boolean fullTollInside;
+    private int lastKnellTick = Integer.MIN_VALUE;
 
     public PulseTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.PULSE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0)
-                .with(TowerStat.TOLL_CAP, 5f).with(TowerStat.TOLL_RATE, 1f).with(TowerStat.TOLL_LINGER, 20f),
+                .with(TowerStat.TOLL_PACE, TOLL_PACE_TICKS).with(TowerStat.DRAG_PER_TOLL, DRAG_PER_TOLL),
                 context, x, y);
-    }
-
-    private TollSpec toll(PulseSpec spec) {
-        return spec.tolls()
-                ? new TollSpec(Math.round(this.stats().value(TowerStat.TOLL_CAP)), this.stats().value(TowerStat.TOLL_RATE),
-                        Math.round(this.stats().value(TowerStat.TOLL_LINGER)))
-                : TollSpec.none();
     }
 
     @Override
@@ -202,15 +164,9 @@ public final class PulseTower extends AbstractTower {
         return TREE;
     }
 
-    /** Whom the field touches and how Toll builds, as the mechanics in {@code owned} make it and the deaths inside widen it. */
+    /** The field and the shadow, as the mechanics in {@code owned} make them. */
     private PulseSpec spec(List<PulseMechanic> owned) {
-        PulseSpec spec = this.spec(owned, this.rangeReal());
-        float growth = spec.field().growthAfter(this.deathsThisWave);
-        return growth > 0f ? this.spec(owned, this.rangeReal() * (1f + growth)) : spec;
-    }
-
-    private PulseSpec spec(List<PulseMechanic> owned, float radius) {
-        Viewpoint view = new Viewpoint(this.centerX, this.centerY, radius, this.context.getBoard().scale());
+        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         PulseSpec spec = PulseSpec.from(view);
         for (PulseMechanic mechanic : owned) {
             spec = mechanic.refineSpec(spec);
@@ -220,382 +176,164 @@ public final class PulseTower extends AbstractTower {
 
     public void doTick(int gameTime) {
         PulseSpec spec = this.spec(this.mechanics.all());
-        this.fieldRadius = spec.view().range();
         List<EnemyMob> inside = spec.reach().matching(this.context.enemies());
-        this.fire = !inside.isEmpty();
+        this.holding = !inside.isEmpty();
+        this.visits.keySet().retainAll(inside);
         int shots = inside.isEmpty() ? 0 : this.clock.shotsDue();
-        List<EnemyMob> wasInside = this.previouslyInside;
-        this.countDeaths(spec, inside);
-        boolean beat = this.context.waves().tickOfWave(gameTime) % TICKS_PER_SECOND == 0;
-        if (beat) {
-            this.interference = this.interferenceNow();
-            this.relink(spec);
-        }
-        List<EnemyMob> onLines = this.onLines(inside);
-        this.lineBusy = this.castLine.isPresent() && onLines.stream().anyMatch(this.castLine.get()::holds);
-        this.holds.keepOnly(onLines.isEmpty() ? inside : concat(inside, onLines));
-        TollSpec toll = this.toll(spec);
-        List<EnemyMob> earners = toll.isActive() ? this.tollTracker.tick(inside, toll.ticksPerStack()) : List.of();
-        int highest = 0;
+        int pace = Math.max(1, Math.round(this.stats().value(TowerStat.TOLL_PACE)));
+        boolean full = false;
         for (EnemyMob enemy : inside) {
-            boolean earned = earners.contains(enemy);
-            boolean startsVisit = earned && !enemy.hasEffect(EffectKind.TOLL);
-            this.addToll(enemy, toll, earned);
-            if (startsVisit) {
-                this.startVisit(enemy, spec.visit());
-            }
-            boolean fullToll = toll.isActive() && enemy.effectStacks(EffectKind.TOLL) >= toll.cap();
-            this.still(enemy, spec.hold(), fullToll && (beat || earned), gameTime);
-            this.holdInside(enemy, spec, beat, this.fromCentre(enemy), !wasInside.contains(enemy));
-            highest = Math.max(highest, enemy.effectStacks(EffectKind.TOLL));
+            int ticksInside = this.visits.merge(enemy, 1, Integer::sum);
+            enemy.holdStacks(EffectKind.TOLL, pace, spec.tollCap());
+            this.holdInside(enemy, spec, ticksInside);
+            full |= enemy.effectStacks(EffectKind.TOLL) >= PulseSpec.TOLL_CAP;
             HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.FIELD, 0f, this.stats());
-            float factor = adjustment.damageFactor() * this.interference;
+            int perTick = Math.round(this.damageCurrent() / TickRate.TICKS_PER_SECOND * adjustment.damageFactor());
             for (int hit = 0; hit < shots && !enemy.isDead(); hit++) {
-                this.dealPeriodicDamage(enemy, Damage.magic(Math.round(this.damageCurrent() * factor)));
+                this.dealPeriodicDamage(enemy, Damage.magic(perTick));
             }
         }
+        this.fullTollInside = full;
         for (int hit = 0; hit < shots; hit++) {
             this.beginShot();
             this.clock.spend();
         }
         this.clock.advance(this.attackRate());
-        this.highestToll = highest;
-        if (toll.isActive() && highest >= toll.cap()) {
+        if (full && spec.knell() > 0f && this.context.waves().tickOfWave(gameTime) % KNELL_EVERY_TICKS == 0) {
+            this.knell(spec, inside, gameTime);
         }
-        for (EnemyMob enemy : onLines) {
-            this.holdInside(enemy, spec, beat, 1f, !this.previouslyOnLines.contains(enemy));
+        this.castShadow(spec.sundial(), inside);
+    }
+
+    /**
+     * What holds while an enemy is inside: the drag Toll deepens, Ward's Silence, and Gravity's Daze once it has stood
+     * a beat inside this visit. Each lasts a moment, refreshed every tick it stays.
+     */
+    private void holdInside(EnemyMob enemy, PulseSpec spec, int ticksInside) {
+        float drag = Math.min(spec.dragCap(),
+                BASE_DRAG + this.stats().value(TowerStat.DRAG_PER_TOLL) * enemy.effectStacks(EffectKind.TOLL));
+        this.applyEffect(enemy, sink -> Effect.dragged(drag, LINGER_TICKS, sink));
+        if (spec.silences()) {
+            this.applyEffect(enemy, sink -> Effect.silenced(LINGER_TICKS, sink));
         }
-        this.previouslyOnLines = onLines;
-        if (spec.zap().isActive() && beat && !inside.isEmpty()) {
-            this.zap(spec.zap(), spec, gameTime);
+        GravitySpec gravity = spec.gravity();
+        if (gravity.isActive() && ticksInside == gravity.afterTicks()) {
+            this.applyEffect(enemy, sink -> Effect.dazed(gravity.dazeTicks(), sink));
         }
     }
 
-    /** The Ley Line, its pin and the field's links stay: the next beat works them out again. */
+    /** One ring of the stone: every enemy in the field takes its hit. */
+    private void knell(PulseSpec spec, List<EnemyMob> inside, int gameTime) {
+        TowerStats shot = this.stats();
+        Damage ring = Damage.magic(DamageUnits.ofPoints(spec.knell()));
+        for (EnemyMob enemy : inside) {
+            HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.FIELD, 0f, shot);
+            boolean critical = this.dealDamage(enemy, ring.scaledBy(adjustment.damageFactor()), shot.attack());
+            this.report(enemy, HitKind.FIELD, critical, enemy.isDead());
+        }
+        this.lastKnellTick = gameTime;
+    }
+
+    /**
+     * The Sundial: its rhythm counts on whatever is in reach, and a turn starts once it is due and an enemy is within
+     * the shadow's reach, so the first comes at once when one walks in. While it turns, every visible enemy whose
+     * bearing it swept this tick takes an aimed hit and a stack of Toll.
+     */
+    private void castShadow(SundialSpec sundial, List<EnemyMob> inside) {
+        if (!sundial.isActive()) {
+            this.shadowLeft = 0;
+            return;
+        }
+        float reach = sundial.reachCells() * this.context.getBoard().scale();
+        List<EnemyMob> within = InRangeTargetQuery.visible(this.centerX, this.centerY, reach)
+                .matching(this.context.enemies());
+        if (this.shadowLeft == 0 && this.shadowClock.isReady() && !within.isEmpty()) {
+            this.shadowClock.spend((double) sundial.periodTicks() / SHADOW_PERIOD_TICKS);
+            this.shadow = SonarSweep.perRevolution((double) sundial.turnTicks() / TickRate.TICKS_PER_SECOND,
+                    TickRate.TICKS_PER_SECOND).startingAt(this.shadow.radiansAt(1.0));
+            this.shadowLeft = sundial.turnTicks();
+        }
+        this.shadowClock.advance(this.attackRate());
+        if (this.shadowLeft == 0) {
+            return;
+        }
+        this.shadow.advance();
+        this.shadowLeft--;
+        TowerStats shot = this.stats();
+        AttackProfile aimed = sundial.shadow() ? shot.attack().asShadow().asAimed() : shot.attack().asAimed();
+        for (EnemyMob enemy : within) {
+            if (!this.shadow.sweptThisTick(TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY()))) {
+                continue;
+            }
+            float factor = inside.contains(enemy) ? sundial.inFieldFactor() : 1f;
+            HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BEAM, 0f, shot);
+            Damage hit = Damage.magic(DamageUnits.ofPoints(sundial.damagePoints() * factor))
+                    .scaledBy(adjustment.damageFactor());
+            HitResult result = this.landHit(enemy, hit, aimed);
+            if (result.dodged()) {
+                continue;
+            }
+            if (enemy.effectStacks(EffectKind.TOLL) < PulseSpec.TOLL_CAP) {
+                this.applyEffect(enemy, sink -> Effect.toll(1, PulseSpec.TOLL_CAP));
+            }
+            this.report(enemy, HitKind.BEAM, result.critical(), enemy.isDead());
+        }
+    }
+
     @Override
     protected void endFight() {
-        this.tollTracker = new TollTracker();
-        this.holds = new FieldHolds();
+        this.visits.clear();
         this.clock = new FireClock(0);
-        this.fire = false;
-        this.highestToll = 0;
-        this.lastZapTick = Integer.MIN_VALUE;
-        this.previouslyInside = List.of();
-        this.previouslyOnLines = List.of();
-        this.deathsThisWave = 0;
-        this.lineBusy = false;
+        this.shadowClock = new FireClock(SHADOW_PERIOD_TICKS - 1);
+        this.shadowLeft = 0;
+        this.holding = false;
+        this.fullTollInside = false;
+        this.lastKnellTick = Integer.MIN_VALUE;
     }
 
-    private static List<EnemyMob> concat(List<EnemyMob> first, List<EnemyMob> second) {
-        List<EnemyMob> both = new ArrayList<>(first);
-        both.addAll(second);
-        return both;
+    /** Whether an enemy stood in the field at the last tick. */
+    public boolean isHolding() {
+        return this.holding;
     }
 
-    /**
-     * Ley Line, once a second: the field this one casts to (its pinned host while that still stands within reach,
-     * else the one whose beam crosses the path most), and the fields that cast to this one.
-     */
-    private void relink(PulseSpec spec) {
-        List<PulseTower> others = this.context.towers().all().stream().map(tower -> tower.accept(AS_FIELD))
-                .flatMap(Optional::stream).filter(other -> other != this).toList();
-        LineSpec line = spec.line();
-        float reach = line.reachCells() * this.context.getBoard().scale();
-        float band = line.bandCells() * this.context.getBoard().scale();
-        Optional<PulseTower> requested = this.pinRequest.getAndSet(Optional.empty());
-        if (requested.isPresent()) {
-            this.pinnedHost = this.pinnedHost.equals(requested) ? Optional.empty() : requested;
-        }
-        this.pinnedHost = this.pinnedHost.filter(others::contains).filter(host -> this.distanceTo(host) <= reach);
-        if (!line.casts()) {
-            this.lineHost = Optional.empty();
-        } else if (this.pinnedHost.isPresent()) {
-            this.lineHost = this.pinnedHost;
-        } else {
-            List<Path> paths = this.context.level().paths().stream().map(PathRuntime::path).toList();
-            this.lineHost = others.stream().filter(other -> this.distanceTo(other) <= reach)
-                    .map(other -> new Candidate(other, this.lineTo(other).scoredOn(paths, band)))
-                    .filter(candidate -> candidate.scored().touchesAPath())
-                    .min(Comparator.comparing(Candidate::scored, LeyLine.BETTER_FIRST))
-                    .map(Candidate::host);
-        }
-        this.castLine = this.lineHost.map(host -> new CastLine(this.lineTo(host), band));
-        this.castersHere = others.stream().filter(other -> other.lineHost.filter(host -> host == this).isPresent())
-                .toList();
+    /** Whether an enemy at full Toll stood in the field at the last tick. */
+    public boolean holdsFullToll() {
+        return this.fullTollInside;
     }
 
-    private LeyLine lineTo(PulseTower host) {
-        return new LeyLine(this.centerX, this.centerY, host.centerX, host.centerY);
+    /** How many ticks ago the stone last rang; a large number before the first. */
+    public int ticksSinceKnell(int gameTime) {
+        return this.lastKnellTick == Integer.MIN_VALUE ? Integer.MAX_VALUE : gameTime - this.lastKnellTick;
     }
 
-    private float distanceTo(PulseTower other) {
-        return (float) Math.hypot(other.centerX - this.centerX, other.centerY - this.centerY);
+    /** Whether the shadow is turning now. */
+    public boolean isCastingShadow() {
+        return this.shadowLeft > 0;
     }
 
-    /** The enemies outside the field on a Ley Line this field casts or hosts, each once. */
-    private List<EnemyMob> onLines(List<EnemyMob> inside) {
-        if (this.castLine.isEmpty() && this.castersHere.isEmpty()) {
-            return List.of();
-        }
-        List<CastLine> lines = new ArrayList<>();
-        this.castLine.ifPresent(lines::add);
-        this.castersHere.forEach(caster -> caster.castLine.ifPresent(lines::add));
-        List<EnemyMob> on = new ArrayList<>();
-        for (CastLine line : lines) {
-            for (EnemyMob enemy : line.near(this.context)) {
-                if (line.holds(enemy) && !inside.contains(enemy) && !on.contains(enemy)) {
-                    on.add(enemy);
-                }
-            }
-        }
-        return on;
+    /** The shadow's heading between the last two ticks, in radians. */
+    public double shadowRadians(double interpolationAlpha) {
+        return this.shadow.radiansAt(interpolationAlpha);
     }
 
-    /** What is left of the field's damage beside the other fields that overlap it. */
-    private float interferenceNow() {
-        long overlapping = this.context.towers().all().stream()
-                .filter(other -> other != this && this.overlaps(other, other.accept(FIELD_RADIUS)))
-                .count();
-        return Math.max(INTERFERENCE_FLOOR, 1f - INTERFERENCE_PER_FIELD * overlapping);
+    /** How far the shadow reaches, in board pixels; 0 without the Sundial. */
+    public float shadowReach() {
+        return this.spec(this.mechanics.all()).sundial().reachCells() * this.context.getBoard().scale();
     }
 
-    private boolean overlaps(Tower other, float otherRadius) {
-        float reach = this.fieldRadius + otherRadius;
-        float dx = other.getX() - this.centerX;
-        float dy = other.getY() - this.centerY;
-        return otherRadius > 0f && dx * dx + dy * dy < reach * reach;
+    /** Which stone the identity pick made it. */
+    public StoneLook stoneLook() {
+        return this.spec(this.mechanics.all()).look();
     }
 
-    /**
-     * Event Horizon: every enemy that was in the field last tick and has died since widens the
-     * field until the next wave starts.
-     */
-    private void countDeaths(PulseSpec spec, List<EnemyMob> inside) {
-        if (spec.field().perDeathGrowth() > 0f) {
-            if (!this.watchingWaves) {
-                this.context.waves().addListener(this.waveListener);
-                this.watchingWaves = true;
-            }
-            this.deathsThisWave += (int) this.previouslyInside.stream().filter(EnemyMob::isDead).count();
-        }
-        this.previouslyInside = inside;
+    /** Whether its field builds Toll deeper than a plain field. */
+    public boolean buildsDeepToll() {
+        return this.spec(this.mechanics.all()).deepToll();
     }
 
-    /**
-     * The zap: the visible enemy of the highest rank in the field, the furthest along of those, made the Priority of every
-     * tower and Condemned a stack further, both held a while after the last zap.
-     */
-    private void zap(ZapSpec zap, PulseSpec spec, int gameTime) {
-        Viewpoint view = spec.view();
-        List<EnemyMob> seen = InRangeTargetQuery.visible(view.x(), view.y(), view.range())
-                .matching(this.context.enemies());
-        Optional<EnemyMob> struck = new HighestRankSelector().selectFrom(seen);
-        if (struck.isEmpty()) {
-            return;
-        }
-        EnemyMob target = struck.get();
-        this.applyEffect(target, sink -> Effect.priority(zap.markTicks(), sink));
-        this.applyEffect(target, sink -> Effect.condemned(1, zap.markTicks(), sink));
-        this.zaps = List.of(new Zap(this.centerX, this.centerY, (float) target.getX(), (float) target.getY()));
-        this.lastZapTick = gameTime;
-    }
-
-    /** An enemy's first Toll stack of a visit: it may be Dazed. */
-    private void startVisit(EnemyMob enemy, VisitSpec visit) {
-        if (visit.dazeTicks() > 0) {
-            this.applyEffect(enemy, sink -> Effect.dazed(visit.dazeTicks(), sink));
-        }
-    }
-
-    /**
-     * Stasis: an enemy at full Toll, on the tick it gets there or once a second after, is Dazed and Stilled; while it
-     * is both, it loses a Toll stack every so often. A Daze that doesn't take hold leaves it unstilled, to be tried
-     * again.
-     */
-    private void still(EnemyMob enemy, HoldSpec hold, boolean tryNow, int gameTime) {
-        if (!hold.stills()) {
-            return;
-        }
-        if (tryNow && !enemy.hasEffect(EffectKind.STILLED)) {
-            this.applyEffect(enemy, sink -> Effect.dazed(hold.stasisTicks(), sink));
-            if (enemy.hasEffect(EffectKind.DAZED)) {
-                this.applyEffect(enemy, sink -> Effect.stilled(hold.stasisTicks(), sink));
-            }
-        } else if (enemy.hasEffect(EffectKind.STILLED) && enemy.hasEffect(EffectKind.DAZED)
-                && this.context.waves().tickOfWave(gameTime) % hold.ticksPerToll() == 0) {
-            enemy.loseStacks(EffectKind.TOLL, 1);
-        }
-    }
-
-    /**
-     * The rules that hold while an enemy is inside: each lasts a moment, refreshed every tick it stays, and those with
-     * a number hold it at the strength its Toll gives. The drag also follows how near the centre it is, an enemy on a
-     * Ley Line counting as at the rim. Purge strips an enemy only as it comes in; Soul Drain takes some spirit each
-     * second.
-     */
-    private void holdInside(EnemyMob enemy, PulseSpec spec, boolean beat, float fromCentre, boolean entering) {
-        ModeSpec modes = spec.modes();
-        int strength = FieldStrength.at(enemy.effectStacks(EffectKind.TOLL));
-        int drag = this.holds.toward(enemy, EffectKind.DRAGGED, spec.hold().dragAt(strength, fromCentre));
-        this.applyEffect(enemy, sink -> Effect.dragged(drag, FieldMode.LINGER_TICKS, sink));
-        if (modes.has(FieldMode.UNDERTOW)) {
-            this.applyEffect(enemy, sink -> Effect.anchored(FieldMode.LINGER_TICKS, sink));
-        }
-        if (modes.has(FieldMode.SILENCE)) {
-            this.applyEffect(enemy, sink -> Effect.silenced(FieldMode.LINGER_TICKS, sink));
-        }
-        if (modes.has(FieldMode.DEAD_ZONE)) {
-            this.applyEffect(enemy, sink -> Effect.deadZone(FieldMode.LINGER_TICKS, sink));
-        }
-        if (modes.has(FieldMode.CORROSION)) {
-            int added = this.holds.toward(enemy, EffectKind.CORRODED, strength);
-            this.applyEffect(enemy, sink -> Effect.corroded(added, FieldMode.LINGER_TICKS, sink));
-        }
-        if (modes.has(FieldMode.FRAIL)) {
-            int added = this.holds.toward(enemy, EffectKind.FRAIL, strength);
-            this.applyEffect(enemy, sink -> Effect.frail(added, FieldMode.LINGER_TICKS, sink));
-        }
-        if (entering && modes.has(FieldMode.PURGE)) {
-            enemy.dispelBuffs();
-            enemy.dispelRestoratives();
-        }
-        if (beat && modes.has(FieldMode.SOUL_DRAIN)) {
-            this.applyEffect(enemy, sink -> Effect.sickened(FieldMode.SOUL_DRAIN_SPIRIT_PER_SECOND));
-        }
-        this.show(enemy, spec.sight());
-    }
-
-    /** Ward's sight: revealed while inside and a while after. */
-    private void show(EnemyMob enemy, SightSpec sight) {
-        if (!sight.reveals()) {
-            return;
-        }
-        this.reveal(enemy, sight.revealTicks());
-    }
-
-    /** How far from the centre {@code enemy} stands, as a share of the field's radius. */
-    private float fromCentre(EnemyMob enemy) {
-        double dx = enemy.getX() - this.centerX;
-        double dy = enemy.getY() - this.centerY;
-        return this.fieldRadius <= 0f ? 1f : (float) (Math.sqrt(dx * dx + dy * dy) / this.fieldRadius);
-    }
-
-    /** A stack for an enemy that has earned one; for one that holds some, the refresh that keeps them. */
-    private void addToll(EnemyMob enemy, TollSpec toll, boolean earned) {
-        if (!toll.isActive() || !(earned || enemy.hasEffect(EffectKind.TOLL))) {
-            return;
-        }
-        int stacks = earned ? 1 : 0;
-        this.applyEffect(enemy, sink -> Effect.toll(stacks, toll.fadeTicks(), sink).withStackCap(toll.cap()));
-    }
-
-    public boolean isFiring() {
-        return this.fire;
-    }
-
-    /** The bolts of the latest zap, from the tower to its first target and on along its chain. */
-    public List<Zap> getZaps() {
-        return this.zaps;
-    }
-
-    /** How many ticks ago it last zapped; a large number before the first. */
-    public int ticksSinceZap(int gameTime) {
-        return this.lastZapTick == Integer.MIN_VALUE ? Integer.MAX_VALUE : gameTime - this.lastZapTick;
-    }
-
-    /** How many ticks a zap's bolt stays drawn. */
-    public int zapFlashTicks() {
-        return ZAP_FLASH_TICKS;
-    }
-
-    @Override
-    public void doCleanup() {
-        super.doCleanup();
-        this.context.waves().removeListener(this.waveListener);
-    }
-
-    /** What the field's colour says about its head: Ward violet, Gravity blue. */
-    public FieldLook getFieldLook() {
-        PulseSpec spec = this.spec(this.mechanics.all());
-        if (spec.sight().reveals()) {
-            return FieldLook.WARD;
-        }
-        return spec.modes().has(FieldMode.UNDERTOW) ? FieldLook.GRAVITY : FieldLook.PLAIN;
-    }
-
-    /** Whether the field owns the bite line, drawn as a red rim. */
-    public boolean bites() {
-        return this.spec(this.mechanics.all()).modes().has(FieldMode.FRAIL);
-    }
-
-    /** Whether the field drags hardest at its centre, drawn darker there. */
-    public boolean hasGravityWell() {
-        return this.spec(this.mechanics.all()).hold().centreDrag() > 0;
-    }
-
-    /** The Ley Line this field casts, as of the last second; empty without one. */
-    public Optional<LeyLine> getLeyLine() {
-        return this.castLine.map(CastLine::line);
-    }
-
-    /** Whether an enemy stood on this field's Ley Line at the last tick. */
-    public boolean isLeyLineBusy() {
-        return this.lineBusy;
-    }
-
-    /** Whether the player chose this field's host rather than leaving it to the field. */
-    public boolean isLeyLinePinned() {
-        return this.pinnedHost.isPresent();
-    }
-
-    /**
-     * Any thread: pins this field's Ley Line to {@code host} from the next second on, if it casts one and {@code host}
-     * is another Obelisk within its reach; pinning the host it is pinned to unpins it. Tells whether it asked.
-     */
-    public boolean pinLeyLine(Tower host) {
-        Optional<PulseTower> field = host.accept(AS_FIELD).filter(other -> other != this);
-        LineSpec line = this.spec(this.mechanics.all()).line();
-        if (field.isEmpty() || !line.casts()
-                || this.distanceTo(field.get()) > line.reachCells() * this.context.getBoard().scale()) {
-            return false;
-        }
-        this.pinRequest.set(field);
-        return true;
-    }
-
-    /** Whether {@code tower} is an Obelisk that casts a Ley Line. */
-    public static boolean castsLeyLine(Tower tower) {
-        return tower.accept(AS_FIELD).filter(field -> field.spec(field.mechanics.all()).line().casts()).isPresent();
-    }
-
-    /**
-     * The Obelisk {@code caster}'s Ley Line is pinned to, with a pin asked for and not yet taken up counted as taken:
-     * what a saved game keeps. Empty for a line left to the field, and for any tower but an Obelisk.
-     */
-    public static Optional<Tower> leyLinePinOf(Tower caster) {
-        return caster.accept(AS_FIELD).flatMap(field -> {
-            Optional<PulseTower> requested = field.pinRequest.get();
-            Optional<PulseTower> pinned = field.pinnedHost;
-            if (requested.isEmpty()) {
-                return pinned;
-            }
-            return pinned.equals(requested) ? Optional.empty() : requested;
-        }).map(Tower.class::cast);
-    }
-
-    /** {@link #pinLeyLine} for {@code caster}, if it is an Obelisk; {@code false} for any other tower. */
-    public static boolean pinLeyLine(Tower caster, Tower host) {
-        return caster.accept(AS_FIELD).filter(field -> field.pinLeyLine(host)).isPresent();
-    }
-
-    /** How far the field reached at the last tick, in board pixels: its range, widened by the deaths inside. */
-    public float getFieldRadius() {
-        return this.fieldRadius;
-    }
-
-    /** The most Toll stacks any enemy in the field held at the last tick. */
-    public int getHighestToll() {
-        return this.highestToll;
+    /** Whether a range upgrade carries it past its base range. */
+    public boolean reachesPastItsBase() {
+        return this.stats().reachReal() > RANGE * this.context.getBoard().scale();
     }
 
     @Override
@@ -609,35 +347,14 @@ public final class PulseTower extends AbstractTower {
     }
 
     @Override
-    protected List<TowerBuffState> ownConditions() {
-        List<TowerBuffState> states = new ArrayList<>();
-        PulseSpec spec = this.spec(this.mechanics.all());
-        float growth = spec.field().growthAfter(this.deathsThisWave);
-        if (growth > 0f) {
-            states.add(TowerBuffState.of(TowerTerm.EVENT_HORIZON, TermText.of(
-                    TermNumbers.signedPercent(growth) + " field width until the wave ends"))
-                    .withStacks(this.deathsThisWave));
-        }
-        if (this.interference < 1f) {
-            states.add(TowerBuffState.of(TowerTerm.INTERFERENCE,
-                    TermText.of(TermNumbers.signedPercent(this.interference - 1f) + " damage")));
-        }
-        if (this.castLine.isPresent()) {
-            states.add(TowerBuffState.of(TowerTerm.LEY_LINE, TermText.of("casting to an Obelisk")));
-        } else if (!this.castersHere.isEmpty()) {
-            states.add(TowerBuffState.of(TowerTerm.LEY_LINE,
-                    TermText.of("hosting " + this.castersHere.size() + " lines")));
-        }
-        this.mechanics.all().forEach(mechanic -> mechanic.condition().ifPresent(states::add));
-        return states;
-    }
-
-    @Override
     protected List<AppliedEffect> baseApplies() {
-        PulseSpec spec = this.spec(this.mechanics.all());
-        return List.of(new AppliedEffect(EffectKind.DRAGGED, List.of(new AppliedEffect.Source(this.displayName(),
-                TermText.of("enemies inside gain ").plus(EffectKind.DRAGGED)
-                        .plus(" of " + spec.hold().dragAt(FieldStrength.FULL, 1f) + "%")))));
+        String drag = TermNumbers.percent(BASE_DRAG) + ", deeper with every stack of ";
+        return List.of(new AppliedEffect(EffectKind.TOLL, List.of(new AppliedEffect.Source(this.displayName(),
+                        TermText.of("enemies inside build a stack, up to " + PulseSpec.TOLL_CAP + ": ")
+                                .plus(TowerTerm.FRAILTY)))),
+                new AppliedEffect(EffectKind.DRAGGED, List.of(new AppliedEffect.Source(this.displayName(),
+                        TermText.of("enemies inside gain ").plus(EffectKind.DRAGGED).plus(" of " + drag)
+                                .plus(EffectKind.TOLL)))));
     }
 
     @Override
@@ -645,114 +362,13 @@ public final class PulseTower extends AbstractTower {
         return "all in range";
     }
 
+    @Override
+    protected String description() {
+        return "Holds every enemy in its field: the longer one stays, the slower it goes and the harder every tower "
+                + "hits it.";
+    }
+
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitPulseTower(this);
-    }
-
-    /** How far a tower's field reaches, in board pixels; {@code 0} for a tower with no field. */
-    private static final TowerVisitor<Float> FIELD_RADIUS = new TowerVisitor<>() {
-        @Override
-        public Float visitSniperTower(SniperTower tower) {
-            return 0f;
-        }
-
-        @Override
-        public Float visitSplashTower(SplashTower tower) {
-            return 0f;
-        }
-
-        @Override
-        public Float visitPulseTower(PulseTower tower) {
-            return tower.fieldRadius;
-        }
-
-        @Override
-        public Float visitAuraTower(AuraTower tower) {
-            return 0f;
-        }
-
-        @Override
-        public Float visitMortarTower(MortarTower tower) {
-            return 0f;
-        }
-
-        @Override
-        public Float visitSeekerTower(SeekerTower tower) {
-            return 0f;
-        }
-
-        @Override
-        public Float visitCinderTower(CinderTower tower) {
-            return 0f;
-        }
-    };
-
-    /** The Obelisk behind a tower, if it is one. */
-    private static final TowerVisitor<Optional<PulseTower>> AS_FIELD = new TowerVisitor<>() {
-        @Override
-        public Optional<PulseTower> visitSniperTower(SniperTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<PulseTower> visitSplashTower(SplashTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<PulseTower> visitPulseTower(PulseTower tower) {
-            return Optional.of(tower);
-        }
-
-        @Override
-        public Optional<PulseTower> visitAuraTower(AuraTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<PulseTower> visitMortarTower(MortarTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<PulseTower> visitSeekerTower(SeekerTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<PulseTower> visitCinderTower(CinderTower tower) {
-            return Optional.empty();
-        }
-    };
-
-    /** A field the relink weighed as a host, with what its beam would do to the paths. */
-    private record Candidate(PulseTower host, LeyLine.Scored scored) {
-    }
-
-    /** A cast Ley Line and how near it an enemy must be, in board pixels, to stand on it. */
-    private record CastLine(LeyLine line, float band) {
-
-        /** The enemies in the circle around the beam, of whom those within the band stand on it. */
-        List<EnemyMob> near(GameWorld context) {
-            float midX = (this.line.fromX() + this.line.toX()) / 2f;
-            float midY = (this.line.fromY() + this.line.toY()) / 2f;
-            float radius = (float) (this.line.length() / 2 + this.band);
-            return InRangeTargetQuery.everyone(Math.round(midX), Math.round(midY), radius).matching(context.enemies());
-        }
-
-        boolean holds(EnemyMob enemy) {
-            return this.line.distanceTo(enemy.getX(), enemy.getY()) <= this.band;
-        }
-    }
-
-    /** What the field's colour says about its head. */
-    public enum FieldLook {
-        PLAIN,
-        WARD,
-        GRAVITY
-    }
-
-    /** One bolt of a zap, in board pixels. */
-    public record Zap(float fromX, float fromY, float toX, float toY) {
     }
 }

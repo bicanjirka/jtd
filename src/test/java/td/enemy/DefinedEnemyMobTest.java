@@ -132,6 +132,22 @@ class DefinedEnemyMobTest {
     }
 
     @Test
+    void aShadowHitGoesPastShieldsAndInsulationButNotMagicResist() {
+        GameWorld context = newContext();
+        EnemyMob enemy = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("warded")
+                .withHealthAndPrice(500, 3).withInsulation(5f).withMagicResist(50f));
+        EnemyMob plain = EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("open")
+                .withHealthAndPrice(500, 3).withMagicResist(50f));
+        enemy.applyEffect(Effect.shield(5000f, 100, DamageSink.none()));
+
+        HitResult shadow = enemy.takeHit(Damage.magic(1000), AttackProfile.none().asShadow());
+        HitResult open = plain.takeHit(Damage.magic(1000), AttackProfile.none());
+
+        assertThat(shadow.absorbed()).isZero();
+        assertThat(shadow.landed()).isEqualTo(open.landed());
+    }
+
+    @Test
     void aCritFromAnAttackerThatPiercesShieldsGoesStraightToHealth() {
         GameWorld context = newContext();
         EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
