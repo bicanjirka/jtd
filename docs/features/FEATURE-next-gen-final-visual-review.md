@@ -14,16 +14,16 @@ second way, and that the board is alive without being busy.
 - `FEATURE-next-gen-tower-looks.md`, "Building a tower's look", is the recipe each rework follows, with the
   mistakes the review of 2026-11-14 found. Each tower's doc has an "In code" list of the cues it must send.
 - Sent from play today: reload and recoil (Sniper, Burst, Mortar), Steady Aim stacks, the Scorcher's stream and
-  Soulfire, the Obelisk's runes, full Toll and knell, the Burst's fork. Every other cue and every identity look is drawn and waits for its tower.
+  Soulfire, the Obelisk's runes, full Toll and knell, the Burst's fork, the Aerie's Ruby and Shade, its Release and
+  its nest. Every other cue and every identity look is drawn and waits for its tower.
 - Known open at the time of writing:
 
   | Open | Whose |
   |---|---|
-  | Ruby and Shade have no tower-level query, so no tower wears them | Aerie |
   | Frenzy's jitter is a still offset | Sniper |
   | A flying shell is a plain ball, not its kind's drawing | Mortar |
-  | The Beacon's rings and the Aerie's orbit still run on an empty board | Beacon, Aerie |
-  | The nest's missiles, shots in flight and enemy marks other than Toll and Silence are lab drawings; the marks and grounds sheets still draw the lab's Toll, Silence, Sundial and field patches | each tower, shot flight |
+  | The Beacon's rings still run on an empty board | Beacon |
+  | Shots in flight other than the Aerie's and enemy marks other than Toll, Silence and the three ices are lab drawings; the sheets still draw the lab's nest, missiles, ices, Toll, Silence, Sundial and field patches | each tower, shot flight |
   | Toolbar icons are 32 px images, soft on a HiDPI screen | the toolbar |
 
 - Painting is outside `td.PerformanceHarness`: the harness measures the tick and the frame build. The sheets'
@@ -95,6 +95,5 @@ Out of scope: new looks, new cues, a change to the art direction.
 ## Open questions
 
 - Should idle lights dim or stop at the smallest zoom?
-- Does the Aerie's nest count as idle life, or must it hold still on an empty board as its doc says?
 - Should the toolbar icons be painted as vectors at the screen's scale instead of 32 px images?
 - Is a tier unlock's flash too strong when several towers unlock in one tick?

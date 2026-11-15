@@ -31,7 +31,7 @@ public class TowerFactory {
         SPLASH(SplashTower.PRICE, 'w', "Burst"),
         MORTAR(MortarTower.PRICE, 'e', "Mortar"),
         CINDER(CinderTower.PRICE, 'r', "Scorcher"),
-        SEEKER(SeekerTower.PRICE, 't', "Hive"),
+        SEEKER(SeekerTower.PRICE, 't', "Aerie"),
         PULSE(PulseTower.PRICE, 'y', "Obelisk"),
         AURA(AuraTower.PRICE, 'u', "Beacon");
 
