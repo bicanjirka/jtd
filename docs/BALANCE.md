@@ -12,6 +12,17 @@ mvn -q compile exec:java -Dexec.mainClass=td.balance.WavePowerReport    # every 
 `EnemyPowerReport` takes `--kinds golem,yeti`, `--ranks grunt,elite` and `--fit golem=1.7,yeti=1.7`;
 `WavePowerReport` takes `--levels rift,hive`. Both store their rows in `target/balance/`.
 
+## The pipeline
+
+Balance is settled in a fixed order, each stage reading what the one before it stored in `target/balance/`:
+enemies, then waves, then towers. A stage stores a tab-separated sheet for the next stage and an HTML page for a
+person (`ReportPage` writes both).
+
+| Stage | Tool | Stores | Page |
+| --- | --- | --- | --- |
+| 1 Enemies | `EnemyPowerReport` (a full run, no `--kinds` or `--ranks`) | `enemy-power.tsv`: one row per enemy and rank, its power on every axis as a multiple of the Walker; `enemy-baseline.tsv`: what the Walker of each rank takes, which turns those multiples into damage a second | `enemies.html` |
+| 2 Waves | `WavePowerReport` | `wave-power.tsv` | |
+
 ## The probe rig
 
 Enemies are measured against a rig, not a tower. The rig lands hits on every enemy of a board through the same calls a
