@@ -4,16 +4,21 @@ import td.tower.Tower;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 
 import java.util.List;
 
 /**
- * A small tree on the standard tiers that the upgrade tests share: two roots in a cluster with a line behind each, a
+ * A small tree, on tiers whose first gate also asks a payment, that the upgrade tests share: two roots in a cluster with a line behind each, a
  * lone node in tier 0 and one in tier I, a cluster of two in tier II, and the top of the first root's line in tier III.
  */
 public final class TierTrees {
+
+    /** Tiers whose first gate asks a payment on top of its XP. */
+    public static final List<UpgradeTier> PAID_TIERS = List.of(UpgradeTier.open(), UpgradeTier.gated(60, 20),
+            UpgradeTier.gated(120, 0), UpgradeTier.gated(200, 0));
 
     public static final UpgradeNode A1 = UpgradeNode.of("a.1", "A", 10);
     public static final UpgradeNode B1 = UpgradeNode.of("b.1", "B", 10);
@@ -29,7 +34,7 @@ public final class TierTrees {
     public static final UpgradeCluster SPECIALS = UpgradeCluster.of("Specials", S1, S2);
 
     public static final UpgradeTree TREE = UpgradeTree.of(A1, B1, LONE, A2, B2, MID, A3, S1, S2, TOP)
-            .withCluster(ROOTS).withCluster(SPECIALS);
+            .withCluster(ROOTS).withCluster(SPECIALS).withTiers(TierTrees.PAID_TIERS);
 
     /** Tier I's unlock. */
     public static final UpgradeNode TIER_ONE = TREE.unlockOf(1).orElseThrow();

@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.FakeTower;
+import td.fixtures.TierTrees;
 import td.fixtures.WorldFixtures;
 import td.tower.proc.Proc;
 import td.tower.proc.ProcPayload;
@@ -27,7 +28,7 @@ class UpgradeOwnershipTest {
             .withProc(Proc.everyNthShot(1, new ProcPayload.GrantStatus(
                     TowerStatus.timed(TowerTerm.HASTE, TowerModifiers.attackSpeed(1f), 1_000))));
     private static final UpgradeTree TREE = UpgradeTree.of(A1, B1, A2, HASTY)
-            .withCluster(UpgradeCluster.of("Roots", A1, B1));
+            .withCluster(UpgradeCluster.of("Roots", A1, B1)).withTiers(TierTrees.PAID_TIERS);
 
     private final GameWorld context = WorldFixtures.newWorld();
 

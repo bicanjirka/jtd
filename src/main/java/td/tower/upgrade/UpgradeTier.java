@@ -10,7 +10,7 @@ import java.util.List;
 public record UpgradeTier(int xp, int unlockPrice) {
 
     private static final UpgradeTier OPEN = new UpgradeTier(0, 0);
-    private static final List<UpgradeTier> STANDARD = List.of(OPEN, gated(60, 20), gated(120, 0), gated(200, 0));
+    private static final List<UpgradeTier> STANDARD = List.of(OPEN, gated(60, 0), gated(120, 0), gated(200, 0));
 
     public UpgradeTier {
         if (xp < 0 || unlockPrice < 0) {

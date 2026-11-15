@@ -199,8 +199,8 @@ shop shows the current price. Selling refunds three quarters of what the tower
 and its upgrades cost.
 
 Every tower, the Aura included, has its own upgrade tree of four tiers, shown in place of the
-wave preview once the tower is selected. A tier opens with XP (Tier I at 60, Tier II at 120, Tier III at 200), and
-Tier I also asks a one-off unlock payment; every tower an enemy reached earns its bounty as XP when its walk ends,
+wave preview once the tower is selected. A tier opens with XP alone (Tier I at 60, Tier II at 120, Tier III at 200);
+every tower an enemy reached earns its bounty as XP when its walk ends,
 killed or leaked (an Aura earns with the towers it buffs). Once a tier is open its upgrades cost only credits. In a
 tier an upgrade stands alone, follows one it needs (in the same tier or the one below), or belongs to a cluster:
 one framed set of which a tower keeps one active, switched for free between waves, which sells back what came
@@ -210,12 +210,12 @@ the old side's upgrades. A downgrade takes a node back with everything that need
 they cost (selling afterwards pays what selling would have) and reopens the choices they made. Upgrade
 prices are multiples of the tower's price. A tower stands on one plinth step for each tier it has open, and its
 foundation grows wider and richer with each; when a tier opens, the new foundation spreads over the old with a ring
-in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade or a tier's unlock now. The Upgrades panel's XP bar ticks where the next tier opens. The Beacon draws a ring on the
+in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade now. The Upgrades panel's XP bar ticks where the next tier opens. The Beacon draws a ring on the
 tower it mentors and (while it is selected) the path spot its Rally watches.
 
 ```mermaid
 flowchart BT
-    t0[Tier 0<br/>Attune, Range, the tower's own] -->|XP 60 and the unlock| t1[Tier I]
+    t0[Tier 0<br/>Attune, Range, the tower's own] -->|XP 60| t1[Tier I]
     t1 -->|XP 120| t2[Tier II]
     t2 -->|XP 200| t3[Tier III]
 ```
