@@ -463,7 +463,8 @@ class TowerEffectFrameBuilderTest {
         float muzzle = TowerSprites.muzzle(TowerLook.CINDER, 0, TowerSpriteFrameBuilder.poseOf(scorcher),
                 scorcher.getX(), scorcher.getY(), BoardFixtures.SCALE, 0.0).x;
         assertThat(stream.originX()).isEqualTo(muzzle);
-        assertThat(stream.tongues().getFirst().reach()).isEqualTo(scorcher.getRangeReal());
+        assertThat(muzzle + stream.tongues().getFirst().reach()).isCloseTo(scorcher.getX() + scorcher.getRangeReal(),
+                within(1e-3f));
     }
 
     @Test
