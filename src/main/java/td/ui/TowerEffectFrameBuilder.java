@@ -544,8 +544,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
         Point2D.Float muzzle = TowerSprites.muzzle(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
                 TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale, heading);
+        // The cone pours as far as its range from the tower's centre, so it is drawn to there from the nozzle.
+        float reach = tower.getRangeReal() - (float) ((muzzle.x - tower.getX()) * Math.cos(heading)
+                + (muzzle.y - tower.getY()) * Math.sin(heading));
         this.draws.add(new StreamDraw(muzzle.x, muzzle.y, (float) heading,
-                streamTongues(look, tower.getRangeReal(), (float) tower.halfWidthRadians()), flicker));
+                streamTongues(look, reach, (float) tower.halfWidthRadians()), flicker));
         for (CinderTower.Flash flash : tower.flashes()) {
             this.draws.add(flashover(look.soulfire(), (float) flash.fromX(), (float) flash.fromY(), (float) flash.toX(),
                     (float) flash.toY(), flicker));
