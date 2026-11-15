@@ -19,7 +19,8 @@ class TowerReportTest {
     private static final int TOWER_PRICE = 20;
     private static final int TIER = 2;
     private static final int WORTH = 8;
-    private static final int VERDICT = 14;
+    private static final int SUGGESTED = 10;
+    private static final int VERDICT = 13;
     private static final List<List<String>> NO_PAIRS = List.of(List.of("tower", "build", "with", "withBuild", "cost"));
 
     private static List<List<String>> nodes(List<List<String>> builds) {
@@ -35,61 +36,43 @@ class TowerReportTest {
     }
 
     @Test
-    void aLaterTierAsksMoreOfItsNodesAndTheFirstAsksLessThanTheTower() {
-        TowerReport.Pace first = TowerReport.Pace.of(0, TOWER_PRICE);
-        TowerReport.Pace second = TowerReport.Pace.of(1, TOWER_PRICE);
-        TowerReport.Pace third = TowerReport.Pace.of(2, TOWER_PRICE);
+    void aNodeIsPricedAtItsWorthTimesItsTiersPremium() {
+        double worth = 40;
+        int fair = (int) Math.round(worth * TowerReport.premium(TIER));
 
-        assertThat(first.high()).isLessThan(TOWER_PRICE);
-        assertThat(second.low()).isLessThanOrEqualTo(TOWER_PRICE);
-        assertThat(second.high()).isGreaterThanOrEqualTo(TOWER_PRICE);
-        assertThat(third.low()).isGreaterThan(second.target());
-    }
+        TowerReport.Price right = TowerReport.priced(TowerReport.Reading.MEASURED, worth, TIER, TOWER_PRICE, fair);
+        TowerReport.Price off = TowerReport.priced(TowerReport.Reading.MEASURED, worth, TIER, TOWER_PRICE, fair * 2);
 
-    @Test
-    void aNodeWorthLessThanItsTierAsksIsPricedAtTheTiersFloorAndCalledWeak() {
-        TowerReport.Pace pace = TowerReport.Pace.of(TIER, TOWER_PRICE);
-
-        TowerReport.Price price = TowerReport.priced(TowerReport.Reading.MEASURED, 1, TIER, TOWER_PRICE, pace.low());
-
-        assertThat(price.suggested()).isEqualTo(pace.low());
-        assertThat(price.fair()).isLessThan(pace.low());
-        assertThat(price.verdict()).startsWith("WARN weak");
-    }
-
-    @Test
-    void aNodeWorthMoreThanItsTierAsksIsPricedAtTheTiersCeilingAndCalledStrong() {
-        TowerReport.Pace pace = TowerReport.Pace.of(TIER, TOWER_PRICE);
-
-        TowerReport.Price price = TowerReport.priced(TowerReport.Reading.MEASURED, pace.high() * 2.0, TIER, TOWER_PRICE,
-                pace.high());
-
-        assertThat(price.suggested()).isEqualTo(pace.high());
-        assertThat(price.verdict()).startsWith("WARN strong");
-    }
-
-    @Test
-    void aNodeInsideItsTiersPaceIsRightAtItsFairPriceAndWarnedFarFromIt() {
-        TowerReport.Pace pace = TowerReport.Pace.of(TIER, TOWER_PRICE);
-        double worth = pace.target() / TowerReport.premium(TIER);
-
-        TowerReport.Price right = TowerReport.priced(TowerReport.Reading.MEASURED, worth, TIER, TOWER_PRICE, pace.target());
-        TowerReport.Price off = TowerReport.priced(TowerReport.Reading.MEASURED, worth, TIER, TOWER_PRICE, pace.target() * 2);
-
-        assertThat(right.fair()).isEqualTo(pace.target());
+        assertThat(right.suggested()).isEqualTo(fair);
         assertThat(right.verdict()).isEqualTo(TowerReport.OK);
-        assertThat(off.verdict()).startsWith("WARN price").endsWith("-> " + pace.target());
+        assertThat(off.verdict()).startsWith("WARN price").endsWith("-> " + fair);
     }
 
     @Test
-    void aNodeTheBenchDoesNotShowIsListedUnmeasuredAndOneThatLowersItsBuildsIsABreach() {
-        TowerReport.Pace pace = TowerReport.Pace.of(TIER, TOWER_PRICE);
+    void aNodeWorthNextToNothingStillCostsItsTiersFloorAndALaterTiersFloorIsHigher() {
+        TowerReport.Price price = TowerReport.priced(TowerReport.Reading.MEASURED, 0.01, TIER, TOWER_PRICE, 1);
 
-        TowerReport.Price quiet = TowerReport.priced(TowerReport.Reading.QUIET, 0, TIER, TOWER_PRICE, 1);
-        TowerReport.Price lowers = TowerReport.priced(TowerReport.Reading.LOWERS, -5, TIER, TOWER_PRICE, 1);
+        assertThat(price.suggested()).isEqualTo(TowerReport.floorOf(TIER, TOWER_PRICE)).isPositive();
+        assertThat(TowerReport.floorOf(TIER + 1, TOWER_PRICE)).isGreaterThan(TowerReport.floorOf(TIER, TOWER_PRICE));
+    }
+
+    @Test
+    void aSmallPriceOffByLessThanTheBenchMovesItIsRight() {
+        int suggested = 5;
+
+        assertThat(TowerReport.priceVerdict(suggested + TowerReport.SMALL_CHANGE, suggested)).isEqualTo(TowerReport.OK);
+        assertThat(TowerReport.priceVerdict(suggested + TowerReport.SMALL_CHANGE + 1, suggested)).startsWith("WARN price");
+    }
+
+    @Test
+    void aNodeTheBenchDoesNotShowKeepsItsPriceAndOneThatLowersItsBuildsIsABreach() {
+        int kept = 7;
+
+        TowerReport.Price quiet = TowerReport.priced(TowerReport.Reading.QUIET, 0, TIER, TOWER_PRICE, kept);
+        TowerReport.Price lowers = TowerReport.priced(TowerReport.Reading.LOWERS, -5, TIER, TOWER_PRICE, kept);
 
         assertThat(quiet.verdict()).startsWith("UNMEASURED");
-        assertThat(quiet.suggested()).isEqualTo(pace.low());
+        assertThat(quiet.suggested()).isEqualTo(kept);
         assertThat(lowers.verdict()).startsWith("BREACH");
     }
 
@@ -177,6 +160,52 @@ class TowerReportTest {
         double lostWithoutB = bare * a * b - bare * a;
         assertThat(worthOfA + worthOfB).isCloseTo((bare * a * b - bare) / rate, within(0.02));
         assertThat(worthOfA / worthOfB).isCloseTo(lostWithoutA / lostWithoutB, within(0.02));
+    }
+
+    @Test
+    void anEarlyNodeIsCreditedWithPartOfWhatItMultipliesLater() {
+        double bare = 2;
+        double each = 2;
+        List<List<String>> rows = nodes(List.of(
+                build("T", TowerBench.BARE, TowerBench.BARE, 10, bare),
+                weighing(build("T", "line:early", TowerBench.LINE, 15, bare * each, "early"), "early", TowerBench.BARE),
+                weighing(build("T", "line:late", TowerBench.LINE, 15, bare * each, "late"), "late", TowerBench.BARE, 1),
+                build("T", "full:0", TowerBench.FULL, 15, bare * each, "early"),
+                build("T", "full:1", TowerBench.FULL, 20, bare * each * each, "early", "late"),
+                weighing(build("T", "without:early", TowerBench.WITHOUT, 10, bare), "early", "full:0"),
+                weighing(build("T", "without:late", TowerBench.WITHOUT, 15, bare * each, "early"), "late", "full:1", 1),
+                weighing(build("T", "without-top:early", TowerBench.WITHOUT_AT_TOP, 15, bare * each, "late"), "early", "full:1"),
+                weighing(build("T", "without-top:late", TowerBench.WITHOUT_AT_TOP, 15, bare * each, "early"), "late", "full:1", 1)));
+
+        double early = Double.parseDouble(rows.get(0).get(WORTH));
+        double late = Double.parseDouble(rows.get(1).get(WORTH));
+
+        double rate = bare / 10;
+        double whenBought = (bare * each - bare) / rate;
+        assertThat(early).isGreaterThan(whenBought);
+        assertThat(early).isLessThan(late);
+        assertThat(early + late).isCloseTo((bare * each * each - bare) / rate, within(0.02));
+    }
+
+    @Test
+    void theMembersOfAClusterShareTheDearestMembersPrice() {
+        double bare = 2;
+        List<List<String>> builds = List.of(
+                build("T", TowerBench.BARE, TowerBench.BARE, 10, bare),
+                weighing(build("T", "line:strong", TowerBench.LINE, 15, bare * 4, "strong"), "strong", TowerBench.BARE),
+                weighing(build("T", "line:weak", TowerBench.LINE, 15, bare * 2, "weak"), "weak", TowerBench.BARE),
+                build("T", "full:0", TowerBench.FULL, 15, bare * 4, "strong"),
+                weighing(build("T", "full:0:weak", TowerBench.FULL, 15, bare * 2, "weak"), "weak", ""),
+                weighing(build("T", "without:strong", TowerBench.WITHOUT, 10, bare), "strong", "full:0"),
+                weighing(build("T", "without:weak", TowerBench.WITHOUT, 10, bare), "weak", "full:0:weak"));
+        TowerReport report = new TowerReport(sheet(builds),
+                Map.of("T", List.of(new TowerReport.Cluster("pick one", List.of("strong", "weak"), false))), NO_PAIRS);
+
+        List<List<String>> rows = report.nodes().rows();
+
+        int alone = Integer.parseInt(new TowerReport(sheet(builds), Map.of(), NO_PAIRS).nodes().rows().get(1).get(SUGGESTED));
+        assertThat(rows.get(1).get(SUGGESTED)).isEqualTo(rows.get(0).get(SUGGESTED));
+        assertThat(Integer.parseInt(rows.get(1).get(SUGGESTED))).isGreaterThan(alone);
     }
 
     @Test

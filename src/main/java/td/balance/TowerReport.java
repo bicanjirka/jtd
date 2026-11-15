@@ -20,11 +20,13 @@ import java.util.stream.Stream;
  * Stage 3 of the balance pipeline, judged: what the bench measured, turned into prices and verdicts.
  *
  * <p>A build's power is worth credits at the going rate, the power a credit buys of a bare tower. A tower's fair
- * price is its bare worth. A node's worth is what a build loses without it; its fair price is that worth times a
- * premium that grows with its tier, and each tier has a pace, a band of prices in tower prices, that a node whose
- * worth falls outside it is too weak or too strong for. The towers' roles, the balance inside each cluster, towers
- * that pay better than every rival, and pairs that hold far more together than apart are each a table with a verdict.
- * A node that moves nothing measured is listed as unmeasured, not priced.
+ * price is its bare worth. A node's worth is its share of what its tree adds to the bare tower, and its price is that
+ * worth times a premium that grows with its tier: prices follow what the nodes do, and a tier's nodes come to what
+ * they come to. Each tier's total is then set against the pace the game wants of its tiers and against the same tier
+ * of the other towers, which is where a tier whose nodes do too little or too much shows. The towers' roles, the
+ * balance inside each cluster, towers that pay better than every rival, and pairs that hold far more together than
+ * apart are each a table with a verdict. A node that moves nothing measured is listed as unmeasured and keeps its
+ * price.
  *
  * <p>Run it after the bench, which stores what this reads.
  */
@@ -42,6 +44,8 @@ public final class TowerReport {
     static final double QUIET = 0.025;
     /** How far a price may sit from the one suggested and still be right. */
     static final double PRICE_BAND = 0.25;
+    /** The credits a small price may be off by: under it, a rerun of the bench moves the suggestion as far. */
+    static final int SMALL_CHANGE = 2;
     private static final double TOWER_BAND = 0.2;
     /** How far above and below its rivals of the same tier a tower's power per credit may sit. */
     private static final double STRONG = 1.25;
@@ -61,13 +65,16 @@ public final class TowerReport {
     private static final double MOVE = 1.12;
     private static final int MOVES = 3;
     private static final int READABLE = 5;
-    private static final int SUGGESTED = 11;
-    private static final double FIRST_TIER_PACE = 0.6;
-    private static final double FIRST_TIER_LOW = 0.3;
-    private static final double FIRST_TIER_HIGH = 0.9;
-    private static final double PACE_GROWTH = 1.5;
-    private static final double PACE_LOW = 0.8;
-    private static final double PACE_HIGH = 1.25;
+    private static final int PRICE = 4;
+    private static final int SUGGESTED = 10;
+    /** The least a node costs, in tower prices, for each tier it is up from the tower: no node is next to free. */
+    private static final double FLOOR = 0.1;
+    /** The most the first tier may cost, and the band the second sits in, in tower prices. */
+    private static final double FIRST_TIER_MOST = 1.0;
+    private static final double SECOND_TIER_LEAST = 0.6;
+    private static final double SECOND_TIER_MOST = 1.6;
+    /** How far a tier's cost may sit from the same tier of the other towers, each in its own tower's prices. */
+    private static final double TIER_APART = 2;
     private static final List<Rule> RULES = List.of(
             Rule.of("The Sniper is the top single-target tower", Relation.CEILING, "SNIPER", "single", "stream", "boss"),
             Rule.of("Against armor and plating the Aerie is the top single-target tower", Relation.CEILING, "SEEKER",
@@ -102,7 +109,7 @@ public final class TowerReport {
         }
         TowerReport report = new TowerReport(sheet, clusters, ReportPage.load(TowerBench.PAIR_SHEET));
         List<ReportPage.Table> tables = List.of(report.towers(), report.stages(), report.roles(), report.profiles(),
-                report.nodes(), report.clusterPicks(), report.synergies());
+                report.tiers(), report.nodes(), report.clusterPicks(), report.synergies());
         ReportPage.Table findings = report.findings(tables);
         ReportPage.store(PRICE_SHEET, report.prices());
         ReportPage.store(STAGE_SHEET, tables.get(1));
@@ -171,17 +178,9 @@ public final class TowerReport {
         }
     }
 
-    /** The band of prices a tier asks of its nodes, in credits. */
-    record Pace(int low, int target, int high) {
-
-        static Pace of(int tier, int towerPrice) {
-            if (tier == 0) {
-                return new Pace(atLeastOne(FIRST_TIER_LOW * towerPrice), atLeastOne(FIRST_TIER_PACE * towerPrice),
-                        atLeastOne(FIRST_TIER_HIGH * towerPrice));
-            }
-            double target = Math.pow(PACE_GROWTH, tier - 1) * towerPrice;
-            return new Pace(atLeastOne(PACE_LOW * target), atLeastOne(target), atLeastOne(PACE_HIGH * target));
-        }
+    /** The least a node of {@code tier} costs on a tower that costs {@code towerPrice}. */
+    static int floorOf(int tier, int towerPrice) {
+        return atLeastOne(FLOOR * (tier + 1) * towerPrice);
     }
 
     /** What the bench read of a node: nothing, a gain in one build and a loss in another, a loss in each, or a worth. */
@@ -190,8 +189,9 @@ public final class TowerReport {
     /**
      * A node's price as measured.
      *
-     * @param fair      its worth times its tier's premium
-     * @param suggested the fair price brought inside its tier's pace
+     * @param fair      its worth times its tier's premium, and its tier's floor at the least; nothing when it has no
+     *                  measured worth
+     * @param suggested the price to give it
      */
     record Price(int fair, int suggested, String verdict) {
     }
@@ -204,29 +204,29 @@ public final class TowerReport {
         return Math.pow(TowerFactory.Type.COPY_PRICE_GROWTH, tier + 1);
     }
 
-    /** The price of a node worth {@code worth} credits in {@code tier} of a tower that costs {@code towerPrice}. */
+    /**
+     * The price of a node worth {@code worth} credits in {@code tier} of a tower that costs {@code towerPrice}. A
+     * node with no measured worth keeps the price it has: there is nothing to move it by.
+     */
     static Price priced(Reading reading, double worth, int tier, int towerPrice, int now) {
-        Pace pace = Pace.of(tier, towerPrice);
+        int floor = floorOf(tier, towerPrice);
         if (reading == Reading.QUIET) {
-            return new Price(0, pace.low(), "UNMEASURED utility: nothing the bench fights shows it");
+            return new Price(0, now, "UNMEASURED utility: nothing the bench fights shows it; its price is kept");
         }
         if (reading == Reading.MIXED) {
-            return new Price(0, pace.low(), "UNMEASURED: it adds to one build and takes from another");
+            return new Price(0, floor, "UNMEASURED: it adds to one build and takes from another");
         }
         if (reading == Reading.LOWERS) {
-            return new Price(0, pace.low(), "BREACH lowers what its builds hold");
+            return new Price(0, floor, "BREACH lowers what its builds hold");
         }
-        int fair = atLeastOne(worth * premium(tier));
-        int suggested = Math.max(pace.low(), Math.min(pace.high(), fair));
-        if (fair < pace.low()) {
-            return new Price(fair, suggested, "WARN weak for its tier: needs " + times((double) pace.low() / fair) + " its worth");
-        }
-        if (fair > pace.high()) {
-            return new Price(fair, suggested, "WARN strong for its tier: " + times((double) fair / pace.high())
-                    + " what the tier asks");
-        }
-        boolean right = Math.abs(now - suggested) <= PRICE_BAND * suggested;
-        return new Price(fair, suggested, right ? OK : "WARN price " + now + " -> " + suggested);
+        int fair = Math.max(floor, atLeastOne(worth * premium(tier)));
+        return new Price(fair, fair, priceVerdict(now, fair));
+    }
+
+    /** Whether a price of {@code now} is near enough the {@code suggested} one. */
+    static String priceVerdict(int now, int suggested) {
+        return Math.abs(now - suggested) <= Math.max(SMALL_CHANGE, PRICE_BAND * suggested) ? OK
+                : "WARN price " + now + " -> " + suggested;
     }
 
     /** How {@code subject} stands to {@code rivals} under {@code relation}, each a number where more is stronger. */
@@ -303,18 +303,27 @@ public final class TowerReport {
                     .forEach(line -> suggested.put(line.node(), Integer.parseInt(this.nodeRow(tower, line).get(SUGGESTED))));
             int tree = top.owned().stream().mapToInt(node -> suggested.getOrDefault(node, 0)).sum();
             rows.add(List.of(tower, bare.name(), String.valueOf(bare.cost()), ReportPage.number(this.sheet.power(bare)),
-                    ReportPage.number(worth), String.valueOf(readable(worth)), top.label(), String.valueOf(top.cost()),
+                    ReportPage.number(worth), String.valueOf(this.towerPrice(tower)), top.label(), String.valueOf(top.cost()),
                     ReportPage.number(this.sheet.worth(top)), ReportPage.number(this.value(top)),
-                    String.valueOf(readable(worth) + tree), ReportPage.number(this.sheet.worth(top) / (readable(worth) + tree)),
+                    String.valueOf(this.towerPrice(tower) + tree),
+                    ReportPage.number(this.sheet.worth(top) / (this.towerPrice(tower) + tree)),
                     this.towerVerdict(tower, bare.cost(), worth)));
         }
-        return ReportPage.Table.of("Tower prices", List.of("tower", "name", "price", "power", "fair", "reads", "top build",
+        return ReportPage.Table.of("Tower prices", List.of("tower", "name", "price", "power", "fair", "suggested", "top build",
                 "top cost", "top worth", "top value", "top suggested", "value then", "verdict"), rows).noted("""
                 power: the Walkers of a mixed wave the bare tower adds to the partners. fair: that power in credits
-                at the going rate. reads: the fair price as a round number. top build: its best way to buy the whole
-                tree, what that costs now, what it is worth, and value, worth over cost: under 1 the tree costs more
-                than the same power bought as bare towers. top suggested and value then: the same build at the
-                readable tower price and the suggested node prices.""").heating("top value", "value then");
+                at the going rate. suggested: the price it has when that is near its fair one, else the fair one as
+                a round number. top build: its best way to buy the whole tree, what that costs now, what it is
+                worth, and value, worth over cost: under 1 the tree costs more than the same power bought as bare
+                towers, which is the premium an upgrade carries. top suggested and value then: the same build at
+                the suggested tower and node prices.""").heating("top value", "value then");
+    }
+
+    /** The price to give {@code tower}: the one it has when that is near its bare worth, else that worth, rounded. */
+    private int towerPrice(String tower) {
+        Held bare = this.sheet.bare(tower);
+        double worth = this.sheet.worth(bare);
+        return !TowerSheet.isJudged(tower) || Math.abs(bare.cost() - worth) <= TOWER_BAND * worth ? bare.cost() : readable(worth);
     }
 
     private String towerVerdict(String tower, int price, double worth) {
@@ -452,25 +461,25 @@ public final class TowerReport {
                     .forEach(line -> rows.add(this.nodeRow(tower, line)));
         }
         return ReportPage.Table.of("Nodes", List.of("tower", "node", "name", "tier", "price", "alone", "in tier", "at top",
-                "worth", "fair", "pace", "suggested", "share", "moves", "verdict"), rows).noted("""
+                "worth", "fair", "suggested", "share", "moves", "verdict"), rows).noted("""
                 alone, in tier, at top: the credits of power the node adds on only the nodes it needs, to its tier
                 bought whole, and to the whole tree; a node others need is not credited with them. Nodes multiply
-                each other, so those grow with the build and add up to more than the tree. worth: the node's share
-                of what its tier adds to the tiers below it, which is what a player buying tier by tier gets; a
-                tower's worths add up to its tree. fair: worth times its tier's premium, the price of the copy of
-                the tower a player would be buying instead. pace: the band of prices its tier asks, from the
-                tower's price. suggested: the fair price inside the pace. share: the part of the whole tree's power
-                lost without it. moves: the scenarios it changes most at the top, alone. A node weak or strong for
-                its tier needs its numbers changed, not only its price.""");
+                each other, so those grow with the build and add up to more than the tree. worth: the mean of the
+                node's share of what its tier adds to the tiers below it, which is what it gives when bought, and its
+                share of what the whole tree adds to the bare tower, which is what it gives in the end; a tower's
+                worths add up to its tree. fair: worth times its tier's premium, the price of the copy of the tower a
+                player would be buying instead, and never under the tier's floor. suggested: the fair price; the
+                members of a cluster and the sides of a fork are switched for free, so they share the dearest
+                member's. share: the part of the whole tree's power lost without it. moves: the scenarios it changes
+                most at the top, alone.""");
     }
 
     private List<String> nodeRow(String tower, Held line) {
         NodeWorth worth = this.worthOf(tower, line);
-        int tier = Integer.parseInt(line.tier());
         int price = line.cost() - this.versus(line).cost();
-        Pace pace = Pace.of(tier, this.sheet.bare(tower).cost());
-        Price priced = priced(worth.reading(), worth.worth(), tier, this.sheet.bare(tower).cost(), price);
-        String verdict = priced.verdict();
+        Price own = this.ownPrice(tower, line);
+        int suggested = this.sharedPrice(tower, line);
+        String verdict = own.fair() > 0 ? priceVerdict(price, suggested) : own.verdict();
         if (!TowerSheet.isJudged(tower)) {
             verdict = NOT_JUDGED;
         } else if (worth.share() <= -SINKS && !verdict.startsWith("BREACH")) {
@@ -481,8 +490,32 @@ public final class TowerReport {
         }
         return List.of(tower, line.node(), line.nodeName(), line.tier(), String.valueOf(price), ReportPage.number(worth.alone()),
                 number(worth.inTier()), number(worth.atTop()), ReportPage.number(worth.worth()),
-                priced.fair() == 0 ? NONE : String.valueOf(priced.fair()), pace.low() + ".." + pace.high(),
-                String.valueOf(priced.suggested()), ReportPage.number(worth.share()), this.moves(tower, line.node()), verdict);
+                own.fair() == 0 ? NONE : String.valueOf(own.fair()), String.valueOf(suggested),
+                ReportPage.number(worth.share()), this.moves(tower, line.node()), verdict);
+    }
+
+    /** The price the node {@code line} weighs comes to by itself. */
+    private Price ownPrice(String tower, Held line) {
+        NodeWorth worth = this.worthOf(tower, line);
+        return priced(worth.reading(), worth.worth(), Integer.parseInt(line.tier()), this.sheet.bare(tower).cost(),
+                line.cost() - this.versus(line).cost());
+    }
+
+    /**
+     * The price to give the node {@code line} weighs: its own, or, in a cluster or a fork, the dearest measured
+     * member's, since a tower that owns one member switches to another for nothing.
+     */
+    private int sharedPrice(String tower, Held line) {
+        List<Price> members = this.clusters.getOrDefault(tower, List.of()).stream()
+                .filter(cluster -> cluster.members().contains(line.node()))
+                .flatMap(cluster -> cluster.members().stream())
+                .flatMap(member -> this.weighing(tower, TowerBench.LINE, member).stream())
+                .map(member -> this.ownPrice(tower, member)).toList();
+        int measured = members.stream().filter(price -> price.fair() > 0).mapToInt(Price::suggested).max().orElse(0);
+        if (measured > 0) {
+            return measured;
+        }
+        return members.stream().mapToInt(Price::suggested).max().orElse(this.ownPrice(tower, line).suggested());
     }
 
     /**
@@ -491,7 +524,7 @@ public final class TowerReport {
      * @param alone  on only the nodes it needs
      * @param inTier to its tier bought whole
      * @param atTop  to the whole tree
-     * @param worth  its share of what its tier adds to the tiers below
+     * @param worth  its share of the tree: of what its tier adds when bought, and of what the whole tree adds
      * @param share  the part of the whole tree's power lost without it
      */
     private record NodeWorth(double alone, OptionalDouble inTier, OptionalDouble atTop, double worth, double share,
@@ -501,8 +534,8 @@ public final class TowerReport {
             return new NodeWorth(alone, inTier, atTop, alone, 0, Reading.MEASURED);
         }
 
-        NodeWorth read(double shareOfTier, double lost, Reading as) {
-            return new NodeWorth(this.alone, this.inTier, this.atTop, shareOfTier, lost, as);
+        NodeWorth read(double shareOfTree, double lost, Reading as) {
+            return new NodeWorth(this.alone, this.inTier, this.atTop, shareOfTree, lost, as);
         }
     }
 
@@ -513,8 +546,9 @@ public final class TowerReport {
         double added = this.sheet.power(line) - this.sheet.power(this.versus(line));
         NodeWorth worth = NodeWorth.of(added / rate, inTier.stream().mapToDouble(less -> this.ownPower(less) / rate).average(),
                 atTop.stream().mapToDouble(less -> this.ownPower(less) / rate).average());
-        double ofTier = inTier.stream().mapToDouble(less -> this.tierScale(less) * this.ownPower(less) / rate).average()
-                .orElse(added / rate);
+        OptionalDouble ofTier = inTier.stream().mapToDouble(less -> this.tierScale(less) * this.ownPower(less) / rate).average();
+        OptionalDouble ofTree = atTop.stream().mapToDouble(less -> this.treeScale(less) * this.ownPower(less) / rate).average();
+        double ofBoth = DoubleStream.concat(ofTier.stream(), ofTree.stream()).average().orElse(added / rate);
         double share = atTop.stream().mapToDouble(less -> this.ownPower(less) / this.sheet.power(this.versus(less))).average()
                 .orElse(0);
         List<Double> moves = new ArrayList<>(List.of(added / Math.max(this.sheet.power(line), this.sheet.power(this.versus(line)))));
@@ -531,10 +565,10 @@ public final class TowerReport {
             reading = Reading.QUIET;
         } else if (!clean.isEmpty() && clean.stream().allMatch(move -> move < -QUIET)) {
             reading = Reading.LOWERS;
-        } else if (ofTier <= 0) {
+        } else if (ofBoth <= 0) {
             reading = Reading.MIXED;
         }
-        return worth.read(ofTier, share, reading);
+        return worth.read(ofBoth, share, reading);
     }
 
     /** The nodes a build lost along with the one {@code less} is there to weigh: the ones that need it. */
@@ -577,6 +611,78 @@ public final class TowerReport {
                 .filter(view -> view.role().equals(TowerBench.WITHOUT) && view.versus().equals(first.label()))
                 .mapToDouble(view -> Math.max(0, this.ownPower(view))).sum();
         return step > 0 && sum > 0 ? step / sum : 1;
+    }
+
+    /**
+     * What turns the power a node adds to the whole tree into its share of what the tree adds to the bare tower, by
+     * the first whole tree on the same side of the fork.
+     */
+    private double treeScale(Held less) {
+        Held whole = this.versus(less);
+        Held first = this.sheet.stage(less.tower(), whole.stage()).stream()
+                .filter(build -> build.side().equals(whole.side()) && build.member().isEmpty()).findFirst().orElse(whole);
+        double step = this.sheet.power(first) - this.sheet.power(this.sheet.bare(less.tower()));
+        double sum = this.sheet.buildsOf(less.tower()).stream()
+                .filter(view -> view.role().equals(TowerBench.WITHOUT_AT_TOP) && view.versus().equals(first.label()))
+                .mapToDouble(view -> Math.max(0, this.ownPower(view))).sum();
+        return step > 0 && sum > 0 ? step / sum : 1;
+    }
+
+    /** What each tier of each tower's best whole tree costs, now and as suggested, against the pace and its rivals. */
+    ReportPage.Table tiers() {
+        List<List<String>> rows = new ArrayList<>();
+        for (String tower : this.sheet.towers()) {
+            for (int tier = 0; tier <= this.sheet.topStage(tower); tier++) {
+                double mine = this.tierCost(tower, tier, SUGGESTED) / this.towerPrice(tower);
+                int at = tier;
+                double rivals = median(this.rivalsAt(tier).stream()
+                        .mapToDouble(rival -> this.tierCost(rival, at, SUGGESTED) / this.towerPrice(rival)));
+                rows.add(List.of(tower, this.sheet.bare(tower).name(), UpgradeTier.nameOf(tier),
+                        String.valueOf(this.tierNodes(tower, tier).size()), ReportPage.number(this.tierCost(tower, tier, PRICE)),
+                        ReportPage.number(this.tierCost(tower, tier, SUGGESTED)), ReportPage.number(mine),
+                        ReportPage.number(mine / rivals), this.tierVerdict(tower, tier, mine, mine / rivals)));
+            }
+        }
+        return ReportPage.Table.of("Tiers", List.of("tower", "name", "tier", "nodes", "cost", "suggested", "tower prices",
+                "vs rivals", "verdict"), rows).noted("""
+                Each tier of the tower's best whole tree: how many nodes it buys there, what they cost now and at
+                the suggested prices, that in suggested tower prices, and that over the median of the judged towers'
+                same tier. The pace: the first tier comes to less than the tower, the second to about the tower, and
+                each later tier to more than the one before. Prices follow what nodes do, so a tier off the pace or
+                far from its rivals is one whose nodes do too little or too much for where they sit.""")
+                .heating("vs rivals");
+    }
+
+    /** The rows of the nodes of {@code tier} that {@code tower}'s best whole tree owns. */
+    private List<List<String>> tierNodes(String tower, int tier) {
+        Held top = this.best(tower, this.sheet.topStage(tower));
+        return this.sheet.buildsOf(tower).stream()
+                .filter(line -> line.role().equals(TowerBench.LINE) && Integer.parseInt(line.tier()) == tier
+                        && top.owned().contains(line.node()))
+                .map(line -> this.nodeRow(tower, line)).toList();
+    }
+
+    private double tierCost(String tower, int tier, int column) {
+        return this.tierNodes(tower, tier).stream().mapToInt(node -> Integer.parseInt(node.get(column))).sum();
+    }
+
+    private String tierVerdict(String tower, int tier, double towerPrices, double againstRivals) {
+        if (!TowerSheet.isJudged(tower)) {
+            return NOT_JUDGED;
+        }
+        if (tier == 0 && towerPrices > FIRST_TIER_MOST) {
+            return "WARN dearer than its tower: " + times(towerPrices);
+        }
+        if (tier == 1 && (towerPrices < SECOND_TIER_LEAST || towerPrices > SECOND_TIER_MOST)) {
+            return "WARN not about its tower's price: " + times(towerPrices);
+        }
+        if (tier > 1 && towerPrices <= this.tierCost(tower, tier - 1, SUGGESTED) / this.towerPrice(tower)) {
+            return "WARN no dearer than the tier before";
+        }
+        if (againstRivals > TIER_APART || againstRivals * TIER_APART < 1) {
+            return "WARN " + times(againstRivals) + " the same tier of its rivals";
+        }
+        return OK;
     }
 
     /** The scenarios the node changes most in the whole tree, alone. */
@@ -716,12 +822,13 @@ public final class TowerReport {
             Held bare = this.sheet.bare(tower);
             double worth = this.sheet.worth(bare);
             rows.add(List.of(tower, "", bare.name(), "", String.valueOf(bare.cost()), ReportPage.number(worth),
-                    String.valueOf(atLeastOne(worth)), String.valueOf(readable(worth)), this.towerVerdict(tower, bare.cost(), worth)));
+                    String.valueOf(atLeastOne(worth)), String.valueOf(this.towerPrice(tower)),
+                    this.towerVerdict(tower, bare.cost(), worth)));
             for (Held line : this.sheet.buildsOf(tower)) {
                 if (line.role().equals(TowerBench.LINE)) {
                     List<String> node = this.nodeRow(tower, line);
-                    rows.add(List.of(tower, node.get(1), node.get(2), node.get(3), node.get(4), node.get(8), node.get(9),
-                            node.get(11), node.getLast()));
+                    rows.add(List.of(tower, node.get(1), node.get(2), node.get(3), node.get(PRICE), node.get(8), node.get(9),
+                            node.get(SUGGESTED), node.getLast()));
                 }
             }
         }

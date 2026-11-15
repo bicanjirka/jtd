@@ -9,6 +9,7 @@ mvn -q compile exec:java -Dexec.mainClass=td.balance.EnemyPowerReport   # every 
 mvn -q compile exec:java -Dexec.mainClass=td.balance.WavePowerReport    # every round of every level; two minutes
 mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerBench         # every build of every tower; a minute
 mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerReport        # prices and verdicts from the bench's sheets; seconds
+mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerPriceWriter   # writes the prices the report calls off into the towers' sources
 ```
 
 `EnemyPowerReport` takes `--kinds golem,yeti`, `--ranks grunt,elite` and `--fit golem=1.7,yeti=1.7`;
@@ -234,25 +235,41 @@ over cost: 1 is as good a buy as the average bare tower.
 
 **Tower prices.** A tower's fair price is its bare worth. A price within a fifth of that is right.
 
-**Node prices.** Nodes multiply each other, so what a build loses without a node grows with the build, and those
-losses add up to more than the tree. A node's **worth** is therefore its share of what its tier adds to the tiers
-below it, split among the tier's nodes by what the whole tier loses without each. That is what a player buying tier
-by tier gets, and a tower's node worths add up to its tree. A node others need is not credited with them. Then:
+**Node prices.** What a node does is the given; its price follows. Nodes multiply each other, so what a build
+loses without a node grows with the build, and those losses add up to more than the tree. A node's **worth** is
+therefore a share, the mean of two:
+
+- its share of what its tier adds to the tiers below it, split among the tier's nodes by what the whole tier loses
+  without each: what the node gives when it is bought;
+- its share of what the whole tree adds to the bare tower, split the same way among all its nodes: what it gives in
+  the end, which is where a node bought early that multiplies everything after it gets its due.
+
+A tower's node worths add up to its tree, and a node others need is not credited with them. Then:
 
 - **fair price** = worth × the tier's **premium**, 1.25 to the power of tier + 1: the copy surcharge of the copy of
-  the tower a player would be buying instead by then. An upgrade takes no cell and no surcharge, so it may cost more
-  than the same power as bare towers.
-- **pace** is the band of prices a tier asks, in tower prices: tier 0 from 0.3 to 0.9, tier I from 0.8 to 1.25,
-  and each later tier half as much again.
-- **suggested price** is the fair price brought inside the pace.
-- A node whose fair price is under its pace is **weak for its tier** and one over it is **strong for its tier**;
-  the verdict says by how much. Such a node needs its numbers changed, not only its price: charging the pace for a
-  weak node makes it a trap, and a strong one is a must-buy at any price inside the pace.
+  the tower a player would be buying instead by then. An upgrade takes no cell and no surcharge, so it costs more
+  than the same power as bare towers, and more the later its tier. A whole tree comes to about half its cost in
+  worth.
+- No node costs less than its tier's **floor**, a tenth of the tower's price for each tier up from the tower.
+- The members of a cluster and the sides of a fork share the dearest measured member's price: a tower that owns
+  one switches to another for nothing, so a cheaper member would be a way round the dearer one's price.
+- A price within a quarter of the suggestion, or two credits of it, is right.
 - A node that moves no build's power by a fortieth is **unmeasured**: a utility the bench's scenarios do not show
-  (a reveal with nothing hidden left to find, a counter to an ability no scenario enemy has). It is listed, and
-  priced at its tier's floor until a scenario shows it. A node that adds to one build and takes from another is
-  unmeasured too, and says so.
+  (a reveal with nothing hidden left to find, a counter to an ability no scenario enemy has). It is listed and
+  keeps the price it has, unless its cluster gives it one. A node that adds to one build and takes from another is
+  unmeasured too, says so, and is priced at its tier's floor.
 - A node every build holds less with is a **breach**, as is one the whole tree holds a tenth more without.
+
+`TowerPriceWriter` writes every tower and node price the report calls off into the tower's source, by the node's
+name, and leaves the ones it calls right, so writing, measuring and judging again settles in two rounds instead of
+chasing the bench's noise.
+
+**The pace of tiers.** Prices follow what nodes do, so the pace the game wants of its tiers is a check on the nodes,
+not a rule the prices are bent to. The Tiers table adds up each tier of a tower's best whole tree at the suggested
+prices, in tower prices: the first tier should come to less than the tower, the second to about the tower (0.6 to
+1.6), and each later tier to more than the one before. It also sets each tier against the same tier of the other
+towers. A tier off the pace, or more than twice or under half its rivals', is one whose nodes do too little or too
+much for where they sit: that is what to change a node's numbers for.
 
 **Verdicts.**
 
@@ -261,7 +278,8 @@ by tier gets, and a tower's node worths add up to its tree. A node others need i
 | Stages | what a credit buys of each tower bought whole to each tier, by its best build, against the median of the judged towers at that tier | `DOMINANT`: it pays 1.25 times its rivals, or no rival holds more for a credit against 60% of a mixed wave. `WARN weak`: it pays under 0.8 |
 | Roles | the rules in `TowerReport.RULES`, at every tier, by what a credit holds alone | `BREACH`, naming each rival on the wrong side and by how much |
 | Profiles | what a credit holds alone in each scenario over the median tower | no verdict: a row warm everywhere is a tower with no weakness |
-| Nodes | the prices above | `DOMINANT node`: the whole tree loses over a third of its power without it |
+| Tiers | each tier's cost at the suggested prices against the pace and the same tier of the other towers | `WARN`, saying which |
+| Nodes | the prices above | `WARN price`: off its suggestion. `DOMINANT node`: the whole tree loses over a third of its power without it |
 | Clusters and forks | each member in the whole tree bought with it | `DOMINANT pick`: a member a credit of which buys 15% more than any other, and that is behind in no scenario. `WARN weaker pick`: under 0.85 of the best |
 | Synergies | the bench's pairs, by the geometric mean over the paired scenarios | `WARN strong pair` from 2, `WARN clash` to 0.7 |
 
@@ -277,10 +295,11 @@ each other, so the top tower of a role is the one a credit spent on holds the mo
 A tower whose tree is not final is measured and listed but **not judged** (`TowerSheet.NOT_JUDGED`): no rate,
 median or rule counts it. Taking it off that list is all it needs to be judged.
 
-**Changing a number.** Change a tower or a node, run `TowerBench --towers <it>` and then `TowerReport`: the bench
-stores each build's cost, so a price change needs it too. A price change moves no power, only cost, and with it
-value, the roles and the price verdicts; a change to what a node does moves its worth, and its neighbours' shares
-with it.
+**Changing a number.** Change what a tower or a node does, run `TowerBench --towers <it>`, `TowerReport`, then
+`TowerPriceWriter`, and the bench and the report once more: the bench stores each build's cost, so the report
+judges the new prices only after it. A price change moves no power, only cost, and with it value, the roles and the
+price verdicts; a change to what a node does moves its worth, and its neighbours' shares with it. A new tier or
+tower is priced the same way, with no change to the tools.
 
 ## What this does not settle
 
@@ -288,5 +307,5 @@ with it.
   next-gen towers (`features/FEATURE-balance-after-next-gen-towers.md`).
 - **Bosses.** Their rows are estimates, and their numbers are as authored.
 - **Lives.** A leak is a loss to the rig; how many leaks a level forgives is not measured.
-- **Whether upgrades are worth buying in play.** The premium and the pace are set by rule; whether a player with
-  few cells left buys a node over a tower at those prices is for the play check to show.
+- **Whether upgrades are worth buying in play.** The premium is set by rule; whether a player with few cells left
+  buys a node over a tower at those prices is for the play check to show.
