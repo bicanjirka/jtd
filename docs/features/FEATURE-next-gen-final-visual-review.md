@@ -13,17 +13,17 @@ second way, and that the board is alive without being busy.
   A look that changed since shows as a changed PNG.
 - `FEATURE-next-gen-tower-looks.md`, "Building a tower's look", is the recipe each rework follows, with the
   mistakes the review of 2026-11-14 found. Each tower's doc has an "In code" list of the cues it must send.
-- Sent from play today: reload and recoil (Sniper, Burst, Mortar), Steady Aim stacks, the Scorcher's stream, the
-  Obelisk's knell, the Burst's fork. Every other cue and every identity look is drawn and waits for its tower.
+- Sent from play today: reload and recoil (Sniper, Burst, Mortar), Steady Aim stacks, the Scorcher's stream and
+  Soulfire, the Obelisk's runes, full Toll and knell, the Burst's fork. Every other cue and every identity look is drawn and waits for its tower.
 - Known open at the time of writing:
 
   | Open | Whose |
   |---|---|
-  | Soulfire, Ruby, Shade and the three runes have no tower-level query, so no tower wears them | Scorcher, Aerie, Obelisk |
+  | Ruby and Shade have no tower-level query, so no tower wears them | Aerie |
   | Frenzy's jitter is a still offset | Sniper |
   | A flying shell is a plain ball, not its kind's drawing | Mortar |
-  | The Beacon's rings, the Obelisk's ripples and the Aerie's orbit still run on an empty board | Beacon, Obelisk, Aerie |
-  | The stream, the nest's missiles, shots in flight, enemy marks and field patches are lab drawings | each tower, shot flight |
+  | The Beacon's rings and the Aerie's orbit still run on an empty board | Beacon, Aerie |
+  | The nest's missiles, shots in flight and enemy marks other than Toll and Silence are lab drawings; the marks and grounds sheets still draw the lab's Toll, Silence, Sundial and field patches | each tower, shot flight |
   | Toolbar icons are 32 px images, soft on a HiDPI screen | the toolbar |
 
 - Painting is outside `td.PerformanceHarness`: the harness measures the tick and the frame build. The sheets'

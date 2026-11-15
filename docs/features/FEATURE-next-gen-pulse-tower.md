@@ -1,6 +1,6 @@
 # Feature Request: Next-gen Obelisk Tower
 
-**Status:** draft, 2026-11-13, sixth round, reviewed with the whole bundle. Tiers 0 to III and the look, written to the node rules in
+**Status:** implemented 2026-11-15 (drafted 2026-11-13, sixth round, reviewed with the whole bundle). Tiers 0 to III and the look, written to the node rules in
 `FEATURE-next-gen-upgrade-tiers.md`. Part of `FEATURE-next-gen.md`, which records why the Radar leaves the game and
 its turning beam comes here. Weighed on paper (`trees/pulse.py`); the numbers below are that model's.
 
@@ -106,7 +106,7 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 | Drag | 10%, +4% for each Toll stack (30% at 5); a field's slows cap at 50% | 15% flat | |
 | Reach | Everyone inside, hidden enemies included; needs no visible enemy | | |
 | Reveals | Nothing: the Beacon reveals | nothing until Ward | |
-| Passive | Toll: an enemy inside gains a stack every second, up to 5, and loses one a second outside every field; each stack deepens the drag and makes it take 4% more damage from every source. | only with Attune; scales the nodes' effects | base.attune, pulse.extra.bite.1 |
+| Passive | Toll: an enemy inside gains a stack every second, up to 5, and loses one a second outside every field; each stack deepens the drag and makes it take 4% more damage from every source. | only with Attune; scales the nodes' effects | |
 
 ### Tiers
 
@@ -122,21 +122,21 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 | Tier | Node | Kind | Cluster | After | Glyph | Colour | Cost | Replaces | Does | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | 0 | Wide Field | stat | | | base.range | | | base.range | Range +0.5 cells | |
-| 0 | Hum | stat | | | pulse.special.arc_discharge | | | | Damage +5 a second | Name is a proposal. |
-| I | Sundial | ability | | | sonar.special.mark_on_sweep | | | | Every 3 s the stone's shadow turns once around it, out to 4 cells: every enemy it passes takes an aimed hit of 20 magic damage and a Toll stack. | The Radar's beam as the stone's shadow. Aimed, so agility dodges it. A path running away from the stone is swept along its length. |
-| I | Ward | ability | | | pulse.head.ward.2 | | | pulse.head.ward.2 | An enemy in the field is Silenced while inside. | Today's Null Field. Against casters: Menders, shielders, a boss's calls. |
-| I | Quick Toll | stat | | | pulse.extra.bite.3 | | | pulse.extra.bite.3 | Toll builds a stack every 0.75 s, from 1 s | Today's Resonant Coils. At 0.5 s it doubled everything Toll drives. Name is a proposal. |
-| I | Deep Pull | stat | | | pulse.head.gravity.1 | | | pulse.head.gravity.1 | Drag +2% for each Toll stack | 30% to 40% at 5 stacks. Today's Undertow as a plain number. Name is a proposal. |
-| II | Burden | ability | The stone | | pulse.head.gravity.1 | #c9a56c | | | Drag +3% for each Toll stack, and the field's slow may reach 75%, from 50%. | The steady weight: an earthen rune. Only inside the field, and two fields' drags never add, so more stones hold a longer stretch, not a deeper one. The Toll road into Deep Toll. |
-| II | Gravity | ability | The stone | | pulse.head.gravity.4b | #7d9be6 | | pulse.head.gravity.2 | An enemy a second inside the field is Dazed for 0.75 s, once a visit. | The hard stop: a deep blue rune. Today's Snare and Stasis as one rule. It reads time inside, not Toll, so a Runner is stopped too. After a beat inside, not at the edge; a row of stones Dazes once for each. What the Aerie's freeze and the Scorcher's Thermal Shock read. |
-| II | Umbra | ability | The stone | Sundial | sonar.head.long_reach.4b | #bcaaf0 | | | The shadow's hit deals double damage to an enemy in the field. | The shadow's bite: an eclipsed rune. Against an Elite, a Boss and the Relay. Name is a proposal. |
-| II | Hum II | stat | | | pulse.special.arc_discharge | | | | Damage +5 a second | |
-| II | Deep Shadow | stat | | Sundial | sonar.head.rapid_array.1 | | | | The shadow's hit is Shadow damage. | Name is a proposal. Shadow passes insulation (Terms), so the shadow's hit gets through a Relay as the field's small damage can't. Unweighed: it was +16 ($18). |
-| II | Wide Field II | stat | | | base.range | | | base.range.2 | Range +0.5 cells | In Tier I it put Tier I a quarter over the reference. |
-| III | Knell | ability | Payoff | | pulse.head.gravity.3 | | | | While an enemy with 5 or more Toll stacks is inside, the stone rings once a second: every enemy in the field takes 20 magic damage. | A crowd: each ring hits everyone inside. One beat for the stone, not one for each enemy at full Toll, so it grows with the crowd, never with its square. It rings for an enemy that walks in already full. |
-| III | Deep Toll | ability | Payoff | | pulse.extra.bite.4 | | | pulse.extra.bite.4 | Toll builds to 10 in this field, from 5. | The one that stays: a boss walks deeper into Toll than anything else, and Frailty and Drag grow with it. Its stacks are ordinary ones and fade outside as any do. |
-| III | Deep Pull II | stat | | | pulse.head.gravity.1 | | | | Drag +2% for each Toll stack | |
-| III | Swift Shadow | stat | | Sundial | sonar.head.rapid_array.1 | | | | The shadow turns every 2 s, from 3 s. | Name is a proposal. |
+| 0 | Hum | stat | | | pulse.hum | | | pulse.hum | Damage +5 a second | Name is a proposal. |
+| I | Sundial | ability | | | pulse.sundial | | | pulse.sundial | Every 3 s the stone's shadow turns once around it, out to 4 cells: every enemy it passes takes an aimed hit of 20 magic damage and a Toll stack. | The Radar's beam as the stone's shadow. Aimed, so agility dodges it. A path running away from the stone is swept along its length. |
+| I | Ward | ability | | | pulse.ward | | | pulse.ward | An enemy in the field is Silenced while inside. | Today's Null Field. Against casters: Menders, shielders, a boss's calls. |
+| I | Quick Toll | stat | | | pulse.quick_toll | | | pulse.quick_toll | Toll builds a stack every 0.75 s, from 1 s | Today's Resonant Coils. At 0.5 s it doubled everything Toll drives. Name is a proposal. |
+| I | Deep Pull | stat | | | pulse.deep_pull | | | pulse.deep_pull | Drag +2% for each Toll stack | 30% to 40% at 5 stacks. Today's Undertow as a plain number. Name is a proposal. |
+| II | Burden | ability | The stone | | pulse.burden | #c9a56c | | pulse.burden | Drag +3% for each Toll stack, and the field's slow may reach 75%, from 50%. | The steady weight: an earthen rune. Only inside the field, and two fields' drags never add, so more stones hold a longer stretch, not a deeper one. The Toll road into Deep Toll. |
+| II | Gravity | ability | The stone | | pulse.gravity | #7d9be6 | | pulse.gravity | An enemy a second inside the field is Dazed for 0.75 s, once a visit. | The hard stop: a deep blue rune. Today's Snare and Stasis as one rule. It reads time inside, not Toll, so a Runner is stopped too. After a beat inside, not at the edge; a row of stones Dazes once for each. What the Aerie's freeze and the Scorcher's Thermal Shock read. |
+| II | Umbra | ability | The stone | Sundial | pulse.umbra | #bcaaf0 | | pulse.umbra | The shadow's hit deals double damage to an enemy in the field. | The shadow's bite: an eclipsed rune. Against an Elite, a Boss and the Relay. Name is a proposal. |
+| II | Hum II | stat | | | pulse.hum_2 | | | pulse.hum_2 | Damage +5 a second | |
+| II | Deep Shadow | ability | | Sundial | pulse.deep_shadow | | | pulse.deep_shadow | The shadow's hit is Shadow damage. | Name is a proposal. Shadow passes insulation (Terms), so the shadow's hit gets through a Relay as the field's small damage can't. Unweighed: it was +16 ($18). |
+| II | Wide Field II | stat | | | base.range.2 | | | base.range.2 | Range +0.5 cells | In Tier I it put Tier I a quarter over the reference. |
+| III | Knell | ability | Payoff | | pulse.knell | | | pulse.knell | While an enemy with 5 or more Toll stacks is inside, the stone rings once a second: every enemy in the field takes 20 magic damage. | A crowd: each ring hits everyone inside. One beat for the stone, not one for each enemy at full Toll, so it grows with the crowd, never with its square. It rings for an enemy that walks in already full. |
+| III | Deep Toll | ability | Payoff | | pulse.deep_toll | | | pulse.deep_toll | Toll builds to 10 in this field, from 5. | The one that stays: a boss walks deeper into Toll than anything else, and Frailty and Drag grow with it. Its stacks are ordinary ones and fade outside as any do. |
+| III | Deep Pull II | stat | | | pulse.deep_pull_2 | | | pulse.deep_pull_2 | Drag +2% for each Toll stack | |
+| III | Swift Shadow | ability | | Sundial | pulse.swift_shadow | | | pulse.swift_shadow | The shadow turns every 2 s, from 3 s. | Name is a proposal. |
 
 ### Terms
 
@@ -146,15 +146,15 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 |---|---|---|
 | Field | | The circle around the Obelisk. Everyone inside takes its damage and its drag, hidden enemies included, with or without a visible enemy. Fields overlap without stacking: one Toll, the deepest drag. |
 | Toll | | Time spent in a field, a stack a second, up to 5; the Sundial's shadow adds one as it passes. It is the enemy's: every field and the shadow add to the same stacks. Outside every field it loses a stack a second. Each stack deepens the drag and makes the enemy take more damage. Full Toll is 5 stacks or more. |
-| Drag | pulse.head.gravity.1 | The field's slow: 10%, and more for each Toll stack. Two fields' drags never add; the deeper one holds. |
-| Frailty | pulse.extra.bite.1 | Each Toll stack makes the enemy take 4% more damage from every source. |
-| Sundial | sonar.special.mark_on_sweep | Every few seconds the stone's shadow turns once around it, past the field. Every enemy it passes takes an aimed hit and a Toll stack. |
-| Ward | pulse.head.ward.2 | Everything inside the field is Silenced. |
-| Burden | pulse.head.gravity.1 | The steady weight: each Toll stack drags deeper, and the field's slow may reach 75%. |
-| Gravity | pulse.head.gravity.4b | The hard stop: an enemy a beat inside the field is Dazed, once a visit. |
-| Umbra | sonar.head.long_reach.4b | The shadow's hit lands twice as hard on an enemy in the field. |
-| Knell | pulse.head.gravity.3 | While anyone with full Toll is inside, the stone rings once a second: every enemy in the field takes a hit. |
-| Deep Toll | pulse.extra.bite.4 | Toll builds to 10 in this field. |
+| Drag | pulse.deep_pull | The field's slow: 10%, and more for each Toll stack. Two fields' drags never add; the deeper one holds. |
+| Frailty | Frailty | Each Toll stack makes the enemy take 4% more damage from every source. |
+| Sundial | Sundial | Every few seconds the stone's shadow turns once around it, past the field. Every enemy it passes takes an aimed hit and a Toll stack. |
+| Ward | pulse.ward | Everything inside the field is Silenced. |
+| Burden | pulse.burden | The steady weight: each Toll stack drags deeper, and the field's slow may reach 75%. |
+| Gravity | pulse.gravity | The hard stop: an enemy a beat inside the field is Dazed, once a visit. |
+| Umbra | pulse.umbra | The shadow's hit lands twice as hard on an enemy in the field. |
+| Knell | pulse.knell | While anyone with full Toll is inside, the stone rings once a second: every enemy in the field takes a hit. |
+| Deep Toll | pulse.deep_toll | Toll builds to 10 in this field. |
 
 ### Look
 
@@ -169,12 +169,19 @@ stone), `BURDEN`, `GRAVITY` and `UMBRA`. Nothing aims.
 | What the tower holds | In the pose |
 |---|---|
 | an enemy at full Toll inside | `TowerCue.CHARGED` (the rune glows brighter, not bigger) |
-| the knell | `fired()` (sent today, while a zap shows) |
+| the knell | `fired()` |
 
-- **The runes are not wired.** Add a query to the tower for the stone it became, then return the look from the
-  body-look visitor. `PulseTower.getFieldLook()` answers for the old tree's fields and goes with them.
-- **The old ripple rings still run** on the wall clock in `TowerEffectFrameBuilder`. They go with this rework: the
-  breathing rune is the stone's idle life, and the field is a ground zone.
+- **The rune** is `PulseTower.stoneLook()` (a `StoneLook` the stone cluster's mechanics set), turned into a look by
+  `TowerSpriteFrameBuilder.bodyLookOf(PulseTower)`; the pose is `poseOf(PulseTower, int)`.
+- **The field** is a ground patch: `ZoneFrameBuilder` lays one disc per Obelisk on its stone's palette
+  (`ZONE_FIELD*`), beside the zones, so it is traced and filled as they are. Burden's denser fill and Gravity's
+  darkening are `Java2DFrameRenderer`'s, by palette. A Ward's rune line is one `WardOutlineDraw` traced round every
+  warded field at once.
+- **The Sundial** is a `ShadowDraw` from the stone while it turns, fading over the last of its turn; an Umbra stone's
+  is drawn again, darker, clipped to its field. **The knell** is a `RingDraw` in the field's colour, not the rune's.
+- **Toll** is a `TollMarkDraw` ring of segments round the enemy and **Silence** a `SilenceMarkDraw`, both enemy
+  marks, so they show whatever gave them. Toll's ripple, the shadow's hit flash and Deep Toll's hotter rune are not
+  drawn (`TODO.md`).
 
 | Tier | Foundation |
 |---|---|

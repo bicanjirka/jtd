@@ -34,7 +34,7 @@ Beacon. The Radar leaves the game ("The last three towers").
 | `FEATURE-next-gen-mortar-tower.md` | The Mortar | tiers, looks, shot flight | implemented |
 | `FEATURE-next-gen-cinder-tower.md` | The Scorcher; the one pool rule for burn, poison and Soulfire | tiers, looks | implemented |
 | `FEATURE-next-gen-seeker-tower.md` | The Aerie (was the Hive) | tiers, looks; the Mortar's weighted draw | Tiers 0 to III, fourth round |
-| `FEATURE-next-gen-pulse-tower.md` | The Obelisk, with the Radar's beam as its Sundial | tiers, looks | Tiers 0 to III, sixth round |
+| `FEATURE-next-gen-pulse-tower.md` | The Obelisk, with the Radar's beam as its Sundial | tiers, looks | implemented |
 | `FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | Tiers 0 to III, third round |
 | `FEATURE-balance-after-next-gen-towers.md` | The second balance pass, played by the built towers | every tower above in code | written; waits |
 | `FEATURE-next-gen-final-visual-review.md` | The visual review of the finished bundle: what to render, what to check on each tower | every tower above in code | written; waits |
