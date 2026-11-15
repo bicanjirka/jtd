@@ -44,6 +44,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private float speed;
     private boolean frozen;
     private float spirit;
+    private float armorAndPlating;
     private int dispels;
     private int buffDispels;
     private float physicalReduction;
@@ -274,6 +275,16 @@ public final class FakeEnemyMob implements EnemyMob {
     @Override
     public float spirit() {
         return this.spirit;
+    }
+
+    /** Reports {@code points} as its armor and plating together. */
+    public void reportArmorAndPlating(float points) {
+        this.armorAndPlating = points;
+    }
+
+    @Override
+    public float armorAndPlating() {
+        return this.armorAndPlating;
     }
 
     @Override

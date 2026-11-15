@@ -81,6 +81,8 @@ final class StatLooks {
             case DAMAGE -> StatLook.plain(Glyph.DOT);
             case ATTACK_SPEED -> StatLook.plain(Glyph.CHEVRON);
             case HEAVY_MULTIPLIER -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
+            case STREAM -> StatLook.face(TermLooks.faceOf(TowerTerm.STREAM));
+            case RELOAD -> StatLook.plain(Glyph.FILLED_DIAMOND);
             case CRIT_CHANCE, CRIT_MULTIPLIER -> StatLook.toned(Glyph.SPARK, Palette.CRIT_SPARK);
             case AIM_STACKS, AIM_STACKS_PER_SHOT -> StatLook.face(TermLooks.faceOf(TowerTerm.STEADY_AIM));
             case ARMOR_PENETRATION, ARMOR_PENETRATION_FLAT -> StatLook.toned(Glyph.PIERCE, Palette.DAMAGE_PHYSICAL);
@@ -89,13 +91,10 @@ final class StatLooks {
             case ACCURACY -> StatLook.plain(Glyph.CROSSHAIR_FILLED);
             case EFFECT_DURATION -> StatLook.plain(Glyph.FILLED_DIAMOND);
             case BUFF_DURATION -> StatLook.toned(Glyph.FILLED_DIAMOND, Palette.TERM_FRAME_TOWER_BUFF);
-            case BURN_DURATION, BURN_POOL_CAP -> StatLook.face(TermLooks.faceOf(EffectKind.BURN));
-            case STOKE_STEP, STOKE_GRACE -> StatLook.face(TermLooks.faceOf(TowerTerm.STOKE));
-            case BURN_MARK_RATE -> StatLook.face(TermLooks.faceOf(EffectKind.SCORCHED));
             case FREEZE_DURATION -> StatLook.face(TermLooks.faceOf(EffectKind.FREEZE));
             case TOLL_CAP, TOLL_RATE, TOLL_LINGER -> StatLook.face(TermLooks.faceOf(EffectKind.TOLL));
             case WITHER_INTERVAL -> StatLook.face(TermLooks.faceOf(EffectKind.VULNERABLE));
-            case PROJECTILE_SPEED, PROJECTILE_SIZE, WAVE_SPEED -> StatLook.plain(Glyph.COMET);
+            case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatLook.plain(Glyph.COMET);
             case NEST_CAPACITY, MISSILES_PER_LAUNCH -> StatLook.plain(Glyph.PIP);
             case BOUNTY -> StatLook.face(TermLooks.faceOf(StatusTerm.CASH));
             case DISRUPTION_TAKEN -> StatLook.toned(Glyph.FILLED_DIAMOND, Palette.DISRUPTION);
@@ -109,7 +108,9 @@ final class StatLooks {
             case MAGIC_DAMAGE, MAGIC_FIELD_DAMAGE -> StatLook.toned(Glyph.DOT, Palette.DAMAGE_MAGIC);
             case FIRE_RATE, WAVE_DPS -> StatLook.plain(Glyph.CHEVRON);
             case PHYSICAL_DPS -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
-            case MAGIC_DPS, BURN_DPS -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_MAGIC);
+            case MAGIC_DPS -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_MAGIC);
+            case FLAME -> StatLook.face(TermLooks.faceOf(TowerTerm.FLAME));
+            case STREAM_FUEL -> StatLook.face(TermLooks.faceOf(EffectKind.BURN));
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatLook.plain(Glyph.COMET);
         };
     }

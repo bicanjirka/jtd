@@ -105,7 +105,8 @@ public final class TermLooks {
             case NEST -> new TermLook(Palette.TOWER_SEEKER_BODY, Palette.TERM_FRAME_TOWER_BUFF);
             case JAMMED -> new TermLook(Palette.DISRUPTION, Palette.TERM_FRAME_TOWER_DEBUFF);
             case INTERFERENCE -> new TermLook(Palette.TERM_INTERFERENCE, Palette.TERM_FRAME_TOWER_DEBUFF);
-            case STOKE -> new TermLook(Palette.TOWER_CINDER_CONE, Palette.TERM_FRAME_MECHANIC);
+            case FLAME, STREAM, CORE, DRAGONS_BREATH, FLASHOVER, THERMAL_SHOCK, MELTDOWN ->
+                    new TermLook(Palette.TOWER_CINDER_CONE, Palette.TERM_FRAME_MECHANIC);
             case KINSHIP -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_MECHANIC);
             case SHATTER -> new TermLook(Palette.FREEZE_CRYSTAL, Palette.TERM_FRAME_MECHANIC);
             case ARC -> new TermLook(Palette.TOWER_SPLASH_ARC, Palette.TERM_FRAME_MECHANIC);

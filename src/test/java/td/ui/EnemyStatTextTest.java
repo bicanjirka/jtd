@@ -16,8 +16,6 @@ import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyDefinition;
-import td.enemy.EnemyInspection;
-import td.enemy.EnemyMark;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.ImmunityTrait;
 import td.enemy.Rank;
@@ -27,7 +25,6 @@ import td.fixtures.WorldFixtures;
 import td.stat.EnemyStat;
 import td.stat.StatWording;
 import td.term.TermText;
-import td.tower.TowerTerm;
 import td.ui.render.EnemyLook;
 import td.ui.render.IconFace;
 import td.ui.render.InfoSheet;
@@ -228,7 +225,7 @@ class EnemyStatTextTest {
     @Test
     void aPoolShowsABarAndNoClock() {
         DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.burn(Damage.magic(100), 100, DamageSink.none()));
+        mob.applyEffect(Effect.burn(Damage.magic(100), DamageSink.none()));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
 
@@ -252,19 +249,6 @@ class EnemyStatTextTest {
         assertThat(freeze.tooltip().lines()).anySatisfy(line -> assertThat(line).isInstanceOfSatisfying(
                 SheetLine.Sentence.class, sentence -> assertThat(sentence.text().plain())
                         .startsWith("The next one lasts ")));
-    }
-
-    @Test
-    void stokeFromTwoTowersIsOneIconWithTheHighestSteps() {
-        DefinedEnemyMob mob = this.anEnemy();
-        EnemyInspection marked = mob.inspect().withMarks(List.of(
-                new EnemyMark(TowerTerm.STOKE, 1, 3, "Scorcher"), new EnemyMark(TowerTerm.STOKE, 2, 3, "Scorcher")));
-
-        InfoSheet sheet = EnemyStatText.live(marked, WORDING);
-
-        List<SheetIcon> stoke = icons(sheet, "Debuffs");
-        assertThat(stoke).hasSize(1);
-        assertThat(stoke.getFirst().face().corner()).isEqualTo("2");
     }
 
     @Test

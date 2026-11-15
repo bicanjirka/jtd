@@ -18,8 +18,7 @@ final class EffectSentences {
     static TermText of(EffectKind kind) {
         return switch (kind) {
             case CHILL -> slowing("slows by what its source gives");
-            case BURN -> TermText.of("damage over time that fades; a top-up adds less the fuller it is, up to "
-                    + TermNumbers.times(PoolTuning.standard().capFactor()) + " its strongest application; it adds a stack of ")
+            case BURN -> pool().plus("; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
                             + " while it lasts, and every tower can see and aim at it");
             case FREEZE -> TermText.of("stops it where it stands and keeps its abilities from firing; ")
@@ -37,7 +36,7 @@ final class EffectSentences {
                     .plus(", up to " + kind.maxStacks() + " stacks");
             case REVEALED -> TermText.of("every tower can see and aim at it, and it can't gain ")
                     .plus(EffectKind.INVISIBLE);
-            case POISON -> TermText.of("damage over time that fades; it adds a stack of ")
+            case POISON -> pool().plus("; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS) + " while it lasts");
             case SCORCHED -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE))
@@ -100,7 +99,7 @@ final class EffectSentences {
             case TARRED -> slowing("slows by " + TermNumbers.percent(kind.rule().slowPerStack()));
             case BLEEDING -> TermText.of("physical damage for every cell it travels, ignoring ").plus(EnemyStat.ARMOR)
                     .plus(" and ").plus(EnemyStat.PLATING).plus("; standing still, it takes none");
-            case SOULFIRE -> TermText.of("damage over time in a pool of its own beside ").plus(EffectKind.BURN)
+            case SOULFIRE -> pool().plus(", its own beside ").plus(EffectKind.BURN)
                     .plus(" and ").plus(EffectKind.POISON).plus("; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
                             + " while it lasts, and every tower can see and aim at it");
@@ -123,6 +122,15 @@ final class EffectSentences {
     }
 
     /** {@code what}, then the rule every slow keeps. */
+    /** What every pool does with its fuel. */
+    private static TermText pool() {
+        return TermText.of("a pool of fuel that it deals in full, faster the more it holds: "
+                + TermNumbers.whole(ActiveEffects.REFERENCE_FUEL_POINTS) + " in "
+                + TermNumbers.seconds(ActiveEffects.REFERENCE_BURN_SECONDS)
+                + ", four times that in twice the time; fuel adds up whoever gives it, with no cap, and ")
+                .plus(EnemyStat.TENACITY).plus(" shrinks it as it comes in");
+    }
+
     private static TermText slowing(String what) {
         return TermText.of(what + "; only the strongest slow counts, and speed comes back over its last "
                 + seconds(ActiveEffects.SLOW_FADE_TICKS));

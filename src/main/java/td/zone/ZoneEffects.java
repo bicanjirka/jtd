@@ -14,8 +14,6 @@ public final class ZoneEffects {
     /** The ticks a pulse lasts before the next one: twice a second. */
     static final int PULSE_TICKS = ZoneRoster.PULSE_TICKS;
 
-    private static final int BURN_TICKS = 60;
-    private static final int POISON_TICKS = 60;
     /** A flare reveals an enemy this long after its last pulse. */
     private static final int FLARE_REVEAL_TICKS = Math.round(3 * TickRate.TICKS_PER_SECOND);
     /** Tar lets go of an enemy this long after its last pulse. */
@@ -35,16 +33,16 @@ public final class ZoneEffects {
      * One pulse of {@code kind} on {@code enemy}, credited to {@code owner}. A frost zone's freeze is
      * a matter of how long an enemy stays, so it is the zone's own to add.
      *
-     * @param strength a burn's or poison's damage a tick (fallout's poison too), or healing ground's heal a tick, in damage units; unused by
+     * @param strength a burn's or poison's fuel a pulse (fallout's poison too), or healing ground's heal a tick, in damage units; unused by
      *                 the kinds with none
      */
     public static void touch(ZoneKind kind, int strength, ZoneOwner owner, EnemyMob enemy) {
         switch (kind) {
             case BURNING_GROUND -> owner.applyEffect(enemy,
-                    sink -> Effect.burn(Damage.magic(strength), BURN_TICKS, sink));
+                    sink -> Effect.burn(Damage.magic(strength), sink));
             case TAR -> {
                 owner.applyEffect(enemy, sink -> Effect.tarred(TARRED_TICKS, sink));
-                owner.applyEffect(enemy, sink -> Effect.poison(Damage.magic(strength), POISON_TICKS, sink));
+                owner.applyEffect(enemy, sink -> Effect.poison(Damage.magic(strength), sink));
             }
             case FROST_GROUND -> owner.applyEffect(enemy, sink -> Effect.chill(FROST_CHILL, FROST_CHILL_TICKS, sink));
             case HEALING_GROUND -> owner.applyEffect(enemy, sink -> Effect.heal(strength, BOON_TICKS, sink));
@@ -55,7 +53,7 @@ public final class ZoneEffects {
                 owner.applyEffect(enemy, sink -> Effect.sickened(FALLOUT_SICKENED_STACKS));
                 owner.applyEffect(enemy, sink -> Effect.deadZone(FALLOUT_HOLD_TICKS, sink));
                 if (strength > 0) {
-                    owner.applyEffect(enemy, sink -> Effect.poison(Damage.magic(strength), POISON_TICKS, sink));
+                    owner.applyEffect(enemy, sink -> Effect.poison(Damage.magic(strength), sink));
                 }
             }
             case FLARE -> owner.applyEffect(enemy, sink -> Effect.revealed(FLARE_REVEAL_TICKS, sink));

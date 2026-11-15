@@ -2,8 +2,6 @@ package td.tower;
 
 import td.damage.AttackOrigin;
 import td.economy.Refund;
-import td.enemy.EnemyMark;
-import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.stat.StatModifiers;
 import td.tower.ability.AbilityState;
@@ -168,11 +166,6 @@ public interface Tower {
 
     /** Every buff and debuff this tower carries now, buffs first. Game loop only. */
     default List<TowerBuffState> conditions() {
-        return List.of();
-    }
-
-    /** Memory this tower keeps about {@code enemy}, named for the player. Game loop only. */
-    default List<EnemyMark> marksOn(EnemyMob enemy) {
         return List.of();
     }
 

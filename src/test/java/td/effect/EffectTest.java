@@ -12,12 +12,10 @@ class EffectTest {
 
     @Test
     void aBurnIsAFuelPool() {
-        Effect burn = Effect.burn(Damage.magic(40), 60, DamageSink.none());
+        Effect burn = Effect.burn(Damage.magic(40), DamageSink.none());
 
         assertThat(burn.dynamics()).isInstanceOf(EffectDynamics.FuelPool.class);
-        assertThat(burn.damagePerTick()).isEqualTo(Damage.magic(40));
         assertThat(burn.fuelLevel()).isEqualTo(40f);
-        assertThat(burn.peakL0()).isEqualTo(40f);
         assertThat(burn.stacks()).isZero();
     }
 
@@ -102,7 +100,7 @@ class EffectTest {
 
     @Test
     void changingStacksOnAPoolIsAProgrammingError() {
-        Effect burn = Effect.burn(Damage.magic(40), 60, DamageSink.none());
+        Effect burn = Effect.burn(Damage.magic(40), DamageSink.none());
 
         assertThatThrownBy(() -> burn.withStacks(3, 60)).isInstanceOf(IllegalStateException.class);
     }

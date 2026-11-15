@@ -23,11 +23,11 @@ public enum ShellKind {
     HEAVY(ShellLook.HEAVY, DamageType.PHYSICAL, Blast.NORMAL, 0.8f, Optional.empty()),
     /** Two Heavies fused: their damage together, a blast of its own, and fallout over most of it. */
     NUKE(ShellLook.NUKE, DamageType.PHYSICAL, new Blast(1f, 1f, 0.75f), 0.7f,
-            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 0.02f))),
+            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 0.39f))),
     /** The Mortar's one way to deal magic: its blast burns, and the ground where it lands too. */
     NAPALM(ShellLook.NAPALM, DamageType.MAGIC, Blast.NORMAL, 1f,
-            Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 0.04f))),
-    TAR(ShellLook.TAR, DamageType.PHYSICAL, Blast.NORMAL, 1f, Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 0.015f))),
+            Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 0.78f))),
+    TAR(ShellLook.TAR, DamageType.PHYSICAL, Blast.NORMAL, 1f, Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 0.29f))),
     CRYO(ShellLook.CRYO, DamageType.PHYSICAL, Blast.NORMAL, 1f,
             Optional.of(Ground.fixed(ZoneKind.FROST_GROUND, 1.2f, 60, 0f))),
     /** A small blast with no edge, and a flare that burns until the wave is over. */
@@ -158,7 +158,7 @@ public enum ShellKind {
      * that is above zero.
      *
      * @param lifetimeTicks how long it lasts
-     * @param damageShare   a burn's or poison's damage a tick, as a share of the Mortar's damage
+     * @param damageShare   a burn's or poison's fuel a pulse, as a share of the Mortar's damage
      */
     public record Ground(ZoneKind kind, float radiusCells, float blastShare, int lifetimeTicks, float damageShare) {
 

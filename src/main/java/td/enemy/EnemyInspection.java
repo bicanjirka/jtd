@@ -39,7 +39,6 @@ import java.util.function.Predicate;
  * @param traitEntries every trait of its own as a term, with its sentence; an affix's is under its affix
  * @param abilityEntries every ability of its own as a term, with its sentence; an affix's is under its affix
  * @param breakdowns   what each shown stat is made of
- * @param marks        memory towers keep about it
  * @param livesOnLeak  the lives it takes if it leaks; {@link EnemyDefinition#ALL_LIVES} for every one left
  */
 public record EnemyInspection(String name, String description, Rank rank, BodyArchetype archetype, int health,
@@ -47,7 +46,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                               Fate fate,
                               int dodges, Map<EnemyStat, Float> baseStats, List<Immunity> immunities,
                               List<AffixEntry> affixes, List<TraitEntry> traitEntries, List<AbilityEntry> abilityEntries,
-                              Map<EnemyStat, StatBreakdown> breakdowns, List<EnemyMark> marks, int livesOnLeak) {
+                              Map<EnemyStat, StatBreakdown> breakdowns, int livesOnLeak) {
 
     public EnemyInspection {
         stats = Collections.unmodifiableMap(new EnumMap<>(stats));
@@ -58,7 +57,6 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         traitEntries = List.copyOf(traitEntries);
         abilityEntries = List.copyOf(abilityEntries);
         breakdowns = breakdowns.isEmpty() ? Map.of() : Collections.unmodifiableMap(new EnumMap<>(breakdowns));
-        marks = List.copyOf(marks);
     }
 
     /** {@code mob} as it is now, read from its parts; {@link DefinedEnemyMob#inspect()} is the way in. */
@@ -101,7 +99,7 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         return new EnemyInspection(definition.title(), definition.description(), mob.getRank(), mob.archetype(),
                 (mob.getHealth() + DamageUnits.PER_POINT - 1) / DamageUnits.PER_POINT, mob.getMaxHealthPoints(), mob.getBounty(), stats, effects,
                 mob.fate(), mob.dodges(), baseStats, immunities, affixes, traitEntries,
-                abilityEntries, breakdowns, List.of(), definition.livesOnLeak());
+                abilityEntries, breakdowns, definition.livesOnLeak());
     }
 
     private static List<TraitEntry> traitEntries(EnemyDefinition definition, Predicate<TraitId> slotsBy) {
@@ -130,13 +128,6 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         return shares;
     }
 
-    /** A copy carrying {@code marks}: memory towers keep about this enemy, filled in by the frame build. */
-    public EnemyInspection withMarks(List<EnemyMark> marks) {
-        return new EnemyInspection(this.name, this.description, this.rank, this.archetype, this.health,
-                this.maxHealth, this.bounty, this.stats, this.effects,
-                this.fate, this.dodges, this.baseStats, this.immunities, this.affixes, this.traitEntries,
-                this.abilityEntries, this.breakdowns, marks, this.livesOnLeak);
-    }
 
     /** An affix, with the traits and abilities it added to this enemy and what they do at its rank. */
     public record AffixEntry(Affix affix, List<TraitEntry> traits, List<AbilityEntry> abilities) {

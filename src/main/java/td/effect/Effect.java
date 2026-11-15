@@ -53,29 +53,33 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.DAZED, durationTicks, sink);
     }
 
-    /** Damage that decays exponentially; each stack it earns lowers resilience by one for good. */
-    public static Effect burn(Damage damagePerTick, int durationTicks, DamageSink sink) {
-        return pool(EffectKind.BURN, damagePerTick, durationTicks, sink);
-    }
-
     /**
-     * A second pool of its own, so it stacks with a burn: damage, and each stack it earns lowers spirit
-     * by one for good.
+     * {@code fuel} for the enemy's burn, which deals all of it over a time that grows with what the pool holds; each
+     * stack it earns lowers resilience by one for good.
      */
-    public static Effect poison(Damage damagePerTick, int durationTicks, DamageSink sink) {
-        return pool(EffectKind.POISON, damagePerTick, durationTicks, sink);
+    public static Effect burn(Damage fuel, DamageSink sink) {
+        return pool(EffectKind.BURN, fuel, sink);
     }
 
     /**
-     * A third pool of its own: it stacks with burn and poison, burns what is immune to fire, and earns
+     * {@code fuel} for a second pool of its own, so it stacks with a burn: damage, and each stack it earns lowers
+     * spirit by one for good.
+     */
+    public static Effect poison(Damage fuel, DamageSink sink) {
+        return pool(EffectKind.POISON, fuel, sink);
+    }
+
+    /**
+     * {@code fuel} for a third pool of its own: it stacks with burn and poison, burns what is immune to fire, and earns
      * Sickened as well as Scorched.
      */
-    public static Effect soulfire(Damage damagePerTick, int durationTicks, DamageSink sink) {
-        return pool(EffectKind.SOULFIRE, damagePerTick, durationTicks, sink);
+    public static Effect soulfire(Damage fuel, DamageSink sink) {
+        return pool(EffectKind.SOULFIRE, fuel, sink);
     }
 
-    private static Effect pool(EffectKind kind, Damage damagePerTick, int durationTicks, DamageSink sink) {
-        return of(kind, durationTicks, sink, EffectDynamics.FuelPool.started(damagePerTick, sink, STACK_INTERVAL_TICKS));
+    /** A pool has no clock: it lasts until its fuel is burned. */
+    private static Effect pool(EffectKind kind, Damage fuel, DamageSink sink) {
+        return of(kind, LASTING_TICKS, sink, EffectDynamics.FuelPool.started(fuel, sink, STACK_INTERVAL_TICKS));
     }
 
     /**
@@ -162,11 +166,6 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     /** This stacking effect allowed up to {@code stackCap} stacks instead of its kind's cap. */
     public Effect withStackCap(int stackCap) {
         return this.withDynamics(this.stacksFamily().withStackCap(stackCap));
-    }
-
-    /** This pool as {@code tuning} has made it. */
-    public Effect withTuning(PoolTuning tuning) {
-        return this.withDynamics(this.poolFamily().withTuning(tuning));
     }
 
     /** The most stacks it may reach: its own cap, else its kind's. */
@@ -318,6 +317,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         EffectDynamics keyed = switch (this.dynamics) {
             case EffectDynamics.HealOverTime heal -> heal.from(origin);
             case EffectDynamics.ShieldPool shield -> shield.from(origin);
+            case EffectDynamics.FuelPool pool -> pool.from(origin);
             default -> this.dynamics;
         };
         return new Effect(this.kind, this.remainingTicks, this.authoredDurationTicks, this.sink, origin, keyed);
@@ -356,39 +356,20 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
-    /**
-     * What a pool would still deal if it ran to its end: its level over one minus the per-tick decay.
-     * {@code 0f} for a kind that is no pool.
-     */
-    public float remainingPoolDamage() {
-        if (!this.kind.isFuelPool() || this.authoredDurationTicks <= 0) {
-            return 0f;
-        }
-        return (float) (this.fuelLevel() / (1.0 - Math.exp(-3.0 / this.authoredDurationTicks)));
-    }
-
-    /** A pool's current total; {@code 0f} for any other kind. */
+    /** The fuel a pool still holds, in damage units: what it will still deal. {@code 0f} for any other kind. */
     public float fuelLevel() {
         float total = 0f;
         for (FuelContribution contribution : this.fuel()) {
-            total += contribution.amount();
+            total += contribution.fuel();
         }
         return total;
     }
 
-    /** A pool's contributions, one per application; empty for any other family. */
-    public List<FuelContribution> fuel() {
+    /** A pool's contributions, one per source; empty for any other family. */
+    List<FuelContribution> fuel() {
         return switch (this.dynamics) {
             case EffectDynamics.FuelPool pool -> pool.fuel();
             default -> List.of();
-        };
-    }
-
-    /** A pool's strongest application ever taken, which bounds what a reapplication can add. */
-    public float peakL0() {
-        return switch (this.dynamics) {
-            case EffectDynamics.FuelPool pool -> pool.peakL0();
-            default -> 0f;
         };
     }
 
@@ -397,14 +378,6 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return switch (this.dynamics) {
             case EffectDynamics.FuelPool pool -> pool.stackClock();
             default -> 0;
-        };
-    }
-
-    /** What the tower feeding a pool has made of it. */
-    public PoolTuning tuning() {
-        return switch (this.dynamics) {
-            case EffectDynamics.FuelPool pool -> pool.tuning();
-            default -> PoolTuning.standard();
         };
     }
 
@@ -463,10 +436,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
-    /** A pool's damage a tick, or a bleed's a cell; none for any other family. */
+    /** A bleed's damage a cell; none for any other family. */
     public Damage damagePerTick() {
         return switch (this.dynamics) {
-            case EffectDynamics.FuelPool pool -> pool.perTick();
             case EffectDynamics.Distance distance -> distance.perCell();
             default -> Damage.none();
         };
@@ -477,10 +449,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return this.withDynamics(this.shieldPool().restrictedTo(type));
     }
 
-    /**
-     * Both the remaining and the authored duration times {@code factor}, rounded and never below a tick. A shorter
-     * authored duration also makes a pool decay faster, so its total damage shrinks with it.
-     */
+    /** Both the remaining and the authored duration times {@code factor}, rounded and never below a tick. */
     public Effect withDurationScaledBy(float factor) {
         if (this.isLasting() && factor > 0f) {
             return this;
@@ -530,12 +499,22 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
-    /** Carries a pool's level forward after decay or a top-up. Its {@code peakL0} only grows. */
-    Effect withFuel(List<FuelContribution> fuel, float peakL0) {
-        return switch (this.dynamics) {
-            case EffectDynamics.FuelPool pool -> this.withDynamics(pool.withFuel(fuel, peakL0));
-            default -> throw this.wrongFamily("a pool");
-        };
+    /** Carries a pool forward after it burns or is fed. */
+    Effect withFuel(List<FuelContribution> fuel) {
+        return this.withDynamics(this.poolFamily().withFuel(fuel));
+    }
+
+    /**
+     * This pool with {@code factor} of its fuel: what tenacity makes of fuel as it comes in, so the time it burns and
+     * what it deals both shrink.
+     */
+    public Effect withFuelScaledBy(float factor) {
+        return this.withDynamics(this.poolFamily().scaledBy(factor));
+    }
+
+    /** The type of damage a pool deals. */
+    DamageType poolType() {
+        return this.poolFamily().type();
     }
 
     /** The same effect with a new stack count and a fresh clock of {@code remainingTicks}. */

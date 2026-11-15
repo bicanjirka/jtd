@@ -2,7 +2,7 @@ package td.tower.cinder;
 
 import td.term.TermText;
 
-/** White Flame: the flame burns white. */
+/** White Flame: the flame's core glows white, in either kind of fire. */
 public final class WhiteFlameMechanic implements CinderMechanic {
 
     @Override
@@ -12,6 +12,6 @@ public final class WhiteFlameMechanic implements CinderMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("the flame turns white");
+        return TermText.of("the flame's core glows white");
     }
 }

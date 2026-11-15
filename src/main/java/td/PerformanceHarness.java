@@ -62,11 +62,9 @@ public final class PerformanceHarness {
     private int peakZones = 0;
     private int towerCount = 0;
 
-    private static final List<TowerFactory.Type> ZONE_TOWERS = List.of(TowerFactory.Type.MORTAR,
-            TowerFactory.Type.CINDER);
-    // Barrage, Napalm and Flare for the Mortar, Lingering Flames for the Cinder.
-    private static final Set<String> ZONE_UPGRADES = Set.of("mortar.barrage", "mortar.napalm", "mortar.flare",
-            "cinder.head.wide_nozzle.3");
+    private static final List<TowerFactory.Type> ZONE_TOWERS = List.of(TowerFactory.Type.MORTAR);
+    // Barrage, Napalm and Flare for the Mortar.
+    private static final Set<String> ZONE_UPGRADES = Set.of("mortar.barrage", "mortar.napalm", "mortar.flare");
 
     private PerformanceHarness(boolean zonesOnly, Observed observed, boolean profiled) {
         this.zonesOnly = zonesOnly;

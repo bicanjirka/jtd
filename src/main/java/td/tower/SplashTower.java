@@ -701,9 +701,9 @@ public final class SplashTower extends AbstractTower {
         }
 
         @Override
-        public void poison(EnemyMob target, float baseShare, int ticks) {
-            Damage perTick = Damage.magic(Math.round(this.stats.damage() * baseShare));
-            SplashTower.this.applyEffect(target, sink -> Effect.poison(perTick, ticks, sink));
+        public void poison(EnemyMob target, float baseShare) {
+            Damage fuel = Damage.magic(Math.round(this.stats.damage() * baseShare));
+            SplashTower.this.applyEffect(target, sink -> Effect.poison(fuel, sink));
         }
     }
 

@@ -180,26 +180,36 @@ final class PerkPictograms {
             Map.entry("sonar.special.wide_band", "F M12 20.4L2.8 9.4A13 13 0 0 1 21.2 9.4Z ; X M7.2 14.6A7 7 0 0 1 16.8 14.6 M4.6 11.6A10.6 10.6 0 0 1 19.4 11.6"),
             // Command Ping
             Map.entry("sonar.special.command_ping", "=effect.priority"),
-            // White Flame
-            Map.entry("cinder.head.white_flame.1", "F M12 2C12 2 19.5 8 19.5 14.2A7.5 7.5 0 0 1 4.5 14.2C4.5 10.8 6.6 8.6 8.2 7.2C8.6 9.6 9.8 11 11 11.4C10.4 8.2 10.9 4.8 12 2Z ; K M12 9.6C12 9.6 16.2 13 16.2 16A4.2 4.2 0 0 1 7.8 16C7.8 13 12 9.6 12 9.6Z ; D M12 11.4C12 11.4 14.8 13.8 14.8 16A2.8 2.8 0 0 1 9.2 16C9.2 13.8 12 11.4 12 11.4Z"),
-            // Flashpoint
-            Map.entry("cinder.head.white_flame.4a", "F M9.6 5.6C9.6 5.6 15.4 10.2 15.4 15.2A5.8 5.8 0 0 1 3.8 15.2C3.8 12.4 5.4 10.4 6.8 9.4C7.2 11.4 8 12.4 9 12.8C8.6 10.2 8.8 7.6 9.6 5.6Z ; F M18.6 1.8L19.8 5.4L23.4 6.6L19.8 7.8L18.6 11.4L17.4 7.8L13.8 6.6L17.4 5.4Z"),
-            // Combustion
-            Map.entry("cinder.head.white_flame.4b", "F M12 1.6L14 7.2L19.4 4.6L16.8 10L22.4 12L16.8 14L19.4 19.4L14 16.8L12 22.4L10 16.8L4.6 19.4L7.2 14L1.6 12L7.2 10L4.6 4.6L10 7.2Z ; K M12 8.6C12 8.6 15 11.2 15 13.4A3 3 0 0 1 9 13.4C9 11.2 12 8.6 12 8.6Z"),
+            // Hot Flame
+            Map.entry("cinder.hot_flame", "=tower.flame"),
+            // Long Stream
+            Map.entry("cinder.long_stream", "=tower.stream"),
             // Wide Nozzle
-            Map.entry("cinder.head.wide_nozzle.1", "F M2.4 9.6H7.4V14.4H2.4Z ; F M7.4 10.2L21.6 3.4V20.6L7.4 13.8Z ; X M10.6 12H21.6 M10.2 10.6L21.6 7.2 M10.2 13.4L21.6 16.8"),
-            // Inferno Ring
-            Map.entry("cinder.head.wide_nozzle.4a", "S O12 12 6.6 ; F M12 0.8C12 0.8 14.4 3 14.4 4.6A2.4 2.4 0 0 1 9.6 4.6C9.6 3 12 0.8 12 0.8Z M12 16.8C12 16.8 14.4 19 14.4 20.6A2.4 2.4 0 0 1 9.6 20.6C9.6 19 12 16.8 12 16.8Z M4 8.8C4 8.8 6.4 11 6.4 12.6A2.4 2.4 0 0 1 1.6 12.6C1.6 11 4 8.8 4 8.8Z M20 8.8C20 8.8 22.4 11 22.4 12.6A2.4 2.4 0 0 1 17.6 12.6C17.6 11 20 8.8 20 8.8Z"),
+            Map.entry("cinder.wide_nozzle", "F M2.4 9.6H7.4V14.4H2.4Z ; F M7.4 10.2L21.6 3.4V20.6L7.4 13.8Z ; X M10.6 12H21.6 M10.2 10.6L21.6 7.2 M10.2 13.4L21.6 16.8"),
+            // Core
+            Map.entry("cinder.core", "=tower.core"),
+            // Fan
+            Map.entry("cinder.fan", "=cinder.wide_nozzle"),
+            // Kindling
+            Map.entry("cinder.kindling", "=effect.scorched"),
+            // Soulfire
+            Map.entry("cinder.soulfire", "=effect.soulfire"),
             // Dragon's Breath
-            Map.entry("cinder.head.wide_nozzle.4b", "F M1.8 12C5.6 7.8 12 6 22.4 3.6C18.6 8 18.6 16 22.4 20.4C12 18 5.6 16.2 1.8 12Z ; K M6 12C8.6 10.2 12.6 9.2 17.4 8.6C16 10.8 16 13.2 17.4 15.4C12.6 14.8 8.6 13.8 6 12Z ; D M8.8 12C10.6 11.2 13 10.8 15.2 10.8C14.6 11.6 14.6 12.4 15.2 13.2C13 13.2 10.6 12.8 8.8 12Z"),
-            // Fuel
-            Map.entry("cinder.extra.fuel.1", "F M5.4 5.6H14.6L18.6 9.6V20.4A1.2 1.2 0 0 1 17.4 21.6H6.6A1.2 1.2 0 0 1 5.4 20.4Z ; K M7.8 7.4H11.8V9.4H7.8Z ; K M12 11.6C12 11.6 15 14.8 15 16.6A3 3 0 0 1 9 16.6C9 14.8 12 11.6 12 11.6Z ; S M16.4 5.6L18.4 3.2"),
-            // Searing Flame
-            Map.entry("cinder.special.searing_flame", "S M3.2 20.8L11.6 12.4 ; F M11 9.6L15.6 5L20.2 9.6L15.6 14.2Z ; K M13.6 9.6L15.6 7.6L17.6 9.6L15.6 11.6Z ; F M4.6 4.6C4.6 4.6 7.4 7 7.4 8.8A2.8 2.8 0 0 1 1.8 8.8C1.8 7 4.6 4.6 4.6 4.6Z"),
+            Map.entry("cinder.dragons_breath", "=tower.dragons_breath"),
+            // White Flame
+            Map.entry("cinder.white_flame", "=tower.flame"),
+            // Bellows
+            Map.entry("cinder.bellows", "=cinder.wide_nozzle"),
+            // Flashover
+            Map.entry("cinder.flashover", "=tower.flashover"),
+            // Meltdown
+            Map.entry("cinder.meltdown", "=tower.meltdown"),
             // Thermal Shock
-            Map.entry("cinder.special.thermal_shock", "F M8.6 3C8.6 3 13.6 7.6 13.6 12.4A5 5 0 0 1 3.6 12.4C3.6 9.6 5.2 7.8 6.4 6.8C6.8 8.8 7.6 9.8 8.4 10.2C8 7.8 8.2 5 8.6 3Z ; T M17 10V21.6 M12 12.9L22 18.7 M12 18.7L22 12.9"),
-            // Pyromancer's Mark
-            Map.entry("cinder.special.pyromancers_mark", "S O12 12 9.4 ; F M12 5.4C12 5.4 16.4 9.4 16.4 13A4.4 4.4 0 0 1 7.6 13C7.6 11 8.8 9.6 9.8 8.8C10 10.2 10.6 11 11.4 11.2C11 9.2 11.2 7 12 5.4Z"),
+            Map.entry("cinder.thermal_shock", "=tower.thermal_shock"),
+            // Hot Flame II
+            Map.entry("cinder.hot_flame_2", "=tower.flame"),
+            // Long Stream II
+            Map.entry("cinder.long_stream_2", "=cinder.long_stream"),
             // Amplifying Core
             Map.entry("aura.head.amplifying_core.1", "F M12 7.4L16.6 12L12 16.6L7.4 12Z ; S M12 1.6L9.6 4 M12 1.6L14.4 4 M12 22.4L9.6 20 M12 22.4L14.4 20 M1.6 12L4 9.6 M1.6 12L4 14.4 M22.4 12L20 9.6 M22.4 12L20 14.4"),
             // Broadcast

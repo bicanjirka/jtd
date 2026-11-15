@@ -37,7 +37,7 @@ class EnemyInspectionTest {
         DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.chill(0.4f, 100, DamageSink.none()));
         mob.doTick(1);
-        mob.applyEffect(Effect.burn(Damage.magic(10), 100, DamageSink.none()));
+        mob.applyEffect(Effect.burn(Damage.magic(10_000), DamageSink.none()));
         mob.doTick(2);
 
         List<EffectKind> kinds = mob.inspect().effects().stream().map(EffectState::kind).toList();
@@ -74,7 +74,7 @@ class EnemyInspectionTest {
     @Test
     void aBurnReportsHowFullItsPoolIs() {
         DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.burn(Damage.magic(10), 100, DamageSink.none()));
+        mob.applyEffect(Effect.burn(Damage.magic(10), DamageSink.none()));
 
         assertThat(stateOf(mob, EffectKind.BURN).fullness().orElseThrow()).isBetween(0.0, 1.0);
     }

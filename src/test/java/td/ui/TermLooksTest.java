@@ -54,7 +54,7 @@ class TermLooksTest {
     void aTowerBuffAndDebuffHaveTheirFrames() {
         assertThat(TermLooks.faceOf(TowerTerm.STEADY_AIM).frame()).isEqualTo(Palette.TERM_FRAME_TOWER_BUFF);
         assertThat(TermLooks.faceOf(TowerTerm.JAMMED).frame()).isEqualTo(Palette.TERM_FRAME_TOWER_DEBUFF);
-        assertThat(TermLooks.faceOf(TowerTerm.STOKE).frame()).isEqualTo(Palette.TERM_FRAME_MECHANIC);
+        assertThat(TermLooks.faceOf(TowerTerm.FLAME).frame()).isEqualTo(Palette.TERM_FRAME_MECHANIC);
     }
 
     @Test

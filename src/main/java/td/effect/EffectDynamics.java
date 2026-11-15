@@ -35,33 +35,39 @@ public sealed interface EffectDynamics {
     }
 
     /**
-     * A burn, poison or Soulfire pool: one contribution per tower, the strongest application it has
-     * taken (which bounds what a reapplication adds), the ticks to the next stack it earns, and what the
-     * tower feeding it has made of it.
+     * A burn, poison or Soulfire pool: the type it deals, one contribution per source, and the ticks to the next stack
+     * it earns.
      */
-    record FuelPool(Damage perTick, List<FuelContribution> fuel, float peakL0, int stackClock, PoolTuning tuning)
-            implements EffectDynamics {
+    record FuelPool(DamageType type, List<FuelContribution> fuel, int stackClock) implements EffectDynamics {
 
         public FuelPool {
             fuel = List.copyOf(fuel);
         }
 
-        /** A new pool of {@code perTick}, all of it fed through {@code sink}, as the tower left it untuned. */
-        public static FuelPool started(Damage perTick, DamageSink sink, int stackClock) {
-            return new FuelPool(perTick, List.of(new FuelContribution(sink, perTick.amount())), perTick.amount(), stackClock,
-                    PoolTuning.standard());
+        /** A new pool of {@code fuel}, all of it fed through {@code sink}. */
+        public static FuelPool started(Damage fuel, DamageSink sink, int stackClock) {
+            return new FuelPool(fuel.type(), List.of(FuelContribution.of(sink, AttackOrigin.none(), fuel.amount())),
+                    stackClock);
         }
 
-        public FuelPool withFuel(List<FuelContribution> fuel, float peakL0) {
-            return new FuelPool(this.perTick, fuel, peakL0, this.stackClock, this.tuning);
+        public FuelPool withFuel(List<FuelContribution> fuel) {
+            return new FuelPool(this.type, fuel, this.stackClock);
         }
 
         public FuelPool withStackClock(int stackClock) {
-            return new FuelPool(this.perTick, this.fuel, this.peakL0, stackClock, this.tuning);
+            return new FuelPool(this.type, this.fuel, stackClock);
         }
 
-        public FuelPool withTuning(PoolTuning tuning) {
-            return new FuelPool(this.perTick, this.fuel, this.peakL0, this.stackClock, tuning);
+        /** Every contribution put on by {@code origin}, so a source's later fuel joins its own. */
+        FuelPool from(AttackOrigin origin) {
+            return this.withFuel(this.fuel.stream()
+                    .map(each -> new FuelContribution(each.sink(), origin, each.fuel(), each.owed())).toList());
+        }
+
+        /** Every contribution's fuel times {@code factor}. */
+        FuelPool scaledBy(float factor) {
+            return this.withFuel(this.fuel.stream()
+                    .map(each -> new FuelContribution(each.sink(), each.origin(), each.fuel() * factor, each.owed())).toList());
         }
     }
 

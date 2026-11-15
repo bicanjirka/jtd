@@ -30,12 +30,12 @@ enum Role {
     CONTROL(EnumSet.of(TowerFactory.Type.SEEKER),
             Set.of("pulse.head.gravity.1", "splash.hex_of_blight", "splash.thunderstrike",
                     "mortar.concussion", "mortar.tar", "mortar.cryo",
-                    "splash.choking_blight", "cinder.special.thermal_shock")),
+                    "splash.choking_blight")),
     /** Only what is there to deny heals and shields: a line that does it on the side keeps its tower's damage. */
     ANTI_SUSTAIN(EnumSet.noneOf(TowerFactory.Type.class),
             Set.of("pulse.head.ward.1", "pulse.special.soul_drain", "mortar.tar",
                     "mortar.fusion", "splash.hex_of_inversion",
-                    "cinder.extra.fuel.2", "seeker.extra.mixed_payloads.2", "seeker.special.nullifier"));
+                    "cinder.soulfire", "seeker.extra.mixed_payloads.2", "seeker.special.nullifier"));
 
     private final Set<TowerFactory.Type> types;
     /** Nodes that do the job; the nodes after one in its line do it too, since they can't be had without it. */

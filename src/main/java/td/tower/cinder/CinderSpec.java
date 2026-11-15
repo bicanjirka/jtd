@@ -1,117 +1,74 @@
 package td.tower.cinder;
 
-import td.effect.PoolTuning;
+import td.effect.EffectKind;
 import td.tower.targeting.Reach;
 import td.tower.targeting.Viewpoint;
 
 /**
- * Whom the Cinder aims at, what shape its wave is and what its burn does to an enemy: the base rules
- * reshaped by each mechanic it owns. Each {@code withX} is a copy.
+ * Whom the Scorcher may aim at, which fire it pours and what it pours more of: the base rules reshaped by each
+ * mechanic it owns. Each {@code withX} is a copy.
  *
  * @param reach         the visible enemies it may aim at
- * @param ring          whether the wave is a full ring rather than a cone
- * @param stoke         how repeated waves raise a burn
- * @param bellows       whether an Aura's attack-speed buff on the Cinder also widens its cone
- * @param soulfire      whether every other wave is Soulfire
- * @param linger        the patch of burning ground each wave leaves
- * @param look          the colour of its waves
- * @param searingIntervalTicks how often at most a wave that hits a burning enemy, and every ignition, makes it Vulnerable;
- *                             0 for never
- * @param thermalShock  how much of what is left of a dead enemy's burn lands on its neighbours, who are chilled; 0 for none
- * @param critScorch    how many Scorched stacks a critical ignition adds
- * @param combustion    what a burn grown hotter than one wave could make it does to its neighbours
- * @param everburnFloor the share of its strongest application a pool never decays below in range, 0 for none
- * @param tuning        what its pools hold, how fast they mark and what they cost
+ * @param fire          the pool its stream feeds
+ * @param core          how wide its Core is and how much more it pours
+ * @param searStacks    the stacks of Scorched the first touch of each stream gives
+ * @param look          the colour of its flame's core
+ * @param dragonsBreath whether its stream is Dragon's Breath, for the look
+ * @param flashover     whether a hot burn in the stream spreads to the enemies beside it
+ * @param meltdown      what each point of an enemy's armor and plating adds to the fuel it takes, 0 for nothing
+ * @param thermalShock  how much more it pours into a held enemy, 1 for no more
  */
-public record CinderSpec(Reach reach, boolean ring, StokeSpec stoke, boolean bellows, boolean soulfire, LingerSpec linger, FlameLook look,
-                         int searingIntervalTicks, float thermalShock, int critScorch, CombustionSpec combustion,
-                         float everburnFloor, PoolTuning tuning) {
+public record CinderSpec(Reach reach, EffectKind fire, CoreSpec core, int searStacks, FlameLook look,
+                         boolean dragonsBreath, boolean flashover, float meltdown, float thermalShock) {
 
-    /** The nearest visible enemy in range, an ordinary cone, a plain burn and no passives. */
-    public static CinderSpec from(Viewpoint view) {
-        return new CinderSpec(Reach.visible(view), false, StokeSpec.none(), false, false,
-                LingerSpec.none(), FlameLook.ORANGE, 0, 0f, 0, CombustionSpec.none(), 0f,
-                PoolTuning.standard());
+    /** The nearest visible enemy in range, a plain burn, no Core and the base Sear. */
+    public static CinderSpec from(Viewpoint view, int searStacks) {
+        return new CinderSpec(Reach.visible(view), EffectKind.BURN, CoreSpec.none(), searStacks, FlameLook.ORANGE,
+                false, false, 0f, 1f);
     }
 
-    public CinderSpec withRing() {
-        return new CinderSpec(this.reach, true, this.stoke,
-                this.bellows, this.soulfire, this.linger, this.look, this.searingIntervalTicks, this.thermalShock,
-                this.critScorch, this.combustion, this.everburnFloor, this.tuning);
+    public CinderSpec withFire(EffectKind fire) {
+        return new CinderSpec(this.reach, fire, this.core, this.searStacks, this.look, this.dragonsBreath,
+                this.flashover, this.meltdown, this.thermalShock);
     }
 
-    public CinderSpec withStoke(StokeSpec stoke) {
-        return new CinderSpec(this.reach, this.ring, stoke,
-                this.bellows, this.soulfire, this.linger, this.look, this.searingIntervalTicks, this.thermalShock,
-                this.critScorch, this.combustion, this.everburnFloor, this.tuning);
+    public CinderSpec withCore(CoreSpec core) {
+        return new CinderSpec(this.reach, this.fire, core, this.searStacks, this.look, this.dragonsBreath,
+                this.flashover, this.meltdown, this.thermalShock);
     }
 
-    public CinderSpec withBellows() {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                true, this.soulfire, this.linger, this.look, this.searingIntervalTicks, this.thermalShock, this.critScorch,
-                this.combustion, this.everburnFloor, this.tuning);
-    }
-
-    public CinderSpec withSoulfire() {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, true, this.linger, this.look, this.searingIntervalTicks, this.thermalShock, this.critScorch,
-                this.combustion, this.everburnFloor, this.tuning);
-    }
-
-    public CinderSpec withLinger(LingerSpec linger) {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, this.soulfire, linger, this.look, this.searingIntervalTicks, this.thermalShock, this.critScorch,
-                this.combustion, this.everburnFloor, this.tuning);
+    public CinderSpec withSearStacks(int searStacks) {
+        return new CinderSpec(this.reach, this.fire, this.core, searStacks, this.look, this.dragonsBreath,
+                this.flashover, this.meltdown, this.thermalShock);
     }
 
     public CinderSpec withLook(FlameLook look) {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, this.soulfire, this.linger, look, this.searingIntervalTicks, this.thermalShock, this.critScorch,
-                this.combustion, this.everburnFloor, this.tuning);
+        return new CinderSpec(this.reach, this.fire, this.core, this.searStacks, look, this.dragonsBreath,
+                this.flashover, this.meltdown, this.thermalShock);
     }
 
-    /** Whether it makes the enemies it burns Vulnerable. */
-    public boolean searing() {
-        return this.searingIntervalTicks > 0;
+    public CinderSpec withDragonsBreath() {
+        return new CinderSpec(this.reach, this.fire, this.core, this.searStacks, this.look, true, this.flashover,
+                this.meltdown, this.thermalShock);
     }
 
-    public CinderSpec withSearing(int intervalTicks) {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, this.soulfire, this.linger, this.look, intervalTicks, this.thermalShock, this.critScorch,
-                this.combustion, this.everburnFloor, this.tuning);
+    public CinderSpec withFlashover() {
+        return new CinderSpec(this.reach, this.fire, this.core, this.searStacks, this.look, this.dragonsBreath, true,
+                this.meltdown, this.thermalShock);
     }
 
-    public CinderSpec withThermalShock(float share) {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, this.soulfire, this.linger, this.look, this.searingIntervalTicks, share, this.critScorch,
-                this.combustion, this.everburnFloor, this.tuning);
+    public CinderSpec withMeltdown(float perPoint) {
+        return new CinderSpec(this.reach, this.fire, this.core, this.searStacks, this.look, this.dragonsBreath,
+                this.flashover, perPoint, this.thermalShock);
     }
 
-    public CinderSpec withCritScorch(int critScorch) {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, this.soulfire, this.linger, this.look, this.searingIntervalTicks, this.thermalShock, critScorch,
-                this.combustion, this.everburnFloor, this.tuning);
+    public CinderSpec withThermalShock(float factor) {
+        return new CinderSpec(this.reach, this.fire, this.core, this.searStacks, this.look, this.dragonsBreath,
+                this.flashover, this.meltdown, factor);
     }
 
-    public CinderSpec withCombustion(CombustionSpec combustion) {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, this.soulfire, this.linger, this.look, this.searingIntervalTicks, this.thermalShock,
-                this.critScorch, combustion, this.everburnFloor, this.tuning);
-    }
-
-    public CinderSpec withEverburnFloor(float everburnFloor) {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, this.soulfire, this.linger, this.look, this.searingIntervalTicks, this.thermalShock,
-                this.critScorch, this.combustion, everburnFloor, this.tuning);
-    }
-
-    public CinderSpec withTuning(PoolTuning tuning) {
-        return new CinderSpec(this.reach, this.ring, this.stoke,
-                this.bellows, this.soulfire, this.linger, this.look, this.searingIntervalTicks, this.thermalShock,
-                this.critScorch, this.combustion, this.everburnFloor, tuning);
-    }
-
-    public Viewpoint view() {
-        return this.reach.view();
+    /** Whether its fire is Soulfire. */
+    public boolean soulfire() {
+        return this.fire == EffectKind.SOULFIRE;
     }
 }

@@ -14,7 +14,6 @@ import td.projectile.CannonballProjectile;
 import td.tower.CinderTower;
 import td.tower.SniperTower;
 import td.tower.TowerFactory;
-import td.tower.TowerTerm;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.render.CellGridDraw;
 import td.ui.render.ConeDraw;
@@ -310,7 +309,7 @@ class BoardRendererTest {
     }
 
     @Test
-    void aCinderTowerThatJustFiredAWaveYieldsAConeDraw() {
+    void aStreamingScorcherYieldsAConeDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         CinderTower tower = new CinderTower(context, 1, 1);
@@ -318,14 +317,11 @@ class BoardRendererTest {
         context.towers().add(tower);
         EnemyMob enemy = EnemyFixtures.plainMob(context, 50, 3);
         context.enemies().setEnemies(new EnemyMob[]{enemy});
+        tower.doTick(1);
 
-        int firedAt = 1;
-        while (tower.getInFlightWaves().isEmpty() && firedAt < 60) {
-            tower.doTick(firedAt++); // turns toward the enemy, then fires a wave
-        }
+        RenderFrame frame = rendererFor(context).buildFrame(1, 0.0, 0.0);
 
-        RenderFrame frame = rendererFor(context).buildFrame(firedAt - 1, 0.0, 0.0);
-
+        assertThat(tower.isStreaming()).isTrue();
         assertThat(frame.towerEffects()).hasSize(1);
         assertThat(frame.towerEffects().getFirst()).isInstanceOf(ConeDraw.class);
     }
@@ -343,30 +339,4 @@ class BoardRendererTest {
         assertThat(frame.projectiles().getFirst()).isInstanceOf(ProjectileDraw.class);
     }
 
-    @Test
-    void aSelectedEnemysSheetCarriesWhatTowersRememberOfIt() {
-        GameEngine engine = newEngine();
-        GameWorld context = engine.getGameWorld();
-        EnemyMob enemy = EnemyFixtures.plainMob(context, 100, 5);
-        context.enemies().add(enemy);
-        int scale = context.getBoard().scale();
-        CinderTower cinder = new CinderTower(context, (int) (enemy.getX() / scale) + 1, (int) (enemy.getY() / scale));
-        context.towers().add(cinder);
-        context.economy().startEconomy(1000, 5);
-        cinder.buyUpgrade(UpgradePaths.named(cinder, "Attune"));
-        for (int t = 1; t <= 400 && cinder.marksOn(enemy).isEmpty(); t++) {
-            cinder.doTick(t);
-        }
-        engine.requestEnemySelectionAt((int) enemy.getX(), (int) enemy.getY());
-
-        RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0, engine.inspectSelectedEnemy());
-
-        assertThat(cinder.marksOn(enemy)).isNotEmpty();
-        assertThat(frame.enemyInspection().orElseThrow().lines()).anySatisfy(line -> assertThat(line)
-                .isInstanceOfSatisfying(SheetLine.IconRow.class, row -> {
-                    assertThat(row.label()).isEqualTo("Debuffs");
-                    assertThat(row.icons()).extracting(icon -> icon.face().pictogram())
-                            .contains(TowerTerm.STOKE.key());
-                }));
-    }
 }

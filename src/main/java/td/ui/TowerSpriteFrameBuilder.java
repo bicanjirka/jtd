@@ -248,7 +248,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitCinderTower(CinderTower tower) {
-        TowerPose pose = TowerPose.idle().with(TowerCue.STREAMING, !tower.getInFlightWaves().isEmpty());
+        TowerPose pose = TowerPose.idle().with(TowerCue.STREAMING, tower.isStreaming());
         this.aimed(tower, pose, tower.getTurretAim(), false);
         return null;
     }

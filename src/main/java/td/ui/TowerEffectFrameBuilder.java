@@ -487,32 +487,16 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    /** One cone per wave in flight, its progress interpolated between ticks. */
+    /** The stream's cone, at full range while it streams. */
     public Void visitCinderTower(CinderTower tower) {
-        for (CinderTower.FlameWave wave : tower.getInFlightWaves()) {
-            float previousProgress = waveProgress(wave, this.gameTime - 1);
-            float currentProgress = waveProgress(wave, this.gameTime);
-            float progress = previousProgress + (currentProgress - previousProgress) * (float) this.interpolationAlpha;
-            this.draws.add(new ConeDraw(conePaletteFor(wave), tower.getX(), tower.getY(),
-                    (float) wave.headingRadians(), tower.getRangeReal(), (float) wave.halfWidthRadians(), progress,
-                    wave.stokeSteps()));
+        if (tower.isStreaming()) {
+            CinderTower.StreamLook look = tower.streamLook();
+            Palette palette = look.soulfire() ? Palette.TOWER_CINDER_CONE_SOUL
+                    : look.whiteCore() ? Palette.TOWER_CINDER_CONE_WHITE : Palette.TOWER_CINDER_CONE;
+            this.draws.add(new ConeDraw(palette, tower.getX(), tower.getY(),
+                    (float) tower.getTurretAim().currentRadians(), tower.getRangeReal(), (float) tower.halfWidthRadians(),
+                    1f, 0));
         }
         return null;
-    }
-
-    private static Palette conePaletteFor(CinderTower.FlameWave wave) {
-        if (wave.isSoulfire()) {
-            return Palette.TOWER_CINDER_CONE_SOUL;
-        }
-        return switch (wave.look()) {
-            case ORANGE -> Palette.TOWER_CINDER_CONE;
-            case WHITE -> Palette.TOWER_CINDER_CONE_WHITE;
-            case SEARING -> Palette.TOWER_CINDER_CONE_SEARING;
-        };
-    }
-
-    private static float waveProgress(CinderTower.FlameWave wave, int atTick) {
-        float travelled = (float) (atTick - wave.firedAtTick()) / wave.travelTicks();
-        return Math.clamp(travelled, 0f, 1f);
     }
 }

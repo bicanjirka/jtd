@@ -1,5 +1,6 @@
 package td.effect;
 
+import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
@@ -21,30 +22,33 @@ import java.util.Set;
 /**
  * The effects active on one enemy, at most one per {@link EffectKind}. Reapplying a kind keeps the
  * stronger one and the longer remaining duration, so a weak top-up never cuts short a strong
- * effect, and of two slows of one kind the stronger holds while it runs. The decaying kinds and the stacking kinds
+ * effect, and of two slows of one kind the stronger holds while it runs. The pools and the stacking kinds
  * combine differently: see {@link #applyPool} and {@link #applyStacks}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class ActiveEffects {
 
-    /**
-     * Per-tick decay {@code alpha = e^(POOL_DECAY_EXPONENT / authoredDurationTicks)} leaves about
-     * 5% of the fuel when the authored duration ends.
-     */
-    private static final double POOL_DECAY_EXPONENT = -3.0;
-    /** A pool deals its damage in a pulse this often: four times a second. */
+    /** A pool deals what it has burned in a pulse this often: four times a second. */
     private static final int POOL_PULSE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 4f);
-    /** A beat this close to whole pulse windows is one: a rate's period carries float noise. */
-    private static final double WHOLE_WINDOWS_TOLERANCE = 1e-4;
+    /** A pool of this much fuel, in points, burns out in {@link #REFERENCE_BURN_SECONDS}. */
+    static final float REFERENCE_FUEL_POINTS = 100f;
+    static final float REFERENCE_BURN_SECONDS = 1.75f;
+    /**
+     * A pool burns this times the square root of its fuel a tick, in damage units: the root falls by half of it every
+     * tick, so the pool empties in a time that grows with the root of what it held.
+     */
+    private static final float BURN_RATE = (float) (2 * Math.sqrt(DamageUnits.ofPoints(REFERENCE_FUEL_POINTS))
+            / (REFERENCE_BURN_SECONDS * TickRate.TICKS_PER_SECOND));
+    /** A pool that would burn longer than this reads as full. */
+    private static final float FULL_BURN_TICKS = 2 * REFERENCE_BURN_SECONDS * TickRate.TICKS_PER_SECOND;
+    /** Less fuel than this is burned at once, so a pool never ends on a crumb it would take ticks to burn. */
+    private static final float LAST_UNIT = 1f;
 
     /** Speed comes back over this last stretch of a slow's own time. */
     public static final int SLOW_FADE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
 
     /** A stack debuff loses a stack this often: one per second, half as fast as a pool earns them. */
     public static final int STACK_DECAY_INTERVAL_TICKS = 20;
-
-    private static final EffectKind[] BURNING_KINDS = {EffectKind.BURN, EffectKind.SOULFIRE};
-    private static final PoolTuning NO_TUNING = PoolTuning.standard();
 
     private final Map<EffectKind, Effect> active = new EnumMap<>(EffectKind.class);
     /** Per kind, progress that is not yet a whole step: towards a stack debuff's next lost stack, or a bleed's next unit. */
@@ -70,7 +74,7 @@ public final class ActiveEffects {
             case EffectDynamics.Flag _ -> 1f;
             case EffectDynamics.Stacks stacks -> stacks.stacks();
             case EffectDynamics.Slow slow -> slow.strength();
-            case EffectDynamics.FuelPool pool -> pool.perTick().amount();
+            case EffectDynamics.FuelPool _ -> effect.fuelLevel();
             case EffectDynamics.HealOverTime heal -> heal.perTick();
             case EffectDynamics.ShieldPool shield -> shield.remaining();
             case EffectDynamics.Distance distance -> distance.perCell().amount();
@@ -122,12 +126,10 @@ public final class ActiveEffects {
     }
 
     /**
-     * A fuel pool ({@code BURN} or {@code POISON}, each its own pool) is additive and decaying. A
-     * reapplication adds its intensity, scaled down the closer the pool is to its cap, and nothing to
-     * a pool already over a cap that shrank while it burned; it never changes the decay rate or earns
-     * a stack. A pool that starts earns its first stack at once and
-     * another every {@code STACK_INTERVAL_TICKS} while it lasts. Each contribution keeps its own
-     * sink, so every contributing tower is credited for its share.
+     * A pool (burn, poison or Soulfire, each its own) takes all the fuel it is given, whoever gives it, with no cap.
+     * Fuel from a source already feeding it joins that source's share, so every source is credited for its own and a
+     * stream fed every tick stays one share. A pool that starts earns its first stack at once and another every
+     * {@code STACK_INTERVAL_TICKS} while it lasts; feeding it earns none.
      */
     private void applyPool(Effect incoming) {
         Effect existing = this.active.get(incoming.kind());
@@ -136,38 +138,30 @@ public final class ActiveEffects {
             this.earnStack(incoming.kind());
             return;
         }
-        float incomingL0 = incoming.damagePerTick().amount();
-        float peakL0 = Math.max(existing.peakL0(), incomingL0);
-        PoolTuning tuning = existing.tuning().strongerWith(incoming.tuning());
-        float lmax = tuning.capFactor() * peakL0;
-        // A negative share would drain the pool and over-pay the others, whose shares are dealt in full.
-        float deltaL = Math.max(0f, incomingL0 * (1f - existing.fuelLevel() / lmax));
         List<FuelContribution> fuel = new ArrayList<>(existing.fuel());
-        if (deltaL > 0f) {
-            fuel.add(new FuelContribution(incoming.sink(), deltaL));
+        for (FuelContribution more : incoming.fuel()) {
+            int own = more.origin() == AttackOrigin.none() ? -1 : indexOfOrigin(fuel, more.origin());
+            if (own >= 0) {
+                fuel.set(own, fuel.get(own).fedBy(more.fuel()));
+            } else {
+                fuel.add(more);
+            }
         }
-        this.active.put(incoming.kind(), existing.withFuel(List.copyOf(fuel), peakL0).withTuning(tuning));
+        this.active.put(incoming.kind(), existing.withFuel(fuel));
     }
 
-    /**
-     * What a pool deals each second once it has settled under a top-up of {@code level} every {@code ticksBetween}
-     * ticks: each top-up then adds exactly what the pool lost since the last. A top-up decays unseen until the next
-     * pulse, which on average takes half a window, and that part is never dealt. A beat of whole pulse windows lands
-     * every top-up just before a pulse, since a pool pulses on its first tick, so then nothing goes unseen.
-     *
-     * @param level         what each top-up carries, a tick
-     * @param durationTicks the duration the pool decays by
-     * @param capFactor     the most it holds, as a multiple of {@code level}
-     */
-    public static float settledPoolPerSecond(float level, int durationTicks, float capFactor, double ticksBetween) {
-        double alpha = Math.exp(POOL_DECAY_EXPONENT / durationTicks);
-        double keptBetween = Math.pow(alpha, ticksBetween);
-        double afterTopUp = level / (1.0 - keptBetween + keptBetween / capFactor);
-        double dealtBetween = afterTopUp * (1.0 - keptBetween) / (1.0 - alpha);
-        double windows = ticksBetween / POOL_PULSE_TICKS;
-        boolean inTimeWithPulses = Math.abs(windows - Math.rint(windows)) < WHOLE_WINDOWS_TOLERANCE;
-        double keptUntilPulse = inTimeWithPulses ? 1.0 : Math.pow(alpha, (POOL_PULSE_TICKS - 1) / 2.0);
-        return (float) (dealtBetween * keptUntilPulse * TickRate.TICKS_PER_SECOND / ticksBetween);
+    private static int indexOfOrigin(List<FuelContribution> fuel, AttackOrigin origin) {
+        for (int i = 0; i < fuel.size(); i++) {
+            if (fuel.get(i).origin().equals(origin)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** The ticks a pool of {@code fuel} damage units takes to burn out, if nothing feeds it. */
+    public static float burnTicksOf(float fuel) {
+        return fuel <= 0f ? 0f : (float) (2 * Math.sqrt(fuel) / BURN_RATE);
     }
 
     /** Adds a stack of each debuff that {@code pool} earns, starting the debuff if the enemy has none. */
@@ -306,8 +300,7 @@ public final class ActiveEffects {
             return OptionalDouble.empty();
         }
         return switch (kind.rule().stacking()) {
-            case POOL -> OptionalDouble.of(Math.min(1f,
-                    effect.fuelLevel() / (effect.tuning().capFactor() * effect.peakL0())));
+            case POOL -> OptionalDouble.of(Math.min(1f, burnTicksOf(effect.fuelLevel()) / FULL_BURN_TICKS));
             case REFRESH -> switch (effect.dynamics()) {
                 case EffectDynamics.Slow _, EffectDynamics.GrowingSlow _ -> OptionalDouble.of(slowNow(effect));
                 default -> OptionalDouble.empty();
@@ -351,11 +344,10 @@ public final class ActiveEffects {
 
     /**
      * Adds every active effect's stat modifiers: each kind's {@link EffectKind#modifiersAt} for its
-     * stacks, a ceiling on speed, the strongest slow's share of speed, a heal's regeneration, and what
-     * the burning pools carry. Nothing here allocates.
+     * stacks, a ceiling on speed, the strongest slow's share of speed and a heal's regeneration. Nothing here
+     * allocates.
      */
     public void contributeTo(StatAccumulator<EnemyStat> accumulator) {
-        this.burningTuning().carried().applyTo(accumulator);
         float strongestSlow = 0f;
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             this.contribute(entry.getKey(), entry.getValue(), accumulator);
@@ -388,37 +380,17 @@ public final class ActiveEffects {
     }
 
     /**
-     * What the active {@code kind} alone adds to the stats now, for a breakdown: its own modifiers, its slow if that is
-     * the one that counts, and what the burning pools carry when it is the first burning kind.
+     * What the active {@code kind} alone adds to the stats now, for a breakdown: its own modifiers and its slow if that
+     * is the one that counts.
      */
     public void contributionOf(EffectKind kind, StatAccumulator<EnemyStat> accumulator) {
         Effect effect = this.active.get(kind);
         if (effect == null) {
             return;
         }
-        for (EffectKind fire : BURNING_KINDS) {
-            if (this.active.containsKey(fire)) {
-                if (fire == kind) {
-                    this.burningTuning().carried().applyTo(accumulator);
-                }
-                break;
-            }
-        }
         contribute(kind, effect, accumulator);
         this.strongestSlow().filter(effect::equals)
                 .ifPresent(slow -> accumulator.multiply(EnemyStat.MOVE_SPEED, 1f - slowNow(slow)));
-    }
-
-    /** What every fire on the enemy has made of it together: the stronger of each setting. */
-    private PoolTuning burningTuning() {
-        PoolTuning tuning = null;
-        for (EffectKind fire : BURNING_KINDS) {
-            Effect pool = this.active.get(fire);
-            if (pool != null) {
-                tuning = tuning == null ? pool.tuning() : tuning.strongerWith(pool.tuning());
-            }
-        }
-        return tuning == null ? NO_TUNING : tuning;
     }
 
     /** {@link #tick(float)} for an enemy that did not move. */
@@ -510,55 +482,53 @@ public final class ActiveEffects {
     }
 
     /**
-     * On a pulse tick, deals what the pool would have dealt over the next {@code POOL_PULSE_TICKS}
-     * ticks, rounded and split by share. Every tick decays every contribution by the same
-     * {@code alpha}, which decays the total exactly, and lets the stack clock run. Ends once a tick
-     * would round to zero damage, since exponential decay never reaches zero. Pulses ride the stack
-     * clock, which is a multiple of the pulse interval, so a pool always pulses on its first tick.
+     * Burns {@link #BURN_RATE} times the root of the pool's fuel, every share by the same part, and on a pulse tick,
+     * or once it is out, deals what has burned since the last, rounded and split by share; the part of a unit left
+     * over stays owed, so a pool deals exactly its fuel. Pulses ride the stack clock, which is a multiple of the pulse
+     * interval, so a pool always pulses on its first tick.
      */
     private Optional<Effect> tickPool(Effect effect) {
-        List<FuelContribution> contributions = effect.fuel();
         float total = effect.fuelLevel();
-        if (Math.round(total) <= 0) {
+        float burned = total < LAST_UNIT ? total : Math.min(total, BURN_RATE * (float) Math.sqrt(total));
+        float share = total > 0f ? burned / total : 0f;
+        List<FuelContribution> fuel = new ArrayList<>(effect.fuel().size());
+        float owed = 0f;
+        for (FuelContribution contribution : effect.fuel()) {
+            FuelContribution after = contribution.burned(share);
+            owed += after.owed();
+            fuel.add(after);
+        }
+        boolean out = total - burned < LAST_UNIT;
+        if (out || effect.stackClock() % POOL_PULSE_TICKS == 0) {
+            this.pay(fuel, owed, effect.poolType());
+        }
+        if (out) {
             return Optional.empty();
         }
-        double alpha = Math.exp(POOL_DECAY_EXPONENT / effect.authoredDurationTicks());
-        if (effect.stackClock() % POOL_PULSE_TICKS == 0) {
-            int damage = Math.round(total * (float) windowFactor(alpha));
-            if (damage > 0) {
-                int[] shares = apportionPoolDamage(contributions, total, damage);
-                DamageType type = effect.damagePerTick().type();
-                for (int i = 0; i < contributions.size(); i++) {
-                    if (shares[i] > 0) {
-                        contributions.get(i).sink().apply(new Damage(shares[i], type));
-                    }
-                }
-            }
-        }
-        List<FuelContribution> decayed = contributions.stream()
-                .map(c -> c.decayedBy((float) alpha))
-                .toList();
-        // The clock always counts down by one, as pulses ride it; a faster stack rate only earns more often.
+        // The clock always counts down by one, as pulses ride it.
         int clock = effect.stackClock() - 1;
-        int stackInterval = Math.max(1, Effect.STACK_INTERVAL_TICKS / effect.tuning().stackRate());
-        if (clock % stackInterval == 0) {
+        if (clock % Effect.STACK_INTERVAL_TICKS == 0) {
             this.earnStack(effect.kind());
         }
         if (clock <= 0) {
             clock = Effect.STACK_INTERVAL_TICKS;
         }
-        return Optional.of(effect.withFuel(decayed, effect.peakL0()).withStackClock(clock));
+        return Optional.of(effect.withFuel(fuel).withStackClock(clock));
     }
 
-    /** The pool's total over one pulse window as a multiple of its level now: {@code 1 + a + a^2 + ...}. */
-    private static double windowFactor(double alpha) {
-        double factor = 0;
-        double term = 1;
-        for (int i = 0; i < POOL_PULSE_TICKS; i++) {
-            factor += term;
-            term *= alpha;
+    /** Deals {@code owed}, rounded, through the shares' sinks, each its part, and keeps each share's remainder owed. */
+    private void pay(List<FuelContribution> fuel, float owed, DamageType type) {
+        int damage = Math.round(owed);
+        if (damage <= 0) {
+            return;
         }
-        return factor;
+        int[] shares = apportionPoolDamage(fuel, owed, damage);
+        for (int i = 0; i < fuel.size(); i++) {
+            if (shares[i] > 0) {
+                fuel.get(i).sink().apply(new Damage(shares[i], type));
+                fuel.set(i, fuel.get(i).paid(shares[i]));
+            }
+        }
     }
 
     /**
@@ -571,7 +541,7 @@ public final class ActiveEffects {
         float[] remainders = new float[n];
         int assigned = 0;
         for (int i = 0; i < n; i++) {
-            float raw = contributions.get(i).amount() / total * roundedTotal;
+            float raw = Math.max(0f, contributions.get(i).owed()) / total * roundedTotal;
             shares[i] = (int) Math.floor(raw);
             remainders[i] = raw - shares[i];
             assigned += shares[i];

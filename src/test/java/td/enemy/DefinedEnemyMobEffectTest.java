@@ -5,6 +5,7 @@ import td.damage.AttackOrigin;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageUnits;
+import td.effect.ActiveEffects;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -66,7 +67,7 @@ class DefinedEnemyMobEffectTest {
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
         EnemyMob enemy = EnemyFixtures.plainMob(context, 1, 3); // 100 health
 
-        enemy.applyEffect(Effect.burn(Damage.magic(1000), 3, enemy::doDamage));
+        enemy.applyEffect(Effect.burn(Damage.magic(1000), enemy::doDamage));
         enemy.doTick(1);
 
         assertThat(enemy.isDead()).isTrue();
@@ -79,11 +80,12 @@ class DefinedEnemyMobEffectTest {
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
         EnemyMob enemy = EnemyFixtures.plainMob(context, 100, 3); // 10000 health
 
-        enemy.applyEffect(Effect.burn(Damage.magic(2000), 5, enemy::doDamage));
+        enemy.applyEffect(Effect.burn(Damage.magic(2000), enemy::doDamage));
         enemy.doTick(1);
 
-        // alpha = e^(-3/5); the pulse is 2000 * (1 + a + a^2 + a^3 + a^4) ~= 4212
-        assertThat(enemy.getHealth()).isEqualTo(5788);
+        // A pool burns at a rate that would empty it in its burn time, as its root falls evenly.
+        int firstTick = Math.round(2 * 2000 / ActiveEffects.burnTicksOf(2000));
+        assertThat(enemy.getHealth()).isEqualTo(10_000 - firstTick);
     }
 
     @Test

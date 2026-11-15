@@ -326,7 +326,7 @@ class DevControlsTest {
         EnemyMob mob = this.spawnAndSelectOne();
         int full = mob.getHealth();
 
-        this.dev.applyEffectToEnemy(EffectKind.POISON, List.of(5f, 100f));
+        this.dev.applyEffectToEnemy(EffectKind.POISON, List.of(100f));
         this.dev.runPending();
         for (int t = 1; t <= 20; t++) {
             this.engine.doTick(t);
@@ -520,9 +520,9 @@ class DevControlsTest {
         tower.setSelected(true);
         this.dev.runPending();
 
-        String message = this.dev.grantToSelectedTower(TowerTerm.STOKE, List.of());
+        String message = this.dev.grantToSelectedTower(TowerTerm.MAGAZINE, List.of());
 
-        assertThat(message).isEqualTo(TowerTerm.STOKE.title() + " " + DevEffects.whyUngrantable(TowerTerm.STOKE).orElseThrow());
+        assertThat(message).isEqualTo(TowerTerm.MAGAZINE.title() + " " + DevEffects.whyUngrantable(TowerTerm.MAGAZINE).orElseThrow());
     }
 
     @Test

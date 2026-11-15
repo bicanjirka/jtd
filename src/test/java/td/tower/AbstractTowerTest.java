@@ -623,7 +623,7 @@ class AbstractTowerTest {
         FakeTower tower = FakeTower.offering(world, 0, 0, UpgradeTree.of(node));
         tower.buyUpgrade(node);
         EnemyMob burning = EnemyFixtures.plainMob(world, 100000, 3);
-        burning.applyEffect(Effect.burn(Damage.magic(1), 100, DamageSink.none()));
+        burning.applyEffect(Effect.burn(Damage.magic(1), DamageSink.none()));
 
         tower.dealDamage(burning, Damage.physical(1000));
 
@@ -688,15 +688,6 @@ class AbstractTowerTest {
     }
 
     @Test
-    void aStatWhoseRangeStartsAboveItsDefaultShowsNoRowWhileUnset() {
-        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none());
-
-        assertThat(TowerStat.BURN_DURATION.clamp(TowerStat.BURN_DURATION.defaultBase()))
-                .isNotEqualTo(TowerStat.BURN_DURATION.defaultBase());
-        assertThat(tower.inspect().stats()).extracting(TowerStatLine::stat).doesNotContain(TowerStat.BURN_DURATION);
-    }
-
-    @Test
     void aNodeNotYetOwnedPreviewsTheRowItMovesOnTheLastingStats() {
         SniperTower tower = new SniperTower(this.context, 0, 0);
         this.context.towers().add(tower);
@@ -751,7 +742,7 @@ class AbstractTowerTest {
         GameWorld alwaysCrits = WorldFixtures.newWorld(() -> 0.0);
         FakeTower tower = FakeTower.offering(alwaysCrits, 0, 0, UpgradeTree.none());
         EnemyMob burning = EnemyFixtures.plainMob(alwaysCrits, 100000, 3);
-        burning.applyEffect(Effect.burn(Damage.magic(1), 100, DamageSink.none()));
+        burning.applyEffect(Effect.burn(Damage.magic(1), DamageSink.none()));
 
         tower.dealDamage(burning, Damage.physical(1000));
 

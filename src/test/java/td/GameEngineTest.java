@@ -362,7 +362,7 @@ class GameEngineTest {
     @Test
     void aDazedEnemyStopsButKeepsItsBurnAndItsChill() {
         EnemyMob enemy = spawnOnly(FakeGameHost.newBoundEngine(), WEAKLING);
-        enemy.applyEffect(Effect.burn(Damage.magic(1), 40, DamageSink.none()));
+        enemy.applyEffect(Effect.burn(Damage.magic(1), DamageSink.none()));
         enemy.applyEffect(Effect.chill(0.3f, 40, DamageSink.none()));
 
         enemy.applyEffect(Effect.dazed(20, DamageSink.none()));
@@ -373,7 +373,7 @@ class GameEngineTest {
 
     private static int totalBurnDamage(EnemyMob enemy) {
         List<Damage> received = new ArrayList<>();
-        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, received::add));
+        enemy.applyEffect(Effect.burn(Damage.magic(100), received::add));
         for (int t = 1; enemy.activeEffectKinds().contains(EffectKind.BURN); t++) {
             enemy.doTick(t);
         }
@@ -2224,9 +2224,9 @@ class GameEngineTest {
     void soulfireBurnsAnEnemyThatIsImmuneToBurn() {
         EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new ImmunityTrait(EffectKind.BURN));
 
-        enemy.applyEffect(Effect.burn(Damage.magic(100), 60, DamageSink.none()));
+        enemy.applyEffect(Effect.burn(Damage.magic(100), DamageSink.none()));
         boolean burned = enemy.activeEffectKinds().contains(EffectKind.BURN);
-        enemy.applyEffect(Effect.soulfire(Damage.magic(100), 60, DamageSink.none()));
+        enemy.applyEffect(Effect.soulfire(Damage.magic(100), DamageSink.none()));
 
         assertThat(burned).isFalse();
         assertThat(enemy.activeEffectKinds()).contains(EffectKind.SOULFIRE);

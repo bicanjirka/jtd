@@ -22,8 +22,10 @@ public enum TowerStatRow implements StatTerm {
     /** Points a second on one target, before its defences. */
     PHYSICAL_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
     MAGIC_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
-    /** Points a second on one target from a burn kept going, before its defences. */
-    BURN_DPS("DPS", "Damage per second", StatUnit.PER_TARGET, StatDirection.HIGHER),
+    /** Fuel a second it pours into each enemy in its cone, in points. */
+    FLAME("Flame", "Flame", StatUnit.DAMAGE_PER_SECOND, StatDirection.HIGHER),
+    /** Fuel one stream gives an enemy, in points. */
+    STREAM_FUEL("Per stream", "Fuel a stream", StatUnit.PER_TARGET, StatDirection.HIGHER),
     /** Points a second it really dealt this wave, on everything it reached. */
     WAVE_DPS("Wave DPS", "Damage per second this wave", StatUnit.DAMAGE_PER_SECOND, StatDirection.HIGHER),
     /** In cells a second. */
@@ -72,7 +74,7 @@ public enum TowerStatRow implements StatTerm {
     public StatGroup group() {
         return switch (this) {
             case PHYSICAL_DAMAGE, MAGIC_DAMAGE, PHYSICAL_FIELD_DAMAGE, MAGIC_FIELD_DAMAGE, FIRE_RATE,
-                 PHYSICAL_DPS, MAGIC_DPS, BURN_DPS, WAVE_DPS -> StatGroup.DAMAGE;
+                 PHYSICAL_DPS, MAGIC_DPS, FLAME, STREAM_FUEL, WAVE_DPS -> StatGroup.DAMAGE;
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatGroup.DELIVERY;
         };
     }
@@ -89,8 +91,10 @@ public enum TowerStatRow implements StatTerm {
             case FIRE_RATE -> TermText.of("how many attacks it makes each second");
             case PHYSICAL_DPS, MAGIC_DPS -> TermText.of("damage x fire rate x average crit on one target, before its "
                     + "defences; it leaves out splash, effects, damage over time, extra hits and misses");
-            case BURN_DPS -> TermText.of("what one target takes from its ").plus(EffectKind.BURN)
-                    .plus(" while it stays in the flame, once the waves have built that up, before its defences");
+            case FLAME -> TermText.of("the fuel a second its stream pours into the ").plus(EffectKind.BURN)
+                    .plus(" of each enemy in its cone; a pool deals all its fuel, before the enemy's defences");
+            case STREAM_FUEL -> TermText.of("the fuel one whole stream gives an enemy in its cone, outside the ")
+                    .plus(TowerTerm.CORE);
             case WAVE_DPS -> TermText.of("what it really dealt this wave, to every enemy and after their defences, "
                     + "from its first damage to its last");
             case PROJECTILE_SPEED -> TermText.of("how fast its shots fly");
