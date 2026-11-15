@@ -507,6 +507,11 @@ public final class TowerBench {
                 before - engine.getGameWorld().economy().getCredits());
     }
 
+    /** The class a tower of {@code type} is an instance of, which names the source its prices are written in. */
+    static Class<?> classOf(TowerFactory.Type type) {
+        return Turn.place(idleEngine(), type, SUBJECT).orElseThrow().getClass();
+    }
+
     /** The tree a tower of {@code type} is built with. */
     static UpgradeTree treeOf(TowerFactory.Type type) {
         return Turn.place(idleEngine(), type, SUBJECT).orElseThrow().upgradeTree();

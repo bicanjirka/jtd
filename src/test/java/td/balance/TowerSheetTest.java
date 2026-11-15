@@ -28,12 +28,17 @@ class TowerSheetTest {
                 String.join(" ", owned));
     }
 
-    /** A build that weighs {@code node} against the build {@code versus}. */
+    /** A build that weighs {@code node}, of the first tier, against the build {@code versus}. */
     static List<String> weighing(List<String> build, String node, String versus) {
+        return weighing(build, node, versus, 0);
+    }
+
+    /** A build that weighs {@code node}, of {@code tier}, against the build {@code versus}. */
+    static List<String> weighing(List<String> build, String node, String versus, int tier) {
         List<String> row = new ArrayList<>(build);
         row.set(4, node);
         row.set(5, node);
-        row.set(6, "0");
+        row.set(6, String.valueOf(tier));
         row.set(7, versus);
         return row;
     }
