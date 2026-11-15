@@ -21,11 +21,6 @@ import td.wave.Point;
 import td.wave.WaveDefinition;
 import td.wave.WaveScript;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -44,14 +39,13 @@ import java.util.function.DoubleFunction;
  * (against its best answer), what it is worth beside Walkers, how much less it is held back, and the bounty that power
  * asks for. A tool run on demand, not a test: several minutes.
  * <p>
- * Usage: {@code EnemyPowerReport [--kinds walker,golem] [--ranks grunt,elite] [--fit golem=1.7,yeti=1.7]}. The table is also
- * written to {@code target/balance/enemy-power.tsv}. {@code --fit} prints, in place of the table, the health at which
+ * Usage: {@code EnemyPowerReport [--kinds walker,golem] [--ranks grunt,elite] [--fit golem=1.7,yeti=1.7]}. A full run
+ * stores {@code enemy-power.tsv}, {@code enemy-baseline.tsv} and {@code enemies.html} in {@code target/balance/}. {@code --fit} prints, in place of the table, the health at which
  * each enemy named weighs the number given at the low ranks, and that times {@link #weightGrowthAt} above them.
  */
 public final class EnemyPowerReport {
 
     static final String BASELINE = TowerLab.PLAIN;
-    private static final Path STORE = Path.of("target", "balance", "enemy-power.tsv");
     /** How far above the Walker an enemy may stand at the low ranks before it needs a weakness. */
     private static final double BLIND_LIMIT = 1.75;
     /** The share of its blind power an enemy over the limit may keep against its best answer. */
@@ -119,26 +113,47 @@ public final class EnemyPowerReport {
                 .map(subject -> EnemyPower.of(subject, baselines.get(subject.rank())))
                 .toList();
 
-        StringBuilder tsv = new StringBuilder(EnemyPower.header()).append('\n');
+        List<List<String>> rows = new ArrayList<>();
+        List<List<String>> walkers = new ArrayList<>();
         for (Rank rank : ranks) {
             Baseline baseline = baselines.get(rank);
             System.out.printf(Locale.ROOT, "%n== %s  (group of %d; the Walker takes shot %.0f, bolt %.0f, blast %.0f, burn %.0f"
                             + " damage a second, and %.2f of the mix)%n", rank, groupAt(rank),
                     baseline.pure().get(PowerProbe.SHOT), baseline.pure().get(PowerProbe.BOLT),
                     baseline.pure().get(PowerProbe.BLAST), baseline.pure().get(PowerProbe.BURN), baseline.mix());
-            System.out.println(EnemyPower.header().replace('\t', ' '));
+            System.out.println(String.join(" ", EnemyPower.HEADER));
+            walkers.add(List.of(rank.name().toLowerCase(Locale.ROOT), String.valueOf(groupAt(rank)),
+                    ReportPage.number(baseline.pure().get(PowerProbe.SHOT)),
+                    ReportPage.number(baseline.pure().get(PowerProbe.BOLT)),
+                    ReportPage.number(baseline.pure().get(PowerProbe.BLAST)),
+                    ReportPage.number(baseline.pure().get(PowerProbe.BURN)), ReportPage.number(baseline.mix())));
             for (EnemyPower power : powers) {
                 if (power.subject().rank() == rank) {
-                    System.out.println(power.line(" "));
-                    tsv.append(power.line("\t")).append('\n');
+                    System.out.println(String.join(" ", power.cells()));
+                    rows.add(power.cells());
                 }
             }
         }
-        try {
-            Files.createDirectories(STORE.getParent());
-            Files.writeString(STORE, tsv.toString(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        ReportPage.Table matrix = ReportPage.Table.of("Every enemy at every rank", EnemyPower.HEADER, rows).noted("""
+                Each number is a multiple of the Walker of the same rank. shot, bolt, blast, burn: what it takes of one
+                answer alone (a heavy physical hit, a heavy magic hit, small area hits, damage over time). seen: the shot
+                while it is kept revealed. blind: what it takes of a balanced mix, its power when the player has not
+                prepared. countered: its best answer. hardness: blind per health and walking time. company: what it adds
+                among Walkers. unheld: how much less a chill holds it. oneType: how much more a one-type defence takes.
+                fair: the bounty its power asks for.""")
+                .heating("shot", "bolt", "blast", "burn", "seen", "blind", "hardness", "countered", "company", "unheld",
+                        "oneType");
+        ReportPage.Table unit = ReportPage.Table.of("The Walker, the unit",
+                List.of("rank", "group", "shot", "bolt", "blast", "burn", "mix"), walkers).noted("""
+                What a group of Walkers of each rank takes of each probe alone, in damage a second, and the share of the
+                balanced mix that just holds it. An enemy's axis times this is its absolute figure.""");
+        if (onlyKinds.isEmpty() && onlyRanks.isEmpty()) {
+            ReportPage.store("enemy-power", matrix);
+            ReportPage.store("enemy-baseline", unit);
+            ReportPage.publish("enemies", "Enemy power", """
+                    Stage 1 of the balance pipeline: every enemy weighed against a rig of probes, with no tower. The
+                    limit is 1.75 Walkers blind (a quarter more at Elite, half more at Boss) unless the enemy has a clear
+                    answer. Click a column to sort.""", List.of(matrix, unit));
         }
     }
 
@@ -424,15 +439,13 @@ public final class EnemyPowerReport {
             return String.join(", ", does);
         }
 
-        static String header() {
-            return String.join("\t", "rank", "kind", "health", "speed", "shot", "bolt", "blast", "burn", "seen", "blind",
-                    "hardness",
-                    "countered", "company", "unheld", "oneType", "bounty", "fair", "verdict", "notes");
-        }
+        static final List<String> HEADER = List.of("rank", "kind", "health", "speed", "shot", "bolt", "blast", "burn",
+                "seen", "blind", "hardness", "countered", "company", "unheld", "oneType", "bounty", "fair", "verdict",
+                "notes");
 
-        String line(String separator) {
+        List<String> cells() {
             EnemyDefinition definition = this.subject.definition();
-            return String.join(separator,
+            return List.of(
                     this.subject.rank().name().toLowerCase(Locale.ROOT),
                     this.subject.kind(),
                     String.valueOf(definition.baseHealth()),
