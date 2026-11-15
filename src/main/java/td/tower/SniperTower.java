@@ -85,57 +85,57 @@ public final class SniperTower extends AbstractTower {
     private static final ProcPayload FRENZY = new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.FRENZY, 3,
             TowerModifiers.attackSpeed(0.35f)).lengthenedByBuffs());
 
-    private static final UpgradeNode RIFLING = UpgradeNode.of("sniper.rifling", "Rifling", 1)
+    private static final UpgradeNode RIFLING = UpgradeNode.of("sniper.rifling", "Rifling", 2)
             .withModifiers(TowerModifiers.critChance(0.05f));
-    private static final UpgradeNode LONG_BARREL = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Barrel", 10)
+    private static final UpgradeNode LONG_BARREL = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Barrel", 5)
             .withModifiers(TowerModifiers.range(1f));
-    private static final UpgradeNode HEAVY_ROUNDS = UpgradeNode.of("sniper.heavy_rounds", "Heavy Rounds", 11)
+    private static final UpgradeNode HEAVY_ROUNDS = UpgradeNode.of("sniper.heavy_rounds", "Heavy Rounds", 9)
             .withModifiers(TowerModifiers.damage(12f));
 
-    private static final UpgradeNode FOURTH_SHOT = UpgradeNode.of("sniper.fourth_shot", "Fourth Shot", 6)
+    private static final UpgradeNode FOURTH_SHOT = UpgradeNode.of("sniper.fourth_shot", "Fourth Shot", 7)
             .withProc(Proc.everyNthShot(FOURTH, new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.FOURTH_SHOT,
                     1, StatModifiers.none()).withCapability(TowerCapability.GUARANTEED_CRIT))))
             .inTier(1);
-    private static final UpgradeNode DEEP_BREATH = UpgradeNode.of("sniper.deep_breath", "Deep Breath", 5)
+    private static final UpgradeNode DEEP_BREATH = UpgradeNode.of("sniper.deep_breath", "Deep Breath", 3)
             .withModifiers(TowerModifiers.aimStacks(3))
             .inTier(1);
-    private static final UpgradeNode KEEN_EYE = UpgradeNode.of("sniper.keen_eye", "Keen Eye", 5)
+    private static final UpgradeNode KEEN_EYE = UpgradeNode.of("sniper.keen_eye", "Keen Eye", 3)
             .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 0), HitAdjustment.critChance(0.02f)))
             .inTier(1);
-    private static final UpgradeNode KILLSHOT = UpgradeNode.of("sniper.killshot", "Killshot", 7)
+    private static final UpgradeNode KILLSHOT = UpgradeNode.of("sniper.killshot", "Killshot", 5)
             .withModifiers(TowerModifiers.critMultiplier(0.5f))
             .inTier(1);
 
-    private static final UpgradeNode FRENZY_NODE = UpgradeNode.of("sniper.frenzy", "Frenzy", 10)
+    private static final UpgradeNode FRENZY_NODE = UpgradeNode.of("sniper.frenzy", "Frenzy", 8)
             .withProc(Proc.onCrit(FRENZY))
             .inTier(2);
-    private static final UpgradeNode RICOCHET = UpgradeNode.of("sniper.ricochet", "Ricochet", 10)
+    private static final UpgradeNode RICOCHET = UpgradeNode.of("sniper.ricochet", "Ricochet", 8)
             .inTier(2);
-    private static final UpgradeNode SUNDERING_CRITS = UpgradeNode.of("sniper.sundering_crits", "Sundering Crits", 10)
+    private static final UpgradeNode SUNDERING_CRITS = UpgradeNode.of("sniper.sundering_crits", "Sundering Crits", 8)
             .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 2)))
             .inTier(2);
-    private static final UpgradeNode SILVER_ROUND = UpgradeNode.of("sniper.silver_round", "Silver Round", 5)
+    private static final UpgradeNode SILVER_ROUND = UpgradeNode.of("sniper.silver_round", "Silver Round", 11)
             .withProc(Proc.everyNthShot(FOURTH, new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.SILVER_ROUND,
                     1, TowerModifiers.magicPenetrationFlat(50f)).withCapability(TowerCapability.MAGIC_DAMAGE))))
             .after(FOURTH_SHOT)
             .inTier(2);
-    private static final UpgradeNode HOLLOW_POINT = UpgradeNode.of("sniper.hollow_point", "Hollow Point", 5)
+    private static final UpgradeNode HOLLOW_POINT = UpgradeNode.of("sniper.hollow_point", "Hollow Point", 11)
             .withProc(Proc.everyNthShot(FOURTH, new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.HOLLOW_POINT,
                     1, TowerModifiers.damagePercent(0.33f)))))
             .after(FOURTH_SHOT)
             .inTier(2);
-    private static final UpgradeNode LONG_BARREL_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Barrel II", 18)
+    private static final UpgradeNode LONG_BARREL_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Barrel II", 15)
             .withModifiers(TowerModifiers.range(1f))
             .inTier(2);
 
-    private static final UpgradeNode HEAVY_ROUNDS_2 = UpgradeNode.of("sniper.heavy_rounds.2", "Heavy Rounds II", 23)
+    private static final UpgradeNode HEAVY_ROUNDS_2 = UpgradeNode.of("sniper.heavy_rounds.2", "Heavy Rounds II", 27)
             .withModifiers(TowerModifiers.damage(12f))
             .inTier(3);
     private static final UpgradeNode EXECUTIONER = UpgradeNode.of("sniper.executioner", "Executioner", 6)
             .inTier(3);
     private static final UpgradeNode HEADHUNTER = UpgradeNode.of("sniper.headhunter", "Headhunter", 6)
             .inTier(3);
-    private static final UpgradeNode UNBROKEN_AIM = UpgradeNode.of("sniper.unbroken_aim", "Unbroken Aim", 1)
+    private static final UpgradeNode UNBROKEN_AIM = UpgradeNode.of("sniper.unbroken_aim", "Unbroken Aim", 6)
             .withModifiers(TowerModifiers.aimStacksPerShot(1))
             .inTier(3);
     private static final UpgradeNode MOMENTUM = UpgradeNode.of("sniper.momentum", "Momentum", 9)

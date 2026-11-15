@@ -114,18 +114,18 @@ public final class SplashTower extends AbstractTower {
     private static final Hex INVERSION = new InversionHex();
     private static final List<Hex> HEXES = List.of(DOOM, BLIGHT, INVERSION);
 
-    private static final UpgradeNode LONG_THROW = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Throw", 8)
+    private static final UpgradeNode LONG_THROW = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Throw", 4)
             .withModifiers(TowerModifiers.range(0.7f));
-    private static final UpgradeNode WIDE_CHARGE = UpgradeNode.of("splash.wide_charge", "Wide Charge", 7)
+    private static final UpgradeNode WIDE_CHARGE = UpgradeNode.of("splash.wide_charge", "Wide Charge", 5)
             .withModifiers(TowerModifiers.areaRadius(0.25f).plus(TowerModifiers.blastEdge(0.5f)));
-    private static final UpgradeNode FLINT_STONES = UpgradeNode.of("splash.flint_stones", "Flint Stones", 1)
+    private static final UpgradeNode FLINT_STONES = UpgradeNode.of("splash.flint_stones", "Flint Stones", 2)
             .withModifiers(TowerModifiers.armorPenetrationFlat(10f));
 
-    private static final UpgradeNode STORMCALLER = UpgradeNode.of("splash.stormcaller", "Stormcaller", 2)
+    private static final UpgradeNode STORMCALLER = UpgradeNode.of("splash.stormcaller", "Stormcaller", 5)
             .inTier(1);
-    private static final UpgradeNode HEXER = UpgradeNode.of("splash.hexer", "Hexer", 2)
+    private static final UpgradeNode HEXER = UpgradeNode.of("splash.hexer", "Hexer", 5)
             .inTier(1);
-    private static final UpgradeNode ARC = UpgradeNode.of("splash.arc", "Arc", 2)
+    private static final UpgradeNode ARC = UpgradeNode.of("splash.arc", "Arc", 3)
             .after(STORMCALLER)
             .inTier(1);
     private static final UpgradeNode HEX_OF_DOOM = UpgradeNode.of("splash.hex_of_doom", "Hex of Doom", 5)
@@ -137,65 +137,65 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeCondition A_HEX = UpgradeCondition.owns(HEX_OF_DOOM.id())
             .or(UpgradeCondition.owns(HEX_OF_BLIGHT.id()));
 
-    private static final UpgradeNode DEEP_DOOM = UpgradeNode.of("splash.deep_doom", "Deep Doom", 3)
+    private static final UpgradeNode DEEP_DOOM = UpgradeNode.of("splash.deep_doom", "Deep Doom", 5)
             .after(HEX_OF_DOOM)
             .inTier(2);
-    private static final UpgradeNode BLIGHT_CLOUD = UpgradeNode.of("splash.blight_cloud", "Blight Cloud", 16)
+    private static final UpgradeNode BLIGHT_CLOUD = UpgradeNode.of("splash.blight_cloud", "Blight Cloud", 32)
             .after(HEX_OF_BLIGHT)
             .inTier(2);
-    private static final UpgradeNode AGONY = UpgradeNode.of("splash.agony", "Agony", 2)
+    private static final UpgradeNode AGONY = UpgradeNode.of("splash.agony", "Agony", 8)
             .withRequires(A_HEX)
             .inTier(2);
-    private static final UpgradeNode CONTAGION = UpgradeNode.of("splash.contagion", "Contagion", 1)
+    private static final UpgradeNode CONTAGION = UpgradeNode.of("splash.contagion", "Contagion", 5)
             .withRequires(A_HEX)
             .inTier(2);
-    private static final UpgradeNode CHAIN_LIGHTNING = UpgradeNode.of("splash.chain_lightning", "Chain Lightning", 3)
+    private static final UpgradeNode CHAIN_LIGHTNING = UpgradeNode.of("splash.chain_lightning", "Chain Lightning", 5)
             .after(ARC)
             .inTier(2);
-    private static final UpgradeNode WILD_ARC = UpgradeNode.of("splash.wild_arc", "Wild Arc", 3)
+    private static final UpgradeNode WILD_ARC = UpgradeNode.of("splash.wild_arc", "Wild Arc", 5)
             .after(ARC)
             .inTier(2);
-    private static final UpgradeNode CONDUCTOR = UpgradeNode.of("splash.conductor", "Conductor", 1)
+    private static final UpgradeNode CONDUCTOR = UpgradeNode.of("splash.conductor", "Conductor", 5)
             .after(ARC)
             .inTier(2);
     private static final UpgradeNode SHORT_CIRCUIT = UpgradeNode.of("splash.short_circuit", "Short Circuit", 1)
             .after(ARC)
             .inTier(2);
-    private static final UpgradeNode HEAVY_STONES = UpgradeNode.of("splash.heavy_stones", "Heavy Stones", 28)
+    private static final UpgradeNode HEAVY_STONES = UpgradeNode.of("splash.heavy_stones", "Heavy Stones", 26)
             .withModifiers(TowerModifiers.damage(7f))
             .inTier(2);
-    private static final UpgradeNode LONG_THROW_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Throw II", 19)
+    private static final UpgradeNode LONG_THROW_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Throw II", 12)
             .withModifiers(TowerModifiers.range(1f))
             .inTier(2);
 
-    private static final UpgradeNode SOUL_HARVEST = UpgradeNode.of("splash.soul_harvest", "Soul Harvest", 26)
+    private static final UpgradeNode SOUL_HARVEST = UpgradeNode.of("splash.soul_harvest", "Soul Harvest", 19)
             .after(HEXER)
             .inTier(3);
-    private static final UpgradeNode HEX_OF_INVERSION = UpgradeNode.of("splash.hex_of_inversion", "Hex of Inversion", 1)
+    private static final UpgradeNode HEX_OF_INVERSION = UpgradeNode.of("splash.hex_of_inversion", "Hex of Inversion", 6)
             .after(HEXER)
             .inTier(3);
     private static final UpgradeNode CHOKING_BLIGHT = UpgradeNode.of("splash.choking_blight", "Choking Blight", 1)
             .after(HEX_OF_BLIGHT)
             .inTier(3);
-    private static final UpgradeNode TWIN_HEX = UpgradeNode.of("splash.twin_hex", "Twin Hex", 20)
+    private static final UpgradeNode TWIN_HEX = UpgradeNode.of("splash.twin_hex", "Twin Hex", 14)
             .withRequires(A_HEX)
             .inTier(3);
-    private static final UpgradeNode THUNDERCLAP = UpgradeNode.of("splash.thunderclap", "Thunderclap", 10)
+    private static final UpgradeNode THUNDERCLAP = UpgradeNode.of("splash.thunderclap", "Thunderclap", 9)
             .after(STORMCALLER)
             .inTier(3);
-    private static final UpgradeNode THUNDERSTRIKE = UpgradeNode.of("splash.thunderstrike", "Thunderstrike", 10)
+    private static final UpgradeNode THUNDERSTRIKE = UpgradeNode.of("splash.thunderstrike", "Thunderstrike", 9)
             .after(STORMCALLER)
             .inTier(3);
-    private static final UpgradeNode HIGH_VOLTAGE = UpgradeNode.of("splash.high_voltage", "High Voltage", 7)
+    private static final UpgradeNode HIGH_VOLTAGE = UpgradeNode.of("splash.high_voltage", "High Voltage", 6)
             .after(ARC)
             .inTier(3);
-    private static final UpgradeNode FEEDBACK = UpgradeNode.of("splash.feedback", "Feedback", 5)
+    private static final UpgradeNode FEEDBACK = UpgradeNode.of("splash.feedback", "Feedback", 6)
             .after(CONDUCTOR)
             .inTier(3);
-    private static final UpgradeNode QUICK_HANDS = UpgradeNode.of("splash.quick_hands", "Quick Hands", 19)
+    private static final UpgradeNode QUICK_HANDS = UpgradeNode.of("splash.quick_hands", "Quick Hands", 17)
             .withModifiers(TowerModifiers.attackSpeed(1f / 0.85f - 1f))
             .inTier(3);
-    private static final UpgradeNode PIERCING_STONES = UpgradeNode.of("splash.piercing_stones", "Piercing Stones", 14)
+    private static final UpgradeNode PIERCING_STONES = UpgradeNode.of("splash.piercing_stones", "Piercing Stones", 6)
             .withModifiers(TowerModifiers.armorPenetrationFlat(40f))
             .inTier(3);
 
