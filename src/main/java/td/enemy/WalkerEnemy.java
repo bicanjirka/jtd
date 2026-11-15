@@ -16,10 +16,10 @@ final class WalkerEnemy {
                 .startingAt(EnemyDefinition.of("walker", "Walker", 75, 2, 1.28f, BodyArchetype.CIRCLE)
                         .withDescription("The plain foot soldier of every wave."), RankGrowth.of(32f).bending(2.6f))
                 .thenAt(Rank.ELITE, e -> e
-                        .withStats(10f, 10f, 0f, 0f, 10f, 5f, 10f)
+                        .withStats(10f, 10f, 0f, 0f, 10f, 10f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f)))))
                 .thenAt(Rank.BOSS, e -> e
-                        .withStats(15f, 15f, 0f, 0f, 30f, 5f, 20f))
+                        .withStats(40f, 40f, 0f, 0f, 40f, 40f, 40f))
                 .build());
     }
 }
