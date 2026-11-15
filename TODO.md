@@ -576,6 +576,16 @@ the feature request's paper values and were never measured in play. The Warden's
 
 ## Interface
 
+### A tall tower sheet scrolls sideways too
+
+At the default window size a sheet taller than the Info pane (a Mortar's) gets a vertical scrollbar, and the rows laid
+out to the pane's full width (stat values, icon rows) then no longer fit beside it, so a horizontal scrollbar shows
+as well and the values are cut at the right edge.
+
+- **Where:** `td.ui.InfoSheetDocument` (`this.width`, the full-width icons), `SheetPane.show`, which hands it the width.
+- **Approach:** lay the sheet out to the width left beside a vertical scrollbar whenever one may show, or keep the
+  scrollbar always shown so the width never changes; check with the Driver at the default size.
+
 ### An open tooltip may not grow when its content changes
 
 Reported with the tower visual revamp: with the pointer still on an upgrade node after buying it, the open tooltip
