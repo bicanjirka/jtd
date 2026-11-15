@@ -79,7 +79,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float ARC_SWING = 0.12f;
     private static final float ARC_MAX_SWING_PIXELS = 6f;
 
-    /** The nest's missiles circle at this fraction of a cell from the tower, a turn every few seconds. */
+    /** The ring the nest's missiles sit on, at this fraction of a cell from the tower. */
     private static final float NEST_ORBIT_FRACTION = 0.7f;
     private static final float APPRENTICE_MARK_CELLS = 0.55f;
     private static final float RALLY_SPOT_CELLS = 1f;
@@ -92,7 +92,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int BLAST_FRAGMENTS = 8;
     private static final float FRAGMENT_SHARE = 0.25f;
     private static final float FRAGMENT_STROKE_CELLS = 0.05f;
-    private static final double NEST_ORBIT_RADIANS_PER_TICK = 0.08;
     /** A stream's tongues take new tips this often, which is all the flicker it needs. */
     private static final int STREAM_FLICKER_TICKS = 3;
     /** The outer tongue fills the cone; the middle one reaches part of it, narrower; the core less again. */
@@ -479,9 +478,9 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /** The missiles banked in the nest, circling the tower; the missile in flight is a projectile. */
     public Void visitSeekerTower(SeekerTower tower) {
-        int stored = tower.getNestStored();
+        int stored = tower.nestMissiles().size();
         if (stored > 0) {
-            double phase = (this.gameTime + this.interpolationAlpha) * NEST_ORBIT_RADIANS_PER_TICK;
+            double phase = tower.ringRadians();
             this.draws.add(new NestDraw(Palette.PROJECTILE_MISSILE, tower.getX(), tower.getY(),
                     NEST_ORBIT_FRACTION * this.scale, stored, phase));
         }

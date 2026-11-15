@@ -277,7 +277,11 @@ public final class TowerLab {
 
         /** From 0 no more than the bare tower to 1 as much as if every enemy stayed revealed. */
         double shareOwning(UpgradeNode line) {
-            double with = partnerDamage(this.duel, this.partnerCell, this.type, this.cell, Optional.of(line), false);
+            return this.shareAt(partnerDamage(this.duel, this.partnerCell, this.type, this.cell, Optional.of(line), false));
+        }
+
+        /** {@link #shareOwning} for a partner that dealt {@code with} beside the tower owning the node. */
+        double shareAt(double with) {
             return this.seen - this.unseen <= HIDING_MATTERS * this.seen ? 1.0
                     : Math.clamp((with - this.unseen) / (this.seen - this.unseen), 0.0, 1.0);
         }

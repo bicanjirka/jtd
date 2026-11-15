@@ -6,6 +6,7 @@ import td.damage.DamageType;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.IntUnaryOperator;
 
 /**
@@ -45,7 +46,12 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     public static Effect freeze(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.FREEZE, durationTicks, sink);
+        return freeze(durationTicks, IceKind.FROST, sink);
+    }
+
+    /** A freeze of {@code ice}: one in ruby also holds what is immune to freezing. */
+    public static Effect freeze(int durationTicks, IceKind ice, DamageSink sink) {
+        return of(EffectKind.FREEZE, durationTicks, sink, new EffectDynamics.Encasing(ice));
     }
 
     /** Stops the enemy for {@code durationTicks}. */
@@ -359,6 +365,19 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
             case EffectDynamics.FuelPool pool -> pool.stackClock();
             default -> 0;
         };
+    }
+
+    /** The ice a freeze is made of; {@link IceKind#FROST} for any other family. */
+    public IceKind ice() {
+        return switch (this.dynamics) {
+            case EffectDynamics.Encasing encasing -> encasing.ice();
+            default -> IceKind.FROST;
+        };
+    }
+
+    /** Whether an enemy immune to {@code immunities} keeps this effect off: a ruby freeze still holds. */
+    public boolean isKeptOffBy(Set<EffectKind> immunities) {
+        return immunities.contains(this.kind) && !this.ice().holdsTheImmune();
     }
 
     /** A stacking kind's stack count. */

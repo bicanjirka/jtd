@@ -159,7 +159,7 @@ public final class DevEffects {
             case STEADY_AIM, FOCUS, MAGAZINE, NEST -> new Refuses<>(KEPT_BY_THE_TOWER);
             case FLAME, STREAM, CORE, DRAGONS_BREATH, FLASHOVER, THERMAL_SHOCK, MELTDOWN,
                     HEAVY_SHELL, NUKE_SHELL, PAYLOAD, NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, FLARE, BARRAGE, CARPET_BOMBING,
-                    CRYO_MISSILE, ARCANE_MISSILE, EMP_MISSILE, TRACER_MISSILE,
+                    FROST_MISSILE, RUBY, SHADE, SWARM, HATCHING, ICE_WAKE,
                     SHATTER, ARC, HEX, STATIC, SOULBRAND, SPARK, SOUL, THUNDERCLAP,
                     THUNDERSTRIKE, SUNDIAL, FRAILTY, SHADOW -> new Refuses<>(FROM_AN_UPGRADE);
             case AURA, KINSHIP -> new Refuses<>("comes from a Beacon");

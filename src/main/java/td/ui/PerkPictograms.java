@@ -130,26 +130,6 @@ final class PerkPictograms {
             Map.entry("mortar.quick_reload", "S M3.2 19.6C5.4 7 14.6 5 19.4 14.8 ; F O20.4 17.6 2.4 ; T M1.8 21.6H22.2 ; F M3.2 19.6L1.6 16.6L5 17Z"),
             // Purge
             Map.entry("pulse.head.ward.4b", "F M11 3.4L4.2 6V11.2C4.2 13.8 5.2 16 6.8 17.6L9.6 12.8L8.6 8.4Z ; F M13 3.4L19.8 6V11.2C19.8 13.8 18.8 16 17.2 17.6L14.4 12.8L15.4 8.4Z ; F M7.8 19.2L10.6 14.4H13.4L16.2 19.2C15 20.2 13.6 21 12 21.6C10.4 21 9 20.2 7.8 19.2Z"),
-            // Twin Warhead
-            Map.entry("seeker.head.twin_warhead.1", "F M4.4 20.4V9.6C4.4 6.6 5.8 4.4 7.6 2.8C9.4 4.4 10.8 6.6 10.8 9.6V20.4Z M13.2 20.4V9.6C13.2 6.6 14.6 4.4 16.4 2.8C18.2 4.4 19.6 6.6 19.6 9.6V20.4Z ; F M4.4 20.4L2.6 22.2V17.6L4.4 15.8Z M10.8 20.4L12.6 22.2V17.6L10.8 15.8Z M19.6 20.4L21.4 22.2V17.6L19.6 15.8Z ; X M4.4 9.4H10.8 M13.2 9.4H19.6"),
-            // Shatterburst
-            Map.entry("seeker.head.twin_warhead.4a", "=tower.shatter"),
-            // Rearm
-            Map.entry("seeker.head.twin_warhead.4b", "F M5.4 20.6V10.2C5.4 7.4 6.8 5.2 8.6 3.6C10.4 5.2 11.8 7.4 11.8 10.2V20.6Z ; X M5.4 10.6H11.8 ; S M15.4 19.6A6.2 6.2 0 0 0 17.6 7.6 ; F M14.6 5.2L19.8 4.6L18.4 9.8Z"),
-            // Deep Freeze
-            Map.entry("seeker.head.deep_freeze.1", "=effect.freeze"),
-            // Absolute Zero
-            Map.entry("seeker.head.deep_freeze.4a", "S M9.6 14.4V5.2A2.4 2.4 0 0 1 14.4 5.2V14.4A4.4 4.4 0 1 1 9.6 14.4Z ; F O12 17.6 2.4 ; T M17.4 6.4H20.4 M17.4 10H20.4"),
-            // Frostbite
-            Map.entry("seeker.head.deep_freeze.4b", "S M10.4 4V20 M3.47 8L17.33 16 M3.47 16L17.33 8 ; F M18.6 1.8L19.8 5.4L23.4 6.6L19.8 7.8L18.6 11.4L17.4 7.8L13.8 6.6L17.4 5.4Z"),
-            // Mixed Payloads
-            Map.entry("seeker.extra.mixed_payloads.1", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M15.2 16.6L16 18.6L18 19.4L16 20.2L15.2 22.2L14.4 20.2L12.4 19.4L14.4 18.6Z ; F M21 11.8L18 15.8H20L19.2 19.2L22.4 14.8H20.4Z"),
-            // Arcane Warhead
-            Map.entry("seeker.special.arcane_warhead", "=tower.arcane_missile"),
-            // Nullifier
-            Map.entry("seeker.special.nullifier", "S M13.2 3.6L20 6.2V11.2C20 15.6 17.2 19 13.2 20.6C9.2 19 6.4 15.6 6.4 11.2V6.2Z ; F@-45 M1.4 10.6H9.8L12.6 12L9.8 13.4H1.4Z"),
-            // Hunter's Mark
-            Map.entry("seeker.special.hunters_mark", "=tower.focus"),
             // Long Reach
             Map.entry("sonar.head.long_reach.1", "S M3.2 8.4C4.8 15.2 10 19.6 17.2 20.4 ; S M3.2 8.4L17.2 20.4 ; T M10.2 14.4L16.6 8 ; F O17.4 7.2 2 ; F M9 20.6H14V22.4H9Z"),
             // Wide Band
@@ -225,7 +205,39 @@ final class PerkPictograms {
             // Chosen
             Map.entry("aura.special.chosen", "F M12 2.6L14.6 9L21.4 9.4L16.2 13.8L17.9 20.4L12 16.8L6.1 20.4L7.8 13.8L2.6 9.4L9.4 9Z"),
             // Rally
-            Map.entry("aura.special.rally", "=tower.rally"));
+            Map.entry("aura.special.rally", "=tower.rally"),
+            // Quick Brood
+            Map.entry("seeker.quick_brood", "=pulse.quick_toll"),
+            // Deep Freeze
+            Map.entry("seeker.deep_freeze", "=effect.freeze"),
+            // Wide Comb
+            Map.entry("seeker.wide_comb", "F M4.4 20.4V9.6C4.4 6.6 5.8 4.4 7.6 2.8C9.4 4.4 10.8 6.6 10.8 9.6V20.4Z M13.2 20.4V9.6C13.2 6.6 14.6 4.4 16.4 2.8C18.2 4.4 19.6 6.6 19.6 9.6V20.4Z ; F M4.4 20.4L2.6 22.2V17.6L4.4 15.8Z M10.8 20.4L12.6 22.2V17.6L10.8 15.8Z M19.6 20.4L21.4 22.2V17.6L19.6 15.8Z ; X M4.4 9.4H10.8 M13.2 9.4H19.6"),
+            // Swarm
+            Map.entry("seeker.swarm", "=tower.swarm"),
+            // Hatching
+            Map.entry("seeker.hatching", "=tower.nest"),
+            // Feeding
+            Map.entry("seeker.feeding", "F M5.4 20.6V10.2C5.4 7.4 6.8 5.2 8.6 3.6C10.4 5.2 11.8 7.4 11.8 10.2V20.6Z ; X M5.4 10.6H11.8 ; S M15.4 19.6A6.2 6.2 0 0 0 17.6 7.6 ; F M14.6 5.2L19.8 4.6L18.4 9.8Z"),
+            // Swift Wings
+            Map.entry("seeker.swift_wings", "F M8.4 9.6H17.4L21.6 12L17.4 14.4H8.4Z ; T M2.4 9.6H6 M1.6 12H6 M2.4 14.4H6"),
+            // Wide Comb II
+            Map.entry("seeker.wide_comb_2", "=seeker.wide_comb"),
+            // Ruby
+            Map.entry("seeker.ruby", "=tower.ruby"),
+            // Shade
+            Map.entry("seeker.shade", "=effect.silenced"),
+            // Sharp Sting
+            Map.entry("seeker.sharp_sting", "F M12 2.6L15 14.4H9Z ; F O12 18 3.2"),
+            // Ice Wake
+            Map.entry("seeker.ice_wake", "=effect.chill"),
+            // Shatter
+            Map.entry("seeker.shatter", "=tower.shatter"),
+            // Rich Brood
+            Map.entry("seeker.rich_brood", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M15.2 16.6L16 18.6L18 19.4L16 20.2L15.2 22.2L14.4 20.2L12.4 19.4L14.4 18.6Z ; F M21 11.8L18 15.8H20L19.2 19.2L22.4 14.8H20.4Z"),
+            // Deep Freeze II
+            Map.entry("seeker.deep_freeze_2", "=effect.freeze"),
+            // Quick Brood II
+            Map.entry("seeker.quick_brood_2", "=seeker.quick_brood"));
 
     private PerkPictograms() {
     }

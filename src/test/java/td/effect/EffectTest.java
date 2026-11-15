@@ -5,6 +5,8 @@ import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -17,6 +19,14 @@ class EffectTest {
         assertThat(burn.dynamics()).isInstanceOf(EffectDynamics.FuelPool.class);
         assertThat(burn.fuelLevel()).isEqualTo(40f);
         assertThat(burn.stacks()).isZero();
+    }
+
+    @Test
+    void anImmunityToFreezingKeepsAFrostFreezeOffButNotARubyOne() {
+        Set<EffectKind> immunities = Set.of(EffectKind.FREEZE);
+
+        assertThat(Effect.freeze(20, DamageSink.none()).isKeptOffBy(immunities)).isTrue();
+        assertThat(Effect.freeze(20, IceKind.RUBY, DamageSink.none()).isKeptOffBy(immunities)).isFalse();
     }
 
     @Test
@@ -73,10 +83,10 @@ class EffectTest {
     }
 
     @Test
-    void aFreezeIsAFlag() {
+    void aFreezeIsAnEncasingOfFrost() {
         Effect freeze = Effect.freeze(30, DamageSink.none());
 
-        assertThat(freeze.dynamics()).isInstanceOf(EffectDynamics.Flag.class);
+        assertThat(freeze.dynamics()).isEqualTo(new EffectDynamics.Encasing(IceKind.FROST));
         assertThat(freeze.stacks()).isZero();
         assertThat(freeze.damagePerTick()).isEqualTo(Damage.none());
     }

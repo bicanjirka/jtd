@@ -1,68 +1,42 @@
 package td.tower.seeker;
 
-import td.tower.targeting.FastestSelector;
 import td.tower.targeting.Reach;
 import td.tower.targeting.Viewpoint;
 
 /**
- * Whom the Seeker may hit, whom it picks, how its nest launches, what a missile does to the enemy it freezes and what missiles carry: the base rules reshaped by
- * each mechanic it owns. Each {@code withX} is a copy.
+ * Whom the Aerie may hunt, what its freezes set off, how its nest draws and what its ice does around it: the base rules
+ * reshaped by each mechanic it owns. Each {@code withX} is a copy.
  *
- * @param reach           the enemies it may fire at
- * @param aim             whom it picks among them
- * @param launchGapTicks  ticks between the missiles of a salvo; {@code 0} for no nest
- * @param spreadsSalvo    whether the launches of one salvo go to different targets
- * @param freeze          how a missile freezes
- * @param shatter         when a frozen enemy shatters
- * @param payloads        which missiles carry what
+ * @param reach   the enemies it may launch at
+ * @param release what every so many freezes set off
+ * @param feeds   whether each freeze takes time off the next load
+ * @param brood   how the nest draws each new missile
+ * @param ice     what its ice does to the enemies around it
  */
-public record SeekerSpec(Reach reach, SeekerAim aim, int launchGapTicks, boolean spreadsSalvo,
-                         FreezeSpec freeze, ShatterSpec shatter, PayloadPlan payloads) {
+public record SeekerSpec(Reach reach, Release release, boolean feeds, BroodSpec brood, IceRider ice) {
 
-    private static final SeekerAim FASTEST = new SeekerAim(new FastestSelector(), "fastest");
-
-    /** The visible enemies in range, the fastest first, no nest and the base freeze. */
+    /** The visible enemies in range, Frost missiles only and nothing more. */
     public static SeekerSpec from(Viewpoint view) {
-        return new SeekerSpec(Reach.visible(view), FASTEST, 0, false, FreezeSpec.base(),
-                ShatterSpec.none(), PayloadPlan.none());
+        return new SeekerSpec(Reach.visible(view), Release.NONE, false, BroodSpec.frostOnly(), IceRider.NONE);
     }
 
     public SeekerSpec withReach(Reach reach) {
-        return new SeekerSpec(reach, this.aim, this.launchGapTicks, this.spreadsSalvo, this.freeze,
-                this.shatter, this.payloads);
+        return new SeekerSpec(reach, this.release, this.feeds, this.brood, this.ice);
     }
 
-    public SeekerSpec withAim(SeekerAim aim) {
-        return new SeekerSpec(this.reach, aim, this.launchGapTicks, this.spreadsSalvo, this.freeze,
-                this.shatter, this.payloads);
+    public SeekerSpec withRelease(Release release) {
+        return new SeekerSpec(this.reach, release, this.feeds, this.brood, this.ice);
     }
 
-    public SeekerSpec withLaunchGapTicks(int launchGapTicks) {
-        return new SeekerSpec(this.reach, this.aim, launchGapTicks, this.spreadsSalvo, this.freeze, this.shatter,
-                this.payloads);
+    public SeekerSpec feeding() {
+        return new SeekerSpec(this.reach, this.release, true, this.brood, this.ice);
     }
 
-    public SeekerSpec withSpreadSalvo() {
-        return new SeekerSpec(this.reach, this.aim, this.launchGapTicks, true, this.freeze,
-                this.shatter, this.payloads);
+    public SeekerSpec withBrood(BroodSpec brood) {
+        return new SeekerSpec(this.reach, this.release, this.feeds, brood, this.ice);
     }
 
-    public SeekerSpec withFreeze(FreezeSpec freeze) {
-        return new SeekerSpec(this.reach, this.aim, this.launchGapTicks, this.spreadsSalvo, freeze,
-                this.shatter, this.payloads);
-    }
-
-    public SeekerSpec withShatter(ShatterSpec shatter) {
-        return new SeekerSpec(this.reach, this.aim, this.launchGapTicks, this.spreadsSalvo, this.freeze,
-                shatter, this.payloads);
-    }
-
-    public SeekerSpec withPayloads(PayloadPlan payloads) {
-        return new SeekerSpec(this.reach, this.aim, this.launchGapTicks, this.spreadsSalvo, this.freeze,
-                this.shatter, payloads);
-    }
-
-    public Viewpoint view() {
-        return this.reach.view();
+    public SeekerSpec withIce(IceRider ice) {
+        return new SeekerSpec(this.reach, this.release, this.feeds, this.brood, ice);
     }
 }

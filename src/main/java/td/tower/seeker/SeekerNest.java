@@ -1,75 +1,79 @@
 package td.tower.seeker;
 
-import td.enemy.EnemyMob;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.function.Predicate;
 
 /**
- * The missiles a Seeker has banked, how long until the next may launch, and whom the salvo in
- * progress has fired at. A salvo ends once no missile has left for twice the launch gap.
+ * The missiles the Aerie holds ready, each of its kind, in the order they leave; how long until the next may
+ * launch; and the missiles a Hatching still has to hatch.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class SeekerNest {
 
-    private static final int IDLE_CAP_TICKS = 1_000_000;
-
-    private final List<EnemyMob> salvoTargets = new ArrayList<>();
-    private int stored;
+    private final List<MissileKind> missiles = new ArrayList<>();
     private int gapLeft;
-    private int ticksSinceLaunch = IDLE_CAP_TICKS;
+    private int hatchLeft;
+    private int hatchWait;
 
-    /** Lets every stored missile go, as a nest that is no longer there. */
-    public void empty() {
-        this.stored = 0;
+    /** The missiles it holds, the next to leave first. */
+    public List<MissileKind> missiles() {
+        return List.copyOf(this.missiles);
     }
 
     public int stored() {
-        return this.stored;
+        return this.missiles.size();
     }
 
-    public boolean hasRoom(NestSpec spec) {
-        return this.stored < spec.capacity();
+    public boolean hasRoom(int capacity) {
+        return this.missiles.size() < capacity;
     }
 
-    /** Banks one missile. */
-    public void load() {
-        this.stored++;
+    /** Takes in one missile of {@code kind}, at the back. */
+    public void load(MissileKind kind) {
+        this.missiles.add(kind);
     }
 
-    /** One tick closer to the next launch; a salvo that has gone quiet is over. */
-    public void tick(NestSpec spec) {
+    /** Lets go every missile of a kind {@code owned} no longer holds. */
+    public void keepOnly(Predicate<MissileKind> owned) {
+        this.missiles.removeIf(owned.negate());
+    }
+
+    /** One tick closer to the next launch. */
+    public void tick() {
         if (this.gapLeft > 0) {
             this.gapLeft--;
-        }
-        if (this.ticksSinceLaunch < IDLE_CAP_TICKS) {
-            this.ticksSinceLaunch++;
-        }
-        if (this.ticksSinceLaunch > 2 * spec.launchGapTicks()) {
-            this.salvoTargets.clear();
         }
     }
 
     public boolean readyToLaunch() {
-        return this.stored > 0 && this.gapLeft == 0;
+        return !this.missiles.isEmpty() && this.gapLeft == 0;
     }
 
-    /** Takes one missile out to launch, and starts the wait before the next. */
-    public void launch(NestSpec spec) {
-        this.stored--;
-        this.gapLeft = spec.launchGapTicks();
-        this.ticksSinceLaunch = 0;
+    /** Takes the front missile out to launch, and starts a wait of {@code gapTicks} before the next. */
+    public MissileKind launch(int gapTicks) {
+        this.gapLeft = gapTicks;
+        return this.missiles.removeFirst();
     }
 
-    /** Remembers that the salvo has fired at {@code target}. */
-    public void recordTarget(EnemyMob target) {
-        this.salvoTargets.add(target);
+    /** {@code count} more missiles to hatch, the first at once. */
+    public void hatch(int count) {
+        this.hatchLeft += count;
     }
 
-    /** Whom the salvo in progress has fired at. */
-    public Set<EnemyMob> salvoTargets() {
-        return Set.copyOf(this.salvoTargets);
+    /** Whether a missile hatches this tick, one every {@code gapTicks} while any are left to hatch. */
+    public boolean hatchesNow(int gapTicks) {
+        if (this.hatchLeft == 0) {
+            return false;
+        }
+        if (this.hatchWait > 0) {
+            this.hatchWait--;
+            return false;
+        }
+        this.hatchLeft--;
+        this.hatchWait = gapTicks - 1;
+        return true;
     }
 }

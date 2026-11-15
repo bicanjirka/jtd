@@ -109,11 +109,10 @@ class ProjectileFrameBuilderTest {
     @Test
     void aMissilesFacingMatchesItsDirectionOfTravelThisTick() {
         FakeEnemyMob target = FakeEnemyMob.at(0, 100);
-        FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
-        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, ProjectileStats.of(10f), t -> {
-        });
+        MissileProjectile missile = new MissileProjectile(0, 0, Math.PI / 2, target, ProjectileStats.of(10f),
+                new FakeMissileGuide());
 
-        missile.doTick(1); // moves straight toward (0, 100), i.e. facing +Y
+        missile.doTick(1);
 
         ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
         missile.accept(builder);
@@ -125,10 +124,8 @@ class ProjectileFrameBuilderTest {
     @Test
     void aMissileIsDrawnAtItsSizeBehindAFadingTrailOfSmoke() {
         FakeEnemyMob target = FakeEnemyMob.at(0, 1000);
-        FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
-        MissileProjectile missile = new MissileProjectile(0, 0, target, registry,
-                ProjectileStats.of(10f).withSize(2f), t -> {
-                });
+        MissileProjectile missile = new MissileProjectile(0, 0, Math.PI / 2, target,
+                ProjectileStats.of(10f).withSize(2f), new FakeMissileGuide());
         for (int t = 1; t <= 4; t++) {
             missile.doTick(t);
         }

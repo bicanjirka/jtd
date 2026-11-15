@@ -390,10 +390,8 @@ public final class Java2DFrameRenderer {
             case BLAST_NUKE_RING -> new Color(200, 240, 74);
             case PROJECTILE_MISSILE -> new Color(80, 180, 255);
             case PROJECTILE_SMOKE -> new Color(190, 200, 210);
-            case PROJECTILE_CRYO -> new Color(170, 235, 255);
-            case PROJECTILE_ARCANE -> new Color(190, 90, 255);
-            case PROJECTILE_EMP -> new Color(255, 235, 60);
-            case PROJECTILE_TRACER -> new Color(255, 70, 70);
+            case PROJECTILE_RUBY -> new Color(0xd0, 0x40, 0x5a);
+            case PROJECTILE_SHADE -> new Color(0xa6, 0xe8, 0xc8);
             case STATUS_MARKER_CHILL -> new Color(120, 120, 255);
             case STATUS_MARKER_BURN -> new Color(255, 120, 40);
             case STATUS_MARKER_FREEZE -> new Color(150, 220, 255);

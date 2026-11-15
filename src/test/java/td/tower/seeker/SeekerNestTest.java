@@ -1,63 +1,66 @@
 package td.tower.seeker;
 
 import org.junit.jupiter.api.Test;
-import td.fixtures.FakeEnemyMob;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SeekerNestTest {
 
-    private static final NestSpec SPEC = NestSpec.of(3, 4);
+    private static final int GAP = 4;
 
     @Test
-    void itHoldsMissilesUpToItsCapacity() {
+    void itHasRoomUntilItHoldsItsCapacity() {
         SeekerNest nest = new SeekerNest();
 
-        for (int i = 0; i < 3; i++) {
-            nest.load();
-        }
+        nest.load(MissileKind.FROST);
+        nest.load(MissileKind.FROST);
 
-        assertThat(nest.stored()).isEqualTo(3);
-        assertThat(nest.hasRoom(SPEC)).isFalse();
-        assertThat(nest.hasRoom(NestSpec.of(4, SPEC.launchGapTicks()))).isTrue();
+        assertThat(nest.hasRoom(3)).isTrue();
+        assertThat(nest.hasRoom(2)).isFalse();
     }
 
     @Test
-    void aLaunchMakesTheNextWaitOutTheGap() {
+    void aLaunchTakesTheFrontMissileAndMakesTheNextWaitOutTheGap() {
         SeekerNest nest = new SeekerNest();
-        nest.load();
-        nest.load();
+        nest.load(MissileKind.RUBY);
+        nest.load(MissileKind.FROST);
 
-        nest.launch(SPEC);
-        int waited = 0;
-        while (!nest.readyToLaunch()) {
-            nest.tick(SPEC);
-            waited++;
+        MissileKind first = nest.launch(GAP);
+        for (int i = 1; i < GAP; i++) {
+            nest.tick();
         }
+        boolean readyEarly = nest.readyToLaunch();
+        nest.tick();
 
-        assertThat(waited).isEqualTo(4);
+        assertThat(first).isEqualTo(MissileKind.RUBY);
+        assertThat(readyEarly).isFalse();
+        assertThat(nest.readyToLaunch()).isTrue();
     }
 
     @Test
-    void anEmptyNestIsNeverReady() {
-        assertThat(new SeekerNest().readyToLaunch()).isFalse();
+    void aHatchingHatchesItsFirstMissileAtOnceAndTheRestAGapApart() {
+        SeekerNest nest = new SeekerNest();
+        nest.hatch(2);
+
+        boolean first = nest.hatchesNow(GAP);
+        int quiet = 0;
+        while (!nest.hatchesNow(GAP)) {
+            quiet++;
+        }
+
+        assertThat(first).isTrue();
+        assertThat(quiet).isEqualTo(GAP - 1);
+        assertThat(nest.hatchesNow(GAP)).isFalse();
     }
 
     @Test
-    void aSalvoRemembersItsTargetsUntilItHasGoneQuietForTwiceTheGap() {
+    void itLetsGoTheMissilesOfAKindItNoLongerHolds() {
         SeekerNest nest = new SeekerNest();
-        FakeEnemyMob target = FakeEnemyMob.at(0, 0);
-        nest.load();
-        nest.launch(SPEC);
-        nest.recordTarget(target);
+        nest.load(MissileKind.FROST);
+        nest.load(MissileKind.SHADE);
 
-        for (int t = 0; t < 8; t++) {
-            nest.tick(SPEC);
-        }
-        boolean stillRemembered = nest.salvoTargets().contains(target);
-        nest.tick(SPEC);
+        nest.keepOnly(kind -> kind == MissileKind.FROST);
 
-        assertThat(stillRemembered).isTrue();
-        assertThat(nest.salvoTargets()).isEmpty();
+        assertThat(nest.missiles()).containsExactly(MissileKind.FROST);
     }
 }

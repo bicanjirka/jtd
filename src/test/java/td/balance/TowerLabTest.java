@@ -68,11 +68,11 @@ class TowerLabTest {
     }
 
     @Test
-    void aTowerThatMarksGivesItsNeighbourMore() {
-        UpgradeNode marking = TowerLab.nodesApplying(PROBES, TowerFactory.Type.SEEKER, BESIDE_THE_PATH, EffectKind.MARKED)
-                .getFirst();
+    void aTowerThatMakesEnemiesTakeMoreGivesItsNeighbourMore() {
+        UpgradeNode frailty = TowerLab.nodesApplying(PROBES, TowerFactory.Type.PULSE, BESIDE_THE_PATH,
+                EffectKind.TOLL).getFirst();
 
-        double gain = supportTrial(TowerFactory.Type.SEEKER).gainOwning(Optional.of(marking));
+        double gain = supportTrial(TowerFactory.Type.PULSE).gainOwning(Optional.of(frailty));
 
         assertThat(gain).isGreaterThan(NEXT_TO_NOTHING);
     }
@@ -87,13 +87,21 @@ class TowerLabTest {
     }
 
     @Test
-    void aNodeThatRevealsShowsAHidingKindToTheSniperBesideIt() {
-        TowerLab.RevealTrial trial = TowerLab.RevealTrial.of(LEVEL, HIDER_KEY, NEXT_TO_IT, TowerFactory.Type.SEEKER, BESIDE_THE_PATH);
+    void aRevealShareIsHowFarANodeBringsItsPartnerFromUnseenToSeen() {
+        TowerLab.RevealTrial trial = new TowerLab.RevealTrial(LEVEL, NEXT_TO_IT, TowerFactory.Type.MORTAR, BESIDE_THE_PATH,
+                100, 300);
 
-        double shown = TowerLab.nodesApplying(PROBES, TowerFactory.Type.SEEKER, BESIDE_THE_PATH, EffectKind.REVEALED).stream()
-                .mapToDouble(trial::shareOwning).max().orElseThrow();
+        assertThat(trial.shareAt(150)).isEqualTo(0.25);
+        assertThat(trial.shareAt(50)).isZero();
+        assertThat(trial.shareAt(400)).isEqualTo(1.0);
+    }
 
-        assertThat(shown).isPositive();
+    @Test
+    void aKindThatHidingBarelyHurtsCountsAsFullyShown() {
+        TowerLab.RevealTrial trial = new TowerLab.RevealTrial(LEVEL, NEXT_TO_IT, TowerFactory.Type.MORTAR, BESIDE_THE_PATH,
+                300, 300);
+
+        assertThat(trial.shareAt(0)).isEqualTo(1.0);
     }
 
     @Test

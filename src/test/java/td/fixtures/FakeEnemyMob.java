@@ -28,6 +28,9 @@ import java.util.Set;
  */
 public final class FakeEnemyMob implements EnemyMob {
 
+    /** How far a fake has left to walk unless a test says otherwise. */
+    private static final double DISTANCE_TO_EXIT = 1000.0;
+
     private final int progression;
     private final int health;
     private final boolean hidden;
@@ -38,10 +41,12 @@ public final class FakeEnemyMob implements EnemyMob {
     private final List<Float> shieldBreaks = new ArrayList<>();
     private boolean hitsLandCritical;
     private boolean diesOnHit;
+    private boolean shielded;
     private boolean appliesEffects;
     private boolean regenerates;
     private boolean taunting;
     private float speed;
+    private double distanceToExit = DISTANCE_TO_EXIT;
     private boolean frozen;
     private float spirit;
     private float armorAndPlating;
@@ -93,7 +98,19 @@ public final class FakeEnemyMob implements EnemyMob {
         this.regenerates = other.regenerates;
         this.taunting = other.taunting;
         this.speed = other.speed;
+        this.distanceToExit = other.distanceToExit;
         return this;
+    }
+
+    /** This fake itself, now {@code pixels} from the exit of its path. */
+    public FakeEnemyMob withDistanceToExit(double pixels) {
+        this.distanceToExit = pixels;
+        return this;
+    }
+
+    @Override
+    public double distanceToExit() {
+        return this.distanceToExit;
     }
 
     /** This fake itself, now moving at {@code speed} pixels a tick. */
@@ -205,6 +222,12 @@ public final class FakeEnemyMob implements EnemyMob {
         this.diesOnHit = true;
     }
 
+    /** From now on a Shield takes every hit whole, but one that goes through shields. */
+    public FakeEnemyMob shieldingEveryHit() {
+        this.shielded = true;
+        return this;
+    }
+
     /** Reports a freeze as active, without any real effect. */
     public void reportFrozen() {
         this.frozen = true;
@@ -226,6 +249,9 @@ public final class FakeEnemyMob implements EnemyMob {
         this.attackers.add(attacker);
         if (this.diesOnHit) {
             this.valid = false;
+        }
+        if (this.shielded && !attacker.piercesShields(this.hitsLandCritical)) {
+            return new HitResult(new Damage(0, damage.type(), false), damage.amount());
         }
         return new HitResult(this.hitsLandCritical ? new Damage(damage.amount(), damage.type(), true) : damage, 0);
     }
@@ -339,7 +365,7 @@ public final class FakeEnemyMob implements EnemyMob {
 
     @Override
     public void applyEffect(Effect effect) {
-        if (!this.immunities.contains(effect.kind())) {
+        if (!effect.isKeptOffBy(this.immunities)) {
             this.appliedEffects.add(effect);
             this.live.apply(effect);
         }

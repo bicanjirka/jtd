@@ -18,6 +18,10 @@ public sealed interface EffectDynamics {
     record Flag() implements EffectDynamics {
     }
 
+    /** On or off like a flag: a freeze, and the ice it is made of. */
+    record Encasing(IceKind ice) implements EffectDynamics {
+    }
+
     /** A stack count and its cap ({@code 0} for its kind's own). */
     record Stacks(int stacks, int stackCap) implements EffectDynamics {
 

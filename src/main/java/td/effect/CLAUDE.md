@@ -1,7 +1,7 @@
 # `td.effect`
 
 - `Effect` is one effect-level record (kind, time, sink, origin) plus one `EffectDynamics` family:
-  flag, stacks, slow, growing slow, fuel pool, heal, shield pool or distance. A family carries
+  flag, encasing (a freeze and its `IceKind`), stacks, slow, growing slow, fuel pool, heal, shield pool or distance. A family carries
   only its own data. This package never depends on `td.enemy`: the producer binds a `DamageSink` when
   it creates the effect.
 - Each `EffectKind` is one row holding its `EffectRule`: category, stacking
@@ -67,7 +67,7 @@
   The mob applies regeneration to itself, capped at max health; `Damage` can't be negative.
 - Tenacity and the freeze meter only scale an authored duration, never change an effect's curve, and a pool's fuel
   in place of its duration: `duration = authored * durationFactor(tenacity)`, and `* FreezeMeter.nextShare()` for `FREEZE`; never under a tick,
-  though a freeze that would last under one doesn't land. Only an immunity keeps a kind out. `FREEZE` isn't renewed
+  though a freeze that would last under one doesn't land. Only an immunity keeps a kind out (`Effect.isKeptOffBy`), and a ruby freeze holds the immune all the same. `FREEZE` isn't renewed
   while it holds (`EffectTag.NOT_RENEWED`); `DAZED` refreshes like any other kind and has no meter.
 - `EffectInteractions` is the one place for how an active kind acts on another: what a pool earns, and what a
   kind keeps out (a reveal keeps `INVISIBLE` out and strips nothing). Add a rule there, never a condition in

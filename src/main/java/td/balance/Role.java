@@ -34,7 +34,7 @@ enum Role {
     ANTI_SUSTAIN(EnumSet.noneOf(TowerFactory.Type.class),
             Set.of("pulse.ward", "mortar.tar",
                     "mortar.fusion", "splash.hex_of_inversion",
-                    "cinder.soulfire", "seeker.extra.mixed_payloads.2", "seeker.special.nullifier"));
+                    "cinder.soulfire", "seeker.shade"));
 
     private final Set<TowerFactory.Type> types;
     /** Nodes that do the job; the nodes after one in its line do it too, since they can't be had without it. */

@@ -38,14 +38,6 @@ final class TowerTermPictograms {
             Map.entry("tower.flare", "=effect.revealed"),
             // Nuke
             Map.entry("tower.nuke_shell", "F M6 9.6C6 6 8.6 3.4 12 3.4C15.4 3.4 18 6 18 9.6C18 11.4 16.6 12.6 15 12.6H14V17.2C14 18.4 15.6 19.6 18 20.8H6C8.4 19.6 10 18.4 10 17.2V12.6H9C7.4 12.6 6 11.4 6 9.6Z ; X M8.6 10.4C10.4 11.2 13.6 11.2 15.4 10.4"),
-            // Cryo Missile
-            Map.entry("tower.cryo_missile", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; T M17.6 13.6V21.4 M14.2 15.6L21 19.4 M14.2 19.4L21 15.6"),
-            // Arcane Missile
-            Map.entry("tower.arcane_missile", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M17.6 13.2L18.6 16.4L21.8 17.4L18.6 18.4L17.6 21.6L16.6 18.4L13.4 17.4L16.6 16.4Z"),
-            // EMP Missile
-            Map.entry("tower.emp_missile", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M19 12.6L14.8 18.2H17.6L16.4 22.2L21 16H18.2Z"),
-            // Tracer Missile
-            Map.entry("tower.tracer_missile", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F O13.6 19.6 1.3 O17.4 19.6 1.3 O21.2 19.6 1.3"),
             // Rally
             Map.entry("tower.rally", "F M2.6 10.8H5.2V13.2H2.6Z M5.2 11.1H12.8L20.4 5.6V18.4L12.8 12.9H5.2Z ; S M7.4 12.9C7.4 17.4 12.8 17.4 12.8 12.9"),
             // Aura
@@ -54,6 +46,18 @@ final class TowerTermPictograms {
             Map.entry("tower.jammed", "F M12 9.4L16.2 21.4H13.6L12 16L10.4 21.4H7.8Z ; S M3.4 6.4L6.4 3.4L9.2 7.8L12 3.4L14.8 7.8L17.6 3.4L20.6 6.4"),
             // Nest
             Map.entry("tower.nest", "F M2.6 13.2H21.4C21.4 18 17.2 21.6 12 21.6C6.8 21.6 2.6 18 2.6 13.2Z ; F M6.4 13.2V8C6.4 6.6 7.2 5.4 8 4.6C8.8 5.4 9.6 6.6 9.6 8V13.2Z M10.4 13.2V6C10.4 4.6 11.2 3.4 12 2.6C12.8 3.4 13.6 4.6 13.6 6V13.2Z M14.4 13.2V8C14.4 6.6 15.2 5.4 16 4.6C16.8 5.4 17.6 6.6 17.6 8V13.2Z ; X M3 13.4H21"),
+            // Frost
+            Map.entry("tower.frost_missile", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; T M17.6 13.6V21.4 M14.2 15.6L21 19.4 M14.2 19.4L21 15.6"),
+            // Ruby
+            Map.entry("tower.ruby", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M17.6 13.2L18.6 16.4L21.8 17.4L18.6 18.4L17.6 21.6L16.6 18.4L13.4 17.4L16.6 16.4Z"),
+            // Shade
+            Map.entry("tower.shade", "=effect.silenced"),
+            // Swarm
+            Map.entry("tower.swarm", "F O6 16.4 2.2 O12 8.6 2.2 O18 16.4 2.2 ; T M6 16.4L12 8.6L18 16.4 ; S M12 21.4V18.2"),
+            // Hatching
+            Map.entry("tower.hatching", "=tower.nest"),
+            // Ice Wake
+            Map.entry("tower.ice_wake", "=effect.chill"),
             // Flame
             Map.entry("tower.flame", "F M12 2C12 2 19.5 8 19.5 14.2A7.5 7.5 0 0 1 4.5 14.2C4.5 10.8 6.6 8.6 8.2 7.2C8.6 9.6 9.8 11 11 11.4C10.4 8.2 10.9 4.8 12 2Z ; K M12 9.6C12 9.6 16.2 13 16.2 16A4.2 4.2 0 0 1 7.8 16C7.8 13 12 9.6 12 9.6Z ; D M12 11.4C12 11.4 14.8 13.8 14.8 16A2.8 2.8 0 0 1 9.2 16C9.2 13.8 12 11.4 12 11.4Z"),
             // Stream

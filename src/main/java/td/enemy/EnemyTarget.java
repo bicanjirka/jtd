@@ -15,6 +15,9 @@ public interface EnemyTarget {
     /** How far along its lap this mob is; for ranking only. */
     int getProgression();
 
+    /** How far it still has to walk to the exit of its own path, in pixels. */
+    double distanceToExit();
+
     /**
      * Where this mob will stand {@code ticks} from now if nothing changes its pace: its own spot for a
      * mob that does not follow a path.
