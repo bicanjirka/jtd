@@ -1,6 +1,7 @@
 package td.save;
 
 import org.junit.jupiter.api.Test;
+import td.tower.mortar.ShellKind;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -65,6 +66,7 @@ class GameSaveTextTest {
                 tower PULSE 4 7 400 123456 40 paid=97 xp+=0.25 base.attune +base.awaken
                 tower PULSE 9 7 0 0 0 paid=112 unused=tower base.attune
                 pin 4 7 9 7
+                magazine 2 2 NORMAL HEAVY NUKE NAPALM TAR CRYO FLARE NORMAL NORMAL HEAVY
                 """;
 
         GameSave save = GameSaveText.read(text).save().orElseThrow();
@@ -79,6 +81,23 @@ class GameSaveTextTest {
         assertThat(save.towers().getFirst().use().unusedNodes()).containsExactly("base.awaken");
         assertThat(save.towers().getLast().use().allUnused()).isTrue();
         assertThat(save.pins()).singleElement().satisfies(pin -> assertThat(pin.host().x()).isEqualTo(9));
+        assertThat(save.magazines()).singleElement().satisfies(magazine ->
+                assertThat(magazine.shells()).startsWith(ShellKind.NORMAL, ShellKind.HEAVY, ShellKind.NUKE));
         assertThat(GameSaveText.write(save)).isEqualTo(text);
+    }
+
+    @Test
+    void aMagazineWithAShellOfNoKnownKindIsAProblemNotASave() {
+        String text = FORMAT_LINE + """
+                level Curly Path
+                wave 9
+                economy 120 3400 5
+                magazine 2 2 NORMAL BOMBLET
+                """;
+
+        GameSaveText.Read read = GameSaveText.read(text);
+
+        assertThat(read.save()).isEmpty();
+        assertThat(read.problem()).contains("magazine");
     }
 }

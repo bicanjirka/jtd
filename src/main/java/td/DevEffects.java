@@ -120,6 +120,7 @@ public final class DevEffects {
             case ANCHORED -> timed(Effect::anchored);
             case BRITTLE -> timed(Effect::brittle);
             case CRACKED -> timed(Effect::cracked);
+            case DEEP_CRACKED -> timed(Effect::deeplyCracked);
             case TARRED -> timed(Effect::tarred);
             case DEAD_ZONE -> timed(Effect::deadZone);
             case EXPOSED -> timed(Effect::exposed);
@@ -160,9 +161,10 @@ public final class DevEffects {
                     TowerModifiers.damagePercent(in.value(1) / 100f)));
             case JAMMED -> new Builds<>(List.of(SECONDS, ATTACK_SPEED_LOST, RANGE_LOST), in -> new TowerGrant.Jam(in.ticks(0),
                     new DisruptionAura(JAM_REACH_CELLS * in.scale(), in.value(1) / 100f, in.value(2))));
-            case STEADY_AIM, FOCUS, BRACKETING, NEST, EVENT_HORIZON, INTERFERENCE, STOKE -> new Refuses<>(KEPT_BY_THE_TOWER);
-            case NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, NUKE_SHELL, CRYO_MISSILE, ARCANE_MISSILE, EMP_MISSILE, TRACER_MISSILE,
-                    SHATTER, ARC, HEX, SHRAPNEL, BOMBLET, STATIC, SOULBRAND, SPARK, SOUL, THUNDERCLAP,
+            case STEADY_AIM, FOCUS, MAGAZINE, NEST, EVENT_HORIZON, INTERFERENCE, STOKE -> new Refuses<>(KEPT_BY_THE_TOWER);
+            case HEAVY_SHELL, NUKE_SHELL, PAYLOAD, NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, FLARE, BARRAGE, CARPET_BOMBING,
+                    CRYO_MISSILE, ARCANE_MISSILE, EMP_MISSILE, TRACER_MISSILE,
+                    SHATTER, ARC, HEX, STATIC, SOULBRAND, SPARK, SOUL, THUNDERCLAP,
                     THUNDERSTRIKE -> new Refuses<>(FROM_AN_UPGRADE);
             case AURA, KINSHIP -> new Refuses<>("comes from a Beacon");
             case LEY_LINE -> new Refuses<>("comes from two Obelisks");

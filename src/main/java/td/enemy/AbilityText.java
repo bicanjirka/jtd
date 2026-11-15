@@ -97,7 +97,7 @@ final class AbilityText {
                     .plus(EffectKind.SHIELD).plus(" of " + TermNumbers.number(zone.power()) + ", " + lasts);
             case BLINDING_FIELD -> TermText.of("blinds the towers within " + reach + ": "
                     + TermNumbers.percent(zone.power()) + " miss chance, " + lasts);
-            case BURNING_GROUND, TAR, FROST_GROUND, FALLOUT -> TermText.of("leaves a zone");
+            case BURNING_GROUND, TAR, FROST_GROUND, FALLOUT, FLARE -> TermText.of("leaves a zone");
         };
     }
 

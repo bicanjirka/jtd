@@ -3,6 +3,7 @@ package td.zone;
 import td.damage.Damage;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
+import td.util.TickRate;
 
 /**
  * What one pulse of a zone puts on an enemy standing in it, so something that is not a zone (a piece
@@ -15,6 +16,8 @@ public final class ZoneEffects {
 
     private static final int BURN_TICKS = 60;
     private static final int POISON_TICKS = 60;
+    /** A flare reveals an enemy this long after its last pulse. */
+    private static final int FLARE_REVEAL_TICKS = Math.round(3 * TickRate.TICKS_PER_SECOND);
     /** Tar lets go of an enemy this long after its last pulse. */
     private static final int TARRED_TICKS = 2 * PULSE_TICKS;
     private static final float FROST_CHILL = 0.2f;
@@ -32,7 +35,7 @@ public final class ZoneEffects {
      * One pulse of {@code kind} on {@code enemy}, credited to {@code owner}. A frost zone's freeze is
      * a matter of how long an enemy stays, so it is the zone's own to add.
      *
-     * @param strength a burn's or poison's damage a tick, or healing ground's heal a tick, in damage units; unused by
+     * @param strength a burn's or poison's damage a tick (fallout's poison too), or healing ground's heal a tick, in damage units; unused by
      *                 the kinds with none
      */
     public static void touch(ZoneKind kind, int strength, ZoneOwner owner, EnemyMob enemy) {
@@ -51,7 +54,11 @@ public final class ZoneEffects {
             case FALLOUT -> {
                 owner.applyEffect(enemy, sink -> Effect.sickened(FALLOUT_SICKENED_STACKS));
                 owner.applyEffect(enemy, sink -> Effect.deadZone(FALLOUT_HOLD_TICKS, sink));
+                if (strength > 0) {
+                    owner.applyEffect(enemy, sink -> Effect.poison(Damage.magic(strength), POISON_TICKS, sink));
+                }
             }
+            case FLARE -> owner.applyEffect(enemy, sink -> Effect.revealed(FLARE_REVEAL_TICKS, sink));
         }
     }
 }

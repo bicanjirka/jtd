@@ -180,7 +180,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case STILLED -> Palette.STATUS_MARKER_STILLED;
             case DEAD_ZONE -> Palette.STATUS_MARKER_DEAD_ZONE;
             case FRAIL -> Palette.STATUS_MARKER_FRAIL;
-            case CRACKED -> Palette.STATUS_MARKER_CRACKED;
+            case CRACKED, DEEP_CRACKED -> Palette.STATUS_MARKER_CRACKED;
             case TARRED -> Palette.STATUS_MARKER_TARRED;
             case BLEEDING -> Palette.STATUS_MARKER_BLEEDING;
             case SOULFIRE -> Palette.STATUS_MARKER_SOULFIRE;
@@ -566,7 +566,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** The dot an effect with no picture of its own earns, if it earns one; every kind is decided here. */
     static Optional<EnemyDotLook> dotFor(EffectKind kind) {
         return switch (kind) {
-            case VULNERABLE, SUNDERED, BRITTLE, CRACKED, TARRED, TOLL, CONDEMNED, STILLED,
+            case VULNERABLE, SUNDERED, BRITTLE, CRACKED, DEEP_CRACKED, TARRED, TOLL, CONDEMNED, STILLED,
                  UNRAVELED -> Optional.of(EnemyDotLook.DEBUFF);
             case EXPOSED, MARKED, PRIORITY, CHARGED -> Optional.of(EnemyDotLook.SPOTTED);
             case SPRINTING, HASTENED, SPELLPROOF, UNYIELDING, RESOLVE -> Optional.of(EnemyDotLook.BUFF);

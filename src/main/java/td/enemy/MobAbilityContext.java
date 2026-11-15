@@ -131,7 +131,7 @@ final class MobAbilityContext implements AbilityContext {
             }
             case BLINDING_FIELD -> Zone.blinding(x, y, radius, action.lifetimeTicks(),
                     DisruptionPenalty.blinding(action.power()), ZoneOwner.nobody());
-            case BURNING_GROUND, TAR, FROST_GROUND, FALLOUT -> throw new IllegalArgumentException(
+            case BURNING_GROUND, TAR, FROST_GROUND, FALLOUT, FLARE -> throw new IllegalArgumentException(
                     action.kind() + " is a tower zone, not an enemy one");
         };
         this.world.zones().add(zone);

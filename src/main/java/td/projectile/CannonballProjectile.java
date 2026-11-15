@@ -17,7 +17,7 @@ public final class CannonballProjectile extends AbstractProjectile {
 
     public CannonballProjectile(double startX, double startY, double destinationX, double destinationY,
                                 float speed, PointImpact impact) {
-        this(startX, startY, destinationX, destinationY, ProjectileStats.of(speed), ShellLook.PLAIN, impact);
+        this(startX, startY, destinationX, destinationY, ProjectileStats.of(speed), ShellLook.NORMAL, impact);
     }
 
     public CannonballProjectile(double startX, double startY, double destinationX, double destinationY,

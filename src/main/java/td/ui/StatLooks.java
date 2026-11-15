@@ -75,12 +75,12 @@ final class StatLooks {
     private static StatLook tower(TowerStat stat) {
         return switch (stat) {
             case RANGE -> StatLook.plain(Glyph.RING);
-            case DEAD_ZONE -> StatLook.plain(Glyph.BROKEN_RING);
+            case MINIMUM_RANGE -> StatLook.plain(Glyph.BROKEN_RING);
             case AREA_RADIUS, BLAST_EDGE -> StatLook.plain(Glyph.RING_CENTRE);
             case CONE_WIDTH -> StatLook.plain(Glyph.WEDGE);
             case DAMAGE -> StatLook.plain(Glyph.DOT);
             case ATTACK_SPEED -> StatLook.plain(Glyph.CHEVRON);
-            case BRACKET_DAMAGE_STEP -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
+            case HEAVY_MULTIPLIER -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
             case CRIT_CHANCE, CRIT_MULTIPLIER -> StatLook.toned(Glyph.SPARK, Palette.CRIT_SPARK);
             case AIM_STACKS, AIM_STACKS_PER_SHOT -> StatLook.face(TermLooks.faceOf(TowerTerm.STEADY_AIM));
             case ARMOR_PENETRATION, ARMOR_PENETRATION_FLAT -> StatLook.toned(Glyph.PIERCE, Palette.DAMAGE_PHYSICAL);

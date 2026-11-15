@@ -11,6 +11,7 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.MagazineFixtures;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
@@ -18,6 +19,9 @@ import td.projectile.CannonballProjectile;
 import td.projectile.Projectile;
 import td.projectile.ShellLook;
 import td.stat.StatModifiers;
+import td.tower.mortar.BlastMark;
+import td.tower.mortar.Magazine;
+import td.tower.mortar.ShellKind;
 import td.util.GameWorld;
 import td.wave.Path;
 import td.wave.Vec2;
@@ -25,7 +29,9 @@ import td.zone.Zone;
 import td.zone.ZoneKind;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -33,7 +39,7 @@ import static org.assertj.core.api.Assertions.within;
 class MortarTowerTest {
 
     private static final int SCALE = BoardFixtures.SCALE;
-    /** Far enough out to be past the dead zone and still in range. */
+    /** Far enough out to be past the minimum range and still in range. */
     private static final int OUT = 3 * SCALE;
 
     private final GameWorld context = WorldFixtures.newWorldOnBoard(SCALE, 20, 20);
@@ -43,13 +49,16 @@ class MortarTowerTest {
         return new MortarTower(this.context, cellX, cellY);
     }
 
-    private MortarTower attunedTower() {
-        return this.towerWith("Attune");
-    }
-
     private MortarTower towerWith(String... nodes) {
         MortarTower tower = this.towerAt(3, 3);
         UpgradePaths.buy(tower, this.context, nodes);
+        return tower;
+    }
+
+    /** A Mortar owning {@code nodes} whose magazine starts with {@code front}. */
+    private MortarTower loaded(List<ShellKind> front, String... nodes) {
+        MortarTower tower = this.towerWith(nodes);
+        MortarTower.loadMagazine(tower, MagazineFixtures.frontedBy(front.toArray(ShellKind[]::new)));
         return tower;
     }
 
@@ -59,19 +68,30 @@ class MortarTowerTest {
 
     /** Ticks until the tower fires, then flies the shell to where it lands. */
     private void landAShell(MortarTower tower) {
-        for (int i = 0; i < 200 && this.context.projectiles().getProjectiles().isEmpty(); i++) {
-            tower.doTick(this.tick++);
-        }
+        this.fire(tower);
         TowerFixtures.flyProjectilesToCompletion(this.context);
     }
 
-    private static int hitAmount(FakeEnemyMob enemy, int index) {
-        return enemy.hits().get(index).amount();
+    /** Ticks until the tower fires; the shell it fired. */
+    private Projectile fire(MortarTower tower) {
+        for (int i = 0; i < 200 && this.context.projectiles().getProjectiles().isEmpty(); i++) {
+            tower.doTick(this.tick++);
+        }
+        return this.context.projectiles().getProjectiles().getLast();
+    }
+
+    private List<ZoneKind> zoneKinds() {
+        return this.context.zones().zones().stream().map(Zone::kind).toList();
+    }
+
+    private static int remainingTicksOf(FakeEnemyMob enemy, EffectKind kind) {
+        return enemy.activeEffects().stream().filter(effect -> effect.kind() == kind).findFirst().orElseThrow()
+                .remainingTicks();
     }
 
     @Test
     void aShellLandsWithTheStatsItWasFiredWithThoughTheChargeItSpentIsGone() {
-        MortarTower tower = this.towerAt(3, 3);
+        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL));
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
         tower.grantStatus(TowerStatus.nextShots(TowerTerm.HASTE, 1, TowerModifiers.damageTimes(3f)));
@@ -108,8 +128,8 @@ class MortarTowerTest {
     }
 
     @Test
-    void theShellIsSlowAndFliesAtItsOwnSpeed() {
-        MortarTower tower = this.towerAt(3, 3);
+    void aNormalShellIsSlowAndFliesAtItsOwnSpeed() {
+        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL));
         this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
         tower.doTick(1);
         CannonballProjectile shell = (CannonballProjectile) this.context.projectiles().getProjectiles().getFirst();
@@ -120,8 +140,8 @@ class MortarTowerTest {
     }
 
     @Test
-    void theBlastDealsFullDamageAtItsCentreAndCracksPlatingWithoutSlowing() {
-        MortarTower tower = this.towerAt(3, 3);
+    void theBlastDealsFullDamageInItsCoreAndCracksPlatingWithoutSlowing() {
+        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL));
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -133,18 +153,38 @@ class MortarTowerTest {
     }
 
     @Test
-    void theBlastFallsOffWithDistanceFromTheCentreAndStopsAtItsRadius() {
-        MortarTower tower = this.towerAt(3, 3);
+    void theBlastsEdgeDealsLessThanItsCoreAndNothingReachesPastIt() {
+        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL));
+        float core = tower.stats().value(TowerStat.AREA_RADIUS) * SCALE;
+        float edge = tower.stats().value(TowerStat.BLAST_EDGE) * SCALE;
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE;
-        FakeEnemyMob half = this.enemyAt(tower, OUT, radius / 2).hidden();
-        FakeEnemyMob beyond = this.enemyAt(tower, OUT, radius + 2).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, half, beyond});
+        FakeEnemyMob atTheEdge = this.enemyAt(tower, OUT, (core + edge) / 2).hidden();
+        FakeEnemyMob beyond = this.enemyAt(tower, OUT, edge + 2).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, atTheEdge, beyond});
 
         this.landAShell(tower);
 
-        assertThat(half.onlyHitAmount()).isCloseTo(Math.round(tower.damageCurrent() * 0.75f), within(1));
+        assertThat(atTheEdge.onlyHitAmount()).isPositive().isLessThan(target.onlyHitAmount());
+        assertThat(atTheEdge.activeEffectKinds()).contains(EffectKind.CRACKED);
         assertThat(beyond.hits()).isEmpty();
+    }
+
+    @Test
+    void aWiderCoreDealsFullDamageWhereTheEdgeDealtLess() {
+        MortarTower plain = this.loaded(List.of(ShellKind.NORMAL));
+        float core = plain.stats().value(TowerStat.AREA_RADIUS) * SCALE;
+        FakeEnemyMob besidePlain = this.enemyAt(plain, OUT, core + 4).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(plain, OUT, 0), besidePlain});
+        this.landAShell(plain);
+        MortarTower wide = TowerFixtures.buffed(this.loaded(List.of(ShellKind.NORMAL)), this.context,
+                TowerModifiers.areaRadius(1f));
+        FakeEnemyMob besideWide = this.enemyAt(wide, OUT, core + 4).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(wide, OUT, 0), besideWide});
+
+        this.landAShell(wide);
+
+        assertThat(besidePlain.onlyHitAmount()).isLessThan(plain.damageCurrent());
+        assertThat(besideWide.onlyHitAmount()).isEqualTo(wide.damageCurrent());
     }
 
     @Test
@@ -171,7 +211,7 @@ class MortarTowerTest {
     }
 
     @Test
-    void anEnemyInsideTheDeadZoneIsNeverShelled() {
+    void anEnemyInsideTheMinimumRangeIsNeverShelled() {
         MortarTower tower = this.towerAt(3, 3);
         this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, SCALE, 0)});
 
@@ -181,23 +221,11 @@ class MortarTowerTest {
     }
 
     @Test
-    void aShellIsDrawnBiggerTheHarderItHits() {
-        MortarTower tower = this.towerAt(3, 3);
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
-        float plainSize = ((CannonballProjectile) this.fire(tower)).stats().size();
-        TowerFixtures.flyProjectilesToCompletion(this.context);
-        TowerFixtures.buffed(tower, this.context, TowerModifiers.damage(50f));
-
-        float buffedSize = ((CannonballProjectile) this.fire(tower)).stats().size();
-
-        assertThat(buffedSize).isGreaterThan(plainSize);
-    }
-
-    @Test
     void aShellFliesAtItsTowersProjectileSpeedAndSize() {
-        MortarTower plain = this.towerAt(3, 3);
+        MortarTower plain = this.loaded(List.of(ShellKind.NORMAL));
         MortarTower tuned = TowerFixtures.buffed(this.towerAt(8, 3), this.context,
                 TowerModifiers.projectileSpeed(0.5f).plus(TowerModifiers.projectileSize(0.5f)));
+        MortarTower.loadMagazine(tuned, MagazineFixtures.frontedBy(ShellKind.NORMAL));
         this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(plain, OUT, 0), this.enemyAt(tuned, OUT, 0)});
 
         plain.doTick(1);
@@ -210,446 +238,236 @@ class MortarTowerTest {
     }
 
     @Test
-    void aWiderBlastRadiusCatchesWhatThePlainBlastMisses() {
-        MortarTower tower = TowerFixtures.buffed(this.towerAt(3, 3), this.context, TowerModifiers.areaRadius(1f));
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob pastThePlainRadius = this.enemyAt(tower, OUT, MortarTower.SPLASH_RADIUS_BASE * SCALE + 4).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, pastThePlainRadius});
+    void aNewMortarLoadsTheSameMagazineAsEveryOther() {
+        MortarTower one = this.towerAt(3, 3);
+        MortarTower other = this.towerAt(9, 9);
 
-        this.landAShell(tower);
-
-        assertThat(pastThePlainRadius.hits()).hasSize(1);
+        assertThat(one.magazine()).isEqualTo(other.magazine());
+        assertThat(one.magazine().shells()).hasSize(Magazine.SIZE);
     }
 
     @Test
-    void aBiggerBracketStepMakesTheNextShellOnTheSpotHitHarder() {
-        int plain = this.secondBracketedHit(this.attunedTower());
+    void firingTakesTheFrontShellAndTheOthersMoveUpWithANewOneDrawnAtTheBack() {
+        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL, ShellKind.HEAVY, ShellKind.NORMAL));
+        List<ShellKind> before = tower.magazine().shells();
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
 
-        int widerStep = this.secondBracketedHit(
-                TowerFixtures.buffed(this.attunedTower(), this.context, TowerModifiers.bracketDamageStep(0.2f)));
+        CannonballProjectile shell = (CannonballProjectile) this.fire(tower);
 
-        assertThat(widerStep).isGreaterThan(plain);
-    }
-
-    /** What {@code tower}'s second shell on the spot of its first deals. */
-    private int secondBracketedHit(MortarTower tower) {
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
-        this.landAShell(tower);
-        this.landAShell(tower);
-        return hitAmount(target, 1);
+        assertThat(shell.look()).isEqualTo(ShellLook.NORMAL);
+        assertThat(tower.magazine().shells()).hasSize(Magazine.SIZE)
+                .startsWith(before.subList(1, Magazine.SIZE).toArray(ShellKind[]::new));
     }
 
     @Test
-    void withoutAttuneShellsOnTheSameSpotAddNothing() {
-        MortarTower tower = this.towerAt(3, 3);
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
+    void aShellItNoLongerOwnsLeavesTheMagazineAndTheOnesBehindMoveUp() {
+        MortarTower tower = this.loaded(List.of(ShellKind.NAPALM, ShellKind.HEAVY), "Napalm");
+        tower.doTick(this.tick++);
+        boolean keptWhileOwned = tower.magazine().front() == ShellKind.NAPALM;
 
-        this.landAShell(tower);
-        this.landAShell(tower);
+        tower.downgrade(UpgradePaths.named(tower, "Napalm"));
+        tower.doTick(this.tick++);
 
-        assertThat(hitAmount(target, 1)).isEqualTo(hitAmount(target, 0));
-        assertThat(tower.getRangingMarker()).isEmpty();
+        assertThat(keptWhileOwned).isTrue();
+        assertThat(tower.magazine().front()).isEqualTo(ShellKind.HEAVY);
+        assertThat(tower.magazine().shells()).hasSize(Magazine.SIZE).doesNotContain(ShellKind.NAPALM);
     }
 
     @Test
-    void attunedEachShellOnTheSpotOfTheLastHitsHarderThanTheOneBefore() {
-        MortarTower tower = this.attunedTower();
+    void aHeavyShellHitsByItsMultiplierInANormalBlastAndFliesSlower() {
+        MortarTower tower = this.loaded(List.of(ShellKind.HEAVY));
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
-
-        this.landAShell(tower);
-        this.landAShell(tower);
-        this.landAShell(tower);
-
-        assertThat(hitAmount(target, 0)).isEqualTo(tower.damageCurrent());
-        assertThat(hitAmount(target, 1)).isGreaterThan(hitAmount(target, 0));
-        assertThat(hitAmount(target, 2)).isGreaterThan(hitAmount(target, 1));
-    }
-
-    @Test
-    void aBracketedShellBlastsWiderThanTheOneBefore() {
-        MortarTower tower = this.attunedTower();
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob edge = this.enemyAt(tower, OUT, tower.getSplashRadius() + 1).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, edge});
-
-        this.landAShell(tower);
-        boolean caughtByTheFirst = !edge.hits().isEmpty();
-        this.landAShell(tower);
-
-        assertThat(caughtByTheFirst).isFalse();
-        assertThat(edge.hits()).hasSize(1);
-    }
-
-    @Test
-    void aShellLandingElsewhereStartsTheBracketOver() {
-        MortarTower tower = this.attunedTower();
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
-        this.landAShell(tower);
-        this.landAShell(tower);
-
-        target.moveTo(tower.getX(), tower.getY() + OUT);
-        this.landAShell(tower);
-
-        assertThat(hitAmount(target, 2)).isEqualTo(hitAmount(target, 0));
-        assertThat(tower.getRangingMarker().orElseThrow().step()).isZero();
-    }
-
-    @Test
-    void theRangingMarkerSitsOnTheLastLandingAndTightensWithEachStep() {
-        MortarTower tower = this.attunedTower();
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
-
-        this.landAShell(tower);
-        this.landAShell(tower);
-
-        assertThat(tower.getRangingMarker().orElseThrow().x()).isEqualTo(target.getX());
-        assertThat(tower.getRangingMarker().orElseThrow().step()).isEqualTo(1);
-    }
-
-
-    @Test
-    void heavyShellFliesSlowerAndDazesWhatItLandsWithinHalfACellOf() {
-        MortarTower tower = this.towerWith("Heavy Shell");
-        FakeEnemyMob centre = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob near = this.enemyAt(tower, OUT, SCALE * 0.4).hidden();
-        FakeEnemyMob far = this.enemyAt(tower, OUT, SCALE * 0.8).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{centre, near, far});
-        tower.doTick(1);
-        CannonballProjectile shell = (CannonballProjectile) this.context.projectiles().getProjectiles().getFirst();
+        CannonballProjectile shell = (CannonballProjectile) this.fire(tower);
         float speed = shell.stats().speed();
 
-        this.landAShell(tower);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
 
         assertThat(speed).isLessThan(MortarTower.SHELL_SPEED);
-        assertThat(centre.activeEffectKinds()).contains(EffectKind.DAZED);
-        assertThat(near.activeEffectKinds()).contains(EffectKind.DAZED);
-        assertThat(far.activeEffectKinds()).doesNotContain(EffectKind.DAZED);
-    }
-
-    private List<ZoneKind> zoneKinds() {
-        return this.context.zones().zones().stream().map(Zone::kind).toList();
+        assertThat(target.onlyHitAmount()).isEqualTo(
+                Math.round(tower.damageCurrent() * tower.stats().value(TowerStat.HEAVY_MULTIPLIER)));
     }
 
     @Test
-    void everyThirdShellIsTheSpecialShellAndLeavesItsZoneWhereItLands() {
-        MortarTower tower = this.towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Cryo Shells");
+    void aHigherHeavyMultiplierMakesAHeavyHitHarder() {
+        MortarTower plain = this.loaded(List.of(ShellKind.HEAVY));
+        FakeEnemyMob plainTarget = this.enemyAt(plain, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{plainTarget});
+        this.landAShell(plain);
+        MortarTower charged = TowerFixtures.buffed(this.loaded(List.of(ShellKind.HEAVY)), this.context,
+                TowerModifiers.heavyMultiplier(1f));
+        FakeEnemyMob chargedTarget = this.enemyAt(charged, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{chargedTarget});
+
+        this.landAShell(charged);
+
+        assertThat(chargedTarget.onlyHitAmount()).isGreaterThan(plainTarget.onlyHitAmount());
+    }
+
+    @Test
+    void concussionDazesAHeavysCoreLongerThanItsEdgeAndANormalDazesNothing() {
+        MortarTower tower = this.loaded(List.of(ShellKind.HEAVY, ShellKind.NORMAL), "Concussion");
+        float core = tower.stats().value(TowerStat.AREA_RADIUS) * SCALE;
+        float edge = tower.stats().value(TowerStat.BLAST_EDGE) * SCALE;
+        FakeEnemyMob centre = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob atTheEdge = this.enemyAt(tower, OUT, (core + edge) / 2).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{centre, atTheEdge});
+        this.landAShell(tower);
+        int centreDaze = remainingTicksOf(centre, EffectKind.DAZED);
+        int edgeDaze = remainingTicksOf(atTheEdge, EffectKind.DAZED);
+        FakeEnemyMob next = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{next});
+
+        this.landAShell(tower);
+
+        assertThat(centreDaze).isGreaterThan(edgeDaze);
+        assertThat(next.activeEffectKinds()).doesNotContain(EffectKind.DAZED);
+    }
+
+    @Test
+    void shrapnelMakesWhatAHeavysBlastReachesBleedAndANormalBleedsNothing() {
+        MortarTower tower = this.loaded(List.of(ShellKind.HEAVY, ShellKind.NORMAL), "Shrapnel");
+        float edge = tower.stats().value(TowerStat.BLAST_EDGE) * SCALE;
+        FakeEnemyMob centre = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob nearTheEdge = this.enemyAt(tower, OUT, edge - 2).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{centre, nearTheEdge});
+        this.landAShell(tower);
+        FakeEnemyMob next = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{next});
+
+        this.landAShell(tower);
+
+        assertThat(centre.activeEffectKinds()).contains(EffectKind.BLEEDING);
+        assertThat(nearTheEdge.activeEffectKinds()).contains(EffectKind.BLEEDING);
+        assertThat(next.activeEffectKinds()).doesNotContain(EffectKind.BLEEDING);
+    }
+
+    @Test
+    void aBleedLandsAsPeriodicDamagePastArmorAndPlating() {
+        MortarTower tower = this.loaded(List.of(ShellKind.HEAVY), "Shrapnel");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
+        this.landAShell(tower);
+        Effect bleed = target.activeEffects().stream()
+                .filter(effect -> effect.kind() == EffectKind.BLEEDING).findFirst().orElseThrow();
 
-        this.landAShell(tower);
-        this.landAShell(tower);
-        List<ZoneKind> afterTwo = this.zoneKinds();
-        this.landAShell(tower);
+        bleed.sink().apply(Damage.physical(100));
 
-        assertThat(afterTwo).isEmpty();
-        assertThat(this.zoneKinds()).containsExactly(ZoneKind.FROST_GROUND);
-        Zone frost = this.context.zones().zones().getFirst();
-        assertThat(frost.x()).isEqualTo(target.getX());
+        AttackProfile dealtBy = target.attackers().getLast();
+        assertThat(dealtBy.delivery()).isEqualTo(Delivery.PERIODIC);
+        assertThat(dealtBy.penetrate(DamageType.PHYSICAL, 50f, false)).isZero();
+        assertThat(dealtBy.penetrateFlatReduction(200f, false)).isZero();
     }
 
     @Test
-    void withTwoSpecialsOwnedTheyTakeTurnsAndEveryThirdShellIsPlain() {
-        MortarTower tower = this.towerWith("Napalm", "Cryo Shells");
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
-
-        for (int i = 0; i < 8; i++) {
-            this.landAShell(tower);
-        }
-
-        assertThat(this.zoneKinds()).containsExactly(ZoneKind.BURNING_GROUND, ZoneKind.FROST_GROUND,
-                ZoneKind.BURNING_GROUND, ZoneKind.FROST_GROUND, ZoneKind.BURNING_GROUND, ZoneKind.FROST_GROUND);
-    }
-
-    @Test
-    void aSpecialShellFliesInItsOwnLook() {
-        MortarTower tower = this.towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Tar");
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
-        List<ShellLook> looks = new ArrayList<>();
-
-        for (int i = 0; i < 3; i++) {
-            for (int t = 0; t < 200 && this.context.projectiles().getProjectiles().isEmpty(); t++) {
-                tower.doTick(this.tick++);
-            }
-            looks.add(((CannonballProjectile) this.context.projectiles().getProjectiles().getFirst()).look());
-            TowerFixtures.flyProjectilesToCompletion(this.context);
-        }
-
-        assertThat(looks).containsExactly(ShellLook.PLAIN, ShellLook.PLAIN, ShellLook.TAR);
-    }
-
-    @Test
-    void aNapalmShellBlastsForMagicAndItsGroundSetsEnemiesAlightCreditedToTheMortar() {
-        MortarTower tower = this.towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Napalm");
+    void aNapalmShellBlastsForMagicAtLessDamageAndItsGroundSetsEnemiesAlight() {
+        MortarTower tower = this.loaded(List.of(ShellKind.NAPALM), "Napalm");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
-        this.landAShell(tower);
-        this.landAShell(tower);
 
         this.landAShell(tower);
         this.context.zones().doTick(1);
 
-        assertThat(target.hits()).extracting(Damage::type).containsExactly(DamageType.PHYSICAL,
-                DamageType.PHYSICAL, DamageType.MAGIC);
+        assertThat(target.hits().getFirst().type()).isEqualTo(DamageType.MAGIC);
+        assertThat(target.hits().getFirst().amount())
+                .isEqualTo(Math.round(tower.damageCurrent() * ShellKind.PAYLOAD_DAMAGE_SHARE));
+        assertThat(this.zoneKinds()).containsExactly(ZoneKind.BURNING_GROUND);
         assertThat(target.activeEffectKinds()).contains(EffectKind.BURN);
     }
 
     @Test
     void aTarShellLeavesTarWhereItLands() {
-        MortarTower tower = this.towerWith("Tar");
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+        MortarTower tower = this.loaded(List.of(ShellKind.TAR), "Tar");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        this.landAShell(tower);
+
+        assertThat(this.zoneKinds()).containsExactly(ZoneKind.TAR);
+        assertThat(this.context.zones().zones().getFirst().x()).isEqualTo(target.getX());
+    }
+
+    /** The ground the payload shell of a Mortar owning {@code nodes} leaves, one pulse after it lands. */
+    private static Zone payloadGround(String... nodes) {
+        GameWorld world = WorldFixtures.newWorldOnBoard(SCALE, 20, 20);
+        MortarTower tower = new MortarTower(world, 3, 3);
+        UpgradePaths.buy(tower, world, nodes);
+        MortarTower.loadMagazine(tower, MagazineFixtures.frontedBy(ShellKind.CRYO));
+        world.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(tower.getX() + OUT, tower.getY())});
+        for (int t = 1; t < 200 && world.projectiles().getProjectiles().isEmpty(); t++) {
+            tower.doTick(t);
+        }
+        TowerFixtures.flyProjectilesToCompletion(world);
+        world.zones().doTick(1);
+        return world.zones().zones().getFirst();
+    }
+
+    @Test
+    void thickMixWidensAPayloadsGround() {
+        Zone plain = payloadGround("Cryo");
+
+        Zone thick = payloadGround("Cryo", "Thick Mix");
+
+        assertThat(thick.radius()).isGreaterThan(plain.radius());
+    }
+
+    @Test
+    void lastingMixMakesAPayloadsGroundLastLonger() {
+        Zone plain = payloadGround("Cryo");
+
+        Zone lasting = payloadGround("Cryo", "Thick Mix", "Lasting Mix");
+
+        assertThat(lasting.lifeLeft()).isGreaterThan(plain.lifeLeft());
+    }
+
+    @Test
+    void aNukeHitsAsTwoHeaviesOverAWiderCoreAndLeavesFalloutThatPoisons() {
+        MortarTower tower = this.loaded(List.of(ShellKind.NUKE), "Fusion");
+        float core = tower.stats().value(TowerStat.AREA_RADIUS) * SCALE;
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob pastANormalCore = this.enemyAt(tower, OUT, core + 4).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, pastANormalCore});
+
+        this.landAShell(tower);
+        this.context.zones().doTick(1);
+
+        int twoHeavies = Math.round(2 * tower.damageCurrent() * tower.stats().value(TowerStat.HEAVY_MULTIPLIER));
+        assertThat(target.hits().getFirst().amount()).isEqualTo(twoHeavies);
+        assertThat(pastANormalCore.hits().getFirst().amount()).isEqualTo(twoHeavies);
+        assertThat(this.zoneKinds()).containsExactly(ZoneKind.FALLOUT);
+        assertThat(target.activeEffectKinds()).contains(EffectKind.SICKENED, EffectKind.DEAD_ZONE, EffectKind.POISON);
+    }
+
+    @Test
+    void aFlareLeavesAFlareThatRevealsAnEnemyInsideAndANewOnePutsOutTheOldest() {
+        MortarTower tower = this.loaded(List.of(ShellKind.FLARE, ShellKind.FLARE, ShellKind.FLARE, ShellKind.FLARE),
+                "Flare");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+        this.landAShell(tower);
+        this.context.zones().doTick(1);
+        boolean revealed = target.activeEffectKinds().contains(EffectKind.REVEALED);
 
         for (int i = 0; i < 3; i++) {
             this.landAShell(tower);
         }
 
-        assertThat(this.zoneKinds()).containsExactly(ZoneKind.TAR);
+        List<Zone> flares = this.context.zones().zones();
+        assertThat(revealed).isTrue();
+        assertThat(flares).extracting(Zone::kind).containsOnly(ZoneKind.FLARE);
+        assertThat(flares.getFirst().isBurning()).isFalse();
+        assertThat(flares.subList(1, flares.size())).hasSize(3).allMatch(Zone::isBurning);
     }
 
     @Test
-    void longBatteryWidensTheDeadZoneAndMoreRangeNeverMovesIt() {
-        MortarTower tower = this.towerWith();
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, 2 * SCALE, 0)});
-        tower.doTick(1);
-        boolean shelledBefore = !this.context.projectiles().getProjectiles().isEmpty();
-        this.context.projectiles().clear();
-
-        UpgradePaths.buy(tower, this.context, "Range III");
-        for (int t = 2; t < 200; t++) {
-            tower.doTick(t);
-        }
-
-        assertThat(shelledBefore).isTrue();
-        assertThat(this.context.projectiles().getProjectiles()).isEmpty();
-    }
-
-    @Test
-    void everyFourthShellIsANukeThatHitsFourTimesAsHardOverAWiderBlastAndLeavesFallout() {
-        MortarTower tower = this.towerWith("Napalm", "Tactical Nuke");
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob wide = this.enemyAt(tower, OUT, tower.getSplashRadius() * 1.4f).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, wide});
-
-        for (int i = 0; i < 4; i++) {
-            this.landAShell(tower);
-        }
-
-        assertThat(target.hits()).hasSize(4);
-        assertThat(hitAmount(target, 0)).isEqualTo(tower.damageCurrent());
-        assertThat(hitAmount(target, 3)).isGreaterThan(3 * hitAmount(target, 1));
-        assertThat(wide.hits()).hasSize(1);
-        assertThat(this.zoneKinds()).containsExactly(ZoneKind.BURNING_GROUND, ZoneKind.FALLOUT);
-    }
-
-    @Test
-    void aNukesFalloutLiesWhereItLandedAndDrainsSpiritAndKeepsHealsOut() {
-        MortarTower tower = this.towerWith("Tactical Nuke");
+    void deepCrackLeavesItsDeeperCrackInPlaceOfCrack() {
+        MortarTower tower = this.towerWith("Deep Crack");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
-        for (int i = 0; i < 4; i++) {
-            this.landAShell(tower);
-        }
-
-        Zone fallout = this.context.zones().zones().getLast();
-        this.context.zones().doTick(1);
-
-        assertThat(fallout.x()).isEqualTo(target.getX());
-        assertThat(target.activeEffectKinds()).contains(EffectKind.SICKENED, EffectKind.DEAD_ZONE);
-    }
-
-    @Test
-    void aNukeShellFliesBiggerAndInItsOwnLook() {
-        MortarTower tower = this.towerWith("Tactical Nuke");
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
-        for (int i = 0; i < 2; i++) {
-            this.landAShell(tower);
-        }
-        float plainSize = ((CannonballProjectile) this.fire(tower)).stats().size();
-        TowerFixtures.flyProjectilesToCompletion(this.context);
-
-        CannonballProjectile nuke = (CannonballProjectile) this.fire(tower);
-
-        assertThat(nuke.look()).isEqualTo(ShellLook.NUKE);
-        assertThat(nuke.stats().size()).isGreaterThan(plainSize);
-    }
-
-    private Projectile fire(MortarTower tower) {
-        for (int t = 0; t < 200 && this.context.projectiles().getProjectiles().isEmpty(); t++) {
-            tower.doTick(this.tick++);
-        }
-        return this.context.projectiles().getProjectiles().getFirst();
-    }
-
-    @Test
-    void bunkerBusterHitsTheEnemyAtTheCentreHarderAndSundersItButNotThoseAroundIt() {
-        MortarTower tower = this.towerWith("Bunker Buster");
-        FakeEnemyMob centre = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob beside = this.enemyAt(tower, OUT, SCALE * 0.8).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{centre, beside});
 
         this.landAShell(tower);
 
-        assertThat(centre.onlyHitAmount()).isGreaterThan(tower.damageCurrent());
-        assertThat(centre.activeEffectKinds()).contains(EffectKind.SUNDERED);
-        assertThat(beside.onlyHitAmount()).isLessThan(tower.damageCurrent());
-        assertThat(beside.activeEffectKinds()).doesNotContain(EffectKind.SUNDERED);
-    }
-
-    /** A straight path along the row 3 cells below the tower, for bomblets to run along. */
-    private void pathBelow(MortarTower tower) {
-        this.context.setPath(new Path(List.of(new Vec2(0, tower.getY() + OUT), new Vec2(900, tower.getY() + OUT))));
-    }
-
-    @Test
-    void fragmentationRoundsHitEnemiesInTheRingPastTheBlastForLessAndCrackThem() {
-        MortarTower tower = this.towerWith("Fragmentation Rounds");
-        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE;
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob ring = this.enemyAt(tower, OUT, radius + 20).hidden();
-        FakeEnemyMob outside = this.enemyAt(tower, OUT, 3 * radius).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, ring, outside});
-
-        this.landAShell(tower);
-
-        assertThat(ring.onlyHitAmount()).isLessThan(target.onlyHitAmount());
-        assertThat(ring.activeEffectKinds()).containsExactly(EffectKind.CRACKED);
-        assertThat(target.hits()).hasSize(1);
-        assertThat(outside.hits()).isEmpty();
-    }
-
-    @Test
-    void shrapnelReachGrowsWithEachBracketingStepBeyondTheWideningOfTheBlast() {
-        MortarTower tower = this.towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Attune", "Fragmentation Rounds");
-        float ring = 1.75f * MortarTower.SPLASH_RADIUS_BASE * SCALE;
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob far = this.enemyAt(tower, OUT, ring + 0.2f * SCALE).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, far});
-
-        this.landAShell(tower);
-        int atStepZero = far.hits().size();
-        this.landAShell(tower);
-
-        assertThat(atStepZero).isZero();
-        assertThat(far.hits()).hasSize(1);
-    }
-
-    @Test
-    void fragmentationRoundsTwoMakeTheShrapnelCarryTheShellsOwnEffect() {
-        MortarTower tower = this.towerWith("Fragmentation Rounds II", "Napalm");
-        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE * 1.0f;
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob ring = this.enemyAt(tower, OUT, radius + 20).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, ring});
-        this.pathBelow(tower);
-
-        this.landAShell(tower);
-        this.landAShell(tower);
-        long burningBefore = ring.activeEffectKinds().stream().filter(EffectKind.BURN::equals).count();
-        this.landAShell(tower);
-
-        assertThat(burningBefore).isZero();
-        assertThat(ring.activeEffectKinds()).contains(EffectKind.BURN);
-        assertThat(this.zoneKinds()).containsExactly(ZoneKind.BURNING_GROUND);
-    }
-
-    @Test
-    void shrapnelNeverLeavesAZoneOfItsOwn() {
-        MortarTower tower = this.towerAt(3, 3);
-        UpgradePaths.buy(tower, this.context, "Fragmentation Rounds");
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
-
-        this.landAShell(tower);
-
-        assertThat(this.zoneKinds()).isEmpty();
-    }
-
-    @Test
-    void clusterShellScattersFourBombletsAlongThePathAroundTheImpact() {
-        MortarTower tower = this.towerWith("Cluster Shell");
-        this.pathBelow(tower);
-        FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + OUT, tower.getY() + OUT);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
-
-        this.landAShell(tower);
-
-        List<Double> xs = tower.getBlastMarks().stream().map(mark -> mark.at().x() - target.getX())
-                .sorted().toList();
-        assertThat(xs).hasSize(5);
-        assertThat(xs.get(0)).isCloseTo(-1.6 * SCALE, within(0.01));
-        assertThat(xs.get(1)).isCloseTo(-0.8 * SCALE, within(0.01));
-        assertThat(xs.get(2)).isCloseTo(0.0, within(0.01));
-        assertThat(xs.get(4)).isCloseTo(1.6 * SCALE, within(0.01));
-    }
-
-    @Test
-    void aBombletHitsWhatItLandsBesideAndCracksIt() {
-        MortarTower tower = this.towerWith("Cluster Shell");
-        this.pathBelow(tower);
-        FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + OUT, tower.getY() + OUT);
-        FakeEnemyMob aside = FakeEnemyMob.at(target.getX() + 0.8 * SCALE, target.getY() + 0.5 * SCALE).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, aside});
-
-        this.landAShell(tower);
-
-        assertThat(aside.hits()).isNotEmpty();
-        assertThat(aside.activeEffectKinds()).contains(EffectKind.CRACKED);
-    }
-
-    @Test
-    void carpetBombingLaysEightBombletsInALineAheadOfTheImpact() {
-        MortarTower tower = this.towerWith("Carpet Bombing");
-        this.pathBelow(tower);
-        FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + OUT, tower.getY() + OUT);
-        FakeEnemyMob ahead = FakeEnemyMob.at(target.getX() + 5.6 * SCALE, target.getY()).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, ahead});
-
-        this.landAShell(tower);
-
-        assertThat(tower.getBlastMarks()).hasSize(9);
-        assertThat(ahead.hits()).isNotEmpty();
-    }
-
-    @Test
-    void shrapnelStormLeavesWhatTheShrapnelHitsBleedingButNotTheMainBlast() {
-        MortarTower tower = this.towerWith("Shrapnel Storm");
-        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE;
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob ring = this.enemyAt(tower, OUT, radius + 20).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, ring});
-        this.pathBelow(tower);
-
-        this.landAShell(tower);
-
-        assertThat(ring.activeEffectKinds()).contains(EffectKind.BLEEDING);
-        assertThat(target.activeEffectKinds()).doesNotContain(EffectKind.BLEEDING);
-    }
-
-    @Test
-    void aBleedLandsAsPeriodicDamagePastArmorAndPlating() {
-        MortarTower tower = this.towerWith("Shrapnel Storm");
-        float radius = MortarTower.SPLASH_RADIUS_BASE * SCALE;
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob ring = this.enemyAt(tower, OUT, radius + 20).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, ring});
-        this.pathBelow(tower);
-        this.landAShell(tower);
-        Effect bleed = ring.activeEffects().stream()
-                .filter(effect -> effect.kind() == EffectKind.BLEEDING).findFirst().orElseThrow();
-
-        bleed.sink().apply(Damage.physical(100));
-
-        AttackProfile dealtBy = ring.attackers().getLast();
-        assertThat(dealtBy.delivery()).isEqualTo(Delivery.PERIODIC);
-        assertThat(dealtBy.penetrate(DamageType.PHYSICAL, 50f, false)).isZero();
-        assertThat(dealtBy.penetrateFlatReduction(200f, false)).isZero();
+        assertThat(target.activeEffectKinds()).contains(EffectKind.DEEP_CRACKED).doesNotContain(EffectKind.CRACKED);
     }
 
     @Test
@@ -679,12 +497,13 @@ class MortarTowerTest {
         assertThat(fastLead).isPositive().isLessThan(slowLead);
     }
 
-    /** How far ahead of a walking enemy a Predictive Fire Mortar given {@code buff} lands its shell. */
+    /** How far ahead of a walking enemy a Predictive Fire Mortar given {@code buff} lands a Normal shell. */
     private static double predictiveLead(StatModifiers<TowerStat> buff) {
         GameWorld world = WorldFixtures.newWorldOnBoard(SCALE, 20, 20);
         MortarTower tower = new MortarTower(world, 3, 3);
         UpgradePaths.buy(tower, world, "Predictive Fire");
         TowerFixtures.buffed(tower, world, buff);
+        MortarTower.loadMagazine(tower, MagazineFixtures.frontedBy(ShellKind.NORMAL));
         FakeEnemyMob walker = FakeEnemyMob.at(tower.getX() + OUT, tower.getY()).walkingBy(0, 2);
         world.enemies().setEnemies(new EnemyMob[]{walker});
         for (int t = 1; t < 200 && world.projectiles().getProjectiles().isEmpty(); t++) {
@@ -694,63 +513,64 @@ class MortarTowerTest {
         return tower.getBlastMarks().getFirst().at().y() - walker.getY();
     }
 
-    @Test
-    void airburstWidensTheBlastAndGivesFullDamageAcrossItsInnerHalf() {
-        MortarTower tower = this.towerWith("Airburst");
-        float radius = tower.getSplashRadius();
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        FakeEnemyMob inner = this.enemyAt(tower, OUT, radius * 0.45f).hidden();
-        FakeEnemyMob outer = this.enemyAt(tower, OUT, radius * 0.9f).hidden();
-        this.context.enemies().setEnemies(new EnemyMob[]{target, inner, outer});
-
-        this.landAShell(tower);
-
-        assertThat(inner.onlyHitAmount()).isEqualTo(tower.damageCurrent());
-        assertThat(outer.onlyHitAmount()).isLessThan(tower.damageCurrent());
+    /** The looks of the shells a Mortar fired, in the order fired, and the ticks it fired them on. */
+    private record Firing(List<ShellLook> looks, List<Integer> ticks) {
     }
 
-    @Test
-    void barrageFiresThreeShellsHalfASecondApartAndReloadsForTwiceAsLong() {
-        MortarTower tower = this.towerWith("Barrage");
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
-
-        int shells = 0;
-        int firstShellAt = -1;
-        int lastShellAt = -1;
-        for (int t = 1; t <= 400; t++) {
+    private Firing fireFor(MortarTower tower, int ticks) {
+        List<ShellLook> looks = new ArrayList<>();
+        List<Integer> fired = new ArrayList<>();
+        for (int t = 1; t <= ticks; t++) {
             int before = this.context.projectiles().getProjectiles().size();
             tower.doTick(t);
-            if (this.context.projectiles().getProjectiles().size() > before) {
-                shells++;
-                firstShellAt = firstShellAt < 0 ? t : firstShellAt;
-                lastShellAt = t;
+            List<Projectile> flying = this.context.projectiles().getProjectiles();
+            if (flying.size() > before) {
+                looks.add(((CannonballProjectile) flying.getLast()).look());
+                fired.add(t);
             }
         }
-
-        assertThat(firstShellAt).isEqualTo(1);
-        assertThat((double) (lastShellAt - firstShellAt)).isGreaterThan(2 * tower.coolDownMax / tower.attackRate());
-        assertThat(shells % 3).isZero();
-        assertThat(shells).isGreaterThanOrEqualTo(6);
+        return new Firing(looks, fired);
     }
 
     @Test
-    void everyShellOfABarrageHitsAtFullDamage() {
-        MortarTower tower = this.towerWith("Barrage");
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
+    void aBarrageFiresTheThreeFrontShellsOneAfterAnotherAndReloadsLonger() {
+        MortarTower plain = this.loaded(List.of(ShellKind.NORMAL));
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(plain, OUT, 0)});
+        Firing single = this.fireFor(plain, 400);
+        this.context.projectiles().clear();
+        MortarTower tower = this.loaded(List.of(ShellKind.HEAVY, ShellKind.NORMAL, ShellKind.HEAVY), "Barrage");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
 
-        for (int t = 1; t <= 40; t++) {
+        Firing barrage = this.fireFor(tower, 400);
+
+        assertThat(barrage.looks().subList(0, 3)).containsExactly(ShellLook.HEAVY, ShellLook.NORMAL, ShellLook.HEAVY);
+        assertThat(barrage.ticks().get(1)).isGreaterThan(barrage.ticks().get(0));
+        assertThat(barrage.ticks().get(3) - barrage.ticks().get(0))
+                .isGreaterThan(single.ticks().get(1) - single.ticks().get(0));
+    }
+
+    @Test
+    void carpetBombingLaysItsShellsAlongThePathBackFromTheTarget() {
+        MortarTower tower = this.towerWith("Carpet Bombing");
+        FakeEnemyMob target = this.enemyAt(tower, OUT + SCALE, 0);
+        this.context.setPath(new Path(List.of(new Vec2(0, tower.getY()), new Vec2(2000, tower.getY()))));
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+        Set<BlastMark> landed = new LinkedHashSet<>();
+
+        for (int t = 1; t <= 200 && landed.size() < 3; t++) {
             tower.doTick(t);
             this.context.projectiles().doTick(t);
+            landed.addAll(tower.getBlastMarks());
         }
-        TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        assertThat(target.hits()).hasSize(3);
-        assertThat(target.hits()).extracting(Damage::amount).allMatch(amount -> amount >= tower.damageCurrent());
+        List<Double> landedAt = landed.stream().map(mark -> mark.at().x()).toList();
+        assertThat(landed).hasSize(3).allMatch(mark -> mark.at().y() == tower.getY());
+        assertThat(landedAt.getFirst()).isCloseTo(target.getX(), within(1.0));
+        assertThat(landedAt).isSortedAccordingTo((a, b) -> Double.compare(b, a));
     }
 
     @Test
-    void aBarrageShowsItsShellsAMinuteOfRateOverTheWholeCycle() {
+    void aVolleyShowsItsShellsASecondOverTheWholeCycle() {
         MortarTower tower = this.towerAt(3, 3);
         TowerStatLine before = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)
                 .findFirst().orElseThrow();
@@ -759,24 +579,17 @@ class MortarTowerTest {
         TowerStatLine after = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)
                 .findFirst().orElseThrow();
 
-        assertThat(before.current()).isLessThan(after.current());
-        assertThat(after.current()).isCloseTo((float) (3 * 20 * tower.attackRate() / ((tower.coolDownMax + 1) * 2f)),
-                within(1e-3f));
+        assertThat(after.current()).isGreaterThan(before.current());
     }
 
     @Test
-    void theNextSpecialShellIsPrimed() {
-        MortarTower tower = this.towerWith("Tactical Nuke");
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+    void theShellLoadingShowsAsAConditionUnlessItIsANormal() {
+        MortarTower heavy = this.loaded(List.of(ShellKind.HEAVY));
+        MortarTower normal = this.loaded(List.of(ShellKind.NORMAL));
 
-        for (int i = 0; i < 3; i++) {
-            this.landAShell(tower);
-        }
+        List<TowerBuffState> loadingHeavy = heavy.conditions();
 
-        assertThat(tower.progress()).anySatisfy(progress -> {
-            assertThat(progress.of()).isEqualTo(4);
-            assertThat(progress.count()).isEqualTo(3);
-        });
-        assertThat(tower.conditions()).extracting(TowerBuffState::term).isNotEmpty();
+        assertThat(loadingHeavy).extracting(TowerBuffState::term).contains(TowerTerm.HEAVY_SHELL);
+        assertThat(normal.conditions()).extracting(TowerBuffState::term).doesNotContain(TowerTerm.HEAVY_SHELL);
     }
 }

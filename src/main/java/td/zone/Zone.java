@@ -124,6 +124,16 @@ public final class Zone {
         }
     }
 
+    /** Its maker lets it go before its time: it fades out as at a wave's clear. */
+    public void putOut() {
+        this.clear();
+    }
+
+    /** Whether it is still on the board and not yet fading out. */
+    public boolean isBurning() {
+        return this.clearingSince < 0 && !this.isExpired();
+    }
+
     /** What the towers within {@code radius} suffer; nothing for any kind but a blinding field. */
     public DisruptionPenalty penalty() {
         return this.penalty;

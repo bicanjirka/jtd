@@ -42,6 +42,7 @@ final class ZoneFrameBuilder {
             case TAR -> Palette.ZONE_TAR;
             case FROST_GROUND -> Palette.ZONE_FROST;
             case FALLOUT -> Palette.ZONE_FALLOUT;
+            case FLARE -> Palette.ZONE_FLARE;
             case HEALING_GROUND -> Palette.ZONE_HEALING;
             case HASTE_GROUND -> Palette.ZONE_HASTE;
             case WARD_MINE -> Palette.ZONE_WARD;

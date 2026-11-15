@@ -1,10 +1,12 @@
 package td.projectile;
 
-/** What a shell carries, for the colour it is drawn in. */
+/** What kind of shell flies, for how it is drawn. */
 public enum ShellLook {
-    PLAIN,
+    NORMAL,
+    HEAVY,
+    NUKE,
     NAPALM,
     TAR,
-    FROST,
-    NUKE
+    CRYO,
+    FLARE
 }

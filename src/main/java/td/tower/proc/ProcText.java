@@ -26,7 +26,6 @@ final class ProcText {
             case PIERCE -> TermText.of("piercing hit");
             case BOUNCE -> TermText.of("bounce");
             case BLAST -> TermText.of("blast");
-            case SHRAPNEL -> TermText.of(TowerTerm.SHRAPNEL).plus(" hit");
             case ARC -> TermText.of(TowerTerm.ARC);
             case BEAM -> TermText.of("beam hit");
             case MISSILE -> TermText.of("missile");
@@ -43,7 +42,6 @@ final class ProcText {
             case PIERCE -> TermText.of("piercing hits");
             case BOUNCE -> TermText.of("bounces");
             case BLAST -> TermText.of("blasts");
-            case SHRAPNEL -> TermText.of(TowerTerm.SHRAPNEL).plus(" hits");
             case ARC -> TermText.of(TowerTerm.ARC).plus(" hits");
             case BEAM -> TermText.of("beam hits");
             case MISSILE -> TermText.of("missiles");

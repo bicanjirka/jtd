@@ -58,10 +58,11 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
 
     static Palette paletteFor(ShellLook look) {
         return switch (look) {
-            case PLAIN -> Palette.PROJECTILE_CANNONBALL;
+            case NORMAL, HEAVY -> Palette.PROJECTILE_CANNONBALL;
+            case FLARE -> Palette.ZONE_FLARE;
             case NAPALM -> Palette.PROJECTILE_NAPALM;
             case TAR -> Palette.PROJECTILE_TAR;
-            case FROST -> Palette.PROJECTILE_FROST;
+            case CRYO -> Palette.PROJECTILE_FROST;
             case NUKE -> Palette.PROJECTILE_NUKE;
         };
     }

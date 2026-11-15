@@ -21,7 +21,7 @@ public enum TowerStat implements StatKey, StatTerm {
 
     RANGE(0f, 0.5f, Float.MAX_VALUE, StatUnit.CELLS, "Range", "Range", StatDirection.HIGHER, StatGroup.REACH,
             Shows.IN_CORE_ROW, true),
-    DEAD_ZONE(0f, 0f, Float.MAX_VALUE, StatUnit.CELLS, "Dead zone", "Dead zone", StatDirection.LOWER,
+    MINIMUM_RANGE(0f, 0f, Float.MAX_VALUE, StatUnit.CELLS, "Min range", "Minimum range", StatDirection.LOWER,
             StatGroup.REACH, Shows.OFF_DEFAULT, false),
     AREA_RADIUS(0f, 0f, Float.MAX_VALUE, StatUnit.CELLS, "Blast radius", "Blast radius", StatDirection.HIGHER,
             StatGroup.REACH, Shows.OFF_DEFAULT, false),
@@ -36,7 +36,7 @@ public enum TowerStat implements StatKey, StatTerm {
     /** Attacks per second are the base rate times {@code 1 + attack speed}. */
     ATTACK_SPEED(0f, -0.75f, 9f, StatUnit.SIGNED_PERCENT, "Fire rate", "Fire rate", StatDirection.HIGHER,
             StatGroup.DAMAGE, Shows.IN_CORE_ROW, true),
-    BRACKET_DAMAGE_STEP(0f, 0f, Float.MAX_VALUE, StatUnit.SIGNED_PERCENT, "Bracketing", "Bracketing step",
+    HEAVY_MULTIPLIER(0f, 0f, Float.MAX_VALUE, StatUnit.PERCENT, "Heavy dmg", "Heavy damage",
             StatDirection.HIGHER, StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
     CRIT_CHANCE(0f, 0f, 1f, StatUnit.PERCENT, "Crit chance", "Crit chance", StatDirection.HIGHER, StatGroup.CRIT,
             Shows.OFF_DEFAULT, true),
@@ -202,13 +202,13 @@ public enum TowerStat implements StatKey, StatTerm {
     public TermText describe() {
         return switch (this) {
             case RANGE -> TermText.of("how far from its centre it reaches");
-            case DEAD_ZONE -> TermText.of("enemies closer than this can't be aimed at");
+            case MINIMUM_RANGE -> TermText.of("enemies closer than this can't be aimed at");
             case AREA_RADIUS -> TermText.of("how far a blast reaches from where a shot lands at full damage");
             case BLAST_EDGE -> TermText.of("how far its weaker edge reaches from where a shot lands");
             case CONE_WIDTH -> TermText.of("how wide its cone of fire is");
             case DAMAGE -> TermText.of("what one hit deals, before the target's defences");
             case ATTACK_SPEED -> TermText.of("how often it attacks");
-            case BRACKET_DAMAGE_STEP -> TermText.of("extra damage each shot in a row on one spot adds");
+            case HEAVY_MULTIPLIER -> TermText.format("what a {} deals, as a share of a Normal shell", TowerTerm.HEAVY_SHELL);
             case CRIT_CHANCE -> TermText.of("the chance a hit crits");
             case CRIT_MULTIPLIER -> TermText.of("what a crit deals, as a share of a normal hit");
             case AIM_STACKS -> TermText.format("how many stacks of {} it can hold", TowerTerm.STEADY_AIM);

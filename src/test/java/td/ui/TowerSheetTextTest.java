@@ -136,7 +136,7 @@ class TowerSheetTextTest {
 
         assertThat(labels(sheet)).startsWith("Range").endsWith("Targets");
         assertThat(iconRow(sheet, "Applies").icons()).isNotEmpty();
-        assertThat(sheet.lines()).endsWith(new SheetLine.Prose(TermText.of("Lobs a slow, unguided shell.")),
+        assertThat(sheet.lines()).endsWith(new SheetLine.Prose(TermText.of(TowerFactory.createTower(TowerFactory.Type.MORTAR, this.world, 0, 0).inspect().description())),
                 new SheetLine.Gap(), new SheetLine.Prose(TermText.of(TowerSheetText.PLACING_HINT)));
     }
 
