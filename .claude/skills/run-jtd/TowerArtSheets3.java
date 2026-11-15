@@ -69,7 +69,9 @@ final class TowerArtSheets3 {
             AffineTransform save = g.getTransform();
             double len = (s.has("dragon") ? 0.28 : 0.25) + 0.07;
             g.translate(len, TowerArt.LIFT * b.top());
-            TowerArt.stream(g, range, half, look, 11);
+            float core = look.contains("core") ? (float) Math.toRadians(half) * 0.25f : 0f;
+            td.ui.TowerArtGame.paintStream(g, range, half, new td.tower.CinderTower.StreamLook(look.contains("soul"),
+                    look.contains("white"), s.has("dragon"), core), 11);
             g.setTransform(save);
             TowerArt.paintCell(g, b, PX);
         };
@@ -550,14 +552,7 @@ final class TowerArtSheets3 {
             dummy(gg, 0.1, -0.35);
             dummy(gg, 0.3, 0.7);
             for (double[] to : new double[][] {{0.1, -0.35}, {0.3, 0.7}}) {
-                AffineTransform save = gg.getTransform();
-                gg.translate(-1.0, 0.2);
-                gg.rotate(Math.atan2(to[1] - 0.2, to[0] + 1.0));
-                gg.setColor(TowerArt.alpha(0xff8a2a, 0.8));
-                gg.fill(TowerArt.tongue(Math.hypot(to[0] + 1.0, to[1] - 0.2), 7, 3, 2));
-                gg.setColor(TowerArt.alpha(0xffe27a, 0.9));
-                gg.fill(TowerArt.tongue(Math.hypot(to[0] + 1.0, to[1] - 0.2) * 0.7, 3, 4, 2));
-                gg.setTransform(save);
+                td.ui.TowerArtGame.paintFlashover(gg, -1.0, 0.2, to[0], to[1], 3);
             }
         });
         tile(g, 340, y, w, h, px, "Knell: the rune flashes and one ring|runs out to the field's edge", gg -> {

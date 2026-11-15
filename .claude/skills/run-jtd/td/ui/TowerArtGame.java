@@ -58,6 +58,22 @@ public final class TowerArtGame {
         TowerSprites.paintParts(g, TowerFoundations.shell(kind, r), pixels);
     }
 
+    /**
+     * The game's stream from a nozzle at the pen's origin along +x, {@code range} cells long and {@code halfDegrees}
+     * either side, as {@code look} shapes it; {@code flicker} picks its tips.
+     */
+    public static void paintStream(Graphics2D g, double range, double halfDegrees, td.tower.CinderTower.StreamLook look,
+                                   int flicker) {
+        Java2DFrameRenderer.paintStream(g, new td.ui.render.StreamDraw(0f, 0f, 0f, TowerEffectFrameBuilder.streamTongues(
+                look, (float) range, (float) Math.toRadians(halfDegrees)), flicker));
+    }
+
+    /** The game's Flashover tongue from {@code fromX, fromY} to {@code toX, toY}, in cell units. */
+    public static void paintFlashover(Graphics2D g, double fromX, double fromY, double toX, double toY, int flicker) {
+        Java2DFrameRenderer.paintStream(g, TowerEffectFrameBuilder.flashover(false, (float) fromX, (float) fromY,
+                (float) toX, (float) toY, flicker));
+    }
+
     /** One lit part: {@code shape} standing {@code height} tall in the three tones of {@code body}. */
     public static void paintSolid(Graphics2D g, Shape shape, double height, Color body, double pixels) {
         TowerSprites.paintParts(g, List.of(TowerFoundations.Part.solid(shape, 0, height, Tones.of(body))), pixels);

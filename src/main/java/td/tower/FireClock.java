@@ -67,6 +67,11 @@ final class FireClock {
 
     /** How much of the wait is left, from {@code 1} just after a shot down to {@code 0} once it is ready. */
     float remaining() {
-        return (float) Math.clamp(1.0 - this.charge / this.period, 0.0, 1.0);
+        return this.remaining(1.0);
+    }
+
+    /** How much of a wait of {@code periods} is left, from {@code 1} just after it was spent down to {@code 0}. */
+    float remaining(double periods) {
+        return (float) Math.clamp((this.period - this.charge) / (periods * this.period), 0.0, 1.0);
     }
 }

@@ -344,36 +344,6 @@ final class TowerArt {
         }
     }
 
-    /** The flame cone, in cell units from the nozzle at 0,0 along +x: three nested tongues, one record each. */
-    static void stream(Graphics2D g, double range, double halfDeg, String look, int seed) {
-        boolean soul = look.contains("soul");
-        boolean white = look.contains("white");
-        Color outer = soul ? alpha(0x5a36b8, 0.55) : alpha(0xe2402a, 0.55);
-        Color middle = soul ? alpha(0x8f6cf0, 0.7) : alpha(0xff8a2a, 0.75);
-        Color core = white ? alpha(0xffffff, 0.95) : soul ? alpha(0xd5e6ff, 0.9) : alpha(0xffe27a, 0.9);
-        g.setColor(outer);
-        g.fill(tongue(range, halfDeg, seed, 9));
-        g.setColor(middle);
-        g.fill(tongue(range * 0.78, halfDeg * 0.66, seed + 1, 7));
-        g.setColor(core);
-        g.fill(tongue(range * (look.contains("core") || white ? 0.72 : 0.42), halfDeg * 0.26, seed + 2, 5));
-    }
-
-    static Shape tongue(double range, double halfDeg, int seed, int tips) {
-        Random rnd = new Random(seed);
-        Path2D.Double p = new Path2D.Double();
-        p.moveTo(0, 0.02);
-        p.lineTo(0, -0.02);
-        for (int i = 0; i <= tips * 2; i++) {
-            double a = -halfDeg + 2 * halfDeg * i / (tips * 2);
-            double edge = 1 - 0.10 * Math.abs(a / halfDeg);
-            double r = range * edge * (i % 2 == 0 ? 0.78 + 0.1 * rnd.nextDouble() : 0.96 + 0.08 * rnd.nextDouble());
-            p.lineTo(cos(a) * r, sin(a) * r);
-        }
-        p.closePath();
-        return p;
-    }
-
     /** The nest: {@code count} stored missiles on one even ring, each the missile that will fly. */
     static void nest(Graphics2D g, int count, double phaseDeg, double ringRadius, String kind, boolean bright) {
         nest(g, count, phaseDeg, ringRadius, kind, bright, 0);

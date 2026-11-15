@@ -60,9 +60,16 @@ public enum Palette {
     TOWER_PULSE_RIM_BITE,
     TOWER_PULSE_WELL,
     TOWER_PULSE_ZAP,
-    TOWER_CINDER_CONE,
-    TOWER_CINDER_CONE_WHITE,
-    TOWER_CINDER_CONE_SOUL,
+    /** A stream's outer tongue, then its middle one and its core. */
+    TOWER_STREAM_OUTER,
+    TOWER_STREAM_MIDDLE,
+    TOWER_STREAM_CORE,
+    /** A White Flame core, in either kind of fire. */
+    TOWER_STREAM_WHITE,
+    /** A Soulfire stream's outer tongue, then its middle one and its core. */
+    TOWER_SOULFIRE_OUTER,
+    TOWER_SOULFIRE_MIDDLE,
+    TOWER_SOULFIRE_CORE,
     /** A Normal shell's iron, in a magazine's strip. */
     SHELL_NORMAL,
     /** The Heavy shell's band. */
