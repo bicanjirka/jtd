@@ -38,6 +38,12 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.DAMAGE, Shows.IN_CORE_ROW, true),
     HEAVY_MULTIPLIER(0f, 0f, Float.MAX_VALUE, StatUnit.PERCENT, "Heavy dmg", "Heavy damage",
             StatDirection.HIGHER, StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
+    /** How long a stream pours. */
+    STREAM(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Stream", "Stream", StatDirection.HIGHER, StatGroup.DAMAGE,
+            Shows.OFF_DEFAULT, false),
+    /** How long it waits between streams, before attack speed. */
+    RELOAD(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Reload", "Reload", StatDirection.LOWER, StatGroup.DAMAGE,
+            Shows.OFF_DEFAULT, false),
     CRIT_CHANCE(0f, 0f, 1f, StatUnit.PERCENT, "Crit chance", "Crit chance", StatDirection.HIGHER, StatGroup.CRIT,
             Shows.OFF_DEFAULT, true),
     CRIT_MULTIPLIER(AttackProfile.DEFAULT_CRIT_MULTIPLIER, 1f, Float.MAX_VALUE, StatUnit.PERCENT, "Crit dmg",
@@ -63,16 +69,6 @@ public enum TowerStat implements StatKey, StatTerm {
             StatDirection.HIGHER, StatGroup.EFFECTS, Shows.WHILE_IT_APPLIES, true),
     BUFF_DURATION(1f, 0f, Float.MAX_VALUE, StatUnit.PERCENT, "Buff time", "Buff duration", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, true),
-    BURN_DURATION(0f, 1f, Float.MAX_VALUE, StatUnit.TICKS, "Burn time", "Burn duration", StatDirection.HIGHER,
-            StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    STOKE_STEP(0f, 0f, Float.MAX_VALUE, StatUnit.SIGNED_PERCENT, "Stoke step", "Stoke step", StatDirection.HIGHER,
-            StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    STOKE_GRACE(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Stoke lingers", "Stoke lingers",
-            StatDirection.HIGHER, StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    BURN_POOL_CAP(0f, 1f, Float.MAX_VALUE, StatUnit.PERCENT, "Burn cap", "Burn pool cap", StatDirection.HIGHER,
-            StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    BURN_MARK_RATE(1f, 1f, Float.MAX_VALUE, StatUnit.PERCENT, "Scorch rate", "Scorch rate", StatDirection.HIGHER,
-            StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     FREEZE_DURATION(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Freeze time", "Freeze duration", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     TOLL_CAP(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Toll cap", "Toll cap", StatDirection.HIGHER,
@@ -91,8 +87,6 @@ public enum TowerStat implements StatKey, StatTerm {
             StatDirection.HIGHER, StatGroup.DELIVERY, Shows.IN_CORE_ROW, false),
     PROJECTILE_SIZE(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Proj size", "Projectile size",
             StatDirection.NEUTRAL, StatGroup.DELIVERY, Shows.IN_CORE_ROW, false),
-    WAVE_SPEED(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Wave speed", "Flame wave speed", StatDirection.HIGHER,
-            StatGroup.DELIVERY, Shows.OFF_DEFAULT, false),
     NEST_CAPACITY(0f, 0f, Float.MAX_VALUE, StatUnit.MISSILES, "Nest", "Nest capacity", StatDirection.HIGHER,
             StatGroup.DELIVERY, Shows.OFF_DEFAULT, false),
     MISSILES_PER_LAUNCH(1f, 1f, Float.MAX_VALUE, StatUnit.COUNT, "Missiles", "Missiles a shot", StatDirection.HIGHER,
@@ -208,6 +202,8 @@ public enum TowerStat implements StatKey, StatTerm {
             case CONE_WIDTH -> TermText.of("how wide its cone of fire is");
             case DAMAGE -> TermText.of("what one hit deals, before the target's defences");
             case ATTACK_SPEED -> TermText.of("how often it attacks");
+            case STREAM -> TermText.format("how long it pours before it reloads: {}", TowerTerm.STREAM);
+            case RELOAD -> TermText.of("how long it waits after a stream before the next; attack speed shortens it");
             case HEAVY_MULTIPLIER -> TermText.format("what a {} deals, as a share of a Normal shell", TowerTerm.HEAVY_SHELL);
             case CRIT_CHANCE -> TermText.of("the chance a hit crits");
             case CRIT_MULTIPLIER -> TermText.of("what a crit deals, as a share of a normal hit");
@@ -221,12 +217,6 @@ public enum TowerStat implements StatKey, StatTerm {
             case ACCURACY -> TermText.of("points of agility its aimed hits ignore");
             case EFFECT_DURATION -> TermText.of("how long its effects on enemies last, as a share of the usual");
             case BUFF_DURATION -> TermText.of("how long its own timed buffs last, as a share of the usual");
-            case BURN_DURATION -> TermText.format("how long a {} it causes lasts", EffectKind.BURN);
-            case STOKE_STEP -> TermText.format("what each second of {} adds to its damage", TowerTerm.STOKE);
-            case STOKE_GRACE -> TermText.format("how long {} stays once an enemy leaves", TowerTerm.STOKE);
-            case BURN_POOL_CAP -> TermText.format("how much {} one enemy can hold, as a share of a single {}", EffectKind.BURN, EffectKind.BURN);
-            case BURN_MARK_RATE -> TermText.format("how fast it builds {}, as a share of the usual",
-                    EffectKind.SCORCHED);
             case FREEZE_DURATION -> TermText.format("how long a {} it causes lasts", EffectKind.FREEZE);
             case TOLL_CAP -> TermText.format("how many stacks of {} one enemy can hold", EffectKind.TOLL);
             case TOLL_RATE -> TermText.format("stacks of {} it adds each second", EffectKind.TOLL);
@@ -235,7 +225,6 @@ public enum TowerStat implements StatKey, StatTerm {
                     EffectKind.VULNERABLE);
             case PROJECTILE_SPEED -> TermText.of("how fast its shots fly, as a share of the usual");
             case PROJECTILE_SIZE -> TermText.of("how big its shots are, as a share of the usual");
-            case WAVE_SPEED -> TermText.of("how fast its flame wave travels, as a share of the usual");
             case NEST_CAPACITY -> TermText.of("how many missiles it can store");
             case MISSILES_PER_LAUNCH -> TermText.of("how many missiles one shot launches");
             case BOUNTY -> TermText.of("extra cash for each kill it makes");

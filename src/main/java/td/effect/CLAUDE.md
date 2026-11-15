@@ -18,12 +18,13 @@
   shorter; one refreshed each pulse never gets there. A growing slow is the exception: it grows by the tick it has run,
   from its start, never under its floor, and ends at its strongest, so what lengthens it makes it grow further. Of one kind a weaker slow is ignored while the stronger runs, and
   a stronger one replaces it, weaker tail and all. `FREEZE` is a hard stop.
-- `BURN` and `POISON` are each a decaying fuel pool of one `FuelContribution` per application, each
-  with its own sink (`EffectKind.isFuelPool()`). Tick damage is apportioned across contributors
-  (largest remainder), so every tower gets credit for its share. Damage lands in a pulse a few times
-  a second carrying the whole window's worth; the pool still decays every tick, and pulses ride the
-  stack clock, so `STACK_INTERVAL_TICKS` must stay a multiple of the pulse interval. A top-up adds
-  `L0 * (1 - fuel / lmax)`, and nothing to a pool over its cap. A pool ends when a tick would round to zero. The two kinds are separate
+- `BURN` and `POISON` are each a fuel pool of one `FuelContribution` per source, each with its own sink
+  (`EffectKind.isFuelPool()`): an effect carries the damage it will deal, and fuel from a source already feeding the
+  pool joins its share. Every tick the pool burns a fixed multiple of the root of its fuel, every share by the same
+  part, so four times the fuel lasts twice as long; there is no cap. Damage lands in a pulse a few times a second
+  carrying what has burned, split across the shares (largest remainder), and the part of a unit left over stays
+  owed, so a pool deals exactly its fuel. Pulses ride the stack clock, so `STACK_INTERVAL_TICKS` must stay a multiple
+  of the pulse interval. The last part of a unit burns at once. The two kinds are separate
   pools, so they stack with each other. A pool earns a stack of its lasting mark (`SCORCHED` for
   burn, `SICKENED` for poison, `EffectInteractions.earnedBy`) when it starts and another every
   `STACK_INTERVAL_TICKS` while it lasts, up to their cap; a top-up earns none.
@@ -52,10 +53,6 @@
   `INVERSION` is the one hex the enemy itself reads: its regeneration is dealt through the hex's sink.
 - `SOULFIRE` is a third fuel pool beside burn and poison (`EffectKind.isBurning()` covers it and burn), and it
   earns `SCORCHED` and `SICKENED` both. It is its own kind, so it burns what is burn-immune.
-- A tower tunes the pool it feeds through `PoolTuning`, carried by the pool: how much it holds, how fast it
-  marks, and the stat modifiers it carries while it burns (Cauterize, Heat
-  and the magic mark are such modifiers). Two towers on one pool leave it the stronger of each setting,
-  and what it carries only lasts while the pool does.
 - A burning pool sets `STEALTH` to 0 like a reveal, through its rule.
 - `CHARGED` is spent by a hit from any attacker but the one in its `origin`, never by periodic
   damage; the mob pays its share of that hit through the charge's own sink, so the charger is
@@ -68,10 +65,10 @@
   shield is `PER_SOURCE` the same way, one `ShieldShare` per source, a recast topping its own share up. Its points
   are what was cast, never scaled; `ActiveEffects.absorb` lets the shares that take a hit's type hold it, the one
   ending soonest first, each worth the `worth` the mob passes (its spirit's `StatCurves.restoreFactor`), and at no
-  worth every share the hit meets breaks. Cauterize lowers `SPIRIT`.
+  worth every share the hit meets breaks.
   The mob applies regeneration to itself, capped at max health; `Damage` can't be negative.
-- Tenacity and the freeze meter only scale an authored duration, never change an effect's curve:
-  `duration = authored * durationFactor(tenacity)`, and `* FreezeMeter.nextShare()` for `FREEZE`; never under a tick,
+- Tenacity and the freeze meter only scale an authored duration, never change an effect's curve, and a pool's fuel
+  in place of its duration: `duration = authored * durationFactor(tenacity)`, and `* FreezeMeter.nextShare()` for `FREEZE`; never under a tick,
   though a freeze that would last under one doesn't land. Only an immunity keeps a kind out. `FREEZE` isn't renewed
   while it holds (`EffectTag.NOT_RENEWED`); `DAZED` refreshes like any other kind and has no meter.
 - `EffectInteractions` is the one place for how an active kind acts on another: what a pool earns, and what a

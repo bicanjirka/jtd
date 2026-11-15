@@ -62,14 +62,14 @@ class TenacityTest {
     }
 
     @Test
-    void itCutsAPoolsTotalWithItsTime() {
+    void itShrinksAPoolsFuelAsItComesIn() {
         DefinedEnemyMob plain = mobWithTenacity(0f);
         DefinedEnemyMob tough = mobWithTenacity(100f);
 
-        plain.applyEffect(Effect.burn(Damage.magic(1000), 100, DamageSink.none()));
-        tough.applyEffect(Effect.burn(Damage.magic(1000), 100, DamageSink.none()));
+        plain.applyEffect(Effect.burn(Damage.magic(1000), DamageSink.none()));
+        tough.applyEffect(Effect.burn(Damage.magic(1000), DamageSink.none()));
 
-        assertThat(tough.activeEffects().getFirst().remainingPoolDamage()
-                / plain.activeEffects().getFirst().remainingPoolDamage()).isCloseTo(0.5f, within(0.05f));
+        assertThat(tough.activeEffects().getFirst().fuelLevel()
+                / plain.activeEffects().getFirst().fuelLevel()).isCloseTo(0.5f, within(0.05f));
     }
 }

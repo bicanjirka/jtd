@@ -1213,8 +1213,11 @@ public abstract class AbstractTower implements Tower {
         return rows;
     }
 
-    /** Damage, then how often: a fire rate with the damage a second it comes to, or a field's damage a second. */
-    private List<TowerStatLine> attackRows(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
+    /**
+     * Damage, then how often: a fire rate with the damage a second it comes to, or a field's damage a second. A tower
+     * whose damage is no hit and no field overrides this.
+     */
+    protected List<TowerStatLine> attackRows(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
         boolean magic = this.dealsMagic(stats);
         if (this.dealsByField()) {
             return List.of(this.derivedRow(TowerStatRow.damage(magic, true), TowerStat.DAMAGE, stats, parts,

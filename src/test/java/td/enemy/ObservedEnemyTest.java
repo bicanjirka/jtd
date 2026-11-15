@@ -67,7 +67,7 @@ class ObservedEnemyTest {
     @Test
     void periodicDamageNamesTheEffectThatDealtIt() {
         DefinedEnemyMob mob = this.observed(this.world, plain());
-        mob.applyEffect(Effect.burn(Damage.magic(100), 40, damage -> mob.takeHit(damage, PERIODIC)));
+        mob.applyEffect(Effect.burn(Damage.magic(100), damage -> mob.takeHit(damage, PERIODIC)));
 
         mob.doTick(1);
 
@@ -79,7 +79,7 @@ class ObservedEnemyTest {
     @Test
     void periodicDamageFromOutsideTheEffectsTickNamesNoEffect() {
         DefinedEnemyMob mob = this.observed(this.world, plain());
-        mob.applyEffect(Effect.burn(Damage.magic(100), 40, damage -> mob.takeHit(damage, PERIODIC)));
+        mob.applyEffect(Effect.burn(Damage.magic(100), damage -> mob.takeHit(damage, PERIODIC)));
         mob.doTick(1);
 
         mob.takeHit(Damage.magic(100), PERIODIC);

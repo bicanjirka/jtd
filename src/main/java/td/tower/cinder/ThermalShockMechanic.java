@@ -1,32 +1,24 @@
 package td.tower.cinder;
 
 import td.effect.EffectKind;
-import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
+import td.tower.TowerTerm;
 
-import java.util.Set;
-
-/** Thermal Shock: a burning enemy that dies lands what is left of its Burn on its neighbours, and chills them. */
+/** Thermal Shock: more Flame into an enemy another tower holds. */
 public final class ThermalShockMechanic implements CinderMechanic {
 
-    public static final float BURST_SHARE = 1.5f;
+    private static final float MORE = 0.35f;
 
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {
-        return spec.withThermalShock(BURST_SHARE);
-    }
-
-    @Override
-    public Set<Term> applies() {
-        return Set.of(EffectKind.CHILL);
+        return spec.withThermalShock(1f + MORE);
     }
 
     @Override
     public TermText describe() {
-        return TermText.of("when an enemy it set alight dies with ").plus(EffectKind.BURN)
-                .plus(", what is left of it lands on the enemies near it at " + TermNumbers.percent(BURST_SHARE)
-                        + ", and they gain ")
-                .plus(EffectKind.CHILL);
+        return TermText.of("it pours " + TermNumbers.percent(MORE) + " more ").plus(TowerTerm.FLAME)
+                .plus(" into an enemy with ").plus(EffectKind.CHILL).plus(", ").plus(EffectKind.FREEZE).plus(" or ")
+                .plus(EffectKind.DAZED);
     }
 }

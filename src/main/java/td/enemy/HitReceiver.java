@@ -96,6 +96,9 @@ public interface HitReceiver {
     /** Its spirit now: {@code 0} at neutral, down to {@code -100}. */
     float spirit();
 
+    /** Its armor and its plating now, together, in points. */
+    float armorAndPlating();
+
     /** Active effect kinds, in a stable order. */
     Set<EffectKind> activeEffectKinds();
 

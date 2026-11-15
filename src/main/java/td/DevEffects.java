@@ -30,7 +30,7 @@ public final class DevEffects {
     private static final DevField SECONDS = DevField.seconds();
     private static final DevField SHOTS = DevField.shots();
     private static final DevField SLOW = new DevField("Slow %", 40f, 1f, 80f);
-    private static final DevField DAMAGE_PER_SECOND = new DevField("Dmg/s", 20f, 0.1f, 100_000f);
+    private static final DevField FUEL = new DevField("Fuel", 100f, 1f, 100_000f);
     private static final DevField SHIELD_POINTS = new DevField("Points", 50f, 1f, 100_000f);
     private static final DevField HEAL_PER_SECOND = new DevField("Heal/s", 10f, 0.1f, 100_000f);
     private static final DevField DAMAGE_PER_CELL = new DevField("Dmg/cell", 5f, 0.1f, 100_000f);
@@ -100,10 +100,9 @@ public final class DevEffects {
     private static Offer<List<Effect>> offer(EffectKind kind) {
         return switch (kind) {
             case CHILL -> one(List.of(SECONDS, SLOW), in -> Effect.chill(in.value(1) / 100f, in.ticks(0), in.sink()));
-            case BURN -> one(List.of(SECONDS, DAMAGE_PER_SECOND), in -> Effect.burn(in.magicPerTick(1), in.ticks(0), in.sink()));
-            case POISON -> one(List.of(SECONDS, DAMAGE_PER_SECOND), in -> Effect.poison(in.magicPerTick(1), in.ticks(0), in.sink()));
-            case SOULFIRE -> one(List.of(SECONDS, DAMAGE_PER_SECOND),
-                    in -> Effect.soulfire(in.magicPerTick(1), in.ticks(0), in.sink()));
+            case BURN -> one(List.of(FUEL), in -> Effect.burn(in.magic(0), in.sink()));
+            case POISON -> one(List.of(FUEL), in -> Effect.poison(in.magic(0), in.sink()));
+            case SOULFIRE -> one(List.of(FUEL), in -> Effect.soulfire(in.magic(0), in.sink()));
             case BLEEDING -> one(List.of(SECONDS, DAMAGE_PER_CELL),
                     in -> Effect.bleeding(DamageUnits.ofPoints(in.value(1)), in.ticks(0), in.sink()));
             case SHIELD -> one(List.of(SECONDS, SHIELD_POINTS),
@@ -140,9 +139,9 @@ public final class DevEffects {
             case SCORCHED -> one(List.of(stacks(kind)), in -> Effect.scorched(in.whole(0)));
             case SICKENED -> one(List.of(stacks(kind)), in -> Effect.sickened(in.whole(0)));
             case INVERSION, DOOM -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
-            case BLIGHT -> new Builds<>(List.of(SECONDS, DAMAGE_PER_SECOND), in -> List.of(
+            case BLIGHT -> new Builds<>(List.of(SECONDS, FUEL), in -> List.of(
                     Effect.blight(in.ticks(0), BlightHex.SLOW_PER_TICK, 0f, 0f, in.sink()),
-                    Effect.poison(in.magicPerTick(1), in.ticks(0), in.sink())));
+                    Effect.poison(in.magic(1), in.sink())));
             case STILLED -> new Refuses<>("needs an Obelisk field");
         };
     }
@@ -161,8 +160,9 @@ public final class DevEffects {
                     TowerModifiers.damagePercent(in.value(1) / 100f)));
             case JAMMED -> new Builds<>(List.of(SECONDS, ATTACK_SPEED_LOST, RANGE_LOST), in -> new TowerGrant.Jam(in.ticks(0),
                     new DisruptionAura(JAM_REACH_CELLS * in.scale(), in.value(1) / 100f, in.value(2))));
-            case STEADY_AIM, FOCUS, MAGAZINE, NEST, EVENT_HORIZON, INTERFERENCE, STOKE -> new Refuses<>(KEPT_BY_THE_TOWER);
-            case HEAVY_SHELL, NUKE_SHELL, PAYLOAD, NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, FLARE, BARRAGE, CARPET_BOMBING,
+            case STEADY_AIM, FOCUS, MAGAZINE, NEST, EVENT_HORIZON, INTERFERENCE -> new Refuses<>(KEPT_BY_THE_TOWER);
+            case FLAME, STREAM, CORE, DRAGONS_BREATH, FLASHOVER, THERMAL_SHOCK, MELTDOWN,
+                    HEAVY_SHELL, NUKE_SHELL, PAYLOAD, NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, FLARE, BARRAGE, CARPET_BOMBING,
                     CRYO_MISSILE, ARCANE_MISSILE, EMP_MISSILE, TRACER_MISSILE,
                     SHATTER, ARC, HEX, STATIC, SOULBRAND, SPARK, SOUL, THUNDERCLAP,
                     THUNDERSTRIKE -> new Refuses<>(FROM_AN_UPGRADE);
@@ -223,8 +223,9 @@ public final class DevEffects {
             return DamageUnits.ofPoints(this.value(field) / TickRate.TICKS_PER_SECOND);
         }
 
-        Damage magicPerTick(int field) {
-            return Damage.magic(this.unitsPerTick(field));
+        /** A field in points, as magic damage in units. */
+        Damage magic(int field) {
+            return Damage.magic(DamageUnits.ofPoints(this.value(field)));
         }
     }
 

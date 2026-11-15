@@ -3,7 +3,6 @@ package td.ui;
 import td.board.BoardGeometry;
 import td.cell.CellHighlight;
 import td.enemy.EnemyInspection;
-import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.projectile.Projectile;
 import td.stat.StatWording;
@@ -92,7 +91,6 @@ public final class BoardRenderer {
         }
 
         Optional<InfoSheet> enemySheet = inspection
-                .map(found -> selected.map(mob -> found.withMarks(this.marksOn(mob))).orElse(found))
                 .map(found -> EnemyStatText.live(found, new StatWording(board.scale())));
 
         Optional<TowerSheet> towerSheet = this.world.towers().all().stream().filter(Tower::isSelected).findFirst()
@@ -103,13 +101,6 @@ public final class BoardRenderer {
                 spriteFrameBuilder.build(),
                 effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers,
                 enemyFrameBuilder.buildOverlays(), enemySheet, towerSheet, this.cellGrid(level), level.ground());
-    }
-
-    /** What every tower remembers about {@code mob}, for its pane. */
-    private List<EnemyMark> marksOn(EnemyMob mob) {
-        List<EnemyMark> marks = new ArrayList<>();
-        this.world.towers().all().forEach(tower -> marks.addAll(tower.marksOn(mob)));
-        return marks;
     }
 
     /** Blocked means unbuildable with no tower on it: a path covers the cell. */

@@ -5,14 +5,12 @@ import td.economy.StatusTerm;
 import td.effect.EffectKind;
 import td.enemy.AbilityEntry;
 import td.enemy.EnemyInspection;
-import td.enemy.EnemyMark;
 import td.enemy.StatRows;
 import td.enemy.TraitEntry;
 import td.stat.EnemyStat;
 import td.stat.StatBreakdown;
 import td.stat.StatWording;
 import td.term.Side;
-import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.ui.render.IconFace;
@@ -25,9 +23,7 @@ import td.ui.render.TooltipKey;
 import td.util.TickRate;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -263,18 +259,7 @@ final class EnemyStatText {
         return new SheetLine.Shields(any, physical, magic);
     }
 
-    /** The debuffs, then each term towers hold a mark of, once, with its highest step. */
     private static List<SheetIcon> debuffIcons(EnemyInspection inspection) {
-        List<SheetIcon> icons = new ArrayList<>(effectIcons(inspection, Side.DEBUFF));
-        Map<Term, List<EnemyMark>> byTerm = new LinkedHashMap<>();
-        inspection.marks().forEach(mark -> byTerm.computeIfAbsent(mark.term(), term -> new ArrayList<>()).add(mark));
-        byTerm.forEach((term, marks) -> {
-            int highest = marks.stream().mapToInt(EnemyMark::steps).max().orElse(0);
-            List<SheetLine> rows = marks.stream().map(mark -> (SheetLine) Row.plain(Glyph.DOT, mark.source(),
-                    mark.steps() + " / " + mark.maxSteps())).toList();
-            icons.add(new SheetIcon(TermLooks.faceOf(term).withCorner(Integer.toString(highest)),
-                    TooltipKey.ofTerm("mark", term), TermSheets.of(term, term.describe(), rows)));
-        });
-        return icons;
+        return effectIcons(inspection, Side.DEBUFF);
     }
 }

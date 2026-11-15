@@ -8,10 +8,7 @@ import td.damage.DamageUnits;
 import td.stat.BaseStats;
 import td.stat.EnemyStat;
 import td.stat.StatCurves;
-import td.stat.StatModifier;
-import td.stat.StatModifiers;
 import td.stat.StatSheet;
-import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +27,18 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aFreshBurnIsHalfAsFullAsATopUpCanMakeIt() {
-        ActiveEffects effects = new ActiveEffects();
+    void aPoolReadsFullerTheLongerItWouldBurnAndFullOnceItWouldBurnLongEnough() {
+        ActiveEffects small = new ActiveEffects();
+        ActiveEffects large = new ActiveEffects();
+        ActiveEffects huge = new ActiveEffects();
 
-        effects.apply(Effect.burn(Damage.magic(10), 60, DamageSink.none()));
+        small.apply(Effect.burn(Damage.magic(1_000), DamageSink.none()));
+        large.apply(Effect.burn(Damage.magic(4_000), DamageSink.none()));
+        huge.apply(Effect.burn(Damage.magic(10_000_000), DamageSink.none()));
 
-        assertThat(effects.fullness(EffectKind.BURN).orElseThrow())
-                .isCloseTo(1.0 / PoolTuning.standard().capFactor(), within(0.01));
+        assertThat(large.fullness(EffectKind.BURN).orElseThrow())
+                .isCloseTo(2 * small.fullness(EffectKind.BURN).orElseThrow(), within(1e-4));
+        assertThat(huge.fullness(EffectKind.BURN).orElseThrow()).isEqualTo(1.0);
     }
 
     @Test
@@ -243,59 +245,6 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aPoolToppedUpOnASteadyBeatDealsWhatItsSettledFormulaGives() {
-        int between = 21;
-        int duration = 60;
-        int level = 1000;
-
-        float dealtPerSecond = settledPoolDealtPerSecond(level, duration, between);
-
-        assertThat(ActiveEffects.settledPoolPerSecond(level, duration, PoolTuning.standard().capFactor(), between))
-                .isCloseTo(dealtPerSecond, within(dealtPerSecond * 0.01f));
-    }
-
-    @Test
-    void aPoolToppedUpInTimeWithItsPulsesDealsWhatItsSettledFormulaGives() {
-        int duration = 20;
-        int level = 1000;
-        int between = 4 * pulseTicks();
-
-        float dealtPerSecond = settledPoolDealtPerSecond(level, duration, between);
-
-        assertThat(ActiveEffects.settledPoolPerSecond(level, duration, PoolTuning.standard().capFactor(), between))
-                .isCloseTo(dealtPerSecond, within(dealtPerSecond * 0.01f));
-    }
-
-    /** The ticks between two pulses: the first pulse is on the pool's first tick. */
-    private static int pulseTicks() {
-        List<Damage> received = new ArrayList<>();
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(1000), 1000, recordingSink(received)));
-        int ticks = 0;
-        do {
-            effects.tick();
-            ticks++;
-        } while (received.size() < 2);
-        return ticks - 1;
-    }
-
-    /** What a burn topped up every {@code between} ticks deals a second once it has settled. */
-    private static float settledPoolDealtPerSecond(int level, int duration, int between) {
-        int beats = 20;
-        List<Damage> received = new ArrayList<>();
-        ActiveEffects effects = new ActiveEffects();
-        for (int beat = 0; beat < 2 * beats; beat++) {
-            if (beat == beats) {
-                received.clear();
-            }
-            effects.apply(Effect.burn(Damage.magic(level), duration, recordingSink(received)));
-            tickTimes(effects, between);
-        }
-        float seconds = beats * between / TickRate.TICKS_PER_SECOND;
-        return received.stream().mapToInt(Damage::amount).sum() / seconds;
-    }
-
-    @Test
     void aFreezeZeroesTheSpeedMultiplier() {
         ActiveEffects effects = new ActiveEffects();
 
@@ -315,97 +264,137 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aBurningFuelPoolDealsItsDecayingDamageInAPulseEveryFiveTicks() {
+    void aPoolDealsWhatItHasBurnedInAPulseOnItsFirstTickAndEveryFifthAfter() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> received = new ArrayList<>();
-        // L0 = 10, T = 60, alpha = e^(-3/60) ~= 0.9512; a pulse is L * (1 + a + a^2 + a^3 + a^4) ~= L * 4.5355
-        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(received)));
+        int fuel = 10_000;
+        effects.apply(Effect.burn(Damage.magic(fuel), recordingSink(received)));
 
-        effects.tick(); // L = 10.000 -> pulse of 45
+        effects.tick();
         tickTimes(effects, 4);
-        assertThat(received).containsExactly(Damage.magic(45));
+        assertThat(received).containsExactly(Damage.magic(Math.round(burnedIn(fuel, 1))));
 
-        effects.tick(); // L = 10 * a^5 = 7.788 -> pulse of 35
-        assertThat(received).containsExactly(Damage.magic(45), Damage.magic(35));
+        effects.tick();
+        assertThat(received).hasSize(2);
+        assertThat(received.get(1).amount()).isCloseTo(Math.round(burnedIn(fuel, 6) - burnedIn(fuel, 1)), within(1));
+    }
+
+    /**
+     * What a pool of {@code fuel} damage units has burned after {@code ticks}: each tick burns the same multiple of
+     * the root of what is left, the one whose pool would empty in its burn time.
+     */
+    private static float burnedIn(float fuel, int ticks) {
+        double rate = 2 * Math.sqrt(fuel) / ActiveEffects.burnTicksOf(fuel);
+        double left = fuel;
+        for (int t = 0; t < ticks; t++) {
+            left -= Math.min(left, rate * Math.sqrt(left));
+        }
+        return (float) (fuel - left);
     }
 
     @Test
-    void pulsingDealsAboutAsMuchInTotalAsDamagingEveryTickWould() {
+    void aPoolDealsExactlyItsFuelAndEnds() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> received = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(100), 60, recordingSink(received)));
+        effects.apply(Effect.burn(Damage.magic(12_345), recordingSink(received)));
 
         tickTimes(effects, 600);
 
-        // the sum of 100 * alpha^k over every tick, alpha = e^(-3/60)
-        int total = received.stream().mapToInt(Damage::amount).sum();
-        assertThat(total).isCloseTo(2050, within(60));
+        assertThat(received.stream().mapToInt(Damage::amount).sum()).isCloseTo(12_345, within(1));
+        assertThat(effects.has(EffectKind.BURN)).isFalse();
     }
 
     @Test
-    void aBurningFuelPoolSelfTerminatesOnceItsRoundedDamageReachesZero() {
+    void fourTimesTheFuelBurnsForTwiceAsLong() {
+        int small = ticksToBurnOut(10_000);
+        int large = ticksToBurnOut(40_000);
+
+        assertThat((float) large / small).isCloseTo(2f, within(0.1f));
+    }
+
+    private static int ticksToBurnOut(int fuel) {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.burn(Damage.magic(fuel), DamageSink.none()));
+        int ticks = 0;
+        while (effects.has(EffectKind.BURN)) {
+            effects.tick();
+            ticks++;
+        }
+        return ticks;
+    }
+
+    @Test
+    void aPoolOfLessThanAUnitBurnsAtOnce() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> received = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(1), 10, recordingSink(received)));
+        effects.apply(Effect.burn(Damage.magic(1), recordingSink(received)));
 
-        tickTimes(effects, 10);
-
-        assertThat(effects.activeKinds()).doesNotContain(EffectKind.BURN);
-        assertThat(received).isNotEmpty();
-    }
-
-    @Test
-    void reapplyingBurnAddsFuelWithDiminishingReturnsAsThePoolNearsItsCap() {
-        ActiveEffects effects = new ActiveEffects();
-        List<Damage> firstTower = new ArrayList<>();
-        List<Damage> secondTower = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(firstTower)));
-
-        // Lmax = 2 * max(10, 8) = 20; deltaL = 8 * (1 - 10/20) = 4; pool becomes 10 + 4 = 14
-        effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(secondTower)));
         effects.tick();
 
-        // pool = 14, pulse = 14 * 4.5355 ~= 63, split 10:4
-        assertThat(firstTower).containsExactly(Damage.magic(45));
-        assertThat(secondTower).containsExactly(Damage.magic(18));
+        assertThat(effects.activeKinds()).doesNotContain(EffectKind.BURN);
+        assertThat(received).containsExactly(Damage.magic(1));
     }
 
     @Test
-    void aSecondTowersBurnFuelIsCreditedToThatTowerRatherThanToTheTowerThatIgnitedTheBurn() {
+    void fuelAddsInFullWithNoCap() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.burn(Damage.magic(1_000), DamageSink.none()));
+
+        for (int i = 0; i < 20; i++) {
+            effects.apply(Effect.burn(Damage.magic(1_000), DamageSink.none()));
+        }
+
+        assertThat(fuelOf(effects, EffectKind.BURN)).isEqualTo(21_000f);
+    }
+
+    @Test
+    void fuelFromASourceAlreadyFeedingAPoolJoinsItsShare() {
+        ActiveEffects effects = new ActiveEffects();
+        AttackOrigin tower = AttackOrigin.fresh();
+        effects.apply(Effect.burn(Damage.magic(1_000), DamageSink.none()).from(tower));
+
+        effects.apply(Effect.burn(Damage.magic(500), DamageSink.none()).from(tower));
+        effects.apply(Effect.burn(Damage.magic(500), DamageSink.none()).from(AttackOrigin.fresh()));
+
+        assertThat(effects.find(EffectKind.BURN).orElseThrow().fuel()).extracting(FuelContribution::fuel)
+                .containsExactly(1_500f, 500f);
+    }
+
+    @Test
+    void aSecondTowersFuelIsCreditedToThatTowerRatherThanToTheTowerThatStartedTheBurn() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> firstTower = new ArrayList<>();
         List<Damage> secondTower = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(firstTower)));
+        effects.apply(Effect.burn(Damage.magic(4_000), recordingSink(firstTower)));
+        tickTimes(effects, 5);
 
-        tickTimes(effects, 5); // the first pulse, 45 to the first tower; the pool decays to 7.788
+        effects.apply(Effect.burn(Damage.magic(6_000), recordingSink(secondTower)));
+        tickTimes(effects, 600);
 
-        // peakL0 stays 10 (8 < 10), so Lmax = 20; deltaL = 8 * (1 - 7.788/20) ~= 4.885
-        effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(secondTower)));
-        effects.tick(); // pool ~= 12.673 -> pulse of 57, split by each share
+        assertThat(total(secondTower)).isCloseTo(6_000, within(1));
+        assertThat(total(firstTower) + total(secondTower)).isCloseTo(10_000, within(1));
+    }
 
-        assertThat(firstTower).containsExactly(Damage.magic(45), Damage.magic(35));
-        assertThat(secondTower).containsExactly(Damage.magic(22));
+    private static int total(List<Damage> received) {
+        return received.stream().mapToInt(Damage::amount).sum();
     }
 
     @Test
-    void threeTowersFuellingTheSameBurnAreEachCreditedTheirOwnProportionalShareOfOnePulse() {
+    void threeTowersFeedingOneBurnAreEachCreditedTheirOwnShareOfEveryPulse() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> firstTower = new ArrayList<>();
         List<Damage> secondTower = new ArrayList<>();
         List<Damage> thirdTower = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(firstTower)));
-        // Lmax = 2 * max(10, 8) = 20; deltaL = 8 * (1 - 10/20) = 4; pool becomes 10 + 4 = 14
-        effects.apply(Effect.burn(Damage.magic(8), 60, recordingSink(secondTower)));
-        // Lmax = 2 * max(10, 6) = 20; deltaL = 6 * (1 - 14/20) = 1.8; pool becomes 14 + 1.8 = 15.8
-        effects.apply(Effect.burn(Damage.magic(6), 60, recordingSink(thirdTower)));
+        effects.apply(Effect.burn(Damage.magic(6_000), recordingSink(firstTower)));
+        effects.apply(Effect.burn(Damage.magic(3_000), recordingSink(secondTower)));
+        effects.apply(Effect.burn(Damage.magic(1_000), recordingSink(thirdTower)));
 
-        // total = 15.8, pulse = 15.8 * 4.5355 ~= 72; exact shares are 45.57/18.23/8.20 - the first
-        // tower's largest fractional remainder (0.57) wins the one leftover unit, giving 46/18/8 = 72
         effects.tick();
 
-        assertThat(firstTower).containsExactly(Damage.magic(46));
-        assertThat(secondTower).containsExactly(Damage.magic(18));
-        assertThat(thirdTower).containsExactly(Damage.magic(8));
+        int pulse = Math.round(burnedIn(10_000, 1));
+        assertThat(total(firstTower)).isCloseTo(Math.round(pulse * 0.6f), within(1));
+        assertThat(total(secondTower)).isCloseTo(Math.round(pulse * 0.3f), within(1));
+        assertThat(total(firstTower) + total(secondTower) + total(thirdTower)).isEqualTo(pulse);
     }
 
     @Test
@@ -413,7 +402,7 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> received = new ArrayList<>();
         effects.apply(Effect.chill(0.5f, 5, DamageSink.none()));
-        effects.apply(Effect.burn(Damage.magic(10), 5, recordingSink(received)));
+        effects.apply(Effect.burn(Damage.magic(10), recordingSink(received)));
 
         effects.tick();
 
@@ -656,7 +645,7 @@ class ActiveEffectsTest {
     @Test
     void eachScorchedStackLowersResilienceByOneAndNoneWearOffWhileBurningKeepsEarningThem() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 5000, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(fuelBurningFor(2_200)), DamageSink.none()));
         assertThat(resolved(effects, EnemyStat.RESILIENCE)).isEqualTo(-1f);
 
         tickTimes(effects, 100); // earned 1 + 10, decayed none
@@ -671,11 +660,11 @@ class ActiveEffectsTest {
     @Test
     void reapplyingABurnFeedsItsPoolButAddsNoStacks() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 5000, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(fuelBurningFor(60)), DamageSink.none()));
         tickTimes(effects, 25); // stacks: 1, then one every 10 ticks
         int before = effects.stacks(EffectKind.BURN);
 
-        effects.apply(Effect.burn(Damage.magic(10), 5000, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(10), DamageSink.none()));
 
         assertThat(effects.stacks(EffectKind.BURN)).isEqualTo(before);
     }
@@ -685,13 +674,13 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> burnTower = new ArrayList<>();
         List<Damage> poisonTower = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(10), 60, recordingSink(burnTower)));
-        effects.apply(Effect.poison(Damage.magic(6), 60, recordingSink(poisonTower)));
+        effects.apply(Effect.burn(Damage.magic(10_000), recordingSink(burnTower)));
+        effects.apply(Effect.poison(Damage.magic(4_000), recordingSink(poisonTower)));
 
         effects.tick();
 
-        assertThat(burnTower).containsExactly(Damage.magic(45));
-        assertThat(poisonTower).containsExactly(Damage.magic(27));
+        assertThat(burnTower).containsExactly(Damage.magic(Math.round(burnedIn(10_000, 1))));
+        assertThat(poisonTower).containsExactly(Damage.magic(Math.round(burnedIn(4_000, 1))));
         assertThat(effects.activeKinds()).contains(EffectKind.BURN, EffectKind.POISON);
     }
 
@@ -701,7 +690,7 @@ class ActiveEffectsTest {
         effects.apply(Effect.freeze(2, DamageSink.none()));
         tickTimes(effects, 2);
 
-        effects.apply(Effect.burn(Damage.magic(10), 60, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(10), DamageSink.none()));
 
         assertThat(effects.activeKinds()).containsExactlyInAnyOrder(EffectKind.BURN, EffectKind.SCORCHED);
         assertThat(effects.blockedKinds()).isEmpty();
@@ -719,7 +708,7 @@ class ActiveEffectsTest {
     @Test
     void scorchedStacksOutlastTheBurnAndThenWearOffOneAtATime() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(fuelBurningFor(30)), DamageSink.none()));
         tickTimes(effects, 40);
 
         assertThat(effects.activeKinds()).containsExactly(EffectKind.SCORCHED);
@@ -738,11 +727,11 @@ class ActiveEffectsTest {
     @Test
     void aNewBurnEarnsItsFirstStackAtOnceOnTopOfTheOnesAlreadyEarned() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(fuelBurningFor(30)), DamageSink.none()));
         tickTimes(effects, 40);
         int earned = effects.stacks(EffectKind.SCORCHED);
 
-        effects.apply(Effect.burn(Damage.magic(10), 30, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(10), DamageSink.none()));
 
         assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(earned + 1);
     }
@@ -750,7 +739,7 @@ class ActiveEffectsTest {
     @Test
     void sickenedStacksOutlastThePoisonAndItsSlowEndsWithThePool() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.poison(Damage.magic(10), 30, DamageSink.none()));
+        effects.apply(Effect.poison(Damage.magic(fuelBurningFor(30)), DamageSink.none()));
         tickTimes(effects, 40);
 
         assertThat(effects.activeKinds()).containsExactly(EffectKind.SICKENED);
@@ -771,6 +760,13 @@ class ActiveEffectsTest {
         assertThat(effects.stacks(EffectKind.SCORCHED)).isEqualTo(4);
     }
 
+    /** Fuel, in damage units, that a pool burns through in about {@code ticks}. */
+    private static int fuelBurningFor(int ticks) {
+        float reference = 10_000f;
+        double rootPerTick = Math.sqrt(reference) / ActiveEffects.burnTicksOf(reference);
+        return (int) Math.round(Math.pow(ticks * rootPerTick, 2));
+    }
+
     private static float resolvedOn(BaseStats<EnemyStat> base, ActiveEffects effects, EnemyStat stat) {
         return new StatSheet(base, effects::contributeTo).value(stat);
     }
@@ -785,10 +781,10 @@ class ActiveEffectsTest {
     void anyFireShowsAnInvisibleEnemyForAsLongAsItBurns() {
         ActiveEffects burning = new ActiveEffects();
         burning.apply(Effect.invisible(1000, DamageSink.none()));
-        burning.apply(Effect.burn(Damage.magic(1), 60, DamageSink.none()));
+        burning.apply(Effect.burn(Damage.magic(1), DamageSink.none()));
         ActiveEffects soulburning = new ActiveEffects();
         soulburning.apply(Effect.invisible(1000, DamageSink.none()));
-        soulburning.apply(Effect.soulfire(Damage.magic(1), 60, DamageSink.none()));
+        soulburning.apply(Effect.soulfire(Damage.magic(1), DamageSink.none()));
         float whileBurning = resolved(burning, EnemyStat.STEALTH);
         float whileSoulburning = resolved(soulburning, EnemyStat.STEALTH);
 
@@ -803,9 +799,9 @@ class ActiveEffectsTest {
     void aFreezeLeavesTheFiresPoisonAndChillOnTheEnemy() {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> dealt = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(100), 40, dealt::add));
-        effects.apply(Effect.soulfire(Damage.magic(100), 40, DamageSink.none()));
-        effects.apply(Effect.poison(Damage.magic(100), 40, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(100), dealt::add));
+        effects.apply(Effect.soulfire(Damage.magic(100), DamageSink.none()));
+        effects.apply(Effect.poison(Damage.magic(100), DamageSink.none()));
         effects.apply(Effect.chill(0.4f, 40, DamageSink.none()));
 
         effects.apply(Effect.freeze(20, DamageSink.none()));
@@ -820,7 +816,7 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.freeze(20, DamageSink.none()));
 
-        effects.apply(Effect.burn(Damage.magic(100), 40, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(100), DamageSink.none()));
 
         assertThat(effects.find(EffectKind.BURN).orElseThrow().fuelLevel()).isEqualTo(100f);
     }
@@ -936,7 +932,7 @@ class ActiveEffectsTest {
     @Test
     void losingAStackEndsAPool() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(100), 30, DamageSink.none()));
+        effects.apply(Effect.burn(Damage.magic(100), DamageSink.none()));
 
         effects.loseStacks(EffectKind.BURN, 1);
 
@@ -996,8 +992,8 @@ class ActiveEffectsTest {
         ActiveEffects effects = new ActiveEffects();
         List<Damage> burn = new ArrayList<>();
         List<Damage> soul = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(100), 60, recordingSink(burn)));
-        effects.apply(Effect.soulfire(Damage.magic(100), 60, recordingSink(soul)));
+        effects.apply(Effect.burn(Damage.magic(100), recordingSink(burn)));
+        effects.apply(Effect.soulfire(Damage.magic(100), recordingSink(soul)));
 
         effects.tick();
 
@@ -1006,48 +1002,6 @@ class ActiveEffectsTest {
         assertThat(burn).isNotEmpty();
         assertThat(soul).isNotEmpty();
         assertThat(effects.stacks(EffectKind.SICKENED)).isEqualTo(1);
-    }
-
-    @Test
-    void aPoolTunedToHoldMoreFillsFurtherBeforeItStopsTakingTopUps() {
-        ActiveEffects plain = new ActiveEffects();
-        ActiveEffects deep = new ActiveEffects();
-        Effect tuned = Effect.burn(Damage.magic(100), 200, DamageSink.none()).withTuning(PoolTuning.standard().withCapFactor(4f));
-        for (int i = 0; i < 12; i++) {
-            plain.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()));
-            deep.apply(tuned);
-        }
-
-        assertThat(fuelOf(deep, EffectKind.BURN)).isGreaterThan(fuelOf(plain, EffectKind.BURN) * 1.5f);
-    }
-
-    @Test
-    void aPoolTunedToMarkFasterEarnsScorchedTwiceAsOften() {
-        ActiveEffects plain = new ActiveEffects();
-        ActiveEffects fast = new ActiveEffects();
-        plain.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()));
-        fast.apply(Effect.burn(Damage.magic(100), 200, DamageSink.none()).withTuning(PoolTuning.standard().withStackRate(2)));
-
-        tickTimes(plain, 20);
-        tickTimes(fast, 20);
-
-        assertThat(fast.stacks(EffectKind.SCORCHED)).isGreaterThan(plain.stacks(EffectKind.SCORCHED) + 1);
-    }
-
-    @Test
-    void aPoolCarriesItsTunedModifiersOnlyWhileItBurns() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(100), 20, DamageSink.none()).withTuning(PoolTuning.standard().withCarried(StatModifiers.of(EnemyStat.PERIODIC_DAMAGE_TAKEN, StatModifier.flat(0.1f))
-                .and(EnemyStat.MAGIC_DAMAGE_TAKEN, StatModifier.flat(0.15f)))));
-
-        float whileBurning = resolved(effects, EnemyStat.PERIODIC_DAMAGE_TAKEN);
-        float magicWhileBurning = resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN);
-        tickTimes(effects, 400);
-
-        assertThat(whileBurning).isCloseTo(1.1f, within(1e-5f));
-        assertThat(magicWhileBurning).isCloseTo(1.15f, within(1e-5f));
-        assertThat(resolved(effects, EnemyStat.PERIODIC_DAMAGE_TAKEN)).isEqualTo(1f);
-        assertThat(resolved(effects, EnemyStat.MAGIC_DAMAGE_TAKEN)).isEqualTo(1f);
     }
 
     @Test
@@ -1086,7 +1040,7 @@ class ActiveEffectsTest {
     void aTickNamesTheEffectBehindEachDamageBeforeItLands() {
         ActiveEffects effects = new ActiveEffects();
         List<String> heard = new ArrayList<>();
-        effects.apply(Effect.burn(Damage.magic(100), 40, damage -> heard.add("damage")));
+        effects.apply(Effect.burn(Damage.magic(100), damage -> heard.add("damage")));
 
         effects.tick(0f, kind -> heard.add(kind.title()));
 

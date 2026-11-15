@@ -516,7 +516,9 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.strikeInsteadOfShielding(effect, inversion.get());
             return;
         }
-        this.applyRetimed(effect);
+        // A pool keeps one share per source, so whoever feeds it every tick stays one share.
+        boolean keyed = effect.kind().isFuelPool() && from != AttackOrigin.none() && effect.origin() == AttackOrigin.none();
+        this.applyRetimed(keyed ? effect.from(from) : effect);
     }
 
     /**
@@ -546,8 +548,10 @@ public final class DefinedEnemyMob implements EnemyMob {
             }
             return;
         }
-        Effect scaled = factor != 1f ? effect.withDurationScaledBy(factor) : effect;
-        if (factor != 1f && this.observer.isOn()) {
+        Effect scaled = factor == 1f ? effect
+                : effect.kind().isFuelPool() ? effect.withFuelScaledBy(factor)
+                : effect.withDurationScaledBy(factor);
+        if (factor != 1f && !effect.kind().isFuelPool() && this.observer.isOn()) {
             this.observer.report(new MobEvent.EffectRetimed(effect.kind(), factor, scaled.remainingTicks()));
         }
         this.activeEffects.apply(scaled);
@@ -613,6 +617,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     @Override
     public float spirit() {
         return this.stats.value(EnemyStat.SPIRIT);
+    }
+
+    @Override
+    public float armorAndPlating() {
+        return this.stats.value(EnemyStat.ARMOR) + DamageUnits.inPoints(this.stats.value(EnemyStat.PLATING));
     }
 
     public void breakShield(float fraction) {

@@ -360,7 +360,7 @@ class EnemyFrameBuilderTest {
     @Test
     void anEffectWithAPictureOfItsOwnEarnsNoDot() {
         EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
-        enemy.applyEffect(Effect.burn(Damage.magic(10), 50, DamageSink.none()));
+        enemy.applyEffect(Effect.burn(Damage.magic(10), DamageSink.none()));
 
         assertThat(overlaysOf(enemy, 0)).noneMatch(EnemyDotsDraw.class::isInstance);
     }
@@ -771,7 +771,7 @@ class EnemyFrameBuilderTest {
     @Test
     void aFullerPoolEmitsMoreThanAFadingOne() {
         EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
-        enemy.applyEffect(Effect.burn(Damage.magic(1000), 40, DamageSink.none()));
+        enemy.applyEffect(Effect.burn(Damage.magic(20_000), DamageSink.none()));
 
         float fresh = emissionsOf(enemy, EnemyEmissionLook.BURN).getFirst().amount();
         for (int tick = 1; tick <= 20; tick++) {
@@ -785,8 +785,8 @@ class EnemyFrameBuilderTest {
     @Test
     void soulfireAndPoisonEmitTheirOwnWayAndPoisonTintsTheBody() {
         EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
-        enemy.applyEffect(Effect.soulfire(Damage.magic(100), 40, DamageSink.none()));
-        enemy.applyEffect(Effect.poison(Damage.magic(100), 40, DamageSink.none()));
+        enemy.applyEffect(Effect.soulfire(Damage.magic(100), DamageSink.none()));
+        enemy.applyEffect(Effect.poison(Damage.magic(100), DamageSink.none()));
 
         assertThat(emissionsOf(enemy, EnemyEmissionLook.SOULFIRE)).hasSize(1);
         assertThat(emissionsOf(enemy, EnemyEmissionLook.POISON)).hasSize(1);
@@ -796,7 +796,7 @@ class EnemyFrameBuilderTest {
     @Test
     void emissionsRunOnTheWallClockAndKeepToOneSeedForTheirEnemy() {
         EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
-        enemy.applyEffect(Effect.burn(Damage.magic(100), 40, DamageSink.none()));
+        enemy.applyEffect(Effect.burn(Damage.magic(100), DamageSink.none()));
 
         EnemyEmissionDraw early = (EnemyEmissionDraw) builtAt(enemy, 0, 1.0).buildOverlays().getFirst();
         EnemyEmissionDraw later = (EnemyEmissionDraw) builtAt(enemy, 0, 2.5).buildOverlays().getFirst();
@@ -936,7 +936,7 @@ class EnemyFrameBuilderTest {
     void aCloakedEnemysEmissionsAndEggGiveNothingAway() {
         EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
         enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
-        enemy.applyEffect(Effect.poison(Damage.magic(1), 100, DamageSink.none()));
+        enemy.applyEffect(Effect.poison(Damage.magic(1), DamageSink.none()));
         enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(1), 100, DamageSink.none()));
         enemy.doTick(0);
 
@@ -951,7 +951,7 @@ class EnemyFrameBuilderTest {
     void aBurnStrongEnoughToRevealACloakedEnemyStillShows() {
         EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50000, 3);
         enemy.applyEffect(Effect.invisible(100, DamageSink.none()));
-        enemy.applyEffect(Effect.burn(Damage.magic(10000), 100, DamageSink.none()));
+        enemy.applyEffect(Effect.burn(Damage.magic(10000), DamageSink.none()));
         enemy.doTick(0);
 
         List<EnemyOverlayDraw> overlays = overlaysOf(enemy, EnemyFrameBuilder.CLOAK_FADE_DURATION_TICKS);
@@ -965,9 +965,9 @@ class EnemyFrameBuilderTest {
         DefinedEnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(),
                 EnemyFixtures.simpleDefinition("plain").withHealthAndPrice(5000, 3), Rank.ELITE);
         enemy.doDamage(Damage.physical(DamageUnits.ofPoints(1)));
-        enemy.applyEffect(Effect.poison(Damage.magic(1), 100, DamageSink.none()));
+        enemy.applyEffect(Effect.poison(Damage.magic(1), DamageSink.none()));
         enemy.applyEffect(Effect.chill(0.2f, 100, DamageSink.none()));
-        enemy.applyEffect(Effect.burn(Damage.magic(1), 100, DamageSink.none()));
+        enemy.applyEffect(Effect.burn(Damage.magic(1), DamageSink.none()));
         enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(1), 100, DamageSink.none()));
         enemy.applyEffect(Effect.exposed(100, DamageSink.none()));
 

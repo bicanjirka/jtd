@@ -1,8 +1,7 @@
 package td.tower.cinder;
 
-/** The colour of the Cinder's waves: orange, white under White Flame, deep red under Searing Flame. */
+/** The colour of the Scorcher's flame at its core: its own, or white under White Flame. */
 public enum FlameLook {
     ORANGE,
-    WHITE,
-    SEARING
+    WHITE
 }

@@ -48,7 +48,7 @@ public final class Zone {
 
     /**
      * @param radius   pixels
-     * @param strength a burn's or poison's damage a tick, in damage units; unused by the kinds with none
+     * @param strength a burn's or poison's fuel a pulse, or a heal a tick, in damage units; unused by the kinds with none
      */
     public Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, int strength, ZoneOwner owner) {
         this(kind, x, y, radius, lifetimeTicks, strength, owner, (mine, by) -> {

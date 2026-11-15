@@ -40,7 +40,6 @@ final class ProbeRig implements IntConsumer {
     private static final float SHOT_CRIT_CHANCE = 0.2f;
     private static final float SHOT_CRIT_MULTIPLIER = 2f;
     private static final int BURN_INTERVAL_TICKS = 20;
-    private static final int BURN_TICKS = 60;
     private static final float CHILL_STRENGTH = 0.3f;
     private static final int CHILL_INTERVAL_TICKS = 10;
     private static final int CHILL_TICKS = 12;
@@ -164,13 +163,14 @@ final class ProbeRig implements IntConsumer {
 
     private void burn(EnemyMob[] mobs, double strength) {
         double perSecond = this.loadout.intensity(PowerProbe.BURN) * strength;
-        int perTick = (int) Math.round(DamageUnits.ofPoints((float) perSecond) / TickRate.TICKS_PER_SECOND);
-        if (perTick <= 0) {
+        // A pool deals all its fuel, so fuel for the time between burns keeps up a burn of that much a second.
+        int fuel = DamageUnits.ofPoints((float) (perSecond * BURN_INTERVAL_TICKS / TickRate.TICKS_PER_SECOND));
+        if (fuel <= 0) {
             return;
         }
         for (EnemyMob mob : mobs) {
             if (mob.validTarget()) {
-                mob.applyEffect(Effect.burn(Damage.magic(perTick), BURN_TICKS, damage -> mob.takeHit(damage, BURNING)));
+                mob.applyEffect(Effect.burn(Damage.magic(fuel), damage -> mob.takeHit(damage, BURNING)));
             }
         }
     }

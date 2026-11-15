@@ -1,46 +1,30 @@
 package td.tower;
 
-import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
-import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.effect.PoolTuning;
-import td.effect.StackingDebuff;
-import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
-import td.term.TermNumbers;
+import td.stat.StatPart;
 import td.term.TermText;
-import td.tower.cinder.BellowsMechanic;
-import td.tower.cinder.CauterizeMechanic;
 import td.tower.cinder.CinderMechanic;
 import td.tower.cinder.CinderSpec;
-import td.tower.cinder.CombustionMechanic;
+import td.tower.cinder.CoreMechanic;
 import td.tower.cinder.DragonsBreathMechanic;
-import td.tower.cinder.EverburnMechanic;
 import td.tower.cinder.FlameLook;
-import td.tower.cinder.FlashpointMechanic;
-import td.tower.cinder.HeatMechanic;
-import td.tower.cinder.InfernoRingMechanic;
-import td.tower.cinder.LingeringFlamesMechanic;
-import td.tower.cinder.PyromancersMarkMechanic;
-import td.tower.cinder.SearingFlameMechanic;
+import td.tower.cinder.FlashoverMechanic;
+import td.tower.cinder.KindlingMechanic;
+import td.tower.cinder.MeltdownMechanic;
 import td.tower.cinder.SoulfireMechanic;
-import td.tower.cinder.StokeMechanic;
-import td.tower.cinder.StokeSpec;
 import td.tower.cinder.ThermalShockMechanic;
 import td.tower.cinder.WhiteFlameMechanic;
-import td.tower.proc.HitAdjustment;
-import td.tower.proc.HitKind;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.MechanicCatalogue;
-import td.tower.upgrade.NodeEffects;
 import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.RangeNodes;
 import td.tower.upgrade.UpgradeCluster;
@@ -49,154 +33,122 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.util.TickRate;
-import td.zone.Zone;
-import td.zone.ZoneKind;
-import td.zone.ZoneOwner;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+
+import static td.tower.upgrade.MechanicCatalogue.entry;
 
 /**
- * The Pyre: a cooldown-gated flame cone that turns slowly toward the nearest enemy and fires only once
- * an enemy is inside the cone. Each shot is a wave travelling outward over several ticks, setting an
- * enemy alight once when its front reaches it. Never aims at an invisible enemy, but burns one caught
- * in a wave.
+ * The Scorcher: a flamethrower that streams, then reloads. While it streams, every enemy in its cone takes Flame
+ * every tick as fuel for its own burn, hidden ones included; the burn knows nothing of the tower and deals all its
+ * fuel. It aims at the nearest visible enemy and keeps it the whole stream while it lives and stays in range. It never
+ * deals a hit: its burns credit it as periodic damage, and nothing it pours crits.
  * <p>
- * A wave's heading and width are fixed when it fires. The tower never deals direct damage: its burns
- * credit it through {@code dealPeriodicDamage}, and a burn it starts never crits, though an ignition
- * can, which starts the pool stronger. What each owned node does lives in a {@link CinderMechanic}.
+ * What each owned node does lives in its data or in a {@link CinderMechanic}: the tower reads one spec from them every
+ * tick.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class CinderTower extends AbstractTower {
 
-    public static final int PRICE = 28;
-    public static final float DAMAGE_POINTS = 1.5f;
+    public static final int PRICE = 20;
+    /** Fuel a second, in points. */
+    public static final float FLAME_POINTS = 60f;
     public static final float RANGE = 2.2f;
-    /** Ticks between shots before buffs. */
-    public static final int COOLDOWN_MAX = 20;
-    /** Ticks a wave takes to reach full range. */
-    public static final int WAVE_TRAVEL_TICKS = 10;
 
-    private static final double MAX_TURN_RADIANS_PER_TICK = 0.15;
-    private static final float THERMAL_SHOCK_RADIUS_CELLS = 1.5f;
-    private static final float THERMAL_SHOCK_CHILL = 0.4f;
-    private static final int THERMAL_SHOCK_CHILL_TICKS = 40;
-    /** An enemy's burning pools together are hot at this share of the strongest wave that fed them. */
-    private static final float HOT_SHARE = 1f;
-    /** A hot enemy must cool under this share before it can burst again. */
-    private static final float COOLED_SHARE = 0.5f;
+    private static final float CONE_DEGREES = 60f;
+    private static final int STREAM_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    private static final int RELOAD_TICKS = Math.round(2 * TickRate.TICKS_PER_SECOND);
+    /** The reload is paid on the fire clock in periods of this many ticks, so attack speed shortens it alone. */
+    private static final int RELOAD_PERIOD_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    private static final int SEAR_STACKS = 5;
+    private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
 
+    private static final UpgradeNode HOT_FLAME = UpgradeNode.of("cinder.hot_flame", "Hot Flame", 8)
+            .withModifiers(TowerModifiers.damage(15f));
+    private static final UpgradeNode LONG_STREAM = UpgradeNode.of("cinder.long_stream", "Long Stream", 7)
+            .withModifiers(TowerModifiers.stream(Math.round(0.5f * TickRate.TICKS_PER_SECOND)));
+    private static final UpgradeNode WIDE_NOZZLE = UpgradeNode.of("cinder.wide_nozzle", "Wide Nozzle", 7)
+            .withModifiers(TowerModifiers.coneTimes(1.5f));
+    private static final UpgradeNode LONG_NOZZLE = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Nozzle", 16)
+            .withModifiers(TowerModifiers.range(0.5f));
 
-    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 22);
-    private static final UpgradeNode AWAKEN = UpgradeNode.of("base.awaken", "Awaken", 28).inTier(1);
-
-    private static final UpgradeNode WHITE_FLAME_1 = UpgradeNode.of("cinder.head.white_flame.1", "White Flame", 28)
-            .withModifiers(TowerModifiers.damage(0.6f).plus(TowerModifiers.stokeStep(0.05f)));
-    private static final UpgradeNode WHITE_FLAME_2 = UpgradeNode.of("cinder.head.white_flame.2", "White Flame II", 42)
-            .withModifiers(TowerModifiers.damage(1f).plus(TowerModifiers.critChance(0.1f))
-                    .plus(TowerModifiers.burnDuration(-15)))
-            .after(WHITE_FLAME_1)
+    private static final UpgradeNode CORE = UpgradeNode.of("cinder.core", "Core", 17)
             .inTier(1);
-    private static final UpgradeNode SOULFIRE = UpgradeNode.of("cinder.head.white_flame.3", "Soulfire", 70)
-            .after(WHITE_FLAME_2)
-            .inTier(2);
-    private static final UpgradeNode FLASHPOINT = UpgradeNode.of("cinder.head.white_flame.4a", "Flashpoint", 112)
-            .withModifiers(TowerModifiers.critChance(0.5f).plus(TowerModifiers.critMultiplier(1.5f)))
-            .after(SOULFIRE)
-            .inTier(3);
-    private static final UpgradeNode COMBUSTION = UpgradeNode.of("cinder.head.white_flame.4b", "Combustion", 112)
-            .withModifiers(TowerModifiers.burnPoolCap(2f))
-            .after(SOULFIRE)
-            .inTier(3);
-
-    private static final UpgradeNode WIDE_NOZZLE_1 = UpgradeNode.of("cinder.head.wide_nozzle.1", "Wide Nozzle", 28)
-            .withModifiers(TowerModifiers.range(0.55f).plus(TowerModifiers.coneWidth(0.21f))
-                    .plus(TowerModifiers.stokeGrace(40)));
-    private static final UpgradeNode WIDE_NOZZLE_2 = UpgradeNode.of("cinder.head.wide_nozzle.2", "Wide Nozzle II", 42)
-            .withModifiers(TowerModifiers.range(0.44f).plus(TowerModifiers.attackSpeed(0.2f))
-                    .plus(TowerModifiers.coneWidth(0.182f)))
-            .after(WIDE_NOZZLE_1)
+    private static final UpgradeNode LANCE = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Lance", 14)
+            .withModifiers(TowerModifiers.range(0.65f).plus(TowerModifiers.coneTimes(0.6f)))
             .inTier(1);
-    private static final UpgradeNode LINGERING_FLAMES = UpgradeNode.of("cinder.head.wide_nozzle.3", "Lingering Flames", 70)
-            .after(WIDE_NOZZLE_2)
-            .inTier(2);
-    private static final UpgradeNode INFERNO_RING = UpgradeNode.of("cinder.head.wide_nozzle.4a", "Inferno Ring", 112)
-            .after(LINGERING_FLAMES)
-            .inTier(3);
-    private static final UpgradeNode DRAGONS_BREATH = UpgradeNode.of("cinder.head.wide_nozzle.4b", "Dragon's Breath", 112)
-            .withModifiers(TowerModifiers.range(0.66f).plus(TowerModifiers.attackSpeed(2f)).plus(TowerModifiers.damage(-0.45f))
-                    .plus(TowerModifiers.burnPoolCap(2f)))
-            .after(LINGERING_FLAMES)
-            .inTier(3);
-
-    private static final UpgradeNode KINDLING = UpgradeNode.of("cinder.extra.fuel.1", "Kindling", 22)
-            .withModifiers(TowerModifiers.burnMarkRate(1f));
-    private static final UpgradeNode CAUTERIZE = UpgradeNode.of("cinder.extra.fuel.2", "Cauterize", 34)
-            .after(KINDLING)
+    private static final UpgradeNode FAN = UpgradeNode.of("cinder.fan", "Fan", 14)
+            .withModifiers(TowerModifiers.coneTimes(1.4f))
             .inTier(1);
-    private static final UpgradeNode HEAT = UpgradeNode.of("cinder.extra.fuel.3", "Heat", 56)
-            .after(CAUTERIZE)
+    private static final UpgradeNode KINDLING = UpgradeNode.of("cinder.kindling", "Kindling", 1)
+            .inTier(1);
+
+    private static final UpgradeNode SOULFIRE = UpgradeNode.of("cinder.soulfire", "Soulfire", 18)
+            .withModifiers(TowerModifiers.damagePercent(0.1f).plus(TowerModifiers.magicPenetration(0.5f)))
             .inTier(2);
-    private static final UpgradeNode EVERBURN = UpgradeNode.of("cinder.extra.fuel.4", "Everburn", 84)
-            .after(HEAT)
+    private static final UpgradeNode DRAGONS_BREATH = UpgradeNode.of("cinder.dragons_breath", "Dragon's Breath", 18)
+            .withModifiers(TowerModifiers.streamTimes(2f).plus(TowerModifiers.damageTimes(0.65f))
+                    .plus(TowerModifiers.reload(-Math.round(TickRate.TICKS_PER_SECOND))))
+            .inTier(2);
+    private static final UpgradeNode WHITE_FLAME = UpgradeNode.of("cinder.white_flame", "White Flame", 36)
+            .withModifiers(TowerModifiers.damage(30f))
+            .inTier(2);
+    private static final UpgradeNode BELLOWS = UpgradeNode.of("cinder.bellows", "Bellows", 16)
+            .withModifiers(TowerModifiers.reload(-Math.round(0.5f * TickRate.TICKS_PER_SECOND)))
+            .inTier(2);
+
+    private static final UpgradeNode FLASHOVER = UpgradeNode.of("cinder.flashover", "Flashover", 17)
+            .inTier(3);
+    private static final UpgradeNode MELTDOWN = UpgradeNode.of("cinder.meltdown", "Meltdown", 17)
+            .inTier(3);
+    private static final UpgradeNode THERMAL_SHOCK = UpgradeNode.of("cinder.thermal_shock", "Thermal Shock", 17)
+            .inTier(3);
+    private static final UpgradeNode HOT_FLAME_2 = UpgradeNode.of("cinder.hot_flame_2", "Hot Flame II", 20)
+            .withModifiers(TowerModifiers.damage(15f))
+            .inTier(3);
+    private static final UpgradeNode LONG_STREAM_2 = UpgradeNode.of("cinder.long_stream_2", "Long Stream II", 24)
+            .withModifiers(TowerModifiers.stream(Math.round(TickRate.TICKS_PER_SECOND)))
             .inTier(3);
 
-    private static final UpgradeNode SEARING_FLAME = UpgradeNode.of("cinder.special.searing_flame", "Searing Flame", 112)
-            .inTier(2);
-    private static final UpgradeNode THERMAL_SHOCK = UpgradeNode.of("cinder.special.thermal_shock", "Thermal Shock", 112)
-            .inTier(2);
-    private static final UpgradeNode PYROMANCERS_MARK = UpgradeNode.of("cinder.special.pyromancers_mark", "Pyromancer's Mark", 112)
-            .inTier(3);
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(HOT_FLAME, LONG_STREAM, WIDE_NOZZLE, LONG_NOZZLE))
+            .with(CORE, LANCE, FAN, KINDLING,
+                    SOULFIRE, DRAGONS_BREATH, WHITE_FLAME, BELLOWS,
+                    FLASHOVER, MELTDOWN, THERMAL_SHOCK, HOT_FLAME_2, LONG_STREAM_2)
+            .withCluster(UpgradeCluster.of("Nozzle", LANCE, FAN))
+            .withCluster(UpgradeCluster.of("Flame", SOULFIRE, DRAGONS_BREATH))
+            .withCluster(UpgradeCluster.of("Burning", FLASHOVER, MELTDOWN, THERMAL_SHOCK));
 
-    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE, 0.2f,
-                    NodeEffects.none().withModifiers(TowerModifiers.waveSpeed(1f))))
-            .with(ATTUNE, WHITE_FLAME_1, WIDE_NOZZLE_1, KINDLING,
-                    AWAKEN, WHITE_FLAME_2, WIDE_NOZZLE_2, CAUTERIZE,
-                    SOULFIRE, LINGERING_FLAMES, SEARING_FLAME, THERMAL_SHOCK, HEAT,
-                    FLASHPOINT, COMBUSTION, INFERNO_RING, DRAGONS_BREATH, PYROMANCERS_MARK, EVERBURN)
-            .withCluster(UpgradeCluster.of("Flame", WHITE_FLAME_1, WIDE_NOZZLE_1))
-            .withCluster(UpgradeCluster.of("Special", SEARING_FLAME, THERMAL_SHOCK))
-            .withCluster(UpgradeCluster.of("Mastery", FLASHPOINT, COMBUSTION))
-            .withCluster(UpgradeCluster.of("Mastery", INFERNO_RING, DRAGONS_BREATH));
-
-    private static final MechanicCatalogue<CinderMechanic> MECHANICS = MechanicCatalogue.<CinderMechanic>empty()
-            .with(ATTUNE.id(), StokeMechanic::new)
-            .with(AWAKEN.id(), BellowsMechanic::new)
-            .with(WHITE_FLAME_1.id(), WhiteFlameMechanic::new)
-            .with(SOULFIRE.id(), SoulfireMechanic::new)
-            .with(FLASHPOINT.id(), FlashpointMechanic::new)
-            .with(COMBUSTION.id(), CombustionMechanic::new)
-            .with(LINGERING_FLAMES.id(), LingeringFlamesMechanic::new)
-            .with(INFERNO_RING.id(), InfernoRingMechanic::new)
-            .with(DRAGONS_BREATH.id(), DragonsBreathMechanic::new)
-            .with(CAUTERIZE.id(), CauterizeMechanic::new)
-            .with(HEAT.id(), HeatMechanic::new)
-            .with(EVERBURN.id(), EverburnMechanic::new)
-            .with(SEARING_FLAME.id(), SearingFlameMechanic::new)
-            .with(THERMAL_SHOCK.id(), ThermalShockMechanic::new)
-            .with(PYROMANCERS_MARK.id(), PyromancersMarkMechanic::new);
+    private static final MechanicCatalogue<CinderMechanic> MECHANICS = MechanicCatalogue.of(
+            entry(CORE.id(), CoreMechanic::new),
+            entry(KINDLING.id(), KindlingMechanic::new),
+            entry(SOULFIRE.id(), SoulfireMechanic::new),
+            entry(DRAGONS_BREATH.id(), DragonsBreathMechanic::new),
+            entry(WHITE_FLAME.id(), WhiteFlameMechanic::new),
+            entry(FLASHOVER.id(), FlashoverMechanic::new),
+            entry(MELTDOWN.id(), MeltdownMechanic::new),
+            entry(THERMAL_SHOCK.id(), ThermalShockMechanic::new));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<CinderMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
-    private final List<FlameWave> inFlightWaves = new ArrayList<>();
-    /** The enemies this tower has set alight and still tracks, first alight first. */
-    private final Map<EnemyMob, Burning> burning = new LinkedHashMap<>();
-    private final ZoneOwner zoneOwner = this::applyEffect;
-    private FireClock clock = new FireClock(COOLDOWN_MAX);
-    private int tickNow;
+    /** The enemies this stream has touched, which Sear has already scorched; it only answers membership. */
+    private final Set<EnemyMob> touched = new HashSet<>();
+    /** Each hot enemy that flashed over this tick and an enemy it reached, in pairs, for the look. */
+    private final List<Flash> flashes = new ArrayList<>();
+    private FireClock clock = new FireClock(RELOAD_PERIOD_TICKS - 1);
+    private TowerStats streamStats = this.stats();
+    private int streamLeft;
+    private Optional<EnemyMob> target = Optional.empty();
 
     public CinderTower(GameWorld context, int x, int y) {
-        super(TowerFactory.Type.CINDER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
-                .with(TowerStat.CONE_WIDTH, 0.7f).with(TowerStat.WAVE_SPEED, 1f).with(TowerStat.BURN_DURATION, 60f)
-                .with(TowerStat.STOKE_STEP, 0.1f).with(TowerStat.STOKE_GRACE, 0f).with(TowerStat.BURN_POOL_CAP, 2f)
-                .with(TowerStat.BURN_MARK_RATE, 1f), context, x, y);
+        super(TowerFactory.Type.CINDER, new TowerBaseStats(FLAME_POINTS, RANGE, 0)
+                .with(TowerStat.CONE_WIDTH, (float) Math.toRadians(CONE_DEGREES))
+                .with(TowerStat.STREAM, STREAM_TICKS).with(TowerStat.RELOAD, RELOAD_TICKS), context, x, y);
     }
 
     @Override
@@ -209,89 +161,113 @@ public final class CinderTower extends AbstractTower {
         return TREE;
     }
 
-    /** How the cone and the burn are shaped, as the mechanics in {@code owned} make them. */
+    /** Whom it aims at and what it pours, as the mechanics in {@code owned} make it. */
     private CinderSpec spec(List<CinderMechanic> owned) {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
-        CinderSpec spec = CinderSpec.from(view);
+        CinderSpec spec = CinderSpec.from(view, SEAR_STACKS);
         for (CinderMechanic mechanic : owned) {
             spec = mechanic.refineSpec(spec);
         }
         return spec;
     }
 
-    /** What every Aura beside this tower adds to its attack speed. */
-    private float fireRateFromAuras() {
-        return Math.max(0f, this.stats().received().flat(TowerStat.ATTACK_SPEED));
-    }
-
-    private double halfWidthRadians(CinderSpec spec) {
-        if (spec.ring()) {
-            return Math.PI;
-        }
-        double bellows = spec.bellows() ? 1.0 + this.fireRateFromAuras() : 1.0;
-        return this.stats().value(TowerStat.CONE_WIDTH) / 2 * bellows;
-    }
-
-    /** It never deals a hit, so what one target takes a second is the burn its waves keep going. */
-    @Override
-    protected TowerStatLine dpsRow(TowerStats stats, TowerStatLine cadence) {
-        return dpsLine(TowerStatRow.BURN_DPS, settledBurnPerSecond(this.authoredStats(), this.spec(List.of()), cadence.base()),
-                settledBurnPerSecond(stats, this.spec(this.mechanics.all()), cadence.current()));
-    }
-
-    /**
-     * In points, with the Stoke full and crits at their average; Soulfire's pool burns beside the ordinary one. A pool
-     * settles on the average wave, but its cap follows the strongest it has taken, so the cap is put in terms of the
-     * average.
-     */
-    private static float settledBurnPerSecond(TowerStats at, CinderSpec spec, float wavesPerSecond) {
-        float stoke = spec.stoke().active() ? at.value(TowerStat.STOKE_STEP) * spec.stoke().maxSteps() : 0f;
-        float average = averageCrit(at);
-        float strongest = at.critChance() > 0f ? at.value(TowerStat.CRIT_MULTIPLIER) : 1f;
-        float level = at.damage() * (1f + stoke) * average;
-        int duration = Math.max(1, Math.round(at.value(TowerStat.BURN_DURATION) * at.effectLength()));
-        float pool = ActiveEffects.settledPoolPerSecond(level, duration, at.value(TowerStat.BURN_POOL_CAP) * strongest / average,
-                TickRate.TICKS_PER_SECOND / wavesPerSecond);
-        return DamageUnits.inPoints(pool) * (spec.soulfire() ? 2f : 1f);
-    }
-
-    private int burnDuration() {
-        return Math.max(1, Math.round(this.stats().value(TowerStat.BURN_DURATION)));
-    }
-
-    /** What this Cinder's pools carry, with the cap and the Scorched rate its stats give them. */
-    private PoolTuning tuning(CinderSpec spec) {
-        return spec.tuning().withCapFactor(this.stats().value(TowerStat.BURN_POOL_CAP))
-                .withStackRate(Math.round(this.stats().value(TowerStat.BURN_MARK_RATE)));
-    }
-
     public void doTick(int gameTime) {
-        this.tickNow = gameTime;
         CinderSpec spec = this.spec(this.mechanics.all());
         List<EnemyMob> inRange = spec.reach().matching(this.context.enemies());
-        Optional<EnemyMob> nearest = PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY))
-                .selectFrom(inRange);
-        if (nearest.isPresent()) {
-            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, nearest.get().getX(), nearest.get().getY()));
+        this.flashes.clear();
+        if (this.streamLeft == 0 && this.clock.isReady() && !inRange.isEmpty()) {
+            this.streamStats = this.beginShot();
+            this.streamLeft = Math.max(1, Math.round(this.streamStats.value(TowerStat.STREAM)));
+            this.touched.clear();
+            this.target = Optional.empty();
+        }
+        if (this.streamLeft > 0 && this.target.filter(inRange::contains).isEmpty()) {
+            this.target = PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY)).selectFrom(inRange);
+        }
+        Optional<EnemyMob> aim = this.streamLeft > 0 ? this.target
+                : PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY)).selectFrom(inRange);
+        if (aim.isPresent()) {
+            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, aim.get().getX(), aim.get().getY()));
         } else if (this.betweenWaves()) {
             this.turretAim.settle();
         }
-
-        if (this.clock.isReady() && this.hasEnemyAhead(spec)) {
-            this.fire(spec, nearest.orElse(null), gameTime);
-            this.clock.spend();
+        if (this.streamLeft > 0) {
+            this.pour(spec);
+            this.streamLeft--;
+            if (this.streamLeft == 0) {
+                this.clock.spend(this.streamStats.value(TowerStat.RELOAD) / RELOAD_PERIOD_TICKS);
+                this.target = Optional.empty();
+            }
+        } else {
+            this.clock.advance(this.attackRate());
         }
-        this.clock.advance(this.attackRate());
+    }
 
-        this.advanceWaves(spec, gameTime);
-        this.tendBurning(spec);
+    /**
+     * One tick of the stream: Flame into every enemy in the cone, more in the Core, Sear on the first touch of each
+     * enemy, then a hot burn's Flashover onto the enemies beside it.
+     */
+    private void pour(CinderSpec spec) {
+        double heading = this.turretAim.currentRadians();
+        double halfWidth = this.halfWidthRadians();
+        float perTick = this.streamStats.damage() / TickRate.TICKS_PER_SECOND;
+        float hot = DamageUnits.ofPoints(FlashoverMechanic.HOT_FUEL_POINTS);
+        List<EnemyMob> hotOnes = new ArrayList<>();
+        for (EnemyMob enemy : new InWedgeTargetQuery(this.centerX, this.centerY, heading, halfWidth)
+                .and(InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal()))
+                .matching(this.context.enemies())) {
+            boolean inCore = spec.core().isActive() && this.offAxis(enemy, heading) <= halfWidth * spec.core().share();
+            this.feed(enemy, perTick * (inCore ? spec.core().factor() : 1f), spec);
+            if (this.touched.add(enemy)) {
+                this.applyEffect(enemy, sink -> Effect.scorched(spec.searStacks()));
+            }
+            if (spec.flashover() && fuelOf(enemy, spec.fire()) >= hot) {
+                hotOnes.add(enemy);
+            }
+        }
+        float radius = FlashoverMechanic.REACH_CELLS * this.context.getBoard().scale();
+        for (EnemyMob source : hotOnes) {
+            for (EnemyMob beside : InRangeTargetQuery.everyone((int) source.getX(), (int) source.getY(), radius)
+                    .matching(this.context.enemies())) {
+                if (beside != source) {
+                    this.feed(beside, perTick * FlashoverMechanic.SHARE, spec);
+                    this.flashes.add(new Flash(source.getX(), source.getY(), beside.getX(), beside.getY()));
+                }
+            }
+        }
+    }
+
+    /** {@code fuel} damage units into {@code enemy}'s pool, as Thermal Shock and Meltdown make it. */
+    private void feed(EnemyMob enemy, float fuel, CinderSpec spec) {
+        boolean held = enemy.hasEffect(EffectKind.CHILL) || enemy.hasEffect(EffectKind.FREEZE)
+                || enemy.hasEffect(EffectKind.DAZED);
+        float amount = fuel * (held ? spec.thermalShock() : 1f) * (1f + spec.meltdown() * enemy.armorAndPlating());
+        Damage poured = Damage.magic(Math.round(amount));
+        if (poured.amount() <= 0) {
+            return;
+        }
+        this.applyEffect(enemy, sink -> spec.soulfire() ? Effect.soulfire(poured, sink) : Effect.burn(poured, sink));
+    }
+
+    private static float fuelOf(EnemyMob enemy, EffectKind fire) {
+        return enemy.activeEffects().stream().filter(effect -> effect.kind() == fire).findFirst()
+                .map(Effect::fuelLevel).orElse(0f);
+    }
+
+    /** How far {@code enemy}'s bearing is from {@code heading}, in radians. */
+    private double offAxis(EnemyMob enemy, double heading) {
+        double bearing = TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY());
+        double off = Math.abs(bearing - heading) % (2 * Math.PI);
+        return off > Math.PI ? 2 * Math.PI - off : off;
     }
 
     @Override
     protected void endFight() {
-        this.inFlightWaves.clear();
-        this.burning.clear();
-        this.clock = new FireClock(COOLDOWN_MAX);
+        this.clock = new FireClock(RELOAD_PERIOD_TICKS - 1);
+        this.streamLeft = 0;
+        this.target = Optional.empty();
+        this.touched.clear();
+        this.flashes.clear();
     }
 
     @Override
@@ -299,255 +275,47 @@ public final class CinderTower extends AbstractTower {
         this.turretAim.rest();
     }
 
-    /** Whether a wave fired at the turret's current heading would reach at least one enemy. */
-    private boolean hasEnemyAhead(CinderSpec spec) {
-        if (spec.ring()) {
-            return !spec.reach().matching(this.context.enemies()).isEmpty();
-        }
-        return !new InWedgeTargetQuery(this.centerX, this.centerY, this.turretAim.currentRadians(),
-                this.halfWidthRadians(spec))
-                .and(InRangeTargetQuery.visible(this.centerX, this.centerY, this.rangeReal()))
-                .matching(this.context.enemies())
-                .isEmpty();
+    /** Flame, then what one stream gives an enemy; how long it streams and reloads are rows of their own. */
+    @Override
+    protected List<TowerStatLine> attackRows(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
+        TowerStatLine flame = this.derivedRow(TowerStatRow.FLAME, TowerStat.DAMAGE, stats, parts,
+                at -> DamageUnits.inPoints(at.damage()));
+        return List.of(flame, dpsLine(TowerStatRow.STREAM_FUEL, streamFuel(this.authoredStats()), streamFuel(stats)));
     }
 
-    private void fire(CinderSpec spec, EnemyMob target, int gameTime) {
-        this.beginShot();
-        boolean soul = spec.soulfire();
-        int travelTicks = Math.max(1, Math.round(WAVE_TRAVEL_TICKS / this.stats().value(TowerStat.WAVE_SPEED)));
-        double heading = this.turretAim.currentRadians();
-        double halfWidth = this.halfWidthRadians(spec);
-        this.inFlightWaves.add(new FlameWave(heading, halfWidth, gameTime, travelTicks, soul, spec.look(),
-                this.stokeStepsAhead(spec, heading, halfWidth)));
-        if (spec.linger().isActive() && target != null) {
-            int scale = this.context.getBoard().scale();
-            this.context.zones().add(new Zone(ZoneKind.BURNING_GROUND, target.getX(), target.getY(),
-                    spec.linger().radiusCells() * scale, this.lengthened(spec.linger().ticks()), this.damageCurrent(),
-                    this.zoneOwner));
-        }
-    }
-
-    /**
-     * The most steps of Stoke any enemy a wave fired now will reach is about to carry, which the
-     * cone shows as its brighter core.
-     */
-    private int stokeStepsAhead(CinderSpec spec, double heading, double halfWidth) {
-        StokeSpec stoke = spec.stoke();
-        if (!stoke.active()) {
-            return 0;
-        }
-        if (stoke.alwaysFull()) {
-            return stoke.maxSteps();
-        }
-        int best = 0;
-        for (EnemyMob enemy : new InWedgeTargetQuery(this.centerX, this.centerY, heading, halfWidth)
-                .and(InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal()))
-                .matching(this.context.enemies())) {
-            Burning entry = this.burning.get(enemy);
-            if (entry != null) {
-                best = Math.max(best, Math.min(stoke.maxSteps(), entry.steps + 1));
-            }
-        }
-        return best;
-    }
-
-    /**
-     * Advances every wave, setting alight the enemies its front reaches for the first time; each wave
-     * reaches an enemy at most once. Drops waves that reached full range.
-     */
-    private void advanceWaves(CinderSpec spec, int gameTime) {
-        Iterator<FlameWave> waves = this.inFlightWaves.iterator();
-        while (waves.hasNext()) {
-            FlameWave wave = waves.next();
-            float travelled = Math.min(1f, (float) (gameTime - wave.firedAtTick) / wave.travelTicks);
-            float currentRadius = travelled * this.rangeReal();
-            List<EnemyMob> caught = new InWedgeTargetQuery(this.centerX, this.centerY, wave.headingRadians,
-                    wave.halfWidthRadians)
-                    .and(InRangeTargetQuery.everyone(this.centerX, this.centerY, currentRadius))
-                    .matching(this.context.enemies());
-            boolean stoked = false;
-            for (EnemyMob enemy : caught) {
-                if (wave.alreadyHit.add(enemy)) {
-                    stoked |= this.ignite(enemy, wave, spec, gameTime);
-                }
-            }
-            if (stoked) {
-            }
-            if (travelled >= 1f) {
-                waves.remove();
-            }
-        }
-    }
-
-    /** One enemy a wave reaches: Stoke, the crit, the pool, and what the specials add. Whether it was stoked. */
-    private boolean ignite(EnemyMob enemy, FlameWave wave, CinderSpec spec, int gameTime) {
-        Burning entry = this.burning.get(enemy);
-        boolean stoked = entry != null && spec.stoke().active();
-        boolean alreadyBurning = entry != null;
-        if (entry == null) {
-            entry = new Burning(gameTime);
-            this.burning.put(enemy, entry);
-        }
-        if (spec.stoke().active()) {
-            entry.steps = spec.stoke().alwaysFull() ? spec.stoke().maxSteps()
-                    : Math.min(spec.stoke().maxSteps(), entry.steps + (stoked ? 1 : 0));
-        }
-        HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.WAVE, 0f, this.stats());
-        AttackProfile attack = adjustment.applyTo(this.stats().attack());
-        boolean critical = enemy.rollsCrit(attack);
-        float potency = (1f + (spec.stoke().active() ? this.stats().value(TowerStat.STOKE_STEP) * entry.steps : 0f))
-                * (critical ? enemy.critFactorFor(attack) : 1f) * adjustment.damageFactor();
-        this.report(enemy, HitKind.WAVE, critical, false);
-        Damage level = Damage.magic(Math.round(this.damageCurrent() * potency));
-        int duration = this.burnDuration();
-        PoolTuning tuning = this.tuning(spec);
-        this.applyEffect(enemy, sink -> Effect.burn(level, duration, sink).withTuning(tuning));
-        if (wave.soul) {
-            this.applyEffect(enemy, sink -> Effect.soulfire(level, duration, sink).withTuning(tuning));
-        }
-        entry.lastBurningTick = gameTime;
-        if (critical && spec.critScorch() > 0) {
-            this.applyEffect(enemy, sink -> Effect.scorched(spec.critScorch()));
-        }
-        if (spec.searing() && (!alreadyBurning || gameTime - entry.lastVulnerableTick >= spec.searingIntervalTicks())) {
-            this.applyStacks(enemy, StackingDebuff.VULNERABLE, 1);
-            entry.lastVulnerableTick = gameTime;
-        }
-        if (spec.combustion().isActive()) {
-            this.combust(enemy, entry, spec);
-        }
-        return stoked;
-    }
-
-    /**
-     * An enemy whose burning pools together have grown hotter than one wave could make them bursts once onto
-     * the enemies near it, and may burst again after it cools.
-     */
-    private void combust(EnemyMob enemy, Burning entry, CinderSpec spec) {
-        float fuel = 0f;
-        float strongest = 0f;
-        float remaining = 0f;
-        for (Effect pool : enemy.activeEffects()) {
-            if (pool.kind().isBurning()) {
-                fuel += pool.fuelLevel();
-                strongest = Math.max(strongest, pool.peakL0());
-                remaining += pool.remainingPoolDamage();
-            }
-        }
-        if (!entry.hot && fuel >= strongest * HOT_SHARE) {
-            entry.hot = true;
-            this.burstOnto(enemy, Math.round(remaining * spec.combustion().share()), spec.combustion().radiusCells());
-        } else if (entry.hot && fuel < strongest * COOLED_SHARE) {
-            entry.hot = false;
-        }
-    }
-
-    private void burstOnto(EnemyMob centre, int damage, float radiusCells) {
-        float radius = radiusCells * this.context.getBoard().scale();
-        for (EnemyMob other : InRangeTargetQuery.everyone((int) centre.getX(), (int) centre.getY(), radius)
-                .matching(this.context.enemies())) {
-            if (other != centre) {
-                this.dealPeriodicDamage(other, Damage.magic(damage));
-            }
-        }
-    }
-
-    /**
-     * Keeps track of the enemies it burns: forgets the ones whose fire has been out too long, tops up
-     * pools Everburn holds, and lets Thermal Shock land what is left of the burn on one that dies. Each entry
-     * goes the tick it is seen dead, so a death the shock itself causes shocks once and the chain ends.
-     */
-    private void tendBurning(CinderSpec spec) {
-        Iterator<Map.Entry<EnemyMob, Burning>> entries = this.burning.entrySet().iterator();
-        while (entries.hasNext()) {
-            Map.Entry<EnemyMob, Burning> tracked = entries.next();
-            EnemyMob enemy = tracked.getKey();
-            Burning entry = tracked.getValue();
-            boolean onFire = enemy.hasEffect(EffectKind.BURN) || enemy.hasEffect(EffectKind.SOULFIRE);
-            if (enemy.isDead()) {
-                entries.remove();
-                if (spec.thermalShock() > 0f && enemy.wasKilled()) {
-                    this.shock(enemy, spec.thermalShock());
-                }
-                continue;
-            }
-            if (onFire) {
-                entry.lastBurningTick = this.tickNow;
-                if (spec.everburnFloor() > 0f) {
-                    this.holdPools(enemy, spec);
-                }
-                continue;
-            }
-            if (this.tickNow - entry.lastBurningTick > this.stats().value(TowerStat.STOKE_GRACE)) {
-                entries.remove();
-            }
-        }
-    }
-
-    /** Everburn: a pool in this tower's range is held up to its floor with a top-up that marks nothing. */
-    private void holdPools(EnemyMob enemy, CinderSpec spec) {
-        double dx = enemy.getX() - this.centerX;
-        double dy = enemy.getY() - this.centerY;
-        if (dx * dx + dy * dy > this.rangeReal2()) {
-            return;
-        }
-        for (Effect pool : enemy.activeEffects()) {
-            if (!pool.kind().isBurning()) {
-                continue;
-            }
-            float floor = spec.everburnFloor() * pool.peakL0();
-            float cap = pool.tuning().capFactor() * pool.peakL0();
-            if (pool.fuelLevel() < floor && pool.fuelLevel() < cap) {
-                int topUp = Math.round((floor - pool.fuelLevel()) / (1f - pool.fuelLevel() / cap));
-                int duration = pool.authoredDurationTicks();
-                PoolTuning tuning = pool.tuning();
-                EffectKind kind = pool.kind();
-                this.applyEffect(enemy, sink -> kind == EffectKind.SOULFIRE
-                        ? Effect.soulfire(Damage.magic(topUp), duration, sink).withTuning(tuning)
-                        : Effect.burn(Damage.magic(topUp), duration, sink).withTuning(tuning));
-            }
-        }
-    }
-
-    /**
-     * What is left of the burn {@code dead} carried, at {@code share}, lands on its neighbours, and they are chilled.
-     * The shock spends the burn, so another Cinder that burned the same enemy has nothing left to land.
-     */
-    private void shock(EnemyMob dead, float share) {
-        dead.activeEffects().stream().filter(effect -> effect.kind() == EffectKind.BURN).findFirst().ifPresent(pool -> {
-            this.burstOnto(dead, Math.round(pool.remainingPoolDamage() * share), THERMAL_SHOCK_RADIUS_CELLS);
-            this.chillAround(dead);
-            dead.loseStacks(EffectKind.BURN, 1);
-        });
-    }
-
-    private void chillAround(EnemyMob centre) {
-        float radius = THERMAL_SHOCK_RADIUS_CELLS * this.context.getBoard().scale();
-        for (EnemyMob other : InRangeTargetQuery.everyone((int) centre.getX(), (int) centre.getY(), radius)
-                .matching(this.context.enemies())) {
-            if (other != centre) {
-                this.applyEffect(other, sink -> Effect.chill(THERMAL_SHOCK_CHILL, THERMAL_SHOCK_CHILL_TICKS, sink));
-            }
-        }
+    /** What a whole stream at {@code stats} gives one enemy outside the Core, in points. */
+    private static float streamFuel(TowerStats stats) {
+        return DamageUnits.inPoints(stats.damage()) * stats.value(TowerStat.STREAM) / TickRate.TICKS_PER_SECOND;
     }
 
     public TurretAim getTurretAim() {
         return this.turretAim;
     }
 
-    public double getHalfWidthRadians() {
-        return this.halfWidthRadians(this.spec(this.mechanics.all()));
+    public double halfWidthRadians() {
+        return this.stats().value(TowerStat.CONE_WIDTH) / 2;
     }
 
-    /** Waves still travelling, oldest first. */
-    public List<FlameWave> getInFlightWaves() {
-        return Collections.unmodifiableList(this.inFlightWaves);
+    /** Whether it is streaming now. */
+    public boolean isStreaming() {
+        return this.streamLeft > 0;
     }
 
-    /** How many steps of Stoke {@code enemy} carries now; none when it is not being stoked. */
-    int stokeStepsOf(EnemyMob enemy) {
-        Burning entry = this.burning.get(enemy);
-        return entry == null ? 0 : entry.steps;
+    /** How much of the reload is left, from 1 as a stream ends down to 0 once it may stream again. */
+    public float reloadLeft() {
+        return this.isStreaming() ? 0f : this.clock.remaining();
+    }
+
+    /** What its stream looks like now, as its nodes shape it. */
+    public StreamLook streamLook() {
+        CinderSpec spec = this.spec(this.mechanics.all());
+        return new StreamLook(spec.soulfire(), spec.look() == FlameLook.WHITE, spec.dragonsBreath(),
+                spec.core().isActive() ? (float) this.halfWidthRadians() * spec.core().share() : 0f);
+    }
+
+    /** This tick's Flashovers, each from a hot enemy to one beside it. */
+    public List<Flash> flashes() {
+        return Collections.unmodifiableList(this.flashes);
     }
 
     @Override
@@ -558,8 +326,9 @@ public final class CinderTower extends AbstractTower {
     @Override
     protected List<AppliedEffect> baseApplies() {
         return List.of(new AppliedEffect(EffectKind.BURN, List.of(new AppliedEffect.Source(this.displayName(),
-                TermText.of("each wave applies ").plus(EffectKind.BURN)
-                        .plus(" for " + TermNumbers.seconds((this.burnDuration()) / TickRate.TICKS_PER_SECOND))))));
+                        TermText.of("its stream pours ").plus(TowerTerm.FLAME).plus(" into ").plus(EffectKind.BURN)))),
+                new AppliedEffect(EffectKind.SCORCHED, List.of(new AppliedEffect.Source(this.displayName(),
+                        TermText.of("Sear: the first touch of each stream gives " + SEAR_STACKS + " stacks")))));
     }
 
     @Override
@@ -568,90 +337,22 @@ public final class CinderTower extends AbstractTower {
     }
 
     @Override
-    public List<EnemyMark> marksOn(EnemyMob enemy) {
-        Burning entry = this.burning.get(enemy);
-        if (entry == null || entry.steps <= 0) {
-            return List.of();
-        }
-        return List.of(new EnemyMark(TowerTerm.STOKE, entry.steps,
-                this.spec(this.mechanics.all()).stoke().maxSteps(), this.displayName()));
-    }
-
-    @Override
     protected String description() {
-        return "Fires a cone of flame that sets everything in it alight.";
+        return "Streams flame into everything in its cone, then reloads; what it pours goes on hurting.";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitCinderTower(this);
     }
 
-    /** What the Cinder remembers of an enemy it has set alight. */
-    private static final class Burning {
-        private int steps;
-        private int lastBurningTick;
-        private int lastVulnerableTick = Integer.MIN_VALUE / 2;
-        private boolean hot;
-
-        private Burning(int tick) {
-            this.lastBurningTick = tick;
-        }
+    /**
+     * How its stream is drawn: in Soulfire, with a white core, as Dragon's Breath, and the half-width of its Core in
+     * radians, 0 for none.
+     */
+    public record StreamLook(boolean soulfire, boolean whiteCore, boolean dragonsBreath, float coreHalfWidth) {
     }
 
-    /**
-     * One shot in flight: its fixed heading and width, fire time, how long it takes to reach full
-     * range, whether it is Soulfire, its look, and the enemies it has already burned.
-     */
-    public static final class FlameWave {
-        private final double headingRadians;
-        private final double halfWidthRadians;
-        private final int firedAtTick;
-        private final int travelTicks;
-        private final boolean soul;
-        private final FlameLook look;
-        private final int stokeSteps;
-        private final Set<EnemyMob> alreadyHit = new HashSet<>();
-
-        private FlameWave(double headingRadians, double halfWidthRadians, int firedAtTick, int travelTicks,
-                          boolean soul, FlameLook look, int stokeSteps) {
-            this.headingRadians = headingRadians;
-            this.halfWidthRadians = halfWidthRadians;
-            this.firedAtTick = firedAtTick;
-            this.travelTicks = travelTicks;
-            this.soul = soul;
-            this.look = look;
-            this.stokeSteps = stokeSteps;
-        }
-
-        /** The most steps of Stoke an enemy in its path carries once it lands, shown as a brighter core. */
-        public int stokeSteps() {
-            return this.stokeSteps;
-        }
-
-        public double headingRadians() {
-            return this.headingRadians;
-        }
-
-        public double halfWidthRadians() {
-            return this.halfWidthRadians;
-        }
-
-        public int firedAtTick() {
-            return this.firedAtTick;
-        }
-
-        /** Ticks this wave takes to reach full range. */
-        public int travelTicks() {
-            return this.travelTicks;
-        }
-
-        /** Whether this wave burns as Soulfire. */
-        public boolean isSoulfire() {
-            return this.soul;
-        }
-
-        public FlameLook look() {
-            return this.look;
-        }
+    /** A Flashover from a hot enemy at {@code fromX, fromY} to one beside it, in board pixels. */
+    public record Flash(double fromX, double fromY, double toX, double toY) {
     }
 }

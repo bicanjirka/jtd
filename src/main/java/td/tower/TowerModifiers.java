@@ -107,32 +107,22 @@ public final class TowerModifiers {
         return flat(TowerStat.HEAVY_MULTIPLIER, fraction);
     }
 
-    public static StatModifiers<TowerStat> coneWidth(float radians) {
-        return flat(TowerStat.CONE_WIDTH, radians);
+    /** The cone {@code factor} times as wide, after every flat and percent bonus. */
+    public static StatModifiers<TowerStat> coneTimes(float factor) {
+        return StatModifiers.of(TowerStat.CONE_WIDTH, StatModifier.times(factor));
     }
 
-    public static StatModifiers<TowerStat> waveSpeed(float fraction) {
-        return flat(TowerStat.WAVE_SPEED, fraction);
+    public static StatModifiers<TowerStat> stream(int ticks) {
+        return flat(TowerStat.STREAM, ticks);
     }
 
-    public static StatModifiers<TowerStat> burnDuration(int ticks) {
-        return flat(TowerStat.BURN_DURATION, ticks);
+    /** The stream {@code factor} times as long, after every flat and percent bonus. */
+    public static StatModifiers<TowerStat> streamTimes(float factor) {
+        return StatModifiers.of(TowerStat.STREAM, StatModifier.times(factor));
     }
 
-    public static StatModifiers<TowerStat> stokeStep(float fraction) {
-        return flat(TowerStat.STOKE_STEP, fraction);
-    }
-
-    public static StatModifiers<TowerStat> stokeGrace(int ticks) {
-        return flat(TowerStat.STOKE_GRACE, ticks);
-    }
-
-    public static StatModifiers<TowerStat> burnPoolCap(float multiple) {
-        return flat(TowerStat.BURN_POOL_CAP, multiple);
-    }
-
-    public static StatModifiers<TowerStat> burnMarkRate(float multiple) {
-        return flat(TowerStat.BURN_MARK_RATE, multiple);
+    public static StatModifiers<TowerStat> reload(int ticks) {
+        return flat(TowerStat.RELOAD, ticks);
     }
 
     public static StatModifiers<TowerStat> tollCap(int stacks) {

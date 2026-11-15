@@ -3,13 +3,10 @@
 Constraints for `CinderTower` (in `td.tower`) and its mechanics in this package. The
 rules shared by every tower are in `td/tower/CLAUDE.md`.
 
-- The Cinder never deals direct damage: each wave sets an enemy alight once, and `ignite` is the one place
-  that decides how strong the pool starts (Stoke steps, then a crit ignition's factor, which it rolls with
-  `HitReceiver.rollsCrit` since an ignition is no hit). The `Burning` ledger is the only memory of whom it
-  has set alight: Stoke steps live there and go when the burn has been out longer than the grace. Soulfire is a
-  second pool the same ignition applies beside the ordinary burn, with the same level; Combustion reads an
-  enemy's burning pools together. What its pools do to an enemy (hold more, mark faster, cauterize, heat,
-  mark for magic) is a `PoolTuning` the pool carries, never state the Cinder keeps on the
-  enemy; a Thermal Shock and an
-  Everburn top-up are the Cinder's own work in `tendBurning`. Bellows reads the attack speed in what the tower
-  receives (`TowerStats.received()`), so it needs no Aura-specific code.
+- The Scorcher deals no direct damage: while it streams, every enemy in its cone takes Flame as fuel for its burn,
+  each tick, and `pour` is the one place that decides how much (the Core, Thermal Shock, Meltdown). The stream is no
+  hit: it never crits, rolls nothing and reports no hit. What the stream leaves on an enemy lives in its pools, never in
+  state the tower keeps about it; the tower remembers only whom the current stream has touched, for Sear.
+- A stream runs its length once started, into the air if its target leaves; the reload is paid on the fire clock
+  after it, so attack speed shortens the reload alone. A tower's stats for a stream are taken once, as it starts.
+- Soulfire pours its own pool in place of the burn; Flashover reads an enemy's burning pools together.

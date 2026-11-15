@@ -63,7 +63,6 @@ public enum Palette {
     TOWER_CINDER_CONE,
     TOWER_CINDER_CONE_WHITE,
     TOWER_CINDER_CONE_SOUL,
-    TOWER_CINDER_CONE_SEARING,
     /** A Normal shell's iron, in a magazine's strip. */
     SHELL_NORMAL,
     /** The Heavy shell's band. */
