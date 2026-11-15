@@ -1,16 +1,18 @@
 # Balancing enemies, bounties and waves
 
-How the game's enemies, what they pay and the waves they come in are held to one scale, and how to check that they
-still are after a change. Two tools do the measuring; neither uses a tower, so they keep working while the towers are
-being redone.
+How the game's enemies, what they pay, the waves they come in and the towers that meet them are held to one scale,
+and how to check that they still are after a change. The enemy and wave tools use no tower, so they keep working
+while the towers are being redone; the tower bench measures the towers in code.
 
 ```bash
 mvn -q compile exec:java -Dexec.mainClass=td.balance.EnemyPowerReport   # every enemy at every rank; seconds
 mvn -q compile exec:java -Dexec.mainClass=td.balance.WavePowerReport    # every round of every level; two minutes
+mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerBench         # every build of every tower; a minute
 ```
 
 `EnemyPowerReport` takes `--kinds golem,yeti`, `--ranks grunt,elite` and `--fit golem=1.7,yeti=1.7`;
-`WavePowerReport` takes `--levels rift,hive`. Both store their rows in `target/balance/`.
+`WavePowerReport` takes `--levels rift,hive`; `TowerBench` takes `--towers sniper,burst`, `--scenarios stream,group`
+and `--quick`. All store their rows in `target/balance/`.
 
 ## The pipeline
 
@@ -22,6 +24,7 @@ person (`ReportPage` writes both).
 | --- | --- | --- | --- |
 | 1 Enemies | `EnemyPowerReport` (a full run, no `--kinds` or `--ranks`) | `enemy-power.tsv`: one row per enemy and rank, its power on every axis as a multiple of the Walker; `enemy-baseline.tsv`: what the Walker of each rank takes, which turns those multiples into damage a second | `enemies.html` |
 | 2 Waves | `WavePowerReport` | `wave-power.tsv` | |
+| 3 Towers, measured | `TowerBench` (reads `enemy-power.tsv`; with `--towers` it replaces only those towers' rows) | `towers.tsv`: one row per build of each tower, what it holds of each scenario in Walkers; `tower-pairs.tsv`: every two towers side by side; `tower-scenarios.tsv`: the scenarios and what a point of health is worth in each | `tower-bench.html` |
 
 ## The probe rig
 
@@ -169,6 +172,49 @@ Room does not move with how many enemies a wave has, since more enemies pay more
 - **the clear bonus and the starting credits**, which add credits and no strength.
 
 Change a wave, run the report for that level, read `even`.
+
+## What a tower holds
+
+`TowerBench` measures towers the way the rig measures enemies, turned round: the defence is fixed and the wave is
+searched. One build of one tower stands beside the middle of the straight test lane, in the real engine, with its
+upgrade gates waived. A scenario's wave has a fixed shape, and the health of its enemies is searched for the most the
+build lets nothing through of, over five seeds. So everything a tower does counts for what it does: a slow for the
+time it buys, a kill for what it triggers, a miss for the leak it causes.
+
+- **Capacity** is that health in **Walkers**: the health of a Grunt Walker, times how many enemies the wave has,
+  times how much tougher than a Walker of its rank the enemy stage found the enemy per point of health
+  (`blind` × the Walker's health ÷ its own). A defence of plain mixed damage therefore holds about as many Walkers
+  in every scenario, and a tower's row shows what it is an answer to and what it is not.
+- A wave's enemies have from half the health searched to half as much again, so they do not all take the same
+  number of hits and a small gain in a tower shows as a small gain in capacity.
+- **0** means the build alone lets something through whatever its health: too few shots for a column, hits that
+  bounce off plating, shells that miss.
+
+| Scenario | Wave | Shows |
+| --- | --- | --- |
+| single | one Veteran Walker | damage on one target over one pass |
+| stream | eight Veteran Walkers, five seconds apart | sustained single-target damage |
+| group | twelve Soldier Walkers in a tight column | area damage |
+| boss | one Boss Walker | one target with a boss's defences |
+| armored, plated, resist, hidden, fast | a stream of Veteran Knights, Juggernauts, Templars, Ghosts, Runners | each defence and trick |
+
+Every scenario is fought twice: alone, and beside two fixed partners, a bare Sniper and a bare Burst (the column
+ending in `+`, counting what all three hold; `tower-scenarios.tsv` has what the partners hold by themselves). The
+second is where a tower that only helps others shows, and where a tower that holds nothing alone shows what it adds.
+
+The builds are read off each tower's tree, so a new tier, node, cluster or tower needs no change to the tool:
+
+| Role | Build | Set against (`versus`) |
+| --- | --- | --- |
+| `bare` | the tower as bought | |
+| `line` | one node on the nodes it needs | the same without it (`before`, or `bare`) |
+| `full` | every node up to a tier; each cluster gives its first member, a fork one family per side, and each other cluster member a family of its own | |
+| `without` | a whole tier less one node, in the tier the node sits in | that tier whole |
+| `without-top` | the whole tree less one node | the whole tree |
+
+A node's worth alone is its `line` over what that is set against; its worth in a build is the `full` build over the
+`without` one. `tower-pairs.tsv` sets every two towers side by side, bare and bought whole, against what each holds
+alone on the same cells: a synergy above 1 is help, below 1 is two towers in each other's way.
 
 ## What this does not settle
 
