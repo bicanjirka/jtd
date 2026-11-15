@@ -6,54 +6,72 @@ import td.wave.Point;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class WavePowerReportTest {
 
     private static final Offset<Double> EXACT = Offset.offset(1e-9);
-    private static final PaperYardstick TWO_STEPS = new PaperYardstick(3,
-            List.of(new PaperYardstick.Step(10, 4), new PaperYardstick.Step(40, 10)));
+    private static final double GROWTH = 2;
+    private static final WavePowerReport.Yardstick TWO_STEPS = new WavePowerReport.Yardstick(
+            List.of(new WavePowerReport.Yardstick.Step(10, 4), new WavePowerReport.Yardstick.Step(40, 10)), 2, GROWTH);
 
     @Test
-    void aTowerThatReachesHalfALaneLandsHalfOfWhatWalksPastAtOnce() {
-        WavePowerReport.LanePower lane = new WavePowerReport.LanePower("", 1, new PowerBench.Passage(200, 0));
+    void theYardstickIsTheAverageOfTheTowersAtEachStage() {
+        TowerSheet sheet = TowerSheetTest.sheet(List.of(
+                TowerSheetTest.build("A", TowerBench.BARE, TowerBench.BARE, 10, 4),
+                TowerSheetTest.build("A", "full:0", TowerBench.FULL, 30, 8, "a"),
+                TowerSheetTest.build("B", TowerBench.BARE, TowerBench.BARE, 20, 6),
+                TowerSheetTest.build("B", "full:0", TowerBench.FULL, 50, 12, "b")));
 
-        assertThat(lane.share(0.5)).isEqualTo(0.5, EXACT);
-    }
+        WavePowerReport.Yardstick yardstick = WavePowerReport.Yardstick.of(sheet);
 
-    @Test
-    void aTowerFiresForAsLongAsTheStreamKeepsComing() {
-        WavePowerReport.LanePower lane = new WavePowerReport.LanePower("", 1, new PowerBench.Passage(100, 300));
-
-        assertThat(lane.share(0.2)).isEqualTo((0.2 * 100 + 300) / 400, EXACT);
+        assertThat(yardstick.types()).isEqualTo(2);
+        assertThat(yardstick.steps()).containsExactly(new WavePowerReport.Yardstick.Step(15, 5),
+                new WavePowerReport.Yardstick.Step(40, 10));
     }
 
     @Test
     void theCheapestDefenceBuildsBareTowersBeforeItUpgradesOne() {
-        WavePowerReport.Ground ground = new WavePowerReport.Ground(TWO_STEPS,
-                List.of(new Point(0, 0), new Point(1, 0)), List.of(new double[] {1}, new double[] {1}));
+        WavePowerReport.Ground ground = ground(new double[] {1}, new double[] {1});
 
-        double cost = ground.cost(List.of(new WavePowerReport.LanePower("", 8, new PowerBench.Passage(100, 0))));
+        double cost = ground.cost(List.of(new WavePowerReport.LanePower("", 8, 0)));
 
         assertThat(cost).isEqualTo(20, EXACT);
     }
 
     @Test
-    void aBoardWithNoRoomLeftPricesTheRestAsItsLastTower() {
-        WavePowerReport.Ground ground = new WavePowerReport.Ground(TWO_STEPS,
-                List.of(new Point(0, 0)), List.of(new double[] {1}));
+    void aTowerBoughtOnceEveryKindStandsPaysForBeingACopy() {
+        WavePowerReport.Ground ground = ground(new double[] {1}, new double[] {1}, new double[] {1});
 
-        double cost = ground.cost(List.of(new WavePowerReport.LanePower("", 16, new PowerBench.Passage(100, 0))));
+        double cost = ground.cost(List.of(new WavePowerReport.LanePower("", 12, 0)));
+
+        assertThat(cost).isEqualTo(10 + 10 + 10 * GROWTH, EXACT);
+    }
+
+    @Test
+    void aTowerThatReachesTwiceTheLaneHoldsTwiceAsMuch() {
+        WavePowerReport.Ground ground = ground(new double[] {2}, new double[] {1});
+
+        double cost = ground.cost(List.of(new WavePowerReport.LanePower("", 8, 0)));
+
+        assertThat(cost).isEqualTo(10, EXACT);
+    }
+
+    @Test
+    void aBoardWithNoRoomLeftPricesTheRestAsItsLastTower() {
+        WavePowerReport.Ground ground = ground(new double[] {1});
+
+        double cost = ground.cost(List.of(new WavePowerReport.LanePower("", 16, 0)));
 
         assertThat(cost).isEqualTo(40 + 6 * (30.0 / 6), EXACT);
     }
 
     @Test
     void aTowerServesOneLaneOnly() {
-        WavePowerReport.Ground ground = new WavePowerReport.Ground(TWO_STEPS,
-                List.of(new Point(0, 0), new Point(1, 0)), List.of(new double[] {1, 1}, new double[] {1, 1}));
-        WavePowerReport.LanePower lane = new WavePowerReport.LanePower("", 4, new PowerBench.Passage(100, 0));
+        WavePowerReport.Ground ground = ground(new double[] {1, 1}, new double[] {1, 1});
+        WavePowerReport.LanePower lane = new WavePowerReport.LanePower("", 4, 0);
 
         assertThat(ground.cost(List.of(lane, lane))).isEqualTo(20, EXACT);
     }
@@ -66,6 +84,19 @@ class WavePowerReportTest {
 
         assertThat(trend.at(1)).isEqualTo(1.0, Offset.offset(1e-6));
         assertThat(trend.at(3)).isEqualTo(0.25, Offset.offset(1e-6));
+    }
+
+    @Test
+    void aRoundWellUnderItsLevelsLineIsAGateAndOneFarOffItIsFlagged() {
+        assertThat(WavePowerReport.verdict(1.0)).isEqualTo(TowerReport.OK);
+        assertThat(WavePowerReport.verdict(0.85)).isEqualTo("gate");
+        assertThat(WavePowerReport.verdict(0.5)).startsWith("WARN");
+        assertThat(WavePowerReport.verdict(1.5)).startsWith("WARN");
+    }
+
+    private static WavePowerReport.Ground ground(double[]... reach) {
+        List<Point> cells = IntStream.range(0, reach.length).mapToObj(x -> new Point(x, 0)).toList();
+        return new WavePowerReport.Ground(TWO_STEPS, cells, List.of(reach));
     }
 
     private static WavePowerReport.RoundPower round(int round, double need) {

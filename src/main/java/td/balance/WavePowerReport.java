@@ -7,14 +7,11 @@ import td.damage.DamageMix;
 import td.enemy.Rank;
 import td.level.BuiltInLevelCatalog;
 import td.level.LevelDefinition;
+import td.tower.TowerFactory;
+import td.tower.upgrade.UpgradeTier;
 import td.util.TickRate;
 import td.wave.Point;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -28,21 +25,24 @@ import java.util.stream.IntStream;
 
 /**
  * Weighs every round of every level and sets it against what the level has paid by then: how strong the round is,
- * lane by lane, in Walkers of the lowest rank; which parts of a defence it asks for; what it pays; and what the
- * defence that just holds it costs when it is built of the paper tools' reference tower. A round is measured as an
- * enemy is, under a {@link ProbeRig}, on the level's own board, so its lanes' length and what its enemies do to
- * each other count. Run it:
+ * lane by lane, in Walkers of the lowest rank; which parts of a defence it asks for; what it pays; what a tower
+ * that has stood on a lane from the start has earned by then; and what the defence that just holds it costs when it
+ * is built of the towers as the tower bench measured them. A round is measured as an enemy is, under a
+ * {@link ProbeRig}, on the level's own board, so its lanes' length and what its enemies do to each other count.
+ * Run it after the tower bench:
  *
  * <pre>
  * mvn -q compile exec:java -Dexec.mainClass=td.balance.WavePowerReport [-Dexec.args="--levels rift,hive"]
  * </pre>
  *
- * It prints one table per level and stores every row in {@code target/balance/wave-power.tsv}. The cost is a
- * yardstick, not a forecast: read how it moves from round to round against the credits, not where it stands.
+ * It prints one table per level, stores every row in {@code target/balance/wave-power.tsv} and publishes
+ * {@code target/balance/waves.html}. The cost is a yardstick, not a forecast: it buys the average tower, for the
+ * round alone.
  */
 public final class WavePowerReport {
 
-    private static final Path STORE = Path.of("target", "balance", "wave-power.tsv");
+    static final String SHEET = "wave-power";
+    private static final String PAGE = "waves";
     /** How many times their first size a defence's hits have grown by a level's last round. */
     private static final float LAST_HIT_SCALE = 1.5f;
     /** A round asks for a part of a defence it leans on this many times as much as Walkers do. */
@@ -52,9 +52,13 @@ public final class WavePowerReport {
     /** How far above what just holds a round the rig stands when the round's pay is counted. */
     private static final double PAY_HEADROOM = 1.5;
     private static final long PAY_SEED = 1L;
-    /** What the weakest tower's defence costs against the reference tower's. */
-    private static final double FLOOR_COST = 1.2;
     private static final double DONE = 1e-6;
+    /** A round this far under its level's line is a gate; one further off it than the band is flagged. */
+    private static final double GATE = 0.92;
+    private static final double BAND_LOW = 0.7;
+    private static final double BAND_HIGH = 1.3;
+    private static final List<String> HEADER = List.of("level", "round", "walkers", "bounty", "bonus", "pays", "bank",
+            "need", "room", "even", "xp", "opens", "asks for", "verdict", "lanes");
 
     private WavePowerReport() {
     }
@@ -68,8 +72,10 @@ public final class WavePowerReport {
             }
         }
         Bench bench = Bench.measured();
-        PaperYardstick yardstick = PaperYardstick.read(PaperYardstick.STORED);
-        List<String> stored = new ArrayList<>(List.of(RoundPower.storedHeader()));
+        TowerSheet sheet = TowerSheet.stored();
+        Yardstick yardstick = Yardstick.of(sheet);
+        List<List<String>> stored = new ArrayList<>();
+        List<ReportPage.Table> tables = new ArrayList<>();
         for (LevelDefinition level : new BuiltInLevelCatalog().levels()) {
             String name = level.name().toLowerCase(Locale.ROOT);
             if (!only.isEmpty() && only.stream().noneMatch(name::contains)) {
@@ -79,35 +85,95 @@ public final class WavePowerReport {
             int rounds = level.paths().getFirst().waves().size();
             List<RoundPower> powers = IntStream.range(0, rounds).parallel()
                     .mapToObj(round -> RoundPower.of(level, round, bench, ground)).toList();
+            List<List<String>> rows = rows(level, powers);
+            stored.addAll(rows);
+            tables.add(ReportPage.Table.of(level.name(), HEADER.subList(1, HEADER.size()),
+                    rows.stream().map(row -> row.subList(1, row.size())).toList())
+                    .noted(String.format(Locale.ROOT, "Starts with %d credits: %.1f towers at the average price of %.0f. "
+                                    + "%d lives, %d lanes.", level.startingCredits(),
+                            level.startingCredits() / yardstick.steps().getFirst().cost(),
+                            yardstick.steps().getFirst().cost(), level.startingLives(), level.paths().size()))
+                    .heating("room", "even"));
             System.out.printf(Locale.ROOT, "%n%s: starts with %d credits, %d lives, %d lanes%n", level.name(),
                     level.startingCredits(), level.startingLives(), level.paths().size());
-            System.out.println(RoundPower.header());
-            double[] banks = new double[rounds];
-            double bank = level.startingCredits();
-            for (RoundPower power : powers) {
-                banks[power.round() - 1] = bank;
-                bank += power.bounty() + power.bonus();
+            System.out.println(String.join("\t", HEADER.subList(1, HEADER.size())));
+            rows.forEach(row -> System.out.println(String.join("\t", row.subList(1, row.size()))));
+        }
+        if (only.isEmpty()) {
+            ReportPage.store(SHEET, ReportPage.Table.of("Waves", HEADER, stored));
+            ReportPage.publish(PAGE, "Waves", String.format(Locale.ROOT, """
+                    Every round of every level, measured with no tower on the board, against what the level has paid \
+                    by then. <b>walkers</b>: the round's strength in Walkers of the lowest rank. <b>pays</b>: bounty \
+                    and clear bonus per Walker of strength. <b>bank</b>: the starting credits and everything earlier \
+                    rounds paid. <b>need</b>: what the cheapest defence that holds the round costs, built of the \
+                    average measured tower (bare %.0f credits for %.1f Walkers on the bench; each later copy dearer; \
+                    tiers after), best cell first. <b>room</b>: bank over need. <b>even</b>: room over the line the \
+                    level's rooms follow; under %.1f is a gate. <b>xp</b>: what a tower that has stood on each lane \
+                    since the first round has earned before this one; <b>opens</b>: the tier the richest lane's has \
+                    opened at the standard gates. <b>asks for</b>: the part of a defence the round leans on more \
+                    than Walkers do.""", yardstick.steps().getFirst().cost(), yardstick.steps().getFirst().walkers(), GATE),
+                    tables);
+            System.out.println("\nStored in " + ReportPage.FOLDER + ": " + SHEET + ".tsv, " + PAGE + ".html");
+        } else {
+            System.out.println("\nNothing stored: a run of some levels only prints.");
+        }
+    }
+
+    /** The stored rows of {@code level}, one a round, in {@link #HEADER}'s order. */
+    private static List<List<String>> rows(LevelDefinition level, List<RoundPower> powers) {
+        double[] banks = new double[powers.size()];
+        double bank = level.startingCredits();
+        for (RoundPower power : powers) {
+            banks[power.round() - 1] = bank;
+            bank += power.bounty() + power.bonus();
+        }
+        Trend trend = Trend.through(powers, banks);
+        int[] earned = new int[level.paths().size()];
+        List<List<String>> rows = new ArrayList<>();
+        for (RoundPower power : powers) {
+            double had = banks[power.round() - 1];
+            double even = had / power.need() / trend.at(power.round());
+            StringBuilder xp = new StringBuilder();
+            StringBuilder scripts = new StringBuilder();
+            for (int lane = 0; lane < earned.length; lane++) {
+                xp.append(lane == 0 ? "" : " | ").append(earned[lane]);
+                LanePower sent = power.lanes().get(lane);
+                scripts.append(lane == 0 ? "" : " | ")
+                        .append(String.format(Locale.ROOT, "[%.0f] %s", sent.walkers(), sent.script()));
             }
-            Trend trend = Trend.through(powers, banks);
-            for (RoundPower power : powers) {
-                double had = banks[power.round() - 1];
-                System.out.println(power.row(had, trend.at(power.round())));
-                stored.add(power.stored(level, had, trend.at(power.round())));
+            rows.add(List.of(level.name(), String.valueOf(power.round()), ReportPage.number(power.walkers()),
+                    String.valueOf(power.bounty()), String.valueOf(power.bonus()),
+                    ReportPage.number((power.bounty() + power.bonus()) / power.walkers()),
+                    String.format(Locale.ROOT, "%.0f", had), String.format(Locale.ROOT, "%.0f", power.need()),
+                    ReportPage.number(had / power.need()), ReportPage.number(even), xp.toString(),
+                    opened(Arrays.stream(earned).max().orElse(0)), power.asksFor(), verdict(even), scripts.toString()));
+            for (int lane = 0; lane < earned.length; lane++) {
+                earned[lane] += power.lanes().get(lane).bounty();
             }
         }
-        try {
-            Files.createDirectories(STORE.getParent());
-            Files.write(STORE, stored, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        return rows;
+    }
+
+    /** The highest tier a tower with {@code xp} has opened at the standard gates. */
+    static String opened(int xp) {
+        List<UpgradeTier> tiers = UpgradeTier.standard();
+        int open = 0;
+        for (int tier = 0; tier < tiers.size(); tier++) {
+            if (tiers.get(tier).xp() <= xp) {
+                open = tier;
+            }
         }
-        System.out.println();
-        System.out.println("walkers: the round's strength in Walkers of the lowest rank walking the test lane in a column;"
-                + " need: the reference tower's cheapest defence that holds it; floor: the weakest tower's;"
-                + " room: credits banked before the round over need; even: room over the line the level's rooms"
-                + " follow, so 1 is a round as tight as its place in the level asks; asks for: the part of a defence it leans on"
-                + " that many times as much as Walkers do (a kind of damage, keeping enemies in sight, holding them).");
-        System.out.println("Stored in " + STORE);
+        return UpgradeTier.nameOf(open);
+    }
+
+    static String verdict(double even) {
+        if (Double.isNaN(even) || even < BAND_LOW) {
+            return "WARN far under the line";
+        }
+        if (even > BAND_HIGH) {
+            return "WARN far over the line";
+        }
+        return even <= GATE ? "gate" : TowerReport.OK;
     }
 
     /**
@@ -199,22 +265,79 @@ public final class WavePowerReport {
     }
 
     /**
-     * A level's board as the reference tower sees it.
+     * What a defence is bought of: the average of the towers the bench measured, bare and bought whole to each tier.
+     * It is no tower a player can buy; it prices a defence by what towers hold on average, so one tower's retune
+     * moves every level's rooms a little and no level's much.
+     *
+     * @param steps  the tower bare, then at each tier in order
+     * @param types  how many towers it is the average of: that many are bought before one is a copy
+     * @param growth what each further copy of a tower costs, as a multiple of the one before
+     */
+    record Yardstick(List<Step> steps, int types, double growth) {
+
+        Yardstick {
+            steps = List.copyOf(steps);
+        }
+
+        /**
+         * One state of the tower.
+         *
+         * @param cost    every credit spent on it so far, at the first copy's price
+         * @param walkers the Walkers of a mixed wave it adds to a defence on the bench's lane
+         */
+        record Step(double cost, double walkers) {
+        }
+
+        static Yardstick of(TowerSheet sheet) {
+            List<Step> steps = new ArrayList<>();
+            for (int stage = -1; stage <= sheet.topStage(); stage++) {
+                int at = stage;
+                List<TowerSheet.Held> best = sheet.judged().stream()
+                        .flatMap(tower -> sheet.stage(tower, at).stream()
+                                .max((left, right) -> Double.compare(sheet.power(left) / left.cost(),
+                                        sheet.power(right) / right.cost())).stream())
+                        .toList();
+                steps.add(new Step(best.stream().mapToInt(TowerSheet.Held::cost).average().orElse(0),
+                        best.stream().mapToDouble(sheet::power).average().orElse(0)));
+            }
+            return new Yardstick(steps, sheet.judged().size(), TowerFactory.Type.COPY_PRICE_GROWTH);
+        }
+
+        /** What moving a tower from {@code built} steps to one more adds, in Walkers. */
+        double more(int built) {
+            return this.steps.get(built).walkers() - (built == 0 ? 0 : this.steps.get(built - 1).walkers());
+        }
+
+        /** What that step costs when {@code towers} stand already: a new tower pays for the copies before it. */
+        double price(int built, int towers) {
+            if (built > 0) {
+                return this.steps.get(built).cost() - this.steps.get(built - 1).cost();
+            }
+            return this.steps.getFirst().cost() * Math.pow(this.growth, towers / Math.max(1, this.types));
+        }
+    }
+
+    /**
+     * A level's board as the yardstick tower sees it.
      *
      * @param cells every cell a tower may stand on
-     * @param reach for each cell, the share of each lane the tower reaches from it
+     * @param reach for each cell and lane, the lane the tower reaches from it over what it reaches on the bench: how
+     *              many times as long an enemy is under its fire
      */
-    record Ground(PaperYardstick yardstick, List<Point> cells, List<double[]> reach) {
+    record Ground(Yardstick yardstick, List<Point> cells, List<double[]> reach) {
 
-        static Ground of(LevelDefinition level, PaperYardstick yardstick) {
+        static Ground of(LevelDefinition level, Yardstick yardstick) {
             BoardSurvey survey = BoardSurvey.of(level);
-            double radius = yardstick.reachCells() * survey.scale();
-            double everywhere = (double) survey.scale() * (level.width() + level.height()) * 2;
+            BoardSurvey bench = BoardSurvey.of(PowerBench.lane(EnemyPowerReport.NO_CONTENT, "walker"));
+            double cells = Arrays.stream(TowerFactory.Type.values())
+                    .filter(type -> TowerSheet.isJudged(type.name()))
+                    .mapToDouble(type -> bench.reach(type) / bench.scale()).average().orElse(1);
+            double onBench = bench.pathWithin(TowerBench.SUBJECT, cells * bench.scale(), 0) / bench.scale();
             List<double[]> reach = new ArrayList<>();
             for (Point cell : survey.buildable()) {
                 double[] shares = new double[survey.pathCount()];
                 for (int lane = 0; lane < shares.length; lane++) {
-                    shares[lane] = survey.pathWithin(cell, radius, lane) / survey.pathWithin(cell, everywhere, lane);
+                    shares[lane] = survey.pathWithin(cell, cells * survey.scale(), lane) / survey.scale() / onBench;
                 }
                 reach.add(shares);
             }
@@ -222,17 +345,18 @@ public final class WavePowerReport {
         }
 
         /**
-         * The credits the cheapest defence found costs that lands on each lane the shots a second it takes. A tower
-         * fires while the stream passes it, so a short reach costs it only its share of the walk; it serves one lane.
-         * Past what the board has room for, the rest is priced as the last tower bought was, so the figure still
-         * says how far out of reach the round is.
+         * The credits the cheapest defence found costs that holds each lane's Walkers. A tower serves one lane, and
+         * holds of it what it holds on the bench times how much more of the lane it reaches. Past what the board has
+         * room for, the rest is priced as the last tower bought was, so the figure still says how far out of reach
+         * the round is.
          */
         double cost(List<LanePower> lanes) {
-            double[] left = lanes.stream().mapToDouble(LanePower::shots).toArray();
+            double[] left = lanes.stream().mapToDouble(LanePower::walkers).toArray();
             int[] built = new int[this.cells.size()];
             int[] serves = new int[this.cells.size()];
             Arrays.fill(serves, -1);
-            List<PaperYardstick.Step> steps = this.yardstick.steps();
+            int steps = this.yardstick.steps().size();
+            int towers = 0;
             double spent = 0;
             double lastPrice = Double.POSITIVE_INFINITY;
             while (Arrays.stream(left).anyMatch(need -> need > DONE)) {
@@ -240,16 +364,16 @@ public final class WavePowerReport {
                 int bestLane = -1;
                 double bestGain = 0;
                 for (int cell = 0; cell < built.length; cell++) {
-                    if (built[cell] >= steps.size()) {
+                    if (built[cell] >= steps) {
                         continue;
                     }
-                    double more = steps.get(built[cell]).damagePerSecond() - damageAt(steps, built[cell]);
-                    double price = steps.get(built[cell]).cost() - costAt(steps, built[cell]);
+                    double more = this.yardstick.more(built[cell]);
+                    double price = this.yardstick.price(built[cell], towers);
                     for (int lane = 0; lane < left.length; lane++) {
                         if (left[lane] <= DONE || serves[cell] >= 0 && serves[cell] != lane) {
                             continue;
                         }
-                        double gain = Math.min(left[lane], more * lanes.get(lane).share(this.reach.get(cell)[lane])) / price;
+                        double gain = Math.min(left[lane], more * this.reach.get(cell)[lane]) / price;
                         if (gain > bestGain) {
                             bestGain = gain;
                             bestCell = cell;
@@ -260,22 +384,14 @@ public final class WavePowerReport {
                 if (bestCell < 0) {
                     return spent + Arrays.stream(left).filter(need -> need > DONE).sum() * lastPrice;
                 }
-                double more = steps.get(built[bestCell]).damagePerSecond() - damageAt(steps, built[bestCell]);
-                spent += steps.get(built[bestCell]).cost() - costAt(steps, built[bestCell]);
-                left[bestLane] -= more * lanes.get(bestLane).share(this.reach.get(bestCell)[bestLane]);
+                spent += this.yardstick.price(built[bestCell], towers);
+                left[bestLane] -= this.yardstick.more(built[bestCell]) * this.reach.get(bestCell)[bestLane];
                 lastPrice = 1 / bestGain;
                 serves[bestCell] = bestLane;
+                towers += built[bestCell] == 0 ? 1 : 0;
                 built[bestCell]++;
             }
             return spent;
-        }
-
-        private static double damageAt(List<PaperYardstick.Step> steps, int built) {
-            return built == 0 ? 0 : steps.get(built - 1).damagePerSecond();
-        }
-
-        private static double costAt(List<PaperYardstick.Step> steps, int built) {
-            return built == 0 ? 0 : steps.get(built - 1).cost();
         }
     }
 
@@ -283,21 +399,10 @@ public final class WavePowerReport {
      * What one lane's wave of a round takes.
      *
      * @param script  the wave as written
-     * @param shots   the single shots a second, landed all along the lane, that hold it
-     * @param passage how it walks the lane undefended
+     * @param walkers its strength
+     * @param bounty  what its kills pay, and so what a tower that reaches all of the lane earns of it
      */
-    record LanePower(String script, double shots, PowerBench.Passage passage) {
-
-        /** The share of {@link #shots} a tower lands that reaches {@code reach} of the lane. */
-        double share(double reach) {
-            double walk = this.passage.walkTicks();
-            double stream = this.passage.streamTicks();
-            return Math.min(1.0, (reach * walk + stream) / (walk + stream));
-        }
-
-        double work() {
-            return this.passage.empty() ? 0 : this.shots * seconds(this.passage);
-        }
+    record LanePower(String script, double walkers, int bounty) {
     }
 
     /**
@@ -309,7 +414,7 @@ public final class WavePowerReport {
      *                holds it
      * @param bounty  what its kills pay
      * @param bonus   what clearing it with no leak pays
-     * @param need    what the reference tower's defence costs
+     * @param need    what the yardstick's defence costs
      */
     record RoundPower(int round, List<LanePower> lanes, double walkers, Map<String, Double> answers, int bounty,
                       int bonus, double need) {
@@ -323,9 +428,13 @@ public final class WavePowerReport {
                 LevelDefinition alone = PowerBench.oneLane(level, round, lane);
                 PowerBench.Passage passage = PowerBench.passage(alone);
                 double scale = passage.empty() ? 0 : PowerBench.threshold(alone, mixAt, 1, DamageMix.none());
-                lanes.add(new LanePower(level.paths().get(lane).waves().get(round).enemies(), bench.shotsFor(scale), passage));
+                double work = passage.empty() ? 0 : bench.shotsFor(scale) * seconds(passage);
+                int pays = passage.empty() || Double.isInfinite(scale) ? 0
+                        : PowerBench.run(alone, mixAt.apply(scale * PAY_HEADROOM), DamageMix.none(), PAY_SEED).credits();
+                lanes.add(new LanePower(level.paths().get(lane).waves().get(round).enemies(),
+                        work / bench.workAWalker(), pays));
             }
-            double walkers = lanes.stream().mapToDouble(LanePower::work).sum() / bench.workAWalker();
+            double walkers = lanes.stream().mapToDouble(LanePower::walkers).sum();
 
             LevelDefinition whole = PowerBench.oneRound(level, round);
             double mix = PowerBench.threshold(whole, mixAt, 1, DamageMix.none());
@@ -348,34 +457,6 @@ public final class WavePowerReport {
                     .map(answer -> Double.isInfinite(answer.getValue()) ? "needs " + answer.getKey()
                             : String.format(Locale.ROOT, "%s %.1f", answer.getKey(), answer.getValue()))
                     .reduce((left, right) -> left + ", " + right).orElse("");
-        }
-
-        static String header() {
-            return String.format(Locale.ROOT, "%5s %8s %7s %6s %6s %7s %7s %6s %6s  %s", "round", "walkers",
-                    "bounty", "bonus", "bank", "need", "floor", "room", "even", "asks for");
-        }
-
-        String row(double bank, double trend) {
-            return String.format(Locale.ROOT, "%5d %8.1f %7d %6d %6.0f %7.0f %7.0f %6.2f %6.2f  %s", this.round, this.walkers,
-                    this.bounty, this.bonus, bank, this.need, this.need * FLOOR_COST, bank / this.need,
-                    bank / this.need / trend, this.asksFor());
-        }
-
-        static String storedHeader() {
-            return "level\tround\twalkers\tbounty\tbonus\tbank\tneed\troom\teven\tasks\tlanes";
-        }
-
-        String stored(LevelDefinition level, double bank, double trend) {
-            StringBuilder line = new StringBuilder(String.format(Locale.ROOT,
-                    "%s\t%d\t%.1f\t%d\t%d\t%.0f\t%.0f\t%.2f\t%.2f", level.name(), this.round, this.walkers, this.bounty,
-                    this.bonus, bank, this.need, bank / this.need, bank / this.need / trend));
-            line.append('\t').append(this.asksFor());
-            StringBuilder scripts = new StringBuilder();
-            for (LanePower lane : this.lanes) {
-                scripts.append(scripts.isEmpty() ? "" : " | ")
-                        .append(String.format(Locale.ROOT, "[%.0f] %s", lane.work(), lane.script()));
-            }
-            return line.append('\t').append(scripts).toString();
         }
     }
 }
