@@ -1,6 +1,6 @@
 # Feature Request: Next-gen Mortar Tower
 
-**Status:** draft, 2026-11-12, reviewed with the whole bundle 2026-11-13. Tiers 0 to III and the look, from the visual
+**Status:** implemented 2026-11-15; drafted 2026-11-12, reviewed with the whole bundle 2026-11-13. Tiers 0 to III and the look, from the visual
 request's handwritten Mortar notes, written to the node rules in `FEATURE-next-gen-upgrade-tiers.md`. Part of
 `FEATURE-next-gen.md`.
 
@@ -92,26 +92,26 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 | Tier | Node | Kind | Cluster | After | Glyph | Colour | Cost | Replaces | Does | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | 0 | Elevation | stat | | | base.range | | | base.range | Range +1 cell | |
-| 0 | Heavy Charge | stat | | | mortar.head.siege_rounds.1 | | | mortar.head.siege_rounds.1 | Damage +10 | |
-| 0 | Big Bore | stat | | | mortar.head.siege_rounds.2 | | | mortar.head.siege_rounds.2 | Heavy shells come up twice as often. | Heavy weight 1 to 2. |
-| 0 | Predictive Fire | ability | | | mortar.extra.ballistics.2 | | | mortar.extra.ballistics.2 | Each shell aims where its target will be when it lands. | The Mortar's weakness is that fast enemies walk out of an unguided shell, so the fix comes first. |
-| I | Concussion | ability | Heavy shell | | Daze | | | mortar.head.siege_rounds.3 | A Heavy shell Dazes every enemy its blast reaches: for 1 s in its 100% zone, 0.5 s at its edge. | Control. |
-| I | Shrapnel | ability | Heavy shell | | mortar.head.fragmentation_rounds.4b | | | mortar.head.fragmentation_rounds.4b | A Heavy shell makes every enemy its blast reaches Bleed. | Damage that grows with how far the enemy walks, so it hurts the fast ones that dodge shells. Today's Shrapnel Storm. |
-| I | Napalm | ability | Payload | | mortar.special.napalm | | | mortar.special.napalm | Adds Napalm shells to the magazine; each leaves burning ground. | Weight 3. The damage pick. |
-| I | Tar | ability | Payload | | mortar.special.tar | | | mortar.special.tar | Adds Tar shells to the magazine; each leaves tar that slows. | Weight 3. The crowd-slow pick. Its poison is half today's (1.5% of damage a tick, from 3%), so it deals less than Napalm, and its tar lasts 3 s, from 4, as every payload's ground. |
-| I | Cryo | ability | Payload | | mortar.special.cryo_shells | | | mortar.special.cryo_shells | Adds Cryo shells to the magazine; each leaves frost ground that freezes an enemy that stays in it. | Weight 3. The stop pick. |
-| I | Flare | ability | | | Reveal | | | | Adds Flare shells to the magazine; each leaves a flare that burns until the wave ends and Reveals every enemy that enters it. | Weight 1. Good where enemies turn invisible, a small cost elsewhere: each Flare takes a slot from a shell that deals damage. |
-| II | Barrage | ability | Volley | | mortar.extra.ballistics.4 | | | mortar.extra.ballistics.4 | Loads the 3 front shells at once and fires them one after another at one target; reloads slower. | Against a boss. |
-| II | Carpet Bombing | ability | Volley | | mortar.head.fragmentation_rounds.4a | | | mortar.head.fragmentation_rounds.4a | Loads the 3 front shells at once and lays them along the path behind the target; reloads slower. | Against a crowd: the shells fall on the enemies that follow the target. Today's bombs fall ahead of the impact. |
-| II | Overcharge | stat | | | mortar.head.siege_rounds.4b | | | | A Heavy shell deals ×3 damage, up from ×2. | The Heavy's strength. |
-| II | Big Bore II | stat | | | mortar.head.siege_rounds.2 | | | | Heavy shells come up twice as often again. | Heavy weight 2 to 4. The Heavy's frequency. |
-| II | Thick Mix | stat | | Payload | mortar.head.fragmentation_rounds.2 | | | mortar.head.fragmentation_rounds.2 | Payload shells' blast +0.5 cells, and their ground with it. | The Payload's strength. Name is a proposal. |
-| III | Fusion | ability | Order | | mortar.head.siege_rounds.4a | | | mortar.head.siege_rounds.4a | A Heavy shell drawn right behind a Heavy fuses with it into a Nuke, which leaves Fallout. | Bursts, and the pick against enemies that heal or shield. |
-| III | Rich Mix | ability | Order | | mortar.head.fragmentation_rounds.3 | | | mortar.head.fragmentation_rounds.3 | A new shell is never the same kind as the one in front of it. | Variety: a payload magazine is always mixed, and a heavy one with only Normal and Heavy alternates. |
-| III | Lasting Mix | stat | | Thick Mix | mortar.extra.ballistics.3 | | | mortar.extra.ballistics.3 | Payload ground lasts 1 s longer. | 3 s to 4 s. The Payload's duration, beside Thick Mix's size. Name is a proposal. |
-| III | Deep Crack | stat | | | Crack | | | | Crack takes 10 points of plating, up from 5. | |
-| III | Quick Reload | stat | | | mortar.extra.ballistics.1 | | | | Attacks every 3 s, down from 3.5 s. | |
-| III | Elevation II | stat | | | base.range | | | base.range.2 | Range +1 cell | |
+| 0 | Heavy Charge | stat | | | mortar.heavy_charge | | | mortar.heavy_charge | Damage +10 | |
+| 0 | Big Bore | stat | | | mortar.big_bore | | | mortar.big_bore | Heavy shells come up twice as often. | Heavy weight 1 to 2. |
+| 0 | Predictive Fire | ability | | | mortar.predictive_fire | | | mortar.predictive_fire | Each shell aims where its target will be when it lands. | The Mortar's weakness is that fast enemies walk out of an unguided shell, so the fix comes first. |
+| I | Concussion | ability | Heavy shell | | mortar.concussion | | | mortar.concussion | A Heavy shell Dazes every enemy its blast reaches: for 1 s in its 100% zone, 0.5 s at its edge. | Control. |
+| I | Shrapnel | ability | Heavy shell | | mortar.shrapnel | | | mortar.shrapnel | A Heavy shell makes every enemy its blast reaches Bleed. | Damage that grows with how far the enemy walks, so it hurts the fast ones that dodge shells. Today's Shrapnel Storm. |
+| I | Napalm | ability | Payload | | mortar.napalm | | | mortar.napalm | Adds Napalm shells to the magazine; each leaves burning ground. | Weight 3. The damage pick. |
+| I | Tar | ability | Payload | | mortar.tar | | | mortar.tar | Adds Tar shells to the magazine; each leaves tar that slows. | Weight 3. The crowd-slow pick. Its poison is half today's (1.5% of damage a tick, from 3%), so it deals less than Napalm, and its tar lasts 3 s, from 4, as every payload's ground. |
+| I | Cryo | ability | Payload | | mortar.cryo | | | mortar.cryo | Adds Cryo shells to the magazine; each leaves frost ground that freezes an enemy that stays in it. | Weight 3. The stop pick. |
+| I | Flare | ability | | | mortar.flare | | | mortar.flare | Adds Flare shells to the magazine; each leaves a flare that burns until the wave ends and Reveals every enemy that enters it. | Weight 1. Good where enemies turn invisible, a small cost elsewhere: each Flare takes a slot from a shell that deals damage. |
+| II | Barrage | ability | Volley | | mortar.barrage | | | mortar.barrage | Loads the 3 front shells at once and fires them one after another at one target; reloads slower. | Against a boss. |
+| II | Carpet Bombing | ability | Volley | | mortar.carpet_bombing | | | mortar.carpet_bombing | Loads the 3 front shells at once and lays them along the path behind the target; reloads slower. | Against a crowd: the shells fall on the enemies that follow the target. Today's bombs fall ahead of the impact. |
+| II | Overcharge | stat | | | mortar.overcharge | | | mortar.overcharge | A Heavy shell deals ×3 damage, up from ×2. | The Heavy's strength. |
+| II | Big Bore II | stat | | | mortar.big_bore_2 | | | mortar.big_bore_2 | Heavy shells come up twice as often again. | Heavy weight 2 to 4. The Heavy's frequency. |
+| II | Thick Mix | stat | | Payload | mortar.thick_mix | | | mortar.thick_mix | Payload shells' blast +0.5 cells, and their ground with it. | The Payload's strength. Name is a proposal. |
+| III | Fusion | ability | Order | | mortar.fusion | | | mortar.fusion | A Heavy shell drawn right behind a Heavy fuses with it into a Nuke, which leaves Fallout. | Bursts, and the pick against enemies that heal or shield. |
+| III | Rich Mix | ability | Order | | mortar.rich_mix | | | mortar.rich_mix | A new shell is never the same kind as the one in front of it. | Variety: a payload magazine is always mixed, and a heavy one with only Normal and Heavy alternates. |
+| III | Lasting Mix | stat | | Thick Mix | mortar.lasting_mix | | | mortar.lasting_mix | Payload ground lasts 1 s longer. | 3 s to 4 s. The Payload's duration, beside Thick Mix's size. Name is a proposal. |
+| III | Deep Crack | stat | | | mortar.deep_crack | | | mortar.deep_crack | Crack takes 10 points of plating, up from 5. | |
+| III | Quick Reload | stat | | | mortar.quick_reload | | | mortar.quick_reload | Attacks every 3 s, down from 3.5 s. | |
+| III | Elevation II | stat | | | base.range.2 | | | base.range.2 | Range +1 cell | |
 
 ### Terms
 
@@ -119,16 +119,16 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 | Term | Glyph | Means |
 |---|---|---|
-| Magazine | mortar.head.siege_rounds.3 | The shells the Mortar has ready, in the order it fires them, shown in the tower pane. A new slot at the back draws its kind by weight: each kind's chance is its weight over the sum of the weights of every kind the tower owns. The front shell is the one loading. |
+| Magazine | tower.magazine | The shells the Mortar has ready, in the order it fires them, shown in the tower pane. A new slot at the back draws its kind by weight: each kind's chance is its weight over the sum of the weights of every kind the tower owns. The front shell is the one loading. |
 | Shell | | One round in the magazine. It carries its own damage, blast, flight speed and reach; hovering it in the pane shows them. |
-| Heavy | mortar.head.siege_rounds.3 | A shell that deals ×2 damage (×3 with Overcharge) in a Normal's blast, with a slower flight. |
-| Nuke | mortar.head.siege_rounds.4a | Two Heavies fused: a shell of its own kind with the damage of both, at 100% to 2 cells and 75% to 2.75 cells, leaving Fallout. It never fuses again, and Concussion and Shrapnel don't apply to it. |
+| Heavy | tower.heavy_shell | A shell that deals ×2 damage (×3 with Overcharge) in a Normal's blast, with a slower flight. |
+| Nuke | tower.nuke_shell | Two Heavies fused: a shell of its own kind with the damage of both, at 100% to 2 cells and 75% to 2.75 cells, leaving Fallout. It never fuses again, and Concussion and Shrapnel don't apply to it. |
 | Fallout | | Ground a Nuke leaves over most of its blast for 4 s, as today. It applies Dead Zone and Sicken, as today, and Poison of 2% of the Mortar's damage a tick. |
-| Payload | mortar.special.napalm | The kind of special shell a Mortar adds: Napalm, Tar or Cryo, one at a time. A payload shell deals half a Normal's damage in a Normal's blast and leaves its ground where it lands, for 3 s. |
-| Flare | Reveal | A shell with a blast of 0.75 cells at 100% that leaves a flare on the ground, 1.5 cells in radius, until the wave ends. Every enemy that enters it is Revealed for 3 s. A Mortar keeps its newest 3 flares; an older one goes out. |
+| Payload | tower.payload | The kind of special shell a Mortar adds: Napalm, Tar or Cryo, one at a time. A payload shell deals half a Normal's damage in a Normal's blast and leaves its ground where it lands, for 3 s. |
+| Flare | tower.flare | A shell with a blast of 0.75 cells at 100% that leaves a flare on the ground, 1.5 cells in radius, until the wave ends. Every enemy that enters it is Revealed for 3 s. A Mortar keeps its newest 3 flares; an older one goes out. |
 | Bleed | | Physical damage for every cell the enemy walks, past armor, plating and shields; a stopped enemy takes none. A Heavy's Bleed costs 5% of the shell's damage a cell, for 4 s. |
-| Barrage | mortar.extra.ballistics.4 | Three shells loaded together and fired one after another at one target; a later one picks a new target if its target died. |
-| Carpet Bombing | mortar.head.fragmentation_rounds.4a | Three shells loaded together and laid along the path, starting at the target and going back toward where the enemies come from. |
+| Barrage | tower.barrage | Three shells loaded together and fired one after another at one target; a later one picks a new target if its target died. |
+| Carpet Bombing | tower.carpet_bombing | Three shells loaded together and laid along the path, starting at the target and going back toward where the enemies come from. |
 | Crack | | Takes 5 points of plating and 5 of insulation (10 of plating with Deep Crack). The only debuff in the game that takes plating. |
 
 ### Look
@@ -197,9 +197,7 @@ A squat mortar with a short, wide barrel. It keeps its brown, `#c39062`. Drawn i
   damage, rather than new stats.
 - Bleed is the Mortar's alone today: each source sets its damage a cell (`Effect.bleeding`), and the Mortar's is a
   share of its damage. It lands as periodic damage, so shields don't hold it.
-- Fallout is today's `ZoneKind.FALLOUT` (`ShellType.NUKE`'s ground), which gains a Poison as Tar's ground has one.
-- `td/tower/mortar/CLAUDE.md` describes Bracketing, `ShellPlan.typeOf` and the special shell's fixed number; those
-  lines change with the magazine.
+- Fallout is today's `ZoneKind.FALLOUT` (`ShellKind.NUKE`'s ground), which gains a Poison as Tar's ground has one.
 - ADR 0021 (a wave starts from its save) and the save text (`GameSaveText`): the magazine is saved (Decisions made).
 
 ## Decisions made

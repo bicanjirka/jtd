@@ -1,10 +1,11 @@
 # Feature Request: Next-gen Shot Flight
 
-**Status:** draft, 2026-11-10, reviewed with the whole bundle 2026-11-13; no open question left. Part of `FEATURE-next-gen.md`; the shot
-timing of the visual request in its appendix. **Partly implemented 2026-11-14:** the Sniper's bullet (lands with
-the stats it was fired with, when its tracer arrives) and the Mortar's shell (lands with its fired stats, drawn on
-the shared arc over a shadow). The Burst's stone, chain hops and flying casts come with the Burst and the
-abilities; the shots' upgrade looks (Fourth Shot, Hollow Point, shell kinds) with each tower.
+**Status:** implemented 2026-11-15 (drafted 2026-11-10, reviewed with the whole bundle 2026-11-13; no open question
+left). Part of `FEATURE-next-gen.md`; the shot timing of the visual request in its appendix. The Sniper's bullet (lands
+with the stats it was fired with, when its tracer arrives) and the Mortar's shell (lands with its fired stats, drawn on
+the shared arc over a shadow) came first, on 2026-11-14; the Burst's stone, its Arc's hops and its flying curses,
+sparks and souls came with the Burst, and each shell drawn by its kind in flight with the Mortar. The shots sheet
+still draws the lab's copies; replacing them is the final visual review's.
 
 ## Summary
 
@@ -44,8 +45,8 @@ on an arc, and chains travel hop by hop. Some of this changes when damage lands,
 
 ## Notes from the visual review (2026-11-14)
 
-What is delivered was read and holds; the Burst's stone, the chain hops and the flying casts were left unbuilt on
-purpose. For whoever builds them:
+What was delivered then was read and holds; the Burst's stone, the chain hops and the flying casts were built after
+it, on these notes:
 
 - **Reuse the bullet's shape.** The Sniper keeps each shot as a value with the stats it was fired with and the ticks
   it flies (`SniperTower.Bullet`, `bulletsInFlight()`), lands it when its tick comes, and leaves a short trace
@@ -57,8 +58,8 @@ purpose. For whoever builds them:
   that flies straight is the same record with other colours.
 - **Leave from the muzzle.** A shot starts at `TowerSprites.muzzle(look, tier, pose, ...)` with the tower's real
   pose. The Sniper's tracer started at the idle muzzle and left a gap to a recoiled barrel.
-- **A flying shell is still a plain lit ball.** `TowerFoundations.shell(LoadedShell, r)` draws the seven kinds and
-  the Mortar's bore uses it; `CannonballDraw` does not yet (the Mortar's doc, "In code").
+- **A flying shell is drawn by its kind.** `CannonballDraw` carries its `LoadedShell`, and
+  `TowerSprites.paintShell` draws it in flight as in the bore and the pane.
 - **The shots sheet is still lab art.** Each shot that reaches the game is then drawn on the sheet by the game, and
   its lab drawing deleted (`next-gen-art/README.md`).
 
@@ -88,8 +89,6 @@ purpose. For whoever builds them:
   every tower gives its height.
 - Chain hops land when they arrive (the notes: "visually and in practice").
 - A flying cast can't be dodged and counts when it lands.
-- The Sniper's hit lands when its tracer arrives, 2-3 ticks after it fires (the user, 2026-11-13).
-- The Burst's stone is unguided: it lands where its target stood when it was thrown (the user, 2026-11-13).
 - The Sniper's hit lands when its tracer arrives, 2-3 ticks after it fires (the user, 2026-11-13).
 - The Burst's stone is unguided: it lands where its target stood when it was thrown (the user, 2026-11-13).
 

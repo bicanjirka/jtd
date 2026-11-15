@@ -148,7 +148,7 @@ no logpoint can show, and prefer a test, where nothing runs against the clock. M
 `upgrade <x> <y> <node name>` (buys it with every node and tier unlock it needs through the real mechanism, so tick a fight to meet its tier's XP first,
 or `gates off` to waive every tier's XP as the dev panel does),
 `spawn <id> [rank]`, `script <wave script>` (spawns it on the first path as the dev spawn box does, so affixes and shapes show), `effect <kind> [ticks]` (on every enemy), `zone <kind> <x> <y> [radiusCells] [ticks]`
-(a ground zone no tower owns: `burning_ground`, `tar`, `frost_ground`, `fallout`), `wave`, `tick <n>`, `kill`,
+(a ground zone no tower owns: `burning_ground`, `tar`, `frost_ground`, `fallout`, `flare`), `wave`, `tick <n>`, `kill`,
 `grid [off]` (the dev cell grid), `hoverplace <tower> <x> <y>` (the placement highlight on a cell),
 `render <path>`, `state`, `quit`. `tick` advances
 the real `GameEngine`, and `render` paints through the real `BoardRenderer` /
