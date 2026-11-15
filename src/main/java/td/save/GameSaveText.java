@@ -5,6 +5,7 @@ import td.economy.EconomyState;
 import td.tower.TowerFactory;
 import td.tower.TowerTally;
 import td.tower.TowerUse;
+import td.tower.mortar.ShellKind;
 import td.wave.Point;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.Set;
  * damage 1250000 480000
  * tower SNIPER 6 11 400 123456 40 paid=120 xp+=0.25 sniper.head.x.1 sniper.head.x.2
  * pin 4 7 9 7
+ * magazine 3 5 NORMAL HEAVY NORMAL NAPALM NORMAL NORMAL HEAVY NORMAL NORMAL NORMAL
  * </pre>
  * The format line names the text's version: a save of another version is refused rather than read wrong, since the
  * upgrades a tower owns are kept by id and ids change between versions. The economy line is credits, score and lives. {@code leaked} lists the 0-based rounds an enemy escaped, and a
@@ -38,13 +40,14 @@ import java.util.Set;
  * tower line is its type, cell, XP, damage dealt, kills, then {@code key=value} facts (what it was bought for,
  * {@code unused=tower} for a tower no wave has run with, the fraction of XP carried), then the upgrades it owns in the
  * order bought, a {@code +} before each one bought since the last wave ran. A {@code pin} line is the cell of an
- * Obelisk and of the one its Ley Line is pinned to. Every line but format, level, wave and economy may
+ * Obelisk and of the one its Ley Line is pinned to. A {@code magazine} line is the cell of a Mortar and
+ * the shells it had ready, front first. Every line but format, level, wave and economy may
  * be left out.
  */
 public final class GameSaveText {
 
     /** The version this game writes and reads. */
-    static final int FORMAT = 5;
+    static final int FORMAT = 6;
     private static final int TOWER_FIELDS = 7;
 
     private GameSaveText() {
@@ -92,6 +95,11 @@ public final class GameSaveText {
             text.append("pin ").append(pin.caster().x()).append(' ').append(pin.caster().y()).append(' ')
                     .append(pin.host().x()).append(' ').append(pin.host().y()).append('\n');
         }
+        for (MagazineLoad magazine : save.magazines()) {
+            text.append("magazine ").append(magazine.mortar().x()).append(' ').append(magazine.mortar().y());
+            magazine.shells().forEach(shell -> text.append(' ').append(shell.name()));
+            text.append('\n');
+        }
         return text.toString();
     }
 
@@ -107,6 +115,7 @@ public final class GameSaveText {
         DamageMix damage = DamageMix.none();
         List<TowerSave> towers = new ArrayList<>();
         List<LeyLinePin> pins = new ArrayList<>();
+        List<MagazineLoad> magazines = new ArrayList<>();
         // A Windows editor may save the text with a byte order mark, which strip() keeps.
         String unmarked = text.startsWith("﻿") ? text.substring(1) : text;
         for (String raw : unmarked.split("\n")) {
@@ -130,6 +139,13 @@ public final class GameSaveText {
                     case "pin" -> pins.add(new LeyLinePin(
                             new Point(Integer.parseInt(words[1]), Integer.parseInt(words[2])),
                             new Point(Integer.parseInt(words[3]), Integer.parseInt(words[4]))));
+                    case "magazine" -> {
+                        Optional<MagazineLoad> magazine = magazine(words);
+                        if (magazine.isEmpty()) {
+                            return Read.problem("Not a magazine: " + line);
+                        }
+                        magazines.add(magazine.get());
+                    }
                     case "economy" -> economy = Optional.of(new EconomyState(Integer.parseInt(words[1]),
                             Integer.parseInt(words[2]), Integer.parseInt(words[3])));
                     case "tower" -> {
@@ -154,7 +170,7 @@ public final class GameSaveText {
             return Read.problem("A save needs a level, a wave and an economy line");
         }
         return Read.of(GameSave.of(level, wave, economy.get(), towers).withSeed(seed)
-                .withHistory(new RoundHistory(leaked, bonuses)).withDamage(damage).withPins(pins));
+                .withHistory(new RoundHistory(leaked, bonuses)).withDamage(damage).withPins(pins).withMagazines(magazines));
     }
 
     /** How many words a line starting with {@code key} has at least, the key included. */
@@ -164,9 +180,23 @@ public final class GameSaveText {
             case "bonus", "damage" -> 3;
             case "economy" -> 4;
             case "pin" -> 5;
+            case "magazine" -> 4;
             case "tower" -> TOWER_FIELDS;
             default -> 1;
         };
+    }
+
+    private static Optional<MagazineLoad> magazine(String[] words) {
+        List<ShellKind> shells = new ArrayList<>();
+        for (String word : List.of(words).subList(3, words.length)) {
+            Optional<ShellKind> kind = Arrays.stream(ShellKind.values()).filter(each -> each.name().equals(word))
+                    .findFirst();
+            if (kind.isEmpty()) {
+                return Optional.empty();
+            }
+            shells.add(kind.get());
+        }
+        return Optional.of(new MagazineLoad(new Point(Integer.parseInt(words[1]), Integer.parseInt(words[2])), shells));
     }
 
     private static Optional<TowerSave> tower(String[] words) {

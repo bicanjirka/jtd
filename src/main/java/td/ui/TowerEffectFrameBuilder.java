@@ -80,12 +80,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /** The nest's missiles circle at this fraction of a cell from the tower, a turn every few seconds. */
     private static final float NEST_ORBIT_FRACTION = 0.7f;
-    /** A Mortar's ranging ring, in cells: wide at the first shell and drawing in with each step. */
-    private static final float RANGING_RADIUS_CELLS = 1.5f;
     private static final float APPRENTICE_MARK_CELLS = 0.55f;
     private static final float RALLY_SPOT_CELLS = 1f;
-    private static final float RANGING_TIGHTENING_CELLS = 1f;
-    private static final float RANGING_ALPHA = 0.7f;
     private static final float NUKE_FLASH_SHARE = 0.6f;
     private static final float BLAST_MARK_ALPHA = 0.4f;
     private static final float NUKE_FLASH_ALPHA = 0.8f;
@@ -421,14 +417,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    /** The ranging marker where its shells have been landing, tightening with each step; the shell is a projectile. */
+    /** The flash of each blast that just went off, and a nuke's ring; the shell is a projectile. */
     public Void visitMortarTower(MortarTower tower) {
-        tower.getRangingMarker().ifPresent(marker -> {
-            float tightness = marker.maxSteps() == 0 ? 0f : (float) marker.step() / marker.maxSteps();
-            float radius = this.scale * (RANGING_RADIUS_CELLS - RANGING_TIGHTENING_CELLS * tightness);
-            this.draws.add(new RingDraw(Palette.TOWER_MORTAR_RANGING, (float) marker.x(), (float) marker.y(), radius,
-                    RANGING_ALPHA));
-        });
         for (BlastMark mark : tower.getBlastMarks()) {
             float progress = (this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha)
                     / MortarTower.BLAST_MARK_TICKS;

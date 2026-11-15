@@ -338,11 +338,12 @@ public final class Java2DFrameRenderer {
             case TOWER_PULSE_RIPPLE_GRAVITY -> new Color(60, 100, 230);
             case TOWER_PULSE_RIM_BITE -> new Color(235, 60, 60);
             case TOWER_PULSE_WELL -> withAlpha(new Color(20, 30, 120), 60);
-            case TOWER_MORTAR_RANGING -> new Color(255, 190, 90);
+            case TERM_HEAVY_SHELL -> new Color(242, 210, 138);
             case ZONE_BURNING -> new Color(255, 120, 30);
             case ZONE_TAR -> new Color(98, 82, 116);
             case ZONE_FROST -> new Color(170, 225, 255);
             case ZONE_FALLOUT -> new Color(150, 220, 60);
+            case ZONE_FLARE -> new Color(255, 240, 190);
             case ZONE_HEALING -> new Color(90, 220, 120);
             case ZONE_HASTE -> new Color(130, 240, 180);
             case ZONE_WARD -> new Color(120, 190, 255);
@@ -455,7 +456,7 @@ public final class Java2DFrameRenderer {
             case TERM_AURA -> new Color(255, 235, 170);
             case TERM_LEY_LINE -> new Color(255, 170, 40);
             case TERM_INTERFERENCE -> new Color(200, 140, 90);
-            case TERM_SHRAPNEL -> new Color(190, 160, 120);
+            case TERM_MAGAZINE -> new Color(190, 160, 120);
             case TERM_BASE_PERK -> new Color(231, 231, 236);
             case SELECTION -> new Color(255, 255, 255);
             case UPGRADE_GATE_MET -> Hud.FOREGROUND;

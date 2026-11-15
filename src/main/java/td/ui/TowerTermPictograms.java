@@ -24,15 +24,19 @@ final class TowerTermPictograms {
             // Hollow Point
             Map.entry("tower.hollow_point", "F M8.6 21.2V10.2C8.6 6.6 10.2 4 12 2.6C13.8 4 15.4 6.6 15.4 10.2V21.2Z ; K O12 6.6 1.7 ; X M8.6 13.6H15.4"),
             Map.entry("tower.silver_round", "F M5.8 21V10C5.8 6.6 7.3 4.2 8.3 2.6C9.3 4.2 10.8 6.6 10.8 10V21Z ; X M5.8 13.4H10.8 ; F M17 3.4L18.2 7.3L22.1 8.5L18.2 9.7L17 13.6L15.8 9.7L11.9 8.5L15.8 7.3Z ; F M18.2 15.6L18.8 17.4L20.6 18L18.8 18.6L18.2 20.4L17.6 18.6L15.8 18L17.6 17.4Z"),
-            // Bracketing
-            Map.entry("tower.bracketing", "F O4.4 19.4 1.6 ; S O9.8 14 2.8 ; S O16.8 7.2 4.6 ; F O16.8 7.2 1.6"),
+            // Magazine
+            Map.entry("tower.magazine", "F O4.4 19.4 1.6 ; S O9.8 14 2.8 ; S O16.8 7.2 4.6 ; F O16.8 7.2 1.6"),
             // Napalm Shell
             Map.entry("tower.napalm_shell", "F M8 20.4H16V11C16 7 14.2 4.2 12 2.6C9.8 4.2 8 7 8 11Z M8 20.4L5.4 22V17.4L8 15.4Z M16 20.4L18.6 22V17.4L16 15.4Z ; K M12 10.4C12 10.4 14.4 12.6 14.4 14.8A2.4 2.4 0 0 1 9.6 14.8C9.6 13.4 10.6 12.2 11.2 11.8C11.4 12.8 12 13.2 12 13.2C12 12.2 11.8 11.2 12 10.4Z"),
             // Tar Shell
             Map.entry("tower.tar_shell", "F M8 20.4H16V11C16 7 14.2 4.2 12 2.6C9.8 4.2 8 7 8 11Z M8 20.4L5.4 22V17.4L8 15.4Z M16 20.4L18.6 22V17.4L16 15.4Z ; K M12 10.4C12 10.4 14.4 13.2 14.4 15A2.4 2.4 0 0 1 9.6 15C9.6 13.2 12 10.4 12 10.4Z"),
             // Cryo Shell
             Map.entry("tower.cryo_shell", "F M8 20.4H16V11C16 7 14.2 4.2 12 2.6C9.8 4.2 8 7 8 11Z M8 20.4L5.4 22V17.4L8 15.4Z M16 20.4L18.6 22V17.4L16 15.4Z ; X M12 10.2V17.4 M9.2 12L14.8 15.6 M9.2 15.6L14.8 12"),
-            // Nuke Shell
+            // Heavy
+            Map.entry("tower.heavy_shell", "F O12 13 7.6 ; K O9.2 10.2 2 ; F M10 3.4H14V5.8H10Z"),
+            Map.entry("tower.payload", "=tower.napalm_shell"),
+            Map.entry("tower.flare", "=effect.revealed"),
+            // Nuke
             Map.entry("tower.nuke_shell", "F M6 9.6C6 6 8.6 3.4 12 3.4C15.4 3.4 18 6 18 9.6C18 11.4 16.6 12.6 15 12.6H14V17.2C14 18.4 15.6 19.6 18 20.8H6C8.4 19.6 10 18.4 10 17.2V12.6H9C7.4 12.6 6 11.4 6 9.6Z ; X M8.6 10.4C10.4 11.2 13.6 11.2 15.4 10.4"),
             // Cryo Missile
             Map.entry("tower.cryo_missile", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; T M17.6 13.6V21.4 M14.2 15.6L21 19.4 M14.2 19.4L21 15.6"),
@@ -78,10 +82,9 @@ final class TowerTermPictograms {
             Map.entry("tower.thunderclap", "F M13.4 3L8.4 12.4H11.6L10.4 21L15.8 10.8H12.6Z ; S M6.4 8A6 6 0 0 0 6.4 16 M17.6 8A6 6 0 0 1 17.6 16 ; T M3 5.4A9.6 9.6 0 0 0 3 18.6 M21 5.4A9.6 9.6 0 0 1 21 18.6"),
             // Thunderstrike
             Map.entry("tower.thunderstrike", "F M6.4 13C4.4 13 3 11.6 3 9.8C3 8 4.4 6.6 6.2 6.6C6.8 4.4 8.8 3 11.2 3C14 3 16.2 5 16.6 7.6C18.8 7.6 20.6 9.2 20.6 11.2C20.6 13 19.2 13 17.4 13Z ; F M12.8 13.8L9.4 18.6H12L10.8 22.4L15.6 16.6H12.8L14.6 13.8Z"),
-            // Shrapnel
-            Map.entry("tower.shrapnel", "F O12 12 2.4 ; F M4.6 4.6L8.6 5.8L5.8 8.6Z M19.4 4.6L18.2 8.6L15.4 5.8Z M19.4 19.4L15.4 18.2L18.2 15.4Z M4.6 19.4L5.8 15.4L8.6 18.2Z ; T M12 7.6V3.4 M12 16.4V20.6 M7.6 12H3.4 M16.4 12H20.6"),
-            // Bomblet
-            Map.entry("tower.bomblet", "F O7.4 16.4 3.8 O16.8 14.6 3.4 O11.2 6.8 2.8 ; T M9.8 13.4L10.6 11.6 M18.6 11.8L19.6 10.2 M12.6 4.4L13.6 2.8"));
+            // Carpet Bombing
+            Map.entry("tower.barrage", "F O6 9 2.4 O12 13 2.4 O18 17 2.4 ; T M6 3.4V5.4 M12 7.4V9.4 M18 11.4V13.4"),
+            Map.entry("tower.carpet_bombing", "F O7.4 16.4 3.8 O16.8 14.6 3.4 O11.2 6.8 2.8 ; T M9.8 13.4L10.6 11.6 M18.6 11.8L19.6 10.2 M12.6 4.4L13.6 2.8"));
 
     private TowerTermPictograms() {
     }

@@ -94,6 +94,10 @@ public enum EffectKind implements Term {
     CRACKED("Crack", EffectRule.of(EffectCategory.DEBUFF)
             .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(5f))
             .perStack(EnemyStat.INSULATION, -DamageUnits.ofPoints(5f))),
+    /** Crack cut deeper: twice its plating, the same insulation. */
+    DEEP_CRACKED("Deep Crack", EffectRule.of(EffectCategory.DEBUFF)
+            .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(10f))
+            .perStack(EnemyStat.INSULATION, -DamageUnits.ofPoints(5f))),
     /** Stuck in tar: a plain slow. */
     TARRED("Tar", EffectRule.of(EffectCategory.DEBUFF).slowingBy(0.4f)),
     /** Takes physical damage for every cell it travels; a stopped enemy takes none. */

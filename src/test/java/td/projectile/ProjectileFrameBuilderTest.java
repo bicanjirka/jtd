@@ -71,7 +71,7 @@ class ProjectileFrameBuilderTest {
     @Test
     void aSpecialShellIsDrawnInItsLookAtItsSize() {
         CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f).withSize(2f),
-                ShellLook.FROST, (x, y) -> {
+                ShellLook.CRYO, (x, y) -> {
                 });
 
         ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);

@@ -36,6 +36,7 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeTower;
 import td.fixtures.LevelFixtures;
+import td.fixtures.MagazineFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.level.LevelDefinition;
@@ -59,6 +60,8 @@ import td.tower.TowerStatRow;
 import td.tower.TowerStatus;
 import td.tower.TowerTally;
 import td.tower.TowerTerm;
+import td.tower.mortar.Magazine;
+import td.tower.mortar.ShellKind;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameStartupException;
@@ -1593,6 +1596,25 @@ class GameEngineTest {
                 .containsExactly(caster.record().paid(), host.record().paid());
         assertThat(save.pins()).hasSize(1);
         assertThat(loaded.save()).contains(save);
+    }
+
+    @Test
+    void aSavedGamePutsBackEachMortarsMagazineShellByShell() {
+        GameEngine saved = FakeGameHost.newBoundEngine();
+        saved.loadLevel(LevelFixtures.levelWith(CHECKPOINT_WAVES, 100_000));
+        saved.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+        Tower mortar = placeTower(saved, TowerFactory.Type.MORTAR, 2, 1);
+        UpgradePaths.buy(mortar, saved.getGameWorld(), "Tar");
+        Magazine loadedThen = MagazineFixtures.frontedBy(ShellKind.TAR, ShellKind.HEAVY, ShellKind.TAR);
+        MortarTower.loadMagazine(mortar, loadedThen);
+        GameSave save = saved.save().orElseThrow();
+        GameEngine loaded = FakeGameHost.newBoundEngine();
+        loaded.loadLevel(LevelFixtures.levelWith(CHECKPOINT_WAVES, 100_000));
+
+        Optional<String> problem = loaded.restore(GameSaveText.read(GameSaveText.write(save)).save().orElseThrow());
+
+        assertThat(problem).isEmpty();
+        assertThat(MortarTower.magazineOf(loaded.getTowers().getFirst())).contains(loadedThen);
     }
 
     @Test

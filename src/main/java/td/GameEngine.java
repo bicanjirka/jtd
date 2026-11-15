@@ -14,12 +14,15 @@ import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.save.GameSave;
 import td.save.LeyLinePin;
+import td.save.MagazineLoad;
 import td.save.RoundHistory;
 import td.save.TowerSave;
+import td.tower.MortarTower;
 import td.tower.PulseTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerRecord;
+import td.tower.mortar.Magazine;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameHost;
 import td.util.GameStartupException;
@@ -516,12 +519,17 @@ public class GameEngine {
                 .flatMap(caster -> PulseTower.leyLinePinOf(caster).stream()
                         .map(host -> new LeyLinePin(cellOf(board, caster), cellOf(board, host))))
                 .toList();
+        List<MagazineLoad> magazines = built.stream()
+                .flatMap(mortar -> MortarTower.magazineOf(mortar).stream()
+                        .map(magazine -> new MagazineLoad(cellOf(board, mortar), magazine.shells())))
+                .toList();
         RoundState state = this.round;
         return Optional.of(GameSave.of(this.levelName, state.wave() + 1, this.gameWorld.economy().state(), towers)
                 .withSeed(this.gameSeed)
                 .withHistory(new RoundHistory(state.leaked(), state.bonusesPaid()))
                 .withDamage(this.gameWorld.damageTally().mix())
-                .withPins(pins));
+                .withPins(pins)
+                .withMagazines(magazines));
     }
 
     private static TowerSave saveOf(BoardGeometry board, Tower tower) {
@@ -591,6 +599,7 @@ public class GameEngine {
             rules.setUpgradeGatesIgnored(gatesIgnored);
         }
         save.pins().forEach(pin -> this.repin(pin).ifPresent(missing::add));
+        save.magazines().forEach(magazine -> this.reload(magazine).ifPresent(missing::add));
         this.gameWorld.economy().startEconomy(save.economy().credits(), save.economy().lives());
         this.gameWorld.economy().apply(EconomyDelta.score(save.economy().score()));
         this.clearBoard();
@@ -614,6 +623,15 @@ public class GameEngine {
         }
         return Optional.of("Ley Line pin " + pin.caster().x() + "," + pin.caster().y() + " to " + pin.host().x() + ","
                 + pin.host().y());
+    }
+
+    /** Loads a rebuilt Mortar's magazine as it was saved; names the magazine if it could not be. */
+    private Optional<String> reload(MagazineLoad saved) {
+        boolean loaded = saved.shells().size() == Magazine.SIZE && towerOn(this.gameWorld.cells(), saved.mortar())
+                .filter(tower -> MortarTower.loadMagazine(tower, new Magazine(saved.shells())))
+                .isPresent();
+        return loaded ? Optional.empty()
+                : Optional.of("Magazine of the Mortar at " + saved.mortar().x() + "," + saved.mortar().y());
     }
 
     private static Optional<Tower> towerOn(CellGrid grid, Point cell) {

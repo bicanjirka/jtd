@@ -19,6 +19,9 @@
   zone ever reaches the next wave. A ward mine is armed a moment after it is laid, so the enemy that laid it walks off first.
 - `ZoneEffects.touch` is one pulse of a kind on one enemy; a zone adds only what depends on how long an
   enemy stays (frost's freeze). Anything else that carries a zone's effect without a zone calls it.
-- Fallout drains spirit through `SICKENED` stacks and holds `DEAD_ZONE` on what stands in it.
+- Fallout drains spirit through `SICKENED` stacks, holds `DEAD_ZONE` on what stands in it, and poisons when it
+  has strength.
+- The tower that made a zone may put it out early (`Zone.putOut`), which fades it as a wave's clear does; nothing
+  else ends a zone before its time.
 - A zone's per-enemy memory (a frost zone's time inside) lives on the zone, is keyed by identity
   and is forgotten the pulse an enemy is not inside.

@@ -23,11 +23,16 @@ public enum TowerTerm implements Term {
     FOURTH_SHOT("Fourth Shot", Side.BUFF, "a shot that is sure to crit"),
     SILVER_ROUND("Silver Round", Side.BUFF, "a shot of magic damage that ignores some magic resist"),
     HOLLOW_POINT("Hollow Point", Side.BUFF, "a shot that hits harder"),
-    BRACKETING("Bracketing", Side.BUFF, "each shell landing near the last hits harder and wider, a step at a time; a shell elsewhere clears it"),
-    NAPALM_SHELL("Napalm Shell", Side.BUFF, "a shell whose blast is magic and leaves flames that apply {}", EffectKind.BURN),
-    TAR_SHELL("Tar Shell", Side.BUFF, "a shell that leaves tar applying {} and {}", EffectKind.TARRED, EffectKind.POISON),
-    CRYO_SHELL("Cryo Shell", Side.BUFF, "a shell that leaves frost applying {}, and {} to an enemy that stays", EffectKind.CHILL, EffectKind.FREEZE),
-    NUKE_SHELL("Nuke Shell", Side.BUFF, "a shell that hits far harder and wider and leaves {}", EffectKind.DEAD_ZONE),
+    MAGAZINE("Magazine", Side.BUFF, "the shells it has ready, in the order it fires them; a new one at the back draws its kind by lot, each kind as likely as its weight among the kinds it owns"),
+    HEAVY_SHELL("Heavy", Side.BUFF, "a shell that hits harder than a Normal one in the same blast, and flies slower"),
+    NUKE_SHELL("Nuke", Side.BUFF, "two Heavies fused: their damage together in a wider blast that leaves fallout applying {}, {} and {}", EffectKind.DEAD_ZONE, EffectKind.SICKENED, EffectKind.POISON),
+    PAYLOAD("Payload", Side.BUFF, "a special shell: half a Normal one's damage, and ground it leaves where it lands"),
+    NAPALM_SHELL("Napalm", Side.BUFF, "a payload whose blast is magic and leaves flames that apply {}", EffectKind.BURN),
+    TAR_SHELL("Tar Shell", Side.BUFF, "a payload that leaves tar applying {} and {}", EffectKind.TARRED, EffectKind.POISON),
+    CRYO_SHELL("Cryo", Side.BUFF, "a payload that leaves frost applying {}, and {} to an enemy that stays", EffectKind.CHILL, EffectKind.FREEZE),
+    FLARE("Flare", Side.BUFF, "a shell that leaves a flare lasting until the wave ends; every enemy that enters it gains {}", EffectKind.REVEALED),
+    BARRAGE("Barrage", Side.BUFF, "the front shells loaded together and fired one after another at one target"),
+    CARPET_BOMBING("Carpet Bombing", Side.BUFF, "the front shells loaded together and laid along the path, from the target back toward where the enemies come from"),
     CRYO_MISSILE("Cryo Missile", Side.BUFF, "a missile that applies {}", EffectKind.FREEZE),
     ARCANE_MISSILE("Arcane Missile", Side.BUFF, "a missile that applies {} instead of {}", EffectKind.UNRAVELED, EffectKind.FREEZE),
     EMP_MISSILE("EMP Missile", Side.BUFF, "a missile that removes {} and {} and applies {}", EffectKind.SHIELD, EffectKind.HEAL, EffectKind.SILENCED),
@@ -49,9 +54,7 @@ public enum TowerTerm implements Term {
     SPARK("Spark", Side.BUFF, "the Stormcaller's currency: its stones earn it by the damage they deal, its passive by the enemies that discharge; all of it goes into each of its abilities at once"),
     SOUL("Soul", Side.BUFF, "the Hexer's currency: its stones earn it by the damage they deal, its passive by the enemies that die; all of it goes into each of its abilities at once"),
     THUNDERCLAP("Thunderclap", Side.BUFF, "a discharge into every enemy in range, as magic"),
-    THUNDERSTRIKE("Thunderstrike", Side.BUFF, "lightning onto the healthiest enemy in range, as magic"),
-    SHRAPNEL("Shrapnel", Side.BUFF, "fragments that fly past a shell's blast"),
-    BOMBLET("Bomblet", Side.BUFF, "a small bomb a shell drops on the path");
+    THUNDERSTRIKE("Thunderstrike", Side.BUFF, "lightning onto the healthiest enemy in range, as magic");
 
     private final String title;
     private final Side side;

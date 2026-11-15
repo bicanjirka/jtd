@@ -483,7 +483,7 @@ What it showed and what is left:
   against Combustion's 28.4 and Dragon's Breath's 25.7.
 
 - **Where:** the `private static final` constants in `MortarTower`, `CinderTower`, `td.zone.Zone`,
-  `td.zone.ZoneEffects`, `td.tower.mortar.ShellType` and the perks under `td.tower.mortar` and
+  `td.zone.ZoneEffects`, `td.tower.mortar.ShellKind` and the mechanics under `td.tower.mortar` and
   `td.tower.cinder`.
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries. The zone roster
   has no cap; `td.PerformanceHarness zones` (Barrage of Napalm and Lingering Flames on every tower) peaks at

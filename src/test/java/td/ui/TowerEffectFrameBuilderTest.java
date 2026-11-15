@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
+import td.fixtures.MagazineFixtures;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
@@ -13,6 +14,7 @@ import td.tower.MortarTower;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
 import td.tower.TowerModifiers;
+import td.tower.mortar.ShellKind;
 import td.ui.render.CannonballDraw;
 import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
@@ -27,7 +29,6 @@ import td.util.GameWorld;
 import td.wave.Path;
 import td.wave.Vec2;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -255,35 +256,7 @@ class TowerEffectFrameBuilderTest {
     }
 
     @Test
-    void anAttunedMortarRingsItsLastLandingAndTheRingDrawsInWithEachStep() {
-        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
-        context.economy().startEconomy(1000, 5);
-        MortarTower mortar = new MortarTower(context, 3, 3);
-        mortar.earnXp(1000);
-        mortar.buyUpgrade(UpgradePaths.named(mortar, "Attune"));
-        FakeEnemyMob target = FakeEnemyMob.at(mortar.getX() + 3 * BoardFixtures.SCALE, mortar.getY());
-        context.enemies().setEnemies(new EnemyMob[]{target});
-        List<Float> radii = new ArrayList<>();
-
-        for (int t = 1; t < 400 && radii.size() < 2; t++) {
-            mortar.doTick(t);
-            context.projectiles().doTick(t);
-            if (mortar.getRangingMarker().isPresent() && mortar.getRangingMarker().get().step() == radii.size()) {
-                TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, t, 1.0, 0.0);
-                mortar.accept(builder);
-                RingDraw ring = (RingDraw) builder.build().getFirst();
-                assertThat(ring.palette()).isEqualTo(Palette.TOWER_MORTAR_RANGING);
-                assertThat(ring.centerX()).isEqualTo((float) target.getX());
-                radii.add(ring.radius());
-            }
-        }
-
-        assertThat(radii).hasSize(2);
-        assertThat(radii.get(1)).isLessThan(radii.get(0));
-    }
-
-    @Test
-    void aMortarThatHasNotLandedAShellDrawsNoRangingRing() {
+    void aMortarThatHasNotLandedAShellDrawsNothing() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         MortarTower mortar = new MortarTower(context, 3, 3);
 
@@ -344,7 +317,8 @@ class TowerEffectFrameBuilderTest {
     void aNukeLandsInAWhiteFlashAndAnExpandingRingThatEndAfterTenTicks() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         MortarTower mortar = new MortarTower(context, 3, 3);
-        UpgradePaths.buy(mortar, context, "Tactical Nuke");
+        UpgradePaths.buy(mortar, context, "Fusion");
+        MortarTower.loadMagazine(mortar, MagazineFixtures.frontedBy(ShellKind.NUKE));
         FakeEnemyMob target = FakeEnemyMob.at(mortar.getX() + 3 * BoardFixtures.SCALE, mortar.getY());
         context.enemies().setEnemies(new EnemyMob[]{target});
         int landedAt = 0;

@@ -267,6 +267,11 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.CRACKED, durationTicks, sink);
     }
 
+    /** Crack that takes more plating, for {@code durationTicks}. */
+    public static Effect deeplyCracked(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.DEEP_CRACKED, durationTicks, sink);
+    }
+
     /** Stuck in tar for {@code durationTicks}. */
     public static Effect tarred(int durationTicks, DamageSink sink) {
         return timed(EffectKind.TARRED, durationTicks, sink);

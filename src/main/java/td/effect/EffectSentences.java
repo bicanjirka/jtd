@@ -93,7 +93,7 @@ final class EffectSentences {
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
                     .plus(", up to " + kind.maxStacks() + " stacks");
-            case CRACKED -> changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind, EnemyStat.PLATING))),
+            case CRACKED, DEEP_CRACKED -> changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind, EnemyStat.PLATING))),
                     EnemyStat.PLATING)
                     .plus(" and ").plus(changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind,
                             EnemyStat.INSULATION))), EnemyStat.INSULATION));

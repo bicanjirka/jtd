@@ -64,12 +64,13 @@ public enum Palette {
     TOWER_CINDER_CONE_WHITE,
     TOWER_CINDER_CONE_SOUL,
     TOWER_CINDER_CONE_SEARING,
-    /** The ring a Mortar draws on the spot it is ranging in on. */
-    TOWER_MORTAR_RANGING,
+    /** The Heavy shell's band. */
+    TERM_HEAVY_SHELL,
     ZONE_BURNING,
     ZONE_TAR,
     ZONE_FROST,
     ZONE_FALLOUT,
+    ZONE_FLARE,
     ZONE_HEALING,
     ZONE_HASTE,
     ZONE_WARD,
@@ -221,8 +222,8 @@ public enum Palette {
     TERM_LEY_LINE,
     /** Interference's tone. */
     TERM_INTERFERENCE,
-    /** Shrapnel's and Bomblet's tone. */
-    TERM_SHRAPNEL,
+    /** The magazine's and the Volleys' tone. */
+    TERM_MAGAZINE,
     /** The tone of the Range and Attune lines. */
     TERM_BASE_PERK,
     /** The ring around the enemy the player is inspecting. */

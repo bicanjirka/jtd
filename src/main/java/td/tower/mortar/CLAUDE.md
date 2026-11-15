@@ -4,14 +4,23 @@ Constraints for `MortarTower` (in `td.tower`) and its mechanics in this package.
 rules shared by every tower are in `td/tower/CLAUDE.md`.
 
 - The Mortar's shell is slow and unguided: it flies to where its target stood, so a fast enemy dodges
-  it. Its dead zone is `DEAD_ZONE`, a fixed distance on the `Reach` that range never moves. Bracketing is read at
-  the landing, from the spec as it stands then, and `BracketTracker` is the only memory of where the
-  last shell fell. Every shell Cracks plating; a shell's size is a tower stat that follows its damage.
-  A shell's type (`ShellPlan.typeOf` its number) is fixed when it is fired, so it is drawn in its look
-  in flight; a special shell leaves one zone where it lands, owned by the Mortar (`ZoneOwner`), and
-  shrapnel never does. Shrapnel hands its shell's zone effect to the enemies it hits directly through
-  `ZoneEffects.touch`, the same pulse a zone gives. Bomblets are placed along the enemy path from the
-  point of it nearest the landing (`PathLine`), never by geometry around the impact. Every blast leaves
-  a `BlastMark` the board draws as a fading flash; a nuke adds its own `NukeFlash`. Predictive Fire
-  asks the target where it will stand (`EnemyTarget.positionAfter`) and re-aims a few times, since flight
-  time depends on where the shell is going; a Barrage's later shells re-pick their target when they fire.
+  it. Its minimum range is `TowerStat.MINIMUM_RANGE`, put on the `Reach` as its dead zone. Predictive Fire asks the
+  target where it will stand (`EnemyTarget.positionAfter`) and re-aims a few times, since flight time depends on where
+  the shell is going.
+- What it fires comes from its `Magazine`, a fixed number of shells, front first. A firing takes the front
+  shells (one, or a volley's), and the back is drawn full again from `MagazineSpec`, the weights the owned nodes
+  set. The magazine is build state, not fight state (ADR 0024): no wave clear resets it and the save keeps it shell by
+  shell. It changes only on the game loop: at a firing, and each tick through `keptTo`, which drops the kinds no
+  longer owned and draws behind. Never draw at purchase, on the EDT.
+- A shell's `ShellKind` is fixed when it is drawn, so the pane shows it in the magazine and the board draws it in its
+  look in flight. Everything a kind does differently (blast, damage type, flight speed, ground) is on the kind;
+  the tower never compares kinds but for a Heavy's pick and a Nuke's flash. A pick a node makes between kinds is a
+  value in the spec (`HeavyRider`), not a branch per mechanic.
+- The chances the panel shows come from `MagazineSpec.chances()` (`MagazineOdds`, which counts Fusion and Rich Mix),
+  never from the weights, which no player sees.
+- A shell lands in two zones: its core at full damage and its edge at its kind's share. Every shell Cracks what it
+  hits (Deep Crack swaps in its own effect). A shell's ground is one zone, owned by the Mortar (`ZoneOwner`); a
+  Mortar keeps only its newest flares and puts out the oldest (`Zone.putOut`).
+- Carpet Bombing lays a volley along the enemy path back from the target (`PathLine`), never by geometry around the
+  impact; a Barrage's later shells re-pick their target when they fire.
+- Every blast leaves a `BlastMark` the board draws as a fading flash; a nuke adds its own `NukeFlash`.

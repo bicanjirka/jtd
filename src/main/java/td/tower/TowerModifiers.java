@@ -83,8 +83,8 @@ public final class TowerModifiers {
         return flat(TowerStat.DAMAGE, DamageUnits.ofPoints(points));
     }
 
-    public static StatModifiers<TowerStat> deadZone(float cells) {
-        return flat(TowerStat.DEAD_ZONE, cells);
+    public static StatModifiers<TowerStat> minimumRange(float cells) {
+        return flat(TowerStat.MINIMUM_RANGE, cells);
     }
 
     public static StatModifiers<TowerStat> areaRadius(float cells) {
@@ -103,8 +103,8 @@ public final class TowerModifiers {
         return flat(TowerStat.PROJECTILE_SIZE, fraction);
     }
 
-    public static StatModifiers<TowerStat> bracketDamageStep(float fraction) {
-        return flat(TowerStat.BRACKET_DAMAGE_STEP, fraction);
+    public static StatModifiers<TowerStat> heavyMultiplier(float fraction) {
+        return flat(TowerStat.HEAVY_MULTIPLIER, fraction);
     }
 
     public static StatModifiers<TowerStat> coneWidth(float radians) {

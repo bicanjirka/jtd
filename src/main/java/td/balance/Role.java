@@ -29,12 +29,12 @@ enum Role {
     /** The Obelisk's base drag stays: it comes with every field, and is the least of what holds an enemy. */
     CONTROL(EnumSet.of(TowerFactory.Type.SEEKER),
             Set.of("pulse.head.gravity.1", "splash.hex_of_blight", "splash.thunderstrike",
-                    "mortar.head.siege_rounds.3", "mortar.special.tar", "mortar.special.cryo_shells",
+                    "mortar.concussion", "mortar.tar", "mortar.cryo",
                     "splash.choking_blight", "cinder.special.thermal_shock")),
     /** Only what is there to deny heals and shields: a line that does it on the side keeps its tower's damage. */
     ANTI_SUSTAIN(EnumSet.noneOf(TowerFactory.Type.class),
-            Set.of("pulse.head.ward.1", "pulse.special.soul_drain", "mortar.special.tar",
-                    "mortar.head.siege_rounds.4a", "splash.hex_of_inversion",
+            Set.of("pulse.head.ward.1", "pulse.special.soul_drain", "mortar.tar",
+                    "mortar.fusion", "splash.hex_of_inversion",
                     "cinder.extra.fuel.2", "seeker.extra.mixed_payloads.2", "seeker.special.nullifier"));
 
     private final Set<TowerFactory.Type> types;

@@ -4,90 +4,58 @@ import td.tower.targeting.Reach;
 import td.tower.targeting.Viewpoint;
 
 /**
- * Whom the Mortar may shell, how its shells bracket, how big a blast they make, how the shell flies
- * and which shells carry what: the base rules reshaped by each mechanic it owns. Each {@code withX} is a
- * copy.
+ * Whom the Mortar may shell and how its magazine draws, what a Heavy and a payload add, how many shells one firing
+ * loads, whether it leads its target and how deep its Crack cuts: the base rules reshaped by each mechanic it owns.
+ * Each {@code withX} is a copy.
  *
- * @param reach          the enemies it may fire at
- * @param bracket        how landing shell on shell builds up
- * @param daze           whom an impact stuns
- * @param shells         which shells carry what
- * @param nuke           what a nuke does
- * @param centre         what the centre of a blast suffers
- * @param shrapnel       the ring past the blast
- * @param bomblets       the small blasts along the path
- * @param leadsTarget    whether it aims where the enemy will be when the shell lands
- * @param flatCore       the share of the blast radius, from its centre, that takes full damage; 0 for none
- * @param salvo          how many shells a firing sends
+ * @param reach       the enemies it may fire at
+ * @param magazine    how a new shell is drawn
+ * @param heavy       what a Heavy shell adds
+ * @param payload     how far a payload's blast and ground grow
+ * @param volley      how many shells a firing loads
+ * @param leadsTarget whether it aims where the enemy will be when the shell lands
+ * @param deepCrack   whether its Crack takes more plating
  */
-public record MortarSpec(Reach reach, BracketSpec bracket, DazeSpec daze, ShellPlan shells, NukeSpec nuke, CentreSpec centre, ShrapnelSpec shrapnel,
-                         BombletSpec bomblets, boolean leadsTarget, float flatCore, SalvoSpec salvo) {
+public record MortarSpec(Reach reach, MagazineSpec magazine, HeavyRider heavy, PayloadSpec payload, VolleySpec volley,
+                         boolean leadsTarget, boolean deepCrack) {
 
-    /** The visible enemies in range, no bracketing and only plain shells. */
+    /** The visible enemies in range, a magazine of Normals and Heavies, one shell a firing. */
     public static MortarSpec from(Viewpoint view) {
-        return new MortarSpec(Reach.visible(view), BracketSpec.none(), DazeSpec.none(), ShellPlan.none(), NukeSpec.none(),
-                CentreSpec.none(), ShrapnelSpec.none(), BombletSpec.none(), false, 0f, SalvoSpec.single());
+        return new MortarSpec(Reach.visible(view), MagazineSpec.standard(), HeavyRider.NONE, PayloadSpec.none(),
+                VolleySpec.single(), false, false);
     }
 
     public MortarSpec withReach(Reach reach) {
-        return new MortarSpec(reach, this.bracket, this.daze,
-                this.shells, this.nuke, this.centre, this.shrapnel, this.bomblets, this.leadsTarget, this.flatCore,
-                this.salvo);
+        return new MortarSpec(reach, this.magazine, this.heavy, this.payload, this.volley, this.leadsTarget,
+                this.deepCrack);
     }
 
-    public MortarSpec withBracket(BracketSpec bracket) {
-        return new MortarSpec(this.reach, bracket, this.daze,
-                this.shells, this.nuke, this.centre, this.shrapnel, this.bomblets, this.leadsTarget, this.flatCore,
-                this.salvo);
+    public MortarSpec withMagazine(MagazineSpec magazine) {
+        return new MortarSpec(this.reach, magazine, this.heavy, this.payload, this.volley, this.leadsTarget,
+                this.deepCrack);
     }
 
-
-
-    public MortarSpec withDaze(DazeSpec daze) {
-        return new MortarSpec(this.reach, this.bracket, daze,
-                this.shells, this.nuke, this.centre, this.shrapnel, this.bomblets, this.leadsTarget, this.flatCore,
-                this.salvo);
+    public MortarSpec withHeavy(HeavyRider heavy) {
+        return new MortarSpec(this.reach, this.magazine, heavy, this.payload, this.volley, this.leadsTarget,
+                this.deepCrack);
     }
 
-    public MortarSpec withShells(ShellPlan shells) {
-        return new MortarSpec(this.reach, this.bracket, this.daze, shells, this.nuke, this.centre, this.shrapnel, this.bomblets, this.leadsTarget,
-                this.flatCore, this.salvo);
+    public MortarSpec withPayload(PayloadSpec payload) {
+        return new MortarSpec(this.reach, this.magazine, this.heavy, payload, this.volley, this.leadsTarget,
+                this.deepCrack);
     }
 
-    public MortarSpec withNuke(NukeSpec nuke) {
-        return new MortarSpec(this.reach, this.bracket, this.daze, this.shells, nuke, this.centre, this.shrapnel, this.bomblets, this.leadsTarget,
-                this.flatCore, this.salvo);
-    }
-
-    public MortarSpec withCentre(CentreSpec centre) {
-        return new MortarSpec(this.reach, this.bracket, this.daze, this.shells, this.nuke, centre, this.shrapnel, this.bomblets, this.leadsTarget,
-                this.flatCore, this.salvo);
-    }
-
-    public MortarSpec withShrapnel(ShrapnelSpec shrapnel) {
-        return new MortarSpec(this.reach, this.bracket, this.daze, this.shells, this.nuke, this.centre, shrapnel, this.bomblets, this.leadsTarget,
-                this.flatCore, this.salvo);
-    }
-
-    public MortarSpec withBomblets(BombletSpec bomblets) {
-        return new MortarSpec(this.reach, this.bracket, this.daze, this.shells, this.nuke, this.centre, this.shrapnel, bomblets, this.leadsTarget,
-                this.flatCore, this.salvo);
+    public MortarSpec withVolley(VolleySpec volley) {
+        return new MortarSpec(this.reach, this.magazine, this.heavy, this.payload, volley, this.leadsTarget,
+                this.deepCrack);
     }
 
     public MortarSpec withLeadingTheTarget() {
-        return new MortarSpec(this.reach, this.bracket, this.daze, this.shells, this.nuke, this.centre, this.shrapnel, this.bomblets, true, this.flatCore,
-                this.salvo);
+        return new MortarSpec(this.reach, this.magazine, this.heavy, this.payload, this.volley, true, this.deepCrack);
     }
 
-    /** Full damage out to {@code radiusShare} of the blast radius. */
-    public MortarSpec withFlatCore(float radiusShare) {
-        return new MortarSpec(this.reach, this.bracket, this.daze, this.shells, this.nuke, this.centre, this.shrapnel, this.bomblets, this.leadsTarget,
-                radiusShare, this.salvo);
-    }
-
-    public MortarSpec withSalvo(SalvoSpec salvo) {
-        return new MortarSpec(this.reach, this.bracket, this.daze, this.shells, this.nuke, this.centre, this.shrapnel, this.bomblets, this.leadsTarget,
-                this.flatCore, salvo);
+    public MortarSpec withDeepCrack() {
+        return new MortarSpec(this.reach, this.magazine, this.heavy, this.payload, this.volley, this.leadsTarget, true);
     }
 
     public Viewpoint view() {

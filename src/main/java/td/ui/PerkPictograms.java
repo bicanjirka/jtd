@@ -97,26 +97,37 @@ final class PerkPictograms {
             Map.entry("splash.quick_hands", "=tower.haste"),
             // Piercing Stones
             Map.entry("splash.piercing_stones", "=effect.sundered"),
-            // Siege Rounds
-            Map.entry("mortar.head.siege_rounds.1", "F O12 13 7.6 ; K O9.2 10.2 2 ; F M10 3.4H14V5.8H10Z"),
-            // Tactical Nuke
-            Map.entry("mortar.head.siege_rounds.4a", "=tower.nuke_shell"),
-            // Bunker Buster
-            Map.entry("mortar.head.siege_rounds.4b", "F M8.6 2.4H15.4V11.6L12 17L8.6 11.6Z ; X M8.6 6.4H15.4 ; S M2.4 19H21.6 ; T M7 19L5.2 22.4 M17 19L18.8 22.4 M12 19V22.6"),
-            // Fragmentation Rounds
-            Map.entry("mortar.head.fragmentation_rounds.1", "=tower.shrapnel"),
+            // Heavy Charge
+            Map.entry("mortar.heavy_charge", "=tower.heavy_shell"),
+            // Big Bore
+            Map.entry("mortar.big_bore", "=tower.heavy_shell"),
+            Map.entry("mortar.big_bore_2", "=tower.heavy_shell"),
+            // Predictive Fire
+            Map.entry("mortar.predictive_fire", "S M3.2 19.6C5.4 7 14.6 5 19.4 14.8 ; S O19.4 16.4 3 ; T M19.4 11.4V13 M19.4 19.8V21.4 M14.4 16.4H16 M22.8 16.4H24"),
+            // Concussion
+            Map.entry("mortar.concussion", "=effect.dazed"),
+            // Shrapnel
+            Map.entry("mortar.shrapnel", "F O9 10.4 2.2 ; F M3.4 3.4L6.8 4.4L4.4 6.8Z M14.6 3.4L13.6 6.8L11.2 4.4Z M3.4 17.4L4.4 14L6.8 16.4Z ; T M9 6.4V3 M9 14.4V17.6 M5 10.4H2 M13 10.4H16 ; F M17.6 11.6C17.6 11.6 21.6 16.2 21.6 18.6A4 4 0 0 1 13.6 18.6C13.6 16.2 17.6 11.6 17.6 11.6Z"),
+            // Napalm, Tar, Cryo
+            Map.entry("mortar.napalm", "=tower.napalm_shell"),
+            Map.entry("mortar.tar", "=tower.tar_shell"),
+            Map.entry("mortar.cryo", "=tower.cryo_shell"),
+            // Flare
+            Map.entry("mortar.flare", "=effect.revealed"),
+            // Barrage
+            Map.entry("mortar.barrage", "=tower.barrage"),
             // Carpet Bombing
-            Map.entry("mortar.head.fragmentation_rounds.4a", "=tower.bomblet"),
-            // Shrapnel Storm
-            Map.entry("mortar.head.fragmentation_rounds.4b", "F O9 10.4 2.2 ; F M3.4 3.4L6.8 4.4L4.4 6.8Z M14.6 3.4L13.6 6.8L11.2 4.4Z M3.4 17.4L4.4 14L6.8 16.4Z ; T M9 6.4V3 M9 14.4V17.6 M5 10.4H2 M13 10.4H16 ; F M17.6 11.6C17.6 11.6 21.6 16.2 21.6 18.6A4 4 0 0 1 13.6 18.6C13.6 16.2 17.6 11.6 17.6 11.6Z"),
-            // Ballistics
-            Map.entry("mortar.extra.ballistics.1", "S M3.2 19.6C5.4 7 14.6 5 19.4 14.8 ; F O20.4 17.6 2.4 ; T M1.8 21.6H22.2 ; F M3.2 19.6L1.6 16.6L5 17Z"),
-            // Napalm
-            Map.entry("mortar.special.napalm", "=tower.napalm_shell"),
-            // Tar
-            Map.entry("mortar.special.tar", "=tower.tar_shell"),
-            // Cryo Shells
-            Map.entry("mortar.special.cryo_shells", "=tower.cryo_shell"),
+            Map.entry("mortar.carpet_bombing", "=tower.carpet_bombing"),
+            // Overcharge
+            Map.entry("mortar.overcharge", "F M8.6 2.4H15.4V11.6L12 17L8.6 11.6Z ; X M8.6 6.4H15.4 ; S M2.4 19H21.6 ; T M7 19L5.2 22.4 M17 19L18.8 22.4 M12 19V22.6"),
+            // Fusion
+            Map.entry("mortar.fusion", "=tower.nuke_shell"),
+            // Rich Mix
+            Map.entry("mortar.rich_mix", "F O7.4 13 3.6 ; S O16.6 13 3.6 ; T M7.4 6.4V8 M16.6 6.4V8"),
+            // Deep Crack
+            Map.entry("mortar.deep_crack", "=effect.cracked"),
+            // Quick Reload
+            Map.entry("mortar.quick_reload", "S M3.2 19.6C5.4 7 14.6 5 19.4 14.8 ; F O20.4 17.6 2.4 ; T M1.8 21.6H22.2 ; F M3.2 19.6L1.6 16.6L5 17Z"),
             // Gravity
             Map.entry("pulse.head.gravity.1", "S M12 12C12 10.6 13.4 10 14.4 10.8C15.8 12 15 14.6 12.8 15C10 15.6 8.4 12.8 9.2 10.4C10.2 7.4 14.4 6.4 17 8.4C20 10.8 19.6 15.8 16.4 18.2C12.4 21.2 6 19.6 4 15C2 10.2 5 4.6 10.2 3.6"),
             // Gravity Well
