@@ -121,7 +121,6 @@ final class EffectSentences {
         };
     }
 
-    /** {@code what}, then the rule every slow keeps. */
     /** What every pool does with its fuel. */
     private static TermText pool() {
         return TermText.of("a pool of fuel that it deals in full, faster the more it holds: "
@@ -131,6 +130,7 @@ final class EffectSentences {
                 .plus(EnemyStat.TENACITY).plus(" shrinks it as it comes in");
     }
 
+    /** {@code what}, then the rule every slow keeps. */
     private static TermText slowing(String what) {
         return TermText.of(what + "; only the strongest slow counts, and speed comes back over its last "
                 + seconds(ActiveEffects.SLOW_FADE_TICKS));

@@ -193,17 +193,17 @@ every look change edits the painter.
 
 ### An attack can read the stats its shot already spent
 
-**Trigger:** each tower's own rework in the next-gen bundle (the Scorcher, the Aerie, the Obelisk). (Design review F15b.)
+**Trigger:** each tower's own rework in the next-gen bundle (the Aerie, the Obelisk). (Design review F15b.)
 
 `AbstractTower.beginShot()` spends the tower's next-shot charges (a `TowerStatus` granted with
 `grantStatus`, such as a primed round), republishes the live stats without them, and returns the
 `TowerStats` the attack should use. The Sniper's bullet, the Mortar's shell and the Burst's stone carry those stats to
-where they land; the Scorcher's waves, the Obelisk's field, the Aerie's missiles
+where they land, and the Scorcher keeps its stream's; the Obelisk's field and the Aerie's missiles
 still read the live stats (`damageCurrent()`, `stats()`), which is right only while no charge was
 spent. Only the Sniper and the Burst grant themselves charges today, so nothing is lost in play yet; a hit that lands
-ticks after the shot (a missile, a wave) also reads stats that may have changed meanwhile.
+ticks after the shot (a missile) also reads stats that may have changed meanwhile.
 
-- **Where:** the callers of `AbstractTower.beginShot` in `CinderTower`, `PulseTower` and `SeekerTower`.
+- **Where:** the callers of `AbstractTower.beginShot` in `PulseTower` and `SeekerTower`.
 - **Approach:** as the Sniper's `Bullet` and the Mortar's `Shell` do: what is in flight keeps the
   `TowerStats` its shot began with and lands with them. One tower per commit, each with a test first on
   the model of `MortarTowerTest.aShellLandsWithTheStatsItWasFiredWithThoughTheChargeItSpentIsGone`.
@@ -402,7 +402,7 @@ asks that hovering one shell show that shell's damage, blast, flight speed and r
 
 ### Tower cues and identity looks are drawn but nothing in play sends them
 
-Most `TowerCue`s, the Beacon's panes and the looks `SOULFIRE`, `RUBY`,
+Most `TowerCue`s, the Beacon's panes and the looks `RUBY`,
 `SHADE`, `BURDEN`, `GRAVITY` and `UMBRA` are reached only by the art sheets and by tests: they were built ahead of
 the towers that own them.
 
@@ -411,6 +411,29 @@ the towers that own them.
 **Approach:** each tower's next-gen rework sends its own, from the "In code" list in its
 `docs/features/FEATURE-next-gen-<type>-tower.md`. `FEATURE-next-gen-final-visual-review.md` deletes whatever no
 tower sends once all seven are in.
+
+### Dragon's Breath streams in the Scorcher's own cone
+
+The feature doc draws Dragon's Breath as a cone a third as wide and half again as long, with a short breath between
+streams; the node lengthens the stream and shortens the reload, but the cone it pours into and the one drawn are the
+tower's own.
+
+- **Where:** `td.tower.cinder.DragonsBreathMechanic`, `CinderTower.halfWidthRadians` and its reach,
+  `td.ui.TowerEffectFrameBuilder.streamTongues`.
+- **Approach:** a cone and reach factor on `CinderSpec` from the mechanic, read by the cone test and the stream's
+  look alike, so what is drawn is what pours; then weigh it again with `tree_calc.py`, since a narrower cone reaches
+  fewer enemies.
+
+### Effect duration does nothing for a pool
+
+A pool lasts as long as its fuel, so the `EFFECT_DURATION` stat (the Beacon's Effect duration among it) no longer
+reaches a burn, a poison or Soulfire, though the info pane still shows the row on a tower that applies one.
+
+- **Where:** `AbstractTower.applyEffect` (`withDurationScaledBy` leaves a lasting effect as it is),
+  `td.tower.TowerStatRow`'s Effect duration row.
+- **Approach:** decide whether Effect duration should add fuel to a pool (a pool fed more lasts longer, so
+  `withFuelScaledBy(length)` is the honest reading) or leave pools alone and hide the row on a tower whose only
+  effects are pools.
 
 ### No tower denies heals or shields along a whole lane
 
@@ -462,49 +485,34 @@ so read their rows with the saved column.
   constant, not embedded in logic. `td.balance.BalanceReport` (the lab's node factors, `--save` and `--compare`)
   and the dev panel (`README.md`) make this cheap to actually do.
 
-### The Mortar's, Cinder's and zones' numbers are unbalanced placeholders
+### The Mortar's, Scorcher's and zones' numbers are unbalanced placeholders
 
-The Mortar's and Cinder's prices, damage, cooldowns, radii and node bonuses come from
+The Mortar's prices, damage, cooldowns, radii and node bonuses come from
 `FEATURE-ground-zones-mortar-and-cinder.md`, and the numbers that doc leaves open were chosen to be
 plausible, not tuned: a zone's radius, length and pulse (twice a second), tar's 40% slow and poison
 share, frost's chill and the 2 s before it freezes, fallout's Sickened stacks, napalm's and tar's damage
 share of the Mortar, how much a Heavy's bleed does, the magazine's weights, each shell kind's flight speed, a
-Volley's gap, reload and spacing, the nuke's flash, Lingering Flames'
-patch, and the Cinder's Thermal Shock radius and chill. Nothing has been played against waves, and the Mortar's slow shell is untested against fast
+Volley's gap, reload and spacing, and the nuke's flash. Nothing has been played against waves, and the Mortar's slow shell is untested against fast
 enemies.
 
-The Cinder had a pass with `td.BuildHarness` (40 seeds, the three built-in levels): Soulfire now burns every wave
-beside the ordinary burn, which doubles the damage on a target (before it split the damage over two pools each
-refreshed half as often, and dealt less than burn alone); Combustion bursts when an enemy's burning pools together
-grow hotter than one wave could make them, since a pool almost never reaches its cap; Dragon's Breath no longer
-cuts the damage on a target by a third; White Flame, Flashpoint, Heat, Everburn and Pyromancer's Mark are stronger.
-What it showed and what is left:
-
-- A node on its own pays little at $1500 (one upgraded Scorcher and plain copies for the rest); a last head node with
-  a special pays well (Dragon's Breath with Searing Flame saves 11 lives on Twisted Hourglass, 6 on Zigzag Path, and
-  nothing on the easy Curly Path). At $600 upgrading does not pay yet on any build: the path to head IV costs about
-  $410 for a $28 tower.
-- The fuel line (Kindling, Cauterize, Heat, Everburn) saves nothing measurable in this loadout. Scorched and Sickened
-  only move crit damage and heals, and no wave here has healers, so judge it with a crit-heavy defence and a Mender
-  wave, not with this table.
-- Flashpoint and Inferno Ring are the weakest last head nodes (2 to 6 lives with a special where Dragon's Breath
-  and Combustion save 6 to 11). A retune (Flashpoint +50% crit and 8 Scorched, Inferno Ring without its range cut,
-  Pyromancer's Mark +40% magic taken) moved them little: four copies on Zigzag Path save 25.1 and 22.1 lives
-  against Combustion's 28.4 and Dragon's Breath's 25.7.
+The Scorcher's numbers were weighed on paper (`FEATURE-next-gen-cinder-tower.md`), never played: its Flame, stream,
+reload, cone and range, each node's bonus and price, the Core's width and share, Flashover's threshold, reach and
+share, Meltdown's share a point and Thermal Shock's bonus. So were the pool rule every burn, poison and Soulfire
+follows (100 fuel in 1.75 s, pulses four times a second) and the fuel the Mortar's ground and the Blight now give,
+each set to what one application dealt under the old decaying rule.
 
 - **Where:** the `private static final` constants in `MortarTower`, `CinderTower`, `td.zone.Zone`,
   `td.zone.ZoneEffects`, `td.tower.mortar.ShellKind` and the mechanics under `td.tower.mortar` and
   `td.tower.cinder`.
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries. The zone roster
-  has no cap; `td.PerformanceHarness zones` (Barrage of Napalm and Lingering Flames on every tower) peaks at
-  67 zones and sits at about a fifth of the tick budget, so a cap is not needed yet. Re-run it after raising
+  has no cap; `td.PerformanceHarness zones` (Mortars with Barrage, Napalm and Flare) peaks at
+  95 zones and sits at about a fifth of the tick budget, so a cap is not needed yet. Re-run it after raising
   a zone's lifetime or radius.
 
 ### Effect and specialization numbers are unbalanced placeholders
 
 Every number the effect-interactions and specialization work introduced was chosen to be plausible,
-not tuned: vulnerable (+15% per stack, cap 3, 4 s), poison's damage (10% of weapon
-damage per tick, 4 s) and the half-second
+not tuned: vulnerable (+15% per stack, cap 3, 4 s), the Blight's poison fuel (a share of the tower's damage) and the half-second
 stack interval of burning and poisoned, revealed (3 s from Wide Band, 2 s from Resonant Field II),
 Momentum's cooldown cut and 5 s, the shatter and explosion share and radius, shrapnel's ring width and
 share, Warding Field's 10% chance, Withering Field's interval, and Long Reach II's scaling. Burning's resilience loss (-1 per stack) and poisoned's spirit loss (-1 per stack) grow without

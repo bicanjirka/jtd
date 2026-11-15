@@ -166,8 +166,8 @@ background copies, budget, upgraded copies).
 ### Towers
 
 A tower's info pane shows Range, then how it deals damage: a hit tower its Physical or Magic damage (/hit), Fire
-rate (/s) and DPS (/target: damage times fire rate times the average crit, before the target's defences; for the Scorcher, the burn
-its waves keep going on one target), the Obelisk its damage a second, a placed tower its Wave DPS (what it really
+rate (/s) and DPS (/target: damage times fire rate times the average crit, before the target's defences), the Scorcher its
+Flame (/s) and Stream fuel (what one stream pours into an enemy), the Obelisk its damage a second, a placed tower its Wave DPS (what it really
 dealt this wave, over the span from its first damage to its last, once that span reaches a second); then every other stat off its default
 (Crit damage whenever it can crit, Effect duration whenever it applies an effect), and what a Beacon gives.
 A changed value has an arrow for which way it moved, and is red only when that is worse; hovering a row says what
@@ -179,7 +179,7 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 | Sniper | 15    | Single target, hits whichever enemy in range is furthest along the path when its tracer arrives, a moment after it fires; each shot adds a stack of Steady Aim, whichever enemy it hits, so the longer it keeps firing, the faster it fires and the likelier it crits; a stack fades 3 s after its last shot, one at a time. Its tree has no fork: every 4th shot sure to crit, loaded with a Silver Round or a Hollow Point; a crit that starts a Frenzy, ricochets or sunders; an Executioner for the wounded or a Headhunter for elites and bosses |
 | Burst  | 15    | Throws a stone at a random target in range; it lands where the target stood and bursts, full physical damage in its core and half at its edge. Forks into the Stormcaller (Static and Sparks: Arc, Thunderclap or Thunderstrike) or the Hexer (Soulbrand and Souls: Doom, Blight, Inversion) |
 | Mortar | 20    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; it lands where the target stood, full physical damage in its core and half at its edge, and cracks the plating of everything it reaches. It fires from a magazine of ten shells, drawn by lot: Normal and, now and then, a Heavy that hits twice as hard. Its tree adds a Payload (Napalm, Tar or Cryo shells that leave burning, tarred or frozen ground), Flares that reveal, a Heavy that Dazes or makes Bleed, a Volley (a Barrage at one target or Carpet Bombing back along the path), and Fusion (two Heavies in a row become a Nuke that leaves Fallout) or Rich Mix (never the same kind twice) |
-| Scorcher | 28    | Turns slowly toward the nearest visible enemy and, once one is in the cone, fires a flame wave that burns everything it reaches, invisible enemies included. A burn never crits but an ignition can, which starts the pool stronger. Attuned, each wave on an enemy it is already burning raises that burn. Forks into hot, short White Flame with Soulfire, or the wide Wide Nozzle that leaves burning ground; a fuel line makes burning enemies heal less, take more and scorch faster |
+| Scorcher | 20    | A flamethrower. It turns toward the nearest visible enemy and streams flame into everything in its cone for a second, then reloads for two; every enemy in the cone, invisible ones included, takes its Flame as fuel for its Burn, and nothing it pours crits. The first touch of each enemy in a stream Sears it with a stack of Scorch. Its tree widens the cone or narrows it into a Lance, adds the Core (more into its target), Kindling (a hotter Sear), Soulfire or Dragon's Breath, White Flame and Bellows, then Flashover, Meltdown or Thermal Shock |
 | Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
 | Obelisk | 25    | Support, a kill box. Short range; a field that drags everything inside 15% and deals a little magic damage to it every tick, ghosts included and with no visible enemy needed, the damage a quarter less for every other field overlapping it. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it stronger. One head holds enemies longer (Gravity: a deeper drag, Dazes, a wider field, a well or Stasis), the other denies them (Ward: reveal, silence, worthless heals, True Sight or Purge); an extra line makes them take more damage and builds Toll faster. A special Condemns the strongest enemy inside, bosses first, for every tower to turn on; drains spirit; or links two Obelisks with a Ley Line. Reveals nothing until Ward is bought |
 | Beacon | 20    | Passive: gives the towers in its range Damage and Range +20% and Jam taken x0.5; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds Fire rate and Crit damage; the other widens its reach, then raises Buff duration and Effect duration. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
@@ -320,14 +320,14 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Effect | Group | Side | What it does |
 |---|---|---|---|
 | Chill | Control | Debuff | Slows by what its source gives; only the strongest slow counts, and speed comes back over its last 0.5 s. |
-| Burn | Affliction | Debuff | Damage over time that fades; a top-up adds less the fuller it is, up to x2 its strongest application; it adds a stack of Scorch every 0.5 s while it lasts, and every tower can see and aim at it. |
+| Burn | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 1.75 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in; it adds a stack of Scorch every 0.5 s while it lasts, and every tower can see and aim at it. |
 | Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; Agility -100, so no dodges and more crits on it; time under it shortens the next one, and walking wins that back, more slowly at higher rank. |
 | Shield | Boon | Buff | Takes a hit before armor does, until its amount is spent or it runs out; more Spirit makes it hold more, shields from different sources add up, and damage over time goes past it. |
 | Invisibility | Boon | Buff | Towers can't aim at it, though damage on an area still reaches it. |
 | Heal | Boon | Buff | Adds to its Regeneration while it lasts; heals from different sources add up. |
 | Vulnerable | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +15%, up to 3 stacks. |
 | Reveal | Mark | Debuff | Every tower can see and aim at it, and it can't gain Invisibility. |
-| Poison | Affliction | Debuff | Damage over time that fades; it adds a stack of Sicken every 0.5 s while it lasts. |
+| Poison | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 1.75 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in; it adds a stack of Sicken every 0.5 s while it lasts. |
 | Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sunder | Weakness | Debuff | Each stack: Armor -5, up to 10 stacks. |
@@ -355,7 +355,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Deep Crack | Weakness | Debuff | Plating -10 and Insulation -5. |
 | Tar | Weakness | Debuff | Slows by 40%; only the strongest slow counts, and speed comes back over its last 0.5 s. |
 | Bleed | Affliction | Debuff | Physical damage for every cell it travels, ignoring Armor and Plating; standing still, it takes none. |
-| Soulfire | Affliction | Debuff | Damage over time in a pool of its own beside Burn and Poison; it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and every tower can see and aim at it. |
+| Soulfire | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 1.75 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in, its own beside Burn and Poison; it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and every tower can see and aim at it. |
 | Sprint | Boon | Buff | Move speed +60%. |
 | Hasten | Boon | Buff | Move speed x2; Freeze and Daze still stop it. |
 | Resolve | Boon | Buff | Each stack: Physical damage taken and Magic damage taken -1%, as many stacks as the ally that gives it has to give. |
@@ -394,7 +394,13 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Nest | Buff | Missiles stored to launch one after another when a target comes. |
 | Jammed | Debuff | An enemy nearby slows its attacks and shortens its range. |
 | Interference | Debuff | Other Obelisk fields overlapping this one take some of its damage away. |
-| Stoke | Debuff | Each wave on an enemy with this tower's Burn raises that Burn a step; the steps go when it ends. |
+| Flame | Buff | Fuel a second the stream pours into the Burn of each enemy in the cone. |
+| Stream | Buff | How long it pours before it reloads; it keeps its target the whole stream while that enemy lives and stays in range, and with no enemy left in range it runs its time out into the air. |
+| Core | Buff | The middle of the cone's width, where its target always stands; it pours more. |
+| Dragon's Breath | Buff | A longer stream with a short reload, at a weaker flame. |
+| Flashover | Buff | A hot Burn in the stream spreads: the enemies beside it take part of the flame too. |
+| Thermal Shock | Buff | More flame into an enemy another tower holds with Chill, Freeze or Daze. |
+| Meltdown | Buff | An enemy's armor and plating add to the Burn it takes, a share for each point. |
 | Kinship | Buff | Towers a Beacon buffs earn more XP for each other tower type in range. |
 | Shatter | Buff | An enemy with Freeze breaks apart and hurts the enemies around it. |
 | Arc | Buff | Lightning a primed stone carries from where it lands, jumping from enemy to enemy as magic. |
@@ -429,7 +435,7 @@ burning through a freeze.
 | Blinding field | Juggernaut, from Veteran   | Works on towers, not enemies: every tower inside misses 75% of its hits, whatever hits them again; fields never stack, the strongest counts; it lasts until the wave is over |
 
 Only a hit can crit: a shot, a blast, a beam pass. Damage over time (a burn, a poison, a field)
-never does, but a burn or poison started by a crit starts that much stronger. Each tower has its
+never does, and a stream is no hit. Each tower has its
 own Crit damage (150% unless an upgrade raises it). A guaranteed crit lands whenever the enemy's
 resilience is below 100; at 100 nothing crits. Negative resilience makes crits hit harder, and negative agility multiplies their chance (-50 turns 20% into 30%);
 Exposed takes 50 agility and 50 resilience. Armor and magic resist never go below 0.
