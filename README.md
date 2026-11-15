@@ -181,7 +181,7 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 | Mortar | 20    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; it lands where the target stood, full physical damage in its core and half at its edge, and cracks the plating of everything it reaches. It fires from a magazine of ten shells, drawn by lot: Normal and, now and then, a Heavy that hits twice as hard. Its tree adds a Payload (Napalm, Tar or Cryo shells that leave burning, tarred or frozen ground), Flares that reveal, a Heavy that Dazes or makes Bleed, a Volley (a Barrage at one target or Carpet Bombing back along the path), and Fusion (two Heavies in a row become a Nuke that leaves Fallout) or Rich Mix (never the same kind twice) |
 | Scorcher | 20    | A flamethrower. It turns toward the nearest visible enemy and streams flame into everything in its cone for a second, then reloads for two; every enemy in the cone, invisible ones included, takes its Flame as fuel for its Burn, and nothing it pours crits. The first touch of each enemy in a stream Sears it with a stack of Scorch. Its tree widens the cone or narrows it into a Lance, adds the Core (more into its target), Kindling (a hotter Sear), Soulfire or Dragon's Breath, White Flame and Bellows, then Flashover, Meltdown or Thermal Shock |
 | Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
-| Obelisk | 25    | Support, a kill box. Short range; a field that drags everything inside 15% and deals a little magic damage to it every tick, ghosts included and with no visible enemy needed, the damage a quarter less for every other field overlapping it. Attuned, an enemy that stays inside builds Toll, which makes every effect the field holds on it stronger. One head holds enemies longer (Gravity: a deeper drag, Dazes, a wider field, a well or Stasis), the other denies them (Ward: reveal, silence, worthless heals, True Sight or Purge); an extra line makes them take more damage and builds Toll faster. A special Condemns the strongest enemy inside, bosses first, for every tower to turn on; drains spirit; or links two Obelisks with a Ley Line. Reveals nothing until Ward is bought |
+| Obelisk | 20    | Support, a kill box. Short range; a field that deals 10 magic damage a second to everything inside it, hidden enemies included and with no visible enemy needed, and drags it 10%, deeper with every stack of Toll. An enemy inside builds a stack of Toll a second, up to 5, shared by every field, and loses one a second outside them all; each stack makes it take 4% more damage from every tower (Frailty). Two fields' drags never add. Its tree builds Toll faster or drags deeper, Silences the field (Ward), and adds the Sundial, its shadow turning out past the field every few seconds to hit and add Toll. The stone becomes Burden (a deeper drag), Gravity (Dazes an enemy a beat inside) or Umbra (the shadow bites twice in the field), then rings a Knell for everyone inside while one is at full Toll, or builds Toll to 10 |
 | Beacon | 20    | Passive: gives the towers in its range Damage and Range +20% and Jam taken x0.5; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds Fire rate and Crit damage; the other widens its reach, then raises Buff duration and Effect duration. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
 
 The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Hive, Obelisk and Beacon
@@ -344,13 +344,9 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Anchor | Control | Debuff | Holds Move speed to at most 75% of its base, whatever raises it, and it comes back over its last 0.5 s. |
 | Unravel | Weakness | Debuff | Each stack: Magic resist -10, up to 5 stacks. |
 | Brittle | Weakness | Debuff | Physical damage taken +30%. |
-| Toll | Weakness | Debuff | Time spent in an Obelisk's field, a stack a second; it sets how strongly the field holds it, and goes soon after it leaves. |
-| Corrode | Weakness | Debuff | Each stack: Armor and Magic resist -3, up to 15 stacks. |
-| Drag | Control | Debuff | Slows by 1% a stack, up to 50 stacks; only the strongest slow counts, and speed comes back over its last 0.5 s. |
-| Condemn | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +5%, up to 4 stacks. |
-| Stasis | Weakness | Debuff | While it also has Daze, the field holding it takes its Toll away. |
+| Toll | Weakness | Debuff | Time spent in an Obelisk's field, a stack a second, lost a stack a second outside every field; each stack: Physical damage taken and Magic damage taken +4%, up to 10 stacks. |
+| Drag | Control | Debuff | Slows by as much as the field gives, deeper with every stack of Toll; only the strongest slow counts, and speed comes back over its last 0.5 s. |
 | Dead Zone | Weakness | Debuff | Spirit -100, so Heal and Shield are worth nothing. |
-| Frail | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +2%, up to 15 stacks. |
 | Crack | Weakness | Debuff | Plating -5 and Insulation -5. |
 | Deep Crack | Weakness | Debuff | Plating -10 and Insulation -5. |
 | Tar | Weakness | Debuff | Slows by 40%; only the strongest slow counts, and speed comes back over its last 0.5 s. |
@@ -387,17 +383,17 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Arcane Missile | Buff | A missile that applies Unravel instead of Freeze. |
 | EMP Missile | Buff | A missile that removes Shield and Heal and applies Silence. |
 | Tracer Missile | Buff | A missile that applies Reveal and Mark. |
-| Event Horizon | Buff | Each death inside the field widens it until the wave ends. |
 | Rally | Buff | Faster attacks for a while, from a Beacon's rally spot. |
 | Aura | Buff | A Beacon in range raises its damage and range, and takes some of the jam enemies put on it. |
-| Ley Line | Buff | A beam between two Obelisks; an enemy on it gets both fields' rules. |
 | Nest | Buff | Missiles stored to launch one after another when a target comes. |
 | Jammed | Debuff | An enemy nearby slows its attacks and shortens its range. |
-| Interference | Debuff | Other Obelisk fields overlapping this one take some of its damage away. |
 | Flame | Buff | Fuel a second the stream pours into the Burn of each enemy in the cone. |
 | Stream | Buff | How long it pours before it reloads; it keeps its target the whole stream while that enemy lives and stays in range, and with no enemy left in range it runs its time out into the air. |
 | Core | Buff | The middle of the cone's width, where its target always stands; it pours more. |
 | Dragon's Breath | Buff | A longer stream with a short reload, at a weaker flame. |
+| Sundial | Buff | The stone's shadow, turning once around it every few seconds, past the field; every enemy it passes takes an aimed hit and a stack of Toll. |
+| Frailty | Buff | Each stack of Toll makes the enemy take more damage from every source. |
+| Shadow | Buff | Magic damage that goes past Shield and insulation; magic resist still holds. |
 | Flashover | Buff | A hot Burn in the stream spreads: the enemies beside it take part of the flame too. |
 | Thermal Shock | Buff | More flame into an enemy another tower holds with Chill, Freeze or Daze. |
 | Meltdown | Buff | An enemy's armor and plating add to the Burn it takes, a share for each point. |
