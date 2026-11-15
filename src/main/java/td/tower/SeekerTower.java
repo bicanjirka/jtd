@@ -1,57 +1,43 @@
 package td.tower;
 
+import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
+import td.enemy.HitResult;
+import td.projectile.MissileGuide;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.proc.HitAdjustment;
-import td.tower.proc.HitBonus;
-import td.tower.proc.HitCondition;
 import td.tower.proc.HitKind;
-import td.tower.proc.HitScaling;
-import td.tower.proc.Proc;
-import td.tower.proc.ProcCondition;
-import td.tower.proc.ProcPayload;
-import td.tower.seeker.AbsoluteZeroMechanic;
-import td.tower.seeker.ArcanePayload;
-import td.tower.seeker.ArcaneWarheadMechanic;
-import td.tower.seeker.BrittleMechanic;
-import td.tower.seeker.BroodMechanic;
-import td.tower.seeker.EmpPayload;
+import td.tower.seeker.BroodSpec;
+import td.tower.seeker.FeedingMechanic;
 import td.tower.seeker.FrozenLedger;
-import td.tower.seeker.FullRackMechanic;
-import td.tower.seeker.Impact;
-import td.tower.seeker.NestMechanic;
-import td.tower.seeker.NestSpec;
-import td.tower.seeker.OverTheHorizonMechanic;
-import td.tower.seeker.PayloadLoad;
-import td.tower.seeker.PayloadMechanic;
-import td.tower.seeker.PayloadPlan;
-import td.tower.seeker.RearmMechanic;
-import td.tower.seeker.SalvoPlanner;
-import td.tower.seeker.SeekerActions;
-import td.tower.seeker.SeekerAim;
+import td.tower.seeker.IceRider;
+import td.tower.seeker.IceWakeMechanic;
+import td.tower.seeker.MissileKind;
+import td.tower.seeker.Release;
+import td.tower.seeker.ReleaseMechanic;
+import td.tower.seeker.RichBroodMechanic;
+import td.tower.seeker.SecondMissileMechanic;
 import td.tower.seeker.SeekerMechanic;
 import td.tower.seeker.SeekerNest;
 import td.tower.seeker.SeekerSpec;
 import td.tower.seeker.ShatterMechanic;
-import td.tower.seeker.ShatterburstMechanic;
-import td.tower.seeker.TargetStreak;
-import td.tower.seeker.TracerPayload;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
-import td.tower.targeting.TargetPriority;
+import td.tower.targeting.SoonestOutSelector;
+import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.RangeNodes;
 import td.tower.upgrade.UpgradeCluster;
+import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
@@ -59,134 +45,122 @@ import td.util.ThreadConfined;
 import td.util.TickRate;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+
+import static td.tower.upgrade.MechanicCatalogue.entry;
 
 /**
- * The hunter: a slow homing missile at the fastest visible enemy in range, which it never loses
- * once fired. On impact it deals magic damage and freezes whichever enemy it reached. A frozen
- * enemy has stopped, so the next missile hunts the next runner.
+ * The control tower: its nest loads a homing missile whenever it has room, with or without a target, so it is full at
+ * every wave start; with an enemy in range the stored missiles launch one after another, each at the visible enemy
+ * that would leave soonest. Every enemy a missile hits is frozen, unless a Shield takes the whole hit. A missile whose
+ * enemy is frozen before it lands turns to another close by, or flies home.
  * <p>
- * Attuned, the cooldown loads a missile into a nest instead of firing, and stored missiles launch
- * as a salvo whenever a target is in range; the nest fills between waves too.
- * <p>
- * What each owned node does lives in a {@link SeekerMechanic}: the tower reads one spec from them
- * whenever it looks for a target.
+ * What each owned node does lives in its data or in a {@link SeekerMechanic}: the tower reads one spec from them
+ * whenever it loads, launches or lands a missile.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class SeekerTower extends AbstractTower {
 
     public static final int PRICE = 30;
-    public static final float DAMAGE_POINTS = 40f;
-    public static final float RANGE = 4.5f;
-    /** Pixels a tick: slow enough to see a missile hunt. */
+    public static final float DAMAGE_POINTS = 15f;
+    public static final float RANGE = 4f;
+    /** Pixels a tick at its top speed: slow enough to see a missile hunt. */
     public static final float MISSILE_SPEED = 8f;
+    /** The ring the nest's missiles sit on turns this far a tick while the tower fights. */
+    public static final double RING_RADIANS_PER_TICK = 0.08;
 
-    private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
-    /** How far a shatter reaches. */
-    private static final float SHATTER_RADIUS_CELLS = 1.5f;
+    /** A load every 2 s. */
+    private static final int COOLDOWN_MAX = 39;
+    private static final float FREEZE_TICKS = 20f;
+    private static final float NEST_SIZE = 3f;
+    private static final int LAUNCH_GAP_TICKS = 4;
+    /** How far around itself a missile that lost its enemy looks for another. */
+    private static final float RETARGET_CELLS = 2f;
+    private static final TargetSelector SOONEST_OUT = PreferringSelector.priority(new SoonestOutSelector());
 
+    private static final UpgradeNode QUICK_BROOD = UpgradeNode.of("seeker.quick_brood", "Quick Brood", 9)
+            .withModifiers(TowerModifiers.attackSpeed(2f / 1.6f - 1f));
+    private static final UpgradeNode DEEP_FREEZE = UpgradeNode.of("seeker.deep_freeze", "Deep Freeze", 7)
+            .withModifiers(TowerModifiers.freezeDuration(6));
+    private static final UpgradeNode WIDE_COMB = UpgradeNode.of("seeker.wide_comb", "Wide Comb", 6)
+            .withModifiers(TowerModifiers.nestCapacity(2));
+    private static final UpgradeNode LONG_FLIGHT = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Flight", 14)
+            .withModifiers(TowerModifiers.range(1f));
 
-    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 24);
-
-    private static final UpgradeNode TWIN_WARHEAD_1 = UpgradeNode.of("seeker.head.twin_warhead.1", "Twin Warhead", 30)
-            .withModifiers(TowerModifiers.attackSpeed(0.3f).plus(TowerModifiers.nestCapacity(1)));
-    private static final UpgradeNode TWIN_WARHEAD_2 = UpgradeNode.of("seeker.head.twin_warhead.2", "Twin Warhead II", 45)
-            .withModifiers(TowerModifiers.missilesPerLaunch(1))
-            .after(TWIN_WARHEAD_1)
+    private static final UpgradeNode SWARM = UpgradeNode.of("seeker.swarm", "Swarm", 28)
             .inTier(1);
-    private static final UpgradeNode BROOD = UpgradeNode.of("seeker.head.twin_warhead.3", "Brood", 75)
+    private static final UpgradeNode HATCHING = UpgradeNode.of("seeker.hatching", "Hatching", 28)
+            .inTier(1);
+    private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 20)
+            .inTier(1);
+    private static final UpgradeNode SWIFT_WINGS = UpgradeNode.of("seeker.swift_wings", "Swift Wings", 4)
+            .withModifiers(TowerModifiers.projectileSpeed(0.5f))
+            .inTier(1);
+    private static final UpgradeNode WIDE_COMB_2 = UpgradeNode.of("seeker.wide_comb_2", "Wide Comb II", 6)
             .withModifiers(TowerModifiers.nestCapacity(2))
-            .after(TWIN_WARHEAD_2)
-            .inTier(2);
-    private static final UpgradeNode SHATTERBURST = UpgradeNode.of("seeker.head.twin_warhead.4a", "Shatterburst", 120)
-            .after(BROOD)
-            .inTier(3);
-    private static final UpgradeNode REARM = UpgradeNode.of("seeker.head.twin_warhead.4b", "Rearm", 120)
-            .after(BROOD)
-            .inTier(3);
-    private static final UpgradeNode DEEP_FREEZE_1 = UpgradeNode.of("seeker.head.deep_freeze.1", "Deep Freeze", 30)
-            .withModifiers(TowerModifiers.freezeDuration(15));
-    private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.head.deep_freeze.2", "Deep Freeze II", 45)
-            .withModifiers(TowerModifiers.damage(12f).plus(TowerModifiers.critChance(0.1f)))
-            .after(DEEP_FREEZE_1)
             .inTier(1);
-    private static final UpgradeNode BRITTLE = UpgradeNode.of("seeker.head.deep_freeze.3", "Brittle", 75)
-            .after(DEEP_FREEZE_2)
+
+    private static final UpgradeNode RUBY = UpgradeNode.of("seeker.ruby", "Ruby", 12)
             .inTier(2);
-    private static final UpgradeNode ABSOLUTE_ZERO = UpgradeNode.of("seeker.head.deep_freeze.4a", "Absolute Zero", 120)
-            .after(BRITTLE)
+    private static final UpgradeNode SHADE = UpgradeNode.of("seeker.shade", "Shade", 12)
+            .inTier(2);
+    private static final UpgradeNode SHARP_STING = UpgradeNode.of("seeker.sharp_sting", "Sharp Sting", 75)
+            .withModifiers(TowerModifiers.damage(10f))
+            .inTier(2);
+    private static final UpgradeNode LONG_FLIGHT_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Flight II", 35)
+            .withModifiers(TowerModifiers.range(1f))
+            .inTier(2);
+
+    private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 38)
             .inTier(3);
-    private static final UpgradeNode FROSTBITE = UpgradeNode.of("seeker.head.deep_freeze.4b", "Frostbite", 120)
-            .withModifiers(TowerModifiers.critChance(0.5f))
-            .after(BRITTLE)
+    private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 38)
             .inTier(3);
-    private static final UpgradeNode ARCANE_PAYLOAD = UpgradeNode.of("seeker.extra.mixed_payloads.1", "Arcane Payload", 24);
-    private static final UpgradeNode EMP_PAYLOAD = UpgradeNode.of("seeker.extra.mixed_payloads.2", "EMP Payload", 36)
-            .after(ARCANE_PAYLOAD)
-            .inTier(1);
-    private static final UpgradeNode TRACER_PAYLOAD = UpgradeNode.of("seeker.extra.mixed_payloads.3", "Tracer Payload", 60)
-            .after(EMP_PAYLOAD)
-            .inTier(2);
-    private static final UpgradeNode FULL_RACK = UpgradeNode.of("seeker.extra.mixed_payloads.4", "Full Rack", 90)
-            .after(TRACER_PAYLOAD)
+    private static final UpgradeNode RICH_BROOD = UpgradeNode.of("seeker.rich_brood", "Rich Brood", 8)
+            .withRequires(UpgradeCondition.owns(RUBY.id()).or(UpgradeCondition.owns(SHADE.id())))
             .inTier(3);
-    private static final UpgradeNode ARCANE_WARHEAD = UpgradeNode.of("seeker.special.arcane_warhead", "Arcane Warhead", 120)
-            .inTier(2);
-    private static final UpgradeNode NULLIFIER = UpgradeNode.of("seeker.special.nullifier", "Nullifier", 120)
-            .withHitBonus(HitBonus.when(new HitCondition.TargetHasAnyOf(Set.of(EffectKind.SHIELD)),
-                    HitAdjustment.damage(0.5f)))
-            .withProc(Proc.onHit(new ProcPayload.Dispel()).when(new ProcCondition.HitKindIn(Set.of(HitKind.MISSILE))))
-            .inTier(2);
-    private static final UpgradeNode HUNTERS_MARK = UpgradeNode.of("seeker.special.hunters_mark", "Hunter's Mark", 120)
-            .withTargeting(TargetPriority.HIGHEST_RANK)
-            .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.FOCUS, 5), HitAdjustment.damage(0.2f)))
+    private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.deep_freeze_2", "Deep Freeze II", 31)
+            .withModifiers(TowerModifiers.freezeDuration(20))
+            .inTier(3);
+    private static final UpgradeNode QUICK_BROOD_2 = UpgradeNode.of("seeker.quick_brood_2", "Quick Brood II", 50)
+            .withModifiers(TowerModifiers.attackSpeed(2f / 1.3f - 2f / 1.6f))
             .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE))
-            .with(ATTUNE, TWIN_WARHEAD_1, DEEP_FREEZE_1, ARCANE_PAYLOAD,
-                    TWIN_WARHEAD_2, DEEP_FREEZE_2, EMP_PAYLOAD,
-                    BROOD, BRITTLE, ARCANE_WARHEAD, NULLIFIER, TRACER_PAYLOAD,
-                    SHATTERBURST, REARM, ABSOLUTE_ZERO, FROSTBITE, HUNTERS_MARK, FULL_RACK)
-            .withCluster(UpgradeCluster.of("Warhead", TWIN_WARHEAD_1, DEEP_FREEZE_1))
-            .withCluster(UpgradeCluster.of("Special", ARCANE_WARHEAD, NULLIFIER))
-            .withCluster(UpgradeCluster.of("Mastery", SHATTERBURST, REARM))
-            .withCluster(UpgradeCluster.of("Mastery", ABSOLUTE_ZERO, FROSTBITE));
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(QUICK_BROOD, DEEP_FREEZE, WIDE_COMB, LONG_FLIGHT))
+            .with(SWARM, HATCHING, FEEDING, SWIFT_WINGS, WIDE_COMB_2,
+                    RUBY, SHADE, SHARP_STING, LONG_FLIGHT_2,
+                    ICE_WAKE, SHATTER, RICH_BROOD, DEEP_FREEZE_2, QUICK_BROOD_2)
+            .withCluster(UpgradeCluster.of("Release", SWARM, HATCHING))
+            .withCluster(UpgradeCluster.of("Second missile", RUBY, SHADE))
+            .withCluster(UpgradeCluster.of("Around the ice", ICE_WAKE, SHATTER));
 
-    private static final MechanicCatalogue<SeekerMechanic> MECHANICS = MechanicCatalogue.<SeekerMechanic>empty()
-            .with(ATTUNE.id(), NestMechanic::new)
-            .with(RangeNodes.RANGE_3_ID, OverTheHorizonMechanic::new)
-            .with(BROOD.id(), BroodMechanic::new)
-            .with(SHATTERBURST.id(), ShatterburstMechanic::new)
-            .with(REARM.id(), RearmMechanic::new)
-            .with(DEEP_FREEZE_2.id(), ShatterMechanic::new)
-            .with(BRITTLE.id(), BrittleMechanic::new)
-            .with(ABSOLUTE_ZERO.id(), AbsoluteZeroMechanic::new)
-            .with(ARCANE_PAYLOAD.id(), () -> new PayloadMechanic(new ArcanePayload()))
-            .with(EMP_PAYLOAD.id(), () -> new PayloadMechanic(new EmpPayload()))
-            .with(TRACER_PAYLOAD.id(), () -> new PayloadMechanic(new TracerPayload()))
-            .with(FULL_RACK.id(), FullRackMechanic::new)
-            .with(ARCANE_WARHEAD.id(), ArcaneWarheadMechanic::new);
+    private static final MechanicCatalogue<SeekerMechanic> MECHANICS = MechanicCatalogue.of(
+            entry(SWARM.id(), () -> new ReleaseMechanic(Release.SWARM)),
+            entry(HATCHING.id(), () -> new ReleaseMechanic(Release.HATCHING)),
+            entry(FEEDING.id(), FeedingMechanic::new),
+            entry(RUBY.id(), () -> new SecondMissileMechanic(MissileKind.RUBY)),
+            entry(SHADE.id(), () -> new SecondMissileMechanic(MissileKind.SHADE)),
+            entry(RICH_BROOD.id(), RichBroodMechanic::new),
+            entry(ICE_WAKE.id(), IceWakeMechanic::new),
+            entry(SHATTER.id(), ShatterMechanic::new));
 
-    private static final int COOLDOWN_MAX = 45;
-
-    private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<SeekerMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
-    private TargetStreak streak = new TargetStreak();
     private SeekerNest nest = new SeekerNest();
-    private final ProjectileStats missile = ProjectileStats.of(MISSILE_SPEED);
-    private final SeekerActions actions = new Actions();
     private FrozenLedger frozen = new FrozenLedger();
     private FireClock clock = new FireClock(COOLDOWN_MAX);
-    private int missilesLaunched;
-    private EnemyMob currentTarget;
+    /** The charge freezes have fed the load in progress, held under its floor. */
+    private double fed;
+    /** Freezes toward the next Release. */
+    private int freezes;
+    private boolean releaseDue;
+    private double ringRadians;
+    private int tickNow;
 
     public SeekerTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SEEKER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
-                .with(TowerStat.FREEZE_DURATION, 30f).with(TowerStat.NEST_CAPACITY, 3f)
-                .with(TowerStat.MISSILES_PER_LAUNCH, 1f), context, x, y);
+                .with(TowerStat.FREEZE_DURATION, FREEZE_TICKS).with(TowerStat.NEST_CAPACITY, NEST_SIZE)
+                .with(TowerStat.PROJECTILE_SPEED, 1f), context, x, y);
     }
 
     @Override
@@ -199,256 +173,211 @@ public final class SeekerTower extends AbstractTower {
         return TREE;
     }
 
-    /** Whom it may fire at, how it picks and what its nest holds, as the mechanics in {@code owned} make it. */
-    private SeekerSpec spec(List<SeekerMechanic> owned) {
-        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
+    /** Whom it may hunt and what its freezes, nest and ice do, as its owned mechanics make them. */
+    private SeekerSpec spec() {
+        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.cell());
         SeekerSpec spec = SeekerSpec.from(view);
-        Optional<TargetPriority> priority = this.upgrades().targeting();
-        if (priority.isPresent()) {
-            spec = spec.withAim(new SeekerAim(priority.get().selector(view.cellSize()), priority.get().label()));
-        }
-        for (SeekerMechanic mechanic : owned) {
+        for (SeekerMechanic mechanic : this.mechanics.all()) {
             spec = mechanic.refineSpec(spec);
         }
         return spec;
     }
 
-    private EnemyMob findTarget(SeekerSpec spec) {
-        return PreferringSelector.priority(spec.aim().selector())
-                .selectFrom(spec.reach().matching(this.context.enemies())).orElse(null);
+    private int cell() {
+        return this.context.getBoard().scale();
     }
 
-    /**
-     * One launch, as the spec shapes it: a missile at the pick among the enemies in reach, and a
-     * second at the next one when it sends two. A spread salvo avoids whom it has already fired at.
-     * Whether anything was launched; it is not when nothing is in reach.
-     */
-    private boolean launchShot(SeekerSpec spec) {
-        List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
-        Set<EnemyMob> avoided = new HashSet<>(spec.spreadsSalvo() ? this.nest.salvoTargets() : Set.of());
-        int missiles = Math.round(this.stats().value(TowerStat.MISSILES_PER_LAUNCH));
-        for (int i = 0; i < missiles; i++) {
-            Optional<EnemyMob> target = SalvoPlanner.pick(PreferringSelector.priority(spec.aim().selector()), inReach,
-                    avoided);
-            if (target.isEmpty()) {
-                if (i == 0) {
-                    this.currentTarget = null;
-                }
-                return i > 0;
-            }
-            if (i == 0) {
-                this.currentTarget = target.get();
-                this.beginShot();
-            }
-            this.context.projectiles().add(this.newMissile(target.get(), false));
-            if (this.nest(spec).isActive()) {
-                this.nest.recordTarget(target.get());
-            }
-            avoided.add(target.get());
-        }
-        return true;
+    private int capacity() {
+        return Math.round(this.stats().value(TowerStat.NEST_CAPACITY));
     }
 
     public void doTick(int gameTime) {
-        SeekerSpec spec = this.spec(this.mechanics.all());
-        if (spec.shatter().onThaw()) {
-            this.frozen.settle().forEach(thawed -> this.shatter(thawed, spec));
+        this.tickNow = gameTime;
+        SeekerSpec spec = this.spec();
+        this.settleIce(spec);
+        this.nest.keepOnly(spec.brood()::owns);
+        List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
+        if (this.releaseDue) {
+            this.releaseDue = false;
+            this.release(spec, inReach);
         }
-        if (this.nest(spec).isActive()) {
-            this.tickNest(spec);
-        } else {
-            this.tickDirect(spec);
+        if (this.nest.hatchesNow(ReleaseMechanic.HATCH_GAP_TICKS)) {
+            this.nest.load(spec.brood().draw(this.context.random()));
+        }
+        if (this.clock.isReady() && this.nest.hasRoom(this.capacity())) {
+            this.nest.load(spec.brood().draw(this.context.random()));
+            this.clock.spend();
+            this.fed = 0.0;
+        }
+        this.nest.tick();
+        if (!inReach.isEmpty()) {
+            this.ringRadians += RING_RADIANS_PER_TICK;
+            if (this.nest.readyToLaunch()) {
+                EnemyMob target = SOONEST_OUT.selectFrom(inReach).orElseThrow();
+                this.launch(this.nest.launch(LAUNCH_GAP_TICKS), target, this.ringRadians);
+            }
         }
         this.clock.advance(this.attackRate());
-        if (this.currentTarget != null) {
-            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
-        } else if (this.betweenWaves()) {
-            this.turretAim.settle();
+    }
+
+    /** A nest that waited with nothing in reach is full, so every wave starts with it full and the count at none. */
+    @Override
+    protected void endFight() {
+        this.frozen = new FrozenLedger();
+        this.clock = new FireClock(COOLDOWN_MAX);
+        this.fed = 0.0;
+        this.freezes = 0;
+        this.releaseDue = false;
+        this.ringRadians = 0.0;
+        this.nest = new SeekerNest();
+        BroodSpec brood = this.spec().brood();
+        while (this.nest.hasRoom(this.capacity())) {
+            this.nest.load(brood.draw(this.context.random()));
         }
     }
 
-    /** A nest that waited with nothing in reach is full, so it starts full. */
-    @Override
-    protected void endFight() {
-        this.streak = new TargetStreak();
-        this.frozen = new FrozenLedger();
-        this.clock = new FireClock(COOLDOWN_MAX);
-        this.missilesLaunched = 0;
-        this.currentTarget = null;
-        this.nest = new SeekerNest();
-        NestSpec nest = this.nest(this.spec(this.mechanics.all()));
-        if (nest.isActive()) {
-            while (this.nest.hasRoom(nest)) {
-                this.nest.load();
+    /** A Swarm's missiles at once, at as many different enemies, soonest out first; a Hatching's into the nest. */
+    private void release(SeekerSpec spec, List<EnemyMob> inReach) {
+        switch (spec.release()) {
+            case NONE -> {
+            }
+            case SWARM -> {
+                List<EnemyMob> left = new ArrayList<>(inReach);
+                for (int i = 0; i < ReleaseMechanic.MISSILES && !left.isEmpty(); i++) {
+                    EnemyMob target = SOONEST_OUT.selectFrom(left).orElseThrow();
+                    left.remove(target);
+                    this.launch(spec.brood().draw(this.context.random()), target,
+                            this.ringRadians + 2 * Math.PI * i / ReleaseMechanic.MISSILES);
+                }
+            }
+            case HATCHING -> this.nest.hatch(ReleaseMechanic.MISSILES);
+        }
+    }
+
+    /** What was launched: the kind of missile, and the stats it lands with however the tower changes meanwhile. */
+    private record Shot(MissileKind kind, TowerStats stats) {
+    }
+
+    /** A missile of {@code kind} at {@code target}, leaving the ring at {@code slotRadians} along its orbit. */
+    private void launch(MissileKind kind, EnemyMob target, double slotRadians) {
+        Shot shot = new Shot(kind, this.beginShot());
+        this.context.projectiles().add(new MissileProjectile(this.centerX, this.centerY, slotRadians + Math.PI / 2,
+                target, this.missileStats(shot.stats(), kind), new Flight(shot, target)));
+    }
+
+    private ProjectileStats missileStats(TowerStats stats, MissileKind kind) {
+        float speedScale = stats.value(TowerStat.PROJECTILE_SPEED);
+        return ProjectileStats.of(MISSILE_SPEED * speedScale).withLook(kind.look()).withStreak(speedScale > 1f);
+    }
+
+    /**
+     * A missile lands with the stats it was launched with: its kind's hit, and a freeze unless a Shield took the whole
+     * of it. A dodged missile does nothing.
+     */
+    private void onImpact(EnemyMob target, Shot shot) {
+        TowerStats stats = shot.stats();
+        MissileKind kind = shot.kind();
+        boolean wasFrozen = target.hasEffect(EffectKind.FREEZE);
+        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.MISSILE, 0f, stats);
+        int amount = Math.round(stats.damage() * kind.damageFactor() * adjustment.damageFactor());
+        HitResult hit = this.landHit(target, Damage.magic(amount), this.profileOf(shot, adjustment).asAimed());
+        if (hit.dodged()) {
+            return;
+        }
+        boolean shieldTookAll = hit.absorbed() > 0 && hit.landed().amount() == 0;
+        if (!shieldTookAll && !target.isDead()) {
+            int ticks = Math.round(stats.value(TowerStat.FREEZE_DURATION));
+            this.applyEffect(target, sink -> Effect.freeze(ticks, kind.ice(), sink));
+            if (!wasFrozen && target.hasEffect(EffectKind.FREEZE)) {
+                this.frozen.record(target, kind, stats, this.tickNow);
+                this.countFreeze();
+            }
+        }
+        this.report(target, HitKind.MISSILE, hit.critical(), target.isDead());
+    }
+
+    private AttackProfile profileOf(Shot shot, HitAdjustment adjustment) {
+        AttackProfile profile = adjustment.applyTo(shot.stats().attack());
+        return shot.kind().shadow() ? profile.asShadow() : profile;
+    }
+
+    /** A freeze it landed: one more toward the next Release, and with Feeding a load that comes sooner. */
+    private void countFreeze() {
+        SeekerSpec spec = this.spec();
+        if (spec.release() != Release.NONE && ++this.freezes >= ReleaseMechanic.EVERY) {
+            this.freezes = 0;
+            this.releaseDue = true;
+        }
+        if (spec.feeds()) {
+            double fed = FeedingMechanic.feedFor(this.fed, this.clock.period(), this.attackRate());
+            this.clock.hasten(fed);
+            this.fed += fed;
+        }
+    }
+
+    /** The freezes that ended: a Shatter bursts and a Shade's enemy stays Silenced; an Ice Wake chills round the rest. */
+    private void settleIce(SeekerSpec spec) {
+        for (FrozenLedger.Thaw thaw : this.frozen.settle(this.tickNow)) {
+            FrozenLedger.Freeze freeze = thaw.freeze();
+            if (spec.ice() == IceRider.SHATTER) {
+                this.shatter(freeze);
+            }
+            if (freeze.kind().silencesAfterThaw() && !freeze.enemy().isDead()) {
+                this.applyEffect(freeze.enemy(), sink -> Effect.silenced(thaw.heldTicks(), sink));
+            }
+        }
+        if (spec.ice() == IceRider.ICE_WAKE) {
+            float radius = IceWakeMechanic.RADIUS_CELLS * this.cell();
+            for (EnemyMob held : this.frozen.holding()) {
+                for (EnemyMob passing : this.around(held, radius)) {
+                    this.applyEffect(passing, sink -> Effect.chill(IceWakeMechanic.CHILL, IceWakeMechanic.CHILL_TICKS,
+                            sink));
+                }
             }
         }
     }
 
-    @Override
-    protected void takeRestPose() {
-        this.turretAim.rest();
+    /** The ice bursts: every other enemy close by takes a share of the damage of the missile that froze it. */
+    private void shatter(FrozenLedger.Freeze freeze) {
+        Shot shot = new Shot(freeze.kind(), freeze.stats());
+        Damage damage = Damage.magic(Math.round(freeze.stats().damage() * freeze.kind().damageFactor()
+                * ShatterMechanic.SHARE));
+        AttackProfile profile = this.profileOf(shot, HitAdjustment.none());
+        this.around(freeze.enemy(), ShatterMechanic.RADIUS_CELLS * this.cell())
+                .forEach(enemy -> this.dealDamage(enemy, damage, profile));
     }
 
-    @Override
-    protected void forgetRemovedUpgrades(List<UpgradeNode> removed) {
-        if (!this.nest(this.spec(this.mechanics.all())).isActive()) {
-            this.nest.empty();
-        }
-    }
-
-    /** No nest: a missile leaves as the cooldown ends, if there is anything to fire at. */
-    private void tickDirect(SeekerSpec spec) {
-        if (this.clock.isReady() && this.launchShot(spec)) {
-            this.clock.spend();
-        }
-    }
-
-    /**
-     * The cooldown loads a missile whenever there is room, with or without a target; a stored
-     * missile launches at the fastest enemy in reach once the gap since the last has passed.
-     */
-    private void tickNest(SeekerSpec spec) {
-        NestSpec nest = this.nest(spec);
-        if (this.clock.isReady() && this.nest.hasRoom(nest)) {
-            this.nest.load();
-            this.clock.spend();
-        }
-        this.nest.tick(nest);
-        if (this.nest.readyToLaunch() && this.launchShot(spec)) {
-            this.nest.launch(nest);
-        }
-    }
-
-    /** A missile at {@code target}, carrying what the plan says its number carries; a rearmed one's freeze rearms nothing. */
-    private MissileProjectile newMissile(EnemyMob target, boolean rearmed) {
-        this.missilesLaunched++;
-        Optional<PayloadLoad> load = this.spec(this.mechanics.all()).payloads().loadFor(this.missilesLaunched);
-        ProjectileStats stats = load.map(carried -> this.missile.withLook(carried.payload().look())).orElse(this.missile);
-        return new MissileProjectile(this.centerX, this.centerY, target, this.context.enemies(), stats,
-                hit -> this.onImpact(hit, rearmed, load));
-    }
-
-    /**
-     * A missile lands: the hit, scaled by what the mechanics make of it, then what it carries (a plain
-     * missile freezes), then the mechanics' reactions.
-     */
-    private void onImpact(EnemyMob target, boolean rearmed, Optional<PayloadLoad> load) {
-        SeekerSpec spec = this.spec(this.mechanics.all());
-        Set<EffectKind> before = target.activeEffectKinds();
-        boolean wasFrozen = before.contains(EffectKind.FREEZE);
-        Impact.Before suffering = wasFrozen ? Impact.Before.FROZEN
-                : before.contains(EffectKind.CHILL) ? Impact.Before.CHILLED : Impact.Before.NOTHING;
-        HitAdjustment adjustment = this.hitAdjustment(target, HitKind.MISSILE, 0f, this.stats(), this.streak.on(target),
-                false);
-        float factor = adjustment.damageFactor();
-        for (SeekerMechanic mechanic : this.mechanics.all()) {
-            factor *= mechanic.damageFactor(target);
-        }
-        boolean critical = this.strike(target, Damage.magic(Math.round(this.damageCurrent() * factor)), adjustment);
-        boolean freezes = load.isEmpty() || load.get().payload().freezes();
-        if (load.isEmpty()) {
-            this.freezeAround(target, 1f, spec);
-        } else {
-            load.get().payload().deliver(target, load.get().strength(), this.actions);
-        }
-        boolean froze = freezes && !wasFrozen && target.hasEffect(EffectKind.FREEZE);
-        if (froze) {
-        }
-        this.streak.landed(target);
-        this.report(target, HitKind.MISSILE, critical, target.isDead());
-        Impact impact = new Impact(target, suffering, froze, rearmed);
-        for (SeekerMechanic mechanic : this.mechanics.all()) {
-            mechanic.react(impact, this.actions);
-        }
-    }
-
-    /** A hit of {@code damage}. */
-    private void strike(EnemyMob enemy, Damage damage) {
-        this.strike(enemy, damage, HitAdjustment.none());
-    }
-
-    private boolean strike(EnemyMob enemy, Damage damage, HitAdjustment adjustment) {
-        return this.dealDamage(enemy, damage, adjustment.applyTo(this.stats().attack()));
-    }
-
-    private int freezeTicks() {
-        return Math.round(this.stats().value(TowerStat.FREEZE_DURATION));
-    }
-
-    private NestSpec nest(SeekerSpec spec) {
-        return spec.launchGapTicks() > 0
-                ? NestSpec.of(Math.round(this.stats().value(TowerStat.NEST_CAPACITY)), spec.launchGapTicks())
-                : NestSpec.none();
-    }
-
-    /** Freezes the enemy a missile reached, and with Absolute Zero everything within a cell of it. */
-    private void freezeAround(EnemyMob target, float strength, SeekerSpec spec) {
-        this.freeze(target, strength, spec);
-        if (spec.freeze().areaCells() > 0f) {
-            float radius = spec.freeze().areaCells() * this.context.getBoard().scale();
-            InRangeTargetQuery.everyone((int) target.getX(), (int) target.getY(), radius)
-                    .matching(this.context.enemies()).stream()
-                    .filter(enemy -> enemy != target)
-                    .forEach(enemy -> this.freeze(enemy, strength, spec));
-        }
-    }
-
-    /**
-     * Freezes {@code enemy} for {@code strength} times the freeze time. A freeze that lands (one already
-     * holding is not renewed) leaves it brittle for that authored time, and a thaw shatter watches it.
-     */
-    private void freeze(EnemyMob enemy, float strength, SeekerSpec spec) {
-        int ticks = Math.round(this.freezeTicks() * strength);
-        boolean wasFrozen = enemy.hasEffect(EffectKind.FREEZE);
-        this.applyEffect(enemy, sink -> Effect.freeze(ticks, sink));
-        if (wasFrozen || !enemy.hasEffect(EffectKind.FREEZE)) {
-            return;
-        }
-        if (spec.freeze().brittle()) {
-            this.applyEffect(enemy, sink -> Effect.brittle(ticks, sink));
-        }
-        if (spec.shatter().onThaw()) {
-            this.frozen.record(enemy);
-        }
-    }
-
-    /** Hits every other enemy within {@code radiusCells} of {@code center} for {@code share} of the damage, as magic. */
-    private List<EnemyMob> burst(EnemyMob center, float share, float radiusCells) {
-        float radius = radiusCells * this.context.getBoard().scale();
-        Damage damage = Damage.magic(Math.round(this.damageCurrent() * share));
-        List<EnemyMob> hit = InRangeTargetQuery.everyone((int) center.getX(), (int) center.getY(), radius)
+    /** Every enemy within {@code radius} pixels of {@code center}, hidden ones too, but itself. */
+    private List<EnemyMob> around(EnemyMob center, float radius) {
+        return InRangeTargetQuery.everyone((int) center.getX(), (int) center.getY(), radius)
                 .matching(this.context.enemies()).stream()
                 .filter(enemy -> enemy != center)
                 .toList();
-        hit.forEach(enemy -> this.strike(enemy, damage));
-        return hit;
     }
 
-    /** A frozen enemy shatters: whatever stands near it takes a share of the Seeker's damage. */
-    private void shatter(EnemyMob shattered, SeekerSpec spec) {
-        this.burst(shattered, spec.shatter().share(), SHATTER_RADIUS_CELLS);
+    /** The missiles it holds ready, the next to leave first, each of its kind. */
+    public List<MissileKind> nestMissiles() {
+        return this.nest.missiles();
     }
 
-    /** Deep Freeze II: a frozen enemy this tower kills shatters. */
-    @Override
-    protected void onKill(EnemyMob killed) {
-        SeekerSpec spec = this.spec(this.mechanics.all());
-        if (spec.shatter().onKill() && killed.hasEffect(EffectKind.FREEZE)) {
-            this.shatter(killed, spec);
-        }
+    /** Where the ring its nest sits on has turned to, in radians. */
+    public double ringRadians() {
+        return this.ringRadians;
     }
 
-    public EnemyMob getCurrentTarget() {
-        return this.currentTarget;
+    /** Whether the next freeze it lands sets off a Release. */
+    public boolean releaseReady() {
+        return this.spec().release() != Release.NONE && this.freezes == ReleaseMechanic.EVERY - 1;
     }
 
-    public TurretAim getTurretAim() {
-        return this.turretAim;
+    /** The second kind of missile its nest draws, its identity, once it took one. */
+    public Optional<MissileKind> secondMissile() {
+        return this.spec().brood().second();
     }
 
-    /** How many missiles the nest holds now; none without Attune. */
-    public int getNestStored() {
-        return this.nest.stored();
+    /** What share of the new missiles each kind comes to. */
+    public Map<MissileKind, Float> missileChances() {
+        return this.spec().brood().chances();
     }
 
     @Override
@@ -458,101 +387,98 @@ public final class SeekerTower extends AbstractTower {
 
     @Override
     protected List<TowerStatLine> ownStats(TowerStats stats) {
-        float cellsPerSecond = this.missile.speed() * TICKS_PER_SECOND / this.context.getBoard().scale();
+        ProjectileStats missile = this.missileStats(stats, MissileKind.FROST);
+        float cellsPerSecond = missile.speed() * TICKS_PER_SECOND / this.cell();
         return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, cellsPerSecond),
-                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, this.missile.size()));
+                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, missile.size()));
     }
 
+    /** The nest's missiles, and the Release the next freeze sets off. */
     @Override
     protected List<TowerBuffState> ownConditions() {
         List<TowerBuffState> states = new ArrayList<>();
-        if (this.streak.current() > 0) {
-            states.add(TowerBuffState.of(TowerTerm.FOCUS, TermText.of("hits on one target build it"))
-                    .withStacks(this.streak.current()));
+        if (this.nest.stored() > 0) {
+            states.add(TowerBuffState.of(TowerTerm.NEST, TermText.of(this.nest.stored() + " of " + this.capacity()
+                    + " missiles ready")).withStacks(this.nest.stored()));
         }
-        SeekerSpec spec = this.spec(this.mechanics.all());
-        NestSpec nest = this.nest(spec);
-        if (nest.isActive() && this.nest.stored() > 0) {
-            states.add(TowerBuffState.of(TowerTerm.NEST, TermText.of(this.nest.stored() + " of " + nest.capacity()
-                    + " missiles stored")).withStacks(this.nest.stored()));
+        if (this.releaseReady()) {
+            TowerTerm release = this.spec().release() == Release.SWARM ? TowerTerm.SWARM : TowerTerm.HATCHING;
+            states.add(TowerBuffState.of(release, TermText.of("the next ").plus(EffectKind.FREEZE)
+                    .plus(" sets it off")));
         }
-        spec.payloads().loadFor(this.missilesLaunched + 1).ifPresent(load -> states.add(
-                TowerBuffState.of(load.payload().term(), load.payload().effect())));
-        this.mechanics.all().forEach(mechanic -> mechanic.condition().ifPresent(states::add));
         return states;
     }
 
+    /** How far the freezes are toward the next Release. */
     @Override
     protected List<NodeProgress> ownProgress() {
-        if (this.spec(this.mechanics.all()).payloads().everyMissile()) {
-            return List.of();
-        }
-        return List.of(ARCANE_PAYLOAD, EMP_PAYLOAD, TRACER_PAYLOAD).stream()
-                .flatMap(node -> this.countingNode(node.id(), this.missilesLaunched % PayloadPlan.EVERY,
-                        PayloadPlan.EVERY).stream())
+        return List.of(SWARM, HATCHING).stream()
+                .flatMap(node -> this.countingNode(node.id(), this.freezes, ReleaseMechanic.EVERY).stream())
                 .toList();
     }
 
     @Override
     protected List<AppliedEffect> baseApplies() {
+        float seconds = this.stats().value(TowerStat.FREEZE_DURATION) / TickRate.TICKS_PER_SECOND;
         return List.of(new AppliedEffect(EffectKind.FREEZE, List.of(new AppliedEffect.Source(this.displayName(),
-                TermText.of("each missile applies ").plus(EffectKind.FREEZE)
-                        .plus(" for " + TermNumbers.seconds((this.freezeTicks()) / TickRate.TICKS_PER_SECOND))))));
+                TermText.of("every missile that hits applies ").plus(EffectKind.FREEZE)
+                        .plus(" for " + TermNumbers.seconds(seconds) + ", unless a ").plus(EffectKind.SHIELD)
+                        .plus(" takes the whole hit")))));
     }
 
     @Override
     protected String targetingLabel() {
-        return this.spec(this.mechanics.all()).aim().label();
+        return "soonest out";
     }
 
     @Override
     protected String description() {
-        return "Fires a homing missile.";
+        return "Loads homing missiles into a nest that is full at every wave start.";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSeekerTower(this);
     }
 
-    /** What the mechanics may make this tower do. */
-    private final class Actions implements SeekerActions {
+    /**
+     * One missile's say in its own flight: it gives up an enemy frozen since it picked it, turns to the soonest-out
+     * enemy close by that isn't frozen, and with none flies home into the nest, or fades when the nest is full.
+     */
+    private final class Flight implements MissileGuide {
 
-        @Override
-        public List<EnemyMob> burst(EnemyMob center, float share, float radiusCells) {
-            return SeekerTower.this.burst(center, share, radiusCells);
+        private final Shot shot;
+        private boolean frozenAtPick;
+
+        Flight(Shot shot, EnemyMob target) {
+            this.shot = shot;
+            this.frozenAtPick = target.hasEffect(EffectKind.FREEZE);
         }
 
         @Override
-        public void freeze(EnemyMob target, float strength) {
-            SeekerTower.this.freezeAround(target, strength, SeekerTower.this.spec(SeekerTower.this.mechanics.all()));
+        public boolean keeps(EnemyMob target) {
+            return this.frozenAtPick || !target.hasEffect(EffectKind.FREEZE);
         }
 
         @Override
-        public void dispel(EnemyMob target) {
-            target.dispelRestoratives();
+        public Optional<EnemyMob> retarget(double x, double y) {
+            float radius = RETARGET_CELLS * SeekerTower.this.cell();
+            List<EnemyMob> near = InRangeTargetQuery.visible((int) Math.round(x), (int) Math.round(y), radius)
+                    .matching(SeekerTower.this.context.enemies()).stream()
+                    .filter(enemy -> !enemy.hasEffect(EffectKind.FREEZE))
+                    .toList();
+            this.frozenAtPick = false;
+            return SOONEST_OUT.selectFrom(near);
         }
 
         @Override
-        public void spot(EnemyMob target, int ticks) {
-            SeekerTower.this.reveal(target, ticks);
-            SeekerTower.this.applyEffect(target, sink -> Effect.marked(ticks, sink));
+        public void land(EnemyMob target) {
+            SeekerTower.this.onImpact(target, this.shot);
         }
 
         @Override
-        public void silence(EnemyMob target, int ticks) {
-            SeekerTower.this.applyEffect(target, sink -> Effect.silenced(ticks, sink));
-        }
-
-        @Override
-        public void applyStacks(EnemyMob target, StackingDebuff debuff, int stacks) {
-            SeekerTower.this.applyStacks(target, debuff, stacks);
-        }
-
-        @Override
-        public void rearm() {
-            EnemyMob target = SeekerTower.this.findTarget(SeekerTower.this.spec(SeekerTower.this.mechanics.all()));
-            if (target != null) {
-                SeekerTower.this.context.projectiles().add(SeekerTower.this.newMissile(target, true));
+        public void arriveHome() {
+            if (SeekerTower.this.nest.hasRoom(SeekerTower.this.capacity())) {
+                SeekerTower.this.nest.load(this.shot.kind());
             }
         }
     }

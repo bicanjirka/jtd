@@ -13,6 +13,7 @@ import td.economy.EconomyState;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.IceKind;
 import td.enemy.Ability;
 import td.enemy.AbilityTerm;
 import td.enemy.AdaptiveResist;
@@ -346,6 +347,15 @@ class GameEngineTest {
         int frozen = freezeFor(enemy, 20, new int[] {0});
 
         assertThat(frozen).isZero();
+    }
+
+    @Test
+    void aRubyFreezeHoldsAnEnemyImmuneToFreezing() {
+        EnemyMob enemy = spawnStill(FakeGameHost.newBoundEngine(), Rank.GRUNT, new ImmunityTrait(EffectKind.FREEZE));
+
+        enemy.applyEffect(Effect.freeze(20, IceKind.RUBY, DamageSink.none()));
+
+        assertThat(enemy.activeEffectKinds()).contains(EffectKind.FREEZE);
     }
 
     /** Dazes {@code enemy} and returns how many ticks it stayed Dazed. */

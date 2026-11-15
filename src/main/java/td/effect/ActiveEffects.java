@@ -79,7 +79,7 @@ public final class ActiveEffects {
     private static float magnitude(Effect effect) {
         return switch (effect.dynamics()) {
             // On/off, not gradated - any reapplication is at least as strong as what's already active.
-            case EffectDynamics.Flag _ -> 1f;
+            case EffectDynamics.Flag _, EffectDynamics.Encasing _ -> 1f;
             case EffectDynamics.Stacks stacks -> stacks.stacks();
             case EffectDynamics.Slow slow -> slow.strength();
             case EffectDynamics.FuelPool _ -> effect.fuelLevel();

@@ -193,20 +193,19 @@ every look change edits the painter.
 
 ### An attack can read the stats its shot already spent
 
-**Trigger:** each tower's own rework in the next-gen bundle (the Aerie, the Obelisk). (Design review F15b.)
+**Trigger:** the next change to the Obelisk's field. (Design review F15b.)
 
 `AbstractTower.beginShot()` spends the tower's next-shot charges (a `TowerStatus` granted with
 `grantStatus`, such as a primed round), republishes the live stats without them, and returns the
-`TowerStats` the attack should use. The Sniper's bullet, the Mortar's shell and the Burst's stone carry those stats to
-where they land, and the Scorcher keeps its stream's; the Obelisk's field and the Aerie's missiles
-still read the live stats (`damageCurrent()`, `stats()`), which is right only while no charge was
-spent. Only the Sniper and the Burst grant themselves charges today, so nothing is lost in play yet; a hit that lands
-ticks after the shot (a missile) also reads stats that may have changed meanwhile.
+`TowerStats` the attack should use. The Sniper's bullet, the Mortar's shell, the Burst's stone and the Aerie's missile
+carry those stats to where they land, and the Scorcher keeps its stream's; the Obelisk's field
+still reads the live stats (`damageCurrent()`, `stats()`), which is right only while no charge was
+spent. Only the Sniper and the Burst grant themselves charges today, so nothing is lost in play yet.
 
-- **Where:** the callers of `AbstractTower.beginShot` in `PulseTower` and `SeekerTower`.
-- **Approach:** as the Sniper's `Bullet` and the Mortar's `Shell` do: what is in flight keeps the
-  `TowerStats` its shot began with and lands with them. One tower per commit, each with a test first on
-  the model of `MortarTowerTest.aShellLandsWithTheStatsItWasFiredWithThoughTheChargeItSpentIsGone`.
+- **Where:** the caller of `AbstractTower.beginShot` in `PulseTower`.
+- **Approach:** as the Sniper's `Bullet` and the Mortar's `Shell` do: what the field deals keeps the
+  `TowerStats` its shot began with, with a test first on the model of
+  `MortarTowerTest.aShellLandsWithTheStatsItWasFiredWithThoughTheChargeItSpentIsGone`.
 
 ### A tower's price is recorded by a constructor duty
 

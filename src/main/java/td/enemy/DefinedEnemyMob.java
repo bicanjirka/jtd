@@ -364,6 +364,11 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.motion.progression();
     }
 
+    @Override
+    public double distanceToExit() {
+        return this.motion.distanceToEnd();
+    }
+
     /** Places this mob anywhere along its path, so an ability spawn appears where its parent was. */
     void jumpToDistance(double distanceIntoLap) {
         this.motion.jumpTo(distanceIntoLap);
@@ -530,7 +535,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     private void applyRetimed(Effect effect) {
-        if (this.immunities.contains(effect.kind())) {
+        if (effect.isKeptOffBy(this.immunities)) {
             if (this.observer.isOn()) {
                 this.observer.report(new MobEvent.EffectBlocked(effect.kind(), "immune"));
             }

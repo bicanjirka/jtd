@@ -141,10 +141,6 @@ public final class TowerModifiers {
         return flat(TowerStat.NEST_CAPACITY, missiles);
     }
 
-    public static StatModifiers<TowerStat> missilesPerLaunch(int missiles) {
-        return flat(TowerStat.MISSILES_PER_LAUNCH, missiles);
-    }
-
     public static StatModifiers<TowerStat> aimStacks(int stacks) {
         return flat(TowerStat.AIM_STACKS, stacks);
     }

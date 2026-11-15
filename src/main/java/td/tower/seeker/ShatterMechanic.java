@@ -5,19 +5,22 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
 
-/** Deep Freeze II: a frozen enemy the Seeker kills shatters, hurting what stands near it. */
+/** Shatter: as a freeze it landed ends, the ice bursts on every other enemy close by. */
 public final class ShatterMechanic implements SeekerMechanic {
 
-    private static final float SHARE = 0.5f;
+    public static final float RADIUS_CELLS = 1f;
+    /** The share of the missile's damage the burst deals. */
+    public static final float SHARE = 0.3f;
 
     @Override
     public SeekerSpec refineSpec(SeekerSpec spec) {
-        return spec.withShatter(spec.shatter().alsoOnKill(SHARE));
+        return spec.withIce(IceRider.SHATTER);
     }
 
     @Override
     public TermText describe() {
-        return TermText.of("an enemy with ").plus(EffectKind.FREEZE).plus(" this tower kills breaks in a ")
-                .plus(TowerTerm.SHATTER).plus(" of " + TermNumbers.percent(SHARE) + " of its damage around it");
+        return TermText.of("when a ").plus(EffectKind.FREEZE).plus(" it landed ends, the ice bursts in a ")
+                .plus(TowerTerm.SHATTER).plus(": every other enemy within " + TermNumbers.cells(RADIUS_CELLS)
+                        + " takes " + TermNumbers.percent(SHARE) + " of the missile's damage");
     }
 }

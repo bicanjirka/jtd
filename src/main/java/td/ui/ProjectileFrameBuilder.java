@@ -51,10 +51,8 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
     private static Palette paletteFor(MissileLook look) {
         return switch (look) {
             case STANDARD -> Palette.PROJECTILE_MISSILE;
-            case CRYO -> Palette.PROJECTILE_CRYO;
-            case ARCANE -> Palette.PROJECTILE_ARCANE;
-            case EMP -> Palette.PROJECTILE_EMP;
-            case TRACER -> Palette.PROJECTILE_TRACER;
+            case RUBY -> Palette.PROJECTILE_RUBY;
+            case SHADE -> Palette.PROJECTILE_SHADE;
         };
     }
 

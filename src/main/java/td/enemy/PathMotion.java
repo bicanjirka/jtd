@@ -95,6 +95,11 @@ final class PathMotion {
                 .orElse(0);
     }
 
+    /** How far it still has to walk to its path's end; none for a mob that holds where it stands. */
+    double distanceToEnd() {
+        return this.arcLengthPath.map(path -> Math.max(0.0, path.totalLength() - this.distanceIntoLap)).orElse(0.0);
+    }
+
     /**
      * Whether the path walked from {@link #startDistance} to here came within {@code radius} of the
      * point. The formation offset shifts the whole walk; the board clamp at the edges is ignored.

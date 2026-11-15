@@ -2,37 +2,47 @@ package td.tower.seeker;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.tower.TowerStats;
 import td.util.ThreadConfined;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** The enemies a Seeker froze that are still frozen, watched for the moment each one thaws. */
+/** The freezes the Aerie landed that still hold, each watched for the tick it ends. */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class FrozenLedger {
 
-    private final List<EnemyMob> frozen = new ArrayList<>();
+    private final List<Freeze> holding = new ArrayList<>();
 
-    /** {@code enemy} was just frozen by this Seeker. */
-    public void record(EnemyMob enemy) {
-        if (!this.frozen.contains(enemy)) {
-            this.frozen.add(enemy);
-        }
+    /** {@code enemy} was just frozen by a missile of {@code kind} fired with {@code stats}, at {@code tick}. */
+    public void record(EnemyMob enemy, MissileKind kind, TowerStats stats, int tick) {
+        this.holding.removeIf(freeze -> freeze.enemy() == enemy);
+        this.holding.add(new Freeze(enemy, kind, stats, tick));
     }
 
-    /** The enemies whose freeze has ended since the last call, still alive; the dead are dropped quietly. */
-    public List<EnemyMob> settle() {
-        List<EnemyMob> thawed = new ArrayList<>();
-        this.frozen.removeIf(enemy -> {
-            if (enemy.isDead()) {
-                return true;
-            }
-            if (!enemy.hasEffect(EffectKind.FREEZE)) {
-                thawed.add(enemy);
+    /** The enemies whose freeze it landed still holds them, alive. */
+    public List<EnemyMob> holding() {
+        return this.holding.stream().map(Freeze::enemy).filter(enemy -> !enemy.isDead()).toList();
+    }
+
+    /** The freezes that ended since the last call, by a thaw or by death, with how long each held up to {@code tick}. */
+    public List<Thaw> settle(int tick) {
+        List<Thaw> ended = new ArrayList<>();
+        this.holding.removeIf(freeze -> {
+            if (freeze.enemy().isDead() || !freeze.enemy().hasEffect(EffectKind.FREEZE)) {
+                ended.add(new Thaw(freeze, tick - freeze.frozenAtTick()));
                 return true;
             }
             return false;
         });
-        return thawed;
+        return ended;
+    }
+
+    /** A freeze it landed: on whom, by which kind of missile, fired with which stats, from which tick. */
+    public record Freeze(EnemyMob enemy, MissileKind kind, TowerStats stats, int frozenAtTick) {
+    }
+
+    /** A freeze that ended, and how many ticks it held. */
+    public record Thaw(Freeze freeze, int heldTicks) {
     }
 }

@@ -1,7 +1,7 @@
 package td.projectile;
 
 import org.junit.jupiter.api.Test;
-import td.enemy.HitReceiver;
+import td.enemy.EnemyMob;
 import td.fixtures.FakeEnemyMob;
 
 import java.util.ArrayList;
@@ -11,96 +11,109 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MissileProjectileTest {
 
-    @Test
-    void homesOnItsTargetsCurrentPositionEachTickRatherThanWhereItStarted() {
-        FakeEnemyMob target = FakeEnemyMob.at(100, 0);
-        FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
-        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, ProjectileStats.of(10f), t -> {
-        });
+    private static final float TOP_SPEED = 8f;
 
-        missile.doTick(1); // aims at (100, 0)
-        target.moveTo(100, 100); // target has since moved
-        missile.doTick(2); // must aim at the NEW position, not the stale one
-
-        assertThat(missile.getY()).isGreaterThan(0.0);
+    private static MissileProjectile missileAt(EnemyMob target, double heading, FakeMissileGuide guide) {
+        return new MissileProjectile(0, 0, heading, target, ProjectileStats.of(TOP_SPEED), guide);
     }
 
-    @Test
-    void impactsOnceItReachesItsTargetAndReportsExactlyThatTarget() {
-        FakeEnemyMob target = FakeEnemyMob.at(20, 0);
-        FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
-        List<HitReceiver> impacts = new ArrayList<>();
-        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, ProjectileStats.of(10f), impacts::add);
-
-        for (int t = 1; t <= 5 && !missile.isFinished(); t++) {
+    private static void fly(MissileProjectile missile) {
+        for (int t = 1; t <= 300 && !missile.isFinished(); t++) {
             missile.doTick(t);
         }
-
-        assertThat(missile.isFinished()).isTrue();
-        assertThat(impacts).containsExactly(target);
     }
 
     @Test
-    void retargetsToTheNearestRemainingEnemyWhenItsTargetBecomesInvalid() {
-        FakeEnemyMob original = FakeEnemyMob.at(20, 0);
-        FakeEnemyMob nearest = FakeEnemyMob.at(5, 0);
-        FakeEnemyMob further = FakeEnemyMob.at(50, 0);
-        FakeEnemyRegistry registry = new FakeEnemyRegistry(original, nearest, further);
-        List<HitReceiver> impacts = new ArrayList<>();
-        MissileProjectile missile = new MissileProjectile(0, 0, original, registry, ProjectileStats.of(10f), impacts::add);
+    void itLeavesSlowAndSpeedsUpGraduallyToItsTopSpeed() {
+        MissileProjectile missile = missileAt(FakeEnemyMob.at(2000, 0), 0, new FakeMissileGuide());
+        List<Double> speeds = new ArrayList<>();
 
-        original.invalidate();
-        for (int t = 1; t <= 5 && !missile.isFinished(); t++) {
+        for (int t = 1; t <= 30; t++) {
             missile.doTick(t);
+            speeds.add(missile.speed());
         }
 
-        assertThat(impacts).containsExactly(nearest);
+        assertThat(speeds.getFirst()).isLessThan(TOP_SPEED / 2.0);
+        assertThat(speeds).isSorted();
+        assertThat(speeds.getLast()).isEqualTo(TOP_SPEED);
     }
 
     @Test
-    void keepsItsLockOnATargetThatIsHiddenInsteadOfRetargetingToAVisibleOne() {
-        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(20, 0);
-        FakeEnemyMob visible = FakeEnemyMob.at(5, 0);
-        FakeEnemyRegistry registry = new FakeEnemyRegistry(hidden, visible);
-        List<HitReceiver> impacts = new ArrayList<>();
-        MissileProjectile missile = new MissileProjectile(0, 0, hidden, registry, ProjectileStats.of(10f),
-                impacts::add);
+    void farFromItsTargetItTurnsOnACurveRatherThanJumpingToItsHeading() {
+        MissileProjectile missile = missileAt(FakeEnemyMob.at(0, 2000), 0, new FakeMissileGuide());
 
-        for (int t = 1; t <= 5 && !missile.isFinished(); t++) {
-            missile.doTick(t);
-        }
+        missile.doTick(1);
 
-        assertThat(impacts).containsExactly(hidden);
+        assertThat(missile.headingRadians()).isBetween(0.01, Math.PI / 4);
     }
 
     @Test
-    void aSlowMissileTakesTicksInProportionToItsSpeedAndRemembersItsLastPositions() {
-        FakeEnemyMob target = FakeEnemyMob.at(80, 0);
-        FakeEnemyRegistry registry = new FakeEnemyRegistry(target);
-        MissileProjectile missile = new MissileProjectile(0, 0, target, registry, ProjectileStats.of(8f), t -> {
-        });
-
+    void launchedAwayFromAnEnemyBesideItItStillReachesItWithoutCircling() {
+        FakeEnemyMob target = FakeEnemyMob.at(0, 30);
+        FakeMissileGuide guide = new FakeMissileGuide();
+        MissileProjectile missile = missileAt(target, -Math.PI / 2, guide);
         int ticks = 0;
-        while (!missile.isFinished()) {
+
+        while (!missile.isFinished() && ticks < 300) {
             missile.doTick(++ticks);
         }
 
-        assertThat(ticks).isEqualTo(10);
-        assertThat(missile.trail()).hasSize(6);
-        assertThat(missile.trail().getFirst().x()).isLessThan(missile.trail().getLast().x());
+        assertThat(guide.landed()).containsExactly(target);
+        assertThat(ticks).isLessThan(40);
     }
 
     @Test
-    void givesUpWithoutImpactingAnythingWhenNoValidTargetRemainsAnywhere() {
-        FakeEnemyMob onlyTarget = FakeEnemyMob.at(20, 0);
-        FakeEnemyRegistry registry = new FakeEnemyRegistry(onlyTarget);
-        List<HitReceiver> impacts = new ArrayList<>();
-        MissileProjectile missile = new MissileProjectile(0, 0, onlyTarget, registry, ProjectileStats.of(10f), impacts::add);
+    void itFollowsItsTargetWhereItHasMovedTo() {
+        FakeEnemyMob target = FakeEnemyMob.at(100, 0);
+        FakeMissileGuide guide = new FakeMissileGuide();
+        MissileProjectile missile = missileAt(target, 0, guide);
 
-        onlyTarget.invalidate();
         missile.doTick(1);
+        target.moveTo(100, 100);
+        fly(missile);
 
-        assertThat(missile.isFinished()).isTrue();
-        assertThat(impacts).isEmpty();
+        assertThat(guide.landed()).containsExactly(target);
+        assertThat(missile.getY()).isEqualTo(100.0);
+    }
+
+    @Test
+    void aTargetItsGuideGivesUpIsLeftForTheOneTheGuideTurnsItTo() {
+        FakeEnemyMob first = FakeEnemyMob.at(100, 0);
+        FakeEnemyMob next = FakeEnemyMob.at(60, 40);
+        FakeMissileGuide guide = new FakeMissileGuide().dropping(first).turningTo(next);
+        MissileProjectile missile = missileAt(first, 0, guide);
+
+        fly(missile);
+
+        assertThat(guide.landed()).containsExactly(next);
+    }
+
+    @Test
+    void withNothingToHuntItFliesBackToWhereItWasLaunched() {
+        FakeEnemyMob target = FakeEnemyMob.at(100, 0);
+        FakeMissileGuide guide = new FakeMissileGuide();
+        MissileProjectile missile = missileAt(target, 0, guide);
+
+        missile.doTick(1);
+        missile.doTick(2);
+        target.invalidate();
+        fly(missile);
+
+        assertThat(guide.landed()).isEmpty();
+        assertThat(guide.homes()).isEqualTo(1);
+        assertThat(missile.getX()).isZero();
+        assertThat(missile.getY()).isZero();
+    }
+
+    @Test
+    void itRemembersItsLastFewPositionsForTheSmokeItDraws() {
+        MissileProjectile missile = missileAt(FakeEnemyMob.at(2000, 0), 0, new FakeMissileGuide());
+
+        for (int t = 1; t <= 20; t++) {
+            missile.doTick(t);
+        }
+
+        assertThat(missile.trail()).hasSizeBetween(2, 10);
+        assertThat(missile.trail().getLast().x()).isGreaterThan(missile.trail().getFirst().x());
     }
 }

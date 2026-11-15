@@ -94,10 +94,11 @@ public final class TermLooks {
             case TAR_SHELL -> new TermLook(Palette.TERM_TAR_SHELL, Palette.TERM_FRAME_TOWER_BUFF);
             case CRYO_SHELL -> new TermLook(Palette.PROJECTILE_FROST, Palette.TERM_FRAME_TOWER_BUFF);
             case NUKE_SHELL -> new TermLook(Palette.TERM_NUKE_SHELL, Palette.TERM_FRAME_TOWER_BUFF);
-            case CRYO_MISSILE -> new TermLook(Palette.PROJECTILE_CRYO, Palette.TERM_FRAME_TOWER_BUFF);
-            case ARCANE_MISSILE -> new TermLook(Palette.PROJECTILE_ARCANE, Palette.TERM_FRAME_TOWER_BUFF);
-            case EMP_MISSILE -> new TermLook(Palette.PROJECTILE_EMP, Palette.TERM_FRAME_TOWER_BUFF);
-            case TRACER_MISSILE -> new TermLook(Palette.PROJECTILE_TRACER, Palette.TERM_FRAME_TOWER_BUFF);
+            case FROST_MISSILE -> new TermLook(Palette.PROJECTILE_MISSILE, Palette.TERM_FRAME_TOWER_BUFF);
+            case RUBY -> new TermLook(Palette.PROJECTILE_RUBY, Palette.TERM_FRAME_TOWER_BUFF);
+            case SHADE -> new TermLook(Palette.PROJECTILE_SHADE, Palette.TERM_FRAME_TOWER_BUFF);
+            case SWARM, HATCHING -> new TermLook(Palette.TOWER_SEEKER_BODY, Palette.TERM_FRAME_TOWER_BUFF);
+            case ICE_WAKE -> new TermLook(Palette.FREEZE_CRYSTAL, Palette.TERM_FRAME_MECHANIC);
             case RALLY -> new TermLook(Palette.TOWER_AURA_RALLY, Palette.TERM_FRAME_TOWER_BUFF);
             case AURA -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_TOWER_BUFF);
             case NEST -> new TermLook(Palette.TOWER_SEEKER_BODY, Palette.TERM_FRAME_TOWER_BUFF);

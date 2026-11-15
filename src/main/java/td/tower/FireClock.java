@@ -50,6 +50,16 @@ final class FireClock {
         this.spentThisTick = true;
     }
 
+    /** Brings the next shot nearer by {@code charge}, as many ticks of charge at a rate of one. */
+    void hasten(double charge) {
+        this.charge += charge;
+    }
+
+    /** The charge one shot costs: the base ticks between shots. */
+    double period() {
+        return this.period;
+    }
+
     /**
      * Ends the tick: {@code rate} more charge. A tower that was ready and did not shoot keeps at most
      * one period; one that shot keeps at most what it can spend next tick.
