@@ -32,21 +32,24 @@ import td.ui.render.PathMarkerBrightness;
 import td.ui.render.PathMarkerDraw;
 import td.ui.render.PathMarkerShape;
 import td.ui.render.ProjectileDraw;
-import td.ui.render.PulseDraw;
 import td.ui.render.RankBadge;
 import td.ui.render.RankBadgeDraw;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.RingDraw;
+import td.ui.render.ShadowDraw;
 import td.ui.render.SheetLine;
+import td.ui.render.SilenceMarkDraw;
 import td.ui.render.SmokeDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.StreamDraw;
+import td.ui.render.TollMarkDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
+import td.ui.render.WardOutlineDraw;
 import td.ui.render.ZoneArcDraw;
 import td.ui.render.ZoneDraw;
 import td.ui.render.ZonePatchDraw;
@@ -58,6 +61,7 @@ import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.LinearGradientPaint;
 import java.awt.RadialGradientPaint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -141,6 +145,23 @@ public final class Java2DFrameRenderer {
     private static final float SHELL_SHADOW_WIDTH = 1.4f;
     private static final float SHELL_SHADOW_FLATTENING = 0.55f;
     private static final int ZONE_FILL_ALPHA = 80;
+    /** An Obelisk's field is fainter than a zone: it lies under every fight it holds. */
+    private static final int FIELD_FILL_ALPHA = 41;
+    private static final Color GRAVITY_WELL = new Color(0x1c2c5c);
+    private static final int GRAVITY_WELL_ALPHA = 215;
+    private static final float GRAVITY_WELL_SHARE = 0.8f;
+    private static final float SHADOW_ALPHA = 0.4f;
+    private static final float SHADOW_UMBRA_ALPHA = 0.55f;
+    private static final float SHADOW_TIP_ALPHA = 0.04f;
+    private static final float SHADOW_EDGE_ALPHA = 0.55f;
+    private static final float WARD_STROKE_CELLS = 0.03f;
+    private static final float[] WARD_DASH_CELLS = {0.16f, 0.05f, 0.03f, 0.05f};
+    private static final int TOLL_SEGMENT_DEGREES = 60;
+    private static final int TOLL_SEGMENT_STEP = 72;
+    private static final float TOLL_STROKE = 1.3f;
+    private static final float TOLL_FULL_STROKE = 1.9f;
+    private static final float TOLL_UNLIT_SHARE = 0.22f;
+    private static final Color SILENCE_INK = new Color(0x0d0e10);
     private static final int ZONE_EDGE_ALPHA = 170;
     /** Round caps, so the arcs of a patch's outline join without a notch where two rims cross. */
     private static final Stroke ZONE_EDGE_STROKE = new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
@@ -335,12 +356,6 @@ public final class Java2DFrameRenderer {
             case TOWER_HEXER_DETONATION_DARK -> new Color(70, 20, 110);
             case TOWER_SPLASH_CAST -> new Color(200, 120, 255);
             case HEX_RUNE -> new Color(225, 170, 255);
-            case TOWER_PULSE_RING -> withAlpha(Color.ORANGE, 80);
-            case TOWER_PULSE_RIPPLE -> new Color(205, 205, 215);
-            case TOWER_PULSE_RIPPLE_WARD -> new Color(180, 110, 255);
-            case TOWER_PULSE_RIPPLE_GRAVITY -> new Color(60, 100, 230);
-            case TOWER_PULSE_RIM_BITE -> new Color(235, 60, 60);
-            case TOWER_PULSE_WELL -> withAlpha(new Color(20, 30, 120), 60);
             case SHELL_NORMAL -> new Color(123, 132, 150);
             case TERM_HEAVY_SHELL -> new Color(242, 210, 138);
             case ZONE_BURNING -> new Color(255, 120, 30);
@@ -352,7 +367,11 @@ public final class Java2DFrameRenderer {
             case ZONE_HASTE -> new Color(130, 240, 180);
             case ZONE_WARD -> new Color(120, 190, 255);
             case ZONE_BLINDING -> new Color(190, 90, 230);
-            case TOWER_PULSE_ZAP -> new Color(255, 245, 190);
+            case ZONE_FIELD, TOWER_SUNDIAL -> TowerLooks.color(TowerLook.PULSE);
+            case ZONE_FIELD_BURDEN -> new Color(0x7a6a52);
+            case ZONE_FIELD_GRAVITY -> new Color(0x4d6fb8);
+            case ZONE_FIELD_UMBRA -> new Color(0x5a4f8a);
+            case TOWER_SUNDIAL_UMBRA -> new Color(0x6a58b0);
             case TOWER_STREAM_OUTER -> new Color(0xe2402a);
             case TOWER_STREAM_MIDDLE -> new Color(0xff8a2a);
             case TOWER_STREAM_CORE -> new Color(0xffe27a);
@@ -536,7 +555,7 @@ public final class Java2DFrameRenderer {
             float r = zone.radius();
             ground.append(new Ellipse2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2), false);
         }
-        g2.setColor(withAlpha(base, ZONE_FILL_ALPHA));
+        g2.setColor(withAlpha(base, zoneFillAlpha(patch.palette())));
         g2.fill(ground);
         Stroke defaultStroke = g2.getStroke();
         g2.setStroke(ZONE_EDGE_STROKE);
@@ -554,9 +573,19 @@ public final class Java2DFrameRenderer {
         g2.setStroke(defaultStroke);
     }
 
+    /** A Burden field reads heavier; every other field is fainter than a zone. */
+    private static int zoneFillAlpha(Palette look) {
+        return switch (look) {
+            case ZONE_FIELD, ZONE_FIELD_GRAVITY, ZONE_FIELD_UMBRA -> FIELD_FILL_ALPHA;
+            case ZONE_FIELD_BURDEN -> 2 * FIELD_FILL_ALPHA;
+            default -> ZONE_FILL_ALPHA;
+        };
+    }
+
     private void paintZoneDetail(Graphics2D g2, Palette look, ZoneDraw zone) {
         float fade = zone.fade();
         switch (look) {
+            case ZONE_FIELD_GRAVITY -> paintGravityWell(g2, zone);
             case ZONE_BURNING -> this.paintZoneFlames(g2, zone, fade);
             case ZONE_TAR -> this.paintZoneTarGloss(g2, zone, fade);
             case ZONE_FROST -> this.paintZoneCrystals(g2, zone, fade);
@@ -566,6 +595,14 @@ public final class Java2DFrameRenderer {
             default -> {
             }
         }
+    }
+
+    /** A Gravity field darkens toward its stone. */
+    private static void paintGravityWell(Graphics2D g2, ZoneDraw zone) {
+        float r = zone.radius() * GRAVITY_WELL_SHARE;
+        g2.setPaint(new RadialGradientPaint(zone.centerX(), zone.centerY(), r, new float[]{0f, 1f},
+                new Color[]{withAlpha(GRAVITY_WELL, GRAVITY_WELL_ALPHA), withAlpha(GRAVITY_WELL, 0)}));
+        g2.fill(new Ellipse2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2));
     }
 
     /** Tongues of flame that rise up the screen, each an outer flame with a hotter heart, flickering. */
@@ -1092,7 +1129,51 @@ public final class Java2DFrameRenderer {
             case EnemyBurstDraw burst -> EnemyEffects.paintBurst(g2, burst);
             case EnemyEmissionDraw emission -> EnemyEffects.paintEmission(g2, emission);
             case EnemyTintDraw tint -> EnemyEffects.paintTint(g2, tint);
+            case TollMarkDraw toll -> paintTollMark(g2, toll);
+            case SilenceMarkDraw silence -> paintSilenceMark(g2, silence);
         }
+    }
+
+    /** One segment of the ring per stack, lit as each lands, from the top round clockwise. */
+    private static void paintTollMark(Graphics2D g2, TollMarkDraw toll) {
+        Stroke defaultStroke = g2.getStroke();
+        Color lit = colorFor(Palette.STATUS_MARKER_TOLL);
+        g2.setStroke(new BasicStroke(toll.full() ? TOLL_FULL_STROKE : TOLL_STROKE, BasicStroke.CAP_BUTT,
+                BasicStroke.JOIN_ROUND));
+        float r = toll.radius();
+        int segments = 360 / TOLL_SEGMENT_STEP;
+        for (int i = 0; i < segments; i++) {
+            float alpha = i < toll.filled() ? toll.alpha() : toll.alpha() * TOLL_UNLIT_SHARE;
+            g2.setColor(scaleAlpha(lit, alpha));
+            int start = 90 - i * TOLL_SEGMENT_STEP - (TOLL_SEGMENT_STEP - TOLL_SEGMENT_DEGREES) / 2;
+            g2.draw(new Arc2D.Float(toll.x() - r, toll.y() - r, r * 2, r * 2, start, -TOLL_SEGMENT_DEGREES, Arc2D.OPEN));
+        }
+        g2.setStroke(defaultStroke);
+    }
+
+    /** A speech mark in Silence's colour, outlined dark and struck through. */
+    private static void paintSilenceMark(Graphics2D g2, SilenceMarkDraw silence) {
+        float s = silence.size();
+        float x = silence.x();
+        float y = silence.y();
+        Area bubble = new Area(new RoundRectangle2D.Float(x - s * 0.5f, y - s * 0.41f, s, s * 0.68f, s * 0.36f,
+                s * 0.36f));
+        Path2D.Float tail = new Path2D.Float();
+        tail.moveTo(x - s * 0.23f, y + s * 0.23f);
+        tail.lineTo(x - s * 0.05f, y + s * 0.23f);
+        tail.lineTo(x - s * 0.27f, y + s * 0.5f);
+        tail.closePath();
+        bubble.add(new Area(tail));
+        Stroke defaultStroke = g2.getStroke();
+        g2.setColor(scaleAlpha(SILENCE_INK, silence.alpha()));
+        g2.setStroke(new BasicStroke(s * 0.18f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.draw(bubble);
+        g2.setColor(scaleAlpha(colorFor(Palette.STATUS_MARKER_SILENCED), silence.alpha()));
+        g2.fill(bubble);
+        g2.setColor(scaleAlpha(SILENCE_INK, silence.alpha()));
+        g2.setStroke(new BasicStroke(s * 0.16f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.draw(new Line2D.Float(x - s * 0.34f, y + s * 0.16f, x + s * 0.34f, y - s * 0.34f));
+        g2.setStroke(defaultStroke);
     }
 
     /** One dark track behind every bar, so the stack reads as one element on any floor; each fill shrinks to the left. */
@@ -1257,8 +1338,8 @@ public final class Java2DFrameRenderer {
             case CannonballDraw stone -> this.paintShell(g2, stone);
             case SplashDraw splash ->
                     this.paintFilledCircle(g2, splash.palette(), splash.centerX(), splash.centerY(), splash.radius());
-            case PulseDraw pulse ->
-                    this.paintFilledCircle(g2, pulse.palette(), pulse.centerX(), pulse.centerY(), pulse.radius());
+            case ShadowDraw shadow -> paintShadow(g2, shadow);
+            case WardOutlineDraw ward -> paintWardOutline(g2, ward);
             case RingDraw ring -> this.paintRing(g2, ring);
             case FlashDraw flash -> this.paintFlash(g2, flash);
             case StreamDraw stream -> paintStream(g2, stream);
@@ -1313,6 +1394,64 @@ public final class Java2DFrameRenderer {
         h *= 0x2C1B3C6D;
         h ^= h >>> 12;
         return (h & 0xFFFF) / 65536f;
+    }
+
+    /**
+     * The Sundial's veil: the floors are near-black, so it is a cool light, strongest at the stone and gone at its tip,
+     * darker and bluer inside the field of an Umbra stone.
+     */
+    private static void paintShadow(Graphics2D g2, ShadowDraw shadow) {
+        AffineTransform save = g2.getTransform();
+        Shape clip = g2.getClip();
+        Stroke defaultStroke = g2.getStroke();
+        g2.translate(shadow.originX(), shadow.originY());
+        g2.rotate(shadow.headingRadians());
+        Path2D.Float veil = new Path2D.Float();
+        veil.moveTo(0, -shadow.rootHalfWidth());
+        veil.lineTo(shadow.reach(), -shadow.tipHalfWidth());
+        veil.lineTo(shadow.reach(), shadow.tipHalfWidth());
+        veil.lineTo(0, shadow.rootHalfWidth());
+        veil.closePath();
+        fillVeil(g2, veil, colorFor(Palette.TOWER_SUNDIAL), SHADOW_ALPHA, shadow);
+        if (shadow.inFieldUmbra()) {
+            float r = shadow.fieldRadius();
+            g2.clip(new Ellipse2D.Float(-r, -r, r * 2, r * 2));
+            fillVeil(g2, veil, colorFor(Palette.TOWER_SUNDIAL_UMBRA), SHADOW_UMBRA_ALPHA, shadow);
+            g2.setClip(clip);
+        }
+        Color edge = colorFor(Palette.TOWER_SUNDIAL);
+        g2.setColor(scaleAlpha(new Color((edge.getRed() + 255 * 2) / 3, (edge.getGreen() + 255 * 2) / 3,
+                (edge.getBlue() + 255 * 2) / 3), SHADOW_EDGE_ALPHA * shadow.alpha()));
+        g2.setStroke(new BasicStroke(shadow.edgeWidth(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.draw(new Line2D.Float(shadow.rootHalfWidth(), -shadow.rootHalfWidth(), shadow.reach(), -shadow.tipHalfWidth()));
+        g2.setStroke(defaultStroke);
+        g2.setTransform(save);
+    }
+
+    private static void fillVeil(Graphics2D g2, Shape veil, Color color, float alpha, ShadowDraw shadow) {
+        g2.setPaint(new LinearGradientPaint(0f, 0f, Math.max(1f, shadow.reach()), 0f, new float[]{0f, 1f},
+                new Color[]{scaleAlpha(color, alpha * shadow.alpha()), scaleAlpha(color, SHADOW_TIP_ALPHA * shadow.alpha())}));
+        g2.fill(veil);
+    }
+
+    /** The Ward's thin dashed rune line in Silence's colour, round every warded field at once. */
+    private static void paintWardOutline(Graphics2D g2, WardOutlineDraw ward) {
+        float[] dash = new float[WARD_DASH_CELLS.length];
+        for (int i = 0; i < dash.length; i++) {
+            dash[i] = WARD_DASH_CELLS[i] * ward.unit();
+        }
+        Stroke defaultStroke = g2.getStroke();
+        g2.setColor(colorFor(Palette.STATUS_MARKER_SILENCED));
+        g2.setStroke(new BasicStroke(Math.max(1f, WARD_STROKE_CELLS * ward.unit()), BasicStroke.CAP_BUTT,
+                BasicStroke.JOIN_ROUND, 1f, dash, 0f));
+        Path2D edge = new Path2D.Float(Path2D.WIND_NON_ZERO);
+        for (ZoneArcDraw arc : ward.edge()) {
+            float r = arc.radius();
+            edge.append(new Arc2D.Float(arc.centerX() - r, arc.centerY() - r, r * 2, r * 2,
+                    (float) -Math.toDegrees(arc.startRadians()), (float) -Math.toDegrees(arc.sweepRadians()), Arc2D.OPEN), false);
+        }
+        g2.draw(edge);
+        g2.setStroke(defaultStroke);
     }
 
     private void paintFlash(Graphics2D g2, FlashDraw flash) {

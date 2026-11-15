@@ -2,6 +2,8 @@ package td.ui;
 
 import org.junit.jupiter.api.Test;
 import td.fixtures.WorldFixtures;
+import td.tower.Tower;
+import td.tower.TowerFactory;
 import td.ui.render.Palette;
 import td.ui.render.ZoneDraw;
 import td.ui.render.ZonePatchDraw;
@@ -12,6 +14,7 @@ import td.zone.ZoneKind;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 class ZoneFrameBuilderTest {
 
@@ -27,7 +30,7 @@ class ZoneFrameBuilderTest {
         this.addZone(ZoneKind.TAR, 40, 60, 30, 100);
         this.world.zones().doTick(1);
 
-        List<ZonePatchDraw> patches = ZoneFrameBuilder.build(this.world.zones(), 2.0);
+        List<ZonePatchDraw> patches = ZoneFrameBuilder.build(this.world.zones(), List.of(), 2.0);
 
         assertThat(patches).extracting(ZonePatchDraw::palette).containsExactly(Palette.ZONE_TAR);
         ZoneDraw disc = patches.getFirst().discs().getFirst();
@@ -44,11 +47,25 @@ class ZoneFrameBuilderTest {
         this.addZone(ZoneKind.FROST_GROUND, 80, 20, 10, 100);
         this.addZone(ZoneKind.TAR, 200, 60, 30, 100);
 
-        List<ZonePatchDraw> patches = ZoneFrameBuilder.build(this.world.zones(), 0.0);
+        List<ZonePatchDraw> patches = ZoneFrameBuilder.build(this.world.zones(), List.of(), 0.0);
 
         assertThat(patches).hasSize(2);
         assertThat(patches).filteredOn(patch -> patch.palette() == Palette.ZONE_TAR).singleElement()
                 .satisfies(tar -> assertThat(tar.discs()).hasSize(2));
+    }
+
+    @Test
+    void everyObeliskFieldLiesOnOnePatchAtItsRangeAndNoOtherTowerLaysOne() {
+        Tower first = TowerFactory.createTower(TowerFactory.Type.PULSE, this.world, 1, 1);
+        Tower second = TowerFactory.createTower(TowerFactory.Type.PULSE, this.world, 2, 1);
+        Tower sniper = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.world, 4, 1);
+
+        List<ZonePatchDraw> patches = ZoneFrameBuilder.build(this.world.zones(), List.of(first, second, sniper), 0.0);
+
+        assertThat(patches).singleElement().satisfies(field -> assertThat(field.discs())
+                .extracting(ZoneDraw::centerX, ZoneDraw::radius)
+                .containsExactly(tuple((float) first.getX(), first.getRangeReal()),
+                        tuple((float) second.getX(), second.getRangeReal())));
     }
 
     @Test
@@ -59,7 +76,7 @@ class ZoneFrameBuilderTest {
             this.world.zones().doTick(tick);
         }
 
-        ZoneDraw disc = ZoneFrameBuilder.build(this.world.zones(), 0.0).getFirst().discs().getFirst();
+        ZoneDraw disc = ZoneFrameBuilder.build(this.world.zones(), List.of(), 0.0).getFirst().discs().getFirst();
 
         assertThat(disc.fade()).isBetween(0f, 0.99f);
         assertThat(disc.radius()).isEqualTo(radius * disc.fade());

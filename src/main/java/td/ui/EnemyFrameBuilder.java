@@ -36,6 +36,8 @@ import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
 import td.ui.render.RankBadgeDraw;
+import td.ui.render.SilenceMarkDraw;
+import td.ui.render.TollMarkDraw;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -98,6 +100,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float RUNE_ROW_OFFSET_FRACTION = 0.6f;
     private static final float RUNE_FIXED_SCALE = 4f;
     private static final float RUNE_SPACING = 11f;
+    /** Toll's ring has a segment for each stack a plain field builds, just outside the selection ring. */
+    private static final int TOLL_SEGMENTS = 5;
+    private static final float TOLL_RING_MARGIN = 2f;
+    private static final float SILENCE_MARK_SIZE = 7f;
+    private static final float SILENCE_MARK_GAP = 4f;
     /** How far a cast with no reach of its own rings out, relative to the body. */
     private static final float CAST_PULSE_RADIUS_FRACTION = 1.6f;
     /** Larger than a cast's: it marks a new mob, not a change on an existing one. */
@@ -365,6 +372,16 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         }
         this.critSpark(mob, x, y);
         this.overlays(mob, x, y, ringRadius, supportAura);
+        if (active.contains(EffectKind.TOLL)) {
+            int stacks = mob.effectStacks(EffectKind.TOLL);
+            this.markDraws.add(new TollMarkDraw(x, y, ringRadius + TOLL_RING_MARGIN, Math.min(stacks, TOLL_SEGMENTS),
+                    stacks >= TOLL_SEGMENTS, visibility));
+        }
+        if (active.contains(EffectKind.SILENCED)) {
+            float top = Math.max(above + RANK_BADGE_GAP + RANK_BADGE_SIZE, ringRadius + TOLL_RING_MARGIN);
+            this.markDraws.add(new SilenceMarkDraw(x, y - top - SILENCE_MARK_GAP - SILENCE_MARK_SIZE / 2f,
+                    SILENCE_MARK_SIZE, visibility));
+        }
         this.pulses(mob, x, y, scale);
         this.badge(mob, scale, x, y - above - RANK_BADGE_GAP, visibility);
         this.runes(active, x, y - scale * RUNE_ROW_OFFSET_FRACTION);
@@ -562,16 +579,17 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** The dot an effect with no picture of its own earns, if it earns one; every kind is decided here. */
     static Optional<EnemyDotLook> dotFor(EffectKind kind) {
         return switch (kind) {
-            case VULNERABLE, SUNDERED, BRITTLE, CRACKED, DEEP_CRACKED, TARRED, TOLL,
+            case VULNERABLE, SUNDERED, BRITTLE, CRACKED, DEEP_CRACKED, TARRED,
                  UNRAVELED -> Optional.of(EnemyDotLook.DEBUFF);
             case EXPOSED, MARKED, PRIORITY, CHARGED -> Optional.of(EnemyDotLook.SPOTTED);
             case SPRINTING, HASTENED, SPELLPROOF, UNYIELDING, RESOLVE -> Optional.of(EnemyDotLook.BUFF);
             // Drawn on the enemy.
-            case BURN, SOULFIRE, POISON, BLEEDING, HEAL, SHIELD, CHILL, FREEZE, DAZED, INVISIBLE -> Optional.empty();
+            case BURN, SOULFIRE, POISON, BLEEDING, HEAL, SHIELD, CHILL, FREEZE, DAZED, INVISIBLE, TOLL,
+                 SILENCED -> Optional.empty();
             // A rune.
             case DOOM, BLIGHT, INVERSION -> Optional.empty();
             // The Info pane's, or the field on the ground says it.
-            case SCORCHED, SICKENED, REVEALED, SILENCED, ANCHORED, DRAGGED, DEAD_ZONE -> Optional.empty();
+            case SCORCHED, SICKENED, REVEALED, ANCHORED, DRAGGED, DEAD_ZONE -> Optional.empty();
         };
     }
 

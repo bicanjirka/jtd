@@ -17,6 +17,7 @@ keeps the seam honest.
 - Ground zones are the one board list drawn under the enemies (`ZoneFrameBuilder`, `RenderFrame.zones`):
   a zone is a patch, not an enemy overlay or a tower effect. Zones of one kind never stack in play, so they draw as one
   `ZonePatchDraw` with one even fill and one outline; what stands on a disc (a mine's casing, flames) stays per zone.
+  An Obelisk's field is a tower's range, not a zone, but lies on the ground the same way: one patch per stone.
 - Every colour, shape and stroke for board content lives in `td.ui`, keyed by a role, never by domain
   type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), a tower's colour and tier
   colours in its `TowerLooks` row, its icon in its `TowerIcons` row and its foundation and head in its
@@ -24,7 +25,8 @@ keeps the seam honest.
   tower's colour in text is a `Palette` tone (`bodyPaletteFor`) whose `colorFor` case reads its row. There
   are no image assets; all art is vector.
 - A new enemy-centred visual goes into the existing sealed `EnemyOverlayDraw` hierarchy (rings,
-  pulses, hex runes, dots, badge, affix pips, bars, egg, bursts, tints, ice, emissions), not a new `RenderFrame` list. Tower transients likewise go
+  pulses, hex runes, dots, badge, affix pips, bars, egg, bursts, tints, ice, emissions, the Toll ring, the Silence
+  mark), not a new `RenderFrame` list. Tower transients likewise go
   into `TowerEffectDraw`. A bar under an enemy is a row in `EnemyFrameBuilder.bars` and a colour in
   `EnemyLooks.barColor`, with no drawing of its own. Invisibility fades the body itself (`EnemyBodyDraw.cloakProgress`). `EnemyEffects` alone paints
   what an effect draws on an enemy, one draw record per effect and every particle a pure function of the clock and the
