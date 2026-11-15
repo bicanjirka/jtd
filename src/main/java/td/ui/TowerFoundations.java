@@ -35,6 +35,8 @@ final class TowerFoundations {
     static final int TIERS = 4;
     /** A pose's recoil and reload are built at this many even steps, so the pictures kept of them stay few. */
     static final int POSE_STEPS = 4;
+    /** How far round, in cells, a shell lies in a barrel's bore: the size every other drawing of a shell scales from. */
+    static final double BORE_SHELL = 0.034;
 
     private static final double[] FOOTPRINT = {0.275, 0.315, 0.36, 0.40};
     private static final double PLINTH_STEP = 0.045;
@@ -807,7 +809,7 @@ final class TowerFoundations {
             h.glow(len + 0.02, 0, 0.13, z + 0.11, alpha(new Color(0xffe6b0), 0.9));
         }
         if (pose.reload() >= 0.5) {
-            shell(h, pose.shell(), len - 0.05, 0, 0.034, z + 0.11);
+            shell(h, pose.shell(), len - 0.05, 0, BORE_SHELL, z + 0.11);
             if (volley) {
                 for (int i = -1; i <= 1; i++) {
                     shell(h, pose.shell(), -0.10, i * 0.052, 0.022, z + 0.04);

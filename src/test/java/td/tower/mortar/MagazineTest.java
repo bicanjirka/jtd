@@ -120,4 +120,12 @@ class MagazineTest {
 
         assertThat(magazine.keptTo(MagazineSpec.standard(), LAST_KIND)).isSameAs(magazine);
     }
+
+    @Test
+    void twoSpecsThatDrawAlikeAreEqual() {
+        MagazineSpec once = MagazineSpec.standard().withWeight(ShellKind.TAR, 3).fusing();
+        MagazineSpec again = MagazineSpec.standard().withWeight(ShellKind.TAR, 3).fusing();
+
+        assertThat(once).isEqualTo(again).hasSameHashCodeAs(again).isNotEqualTo(again.mixing());
+    }
 }

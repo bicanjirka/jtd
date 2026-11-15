@@ -7,7 +7,9 @@ import td.enemy.EnemyMark;
 import td.enemy.EnemyMob;
 import td.projectile.Projectile;
 import td.stat.StatWording;
+import td.tower.MortarTower;
 import td.tower.Tower;
+import td.tower.TowerInspection;
 import td.ui.render.CellDraw;
 import td.ui.render.CellGridDraw;
 import td.ui.render.InfoSheet;
@@ -94,9 +96,7 @@ public final class BoardRenderer {
                 .map(found -> EnemyStatText.live(found, new StatWording(board.scale())));
 
         Optional<TowerSheet> towerSheet = this.world.towers().all().stream().filter(Tower::isSelected).findFirst()
-                .map(tower -> new TowerSheet(tower.getX(), tower.getY(), TowerSheetText.status(tower.inspect()
-                        .withConditions(tower.conditions()).withProgress(tower.progress())
-                        .withAbilities(tower.abilities()))));
+                .map(tower -> new TowerSheet(tower.getX(), tower.getY(), TowerSheetText.status(liveInspection(tower))));
 
         return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
                 cells, ZoneFrameBuilder.build(this.world.zones(), animationSeconds), enemyFrameBuilder.build(), enemyFrameBuilder.buildCritSparks(),
@@ -124,5 +124,12 @@ public final class BoardRenderer {
             }
         });
         return Optional.of(new CellGridDraw(blocked));
+    }
+
+    /** {@code tower} as it stands this frame: what it carries, how far its nodes count, its bars and its magazine. */
+    static TowerInspection liveInspection(Tower tower) {
+        TowerInspection found = tower.inspect().withConditions(tower.conditions()).withProgress(tower.progress())
+                .withAbilities(tower.abilities());
+        return MortarTower.magazineViewOf(tower).map(found::withMagazine).orElse(found);
     }
 }

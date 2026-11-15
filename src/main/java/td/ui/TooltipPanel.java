@@ -115,6 +115,7 @@ final class TooltipPanel extends JPanel {
             case SheetLine.Prose prose -> false;
             case SheetLine.IconRow row -> false;
             case SheetLine.AbilityRow ability -> false;
+            case SheetLine.MagazineRow magazine -> false;
             case SheetLine.Sentence sentence -> false;
             case SheetLine.Divider divider -> false;
             case SheetLine.Gap gap -> false;

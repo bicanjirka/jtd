@@ -10,7 +10,7 @@ import java.util.Set;
 /** A Payload: adds its kind of shell to the magazine, which leaves its ground where it lands. */
 public final class PayloadMechanic implements MortarMechanic {
 
-    private static final int WEIGHT = 3;
+    public static final int WEIGHT = 3;
 
     private final ShellKind kind;
 

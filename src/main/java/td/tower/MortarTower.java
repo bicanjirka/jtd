@@ -22,6 +22,8 @@ import td.tower.mortar.FusionMechanic;
 import td.tower.mortar.HeavyRider;
 import td.tower.mortar.LastingMixMechanic;
 import td.tower.mortar.Magazine;
+import td.tower.mortar.MagazineSpec;
+import td.tower.mortar.MagazineView;
 import td.tower.mortar.MortarMechanic;
 import td.tower.mortar.MortarSpec;
 import td.tower.mortar.NukeFlash;
@@ -222,6 +224,8 @@ public final class MortarTower extends AbstractTower {
     private volatile int loading = 1;
     private FireClock clock = new FireClock(COOLDOWN_MAX);
     private volatile NukeFlash nukeFlash;
+    /** The chances last worked out, and the draw they were worked out for. */
+    private volatile ShellOdds odds;
     private int tickNow;
     private EnemyMob currentTarget;
 
@@ -354,6 +358,9 @@ public final class MortarTower extends AbstractTower {
     }
 
     /** A shell of a volley still to fire: its kind, where it is laid with Carpet Bombing, and the tick it fires. */
+    private record ShellOdds(MagazineSpec spec, Map<ShellKind, Float> chances) {
+    }
+
     private record VolleyShell(ShellKind kind, Optional<Vec2> laidAt, int firesAt) {
     }
 
@@ -437,7 +444,9 @@ public final class MortarTower extends AbstractTower {
         if (kind == ShellKind.NUKE) {
             this.nukeFlash = new NukeFlash(x, y, blast.edge(), this.tickNow + 1);
         }
-        this.blastMarks.add(new BlastMark(new Vec2(x, y), blast.edge(), this.tickNow + 1, kind.look()));
+        boolean fragments = kind == ShellKind.HEAVY && spec.heavy() == HeavyRider.SHRAPNEL;
+        this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), this.tickNow + 1, kind.look())
+                .withFragments(fragments));
         this.leaveGround(x, y, shell, blast, spec);
     }
 
@@ -497,14 +506,81 @@ public final class MortarTower extends AbstractTower {
         return this.magazine;
     }
 
+    /** Whether a range upgrade carries it past its base range. */
+    public boolean reachesPastItsBase() {
+        return this.stats().reachReal() > RANGE * this.cell();
+    }
+
     /** How many front shells one firing loads: one, or a volley's. Any thread. */
     public int loadingCount() {
         return this.loading;
     }
 
-    /** What share of the shells it fires are each kind, over a long run of draws. */
+    /** What share of the shells it fires are each kind, over a long run of draws; worked out again only as it changes. */
     public Map<ShellKind, Float> shellChances() {
-        return this.spec(this.mechanics.all()).magazine().chances();
+        MagazineSpec spec = this.spec(this.mechanics.all()).magazine();
+        ShellOdds last = this.odds;
+        if (last != null && last.spec().equals(spec)) {
+            return last.chances();
+        }
+        ShellOdds fresh = new ShellOdds(spec, spec.chances());
+        this.odds = fresh;
+        return fresh.chances();
+    }
+
+    /**
+     * What {@code node} says, and, for one it doesn't own, how the share of each kind it fires would change: a node
+     * taking a cluster's place leaves out what the member it replaces adds.
+     */
+    @Override
+    public NodeWords wordsOf(UpgradeNode node) {
+        NodeWords words = super.wordsOf(node);
+        List<UpgradeNode> owned = this.upgrades().owned();
+        if (owned.stream().anyMatch(it -> it.id().equals(node.id()))) {
+            return words;
+        }
+        Optional<UpgradeCluster> cluster = this.upgradeTree().clusterOf(node);
+        List<MortarMechanic> after = new ArrayList<>();
+        for (UpgradeNode kept : owned) {
+            if (cluster.isEmpty() || !cluster.get().contains(kept.id())) {
+                after.addAll(MECHANICS.mechanicsOf(kept));
+            }
+        }
+        after.addAll(MECHANICS.mechanicsOf(node));
+        Optional<TermText> change = chanceChange(this.shellChances(), this.spec(after).magazine().chances());
+        if (change.isEmpty()) {
+            return words;
+        }
+        List<TermText> sentences = new ArrayList<>(words.sentences());
+        sentences.add(change.get());
+        return NodeWords.of(words.name(), words.stats(), sentences).withChosenOver(words.chosenOver());
+    }
+
+    /** "Heavy 18% → 31%, Normal 82% → 69%" for every kind whose shown share moves; empty when none does. */
+    static Optional<TermText> chanceChange(Map<ShellKind, Float> before, Map<ShellKind, Float> after) {
+        TermText text = TermText.empty();
+        for (ShellKind kind : ShellKind.values()) {
+            String was = TermNumbers.percent(before.getOrDefault(kind, 0f));
+            String will = TermNumbers.percent(after.getOrDefault(kind, 0f));
+            if (was.equals(will)) {
+                continue;
+            }
+            if (!text.isEmpty()) {
+                text = text.plus(", ");
+            }
+            text = text.plus(kind.mention()).plus(" " + was + " → " + will);
+        }
+        return text.isEmpty() ? Optional.empty() : Optional.of(text);
+    }
+
+    /** Its magazine as the pane shows it. */
+    public MagazineView magazineView() {
+        return new MagazineView(this.magazine.shells(), this.loading, this.shellChances());
+    }
+
+    /** {@code tower}'s magazine as the pane shows it, when it is a Mortar. */
+    public static Optional<MagazineView> magazineViewOf(Tower tower) {
+        return tower.accept(AS_MORTAR).map(MortarTower::magazineView);
     }
 
     /** {@code tower}'s magazine, when it is a Mortar. */

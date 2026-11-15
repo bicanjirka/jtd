@@ -153,6 +153,14 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
                 .with(TowerCue.HEADHUNTER, tower.huntsItsTarget());
     }
 
+    /** The pose a Mortar's barrel is in: the shell at its magazine's front in the bore, a tray while it loads a volley. */
+    static TowerPose poseOf(MortarTower tower) {
+        return poseOfReload(tower.getCoolDownFraction())
+                .withShell(ProjectileFrameBuilder.loadedShellOf(tower.magazine().front().look()))
+                .with(TowerCue.VOLLEY, tower.loadingCount() > 1)
+                .with(TowerCue.LONG_BARREL, tower.reachesPastItsBase());
+    }
+
     /** An upgrade tier's colour role, for its perk icons; a tier above the last takes the last's. */
     static Palette tierPaletteFor(int tier) {
         return TIER_PALETTES[Math.min(tier, TIER_PALETTES.length - 1)];
@@ -230,8 +238,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitMortarTower(MortarTower tower) {
-        this.aimed(tower, poseOfReload(tower.getCoolDownFraction()), tower.getTurretAim(),
-                tower.getCoolDownFraction() <= 0f);
+        this.aimed(tower, poseOf(tower), tower.getTurretAim(), tower.getCoolDownFraction() <= 0f);
         return null;
     }
 

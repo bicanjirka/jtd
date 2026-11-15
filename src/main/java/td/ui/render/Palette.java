@@ -64,6 +64,8 @@ public enum Palette {
     TOWER_CINDER_CONE_WHITE,
     TOWER_CINDER_CONE_SOUL,
     TOWER_CINDER_CONE_SEARING,
+    /** A Normal shell's iron, in a magazine's strip. */
+    SHELL_NORMAL,
     /** The Heavy shell's band. */
     TERM_HEAVY_SHELL,
     ZONE_BURNING,
@@ -84,6 +86,10 @@ public enum Palette {
     PROJECTILE_SHADOW,
     /** The white flash and expanding ring a nuke lands in. */
     TOWER_MORTAR_NUKE_FLASH,
+    /** The ring round a blast's full-damage core, and fainter round its edge. */
+    BLAST_RING,
+    /** The ring round a nuke's stronger edge. */
+    BLAST_NUKE_RING,
     PROJECTILE_MISSILE,
     PROJECTILE_SMOKE,
     PROJECTILE_CRYO,

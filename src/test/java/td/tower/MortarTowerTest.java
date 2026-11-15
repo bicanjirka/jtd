@@ -19,9 +19,13 @@ import td.projectile.CannonballProjectile;
 import td.projectile.Projectile;
 import td.projectile.ShellLook;
 import td.stat.StatModifiers;
+import td.term.TermText;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.Magazine;
+import td.tower.mortar.MagazineSpec;
+import td.tower.mortar.PayloadMechanic;
 import td.tower.mortar.ShellKind;
+import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.wave.Path;
 import td.wave.Vec2;
@@ -31,6 +35,7 @@ import td.zone.ZoneKind;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -591,5 +596,42 @@ class MortarTowerTest {
 
         assertThat(loadingHeavy).extracting(TowerBuffState::term).contains(TowerTerm.HEAVY_SHELL);
         assertThat(normal.conditions()).extracting(TowerBuffState::term).doesNotContain(TowerTerm.HEAVY_SHELL);
+    }
+
+    @Test
+    void aNodeNotYetOwnedSaysHowItWouldMoveEachKindsShareAndAnOwnedOneDoesNot() {
+        MortarTower tower = this.towerAt(3, 3);
+        UpgradeNode tar = UpgradePaths.named(tower, "Tar");
+        Map<ShellKind, Float> before = tower.shellChances();
+        Map<ShellKind, Float> after = MagazineSpec.standard().withWeight(ShellKind.TAR, PayloadMechanic.WEIGHT).chances();
+
+        List<TermText> offered = tower.wordsOf(tar).sentences();
+        UpgradePaths.buy(tower, this.context, "Tar");
+        List<TermText> owned = tower.wordsOf(tar).sentences();
+
+        assertThat(offered).endsWith(MortarTower.chanceChange(before, after).orElseThrow());
+        assertThat(owned).doesNotContain(MortarTower.chanceChange(before, after).orElseThrow());
+    }
+
+    @Test
+    void aClusterMembersHoverLeavesOutWhatTheMemberItWouldReplaceAdds() {
+        MortarTower tower = this.towerWith("Napalm");
+        Map<ShellKind, Float> withTarInstead = MagazineSpec.standard().withWeight(ShellKind.TAR, PayloadMechanic.WEIGHT)
+                .chances();
+
+        List<TermText> offered = tower.wordsOf(UpgradePaths.named(tower, "Tar")).sentences();
+
+        assertThat(offered).endsWith(MortarTower.chanceChange(tower.shellChances(), withTarInstead).orElseThrow());
+    }
+
+    @Test
+    void aChanceChangeNamesOnlyTheKindsWhoseShownShareMoves() {
+        Map<ShellKind, Float> before = Map.of(ShellKind.NORMAL, 0.9f, ShellKind.HEAVY, 0.1f);
+        Map<ShellKind, Float> after = Map.of(ShellKind.NORMAL, 0.8f, ShellKind.HEAVY, 0.1f, ShellKind.FLARE, 0.1f);
+
+        TermText change = MortarTower.chanceChange(before, after).orElseThrow();
+
+        assertThat(change).isEqualTo(TermText.of("Normal 90% → 80%, ").plus(TowerTerm.FLARE).plus(" 0% → 10%"));
+        assertThat(MortarTower.chanceChange(before, before)).isEmpty();
     }
 }

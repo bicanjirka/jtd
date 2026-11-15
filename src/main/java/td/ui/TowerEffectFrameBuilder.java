@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.projectile.ShellLook;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
 import td.tower.MortarTower;
@@ -85,6 +86,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float NUKE_FLASH_SHARE = 0.6f;
     private static final float BLAST_MARK_ALPHA = 0.4f;
     private static final float NUKE_FLASH_ALPHA = 0.8f;
+    private static final float BLAST_CORE_RING_ALPHA = 0.7f;
+    private static final float BLAST_EDGE_RING_ALPHA = 0.3f;
+    /** A Heavy's fragments: how many fly out, how long each streak is as a share of the edge, and how thick. */
+    private static final int BLAST_FRAGMENTS = 8;
+    private static final float FRAGMENT_SHARE = 0.25f;
+    private static final float FRAGMENT_STROKE_CELLS = 0.05f;
     private static final double NEST_ORBIT_RADIANS_PER_TICK = 0.08;
 
     /** The Pulse's ripples: how many rings, how fast they spread, and how much faster for each Toll stack. */
@@ -289,7 +296,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         float lift = ProjectileFrameBuilder.lobLift(peak, flown) + released;
         Palette tone = stone.charged() ? Palette.TOWER_SPLASH_ARC : Palette.PROJECTILE_CANNONBALL;
         this.draws.add(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(lift - released, peak), 1f, x,
-                y - lift));
+                y - lift, Optional.empty()));
     }
 
     /** Something flying straight to where it lands, its streak trailing behind its head. */
@@ -423,8 +430,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             float progress = (this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha)
                     / MortarTower.BLAST_MARK_TICKS;
             if (progress >= 0f && progress < 1f) {
-                this.draws.add(new FlashDraw(ProjectileFrameBuilder.paletteFor(mark.look()), (float) mark.at().x(),
-                        (float) mark.at().y(), mark.radius(), (1f - progress) * BLAST_MARK_ALPHA));
+                this.blastMark(mark, progress);
             }
         }
         tower.getNukeFlash().ifPresent(flash -> {
@@ -439,6 +445,35 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             }
         });
         return null;
+    }
+
+    /**
+     * A blast's flash over its edge, a white ring round its full-damage core and a fainter one, or a nuke's yellow-green
+     * one, round its edge; a Heavy with shrapnel throws fragments out over it.
+     */
+    private void blastMark(BlastMark mark, float progress) {
+        float fade = 1f - progress;
+        float x = (float) mark.at().x();
+        float y = (float) mark.at().y();
+        this.draws.add(new FlashDraw(ProjectileFrameBuilder.paletteFor(mark.look()), x, y, mark.edge(),
+                fade * BLAST_MARK_ALPHA));
+        this.draws.add(new RingDraw(Palette.BLAST_RING, x, y, mark.core(), fade * BLAST_CORE_RING_ALPHA));
+        if (mark.edge() > mark.core()) {
+            boolean nuke = mark.look() == ShellLook.NUKE;
+            this.draws.add(new RingDraw(nuke ? Palette.BLAST_NUKE_RING : Palette.BLAST_RING, x, y, mark.edge(),
+                    fade * (nuke ? BLAST_CORE_RING_ALPHA : BLAST_EDGE_RING_ALPHA)));
+        }
+        if (mark.fragments()) {
+            float head = mark.edge() * progress;
+            float tail = Math.max(0f, head - mark.edge() * FRAGMENT_SHARE);
+            for (int i = 0; i < BLAST_FRAGMENTS; i++) {
+                double angle = i * 2 * Math.PI / BLAST_FRAGMENTS + mark.startedAtTick();
+                float cos = (float) Math.cos(angle);
+                float sin = (float) Math.sin(angle);
+                this.draws.add(new TracerDraw(Palette.PROJECTILE_CANNONBALL, Palette.TERM_HEAVY_SHELL, x + cos * tail,
+                        y + sin * tail, x + cos * head, y + sin * head, this.scale * FRAGMENT_STROKE_CELLS, fade));
+            }
+        }
     }
 
     /** The missiles banked in the nest, circling the tower; the missile in flight is a projectile. */
