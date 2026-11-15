@@ -98,54 +98,54 @@ public final class MortarTower extends AbstractTower {
     /** Flight time depends on where the shell is going, so the aim is refined this many times. */
     private static final int PREDICTION_PASSES = 3;
 
-    private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 11)
+    private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 5)
             .withModifiers(TowerModifiers.range(1f));
-    private static final UpgradeNode HEAVY_CHARGE = UpgradeNode.of("mortar.heavy_charge", "Heavy Charge", 11)
+    private static final UpgradeNode HEAVY_CHARGE = UpgradeNode.of("mortar.heavy_charge", "Heavy Charge", 9)
             .withModifiers(TowerModifiers.damage(10f));
-    private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 3);
-    private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 1);
+    private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 2);
+    private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 2);
 
-    private static final UpgradeNode CONCUSSION = UpgradeNode.of("mortar.concussion", "Concussion", 5)
+    private static final UpgradeNode CONCUSSION = UpgradeNode.of("mortar.concussion", "Concussion", 6)
             .inTier(1);
-    private static final UpgradeNode SHRAPNEL = UpgradeNode.of("mortar.shrapnel", "Shrapnel", 5)
+    private static final UpgradeNode SHRAPNEL = UpgradeNode.of("mortar.shrapnel", "Shrapnel", 6)
             .inTier(1);
-    private static final UpgradeNode NAPALM = UpgradeNode.of("mortar.napalm", "Napalm", 12)
+    private static final UpgradeNode NAPALM = UpgradeNode.of("mortar.napalm", "Napalm", 4)
             .inTier(1);
-    private static final UpgradeNode TAR = UpgradeNode.of("mortar.tar", "Tar", 12)
+    private static final UpgradeNode TAR = UpgradeNode.of("mortar.tar", "Tar", 4)
             .inTier(1);
-    private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 12)
+    private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 4)
             .inTier(1);
-    private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 1)
+    private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 4)
             .inTier(1);
     private static final UpgradeCondition A_PAYLOAD = UpgradeCondition.owns(NAPALM.id())
             .or(UpgradeCondition.owns(TAR.id())).or(UpgradeCondition.owns(CRYO.id()));
 
-    private static final UpgradeNode BARRAGE = UpgradeNode.of("mortar.barrage", "Barrage", 4)
+    private static final UpgradeNode BARRAGE = UpgradeNode.of("mortar.barrage", "Barrage", 31)
             .inTier(2);
-    private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 4)
+    private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 31)
             .inTier(2);
     private static final UpgradeNode OVERCHARGE = UpgradeNode.of("mortar.overcharge", "Overcharge", 8)
             .withModifiers(TowerModifiers.heavyMultiplier(1f))
             .inTier(2);
-    private static final UpgradeNode BIG_BORE_2 = UpgradeNode.of("mortar.big_bore_2", "Big Bore II", 9)
+    private static final UpgradeNode BIG_BORE_2 = UpgradeNode.of("mortar.big_bore_2", "Big Bore II", 6)
             .inTier(2);
-    private static final UpgradeNode THICK_MIX = UpgradeNode.of("mortar.thick_mix", "Thick Mix", 7)
+    private static final UpgradeNode THICK_MIX = UpgradeNode.of("mortar.thick_mix", "Thick Mix", 6)
             .withRequires(A_PAYLOAD)
             .inTier(2);
 
-    private static final UpgradeNode FUSION = UpgradeNode.of("mortar.fusion", "Fusion", 18)
+    private static final UpgradeNode FUSION = UpgradeNode.of("mortar.fusion", "Fusion", 8)
             .inTier(3);
-    private static final UpgradeNode RICH_MIX = UpgradeNode.of("mortar.rich_mix", "Rich Mix", 18)
+    private static final UpgradeNode RICH_MIX = UpgradeNode.of("mortar.rich_mix", "Rich Mix", 8)
             .inTier(3);
-    private static final UpgradeNode LASTING_MIX = UpgradeNode.of("mortar.lasting_mix", "Lasting Mix", 10)
+    private static final UpgradeNode LASTING_MIX = UpgradeNode.of("mortar.lasting_mix", "Lasting Mix", 8)
             .after(THICK_MIX)
             .inTier(3);
     private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 5)
             .inTier(3);
-    private static final UpgradeNode QUICK_RELOAD = UpgradeNode.of("mortar.quick_reload", "Quick Reload", 19)
+    private static final UpgradeNode QUICK_RELOAD = UpgradeNode.of("mortar.quick_reload", "Quick Reload", 39)
             .withModifiers(TowerModifiers.attackSpeed(3.5f / 3f - 1f))
             .inTier(3);
-    private static final UpgradeNode ELEVATION_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Elevation II", 26)
+    private static final UpgradeNode ELEVATION_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Elevation II", 16)
             .withModifiers(TowerModifiers.range(1f))
             .inTier(3);
 

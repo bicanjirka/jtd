@@ -58,7 +58,7 @@ import static td.tower.upgrade.MechanicCatalogue.entry;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class PulseTower extends AbstractTower {
 
-    public static final int PRICE = 20;
+    public static final int PRICE = 15;
     /** Damage a second to every enemy in the field. */
     public static final float DAMAGE_POINTS = 10f;
     public static final float RANGE = 1.5f;
@@ -74,48 +74,48 @@ public final class PulseTower extends AbstractTower {
     private static final int SHADOW_PERIOD_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     private static final float HUM_POINTS = 5f;
 
-    private static final UpgradeNode WIDE_FIELD = UpgradeNode.of(RangeNodes.RANGE_ID, "Wide Field", 8)
+    private static final UpgradeNode WIDE_FIELD = UpgradeNode.of(RangeNodes.RANGE_ID, "Wide Field", 26)
             .withModifiers(TowerModifiers.range(0.5f));
-    private static final UpgradeNode HUM = UpgradeNode.of("pulse.hum", "Hum", 5)
+    private static final UpgradeNode HUM = UpgradeNode.of("pulse.hum", "Hum", 14)
             .withModifiers(TowerModifiers.damage(HUM_POINTS));
 
-    private static final UpgradeNode SUNDIAL = UpgradeNode.of("pulse.sundial", "Sundial", 20)
+    private static final UpgradeNode SUNDIAL = UpgradeNode.of("pulse.sundial", "Sundial", 35)
             .inTier(1);
     private static final UpgradeNode WARD = UpgradeNode.of("pulse.ward", "Ward", 1)
             .inTier(1);
-    private static final UpgradeNode QUICK_TOLL = UpgradeNode.of("pulse.quick_toll", "Quick Toll", 3)
+    private static final UpgradeNode QUICK_TOLL = UpgradeNode.of("pulse.quick_toll", "Quick Toll", 9)
             .withModifiers(TowerModifiers.tollPace(-Math.round(0.25f * TickRate.TICKS_PER_SECOND)))
             .inTier(1);
-    private static final UpgradeNode DEEP_PULL = UpgradeNode.of("pulse.deep_pull", "Deep Pull", 3)
+    private static final UpgradeNode DEEP_PULL = UpgradeNode.of("pulse.deep_pull", "Deep Pull", 29)
             .withModifiers(TowerModifiers.dragPerToll(0.02f))
             .inTier(1);
 
-    private static final UpgradeNode BURDEN = UpgradeNode.of("pulse.burden", "Burden", 16)
+    private static final UpgradeNode BURDEN = UpgradeNode.of("pulse.burden", "Burden", 62)
             .withModifiers(TowerModifiers.dragPerToll(0.03f))
             .inTier(2);
-    private static final UpgradeNode GRAVITY = UpgradeNode.of("pulse.gravity", "Gravity", 16)
+    private static final UpgradeNode GRAVITY = UpgradeNode.of("pulse.gravity", "Gravity", 62)
             .inTier(2);
-    private static final UpgradeNode UMBRA = UpgradeNode.of("pulse.umbra", "Umbra", 16)
+    private static final UpgradeNode UMBRA = UpgradeNode.of("pulse.umbra", "Umbra", 62)
             .after(SUNDIAL)
             .inTier(2);
-    private static final UpgradeNode HUM_2 = UpgradeNode.of("pulse.hum_2", "Hum II", 9)
+    private static final UpgradeNode HUM_2 = UpgradeNode.of("pulse.hum_2", "Hum II", 29)
             .withModifiers(TowerModifiers.damage(HUM_POINTS))
             .inTier(2);
     private static final UpgradeNode DEEP_SHADOW = UpgradeNode.of("pulse.deep_shadow", "Deep Shadow", 18)
             .after(SUNDIAL)
             .inTier(2);
-    private static final UpgradeNode WIDE_FIELD_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Wide Field II", 19)
+    private static final UpgradeNode WIDE_FIELD_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Wide Field II", 52)
             .withModifiers(TowerModifiers.range(0.5f))
             .inTier(2);
 
-    private static final UpgradeNode KNELL = UpgradeNode.of("pulse.knell", "Knell", 21)
+    private static final UpgradeNode KNELL = UpgradeNode.of("pulse.knell", "Knell", 152)
             .inTier(3);
-    private static final UpgradeNode DEEP_TOLL = UpgradeNode.of("pulse.deep_toll", "Deep Toll", 21)
+    private static final UpgradeNode DEEP_TOLL = UpgradeNode.of("pulse.deep_toll", "Deep Toll", 152)
             .inTier(3);
-    private static final UpgradeNode DEEP_PULL_2 = UpgradeNode.of("pulse.deep_pull_2", "Deep Pull II", 14)
+    private static final UpgradeNode DEEP_PULL_2 = UpgradeNode.of("pulse.deep_pull_2", "Deep Pull II", 102)
             .withModifiers(TowerModifiers.dragPerToll(0.02f))
             .inTier(3);
-    private static final UpgradeNode SWIFT_SHADOW = UpgradeNode.of("pulse.swift_shadow", "Swift Shadow", 22)
+    private static final UpgradeNode SWIFT_SHADOW = UpgradeNode.of("pulse.swift_shadow", "Swift Shadow", 46)
             .after(SUNDIAL)
             .inTier(3);
 
