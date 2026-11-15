@@ -18,11 +18,14 @@ import td.tower.ability.AbilityBar;
 import td.tower.ability.AbilityState;
 import td.tower.mortar.MagazineView;
 import td.tower.mortar.ShellKind;
+import td.tower.seeker.MissileKind;
+import td.tower.seeker.NestView;
 import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeLine;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.render.IconFace;
 import td.ui.render.InfoSheet;
+import td.ui.render.LoadedMissile;
 import td.ui.render.LoadedShell;
 import td.ui.render.Palette;
 import td.ui.render.SheetIcon;
@@ -101,6 +104,7 @@ final class TowerSheetText {
         iconRow("Perks", perkIcons(tower)).ifPresent(lines::add);
         tower.abilities().forEach(ability -> lines.add(abilityRow(ability)));
         tower.magazine().ifPresent(magazine -> lines.addAll(magazineLines(magazine)));
+        tower.nest().filter(nest -> nest.chances().size() > 1).ifPresent(nest -> lines.addAll(nestLines(nest)));
         iconRow("Buffs", conditionIcons(tower, Side.BUFF)).ifPresent(lines::add);
         iconRow("Debuffs", conditionIcons(tower, Side.DEBUFF)).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
@@ -206,6 +210,31 @@ final class TowerSheetText {
                 .toList(), magazine.loading(), shares,
                 new SheetTooltip(TooltipKey.ofTerm("magazine", TowerTerm.MAGAZINE), hover));
         return List.of(row, SheetLine.Sentence.of(chances));
+    }
+
+    /** The nest's slots and strip once it draws more than one kind, then each kind's share in words. */
+    private static List<SheetLine> nestLines(NestView nest) {
+        List<SheetLine.MissileShare> shares = nest.chances().entrySet().stream()
+                .map(entry -> new SheetLine.MissileShare(missileOf(entry.getKey()), entry.getValue()))
+                .toList();
+        TermText chances = TermText.empty();
+        List<SheetLine> rows = new ArrayList<>();
+        for (Map.Entry<MissileKind, Float> entry : nest.chances().entrySet()) {
+            if (!chances.spans().isEmpty()) {
+                chances = chances.plus(" · ");
+            }
+            chances = chances.plus(entry.getKey().term()).plus(" " + TermNumbers.percent(entry.getValue()));
+            rows.add(Row.toned(Glyph.DOT, MissileArt.paletteOf(missileOf(entry.getKey())), entry.getKey().term().title(),
+                    TermNumbers.percent(entry.getValue())));
+        }
+        InfoSheet hover = TermSheets.of(TowerTerm.NEST, TowerTerm.NEST.describe(), rows);
+        SheetLine.NestRow row = new SheetLine.NestRow(nest.missiles().stream().map(TowerSheetText::missileOf).toList(),
+                shares, new SheetTooltip(TooltipKey.ofTerm("nest", TowerTerm.NEST), hover));
+        return List.of(row, SheetLine.Sentence.of(chances));
+    }
+
+    private static LoadedMissile missileOf(MissileKind kind) {
+        return ProjectileFrameBuilder.loadedMissileOf(kind.look());
     }
 
     /** "Normal 60% · Heavy 40%". */

@@ -25,6 +25,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
@@ -78,6 +79,7 @@ final class InfoSheetDocument {
     private static final int SLOT_MAX = 20;
     private static final int SLOT_GAP = 2;
     private static final float SLOT_SHELL_SHARE = 0.24f;
+    private static final float SLOT_MISSILE_SHARE = 0.7f;
     private static final int SHARE_STRIP_HEIGHT = 5;
     private static final int SHARE_STRIP_GAP = 3;
     private static final Color SLOT_BACKGROUND = new Color(28, 28, 29);
@@ -125,6 +127,7 @@ final class InfoSheetDocument {
             case SheetLine.IconRow row -> this.iconRow(row);
             case SheetLine.AbilityRow ability -> this.abilityRow(ability);
             case SheetLine.MagazineRow magazine -> this.magazineRow(magazine);
+            case SheetLine.NestRow nest -> this.nestRow(nest);
             case SheetLine.Divider divider -> {
                 this.icon(new PaintedIcon(this.width, DIVIDER_HEIGHT, g2 -> {
                     g2.setColor(Hud.BORDER_IDLE);
@@ -436,6 +439,41 @@ final class InfoSheetDocument {
             for (SheetLine.ShellShare share : magazine.shares()) {
                 float to = from + rowWidth * share.share();
                 g2.setColor(Java2DFrameRenderer.colorFor(share.tone()));
+                g2.fill(new Rectangle2D.Float(from, slot + SHARE_STRIP_GAP, to - from, SHARE_STRIP_HEIGHT));
+                from = to;
+            }
+        }));
+    }
+
+    /**
+     * The nest as the magazine is drawn: a slot per missile held, the next to leave first, each missile drawn as it
+     * circles the tower, and under them the strip of each kind's share. The line opens its tooltip.
+     */
+    private void nestRow(SheetLine.NestRow nest) {
+        this.hover = new HoverRun.RowRun(nest.tooltip());
+        int count = Math.max(1, nest.missiles().size());
+        int room = this.width - EDGE_MARGIN * 2 - SLOT_GAP * (count - 1);
+        int slot = Math.max(1, Math.min(SLOT_MAX, room / count));
+        int height = slot + SHARE_STRIP_GAP + SHARE_STRIP_HEIGHT;
+        int rowWidth = count * (slot + SLOT_GAP) - SLOT_GAP;
+        this.icon(new PaintedIcon(rowWidth, height, g2 -> {
+            g2.translate(-rowWidth / 2.0, -height / 2.0);
+            for (int i = 0; i < nest.missiles().size(); i++) {
+                int x = i * (slot + SLOT_GAP);
+                g2.setColor(SLOT_BACKGROUND);
+                g2.fill(new Rectangle2D.Float(x, 0, slot, slot));
+                g2.setColor(Hud.BORDER_IDLE);
+                g2.draw(new Rectangle2D.Float(x + 0.5f, 0.5f, slot - 1, slot - 1));
+                AffineTransform pen = g2.getTransform();
+                g2.translate(x + slot / 2.0, slot / 2.0);
+                g2.rotate(-Math.PI / 4);
+                MissileArt.paint(g2, nest.missiles().get(i), slot * SLOT_MISSILE_SHARE, false);
+                g2.setTransform(pen);
+            }
+            float from = 0f;
+            for (SheetLine.MissileShare share : nest.shares()) {
+                float to = from + rowWidth * share.share();
+                g2.setColor(Java2DFrameRenderer.colorFor(MissileArt.paletteOf(share.missile())));
                 g2.fill(new Rectangle2D.Float(from, slot + SHARE_STRIP_GAP, to - from, SHARE_STRIP_HEIGHT));
                 from = to;
             }

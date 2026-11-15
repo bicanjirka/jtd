@@ -37,6 +37,8 @@ final class TowerSprites {
 
     /** How far up the screen a part's top is lifted, as a share of its height: the board is seen from the south. */
     private static final double LIFT = 0.42;
+    /** A nest's ring circles this far past the foundation's edge, in cells. */
+    private static final double NEST_PAST_FOUNDATION = 0.06;
     /** The lit rim along a part's top-left edge, in cells. */
     private static final double RIM = 0.024;
     /** A head turns in this many steps; between two of them it reuses the nearer picture. */
@@ -212,6 +214,17 @@ final class TowerSprites {
         return new Point2D.Float((float) (centerX + Math.cos(heading) * foundation.muzzle() * scale),
                 (float) (centerY + Math.sin(heading) * foundation.muzzle() * scale
                         - LIFT * foundation.muzzleHeight() * scale));
+    }
+
+    /** The ring a nest circles on round {@code look} in {@code pose}, in board pixels: its centre lifted to its height. */
+    static Point2D.Float nestCentre(TowerLook look, int tier, TowerPose pose, float centerX, float centerY, int scale) {
+        TowerFoundations.Foundation foundation = TowerFoundations.of(look, tier, pose);
+        return new Point2D.Float(centerX, (float) (centerY - LIFT * foundation.nest() * scale));
+    }
+
+    /** How far out a nest's ring circles at {@code tier}, in board pixels: just outside the foundation. */
+    static float nestRadius(int tier, int scale) {
+        return (float) ((TowerFoundations.footprint(tier) + NEST_PAST_FOUNDATION) * scale);
     }
 
     private static void paintRising(Graphics2D g2, TowerSpriteDraw tower, int scale, float progress) {

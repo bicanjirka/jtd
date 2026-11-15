@@ -72,7 +72,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         }
 
         public TowerLook visitSeekerTower(SeekerTower tower) {
-            return TowerLook.SEEKER;
+            return bodyLookOf(tower);
         }
 
         public TowerLook visitCinderTower(CinderTower tower) {
@@ -116,6 +116,20 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     /** The pose a Burst is in: its arm reloading, and charged while an ability is full and waits. */
     static TowerPose poseOf(SplashTower tower) {
         return poseOfReload(tower.getCoolDownFraction()).with(TowerCue.CHARGED, tower.holdsAFullAbility());
+    }
+
+    /** The crystal its second missile made it. */
+    static TowerLook bodyLookOf(SeekerTower tower) {
+        return tower.secondMissile().map(kind -> switch (kind) {
+            case FROST -> TowerLook.SEEKER;
+            case RUBY -> TowerLook.RUBY;
+            case SHADE -> TowerLook.SHADE;
+        }).orElse(TowerLook.SEEKER);
+    }
+
+    /** An Aerie brightens while the next freeze sets off a Release. */
+    static TowerPose poseOf(SeekerTower tower) {
+        return TowerPose.idle().with(TowerCue.RELEASE_READY, tower.releaseReady());
     }
 
     /** The stone the identity pick made it, which its rune shows. */
@@ -267,7 +281,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitSeekerTower(SeekerTower tower) {
-        this.sprite(tower, TowerLook.SEEKER, TowerPose.idle());
+        this.sprite(tower, bodyLookOf(tower), poseOf(tower));
         return null;
     }
 

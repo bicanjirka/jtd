@@ -5,6 +5,7 @@ import td.ui.render.EnemyEggDraw;
 import td.ui.render.EnemyEmissionDraw;
 import td.ui.render.EnemyIceDraw;
 import td.ui.render.EnemyTintDraw;
+import td.ui.render.IceLook;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -49,8 +50,6 @@ final class EnemyEffects {
     private static final Color CHILL_TINT = new Color(0x8F, 0xD4, 0xFF);
     private static final Color CHILL_RIM = new Color(0xC8, 0xEC, 0xFF);
     private static final Color FLAKE = new Color(0xD6, 0xF1, 0xFF);
-    private static final Color FREEZE_TINT = new Color(0xA8, 0xDC, 0xFF);
-    private static final Color ICE_RIM = new Color(240, 251, 255);
     private static final Color HEAL_PLUS = new Color(0x7D, 0xFF, 0xA0);
     private static final Color DAZE_STAR = new Color(0xFF, 0xE4, 0x6A);
 
@@ -79,11 +78,31 @@ final class EnemyEffects {
     /** How far ice stands off what it encases, on screen. */
     private static final float ICE_MARGIN = 1.5f;
     private static final float[] ICE_FRACTIONS = {0f, 0.55f, 1f};
-    private static final Color ICE_TOP = new Color(225, 246, 255);
-    private static final Color ICE_MIDDLE = new Color(120, 195, 245);
-    private static final Color ICE_BOTTOM = new Color(70, 140, 215);
+    private static final Ice FROST_ICE = new Ice(new Color(225, 246, 255), new Color(120, 195, 245),
+            new Color(70, 140, 215), new Color(240, 251, 255), new Color(0xA8, 0xDC, 0xFF), FLAKE, Color.WHITE);
+    private static final Ice RUBY_ICE = new Ice(new Color(0xF2, 0x9A, 0xAA), new Color(0xD0, 0x40, 0x5A),
+            new Color(0x8A, 0x1C, 0x32), new Color(0xFF, 0xD6, 0xDE), new Color(0xE0, 0x60, 0x78),
+            new Color(0xD0, 0x40, 0x5A), new Color(0xFF, 0xD6, 0xDE));
+    private static final Ice SHADE_ICE = new Ice(new Color(0x7A, 0x84, 0x96), new Color(0x3C, 0x40, 0x50),
+            new Color(0x1D, 0x1F, 0x26), new Color(0xA6, 0xE8, 0xC8), new Color(0x3C, 0x40, 0x50),
+            new Color(0x3C, 0x40, 0x50), new Color(0xA6, 0xE8, 0xC8));
 
     private EnemyEffects() {
+    }
+
+    /**
+     * One ice: its block lit from the top down, its rim, the tint it lays on the body it holds, and its shards, most
+     * of them {@code shard} and every third {@code glint}.
+     */
+    private record Ice(Color top, Color middle, Color bottom, Color rim, Color tint, Color shard, Color glint) {
+
+        static Ice of(IceLook look) {
+            return switch (look) {
+                case FROST -> FROST_ICE;
+                case RUBY -> RUBY_ICE;
+                case SHADE -> SHADE_ICE;
+            };
+        }
     }
 
     /** One fire: its outer flame, its inner flame and its embers. */
@@ -177,7 +196,9 @@ final class EnemyEffects {
         enter(g2, burst.x(), burst.y());
         switch (burst.look()) {
             case SHIELD_POP -> paintShieldPop(g2, burst);
-            case ICE_SHARDS -> paintIceShards(g2, burst);
+            case ICE_SHARDS -> paintIceShards(g2, burst, FROST_ICE);
+            case RUBY_SHARDS -> paintIceShards(g2, burst, RUBY_ICE);
+            case SHADE_SHARDS -> paintIceShards(g2, burst, SHADE_ICE);
         }
         g2.setStroke(stroke);
         g2.setTransform(save);
@@ -205,7 +226,7 @@ final class EnemyEffects {
     }
 
     /** The ice breaking: splinters thrown out from where it stood, falling a little as they go. */
-    private static void paintIceShards(Graphics2D g2, EnemyBurstDraw burst) {
+    private static void paintIceShards(Graphics2D g2, EnemyBurstDraw burst, Ice ice) {
         float p = burst.progress();
         float rx = toScreen(burst.radiusX());
         float ry = toScreen(burst.radiusY());
@@ -223,7 +244,7 @@ final class EnemyEffects {
             shard.lineTo(-size * 0.6f, -size * 0.5f);
             shard.lineTo(-size * 0.6f, size * 0.5f);
             shard.closePath();
-            g2.setColor(faded(i % 3 == 0 ? Color.WHITE : FLAKE, (1f - p) * burst.alpha()));
+            g2.setColor(faded(i % 3 == 0 ? ice.glint() : ice.shard(), (1f - p) * burst.alpha()));
             g2.fill(shard);
             g2.setTransform(save);
         }
@@ -409,7 +430,15 @@ final class EnemyEffects {
                 g2.draw(body);
             }
             case FREEZE -> {
-                g2.setColor(faded(FREEZE_TINT, FREEZE_TINT_ALPHA * tint.alpha()));
+                g2.setColor(faded(FROST_ICE.tint(), FREEZE_TINT_ALPHA * tint.alpha()));
+                g2.fill(body);
+            }
+            case RUBY_FREEZE -> {
+                g2.setColor(faded(RUBY_ICE.tint(), FREEZE_TINT_ALPHA * tint.alpha()));
+                g2.fill(body);
+            }
+            case SHADE_FREEZE -> {
+                g2.setColor(faded(SHADE_ICE.tint(), FREEZE_TINT_ALPHA * tint.alpha()));
                 g2.fill(body);
             }
         }
@@ -438,8 +467,10 @@ final class EnemyEffects {
         }
         block.closePath();
         float alpha = ice.alpha();
+        Ice made = Ice.of(ice.look());
         g2.setPaint(new LinearGradientPaint(0f, -r * 2f, 0f, r * 1.6f + 0.01f, ICE_FRACTIONS,
-                new Color[] {faded(ICE_TOP, 0.72 * alpha), faded(ICE_MIDDLE, 0.46 * alpha), faded(ICE_BOTTOM, 0.62 * alpha)}));
+                new Color[] {faded(made.top(), 0.72 * alpha), faded(made.middle(), 0.46 * alpha),
+                    faded(made.bottom(), 0.62 * alpha)}));
         g2.fill(block);
         g2.setPaint(paint);
         float hubX = -r * 0.2f;
@@ -456,7 +487,7 @@ final class EnemyEffects {
         facet.closePath();
         g2.setColor(faded(Color.WHITE, 0.4 * alpha));
         g2.fill(facet);
-        g2.setColor(faded(ICE_RIM, 0.95 * alpha));
+        g2.setColor(faded(made.rim(), 0.95 * alpha));
         g2.setStroke(new BasicStroke(1.1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.draw(block);
         double glint = ice.seconds() * 0.8 + ice.seed();

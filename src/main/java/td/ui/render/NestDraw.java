@@ -1,9 +1,17 @@
 package td.ui.render;
 
+import java.util.List;
+
 /**
- * The missiles banked in a Seeker's nest, orbiting it: {@code count} small missiles spread evenly on
- * a circle of {@code orbitRadius} around the tower, the first at {@code phaseRadians}.
+ * The missiles an Aerie holds, one for one, spread evenly on a ring of {@code ringRadius} round
+ * ({@code centerX}, {@code centerY}), the ring already lifted to the height it circles at; the first at
+ * {@code phaseRadians}, each {@code missileLength} pixels long. While {@code releaseReady}, the ring's path shows and
+ * every missile wears a halo.
  */
-public record NestDraw(Palette palette, float centerX, float centerY, float orbitRadius, int count,
-                       double phaseRadians) implements TowerEffectDraw {
+public record NestDraw(float centerX, float centerY, float ringRadius, List<LoadedMissile> missiles,
+                       double phaseRadians, float missileLength, boolean releaseReady) implements TowerEffectDraw {
+
+    public NestDraw {
+        missiles = List.copyOf(missiles);
+    }
 }

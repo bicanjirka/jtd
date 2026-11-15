@@ -6,6 +6,7 @@ import td.projectile.MissileProjectile;
 import td.projectile.ProjectileVisitor;
 import td.projectile.ShellLook;
 import td.ui.render.CannonballDraw;
+import td.ui.render.LoadedMissile;
 import td.ui.render.LoadedShell;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
@@ -16,15 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Describes each projectile, interpolated between ticks. A missile's facing comes from its movement
- * delta, which is safe because a missile moves many pixels per tick.
- */
+/** Describes each projectile, interpolated between ticks. */
 public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
 
     /** A puff's radius in pixels when fresh, and how opaque it starts. */
     private static final float SMOKE_RADIUS = 2f;
     private static final float SMOKE_ALPHA = 0.5f;
+    /** How long a missile of the standard size is drawn, in cells: the same in the nest as in flight. */
+    static final float MISSILE_LENGTH_CELLS = 0.22f;
     /**
      * The one pull on every lobbed shot, in cells per tick per tick: a shot that flies longer climbs higher,
      * so every lob arcs alike whatever its speed and distance.
@@ -48,11 +48,12 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         return (float) (from + (to - from) * alpha);
     }
 
-    private static Palette paletteFor(MissileLook look) {
+    /** The drawing of a missile of {@code look}: the same in the nest as in flight. */
+    static LoadedMissile loadedMissileOf(MissileLook look) {
         return switch (look) {
-            case STANDARD -> Palette.PROJECTILE_MISSILE;
-            case RUBY -> Palette.PROJECTILE_RUBY;
-            case SHADE -> Palette.PROJECTILE_SHADE;
+            case STANDARD -> LoadedMissile.FROST;
+            case RUBY -> LoadedMissile.RUBY;
+            case SHADE -> LoadedMissile.SHADE;
         };
     }
 
@@ -143,7 +144,6 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
     public Void visitMissile(MissileProjectile projectile) {
         float x = lerp(projectile.getPrevX(), projectile.getX(), this.interpolationAlpha);
         float y = lerp(projectile.getPrevY(), projectile.getY(), this.interpolationAlpha);
-        double facingRadians = Math.atan2(projectile.getY() - projectile.getPrevY(), projectile.getX() - projectile.getPrevX());
         List<MissileProjectile.TrailPoint> trail = projectile.trail();
         for (int i = 0; i < trail.size(); i++) {
             // The oldest puff is the faintest and the widest, as it has had longest to spread.
@@ -151,8 +151,8 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
             this.draws.add(new SmokeDraw(Palette.PROJECTILE_SMOKE, (float) trail.get(i).x(), (float) trail.get(i).y(),
                     SMOKE_RADIUS * (1f + age) * projectile.stats().size(), SMOKE_ALPHA * (1f - age)));
         }
-        this.draws.add(new MissileDraw(paletteFor(projectile.stats().look()), x, y, facingRadians,
-                projectile.stats().size()));
+        this.draws.add(new MissileDraw(loadedMissileOf(projectile.stats().look()), x, y, projectile.headingRadians(),
+                MISSILE_LENGTH_CELLS * this.scale * projectile.stats().size()));
         return null;
     }
 }

@@ -13,10 +13,13 @@ import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
 import td.tower.mortar.BlastMark;
 import td.tower.pulse.StoneLook;
+import td.tower.seeker.ShatterMark;
 import td.tower.splash.Passive;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.FlashDraw;
+import td.ui.render.IceWakeDraw;
+import td.ui.render.LoadedMissile;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
@@ -79,8 +82,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float ARC_SWING = 0.12f;
     private static final float ARC_MAX_SWING_PIXELS = 6f;
 
-    /** The ring the nest's missiles sit on, at this fraction of a cell from the tower. */
-    private static final float NEST_ORBIT_FRACTION = 0.7f;
+    /** A Shatter throws this many shards, each this long and this thick, in cells. */
+    private static final int SHATTER_SHARDS = 10;
+    private static final float SHATTER_SHARD_CELLS = 0.18f;
+    private static final float SHATTER_STROKE_CELLS = 0.06f;
     private static final float APPRENTICE_MARK_CELLS = 0.55f;
     private static final float RALLY_SPOT_CELLS = 1f;
     private static final float NUKE_FLASH_SHARE = 0.6f;
@@ -476,15 +481,49 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
     }
 
-    /** The missiles banked in the nest, circling the tower; the missile in flight is a projectile. */
+    /**
+     * The frost round every enemy an Ice Wake holds, the shards of ice that just burst, and the missiles held in the
+     * nest, circling the tower at its perch; the missile in flight is a projectile.
+     */
     public Void visitSeekerTower(SeekerTower tower) {
-        int stored = tower.nestMissiles().size();
-        if (stored > 0) {
-            double phase = tower.ringRadians();
-            this.draws.add(new NestDraw(Palette.PROJECTILE_MISSILE, tower.getX(), tower.getY(),
-                    NEST_ORBIT_FRACTION * this.scale, stored, phase));
+        for (Vec2 held : tower.iceWakes()) {
+            this.draws.add(new IceWakeDraw((float) held.x(), (float) held.y(), tower.iceWakeRadius(), this.scale));
         }
+        for (ShatterMark mark : tower.shatterMarks()) {
+            float progress = (this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha)
+                    / SeekerTower.SHATTER_MARK_TICKS;
+            if (progress >= 0f && progress < 1f) {
+                this.shatter(mark, progress);
+            }
+        }
+        List<LoadedMissile> missiles = tower.nestMissiles().stream()
+                .map(kind -> ProjectileFrameBuilder.loadedMissileOf(kind.look())).toList();
+        boolean ready = tower.releaseReady();
+        if (missiles.isEmpty() && !ready) {
+            return null;
+        }
+        int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
+        Point2D.Float centre = TowerSprites.nestCentre(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
+                TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale);
+        this.draws.add(new NestDraw(centre.x, centre.y, TowerSprites.nestRadius(tier, this.scale), missiles,
+                tower.ringRadians(), ProjectileFrameBuilder.MISSILE_LENGTH_CELLS * this.scale, ready));
         return null;
+    }
+
+    /** Shards of the ice thrown out over every enemy the burst reaches, in the colour of the missile that froze it. */
+    private void shatter(ShatterMark mark, float progress) {
+        float x = (float) mark.at().x();
+        float y = (float) mark.at().y();
+        Palette ice = MissileArt.paletteOf(ProjectileFrameBuilder.loadedMissileOf(mark.kind().look()));
+        float head = mark.radius() * (1f - (1f - progress) * (1f - progress));
+        float tail = Math.max(0f, head - this.scale * SHATTER_SHARD_CELLS);
+        for (int i = 0; i < SHATTER_SHARDS; i++) {
+            double angle = i * 2 * Math.PI / SHATTER_SHARDS + mark.startedAtTick();
+            float cos = (float) Math.cos(angle);
+            float sin = (float) Math.sin(angle);
+            this.draws.add(new TracerDraw(ice, Palette.PROJECTILE_FROST, x + cos * tail, y + sin * tail,
+                    x + cos * head, y + sin * head, this.scale * SHATTER_STROKE_CELLS, 1f - progress));
+        }
     }
 
     /** The stream's cone, at full range while it streams. */

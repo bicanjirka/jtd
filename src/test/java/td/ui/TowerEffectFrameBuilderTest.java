@@ -16,6 +16,7 @@ import td.stat.DisruptionAura;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
 import td.tower.MortarTower;
+import td.tower.SeekerTower;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
@@ -24,7 +25,9 @@ import td.tower.cinder.FlashoverMechanic;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.ShellKind;
 import td.ui.render.CannonballDraw;
+import td.ui.render.LoadedMissile;
 import td.ui.render.LoadedShell;
+import td.ui.render.NestDraw;
 import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
@@ -507,5 +510,32 @@ class TowerEffectFrameBuilderTest {
 
         assertThat(TowerSpriteFrameBuilder.bodyLookOf(scorcherWith(context))).isEqualTo(TowerLook.CINDER);
         assertThat(TowerSpriteFrameBuilder.bodyLookOf(scorcherWith(context, "Soulfire"))).isEqualTo(TowerLook.SOULFIRE);
+    }
+
+    @Test
+    void anAerieWearsTheCrystalOfItsSecondMissile() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SeekerTower plain = new SeekerTower(context, 3, 3);
+        SeekerTower ruby = new SeekerTower(context, 6, 6);
+        UpgradePaths.buy(ruby, context, "Ruby");
+
+        assertThat(TowerSpriteFrameBuilder.bodyLookOf(plain)).isEqualTo(TowerLook.SEEKER);
+        assertThat(TowerSpriteFrameBuilder.bodyLookOf(ruby)).isEqualTo(TowerLook.RUBY);
+    }
+
+    @Test
+    void theNestDrawsEachMissileItHoldsOnARingAboveTheTower() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SeekerTower tower = new SeekerTower(context, 3, 3);
+        tower.readyForWave();
+
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 1, 0.0, 0.0);
+        tower.accept(builder);
+
+        assertThat(builder.build()).singleElement().isInstanceOfSatisfying(NestDraw.class, nest -> {
+            assertThat(nest.missiles()).hasSize(tower.nestMissiles().size()).containsOnly(LoadedMissile.FROST);
+            assertThat(nest.centerY()).isLessThan(tower.getY());
+            assertThat(nest.releaseReady()).isFalse();
+        });
     }
 }
