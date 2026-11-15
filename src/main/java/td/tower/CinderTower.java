@@ -35,7 +35,6 @@ import td.util.ThreadConfined;
 import td.util.TickRate;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -303,7 +302,13 @@ public final class CinderTower extends AbstractTower {
 
     /** How much of the reload is left, from 1 as a stream ends down to 0 once it may stream again. */
     public float reloadLeft() {
-        return this.isStreaming() ? 0f : this.clock.remaining();
+        return this.isStreaming() ? 0f
+                : this.clock.remaining(this.streamStats.value(TowerStat.RELOAD) / RELOAD_PERIOD_TICKS);
+    }
+
+    /** Whether a range upgrade carries it past its base range. */
+    public boolean reachesPastItsBase() {
+        return this.stats().reachReal() > RANGE * this.context.getBoard().scale();
     }
 
     /** What its stream looks like now, as its nodes shape it. */
@@ -315,7 +320,7 @@ public final class CinderTower extends AbstractTower {
 
     /** This tick's Flashovers, each from a hot enemy to one beside it. */
     public List<Flash> flashes() {
-        return Collections.unmodifiableList(this.flashes);
+        return List.copyOf(this.flashes);
     }
 
     @Override

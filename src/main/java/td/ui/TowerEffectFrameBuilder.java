@@ -15,7 +15,6 @@ import td.tower.mortar.BlastMark;
 import td.tower.splash.Passive;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
-import td.ui.render.ConeDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.LeyLineDraw;
 import td.ui.render.NestDraw;
@@ -24,6 +23,7 @@ import td.ui.render.PulseDraw;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.SplashDraw;
+import td.ui.render.StreamDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerStatusDraw;
@@ -93,6 +93,23 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float FRAGMENT_SHARE = 0.25f;
     private static final float FRAGMENT_STROKE_CELLS = 0.05f;
     private static final double NEST_ORBIT_RADIANS_PER_TICK = 0.08;
+    /** A stream's tongues take new tips this often, which is all the flicker it needs. */
+    private static final int STREAM_FLICKER_TICKS = 3;
+    /** The outer tongue fills the cone; the middle one reaches part of it, narrower; the core less again. */
+    private static final float STREAM_OUTER_ALPHA = 0.55f;
+    private static final int STREAM_OUTER_TIPS = 9;
+    private static final float STREAM_MIDDLE_ALPHA = 0.75f;
+    private static final float STREAM_MIDDLE_REACH = 0.78f;
+    private static final float STREAM_MIDDLE_WIDTH = 0.66f;
+    private static final int STREAM_MIDDLE_TIPS = 7;
+    private static final float STREAM_CORE_ALPHA = 0.9f;
+    /** How far the core reaches: most of the cone with the Core or a White Flame, a short heart at the nozzle without. */
+    private static final float STREAM_CORE_LONG = 0.72f;
+    private static final float STREAM_CORE_SHORT = 0.42f;
+    private static final float STREAM_CORE_WIDTH = 0.26f;
+    private static final int STREAM_CORE_TIPS = 5;
+    /** How wide a Flashover's tongue spreads either side, in radians. */
+    private static final float FLASHOVER_HALF_WIDTH = 0.22f;
 
     /** The Pulse's ripples: how many rings, how fast they spread, and how much faster for each Toll stack. */
     private static final float ZAP_STROKE = 2.5f;
@@ -488,14 +505,50 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /** The stream's cone, at full range while it streams. */
+    /** A stream's three tongues as {@code look} shapes them, the outermost {@code reach} long and {@code half} wide. */
+    static List<StreamDraw.Tongue> streamTongues(CinderTower.StreamLook look, float reach, float half) {
+        boolean longCore = look.coreHalfWidth() > 0f || look.whiteCore();
+        Palette core = look.whiteCore() ? Palette.TOWER_STREAM_WHITE
+                : look.soulfire() ? Palette.TOWER_SOULFIRE_CORE : Palette.TOWER_STREAM_CORE;
+        Palette outer = look.soulfire() ? Palette.TOWER_SOULFIRE_OUTER : Palette.TOWER_STREAM_OUTER;
+        Palette middle = look.soulfire() ? Palette.TOWER_SOULFIRE_MIDDLE : Palette.TOWER_STREAM_MIDDLE;
+        return List.of(new StreamDraw.Tongue(outer, STREAM_OUTER_ALPHA, reach, half, STREAM_OUTER_TIPS),
+                new StreamDraw.Tongue(middle, STREAM_MIDDLE_ALPHA, reach * STREAM_MIDDLE_REACH,
+                        half * STREAM_MIDDLE_WIDTH, STREAM_MIDDLE_TIPS),
+                new StreamDraw.Tongue(core, STREAM_CORE_ALPHA, reach * (longCore ? STREAM_CORE_LONG : STREAM_CORE_SHORT),
+                        look.coreHalfWidth() > 0f ? look.coreHalfWidth() : half * STREAM_CORE_WIDTH, STREAM_CORE_TIPS));
+    }
+
+    /** A Flashover: a small tongue of the stream's fire from {@code fromX, fromY} reaching {@code toX, toY}. */
+    static StreamDraw flashover(boolean soulfire, float fromX, float fromY, float toX, float toY, int flicker) {
+        float length = (float) Math.hypot(toX - fromX, toY - fromY);
+        Palette outer = soulfire ? Palette.TOWER_SOULFIRE_OUTER : Palette.TOWER_STREAM_OUTER;
+        Palette middle = soulfire ? Palette.TOWER_SOULFIRE_MIDDLE : Palette.TOWER_STREAM_MIDDLE;
+        return new StreamDraw(fromX, fromY, (float) Math.atan2(toY - fromY, toX - fromX), List.of(
+                new StreamDraw.Tongue(outer, STREAM_OUTER_ALPHA, length, FLASHOVER_HALF_WIDTH, STREAM_CORE_TIPS),
+                new StreamDraw.Tongue(middle, STREAM_MIDDLE_ALPHA, length * STREAM_MIDDLE_REACH,
+                        FLASHOVER_HALF_WIDTH * STREAM_MIDDLE_WIDTH, STREAM_CORE_TIPS)), flicker);
+    }
+
+    /**
+     * While it streams, three nested tongues from the nozzle to its range: the Core or a White Flame draws the inner one
+     * out over most of the cone. Each Flashover is a small tongue from the hot enemy to the one beside it.
+     */
     public Void visitCinderTower(CinderTower tower) {
-        if (tower.isStreaming()) {
-            CinderTower.StreamLook look = tower.streamLook();
-            Palette palette = look.soulfire() ? Palette.TOWER_CINDER_CONE_SOUL
-                    : look.whiteCore() ? Palette.TOWER_CINDER_CONE_WHITE : Palette.TOWER_CINDER_CONE;
-            this.draws.add(new ConeDraw(palette, tower.getX(), tower.getY(),
-                    (float) tower.getTurretAim().currentRadians(), tower.getRangeReal(), (float) tower.halfWidthRadians(),
-                    1f, 0));
+        if (!tower.isStreaming()) {
+            return null;
+        }
+        CinderTower.StreamLook look = tower.streamLook();
+        int flicker = this.gameTime / STREAM_FLICKER_TICKS;
+        double heading = tower.getTurretAim().radiansAt(this.interpolationAlpha);
+        int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
+        Point2D.Float muzzle = TowerSprites.muzzle(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
+                TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale, heading);
+        this.draws.add(new StreamDraw(muzzle.x, muzzle.y, (float) heading,
+                streamTongues(look, tower.getRangeReal(), (float) tower.halfWidthRadians()), flicker));
+        for (CinderTower.Flash flash : tower.flashes()) {
+            this.draws.add(flashover(look.soulfire(), (float) flash.fromX(), (float) flash.fromY(), (float) flash.toX(),
+                    (float) flash.toY(), flicker));
         }
         return null;
     }

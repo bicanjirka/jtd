@@ -1,6 +1,10 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.damage.DamageUnits;
+import td.effect.DamageSink;
+import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
@@ -10,11 +14,13 @@ import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.tower.AuraTower;
+import td.tower.CinderTower;
 import td.tower.MortarTower;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerModifiers;
+import td.tower.cinder.FlashoverMechanic;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.ShellKind;
 import td.ui.render.CannonballDraw;
@@ -22,6 +28,7 @@ import td.ui.render.LoadedShell;
 import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
+import td.ui.render.StreamDraw;
 import td.ui.render.TowerCue;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
@@ -427,5 +434,77 @@ class TowerEffectFrameBuilderTest {
         assertThat(TowerSpriteFrameBuilder.poseOf(single).shell()).isEqualTo(LoadedShell.HEAVY);
         assertThat(TowerSpriteFrameBuilder.poseOf(single).has(TowerCue.VOLLEY)).isFalse();
         assertThat(TowerSpriteFrameBuilder.poseOf(volley).has(TowerCue.VOLLEY)).isTrue();
+    }
+
+    private static CinderTower scorcherWith(GameWorld context, String... nodes) {
+        CinderTower scorcher = new CinderTower(context, 3, 3);
+        context.towers().add(scorcher);
+        UpgradePaths.buy(scorcher, context, nodes);
+        return scorcher;
+    }
+
+    /** The streams the Scorcher draws on its first tick, with {@code enemies} standing before it. */
+    private static List<StreamDraw> streamsOf(GameWorld context, CinderTower scorcher, EnemyMob... enemies) {
+        context.enemies().setEnemies(enemies);
+        scorcher.doTick(1);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 1, 0.0, 0.0);
+        scorcher.accept(builder);
+        return builder.build().stream().filter(StreamDraw.class::isInstance).map(StreamDraw.class::cast).toList();
+    }
+
+    @Test
+    void aStreamLeavesFromTheNozzleAsItIsPosed() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        CinderTower scorcher = scorcherWith(context);
+
+        StreamDraw stream = streamsOf(context, scorcher, FakeEnemyMob.at(scorcher.getX() + 40, scorcher.getY()))
+                .getFirst();
+
+        float muzzle = TowerSprites.muzzle(TowerLook.CINDER, 0, TowerSpriteFrameBuilder.poseOf(scorcher),
+                scorcher.getX(), scorcher.getY(), BoardFixtures.SCALE, 0.0).x;
+        assertThat(stream.originX()).isEqualTo(muzzle);
+        assertThat(stream.tongues().getFirst().reach()).isEqualTo(scorcher.getRangeReal());
+    }
+
+    @Test
+    void theCoreDrawsTheStreamsInnerTongueFurtherOut() {
+        GameWorld plainWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        CinderTower plain = scorcherWith(plainWorld);
+        GameWorld coreWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        CinderTower cored = scorcherWith(coreWorld, "Core");
+
+        float plainCore = streamsOf(plainWorld, plain, FakeEnemyMob.at(plain.getX() + 40, plain.getY()))
+                .getFirst().tongues().getLast().reach();
+        float core = streamsOf(coreWorld, cored, FakeEnemyMob.at(cored.getX() + 40, cored.getY()))
+                .getFirst().tongues().getLast().reach();
+
+        assertThat(core).isGreaterThan(plainCore);
+    }
+
+    @Test
+    void aFlashoverIsDrawnAsATongueFromTheHotEnemyToTheOneBesideIt() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        CinderTower scorcher = scorcherWith(context, "Flashover");
+        FakeEnemyMob hot = FakeEnemyMob.at(scorcher.getX() + 40, scorcher.getY());
+        hot.applyEffect(Effect.burn(Damage.magic(DamageUnits.ofPoints(2 * FlashoverMechanic.HOT_FUEL_POINTS)),
+                DamageSink.none()));
+        FakeEnemyMob beside = FakeEnemyMob.at(hot.getX(), hot.getY() + 38);
+
+        List<StreamDraw> streams = streamsOf(context, scorcher, hot, beside);
+
+        assertThat(streams).hasSize(2);
+        StreamDraw flash = streams.getLast();
+        assertThat(flash.originX()).isEqualTo((float) hot.getX());
+        assertThat(flash.originY()).isEqualTo((float) hot.getY());
+        assertThat(flash.headingRadians()).isCloseTo((float) (Math.PI / 2), within(1e-4f));
+        assertThat(flash.tongues().getFirst().reach()).isCloseTo(38f, within(1e-3f));
+    }
+
+    @Test
+    void aSoulfireScorcherWearsTheSoulfireLook() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+
+        assertThat(TowerSpriteFrameBuilder.bodyLookOf(scorcherWith(context))).isEqualTo(TowerLook.CINDER);
+        assertThat(TowerSpriteFrameBuilder.bodyLookOf(scorcherWith(context, "Soulfire"))).isEqualTo(TowerLook.SOULFIRE);
     }
 }

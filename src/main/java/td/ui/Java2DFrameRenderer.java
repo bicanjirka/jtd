@@ -6,7 +6,6 @@ import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CellDraw;
 import td.ui.render.CellGridDraw;
-import td.ui.render.ConeDraw;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarsDraw;
@@ -43,6 +42,7 @@ import td.ui.render.RingDraw;
 import td.ui.render.SheetLine;
 import td.ui.render.SmokeDraw;
 import td.ui.render.SplashDraw;
+import td.ui.render.StreamDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerSpriteDraw;
@@ -157,18 +157,23 @@ public final class Java2DFrameRenderer {
     private static final Color ZONE_MINE_LIT = new Color(255, 70, 70);
     private static final Color ZONE_MINE_UNLIT = new Color(110, 30, 30);
     private static final int ZONE_FALLOUT_BLADES = 3;
-    /** How far toward white the innermost Stoke core goes. */
-    private static final float CINDER_CORE_BRIGHTEN = 0.8f;
     /** A banked missile is drawn this share of a missile in flight. */
     private static final float NEST_MISSILE_SCALE = 0.6f;
     private static final Font MISS_MARK_FONT = Hud.LABEL_FONT.deriveFont(10f);
     private static final String MISS_TEXT = "miss";
     private static final float MISS_MARK_RISE = 10f;
     private static final float MISS_MARK_GAP = 3f;
-    /** Flame wave alpha, the same from launch to burn-out. */
-    private static final float CINDER_CONE_ALPHA = 0.45f;
-    /** How deep the wave's band is, as a share of the cone's full reach. */
-    private static final float CINDER_CONE_BAND_FRACTION = 0.35f;
+    /** How wide a tongue's root at the muzzle is, as a share of its reach. */
+    private static final float STREAM_ROOT_SHARE = 0.01f;
+    /** How much shorter a tongue is at its sides than along its middle. */
+    private static final float STREAM_SIDE_FALL = 0.10f;
+    /** How far a tongue's notches and tips reach, and by how much more at most, as shares of its reach. */
+    private static final float STREAM_NOTCH_REACH = 0.78f;
+    private static final float STREAM_NOTCH_SPREAD = 0.10f;
+    private static final float STREAM_TIP_REACH = 0.96f;
+    private static final float STREAM_TIP_SPREAD = 0.08f;
+    /** Seeds a flicker step leaves to its tongues, so no two tongues of one stream share their tips. */
+    private static final int STREAM_TONGUE_SEEDS = 7;
 
     private final GroundPainter groundPainter = new GroundPainter();
 
@@ -351,9 +356,13 @@ public final class Java2DFrameRenderer {
             case ZONE_WARD -> new Color(120, 190, 255);
             case ZONE_BLINDING -> new Color(190, 90, 230);
             case TOWER_PULSE_ZAP -> new Color(255, 245, 190);
-            case TOWER_CINDER_CONE -> new Color(255, 90, 30);
-            case TOWER_CINDER_CONE_WHITE -> new Color(255, 245, 225);
-            case TOWER_CINDER_CONE_SOUL -> new Color(70, 140, 255);
+            case TOWER_STREAM_OUTER -> new Color(0xe2402a);
+            case TOWER_STREAM_MIDDLE -> new Color(0xff8a2a);
+            case TOWER_STREAM_CORE -> new Color(0xffe27a);
+            case TOWER_STREAM_WHITE -> Color.WHITE;
+            case TOWER_SOULFIRE_OUTER -> new Color(0x5a36b8);
+            case TOWER_SOULFIRE_MIDDLE -> new Color(0x8f6cf0);
+            case TOWER_SOULFIRE_CORE -> new Color(0xd5e6ff);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
             case PROJECTILE_NAPALM -> new Color(255, 130, 30);
             case PROJECTILE_TAR -> new Color(75, 60, 90);
@@ -1263,7 +1272,7 @@ public final class Java2DFrameRenderer {
                     this.paintFilledCircle(g2, pulse.palette(), pulse.centerX(), pulse.centerY(), pulse.radius());
             case RingDraw ring -> this.paintRing(g2, ring);
             case FlashDraw flash -> this.paintFlash(g2, flash);
-            case ConeDraw cone -> this.paintCone(g2, cone);
+            case StreamDraw stream -> paintStream(g2, stream);
             case NestDraw nest -> this.paintNest(g2, nest);
             case TowerStatusDraw status -> this.paintTowerStatus(g2, status);
             case RefundMarkDraw mark -> CashMark.paint(g2, mark.x(), mark.y(), mark.height());
@@ -1271,50 +1280,50 @@ public final class Java2DFrameRenderer {
     }
 
 
-    /**
-     * A band between two arcs on the cone's heading, its outer arc at the wave's front as
-     * {@code cone.progress()} goes from 0 to 1. The trailing arc keeps the band clear of the tower.
-     */
-    private void paintCone(Graphics2D g2, ConeDraw cone) {
-        float frontRadius = cone.maxRadius() * cone.progress();
-        if (frontRadius <= 0) {
-            return;
-        }
-        float trailingRadius = Math.max(0f, frontRadius - cone.maxRadius() * CINDER_CONE_BAND_FRACTION);
+    /** Each tongue of the stream, the outermost first, turned to its heading at the muzzle. */
+    static void paintStream(Graphics2D g2, StreamDraw stream) {
         AffineTransform save = g2.getTransform();
-        g2.translate(cone.originX(), cone.originY());
-        g2.rotate(cone.headingRadians());
-        Color flame = colorFor(cone.palette());
-        g2.setColor(withAlpha(flame, Math.round(CINDER_CONE_ALPHA * 255)));
-        g2.fill(coneBand(frontRadius, trailingRadius, cone.halfWidthRadians()));
-        for (int step = 1; step <= cone.stokeSteps(); step++) {
-            float share = step / (cone.stokeSteps() + 1f);
-            g2.setColor(withAlpha(brightened(flame, share * CINDER_CORE_BRIGHTEN), Math.round(CINDER_CONE_ALPHA * 255)));
-            g2.fill(coneBand(frontRadius, trailingRadius, cone.halfWidthRadians() * (1f - share)));
+        g2.translate(stream.originX(), stream.originY());
+        g2.rotate(stream.headingRadians());
+        for (int i = 0; i < stream.tongues().size(); i++) {
+            StreamDraw.Tongue tongue = stream.tongues().get(i);
+            g2.setColor(withAlpha(colorFor(tongue.palette()), Math.round(tongue.alpha() * 255)));
+            g2.fill(tongue(tongue, stream.flicker() * STREAM_TONGUE_SEEDS + i));
         }
         g2.setTransform(save);
     }
 
-    private static Area coneBand(float frontRadius, float trailingRadius, double halfWidthRadians) {
-        Area band = new Area(wedge(frontRadius, halfWidthRadians));
-        if (trailingRadius > 0) {
-            band.subtract(new Area(wedge(trailingRadius, halfWidthRadians)));
+    /**
+     * A tongue along +x from the muzzle: its edge runs through tips and notches across its width, a little shorter
+     * toward its sides, each point's reach drawn from {@code seed}.
+     */
+    private static Shape tongue(StreamDraw.Tongue tongue, int seed) {
+        Path2D.Float path = new Path2D.Float();
+        float half = tongue.halfWidthRadians();
+        float root = tongue.reach() * STREAM_ROOT_SHARE;
+        path.moveTo(0, root);
+        path.lineTo(0, -root);
+        int points = tongue.tips() * 2;
+        for (int i = 0; i <= points; i++) {
+            float angle = -half + 2 * half * i / points;
+            float edge = 1f - STREAM_SIDE_FALL * Math.abs(angle / half);
+            float roll = jitter(seed, i);
+            float share = i % 2 == 0 ? STREAM_NOTCH_REACH + STREAM_NOTCH_SPREAD * roll
+                    : STREAM_TIP_REACH + STREAM_TIP_SPREAD * roll;
+            float r = tongue.reach() * edge * share;
+            path.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
         }
-        return band;
+        path.closePath();
+        return path;
     }
 
-    /** {@code color} a share of the way to white. */
-    private static Color brightened(Color color, float share) {
-        return new Color(color.getRed() + Math.round((255 - color.getRed()) * share),
-                color.getGreen() + Math.round((255 - color.getGreen()) * share),
-                color.getBlue() + Math.round((255 - color.getBlue()) * share));
-    }
-
-    /** A pie slice centred on the origin along the x axis. */
-    private static Shape wedge(float radius, double halfWidthRadians) {
-        float halfWidthDegrees = (float) Math.toDegrees(halfWidthRadians);
-        return new Arc2D.Float(-radius, -radius, radius * 2, radius * 2, -halfWidthDegrees, halfWidthDegrees * 2,
-                Arc2D.PIE);
+    /** A value in [0, 1) from {@code seed} and {@code index}, the same every time they are. */
+    private static float jitter(int seed, int index) {
+        int h = seed * 0x9E3779B1 + index * 0x85EBCA6B;
+        h ^= h >>> 15;
+        h *= 0x2C1B3C6D;
+        h ^= h >>> 12;
+        return (h & 0xFFFF) / 65536f;
     }
 
     private void paintFlash(Graphics2D g2, FlashDraw flash) {

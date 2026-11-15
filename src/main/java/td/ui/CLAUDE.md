@@ -77,7 +77,7 @@ keeps the seam honest.
 ## Two clocks
 
 - `interpolationAlpha` (between the last two ticks) for anything backed by per-tick domain state:
-  enemy/projectile position, turret heading, a Cinder wave's travel. It respects pause and
+  enemy/projectile position, turret heading. It respects pause and
   fast-forward.
 - `animationSeconds` (wall clock) for pure cosmetics: the aura's rings, path
   chevrons. It keeps running while paused.

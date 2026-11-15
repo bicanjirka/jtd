@@ -98,6 +98,24 @@ class CinderTowerTest {
     }
 
     @Test
+    void itsReloadRunsFromWhollyLeftAsAStreamEndsToNoneOnceItMayStreamAgain() {
+        CinderTower tower = this.tower();
+        this.enemies(FakeEnemyMob.at(150, 112));
+        int stream = Math.round(tower.stats().value(TowerStat.STREAM));
+        int reload = Math.round(tower.stats().value(TowerStat.RELOAD));
+
+        tickThrough(tower, 1, stream);
+        float justEnded = tower.reloadLeft();
+        tickThrough(tower, stream + 1, stream + reload / 2);
+        float halfway = tower.reloadLeft();
+        tickThrough(tower, stream + reload / 2 + 1, stream + reload);
+
+        assertThat(justEnded).isEqualTo(1f);
+        assertThat(halfway).isCloseTo(0.5f, within(1e-3f));
+        assertThat(tower.reloadLeft()).isZero();
+    }
+
+    @Test
     void noStreamStartsWithoutAVisibleEnemyInRange() {
         CinderTower tower = this.tower();
         FakeEnemyMob ghost = FakeEnemyMob.ghostAt(150, 112);

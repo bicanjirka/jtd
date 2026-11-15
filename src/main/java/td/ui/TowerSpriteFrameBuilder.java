@@ -74,7 +74,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         }
 
         public TowerLook visitCinderTower(CinderTower tower) {
-            return TowerLook.CINDER;
+            return tower.streamLook().soulfire() ? TowerLook.SOULFIRE : TowerLook.CINDER;
         }
     };
     private static final Palette[] TIER_PALETTES = {Palette.TOWER_UPGRADE_TIER_0, Palette.TOWER_UPGRADE_TIER_1,
@@ -153,6 +153,13 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
                 .with(TowerCue.HEADHUNTER, tower.huntsItsTarget());
     }
 
+    /** The pose a Scorcher's nozzle is in: where it draws its tip is where its stream leaves from. */
+    static TowerPose poseOf(CinderTower tower) {
+        return poseOfReload(tower.reloadLeft()).with(TowerCue.STREAMING, tower.isStreaming())
+                .with(TowerCue.DRAGONS_BREATH, tower.streamLook().dragonsBreath())
+                .with(TowerCue.LONG_BARREL, tower.reachesPastItsBase());
+    }
+
     /** The pose a Mortar's barrel is in: the shell at its magazine's front in the bore, a tray while it loads a volley. */
     static TowerPose poseOf(MortarTower tower) {
         return poseOfReload(tower.getCoolDownFraction())
@@ -212,7 +219,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     /** {@code resting} is a head with nothing to aim at: it scans slowly about its heading until it has. */
     private void aimed(Tower tower, TowerPose pose, TurretAim aim, boolean resting) {
         double scan = resting ? SCAN_RADIANS * Math.sin(2 * Math.PI * this.lifeSeconds(tower) / SCAN_SECONDS) : 0.0;
-        this.sprite(tower, lookFor(tower.getType()), pose, aim.radiansAt(this.interpolationAlpha) + scan);
+        this.sprite(tower, bodyLookOf(tower), pose, aim.radiansAt(this.interpolationAlpha) + scan);
     }
 
     public Void visitSniperTower(SniperTower tower) {
@@ -248,8 +255,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitCinderTower(CinderTower tower) {
-        TowerPose pose = TowerPose.idle().with(TowerCue.STREAMING, tower.isStreaming());
-        this.aimed(tower, pose, tower.getTurretAim(), false);
+        this.aimed(tower, poseOf(tower), tower.getTurretAim(), false);
         return null;
     }
 }
