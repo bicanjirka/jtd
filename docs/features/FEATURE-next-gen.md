@@ -26,14 +26,14 @@ Beacon. The Radar leaves the game ("The last three towers").
 | Doc | Owns | Needs | Status |
 |---|---|---|---|
 | `FEATURE-next-gen-upgrade-tiers.md` | Tiers, gates, clusters, fork gates, the new Upgrades panel; every tower moved onto tiers | | implemented |
-| `FEATURE-next-gen-tower-looks.md` | The art direction, foundation by tier with a head, a calm board, enemy marks, toolbar icons, palette | upgrade tiers | every look, pose, cue, icon and thumbnail in code; each tower sends its own cues |
+| `FEATURE-next-gen-tower-looks.md` | The art direction, foundation by tier with a head, a calm board, enemy marks, toolbar icons, palette | upgrade tiers | implemented, but for the Beacon's own cues, rings and Glare mark, which come with its rework |
 | `FEATURE-next-gen-shot-flight.md` | Hits that land later, arcs, the tracer, chains hop by hop | | implemented |
 | `FEATURE-next-gen-tower-abilities.md` | Ability bars, currency, casts, the pane's Abilities list | upgrade tiers | implemented; the Burst is its first user |
 | `FEATURE-next-gen-sniper-tower.md` | The Sniper | tiers, looks, shot flight | implemented |
 | `FEATURE-next-gen-splash-tower.md` | The Burst | tiers, looks, shot flight, abilities | implemented |
 | `FEATURE-next-gen-mortar-tower.md` | The Mortar | tiers, looks, shot flight | implemented |
 | `FEATURE-next-gen-cinder-tower.md` | The Scorcher; the one pool rule for burn, poison and Soulfire | tiers, looks | implemented |
-| `FEATURE-next-gen-seeker-tower.md` | The Aerie (was the Hive) | tiers, looks; the Mortar's weighted draw | Tiers 0 to III, fourth round |
+| `FEATURE-next-gen-seeker-tower.md` | The Aerie (was the Hive) | tiers, looks; the Mortar's weighted draw | implemented |
 | `FEATURE-next-gen-pulse-tower.md` | The Obelisk, with the Radar's beam as its Sundial | tiers, looks | implemented |
 | `FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | Tiers 0 to III, third round |
 | `FEATURE-balance-after-next-gen-towers.md` | The second balance pass, played by the built towers | every tower above in code | written; waits |

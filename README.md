@@ -180,11 +180,11 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 | Burst  | 15    | Throws a stone at a random target in range; it lands where the target stood and bursts, full physical damage in its core and half at its edge. Forks into the Stormcaller (Static and Sparks: Arc, Thunderclap or Thunderstrike) or the Hexer (Soulbrand and Souls: Doom, Blight, Inversion) |
 | Mortar | 20    | Lobs a slow, unguided shell at whichever enemy in range is furthest along the path, never one within 1.5 cells of it; it lands where the target stood, full physical damage in its core and half at its edge, and cracks the plating of everything it reaches. It fires from a magazine of ten shells, drawn by lot: Normal and, now and then, a Heavy that hits twice as hard. Its tree adds a Payload (Napalm, Tar or Cryo shells that leave burning, tarred or frozen ground), Flares that reveal, a Heavy that Dazes or makes Bleed, a Volley (a Barrage at one target or Carpet Bombing back along the path), and Fusion (two Heavies in a row become a Nuke that leaves Fallout) or Rich Mix (never the same kind twice) |
 | Scorcher | 20    | A flamethrower. It turns toward the nearest visible enemy and streams flame into everything in its cone for a second, then reloads for two; every enemy in the cone, invisible ones included, takes its Flame as fuel for its Burn, and nothing it pours crits. The first touch of each enemy in a stream Sears it with a stack of Scorch. Its tree widens the cone or narrows it into a Lance, adds the Core (more into its target), Kindling (a hotter Sear), Soulfire or Dragon's Breath, White Flame and Bellows, then Flashover, Meltdown or Thermal Shock |
-| Hive   | 30    | Fires a slow homing missile at the fastest enemy in range, which it keeps through invisibility and re-aims at each tick; deals magic damage and freezes whichever mob it actually hits. Attuned, it banks missiles in a nest, between waves too, and launches them as a salvo |
+| Aerie  | 30    | Control. Loads homing missiles into a nest of three that is full at every wave start, and launches them one after another, each at the enemy in range that would reach its exit first; a missile speeds up as it flies, turns on a curve and never misses. Every hit deals magic damage and Freezes, unless a Shield takes all of it; a missile whose enemy was frozen meanwhile turns to an unfrozen one near it, or flies home. Its tree loads faster, freezes longer and widens the nest; every 14th freeze sets off a Release (Swarm: seven missiles at once, or Hatching: seven into the nest), and Feeding brings the next load nearer with each freeze. A second missile joins the nest by lot and turns the tower Ruby (double damage, ice that holds the freeze-immune) or Shade (Shadow damage, Silence after the thaw), then the ice chills the enemies passing it (Ice Wake) or bursts on them as it ends (Shatter) |
 | Obelisk | 20    | Support, a kill box. Short range; a field that deals 10 magic damage a second to everything inside it, hidden enemies included and with no visible enemy needed, and drags it 10%, deeper with every stack of Toll. An enemy inside builds a stack of Toll a second, up to 5, shared by every field, and loses one a second outside them all; each stack makes it take 4% more damage from every tower (Frailty). Two fields' drags never add. Its tree builds Toll faster or drags deeper, Silences the field (Ward), and adds the Sundial, its shadow turning out past the field every few seconds to hit and add Toll. The stone becomes Burden (a deeper drag), Gravity (Dazes an enemy a beat inside) or Umbra (the shadow bites twice in the field), then rings a Knell for everyone inside while one is at full Toll, or builds Toll to 10 |
 | Beacon | 20    | Passive: gives the towers in its range Damage and Range +20% and Jam taken x0.5; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds Fire rate and Crit damage; the other widens its reach, then raises Buff duration and Effect duration. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
 
-The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Hive, Obelisk and Beacon
+The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Aerie, Obelisk and Beacon
 (keys `q` `w` `e` `r` `t` `y` `u`, in that order). A Burst that forks is called a Stormcaller or a Hexer.
 
 An attack-speed bonus adds to the attacks a second, so +100% is twice as fast; bonuses add up, and a Jamming enemy
@@ -379,13 +379,15 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Flare | Buff | A shell that leaves a flare lasting until the wave ends; every enemy that enters it gains Reveal. |
 | Barrage | Buff | The front shells loaded together and fired one after another at one target. |
 | Carpet Bombing | Buff | The front shells loaded together and laid along the path, from the target back toward where the enemies come from. |
-| Cryo Missile | Buff | A missile that applies Freeze. |
-| Arcane Missile | Buff | A missile that applies Unravel instead of Freeze. |
-| EMP Missile | Buff | A missile that removes Shield and Heal and applies Silence. |
-| Tracer Missile | Buff | A missile that applies Reveal and Mark. |
+| Frost | Buff | The plain missile: it applies Freeze to the enemy it hits. |
+| Ruby | Buff | A missile that deals double damage, and whose Freeze also holds an enemy immune to it. |
+| Shade | Buff | A missile whose hit goes past Shield and insulation, and whose Freeze leaves its enemy Silenced as long again once it thaws. |
+| Swarm | Buff | Missiles at once, each at a different enemy, soonest out first. |
+| Hatching | Buff | Missiles that hatch into the nest past its size, one after another, and launch as usual. |
+| Ice Wake | Buff | While a Freeze the tower landed holds, every enemy walking close past the ice gains Chill. |
 | Rally | Buff | Faster attacks for a while, from a Beacon's rally spot. |
 | Aura | Buff | A Beacon in range raises its damage and range, and takes some of the jam enemies put on it. |
-| Nest | Buff | Missiles stored to launch one after another when a target comes. |
+| Nest | Buff | The missiles it holds ready: it loads one whenever it has room, so it is full at every wave start, and with an enemy in range they launch one after another, each picking its own target. |
 | Jammed | Debuff | An enemy nearby slows its attacks and shortens its range. |
 | Flame | Buff | Fuel a second the stream pours into the Burn of each enemy in the cone. |
 | Stream | Buff | How long it pours before it reloads; it keeps its target the whole stream while that enemy lives and stays in range, and with no enemy left in range it runs its time out into the air. |
@@ -398,7 +400,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Thermal Shock | Buff | More flame into an enemy another tower holds with Chill, Freeze or Daze. |
 | Meltdown | Buff | An enemy's armor and plating add to the Burn it takes, a share for each point. |
 | Kinship | Buff | Towers a Beacon buffs earn more XP for each other tower type in range. |
-| Shatter | Buff | An enemy with Freeze breaks apart and hurts the enemies around it. |
+| Shatter | Buff | As a Freeze the tower landed ends, the ice bursts on the enemies around it. |
 | Arc | Buff | Lightning a primed stone carries from where it lands, jumping from enemy to enemy as magic. |
 | Hex | Buff | A curse a Hexer casts with its Souls; each kind does its own thing. |
 | Static | Buff | Every enemy its stones or their lightning damage carries a stack, one per Stormcaller; badly hurt, the enemy discharges into itself for each stack and pays each Stormcaller that tagged it in its currency. |

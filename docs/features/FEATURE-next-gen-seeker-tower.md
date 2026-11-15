@@ -1,6 +1,6 @@
 # Feature Request: Next-gen Aerie Tower
 
-**Status:** draft, 2026-11-13, fourth round, reviewed with the whole bundle. Tiers 0 to III and the look, from the visual request's handwritten Hive
+**Status:** implemented 2026-11-15 (drafted 2026-11-13, fourth round, reviewed with the whole bundle). Tiers 0 to III and the look, from the visual request's handwritten Hive
 notes, written to the node rules in `FEATURE-next-gen-upgrade-tiers.md`. Part of `FEATURE-next-gen.md`. Weighed once
 on paper: damage 15 and price $30 are set; the rest are the balance pass's (open questions 8 and 14).
 
@@ -73,24 +73,24 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 
 | Tier | Node | Kind | Cluster | After | Glyph | Colour | Cost | Replaces | Does | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 0 | Quick Brood | stat | | | seeker.head.twin_warhead.2 | | | | Loads a missile every 1.6 s, from 2 s. | Name is a proposal. |
-| 0 | Deep Freeze | stat | | | seeker.head.deep_freeze.1 | | | seeker.head.deep_freeze.1 | Freeze +0.3 s | |
-| 0 | Wide Comb | stat | | | seeker.head.twin_warhead.1 | | | seeker.head.twin_warhead.1 | Nest +2 missiles | Name is a proposal. |
+| 0 | Quick Brood | stat | | | seeker.quick_brood | | | seeker.quick_brood | Loads a missile every 1.6 s, from 2 s. | Name is a proposal. |
+| 0 | Deep Freeze | stat | | | seeker.deep_freeze | | | seeker.deep_freeze | Freeze +0.3 s | |
+| 0 | Wide Comb | stat | | | seeker.wide_comb | | | seeker.wide_comb | Nest +2 missiles | Name is a proposal. |
 | 0 | Long Flight | stat | | | base.range | | | base.range | Range +1 cell | |
-| I | Swarm | ability | Release | | seeker.head.twin_warhead.3 | | | seeker.head.twin_warhead.3 | Every 14th freeze releases 7 missiles at once, one at each of the 7 soonest-out enemies in range. | A wide wave: the missiles fan out over the board. Today's Brood (a salvo spreads) grown into a cast. |
-| I | Hatching | ability | Release | | Nest | | | | Every 14th freeze hatches 7 missiles: they join the nest past its size, one every 0.4 s, and launch as usual. | A long wave: seven missiles over a few seconds, each picking as usual, so it keeps up with enemies as they thaw. It leaves the load alone. |
-| I | Feeding | ability | | | seeker.head.twin_warhead.4b | | | seeker.head.twin_warhead.4b | Each freeze takes 0.25 s off the next load, never below half its time. | The request's node, on every freeze: a Ruby's, a Shade's and a released missile's too. Today's Rearm (a freeze launches a missile) made gentler. Seconds, not a share, so it grows with every faster load: +19% alone at a 1.6 s load, +24% at 1.3 s; beside a Release, +45% and +63% (open question 7). Name is a proposal. |
-| I | Swift Wings | stat | | | seeker.special.hunters_mark | | | | Missile speed +50% | A fast enemy walks out of range before a slow missile lands. Name is a proposal. |
-| II | Ruby | ability | Second missile | | seeker.special.arcane_warhead | #d0405a | | | Adds Ruby missiles to the nest, one in three: a Ruby deals ×2 damage, and its freeze also holds what is freeze-immune. | The crystal hive: the tower turns ruby. Against the Yeti, the Molten Core, the Monolith and the Warden; ×2 is the Mortar's Heavy, and it gets through more of a shield. |
-| II | Shade | ability | Second missile | | Silence | #a6e8c8 | | seeker.extra.mixed_payloads.2 | Adds Shade missiles to the nest, one in three: a Shade deals Shadow damage, which goes past Shield and insulation, and its freeze leaves its enemy Silenced as long again after it thaws. | The shadow spire: the tower turns dark with a pale green glow. Against the shielded and casters: Menders, shielders, the Timekeeper, a boss's calls. Today's EMP Payload's Silence. |
-| II | Sharp Sting | stat | | | seeker.head.deep_freeze.2 | | | seeker.head.deep_freeze.2 | Damage +10 | Name is a proposal. |
-| I | Wide Comb II | stat | | | seeker.head.twin_warhead.1 | | | | Nest +2 missiles | |
-| II | Long Flight II | stat | | | base.range | | | base.range.2 | Range +1 cell | |
-| III | Ice Wake | ability | Around the ice | | Chill | | | seeker.head.deep_freeze.3 | An enemy it froze Chills every enemy within 0.5 cells of it by 30% while the freeze lasts. | Control: the ice block jams the enemies behind it. |
-| III | Shatter | ability | Around the ice | | Shatter | | | seeker.head.twin_warhead.4a | When a freeze it landed ends, the ice bursts: every other enemy within 1 cell takes 30% of the missile's damage. | Damage to a crowd. Today's Shatterburst and Deep Freeze II's shatter on a kill, as one rule on every thaw. |
-| III | Rich Brood | stat | | Second missile | seeker.extra.mixed_payloads.4 | | | seeker.extra.mixed_payloads.4 | The second kind comes up one in two, from one in three. | The identity's strength. Today's Full Rack (every missile a payload). Name is a proposal. |
-| III | Deep Freeze II | stat | | | seeker.head.deep_freeze.1 | | | | Freeze +1 s | |
-| III | Quick Brood II | stat | | | seeker.head.twin_warhead.2 | | | | Loads a missile every 1.3 s, from 1.6 s. | |
+| I | Swarm | ability | Release | | seeker.swarm | | | seeker.swarm | Every 14th freeze releases 7 missiles at once, one at each of the 7 soonest-out enemies in range. | A wide wave: the missiles fan out over the board. Today's Brood (a salvo spreads) grown into a cast. |
+| I | Hatching | ability | Release | | seeker.hatching | | | seeker.hatching | Every 14th freeze hatches 7 missiles: they join the nest past its size, one every 0.4 s, and launch as usual. | A long wave: seven missiles over a few seconds, each picking as usual, so it keeps up with enemies as they thaw. It leaves the load alone. |
+| I | Feeding | ability | | | seeker.feeding | | | seeker.feeding | Each freeze takes 0.25 s off the next load, never below half its time. | The request's node, on every freeze: a Ruby's, a Shade's and a released missile's too. Today's Rearm (a freeze launches a missile) made gentler. Seconds, not a share, so it grows with every faster load: +19% alone at a 1.6 s load, +24% at 1.3 s; beside a Release, +45% and +63% (open question 7). Name is a proposal. |
+| I | Swift Wings | stat | | | seeker.swift_wings | | | seeker.swift_wings | Missile speed +50% | A fast enemy walks out of range before a slow missile lands. Name is a proposal. |
+| II | Ruby | ability | Second missile | | seeker.ruby | #d0405a | | seeker.ruby | Adds Ruby missiles to the nest, one in three: a Ruby deals ×2 damage, and its freeze also holds what is freeze-immune. | The crystal hive: the tower turns ruby. Against the Yeti, the Molten Core, the Monolith and the Warden; ×2 is the Mortar's Heavy, and it gets through more of a shield. |
+| II | Shade | ability | Second missile | | seeker.shade | #a6e8c8 | | seeker.shade | Adds Shade missiles to the nest, one in three: a Shade deals Shadow damage, which goes past Shield and insulation, and its freeze leaves its enemy Silenced as long again after it thaws. | The shadow spire: the tower turns dark with a pale green glow. Against the shielded and casters: Menders, shielders, the Timekeeper, a boss's calls. Today's EMP Payload's Silence. |
+| II | Sharp Sting | stat | | | seeker.sharp_sting | | | seeker.sharp_sting | Damage +10 | Name is a proposal. |
+| I | Wide Comb II | stat | | | seeker.wide_comb_2 | | | seeker.wide_comb_2 | Nest +2 missiles | |
+| II | Long Flight II | stat | | | base.range.2 | | | base.range.2 | Range +1 cell | |
+| III | Ice Wake | ability | Around the ice | | seeker.ice_wake | | | seeker.ice_wake | An enemy it froze Chills every enemy within 0.5 cells of it by 30% while the freeze lasts. | Control: the ice block jams the enemies behind it. |
+| III | Shatter | ability | Around the ice | | seeker.shatter | | | seeker.shatter | When a freeze it landed ends, the ice bursts: every other enemy within 1 cell takes 30% of the missile's damage. | Damage to a crowd. Today's Shatterburst and Deep Freeze II's shatter on a kill, as one rule on every thaw. |
+| III | Rich Brood | stat | | Second missile | seeker.rich_brood | | | seeker.rich_brood | The second kind comes up one in two, from one in three. | The identity's strength. Today's Full Rack (every missile a payload). Name is a proposal. |
+| III | Deep Freeze II | stat | | | seeker.deep_freeze_2 | | | seeker.deep_freeze_2 | Freeze +1 s | |
+| III | Quick Brood II | stat | | | seeker.quick_brood_2 | | | seeker.quick_brood_2 | Loads a missile every 1.3 s, from 1.6 s. | |
 
 ### Terms
 
@@ -122,13 +122,19 @@ the Stormcaller. There is no turning head: the moving part is the nest. Drawn in
 |---|---|
 | the next freeze sets off a Release | `TowerCue.RELEASE_READY` (the ring and the perch brighten) |
 
-- **Ruby and Shade are not wired.** Add a query to the tower for the identity it took, then return the look from
-  the body-look visitor.
-- **The nest is not the tower's picture.** The stored missiles are drawn one for one by `NestDraw`, and today they
-  orbit on game time whether or not an enemy is near. `Foundation.nest` is the height of the ring they sit on:
-  missiles on the far half of the ring are painted before the tower, those on the near half after it. The rework
-  holds the ring still on an empty board and draws the three missile looks (`TowerArt.missile`).
-- The Release cue's halo on each missile and the ring's path belong to the nest, not to the pose.
+- **The identity** is `SeekerTower.secondMissile()`, turned into a look by
+  `TowerSpriteFrameBuilder.bodyLookOf(SeekerTower)`; the pose is `poseOf(SeekerTower)`.
+- **The nest is not the tower's picture.** The held missiles are drawn one for one by one `NestDraw`, on a ring
+  `TowerSprites.nestCentre` lifts to `Foundation.nest` and `nestRadius` sets just outside the foundation. The ring
+  turns only while an enemy is in reach. The whole ring is painted after the tower: it stands outside the foundation,
+  so the spire hides little of it.
+- **A missile** is a `LoadedMissile`, drawn by `MissileArt` alike in the nest, in flight (`MissileDraw`, on the
+  missile's own heading) and in the pane's nest row. A missile leaves from the tower's centre on the ring's tangent.
+- The Release cue's halo on each missile and the ring's path belong to the nest (`NestDraw.releaseReady`), not to the
+  pose.
+- **The freeze** is coloured by its `IceKind` (`DefinedEnemyMob.lastIce`): `EnemyIceDraw` carries an `IceLook`, and the
+  tint and thaw shards have a look per ice. **Ice Wake** is an `IceWakeDraw` round each enemy in
+  `SeekerTower.iceWakes()`, **Shatter** shard streaks from `SeekerTower.shatterMarks()`.
 
 | Tier | Foundation | Ruby | Shade |
 |---|---|---|---|
