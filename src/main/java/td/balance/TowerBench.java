@@ -78,7 +78,7 @@ public final class TowerBench {
     private static final String MOB = "benchmob";
     private static final String PLAIN = "walker";
     private static final String SEPARATOR = ":";
-    private static final Point SUBJECT = new Point(6, 0);
+    static final Point SUBJECT = new Point(6, 0);
     private static final Point SECOND = new Point(7, 0);
     /** The towers a subject's help is measured on: the two cheapest, one that picks a target and one that hits an area. */
     private static final List<Stand> PARTNERS = List.of(
