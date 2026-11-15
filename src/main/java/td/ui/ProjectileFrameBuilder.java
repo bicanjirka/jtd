@@ -6,6 +6,7 @@ import td.projectile.MissileProjectile;
 import td.projectile.ProjectileVisitor;
 import td.projectile.ShellLook;
 import td.ui.render.CannonballDraw;
+import td.ui.render.LoadedShell;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
 import td.ui.render.ProjectileDraw;
@@ -13,6 +14,7 @@ import td.ui.render.SmokeDraw;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Describes each projectile, interpolated between ticks. A missile's facing comes from its movement
@@ -67,6 +69,27 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         };
     }
 
+    /** The drawing of a shell of {@code look}: the same in flight as in the bore and in the pane. */
+    static LoadedShell loadedShellOf(ShellLook look) {
+        return switch (look) {
+            case NORMAL -> LoadedShell.NORMAL;
+            case HEAVY -> LoadedShell.HEAVY;
+            case NUKE -> LoadedShell.NUKE;
+            case NAPALM -> LoadedShell.NAPALM;
+            case TAR -> LoadedShell.TAR;
+            case CRYO -> LoadedShell.CRYO;
+            case FLARE -> LoadedShell.FLARE;
+        };
+    }
+
+    /** A burning, freezing or glowing shell leaves a trail in flight. */
+    private static boolean trails(LoadedShell kind) {
+        return switch (kind) {
+            case NAPALM, CRYO, FLARE -> true;
+            case NORMAL, HEAVY, NUKE, TAR -> false;
+        };
+    }
+
     public List<ProjectileDraw> build() {
         return this.draws;
     }
@@ -108,12 +131,13 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         float peak = this.peakOf(projectile);
         float lift = liftAt(projectile, peak, x, y);
         float shadowScale = lobShadowScale(lift, peak);
-        boolean streak = projectile.stats().streak();
+        LoadedShell kind = loadedShellOf(projectile.look());
+        boolean streak = projectile.stats().streak() || trails(kind);
         float tailX = streak ? (float) projectile.getPrevX() : x;
         float tailY = streak ? (float) projectile.getPrevY()
                 - liftAt(projectile, peak, projectile.getPrevX(), projectile.getPrevY()) : y - lift;
         this.draws.add(new CannonballDraw(paletteFor(projectile.look()), x, y, lift, shadowScale,
-                projectile.stats().size(), tailX, tailY));
+                projectile.stats().size(), tailX, tailY, Optional.of(kind)));
         return null;
     }
 

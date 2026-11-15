@@ -186,6 +186,33 @@ public sealed interface SheetLine {
         }
     }
 
+    /**
+     * A row of shells, front first, the ones the next firing loads marked, over one strip split into each kind's
+     * share of the shots.
+     *
+     * @param shells  the shells, front first
+     * @param loading how many front shells the next firing loads
+     * @param shares  each kind it can draw with its share, in order; the shares add to one
+     * @param tooltip what hovering it opens: each kind's chance and what it does
+     */
+    record MagazineRow(List<LoadedShell> shells, int loading, List<ShellShare> shares, SheetTooltip tooltip)
+            implements SheetLine {
+
+        public MagazineRow {
+            shells = List.copyOf(shells);
+            shares = List.copyOf(shares);
+        }
+
+        @Override
+        public Optional<InfoSheet> tooltipFor(TooltipKey key) {
+            return this.tooltip.key().equals(key) ? Optional.of(this.tooltip.sheet()) : Optional.empty();
+        }
+    }
+
+    /** One kind's piece of a magazine's strip, in {@code tone}. */
+    record ShellShare(LoadedShell shell, Palette tone, float share) {
+    }
+
     /** A face, a bold name in the face's tone, and a value on the right: the head of a tooltip. */
     record IconTitle(IconFace face, String name, Palette tone, String value) implements SheetLine {
     }

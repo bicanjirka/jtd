@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.ui.render.LoadedShell;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerPose;
 import td.ui.render.TowerSpriteDraw;
@@ -19,6 +20,8 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,6 +95,8 @@ final class TowerSprites {
     private static final double DRAINED_ALPHA = 0.75;
 
     private static final Map<Key, Sprite> SPRITES = new ConcurrentHashMap<>();
+    /** Every shell kind's drawing at the bore's size, built once: the kinds are few and never change. */
+    private static final Map<LoadedShell, List<TowerFoundations.Part>> SHELLS = shells();
     private static final AtomicLong KEPT_PIXELS = new AtomicLong();
 
     private TowerSprites() {
@@ -443,6 +448,27 @@ final class TowerSprites {
         for (TowerFoundations.Part part : parts) {
             paintPart(g, part, pixels);
         }
+    }
+
+    /**
+     * A shell of {@code kind} centred at {@code x, y}, a standard shell {@code radius} pixels round: the drawing its
+     * look's bore holds, scaled up.
+     */
+    static void paintShell(Graphics2D g2, LoadedShell kind, float x, float y, float radius) {
+        Graphics2D g = (Graphics2D) g2.create();
+        double toPixels = radius / TowerFoundations.BORE_SHELL;
+        g.translate(x, y);
+        g.scale(toPixels, toPixels);
+        paintParts(g, SHELLS.get(kind), toPixels * Math.max(1.0, g2.getTransform().getScaleX()));
+        g.dispose();
+    }
+
+    private static Map<LoadedShell, List<TowerFoundations.Part>> shells() {
+        Map<LoadedShell, List<TowerFoundations.Part>> shells = new EnumMap<>(LoadedShell.class);
+        for (LoadedShell kind : LoadedShell.values()) {
+            shells.put(kind, TowerFoundations.shell(kind, TowerFoundations.BORE_SHELL));
+        }
+        return Collections.unmodifiableMap(shells);
     }
 
     /** Draws {@code parts} into a picture, {@code pixels} device pixels to a cell. */

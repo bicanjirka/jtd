@@ -59,6 +59,7 @@ import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.RadialGradientPaint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
@@ -338,6 +339,7 @@ public final class Java2DFrameRenderer {
             case TOWER_PULSE_RIPPLE_GRAVITY -> new Color(60, 100, 230);
             case TOWER_PULSE_RIM_BITE -> new Color(235, 60, 60);
             case TOWER_PULSE_WELL -> withAlpha(new Color(20, 30, 120), 60);
+            case SHELL_NORMAL -> new Color(123, 132, 150);
             case TERM_HEAVY_SHELL -> new Color(242, 210, 138);
             case ZONE_BURNING -> new Color(255, 120, 30);
             case ZONE_TAR -> new Color(98, 82, 116);
@@ -360,6 +362,8 @@ public final class Java2DFrameRenderer {
             case PROJECTILE_NUKE -> new Color(245, 245, 235);
             case PROJECTILE_SHADOW -> new Color(0x6a, 0x70, 0x84, 150);
             case TOWER_MORTAR_NUKE_FLASH -> new Color(255, 255, 240);
+            case BLAST_RING -> new Color(255, 255, 255);
+            case BLAST_NUKE_RING -> new Color(200, 240, 74);
             case PROJECTILE_MISSILE -> new Color(80, 180, 255);
             case PROJECTILE_SMOKE -> new Color(190, 200, 210);
             case PROJECTILE_CRYO -> new Color(170, 235, 255);
@@ -560,6 +564,7 @@ public final class Java2DFrameRenderer {
             case ZONE_FROST -> this.paintZoneCrystals(g2, zone, fade);
             case ZONE_FALLOUT -> this.paintZoneFallout(g2, zone, fade);
             case ZONE_WARD -> this.paintZoneMine(g2, zone, fade);
+            case ZONE_FLARE -> this.paintZoneSpark(g2, zone, fade);
             default -> {
             }
         }
@@ -615,6 +620,33 @@ public final class Java2DFrameRenderer {
             double start = Math.toDegrees(zone.phase() * 0.8 + i * 2 * Math.PI / ZONE_FALLOUT_BLADES);
             g2.fill(new Arc2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2, (float) start, 60f, Arc2D.PIE));
         }
+    }
+
+    /** One small four-point spark in a faint glow, calm beside the payload grounds: it only flickers a little. */
+    private void paintZoneSpark(Graphics2D g2, ZoneDraw zone, float fade) {
+        float glow = zone.radius() * 0.6f;
+        float flicker = 0.85f + 0.15f * (float) Math.sin(zone.phase() * 5);
+        Color warm = colorFor(Palette.ZONE_FLARE);
+        g2.setPaint(new RadialGradientPaint(zone.centerX(), zone.centerY(), glow, new float[]{0f, 1f},
+                new Color[]{withAlpha(warm, Math.round(110 * fade * flicker)), withAlpha(warm, 0)}));
+        g2.fill(new Ellipse2D.Float(zone.centerX() - glow, zone.centerY() - glow, glow * 2, glow * 2));
+        float spark = zone.radius() * 0.18f * flicker;
+        float waist = spark * 0.28f;
+        Path2D.Float star = new Path2D.Float();
+        for (int i = 0; i < 8; i++) {
+            double angle = i * Math.PI / 4;
+            float reach = i % 2 == 0 ? spark : waist;
+            float px = zone.centerX() + (float) Math.cos(angle) * reach;
+            float py = zone.centerY() + (float) Math.sin(angle) * reach;
+            if (i == 0) {
+                star.moveTo(px, py);
+            } else {
+                star.lineTo(px, py);
+            }
+        }
+        star.closePath();
+        g2.setColor(withAlpha(new Color(255, 251, 224), Math.round(255 * fade)));
+        g2.fill(star);
     }
 
     /** A dark casing standing on the ground, with a red light that blinks. */
@@ -1356,7 +1388,7 @@ public final class Java2DFrameRenderer {
         }
     }
 
-    /** The shadow on the ground, then the shell over it, lifted along its arc. */
+    /** The shadow on the ground, then the shell over it, lifted along its arc, in its kind's drawing if it has one. */
     private void paintShell(Graphics2D g2, CannonballDraw shell) {
         float radius = PROJECTILE_SIZE * shell.size();
         float shadowX = radius * SHELL_SHADOW_WIDTH * shell.shadowScale();
@@ -1371,6 +1403,10 @@ public final class Java2DFrameRenderer {
             g2.setStroke(new BasicStroke(radius, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g2.draw(new Line2D.Float(shell.tailX(), shell.tailY(), x, y));
             g2.setStroke(defaultStroke);
+        }
+        if (shell.kind().isPresent()) {
+            TowerSprites.paintShell(g2, shell.kind().get(), x, y, radius);
+            return;
         }
         Tones tones = Tones.of(colorFor(shell.palette()));
         g2.setColor(tones.shade());

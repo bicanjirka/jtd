@@ -2,6 +2,7 @@ package td.tower.mortar;
 
 import td.util.RandomSource;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
@@ -9,29 +10,23 @@ import java.util.Optional;
 /**
  * How the Mortar's magazine draws a new shell: each kind it owns by its weight, a kind's chance its weight over the sum
  * of them; with Fusion a Heavy drawn behind a Heavy fuses with it into a Nuke, and with Rich Mix a new shell is never
- * the kind of the one in front of it. Each {@code withX} is a copy.
+ * the kind of the one in front of it. Each {@code withX} is a copy; two specs that draw alike are equal.
  */
-public final class MagazineSpec {
+public record MagazineSpec(Map<ShellKind, Integer> weights, boolean fuses, boolean mixes) {
 
     private static final int NORMAL_WEIGHT = 9;
     private static final int HEAVY_WEIGHT = 1;
 
-    private final EnumMap<ShellKind, Integer> weights;
-    private final boolean fuses;
-    private final boolean mixes;
-
-    private MagazineSpec(EnumMap<ShellKind, Integer> weights, boolean fuses, boolean mixes) {
-        this.weights = weights;
-        this.fuses = fuses;
-        this.mixes = mixes;
+    /** The weights kept in the kinds' order, which the draw walks, and never changed after. */
+    public MagazineSpec {
+        EnumMap<ShellKind, Integer> ordered = new EnumMap<>(ShellKind.class);
+        ordered.putAll(weights);
+        weights = Collections.unmodifiableMap(ordered);
     }
 
     /** Normal and Heavy shells only, nine Normals to one Heavy. */
     public static MagazineSpec standard() {
-        EnumMap<ShellKind, Integer> weights = new EnumMap<>(ShellKind.class);
-        weights.put(ShellKind.NORMAL, NORMAL_WEIGHT);
-        weights.put(ShellKind.HEAVY, HEAVY_WEIGHT);
-        return new MagazineSpec(weights, false, false);
+        return new MagazineSpec(Map.of(ShellKind.NORMAL, NORMAL_WEIGHT, ShellKind.HEAVY, HEAVY_WEIGHT), false, false);
     }
 
     /** {@code kind} drawn {@code added} weight more often: a kind not owned yet joins the draw. */
@@ -47,14 +42,6 @@ public final class MagazineSpec {
 
     public MagazineSpec mixing() {
         return new MagazineSpec(this.weights, this.fuses, true);
-    }
-
-    public boolean fuses() {
-        return this.fuses;
-    }
-
-    public boolean mixes() {
-        return this.mixes;
     }
 
     public int weightOf(ShellKind kind) {

@@ -5,6 +5,7 @@ import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.ui.ProjectileFrameBuilder;
 import td.ui.render.CannonballDraw;
+import td.ui.render.LoadedShell;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
 import td.ui.render.ProjectileDraw;
@@ -80,6 +81,29 @@ class ProjectileFrameBuilderTest {
         CannonballDraw draw = (CannonballDraw) builder.build().getFirst();
         assertThat(draw.palette()).isEqualTo(Palette.PROJECTILE_FROST);
         assertThat(draw.size()).isEqualTo(2f);
+    }
+
+    @Test
+    void aShellIsDrawnAsItsKindAndOnlyAShellThatBurnsFreezesOrGlowsTrails() {
+        CannonballProjectile napalm = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f), ShellLook.NAPALM,
+                (x, y) -> {
+                });
+        CannonballProjectile heavy = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f), ShellLook.HEAVY,
+                (x, y) -> {
+                });
+        napalm.doTick(1);
+        heavy.doTick(1);
+
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
+        napalm.accept(builder);
+        heavy.accept(builder);
+
+        CannonballDraw burning = (CannonballDraw) builder.build().getFirst();
+        CannonballDraw plain = (CannonballDraw) builder.build().getLast();
+        assertThat(burning.kind()).contains(LoadedShell.NAPALM);
+        assertThat(plain.kind()).contains(LoadedShell.HEAVY);
+        assertThat(burning.tailX()).isLessThan(burning.x());
+        assertThat(plain.tailX()).isEqualTo(plain.x());
     }
 
     @Test

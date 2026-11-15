@@ -391,9 +391,18 @@ panel's width, and a node squeezed below full size shows no price or key chip; o
 - **Approach:** a wider panel, or a side column that takes the room of the shared column above the fork's tier when
   that column holds two nodes; failing that, a price under a squeezed node in a smaller font.
 
+### A shell in the Mortar's magazine has no hover of its own
+
+The pane's magazine row opens one tooltip for the whole row: the magazine and each kind's chance. The feature doc
+asks that hovering one shell show that shell's damage, blast, flight speed and reach.
+
+- **Where:** `td.ui.InfoSheetDocument.magazineRow`, `td.ui.SheetPane.hoverAt`, `td.ui.HoverRun`.
+- **Approach:** a `HoverRun` for the row with a slot layout, as `IconRowRun` has with `IconRowLayout`, and a tooltip
+  per kind in `SheetLine.MagazineRow`, built from `ShellKind` and the tower's stats in `TowerSheetText`.
+
 ### Tower cues and identity looks are drawn but nothing in play sends them
 
-Most `TowerCue`s, every `LoadedShell` but the normal one, the Beacon's panes and the looks `SOULFIRE`, `RUBY`,
+Most `TowerCue`s, the Beacon's panes and the looks `SOULFIRE`, `RUBY`,
 `SHADE`, `BURDEN`, `GRAVITY` and `UMBRA` are reached only by the art sheets and by tests: they were built ahead of
 the towers that own them.
 

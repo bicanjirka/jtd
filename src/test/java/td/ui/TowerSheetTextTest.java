@@ -4,11 +4,13 @@ import org.junit.jupiter.api.Test;
 import td.effect.EffectKind;
 import td.fixtures.FakeAbilityMechanic;
 import td.fixtures.FakeTower;
+import td.fixtures.MagazineFixtures;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.term.TermText;
+import td.tower.MortarTower;
 import td.tower.NodeProgress;
 import td.tower.SniperTower;
 import td.tower.Tower;
@@ -21,11 +23,14 @@ import td.tower.TowerStatLine;
 import td.tower.TowerStatRow;
 import td.tower.TowerTerm;
 import td.tower.ability.AbilityUnits;
+import td.tower.mortar.MagazineView;
+import td.tower.mortar.ShellKind;
 import td.tower.upgrade.Mechanic;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.render.InfoSheet;
+import td.ui.render.LoadedShell;
 import td.ui.render.Palette;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
@@ -35,9 +40,12 @@ import td.ui.render.TowerLook;
 import td.util.GameHost;
 import td.util.GameWorld;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class TowerSheetTextTest {
 
@@ -318,5 +326,37 @@ class TowerSheetTextTest {
         assertThat(ability.capacity()).isEqualTo(3);
         assertThat(ability.cost()).isEqualTo(2);
         assertThat(row(ability.tooltip().sheet(), EffectKind.CHARGED.title()).value()).isEqualTo("1.3 / 3");
+    }
+
+    @Test
+    void aMortarsPaneShowsItsMagazineFrontFirstThenEachKindsShareInWords() {
+        Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
+        UpgradePaths.buy(mortar, this.world, "Tar");
+        MortarTower.loadMagazine(mortar, MagazineFixtures.frontedBy(ShellKind.TAR, ShellKind.HEAVY));
+
+        InfoSheet sheet = TowerSheetText.status(BoardRenderer.liveInspection(mortar));
+
+        List<SheetLine> lines = sheet.lines();
+        SheetLine.MagazineRow row = lines.stream().filter(SheetLine.MagazineRow.class::isInstance)
+                .map(SheetLine.MagazineRow.class::cast).findFirst().orElseThrow();
+        MagazineView view = MortarTower.magazineViewOf(mortar).orElseThrow();
+        assertThat(row.shells()).hasSize(view.shells().size()).startsWith(LoadedShell.TAR, LoadedShell.HEAVY);
+        assertThat(row.loading()).isEqualTo(1);
+        assertThat(row.shares()).extracting(SheetLine.ShellShare::shell)
+                .containsExactly(LoadedShell.NORMAL, LoadedShell.HEAVY, LoadedShell.TAR);
+        assertThat(row.shares().stream().mapToDouble(SheetLine.ShellShare::share).sum()).isCloseTo(1.0, within(1e-3));
+        assertThat(lines.get(lines.indexOf(row) + 1))
+                .isEqualTo(SheetLine.Sentence.of(TowerSheetText.chancesText(view.chances())));
+    }
+
+    @Test
+    void theChancesInWordsNameEachKindWithItsShareInOrder() {
+        Map<ShellKind, Float> chances = new EnumMap<>(ShellKind.class);
+        chances.put(ShellKind.NORMAL, 0.6f);
+        chances.put(ShellKind.HEAVY, 0.4f);
+
+        TermText text = TowerSheetText.chancesText(chances);
+
+        assertThat(text).isEqualTo(TermText.of("Normal 60% · ").plus(TowerTerm.HEAVY_SHELL).plus(" 40%"));
     }
 }

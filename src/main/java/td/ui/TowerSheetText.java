@@ -12,14 +12,18 @@ import td.tower.NodeWords;
 import td.tower.TowerBuffState;
 import td.tower.TowerInspection;
 import td.tower.TowerStatLine;
+import td.tower.TowerTerm;
 import td.tower.ability.Ability;
 import td.tower.ability.AbilityBar;
 import td.tower.ability.AbilityState;
+import td.tower.mortar.MagazineView;
+import td.tower.mortar.ShellKind;
 import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeLine;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.render.IconFace;
 import td.ui.render.InfoSheet;
+import td.ui.render.LoadedShell;
 import td.ui.render.Palette;
 import td.ui.render.SheetIcon;
 import td.ui.render.SheetLine;
@@ -31,6 +35,7 @@ import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -95,6 +100,7 @@ final class TowerSheetText {
         targets(tower).ifPresent(lines::add);
         iconRow("Perks", perkIcons(tower)).ifPresent(lines::add);
         tower.abilities().forEach(ability -> lines.add(abilityRow(ability)));
+        tower.magazine().ifPresent(magazine -> lines.addAll(magazineLines(magazine)));
         iconRow("Buffs", conditionIcons(tower, Side.BUFF)).ifPresent(lines::add);
         iconRow("Debuffs", conditionIcons(tower, Side.DEBUFF)).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
@@ -183,6 +189,52 @@ final class TowerSheetText {
         InfoSheet hover = TermSheets.of(ability.term(), ability.term().describe(), rows);
         return new SheetLine.AbilityRow(face, ability.term().title(), currency, bar.capacity(), bar.cost(), fill,
                 new SheetTooltip(TooltipKey.ofTerm("ability", ability.term()), hover));
+    }
+
+    /** The magazine's slots and strip, then each kind's share in words, every named kind a mention. */
+    private static List<SheetLine> magazineLines(MagazineView magazine) {
+        List<SheetLine.ShellShare> shares = magazine.chances().entrySet().stream()
+                .map(entry -> new SheetLine.ShellShare(shellOf(entry.getKey()), shareTone(entry.getKey()),
+                        entry.getValue()))
+                .toList();
+        TermText chances = chancesText(magazine.chances());
+        List<SheetLine> rows = new ArrayList<>();
+        magazine.chances().forEach((kind, share) -> rows.add(Row.toned(Glyph.DOT, shareTone(kind),
+                kind.title(), TermNumbers.percent(share))));
+        InfoSheet hover = TermSheets.of(TowerTerm.MAGAZINE, TowerTerm.MAGAZINE.describe(), rows);
+        SheetLine.MagazineRow row = new SheetLine.MagazineRow(magazine.shells().stream().map(TowerSheetText::shellOf)
+                .toList(), magazine.loading(), shares,
+                new SheetTooltip(TooltipKey.ofTerm("magazine", TowerTerm.MAGAZINE), hover));
+        return List.of(row, SheetLine.Sentence.of(chances));
+    }
+
+    /** "Normal 60% · Heavy 40%". */
+    static TermText chancesText(Map<ShellKind, Float> chances) {
+        TermText text = TermText.empty();
+        for (Map.Entry<ShellKind, Float> entry : chances.entrySet()) {
+            if (!text.spans().isEmpty()) {
+                text = text.plus(" · ");
+            }
+            text = text.plus(entry.getKey().mention()).plus(" " + TermNumbers.percent(entry.getValue()));
+        }
+        return text;
+    }
+
+    private static LoadedShell shellOf(ShellKind kind) {
+        return ProjectileFrameBuilder.loadedShellOf(kind.look());
+    }
+
+    /** A kind's colour in the magazine's strip: the colour its shell is drawn in. */
+    private static Palette shareTone(ShellKind kind) {
+        return switch (kind) {
+            case NORMAL -> Palette.SHELL_NORMAL;
+            case HEAVY -> Palette.TERM_HEAVY_SHELL;
+            case NUKE -> Palette.BLAST_NUKE_RING;
+            case NAPALM -> Palette.PROJECTILE_NAPALM;
+            case TAR -> Palette.ZONE_TAR;
+            case CRYO -> Palette.PROJECTILE_FROST;
+            case FLARE -> Palette.ZONE_FLARE;
+        };
     }
 
     private static List<SheetIcon> conditionIcons(TowerInspection tower, Side side) {

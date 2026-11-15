@@ -92,7 +92,12 @@ public enum ShellKind {
 
     /** Its name as the player reads it: "Normal", or its term. */
     public TermText mention() {
-        return this.term().map(TermText::of).orElse(TermText.of("Normal"));
+        return this.term().map(TermText::of).orElse(TermText.of(this.title()));
+    }
+
+    /** Its name, plain: "Normal", or its term's title. */
+    public String title() {
+        return this.term().map(TowerTerm::title).orElse("Normal");
     }
 
     /** The term that names it; a Normal shell has none. */
