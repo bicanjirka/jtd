@@ -8,6 +8,7 @@ import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.IceKind;
 import td.effect.InvisibleTemplate;
 import td.enemy.Ability;
 import td.enemy.AbilityTerm;
@@ -51,6 +52,7 @@ import td.ui.render.EnemyTintDraw;
 import td.ui.render.EnemyTintLook;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
+import td.ui.render.IceLook;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
@@ -918,6 +920,20 @@ class EnemyFrameBuilderTest {
         assertThat(burstsOf(enemy, 2)).singleElement()
                 .satisfies(burst -> assertThat(burst.look()).isEqualTo(EnemyBurstLook.ICE_SHARDS));
         assertThat(burstsOf(enemy, 2 + EnemyFrameBuilder.ICE_SHARDS_DURATION_TICKS + 1)).isEmpty();
+    }
+
+    @Test
+    void aRubyFreezeIsDrawnInRubyIceAndThawsIntoRubyShards() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        enemy.applyEffect(Effect.freeze(2, IceKind.RUBY, DamageSink.none()));
+
+        EnemyIceDraw ice = iceOf(enemy);
+        enemy.doTick(1);
+        enemy.doTick(2);
+
+        assertThat(ice.look()).isEqualTo(IceLook.RUBY);
+        assertThat(burstsOf(enemy, 2)).singleElement()
+                .satisfies(burst -> assertThat(burst.look()).isEqualTo(EnemyBurstLook.RUBY_SHARDS));
     }
 
     @Test

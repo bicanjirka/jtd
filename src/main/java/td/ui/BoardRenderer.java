@@ -7,6 +7,7 @@ import td.enemy.EnemyMob;
 import td.projectile.Projectile;
 import td.stat.StatWording;
 import td.tower.MortarTower;
+import td.tower.SeekerTower;
 import td.tower.Tower;
 import td.tower.TowerInspection;
 import td.ui.render.CellDraw;
@@ -117,10 +118,11 @@ public final class BoardRenderer {
         return Optional.of(new CellGridDraw(blocked));
     }
 
-    /** {@code tower} as it stands this frame: what it carries, how far its nodes count, its bars and its magazine. */
+    /** {@code tower} as it stands this frame: what it carries, how far its nodes count, its bars, its magazine or nest. */
     static TowerInspection liveInspection(Tower tower) {
         TowerInspection found = tower.inspect().withConditions(tower.conditions()).withProgress(tower.progress())
                 .withAbilities(tower.abilities());
-        return MortarTower.magazineViewOf(tower).map(found::withMagazine).orElse(found);
+        TowerInspection loaded = MortarTower.magazineViewOf(tower).map(found::withMagazine).orElse(found);
+        return SeekerTower.nestViewOf(tower).map(loaded::withNest).orElse(loaded);
     }
 }

@@ -20,6 +20,7 @@ import td.tower.seeker.FrozenLedger;
 import td.tower.seeker.IceRider;
 import td.tower.seeker.IceWakeMechanic;
 import td.tower.seeker.MissileKind;
+import td.tower.seeker.NestView;
 import td.tower.seeker.Release;
 import td.tower.seeker.ReleaseMechanic;
 import td.tower.seeker.RichBroodMechanic;
@@ -27,6 +28,7 @@ import td.tower.seeker.SecondMissileMechanic;
 import td.tower.seeker.SeekerMechanic;
 import td.tower.seeker.SeekerNest;
 import td.tower.seeker.SeekerSpec;
+import td.tower.seeker.ShatterMark;
 import td.tower.seeker.ShatterMechanic;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
@@ -43,6 +45,7 @@ import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.util.TickRate;
+import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +73,8 @@ public final class SeekerTower extends AbstractTower {
     public static final float MISSILE_SPEED = 8f;
     /** The ring the nest's missiles sit on turns this far a tick while the tower fights. */
     public static final double RING_RADIANS_PER_TICK = 0.08;
+    /** How long the shards of a burst ice fly. */
+    public static final int SHATTER_MARK_TICKS = 10;
 
     /** A load every 2 s. */
     private static final int COOLDOWN_MAX = 39;
@@ -145,8 +150,46 @@ public final class SeekerTower extends AbstractTower {
             entry(ICE_WAKE.id(), IceWakeMechanic::new),
             entry(SHATTER.id(), ShatterMechanic::new));
 
+    private static final TowerVisitor<Optional<SeekerTower>> AS_SEEKER = new TowerVisitor<>() {
+        @Override
+        public Optional<SeekerTower> visitSniperTower(SniperTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<SeekerTower> visitSplashTower(SplashTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<SeekerTower> visitPulseTower(PulseTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<SeekerTower> visitAuraTower(AuraTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<SeekerTower> visitMortarTower(MortarTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<SeekerTower> visitSeekerTower(SeekerTower tower) {
+            return Optional.of(tower);
+        }
+
+        @Override
+        public Optional<SeekerTower> visitCinderTower(CinderTower tower) {
+            return Optional.empty();
+        }
+    };
+
     private final OwnedMechanics<SeekerMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private SeekerNest nest = new SeekerNest();
+    private final List<ShatterMark> shatterMarks = new ArrayList<>();
     private FrozenLedger frozen = new FrozenLedger();
     private FireClock clock = new FireClock(COOLDOWN_MAX);
     /** The charge freezes have fed the load in progress, held under its floor. */
@@ -193,6 +236,7 @@ public final class SeekerTower extends AbstractTower {
 
     public void doTick(int gameTime) {
         this.tickNow = gameTime;
+        this.shatterMarks.removeIf(mark -> gameTime - mark.startedAtTick() >= SHATTER_MARK_TICKS);
         SeekerSpec spec = this.spec();
         this.settleIce(spec);
         this.nest.keepOnly(spec.brood()::owns);
@@ -224,6 +268,7 @@ public final class SeekerTower extends AbstractTower {
     @Override
     protected void endFight() {
         this.frozen = new FrozenLedger();
+        this.shatterMarks.clear();
         this.clock = new FireClock(COOLDOWN_MAX);
         this.fed = 0.0;
         this.freezes = 0;
@@ -343,8 +388,10 @@ public final class SeekerTower extends AbstractTower {
         Damage damage = Damage.magic(Math.round(freeze.stats().damage() * freeze.kind().damageFactor()
                 * ShatterMechanic.SHARE));
         AttackProfile profile = this.profileOf(shot, HitAdjustment.none());
-        this.around(freeze.enemy(), ShatterMechanic.RADIUS_CELLS * this.cell())
-                .forEach(enemy -> this.dealDamage(enemy, damage, profile));
+        float radius = ShatterMechanic.RADIUS_CELLS * this.cell();
+        this.around(freeze.enemy(), radius).forEach(enemy -> this.dealDamage(enemy, damage, profile));
+        this.shatterMarks.add(new ShatterMark(new Vec2(freeze.enemy().getX(), freeze.enemy().getY()), radius,
+                this.tickNow, freeze.kind()));
     }
 
     /** Every enemy within {@code radius} pixels of {@code center}, hidden ones too, but itself. */
@@ -360,6 +407,24 @@ public final class SeekerTower extends AbstractTower {
         return this.nest.missiles();
     }
 
+    /** Where every enemy it holds frozen stands while it has an Ice Wake; none without one. */
+    public List<Vec2> iceWakes() {
+        if (this.spec().ice() != IceRider.ICE_WAKE) {
+            return List.of();
+        }
+        return this.frozen.holding().stream().map(enemy -> new Vec2(enemy.getX(), enemy.getY())).toList();
+    }
+
+    /** How far an Ice Wake reaches round the ice, in pixels. */
+    public float iceWakeRadius() {
+        return IceWakeMechanic.RADIUS_CELLS * this.cell();
+    }
+
+    /** The ice that burst lately, for the shards the board draws. */
+    public List<ShatterMark> shatterMarks() {
+        return List.copyOf(this.shatterMarks);
+    }
+
     /** Where the ring its nest sits on has turned to, in radians. */
     public double ringRadians() {
         return this.ringRadians;
@@ -373,6 +438,16 @@ public final class SeekerTower extends AbstractTower {
     /** The second kind of missile its nest draws, its identity, once it took one. */
     public Optional<MissileKind> secondMissile() {
         return this.spec().brood().second();
+    }
+
+    /** Its nest as the pane shows it. */
+    public NestView nestView() {
+        return new NestView(this.nest.missiles(), this.missileChances());
+    }
+
+    /** {@code tower}'s nest as the pane shows it, when it is an Aerie. */
+    public static Optional<NestView> nestViewOf(Tower tower) {
+        return tower.accept(AS_SEEKER).map(SeekerTower::nestView);
     }
 
     /** What share of the new missiles each kind comes to. */

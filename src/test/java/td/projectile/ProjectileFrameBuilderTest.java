@@ -126,15 +126,20 @@ class ProjectileFrameBuilderTest {
         FakeEnemyMob target = FakeEnemyMob.at(0, 1000);
         MissileProjectile missile = new MissileProjectile(0, 0, Math.PI / 2, target,
                 ProjectileStats.of(10f).withSize(2f), new FakeMissileGuide());
+        MissileProjectile standard = new MissileProjectile(0, 0, Math.PI / 2, target, ProjectileStats.of(10f),
+                new FakeMissileGuide());
         for (int t = 1; t <= 4; t++) {
             missile.doTick(t);
         }
 
         ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
+        standard.accept(builder);
+        float standardLength = ((MissileDraw) builder.build().getLast()).length();
         missile.accept(builder);
-        List<ProjectileDraw> draws = builder.build();
+        List<ProjectileDraw> draws = builder.build().subList(1, builder.build().size());
 
-        assertThat(draws.getLast()).isInstanceOfSatisfying(MissileDraw.class, draw -> assertThat(draw.size()).isEqualTo(2f));
+        assertThat(draws.getLast()).isInstanceOfSatisfying(MissileDraw.class,
+                draw -> assertThat(draw.length()).isEqualTo(2 * standardLength));
         List<SmokeDraw> smoke = draws.stream().filter(SmokeDraw.class::isInstance).map(SmokeDraw.class::cast).toList();
         assertThat(smoke).hasSize(4);
         assertThat(smoke).extracting(SmokeDraw::alpha).isSorted();

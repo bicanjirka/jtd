@@ -1,6 +1,7 @@
 package td.ui;
 
 import td.effect.EffectKind;
+import td.effect.IceKind;
 import td.enemy.Affix;
 import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
@@ -32,6 +33,7 @@ import td.ui.render.EnemyTintDraw;
 import td.ui.render.EnemyTintLook;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
+import td.ui.render.IceLook;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.Palette;
 import td.ui.render.RankBadge;
@@ -297,6 +299,30 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return null;
     }
 
+    private static IceLook iceLookOf(IceKind ice) {
+        return switch (ice) {
+            case FROST -> IceLook.FROST;
+            case RUBY -> IceLook.RUBY;
+            case SHADE -> IceLook.SHADE;
+        };
+    }
+
+    private static EnemyTintLook tintOf(IceKind ice) {
+        return switch (ice) {
+            case FROST -> EnemyTintLook.FREEZE;
+            case RUBY -> EnemyTintLook.RUBY_FREEZE;
+            case SHADE -> EnemyTintLook.SHADE_FREEZE;
+        };
+    }
+
+    private static EnemyBurstLook shardsOf(IceKind ice) {
+        return switch (ice) {
+            case FROST -> EnemyBurstLook.ICE_SHARDS;
+            case RUBY -> EnemyBurstLook.RUBY_SHARDS;
+            case SHADE -> EnemyBurstLook.SHADE_SHARDS;
+        };
+    }
+
     /** Adds what is drawn on a live enemy, back to front; a later layer never hides what an earlier one reports. */
     private void liveBody(EnemyLook look, DefinedEnemyMob mob, float scale, double facingRadians, Optional<SupportAura> supportAura) {
         float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
@@ -333,9 +359,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             this.emit(EnemyEmissionLook.CHILL, x, y, hull, level, seed, visibility);
         }
         int iceVariant = (int) Math.floorMod(mob.id(), EnemyEffects.iceVariants());
+        IceKind ice = mob.lastIce();
         if (active.contains(EffectKind.FREEZE)) {
-            this.overlayDraws.add(new EnemyTintDraw(look, x, y, facing, drawScale, EnemyTintLook.FREEZE, 1f, visibility));
-            this.overlayDraws.add(new EnemyIceDraw(x, y, iceScale, iceVariant, seed, this.animationSeconds, visibility));
+            this.overlayDraws.add(new EnemyTintDraw(look, x, y, facing, drawScale, tintOf(ice), 1f, visibility));
+            this.overlayDraws.add(new EnemyIceDraw(iceLookOf(ice), x, y, iceScale, iceVariant, seed, this.animationSeconds,
+                    visibility));
             above = Math.max(above, EnemyEffects.iceAbove(iceVariant, iceScale));
             beneath = Math.max(beneath, EnemyEffects.iceBeneath(iceVariant, iceScale));
             ringRadius = Math.max(ringRadius, EnemyEffects.iceReach(iceVariant, iceScale) + SELECTION_RING_MARGIN);
@@ -367,7 +395,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         }
         OptionalInt thawed = mob.effectLostWithin(EffectKind.FREEZE, this.gameTime, ICE_SHARDS_DURATION_TICKS);
         if (thawed.isPresent() && !active.contains(EffectKind.FREEZE)) {
-            this.overlayDraws.add(new EnemyBurstDraw(EnemyBurstLook.ICE_SHARDS, x, y, eggX, eggY,
+            this.overlayDraws.add(new EnemyBurstDraw(shardsOf(ice), x, y, eggX, eggY,
                     (float) thawed.getAsInt() / ICE_SHARDS_DURATION_TICKS, seed, visibility));
         }
         this.critSpark(mob, x, y);

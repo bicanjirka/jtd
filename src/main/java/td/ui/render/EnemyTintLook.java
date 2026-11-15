@@ -4,5 +4,7 @@ package td.ui.render;
 public enum EnemyTintLook {
     POISON,
     CHILL,
-    FREEZE
+    FREEZE,
+    RUBY_FREEZE,
+    SHADE_FREEZE
 }

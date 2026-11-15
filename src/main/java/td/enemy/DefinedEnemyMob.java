@@ -12,6 +12,7 @@ import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.effect.EffectTransitions;
 import td.effect.FreezeMeter;
+import td.effect.IceKind;
 import td.effect.ShieldGauge;
 import td.enemy.MobMoments.Moment;
 import td.stat.BaseStats;
@@ -93,6 +94,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private int ticksSinceLastHit;
     private int dodges;
     private int alliesNearby;
+    private IceKind lastIce = IceKind.FROST;
     private MobObserver observer = MobObserver.off();
 
     public DefinedEnemyMob(EnemyDefinition definition, GameWorld gameWorld, SpawnParameters spawnParameters, Rank rank) {
@@ -560,6 +562,9 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.observer.report(new MobEvent.EffectRetimed(effect.kind(), factor, scaled.remainingTicks()));
         }
         this.activeEffects.apply(scaled);
+        if (freeze) {
+            this.lastIce = this.activeEffects.find(EffectKind.FREEZE).map(Effect::ice).orElse(this.lastIce);
+        }
         this.stats.invalidate();
         if (this.observer.isOn()) {
             this.observer.effectApplied(EffectStates.of(this.activeEffects), effect.kind(),
@@ -695,6 +700,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     /** Empty if never gained. */
     public OptionalInt ticksSinceEffectGained(EffectKind kind, int gameTime) {
         return this.effectTransitions.ticksSinceGained(kind, gameTime);
+    }
+
+    /** What its freeze is made of, or the last one's once it thawed. */
+    public IceKind lastIce() {
+        return this.lastIce;
     }
 
     /** How long ago {@code kind} was last lost, if no more than {@code ticks} ago. */
