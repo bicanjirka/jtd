@@ -31,7 +31,6 @@ import java.util.Set;
  * bonus 0 40
  * damage 1250000 480000
  * tower SNIPER 6 11 400 123456 40 paid=120 xp+=0.25 sniper.head.x.1 sniper.head.x.2
- * pin 4 7 9 7
  * magazine 3 5 NORMAL HEAVY NORMAL NAPALM NORMAL NORMAL HEAVY NORMAL NORMAL NORMAL
  * </pre>
  * The format line names the text's version: a save of another version is refused rather than read wrong, since the
@@ -39,15 +38,14 @@ import java.util.Set;
  * {@code bonus} line is a round and the clear bonus it paid. {@code damage} is the physical and magic damage landed. A
  * tower line is its type, cell, XP, damage dealt, kills, then {@code key=value} facts (what it was bought for,
  * {@code unused=tower} for a tower no wave has run with, the fraction of XP carried), then the upgrades it owns in the
- * order bought, a {@code +} before each one bought since the last wave ran. A {@code pin} line is the cell of an
- * Obelisk and of the one its Ley Line is pinned to. A {@code magazine} line is the cell of a Mortar and
+ * order bought, a {@code +} before each one bought since the last wave ran. A {@code magazine} line is the cell of a Mortar and
  * the shells it had ready, front first. Every line but format, level, wave and economy may
  * be left out.
  */
 public final class GameSaveText {
 
     /** The version this game writes and reads. */
-    static final int FORMAT = 7;
+    static final int FORMAT = 8;
     private static final int TOWER_FIELDS = 7;
 
     private GameSaveText() {
@@ -91,10 +89,6 @@ public final class GameSaveText {
                     .append(node));
             text.append('\n');
         }
-        for (LeyLinePin pin : save.pins()) {
-            text.append("pin ").append(pin.caster().x()).append(' ').append(pin.caster().y()).append(' ')
-                    .append(pin.host().x()).append(' ').append(pin.host().y()).append('\n');
-        }
         for (MagazineLoad magazine : save.magazines()) {
             text.append("magazine ").append(magazine.mortar().x()).append(' ').append(magazine.mortar().y());
             magazine.shells().forEach(shell -> text.append(' ').append(shell.name()));
@@ -114,7 +108,6 @@ public final class GameSaveText {
         Map<Integer, Integer> bonuses = new HashMap<>();
         DamageMix damage = DamageMix.none();
         List<TowerSave> towers = new ArrayList<>();
-        List<LeyLinePin> pins = new ArrayList<>();
         List<MagazineLoad> magazines = new ArrayList<>();
         // A Windows editor may save the text with a byte order mark, which strip() keeps.
         String unmarked = text.startsWith("﻿") ? text.substring(1) : text;
@@ -136,9 +129,6 @@ public final class GameSaveText {
                     case "leaked" -> Arrays.stream(words).skip(1).map(Integer::parseInt).forEach(leaked::add);
                     case "bonus" -> bonuses.put(Integer.parseInt(words[1]), Integer.parseInt(words[2]));
                     case "damage" -> damage = new DamageMix(Long.parseLong(words[1]), Long.parseLong(words[2]));
-                    case "pin" -> pins.add(new LeyLinePin(
-                            new Point(Integer.parseInt(words[1]), Integer.parseInt(words[2])),
-                            new Point(Integer.parseInt(words[3]), Integer.parseInt(words[4]))));
                     case "magazine" -> {
                         Optional<MagazineLoad> magazine = magazine(words);
                         if (magazine.isEmpty()) {
@@ -170,7 +160,7 @@ public final class GameSaveText {
             return Read.problem("A save needs a level, a wave and an economy line");
         }
         return Read.of(GameSave.of(level, wave, economy.get(), towers).withSeed(seed)
-                .withHistory(new RoundHistory(leaked, bonuses)).withDamage(damage).withPins(pins).withMagazines(magazines));
+                .withHistory(new RoundHistory(leaked, bonuses)).withDamage(damage).withMagazines(magazines));
     }
 
     /** How many words a line starting with {@code key} has at least, the key included. */
@@ -179,7 +169,6 @@ public final class GameSaveText {
             case "format", "wave", "seed" -> 2;
             case "bonus", "damage" -> 3;
             case "economy" -> 4;
-            case "pin" -> 5;
             case "magazine" -> 4;
             case "tower" -> TOWER_FIELDS;
             default -> 1;

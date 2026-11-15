@@ -125,16 +125,12 @@ public final class TowerModifiers {
         return flat(TowerStat.RELOAD, ticks);
     }
 
-    public static StatModifiers<TowerStat> tollCap(int stacks) {
-        return flat(TowerStat.TOLL_CAP, stacks);
+    public static StatModifiers<TowerStat> tollPace(int ticks) {
+        return flat(TowerStat.TOLL_PACE, ticks);
     }
 
-    public static StatModifiers<TowerStat> tollRate(float stacksPerSecond) {
-        return flat(TowerStat.TOLL_RATE, stacksPerSecond);
-    }
-
-    public static StatModifiers<TowerStat> tollLinger(int ticks) {
-        return flat(TowerStat.TOLL_LINGER, ticks);
+    public static StatModifiers<TowerStat> dragPerToll(float share) {
+        return flat(TowerStat.DRAG_PER_TOLL, share);
     }
 
     public static StatModifiers<TowerStat> freezeDuration(int ticks) {

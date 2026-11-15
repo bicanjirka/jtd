@@ -72,26 +72,16 @@ final class EffectSentences {
             case UNRAVELED -> stacked(kind, EnemyStat.MAGIC_RESIST);
             case BRITTLE -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                     EnemyStat.PHYSICAL_DAMAGE_TAKEN);
-            case TOLL -> TermText.of("time spent in an Obelisk's field, a stack a second; it sets how strongly the "
-                    + "field holds it, and goes soon after it leaves");
-            case CORRODED -> TermText.of("each stack: ")
-                    .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.ARMOR)), EnemyStat.ARMOR,
-                            EnemyStat.MAGIC_RESIST))
-                    .plus(", up to " + kind.maxStacks() + " stacks");
-            case DRAGGED -> slowing("slows by " + TermNumbers.percent(kind.rule().slowPerStack()) + " a stack, up to "
-                    + kind.maxStacks() + " stacks");
-            case CONDEMNED -> TermText.of("each stack: ")
+            case TOLL -> TermText.of("time spent in an Obelisk's field, a stack a second, lost a stack a second "
+                    + "outside every field; each stack: ")
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
                     .plus(", up to " + kind.maxStacks() + " stacks");
-            case STILLED -> TermText.of("while it also has ").plus(EffectKind.DAZED)
-                    .plus(", the field holding it takes its ").plus(EffectKind.TOLL).plus(" away");
+            case DRAGGED -> TermText.of("slows by as much as the field gives, deeper with every stack of ")
+                    .plus(EffectKind.TOLL).plus("; only the strongest slow counts, and speed comes back over its last "
+                            + seconds(ActiveEffects.SLOW_FADE_TICKS));
             case DEAD_ZONE -> changes(TermNumbers.signed(kind.rule().perStack().get(EnemyStat.SPIRIT).setTo()), EnemyStat.SPIRIT)
                     .plus(", so ").plus(EffectKind.HEAL).plus(" and ").plus(EffectKind.SHIELD).plus(" are worth nothing");
-            case FRAIL -> TermText.of("each stack: ")
-                    .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
-                            EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
-                    .plus(", up to " + kind.maxStacks() + " stacks");
             case CRACKED, DEEP_CRACKED -> changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind, EnemyStat.PLATING))),
                     EnemyStat.PLATING)
                     .plus(" and ").plus(changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind,

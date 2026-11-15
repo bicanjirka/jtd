@@ -1,69 +1,79 @@
 package td.tower.pulse;
 
+import td.effect.EffectKind;
 import td.tower.targeting.Reach;
 import td.tower.targeting.Viewpoint;
 
 /**
- * Whom the Pulse's field touches, how Toll builds there, how it grows, what its zap does, what a visit starts with,
- * which rules hold inside, how it holds the enemies, what it shows of them and the line it casts: the base rules reshaped by each mechanic it
- * owns. Each {@code withX} is a copy.
+ * Whom the field touches and what it does to them, and the shadow it casts: the base rules reshaped by each mechanic
+ * the Obelisk owns. Each {@code withX} is a copy.
  *
- * @param reach the enemies in the field
- * @param tolls whether Toll builds on the enemies inside
- * @param field how the field grows within a wave
- * @param zap   the zap it fires once a second
- * @param visit what an enemy's first Toll stack of a visit does
- * @param modes the rules that hold while an enemy is inside
- * @param hold  how hard it drags, and whether it stills
- * @param sight what it reveals
- * @param line  the Ley Line it casts
+ * @param view     the field's centre and radius
+ * @param reach    whom the field touches: everyone inside, hidden enemies included
+ * @param tollCap  the Toll stacks the field builds an enemy to
+ * @param dragCap  the most of an enemy's speed the field's drag takes
+ * @param silences whether an enemy inside is Silenced
+ * @param gravity  the Daze an enemy a beat inside takes, once a visit
+ * @param sundial  the shadow the stone casts
+ * @param knell    what each ring of the stone deals every enemy inside, in points; 0 for none
+ * @param look     which stone it became
  */
-public record PulseSpec(Reach reach, boolean tolls, FieldSpec field, ZapSpec zap, VisitSpec visit, ModeSpec modes,
-                        HoldSpec hold, SightSpec sight, LineSpec line) {
+public record PulseSpec(Viewpoint view, Reach reach, int tollCap, float dragCap, boolean silences,
+                        GravitySpec gravity, SundialSpec sundial, float knell, StoneLook look) {
 
-    /** Every enemy in range, hidden ones included, the base drag, and nothing else. */
+    /** The Toll a plain field builds an enemy to, and full Toll, which sets the knell ringing whatever the cap. */
+    public static final int TOLL_CAP = 5;
+    /** The most of an enemy's speed a plain field's drag takes. */
+    public static final float DRAG_CAP = 0.5f;
+
+    /** The plain stone's field around {@code view}. */
     public static PulseSpec from(Viewpoint view) {
-        return new PulseSpec(Reach.everyone(view), false, FieldSpec.base(), ZapSpec.none(), VisitSpec.none(),
-                ModeSpec.none(), HoldSpec.base(), SightSpec.none(), LineSpec.none());
+        return new PulseSpec(view, Reach.everyone(view), TOLL_CAP, DRAG_CAP, false, GravitySpec.none(),
+                SundialSpec.none(), 0f, StoneLook.PLAIN);
     }
 
-    public PulseSpec withReach(Reach reach) {
-        return new PulseSpec(reach, this.tolls, this.field, this.zap, this.visit, this.modes, this.hold, this.sight, this.line);
+    public PulseSpec withTollCap(int stacks) {
+        return new PulseSpec(this.view, this.reach, stacks, this.dragCap, this.silences, this.gravity, this.sundial,
+                this.knell, this.look);
     }
 
-    public PulseSpec tolling() {
-        return new PulseSpec(this.reach, true, this.field, this.zap, this.visit, this.modes, this.hold, this.sight, this.line);
+    public PulseSpec withDragCap(float share) {
+        return new PulseSpec(this.view, this.reach, this.tollCap, share, this.silences, this.gravity, this.sundial,
+                this.knell, this.look);
     }
 
-    public PulseSpec withField(FieldSpec field) {
-        return new PulseSpec(this.reach, this.tolls, field, this.zap, this.visit, this.modes, this.hold, this.sight, this.line);
+    public PulseSpec withSilence() {
+        return new PulseSpec(this.view, this.reach, this.tollCap, this.dragCap, true, this.gravity, this.sundial,
+                this.knell, this.look);
     }
 
-    public PulseSpec withZap(ZapSpec zap) {
-        return new PulseSpec(this.reach, this.tolls, this.field, zap, this.visit, this.modes, this.hold, this.sight, this.line);
+    public PulseSpec withGravity(GravitySpec next) {
+        return new PulseSpec(this.view, this.reach, this.tollCap, this.dragCap, this.silences, next, this.sundial,
+                this.knell, this.look);
     }
 
-    public PulseSpec withVisit(VisitSpec visit) {
-        return new PulseSpec(this.reach, this.tolls, this.field, this.zap, visit, this.modes, this.hold, this.sight, this.line);
+    public PulseSpec withSundial(SundialSpec next) {
+        return new PulseSpec(this.view, this.reach, this.tollCap, this.dragCap, this.silences, this.gravity, next,
+                this.knell, this.look);
     }
 
-    public PulseSpec withModes(ModeSpec modes) {
-        return new PulseSpec(this.reach, this.tolls, this.field, this.zap, this.visit, modes, this.hold, this.sight, this.line);
+    public PulseSpec withKnell(float damagePoints) {
+        return new PulseSpec(this.view, this.reach, this.tollCap, this.dragCap, this.silences, this.gravity,
+                this.sundial, damagePoints, this.look);
     }
 
-    public PulseSpec withHold(HoldSpec hold) {
-        return new PulseSpec(this.reach, this.tolls, this.field, this.zap, this.visit, this.modes, hold, this.sight, this.line);
+    public PulseSpec withLook(StoneLook next) {
+        return new PulseSpec(this.view, this.reach, this.tollCap, this.dragCap, this.silences, this.gravity,
+                this.sundial, this.knell, next);
     }
 
-    public PulseSpec withSight(SightSpec sight) {
-        return new PulseSpec(this.reach, this.tolls, this.field, this.zap, this.visit, this.modes, this.hold, sight, this.line);
+    /** Whether this field builds Toll past a plain field's cap. */
+    public boolean deepToll() {
+        return this.tollCap > TOLL_CAP;
     }
 
-    public PulseSpec withLine(LineSpec line) {
-        return new PulseSpec(this.reach, this.tolls, this.field, this.zap, this.visit, this.modes, this.hold, this.sight, line);
-    }
-
-    public Viewpoint view() {
-        return this.reach.view();
+    /** The most Toll any field builds. */
+    public static int deepestToll() {
+        return EffectKind.TOLL.maxStacks();
     }
 }

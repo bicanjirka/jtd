@@ -41,8 +41,9 @@ class RoleTest {
         Tower plain = TowerFactory.createTower(TowerFactory.Type.PULSE, engine.getGameWorld(), 0, 0);
         Tower ward = TowerFactory.createTower(TowerFactory.Type.PULSE, engine.getGameWorld(), 0, 0);
         engine.getGameWorld().economy().apply(EconomyDelta.credits(1000));
-        ward.upgradeTree().nodes().stream().filter(node -> node.id().equals("pulse.head.ward.1")).findFirst()
-                .ifPresent(sight -> ward.upgradeTree().pathTo(sight).forEach(ward::buyUpgrade));
+        engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+        ward.upgradeTree().nodes().stream().filter(node -> node.id().equals("pulse.ward")).findFirst()
+                .ifPresent(node -> ward.upgradeTree().pathTo(node).forEach(ward::buyUpgrade));
 
         boolean plainDoes = Role.ANTI_SUSTAIN.doneBy(plain);
         boolean wardDoes = Role.ANTI_SUSTAIN.doneBy(ward);

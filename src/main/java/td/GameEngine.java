@@ -13,12 +13,10 @@ import td.enemy.EnemyMob;
 import td.level.LevelDefinition;
 import td.level.LevelOutcome;
 import td.save.GameSave;
-import td.save.LeyLinePin;
 import td.save.MagazineLoad;
 import td.save.RoundHistory;
 import td.save.TowerSave;
 import td.tower.MortarTower;
-import td.tower.PulseTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.TowerRecord;
@@ -417,39 +415,6 @@ public class GameEngine {
 
     public void unSelectTower() {
         this.placement.unSelectTower();
-        this.placement.stopPinningLeyLine();
-    }
-
-    /** The next board click picks the host of the selected Obelisk's Ley Line; a no-op for any other selection. */
-    public void startPinningLeyLine() {
-        if (!this.outcome().isOver() && this.selectedTower().filter(PulseTower::castsLeyLine).isPresent()) {
-            this.placement.startPinningLeyLine();
-        }
-    }
-
-    public void cancelPinningLeyLine() {
-        this.placement.stopPinningLeyLine();
-    }
-
-    public boolean isPinningLeyLine() {
-        return this.placement.isPinningLeyLine();
-    }
-
-    /**
-     * Ends pinning, and pins the selected Obelisk's Ley Line to the Obelisk under this board pixel (the one it is
-     * pinned to unpins it).
-     *
-     * @return whether a pin was asked for: false for an empty cell, a tower that is no Obelisk, or one out of reach
-     */
-    public boolean pinLeyLineAt(int boardX, int boardY) {
-        this.placement.stopPinningLeyLine();
-        Optional<Tower> caster = this.selectedTower();
-        Optional<Tower> host = this.placement.towerAt(boardX, boardY);
-        return caster.isPresent() && host.isPresent() && PulseTower.pinLeyLine(caster.get(), host.get());
-    }
-
-    private Optional<Tower> selectedTower() {
-        return this.gameWorld.towers().all().stream().filter(Tower::isSelected).findFirst();
     }
 
     /**
@@ -515,10 +480,6 @@ public class GameEngine {
         List<TowerSave> towers = built.stream()
                 .map(tower -> saveOf(board, tower))
                 .toList();
-        List<LeyLinePin> pins = built.stream()
-                .flatMap(caster -> PulseTower.leyLinePinOf(caster).stream()
-                        .map(host -> new LeyLinePin(cellOf(board, caster), cellOf(board, host))))
-                .toList();
         List<MagazineLoad> magazines = built.stream()
                 .flatMap(mortar -> MortarTower.magazineOf(mortar).stream()
                         .map(magazine -> new MagazineLoad(cellOf(board, mortar), magazine.shells())))
@@ -528,7 +489,6 @@ public class GameEngine {
                 .withSeed(this.gameSeed)
                 .withHistory(new RoundHistory(state.leaked(), state.bonusesPaid()))
                 .withDamage(this.gameWorld.damageTally().mix())
-                .withPins(pins)
                 .withMagazines(magazines));
     }
 
@@ -598,7 +558,6 @@ public class GameEngine {
         } finally {
             rules.setUpgradeGatesIgnored(gatesIgnored);
         }
-        save.pins().forEach(pin -> this.repin(pin).ifPresent(missing::add));
         save.magazines().forEach(magazine -> this.reload(magazine).ifPresent(missing::add));
         this.gameWorld.economy().startEconomy(save.economy().credits(), save.economy().lives());
         this.gameWorld.economy().apply(EconomyDelta.score(save.economy().score()));
@@ -611,18 +570,6 @@ public class GameEngine {
                 + String.join("; ", missing);
         LOG.warn(problem);
         return Optional.of(problem);
-    }
-
-    /** Pins a rebuilt Obelisk's Ley Line again; names the pin if it could not be. */
-    private Optional<String> repin(LeyLinePin pin) {
-        CellGrid grid = this.gameWorld.cells();
-        Optional<Tower> caster = towerOn(grid, pin.caster());
-        Optional<Tower> host = towerOn(grid, pin.host());
-        if (caster.isPresent() && host.isPresent() && PulseTower.pinLeyLine(caster.get(), host.get())) {
-            return Optional.empty();
-        }
-        return Optional.of("Ley Line pin " + pin.caster().x() + "," + pin.caster().y() + " to " + pin.host().x() + ","
-                + pin.host().y());
     }
 
     /** Loads a rebuilt Mortar's magazine as it was saved; names the magazine if it could not be. */

@@ -24,7 +24,6 @@ import td.ui.render.EnemyTintDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
-import td.ui.render.LeyLineDraw;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.NestDraw;
@@ -94,12 +93,10 @@ public final class Java2DFrameRenderer {
     /** The HUD's own border, so the dev grid reads as part of the panel chrome. */
     private static final Color CELL_GRID_LINE = Hud.BORDER_DISABLED;
     /** A Ley Line's width, and the dash it is drawn with once the player has pinned it. */
-    private static final float LEY_LINE_STROKE = 2f;
     /** A tracer is drawn in this many pieces; its back end at this share of the opacity and width of its head. */
     private static final int TRACER_PIECES = 6;
     private static final float TRACER_TAIL_ALPHA = 0.25f;
     private static final float TRACER_TAIL_WIDTH = 0.65f;
-    private static final float[] LEY_LINE_DASH = {6f, 5f};
     private static final Color CELL_BLOCKED = new Color(39, 39, 40);
     /** An info-panel glyph for a stat nothing on the board marks. */
     private static final Color UNMARKED_GLYPH = Hud.TEXT_PROSE;
@@ -391,12 +388,8 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_UNRAVELED -> new Color(220, 120, 255);
             case STATUS_MARKER_BRITTLE -> new Color(200, 240, 255);
             case STATUS_MARKER_TOLL -> new Color(255, 170, 70);
-            case STATUS_MARKER_CORRODED -> new Color(120, 220, 90);
             case STATUS_MARKER_DRAGGED -> new Color(110, 120, 200);
-            case STATUS_MARKER_CONDEMNED -> new Color(255, 230, 120);
-            case STATUS_MARKER_STILLED -> new Color(40, 60, 170);
             case STATUS_MARKER_DEAD_ZONE -> new Color(130, 130, 130);
-            case STATUS_MARKER_FRAIL -> new Color(255, 80, 80);
             case STATUS_MARKER_CRACKED -> new Color(210, 170, 120);
             case STATUS_MARKER_TARRED -> new Color(70, 55, 45);
             case STATUS_MARKER_BLEEDING -> new Color(200, 30, 50);
@@ -464,10 +457,7 @@ public final class Java2DFrameRenderer {
             case TERM_FOURTH_SHOT -> new Color(255, 90, 90);
             case TERM_TAR_SHELL -> new Color(130, 110, 150);
             case TERM_NUKE_SHELL -> new Color(230, 240, 150);
-            case TERM_EVENT_HORIZON -> new Color(120, 110, 255);
             case TERM_AURA -> new Color(255, 235, 170);
-            case TERM_LEY_LINE -> new Color(255, 170, 40);
-            case TERM_INTERFERENCE -> new Color(200, 140, 90);
             case TERM_MAGAZINE -> new Color(190, 160, 120);
             case TERM_BASE_PERK -> new Color(231, 231, 236);
             case SELECTION -> new Color(255, 255, 255);
@@ -1265,7 +1255,6 @@ public final class Java2DFrameRenderer {
             case BeamDraw beam -> this.paintBeam(g2, beam);
             case TracerDraw tracer -> this.paintTracer(g2, tracer);
             case CannonballDraw stone -> this.paintShell(g2, stone);
-            case LeyLineDraw line -> this.paintLeyLine(g2, line);
             case SplashDraw splash ->
                     this.paintFilledCircle(g2, splash.palette(), splash.centerX(), splash.centerY(), splash.radius());
             case PulseDraw pulse ->
@@ -1369,16 +1358,6 @@ public final class Java2DFrameRenderer {
             g2.draw(new Line2D.Float(tracer.fromX() + dx * a, tracer.fromY() + dy * a,
                     tracer.fromX() + dx * b, tracer.fromY() + dy * b));
         }
-        g2.setStroke(defaultStroke);
-    }
-
-    private void paintLeyLine(Graphics2D g2, LeyLineDraw line) {
-        Stroke defaultStroke = g2.getStroke();
-        g2.setColor(scaleAlpha(colorFor(line.palette()), line.alpha()));
-        g2.setStroke(line.pinned()
-                ? new BasicStroke(LEY_LINE_STROKE, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1f, LEY_LINE_DASH, 0f)
-                : new BasicStroke(LEY_LINE_STROKE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL));
-        g2.draw(new Line2D.Float(line.fromX(), line.fromY(), line.toX(), line.toY()));
         g2.setStroke(defaultStroke);
     }
 

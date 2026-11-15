@@ -174,12 +174,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case UNRAVELED -> Palette.STATUS_MARKER_UNRAVELED;
             case BRITTLE -> Palette.STATUS_MARKER_BRITTLE;
             case TOLL -> Palette.STATUS_MARKER_TOLL;
-            case CORRODED -> Palette.STATUS_MARKER_CORRODED;
             case DRAGGED -> Palette.STATUS_MARKER_DRAGGED;
-            case CONDEMNED -> Palette.STATUS_MARKER_CONDEMNED;
-            case STILLED -> Palette.STATUS_MARKER_STILLED;
             case DEAD_ZONE -> Palette.STATUS_MARKER_DEAD_ZONE;
-            case FRAIL -> Palette.STATUS_MARKER_FRAIL;
             case CRACKED, DEEP_CRACKED -> Palette.STATUS_MARKER_CRACKED;
             case TARRED -> Palette.STATUS_MARKER_TARRED;
             case BLEEDING -> Palette.STATUS_MARKER_BLEEDING;
@@ -566,7 +562,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** The dot an effect with no picture of its own earns, if it earns one; every kind is decided here. */
     static Optional<EnemyDotLook> dotFor(EffectKind kind) {
         return switch (kind) {
-            case VULNERABLE, SUNDERED, BRITTLE, CRACKED, DEEP_CRACKED, TARRED, TOLL, CONDEMNED, STILLED,
+            case VULNERABLE, SUNDERED, BRITTLE, CRACKED, DEEP_CRACKED, TARRED, TOLL,
                  UNRAVELED -> Optional.of(EnemyDotLook.DEBUFF);
             case EXPOSED, MARKED, PRIORITY, CHARGED -> Optional.of(EnemyDotLook.SPOTTED);
             case SPRINTING, HASTENED, SPELLPROOF, UNYIELDING, RESOLVE -> Optional.of(EnemyDotLook.BUFF);
@@ -575,8 +571,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             // A rune.
             case DOOM, BLIGHT, INVERSION -> Optional.empty();
             // The Info pane's, or the field on the ground says it.
-            case SCORCHED, SICKENED, REVEALED, SILENCED, ANCHORED, CORRODED, DRAGGED, DEAD_ZONE,
-                 FRAIL -> Optional.empty();
+            case SCORCHED, SICKENED, REVEALED, SILENCED, ANCHORED, DRAGGED, DEAD_ZONE -> Optional.empty();
         };
     }
 

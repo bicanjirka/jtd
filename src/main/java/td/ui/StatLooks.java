@@ -92,7 +92,8 @@ final class StatLooks {
             case EFFECT_DURATION -> StatLook.plain(Glyph.FILLED_DIAMOND);
             case BUFF_DURATION -> StatLook.toned(Glyph.FILLED_DIAMOND, Palette.TERM_FRAME_TOWER_BUFF);
             case FREEZE_DURATION -> StatLook.face(TermLooks.faceOf(EffectKind.FREEZE));
-            case TOLL_CAP, TOLL_RATE, TOLL_LINGER -> StatLook.face(TermLooks.faceOf(EffectKind.TOLL));
+            case TOLL_PACE -> StatLook.face(TermLooks.faceOf(EffectKind.TOLL));
+            case DRAG_PER_TOLL -> StatLook.face(TermLooks.faceOf(EffectKind.DRAGGED));
             case WITHER_INTERVAL -> StatLook.face(TermLooks.faceOf(EffectKind.VULNERABLE));
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatLook.plain(Glyph.COMET);
             case NEST_CAPACITY, MISSILES_PER_LAUNCH -> StatLook.plain(Glyph.PIP);

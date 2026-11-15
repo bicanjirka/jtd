@@ -251,8 +251,8 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     @Override
-    public void loseStacks(EffectKind kind, int stacks) {
-        this.live.loseStacks(kind, stacks);
+    public void holdStacks(EffectKind kind, int ticksPerStack, int cap) {
+        this.live.hold(kind, ticksPerStack, cap);
     }
 
     @Override
@@ -465,6 +465,11 @@ public final class FakeEnemyMob implements EnemyMob {
 
     @Override
     public void doTick(int gameTime) {
+    }
+
+    /** One tick of its effects alone, which its own tick leaves as they are: what holds build, what wears off. */
+    public void tickEffects() {
+        this.live.tick();
     }
 
     @Override

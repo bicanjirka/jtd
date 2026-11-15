@@ -369,18 +369,6 @@ class DevControlsTest {
     }
 
     @Test
-    void anEffectThePanelCannotMakeWorkIsRefusedWithItsReason() {
-        this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        this.spawnAndSelectOne();
-
-        String message = this.dev.applyEffectToEnemy(EffectKind.STILLED, List.of(5f));
-        this.dev.runPending();
-
-        assertThat(message).isEqualTo(EffectKind.STILLED.title() + " " + DevEffects.whyUnusable(EffectKind.STILLED).orElseThrow());
-        assertThat(this.world.enemies().getEnemies()[0].hasEffect(EffectKind.STILLED)).isFalse();
-    }
-
-    @Test
     void aValueOutsideItsFieldsRangeIsRefusedByNameAndAppliesNothing() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         EnemyMob mob = this.spawnAndSelectOne();

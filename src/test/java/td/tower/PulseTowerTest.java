@@ -1,586 +1,309 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.damage.AttackProfile;
 import td.damage.Damage;
-import td.effect.DamageSink;
-import td.effect.DragStrength;
+import td.damage.Delivery;
 import td.effect.Effect;
 import td.effect.EffectKind;
-import td.effect.FieldStrength;
 import td.enemy.EnemyMob;
-import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
-import td.tower.pulse.FieldMode;
+import td.tower.pulse.PulseSpec;
 import td.util.GameWorld;
-import td.wave.Path;
-import td.wave.Vec2;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 class PulseTowerTest {
 
-    private final GameWorld context = WorldFixtures.newWorld();
+    private static final int SECOND = Math.round(TickRate.TICKS_PER_SECOND);
+
     private final GameWorld board = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
 
-    @Test
-    void theFieldHitsEveryEnemyInRangeForMagicEveryTickHiddenOnesIncluded() {
-        PulseTower tower = new PulseTower(this.context, 0, 0);
-        FakeEnemyMob visible = FakeEnemyMob.at(tower.getX(), tower.getY());
-        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{visible, hidden});
-
-        tower.doTick(0);
-        tower.doTick(1);
-
-        Damage field = Damage.magic(tower.damageCurrent());
-        assertThat(visible.hits()).containsExactly(field, field);
-        assertThat(hidden.hits()).containsExactly(field, field);
-    }
-
-    @Test
-    void theFieldFiresWithOnlyAGhostInRangeAndNotWithNobody() {
-        PulseTower tower = new PulseTower(this.context, 0, 0);
-        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{ghost});
-        tower.doTick(0);
-        boolean withGhost = tower.isFiring();
-
-        this.context.enemies().setEnemies(new EnemyMob[]{});
-        tower.doTick(1);
-
-        assertThat(withGhost).isTrue();
-        assertThat(tower.isFiring()).isFalse();
-    }
-
-    @Test
-    void theFieldNeverReachesAnEnemyOutsideItsRange() {
-        PulseTower tower = new PulseTower(this.context, 0, 0);
-        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() + 400, tower.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{outside});
-
-        tower.doTick(0);
-
-        assertThat(outside.hits()).isEmpty();
-    }
-
-    private PulseTower attunedTower() {
-        PulseTower tower = new PulseTower(this.context, 0, 0);
-        UpgradePaths.buy(tower, this.context, "Attune");
-        return tower;
-    }
-
-    @Test
-    void withoutAttuneAnEnemyThatStaysBuildsNoToll() {
-        PulseTower tower = new PulseTower(this.context, 0, 0);
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        for (int t = 0; t < 100; t++) {
-            tower.doTick(t);
-        }
-
-        assertThat(enemy.hasEffect(EffectKind.TOLL)).isFalse();
-    }
-
-    @Test
-    void attunedAnEnemyThatStaysEarnsTollOverTimeUpToTheFieldsCap() {
-        PulseTower tower = this.attunedTower();
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        tower.doTick(0);
-        int atOnce = enemy.effectStacks(EffectKind.TOLL);
-        for (int t = 1; t < 600; t++) {
-            tower.doTick(t);
-        }
-
-        assertThat(atOnce).isZero();
-        assertThat(enemy.effectStacks(EffectKind.TOLL)).isEqualTo(tollCap(tower));
-    }
-
-    @Test
-    void aHigherTollCapLetsTollBuildFurtherAndAFasterRateBuildsItSooner() {
-        PulseTower plain = this.attunedTower();
-        PulseTower tuned = TowerFixtures.buffed(this.attunedTower(), this.context,
-                TowerModifiers.tollCap(2).plus(TowerModifiers.tollRate(1f)));
-        FakeEnemyMob atPlain = FakeEnemyMob.at(plain.getX(), plain.getY());
-        FakeEnemyMob atTuned = FakeEnemyMob.at(tuned.getX(), tuned.getY());
-
-        int plainFirst = ticksToFirstToll(plain, atPlain);
-        int tunedFirst = ticksToFirstToll(tuned, atTuned);
-        for (int t = 600; t < 1200; t++) {
-            this.context.enemies().setEnemies(new EnemyMob[]{atTuned});
-            tuned.doTick(t);
-        }
-
-        assertThat(tunedFirst).isLessThan(plainFirst);
-        assertThat(atTuned.effectStacks(EffectKind.TOLL)).isEqualTo(tollCap(tuned)).isGreaterThan(tollCap(plain));
-    }
-
-    /** The ticks {@code tower}'s field takes to put a first stack of Toll on {@code enemy}, standing alone in it. */
-    private int ticksToFirstToll(PulseTower tower, FakeEnemyMob enemy) {
-        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
-        int t = 0;
-        while (enemy.effectStacks(EffectKind.TOLL) == 0 && t < 5000) {
-            tower.doTick(t++);
-        }
-        return t;
-    }
-
-    @Test
-    void tollLeavesTheFieldsDamageAlone() {
-        PulseTower tower = this.attunedTower();
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        for (int t = 0; t < 600; t++) {
-            tower.doTick(t);
-        }
-
-        assertThat(enemy.effectStacks(EffectKind.TOLL)).isPositive();
-        assertThat(enemy.hits().getLast()).isEqualTo(Damage.magic(tower.damageCurrent()));
-    }
-
-    private static int tollCap(PulseTower tower) {
-        return Math.round(tower.stats().value(TowerStat.TOLL_CAP));
-    }
-
-    @Test
-    void eachOtherFieldOverlappingThisOneTakesAQuarterOffItsDamageDownToAQuarter() {
-        PulseTower lone = new PulseTower(this.context, 0, 0);
-        PulseTower paired = new PulseTower(this.context, 10, 10);
-        PulseTower crowded = new PulseTower(this.context, 15, 15);
-        List<PulseTower> all = new ArrayList<>(List.of(lone, paired, new PulseTower(this.context, 11, 10), crowded));
-        for (int i = 0; i < 4; i++) {
-            all.add(new PulseTower(this.context, 16 + i % 2, 15 + i / 2));
-        }
-        all.forEach(this.context.towers()::add);
-        FakeEnemyMob atLone = FakeEnemyMob.at(lone.getX(), lone.getY());
-        FakeEnemyMob atPaired = FakeEnemyMob.at(paired.getX(), paired.getY());
-        FakeEnemyMob atCrowded = FakeEnemyMob.at(crowded.getX(), crowded.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{atLone, atPaired, atCrowded});
-        all.forEach(tower -> tower.doTick(19));
-
-        lone.doTick(20);
-        paired.doTick(20);
-        crowded.doTick(20);
-
-        int full = lone.damageCurrent();
-        assertThat(atLone.hits().getLast()).isEqualTo(Damage.magic(full));
-        assertThat(atPaired.hits().getLast()).isEqualTo(Damage.magic(Math.round(full * 0.75f)));
-        assertThat(atCrowded.hits().getLast()).isEqualTo(Damage.magic(Math.round(full * 0.25f)));
-    }
-
-    @Test
-    void theFieldKeepsRefreshingTheTollOfAnEnemyInsideToTheSameLinger() {
-        PulseTower tower = this.attunedTower();
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        for (int t = 0; t < 100; t++) {
-            tower.doTick(t);
-        }
-
-        List<Effect> refreshes = tollOn(enemy);
-        assertThat(refreshes).hasSizeGreaterThan(1);
-        assertThat(refreshes).extracting(Effect::remainingTicks).containsOnly(refreshes.getFirst().remainingTicks());
-        assertThat(tower.getHighestToll()).isEqualTo(enemy.effectStacks(EffectKind.TOLL));
-    }
-
-
-    /** A Pulse at cell (3, 3) of a 32-pixel board. */
     private PulseTower pulseWith(String... nodes) {
-        PulseTower tower = new PulseTower(this.board, 3, 3);
+        PulseTower tower = new PulseTower(this.board, 5, 5);
         UpgradePaths.buy(tower, this.board, nodes);
         return tower;
     }
 
-    private static List<Effect> tollOn(FakeEnemyMob enemy) {
-        return enemy.appliedEffects().stream().filter(e -> e.kind() == EffectKind.TOLL).toList();
+    private void spawn(EnemyMob... enemies) {
+        this.board.enemies().setEnemies(enemies);
     }
 
-    /** {@code enemy} at the most Toll {@code tower} builds. */
-    private static void fullToll(FakeEnemyMob enemy, PulseTower tower) {
-        int cap = tollCap(tower);
-        enemy.applyEffect(Effect.toll(cap, 100, DamageSink.none()).withStackCap(cap));
+    /** Ticks every tower from {@code from} to {@code to}, then the effects of every enemy given, as the engine orders them. */
+    private static void run(int from, int to, List<PulseTower> towers, FakeEnemyMob... enemies) {
+        for (int t = from; t <= to; t++) {
+            for (PulseTower tower : towers) {
+                tower.doTick(t);
+            }
+            for (FakeEnemyMob enemy : enemies) {
+                enemy.tickEffects();
+            }
+        }
     }
 
-    private static List<Effect> applied(FakeEnemyMob enemy, EffectKind kind) {
-        return enemy.appliedEffects().stream().filter(e -> e.kind() == kind).toList();
+    private static List<Damage> hitsOf(FakeEnemyMob enemy, Delivery delivery) {
+        List<Damage> hits = new ArrayList<>();
+        List<AttackProfile> attackers = enemy.attackers();
+        for (int i = 0; i < attackers.size(); i++) {
+            if (attackers.get(i).delivery() == delivery) {
+                hits.add(enemy.hits().get(i));
+            }
+        }
+        return hits;
     }
 
-    private static boolean has(FakeEnemyMob enemy, EffectKind kind) {
-        return enemy.hasEffect(kind);
+    private static float dragOn(FakeEnemyMob enemy) {
+        return enemy.activeEffects().stream().filter(effect -> effect.kind() == EffectKind.DRAGGED).findFirst()
+                .map(Effect::slowStrength).orElse(0f);
+    }
+
+    private static long applied(FakeEnemyMob enemy, EffectKind kind) {
+        return enemy.appliedEffects().stream().filter(effect -> effect.kind() == kind).count();
+    }
+
+    /** A cell's worth of board pixels times {@code cells}. */
+    private static double cells(float cells) {
+        return cells * BoardFixtures.SCALE;
     }
 
     @Test
-    void theBaseFieldDragsEveryEnemyInsideAtItsBaseStrengthWhateverItsTollAndOnlyThose() {
+    void theFieldHitsEveryEnemyInsideForMagicEveryTickHiddenOnesIncludedAndNoneOutside() {
+        PulseTower tower = this.pulseWith();
+        FakeEnemyMob visible = FakeEnemyMob.at(tower.getX(), tower.getY());
+        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
+        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() + cells(3f), tower.getY());
+        this.spawn(visible, hidden, outside);
+
+        tower.doTick(1);
+        tower.doTick(2);
+
+        Damage tick = Damage.magic(Math.round(tower.damageCurrent() / TickRate.TICKS_PER_SECOND));
+        assertThat(visible.hits()).containsExactly(tick, tick);
+        assertThat(hidden.hits()).containsExactly(tick, tick);
+        assertThat(outside.hits()).isEmpty();
+    }
+
+    @Test
+    void anEnemyInsideBuildsAStackOfTollEachPaceUpToTheFieldsCap() {
+        PulseTower tower = this.pulseWith();
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        this.spawn(enemy);
+        int pace = Math.round(tower.stats().value(TowerStat.TOLL_PACE));
+
+        run(1, pace, List.of(tower), enemy);
+        int afterOnePace = enemy.effectStacks(EffectKind.TOLL);
+        run(pace + 1, pace * (PulseSpec.TOLL_CAP + 3), List.of(tower), enemy);
+
+        assertThat(afterOnePace).isEqualTo(1);
+        assertThat(enemy.effectStacks(EffectKind.TOLL)).isEqualTo(PulseSpec.TOLL_CAP);
+    }
+
+    @Test
+    void aQuickerTollPaceBuildsTheFirstStackSooner() {
+        PulseTower plain = this.pulseWith();
+        int pace = Math.round(plain.stats().value(TowerStat.TOLL_PACE));
+        PulseTower quick = TowerFixtures.buffed(new PulseTower(this.board, 12, 12), this.board,
+                TowerModifiers.tollPace(-pace / 2));
+        FakeEnemyMob enemy = FakeEnemyMob.at(quick.getX(), quick.getY());
+        this.spawn(enemy);
+
+        run(1, pace - pace / 2, List.of(quick), enemy);
+
+        assertThat(enemy.effectStacks(EffectKind.TOLL)).isEqualTo(1);
+    }
+
+    @Test
+    void twoFieldsOverAnEnemyBuildOneTollNotTwo() {
+        PulseTower first = this.pulseWith();
+        PulseTower second = new PulseTower(this.board, 5, 5);
+        FakeEnemyMob enemy = FakeEnemyMob.at(first.getX(), first.getY());
+        this.spawn(enemy);
+        int pace = Math.round(first.stats().value(TowerStat.TOLL_PACE));
+
+        run(1, pace, List.of(first, second), enemy);
+
+        assertThat(enemy.effectStacks(EffectKind.TOLL)).isEqualTo(1);
+    }
+
+    @Test
+    void deepTollBuildsTollPastAPlainFieldsCap() {
+        PulseTower tower = this.pulseWith("Deep Toll");
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        this.spawn(enemy);
+        int pace = Math.round(tower.stats().value(TowerStat.TOLL_PACE));
+
+        run(1, pace * (PulseSpec.deepestToll() + 2), List.of(tower), enemy);
+
+        assertThat(enemy.effectStacks(EffectKind.TOLL)).isEqualTo(PulseSpec.deepestToll());
+    }
+
+    @Test
+    void theDragDeepensByItsShareForEveryStackOfToll() {
         PulseTower tower = this.pulseWith();
         FakeEnemyMob fresh = FakeEnemyMob.at(tower.getX(), tower.getY());
         FakeEnemyMob tolled = FakeEnemyMob.at(tower.getX(), tower.getY());
-        fullToll(tolled, tower);
-        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() + 300, tower.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{fresh, tolled, outside});
+        tolled.applyEffect(Effect.toll(3, PulseSpec.TOLL_CAP));
+        this.spawn(fresh, tolled);
 
         tower.doTick(1);
 
-        assertThat(fresh.effectStacks(EffectKind.DRAGGED)).isEqualTo(DragStrength.BASE);
-        assertThat(tolled.effectStacks(EffectKind.DRAGGED)).isEqualTo(DragStrength.BASE);
-        assertThat(applied(fresh, EffectKind.DRAGGED).getFirst().remainingTicks()).isEqualTo(FieldMode.LINGER_TICKS);
-        assertThat(has(outside, EffectKind.DRAGGED)).isFalse();
+        assertThat(dragOn(tolled) - dragOn(fresh))
+                .isCloseTo(3 * tower.stats().value(TowerStat.DRAG_PER_TOLL), within(0.0001f));
+        assertThat(dragOn(fresh)).isPositive();
     }
 
     @Test
-    void twoFieldsDragAnEnemyInsideBothNoHarderThanOne() {
-        PulseTower first = this.pulseWith();
-        PulseTower second = this.pulseWith();
-        FakeEnemyMob enemy = FakeEnemyMob.at(first.getX(), first.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
+    void theDragStopsAtTheFieldsCapAndBurdenLetsItGoDeeper() {
+        PulseTower plain = TowerFixtures.buffed(this.pulseWith(), this.board, TowerModifiers.dragPerToll(1f));
+        PulseTower burden = TowerFixtures.buffed(new PulseTower(this.board, 12, 12), this.board,
+                TowerModifiers.dragPerToll(1f));
+        UpgradePaths.buy(burden, this.board, "Burden");
+        FakeEnemyMob atPlain = FakeEnemyMob.at(plain.getX(), plain.getY());
+        FakeEnemyMob atBurden = FakeEnemyMob.at(burden.getX(), burden.getY());
+        atPlain.applyEffect(Effect.toll(PulseSpec.TOLL_CAP, PulseSpec.TOLL_CAP));
+        atBurden.applyEffect(Effect.toll(PulseSpec.TOLL_CAP, PulseSpec.TOLL_CAP));
+        this.spawn(atPlain, atBurden);
 
-        first.doTick(1);
-        second.doTick(1);
-
-        assertThat(enemy.effectStacks(EffectKind.DRAGGED)).isEqualTo(DragStrength.BASE);
-    }
-
-    @Test
-    void undertowDeepensTheDragWithTollAndAnchors() {
-        PulseTower tower = this.pulseWith("Undertow");
-        FakeEnemyMob fresh = FakeEnemyMob.at(tower.getX(), tower.getY());
-        FakeEnemyMob tolled = FakeEnemyMob.at(tower.getX(), tower.getY());
-        fullToll(tolled, tower);
-        this.board.enemies().setEnemies(new EnemyMob[]{fresh, tolled});
-
-        tower.doTick(1);
-
-        assertThat(tolled.effectStacks(EffectKind.DRAGGED)).isGreaterThan(fresh.effectStacks(EffectKind.DRAGGED));
-        assertThat(has(tolled, EffectKind.ANCHORED)).isTrue();
-    }
-
-    @Test
-    void snareDazesAnEnemyOnItsFirstTollStackOfAVisitOnly() {
-        PulseTower tower = this.pulseWith("Attune", "Snare");
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        for (int t = 1; t <= 60; t++) {
-            tower.doTick(t);
-        }
-
-        assertThat(applied(enemy, EffectKind.DAZED)).hasSize(1);
-    }
-
-    @Test
-    void gravityWellDragsHardestAtTheCentreAndLowersWhatItGaveAsTheEnemyMovesOut() {
-        PulseTower tower = this.pulseWith("Gravity Well");
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
-        tower.doTick(1);
-        int atCentre = enemy.effectStacks(EffectKind.DRAGGED);
-
-        enemy.moveTo(tower.getX() + 36, tower.getY());
-        tower.doTick(2);
-
-        assertThat(atCentre).isEqualTo(DragStrength.MOST);
-        assertThat(enemy.effectStacks(EffectKind.DRAGGED)).isLessThan(atCentre);
-    }
-
-    @Test
-    void aFieldNeverLowersADragAStrongerFieldGave() {
-        PulseTower well = this.pulseWith("Gravity Well");
-        PulseTower plain = this.pulseWith();
-        FakeEnemyMob enemy = FakeEnemyMob.at(well.getX(), well.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        well.doTick(1);
         plain.doTick(1);
+        burden.doTick(1);
 
-        assertThat(enemy.effectStacks(EffectKind.DRAGGED)).isEqualTo(DragStrength.MOST);
+        assertThat(dragOn(atPlain)).isEqualTo(PulseSpec.DRAG_CAP);
+        assertThat(dragOn(atBurden)).isGreaterThan(PulseSpec.DRAG_CAP).isLessThan(1f);
     }
 
     @Test
-    void stasisDazesAndStillsAnEnemyAtFullTollWhichLosesTollWhileDazed() {
-        PulseTower tower = this.pulseWith("Attune", "Stasis");
-        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        fullToll(enemy, tower);
-        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
-
-        tower.doTick(20);
-        for (int t = 21; t <= 30; t++) {
-            tower.doTick(t);
-        }
-
-        assertThat(applied(enemy, EffectKind.DAZED)).hasSize(1);
-        assertThat(applied(enemy, EffectKind.STILLED)).hasSize(1);
-        assertThat(enemy.effectStacks(EffectKind.TOLL)).isLessThan(tollCap(tower));
-    }
-
-    @Test
-    void sightRevealsEveryEnemyInsideForAMomentAfterAndNoOther() {
-        PulseTower tower = this.pulseWith("Sight");
-        FakeEnemyMob inside = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
-        FakeEnemyMob outside = FakeEnemyMob.ghostAt(tower.getX() + 300, tower.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{inside, outside});
-
-        tower.doTick(1);
-
-        assertThat(applied(inside, EffectKind.REVEALED)).hasSize(1);
-        assertThat(has(outside, EffectKind.REVEALED)).isFalse();
-    }
-
-    @Test
-    void nullFieldSilencesEveryEnemyInsideAndOnlyThose() {
-        PulseTower tower = this.pulseWith("Sight", "Null Field");
+    void wardSilencesEveryEnemyInsideAndNoOther() {
+        PulseTower tower = this.pulseWith("Ward");
         FakeEnemyMob inside = FakeEnemyMob.at(tower.getX(), tower.getY());
-        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() + 300, tower.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{inside, outside});
+        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() + cells(3f), tower.getY());
+        this.spawn(inside, outside);
 
         tower.doTick(1);
 
-        assertThat(applied(inside, EffectKind.SILENCED)).singleElement().extracting(Effect::remainingTicks)
-                .isEqualTo(FieldMode.LINGER_TICKS);
+        assertThat(inside.hasEffect(EffectKind.SILENCED)).isTrue();
         assertThat(outside.hasEffect(EffectKind.SILENCED)).isFalse();
     }
 
     @Test
-    void deadZoneKeepsHealsAndShieldsFromTakingHoldInsideTheField() {
-        PulseTower tower = this.pulseWith("Sight", "Null Field", "Dead Zone");
-        FakeEnemyMob inside = FakeEnemyMob.at(tower.getX(), tower.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{inside});
+    void gravityDazesAnEnemyOnceAVisitABeatAfterItWalksIn() {
+        PulseTower tower = this.pulseWith("Gravity");
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        this.spawn(enemy);
 
-        tower.doTick(1);
+        run(1, 10, List.of(tower), enemy);
+        long early = applied(enemy, EffectKind.DAZED);
+        run(11, 100, List.of(tower), enemy);
+        long oneVisit = applied(enemy, EffectKind.DAZED);
+        enemy.moveTo(tower.getX() + cells(3f), tower.getY());
+        tower.doTick(101);
+        enemy.moveTo(tower.getX(), tower.getY());
+        run(102, 200, List.of(tower), enemy);
 
-        assertThat(applied(inside, EffectKind.DEAD_ZONE)).singleElement().extracting(Effect::remainingTicks)
-                .isEqualTo(FieldMode.LINGER_TICKS);
+        assertThat(early).isZero();
+        assertThat(oneVisit).isEqualTo(1);
+        assertThat(applied(enemy, EffectKind.DAZED)).isEqualTo(2);
     }
 
     @Test
-    void trueSightRevealsLongerThanAFieldLingers() {
-        PulseTower tower = this.pulseWith("True Sight");
-        FakeEnemyMob enemy = FakeEnemyMob.ghostAt(tower.getX(), tower.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{enemy});
+    void theSundialTurnsOnceHittingEveryVisibleEnemyItPassesOnceWithAStackOfToll() {
+        PulseTower tower = this.pulseWith("Sundial");
+        List<FakeEnemyMob> around = IntStream.range(0, 4)
+                .mapToObj(i -> FakeEnemyMob.at(tower.getX() + cells(2.5f) * Math.cos(i * Math.PI / 2),
+                        tower.getY() + cells(2.5f) * Math.sin(i * Math.PI / 2)))
+                .toList();
+        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(tower.getX() + cells(2f), tower.getY() + cells(1f));
+        FakeEnemyMob far = FakeEnemyMob.at(tower.getX() + cells(6f), tower.getY());
+        List<EnemyMob> all = new ArrayList<>(around);
+        all.add(hidden);
+        all.add(far);
+        this.spawn(all.toArray(EnemyMob[]::new));
 
-        tower.doTick(1);
+        run(1, 2 * SECOND, List.of(tower));
 
-        int revealed = applied(enemy, EffectKind.REVEALED).getFirst().remainingTicks();
-        assertThat(revealed).isGreaterThan(FieldMode.LINGER_TICKS);
-    }
-
-    @Test
-    void purgeStripsTheBuffsAndShieldsOfAnEnemyOnceAsItComesIn() {
-        PulseTower tower = this.pulseWith("Purge");
-        FakeEnemyMob inside = FakeEnemyMob.at(tower.getX(), tower.getY());
-        inside.applyEffect(Effect.sprinting(40, DamageSink.none()));
-        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() + 300, tower.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{inside, outside});
-
-        tower.doTick(1);
-        inside.applyEffect(Effect.sprinting(40, DamageSink.none()));
-        tower.doTick(2);
-
-        assertThat(has(inside, EffectKind.SPRINTING)).isTrue();
-        assertThat(inside.buffDispels()).isEqualTo(1);
-        assertThat(inside.dispels()).isEqualTo(1);
-        assertThat(outside.buffDispels()).isZero();
-    }
-
-    @Test
-    void frailtyMakesEnemiesInsideTakeMoreAtHalfOnEntryAndInFullAtFullToll() {
-        PulseTower tower = this.pulseWith("Frailty");
-        FakeEnemyMob fresh = FakeEnemyMob.at(tower.getX(), tower.getY());
-        FakeEnemyMob tolled = FakeEnemyMob.at(tower.getX(), tower.getY());
-        fullToll(tolled, tower);
-        this.board.enemies().setEnemies(new EnemyMob[]{fresh, tolled});
-
-        tower.doTick(1);
-        tower.doTick(2);
-
-        assertThat(fresh.effectStacks(EffectKind.FRAIL)).isEqualTo(FieldStrength.ENTRY);
-        assertThat(tolled.effectStacks(EffectKind.FRAIL)).isEqualTo(FieldStrength.FULL);
-    }
-
-    @Test
-    void corrosionLowersArmorOnlyOnEnemiesInsideTheField() {
-        PulseTower tower = this.pulseWith("Corrosion");
-        FakeEnemyMob inside = FakeEnemyMob.at(tower.getX(), tower.getY());
-        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() + 300, tower.getY());
-        this.board.enemies().setEnemies(new EnemyMob[]{inside, outside});
-
-        tower.doTick(1);
-
-        assertThat(applied(inside, EffectKind.CORRODED)).singleElement().extracting(Effect::remainingTicks)
-                .isEqualTo(FieldMode.LINGER_TICKS);
-        assertThat(has(outside, EffectKind.CORRODED)).isFalse();
-    }
-
-    @Test
-    void eventHorizonWidensTheFieldATenthForEveryDeathInsideUntilTheNextWaveStarts() {
-        PulseTower tower = this.pulseWith("Event Horizon");
-        FakeEnemyMob doomed = FakeEnemyMob.at(tower.getX(), tower.getY());
-        FakeEnemyMob survivor = FakeEnemyMob.at(tower.getX(), tower.getY() + 5);
-        this.board.enemies().setEnemies(new EnemyMob[]{doomed, survivor});
-        tower.doTick(1);
-        doomed.invalidate();
-
-        tower.doTick(2);
-        tower.doTick(3);
-        float widened = tower.getFieldRadius();
-        this.board.waves().announce(0);
-        tower.doTick(4);
-
-        assertThat(widened).isCloseTo(tower.rangeReal() * 1.1f, within(0.01f));
-        assertThat(tower.getFieldRadius()).isEqualTo(tower.rangeReal());
-    }
-
-    @Test
-    void eventHorizonStopsWideningAtTwiceTheRange() {
-        PulseTower tower = this.pulseWith("Event Horizon");
-        List<FakeEnemyMob> crowd = new ArrayList<>();
-        for (int i = 0; i < 30; i++) {
-            crowd.add(FakeEnemyMob.at(tower.getX(), tower.getY()));
+        for (FakeEnemyMob enemy : around) {
+            assertThat(hitsOf(enemy, Delivery.HIT)).hasSize(1);
+            assertThat(enemy.effectStacks(EffectKind.TOLL)).isEqualTo(1);
         }
-        FakeEnemyMob survivor = FakeEnemyMob.at(tower.getX(), tower.getY() + 5);
-        crowd.add(survivor);
-        this.board.enemies().setEnemies(crowd.toArray(new EnemyMob[0]));
-        tower.doTick(1);
-        crowd.stream().filter(enemy -> enemy != survivor).forEach(FakeEnemyMob::invalidate);
-
-        tower.doTick(2);
-        tower.doTick(3);
-
-        assertThat(tower.getFieldRadius()).isCloseTo(tower.rangeReal() * 2f, within(0.01f));
+        assertThat(hidden.hits()).isEmpty();
+        assertThat(far.hits()).isEmpty();
     }
 
     @Test
-    void wideFieldWidensTheFieldAndMakesTollLingerLongerAfterAnEnemyLeaves() {
-        PulseTower plain = this.pulseWith("Attune");
-        PulseTower wide = this.pulseWith("Range III");
-        FakeEnemyMob plainEnemy = FakeEnemyMob.at(plain.getX(), plain.getY());
-        FakeEnemyMob wideEnemy = FakeEnemyMob.at(wide.getX(), wide.getY());
-        fullToll(plainEnemy, plain);
-        fullToll(wideEnemy, wide);
-        this.board.enemies().setEnemies(new EnemyMob[]{plainEnemy});
-        plain.doTick(1);
-        this.board.enemies().setEnemies(new EnemyMob[]{wideEnemy});
+    void theShadowTurnsAtOnceWhenAnEnemyComesInReachThenWaitsItsPeriod() {
+        PulseTower tower = this.pulseWith("Sundial");
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX() + cells(2.5f), tower.getY());
+        this.spawn();
+        run(1, 100, List.of(tower));
+        this.spawn(enemy);
 
-        wide.doTick(1);
+        run(101, 101 + 2 * SECOND, List.of(tower));
+        boolean waiting = !tower.isCastingShadow();
+        int firstTurn = hitsOf(enemy, Delivery.HIT).size();
+        run(102 + 2 * SECOND, 101 + 4 * SECOND, List.of(tower));
 
-        assertThat(tollOn(wideEnemy).getLast().remainingTicks()).isGreaterThan(tollOn(plainEnemy).getLast().remainingTicks());
-        assertThat(wide.rangeReal()).isGreaterThan(plain.rangeReal());
+        assertThat(firstTurn).isEqualTo(1);
+        assertThat(waiting).isTrue();
+        assertThat(hitsOf(enemy, Delivery.HIT)).hasSize(2);
     }
 
     @Test
-    void arcDischargeCondemnsTheVisibleEnemyOfTheHighestRankInsideAStackAZapAndHitsNoHarder() {
-        PulseTower tower = this.pulseWith("Arc Discharge");
-        FakeEnemyMob hidden = FakeEnemyMob.ghostAt(tower.getX(), tower.getY()).ranked(Rank.BOSS);
-        FakeEnemyMob boss = FakeEnemyMob.at(tower.getX(), tower.getY()).withHealth(300).ranked(Rank.BOSS);
-        FakeEnemyMob healthier = FakeEnemyMob.at(tower.getX() + 10, tower.getY()).withHealth(900).ranked(Rank.ELITE);
-        this.board.enemies().setEnemies(new EnemyMob[]{hidden, boss, healthier});
+    void umbraDoublesTheShadowsHitOnAnEnemyInTheField() {
+        PulseTower tower = this.pulseWith("Sundial", "Umbra");
+        FakeEnemyMob inside = FakeEnemyMob.at(tower.getX() + cells(0.5f), tower.getY());
+        FakeEnemyMob outside = FakeEnemyMob.at(tower.getX() - cells(2.5f), tower.getY());
+        this.spawn(inside, outside);
 
-        tower.doTick(20);
-        tower.doTick(21);
-        tower.doTick(40);
+        run(1, SECOND, List.of(tower));
 
-        assertThat(applied(boss, EffectKind.PRIORITY)).hasSize(2);
-        assertThat(boss.effectStacks(EffectKind.CONDEMNED)).isEqualTo(2);
-        assertThat(has(healthier, EffectKind.PRIORITY)).isFalse();
-        assertThat(has(hidden, EffectKind.CONDEMNED)).isFalse();
-        assertThat(boss.hits()).allMatch(Damage.magic(tower.damageCurrent())::equals);
-        assertThat(tower.getZaps()).hasSize(1);
+        assertThat(hitsOf(inside, Delivery.HIT).getFirst().amount())
+                .isEqualTo(2 * hitsOf(outside, Delivery.HIT).getFirst().amount());
     }
 
     @Test
-    void soulDrainCostsFifteenSpiritEachSecondAndTheFieldHitsNoHarder() {
-        PulseTower tower = this.pulseWith("Soul Drain");
-        FakeEnemyMob drained = FakeEnemyMob.at(tower.getX(), tower.getY());
-        drained.reportSpirit(-100f);
-        this.board.enemies().setEnemies(new EnemyMob[]{drained});
+    void deepShadowsHitGoesPastShields() {
+        PulseTower tower = this.pulseWith("Sundial", "Deep Shadow");
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX() + cells(2.5f), tower.getY());
+        this.spawn(enemy);
 
-        tower.doTick(19);
-        tower.doTick(20);
+        run(1, SECOND, List.of(tower));
 
-        assertThat(drained.hits().getFirst()).isEqualTo(Damage.magic(tower.damageCurrent()));
-        assertThat(applied(drained, EffectKind.SICKENED)).singleElement().extracting(Effect::stacks)
-                .isEqualTo(FieldMode.SOUL_DRAIN_SPIRIT_PER_SECOND);
-        assertThat(has(drained, EffectKind.DEAD_ZONE)).isFalse();
+        assertThat(enemy.attackers()).filteredOn(attacker -> attacker.delivery() == Delivery.HIT)
+                .singleElement().satisfies(attacker -> assertThat(attacker.piercesShields(false)).isTrue());
     }
 
     @Test
-    void theFieldIsColouredByItsHead() {
-        assertThat(this.pulseWith().getFieldLook()).isEqualTo(PulseTower.FieldLook.PLAIN);
-        assertThat(this.pulseWith("Frailty").getFieldLook()).isEqualTo(PulseTower.FieldLook.PLAIN);
-        assertThat(this.pulseWith("Frailty").bites()).isTrue();
-        assertThat(this.pulseWith("Undertow").getFieldLook()).isEqualTo(PulseTower.FieldLook.GRAVITY);
-        assertThat(this.pulseWith("Sight").getFieldLook()).isEqualTo(PulseTower.FieldLook.WARD);
-        assertThat(this.pulseWith("Gravity Well").hasGravityWell()).isTrue();
+    void knellRingsOnceASecondWhileAnEnemyAtFullTollIsInsideHittingEveryoneInside() {
+        PulseTower tower = this.pulseWith("Knell");
+        FakeEnemyMob full = FakeEnemyMob.at(tower.getX(), tower.getY());
+        full.applyEffect(Effect.toll(PulseSpec.TOLL_CAP, PulseSpec.TOLL_CAP));
+        FakeEnemyMob fresh = FakeEnemyMob.at(tower.getX(), tower.getY());
+        this.spawn(full, fresh);
+
+        run(1, 2 * SECOND, List.of(tower));
+
+        assertThat(hitsOf(fresh, Delivery.HIT)).hasSize(2);
+        assertThat(hitsOf(full, Delivery.HIT)).hasSize(2);
     }
 
     @Test
-    void aLeyLineLinksToTheObeliskWhoseBeamCrossesThePathAndGivesAnEnemyOnItBothFieldsRulesButNoDamage() {
-        this.board.setPath(new Path(List.of(new Vec2(0, 176), new Vec2(640, 176))));
-        PulseTower caster = this.pulseWith("Frailty", "Ley Line");
-        PulseTower across = this.pulseAt(3, 7, "Sight");
-        PulseTower beside = this.pulseAt(7, 3);
-        List.of(caster, across, beside).forEach(this.board.towers()::add);
-        FakeEnemyMob onTheLine = FakeEnemyMob.ghostAt(caster.getX(), 176);
-        this.board.enemies().setEnemies(new EnemyMob[]{onTheLine});
+    void knellStaysSilentWhileNobodyInsideHasFullToll() {
+        PulseTower tower = this.pulseWith("Knell");
+        FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
+        enemy.applyEffect(Effect.toll(PulseSpec.TOLL_CAP - 1, PulseSpec.TOLL_CAP));
+        this.spawn(enemy);
 
-        caster.doTick(20);
-        across.doTick(20);
-        across.doTick(21);
+        run(1, 2 * SECOND, List.of(tower));
 
-        assertThat(caster.getLeyLine()).hasValueSatisfying(line -> assertThat(line.toY()).isEqualTo(across.getY()));
-        assertThat(has(onTheLine, EffectKind.FRAIL)).isTrue();
-        assertThat(has(onTheLine, EffectKind.REVEALED)).isTrue();
-        assertThat(onTheLine.effectStacks(EffectKind.DRAGGED)).isEqualTo(DragStrength.BASE);
-        assertThat(onTheLine.hits()).isEmpty();
-        assertThat(has(onTheLine, EffectKind.TOLL)).isFalse();
-        assertThat(caster.isLeyLineBusy()).isTrue();
-    }
-
-    @Test
-    void aPinnedLeyLineLinksToTheChosenObeliskUntilPinnedAgain() {
-        this.board.setPath(new Path(List.of(new Vec2(0, 176), new Vec2(640, 176))));
-        PulseTower caster = this.pulseWith("Ley Line");
-        PulseTower across = this.pulseAt(3, 7);
-        PulseTower beside = this.pulseAt(7, 3);
-        List.of(caster, across, beside).forEach(this.board.towers()::add);
-
-        boolean pinned = caster.pinLeyLine(beside);
-        caster.doTick(20);
-        float pinnedTo = caster.getLeyLine().orElseThrow().toX();
-        caster.pinLeyLine(beside);
-        caster.doTick(40);
-
-        assertThat(pinned).isTrue();
-        assertThat(pinnedTo).isEqualTo(beside.getX());
-        assertThat(caster.getLeyLine().orElseThrow().toY()).isEqualTo(across.getY());
-        assertThat(caster.isLeyLinePinned()).isFalse();
-    }
-
-    @Test
-    void aLeyLineCannotBePinnedBeyondItsReachOrWithoutTheSpecial() {
-        PulseTower caster = this.pulseWith("Ley Line");
-        PulseTower plain = this.pulseWith();
-        PulseTower far = this.pulseAt(15, 3);
-        PulseTower near = this.pulseAt(3, 7);
-
-        assertThat(caster.pinLeyLine(far)).isFalse();
-        assertThat(plain.pinLeyLine(near)).isFalse();
-        assertThat(caster.pinLeyLine(near)).isTrue();
-    }
-
-    private PulseTower pulseAt(int x, int y, String... nodes) {
-        PulseTower tower = new PulseTower(this.board, x, y);
-        UpgradePaths.buy(tower, this.board, nodes);
-        return tower;
+        assertThat(hitsOf(enemy, Delivery.HIT)).isEmpty();
     }
 }

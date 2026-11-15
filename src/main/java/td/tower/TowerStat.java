@@ -71,11 +71,9 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, true),
     FREEZE_DURATION(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Freeze time", "Freeze duration", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    TOLL_CAP(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Toll cap", "Toll cap", StatDirection.HIGHER,
+    TOLL_PACE(0f, 1f, Float.MAX_VALUE, StatUnit.TICKS, "Toll pace", "Toll pace", StatDirection.LOWER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    TOLL_RATE(0f, 0f, Float.MAX_VALUE, StatUnit.PER_SECOND, "Toll rate", "Toll rate", StatDirection.HIGHER,
-            StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    TOLL_LINGER(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Toll lingers", "Toll lingers", StatDirection.HIGHER,
+    DRAG_PER_TOLL(0f, 0f, 1f, StatUnit.PERCENT, "Drag/Toll", "Drag per Toll", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     /**
      * Only ever set, so two sources keep the shorter interval; 0 is never. Neutral: switching it on raises the
@@ -218,9 +216,9 @@ public enum TowerStat implements StatKey, StatTerm {
             case EFFECT_DURATION -> TermText.of("how long its effects on enemies last, as a share of the usual");
             case BUFF_DURATION -> TermText.of("how long its own timed buffs last, as a share of the usual");
             case FREEZE_DURATION -> TermText.format("how long a {} it causes lasts", EffectKind.FREEZE);
-            case TOLL_CAP -> TermText.format("how many stacks of {} one enemy can hold", EffectKind.TOLL);
-            case TOLL_RATE -> TermText.format("stacks of {} it adds each second", EffectKind.TOLL);
-            case TOLL_LINGER -> TermText.format("how long {} stays once an enemy leaves", EffectKind.TOLL);
+            case TOLL_PACE -> TermText.format("how long an enemy inside takes to build a stack of {}", EffectKind.TOLL);
+            case DRAG_PER_TOLL -> TermText.format("how much deeper its {} grows for each stack of {}", EffectKind.DRAGGED,
+                    EffectKind.TOLL);
             case WITHER_INTERVAL -> TermText.format("the pause between its hits that leave {}",
                     EffectKind.VULNERABLE);
             case PROJECTILE_SPEED -> TermText.of("how fast its shots fly, as a share of the usual");

@@ -10,6 +10,7 @@ import td.util.ThreadConfined;
 import td.util.TickRate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -53,6 +54,13 @@ public final class ActiveEffects {
     private final Map<EffectKind, Effect> active = new EnumMap<>(EffectKind.class);
     /** Per kind, progress that is not yet a whole step: towards a stack debuff's next lost stack, or a bleed's next unit. */
     private final float[] progress = new float[EffectKind.values().length];
+    /** Per kind, the hold given since the last tick: the ticks a stack takes, 0 for none, and the stacks it builds to. */
+    private final int[] holdTicks = new int[EffectKind.values().length];
+    private final int[] holdCap = new int[EffectKind.values().length];
+    /** Per kind, progress toward the next stack a hold builds. */
+    private final float[] holdProgress = new float[EffectKind.values().length];
+    private boolean held;
+    private boolean heldBefore;
 
     private static Effect strongerOf(Effect a, Effect b) {
         Effect stronger = magnitude(a) >= magnitude(b) ? a : b;
@@ -238,17 +246,40 @@ public final class ActiveEffects {
         return Optional.ofNullable(this.active.get(kind));
     }
 
-    /** Takes {@code count} stacks off the active {@code kind}, keeping its clock; none left ends it. */
-    public void loseStacks(EffectKind kind, int count) {
-        Effect effect = this.active.get(kind);
-        if (effect == null) {
-            return;
-        }
-        int left = effect.stacks() - count;
-        if (left <= 0) {
-            this.active.remove(kind);
-        } else {
-            this.active.put(kind, effect.withStacks(left, effect.remainingTicks()));
+    /**
+     * Holds the stack debuff {@code kind} through the next tick: it builds a stack every {@code ticksPerStack} up to
+     * {@code cap} and loses none. Of several holds in one tick the quickest pace and the highest cap count, so holds
+     * never add up; stacks past the cap are kept, not built.
+     */
+    public void hold(EffectKind kind, int ticksPerStack, int cap) {
+        int slot = kind.ordinal();
+        int pace = Math.max(1, ticksPerStack);
+        this.holdTicks[slot] = this.holdTicks[slot] == 0 ? pace : Math.min(this.holdTicks[slot], pace);
+        this.holdCap[slot] = Math.max(this.holdCap[slot], cap);
+        this.held = true;
+    }
+
+    /** One tick of every hold: progress toward the next stack, which lands while under the cap. */
+    private void buildHeld() {
+        for (EffectKind kind : EffectKind.values()) {
+            int slot = kind.ordinal();
+            if (this.holdTicks[slot] == 0) {
+                this.holdProgress[slot] = 0f;
+                continue;
+            }
+            Effect existing = this.active.get(kind);
+            int stacks = existing == null ? 0 : existing.stacks();
+            float gathered = this.holdProgress[slot] + 1f / this.holdTicks[slot];
+            while (gathered >= 1f && stacks < this.holdCap[slot]) {
+                gathered -= 1f;
+                stacks++;
+            }
+            this.holdProgress[slot] = stacks < this.holdCap[slot] ? gathered : 0f;
+            if (stacks > 0) {
+                this.active.put(kind, Effect.stackDebuff(kind, stacks).withStackCap(
+                        Math.max(this.holdCap[slot], existing == null ? 0 : existing.effectiveStackCap())));
+            }
+            this.progress[slot] = 0f;
         }
     }
 
@@ -409,13 +440,17 @@ public final class ActiveEffects {
 
     /** {@link #tick(float)}, telling {@code listener} which effect deals each part of the tick's damage. */
     public void tick(float cellsMoved, PeriodicDamageListener listener) {
+        if (this.held || this.heldBefore) {
+            this.buildHeld();
+        }
+        this.heldBefore = this.held;
         List<EffectKind> expired = new ArrayList<>();
         for (Map.Entry<EffectKind, Effect> entry : this.active.entrySet()) {
             EffectKind kind = entry.getKey();
             Effect effect = entry.getValue();
             Optional<Effect> next = switch (effect.dynamics()) {
                 case EffectDynamics.Stacks _ when kind.isStackDebuff() ->
-                        this.decayStacks(effect);
+                        this.holdTicks[kind.ordinal()] > 0 ? Optional.of(effect) : this.decayStacks(effect);
                 case EffectDynamics.FuelPool _ -> {
                     listener.dealing(kind);
                     yield this.tickPool(effect);
@@ -436,6 +471,11 @@ public final class ActiveEffects {
             }
         }
         expired.forEach(this.active::remove);
+        if (this.held) {
+            Arrays.fill(this.holdTicks, 0);
+            Arrays.fill(this.holdCap, 0);
+            this.held = false;
+        }
     }
 
     /** Runs a timer down by a tick; empty once it runs out. */

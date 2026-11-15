@@ -192,14 +192,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.boardOverlays.onBackToMenu(this::requestReturnToMenu);
         this.header.onRestart(this::requestRestartWave);
         this.boardOverlays.onPlayAgain(this::requestRestartWave);
-        this.gameConsole.getTowerInfo().onPinToggled(pinning -> {
-            if (pinning) {
-                this.engine.startPinningLeyLine();
-            } else {
-                this.engine.cancelPinningLeyLine();
-            }
-            this.gameConsole.getTowerInfo().showPinning(this.engine.isPinningLeyLine());
-        });
         this.panelTowerSelector.doInit(this.gameWorld, this);
         this.panelTowerSelector.setTooltips(this.tooltips);
         this.panelDev.setGameWorld(this.gameWorld, this.devControls);
@@ -723,11 +715,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         Point boardPixel = this.gameBoard.boardPixelAt(evt);
         int boardX = boardPixel.x;
         int boardY = boardPixel.y;
-        if (this.engine.isPinningLeyLine()) {
-            this.engine.pinLeyLineAt(boardX, boardY);
-            this.gameConsole.getTowerInfo().showPinning(false);
-            return;
-        }
         this.unSelectTower();
         boolean wasPlacing = this.engine.isPlacingTower();
         BoardGeometry board = this.gameWorld.getBoard();

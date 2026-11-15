@@ -130,8 +130,8 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     /**
-     * A burn's or poison's lasting mark ({@code SCORCHED} or {@code SICKENED}) with {@code stacks}
-     * stacks. Made by {@code ActiveEffects} as a pool earns them, never by a tower.
+     * A stack debuff with {@code stacks} stacks that wear off one at a time: a burn's or poison's lasting mark, made by
+     * {@code ActiveEffects} as a pool earns them, or Toll.
      */
     static Effect stackDebuff(EffectKind kind, int stacks) {
         return of(kind, 0, DamageSink.none(), new EffectDynamics.Stacks(stacks, 0));
@@ -218,39 +218,19 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.BRITTLE, durationTicks, sink);
     }
 
-    /** {@code stacks} more Toll; the clock is how long it lasts after the last refresh. */
-    public static Effect toll(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.TOLL, stacks, durationTicks, sink);
+    /** {@code stacks} more Toll, up to {@code cap}; they wear off a stack at a time outside every field. */
+    public static Effect toll(int stacks, int cap) {
+        return stackDebuff(EffectKind.TOLL, stacks).withStackCap(cap);
     }
 
-    /** {@code stacks} more of armor and magic resist lowered, held for {@code durationTicks}: the field's Corrosion. */
-    public static Effect corroded(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.CORRODED, stacks, durationTicks, sink);
-    }
-
-    /** {@code stacks} more points of the field's slow, held for {@code durationTicks}. */
-    public static Effect dragged(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.DRAGGED, stacks, durationTicks, sink);
-    }
-
-    /** {@code stacks} more of Arc Discharge's extra damage taken, on one clock of {@code durationTicks}. */
-    public static Effect condemned(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.CONDEMNED, stacks, durationTicks, sink);
-    }
-
-    /** For {@code durationTicks}, a Dazed enemy loses Toll to the field that stilled it. */
-    public static Effect stilled(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.STILLED, durationTicks, sink);
+    /** Takes {@code strength} of speed away for {@code durationTicks}: the field's slow. */
+    public static Effect dragged(float strength, int durationTicks, DamageSink sink) {
+        return of(EffectKind.DRAGGED, durationTicks, sink, new EffectDynamics.Slow(strength));
     }
 
     /** Heals, shields and rewinds are worth nothing for {@code durationTicks}. */
     public static Effect deadZone(int durationTicks, DamageSink sink) {
         return timed(EffectKind.DEAD_ZONE, durationTicks, sink);
-    }
-
-    /** {@code stacks} more of extra damage taken from every source, held for {@code durationTicks}. */
-    public static Effect frail(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.FRAIL, stacks, durationTicks, sink);
     }
 
     /**

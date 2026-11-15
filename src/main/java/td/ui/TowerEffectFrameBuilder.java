@@ -16,7 +16,6 @@ import td.tower.splash.Passive;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.FlashDraw;
-import td.ui.render.LeyLineDraw;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
 import td.ui.render.PulseDraw;
@@ -67,8 +66,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float EXECUTION_SHARD_FLIGHT_CELLS = 0.5f;
     private static final float EXECUTION_SHARD_CELLS = 0.12f;
     private static final int EXECUTION_SHARDS = 8;
-    /** How bright a Ley Line is drawn while no enemy stands on it. */
-    private static final float LEY_LINE_IDLE_ALPHA = 0.45f;
     /** How long a blast's detonation and its arcs stay drawn. */
     private static final float DETONATION_TICKS = 8f;
     /** The detonation's first flash lasts this share of it. */
@@ -111,11 +108,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     /** How wide a Flashover's tongue spreads either side, in radians. */
     private static final float FLASHOVER_HALF_WIDTH = 0.22f;
 
-    /** The Pulse's ripples: how many rings, how fast they spread, and how much faster for each Toll stack. */
-    private static final float ZAP_STROKE = 2.5f;
-    private static final int RIPPLE_RINGS = 3;
-    private static final double RIPPLE_CYCLES_PER_SECOND = 0.6;
-    private static final double RIPPLE_SPEEDUP_PER_TOLL = 0.4;
 
     private final GameWorld world;
     private final List<TowerEffectDraw> draws = new ArrayList<>();
@@ -374,53 +366,13 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
     }
 
-    /** The field's faint disc, and rings rippling out of the tower faster the more Toll its enemies hold. */
+    /** The field's faint disc while it holds anyone. */
     public Void visitPulseTower(PulseTower tower) {
-        this.addZap(tower);
-        Palette tint = rippleFor(tower.getFieldLook());
-        tower.getLeyLine().ifPresent(line -> this.draws.add(new LeyLineDraw(tint, line.fromX(), line.fromY(), line.toX(),
-                line.toY(), tower.isLeyLinePinned(), tower.isLeyLineBusy() ? 1f : LEY_LINE_IDLE_ALPHA)));
-        if (!tower.isFiring()) {
-            return null;
-        }
-        float radius = tower.getFieldRadius();
-        this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), radius));
-        if (tower.hasGravityWell()) {
-            this.draws.add(new PulseDraw(Palette.TOWER_PULSE_WELL, tower.getX(), tower.getY(), radius * 2f / 3f));
-            this.draws.add(new PulseDraw(Palette.TOWER_PULSE_WELL, tower.getX(), tower.getY(), radius / 3f));
-        }
-        if (tower.bites()) {
-            this.draws.add(new RingDraw(Palette.TOWER_PULSE_RIM_BITE, tower.getX(), tower.getY(), radius, 1f));
-        }
-        double cyclesPerSecond = RIPPLE_CYCLES_PER_SECOND * (1.0 + RIPPLE_SPEEDUP_PER_TOLL * tower.getHighestToll());
-        for (int i = 0; i < RIPPLE_RINGS; i++) {
-            double phase = (this.animationSeconds * cyclesPerSecond + (double) i / RIPPLE_RINGS) % 1.0;
-            this.draws.add(new RingDraw(tint, tower.getX(), tower.getY(), (float) (phase * radius), (float) (1.0 - phase)));
+        if (tower.isHolding()) {
+            this.draws.add(new PulseDraw(Palette.TOWER_PULSE_RING, tower.getX(), tower.getY(), tower.getRangeReal()));
         }
         return null;
     }
-
-    private static Palette rippleFor(PulseTower.FieldLook look) {
-        return switch (look) {
-            case PLAIN -> Palette.TOWER_PULSE_RIPPLE;
-            case WARD -> Palette.TOWER_PULSE_RIPPLE_WARD;
-            case GRAVITY -> Palette.TOWER_PULSE_RIPPLE_GRAVITY;
-        };
-    }
-
-    /** A zap's bolts, bright at first and fading as they age. */
-    private void addZap(PulseTower tower) {
-        int age = tower.ticksSinceZap(this.gameTime);
-        if (age >= tower.zapFlashTicks()) {
-            return;
-        }
-        float alpha = 1f - (float) age / tower.zapFlashTicks();
-        for (PulseTower.Zap bolt : tower.getZaps()) {
-            this.draws.add(new BeamDraw(Palette.TOWER_PULSE_ZAP, bolt.fromX(), bolt.fromY(), bolt.toX(), bolt.toY(),
-                    ZAP_STROKE, alpha));
-        }
-    }
-
 
     public Void visitAuraTower(AuraTower tower) {
         float maxRadius = tower.getRangeReal();

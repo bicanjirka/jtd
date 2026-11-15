@@ -24,16 +24,15 @@ enum Role {
      */
     ANTI_PHYSICAL(EnumSet.of(TowerFactory.Type.SEEKER, TowerFactory.Type.CINDER, TowerFactory.Type.MORTAR),
             Set.of("sniper.silver_round", "sniper.sundering_crits", "splash.arc",
-                    "splash.hex_of_doom", "splash.thunderstrike",
-                    "pulse.extra.bite.2", "pulse.special.arc_discharge")),
+                    "splash.hex_of_doom", "splash.thunderstrike")),
     /** The Obelisk's base drag stays: it comes with every field, and is the least of what holds an enemy. */
     CONTROL(EnumSet.of(TowerFactory.Type.SEEKER),
-            Set.of("pulse.head.gravity.1", "splash.hex_of_blight", "splash.thunderstrike",
+            Set.of("pulse.burden", "pulse.gravity", "splash.hex_of_blight", "splash.thunderstrike",
                     "mortar.concussion", "mortar.tar", "mortar.cryo",
                     "splash.choking_blight")),
     /** Only what is there to deny heals and shields: a line that does it on the side keeps its tower's damage. */
     ANTI_SUSTAIN(EnumSet.noneOf(TowerFactory.Type.class),
-            Set.of("pulse.head.ward.1", "pulse.special.soul_drain", "mortar.tar",
+            Set.of("pulse.ward", "mortar.tar",
                     "mortar.fusion", "splash.hex_of_inversion",
                     "cinder.soulfire", "seeker.extra.mixed_payloads.2", "seeker.special.nullifier"));
 

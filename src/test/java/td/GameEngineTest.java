@@ -459,37 +459,6 @@ class GameEngineTest {
         assertThat(plain.getHealthFraction()).isEqualTo(1f);
     }
 
-    @Test
-    void aClickWhilePinningLinksTheSelectedObelisksLeyLineToTheObeliskClickedAndKeepsItSelected() {
-        GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("walker")), 100_000));
-        engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
-        engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(0));
-        engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(2), BoardFixtures.cellCenter(4));
-        engine.startPlacing(TowerFactory.Type.PULSE, PulseTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(6), BoardFixtures.cellCenter(0));
-        PulseTower caster = (PulseTower) engine.getGameWorld().towers().all().getFirst();
-        UpgradePaths.buy(caster, engine.getGameWorld(), "Ley Line");
-        caster.setSelected(true);
-        engine.doTick(20);
-        float autoTo = caster.getLeyLine().orElseThrow().toY();
-
-        engine.startPinningLeyLine();
-        boolean pinning = engine.isPinningLeyLine();
-        boolean asked = engine.pinLeyLineAt(BoardFixtures.cellCenter(6), BoardFixtures.cellCenter(0));
-        engine.doTick(40);
-
-        assertThat(autoTo).isEqualTo(BoardFixtures.cellCenter(4));
-        assertThat(pinning).isTrue();
-        assertThat(asked).isTrue();
-        assertThat(engine.isPinningLeyLine()).isFalse();
-        assertThat(caster.isLeyLinePinned()).isTrue();
-        assertThat(caster.getLeyLine().orElseThrow().toX()).isEqualTo(BoardFixtures.cellCenter(6));
-        assertThat(caster.isSelected()).isTrue();
-    }
-
     private static Tower towerOfType(GameEngine engine, TowerFactory.Type type) {
         return engine.getGameWorld().towers().all().stream()
                 .filter(tower -> tower.getType() == type).findFirst().orElseThrow();
@@ -1575,15 +1544,14 @@ class GameEngineTest {
     }
 
     @Test
-    void aSavedGameKeepsWhatEachTowerWasBoughtForAndThePinnedLeyLines() {
+    void aSavedGameKeepsWhatEachTowerWasBoughtFor() {
         GameEngine saved = FakeGameHost.newBoundEngine();
         saved.loadLevel(LevelFixtures.levelWith(CHECKPOINT_WAVES, 100_000));
         saved.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
         Tower first = placeTower(saved, TowerFactory.Type.PULSE, 0, 1);
-        Tower caster = placeTower(saved, TowerFactory.Type.PULSE, 1, 1);
-        Tower host = placeTower(saved, TowerFactory.Type.PULSE, 2, 1);
-        UpgradePaths.buy(caster, saved.getGameWorld(), "Ley Line");
-        PulseTower.pinLeyLine(caster, host);
+        Tower kept = placeTower(saved, TowerFactory.Type.PULSE, 1, 1);
+        Tower other = placeTower(saved, TowerFactory.Type.PULSE, 2, 1);
+        UpgradePaths.buy(kept, saved.getGameWorld(), "Sundial");
         saved.getGameWorld().towers().sell(first);
         GameSave save = saved.save().orElseThrow();
         GameEngine loaded = FakeGameHost.newBoundEngine();
@@ -1593,8 +1561,7 @@ class GameEngineTest {
 
         assertThat(problem).isEmpty();
         assertThat(loaded.getTowers()).extracting(tower -> tower.record().paid())
-                .containsExactly(caster.record().paid(), host.record().paid());
-        assertThat(save.pins()).hasSize(1);
+                .containsExactly(kept.record().paid(), other.record().paid());
         assertThat(loaded.save()).contains(save);
     }
 

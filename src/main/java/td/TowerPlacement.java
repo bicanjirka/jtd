@@ -28,7 +28,6 @@ public class TowerPlacement {
 
     private Optional<Placing> placing = Optional.empty();
     private volatile CellHighlight highlight = CellHighlight.none();
-    private boolean pinningLeyLine = false;
 
     public TowerPlacement(GameWorld gameWorld, Supplier<CellGrid> cellGrid) {
         this.gameWorld = gameWorld;
@@ -52,19 +51,6 @@ public class TowerPlacement {
         this.unHighlightCell();
     }
 
-    /** Whether the next board click picks a Ley Line's host rather than selecting or building. */
-    public boolean isPinningLeyLine() {
-        return this.pinningLeyLine;
-    }
-
-    public void startPinningLeyLine() {
-        this.pinningLeyLine = true;
-    }
-
-    public void stopPinningLeyLine() {
-        this.pinningLeyLine = false;
-    }
-
     /** Any thread: the highlighted cell as last published. */
     public CellHighlight highlight() {
         return this.highlight;
@@ -77,20 +63,9 @@ public class TowerPlacement {
         }
     }
 
-    /** The tower standing on the cell under this board pixel; empty off the board or on an empty cell. */
-    public Optional<Tower> towerAt(int boardX, int boardY) {
-        BoardGeometry board = this.gameWorld.getBoard();
-        if (!board.containsPixel(boardX, boardY)) {
-            return Optional.empty();
-        }
-        Cell cell = this.cellGrid.get().at(board.cellX(boardX), board.cellY(boardY));
-        return cell.hasTower() ? Optional.of(cell.getTower()) : Optional.empty();
-    }
-
     /** Drops placement mode and the highlight, for use before a possibly smaller grid replaces the grid. */
     public void reset() {
         this.placing = Optional.empty();
-        this.pinningLeyLine = false;
         this.unHighlightCell();
     }
 

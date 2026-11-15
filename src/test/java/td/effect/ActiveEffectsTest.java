@@ -230,12 +230,11 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void aStackedSlowTakesItsShareForEveryStack() {
+    void aDragTakesTheShareOfSpeedItWasGiven() {
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.dragged(20, 100, DamageSink.none()));
+        effects.apply(Effect.dragged(0.2f, 100, DamageSink.none()));
 
-        assertThat(resolved(effects, EnemyStat.MOVE_SPEED))
-                .isCloseTo(1f - 20 * EffectKind.DRAGGED.rule().slowPerStack(), within(0.001f));
+        assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(1f - 0.2f, within(0.001f));
     }
 
     private static void tickTimes(ActiveEffects effects, int times) {
@@ -870,73 +869,78 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void tollLeavesEveryOtherDebuffsTimerAlone() {
-        ActiveEffects plain = new ActiveEffects();
-        plain.apply(Effect.exposed(100, DamageSink.none()));
-        ActiveEffects tolled = new ActiveEffects();
-        tolled.apply(Effect.exposed(100, DamageSink.none()));
-        tolled.apply(Effect.toll(5, 1000, DamageSink.none()));
+    void aHoldBuildsAStackEveryPaceUpToItsCapAndLosesNone() {
+        int pace = 4;
+        int cap = 3;
+        ActiveEffects effects = new ActiveEffects();
 
-        tickTimes(plain, 60);
-        tickTimes(tolled, 60);
+        int afterOnePace = 0;
+        for (int tick = 1; tick <= pace * (cap + 2); tick++) {
+            effects.hold(EffectKind.TOLL, pace, cap);
+            effects.tick();
+            if (tick == pace) {
+                afterOnePace = effects.stacks(EffectKind.TOLL);
+            }
+        }
 
-        assertThat(tolled.remainingTicks(EffectKind.EXPOSED)).isEqualTo(plain.remainingTicks(EffectKind.EXPOSED));
+        assertThat(afterOnePace).isEqualTo(1);
+        assertThat(effects.stacks(EffectKind.TOLL)).isEqualTo(cap);
     }
 
     @Test
-    void tollNeverSlowsItself() {
+    void ofTwoHoldsInOneTickTheQuickerPaceAndTheHigherCapCountAndNeverAddUp() {
+        int pace = 4;
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.toll(5, 20, DamageSink.none()));
 
-        tickTimes(effects, 20);
+        for (int tick = 0; tick < pace * 6; tick++) {
+            effects.hold(EffectKind.TOLL, pace, 3);
+            effects.hold(EffectKind.TOLL, 2 * pace, 5);
+            effects.tick();
+        }
 
+        assertThat(effects.stacks(EffectKind.TOLL)).isEqualTo(5);
+    }
+
+    @Test
+    void aHoldKeepsStacksPastItsCapWithoutBuildingMore() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.toll(4, 4));
+
+        for (int tick = 0; tick < 20; tick++) {
+            effects.hold(EffectKind.TOLL, 1, 2);
+            effects.tick();
+        }
+
+        assertThat(effects.stacks(EffectKind.TOLL)).isEqualTo(4);
+    }
+
+    @Test
+    void onceNoLongerHeldAStackDebuffLosesAStackEveryDecayInterval() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.toll(3, 3));
+        effects.hold(EffectKind.TOLL, 1000, 3);
+        effects.tick();
+
+        tickTimes(effects, ActiveEffects.STACK_DECAY_INTERVAL_TICKS);
+        int afterOneInterval = effects.stacks(EffectKind.TOLL);
+        tickTimes(effects, 2 * ActiveEffects.STACK_DECAY_INTERVAL_TICKS);
+
+        assertThat(afterOneInterval).isEqualTo(2);
         assertThat(effects.has(EffectKind.TOLL)).isFalse();
     }
 
     @Test
     void stacksStopAtTheKindsCapOrTheCapTheEffectWasGiven() {
-        int cap = EffectKind.TOLL.maxStacks();
+        int cap = EffectKind.VULNERABLE.maxStacks();
         ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.toll(cap, 20, DamageSink.none()));
-        effects.apply(Effect.toll(cap, 20, DamageSink.none()));
+        effects.apply(Effect.vulnerable(cap, 20, DamageSink.none()));
+        effects.apply(Effect.vulnerable(cap, 20, DamageSink.none()));
         ActiveEffects deep = new ActiveEffects();
-        deep.apply(Effect.toll(cap, 20, DamageSink.none()).withStackCap(3 * cap));
-        deep.apply(Effect.toll(cap, 20, DamageSink.none()).withStackCap(3 * cap));
+        deep.apply(Effect.vulnerable(cap, 20, DamageSink.none()).withStackCap(3 * cap));
+        deep.apply(Effect.vulnerable(cap, 20, DamageSink.none()).withStackCap(3 * cap));
 
-        assertThat(effects.stacks(EffectKind.TOLL)).isEqualTo(cap);
-        assertThat(deep.stacks(EffectKind.TOLL)).isEqualTo(2 * cap);
-    }
-
-    @Test
-    void aFieldEffectsStacksStopAtTheFieldsMostStrength() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.frail(FieldStrength.MOST, 10, DamageSink.none()));
-        effects.apply(Effect.frail(FieldStrength.MOST, 10, DamageSink.none()));
-
-        assertThat(effects.stacks(EffectKind.FRAIL)).isEqualTo(FieldStrength.MOST);
-    }
-
-    @Test
-    void losingStacksKeepsTheClockAndLosingThemAllEndsTheEffect() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.toll(5, 30, DamageSink.none()));
-
-        effects.loseStacks(EffectKind.TOLL, 2);
-        int left = effects.stacks(EffectKind.TOLL);
-        effects.loseStacks(EffectKind.TOLL, 3);
-
-        assertThat(left).isEqualTo(3);
-        assertThat(effects.has(EffectKind.TOLL)).isFalse();
-    }
-
-    @Test
-    void losingAStackEndsAPool() {
-        ActiveEffects effects = new ActiveEffects();
-        effects.apply(Effect.burn(Damage.magic(100), DamageSink.none()));
-
-        effects.loseStacks(EffectKind.BURN, 1);
-
-        assertThat(effects.has(EffectKind.BURN)).isFalse();
+        assertThat(effects.stacks(EffectKind.VULNERABLE)).isEqualTo(cap);
+        assertThat(deep.stacks(EffectKind.VULNERABLE)).isEqualTo(2 * cap);
     }
 
     @Test
