@@ -35,7 +35,7 @@ public class TowerFactory {
         PULSE(PulseTower.PRICE, 'y', "Obelisk"),
         AURA(AuraTower.PRICE, 'u', "Beacon");
 
-        private static final double COPY_PRICE_GROWTH = 1.25;
+        public static final double COPY_PRICE_GROWTH = 1.25;
 
         /** The list price: what the first copy costs and what upgrade prices are multiples of. */
         public final int price;
