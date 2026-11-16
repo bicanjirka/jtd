@@ -15,14 +15,13 @@ second way, and that the board is alive without being busy.
   mistakes the review of 2026-11-14 found. Each tower's doc has an "In code" list of the cues it must send.
 - Sent from play today: reload and recoil (Sniper, Burst, Mortar), Steady Aim stacks, the Scorcher's stream and
   Soulfire, the Obelisk's runes, full Toll and knell, the Burst's fork, the Aerie's Ruby and Shade, its Release and
-  its nest. Every other cue and every identity look is drawn and waits for its tower.
+  its nest, the Beacon's panes and Daylight. Every other cue and every identity look is drawn and waits for its tower.
 - Known open at the time of writing:
 
   | Open | Whose |
   |---|---|
   | Frenzy's jitter is a still offset | Sniper |
   | A flying shell is a plain ball, not its kind's drawing | Mortar |
-  | The Beacon's rings still run on an empty board | Beacon |
   | Shots in flight other than the Aerie's and enemy marks other than Toll, Silence and the three ices are lab drawings; the sheets still draw the lab's nest, missiles, ices, Toll, Silence, Sundial and field patches | each tower, shot flight |
   | Toolbar icons are 32 px images, soft on a HiDPI screen | the toolbar |
 

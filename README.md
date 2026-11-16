@@ -182,7 +182,7 @@ the stat does and what made it. An upgrade's hover shows each change and what th
 | Scorcher | 20    | A flamethrower. It turns toward the nearest visible enemy and streams flame into everything in its cone for a second, then reloads for two; every enemy in the cone, invisible ones included, takes its Flame as fuel for its Burn, and nothing it pours crits. The first touch of each enemy in a stream Sears it with a stack of Scorch. Its tree widens the cone or narrows it into a Lance, adds the Core (more into its target), Kindling (a hotter Sear), Soulfire or Dragon's Breath, White Flame and Bellows, then Flashover, Meltdown or Thermal Shock |
 | Aerie  | 15    | Control. Loads homing missiles into a nest of three that is full at every wave start, and launches them one after another, each at the enemy in range that would reach its exit first; a missile speeds up as it flies, turns on a curve and never misses. Every hit deals magic damage and Freezes, unless a Shield takes all of it; a missile whose enemy was frozen meanwhile turns to an unfrozen one near it, and stays on its enemy when there is none. Its tree loads faster, freezes longer and widens the nest; every 14th freeze sets off a Release (Swarm: seven missiles at once, or Hatching: seven into the nest), and Feeding brings the next load nearer with each freeze. A second missile joins the nest by lot and turns the tower Ruby (double damage, ice that holds the freeze-immune) or Shade (Shadow damage, Silence after the thaw), then the ice chills the enemies passing it (Ice Wake) or bursts on them as it ends (Shatter) |
 | Obelisk | 15    | Support, a kill box. Short range; a field that deals 10 magic damage a second to everything inside it, hidden enemies included and with no visible enemy needed, and drags it 10%, deeper with every stack of Toll. An enemy inside builds a stack of Toll a second, up to 5, shared by every field, and loses one a second outside them all; each stack makes it take 4% more damage from every tower (Frailty). Two fields' drags never add. Its tree builds Toll faster or drags deeper, Silences the field (Ward), and adds the Sundial, its shadow turning out past the field every few seconds to hit and add Toll. The stone becomes Burden (a deeper drag), Gravity (Dazes an enemy a beat inside) or Umbra (the shadow bites twice in the field), then rings a Knell for everyone inside while one is at full Toll, or builds Toll to 10 |
-| Beacon | 20    | Passive: gives the towers in its range Damage and Range +20% and Jam taken x0.5; it never buffs another Beacon, and several stack. Attuned, the towers it buffs earn more XP for each other tower type in its range (Kinship). One head strengthens the buff, then adds Fire rate and Crit damage; the other widens its reach, then raises Buff duration and Effect duration. An extra line mentors XP, and a special makes it wither enemies, buff only its best tower, or rally the towers when an enemy reaches a spot on the path |
+| Beacon | 15    | Support; never attacks. Its light, 2.5 cells round it, Reveals every enemy in it (for 1 s after it leaves), and every other tower whose centre is in it is Lit: it takes two thirds of the jam and the blinding enemies put on it. A Beacon never lights another Beacon; lights that overlap stack. Steady Light halves the jam it lets through, and Afterglow keeps the Reveal 3 s. At Tier I the Spotlight holds one enemy in the light with Priority (Searchlight: the highest rank, then the most health; Last Light: the one nearest its exit; Ringleader: one that leads its allies, else the middle of the pack), and a Lesson makes the Lit towers learn (Kinship: +5% XP for each other tower type in the light, up to 5; Mentor: the Lit tower with the least XP earns x2; Breakthrough: a Lit tower opening a tier gives every other one 10 XP). At Tier II the light's edge: Daylight (an enemy in it gives its allies no aura and no jam) or Glare (every enemy in it is Exposed). At Tier III, Sanctuary (Lit towers take no jam and no blinding) and Prism (every enemy in the light carries a stack of each Lit tower type's mark: Sunder, Crack, Scorch, Chill, Toll, Static, Soulbrand; the pane lists what it carries now) |
 
 The shop and the board call the towers Sniper, Burst, Mortar, Scorcher, Aerie, Obelisk and Beacon
 (keys `q` `w` `e` `r` `t` `y` `u`, in that order). A Burst that forks is called a Stormcaller or a Hexer.
@@ -198,10 +198,10 @@ The price is the first copy's: each copy of a tower already on the board makes t
 shop shows the current price. Selling refunds three quarters of what the tower
 and its upgrades cost.
 
-Every tower, the Aura included, has its own upgrade tree of four tiers, shown in place of the
+Every tower, the Beacon included, has its own upgrade tree of four tiers, shown in place of the
 wave preview once the tower is selected. A tier opens with XP alone (Tier I at 60, Tier II at 120, Tier III at 200);
 every tower an enemy reached earns its bounty as XP when its walk ends,
-killed or leaked (an Aura earns with the towers it buffs). Once a tier is open its upgrades cost only credits. In a
+killed or leaked (a Beacon earns with the towers it lights). Once a tier is open its upgrades cost only credits. In a
 tier an upgrade stands alone, follows one it needs (in the same tier or the one below), or belongs to a cluster:
 one framed set of which a tower keeps one active, switched for free between waves, which sells back what came
 after the old one. Attune, in Tier 0, gives each tower its own mechanic. The Burst picks Stormcaller or Hexer at Tier
@@ -210,8 +210,8 @@ the old side's upgrades. A downgrade takes a node back with everything that need
 they cost (selling afterwards pays what selling would have) and reopens the choices they made. Upgrade
 prices are multiples of the tower's price. A tower stands on one plinth step for each tier it has open, and its
 foundation grows wider and richer with each; when a tier opens, the new foundation spreads over the old with a ring
-in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade now. The Upgrades panel's XP bar ticks where the next tier opens. The Beacon draws a ring on the
-tower it mentors and (while it is selected) the path spot its Rally watches.
+in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade now. The Upgrades panel's XP bar ticks where the next tier opens. Selecting a Beacon marks every
+tower in its light with a small gold diamond.
 
 ```mermaid
 flowchart BT
@@ -331,7 +331,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 100; once nothing adds more, it loses a stack every 1 s. |
 | Sunder | Weakness | Debuff | Each stack: Armor -5, up to 10 stacks. |
-| Expose | Mark | Debuff | Agility and Resilience -50: more and stronger crits on it. |
+| Expose | Mark | Debuff | Agility and Resilience -25: more and stronger crits on it. |
 | Mark | Mark | Debuff | The next hit on it is a crit, which spends this. |
 | Priority | Mark | Debuff | Physical damage taken and Magic damage taken +15%, and a tower that picks one target picks it. |
 | Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; it can't dodge: its Agility counts as none unless it is lower still. |
@@ -385,8 +385,9 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Swarm | Buff | Missiles at once, each at a different enemy, soonest out first. |
 | Hatching | Buff | Missiles that hatch into the nest past its size, one after another, and launch as usual. |
 | Ice Wake | Buff | While a Freeze the tower landed holds, every enemy walking close past the ice gains Chill. |
-| Rally | Buff | Faster attacks for a while, from a Beacon's rally spot. |
-| Aura | Buff | A Beacon in range raises its damage and range, and takes some of the jam enemies put on it. |
+| Light | Buff | A Beacon's circle: every enemy in it gains Reveal, while inside and a moment after, and every other tower whose centre is in it is Lit; lights that overlap stack. |
+| Lit | Buff | In a Beacon's light: it takes less of the jam and the blinding enemies put on it. |
+| Spotlight | Buff | The lantern's beam holds one enemy in the light until it dies or leaves, then picks again; the held enemy has Priority. |
 | Nest | Buff | The missiles it holds ready: it loads one whenever it has room, so it is full at every wave start, and with an enemy in range they launch one after another, each picking its own target. |
 | Jammed | Debuff | An enemy nearby slows its attacks and shortens its range. |
 | Flame | Buff | Fuel a second the stream pours into the Burn of each enemy in the cone. |
@@ -399,7 +400,11 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Flashover | Buff | A hot Burn in the stream spreads: the enemies beside it take part of the flame too. |
 | Thermal Shock | Buff | More flame into an enemy another tower holds with Chill, Freeze or Daze. |
 | Meltdown | Buff | An enemy's armor and plating add to the Burn it takes, a share for each point. |
-| Kinship | Buff | Towers a Beacon buffs earn more XP for each other tower type in range. |
+| Kinship | Buff | Towers in a Beacon's light learn faster for every other kind of tower in the same light. |
+| Mentor | Buff | The tower in a Beacon's light that has learned least learns twice as fast. |
+| Breakthrough | Buff | A tower in a Beacon's light opening a tier teaches every other tower in it a little. |
+| Daylight | Buff | An enemy in a Beacon's light gives its allies no aura: no shroud, command, mending, ward or jam reaches out of it. |
+| Prism | Buff | A Beacon's light carries the mark of every kind of tower it lights; the mark fades by its own rule once the enemy leaves. |
 | Shatter | Buff | As a Freeze the tower landed ends, the ice bursts on the enemies around it. |
 | Arc | Buff | Lightning a primed stone carries from where it lands, jumping from enemy to enemy as magic. |
 | Hex | Buff | A curse a Hexer casts with its Souls; each kind does its own thing. |

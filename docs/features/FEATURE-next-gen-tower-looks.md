@@ -1,6 +1,6 @@
 # Feature Request: Next-gen Tower Looks
 
-**Status:** implemented 2026-11-15, but for the Beacon's own look; drafted 2026-11-10, reviewed with the whole bundle 2026-11-13; the art pass drew it the same day
+**Status:** implemented 2026-11-16 (the Beacon's own look with its rework); drafted 2026-11-10, reviewed with the whole bundle 2026-11-13; the art pass drew it the same day
 (`next-gen-art/`) in the raised view the user chose, and the enemies and ground zones already in the game were
 moved into the same look ("The rest of the board"). Part of `FEATURE-next-gen.md`, whose appendix
 holds the visual request as given; this doc owns its "all towers" parts, keyed to tiers.
@@ -13,8 +13,8 @@ Back-to-front painting with enemy marks over the towers, the tier unlock, a plac
 idle light a tower, the two-tone toolbar icons and the panel's tier thumbnails. The art sheets are rendered from the
 game's own tables. Each tower's rework then sent its cues from its state ("Building a tower's look") and wired its
 identity looks, its shots in flight and its enemy marks, and the Obelisk's ripples and the Aerie's orbit stopped
-running on an empty board. Only the Beacon's are left, with its rework: its cues, its rings that still run always on,
-and Glare's mark.
+running on an empty board. The Beacon's came with its rework: its panes and Daylight, the rings gone, the
+reveal ray, the Spotlight's beam and Glare's glint.
 
 ## Summary
 

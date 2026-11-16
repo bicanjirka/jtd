@@ -1,6 +1,6 @@
 # Feature Request: Next-gen Beacon Tower
 
-**Status:** draft, 2026-11-13, third round, reviewed with the whole bundle. Tiers 0 to III and the look, written to the node rules in
+**Status:** implemented 2026-11-16 (drafted 2026-11-13, third round, reviewed with the whole bundle). Tiers 0 to III and the look, written to the node rules in
 `FEATURE-next-gen-upgrade-tiers.md`. Part of `FEATURE-next-gen.md`. Weighed on paper (`trees/aura.py`); the numbers below are
 that model's, and the XP ones rest on placeholder gates.
 
@@ -102,7 +102,7 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 | Tier | Gate | Unlock | Colour |
 |---|---|---|---|
 | 0 | - | - | #d8b866 |
-| I | XP 60 | $20 | #ecd48c |
+| I | XP 60 | - | #ecd48c |
 | II | XP 120 | - | #f2e3b3 |
 | III | XP 200 | - | #f8ecc2 |
 
@@ -110,18 +110,18 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 
 | Tier | Node | Kind | Cluster | After | Glyph | Colour | Cost | Replaces | Does | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 0 | Steady Light | stat | | | aura.head.broadcast.2 | | | aura.head.broadcast.2 | Lit towers take a third of the jam and of the blinding, from two thirds. | A quarter was too strong. Name is a proposal. |
-| 0 | Afterglow | stat | | | sonar.special.wide_band | | | | Reveal lasts 3 s after the light, from 1 s. | Against shrouds: an Elite Ghost re-casts every 3 s, so a Reveal that outlasts the cast keeps its group seen. A 0.5 s to 1.5 s linger moved nothing (`TODO.md`); 3 s is the first that may. |
-| I | Searchlight | ability | Spotlight | | sonar.special.command_ping | | | | The beam holds the enemy in the light with the highest rank, then the most health: it has Priority while held. | A boss or an elite. Today's Radar Command Ping and the Obelisk's Arc Discharge as one rule. |
-| I | Last Light | ability | Spotlight | | sonar.head.long_reach.1 | | | | The beam holds the enemy in the light nearest its exit: it has Priority while held. | The leaker. Priority comes before a Taunting enemy's pull. |
-| I | Ringleader | ability | Spotlight | | Priority | | | | The beam holds an enemy in the light that gives its allies an aura, or else the one with the most allies within 1 cell: it has Priority while held. | Against the affixes that lead (Commanding, Mending, Jamming, Warding) and the Ghost's shroud; on a plain wave, the middle of the pack. |
-| I | Kinship | ability | Lessons | | aura.head.amplifying_core.1 | | | base.attune | Lit towers earn 5% more XP for each other tower type in the light, up to 5. | A mixed cluster: copies add nothing. At 10% a type it beat Mentor and Breakthrough everywhere (On paper). |
-| I | Mentor | ability | Lessons | | aura.extra.tutelage.3 | | | aura.extra.tutelage.3 | The Lit tower with the least XP earns twice as much. | A newcomer among veterans: a tower built late catches up. Today's Apprentice. |
-| I | Breakthrough | ability | Lessons | | aura.extra.tutelage.2 | | | | When a Lit tower opens a tier, every other Lit tower gains 10 XP. | Towers pushing their tiers: rewards upgrading the towers in the light. Each tower opens each tier once, so the chain ends by itself. Replaces the sold-tower Legacy (Decisions made). |
-| II | Daylight | ability | Edge of light | | pulse.head.ward.4b | | | | An enemy in the light gives its allies no aura. | A shroud, a command, a mending or a jamming aura stops at the light's edge. Silence stops casts; Daylight stops auras. |
-| II | Glare | ability | Edge of light | | Expose | | | | An enemy in the light is Exposed. | Against Elusive and for crits: it dodges less and is crit more. Expose stays in the game here, at half its old strength (Terms). |
-| III | Sanctuary | stat | | | aura.head.broadcast.3 | | | | Lit towers take no jam and no blinding. | The full answer to a jamming boss and a Juggernaut's blinding field. |
-| III | Prism | ability | | | aura.head.amplifying_core.2 | | | | An enemy in the light carries one stack of each Lit tower type's mark while inside: Sniper Sunder, Mortar Crack, Scorcher 5 stacks of Scorch, Aerie Chill (15%), Obelisk Toll, Stormcaller Static, Hexer Soulbrand. | One stack per type, never per tower: copies add nothing, as for Kinship. The Beacon's pane lists what its light carries now ("Sunder, Crack, Scorch"). A stack from the light is an ordinary stack (Terms). The Scorcher's mark is 5 stacks, as its Sear gives: one stack of Scorch is a single point of resilience and did nothing. The Aerie's Chill is 15%: at 30% it alone was worth a copy of the reference tower (On paper). |
+| 0 | Steady Light | stat | | | aura.steady_light | | | aura.steady_light | Lit towers take a third of the jam and of the blinding, from two thirds. | A quarter was too strong. Name is a proposal. |
+| 0 | Afterglow | stat | | | aura.afterglow | | | aura.afterglow | Reveal lasts 3 s after the light, from 1 s. | Against shrouds: an Elite Ghost re-casts every 3 s, so a Reveal that outlasts the cast keeps its group seen. A 0.5 s to 1.5 s linger moved nothing (`TODO.md`); 3 s is the first that may. |
+| I | Searchlight | ability | Spotlight | | aura.searchlight | | | aura.searchlight | The beam holds the enemy in the light with the highest rank, then the most health: it has Priority while held. | A boss or an elite. Today's Radar Command Ping and the Obelisk's Arc Discharge as one rule. |
+| I | Last Light | ability | Spotlight | | aura.last_light | | | aura.last_light | The beam holds the enemy in the light nearest its exit: it has Priority while held. | The leaker. Priority comes before a Taunting enemy's pull. |
+| I | Ringleader | ability | Spotlight | | aura.ringleader | | | aura.ringleader | The beam holds an enemy in the light that gives its allies an aura, or else the one with the most allies within 1 cell: it has Priority while held. | Against the affixes that lead (Commanding, Mending, Jamming, Warding) and the Ghost's shroud; on a plain wave, the middle of the pack. |
+| I | Kinship | ability | Lessons | | aura.kinship | | | aura.kinship | Lit towers earn 5% more XP for each other tower type in the light, up to 5. | A mixed cluster: copies add nothing. At 10% a type it beat Mentor and Breakthrough everywhere (On paper). |
+| I | Mentor | ability | Lessons | | aura.mentor | | | aura.mentor | The Lit tower with the least XP earns twice as much. | A newcomer among veterans: a tower built late catches up. Today's Apprentice. |
+| I | Breakthrough | ability | Lessons | | aura.breakthrough | | | aura.breakthrough | When a Lit tower opens a tier, every other Lit tower gains 10 XP. | Towers pushing their tiers: rewards upgrading the towers in the light. Each tower opens each tier once, so the chain ends by itself. Replaces the sold-tower Legacy (Decisions made). |
+| II | Daylight | ability | Edge of light | | aura.daylight | | | aura.daylight | An enemy in the light gives its allies no aura. | A shroud, a command, a mending or a jamming aura stops at the light's edge. Silence stops casts; Daylight stops auras. |
+| II | Glare | ability | Edge of light | | aura.glare | | | aura.glare | An enemy in the light is Exposed. | Against Elusive and for crits: it dodges less and is crit more. Expose stays in the game here, at half its old strength (Terms). |
+| III | Sanctuary | stat | | | aura.sanctuary | | | aura.sanctuary | Lit towers take no jam and no blinding. | The full answer to a jamming boss and a Juggernaut's blinding field. |
+| III | Prism | ability | | | aura.prism | | | aura.prism | An enemy in the light carries one stack of each Lit tower type's mark while inside: Sniper Sunder, Mortar Crack, Scorcher 5 stacks of Scorch, Aerie Chill (15%), Obelisk Toll, Stormcaller Static, Hexer Soulbrand. | One stack per type, never per tower: copies add nothing, as for Kinship. The Beacon's pane lists what its light carries now ("Sunder, Crack, Scorch"). A stack from the light is an ordinary stack (Terms). The Scorcher's mark is 5 stacks, as its Sear gives: one stack of Scorch is a single point of resilience and did nothing. The Aerie's Chill is 15%: at 30% it alone was worth a copy of the reference tower (On paper). |
 
 ### Terms
 
@@ -129,7 +129,7 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 | Term | Glyph | Means |
 |---|---|---|
-| Light | | The Beacon's circle and its passive. Every enemy in it is Revealed; every tower whose centre is in it is Lit. Several Beacons' lights overlap; they never stack. |
+| Light | | The Beacon's circle and its passive. Every enemy in it is Revealed; every tower whose centre is in it is Lit. Lights that overlap stack, each as if it stood alone. |
 | Lit | | A tower in a Beacon's light: it takes two thirds of the jam and of the blinding. It replaces today's Aura buff and gives no damage, range or fire rate. |
 | Spotlight | sonar.special.command_ping | The lantern's beam holds one enemy in the light until it dies or leaves, then picks again by its rule: the held enemy has Priority, and every tower that picks one target turns to it. Searchlight, Last Light or Ringleader chooses which. |
 | Kinship | aura.head.amplifying_core.1 | Lit towers learn faster for every other kind of tower in the same light. |
@@ -151,11 +151,16 @@ the opposite of today's two breathing rings, pulsing head and line to every towe
 | the tower types in its light (Kinship, Prism) | `withPanes(List<TowerLook>)`, in a fixed order; a pane a type, repeating round the octagon |
 | Daylight owned | `TowerCue.DAYLIGHT` |
 
-- **The two breathing rings still run** on the wall clock in `TowerEffectFrameBuilder`. They go with this rework:
-  the lamp's slow ray is the Beacon's idle life.
-- The panes' order must not depend on a hash: build the list from the towers in range in a stable order, or the
-  picture changes between frames and the cache fills.
-- The reveal ray, the Spotlight's wedge and Glare are `TowerEffectDraw`s and an enemy mark, not the tower's picture.
+- The breathing rings are gone; the lamp's slow ray is the Beacon's idle life.
+- The panes come from `AuraTower.litTowers()` (the order built), one per distinct look, and only while Kinship or
+  Prism reads the tower types (`readsTowerTypes`); otherwise the glass is plain.
+- The reveal ray (`AuraTower.reveals()`, each with its tick) and the Spotlight (`heldEnemy()`) are `BeamDraw`s from
+  the lantern in `TowerEffectFrameBuilder`; the wedge is a wide, faint beam. Glare's glint is a steady `CritSparkDraw`
+  on every Exposed enemy, which has no dot of its own any more.
+- A caster in daylight gives its allies nothing, so its aura and jamming rings are not drawn at all rather than cut
+  off at the light's edge.
+- The Lit mark is a `TowerStatusDraw` in the gold of the lantern, in each Lit tower's bottom-left corner, only while
+  the Beacon is selected. Prism's list is the pane's "Light carries" row (`TowerInspection.carries`).
 
 | Tier | Foundation |
 |---|---|
@@ -248,7 +253,11 @@ From the review rounds (2026-11-13):
   player who forgot to switch to it. Breakthrough takes its place.
 - **XP stays in the Beacon**; the Obelisk's Tithe is dropped.
 - **Glare is Expose, at -25 agility and -25 resilience**, half today's.
-- **Prism is one stack per tower type, not per tower**, and gives Toll's Frailty as an accepted exception.
+- **Prism is one stack per tower type, not per tower**, and gives Toll's Frailty as an accepted exception. In code a
+  light adds its stack as an enemy enters it, on top of what the enemy carries and up to the mark's own cap, and again
+  once the mark has worn off it while it stays; never every tick.
+- **Lights that overlap stack** (decided at implementation): the jam shares multiply, each light adds its own Prism
+  stack, and each keeps its own Static and Soulbrand tag.
 - **A stack from the light is an ordinary stack**: it behaves as if any tower gave it, so marks that fade fade once
   the enemy leaves the light, and Static and Soulbrand, which never fade, stay. Their stacks from the light pay no
   currency.
@@ -256,7 +265,7 @@ From the review rounds (2026-11-13):
   member, so the bare tower reads as one idea and Lessons is a pick of three rules for three situations.
 - **Reveal only by the light's touch**: 1 s after the light bare, 3 s with Afterglow. A Reveal on every Lit tower's hit
   (Tracer Light) was far stronger than the Mortar's rare Flare and is dropped.
-- **A light's Static or Soulbrand stack credits no tower**: the Beacon deals no damage, and the stack pays no currency.
+- **A light's Static or Soulbrand stack pays no currency**; in code its damage is credited to the Beacon's record.
 - **Prism gives the Aerie Chill**, not Freeze.
 - **Every balance tied to the Beacon is the Beacon's.** No other tower is weighed with it, and a runaway combination is
   tuned in the Beacon's nodes.
