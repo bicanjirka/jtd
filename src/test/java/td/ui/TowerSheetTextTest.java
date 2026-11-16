@@ -194,6 +194,20 @@ class TowerSheetTextTest {
     }
 
     @Test
+    void aPrismBeaconsPaneListsTheMarksItsLightCarriesNow() {
+        Tower beacon = this.place(TowerFactory.Type.AURA, 0, 0);
+        UpgradePaths.buy(beacon, this.world, "Prism");
+        InfoSheet empty = TowerSheetText.status(BoardRenderer.liveInspection(beacon));
+        this.place(TowerFactory.Type.SNIPER, 1, 0);
+
+        InfoSheet lit = TowerSheetText.status(BoardRenderer.liveInspection(beacon));
+
+        assertThat(empty.lines()).noneMatch(line -> line instanceof SheetLine.IconRow row
+                && row.label().equals("Light carries"));
+        assertThat(iconRow(lit, "Light carries").icons()).hasSize(1);
+    }
+
+    @Test
     void aJammedTowersStatusShowsADebuffAndTheLostRangeAndRateInTheWorseColour() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
         this.world.disruptions().add(sniper.getX(), sniper.getY(), new DisruptionAura(20f, 0.3f, 0.2f));

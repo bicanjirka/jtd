@@ -339,9 +339,9 @@ public final class Java2DFrameRenderer {
             case TOWER_MORTAR_BODY -> TowerLooks.color(TowerLook.MORTAR);
             case TOWER_SEEKER_BODY -> TowerLooks.color(TowerLook.SEEKER);
             case TOWER_CINDER_BODY -> TowerLooks.color(TowerLook.CINDER);
-            case TOWER_AURA_RING -> Color.WHITE;
-            case TOWER_AURA_RALLY -> new Color(255, 170, 60);
-            case TOWER_AURA_MENTEE -> new Color(255, 215, 90);
+            case TOWER_AURA_REVEAL_RAY -> new Color(255, 250, 225, 200);
+            case TOWER_AURA_SPOTLIGHT -> new Color(255, 236, 170, 60);
+            case TOWER_AURA_LIT_MARK -> TowerLooks.color(TowerLook.AURA);
             case TOWER_UPGRADE_TIER_3 -> new Color(127, 212, 255);
             case TOWER_UPGRADE_TIER_0 -> new Color(225, 225, 230);
             case TOWER_UPGRADE_TIER_1 -> new Color(255, 200, 60);
@@ -433,6 +433,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_MARKED -> new Color(255, 80, 80);
             case STATUS_MARKER_PRIORITY -> new Color(255, 150, 60);
             case CRIT_SPARK -> Color.WHITE;
+            case EXPOSED_GLINT -> new Color(255, 255, 255, 220);
             case MISS_MARK -> new Color(190, 190, 190);
             case FREEZE_CRYSTAL -> new Color(220, 245, 255);
             case SPAWN_BURST -> Color.WHITE;

@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.enemy.EnemyMob;
 import td.projectile.ShellLook;
 import td.tower.AuraTower;
 import td.tower.CinderTower;
@@ -11,6 +12,7 @@ import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
+import td.tower.aura.RevealedEnemy;
 import td.tower.mortar.BlastMark;
 import td.tower.pulse.StoneLook;
 import td.tower.seeker.ShatterMark;
@@ -48,8 +50,11 @@ import java.util.Optional;
 public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     // Two rings half a period apart read as one breathing aura, not a blinking ring.
-    private static final double AURA_PERIOD_SECONDS = 1.8;
-    private static final double[] AURA_PHASE_OFFSETS = {0.0, 0.5};
+    /** How far above its cell's centre the Beacon's lantern hangs, where its rays start. */
+    private static final float LANTERN_LIFT_CELLS = 0.4f;
+    private static final int REVEAL_RAY_TICKS = AuraTower.REVEAL_MEMORY_TICKS;
+    private static final float REVEAL_RAY_WIDTH_CELLS = 0.04f;
+    private static final float SPOTLIGHT_WIDTH_CELLS = 0.3f;
 
     private static final float STATUS_MARKER_SCALE_FRACTION = 0.12f;
     private static final float REFUND_MARK_SCALE_FRACTION = 0.3f;
@@ -86,7 +91,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int SHATTER_SHARDS = 10;
     private static final float SHATTER_SHARD_CELLS = 0.18f;
     private static final float SHATTER_STROKE_CELLS = 0.06f;
-    private static final float APPRENTICE_MARK_CELLS = 0.55f;
     private static final float NUKE_FLASH_SHARE = 0.6f;
     private static final float BLAST_MARK_ALPHA = 0.4f;
     private static final float NUKE_FLASH_ALPHA = 0.8f;
@@ -142,11 +146,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /** Position of {@code seconds} in a repeating {@code [0, 1)} cycle. */
-    private static double phaseFraction(double seconds, double phaseOffset) {
-        double t = (seconds / AURA_PERIOD_SECONDS + phaseOffset) % 1.0;
-        return t < 0 ? t + 1.0 : t;
-    }
-
     /** A marker in the tower's top-right corner while an enemy disrupts it. */
     public void addStatus(Tower tower) {
         float x = tower.getBoardX() + this.scale * 0.85f;
@@ -410,15 +409,23 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitAuraTower(AuraTower tower) {
-        float maxRadius = tower.getRangeReal();
-        for (double phaseOffset : AURA_PHASE_OFFSETS) {
-            double phase = phaseFraction(this.animationSeconds, phaseOffset);
-            this.draws.add(new RingDraw(Palette.TOWER_AURA_RING, tower.getX(), tower.getY(),
-                    (float) (phase * maxRadius), (float) (1.0 - phase)));
+        float lanternX = tower.getX();
+        float lanternY = tower.getY() - this.scale * LANTERN_LIFT_CELLS;
+        for (RevealedEnemy reveal : tower.reveals()) {
+            float progress = (this.gameTime - reveal.atTick() + (float) this.interpolationAlpha) / REVEAL_RAY_TICKS;
+            if (progress >= 0f && progress < 1f) {
+                EnemyMob enemy = reveal.enemy();
+                this.draws.add(new BeamDraw(Palette.TOWER_AURA_REVEAL_RAY, lanternX, lanternY, (float) enemy.getX(),
+                        (float) enemy.getY(), this.scale * REVEAL_RAY_WIDTH_CELLS, 1f - progress));
+            }
         }
-        if (tower.mentors()) {
-            tower.apprentice().ifPresent(apprentice -> this.draws.add(new RingDraw(Palette.TOWER_AURA_MENTEE,
-                    apprentice.getX(), apprentice.getY(), this.scale * APPRENTICE_MARK_CELLS, 1f)));
+        tower.heldEnemy().ifPresent(enemy -> this.draws.add(BeamDraw.solid(Palette.TOWER_AURA_SPOTLIGHT, lanternX,
+                lanternY, (float) enemy.getX(), (float) enemy.getY(), this.scale * SPOTLIGHT_WIDTH_CELLS)));
+        if (tower.isSelected()) {
+            for (Tower lit : tower.litTowers()) {
+                this.draws.add(new TowerStatusDraw(Palette.TOWER_AURA_LIT_MARK, lit.getBoardX() + this.scale * 0.15f,
+                        lit.getBoardY() + this.scale * 0.85f, this.scale * STATUS_MARKER_SCALE_FRACTION));
+            }
         }
         return null;
     }

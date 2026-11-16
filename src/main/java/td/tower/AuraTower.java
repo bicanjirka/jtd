@@ -8,6 +8,7 @@ import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
 import td.stat.StatModifiers;
+import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.aura.AuraMechanic;
@@ -20,6 +21,7 @@ import td.tower.aura.LightSpec;
 import td.tower.aura.MentorMechanic;
 import td.tower.aura.PrismMark;
 import td.tower.aura.PrismMechanic;
+import td.tower.aura.RevealedEnemy;
 import td.tower.aura.RingleaderMechanic;
 import td.tower.aura.SearchlightMechanic;
 import td.tower.aura.Spotlight;
@@ -69,6 +71,8 @@ public final class AuraTower extends AbstractTower {
     private static final int AFTERGLOW_TICKS = Math.round(2f * TickRate.TICKS_PER_SECOND);
     /** How long what the light holds an enemy to lasts once it leaves: Priority, Glare's Expose, Prism's Chill. */
     private static final int LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
+    /** How long a reveal is remembered: long enough for its ray to fade. */
+    public static final int REVEAL_MEMORY_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     private static final int CHILL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
 
     private static final UpgradeNode STEADY_LIGHT = UpgradeNode.of("aura.steady_light", "Steady Light", 11)
@@ -152,16 +156,53 @@ public final class AuraTower extends AbstractTower {
         }
     };
 
+    private static final TowerVisitor<Optional<AuraTower>> AS_BEACON = new TowerVisitor<>() {
+        @Override
+        public Optional<AuraTower> visitSniperTower(SniperTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<AuraTower> visitSplashTower(SplashTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<AuraTower> visitPulseTower(PulseTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<AuraTower> visitAuraTower(AuraTower tower) {
+            return Optional.of(tower);
+        }
+
+        @Override
+        public Optional<AuraTower> visitMortarTower(MortarTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<AuraTower> visitSeekerTower(SeekerTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<AuraTower> visitCinderTower(CinderTower tower) {
+            return Optional.empty();
+        }
+    };
+
     private final OwnedMechanics<AuraMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     // Both threads ask for the spec; the fold is cached per mechanic list, which a purchase replaces whole.
     private volatile FoldedSpec folded = new FoldedSpec(List.of(), LightSpec.bare());
     /** The enemy the Spotlight holds; seen by the frame build, so published. */
     private volatile Optional<EnemyMob> held = Optional.empty();
-    /** The enemies that entered the light hidden this tick, for the reveal ray; published whole. */
-    private volatile List<EnemyMob> revealedNow = List.of();
-    /** The enemies this light's Static and Soulbrand tag, one stack per light, settled by the Burst's rules. */
+    /** The hidden enemies the light revealed in the last moment, for the reveal ray; published whole. */
+    private volatile List<RevealedEnemy> reveals = List.of();
     /** The enemies inside at the last tick: one entering gets Prism's stacks. Membership only. */
     private Set<EnemyMob> lastInside = Collections.newSetFromMap(new IdentityHashMap<>());
+    /** The enemies this light's Static and Soulbrand tag, one stack per light, settled by the Burst's rules. */
     private TagLedger lightStatic = new TagLedger();
     private TagLedger lightSoulbrand = new TagLedger();
 
@@ -272,7 +313,7 @@ public final class AuraTower extends AbstractTower {
     }
 
     /** The Lit tower with the least XP, the earliest built on a tie; empty when the light holds none. */
-    public Optional<Tower> apprentice() {
+    private Optional<Tower> apprentice() {
         Tower least = null;
         for (Tower tower : this.litTowers()) {
             if (least == null || tower.experience().xp() < least.experience().xp()) {
@@ -282,9 +323,10 @@ public final class AuraTower extends AbstractTower {
         return Optional.ofNullable(least);
     }
 
-    /** Whether Mentor marks the Lit tower with the least XP. */
-    public boolean mentors() {
-        return this.spec().lesson() == LightSpec.Lesson.MENTOR;
+    /** Whether the light reads which tower types it holds (Kinship, Prism), so the lantern shows them. */
+    public boolean readsTowerTypes() {
+        LightSpec spec = this.spec();
+        return spec.lesson() == LightSpec.Lesson.KINSHIP || spec.prism();
     }
 
     /** Whether its light carries Daylight, where an enemy gives its allies no aura. */
@@ -302,9 +344,9 @@ public final class AuraTower extends AbstractTower {
         return this.held;
     }
 
-    /** The hidden enemies the light revealed on entering it this tick. */
-    public List<EnemyMob> revealedNow() {
-        return this.revealedNow;
+    /** The hidden enemies the light revealed as they entered, over the last {@link #REVEAL_MEMORY_TICKS}. */
+    public List<RevealedEnemy> reveals() {
+        return this.reveals;
     }
 
     /** The marks Prism carries now, one per Lit tower type that leaves one, in the pane's order; none without it. */
@@ -319,6 +361,12 @@ public final class AuraTower extends AbstractTower {
         return List.copyOf(marks);
     }
 
+    /** What {@code tower}'s light carries onto the enemies in it now: Prism's marks; nothing for any other tower. */
+    public static List<Term> carriedBy(Tower tower) {
+        return tower.accept(AS_BEACON).map(beacon -> beacon.prismMarks().stream().map(PrismMark::term).toList())
+                .orElse(List.of());
+    }
+
     /**
      * The light's tick: Daylight's circle, the reveal and Glare on every enemy inside, the Spotlight's hold, Prism's
      * marks and what its tags settle, and Breakthrough's lessons.
@@ -331,14 +379,19 @@ public final class AuraTower extends AbstractTower {
         List<EnemyMob> inside = InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal())
                 .matching(this.context.enemies());
         int revealTicks = Math.round(this.stats().value(TowerStat.REVEAL_TIME));
-        List<EnemyMob> revealed = new ArrayList<>();
+        List<RevealedEnemy> revealed = new ArrayList<>();
+        for (RevealedEnemy earlier : this.reveals) {
+            if (gameTime - earlier.atTick() < REVEAL_MEMORY_TICKS && !earlier.enemy().isDead()) {
+                revealed.add(earlier);
+            }
+        }
         List<PrismMark> marks = this.prismMarks();
         Set<EnemyMob> nowInside = Collections.newSetFromMap(new IdentityHashMap<>());
         for (EnemyMob enemy : inside) {
             nowInside.add(enemy);
             boolean entered = !this.lastInside.contains(enemy);
-            if (enemy.isHidden()) {
-                revealed.add(enemy);
+            if (entered && enemy.isHidden()) {
+                revealed.add(new RevealedEnemy(enemy, gameTime));
             }
             this.reveal(enemy, revealTicks);
             if (spec.edge() == LightSpec.Edge.GLARE) {
@@ -347,7 +400,7 @@ public final class AuraTower extends AbstractTower {
             marks.forEach(mark -> this.carry(mark, enemy, entered));
         }
         this.lastInside = nowInside;
-        this.revealedNow = List.copyOf(revealed);
+        this.reveals = List.copyOf(revealed);
         this.hold(spec.spotlight(), inside);
         this.settleTags();
         if (spec.lesson() == LightSpec.Lesson.BREAKTHROUGH) {
@@ -432,7 +485,7 @@ public final class AuraTower extends AbstractTower {
     @Override
     protected void endFight() {
         this.held = Optional.empty();
-        this.revealedNow = List.of();
+        this.reveals = List.of();
         this.lastInside = Collections.newSetFromMap(new IdentityHashMap<>());
         this.lightStatic = new TagLedger();
         this.lightSoulbrand = new TagLedger();

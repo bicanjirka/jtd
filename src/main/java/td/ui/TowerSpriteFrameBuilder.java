@@ -113,6 +113,15 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return tower.accept(BODY_LOOK);
     }
 
+    /** A Beacon's lantern: whiter in Daylight, and a pane for each tower type its light holds while it reads them. */
+    static TowerPose poseOf(AuraTower tower) {
+        TowerPose pose = TowerPose.idle().with(TowerCue.DAYLIGHT, tower.givesDaylight());
+        if (!tower.readsTowerTypes()) {
+            return pose;
+        }
+        return pose.withPanes(tower.litTowers().stream().map(TowerSpriteFrameBuilder::bodyLookOf).distinct().toList());
+    }
+
     /** The pose a Burst is in: its arm reloading, and charged while an ability is full and waits. */
     static TowerPose poseOf(SplashTower tower) {
         return poseOfReload(tower.getCoolDownFraction()).with(TowerCue.CHARGED, tower.holdsAFullAbility());
@@ -271,7 +280,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitAuraTower(AuraTower tower) {
-        this.sprite(tower, TowerLook.AURA, TowerPose.idle());
+        this.sprite(tower, TowerLook.AURA, poseOf(tower));
         return null;
     }
 

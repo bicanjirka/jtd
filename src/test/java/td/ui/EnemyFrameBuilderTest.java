@@ -127,6 +127,34 @@ class EnemyFrameBuilderTest {
     }
 
     @Test
+    void anExposedEnemyWearsASteadyGlint() {
+        EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
+        enemy.applyEffect(Effect.exposed(100, DamageSink.none()));
+
+        CritSparkDraw glint = critSparkOf(enemy, 0);
+
+        assertThat(glint.palette()).isEqualTo(Palette.EXPOSED_GLINT);
+        assertThat(glint.fadeProgress()).isZero();
+    }
+
+    @Test
+    void aJammerStandingInDaylightShowsNoJammingRing() {
+        GameWorld context = contextWithStraightPath();
+        DefinedEnemyMob jammer = EnemyFixtures.liveMob(context,
+                EnemyFixtures.simpleDefinition("jammer").withDisruption(new DisruptionAura(50f, 0.3f, 0.2f)));
+        boolean ringedInTheDark = overlaysOf(jammer, 0).stream().anyMatch(EnemyFrameBuilderTest::isJammingRing);
+
+        context.daylight().add(jammer.getX(), jammer.getY(), 100f);
+
+        assertThat(ringedInTheDark).isTrue();
+        assertThat(overlaysOf(jammer, 0)).noneMatch(EnemyFrameBuilderTest::isJammingRing);
+    }
+
+    private static boolean isJammingRing(EnemyOverlayDraw draw) {
+        return draw instanceof EnemyRingDraw ring && ring.palette() == Palette.DISRUPTION;
+    }
+
+    @Test
     void anEnemyAtFullHealthCarriesNoBar() {
         EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
 
@@ -352,7 +380,7 @@ class EnemyFrameBuilderTest {
     @Test
     void dotsComeOncePerKindInAFixedOrderWhateverTheEffects() {
         EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
-        enemy.applyEffect(Effect.exposed(50, DamageSink.none()));
+        enemy.applyEffect(Effect.marked(50, DamageSink.none()));
         enemy.applyEffect(Effect.vulnerable(1, 50, DamageSink.none()));
         enemy.applyEffect(Effect.sundered(1, 50, DamageSink.none()));
 
@@ -371,7 +399,7 @@ class EnemyFrameBuilderTest {
     void dotsSitBetweenTheBodyAndTheBars() {
         DefinedEnemyMob enemy = EnemyFixtures.liveMob(contextWithStraightPath(), EnemyFixtures.simpleDefinition("plain"));
         enemy.doDamage(Damage.physical(1));
-        enemy.applyEffect(Effect.exposed(50, DamageSink.none()));
+        enemy.applyEffect(Effect.marked(50, DamageSink.none()));
 
         float dotY = dotsOf(enemy).y();
 
@@ -985,7 +1013,7 @@ class EnemyFrameBuilderTest {
         enemy.applyEffect(Effect.chill(0.2f, 100, DamageSink.none()));
         enemy.applyEffect(Effect.burn(Damage.magic(1), DamageSink.none()));
         enemy.applyEffect(Effect.shield(DamageUnits.ofPoints(1), 100, DamageSink.none()));
-        enemy.applyEffect(Effect.exposed(100, DamageSink.none()));
+        enemy.applyEffect(Effect.marked(100, DamageSink.none()));
 
         List<String> kinds = overlaysOf(enemy, 0).stream().map(overlay -> overlay.getClass().getSimpleName()).toList();
 

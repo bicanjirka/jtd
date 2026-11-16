@@ -24,6 +24,7 @@ import td.tower.TowerModifiers;
 import td.tower.cinder.FlashoverMechanic;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.ShellKind;
+import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.LoadedMissile;
 import td.ui.render.LoadedShell;
@@ -133,7 +134,11 @@ class TowerEffectFrameBuilderTest {
     }
 
     private static List<TowerEffectDraw> drawnBy(GameWorld context, AuraTower aura) {
-        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
+        return drawnAt(context, aura, 0);
+    }
+
+    private static List<TowerEffectDraw> drawnAt(GameWorld context, AuraTower aura, int gameTime) {
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, gameTime, 0.0, 0.0);
         aura.accept(builder);
         return builder.build();
     }
@@ -143,20 +148,87 @@ class TowerEffectFrameBuilderTest {
                 .filter(ring -> ring.palette() == palette).toList();
     }
 
+    private static List<BeamDraw> beamsIn(List<TowerEffectDraw> draws, Palette palette) {
+        return draws.stream().filter(BeamDraw.class::isInstance).map(BeamDraw.class::cast)
+                .filter(beam -> beam.palette() == palette).toList();
+    }
+
     @Test
-    void theApprenticeWearsAMentoringRing() {
+    void aRevealedEnemyGetsARayFromTheLanternThatFades() {
         GameWorld context = WorldFixtures.newWorld();
-        AuraTower aura = auraWith(context, "Mentor");
-        SniperTower veteran = new SniperTower(context, 0, 0);
-        SniperTower novice = new SniperTower(context, 0, 0);
-        context.towers().add(veteran);
-        context.towers().add(novice);
-        veteran.earnXp(500);
+        AuraTower aura = auraWith(context);
+        FakeEnemyMob ghost = FakeEnemyMob.ghostAt(10, 0);
+        context.enemies().setEnemies(new EnemyMob[]{ghost});
+        aura.doTick(1);
 
-        List<RingDraw> marks = ringsIn(drawnBy(context, aura), Palette.TOWER_AURA_MENTEE);
+        BeamDraw fresh = beamsIn(drawnAt(context, aura, 1),
+                Palette.TOWER_AURA_REVEAL_RAY).getFirst();
+        List<BeamDraw> late = beamsIn(drawnAt(context, aura, 1 + AuraTower.REVEAL_MEMORY_TICKS), Palette.TOWER_AURA_REVEAL_RAY);
 
-        assertThat(marks).hasSize(1);
-        assertThat(marks.getFirst().centerX()).isEqualTo((float) novice.getX());
+        assertThat(fresh.toX()).isEqualTo(10f);
+        assertThat(fresh.alpha()).isEqualTo(1f);
+        assertThat(late).isEmpty();
+    }
+
+    @Test
+    void theSpotlightShinesOnTheEnemyItHolds() {
+        GameWorld context = WorldFixtures.newWorld();
+        AuraTower aura = auraWith(context, "Last Light");
+        FakeEnemyMob enemy = FakeEnemyMob.at(20, 0);
+        context.enemies().setEnemies(new EnemyMob[]{enemy});
+        aura.doTick(1);
+
+        List<BeamDraw> beams = beamsIn(drawnBy(context, aura), Palette.TOWER_AURA_SPOTLIGHT);
+
+        assertThat(beams).singleElement().extracting(BeamDraw::toX).isEqualTo(20f);
+    }
+
+    @Test
+    void theTowersInTheLightAreMarkedOnlyWhileTheBeaconIsSelected() {
+        GameWorld context = WorldFixtures.newWorld();
+        AuraTower aura = auraWith(context);
+        context.towers().add(new SniperTower(context, 0, 0));
+
+        long unselected = drawnBy(context, aura).stream().filter(TowerStatusDraw.class::isInstance).count();
+        aura.setSelected(true);
+        List<TowerStatusDraw> selected = drawnBy(context, aura).stream().filter(TowerStatusDraw.class::isInstance)
+                .map(TowerStatusDraw.class::cast).toList();
+
+        assertThat(unselected).isZero();
+        assertThat(selected).singleElement().extracting(TowerStatusDraw::palette).isEqualTo(Palette.TOWER_AURA_LIT_MARK);
+    }
+
+    @Test
+    void aLanternThatReadsTowerTypesHasAPaneForEachTypeInItsLightInTheOrderBuilt() {
+        GameWorld context = WorldFixtures.newWorld();
+        AuraTower aura = auraWith(context, "Kinship");
+        context.towers().add(new MortarTower(context, 0, 0));
+        context.towers().add(new SniperTower(context, 0, 0));
+        context.towers().add(new MortarTower(context, 0, 0));
+
+        TowerPose pose = TowerSpriteFrameBuilder.poseOf(aura);
+
+        assertThat(pose.panes()).containsExactly(TowerLook.MORTAR, TowerLook.SNIPER);
+    }
+
+    @Test
+    void aLanternThatDoesNotReadTowerTypesKeepsPlainPanes() {
+        GameWorld context = WorldFixtures.newWorld();
+        AuraTower aura = auraWith(context);
+        context.towers().add(new SniperTower(context, 0, 0));
+
+        assertThat(TowerSpriteFrameBuilder.poseOf(aura).panes()).isEmpty();
+    }
+
+    @Test
+    void daylightWhitensTheLantern() {
+        GameWorld context = WorldFixtures.newWorld();
+
+        boolean plain = TowerSpriteFrameBuilder.poseOf(auraWith(context)).has(TowerCue.DAYLIGHT);
+        boolean daylit = TowerSpriteFrameBuilder.poseOf(auraWith(context, "Daylight")).has(TowerCue.DAYLIGHT);
+
+        assertThat(plain).isFalse();
+        assertThat(daylit).isTrue();
     }
 
     @Test
