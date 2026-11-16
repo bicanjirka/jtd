@@ -293,9 +293,10 @@ public record PlayRecord(Play play, Result result, List<Round> rounds, Log log) 
     /**
      * Where and how an enemy's walk ended.
      *
-     * @param progress how far along its path, 0 to 1
+     * @param progress   how far along its path, 0 to 1
+     * @param healthLeft the share of its health it still had: what a leak got away with, none for a kill
      */
-    public record Spot(double x, double y, double progress) {
+    public record Spot(double x, double y, double progress, double healthLeft) {
     }
 
     /** One enemy's walk, ended in a kill or a leak, in round {@code round}. */

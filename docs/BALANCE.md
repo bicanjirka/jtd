@@ -10,19 +10,21 @@ mvn -q compile exec:java -Dexec.mainClass=td.balance.WavePowerReport    # every 
 mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerBench         # every build of every tower; a minute
 mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerReport        # prices and verdicts from the bench's sheets; seconds
 mvn -q compile exec:java -Dexec.mainClass=td.balance.TowerPriceWriter   # writes the prices the report calls off into the towers' sources
+mvn -q compile exec:java -Dexec.mainClass=td.balance.PlayCheck          # one level played by players that try before they buy; twenty minutes
 ```
 
 `EnemyPowerReport` takes `--kinds golem,yeti`, `--ranks grunt,elite` and `--fit golem=1.7,yeti=1.7`;
 `WavePowerReport` takes `--levels rift,hive`; `TowerBench` takes `--towers sniper,burst`, `--scenarios stream,group`
-and `--quick`; `TowerReport` takes nothing and reads what the bench stored. All store their rows in
+and `--quick`; `TowerReport` takes nothing and reads what the bench stored; `PlayCheck` takes `--level rift`
+(Iron Crossing without it), `--seed 7`, `--players best,mortar`, `--ahead 1` and `--verbose`. All store their rows in
 `target/balance/`. `WavePowerReport` reads the bench's sheets, so it runs after `TowerBench`; with `--levels` it
-prints and stores nothing.
+prints and stores nothing, as `PlayCheck` does with `--players`.
 
 ## The pipeline
 
 Balance is settled in a fixed order, each stage reading what the one before it stored in `target/balance/`:
-enemies, then towers, then waves: a level's economy is set against what towers hold, so a tower retune is followed
-by a wave run. A stage stores a tab-separated sheet for the next stage and an HTML page for a
+enemies, then towers, then waves, then the play check: a level's economy is set against what towers hold, so a
+tower retune is followed by a wave run, and a wave change by a play. A stage stores a tab-separated sheet for the next stage and an HTML page for a
 person (`ReportPage` writes both).
 
 | Stage | Tool | Stores | Page |
@@ -31,6 +33,7 @@ person (`ReportPage` writes both).
 | 2 Towers, measured | `TowerBench` (reads `enemy-power.tsv`; with `--towers` it replaces only those towers' rows) | `towers.tsv`: one row per build of each tower, what it holds of each scenario in Walkers; `tower-pairs.tsv`: every two towers side by side; `tower-scenarios.tsv`: the scenarios and what a point of health is worth in each | `tower-bench.html` |
 | 3 Towers, judged | `TowerReport` (reads the bench's three sheets; rerun it after every bench run) | `tower-prices.tsv`: one row per tower and node, its price, worth, fair and suggested price and verdict; `tower-stages.tsv`: each tower bought whole to each tier, its cost, power, worth and value | `towers.html` |
 | 4 Waves | `WavePowerReport` (a full run; reads `towers.tsv` and `tower-scenarios.tsv`) | `wave-power.tsv`: one row per level and round, its strength, pay, bank, need, room, the experience a tower has by then, what it asks for and its verdict | `waves.html` |
+| 5 Play | `PlayCheck` (a full run; reads `wave-power.tsv` only to show each round's room beside the play) | `play.tsv`: one row per player, its leaks, spending and verdict; `play-rounds.tsv`: every round of every player; `play-script.tsv`: every purchase, in the words a play script replays | `play.html` |
 
 ## The probe rig
 
@@ -161,7 +164,7 @@ where they cross. Whether a level at these rooms is won and by whom is the play 
 - A **clear bonus** is paid only where kills alone leave the next round short, and is never more than 0.6 of that
   round's bounty. A level whose rooms hold the line on bounties has none.
 
-Iron Crossing is tuned to these on the measured towers: 50 credits, rooms from 1.43 down to 0.85, gates at rounds
+Iron Crossing is tuned to these on the measured towers: 50 credits, rooms from 1.50 down to 0.86, gates at rounds
 6, 10, 13 and 15, no clear bonus. The other levels were tuned on the paper reference tower the measured towers
 replaced; on the measured yardstick their rooms stand at two to six, and they wait for their own pass (`TODO.md`).
 
@@ -264,7 +267,7 @@ therefore a share, the mean of two:
 
 A tower's node worths add up to its tree, and a node others need is not credited with them. Then:
 
-- **fair price** = worth × the tier's **premium**, 1.25 to the power of tier + 1: the copy surcharge of the copy of
+- **fair price** = worth Ã— the tier's **premium**, 1.25 to the power of tier + 1: the copy surcharge of the copy of
   the tower a player would be buying instead by then. An upgrade takes no cell and no surcharge, so it costs more
   than the same power as bare towers, and more the later its tier. A whole tree comes to about half its cost in
   worth.
@@ -319,11 +322,51 @@ judges the new prices only after it. A price change moves no power, only cost, a
 price verdicts; a change to what a node does moves its worth, and its neighbours' shares with it. A new tier or
 tower is priced the same way, with no change to the tools.
 
+## Whether the level is won
+
+`PlayCheck` plays one level in the real engine with players that know nothing of prices or roles: a player
+(`SearchingPlayer`) only tries. Before each round it plays that round with what it has; while that leaks it tries
+every purchase it can afford, each in a replay of the round, and makes the cheapest that holds the round, or with
+none the one that gains the most: fewer lives lost, then less health on the enemies that got away. What a round
+does not need stays in the bank. Three things keep it from stopping short:
+
+- a purchase is tried on a tower's best cells: the one that reaches the most path, and the most of each lane;
+- when no single purchase helps, it tries a node together with the nodes before it, and a new tower with a node;
+- when that does not help either, it tries sixty spending sprees drawn by lot and takes the best: a boss that only
+  breaks under a whole defence shows no single step to take.
+
+A play is taken round by round, each from the game the round before left, as a person who saves between rounds
+plays. Each round is played under two policies (the most gain for a credit; the most gain) and the play goes on
+from the better. The player that must clear also goes back: when no way of playing a round holds it, the round
+before is taken the other way. Lives never run out, so a lost level still shows by how much.
+
+The players differ only in what they may buy:
+
+| Player | May buy | Must |
+| --- | --- | --- |
+| best effort | every judged tower and every node | clear with **no leak** |
+| bare towers only | every judged tower, no node | lose: leak the level's lives away |
+| one per judged tower | that tower and its nodes | lose |
+
+`ok`, `FAIL` (the best effort leaks), `BREACH` (a player that must lose clears with no leak) and `WARN` (it leaks
+but keeps a life). The page also lists every node the best effort bought, what share of its spending went to
+upgrades in each third of the level (`WARN` under 15%), each round's purchases and what leaked, and the towers
+left standing. A purchase is judged by what it does on this board against this round, so a new tower, tier or
+level needs no change to the tool, and a tower taken off `TowerSheet.NOT_JUDGED` gets its own player.
+
+Where Iron Crossing stands: the best effort clears with no leak on 16 towers, 71% of its spending in upgrades;
+bare towers lose in round 12; the Mortar alone loses in round 10 on three leaks; every other tower alone loses by
+round 5. The first seven rounds take all the level has paid; from round 8 the best effort holds each round with
+credits to spare and ends with 1008 of the 2265 the level pays unspent. The yardstick's need is about twice what
+a chosen defence costs there, so the late rounds are due to be made stronger for the same pay.
+
+The best effort is a floor on what the level allows, not a person: it rehearses every round before it buys. A
+level it clears with nothing to spare is one a person loses.
+
 ## What this does not settle
 
-- **How hard the game is.** The targets fix the shape of each level against the average tower; whether a level at
-  room 1 is won, and by which builds, is for the play check to show.
+- **How hard the game is for a person.** The play check shows that a level can be held and what cannot hold it;
+  how much of the best effort's play a person finds is not measured.
 - **Bosses.** Their rows are estimates, and their numbers are as authored.
 - **Lives.** A leak is a loss to the rig; how many leaks a level forgives is not measured.
-- **Whether upgrades are worth buying in play.** The premium is set by rule; whether a player with few cells left
-  buys a node over a tower at those prices is for the play check to show.
+- **One seed.** A play is one roll of the game's dice; `--seed` plays another.

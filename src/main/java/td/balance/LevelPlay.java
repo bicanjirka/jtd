@@ -81,6 +81,25 @@ public final class LevelPlay {
                 new Span(Optional.empty(), lastRound)).record();
     }
 
+    /**
+     * One round of a play taken round by round: what it left, and the game to start the next round from, none once
+     * the level is over.
+     */
+    record Segment(PlayRecord record, Optional<GameSave> after) {
+    }
+
+    /**
+     * Plays round {@code round} alone, from {@code from} or from the level's start. A play taken this way is a chain
+     * of saved games, as a person's is who saves between rounds, so a player that rehearses replays one round, not
+     * the level so far.
+     */
+    static Segment playRound(BoardSurvey survey, PlayerSpec spec, long seed, Pacing pacing, Optional<GameSave> from,
+                             int round) {
+        Played played = play(survey, spec.createFor(survey, seed), spec.name(), seed, pacing, Rules.standard(),
+                new Span(from, round));
+        return new Segment(played.record(), played.engine().save());
+    }
+
     /** The game {@code actions} leave just before round {@code wave}, its own purchases before it not made. */
     static GameSave saveBefore(BoardSurvey survey, List<PlayRecord.TimedAction> actions, long seed, int wave) {
         Player player = new ScriptedPlayer(actions.stream().filter(action -> action.round() < wave).toList());
