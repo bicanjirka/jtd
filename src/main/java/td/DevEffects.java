@@ -144,7 +144,7 @@ public final class DevEffects {
 
     private static Offer<TowerGrant> grant(TowerTerm term) {
         return switch (term) {
-            case HASTE, RALLY -> status(List.of(SECONDS, ATTACK_SPEED),
+            case HASTE -> status(List.of(SECONDS, ATTACK_SPEED),
                     in -> TowerStatus.timed(term, TowerModifiers.attackSpeed(in.value(1) / 100f), in.ticks(0)));
             case FRENZY -> status(List.of(SHOTS, ATTACK_SPEED),
                     in -> TowerStatus.nextShots(term, in.whole(0), TowerModifiers.attackSpeed(in.value(1) / 100f)));
@@ -162,7 +162,7 @@ public final class DevEffects {
                     FROST_MISSILE, RUBY, SHADE, SWARM, HATCHING, ICE_WAKE,
                     SHATTER, ARC, HEX, STATIC, SOULBRAND, SPARK, SOUL, THUNDERCLAP,
                     THUNDERSTRIKE, SUNDIAL, FRAILTY, SHADOW -> new Refuses<>(FROM_AN_UPGRADE);
-            case AURA, KINSHIP -> new Refuses<>("comes from a Beacon");
+            case LIGHT, LIT, SPOTLIGHT, KINSHIP, MENTOR, BREAKTHROUGH, DAYLIGHT, PRISM -> new Refuses<>("comes from a Beacon");
         };
     }
 

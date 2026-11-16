@@ -30,6 +30,11 @@ public final class PreferringSelector implements TargetSelector {
                 new PreferringSelector(EnemyMob::taunts, inner));
     }
 
+    /** Picks among the enemies that give their allies an aura first. */
+    public static PreferringSelector leadersFirst(TargetSelector inner) {
+        return new PreferringSelector(EnemyMob::leadsAllies, inner);
+    }
+
     /** Aims at a frozen enemy first. */
     public static PreferringSelector stoppedFirst(TargetSelector inner) {
         return new PreferringSelector(EnemyMob::isStopped, inner);

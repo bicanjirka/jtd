@@ -87,7 +87,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float SHATTER_SHARD_CELLS = 0.18f;
     private static final float SHATTER_STROKE_CELLS = 0.06f;
     private static final float APPRENTICE_MARK_CELLS = 0.55f;
-    private static final float RALLY_SPOT_CELLS = 1f;
     private static final float NUKE_FLASH_SHARE = 0.6f;
     private static final float BLAST_MARK_ALPHA = 0.4f;
     private static final float NUKE_FLASH_ALPHA = 0.8f;
@@ -417,14 +416,9 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.draws.add(new RingDraw(Palette.TOWER_AURA_RING, tower.getX(), tower.getY(),
                     (float) (phase * maxRadius), (float) (1.0 - phase)));
         }
-        Tower apprentice = tower.mentorsApprentice() ? tower.apprentice() : null;
-        if (apprentice != null) {
-            this.draws.add(new RingDraw(Palette.TOWER_AURA_MENTEE, apprentice.getX(), apprentice.getY(),
-                    this.scale * APPRENTICE_MARK_CELLS, 1f));
-        }
-        if (tower.isSelected()) {
-            tower.rallySpot().ifPresent(spot -> this.draws.add(new RingDraw(Palette.TOWER_AURA_RALLY,
-                    (float) spot.x(), (float) spot.y(), this.scale * RALLY_SPOT_CELLS, 0.9f)));
+        if (tower.mentors()) {
+            tower.apprentice().ifPresent(apprentice -> this.draws.add(new RingDraw(Palette.TOWER_AURA_MENTEE,
+                    apprentice.getX(), apprentice.getY(), this.scale * APPRENTICE_MARK_CELLS, 1f)));
         }
         return null;
     }

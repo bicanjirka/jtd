@@ -94,7 +94,7 @@ public final class MortarTower extends AbstractTower {
     /** A shot every 3.5 s. */
     private static final int COOLDOWN_MAX = 69;
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
-    private static final int CRACKED_TICKS = 100;
+    static final int CRACKED_TICKS = 100;
     /** Flight time depends on where the shell is going, so the aim is refined this many times. */
     private static final int PREDICTION_PASSES = 3;
 

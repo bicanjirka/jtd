@@ -94,12 +94,11 @@ final class StatLooks {
             case FREEZE_DURATION -> StatLook.face(TermLooks.faceOf(EffectKind.FREEZE));
             case TOLL_PACE -> StatLook.face(TermLooks.faceOf(EffectKind.TOLL));
             case DRAG_PER_TOLL -> StatLook.face(TermLooks.faceOf(EffectKind.DRAGGED));
-            case WITHER_INTERVAL -> StatLook.face(TermLooks.faceOf(EffectKind.VULNERABLE));
+            case REVEAL_TIME -> StatLook.face(TermLooks.faceOf(EffectKind.REVEALED));
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatLook.plain(Glyph.COMET);
             case NEST_CAPACITY -> StatLook.plain(Glyph.PIP);
             case BOUNTY -> StatLook.face(TermLooks.faceOf(StatusTerm.CASH));
             case DISRUPTION_TAKEN -> StatLook.toned(Glyph.FILLED_DIAMOND, Palette.DISRUPTION);
-            case AURA_POWER -> StatLook.toned(Glyph.RING, Palette.TERM_AURA);
         };
     }
 

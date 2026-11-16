@@ -7,6 +7,8 @@ import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
+import td.tower.aura.KinshipMechanic;
+import td.tower.aura.MentorMechanic;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,7 +81,7 @@ class ExperienceAwarderTest {
     }
 
     @Test
-    void anAuraEarnsWhatTheTowersItBuffsEarnWithoutAnyBonusOfItsOwn() {
+    void aBeaconEarnsWhatTheTowersItLightsEarnWithoutAnyBonusOfItsOwn() {
         AuraTower aura = this.place(new AuraTower(this.world, 3, 3));
         SniperTower near = this.place(new SniperTower(this.world, 3, 2));
 
@@ -89,110 +91,33 @@ class ExperienceAwarderTest {
     }
 
     @Test
-    void kinshipPaysFivePercentForEachOtherTowerTypeInRange() {
-        AuraTower aura = this.auraWith(3, 3, "Attune");
+    void kinshipPaysItsShareForEachOtherTowerTypeInTheLight() {
+        this.auraWith(3, 3, "Kinship");
         SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
         this.place(new SplashTower(this.world, 3, 4));
         this.place(new MortarTower(this.world, 2, 3));
 
         this.awarder.walkEnded(walkNear(100, sniper));
 
-        assertThat(aura).isNotNull();
-        assertThat(sniper.experience().xp()).isEqualTo(110);
+        assertThat(sniper.experience().xp()).isEqualTo(Math.round(100 * (1f + KinshipMechanic.xpFor(2))));
     }
 
     @Test
-    void kinshipCountsNoTypeTheBuffedTowerIsItself() {
-        this.auraWith(3, 3, "Attune");
-        SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
-        this.place(new SniperTower(this.world, 3, 4));
-
-        this.awarder.walkEnded(walkNear(100, sniper));
-
-        assertThat(sniper.experience().xp()).isEqualTo(100);
-    }
-
-    @Test
-    void kinshipStopsAtTwentyPercentWithoutBroadcast() {
-        this.auraWith(3, 3, "Attune");
-        SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
-        this.place(new SplashTower(this.world, 3, 4));
-        this.place(new MortarTower(this.world, 2, 3));
-        this.place(new PulseTower(this.world, 4, 3));
-        this.place(new SeekerTower(this.world, 2, 2));
-        this.place(new CinderTower(this.world, 4, 4));
-
-        this.awarder.walkEnded(walkNear(100, sniper));
-
-        assertThat(sniper.experience().xp()).isEqualTo(120);
-    }
-
-    @Test
-    void broadcastLiftsKinshipsCapAndCountsOneCellFurther() {
-        this.auraWith(3, 3, "Attune", "Broadcast");
-        SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
-        this.place(new SplashTower(this.world, 3, 4));
-        this.place(new MortarTower(this.world, 2, 3));
-        this.place(new PulseTower(this.world, 4, 3));
-        this.place(new SeekerTower(this.world, 2, 2));
-        this.place(new CinderTower(this.world, 4, 4));
-
-        this.awarder.walkEnded(walkNear(100, sniper));
-
-        assertThat(sniper.experience().xp()).isEqualTo(125);
-    }
-
-    @Test
-    void tutelageAddsTenPercentOnTopOfKinship() {
-        this.auraWith(3, 3, "Attune", "Tutelage");
-        SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
-        this.place(new SplashTower(this.world, 3, 4));
-
-        this.awarder.walkEnded(walkNear(100, sniper));
-
-        assertThat(sniper.experience().xp()).isEqualTo(115);
-    }
-
-    @Test
-    void sharedLessonsPaysEveryBuffedTowerForWhatAnyOfThemReached() {
-        this.auraWith(3, 3, "Attune", "Tutelage", "Shared Lessons");
-        SniperTower near = this.place(new SniperTower(this.world, 3, 2));
-        SplashTower beside = this.place(new SplashTower(this.world, 3, 4));
-        CinderTower outside = this.place(new CinderTower(this.world, 15, 15));
-
-        this.awarder.walkEnded(walkNear(100, near));
-
-        assertThat(beside.experience().xp()).isGreaterThan(100);
-        assertThat(outside.experience().xp()).isZero();
-    }
-
-    @Test
-    void withoutSharedLessonsABuffedTowerThatDidNotReachEarnsNothing() {
-        this.auraWith(3, 3, "Attune", "Tutelage");
-        SniperTower near = this.place(new SniperTower(this.world, 3, 2));
-        SplashTower beside = this.place(new SplashTower(this.world, 3, 4));
-
-        this.awarder.walkEnded(walkNear(100, near));
-
-        assertThat(beside.experience().xp()).isZero();
-    }
-
-    @Test
-    void theApprenticeTheBuffedTowerWithTheLeastXpEarnsDouble() {
-        this.auraWith(3, 3, "Attune", "Tutelage", "Shared Lessons", "Apprentice");
+    void mentorDoublesWhatTheLitTowerWithTheLeastXpEarns() {
+        this.auraWith(3, 3, "Mentor");
         SniperTower veteran = this.place(new SniperTower(this.world, 3, 2));
         SplashTower novice = this.place(new SplashTower(this.world, 3, 4));
         veteran.earnXp(500);
 
         this.awarder.walkEnded(walkNear(100, veteran, novice));
 
-        assertThat(veteran.experience().xp()).isEqualTo(500 + 110 + 5);
-        assertThat(novice.experience().xp()).isEqualTo(100 + 100 + 10 + 5);
+        assertThat(veteran.experience().xp()).isEqualTo(500 + 100);
+        assertThat(novice.experience().xp()).isEqualTo(Math.round(100 * (1f + MentorMechanic.XP)));
     }
 
     @Test
     void theFractionOfXpABonusCannotHoldCarriesToTheNextWalk() {
-        this.auraWith(3, 3, "Attune");
+        this.auraWith(3, 3, "Kinship");
         SniperTower sniper = this.place(new SniperTower(this.world, 3, 2));
         this.place(new SplashTower(this.world, 3, 4));
         EnemyWalk walk = walkNear(5, sniper);

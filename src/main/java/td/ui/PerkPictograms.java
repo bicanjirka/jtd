@@ -128,14 +128,6 @@ final class PerkPictograms {
             Map.entry("mortar.deep_crack", "=effect.cracked"),
             // Quick Reload
             Map.entry("mortar.quick_reload", "S M3.2 19.6C5.4 7 14.6 5 19.4 14.8 ; F O20.4 17.6 2.4 ; T M1.8 21.6H22.2 ; F M3.2 19.6L1.6 16.6L5 17Z"),
-            // Purge
-            Map.entry("pulse.head.ward.4b", "F M11 3.4L4.2 6V11.2C4.2 13.8 5.2 16 6.8 17.6L9.6 12.8L8.6 8.4Z ; F M13 3.4L19.8 6V11.2C19.8 13.8 18.8 16 17.2 17.6L14.4 12.8L15.4 8.4Z ; F M7.8 19.2L10.6 14.4H13.4L16.2 19.2C15 20.2 13.6 21 12 21.6C10.4 21 9 20.2 7.8 19.2Z"),
-            // Long Reach
-            Map.entry("sonar.head.long_reach.1", "S M3.2 8.4C4.8 15.2 10 19.6 17.2 20.4 ; S M3.2 8.4L17.2 20.4 ; T M10.2 14.4L16.6 8 ; F O17.4 7.2 2 ; F M9 20.6H14V22.4H9Z"),
-            // Wide Band
-            Map.entry("sonar.special.wide_band", "F M12 20.4L2.8 9.4A13 13 0 0 1 21.2 9.4Z ; X M7.2 14.6A7 7 0 0 1 16.8 14.6 M4.6 11.6A10.6 10.6 0 0 1 19.4 11.6"),
-            // Command Ping
-            Map.entry("sonar.special.command_ping", "=effect.priority"),
             // Hot Flame
             Map.entry("cinder.hot_flame", "=tower.flame"),
             // Long Stream
@@ -194,18 +186,30 @@ final class PerkPictograms {
             Map.entry("pulse.deep_pull_2", "=pulse.deep_pull"),
             // Swift Shadow
             Map.entry("pulse.swift_shadow", "=tower.sundial"),
-            // Amplifying Core
-            Map.entry("aura.head.amplifying_core.1", "F M12 7.4L16.6 12L12 16.6L7.4 12Z ; S M12 1.6L9.6 4 M12 1.6L14.4 4 M12 22.4L9.6 20 M12 22.4L14.4 20 M1.6 12L4 9.6 M1.6 12L4 14.4 M22.4 12L20 9.6 M22.4 12L20 14.4"),
-            // Broadcast
-            Map.entry("aura.head.broadcast.1", "F M12 10.4L15.6 21.4H13.4L12 16.8L10.6 21.4H8.4Z ; F O12 8.4 2 ; S M7.6 4.6A6.2 6.2 0 0 0 7.6 12.2 M16.4 4.6A6.2 6.2 0 0 1 16.4 12.2 ; T M4.2 2A10.2 10.2 0 0 0 4.2 14.8 M19.8 2A10.2 10.2 0 0 1 19.8 14.8"),
-            // Tutelage
-            Map.entry("aura.extra.tutelage.1", "F M2.6 5.6C5.8 4.2 9.2 4.4 11.2 6.2V20C9.2 18.4 5.8 18.2 2.6 19.6Z M21.4 5.6C18.2 4.2 14.8 4.4 12.8 6.2V20C14.8 18.4 18.2 18.2 21.4 19.6Z"),
-            // Withering Field
-            Map.entry("aura.special.withering_field", "S M12 21.4V13.6C12 10 14.8 8.6 17.4 9.8 ; F M17.4 9.8C19.6 9.4 21.6 10.8 21.6 13.4C19.4 13.8 17.6 12.4 17.4 9.8Z M17.4 9.8C16.4 11.6 16.6 14 18.6 15.4C19.8 13.6 19.4 11.2 17.4 9.8Z ; T M6 21.4H18 ; F M7.6 15.6C5 15.6 3.4 13.6 3.6 11.2C6.2 11 7.8 13 7.6 15.6Z"),
-            // Chosen
-            Map.entry("aura.special.chosen", "F M12 2.6L14.6 9L21.4 9.4L16.2 13.8L17.9 20.4L12 16.8L6.1 20.4L7.8 13.8L2.6 9.4L9.4 9Z"),
-            // Rally
-            Map.entry("aura.special.rally", "=tower.rally"),
+            // Steady Light
+            Map.entry("aura.steady_light", "F M12 10.4L15.6 21.4H13.4L12 16.8L10.6 21.4H8.4Z ; F O12 8.4 2 ; S M7.6 4.6A6.2 6.2 0 0 0 7.6 12.2 M16.4 4.6A6.2 6.2 0 0 1 16.4 12.2 ; T M4.2 2A10.2 10.2 0 0 0 4.2 14.8 M19.8 2A10.2 10.2 0 0 1 19.8 14.8"),
+            // Afterglow
+            Map.entry("aura.afterglow", "F M12 20.4L2.8 9.4A13 13 0 0 1 21.2 9.4Z ; X M7.2 14.6A7 7 0 0 1 16.8 14.6 M4.6 11.6A10.6 10.6 0 0 1 19.4 11.6"),
+            // Searchlight
+            Map.entry("aura.searchlight", "=effect.priority"),
+            // Last Light
+            Map.entry("aura.last_light", "S M3.2 8.4C4.8 15.2 10 19.6 17.2 20.4 ; S M3.2 8.4L17.2 20.4 ; T M10.2 14.4L16.6 8 ; F O17.4 7.2 2 ; F M9 20.6H14V22.4H9Z"),
+            // Ringleader
+            Map.entry("aura.ringleader", "=effect.priority"),
+            // Kinship
+            Map.entry("aura.kinship", "F M12 7.4L16.6 12L12 16.6L7.4 12Z ; S M12 1.6L9.6 4 M12 1.6L14.4 4 M12 22.4L9.6 20 M12 22.4L14.4 20 M1.6 12L4 9.6 M1.6 12L4 14.4 M22.4 12L20 9.6 M22.4 12L20 14.4"),
+            // Mentor
+            Map.entry("aura.mentor", "=tower.mentor"),
+            // Breakthrough
+            Map.entry("aura.breakthrough", "=tower.breakthrough"),
+            // Daylight
+            Map.entry("aura.daylight", "=tower.daylight"),
+            // Glare
+            Map.entry("aura.glare", "=effect.exposed"),
+            // Sanctuary
+            Map.entry("aura.sanctuary", "=aura.steady_light"),
+            // Prism
+            Map.entry("aura.prism", "=tower.prism"),
             // Quick Brood
             Map.entry("seeker.quick_brood", "=pulse.quick_toll"),
             // Deep Freeze

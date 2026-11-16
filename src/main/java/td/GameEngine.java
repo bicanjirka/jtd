@@ -316,6 +316,7 @@ public class GameEngine {
         this.gameWorld.zones().doTick(time);
         this.gameWorld.playtestHooks().doTick(time);
         List<Tower> towers = this.gameWorld.towers().all();
+        this.gameWorld.daylight().clear();
         boolean emissionChanged = false;
         for (Tower tower : towers) {
             emissionChanged |= tower.beginTick(time) && tower.emitsBuffs();

@@ -487,7 +487,7 @@ tower's own.
 
 ### Effect duration does nothing for a pool
 
-A pool lasts as long as its fuel, so the `EFFECT_DURATION` stat (the Beacon's Effect duration among it) no longer
+A pool lasts as long as its fuel, so the `EFFECT_DURATION` stat no longer
 reaches a burn, a poison or Soulfire, though the info pane still shows the row on a tower that applies one.
 
 - **Where:** `AbstractTower.applyEffect` (`withDurationScaledBy` leaves a lasting effect as it is),
@@ -576,7 +576,7 @@ Every number the effect-interactions and specialization work introduced was chos
 not tuned: vulnerable (+15% per stack, cap 3, 4 s), the Blight's poison fuel (a share of the tower's damage) and the half-second
 stack interval of burning and poisoned, revealed (3 s from Wide Band, 2 s from Resonant Field II),
 Momentum's cooldown cut and 5 s, the shatter and explosion share and radius, shrapnel's ring width and
-share, Warding Field's 10% chance, Withering Field's interval, and Long Reach II's scaling. Burning's resilience loss (-1 per stack) and poisoned's spirit loss (-1 per stack) grow without
+share, Warding Field's 10% chance, and Long Reach II's scaling. Burning's resilience loss (-1 per stack) and poisoned's spirit loss (-1 per stack) grow without
 limit up to their stat floors of -100. Scorched and Sickened hold while a pool that earns them is active, then lose a stack per second
 (one per 20 ticks, `ActiveEffects.STACK_DECAY_INTERVAL_TICKS`).
 A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s of steady burning.

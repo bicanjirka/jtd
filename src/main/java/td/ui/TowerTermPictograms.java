@@ -38,10 +38,18 @@ final class TowerTermPictograms {
             Map.entry("tower.flare", "=effect.revealed"),
             // Nuke
             Map.entry("tower.nuke_shell", "F M6 9.6C6 6 8.6 3.4 12 3.4C15.4 3.4 18 6 18 9.6C18 11.4 16.6 12.6 15 12.6H14V17.2C14 18.4 15.6 19.6 18 20.8H6C8.4 19.6 10 18.4 10 17.2V12.6H9C7.4 12.6 6 11.4 6 9.6Z ; X M8.6 10.4C10.4 11.2 13.6 11.2 15.4 10.4"),
-            // Rally
-            Map.entry("tower.rally", "F M2.6 10.8H5.2V13.2H2.6Z M5.2 11.1H12.8L20.4 5.6V18.4L12.8 12.9H5.2Z ; S M7.4 12.9C7.4 17.4 12.8 17.4 12.8 12.9"),
-            // Aura
-            Map.entry("tower.aura", "F O12 12 3.4 ; S O12 12 6.8 ; T M12 1.6V3.6 M12 20.4V22.4 M1.6 12H3.6 M20.4 12H22.4 M4.6 4.6L6 6 M18 18L19.4 19.4 M4.6 19.4L6 18 M18 6L19.4 4.6"),
+            // Lit
+            Map.entry("tower.lit", "F O12 12 3.4 ; S O12 12 6.8 ; T M12 1.6V3.6 M12 20.4V22.4 M1.6 12H3.6 M20.4 12H22.4 M4.6 4.6L6 6 M18 18L19.4 19.4 M4.6 19.4L6 18 M18 6L19.4 4.6"),
+            // Light
+            Map.entry("tower.light", "=tower.lit"),
+            // Spotlight
+            Map.entry("tower.spotlight", "=effect.priority"),
+            // Mentor
+            Map.entry("tower.mentor", "F M2.6 5.6C5.8 4.2 9.2 4.4 11.2 6.2V20C9.2 18.4 5.8 18.2 2.6 19.6Z M21.4 5.6C18.2 4.2 14.8 4.4 12.8 6.2V20C14.8 18.4 18.2 18.2 21.4 19.6Z"),
+            // Breakthrough
+            Map.entry("tower.breakthrough", "F M12 2.6L14.6 9L21.4 9.4L16.2 13.8L17.9 20.4L12 16.8L6.1 20.4L7.8 13.8L2.6 9.4L9.4 9Z"),
+            // Daylight
+            Map.entry("tower.daylight", "F M11 3.4L4.2 6V11.2C4.2 13.8 5.2 16 6.8 17.6L9.6 12.8L8.6 8.4Z ; F M13 3.4L19.8 6V11.2C19.8 13.8 18.8 16 17.2 17.6L14.4 12.8L15.4 8.4Z ; F M7.8 19.2L10.6 14.4H13.4L16.2 19.2C15 20.2 13.6 21 12 21.6C10.4 21 9 20.2 7.8 19.2Z"),
             // Jammed
             Map.entry("tower.jammed", "F M12 9.4L16.2 21.4H13.6L12 16L10.4 21.4H7.8Z ; S M3.4 6.4L6.4 3.4L9.2 7.8L12 3.4L14.8 7.8L17.6 3.4L20.6 6.4"),
             // Nest
@@ -80,6 +88,8 @@ final class TowerTermPictograms {
             Map.entry("tower.shadow", "S O12 12 8.8 ; F M12 12V3.2A8.8 8.8 0 0 1 19.6 7.6Z ; F O12 12 1.6"),
             // Kinship
             Map.entry("tower.kinship", "T M12 5.6L5.6 17.6H18.4Z ; F O12 5.4 3 ; F M2.6 15.2H8.6V21.2H2.6Z ; F M18.4 14.4L21.6 20.6H15.2Z"),
+            // Prism
+            Map.entry("tower.prism", "=tower.kinship"),
             // Shatter
             Map.entry("tower.shatter", "F O12 12 1.8 ; F M12 9L10.4 2.2L14.2 3.2Z M14.8 11L21.6 8.2L20.8 12.4Z M14.2 14.4L18 20.8L13.8 20.4Z M9.8 14.6L6.2 21.2L4.4 17.6Z M9.2 10.8L2.6 8.4L4.2 4.8Z"),
             // Arc

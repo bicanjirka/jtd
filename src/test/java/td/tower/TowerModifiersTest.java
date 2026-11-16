@@ -15,9 +15,4 @@ class TowerModifiersTest {
         assertThat(TowerModifiers.attackSpeed(0.25f).get(TowerStat.ATTACK_SPEED)).isEqualTo(StatModifier.flat(0.25f));
         assertThat(TowerModifiers.bounty(0.5f).get(TowerStat.BOUNTY)).isEqualTo(StatModifier.flat(0.5f));
     }
-
-    @Test
-    void witherEverySetsTheInterval() {
-        assertThat(TowerModifiers.witherEvery(200).get(TowerStat.WITHER_INTERVAL)).isEqualTo(StatModifier.setTo(200f));
-    }
 }

@@ -39,8 +39,6 @@ import td.ui.render.TowerPose;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
 import td.util.GameWorld;
-import td.wave.Path;
-import td.wave.Vec2;
 
 import java.util.List;
 
@@ -148,7 +146,7 @@ class TowerEffectFrameBuilderTest {
     @Test
     void theApprenticeWearsAMentoringRing() {
         GameWorld context = WorldFixtures.newWorld();
-        AuraTower aura = auraWith(context, "Tutelage", "Shared Lessons", "Apprentice");
+        AuraTower aura = auraWith(context, "Mentor");
         SniperTower veteran = new SniperTower(context, 0, 0);
         SniperTower novice = new SniperTower(context, 0, 0);
         context.towers().add(veteran);
@@ -159,20 +157,6 @@ class TowerEffectFrameBuilderTest {
 
         assertThat(marks).hasSize(1);
         assertThat(marks.getFirst().centerX()).isEqualTo((float) novice.getX());
-    }
-
-    @Test
-    void ralliesSpotIsMarkedOnlyWhileTheAuraIsSelected() {
-        GameWorld context = WorldFixtures.newWorld();
-        context.setPath(new Path(List.of(new Vec2(0, 0), new Vec2(900, 0))));
-        AuraTower aura = auraWith(context, "Rally");
-
-        int unselected = ringsIn(drawnBy(context, aura), Palette.TOWER_AURA_RALLY).size();
-        aura.setSelected(true);
-        int selected = ringsIn(drawnBy(context, aura), Palette.TOWER_AURA_RALLY).size();
-
-        assertThat(unselected).isZero();
-        assertThat(selected).isEqualTo(1);
     }
 
     @Test

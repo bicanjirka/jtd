@@ -54,6 +54,7 @@ import td.tower.PulseTower;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
+import td.tower.TowerBuffState;
 import td.tower.TowerFactory;
 import td.tower.TowerModifiers;
 import td.tower.TowerStatLine;
@@ -147,12 +148,12 @@ class GameEngineTest {
     }
 
     @Test
-    void anExposedCritImmuneEnemyCanBeCrittedAtTheChanceItsAgilityAndResilienceLeave() {
+    void aCritImmuneEnemyThatLosesResilienceAndAgilityIsCritAtTheChanceTheyLeave() {
         EnemyDefinition immune = EnemyDefinition.of("immune", "Immune", 1_000_000, 1, 0f, BodyArchetype.CIRCLE)
                 .withResilience(100f);
         EnemyMob plain = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), immune);
-        EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), immune);
-        exposed.applyEffect(Effect.exposed(1_000_000, DamageSink.none()));
+        EnemyMob exposed = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)),
+                immune.withResilience(50f).withAgility(-50f));
 
         int plainCrits = critsIn(plain, 2000);
         int exposedCrits = critsIn(exposed, 2000);
@@ -493,24 +494,24 @@ class GameEngineTest {
     }
 
     @Test
-    void aDisruptedAuraStopsBuffingATowerItNoLongerReachesInTheSameTick() {
+    void aJammedBeaconStopsLightingATowerItNoLongerReachesInTheSameTick() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         EnemyDefinition jammer = EnemyDefinition.of("jam", "Jam", 100, 1, 0f, BodyArchetype.SQUARE)
                 .withDisruption(new DisruptionAura(1000f, 0.3f, 0.6f));
         engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("jam")), 1000)
                 .withCustomEnemies(List.of(jammer)));
         engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(6), BoardFixtures.cellCenter(5));
+        engine.mouseClicked(BoardFixtures.cellCenter(7), BoardFixtures.cellCenter(5));
         engine.startPlacing(TowerFactory.Type.AURA, AuraTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(5), BoardFixtures.cellCenter(5));
         Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
-        TowerStatLine buffed = damage(sniper);
+        boolean litBefore = sniper.conditions().stream().anyMatch(state -> state.term() == TowerTerm.LIT);
         engine.nextWave();
 
         engine.doTick(1);
 
-        assertThat(buffed.current()).isGreaterThan(buffed.base());
-        assertThat(damage(sniper).current()).isEqualTo(damage(sniper).base());
+        assertThat(litBefore).isTrue();
+        assertThat(sniper.conditions()).extracting(TowerBuffState::term).doesNotContain(TowerTerm.LIT);
     }
 
     @Test

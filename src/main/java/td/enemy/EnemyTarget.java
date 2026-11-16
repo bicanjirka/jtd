@@ -35,6 +35,11 @@ public interface EnemyTarget {
     /** Whether a tower that picks one target must aim at it while it is in range, unless one carries a priority. */
     boolean taunts();
 
+    /** Whether it gives its allies an aura: an effect it casts on those near it, or a jam on the towers near it. */
+    default boolean leadsAllies() {
+        return false;
+    }
+
     /** Whether a tower may pick this mob as the target of a shot, an aim or a trigger. */
     default boolean canBeTargeted() {
         return this.validTarget() && !this.isHidden();

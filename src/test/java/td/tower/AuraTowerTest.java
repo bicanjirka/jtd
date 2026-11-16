@@ -1,20 +1,22 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.FakeEnemyMob;
-import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.stat.StatModifiers;
+import td.tower.aura.BreakthroughMechanic;
+import td.tower.aura.KinshipMechanic;
+import td.tower.aura.MentorMechanic;
+import td.tower.aura.PrismMark;
+import td.tower.splash.StaticMechanic;
 import td.util.GameWorld;
-import td.wave.Path;
-import td.wave.Vec2;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -23,236 +25,323 @@ class AuraTowerTest {
 
     private final GameWorld context = WorldFixtures.newWorld();
 
-    private void addClusterFiller() {
-        this.context.towers().add(new SniperTower(this.context, 0, 0));
-        this.context.towers().add(new SniperTower(this.context, 0, 0));
-        this.context.towers().add(new SniperTower(this.context, 0, 0));
+    private AuraTower beaconWith(String... nodes) {
+        AuraTower beacon = new AuraTower(this.context, 0, 0);
+        this.context.towers().add(beacon);
+        if (nodes.length > 0) {
+            UpgradePaths.buy(beacon, this.context, nodes);
+        }
+        return beacon;
+    }
+
+    private <T extends Tower> T place(T tower) {
+        this.context.towers().add(tower);
+        return tower;
+    }
+
+    private float outside() {
+        return 3 * AuraTower.RANGE * this.context.getBoard().scale();
+    }
+
+    private void enemies(EnemyMob... enemies) {
+        this.context.enemies().setEnemies(enemies);
     }
 
     @Test
-    void amplifyingCoreIncreasesTheBuffANeighbourReceives() {
-        SniperTower neighbour = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(neighbour);
-        this.addClusterFiller();
-        AuraTower aura = this.auraWith();
-        int damageBeforeUpgrade = neighbour.damageCurrent();
+    void aTowerInTheLightTakesLessJamThanOneOutsideIt() {
+        this.beaconWith();
+        SniperTower lit = this.place(new SniperTower(this.context, 0, 0));
+        SniperTower dark = this.place(new SniperTower(this.context, (int) this.outside(), 0));
+        DisruptionAura jammer = new DisruptionAura(20f, 0.4f, 0.2f);
+        this.context.disruptions().add(lit.getX(), lit.getY(), jammer);
+        this.context.disruptions().add(dark.getX(), dark.getY(), jammer);
 
-        UpgradePaths.buy(aura, this.context, "Amplifying Core");
+        lit.beginTick(1);
+        dark.beginTick(1);
 
-        assertThat(neighbour.damageCurrent()).isGreaterThan(damageBeforeUpgrade);
+        assertThat(dark.attackRate()).isLessThan(1.0);
+        assertThat(lit.attackRate()).isGreaterThan(dark.attackRate());
     }
 
     @Test
-    void anAuraNeverBuffsAnotherAuraEvenWithBroadcast() {
-        AuraTower first = this.auraWith("Broadcast");
-        AuraTower second = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(second);
+    void twoLightsOverATowerStack() {
+        AuraTower first = this.beaconWith();
+        SniperTower lit = this.place(new SniperTower(this.context, 0, 0));
+        float underOne = lit.stats().value(TowerStat.DISRUPTION_TAKEN);
+
+        this.place(new AuraTower(this.context, 0, 0));
+
+        assertThat(underOne).isEqualTo(first.light().get(TowerStat.DISRUPTION_TAKEN).multiply());
+        assertThat(lit.stats().value(TowerStat.DISRUPTION_TAKEN)).isCloseTo(underOne * underOne, within(1e-6f));
+    }
+
+    @Test
+    void aBeaconNeverLightsAnotherBeaconOrItself() {
+        AuraTower first = this.beaconWith();
+        AuraTower second = this.place(new AuraTower(this.context, 0, 0));
 
         assertThat(first.buffFor(second)).isEqualTo(StatModifiers.none());
+        assertThat(first.buffFor(first)).isEqualTo(StatModifiers.none());
     }
 
     @Test
-    void onAmplifyingCoreKinshipStrengthensTheBuffForEachOtherTowerTypeInRange() {
-        AuraTower aura = this.auraWith("Attune", "Amplifying Core");
-        SniperTower sniper = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(sniper);
-        float alone = aura.buffFor(sniper).get(TowerStat.DAMAGE).percentAdd();
+    void litTowersAreTheOthersWhoseCentreIsInTheLightInTheOrderBuilt() {
+        AuraTower beacon = this.beaconWith();
+        SniperTower near = this.place(new SniperTower(this.context, 0, 0));
+        this.place(new SniperTower(this.context, (int) this.outside(), 0));
+        this.place(new AuraTower(this.context, 0, 0));
+        SplashTower later = this.place(new SplashTower(this.context, 0, 0));
 
-        this.context.towers().add(new SplashTower(this.context, 0, 0));
-        this.context.towers().add(new MortarTower(this.context, 0, 0));
-
-        assertThat(aura.buffFor(sniper).get(TowerStat.DAMAGE).percentAdd()).isGreaterThan(alone);
+        assertThat(beacon.litTowers()).containsExactly(near, later);
     }
 
     @Test
-    void anAurasEmissionNeverIncludesABlastRadius() {
-        AuraTower aura = this.auraWith("Broadcast II", "Conduit", "Withering Field");
-        SplashTower splash = new SplashTower(this.context, 0, 0);
-        this.context.towers().add(splash);
+    void sellingTheBeaconTakesItsLightAway() {
+        this.context.economy().startEconomy(100, 5);
+        SniperTower lit = this.place(new SniperTower(this.context, 0, 0));
+        AuraTower beacon = this.place(new AuraTower(this.context, 0, 0));
 
-        assertThat(aura.buffFor(splash).stats()).isNotEmpty().doesNotContain(TowerStat.AREA_RADIUS);
-    }
+        this.context.towers().sell(beacon);
 
-    private AuraTower auraWith(String... nodes) {
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
-        UpgradePaths.buy(aura, this.context, nodes);
-        return aura;
+        assertThat(lit.stats().value(TowerStat.DISRUPTION_TAKEN)).isEqualTo(1f);
     }
 
     @Test
-    void broadcastWidensTheAurasOwnReach() {
-        AuraTower aura = this.auraWith();
-        float before = aura.getRangeReal();
+    void theLightRevealsEveryEnemyInsideForItsRevealTimeAndNoneOutside() {
+        AuraTower beacon = this.beaconWith();
+        FakeEnemyMob inside = FakeEnemyMob.ghostAt(0, 0);
+        FakeEnemyMob beyond = FakeEnemyMob.ghostAt(this.outside(), 0);
+        this.enemies(inside, beyond);
 
-        UpgradePaths.buy(aura, this.context, "Broadcast");
+        beacon.doTick(1);
 
-        assertThat(aura.getRangeReal()).isGreaterThan(before);
+        assertThat(inside.appliedEffects()).filteredOn(effect -> effect.kind() == EffectKind.REVEALED)
+                .extracting(Effect::authoredDurationTicks)
+                .containsExactly(Math.round(beacon.stats().value(TowerStat.REVEAL_TIME)));
+        assertThat(beyond.appliedEffects()).isEmpty();
+        assertThat(beacon.revealedNow()).containsExactly(inside);
     }
 
     @Test
-    void towersInRangeOfAnAuraTakeLessDisruptionFromTheStart() {
-        this.context.towers().add(new AuraTower(this.context, 0, 0));
-        SniperTower shielded = new SniperTower(this.context, 0, 0);
-        SniperTower exposed = new SniperTower(this.context, 30, 30);
-        this.context.towers().add(shielded);
-        this.context.towers().add(exposed);
-        DisruptionAura jammer = new DisruptionAura(20f, 0.4f, 0.2f);
-        this.context.disruptions().add(shielded.getX(), shielded.getY(), jammer);
-        this.context.disruptions().add(exposed.getX(), exposed.getY(), jammer);
+    void theSpotlightHoldsItsEnemyUntilItLeavesTheLightThenPicksAgain() {
+        AuraTower beacon = this.beaconWith("Last Light");
+        FakeEnemyMob first = FakeEnemyMob.at(0, 0).withDistanceToExit(100);
+        FakeEnemyMob second = FakeEnemyMob.at(0, 0).withDistanceToExit(200);
+        this.enemies(first, second);
+        beacon.doTick(1);
+        second.withDistanceToExit(50);
 
-        shielded.beginTick(1);
-        exposed.beginTick(1);
+        beacon.doTick(2);
+        EnemyMob heldWhileInside = beacon.heldEnemy().orElseThrow();
+        first.moveTo(this.outside(), 0);
+        beacon.doTick(3);
 
-        assertThat(exposed.attackRate()).isLessThan(1.0);
-        assertThat(shielded.attackRate()).isGreaterThan(exposed.attackRate());
+        assertThat(heldWhileInside).isSameAs(first);
+        assertThat(beacon.heldEnemy()).containsSame(second);
+        assertThat(second.hasEffect(EffectKind.PRIORITY)).isTrue();
     }
 
     @Test
-    void aTowerGivenAWitherIntervalMakesItsNextHitApplyVulnerableOnceEachInterval() {
-        SniperTower sniper = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(sniper);
-        TowerFixtures.buffed(sniper, this.context, TowerModifiers.witherEvery(200));
-        FakeEnemyMob target = FakeEnemyMob.at(sniper.getX(), sniper.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
+    void theSearchlightHoldsTheHighestRankThenTheMostHealth() {
+        AuraTower beacon = this.beaconWith("Searchlight");
+        FakeEnemyMob grunt = FakeEnemyMob.at(0, 0).withHealth(900);
+        FakeEnemyMob weakElite = FakeEnemyMob.at(0, 0).ranked(Rank.ELITE).withHealth(100);
+        FakeEnemyMob strongElite = FakeEnemyMob.at(0, 0).ranked(Rank.ELITE).withHealth(200);
+        this.enemies(grunt, weakElite, strongElite);
 
-        for (int t = 1; t <= 260; t++) {
-            sniper.beginTick(t);
-            sniper.doTick(t);
-        }
+        beacon.doTick(1);
 
-        assertThat(target.hits().size()).isGreaterThan(4);
-        assertThat(target.appliedEffects()).extracting(Effect::kind)
-                .containsExactly(EffectKind.VULNERABLE, EffectKind.VULNERABLE);
+        assertThat(beacon.heldEnemy()).containsSame(strongElite);
     }
 
     @Test
-    void aTowerWithoutAWitherIntervalNeverWithers() {
-        SniperTower alone = new SniperTower(this.context, 30, 30);
-        this.context.towers().add(alone);
-        FakeEnemyMob target = FakeEnemyMob.at(alone.getX(), alone.getY());
-        this.context.enemies().setEnemies(new EnemyMob[]{target});
+    void theRingleaderHoldsAnEnemyThatLeadsItsAlliesBeforeThePack() {
+        AuraTower beacon = this.beaconWith("Ringleader");
+        FakeEnemyMob leader = FakeEnemyMob.at(this.context.getBoard().scale(), 0).leading();
+        this.enemies(FakeEnemyMob.at(0, 0), FakeEnemyMob.at(0, 0), leader);
 
-        for (int t = 1; t <= 60; t++) {
-            alone.beginTick(t);
-            alone.doTick(t);
-        }
+        beacon.doTick(1);
 
-        assertThat(target.appliedEffects()).isEmpty();
+        assertThat(beacon.heldEnemy()).containsSame(leader);
     }
 
     @Test
-    void chosenBuffsOnlyTheMostExperiencedTowerInRangeAtTripleStrength() {
-        AuraTower aura = this.auraWith("Chosen");
-        SniperTower veteran = new SniperTower(this.context, 0, 0);
-        SniperTower novice = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(veteran);
-        this.context.towers().add(novice);
-        veteran.earnXp(500);
-        float plain = new AuraTower(this.context, 0, 0).buffFor(veteran).get(TowerStat.DAMAGE).percentAdd();
+    void withoutASpotlightTheLightHoldsNoOne() {
+        AuraTower beacon = this.beaconWith();
+        FakeEnemyMob enemy = FakeEnemyMob.at(0, 0);
+        this.enemies(enemy);
 
-        assertThat(aura.buffFor(veteran).get(TowerStat.DAMAGE).percentAdd()).isCloseTo(3 * plain, within(1e-6f));
-        assertThat(aura.buffFor(novice)).isEqualTo(StatModifiers.none());
-        assertThat(aura.buffedTowers()).containsExactly(veteran);
+        beacon.doTick(1);
+
+        assertThat(beacon.heldEnemy()).isEmpty();
+        assertThat(enemy.hasEffect(EffectKind.PRIORITY)).isFalse();
     }
 
     @Test
-    void chosenFollowsTheTowerThatOvertakesTheHero() {
-        AuraTower aura = this.auraWith("Chosen");
-        SniperTower first = new SniperTower(this.context, 0, 0);
-        SniperTower second = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(first);
-        this.context.towers().add(second);
-        first.earnXp(100);
-        aura.doTick(1);
-        int firstBuffed = first.damageCurrent();
+    void glareExposesEveryEnemyInTheLight() {
+        AuraTower beacon = this.beaconWith("Glare");
+        FakeEnemyMob inside = FakeEnemyMob.at(0, 0);
+        FakeEnemyMob beyond = FakeEnemyMob.at(this.outside(), 0);
+        this.enemies(inside, beyond);
 
-        second.earnXp(500);
-        aura.doTick(2);
+        beacon.doTick(1);
 
-        assertThat(firstBuffed).isGreaterThan(first.damageBase);
-        assertThat(first.damageCurrent()).isEqualTo(first.damageBase);
-        assertThat(second.damageCurrent()).isGreaterThan(second.damageBase);
-    }
-
-    private AuraTower rallyAura() {
-        this.context.setPath(new Path(List.of(new Vec2(0, 0), new Vec2(900, 0))));
-        return this.auraWith("Rally");
+        assertThat(inside.hasEffect(EffectKind.EXPOSED)).isTrue();
+        assertThat(beyond.hasEffect(EffectKind.EXPOSED)).isFalse();
     }
 
     @Test
-    void rallyMarksThePathSpotNearestTheAura() {
-        AuraTower aura = this.rallyAura();
+    void daylightLaysItsLightOnTheWorldForEnemiesToRead() {
+        AuraTower beacon = this.beaconWith("Daylight");
 
-        assertThat(aura.rallySpot()).hasValueSatisfying(spot -> {
-            assertThat(spot.x()).isCloseTo(aura.getX(), within(1.0));
-            assertThat(spot.y()).isCloseTo(0.0, within(1.0));
-        });
+        beacon.doTick(1);
+
+        assertThat(this.context.daylight().covers(0, 0)).isTrue();
+        assertThat(this.context.daylight().covers(this.outside(), 0)).isFalse();
     }
 
     @Test
-    void anEnemyOnTheRallySpotGivesBuffedTowersMoreAttackSpeedForFiveSecondsThenTenSecondsOfCooldown() {
-        AuraTower aura = this.rallyAura();
-        SniperTower sniper = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(sniper);
-        this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(aura.getX(), 0)});
+    void aLightWithoutDaylightLaysNone() {
+        AuraTower beacon = this.beaconWith();
 
-        aura.doTick(1);
-        double during = sniper.attackRate();
-        sniper.beginTick(101);
-        aura.doTick(101);
-        double afterBuff = sniper.attackRate();
-        sniper.beginTick(201);
-        aura.doTick(201);
-        double secondRally = sniper.attackRate();
+        beacon.doTick(1);
 
-        assertThat(during).isCloseTo(1.3, within(1e-6));
-        assertThat(afterBuff).isEqualTo(1.0);
-        assertThat(secondRally).isCloseTo(1.3, within(1e-6));
+        assertThat(this.context.daylight().covers(0, 0)).isFalse();
     }
 
     @Test
-    void rallyDoesNothingWithoutAnEnemyOnTheSpot() {
-        AuraTower aura = this.rallyAura();
-        SniperTower sniper = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(sniper);
-        this.context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(aura.getX(), 500)});
+    void prismCarriesOneMarkForEachLitTowerTypeHoweverManyAreLit() {
+        AuraTower beacon = this.beaconWith("Prism");
+        this.place(new SniperTower(this.context, 0, 0));
+        this.place(new SniperTower(this.context, 0, 0));
+        this.place(new MortarTower(this.context, 0, 0));
+        FakeEnemyMob inside = FakeEnemyMob.at(0, 0);
+        this.enemies(inside);
 
-        aura.doTick(1);
+        beacon.doTick(1);
+        beacon.doTick(2);
 
-        assertThat(sniper.attackRate()).isEqualTo(1.0);
+        assertThat(beacon.prismMarks()).containsExactly(PrismMark.SUNDER, PrismMark.CRACK);
+        assertThat(inside.effectStacks(EffectKind.SUNDERED)).isEqualTo(PrismMark.SUNDER.stacks());
+        assertThat(inside.hasEffect(EffectKind.CRACKED)).isTrue();
     }
 
     @Test
-    void aBuffedTowerCarriesAuraWithWhatItReceives() {
-        SniperTower buffed = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(buffed);
-        this.context.towers().add(new AuraTower(this.context, 0, 0));
+    void prismAddsItsStackOnTopOfWhatAnEnemyEnteringCarriesOnceAndNotEveryTick() {
+        AuraTower beacon = this.beaconWith("Prism");
+        this.place(new SniperTower(this.context, 0, 0));
+        FakeEnemyMob enemy = FakeEnemyMob.at(0, 0);
+        enemy.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
+        this.enemies(enemy);
 
-        assertThat(buffed.conditions()).singleElement().satisfies(state -> {
-            assertThat(state.term()).isEqualTo(TowerTerm.AURA);
-            assertThat(state.stacks()).isZero();
-        });
+        beacon.doTick(1);
+        beacon.doTick(2);
+
+        assertThat(enemy.effectStacks(EffectKind.SUNDERED)).isEqualTo(2 + PrismMark.SUNDER.stacks());
     }
 
     @Test
-    void aJammedTowerCarriesJammedAsADebuffAfterItsBuffs() {
-        AuraTower aura = new AuraTower(this.context, 0, 0);
-        this.context.towers().add(aura);
-        SniperTower jammed = new SniperTower(this.context, 0, 0);
-        this.context.towers().add(jammed);
+    void eachLightAnEnemyEntersAddsItsOwnStack() {
+        AuraTower first = this.beaconWith("Prism");
+        AuraTower second = this.place(new AuraTower(this.context, 0, 0));
+        UpgradePaths.buy(second, this.context, "Prism");
+        this.place(new SniperTower(this.context, 0, 0));
+        FakeEnemyMob enemy = FakeEnemyMob.at(0, 0);
+        this.enemies(enemy);
+
+        first.doTick(1);
+        second.doTick(1);
+
+        assertThat(enemy.effectStacks(EffectKind.SUNDERED)).isEqualTo(2 * PrismMark.SUNDER.stacks());
+    }
+
+    @Test
+    void withoutPrismTheLightCarriesNoMark() {
+        AuraTower beacon = this.beaconWith();
+        this.place(new SniperTower(this.context, 0, 0));
+
+        assertThat(beacon.prismMarks()).isEmpty();
+    }
+
+    @Test
+    void eachLightsStaticDischargesOnceTheEnemyIsBadlyHurt() {
+        AuraTower beacon = this.beaconWith("Prism");
+        AuraTower second = this.place(new AuraTower(this.context, 0, 0));
+        UpgradePaths.buy(second, this.context, "Prism");
+        SplashTower stormcaller = this.place(new SplashTower(this.context, 0, 0));
+        UpgradePaths.buy(stormcaller, this.context, "Stormcaller");
+        FakeEnemyMob enemy = FakeEnemyMob.at(0, 0);
+        this.enemies(enemy);
+        beacon.doTick(1);
+        second.doTick(1);
+        boolean hitWhileHealthy = !enemy.hits().isEmpty();
+
+        enemy.atHealthFraction(StaticMechanic.DISCHARGE_AT);
+        beacon.doTick(2);
+        second.doTick(2);
+
+        assertThat(hitWhileHealthy).isFalse();
+        assertThat(enemy.hits()).hasSize(2);
+    }
+
+    @Test
+    void breakthroughTeachesEveryOtherLitTowerWhenOneOpensATier() {
+        AuraTower beacon = this.beaconWith("Breakthrough");
+        SniperTower opener = this.place(new SniperTower(this.context, 0, 0));
+        SniperTower other = this.place(new SniperTower(this.context, 0, 0));
+        SniperTower dark = this.place(new SniperTower(this.context, (int) this.outside(), 0));
+        this.context.playtestRules().setUpgradeGatesIgnored(false);
+        opener.beginTick(1);
+        opener.earnXp(opener.upgradeTree().tiers().get(1).xp());
+        opener.beginTick(2);
+
+        beacon.doTick(2);
+        beacon.doTick(3);
+
+        assertThat(other.experience().xp()).isEqualTo(BreakthroughMechanic.XP);
+        assertThat(dark.experience().xp()).isZero();
+        assertThat(opener.experience().xp()).isEqualTo(opener.upgradeTree().tiers().get(1).xp());
+    }
+
+    @Test
+    void mentorMarksTheLitTowerWithTheLeastXp() {
+        AuraTower beacon = this.beaconWith("Mentor");
+        SniperTower veteran = this.place(new SniperTower(this.context, 0, 0));
+        SniperTower novice = this.place(new SniperTower(this.context, 0, 0));
+        veteran.earnXp(50);
+
+        assertThat(beacon.xpBonusFor(novice)).isEqualTo(MentorMechanic.XP);
+        assertThat(beacon.xpBonusFor(veteran)).isZero();
+    }
+
+    @Test
+    void kinshipCountsTheOtherTowerTypesInTheLight() {
+        AuraTower beacon = this.beaconWith("Kinship");
+        SniperTower sniper = this.place(new SniperTower(this.context, 0, 0));
+        this.place(new SniperTower(this.context, 0, 0));
+        this.place(new SplashTower(this.context, 0, 0));
+        this.place(new MortarTower(this.context, 0, 0));
+        this.place(new MortarTower(this.context, (int) this.outside(), 0));
+
+        assertThat(beacon.xpBonusFor(sniper)).isEqualTo(KinshipMechanic.xpFor(2));
+    }
+
+    @Test
+    void aLitTowerCarriesLitAndAJammedOneJammedAfterIt() {
+        this.beaconWith();
+        SniperTower jammed = this.place(new SniperTower(this.context, 0, 0));
         this.context.disruptions().add(jammed.getX(), jammed.getY(), new DisruptionAura(20f, 0.4f, 0.2f));
         jammed.beginTick(1);
 
         assertThat(jammed.conditions()).extracting(TowerBuffState::term)
-                .containsExactly(TowerTerm.AURA, TowerTerm.JAMMED);
+                .containsExactly(TowerTerm.LIT, TowerTerm.JAMMED);
     }
 
     @Test
-    void aBeaconAppliesItsAuraAndRallyToTowers() {
-        AuraTower aura = this.rallyAura();
+    void aBeaconAppliesItsRevealToEnemiesAndLitToTowers() {
+        AuraTower beacon = this.beaconWith("Glare");
 
-        assertThat(aura.applies()).extracting(AppliedEffect::term).containsExactly(TowerTerm.AURA, TowerTerm.RALLY);
-        assertThat(aura.applies().getLast().sources()).extracting(AppliedEffect.Source::name).containsExactly("Rally");
+        assertThat(beacon.applies()).extracting(AppliedEffect::term)
+                .containsExactly(EffectKind.REVEALED, TowerTerm.LIT, EffectKind.EXPOSED);
     }
 }

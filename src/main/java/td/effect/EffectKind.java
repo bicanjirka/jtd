@@ -39,8 +39,8 @@ public enum EffectKind implements Term {
     /** Each stack lowers armor by five. */
     SUNDERED("Sunder", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(10)
             .perStack(EnemyStat.ARMOR, -5f)),
-    /** Takes fifty agility and fifty resilience: crits come more often and hit harder. */
-    EXPOSED("Expose", EffectRule.of(EffectCategory.SPOTTED).perStack(EnemyStat.AGILITY, -50f).perStack(EnemyStat.RESILIENCE, -50f)
+    /** Takes agility and resilience: it dodges less, and crits come more often and hit harder. */
+    EXPOSED("Expose", EffectRule.of(EffectCategory.SPOTTED).perStack(EnemyStat.AGILITY, -25f).perStack(EnemyStat.RESILIENCE, -25f)
             ),
     /** The next hit lands as a guaranteed crit and spends the mark. */
     MARKED("Mark", EffectRule.of(EffectCategory.SPOTTED)),

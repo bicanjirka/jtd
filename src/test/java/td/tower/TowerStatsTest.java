@@ -85,14 +85,6 @@ class TowerStatsTest {
     }
 
     @Test
-    void twoWitheringSourcesKeepTheShorterInterval() {
-        TowerStats stats = of(TowerModifiers.witherEvery(200).plus(TowerModifiers.witherEvery(100)),
-                DisruptionPenalty.none());
-
-        assertThat(stats.witherTicks()).isEqualTo(100);
-    }
-
-    @Test
     void rangeNeverDropsBelowHalfACell() {
         TowerStats stats = of(TowerModifiers.range(-5f), new DisruptionPenalty(0f, 3f));
 
