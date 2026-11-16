@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
@@ -116,6 +117,9 @@ public final class PolishSheets {
         }
         if (wanted(only, "closeups")) {
             closeups(new File(out, "closeups.png"));
+        }
+        if (wanted(only, "strips")) {
+            strips(new File(out, "strips.png"));
         }
         if (wanted(only, "tops")) {
             tops();
@@ -507,6 +511,66 @@ public final class PolishSheets {
             tower(g, PolishLooks.of((Look) tiles[i][0], (Integer) tiles[i][1], (TowerPose) tiles[i][2]), cx, cy, big,
                     Math.toRadians((Double) tiles[i][3]));
             text(g, (String) tiles[i][4], cx - 130, cy + 130, DIM, LABEL);
+        }
+        g.dispose();
+        save(image, file);
+    }
+
+    /** Still references of every animation: eight moments of each in a row, at 3x. */
+    private static void strips(File file) throws IOException {
+        int tile = 190;
+        int rowHeight = 300;
+        String[] names = {"Stormcaller sparks (idle), every 0.1 s", "Hexer ball (idle), every 0.6 s",
+                "Aerie birds and nest (idle), every 0.7 s", "Ruby", "Shade", "White",
+                "Obelisk runes (idle), every 0.5 s", "Knell (tick clock), every 0.06 s",
+                "Sniper cartridge (tick clock), every 0.06 s", "Scorcher steam (tick clock), every 0.12 s"};
+        BufferedImage image = new BufferedImage(20 + tile * 8, 40 + rowHeight * names.length,
+                BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = pen(image);
+        g.setColor(BACK);
+        g.fillRect(0, 0, image.getWidth(), image.getHeight());
+        for (int row = 0; row < names.length; row++) {
+            text(g, names[row], 14, 30 + row * rowHeight, TEXT, TITLE);
+            for (int i = 0; i < 8; i++) {
+                double cx = 20 + i * tile + tile / 2.0;
+                double cy = 40 + row * rowHeight + 215;
+                floor(g, cx, cy, 96, 1);
+                Shape clip = g.getClip();
+                g.clip(new Rectangle2D.Double(cx - tile / 2.0, cy - 250, tile, 300));
+                switch (row) {
+                    case 0 -> alive(g, Look.STORMCALLER, 3, TowerPose.idle(), cx, cy, 96, 0, 0.35 + i * 0.1, 11, 1);
+                    case 1 -> alive(g, Look.HEXER, 3, TowerPose.idle(), cx, cy, 96, 0, i * 0.6, 11, 1);
+                    case 2 -> alive(g, Look.SEEKER, 3, TowerPose.idle(), cx, cy, 96, 0, i * 0.7, 11,
+                            PolishLife.ORBIT_SQUASH);
+                    case 3 -> alive(g, Look.RUBY, 3, TowerPose.idle(), cx, cy, 96, 0, i * 0.7, 16,
+                            PolishLife.ORBIT_SQUASH);
+                    case 4 -> alive(g, Look.SHADE, 3, TowerPose.idle(), cx, cy, 96, 0, i * 0.7, 21,
+                            PolishLife.ORBIT_SQUASH);
+                    case 5 -> alive(g, Look.WHITE, 3, TowerPose.idle(), cx, cy, 96, 0, i * 0.7, 26,
+                            PolishLife.ORBIT_SQUASH);
+                    case 6 -> alive(g, Look.GRAVITY, 3, TowerPose.idle(), cx, cy, 96, 0, i * 0.5, 3, 1);
+                    case 7 -> {
+                        knellRing(g, cx, cy, 96, i * 0.06);
+                        tower(g, PolishLooks.of(Look.PULSE, 3, knellPose(i * 0.06)), cx, cy, 96, 0);
+                    }
+                    case 8 -> {
+                        Built f = PolishLooks.of(Look.SNIPER, 2, TowerPose.idle());
+                        tower(g, f, cx, cy, 96, Math.toRadians(-35));
+                        PolishLife.casing(g, cx, cy, 96, Math.toRadians(-35), f.top() + 0.05,
+                                i * 0.06 / PolishLife.CASING_SECONDS);
+                    }
+                    default -> {
+                        Built f = PolishLooks.of(Look.CINDER, 2,
+                                TowerPose.idle().with(TowerCue.DRAGONS_BREATH).refilling(0.25f));
+                        double aim = Math.toRadians(-25);
+                        tower(g, f, cx, cy, 96, aim);
+                        PolishLife.steam(g, cx + Math.cos(aim) * f.muzzle() * 96,
+                                cy + (Math.sin(aim) * f.muzzle() - PolishLooks.LIFT * f.muzzleHeight()) * 96, 96,
+                                i * 0.12 / PolishLife.STEAM_SECONDS, 5);
+                    }
+                }
+                g.setClip(clip);
+            }
         }
         g.dispose();
         save(image, file);
