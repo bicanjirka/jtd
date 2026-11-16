@@ -58,7 +58,7 @@ import static td.tower.upgrade.MechanicCatalogue.entry;
  * The control tower: its nest loads a homing missile whenever it has room, with or without a target, so it is full at
  * every wave start; with an enemy in range the stored missiles launch one after another, each at the visible enemy
  * that would leave soonest. Every enemy a missile hits is frozen, unless a Shield takes the whole hit. A missile whose
- * enemy is frozen before it lands turns to another close by, or flies home.
+ * enemy is frozen before it lands turns to another close by, or stays on it when there is none.
  * <p>
  * What each owned node does lives in its data or in a {@link SeekerMechanic}: the tower reads one spec from them
  * whenever it loads, launches or lands a missile.
@@ -516,16 +516,19 @@ public final class SeekerTower extends AbstractTower {
     }
 
     /**
-     * One missile's say in its own flight: it gives up an enemy frozen since it picked it, turns to the soonest-out
-     * enemy close by that isn't frozen, and with none flies home into the nest, or fades when the nest is full.
+     * One missile's say in its own flight: it gives up an enemy frozen since it picked it for the soonest-out enemy
+     * close by that isn't frozen, and stays on it when there is none. With no enemy left it flies home into the nest,
+     * or fades when the nest is full.
      */
     private final class Flight implements MissileGuide {
 
         private final Shot shot;
+        private EnemyMob pick;
         private boolean frozenAtPick;
 
         Flight(Shot shot, EnemyMob target) {
             this.shot = shot;
+            this.pick = target;
             this.frozenAtPick = target.hasEffect(EffectKind.FREEZE);
         }
 
@@ -541,8 +544,15 @@ public final class SeekerTower extends AbstractTower {
                     .matching(SeekerTower.this.context.enemies()).stream()
                     .filter(enemy -> !enemy.hasEffect(EffectKind.FREEZE))
                     .toList();
-            this.frozenAtPick = false;
-            return SOONEST_OUT.selectFrom(near);
+            Optional<EnemyMob> next = SOONEST_OUT.selectFrom(near);
+            if (next.isEmpty() && this.pick.validTarget()) {
+                next = Optional.of(this.pick);
+            }
+            next.ifPresent(enemy -> {
+                this.pick = enemy;
+                this.frozenAtPick = enemy.hasEffect(EffectKind.FREEZE);
+            });
+            return next;
         }
 
         @Override

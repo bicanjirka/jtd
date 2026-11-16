@@ -163,18 +163,14 @@ class GameEngineTest {
     }
 
     @Test
-    void aStoppedEnemyIsCritTwiceAsOften() {
-        EnemyDefinition plainEnemy = EnemyDefinition.of("plain", "Plain", 1_000_000, 1, 0f, BodyArchetype.CIRCLE);
-        EnemyMob frozen = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), plainEnemy);
-        EnemyMob dazed = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), plainEnemy);
-        frozen.applyEffect(Effect.freeze(1_000_000, DamageSink.none()));
-        dazed.applyEffect(Effect.dazed(1_000_000, DamageSink.none()));
+    void anEnemyAtMinusAHundredAgilityIsCritTwiceAsOften() {
+        EnemyDefinition clumsy = EnemyDefinition.of("clumsy", "Clumsy", 1_000_000, 1, 0f, BodyArchetype.CIRCLE)
+                .withAgility(-100f);
+        EnemyMob enemy = spawnOnly(FakeGameHost.newBoundEngine(RandomSource.seeded(1)), clumsy);
 
-        int frozenCrits = critsIn(frozen, 2000);
-        int dazedCrits = critsIn(dazed, 2000);
+        int crits = critsIn(enemy, 2000);
 
-        assertThat(frozenCrits).isBetween(700, 900);
-        assertThat(dazedCrits).isBetween(700, 900);
+        assertThat(crits).isBetween(700, 900);
     }
 
     @Test

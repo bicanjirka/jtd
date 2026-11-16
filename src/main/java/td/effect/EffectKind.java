@@ -19,7 +19,7 @@ public enum EffectKind implements Term {
     BURN("Burn", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool()
             .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f)).tagged(EffectTag.BURNING)),
     FREEZE("Freeze", EffectRule.of(EffectCategory.HARD_CC)
-            .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.setTo(-100f))
+            .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.capAtShareOfBase(0f))
             .tagged(EffectTag.STOPS, EffectTag.NOT_RENEWED)),
     SHIELD("Shield", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
     INVISIBLE("Invisibility", EffectRule.of(EffectCategory.STEALTH).perStack(EnemyStat.STEALTH, StatModifier.setTo(1f)).helpsCarrier()),
@@ -49,7 +49,7 @@ public enum EffectKind implements Term {
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.15f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.15f)),
     /** Stops the enemy and its abilities, like a freeze. */
     DAZED("Daze", EffectRule.of(EffectCategory.HARD_CC).perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f))
-            .perStack(EnemyStat.AGILITY, StatModifier.setTo(-100f)).tagged(EffectTag.STOPS)),
+            .perStack(EnemyStat.AGILITY, StatModifier.capAtShareOfBase(0f)).tagged(EffectTag.STOPS)),
     /** The next hit from another tower discharges it for extra magic, credited to the tower that charged it. */
     CHARGED("Charge", EffectRule.of(EffectCategory.SPOTTED)),
     /** When it ends, the target takes a share of all the damage it took while it lasted. */

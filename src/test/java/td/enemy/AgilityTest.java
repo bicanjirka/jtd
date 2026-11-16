@@ -6,6 +6,7 @@ import td.damage.Damage;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.fixtures.WorldFixtures;
+import td.stat.EnemyStat;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +58,30 @@ class AgilityTest {
 
         assertThat(result.dodged()).isFalse();
         assertThat(result.landed()).isEqualTo(Damage.physical(1000));
+    }
+
+    @Test
+    void aStoppedEnemyHasNoAgilityLeftButNoneTakenBelowThat() {
+        DefinedEnemyMob frozen = nimble();
+        DefinedEnemyMob dazed = nimble();
+
+        frozen.applyEffect(Effect.freeze(100, DamageSink.none()));
+        dazed.applyEffect(Effect.dazed(100, DamageSink.none()));
+
+        assertThat(frozen.stats().value(EnemyStat.AGILITY)).isZero();
+        assertThat(dazed.stats().value(EnemyStat.AGILITY)).isZero();
+    }
+
+    @Test
+    void aStoppedEnemyKeepsTheAgilityItHadAlreadyLost() {
+        DefinedEnemyMob enemy = nimble();
+        enemy.applyEffect(Effect.exposed(100, DamageSink.none()));
+        enemy.applyEffect(Effect.exposed(100, DamageSink.none()));
+        float lost = enemy.stats().value(EnemyStat.AGILITY);
+
+        enemy.applyEffect(Effect.freeze(100, DamageSink.none()));
+
+        assertThat(enemy.stats().value(EnemyStat.AGILITY)).isEqualTo(Math.min(lost, 0f));
     }
 
     @Test
