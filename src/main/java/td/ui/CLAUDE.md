@@ -81,7 +81,7 @@ keeps the seam honest.
 - `interpolationAlpha` (between the last two ticks) for anything backed by per-tick domain state:
   enemy/projectile position, turret heading. It respects pause and
   fast-forward.
-- `animationSeconds` (wall clock) for pure cosmetics: the aura's rings, path
+- `animationSeconds` (wall clock) for pure cosmetics: idle lights, path
   chevrons. It keeps running while paused.
 - Dead enemies are drawn without interpolation.
 

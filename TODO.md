@@ -451,7 +451,7 @@ asks that hovering one shell show that shell's damage, blast, flight speed and r
 
 ### Tower cues and identity looks are drawn but nothing in play sends them
 
-Most `TowerCue`s, the Beacon's panes and the looks `RUBY` and
+Most `TowerCue`s and the looks `RUBY` and
 `SHADE` are reached only by the art sheets and by tests: they were built ahead of the towers that own them.
 
 **Where:** `td.ui.TowerSpriteFrameBuilder` (each visit method's pose, `BODY_LOOK`), `td.ui.TowerFoundations`.

@@ -58,6 +58,9 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     static final int CRIT_SPARK_DURATION_TICKS = 8;
     /** Fixed, so a crit looks the same on every enemy. */
     private static final float CRIT_SPARK_FIXED_SCALE = 12f;
+    /** Where Exposed's glint sits off the body's centre, and its size, as shares of the body. */
+    private static final float GLINT_OFFSET_SHARE = 0.75f;
+    private static final float GLINT_SIZE_SHARE = 0.45f;
     static final int MISS_MARK_DURATION_TICKS = 12;
     static final int CLOAK_FADE_DURATION_TICKS = 8;
     static final int SHIELD_FLASH_DURATION_TICKS = 4;
@@ -399,6 +402,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                     (float) thawed.getAsInt() / ICE_SHARDS_DURATION_TICKS, seed, visibility));
         }
         this.critSpark(mob, x, y);
+        if (active.contains(EffectKind.EXPOSED)) {
+            this.critSparkDraws.add(new CritSparkDraw(Palette.EXPOSED_GLINT, x + scale * GLINT_OFFSET_SHARE,
+                    y - scale * GLINT_OFFSET_SHARE, scale * GLINT_SIZE_SHARE, 0f, 0f));
+        }
         this.overlays(mob, x, y, ringRadius, supportAura);
         if (active.contains(EffectKind.TOLL)) {
             int stacks = mob.effectStacks(EffectKind.TOLL);
@@ -501,12 +508,14 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
 
     /** The rings around an enemy: its selection and support aura while selected, and always its disruption. */
     private void overlays(DefinedEnemyMob mob, float x, float y, float selectionRadius, Optional<SupportAura> supportAura) {
+        // A caster in daylight gives its allies nothing, so it shows no aura either.
+        boolean leads = !mob.inDaylight();
         if (this.selected.isPresent() && this.selected.get() == mob) {
             this.overlayDraws.add(new EnemyRingDraw(Palette.SELECTION, x, y, selectionRadius, SELECTION_RING_ALPHA));
-            supportAura.ifPresent(aura -> this.overlayDraws.add(
+            supportAura.filter(aura -> leads).ifPresent(aura -> this.overlayDraws.add(
                     new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));
         }
-        mob.definition().disruption().ifPresent(aura -> this.overlayDraws.add(
+        mob.definition().disruption().filter(aura -> leads).ifPresent(aura -> this.overlayDraws.add(
                 new EnemyRingDraw(Palette.DISRUPTION, x, y, aura.radius(), DISRUPTION_RING_ALPHA)));
     }
 
@@ -609,11 +618,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return switch (kind) {
             case VULNERABLE, SUNDERED, BRITTLE, CRACKED, DEEP_CRACKED, TARRED,
                  UNRAVELED -> Optional.of(EnemyDotLook.DEBUFF);
-            case EXPOSED, MARKED, PRIORITY, CHARGED -> Optional.of(EnemyDotLook.SPOTTED);
+            case MARKED, PRIORITY, CHARGED -> Optional.of(EnemyDotLook.SPOTTED);
             case SPRINTING, HASTENED, SPELLPROOF, UNYIELDING, RESOLVE -> Optional.of(EnemyDotLook.BUFF);
             // Drawn on the enemy.
             case BURN, SOULFIRE, POISON, BLEEDING, HEAL, SHIELD, CHILL, FREEZE, DAZED, INVISIBLE, TOLL,
-                 SILENCED -> Optional.empty();
+                 SILENCED, EXPOSED -> Optional.empty();
             // A rune.
             case DOOM, BLIGHT, INVERSION -> Optional.empty();
             // The Info pane's, or the field on the ground says it.

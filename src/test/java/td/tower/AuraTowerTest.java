@@ -15,6 +15,7 @@ import td.tower.aura.BreakthroughMechanic;
 import td.tower.aura.KinshipMechanic;
 import td.tower.aura.MentorMechanic;
 import td.tower.aura.PrismMark;
+import td.tower.aura.RevealedEnemy;
 import td.tower.splash.StaticMechanic;
 import td.util.GameWorld;
 
@@ -119,7 +120,21 @@ class AuraTowerTest {
                 .extracting(Effect::authoredDurationTicks)
                 .containsExactly(Math.round(beacon.stats().value(TowerStat.REVEAL_TIME)));
         assertThat(beyond.appliedEffects()).isEmpty();
-        assertThat(beacon.revealedNow()).containsExactly(inside);
+        assertThat(beacon.reveals()).extracting(RevealedEnemy::enemy).containsExactly(inside);
+    }
+
+    @Test
+    void aRevealIsRememberedForAMomentAfterTheEnemyEntersThenForgotten() {
+        AuraTower beacon = this.beaconWith();
+        this.enemies(FakeEnemyMob.ghostAt(0, 0));
+        beacon.doTick(1);
+
+        beacon.doTick(AuraTower.REVEAL_MEMORY_TICKS);
+        int rememberedAtTheEnd = beacon.reveals().size();
+        beacon.doTick(1 + AuraTower.REVEAL_MEMORY_TICKS);
+
+        assertThat(rememberedAtTheEnd).isEqualTo(1);
+        assertThat(beacon.reveals()).isEmpty();
     }
 
     @Test

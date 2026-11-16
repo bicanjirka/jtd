@@ -4,6 +4,7 @@ import td.damage.DamageUnits;
 import td.stat.StatBreakdown;
 import td.stat.StatWording;
 import td.term.Side;
+import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.AppliedEffect;
@@ -108,6 +109,8 @@ final class TowerSheetText {
         iconRow("Buffs", conditionIcons(tower, Side.BUFF)).ifPresent(lines::add);
         iconRow("Debuffs", conditionIcons(tower, Side.DEBUFF)).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
+        iconRow("Light carries", tower.carries().stream().map(TowerSheetText::carriedIcon).toList())
+                .ifPresent(lines::add);
         lines.add(Row.plain(Glyph.FILLED_DIAMOND, "XP", TermNumbers.number(tower.xp())));
         lines.add(Row.plain(Glyph.SKULL, "Kills", TermNumbers.number(tower.kills()) + " · "
                 + TermNumbers.number(DamageUnits.inPoints(tower.damageDealt()))).withGloss("dmg", ""));
@@ -298,6 +301,11 @@ final class TowerSheetText {
 
     private static List<SheetIcon> appliesIcons(TowerInspection tower) {
         return tower.applies().stream().map(TowerSheetText::appliesIcon).toList();
+    }
+
+    private static SheetIcon carriedIcon(Term term) {
+        return new SheetIcon(TermLooks.faceOf(term), TooltipKey.ofTerm("carries", term),
+                TermSheets.of(term, term.describe(), List.of()));
     }
 
     private static SheetIcon appliesIcon(AppliedEffect applied) {

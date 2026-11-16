@@ -737,7 +737,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /** Whether it stands in a Beacon's daylight, where it gives its allies no aura. */
-    boolean inDaylight() {
+    public boolean inDaylight() {
         return this.gameWorld.daylight().covers(this.getX(), this.getY());
     }
 

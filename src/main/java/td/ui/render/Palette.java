@@ -17,9 +17,9 @@ public enum Palette {
     TOWER_MORTAR_BODY,
     TOWER_SEEKER_BODY,
     TOWER_CINDER_BODY,
-    TOWER_AURA_RING,
-    TOWER_AURA_RALLY,
-    TOWER_AURA_MENTEE,
+    TOWER_AURA_REVEAL_RAY,
+    TOWER_AURA_SPOTLIGHT,
+    TOWER_AURA_LIT_MARK,
     /** Perk icon frames, one role per upgrade tier from the bottom. */
     TOWER_UPGRADE_TIER_0,
     TOWER_UPGRADE_TIER_1,
@@ -138,6 +138,7 @@ public enum Palette {
     /** Ice over a frozen enemy, whiter than the slow and freeze markers. */
     FREEZE_CRYSTAL,
     CRIT_SPARK,
+    EXPOSED_GLINT,
     MISS_MARK,
     /** The ring where an ability spawn arrived. */
     SPAWN_BURST,
