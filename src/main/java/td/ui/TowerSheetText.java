@@ -109,7 +109,7 @@ final class TowerSheetText {
         iconRow("Buffs", conditionIcons(tower, Side.BUFF)).ifPresent(lines::add);
         iconRow("Debuffs", conditionIcons(tower, Side.DEBUFF)).ifPresent(lines::add);
         iconRow("Applies", appliesIcons(tower)).ifPresent(lines::add);
-        iconRow("Light carries", tower.carries().stream().map(TowerSheetText::carriedIcon).toList())
+        iconRow("Carries", tower.carries().stream().map(TowerSheetText::carriedIcon).toList())
                 .ifPresent(lines::add);
         lines.add(Row.plain(Glyph.FILLED_DIAMOND, "XP", TermNumbers.number(tower.xp())));
         lines.add(Row.plain(Glyph.SKULL, "Kills", TermNumbers.number(tower.kills()) + " · "
