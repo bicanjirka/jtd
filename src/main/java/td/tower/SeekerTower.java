@@ -66,7 +66,7 @@ import static td.tower.upgrade.MechanicCatalogue.entry;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class SeekerTower extends AbstractTower {
 
-    public static final int PRICE = 20;
+    public static final int PRICE = 15;
     public static final float DAMAGE_POINTS = 15f;
     public static final float RANGE = 4f;
     /** Pixels a tick at its top speed: slow enough to see a missile hunt. */
@@ -94,11 +94,11 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode LONG_FLIGHT = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Flight", 3)
             .withModifiers(TowerModifiers.range(1f));
 
-    private static final UpgradeNode SWARM = UpgradeNode.of("seeker.swarm", "Swarm", 33)
+    private static final UpgradeNode SWARM = UpgradeNode.of("seeker.swarm", "Swarm", 16)
             .inTier(1);
-    private static final UpgradeNode HATCHING = UpgradeNode.of("seeker.hatching", "Hatching", 33)
+    private static final UpgradeNode HATCHING = UpgradeNode.of("seeker.hatching", "Hatching", 16)
             .inTier(1);
-    private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 12)
+    private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 8)
             .inTier(1);
     private static final UpgradeNode SWIFT_WINGS = UpgradeNode.of("seeker.swift_wings", "Swift Wings", 6)
             .withModifiers(TowerModifiers.projectileSpeed(0.5f))
@@ -107,20 +107,20 @@ public final class SeekerTower extends AbstractTower {
             .withModifiers(TowerModifiers.nestCapacity(2))
             .inTier(1);
 
-    private static final UpgradeNode RUBY = UpgradeNode.of("seeker.ruby", "Ruby", 24)
+    private static final UpgradeNode RUBY = UpgradeNode.of("seeker.ruby", "Ruby", 19)
             .inTier(2);
-    private static final UpgradeNode SHADE = UpgradeNode.of("seeker.shade", "Shade", 24)
+    private static final UpgradeNode SHADE = UpgradeNode.of("seeker.shade", "Shade", 19)
             .inTier(2);
     private static final UpgradeNode SHARP_STING = UpgradeNode.of("seeker.sharp_sting", "Sharp Sting", 39)
             .withModifiers(TowerModifiers.damage(10f))
             .inTier(2);
-    private static final UpgradeNode LONG_FLIGHT_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Flight II", 7)
+    private static final UpgradeNode LONG_FLIGHT_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Flight II", 10)
             .withModifiers(TowerModifiers.range(1f))
             .inTier(2);
 
-    private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 61)
+    private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 22)
             .inTier(3);
-    private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 61)
+    private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 22)
             .inTier(3);
     private static final UpgradeNode RICH_BROOD = UpgradeNode.of("seeker.rich_brood", "Rich Brood", 14)
             .withRequires(UpgradeCondition.owns(RUBY.id()).or(UpgradeCondition.owns(SHADE.id())))
@@ -128,7 +128,7 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.deep_freeze_2", "Deep Freeze II", 20)
             .withModifiers(TowerModifiers.freezeDuration(20))
             .inTier(3);
-    private static final UpgradeNode QUICK_BROOD_2 = UpgradeNode.of("seeker.quick_brood_2", "Quick Brood II", 40)
+    private static final UpgradeNode QUICK_BROOD_2 = UpgradeNode.of("seeker.quick_brood_2", "Quick Brood II", 31)
             .withModifiers(TowerModifiers.attackSpeed(2f / 1.3f - 2f / 1.6f))
             .inTier(3);
 

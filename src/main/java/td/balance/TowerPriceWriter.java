@@ -30,6 +30,8 @@ public final class TowerPriceWriter {
     private static final int NAME = 2;
     private static final int PRICE = 4;
     private static final int SUGGESTED = 7;
+    /** As near its suggestion as the report calls right. */
+    private static final int NEAR_CREDITS = 2;
 
     private TowerPriceWriter() {
     }
@@ -43,7 +45,7 @@ public final class TowerPriceWriter {
             String source = read(file);
             String written = source;
             for (List<String> row : prices.subList(1, prices.size())) {
-                if (!row.get(TOWER).equals(type.name()) || !row.getLast().contains(OFF)) {
+                if (!row.get(TOWER).equals(type.name()) || !isOff(row)) {
                     continue;
                 }
                 int price = Integer.parseInt(row.get(SUGGESTED));
@@ -59,6 +61,24 @@ public final class TowerPriceWriter {
             }
         }
         System.out.println(changed + " prices written. Rerun TowerBench and TowerReport to see what they do.");
+    }
+
+    /**
+     * Whether {@code row}'s price is to be written: the report calls it off, or the node's verdict is about what it
+     * does and so says nothing of its price, which a cluster or a floor still sets.
+     */
+    static boolean isOff(List<String> row) {
+        String verdict = row.getLast();
+        if (verdict.contains(OFF)) {
+            return true;
+        }
+        String suggested = row.get(SUGGESTED);
+        if (!(verdict.contains("BREACH") || verdict.contains("UNMEASURED")) || suggested.isEmpty()
+                || !suggested.chars().allMatch(Character::isDigit)) {
+            return false;
+        }
+        int to = Integer.parseInt(suggested);
+        return Math.abs(Integer.parseInt(row.get(PRICE)) - to) > Math.max(NEAR_CREDITS, TowerReport.PRICE_BAND * to);
     }
 
     /** {@code source} with its tower's list price set to {@code price}. */
