@@ -34,11 +34,11 @@ final class PolishLife {
 
     /** An arc jumps about this often from each of a ball's two sides, and shows for this long. */
     static final double SPARK_SECONDS = 1.15;
-    static final double SPARK_SHOWS_SECONDS = 0.20;
+    static final double SPARK_SHOWS_SECONDS = 0.28;
     /** An arc is redrawn this many times a second, which is what makes it crackle. */
     static final double SPARK_JITTER_HZ = 24;
     static final int SPARK_JOINTS = 5;
-    static final double SPARK_STROKE_CELLS = 0.016;
+    static final double SPARK_STROKE_CELLS = 0.028;
 
     /** How fast each mote turns inside the ball, in radians a second, and how far out it rides. */
     static final double[] SWIRL_SPEED = {1.3, -0.9, 0.6};
@@ -53,19 +53,19 @@ final class PolishLife {
     /** How far a level circle is flattened on screen. 1 is the board's own projection; see the doc's "Perspective". */
     static final double ORBIT_SQUASH = 0.62;
     /** The nest's ring: its radius in cells and how fast it turns while the tower idles, in radians a second. */
-    static final double NEST_RADIUS_CELLS = 0.21;
+    static final double NEST_RADIUS_CELLS = 0.27;
     static final double NEST_TURN = 0.6;
 
     /** The birds of one Aerie look. */
     enum Flock {
         /** The plain Aerie: snow terns, quick and pale. */
-        TERNS(new Color(0xe4f6fc), 0.095, 3.2, 0.85, 1, false, 0),
+        TERNS(new Color(0xe4f6fc), 0.14, 3.2, 0.85, 1, false, 0),
         /** Ruby: ember birds, small and fast, each trailing a glow. */
-        EMBERS(new Color(0xff9a6a), 0.075, 5.0, 1.35, 1, false, 0.9),
+        EMBERS(new Color(0xff9a6a), 0.10, 5.0, 1.35, 1, false, 0.9),
         /** Shade: crows, ragged, circling the other way in a loose crowd. */
-        CROWS(new Color(0x8f9aa8), 0.10, 2.4, 0.7, -1, true, 0),
+        CROWS(new Color(0x8f9aa8), 0.15, 2.4, 0.7, -1, true, 0),
         /** The White tower: great eagles that glide and seldom beat their wings. */
-        EAGLES(new Color(0xfff3d0), 0.15, 1.1, 0.45, 1, false, 0);
+        EAGLES(new Color(0xfff3d0), 0.22, 1.1, 0.45, 1, false, 0);
 
         final Color color;
         final double span;
@@ -103,8 +103,8 @@ final class PolishLife {
     static final Color STEAM = new Color(0xdfe6ee);
     /** The Sundial's shadow: a dark body that dims what it lies on, a veil that shows on a black floor, a lit edge. */
     static final Color SUNDIAL_DARK = new Color(0x06040e);
-    static final float SUNDIAL_DARK_ALPHA = 0.62f;
-    static final float SUNDIAL_VEIL_ALPHA = 0.30f;
+    static final float SUNDIAL_DARK_ALPHA = 0.78f;
+    static final float SUNDIAL_VEIL_ALPHA = 0.34f;
     static final float SUNDIAL_TIP_ALPHA = 0.10f;
     static final float SUNDIAL_EDGE_ALPHA = 0.75f;
     static final double SUNDIAL_EDGE_CELLS = 0.028;
@@ -194,8 +194,8 @@ final class PolishLife {
     static void sparks(Graphics2D g2, double x, double y, double reach, double scale, Color color, double seconds,
                        int seed) {
         long frame = (long) Math.floor(seconds * SPARK_JITTER_HZ);
-        for (int side = 0; side < 2; side++) {
-            double t = seconds / SPARK_SECONDS + hash(seed, side) + side * 0.5;
+        for (int side = 0; side < 3; side++) {
+            double t = seconds / SPARK_SECONDS + hash(seed, side) + side / 3.0;
             long jump = (long) Math.floor(t);
             double since = (t - jump) * SPARK_SECONDS;
             if (since >= SPARK_SHOWS_SECONDS) {
@@ -203,7 +203,7 @@ final class PolishLife {
             }
             double fade = 1 - since / SPARK_SHOWS_SECONDS;
             double bearing = hash(jump * 31 + side, seed) * 2 * Math.PI;
-            double length = reach * (0.5 + 0.5 * hash(jump * 17 + side, seed + 1L));
+            double length = reach * (0.6 + 0.4 * hash(jump * 17 + side, seed + 1L));
             double droop = length * (0.3 + 0.9 * hash(jump * 13 + side, seed + 2L)) * LIFT;
             Path2D.Double arc = new Path2D.Double();
             Path2D.Double fork = new Path2D.Double();
@@ -224,7 +224,7 @@ final class PolishLife {
                     fork.lineTo(px + Math.cos(turn) * length * 0.3, py + Math.sin(turn) * length * 0.3);
                 }
             }
-            glow(g2, x, y, scale * 0.11, color, 0.55 * fade);
+            glow(g2, x, y, scale * 0.16, color, 0.8 * fade);
             g2.setStroke(new BasicStroke((float) (scale * SPARK_STROKE_CELLS * 2.2), BasicStroke.CAP_ROUND,
                     BasicStroke.JOIN_ROUND));
             g2.setColor(faded(new Color(0x8496ff), 0.35 * fade));
@@ -305,10 +305,10 @@ final class PolishLife {
             double h1 = hash(seed, i);
             double h2 = hash(seed + 7L, i);
             double h3 = hash(seed + 13L, i);
-            double ring = (0.27 + 0.15 * h1) * scale;
+            double ring = (0.36 + 0.16 * h1) * scale;
             int turn = flock.ragged && i % 3 == 2 ? -flock.turn : flock.turn;
             double a = turn * seconds * flock.speed * (0.8 + 0.4 * h2) + h3 * 2 * Math.PI;
-            double rise = 0.02 + 0.20 * h2 + 0.03 * Math.sin(seconds * 0.9 + i * 2.1);
+            double rise = 0.10 + 0.24 * h2 + 0.03 * Math.sin(seconds * 0.9 + i * 2.1);
             double x = cx + Math.cos(a) * ring;
             double y = cy + Math.sin(a) * ring * squash - LIFT * rise * scale;
             double heading = Math.atan2(turn * Math.cos(a) * squash, -turn * Math.sin(a));
@@ -332,15 +332,18 @@ final class PolishLife {
         double reach = span / 2 * (0.62 + 0.38 * Math.abs(beat));
         double sweep = span * (-0.16 + 0.14 * beat);
         g2.setColor(flock.color);
-        g2.setStroke(new BasicStroke((float) (span * 0.17), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         for (int side = -1; side <= 1; side += 2) {
             Path2D.Double wing = new Path2D.Double();
-            wing.moveTo(span * 0.05, 0);
-            wing.quadTo(span * 0.12, side * reach * 0.55, sweep, side * reach);
+            wing.moveTo(span * 0.14, 0);
+            wing.quadTo(span * 0.16, side * reach * 0.6, sweep, side * reach);
             if (flock.ragged) {
-                wing.lineTo(sweep - span * 0.16, side * reach * 0.72);
+                wing.lineTo(sweep - span * 0.05, side * reach * 0.70);
+                wing.lineTo(sweep - span * 0.16, side * reach * 0.62);
             }
-            g2.draw(wing);
+            wing.lineTo(-span * 0.14, side * reach * 0.30);
+            wing.lineTo(-span * 0.10, 0);
+            wing.closePath();
+            g2.fill(wing);
         }
         g2.fill(new Ellipse2D.Double(-span * 0.26, -span * 0.09, span * 0.52, span * 0.18));
         g2.setTransform(save);
@@ -417,15 +420,14 @@ final class PolishLife {
         g2.setPaint(new LinearGradientPaint(0f, 0f, end, 0f, new float[] {0f, 1f}, new Color[] {
                 faded(tint, (umbra ? 0.42 : SUNDIAL_VEIL_ALPHA) * alpha), faded(tint, SUNDIAL_TIP_ALPHA * alpha)}));
         g2.fill(shadow);
-        Rectangle2D bounds = shadow.getBounds2D();
         Color edge = new Color((tint.getRed() + 510) / 3, (tint.getGreen() + 510) / 3, (tint.getBlue() + 510) / 3);
         g2.setPaint(new LinearGradientPaint(0f, 0f, end, 0f, new float[] {0f, 1f}, new Color[] {
                 faded(edge, SUNDIAL_EDGE_ALPHA * alpha), faded(edge, SUNDIAL_EDGE_ALPHA * 0.35 * alpha)}));
         g2.setStroke(new BasicStroke((float) (SUNDIAL_EDGE_CELLS * scale), BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_ROUND));
         Shape clip = g2.getClip();
-        g2.clip(new Rectangle2D.Double(0, bounds.getMinY() - scale, reach + scale, -bounds.getMinY() + scale));
-        g2.draw(new Line2D.Double(scale * 0.02, bounds.getMinY(), reach, bounds.getMinY() * 0.45));
+        g2.clip(new Rectangle2D.Double(scale * 0.02, -scale * 2, reach + scale, scale * 2));
+        g2.draw(shadow);
         g2.setClip(clip);
         g2.setTransform(save);
     }

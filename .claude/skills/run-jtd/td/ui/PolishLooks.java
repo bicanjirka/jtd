@@ -503,7 +503,7 @@ final class PolishLooks {
             b.glow(0, 0, 0.28, z + ball, alpha(storm, 0.75));
         } else {
             b.light(Life.BREATH, 0, 0, z + ball, 0.19, storm);
-            b.light(Life.SPARKS, 0, 0, z + ball, 0.24, new Color(0xe6edff));
+            b.light(Life.SPARKS, 0, 0, z + ball, 0.34, new Color(0xe6edff));
         }
         ball(b, 0, 0, z + ball, ball, charged ? new Color(0xe8eeff) : storm);
         if (pose.flash()) {
@@ -897,7 +897,7 @@ final class PolishLooks {
             }
             b.around(mark);
         }
-        double height = 0.80 + 0.32 * tier;
+        double height = 0.68 + 0.30 * tier;
         double[] side = {0.21, 0.165, 0.125};
         double[] share = {0.46, 0.32, 0.22};
         double foot = z;
@@ -1155,14 +1155,19 @@ final class PolishLooks {
      * The menhir's shadow lying on the ground along +X from the stone's foot, {@code reach} cells long: the stone's own
      * outline, slice by slice, with its uneven top at the far end. The Sundial turns this instead of a wedge.
      */
+    /** The shadow is this much wider than the stone at its foot, and this much wider again by its tip. */
+    static final double SHADOW_WIDTH = 1.7;
+    static final double SHADOW_SPREAD = 0.9;
+
     static Shape menhirShadow(int tier, double reach) {
         double grow = tier == 3 ? 1.12 : 1.0;
         Path2D.Double p = new Path2D.Double();
         double[] left = new double[MENHIR_SHARE.length];
         double[] right = new double[MENHIR_SHARE.length];
         for (int i = 0; i < MENHIR_SHARE.length; i++) {
-            left[i] = (-0.125 * MENHIR_TAPER[i] + MENHIR_LEAN[i]) * grow;
-            right[i] = (0.125 * MENHIR_TAPER[i] + MENHIR_LEAN[i]) * grow;
+            double spread = SHADOW_WIDTH * (1 + SHADOW_SPREAD * i / (MENHIR_SHARE.length - 1.0));
+            left[i] = (-0.125 * MENHIR_TAPER[i] + MENHIR_LEAN[i]) * grow * spread;
+            right[i] = (0.125 * MENHIR_TAPER[i] + MENHIR_LEAN[i]) * grow * spread;
         }
         double along = 0;
         p.moveTo(0, left[0]);
