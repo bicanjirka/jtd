@@ -160,7 +160,7 @@ the opposite of today's two breathing rings, pulsing head and line to every towe
 - A caster in daylight gives its allies nothing, so its aura and jamming rings are not drawn at all rather than cut
   off at the light's edge.
 - The Lit mark is a `TowerStatusDraw` in the gold of the lantern, in each Lit tower's bottom-left corner, only while
-  the Beacon is selected. Prism's list is the pane's "Light carries" row (`TowerInspection.carries`).
+  the Beacon is selected. Prism's list is the pane's "Carries" row (`TowerInspection.carries`).
 
 | Tier | Foundation |
 |---|---|

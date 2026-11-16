@@ -203,8 +203,8 @@ class TowerSheetTextTest {
         InfoSheet lit = TowerSheetText.status(BoardRenderer.liveInspection(beacon));
 
         assertThat(empty.lines()).noneMatch(line -> line instanceof SheetLine.IconRow row
-                && row.label().equals("Light carries"));
-        assertThat(iconRow(lit, "Light carries").icons()).hasSize(1);
+                && row.label().equals("Carries"));
+        assertThat(iconRow(lit, "Carries").icons()).hasSize(1);
     }
 
     @Test
