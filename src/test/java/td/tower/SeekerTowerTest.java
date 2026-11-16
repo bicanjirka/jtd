@@ -194,6 +194,19 @@ class SeekerTowerTest {
     }
 
     @Test
+    void aMissileWhoseEnemyIsFrozenInFlightStaysOnItWhenNothingElseWalksCloseBy() {
+        SeekerTower tower = this.towerWith();
+        FakeEnemyMob only = this.enemyAt(tower, OUT, 0);
+        this.enemies(only);
+        this.launch(tower);
+
+        only.applyEffect(Effect.freeze(100, DamageSink.none()));
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(only.hits()).isNotEmpty();
+    }
+
+    @Test
     void aMissileWithNothingLeftToHuntFliesHomeIntoTheNest() {
         SeekerTower tower = this.towerWith();
         tower.readyForWave();

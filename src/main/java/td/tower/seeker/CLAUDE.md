@@ -9,8 +9,8 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
 - Stored missiles launch a gap apart, one target pick per missile, from the tower's centre along the ring's tangent.
   The ring turns only while an enemy is in reach and starts each fight at rest.
 - A missile in flight asks the tower through its `MissileGuide`: it keeps its pick unless that enemy was frozen since,
-  turns to the soonest-out unfrozen enemy near it, and flies home to reload when there is none. It lands with the
-  stats its shot began with.
+  turns to the soonest-out unfrozen enemy near it, stays on its pick when there is none, and flies home to reload
+  only when no enemy is left. It lands with the stats its shot began with.
 - A hit freezes unless a shield took all of it. Each new freeze is counted for the release and for Feeding; a release
   that falls due fires on the tower's next tick, never from inside the hit.
 - The `FrozenLedger` only watches the enemies the tower froze, for the tick their freeze ends, death included: what

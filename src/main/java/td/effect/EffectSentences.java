@@ -22,7 +22,7 @@ final class EffectSentences {
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
                             + " while it lasts, and every tower can see and aim at it");
             case FREEZE -> TermText.of("stops it where it stands and keeps its abilities from firing; ")
-                    .plus(stoppedAgility(kind)).plus("; time under it shortens the next one, and walking wins that back, "
+                    .plus(stoppedAgility()).plus("; time under it shortens the next one, and walking wins that back, "
                             + "more slowly at higher rank");
             case SHIELD -> TermText.of("takes a hit before armor does, until its amount is spent or it runs out; more ")
                     .plus(EnemyStat.SPIRIT).plus(" makes it hold more, shields from different sources add up, and damage over"
@@ -54,7 +54,7 @@ final class EffectSentences {
                     EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN)
                     .plus(", and a tower that picks one target picks it");
             case DAZED -> TermText.of("stops it and keeps its abilities from firing, like ").plus(EffectKind.FREEZE)
-                    .plus("; ").plus(stoppedAgility(kind));
+                    .plus("; ").plus(stoppedAgility());
             case CHARGED -> TermText.of("the next hit on it from another tower lands "
                     + TermNumbers.percent(Effect.CHARGE_DISCHARGE_SHARE)
                     + " of that hit again as magic, twice that on a crit, for the tower that applied it");
@@ -126,10 +126,9 @@ final class EffectSentences {
                 + seconds(ActiveEffects.SLOW_FADE_TICKS));
     }
 
-    /** "Agility -100, so no dodges and more crits on it", the value read from {@code kind}'s rule. */
-    private static TermText stoppedAgility(EffectKind kind) {
-        return changes(TermNumbers.signed(kind.rule().perStack().get(EnemyStat.AGILITY).setTo()), EnemyStat.AGILITY)
-                .plus(", so no dodges and more crits on it");
+    /** What being stopped does to dodging: agility above none counts for nothing, agility already lost stays lost. */
+    private static TermText stoppedAgility() {
+        return TermText.of("it can't dodge: its ").plus(EnemyStat.AGILITY).plus(" counts as none unless it is lower still");
     }
 
     /** "each stack: Armor -5, up to 3 stacks", the change read from {@code kind}'s rule. */

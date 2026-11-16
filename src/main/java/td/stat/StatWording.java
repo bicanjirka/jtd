@@ -45,7 +45,8 @@ public record StatWording(float cellPixels) {
             parts.add(TermNumbers.times(modifier.multiply()));
         }
         if (modifier.hasCap()) {
-            parts.add("at most " + TermNumbers.percent(modifier.capShareOfBase()));
+            parts.add(modifier.capShareOfBase() == 0f ? "at most " + this.value(stat, 0f)
+                    : "at most " + TermNumbers.percent(modifier.capShareOfBase()));
         }
         return String.join(", ", parts);
     }
