@@ -349,16 +349,25 @@ The players differ only in what they may buy:
 | one per judged tower | that tower and its nodes | lose |
 
 `ok`, `FAIL` (the best effort leaks), `BREACH` (a player that must lose clears with no leak) and `WARN` (it leaks
-but keeps a life). The page also lists every node the best effort bought, what share of its spending went to
+but keeps a life).
+
+**Slack.** A level is meant to be barely won by spending all it pays. What the last round pays buys nothing, so
+the measure is what the best effort has unspent as the last round starts, as a share of everything paid before it:
+over a twentieth and its verdict adds `WARN`, with the credits never needed. The Rounds table has the same share
+for every round (`idle`): a round near 0 took all the level had paid, and a run of rounds well above it is where
+the level pays more than it asks.
+
+ The page also lists every node the best effort bought, what share of its spending went to
 upgrades in each third of the level (`WARN` under 15%), each round's purchases and what leaked, and the towers
 left standing. A purchase is judged by what it does on this board against this round, so a new tower, tier or
 level needs no change to the tool, and a tower taken off `TowerSheet.NOT_JUDGED` gets its own player.
 
 Where Iron Crossing stands: the best effort clears with no leak on 16 towers, 71% of its spending in upgrades;
 bare towers lose in round 12; the Mortar alone loses in round 10 on three leaks; every other tower alone loses by
-round 5. The first seven rounds take all the level has paid; from round 8 the best effort holds each round with
-credits to spare and ends with 1008 of the 2265 the level pays unspent. The yardstick's need is about twice what
-a chosen defence costs there, so the late rounds are due to be made stronger for the same pay.
+round 5. The first seven rounds take what the level has paid; from round 8 the best effort holds each round with credits
+to spare, and 733 of the 1990 paid before the last round are idle as it starts, so the slack verdict warns. The
+yardstick's need is about twice what a chosen defence costs there; the late rounds wait to be made stronger for
+the same pay (`TODO.md`).
 
 The best effort is a floor on what the level allows, not a person: it rehearses every round before it buys. A
 level it clears with nothing to spare is one a person loses.
