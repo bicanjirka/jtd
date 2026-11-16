@@ -33,7 +33,7 @@
 - A missile's speed and size are a tower stat (`ProjectileStats`), shown as `TowerStatRow.PROJECTILE_SPEED`
   (cells a second, so it holds at any board scale) and `PROJECTILE_SIZE`, and drawn from the same record.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
-  `AuraTower.buffs`' single "is this an aura" check stays the only role check.
+  `AuraTower.lights`' single "is this a Beacon" check stays the only role check.
 
 ## Targeting
 
@@ -94,16 +94,16 @@
 
 ## Experience
 
-- XP comes only from `ExperienceAwarder`, once per finished walk (`WalkEndListener`): the bounty
+- XP comes only from `ExperienceAwarder` (and a Beacon's Breakthrough, `aura/`), once per finished walk (`WalkEndListener`): the bounty
   to every tower that `reached` the mob, and once to every tower buffing one of those. Never per
   hit, per kill or per tick.
 - `reached` is decided at walk end, never tracked per tick: the mob went live after the tower was
   built (`entryOrdinal` against the count the tower recorded) and its walked stretch passed within
-  `TowerStats.reachReal()` (range before disruption). A tower with no reach on the path (the Aura)
-  returns `false` and earns through the towers it buffs.
+  `TowerStats.reachReal()` (range before disruption). A tower with no reach on the path (the Beacon)
+  returns `false` and earns through the towers it lights.
 - What a tower adds to another's XP is derived like a buff: `Tower.xpBonusFor(earner)` summed over every
-  tower at award time (Kinship, Tutelage, the Apprentice mark), and `Tower.xpSharedWith(earners)` names the towers a
-  tower makes earn what those did (Shared Lessons). The fraction XP cannot hold carries in the earner
+  tower at award time (Kinship, Mentor), and `Tower.xpSharedWith(earners)` names the towers a
+  tower makes earn what those did. The fraction XP cannot hold carries in the earner
   (`earnXp(bounty, bonus)`), so a small bonus is never rounded away.
 - `ExperienceAwarder` runs on a tick for every finished walk, so it stays a pass or two over the towers, never
   a pass over towers inside a pass over towers inside a pass over the reached ones.

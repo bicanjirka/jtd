@@ -75,10 +75,6 @@ public final class TowerModifiers {
         return StatModifiers.of(TowerStat.DISRUPTION_TAKEN, StatModifier.times(factor));
     }
 
-    public static StatModifiers<TowerStat> witherEvery(int ticks) {
-        return StatModifiers.of(TowerStat.WITHER_INTERVAL, StatModifier.setTo(ticks));
-    }
-
     public static StatModifiers<TowerStat> damage(float points) {
         return flat(TowerStat.DAMAGE, DamageUnits.ofPoints(points));
     }
@@ -125,6 +121,10 @@ public final class TowerModifiers {
         return flat(TowerStat.RELOAD, ticks);
     }
 
+    public static StatModifiers<TowerStat> revealTime(int ticks) {
+        return flat(TowerStat.REVEAL_TIME, ticks);
+    }
+
     public static StatModifiers<TowerStat> tollPace(int ticks) {
         return flat(TowerStat.TOLL_PACE, ticks);
     }
@@ -147,10 +147,6 @@ public final class TowerModifiers {
 
     public static StatModifiers<TowerStat> aimStacksPerShot(int stacks) {
         return flat(TowerStat.AIM_STACKS_PER_SHOT, stacks);
-    }
-
-    public static StatModifiers<TowerStat> auraPower(float fraction) {
-        return flat(TowerStat.AURA_POWER, fraction);
     }
 
     private static StatModifiers<TowerStat> flat(TowerStat stat, float amount) {

@@ -75,12 +75,8 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     DRAG_PER_TOLL(0f, 0f, 1f, StatUnit.PERCENT, "Drag/Toll", "Drag per Toll", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    /**
-     * Only ever set, so two sources keep the shorter interval; 0 is never. Neutral: switching it on raises the
-     * number, so neither way reads as better.
-     */
-    WITHER_INTERVAL(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Wither", "Wither interval", StatDirection.NEUTRAL,
-            StatGroup.EFFECTS, Shows.OFF_DEFAULT, true),
+    REVEAL_TIME(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Reveal time", "Reveal time", StatDirection.HIGHER,
+            StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     PROJECTILE_SPEED(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Proj speed", "Projectile speed",
             StatDirection.HIGHER, StatGroup.DELIVERY, Shows.IN_CORE_ROW, false),
     PROJECTILE_SIZE(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Proj size", "Projectile size",
@@ -91,9 +87,7 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.ECONOMY, Shows.OFF_DEFAULT, true),
     /** The share of an enemy's disruption that reaches the tower. */
     DISRUPTION_TAKEN(1f, 0f, 1f, StatUnit.PERCENT, "Jam taken", "Jam taken", StatDirection.LOWER,
-            StatGroup.ECONOMY, Shows.OFF_DEFAULT, true),
-    AURA_POWER(0f, 0f, Float.MAX_VALUE, StatUnit.PERCENT, "Buff power", "Buff power", StatDirection.HIGHER,
-            StatGroup.GIVES, Shows.OFF_DEFAULT, false);
+            StatGroup.ECONOMY, Shows.OFF_DEFAULT, true);
 
     /** No tower stat is read in pixels, so its words never need the board's cell size. */
     private static final StatWording BOARDLESS = new StatWording(Float.NaN);
@@ -217,16 +211,14 @@ public enum TowerStat implements StatKey, StatTerm {
             case TOLL_PACE -> TermText.format("how long an enemy inside takes to build a stack of {}", EffectKind.TOLL);
             case DRAG_PER_TOLL -> TermText.format("how much deeper its {} grows for each stack of {}", EffectKind.DRAGGED,
                     EffectKind.TOLL);
-            case WITHER_INTERVAL -> TermText.format("the pause between its hits that leave {}",
-                    EffectKind.VULNERABLE);
+            case REVEAL_TIME -> TermText.format("how long an enemy keeps the {} its light gives once it leaves",
+                    EffectKind.REVEALED);
             case PROJECTILE_SPEED -> TermText.of("how fast its shots fly, as a share of the usual");
             case PROJECTILE_SIZE -> TermText.of("how big its shots are, as a share of the usual");
             case NEST_CAPACITY -> TermText.of("how many missiles it can store");
             case BOUNTY -> TermText.of("extra cash for each kill it makes");
             case DISRUPTION_TAKEN -> TermText.format("the share of {} it takes from enemies",
                     TowerTerm.JAMMED);
-            case AURA_POWER -> TermText.format("how strong its {} buffs are, as a share of the usual",
-                    TowerTerm.AURA);
         };
     }
 

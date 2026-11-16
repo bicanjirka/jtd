@@ -143,7 +143,6 @@ public abstract class AbstractTower implements Tower {
     private List<HitBonus> armedBonuses = List.of();
     private List<Proc> armedProcs = List.of();
     private float xpRemainder;
-    private int lastWitherTick = Integer.MIN_VALUE;
     private boolean inKillHook;
 
     /**
@@ -202,7 +201,6 @@ public abstract class AbstractTower implements Tower {
     @Override
     public final void endWave() {
         this.shotsBegun = 0;
-        this.lastWitherTick = Integer.MIN_VALUE;
         this.statuses.clear();
         this.disruption = DisruptionPenalty.none();
         this.ownedMechanics().renew();
@@ -381,7 +379,6 @@ public abstract class AbstractTower implements Tower {
         if (result.dodged()) {
             return result;
         }
-        this.wither(enemy, attacker);
         if (wasAlive) {
             this.damageDealt += result.credited();
             if (result.credited() > 0) {
@@ -406,16 +403,6 @@ public abstract class AbstractTower implements Tower {
     private boolean isBlinded() {
         float chance = this.stats.missChance();
         return chance > 0f && this.context.random().nextDouble() < chance;
-    }
-
-    /** Withering Field: the first hit in every interval applies a stack of Vulnerable; periodic damage is no hit. */
-    private void wither(EnemyMob enemy, AttackProfile attacker) {
-        int every = this.stats.witherTicks();
-        if (every > 0 && attacker.delivery() == Delivery.HIT && !enemy.isDead()
-                && (long) this.currentTick - this.lastWitherTick >= every) {
-            this.lastWitherTick = this.currentTick;
-            this.applyStacks(enemy, StackingDebuff.VULNERABLE, 1);
-        }
     }
 
     /**
@@ -1143,7 +1130,7 @@ public abstract class AbstractTower implements Tower {
         if (givers == 0) {
             return Optional.empty();
         }
-        TowerBuffState state = TowerBuffState.of(TowerTerm.AURA, TowerTerm.AURA.describe())
+        TowerBuffState state = TowerBuffState.of(TowerTerm.LIT, TowerTerm.LIT.describe())
                 .withChanges(this.stats.received());
         return Optional.of(givers > 1 ? state.withStacks((int) givers) : state);
     }
@@ -1301,7 +1288,7 @@ public abstract class AbstractTower implements Tower {
         if (!received.equals(StatModifier.none())) {
             int givers = (int) this.context.towers().all().stream()
                     .filter(other -> !other.buffFor(this).get(stat).equals(StatModifier.none())).count();
-            parts.add(new StatPart(TermText.of(TowerTerm.AURA), Math.max(1, givers), stat, received));
+            parts.add(new StatPart(TermText.of(TowerTerm.LIT), Math.max(1, givers), stat, received));
         }
         StatModifier jammed = jam.get(stat);
         if (!jammed.equals(StatModifier.none())) {

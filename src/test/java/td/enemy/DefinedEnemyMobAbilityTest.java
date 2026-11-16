@@ -82,6 +82,18 @@ class DefinedEnemyMobAbilityTest {
     }
 
     @Test
+    void aCasterStandingInDaylightGivesItsAlliesNothing() {
+        DefinedEnemyMob healer = EnemyFixtures.liveMob(this.world, casting("healer", new PeriodicTrigger(CAST_TICK), healAround()));
+        DefinedEnemyMob near = wounded(EnemyFixtures.liveMob(this.world, ALLY));
+        int nearWounded = near.getHealth();
+        this.world.daylight().add(healer.getX(), healer.getY(), 10 * RADIUS);
+
+        EnemyFixtures.tickEnemies(this.world, 1, CAST_TICK + 1);
+
+        assertThat(near.getHealth()).isEqualTo(nearWounded);
+    }
+
+    @Test
     void aRadiusAbilityNeverReachesItsCaster() {
         DefinedEnemyMob healer = wounded(
                 EnemyFixtures.liveMob(this.world, casting("healer", new PeriodicTrigger(CAST_TICK), healAround())));

@@ -95,8 +95,11 @@ final class MobAbilityContext implements AbilityContext {
         }
     }
 
-    /** @return how many it reached */
+    /** @return how many it reached: none from a caster in daylight */
     private int applyToOthersInRadius(EffectTemplate template, float radius) {
+        if (this.caster.inDaylight()) {
+            return 0;
+        }
         float radius2 = radius * radius;
         double selfX = this.caster.getX();
         double selfY = this.caster.getY();

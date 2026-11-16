@@ -1,129 +1,173 @@
 package td.tower;
 
+import td.damage.Damage;
+import td.damage.DamageUnits;
+import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.StackingDebuff;
+import td.enemy.EnemyMob;
 import td.enemy.EnemyWalk;
-import td.stat.StatModifier;
 import td.stat.StatModifiers;
 import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.aura.ApprenticeMechanic;
 import td.tower.aura.AuraMechanic;
-import td.tower.aura.AuraSpec;
-import td.tower.aura.ChosenMechanic;
-import td.tower.aura.FarKinshipMechanic;
+import td.tower.aura.BreakthroughMechanic;
+import td.tower.aura.DaylightMechanic;
+import td.tower.aura.GlareMechanic;
 import td.tower.aura.KinshipMechanic;
-import td.tower.aura.KinshipStrengthMechanic;
-import td.tower.aura.RallyMechanic;
-import td.tower.aura.RallyRule;
-import td.tower.aura.SharedLessonsMechanic;
-import td.tower.aura.TutelageMechanic;
-import td.tower.mortar.PathLine;
+import td.tower.aura.LastLightMechanic;
+import td.tower.aura.LightSpec;
+import td.tower.aura.MentorMechanic;
+import td.tower.aura.PrismMark;
+import td.tower.aura.PrismMechanic;
+import td.tower.aura.RingleaderMechanic;
+import td.tower.aura.SearchlightMechanic;
+import td.tower.aura.Spotlight;
+import td.tower.pulse.PulseSpec;
+import td.tower.splash.SoulbrandMechanic;
+import td.tower.splash.StaticMechanic;
+import td.tower.splash.TagLedger;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.RangeNodes;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
-import td.util.PathRuntime;
 import td.util.ThreadConfined;
 import td.util.TickRate;
-import td.wave.Vec2;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static td.tower.upgrade.MechanicCatalogue.entry;
+
 /**
- * Never attacks; contributes stat modifiers to other towers whose centre is within its range.
- * Several auras stack additively.
+ * The Beacon: a lantern that never attacks. Its light reveals every enemy in it, and every other tower whose centre
+ * is in it is Lit and takes less of the jam and the blinding. It gives no damage, range or fire rate; what its nodes
+ * add is a counter (Daylight, Glare, Sanctuary), a direction (the Spotlight), time (the Lessons) or every Lit type's
+ * mark (Prism). Lights that overlap stack, each as if it stood alone.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class AuraTower extends AbstractTower {
 
-    public static final int PRICE = 20;
+    public static final int PRICE = 15;
     public static final float DAMAGE_POINTS = 0f;
-    public static final float RANGE = 1.5f;
-    public static final float DEFAULT_POWER = 0.2f;
+    /** The light's radius; no node changes it. */
+    public static final float RANGE = 2.5f;
+    /** The share of the jam and the blinding a Lit tower still takes. */
+    public static final float LIT_JAM_TAKEN = 0.66f;
 
-    /** The share of a jammer's effect that still reaches a tower in range. */
-    private static final float DISRUPTION_LEFT = 0.5f;
-    /** Rally: the spot's size, what stepping on it gives, for how long, and how soon it can be used again. */
+    /** Steady Light halves what the bare light lets through. */
+    private static final float STEADY_JAM_FACTOR = 0.5f;
+    private static final int REVEAL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    private static final int AFTERGLOW_TICKS = Math.round(2f * TickRate.TICKS_PER_SECOND);
+    /** How long what the light holds an enemy to lasts once it leaves: Priority, Glare's Expose, Prism's Chill. */
+    private static final int LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
+    private static final int CHILL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
 
-    private static final UpgradeNode AMPLIFYING_CORE_1 = UpgradeNode.of("aura.head.amplifying_core.1", "Amplifying Core", 20)
-            .withModifiers(TowerModifiers.auraPower(0.1f));
-    private static final UpgradeNode AMPLIFYING_CORE_2 = UpgradeNode.of("aura.head.amplifying_core.2", "Amplifying Core II", 30)
-            .after(AMPLIFYING_CORE_1)
-            .withModifiers(TowerModifiers.auraPower(0.1f))
-            .withEmission(TowerModifiers.attackSpeed(0.1f))
-            .inTier(1);
-    private static final UpgradeNode KEEN_EDGE = UpgradeNode.of("aura.head.amplifying_core.3", "Keen Edge", 50)
-            .withEmission(TowerModifiers.critMultiplier(0.5f))
-            .after(AMPLIFYING_CORE_2)
-            .inTier(2);
-    private static final UpgradeNode BROADCAST_1 = UpgradeNode.of("aura.head.broadcast.1", "Broadcast", 20)
-            .withModifiers(TowerModifiers.range(0.45f));
-    private static final UpgradeNode BROADCAST_2 = UpgradeNode.of("aura.head.broadcast.2", "Broadcast II", 30)
-            .after(BROADCAST_1)
-            .withEmission(TowerModifiers.buffDuration(1f).plus(TowerModifiers.disruptionTaken(0.5f)))
-            .inTier(1);
-    private static final UpgradeNode CONDUIT = UpgradeNode.of("aura.head.broadcast.3", "Conduit", 50)
-            .withEmission(TowerModifiers.effectDuration(0.3f))
-            .after(BROADCAST_2)
-            .inTier(2);
-    private static final UpgradeNode TUTELAGE_1 = UpgradeNode.of("aura.extra.tutelage.1", "Tutelage", 16);
-    private static final UpgradeNode SHARED_LESSONS = UpgradeNode.of("aura.extra.tutelage.2", "Shared Lessons", 24)
-            .after(TUTELAGE_1)
-            .inTier(1);
-    private static final UpgradeNode APPRENTICE = UpgradeNode.of("aura.extra.tutelage.3", "Apprentice", 40)
-            .after(SHARED_LESSONS)
-            .inTier(2);
-    private static final UpgradeNode WITHERING_FIELD = UpgradeNode.of("aura.special.withering_field", "Withering Field", 80)
-            .withEmission(TowerModifiers.witherEvery(200))
+    private static final UpgradeNode STEADY_LIGHT = UpgradeNode.of("aura.steady_light", "Steady Light", 11)
+            .withEmission(TowerModifiers.disruptionTaken(STEADY_JAM_FACTOR));
+    private static final UpgradeNode AFTERGLOW = UpgradeNode.of("aura.afterglow", "Afterglow", 1)
+            .withModifiers(TowerModifiers.revealTime(AFTERGLOW_TICKS));
+
+    private static final UpgradeNode SEARCHLIGHT = UpgradeNode.of("aura.searchlight", "Searchlight", 35).inTier(1);
+    private static final UpgradeNode LAST_LIGHT = UpgradeNode.of("aura.last_light", "Last Light", 35).inTier(1);
+    private static final UpgradeNode RINGLEADER = UpgradeNode.of("aura.ringleader", "Ringleader", 35).inTier(1);
+    private static final UpgradeNode KINSHIP = UpgradeNode.of("aura.kinship", "Kinship", 21).inTier(1);
+    private static final UpgradeNode MENTOR = UpgradeNode.of("aura.mentor", "Mentor", 21).inTier(1);
+    private static final UpgradeNode BREAKTHROUGH = UpgradeNode.of("aura.breakthrough", "Breakthrough", 21).inTier(1);
+
+    private static final UpgradeNode DAYLIGHT = UpgradeNode.of("aura.daylight", "Daylight", 69).inTier(2);
+    private static final UpgradeNode GLARE = UpgradeNode.of("aura.glare", "Glare", 69).inTier(2);
+
+    private static final UpgradeNode SANCTUARY = UpgradeNode.of("aura.sanctuary", "Sanctuary", 50)
+            .withEmission(TowerModifiers.disruptionTaken(0f))
             .inTier(3);
-    private static final UpgradeNode CHOSEN = UpgradeNode.of("aura.special.chosen", "Chosen", 80)
-            .inTier(3);
-    private static final UpgradeNode RALLY = UpgradeNode.of("aura.special.rally", "Rally", 80)
-            .inTier(3);
+    private static final UpgradeNode PRISM = UpgradeNode.of("aura.prism", "Prism", 89).inTier(3);
 
-    private static final UpgradeNode ATTUNE = UpgradeNode.of("base.attune", "Attune", 16);
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_LIGHT, AFTERGLOW))
+            .with(SEARCHLIGHT, LAST_LIGHT, RINGLEADER, KINSHIP, MENTOR, BREAKTHROUGH,
+                    DAYLIGHT, GLARE,
+                    SANCTUARY, PRISM)
+            .withCluster(UpgradeCluster.of("Spotlight", SEARCHLIGHT, LAST_LIGHT, RINGLEADER))
+            .withCluster(UpgradeCluster.of("Lessons", KINSHIP, MENTOR, BREAKTHROUGH))
+            .withCluster(UpgradeCluster.of("Edge of light", DAYLIGHT, GLARE));
 
-    private static final UpgradeTree TREE = UpgradeTree.of(RangeNodes.of(PRICE, RANGE).subList(0, 2))
-            .with(ATTUNE, AMPLIFYING_CORE_1, BROADCAST_1, TUTELAGE_1,
-                    AMPLIFYING_CORE_2, BROADCAST_2, SHARED_LESSONS,
-                    KEEN_EDGE, CONDUIT, APPRENTICE,
-                    WITHERING_FIELD, CHOSEN, RALLY)
-            .withCluster(UpgradeCluster.of("Core", AMPLIFYING_CORE_1, BROADCAST_1))
-            .withCluster(UpgradeCluster.of("Special", WITHERING_FIELD, CHOSEN, RALLY));
+    private static final MechanicCatalogue<AuraMechanic> MECHANICS = MechanicCatalogue.of(
+            entry(SEARCHLIGHT.id(), SearchlightMechanic::new),
+            entry(LAST_LIGHT.id(), LastLightMechanic::new),
+            entry(RINGLEADER.id(), RingleaderMechanic::new),
+            entry(KINSHIP.id(), KinshipMechanic::new),
+            entry(MENTOR.id(), MentorMechanic::new),
+            entry(BREAKTHROUGH.id(), BreakthroughMechanic::new),
+            entry(DAYLIGHT.id(), DaylightMechanic::new),
+            entry(GLARE.id(), GlareMechanic::new),
+            entry(PRISM.id(), PrismMechanic::new));
 
-    private static final MechanicCatalogue<AuraMechanic> MECHANICS = MechanicCatalogue.<AuraMechanic>empty()
-            .with(ATTUNE.id(), KinshipMechanic::new)
-            .with(BROADCAST_1.id(), FarKinshipMechanic::new)
-            .with(AMPLIFYING_CORE_1.id(), KinshipStrengthMechanic::new)
-            .with(TUTELAGE_1.id(), TutelageMechanic::new)
-            .with(SHARED_LESSONS.id(), SharedLessonsMechanic::new)
-            .with(APPRENTICE.id(), ApprenticeMechanic::new)
-            .with(CHOSEN.id(), ChosenMechanic::new)
-            .with(RALLY.id(), RallyMechanic::new);
+    /** The mark each kind of tower leaves, as Prism carries it; none for a tower that leaves none. */
+    private static final TowerVisitor<Optional<PrismMark>> MARK_OF = new TowerVisitor<>() {
+        @Override
+        public Optional<PrismMark> visitSniperTower(SniperTower tower) {
+            return Optional.of(PrismMark.SUNDER);
+        }
+
+        @Override
+        public Optional<PrismMark> visitSplashTower(SplashTower tower) {
+            return switch (tower.fork()) {
+                case NONE -> Optional.empty();
+                case STORMCALLER -> Optional.of(PrismMark.STATIC);
+                case HEXER -> Optional.of(PrismMark.SOULBRAND);
+            };
+        }
+
+        @Override
+        public Optional<PrismMark> visitPulseTower(PulseTower tower) {
+            return Optional.of(PrismMark.TOLL);
+        }
+
+        @Override
+        public Optional<PrismMark> visitAuraTower(AuraTower tower) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<PrismMark> visitMortarTower(MortarTower tower) {
+            return Optional.of(PrismMark.CRACK);
+        }
+
+        @Override
+        public Optional<PrismMark> visitSeekerTower(SeekerTower tower) {
+            return Optional.of(PrismMark.CHILL);
+        }
+
+        @Override
+        public Optional<PrismMark> visitCinderTower(CinderTower tower) {
+            return Optional.of(PrismMark.SCORCH);
+        }
+    };
 
     private final OwnedMechanics<AuraMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     // Both threads ask for the spec; the fold is cached per mechanic list, which a purchase replaces whole.
-    private volatile FoldedSpec folded = new FoldedSpec(List.of(), AuraSpec.none());
-    private Tower lastChosen;
-    private int rallyReadyAt;
-    private Vec2 rallySpot;
+    private volatile FoldedSpec folded = new FoldedSpec(List.of(), LightSpec.bare());
+    /** The enemy the Spotlight holds; seen by the frame build, so published. */
+    private volatile Optional<EnemyMob> held = Optional.empty();
+    /** The enemies that entered the light hidden this tick, for the reveal ray; published whole. */
+    private volatile List<EnemyMob> revealedNow = List.of();
+    /** The enemies this light's Static and Soulbrand tag, one stack per light, settled by the Burst's rules. */
+    /** The enemies inside at the last tick: one entering gets Prism's stacks. Membership only. */
+    private Set<EnemyMob> lastInside = Collections.newSetFromMap(new IdentityHashMap<>());
+    private TagLedger lightStatic = new TagLedger();
+    private TagLedger lightSoulbrand = new TagLedger();
 
     public AuraTower(GameWorld context, int x, int y) {
-        this(context, x, y, DEFAULT_POWER);
-    }
-
-    /** An aura with a non-default buff strength. */
-    public AuraTower(GameWorld context, int x, int y, float power) {
-        super(TowerFactory.Type.AURA, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0).with(TowerStat.AURA_POWER, power),
-                context, x, y);
+        super(TowerFactory.Type.AURA, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0)
+                .with(TowerStat.REVEAL_TIME, REVEAL_TICKS), context, x, y);
     }
 
     @Override
@@ -136,14 +180,14 @@ public final class AuraTower extends AbstractTower {
         return TREE;
     }
 
-    /** What the owned mechanics make this aura do, folded once per set of mechanics. */
-    private AuraSpec spec() {
+    /** What the owned mechanics make the light do, folded once per set of mechanics. */
+    private LightSpec spec() {
         List<AuraMechanic> owned = this.mechanics.all();
         FoldedSpec last = this.folded;
         if (last.mechanics() == owned) {
             return last.spec();
         }
-        AuraSpec spec = AuraSpec.none();
+        LightSpec spec = LightSpec.bare();
         for (AuraMechanic mechanic : owned) {
             spec = mechanic.refineSpec(spec);
         }
@@ -163,24 +207,16 @@ public final class AuraTower extends AbstractTower {
 
     @Override
     protected StatModifiers<TowerStat> gives() {
-        return this.buff();
+        return this.light();
     }
 
-    /** What this aura gives a tower that gets no Kinship strength from it. */
-    public StatModifiers<TowerStat> buff() {
-        return this.emissionAt(this.stats().value(TowerStat.AURA_POWER), this.spec());
+    /** What a Lit tower takes from this light: the share of the jam and the blinding it lets through. */
+    public StatModifiers<TowerStat> light() {
+        return TowerModifiers.disruptionTaken(LIT_JAM_TAKEN).plus(this.upgrades().totalEmission());
     }
 
-    private StatModifiers<TowerStat> emissionAt(float strength, AuraSpec spec) {
-        StatModifiers<TowerStat> emission = TowerModifiers.damagePercent(strength)
-                .plus(TowerModifiers.rangePercent(strength))
-                .plus(TowerModifiers.disruptionTaken(DISRUPTION_LEFT))
-                .plus(this.upgrades().totalEmission());
-        return spec.chosen() ? emission.scaledBy(spec.chosenStrength()) : emission;
-    }
-
-    /** Another tower within range. Never itself, and never another aura. */
-    private boolean inRange(Tower other) {
+    /** Another tower whose centre is in the light. Never itself, and never another Beacon. */
+    private boolean lights(Tower other) {
         if (other == this || other.getType() == TowerFactory.Type.AURA) {
             return false;
         }
@@ -189,194 +225,240 @@ public final class AuraTower extends AbstractTower {
         return (dx * dx + dy * dy) < this.rangeReal2();
     }
 
-    /** Whether this aura marks the buffed tower with the least XP; the mark is {@link #apprentice()}. */
-    public boolean mentorsApprentice() {
-        return this.spec().apprenticeXp() > 0f;
+    @Override
+    public StatModifiers<TowerStat> buffFor(Tower other) {
+        return this.lights(other) ? this.light() : StatModifiers.none();
     }
 
-    /** A tower in range, or with Chosen only the most experienced one. */
-    private boolean buffs(Tower other) {
-        return this.inRange(other) && (!this.spec().chosen() || other == this.chosen());
-    }
-
-    /** The tower in range with the most XP, the earliest built on a tie; null when none is in range. */
-    public Tower chosen() {
-        Tower most = null;
+    /** The towers in the light, in the order they were built, derived on each call rather than tracked. */
+    public List<Tower> litTowers() {
+        List<Tower> lit = new ArrayList<>();
         for (Tower tower : this.context.towers().all()) {
-            if (this.inRange(tower) && (most == null || tower.experience().xp() > most.experience().xp())) {
-                most = tower;
+            if (this.lights(tower)) {
+                lit.add(tower);
             }
         }
-        return most;
+        return lit;
     }
 
-    /** An aura has no reach on the path: it earns through the towers it buffs. */
+    /** The Beacon has no reach on the path: it earns through the towers it lights. */
     @Override
     public boolean reached(EnemyWalk walk) {
         return false;
     }
 
+    /** Kinship or Mentor, as the Lessons pick makes it; nothing for a tower out of the light. */
     @Override
-    public StatModifiers<TowerStat> buffFor(Tower other) {
-        if (!this.buffs(other)) {
-            return StatModifiers.none();
+    public float xpBonusFor(Tower earner) {
+        if (!this.lights(earner)) {
+            return 0f;
         }
-        AuraSpec spec = this.spec();
-        float strength = this.stats().value(TowerStat.AURA_POWER) + this.kinshipStrengthFor(other, spec);
-        return this.emissionAt(strength, spec);
+        return switch (this.spec().lesson()) {
+            case KINSHIP -> KinshipMechanic.xpFor(this.otherTypesFor(earner));
+            case MENTOR -> earner == this.apprentice().orElse(null) ? MentorMechanic.XP : 0f;
+            case NONE, BREAKTHROUGH -> 0f;
+        };
     }
 
-    /** The other tower types Kinship counts for {@code other}: not its own, not an aura, within reach. */
-    private int kinshipTypesFor(Tower other) {
-        Set<TowerFactory.Type> types = this.typesInReach();
-        types.remove(other.getType());
+    /** The tower types in the light other than {@code earner}'s. */
+    private int otherTypesFor(Tower earner) {
+        // Membership only: the count is all that is read.
+        Set<TowerFactory.Type> types = EnumSet.noneOf(TowerFactory.Type.class);
+        for (Tower tower : this.litTowers()) {
+            types.add(tower.getType());
+        }
+        types.remove(earner.getType());
         return types.size();
     }
 
-    /** Kinship's reach is the aura's range and whatever its rule adds. */
-    private Set<TowerFactory.Type> typesInReach() {
-        Set<TowerFactory.Type> types = EnumSet.noneOf(TowerFactory.Type.class);
-        double reach = this.rangeReal() + this.spec().kinship().extraReachCells() * this.context.getBoard().scale();
-        for (Tower tower : this.context.towers().all()) {
-            double dx = this.centerX - tower.getX();
-            double dy = this.centerY - tower.getY();
-            if (tower != this && tower.getType() != TowerFactory.Type.AURA && dx * dx + dy * dy < reach * reach) {
-                types.add(tower.getType());
-            }
-        }
-        return types;
-    }
-
-    /** What Kinship adds to the buff's strength for {@code other}, when its rule strengthens it. */
-    private float kinshipStrengthFor(Tower other, AuraSpec spec) {
-        if (!spec.kinship().active() || spec.kinship().strengthPerType() == 0f) {
-            return 0f;
-        }
-        return spec.kinship().strengthFor(this.kinshipTypesFor(other));
-    }
-
-    /** Kinship, Tutelage and the Apprentice mark, added together; nothing for a tower this aura does not buff. */
-    @Override
-    public float xpBonusFor(Tower earner) {
-        if (!this.buffs(earner)) {
-            return 0f;
-        }
-        AuraSpec spec = this.spec();
-        float bonus = spec.tutelageXp();
-        if (spec.kinship().active()) {
-            bonus += spec.kinship().xpFor(this.kinshipTypesFor(earner));
-        }
-        if (spec.apprenticeXp() > 0f && earner == this.apprentice()) {
-            bonus += spec.apprenticeXp();
-        }
-        return bonus;
-    }
-
-    @Override
-    public List<Tower> xpSharedWith(List<Tower> earners) {
-        if (!this.spec().sharesLessons() || earners.stream().noneMatch(this::buffs)) {
-            return List.of();
-        }
-        return this.buffedTowers();
-    }
-
-    /** The buffed tower with the least XP, the earliest built on a tie; null when this aura buffs none. */
-    public Tower apprentice() {
+    /** The Lit tower with the least XP, the earliest built on a tie; empty when the light holds none. */
+    public Optional<Tower> apprentice() {
         Tower least = null;
-        for (Tower tower : this.buffedTowers()) {
+        for (Tower tower : this.litTowers()) {
             if (least == null || tower.experience().xp() < least.experience().xp()) {
                 least = tower;
             }
         }
-        return least;
+        return Optional.ofNullable(least);
     }
 
-    /** The towers this aura buffs, derived on each call rather than tracked. */
-    public List<Tower> buffedTowers() {
-        List<Tower> buffed = new ArrayList<>();
-        for (Tower tower : this.context.towers().all()) {
-            if (this.buffs(tower)) {
-                buffed.add(tower);
-            }
+    /** Whether Mentor marks the Lit tower with the least XP. */
+    public boolean mentors() {
+        return this.spec().lesson() == LightSpec.Lesson.MENTOR;
+    }
+
+    /** Whether its light carries Daylight, where an enemy gives its allies no aura. */
+    public boolean givesDaylight() {
+        return this.spec().edge() == LightSpec.Edge.DAYLIGHT;
+    }
+
+    /** Whether its light Exposes what stands in it. */
+    public boolean glares() {
+        return this.spec().edge() == LightSpec.Edge.GLARE;
+    }
+
+    /** The enemy the Spotlight holds now, if any. */
+    public Optional<EnemyMob> heldEnemy() {
+        return this.held;
+    }
+
+    /** The hidden enemies the light revealed on entering it this tick. */
+    public List<EnemyMob> revealedNow() {
+        return this.revealedNow;
+    }
+
+    /** The marks Prism carries now, one per Lit tower type that leaves one, in the pane's order; none without it. */
+    public List<PrismMark> prismMarks() {
+        if (!this.spec().prism()) {
+            return List.of();
         }
-        return buffed;
-    }
-
-    /** Rally is ready again; who is Chosen follows the XP, which a wave's end keeps. */
-    @Override
-    protected void endFight() {
-        this.rallyReadyAt = 0;
+        Set<PrismMark> marks = EnumSet.noneOf(PrismMark.class);
+        for (Tower tower : this.litTowers()) {
+            tower.accept(MARK_OF).ifPresent(marks::add);
+        }
+        return List.copyOf(marks);
     }
 
     /**
-     * Chosen follows whoever has the most XP, and the buffs are derived, so a change of hero republishes
-     * the stats; Rally watches its spot.
+     * The light's tick: Daylight's circle, the reveal and Glare on every enemy inside, the Spotlight's hold, Prism's
+     * marks and what its tags settle, and Breakthrough's lessons.
      */
     public void doTick(int gameTime) {
-        AuraSpec spec = this.spec();
-        if (spec.chosen()) {
-            Tower chosen = this.chosen();
-            if (chosen != this.lastChosen) {
-                this.lastChosen = chosen;
-                this.context.towers().all().forEach(Tower::recalculateStats);
-            }
+        LightSpec spec = this.spec();
+        if (spec.edge() == LightSpec.Edge.DAYLIGHT) {
+            this.context.daylight().add(this.centerX, this.centerY, this.rangeReal());
         }
-        RallyRule rally = spec.rally();
-        if (rally.isActive() && gameTime >= this.rallyReadyAt && this.enemyOnRallySpot(rally)) {
-            this.rallyReadyAt = gameTime + rally.cooldownTicks();
-            for (Tower buffed : this.buffedTowers()) {
-                buffed.receiveStatus(TowerStatus.timed(TowerTerm.RALLY, TowerModifiers.attackSpeed(rally.attackSpeed()), rally.ticks()));
+        List<EnemyMob> inside = InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal())
+                .matching(this.context.enemies());
+        int revealTicks = Math.round(this.stats().value(TowerStat.REVEAL_TIME));
+        List<EnemyMob> revealed = new ArrayList<>();
+        List<PrismMark> marks = this.prismMarks();
+        Set<EnemyMob> nowInside = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (EnemyMob enemy : inside) {
+            nowInside.add(enemy);
+            boolean entered = !this.lastInside.contains(enemy);
+            if (enemy.isHidden()) {
+                revealed.add(enemy);
+            }
+            this.reveal(enemy, revealTicks);
+            if (spec.edge() == LightSpec.Edge.GLARE) {
+                this.applyEffect(enemy, sink -> Effect.exposed(LINGER_TICKS, sink));
+            }
+            marks.forEach(mark -> this.carry(mark, enemy, entered));
+        }
+        this.lastInside = nowInside;
+        this.revealedNow = List.copyOf(revealed);
+        this.hold(spec.spotlight(), inside);
+        this.settleTags();
+        if (spec.lesson() == LightSpec.Lesson.BREAKTHROUGH) {
+            this.teachBreakthroughs(gameTime);
+        }
+    }
+
+    /** The beam keeps its enemy while it lives and stays in the light, then picks again. */
+    private void hold(Spotlight spotlight, List<EnemyMob> inside) {
+        if (!spotlight.isActive()) {
+            this.held = Optional.empty();
+            return;
+        }
+        Optional<EnemyMob> keep = this.held.filter(enemy -> !enemy.isDead() && inside.contains(enemy));
+        Optional<EnemyMob> next = keep.isPresent() ? keep
+                : spotlight.selector(this.context.getBoard().scale()).selectFrom(inside);
+        next.ifPresent(enemy -> this.applyEffect(enemy, sink -> Effect.priority(LINGER_TICKS, sink)));
+        this.held = next;
+    }
+
+    /**
+     * The light's stack of a mark that stacks lands on top of what the enemy carries, up to the mark's own cap, as it
+     * enters, and again while it stays once the mark has worn off it; a timed mark is renewed while it stays.
+     */
+    private void carry(PrismMark mark, EnemyMob enemy, boolean entered) {
+        switch (mark) {
+            case SUNDER -> {
+                if (entered || enemy.effectStacks(EffectKind.SUNDERED) == 0) {
+                    this.applyStacks(enemy, StackingDebuff.SUNDERED, mark.stacks());
+                }
+            }
+            case SCORCH -> {
+                if (entered || enemy.effectStacks(EffectKind.SCORCHED) == 0) {
+                    this.applyEffect(enemy, sink -> Effect.scorched(mark.stacks()));
+                }
+            }
+            case TOLL -> {
+                if (entered || enemy.effectStacks(EffectKind.TOLL) == 0) {
+                    this.applyEffect(enemy, sink -> Effect.toll(mark.stacks(), PulseSpec.TOLL_CAP));
+                }
+            }
+            case CRACK -> this.applyEffect(enemy, sink -> Effect.cracked(MortarTower.CRACKED_TICKS, sink));
+            case CHILL -> this.applyEffect(enemy, sink -> Effect.chill(PrismMark.CHILL_STRENGTH, CHILL_TICKS, sink));
+            case STATIC -> this.lightStatic.tag(enemy);
+            case SOULBRAND -> this.lightSoulbrand.tag(enemy);
+        }
+    }
+
+    /** The light's Static discharges once badly hurt and its Soulbrand bursts once killed, as the Burst's do. */
+    private void settleTags() {
+        this.lightStatic.take(enemy -> enemy.isDead() || enemy.getHealthFraction() <= StaticMechanic.DISCHARGE_AT)
+                .stream()
+                .filter(enemy -> !enemy.isDead())
+                .forEach(enemy -> this.dealDamage(enemy,
+                        Damage.magic(DamageUnits.ofPoints(StaticMechanic.DISCHARGE_POINTS)),
+                        this.stats().attack().withoutCrits()));
+        this.lightSoulbrand.take(EnemyMob::isDead).stream()
+                .filter(EnemyMob::wasKilled)
+                .forEach(this::burstSoul);
+    }
+
+    private void burstSoul(EnemyMob dead) {
+        float reach = SoulbrandMechanic.BURST_CELLS * this.context.getBoard().scale();
+        InRangeTargetQuery.everyone((int) dead.getX(), (int) dead.getY(), reach)
+                .matching(this.context.enemies()).stream()
+                .filter(enemy -> enemy != dead && !enemy.isDead())
+                .forEach(enemy -> this.dealDamage(enemy, Damage.magic(DamageUnits.ofPoints(SoulbrandMechanic.BURST_POINTS)),
+                        this.stats().attack().withoutCrits()));
+    }
+
+    /** Breakthrough: a Lit tower whose tier rose this tick teaches every other Lit tower. */
+    private void teachBreakthroughs(int gameTime) {
+        List<Tower> lit = this.litTowers();
+        for (Tower opener : lit) {
+            if (opener.tierRise().ticksSince(gameTime, 0).isPresent()) {
+                lit.stream().filter(tower -> tower != opener).forEach(tower -> tower.earnXp(BreakthroughMechanic.XP));
             }
         }
     }
 
-    private boolean enemyOnRallySpot(RallyRule rally) {
-        Optional<Vec2> spot = this.rallySpot();
-        if (spot.isEmpty()) {
-            return false;
-        }
-        float radius = rally.spotCells() * this.context.getBoard().scale();
-        return InRangeTargetQuery.everyone((int) Math.round(spot.get().x()), (int) Math.round(spot.get().y()), radius)
-                .matching(this.context.enemies()).stream().anyMatch(enemy -> !enemy.isDead());
-    }
-
-    /** Rally's spot: the point of the path nearest the aura, found once; empty when the level has no path. */
-    public Optional<Vec2> rallySpot() {
-        if (this.rallySpot == null) {
-            List<td.wave.Path> paths = this.context.level().paths().stream().map(PathRuntime::path).toList();
-            this.rallySpot = PathLine.along(paths, this.centerX, this.centerY, new double[]{0.0}).stream()
-                    .findFirst().orElse(null);
-        }
-        return Optional.ofNullable(this.rallySpot);
+    /** The beam lets go and the light's tags are dropped; what an enemy carries is its own. */
+    @Override
+    protected void endFight() {
+        this.held = Optional.empty();
+        this.revealedNow = List.of();
+        this.lastInside = Collections.newSetFromMap(new IdentityHashMap<>());
+        this.lightStatic = new TagLedger();
+        this.lightSoulbrand = new TagLedger();
     }
 
     @Override
     protected List<AppliedEffect> baseApplies() {
-        List<AppliedEffect> all = new ArrayList<>();
-        all.add(new AppliedEffect(TowerTerm.AURA, List.of(new AppliedEffect.Source(this.displayName(),
-                TermText.of("towers in range gain ").plus(TowerTerm.AURA).plus(": ").plus(TowerStat.DAMAGE)
-                        .plus(" and ").plus(TowerStat.RANGE)
-                        .plus(" " + TermNumbers.signedPercent(this.stats().value(TowerStat.AURA_POWER)) + ", ")
-                        .plus(TowerStat.DISRUPTION_TAKEN.changeText(TowerModifiers.disruptionTaken(DISRUPTION_LEFT).get(TowerStat.DISRUPTION_TAKEN)))))));
-        StatModifier wither = this.upgrades().totalEmission().get(TowerStat.WITHER_INTERVAL);
-        if (wither.hasSetValue()) {
-            all.add(new AppliedEffect(EffectKind.VULNERABLE, List.of(new AppliedEffect.Source(
-                    WITHERING_FIELD.displayName(), TermText.of("each buffed tower's first hit every "
-                            + TermNumbers.seconds(Math.round(wither.setTo()) / TickRate.TICKS_PER_SECOND) + " applies a stack of ")
-                    .plus(EffectKind.VULNERABLE)))));
-        }
-        return all;
+        float seconds = this.stats().value(TowerStat.REVEAL_TIME) / TickRate.TICKS_PER_SECOND;
+        return List.of(new AppliedEffect(EffectKind.REVEALED, List.of(new AppliedEffect.Source(this.displayName(),
+                        TermText.of("every enemy in the ").plus(TowerTerm.LIGHT)
+                                .plus(", while inside and " + TermNumbers.seconds(seconds) + " after")))),
+                new AppliedEffect(TowerTerm.LIT, List.of(new AppliedEffect.Source(this.displayName(),
+                        TermText.of("every other tower in the ").plus(TowerTerm.LIGHT).plus(": ")
+                                .plus(TowerStat.DISRUPTION_TAKEN.changeText(this.light().get(TowerStat.DISRUPTION_TAKEN)))))));
     }
 
     @Override
     protected String description() {
-        return "Never attacks. Several Beacons stack, but a Beacon never buffs another Beacon.";
+        return "Never attacks. Its light shows the hidden and shields the towers in it from jam; a Beacon never "
+                + "lights another Beacon, and lights that overlap stack.";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitAuraTower(this);
     }
 
-    private record FoldedSpec(List<AuraMechanic> mechanics, AuraSpec spec) {
+    private record FoldedSpec(List<AuraMechanic> mechanics, LightSpec spec) {
     }
 }

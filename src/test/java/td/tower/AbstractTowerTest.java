@@ -15,9 +15,9 @@ import td.enemy.HitResult;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.FakeTower;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
-import td.stat.StatModifiers;
 import td.stat.StatTerm;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
@@ -111,132 +111,54 @@ class AbstractTowerTest {
     }
 
     @Test
-    void anAuraTowerAddedToTheBoardBuffsTheTowersInRangeOfIt() {
-        SniperTower tower = new SniperTower(context, 0, 0);
-        context.towers().add(tower);
+    void anEmissionReachesATowerBuiltAfterItsEmitter() {
+        this.context.towers().add(FakeTower.offering(this.context, 0, 0, UpgradeTree.none())
+                .giving(TowerModifiers.damagePercent(0.2f)));
 
-        // Placing the aura applies the buff; its constructor has no side effects.
-        context.towers().add(new AuraTower(context, 0, 0));
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(tower);
 
-        float expectedMultiplier = 1f + AuraTower.DEFAULT_POWER;
-        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
-        assertThat(tower.damageCurrent()).isNotEqualTo(tower.damageBase);
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * 1.2f));
     }
 
     @Test
-    void aFlatRangeNodeIsAmplifiedByANearbyAura() {
+    void aFlatRangeNodeIsAmplifiedByAReceivedRangeShare() {
+        GameWorld elsewhere = WorldFixtures.newWorld();
         SniperTower buffed = new SniperTower(this.context, 0, 0);
-        SniperTower alone = new SniperTower(this.context, 100, 100);
+        SniperTower alone = new SniperTower(elsewhere, 0, 0);
         this.context.towers().add(buffed);
-        this.context.towers().add(alone);
-        this.context.towers().add(new AuraTower(this.context, 0, 0));
+        elsewhere.towers().add(alone);
+        TowerFixtures.buffed(buffed, this.context, TowerModifiers.rangePercent(0.2f));
 
         UpgradePaths.buy(buffed, this.context, "Long Barrel");
-        UpgradePaths.buy(alone, this.context, "Long Barrel");
+        UpgradePaths.buy(alone, elsewhere, "Long Barrel");
 
-        assertThat(buffed.stats().range()).isCloseTo(alone.stats().range() * (1f + AuraTower.DEFAULT_POWER), within(1e-5f));
+        assertThat(buffed.stats().range()).isCloseTo(alone.stats().range() * 1.2f, within(1e-5f));
     }
 
     @Test
-    void anAuraTowerBuffsATowerBuiltAfterItJustTheSame() {
-        context.towers().add(new AuraTower(context, 0, 0));
+    void twoEmittersSharesAddUp() {
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(tower);
 
-        SniperTower tower = new SniperTower(context, 0, 0);
-        context.towers().add(tower);
+        TowerFixtures.buffed(tower, this.context, TowerModifiers.damagePercent(0.1f));
+        TowerFixtures.buffed(tower, this.context, TowerModifiers.damagePercent(0.3f));
 
-        float expectedMultiplier = 1f + AuraTower.DEFAULT_POWER;
-        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * (1f + 0.1f + 0.3f)));
     }
 
     @Test
-    void anAuraTowerDoesNotBuffAnotherAuraTowerOrItself() {
-        AuraTower first = new AuraTower(context, 0, 0);
-        context.towers().add(first);
-        AuraTower second = new AuraTower(context, 0, 0);
-        context.towers().add(second);
+    void sellingAnEmitterRevertsWhatItWasGiving() {
+        this.context.economy().startEconomy(100, 5);
+        SniperTower tower = new SniperTower(this.context, 0, 0);
+        this.context.towers().add(tower);
+        FakeTower emitter = FakeTower.offering(this.context, 0, 0, UpgradeTree.none())
+                .giving(TowerModifiers.damagePercent(0.2f));
+        this.context.towers().add(emitter);
 
-        assertThat(first.buffFor(second)).isEqualTo(StatModifiers.none());
-        assertThat(first.buffFor(first)).isEqualTo(StatModifiers.none());
-    }
-
-    @Test
-    void twoAuraTowersStackAdditively() {
-        SniperTower tower = new SniperTower(context, 0, 0);
-        context.towers().add(tower);
-
-        context.towers().add(new AuraTower(context, 0, 0));
-        context.towers().add(new AuraTower(context, 0, 0));
-
-        float expectedMultiplier = 1f + 2 * AuraTower.DEFAULT_POWER;
-        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
-    }
-
-    @Test
-    void unequalAuraTowersStackTheirDifferentStrengths() {
-        SniperTower tower = new SniperTower(context, 0, 0);
-        context.towers().add(tower);
-
-        context.towers().add(new AuraTower(context, 0, 0, 0.1f));
-        context.towers().add(new AuraTower(context, 0, 0, 0.3f));
-
-        float expectedMultiplier = 1f + 0.1f + 0.3f;
-        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
-    }
-
-    @Test
-    void sellingTheAuraTowerRevertsTheBuffItWasGiving() {
-        context.economy().startEconomy(100, 5);
-        SniperTower tower = new SniperTower(context, 0, 0);
-        context.towers().add(tower);
-        AuraTower aura = new AuraTower(context, 0, 0);
-        context.towers().add(aura);
-
-        context.towers().sell(aura);
+        this.context.towers().sell(emitter);
 
         assertThat(tower.damageCurrent()).isEqualTo(tower.damageBase);
-    }
-
-    @Test
-    void sellingOneOfTwoAuraTowersLeavesTheOthersBuffInPlace() {
-        context.economy().startEconomy(100, 5);
-        SniperTower tower = new SniperTower(context, 0, 0);
-        context.towers().add(tower);
-        AuraTower sold = new AuraTower(context, 0, 0);
-        context.towers().add(sold);
-        context.towers().add(new AuraTower(context, 0, 0));
-
-        context.towers().sell(sold);
-
-        float expectedMultiplier = 1f + AuraTower.DEFAULT_POWER;
-        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
-    }
-
-    @Test
-    void towerOutsideAuraRangeIsNotBuffed() {
-        SniperTower near = new SniperTower(context, 0, 0);
-        context.towers().add(near);
-        // far outside the aura's range
-        SniperTower far = new SniperTower(context, 100, 100);
-        context.towers().add(far);
-
-        context.towers().add(new AuraTower(context, 0, 0));
-
-        assertThat(near.damageCurrent()).isNotEqualTo(near.damageBase);
-        assertThat(far.damageCurrent()).isEqualTo(far.damageBase);
-    }
-
-    @Test
-    void buffedTowersListsExactlyTheInRangeNonAuraTowersAndNoOthers() {
-        AuraTower aura = new AuraTower(context, 0, 0);
-        context.towers().add(aura);
-        SniperTower near = new SniperTower(context, 0, 0);
-        context.towers().add(near);
-        SniperTower far = new SniperTower(context, 100, 100);
-        context.towers().add(far);
-        AuraTower otherAura = new AuraTower(context, 0, 0);
-        context.towers().add(otherAura);
-
-        assertThat(aura.buffedTowers()).containsExactly(near);
     }
 
     @Test
@@ -432,18 +354,17 @@ class AbstractTowerTest {
     }
 
     @Test
-    void aBoughtNodeComposesWithANearbyAuraTowersBuff() {
-        context.economy().startEconomy(100, 5);
+    void aBoughtNodeComposesWithAReceivedBuff() {
+        this.context.economy().startEconomy(100, 5);
         UpgradeNode node = UpgradeNode.of("veteran", "Veteran", 10)
                 .withModifiers(TowerModifiers.damagePercent(0.2f).plus(TowerModifiers.rangePercent(0.2f)));
-        FakeTower tower = FakeTower.offering(context, 0, 0, UpgradeTree.of(node));
-        context.towers().add(tower);
-        context.towers().add(new AuraTower(context, 0, 0));
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.of(node));
+        this.context.towers().add(tower);
+        TowerFixtures.buffed(tower, this.context, TowerModifiers.damagePercent(0.3f));
 
         tower.buyUpgrade(node);
 
-        float expectedMultiplier = 1f + 0.2f + AuraTower.DEFAULT_POWER;
-        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * expectedMultiplier));
+        assertThat(tower.damageCurrent()).isEqualTo((int) (tower.damageBase * (1f + 0.2f + 0.3f)));
     }
 
     @Test
@@ -665,14 +586,14 @@ class AbstractTowerTest {
         SniperTower tower = new SniperTower(this.context, 0, 0);
         this.context.towers().add(tower);
 
-        this.context.towers().add(new AuraTower(this.context, 0, 0));
+        TowerFixtures.buffed(tower, this.context, TowerModifiers.rangePercent(0.2f));
 
         TowerInspection inspection = tower.inspect();
         assertThat(inspection.stats().getFirst().stat()).isEqualTo(TowerStat.RANGE);
         assertThat(inspection.stats().getFirst().base()).isEqualTo(SniperTower.RANGE);
         assertThat(inspection.stats().getFirst().current()).isEqualTo(tower.stats().range());
         assertThat(inspection.stats().getFirst().breakdown().added()).extracting(part -> part.source().mentions())
-                .containsExactly(List.of(TowerTerm.AURA));
+                .containsExactly(List.of(TowerTerm.LIT));
         assertThat(tower.stats().range()).isGreaterThan(SniperTower.RANGE);
         assertThat(inspection.auras()).isEqualTo(1);
     }

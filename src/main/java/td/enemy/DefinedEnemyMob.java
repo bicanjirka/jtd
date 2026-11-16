@@ -731,6 +731,16 @@ public final class DefinedEnemyMob implements EnemyMob {
         return this.definition.taunts();
     }
 
+    @Override
+    public boolean leadsAllies() {
+        return this.definition.supportAura().isPresent() || this.definition.disruption().isPresent();
+    }
+
+    /** Whether it stands in a Beacon's daylight, where it gives its allies no aura. */
+    boolean inDaylight() {
+        return this.gameWorld.daylight().covers(this.getX(), this.getY());
+    }
+
     /**
      * Applies a hit through {@link HitResolution}, paying the bounty if it kills. A no-op on a dead
      * mob, so only the first of several same-tick hits counts as the kill. A dodged hit changes nothing
@@ -1081,7 +1091,9 @@ public final class DefinedEnemyMob implements EnemyMob {
     private void trackBoardPresence() {
         this.onBoard = this.motion.isOnBoard();
         if (this.onBoard) {
-            this.definition.disruption().ifPresent(aura -> this.gameWorld.disruptions().add(this.getX(), this.getY(), aura));
+            if (!this.inDaylight()) {
+                this.definition.disruption().ifPresent(aura -> this.gameWorld.disruptions().add(this.getX(), this.getY(), aura));
+            }
         }
     }
 

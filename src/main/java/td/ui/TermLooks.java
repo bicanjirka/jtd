@@ -99,14 +99,14 @@ public final class TermLooks {
             case SHADE -> new TermLook(Palette.PROJECTILE_SHADE, Palette.TERM_FRAME_TOWER_BUFF);
             case SWARM, HATCHING -> new TermLook(Palette.TOWER_SEEKER_BODY, Palette.TERM_FRAME_TOWER_BUFF);
             case ICE_WAKE -> new TermLook(Palette.FREEZE_CRYSTAL, Palette.TERM_FRAME_MECHANIC);
-            case RALLY -> new TermLook(Palette.TOWER_AURA_RALLY, Palette.TERM_FRAME_TOWER_BUFF);
-            case AURA -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_TOWER_BUFF);
+            case LIT -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_TOWER_BUFF);
+            case LIGHT, SPOTLIGHT, DAYLIGHT, PRISM -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_MECHANIC);
             case NEST -> new TermLook(Palette.TOWER_SEEKER_BODY, Palette.TERM_FRAME_TOWER_BUFF);
             case JAMMED -> new TermLook(Palette.DISRUPTION, Palette.TERM_FRAME_TOWER_DEBUFF);
             case FLAME, STREAM, CORE, DRAGONS_BREATH, FLASHOVER, THERMAL_SHOCK, MELTDOWN ->
                     new TermLook(Palette.TOWER_STREAM_MIDDLE, Palette.TERM_FRAME_MECHANIC);
             case SUNDIAL, FRAILTY, SHADOW -> new TermLook(Palette.TOWER_PULSE_BODY, Palette.TERM_FRAME_MECHANIC);
-            case KINSHIP -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_MECHANIC);
+            case KINSHIP, MENTOR, BREAKTHROUGH -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_MECHANIC);
             case SHATTER -> new TermLook(Palette.FREEZE_CRYSTAL, Palette.TERM_FRAME_MECHANIC);
             case ARC -> new TermLook(Palette.TOWER_SPLASH_ARC, Palette.TERM_FRAME_MECHANIC);
             case HEX -> new TermLook(Palette.HEX_RUNE, Palette.TERM_FRAME_MECHANIC);

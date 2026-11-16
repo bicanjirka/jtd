@@ -18,7 +18,8 @@
   allocates. Whoever changes an input (a hit, an effect applied or ticked) invalidates.
 - `DisruptionField` is cleared at the start of every tick's enemies phase; live, on-board enemies
   with a `DisruptionAura` add their zone, and towers sample it after. It is the only link
-  between them.
+  between them. `DaylightField` is the same link the other way: cleared at the start of the towers phase, Beacons
+  add their circle, and enemies read it on their next tick.
 - A new stat: an `EnemyStat` constant with its default, clamp, names, unit, direction, group and meaning, and a
   case in `td.ui.StatLooks`. A new stat that a hit reads goes
   into `td.enemy.HitResolution`, the only place the hit formula lives.

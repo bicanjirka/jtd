@@ -11,6 +11,7 @@ import td.enemy.EnemySelection;
 import td.enemy.ObserveLog;
 import td.enemy.WalkSettlement;
 import td.projectile.ProjectileRoster;
+import td.stat.DaylightField;
 import td.stat.DisruptionField;
 import td.tower.ExperienceAwarder;
 import td.tower.TowerRoster;
@@ -46,6 +47,7 @@ public class GameWorld {
     private final WaveAnnouncer waves = new WaveAnnouncer();
     private final DamageTally damageTally = new DamageTally();
     private final DisruptionField disruptions = new DisruptionField();
+    private final DaylightField daylight = new DaylightField();
     private final EnemySelection enemySelection = new EnemySelection();
     private final EnemyObservation enemyObservation;
     private volatile LoadedLevel level = LoadedLevel.none();
@@ -118,6 +120,11 @@ public class GameWorld {
     /** Where enemies weaken towers this tick. */
     public DisruptionField disruptions() {
         return this.disruptions;
+    }
+
+    /** Where an enemy gives its allies no aura. */
+    public DaylightField daylight() {
+        return this.daylight;
     }
 
     /** The only source of randomness in the simulation; the same handle whatever wave draws from it. */

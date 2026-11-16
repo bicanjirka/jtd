@@ -102,6 +102,7 @@
   rings from both.
 - Invisibility is an `INVISIBLE` effect that raises `STEALTH`; `DefinedEnemyMob.isHidden()` is the
   only place that reads it. A reveal sets `STEALTH` to 0, which beats invisibility's 1.
+- A mob that stands in daylight (`GameWorld.daylight()`) casts nothing on its allies and adds no jam.
 - `EnemyDefinition.supportAura()` derives the aura ring the UI draws from radius-targeted
   abilities; the UI must not walk abilities itself.
 

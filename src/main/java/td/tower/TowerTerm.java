@@ -43,8 +43,12 @@ public enum TowerTerm implements Term {
             + "usual"),
     ICE_WAKE("Ice Wake", Side.BUFF, "while a {} the tower landed holds, every enemy walking close past the ice gains {}",
             EffectKind.FREEZE, EffectKind.CHILL),
-    RALLY("Rally", Side.BUFF, "faster attacks for a while, from a Beacon's rally spot"),
-    AURA("Aura", Side.BUFF, "a Beacon in range raises its damage and range, and takes some of the jam enemies put on it"),
+    LIGHT("Light", Side.BUFF, "a Beacon's circle: every enemy in it gains {}, while inside and a moment after, and "
+            + "every other tower whose centre is in it takes less of the jam; lights that overlap stack", EffectKind.REVEALED),
+    LIT("Lit", Side.BUFF, "in a Beacon's light: it takes less of the jam and the blinding enemies put on it"),
+    SPOTLIGHT("Spotlight", Side.BUFF, "the lantern's beam holds one enemy in the light until it dies or leaves, then "
+            + "picks again; the held enemy has {}, so every tower that picks one target turns to it",
+            EffectKind.PRIORITY),
     NEST("Nest", Side.BUFF, "the missiles it holds ready: it loads one whenever it has room, so it is full at every "
             + "wave start, and with an enemy in range they launch one after another, each picking its own target"),
     JAMMED("Jammed", Side.DEBUFF, "an enemy nearby slows its attacks and shortens its range, or its blast makes the tower miss"),
@@ -64,7 +68,13 @@ public enum TowerTerm implements Term {
     FRAILTY("Frailty", Side.BUFF, "each stack of {} makes the enemy take more damage from every source", EffectKind.TOLL),
     SHADOW("Shadow", Side.BUFF, "magic damage that goes past {} and insulation; magic resist still holds",
             EffectKind.SHIELD),
-    KINSHIP("Kinship", Side.BUFF, "towers a Beacon buffs earn more XP for each other tower type in range"),
+    KINSHIP("Kinship", Side.BUFF, "towers in a Beacon's light learn faster for every other kind of tower in the same light"),
+    MENTOR("Mentor", Side.BUFF, "the tower in the light that has learned least learns twice as fast"),
+    BREAKTHROUGH("Breakthrough", Side.BUFF, "a tower in the light opening a tier teaches every other tower in it a little"),
+    DAYLIGHT("Daylight", Side.BUFF, "an enemy in the light gives its allies no aura: no shroud, command, mending, ward "
+            + "or jam reaches out of it"),
+    PRISM("Prism", Side.BUFF, "the light carries the mark of every kind of tower it lights: every enemy inside holds "
+            + "that tower's debuff, which fades by its own rule once it leaves"),
     SHATTER("Shatter", Side.BUFF, "as a {} the tower landed ends, the ice bursts on the enemies around it",
             EffectKind.FREEZE),
     ARC("Arc", Side.BUFF, "lightning a primed stone carries from where it lands, jumping from enemy to enemy as magic"),

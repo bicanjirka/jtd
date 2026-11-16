@@ -45,6 +45,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private boolean appliesEffects;
     private boolean regenerates;
     private boolean taunting;
+    private boolean leading;
     private float speed;
     private double distanceToExit = DISTANCE_TO_EXIT;
     private boolean frozen;
@@ -413,6 +414,17 @@ public final class FakeEnemyMob implements EnemyMob {
     }
 
     /** This fake itself, now an enemy that single-target towers must aim at. */
+    /** A fake that gives its allies an aura. */
+    public FakeEnemyMob leading() {
+        this.leading = true;
+        return this;
+    }
+
+    @Override
+    public boolean leadsAllies() {
+        return this.leading;
+    }
+
     public FakeEnemyMob taunting() {
         this.taunting = true;
         return this;

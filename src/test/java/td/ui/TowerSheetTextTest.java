@@ -179,9 +179,11 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void aStatAnAuraRaisesReadsBaseToCurrentInTheBetterColourAndTheAuraIsABuff() {
+    void aStatAReceivedBuffRaisesReadsBaseToCurrentInTheBetterColourAndTheBuffIsABuff() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        this.place(TowerFactory.Type.AURA, 1, 0);
+        this.world.towers().add(FakeTower.offering(this.world, 1, 0, UpgradeTree.none())
+                .giving(TowerModifiers.damagePercent(0.2f)));
+        sniper.recalculateStats();
 
         InfoSheet sheet = liveStatus(sniper);
 

@@ -108,9 +108,4 @@ public record TowerStats(ResolvedStats<TowerStat> values, float rangeReal, float
     public float timedBuffLength() {
         return this.value(TowerStat.BUFF_DURATION);
     }
-
-    /** Ticks between the hits that apply Vulnerable; {@code 0} for none. */
-    public int witherTicks() {
-        return Math.round(this.value(TowerStat.WITHER_INTERVAL));
-    }
 }
