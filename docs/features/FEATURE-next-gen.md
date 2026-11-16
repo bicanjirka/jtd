@@ -26,7 +26,7 @@ Beacon. The Radar leaves the game ("The last three towers").
 | Doc | Owns | Needs | Status |
 |---|---|---|---|
 | `FEATURE-next-gen-upgrade-tiers.md` | Tiers, gates, clusters, fork gates, the new Upgrades panel; every tower moved onto tiers | | implemented |
-| `FEATURE-next-gen-tower-looks.md` | The art direction, foundation by tier with a head, a calm board, enemy marks, toolbar icons, palette | upgrade tiers | implemented, but for the Beacon's own cues, rings and Glare mark, which come with its rework |
+| `FEATURE-next-gen-tower-looks.md` | The art direction, foundation by tier with a head, a calm board, enemy marks, toolbar icons, palette | upgrade tiers | implemented |
 | `FEATURE-next-gen-shot-flight.md` | Hits that land later, arcs, the tracer, chains hop by hop | | implemented |
 | `FEATURE-next-gen-tower-abilities.md` | Ability bars, currency, casts, the pane's Abilities list | upgrade tiers | implemented; the Burst is its first user |
 | `FEATURE-next-gen-sniper-tower.md` | The Sniper | tiers, looks, shot flight | implemented |
@@ -35,7 +35,7 @@ Beacon. The Radar leaves the game ("The last three towers").
 | `FEATURE-next-gen-cinder-tower.md` | The Scorcher; the one pool rule for burn, poison and Soulfire | tiers, looks | implemented |
 | `FEATURE-next-gen-seeker-tower.md` | The Aerie (was the Hive) | tiers, looks; the Mortar's weighted draw | implemented |
 | `FEATURE-next-gen-pulse-tower.md` | The Obelisk, with the Radar's beam as its Sundial | tiers, looks | implemented |
-| `FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | Tiers 0 to III, third round |
+| `FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | implemented |
 | `FEATURE-balance-after-next-gen-towers.md` | The second balance pass, played by the built towers | every tower above in code | written; waits |
 | `FEATURE-next-gen-final-visual-review.md` | The visual review of the finished bundle: what to render, what to check on each tower | every tower above in code | written; waits |
 | `FEATURE-next-gen-final-code-review.md` | The code review of the finished bundle: the Sniper's smells as questions for every tower, shared fixes, new rules | every tower above in code | written; waits |
