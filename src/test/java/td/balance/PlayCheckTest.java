@@ -46,6 +46,29 @@ class PlayCheckTest {
         assertThat(PlayCheck.upgradeVerdict(play(3, 60, 0, 0, 0))).startsWith("ok: upgrades take 60%");
     }
 
+    /** A clean play of two rounds that spent {@code spent} before the first and had {@code unspent} idle at the last. */
+    private static PlayRecord playLeaving(int spent, int unspent) {
+        List<PlayRecord.Round> rounds = List.of(
+                new PlayRecord.Round(1, 100, new PlayRecord.RoundEconomy(unspent, new PlayRecord.Income(0, 0),
+                        new PlayRecord.Spending(spent, 0, 0), 0), new PlayRecord.RoundPressure(100, 0, 0.5, Map.of())),
+                new PlayRecord.Round(2, 100, new PlayRecord.RoundEconomy(unspent, new PlayRecord.Income(500, 0),
+                        new PlayRecord.Spending(0, 0, 0), 0), new PlayRecord.RoundPressure(100, 0, 0.5, Map.of())));
+        return new PlayRecord(new PlayRecord.Play("level", 1L, "player"), new PlayRecord.Result(3, 0, 2, 2), rounds,
+                new PlayRecord.Log(List.of(), List.of(), List.of(), new PlayRecord.Watch(
+                        new PlayRecord.EffectUse(0, Map.of(), Map.of()), Map.of(), List.of(), Map.of())));
+    }
+
+    @Test
+    void whatSitsIdleAsARoundStartsIsAShareOfEverythingPaidBeforeIt() {
+        assertThat(PlayCheck.idleShare(playLeaving(300, 100), 2)).isEqualTo(0.25);
+    }
+
+    @Test
+    void aLevelThatLeavesCreditsIdleBeforeItsLastRoundIsWarnedOfWhateverTheLastRoundPays() {
+        assertThat(PlayCheck.slackVerdict(playLeaving(300, 100))).startsWith("WARN: 100 credits, 25%");
+        assertThat(PlayCheck.slackVerdict(playLeaving(400, 0))).startsWith("ok");
+    }
+
     @Test
     void theBestEffortMayBuyEverythingJudgedAndEveryOtherPlayerLessAndMustLose() {
         List<PlayCheck.Contestant> contestants = PlayCheck.contestants(0);

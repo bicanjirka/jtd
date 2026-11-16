@@ -357,6 +357,56 @@ Rift's lone walker).
   credits to about 1.4 times the first round's need, raise ranks in place of counts until room follows 1.4 down to
   1.0, drop the clear bonuses the line no longer needs; then the play check.
 
+### Iron Crossing pays about twice what its late rounds ask
+
+The play check's best effort clears the level with no leak and has 733 of the 1990 credits paid before the last
+round unspent as it starts (37%; the slack verdict warns over 5%). Its idle credits by round: 30 39 32 39 59 56 43,
+then 181 275 363 620 757 283 605 733. Rounds 1 to 7 take what the level has paid (round 7, two Veteran Ghosts on the
+rush lane, is held only after an earlier round is replayed); rounds 8 to 15 do not. The wave stage's yardstick
+overstates the need there about twofold (2325 at round 15 against 1257 spent in the whole play): it buys average
+towers that serve one lane, and the play buys counters, stands them where the lanes cross and puts 71% into
+upgrades. Not done with the play check because the enemies' higher ranks are to be retuned first, which moves
+every round's strength.
+
+- **Where:** `IronCrossingLevel` rounds 8 to 15; the room line in `docs/BALANCE.md` ("The targets");
+  `WavePowerReport` (the line the `even` column follows); `PlayCheck.slackVerdict` is the judge.
+- **Approach:** after the enemy retune below, harder for the same pay: rank (Veteran to Elite) and affixes
+  (warding, armored, steadfast, unstoppable) in place of counts, about 1.6 to 1.8 times the strength of rounds 8
+  to 15 as they stand. Loop `WavePowerReport --levels iron`, then `PlayCheck --players best --verbose`, until the
+  best effort still clears with no leak and its `idle` column stays under about 0.1 from round 8 on and under 0.05
+  at the last round. Then set the room line to what those rounds measure (about 1.4 falling to about 0.55, not to
+  1.0), and run the full `PlayCheck`: bare towers and every single tower must still lose. The Mortar alone loses
+  only in round 10 on three leaks, so watch it first.
+
+### Higher ranks get more health, not more to do
+
+An enemy's Veteran, Elite and Boss ranks are mostly the same enemy with more health. The retune wanted: keep each
+rank's health and bounty, and give the higher ranks stronger stats, traits and abilities, so a late round is
+harder without paying more.
+
+- **Where:** the rank ladders in `td.enemy.*Enemy` (`RankGrowth`, the per-rank stats, traits and abilities);
+  `EnemyPowerReport` for what each change weighs.
+- **Approach:** change one kind, run `EnemyPowerReport --kinds <it>`: `blind` is its new power in Walkers and the
+  verdict holds it to the limit per rank (1.75 Walkers, 1.25 times that at Elite, 1.5 at Boss, more only with a
+  clear answer). The `fair` column is the bounty that power would earn; holding the bounty under it is the point,
+  so read it as how much harder than its pay the rank now is. Nothing else is entered by hand: a full
+  `EnemyPowerReport`, `TowerBench`, `TowerReport`, `TowerPriceWriter` (the bench's defence scenarios are Veteran
+  Knights, Juggernauts, Templars, Ghosts and Runners, so their retune moves tower worths and prices), then
+  `WavePowerReport` and `PlayCheck` recompute every sheet. Keep the Walker as it is: it is the unit.
+
+### A round always pays its full bounty
+
+A level's last round pays for nothing: no round is left to spend it on. A wave should take a pay ratio (1 by
+default, 0 for nothing) that scales the bounty of its kills, for the last round to use.
+
+- **Where:** `WaveDefinition` (beside `withClearBonus`), where a kill's bounty is paid in the engine (the playtest
+  rules' bounty percent already scales it for a whole play), the wave preview's pay line, `WavePowerReport`'s
+  `bounty` and `pays`, the save format if a round's pay is stored.
+- **Approach:** `WaveDefinition.withPay(ratio)`; the engine multiplies a kill's bounty by its wave's ratio, spawns
+  included; the preview shows the scaled pay. It changes no verdict by itself: the play check already leaves the
+  last round's pay out of the slack, and the credits idle before the last round were paid by rounds 8 to 14, not
+  by the last one, so it does not replace the entry above.
+
 ### The level-select screen fits six levels
 
 Every card sits in one row, because a second row leaves a card too little height at the menu's size for its preview,

@@ -44,7 +44,7 @@ public final class PlayCheck {
 
     private static final List<String> HEADER = List.of("player", "may buy", "leaks", "first leak", "lost in", "towers",
             "on towers", "on upgrades", "upgrade share", "unspent", "verdict");
-    private static final List<String> ROUND_HEADER = List.of("player", "round", "unspent", "paid", "on towers",
+    private static final List<String> ROUND_HEADER = List.of("player", "round", "unspent", "idle", "paid", "on towers",
             "on upgrades", "leaks", "leaked", "closest", "room", "bought");
     private static final List<String> SCRIPT_HEADER = List.of("player", "round", "offset", "action");
     private static final List<String> TOWER_HEADER = List.of("player", "tower", "cell", "damage", "kills", "xp",
@@ -53,6 +53,8 @@ public final class PlayCheck {
             "first in round");
     /** Spending under this share on upgrades is a shop whose upgrades lose to another tower. */
     private static final double FEW_UPGRADES = 0.15;
+    /** The share of its pay a level may leave the best effort with as its last round starts. */
+    private static final double SPARE = 0.05;
     /** Rounds the best effort may play in all while it looks for a play with no leak, the level's own included. */
     private static final int BACKTRACK_ROUNDS = 80;
 
@@ -112,12 +114,14 @@ public final class PlayCheck {
         tables.add(ReportPage.Table.of("Verdicts", HEADER, verdicts).noted("""
                 <b>leaks</b>: lives lost over the whole level, played on past the last life. <b>lost in</b>: the round \
                 the level's own lives ran out. <b>on towers / on upgrades</b>: credits spent. <b>unspent</b>: credits \
-                left at the end. The best effort must clear with no leak; every other player must lose."""));
+                left at the end. The best effort must clear with no leak and need what the level paid before its last round; \
+                every other player must lose."""));
         Optional<Contestant> best = contestants.stream().filter(one -> one.name().equals(BEST)).findFirst();
         best.ifPresent(contestant -> tables.add(ReportPage.Table.of("Upgrades the best effort bought", NODE_HEADER,
                 nodeRows(plays.get(contestant))).noted(upgradeVerdict(plays.get(contestant)))));
         tables.add(ReportPage.Table.of("Rounds", ROUND_HEADER, rounds).noted("""
-                <b>unspent</b>: credits idle as the round started. <b>paid</b>: what the round paid. <b>closest</b>: \
+                <b>unspent</b>: credits idle as the round started. <b>idle</b>: those as a share of everything paid \
+                before the round: near 0 is a round that took all the level had paid. <b>paid</b>: what the round paid. <b>closest</b>: \
                 how far the furthest enemy got, 1 once one leaked. <b>room</b>: the wave stage's bank over need for \
                 the round, when its sheet is stored.""").heating("room"));
         tables.add(ReportPage.Table.of("Towers at the end", TOWER_HEADER, towers));
@@ -305,7 +309,40 @@ public final class PlayCheck {
                 String.valueOf(onTowers), String.valueOf(onUpgrades),
                 ReportPage.number(onUpgrades / (double) Math.max(1, onTowers + onUpgrades)),
                 String.valueOf(last.economy().creditsAtStart() + last.economy().income().total()),
-                verdict(contestant.expect(), play));
+                contestant.expect() == Expect.CLEARS && play.result().leaks() == 0
+                        ? verdict(contestant.expect(), play) + "; " + slackVerdict(play)
+                        : verdict(contestant.expect(), play));
+    }
+
+    /**
+     * The share of everything {@code play} had been paid before round {@code round} that sat unspent as the round
+     * started: what the level had paid and the rounds so far had not asked for.
+     */
+    static double idleShare(PlayRecord play, int round) {
+        int spent = 0;
+        for (PlayRecord.Round one : play.rounds()) {
+            spent += one.economy().spent().total();
+            if (one.number() == round) {
+                int unspent = one.economy().creditsAtStart();
+                return unspent / (double) Math.max(1, unspent + spent);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Whether a play that held the level needed what the level paid. What the last round pays buys nothing, so the
+     * measure is what sat unspent as the last round started.
+     */
+    static String slackVerdict(PlayRecord play) {
+        PlayRecord.Round last = play.rounds().getLast();
+        double idle = idleShare(play, last.number());
+        String share = percent(idle) + " of what the level paid before its last round";
+        if (idle <= SPARE) {
+            return "ok: all but " + share + " is needed";
+        }
+        return "WARN: " + last.economy().creditsAtStart() + " credits, " + share
+                + ", are never needed: the level pays more than it asks";
     }
 
     private static String dashed(int round) {
@@ -318,6 +355,7 @@ public final class PlayCheck {
             String bought = play.actions().stream().filter(action -> action.round() == round.number())
                     .map(action -> action.action().toLine()).collect(Collectors.joining("; "));
             rows.add(List.of(player, String.valueOf(round.number()), String.valueOf(round.economy().creditsAtStart()),
+                    ReportPage.number(idleShare(play, round.number())),
                     String.valueOf(round.economy().income().total()), String.valueOf(round.economy().spent().towers()),
                     String.valueOf(round.economy().spent().upgrades()), String.valueOf(round.pressure().leaked()),
                     leaked(play, round.number()),
