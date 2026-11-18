@@ -227,6 +227,8 @@ public final class MortarTower extends AbstractTower {
     private volatile NukeFlash nukeFlash;
     /** The chances last worked out, and the draw they were worked out for. */
     private volatile ShellOdds odds;
+    /** The kinds it can load, and the mechanics they were worked out for. */
+    private volatile LoadableKinds loadable;
     private int tickNow;
     private EnemyMob currentTarget;
 
@@ -358,10 +360,14 @@ public final class MortarTower extends AbstractTower {
         }
     }
 
-    /** A shell of a volley still to fire: its kind, where it is laid with Carpet Bombing, and the tick it fires. */
+    /** The frame reads the kinds every frame and they change only with the mechanics, so they are kept until then. */
+    private record LoadableKinds(List<MortarMechanic> owned, List<ShellKind> kinds) {
+    }
+
     private record ShellOdds(MagazineSpec spec, Map<ShellKind, Float> chances) {
     }
 
+    /** A shell of a volley still to fire: its kind, where it is laid with Carpet Bombing, and the tick it fires. */
     private record VolleyShell(ShellKind kind, Optional<Vec2> laidAt, int firesAt) {
     }
 
@@ -519,8 +525,15 @@ public final class MortarTower extends AbstractTower {
 
     /** Every kind of shell it can load, in the kinds' order: each kind it draws, and the Nuke while Heavies fuse. */
     public List<ShellKind> loadableKinds() {
-        MagazineSpec spec = this.spec(this.mechanics.all()).magazine();
-        return Arrays.stream(ShellKind.values()).filter(spec::owns).toList();
+        List<MortarMechanic> owned = this.mechanics.all();
+        LoadableKinds last = this.loadable;
+        if (last != null && last.owned().equals(owned)) {
+            return last.kinds();
+        }
+        MagazineSpec spec = this.spec(owned).magazine();
+        LoadableKinds fresh = new LoadableKinds(owned, Arrays.stream(ShellKind.values()).filter(spec::owns).toList());
+        this.loadable = fresh;
+        return fresh.kinds();
     }
 
     /** What share of the shells it fires are each kind, over a long run of draws; worked out again only as it changes. */

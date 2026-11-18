@@ -112,6 +112,9 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
+The tower visual polish (`FEATURE-tower-visual-polish.md`, 2026-11-18) redrew parts of this look, its idle
+life and its moments; where the two differ, that request is what the game draws.
+
 A crystal spire with its missiles circling it: the nest. It keeps a blue, moved to `#5cc4e2` so it stands clear of
 the Stormcaller. There is no turning head: the moving part is the nest. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.aerie`, built from a `TowerPose`; the nest and a missile are still lab art (`TowerArt.nest`, `missile`).
 
@@ -120,18 +123,17 @@ the Stormcaller. There is no turning head: the moving part is the nest. Drawn in
 
 | What the tower holds | In the pose |
 |---|---|
-| the next freeze sets off a Release | `TowerCue.RELEASE_READY` (the ring and the perch brighten) |
+| the next freeze sets off a Release | `TowerCue.RELEASE_READY` (the spire's tip turns white and glows) |
 
 - **The identity** is `SeekerTower.secondMissile()`, turned into a look by
   `TowerSpriteFrameBuilder.bodyLookOf(SeekerTower)`; the pose is `poseOf(SeekerTower)`.
-- **The nest is not the tower's picture.** The held missiles are drawn one for one by one `NestDraw`, on a ring
-  `TowerSprites.nestCentre` lifts to `Foundation.nest` and `nestRadius` sets just outside the foundation. The ring
-  turns only while an enemy is in reach. The whole ring is painted after the tower: it stands outside the foundation,
-  so the spire hides little of it.
+- **The nest is not the tower's picture.** The held missiles are drawn one for one by one `NestDraw`, on a flattened
+  ring round the tower's top (`TowerSprites.nestCentre`, `Foundation.nest`), wide enough that its far half passes
+  above the tip. It turns slowly on the wall clock, and on the tick clock while an enemy is in reach. Birds circle a
+  quiet Aerie's top as a `FlockDraw`.
 - **A missile** is a `LoadedMissile`, drawn by `MissileArt` alike in the nest, in flight (`MissileDraw`, on the
   missile's own heading) and in the pane's nest row. A missile leaves from the tower's centre on the ring's tangent.
-- The Release cue's halo on each missile and the ring's path belong to the nest (`NestDraw.releaseReady`), not to the
-  pose.
+- The Release cue's halo on each missile belongs to the nest (`NestDraw.releaseReady`), not to the pose.
 - **The freeze** is coloured by its `IceKind` (`DefinedEnemyMob.lastIce`): `EnemyIceDraw` carries an `IceLook`, and the
   tint and thaw shards have a look per ice. **Ice Wake** is an `IceWakeDraw` round each enemy in
   `SeekerTower.iceWakes()`, **Shatter** shard streaks from `SeekerTower.shatterMarks()`.
@@ -143,13 +145,13 @@ the Stormcaller. There is no turning head: the moving part is the nest. Drawn in
 | II | two steps; a taller spire with four ice shards at its foot | the spire, the shards and the perch ring in ruby red `#d0405a` | dark stone `#3c4050`, three pale green slits in the spire's top, a pale green perch ring `#a6e8c8` |
 | III | three steps; a six-pointed crystal star for a spire, six shards, three perch arms each ending in a small ring | a ruby cluster, from the same shapes | a dark tower with a crown of six pale green points round its top, in a green glow |
 
-- **The nest circles the tower.** Every stored missile is drawn on one even ring just outside the foundation
-  (0.06 of a cell past its edge) at the height of the perch, so a missile on the far half of the ring passes
-  behind the spire and one on the near half in front of it. They are spaced evenly, in its kind's look: a Frost missile a blue dart, a Ruby a red
+- **The nest circles the tower.** Every stored missile is drawn on one even ring round the spire's top,
+  flattened as a level ring seen from above, so a missile on its far half passes above the tip and one on its near
+  half in front of the spire. They are spaced evenly, in its kind's look: a Frost missile a blue dart, a Ruby a red
   diamond shard, a Shade a pale green wisp with a dark eye and a fading tail. They are the missiles themselves, one
   for one, not an effect: the missile that flies is the one that left its place on the ring. A new missile joins the
   ring as it loads, and the others spread to make room; a missile that flies home takes its place again. The ring
-  holds still while no enemy is in range, and its path is not drawn.
+  turns slowly while no enemy is in range, and its path is not drawn.
 - **A missile flies like an aircraft.** It leaves the ring along its orbit, turns toward its enemy on a smooth curve,
   never a jump in heading, and speeds up gradually to its top speed (the Missile speed stat). In flight it keeps
   turning after its enemy as the enemy moves, and turns harder the nearer it gets, so it never circles a fast enemy.

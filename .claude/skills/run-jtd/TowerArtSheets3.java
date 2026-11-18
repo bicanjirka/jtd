@@ -126,13 +126,13 @@ final class TowerArtSheets3 {
         double[] wide2 = {250, 250, TILE, TILE, TILE, TILE, TILE};
         y = row(g, y, "Scorcher: Soulfire; Aerie: the nest (the stored missiles themselves)", wide2,
                 new String[] {"Soulfire streaming|violet flame, pale core", "Furnace (Tier III) streaming|the vents glow", "Aerie: one missile",
-                    "Two missiles|evenly spaced", "Release ready|ring and perch brighten", "Swarm|seven on the ring", "Ruby: Release ready"},
+                    "Two missiles|evenly spaced", "Release ready|the tip turns white", "Swarm|seven on the ring", "Ruby: Release ready"},
                 streaming("soulfire", 2, st(), 2.0, 30, "soul"), streaming("scorcher", 3, st(), 2.0, 30, ""),
                 tower("aerie", 1, st()), tower("aerie", 2, st().stacks(2)), tower("aerie", 2, st().stacks(2).cue("release")),
                 tower("aerie", 3, st().cue("swarm")), tower("ruby", 3, st().stacks(3).cue("release")));
         y = row(g, y, "Aerie: Shade; Obelisk: the rune (the only part that glows)", null,
                 new String[] {"Shade|wisps, green crown", "Plain rune|in its tier colour", "Burden|a bar over a chevron", "Gravity|a spiral drawn inward",
-                    "Umbra|an eclipsed disc", "Full Toll inside|brighter, not bigger", "Knell|the rune flashes", "Beacon: steady glow",
+                    "Umbra|an eclipsed disc", "Full Toll inside|brighter, not bigger", "Knell|the stone is thrown, runes white", "Beacon: steady glow",
                     "Kinship or Prism|a pane per Lit type", "Daylight|a whiter glow"},
                 tower("shade", 3, st().stacks(3)), tower("obelisk", 1, st()), tower("obelisk", 1, st().look("burden")),
                 tower("obelisk", 1, st().look("gravity")), tower("obelisk", 1, st().look("umbra")),
@@ -555,7 +555,7 @@ final class TowerArtSheets3 {
                 td.ui.TowerArtGame.paintFlashover(gg, -1.0, 0.2, to[0], to[1], 3);
             }
         });
-        tile(g, 340, y, w, h, px, "Knell: the rune flashes and one ring|runs out to the field's edge", gg -> {
+        tile(g, 340, y, w, h, px, "Knell: the stone rocks and one ring|runs out to the field's edge", gg -> {
             gg.setColor(TowerArt.alpha(TowerArt.OBELISK, 0.12));
             gg.fill(TowerArt.circ(0, 0, 1.05));
             gg.setColor(TowerArt.alpha(TowerArt.OBELISK, 0.45));

@@ -74,7 +74,8 @@ Every tower is drawn by `TowerSpriteFrameBuilder` (sprite and head) and `TowerEf
   has its own moving part instead, named in its doc.
 - **Identity looks.** A tower whose tree has an identity, a fork (the Burst) or a pick that changes what it is
   (Soulfire, Ruby or Shade, the Obelisk's stones), changes its look with it: the Burst becomes another tower, the
-  others change material, colour or rune and keep their silhouette.
+  others change material, colour or rune and keep their silhouette (Ruby and Shade have their own since the
+  tower visual polish).
 - **Upgrades that change how a tower fires or what it fires** (its ammunition) may change the head or the shot, each
   in its own way, chosen per upgrade.
 - **Tower buffs** that change the next shot or the fire rate show on the head while held, and they combine: a head
@@ -137,7 +138,8 @@ names its own parts:
   its size, overshoots a little and settles back, a thin ring of dust running out from under it. A tower restored
   from a save does not.
 - **Idle life** (the user, 2026-11-14: "game looking alive is more important"). A tower with nothing to do carries
-  one small living light, on the wall clock: the Sniper's lens and the Mortar's shell glint once in a while, the
+  one small living light, on the wall clock (the tower visual polish, 2026-11-18, adds the Stormcaller's sparks, the
+  Hexer's turning ball, the Obelisk's climbing runes, the Aerie's birds and its nest turning while it idles): the Sniper's lens and the Mortar's shell glint once in a while, the
   Scorcher's pilot flame flickers, the Stormcaller's ball, the Hexer's brew, the Aerie's tip and the Obelisk's rune
   breathe, the Beacon's lamp turns a pale ray. A head with nothing to aim at scans slowly, a few degrees to either
   side. Neighbouring towers run out of step, so a row never breathes as one.
@@ -195,9 +197,8 @@ the same look on 2026-11-13, in the renderer itself ([theme](next-gen-art/theme.
 - **XP ranks go**: the tier is the tower's rank and the foundation shows it. The rank diamonds and the rank-up
   glow leave the board, and the pane shows XP toward the next gate (open question 1).
 - Idle towers are nearly still: each carries one small living light and an aiming head scans slowly ("Art
-  direction", idle life). Any larger motion means something happened: a shot, a reload, a buff, an effect landing.
-  Always-on loops (aura rings, ripples, pulsing heads, a nest circling an empty board) are cut back or replaced per
-  tower.
+  direction", idle life); `FEATURE-tower-visual-polish.md` adds a little more idle life, the nest turning among it. Any larger motion means something happened: a shot, a reload, a buff, an effect landing.
+  Always-on loops (aura rings, ripples, pulsing heads) are cut back or replaced per tower.
 - Kept: the selection range circle, the Jammed marker.
 
 ### Enemy marks the new towers need

@@ -126,6 +126,9 @@ what the nodes no row replaces leave unused. The column rules are in run-jtd's `
 
 ### Look
 
+The tower visual polish (`FEATURE-tower-visual-polish.md`, 2026-11-18) redrew parts of this look, its idle
+life and its moments; where the two differ, that request is what the game draws.
+
 A flamethrower nozzle on a round tank. It keeps its orange, moved to `#ea862a` so it stands clear of the Burst.
 Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.scorcher`, built from a `TowerPose`; the stream's tongues in `TowerEffectFrameBuilder.streamTongues`.
 
@@ -140,9 +143,10 @@ Drawn in the art pass (2026-11-13), in the raised view with a footprint that gro
 | a range node owned | `LONG_BARREL` |
 
 - **Soulfire** is the body look `SOULFIRE`, chosen by the body-look visitor from the tower's `streamLook()`.
-- **The stream** is a `StreamDraw` from the posed muzzle: three tongues from `streamTongues`, and a Flashover's small
-  tongue from `flashover`. The art sheets draw both through the game. Dragon's Breath's own shape is not drawn yet
-  (`TODO.md`).
+- **The flame** is one `FlameDraw` of every stream of the frame from its posed muzzle, painted in one pass so cones
+  that cross merge, each enemy in a cone a silhouette standing in it (`FlameArt`); a Flashover's small tongue is a
+  `StreamDraw` from `flashover`. Steam leaves the nozzle as a stream ends (`SteamDraw`). Dragon's Breath's own flame
+  shape is not drawn yet (`TODO.md`).
 
 | Tier | Foundation |
 |---|---|

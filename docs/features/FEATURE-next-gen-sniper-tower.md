@@ -92,6 +92,9 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
+The tower visual polish (`FEATURE-tower-visual-polish.md`, 2026-11-18) redrew parts of this look, its idle
+life and its moments; where the two differ, that request is what the game draws.
+
 A watchtower with a long rifle. It keeps its triangle and its green, softened to `#a6d674`
 (`FEATURE-next-gen-tower-looks.md`, "Palette"). Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.sniper`, built from a `TowerPose`.
 
@@ -101,16 +104,18 @@ every cue below is already drawn: the rework only sends it, in `TowerSpriteFrame
 | What the tower holds | In the pose |
 |---|---|
 | reload, recoil, muzzle flash | `poseOfReload(coolDownFraction)` (sent today) |
-| Steady Aim stacks | `withStacks(n)` (sent today) |
+| Steady Aim stacks | `withStacks(n)`, up to `FOCUS_STACKS`, where the scope is focused |
+| a full focus while a hit bonus grows with it (Keen Eye) | `KEEN_FOCUS` |
 | a Long Barrel node owned | `TowerCue.LONG_BARREL` |
 | Fourth Shot, Silver Round, Hollow Point primed | `FOURTH_SHOT`, `SILVER_ROUND`, `HOLLOW_POINT` |
 | Frenzy running | `FRENZY` |
 | aiming at an Elite or a Boss with Headhunter | `HEADHUNTER` |
 
 - The tracer already leaves from the posed muzzle; keep `poseOf` the one place the pose is built.
-- **Frenzy's jitter is a still offset today.** The pose is kept as a picture, so it cannot shake each tick. Either
-  accept the offset with its sparks, or paint the shake live in `TowerSprites` from the tick; do not add pose steps.
-- The tracer's upgrade looks (a white crit, a silver round) are colours of `TracerDraw`, not cues.
+- **Frenzy** shakes the head a pose step every few ticks (`withBeat`), and its embers are an `EmbersDraw`.
+- A bullet is a `BulletDraw` of its `BulletRound` (plain, a crit, Fourth Shot, Hollow Point, Silver Round), not a cue;
+  a ricochet is drawn as the shot it hopped from. A spent cartridge (`CasingDraw`) flies from the breech after each
+  shot.
 
 | Tier | Foundation |
 |---|---|

@@ -51,18 +51,18 @@ A radius, an offset or a colour that a doc does not state is in the builder.
 | Look | In `TowerFoundations` | Pose it reads |
 |---|---|---|
 | The shared plinth, footprint by tier | `FOOTPRINT`, `PLINTH_STEP`, `STEP_HEIGHT`, `footprint(tier)` | none |
-| Sniper and its rifle | `sniper` (`Row.aiming`) | `LONG_BARREL`, `SILVER_ROUND`, `HOLLOW_POINT`, `FOURTH_SHOT`, `FRENZY`, `HEADHUNTER`; `stacks` is Steady Aim; recoil, flash |
-| Burst | `thrower`, `stormcaller`, `hexer` | `CHARGED` is an ability waiting; `fired()` and `reloading` drive the arm, the spark, the bubble |
-| Mortar, its barrel and shells | `mortar` (`Row.aiming`), `shell(LoadedShell, r)` | `VOLLEY`, `LONG_BARREL`; `shell` is the round in the bore; recoil, reload |
-| Scorcher and its nozzle | `scorcher` (`CINDER`, `SOULFIRE`) | `STREAMING`, `DRAGONS_BREATH`, `LONG_BARREL`; reload cools the nozzle |
-| Aerie | `aerie` (`SEEKER`, `RUBY`, `SHADE`) | `RELEASE_READY`; `Foundation.nest` is the height of the ring the missiles sit on |
-| Obelisk and its rune | `obelisk` (`PULSE`, `BURDEN`, `GRAVITY`, `UMBRA`) | `CHARGED` is a full Toll inside; `fired()` is the knell |
+| Sniper and its rifle | `sniper` (`Row.aiming`) | `LONG_BARREL`, `SILVER_ROUND`, `HOLLOW_POINT`, `FOURTH_SHOT`, `FRENZY`, `HEADHUNTER`, `KEEN_FOCUS`; `stacks` is Steady Aim, the scope's focus; `beat` is Frenzy's shake; recoil, flash |
+| Burst | `thrower` (the onager), `stormcaller`, `hexer` | `CHARGED` is an ability waiting; `fired()` and `reloading` drive the arm, the spark, the bubble |
+| Mortar, its barrel and shells | `siegeMortar` (`Row.posed`, no head), `shell(LoadedShell, r)` | `VOLLEY`, `LONG_BARREL`; `load` is what this reload carries up, `stock` the rack; recoil, reload |
+| Scorcher and its nozzle | `scorcher` (`CINDER`, `SOULFIRE`; a dragon's head or a soul cage for its head) | `STREAMING`, `DRAGONS_BREATH`, `LONG_BARREL`; reload cools the nozzle |
+| Aerie | `aerie`, `ruby`, `shade`, `white` (`SEEKER`, `RUBY`, `SHADE`, `WHITE`) | `RELEASE_READY` whitens the tip; `Foundation.nest` is the top the missiles circle |
+| Obelisk, a menhir, and its runes | `obelisk` (`PULSE`, `BURDEN`, `GRAVITY`, `UMBRA`) | `CHARGED` is a full Toll inside; `reloading` is the knell's throw |
 | Beacon | `beacon` (`AURA`) | `panes` are the Lit types' looks; `DAYLIGHT` |
 | A living light on a still tower | `Build.light(Life, ...)` | painted live by `TowerSprites`, never part of a kept picture |
 | Back-to-front order inside a foundation | `Foundation.parts`, `head`, `front` | parts south of the head are painted over it |
 | The raised view, the three paint steps | `TowerSprites.paintParts` | |
 | Colours | `td.ui.TowerLooks` | |
-| The stream, a tongue, a nest's missile, the upgrade arrow | lab: `TowerArt` (`stream`, `tongue`, `nest`, `missile`, `upgradeArrow`) | until the game draws them |
+| The flame, a nest's missile, the upgrade arrow | lab: `TowerArt` (`stream`, `tongue`, `nest`, `missile`, `upgradeArrow`); the flame through the game's `FlameArt` | |
 | Marks, field patches, icons | lab: `TowerArtSheets4` (`silence`, `toll`, `hex`, `crystal`, `shards`, `patch`, `icon`) | |
 | Tracer, lobbed shots, bolts, curses, the Sundial | lab: `TowerArtSheets3` (`tracer`, `lob`, `blast`, `lightning`, `curse`, `sundial`) | |
 

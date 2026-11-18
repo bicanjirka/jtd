@@ -65,10 +65,14 @@ keeps the seam honest.
   constant, an identity a `TowerLook` row. Never a new draw record, a field on `TowerSpriteDraw` or a painter branch
   for one tower. A pose is snapped to a few steps, so the kept pictures stay few.
 - A look whose body is the same in every pose is `Row.aiming`; any other is `Row.posed`.
-- Only a tower's idle lights (`Build.light`), a tier's rise and a placed tower settling are painted live. A live
-  stroke or size is a share of `scale`, never a pixel constant: the art sheets paint with a scale of 1.
-- Idle life runs on the wall clock and is one small light or a slow scan; a moment (a shot, a reload, a rise, a
-  placement) runs on the tick clock.
+- Of a tower's own picture only its idle lights (`Build.light`, sparks, a swirl and runes among them), a tier's rise
+  and a placed tower settling are painted live; what moves round it (the nest, birds, a flame, a casing, steam) is a
+  `TowerEffectDraw`. A live stroke or size is a share of `scale`, never a pixel constant: the art sheets paint with a
+  scale of 1.
+- Idle life runs on the wall clock (a light, a slow scan, the nest turning, birds circling); a moment (a shot, a
+  reload, a rise, a placement, a knell, birds coming or leaving) runs on the tick clock.
+- The nest circles the top of its tower, so no missile is drawn behind the tower.
+- The Mortar has no head: it is stationary, its barrel part of its posed body.
 - The toolbar icon and the Info pane's glyph are the look's `TowerIcons` row; a tier's thumbnail in the Upgrades
   panel is that tier's foundation (`TowerSprites.paintStill`), drained of colour while locked.
 - The art sheets in `docs/features/next-gen-art` are rendered from these tables. After a change to a look, render

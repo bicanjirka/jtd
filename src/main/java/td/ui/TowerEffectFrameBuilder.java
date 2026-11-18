@@ -527,9 +527,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /** The shell being carried from the rack into the muzzle while it reloads, once the shot's flash is gone. */
     private void shellCarry(MortarTower tower) {
-        TowerPose pose = TowerSpriteFrameBuilder.poseOf(tower);
         float coolDown = tower.getCoolDownFraction();
-        if (coolDown <= 0f || pose.flash()) {
+        if (coolDown <= 0f) {
+            return;
+        }
+        TowerPose pose = TowerSpriteFrameBuilder.poseOf(tower);
+        if (pose.flash()) {
             return;
         }
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);

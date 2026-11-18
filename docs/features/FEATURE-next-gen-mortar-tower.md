@@ -133,6 +133,9 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
+The tower visual polish (`FEATURE-tower-visual-polish.md`, 2026-11-18) redrew parts of this look, its idle
+life and its moments; where the two differ, that request is what the game draws.
+
 A squat mortar with a short, wide barrel. It keeps its brown, `#c39062`. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.mortar`, built from a `TowerPose`.
 
 **In code** (`FEATURE-next-gen-tower-looks.md`, "Building a tower's look"). The look is `TowerLook.MORTAR`.
@@ -140,7 +143,8 @@ A squat mortar with a short, wide barrel. It keeps its brown, `#c39062`. Drawn i
 | What the tower holds | In the pose |
 |---|---|
 | reload, recoil, the empty bore | `poseOfReload(coolDownFraction)` (sent today) |
-| the kind of shell loaded next | `withShell(LoadedShell)`: `NORMAL`, `HEAVY`, `NUKE`, `NAPALM`, `TAR`, `CRYO`, `FLARE` |
+| the shells this reload loads, front first | `withLoad(List<LoadedShell>)`: `NORMAL`, `HEAVY`, `NUKE`, `NAPALM`, `TAR`, `CRYO`, `FLARE` |
+| every kind it can load, for the rack | `withStock(List<LoadedShell>)` |
 | a Volley ready | `TowerCue.VOLLEY` |
 | a range node owned | `TowerCue.LONG_BARREL` |
 
