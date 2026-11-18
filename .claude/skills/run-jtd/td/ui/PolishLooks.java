@@ -31,7 +31,7 @@ import static td.ui.TowerFoundations.rot;
 import static td.ui.TowerFoundations.sin;
 
 /**
- * The tower visual polish, drawn in the game's own part vocabulary (docs/features/FEATURE-tower-visual-polish.md).
+ * The tower visual polish, drawn in the game's own part vocabulary (docs/features/shipped/FEATURE-tower-visual-polish.md).
  * Every builder here is written to be moved into {@code TowerFoundations} as it stands: the same measures (cell units,
  * the cell's centre at 0,0, north at -90 degrees), the same {@code Build} calls, the same pose reads. What this file
  * copies from {@code TowerFoundations} because it is private there ({@code Build}, {@code plinth}, {@code stoneRing},

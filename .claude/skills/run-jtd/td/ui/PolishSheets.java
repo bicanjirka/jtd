@@ -61,7 +61,7 @@ public final class PolishSheets {
     }
 
     public static void main(String[] args) throws IOException {
-        File out = new File(args.length > 0 ? args[0] : "docs/features/tower-polish-art");
+        File out = new File(args.length > 0 ? args[0] : "docs/features/shipped/tower-polish-art");
         out.mkdirs();
         Set<String> only = new HashSet<>(Arrays.asList(args).subList(Math.min(1, args.length), args.length));
         if (wanted(only, "looks")) {

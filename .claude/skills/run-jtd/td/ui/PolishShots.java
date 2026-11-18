@@ -9,7 +9,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 
 /**
- * The shots of the tower visual polish (docs/features/FEATURE-tower-visual-polish.md, "Shots"): the Sniper's bullets
+ * The shots of the tower visual polish (docs/features/shipped/FEATURE-tower-visual-polish.md, "Shots"): the Sniper's bullets
  * and ricochets by round, the Headhunter's laser, the execution, Frenzy's embers, and the Burst's stone at its new
  * size. Every method paints in board pixels; {@code scale} is the pixels to a cell. Each is a pure function of its
  * progress or clock and a seed.

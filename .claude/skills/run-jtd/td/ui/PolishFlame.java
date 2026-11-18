@@ -11,7 +11,7 @@ import java.awt.geom.Path2D;
 import java.util.List;
 
 /**
- * The Scorcher's flame, redrawn (docs/features/FEATURE-tower-visual-polish.md, "The flame"). Every stream of the frame is
+ * The Scorcher's flame, redrawn (docs/features/shipped/FEATURE-tower-visual-polish.md, "The flame"). Every stream of the frame is
  * painted in one pass, layer by layer, so where two cones cross their fire merges into one flame instead of stacking
  * its alpha twice. Over the fire, each enemy caught in a cone shows as a body standing in the jet: heat pooling on
  * its front, a dimmer wake behind it, its dark silhouette lit white-hot where the jet strikes and dull red round its
