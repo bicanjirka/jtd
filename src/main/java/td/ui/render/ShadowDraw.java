@@ -1,11 +1,10 @@
 package td.ui.render;
 
 /**
- * The Sundial's veil from its stone: a wedge along {@code headingRadians}, {@code rootHalfWidth} wide at the stone and
- * {@code tipHalfWidth} at {@code reach}, with a lighter line {@code edgeWidth} wide along its leading edge. A darker
- * veil {@code inFieldUmbra} draws over it inside the stone's field, {@code fieldRadius} round it.
+ * The Sundial's shadow from its stone along {@code headingRadians}, {@code reach} long, in the band of sun-lit ground
+ * round it, faded by {@code alpha}; {@code cellPixels} is a cell's size on the board. Inside the stone's field,
+ * {@code fieldRadius} round it, an {@code inFieldUmbra} stone lights the band darker.
  */
-public record ShadowDraw(float originX, float originY, float headingRadians, float reach, float rootHalfWidth,
-                         float tipHalfWidth, float edgeWidth, float alpha, float fieldRadius, boolean inFieldUmbra)
-        implements TowerEffectDraw {
+public record ShadowDraw(float originX, float originY, float headingRadians, float reach, float cellPixels,
+                         float alpha, float fieldRadius, boolean inFieldUmbra) implements TowerEffectDraw {
 }

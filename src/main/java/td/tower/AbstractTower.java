@@ -692,11 +692,15 @@ public abstract class AbstractTower implements Tower {
 
     @Override
     public OptionalInt ticksSincePlaced(int gameTime, int window) {
-        OptionalInt placed = this.placedAtTick;
-        if (placed.isEmpty()) {
+        return within(this.placedAtTick, gameTime, window);
+    }
+
+    /** The ticks from {@code at} to {@code gameTime}, while they are within {@code window}; empty if it never was. */
+    protected static OptionalInt within(OptionalInt at, int gameTime, int window) {
+        if (at.isEmpty()) {
             return OptionalInt.empty();
         }
-        int ticks = gameTime - placed.getAsInt();
+        int ticks = gameTime - at.getAsInt();
         return ticks >= 0 && ticks <= window ? OptionalInt.of(ticks) : OptionalInt.empty();
     }
 

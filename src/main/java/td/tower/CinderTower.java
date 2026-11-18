@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -142,6 +143,7 @@ public final class CinderTower extends AbstractTower {
     private FireClock clock = new FireClock(RELOAD_PERIOD_TICKS - 1);
     private TowerStats streamStats = this.stats();
     private int streamLeft;
+    private OptionalInt streamEndedAt = OptionalInt.empty();
     private Optional<EnemyMob> target = Optional.empty();
 
     public CinderTower(GameWorld context, int x, int y) {
@@ -194,6 +196,7 @@ public final class CinderTower extends AbstractTower {
             this.pour(spec);
             this.streamLeft--;
             if (this.streamLeft == 0) {
+                this.streamEndedAt = OptionalInt.of(gameTime);
                 this.clock.spend(this.streamStats.value(TowerStat.RELOAD) / RELOAD_PERIOD_TICKS);
                 this.target = Optional.empty();
             }
@@ -298,6 +301,11 @@ public final class CinderTower extends AbstractTower {
     /** Whether it is streaming now. */
     public boolean isStreaming() {
         return this.streamLeft > 0;
+    }
+
+    /** The ticks since its last stream ended, while they are within {@code window}. */
+    public OptionalInt ticksSinceStreamEnded(int gameTime, int window) {
+        return within(this.streamEndedAt, gameTime, window);
     }
 
     /** How much of the reload is left, from 1 as a stream ends down to 0 once it may stream again. */

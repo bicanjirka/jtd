@@ -45,6 +45,7 @@ import td.wave.Vec2;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * The rhythmic single-target tower: each shot builds Steady Aim, whichever enemy it hits, until it stops firing for a
@@ -167,6 +168,7 @@ public final class SniperTower extends AbstractTower {
     private EnemyMob currentTarget;
     private ShotTrace lastShot;
     private Execution lastExecution;
+    private OptionalInt firedAt = OptionalInt.empty();
     private int tickNow;
 
     public SniperTower(GameWorld context, int x, int y) {
@@ -259,6 +261,7 @@ public final class SniperTower extends AbstractTower {
             shot = mechanic.shape(shot, context);
         }
         this.bullets.add(new Bullet(shot, stats, target, this.flightFrom(this.centerX, this.centerY, target)));
+        this.firedAt = OptionalInt.of(this.tickNow);
         double rate = this.attackRate();
         this.clock.spend(rate / (rate + shot.attackSpeedBonus()));
     }
@@ -355,6 +358,11 @@ public final class SniperTower extends AbstractTower {
     }
 
     /** The last enemy an execution killed, for drawing its moment; empty before the first. */
+    /** The ticks since its last shot left, while they are within {@code window}. */
+    public OptionalInt ticksSinceFired(int gameTime, int window) {
+        return within(this.firedAt, gameTime, window);
+    }
+
     public Optional<Execution> lastExecution() {
         return Optional.ofNullable(this.lastExecution);
     }
