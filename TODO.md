@@ -453,6 +453,17 @@ panel's width, and a node squeezed below full size shows no price or key chip; o
 - **Approach:** a wider panel, or a side column that takes the room of the shared column above the fork's tier when
   that column holds two nodes; failing that, a price under a squeezed node in a smaller font.
 
+### A tier's paid unlock is still in the upgrade tree
+
+Every gate opens on XP alone (`UpgradeTreeCatalogueTest` holds the built-in trees to it) and the Upgrades panel has
+no place for a price at a gate, but the tree can still make a paid tier's unlock node.
+
+- **Where:** `UpgradeTier.unlockPrice`, `UpgradeTree` (`unlockOf`, `isPaidOpen`, `isUnlock`, `unlocksHeld`),
+  `PathPlanner`, `UpgradeOffer`, `UpgradeSheetText.bandLabel`, `TowerBench`, and the tests built on
+  `TierTrees.PAID_TIERS`.
+- **Approach:** delete the unlock with the next change to tier gates, moving `TierTrees` to standard tiers; or, if a
+  paid gate comes back, give the panel's floor strip a pay button.
+
 ### A shell in the Mortar's magazine has no hover of its own
 
 The pane's magazine row opens one tooltip for the whole row: the magazine and each kind's chance. The feature doc

@@ -47,7 +47,7 @@ public final class UpgradeTree {
 
     /**
      * Rejects duplicate node ids, a node outside the tiers or before a node it comes after, a cluster member missing
-     * or in two clusters, a cluster whose members differ in tier or price, a fork in tier 0, and a node that comes
+     * or in two clusters, a cluster whose members differ in tier or price, and a node that comes
      * after itself through other nodes, on which every walk back along prerequisites would never end.
      */
     private UpgradeTree(List<UpgradeTier> tiers, List<UpgradeNode> nodes, List<UpgradeCluster> clusters,
@@ -82,11 +82,6 @@ public final class UpgradeTree {
         }));
         this.byId = Map.copyOf(ids);
         this.clusterByMember = clustersByMember(this.allClusters(), ids);
-        fork.ifPresent(sides -> {
-            if (ids.get(sides.memberIds().getFirst()).tier() == 0) {
-                throw new IllegalArgumentException("A fork is picked at a tier's gate, and tier 0 has none");
-            }
-        });
         Set<String> acyclic = new HashSet<>();
         for (UpgradeNode node : this.nodes) {
             rejectCycleFrom(node, ids, new LinkedHashSet<>(), acyclic);
@@ -129,7 +124,10 @@ public final class UpgradeTree {
         return new UpgradeTree(this.tiers, this.nodes, next, this.fork);
     }
 
-    /** This tree with {@code sides} as its fork, picked at the gate below their tier. */
+    /**
+     * This tree with {@code sides} as its fork: a cluster like any other, bought and switched as one, whose pick is the
+     * tower's identity. The balance tools take each side as a build family, and a line after a side shows its art.
+     */
     public UpgradeTree withFork(UpgradeCluster sides) {
         return new UpgradeTree(this.tiers, this.nodes, this.clusters, Optional.of(sides));
     }

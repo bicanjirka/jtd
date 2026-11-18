@@ -119,8 +119,8 @@
   Range line every tower shares.
 - One-of choices are an `UpgradeCluster` on the tree (`withCluster`), never a condition in `requires`: members share
   a tier and a price, one is active, and switching between waves sells what followed the old one
-  (`switchFor`). A tower whose identity is a fork has one `withFork` cluster, picked at its tier's gate, which
-  renames the tower; the tree rejects a fork in tier 0.
+  (`switchFor`). A tower whose identity is a fork has one `withFork` cluster, which
+  renames the tower; it buys, switches and shows as any other cluster.
 - Keys 1 to `UpgradeTree.KEYS` buy left to right in the highest open tier (`keyed`); a cluster takes one key, and
   each fork side its own until picked. `UpgradeTreeCatalogueTest` rejects a built-in tier with more.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
