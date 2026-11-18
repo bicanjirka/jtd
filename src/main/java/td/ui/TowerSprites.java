@@ -36,8 +36,6 @@ import java.util.concurrent.atomic.AtomicLong;
 final class TowerSprites {
 
     private static final double LIFT = TowerFoundations.LIFT;
-    /** A nest's ring circles this far past the foundation's edge, in cells. */
-    private static final double NEST_PAST_FOUNDATION = 0.06;
     /** The lit rim along a part's top-left edge, in cells. */
     private static final double RIM = 0.024;
     /** A head turns in this many steps; between two of them it reuses the nearer picture. */
@@ -215,15 +213,10 @@ final class TowerSprites {
                         - LIFT * foundation.muzzleHeight() * scale));
     }
 
-    /** The ring a nest circles on round {@code look} in {@code pose}, in board pixels: its centre lifted to its height. */
+    /** The centre of the ring a nest circles on round {@code look} in {@code pose}, in board pixels: its top. */
     static Point2D.Float nestCentre(TowerLook look, int tier, TowerPose pose, float centerX, float centerY, int scale) {
         TowerFoundations.Foundation foundation = TowerFoundations.of(look, tier, pose);
         return new Point2D.Float(centerX, (float) (centerY - LIFT * foundation.nest() * scale));
-    }
-
-    /** How far out a nest's ring circles at {@code tier}, in board pixels: just outside the foundation. */
-    static float nestRadius(int tier, int scale) {
-        return (float) ((TowerFoundations.footprint(tier) + NEST_PAST_FOUNDATION) * scale);
     }
 
     private static void paintRising(Graphics2D g2, TowerSpriteDraw tower, int scale, float progress) {
@@ -341,6 +334,7 @@ final class TowerSprites {
         double cos = Math.cos(tower.headingRadians());
         double sin = Math.sin(tower.headingRadians());
         double seconds = tower.lifeSeconds();
+        int seed = tower.boardX() * 31 + tower.boardY();
         for (int i = 0; i < lights.size(); i++) {
             TowerFoundations.Light light = lights.get(i);
             double lx = light.turning() ? light.x() * cos - light.y() * sin : light.x();
@@ -374,6 +368,10 @@ final class TowerSprites {
                     g2.fill(ray(x, y, radius, turn));
                     g2.fill(ray(x, y, radius, turn + Math.PI));
                 }
+                case SPARKS -> TowerLifeArt.sparks(g2, x, y, radius, scale, light.color(), seconds, seed);
+                case SWIRL -> TowerLifeArt.swirl(g2, x, y, radius, light.color(), seconds, seed);
+                case RUNE -> TowerLifeArt.rune(g2, x, y, radius, light.color(), seconds,
+                        (tower.centerY() - y) / (double) scale);
             }
         }
     }

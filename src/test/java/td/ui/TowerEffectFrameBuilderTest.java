@@ -26,6 +26,7 @@ import td.tower.mortar.BlastMark;
 import td.tower.mortar.ShellKind;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
+import td.ui.render.FlockDraw;
 import td.ui.render.LoadedMissile;
 import td.ui.render.LoadedShell;
 import td.ui.render.NestDraw;
@@ -40,6 +41,7 @@ import td.ui.render.TowerPose;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
 import td.util.GameWorld;
+import td.util.TickRate;
 
 import java.util.List;
 
@@ -578,6 +580,64 @@ class TowerEffectFrameBuilderTest {
 
         assertThat(TowerSpriteFrameBuilder.bodyLookOf(plain)).isEqualTo(TowerLook.SEEKER);
         assertThat(TowerSpriteFrameBuilder.bodyLookOf(ruby)).isEqualTo(TowerLook.RUBY);
+    }
+
+    @Test
+    void theNestCirclesTheTowersTopAndTurnsOnTheWallClockWhileTheTowerIdles() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SeekerTower tower = new SeekerTower(context, 3, 3);
+        tower.readyForWave();
+
+        NestDraw now = nestOf(context, tower, 0.0);
+        NestDraw later = nestOf(context, tower, 1.0);
+
+        float top = TowerSprites.nestCentre(TowerLook.SEEKER, 0, TowerPose.idle(), tower.getX(), tower.getY(),
+                BoardFixtures.SCALE).y;
+        float tip = tower.getY() - (float) (TowerFoundations.LIFT * TowerFoundations.of(TowerLook.SEEKER, 0).top()
+                * BoardFixtures.SCALE);
+        assertThat(now.centerY()).isEqualTo(top).isCloseTo(tip, within(1e-3f));
+        assertThat(later.phaseRadians()).isNotEqualTo(now.phaseRadians());
+    }
+
+    private static NestDraw nestOf(GameWorld context, SeekerTower tower, double animationSeconds) {
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 1, 0.0, animationSeconds);
+        tower.accept(builder);
+        return builder.build().stream().filter(NestDraw.class::isInstance).map(NestDraw.class::cast).findFirst()
+                .orElseThrow();
+    }
+
+    /** What flies over {@code tower} at tick {@code at}. */
+    private static List<FlockDraw> flockOf(GameWorld context, SeekerTower tower, int at) {
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, at, 0.0, 0.0);
+        tower.accept(builder);
+        return builder.build().stream().filter(FlockDraw.class::isInstance).map(FlockDraw.class::cast).toList();
+    }
+
+    @Test
+    void birdsComeToAnAerieQuietAWhileAndScatterOnceItFights() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SeekerTower tower = new SeekerTower(context, 3, 3);
+        int delay = Math.round((float) FlockPresence.DELAY_SECONDS * TickRate.TICKS_PER_SECOND);
+        int settle = Math.round((float) (FlockPresence.DELAY_SECONDS + FlockPresence.ARRIVE_SECONDS)
+                * TickRate.TICKS_PER_SECOND);
+        int tick = 1;
+        for (; tick <= delay; tick++) {
+            tower.doTick(tick);
+        }
+        List<FlockDraw> early = flockOf(context, tower, tick - 1);
+        for (; tick <= settle + 1; tick++) {
+            tower.doTick(tick);
+        }
+        List<FlockDraw> settled = flockOf(context, tower, tick - 1);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(tower.getX() + 40, tower.getY())});
+        int fled = tick + Math.round((float) FlockPresence.LEAVE_SECONDS * 2 * TickRate.TICKS_PER_SECOND);
+        for (; tick <= fled; tick++) {
+            tower.doTick(tick);
+        }
+
+        assertThat(early).isEmpty();
+        assertThat(settled).singleElement().satisfies(flock -> assertThat(flock.arrived()).isEqualTo(1f));
+        assertThat(flockOf(context, tower, tick - 1)).isEmpty();
     }
 
     @Test

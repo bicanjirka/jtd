@@ -274,8 +274,18 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /** The wall clock {@code tower}'s own lights and idle motion run on. */
     private float lifeSeconds(Tower tower) {
-        return (float) ((this.animationSeconds
+        return lifeSeconds(tower, this.animationSeconds);
+    }
+
+    /** The wall clock {@code tower}'s own lights and idle motion run on, at {@code animationSeconds}. */
+    static float lifeSeconds(Tower tower, double animationSeconds) {
+        return (float) ((animationSeconds
                 + (tower.getBoardX() * 7 + tower.getBoardY() * 13) * LIFE_OFFSET_SECONDS) % LIFE_WRAP_SECONDS);
+    }
+
+    /** What a tower's live paint draws its own pattern from, the same every frame. */
+    static int seedOf(Tower tower) {
+        return tower.getBoardX() * 31 + tower.getBoardY();
     }
 
     /** {@code resting} is a head with nothing to aim at: it scans slowly about its heading until it has. */

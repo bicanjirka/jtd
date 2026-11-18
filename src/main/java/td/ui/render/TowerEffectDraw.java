@@ -1,5 +1,5 @@
 package td.ui.render;
 
 public sealed interface TowerEffectDraw permits BeamDraw, SplashDraw, RingDraw, ShadowDraw, WardOutlineDraw, StreamDraw, TowerStatusDraw,
-        NestDraw, IceWakeDraw, FlashDraw, RefundMarkDraw, TracerDraw, CannonballDraw {
+        NestDraw, FlockDraw, IceWakeDraw, FlashDraw, RefundMarkDraw, TracerDraw, CannonballDraw {
 }
