@@ -101,19 +101,43 @@ final class TowerFoundations {
      * shell in flight on purpose, so the rack fits the cell and the barrel stays in proportion.
      */
     static final double MORTAR_SHELL = 0.056;
-    /** Where the bedplate stands on its cell (its centre), and how far north the barrel leans per cell up. */
-    static final double MORTAR_X = 0.0;
-    static final double MORTAR_Y = -0.07;
-    static final double MORTAR_LEAN = 0.30;
-    /** The barrel: its slices' height, how many (one more with a long barrel), its bore and its muzzle ring. */
-    static final double MORTAR_SLICE = 0.066;
-    static final int MORTAR_SLICES = 6;
-    static final double MORTAR_BORE = 0.085;
-    static final double MORTAR_MUZZLE = 0.135;
-    /** How far a shot throws the barrel down its own axis, in cells. */
-    static final double MORTAR_RECOIL = 0.04;
+    /** Where the Strider's drum stands on its cell (its centre), and how far north its barrel leans per cell up. */
+    static final double STRIDER_X = 0.0;
+    static final double STRIDER_Y = -0.05;
+    static final double STRIDER_LEAN = 0.22;
+    /** How far out from the centre its feet stand, and their bearings on the plan, in degrees. */
+    static final double STRIDER_FOOT = 0.335;
+    private static final double[] STRIDER_FEET = {-130, -50, 30, 150};
+    /** The barrel's rings from the bottom: a groove, then the ring itself; each ring's radius (one more when long). */
+    private static final double STRIDER_GROOVE = 0.012;
+    private static final double STRIDER_RING = 0.088;
+    private static final double[] STRIDER_RADII = {0.150, 0.160, 0.166, 0.168, 0.168, 0.168};
+    private static final int STRIDER_RINGS = 5;
+    /** The drum the legs carry: its bottom and top above the floor, and the collar and lip over the last ring. */
+    private static final double STRIDER_HIP_LOW = 0.075;
+    private static final double STRIDER_HIP_HIGH = 0.145;
+    private static final double STRIDER_COLLAR = 0.03;
+    private static final double STRIDER_LIP = 0.035;
+    /**
+     * The Strider's moments, as its pose's beat: at rest, a frame of the shot from the tick a shell leaves, a step of
+     * the one deep pump after the shell drops in, and cocked once the pump is down.
+     */
+    static final int STRIDE_REST = 0;
+    static final int STRIDE_SHOT_FRAMES = 5;
+    static final int STRIDE_PUMP_STEPS = 4;
+    static final int STRIDE_COCKED = 1 + STRIDE_SHOT_FRAMES + STRIDE_PUMP_STEPS;
+    /** The pump takes this many ticks from the shell dropping in. */
+    static final int STRIDE_PUMP_TICKS = 8;
+    /** Each shot frame's stretch of the barrel and crouch of the legs: the spit, the slam, then the bounce. */
+    private static final double[] STRIDE_SHOT_STRETCH = {1.24, 0.80, 1.08, 0.96, 1.0};
+    private static final double[] STRIDE_SHOT_CROUCH = {-0.7, 1.0, 0.25, 0.5, 0.15};
+    /** Pumped all the way, the barrel squats this much and the legs crouch this far. */
+    private static final double STRIDE_PUMP_SQUAT = 0.12;
+    private static final double STRIDE_PUMP_CROUCH = 0.5;
+    /** The share of a reload at which the shell of a single load drops into the barrel, and a volley's last one. */
+    static final float MORTAR_LOADED_AT = 0.75f;
     /** The ready rack in front of the mortar: its row's distance south of the cell's centre, and its shells' spacing. */
-    static final double MORTAR_RACK_Y = 0.15;
+    static final double MORTAR_RACK_Y = 0.2;
     /** The rack stands on a crate this tall, so its shells show over the deck's edge. */
     static final double MORTAR_RACK_HEIGHT = 0.07;
     static final double MORTAR_RACK_GAP = MORTAR_SHELL * 2.1;
@@ -323,7 +347,7 @@ final class TowerFoundations {
         rows.put(TowerLook.SPLASH, Row.posed(TowerFoundations::thrower));
         rows.put(TowerLook.STORMCALLER, Row.posed((tier, pose) -> stormcaller(Math.max(1, tier), pose)));
         rows.put(TowerLook.HEXER, Row.posed((tier, pose) -> hexer(Math.max(1, tier), pose)));
-        rows.put(TowerLook.MORTAR, Row.posed(TowerFoundations::siegeMortar));
+        rows.put(TowerLook.MORTAR, Row.posed(TowerFoundations::striderMortar));
         rows.put(TowerLook.CINDER, Row.posed((tier, pose) -> scorcher(tier, pose, false)));
         rows.put(TowerLook.SOULFIRE, Row.posed((tier, pose) -> scorcher(tier, pose, true)));
         rows.put(TowerLook.SEEKER, Row.posed(TowerFoundations::aerie));
@@ -1017,18 +1041,126 @@ final class TowerFoundations {
         return b;
     }
 
-    // ---- Mortar: a stationary siege mortar --------------------------------------------------------------------------
+    // ---- Mortar: the Strider, a fat ribbed mortar on four jointed legs -----------------------------------------------
 
     /** The height of the floor the mortar and the rack stand on for {@code tier}: the plinth's top, then the deck. */
     static double mortarFloor(int tier) {
         return tier * STEP_HEIGHT + (tier >= 1 ? MORTAR_DECK : 0);
     }
 
-    /** The muzzle's centre at the top of the barrel, in cells: x, y on the plan and z, for {@code tier} in {@code pose}. */
+    /**
+     * The height of the floor {@code rho} out from the centre: the deck, or the plinth step it lands on, so a leg that
+     * reaches past the deck grips down over the plinth's edge.
+     */
+    private static double floorAt(int tier, double rho) {
+        double r = FOOTPRINT[tier];
+        double deck = (r - tier * PLINTH_STEP) * 0.92;
+        if (tier >= 1 && rho <= deck) {
+            return mortarFloor(tier);
+        }
+        double z = 0;
+        for (int i = 0; i < tier; i++) {
+            if (r - i * PLINTH_STEP >= rho) {
+                z = (i + 1) * STEP_HEIGHT;
+            }
+        }
+        return z;
+    }
+
+    /** Where the barrel's axis is on the plan {@code h} above the floor: it leans north as it rises. */
+    private static double striderY(double h) {
+        return STRIDER_Y - STRIDER_LEAN * h;
+    }
+
+    private static int striderRings(TowerPose pose) {
+        return STRIDER_RINGS + (pose.has(TowerCue.LONG_BARREL) ? 1 : 0);
+    }
+
+    /** The beat of the shot's frame {@code ticks} after a shell left, at rest once the frames are over. */
+    static int strideShot(int ticks) {
+        return ticks >= 0 && ticks < STRIDE_SHOT_FRAMES ? 1 + ticks : STRIDE_REST;
+    }
+
+    /** The beat {@code ticks} after the shell dropped in: at rest before it, a step of the pump, then cocked. */
+    static int stridePump(double ticks) {
+        if (ticks >= STRIDE_PUMP_TICKS) {
+            return STRIDE_COCKED;
+        }
+        if (!(ticks > 0)) {
+            return STRIDE_REST;
+        }
+        int step = (int) Math.round(ticks / STRIDE_PUMP_TICKS * (STRIDE_PUMP_STEPS + 1));
+        return step <= 0 ? STRIDE_REST : step > STRIDE_PUMP_STEPS ? STRIDE_COCKED : STRIDE_SHOT_FRAMES + step;
+    }
+
+    /**
+     * How the Strider's body is bent in a pose: its barrel stretched up (and thinner) or squashed, its legs crouched
+     * (or kicked straight when below zero), and how far its pump is down, handle and gauge alike.
+     */
+    private record Stride(double stretch, double crouch, double pumped) {
+
+        private static final Stride REST = new Stride(1, 0, 0);
+
+        static Stride of(TowerPose pose) {
+            int beat = pose.beat();
+            if (beat >= 1 && beat <= STRIDE_SHOT_FRAMES) {
+                return new Stride(STRIDE_SHOT_STRETCH[beat - 1], STRIDE_SHOT_CROUCH[beat - 1], 0);
+            }
+            if (beat > STRIDE_SHOT_FRAMES && beat <= STRIDE_COCKED) {
+                double u = (beat - STRIDE_SHOT_FRAMES) / (STRIDE_PUMP_STEPS + 1.0);
+                double eased = u * u * (3 - 2 * u);
+                return new Stride(1 - STRIDE_PUMP_SQUAT * eased, STRIDE_PUMP_CROUCH * eased, eased);
+            }
+            return REST;
+        }
+
+        /** A stretched ring keeps its volume: it thins as it grows taller. */
+        double fat() {
+            return 1 / Math.sqrt(this.stretch);
+        }
+
+        /** How far the crouch lowers the drum. */
+        double drop() {
+            return 0.03 * this.crouch;
+        }
+
+        /** The height above the floor where ring {@code k}'s groove starts. */
+        double ringBase(int k) {
+            return STRIDER_HIP_HIGH - this.drop() + k * (STRIDER_GROOVE + STRIDER_RING) * this.stretch;
+        }
+    }
+
+    /** The centre of the muzzle's top, in cells: x, y on the plan and z, for {@code tier} in {@code pose}. */
     static double[] mortarMouth(int tier, TowerPose pose) {
-        int slices = MORTAR_SLICES + (pose.has(TowerCue.LONG_BARREL) ? 1 : 0);
-        double rise = 0.04 + slices * MORTAR_SLICE - pose.recoil() * MORTAR_RECOIL;
-        return new double[] {MORTAR_X, MORTAR_Y - MORTAR_LEAN * rise, mortarFloor(tier) + rise};
+        Stride stride = Stride.of(pose);
+        double collar = stride.ringBase(striderRings(pose)) + STRIDER_COLLAR;
+        return new double[] {STRIDER_X, striderY(collar), mortarFloor(tier) + collar + STRIDER_LIP};
+    }
+
+    /**
+     * The side pump on the barrel's east, in cells: its centre on the plan (x, y), and the heights of its foot and its
+     * top, for {@code tier} in {@code pose}.
+     */
+    static double[] mortarPump(int tier, TowerPose pose) {
+        Stride stride = Stride.of(pose);
+        double floor = mortarFloor(tier);
+        double bottom = stride.ringBase(1) + STRIDER_GROOVE * stride.stretch() - 0.03;
+        double top = stride.ringBase(3) + (STRIDER_GROOVE + STRIDER_RING * 0.3) * stride.stretch();
+        return new double[] {STRIDER_X + 0.172 * stride.fat() + 0.03, striderY((bottom + top) / 2) + 0.02,
+            floor + bottom, floor + top};
+    }
+
+    /** How many feet the Strider stands on. */
+    static int mortarFeet() {
+        return STRIDER_FEET.length;
+    }
+
+    /** Foot {@code i} of a Strider of {@code tier}, in cells: x, y on the plan, the floor under it, and its bearing. */
+    static double[] mortarFoot(int tier, int i) {
+        double bearing = STRIDER_FEET[i];
+        double x = STRIDER_X + cos(bearing) * STRIDER_FOOT;
+        double y = striderY(0.10) + sin(bearing) * STRIDER_FOOT;
+        return new double[] {x, y, floorAt(tier, Math.hypot(x, y)), bearing};
     }
 
     /**
@@ -1036,7 +1168,7 @@ final class TowerFoundations {
      * its gaps on top.
      */
     static double[] mortarPiece(int tier, int i, int count) {
-        double base = mortarFloor(tier) + MORTAR_RACK_HEIGHT + 0.02 + MORTAR_SHELL * 0.85;
+        double base = floorAt(tier, MORTAR_RACK_Y) + MORTAR_RACK_HEIGHT + 0.02 + MORTAR_SHELL * 0.85;
         if (i < MORTAR_RACK_ROW) {
             int row = Math.min(count, MORTAR_RACK_ROW);
             return new double[] {(i - (row - 1) / 2.0) * MORTAR_RACK_GAP, MORTAR_RACK_Y, base};
@@ -1052,8 +1184,8 @@ final class TowerFoundations {
     }
 
     /**
-     * How many shells are in the barrel while {@code pose} reloads: a single load drops in at the reload's last
-     * quarter, a volley one at each quarter from the shot.
+     * How many shells are in the barrel while {@code pose} reloads: a single load drops in late in the reload, a volley
+     * one at each quarter from the shot.
      */
     static int mortarLoadedCount(TowerPose pose, boolean volley) {
         if (pose.flash()) {
@@ -1062,7 +1194,7 @@ final class TowerFoundations {
         if (volley) {
             return Math.min(3, (int) Math.floor(pose.reload() * 4));
         }
-        return pose.reload() >= 0.75 ? 1 : 0;
+        return pose.reload() >= MORTAR_LOADED_AT ? 1 : 0;
     }
 
     /**
@@ -1075,26 +1207,36 @@ final class TowerFoundations {
     }
 
     /**
-     * A stationary siege mortar standing in the middle of its cell, on a plank deck from Tier I: a bedplate, four
-     * splayed legs braced across, a thick wide-mouthed barrel fixed at a steep angle to the north, and a ready rack in
-     * front holding one shell of every kind the pose's stock names (what the tower can load, whatever its magazine
-     * holds now). Nothing turns. A shot throws the barrel down its axis and flashes at the muzzle; while it reloads the
-     * bore smokes, shells are lifted off the rack (their flight between is painted live) and the last one in shows its
-     * top above the muzzle until the next shot. The rack never empties: it is the stock, not the magazine.
+     * The Strider: a fat ribbed mortar on four jointed legs in the middle of its cell, on packed dirt beside a powder
+     * keg at Tier 0 and on a plank deck from Tier I. A hip drum carries a barrel of ringed iron with bronze bands, a
+     * side pump and a pressure gauge, and a wide bronze mouth; a ready rack in front holds one shell of every kind the
+     * pose's stock names (what the tower can load, whatever its magazine holds now). Nothing turns. The pose's beat
+     * bends it: a shot stretches it up and slams it down onto its knees, then it bounces and settles; after a shell
+     * drops in it pumps once, deeply, and holds cocked until the next shot. While it reloads the bore smokes, shells
+     * are lifted off the rack (their flight between is painted live) and the last one in shows its top in the mouth.
+     * The rack never empties: it is the stock, not the magazine.
      */
-    private static Build siegeMortar(int tier, TowerPose pose) {
+    private static Build striderMortar(int tier, TowerPose pose) {
         List<LoadedShell> stock = pose.stock().isEmpty() ? List.of(LoadedShell.NORMAL) : pose.stock();
         List<LoadedShell> load = pose.load().isEmpty() ? List.of(LoadedShell.NORMAL) : pose.load();
+        boolean volley = pose.has(TowerCue.VOLLEY);
         Color mortar = colour(TowerLook.MORTAR);
-        Tones iron = tones(0x5a6070);
-        Tones dark = tones(0x3a3f4c);
+        Tones iron = tones(0x5d6372);
+        Tones dark = tones(0x363b47);
+        Tones groove = tones(0x23262e);
         Tones bronze = Tones.of(mix(mortar, Color.WHITE, 0.12));
         Tones wood = tones(0x7a5a3a);
         Tones plank = Tones.of(mix(wood.shade(), new Color(0x2a2622), 0.4));
-        boolean volley = pose.has(TowerCue.VOLLEY);
         Build b = plinth(tier, mortar, r -> ngon(0, 0, 8, r, 22.5));
         double r = b.bodyRadius;
         double z = b.top;
+        if (tier == 0) {
+            b.flat(ell(0, 0.0, 0.43, 0.40), 0, new Color(0x16130f));
+            b.flat(ell(0.02, 0.01, 0.34, 0.31), 0, new Color(0x1e1a15));
+            for (int i = 0; i < 4; i++) {
+                b.flat(at(ell(0, 0, 0.05, 0.035), 22 + i * 90, 0.30), 0, new Color(0x2a2620));
+            }
+        }
         if (tier >= 1) {
             double deck = r * 0.92;
             b.solid(ngon(0, 0, 8, deck, 22.5), z, MORTAR_DECK, plank);
@@ -1119,89 +1261,158 @@ final class TowerFoundations {
             b.line(arcOver(r * 0.80, -180, 0, z + 0.12), 0, iron.shade(), 0.016);
             b.around(mark);
         }
-        double legs = 0.19 + 0.012 * tier;
-        double collar = z + 0.04 + MORTAR_SLICE * 2.5;
-        double collarY = MORTAR_Y - MORTAR_LEAN * (collar - z);
-        double[] feet = {-135, -45, 45, 135};
-        for (double a : feet) {
-            if (sin(a) < 0) {
-                leg(b, MORTAR_X + cos(a) * legs, MORTAR_Y + sin(a) * legs, z, MORTAR_X + cos(a) * 0.10,
-                        collarY + sin(a) * 0.08, collar, dark, tier);
+        Stride stride = Stride.of(pose);
+        double s = stride.stretch();
+        double fat = stride.fat();
+        double hipLow = z + STRIDER_HIP_LOW - stride.drop();
+        double hipHigh = z + STRIDER_HIP_HIGH - stride.drop();
+        for (int i = 0; i < STRIDER_FEET.length; i++) {
+            if (sin(STRIDER_FEET[i]) < 0) {
+                strideLeg(b, tier, i, z, hipHigh, stride.crouch(), dark, bronze);
             }
         }
-        b.solid(ngon(MORTAR_X, MORTAR_Y, 8, 0.14 + 0.008 * tier, 22.5), z, 0.04, dark);
-        b.flat(ring(MORTAR_X, MORTAR_Y, 0.125 + 0.008 * tier, 0.11 + 0.008 * tier), z + 0.04, iron.highlight());
-        int slices = MORTAR_SLICES + (pose.has(TowerCue.LONG_BARREL) ? 1 : 0);
-        double back = pose.recoil() * MORTAR_RECOIL;
-        double rise = z + 0.04 - back;
-        for (int k = 0; k < slices; k++) {
-            double y = MORTAR_Y - MORTAR_LEAN * (rise - z);
-            boolean band = k == 0 || k == 2 || k == slices - 1;
-            double radius = k == 0 ? 0.122 : k == slices - 1 ? 0.128 : 0.110;
-            b.solid(circ(MORTAR_X, y, radius), rise, MORTAR_SLICE, band ? bronze : iron);
-            if (k == 2) {
-                for (int s = -1; s <= 1; s += 2) {
-                    b.solid(box(MORTAR_X + s * 0.128, y, 0.036, 0.046), rise + MORTAR_SLICE * 0.3, 0.032, dark);
-                }
-            }
-            rise += MORTAR_SLICE;
+        double hy = striderY(0.10);
+        b.solid(ngon(STRIDER_X, hy, 8, 0.155, 22.5), hipLow, hipHigh - hipLow, dark);
+        b.flat(ring(STRIDER_X, hy, 0.155, 0.132), hipHigh, bronze.body());
+        int rings = striderRings(pose);
+        double ringHigh = STRIDER_RING * s;
+        for (int k = 0; k < rings; k++) {
+            double rise = z + stride.ringBase(k);
+            double rad = STRIDER_RADII[k] * (k == 0 ? 1 : fat);
+            b.solid(circ(STRIDER_X, striderY(rise - z), rad - 0.018), rise, STRIDER_GROOVE * s, groove);
+            rise += STRIDER_GROOVE * s;
+            b.solid(circ(STRIDER_X, striderY(rise - z), rad), rise, ringHigh * 0.78,
+                    k == 1 || k == rings - 1 ? bronze : iron);
+            b.solid(circ(STRIDER_X, striderY(rise - z + ringHigh * 0.78), rad - 0.012), rise + ringHigh * 0.78,
+                    ringHigh * 0.22, Tones.of(iron.highlight()));
         }
-        double my = MORTAR_Y - MORTAR_LEAN * (rise - z);
-        Shape lip = ring(MORTAR_X, my, MORTAR_MUZZLE, MORTAR_BORE);
+        double[] pump = mortarPump(tier, pose);
+        double px = pump[0];
+        double py = pump[1];
+        double pumpBottom = pump[2];
+        double pumpTop = pump[3];
+        b.solid(box(px - 0.03, py, 0.03, 0.03), pumpBottom + 0.03, 0.03, dark);
+        b.solid(circ(px, py, 0.032), pumpBottom, pumpTop - pumpBottom, bronze);
+        b.flat(ring(px, py, 0.032, 0.02), pumpTop, bronze.highlight());
+        double rod = pumpTop + 0.02 + 0.10 * (1 - stride.pumped());
+        b.line(open(px, py - LIFT * pumpTop, px, py - LIFT * rod), 0, iron.shade(), 0.016);
+        b.line(open(px - 0.002, py - LIFT * pumpTop, px - 0.002, py - LIFT * rod), 0, iron.highlight(), 0.006);
+        b.line(open(px - 0.045, py - LIFT * rod, px + 0.045, py - LIFT * rod), 0, dark.shade(), 0.022);
+        b.line(open(px - 0.045, py - LIFT * rod - 0.005, px + 0.045, py - LIFT * rod - 0.005), 0, wood.highlight(),
+                0.008);
+        double gaugeZ = z + stride.ringBase(1) + (STRIDER_GROOVE + STRIDER_RING * 0.45) * s;
+        double gy = striderY(gaugeZ - z) + STRIDER_RADII[0] * fat * 0.92 - LIFT * gaugeZ;
+        double gx = STRIDER_X - 0.06;
+        b.flat(circ(gx, gy, 0.034), 0, bronze.shade());
+        b.flat(circ(gx, gy, 0.026), 0, new Color(0xe9e2cc));
+        double needle = -210 + 240 * stride.pumped();
+        b.line(open(gx, gy, gx + cos(needle) * 0.022, gy + sin(needle) * 0.022), 0,
+                stride.pumped() > 0.85 ? new Color(0xd0402a) : new Color(0x2a2620), 0.007);
+        double rise = z + stride.ringBase(rings);
+        double my = striderY(rise - z);
+        double lipOuter = 0.182 * fat;
+        double bore = 0.118;
+        b.solid(circ(STRIDER_X, my, lipOuter), rise, STRIDER_COLLAR, bronze);
+        rise += STRIDER_COLLAR;
+        my = striderY(rise - z);
+        Shape lip = ring(STRIDER_X, my, lipOuter, bore);
         Area farLip = new Area(lip);
         farLip.intersect(new Area(new Rectangle2D.Double(-2, -2, 4, 2 + my)));
         Area nearLip = new Area(lip);
         nearLip.subtract(farLip);
-        b.solid(farLip, rise, 0.03, bronze);
-        b.flat(circ(MORTAR_X, my, MORTAR_BORE), rise + 0.03, new Color(0x120f0c));
+        double top = rise + STRIDER_LIP;
+        b.solid(farLip, rise, STRIDER_LIP, bronze);
+        b.flat(circ(STRIDER_X, my, bore), top, new Color(0x0d0b09));
+        b.flat(circ(STRIDER_X, my + 0.02, bore * 0.7), top, new Color(0x1a1512));
         boolean loaded = mortarLoadedCount(pose, volley) > 0;
+        double shellZ = top + MORTAR_SHELL * 0.4;
         if (loaded) {
-            shell(b, mortarShowing(pose, volley, load), MORTAR_X, my, MORTAR_SHELL, rise + MORTAR_SHELL * 0.7);
+            shell(b, mortarShowing(pose, volley, load), STRIDER_X, my, MORTAR_SHELL * 1.15, shellZ);
         }
-        b.solid(nearLip, rise, 0.03, bronze);
-        if (pose.flash()) {
-            b.glow(MORTAR_X, my, 0.24, rise + 0.07, alpha(new Color(0xffe6b0), 0.95));
-            b.glow(MORTAR_X, my, 0.11, rise + 0.07, alpha(Color.WHITE, 0.9));
-        } else if (pose.reload() < 0.25 && !loaded) {
-            b.glow(MORTAR_X, my, 0.10, rise + 0.08, alpha(new Color(0xb9bcc8), 0.55));
-            b.glow(MORTAR_X - 0.025, my - 0.04, 0.07, rise + 0.17, alpha(new Color(0xb9bcc8), 0.35));
-        }
-        if (loaded && pose.reload() >= 1) {
-            b.light(Life.GLINT, MORTAR_X - 0.02, my - 0.03, rise + MORTAR_SHELL * 0.7, 0.05, Color.WHITE);
-        }
-        for (double a : feet) {
+        b.solid(nearLip, rise, STRIDER_LIP, bronze);
+        b.flat(ring(STRIDER_X, my, bore + 0.018, bore), top, iron.shade());
+        for (int i = 0; i < 8; i++) {
+            double a = 22.5 + i * 45;
             if (sin(a) > 0) {
-                leg(b, MORTAR_X + cos(a) * legs, MORTAR_Y + sin(a) * legs, z, MORTAR_X + cos(a) * 0.10,
-                        collarY + sin(a) * 0.08, collar, dark, tier);
+                b.flat(mv(at(circ(0, 0, 0.010), a, (lipOuter + bore + 0.018) / 2), STRIDER_X, my), top,
+                        bronze.highlight());
             }
         }
-        double braceZ = z + (collar - z) * 0.45;
-        double bx = legs * 0.62;
-        double braceY = MORTAR_Y + bx * 0.75;
-        b.line(open(MORTAR_X - bx * 0.75, braceY - LIFT * braceZ, MORTAR_X + bx * 0.75, braceY - LIFT * braceZ), 0,
-                dark.shade(), 0.024);
-        b.line(open(MORTAR_X - bx * 0.75, braceY - LIFT * braceZ, MORTAR_X + bx * 0.75, braceY - LIFT * braceZ), 0,
-                dark.highlight(), 0.010);
-        if (tier >= 2) {
-            b.line(open(MORTAR_X - bx * 0.75, braceY - LIFT * z, MORTAR_X + bx * 0.75, braceY - LIFT * braceZ), 0,
-                    dark.shade(), 0.018);
-            b.line(open(MORTAR_X + bx * 0.75, braceY - LIFT * z, MORTAR_X - bx * 0.75, braceY - LIFT * braceZ), 0,
-                    dark.shade(), 0.018);
+        if (pose.beat() == STRIDE_REST && pose.reload() < 0.25 && !loaded) {
+            b.glow(STRIDER_X, my, 0.10, top + 0.045, alpha(new Color(0xb9bcc8), 0.55));
+            b.glow(STRIDER_X - 0.025, my - 0.04, 0.07, top + 0.135, alpha(new Color(0xb9bcc8), 0.35));
+        }
+        if (loaded && pose.reload() >= 1) {
+            b.light(Life.GLINT, STRIDER_X - 0.02, my - 0.03, shellZ, 0.05, Color.WHITE);
+        }
+        for (int i = 0; i < STRIDER_FEET.length; i++) {
+            if (sin(STRIDER_FEET[i]) > 0) {
+                strideLeg(b, tier, i, z, hipHigh, stride.crouch(), dark, bronze);
+            }
         }
         int count = stock.size();
         int row = Math.min(count, MORTAR_RACK_ROW);
         double rackWide = row * MORTAR_RACK_GAP + 0.03;
-        b.solid(box(0, MORTAR_RACK_Y, rackWide, MORTAR_RACK_GAP + 0.02), z, MORTAR_RACK_HEIGHT, wood);
-        for (int s = -1; s <= 1; s += 2) {
-            b.solid(box(s * (rackWide / 2 - 0.008), MORTAR_RACK_Y, 0.016, MORTAR_RACK_GAP + 0.02),
-                    z + MORTAR_RACK_HEIGHT, 0.03, Tones.of(wood.shade()));
+        double rackZ = floorAt(tier, MORTAR_RACK_Y);
+        b.solid(box(0, MORTAR_RACK_Y, rackWide, MORTAR_RACK_GAP + 0.02), rackZ, MORTAR_RACK_HEIGHT, wood);
+        for (int side = -1; side <= 1; side += 2) {
+            b.solid(box(side * (rackWide / 2 - 0.008), MORTAR_RACK_Y, 0.016, MORTAR_RACK_GAP + 0.02),
+                    rackZ + MORTAR_RACK_HEIGHT, 0.03, Tones.of(wood.shade()));
         }
         for (int i = 0; i < count; i++) {
             double[] p = mortarPiece(tier, i, count);
             rackedShell(b, stock.get(i), p[0], p[1], MORTAR_SHELL, p[2]);
         }
-        b.top = rise + 0.03;
+        if (tier == 0) {
+            keg(b, -0.36, -0.03, 0, wood, iron);
+        }
+        b.top = top;
         return b;
+    }
+
+    /** A powder keg standing on the ground: two iron hoops, and a lid with a bung. */
+    private static void keg(Build b, double x, double y, double z, Tones wood, Tones iron) {
+        b.solid(circ(x, y, 0.055), z, 0.10, wood);
+        b.flat(ring(x, y, 0.056, 0.05), z, iron.shade());
+        for (double hoop : new double[] {0.025, 0.075}) {
+            b.line(open(x - 0.055, y + 0.012 - LIFT * (z + hoop), x + 0.055, y + 0.012 - LIFT * (z + hoop)), 0,
+                    iron.shade(), 0.010);
+        }
+        b.flat(circ(x, y, 0.05), z + 0.10, wood.highlight());
+        b.flat(ring(x, y, 0.05, 0.042), z + 0.10, wood.shade());
+        b.flat(circ(x + 0.012, y - 0.01, 0.012), z + 0.10, new Color(0x2a2018));
+    }
+
+    /**
+     * Leg {@code i}: from the drum's side up and out to a knee, then down to a pointed foot on whatever floor is under
+     * it, drawn in screen measures (line parts at height 0). A crouch spreads and lowers the knee and the hip.
+     */
+    private static void strideLeg(Build b, int tier, int i, double z, double hipHigh, double crouch, Tones t,
+                                  Tones joint) {
+        double a = STRIDER_FEET[i];
+        double hy = striderY(0.10);
+        double hipZ = hipHigh + 0.05 - 0.02 * crouch;
+        double hipX = STRIDER_X + cos(a) * 0.15;
+        double hipY = striderY(hipZ - z) + sin(a) * 0.15 * 0.95;
+        double kneeR = 0.27 + 0.035 * crouch;
+        double kneeX = STRIDER_X + cos(a) * kneeR;
+        double kneeY = hy + sin(a) * kneeR;
+        double kneeZ = hipZ + 0.10 - 0.07 * crouch;
+        double[] foot = mortarFoot(tier, i);
+        double footX = foot[0];
+        double footY = foot[1];
+        double footZ = foot[2];
+        double w = 0.062 + 0.004 * tier;
+        b.line(open(hipX, hipY - LIFT * hipZ, kneeX, kneeY - LIFT * kneeZ), 0, t.shade(), w);
+        b.line(open(hipX - w * 0.15, hipY - LIFT * hipZ - w * 0.22, kneeX - w * 0.15, kneeY - LIFT * kneeZ - w * 0.22),
+                0, t.highlight(), w * 0.33);
+        b.line(open(kneeX, kneeY - LIFT * kneeZ, footX, footY - LIFT * (footZ + 0.02)), 0, t.shade(), w * 0.8);
+        b.line(open(kneeX - w * 0.12, kneeY - LIFT * kneeZ, footX - w * 0.12, footY - LIFT * (footZ + 0.02)), 0,
+                t.highlight(), w * 0.26);
+        b.flat(circ(kneeX, kneeY - LIFT * kneeZ, w * 0.66), 0, t.shade().darker());
+        b.flat(circ(kneeX - w * 0.12, kneeY - LIFT * kneeZ - w * 0.12, w * 0.46), 0, t.body());
+        b.flat(circ(kneeX - w * 0.2, kneeY - LIFT * kneeZ - w * 0.2, w * 0.16), 0, joint.highlight());
+        b.solid(mv(rot(poly(-0.03, -0.035, 0.06, 0, -0.03, 0.035), a), footX, footY), footZ, 0.022, t);
     }
 
     /** A rail along the far half of a circle of radius {@code r}, from {@code from} to {@code to} degrees, at {@code z}. */
@@ -1214,19 +1425,6 @@ final class TowerFoundations {
             xy[i * 2 + 1] = sin(a) * r - LIFT * z;
         }
         return open(xy);
-    }
-
-    /**
-     * One splayed leg from its foot on the floor to the collar round the barrel, a shaded line drawn in screen
-     * measures (a line part at height 0), with a foot plate.
-     */
-    private static void leg(Build b, double fx, double fy, double fz, double cx, double cy, double cz, Tones t,
-                            int tier) {
-        double w = 0.034 + 0.004 * tier;
-        b.solid(circ(fx, fy, w * 0.9), fz, 0.02, t);
-        b.line(open(fx, fy - LIFT * fz, cx, cy - LIFT * cz), 0, t.shade(), w);
-        b.line(open(fx - w * 0.2, fy - LIFT * fz - w * 0.2, cx - w * 0.2, cy - LIFT * cz - w * 0.2), 0,
-                t.highlight(), w * 0.35);
     }
 
     /** A shell of {@code kind} on a rack, without its glow: there a glow would hide its neighbours. */

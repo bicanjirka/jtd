@@ -55,7 +55,9 @@ import td.util.TickRate;
 import td.wave.Path;
 import td.wave.Vec2;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -548,10 +550,10 @@ class TowerEffectFrameBuilderTest {
         single.doTick(1);
         volley.doTick(1);
 
-        assertThat(TowerSpriteFrameBuilder.poseOf(single).load()).containsExactly(LoadedShell.HEAVY);
-        assertThat(TowerSpriteFrameBuilder.poseOf(volley).load()).hasSize(volley.loadingCount());
-        assertThat(TowerSpriteFrameBuilder.poseOf(single).has(TowerCue.VOLLEY)).isFalse();
-        assertThat(TowerSpriteFrameBuilder.poseOf(volley).has(TowerCue.VOLLEY)).isTrue();
+        assertThat(TowerSpriteFrameBuilder.poseOf(single, 1).load()).containsExactly(LoadedShell.HEAVY);
+        assertThat(TowerSpriteFrameBuilder.poseOf(volley, 1).load()).hasSize(volley.loadingCount());
+        assertThat(TowerSpriteFrameBuilder.poseOf(single, 1).has(TowerCue.VOLLEY)).isFalse();
+        assertThat(TowerSpriteFrameBuilder.poseOf(volley, 1).has(TowerCue.VOLLEY)).isTrue();
     }
 
     /** The draws of {@code type} {@code tower} makes at {@code tick}. */
@@ -602,7 +604,7 @@ class TowerEffectFrameBuilderTest {
     }
 
     @Test
-    void aMortarCarriesAShellAsItReloadsOnceTheShotsFlashIsGone() {
+    void aMortarCarriesAShellAsItReloadsOnceTheShotsFramesAreOver() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         MortarTower mortar = new MortarTower(context, 3, 3);
         context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(mortar.getX() + 60, mortar.getY())});
@@ -611,15 +613,82 @@ class TowerEffectFrameBuilderTest {
             mortar.doTick(tick);
         }
         List<ShellCarryDraw> fired = effectsOf(mortar, context, tick - 1, ShellCarryDraw.class);
-        for (; TowerSpriteFrameBuilder.poseOf(mortar).flash() && tick < 400; tick++) {
+        for (; mortar.ticksSinceFired(tick - 1, TowerFoundations.STRIDE_SHOT_FRAMES - 1).isPresent() && tick < 400;
+                tick++) {
             mortar.doTick(tick);
         }
 
+        int carrying = tick - 1;
+
         assertThat(fired).isEmpty();
-        assertThat(effectsOf(mortar, context, tick - 1, ShellCarryDraw.class)).singleElement().satisfies(carry -> {
+        assertThat(effectsOf(mortar, context, carrying, ShellCarryDraw.class)).singleElement().satisfies(carry -> {
             assertThat(carry.reload()).isEqualTo(1f - mortar.getCoolDownFraction());
-            assertThat(carry.load()).isEqualTo(TowerSpriteFrameBuilder.poseOf(mortar).load());
+            assertThat(carry.load()).isEqualTo(TowerSpriteFrameBuilder.poseOf(mortar, carrying).load());
         });
+    }
+
+    @Test
+    void aMortarRunsItsShotFramesFromTheTickAShellLeavesThenRests() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        MortarTower mortar = new MortarTower(context, 3, 3);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(mortar.getX() + 60, mortar.getY())});
+        int fired = firstShot(mortar);
+
+        List<Integer> beats = IntStream.rangeClosed(0, TowerFoundations.STRIDE_SHOT_FRAMES)
+                .mapToObj(t -> TowerSpriteFrameBuilder.poseOf(mortar, fired + t).beat()).toList();
+
+        assertThat(beats.subList(0, TowerFoundations.STRIDE_SHOT_FRAMES)).isEqualTo(
+                IntStream.range(0, TowerFoundations.STRIDE_SHOT_FRAMES).map(TowerFoundations::strideShot).boxed()
+                        .toList());
+        assertThat(beats.getLast()).isEqualTo(TowerFoundations.STRIDE_REST);
+    }
+
+    @Test
+    void aMortarPumpsOnceAfterTheShellDropsInAndHoldsCockedUntilItFires() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        MortarTower mortar = new MortarTower(context, 3, 3);
+        TowerPose unfired = TowerSpriteFrameBuilder.poseOf(mortar, 0);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(mortar.getX() + 60, mortar.getY())});
+        List<Integer> beats = new ArrayList<>();
+        for (int tick = firstShot(mortar) + 1; tick < 400; tick++) {
+            mortar.doTick(tick);
+            if (mortar.ticksSinceFired(tick, 0).isPresent()) {
+                break;
+            }
+            if (mortar.ticksSinceFired(tick, TowerFoundations.STRIDE_SHOT_FRAMES - 1).isEmpty()) {
+                beats.add(TowerSpriteFrameBuilder.poseOf(mortar, tick).beat());
+            }
+        }
+
+        assertThat(beats).isSorted().startsWith(TowerFoundations.STRIDE_REST)
+                .contains(TowerFoundations.STRIDE_SHOT_FRAMES + 1).endsWith(TowerFoundations.STRIDE_COCKED);
+        assertThat(unfired.beat()).isEqualTo(TowerFoundations.STRIDE_COCKED);
+    }
+
+    @Test
+    void aVolleyRunsTheShotFramesAgainForEveryShellThatLeaves() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        MortarTower volley = new MortarTower(context, 3, 3);
+        UpgradePaths.buy(volley, context, "Barrage");
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(volley.getX() + 60, volley.getY())});
+        int first = firstShot(volley);
+        int tick = first + 1;
+        for (; (volley.ticksSinceFired(tick - 1, 0).isEmpty() || tick - 1 == first) && tick < 400; tick++) {
+            volley.doTick(tick);
+        }
+        int second = tick - 1;
+
+        assertThat(volley.getCoolDownFraction()).isPositive();
+        assertThat(TowerSpriteFrameBuilder.poseOf(volley, second).beat()).isEqualTo(TowerFoundations.strideShot(0));
+    }
+
+    /** Ticks {@code mortar} from the first tick until a shell leaves, and returns that tick. */
+    private static int firstShot(MortarTower mortar) {
+        int tick = 1;
+        for (; mortar.getCoolDownFraction() <= 0f && tick < 400; tick++) {
+            mortar.doTick(tick);
+        }
+        return tick - 1;
     }
 
     private static CinderTower scorcherWith(GameWorld context, String... nodes) {

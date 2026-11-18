@@ -215,15 +215,39 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * The pose a Mortar is in: the shells this reload loads, its magazine's front ones, and on its rack every kind it
-     * can load.
+     * The pose a Mortar is in: how far it has reloaded (it throws nothing back: the shot bends its body instead), the
+     * beat of its moment, the shells this reload loads, its magazine's front ones, and on its rack every kind it can
+     * load.
      */
-    static TowerPose poseOf(MortarTower tower) {
-        return poseOfReload(tower.getCoolDownFraction())
+    static TowerPose poseOf(MortarTower tower, int gameTime) {
+        float coolDown = tower.getCoolDownFraction();
+        TowerPose reload = coolDown <= 0f ? TowerPose.idle() : TowerPose.idle().refilling(1f - coolDown);
+        return reload.withBeat(strideOf(tower, gameTime))
                 .withLoad(shellsOf(tower.magazine().front(tower.loadingCount())))
                 .withStock(shellsOf(tower.loadableKinds()))
                 .with(TowerCue.VOLLEY, tower.loadingCount() > 1)
                 .with(TowerCue.LONG_BARREL, tower.reachesPastItsBase());
+    }
+
+    /** A Mortar's moment: a frame of the shot while one runs, else where the pump is since the shell dropped in. */
+    static int strideOf(MortarTower tower, int gameTime) {
+        OptionalInt shot = tower.ticksSinceFired(gameTime, TowerFoundations.STRIDE_SHOT_FRAMES - 1);
+        if (shot.isPresent()) {
+            return TowerFoundations.strideShot(shot.getAsInt());
+        }
+        return TowerFoundations.stridePump(ticksSinceLoaded(tower));
+    }
+
+    /**
+     * The ticks since the shell (a volley's last) dropped into a Mortar's barrel: negative before it, and endless
+     * while it stands ready.
+     */
+    static double ticksSinceLoaded(MortarTower tower) {
+        float coolDown = tower.getCoolDownFraction();
+        if (coolDown <= 0f) {
+            return Double.POSITIVE_INFINITY;
+        }
+        return (1f - TowerFoundations.MORTAR_LOADED_AT - coolDown) * tower.reloadTicks();
     }
 
     private static List<LoadedShell> shellsOf(List<ShellKind> kinds) {
@@ -320,7 +344,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitMortarTower(MortarTower tower) {
-        this.sprite(tower, TowerLook.MORTAR, poseOf(tower));
+        this.sprite(tower, TowerLook.MORTAR, poseOf(tower, this.gameTime));
         return null;
     }
 
