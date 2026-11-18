@@ -1,8 +1,8 @@
 # Feature Request: Tower visual polish
 
-**Status:** art prepared 2026-11-16, reworked after the user's review 2026-11-18; not implemented. The pieces the
-review asked for are drawn and checked by their author on the renders; the user's second look is owed for the ones
-listed under "Open questions".
+**Status:** art prepared 2026-11-16, reworked after the user's reviews of 2026-11-18 (two rounds); not implemented.
+The pieces the reviews asked for are drawn and checked by their author on the renders; the user's look is owed for
+the ones listed under "Open questions".
 
 ## Summary
 
@@ -24,7 +24,7 @@ verification instructions with the art.
   |---|---|
   | `PolishLooks.java` | every new look as a builder; code marked COPY repeats what is private in `TowerFoundations` and is not moved |
   | `PolishLife.java` | idle life and moments painted live, in board pixels: sparks, ball, runes, nest, birds, cartridge, steam, Sundial, the Mortar's reload arc |
-  | `PolishShots.java` | the Sniper's rounds and ricochets, the Headhunter's laser, the execution mark, Frenzy's embers, the stone's size |
+  | `PolishShots.java` | the Sniper's rounds and ricochets, the Headhunter's laser, the execution, Frenzy's embers, the stone's size |
   | `PolishFlame.java` | the Scorcher's flame: merged cones, silhouettes, heat |
   | `PolishSheets.java` | renders the sheets and the GIFs |
 
@@ -51,13 +51,17 @@ verification instructions with the art.
   Names: `looks lineup heads closeups strips stones tops idle-stormcaller idle-hexer idle-aerie idle-aerie-tiers
   idle-obelisk orbit-options flock moment-knell moment-sundial moment-sniper moment-mortar moment-scorcher
   dragon-turn sniper-shots sniper-states flame`.
+- The Burst at Tier 0 is a ring of stones round a throwing arm on a dark patch of ground (`TowerFoundations.thrower`):
+  it reads as a pit.
 - The Burst's fork is picked in Tier I's gate, so a Burst without a fork never passes Tier 0 in play, and the
   `SPLASH` row draws the Stormcaller above Tier 0.
 - The Aerie has two identities, Ruby and Shade. There is no third: no node, no missile kind.
 - The nest's ring is a circle round the tower's centre lifted to `Foundation.nest`, as wide as the footprint, and
   turns only with `SeekerTower.ringRadians()`: it stands still while the tower idles.
-- A ring round a column (the Stormcaller's guard rings, the Aerie's perch) goes through `Build.around`, which puts
+- A ring round a column (the Stormcaller's guard rings, the Aerie's ring) goes through `Build.around`, which puts
   its far half after the column, so the far half is drawn over it.
+- The Aerie's ring round its spire carries one cue: it brightens and glows while the next freeze will set off a
+  Release (`TowerCue.RELEASE_READY`).
 - The Sundial is a wedge (`ShadowDraw`), narrow at the stone and wider at its tip.
 - A knell is `pose.fired()`: the rune flashes; the frame builder adds a ring.
 - Soulfire and Dragon's Breath are one cluster, so no tower holds both.
@@ -68,7 +72,8 @@ verification instructions with the art.
   fixed step and draws three red strokes; the Headhunter draws a crosshair on the lens.
 - A bullet flies white only when it carries `GUARANTEED_CRIT` (`SniperTower.Bullet.sureCrit`, the Fourth Shot's);
   every other crit is rolled when the bullet lands and shows only in the fading trace after it.
-- An execution is drawn after the kill: a ring on the enemy bursting into shards (`TowerEffectFrameBuilder.execution`).
+- An execution is drawn after the kill: a thin white ring on the enemy bursting into eight short white strokes
+  (`TowerEffectFrameBuilder.execution`, from `SniperTower.lastExecution()`), easy to miss beside a crit's white trace.
 - The flame is three nested tongues per stream (`StreamDraw`, `paintStream`), each stream painted alone, so two
   crossing cones stack their alpha; an enemy in a cone is hidden under the fire.
 - The Burst's stone flies as a `CannonballDraw` of size 1: a radius of `PROJECTILE_SIZE` (5 px on a 32 px cell).
@@ -90,14 +95,14 @@ measures: a point `v` up a face at `faceY` stands at `y = faceY - 0.42 v`.
 
 | Tower | New look | Lab | In the game |
 |---|---|---|---|
-| Burst without a fork, Tiers I to III | the stone thrower grown into a siege engine: taller frame, a counterweight, a walled yard with a banner | `thrower(tier, pose)` | the `SPLASH` row above Tier 0 |
+| Burst without a fork, every tier | a wooden onager, the cheap stone thrower a village builds, set across its cell to throw over the north-east: a plank bed, two rails, a rope skein with a winch at each end, a tall stop frame with a padded crossbar, one arm with a cup, a basket of stones. The arm lies cocked with a stone in its cup, stands slammed into the pad at the throw, and is winched down while it reloads. The tiers grow it and never ring it: iron bands and spoked winches (I), side braces, iron caps and a heap of stones (II), a banner (III). No pit | `thrower(tier, pose)`, `turned`, `beam`, the `THROWER_*` constants | the whole `SPLASH` row, Tier 0 included |
 | Stormcaller | a tesla coil: primary drum, a tall secondary striped in two coppers, a steel top-load carrying the ball; the guard rings' far halves go behind the coil | `stormcaller`, `ball`, `Build.aroundColumn` | replaces `stormcaller` |
 | Hexer | an oracle's ball of violet glass on a twisted iron stem, cradled by claws (bone at Tier III) | `hexer` | replaces `hexer` |
 | Scorcher with Dragon's Breath | a dragon's head for a turret head: neck, crest, a jaw that drops while it streams, horns. The body stays (the user, 2026-11-18) | `dragonHead` | the head of `scorcher` when the pose has `DRAGONS_BREATH` |
 | Soulfire | a soul cage: banded barrel, two blades and a fang round a pale flame, a small skull behind | `soulHead` | the head of `scorcher` when `soul` |
 | Mortar | a stationary siege mortar, see "The Mortar" | `siegeMortar`, `leg`, the `MORTAR_*` constants | replaces `mortar` and `mortarHead`; no head |
 | Sniper | the same rifle, showing its focus and its Frenzy, see "The Sniper" | `sniperHead`, the `FOCUS_*`, `KEEN_GOLD`, `FRENZY_SHAKE*` constants | replaces `sniperHead` |
-| Aerie | the same spire, narrowing as it climbs, the tallest tower at every tier; a dark blue disc round the spire's foot so the pale crystal stands out from its blue base; the perch ring just under the top slice, its far half behind the spire | `aerie`, `perch`, `AERIE_FOOT*` | the `SEEKER` row |
+| Aerie | the same spire, narrowing as it climbs, the tallest tower at every tier; a dark blue disc round the spire's foot so the pale crystal stands out from its blue base; no ring (the user, 2026-11-18): while a Release is ready its tip turns white and glows, as Ruby's, Shade's and White's do | `aerie`, `AERIE_FOOT*` | the `SEEKER` row; the ring and its arms go |
 | Ruby | a geode broken open: a cluster of leaning crystals round one great shard, an ember under them | `ruby`, `crystalShard` | the `RUBY` row |
 | Shade | a dark tower: buttress fins, a shaft that steps in with spikes, two horns with nothing between them, pale green slits | `shade` | the `SHADE` row |
 | White (new) | a white tower: marble shaft over small turrets, a balcony, a silver-blue roof, a gold needle and pennant | `white` | a new `TowerLook.WHITE` with its `TowerLooks` row (`0xe6eaf2`, the Aerie's tier ramp) and `TowerIcons` row; unused on purpose, ready for a future identity (`TODO.md`) |
@@ -105,7 +110,8 @@ measures: a point `v` up a face at `faceY` stands at `y = faceY - 0.42 v`.
 
 Heights of the tops, in cells, Tiers 0 to III: Stormcaller -, 0.99, 1.32, 1.60; Hexer -, 1.05, 1.35, 1.65; Aerie
 1.08, 1.55, 2.02, 2.49; Ruby (from II) 1.74, 2.15; Shade 1.94, 2.35; White 1.91, 2.28; Obelisk 0.72, 0.99, 1.26,
-1.53; Mortar 0.54, 0.61, 0.68, 0.75 (the muzzle). `PolishSheets tops` prints them.
+1.53; Mortar 0.47, 0.54, 0.61, 0.68 (the muzzle); Burst 0.38, 0.50, 0.62, 0.74 (the stop frame). `PolishSheets
+tops` prints them.
 
 ### Idle life (the wall clock)
 
@@ -125,7 +131,8 @@ Heights of the tops, in cells, Tiers 0 to III: Stormcaller -, 0.99, 1.32, 1.60; 
 | The Scorcher lets off steam when its reload starts | `PolishLife.steam`, `STEAM_SECONDS` | a tower effect at `TowerSprites.muzzle`, its progress from the ticks since the stream ended |
 | A knell throws the Obelisk from side to side and turns its runes white | `obelisk` reads `pose.recoil()` through `KNELL_SHAKE` | the visit method sends `reloading(progress since the knell)` instead of `fired()` |
 | The Sundial is a real shadow, see "The Sundial" | `PolishLife.sundial`, the `SUNDIAL_*` constants | the body of `Java2DFrameRenderer.paintShadow`; reach, heading, fade and the Umbra rule stay |
-| The Mortar's reload: a shell carried from the pile to the muzzle, see "The Mortar" | `PolishLife.mortarLoad`, `MORTAR_ARC_PEAK` | a tower effect, its progress the reload's own, not snapped |
+| The Mortar's reload: a shell lifted off the rack into the muzzle, see "The Mortar" | `PolishLife.mortarLoad`, `MORTAR_ARC_PEAK` | a tower effect, its progress the reload's own, not snapped |
+| An execution: the headsman's cut on the enemy the Executioner killed, see "The Sniper" | `PolishShots.execution`, the `EXECUTION_*` constants | the body of `TowerEffectFrameBuilder.execution`, its progress from `SniperTower.lastExecution()`'s tick |
 | Frenzy shakes the Sniper's head and red embers rise off it | `sniperHead(.., shake, ..)`, `PolishShots.frenzy` | the shake a pose step, the embers a tower effect |
 
 ### The Sundial
@@ -139,23 +146,27 @@ An Umbra stone inside its own field lights the band darker and bluer, as today.
 
 ### The Mortar
 
-A stationary, ground-anchored siege mortar on the emplacement the tiers already build (sandbags at Tiers I and II,
-stone battlements at III): a bedplate, four splayed legs braced across (twice from Tier II), and a thick,
-wide-mouthed barrel fixed at a steep angle to the north. Nothing turns. A long barrel (`LONG_BARREL`) adds a slice.
+A stationary, ground-anchored siege mortar standing in the middle of its cell, as every tower does, on the emplacement
+the tiers already build (sandbags at Tiers I and II, stone battlements at III): a bedplate, four splayed legs braced
+across (twice from Tier II), and a thick, wide-mouthed barrel fixed at a steep angle to the north. Nothing turns. A long
+barrel (`LONG_BARREL`) adds a slice.
 
-- **Scale:** the loaded, piled and carried shells are the in-flight shell exactly: its own art
-  (`TowerFoundations.shell`, `TowerSprites.paintShell`) at the in-flight radius, `PROJECTILE_SIZE` on a 32 px cell
-  (`MORTAR_SHELL`, 0.156 cells). The bore is as wide as that shell.
-- **The pile:** beside the mortar, on a pallet inside the emplacement, three shells of the loaded kind
-  (`pose.shell()`), two on the ground and one on top.
-- **The shot:** the barrel is thrown down its own axis (`pose.recoil()`), the muzzle flashes, the pile is whole again.
-- **A single load:** the bore smokes for the first quarter of the reload; in its middle half the top shell is lifted
-  from the pile and carried on a smooth parabola into the muzzle; from the last quarter the shell's top shows above
-  the muzzle until the shot, with a glint once ready.
-- **Barrage and Carpet Bombing (`VOLLEY`):** three shells, one a quarter from the shot, last stacked first: the top
-  one, then the right, then the left. The first one's top shows in the muzzle from the second quarter.
-- The pile and the muzzle read the pose by quarters (`mortarTaken`, `mortarLoaded`); only the shell in the air is
-  live paint.
+- **Scale:** every shell on the tower (racked, carried, loaded) is the in-flight shell's own art
+  (`TowerFoundations.shell`, `TowerSprites.paintShell`) at `MORTAR_SHELL`, about a third of its size in flight, so the
+  rack fits the cell and the barrel stays in proportion (the user, 2026-11-18). The bore is sized to it.
+- **The rack:** a small wooden rack in front of the mortar holding one shell of every kind the tower can load, in the
+  kinds' order: three on the bottom row, the rest lying on top (at most five: Normal, Heavy, Nuke under Fusion, its
+  payload, Flare). It shows what the tower has unlocked, whatever its magazine holds now, and it never empties: it is
+  the stock, not the magazine.
+- **The shot:** the barrel is thrown down its own axis (`pose.recoil()`), the muzzle flashes.
+- **A single load:** the bore smokes for the first quarter of the reload; in its middle half a shell of the front
+  shell's kind is lifted off that kind's place on the rack and carried on a smooth parabola into the muzzle; from the
+  last quarter its top shows above the muzzle until the shot, with a glint once ready.
+- **Barrage and Carpet Bombing (`VOLLEY`):** three shells, one a quarter from the shot, each off its own kind's place,
+  loaded back to front: the shell fired last goes in first and the front shell last, so the front shell's top is the
+  one showing when the volley fires. Between, the muzzle shows the shell that went in last.
+- The barrel and the rack read the pose by quarters (`mortarLoadedCount`, `mortarShowing`); only the shell in the air
+  is live paint.
 
 ### The Sniper
 
@@ -168,7 +179,7 @@ wide-mouthed barrel fixed at a steep angle to the north. Nothing turns. A long b
 | A loaded Fourth Shot | `sniperHead` | the muzzle burns red round a white core, larger than today |
 | Frenzy | `sniperHead(.., shake, ..)`, `FRENZY_SHAKE`, `PolishShots.frenzy` | the whole head jumps between four offsets every `FRENZY_SHAKE_TICKS` ticks, a red glow under it, red strokes off it, and red embers rise above the turret and go out |
 | Headhunter aiming at an Elite or a Boss | `PolishShots.laser` | a very thin red laser from the scope's lens to the enemy, a faint shimmering glow along it, a red dot where it lands; the lens crosshair stays |
-| Executioner, a target a crit would execute now | `PolishShots.executionMark` | a thin white ring with four ticks closing slowly on the enemy; when the bullet on its way is a sure crit, the ring is whole and bright, the ticks touch it and a red point burns in its middle. The burst after the kill stays |
+| Executioner, a kill it made | `PolishShots.execution`, `EXECUTION_*` | only after the Executioner killed: a crit left the enemy under its line and the node executed it. The headsman's cut: a blade of white light slashes down across the enemy in the first instant, red at its edges, a crimson ring snaps out from the cut, and red-hot shards fly off both sides of it and go out, over `EXECUTION_SECONDS`. Nothing is drawn while the Sniper aims or a bullet flies: no mark promises a kill (the user, 2026-11-18). It replaces today's thin white ring and strokes |
 
 ### The flame
 
@@ -199,23 +210,21 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
   and wing beat come from the tower's seed, and its ring slowly breathes in and out; the birds of one tower drift
   against each other, so the flock's picture seldom repeats and no two towers fly alike. One bird alone does repeat
   its own circle.
-- **The blue circle at the top of the Aerie** is its perch: the ring the nest circles on, the nest's mark on the
-  tower. Its far half was drawn after the spire, so it showed through it; the Stormcaller's guard rings had the same
-  fault. Both now put the far half under their column (`Build.aroundColumn`), and the perch sits just under the top
-  slice.
+- **The blue circle at the top of the Aerie** was the Aerie's ring, kept from the game's look. It did one thing: it
+  brightened and glowed while a Release was ready. It is gone (the user prefers the spire without it); the Release
+  cue moved to the spire's tip, which turns white and glows, as the other Aerie looks already showed it.
 - **How is a crit known in advance (the white bullet)?** Only a bullet that carries `GUARANTEED_CRIT` knows it: the
   Fourth Shot's. Every other crit is rolled when the bullet lands, and shows in the trace after it.
 - **Can an execution be known in advance?** Not for certain: a crit is rolled when the bullet lands (unless it is
-  sure), the enemy may dodge, and its health may change while the bullet flies. What is known now is that the enemy
-  is executable (below an Elite and under the Executioner's threshold), so any crit would kill it; and a sure crit on
-  its way to such an enemy is as close to certain as the game gets. The execution mark shows those two. Today the
-  only execution visual is the burst after the kill.
+  sure), the enemy may dodge, and its health may change while the bullet flies. So nothing is drawn before; the
+  execution is drawn when it happens (round 2: the mark before it is dropped).
 
 ### How to implement
 
 1. Move a builder as it stands. Its measures, colours and pose reads are final; `Build`, `plinth`, `stoneRing` and
    the small helpers it calls exist in `TowerFoundations` under the same names. `scaled`, `mirrored`, `ball`,
-   `crystalShard`, `perch`, `leg`, `Build.aroundColumn` and the constants marked NEW move with it.
+   `crystalShard`, `leg`, `turned`, `beam`, `Build.aroundColumn` and the constants marked NEW move with it. The
+   game's Aerie ring and the Burst's stone ring and dark patch go.
 2. A look whose body reads the pose stays `Row.posed`. The Mortar becomes a posed row with no head. The Scorcher
    stays as it is: only its heads change.
 3. A new life is a `Life` constant and a case beside `BREATH`; its painter is the `PolishLife` method, which
@@ -236,9 +245,13 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
      pictures a heading while Frenzy runs); the embers on the tick clock from the tower's seed.
    - Headhunter: the position of the enemy the Sniper aims at while it hunts it; the laser leaves from the lens
      (`0.09, -0.05` on the head, turned with it, at the head's height plus 0.08).
-   - Executioner: whether the enemy it aims at is executable now, and whether a sure-crit bullet is on its way to it.
-   - Mortar: the reload's progress (not snapped), `VOLLEY`, the front shell's kind; a lobbed shell leaves from
-     `mortarMouth`, the muzzle that no longer turns.
+   - Executioner: nothing new. `SniperTower.lastExecution()` (its tick and place) is recorded only when
+     `ExecutionerMechanic` executes, which is exactly the moment to draw: a crit that left the enemy under the line.
+   - Mortar: the reload's progress (not snapped); `VOLLEY`; the kinds this reload loads, front first (the
+     magazine's front shell, or its front three for a volley); the kinds on the rack: every kind with a share in
+     `MagazineView.chances`, and Nuke under Fusion. The rack changes only with an upgrade, so it belongs with the
+     look's kept pictures, not to every frame. A lobbed shell leaves from `mortarMouth`, the muzzle that no longer
+     turns.
    - Flame: every stream of the frame together; a stream's fuel a second; for each enemy in a cone, its outline
      (its look's top shape at its size and facing), its centre, the nozzle, and the fuel it was fed this tick.
 7. Out of scope, and needed before two looks can show in play: a way for a Burst to pass Tier 0 without a fork; a
@@ -251,13 +264,14 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
 | Each look matches its drawing | render the game's sheets (`next-gen-art/README.md`) and set `catalogue.png` and `heads.png` beside `looks.png` and `heads.png` here; every other changed sheet must be one this request explains |
 | The lab and the game build the same parts | `TowerArtGame.dump` of the game's look against the same dump of the lab's `Built`, for every look, tier and pose on `heads.png` |
 | The table rules hold | `TowerFoundationsTest`, `TowerPoseTest` |
-| A cue reaches its picture | a `BoardRendererTest` per new pose read: a knell in, a recoiling pose out; Dragon's Breath in, the cue out; five stacks in, the focus out; Keen Eye full in, its cue out |
-| A ring's far half is hidden | at 7x, the Stormcaller's guard rings and the Aerie's perch pass behind their column |
+| A cue reaches its picture | a `BoardRendererTest` per new pose read: a knell in, a recoiling pose out; Dragon's Breath in, the cue out; five stacks in, the focus out; Keen Eye full in, its cue out; Release ready in, the Aerie's tip white out; a Mortar's unlocked kinds in, their shells on the rack out |
+| A ring's far half is hidden | at 7x, the Stormcaller's guard rings pass behind their coil |
 | Idle life runs on the wall clock, moments on the tick clock | one live `run-jtd` pass: pause, and the sparks, the ball, the runes, the circling birds and the nest keep moving while a cartridge, steam, a knell, the Sundial, the Mortar's shell in the air, Frenzy's embers and the birds coming or leaving hold |
 | Each animation matches | the live pass beside `strips.png` and the GIFs |
 | The nest circles the top | at Tier III no missile is ever drawn over the spire from behind it |
 | Birds only at a quiet tower | live: an Aerie that fights has no birds; quiet a few seconds, they come in one by one; a fight scatters them |
-| The Mortar reloads as drawn | live, a Mortar with Barrage: three shells leave the pile top, right, left, and the top of a shell shows in the muzzle until the shot |
+| The Mortar reloads as drawn | live, a Mortar with Barrage and a payload: three shells rise off the rack, each from its own kind's place, the front shell last, and its top shows in the muzzle until the shot; the rack shows every unlocked kind and never empties |
+| An execution shows once | live, a Sniper with Executioner: the cut plays on an enemy a crit left under the line, and on no other kill; nothing marks an enemy before |
 | The flame merges | live, two Scorchers whose cones cross: one flame where they cross, no darker overlap; an enemy in a cone shows as a silhouette with its hot edge toward the nozzle |
 | A tall tower hides nothing it must not | an enemy on the path north of a Tier III Aerie still shows its bars and marks |
 | Cost | `td.PerformanceHarness`, both loadouts; the sheets' `bench`; a live JFR of the painter on a board of Aeries, Stormcallers and Scorchers, since birds, sparks, the nest, the merged flame (shape unions every frame) and the silhouettes are painted live (`jtd-paint-is-outside-the-harness`) |
@@ -286,8 +300,8 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
 - A mark on a wall is not foreshortened as its wall is (`RUNE_SQUASH`), or a rune would not read.
 - `TowerLook.WHITE` is a look no tower wears until its node exists.
 - The flattened orbit does not follow the board's projection, in which a level circle stays a circle.
-- The loaded and piled shells are drawn at size 1; a larger shell (Big Bore) grows only in flight.
-- The execution mark promises less than certainty: a dodge or a heal can still spare a marked enemy.
+- The shells on the Mortar are drawn smaller than in flight, on purpose; a larger shell (Big Bore) grows only in
+  flight.
 
 ## Decisions made
 
@@ -303,22 +317,25 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
 - The White tower is a look kept for the future, unused on purpose (the user, 2026-11-18; `TODO.md`).
 - The Sundial is the old wedge reworked into a lit band with a soft shadow in it; the stone's outline is dropped
   (the user, 2026-11-18).
-- The Mortar's shells are the in-flight shell's art at its in-flight size (the user, 2026-11-18), so the barrel and
-  the pile are sized to it.
+- The Mortar's shells are the in-flight shell's art, drawn smaller than in flight so the rack fits and the barrel
+  stays in proportion; the mortar stands in the middle of its cell; its rack shows every kind the tower can load,
+  never the magazine (the user, 2026-11-18, second round).
+- The plain Burst is an onager, not a pit, at every tier (the user, 2026-11-18, second round). It is turned to throw
+  over the north-east, so its arm reads in the raised view; it still never turns.
+- The Aerie has no ring; its Release cue is its tip (the user, 2026-11-18, second round).
+- The Executioner is drawn only when it executes, never before (the user, 2026-11-18, second round).
 - Beyond the request: Ruby, Shade and White each got a silhouette of their own; the Soulfire head carries a skull;
   the Obelisk's standing stones became rough stones; every Aerie look keeps a Release-ready cue; the Aerie's shards
-  and the Stormcaller's insulators grew with their towers; the birds' rings breathe; the Mortar got a pallet under its
-  pile and a glint once loaded; the flame got a white-hot inner core from half heat and a plasma sheen along every
-  cone; a loaded Fourth Shot glows larger on the rifle; the Silver Round leaves glitter.
+  and the Stormcaller's insulators grew with their towers; the birds' rings breathe; the Mortar got a wooden rack
+  and a glint once loaded; the Burst's onager got winches, braces, a basket and a heap of stones; the flame got a
+  white-hot inner core from half heat and a plasma sheen along every cone; a loaded Fourth Shot glows larger on the
+  rifle; the Silver Round leaves glitter.
 
 ## Open questions
 
-The user's look is owed for what the review asked to be redone or added; each is in its sheet:
+The user approved everything else in the second round (2026-11-18). Owed, each in its sheet:
 
-- The Aerie's dark foot disc, all tiers (`looks.png`, the Aerie row): does it separate the spire from its base?
-- The Sundial's lit band and shadow (`moment-sundial.gif`, `strips.png`).
-- The siege mortar and its reload (`moment-mortar.gif`, `heads.png`, `strips.png`): the barrel leans north, fixed.
-- The flame (`flame.gif`): merging, silhouettes, rim, wisps, plasma, the heat ladder.
-- The Sniper (`sniper-shots.gif`, `sniper-states.gif`): rounds, ricochets, focus and Keen Eye, Frenzy, the laser, the
-  execution mark.
-- The birds coming and going (`flock.gif`), the nest at the top (`idle-aerie.gif`), the stone's size (`stones.png`).
+- The plain Burst as an onager, every tier and its three poses (`looks.png` first row, `closeups.png`, `heads.png`).
+- The Mortar in the middle of its cell, its rack and its reload (`moment-mortar.gif`, `closeups.png`, `strips.png`).
+- The Aerie without its ring, the Release cue on its tip (`looks.png`, `heads.png`).
+- The execution (`sniper-states.gif`, the Executioner panel: now, then new).

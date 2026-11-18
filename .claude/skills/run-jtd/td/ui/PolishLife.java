@@ -457,29 +457,30 @@ final class PolishLife {
     }
 
     /** A carried shell rises this far (cells) above the higher of its two ends. */
-    static final double MORTAR_ARC_PEAK = 0.32;
+    static final double MORTAR_ARC_PEAK = 0.26;
 
     /**
-     * The Mortar's reload on the tick clock: a shell lifted from the pile beside the mortar standing at {@code cx, cy}
-     * and carried on a smooth parabola into the muzzle, as the in-flight shell is drawn (TowerSprites.paintShell at
-     * the shell's own radius), its small shadow running under it. {@code reload} is the reload's progress, not
-     * snapped. A single load flies in the reload's middle half and takes the top shell; a volley's three fly a quarter
-     * each from the shot, top, right, left (last stacked, first taken).
+     * The Mortar's reload on the tick clock: a shell lifted off its kind's place on the ready rack in front of the
+     * mortar standing at {@code cx, cy} and carried on a smooth parabola into the muzzle, drawn as the in-flight shell
+     * is (TowerSprites.paintShell) at the rack's radius, its small shadow running under it. {@code reload} is the
+     * reload's progress, not snapped. {@code stock} is the rack (the kinds the tower can load), {@code load} what this
+     * reload loads, front first. A single load flies in the reload's middle half; a volley's three fly a quarter each
+     * from the shot, back to front, so the shell fired first goes in last.
      */
     static void mortarLoad(Graphics2D g2, double cx, double cy, double scale, int tier, TowerPose pose, double reload,
-                           boolean volley, LoadedShell kind) {
+                           boolean volley, List<LoadedShell> stock, List<LoadedShell> load) {
         double from = volley ? Math.floor(reload * 4) / 4 : 0.25;
         double length = volley ? 0.25 : 0.5;
         if (reload < from || reload >= from + length || (volley && reload >= 0.75) || pose.flash()) {
             return;
         }
-        int piece = volley ? 2 - (int) Math.floor(reload * 4) : 2;
+        LoadedShell kind = volley ? load.get(load.size() - 1 - (int) Math.floor(reload * 4)) : load.get(0);
         double u = (reload - from) / length;
         double s = u * u * (3 - 2 * u);
-        double[] a = PolishLooks.mortarPiece(tier, piece);
+        double[] a = PolishLooks.mortarPiece(tier, PolishLooks.mortarPlace(stock, kind), stock.size());
         double[] m = PolishLooks.mortarMouth(tier, TowerPose.idle().with(TowerCue.LONG_BARREL,
                 pose.has(TowerCue.LONG_BARREL)));
-        double endZ = m[2] + PolishLooks.MORTAR_SHELL * 0.75;
+        double endZ = m[2] + PolishLooks.MORTAR_SHELL * 0.7;
         double x = a[0] + (m[0] - a[0]) * s;
         double y = a[1] + (m[1] - a[1]) * s;
         double peak = Math.max(a[2], endZ) + MORTAR_ARC_PEAK;
