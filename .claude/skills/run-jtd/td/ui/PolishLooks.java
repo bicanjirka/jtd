@@ -346,23 +346,6 @@ final class PolishLooks {
         return b;
     }
 
-    /** COPY of TowerFoundations.stoneRing. */
-    private static void stoneRing(Build b, double r, double z, Color tower, boolean two) {
-        int mark = b.mark();
-        Tones a = stone(tower);
-        Tones c = Tones.of(mix(a.body(), Color.WHITE, 0.16));
-        for (int i = 0; i < 9; i++) {
-            double size = 0.058 + 0.012 * ((i * 7) % 3);
-            b.solid(at(ngon(0, 0, 5 + i % 2, size, i * 31), i * 40, r), z, 0.09 + 0.02 * (i % 2), i % 2 == 0 ? a : c);
-        }
-        if (two) {
-            for (int i = 0; i < 5; i++) {
-                b.solid(at(ngon(0, 0, 5, 0.046, i * 47), 20 + i * 72, r * 0.98), z + 0.10, 0.07, i % 2 == 0 ? c : a);
-            }
-        }
-        b.around(mark);
-    }
-
     // ==== NEW helpers (move) ==========================================================================================
 
     /** {@code s} scaled by {@code sx, sy} about {@code ax, ay}. */
@@ -558,14 +541,11 @@ final class PolishLooks {
         Build b = plinth(tier, storm, r -> ngon(0, 0, 12, r, 15));
         double r = b.bodyRadius;
         double z = b.top;
-        if (tier == 1) {
-            stoneRing(b, r * 0.80, z, storm, false);
-        } else {
-            b.solid(ngon(0, 0, 8, r, 22.5), z, 0.05, iron);
-            z += 0.05;
-            for (int i = 0; i < 8; i++) {
-                b.flat(at(circ(0, 0, 0.013), i * 45, r * 0.84), z, iron.highlight());
-            }
+        double plate = tier == 1 ? r * 0.86 : r;
+        b.solid(ngon(0, 0, 8, plate, 22.5), z, 0.05, iron);
+        z += 0.05;
+        for (int i = 0; i < 8; i++) {
+            b.flat(at(circ(0, 0, 0.013), i * 45, plate * 0.84), z, iron.highlight());
         }
         if (tier == 3) {
             int mark = b.mark();
@@ -637,9 +617,6 @@ final class PolishLooks {
         Build b = plinth(tier, hex, r -> ngon(0, 0, 12, r, 15));
         double r = b.bodyRadius;
         double z = b.top;
-        if (tier == 1) {
-            stoneRing(b, r * 0.80, z, hex, false);
-        }
         if (tier == 3) {
             b.line(circ(0, 0, r * 0.94), z, alpha(hex, 0.9), 0.014);
             for (int i = 0; i < 6; i++) {
@@ -647,15 +624,15 @@ final class PolishLooks {
                         alpha(hex, 0.9), 0.014);
             }
         }
-        if (tier >= 2) {
-            int mark = b.mark();
-            for (int i = 0; i < 3; i++) {
-                b.solid(rot(box(0.16, 0, 0.17, 0.034), 90 + i * 120), z, 0.05, iron);
-                b.solid(at(ngon(0, 0, 4, 0.052, 20), 30 + i * 120, r * 0.74), z, 0.16, stone(hex));
-                b.flat(at(box(0, 0, 0.012, 0.045), 30 + i * 120, r * 0.74), z + 0.16, lit);
-            }
-            b.around(mark);
+        int marks = b.mark();
+        double standing = tier >= 2 ? 0.16 : 0.10;
+        for (int i = 0; i < 3; i++) {
+            b.solid(rot(box(0.16, 0, 0.17, 0.034), 90 + i * 120), z, 0.05, iron);
+            b.solid(at(ngon(0, 0, 4, tier >= 2 ? 0.052 : 0.044, 20), 30 + i * 120, r * 0.74), z, standing, stone(hex));
+            b.flat(at(box(0, 0, 0.012, 0.045), 30 + i * 120, r * 0.74), z + standing,
+                    tier >= 2 ? lit : mix(lit, stone(hex).body(), 0.5));
         }
+        b.around(marks);
         b.solid(ngon(0, 0, 8, tier >= 2 ? 0.13 : 0.11, 22.5), z, 0.08, iron);
         z += 0.08;
         double stem = 0.42 + 0.20 * tier;
@@ -922,9 +899,12 @@ final class PolishLooks {
     /** The rack holds one shell of each kind the tower can load: at most this many on the bottom row, the rest on top. */
     static final int MORTAR_RACK_ROW = 3;
 
-    /** The height of the plinth's top for {@code tier}: where the mortar and the rack stand. */
+    /** The plank deck the mortar stands on from Tier I: its thickness. */
+    static final double MORTAR_DECK = 0.025;
+
+    /** The height of the floor the mortar and the rack stand on for {@code tier}: the plinth's top, then the deck. */
     static double mortarFloor(int tier) {
-        return tier * STEP_HEIGHT;
+        return tier * STEP_HEIGHT + (tier >= 1 ? MORTAR_DECK : 0);
     }
 
     /** The muzzle's centre at the top of the barrel, in cells: x, y on the plan and z, for {@code tier} in {@code pose}. */
@@ -991,26 +971,34 @@ final class PolishLooks {
         Tones iron = tones(0x5a6070);
         Tones dark = tones(0x3a3f4c);
         Tones bronze = Tones.of(mix(mortar, Color.WHITE, 0.12));
-        Tones sand = tones(0xb5a27c);
         Tones wood = tones(0x7a5a3a);
+        Tones plank = Tones.of(mix(wood.shade(), new Color(0x2a2622), 0.4));
         boolean volley = pose.has(TowerCue.VOLLEY);
         Build b = plinth(tier, mortar, r -> ngon(0, 0, 8, r, 22.5));
         double r = b.bodyRadius;
         double z = b.top;
+        if (tier >= 1) {
+            double deck = r * 0.92;
+            b.solid(ngon(0, 0, 8, deck, 22.5), z, MORTAR_DECK, plank);
+            for (int i = -2; i <= 2; i++) {
+                b.flat(box(i * deck * 0.36, 0, 0.006, deck * 1.7), z + MORTAR_DECK, plank.shade());
+            }
+            if (tier >= 2) {
+                b.flat(ring(0, 0, deck, deck - 0.022), z + MORTAR_DECK, iron.body());
+                for (int i = 0; i < 8; i++) {
+                    b.flat(at(circ(0, 0, 0.012), 22.5 + i * 45, deck - 0.011), z + MORTAR_DECK, iron.highlight());
+                }
+            }
+            z += MORTAR_DECK;
+        }
         if (tier == 3) {
             int mark = b.mark();
-            b.solid(minus(ngon(0, 0, 8, r * 1.02, 22.5), ngon(0, 0, 8, r * 0.78, 22.5)), z, 0.16, stone(mortar));
-            for (int i = 0; i < 8; i++) {
-                b.solid(at(box(0, 0, 0.05, 0.06), 22.5 + i * 45, r * 0.9), z + 0.16, 0.05,
-                        Tones.of(stone(mortar).highlight()));
+            for (int i = 0; i < 5; i++) {
+                double a = -180 + i * 45;
+                b.solid(at(circ(0, 0, 0.018), a, r * 0.80), z, 0.14, iron);
+                b.flat(at(circ(0, 0, 0.022), a, r * 0.80), z + 0.14, iron.highlight());
             }
-            b.around(mark);
-            b.flat(ngon(0, 0, 8, r * 0.78, 22.5), z, new Color(0x2a2622));
-        } else if (tier >= 1) {
-            int mark = b.mark();
-            for (int i = 0; i < 10; i++) {
-                b.solid(at(ell(0, 0, 0.042, 0.066), i * 36, r * 0.84), z, 0.07, sand);
-            }
+            b.line(arcOver(r * 0.80, -180, 0, z + 0.12), 0, iron.shade(), 0.016);
             b.around(mark);
         }
         double legs = 0.19 + 0.012 * tier;
@@ -1096,6 +1084,18 @@ final class PolishLooks {
         }
         b.top = rise + 0.03;
         return b;
+    }
+
+    /** A rail along the far half of a circle of radius {@code r}, from {@code from} to {@code to} degrees, at {@code z}. */
+    private static Shape arcOver(double r, double from, double to, double z) {
+        int steps = 24;
+        double[] xy = new double[(steps + 1) * 2];
+        for (int i = 0; i <= steps; i++) {
+            double a = from + (to - from) * i / steps;
+            xy[i * 2] = cos(a) * r;
+            xy[i * 2 + 1] = sin(a) * r - LIFT * z;
+        }
+        return open(xy);
     }
 
     /**

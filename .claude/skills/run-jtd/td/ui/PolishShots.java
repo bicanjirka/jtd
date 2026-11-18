@@ -69,6 +69,8 @@ final class PolishShots {
     static final double EXECUTION_CUT_DEGREES = 62;
     static final int EXECUTION_SHARDS = 10;
     static final Color EXECUTION_RED = new Color(0xe0202a);
+    /** How flat the execution's ring and stain lie on the ground: the flattening of a lobbed shell's shadow. */
+    static final double EXECUTION_GROUND_SQUASH = 0.55;
 
     static final int FRENZY_EMBERS = 7;
     static final double FRENZY_EMBER_SECONDS = 0.9;
@@ -208,30 +210,43 @@ final class PolishShots {
 
     /**
      * An execution, {@code progress} (0..1 over {@link #EXECUTION_SECONDS} on the tick clock) after the Executioner
-     * killed the enemy at {@code x, y} (its body's centre, lifted): the headsman's cut. A blade of white light slashes
-     * down across the enemy in the first instant, red at its edges; a crimson ring snaps out from the cut and fades;
-     * red-hot shards fly off both sides of the cut and go out. Drawn only for a kill the Executioner made, never
-     * while a shot is aimed or in flight.
+     * killed the enemy standing at {@code x, groundY} (its point on the ground, board pixels) with its body's centre
+     * {@code bodyLift} pixels above it: the headsman's cut. A blade of white light slashes down across the body in the
+     * first instant, red at its edges. Under it, on the ground, a dark stain spreads and a crimson ring snaps out round
+     * the enemy's feet, flattened onto the ground as a lobbed shell's shadow is. Red-hot shards burst off both sides of the cut, fall, and go
+     * out where they land. Drawn only for a kill the Executioner made, never while a shot is aimed or in flight.
      */
-    static void execution(Graphics2D g2, double x, double y, double scale, double progress, int seed) {
+    static void execution(Graphics2D g2, double x, double groundY, double bodyLift, double scale, double progress,
+                          int seed) {
         if (progress < 0 || progress >= 1) {
             return;
         }
+        double fade = progress < EXECUTION_STRIKE ? 1 : 1 - (progress - EXECUTION_STRIKE) / (1 - EXECUTION_STRIKE);
+        double spread = Math.sqrt(progress);
+        double stain = scale * (0.10 + 0.20 * spread);
+        g2.setColor(faded(new Color(0x2a0508), 0.55 * fade));
+        g2.fill(new Ellipse2D.Double(x - stain, groundY - stain * EXECUTION_GROUND_SQUASH, stain * 2,
+                stain * 2 * EXECUTION_GROUND_SQUASH));
+        double ring = scale * (0.14 + 0.40 * spread);
+        Ellipse2D ground = new Ellipse2D.Double(x - ring, groundY - ring * EXECUTION_GROUND_SQUASH, ring * 2,
+                ring * 2 * EXECUTION_GROUND_SQUASH);
+        g2.setStroke(new BasicStroke((float) (scale * (0.05 * (1 - progress) + 0.008))));
+        g2.setColor(faded(EXECUTION_RED, 0.35 * fade));
+        g2.draw(ground);
+        g2.setStroke(new BasicStroke((float) (scale * (0.022 * (1 - progress) + 0.006))));
+        g2.setColor(faded(mixed(EXECUTION_RED, new Color(0xffb0a0), 0.3 * (1 - progress)), 0.9 * fade));
+        g2.draw(ground);
+        double y = groundY - bodyLift;
         double cut = Math.toRadians(EXECUTION_CUT_DEGREES);
         double cx = Math.cos(cut);
         double cy = Math.sin(cut);
         double half = scale * EXECUTION_CUT_CELLS / 2;
         double drawn = Math.min(1, progress / EXECUTION_STRIKE);
-        double fade = progress < EXECUTION_STRIKE ? 1 : 1 - (progress - EXECUTION_STRIKE) / (1 - EXECUTION_STRIKE);
         double ax = x - cx * half;
         double ay = y - cy * half;
         double bx = ax + cx * half * 2 * drawn;
         double by = ay + cy * half * 2 * drawn;
-        glow(g2, x, y, scale * 0.34 * (0.6 + 0.4 * drawn), EXECUTION_RED, 0.55 * fade);
-        double ring = scale * (0.14 + 0.46 * Math.sqrt(progress));
-        g2.setStroke(new BasicStroke((float) (scale * 0.035 * (1 - progress) + scale * 0.006)));
-        g2.setColor(faded(EXECUTION_RED, 0.85 * fade));
-        g2.draw(new Ellipse2D.Double(x - ring, y - ring * 0.62, ring * 2, ring * 1.24));
+        glow(g2, x, y, scale * 0.26 * (0.6 + 0.4 * drawn), EXECUTION_RED, 0.5 * fade);
         g2.setStroke(new BasicStroke((float) (scale * 0.075), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.setColor(faded(EXECUTION_RED, 0.75 * fade));
         g2.draw(new Line2D.Double(ax, ay, bx, by));
@@ -246,20 +261,27 @@ final class PolishShots {
         for (int i = 0; i < EXECUTION_SHARDS; i++) {
             double side = i % 2 == 0 ? 1 : -1;
             double along = (PolishLife.hash(seed, i) - 0.5) * 1.6;
-            double spread = (PolishLife.hash(seed + 5L, i) - 0.5) * 0.9;
-            double nx = -cy * side + cx * spread;
-            double ny = cx * side + cy * spread;
+            double turn = (PolishLife.hash(seed + 5L, i) - 0.5) * 0.9;
+            double nx = -cy * side + cx * turn;
+            double ny = cx * side + cy * turn;
             double norm = Math.hypot(nx, ny);
-            double reach = scale * (0.12 + 0.50 * out) * (0.7 + 0.5 * PolishLife.hash(seed + 9L, i));
-            double px = x + cx * half * along + nx / norm * reach;
-            double py = y + cy * half * along + ny / norm * reach + scale * 0.10 * flight * flight;
+            nx /= norm;
+            ny /= norm;
+            double reach = scale * (0.12 + 0.42 * out) * (0.7 + 0.5 * PolishLife.hash(seed + 9L, i));
+            double start = bodyLift + cy * half * along * -1;
+            double toss = scale * 0.10 * PolishLife.hash(seed + 13L, i);
+            double height = Math.max(0, start * (1 - flight) + toss * 4 * flight * (1 - flight));
+            double px = x + cx * half * along + nx * reach;
+            double py = groundY + ny * reach * EXECUTION_GROUND_SQUASH - height;
+            double landed = height <= 0 ? 1 : 0;
             double size = scale * 0.05 * (1 - 0.5 * flight);
-            g2.setColor(faded(mixed(new Color(0xffe8c0), EXECUTION_RED, Math.min(1, flight * 1.8)), 1 - flight));
+            g2.setColor(faded(mixed(new Color(0xffe8c0), EXECUTION_RED, Math.min(1, flight * 1.8)),
+                    (1 - flight) * (1 - 0.3 * landed)));
             Path2D.Double shard = new Path2D.Double();
-            shard.moveTo(px + nx / norm * size * 1.8, py + ny / norm * size * 1.8);
-            shard.lineTo(px - ny / norm * size * 0.6, py + nx / norm * size * 0.6);
-            shard.lineTo(px - nx / norm * size, py - ny / norm * size);
-            shard.lineTo(px + ny / norm * size * 0.6, py - nx / norm * size * 0.6);
+            shard.moveTo(px + nx * size * 1.8, py + ny * size * 1.8);
+            shard.lineTo(px - ny * size * 0.6, py + nx * size * 0.6);
+            shard.lineTo(px - nx * size, py - ny * size);
+            shard.lineTo(px + ny * size * 0.6, py - nx * size * 0.6);
             shard.closePath();
             g2.fill(shard);
         }
