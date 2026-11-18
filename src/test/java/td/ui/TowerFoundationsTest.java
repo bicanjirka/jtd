@@ -118,6 +118,9 @@ class TowerFoundationsTest {
         poses.add(TowerPose.idle().withStacks(3));
         poses.add(TowerPose.idle().withStacks(TowerFoundations.FOCUS_STACKS));
         poses.add(TowerPose.idle().with(TowerCue.FRENZY).withBeat(1));
+        for (int beat = 0; beat <= TowerFoundations.STRIDE_COCKED; beat++) {
+            poses.add(TowerPose.idle().withBeat(beat).with(TowerCue.LONG_BARREL));
+        }
         poses.add(TowerPose.idle().withStock(List.of(LoadedShell.values())).withLoad(List.of(LoadedShell.values()))
                 .reloading(0.5f));
         poses.add(TowerPose.idle().withPanes(List.of(TowerLook.SNIPER, TowerLook.MORTAR)));

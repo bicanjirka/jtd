@@ -249,6 +249,8 @@ final class TowerArt {
         /** 0 just fired, 1 ready. */
         double reload = 1;
         int stacks;
+        /** The step of a running motion: Frenzy's shake, the Mortar's moment. */
+        int beat;
         String look = "";
         String shell = "normal";
         final Set<String> cues = new HashSet<>();
@@ -289,6 +291,11 @@ final class TowerArt {
             return this;
         }
 
+        State beat(int step) {
+            this.beat = step;
+            return this;
+        }
+
         State stacks(int n) {
             this.stacks = n;
             return this;
@@ -311,7 +318,7 @@ final class TowerArt {
             } else if (this.reload < 1) {
                 pose = pose.refilling((float) this.reload);
             }
-            pose = pose.withStacks(this.stacks).withLoad(java.util.List.of(LoadedShell.valueOf(this.shell.toUpperCase())));
+            pose = pose.withStacks(this.stacks).withBeat(this.beat).withLoad(java.util.List.of(LoadedShell.valueOf(this.shell.toUpperCase())));
             for (String cue : this.cues) {
                 switch (cue) {
                     case "long" -> pose = pose.with(TowerCue.LONG_BARREL);

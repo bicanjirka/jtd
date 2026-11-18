@@ -109,10 +109,10 @@ final class TowerArtSheets3 {
                 tower("stormcaller", 2, st().fire(1)), tower("stormcaller", 2, st().cue("full")), tower("hexer", 2, st()),
                 tower("hexer", 2, st().fire(1)));
         y = row(g, y, "Hexer, continued; Mortar: the barrel and the shell in it", null,
-                new String[] {"Hexer: ability full|the brew glows", "Mortar: Normal loaded", "Fired|barrel back, bore empty", "Reloading|barrel slides out",
+                new String[] {"Hexer: ability full|the brew glows", "Mortar: cocked|pumped, needle in the red", "Spit|stretched up, bore empty", "Slam|squashed onto its knees",
                     "Heavy|larger, bright band", "Nuke|pale, hazard glow", "Napalm", "Tar|black, glossy", "Cryo", "Flare"},
-                tower("hexer", 2, st().cue("full")), tower("mortar", 2, st()), tower("mortar", 2, st().fire(1)),
-                tower("mortar", 2, st().reload(0.3)), tower("mortar", 2, st().shell("heavy")), tower("mortar", 2, st().shell("nuke")),
+                tower("hexer", 2, st().cue("full")), tower("mortar", 2, st().beat(10)), tower("mortar", 2, st().fire(1).beat(1)),
+                tower("mortar", 2, st().reload(0.05).beat(2)), tower("mortar", 2, st().shell("heavy")), tower("mortar", 2, st().shell("nuke")),
                 tower("mortar", 2, st().shell("napalm")), tower("mortar", 2, st().shell("tar")), tower("mortar", 2, st().shell("cryo")),
                 tower("mortar", 2, st().shell("flare")));
         double[] wide = {TILE, TILE, TILE, 250, 250, 250, 250};

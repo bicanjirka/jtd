@@ -62,6 +62,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.Function;
 
 import static td.tower.upgrade.MechanicCatalogue.entry;
@@ -92,6 +93,8 @@ public final class MortarTower extends AbstractTower {
 
     private static final float MINIMUM_RANGE_CELLS = 1.5f;
     private static final float HEAVY_TIMES = 2f;
+    /** A rate below this counts as it, so a stalled tower's reload is long rather than endless. */
+    private static final double MINIMUM_RATE = 1e-3;
     /** A shot every 3.5 s. */
     private static final int COOLDOWN_MAX = 69;
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
@@ -230,6 +233,7 @@ public final class MortarTower extends AbstractTower {
     /** The kinds it can load, and the mechanics they were worked out for. */
     private volatile LoadableKinds loadable;
     private int tickNow;
+    private OptionalInt firedAt = OptionalInt.empty();
     private EnemyMob currentTarget;
 
     public MortarTower(GameWorld context, int x, int y) {
@@ -373,6 +377,7 @@ public final class MortarTower extends AbstractTower {
 
     private void fireAt(ShellKind kind, Vec2 aim) {
         Shell shell = new Shell(kind, this.beginShot());
+        this.firedAt = OptionalInt.of(this.tickNow);
         this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, aim.x(), aim.y(),
                 this.shellStats(shell), kind.look(), (x, y) -> this.onImpact(x, y, shell)));
     }
@@ -623,6 +628,16 @@ public final class MortarTower extends AbstractTower {
     /** How much of the reload is still to run: 1 as a shell leaves, 0 once the next is ready. */
     public float getCoolDownFraction() {
         return this.clock.remaining();
+    }
+
+    /** The ticks since its last shell left, a volley's included, while they are within {@code window}. */
+    public OptionalInt ticksSinceFired(int gameTime, int window) {
+        return within(this.firedAt, gameTime, window);
+    }
+
+    /** How many ticks a whole reload takes at its rate now: the cooldown fraction falls by one over that many. */
+    public double reloadTicks() {
+        return this.clock.period() / Math.max(MINIMUM_RATE, this.attackRate());
     }
 
     public TurretAim getTurretAim() {

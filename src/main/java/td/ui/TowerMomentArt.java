@@ -137,7 +137,7 @@ final class TowerMomentArt {
                 carry.stock().size());
         double[] m = TowerFoundations.mortarMouth(tier, TowerPose.idle().with(TowerCue.LONG_BARREL,
                 carry.longBarrel()));
-        double endZ = m[2] + TowerFoundations.MORTAR_SHELL * 0.7;
+        double endZ = m[2] + TowerFoundations.MORTAR_SHELL * 0.4;
         double x = a[0] + (m[0] - a[0]) * s;
         double y = a[1] + (m[1] - a[1]) * s;
         double peak = Math.max(a[2], endZ) + MORTAR_ARC_PEAK;
