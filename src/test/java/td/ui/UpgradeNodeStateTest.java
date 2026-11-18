@@ -70,14 +70,6 @@ class UpgradeNodeStateTest {
         assertThat(UpgradeNodeState.of(B2, tower, this.world).look()).isEqualTo(Look.LOCKED_OUT);
     }
 
-    @Test
-    void aKeyIsTheBindingThatBuysTheNodeNow() {
-        FakeTower tower = this.tower();
-
-        assertThat(UpgradeNodeState.of(LONE, tower, this.world).key())
-                .isEqualTo(TREE.keyOf(LONE, tower, this.world));
-    }
-
     private FakeTower tower() {
         this.world.economy().startEconomy(1_000, 5);
         return FakeTower.offering(this.world, 0, 0, TREE);

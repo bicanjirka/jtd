@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -28,8 +27,6 @@ import java.util.stream.Stream;
  */
 public final class UpgradeTree {
 
-    /** Keys 1 to this buy in the highest open tier. */
-    public static final int KEYS = 6;
     private static final String UNLOCK_PREFIX = "tier.";
     private static final UpgradeTree NONE = new UpgradeTree(List.of(UpgradeTier.open()), List.of(), List.of(),
             Optional.empty());
@@ -370,46 +367,10 @@ public final class UpgradeTree {
                 && (cluster == null || !cluster.isTaken(kept));
     }
 
-    /**
-     * The nodes keys 1 to {@value #KEYS} buy for {@code tower}, left to right in its highest open tier: a cluster by
-     * its first member, a branch only while its member is owned. Until the fork is picked in its tier, each side
-     * takes a key of its own after the row: the pick is the tower's identity, never a default.
-     */
-    public List<UpgradeNode> keyed(Tower tower, GameWorld context) {
-        TierRow row = this.rows.get(this.highestOpenTier(tower, context));
-        UpgradeState owned = tower.upgrades();
-        List<UpgradeNode> keyed = new ArrayList<>();
-        appendKeyed(row.places(), owned, keyed);
-        row.side().ifPresent(side -> appendKeyed(List.of(side), owned, keyed));
-        this.fork.filter(sides -> this.tierOf(sides) == row.tier() && !sides.isTaken(owned))
-                .ifPresent(sides -> sides.memberIds().forEach(id -> keyed.add(this.byId.get(id))));
-        return List.copyOf(keyed.subList(0, Math.min(KEYS, keyed.size())));
-    }
-
-    /** The number key that buys {@code node} for {@code tower} now; a cluster member shows its cluster's key. */
-    public OptionalInt keyOf(UpgradeNode node, Tower tower, GameWorld context) {
-        List<UpgradeNode> keyed = this.keyed(tower, context);
-        UpgradeCluster cluster = this.clusterByMember.get(node.id());
-        UpgradeNode keyedAs = cluster == null || this.isForkSide(node) ? node
-                : this.byId.get(cluster.memberIds().getFirst());
-        int index = keyed.indexOf(keyedAs);
-        return index < 0 ? OptionalInt.empty() : OptionalInt.of(index + 1);
-    }
-
-    private static void appendKeyed(List<RowPlace> places, UpgradeState owned, List<UpgradeNode> keyed) {
-        for (RowPlace place : places) {
-            switch (place) {
-                case RowPlace.Lone lone -> keyed.add(lone.node());
-                case RowPlace.Group group -> keyed.add(group.members().getFirst());
-                case RowPlace.Branches branches -> {
-                    for (int i = 0; i < branches.cluster().memberIds().size(); i++) {
-                        if (owned.owns(branches.cluster().memberIds().get(i))) {
-                            appendKeyed(branches.branches().get(i), owned, keyed);
-                        }
-                    }
-                }
-            }
-        }
+    /** {@code tier}'s singles: its nodes in no cluster, in declaration order. */
+    public List<UpgradeNode> singlesIn(int tier) {
+        return this.nodes.stream().filter(node -> node.tier() == tier && !this.clusterByMember.containsKey(node.id()))
+                .toList();
     }
 
     /**

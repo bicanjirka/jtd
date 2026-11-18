@@ -677,24 +677,4 @@ public class GameEngine {
     public void debugGrantCredits(int amount) {
         this.gameWorld.economy().apply(EconomyDelta.credits(amount));
     }
-
-    /**
-     * Buys for the selected tower what key {@code number} buys in its highest open tier
-     * ({@link td.tower.upgrade.UpgradeTree#keyed}). A no-op if nothing is selected, the key buys nothing, or that is not
-     * on offer.
-     */
-    public void buyUpgradeForSelected(int number) {
-        if (this.outcome().isOver() || number < 1) {
-            return;
-        }
-        this.gameWorld.towers().all().stream()
-                .filter(Tower::isSelected)
-                .findFirst()
-                .ifPresent(tower -> {
-                    List<UpgradeNode> keyed = tower.upgradeTree().keyed(tower, this.gameWorld);
-                    if (number <= keyed.size()) {
-                        tower.buyUpgrade(keyed.get(number - 1));
-                    }
-                });
-    }
 }

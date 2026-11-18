@@ -77,16 +77,4 @@ class UpgradeTreeCatalogueTest {
             }
         }
     }
-
-    @Test
-    void everyTowersRowFitsTheNumberKeys() {
-        for (TowerFactory.Type type : TowerFactory.Type.values()) {
-            UpgradeTree tree = TowerFactory.createTower(type, this.context, 0, 0).upgradeTree();
-            for (TierRow row : tree.rows()) {
-                long places = row.places().stream().filter(place -> !(place instanceof RowPlace.Branches)).count();
-
-                assertThat(places).as("%s's tier %s", type, row.tier()).isLessThanOrEqualTo(UpgradeTree.KEYS);
-            }
-        }
-    }
 }

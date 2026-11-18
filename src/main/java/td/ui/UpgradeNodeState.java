@@ -6,16 +6,13 @@ import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 
-import java.util.OptionalInt;
-
 /**
  * How the Upgrades panel shows one node now, read once per refresh.
  *
  * @param ability whether it adds something the tower couldn't do, rather than changing a number: drawn round
- * @param key     the number key that buys it now; empty outside the highest open tier
  * @param unused  for an owned node, whether no wave has run with it yet, so it sells back in full
  */
-record UpgradeNodeState(UpgradeNode node, Look look, boolean ability, OptionalInt key, boolean unused) {
+record UpgradeNodeState(UpgradeNode node, Look look, boolean ability, boolean unused) {
 
     UpgradeNodeState {
         if (unused && look != Look.OWNED) {
@@ -47,9 +44,8 @@ record UpgradeNodeState(UpgradeNode node, Look look, boolean ability, OptionalIn
         UpgradeTree tree = tower.upgradeTree();
         UpgradeState owned = tower.upgrades();
         boolean ability = !tree.isUnlock(node) && !tower.wordsOf(node).sentences().isEmpty();
-        OptionalInt key = owned.owns(node.id()) ? OptionalInt.empty() : tree.keyOf(node, tower, world);
         Look look = lookOf(node, tower, world, tree, owned);
-        return new UpgradeNodeState(node, look, ability, key, look == Look.OWNED && tower.use().isUnused(node));
+        return new UpgradeNodeState(node, look, ability, look == Look.OWNED && tower.use().isUnused(node));
     }
 
     private static Look lookOf(UpgradeNode node, Tower tower, GameWorld world, UpgradeTree tree, UpgradeState owned) {

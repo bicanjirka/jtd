@@ -213,6 +213,20 @@ public interface Tower {
     boolean buyPath(UpgradeNode target);
 
     /**
+     * Buys each of {@code nodes} in order that is on offer and affordable when its turn comes, one charge each, and
+     * passes over the rest; returns how many it bought.
+     */
+    default int buyEach(List<UpgradeNode> nodes) {
+        int bought = 0;
+        for (UpgradeNode node : nodes) {
+            if (this.buyUpgrade(node)) {
+                bought++;
+            }
+        }
+        return bought;
+    }
+
+    /**
      * What a downgrade that takes {@code removal} away gives back: what selling would pay less, so that
      * downgrading and then selling pays what selling would have.
      */
