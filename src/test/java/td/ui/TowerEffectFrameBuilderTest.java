@@ -28,6 +28,7 @@ import td.tower.TowerTerm;
 import td.tower.cinder.FlashoverMechanic;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.ShellKind;
+import td.tower.sniper.Hop;
 import td.ui.render.BeamDraw;
 import td.ui.render.BulletDraw;
 import td.ui.render.BulletRound;
@@ -453,7 +454,7 @@ class TowerEffectFrameBuilderTest {
         while (sniper.hopsInFlight().isEmpty()) {
             sniper.doTick(++tick);
         }
-        SniperTower.Hop hop = sniper.hopsInFlight().getFirst();
+        Hop hop = sniper.hopsInFlight().getFirst();
         int midFlight = (hop.bullet().firedAt() + hop.bullet().landsAt()) / 2;
 
         List<BulletDraw> ricochets = bulletsOf(sniper, context, midFlight, 0.0).stream()

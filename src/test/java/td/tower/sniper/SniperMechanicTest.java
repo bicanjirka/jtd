@@ -69,9 +69,9 @@ class SniperMechanicTest {
     void headhunterAddsDamageAgainstAnEliteAndABossButNotARankBelow() {
         HeadhunterMechanic mechanic = new HeadhunterMechanic();
 
-        float veteran = mechanic.shape(BASE, new ShotContext(FakeEnemyMob.at(0, 0).ranked(Rank.VETERAN))).bonusDamage();
-        float elite = mechanic.shape(BASE, new ShotContext(FakeEnemyMob.at(0, 0).ranked(Rank.ELITE))).bonusDamage();
-        float boss = mechanic.shape(BASE, new ShotContext(FakeEnemyMob.at(0, 0).ranked(Rank.BOSS))).bonusDamage();
+        float veteran = mechanic.shape(BASE, FakeEnemyMob.at(0, 0).ranked(Rank.VETERAN)).bonusDamage();
+        float elite = mechanic.shape(BASE, FakeEnemyMob.at(0, 0).ranked(Rank.ELITE)).bonusDamage();
+        float boss = mechanic.shape(BASE, FakeEnemyMob.at(0, 0).ranked(Rank.BOSS)).bonusDamage();
 
         assertThat(veteran).isZero();
         assertThat(elite).isPositive();
