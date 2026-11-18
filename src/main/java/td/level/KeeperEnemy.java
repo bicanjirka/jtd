@@ -6,7 +6,6 @@ import td.enemy.AbilityTerm;
 import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
-import td.enemy.IdentifiedAbility;
 import td.enemy.PeriodicTrigger;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
@@ -35,17 +34,17 @@ final class KeeperEnemy {
         return RankedEnemy.unique(EnemyDefinition.of("keeperOfHours", "The Keeper of Hours", 6000, 50, 0.45f, BodyArchetype.KEEPER)
                 .withDescription("It has turned the glass before. It will turn it again - unless the sand is held still.")
                 .withMovement(new SwingMovement((float) Math.toRadians(14.0), 50, SwingCurve.SMOOTH))
-                .withStats(20f, 20f, 2f, 2f, 40f, 0f, 0f)
+                .withStats(50f, 50f, 12f, 12f, 0f, 0f, 40f, 40f)
                 .withDisruption(new DisruptionAura(110f, 0.25f, 0.4f))
-                .withIdentifiedAbilities(List.of(
-                        IdentifiedAbility.anonymous(new Ability(AbilityTerm.REWIND, new PeriodicTrigger(120),
-                                new RewindAction(60, new SelfTarget()))),
-                        IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(200),
-                                new SpawnEnemiesAction("timekeeper", AbilitySpawnShape.normal().unpaid(), false).atRank(Rank.VETERAN))),
-                        IdentifiedAbility.anonymous(new Ability(AbilityTerm.SWARM, new HealthThresholdTrigger(0.5f),
-                                new SpawnEnemiesAction("sandling", AbilitySpawnShape.brood(6, 1f, 1f), false)
-                                        .atRank(Rank.SOLDIER))),
-                        IdentifiedAbility.anonymous(new Ability(AbilityTerm.REWIND, new HealthThresholdTrigger(0.15f),
-                                new RewindAction(160, new SelfTarget()))))));
+                .withAbilities(List.of(
+                        new Ability(AbilityTerm.REWIND, new PeriodicTrigger(120),
+                                new RewindAction(60, new SelfTarget())),
+                        new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(100),
+                                new SpawnEnemiesAction("timekeeper", AbilitySpawnShape.normal().unpaid(), false).atRank(Rank.VETERAN)),
+                        new Ability(AbilityTerm.SWARM, new HealthThresholdTrigger(0.5f),
+                                new SpawnEnemiesAction("sandling", AbilitySpawnShape.brood(6, 1f, 0f), false)
+                                        .atRank(Rank.SOLDIER)),
+                        new Ability(AbilityTerm.REWIND, new HealthThresholdTrigger(0.15f),
+                                new RewindAction(160, new SelfTarget())))));
     }
 }

@@ -2,8 +2,10 @@ package td.level;
 
 import td.board.BoardGround;
 import td.board.GroundMotif;
+import td.effect.EffectKind;
 import td.effect.ShieldTemplate;
 import td.enemy.Ability;
+import td.enemy.AbilitySpawnShape;
 import td.enemy.AbilityTerm;
 import td.enemy.ApplyEffectAction;
 import td.enemy.BodyArchetype;
@@ -13,6 +15,7 @@ import td.enemy.HealthThresholdTrigger;
 import td.enemy.HurtSpeedTrait;
 import td.enemy.IdentifiedAbility;
 import td.enemy.IdentifiedTrait;
+import td.enemy.ImmunityTrait;
 import td.enemy.OnDeathTrigger;
 import td.enemy.PathDirectionalMovement;
 import td.enemy.PeriodicTrigger;
@@ -56,28 +59,53 @@ final class LastHourLevel {
             .startingAt(EnemyDefinition.of("sandling", "Sandling", 70, 1, 1.5f, BodyArchetype.SANDLING)
                     .withDescription("A handful of the hour's sand, running down the glass. Hold it back and it is gone.")
                     .withMovement(new PathDirectionalMovement())
-                    .withAgility(10f)
+                    .withAgility(25f)
                     .withIdentifiedTraits(List.of(crumble(4f))), RankGrowth.of(14f))
             .thenAt(Rank.SOLDIER, e -> e.withAdditionalTraits(List.of(crumble(7f))))
-            .thenAt(Rank.VETERAN, e -> e.withAdditionalTraits(List.of(crumble(14f))))
+            .thenAt(Rank.VETERAN, e -> e
+                    .withStats(10f, 10f, 0f, 0f, 45f, 0f, 0f, 10f)
+                    .withAdditionalTraits(List.of(crumble(14f))))
             .thenAt(Rank.ELITE, e -> e
-                    .withStats(5f, 5f, 0f, 0f, 0f, 25f, 0f)
+                    .withStats(25f, 25f, 5f, 5f, 65f, 0f, 0f, 40f)
                     .withAdditionalTraits(List.of(crumble(30f))))
-            .thenAt(Rank.BOSS, e -> e.withAdditionalTraits(List.of(crumble(50f))))
+            .thenAt(Rank.BOSS, e -> e
+                    .withAdditionalTraits(List.of(crumble(20f)))
+                    .withAbilities(List.of(new Ability(AbilityTerm.SPLIT, new OnDeathTrigger(),
+                            new SpawnEnemiesAction("sandGrain", AbilitySpawnShape.brood(3, 1f, 0f), false)))))
             .build();
 
-    /** A walking clock that turns the health of the allies around it back, further with rank. */
+    /**
+     * What a Boss Sandling falls apart into: a definition of its own, since a Sandling that spawns Sandlings would be
+     * a cycle. It crumbles faster than the Sandling and pays nothing.
+     */
+    private static final RankedEnemy SAND_GRAIN = RankedEnemy
+            .startingAt(EnemyDefinition.of("sandGrain", "Sand Grain", 25, 0, 1.7f, BodyArchetype.SANDLING)
+                    .withDescription("A fistful of a Sandling, still running.")
+                    .withMovement(new PathDirectionalMovement())
+                    .withAgility(25f)
+                    .withIdentifiedTraits(List.of(crumble(4f))), RankGrowth.of(12f))
+            .thenAt(Rank.BOSS, e -> e.withAdditionalTraits(List.of(crumble(15f))))
+            .build();
+
+    /** A walking clock that turns the health of the allies around it back, further with rank, and at Boss its own. */
     private static final RankedEnemy TIMEKEEPER = RankedEnemy
             .startingAt(EnemyDefinition.of("timekeeper", "Timekeeper", 130, 3, 1.0f, BodyArchetype.TIMEKEEPER)
                     .withDescription("Keeps the hour for the others: whatever they lose, it gives back.")
                     .withMovement(new RotorMovement((float) Math.toRadians(5.0)))
-                    .withIdentifiedAbilities(List.of(rewindAround(50))), RankGrowth.stepped(210, 600, 1300, 2400).paying(4, 10, 26, 40))
+                    .withIdentifiedAbilities(List.of(rewindAround(50))),
+                    RankGrowth.stepped(210, 600, 1300, 2400).paying(4, 10, 26, 40))
             .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(rewindAround(40))))
-            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(rewindAround(50))))
+            .thenAt(Rank.VETERAN, e -> e
+                    .withStats(10f, 15f, 0f, 2f, 0f, 15f, 10f, 20f)
+                    .withAdditionalAbilities(List.of(rewindAround(50))))
             .thenAt(Rank.ELITE, e -> e
-                    .withStats(10f, 20f, 0f, 0f, 0f, 10f, 20f)
+                    .withStats(15f, 25f, 0f, 3f, 10f, 25f, 15f, 25f)
                     .withAdditionalAbilities(List.of(rewindAround(60))))
-            .thenAt(Rank.BOSS, e -> e.withAdditionalAbilities(List.of(rewindAround(80))))
+            .thenAt(Rank.BOSS, e -> e
+                    .withStats(20f, 30f, 0f, 4f, 10f, 25f, 20f, 30f)
+                    .withAdditionalAbilities(List.of(rewindAround(80), IdentifiedAbility.anonymous(new Ability(
+                            AbilityTerm.REWIND, new HealthThresholdTrigger(0.25f),
+                            new RewindAction(40, new SelfTarget()))))))
             .build();
 
     /** Glass: thick against every small hit, either type, and shattering under a crit. */
@@ -85,18 +113,13 @@ final class LastHourLevel {
             .startingAt(EnemyDefinition.of("glassSentinel", "Glass Sentinel", 156, 4, 0.8f, BodyArchetype.GLASS_SENTINEL)
                     .withDescription("Cut from the glass itself. A small hit only rings on it; a hard one shatters it.")
                     .withMovement(new SwingMovement((float) Math.toRadians(6.0), 40, SwingCurve.SMOOTH))
-                    .withStats(0f, 0f, 8f, 8f, -60f, 0f, 0f), RankGrowth.stepped(230, 680, 2578, 4332).paying(5, 9, 24, 40))
-            .thenAt(Rank.SOLDIER, e -> e.withPlating(10f).withInsulation(10f))
-            .thenAt(Rank.VETERAN, e -> e.withPlating(13f).withInsulation(13f))
-            .thenAt(Rank.ELITE, e -> e.withStats(10f, 10f, 16f, 16f, -60f, 0f, 10f))
-            .thenAt(Rank.BOSS, e -> e.withStats(20f, 20f, 22f, 22f, -50f, 0f, 20f))
+                    .withStats(0f, 0f, 8f, 8f, 0f, -10f, -70f, 5f),
+                    RankGrowth.stepped(230, 680, 2578, 4332).paying(5, 9, 24, 40))
+            .thenAt(Rank.SOLDIER, e -> e.withPlating(15f).withInsulation(15f))
+            .thenAt(Rank.VETERAN, e -> e.withPlating(19f).withInsulation(19f))
+            .thenAt(Rank.ELITE, e -> e.withStats(25f, 25f, 23f, 23f, 0f, -20f, -60f, 30f))
+            .thenAt(Rank.BOSS, e -> e.withStats(60f, 60f, 25f, 25f, 0f, -40f, -50f, 70f))
             .build();
-
-    /** A tenth of the rank's health, once it is badly wounded. */
-    private static IdentifiedAbility panicShield(float points) {
-        return IdentifiedAbility.named("panicShield", new Ability(AbilityTerm.PANIC, new HealthThresholdTrigger(0.5f),
-                new ApplyEffectAction(new ShieldTemplate(points, 100), new SelfTarget())));
-    }
 
     /** A brute of packed sand that runs faster as it is hurt and falls apart into Sandlings. */
     private static final RankedEnemy REAVER = RankedEnemy
@@ -109,22 +132,30 @@ final class LastHourLevel {
                     .withInsulation(1f)
                     .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f))))
                     .withIdentifiedAbilities(List.of(
-                            panicShield(35f),
+                            panicShield(70f),
                             IdentifiedAbility.named("splitOnDeath",
                                     new Ability(AbilityTerm.SPLIT, new OnDeathTrigger(), new SpawnEnemiesAction("sandling", 2, false))))),
                     RankGrowth.stepped(190, 560, 1250, 2100).paying(10, 15, 18, 18))
             .thenAt(Rank.SOLDIER, e -> e
-                    .withAdditionalAbilities(List.of(panicShield(63f))))
+                    .withAdditionalAbilities(List.of(panicShield(126f))))
             .thenAt(Rank.VETERAN, e -> e
-                    .withAdditionalAbilities(List.of(panicShield(112f))))
+                    .withStats(10f, 10f, 2f, 2f, 10f, 0f, 50f, 20f)
+                    .withAdditionalAbilities(List.of(panicShield(224f))))
             .thenAt(Rank.ELITE, e -> e
-                    .withStats(10f, 10f, 1f, 1f, 100f, 5f, 10f)
-                    .withAdditionalAbilities(List.of(panicShield(200f))))
+                    .withStats(25f, 25f, 6f, 6f, 25f, 0f, 100f, 30f)
+                    .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
+                    .withAdditionalAbilities(List.of(panicShield(400f))))
             .thenAt(Rank.BOSS, e -> e
-                    .withStats(15f, 15f, 1f, 1f, 100f, 5f, 20f)
-                    .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.6f))))
-                    .withAdditionalAbilities(List.of(panicShield(370f))))
+                    .withStats(55f, 40f, 10f, 6f, 25f, 0f, 100f, 50f)
+                    .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.9f))))
+                    .withAdditionalAbilities(List.of(panicShield(740f))))
             .build();
+
+    /** A shield that holds until broken, once it is badly wounded. */
+    private static IdentifiedAbility panicShield(float points) {
+        return IdentifiedAbility.named("panicShield", new Ability(AbilityTerm.PANIC, new HealthThresholdTrigger(0.25f),
+                new ApplyEffectAction(ShieldTemplate.untilBroken(points), new SelfTarget())));
+    }
 
     private static final QuadraticBezierSmoothing SMOOTHING = new QuadraticBezierSmoothing(0.28, 12);
 
@@ -190,7 +221,7 @@ final class LastHourLevel {
                             new WaveDefinition("veteran: 2 sandReaver e swarm 12 sandling"),
                             new WaveDefinition("veteran: timekeeper column 4 knight"),
                             new WaveDefinition("veteran: elite sandReaver e swarm 12 sandling"),
-                            new WaveDefinition("elite: keeperOfHours e 2 timekeeper")),
+                            new WaveDefinition("keeperOfHours e 2 elite timekeeper")),
                     SMOOTHING)
             .withColor(DUSK_COLOR);
 
@@ -202,7 +233,7 @@ final class LastHourLevel {
             .withCardColor(GLASS_COLOR)
             .withGround(BoardGround.of(0x070C0E, GroundMotif.DUNES, 0x111C1E))
             // What the Reaver and the Keeper call, before them.
-            .withCustomRankedEnemies(List.of(SANDLING, TIMEKEEPER, GLASS_SENTINEL, REAVER, KeeperEnemy.keeper()));
+            .withCustomRankedEnemies(List.of(SAND_GRAIN, SANDLING, TIMEKEEPER, GLASS_SENTINEL, REAVER, KeeperEnemy.keeper()));
 
     private LastHourLevel() {
     }

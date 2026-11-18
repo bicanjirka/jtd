@@ -29,6 +29,10 @@ public record ShieldTemplate(float points, int durationTicks, Optional<DamageTyp
         return new ShieldTemplate(points, durationTicks, Optional.of(DamageType.MAGIC));
     }
 
+    public static ShieldTemplate magicOnlyUntilBroken(float points) {
+        return new ShieldTemplate(points, Effect.LASTING_TICKS, Optional.of(DamageType.MAGIC));
+    }
+
     @Override
     public Effect toEffect(DamageSink sink) {
         Effect effect = Effect.shield(DamageUnits.ofPoints(this.points), this.durationTicks, sink);

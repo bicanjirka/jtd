@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
+import td.enemy.HurtSpeedTrait;
 import td.enemy.Rank;
 import td.enemy.TraitTerm;
 import td.fixtures.EnemyFixtures;
@@ -18,6 +19,7 @@ import td.util.GameWorld;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +31,10 @@ class PanelEnemyTest {
     private final GameWorld world = WorldFixtures.newWorld();
 
     private InfoSheet hoverSheet(String id, Rank rank) {
-        EnemyDefinition definition = EnemyCatalog.builtIn().ranked(id).definitionFor(rank);
+        return this.hoverSheet(EnemyCatalog.builtIn().ranked(id).definitionFor(rank), rank);
+    }
+
+    private InfoSheet hoverSheet(EnemyDefinition definition, Rank rank) {
         EnemyMob mob = PanelEnemy.previewMob(definition, rank, this.world);
 
         return mob.accept(new EnemyInfoText(WORDING));
@@ -95,7 +100,8 @@ class PanelEnemyTest {
 
     @Test
     void aPreviewedEnemyThatSpeedsUpWhenHurtShowsItsUnhurtSpeedAndHowFastItCanGet() {
-        InfoSheet sheet = this.hoverSheet("runner", Rank.ELITE);
+        EnemyDefinition runner = EnemyFixtures.simpleDefinition("runner").withTraits(List.of(new HurtSpeedTrait(1.8f)));
+        InfoSheet sheet = this.hoverSheet(runner, Rank.ELITE);
 
         assertThat(sheet.lines().stream().filter(Row.class::isInstance).map(Row.class::cast)
                 .filter(row -> row.label().equals(EnemyStat.MOVE_SPEED.shortName())).map(Row::value))

@@ -8,14 +8,16 @@ import java.util.Locale;
 /** An ability an enemy fires, named for the player. */
 public enum AbilityTerm implements Term {
     BRACE("Brace", "shields itself against physical hits once badly hurt"),
-    BULWARK("Bulwark", "shields itself against magic once badly hurt"),
+    BULWARK("Bulwark", "shields itself against magic as it is worn down"),
     SHIELD_WALL("Shield Wall", "shields the allies near it against physical hits"),
     GUARD("Guard", "shields itself against physical hits, again and again"),
+    PARRY("Parry", "shields itself for a moment each time it dodges"),
     ARCANE_WARD("Arcane Ward", "wards itself against magic from time to time"),
     AEGIS("Aegis", "shields the allies near it once badly hurt"),
     HARDEN("Harden", "answers each crit it survives with a shield"),
     PANIC("Panic", "throws up a shield once badly hurt"),
-    STONE_SKIN("Stone Skin", "hardens into a shield that holds until broken, once badly hurt"),
+    ECTOPLASM("Ectoplasm", "thickens into a shield that holds until broken, once nearly gone"),
+    STONE_SKIN("Stone Skin", "hardens into a shield that holds until broken as it is worn down"),
     WARD("Ward", "shields the allies near it from time to time"),
     MEND("Mend", "heals the allies near it"),
     RECOVER("Recover", "heals itself when it is left alone"),
@@ -51,7 +53,7 @@ public enum AbilityTerm implements Term {
     BLINDING_BURST("Blinding Burst", "blinds the towers near it as it dies, until the wave is over"),
     THUNDERCLAP("Thunderclap", "blinds the towers near it once badly hurt, until the wave is over"),
     SPELL_WARD("Spell Ward", "gives the enemies near it magic resist once badly hurt"),
-    LAST_STAND("Last Stand", "turns almost proof against magic and crits once nearly dead"),
+    LAST_STAND("Last Stand", "turns almost proof against hits, crits and debuffs once nearly dead"),
     COMMAND("Command", "lowers the damage the allies near it take"),
     VENGEANCE("Vengeance", "hurries the allies near it on as it dies");
 

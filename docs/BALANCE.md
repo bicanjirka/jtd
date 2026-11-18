@@ -74,19 +74,21 @@ wave is never the sum of its enemies; waves are measured whole (below).
 
 ### The rule
 
-An enemy may weigh up to **1.75 Walkers** blind at Grunt, Soldier and Veteran, **1.25 times that at Elite and 1.5
-times at Boss**. It may weigh more only if it has a clear answer: countered at 0.6 of its blind power or less, and
-countered under the limit. The report's verdict column says `ok`, `ok: has an answer` or `BREACH`. A Boss and a
-unique enemy are marked `estimate`: one enemy alone on a test lane says little about a boss fight.
+**The Walker is the weakest enemy of every rank.** No other enemy may weigh less than 1.0 blind; the Courier and the
+Mite may: the Courier is fragile on purpose and paid as a prize, and the Mite is a swarm member that one probe hit
+kills whatever its numbers, so the report cannot see what its rank adds. There is no ceiling: the higher ranks are meant to ask for
+upgraded towers, which strip more of their stats, rather than for more of the same tower. The report's verdict column
+says `ok`, `ok: under the floor by design` (the Courier, the Mite) or `BREACH: under the Walker`. A Boss and a unique enemy are
+marked `estimate`: one enemy alone on a test lane says little about a boss fight.
 
 ### What each rank is for
 
 | Rank | Intent | Carries |
 | --- | --- | --- |
 | Grunt, Soldier | the classic enemy | one piece of identity (the Knight's armor, the Golem's shield, the Relay's alarm) |
-| Veteran | special, not overpowering | the second piece (the Golem splits, the Magma's last stand, the Salamander's hide) |
-| Elite | a miniboss | everything, stronger; weighs a quarter more against the Walker |
-| Boss | massive | everything at its strongest; half as much again; only estimated |
+| Veteran | special, and asking for an upgrade | the second piece (the Mite's brood, the Magma's last stand, the Salamander's hide) |
+| Elite | a miniboss | everything, stronger, with stats an un-upgraded tower barely dents |
+| Boss | massive | everything at its strongest; only estimated |
 
 ### Health and bounty
 
@@ -94,28 +96,23 @@ The Walker sets the ladder: 75, 138, 458, 1175 and 2400 health, so an Elite is w
 Boss two Elites, and it pays 2, 3, 5, 8 and 11. Its bounty grows with the square root of its health, so a higher
 rank asks for more damage per credit.
 
-Every other enemy's health is written rank by rank (`RankGrowth.stepped`) so that it weighs its target number of
-Walkers at every rank: `--fit kind=target` solves the health. Targets in use: Runner 1.2, Courier 1.3, Knight,
-Ghost, Salamander and Skirmisher 1.5, Relay and Templar 1.6, Mender, Magma, Golem and Yeti 1.7, Juggernaut 2.8 (its answer is
-magic).
+Every other enemy's health is written rank by rank (`RankGrowth.stepped`); `--fit kind=target` solves the health at
+which it weighs a given number of Walkers, when a rank needs one found.
 
-**Bounty = the Walker's bounty at that rank × blind power − what its spawns pay**, rounded (`paying`; the report's
-`fair` column). Within a rank it is linear in power; up the ranks it is sublinear because the Walker's is. The
-Courier is the deliberate exception: it pays far more than it weighs, as a prize for catching it. A bounty never
+The report's `fair` column is **the Walker's bounty at that rank × blind power − what its spawns pay**: within a rank
+it is linear in power; up the ranks it is sublinear because the Walker's is. A bounty is written against it, not to
+it: the higher ranks pay less than their power asks, so a late round is harder without paying more. A bounty never
 falls as rank rises, so the Relay, whose calls pay more of its share the higher it stands, holds its Soldier bounty. Reinforcements a
 caller sends on a timer pay nothing, so what a round pays is bounded; the Warden's Drones still pay.
 
 ### Where the table stands
 
-Regenerate it with the first command above; these are the lines that are not `ok`.
+Regenerate it with the first command above; these are the lines under the floor.
 
 | Enemy | Blind | Why it stands |
 | --- | --- | --- |
-| Sand Reaver | 4.5 at Grunt, 3.1 at Elite | the game's one brute, allowed over the limit |
-| Juggernaut, Soldier | 2.6, countered 1.65 | its answer (magic) is clear at every other rank; a margin of the measure |
-| Glass Sentinel, Raincloud, Hornet | 1.77 to 1.83 at one or two ranks (Hornet 2.20 at Elite) | within a few hundredths of the limit |
-| Warden | about 22 | unique boss, left as authored and played by hand |
-| Minotaur | about 7 | unique boss, left as authored |
+| Sandling | 0.0 to 0.67 | it crumbles before a blind rig's lane is over: being held back is its whole answer |
+| Raindrop | 0.04 to 0.98 | one rank of its own, so it is a Grunt's drop whatever rank the cloud that bursts is |
 
 Each damage type has a classic that blunts it and is ordinary to the other: the Juggernaut's plating against
 physical, the Relay's insulation and the Templar's magic resist against magic. Plating and insulation take a flat

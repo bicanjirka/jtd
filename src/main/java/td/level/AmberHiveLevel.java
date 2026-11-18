@@ -56,7 +56,7 @@ final class AmberHiveLevel {
                     .withArchetype(BodyArchetype.DRONE)
                     .withDescription("A worker of the hive. Never alone, and never as weak as it looks.")
                     .withMovement(new StrideMovement((float) Math.toRadians(16.0), 4))
-                    .withAdditionalTraits(List.of(IdentifiedTrait.named("hivemind", new HivemindTrait(4f, 5)))));
+                    .withAdditionalTraits(List.of(IdentifiedTrait.named("hivemind", new HivemindTrait(4f, 10)))));
 
     /** A slow, thick-shelled drone that hardens far more in company. */
     private static final RankedEnemy HIVE_GUARD = EnemyCatalog.builtIn().ranked("walker").cloneAs("hiveGuard",
@@ -67,8 +67,8 @@ final class AmberHiveLevel {
                     .withMovement(new StrideMovement((float) Math.toRadians(5.0), 20))
                     .withHealthAndPrice(Math.round(simple.baseHealth() * 2.8f), simple.price() * 2)
                     .withBaseSpeed(simple.baseSpeed() / 2f)
-                    .withPlating(1f)
-                    .withAdditionalTraits(List.of(IdentifiedTrait.named("hivemind", new HivemindTrait(9f, 4)))));
+                    .withPlating(5f)
+                    .withAdditionalTraits(List.of(IdentifiedTrait.named("hivemind", new HivemindTrait(9f, 10)))));
 
     /**
      * The hive's Menders: from Veteran they also ward the allies near them with a shield that takes every damage type,
@@ -82,9 +82,9 @@ final class AmberHiveLevel {
                         .withDescription("Tends the brood on the march: heals it, and from Veteran wards it.");
                 return switch (rank) {
                     case GRUNT, SOLDIER -> nurse;
-                    case VETERAN -> warding(nurse, 25f);
-                    case ELITE -> warding(nurse, 40f);
-                    case BOSS -> warding(nurse, 70f);
+                    case VETERAN -> warding(nurse, 150f);
+                    case ELITE -> warding(nurse, 250f);
+                    case BOSS -> warding(nurse, 700f);
                 };
             });
 
@@ -93,18 +93,21 @@ final class AmberHiveLevel {
             .startingAt(EnemyDefinition.of("hornet", "Hornet", 69, 3, 2.0f, BodyArchetype.HORNET)
                     .withDescription("What the cocoon was keeping. It does not walk the coil; it flies it.")
                     .withMovement(new PathDirectionalMovement())
-                    .withAgility(25f)
+                    .withAgility(30f)
+                    .withTenacity(10f)
                     .withResilience(-20f)
-                    .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.3f)))),
-                    RankGrowth.stepped(117, 359, 880, 1902).paying(5, 8, 17, 27))
-            .thenAt(Rank.SOLDIER, e -> e.withAgility(30f))
+                    .withIdentifiedTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.4f)))),
+                    RankGrowth.stepped(117, 359, 880, 1902).paying(5, 8, 11, 17))
+            .thenAt(Rank.SOLDIER, e -> e.withAgility(40f))
             .thenAt(Rank.VETERAN, e -> e
-                    .withAgility(35f)
+                    .withAgility(50f)
+                    .withTenacity(15f)
+                    .withAdditionalTraits(List.of(IdentifiedTrait.named("hivemind", new HivemindTrait(6f, 10))))
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("sidestep", new Ability(AbilityTerm.SIDESTEP,
                             new OnDodgeTrigger(), new ApplyEffectAction(new SprintTemplate(20), new SelfTarget()))))))
             .thenAt(Rank.ELITE, e -> e
-                    .withStats(10f, 10f, 0f, 0f, -20f, 45f, 10f)
-                    .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(1.6f)))))
+                    .withStats(40f, 40f, 0f, 0f, 65f, 25f, -30f, 30f)
+                    .withAdditionalTraits(List.of(IdentifiedTrait.named("hurtSpeed", new HurtSpeedTrait(2.2f)))))
             .build();
 
     /** A larva left to walk long enough: still, armored and soft to a crit, and hatching unless it is broken open. */
@@ -112,13 +115,13 @@ final class AmberHiveLevel {
             .startingAt(EnemyDefinition.of("cocoon", "Cocoon", 240, 3, 0f, BodyArchetype.COCOON)
                     .withDescription("Silk wound round something that is still changing. It will not be still for long.")
                     .withMovement(new FixedMovement())
-                    .withStats(30f, 0f, 2f, 0f, -40f, 0f, 0f)
+                    .withStats(30f, 0f, 4f, 0f, -20f, -20f, -40f, 0f)
                     .withIdentifiedAbilities(List.of(IdentifiedAbility.named("hatch", new Ability(AbilityTerm.HATCH,
                             new OnceTrigger(120), new SpawnEnemiesAction("hornet", 1, true))))),
                     RankGrowth.of(14f))
-            .thenAt(Rank.SOLDIER, e -> e.withArmor(35f))
-            .thenAt(Rank.VETERAN, e -> e.withStats(40f, 10f, 3f, 0f, -40f, 0f, 0f))
-            .thenAt(Rank.ELITE, e -> e.withStats(50f, 25f, 4f, 2f, -40f, 0f, 20f))
+            .thenAt(Rank.SOLDIER, e -> e.withArmor(60f))
+            .thenAt(Rank.VETERAN, e -> e.withStats(90f, 10f, 10f, 0f, -30f, -30f, -40f, 0f))
+            .thenAt(Rank.ELITE, e -> e.withStats(140f, 25f, 15f, 5f, -35f, -35f, -40f, -10f))
             .build();
 
     /** A soft grub that crawls a while, then spins a cocoon where it stands. */
@@ -127,8 +130,8 @@ final class AmberHiveLevel {
                     .withDisplayName("Larva")
                     .withArchetype(BodyArchetype.LARVA)
                     .withDescription("Soft, slow and nothing to fear - if it dies before it spins.")
-                    .withMovement(new PulseMovement(0.15f, 14, 6))
-                    .withHealthAndPrice(Math.round(simple.baseHealth() * 0.8f), simple.price())
+                    .withMovement(new PulseMovement(0.3f, 14, 6))
+                    .withHealthAndPrice(Math.round(simple.baseHealth() * 0.9f), simple.price())
                     .withBaseSpeed(simple.baseSpeed() * 0.7f)
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("pupate", new Ability(AbilityTerm.PUPATE,
                             new OnceTrigger(180), new SpawnEnemiesAction("cocoon", 1, true))))));

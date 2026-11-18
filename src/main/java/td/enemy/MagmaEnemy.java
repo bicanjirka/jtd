@@ -9,10 +9,10 @@ import java.util.List;
 
 /**
  * The Magma ({@code magma}): the fire-proof counterpart of the Yeti, slow and heavy. It cannot burn, resists magic
- * heavily and almost never takes a crit. From Soldier, once badly hurt, it wards the
- * enemies around it against magic; from Veteran, nearly dead, it turns almost proof against magic and crits for a
- * while, and it leaves pools of molten rock behind it that mend whatever stands in them, until it is too hurt to keep
- * up.
+ * heavily and almost never takes a crit, but whatever holds it back holds it far longer, less so with rank. From Soldier, once badly hurt, it wards the enemies around it against magic; from Veteran, nearly dead, it
+ * turns almost proof against hits, crits and debuffs for a while, and it leaves pools of molten rock behind it that mend
+ * whatever stands in them, until it is too hurt to keep up. At Boss it keeps its ward to itself and its pools run
+ * hotter and longer.
  */
 final class MagmaEnemy {
 
@@ -27,28 +27,30 @@ final class MagmaEnemy {
 
     static void registerIn(EnemyCatalog catalog) {
         catalog.register(RankedEnemy
-                .startingAt(EnemyDefinition.of("magma", "Magma", 163, 3, 0.8f, BodyArchetype.MAGMA)
-                        .withDescription("A slow, fire-proof hulk of molten rock.")
-                        .withMovement(new PulseMovement(0.12f, 40, 20))
-                        .withMagicResist(50f)
-                        .withAgility(10f)
-                        .withResilience(70f)
-                        .withSpirit(30f)
-                        .withIdentifiedTraits(List.of(
-                                IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN))))
-                        , RankGrowth.stepped(360, 842, 2012, 2456).paying(5, 8, 17, 28))
+                .startingAt(EnemyDefinition.of("magma", "Magma", 163, 3, 0.73f, BodyArchetype.MAGMA)
+                                .withDescription("A slow, fire-proof hulk of molten rock.")
+                                .withMovement(new PulseMovement(0.3f, 40, 20))
+                                .withMagicResist(50f)
+                                .withAgility(10f)
+                                .withResilience(70f)
+                                .withTenacity(-45f)
+                                .withSpirit(10f)
+                                .withTraits(List.of(new ImmunityTrait(EffectKind.BURN))),
+                        RankGrowth.stepped(360, 842, 2012, 2456).paying(5, 8, 17, 28))
                 .thenAt(Rank.SOLDIER, e -> e
-                        .withMagicResist(60f)
+                        .withMagicResist(75f)
+                        .withTenacity(0f)
                         .withAdditionalAbilities(List.of(spellWard(30))))
                 .thenAt(Rank.VETERAN, e -> e
-                        .withMagicResist(75f)
-                        .withAdditionalAbilities(List.of(spellWard(50), lastStand(), pool(0.35f, 1f, 0.5f))))
+                        .withMagicResist(100f)
+                        .withAdditionalAbilities(List.of(spellWard(50), lastStand(), pool(1f, 0.75f, 0.5f))))
                 .thenAt(Rank.ELITE, e -> e
-                        .withStats(10f, 90f, 0f, 0f, 85f, 10f, 45f)
-                        .withAdditionalAbilities(List.of(pool(0.6f, 1.25f, 0.5f))))
+                        .withStats(10f, 135f, 0f, 0f, 10f, 0f, 85f, 15f)
+                        .withAdditionalAbilities(List.of(pool(1.66f, 0.85f, 0.5f))))
                 .thenAt(Rank.BOSS, e -> e
-                        .withStats(15f, 110f, 0f, 0f, 95f, 10f, 60f)
-                        .withAdditionalAbilities(List.of(pool(1f, 1.5f, 0.25f))))
+                        .withStats(25f, 200f, 4f, 2f, 10f, 0f, 95f, 20f)
+                        .withoutAbility("spellWard")
+                        .withAdditionalAbilities(List.of(pool(4f, 1f, 0.25f))))
                 .build());
     }
 
@@ -68,9 +70,9 @@ final class MagmaEnemy {
                         new RadiusTarget(SPELL_WARD_RADIUS))));
     }
 
-    /** Once nearly dead: far more resilience, spirit and magic resist. */
+    /** Once nearly dead: far harder to hurt, to crit or to hold back for a while. */
     private static IdentifiedAbility lastStand() {
-        return IdentifiedAbility.named("lastStand", new Ability(AbilityTerm.LAST_STAND, new HealthThresholdTrigger(0.05f),
+        return IdentifiedAbility.named("lastStand", new Ability(AbilityTerm.LAST_STAND, new HealthThresholdTrigger(0.1f),
                 new ApplyEffectAction(
                         new UnyieldingTemplate(Math.round(LAST_STAND_SECONDS * TickRate.TICKS_PER_SECOND)),
                         new SelfTarget())));

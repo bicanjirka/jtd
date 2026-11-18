@@ -101,9 +101,10 @@ public enum EffectKind implements Term {
     /** Magic resist that stacks, on one shared clock. */
     SPELLPROOF("Spellproof", EffectRule.of(EffectCategory.BUFF).stackingOnASharedClock(200)
             .perStack(EnemyStat.MAGIC_RESIST, 1f).helpsCarrier()),
-    /** A last stand: far more resilience, spirit and magic resist. */
+    /** A last stand: far more armor, magic resist, resilience, tenacity and spirit. */
     UNYIELDING("Unyielding", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.RESILIENCE, 100f)
-            .perStack(EnemyStat.SPIRIT, 100f).perStack(EnemyStat.MAGIC_RESIST, 100f).helpsCarrier()),
+            .perStack(EnemyStat.SPIRIT, 100f).perStack(EnemyStat.MAGIC_RESIST, 100f)
+            .perStack(EnemyStat.TENACITY, 100f).perStack(EnemyStat.ARMOR, 100f).helpsCarrier()),
     /** Less damage taken of either type, a stack a point; an application holds it at its own stacks. */
     RESOLVE("Resolve", EffectRule.of(EffectCategory.BUFF).stackingOnASharedClock(100)
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, -0.01f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, -0.01f)
