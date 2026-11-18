@@ -43,8 +43,8 @@ verification instructions with the art.
   # after mvn -q compile, with target/runtime-classpath.txt in place (run-jtd's SKILL.md)
   CP="target/classes;.claude/skills/run-jtd;$(cat target/runtime-classpath.txt)"
   javac -cp "$CP" -d target/polish-lab .claude/skills/run-jtd/td/ui/TowerArtGame.java .claude/skills/run-jtd/td/ui/Polish*.java
-  java -Djava.awt.headless=true -cp "target/polish-lab;$CP" td.ui.PolishSheets docs/features/tower-polish-art          # all
-  java -Djava.awt.headless=true -cp "target/polish-lab;$CP" td.ui.PolishSheets docs/features/tower-polish-art looks strips
+  java -Djava.awt.headless=true -cp "target/polish-lab;$CP" td.ui.PolishSheets docs/features/shipped/tower-polish-art          # all
+  java -Djava.awt.headless=true -cp "target/polish-lab;$CP" td.ui.PolishSheets docs/features/shipped/tower-polish-art looks strips
   ```
 
   Names: `looks lineup heads closeups strips stones tops idle-stormcaller idle-hexer idle-aerie idle-aerie-tiers

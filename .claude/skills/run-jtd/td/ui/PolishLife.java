@@ -20,7 +20,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 /**
- * Everything of the tower visual polish that is painted live (docs/features/FEATURE-tower-visual-polish.md): idle
+ * Everything of the tower visual polish that is painted live (docs/features/shipped/FEATURE-tower-visual-polish.md): idle
  * life on the wall clock and moments on the tick clock. Every method paints in board pixels, as the game's painters
  * do: {@code scale} is the pixels to a cell, a position is where the thing stands on the board. Each is a pure
  * function of its clock or progress and a seed, so nothing is stored between frames.

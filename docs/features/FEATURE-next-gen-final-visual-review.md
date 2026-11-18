@@ -11,7 +11,7 @@ second way, and that the board is alive without being busy.
 
 - `docs/features/next-gen-art/` holds the sheets, rendered from the game's own tables (`README.md` there says how).
   A look that changed since shows as a changed PNG.
-- `FEATURE-next-gen-tower-looks.md`, "Building a tower's look", is the recipe each rework follows, with the
+- `shipped/FEATURE-next-gen-tower-looks.md`, "Building a tower's look", is the recipe each rework follows, with the
   mistakes the review of 2026-11-14 found. Each tower's doc has an "In code" list of the cues it must send.
 - Sent from play today: reload and recoil (Sniper, Burst, Mortar), Steady Aim stacks, the Scorcher's stream and
   Soulfire, the Obelisk's runes, full Toll and knell, the Burst's fork, the Aerie's Ruby and Shade, its Release and
@@ -67,10 +67,10 @@ Out of scope: new looks, new cues, a change to the art direction.
 
 ## Interconnections
 
-- `FEATURE-next-gen-tower-looks.md` owns the art direction and the recipe; a flaw in the recipe found here is fixed
+- `shipped/FEATURE-next-gen-tower-looks.md` owns the art direction and the recipe; a flaw in the recipe found here is fixed
   there.
 - Each tower's doc owns its look: a tower that fails a check goes back to its own doc.
-- `FEATURE-next-gen-shot-flight.md`: shots, hops and casts are reviewed with it, on the shots sheet.
+- `shipped/FEATURE-next-gen-shot-flight.md`: shots, hops and casts are reviewed with it, on the shots sheet.
 - `FEATURE-balance-after-next-gen-towers.md` runs at the same point in the bundle and plays the same towers; a
   fight set up for one serves the other.
 - `src/main/java/td/ui/CLAUDE.md` holds the rules as constraints; the review reads the code against it.

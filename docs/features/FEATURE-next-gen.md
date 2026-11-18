@@ -25,17 +25,17 @@ Beacon. The Radar leaves the game ("The last three towers").
 
 | Doc | Owns | Needs | Status |
 |---|---|---|---|
-| `FEATURE-next-gen-upgrade-tiers.md` | Tiers, gates, clusters, fork gates, the new Upgrades panel; every tower moved onto tiers | | implemented |
-| `FEATURE-next-gen-tower-looks.md` | The art direction, foundation by tier with a head, a calm board, enemy marks, toolbar icons, palette | upgrade tiers | implemented |
-| `FEATURE-next-gen-shot-flight.md` | Hits that land later, arcs, the tracer, chains hop by hop | | implemented |
-| `FEATURE-next-gen-tower-abilities.md` | Ability bars, currency, casts, the pane's Abilities list | upgrade tiers | implemented; the Burst is its first user |
-| `FEATURE-next-gen-sniper-tower.md` | The Sniper | tiers, looks, shot flight | implemented |
-| `FEATURE-next-gen-splash-tower.md` | The Burst | tiers, looks, shot flight, abilities | implemented |
-| `FEATURE-next-gen-mortar-tower.md` | The Mortar | tiers, looks, shot flight | implemented |
-| `FEATURE-next-gen-cinder-tower.md` | The Scorcher; the one pool rule for burn, poison and Soulfire | tiers, looks | implemented |
-| `FEATURE-next-gen-seeker-tower.md` | The Aerie (was the Hive) | tiers, looks; the Mortar's weighted draw | implemented |
-| `FEATURE-next-gen-pulse-tower.md` | The Obelisk, with the Radar's beam as its Sundial | tiers, looks | implemented |
-| `FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | implemented |
+| `shipped/FEATURE-next-gen-upgrade-tiers.md` | Tiers, gates, clusters, fork gates, the new Upgrades panel; every tower moved onto tiers | | implemented |
+| `shipped/FEATURE-next-gen-tower-looks.md` | The art direction, foundation by tier with a head, a calm board, enemy marks, toolbar icons, palette | upgrade tiers | implemented |
+| `shipped/FEATURE-next-gen-shot-flight.md` | Hits that land later, arcs, the tracer, chains hop by hop | | implemented |
+| `shipped/FEATURE-next-gen-tower-abilities.md` | Ability bars, currency, casts, the pane's Abilities list | upgrade tiers | implemented; the Burst is its first user |
+| `shipped/FEATURE-next-gen-sniper-tower.md` | The Sniper | tiers, looks, shot flight | implemented |
+| `shipped/FEATURE-next-gen-splash-tower.md` | The Burst | tiers, looks, shot flight, abilities | implemented |
+| `shipped/FEATURE-next-gen-mortar-tower.md` | The Mortar | tiers, looks, shot flight | implemented |
+| `shipped/FEATURE-next-gen-cinder-tower.md` | The Scorcher; the one pool rule for burn, poison and Soulfire | tiers, looks | implemented |
+| `shipped/FEATURE-next-gen-seeker-tower.md` | The Aerie (was the Hive) | tiers, looks; the Mortar's weighted draw | implemented |
+| `shipped/FEATURE-next-gen-pulse-tower.md` | The Obelisk, with the Radar's beam as its Sundial | tiers, looks | implemented |
+| `shipped/FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | implemented |
 | `FEATURE-balance-after-next-gen-towers.md` | The second balance pass, played by the built towers | every tower above in code | written; waits |
 | `FEATURE-next-gen-final-visual-review.md` | The visual review of the finished bundle: what to render, what to check on each tower | every tower above in code | written; waits |
 | `FEATURE-next-gen-final-code-review.md` | The code review of the finished bundle: the Sniper's smells as questions for every tower, shared fixes, new rules | every tower above in code | written; waits |
@@ -118,12 +118,12 @@ Answered from the docs together; each can be reopened.
   Fractured) leave with it.
 - **Gates are XP only.** All seven trees gate their tiers on XP, the Mortar and the Obelisk dropped their purpose
   gates, and the Beacon's doc settles "Tier gates stay XP". Deed counts stay possible for a later tree, unused
-  (`FEATURE-next-gen-upgrade-tiers.md`, question 7).
+  (`shipped/FEATURE-next-gen-upgrade-tiers.md`, question 7).
 - **A tier's unlock price decides how it opens**: a tier with a price waits for the click, one without opens by itself.
-  The rule already holds both; the prices are tuning (`FEATURE-next-gen-upgrade-tiers.md`, question 1).
+  The rule already holds both; the prices are tuning (`shipped/FEATURE-next-gen-upgrade-tiers.md`, question 1).
 - **No choice of active abilities.** No tree gives a tower more than two bar abilities (the Hexer's hexes and the
   Stormcaller's Storm are each one cluster), so the cap of 3 never binds and the pane needs no picker
-  (`FEATURE-next-gen-tower-abilities.md`).
+  (`shipped/FEATURE-next-gen-tower-abilities.md`).
 - **"ability" in a Kind column** is a node that adds a mechanic, drawn in the ability shape. Only the Burst's carry a
   bar and a currency; the Fourth Shot and the Aerie's Release are counts, the Sundial a rhythm.
 - **The Aerie's missiles get a new flight** of their own (its doc), so they don't "stay as they are".
@@ -147,7 +147,7 @@ piece is drawn (the art pass, 2026-11-13) and written into the doc that owns it;
 | Upgrade looks (nodes that show) | written | written | written | written | written | written | written | heads, shots |
 | Ground it leaves | | | drawn (flare; payload grounds as today) | | drawn (Ice Wake) | drawn (five field patches) | | [grounds](next-gen-art/grounds.png) |
 
-Shared looks, owned by `FEATURE-next-gen-tower-looks.md` and decided there under "Art direction": the raised view
+Shared looks, owned by `shipped/FEATURE-next-gen-tower-looks.md` and decided there under "Art direction": the raised view
 (the user, 2026-11-13; [directions](next-gen-art/directions.png)), flat parts in three tones lit from the top left,
 one plinth step per tier in the tower's own plan shape, a footprint that grows from 0.55 to 0.80 of a cell, the tier
 unlock, the one upgrade arrow, the enemy marks ([marks](next-gen-art/marks.png)), the seven toolbar icons, the
@@ -195,10 +195,10 @@ The verdict:
   to the Obelisk as its Sundial, the reveal and Expose (halved, as Glare) to the Beacon.
 - **The Obelisk stays, cut hardest.** The kill box is its own idea; under it, two heads, an extra line and three
   specials piled up names. Toll becomes its passive, with Frailty in it; the Sundial its signature
-  (`FEATURE-next-gen-pulse-tower.md`).
+  (`shipped/FEATURE-next-gen-pulse-tower.md`).
 - **The Beacon stays, without its numbers.** Retiring it was weighed: it complicated balance and blurred "upgrade or
   build", and both came from its stat multiplier. It keeps the answers no other tower has (jam and blinding, enemy
-  auras, the reveal) and loses the multiplier (`FEATURE-next-gen-aura-tower.md`).
+  auras, the reveal) and loses the multiplier (`shipped/FEATURE-next-gen-aura-tower.md`).
 - **Combining the Beacon and the Obelisk** (one stone, forked to buff towers or weaken enemies) was weighed and set
   aside: a Beacon wants to stand among towers and an Obelisk on the path, so the player would have to place it before
   knowing which side it takes.
@@ -215,7 +215,7 @@ keys until those towers are built.
 
 ## Working on a tower
 
-1. Write the tower's doc to the node rules (`FEATURE-next-gen-upgrade-tiers.md`, "How a node reads") and refine
+1. Write the tower's doc to the node rules (`shipped/FEATURE-next-gen-upgrade-tiers.md`, "How a node reads") and refine
    it in review rounds. Its tables (Bare tower, Tiers, Upgrade tree, Open
    questions) follow run-jtd's `SKILL.md`, "PreviewUpgrades".
 2. After each round, `td.ui.PreviewUpgrades` rebuilds the review board (today's panel with its real hovers beside the
@@ -262,23 +262,23 @@ First round:
   and the Obelisk's Deep Shadow deal it; Soulfire stays a burn that passes half a magic resist.
 - **Switching a pick, selling and downgrading** go one way, the easiest to build: switching downgrades what depends
   on the old member (refunded at the sell price) and picks the new one for free, as a fork's switch does.
-  Selling and downgrading upgrades happen only between waves (`FEATURE-next-gen-upgrade-tiers.md`, question 4).
+  Selling and downgrading upgrades happen only between waves (`shipped/FEATURE-next-gen-upgrade-tiers.md`, question 4).
 - **The Ruby and the Shade freezes** reuse today's freeze crystal and thaw shards, recoloured
-  (`FEATURE-next-gen-seeker-tower.md`, Look).
+  (`shipped/FEATURE-next-gen-seeker-tower.md`, Look).
 - **The order** after the Burst: Mortar, Scorcher, Aerie, Obelisk, Beacon ("Order").
 
 Second round, the answers to the final-review list (each is folded into its doc and marked ✅ there):
 
 - **A whole tower can be sold during a wave**; only upgrades wait for the wave's end.
-- **The Sniper's hit lands when its tracer arrives** (`FEATURE-next-gen-shot-flight.md`, 1).
+- **The Sniper's hit lands when its tracer arrives** (`shipped/FEATURE-next-gen-shot-flight.md`, 1).
 - **The Burst's stone is unguided**: it lands where its target stood when it was thrown. The Burst can now miss,
-  as the Mortar can (shot flight, 2; `FEATURE-next-gen-splash-tower.md`, question 14 for what follows from it).
+  as the Mortar can (shot flight, 2; `shipped/FEATURE-next-gen-splash-tower.md`, question 14 for what follows from it).
 - **Node prices**: `tree_calc.py`'s fair prices go into each tower's Cost column before its plan, and the balance pass
   rescales them all at once.
 - **Ranks go**: `TowerRank`, its diamonds and its glow. The tier is the tower's rank.
 - **Number keys** 1-6 buy in the highest open tier; lower tiers by mouse.
 - **A tree taller than the panel** folds its finished tiers. If the new tree is taller than today's panel, the panel's
-  graphics, margins and overall look are reviewed with it (`FEATURE-next-gen-upgrade-tiers.md`, question 6).
+  graphics, margins and overall look are reviewed with it (`shipped/FEATURE-next-gen-upgrade-tiers.md`, question 6).
 - **Cast order** of two abilities full on one tick: the pane's order, top first.
 - **The art direction**: flat vector with two or three tones a colour and one light from the top left; a footprint
   that grows with the tier, to be judged on the art sheet; freeform shapes with one plinth step per tier; a tier
@@ -385,7 +385,7 @@ Reported, not tuned; the balance pass or the user decides.
 None. What each plan still carries:
 
 - **The looks**: what the raised view asks of the board, towers painted back to front and enemy marks painted over
-  them (`FEATURE-next-gen-tower-looks.md`, question 9).
+  them (`shipped/FEATURE-next-gen-tower-looks.md`, question 9).
 - **Each tower**: `tree_calc.py`'s fair prices into its Cost column before its plan (Answered by the user, second
   round).
 

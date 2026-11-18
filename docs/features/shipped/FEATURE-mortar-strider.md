@@ -20,7 +20,7 @@ barrel, wide mouth, knees bent up and out, pointed feet).
 
 ## Art (approved)
 
-All in `docs/features/mortar-art/`:
+All in `docs/features/shipped/mortar-art/`:
 
 | File | Shows |
 |---|---|
@@ -31,7 +31,7 @@ All in `docs/features/mortar-art/`:
 | `mortar-arcs.png` | three arc options from one tower to seven targets; **B is the one chosen** |
 | `mortar-arcs.gif` | the same arcs with shells flying at their real speed; not committed |
 
-The lab that drew them is in `docs/features/mortar-art/lab/`:
+The lab that drew them is in `docs/features/shipped/mortar-art/lab/`:
 
 - `strider-mortar-builder.java.txt`: the new body, written as extra members of `td.ui.TowerFoundations`, in the game's
   own part vocabulary (`Build.solid/flat/glow/line`, `LIFT`, `plinth`, `shell`, `rackedShell`, `arcOver`,
@@ -40,7 +40,7 @@ The lab that drew them is in `docs/features/mortar-art/lab/`:
   `Lab.pump = false`: they are the rejected "gulp" variant.
 - `MortarLab.java.txt`: the renderer. `state(t, cd)` with `variant == 0` is the approved timeline, tick by tick.
   `lift(1, d, s, launch)` is the approved arc.
-- `run.sh` / `assemble.py`: render everything again (`bash docs/features/mortar-art/lab/run.sh` from the repo root,
+- `run.sh` / `assemble.py`: render everything again (`bash docs/features/shipped/mortar-art/lab/run.sh` from the repo root,
   after `mvn -q compile`). The lab's `TowerFoundations` is the one at commit `8b3a32b6` with the builder appended. It
   shadows the game's class on the classpath, so it only compiles against classes from before the builder moves in.
 

@@ -14,7 +14,7 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Balance after the next-gen towers** (`docs/features/FEATURE-balance-after-next-gen-towers.md`): the second pass,
   played by the built towers: the game's absolute difficulty, the floor and ceiling in play, lives, the bosses.
   Request written; waits for the towers.
-- **The White tower** (`docs/features/FEATURE-tower-visual-polish.md`): a third Aerie identity, pure and white; its
+- **The White tower** (`docs/features/shipped/FEATURE-tower-visual-polish.md`): a third Aerie identity, pure and white; its
   look (`TowerLook.WHITE`, eagles for birds) comes with the visual polish, unused on purpose. It needs a name, a node
   and a missile of its own. Idea only.
 - **Call-to-arms banner**: wherever an enemy will call reinforcements (a Relay, a Knight boss, a Keeper), a banner on
@@ -570,7 +570,7 @@ share of the Mortar, how much a Heavy's bleed does, the magazine's weights, each
 Volley's gap, reload and spacing, and the nuke's flash. Nothing has been played against waves, and the Mortar's slow shell is untested against fast
 enemies.
 
-The Scorcher's numbers were weighed on paper (`FEATURE-next-gen-cinder-tower.md`), never played: its Flame, stream,
+The Scorcher's numbers were weighed on paper (`shipped/FEATURE-next-gen-cinder-tower.md`), never played: its Flame, stream,
 reload, cone and range, each node's bonus and price, the Core's width and share, Flashover's threshold, reach and
 share, Meltdown's share a point and Thermal Shock's bonus. So were the pool rule every burn, poison and Soulfire
 follows (100 fuel in 1.75 s, pulses four times a second) and the fuel the Mortar's ground and the Blight now give,
