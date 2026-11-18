@@ -18,13 +18,18 @@ import td.tower.pulse.StoneLook;
 import td.tower.seeker.ShatterMark;
 import td.tower.splash.Passive;
 import td.ui.render.BeamDraw;
+import td.ui.render.BulletDraw;
+import td.ui.render.BulletRound;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CasingDraw;
 import td.ui.render.EmbersDraw;
+import td.ui.render.EnemyLook;
+import td.ui.render.ExecutionDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.FlockLook;
 import td.ui.render.IceWakeDraw;
+import td.ui.render.LaserDraw;
 import td.ui.render.LoadedMissile;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
@@ -77,22 +82,18 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      */
     private static final float NEST_RADIUS_CELLS = 0.30f;
     private static final double NEST_TURN = 0.6;
-    private static final float TRACER_LENGTH = 0.45f;
     private static final float TRACER_WIDTH_CELLS = 0.028f;
     /** How much of its way a curse, spark or soul in flight trails behind it. */
     private static final float STREAK_SHARE = 0.25f;
     /** How long the streak a bullet leaves stays drawn once it has arrived: far less than a reload. */
     private static final float TRACER_FADE_TICKS = 4f;
-    /** The Fourth Shot's bolt round its bullet: wider and fainter. */
-    private static final float BOLT_WIDTH_CELLS = 0.09f;
-    private static final float BOLT_ALPHA = 0.35f;
     /** How far a ricochet's arc bows out, as a share of the hop's length. */
     private static final float HOP_BOW = 0.25f;
-    private static final float EXECUTION_TICKS = 10f;
-    private static final float EXECUTION_RING_CELLS = 0.3f;
-    private static final float EXECUTION_SHARD_FLIGHT_CELLS = 0.5f;
-    private static final float EXECUTION_SHARD_CELLS = 0.12f;
-    private static final int EXECUTION_SHARDS = 8;
+    private static final float EXECUTION_TICKS = 0.6f * TickRate.TICKS_PER_SECOND;
+    /** The hunting scope's lens on the head, in cells along and across its aim, and how far above the rifle's top. */
+    private static final double LENS_ALONG_CELLS = 0.09;
+    private static final double LENS_ACROSS_CELLS = -0.05;
+    private static final double LENS_ABOVE_CELLS = 0.08;
     /** How long a blast's detonation and its arcs stay drawn. */
     private static final float DETONATION_TICKS = 8f;
     /** The detonation's first flash lasts this share of it. */
@@ -205,6 +206,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.hop(hop, this.flown(hop.bullet()));
         }
         tower.lastExecution().ifPresent(this::execution);
+        this.laser(tower, tier);
         this.casing(tower, tier);
         if (tower.frenzied()) {
             TowerFoundations.Foundation foundation = TowerFoundations.of(TowerLook.SNIPER, tier,
@@ -245,73 +247,76 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 / (bullet.landsAt() - bullet.firedAt()));
     }
 
-    /** A streak {@code flown} of the way from the Sniper's muzzle to {@code toX, toY}. */
+    /** What a bullet is drawn as: its round, else a crit (one known in flight, or a trace that landed), else plain. */
+    static BulletRound roundOf(List<TowerTerm> rounds, boolean critical) {
+        if (rounds.contains(TowerTerm.FOURTH_SHOT)) {
+            return BulletRound.FOURTH_SHOT;
+        }
+        if (rounds.contains(TowerTerm.HOLLOW_POINT)) {
+            return BulletRound.HOLLOW_POINT;
+        }
+        if (rounds.contains(TowerTerm.SILVER_ROUND)) {
+            return BulletRound.SILVER_ROUND;
+        }
+        return critical ? BulletRound.CRIT : BulletRound.PLAIN;
+    }
+
+    /** A bullet {@code flown} of the way from the Sniper's muzzle to {@code toX, toY}. */
     private void tracer(SniperTower tower, int tier, float toX, float toY, float flown, boolean critical,
                         List<TowerTerm> rounds, float alpha) {
         double heading = Math.atan2(toY - tower.getY(), toX - tower.getX());
         Point2D.Float muzzle = TowerSprites.muzzle(TowerLook.SNIPER, tier,
                 TowerSpriteFrameBuilder.poseOf(tower, this.gameTime), tower.getX(), tower.getY(), this.scale, heading);
-        float from = Math.max(0f, flown - TRACER_LENGTH);
-        Palette tail = rounds.contains(TowerTerm.SILVER_ROUND) ? Palette.TOWER_SNIPER_SILVER
-                : rounds.contains(TowerTerm.HOLLOW_POINT) ? Palette.DAMAGE_PHYSICAL
-                : critical ? Palette.TOWER_SNIPER_TRACER : Palette.TOWER_SNIPER_BODY;
-        float fromX = muzzle.x + (toX - muzzle.x) * from;
-        float fromY = muzzle.y + (toY - muzzle.y) * from;
-        float headX = muzzle.x + (toX - muzzle.x) * flown;
-        float headY = muzzle.y + (toY - muzzle.y) * flown;
-        if (rounds.contains(TowerTerm.FOURTH_SHOT)) {
-            this.draws.add(new TracerDraw(Palette.TOWER_SNIPER_TRACER, Palette.TOWER_SNIPER_TRACER, fromX, fromY, headX,
-                    headY, BOLT_WIDTH_CELLS * this.scale, alpha * BOLT_ALPHA));
-        }
-        this.draws.add(new TracerDraw(tail, Palette.TOWER_SNIPER_TRACER, fromX, fromY, headX, headY,
-                TRACER_WIDTH_CELLS * this.scale, alpha));
+        this.draws.add(new BulletDraw(roundOf(rounds, critical), muzzle.x, muzzle.y, toX, toY, 0f, flown, alpha,
+                this.scale, this.tickSeconds()));
     }
 
-    /** A ricochet {@code flown} of the way along its arc, which bows out to one side of the straight line. */
+    /**
+     * A ricochet {@code flown} of the way along its arc, which bows out to one side of the straight line, drawn as the
+     * shot it hopped from; a ricochet follows a crit, so a plain shot hops as one.
+     */
     private void hop(SniperTower.Hop hop, float flown) {
-        float fromX = (float) hop.from().x();
-        float fromY = (float) hop.from().y();
-        float toX = (float) hop.bullet().target().getX();
-        float toY = (float) hop.bullet().target().getY();
-        float bowX = (fromX + toX) / 2f - (toY - fromY) * HOP_BOW;
-        float bowY = (fromY + toY) / 2f + (toX - fromX) * HOP_BOW;
-        float tail = Math.max(0f, flown - TRACER_LENGTH);
-        float middle = (tail + flown) / 2f;
-        float[] points = {tail, middle, flown};
-        for (int i = 0; i < points.length - 1; i++) {
-            float a = points[i];
-            float b = points[i + 1];
-            this.draws.add(new TracerDraw(Palette.TOWER_SNIPER_BODY, Palette.TOWER_SNIPER_BODY,
-                    bezier(fromX, bowX, toX, a), bezier(fromY, bowY, toY, a),
-                    bezier(fromX, bowX, toX, b), bezier(fromY, bowY, toY, b), TRACER_WIDTH_CELLS * this.scale, 1f));
-        }
+        this.draws.add(new BulletDraw(roundOf(hop.rounds(), true), (float) hop.from().x(), (float) hop.from().y(),
+                (float) hop.bullet().target().getX(), (float) hop.bullet().target().getY(), HOP_BOW, flown, 1f,
+                this.scale, this.tickSeconds()));
     }
 
-    private static float bezier(float from, float bow, float to, float t) {
-        float rest = 1f - t;
-        return rest * rest * from + 2f * rest * t * bow + t * t * to;
+    /** How far above its point on the ground {@code enemy}'s body's centre is drawn, in pixels. */
+    private static float bodyLiftOf(EnemyMob enemy) {
+        EnemyLook look = enemy.accept(mob -> EnemyFrameBuilder.lookFor(mob.archetype()));
+        EnemyLooks.Form form = EnemyLooks.of(look).form();
+        return enemy.getBodyScale() * (form.hover() + form.height() / 2f);
     }
 
-    /** A thin white ring on the enemy an execution killed, bursting into shards that fly out as it fades. */
+    /** The headsman's cut on the enemy an execution killed. */
     private void execution(SniperTower.Execution execution) {
         float progress = (this.gameTime - execution.tick() + (float) this.interpolationAlpha) / EXECUTION_TICKS;
         if (progress >= 1f) {
             return;
         }
-        float x = (float) execution.at().x();
-        float y = (float) execution.at().y();
-        float fade = 1f - progress;
-        this.draws.add(new RingDraw(Palette.TOWER_SNIPER_TRACER, x, y, EXECUTION_RING_CELLS * this.scale, fade));
-        float inner = (EXECUTION_RING_CELLS + EXECUTION_SHARD_FLIGHT_CELLS * progress) * this.scale;
-        float outer = inner + EXECUTION_SHARD_CELLS * this.scale;
-        for (int i = 0; i < EXECUTION_SHARDS; i++) {
-            double angle = 2 * Math.PI * i / EXECUTION_SHARDS;
-            float cos = (float) Math.cos(angle);
-            float sin = (float) Math.sin(angle);
-            this.draws.add(new TracerDraw(Palette.TOWER_SNIPER_TRACER, Palette.TOWER_SNIPER_TRACER,
-                    x + cos * inner, y + sin * inner, x + cos * outer, y + sin * outer,
-                    TRACER_WIDTH_CELLS * this.scale, fade));
+        this.draws.add(new ExecutionDraw((float) execution.at().x(), (float) execution.at().y(),
+                bodyLiftOf(execution.enemy()), this.scale, progress, execution.tick()));
+    }
+
+    /** The hunting scope's laser from its lens to the enemy it singles out, while it does. */
+    private void laser(SniperTower tower, int tier) {
+        EnemyMob target = tower.getCurrentTarget();
+        if (!tower.huntsItsTarget() || target == null) {
+            return;
         }
+        double aim = tower.getTurretAim().radiansAt(this.interpolationAlpha);
+        TowerFoundations.Foundation foundation = TowerFoundations.of(TowerLook.SNIPER, tier,
+                TowerSpriteFrameBuilder.poseOf(tower, this.gameTime));
+        float lensX = (float) (tower.getX()
+                + (Math.cos(aim) * LENS_ALONG_CELLS - Math.sin(aim) * LENS_ACROSS_CELLS) * this.scale);
+        float lensY = (float) (tower.getY()
+                + (Math.sin(aim) * LENS_ALONG_CELLS + Math.cos(aim) * LENS_ACROSS_CELLS) * this.scale
+                - TowerFoundations.LIFT * (foundation.top() + LENS_ABOVE_CELLS) * this.scale);
+        Point2D.Float at = target.accept(mob -> new Point2D.Float(
+                (float) (mob.getPrevX() + (mob.getX() - mob.getPrevX()) * this.interpolationAlpha),
+                (float) (mob.getPrevY() + (mob.getY() - mob.getPrevY()) * this.interpolationAlpha)));
+        this.draws.add(new LaserDraw(lensX, lensY, at.x, at.y - bodyLiftOf(target), this.scale,
+                (float) this.animationSeconds));
     }
 
     /**

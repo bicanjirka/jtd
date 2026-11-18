@@ -6,7 +6,9 @@ import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
+import td.enemy.Rank;
 import td.fixtures.BoardFixtures;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.MagazineFixtures;
 import td.fixtures.TowerFixtures;
@@ -21,13 +23,17 @@ import td.tower.SniperTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerModifiers;
+import td.tower.TowerTerm;
 import td.tower.cinder.FlashoverMechanic;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.ShellKind;
 import td.ui.render.BeamDraw;
+import td.ui.render.BulletDraw;
+import td.ui.render.BulletRound;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CasingDraw;
 import td.ui.render.FlockDraw;
+import td.ui.render.LaserDraw;
 import td.ui.render.LoadedMissile;
 import td.ui.render.LoadedShell;
 import td.ui.render.NestDraw;
@@ -45,6 +51,8 @@ import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
 import td.util.GameWorld;
 import td.util.TickRate;
+import td.wave.Path;
+import td.wave.Vec2;
 
 import java.util.List;
 
@@ -275,6 +283,48 @@ class TowerEffectFrameBuilderTest {
         return builder.build().stream().filter(TracerDraw.class::isInstance).map(TracerDraw.class::cast).toList();
     }
 
+    private static List<BulletDraw> bulletsOf(SniperTower tower, GameWorld context, int gameTime, double alpha) {
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, gameTime, alpha, 0.0);
+        tower.accept(builder);
+        return builder.build().stream().filter(BulletDraw.class::isInstance).map(BulletDraw.class::cast).toList();
+    }
+
+    @Test
+    void aBulletIsDrawnAsItsRoundElseAsACritElsePlain() {
+        assertThat(TowerEffectFrameBuilder.roundOf(List.of(TowerTerm.SILVER_ROUND), true))
+                .isEqualTo(BulletRound.SILVER_ROUND);
+        assertThat(TowerEffectFrameBuilder.roundOf(List.of(TowerTerm.HOLLOW_POINT), false))
+                .isEqualTo(BulletRound.HOLLOW_POINT);
+        assertThat(TowerEffectFrameBuilder.roundOf(List.of(TowerTerm.FOURTH_SHOT), true))
+                .isEqualTo(BulletRound.FOURTH_SHOT);
+        assertThat(TowerEffectFrameBuilder.roundOf(List.of(), true)).isEqualTo(BulletRound.CRIT);
+        assertThat(TowerEffectFrameBuilder.roundOf(List.of(), false)).isEqualTo(BulletRound.PLAIN);
+    }
+
+    /** The lasers a Headhunter Sniper draws once it has aimed at a live enemy of {@code rank} walking past it. */
+    private static List<LaserDraw> lasersAt(Rank rank) {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower sniper = new SniperTower(context, 3, 3);
+        UpgradePaths.buy(sniper, context, "Headhunter");
+        context.setPath(new Path(List.of(new Vec2(sniper.getX() - 2 * BoardFixtures.SCALE, sniper.getY()),
+                new Vec2(sniper.getX() + 10 * BoardFixtures.SCALE, sniper.getY()))));
+        EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("walker"), rank);
+        sniper.doTick(1);
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 1, 0.0, 0.0);
+        sniper.accept(builder);
+        return builder.build().stream().filter(LaserDraw.class::isInstance).map(LaserDraw.class::cast).toList();
+    }
+
+    @Test
+    void aHeadhuntersLaserMarksOnlyTheEnemyItHunts() {
+        List<LaserDraw> elite = lasersAt(Rank.ELITE);
+        List<LaserDraw> grunt = lasersAt(Rank.GRUNT);
+
+        assertThat(elite).singleElement().satisfies(laser -> assertThat(laser.toX())
+                .isCloseTo(BoardFixtures.SCALE * 1.5f, within(BoardFixtures.SCALE / 2f)));
+        assertThat(grunt).isEmpty();
+    }
+
     @Test
     void aBulletsStreakRunsTowardItsEnemyAndReachesItOnlyAsItLands() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
@@ -284,12 +334,12 @@ class TowerEffectFrameBuilderTest {
         sniper.doTick(1);
         int landsAt = sniper.bulletsInFlight().getFirst().landsAt();
 
-        TracerDraw fired = tracersOf(sniper, context, 1, 0.0).getFirst();
-        TracerDraw arriving = tracersOf(sniper, context, landsAt - 1, 0.99).getFirst();
+        BulletDraw fired = bulletsOf(sniper, context, 1, 0.0).getFirst();
+        BulletDraw arriving = bulletsOf(sniper, context, landsAt - 1, 0.99).getFirst();
 
-        assertThat(fired.toX()).isLessThan(arriving.toX());
-        assertThat(arriving.toX()).isLessThanOrEqualTo((float) target.getX());
-        assertThat(arriving.toX()).isGreaterThan((float) target.getX() - 2f);
+        assertThat(fired.toX()).isEqualTo((float) target.getX());
+        assertThat(fired.flown()).isLessThan(arriving.flown());
+        assertThat(arriving.flown()).isLessThan(1f).isGreaterThan(0.5f);
     }
 
     @Test
@@ -300,7 +350,7 @@ class TowerEffectFrameBuilderTest {
         sniper.doTick(1);
         TowerPose recoiled = TowerSpriteFrameBuilder.poseOf(sniper, 1);
 
-        TracerDraw fired = tracersOf(sniper, context, 1, 0.0).getFirst();
+        BulletDraw fired = bulletsOf(sniper, context, 1, 0.0).getFirst();
 
         float posedMuzzle = TowerSprites.muzzle(TowerLook.SNIPER, 0, recoiled, sniper.getX(), sniper.getY(),
                 BoardFixtures.SCALE, 0.0).x;
@@ -320,12 +370,12 @@ class TowerEffectFrameBuilderTest {
         for (; tick <= landsAt; tick++) {
             sniper.doTick(tick);
         }
-        List<TracerDraw> landed = tracersOf(sniper, context, landsAt, 0.0);
-        for (; tracersOf(sniper, context, tick, 0.0).size() == 1; tick++) {
+        List<BulletDraw> landed = bulletsOf(sniper, context, landsAt, 0.0);
+        for (; bulletsOf(sniper, context, tick, 0.0).size() == 1; tick++) {
             sniper.doTick(tick);
         }
 
-        assertThat(landed).singleElement().extracting(TracerDraw::alpha).isEqualTo(1f);
+        assertThat(landed).singleElement().extracting(BulletDraw::alpha).isEqualTo(1f);
         assertThat(sniper.getCoolDownFraction()).isGreaterThan(0.5f);
     }
 
@@ -364,7 +414,7 @@ class TowerEffectFrameBuilderTest {
     }
 
     @Test
-    void aRicochetFliesFromTheEnemyItHoppedFromOnAnArcNotAStraightLine() {
+    void aRicochetFliesFromTheEnemyItHoppedFromOnAnArcAsTheCritThatMadeIt() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         SniperTower sniper = new SniperTower(context, 3, 3);
         UpgradePaths.buy(sniper, context, "Ricochet");
@@ -379,12 +429,14 @@ class TowerEffectFrameBuilderTest {
         SniperTower.Hop hop = sniper.hopsInFlight().getFirst();
         int midFlight = (hop.bullet().firedAt() + hop.bullet().landsAt()) / 2;
 
-        List<TracerDraw> streak = tracersOf(sniper, context, midFlight, 0.0).stream()
-                .filter(tracer -> tracer.tail() == Palette.TOWER_SNIPER_BODY).toList();
+        List<BulletDraw> ricochets = bulletsOf(sniper, context, midFlight, 0.0).stream()
+                .filter(bullet -> bullet.bow() != 0f).toList();
 
-        assertThat(streak).isNotEmpty();
-        assertThat(streak.getFirst().fromX()).isGreaterThan((float) aimed.getX());
-        assertThat(streak.getLast().toY()).isNotCloseTo((float) aimed.getY(), within(1f));
+        assertThat(ricochets).singleElement().satisfies(ricochet -> {
+            assertThat(ricochet.fromX()).isEqualTo((float) aimed.getX());
+            assertThat(ricochet.toX()).isEqualTo((float) beside.getX());
+            assertThat(ricochet.round()).isEqualTo(BulletRound.CRIT);
+        });
     }
 
     @Test

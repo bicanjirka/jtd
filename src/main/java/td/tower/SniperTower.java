@@ -345,7 +345,7 @@ public final class SniperTower extends AbstractTower {
         }
         SniperShot hop = this.landing.shot().withAttack(AttackProfile::withoutCrits).asRounds(List.of());
         this.hops.add(new Hop(new Vec2(from.getX(), from.getY()), new Bullet(hop, this.landing.stats(), next.get(),
-                this.flightFrom(from.getX(), from.getY(), next.get()))));
+                this.flightFrom(from.getX(), from.getY(), next.get())), this.landing.shot().rounds()));
     }
 
     public EnemyMob getCurrentTarget() {
@@ -510,8 +510,13 @@ public final class SniperTower extends AbstractTower {
      *
      * @param from   where it hopped from, in pixels
      * @param bullet the hop itself, aimed at the next enemy
+     * @param rounds the rounds of the shot it hopped from, which the hop itself no longer carries
      */
-    public record Hop(Vec2 from, Bullet bullet) {
+    public record Hop(Vec2 from, Bullet bullet, List<TowerTerm> rounds) {
+
+        public Hop {
+            rounds = List.copyOf(rounds);
+        }
     }
 
     /**
@@ -519,8 +524,9 @@ public final class SniperTower extends AbstractTower {
      *
      * @param at     where it died, in pixels
      * @param tick   the tick it died
+     * @param enemy  the enemy it killed
      */
-    public record Execution(Vec2 at, int tick) {
+    public record Execution(Vec2 at, int tick, EnemyMob enemy) {
     }
 
     /**
@@ -541,7 +547,7 @@ public final class SniperTower extends AbstractTower {
             SniperTower.this.dealDamage(target, Damage.physical(EXECUTION_DAMAGE), finisher);
             if (target.isDead()) {
                 SniperTower.this.lastExecution = new Execution(new Vec2(target.getX(), target.getY()),
-                        SniperTower.this.tickNow);
+                        SniperTower.this.tickNow, target);
             }
             return target.isDead();
         }
