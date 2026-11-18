@@ -8,7 +8,6 @@ import td.enemy.EnemyMob;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.util.ThreadConfined;
-import td.wave.Vec2;
 
 import java.util.Optional;
 
@@ -88,6 +87,6 @@ public final class HexKeeper {
                                 .noneMatch(kind -> kind.category() == EffectCategory.HEX))
                         .toList());
         next.ifPresent(to -> this.caster.jump(new HexJump(new HexEvent.CarriedHex(carried.kind(), ticks),
-                new Vec2(dead.getX(), dead.getY()), to, effect.grownSlow())));
+                dead.position(), to, effect.grownSlow())));
     }
 }

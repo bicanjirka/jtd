@@ -43,15 +43,6 @@ public final class MechanicCatalogue<P extends Mechanic> {
         return new MechanicCatalogue<>(Map.of());
     }
 
-    /** This catalogue with {@code mechanic} added to what the node {@code nodeId} brings. */
-    public MechanicCatalogue<P> with(String nodeId, Supplier<? extends P> mechanic) {
-        Map<String, List<Supplier<? extends P>>> next = new HashMap<>(this.byNode);
-        List<Supplier<? extends P>> mechanics = new ArrayList<>(next.getOrDefault(nodeId, List.of()));
-        mechanics.add(mechanic);
-        next.put(nodeId, List.copyOf(mechanics));
-        return new MechanicCatalogue<>(Map.copyOf(next));
-    }
-
     /** New mechanics for {@code node}, in the order they were added; none if it brings only a buff. */
     public List<P> mechanicsOf(UpgradeNode node) {
         return this.byNode.getOrDefault(node.id(), List.of()).stream()

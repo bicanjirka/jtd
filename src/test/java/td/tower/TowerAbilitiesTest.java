@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static td.tower.upgrade.MechanicCatalogue.entry;
 
 class TowerAbilitiesTest {
 
@@ -26,9 +27,9 @@ class TowerAbilitiesTest {
 
     /** A tower owning Bolt (2 Sparks), then Storm (3 Sparks), bought in that order. */
     private FakeTower withBoltThenStorm() {
-        MechanicCatalogue<Mechanic> mechanics = MechanicCatalogue.<Mechanic>empty()
-                .with(BOLT.id(), () -> FakeAbilityMechanic.costing("Bolt", 2))
-                .with(STORM.id(), () -> FakeAbilityMechanic.costing("Storm", 3));
+        MechanicCatalogue<Mechanic> mechanics = MechanicCatalogue.of(
+                entry(BOLT.id(), () -> FakeAbilityMechanic.costing("Bolt", 2)),
+                entry(STORM.id(), () -> FakeAbilityMechanic.costing("Storm", 3)));
         FakeTower tower = FakeTower.offering(this.world, 0, 0, UpgradeTree.none().with(BOLT, STORM), mechanics);
         this.world.economy().startEconomy(1000, 5);
         tower.buyUpgrade(BOLT);

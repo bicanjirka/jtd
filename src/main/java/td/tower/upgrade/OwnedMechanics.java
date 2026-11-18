@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public final class OwnedMechanics<P extends Mechanic> {
 
     private final MechanicCatalogue<P> catalogue;
-    private volatile Held<P> held = new Held<>(List.of(), List.of());
+    private volatile Held<P> held = new Held<>(List.of());
 
     public OwnedMechanics(MechanicCatalogue<P> catalogue) {
         this.catalogue = catalogue;
@@ -29,36 +29,23 @@ public final class OwnedMechanics<P extends Mechanic> {
 
     /** Adds what {@code node} brings; call it once, when the node is bought. */
     public synchronized void add(UpgradeNode node) {
-        List<P> brought = this.catalogue.mechanicsOf(node);
+        List<Owned<P>> brought = this.broughtBy(node);
         if (brought.isEmpty()) {
             return;
         }
-        Held<P> now = this.held;
-        List<UpgradeNode> from = new ArrayList<>(now.from());
-        List<P> mechanics = new ArrayList<>(now.mechanics());
-        brought.forEach(mechanic -> {
-            from.add(node);
-            mechanics.add(mechanic);
-        });
-        this.held = new Held<>(from, mechanics);
+        List<Owned<P>> owned = new ArrayList<>(this.held.owned());
+        owned.addAll(brought);
+        this.held = new Held<>(owned);
     }
 
     /** Drops what {@code removed} brought; the mechanics of every other node stay, with their state. */
     public synchronized void remove(Collection<UpgradeNode> removed) {
         Set<String> ids = removed.stream().map(UpgradeNode::id).collect(Collectors.toSet());
-        Held<P> now = this.held;
-        List<UpgradeNode> from = new ArrayList<>();
-        List<P> mechanics = new ArrayList<>();
-        for (int i = 0; i < now.from().size(); i++) {
-            if (!ids.contains(now.from().get(i).id())) {
-                from.add(now.from().get(i));
-                mechanics.add(now.mechanics().get(i));
-            }
+        List<Owned<P>> now = this.held.owned();
+        List<Owned<P>> kept = now.stream().filter(owned -> !ids.contains(owned.node().id())).toList();
+        if (kept.size() != now.size()) {
+            this.held = new Held<>(kept);
         }
-        if (from.size() == now.from().size()) {
-            return;
-        }
-        this.held = new Held<>(from, mechanics);
     }
 
     /**
@@ -66,20 +53,11 @@ public final class OwnedMechanics<P extends Mechanic> {
      * Built from what is held rather than from the owned nodes, so a node bought on another thread meanwhile is kept.
      */
     public synchronized void renew() {
-        Held<P> now = this.held;
-        List<UpgradeNode> from = new ArrayList<>();
-        List<P> mechanics = new ArrayList<>();
-        UpgradeNode last = null;
-        for (UpgradeNode node : now.from()) {
-            if (node != last) {
-                for (P mechanic : this.catalogue.mechanicsOf(node)) {
-                    from.add(node);
-                    mechanics.add(mechanic);
-                }
-                last = node;
-            }
-        }
-        this.held = new Held<>(from, mechanics);
+        this.held = new Held<>(this.held.owned().stream()
+                .map(Owned::node)
+                .distinct()
+                .flatMap(node -> this.broughtBy(node).stream())
+                .toList());
     }
 
     /** The mechanics owned now. Read it once per action, so every step of it sees the same mechanics. */
@@ -87,12 +65,19 @@ public final class OwnedMechanics<P extends Mechanic> {
         return this.held.mechanics();
     }
 
-    /** Each mechanic beside the id of the node that brought it. */
-    private record Held<P>(List<UpgradeNode> from, List<P> mechanics) {
+    private List<Owned<P>> broughtBy(UpgradeNode node) {
+        return this.catalogue.mechanicsOf(node).stream().map(mechanic -> new Owned<>(node, mechanic)).toList();
+    }
 
-        private Held {
-            from = List.copyOf(from);
-            mechanics = List.copyOf(mechanics);
+    /** One mechanic beside the node that brought it. */
+    private record Owned<P>(UpgradeNode node, P mechanic) {
+    }
+
+    /** The owned mechanics, oldest first, with the bare mechanics kept for the readers of every tick. */
+    private record Held<P>(List<Owned<P>> owned, List<P> mechanics) {
+
+        Held(List<Owned<P>> owned) {
+            this(List.copyOf(owned), owned.stream().map(Owned::mechanic).toList());
         }
     }
 }

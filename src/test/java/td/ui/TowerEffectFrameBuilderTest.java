@@ -19,6 +19,7 @@ import td.tower.AuraTower;
 import td.tower.CinderTower;
 import td.tower.MortarTower;
 import td.tower.SeekerTower;
+import td.tower.ShotFlight;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
@@ -112,7 +113,7 @@ class TowerEffectFrameBuilderTest {
         FakeEnemyMob target = FakeEnemyMob.at(splash.getX() + 2 * BoardFixtures.SCALE, splash.getY());
         context.enemies().setEnemies(new EnemyMob[]{target});
         splash.doTick(1);
-        SplashTower.Flight flight = splash.stonesInFlight().getFirst().flight();
+        ShotFlight flight = splash.stonesInFlight().getFirst().flight();
         int halfway = (flight.firedAt() + flight.landsAt()) / 2;
 
         TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, halfway, 0.0, 0.0);
@@ -133,7 +134,7 @@ class TowerEffectFrameBuilderTest {
         context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(splash.getX() + 2 * BoardFixtures.SCALE,
                 splash.getY())});
         splash.doTick(1);
-        SplashTower.Flight flight = splash.stonesInFlight().getFirst().flight();
+        ShotFlight flight = splash.stonesInFlight().getFirst().flight();
         int halfway = (flight.firedAt() + flight.landsAt()) / 2;
         double flown = (halfway - flight.firedAt()) / (double) (flight.landsAt() - flight.firedAt());
 
