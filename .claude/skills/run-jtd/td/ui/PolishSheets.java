@@ -1059,7 +1059,7 @@ public final class PolishSheets {
                 } else {
                     double progress = (cycle - 0.3) / PolishShots.EXECUTION_SECONDS;
                     if (fresh) {
-                        PolishShots.execution(g, vx, vy - rise, scale, progress, 11);
+                        PolishShots.execution(g, vx, vy + scale * 0.04, scale * 0.12, scale, progress, 11);
                     } else {
                         PolishShots.executionNow(g, vx, vy - rise, scale, (cycle - 0.3) / 0.33);
                     }
@@ -1116,7 +1116,7 @@ public final class PolishSheets {
      */
     private static void flame(File file) throws IOException {
         int scale = 64;
-        gif(file, 1200, 60 + scale * 6 + 200, 3, (g, t) -> {
+        gif(file, 1200, 60 + scale * 6 + 200 + 330, 3, (g, t) -> {
             text(g, "The flame (tick clock). Left: now. Right: merged cones, enemies as silhouettes with a hot rim,"
                     + " wisps and plasma. Below: heat from the fuel, then the Core", 12, 20, TEXT, TITLE);
             int flicker = (int) Math.floor(t * 20 / 3);
@@ -1193,6 +1193,29 @@ public final class PolishSheets {
                 PolishFlame.paint(g, List.of(s), List.of(new PolishFlame.Caught(body, ox + 140, oy + 75,
                         heats[i] + (i == 4 ? PolishFlame.CORE_HEAT : 0), ox + 15, oy + 75, false)), scale, t);
                 text(g, names[i], ox + 4, oy + 166, TEXT, LABEL);
+            }
+            double big = 200;
+            double top = 60 + scale * 6 + 200;
+            text(g, "Close-up at about 6x: an enemy standing in the jet (Hot Flame; then every damage node and the Core)",
+                    12, top + 14, TEXT, TITLE);
+            for (int i = 0; i < 2; i++) {
+                double ox = 20 + i * 590;
+                double oy = top + 24;
+                g.setColor(FLOOR);
+                g.fill(new Rectangle2D.Double(ox, oy, 570, 290));
+                double fx = ox + 330;
+                double fy = oy + 145 + 6 * Math.sin(t * 1.3 + i);
+                Shape body = enemyAt(i, fx, fy, big * 0.16, Math.PI);
+                g.setColor(ENEMY_BODY[i % 4]);
+                g.fill(body);
+                double heat = i == 0 ? 0.25 : 1.0;
+                Shape clip = g.getClip();
+                g.clip(new Rectangle2D.Double(ox, oy, 570, 290));
+                PolishFlame.Stream s = new PolishFlame.Stream(ox + 10, oy + 145, 0, 560, Math.toRadians(20), heat,
+                        i == 1 ? Math.toRadians(8) : 0, false, flicker);
+                PolishFlame.paint(g, List.of(s), List.of(new PolishFlame.Caught(body, fx, fy,
+                        heat + (i == 1 ? PolishFlame.CORE_HEAT : 0), ox + 10, oy + 145, false)), big, t);
+                g.setClip(clip);
             }
         });
     }

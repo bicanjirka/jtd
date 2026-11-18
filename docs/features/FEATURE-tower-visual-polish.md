@@ -96,8 +96,8 @@ measures: a point `v` up a face at `faceY` stands at `y = faceY - 0.42 v`.
 | Tower | New look | Lab | In the game |
 |---|---|---|---|
 | Burst without a fork, every tier | a wooden onager, the cheap stone thrower a village builds, set across its cell to throw over the north-east: a plank bed, two rails, a rope skein with a winch at each end, a tall stop frame with a padded crossbar, one arm with a cup, a basket of stones. The arm lies cocked with a stone in its cup, stands slammed into the pad at the throw, and is winched down while it reloads. The tiers grow it and never ring it: iron bands and spoked winches (I), side braces, iron caps and a heap of stones (II), a banner (III). No pit | `thrower(tier, pose)`, `turned`, `beam`, the `THROWER_*` constants | the whole `SPLASH` row, Tier 0 included |
-| Stormcaller | a tesla coil: primary drum, a tall secondary striped in two coppers, a steel top-load carrying the ball; the guard rings' far halves go behind the coil | `stormcaller`, `ball`, `Build.aroundColumn` | replaces `stormcaller` |
-| Hexer | an oracle's ball of violet glass on a twisted iron stem, cradled by claws (bone at Tier III) | `hexer` | replaces `hexer` |
+| Stormcaller | a tesla coil: primary drum, a tall secondary striped in two coppers, a steel top-load carrying the ball; the guard rings' far halves go behind the coil. Every tier stands on the riveted iron plate (a smaller one at Tier I): the Burst's stones are gone | `stormcaller`, `ball`, `Build.aroundColumn` | replaces `stormcaller` |
+| Hexer | an oracle's ball of violet glass on a twisted iron stem, cradled by claws (bone at Tier III). Every tier has the three iron spokes and standing stones, short and with dim runes at Tier I: the Burst's stones are gone | `hexer` | replaces `hexer` |
 | Scorcher with Dragon's Breath | a dragon's head for a turret head: neck, crest, a jaw that drops while it streams, horns. The body stays (the user, 2026-11-18) | `dragonHead` | the head of `scorcher` when the pose has `DRAGONS_BREATH` |
 | Soulfire | a soul cage: banded barrel, two blades and a fang round a pale flame, a small skull behind | `soulHead` | the head of `scorcher` when `soul` |
 | Mortar | a stationary siege mortar, see "The Mortar" | `siegeMortar`, `leg`, the `MORTAR_*` constants | replaces `mortar` and `mortarHead`; no head |
@@ -110,7 +110,7 @@ measures: a point `v` up a face at `faceY` stands at `y = faceY - 0.42 v`.
 
 Heights of the tops, in cells, Tiers 0 to III: Stormcaller -, 0.99, 1.32, 1.60; Hexer -, 1.05, 1.35, 1.65; Aerie
 1.08, 1.55, 2.02, 2.49; Ruby (from II) 1.74, 2.15; Shade 1.94, 2.35; White 1.91, 2.28; Obelisk 0.72, 0.99, 1.26,
-1.53; Mortar 0.47, 0.54, 0.61, 0.68 (the muzzle); Burst 0.38, 0.50, 0.62, 0.74 (the stop frame). `PolishSheets
+1.53; Mortar 0.47, 0.56, 0.63, 0.70 (the muzzle); Burst 0.38, 0.50, 0.62, 0.74 (the stop frame). `PolishSheets
 tops` prints them.
 
 ### Idle life (the wall clock)
@@ -146,18 +146,19 @@ An Umbra stone inside its own field lights the band darker and bluer, as today.
 
 ### The Mortar
 
-A stationary, ground-anchored siege mortar standing in the middle of its cell, as every tower does, on the emplacement
-the tiers already build (sandbags at Tiers I and II, stone battlements at III): a bedplate, four splayed legs braced
-across (twice from Tier II), and a thick, wide-mouthed barrel fixed at a steep angle to the north. Nothing turns. A long
-barrel (`LONG_BARREL`) adds a slice.
+A stationary, ground-anchored siege mortar standing in the middle of its cell, as every tower does: a bedplate, four
+splayed legs braced across (twice from Tier II), and a thick, wide-mouthed barrel fixed at a steep angle to the north.
+Nothing turns. A long barrel (`LONG_BARREL`) adds a slice. No sandbags and no battlements, so nothing hides the rack
+(the user, 2026-11-18): from Tier I it stands on a plank deck (`MORTAR_DECK`), iron-edged and bolted from Tier II, and
+at Tier III a low iron rail on posts runs round the back half only.
 
 - **Scale:** every shell on the tower (racked, carried, loaded) is the in-flight shell's own art
   (`TowerFoundations.shell`, `TowerSprites.paintShell`) at `MORTAR_SHELL`, about a third of its size in flight, so the
   rack fits the cell and the barrel stays in proportion (the user, 2026-11-18). The bore is sized to it.
-- **The rack:** a small wooden rack in front of the mortar holding one shell of every kind the tower can load, in the
+- **The rack:** a small wooden rack on a crate (`MORTAR_RACK_HEIGHT`) in front of the mortar holding one shell of every kind the tower can load, in the
   kinds' order: three on the bottom row, the rest lying on top (at most five: Normal, Heavy, Nuke under Fusion, its
   payload, Flare). It shows what the tower has unlocked, whatever its magazine holds now, and it never empties: it is
-  the stock, not the magazine.
+  the stock, not the magazine. A racked shell is drawn without its glow, which would hide its neighbours.
 - **The shot:** the barrel is thrown down its own axis (`pose.recoil()`), the muzzle flashes.
 - **A single load:** the bore smokes for the first quarter of the reload; in its middle half a shell of the front
   shell's kind is lifted off that kind's place on the rack and carried on a smooth parabola into the muzzle; from the
@@ -179,7 +180,7 @@ barrel (`LONG_BARREL`) adds a slice.
 | A loaded Fourth Shot | `sniperHead` | the muzzle burns red round a white core, larger than today |
 | Frenzy | `sniperHead(.., shake, ..)`, `FRENZY_SHAKE`, `PolishShots.frenzy` | the whole head jumps between four offsets every `FRENZY_SHAKE_TICKS` ticks, a red glow under it, red strokes off it, and red embers rise above the turret and go out |
 | Headhunter aiming at an Elite or a Boss | `PolishShots.laser` | a very thin red laser from the scope's lens to the enemy, a faint shimmering glow along it, a red dot where it lands; the lens crosshair stays |
-| Executioner, a kill it made | `PolishShots.execution`, `EXECUTION_*` | only after the Executioner killed: a crit left the enemy under its line and the node executed it. The headsman's cut: a blade of white light slashes down across the enemy in the first instant, red at its edges, a crimson ring snaps out from the cut, and red-hot shards fly off both sides of it and go out, over `EXECUTION_SECONDS`. Nothing is drawn while the Sniper aims or a bullet flies: no mark promises a kill (the user, 2026-11-18). It replaces today's thin white ring and strokes |
+| Executioner, a kill it made | `PolishShots.execution`, `EXECUTION_*` | only after the Executioner killed: a crit left the enemy under its line and the node executed it. The headsman's cut: a blade of white light slashes down across the enemy's body in the first instant, red at its edges. Below it, on the ground round the enemy's feet, a dark stain spreads and a crimson ring snaps out, both flattened onto the ground as a lobbed shell's shadow is (`EXECUTION_GROUND_SQUASH`, the renderer's `SHELL_SHADOW_FLATTENING`). Red-hot shards burst off both sides of the cut, fall, and go out where they land, over `EXECUTION_SECONDS`. It needs the enemy's ground point and its body's height. Nothing is drawn while the Sniper aims or a bullet flies: no mark promises a kill (the user, 2026-11-18). It replaces today's thin white ring and strokes |
 
 ### The flame
 
@@ -187,17 +188,24 @@ Every stream of the frame is painted in one pass, so two cones that cross merge 
 their alpha: the outer and middle layers of every stream are joined into one shape each and filled once; each
 stream's core stays its own. Flashovers stay the game's small tongues.
 
-- **Silhouettes:** an enemy caught in a cone shows over the fire as a faint, semi-transparent dark silhouette of its
-  own outline, instead of being hidden.
-- **The hot rim:** the silhouette's edge facing the nozzle is stroked in an intense rim with a soft glow.
-- **Wisps and plasma:** from that edge, wisps of orange flame curl round both its sides and trail away downstream,
-  each with a blue-violet plasma sheen beside it; a plasma sheen also curves along each side of every cone.
+- **An enemy in the jet** looks as a body standing in a jet of flame does, instead of being hidden:
+  - its own outline as a semi-transparent dark silhouette over the fire;
+  - heat pooling against its front, a soft hot glow on the side facing the nozzle;
+  - a dimmer wake trailing downstream behind it, where its body blocks the fire (`WAKE_*`);
+  - the hot rim: its outline lit white-hot where the jet strikes square, cooling to a dull red round its flanks and
+    fading out at its back, and the silhouette itself warmed on its front;
+  - tongues of flame (`TONGUES` a side) that split on its front, hug its flanks and stream away downstream, tapering
+    to a point and wavering; brighter than the fire behind them, as a flame front is, a faint blue-violet plasma along
+    their outer edge, and a narrower white-hot tongue inside the first;
+  - a few embers shed off its flanks downstream (`EMBER*`).
+- **Plasma:** a blue-violet sheen also curves along each side of every cone.
 - **Heat:** how hot it looks follows the fuel (`PolishFlame.heatOf`): 0 is the bare flame's fuel a second
   (`FLAME_POINTS`), 1 the fuel with every damage node (Hot Flame, White Flame, Hot Flame II). Each layer ramps from
   red-orange to yellow, then white, then blue-white at the core. A stream's heat is its own fuel a second; an enemy's
   rim takes the fuel that enemy is fed, so the Core (plus `CORE_HEAT`), Thermal Shock and Meltdown each make its rim
   hotter. Soulfire keeps its violet ramps.
-- Stylised and flat as the board: filled shapes and strokes, no blur.
+- Stylised as the board: filled shapes, strokes and gradients, no blur filter. Close-up in `flame.gif`'s bottom
+  row.
 
 ### The Burst's stone
 
@@ -245,8 +253,10 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
      pictures a heading while Frenzy runs); the embers on the tick clock from the tower's seed.
    - Headhunter: the position of the enemy the Sniper aims at while it hunts it; the laser leaves from the lens
      (`0.09, -0.05` on the head, turned with it, at the head's height plus 0.08).
-   - Executioner: nothing new. `SniperTower.lastExecution()` (its tick and place) is recorded only when
+   - Executioner: no new rule. `SniperTower.lastExecution()` (its tick and place) is recorded only when
      `ExecutionerMechanic` executes, which is exactly the moment to draw: a crit that left the enemy under the line.
+     Its place is the ground point; the cut also needs the body's height on screen, from the enemy's look (its
+     `EnemyLooks.Form` height and size), carried in the record or read when it is made.
    - Mortar: the reload's progress (not snapped); `VOLLEY`; the kinds this reload loads, front first (the
      magazine's front shell, or its front three for a volley); the kinds on the rack: every kind with a share in
      `MagazineView.chances`, and Nuke under Fusion. The rack changes only with an upgrade, so it belongs with the
@@ -333,9 +343,11 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
 
 ## Open questions
 
-The user approved everything else in the second round (2026-11-18). Owed, each in its sheet:
+Everything else stands as reviewed (2026-11-18); the third look left the onager Burst and the ringless Aerie without
+a note. Owed, each in its sheet:
 
-- The plain Burst as an onager, every tier and its three poses (`looks.png` first row, `closeups.png`, `heads.png`).
-- The Mortar in the middle of its cell, its rack and its reload (`moment-mortar.gif`, `closeups.png`, `strips.png`).
-- The Aerie without its ring, the Release cue on its tip (`looks.png`, `heads.png`).
-- The execution (`sniper-states.gif`, the Executioner panel: now, then new).
+- The Mortar without sandbags or walls, on its deck, its rack and its reload (`moment-mortar.gif`, `closeups.png`,
+  `looks.png`).
+- The Stormcaller's and the Hexer's Tier I bases (`looks.png`).
+- The execution on the ground (`sniper-states.gif`, the Executioner panel: now, then new).
+- The enemy in the jet (`flame.gif`, its close-up row).

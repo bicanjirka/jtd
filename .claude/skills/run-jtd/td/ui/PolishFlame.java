@@ -13,9 +13,9 @@ import java.util.List;
 /**
  * The Scorcher's flame, redrawn (docs/features/FEATURE-tower-visual-polish.md, "The flame"). Every stream of the frame is
  * painted in one pass, layer by layer, so where two cones cross their fire merges into one flame instead of stacking
- * its alpha twice. Over the fire, each enemy caught in a cone shows as a faint dark silhouette, its edge facing the
- * nozzle wrapped in a hot rim, wisps of flame curling round its sides and trailing downstream, a blue-violet plasma
- * sheen along them. How hot it all looks follows the fuel: a hotter stream and a hotter enemy burn yellower, then
+ * its alpha twice. Over the fire, each enemy caught in a cone shows as a body standing in the jet: heat pooling on
+ * its front, a dimmer wake behind it, its dark silhouette lit white-hot where the jet strikes and dull red round its
+ * flanks, tongues of flame licking round both sides with a blue-violet plasma edge, and embers shed off it. How hot it all looks follows the fuel: a hotter stream and a hotter enemy burn yellower, then
  * white, then blue-white. Pure functions of their inputs and {@code flicker}: nothing is stored.
  */
 final class PolishFlame {
@@ -50,9 +50,14 @@ final class PolishFlame {
     static final float CORE_ALPHA = 0.88f;
     /** A silhouette: how dark it lies over the fire, its rim's width (cells) and how many wisps curl off it. */
     static final Color SILHOUETTE = new Color(0x1a0c06);
-    static final float SILHOUETTE_ALPHA = 0.50f;
+    static final float SILHOUETTE_ALPHA = 0.68f;
     static final double RIM_CELLS = 0.030;
-    static final int WISPS = 2;
+    /** Tongues of flame licking round each flank, embers shed off it and how fast, the wake's length and depth. */
+    static final int TONGUES = 2;
+    static final int EMBERS = 4;
+    static final double EMBER_SECONDS = 0.7;
+    static final double WAKE_LENGTH = 3.0;
+    static final float WAKE_ALPHA = 0.42f;
     static final Color PLASMA = new Color(0x7a6cff);
     static final Color PLASMA_SOUL = new Color(0x58d8ff);
 
@@ -200,63 +205,140 @@ final class PolishFlame {
     }
 
     /**
-     * An enemy over the fire: its dark silhouette; its outline on the side facing the nozzle stroked in a hot rim with a
-     * soft glow; wisps of fire from that edge curling round both its sides and trailing away downstream, a plasma
-     * sheen beside each.
+     * An enemy in the fire, as a body standing in a jet of flame looks. The jet piles up against its front: a hot
+     * glow pools on the side facing the nozzle. Its body blocks the fire: a dimmer wake trails behind it downstream.
+     * Its dark silhouette is lit along the facing edge, white-hot where the jet strikes square and cooling to a dull
+     * red round its flanks. Tongues of flame split on its front and lick round both sides, tapering and wavering as
+     * they stream away, a faint blue-violet plasma along their outer edge; a few embers shed off its flanks.
      */
     private static void silhouette(Graphics2D g2, Caught c, double scale, double seconds) {
-        g2.setColor(faded(SILHOUETTE, SILHOUETTE_ALPHA));
-        g2.fill(c.outline());
         double toNozzle = Math.atan2(c.nozzleY() - c.y(), c.nozzleX() - c.x());
-        Shape clip = g2.getClip();
-        Path2D.Double facing = new Path2D.Double();
-        double far = scale * 2;
-        facing.moveTo(c.x() + Math.cos(toNozzle + Math.PI / 2) * far, c.y() + Math.sin(toNozzle + Math.PI / 2) * far);
-        facing.lineTo(c.x() + Math.cos(toNozzle + Math.PI / 2) * far + Math.cos(toNozzle) * far,
-                c.y() + Math.sin(toNozzle + Math.PI / 2) * far + Math.sin(toNozzle) * far);
-        facing.lineTo(c.x() + Math.cos(toNozzle - Math.PI / 2) * far + Math.cos(toNozzle) * far,
-                c.y() + Math.sin(toNozzle - Math.PI / 2) * far + Math.sin(toNozzle) * far);
-        facing.lineTo(c.x() + Math.cos(toNozzle - Math.PI / 2) * far, c.y() + Math.sin(toNozzle - Math.PI / 2) * far);
-        facing.closePath();
-        g2.clip(facing);
-        Color hot = rim(c.heat(), c.soul());
-        g2.setStroke(new BasicStroke((float) (RIM_CELLS * scale * 2.6), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(faded(hot, 0.30));
-        g2.draw(c.outline());
-        g2.setStroke(new BasicStroke((float) (RIM_CELLS * scale), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(faded(hot, 0.95));
-        g2.draw(c.outline());
-        g2.setClip(clip);
-        double size = Math.max(c.outline().getBounds2D().getWidth(), c.outline().getBounds2D().getHeight()) / 2;
         double down = toNozzle + Math.PI;
+        double size = Math.max(c.outline().getBounds2D().getWidth(), c.outline().getBounds2D().getHeight()) / 2;
+        int seed = (int) Math.round(c.x() * 7 + c.y() * 13);
+        Color hot = rim(c.heat(), c.soul());
+        Color flame = c.soul() ? new Color(0xb49cff) : new Color(0xff8a2a);
+        Color plasma = c.soul() ? PLASMA_SOUL : PLASMA;
+        double wakeX = c.x() + Math.cos(down) * size * WAKE_LENGTH;
+        double wakeY = c.y() + Math.sin(down) * size * WAKE_LENGTH;
+        Path2D.Double wake = new Path2D.Double();
+        wake.moveTo(c.x() + Math.cos(toNozzle + Math.PI / 2) * size * 0.9,
+                c.y() + Math.sin(toNozzle + Math.PI / 2) * size * 0.9);
+        wake.quadTo(wakeX + Math.cos(toNozzle + Math.PI / 2) * size * 0.5,
+                wakeY + Math.sin(toNozzle + Math.PI / 2) * size * 0.5, wakeX, wakeY);
+        wake.quadTo(wakeX + Math.cos(toNozzle - Math.PI / 2) * size * 0.5,
+                wakeY + Math.sin(toNozzle - Math.PI / 2) * size * 0.5,
+                c.x() + Math.cos(toNozzle - Math.PI / 2) * size * 0.9,
+                c.y() + Math.sin(toNozzle - Math.PI / 2) * size * 0.9);
+        wake.closePath();
+        g2.setPaint(new GradientPaint((float) c.x(), (float) c.y(), faded(SILHOUETTE, WAKE_ALPHA), (float) wakeX,
+                (float) wakeY, faded(SILHOUETTE, 0)));
+        g2.fill(wake);
+        double frontX = c.x() + Math.cos(toNozzle) * size * 0.9;
+        double frontY = c.y() + Math.sin(toNozzle) * size * 0.9;
+        glowAt(g2, frontX, frontY, size * 1.25, hot, 0.55);
+        glowAt(g2, frontX, frontY, size * 0.6, mix(hot, Color.WHITE, 0.4), 0.55);
         for (int side = -1; side <= 1; side += 2) {
-            for (int k = 0; k < WISPS; k++) {
-                double flick = Math.sin(seconds * (9 + 3 * k) + side * 1.7 + k * 2.2);
-                double start = toNozzle + side * (0.35 + 0.25 * k);
-                double sx = c.x() + Math.cos(start) * size * 0.95;
-                double sy = c.y() + Math.sin(start) * size * 0.95;
-                double bendA = toNozzle + side * (Math.PI / 2 + 0.25);
-                double bx = c.x() + Math.cos(bendA) * size * (1.35 + 0.15 * flick);
-                double by = c.y() + Math.sin(bendA) * size * (1.35 + 0.15 * flick);
-                double tail = size * (1.6 + 0.7 * k + 0.25 * flick);
-                double ex = bx + Math.cos(down + side * 0.25) * tail;
-                double ey = by + Math.sin(down + side * 0.25) * tail;
-                Path2D.Double wisp = new Path2D.Double();
-                wisp.moveTo(sx, sy);
-                wisp.curveTo(bx + Math.cos(toNozzle) * size * 0.3, by + Math.sin(toNozzle) * size * 0.3, bx, by,
-                        ex, ey);
-                g2.setStroke(new BasicStroke((float) (scale * 0.05 * (1 - 0.3 * k)), BasicStroke.CAP_ROUND,
-                        BasicStroke.JOIN_ROUND));
-                g2.setPaint(new GradientPaint((float) sx, (float) sy, faded(c.soul() ? PLASMA_SOUL : PLASMA, 0.35),
-                        (float) ex, (float) ey, faded(c.soul() ? PLASMA_SOUL : PLASMA, 0)));
-                g2.draw(wisp);
-                g2.setStroke(new BasicStroke((float) (scale * 0.022 * (1 - 0.3 * k)), BasicStroke.CAP_ROUND,
-                        BasicStroke.JOIN_ROUND));
-                Color flame = c.soul() ? new Color(0xb49cff) : new Color(0xff9a3a);
-                g2.setPaint(new GradientPaint((float) sx, (float) sy, faded(mix(hot, flame, 0.4), 0.95),
-                        (float) ex, (float) ey, faded(flame, 0)));
-                g2.draw(wisp);
+            for (int k = 0; k < TONGUES; k++) {
+                Shape t = lick(c.x(), c.y(), toNozzle, size, side, k, seconds, seed, 1.0);
+                g2.setPaint(new GradientPaint((float) frontX, (float) frontY, faded(mix(flame, hot, 0.65), 0.95),
+                        (float) (c.x() + Math.cos(down) * size * 3), (float) (c.y() + Math.sin(down) * size * 3),
+                        faded(mix(flame, hot, 0.3), 0)));
+                g2.fill(t);
+                g2.setStroke(new BasicStroke((float) (scale * 0.008)));
+                g2.setPaint(new GradientPaint((float) frontX, (float) frontY, faded(plasma, 0.45),
+                        (float) (c.x() + Math.cos(down) * size * 2.5), (float) (c.y() + Math.sin(down) * size * 2.5),
+                        faded(plasma, 0)));
+                g2.draw(t);
             }
         }
+        double backX = c.x() + Math.cos(down) * size;
+        double backY = c.y() + Math.sin(down) * size;
+        g2.setPaint(new GradientPaint((float) frontX, (float) frontY, faded(mix(SILHOUETTE, hot, 0.35), 0.62),
+                (float) c.x(), (float) c.y(), faded(SILHOUETTE, SILHOUETTE_ALPHA)));
+        g2.fill(c.outline());
+        g2.setStroke(new BasicStroke((float) (RIM_CELLS * scale * 2.4), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setPaint(new GradientPaint((float) frontX, (float) frontY, faded(hot, 0.45), (float) backX, (float) backY,
+                faded(new Color(0xc0301a), 0)));
+        g2.draw(c.outline());
+        g2.setStroke(new BasicStroke((float) (RIM_CELLS * scale * 0.9), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setPaint(new GradientPaint((float) frontX, (float) frontY, faded(mix(hot, Color.WHITE, 0.5), 1.0),
+                (float) c.x(), (float) c.y(), faded(new Color(0xd04020), 0.15)));
+        g2.draw(c.outline());
+        for (int side = -1; side <= 1; side += 2) {
+            Shape t = lick(c.x(), c.y(), toNozzle, size, side, 0, seconds, seed, 0.45);
+            g2.setPaint(new GradientPaint((float) frontX, (float) frontY, faded(mix(hot, Color.WHITE, 0.3), 0.95),
+                    (float) (c.x() + Math.cos(down) * size * 1.6), (float) (c.y() + Math.sin(down) * size * 1.6),
+                    faded(hot, 0)));
+            g2.fill(t);
+        }
+        for (int i = 0; i < EMBERS; i++) {
+            double life = seconds / EMBER_SECONDS + (double) i / EMBERS + PolishLife.hash(seed, i) * 0.4;
+            double age = life - Math.floor(life);
+            int side = i % 2 == 0 ? 1 : -1;
+            double flank = toNozzle + side * (Math.PI / 2 + 0.2);
+            double ex = c.x() + Math.cos(flank) * size * (1.1 + 0.4 * age) + Math.cos(down) * size * 3.2 * age;
+            double ey = c.y() + Math.sin(flank) * size * (1.1 + 0.4 * age) + Math.sin(down) * size * 3.2 * age;
+            double r = scale * 0.012 * (1 - 0.6 * age);
+            g2.setColor(faded(mix(mix(hot, Color.WHITE, 0.4), flame, age), (1 - age) * Math.min(1, age * 6)));
+            g2.fill(new java.awt.geom.Ellipse2D.Double(ex - r, ey - r, r * 2, r * 2));
+        }
+    }
+
+    /**
+     * One tongue of flame licking round a body of radius {@code size} at {@code x, y}: it splits off the front a little
+     * to {@code side} of the jet, hugs the flank, and streams away downstream, tapering to a point and wavering with
+     * {@code seconds}. {@code k} picks one of the tongues on that side (later ones start further round and run
+     * longer); {@code width} scales it (an inner, hotter tongue is narrower).
+     */
+    private static Shape lick(double x, double y, double toNozzle, double size, int side, int k, double seconds,
+                              int seed, double width) {
+        double down = toNozzle + Math.PI;
+        double wobble = Math.sin(seconds * (11 + 4 * k) + seed * 0.37 + side * 1.9 + k * 2.1);
+        double start = toNozzle + side * (0.25 + 0.38 * k);
+        double flank = toNozzle + side * (Math.PI / 2 + 0.15);
+        double length = size * (2.0 + 0.9 * k + 0.35 * wobble) * (0.85 + 0.3 * PolishLife.hash(seed + k, side + 3L));
+        double ax = x + Math.cos(start) * size * 0.95;
+        double ay = y + Math.sin(start) * size * 0.95;
+        double bx = x + Math.cos(flank) * size * (1.12 + 0.08 * k);
+        double by = y + Math.sin(flank) * size * (1.12 + 0.08 * k);
+        double ex = bx + Math.cos(down + side * 0.18) * length;
+        double ey = by + Math.sin(down + side * 0.18) * length;
+        int n = 14;
+        double[][] left = new double[n + 1][];
+        double[][] right = new double[n + 1][];
+        double root = size * 0.34 * width * (1 - 0.25 * k);
+        for (int i = 0; i <= n; i++) {
+            double t = (double) i / n;
+            double px = (1 - t) * (1 - t) * ax + 2 * (1 - t) * t * bx + t * t * ex;
+            double py = (1 - t) * (1 - t) * ay + 2 * (1 - t) * t * by + t * t * ey;
+            double dx = 2 * (1 - t) * (bx - ax) + 2 * t * (ex - bx);
+            double dy = 2 * (1 - t) * (by - ay) + 2 * t * (ey - by);
+            double len = Math.max(1e-6, Math.hypot(dx, dy));
+            double nx = -dy / len;
+            double ny = dx / len;
+            double sway = Math.sin(seconds * 13 + t * 7 + k * 1.3 + seed) * size * 0.12 * t;
+            px += nx * sway;
+            py += ny * sway;
+            double w = root * Math.pow(1 - t, 0.8) * (0.55 + 0.45 * Math.sin(Math.PI * Math.min(1, t * 1.6 + 0.2)));
+            left[i] = new double[] {px + nx * w, py + ny * w};
+            right[i] = new double[] {px - nx * w, py - ny * w};
+        }
+        Path2D.Double p = new Path2D.Double();
+        p.moveTo(left[0][0], left[0][1]);
+        for (int i = 1; i <= n; i++) {
+            p.lineTo(left[i][0], left[i][1]);
+        }
+        for (int i = n; i >= 0; i--) {
+            p.lineTo(right[i][0], right[i][1]);
+        }
+        p.closePath();
+        return p;
+    }
+
+    private static void glowAt(Graphics2D g2, double x, double y, double r, Color c, double alpha) {
+        g2.setPaint(new java.awt.RadialGradientPaint((float) x, (float) y, (float) r, new float[] {0f, 1f},
+                new Color[] {faded(c, alpha), faded(c, 0)}));
+        g2.fill(new java.awt.geom.Ellipse2D.Double(x - r, y - r, r * 2, r * 2));
     }
 }
