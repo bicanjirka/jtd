@@ -25,6 +25,7 @@ import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerModifiers;
 import td.tower.TowerTerm;
+import td.tower.cinder.Caught;
 import td.tower.cinder.FlashoverMechanic;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.ShellKind;
@@ -816,8 +817,8 @@ class TowerEffectFrameBuilderTest {
 
         FlameDraw flame = flameOf(context, enemy);
 
-        assertThat(near.caught()).extracting(CinderTower.Caught::enemy).containsExactly(enemy);
-        assertThat(behind.caught()).extracting(CinderTower.Caught::enemy).containsExactly(enemy);
+        assertThat(near.caught()).extracting(Caught::enemy).containsExactly(enemy);
+        assertThat(behind.caught()).extracting(Caught::enemy).containsExactly(enemy);
         float hottest = Math.max(near.caught().getFirst().fuelPerSecond(), behind.caught().getFirst().fuelPerSecond());
         assertThat(flame.streams()).hasSize(2);
         assertThat(flame.caught()).singleElement().satisfies(caught -> {

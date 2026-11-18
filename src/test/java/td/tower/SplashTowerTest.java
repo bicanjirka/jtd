@@ -12,6 +12,7 @@ import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.tower.splash.ArcSpec;
+import td.tower.splash.Curse;
 import td.tower.splash.HexSpec;
 import td.tower.splash.SoulbrandMechanic;
 import td.tower.splash.StaticMechanic;
@@ -280,7 +281,7 @@ class SplashTowerTest {
 
         this.runUntil(tower, () -> !tower.cursesInFlight().isEmpty());
 
-        assertThat(tower.cursesInFlight()).extracting(SplashTower.Curse::target).containsExactlyInAnyOrder(first, second);
+        assertThat(tower.cursesInFlight()).extracting(Curse::target).containsExactlyInAnyOrder(first, second);
     }
 
     @Test

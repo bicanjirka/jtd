@@ -8,15 +8,18 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.stat.StatPart;
 import td.term.TermText;
+import td.tower.cinder.Caught;
 import td.tower.cinder.CinderMechanic;
 import td.tower.cinder.CinderSpec;
 import td.tower.cinder.CoreMechanic;
 import td.tower.cinder.DragonsBreathMechanic;
 import td.tower.cinder.FlameLook;
+import td.tower.cinder.Flash;
 import td.tower.cinder.FlashoverMechanic;
 import td.tower.cinder.KindlingMechanic;
 import td.tower.cinder.MeltdownMechanic;
 import td.tower.cinder.SoulfireMechanic;
+import td.tower.cinder.StreamLook;
 import td.tower.cinder.ThermalShockMechanic;
 import td.tower.cinder.WhiteFlameMechanic;
 import td.tower.targeting.InRangeTargetQuery;
@@ -373,26 +376,5 @@ public final class CinderTower extends AbstractTower {
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitCinderTower(this);
-    }
-
-    /**
-     * How its stream is drawn: in Soulfire, with a white core, as Dragon's Breath, and the half-width of its Core in
-     * radians, 0 for none.
-     */
-    public record StreamLook(boolean soulfire, boolean whiteCore, boolean dragonsBreath, float coreHalfWidth) {
-    }
-
-    /**
-     * An enemy the cone fed this tick.
-     *
-     * @param enemy         the enemy
-     * @param fuelPerSecond what it was fed, in points a second
-     * @param inCore        whether it stood in the Core
-     */
-    public record Caught(EnemyMob enemy, float fuelPerSecond, boolean inCore) {
-    }
-
-    /** A Flashover from a hot enemy at {@code fromX, fromY} to one beside it, in board pixels. */
-    public record Flash(double fromX, double fromY, double toX, double toY) {
     }
 }
