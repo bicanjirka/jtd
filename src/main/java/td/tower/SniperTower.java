@@ -47,6 +47,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 
+import static td.tower.upgrade.MechanicCatalogue.entry;
+
 /**
  * The rhythmic single-target tower: each shot builds Steady Aim, whichever enemy it hits, until it stops firing for a
  * while. It fires at the visible enemy in range furthest along the path, and its crits are what its upgrades pay out.
@@ -152,10 +154,10 @@ public final class SniperTower extends AbstractTower {
             .withCluster(UpgradeCluster.of("Ammo", SILVER_ROUND, HOLLOW_POINT))
             .withCluster(UpgradeCluster.of("Finisher", EXECUTIONER, HEADHUNTER));
 
-    private static final MechanicCatalogue<SniperMechanic> MECHANICS = MechanicCatalogue.<SniperMechanic>empty()
-            .with(RICOCHET.id(), RicochetMechanic::new)
-            .with(EXECUTIONER.id(), ExecutionerMechanic::new)
-            .with(HEADHUNTER.id(), HeadhunterMechanic::new);
+    private static final MechanicCatalogue<SniperMechanic> MECHANICS = MechanicCatalogue.of(
+            entry(RICOCHET.id(), RicochetMechanic::new),
+            entry(EXECUTIONER.id(), ExecutionerMechanic::new),
+            entry(HEADHUNTER.id(), HeadhunterMechanic::new));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final ShotActions actions = new Actions();
@@ -267,11 +269,11 @@ public final class SniperTower extends AbstractTower {
     }
 
     /** A flight from {@code x, y} to {@code target}, starting now. */
-    private Flight flightFrom(double x, double y, EnemyMob target) {
+    private ShotFlight flightFrom(double x, double y, EnemyMob target) {
         double distance = Math.hypot(target.getX() - x, target.getY() - y);
         int ticks = Math.max(MIN_FLIGHT_TICKS,
                 (int) Math.ceil(distance / (BULLET_CELLS_PER_TICK * this.context.getBoard().scale())));
-        return new Flight(this.tickNow, this.tickNow + ticks);
+        return new ShotFlight(this.tickNow, this.tickNow + ticks);
     }
 
     /** Lands every bullet and every hop whose flight ends now. */
@@ -325,7 +327,7 @@ public final class SniperTower extends AbstractTower {
     }
 
     private ShotTrace traceOf(Bullet bullet, boolean critical) {
-        return new ShotTrace(new Vec2(bullet.target().getX(), bullet.target().getY()), critical, bullet.shot(),
+        return new ShotTrace(bullet.target().position(), critical, bullet.shot(),
                 this.tickNow);
     }
 
@@ -344,7 +346,7 @@ public final class SniperTower extends AbstractTower {
             return;
         }
         SniperShot hop = this.landing.shot().withAttack(AttackProfile::withoutCrits).asRounds(List.of());
-        this.hops.add(new Hop(new Vec2(from.getX(), from.getY()), new Bullet(hop, this.landing.stats(), next.get(),
+        this.hops.add(new Hop(from.position(), new Bullet(hop, this.landing.stats(), next.get(),
                 this.flightFrom(from.getX(), from.getY(), next.get())), this.landing.shot().rounds()));
     }
 
@@ -489,7 +491,7 @@ public final class SniperTower extends AbstractTower {
      * @param target the enemy it was aimed at
      * @param flight when it flies
      */
-    public record Bullet(SniperShot shot, TowerStats stats, EnemyMob target, Flight flight) {
+    public record Bullet(SniperShot shot, TowerStats stats, EnemyMob target, ShotFlight flight) {
 
         public int firedAt() {
             return this.flight.firedAt();
@@ -529,15 +531,6 @@ public final class SniperTower extends AbstractTower {
     public record Execution(Vec2 at, int tick, EnemyMob enemy) {
     }
 
-    /**
-     * When a bullet flies.
-     *
-     * @param firedAt the tick it was fired
-     * @param landsAt the tick it arrives
-     */
-    public record Flight(int firedAt, int landsAt) {
-    }
-
     /** What the mechanics may make this tower do. */
     private final class Actions implements ShotActions {
 
@@ -546,7 +539,7 @@ public final class SniperTower extends AbstractTower {
             AttackProfile finisher = AttackProfile.none().pastArmorAndPlating().asPeriodic();
             SniperTower.this.dealDamage(target, Damage.physical(EXECUTION_DAMAGE), finisher);
             if (target.isDead()) {
-                SniperTower.this.lastExecution = new Execution(new Vec2(target.getX(), target.getY()),
+                SniperTower.this.lastExecution = new Execution(target.position(),
                         SniperTower.this.tickNow, target);
             }
             return target.isDead();

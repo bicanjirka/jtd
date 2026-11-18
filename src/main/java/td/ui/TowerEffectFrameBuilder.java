@@ -7,6 +7,7 @@ import td.tower.CinderTower;
 import td.tower.MortarTower;
 import td.tower.PulseTower;
 import td.tower.SeekerTower;
+import td.tower.ShotFlight;
 import td.tower.SniperTower;
 import td.tower.SplashTower;
 import td.tower.Tower;
@@ -356,7 +357,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.stone(tower, tier, stone);
         }
         for (SplashTower.Curse curse : tower.cursesInFlight()) {
-            this.streak(Palette.TOWER_SPLASH_CAST, curse.from(), new Vec2(curse.target().getX(), curse.target().getY()),
+            this.streak(Palette.TOWER_SPLASH_CAST, curse.from(), curse.target().position(),
                     curse.flight());
         }
         for (SplashTower.Wisp wisp : tower.wispsInFlight()) {
@@ -383,7 +384,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /** How far along its way something flying is now, between the last two ticks. */
-    private double flown(SplashTower.Flight flight) {
+    private double flown(ShotFlight flight) {
         double now = this.gameTime + this.interpolationAlpha;
         return Math.clamp((now - flight.firedAt()) / Math.max(1, flight.landsAt() - flight.firedAt()), 0, 1);
     }
@@ -409,7 +410,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /** Something flying straight to where it lands, its streak trailing behind its head. */
-    private void streak(Palette tone, Vec2 from, Vec2 to, SplashTower.Flight flight) {
+    private void streak(Palette tone, Vec2 from, Vec2 to, ShotFlight flight) {
         double flown = this.flown(flight);
         double tail = Math.max(0, flown - STREAK_SHARE);
         this.draws.add(new TracerDraw(tone, tone, (float) (from.x() + (to.x() - from.x()) * tail),

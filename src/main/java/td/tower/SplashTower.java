@@ -326,8 +326,8 @@ public final class SplashTower extends AbstractTower {
         boolean charged = this.holdsStatus(TowerTerm.ARC);
         TowerStats stats = this.beginShot();
         Vec2 from = new Vec2(this.centerX, this.centerY);
-        Vec2 to = new Vec2(target.getX(), target.getY());
-        this.stones.add(new Stone(to, stats, charged, new Flight(this.tickNow,
+        Vec2 to = target.position();
+        this.stones.add(new Stone(to, stats, charged, new ShotFlight(this.tickNow,
                 this.tickNow + this.flightTicks(from, to, STONE_CELLS_PER_TICK))));
         this.clock.spend();
     }
@@ -425,7 +425,7 @@ public final class SplashTower extends AbstractTower {
             next = Optional.of(current);
         }
         next.ifPresent(to -> this.hops.add(new PendingHop(new Hop(from, to,
-                new Flight(this.tickNow, this.tickNow + HOP_TICKS)), run)));
+                new ShotFlight(this.tickNow, this.tickNow + HOP_TICKS)), run)));
     }
 
     /** One jump of an Arc lands as magic, unable to crit unless the Arc can, then the Arc jumps on. */
@@ -442,7 +442,7 @@ public final class SplashTower extends AbstractTower {
         int amount = Math.round(stats.damage() * arc.share() * adjustment.damageFactor()
                 * arc.factorAgainst(target.reductionAgainst(DamageType.PHYSICAL)));
         AttackProfile attack = adjustment.applyTo(stats.attack()).withCritChance(arc.critChance());
-        Vec2 at = new Vec2(target.getX(), target.getY());
+        Vec2 at = target.position();
         HitResult hit = this.landHit(target, Damage.magic(amount), attack);
         run.spend(target);
         if (!hit.dodged()) {
@@ -491,17 +491,17 @@ public final class SplashTower extends AbstractTower {
     }
 
     private void sendHome(EnemyMob enemy, Passive passive) {
-        Vec2 from = new Vec2(enemy.getX(), enemy.getY());
+        Vec2 from = enemy.position();
         Vec2 home = new Vec2(this.centerX, this.centerY);
-        this.wisps.add(new PendingWisp(new Wisp(from, passive, new Flight(this.tickNow,
+        this.wisps.add(new PendingWisp(new Wisp(from, passive, new ShotFlight(this.tickNow,
                 this.tickNow + this.flightTicks(from, home, WISP_CELLS_PER_TICK))),
                 PassivePayout.forMaxHealth(enemy.getMaxHealthPoints())));
     }
 
     /** Sends {@code hex} from {@code from} to {@code target}; it takes hold when it arrives. */
     private void sendCurse(Hex hex, Vec2 from, EnemyMob target, Dose dose) {
-        Vec2 to = new Vec2(target.getX(), target.getY());
-        this.curses.add(new PendingCurse(new Curse(hex.kind(), from, target, new Flight(this.tickNow,
+        Vec2 to = target.position();
+        this.curses.add(new PendingCurse(new Curse(hex.kind(), from, target, new ShotFlight(this.tickNow,
                 this.tickNow + this.flightTicks(from, to, CURSE_CELLS_PER_TICK))), hex, this.stats(), dose));
     }
 
@@ -676,7 +676,7 @@ public final class SplashTower extends AbstractTower {
         if (!hit.dodged()) {
             this.report(enemy, HitKind.ARC, false, enemy.isDead());
         }
-        this.bolts.add(new Bolt(from, new Vec2(enemy.getX(), enemy.getY()), this.tickNow, kind));
+        this.bolts.add(new Bolt(from, enemy.position(), this.tickNow, kind));
     }
 
     /** What a hex puts on an enemy as it lands, at the strength of the tower when it was cast. */
@@ -797,20 +797,11 @@ public final class SplashTower extends AbstractTower {
     }
 
     /**
-     * When something flies.
-     *
-     * @param firedAt the tick it left
-     * @param landsAt the tick it arrives
-     */
-    public record Flight(int firedAt, int landsAt) {
-    }
-
-    /**
      * A stone on its way: unguided, from the tower to where its target stood, with the stats it was thrown with.
      *
      * @param charged whether it carries an Arc
      */
-    public record Stone(Vec2 to, TowerStats stats, boolean charged, Flight flight) {
+    public record Stone(Vec2 to, TowerStats stats, boolean charged, ShotFlight flight) {
     }
 
     /**
@@ -824,7 +815,7 @@ public final class SplashTower extends AbstractTower {
     }
 
     /** A jump of an Arc on its way, from where it is to the enemy it strikes. */
-    public record Hop(Vec2 from, EnemyMob to, Flight flight) {
+    public record Hop(Vec2 from, EnemyMob to, ShotFlight flight) {
     }
 
     /** A bolt that struck. */
@@ -832,7 +823,7 @@ public final class SplashTower extends AbstractTower {
     }
 
     /** A hex on its way to the enemy it curses. */
-    public record Curse(EffectKind kind, Vec2 from, EnemyMob target, Flight flight) {
+    public record Curse(EffectKind kind, Vec2 from, EnemyMob target, ShotFlight flight) {
     }
 
     /**
@@ -840,6 +831,6 @@ public final class SplashTower extends AbstractTower {
      *
      * @param passive Soulbrand for a soul, Static for a spark
      */
-    public record Wisp(Vec2 from, Passive passive, Flight flight) {
+    public record Wisp(Vec2 from, Passive passive, ShotFlight flight) {
     }
 }

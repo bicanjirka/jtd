@@ -409,7 +409,7 @@ public final class SeekerTower extends AbstractTower {
         AttackProfile profile = this.profileOf(shot, HitAdjustment.none());
         float radius = ShatterMechanic.RADIUS_CELLS * this.cell();
         this.around(freeze.enemy(), radius).forEach(enemy -> this.dealDamage(enemy, damage, profile));
-        this.shatterMarks.add(new ShatterMark(new Vec2(freeze.enemy().getX(), freeze.enemy().getY()), radius,
+        this.shatterMarks.add(new ShatterMark(freeze.enemy().position(), radius,
                 this.tickNow, freeze.kind()));
     }
 
@@ -431,7 +431,7 @@ public final class SeekerTower extends AbstractTower {
         if (this.spec().ice() != IceRider.ICE_WAKE) {
             return List.of();
         }
-        return this.frozen.holding().stream().map(enemy -> new Vec2(enemy.getX(), enemy.getY())).toList();
+        return this.frozen.holding().stream().map(EnemyMob::position).toList();
     }
 
     /** How far an Ice Wake reaches round the ice, in pixels. */

@@ -25,7 +25,6 @@ import td.tower.TowerTerm;
 import td.tower.ability.AbilityUnits;
 import td.tower.mortar.MagazineView;
 import td.tower.mortar.ShellKind;
-import td.tower.upgrade.Mechanic;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
@@ -46,6 +45,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static td.tower.upgrade.MechanicCatalogue.entry;
 
 class TowerSheetTextTest {
 
@@ -328,7 +328,8 @@ class TowerSheetTextTest {
     void eachAbilityShowsItsBarOneUnitLongerThanItsCostAndItsHoverReadsTheFillInUnits() {
         UpgradeNode bolt = UpgradeNode.of("test.bolt", "Bolt", 0);
         FakeTower tower = FakeTower.offering(this.world, 0, 0, UpgradeTree.none().with(bolt),
-                MechanicCatalogue.<Mechanic>empty().with(bolt.id(), () -> FakeAbilityMechanic.of(TowerTerm.HOLLOW_POINT, EffectKind.CHARGED, 2)));
+                MechanicCatalogue.of(
+                        entry(bolt.id(), () -> FakeAbilityMechanic.of(TowerTerm.HOLLOW_POINT, EffectKind.CHARGED, 2))));
         this.world.economy().startEconomy(100, 5);
         tower.buyUpgrade(bolt);
         tower.earn(AbilityUnits.of(0.25f));

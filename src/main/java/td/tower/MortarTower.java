@@ -340,7 +340,7 @@ public final class MortarTower extends AbstractTower {
         }
         List<Path> paths = this.context.level().paths().stream().map(PathRuntime::path).toList();
         List<Vec2> points = PathLine.along(paths, target.getX(), target.getY(), offsets);
-        Vec2 standing = new Vec2(target.getX(), target.getY());
+        Vec2 standing = target.position();
         for (int i = 0; i < shells; i++) {
             laid.add(Optional.of(i < points.size() ? points.get(i) : standing));
         }
@@ -391,7 +391,7 @@ public final class MortarTower extends AbstractTower {
      * that shell lands.
      */
     private Vec2 aimPoint(EnemyMob target, MortarSpec spec, ShellKind kind) {
-        Vec2 aim = new Vec2(target.getX(), target.getY());
+        Vec2 aim = target.position();
         if (!spec.leadsTarget()) {
             return aim;
         }

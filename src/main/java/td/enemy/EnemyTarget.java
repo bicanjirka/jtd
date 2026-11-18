@@ -23,6 +23,11 @@ public interface EnemyTarget {
      * mob that does not follow a path.
      */
     default Vec2 positionAfter(int ticks) {
+        return this.position();
+    }
+
+    /** Where this mob stands now, in pixels. */
+    default Vec2 position() {
         return new Vec2(this.getX(), this.getY());
     }
 
