@@ -232,7 +232,6 @@ public final class MortarTower extends AbstractTower {
     private volatile ShellOdds odds;
     /** The kinds it can load, and the mechanics they were worked out for. */
     private volatile LoadableKinds loadable;
-    private int tickNow;
     private OptionalInt firedAt = OptionalInt.empty();
     private EnemyMob currentTarget;
 
@@ -273,8 +272,8 @@ public final class MortarTower extends AbstractTower {
         return PreferringSelector.priority(new FurthestAlongPathSelector()).selectFrom(inReach);
     }
 
-    public void doTick(int gameTime) {
-        this.tickNow = gameTime;
+    @Override
+    protected void act(int gameTime) {
         this.blastMarks.removeIf(mark -> gameTime - mark.startedAtTick() >= BLAST_MARK_TICKS);
         MortarSpec spec = this.spec(this.mechanics.all());
         this.magazine = this.magazine.keptTo(spec.magazine(), this.context.random());
@@ -321,7 +320,7 @@ public final class MortarTower extends AbstractTower {
         ShellKind first = loaded.getFirst();
         this.fireAt(first, laid.getFirst().orElseGet(() -> this.aimPoint(target, spec, first)));
         for (int i = 1; i < loaded.size(); i++) {
-            this.volleyLeft.add(new VolleyShell(loaded.get(i), laid.get(i), this.tickNow + i * volley.gapTicks()));
+            this.volleyLeft.add(new VolleyShell(loaded.get(i), laid.get(i), this.tickNow() + i * volley.gapTicks()));
         }
     }
 
@@ -349,7 +348,7 @@ public final class MortarTower extends AbstractTower {
 
     /** Fires the volley's shells whose turn has come: a Barrage's at its target, a new one if that one died. */
     private void fireVolleyLeft(MortarSpec spec) {
-        while (!this.volleyLeft.isEmpty() && this.volleyLeft.getFirst().firesAt() <= this.tickNow) {
+        while (!this.volleyLeft.isEmpty() && this.volleyLeft.getFirst().firesAt() <= this.tickNow()) {
             VolleyShell next = this.volleyLeft.removeFirst();
             if (next.laidAt().isPresent()) {
                 this.fireAt(next.kind(), next.laidAt().get());
@@ -377,9 +376,9 @@ public final class MortarTower extends AbstractTower {
 
     private void fireAt(ShellKind kind, Vec2 aim) {
         Shell shell = new Shell(kind, this.beginShot());
-        this.firedAt = OptionalInt.of(this.tickNow);
+        this.firedAt = OptionalInt.of(this.tickNow());
         this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, aim.x(), aim.y(),
-                this.shellStats(shell), kind.look(), (x, y) -> this.onImpact(x, y, shell)));
+                this.shellStats(shell), kind.look(), (x, y, gameTime) -> this.onImpact(x, y, shell, gameTime)));
     }
 
     /** What was fired: the kind of shell, and the stats it lands with however the Mortar changes meanwhile. */
@@ -429,7 +428,7 @@ public final class MortarTower extends AbstractTower {
      * A shell lands with the stats it was fired with: everything within its edge takes a hit, the core at full damage,
      * and carries Crack, and a Heavy's pick; it leaves its kind's ground.
      */
-    private void onImpact(double x, double y, Shell shell) {
+    private void onImpact(double x, double y, Shell shell, int gameTime) {
         MortarSpec spec = this.spec(this.mechanics.all());
         ShellKind kind = shell.kind();
         TowerStats stats = shell.stats();
@@ -454,10 +453,10 @@ public final class MortarTower extends AbstractTower {
             }
         }
         if (kind == ShellKind.NUKE) {
-            this.nukeFlash = new NukeFlash(x, y, blast.edge(), this.tickNow + 1);
+            this.nukeFlash = new NukeFlash(x, y, blast.edge(), gameTime);
         }
         boolean fragments = kind == ShellKind.HEAVY && spec.heavy() == HeavyRider.SHRAPNEL;
-        this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), this.tickNow + 1, kind.look())
+        this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), gameTime, kind.look())
                 .withFragments(fragments));
         this.leaveGround(x, y, shell, blast, spec);
     }

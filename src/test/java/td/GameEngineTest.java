@@ -1625,7 +1625,7 @@ class GameEngineTest {
     void reloadingALevelClearsProjectilesStillInFlightFromThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        engine.getGameWorld().projectiles().add(new CannonballProjectile(0, 0, 1000, 0, 1f, (x, y) -> {
+        engine.getGameWorld().projectiles().add(new CannonballProjectile(0, 0, 1000, 0, 1f, (x, y, gameTime) -> {
         }));
         assertThat(engine.getGameWorld().projectiles().getProjectiles()).isNotEmpty();
 
@@ -1638,7 +1638,7 @@ class GameEngineTest {
     void aProjectileAdvancesOnATickBetweenEnemiesAndTowersMoving() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        engine.getGameWorld().projectiles().add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        engine.getGameWorld().projectiles().add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y, gameTime) -> {
         }));
 
         engine.doTick(1);

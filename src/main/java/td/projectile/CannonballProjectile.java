@@ -60,7 +60,7 @@ public final class CannonballProjectile extends AbstractProjectile {
         if (distance <= speed) {
             this.x = this.destinationX;
             this.y = this.destinationY;
-            this.impact.onImpact(this.destinationX, this.destinationY);
+            this.impact.onImpact(this.destinationX, this.destinationY, gameTime);
             this.finish();
         } else {
             this.x += dx / distance * speed;

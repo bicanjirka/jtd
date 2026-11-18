@@ -45,7 +45,7 @@ final class FakeMissileGuide implements MissileGuide {
     }
 
     @Override
-    public void land(EnemyMob target) {
+    public void land(EnemyMob target, int gameTime) {
         this.landed.add(target);
     }
 

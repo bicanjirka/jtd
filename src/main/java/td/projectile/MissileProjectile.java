@@ -76,7 +76,7 @@ public final class MissileProjectile extends AbstractProjectile {
         if (distance <= this.speed) {
             this.x = toX;
             this.y = toY;
-            this.target.ifPresentOrElse(this.guide::land, this.guide::arriveHome);
+            this.target.ifPresentOrElse(enemy -> this.guide.land(enemy, gameTime), this.guide::arriveHome);
             this.finish();
             return;
         }

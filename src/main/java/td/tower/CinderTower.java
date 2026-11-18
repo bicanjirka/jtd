@@ -174,7 +174,8 @@ public final class CinderTower extends AbstractTower {
         return spec;
     }
 
-    public void doTick(int gameTime) {
+    @Override
+    protected void act(int gameTime) {
         CinderSpec spec = this.spec(this.mechanics.all());
         List<EnemyMob> inRange = spec.reach().matching(this.context.enemies());
         this.flashes.clear();

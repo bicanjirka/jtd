@@ -199,7 +199,6 @@ public final class SeekerTower extends AbstractTower {
     private int freezes;
     private boolean releaseDue;
     private double ringRadians;
-    private int tickNow;
     /** The tick its present quiet, or the quiet before its present fight, began; empty before its first tick. */
     private OptionalInt quietSince = OptionalInt.empty();
     /** The tick its present fight began; empty while it is quiet. */
@@ -239,8 +238,8 @@ public final class SeekerTower extends AbstractTower {
         return Math.round(this.stats().value(TowerStat.NEST_CAPACITY));
     }
 
-    public void doTick(int gameTime) {
-        this.tickNow = gameTime;
+    @Override
+    protected void act(int gameTime) {
         this.shatterMarks.removeIf(mark -> gameTime - mark.startedAtTick() >= SHATTER_MARK_TICKS);
         SeekerSpec spec = this.spec();
         this.settleIce(spec);
@@ -338,7 +337,7 @@ public final class SeekerTower extends AbstractTower {
      * A missile lands with the stats it was launched with: its kind's hit, and a freeze unless a Shield took the whole
      * of it. A dodged missile does nothing.
      */
-    private void onImpact(EnemyMob target, Shot shot) {
+    private void onImpact(EnemyMob target, Shot shot, int gameTime) {
         TowerStats stats = shot.stats();
         MissileKind kind = shot.kind();
         boolean wasFrozen = target.hasEffect(EffectKind.FREEZE);
@@ -353,7 +352,7 @@ public final class SeekerTower extends AbstractTower {
             int ticks = Math.round(stats.value(TowerStat.FREEZE_DURATION));
             this.applyEffect(target, sink -> Effect.freeze(ticks, kind.ice(), sink));
             if (!wasFrozen && target.hasEffect(EffectKind.FREEZE)) {
-                this.frozen.record(target, kind, stats, this.tickNow);
+                this.frozen.record(target, kind, stats, gameTime);
                 this.countFreeze();
             }
         }
@@ -381,7 +380,7 @@ public final class SeekerTower extends AbstractTower {
 
     /** The freezes that ended: a Shatter bursts and a Shade's enemy stays Silenced; an Ice Wake chills round the rest. */
     private void settleIce(SeekerSpec spec) {
-        for (FrozenLedger.Thaw thaw : this.frozen.settle(this.tickNow)) {
+        for (FrozenLedger.Thaw thaw : this.frozen.settle(this.tickNow())) {
             FrozenLedger.Freeze freeze = thaw.freeze();
             if (spec.ice() == IceRider.SHATTER) {
                 this.shatter(freeze);
@@ -410,7 +409,7 @@ public final class SeekerTower extends AbstractTower {
         float radius = ShatterMechanic.RADIUS_CELLS * this.cell();
         this.around(freeze.enemy(), radius).forEach(enemy -> this.dealDamage(enemy, damage, profile));
         this.shatterMarks.add(new ShatterMark(freeze.enemy().position(), radius,
-                this.tickNow, freeze.kind()));
+                this.tickNow(), freeze.kind()));
     }
 
     /** Every enemy within {@code radius} pixels of {@code center}, hidden ones too, but itself. */
@@ -592,8 +591,8 @@ public final class SeekerTower extends AbstractTower {
         }
 
         @Override
-        public void land(EnemyMob target) {
-            SeekerTower.this.onImpact(target, this.shot);
+        public void land(EnemyMob target, int gameTime) {
+            SeekerTower.this.onImpact(target, this.shot, gameTime);
         }
 
         @Override

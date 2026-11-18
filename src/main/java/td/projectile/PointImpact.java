@@ -6,5 +6,6 @@ package td.projectile;
  */
 @FunctionalInterface
 public interface PointImpact {
-    void onImpact(double x, double y);
+    /** The shell lands at {@code x, y} on tick {@code gameTime}. */
+    void onImpact(double x, double y, int gameTime);
 }

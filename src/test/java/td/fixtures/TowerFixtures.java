@@ -28,9 +28,16 @@ public final class TowerFixtures {
      * Ticks until no projectile is left, capped at 50 ticks so a test that never fires fails fast.
      */
     public static void flyProjectilesToCompletion(GameWorld world) {
-        for (int t = 1; t <= 50 && !world.projectiles().getProjectiles().isEmpty(); t++) {
-            world.projectiles().doTick(t);
+        flyProjectilesToCompletion(world, 1);
+    }
+
+    /** Flies every projectile until none is left, on ticks counted from {@code firstTick}; the tick after the last. */
+    public static int flyProjectilesToCompletion(GameWorld world, int firstTick) {
+        int tick = firstTick;
+        while (tick < firstTick + 50 && !world.projectiles().getProjectiles().isEmpty()) {
+            world.projectiles().doTick(tick++);
         }
+        return tick;
     }
 
     /** Each text as its plain words, mentions as their titles. */

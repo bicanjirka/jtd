@@ -440,7 +440,7 @@ class BoardRendererTest {
     void anInFlightProjectileYieldsAProjectileDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
-        context.projectiles().add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        context.projectiles().add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y, gameTime) -> {
         }));
 
         RenderFrame frame = rendererFor(context).buildFrame(0, 0.0, 0.0);

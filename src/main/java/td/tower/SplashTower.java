@@ -245,7 +245,6 @@ public final class SplashTower extends AbstractTower {
     private final List<PendingWisp> wisps = new ArrayList<>();
     private final List<Blast> blasts = new ArrayList<>();
     private final List<Bolt> bolts = new ArrayList<>();
-    private int tickNow;
 
     public SplashTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SPLASH, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
@@ -278,8 +277,8 @@ public final class SplashTower extends AbstractTower {
         return this.context.getBoard().scale();
     }
 
-    public void doTick(int gameTime) {
-        this.tickNow = gameTime;
+    @Override
+    protected void act(int gameTime) {
         List<SplashMechanic> owned = this.mechanics.all();
         SplashSpec spec = this.spec(owned);
         this.forgetOldTraces();
@@ -317,8 +316,8 @@ public final class SplashTower extends AbstractTower {
     }
 
     private void forgetOldTraces() {
-        this.blasts.removeIf(blast -> this.tickNow - blast.tick() > TRACE_TICKS);
-        this.bolts.removeIf(bolt -> this.tickNow - bolt.tick() > TRACE_TICKS);
+        this.blasts.removeIf(blast -> this.tickNow() - blast.tick() > TRACE_TICKS);
+        this.bolts.removeIf(bolt -> this.tickNow() - bolt.tick() > TRACE_TICKS);
     }
 
     /** Throws a stone at where {@code target} stands: it flies with the stats it was thrown with, charged or not. */
@@ -327,8 +326,8 @@ public final class SplashTower extends AbstractTower {
         TowerStats stats = this.beginShot();
         Vec2 from = new Vec2(this.centerX, this.centerY);
         Vec2 to = target.position();
-        this.stones.add(new Stone(to, stats, charged, new ShotFlight(this.tickNow,
-                this.tickNow + this.flightTicks(from, to, STONE_CELLS_PER_TICK))));
+        this.stones.add(new Stone(to, stats, charged, new ShotFlight(this.tickNow(),
+                this.tickNow() + this.flightTicks(from, to, STONE_CELLS_PER_TICK))));
         this.clock.spend();
     }
 
@@ -339,7 +338,7 @@ public final class SplashTower extends AbstractTower {
 
     /** Lands every stone, jump, curse and soul or spark whose flight ends now. */
     private void landArrived(SplashSpec spec) {
-        while (!this.stones.isEmpty() && this.stones.getFirst().flight().landsAt() <= this.tickNow) {
+        while (!this.stones.isEmpty() && this.stones.getFirst().flight().landsAt() <= this.tickNow()) {
             this.land(this.stones.removeFirst(), spec);
         }
         List<PendingHop> arrivedHops = takeArrived(this.hops, hop -> hop.hop().flight().landsAt());
@@ -356,7 +355,7 @@ public final class SplashTower extends AbstractTower {
         }
         List<T> arrived = new ArrayList<>();
         flying.removeIf(item -> {
-            if (landsAt.applyAsInt(item) <= this.tickNow) {
+            if (landsAt.applyAsInt(item) <= this.tickNow()) {
                 arrived.add(item);
                 return true;
             }
@@ -396,7 +395,7 @@ public final class SplashTower extends AbstractTower {
         if (spec.passive() != Passive.NONE && credited > 0L) {
             this.earnAbilities(AbilityUnits.forDamage((int) Math.min(Integer.MAX_VALUE, credited), spec.damagePerUnit()));
         }
-        this.blasts.add(new Blast(at, core, edge, this.tickNow));
+        this.blasts.add(new Blast(at, core, edge, this.tickNow()));
         if (stone.charged()) {
             ArcRun run = new ArcRun(stats, spec.arc());
             this.nextJump(at, null, run);
@@ -425,7 +424,7 @@ public final class SplashTower extends AbstractTower {
             next = Optional.of(current);
         }
         next.ifPresent(to -> this.hops.add(new PendingHop(new Hop(from, to,
-                new ShotFlight(this.tickNow, this.tickNow + HOP_TICKS)), run)));
+                new ShotFlight(this.tickNow(), this.tickNow() + HOP_TICKS)), run)));
     }
 
     /** One jump of an Arc lands as magic, unable to crit unless the Arc can, then the Arc jumps on. */
@@ -451,7 +450,7 @@ public final class SplashTower extends AbstractTower {
             if (hit.critical()) {
                 this.earnAbilities(arc.critRefund());
             }
-            this.bolts.add(new Bolt(hop.from(), at, this.tickNow, BoltKind.ARC));
+            this.bolts.add(new Bolt(hop.from(), at, this.tickNow(), BoltKind.ARC));
         }
         this.nextJump(at, target, run);
     }
@@ -493,16 +492,16 @@ public final class SplashTower extends AbstractTower {
     private void sendHome(EnemyMob enemy, Passive passive) {
         Vec2 from = enemy.position();
         Vec2 home = new Vec2(this.centerX, this.centerY);
-        this.wisps.add(new PendingWisp(new Wisp(from, passive, new ShotFlight(this.tickNow,
-                this.tickNow + this.flightTicks(from, home, WISP_CELLS_PER_TICK))),
+        this.wisps.add(new PendingWisp(new Wisp(from, passive, new ShotFlight(this.tickNow(),
+                this.tickNow() + this.flightTicks(from, home, WISP_CELLS_PER_TICK))),
                 PassivePayout.forMaxHealth(enemy.getMaxHealthPoints())));
     }
 
     /** Sends {@code hex} from {@code from} to {@code target}; it takes hold when it arrives. */
     private void sendCurse(Hex hex, Vec2 from, EnemyMob target, Dose dose) {
         Vec2 to = target.position();
-        this.curses.add(new PendingCurse(new Curse(hex.kind(), from, target, new ShotFlight(this.tickNow,
-                this.tickNow + this.flightTicks(from, to, CURSE_CELLS_PER_TICK))), hex, this.stats(), dose));
+        this.curses.add(new PendingCurse(new Curse(hex.kind(), from, target, new ShotFlight(this.tickNow(),
+                this.tickNow() + this.flightTicks(from, to, CURSE_CELLS_PER_TICK))), hex, this.stats(), dose));
     }
 
     /** A curse that arrives takes hold, on the enemies around it too with Blight Cloud; one whose enemy died is lost. */
@@ -676,7 +675,7 @@ public final class SplashTower extends AbstractTower {
         if (!hit.dodged()) {
             this.report(enemy, HitKind.ARC, false, enemy.isDead());
         }
-        this.bolts.add(new Bolt(from, enemy.position(), this.tickNow, kind));
+        this.bolts.add(new Bolt(from, enemy.position(), this.tickNow(), kind));
     }
 
     /** What a hex puts on an enemy as it lands, at the strength of the tower when it was cast. */

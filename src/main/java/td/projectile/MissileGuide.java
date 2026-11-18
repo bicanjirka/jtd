@@ -14,7 +14,7 @@ public interface MissileGuide {
     Optional<EnemyMob> retarget(double x, double y);
 
     /** The missile reached {@code target}. */
-    void land(EnemyMob target);
+    void land(EnemyMob target, int gameTime);
 
     /** The missile flew home with nothing to hunt. */
     void arriveHome();
