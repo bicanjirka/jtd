@@ -25,6 +25,7 @@ import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
 import td.ui.render.EnemyTintDraw;
 import td.ui.render.ExecutionDraw;
+import td.ui.render.FlameDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.HexGlyph;
@@ -380,11 +381,8 @@ public final class Java2DFrameRenderer {
             case TOWER_SUNDIAL_UMBRA -> new Color(0x6a58b0);
             case TOWER_STREAM_OUTER -> new Color(0xe2402a);
             case TOWER_STREAM_MIDDLE -> new Color(0xff8a2a);
-            case TOWER_STREAM_CORE -> new Color(0xffe27a);
-            case TOWER_STREAM_WHITE -> Color.WHITE;
             case TOWER_SOULFIRE_OUTER -> new Color(0x5a36b8);
             case TOWER_SOULFIRE_MIDDLE -> new Color(0x8f6cf0);
-            case TOWER_SOULFIRE_CORE -> new Color(0xd5e6ff);
             case PROJECTILE_CANNONBALL -> new Color(139, 90, 43);
             case PROJECTILE_NAPALM -> new Color(255, 130, 30);
             case PROJECTILE_TAR -> new Color(75, 60, 90);
@@ -1358,6 +1356,7 @@ public final class Java2DFrameRenderer {
             case BulletDraw bullet -> SniperShotArt.bullet(g2, bullet);
             case LaserDraw laser -> SniperShotArt.laser(g2, laser);
             case ExecutionDraw execution -> SniperShotArt.execution(g2, execution);
+            case FlameDraw flame -> FlameArt.paint(g2, flame);
             case IceWakeDraw wake -> paintIceWake(g2, wake);
             case TowerStatusDraw status -> this.paintTowerStatus(g2, status);
             case RefundMarkDraw mark -> CashMark.paint(g2, mark.x(), mark.y(), mark.height());

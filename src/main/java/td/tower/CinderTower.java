@@ -140,6 +140,8 @@ public final class CinderTower extends AbstractTower {
     private final Set<EnemyMob> touched = new HashSet<>();
     /** Each hot enemy that flashed over this tick and an enemy it reached, in pairs, for the look. */
     private final List<Flash> flashes = new ArrayList<>();
+    /** Each enemy the cone fed this tick and what it was fed, for the look. */
+    private final List<Caught> caught = new ArrayList<>();
     private FireClock clock = new FireClock(RELOAD_PERIOD_TICKS - 1);
     private TowerStats streamStats = this.stats();
     private int streamLeft;
@@ -176,6 +178,7 @@ public final class CinderTower extends AbstractTower {
         CinderSpec spec = this.spec(this.mechanics.all());
         List<EnemyMob> inRange = spec.reach().matching(this.context.enemies());
         this.flashes.clear();
+        this.caught.clear();
         if (this.streamLeft == 0 && this.clock.isReady() && !inRange.isEmpty()) {
             this.streamStats = this.beginShot();
             this.streamLeft = Math.max(1, Math.round(this.streamStats.value(TowerStat.STREAM)));
@@ -219,7 +222,8 @@ public final class CinderTower extends AbstractTower {
                 .and(InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal()))
                 .matching(this.context.enemies())) {
             boolean inCore = spec.core().isActive() && this.offAxis(enemy, heading) <= halfWidth * spec.core().share();
-            this.feed(enemy, perTick * (inCore ? spec.core().factor() : 1f), spec);
+            float fed = this.feed(enemy, perTick * (inCore ? spec.core().factor() : 1f), spec);
+            this.caught.add(new Caught(enemy, DamageUnits.inPoints(fed) * TickRate.TICKS_PER_SECOND, inCore));
             if (this.touched.add(enemy)) {
                 this.applyEffect(enemy, sink -> Effect.scorched(spec.searStacks()));
             }
@@ -239,16 +243,17 @@ public final class CinderTower extends AbstractTower {
         }
     }
 
-    /** {@code fuel} damage units into {@code enemy}'s pool, as Thermal Shock and Meltdown make it. */
-    private void feed(EnemyMob enemy, float fuel, CinderSpec spec) {
+    /** {@code fuel} damage units into {@code enemy}'s pool, as Thermal Shock and Meltdown make it; what it poured. */
+    private float feed(EnemyMob enemy, float fuel, CinderSpec spec) {
         boolean held = enemy.hasEffect(EffectKind.CHILL) || enemy.hasEffect(EffectKind.FREEZE)
                 || enemy.hasEffect(EffectKind.DAZED);
         float amount = fuel * (held ? spec.thermalShock() : 1f) * (1f + spec.meltdown() * enemy.armorAndPlating());
         Damage poured = Damage.magic(Math.round(amount));
         if (poured.amount() <= 0) {
-            return;
+            return 0f;
         }
         this.applyEffect(enemy, sink -> spec.soulfire() ? Effect.soulfire(poured, sink) : Effect.burn(poured, sink));
+        return poured.amount();
     }
 
     private static float fuelOf(EnemyMob enemy, EffectKind fire) {
@@ -270,6 +275,7 @@ public final class CinderTower extends AbstractTower {
         this.target = Optional.empty();
         this.touched.clear();
         this.flashes.clear();
+        this.caught.clear();
     }
 
     @Override
@@ -301,6 +307,16 @@ public final class CinderTower extends AbstractTower {
     /** Whether it is streaming now. */
     public boolean isStreaming() {
         return this.streamLeft > 0;
+    }
+
+    /** The fuel its stream pours a second, in points, outside the Core. */
+    public float fuelPerSecond() {
+        return DamageUnits.inPoints(this.streamStats.damage());
+    }
+
+    /** Each enemy the cone fed this tick, in the order it fed them. */
+    public List<Caught> caught() {
+        return List.copyOf(this.caught);
     }
 
     /** The ticks since its last stream ended, while they are within {@code window}. */
@@ -363,6 +379,16 @@ public final class CinderTower extends AbstractTower {
      * radians, 0 for none.
      */
     public record StreamLook(boolean soulfire, boolean whiteCore, boolean dragonsBreath, float coreHalfWidth) {
+    }
+
+    /**
+     * An enemy the cone fed this tick.
+     *
+     * @param enemy         the enemy
+     * @param fuelPerSecond what it was fed, in points a second
+     * @param inCore        whether it stood in the Core
+     */
+    public record Caught(EnemyMob enemy, float fuelPerSecond, boolean inCore) {
     }
 
     /** A Flashover from a hot enemy at {@code fromX, fromY} to one beside it, in board pixels. */
