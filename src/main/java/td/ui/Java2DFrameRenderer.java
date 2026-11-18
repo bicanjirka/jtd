@@ -4,10 +4,12 @@ import td.term.Term;
 import td.ui.render.AffixPipsDraw;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
+import td.ui.render.CasingDraw;
 import td.ui.render.CellDraw;
 import td.ui.render.CellGridDraw;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
+import td.ui.render.EmbersDraw;
 import td.ui.render.EnemyBarsDraw;
 import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyBurstDraw;
@@ -41,9 +43,11 @@ import td.ui.render.RenderFrame;
 import td.ui.render.RingDraw;
 import td.ui.render.ShadowDraw;
 import td.ui.render.SheetLine;
+import td.ui.render.ShellCarryDraw;
 import td.ui.render.SilenceMarkDraw;
 import td.ui.render.SmokeDraw;
 import td.ui.render.SplashDraw;
+import td.ui.render.SteamDraw;
 import td.ui.render.StreamDraw;
 import td.ui.render.TollMarkDraw;
 import td.ui.render.TowerEffectDraw;
@@ -63,7 +67,6 @@ import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.LinearGradientPaint;
 import java.awt.RadialGradientPaint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -152,10 +155,6 @@ public final class Java2DFrameRenderer {
     private static final Color GRAVITY_WELL = new Color(0x1c2c5c);
     private static final int GRAVITY_WELL_ALPHA = 215;
     private static final float GRAVITY_WELL_SHARE = 0.8f;
-    private static final float SHADOW_ALPHA = 0.4f;
-    private static final float SHADOW_UMBRA_ALPHA = 0.55f;
-    private static final float SHADOW_TIP_ALPHA = 0.04f;
-    private static final float SHADOW_EDGE_ALPHA = 0.55f;
     private static final float WARD_STROKE_CELLS = 0.03f;
     private static final float[] WARD_DASH_CELLS = {0.16f, 0.05f, 0.03f, 0.05f};
     private static final int TOLL_SEGMENT_DEGREES = 60;
@@ -1341,13 +1340,18 @@ public final class Java2DFrameRenderer {
             case CannonballDraw stone -> this.paintShell(g2, stone);
             case SplashDraw splash ->
                     this.paintFilledCircle(g2, splash.palette(), splash.centerX(), splash.centerY(), splash.radius());
-            case ShadowDraw shadow -> paintShadow(g2, shadow);
+            case ShadowDraw shadow -> TowerMomentArt.sundial(g2, shadow, colorFor(Palette.TOWER_SUNDIAL),
+                    colorFor(Palette.TOWER_SUNDIAL_UMBRA));
             case WardOutlineDraw ward -> paintWardOutline(g2, ward);
             case RingDraw ring -> this.paintRing(g2, ring);
             case FlashDraw flash -> this.paintFlash(g2, flash);
             case StreamDraw stream -> paintStream(g2, stream);
             case NestDraw nest -> TowerLifeArt.nest(g2, nest);
             case FlockDraw flock -> TowerLifeArt.birds(g2, flock);
+            case CasingDraw casing -> TowerMomentArt.casing(g2, casing);
+            case SteamDraw steam -> TowerMomentArt.steam(g2, steam);
+            case ShellCarryDraw carry -> TowerMomentArt.shellCarry(g2, carry);
+            case EmbersDraw embers -> TowerMomentArt.embers(g2, embers);
             case IceWakeDraw wake -> paintIceWake(g2, wake);
             case TowerStatusDraw status -> this.paintTowerStatus(g2, status);
             case RefundMarkDraw mark -> CashMark.paint(g2, mark.x(), mark.y(), mark.height());
@@ -1399,44 +1403,6 @@ public final class Java2DFrameRenderer {
         h *= 0x2C1B3C6D;
         h ^= h >>> 12;
         return (h & 0xFFFF) / 65536f;
-    }
-
-    /**
-     * The Sundial's veil: the floors are near-black, so it is a cool light, strongest at the stone and gone at its tip,
-     * darker and bluer inside the field of an Umbra stone.
-     */
-    private static void paintShadow(Graphics2D g2, ShadowDraw shadow) {
-        AffineTransform save = g2.getTransform();
-        Shape clip = g2.getClip();
-        Stroke defaultStroke = g2.getStroke();
-        g2.translate(shadow.originX(), shadow.originY());
-        g2.rotate(shadow.headingRadians());
-        Path2D.Float veil = new Path2D.Float();
-        veil.moveTo(0, -shadow.rootHalfWidth());
-        veil.lineTo(shadow.reach(), -shadow.tipHalfWidth());
-        veil.lineTo(shadow.reach(), shadow.tipHalfWidth());
-        veil.lineTo(0, shadow.rootHalfWidth());
-        veil.closePath();
-        fillVeil(g2, veil, colorFor(Palette.TOWER_SUNDIAL), SHADOW_ALPHA, shadow);
-        if (shadow.inFieldUmbra()) {
-            float r = shadow.fieldRadius();
-            g2.clip(new Ellipse2D.Float(-r, -r, r * 2, r * 2));
-            fillVeil(g2, veil, colorFor(Palette.TOWER_SUNDIAL_UMBRA), SHADOW_UMBRA_ALPHA, shadow);
-            g2.setClip(clip);
-        }
-        Color edge = colorFor(Palette.TOWER_SUNDIAL);
-        g2.setColor(scaleAlpha(new Color((edge.getRed() + 255 * 2) / 3, (edge.getGreen() + 255 * 2) / 3,
-                (edge.getBlue() + 255 * 2) / 3), SHADOW_EDGE_ALPHA * shadow.alpha()));
-        g2.setStroke(new BasicStroke(shadow.edgeWidth(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.draw(new Line2D.Float(shadow.rootHalfWidth(), -shadow.rootHalfWidth(), shadow.reach(), -shadow.tipHalfWidth()));
-        g2.setStroke(defaultStroke);
-        g2.setTransform(save);
-    }
-
-    private static void fillVeil(Graphics2D g2, Shape veil, Color color, float alpha, ShadowDraw shadow) {
-        g2.setPaint(new LinearGradientPaint(0f, 0f, Math.max(1f, shadow.reach()), 0f, new float[]{0f, 1f},
-                new Color[]{scaleAlpha(color, alpha * shadow.alpha()), scaleAlpha(color, SHADOW_TIP_ALPHA * shadow.alpha())}));
-        g2.fill(veil);
     }
 
     /** The Ward's thin dashed rune line in Silence's colour, round every warded field at once. */

@@ -19,6 +19,8 @@ import td.tower.seeker.ShatterMark;
 import td.tower.splash.Passive;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
+import td.ui.render.CasingDraw;
+import td.ui.render.EmbersDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.FlockLook;
@@ -29,10 +31,14 @@ import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.ShadowDraw;
+import td.ui.render.ShellCarryDraw;
 import td.ui.render.SplashDraw;
+import td.ui.render.SteamDraw;
 import td.ui.render.StreamDraw;
+import td.ui.render.TowerCue;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
+import td.ui.render.TowerPose;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
 import td.ui.render.WardOutlineDraw;
@@ -132,9 +138,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     /** The knell's ring runs out to the field's edge in this long. */
     private static final int KNELL_RING_TICKS = 10;
     /** The Sundial's veil, in cells: narrow at the stone, wider at its tip, with a thin leading edge. */
-    private static final float SHADOW_ROOT_CELLS = 0.07f;
-    private static final float SHADOW_TIP_CELLS = 0.26f;
-    private static final float SHADOW_EDGE_CELLS = 0.03f;
+    /** A spent cartridge leaves from a little above the rifle's top; embers from a little above the turret's. */
+    private static final double CASING_ABOVE_CELLS = 0.05;
+    private static final double EMBERS_ABOVE_CELLS = 0.06;
+    private static final int CASING_TICKS = Math.round((float) TowerMomentArt.CASING_SECONDS * TickRate.TICKS_PER_SECOND);
+    private static final int STEAM_TICKS = Math.round((float) TowerMomentArt.STEAM_SECONDS * TickRate.TICKS_PER_SECOND);
     /** The veil keeps its strength for most of its turn and fades over the rest. */
     private static final float SHADOW_FADE_SHARE = 0.3f;
 
@@ -197,7 +205,38 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.hop(hop, this.flown(hop.bullet()));
         }
         tower.lastExecution().ifPresent(this::execution);
+        this.casing(tower, tier);
+        if (tower.frenzied()) {
+            TowerFoundations.Foundation foundation = TowerFoundations.of(TowerLook.SNIPER, tier,
+                    TowerSpriteFrameBuilder.poseOf(tower, this.gameTime));
+            this.draws.add(new EmbersDraw(tower.getX(), (float) (tower.getY() - TowerFoundations.LIFT
+                    * (foundation.top() + EMBERS_ABOVE_CELLS) * this.scale), this.scale, this.tickSeconds(),
+                    TowerSpriteFrameBuilder.seedOf(tower)));
+        }
         return null;
+    }
+
+    /** The tick clock in seconds, between the last two ticks. */
+    private float tickSeconds() {
+        return (float) ((this.gameTime + this.interpolationAlpha) / TickRate.TICKS_PER_SECOND);
+    }
+
+    /** {@code ticks} since a moment and the frame's share of the next tick, as a share of a moment {@code window} long. */
+    private float progressOf(int ticks, int window) {
+        return (ticks + (float) this.interpolationAlpha) / window;
+    }
+
+    /** The cartridge its last shot threw from the breech. */
+    private void casing(SniperTower tower, int tier) {
+        OptionalInt since = tower.ticksSinceFired(this.gameTime, CASING_TICKS);
+        if (since.isEmpty()) {
+            return;
+        }
+        TowerFoundations.Foundation foundation = TowerFoundations.of(TowerLook.SNIPER, tier,
+                TowerSpriteFrameBuilder.poseOf(tower, this.gameTime));
+        this.draws.add(new CasingDraw(tower.getX(), tower.getY(), this.scale,
+                (float) tower.getTurretAim().radiansAt(this.interpolationAlpha),
+                (float) (foundation.top() + CASING_ABOVE_CELLS), this.progressOf(since.getAsInt(), CASING_TICKS)));
     }
 
     /** How far {@code bullet} has flown, 0..1. */
@@ -412,8 +451,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         if (tower.isCastingShadow()) {
             float alpha = Math.min(1f, tower.shadowShareLeft() / SHADOW_FADE_SHARE);
             this.draws.add(new ShadowDraw(x, y, (float) tower.shadowRadians(this.interpolationAlpha),
-                    tower.shadowReach(), this.scale * SHADOW_ROOT_CELLS, this.scale * SHADOW_TIP_CELLS,
-                    this.scale * SHADOW_EDGE_CELLS, alpha, field, tower.stoneLook() == StoneLook.UMBRA));
+                    tower.shadowReach(), this.scale, alpha, field, tower.stoneLook() == StoneLook.UMBRA));
         }
         return null;
     }
@@ -460,7 +498,20 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                         flash.radius() * progress, fade));
             }
         });
+        this.shellCarry(tower);
         return null;
+    }
+
+    /** The shell being carried from the rack into the muzzle while it reloads, once the shot's flash is gone. */
+    private void shellCarry(MortarTower tower) {
+        TowerPose pose = TowerSpriteFrameBuilder.poseOf(tower);
+        float coolDown = tower.getCoolDownFraction();
+        if (coolDown <= 0f || pose.flash()) {
+            return;
+        }
+        int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
+        this.draws.add(new ShellCarryDraw(tier, pose.has(TowerCue.LONG_BARREL), tower.getX(), tower.getY(), this.scale,
+                1f - coolDown, pose.has(TowerCue.VOLLEY), pose.stock(), pose.load()));
     }
 
     /**
@@ -593,6 +644,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      */
     public Void visitCinderTower(CinderTower tower) {
         if (!tower.isStreaming()) {
+            this.steam(tower);
             return null;
         }
         CinderTower.StreamLook look = tower.streamLook();
@@ -611,5 +663,19 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                     (float) flash.toY(), flicker));
         }
         return null;
+    }
+
+    /** The steam its nozzle lets off as its reload starts. */
+    private void steam(CinderTower tower) {
+        OptionalInt since = tower.ticksSinceStreamEnded(this.gameTime, STEAM_TICKS);
+        if (since.isEmpty()) {
+            return;
+        }
+        int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
+        Point2D.Float muzzle = TowerSprites.muzzle(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
+                TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale,
+                tower.getTurretAim().radiansAt(this.interpolationAlpha));
+        this.draws.add(new SteamDraw(muzzle.x, muzzle.y, this.scale, this.progressOf(since.getAsInt(), STEAM_TICKS),
+                TowerSpriteFrameBuilder.seedOf(tower)));
     }
 }

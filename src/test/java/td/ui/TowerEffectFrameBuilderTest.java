@@ -26,6 +26,7 @@ import td.tower.mortar.BlastMark;
 import td.tower.mortar.ShellKind;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
+import td.ui.render.CasingDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.LoadedMissile;
 import td.ui.render.LoadedShell;
@@ -33,6 +34,8 @@ import td.ui.render.NestDraw;
 import td.ui.render.Palette;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
+import td.ui.render.ShellCarryDraw;
+import td.ui.render.SteamDraw;
 import td.ui.render.StreamDraw;
 import td.ui.render.TowerCue;
 import td.ui.render.TowerEffectDraw;
@@ -496,6 +499,74 @@ class TowerEffectFrameBuilderTest {
         assertThat(TowerSpriteFrameBuilder.poseOf(volley).load()).hasSize(volley.loadingCount());
         assertThat(TowerSpriteFrameBuilder.poseOf(single).has(TowerCue.VOLLEY)).isFalse();
         assertThat(TowerSpriteFrameBuilder.poseOf(volley).has(TowerCue.VOLLEY)).isTrue();
+    }
+
+    /** The draws of {@code type} {@code tower} makes at {@code tick}. */
+    private static <T> List<T> effectsOf(Tower tower, GameWorld context, int tick, Class<T> type) {
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, tick, 0.0, 0.0);
+        tower.accept(builder);
+        return builder.build().stream().filter(type::isInstance).map(type::cast).toList();
+    }
+
+    @Test
+    void aSniperThrowsACasingAsItFiresThatIsGoneAMomentLater() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SniperTower sniper = new SniperTower(context, 3, 3);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(sniper.getX() + 60, sniper.getY())});
+        int tick = 1;
+        for (; sniper.bulletsInFlight().isEmpty() && tick < 200; tick++) {
+            sniper.doTick(tick);
+        }
+        int fired = tick - 1;
+        List<CasingDraw> thrown = effectsOf(sniper, context, fired, CasingDraw.class);
+        context.enemies().setEnemies(new EnemyMob[0]);
+        int later = fired + Math.round((float) TowerMomentArt.CASING_SECONDS * TickRate.TICKS_PER_SECOND) + 1;
+        for (; tick <= later; tick++) {
+            sniper.doTick(tick);
+        }
+
+        assertThat(thrown).singleElement().extracting(CasingDraw::progress).isEqualTo(0f);
+        assertThat(effectsOf(sniper, context, later, CasingDraw.class)).isEmpty();
+    }
+
+    @Test
+    void aScorcherLetsOffSteamOnlyAsItsStreamEnds() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        CinderTower scorcher = scorcherWith(context);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(scorcher.getX() + 40, scorcher.getY())});
+        int tick = 1;
+        scorcher.doTick(tick++);
+        List<SteamDraw> streaming = effectsOf(scorcher, context, tick - 1, SteamDraw.class);
+        for (; scorcher.isStreaming() && tick < 400; tick++) {
+            scorcher.doTick(tick);
+        }
+        List<SteamDraw> ended = effectsOf(scorcher, context, tick - 1, SteamDraw.class);
+        int later = tick + Math.round((float) TowerMomentArt.STEAM_SECONDS * TickRate.TICKS_PER_SECOND);
+
+        assertThat(streaming).isEmpty();
+        assertThat(ended).singleElement().extracting(SteamDraw::progress).isEqualTo(0f);
+        assertThat(effectsOf(scorcher, context, later, SteamDraw.class)).isEmpty();
+    }
+
+    @Test
+    void aMortarCarriesAShellAsItReloadsOnceTheShotsFlashIsGone() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        MortarTower mortar = new MortarTower(context, 3, 3);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(mortar.getX() + 60, mortar.getY())});
+        int tick = 1;
+        for (; mortar.getCoolDownFraction() <= 0f && tick < 400; tick++) {
+            mortar.doTick(tick);
+        }
+        List<ShellCarryDraw> fired = effectsOf(mortar, context, tick - 1, ShellCarryDraw.class);
+        for (; TowerSpriteFrameBuilder.poseOf(mortar).flash() && tick < 400; tick++) {
+            mortar.doTick(tick);
+        }
+
+        assertThat(fired).isEmpty();
+        assertThat(effectsOf(mortar, context, tick - 1, ShellCarryDraw.class)).singleElement().satisfies(carry -> {
+            assertThat(carry.reload()).isEqualTo(1f - mortar.getCoolDownFraction());
+            assertThat(carry.load()).isEqualTo(TowerSpriteFrameBuilder.poseOf(mortar).load());
+        });
     }
 
     private static CinderTower scorcherWith(GameWorld context, String... nodes) {
