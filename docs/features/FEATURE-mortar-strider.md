@@ -1,7 +1,11 @@
 # Feature Request: The Strider Mortar and the steep lob
 
-Status: **designed, ready to implement** (the user approved the art, 2026-11-18). Aesthetic only: no mechanic,
-number or balance change.
+Status: **implemented** (2026-11-18: `46d65b50` the body, `119c1e76` the moments, `f82c243d` the lob). Aesthetic
+only: no mechanic, number or balance change.
+
+As built, beside the art: the bore still smokes early in the reload and the loaded shell still glints when ready
+(idle life the lab could not paint); the moments are `MuzzleBlastDraw`, `FootDustDraw` and `PumpSteamDraw`, painted
+over the body, so the dust of the two back feet lies over the legs' tips where the lab drew it under the drum.
 
 ## Summary
 
