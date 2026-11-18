@@ -1,8 +1,7 @@
 # Feature Request: Tower visual polish
 
-**Status:** art prepared 2026-11-16, reworked after the user's reviews of 2026-11-18 (two rounds); not implemented.
-The pieces the reviews asked for are drawn and checked by their author on the renders; the user's look is owed for
-the ones listed under "Open questions".
+**Status:** art final, approved by the user 2026-11-18 after four rounds of review; ready to implement. Nothing is
+implemented yet. The implementing session starts at "Instructions for the implementing session".
 
 ## Summary
 
@@ -227,10 +226,63 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
   sure), the enemy may dodge, and its health may change while the bullet flies. So nothing is drawn before; the
   execution is drawn when it happens (round 2: the mark before it is dropped).
 
+### Instructions for the implementing session
+
+Implement the polish in the game. Aesthetics only: no rule, number, range or hit changes. The art is drawn and
+approved: move it, do not redesign it. If something looks wrong against this doc, report it instead of redesigning.
+
+**Read first, in full:** this doc, then the lab (`.claude/skills/run-jtd/td/ui/`: `PolishLooks`, `PolishLife`,
+`PolishShots`, `PolishFlame`, `PolishSheets`), then `td/ui/CLAUDE.md` and `FEATURE-next-gen-tower-looks.md`
+("Building a tower's look"). Render the GIFs with the command under "Current state" to see every animation; they are
+not in the repository.
+
+**Critical points:**
+
+- A lab builder moves as it stands (step 1 below); a live painter moves as a pure function of clock or progress plus
+  a seed, its strokes and sizes shares of `scale` (steps 3 to 5). Step 6 lists what each picture needs from the game:
+  that, and only that, is new game-side state.
+- The clocks: idle circling (sparks, ball, runes, nest, the birds' circling) on the wall clock; every moment (casing,
+  steam, knell, Sundial, the Mortar's reload arc, Frenzy, the birds coming and going, the execution) on the tick
+  clock, so it holds on pause. The flame is a moment too: its flicker, and the heat, tongues, wake and embers round an
+  enemy in it, all run on the tick clock (`PolishFlame.paint`'s `seconds` is game time), so a paused flame
+  holds still.
+- The Burst's onager replaces Tier 0's look too, the one players see. Its Tiers I to III are drawn but unreachable
+  in play; add the looks, not a way to reach them.
+- The Mortar becomes a posed row with no head. Its rack is the kinds it can load (`MagazineView.chances` plus Nuke
+  under Fusion), never the magazine; it changes only with an upgrade, so it belongs with the kept pictures. Count the
+  kept pictures it adds.
+- The flame paints every stream of a frame in one pass and needs per-enemy outlines and fuel; it is the costliest
+  piece (shape unions and gradients every frame): measure it live with JFR (`jtd-paint-is-outside-the-harness`)
+  on a crowded board (several Scorchers whose cones cross, a wave inside them). If it is overly expensive (it costs
+  the EDT's paint a visible share of a frame, or frames drop), optimise it without changing the picture: for
+  example cache each tongue shape per flicker step, skip the union when no two cones overlap, reuse the gradient
+  paints per heat step, and cap the enemies drawn in the jet per stream to the nearest few. Measure again and report
+  the before and after.
+- The Aerie loses its ring; its Release cue moves to the tip. The Sniper's execution is drawn only from
+  `lastExecution()`; nothing marks an enemy before.
+- `TowerLook.WHITE` is a look only, unused on purpose (`TODO.md`).
+- This request overrides three decisions in `FEATURE-next-gen-tower-looks.md` ("Interconnections"): fix every line
+  in it, in `td/ui/CLAUDE.md`, `next-gen-art/README.md`, `README.md`'s tower table and the towers' Look sections that
+  the change makes false, in the same commit. `FEATURE-next-gen-final-visual-review.md` is skipped.
+
+**Phases, one commit each** (on main, staging your own files by name, `mvn verify` before each, no push):
+
+1. Looks: the builders and their rows (Burst, Stormcaller, Hexer, Scorcher heads, Mortar, Sniper head, Aerie, Ruby,
+   Shade, White, Obelisk), with the pose reads they need (knell, focus, Keen Eye, Frenzy shake, the Mortar's
+   load). Render the game's sheets (`next-gen-art/README.md`) and compare them with `looks.png`, `heads.png`,
+   `closeups.png`.
+2. Idle life: sparks, swirl, rune wave, the nest at the top, the birds with `Presence`.
+3. Moments: casing, steam, the Sundial, the Mortar's reload arc, Frenzy's embers.
+4. The Sniper's shots: rounds, ricochets as their round, the Headhunter's laser, the execution.
+5. The flame and the Burst's stone at half size.
+6. Docs and verification: every check in "Verification after implementation", one live `run-jtd` pass at the end,
+   `td.PerformanceHarness` both loadouts. Leave the lab as it is: it renders this doc's sheets.
+
 ### How to implement
 
-1. Move a builder as it stands. Its measures, colours and pose reads are final; `Build`, `plinth`, `stoneRing` and
-   the small helpers it calls exist in `TowerFoundations` under the same names. `scaled`, `mirrored`, `ball`,
+1. Move a builder as it stands. Its measures, colours and pose reads are final; `Build`, `plinth` and the small
+   helpers it calls exist in `TowerFoundations` under the same names. No look uses `stoneRing` any more: delete it
+   once nothing calls it. `scaled`, `mirrored`, `ball`,
    `crystalShard`, `leg`, `turned`, `beam`, `Build.aroundColumn` and the constants marked NEW move with it. The
    game's Aerie ring and the Burst's stone ring and dark patch go.
 2. A look whose body reads the pose stays `Row.posed`. The Mortar becomes a posed row with no head. The Scorcher
@@ -296,8 +348,6 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
 - `FEATURE-next-gen-seeker-tower.md`, `-splash-tower.md`, `-cinder-tower.md`, `-pulse-tower.md`, `-mortar-tower.md`,
   `-sniper-tower.md`: their Look sections describe what this replaces. The Mortar's turret is gone.
 - `FEATURE-next-gen-final-visual-review.md` is skipped; its checks on cost and paint order are in the table above.
-- `notes.txt` (the user's gameplay notes) proposes mechanic changes to the same towers (the Aerie's missile order,
-  the Mortar's aim and Carpet Bombing's shells, the Sniper's stacks); the art here does not depend on them.
 
 ## Constraints and open risks
 
@@ -343,11 +393,4 @@ The thrown stone is drawn at half its size (`PolishShots.STONE_SIZE`, 0.5): the 
 
 ## Open questions
 
-Everything else stands as reviewed (2026-11-18); the third look left the onager Burst and the ringless Aerie without
-a note. Owed, each in its sheet:
-
-- The Mortar without sandbags or walls, on its deck, its rack and its reload (`moment-mortar.gif`, `closeups.png`,
-  `looks.png`).
-- The Stormcaller's and the Hexer's Tier I bases (`looks.png`).
-- The execution on the ground (`sniper-states.gif`, the Executioner panel: now, then new).
-- The enemy in the jet (`flame.gif`, its close-up row).
+None. The user approved all of the art on 2026-11-18.
