@@ -10,7 +10,8 @@ import td.tower.upgrade.Mechanic;
  */
 public interface SniperMechanic extends Mechanic {
 
-    default SniperShot shape(SniperShot shot, ShotContext context) {
+    /** Reshapes the shot about to be fired at {@code target}. */
+    default SniperShot shape(SniperShot shot, EnemyMob target) {
         return shot;
     }
 

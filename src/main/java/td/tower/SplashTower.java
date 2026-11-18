@@ -338,30 +338,13 @@ public final class SplashTower extends AbstractTower {
 
     /** Lands every stone, jump, curse and soul or spark whose flight ends now. */
     private void landArrived(SplashSpec spec) {
-        while (!this.stones.isEmpty() && this.stones.getFirst().flight().landsAt() <= this.tickNow()) {
-            this.land(this.stones.removeFirst(), spec);
-        }
-        List<PendingHop> arrivedHops = takeArrived(this.hops, hop -> hop.hop().flight().landsAt());
-        arrivedHops.forEach(hop -> this.landHop(hop, spec));
-        List<PendingCurse> arrivedCurses = takeArrived(this.curses, curse -> curse.curse().flight().landsAt());
-        arrivedCurses.forEach(curse -> this.landCurse(curse, spec));
-        List<PendingWisp> arrivedWisps = takeArrived(this.wisps, wisp -> wisp.wisp().flight().landsAt());
-        arrivedWisps.forEach(wisp -> this.earnAbilities(wisp.pays()));
-    }
-
-    private <T> List<T> takeArrived(List<T> flying, java.util.function.ToIntFunction<T> landsAt) {
-        if (flying.isEmpty()) {
-            return List.of();
-        }
-        List<T> arrived = new ArrayList<>();
-        flying.removeIf(item -> {
-            if (landsAt.applyAsInt(item) <= this.tickNow()) {
-                arrived.add(item);
-                return true;
-            }
-            return false;
-        });
-        return arrived;
+        int now = this.tickNow();
+        Arrivals.takeDue(this.stones, stone -> stone.flight().landsAt(), now).forEach(stone -> this.land(stone, spec));
+        Arrivals.takeDue(this.hops, hop -> hop.hop().flight().landsAt(), now).forEach(hop -> this.landHop(hop, spec));
+        Arrivals.takeDue(this.curses, curse -> curse.curse().flight().landsAt(), now)
+                .forEach(curse -> this.landCurse(curse, spec));
+        Arrivals.takeDue(this.wisps, wisp -> wisp.wisp().flight().landsAt(), now)
+                .forEach(wisp -> this.earnAbilities(wisp.pays()));
     }
 
     /**

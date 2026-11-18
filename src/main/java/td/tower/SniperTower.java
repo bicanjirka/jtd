@@ -16,12 +16,15 @@ import td.tower.proc.Proc;
 import td.tower.proc.ProcPayload;
 import td.tower.sniper.AimFocus;
 import td.tower.sniper.AimLock;
+import td.tower.sniper.Bullet;
+import td.tower.sniper.Execution;
 import td.tower.sniper.ExecutionerMechanic;
 import td.tower.sniper.HeadhunterMechanic;
+import td.tower.sniper.Hop;
 import td.tower.sniper.RicochetMechanic;
 import td.tower.sniper.ShotActions;
-import td.tower.sniper.ShotContext;
 import td.tower.sniper.ShotResult;
+import td.tower.sniper.ShotTrace;
 import td.tower.sniper.SniperAim;
 import td.tower.sniper.SniperMechanic;
 import td.tower.sniper.SniperShot;
@@ -29,7 +32,6 @@ import td.tower.sniper.SniperSpec;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.targeting.PreferringSelector;
-import td.tower.targeting.TargetPriority;
 import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.MechanicCatalogue;
@@ -40,12 +42,12 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
-import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.stream.Stream;
 
 import static td.tower.upgrade.MechanicCatalogue.entry;
 
@@ -70,7 +72,7 @@ public final class SniperTower extends AbstractTower {
     private static final int COOLDOWN_MAX = 49;
     private static final int STEADY_AIM_STACKS = 5;
 
-    /** Enough to kill anything, so that an execution takes exactly what health is left. */
+    /** More damage than any enemy has health, so that no reduction leaves an executed enemy alive. */
     private static final int EXECUTION_DAMAGE = 1_000_000_000;
     /** How far a bullet flies in a tick, in cells: fast, yet its travel is seen. */
     private static final float BULLET_CELLS_PER_TICK = 2f;
@@ -81,11 +83,11 @@ public final class SniperTower extends AbstractTower {
     private static final List<TowerTerm> ROUNDS = List.of(TowerTerm.FOURTH_SHOT, TowerTerm.SILVER_ROUND,
             TowerTerm.HOLLOW_POINT);
 
-    private static final List<HitBonus> STEADY_AIM = List.of(HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 0),
+    private static final List<HitBonus> STEADY_AIM = List.of(perSteadyAimStack(
             HitAdjustment.attackSpeed(0.04f).plus(HitAdjustment.critChance(0.02f))));
 
     /** Reads the same whichever node grants it. */
-    private static final ProcPayload FRENZY = new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.FRENZY, 3,
+    private static final ProcPayload GRANTS_FRENZY = new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.FRENZY, 3,
             TowerModifiers.attackSpeed(0.35f)).lengthenedByBuffs());
 
     private static final UpgradeNode RIFLING = UpgradeNode.of("sniper.rifling", "Rifling", 2)
@@ -96,21 +98,21 @@ public final class SniperTower extends AbstractTower {
             .withModifiers(TowerModifiers.damage(12f));
 
     private static final UpgradeNode FOURTH_SHOT = UpgradeNode.of("sniper.fourth_shot", "Fourth Shot", 7)
-            .withProc(Proc.everyNthShot(FOURTH, new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.FOURTH_SHOT,
-                    1, StatModifiers.none()).withCapability(TowerCapability.GUARANTEED_CRIT))))
+            .withProc(everyFourthShotIs(TowerStatus.nextShots(TowerTerm.FOURTH_SHOT, 1, StatModifiers.none())
+                    .withCapability(TowerCapability.GUARANTEED_CRIT)))
             .inTier(1);
     private static final UpgradeNode DEEP_BREATH = UpgradeNode.of("sniper.deep_breath", "Deep Breath", 3)
             .withModifiers(TowerModifiers.aimStacks(3))
             .inTier(1);
     private static final UpgradeNode KEEN_EYE = UpgradeNode.of("sniper.keen_eye", "Keen Eye", 3)
-            .withHitBonus(HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 0), HitAdjustment.critChance(0.02f)))
+            .withHitBonus(perSteadyAimStack(HitAdjustment.critChance(0.02f)))
             .inTier(1);
     private static final UpgradeNode KILLSHOT = UpgradeNode.of("sniper.killshot", "Killshot", 5)
             .withModifiers(TowerModifiers.critMultiplier(0.5f))
             .inTier(1);
 
-    private static final UpgradeNode FRENZY_NODE = UpgradeNode.of("sniper.frenzy", "Frenzy", 8)
-            .withProc(Proc.onCrit(FRENZY))
+    private static final UpgradeNode FRENZY = UpgradeNode.of("sniper.frenzy", "Frenzy", 8)
+            .withProc(Proc.onCrit(GRANTS_FRENZY))
             .inTier(2);
     private static final UpgradeNode RICOCHET = UpgradeNode.of("sniper.ricochet", "Ricochet", 8)
             .inTier(2);
@@ -118,13 +120,13 @@ public final class SniperTower extends AbstractTower {
             .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 2)))
             .inTier(2);
     private static final UpgradeNode SILVER_ROUND = UpgradeNode.of("sniper.silver_round", "Silver Round", 11)
-            .withProc(Proc.everyNthShot(FOURTH, new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.SILVER_ROUND,
-                    1, TowerModifiers.magicPenetrationFlat(50f)).withCapability(TowerCapability.MAGIC_DAMAGE))))
+            .withProc(everyFourthShotIs(TowerStatus.nextShots(TowerTerm.SILVER_ROUND, 1,
+                    TowerModifiers.magicPenetrationFlat(50f)).withCapability(TowerCapability.MAGIC_DAMAGE)))
             .after(FOURTH_SHOT)
             .inTier(2);
     private static final UpgradeNode HOLLOW_POINT = UpgradeNode.of("sniper.hollow_point", "Hollow Point", 11)
-            .withProc(Proc.everyNthShot(FOURTH, new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.HOLLOW_POINT,
-                    1, TowerModifiers.damagePercent(0.33f)))))
+            .withProc(everyFourthShotIs(TowerStatus.nextShots(TowerTerm.HOLLOW_POINT, 1,
+                    TowerModifiers.damagePercent(0.33f))))
             .after(FOURTH_SHOT)
             .inTier(2);
     private static final UpgradeNode LONG_BARREL_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Barrel II", 15)
@@ -142,15 +144,15 @@ public final class SniperTower extends AbstractTower {
             .withModifiers(TowerModifiers.aimStacksPerShot(1))
             .inTier(3);
     private static final UpgradeNode MOMENTUM = UpgradeNode.of("sniper.momentum", "Momentum", 9)
-            .withProc(Proc.onKill(FRENZY))
+            .withProc(Proc.onKill(GRANTS_FRENZY))
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(RIFLING, LONG_BARREL, HEAVY_ROUNDS))
             .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, KILLSHOT,
-                    FRENZY_NODE, RICOCHET, SUNDERING_CRITS, SILVER_ROUND, HOLLOW_POINT, LONG_BARREL_2,
+                    FRENZY, RICOCHET, SUNDERING_CRITS, SILVER_ROUND, HOLLOW_POINT, LONG_BARREL_2,
                     HEAVY_ROUNDS_2, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, MOMENTUM)
             .withCluster(UpgradeCluster.of("Steady Aim", DEEP_BREATH, KEEN_EYE))
-            .withCluster(UpgradeCluster.of("On crit", FRENZY_NODE, RICOCHET, SUNDERING_CRITS))
+            .withCluster(UpgradeCluster.of("On crit", FRENZY, RICOCHET, SUNDERING_CRITS))
             .withCluster(UpgradeCluster.of("Ammo", SILVER_ROUND, HOLLOW_POINT))
             .withCluster(UpgradeCluster.of("Finisher", EXECUTIONER, HEADHUNTER));
 
@@ -160,22 +162,33 @@ public final class SniperTower extends AbstractTower {
             entry(HEADHUNTER.id(), HeadhunterMechanic::new));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
-    private final ShotActions actions = new Actions();
     private final OwnedMechanics<SniperMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private AimFocus focus = new AimFocus();
     private FireClock clock = new FireClock(COOLDOWN_MAX);
     private final List<Bullet> bullets = new ArrayList<>();
     private final List<Hop> hops = new ArrayList<>();
-    private Bullet landing;
-    private EnemyMob currentTarget;
-    private ShotTrace lastShot;
-    private Execution lastExecution;
+    private Optional<EnemyMob> target = Optional.empty();
+    private Optional<ShotTrace> lastShot = Optional.empty();
+    private Optional<Execution> lastExecution = Optional.empty();
     private OptionalInt firedAt = OptionalInt.empty();
 
     public SniperTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .withCritChance(CRIT_CHANCE).withCritMultiplier(CRIT_MULTIPLIER)
                 .with(TowerStat.AIM_STACKS, STEADY_AIM_STACKS).with(TowerStat.AIM_STACKS_PER_SHOT, 1f), context, x, y);
+    }
+
+    private static HitBonus perSteadyAimStack(HitAdjustment adjustment) {
+        return HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 0), adjustment);
+    }
+
+    private static boolean growsWithSteadyAim(HitBonus bonus) {
+        return bonus.scaling().focusCounter().equals(Optional.of(TowerTerm.STEADY_AIM));
+    }
+
+    /** Every fourth shot is {@code round}. */
+    private static Proc everyFourthShotIs(TowerStatus round) {
+        return Proc.everyNthShot(FOURTH, new ProcPayload.GrantStatus(round));
     }
 
     @Override
@@ -197,16 +210,14 @@ public final class SniperTower extends AbstractTower {
     private SniperSpec spec() {
         Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
         SniperSpec spec = SniperSpec.from(view);
-        Optional<TargetPriority> priority = this.upgrades().targeting();
-        if (priority.isPresent()) {
-            spec = spec.aimingAt(new SniperAim(priority.get().selector(view.cellSize()), priority.get().label()));
-        }
-        return spec;
+        return this.upgrades().targeting()
+                .map(priority -> spec.aimingAt(new SniperAim(priority.selector(view.cellSize()), priority.label())))
+                .orElse(spec);
     }
 
-    private EnemyMob findEnemy(SniperSpec spec) {
-        TargetSelector selector = PreferringSelector.priority(spec.chosenAim().selector());
-        return selector.selectFrom(spec.reach().matching(this.context.enemies())).orElse(null);
+    private Optional<EnemyMob> findEnemy(SniperSpec spec) {
+        TargetSelector selector = PreferringSelector.priority(spec.aim().selector());
+        return selector.selectFrom(spec.reach().matching(this.context.enemies()));
     }
 
     @Override
@@ -214,17 +225,17 @@ public final class SniperTower extends AbstractTower {
         this.focus.advance();
         this.landArrived();
         if (this.clock.isReady()) {
-            this.currentTarget = this.findEnemy(this.spec());
-            if (this.currentTarget != null) {
-                this.fire(this.currentTarget, this.mechanics.all());
-            }
+            this.target = this.findEnemy(this.spec());
+            this.target.ifPresent(enemy -> this.fire(enemy, this.mechanics.all()));
         }
         this.clock.advance(this.attackRate());
-        if (this.currentTarget != null) {
-            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(), this.currentTarget.getY()));
-        } else if (this.betweenWaves()) {
-            this.turretAim.settle();
-        }
+        this.target.ifPresentOrElse(
+                enemy -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY())),
+                () -> {
+                    if (this.betweenWaves()) {
+                        this.turretAim.settle();
+                    }
+                });
     }
 
     @Override
@@ -233,9 +244,8 @@ public final class SniperTower extends AbstractTower {
         this.clock = new FireClock(COOLDOWN_MAX);
         this.bullets.clear();
         this.hops.clear();
-        this.landing = null;
-        this.currentTarget = null;
-        this.lastExecution = null;
+        this.target = Optional.empty();
+        this.lastExecution = Optional.empty();
     }
 
     @Override
@@ -257,12 +267,13 @@ public final class SniperTower extends AbstractTower {
         if (stats.has(TowerCapability.MAGIC_DAMAGE)) {
             shot = shot.withType(DamageType.MAGIC);
         }
-        ShotContext context = new ShotContext(target);
         for (SniperMechanic mechanic : owned) {
-            shot = mechanic.shape(shot, context);
+            shot = mechanic.shape(shot, target);
         }
         this.bullets.add(new Bullet(shot, stats, target, this.flightFrom(this.centerX, this.centerY, target)));
         this.firedAt = OptionalInt.of(this.tickNow());
+        // A bonus this shot carries hastens only the wait after it: that wait is the period at the faster rate, as a
+        // share of the period the clock counts at the tower's own rate.
         double rate = this.attackRate();
         this.clock.spend(rate / (rate + shot.attackSpeedBonus()));
     }
@@ -275,14 +286,10 @@ public final class SniperTower extends AbstractTower {
         return new ShotFlight(this.tickNow(), this.tickNow() + ticks);
     }
 
-    /** Lands every bullet and every hop whose flight ends now. */
+    /** Lands every hop and every bullet whose flight ends now. */
     private void landArrived() {
-        while (!this.hops.isEmpty() && this.hops.getFirst().bullet().landsAt() <= this.tickNow()) {
-            this.landHop(this.hops.removeFirst());
-        }
-        while (!this.bullets.isEmpty() && this.bullets.getFirst().landsAt() <= this.tickNow()) {
-            this.land(this.bullets.removeFirst());
-        }
+        Arrivals.takeDue(this.hops, hop -> hop.bullet().landsAt(), this.tickNow()).forEach(this::landHop);
+        Arrivals.takeDue(this.bullets, Bullet::landsAt, this.tickNow()).forEach(this::land);
     }
 
     /**
@@ -291,14 +298,13 @@ public final class SniperTower extends AbstractTower {
      */
     private void land(Bullet bullet) {
         EnemyMob target = bullet.target();
-        this.landing = bullet;
         if (target.isDead()) {
-            this.lastShot = this.traceOf(bullet, false);
+            this.lastShot = Optional.of(this.traceOf(bullet, false));
             return;
         }
-        HitResult hit = this.land(bullet.shot().aimed(), target, bullet.stats());
+        HitResult hit = this.strike(bullet);
         if (hit.dodged()) {
-            this.lastShot = this.traceOf(bullet, false);
+            this.lastShot = Optional.of(this.traceOf(bullet, false));
         } else {
             this.settle(new ShotResult(target, hit.critical(), target.isDead()), bullet, this.mechanics.all());
         }
@@ -306,66 +312,53 @@ public final class SniperTower extends AbstractTower {
 
     /** A hop lands as the shot it came from, unable to crit, and nothing triggers off it. */
     private void landHop(Hop hop) {
-        Bullet bullet = hop.bullet();
-        if (!bullet.target().isDead()) {
-            this.land(bullet.shot().aimed(), bullet.target(), bullet.stats());
+        if (!hop.bullet().target().isDead()) {
+            this.strike(hop.bullet());
         }
     }
 
     /** A shot that landed: the mechanics decide what it counts as, the procs hear of it, then the mechanics react. */
     private void settle(ShotResult landed, Bullet bullet, List<SniperMechanic> owned) {
+        ShotActions actions = new Actions(bullet);
         ShotResult result = landed;
         for (SniperMechanic mechanic : owned) {
-            result = mechanic.settle(result, this.actions);
+            result = mechanic.settle(result, actions);
         }
         this.report(result.target(), HitKind.DIRECT, result.critical(), result.killed());
-        this.lastShot = this.traceOf(bullet, result.critical());
+        this.lastShot = Optional.of(this.traceOf(bullet, result.critical()));
         for (SniperMechanic mechanic : owned) {
-            mechanic.react(result, this.actions);
+            mechanic.react(result, actions);
         }
     }
 
     private ShotTrace traceOf(Bullet bullet, boolean critical) {
-        return new ShotTrace(bullet.target().position(), critical, bullet.shot(),
-                this.tickNow());
+        return new ShotTrace(bullet.target().position(), critical, bullet.shot(), this.tickNow());
     }
 
-    private HitResult land(SniperShot shot, EnemyMob target, TowerStats stats) {
-        return this.landHit(target, Damage.of(shot.type(), shot.amountOn(stats.damage())), shot.attack());
-    }
-
-    /** Sends the landing shot on from {@code from} to the nearest other enemy within {@code reachCells}. */
-    private void ricochet(EnemyMob from, float reachCells) {
-        float reach = reachCells * this.context.getBoard().scale();
-        List<EnemyMob> beside = new ArrayList<>(InRangeTargetQuery.visible((int) from.getX(), (int) from.getY(), reach)
-                .matching(this.context.enemies()));
-        beside.remove(from);
-        Optional<EnemyMob> next = new NearestSelector(from.getX(), from.getY()).selectFrom(beside);
-        if (next.isEmpty()) {
-            return;
-        }
-        SniperShot hop = this.landing.shot().withAttack(AttackProfile::withoutCrits).asRounds(List.of());
-        this.hops.add(new Hop(from.position(), new Bullet(hop, this.landing.stats(), next.get(),
-                this.flightFrom(from.getX(), from.getY(), next.get())), this.landing.shot().rounds()));
+    /** The bullet's hit on its target, with the stats it was fired with. */
+    private HitResult strike(Bullet bullet) {
+        SniperShot shot = bullet.shot().aimed();
+        return this.landHit(bullet.target(), Damage.of(shot.type(), shot.amountOn(bullet.stats().damage())),
+                shot.attack());
     }
 
     public EnemyMob getCurrentTarget() {
-        return this.currentTarget;
+        return this.target.orElse(null);
     }
 
     /** The last shot that arrived, for drawing its trace; empty before the first. */
     public Optional<ShotTrace> lastShot() {
-        return Optional.ofNullable(this.lastShot);
+        return this.lastShot;
     }
 
-    /** The last enemy an execution killed, for drawing its moment; empty before the first. */
     /** The ticks since its last shot left, while they are within {@code window}. */
     public OptionalInt ticksSinceFired(int gameTime, int window) {
         return within(this.firedAt, gameTime, window);
     }
 
+    /** The last enemy an execution killed, for drawing its moment; empty before the first. */
     public Optional<Execution> lastExecution() {
-        return Optional.ofNullable(this.lastExecution);
+        return this.lastExecution;
     }
 
     /** Whether the next shot is {@code round}, one of the counted shots its nodes prime. */
@@ -385,8 +378,9 @@ public final class SniperTower extends AbstractTower {
 
     /** Whether a mechanic it owns singles out the enemy it aims at now. */
     public boolean huntsItsTarget() {
-        EnemyMob target = this.currentTarget;
-        return target != null && !target.isDead() && this.mechanics.all().stream().anyMatch(m -> m.hunts(target));
+        return this.target.filter(enemy -> !enemy.isDead())
+                .filter(enemy -> this.mechanics.all().stream().anyMatch(mechanic -> mechanic.hunts(enemy)))
+                .isPresent();
     }
 
     /** The bullets on their way, oldest first. */
@@ -407,16 +401,7 @@ public final class SniperTower extends AbstractTower {
     /** Whether its focus is full and a hit bonus grows with every stack of it. */
     public boolean keenAtFullFocus() {
         return this.focus.stacks() >= this.aimStackCap()
-                && this.upgrades().hitBonuses().stream().anyMatch(bonus -> growsWithFocus(bonus.scaling()));
-    }
-
-    private static boolean growsWithFocus(HitScaling scaling) {
-        return switch (scaling) {
-            case HitScaling.PerFocus focus -> true;
-            case HitScaling.Once once -> false;
-            case HitScaling.PerRangeShare share -> false;
-            case HitScaling.PerStackOf stacks -> false;
-        };
+                && this.upgrades().hitBonuses().stream().anyMatch(SniperTower::growsWithSteadyAim);
     }
 
     private int aimStackCap() {
@@ -440,11 +425,10 @@ public final class SniperTower extends AbstractTower {
         List<TowerBuffState> states = new ArrayList<>();
         int stacks = this.steadyAimStacks();
         if (stacks > 0) {
-            List<HitBonus> bonuses = new ArrayList<>(STEADY_AIM);
-            bonuses.addAll(this.upgrades().hitBonuses());
-            List<TermText> parts = new ArrayList<>(bonuses.stream()
-                    .filter(bonus -> bonus.scaling().focusCounter().filter(TowerTerm.STEADY_AIM::equals).isPresent())
-                    .map(bonus -> bonus.adjustment().describe()).toList());
+            List<TermText> parts = new ArrayList<>(Stream.concat(STEADY_AIM.stream(), this.upgrades().hitBonuses().stream())
+                    .filter(SniperTower::growsWithSteadyAim)
+                    .map(bonus -> bonus.adjustment().describe())
+                    .toList());
             parts.add(TermText.of("up to " + this.aimStackCap() + " stacks"));
             states.add(TowerBuffState.of(TowerTerm.STEADY_AIM, TermText.join("; ", parts)).withStacks(stacks)
                     .withClock(this.focus.ticksUntilFade(), AimFocus.STACK_TICKS));
@@ -455,98 +439,44 @@ public final class SniperTower extends AbstractTower {
 
     @Override
     protected String targetingLabel() {
-        return this.spec().chosenAim().label();
+        return this.spec().aim().label();
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {
         return visitor.visitSniperTower(this);
     }
 
-    /**
-     * Where a shot went and what it was.
-     *
-     * @param to       where its line ends, in pixels
-     * @param critical whether it crit its target
-     * @param shot     what it was
-     * @param landedAt the tick it arrived
-     */
-    public record ShotTrace(Vec2 to, boolean critical, SniperShot shot, int landedAt) {
-
-        public float toX() {
-            return (float) this.to.x();
-        }
-
-        public float toY() {
-            return (float) this.to.y();
-        }
-    }
-
-    /**
-     * A shot on its way. It carries the stats it was fired with, so a charge spent on it is not lost
-     * however the tower changes before it lands.
-     *
-     * @param shot   the shot as the mechanics shaped it
-     * @param stats  the stats it was fired with
-     * @param target the enemy it was aimed at
-     * @param flight when it flies
-     */
-    public record Bullet(SniperShot shot, TowerStats stats, EnemyMob target, ShotFlight flight) {
-
-        public int firedAt() {
-            return this.flight.firedAt();
-        }
-
-        public int landsAt() {
-            return this.flight.landsAt();
-        }
-
-        /** Whether it is sure to crit, which shows before it lands. */
-        public boolean sureCrit() {
-            return this.stats.has(TowerCapability.GUARANTEED_CRIT);
-        }
-    }
-
-    /**
-     * A shot that hopped on from one enemy to the next.
-     *
-     * @param from   where it hopped from, in pixels
-     * @param bullet the hop itself, aimed at the next enemy
-     * @param rounds the rounds of the shot it hopped from, which the hop itself no longer carries
-     */
-    public record Hop(Vec2 from, Bullet bullet, List<TowerTerm> rounds) {
-
-        public Hop {
-            rounds = List.copyOf(rounds);
-        }
-    }
-
-    /**
-     * An enemy an execution killed.
-     *
-     * @param at     where it died, in pixels
-     * @param tick   the tick it died
-     * @param enemy  the enemy it killed
-     */
-    public record Execution(Vec2 at, int tick, EnemyMob enemy) {
-    }
-
-    /** What the mechanics may make this tower do. */
+    /** What the mechanics may make this tower do about the bullet that just landed. */
     private final class Actions implements ShotActions {
+
+        private final Bullet landed;
+
+        private Actions(Bullet landed) {
+            this.landed = landed;
+        }
 
         @Override
         public boolean execute(EnemyMob target) {
             AttackProfile finisher = AttackProfile.none().pastArmorAndPlating().asPeriodic();
             SniperTower.this.dealDamage(target, Damage.physical(EXECUTION_DAMAGE), finisher);
             if (target.isDead()) {
-                SniperTower.this.lastExecution = new Execution(target.position(),
-                        SniperTower.this.tickNow(), target);
+                SniperTower.this.lastExecution = Optional.of(new Execution(target.position(),
+                        SniperTower.this.tickNow(), target));
             }
             return target.isDead();
         }
 
         @Override
         public void ricochet(EnemyMob from, float reachCells) {
-            SniperTower.this.ricochet(from, reachCells);
+            float reach = reachCells * SniperTower.this.context.getBoard().scale();
+            List<EnemyMob> beside = new ArrayList<>(InRangeTargetQuery.visible((int) from.getX(), (int) from.getY(), reach)
+                    .matching(SniperTower.this.context.enemies()));
+            beside.remove(from);
+            new NearestSelector(from.getX(), from.getY()).selectFrom(beside).ifPresent(next -> {
+                SniperShot hop = this.landed.shot().withAttack(AttackProfile::withoutCrits).asRounds(List.of());
+                SniperTower.this.hops.add(new Hop(from.position(), new Bullet(hop, this.landed.stats(), next,
+                        SniperTower.this.flightFrom(from.getX(), from.getY(), next)), this.landed.shot().rounds()));
+            });
         }
     }
 }

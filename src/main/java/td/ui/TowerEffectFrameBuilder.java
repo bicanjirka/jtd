@@ -17,6 +17,10 @@ import td.tower.aura.RevealedEnemy;
 import td.tower.mortar.BlastMark;
 import td.tower.pulse.StoneLook;
 import td.tower.seeker.ShatterMark;
+import td.tower.sniper.Bullet;
+import td.tower.sniper.Execution;
+import td.tower.sniper.Hop;
+import td.tower.sniper.ShotTrace;
 import td.tower.splash.Passive;
 import td.ui.render.BeamDraw;
 import td.ui.render.BulletDraw;
@@ -202,19 +206,19 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      */
     public Void visitSniperTower(SniperTower tower) {
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
-        for (SniperTower.Bullet bullet : tower.bulletsInFlight()) {
+        for (Bullet bullet : tower.bulletsInFlight()) {
             this.tracer(tower, tier, (float) bullet.target().getX(), (float) bullet.target().getY(),
                     this.flown(bullet), bullet.sureCrit(), bullet.shot().rounds(), 1f);
         }
-        Optional<SniperTower.ShotTrace> shot = tower.lastShot();
+        Optional<ShotTrace> shot = tower.lastShot();
         if (shot.isPresent()) {
-            SniperTower.ShotTrace trace = shot.get();
+            ShotTrace trace = shot.get();
             float age = (this.gameTime - trace.landedAt() + (float) this.interpolationAlpha) / TRACER_FADE_TICKS;
             if (age < 1f) {
                 this.tracer(tower, tier, trace.toX(), trace.toY(), 1f, trace.critical(), trace.shot().rounds(), 1f - age);
             }
         }
-        for (SniperTower.Hop hop : tower.hopsInFlight()) {
+        for (Hop hop : tower.hopsInFlight()) {
             this.hop(hop, this.flown(hop.bullet()));
         }
         tower.lastExecution().ifPresent(this::execution);
@@ -254,7 +258,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /** How far {@code bullet} has flown, 0..1. */
-    private float flown(SniperTower.Bullet bullet) {
+    private float flown(Bullet bullet) {
         return Math.min(1f, (this.gameTime - bullet.firedAt() + (float) this.interpolationAlpha)
                 / (bullet.landsAt() - bullet.firedAt()));
     }
@@ -287,7 +291,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      * A ricochet {@code flown} of the way along its arc, which bows out to one side of the straight line, drawn as the
      * shot it hopped from; a ricochet follows a crit, so a plain shot hops as one.
      */
-    private void hop(SniperTower.Hop hop, float flown) {
+    private void hop(Hop hop, float flown) {
         this.draws.add(new BulletDraw(roundOf(hop.rounds(), true), (float) hop.from().x(), (float) hop.from().y(),
                 (float) hop.bullet().target().getX(), (float) hop.bullet().target().getY(), HOP_BOW, flown, 1f,
                 this.scale, this.tickSeconds()));
@@ -315,7 +319,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /** The headsman's cut on the enemy an execution killed. */
-    private void execution(SniperTower.Execution execution) {
+    private void execution(Execution execution) {
         float progress = (this.gameTime - execution.tick() + (float) this.interpolationAlpha) / EXECUTION_TICKS;
         if (progress >= 1f) {
             return;

@@ -14,8 +14,8 @@ public final class HeadhunterMechanic implements SniperMechanic {
     private static final Rank HUNTED_FROM = Rank.ELITE;
 
     @Override
-    public SniperShot shape(SniperShot shot, ShotContext context) {
-        return this.hunts(context.target()) ? shot.withBonusDamage(DamageUnits.ofPoints(BONUS_POINTS)) : shot;
+    public SniperShot shape(SniperShot shot, EnemyMob target) {
+        return this.hunts(target) ? shot.withBonusDamage(DamageUnits.ofPoints(BONUS_POINTS)) : shot;
     }
 
     @Override

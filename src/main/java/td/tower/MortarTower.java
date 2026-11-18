@@ -233,7 +233,7 @@ public final class MortarTower extends AbstractTower {
     /** The kinds it can load, and the mechanics they were worked out for. */
     private volatile LoadableKinds loadable;
     private OptionalInt firedAt = OptionalInt.empty();
-    private EnemyMob currentTarget;
+    private Optional<EnemyMob> target = Optional.empty();
 
     public MortarTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.MORTAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
@@ -281,18 +281,19 @@ public final class MortarTower extends AbstractTower {
         this.fireVolleyLeft(spec);
         if (this.clock.isReady() && this.volleyLeft.isEmpty()) {
             this.findTarget(spec).ifPresent(target -> {
-                this.currentTarget = target;
+                this.target = Optional.of(target);
                 this.load(target, spec);
                 this.clock.spend(spec.volley().reloadFactor());
             });
         }
         this.clock.advance(this.attackRate());
-        if (this.currentTarget != null) {
-            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, this.currentTarget.getX(),
-                    this.currentTarget.getY()));
-        } else if (this.betweenWaves()) {
-            this.turretAim.settle();
-        }
+        this.target.ifPresentOrElse(
+                enemy -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY())),
+                () -> {
+                    if (this.betweenWaves()) {
+                        this.turretAim.settle();
+                    }
+                });
     }
 
     @Override
@@ -300,7 +301,7 @@ public final class MortarTower extends AbstractTower {
         this.clock = new FireClock(COOLDOWN_MAX);
         this.volleyLeft.clear();
         this.flares.clear();
-        this.currentTarget = null;
+        this.target = Optional.empty();
     }
 
     @Override
@@ -354,12 +355,8 @@ public final class MortarTower extends AbstractTower {
                 this.fireAt(next.kind(), next.laidAt().get());
                 continue;
             }
-            if (this.currentTarget == null || this.currentTarget.isDead()) {
-                this.currentTarget = this.findTarget(spec).orElse(null);
-            }
-            if (this.currentTarget != null) {
-                this.fireAt(next.kind(), this.aimPoint(this.currentTarget, spec, next.kind()));
-            }
+            this.target = this.target.filter(enemy -> !enemy.isDead()).or(() -> this.findTarget(spec));
+            this.target.ifPresent(enemy -> this.fireAt(next.kind(), this.aimPoint(enemy, spec, next.kind())));
         }
     }
 
