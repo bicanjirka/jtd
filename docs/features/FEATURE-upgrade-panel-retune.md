@@ -244,7 +244,7 @@ confirmation, and the panel at a 560-pixel window.
   prices sit on neutral tags (red when short, grey when not available), and an owned node has a tick, a tinted fill and
   a border in the tower's colour. The other member of a cluster is hatched.
 - Links run along the axes, from a cluster's frame where the rule names the cluster (Thick Mix, Agony, Contagion,
-  Rich Brood) and into a frame where all its members share the need (Ammo, Hex, Release; the Burst's Storm by a badge on its frame). A need more than
+  Rich Brood) and into a frame where all its members share the need (Ammo, Hex; the Burst's Storm by a badge on its frame). A need more than
   a tier below is a badge; a frame's badge sits on its top-right corner, clear of its name.
 - Hover marks light links and badges: white for a buy, red and dashed for a sale or a switch's losses.
 - The lean follows the table. The Burst keeps the mock's approved layout.
