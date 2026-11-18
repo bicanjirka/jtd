@@ -1,5 +1,7 @@
 # Feature Request: The final code review, once the next-gen towers are in code
 
+**Status:** implemented 2026-11-18 (498d2b9f..). What each finding became is under "Outcome".
+
 ## Summary
 
 Each tower's rework was written while its own mechanics were still moving, so each carries some noise: constructs
@@ -57,6 +59,30 @@ A review, and the fixes it finds. In this order:
 
 Out of scope: balance, looks and any change a player can see.
 
+## Outcome
+
+| Finding | What became of it |
+|---|---|
+| Copying `with` chain | The last one (the Sniper's, two tests) is one `of(entry(...))`; `MechanicCatalogue.with` is gone |
+| `landing` through a field; `Actions.ricochet` a pass-through | The Sniper makes one `Actions` per landed bullet, which holds it and hops it on |
+| `tickNow` kept as state | Four towers kept it; `AbstractTower.doTick` notes it once and calls `act`, `tickNow()` reads it. Projectile hooks are passed their tick, since they run before the towers act (the Mortar's `+ 1`, the Aerie's freeze a tick early). A rule in `td/tower/CLAUDE.md` |
+| Two `land` methods | `land(Bullet)` and `strike(Bullet)` |
+| A billion points as an execution | Kept: a kill has to go through `dealDamage` to be credited and counted. The constant says why it is large |
+| One literal twice, one node shape three times | `perSteadyAimStack`, `everyFourthShotIs` |
+| `FRENZY` / `FRENZY_NODE` | `GRANTS_FRENZY` / `FRENZY` |
+| `new Vec2(x.getX(), x.getY())` | Fifteen times in five classes: `EnemyTarget.position()` |
+| `orElse(null)` and a nullable target | The Sniper's and the Mortar's target are `Optional`; `getCurrentTarget()` stays |
+| `spec()`, `SniperSpec`'s `Optional`, `aim`/`chosenAim`, dead `view()` | `SniperSpec(reach, aim)`, built with `map` |
+| `ShotContext` | Gone: a mechanic shapes a shot for an enemy |
+| `SniperShot.withX` copies | Kept, as the record rule allows |
+| Records nested in the tower | The Sniper's, the Burst's and the Scorcher's drawn records live in their packages; a rule in `td/tower/CLAUDE.md` |
+| Steady Aim's line filtered by `focusCounter` | One `growsWithSteadyAim`, also behind `keenAtFullFocus` |
+| `spend` without a why | A comment |
+| `landArrived` pops the head | `Arrivals.takeDue`, shared with the Burst, takes whatever is due; a rule |
+| `lastShot` not reset in `endFight` | Kept: both traces fade by their own tick, and a reset would change what is drawn |
+| `OwnedMechanics`' parallel lists | One list of pairs; `renew` takes the distinct nodes |
+| Looks built ahead | Every `TowerCue` and `LoadedShell` is sent; only `TowerLook.WHITE` goes unworn, on purpose. Dead accessors removed: `glares`, `isHolding`, `buildsDeepToll` |
+
 ## Interconnections
 
 - `FEATURE-balance-after-next-gen-towers.md` runs at the same point.
@@ -79,7 +105,8 @@ Out of scope: balance, looks and any change a player can see.
 
 ## Open questions
 
-- Does a tower's visible-state getters (`frenzied`, `nextShotIs`, `huntsItsTarget`, and the rest) want one snapshot
-  type per tower, as `RenderFrame` is for the frame, or do they stay as queries?
-- Should an enemy's position get a `Vec2`-returning accessor on `EnemyMob`?
-- Should "kill this enemy outright" be a call on the tower's damage path instead of a number large enough to do it?
+- ~~A snapshot type per tower for its visible-state getters?~~ They stay queries: the frame is built on the game-loop
+  thread that changes them, so no reader needs them correlated across threads.
+- ~~A `Vec2`-returning accessor for an enemy's position?~~ Yes: `EnemyTarget.position()`.
+- ~~"Kill outright" as a call on the damage path?~~ No: the kill must be credited and counted as any other, which
+  `dealDamage` does.

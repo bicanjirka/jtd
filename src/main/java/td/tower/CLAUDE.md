@@ -15,6 +15,10 @@
 - A tower's turn is `act(gameTime)`; what its turn reaches reads the tick through `tickNow()`, never a tick field of
   its own. A projectile lands before the towers act, so its hook (`PointImpact`, `MissileGuide.land`) takes the tick
   it is passed.
+- What a tower has in flight (bullets, stones, hops, curses) lands through `Arrivals.takeDue`, never by popping the
+  head of its list: a shot fired later may land sooner.
+- What the renderer reads of a tower's shots, traces and marks is a record in the tower's sub-package, never one nested
+  in the tower class; a record only the tower reads stays private in it.
 - Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.
 - A tower that hits every tick passes `coolDownMax = 0`; one whose cadence is not a cooldown also overrides
   `cadence()`.

@@ -144,7 +144,6 @@ public final class PulseTower extends AbstractTower {
     private FireClock shadowClock = new FireClock(SHADOW_PERIOD_TICKS - 1);
     private SonarSweep shadow = SonarSweep.perRevolution(1, TickRate.TICKS_PER_SECOND);
     private int shadowLeft;
-    private boolean holding;
     private boolean fullTollInside;
     private int lastKnellTick = Integer.MIN_VALUE;
 
@@ -178,7 +177,6 @@ public final class PulseTower extends AbstractTower {
     protected void act(int gameTime) {
         PulseSpec spec = this.spec(this.mechanics.all());
         List<EnemyMob> inside = spec.reach().matching(this.context.enemies());
-        this.holding = !inside.isEmpty();
         this.visits.keySet().retainAll(inside);
         int shots = inside.isEmpty() ? 0 : this.clock.shotsDue();
         int pace = Math.max(1, Math.round(this.stats().value(TowerStat.TOLL_PACE)));
@@ -287,14 +285,8 @@ public final class PulseTower extends AbstractTower {
         this.clock = new FireClock(0);
         this.shadowClock = new FireClock(SHADOW_PERIOD_TICKS - 1);
         this.shadowLeft = 0;
-        this.holding = false;
         this.fullTollInside = false;
         this.lastKnellTick = Integer.MIN_VALUE;
-    }
-
-    /** Whether an enemy stood in the field at the last tick. */
-    public boolean isHolding() {
-        return this.holding;
     }
 
     /** Whether an enemy at full Toll stood in the field at the last tick. */
@@ -336,11 +328,6 @@ public final class PulseTower extends AbstractTower {
     /** Which stone the identity pick made it. */
     public StoneLook stoneLook() {
         return this.spec(this.mechanics.all()).look();
-    }
-
-    /** Whether its field builds Toll deeper than a plain field. */
-    public boolean buildsDeepToll() {
-        return this.spec(this.mechanics.all()).deepToll();
     }
 
     /** Whether a range upgrade carries it past its base range. */

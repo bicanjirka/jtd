@@ -334,11 +334,6 @@ public final class AuraTower extends AbstractTower {
         return this.spec().edge() == LightSpec.Edge.DAYLIGHT;
     }
 
-    /** Whether its light Exposes what stands in it. */
-    public boolean glares() {
-        return this.spec().edge() == LightSpec.Edge.GLARE;
-    }
-
     /** The enemy the Spotlight holds now, if any. */
     public Optional<EnemyMob> heldEnemy() {
         return this.held;

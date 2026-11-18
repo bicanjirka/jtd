@@ -37,7 +37,7 @@ Beacon. The Radar leaves the game ("The last three towers").
 | `shipped/FEATURE-next-gen-pulse-tower.md` | The Obelisk, with the Radar's beam as its Sundial | tiers, looks | implemented |
 | `shipped/FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | implemented |
 | `FEATURE-balance-after-next-gen-towers.md` | The second balance pass, played by the built towers | every tower above in code | written; waits |
-| `FEATURE-next-gen-final-code-review.md` | The code review of the finished bundle: the Sniper's smells as questions for every tower, shared fixes, new rules | every tower above in code | written; waits |
+| `shipped/FEATURE-next-gen-final-code-review.md` | The code review of the finished bundle: the Sniper's smells as questions for every tower, shared fixes, new rules | every tower above in code | implemented |
 | (none) | The Radar (`sonar`) leaves the game: "The last three towers" below | | done |
 
 A tower doc is named by its `TowerFactory.Type` constant in lower case, so the review board finds it.

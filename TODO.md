@@ -463,17 +463,6 @@ asks that hovering one shell show that shell's damage, blast, flight speed and r
 - **Approach:** a `HoverRun` for the row with a slot layout, as `IconRowRun` has with `IconRowLayout`, and a tooltip
   per kind in `SheetLine.MagazineRow`, built from `ShellKind` and the tower's stats in `TowerSheetText`.
 
-### Tower cues and identity looks are drawn but nothing in play sends them
-
-Most `TowerCue`s and the looks `RUBY` and
-`SHADE` are reached only by the art sheets and by tests: they were built ahead of the towers that own them.
-
-**Where:** `td.ui.TowerSpriteFrameBuilder` (each visit method's pose, `BODY_LOOK`), `td.ui.TowerFoundations`.
-
-**Approach:** each tower's next-gen rework sends its own, from the "In code" list in its
-`docs/features/FEATURE-next-gen-<type>-tower.md`. `FEATURE-next-gen-final-code-review.md` deletes whatever no
-tower sends once all seven are in.
-
 ### The Obelisk's smallest cues are not drawn
 
 The feature doc's look has three cues the board does not show yet: a thin ripple from an enemy each time it gains a
@@ -485,7 +474,7 @@ the Toll ring all draw.
   `td.ui.TowerSpriteFrameBuilder.poseOf(PulseTower, int)`, `td.ui.TowerFoundations.obelisk`.
 - **Approach:** the ripple and the flash follow the timed-visual idiom: the enemy records the tick it last gained a
   stack and the tower the tick and place of each shadow hit, answered as an `OptionalInt`; Deep Toll's glow is a
-  `TowerCue` the pose sends when `buildsDeepToll()` and the field holds an enemy past the plain cap.
+  `TowerCue` the pose sends when the tower's `PulseSpec.deepToll()` and the field holds an enemy past the plain cap.
 
 ### Dragon's Breath streams in the Scorcher's own cone
 
