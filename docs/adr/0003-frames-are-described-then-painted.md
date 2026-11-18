@@ -30,7 +30,8 @@ build or check without a display.
   colour and its moving part in a lighter tone of it, on a dark tile (some board colours vanish on
   light faces). Amended 2026-11-14: icons reused the one closed body shape while a tower was one
   shape; a foundation of lit parts is unreadable at icon size, so the mark is drawn for that size.
-  The Upgrades panel's tier thumbnails are the foundations themselves.
+  Amended 2026-11-18: the Upgrades panel no longer shows a tier's foundation as a thumbnail; a tier is its
+  numeral there.
 
 ## Consequences
 - A frame can be built and checked headless (`PreviewBoard`, `td.PerformanceHarness`).
