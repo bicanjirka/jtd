@@ -152,8 +152,7 @@ final class PolishLooks {
     /** The new look of {@code look} at {@code tier} in {@code pose}. */
     static Built of(Look look, int tier, TowerPose pose) {
         return switch (look) {
-            case SPLASH -> tier == 0 ? Built.of(TowerFoundations.of(TowerLook.SPLASH, 0, pose))
-                    : Built.of(thrower(tier, pose));
+            case SPLASH -> Built.of(thrower(tier, pose));
             case STORMCALLER -> Built.of(stormcaller(Math.max(1, tier), pose));
             case HEXER -> Built.of(hexer(Math.max(1, tier), pose));
             case CINDER -> {
@@ -170,7 +169,9 @@ final class PolishLooks {
             case BURDEN -> Built.of(obelisk(tier, pose, TowerLook.BURDEN));
             case GRAVITY -> Built.of(obelisk(tier, pose, TowerLook.GRAVITY));
             case UMBRA -> Built.of(obelisk(tier, pose, TowerLook.UMBRA));
-            case MORTAR -> Built.of(siegeMortar(tier, pose));
+            case MORTAR -> Built.of(siegeMortar(tier, pose, MORTAR_STOCK,
+                    pose.has(TowerCue.VOLLEY) ? List.of(pose.shell(), LoadedShell.HEAVY, LoadedShell.NORMAL)
+                            : List.of(pose.shell())));
             case SNIPER -> sniper(tier, pose, 0, false);
         };
     }
@@ -387,77 +388,157 @@ final class PolishLooks {
         b.flat(circ(x - r * 0.36, y - r * 0.40, r * 0.17), z, mix(body, Color.WHITE, 0.75));
     }
 
-    // ==== Burst: the stone thrower past Tier 0 (NEW, move) ============================================================
+    // ==== Burst: the stone thrower (REPLACES TowerFoundations.thrower; Tiers I to III NEW) ===========================
+
+    /** How far the thrower is turned from north, clockwise in degrees: it throws over the north-east. */
+    static final double THROWER_TURN = 35;
+    /** The arm: where it pivots on the skein (south of the cell's centre, along the machine), and its angles in degrees
+     * above the ground, from pointing back: cocked, being winched down, and slammed into the pad. */
+    static final double THROWER_PIVOT = 0.05;
+    static final double THROWER_COCKED = 24;
+    static final double THROWER_WINDING = 75;
+    static final double THROWER_THROWN = 123;
+
+    /** A shape drawn along the machine (north is its front) turned to where the machine faces. */
+    private static Shape turned(Shape s) {
+        return rot(s, THROWER_TURN);
+    }
+
+    /** A point along the machine ({@code u} across it, {@code v} back from its centre) on the plan. */
+    private static double[] turned(double u, double v) {
+        double a = Math.toRadians(THROWER_TURN);
+        return new double[] {u * Math.cos(a) - v * Math.sin(a), u * Math.sin(a) + v * Math.cos(a)};
+    }
+
+    /** A beam in the air from one point of the machine to another, a shaded line drawn in screen measures. */
+    private static void beam(Build b, double u0, double v0, double z0, double u1, double v1, double z1, Tones t,
+                             double w) {
+        double[] p = turned(u0, v0);
+        double[] q = turned(u1, v1);
+        b.line(open(p[0], p[1] - LIFT * z0, q[0], q[1] - LIFT * z1), 0, t.shade(), w);
+        b.line(open(p[0] - w * 0.18, p[1] - LIFT * z0 - w * 0.18, q[0] - w * 0.18, q[1] - LIFT * z1 - w * 0.18), 0,
+                t.highlight(), w * 0.38);
+    }
 
     /**
-     * The stone thrower grown into a siege engine for a Burst that took neither fork: a taller frame every tier, a
-     * counterweight from Tier II, a walled yard with a banner at Tier III. The arm reads the pose as Tier 0's does.
+     * A wooden onager, the cheap stone thrower a village builds, set across its cell to throw over the north-east: two
+     * rails on a plank bed, a twisted rope skein between them with a winch at each end, a tall stop frame at the front
+     * with a padded crossbar, and one arm with a cup. Cocked, the arm lies back with a stone in its cup; at the throw it
+     * stands slammed into the pad; while it reloads it is winched back down and a stone is set in the cup. It never
+     * turns: it throws over its front at whatever it picked. The tiers grow it and never ring it: iron bands and
+     * spoked winches, then side braces and iron caps, then a banner. A basket of stones beside it, a heap from Tier II.
      */
     private static Build thrower(int tier, TowerPose pose) {
         Color burst = colour(TowerLook.SPLASH);
         Tones wood = Tones.of(burst);
-        Tones dark = Tones.of(wood.shade());
-        Tones iron = tones(0x6a5a52);
+        Tones dark = Tones.of(mix(wood.shade(), new Color(0x2a1a16), 0.25));
+        Tones plank = Tones.of(mix(wood.shade(), new Color(0x2a1f1c), 0.45));
+        Tones arm = Tones.of(mix(burst, new Color(0xe8c8a0), 0.25));
+        Tones iron = tones(0x5c5450);
+        Tones rope = tones(0xa8916a);
+        Tones wicker = tones(0x6e5030);
+        Tones rock = tones(0xd8c8c0);
+        Tones pad = tones(0xb8a07a);
         Build b = plinth(tier, burst, r -> circ(0, 0, r));
-        double r = b.bodyRadius;
         double z = b.top;
-        b.flat(circ(0, 0, r * 0.74), z, new Color(0x2b2422));
-        stoneRing(b, r * 0.80, z, burst, tier >= 2);
-        if (tier == 3) {
-            int mark = b.mark();
-            Tones pale = Tones.of(mix(stone(burst).body(), Color.WHITE, 0.3));
-            for (int i = 0; i < 6; i++) {
-                b.solid(at(box(0, 0, 0.06, 0.07), 30 + i * 60, r * 0.80), z + 0.17, 0.07, pale);
-            }
-            b.around(mark);
+        b.solid(turned(box(0, 0.01, 0.30, 0.42)), z, 0.03, plank);
+        z += 0.03;
+        for (int i = -1; i <= 1; i += 2) {
+            b.flat(turned(box(i * 0.05, 0.01, 0.006, 0.40)), z, plank.shade());
         }
-        int pile = b.mark();
-        int stones = 1 + tier * 2;
-        for (int i = 0; i < stones; i++) {
-            double a = 118 + i * 17;
-            b.solid(at(ngon(0, 0, 6, 0.03, i * 23), a, r * (i % 2 == 0 ? 0.50 : 0.36)), z, 0.035, tones(0xd8c8c0));
+        if (tier >= 1) {
+            for (int i = -1; i <= 1; i += 2) {
+                b.flat(turned(box(i * 0.143, 0.01, 0.014, 0.42)), z, iron.body());
+            }
         }
-        b.around(pile);
-        double frame = 0.14 + 0.09 * tier;
-        double half = 0.075 + 0.006 * tier;
-        if (tier >= 2) {
-            b.solid(box(-0.05, -half, 0.05, 0.04), z, frame * 0.45, dark);
-            b.solid(box(0.05, -half, 0.05, 0.04), z, frame * 0.45, dark);
+        double rail = 0.095;
+        double frameV = -0.10;
+        double frameTop = z + 0.30 + 0.05 * tier;
+        double skein = z + 0.035;
+        b.solid(turned(box(0, -0.16, rail * 2 + 0.02, 0.04)), z, 0.045, dark);
+        for (int s = -1; s <= 1; s += 2) {
+            b.solid(turned(box(s * rail, 0.02, 0.045, 0.40)), z, 0.05, dark);
+            if (tier >= 1) {
+                for (double v : new double[] {-0.04, 0.15}) {
+                    b.solid(turned(box(s * rail, v, 0.05, 0.016)), z + 0.05, 0.004, iron);
+                }
+            }
         }
-        b.solid(box(0, -half, 0.055, 0.05), z, frame, wood);
-        double axle = z + frame - 0.02;
-        b.solid(box(0, 0, 0.03, half * 2 + 0.03), axle, 0.025, iron);
-        double arm = 0.17 + 0.03 * tier;
-        double thick = 0.034 + 0.004 * tier;
-        double cup = 0.046 + 0.004 * tier;
-        if (pose.flash()) {
-            if (tier >= 2) {
-                b.solid(at(box(0, 0, 0.075, 0.075), 140, 0.06), axle - 0.10, 0.07, iron);
-            }
-            b.solid(rot(box(arm * 0.26, 0, arm * 0.52, thick), -40), axle + 0.06, 0.03, wood);
-            b.solid(at(circ(0, 0, cup * 0.87), -40, arm * 0.56), axle + 0.12, 0.02, dark);
-        } else {
-            if (tier >= 2) {
-                b.solid(at(box(0, 0, 0.075, 0.075), -40, 0.07), axle + 0.03, 0.07, iron);
-            }
-            b.solid(rot(box(arm / 2, 0, arm, thick), 140), axle, 0.03, wood);
-            b.solid(at(circ(0, 0, cup), 140, arm), axle, 0.03, dark);
-            if (pose.reload() > 0.5) {
-                b.solid(at(ngon(0, 0, 6, cup * 0.70, 10), 140, arm), axle + 0.03, 0.03, tones(0xd8c8c0));
-            }
+        for (int s = -1; s <= 1; s += 2) {
+            b.solid(turned(box(s * rail, frameV, 0.048, 0.048)), z + 0.05, frameTop - z - 0.05, wood);
         }
         if (tier >= 2) {
-            b.solid(box(-0.05, half, 0.05, 0.04), z, frame * 0.45, dark);
-            b.solid(box(0.05, half, 0.05, 0.04), z, frame * 0.45, dark);
+            for (int s = -1; s <= 1; s += 2) {
+                beam(b, s * rail, 0.12, z + 0.05, s * rail, frameV + 0.02, frameTop - 0.04, dark, 0.03);
+            }
         }
-        b.solid(box(0, half, 0.055, 0.05), z, frame, wood);
+        b.solid(turned(box(0, frameV, rail * 2 + 0.08, 0.05)), frameTop, 0.045, wood);
+        if (tier >= 2) {
+            for (int s = -1; s <= 1; s += 2) {
+                b.solid(turned(box(s * (rail + 0.04), frameV, 0.03, 0.056)), frameTop, 0.05, iron);
+            }
+        }
+        b.solid(turned(box(0, frameV + 0.035, 0.12 + 0.01 * tier, 0.03)), frameTop - 0.05, 0.08, pad);
+        b.solid(turned(box(0, 0.20, rail * 2 + 0.02, 0.04)), z, 0.045, dark);
+        b.solid(turned(box(0, THROWER_PIVOT, rail * 2 - 0.04, 0.065)), skein, 0.055, rope);
+        for (int i = 0; i < 4; i++) {
+            b.flat(turned(box(-0.054 + i * 0.036, THROWER_PIVOT, 0.008, 0.065)), skein + 0.055, rope.shade());
+        }
+        for (int s = -1; s <= 1; s += 2) {
+            double wu = s * (rail + 0.04);
+            double size = tier >= 1 ? 0.11 : 0.08;
+            b.solid(turned(box(wu, THROWER_PIVOT, 0.024, size)), z, size, iron);
+            if (tier >= 1) {
+                double[] c = turned(wu, THROWER_PIVOT);
+                double cy = c[1] - LIFT * (z + size / 2);
+                b.line(open(c[0] - 0.03, cy - 0.03, c[0] + 0.03, cy + 0.03), 0, iron.highlight(), 0.008);
+                b.line(open(c[0] - 0.03, cy + 0.03, c[0] + 0.03, cy - 0.03), 0, iron.highlight(), 0.008);
+            }
+        }
+        double pivotZ = skein + 0.055;
+        double length = 0.22 + 0.015 * tier;
+        double angle = pose.flash() ? THROWER_THROWN : pose.reload() < 0.25 ? THROWER_WINDING : THROWER_COCKED;
+        double a = Math.toRadians(angle);
+        double endV = THROWER_PIVOT + Math.cos(a) * length;
+        double endZ = pivotZ + Math.sin(a) * length;
+        beam(b, 0, THROWER_PIVOT, pivotZ, 0, endV, endZ, arm, 0.05 + 0.004 * tier);
+        if (tier >= 1) {
+            double t = 0.45;
+            double[] m = turned(0, THROWER_PIVOT + (endV - THROWER_PIVOT) * t);
+            double mz = pivotZ + (endZ - pivotZ) * t;
+            b.solid(circ(m[0], m[1], 0.03), mz - 0.01, 0.02, iron);
+        }
+        double cup = 0.048 + 0.003 * tier;
+        double[] e = turned(0, endV);
+        b.solid(circ(e[0], e[1], cup), endZ - 0.02, 0.035, dark);
+        b.flat(circ(e[0], e[1], cup * 0.68), endZ + 0.015, plank.shade());
+        if (!pose.flash() && pose.reload() > 0.5) {
+            b.solid(ngon(e[0], e[1], 6, cup * 0.74, 10), endZ + 0.01, 0.04, rock);
+        }
+        int basket = b.mark();
+        double[] k = turned(-0.18, 0.12);
+        b.solid(circ(k[0], k[1], 0.05), z - 0.03, 0.06, wicker);
+        b.flat(ring(k[0], k[1], 0.05, 0.04), z + 0.03, wicker.highlight());
+        for (int i = 0; i < 3; i++) {
+            b.solid(mv(at(ngon(0, 0, 6, 0.022, i * 23), 30 + i * 120, 0.02), k[0], k[1]), z + 0.02, 0.03, rock);
+        }
+        b.around(basket);
+        if (tier >= 2) {
+            int heap = b.mark();
+            for (int i = 0; i < 3; i++) {
+                double[] h = turned(0.17 - (i % 2) * 0.03, 0.16 - i * 0.035);
+                b.solid(ngon(h[0], h[1], 6, 0.024, i * 31), z - 0.03, 0.035, rock);
+            }
+            b.around(heap);
+        }
         if (tier == 3) {
             int mark = b.mark();
-            b.solid(circ(0.19, -0.15, 0.013), z, 0.46, tones(0xd8c8c0));
-            b.flat(poly(0.19, -0.15, 0.30, -0.125, 0.19, -0.10), z + 0.46, burst);
+            double[] f = turned(-0.17, -0.13);
+            b.solid(circ(f[0], f[1], 0.012), z - 0.03, 0.55, iron);
+            b.flat(poly(f[0], f[1] - 0.03, f[0] + 0.12, f[1] - 0.015, f[0], f[1]), z + 0.49, burst);
             b.around(mark);
         }
-        b.top = axle + 0.06;
+        b.top = Math.max(frameTop + 0.05, endZ + 0.04);
         return b;
     }
 
@@ -815,28 +896,33 @@ final class PolishLooks {
     // ==== Mortar: a stationary siege mortar (REPLACES TowerFoundations.mortar and mortarHead) ========================
 
     /**
-     * A shell's radius in cells at the board's own size: the in-flight shell is PROJECTILE_SIZE (5 px) times its size
-     * on a 32 px cell, and the loaded, piled and carried shells are drawn at exactly that.
+     * The radius, in cells, of every shell the Mortar shows on its tower: racked, carried and loaded. Smaller than the
+     * shell in flight on purpose, so the rack fits the cell and the barrel stays in proportion (the user, 2026-11-18).
      */
-    static final double MORTAR_SHELL = 5.0 / 32;
-    /** Where the mortar stands on its cell (its bedplate's centre), and how far north its barrel leans per cell up. */
-    static final double MORTAR_X = 0.12;
-    static final double MORTAR_Y = -0.04;
-    static final double MORTAR_LEAN = 0.32;
+    static final double MORTAR_SHELL = 0.056;
+    /** The kinds the sheets' Mortar can load: a payload build with Fusion, every place on the rack. */
+    static final List<LoadedShell> MORTAR_STOCK = List.of(LoadedShell.NORMAL, LoadedShell.HEAVY, LoadedShell.NUKE,
+            LoadedShell.NAPALM, LoadedShell.FLARE);
+    /** Where the bedplate stands on its cell (its centre), and how far north the barrel leans per cell up. */
+    static final double MORTAR_X = 0.0;
+    static final double MORTAR_Y = -0.07;
+    static final double MORTAR_LEAN = 0.30;
     /** The barrel: its slices' height, how many (one more with a long barrel), its bore and its muzzle ring. */
-    static final double MORTAR_SLICE = 0.075;
+    static final double MORTAR_SLICE = 0.066;
     static final int MORTAR_SLICES = 6;
-    static final double MORTAR_BORE = 0.165;
-    static final double MORTAR_MUZZLE = 0.215;
+    static final double MORTAR_BORE = 0.085;
+    static final double MORTAR_MUZZLE = 0.135;
     /** How far a shot throws the barrel down its own axis, in cells. */
-    static final double MORTAR_RECOIL = 0.05;
-    /**
-     * The munition pile beside the mortar, inside the emplacement: two shells on the ground and one on top, in the
-     * order they were stacked. Shells leave it last-in, first-out: the top one, then the right, then the left.
-     */
-    static final double[][] MORTAR_PILE = {{-0.285, 0.150, 0}, {-0.125, 0.170, 0}, {-0.205, 0.150, 1}};
+    static final double MORTAR_RECOIL = 0.04;
+    /** The ready rack in front of the mortar: its row's distance south of the cell's centre, and its shells' spacing. */
+    static final double MORTAR_RACK_Y = 0.15;
+    /** The rack stands on a crate this tall, so its shells show over the emplacement's front sandbags. */
+    static final double MORTAR_RACK_HEIGHT = 0.07;
+    static final double MORTAR_RACK_GAP = MORTAR_SHELL * 2.1;
+    /** The rack holds one shell of each kind the tower can load: at most this many on the bottom row, the rest on top. */
+    static final int MORTAR_RACK_ROW = 3;
 
-    /** The height of the plinth's top for {@code tier}: where the mortar and the pile stand. */
+    /** The height of the plinth's top for {@code tier}: where the mortar and the rack stand. */
     static double mortarFloor(int tier) {
         return tier * STEP_HEIGHT;
     }
@@ -844,44 +930,63 @@ final class PolishLooks {
     /** The muzzle's centre at the top of the barrel, in cells: x, y on the plan and z, for {@code tier} in {@code pose}. */
     static double[] mortarMouth(int tier, TowerPose pose) {
         int slices = MORTAR_SLICES + (pose.has(TowerCue.LONG_BARREL) ? 1 : 0);
-        double rise = 0.05 + slices * MORTAR_SLICE - pose.recoil() * MORTAR_RECOIL;
+        double rise = 0.04 + slices * MORTAR_SLICE - pose.recoil() * MORTAR_RECOIL;
         return new double[] {MORTAR_X, MORTAR_Y - MORTAR_LEAN * rise, mortarFloor(tier) + rise};
     }
 
-    /** Pile shell {@code i}'s centre in cells (x, y, z), lying on the floor of {@code tier} or on the two under it. */
-    static double[] mortarPiece(int tier, int i) {
-        double[] p = MORTAR_PILE[i];
-        double z = mortarFloor(tier) + 0.03 + MORTAR_SHELL * (0.55 + 1.35 * p[2]);
-        return new double[] {p[0], p[1], z};
+    /**
+     * The centre in cells (x, y, z) of rack place {@code i} of {@code count}: the bottom row centred, the rest lying in
+     * its gaps on top.
+     */
+    static double[] mortarPiece(int tier, int i, int count) {
+        double base = mortarFloor(tier) + MORTAR_RACK_HEIGHT + 0.02 + MORTAR_SHELL * 0.85;
+        if (i < MORTAR_RACK_ROW) {
+            int row = Math.min(count, MORTAR_RACK_ROW);
+            return new double[] {(i - (row - 1) / 2.0) * MORTAR_RACK_GAP, MORTAR_RACK_Y, base};
+        }
+        int top = count - MORTAR_RACK_ROW;
+        double x = top == 1 ? -MORTAR_RACK_GAP / 2 : (i - MORTAR_RACK_ROW - 0.5) * MORTAR_RACK_GAP;
+        return new double[] {x, MORTAR_RACK_Y - MORTAR_SHELL * 0.3, base + MORTAR_SHELL * 1.4};
+    }
+
+    /** The rack place of {@code kind} among {@code stock} (the kinds in their order), the first if it is not there. */
+    static int mortarPlace(List<LoadedShell> stock, LoadedShell kind) {
+        return Math.max(0, stock.indexOf(kind));
     }
 
     /**
-     * How many of the pile's shells are gone while {@code pose} reloads: a single load takes the top one in the reload's
-     * middle half, a volley one each quarter from the shot. The pile is whole again at the shot.
+     * How many shells are in the barrel while {@code pose} reloads: a single load drops in at the reload's last
+     * quarter, a volley one at each quarter from the shot.
      */
-    static int mortarTaken(TowerPose pose, boolean volley) {
+    static int mortarLoadedCount(TowerPose pose, boolean volley) {
         if (pose.flash()) {
             return 0;
         }
         if (volley) {
-            return Math.min(3, 1 + (int) Math.floor(pose.reload() * 4));
+            return Math.min(3, (int) Math.floor(pose.reload() * 4));
         }
-        return pose.reload() >= 0.25 ? 1 : 0;
-    }
-
-    /** Whether the mouth holds a shell: a single load from the reload's last quarter, a volley from its second. */
-    static boolean mortarLoaded(TowerPose pose, boolean volley) {
-        return !pose.flash() && pose.reload() >= (volley ? 0.25 : 0.75);
+        return pose.reload() >= 0.75 ? 1 : 0;
     }
 
     /**
-     * A stationary siege mortar on the emplacement the tiers build (sandbags, then stone battlements): a bedplate, four
-     * splayed legs braced across, a thick wide-mouthed barrel fixed at a steep angle to the north, and the pile of the
-     * loaded munition beside it. Nothing turns. A shot throws the barrel down its axis and flashes at the muzzle; while
-     * it reloads the bore smokes, shells leave the pile (the arc between is live paint: PolishLife.mortarLoad) and the
-     * loaded shell's top shows above the muzzle until the next shot.
+     * The kind whose top shows in the muzzle: the shell dropped in last. {@code load} is what this reload loads, front
+     * (fired first) first; a volley loads it back to front, so the front shell goes in last and sits on top.
      */
-    static Build siegeMortar(int tier, TowerPose pose) {
+    static LoadedShell mortarShowing(TowerPose pose, boolean volley, List<LoadedShell> load) {
+        int in = mortarLoadedCount(pose, volley);
+        return load.get(Math.max(0, load.size() - in));
+    }
+
+    /**
+     * A stationary siege mortar standing in the middle of its emplacement (sandbags, then stone battlements): a
+     * bedplate, four splayed legs braced across, a thick wide-mouthed barrel fixed at a steep angle to the north, and a
+     * ready rack in front holding one shell of every kind {@code stock} names (what the tower can load, whatever its
+     * magazine holds now). Nothing turns. A shot throws the barrel down its axis and flashes at the muzzle; while it
+     * reloads the bore smokes, shells are lifted off the rack (the arc between is live paint: PolishLife.mortarLoad)
+     * and the last one in shows its top above the muzzle until the next shot. The rack never empties: it is the
+     * stock, not the magazine.
+     */
+    static Build siegeMortar(int tier, TowerPose pose, List<LoadedShell> stock, List<LoadedShell> load) {
         Color mortar = colour(TowerLook.MORTAR);
         Tones iron = tones(0x5a6070);
         Tones dark = tones(0x3a3f4c);
@@ -908,29 +1013,29 @@ final class PolishLooks {
             }
             b.around(mark);
         }
-        double legs = 0.30 + 0.02 * tier;
-        double collar = z + 0.05 + MORTAR_SLICE * 2.5;
+        double legs = 0.19 + 0.012 * tier;
+        double collar = z + 0.04 + MORTAR_SLICE * 2.5;
         double collarY = MORTAR_Y - MORTAR_LEAN * (collar - z);
         double[] feet = {-135, -45, 45, 135};
         for (double a : feet) {
             if (sin(a) < 0) {
-                leg(b, MORTAR_X + cos(a) * legs, MORTAR_Y + sin(a) * legs, z, MORTAR_X + cos(a) * 0.15,
-                        collarY + sin(a) * 0.12, collar, dark, tier);
+                leg(b, MORTAR_X + cos(a) * legs, MORTAR_Y + sin(a) * legs, z, MORTAR_X + cos(a) * 0.10,
+                        collarY + sin(a) * 0.08, collar, dark, tier);
             }
         }
-        b.solid(ngon(MORTAR_X, MORTAR_Y, 8, 0.20 + 0.01 * tier, 22.5), z, 0.05, dark);
-        b.flat(ring(MORTAR_X, MORTAR_Y, 0.18 + 0.01 * tier, 0.16 + 0.01 * tier), z + 0.05, iron.highlight());
+        b.solid(ngon(MORTAR_X, MORTAR_Y, 8, 0.14 + 0.008 * tier, 22.5), z, 0.04, dark);
+        b.flat(ring(MORTAR_X, MORTAR_Y, 0.125 + 0.008 * tier, 0.11 + 0.008 * tier), z + 0.04, iron.highlight());
         int slices = MORTAR_SLICES + (pose.has(TowerCue.LONG_BARREL) ? 1 : 0);
         double back = pose.recoil() * MORTAR_RECOIL;
-        double rise = z + 0.05 - back;
+        double rise = z + 0.04 - back;
         for (int k = 0; k < slices; k++) {
             double y = MORTAR_Y - MORTAR_LEAN * (rise - z);
             boolean band = k == 0 || k == 2 || k == slices - 1;
-            double radius = k == 0 ? 0.19 : k == slices - 1 ? 0.20 : 0.178;
+            double radius = k == 0 ? 0.122 : k == slices - 1 ? 0.128 : 0.110;
             b.solid(circ(MORTAR_X, y, radius), rise, MORTAR_SLICE, band ? bronze : iron);
             if (k == 2) {
                 for (int s = -1; s <= 1; s += 2) {
-                    b.solid(box(MORTAR_X + s * 0.205, y, 0.05, 0.06), rise + MORTAR_SLICE * 0.3, 0.04, dark);
+                    b.solid(box(MORTAR_X + s * 0.128, y, 0.036, 0.046), rise + MORTAR_SLICE * 0.3, 0.032, dark);
                 }
             }
             rise += MORTAR_SLICE;
@@ -941,48 +1046,55 @@ final class PolishLooks {
         farLip.intersect(new Area(new Rectangle2D.Double(-2, -2, 4, 2 + my)));
         Area nearLip = new Area(lip);
         nearLip.subtract(farLip);
-        b.solid(farLip, rise, 0.035, bronze);
-        b.flat(circ(MORTAR_X, my, MORTAR_BORE), rise + 0.035, new Color(0x120f0c));
-        if (mortarLoaded(pose, volley)) {
-            shell(b, pose.shell(), MORTAR_X, my, MORTAR_SHELL, rise + MORTAR_SHELL * 0.75);
+        b.solid(farLip, rise, 0.03, bronze);
+        b.flat(circ(MORTAR_X, my, MORTAR_BORE), rise + 0.03, new Color(0x120f0c));
+        boolean loaded = mortarLoadedCount(pose, volley) > 0;
+        if (loaded) {
+            shell(b, mortarShowing(pose, volley, load), MORTAR_X, my, MORTAR_SHELL, rise + MORTAR_SHELL * 0.7);
         }
-        b.solid(nearLip, rise, 0.035, bronze);
+        b.solid(nearLip, rise, 0.03, bronze);
         if (pose.flash()) {
-            b.glow(MORTAR_X, my, 0.30, rise + 0.08, alpha(new Color(0xffe6b0), 0.95));
-            b.glow(MORTAR_X, my, 0.14, rise + 0.08, alpha(Color.WHITE, 0.9));
-        } else if (pose.reload() < 0.25 && !mortarLoaded(pose, volley)) {
-            b.glow(MORTAR_X, my, 0.13, rise + 0.10, alpha(new Color(0xb9bcc8), 0.55));
-            b.glow(MORTAR_X - 0.03, my - 0.05, 0.09, rise + 0.20, alpha(new Color(0xb9bcc8), 0.35));
+            b.glow(MORTAR_X, my, 0.24, rise + 0.07, alpha(new Color(0xffe6b0), 0.95));
+            b.glow(MORTAR_X, my, 0.11, rise + 0.07, alpha(Color.WHITE, 0.9));
+        } else if (pose.reload() < 0.25 && !loaded) {
+            b.glow(MORTAR_X, my, 0.10, rise + 0.08, alpha(new Color(0xb9bcc8), 0.55));
+            b.glow(MORTAR_X - 0.025, my - 0.04, 0.07, rise + 0.17, alpha(new Color(0xb9bcc8), 0.35));
         }
-        if (mortarLoaded(pose, volley) && pose.reload() >= 1) {
-            b.light(Life.GLINT, MORTAR_X - 0.05, my - 0.05, rise + MORTAR_SHELL * 0.75, 0.075, Color.WHITE);
+        if (loaded && pose.reload() >= 1) {
+            b.light(Life.GLINT, MORTAR_X - 0.02, my - 0.03, rise + MORTAR_SHELL * 0.7, 0.05, Color.WHITE);
         }
         for (double a : feet) {
             if (sin(a) > 0) {
-                leg(b, MORTAR_X + cos(a) * legs, MORTAR_Y + sin(a) * legs, z, MORTAR_X + cos(a) * 0.15,
-                        collarY + sin(a) * 0.12, collar, dark, tier);
+                leg(b, MORTAR_X + cos(a) * legs, MORTAR_Y + sin(a) * legs, z, MORTAR_X + cos(a) * 0.10,
+                        collarY + sin(a) * 0.08, collar, dark, tier);
             }
         }
         double braceZ = z + (collar - z) * 0.45;
         double bx = legs * 0.62;
-        b.line(open(MORTAR_X - bx * 0.75, MORTAR_Y + bx * 0.75 - LIFT * braceZ, MORTAR_X + bx * 0.75,
-                MORTAR_Y + bx * 0.75 - LIFT * braceZ), 0, dark.shade(), 0.03);
-        b.line(open(MORTAR_X - bx * 0.75, MORTAR_Y + bx * 0.75 - LIFT * braceZ, MORTAR_X + bx * 0.75,
-                MORTAR_Y + bx * 0.75 - LIFT * braceZ), 0, dark.highlight(), 0.012);
+        double braceY = MORTAR_Y + bx * 0.75;
+        b.line(open(MORTAR_X - bx * 0.75, braceY - LIFT * braceZ, MORTAR_X + bx * 0.75, braceY - LIFT * braceZ), 0,
+                dark.shade(), 0.024);
+        b.line(open(MORTAR_X - bx * 0.75, braceY - LIFT * braceZ, MORTAR_X + bx * 0.75, braceY - LIFT * braceZ), 0,
+                dark.highlight(), 0.010);
         if (tier >= 2) {
-            b.line(open(MORTAR_X - bx * 0.75, MORTAR_Y + bx * 0.75 - LIFT * z, MORTAR_X + bx * 0.75,
-                    MORTAR_Y + bx * 0.75 - LIFT * braceZ), 0, dark.shade(), 0.022);
-            b.line(open(MORTAR_X + bx * 0.75, MORTAR_Y + bx * 0.75 - LIFT * z, MORTAR_X - bx * 0.75,
-                    MORTAR_Y + bx * 0.75 - LIFT * braceZ), 0, dark.shade(), 0.022);
+            b.line(open(MORTAR_X - bx * 0.75, braceY - LIFT * z, MORTAR_X + bx * 0.75, braceY - LIFT * braceZ), 0,
+                    dark.shade(), 0.018);
+            b.line(open(MORTAR_X + bx * 0.75, braceY - LIFT * z, MORTAR_X - bx * 0.75, braceY - LIFT * braceZ), 0,
+                    dark.shade(), 0.018);
         }
-        b.solid(box(-0.205, 0.160, 0.40, 0.14), z, 0.03, wood);
-        b.line(open(-0.38, 0.160 - LIFT * (z + 0.03), -0.03, 0.160 - LIFT * (z + 0.03)), 0, wood.shade(), 0.008);
-        int taken = mortarTaken(pose, volley);
-        for (int i = 0; i < MORTAR_PILE.length - taken; i++) {
-            double[] p = mortarPiece(tier, i);
-            shell(b, pose.shell(), p[0], p[1], MORTAR_SHELL, p[2]);
+        int count = stock.size();
+        int row = Math.min(count, MORTAR_RACK_ROW);
+        double rackWide = row * MORTAR_RACK_GAP + 0.03;
+        b.solid(box(0, MORTAR_RACK_Y, rackWide, MORTAR_RACK_GAP + 0.02), z, MORTAR_RACK_HEIGHT, wood);
+        for (int s = -1; s <= 1; s += 2) {
+            b.solid(box(s * (rackWide / 2 - 0.008), MORTAR_RACK_Y, 0.016, MORTAR_RACK_GAP + 0.02),
+                    z + MORTAR_RACK_HEIGHT, 0.03, Tones.of(wood.shade()));
         }
-        b.top = rise + 0.035;
+        for (int i = 0; i < count; i++) {
+            double[] p = mortarPiece(tier, i, count);
+            shell(b, stock.get(i), p[0], p[1], MORTAR_SHELL, p[2], false);
+        }
+        b.top = rise + 0.03;
         return b;
     }
 
@@ -1001,7 +1113,15 @@ final class PolishLooks {
 
     /** A shell of {@code kind}: the game's own drawing (TowerFoundations.shell), lifted to its place. */
     private static void shell(Build h, LoadedShell kind, double x, double y, double r, double z) {
+        shell(h, kind, x, y, r, z, true);
+    }
+
+    /** A shell as {@link #shell}, without its glow when {@code glow} is false: on the rack a glow would hide the rest. */
+    private static void shell(Build h, LoadedShell kind, double x, double y, double r, double z, boolean glow) {
         for (Part p : TowerFoundations.shell(kind, r)) {
+            if (!glow && p.kind() == Kind.GLOW) {
+                continue;
+            }
             h.parts.add(new Part(p.kind(), mv(p.shape(), x, y), p.z0() + z, p.height(), p.tones(), p.color(),
                     p.width()));
         }
@@ -1010,8 +1130,8 @@ final class PolishLooks {
     // ==== Aerie (REPLACES TowerFoundations.aerie for SEEKER) ==========================================================
 
     /**
-     * The plain Aerie: a crystal spire that narrows as it climbs, the tallest thing on the board. Its perch ring sits
-     * near its top, where the missiles and the birds circle.
+     * The plain Aerie: a crystal spire that narrows as it climbs, the tallest thing on the board; nothing rings it. Its
+     * tip turns white and glows while a Release is ready, as Ruby's, Shade's and White's do.
      */
     private static Build aerie(int tier, TowerPose pose) {
         Color tint = colour(TowerLook.SEEKER);
@@ -1038,41 +1158,19 @@ final class PolishLooks {
         double wide = 0.105 + 0.010 * tier;
         double[] share = {0.40, 0.30, 0.20, 0.10};
         double[] taper = {1.0, 0.80, 0.58, 0.34};
-        double foot = z;
-        int column = b.mark();
         for (int i = 0; i < share.length; i++) {
             Shape plan = tier == 3 && i == 0 ? star(0, 0, 6, 0.15, 0.095, 0) : ngon(0, 0, 6, wide * taper[i], 0);
             b.solid(plan, z, height * share[i], i == 3 ? pale : crystal);
             z += height * share[i];
         }
-        b.flat(ngon(0, 0, 6, wide * 0.2, 30), z, mix(lit, Color.WHITE, 0.55));
+        b.flat(ngon(0, 0, 6, wide * 0.2, 30), z, release ? Color.WHITE : mix(lit, Color.WHITE, 0.55));
+        if (release) {
+            b.glow(0, 0, 0.26, z, alpha(lit, 0.8));
+        }
         b.light(Life.BREATH, 0, 0, z, 0.15, lit);
         b.top = z;
         b.nest = z;
-        perch(b, tier, release, foot + height * 0.90, column, crystal, stone(tint), lit);
         return b;
-    }
-
-    /**
-     * The perch: a ring round the spire just under its top slice, arms carrying it at Tier III. It is the nest's mark
-     * on the tower; its far half goes under the spire, which hides it.
-     */
-    private static void perch(Build b, int tier, boolean release, double z, int column, Tones ring, Tones arm,
-                              Color lit) {
-        if (tier == 0) {
-            return;
-        }
-        int mark = b.mark();
-        if (release) {
-            b.glow(0, 0, 0.30, z, alpha(lit, 0.7));
-        }
-        if (tier == 3) {
-            for (int i = 0; i < 3; i++) {
-                b.solid(rot(box(0.12, 0, 0.14, 0.026), -90 + i * 120), z, 0.02, arm);
-            }
-        }
-        b.solid(ring(0, 0, 0.20, 0.172), z, 0.022, release ? Tones.of(mix(lit, Color.WHITE, 0.5)) : ring);
-        b.aroundColumn(column, mark);
     }
 
     // ==== Aerie: Ruby (REPLACES the RUBY row) =========================================================================

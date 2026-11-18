@@ -10,7 +10,7 @@ import java.awt.geom.Path2D;
 
 /**
  * The shots of the tower visual polish (docs/features/FEATURE-tower-visual-polish.md, "Shots"): the Sniper's bullets
- * and ricochets by round, the Headhunter's laser, the execution mark, Frenzy's embers, and the Burst's stone at its new
+ * and ricochets by round, the Headhunter's laser, the execution, Frenzy's embers, and the Burst's stone at its new
  * size. Every method paints in board pixels; {@code scale} is the pixels to a cell. Each is a pure function of its
  * progress or clock and a seed.
  */
@@ -62,6 +62,14 @@ final class PolishShots {
     static final double LASER_SHIMMER_HZ = 7;
     static final Color LASER = new Color(255, 60, 60);
     /** Frenzy's embers: how many rise at once, how long each lives (seconds, tick clock), how high (cells). */
+    /** The execution: how long it plays, the cut's share of it, its length and slope, its shards and its red. */
+    static final double EXECUTION_SECONDS = 0.6;
+    static final double EXECUTION_STRIKE = 0.18;
+    static final double EXECUTION_CUT_CELLS = 0.62;
+    static final double EXECUTION_CUT_DEGREES = 62;
+    static final int EXECUTION_SHARDS = 10;
+    static final Color EXECUTION_RED = new Color(0xe0202a);
+
     static final int FRENZY_EMBERS = 7;
     static final double FRENZY_EMBER_SECONDS = 0.9;
     static final double FRENZY_EMBER_RISE = 1.0;
@@ -199,30 +207,80 @@ final class PolishShots {
     }
 
     /**
-     * Executioner's mark over an enemy the Sniper aims at that a crit would execute now (below an Elite and under the
-     * threshold): a thin white ring with four ticks that slowly close on it. {@code sure} when the bullet on its way
-     * is a sure crit as well: the ring is whole and bright, the ticks touch it, and a red point burns in its middle.
+     * An execution, {@code progress} (0..1 over {@link #EXECUTION_SECONDS} on the tick clock) after the Executioner
+     * killed the enemy at {@code x, y} (its body's centre, lifted): the headsman's cut. A blade of white light slashes
+     * down across the enemy in the first instant, red at its edges; a crimson ring snaps out from the cut and fades;
+     * red-hot shards fly off both sides of the cut and go out. Drawn only for a kill the Executioner made, never
+     * while a shot is aimed or in flight.
      */
-    static void executionMark(Graphics2D g2, double x, double y, double scale, boolean sure, double seconds) {
-        double breathe = 0.5 + 0.5 * Math.sin(seconds * 4.2);
-        double r = scale * (sure ? 0.22 : 0.26 - 0.02 * breathe);
-        double alpha = sure ? 0.95 : 0.55 + 0.25 * breathe;
-        g2.setStroke(new BasicStroke((float) (scale * 0.016), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(faded(Color.WHITE, alpha));
-        g2.draw(new Ellipse2D.Double(x - r, y - r, r * 2, r * 2));
-        double gap = sure ? 0 : scale * 0.05 * (1 - breathe * 0.5);
-        for (int i = 0; i < 4; i++) {
-            double a = Math.PI / 4 + i * Math.PI / 2;
-            double from = r + gap;
-            double to = from + scale * 0.09;
-            g2.draw(new Line2D.Double(x + Math.cos(a) * from, y + Math.sin(a) * from, x + Math.cos(a) * to,
-                    y + Math.sin(a) * to));
+    static void execution(Graphics2D g2, double x, double y, double scale, double progress, int seed) {
+        if (progress < 0 || progress >= 1) {
+            return;
         }
-        if (sure) {
-            glow(g2, x, y, scale * 0.10, new Color(0xff4040), 0.8);
-            double dot = scale * 0.022;
-            g2.setColor(Color.WHITE);
-            g2.fill(new Ellipse2D.Double(x - dot, y - dot, dot * 2, dot * 2));
+        double cut = Math.toRadians(EXECUTION_CUT_DEGREES);
+        double cx = Math.cos(cut);
+        double cy = Math.sin(cut);
+        double half = scale * EXECUTION_CUT_CELLS / 2;
+        double drawn = Math.min(1, progress / EXECUTION_STRIKE);
+        double fade = progress < EXECUTION_STRIKE ? 1 : 1 - (progress - EXECUTION_STRIKE) / (1 - EXECUTION_STRIKE);
+        double ax = x - cx * half;
+        double ay = y - cy * half;
+        double bx = ax + cx * half * 2 * drawn;
+        double by = ay + cy * half * 2 * drawn;
+        glow(g2, x, y, scale * 0.34 * (0.6 + 0.4 * drawn), EXECUTION_RED, 0.55 * fade);
+        double ring = scale * (0.14 + 0.46 * Math.sqrt(progress));
+        g2.setStroke(new BasicStroke((float) (scale * 0.035 * (1 - progress) + scale * 0.006)));
+        g2.setColor(faded(EXECUTION_RED, 0.85 * fade));
+        g2.draw(new Ellipse2D.Double(x - ring, y - ring * 0.62, ring * 2, ring * 1.24));
+        g2.setStroke(new BasicStroke((float) (scale * 0.075), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(faded(EXECUTION_RED, 0.75 * fade));
+        g2.draw(new Line2D.Double(ax, ay, bx, by));
+        g2.setStroke(new BasicStroke((float) (scale * 0.030), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(faded(Color.WHITE, fade));
+        g2.draw(new Line2D.Double(ax, ay, bx, by));
+        if (progress < EXECUTION_STRIKE) {
+            return;
+        }
+        double flight = (progress - EXECUTION_STRIKE) / (1 - EXECUTION_STRIKE);
+        double out = 1 - (1 - flight) * (1 - flight);
+        for (int i = 0; i < EXECUTION_SHARDS; i++) {
+            double side = i % 2 == 0 ? 1 : -1;
+            double along = (PolishLife.hash(seed, i) - 0.5) * 1.6;
+            double spread = (PolishLife.hash(seed + 5L, i) - 0.5) * 0.9;
+            double nx = -cy * side + cx * spread;
+            double ny = cx * side + cy * spread;
+            double norm = Math.hypot(nx, ny);
+            double reach = scale * (0.12 + 0.50 * out) * (0.7 + 0.5 * PolishLife.hash(seed + 9L, i));
+            double px = x + cx * half * along + nx / norm * reach;
+            double py = y + cy * half * along + ny / norm * reach + scale * 0.10 * flight * flight;
+            double size = scale * 0.05 * (1 - 0.5 * flight);
+            g2.setColor(faded(mixed(new Color(0xffe8c0), EXECUTION_RED, Math.min(1, flight * 1.8)), 1 - flight));
+            Path2D.Double shard = new Path2D.Double();
+            shard.moveTo(px + nx / norm * size * 1.8, py + ny / norm * size * 1.8);
+            shard.lineTo(px - ny / norm * size * 0.6, py + nx / norm * size * 0.6);
+            shard.lineTo(px - nx / norm * size, py - ny / norm * size);
+            shard.lineTo(px + ny / norm * size * 0.6, py - nx / norm * size * 0.6);
+            shard.closePath();
+            g2.fill(shard);
+        }
+    }
+
+    /** The execution as the game draws it today: a thin white ring bursting into eight shards (for the sheet). */
+    static void executionNow(Graphics2D g2, double x, double y, double scale, double progress) {
+        if (progress < 0 || progress >= 1) {
+            return;
+        }
+        double fade = 1 - progress;
+        double r = 0.3 * scale;
+        g2.setStroke(new BasicStroke((float) (scale * 0.03), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(faded(Color.WHITE, fade));
+        g2.draw(new Ellipse2D.Double(x - r, y - r, r * 2, r * 2));
+        double inner = (0.3 + 0.5 * progress) * scale;
+        double outer = inner + 0.12 * scale;
+        for (int i = 0; i < 8; i++) {
+            double a = 2 * Math.PI * i / 8;
+            g2.draw(new Line2D.Double(x + Math.cos(a) * inner, y + Math.sin(a) * inner, x + Math.cos(a) * outer,
+                    y + Math.sin(a) * outer));
         }
     }
 

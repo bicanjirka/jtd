@@ -444,7 +444,7 @@ public final class PolishSheets {
         }
         row++;
         float[] reload = {0f, 0.25f, 0.5f, 0.75f, 1f};
-        String[] reloadName = {"fired: bore smokes", "1/4: top shell taken", "1/2: (shell in the air)",
+        String[] reloadName = {"fired: bore smokes", "1/4: (a shell in the air)", "1/2: (a shell in the air)",
                 "3/4: loaded, top shows", "ready: glint"};
         for (int i = 0; i < 5; i++) {
             TowerPose pose = i == 0 ? TowerPose.idle().reloading(0.13f) : TowerPose.idle().refilling(reload[i]);
@@ -467,8 +467,9 @@ public final class PolishSheets {
         for (int i = 0; i < 9; i++) {
             TowerPose pose = i % 3 == 0 ? TowerPose.idle() : i % 3 == 1 ? TowerPose.idle().fired()
                     : TowerPose.idle().refilling(0.25f);
-            headTile(g, Look.SPLASH, 1 + i / 3, pose, 0, 40 + i * tile, 50 + row * rowHeight, big,
-                    "Burst T" + (1 + i / 3) + ": " + thrown[i % 3]);
+            int tier = new int[] {0, 1, 3}[i / 3];
+            headTile(g, Look.SPLASH, tier, pose, 0, 40 + i * tile, 50 + row * rowHeight, big,
+                    "Burst T" + tier + ": " + thrown[i % 3]);
         }
         row++;
         Look[] cued = {Look.STORMCALLER, Look.STORMCALLER, Look.HEXER, Look.HEXER, Look.SEEKER, Look.RUBY, Look.SHADE,
@@ -516,7 +517,7 @@ public final class PolishSheets {
                 {Look.MORTAR, 2, TowerPose.idle().refilling(0.25f), -30.0, "Mortar 1/4"},
                 {Look.MORTAR, 2, TowerPose.idle().refilling(0.5f), -30.0, "Mortar 1/2"},
                 {Look.MORTAR, 2, TowerPose.idle(), -30.0, "Mortar ready"},
-                {Look.SPLASH, 1, TowerPose.idle(), 0.0, "Burst T1"}, {Look.SPLASH, 2, TowerPose.idle(), 0.0, "Burst T2"},
+                {Look.SPLASH, 0, TowerPose.idle(), 0.0, "Burst T0"}, {Look.SPLASH, 2, TowerPose.idle(), 0.0, "Burst T2"},
                 {Look.SPLASH, 3, TowerPose.idle(), 0.0, "Burst T3"},
                 {Look.SPLASH, 3, TowerPose.idle().fired(), 0.0, "Burst T3 thrown"},
                 {Look.HEXER, 1, TowerPose.idle(), 0.0, "Hexer T1"}, {Look.PULSE, 1, TowerPose.idle(), 0.0, "Obelisk T1"},
@@ -548,7 +549,7 @@ public final class PolishSheets {
                 "Aerie flock comes in to a quiet tower (tick clock), every 0.7 s from 1.5 s quiet",
                 "Aerie flock scatters as the tower fights (tick clock), every 0.2 s",
                 "Mortar single reload (tick clock), every 0.3 s of a 2.4 s reload",
-                "Mortar volley reload, three shells last stacked first, every 0.3 s",
+                "Mortar volley reload: Normal, Napalm, then Heavy (fired first) goes in last, every 0.3 s",
                 "Sniper Frenzy: shake and embers (tick clock), every 0.1 s"};
         BufferedImage image = new BufferedImage(20 + tile * 8, 40 + rowHeight * names.length,
                 BufferedImage.TYPE_INT_RGB);
@@ -589,8 +590,11 @@ public final class PolishSheets {
                             PolishLife.ORBIT_SQUASH, PolishLife.Presence.of(1.5 + i * 0.7, false, 0));
                     case 11 -> alive(g, Look.SHADE, 3, TowerPose.idle(), cx, cy, 96, 0, 3 + i * 0.2, 21,
                             PolishLife.ORBIT_SQUASH, PolishLife.Presence.of(9, true, i * 0.2));
-                    case 12 -> mortarAt(g, 2, false, LoadedShell.NORMAL, 0.05 + i * 0.3, 2.4, cx, cy, 96);
-                    case 13 -> mortarAt(g, 3, true, LoadedShell.HEAVY, 0.05 + i * 0.3, 2.4, cx, cy, 96);
+                    case 12 -> mortarAt(g, 2, false, MORTAR_STOCKS.get(2), List.of(LoadedShell.TAR), 0.05 + i * 0.3,
+                            2.4, cx, cy, 96);
+                    case 13 -> mortarAt(g, 3, true, PolishLooks.MORTAR_STOCK,
+                            List.of(LoadedShell.HEAVY, LoadedShell.NAPALM, LoadedShell.NORMAL), 0.05 + i * 0.3, 2.4,
+                            cx, cy, 96);
                     case 14 -> {
                         Built f = PolishLooks.sniper(2, TowerPose.idle().with(TowerCue.FRENZY), i, false);
                         tower(g, f, cx, cy, 96, Math.toRadians(-20));
@@ -829,40 +833,58 @@ public final class PolishSheets {
         });
     }
 
-    /** One lab Mortar {@code since} seconds after a shot with a reload of {@code reload} seconds, its arc live. */
-    private static void mortarAt(Graphics2D g, int tier, boolean volley, LoadedShell kind, double since, double reload,
-                                 double cx, double cy, double scale) {
+    /** The racks the sheets show, Tiers 0 to III: what a tower that far up the tree might load. */
+    private static final List<List<LoadedShell>> MORTAR_STOCKS = List.of(
+            List.of(LoadedShell.NORMAL, LoadedShell.HEAVY),
+            List.of(LoadedShell.NORMAL, LoadedShell.HEAVY, LoadedShell.NAPALM),
+            List.of(LoadedShell.NORMAL, LoadedShell.HEAVY, LoadedShell.TAR, LoadedShell.FLARE),
+            PolishLooks.MORTAR_STOCK);
+
+    /**
+     * One lab Mortar {@code since} seconds after a shot with a reload of {@code reload} seconds, its arc live:
+     * {@code stock} on its rack, loading {@code load} (front first).
+     */
+    private static void mortarAt(Graphics2D g, int tier, boolean volley, List<LoadedShell> stock,
+                                 List<LoadedShell> load, double since, double reload, double cx, double cy,
+                                 double scale) {
         double done = Math.min(1, since / reload);
         TowerPose pose = (done < 1 ? TowerPose.idle().reloading((float) done).snapped(4) : TowerPose.idle())
-                .withShell(kind).with(TowerCue.VOLLEY, volley);
-        tower(g, PolishLooks.of(Look.MORTAR, tier, pose), cx, cy, scale, 0);
-        PolishLife.mortarLoad(g, cx, cy, scale, tier, pose, done, volley, kind);
+                .withShell(load.get(0)).with(TowerCue.VOLLEY, volley);
+        tower(g, Built.of(PolishLooks.siegeMortar(tier, pose, stock, load)), cx, cy, scale, 0);
+        PolishLife.mortarLoad(g, cx, cy, scale, tier, pose, done, volley, stock, load);
     }
 
     /**
-     * The siege mortar's reload, a shot every 3 s: Tiers 0 to III loading one shell, then a volley loading three, last
-     * stacked first; under them the board's own size. Left of all, the Mortar as it is now.
+     * The siege mortar's reload, a shot every 3 s: Tiers 0 to III loading one shell, each a rack of what it can load,
+     * then a volley loading three, the shell fired first going in last; under them the board's own size. Left of
+     * all, the Mortar as it is now.
      */
     private static void mortar(File file) throws IOException {
         int step = 190;
-        gif(file, 40 + step * 6, 470, 6, (g, t) -> {
-            text(g, "Mortar (tick clock): a stationary siege mortar; a shot every 3 s, the reload carries a shell from the"
-                    + " pile to the muzzle. Now, Tiers 0-III, a volley (3 shells, last stacked first)", 12, 20, TEXT,
-                    TITLE);
+        gif(file, 40 + step * 6, 470, 12, (g, t) -> {
+            text(g, "Mortar (tick clock): a stationary siege mortar; a shot every 3 s, the reload lifts a shell off the"
+                    + " rack into the muzzle. Now, Tiers 0-III, a volley (3 shells, the first to fire goes in last)", 12,
+                    20, TEXT, TITLE);
             double since = t % 3.0;
-            LoadedShell kind = t < 3 ? LoadedShell.NORMAL : LoadedShell.NAPALM;
+            int shot = (int) Math.floor(t / 3.0);
+            LoadedShell kindNow = shot % 2 == 0 ? LoadedShell.NORMAL : LoadedShell.NAPALM;
             TowerPose now = (since < 2.4 ? TowerPose.idle().reloading((float) (since / 2.4)).snapped(4)
-                    : TowerPose.idle()).withShell(kind);
+                    : TowerPose.idle()).withShell(kindNow);
             floor(g, 30 + step / 2.0, 260, 112, 1);
             game(g, TowerLook.MORTAR, 2, now, 30 + step / 2.0, 260, 112, -30);
             text(g, "now", 30 + step / 2.0 - 12, 340, DIM, LABEL);
             for (int i = 0; i < 5; i++) {
                 double cx = 30 + step * (i + 1) + step / 2.0;
+                int tier = Math.min(3, i);
+                List<LoadedShell> stock = MORTAR_STOCKS.get(tier);
+                List<LoadedShell> load = i == 4
+                        ? List.of(stock.get(shot % stock.size()), LoadedShell.NAPALM, LoadedShell.HEAVY)
+                        : List.of(stock.get(shot % stock.size()));
                 floor(g, cx, 260, 112, 1);
-                mortarAt(g, Math.min(3, i), i == 4, i == 4 ? LoadedShell.HEAVY : kind, since, 2.4, cx, 260, 112);
+                mortarAt(g, tier, i == 4, stock, load, since, 2.4, cx, 260, 112);
                 text(g, i == 4 ? "T3 volley" : "T" + i, cx - 20, 340, TEXT, LABEL);
                 floor(g, cx, 420, 32, 1);
-                mortarAt(g, Math.min(3, i), i == 4, i == 4 ? LoadedShell.HEAVY : kind, since, 2.4, cx, 420, 32);
+                mortarAt(g, tier, i == 4, stock, load, since, 2.4, cx, 420, 32);
             }
         });
     }
@@ -1020,15 +1042,29 @@ public final class PolishSheets {
             double ly = hy + (Math.sin(aim) * lensX + Math.cos(aim) * lensY) * 96
                     - PolishLooks.LIFT * (hf.top() + 0.08) * 96;
             PolishShots.laser(g, lx, ly, ex, ey - 96 * 0.2, 96, t);
-            text(g, "Executioner: a crit would execute it / a sure crit is on its way", 760, 330, TEXT, TITLE);
-            dummy(g, 860, 460, 96 * 0.16, new Color(0x8a7f74));
-            PolishShots.executionMark(g, 860, 460 - 96 * 0.16, 96, false, t);
-            dummy(g, 1040, 460, 96 * 0.16, new Color(0x8a7f74));
-            PolishShots.executionMark(g, 1040, 460 - 96 * 0.16, 96, true, t);
-            dummy(g, 880, 530, 32 * 0.16, new Color(0x8a7f74));
-            PolishShots.executionMark(g, 880, 530 - 32 * 0.16, 32, false, t);
-            dummy(g, 920, 530, 32 * 0.16, new Color(0x8a7f74));
-            PolishShots.executionMark(g, 920, 530 - 32 * 0.16, 32, true, t);
+            text(g, "Executioner: a crit leaves it under the line and it is executed (now | new)", 760, 330, TEXT,
+                    TITLE);
+            double cycle = t % 1.6;
+            for (int k = 0; k < 4; k++) {
+                boolean fresh = k % 2 == 1;
+                double scale = k < 2 ? 96 : 32;
+                double vx = k < 2 ? 900 + k * 200 : 940 + (k - 2) * 60;
+                double vy = k < 2 ? 450 : 540;
+                double from = vx - scale * 1.4;
+                double rise = scale * 0.16;
+                if (cycle < 0.3) {
+                    dummy(g, vx, vy, scale * 0.16, new Color(0x8a7f74));
+                    PolishShots.shot(g, PolishShots.Round.CRIT, from, vy - rise - scale * 0.3, vx, vy - rise,
+                            cycle / 0.3, 1, scale, t);
+                } else {
+                    double progress = (cycle - 0.3) / PolishShots.EXECUTION_SECONDS;
+                    if (fresh) {
+                        PolishShots.execution(g, vx, vy - rise, scale, progress, 11);
+                    } else {
+                        PolishShots.executionNow(g, vx, vy - rise, scale, (cycle - 0.3) / 0.33);
+                    }
+                }
+            }
         });
     }
 
