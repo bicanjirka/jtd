@@ -4,23 +4,32 @@ import org.junit.jupiter.api.Test;
 import td.GameEngine;
 import td.cell.CellHighlight;
 import td.damage.Damage;
+import td.effect.Effect;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
 import td.fixtures.EnemyFixtures;
+import td.fixtures.FakeEnemyMob;
 import td.fixtures.LevelFixtures;
+import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.projectile.CannonballProjectile;
 import td.tower.CinderTower;
+import td.tower.MortarTower;
+import td.tower.PulseTower;
+import td.tower.SeekerTower;
 import td.tower.SniperTower;
 import td.tower.TowerFactory;
+import td.tower.pulse.PulseSpec;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.render.CellGridDraw;
 import td.ui.render.EnemyFadeDraw;
 import td.ui.render.FlameDraw;
+import td.ui.render.LoadedShell;
 import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.SheetLine;
+import td.ui.render.TowerCue;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerPose;
 import td.ui.render.TowerSheet;
@@ -47,6 +56,107 @@ class BoardRendererTest {
 
     private static BoardRenderer rendererFor(GameWorld context, CellHighlight highlight) {
         return new BoardRenderer(context, () -> highlight);
+    }
+
+    /**
+     * The pose the only tower of {@code context} is drawn in at {@code gameTime}, its stand-in enemies, which have no
+     * body to draw, taken off the board first.
+     */
+    private static TowerPose poseIn(GameWorld context, int gameTime) {
+        context.enemies().setEnemies(new EnemyMob[0]);
+        return rendererFor(context).buildFrame(gameTime, 0.0, 0.0).towerSprites().getFirst().pose();
+    }
+
+    @Test
+    void aKnellThrowsTheObeliskAsItRings() {
+        GameWorld context = newEngine().getGameWorld();
+        PulseTower tower = new PulseTower(context, 3, 3);
+        UpgradePaths.buy(tower, context, "Knell");
+        context.towers().add(tower);
+        FakeEnemyMob full = FakeEnemyMob.at(tower.getX(), tower.getY());
+        full.applyEffect(Effect.toll(PulseSpec.TOLL_CAP, PulseSpec.TOLL_CAP));
+        float before = poseIn(context, 0).recoil();
+        context.enemies().setEnemies(new EnemyMob[]{full});
+        int tick = 0;
+        do {
+            tick++;
+            tower.beginTick(tick);
+            tower.doTick(tick);
+        } while (tick < 200 && tower.ticksSinceKnell(tick) != 0);
+
+        TowerPose ringing = poseIn(context, tick);
+
+        assertThat(before).isZero();
+        assertThat(ringing.recoil()).isPositive();
+    }
+
+    @Test
+    void dragonsBreathReachesTheScorchersPose() {
+        GameWorld context = newEngine().getGameWorld();
+        CinderTower tower = new CinderTower(context, 3, 3);
+        context.towers().add(tower);
+        boolean before = poseIn(context, 0).has(TowerCue.DRAGONS_BREATH);
+
+        UpgradePaths.buy(tower, context, "Dragon's Breath");
+
+        assertThat(before).isFalse();
+        assertThat(poseIn(context, 0).has(TowerCue.DRAGONS_BREATH)).isTrue();
+    }
+
+    @Test
+    void aFullKeenFocusReachesTheRiflesPoseAsItsStacksAndItsCue() {
+        GameWorld context = newEngine().getGameWorld();
+        SniperTower tower = new SniperTower(context, 3, 3);
+        UpgradePaths.buy(tower, context, "Keen Eye");
+        context.towers().add(tower);
+        FakeEnemyMob target = FakeEnemyMob.at(tower.getX() + 40, tower.getY());
+        boolean keenBefore = poseIn(context, 0).has(TowerCue.KEEN_FOCUS);
+        context.enemies().setEnemies(new EnemyMob[]{target});
+        int tick = 1;
+        for (; tick < 2000 && !tower.keenAtFullFocus(); tick++) {
+            tower.beginTick(tick);
+            tower.doTick(tick);
+        }
+
+        TowerPose focused = poseIn(context, tick - 1);
+
+        assertThat(keenBefore).isFalse();
+        assertThat(focused.has(TowerCue.KEEN_FOCUS)).isTrue();
+        assertThat(focused.stacks()).isEqualTo(Math.min(tower.steadyAimStacks(), TowerFoundations.FOCUS_STACKS));
+    }
+
+    @Test
+    void aReadyReleaseReachesTheAeriesPose() {
+        GameWorld context = newEngine().getGameWorld();
+        SeekerTower tower = new SeekerTower(context, 3, 3);
+        UpgradePaths.buy(tower, context, "Swarm");
+        context.towers().add(tower);
+        boolean before = poseIn(context, 0).has(TowerCue.RELEASE_READY);
+        int tick = 1;
+        while (!tower.releaseReady() && tick < 5000) {
+            context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(tower.getX() + 40, tower.getY())});
+            for (int i = 0; i < 200 && context.projectiles().getProjectiles().isEmpty(); i++) {
+                tower.doTick(tick++);
+            }
+            TowerFixtures.flyProjectilesToCompletion(context);
+        }
+
+        assertThat(before).isFalse();
+        assertThat(poseIn(context, tick).has(TowerCue.RELEASE_READY)).isTrue();
+    }
+
+    @Test
+    void theMortarsRackHoldsEveryKindItCanLoad() {
+        GameWorld context = newEngine().getGameWorld();
+        MortarTower tower = new MortarTower(context, 3, 3);
+        context.towers().add(tower);
+        UpgradePaths.buy(tower, context, "Fusion");
+
+        List<LoadedShell> rack = poseIn(context, 0).stock();
+
+        assertThat(rack).containsExactlyElementsOf(tower.loadableKinds().stream()
+                .map(kind -> ProjectileFrameBuilder.loadedShellOf(kind.look())).toList());
+        assertThat(rack).contains(LoadedShell.NUKE);
     }
 
     @Test

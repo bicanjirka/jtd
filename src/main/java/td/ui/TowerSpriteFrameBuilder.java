@@ -227,7 +227,11 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     private static List<LoadedShell> shellsOf(List<ShellKind> kinds) {
-        return kinds.stream().map(kind -> ProjectileFrameBuilder.loadedShellOf(kind.look())).toList();
+        LoadedShell[] shells = new LoadedShell[kinds.size()];
+        for (int i = 0; i < shells.length; i++) {
+            shells[i] = ProjectileFrameBuilder.loadedShellOf(kinds.get(i).look());
+        }
+        return List.of(shells);
     }
 
     /** An upgrade tier's colour role, for its perk icons; a tier above the last takes the last's. */

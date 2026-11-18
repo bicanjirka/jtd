@@ -122,7 +122,7 @@ final class TowerArtSheets2 {
                 70 + one.getHeight() + 50 + big.getHeight() + 30, TowerArtSheets.PAPER);
         Graphics2D g = TowerArtSheets.pen(img);
         TowerArtSheets.title(g, "The seven towers on Iron Crossing, painted over the game's own frame", 20, 26);
-        TowerArtSheets.label(g, "Board scale 1x (32 px cells). Columns: Sniper, Burst (Stormcaller from Tier I), Mortar, Scorcher, "
+        TowerArtSheets.label(g, "Board scale 1x (32 px cells). Columns: Sniper, Burst (unforked), Mortar, Scorcher, "
                 + "Aerie, Obelisk, Beacon. Rows: Tiers 0 to III.", 20, 46);
         g.drawImage(one, 20, 56, null);
         TowerArtSheets.label(g, "Smallest zoom, 0.5x (16 px cells)", 40 + one.getWidth(), 76);

@@ -158,6 +158,9 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
+The tower visual polish (`FEATURE-tower-visual-polish.md`, 2026-11-18) redrew parts of this look, its idle
+life and its moments; where the two differ, that request is what the game draws.
+
 A dark standing stone, square in plan, with a pyramidion at its tip that holds one rune. Calmer than today's spinning
 star and three ripple rings. Its colour is `#8f86b8`; the stone's top is a darker step of it and its face, turned
 to the player, darker still. It is the tallest thing on the board for its width. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.obelisk`, built from a `TowerPose`.
@@ -169,7 +172,7 @@ stone), `BURDEN`, `GRAVITY` and `UMBRA`. Nothing aims.
 | What the tower holds | In the pose |
 |---|---|
 | an enemy at full Toll inside | `TowerCue.CHARGED` (the rune glows brighter, not bigger) |
-| the knell | `fired()` |
+| the knell | `reloading(progress since the knell)`: thrown from side to side, its runes white |
 
 - **The rune** is `PulseTower.stoneLook()` (a `StoneLook` the stone cluster's mechanics set), turned into a look by
   `TowerSpriteFrameBuilder.bodyLookOf(PulseTower)`; the pose is `poseOf(PulseTower, int)`.
@@ -177,8 +180,8 @@ stone), `BURDEN`, `GRAVITY` and `UMBRA`. Nothing aims.
   (`ZONE_FIELD*`), beside the zones, so it is traced and filled as they are. Burden's denser fill and Gravity's
   darkening are `Java2DFrameRenderer`'s, by palette. A Ward's rune line is one `WardOutlineDraw` traced round every
   warded field at once.
-- **The Sundial** is a `ShadowDraw` from the stone while it turns, fading over the last of its turn; an Umbra stone's
-  is drawn again, darker, clipped to its field. **The knell** is a `RingDraw` in the field's colour, not the rune's.
+- **The Sundial** is a `ShadowDraw` from the stone while it turns, fading over the last of its turn: the stone's dark
+  shadow in a band of sun-lit ground, which an Umbra stone lights darker inside its field. **The knell** is a `RingDraw` in the field's colour, not the rune's.
 - **Toll** is a `TollMarkDraw` ring of segments round the enemy and **Silence** a `SilenceMarkDraw`, both enemy
   marks, so they show whatever gave them. Toll's ripple, the shadow's hit flash and Deep Toll's hotter rune are not
   drawn (`TODO.md`).

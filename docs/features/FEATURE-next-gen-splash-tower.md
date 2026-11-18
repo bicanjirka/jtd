@@ -102,6 +102,9 @@ New or changed meanings of names the rows use. A name with no row here reads as 
 
 ### Look
 
+The tower visual polish (`FEATURE-tower-visual-polish.md`, 2026-11-18) redrew parts of this look, its idle
+life and its moments; where the two differ, that request is what the game draws.
+
 The earlier idea of a hole in the ground is dropped. The tower is defined by its split: a cheap stone thrower that
 becomes an electric contraption, a tesla coil, or a witch's cauldron. Drawn in the art pass (2026-11-13), in the raised view with a footprint that grows with the tier (`FEATURE-next-gen-tower-looks.md`, "Art direction"). The sheets show exactly what to build: [every tier](next-gen-art/catalogue.png), [on the board](next-gen-art/board.png), [the moving part and its cues](next-gen-art/heads.png), [shots and casts](next-gen-art/shots.png). Every measure, in cell units, is in `TowerFoundations.thrower`, `stormcaller` and `hexer`, built from a `TowerPose`.
 
@@ -131,7 +134,8 @@ built from the pose.
   moves, so the tusks stand in for it.
 - **The moving part** (no turning head, question 5): the thrower's arm flicks forward on each throw and lies back
   as it reloads, a new stone appearing in its cup at half the reload; the coil's ball sparks once, four short jagged
-  lines; the brew throws up one big bubble and three drops. Nothing moves between throws.
+  lines; the brew throws up one big bubble and three drops. Between throws only the idle life moves: arcs jumping
+  off the coil's ball and magic turning in the Hexer's (`Life.SPARKS`, `Life.SWIRL`).
 - **A full ability waiting for a target**: the coil's ball turns white in a steady blue glow; the brew turns pale
   and glows violet. Steady, not pulsing, until it casts.
 - **Shot**: a stone thrown on a high arc at the (random) target, with a soft grey veil under it on the ground for a
