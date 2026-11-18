@@ -34,11 +34,14 @@ import td.ui.render.CannonballDraw;
 import td.ui.render.CasingDraw;
 import td.ui.render.FlameDraw;
 import td.ui.render.FlockDraw;
+import td.ui.render.FootDustDraw;
 import td.ui.render.LaserDraw;
 import td.ui.render.LoadedMissile;
 import td.ui.render.LoadedShell;
+import td.ui.render.MuzzleBlastDraw;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
+import td.ui.render.PumpSteamDraw;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.ShellCarryDraw;
@@ -680,6 +683,48 @@ class TowerEffectFrameBuilderTest {
 
         assertThat(volley.getCoolDownFraction()).isPositive();
         assertThat(TowerSpriteFrameBuilder.poseOf(volley, second).beat()).isEqualTo(TowerFoundations.strideShot(0));
+    }
+
+    @Test
+    void aMortarSpitsAtItsMouthAsAShellLeavesAndKicksUpDustAtItsFeetAsItSlams() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        MortarTower mortar = new MortarTower(context, 3, 3);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(mortar.getX() + 60, mortar.getY())});
+        int fired = firstShot(mortar);
+        int smokeGone = fired + TowerMomentArt.MUZZLE_SMOKE_TICKS;
+
+        List<MuzzleBlastDraw> spit = effectsOf(mortar, context, fired, MuzzleBlastDraw.class);
+        List<FootDustDraw> dustAtTheSpit = effectsOf(mortar, context, fired, FootDustDraw.class);
+        List<FootDustDraw> slam = effectsOf(mortar, context, fired + 1, FootDustDraw.class);
+
+        assertThat(spit).singleElement().extracting(MuzzleBlastDraw::progress).isEqualTo(0f);
+        assertThat(dustAtTheSpit).isEmpty();
+        assertThat(slam).singleElement().extracting(FootDustDraw::progress).isEqualTo(0f);
+        assertThat(effectsOf(mortar, context, smokeGone, MuzzleBlastDraw.class)).isEmpty();
+        assertThat(effectsOf(mortar, context, smokeGone, FootDustDraw.class)).isEmpty();
+    }
+
+    @Test
+    void aMortarLetsOffSteamOnlyOnceItsShellIsInAndHissesNowAndThenWhileItWaits() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        MortarTower mortar = new MortarTower(context, 3, 3);
+        List<Boolean> waiting = IntStream.range(0, Math.round(2 * TickRate.TICKS_PER_SECOND))
+                .mapToObj(t -> !effectsOf(mortar, context, t, PumpSteamDraw.class).isEmpty()).toList();
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(mortar.getX() + 60, mortar.getY())});
+        List<Float> steamedAt = new ArrayList<>();
+        for (int tick = firstShot(mortar) + 1; tick < 400; tick++) {
+            mortar.doTick(tick);
+            if (mortar.ticksSinceFired(tick, 0).isPresent()) {
+                break;
+            }
+            if (!effectsOf(mortar, context, tick, PumpSteamDraw.class).isEmpty()) {
+                steamedAt.add(mortar.getCoolDownFraction());
+            }
+        }
+
+        assertThat(waiting).contains(true, false);
+        assertThat(steamedAt).isNotEmpty().allSatisfy(coolDown ->
+                assertThat(coolDown).isLessThanOrEqualTo(1f - TowerFoundations.MORTAR_LOADED_AT));
     }
 
     /** Ticks {@code mortar} from the first tick until a shell leaves, and returns that tick. */

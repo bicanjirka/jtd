@@ -2,7 +2,10 @@ package td.ui;
 
 import td.ui.render.CasingDraw;
 import td.ui.render.EmbersDraw;
+import td.ui.render.FootDustDraw;
 import td.ui.render.LoadedShell;
+import td.ui.render.MuzzleBlastDraw;
+import td.ui.render.PumpSteamDraw;
 import td.ui.render.ShadowDraw;
 import td.ui.render.ShellCarryDraw;
 import td.ui.render.SteamDraw;
@@ -22,7 +25,8 @@ import java.awt.geom.Rectangle2D;
 
 /**
  * A tower's moments, painted live in board pixels on the tick clock: a rifle's spent cartridge, a nozzle's steam, a
- * shell carried into a mortar, a frenzied turret's embers and the Sundial's shadow. Each is a pure function of its
+ * shell carried into a mortar, a mortar's spit, the dust at its feet and the steam off its pump, a frenzied turret's
+ * embers and the Sundial's shadow. Each is a pure function of its
  * draw's progress, so nothing is kept between frames.
  */
 final class TowerMomentArt {
@@ -38,6 +42,22 @@ final class TowerMomentArt {
     private static final double MORTAR_ARC_PEAK = 0.26;
     /** A volley's shells each fly a quarter of the reload, a single load its middle half. */
     private static final double VOLLEY_SHARE = 0.25;
+
+    /**
+     * A mortar's moments, in ticks: the smoke off its mouth after a shot (the flash shows on the first of them), the
+     * dust at its feet from the slam, and a puff of steam off its pump.
+     */
+    static final int MUZZLE_SMOKE_TICKS = 9;
+    static final int FOOT_DUST_TICKS = 4;
+    static final int PUMP_STEAM_TICKS = 4;
+    private static final Color MUZZLE_FLASH = new Color(0xffe0a0);
+    private static final Color MUZZLE_PUFF = new Color(0xb4b7c0);
+    private static final Color MUZZLE_RING = new Color(0xc9ccd4);
+    private static final int MUZZLE_PUFFS = 5;
+    /** The side puffs are gone once the ring has run this share of its rise. */
+    private static final double MUZZLE_PUFF_SHARE = 0.45;
+    private static final Color FOOT_DUST = new Color(0xa89a80);
+    private static final Color PUMP_STEAM = new Color(0xdfe3ea);
 
     private static final int FRENZY_EMBERS = 7;
     private static final double FRENZY_EMBER_SECONDS = 0.9;
@@ -152,6 +172,73 @@ final class TowerMomentArt {
                 cy + (y - TowerFoundations.LIFT * floor) * scale - radius * 0.45, radius * 2, radius * 0.9));
         TowerSprites.paintShell(g2, kind, (float) (cx + x * scale),
                 (float) (cy + (y - TowerFoundations.LIFT * z) * scale), (float) radius);
+    }
+
+    /**
+     * A mortar's spit: a warm flash with a white heart over the mouth on the shot's first tick, puffs of smoke bursting
+     * out sideways round the mouth, and a smoke ring rising off it, widening and thinning out.
+     */
+    static void muzzleBlast(Graphics2D g2, MuzzleBlastDraw blast) {
+        double age = blast.progress();
+        if (age < 0 || age >= 1) {
+            return;
+        }
+        double scale = blast.cellPixels();
+        double x = blast.x();
+        double y = blast.y();
+        double lift = TowerFoundations.LIFT * scale;
+        if (age < 1.0 / MUZZLE_SMOKE_TICKS) {
+            TowerLifeArt.glow(g2, x, y - lift * 0.06, scale * 0.30, MUZZLE_FLASH, 0.95);
+            TowerLifeArt.glow(g2, x, y - lift * 0.06, scale * 0.14, Color.WHITE, 0.95);
+        }
+        if (age < MUZZLE_PUFF_SHARE) {
+            double puff = age / MUZZLE_PUFF_SHARE;
+            for (int i = 0; i < MUZZLE_PUFFS; i++) {
+                double bearing = Math.toRadians(-150 + i * 30);
+                double out = (0.10 + 0.16 * puff) * scale;
+                TowerLifeArt.glow(g2, x + Math.cos(bearing) * out,
+                        y + Math.sin(bearing) * out * 0.5 - lift * (0.02 + 0.10 * puff), scale * (0.07 + 0.06 * puff),
+                        MUZZLE_PUFF, 0.7 * (1 - puff));
+            }
+        }
+        double ringY = y - lift * (0.06 + 0.55 * Math.sqrt(age));
+        double outer = (0.13 + 0.13 * age) * scale;
+        double inner = outer * 0.55;
+        Path2D.Double ring = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        ring.append(new Ellipse2D.Double(x - outer, ringY - outer, outer * 2, outer * 2), false);
+        ring.append(new Ellipse2D.Double(x - inner, ringY - inner, inner * 2, inner * 2), false);
+        g2.setColor(TowerLifeArt.faded(MUZZLE_RING, 0.8 * (1 - age)));
+        g2.fill(ring);
+        TowerLifeArt.glow(g2, x, ringY, outer * 1.2, MUZZLE_RING, 0.25 * (1 - age));
+    }
+
+    /** Dust kicked up at every foot of a Strider as it slams down, spreading outward and settling. */
+    static void footDust(Graphics2D g2, FootDustDraw dust) {
+        double age = dust.progress();
+        if (age < 0 || age >= 1) {
+            return;
+        }
+        double scale = dust.cellPixels();
+        for (int i = 0; i < TowerFoundations.mortarFeet(); i++) {
+            double[] foot = TowerFoundations.mortarFoot(dust.tier(), i);
+            double bearing = Math.toRadians(foot[3]);
+            double x = foot[0] + Math.cos(bearing) * 0.05 * age;
+            double y = foot[1] + Math.sin(bearing) * 0.04 * age - TowerFoundations.LIFT * (foot[2] + 0.02 + 0.04 * age);
+            TowerLifeArt.glow(g2, dust.centerX() + x * scale, dust.centerY() + y * scale, scale * (0.05 + 0.07 * age),
+                    FOOT_DUST, 0.6 * (1 - age));
+        }
+    }
+
+    /** One puff of steam drifting up and away east from the foot of a pump, swelling and fading. */
+    static void pumpSteam(Graphics2D g2, PumpSteamDraw steam) {
+        double age = steam.progress();
+        if (age < 0 || age >= 1) {
+            return;
+        }
+        double scale = steam.cellPixels();
+        TowerLifeArt.glow(g2, steam.x() + scale * (0.03 + 0.04 * age),
+                steam.y() - scale * (0.01 + TowerFoundations.LIFT * (0.05 + 0.12 * age)), scale * (0.05 + 0.05 * age),
+                PUMP_STEAM, 0.75 * (1 - age));
     }
 
     /** Red sparks that leave the turret one after another, rise, waver and go out. */

@@ -99,7 +99,7 @@ measures: a point `v` up a face at `faceY` stands at `y = faceY - 0.42 v`.
 | Hexer | an oracle's ball of violet glass on a twisted iron stem, cradled by claws (bone at Tier III). Every tier has the three iron spokes and standing stones, short and with dim runes at Tier I: the Burst's stones are gone | `hexer` | replaces `hexer` |
 | Scorcher with Dragon's Breath | a dragon's head for a turret head: neck, crest, a jaw that drops while it streams, horns. The body stays (the user, 2026-11-18) | `dragonHead` | the head of `scorcher` when the pose has `DRAGONS_BREATH` |
 | Soulfire | a soul cage: banded barrel, two blades and a fang round a pale flame, a small skull behind | `soulHead` | the head of `scorcher` when `soul` |
-| Mortar | a stationary siege mortar, see "The Mortar" | `siegeMortar`, `leg`, the `MORTAR_*` constants | replaces `mortar` and `mortarHead`; no head |
+| Mortar | a stationary siege mortar, see "The Mortar"; now the Strider (`FEATURE-mortar-strider.md`) | `siegeMortar`, `leg`, the `MORTAR_*` constants; now `striderMortar` | replaces `mortar` and `mortarHead`; no head |
 | Sniper | the same rifle, showing its focus and its Frenzy, see "The Sniper" | `sniperHead`, the `FOCUS_*`, `KEEN_GOLD`, `FRENZY_SHAKE*` constants | replaces `sniperHead` |
 | Aerie | the same spire, narrowing as it climbs, the tallest tower at every tier; a dark blue disc round the spire's foot so the pale crystal stands out from its blue base; no ring (the user, 2026-11-18): while a Release is ready its tip turns white and glows, as Ruby's, Shade's and White's do | `aerie`, `AERIE_FOOT*` | the `SEEKER` row; the ring and its arms go |
 | Ruby | a geode broken open: a cluster of leaning crystals round one great shard, an ember under them | `ruby`, `crystalShard` | the `RUBY` row |
@@ -144,6 +144,10 @@ with distance. Each soft edge is six nested layers. The leading side, where the 
 An Umbra stone inside its own field lights the band darker and bluer, as today.
 
 ### The Mortar
+
+**Superseded by `FEATURE-mortar-strider.md`** (the Strider: a fat ribbed mortar on four jointed legs, its shot, slam,
+bounce and pump, and the steep lob). What follows is the siege mortar this feature shipped; its scale, its rack and
+its loading still hold, and the deck, the iron edge and the Tier III rail are kept.
 
 A stationary, ground-anchored siege mortar standing in the middle of its cell, as every tower does: a bedplate, four
 splayed legs braced across (twice from Tier II), and a thick, wide-mouthed barrel fixed at a steep angle to the north.
