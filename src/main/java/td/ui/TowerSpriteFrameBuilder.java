@@ -13,8 +13,10 @@ import td.tower.TowerFactory;
 import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
 import td.tower.TurretAim;
+import td.tower.mortar.ShellKind;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
+import td.ui.render.LoadedShell;
 import td.ui.render.Palette;
 import td.ui.render.TowerCue;
 import td.ui.render.TowerLook;
@@ -34,9 +36,9 @@ import java.util.OptionalInt;
  */
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
+    /** How long a knell throws the stone about. */
+    private static final int KNELL_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 0.4f);
     /** A tier's rise takes half a second on the tick clock, so it pauses and speeds with the game. */
-    /** How long the stone shows a ring of its knell. */
-    private static final int KNELL_FLASH_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 0.4f);
     private static final int RISE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2);
     /** A placed tower settles onto its cell a little faster than a tier rises. */
     private static final int SETTLE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 0.35f);
@@ -151,10 +153,14 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         };
     }
 
-    /** The pose an Obelisk is in: its rune bright while it holds an enemy at full Toll, flashing as it rings. */
+    /**
+     * The pose an Obelisk is in: its runes bright while it holds an enemy at full Toll; as it rings, thrown about and
+     * settling over the knell's moment.
+     */
     static TowerPose poseOf(PulseTower tower, int gameTime) {
         TowerPose pose = TowerPose.idle().with(TowerCue.CHARGED, tower.holdsFullToll());
-        return tower.ticksSinceKnell(gameTime) < KNELL_FLASH_TICKS ? pose.fired() : pose;
+        int since = tower.ticksSinceKnell(gameTime);
+        return since < KNELL_TICKS ? pose.reloading(since / (float) KNELL_TICKS) : pose;
     }
 
     static TowerLook bodyLookOf(SplashTower tower) {
@@ -183,14 +189,21 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         return coolDownFraction <= 0f ? TowerPose.idle() : TowerPose.idle().reloading(1f - coolDownFraction);
     }
 
-    /** The pose a Sniper's rifle is in: where it draws its barrel is where its bullets leave from. */
-    static TowerPose poseOf(SniperTower tower) {
-        return poseOfReload(tower.getCoolDownFraction()).withStacks(tower.steadyAimStacks())
+    /**
+     * The pose a Sniper's rifle is in: where it draws its barrel is where its bullets leave from. Its stacks stop at
+     * the count past which the lens shows nothing more, and Frenzy shakes it a step every few ticks.
+     */
+    static TowerPose poseOf(SniperTower tower, int gameTime) {
+        boolean frenzied = tower.frenzied();
+        return poseOfReload(tower.getCoolDownFraction())
+                .withStacks(Math.min(tower.steadyAimStacks(), TowerFoundations.FOCUS_STACKS))
+                .withBeat(frenzied ? gameTime / TowerFoundations.FRENZY_SHAKE_TICKS % TowerFoundations.FRENZY_STEPS : 0)
+                .with(TowerCue.KEEN_FOCUS, tower.keenAtFullFocus())
                 .with(TowerCue.LONG_BARREL, tower.reachesPastItsBase())
                 .with(TowerCue.FOURTH_SHOT, tower.nextShotIs(TowerTerm.FOURTH_SHOT))
                 .with(TowerCue.SILVER_ROUND, tower.nextShotIs(TowerTerm.SILVER_ROUND))
                 .with(TowerCue.HOLLOW_POINT, tower.nextShotIs(TowerTerm.HOLLOW_POINT))
-                .with(TowerCue.FRENZY, tower.frenzied())
+                .with(TowerCue.FRENZY, frenzied)
                 .with(TowerCue.HEADHUNTER, tower.huntsItsTarget());
     }
 
@@ -201,12 +214,20 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
                 .with(TowerCue.LONG_BARREL, tower.reachesPastItsBase());
     }
 
-    /** The pose a Mortar's barrel is in: the shell at its magazine's front in the bore, a tray while it loads a volley. */
+    /**
+     * The pose a Mortar is in: the shells this reload loads, its magazine's front ones, and on its rack every kind it
+     * can load.
+     */
     static TowerPose poseOf(MortarTower tower) {
         return poseOfReload(tower.getCoolDownFraction())
-                .withShell(ProjectileFrameBuilder.loadedShellOf(tower.magazine().front().look()))
+                .withLoad(shellsOf(tower.magazine().front(tower.loadingCount())))
+                .withStock(shellsOf(tower.loadableKinds()))
                 .with(TowerCue.VOLLEY, tower.loadingCount() > 1)
                 .with(TowerCue.LONG_BARREL, tower.reachesPastItsBase());
+    }
+
+    private static List<LoadedShell> shellsOf(List<ShellKind> kinds) {
+        return kinds.stream().map(kind -> ProjectileFrameBuilder.loadedShellOf(kind.look())).toList();
     }
 
     /** An upgrade tier's colour role, for its perk icons; a tier above the last takes the last's. */
@@ -264,7 +285,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitSniperTower(SniperTower tower) {
-        this.aimed(tower, poseOf(tower), tower.getTurretAim(), tower.getCurrentTarget() == null);
+        this.aimed(tower, poseOf(tower, this.gameTime), tower.getTurretAim(), tower.getCurrentTarget() == null);
         return null;
     }
 
@@ -285,7 +306,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
     }
 
     public Void visitMortarTower(MortarTower tower) {
-        this.aimed(tower, poseOf(tower), tower.getTurretAim(), tower.getCoolDownFraction() <= 0f);
+        this.sprite(tower, TowerLook.MORTAR, poseOf(tower));
         return null;
     }
 

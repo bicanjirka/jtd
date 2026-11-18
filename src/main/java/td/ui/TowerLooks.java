@@ -72,6 +72,7 @@ final class TowerLooks {
         rows.put(TowerLook.SEEKER, new Row(new Color(0x5cc4e2), seeker));
         rows.put(TowerLook.RUBY, new Row(new Color(0xd0405a), seeker));
         rows.put(TowerLook.SHADE, new Row(new Color(0xa6e8c8), seeker));
+        rows.put(TowerLook.WHITE, new Row(new Color(0xe6eaf2), seeker));
         List<Color> cinder = ramp(0xea862a, 0xf0a040, 0xf5c081, 0xfadaa8);
         rows.put(TowerLook.CINDER, new Row(new Color(0xea862a), cinder));
         rows.put(TowerLook.SOULFIRE, new Row(new Color(0xb9a0ff), cinder));

@@ -96,6 +96,7 @@ final class TowerIcons {
         icons.put(TowerLook.SEEKER, aerie);
         icons.put(TowerLook.RUBY, aerie);
         icons.put(TowerLook.SHADE, aerie);
+        icons.put(TowerLook.WHITE, aerie);
         Icon obelisk = obelisk();
         icons.put(TowerLook.PULSE, obelisk);
         icons.put(TowerLook.BURDEN, obelisk);

@@ -293,7 +293,7 @@ class TowerEffectFrameBuilderTest {
         SniperTower sniper = new SniperTower(context, 3, 3);
         context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(sniper.getX() + 60, sniper.getY())});
         sniper.doTick(1);
-        TowerPose recoiled = TowerSpriteFrameBuilder.poseOf(sniper);
+        TowerPose recoiled = TowerSpriteFrameBuilder.poseOf(sniper, 1);
 
         TracerDraw fired = tracersOf(sniper, context, 1, 0.0).getFirst();
 
@@ -345,17 +345,17 @@ class TowerEffectFrameBuilderTest {
         int tick = 0;
         boolean primedEarly = false;
         while (sniper.bulletsInFlight().size() + target.hits().size() < 3) {
-            primedEarly |= TowerSpriteFrameBuilder.poseOf(sniper).has(TowerCue.FOURTH_SHOT);
+            primedEarly |= TowerSpriteFrameBuilder.poseOf(sniper, tick).has(TowerCue.FOURTH_SHOT);
             sniper.doTick(++tick);
         }
-        boolean primed = TowerSpriteFrameBuilder.poseOf(sniper).has(TowerCue.FOURTH_SHOT);
+        boolean primed = TowerSpriteFrameBuilder.poseOf(sniper, tick).has(TowerCue.FOURTH_SHOT);
         while (sniper.bulletsInFlight().size() + target.hits().size() < 4) {
             sniper.doTick(++tick);
         }
 
         assertThat(primedEarly).isFalse();
         assertThat(primed).isTrue();
-        assertThat(TowerSpriteFrameBuilder.poseOf(sniper).has(TowerCue.FOURTH_SHOT)).isFalse();
+        assertThat(TowerSpriteFrameBuilder.poseOf(sniper, tick).has(TowerCue.FOURTH_SHOT)).isFalse();
     }
 
     @Test
@@ -480,7 +480,7 @@ class TowerEffectFrameBuilderTest {
     }
 
     @Test
-    void aMortarHoldsItsFrontShellInItsBoreAndATrayOnlyWhileItLoadsAVolley() {
+    void aMortarLoadsItsMagazinesFrontShellsAndMarksOnlyAVolley() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         MortarTower single = new MortarTower(context, 3, 3);
         MortarTower.loadMagazine(single, MagazineFixtures.frontedBy(ShellKind.HEAVY));
@@ -490,7 +490,8 @@ class TowerEffectFrameBuilderTest {
         single.doTick(1);
         volley.doTick(1);
 
-        assertThat(TowerSpriteFrameBuilder.poseOf(single).shell()).isEqualTo(LoadedShell.HEAVY);
+        assertThat(TowerSpriteFrameBuilder.poseOf(single).load()).containsExactly(LoadedShell.HEAVY);
+        assertThat(TowerSpriteFrameBuilder.poseOf(volley).load()).hasSize(volley.loadingCount());
         assertThat(TowerSpriteFrameBuilder.poseOf(single).has(TowerCue.VOLLEY)).isFalse();
         assertThat(TowerSpriteFrameBuilder.poseOf(volley).has(TowerCue.VOLLEY)).isTrue();
     }

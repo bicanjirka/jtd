@@ -11,21 +11,23 @@ public enum TowerCue {
     SILVER_ROUND,
     /** An orange band round the middle of the barrel. */
     HOLLOW_POINT,
-    /** A white diamond in a white glow at the muzzle. */
+    /** A white core in a red glow at the muzzle. */
     FOURTH_SHOT,
-    /** The barrel shaken sideways, red sparks at the breech. */
+    /** The head shaken about, a step of the pose's beat at a time, red sparks off it. */
     FRENZY,
+    /** A focus at its fullest that a node sharpens: the lens a golden eye. */
+    KEEN_FOCUS,
     /** A ring round the lens and a line through it. */
     HEADHUNTER,
     /** A store that is full: the part that holds it glows steadily and turns pale. */
     CHARGED,
-    /** A second tray of shells behind the barrel. */
+    /** Three shells loaded for one firing, one at each quarter of the reload. */
     VOLLEY,
     /** A stream pouring: a white-hot tip, no pilot flame, glowing vents. */
     STREAMING,
-    /** A longer, thinner nozzle. */
+    /** A dragon's head for a nozzle. */
     DRAGONS_BREATH,
-    /** A release that waits: the ring and the perch brighten. */
+    /** A release that waits: the tip turns white and glows. */
     RELEASE_READY,
     /** A whiter light. */
     DAYLIGHT

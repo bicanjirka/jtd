@@ -35,8 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 final class TowerSprites {
 
-    /** How far up the screen a part's top is lifted, as a share of its height: the board is seen from the south. */
-    private static final double LIFT = 0.42;
+    private static final double LIFT = TowerFoundations.LIFT;
     /** A nest's ring circles this far past the foundation's edge, in cells. */
     private static final double NEST_PAST_FOUNDATION = 0.06;
     /** The lit rim along a part's top-left edge, in cells. */

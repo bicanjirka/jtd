@@ -395,6 +395,21 @@ public final class SniperTower extends AbstractTower {
         return Math.min(this.aimStackCap(), this.focus.stacks());
     }
 
+    /** Whether its focus is full and a hit bonus grows with every stack of it. */
+    public boolean keenAtFullFocus() {
+        return this.focus.stacks() >= this.aimStackCap()
+                && this.upgrades().hitBonuses().stream().anyMatch(bonus -> growsWithFocus(bonus.scaling()));
+    }
+
+    private static boolean growsWithFocus(HitScaling scaling) {
+        return switch (scaling) {
+            case HitScaling.PerFocus focus -> true;
+            case HitScaling.Once once -> false;
+            case HitScaling.PerRangeShare share -> false;
+            case HitScaling.PerStackOf stacks -> false;
+        };
+    }
+
     private int aimStackCap() {
         return Math.round(this.stats().value(TowerStat.AIM_STACKS));
     }

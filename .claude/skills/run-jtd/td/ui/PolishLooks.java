@@ -170,10 +170,15 @@ final class PolishLooks {
             case GRAVITY -> Built.of(obelisk(tier, pose, TowerLook.GRAVITY));
             case UMBRA -> Built.of(obelisk(tier, pose, TowerLook.UMBRA));
             case MORTAR -> Built.of(siegeMortar(tier, pose, MORTAR_STOCK,
-                    pose.has(TowerCue.VOLLEY) ? List.of(pose.shell(), LoadedShell.HEAVY, LoadedShell.NORMAL)
-                            : List.of(pose.shell())));
+                    pose.has(TowerCue.VOLLEY) ? List.of(front(pose), LoadedShell.HEAVY, LoadedShell.NORMAL)
+                            : List.of(front(pose))));
             case SNIPER -> sniper(tier, pose, 0, false);
         };
+    }
+
+    /** The shell at the front of the pose's load, a Normal one when it loads none. */
+    static LoadedShell front(TowerPose pose) {
+        return pose.load().isEmpty() ? LoadedShell.NORMAL : pose.load().getFirst();
     }
 
     /**

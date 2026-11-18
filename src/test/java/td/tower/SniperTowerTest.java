@@ -165,6 +165,21 @@ class SniperTowerTest {
     }
 
     @Test
+    void aFocusIsKeenOnlyOnceItIsFullAndOnlyWhileAHitBonusGrowsWithIt() {
+        SniperTower plain = new SniperTower(this.world, 3, 3);
+        SniperTower keen = new SniperTower(this.world, 3, 3);
+        UpgradePaths.buy(keen, this.world, "Keen Eye");
+        boolean keenBefore = keen.keenAtFullFocus();
+
+        this.fireShots(plain, this.onlyTarget(), 8);
+        this.fireShots(keen, this.onlyTarget(), 8);
+
+        assertThat(keenBefore).isFalse();
+        assertThat(plain.keenAtFullFocus()).isFalse();
+        assertThat(keen.keenAtFullFocus()).isTrue();
+    }
+
+    @Test
     void steadyAimShowsItsStacksAndTheTimeToItsNextFade() {
         SniperTower tower = new SniperTower(this.world, 3, 3);
         FakeEnemyMob target = this.onlyTarget();

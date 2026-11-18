@@ -200,6 +200,7 @@ final class TowerArt {
             case "aerie" -> TowerLook.SEEKER;
             case "ruby" -> TowerLook.RUBY;
             case "shade" -> TowerLook.SHADE;
+            case "white" -> TowerLook.WHITE;
             case "beacon" -> TowerLook.AURA;
             case "obelisk" -> switch (s.look) {
                 case "burden" -> TowerLook.BURDEN;
@@ -310,7 +311,7 @@ final class TowerArt {
             } else if (this.reload < 1) {
                 pose = pose.refilling((float) this.reload);
             }
-            pose = pose.withStacks(this.stacks).withShell(LoadedShell.valueOf(this.shell.toUpperCase()));
+            pose = pose.withStacks(this.stacks).withLoad(java.util.List.of(LoadedShell.valueOf(this.shell.toUpperCase())));
             for (String cue : this.cues) {
                 switch (cue) {
                     case "long" -> pose = pose.with(TowerCue.LONG_BARREL);
