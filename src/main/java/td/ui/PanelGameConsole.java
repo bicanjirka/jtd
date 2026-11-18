@@ -72,12 +72,11 @@ public class PanelGameConsole extends JPanel {
         this.panelWaveInfo.setVisible(true);
     }
 
-    /** The loaded level's colour on the panel titles and the XP bar. */
+    /** The loaded level's colour on the panel titles. */
     public void setVoice(Color voice) {
         Hud.setPanelTitleColor(this.panelTowerInfo, voice);
         Hud.setPanelTitleColor(this.panelWaveInfo, voice);
         Hud.setPanelTitleColor(this.panelUpgradeTree, voice);
-        this.panelUpgradeTree.setXpFill(voice);
     }
 
     public void setLevelEnded(boolean ended) {

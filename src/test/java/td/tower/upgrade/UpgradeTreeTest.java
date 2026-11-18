@@ -7,8 +7,6 @@ import td.fixtures.WorldFixtures;
 import td.tower.Tower;
 import td.util.GameWorld;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static td.fixtures.TierTrees.A1;
@@ -91,14 +89,6 @@ class UpgradeTreeTest {
         assertThat(TREE.isHidden(B2, owned)).isTrue();
         assertThat(TREE.isHidden(A2, owned)).isFalse();
         assertThat(TREE.branchOf(B2)).contains(B1);
-    }
-
-    @Test
-    void aClusterTakesOnePlaceInItsRowAndTheLinesBehindItShareTheNext() {
-        assertThat(TREE.rows().getFirst().places()).containsExactly(new RowPlace.Group(TierTrees.ROOTS, List.of(A1, B1)),
-                new RowPlace.Lone(LONE));
-        assertThat(TREE.rows().get(1).places()).containsExactly(new RowPlace.Branches(TierTrees.ROOTS,
-                List.of(List.of(new RowPlace.Lone(A2)), List.of(new RowPlace.Lone(B2)))), new RowPlace.Lone(MID));
     }
 
     @Test

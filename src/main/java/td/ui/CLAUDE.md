@@ -73,8 +73,7 @@ keeps the seam honest.
   reload, a rise, a placement, a knell, birds coming or leaving) runs on the tick clock.
 - The nest circles the top of its tower, so no missile is drawn behind the tower.
 - The Mortar has no head: it is stationary, its barrel part of its posed body.
-- The toolbar icon and the Info pane's glyph are the look's `TowerIcons` row; a tier's thumbnail in the Upgrades
-  panel is that tier's foundation (`TowerSprites.paintStill`), drained of colour while locked.
+- The toolbar icon and the Info pane's glyph are the look's `TowerIcons` row.
 - The art sheets in `docs/features/next-gen-art` are rendered from these tables. After a change to a look, render
   them again and explain every sheet that changed.
 - A lobbed shot's position is its point on the ground; how high it is drawn comes from the one arc in
@@ -127,9 +126,10 @@ keeps the seam honest.
 - The speed buttons in `PanelHeader` are a radio the owner selects from the live speed; a click only reports. A
   `StatusIcon` opens its tooltip under itself (`TooltipLayer.watchBelow`), and a level's first numbers are a baseline,
   never a change to flash.
-- The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) where `UpgradeTreeLayout` derives each
-  node's place from the tree, scaled to fit, never scrolled; a node's look is an `UpgradeNodeState`, and its hover
-  is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).
+- The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) at the places `UpgradeTreeLayout` takes
+  from the tower's hand-made `UpgradeTreePlans` row, scaled to fit, never scrolled. Every tower has a row, and it
+  places every node once; nothing in the panel is special to one tower. A node's look is an `UpgradeNodeState`, and
+  its hover is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).
 - A question is a `ConfirmPopup` on the popup layer, never a platform dialog.
 - A key chip shows the binding its key runs, never a copy: a tower's `placementKey`, a tier's `GameKey.singlesKey`,
   a `GameKey`, a dev `Shortcut`'s stroke. Game chips always show; dev chips only while Alt is held, drawn over the

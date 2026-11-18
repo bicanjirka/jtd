@@ -171,7 +171,7 @@ public final class PreviewUpgrades {
     }
 
     /** The panel and every hover sheet on one image; returns the panel's nodes with where each sits. */
-    private Map<String, Object> dumpPanel(Tower tower, File out) throws IOException {
+    private Map<String, Object> dumpPanel(Tower tower, File out) throws IOException, ReflectiveOperationException {
         int w = UpgradeTreeLayout.WIDTH;
         int h = UpgradeTreeLayout.HEIGHT;
         PanelUpgradeTree panel = new PanelUpgradeTree();
@@ -186,10 +186,8 @@ public final class PreviewUpgrades {
         pg.dispose();
 
         UpgradeTree tree = tower.upgradeTree();
-        UpgradeTreeLayout layout = UpgradeTreeLayout.of(tree, UpgradeState.none(), Optional.empty(), Set.of());
-        float s = Math.min(1.15f, Math.min(w / (float) UpgradeTreeLayout.WIDTH, h / (float) UpgradeTreeLayout.HEIGHT));
-        float ox = (w - UpgradeTreeLayout.WIDTH * s) / 2f;
-        float oy = (h - UpgradeTreeLayout.HEIGHT * s) / 2f;
+        java.lang.reflect.Method boundsOf = PanelUpgradeTree.class.getDeclaredMethod("boundsOf", UpgradeNode.class);
+        boundsOf.setAccessible(true);
 
         List<BufferedImage> tips = new ArrayList<>();
         for (UpgradeNode node : tree.nodes()) {
@@ -232,16 +230,18 @@ public final class PreviewUpgrades {
         List<Object> nodes = new ArrayList<>();
         for (int i = 0; i < tree.nodes().size(); i++) {
             UpgradeNode node = tree.nodes().get(i);
-            UpgradeTreeLayout.Spot spot = layout.spots().get(node);
-            if (spot == null) {
-                continue;
+            java.awt.Rectangle box;
+            try {
+                box = (java.awt.Rectangle) boundsOf.invoke(panel, node);
+            } catch (ReflectiveOperationException e) {
+                throw new IOException(e);
             }
-            float size = spot.width() * s;
+            float size = box.width;
             Map<String, Object> n = new LinkedHashMap<>();
             n.put("id", node.id());
             n.put("name", node.displayName());
-            n.put("x", round(ox + spot.x() * s - size / 2));
-            n.put("y", round(oy + spot.y() * s - size / 2));
+            n.put("x", round(box.x));
+            n.put("y", round(box.y));
             n.put("s", round(size));
             n.put("r", !tower.wordsOf(node).sentences().isEmpty());
             n.put("tx", places.get(i)[0] / ZOOM);
