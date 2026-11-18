@@ -29,11 +29,14 @@ import td.ui.render.FlameDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.FlockLook;
+import td.ui.render.FootDustDraw;
 import td.ui.render.IceWakeDraw;
 import td.ui.render.LaserDraw;
 import td.ui.render.LoadedMissile;
+import td.ui.render.MuzzleBlastDraw;
 import td.ui.render.NestDraw;
 import td.ui.render.Palette;
+import td.ui.render.PumpSteamDraw;
 import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.ShadowDraw;
@@ -143,6 +146,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final double EMBERS_ABOVE_CELLS = 0.06;
     private static final int CASING_TICKS = Math.round((float) TowerMomentArt.CASING_SECONDS * TickRate.TICKS_PER_SECOND);
     private static final int STEAM_TICKS = Math.round((float) TowerMomentArt.STEAM_SECONDS * TickRate.TICKS_PER_SECOND);
+    /** A cocked mortar waiting for a target hisses about this often. */
+    private static final int HISS_TICKS = Math.round(1.5f * TickRate.TICKS_PER_SECOND);
     /** The veil keeps its strength for most of its turn and fades over the rest. */
     private static final float SHADOW_FADE_SHARE = 0.3f;
 
@@ -526,7 +531,55 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             }
         });
         this.shellCarry(tower);
+        this.stride(tower);
         return null;
+    }
+
+    /**
+     * The Strider's moments round its body: the spit at its mouth and the dust at its feet as each shell leaves, and
+     * the steam off its pump as the pump ends and, now and then, while it waits cocked.
+     */
+    private void stride(MortarTower tower) {
+        OptionalInt shot = tower.ticksSinceFired(this.gameTime, TowerMomentArt.MUZZLE_SMOKE_TICKS - 1);
+        float steam = this.pumpSteam(tower);
+        if (shot.isEmpty() && steam < 0f) {
+            return;
+        }
+        int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
+        TowerPose pose = TowerPose.idle().withBeat(TowerSpriteFrameBuilder.strideOf(tower, this.gameTime))
+                .with(TowerCue.LONG_BARREL, tower.reachesPastItsBase());
+        if (shot.isPresent()) {
+            int since = shot.getAsInt();
+            double[] mouth = TowerFoundations.mortarMouth(tier, pose);
+            this.draws.add(new MuzzleBlastDraw((float) (tower.getX() + mouth[0] * this.scale),
+                    (float) (tower.getY() + (mouth[1] - TowerFoundations.LIFT * mouth[2]) * this.scale), this.scale,
+                    this.progressOf(since, TowerMomentArt.MUZZLE_SMOKE_TICKS)));
+            if (since >= 1 && since <= TowerMomentArt.FOOT_DUST_TICKS) {
+                this.draws.add(new FootDustDraw(tier, tower.getX(), tower.getY(), this.scale,
+                        this.progressOf(since - 1, TowerMomentArt.FOOT_DUST_TICKS)));
+            }
+        }
+        if (steam >= 0f) {
+            double[] pump = TowerFoundations.mortarPump(tier, pose);
+            this.draws.add(new PumpSteamDraw((float) (tower.getX() + pump[0] * this.scale),
+                    (float) (tower.getY() + (pump[1] - TowerFoundations.LIFT * pump[2]) * this.scale), this.scale,
+                    steam));
+        }
+    }
+
+    /**
+     * How far through a puff of steam a Mortar's pump is, or below zero for none: one as the pump ends, and while it
+     * stands ready a hiss every so often, its own beat from its seed.
+     */
+    private float pumpSteam(MortarTower tower) {
+        double loaded = TowerSpriteFrameBuilder.ticksSinceLoaded(tower);
+        if (Double.isFinite(loaded)) {
+            double since = loaded + this.interpolationAlpha - (TowerFoundations.STRIDE_PUMP_TICKS - 1);
+            return since >= 0 && since < TowerMomentArt.PUMP_STEAM_TICKS
+                    ? (float) (since / TowerMomentArt.PUMP_STEAM_TICKS) : -1f;
+        }
+        int beat = Math.floorMod(this.gameTime + TowerSpriteFrameBuilder.seedOf(tower), HISS_TICKS);
+        return beat < TowerMomentArt.PUMP_STEAM_TICKS ? this.progressOf(beat, TowerMomentArt.PUMP_STEAM_TICKS) : -1f;
     }
 
     /** The shell being carried from the rack into the muzzle while it reloads, once the shot's frames are over. */
