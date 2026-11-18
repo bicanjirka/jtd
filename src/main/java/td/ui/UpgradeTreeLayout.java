@@ -1,10 +1,7 @@
 package td.ui;
 
-import td.tower.upgrade.RowPlace;
-import td.tower.upgrade.TierRow;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 
 import java.util.ArrayList;
@@ -17,135 +14,138 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Where every node of a tree sits on the Upgrades panel, in design units {@value #WIDTH} wide, derived from the
- * tree's rows: one row per tier, bottom up, with a gate band between two tiers for the upper one's unlock and, at the
- * fork's tier, the fork's sides. From the fork's tier up a row splits into what both sides share, on the left, and
- * the picked side's column. A cluster's branches share one place, showing the owned member's, or the previewed
- * member's dimmed. A folded tier is a thin row of small nodes. No tower has layout of its own. Pure.
+ * Where every node of a tree sits on the Upgrades panel, in design units {@value #WIDTH} wide, from the tower's
+ * hand-made {@link UpgradeTreePlan}: a band per tier, bottom up, each one or more rows of nodes over a floor strip, with
+ * its numeral in a strip at its left. A link leaves the top of what a node needs, runs in the channel above that row
+ * and climbs into the node's bottom; a cluster's frame stands in for its members where the rule names the cluster or
+ * all of them share one need. A need more than a tier below is a badge on a top corner instead. Pure.
  *
- * @param spots     each shown node's place, the unlocks and the fork's sides included
- * @param links     a node to the one it comes after, where both show
- * @param frames    a cluster's frame around its members
- * @param rows      every tier's row, top first
- * @param hidden    where a branch the tower didn't pick hides
- * @param previewed the nodes shown only because the hovered member opens them
- * @param split     the x of the line between the shared column and the side's; empty without a fork
- * @param height    the whole panel's height, the XP line and footer included
+ * @param bands  every tier's band, tier 0 first
+ * @param spots  each node's place
+ * @param frames a cluster's frame around its members
+ * @param links  a need to what needs it, as a path
+ * @param badges a need more than a tier below, on the corner of what needs it
+ * @param height the whole design's height, the footer included
  */
-record UpgradeTreeLayout(Map<UpgradeNode, Spot> spots, List<Link> links, List<Frame> frames, List<Row> rows,
-                         List<Spot> hidden, Set<UpgradeNode> previewed, Optional<Float> split, float height) {
+record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Frame> frames, List<Link> links,
+                         List<Badge> badges, float height) {
 
     static final int WIDTH = 300;
-    /** The design height the panel asks for: four unfolded tiers fit it. */
+    /** The design height the panel asks for: five one-row tiers fit it. */
     static final int HEIGHT = 380;
-    static final float NODE = 32f;
-    static final float SMALL_NODE = 14f;
-    static final float PILL_WIDTH = 46f;
-    static final float PILL_HEIGHT = 16f;
-    static final float THUMB_X = 22f;
-    static final float FOOTER = 20f;
+    static final float NODE = 30f;
+    static final float PITCH = 37f;
+    static final float ROW = 46f;
+    static final float STRIP = 15f;
+    static final float BAND_X = 6f;
+    static final float NUMERAL_WIDTH = 16f;
+    static final float BODY_X = BAND_X + NUMERAL_WIDTH + 2f;
+    static final float FOOTER = 16f;
+    static final float FRAME_PAD = 4f;
+    static final float BADGE = 6f;
 
-    private static final float TOP = 40f;
-    private static final float ROW = 54f;
-    private static final float FOLDED_ROW = 22f;
-    private static final float BAND = 22f;
-    private static final float FORK_BAND = 52f;
-    private static final float LEFT = 46f;
-    private static final float RIGHT = 294f;
-    private static final float PITCH = 40f;
-    private static final float SMALL_PITCH = 20f;
-    private static final float PAD = 4f;
+    private static final float TOP = 4f;
     private static final float GAP = 6f;
-    private static final float MARKER = 14f;
-    private static final float NODE_TOP = 6f;
+    private static final float FIRST_SLOT = BODY_X + 4f + NODE / 2;
+    /** From a row's top to its nodes' centre: the channel a link runs in sits above the nodes. */
+    private static final float NODE_DROP = 24f;
+    /** A frame's name, over its top edge, that an outgoing link keeps clear of: roughly its width per letter. */
+    private static final float LABEL_LETTER = 3.7f;
+    private static final float LABEL_PAD = 10f;
 
-    /** One spot's centre and box. */
-    record Spot(float x, float y, float width, float height) {
+    /** A tier's band: its rows over its floor strip. */
+    record Band(int tier, float top, float bottom) {
+
+        float stripTop() {
+            return this.bottom - STRIP;
+        }
+    }
+
+    /** One node's centre, size, and the top of the row it stands in. */
+    record Spot(float x, float y, float size, float rowTop) {
 
         boolean contains(float px, float py, float slack) {
-            return Math.abs(px - this.x) <= this.width / 2 + slack && Math.abs(py - this.y) <= this.height / 2 + slack;
+            return Math.abs(px - this.x) <= this.size / 2 + slack && Math.abs(py - this.y) <= this.size / 2 + slack;
         }
     }
 
-    record Link(UpgradeNode from, UpgradeNode to) {
+    /** A box by its edges. */
+    record Box(float left, float top, float right, float bottom) {
     }
 
-    /** A cluster's frame, named at its top edge. */
-    record Frame(UpgradeCluster cluster, Spot box) {
+    /** A cluster's frame around its members, named at its top edge. */
+    record Frame(UpgradeCluster cluster, Box box, float rowTop) {
+    }
+
+    /** One end of a link or a badge: a node, or a cluster's frame standing for all its members. */
+    record End(List<UpgradeNode> nodes, Optional<UpgradeCluster> cluster, Box box, float rowTop) {
+
+        End {
+            nodes = List.copyOf(nodes);
+        }
 
         float left() {
-            return this.box.x() - this.box.width() / 2;
-        }
-
-        float right() {
-            return this.box.x() + this.box.width() / 2;
+            return this.box.left();
         }
 
         float top() {
-            return this.box.y() - this.box.height() / 2;
+            return this.box.top();
+        }
+
+        float right() {
+            return this.box.right();
         }
 
         float bottom() {
-            return this.box.y() + this.box.height() / 2;
+            return this.box.bottom();
+        }
+
+        float x() {
+            return (this.box.left() + this.box.right()) / 2;
+        }
+
+        float y() {
+            return (this.box.top() + this.box.bottom()) / 2;
+        }
+
+        int tier() {
+            return this.nodes.getFirst().tier();
         }
     }
 
-    /** A tier's row, and the band of its gate under it; a free tier's band is empty, tier 0 has none. */
-    record Row(int tier, float top, float bottom, float bandBottom, boolean folded) {
+    record Point(float x, float y) {
+    }
 
-        /** A full-height row with no band under it. */
-        static Row of(int tier, float top, float bottom) {
-            return new Row(tier, top, bottom, bottom, false);
-        }
+    /** {@code from} needed by {@code to}, drawn along {@code path}. */
+    record Link(End from, End to, List<Point> path) {
 
-        Row withBandTo(float bandBottom) {
-            return new Row(this.tier, this.top, this.bottom, bandBottom, this.folded);
-        }
-
-        Row foldedIf(boolean thin) {
-            return new Row(this.tier, this.top, this.bottom, this.bandBottom, thin);
-        }
-
-        float centre() {
-            return (this.top + this.bottom) / 2;
+        Link {
+            path = List.copyOf(path);
         }
     }
 
-    /** The node size and pitch a row is laid out at. */
-    private record Scale(float node, float pitch, float pad, float gap) {
-
-        Scale squeezed(float share) {
-            return share >= 1f ? this : new Scale(Math.min(this.node, this.pitch * share - 6f), this.pitch * share,
-                    this.pad * share, this.gap * share);
-        }
+    /** {@code from} needed by {@code to}, shown as a small circle centred at ({@code x}, {@code y}). */
+    record Badge(End from, End to, float x, float y) {
     }
 
     UpgradeTreeLayout {
+        bands = List.copyOf(bands);
         spots = Map.copyOf(spots);
-        links = List.copyOf(links);
         frames = List.copyOf(frames);
-        rows = List.copyOf(rows);
-        hidden = List.copyOf(hidden);
-        previewed = Set.copyOf(previewed);
+        links = List.copyOf(links);
+        badges = List.copyOf(badges);
     }
 
     /**
-     * {@code tree}'s layout for a tower owning {@code owned}, with {@code preview}'s branches shown when it is a cluster
-     * member, and every tier in {@code folded} thin.
+     * {@code tree} laid out by {@code plan}. Throws when the plan names a node or cluster the tree lacks, places one
+     * twice or in another tier, places a cluster's member alone, leaves one out, or has another number of tiers.
      */
-    static UpgradeTreeLayout of(UpgradeTree tree, UpgradeState owned, Optional<UpgradeNode> preview,
-                                Set<Integer> folded) {
-        return new Builder(tree, owned, preview, folded).build();
+    static UpgradeTreeLayout of(UpgradeTree tree, UpgradeTreePlan plan) {
+        return new Builder(tree, plan).build();
     }
 
     Optional<Spot> spotOf(UpgradeNode node) {
         return Optional.ofNullable(this.spots.get(node));
-    }
-
-    /** {@code nodes} by where they sit, left to right; a node not shown last. */
-    List<UpgradeNode> leftToRight(List<UpgradeNode> nodes) {
-        return nodes.stream().sorted(Comparator.comparingDouble(
-                node -> this.spotOf(node).map(Spot::x).orElse(Float.MAX_VALUE))).toList();
     }
 
     /** The node at design point ({@code x}, {@code y}), within {@code slack} of its box. */
@@ -154,195 +154,192 @@ record UpgradeTreeLayout(Map<UpgradeNode, Spot> spots, List<Link> links, List<Fr
                 .map(Map.Entry::getKey).findFirst();
     }
 
-    /** The nodes of tier {@code tier}'s row as shown, the band's unlock and sides aside. */
-    List<UpgradeNode> shownIn(int tier) {
-        return this.spots.keySet().stream().filter(node -> node.tier() == tier && this.inRow(node)).toList();
+    /** {@code nodes} by where they sit, left to right, the lower row first where two share a column. */
+    List<UpgradeNode> leftToRight(List<UpgradeNode> nodes) {
+        return nodes.stream().sorted(Comparator.comparingDouble((UpgradeNode node) -> this.spots.get(node).x())
+                .thenComparing(node -> -this.spots.get(node).y())).toList();
     }
 
-    private boolean inRow(UpgradeNode node) {
-        Spot spot = this.spots.get(node);
-        return this.rows.stream().anyMatch(row -> row.tier() == node.tier() && spot.y() >= row.top()
-                && spot.y() <= row.bottom());
+    Band bandOf(int tier) {
+        return this.bands.get(tier);
     }
 
     private static final class Builder {
 
         private final UpgradeTree tree;
-        private final UpgradeState owned;
-        private final Optional<UpgradeNode> preview;
-        private final Set<Integer> folded;
+        private final UpgradeTreePlan plan;
         private final Map<UpgradeNode, Spot> spots = new LinkedHashMap<>();
-        private final List<Frame> frames = new ArrayList<>();
-        private final List<Spot> hidden = new ArrayList<>();
-        private final Set<UpgradeNode> previewed = new LinkedHashSet<>();
-        private final List<Row> rows = new ArrayList<>();
-        private final int forkTier;
-        private final float split;
+        private final Map<UpgradeCluster, Frame> frames = new LinkedHashMap<>();
+        private final List<Band> bands = new ArrayList<>();
 
-        Builder(UpgradeTree tree, UpgradeState owned, Optional<UpgradeNode> preview, Set<Integer> folded) {
+        Builder(UpgradeTree tree, UpgradeTreePlan plan) {
             this.tree = tree;
-            this.owned = owned;
-            this.preview = preview;
-            this.folded = folded;
-            this.forkTier = tree.fork().map(fork -> tree.node(fork.memberIds().getFirst()).orElseThrow().tier())
-                    .orElse(Integer.MAX_VALUE);
-            float shared = tree.rows().stream().filter(row -> row.tier() >= this.forkTier)
-                    .map(row -> widthOf(row.places(), this.full(row.tier()))).reduce(0f, Math::max);
-            this.split = LEFT + shared + GAP;
+            this.plan = plan;
         }
 
         UpgradeTreeLayout build() {
-            List<TierRow> tierRows = this.tree.rows();
+            int tiers = this.tree.tiers().size();
+            if (this.plan.tiers().size() != tiers) {
+                throw new IllegalArgumentException("The plan has " + this.plan.tiers().size() + " tiers, the tree "
+                        + tiers);
+            }
             float y = TOP;
-            for (int i = tierRows.size() - 1; i >= 0; i--) {
-                TierRow row = tierRows.get(i);
-                boolean thin = this.folded.contains(row.tier());
-                float bottom = y + (thin ? FOLDED_ROW : ROW);
-                this.placeRow(row, y, thin);
-                float bandBottom = bottom + this.bandHeight(row.tier());
-                this.placeBand(row.tier(), bottom, bandBottom);
-                this.rows.add(Row.of(row.tier(), y, bottom).withBandTo(bandBottom).foldedIf(thin));
-                y = bandBottom;
+            Band[] placed = new Band[tiers];
+            for (int tier = tiers - 1; tier >= 0; tier--) {
+                List<UpgradeTreePlan.Row> rows = this.plan.tiers().get(tier).rows();
+                float bottom = y + rows.size() * ROW + STRIP;
+                placed[tier] = new Band(tier, y, bottom);
+                for (int r = 0; r < rows.size(); r++) {
+                    this.placeRow(tier, rows.get(r), y + (rows.size() - 1 - r) * ROW);
+                }
+                y = bottom + GAP;
+            }
+            this.bands.addAll(List.of(placed));
+            for (UpgradeNode node : this.tree.nodes()) {
+                if (!this.spots.containsKey(node)) {
+                    throw new IllegalArgumentException("The plan leaves out " + node.id());
+                }
             }
             List<Link> links = new ArrayList<>();
-            for (UpgradeNode node : this.spots.keySet()) {
-                this.tree.previousInLine(node).filter(this.spots::containsKey)
-                        .ifPresent(previous -> links.add(new Link(previous, node)));
-            }
-            Optional<Float> split = this.forkTier == Integer.MAX_VALUE ? Optional.empty() : Optional.of(this.split);
-            return new UpgradeTreeLayout(this.spots, links, this.frames, this.rows, this.hidden, this.previewed, split,
-                    y + FOOTER);
-        }
-
-        private float bandHeight(int tier) {
-            if (tier == 0) {
-                return 0f;
-            }
-            return tier == this.forkTier ? FORK_BAND : BAND;
-        }
-
-        private Scale full(int tier) {
-            return this.folded.contains(tier) ? new Scale(SMALL_NODE, SMALL_PITCH, 2f, 3f) : new Scale(NODE, PITCH, PAD, GAP);
-        }
-
-        private void placeRow(TierRow row, float top, boolean thin) {
-            Scale scale = this.full(row.tier());
-            float centre = top + (thin ? FOLDED_ROW / 2 : NODE_TOP + NODE / 2);
-            if (row.tier() < this.forkTier) {
-                this.placeAll(row.places(), LEFT, RIGHT, centre, scale, false);
-                return;
-            }
-            this.placeAll(row.places(), LEFT, this.split - GAP, centre, scale, false);
-            row.side().ifPresent(side -> {
-                float left = this.split + GAP;
-                float width = widthOf(List.of(side), scale);
-                Scale fitted = scale.squeezed(width <= RIGHT - left ? 1f : (RIGHT - left) / width);
-                this.placeBranches(side, left, centre, fitted, false, false);
-            });
-        }
-
-        /** The unlock's pill at the band's left; at the fork's tier, the fork's sides in the side column. */
-        private void placeBand(int tier, float top, float bottom) {
-            this.tree.unlockOf(tier).ifPresent(unlock -> this.spots.put(unlock,
-                    new Spot(LEFT + PILL_WIDTH / 2, (top + bottom) / 2, PILL_WIDTH, PILL_HEIGHT)));
-            if (tier != this.forkTier) {
-                return;
-            }
-            UpgradeCluster fork = this.tree.fork().orElseThrow();
-            float x = this.split + GAP + PITCH / 2;
-            for (String id : fork.memberIds()) {
-                this.spots.put(this.tree.node(id).orElseThrow(), new Spot(x, (top + bottom) / 2, NODE, NODE));
-                x += PITCH;
-            }
-        }
-
-        /** Lays {@code places} out from {@code left}, squeezed to end by {@code right}. */
-        private void placeAll(List<RowPlace> places, float left, float right, float y, Scale scale, boolean dim) {
-            float width = widthOf(places, scale);
-            Scale fitted = scale.squeezed(width <= right - left ? 1f : (right - left) / width);
-            float x = left;
-            for (RowPlace place : places) {
-                x = this.place(place, x, y, fitted, dim);
-            }
-        }
-
-        /** Places {@code place} from {@code x}; returns where the next starts. */
-        private float place(RowPlace place, float x, float y, Scale scale, boolean dim) {
-            return switch (place) {
-                case RowPlace.Lone lone -> {
-                    this.put(lone.node(), x + scale.pitch() / 2, y, scale, dim);
-                    yield x + scale.pitch();
+            List<Badge> badges = new ArrayList<>();
+            for (Need need : this.needs()) {
+                if (need.to().tier() - need.from().tier() >= 2) {
+                    badges.add(badgeOn(need, badges.stream().filter(badge -> badge.to().equals(need.to())).count()));
+                } else {
+                    links.add(new Link(need.from(), need.to(), pathOf(need.from(), need.to())));
                 }
-                case RowPlace.Group group -> {
-                    float cursor = x + scale.pad();
-                    for (UpgradeNode member : group.members()) {
-                        this.put(member, cursor + scale.pitch() / 2, y, scale, dim);
-                        cursor += scale.pitch();
-                    }
-                    float half = scale.node() / 2 + scale.pad();
-                    float left = x + scale.pitch() / 2 - half + scale.pad();
-                    float right = cursor - scale.pitch() / 2 + half;
-                    this.frames.add(new Frame(group.cluster(), new Spot((left + right) / 2, y, right - left, 2 * half)));
-                    yield cursor + scale.pad() + scale.gap();
-                }
-                case RowPlace.Branches branches -> {
-                    this.placeBranches(branches, x, y, scale, dim, true);
-                    yield x + widthOf(List.of(branches), scale);
-                }
-            };
+            }
+            return new UpgradeTreeLayout(this.bands, this.spots, List.copyOf(this.frames.values()), links, badges,
+                    y - GAP + FOOTER);
         }
 
         /**
-         * The branch of the previewed member, dimmed, else the owned member's; a marker where a branch hides, unless
-         * {@code marked} is off: before the fork's pick its side column stays empty.
+         * The {@code before}-th badge on a node's top-left corner, and on to its right; a frame's go on its top-right
+         * corner and on to its left, clear of its name.
          */
-        private void placeBranches(RowPlace.Branches branches, float x, float y, Scale scale, boolean dim,
-                                   boolean marked) {
-            List<String> members = branches.cluster().memberIds();
-            int previewIndex = this.preview.filter(node -> !this.owned.owns(node.id()))
-                    .map(node -> members.indexOf(node.id())).orElse(-1);
-            int ownedIndex = -1;
-            for (int i = 0; i < members.size(); i++) {
-                if (this.owned.owns(members.get(i))) {
-                    ownedIndex = i;
+        private static Badge badgeOn(Need need, long before) {
+            float step = before * (2 * BADGE + 1f);
+            End to = need.to();
+            float x = to.cluster().isPresent() ? to.right() - 1f - step : to.left() + 1f + step;
+            return new Badge(need.from(), to, x, to.top() + 1f);
+        }
+
+        private void placeRow(int tier, UpgradeTreePlan.Row row, float rowTop) {
+            float centre = rowTop + NODE_DROP;
+            for (UpgradeTreePlan.Slot slot : row.slots()) {
+                float x = FIRST_SLOT + slot.at() * PITCH;
+                if (!slot.cluster()) {
+                    UpgradeNode node = this.nodeOf(slot.key(), tier);
+                    if (this.tree.clusterOf(node).isPresent()) {
+                        throw new IllegalArgumentException(node.id() + " is placed apart from its cluster");
+                    }
+                    this.put(node, x, centre, rowTop);
+                    continue;
                 }
-            }
-            int shown = previewIndex >= 0 ? previewIndex : ownedIndex;
-            float cursor = x;
-            if (shown >= 0) {
-                boolean dimmed = dim || shown == previewIndex;
-                for (RowPlace place : branches.branches().get(shown)) {
-                    cursor = this.place(place, cursor, y, scale, dimmed);
+                UpgradeCluster cluster = this.tree.clusters().stream().filter(c -> c.name().equals(slot.key()))
+                        .findFirst().or(() -> this.tree.fork().filter(c -> c.name().equals(slot.key())))
+                        .orElseThrow(() -> new IllegalArgumentException("No cluster " + slot.key()));
+                List<String> members = cluster.memberIds();
+                for (int i = 0; i < members.size(); i++) {
+                    this.put(this.nodeOf(members.get(i), tier), x + i * PITCH, centre, rowTop);
                 }
-            }
-            boolean hides = false;
-            for (int i = 0; i < members.size(); i++) {
-                hides |= i != shown && !branches.branches().get(i).isEmpty();
-            }
-            if (marked && hides) {
-                float size = Math.min(MARKER, scale.node());
-                this.hidden.add(new Spot(cursor + size / 2 + 2f, y, size, size));
+                float half = NODE / 2 + FRAME_PAD;
+                this.frames.put(cluster, new Frame(cluster, new Box(x - half, centre - half,
+                        x + (members.size() - 1) * PITCH + half, centre + half), rowTop));
             }
         }
 
-        private void put(UpgradeNode node, float x, float y, Scale scale, boolean dim) {
-            this.spots.put(node, new Spot(x, y, scale.node(), scale.node()));
-            if (dim) {
-                this.previewed.add(node);
+        private UpgradeNode nodeOf(String id, int tier) {
+            UpgradeNode node = this.tree.node(id).filter(found -> !this.tree.isUnlock(found))
+                    .orElseThrow(() -> new IllegalArgumentException("No node " + id));
+            if (node.tier() != tier) {
+                throw new IllegalArgumentException(id + " is placed in tier " + tier + " but sits in " + node.tier());
+            }
+            return node;
+        }
+
+        private void put(UpgradeNode node, float x, float y, float rowTop) {
+            if (this.spots.putIfAbsent(node, new Spot(x, y, NODE, rowTop)) != null) {
+                throw new IllegalArgumentException("The plan places " + node.id() + " twice");
             }
         }
 
-        private static float widthOf(List<RowPlace> places, Scale scale) {
-            float width = 0f;
-            for (RowPlace place : places) {
-                width += switch (place) {
-                    case RowPlace.Lone lone -> scale.pitch();
-                    case RowPlace.Group group -> group.members().size() * scale.pitch() + 2 * scale.pad() + scale.gap();
-                    case RowPlace.Branches branches -> branches.branches().stream()
-                            .map(branch -> widthOf(branch, scale)).reduce(0f, Math::max) + MARKER + 4f;
-                };
+        /** A need of one node or frame by another, in the order the tree declares the needing nodes. */
+        private record Need(End from, End to) {
+        }
+
+        /**
+         * Every need to draw: a node's each, from the frame of a cluster when the rule takes any of its members, and
+         * into its own cluster's frame when every member shares it; a need two ends share is drawn once.
+         */
+        private List<Need> needs() {
+            Set<Need> needs = new LinkedHashSet<>();
+            for (UpgradeNode node : this.tree.nodes()) {
+                Set<String> mentioned = node.requires().mentionedNodes();
+                if (mentioned.isEmpty()) {
+                    continue;
+                }
+                End to = this.tree.clusterOf(node).filter(cluster -> this.allShare(cluster, mentioned))
+                        .map(this::endOf).orElseGet(() -> this.endOf(node));
+                boolean either = node.requires().requiredNodes().size() < mentioned.size();
+                Optional<UpgradeCluster> named = either ? this.clusterOfAll(mentioned) : Optional.empty();
+                if (named.isPresent()) {
+                    needs.add(new Need(this.endOf(named.get()), to));
+                    continue;
+                }
+                mentioned.stream().map(id -> this.tree.node(id).orElseThrow()).filter(this.spots::containsKey)
+                        .sorted(Comparator.comparingDouble(before -> this.spots.get(before).x()))
+                        .forEach(before -> needs.add(new Need(this.endOf(before), to)));
             }
-            return width;
+            return List.copyOf(needs);
+        }
+
+        private boolean allShare(UpgradeCluster cluster, Set<String> mentioned) {
+            return cluster.memberIds().stream().allMatch(id -> this.tree.node(id).orElseThrow().requires()
+                    .mentionedNodes().equals(mentioned));
+        }
+
+        /** The placed cluster whose members are exactly {@code ids}. */
+        private Optional<UpgradeCluster> clusterOfAll(Set<String> ids) {
+            return this.frames.keySet().stream().filter(cluster -> Set.copyOf(cluster.memberIds()).equals(ids))
+                    .findFirst();
+        }
+
+        private End endOf(UpgradeNode node) {
+            Spot spot = this.spots.get(node);
+            float half = spot.size() / 2;
+            return new End(List.of(node), Optional.empty(), new Box(spot.x() - half, spot.y() - half,
+                    spot.x() + half, spot.y() + half), spot.rowTop());
+        }
+
+        private End endOf(UpgradeCluster cluster) {
+            Frame frame = this.frames.get(cluster);
+            return new End(cluster.memberIds().stream().map(id -> this.tree.node(id).orElseThrow()).toList(),
+                    Optional.of(cluster), frame.box(), frame.rowTop());
+        }
+
+        /**
+         * Side to side within a row; else up from the source's top into the channel above its row, across, and up
+         * into the target's bottom. From a frame the path keeps clear of its name, heading for the target where the
+         * frame allows.
+         */
+        private static List<Point> pathOf(End from, End to) {
+            if (Math.abs(from.y() - to.y()) < 1f) {
+                boolean rightward = from.x() < to.x();
+                return List.of(new Point(rightward ? from.right() : from.left(), from.y()),
+                        new Point(rightward ? to.left() : to.right(), to.y()));
+            }
+            float x = from.x();
+            if (from.cluster().isPresent()) {
+                float clear = from.left() + from.cluster().get().name().length() * LABEL_LETTER + LABEL_PAD;
+                x = Math.clamp(to.x(), Math.min(clear, from.right() - 6f), from.right() - 6f);
+            }
+            if (Math.abs(x - to.x()) < 0.5f) {
+                return List.of(new Point(x, from.top()), new Point(x, to.bottom()));
+            }
+            float channel = from.rowTop() - GAP / 2;
+            return List.of(new Point(x, from.top()), new Point(x, channel), new Point(to.x(), channel),
+                    new Point(to.x(), to.bottom()));
         }
     }
 }

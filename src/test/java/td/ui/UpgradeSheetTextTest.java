@@ -333,23 +333,15 @@ class UpgradeSheetTextTest {
     }
 
     @Test
-    void theXpLabelCountsTowardTheNextTierXpOpens() {
-        assertThat(UpgradeSheetText.xpLabel(40, TREE)).isEqualTo("XP 40 / " + TIER_ONE_XP + " to "
-                + UpgradeTier.nameOf(1));
+    void aGateHoldsTheXpAtItsOwnOnceMet() {
+        assertThat(UpgradeSheetText.gateLabel(40, TIER_ONE_XP)).isEqualTo("XP 40 / " + TIER_ONE_XP);
+        assertThat(UpgradeSheetText.gateLabel(TIER_ONE_XP + 5, TIER_ONE_XP))
+                .isEqualTo("XP " + TIER_ONE_XP + " / " + TIER_ONE_XP);
     }
 
     @Test
-    void onceEveryTiersXpIsMetTheLabelShowsTheXpAlone() {
-        int xp = TREE.tiers().getLast().xp();
-
-        assertThat(UpgradeSheetText.xpLabel(xp, TREE)).isEqualTo("XP " + xp);
-    }
-
-    @Test
-    void aGateBandNamesItsTierOnceOpenAndOtherwiseItsXpOrItsUnlock() {
-        assertThat(UpgradeSheetText.bandLabel(TREE, 1, 0, false)).isEqualTo(UpgradeTier.nameOf(1) + " · XP 0 / "
-                + TIER_ONE_XP);
-        assertThat(UpgradeSheetText.bandLabel(TREE, 1, TIER_ONE_XP, false)).isEqualTo(UpgradeTier.nameOf(1) + " · unlock");
-        assertThat(UpgradeSheetText.bandLabel(TREE, 1, TIER_ONE_XP, true)).isEqualTo(UpgradeTier.nameOf(1));
+    void theSinglesFooterCountsWhatTheButtonBuysAndItsTotal() {
+        assertThat(UpgradeSheetText.singlesFooter(1, 5)).isEqualTo("1 single · $5");
+        assertThat(UpgradeSheetText.singlesFooter(3, 24)).isEqualTo("3 singles · $24");
     }
 }

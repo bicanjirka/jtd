@@ -4,137 +4,150 @@ import org.junit.jupiter.api.Test;
 import td.fixtures.WorldFixtures;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeCluster;
+import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
-import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
+import td.ui.UpgradeTreeLayout.Link;
+import td.ui.UpgradeTreeLayout.Point;
 import td.ui.UpgradeTreeLayout.Spot;
 import td.util.GameWorld;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.IntStream;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static td.fixtures.TierTrees.A1;
-import static td.fixtures.TierTrees.A2;
-import static td.fixtures.TierTrees.A3;
-import static td.fixtures.TierTrees.B1;
-import static td.fixtures.TierTrees.B2;
-import static td.fixtures.TierTrees.LONE;
-import static td.fixtures.TierTrees.MID;
-import static td.fixtures.TierTrees.TIER_ONE;
-import static td.fixtures.TierTrees.TOP;
-import static td.fixtures.TierTrees.TREE;
-import static td.fixtures.TierTrees.state;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static td.ui.UpgradeTreePlan.cluster;
+import static td.ui.UpgradeTreePlan.node;
+import static td.ui.UpgradeTreePlan.row;
+import static td.ui.UpgradeTreePlan.tier;
 
 class UpgradeTreeLayoutTest {
+
+    private static final UpgradeNode LEFT = UpgradeNode.of("left", "Left", 10);
+    private static final UpgradeNode RIGHT = UpgradeNode.of("right", "Right", 10);
+    private static final UpgradeNode SOLO = UpgradeNode.of("solo", "Solo", 8);
+    private static final UpgradeNode EITHER = UpgradeNode.of("either", "Either", 12).inTier(1)
+            .withRequires(UpgradeCondition.owns(LEFT.id()).or(UpgradeCondition.owns(RIGHT.id())));
+    private static final UpgradeNode TWIN_A = UpgradeNode.of("twin.a", "Twin A", 15).inTier(1).after(SOLO);
+    private static final UpgradeNode TWIN_B = UpgradeNode.of("twin.b", "Twin B", 15).inTier(1).after(SOLO);
+    private static final UpgradeNode FAR = UpgradeNode.of("far", "Far", 20).inTier(2).after(SOLO);
+    private static final UpgradeCluster PAIR = UpgradeCluster.of("Pair", LEFT, RIGHT);
+    private static final UpgradeCluster TWINS = UpgradeCluster.of("Twins", TWIN_A, TWIN_B);
+    private static final UpgradeTree TREE = UpgradeTree.of(LEFT, RIGHT, SOLO, EITHER, TWIN_A, TWIN_B, FAR)
+            .withCluster(PAIR).withCluster(TWINS);
+    private static final UpgradeTreePlan PLAN = UpgradeTreePlan.of(
+            tier(row(cluster("Pair", 0f), node("solo", 3f))),
+            tier(row(node("either", 0.5f), cluster("Twins", 3f))),
+            tier(row(node("far", 3f))),
+            tier());
 
     private final GameWorld context = WorldFixtures.newWorld();
 
     @Test
-    void everyBuiltInTreeFitsThePanelWithEveryNodeItShowsPlaced() {
+    void everyTowersPlanPlacesEachNodeOnceInsideThePanelWithNothingOverlapping() {
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             UpgradeTree tree = TowerFactory.createTower(type, this.context, 0, 0).upgradeTree();
 
-            UpgradeTreeLayout layout = layout(tree, UpgradeState.none());
+            UpgradeTreeLayout layout = UpgradeTreeLayout.of(tree, UpgradeTreePlans.of(type));
 
-            assertThat(tree.nodes()).as(type.name()).filteredOn(node -> !tree.isHidden(node, UpgradeState.none()))
-                    .allMatch(node -> layout.spotOf(node).isPresent());
-            assertThat(layout.spots().values()).as(type.name()).allMatch(spot -> spot.x() - spot.width() / 2 >= 0f
-                    && spot.x() + spot.width() / 2 <= UpgradeTreeLayout.WIDTH);
+            assertThat(layout.spots().keySet()).as(type.name()).containsExactlyInAnyOrderElementsOf(tree.nodes());
+            assertThat(layout.spots().values()).as(type.name()).allMatch(spot -> spot.x() - spot.size() / 2
+                    >= UpgradeTreeLayout.BODY_X && spot.x() + spot.size() / 2 <= UpgradeTreeLayout.WIDTH
+                    - UpgradeTreeLayout.BAND_X);
+            assertThat(layout.frames()).as(type.name()).allMatch(frame -> frame.box().left() >= UpgradeTreeLayout.BODY_X
+                    && frame.box().right() <= UpgradeTreeLayout.WIDTH - UpgradeTreeLayout.BAND_X);
+            assertThat(overlaps(layout)).as(type.name()).isEmpty();
             assertThat(layout.height()).as(type.name()).isLessThanOrEqualTo(UpgradeTreeLayout.HEIGHT);
         }
     }
 
     @Test
-    void tiersClimbFromTheBottomWithAPaidTiersUnlockInTheBandBetween() {
-        UpgradeTreeLayout layout = layout(TREE, state(A1));
+    void tiersClimbFromTheBottom() {
+        UpgradeTreeLayout layout = UpgradeTreeLayout.of(TREE, PLAN);
 
-        float zero = layout.spotOf(A1).orElseThrow().y();
-        float one = layout.spotOf(A2).orElseThrow().y();
-        float unlock = layout.spotOf(TIER_ONE).orElseThrow().y();
-
-        assertThat(one).isLessThan(zero);
-        assertThat(unlock).isBetween(one, zero);
+        assertThat(layout.spotOf(EITHER).orElseThrow().y()).isLessThan(layout.spotOf(LEFT).orElseThrow().y());
+        assertThat(layout.bandOf(1).bottom()).isLessThan(layout.bandOf(0).top());
     }
 
     @Test
-    void aRowRunsLeftToRightInTheTreesOrderWithAClustersMembersInOneFrame() {
-        UpgradeTreeLayout layout = layout(TREE, UpgradeState.none());
+    void aPlanThatLeavesANodeOutOrPlacesAMemberAloneIsRejected() {
+        UpgradeTreePlan missing = UpgradeTreePlan.of(tier(row(cluster("Pair", 0f), node("solo", 3f))),
+                tier(row(cluster("Twins", 3f))), tier(row(node("far", 3f))), tier());
+        UpgradeTreePlan alone = UpgradeTreePlan.of(tier(row(node("left", 0f), node("right", 1f), node("solo", 3f))),
+                tier(row(node("either", 0.5f), cluster("Twins", 3f))), tier(row(node("far", 3f))), tier());
 
-        assertThat(layout.spotOf(A1).orElseThrow().x()).isLessThan(layout.spotOf(B1).orElseThrow().x());
-        assertThat(layout.spotOf(B1).orElseThrow().x()).isLessThan(layout.spotOf(LONE).orElseThrow().x());
-        assertThat(layout.frames()).filteredOn(frame -> frame.cluster().name().equals("Roots")).singleElement()
-                .satisfies(frame -> assertThat(frame.left()).isLessThan(layout.spotOf(A1).orElseThrow().x()));
+        assertThatThrownBy(() -> UpgradeTreeLayout.of(TREE, missing)).hasMessageContaining("either");
+        assertThatThrownBy(() -> UpgradeTreeLayout.of(TREE, alone)).hasMessageContaining("left");
     }
 
     @Test
-    void theBranchOfTheOwnedMemberShowsAndTheOthersHidesBehindAMarkerInEachRowItReaches() {
-        UpgradeTreeLayout layout = layout(TREE, state(B1));
+    void aNeedOfAnyMemberHangsOffTheClustersFrameAndRunsOnlyAlongTheAxes() {
+        UpgradeTreeLayout layout = UpgradeTreeLayout.of(TREE, PLAN);
 
-        assertThat(layout.spotOf(B2)).isPresent();
-        assertThat(layout.spotOf(A2)).isEmpty();
-        assertThat(layout.spotOf(TOP)).isEmpty();
-        assertThat(layout.hidden()).hasSize(3);
-        assertThat(layout.links()).contains(new UpgradeTreeLayout.Link(B1, B2));
+        Link link = layout.links().stream().filter(l -> l.to().nodes().equals(List.of(EITHER))).findFirst()
+                .orElseThrow();
+
+        assertThat(link.from().cluster()).contains(PAIR);
+        assertThat(link.path().getFirst().y()).isEqualTo(link.from().top());
+        assertThat(link.path().getLast().y()).isEqualTo(link.to().bottom());
+        assertThat(link.path().getLast().x()).isEqualTo(layout.spotOf(EITHER).orElseThrow().x());
+        for (int i = 1; i < link.path().size(); i++) {
+            Point a = link.path().get(i - 1);
+            Point b = link.path().get(i);
+            assertThat(a.x() == b.x() || a.y() == b.y()).isTrue();
+        }
     }
 
     @Test
-    void beforeAPickNoBranchShowsAndHoveringAMemberPreviewsItsOwnDimmed() {
-        UpgradeTreeLayout none = layout(TREE, UpgradeState.none());
-        UpgradeTreeLayout previewed = UpgradeTreeLayout.of(TREE, UpgradeState.none(), Optional.of(A1), Set.of());
+    void aClusterWhoseMembersShareANeedTakesOneLinkIntoItsFrame() {
+        UpgradeTreeLayout layout = UpgradeTreeLayout.of(TREE, PLAN);
 
-        assertThat(none.spotOf(A2)).isEmpty();
-        assertThat(none.spotOf(B2)).isEmpty();
-        assertThat(previewed.spotOf(A2)).isPresent();
-        assertThat(previewed.previewed()).containsExactlyInAnyOrder(A2, A3, TOP);
+        assertThat(layout.links()).filteredOn(link -> link.from().nodes().equals(List.of(SOLO))).singleElement()
+                .satisfies(link -> assertThat(link.to().cluster()).contains(TWINS));
     }
 
     @Test
-    void aFoldedTierIsAThinRowOfSmallNodes() {
-        UpgradeTreeLayout open = layout(TREE, state(A1, LONE));
-        UpgradeTreeLayout folded = UpgradeTreeLayout.of(TREE, state(A1, LONE), Optional.empty(), Set.of(0));
+    void aNeedMoreThanATierBelowIsABadgeOnTheNodesCornerRatherThanALink() {
+        UpgradeTreeLayout layout = UpgradeTreeLayout.of(TREE, PLAN);
+        Spot far = layout.spotOf(FAR).orElseThrow();
 
-        Spot full = open.spotOf(LONE).orElseThrow();
-        Spot small = folded.spotOf(LONE).orElseThrow();
-
-        assertThat(small.width()).isLessThan(full.width());
-        assertThat(folded.height()).isLessThan(open.height());
-        assertThat(folded.spotOf(MID).orElseThrow().y()).isEqualTo(open.spotOf(MID).orElseThrow().y());
+        assertThat(layout.links()).noneMatch(link -> link.to().nodes().contains(FAR));
+        assertThat(layout.badges()).singleElement().satisfies(badge -> {
+            assertThat(badge.from().nodes()).containsExactly(SOLO);
+            assertThat(badge.x()).isLessThan(far.x());
+            assertThat(badge.y()).isLessThan(far.y());
+        });
     }
 
     @Test
-    void theForksSidesStandInTheGateBandUnderTheirTier() {
-        UpgradeNode left = UpgradeNode.of("side.l", "Left", 10).inTier(1);
-        UpgradeNode right = UpgradeNode.of("side.r", "Right", 10).inTier(1);
-        UpgradeNode follow = UpgradeNode.of("follow", "Follow", 10).inTier(1).after(left);
-        UpgradeTree tree = UpgradeTree.of(LONE, left, right, follow)
-                .withFork(UpgradeCluster.of("Sides", left, right));
+    void leftToRightOrdersNodesByWhereTheySit() {
+        UpgradeTreeLayout layout = UpgradeTreeLayout.of(TREE, PLAN);
 
-        UpgradeTreeLayout layout = layout(tree, state(left));
-
-        UpgradeTreeLayout.Row one = layout.rows().stream().filter(row -> row.tier() == 1).findFirst().orElseThrow();
-        assertThat(layout.spotOf(left).orElseThrow().y()).isBetween(one.bottom(), one.bandBottom());
-        assertThat(layout.spotOf(follow).orElseThrow().x()).isGreaterThan(layout.split().orElseThrow());
+        assertThat(layout.leftToRight(List.of(SOLO, RIGHT, LEFT))).containsExactly(LEFT, RIGHT, SOLO);
     }
 
-    @Test
-    void aForkSideTooWideForItsColumnIsSqueezedToFitThePanel() {
-        UpgradeNode left = UpgradeNode.of("side.l", "Left", 10).inTier(1);
-        UpgradeNode right = UpgradeNode.of("side.r", "Right", 10).inTier(1);
-        List<UpgradeNode> followers = IntStream.range(0, 8)
-                .mapToObj(i -> UpgradeNode.of("follow." + i, "Follow " + i, 10).inTier(2).after(left)).toList();
-        UpgradeTree tree = UpgradeTree.of(LONE, left, right).with(followers.toArray(UpgradeNode[]::new))
-                .withFork(UpgradeCluster.of("Sides", left, right));
-
-        UpgradeTreeLayout layout = layout(tree, state(left));
-
-        assertThat(followers).allMatch(node -> layout.spotOf(node).isPresent());
-        assertThat(layout.spots().values()).allMatch(spot -> spot.x() + spot.width() / 2 <= UpgradeTreeLayout.WIDTH);
-    }
-
-    private static UpgradeTreeLayout layout(UpgradeTree tree, UpgradeState owned) {
-        return UpgradeTreeLayout.of(tree, owned, Optional.empty(), Set.of());
+    /** Every pair of nodes that touch, and every node a frame it isn't in covers. */
+    private static List<String> overlaps(UpgradeTreeLayout layout) {
+        List<String> found = new ArrayList<>();
+        List<Map.Entry<UpgradeNode, Spot>> spots = List.copyOf(layout.spots().entrySet());
+        for (int i = 0; i < spots.size(); i++) {
+            Spot a = spots.get(i).getValue();
+            for (int j = i + 1; j < spots.size(); j++) {
+                Spot b = spots.get(j).getValue();
+                if (Math.abs(a.x() - b.x()) < UpgradeTreeLayout.NODE && Math.abs(a.y() - b.y()) < UpgradeTreeLayout.NODE) {
+                    found.add(spots.get(i).getKey().id() + " / " + spots.get(j).getKey().id());
+                }
+            }
+            for (UpgradeTreeLayout.Frame frame : layout.frames()) {
+                boolean member = frame.cluster().contains(spots.get(i).getKey().id());
+                if (!member && a.x() + a.size() / 2 > frame.box().left() && a.x() - a.size() / 2 < frame.box().right()
+                        && a.y() + a.size() / 2 > frame.box().top() && a.y() - a.size() / 2 < frame.box().bottom()) {
+                    found.add(spots.get(i).getKey().id() + " in " + frame.cluster().name());
+                }
+            }
+        }
+        return found;
     }
 }

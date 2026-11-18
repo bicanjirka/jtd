@@ -40,10 +40,11 @@ public record UpgradeTier(int xp, int unlockPrice) {
 
     /** {@code tier}'s name as the panel and its hovers say it: "Tier 0", "Tier I", "Tier II". */
     public static String nameOf(int tier) {
-        return "Tier " + numeral(tier);
+        return "Tier " + numeralOf(tier);
     }
 
-    private static String numeral(int tier) {
+    /** {@code tier}'s numeral alone: "0", "I", "II". */
+    public static String numeralOf(int tier) {
         if (tier == 0) {
             return "0";
         }

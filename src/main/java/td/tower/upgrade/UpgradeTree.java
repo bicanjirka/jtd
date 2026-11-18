@@ -5,7 +5,6 @@ import td.util.GameWorld;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -15,7 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * One tower type's upgrades as a stack of tiers that climbs from the bottom, its clusters and its fork.
@@ -40,7 +38,6 @@ public final class UpgradeTree {
     private final Map<String, UpgradeCluster> clusterByMember;
     private final Map<String, String> branchMember;
     private final Map<String, Set<String>> mentionedBefore;
-    private final List<TierRow> rows;
 
     /**
      * Rejects duplicate node ids, a node outside the tiers or before a node it comes after, a cluster member missing
@@ -92,7 +89,6 @@ public final class UpgradeTree {
         }
         this.mentionedBefore = this.mentionedClosures();
         this.branchMember = this.branchMembers();
-        this.rows = this.buildRows();
     }
 
     public static UpgradeTree none() {
@@ -177,11 +173,6 @@ public final class UpgradeTree {
 
     public boolean isForkSide(UpgradeNode node) {
         return this.fork.filter(sides -> sides.contains(node.id())).isPresent();
-    }
-
-    /** Every tier's row, bottom first. */
-    public List<TierRow> rows() {
-        return this.rows;
     }
 
     /** The member of an earlier cluster whose branch {@code node} belongs to: what it hides behind. */
@@ -561,63 +552,5 @@ public final class UpgradeTree {
 
     private int tierOf(UpgradeCluster cluster) {
         return this.byId.get(cluster.memberIds().getFirst()).tier();
-    }
-
-    private List<TierRow> buildRows() {
-        List<TierRow> built = new ArrayList<>();
-        for (int tier = 0; tier < this.tiers.size(); tier++) {
-            int t = tier;
-            List<UpgradeNode> inTier = this.nodes.stream().filter(node -> node.tier() == t && !this.isForkSide(node))
-                    .toList();
-            List<RowPlace> places = new ArrayList<>(this.placesOf(inTier, Set.of()));
-            Optional<RowPlace.Branches> side = places.stream().flatMap(place -> switch (place) {
-                case RowPlace.Branches branches when this.fork.filter(branches.cluster()::equals).isPresent() ->
-                        Stream.of(branches);
-                default -> Stream.<RowPlace.Branches>empty();
-            }).findFirst();
-            side.ifPresent(places::remove);
-            built.add(new TierRow(tier, places, side));
-        }
-        return List.copyOf(built);
-    }
-
-    /** {@code inTier}'s places in declaration order, branching on every cluster but those in {@code done}. */
-    private List<RowPlace> placesOf(List<UpgradeNode> inTier, Set<UpgradeCluster> done) {
-        List<RowPlace> places = new ArrayList<>();
-        Set<UpgradeNode> placed = new HashSet<>();
-        for (UpgradeNode node : inTier) {
-            if (placed.contains(node)) {
-                continue;
-            }
-            Optional<UpgradeCluster> branching = this.outermostBranching(node, done);
-            UpgradeCluster cluster = this.clusterByMember.get(node.id());
-            if (branching.isPresent()) {
-                UpgradeCluster owner = branching.get();
-                Set<UpgradeCluster> deeper = new HashSet<>(done);
-                deeper.add(owner);
-                List<List<RowPlace>> branches = new ArrayList<>();
-                for (String member : owner.memberIds()) {
-                    List<UpgradeNode> branch = inTier.stream()
-                            .filter(other -> this.memberBehind(other, owner).filter(member::equals).isPresent()).toList();
-                    placed.addAll(branch);
-                    branches.add(this.placesOf(branch, deeper));
-                }
-                places.add(new RowPlace.Branches(owner, branches));
-            } else if (cluster != null && !done.contains(cluster)) {
-                List<UpgradeNode> members = cluster.memberIds().stream().map(this.byId::get).toList();
-                placed.addAll(members);
-                places.add(new RowPlace.Group(cluster, members));
-            } else {
-                placed.add(node);
-                places.add(new RowPlace.Lone(node));
-            }
-        }
-        return places;
-    }
-
-    private Optional<UpgradeCluster> outermostBranching(UpgradeNode node, Collection<UpgradeCluster> done) {
-        return this.allClusters().stream()
-                .filter(cluster -> !done.contains(cluster) && this.memberBehind(node, cluster).isPresent())
-                .min((a, b) -> Integer.compare(this.tierOf(a), this.tierOf(b)));
     }
 }

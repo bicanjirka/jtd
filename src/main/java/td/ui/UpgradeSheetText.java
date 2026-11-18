@@ -19,7 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 /** The words for an upgrade node: its hover sheet, the panel's footer and the downgrade confirmation. Pure. */
 final class UpgradeSheetText {
@@ -28,6 +27,8 @@ final class UpgradeSheetText {
     static final String IDLE_FOOTER = "Click: buy · Right-click: downgrade";
     /** The footer once the level is over and nothing can be bought or downgraded. */
     static final String ENDED_FOOTER = "Level over";
+    /** A tier's floor strip once every single in it is owned. */
+    static final String SINGLES_BOUGHT = "Singles bought";
     /** Why a switch or a downgrade waits while a wave is out. */
     static final String BETWEEN_WAVES = "Changes between waves";
 
@@ -293,36 +294,23 @@ final class UpgradeSheetText {
                 : SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, progress);
     }
 
-    /**
-     * Beside the XP bar: "XP 40 / 60 to Tier I" toward the next tier XP opens, or the XP alone once none is left.
-     */
-    static String xpLabel(int xp, UpgradeTree tree) {
-        OptionalInt next = nextTier(tree, xp);
-        return next.isPresent()
-                ? "XP " + xp + " / " + tree.tiers().get(next.getAsInt()).xp() + " to " + UpgradeTier.nameOf(next.getAsInt())
-                : "XP " + xp;
+    /** The tower's XP on the panel's title line: "XP 70". */
+    static String titleXp(int xp) {
+        return "XP " + xp;
     }
 
-    /** The lowest tier whose XP is still ahead of {@code xp}. */
-    static OptionalInt nextTier(UpgradeTree tree, int xp) {
-        for (int tier = 1; tier < tree.tiers().size(); tier++) {
-            if (tree.tiers().get(tier).xp() > xp) {
-                return OptionalInt.of(tier);
-            }
-        }
-        return OptionalInt.empty();
+    /** A locked tier's gate: "XP 70 / 120", the XP held at the gate's once it is met. */
+    static String gateLabel(int xp, int needed) {
+        return "XP " + Math.min(xp, needed) + " / " + needed;
     }
 
-    /** A gate band's words: the tier's name once open; else its XP, or that it waits for its unlock. */
-    static String bandLabel(UpgradeTree tree, int tier, int xp, boolean open) {
-        String name = UpgradeTier.nameOf(tier);
-        if (open) {
-            return name;
-        }
-        int needed = tree.tiers().get(tier).xp();
-        if (xp < needed) {
-            return name + " · XP " + xp + " / " + needed;
-        }
-        return tree.unlockOf(tier).isPresent() ? name + " · unlock" : name;
+    /** The button that buys a tier's singles on offer, for {@code total} credits together. */
+    static String singlesButton(int total) {
+        return "Buy singles · " + TermNumbers.cash(total);
+    }
+
+    /** The footer while the singles' button is hovered: "3 singles · $24". */
+    static String singlesFooter(int count, int total) {
+        return count + (count == 1 ? " single · " : " singles · ") + TermNumbers.cash(total);
     }
 }
