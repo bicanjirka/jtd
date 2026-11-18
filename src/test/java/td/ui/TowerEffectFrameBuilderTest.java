@@ -127,6 +127,26 @@ class TowerEffectFrameBuilderTest {
     }
 
     @Test
+    void aStoneClimbsAtLeastTheArcOfItsLengthOnTheGround() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        SplashTower splash = splashWith(context);
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(splash.getX() + 2 * BoardFixtures.SCALE,
+                splash.getY())});
+        splash.doTick(1);
+        SplashTower.Flight flight = splash.stonesInFlight().getFirst().flight();
+        int halfway = (flight.firedAt() + flight.landsAt()) / 2;
+        double flown = (halfway - flight.firedAt()) / (double) (flight.landsAt() - flight.firedAt());
+
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, halfway, 0.0, 0.0);
+        splash.accept(builder);
+        List<CannonballDraw> stones = builder.build().stream().filter(CannonballDraw.class::isInstance)
+                .map(CannonballDraw.class::cast).toList();
+
+        assertThat(stones).singleElement().satisfies(stone -> assertThat(stone.lift()).isGreaterThanOrEqualTo(
+                (float) (ProjectileFrameBuilder.lobPeak(2, BoardFixtures.SCALE) * 4 * flown * (1 - flown))));
+    }
+
+    @Test
     void aBurstWearsTheChargedCueWhileAFullAbilityWaitsForATarget() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         SplashTower splash = TowerFixtures.buffed(splashWith(context, "Thunderstrike"), context,

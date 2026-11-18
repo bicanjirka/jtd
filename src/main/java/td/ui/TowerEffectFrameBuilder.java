@@ -399,12 +399,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale, heading);
         float x = (float) (muzzle.x + (stone.to().x() - muzzle.x) * flown);
         float y = (float) (tower.getY() + (stone.to().y() - tower.getY()) * flown);
-        float released = (float) ((y - (muzzle.y + (stone.to().y() - muzzle.y) * flown)));
-        float peak = ProjectileFrameBuilder.lobPeak(stone.flight().landsAt() - stone.flight().firedAt(), this.scale);
-        float lift = ProjectileFrameBuilder.lobLift(peak, flown) + released;
+        float launch = (float) (tower.getY() - muzzle.y);
+        float peak = ProjectileFrameBuilder.lobPeak(Math.hypot(stone.to().x() - tower.getX(),
+                stone.to().y() - tower.getY()) / this.scale, this.scale);
+        float lift = ProjectileFrameBuilder.lobLift(launch, peak, flown);
         Palette tone = stone.charged() ? Palette.TOWER_SPLASH_ARC : Palette.PROJECTILE_CANNONBALL;
-        this.draws.add(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(lift - released, peak),
-                STONE_SIZE, x,
+        this.draws.add(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(flown), STONE_SIZE, x,
                 y - lift, Optional.empty()));
     }
 

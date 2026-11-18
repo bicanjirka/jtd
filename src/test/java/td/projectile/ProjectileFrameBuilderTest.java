@@ -50,23 +50,26 @@ class ProjectileFrameBuilderTest {
     }
 
     @Test
-    void aShellLeavesFromTheGroundAndIsHighestHalfwayOver() {
-        float lifted = liftAfter(lob(200, 10f), 5);
-        float halfway = liftAfter(lob(200, 10f), 10);
+    void aShellLeavesFromItsLaunchHeightAndArcsSymmetricallyOverItsDescentOntoTheGround() {
         float leaving = liftAfter(lob(200, 10f), 0);
+        float quarter = liftAfter(lob(200, 10f), 5);
+        float threeQuarters = liftAfter(lob(200, 10f), 15);
+        float landed = liftAfter(lob(200, 10f), 20);
 
-        assertThat(leaving).isZero();
-        assertThat(lifted).isPositive();
-        assertThat(halfway).isGreaterThan(lifted);
-        assertThat(liftAfter(lob(200, 10f), 15)).isCloseTo(lifted, within(0.01f));
+        assertThat(leaving).isPositive();
+        assertThat(quarter).isGreaterThan(leaving);
+        assertThat(quarter - leaving * 0.75f).isCloseTo(threeQuarters - leaving * 0.25f, within(0.01f));
+        assertThat(landed).isZero();
     }
 
     @Test
-    void aSlowerShellClimbsHigherOverTheSameGround() {
-        float fast = liftAfter(lob(100, 10f), 5);
-        float slow = liftAfter(lob(100, 5f), 10);
+    void aShellClimbsHigherTheFurtherItFliesOnTheGroundWhateverItsSpeed() {
+        float fast = liftAfter(lob(2 * BoardFixtures.SCALE, 8f), BoardFixtures.SCALE / 8);
+        float slow = liftAfter(lob(2 * BoardFixtures.SCALE, 4f), BoardFixtures.SCALE / 4);
+        float further = liftAfter(lob(4 * BoardFixtures.SCALE, 8f), BoardFixtures.SCALE / 4);
 
-        assertThat(slow).isGreaterThan(fast);
+        assertThat(slow).isCloseTo(fast, within(0.01f));
+        assertThat(further).isGreaterThan(fast);
     }
 
     @Test
