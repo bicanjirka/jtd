@@ -13,8 +13,6 @@ it finds, so the next tower doesn't copy it.
 - The first rule it produced is in the root `CLAUDE.md`: a catalogue is built by one factory call listing its entries,
   never `empty()` and a chain of `with`. Seven towers and `OwnedMechanicsTest` still write the chain
   (`MechanicCatalogue.<X>empty().with(...)`), each with a type witness.
-- `FEATURE-next-gen-final-visual-review.md` reviews how the towers look; this one reviews how the code reads. They run
-  together and share the fights they set up, but neither's findings go in the other's list.
 
 ### The Sniper's findings
 
@@ -52,6 +50,8 @@ A review, and the fixes it finds. In this order:
 3. **Turn a lesson into a rule.** Where a smell would come back, the rule goes in `CLAUDE.md` (a constraint, never a
    story), and into Checkstyle where a tool can see it. Where it is a judgment, it goes in `docs/DESIGN.md`.
 4. **Delete what the review leaves unused**: an accessor, a record component or a constant nothing reads.
+   Among them the looks built ahead of their towers: a `TowerCue` or `LoadedShell` nothing sends, a `TowerLook` no
+   tower wears (except `WHITE` and its eagles, kept on purpose), and helpers kept only for the flat towers.
 5. **Check the budget and the tests**: `mvn verify`, and `td.PerformanceHarness` if per-tick code moved. A fix is a
    refactor; no expected value changes.
 
@@ -59,8 +59,7 @@ Out of scope: balance, looks and any change a player can see.
 
 ## Interconnections
 
-- `FEATURE-next-gen-final-visual-review.md` and `FEATURE-balance-after-next-gen-towers.md` run at the same point.
-  A smell found while reading for a look goes here, not there.
+- `FEATURE-balance-after-next-gen-towers.md` runs at the same point.
 - `docs/DESIGN.md` and `CLAUDE.md` hold the rules the review reads against and extends.
 - Known gaps the review finds that it won't fix go in `TODO.md` with **Where** and **Approach**, never in this list.
 

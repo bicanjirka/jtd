@@ -5,7 +5,7 @@ left). Part of `FEATURE-next-gen.md`; the shot timing of the visual request in i
 with the stats it was fired with, when its tracer arrives) and the Mortar's shell (lands with its fired stats, drawn on
 the shared arc over a shadow) came first, on 2026-11-14; the Burst's stone, its Arc's hops and its flying curses,
 sparks and souls came with the Burst, and each shell drawn by its kind in flight with the Mortar. The shots sheet
-still draws the lab's copies; replacing them is the final visual review's.
+still draws the lab's copies.
 
 ## Summary
 

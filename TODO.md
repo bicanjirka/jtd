@@ -471,7 +471,7 @@ Most `TowerCue`s and the looks `RUBY` and
 **Where:** `td.ui.TowerSpriteFrameBuilder` (each visit method's pose, `BODY_LOOK`), `td.ui.TowerFoundations`.
 
 **Approach:** each tower's next-gen rework sends its own, from the "In code" list in its
-`docs/features/FEATURE-next-gen-<type>-tower.md`. `FEATURE-next-gen-final-visual-review.md` deletes whatever no
+`docs/features/FEATURE-next-gen-<type>-tower.md`. `FEATURE-next-gen-final-code-review.md` deletes whatever no
 tower sends once all seven are in.
 
 ### The Obelisk's smallest cues are not drawn

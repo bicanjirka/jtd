@@ -37,7 +37,6 @@ Beacon. The Radar leaves the game ("The last three towers").
 | `shipped/FEATURE-next-gen-pulse-tower.md` | The Obelisk, with the Radar's beam as its Sundial | tiers, looks | implemented |
 | `shipped/FEATURE-next-gen-aura-tower.md` | The Beacon, with the Radar's reveal | tiers, looks; every other tower's mark (Prism) | implemented |
 | `FEATURE-balance-after-next-gen-towers.md` | The second balance pass, played by the built towers | every tower above in code | written; waits |
-| `FEATURE-next-gen-final-visual-review.md` | The visual review of the finished bundle: what to render, what to check on each tower | every tower above in code | written; waits |
 | `FEATURE-next-gen-final-code-review.md` | The code review of the finished bundle: the Sniper's smells as questions for every tower, shared fixes, new rules | every tower above in code | written; waits |
 | (none) | The Radar (`sonar`) leaves the game: "The last three towers" below | | done |
 
@@ -61,7 +60,7 @@ flowchart TD
     C --> E[Aerie]
     E --> O[Obelisk]
     O --> K[Beacon]
-    K --> Z[Close: balance pass, final art and code sweep, docs]
+    K --> Z[Close: balance pass, final code sweep, docs]
 ```
 
 - **The Radar goes first**, before the tiers feature moves the trees, so no Radar tree is carried over. Done
@@ -232,8 +231,6 @@ keys until those towers are built.
 - **Balance**: first every bare tower roughly equal per credit, then tiers and prices, in
   `FEATURE-balance-after-next-gen-towers.md`. The placeholder entries in `TODO.md` ("Upgrade-tree node numbers", the
   lab's ceiling) are judged then.
-- **Final art pass**: the built towers rendered through `PreviewBoard` beside `next-gen-art/board.png`, at every
-  tier and identity, the toolbar icons, and `td.PerformanceHarness` on a board full of Tier III towers.
 - **Final sweep**: the ledger with every tower converted, then a manual pass over effects, glyphs, traits, statuses
   and `Palette` entries nothing reaches any more. The Radar left four tower-agnostic pieces with no node using them:
   `ProcPayload.BreakShield`, `HitScaling.PerRangeShare`, `ProcCondition.TargetHasAnyOf` and `HitKind.BEAM` (the
