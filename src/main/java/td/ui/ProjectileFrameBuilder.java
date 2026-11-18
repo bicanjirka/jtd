@@ -26,12 +26,18 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
     /** How long a missile of the standard size is drawn, in cells: the same in the nest as in flight. */
     static final float MISSILE_LENGTH_CELLS = 0.22f;
     /**
-     * The one pull on every lobbed shot, in cells per tick per tick: a shot that flies longer climbs higher,
-     * so every lob arcs alike whatever its speed and distance.
+     * The one steep arc of every lobbed shot, in cells: it climbs this high over its launch, and this much more for
+     * every cell it flies on the ground, so even a short lob goes up high and drops almost straight down.
      */
-    private static final float LOB_PULL_CELLS = 0.03f;
-    /** No lob climbs higher than this, in cells, so a slow shell stays on the board. */
-    private static final float LOB_TOP_CELLS = 2f;
+    private static final float LOB_RISE_CELLS = 1.1f;
+    private static final float LOB_RISE_PER_CELL = 0.32f;
+    /** No lob climbs higher than this, in cells, so a long one stays on the board. */
+    private static final float LOB_TOP_CELLS = 2.6f;
+    /**
+     * A Mortar's shell leaves from its muzzle, this high over the tower's centre on screen, in cells: the muzzle's
+     * height whatever the tier, its flash and smoke hiding the difference, so the shell keeps no link to its tower.
+     */
+    static final float SHELL_LAUNCH_CELLS = 0.55f;
     /** At its peak the shadow is this much smaller than on the ground. */
     private static final float SHADOW_SHRINK = 0.45f;
 
@@ -93,34 +99,40 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         return this.draws;
     }
 
-    /**
-     * A lobbed shot flies its arc as if thrown up and pulled down: its peak grows with the square of its
-     * flight time.
-     */
+    /** The peak of a shell's arc, from its flight's length on the ground. */
     private float peakOf(CannonballProjectile projectile) {
-        return lobPeak(projectile.distance() / projectile.stats().speed(), this.scale);
+        return lobPeak(projectile.distance() / this.scale, this.scale);
     }
 
-    /** How high a lob that flies {@code ticks} climbs at its peak, in pixels. */
-    static float lobPeak(double ticks, int scale) {
-        return (float) Math.min(LOB_TOP_CELLS * scale, LOB_PULL_CELLS * scale * ticks * ticks / 8);
+    /** How high a lob that flies {@code groundCells} on the ground climbs over its launch at its peak, in pixels. */
+    static float lobPeak(double groundCells, int scale) {
+        return (float) Math.min(LOB_TOP_CELLS * scale, (LOB_RISE_CELLS + LOB_RISE_PER_CELL * groundCells) * scale);
     }
 
-    /** How high a lob with this {@code peak} is once it has flown {@code flown} of its way. */
-    static float lobLift(float peak, double flown) {
+    /**
+     * How high a lob is once it has flown {@code flown} of its way: from its {@code launch} height, which it leaves
+     * behind as it goes, up its arc of this {@code peak} and down onto the ground.
+     */
+    static float lobLift(float launch, float peak, double flown) {
         double share = Math.clamp(flown, 0, 1);
-        return (float) (peak * 4 * share * (1 - share));
+        return (float) (launch * (1 - share) + peak * 4 * share * (1 - share));
     }
 
-    /** How small a lob's shadow is at {@code lift} under this {@code peak}. */
-    static float lobShadowScale(float lift, float peak) {
-        return peak > 0 ? 1f - SHADOW_SHRINK * lift / peak : 1f;
+    /** How small a lob's shadow is once it has flown {@code flown} of its way: smallest at the arc's peak. */
+    static float lobShadowScale(double flown) {
+        double share = Math.clamp(flown, 0, 1);
+        return (float) (1 - SHADOW_SHRINK * 4 * share * (1 - share));
     }
 
-    /** How high a lob with this {@code peak} is over its ground point at {@code x, y}. */
-    private static float liftAt(CannonballProjectile projectile, float peak, double x, double y) {
+    /** How far a shell has flown of its way at its ground point {@code x, y}, 0..1. */
+    private static double flownShare(CannonballProjectile projectile, double x, double y) {
         double distance = projectile.distance();
-        return lobLift(peak, distance > 0 ? projectile.flownAt(x, y) / distance : 1);
+        return distance > 0 ? projectile.flownAt(x, y) / distance : 1;
+    }
+
+    /** How high a shell under this {@code peak} is over its ground point at {@code x, y}. */
+    private float liftAt(CannonballProjectile projectile, float peak, double x, double y) {
+        return lobLift(SHELL_LAUNCH_CELLS * this.scale, peak, flownShare(projectile, x, y));
     }
 
     @Override
@@ -128,13 +140,13 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         float x = lerp(projectile.getPrevX(), projectile.getX(), this.interpolationAlpha);
         float y = lerp(projectile.getPrevY(), projectile.getY(), this.interpolationAlpha);
         float peak = this.peakOf(projectile);
-        float lift = liftAt(projectile, peak, x, y);
-        float shadowScale = lobShadowScale(lift, peak);
+        float lift = this.liftAt(projectile, peak, x, y);
+        float shadowScale = lobShadowScale(flownShare(projectile, x, y));
         LoadedShell kind = loadedShellOf(projectile.look());
         boolean streak = projectile.stats().streak() || trails(kind);
         float tailX = streak ? (float) projectile.getPrevX() : x;
         float tailY = streak ? (float) projectile.getPrevY()
-                - liftAt(projectile, peak, projectile.getPrevX(), projectile.getPrevY()) : y - lift;
+                - this.liftAt(projectile, peak, projectile.getPrevX(), projectile.getPrevY()) : y - lift;
         this.draws.add(new CannonballDraw(paletteFor(projectile.look()), x, y, lift, shadowScale,
                 projectile.stats().size(), tailX, tailY, Optional.of(kind)));
         return null;

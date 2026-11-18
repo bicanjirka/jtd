@@ -35,8 +35,8 @@ on an arc, and chains travel hop by hop. Some of this changes when damage lands,
     to a spot, not after an enemy.
 - **A projectile's flight is a straight line on the ground.** Its ground point moves at one speed from the muzzle to
   the spot it was aimed at, never turning, speeding up or slowing down. The arc is only a picture: the height above
-  the ground point the projectile is drawn at comes from one shared formula of its speed and the distance, so every
-  lobbed shot arcs alike. A faint dot on the board marks its ground point, its shadow. The Aerie's missiles get a flight of their own
+  the ground point the projectile is drawn at comes from one shared formula of the distance on the ground, from the
+  height it leaves at (`FEATURE-mortar-strider.md`: the steep lob), so every lobbed shot arcs alike. A faint dot on the board marks its ground point, its shadow. The Aerie's missiles get a flight of their own
   in `FEATURE-next-gen-seeker-tower.md` (they leave an orbit, turn smoothly and speed up); the Scorcher's stream
   lands as it pours, and the Obelisk's Sundial sweeps.
 - **Chains travel hop by hop**, with a visible pause between hops; each hop deals its damage when it arrives.
