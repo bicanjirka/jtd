@@ -1,6 +1,9 @@
 package td.ui;
 
 import td.ui.render.LoadedMissile;
+import td.ui.render.LoadedShell;
+import td.ui.render.TowerCue;
+import td.ui.render.TowerPose;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -52,8 +55,11 @@ final class PolishLife {
 
     /** How far a level circle is flattened on screen. 1 is the board's own projection; see the doc's "Perspective". */
     static final double ORBIT_SQUASH = 0.62;
-    /** The nest's ring: its radius in cells and how fast it turns while the tower idles, in radians a second. */
-    static final double NEST_RADIUS_CELLS = 0.27;
+    /**
+     * The nest's ring: its radius in cells and how fast it turns while the tower idles, in radians a second. Its centre
+     * is the tower's top, so its far half passes above the tip and never behind the tower.
+     */
+    static final double NEST_RADIUS_CELLS = 0.30;
     static final double NEST_TURN = 0.6;
 
     /** The birds of one Aerie look. */
@@ -101,13 +107,23 @@ final class PolishLife {
     static final double STEAM_SECONDS = 0.9;
     static final int STEAM_PUFFS = 5;
     static final Color STEAM = new Color(0xdfe6ee);
-    /** The Sundial's shadow: a dark body that dims what it lies on, a veil that shows on a black floor, a lit edge. */
-    static final Color SUNDIAL_DARK = new Color(0x06040e);
-    static final float SUNDIAL_DARK_ALPHA = 0.78f;
-    static final float SUNDIAL_VEIL_ALPHA = 0.34f;
-    static final float SUNDIAL_TIP_ALPHA = 0.10f;
-    static final float SUNDIAL_EDGE_ALPHA = 0.75f;
-    static final double SUNDIAL_EDGE_CELLS = 0.028;
+    /**
+     * The Sundial: the band of sun-lit ground and the shadow in it, as half-widths in cells at the stone's foot and at
+     * the shadow's tip. Each soft edge is drawn as this many nested layers.
+     */
+    static final double SUNDIAL_LIGHT_ROOT = 0.26;
+    static final double SUNDIAL_LIGHT_TIP = 0.56;
+    static final double SUNDIAL_UMBRA_ROOT = 0.10;
+    static final double SUNDIAL_UMBRA_TIP = 0.04;
+    static final double SUNDIAL_PENUMBRA_ROOT = 0.13;
+    static final double SUNDIAL_PENUMBRA_TIP = 0.34;
+    static final int SUNDIAL_SOFT_STEPS = 6;
+    static final Color SUNDIAL_DARK = new Color(0x050309);
+    static final float SUNDIAL_DARK_ALPHA = 0.92f;
+    static final float SUNDIAL_LIGHT_ALPHA = 0.62f;
+    static final float SUNDIAL_LIGHT_TIP_ALPHA = 0.12f;
+    static final float SUNDIAL_EDGE_ALPHA = 0.45f;
+    static final double SUNDIAL_EDGE_CELLS = 0.02;
 
     private PolishLife() {
     }
@@ -300,38 +316,101 @@ final class PolishLife {
      * ring, height, speed and wing beat, all from {@code seed}, so two towers never fly alike.
      */
     static void birds(Graphics2D g2, Flock flock, int tier, double cx, double cy, double scale, double squash,
-                      double seconds, int seed) {
-        for (int i = 0; i < flock.count(tier); i++) {
+                      double seconds, int seed, Presence presence) {
+        int count = flock.count(tier);
+        for (int i = 0; i < count; i++) {
             double h1 = hash(seed, i);
             double h2 = hash(seed + 7L, i);
             double h3 = hash(seed + 13L, i);
-            double ring = (0.36 + 0.16 * h1) * scale;
+            double in = presence.in(i, count);
+            double out = presence.out(hash(seed + 29L, i));
+            if (in <= 0 || out >= 1) {
+                continue;
+            }
+            double far = 1 - in * in * (3 - 2 * in);
+            double away = Math.pow(out, 1.6);
+            double wander = 1 + BIRD_WANDER * Math.sin(seconds * (0.25 + 0.2 * h1) + h3 * 6.28);
+            double ring = (0.36 + 0.16 * h1) * wander * (1 + BIRD_COME_FROM * far + BIRD_FLEE_TO * away) * scale;
             int turn = flock.ragged && i % 3 == 2 ? -flock.turn : flock.turn;
             double a = turn * seconds * flock.speed * (0.8 + 0.4 * h2) + h3 * 2 * Math.PI;
-            double rise = 0.10 + 0.24 * h2 + 0.03 * Math.sin(seconds * 0.9 + i * 2.1);
+            double rise = 0.10 + 0.24 * h2 + 0.03 * Math.sin(seconds * 0.9 + i * 2.1) + BIRD_COME_HIGH * far
+                    + BIRD_FLEE_HIGH * Math.pow(out, 1.3);
             double x = cx + Math.cos(a) * ring;
             double y = cy + Math.sin(a) * ring * squash - LIFT * rise * scale;
-            double heading = Math.atan2(turn * Math.cos(a) * squash, -turn * Math.sin(a));
-            double beat = Math.sin(2 * Math.PI * flock.flapHz * seconds + h1 * 6.28);
-            if (flock == Flock.EAGLES && Math.sin(seconds * 0.8 + i * 1.9) < 0.55) {
+            double along = Math.atan2(turn * Math.cos(a) * squash, -turn * Math.sin(a));
+            double outward = Math.atan2(Math.sin(a) * squash - LIFT * 0.6, Math.cos(a));
+            double inward = outward + Math.PI;
+            double heading = turnToward(turnToward(along, inward, 0.6 * far), outward, Math.min(1, out * 2.5));
+            double beat = Math.sin(2 * Math.PI * flock.flapHz * (1 + out * 1.5) * seconds + h1 * 6.28);
+            if (flock == Flock.EAGLES && out == 0 && Math.sin(seconds * 0.8 + i * 1.9) < 0.55) {
                 beat = 0.25;
             }
             double near = 0.85 + 0.15 * Math.sin(a);
-            bird(g2, flock, x, y, heading, beat, flock.span * scale * near);
+            double alpha = Math.min(1, in * 4) * Math.min(1, (1 - out) * 3.5);
+            bird(g2, flock, x, y, heading, beat, flock.span * scale * near, alpha);
+        }
+    }
+
+    /** {@code from} turned {@code share} of the short way toward {@code to}. */
+    private static double turnToward(double from, double to, double share) {
+        double d = Math.atan2(Math.sin(to - from), Math.cos(to - from));
+        return from + d * share;
+    }
+
+    /** Birds come in from this many rings out and this many cells higher, and flee to these. */
+    static final double BIRD_COME_FROM = 5.0;
+    static final double BIRD_COME_HIGH = 1.2;
+    static final double BIRD_FLEE_TO = 7.0;
+    static final double BIRD_FLEE_HIGH = 1.8;
+    /** How far a bird's ring breathes in and out as it circles, a share of the ring. */
+    static final double BIRD_WANDER = 0.10;
+    /** A tower must be quiet this long before its first bird comes; the flock takes this long to come in. */
+    static final double FLOCK_DELAY_SECONDS = 1.5;
+    static final double FLOCK_ARRIVE_SECONDS = 3.5;
+    /** Once the tower fights, its birds scatter over this long. */
+    static final double FLOCK_LEAVE_SECONDS = 1.4;
+
+    /**
+     * Where a tower's flock is, on the tick clock, from two ticks the tower records: when its last fight ended and when
+     * its present fight began. {@code arrived} is how far the flock had come in (0 none, 1 all circling); {@code
+     * leaving} how far it has scattered since the fight began (0 while quiet).
+     */
+    record Presence(double arrived, double leaving) {
+
+        static final Presence CIRCLING = new Presence(1, 0);
+
+        /**
+         * A quiet tower: {@code quietSeconds} since its last fight ended. A fighting one: {@code quietSeconds} is how
+         * long the quiet before this fight lasted, {@code fightingSeconds} how long it has fought.
+         */
+        static Presence of(double quietSeconds, boolean fighting, double fightingSeconds) {
+            double arrived = Math.clamp((quietSeconds - FLOCK_DELAY_SECONDS) / FLOCK_ARRIVE_SECONDS, 0, 1);
+            return new Presence(arrived, fighting ? Math.max(1e-6, fightingSeconds / FLOCK_LEAVE_SECONDS) : 0);
+        }
+
+        /** How far bird {@code i} of {@code count} is in: they come one after another. */
+        double in(int i, int count) {
+            double gap = 0.5 / count;
+            return Math.clamp((this.arrived - i * gap) / (1 - (count - 1) * gap), 0, 1);
+        }
+
+        /** How far a bird has fled, its own pace from {@code roll}. */
+        double out(double roll) {
+            return this.leaving <= 0 ? 0 : Math.clamp(this.leaving * (0.8 + 0.4 * roll), 0, 1);
         }
     }
 
     private static void bird(Graphics2D g2, Flock flock, double x, double y, double heading, double beat,
-                             double span) {
+                             double span, double alpha) {
         AffineTransform save = g2.getTransform();
         g2.translate(x, y);
         g2.rotate(heading);
         if (flock.trail > 0) {
-            glow(g2, -span * 0.5, 0, span * flock.trail, flock.color, 0.5);
+            glow(g2, -span * 0.5, 0, span * flock.trail, flock.color, 0.5 * alpha);
         }
         double reach = span / 2 * (0.62 + 0.38 * Math.abs(beat));
         double sweep = span * (-0.16 + 0.14 * beat);
-        g2.setColor(flock.color);
+        g2.setColor(faded(flock.color, alpha));
         for (int side = -1; side <= 1; side += 2) {
             Path2D.Double wing = new Path2D.Double();
             wing.moveTo(span * 0.14, 0);
@@ -377,6 +456,43 @@ final class PolishLife {
         g2.setTransform(save);
     }
 
+    /** A carried shell rises this far (cells) above the higher of its two ends. */
+    static final double MORTAR_ARC_PEAK = 0.32;
+
+    /**
+     * The Mortar's reload on the tick clock: a shell lifted from the pile beside the mortar standing at {@code cx, cy}
+     * and carried on a smooth parabola into the muzzle, as the in-flight shell is drawn (TowerSprites.paintShell at
+     * the shell's own radius), its small shadow running under it. {@code reload} is the reload's progress, not
+     * snapped. A single load flies in the reload's middle half and takes the top shell; a volley's three fly a quarter
+     * each from the shot, top, right, left (last stacked, first taken).
+     */
+    static void mortarLoad(Graphics2D g2, double cx, double cy, double scale, int tier, TowerPose pose, double reload,
+                           boolean volley, LoadedShell kind) {
+        double from = volley ? Math.floor(reload * 4) / 4 : 0.25;
+        double length = volley ? 0.25 : 0.5;
+        if (reload < from || reload >= from + length || (volley && reload >= 0.75) || pose.flash()) {
+            return;
+        }
+        int piece = volley ? 2 - (int) Math.floor(reload * 4) : 2;
+        double u = (reload - from) / length;
+        double s = u * u * (3 - 2 * u);
+        double[] a = PolishLooks.mortarPiece(tier, piece);
+        double[] m = PolishLooks.mortarMouth(tier, TowerPose.idle().with(TowerCue.LONG_BARREL,
+                pose.has(TowerCue.LONG_BARREL)));
+        double endZ = m[2] + PolishLooks.MORTAR_SHELL * 0.75;
+        double x = a[0] + (m[0] - a[0]) * s;
+        double y = a[1] + (m[1] - a[1]) * s;
+        double peak = Math.max(a[2], endZ) + MORTAR_ARC_PEAK;
+        double z = (1 - s) * (1 - s) * a[2] + 2 * (1 - s) * s * (2 * peak - (a[2] + endZ) / 2) + s * s * endZ;
+        double radius = PolishLooks.MORTAR_SHELL * scale;
+        double floor = PolishLooks.mortarFloor(tier);
+        g2.setColor(faded(Color.BLACK, 0.30 * (1 - 0.5 * Math.sin(Math.PI * s))));
+        g2.fill(new Ellipse2D.Double(cx + x * scale - radius, cy + (y - LIFT * floor) * scale - radius * 0.45,
+                radius * 2, radius * 0.9));
+        TowerSprites.paintShell(g2, kind, (float) (cx + x * scale), (float) (cy + (y - LIFT * z) * scale),
+                (float) radius);
+    }
+
     /**
      * Steam let off at {@code x, y} (the nozzle's tip, already lifted), {@code progress} of the way through
      * {@link #STEAM_SECONDS} on the tick clock from the moment the reload starts: puffs that leave one after another,
@@ -400,35 +516,60 @@ final class PolishLife {
     }
 
     /**
-     * The Sundial as the stone's own shadow: the menhir's outline laid on the ground from the stone's foot at
-     * {@code cx, cy} along {@code heading}, {@code reach} pixels long. A dark body dims what it crosses, a violet veil
-     * keeps it visible on the black floor, and the leading edge, where the hit lands, is lit. {@code alpha} fades it
-     * in and out as the wedge's did; {@code umbra} is the darker, bluer veil of an Umbra stone inside its field.
+     * The Sundial as a real shadow. The floors are near black, so a shadow alone would not show: the low sun lights a
+     * band of the ground along the shadow's line (the wedge the game draws today, wider and softer), and the stone's
+     * shadow lies dark down the middle of it. Like any shadow of a sun-lit stone it is sharp and as wide as the stone
+     * at its foot, and narrows toward the stone's top while its blurred edge (the penumbra) widens and pales with
+     * distance. The leading side, where the hit lands, carries a faint lit line. {@code heading} and {@code reach}
+     * (pixels) are the game's; {@code alpha} fades it in and out as the wedge's did; {@code umbra} is an Umbra stone
+     * inside its own field, whose light is darker and bluer.
      */
-    static void sundial(Graphics2D g2, double cx, double cy, double scale, double heading, int tier, double reach,
-                        double alpha, boolean umbra, Color veil) {
+    static void sundial(Graphics2D g2, double cx, double cy, double scale, double heading, double reach, double alpha,
+                        boolean umbra, Color veil) {
         AffineTransform save = g2.getTransform();
         g2.translate(cx, cy);
         g2.rotate(heading);
-        Shape shadow = AffineTransform.getScaleInstance(scale, scale)
-                .createTransformedShape(PolishLooks.menhirShadow(tier, reach / scale));
         float end = (float) Math.max(1, reach);
+        Color light = umbra ? new Color(0x6a58b0) : veil;
+        for (int i = 0; i < SUNDIAL_SOFT_STEPS; i++) {
+            double t = (double) i / (SUNDIAL_SOFT_STEPS - 1);
+            Shape band = wedge(reach, scale * SUNDIAL_LIGHT_ROOT * (1 - 0.45 * t),
+                    scale * SUNDIAL_LIGHT_TIP * (1 - 0.45 * t));
+            double a = alpha / SUNDIAL_SOFT_STEPS;
+            g2.setPaint(new LinearGradientPaint(0f, 0f, end, 0f, new float[] {0f, 1f}, new Color[] {
+                    faded(light, SUNDIAL_LIGHT_ALPHA * a * 2), faded(light, SUNDIAL_LIGHT_TIP_ALPHA * a * 2)}));
+            g2.fill(band);
+        }
+        for (int i = 0; i < SUNDIAL_SOFT_STEPS; i++) {
+            double t = (double) i / (SUNDIAL_SOFT_STEPS - 1);
+            Shape shade = wedge(reach, scale * (SUNDIAL_UMBRA_ROOT + (SUNDIAL_PENUMBRA_ROOT - SUNDIAL_UMBRA_ROOT) * t),
+                    scale * (SUNDIAL_UMBRA_TIP + (SUNDIAL_PENUMBRA_TIP - SUNDIAL_UMBRA_TIP) * t));
+            double a = alpha / SUNDIAL_SOFT_STEPS;
+            g2.setPaint(new LinearGradientPaint(0f, 0f, end, 0f, new float[] {0f, 0.55f, 1f}, new Color[] {
+                    faded(SUNDIAL_DARK, SUNDIAL_DARK_ALPHA * a * 2), faded(SUNDIAL_DARK, SUNDIAL_DARK_ALPHA * 0.75 * a * 2),
+                    faded(SUNDIAL_DARK, SUNDIAL_DARK_ALPHA * 0.30 * a * 2)}));
+            g2.fill(shade);
+        }
+        Color edge = new Color((light.getRed() + 510) / 3, (light.getGreen() + 510) / 3, (light.getBlue() + 510) / 3);
         g2.setPaint(new LinearGradientPaint(0f, 0f, end, 0f, new float[] {0f, 1f}, new Color[] {
-                faded(SUNDIAL_DARK, SUNDIAL_DARK_ALPHA * alpha), faded(SUNDIAL_DARK, SUNDIAL_DARK_ALPHA * 0.45 * alpha)}));
-        g2.fill(shadow);
-        Color tint = umbra ? new Color(0x6a58b0) : veil;
-        g2.setPaint(new LinearGradientPaint(0f, 0f, end, 0f, new float[] {0f, 1f}, new Color[] {
-                faded(tint, (umbra ? 0.42 : SUNDIAL_VEIL_ALPHA) * alpha), faded(tint, SUNDIAL_TIP_ALPHA * alpha)}));
-        g2.fill(shadow);
-        Color edge = new Color((tint.getRed() + 510) / 3, (tint.getGreen() + 510) / 3, (tint.getBlue() + 510) / 3);
-        g2.setPaint(new LinearGradientPaint(0f, 0f, end, 0f, new float[] {0f, 1f}, new Color[] {
-                faded(edge, SUNDIAL_EDGE_ALPHA * alpha), faded(edge, SUNDIAL_EDGE_ALPHA * 0.35 * alpha)}));
+                faded(edge, SUNDIAL_EDGE_ALPHA * alpha), faded(edge, 0)}));
         g2.setStroke(new BasicStroke((float) (SUNDIAL_EDGE_CELLS * scale), BasicStroke.CAP_ROUND,
                 BasicStroke.JOIN_ROUND));
-        Shape clip = g2.getClip();
-        g2.clip(new Rectangle2D.Double(scale * 0.02, -scale * 2, reach + scale, scale * 2));
-        g2.draw(shadow);
-        g2.setClip(clip);
+        double rim = (SUNDIAL_UMBRA_ROOT + SUNDIAL_PENUMBRA_ROOT) / 2 * scale;
+        double rimTip = (SUNDIAL_UMBRA_TIP + SUNDIAL_PENUMBRA_TIP) / 2 * scale;
+        g2.draw(new Line2D.Double(scale * 0.12, -rim, reach, -rimTip));
         g2.setTransform(save);
+    }
+
+    /** A wedge along +x from 0 to {@code reach}, {@code root} either side at its foot and {@code tip} at its end. */
+    private static Shape wedge(double reach, double root, double tip) {
+        Path2D.Double p = new Path2D.Double();
+        p.moveTo(0, -root);
+        p.lineTo(reach, -tip);
+        p.quadTo(reach + tip * 0.6, 0, reach, tip);
+        p.lineTo(0, root);
+        p.quadTo(-root * 0.6, 0, 0, -root);
+        p.closePath();
+        return p;
     }
 }
