@@ -87,6 +87,29 @@ class SeekerTowerTest {
     }
 
     @Test
+    void aFightRunsWhileAnEnemyIsInReachAndTheQuietBeforeItIsKept() {
+        SeekerTower tower = this.towerWith();
+        boolean quietBeforeTheFirstTick = tower.ticksQuiet(this.tick).isPresent();
+        for (int i = 0; i < 5; i++) {
+            tower.doTick(this.tick++);
+        }
+        this.enemies(this.enemyAt(tower, OUT, 0));
+        for (int i = 0; i < 3; i++) {
+            tower.doTick(this.tick++);
+        }
+        int fighting = tower.ticksFighting(this.tick).orElseThrow();
+        int quietBefore = tower.ticksQuiet(this.tick).orElseThrow();
+        this.enemies();
+        tower.doTick(this.tick++);
+
+        assertThat(quietBeforeTheFirstTick).isFalse();
+        assertThat(fighting).isEqualTo(3);
+        assertThat(quietBefore).isEqualTo(5);
+        assertThat(tower.ticksFighting(this.tick)).isEmpty();
+        assertThat(tower.ticksQuiet(this.tick)).hasValue(1);
+    }
+
+    @Test
     void theNestLoadsWithNoEnemyInRangeUpToItsSize() {
         SeekerTower tower = this.towerWith();
 

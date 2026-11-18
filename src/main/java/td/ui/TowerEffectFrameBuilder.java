@@ -20,6 +20,8 @@ import td.tower.splash.Passive;
 import td.ui.render.BeamDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.FlashDraw;
+import td.ui.render.FlockDraw;
+import td.ui.render.FlockLook;
 import td.ui.render.IceWakeDraw;
 import td.ui.render.LoadedMissile;
 import td.ui.render.NestDraw;
@@ -36,12 +38,14 @@ import td.ui.render.TracerDraw;
 import td.ui.render.WardOutlineDraw;
 import td.ui.render.ZoneDraw;
 import td.util.GameWorld;
+import td.util.TickRate;
 import td.wave.Vec2;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * Describes each tower's transient effect - beam, splash, pulse, cone, or an aura's ring - as draw
@@ -61,6 +65,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /** The aim laser's opacity with no Steady Aim stack, and how much each stack adds. */
     /** A bullet's streak is this share of the way from muzzle to enemy, and this wide, in cells. */
+    /**
+     * The nest's ring round an Aerie's top: its radius in cells, so its far half passes above the tip, and how fast it
+     * turns on the wall clock, in radians a second, also while the tower idles.
+     */
+    private static final float NEST_RADIUS_CELLS = 0.30f;
+    private static final double NEST_TURN = 0.6;
     private static final float TRACER_LENGTH = 0.45f;
     private static final float TRACER_WIDTH_CELLS = 0.028f;
     /** How much of its way a curse, spark or soul in flight trails behind it. */
@@ -483,8 +493,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * The frost round every enemy an Ice Wake holds, the shards of ice that just burst, and the missiles held in the
-     * nest, circling the tower at its perch; the missile in flight is a projectile.
+     * The frost round every enemy an Ice Wake holds, the shards of ice that just burst, the missiles held in the nest,
+     * circling the tower's top, and the birds over it while it is quiet; the missile in flight is a projectile.
      */
     public Void visitSeekerTower(SeekerTower tower) {
         for (Vec2 held : tower.iceWakes()) {
@@ -499,16 +509,40 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
         List<LoadedMissile> missiles = tower.nestMissiles().stream()
                 .map(kind -> ProjectileFrameBuilder.loadedMissileOf(kind.look())).toList();
-        boolean ready = tower.releaseReady();
-        if (missiles.isEmpty() && !ready) {
-            return null;
-        }
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
-        Point2D.Float centre = TowerSprites.nestCentre(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
+        Point2D.Float top = TowerSprites.nestCentre(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
                 TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale);
-        this.draws.add(new NestDraw(centre.x, centre.y, TowerSprites.nestRadius(tier, this.scale), missiles,
-                tower.ringRadians(), ProjectileFrameBuilder.MISSILE_LENGTH_CELLS * this.scale, ready));
+        float lifeSeconds = TowerSpriteFrameBuilder.lifeSeconds(tower, this.animationSeconds);
+        if (!missiles.isEmpty()) {
+            this.draws.add(new NestDraw(top.x, top.y, NEST_RADIUS_CELLS * this.scale, missiles,
+                    tower.ringRadians() + lifeSeconds * NEST_TURN,
+                    ProjectileFrameBuilder.MISSILE_LENGTH_CELLS * this.scale, tower.releaseReady()));
+        }
+        this.flock(tower, tier, top, lifeSeconds);
         return null;
+    }
+
+    /** The birds over an Aerie: they come once it has been quiet a while and scatter when it fights. */
+    private void flock(SeekerTower tower, int tier, Point2D.Float top, float lifeSeconds) {
+        OptionalInt quiet = tower.ticksQuiet(this.gameTime);
+        if (quiet.isEmpty()) {
+            return;
+        }
+        OptionalInt fighting = tower.ticksFighting(this.gameTime);
+        float alpha = (float) this.interpolationAlpha;
+        FlockPresence presence = FlockPresence.of(
+                (quiet.getAsInt() + (fighting.isPresent() ? 0f : alpha)) / TickRate.TICKS_PER_SECOND,
+                fighting.isPresent(), (fighting.orElse(0) + alpha) / TickRate.TICKS_PER_SECOND);
+        if (presence.empty()) {
+            return;
+        }
+        FlockLook look = tower.secondMissile().map(kind -> switch (kind) {
+            case FROST -> FlockLook.TERNS;
+            case RUBY -> FlockLook.EMBERS;
+            case SHADE -> FlockLook.CROWS;
+        }).orElse(FlockLook.TERNS);
+        this.draws.add(new FlockDraw(look, TowerLifeArt.birdCount(look, tier), top.x, top.y, this.scale, lifeSeconds,
+                TowerSpriteFrameBuilder.seedOf(tower), (float) presence.arrived(), (float) presence.leaving()));
     }
 
     /** Shards of the ice thrown out over every enemy the burst reaches, in the colour of the missile that froze it. */

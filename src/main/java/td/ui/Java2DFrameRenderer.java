@@ -22,6 +22,7 @@ import td.ui.render.EnemyOverlayDraw;
 import td.ui.render.EnemyRingDraw;
 import td.ui.render.EnemyTintDraw;
 import td.ui.render.FlashDraw;
+import td.ui.render.FlockDraw;
 import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
 import td.ui.render.IceWakeDraw;
@@ -176,13 +177,10 @@ public final class Java2DFrameRenderer {
     private static final Color ZONE_MINE_LIT = new Color(255, 70, 70);
     private static final Color ZONE_MINE_UNLIT = new Color(110, 30, 30);
     private static final int ZONE_FALLOUT_BLADES = 3;
-    /** A waiting Release's ring path: how opaque, and how thick as a share of a missile's length. */
-    private static final int NEST_PATH_ALPHA = 140;
     /** An Ice Wake's frost ring: faint, thin and broken into short dashes, in cells. */
     private static final int ICE_WAKE_ALPHA = 120;
     private static final float ICE_WAKE_STROKE_CELLS = 0.035f;
     private static final float[] ICE_WAKE_DASH_CELLS = {0.08f, 0.07f};
-    private static final float NEST_PATH_STROKE = 0.13f;
     private static final Font MISS_MARK_FONT = Hud.LABEL_FONT.deriveFont(10f);
     private static final String MISS_TEXT = "miss";
     private static final float MISS_MARK_RISE = 10f;
@@ -1348,7 +1346,8 @@ public final class Java2DFrameRenderer {
             case RingDraw ring -> this.paintRing(g2, ring);
             case FlashDraw flash -> this.paintFlash(g2, flash);
             case StreamDraw stream -> paintStream(g2, stream);
-            case NestDraw nest -> this.paintNest(g2, nest);
+            case NestDraw nest -> TowerLifeArt.nest(g2, nest);
+            case FlockDraw flock -> TowerLifeArt.birds(g2, flock);
             case IceWakeDraw wake -> paintIceWake(g2, wake);
             case TowerStatusDraw status -> this.paintTowerStatus(g2, status);
             case RefundMarkDraw mark -> CashMark.paint(g2, mark.x(), mark.y(), mark.height());
@@ -1581,29 +1580,4 @@ public final class Java2DFrameRenderer {
         g2.setComposite(save);
     }
 
-    /**
-     * The missiles held, evenly spread, each pointing the way the ring turns; while a Release waits, the ring's path in
-     * the first missile's colour.
-     */
-    private void paintNest(Graphics2D g2, NestDraw nest) {
-        float r = nest.ringRadius();
-        if (nest.releaseReady()) {
-            Stroke stroke = g2.getStroke();
-            Color ring = nest.missiles().isEmpty() ? colorFor(Palette.PROJECTILE_MISSILE)
-                    : colorFor(MissileArt.paletteOf(nest.missiles().getFirst()));
-            g2.setColor(withAlpha(ring, NEST_PATH_ALPHA));
-            g2.setStroke(new BasicStroke(nest.missileLength() * NEST_PATH_STROKE));
-            g2.draw(new Ellipse2D.Float(nest.centerX() - r, nest.centerY() - r, r * 2, r * 2));
-            g2.setStroke(stroke);
-        }
-        AffineTransform save = g2.getTransform();
-        int count = nest.missiles().size();
-        for (int i = 0; i < count; i++) {
-            double angle = nest.phaseRadians() + Math.PI * 2 * i / count;
-            g2.translate(nest.centerX() + Math.cos(angle) * r, nest.centerY() + Math.sin(angle) * r);
-            g2.rotate(angle + Math.PI / 2);
-            MissileArt.paint(g2, nest.missiles().get(i), nest.missileLength(), nest.releaseReady());
-            g2.setTransform(save);
-        }
-    }
 }

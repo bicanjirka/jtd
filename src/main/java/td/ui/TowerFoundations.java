@@ -153,7 +153,13 @@ final class TowerFoundations {
         /** A four-point star that flashes once in a while. */
         GLINT,
         /** A pale ray that turns round its centre. */
-        SWEEP
+        SWEEP,
+        /** Arcs that jump from a ball now and then, crackling. */
+        SPARKS,
+        /** Motes and wisps that turn inside a glass ball. */
+        SWIRL,
+        /** A rune's glow, lit by a wave that climbs the stone. */
+        RUNE
     }
 
     /** One part: a shape whose foot stands {@code z0} up, {@code height} tall, in its three tones or one colour. */
@@ -925,6 +931,7 @@ final class TowerFoundations {
             b.glow(0, 0, 0.28, z + ball, alpha(storm, 0.75));
         } else {
             b.light(Life.BREATH, 0, 0, z + ball, 0.19, storm);
+            b.light(Life.SPARKS, 0, 0, z + ball, 0.34, new Color(0xe6edff));
         }
         ball(b, 0, 0, z + ball, ball, charged ? new Color(0xe8eeff) : storm);
         if (pose.flash()) {
@@ -993,6 +1000,7 @@ final class TowerFoundations {
             b.glow(0, 0, ball * (pose.flash() ? 2.6 : 2.0), centre, alpha(hex, 0.8));
         } else {
             b.light(Life.BREATH, 0, 0, centre, ball * 1.7, hex);
+            b.light(Life.SWIRL, 0, 0, centre, ball * 0.86, lit);
         }
         ball(b, 0, 0, centre, ball, pose.flash() ? mix(lit, Color.WHITE, 0.6) : charged ? lit : glass);
         if (pose.flash()) {
@@ -1785,6 +1793,9 @@ final class TowerFoundations {
             double size = i == 1 ? 1.0 : 0.62;
             double w = 0.020 * size;
             b.glow(x, y, 0.085 * size, 0, alpha(c, pose.flash() ? 1.0 : charged ? 0.9 : 0.45));
+            if (!charged && !pose.flash()) {
+                b.light(Life.RUNE, x, y, 0, 0.11 * size, c);
+            }
             int first = b.mark();
             if (i == 1) {
                 greatRune(b, look, ink, w);

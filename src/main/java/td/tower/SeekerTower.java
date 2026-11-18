@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import static td.tower.upgrade.MechanicCatalogue.entry;
 
@@ -199,6 +200,10 @@ public final class SeekerTower extends AbstractTower {
     private boolean releaseDue;
     private double ringRadians;
     private int tickNow;
+    /** The tick its present quiet, or the quiet before its present fight, began; empty before its first tick. */
+    private OptionalInt quietSince = OptionalInt.empty();
+    /** The tick its present fight began; empty while it is quiet. */
+    private OptionalInt fightingSince = OptionalInt.empty();
 
     public SeekerTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SEEKER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
@@ -241,6 +246,7 @@ public final class SeekerTower extends AbstractTower {
         this.settleIce(spec);
         this.nest.keepOnly(spec.brood()::owns);
         List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
+        this.noteFight(!inReach.isEmpty(), gameTime);
         if (this.releaseDue) {
             this.releaseDue = false;
             this.release(spec, inReach);
@@ -262,6 +268,19 @@ public final class SeekerTower extends AbstractTower {
             }
         }
         this.clock.advance(this.attackRate());
+    }
+
+    /** A fight begins when an enemy comes into its reach and ends when none is left there. */
+    private void noteFight(boolean fighting, int gameTime) {
+        if (this.quietSince.isEmpty()) {
+            this.quietSince = OptionalInt.of(gameTime);
+        }
+        if (fighting && this.fightingSince.isEmpty()) {
+            this.fightingSince = OptionalInt.of(gameTime);
+        } else if (!fighting && this.fightingSince.isPresent()) {
+            this.quietSince = OptionalInt.of(gameTime);
+            this.fightingSince = OptionalInt.empty();
+        }
     }
 
     /** A nest that waited with nothing in reach is full, so every wave starts with it full and the count at none. */
@@ -428,6 +447,23 @@ public final class SeekerTower extends AbstractTower {
     /** Where the ring its nest sits on has turned to, in radians. */
     public double ringRadians() {
         return this.ringRadians;
+    }
+
+    /**
+     * How long it has been quiet, or, while it fights, how long the quiet before this fight lasted; empty before its
+     * first tick.
+     */
+    public OptionalInt ticksQuiet(int gameTime) {
+        if (this.quietSince.isEmpty()) {
+            return OptionalInt.empty();
+        }
+        return OptionalInt.of(this.fightingSince.orElse(gameTime) - this.quietSince.getAsInt());
+    }
+
+    /** How long its present fight has run, an enemy in its reach all along; empty while it is quiet. */
+    public OptionalInt ticksFighting(int gameTime) {
+        return this.fightingSince.isPresent() ? OptionalInt.of(gameTime - this.fightingSince.getAsInt())
+                : OptionalInt.empty();
     }
 
     /** Whether the next freeze it lands sets off a Release. */
