@@ -111,7 +111,8 @@ Mouse: move to preview placement, click to place or to select a placed tower. In
 hovering a node shows what it does and what a click would do; a click buys it with every node it
 needs first, in one payment or not at all, and a right-click on an owned node downgrades it (after a
 confirmation, unless all of it refunds in full) with every node that depends on it. Between waves, a click on a
-cluster's other member switches to it. Click a moving enemy, invisible ones too (when not placing a
+cluster's other member switches to it. Each open tier's strip has a **Buy singles** button, the same as its digit
+key: it buys, left to right, each of the tier's nodes in no cluster that is on offer and affordable. Click a moving enemy, invisible ones too (when not placing a
 tower), to inspect it: the side panel shows its live health, stats, effects and traits, updating even while paused,
 and keeps a "Killed" or "Leaked" line after it's gone until your next click. Hovering an enemy in
 the wave preview opens a tooltip of the stats that enemy type spawns with.
@@ -204,13 +205,16 @@ every tower an enemy reached earns its bounty as XP when its walk ends,
 killed or leaked (a Beacon earns with the towers it lights). Once a tier is open its upgrades cost only credits. In a
 tier an upgrade stands alone, follows one it needs (in the same tier or the one below), or belongs to a cluster:
 one framed set of which a tower keeps one active, switched for free between waves, which sells back what came
-after the old one. Attune, in Tier 0, gives each tower its own mechanic. The Burst picks Stormcaller or Hexer at Tier
-I's gate, which makes it a Stormcaller or a Hexer; picking the other side later works only between waves and sells
-the old side's upgrades. A downgrade takes a node back with everything that needs it, refunds three quarters of what
+after the old one. Attune, in Tier 0, gives each tower its own mechanic. The Burst's Stormcaller or Hexer is a
+Tier I cluster like any other, and its pick makes it a Stormcaller or a Hexer; switching sides later works only
+between waves and sells the old side's upgrades. A downgrade takes a node back with everything that needs it, refunds three quarters of what
 they cost (selling afterwards pays what selling would have) and reopens the choices they made. Upgrade
 prices are multiples of the tower's price. A tower stands on one plinth step for each tier it has open, and its
 foundation grows wider and richer with each; when a tier opens, the new foundation spreads over the old with a ring
-in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade now. The Upgrades panel's XP bar ticks where the next tier opens. Selecting a Beacon marks every
+in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade now. The Upgrades panel shows the tower's XP on
+its title line, each tier as a band with its numeral, and a locked tier's XP toward its gate on the band's strip.
+A round node changes a number and a square one adds an ability; where a tree holds two builds, one leans left and
+the other right. A small badge on a node's corner stands for a need more than a tier below. Selecting a Beacon marks every
 tower in its light with a small gold diamond.
 
 ```mermaid
