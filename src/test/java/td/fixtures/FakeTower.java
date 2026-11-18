@@ -155,7 +155,7 @@ public final class FakeTower extends AbstractTower {
     }
 
     @Override
-    public void doTick(int gameTime) {
+    protected void act(int gameTime) {
     }
 
     /** Visited as a plain tower of the type it reports, standing in its cell. */

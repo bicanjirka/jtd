@@ -12,6 +12,9 @@
   hits from another's (`charge`).
 - After `doCleanup` (sell or teardown), `dealDamage` is a no-op, because a burn the tower applied
   keeps ticking. A tower that subscribes to anything unsubscribes in `doCleanup`.
+- A tower's turn is `act(gameTime)`; what its turn reaches reads the tick through `tickNow()`, never a tick field of
+  its own. A projectile lands before the towers act, so its hook (`PointImpact`, `MissileGuide.land`) takes the tick
+  it is passed.
 - Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.
 - A tower that hits every tick passes `coolDownMax = 0`; one whose cadence is not a cooldown also overrides
   `cadence()`.

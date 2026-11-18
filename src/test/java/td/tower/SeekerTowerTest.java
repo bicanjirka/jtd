@@ -351,7 +351,8 @@ class SeekerTowerTest {
         SeekerTower tower = this.towerWith("Shade");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.enemies(target);
-        this.landOne(tower);
+        this.launch(tower);
+        this.tick = TowerFixtures.flyProjectilesToCompletion(this.context, this.tick);
         int frozenAt = this.tick - 1;
         for (int i = 0; i < 10; i++) {
             tower.doTick(this.tick++);

@@ -20,7 +20,7 @@ class ProjectileFrameBuilderTest {
 
     @Test
     void aCannonballIsInterpolatedBetweenItsPreviousAndCurrentPosition() {
-        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y, gameTime) -> {
         });
         shell.doTick(1); // prevX/Y = (0,0), x/y = (10,0)
 
@@ -45,7 +45,7 @@ class ProjectileFrameBuilderTest {
     }
 
     private static CannonballProjectile lob(float distance, float speed) {
-        return new CannonballProjectile(0, 0, distance, 0, speed, (x, y) -> {
+        return new CannonballProjectile(0, 0, distance, 0, speed, (x, y, gameTime) -> {
         });
     }
 
@@ -75,7 +75,7 @@ class ProjectileFrameBuilderTest {
     @Test
     void aSpecialShellIsDrawnInItsLookAtItsSize() {
         CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f).withSize(2f),
-                ShellLook.CRYO, (x, y) -> {
+                ShellLook.CRYO, (x, y, gameTime) -> {
                 });
 
         ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
@@ -89,10 +89,10 @@ class ProjectileFrameBuilderTest {
     @Test
     void aShellIsDrawnAsItsKindAndOnlyAShellThatBurnsFreezesOrGlowsTrails() {
         CannonballProjectile napalm = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f), ShellLook.NAPALM,
-                (x, y) -> {
+                (x, y, gameTime) -> {
                 });
         CannonballProjectile heavy = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f), ShellLook.HEAVY,
-                (x, y) -> {
+                (x, y, gameTime) -> {
                 });
         napalm.doTick(1);
         heavy.doTick(1);

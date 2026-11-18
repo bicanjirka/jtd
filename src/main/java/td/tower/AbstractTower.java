@@ -645,6 +645,24 @@ public abstract class AbstractTower implements Tower {
         return List.copyOf(all);
     }
 
+    /** This tower's turn: it notes the tick, then acts. */
+    @Override
+    public final void doTick(int gameTime) {
+        this.currentTick = gameTime;
+        this.act(gameTime);
+    }
+
+    /** What this tower does in its turn. */
+    protected abstract void act(int gameTime);
+
+    /**
+     * The tick of this tower's latest turn. A projectile lands before the towers act, so what it calls back is passed
+     * its own tick and never reads this one.
+     */
+    protected final int tickNow() {
+        return this.currentTick;
+    }
+
     /**
      * Start of this tower's turn: ends the timed statuses that have run out, and re-reads the disruption at
      * its centre. Stats are republished only when one of them changed; compared against the

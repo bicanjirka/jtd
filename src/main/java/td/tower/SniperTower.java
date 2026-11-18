@@ -171,7 +171,6 @@ public final class SniperTower extends AbstractTower {
     private ShotTrace lastShot;
     private Execution lastExecution;
     private OptionalInt firedAt = OptionalInt.empty();
-    private int tickNow;
 
     public SniperTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
@@ -210,8 +209,8 @@ public final class SniperTower extends AbstractTower {
         return selector.selectFrom(spec.reach().matching(this.context.enemies())).orElse(null);
     }
 
-    public void doTick(int gameTime) {
-        this.tickNow = gameTime;
+    @Override
+    protected void act(int gameTime) {
         this.focus.advance();
         this.landArrived();
         if (this.clock.isReady()) {
@@ -263,7 +262,7 @@ public final class SniperTower extends AbstractTower {
             shot = mechanic.shape(shot, context);
         }
         this.bullets.add(new Bullet(shot, stats, target, this.flightFrom(this.centerX, this.centerY, target)));
-        this.firedAt = OptionalInt.of(this.tickNow);
+        this.firedAt = OptionalInt.of(this.tickNow());
         double rate = this.attackRate();
         this.clock.spend(rate / (rate + shot.attackSpeedBonus()));
     }
@@ -273,15 +272,15 @@ public final class SniperTower extends AbstractTower {
         double distance = Math.hypot(target.getX() - x, target.getY() - y);
         int ticks = Math.max(MIN_FLIGHT_TICKS,
                 (int) Math.ceil(distance / (BULLET_CELLS_PER_TICK * this.context.getBoard().scale())));
-        return new ShotFlight(this.tickNow, this.tickNow + ticks);
+        return new ShotFlight(this.tickNow(), this.tickNow() + ticks);
     }
 
     /** Lands every bullet and every hop whose flight ends now. */
     private void landArrived() {
-        while (!this.hops.isEmpty() && this.hops.getFirst().bullet().landsAt() <= this.tickNow) {
+        while (!this.hops.isEmpty() && this.hops.getFirst().bullet().landsAt() <= this.tickNow()) {
             this.landHop(this.hops.removeFirst());
         }
-        while (!this.bullets.isEmpty() && this.bullets.getFirst().landsAt() <= this.tickNow) {
+        while (!this.bullets.isEmpty() && this.bullets.getFirst().landsAt() <= this.tickNow()) {
             this.land(this.bullets.removeFirst());
         }
     }
@@ -328,7 +327,7 @@ public final class SniperTower extends AbstractTower {
 
     private ShotTrace traceOf(Bullet bullet, boolean critical) {
         return new ShotTrace(bullet.target().position(), critical, bullet.shot(),
-                this.tickNow);
+                this.tickNow());
     }
 
     private HitResult land(SniperShot shot, EnemyMob target, TowerStats stats) {
@@ -540,7 +539,7 @@ public final class SniperTower extends AbstractTower {
             SniperTower.this.dealDamage(target, Damage.physical(EXECUTION_DAMAGE), finisher);
             if (target.isDead()) {
                 SniperTower.this.lastExecution = new Execution(target.position(),
-                        SniperTower.this.tickNow, target);
+                        SniperTower.this.tickNow(), target);
             }
             return target.isDead();
         }

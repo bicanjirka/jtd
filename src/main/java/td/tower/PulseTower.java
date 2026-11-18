@@ -174,7 +174,8 @@ public final class PulseTower extends AbstractTower {
         return spec;
     }
 
-    public void doTick(int gameTime) {
+    @Override
+    protected void act(int gameTime) {
         PulseSpec spec = this.spec(this.mechanics.all());
         List<EnemyMob> inside = spec.reach().matching(this.context.enemies());
         this.holding = !inside.isEmpty();

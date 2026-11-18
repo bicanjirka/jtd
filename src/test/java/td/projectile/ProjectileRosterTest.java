@@ -10,7 +10,7 @@ class ProjectileRosterTest {
 
     @Test
     void addedProjectilesAppearInGetProjectiles() {
-        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y, gameTime) -> {
         });
 
         roster.add(shell);
@@ -20,7 +20,7 @@ class ProjectileRosterTest {
 
     @Test
     void doTickAdvancesEveryLiveProjectile() {
-        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y, gameTime) -> {
         });
         roster.add(shell);
 
@@ -31,7 +31,7 @@ class ProjectileRosterTest {
 
     @Test
     void aFinishedProjectileIsDroppedFromTheRosterAfterItsTick() {
-        CannonballProjectile shell = new CannonballProjectile(0, 0, 10, 0, 10f, (x, y) -> {
+        CannonballProjectile shell = new CannonballProjectile(0, 0, 10, 0, 10f, (x, y, gameTime) -> {
         });
         roster.add(shell);
 
@@ -43,7 +43,7 @@ class ProjectileRosterTest {
 
     @Test
     void clearingTheRosterRemovesEveryProjectileInFlight() {
-        roster.add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        roster.add(new CannonballProjectile(0, 0, 100, 0, 10f, (x, y, gameTime) -> {
         }));
 
         roster.clear();

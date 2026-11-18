@@ -371,7 +371,8 @@ public final class AuraTower extends AbstractTower {
      * The light's tick: Daylight's circle, the reveal and Glare on every enemy inside, the Spotlight's hold, Prism's
      * marks and what its tags settle, and Breakthrough's lessons.
      */
-    public void doTick(int gameTime) {
+    @Override
+    protected void act(int gameTime) {
         LightSpec spec = this.spec();
         if (spec.edge() == LightSpec.Edge.DAYLIGHT) {
             this.context.daylight().add(this.centerX, this.centerY, this.rangeReal());

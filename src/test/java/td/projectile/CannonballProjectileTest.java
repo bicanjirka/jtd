@@ -12,7 +12,7 @@ class CannonballProjectileTest {
 
     @Test
     void travelsInAStraightLineTowardItsFixedDestination() {
-        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y, gameTime) -> {
         });
 
         shell.doTick(1);
@@ -25,7 +25,7 @@ class CannonballProjectileTest {
     @Test
     void detonatesExactlyAtItsDestinationAndReportsThePointItArrivedAt() {
         List<double[]> impacts = new ArrayList<>();
-        CannonballProjectile shell = new CannonballProjectile(0, 0, 30, 0, 10f, (x, y) -> impacts.add(new double[]{x, y}));
+        CannonballProjectile shell = new CannonballProjectile(0, 0, 30, 0, 10f, (x, y, gameTime) -> impacts.add(new double[]{x, y}));
 
         for (int t = 1; t <= 3 && !shell.isFinished(); t++) {
             shell.doTick(t);
@@ -40,7 +40,7 @@ class CannonballProjectileTest {
     @Test
     void aFinishedProjectileDoesNothingOnFurtherTicks() {
         List<double[]> impacts = new ArrayList<>();
-        CannonballProjectile shell = new CannonballProjectile(0, 0, 10, 0, 10f, (x, y) -> impacts.add(new double[]{x, y}));
+        CannonballProjectile shell = new CannonballProjectile(0, 0, 10, 0, 10f, (x, y, gameTime) -> impacts.add(new double[]{x, y}));
 
         shell.doTick(1); // arrives in exactly one tick (distance 10 == speed 10)
         shell.doTick(2);
@@ -51,7 +51,7 @@ class CannonballProjectileTest {
 
     @Test
     void interpolationSourceTracksOneTickBehindCurrentPosition() {
-        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y) -> {
+        CannonballProjectile shell = new CannonballProjectile(0, 0, 100, 0, 10f, (x, y, gameTime) -> {
         });
 
         shell.doTick(1);
