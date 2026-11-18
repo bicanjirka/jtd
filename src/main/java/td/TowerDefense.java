@@ -785,10 +785,10 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         if (this.engine.outcome().isOver()) {
             return;
         }
-        // A digit buys the selected tower's offered upgrade by number; no placement key is a digit.
-        if (key >= '1' && key <= '9') {
-            this.engine.buyUpgradeForSelected(key - '0');
-            this.gameConsole.refreshSelected();
+        // A digit buys a tier's singles for the selected tower; no placement key is a digit.
+        OptionalInt tier = GameKey.singlesTierOf(key);
+        if (tier.isPresent()) {
+            this.gameConsole.buySingles(tier.getAsInt());
             return;
         }
         TowerFactory.Type[] types = TowerFactory.Type.values();

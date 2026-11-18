@@ -1001,54 +1001,6 @@ class GameEngineTest {
     }
 
     @Test
-    void numberKeysBuyTheSelectedTowersOfferedNodeWithThatKeyOneForTheChainTwoForRange() {
-        GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
-        Tower tower = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0))
-                .orElseThrow();
-        tower.setSelected(true);
-        int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
-        List<UpgradeNode> keyed = tower.upgradeTree().keyed(tower, engine.getGameWorld());
-
-        engine.buyUpgradeForSelected(2);
-        engine.buyUpgradeForSelected(1);
-
-        assertThat(engine.getGameWorld().economy().getCredits()).isLessThan(creditsBeforeUpgrade);
-        assertThat(tower.upgrades().owned()).containsExactly(keyed.get(1), keyed.get(0));
-    }
-
-    @Test
-    void buyUpgradeForSelectedWithNoTowerSelectedSpendsNothing() {
-        GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
-        int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
-
-        engine.buyUpgradeForSelected(1);
-
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsBeforeUpgrade);
-    }
-
-    @Test
-    void buyUpgradeForSelectedWithAnOutOfRangeNumberSpendsNothing() {
-        GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        engine.startPlacing(TowerFactory.Type.SNIPER, SniperTower.RANGE);
-        engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0));
-        Tower tower = engine.mouseClicked(BoardFixtures.cellCenter(0), BoardFixtures.cellCenter(0))
-                .orElseThrow();
-        tower.setSelected(true);
-        int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
-
-        engine.buyUpgradeForSelected(99);
-
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsBeforeUpgrade);
-    }
-
-    @Test
     void placingOnAPathCellIsRejectedAndCostsNothing() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
@@ -1343,9 +1295,9 @@ class GameEngineTest {
         Tower secondCopy = placeSniper(engine, 1, 0);
         secondCopy.setSelected(true);
         int creditsBeforeUpgrade = engine.getGameWorld().economy().getCredits();
-        UpgradeNode second = secondCopy.upgradeTree().keyed(secondCopy, engine.getGameWorld()).get(1);
+        UpgradeNode second = secondCopy.offeredUpgrades(engine.getGameWorld()).get(1);
 
-        engine.buyUpgradeForSelected(2);
+        secondCopy.buyUpgrade(second);
 
         assertThat(secondCopy.upgrades().owned()).containsExactly(second);
         assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsBeforeUpgrade - second.price());

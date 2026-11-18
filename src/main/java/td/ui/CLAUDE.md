@@ -131,7 +131,7 @@ keeps the seam honest.
   node's place from the tree, scaled to fit, never scrolled; a node's look is an `UpgradeNodeState`, and its hover
   is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).
 - A question is a `ConfirmPopup` on the popup layer, never a platform dialog.
-- A key chip shows the binding its key runs, never a copy: a tower's `placementKey`, an upgrade's `UpgradeTree.keyOf`,
+- A key chip shows the binding its key runs, never a copy: a tower's `placementKey`, a tier's `GameKey.singlesKey`,
   a `GameKey`, a dev `Shortcut`'s stroke. Game chips always show; dev chips only while Alt is held, drawn over the
   control so nothing moves.
 - Info-pane content is an AWT-free `InfoSheet` that a `*SheetText` builds from a domain

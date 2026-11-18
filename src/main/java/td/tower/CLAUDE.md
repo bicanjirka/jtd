@@ -121,8 +121,8 @@
   a tier and a price, one is active, and switching between waves sells what followed the old one
   (`switchFor`). A tower whose identity is a fork has one `withFork` cluster, which
   renames the tower; it buys, switches and shows as any other cluster.
-- Keys 1 to `UpgradeTree.KEYS` buy left to right in the highest open tier (`keyed`); a cluster takes one key, and
-  each fork side its own until picked. `UpgradeTreeCatalogueTest` rejects a built-in tier with more.
+- A tier's singles are its nodes in no cluster (`singlesIn`); `Tower.buyEach` buys them in the order the panel shows
+  them, passing over what is not on offer or not affordable.
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel shows every node's.
 - A mechanic says what it adds (`describe()`), built from its own constants; a node carries no note. A node's hover

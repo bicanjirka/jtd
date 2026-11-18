@@ -113,8 +113,6 @@ final class UpgradeTreePainter {
     /** Under the border's title. */
     private static final float XP_BASELINE = 30f;
     private static final float CORNER = 7f;
-    private static final float CHIP_INSET = 3f;
-    private static final float ROUND_CHIP_INSET = 5f;
     private static final float BADGE = 15f;
     /** A tier's thumbnail is its foundation, a cell this wide, set a little low since a tower stands up from its cell. */
     private static final float THUMB = 25f;
@@ -317,8 +315,6 @@ final class UpgradeTreePainter {
         String text = look == Look.OWNED ? "✔" : TermNumbers.cash(state.node().price());
         g.setColor(look == Look.SHORT_OF_CASH ? SHORT : look == Look.OWNED ? WHITE : color);
         centred(g, text, PILL_FONT, spot.x(), spot.y() + 3.5f);
-        state.key().ifPresent(key -> Hud.paintChip(g, String.valueOf(key), spot.x() - spot.width() / 2 - 6f,
-                spot.y() - spot.height() / 2 - 2f, Hud.withAlpha(color, 0.6f), color));
     }
 
     private void paintNode(Graphics2D g, UpgradeNode node, Spot spot, UpgradeNodeState state, Highlight highlight,
@@ -381,7 +377,7 @@ final class UpgradeTreePainter {
         }
     }
 
-    /** The cash mark of an owned node no wave has used, the key chip and the price. */
+    /** The cash mark of an owned node no wave has used, and the price. */
     private void paintMarks(Graphics2D g, UpgradeNode node, Spot spot, UpgradeNodeState state, Gates gates) {
         float half = spot.width() / 2;
         if (spot.width() < UpgradeTreeLayout.NODE - 1f) {
@@ -391,11 +387,6 @@ final class UpgradeTreePainter {
             CashMark.paint(g, spot.x() + half - 10 + BADGE / 2f, spot.y() - half - 6 + BADGE / 2f, BADGE);
         }
         Color tier = this.tierColor(node.tier());
-        if (state.key().isPresent() && this.showsKey(node)) {
-            float inset = state.ability() ? ROUND_CHIP_INSET : CHIP_INSET;
-            Hud.paintChip(g, String.valueOf(state.key().getAsInt()), spot.x() - half + inset, spot.y() - half + inset,
-                    Hud.withAlpha(tier, 0.6f), tier);
-        }
         if (!state.look().showsPrice()) {
             return;
         }
@@ -406,12 +397,6 @@ final class UpgradeTreePainter {
             default -> tier;
         });
         centred(g, TermNumbers.cash(node.price()), PRICE_FONT, spot.x(), spot.y() + half + 11);
-    }
-
-    /** A cluster's key shows on its first member only, which the key takes. */
-    private boolean showsKey(UpgradeNode node) {
-        return this.tree.isForkSide(node) || this.tree.clusterOf(node)
-                .map(cluster -> cluster.memberIds().getFirst().equals(node.id())).orElse(true);
     }
 
     private Color tierColor(int tier) {

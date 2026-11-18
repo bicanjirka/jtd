@@ -8,6 +8,7 @@ import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeTree;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -139,6 +140,12 @@ record UpgradeTreeLayout(Map<UpgradeNode, Spot> spots, List<Link> links, List<Fr
 
     Optional<Spot> spotOf(UpgradeNode node) {
         return Optional.ofNullable(this.spots.get(node));
+    }
+
+    /** {@code nodes} by where they sit, left to right; a node not shown last. */
+    List<UpgradeNode> leftToRight(List<UpgradeNode> nodes) {
+        return nodes.stream().sorted(Comparator.comparingDouble(
+                node -> this.spotOf(node).map(Spot::x).orElse(Float.MAX_VALUE))).toList();
     }
 
     /** The node at design point ({@code x}, {@code y}), within {@code slack} of its box. */

@@ -97,7 +97,7 @@ Every button shows its key on a chip in its top-left corner.
 |---------------------------------|------------------------------------------------------------------------------------------------------|
 | `q` `w` `e` `r` `t` `y` `u`     | Select tower 1–7 for placement                                                                       |
 | `Esc`                           | Cancel tower placement; cancel a question                                                            |
-| `1`–`6`                         | Buy an upgrade in the selected tower's highest open tier, left to right; a cluster takes one key, each fork side its own |
+| `0`–`4`                         | Buy the selected tower's tier 0 to IV singles (nodes in no cluster) it can afford, left to right     |
 | `Space` or `P`                  | Pause; while paused or between waves, play on at the last speed and send the next wave               |
 | `d` `f` `g`                     | Normal, fast, super fast speed; each also sends the next wave if it is waiting                       |
 | `Delete`                        | Sell the selected tower                                                                              |

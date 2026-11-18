@@ -142,6 +142,19 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     }
 
     /**
+     * Buys {@code tier}'s singles ({@link UpgradeTree#singlesIn}) left to right as the panel shows them, each it is
+     * offered and can pay for; a no-op without a tower, after the level's end, and for a tier the tree lacks.
+     */
+    public void buySingles(int tier) {
+        if (this.tower == null || this.levelEnded || tier < 0 || tier >= this.tower.upgradeTree().tiers().size()) {
+            return;
+        }
+        List<UpgradeNode> singles = this.tower.upgradeTree().singlesIn(tier);
+        this.tower.buyEach(this.layout.map(laid -> laid.leftToRight(singles)).orElse(singles));
+        this.refresh();
+    }
+
+    /**
      * Reads every node's state and the hovered node's path again. Also called from the render pulse, since XP and
      * gate progress change without economy events; an open node sheet follows.
      */

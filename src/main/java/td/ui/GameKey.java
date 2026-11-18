@@ -3,10 +3,11 @@ package td.ui;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * The game's keys besides a tower's ({@code TowerFactory.Type.placementKey}) and an upgrade's
- * ({@code UpgradeTree.keyOf}): what the frame runs on a key press, and the label the control it presses shows on its
+ * (a tier's digit, {@link #singlesKey}): what the frame runs on a key press, and the label the control it presses shows on its
  * chip, from one place so the two never drift apart. A key may answer to more than one code; its chip names the first.
  */
 public enum GameKey {
@@ -26,6 +27,16 @@ public enum GameKey {
     GameKey(String chip, int... keyCodes) {
         this.chip = chip;
         this.keyCodes = keyCodes.clone();
+    }
+
+    /** The digit that buys tier {@code tier}'s singles for the selected tower. */
+    public static char singlesKey(int tier) {
+        return (char) ('0' + tier);
+    }
+
+    /** The tier whose singles {@code typed} buys, if it is a digit. */
+    public static OptionalInt singlesTierOf(char typed) {
+        return typed >= '0' && typed <= '9' ? OptionalInt.of(typed - '0') : OptionalInt.empty();
     }
 
     /** The key a key press with this code means, if any. */

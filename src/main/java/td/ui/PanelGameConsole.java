@@ -85,6 +85,11 @@ public class PanelGameConsole extends JPanel {
         this.panelUpgradeTree.setLevelEnded(ended);
     }
 
+    /** Buys {@code tier}'s singles for the selected tower, as its Upgrades panel's button does. */
+    public void buySingles(int tier) {
+        this.panelUpgradeTree.buySingles(tier);
+    }
+
     /**
      * Refreshes the selected tower's panels each render pulse, since gate progress changes without
      * any economy event.
