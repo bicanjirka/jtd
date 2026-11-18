@@ -55,7 +55,9 @@ import td.wave.Vec2;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -149,7 +151,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final List<ZoneDraw> wards = new ArrayList<>();
     private final List<FlameDraw.Stream> streams = new ArrayList<>();
-    private final List<FlameDraw.Caught> caught = new ArrayList<>();
+    private final Map<EnemyMob, Burning> burning = new LinkedHashMap<>();
     private final int scale;
     private final int gameTime;
     private final double interpolationAlpha;
@@ -180,7 +182,9 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.draws.add(new WardOutlineDraw(ZoneOutlineTracer.trace(this.wards), this.scale));
         }
         if (!this.streams.isEmpty()) {
-            this.draws.add(new FlameDraw(this.streams, this.caught, this.scale, this.tickSeconds()));
+            List<FlameDraw.Caught> caught = this.burning.entrySet().stream()
+                    .map(entry -> this.caught(entry.getKey(), entry.getValue())).toList();
+            this.draws.add(new FlameDraw(this.streams, caught, this.scale, this.tickSeconds()));
         }
         return this.draws;
     }
@@ -677,16 +681,45 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 (float) tower.halfWidthRadians(), heatOf(tower.fuelPerSecond()), look.coreHalfWidth(), look.soulfire(),
                 flicker));
         for (CinderTower.Caught fed : tower.caught()) {
-            float heat = heatOf(fed.fuelPerSecond()) + (fed.inCore() ? (float) FlameArt.CORE_HEAT : 0f);
-            this.caught.add(fed.enemy().accept(mob -> new FlameDraw.Caught(EnemyFrameBuilder.lookFor(mob.archetype()),
-                    this.lerp(mob.getPrevX(), mob.getX()), this.lerp(mob.getPrevY(), mob.getY()), mob.getBodyScale(),
-                    (float) mob.getFacingRadians(), heat, muzzle.x, muzzle.y, look.soulfire())));
+            this.burning.merge(fed.enemy(), new Burning(new Cone(fed.fuelPerSecond(), muzzle, look.soulfire()),
+                    fed.inCore(), 1), Burning::with);
         }
         for (CinderTower.Flash flash : tower.flashes()) {
             this.draws.add(flashover(look.soulfire(), (float) flash.fromX(), (float) flash.fromY(), (float) flash.toX(),
                     (float) flash.toY(), flicker));
         }
         return null;
+    }
+
+    /** {@code enemy} standing in the flame, as hot as {@code fire} burns it, lit from its hottest cone's nozzle. */
+    private FlameDraw.Caught caught(EnemyMob enemy, Burning fire) {
+        Cone hottest = fire.hottest();
+        return enemy.accept(mob -> new FlameDraw.Caught(EnemyFrameBuilder.lookFor(mob.archetype()),
+                this.lerp(mob.getPrevX(), mob.getX()), this.lerp(mob.getPrevY(), mob.getY()), mob.getBodyScale(),
+                (float) mob.getFacingRadians(), fire.heat(), hottest.nozzle().x, hottest.nozzle().y,
+                hottest.soulfire()));
+    }
+
+    /** One cone's fuel into an enemy, a second, and the nozzle and fire it came from. */
+    private record Cone(float fuelPerSecond, Point2D.Float nozzle, boolean soulfire) {
+    }
+
+    /**
+     * Every cone that fed one enemy this tick: the hottest, whether any held it in its Core, and how many. The hottest
+     * sets the heat, so crossfire warms a rim without stealing the white and ice-blue that only upgrades reach.
+     */
+    private record Burning(Cone hottest, boolean inCore, int cones) {
+
+        Burning with(Burning other) {
+            Cone hotter = other.hottest().fuelPerSecond() > this.hottest().fuelPerSecond() ? other.hottest()
+                    : this.hottest();
+            return new Burning(hotter, this.inCore() || other.inCore(), this.cones() + other.cones());
+        }
+
+        float heat() {
+            return heatOf(this.hottest().fuelPerSecond()) + (float) (FlameArt.CROSSFIRE_HEAT * (this.cones() - 1))
+                    + (this.inCore() ? (float) FlameArt.CORE_HEAT : 0f);
+        }
     }
 
     /** The steam its nozzle lets off as its reload starts. */

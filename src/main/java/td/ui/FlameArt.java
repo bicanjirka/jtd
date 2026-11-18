@@ -13,11 +13,11 @@ import java.awt.geom.Path2D;
 
 /**
  * The Scorchers' flame. Every stream of the frame is painted in one pass, layer by layer, so where two cones cross their
- * fire merges into one flame instead of stacking its alpha twice. Over the fire, each enemy caught in a cone shows as a
- * body standing in the jet: heat pooling on its front, a dimmer wake behind it, its dark silhouette lit white-hot where
- * the jet strikes and dull red round its flanks, tongues of flame licking round both sides with a blue-violet plasma
- * edge, and embers shed off it. How hot it all looks follows the fuel: a hotter stream and a hotter enemy burn yellower,
- * then white, then blue-white. Nothing is stored between frames.
+ * fire merges into one flame instead of stacking its alpha twice. A cone's solid fire covers its whole reach and its
+ * tips lick past it. Over the fire, each enemy caught in a cone shows as a body standing in the jet: heat pooling on its
+ * front, a dimmer wake behind it, its dark silhouette ringed by a rim of its heat, tongues of flame licking round both
+ * sides and embers shed off it. How hot it all looks follows the fuel: a hotter stream and a hotter enemy burn yellower,
+ * then white, then ice-blue, and a hotter rim is thicker. Nothing is stored between frames.
  */
 final class FlameArt {
 
@@ -25,6 +25,8 @@ final class FlameArt {
     static final double FULL_FUEL = 120;
     /** Heat added inside the Core, on top of the fuel the Core already adds. */
     static final double CORE_HEAT = 0.25;
+    /** Heat each cone past the hottest adds to an enemy caught in several. */
+    static final double CROSSFIRE_HEAT = 0.1;
 
     /** The three layers' alpha; the outer and middle merge across cones, the core stays each stream's. */
     private static final float OUTER_ALPHA = 0.55f;
@@ -35,7 +37,7 @@ final class FlameArt {
     private static final int CORE_TIPS = 5;
     private static final int WHITE_TIPS = 3;
     private static final int TONGUE_SEEDS = 7;
-    /** A silhouette: how dark it lies over the fire, and its rim's width in cells. */
+    /** A silhouette: how dark it lies over the fire, and its coolest rim's width in cells. */
     private static final Color SILHOUETTE = new Color(0x1a0c06);
     private static final float SILHOUETTE_ALPHA = 0.68f;
     private static final double RIM_CELLS = 0.030;
@@ -46,13 +48,8 @@ final class FlameArt {
     private static final double WAKE_LENGTH = 3.0;
     private static final float WAKE_ALPHA = 0.42f;
     private static final int LICK_POINTS = 14;
-    private static final int PLASMA_POINTS = 12;
-    private static final Color PLASMA = new Color(0x7a6cff);
-    private static final Color PLASMA_SOUL = new Color(0x58d8ff);
     private static final Color FLAME = new Color(0xff8a2a);
     private static final Color FLAME_SOUL = new Color(0xb49cff);
-    private static final Color RIM_COOL = new Color(0xc0301a);
-    private static final Color RIM_DULL = new Color(0xd04020);
 
     private FlameArt() {
     }
@@ -86,10 +83,15 @@ final class FlameArt {
                 : ramp(heat, new Color(0xffe27a), new Color(0xfff2b8), new Color(0xfffaf0), new Color(0xe6f0ff));
     }
 
-    /** The rim on a silhouette's hot edge: yellow, white-hot, then blue-white. */
+    /** How far {@code heat} is toward the hottest a rim gets: a full stream in the Core. */
+    private static double rimShare(double heat) {
+        return Math.clamp(heat / (1 + CORE_HEAT), 0, 1);
+    }
+
+    /** The rim round a silhouette: orange-red, yellow, white-hot, then ice-blue. */
     private static Color rim(double heat, boolean soul) {
-        return soul ? ramp(heat, new Color(0xe0d0ff), Color.WHITE)
-                : ramp(heat / 1.25, new Color(0xffd84a), new Color(0xfff0a0), Color.WHITE, new Color(0xd8e8ff));
+        return soul ? ramp(rimShare(heat), new Color(0xa47cff), new Color(0xe0d0ff), Color.WHITE, new Color(0xa8f0ff))
+                : ramp(rimShare(heat), new Color(0xe04a20), new Color(0xffd040), Color.WHITE, new Color(0x9cd0ff));
     }
 
     /** Every stream and every enemy caught in one. */
@@ -121,7 +123,6 @@ final class FlameArt {
             g2.fill(middle);
         }
         for (FlameDraw.Stream s : flame.streams()) {
-            plasma(g2, s, scale);
             boolean core = s.coreHalfWidthRadians() > 0;
             double coreHalf = core ? s.coreHalfWidthRadians() : s.halfWidthRadians() * 0.26;
             double coreHeat = s.heat() + (core ? CORE_HEAT : 0);
@@ -144,7 +145,7 @@ final class FlameArt {
         return t.createTransformedShape(tongue);
     }
 
-    /** A flame along +x, its edge through tips and notches across its width, a little shorter toward its sides. */
+    /** A flame along +x: its notches lie at {@code reach} across its width, its tips past it, shorter toward its sides. */
     private static Shape tongue(double reach, double half, int tips, int seed) {
         Path2D.Double path = new Path2D.Double();
         double root = reach * 0.01;
@@ -153,49 +154,21 @@ final class FlameArt {
         int points = tips * 2;
         for (int i = 0; i <= points; i++) {
             double angle = -half + 2 * half * i / points;
-            double edge = 1 - 0.10 * Math.abs(angle / half);
             double roll = TowerLifeArt.hash(seed, i);
-            double share = i % 2 == 0 ? 0.78 + 0.10 * roll : 0.96 + 0.08 * roll;
-            double r = reach * edge * share;
+            double over = (0.15 + 0.10 * roll) * (1 - 0.5 * Math.abs(angle / half));
+            double share = i % 2 == 0 ? 1.0 + 0.04 * roll : 1.0 + over;
+            double r = reach * share;
             path.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
         }
         path.closePath();
         return path;
     }
 
-    /** A thin blue-violet sheen curving along each side of the cone from a third of its reach, gone at the tips. */
-    private static void plasma(Graphics2D g2, FlameDraw.Stream s, double scale) {
-        AffineTransform save = g2.getTransform();
-        g2.translate(s.x(), s.y());
-        g2.rotate(s.headingRadians());
-        Color tint = s.soulfire() ? PLASMA_SOUL : PLASMA;
-        g2.setStroke(new BasicStroke((float) (scale * 0.05), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setPaint(new GradientPaint(s.reach() * 0.3f, 0f, TowerLifeArt.faded(tint, 0), s.reach() * 0.62f, 0f,
-                TowerLifeArt.faded(tint, 0.30 + 0.15 * s.heat()), true));
-        for (int side = -1; side <= 1; side += 2) {
-            Path2D.Double sheen = new Path2D.Double();
-            double inner = s.halfWidthRadians() * 0.80;
-            for (int i = 0; i <= PLASMA_POINTS; i++) {
-                double u = 0.3 + 0.62 * i / PLASMA_POINTS;
-                double a = side * inner * (1 - 0.15 * Math.sin(Math.PI * (u - 0.3) / 0.62));
-                double r = s.reach() * u;
-                if (i == 0) {
-                    sheen.moveTo(Math.cos(a) * r, Math.sin(a) * r);
-                } else {
-                    sheen.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-                }
-            }
-            g2.draw(sheen);
-        }
-        g2.setTransform(save);
-    }
-
-
     /**
      * An enemy in the fire. The jet piles up against its front: a hot glow pools on the side facing the nozzle. Its
-     * body blocks the fire: a dimmer wake trails behind it downstream. Its dark silhouette is lit along the facing edge,
-     * white-hot where the jet strikes square and cooling to a dull red round its flanks. Tongues of flame split on its
-     * front and lick round both sides, a faint plasma along their outer edge; a few embers shed off its flanks.
+     * body blocks the fire: a dimmer wake trails behind it downstream. Its dark silhouette is ringed by a rim as hot,
+     * and as thick, as the fire in it. Tongues of flame split on its front and lick round both sides; a few embers shed
+     * off its flanks.
      */
     private static void silhouette(Graphics2D g2, FlameDraw.Caught c, double scale, double seconds) {
         double x = c.x();
@@ -209,7 +182,6 @@ final class FlameArt {
         int seed = (int) Math.round(c.x() * 7 + c.y() * 13);
         Color hot = rim(c.heat(), c.soulfire());
         Color flame = c.soulfire() ? FLAME_SOUL : FLAME;
-        Color plasma = c.soulfire() ? PLASMA_SOUL : PLASMA;
         double across = toNozzle + Math.PI / 2;
         double wakeX = x + Math.cos(down) * size * WAKE_LENGTH;
         double wakeY = y + Math.sin(down) * size * WAKE_LENGTH;
@@ -226,7 +198,6 @@ final class FlameArt {
         double frontY = y + Math.sin(toNozzle) * size * 0.9;
         TowerLifeArt.glow(g2, frontX, frontY, size * 1.25, hot, 0.55);
         TowerLifeArt.glow(g2, frontX, frontY, size * 0.6, mix(hot, Color.WHITE, 0.4), 0.55);
-        g2.setStroke(new BasicStroke((float) (scale * 0.008)));
         for (int side = -1; side <= 1; side += 2) {
             for (int k = 0; k < TONGUES; k++) {
                 Shape t = lick(x, y, toNozzle, size, side, k, seconds, seed, 1.0);
@@ -234,25 +205,13 @@ final class FlameArt {
                         TowerLifeArt.faded(mix(flame, hot, 0.65), 0.95), (float) (x + Math.cos(down) * size * 3),
                         (float) (y + Math.sin(down) * size * 3), TowerLifeArt.faded(mix(flame, hot, 0.3), 0)));
                 g2.fill(t);
-                g2.setPaint(new GradientPaint((float) frontX, (float) frontY, TowerLifeArt.faded(plasma, 0.45),
-                        (float) (x + Math.cos(down) * size * 2.5), (float) (y + Math.sin(down) * size * 2.5),
-                        TowerLifeArt.faded(plasma, 0)));
-                g2.draw(t);
             }
         }
-        double backX = x + Math.cos(down) * size;
-        double backY = y + Math.sin(down) * size;
-        g2.setPaint(new GradientPaint((float) frontX, (float) frontY,
-                TowerLifeArt.faded(mix(SILHOUETTE, hot, 0.35), 0.62), (float) x, (float) y,
-                TowerLifeArt.faded(SILHOUETTE, SILHOUETTE_ALPHA)));
+        g2.setColor(TowerLifeArt.faded(SILHOUETTE, SILHOUETTE_ALPHA));
         g2.fill(outline);
-        g2.setStroke(new BasicStroke((float) (RIM_CELLS * scale * 2.4), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setPaint(new GradientPaint((float) frontX, (float) frontY, TowerLifeArt.faded(hot, 0.45), (float) backX,
-                (float) backY, TowerLifeArt.faded(RIM_COOL, 0)));
-        g2.draw(outline);
-        g2.setStroke(new BasicStroke((float) (RIM_CELLS * scale * 0.9), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setPaint(new GradientPaint((float) frontX, (float) frontY, TowerLifeArt.faded(mix(hot, Color.WHITE, 0.5), 1.0),
-                (float) x, (float) y, TowerLifeArt.faded(RIM_DULL, 0.15)));
+        float rimWidth = (float) (RIM_CELLS * scale * (1 + rimShare(c.heat())));
+        g2.setStroke(new BasicStroke(rimWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(TowerLifeArt.faded(hot, 0.85));
         g2.draw(outline);
         for (int side = -1; side <= 1; side += 2) {
             Shape t = lick(x, y, toNozzle, size, side, 0, seconds, seed, 0.45);

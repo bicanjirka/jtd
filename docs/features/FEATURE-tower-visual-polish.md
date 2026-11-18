@@ -185,24 +185,28 @@ at Tier III a low iron rail on posts runs round the back half only.
 
 Every stream of the frame is painted in one pass, so two cones that cross merge into one flame instead of stacking
 their alpha: the outer and middle layers of every stream are joined into one shape each and filled once; each
-stream's core stays its own. Flashovers stay the game's small tongues.
+stream's core stays its own. Flashovers stay the game's small tongues. A cone's solid fire covers its whole range
+and its ragged tips lick past it, shorter toward its sides, so no enemy it burns stands outside the drawn flame.
 
 - **An enemy in the jet** looks as a body standing in a jet of flame does, instead of being hidden:
   - its own outline as a semi-transparent dark silhouette over the fire;
   - heat pooling against its front, a soft hot glow on the side facing the nozzle;
   - a dimmer wake trailing downstream behind it, where its body blocks the fire (`WAKE_*`);
-  - the hot rim: its outline lit white-hot where the jet strikes square, cooling to a dull red round its flanks and
-    fading out at its back, and the silhouette itself warmed on its front;
+  - the hot rim: one flat line round its whole outline in the colour of its heat, thicker the hotter it burns, over
+    a flat dark silhouette;
   - tongues of flame (`TONGUES` a side) that split on its front, hug its flanks and stream away downstream, tapering
-    to a point and wavering; brighter than the fire behind them, as a flame front is, a faint blue-violet plasma along
-    their outer edge, and a narrower white-hot tongue inside the first;
+    to a point and wavering; brighter than the fire behind them, as a flame front is, and a narrower white-hot tongue
+    inside the first;
   - a few embers shed off its flanks downstream (`EMBER*`).
-- **Plasma:** a blue-violet sheen also curves along each side of every cone.
+- **One body per enemy:** an enemy two cones hold is drawn once. Its hottest cone sets its heat, colour and lit
+  side, each further cone adds a little heat (`CROSSFIRE_HEAT`), and the Core's bonus counts if any cone holds it in
+  its Core; so crossfire warms a rim without reaching the colours only upgrades reach.
 - **Heat:** how hot it looks follows the fuel (`PolishFlame.heatOf`): 0 is the bare flame's fuel a second
   (`FLAME_POINTS`), 1 the fuel with every damage node (Hot Flame, White Flame, Hot Flame II). Each layer ramps from
   red-orange to yellow, then white, then blue-white at the core. A stream's heat is its own fuel a second; an enemy's
   rim takes the fuel that enemy is fed, so the Core (plus `CORE_HEAT`), Thermal Shock and Meltdown each make its rim
-  hotter. Soulfire keeps its violet ramps.
+  hotter. The rim runs orange-red, yellow, white, then ice-blue, which only a full stream in the Core reaches; a
+  Soulfire rim runs violet, lilac, white, then pale cyan. Soulfire keeps its violet ramps.
 - Stylised as the board: filled shapes, strokes and gradients, no blur filter. Close-up in `flame.gif`'s bottom
   row.
 
@@ -388,7 +392,7 @@ not in the repository.
   the Obelisk's standing stones became rough stones; every Aerie look keeps a Release-ready cue; the Aerie's shards
   and the Stormcaller's insulators grew with their towers; the birds' rings breathe; the Mortar got a wooden rack
   and a glint once loaded; the Burst's onager got winches, braces, a basket and a heap of stones; the flame got a
-  white-hot inner core from half heat and a plasma sheen along every cone; a loaded Fourth Shot glows larger on the
+  white-hot inner core from half heat; a loaded Fourth Shot glows larger on the
   rifle; the Silver Round leaves glitter.
 
 ## Open questions
