@@ -58,6 +58,7 @@ import td.zone.Zone;
 import td.zone.ZoneOwner;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -514,6 +515,12 @@ public final class MortarTower extends AbstractTower {
     /** How many front shells one firing loads: one, or a volley's. Any thread. */
     public int loadingCount() {
         return this.loading;
+    }
+
+    /** Every kind of shell it can load, in the kinds' order: each kind it draws, and the Nuke while Heavies fuse. */
+    public List<ShellKind> loadableKinds() {
+        MagazineSpec spec = this.spec(this.mechanics.all()).magazine();
+        return Arrays.stream(ShellKind.values()).filter(spec::owns).toList();
     }
 
     /** What share of the shells it fires are each kind, over a long run of draws; worked out again only as it changes. */

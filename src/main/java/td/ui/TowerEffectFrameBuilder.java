@@ -200,8 +200,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private void tracer(SniperTower tower, int tier, float toX, float toY, float flown, boolean critical,
                         List<TowerTerm> rounds, float alpha) {
         double heading = Math.atan2(toY - tower.getY(), toX - tower.getX());
-        Point2D.Float muzzle = TowerSprites.muzzle(TowerLook.SNIPER, tier, TowerSpriteFrameBuilder.poseOf(tower),
-                tower.getX(), tower.getY(), this.scale, heading);
+        Point2D.Float muzzle = TowerSprites.muzzle(TowerLook.SNIPER, tier,
+                TowerSpriteFrameBuilder.poseOf(tower, this.gameTime), tower.getX(), tower.getY(), this.scale, heading);
         float from = Math.max(0f, flown - TRACER_LENGTH);
         Palette tail = rounds.contains(TowerTerm.SILVER_ROUND) ? Palette.TOWER_SNIPER_SILVER
                 : rounds.contains(TowerTerm.HOLLOW_POINT) ? Palette.DAMAGE_PHYSICAL

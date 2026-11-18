@@ -163,15 +163,16 @@ public final class TowerArtSheets {
     }
 
     static final String[][] ROWS = {
-        {"sniper", "Sniper"}, {"burst", "Burst: stone thrower, then Stormcaller"}, {"hexer", "Burst: Hexer"},
-        {"mortar", "Mortar"}, {"scorcher", "Scorcher"}, {"soulfire", "Scorcher: Soulfire"}, {"aerie", "Aerie"},
-        {"ruby", "Aerie: Ruby"}, {"shade", "Aerie: Shade"}, {"obelisk", "Obelisk"}, {"beacon", "Beacon"},
+        {"sniper", "Sniper"}, {"burst", "Burst: the onager, no fork"}, {"stormcaller", "Burst: Stormcaller"},
+        {"hexer", "Burst: Hexer"}, {"mortar", "Mortar"}, {"scorcher", "Scorcher"}, {"soulfire", "Scorcher: Soulfire"},
+        {"aerie", "Aerie"}, {"ruby", "Aerie: Ruby"}, {"shade", "Aerie: Shade"}, {"white", "Aerie: White (unused)"},
+        {"obelisk", "Obelisk"}, {"beacon", "Beacon"},
     };
 
     static boolean exists(String id, int tier) {
         return switch (id) {
-            case "hexer" -> tier >= 1;
-            case "ruby", "shade" -> tier >= 2;
+            case "stormcaller", "hexer" -> tier >= 1;
+            case "ruby", "shade", "white" -> tier >= 2;
             default -> true;
         };
     }
@@ -179,7 +180,8 @@ public final class TowerArtSheets {
     static void catalogue() throws Exception {
         int big = 112;
         int colW = big + 32 + 16 + 44;
-        int rowH = big + 34;
+        int tall = big * 2;
+        int rowH = tall + 20;
         BufferedImage img = image(250 + colW * 4, 60 + rowH * ROWS.length, PAPER);
         Graphics2D g = pen(img);
         title(g, "Every tower at Tiers 0 to III, raised view: 2.5x, then the board's 1x (32 px cell) and 0.5x (16 px cell), each with the cell above it", 16, 26);
@@ -195,13 +197,13 @@ public final class TowerArtSheets {
                     continue;
                 }
                 double x = 250 + t * colW;
-                tile(g, x, y, big, big);
-                tower(g, id, t, TowerArt.State.idle(), x + big / 2.0, y + big * 0.70, big * 0.70);
-                tile(g, x + big + 8, y, 32, 48);
-                tower(g, id, t, TowerArt.State.idle(), x + big + 24, y + 32, 32);
-                tile(g, x + big + 8, y + 56, 16, 24);
-                tower(g, id, t, TowerArt.State.idle(), x + big + 16, y + 72, 16);
-                label(g, TowerArt.build(id, t, TowerArt.State.idle()).count() + " parts", x + big + 8, y + 96);
+                tile(g, x, y, big, tall);
+                tower(g, id, t, TowerArt.State.idle(), x + big / 2.0, y + tall - big * 0.42, big * 0.70);
+                tile(g, x + big + 8, y + tall - 152, 32, 80);
+                tower(g, id, t, TowerArt.State.idle(), x + big + 24, y + tall - 88, 32);
+                tile(g, x + big + 8, y + tall - 64, 16, 40);
+                tower(g, id, t, TowerArt.State.idle(), x + big + 16, y + tall - 32, 16);
+                label(g, TowerArt.build(id, t, TowerArt.State.idle()).count() + " parts", x + big + 8, y + tall - 6);
             }
         }
         g.dispose();

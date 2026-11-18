@@ -459,7 +459,7 @@ public final class PolishSheets {
         row++;
         LoadedShell[] shells = LoadedShell.values();
         for (int i = 0; i < shells.length; i++) {
-            headTile(g, Look.MORTAR, 1, TowerPose.idle().withShell(shells[i]), -30, 40 + i * tile,
+            headTile(g, Look.MORTAR, 1, TowerPose.idle().withLoad(List.of(shells[i])), -30, 40 + i * tile,
                     50 + row * rowHeight, big, "Loaded: " + shells[i]);
         }
         row++;
@@ -489,7 +489,8 @@ public final class PolishSheets {
         float[] recoil = {1f, 0.75f, 0.5f, 0.25f, 0f};
         for (int i = 0; i < 5; i++) {
             TowerPose base = TowerPose.idle().fired();
-            TowerPose pose = new TowerPose(base.cues(), 0, base.shell(), base.panes(), recoil[i], i < 2, 1f - recoil[i]);
+            TowerPose pose = new TowerPose(base.cues(), 0, 0, base.load(), base.stock(), base.panes(), recoil[i], i < 2,
+                    1f - recoil[i]);
             headTile(g, Look.PULSE, 3, pose, 0, 40 + i * tile, 50 + row * rowHeight, big * 0.8,
                     "Knell: recoil " + recoil[i]);
         }
@@ -726,7 +727,7 @@ public final class PolishSheets {
     private static TowerPose knellPose(double sinceKnell) {
         double done = Math.clamp(sinceKnell / 0.4, 0, 1);
         float back = (float) ((1 - done) * (1 - done));
-        TowerPose pose = new TowerPose(Set.of(TowerCue.CHARGED), 0, LoadedShell.NORMAL, List.of(), back, done < 0.3,
+        TowerPose pose = new TowerPose(Set.of(TowerCue.CHARGED), 0, 0, List.of(), List.of(), List.of(), back, done < 0.3,
                 (float) done);
         return pose.snapped(4);
     }
@@ -849,7 +850,7 @@ public final class PolishSheets {
                                  double scale) {
         double done = Math.min(1, since / reload);
         TowerPose pose = (done < 1 ? TowerPose.idle().reloading((float) done).snapped(4) : TowerPose.idle())
-                .withShell(load.get(0)).with(TowerCue.VOLLEY, volley);
+                .withLoad(List.of(load.get(0))).with(TowerCue.VOLLEY, volley);
         tower(g, Built.of(PolishLooks.siegeMortar(tier, pose, stock, load)), cx, cy, scale, 0);
         PolishLife.mortarLoad(g, cx, cy, scale, tier, pose, done, volley, stock, load);
     }
@@ -869,7 +870,7 @@ public final class PolishSheets {
             int shot = (int) Math.floor(t / 3.0);
             LoadedShell kindNow = shot % 2 == 0 ? LoadedShell.NORMAL : LoadedShell.NAPALM;
             TowerPose now = (since < 2.4 ? TowerPose.idle().reloading((float) (since / 2.4)).snapped(4)
-                    : TowerPose.idle()).withShell(kindNow);
+                    : TowerPose.idle()).withLoad(List.of(kindNow));
             floor(g, 30 + step / 2.0, 260, 112, 1);
             game(g, TowerLook.MORTAR, 2, now, 30 + step / 2.0, 260, 112, -30);
             text(g, "now", 30 + step / 2.0 - 12, 340, DIM, LABEL);

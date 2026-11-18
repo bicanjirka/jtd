@@ -28,7 +28,7 @@ public final class AsciiBoardRenderer {
             case PULSE, BURDEN, GRAVITY, UMBRA -> '4';
             case AURA -> 'A';
             case MORTAR -> 'M';
-            case SEEKER, RUBY, SHADE -> 'K';
+            case SEEKER, RUBY, SHADE, WHITE -> 'K';
             case CINDER, SOULFIRE -> 'N';
         };
     }

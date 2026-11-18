@@ -103,19 +103,23 @@ class TowerFoundationsTest {
         assertThat(TowerFoundations.of(TowerLook.SNIPER, TowerFoundations.TIERS + 2)).isSameAs(last);
     }
 
-    /** One pose per cue, every shell, and the moments of a shot. */
+    /** One pose per cue, every shell, a full rack, and the moments of a shot. */
     private static List<TowerPose> poses() {
         List<TowerPose> poses = new ArrayList<>();
         for (TowerCue cue : TowerCue.values()) {
             poses.add(TowerPose.idle().with(cue));
         }
         for (LoadedShell shell : LoadedShell.values()) {
-            poses.add(TowerPose.idle().withShell(shell).with(TowerCue.VOLLEY));
+            poses.add(TowerPose.idle().withLoad(List.of(shell)).with(TowerCue.VOLLEY));
         }
         poses.add(TowerPose.idle().fired());
         poses.add(TowerPose.idle().refilling(0f));
         poses.add(TowerPose.idle().reloading(0.5f));
         poses.add(TowerPose.idle().withStacks(3));
+        poses.add(TowerPose.idle().withStacks(TowerFoundations.FOCUS_STACKS));
+        poses.add(TowerPose.idle().with(TowerCue.FRENZY).withBeat(1));
+        poses.add(TowerPose.idle().withStock(List.of(LoadedShell.values())).withLoad(List.of(LoadedShell.values()))
+                .reloading(0.5f));
         poses.add(TowerPose.idle().withPanes(List.of(TowerLook.SNIPER, TowerLook.MORTAR)));
         return poses;
     }

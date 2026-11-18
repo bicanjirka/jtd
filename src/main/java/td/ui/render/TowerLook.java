@@ -23,6 +23,8 @@ public enum TowerLook {
     RUBY,
     /** A Seeker of smoky dark crystal with a pale green light. */
     SHADE,
+    /** A Seeker as a white marble tower: a look kept for an identity not made yet. */
+    WHITE,
     CINDER,
     /** A Cinder of dark metal burning violet. */
     SOULFIRE

@@ -243,6 +243,19 @@ class MortarTowerTest {
     }
 
     @Test
+    void aMortarCanLoadEveryKindItDrawsAndANukeOnlyWhileItsHeaviesFuse() {
+        MortarTower plain = new MortarTower(this.context, 3, 3);
+        MortarTower fusing = new MortarTower(this.context, 6, 6);
+        UpgradePaths.buy(fusing, this.context, "Fusion");
+
+        List<ShellKind> drawn = plain.shellChances().entrySet().stream().filter(chance -> chance.getValue() > 0f)
+                .map(Map.Entry::getKey).toList();
+
+        assertThat(plain.loadableKinds()).containsExactlyElementsOf(drawn).doesNotContain(ShellKind.NUKE);
+        assertThat(fusing.loadableKinds()).contains(ShellKind.NUKE);
+    }
+
+    @Test
     void aNewMortarLoadsTheSameMagazineAsEveryOther() {
         MortarTower one = this.towerAt(3, 3);
         MortarTower other = this.towerAt(9, 9);
