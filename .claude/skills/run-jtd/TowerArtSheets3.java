@@ -60,11 +60,11 @@ final class TowerArtSheets3 {
         return TowerArt.State.idle();
     }
 
-    /** A Scorcher with its stream, the nozzle at the tile's left so the cone has room. */
+    /** A Scorcher with its stream, the nozzle at the tile's left and drawn small, so the flame's tips past its range fit. */
     static Art streaming(String id, int tier, TowerArt.State s, double range, double half, String look) {
         return g -> {
             g.translate(-1.0, 0.2);
-            g.scale(0.9, 0.9);
+            g.scale(0.75, 0.75);
             TowerArt.Build b = TowerArt.build(id, tier, s.aim(0).cue("stream"));
             AffineTransform save = g.getTransform();
             double len = (s.has("dragon") ? 0.28 : 0.25) + 0.07;

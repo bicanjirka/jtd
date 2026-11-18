@@ -144,9 +144,9 @@ Drawn in the art pass (2026-11-13), in the raised view with a footprint that gro
 
 - **Soulfire** is the body look `SOULFIRE`, chosen by the body-look visitor from the tower's `streamLook()`.
 - **The flame** is one `FlameDraw` of every stream of the frame from its posed muzzle, painted in one pass so cones
-  that cross merge, each enemy in a cone a silhouette standing in it (`FlameArt`); a Flashover's small tongue is a
-  `StreamDraw` from `flashover`. Steam leaves the nozzle as a stream ends (`SteamDraw`). Dragon's Breath's own flame
-  shape is not drawn yet (`TODO.md`).
+  that cross merge, each enemy it burns one silhouette standing in it however many cones hold it (`FlameArt`); a
+  Flashover's small tongue is a `StreamDraw` from `flashover`. Steam leaves the nozzle as a stream ends (`SteamDraw`).
+  Dragon's Breath's own flame shape is not drawn yet (`TODO.md`).
 
 | Tier | Foundation |
 |---|---|

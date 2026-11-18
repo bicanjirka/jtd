@@ -671,19 +671,24 @@ class TowerEffectFrameBuilderTest {
     }
 
     @Test
-    void crossingStreamsAreOneFlameOverEveryEnemyTheyFeed() {
+    void crossingStreamsAreOneFlameBurningEachEnemyOnceAShadeHotterThanItsHottestCone() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
-        CinderTower west = scorcherWith(context);
-        CinderTower north = new CinderTower(context, 4, 2);
-        context.towers().add(north);
-        EnemyMob enemy = walkerBefore(context, west, BoardFixtures.SCALE);
+        CinderTower near = scorcherWith(context);
+        CinderTower behind = new CinderTower(context, 2, 3);
+        context.towers().add(behind);
+        EnemyMob enemy = walkerBefore(context, near, BoardFixtures.SCALE);
 
         FlameDraw flame = flameOf(context, enemy);
 
+        assertThat(near.caught()).extracting(CinderTower.Caught::enemy).containsExactly(enemy);
+        assertThat(behind.caught()).extracting(CinderTower.Caught::enemy).containsExactly(enemy);
+        float hottest = Math.max(near.caught().getFirst().fuelPerSecond(), behind.caught().getFirst().fuelPerSecond());
         assertThat(flame.streams()).hasSize(2);
-        assertThat(flame.caught()).isNotEmpty().allSatisfy(caught -> {
+        assertThat(flame.caught()).singleElement().satisfies(caught -> {
             assertThat(caught.x()).isEqualTo((float) enemy.getX());
             assertThat(caught.bodyScale()).isEqualTo(enemy.getBodyScale());
+            assertThat(caught.heat()).isCloseTo(
+                    TowerEffectFrameBuilder.heatOf(hottest) + (float) FlameArt.CROSSFIRE_HEAT, within(1e-5f));
         });
     }
 
