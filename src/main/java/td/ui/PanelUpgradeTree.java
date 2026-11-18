@@ -247,7 +247,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             if (!offered.isEmpty()) {
                 int total = offered.stream().mapToInt(UpgradeNode::price).sum();
                 floors.add(new Floor.Singles(UpgradeSheetText.singlesButton(total),
-                        String.valueOf(GameKey.singlesKey(tier)), !this.context.economy().canPay(total),
+                        String.valueOf(GameKey.singlesKey(tier)), !this.anyAffordable(offered),
                         this.hoveredTier.isPresent() && this.hoveredTier.getAsInt() == tier));
             } else if (this.allOwned(tree.singlesIn(tier))) {
                 floors.add(new Floor.Bought());
@@ -256,6 +256,11 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             }
         }
         return floors;
+    }
+
+    /** Whether the button would buy anything now: red only when the credits cover none of what it offers. */
+    private boolean anyAffordable(List<UpgradeNode> offered) {
+        return offered.stream().anyMatch(node -> this.context.economy().canPay(node.price()));
     }
 
     private boolean allOwned(List<UpgradeNode> singles) {
@@ -304,8 +309,8 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         if (this.hoveredTier.isPresent()) {
             List<UpgradeNode> offered = this.offeredSingles(this.hoveredTier.getAsInt());
             int total = offered.stream().mapToInt(UpgradeNode::price).sum();
-            return new Footer(UpgradeSheetText.singlesFooter(offered.size(), total),
-                    !this.context.economy().canPay(total), true);
+            return new Footer(UpgradeSheetText.singlesFooter(offered.size(), total), !this.anyAffordable(offered),
+                    true);
         }
         return new Footer(UpgradeSheetText.footer(this.hover), UpgradeSheetText.footerWarns(this.hover),
                 this.hover.isPresent());

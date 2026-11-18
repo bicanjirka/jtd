@@ -1,5 +1,8 @@
 # Feature Request: Upgrade Panel Retune
 
+Status: **implemented** (2026-11-18: `1637a5ee` the Burst's fork as a cluster, `66cc5f2b` the singles' keys,
+`69fba824` the hand-placed layout and new painter, `50a67a25` the README, then the review's fixes). See *Review*.
+
 ## Summary
 
 Make the Upgrades panel cleaner and easier to use. Each tier becomes one band with its numeral and its gate.
@@ -222,3 +225,52 @@ Commit after each step (`mvn verify` green). Only step 6 runs the live game.
      differently, each item with a fix or a reason to keep it.
    - Make one iteration that fixes the list. Re-render, and update the *Review* section to say what was fixed and
      what was kept and why. Then mark this doc implemented.
+
+## Review
+
+Done after step 5: every tower's panel rendered headless fresh (with the Tier 0 button hovered), part-bought (with a
+Tier II node hovered) and fully bought, compared with this doc and the mock, and one live `run-jtd` pass on the
+Burst. The pass checked the digit keys (`0` bought Tier 0's singles; `1` bought nothing while Tier I was locked, and
+once open bought Arc only after Stormcaller; `2` passed over Agony and Contagion without a Hex), the chips, hover
+over links and badges, a pick, a switch with its confirmation, a right-click sale at full refund with no
+confirmation, and the panel at a 560-pixel window.
+
+### Matches
+
+- Bands bottom up, the numeral strip in the tower's colour once open and grey while locked, the gate's XP and track
+  on a locked tier's strip, the button with its tier digit on an open one, "Singles bought" once all are owned, and
+  nothing on a tier without singles (the Beacon's Tiers I and II).
+- The title line carries the XP. No tier folds. Round is a stat and square an ability. Glyphs keep the tower's colour,
+  prices sit on neutral tags (red when short, grey when not available), and an owned node has a tick, a tinted fill and
+  a border in the tower's colour. The other member of a cluster is hatched.
+- Links run along the axes, from a cluster's frame where the rule names the cluster (Thick Mix, Agony, Contagion,
+  Rich Brood) and into a frame where all its members share the need (Ammo, Hex, Release; the Burst's Storm by a badge on its frame). A need more than
+  a tier below is a badge; a frame's badge sits on its top-right corner, clear of its name.
+- Hover marks light links and badges: white for a buy, red and dashed for a sale or a switch's losses.
+- The lean follows the table. The Burst keeps the mock's approved layout.
+- Fit: four one-row tiers take 282 design units, so a one-row Tier IV (349) fits 380. The Burst takes 374; a Tier IV
+  row would bring it to 441, about 86%, as the doc expected.
+
+### Found, and what was done
+
+1. **The cash mark of an unused node hid a frame's name** when the first member was owned (Edge of light, Burning).
+   Fixed: frame names are painted after the nodes.
+2. **The button went red whenever its total was over the credits**, though the key still buys what it can.
+   Fixed: it goes red, with its hover footer, only when the credits cover none of what it offers.
+3. **The panel kept its old 380 height**, leaving a strip of nothing under a four-tier tree. Fixed in step 4: the
+   panel asks for the height its tree takes, so the Info panel above gets the rest.
+4. **A frame's badge covered its name** in the first renders. Fixed in step 4: a frame's badges go on its top-right
+   corner.
+5. *Kept:* the Burst's Blight Cloud link runs behind Agony in the row below. The mock's approved layout puts them
+   there, and the link reappears above Agony, so it still reads.
+6. *Kept:* right after a large purchase, before any wave, every owned node carries the cash mark (it sells back in
+   full). It is accurate and goes once a wave runs; making it smaller was enough.
+7. *Kept:* at the console's smallest height the Burst scales to about 60%, where the strips' words are small. The
+   panel never scrolls, and every word on a strip is also in the hover footer.
+8. *Kept:* hovering a locked-out node says "0 steps · $0 · blocked: locked out". It predates this feature and the
+   hover sheets were out of scope.
+9. *Out of scope, flagged:* the paid tier unlock still exists in the tree (`TODO.md`), held off the built-in trees
+   by a catalogue rule.
+
+The *Build lean* table read well on every render; no row turned out wrong. The live game only confirmed the Burst,
+so a lean that reads wrong in long play on another tower is a one-line change in `UpgradeTreePlans`.

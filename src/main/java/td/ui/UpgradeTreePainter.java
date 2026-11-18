@@ -191,6 +191,10 @@ final class UpgradeTreePainter {
             this.faded(g, tier > openTier, () -> this.paintFrame(g, frame, states));
         }
         this.layout.spots().forEach((node, spot) -> this.paintNode(g, node, spot, states.get(node), highlight));
+        for (Frame frame : this.layout.frames()) {
+            int tier = this.tree.node(frame.cluster().memberIds().getFirst()).orElseThrow().tier();
+            this.faded(g, tier > openTier, () -> paintFrameName(g, frame));
+        }
         this.layout.badges().forEach(badge -> this.paintBadge(g, badge, states, highlight));
         paintFooter(g, footer, this.layout.height());
     }
@@ -319,6 +323,10 @@ final class UpgradeTreePainter {
         g.setColor(taken ? FRAME_TAKEN : FRAME_IDLE);
         g.setStroke(taken ? new BasicStroke(1f) : dashed(1f, 3f, 2f));
         g.draw(box);
+    }
+
+    /** The frame's name over its top edge, painted after the nodes so a member's corner mark never hides it. */
+    private static void paintFrameName(Graphics2D g, Frame frame) {
         g.setFont(FRAME_FONT);
         String name = frame.cluster().name();
         float width = g.getFontMetrics().stringWidth(name);
