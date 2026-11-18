@@ -115,6 +115,21 @@ public final class PolishSheets {
         if (wanted(only, "dragon-turn")) {
             dragonTurn(new File(out, "dragon-turn.gif"));
         }
+        if (wanted(only, "sniper-shots")) {
+            sniperShots(new File(out, "sniper-shots.gif"));
+        }
+        if (wanted(only, "sniper-states")) {
+            sniperStates(new File(out, "sniper-states.gif"));
+        }
+        if (wanted(only, "flock")) {
+            flock(new File(out, "flock.gif"));
+        }
+        if (wanted(only, "flame")) {
+            flame(new File(out, "flame.gif"));
+        }
+        if (wanted(only, "stones")) {
+            stones(new File(out, "stones.png"));
+        }
         if (wanted(only, "closeups")) {
             closeups(new File(out, "closeups.png"));
         }
@@ -177,15 +192,21 @@ public final class PolishSheets {
     /** The tower with everything that lives on it while it idles: lights, the nest's missiles, its birds. */
     static void alive(Graphics2D g, Look look, int tier, TowerPose pose, double cx, double cy, double scale,
                       double heading, double seconds, int seed, double squash) {
+        alive(g, look, tier, pose, cx, cy, scale, heading, seconds, seed, squash, PolishLife.Presence.CIRCLING);
+    }
+
+    static void alive(Graphics2D g, Look look, int tier, TowerPose pose, double cx, double cy, double scale,
+                      double heading, double seconds, int seed, double squash, PolishLife.Presence flock) {
         Built f = PolishLooks.of(look, tier, pose);
         tower(g, f, cx, cy, scale, heading);
         PolishLife.paintLives(g, f, cx, cy, scale, heading, seconds, seed);
-        Flock flock = flockOf(look);
-        if (flock != null) {
+        Flock birds = flockOf(look);
+        if (birds != null) {
             List<LoadedMissile> missiles = missilesOf(look, tier);
             PolishLife.nest(g, missiles, cx, cy - PolishLooks.LIFT * f.nest() * scale, scale, squash,
                     seconds * PolishLife.NEST_TURN + seed, pose.has(TowerCue.RELEASE_READY));
-            PolishLife.birds(g, flock, tier, cx, cy - PolishLooks.LIFT * f.top() * scale, scale, squash, seconds, seed);
+            PolishLife.birds(g, birds, tier, cx, cy - PolishLooks.LIFT * f.top() * scale, scale, squash, seconds, seed,
+                    flock);
         }
     }
 
@@ -423,8 +444,8 @@ public final class PolishSheets {
         }
         row++;
         float[] reload = {0f, 0.25f, 0.5f, 0.75f, 1f};
-        String[] reloadName = {"fired: bore smokes", "1/4: shell on cradle", "1/2: arm lifts it", "3/4: seated",
-                "ready: glint"};
+        String[] reloadName = {"fired: bore smokes", "1/4: top shell taken", "1/2: (shell in the air)",
+                "3/4: loaded, top shows", "ready: glint"};
         for (int i = 0; i < 5; i++) {
             TowerPose pose = i == 0 ? TowerPose.idle().reloading(0.13f) : TowerPose.idle().refilling(reload[i]);
             headTile(g, Look.MORTAR, 2, pose, -30, 40 + i * tile, 50 + row * rowHeight, big, "Mortar " + reloadName[i]);
@@ -432,9 +453,9 @@ public final class PolishSheets {
         headTile(g, Look.MORTAR, 2, TowerPose.idle().fired(), -30, 40 + 5 * tile, 50 + row * rowHeight, big,
                 "Mortar: the shot");
         headTile(g, Look.MORTAR, 3, TowerPose.idle().with(TowerCue.VOLLEY), 150, 40 + 6 * tile, 50 + row * rowHeight,
-                big, "Volley, ready");
+                big, "Volley, loaded");
         headTile(g, Look.MORTAR, 3, TowerPose.idle().refilling(0.5f), 60, 40 + 7 * tile, 50 + row * rowHeight, big,
-                "1/2, turned south");
+                "1/2 (nothing turns)");
         row++;
         LoadedShell[] shells = LoadedShell.values();
         for (int i = 0; i < shells.length; i++) {
@@ -523,7 +544,12 @@ public final class PolishSheets {
         String[] names = {"Stormcaller sparks (idle), every 0.1 s", "Hexer ball (idle), every 0.6 s",
                 "Aerie birds and nest (idle), every 0.7 s", "Ruby", "Shade", "White",
                 "Obelisk runes (idle), every 0.5 s", "Knell (tick clock), every 0.06 s",
-                "Sniper cartridge (tick clock), every 0.06 s", "Scorcher steam (tick clock), every 0.12 s"};
+                "Sniper cartridge (tick clock), every 0.06 s", "Scorcher steam (tick clock), every 0.12 s",
+                "Aerie flock comes in to a quiet tower (tick clock), every 0.7 s from 1.5 s quiet",
+                "Aerie flock scatters as the tower fights (tick clock), every 0.2 s",
+                "Mortar single reload (tick clock), every 0.3 s of a 2.4 s reload",
+                "Mortar volley reload, three shells last stacked first, every 0.3 s",
+                "Sniper Frenzy: shake and embers (tick clock), every 0.1 s"};
         BufferedImage image = new BufferedImage(20 + tile * 8, 40 + rowHeight * names.length,
                 BufferedImage.TYPE_INT_RGB);
         Graphics2D g = pen(image);
@@ -558,6 +584,17 @@ public final class PolishSheets {
                         tower(g, f, cx, cy, 96, Math.toRadians(-35));
                         PolishLife.casing(g, cx, cy, 96, Math.toRadians(-35), f.top() + 0.05,
                                 i * 0.06 / PolishLife.CASING_SECONDS);
+                    }
+                    case 10 -> alive(g, Look.SHADE, 3, TowerPose.idle(), cx, cy, 96, 0, i * 0.7, 21,
+                            PolishLife.ORBIT_SQUASH, PolishLife.Presence.of(1.5 + i * 0.7, false, 0));
+                    case 11 -> alive(g, Look.SHADE, 3, TowerPose.idle(), cx, cy, 96, 0, 3 + i * 0.2, 21,
+                            PolishLife.ORBIT_SQUASH, PolishLife.Presence.of(9, true, i * 0.2));
+                    case 12 -> mortarAt(g, 2, false, LoadedShell.NORMAL, 0.05 + i * 0.3, 2.4, cx, cy, 96);
+                    case 13 -> mortarAt(g, 3, true, LoadedShell.HEAVY, 0.05 + i * 0.3, 2.4, cx, cy, 96);
+                    case 14 -> {
+                        Built f = PolishLooks.sniper(2, TowerPose.idle().with(TowerCue.FRENZY), i, false);
+                        tower(g, f, cx, cy, 96, Math.toRadians(-20));
+                        PolishShots.frenzy(g, cx, cy - PolishLooks.LIFT * (f.top() + 0.06) * 96, 96, i * 0.1, 7);
                     }
                     default -> {
                         Built f = PolishLooks.of(Look.CINDER, 2,
@@ -726,7 +763,7 @@ public final class PolishSheets {
         int scale = 48;
         gif(file, 20 + scale * 9 * 2 + 20, 60 + scale * 9, 6, (g, t) -> {
             text(g, "The Sundial (tick clock), one turn every 3 s out to 4 cells. Left: the wedge as it is now. Right:"
-                    + " the stone's own shadow.", 12, 20, TEXT, TITLE);
+                    + " the stone's shadow in a band of sun-lit ground.", 12, 20, TEXT, TITLE);
             for (int side = 0; side < 2; side++) {
                 double ox = 20 + side * (scale * 9 + 20);
                 double oy = 40;
@@ -763,7 +800,7 @@ public final class PolishSheets {
                     g.setTransform(save);
                     game(g, TowerLook.PULSE, 2, TowerPose.idle(), cx, cy, scale, 0);
                 } else {
-                    PolishLife.sundial(g, cx, cy, scale, heading, 2, 4.0 * scale, alpha, false, veil);
+                    PolishLife.sundial(g, cx, cy, scale, heading, 4.0 * scale, alpha, false, veil);
                     alive(g, Look.PULSE, 2, TowerPose.idle(), cx, cy, scale, 0, t, 3, 1);
                 }
             }
@@ -792,25 +829,41 @@ public final class PolishSheets {
         });
     }
 
+    /** One lab Mortar {@code since} seconds after a shot with a reload of {@code reload} seconds, its arc live. */
+    private static void mortarAt(Graphics2D g, int tier, boolean volley, LoadedShell kind, double since, double reload,
+                                 double cx, double cy, double scale) {
+        double done = Math.min(1, since / reload);
+        TowerPose pose = (done < 1 ? TowerPose.idle().reloading((float) done).snapped(4) : TowerPose.idle())
+                .withShell(kind).with(TowerCue.VOLLEY, volley);
+        tower(g, PolishLooks.of(Look.MORTAR, tier, pose), cx, cy, scale, 0);
+        PolishLife.mortarLoad(g, cx, cy, scale, tier, pose, done, volley, kind);
+    }
+
+    /**
+     * The siege mortar's reload, a shot every 3 s: Tiers 0 to III loading one shell, then a volley loading three, last
+     * stacked first; under them the board's own size. Left of all, the Mortar as it is now.
+     */
     private static void mortar(File file) throws IOException {
-        gif(file, 640, 380, 6, (g, t) -> {
-            text(g, "Mortar (tick clock): the reload in four moments, and a larger shell. Left now, right new", 12, 20,
-                    TEXT, TITLE);
+        int step = 190;
+        gif(file, 40 + step * 6, 470, 6, (g, t) -> {
+            text(g, "Mortar (tick clock): a stationary siege mortar; a shot every 3 s, the reload carries a shell from the"
+                    + " pile to the muzzle. Now, Tiers 0-III, a volley (3 shells, last stacked first)", 12, 20, TEXT,
+                    TITLE);
             double since = t % 3.0;
-            TowerPose pose = since < 2.4 ? TowerPose.idle().reloading((float) (since / 2.4)).snapped(4)
-                    : TowerPose.idle();
-            pose = pose.withShell(t >= 3 ? LoadedShell.HEAVY : LoadedShell.NORMAL);
-            double aim = Math.toRadians(t >= 3 ? 140 : -30);
-            floor(g, 130, 240, 128, 0);
-            game(g, TowerLook.MORTAR, 2, pose, 130, 240, 128, Math.toDegrees(aim));
-            floor(g, 330, 240, 128, 0);
-            tower(g, PolishLooks.of(Look.MORTAR, 2, pose), 330, 240, 128, aim);
-            floor(g, 500, 200, 32, 0);
-            game(g, TowerLook.MORTAR, 2, pose, 500, 200, 32, Math.toDegrees(aim));
-            floor(g, 560, 200, 32, 0);
-            tower(g, PolishLooks.of(Look.MORTAR, 2, pose), 560, 200, 32, aim);
-            text(g, "now", 488, 240, DIM, LABEL);
-            text(g, "new", 548, 240, TEXT, LABEL);
+            LoadedShell kind = t < 3 ? LoadedShell.NORMAL : LoadedShell.NAPALM;
+            TowerPose now = (since < 2.4 ? TowerPose.idle().reloading((float) (since / 2.4)).snapped(4)
+                    : TowerPose.idle()).withShell(kind);
+            floor(g, 30 + step / 2.0, 260, 112, 1);
+            game(g, TowerLook.MORTAR, 2, now, 30 + step / 2.0, 260, 112, -30);
+            text(g, "now", 30 + step / 2.0 - 12, 340, DIM, LABEL);
+            for (int i = 0; i < 5; i++) {
+                double cx = 30 + step * (i + 1) + step / 2.0;
+                floor(g, cx, 260, 112, 1);
+                mortarAt(g, Math.min(3, i), i == 4, i == 4 ? LoadedShell.HEAVY : kind, since, 2.4, cx, 260, 112);
+                text(g, i == 4 ? "T3 volley" : "T" + i, cx - 20, 340, TEXT, LABEL);
+                floor(g, cx, 420, 32, 1);
+                mortarAt(g, Math.min(3, i), i == 4, i == 4 ? LoadedShell.HEAVY : kind, since, 2.4, cx, 420, 32);
+            }
         });
     }
 
@@ -843,6 +896,327 @@ public final class PolishSheets {
                 }
             }
         });
+    }
+
+    /** A stand-in enemy: a disc with its own shadow, at {@code x, y}, {@code r} pixels across. */
+    private static void dummy(Graphics2D g, double x, double y, double r, Color body) {
+        g.setColor(new Color(0, 0, 0, 120));
+        g.fill(new Ellipse2D.Double(x - r * 0.9, y - r * 0.2, r * 1.8, r * 0.9));
+        g.setColor(body.darker());
+        g.fill(new Ellipse2D.Double(x - r, y - r * 1.25, r * 2, r * 2));
+        g.setColor(body);
+        g.fill(new Ellipse2D.Double(x - r * 0.92, y - r * 1.35, r * 1.84, r * 1.84));
+    }
+
+    /** Where a lab Sniper's bullet leaves: as TowerSprites.muzzle. */
+    private static double[] muzzle(Built f, double cx, double cy, double scale, double aim) {
+        return new double[] {cx + Math.cos(aim) * f.muzzle() * scale,
+                cy + (Math.sin(aim) * f.muzzle() - PolishLooks.LIFT * f.muzzleHeight()) * scale};
+    }
+
+    /**
+     * Every round a Sniper fires, a row each: the bullet flies, lands, its trace fades, and it hops on to a second
+     * enemy as a ricochet drawn the same way. Left at 3x, right at the board's 1x.
+     */
+    private static void sniperShots(File file) throws IOException {
+        PolishShots.Round[] rounds = PolishShots.Round.values();
+        String[] names = {"plain shot", "crit (trace after it lands)", "Fourth Shot (sure crit)", "Hollow Point",
+                "Silver Round"};
+        TowerPose[] poses = {TowerPose.idle(), TowerPose.idle(), TowerPose.idle().with(TowerCue.FOURTH_SHOT),
+                TowerPose.idle().with(TowerCue.HOLLOW_POINT), TowerPose.idle().with(TowerCue.SILVER_ROUND)};
+        int rowHeight = 150;
+        gif(file, 1000, 40 + rowHeight * rounds.length, 2.0, (g, t) -> {
+            text(g, "Sniper rounds (tick clock): the bullet, its fading trace, and a ricochet drawn as its bullet."
+                    + " Left 3x, right the board's 1x", 12, 20, TEXT, TITLE);
+            double cycle = t % 1.0;
+            for (int r = 0; r < rounds.length; r++) {
+                double y0 = 40 + r * rowHeight;
+                for (int size = 0; size < 2; size++) {
+                    double scale = size == 0 ? 96 : 32;
+                    double cx = size == 0 ? 80 : 720;
+                    double cy = y0 + (size == 0 ? 110 : 90);
+                    double ex = cx + scale * (size == 0 ? 4.6 : 4.2);
+                    double ey = cy - scale * 0.35;
+                    double hx = ex + scale * 1.0;
+                    double hy = ey + scale * 0.55;
+                    g.setColor(FLOOR);
+                    g.fill(new Rectangle2D.Double(cx - scale / 2, y0 + 26, ex - cx + scale * 1.6, rowHeight - 30));
+                    double aim = Math.atan2(ey - cy, ex - cx);
+                    TowerPose pose = cycle < 0.06 ? poses[r] : cycle < 0.6
+                            ? TowerPose.idle().reloading((float) ((cycle - 0.06) / 0.54)).snapped(4) : poses[r];
+                    Built f = PolishLooks.sniper(2, pose, 0, false);
+                    dummy(g, ex, ey, scale * 0.14, new Color(0x8a7f74));
+                    dummy(g, hx, hy, scale * 0.12, new Color(0x7f8a74));
+                    tower(g, f, cx, cy, scale, aim);
+                    double[] m = muzzle(PolishLooks.sniper(2, poses[r], 0, false), cx, cy, scale, aim);
+                    double flown = cycle / 0.22;
+                    double ty = ey - scale * 0.12;
+                    PolishShots.Round shown = r == 1 && flown < 1 ? PolishShots.Round.PLAIN : rounds[r];
+                    if (flown < 1) {
+                        PolishShots.shot(g, shown, m[0], m[1], ex, ty, flown, 1, scale, t);
+                    } else if (flown < 1.25) {
+                        PolishShots.shot(g, rounds[r], m[0], m[1], ex, ty, 1, 1 - (flown - 1) / 0.25, scale, t);
+                    }
+                    double hop = (cycle - 0.22) / 0.25;
+                    if (hop > 0 && hop < 1.2) {
+                        PolishShots.ricochet(g, rounds[r], ex, ty, hx, hy - scale * 0.1, 0.25, Math.min(1, hop), scale,
+                                t);
+                    }
+                    if (size == 0) {
+                        text(g, names[r], cx - 40, y0 + 40, TEXT, LABEL);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * What a Sniper shows while it fights: Steady Aim stacks on the lens, focused from five, the golden eye at full
+     * stacks under Keen Eye; Frenzy shaking the head with embers rising; the Headhunter's laser on an Elite; the
+     * Executioner's mark, possible and sure.
+     */
+    private static void sniperStates(File file) throws IOException {
+        int tile = 170;
+        gif(file, 20 + tile * 7, 560, 3.0, (g, t) -> {
+            text(g, "Sniper states at 3x (top) and the board's 1x (under each): Steady Aim stacks, focus, Keen Eye",
+                    12, 20, TEXT, TITLE);
+            int[] stacks = {0, 1, 2, 3, 4, 6, 5};
+            String[] names = {"0 stacks", "1", "2", "3", "4", "5+: focused", "full + Keen Eye"};
+            for (int i = 0; i < 7; i++) {
+                double cx = 20 + i * tile + tile / 2.0;
+                floor(g, cx, 170, 96, 0);
+                TowerPose pose = TowerPose.idle().withStacks(stacks[i]);
+                Built f = PolishLooks.sniper(2, pose, 0, i == 6);
+                tower(g, f, cx, 170, 96, Math.toRadians(-35));
+                PolishLife.paintLives(g, f, cx, 170, 96, Math.toRadians(-35), t, 3);
+                floor(g, cx, 250, 32, 0);
+                tower(g, f, cx, 250, 32, Math.toRadians(-35));
+                PolishLife.paintLives(g, f, cx, 250, 32, Math.toRadians(-35), t, 3);
+                text(g, names[i], cx - 60, 290, DIM, LABEL);
+            }
+            text(g, "Frenzy (shake + embers, tick clock)", 12, 330, TEXT, TITLE);
+            int step = (int) Math.floor(t * 20 / PolishLooks.FRENZY_SHAKE_TICKS);
+            for (int k = 0; k < 2; k++) {
+                double scale = k == 0 ? 96 : 32;
+                double cx = k == 0 ? 90 : 200;
+                floor(g, cx, 470, scale, 0);
+                Built f = PolishLooks.sniper(2, TowerPose.idle().with(TowerCue.FRENZY).withStacks(2), step, false);
+                tower(g, f, cx, 470, scale, Math.toRadians(-20));
+                PolishShots.frenzy(g, cx, 470 - PolishLooks.LIFT * (f.top() + 0.06) * scale, scale, t, 7);
+            }
+            text(g, "Headhunter: laser on an Elite or a Boss (wall clock)", 300, 330, TEXT, TITLE);
+            double hx = 330;
+            double hy = 470;
+            double ex = hx + 96 * 3.2;
+            double ey = hy - 96 * 0.9 + 12 * Math.sin(t * 1.4);
+            floor(g, hx, hy, 96, 0);
+            dummy(g, ex, ey, 96 * 0.2, new Color(0xc9a24a));
+            double aim = Math.atan2(ey - hy, ex - hx);
+            Built hf = PolishLooks.sniper(2, TowerPose.idle().with(TowerCue.HEADHUNTER).withStacks(1), 0, false);
+            tower(g, hf, hx, hy, 96, aim);
+            double lensX = 0.09;
+            double lensY = -0.05;
+            double lx = hx + (Math.cos(aim) * lensX - Math.sin(aim) * lensY) * 96;
+            double ly = hy + (Math.sin(aim) * lensX + Math.cos(aim) * lensY) * 96
+                    - PolishLooks.LIFT * (hf.top() + 0.08) * 96;
+            PolishShots.laser(g, lx, ly, ex, ey - 96 * 0.2, 96, t);
+            text(g, "Executioner: a crit would execute it / a sure crit is on its way", 760, 330, TEXT, TITLE);
+            dummy(g, 860, 460, 96 * 0.16, new Color(0x8a7f74));
+            PolishShots.executionMark(g, 860, 460 - 96 * 0.16, 96, false, t);
+            dummy(g, 1040, 460, 96 * 0.16, new Color(0x8a7f74));
+            PolishShots.executionMark(g, 1040, 460 - 96 * 0.16, 96, true, t);
+            dummy(g, 880, 530, 32 * 0.16, new Color(0x8a7f74));
+            PolishShots.executionMark(g, 880, 530 - 32 * 0.16, 32, false, t);
+            dummy(g, 920, 530, 32 * 0.16, new Color(0x8a7f74));
+            PolishShots.executionMark(g, 920, 530 - 32 * 0.16, 32, true, t);
+        });
+    }
+
+    /**
+     * The flock's whole cycle on the tick clock, for every Aerie look: quiet, the birds come in one after another,
+     * circle, then the tower fights (a red mark) and they scatter; then quiet again. Wall clock for their circling.
+     */
+    private static void flock(File file) throws IOException {
+        Look[] looks = {Look.SEEKER, Look.RUBY, Look.SHADE, Look.WHITE};
+        gif(file, 30 + 190 * 4, 420, 12, (g, t) -> {
+            double cycle = t % 12;
+            boolean fighting = cycle >= 8.5;
+            PolishLife.Presence flock = fighting ? PolishLife.Presence.of(8.5, true, cycle - 8.5)
+                    : PolishLife.Presence.of(cycle, false, 0);
+            text(g, "Birds only at a quiet tower: they come in after 1.5 s of quiet and scatter when it fights. Now: "
+                    + (fighting ? "FIGHTING" : String.format("quiet %.1f s", cycle)), 12, 20, fighting
+                    ? new Color(0xff7060) : TEXT, TITLE);
+            for (int i = 0; i < looks.length; i++) {
+                double cx = 30 + i * 190 + 95;
+                floor(g, cx, 250, 96, 1);
+                alive(g, looks[i], 3, TowerPose.idle(), cx, 250, 96, 0, t, 11 + i * 5, PolishLife.ORBIT_SQUASH, flock);
+                floor(g, 60 + i * 48, 390, 32, 1);
+                alive(g, looks[i], 3, TowerPose.idle(), 60 + i * 48, 390, 32, 0, t, 11 + i * 5,
+                        PolishLife.ORBIT_SQUASH, flock);
+            }
+        });
+    }
+
+    /** An enemy stand-in for the flame sheet: one of the game's top shapes, filled, at {@code x, y}. */
+    private static Shape enemyAt(int which, double x, double y, double size, double facing) {
+        Shape s = switch (which % 4) {
+            case 0 -> EnemyShapes.beetleShape((float) size);
+            case 1 -> EnemyShapes.giantShape((float) size);
+            case 2 -> EnemyShapes.lizardShape((float) size);
+            default -> EnemyShapes.slabShape((float) size);
+        };
+        AffineTransform t = AffineTransform.getTranslateInstance(x, y);
+        t.rotate(facing);
+        return t.createTransformedShape(s);
+    }
+
+    private static final Color[] ENEMY_BODY = {new Color(0x8a6a4a), new Color(0x6a7a8a), new Color(0x6a8a5a),
+            new Color(0x9a8a7a)};
+
+    /**
+     * The flame, now and new: left the game's stream as it is (two cones stacking their alpha and hiding the enemies),
+     * right the same two streams merged, each enemy in them a silhouette with a hot rim, wisps and plasma. Under them
+     * the heat ladder: the bare flame, Hot Flame, White Flame, every damage node, and the Core.
+     */
+    private static void flame(File file) throws IOException {
+        int scale = 64;
+        gif(file, 1200, 60 + scale * 6 + 200, 3, (g, t) -> {
+            text(g, "The flame (tick clock). Left: now. Right: merged cones, enemies as silhouettes with a hot rim,"
+                    + " wisps and plasma. Below: heat from the fuel, then the Core", 12, 20, TEXT, TITLE);
+            int flicker = (int) Math.floor(t * 20 / 3);
+            for (int side = 0; side < 2; side++) {
+                double ox = 20 + side * (scale * 8 + 20);
+                double oy = 40;
+                for (int x = 0; x < 8; x++) {
+                    for (int y = 0; y < 6; y++) {
+                        boolean path = y == 2 || y == 3;
+                        g.setColor(path ? PATH : FLOOR);
+                        g.fill(new Rectangle2D.Double(ox + x * scale, oy + y * scale, scale, scale));
+                        g.setColor(GRID);
+                        g.setStroke(new BasicStroke(1f));
+                        g.draw(new Rectangle2D.Double(ox + x * scale, oy + y * scale, scale, scale));
+                    }
+                }
+                double[][] towers = {{1.5, 0.5, 0.80}, {3.5, 5.5, -1.40}};
+                double[][] foes = {{3.0 + 0.4 * Math.sin(t), 2.6}, {4.1 + 0.3 * t % 1, 3.1}, {3.6, 2.2},
+                        {5.6, 3.3}, {2.2, 3.3}};
+                for (int i = 0; i < foes.length; i++) {
+                    Shape body = enemyAt(i, ox + foes[i][0] * scale, oy + foes[i][1] * scale, scale * 0.16, 0);
+                    g.setColor(ENEMY_BODY[i % 4]);
+                    g.fill(body);
+                    g.setColor(ENEMY_BODY[i % 4].brighter());
+                    g.draw(body);
+                }
+                List<PolishFlame.Stream> streams = new ArrayList<>();
+                for (double[] tw : towers) {
+                    double cx = ox + tw[0] * scale;
+                    double cy = oy + tw[1] * scale;
+                    Built f = PolishLooks.of(Look.CINDER, 2, TowerPose.idle().with(TowerCue.STREAMING));
+                    tower(g, f, cx, cy, scale, tw[2]);
+                    double mx = cx + Math.cos(tw[2]) * f.muzzle() * scale;
+                    double my = cy + (Math.sin(tw[2]) * f.muzzle() - PolishLooks.LIFT * f.muzzleHeight()) * scale;
+                    double reach = 3.4 * scale;
+                    if (side == 0) {
+                        StreamDrawLab.paint(g, mx, my, tw[2], reach, Math.toRadians(30), flicker);
+                    } else {
+                        streams.add(new PolishFlame.Stream(mx, my, tw[2], reach, Math.toRadians(30), 0.25, 0, false,
+                                flicker));
+                    }
+                }
+                if (side == 1) {
+                    List<PolishFlame.Caught> caught = new ArrayList<>();
+                    for (int i = 0; i < foes.length; i++) {
+                        double fx = ox + foes[i][0] * scale;
+                        double fy = oy + foes[i][1] * scale;
+                        for (PolishFlame.Stream s : streams) {
+                            double d = Math.hypot(fx - s.x(), fy - s.y());
+                            double off = Math.abs(Math.atan2(Math.sin(Math.atan2(fy - s.y(), fx - s.x()) - s.heading()),
+                                    Math.cos(Math.atan2(fy - s.y(), fx - s.x()) - s.heading())));
+                            if (d < s.reach() && off < s.half()) {
+                                caught.add(new PolishFlame.Caught(enemyAt(i, fx, fy, scale * 0.16, 0), fx, fy,
+                                        0.25 + 0.3 * i % 2, s.x(), s.y(), false));
+                                break;
+                            }
+                        }
+                    }
+                    PolishFlame.paint(g, streams, caught, scale, t);
+                }
+            }
+            double[] heats = {0, 0.25, 0.75, 1.0, 1.0};
+            String[] names = {"bare flame", "Hot Flame", "+ White Flame", "+ Hot Flame II", "+ Core"};
+            for (int i = 0; i < 5; i++) {
+                double ox = 20 + i * 234;
+                double oy = 60 + scale * 6 + 30;
+                g.setColor(FLOOR);
+                g.fill(new Rectangle2D.Double(ox, oy, 210, 150));
+                Shape body = enemyAt(i, ox + 140, oy + 75, scale * 0.16, Math.PI);
+                g.setColor(ENEMY_BODY[i % 4]);
+                g.fill(body);
+                PolishFlame.Stream s = new PolishFlame.Stream(ox + 15, oy + 75, 0, 185, Math.toRadians(26), heats[i],
+                        i == 4 ? Math.toRadians(9) : 0, false, flicker);
+                PolishFlame.paint(g, List.of(s), List.of(new PolishFlame.Caught(body, ox + 140, oy + 75,
+                        heats[i] + (i == 4 ? PolishFlame.CORE_HEAT : 0), ox + 15, oy + 75, false)), scale, t);
+                text(g, names[i], ox + 4, oy + 166, TEXT, LABEL);
+            }
+        });
+    }
+
+    /** The game's stream as it is today (Java2DFrameRenderer.paintStream with streamTongues), for "now". */
+    private static final class StreamDrawLab {
+        static void paint(Graphics2D g, double x, double y, double heading, double reach, double half, int flicker) {
+            AffineTransform save = g.getTransform();
+            g.translate(x, y);
+            g.rotate(heading);
+            double[][] layers = {{reach, half, 9, 0.55, 0xe2402a}, {reach * 0.78, half * 0.66, 7, 0.75, 0xff8a2a},
+                    {reach * 0.42, half * 0.26, 5, 0.9, 0xffe27a}};
+            for (int i = 0; i < layers.length; i++) {
+                Color c = new Color((int) layers[i][4]);
+                g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) (layers[i][3] * 255)));
+                g.fill(PolishFlame.tongue(layers[i][0], layers[i][1], (int) layers[i][2], flicker * 7 + i));
+            }
+            g.setTransform(save);
+        }
+    }
+
+    /** The Burst's stone as it flies now (size 1) and at its new size, with its shadow, at 3x and 1x. */
+    private static void stones(File file) throws IOException {
+        BufferedImage image = new BufferedImage(620, 300, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = pen(image);
+        g.setColor(BACK);
+        g.fillRect(0, 0, image.getWidth(), image.getHeight());
+        text(g, "The Burst's stone in flight: now (size 1) and new (size " + PolishShots.STONE_SIZE + "), 3x and 1x",
+                12, 20, TEXT, TITLE);
+        float[] sizes = {1f, PolishShots.STONE_SIZE};
+        for (int k = 0; k < 2; k++) {
+            for (int z = 0; z < 2; z++) {
+                double scale = z == 0 ? 96 : 32;
+                double cx = 40 + k * 300 + (z == 0 ? 80 : 220);
+                floor(g, cx, 200, scale, 1);
+                stone(g, cx, 200, scale * 0.5, sizes[k], scale);
+                stone(g, cx + scale * 0.3, 200 - scale * 0.9, scale * 0.9, sizes[k], scale);
+            }
+            text(g, k == 0 ? "now" : "new", 40 + k * 300 + 60, 280, k == 0 ? DIM : TEXT, LABEL);
+        }
+        g.dispose();
+        save(image, file);
+    }
+
+    /** As Java2DFrameRenderer.paintShell's plain stone: radius PROJECTILE_SIZE (5 px a 32 px cell) times size. */
+    private static void stone(Graphics2D g, double x, double y, double lift, float size, double scale) {
+        double radius = 5.0 * size * scale / 32;
+        double sx = radius * 1.4;
+        g.setColor(new Color(0x6a, 0x70, 0x84, 150));
+        g.fill(new Ellipse2D.Double(x - sx, y - sx * 0.55, sx * 2, sx * 1.1));
+        double cy = y - lift;
+        Tones tones = Tones.of(new Color(139, 90, 43));
+        g.setColor(tones.shade());
+        g.fill(new Ellipse2D.Double(x - radius, cy - radius, radius * 2, radius * 2));
+        double lit = radius * 0.78;
+        double shift = radius - lit;
+        g.setColor(tones.body());
+        g.fill(new Ellipse2D.Double(x - radius, cy - radius, lit * 2 + shift, lit * 2 + shift));
+        g.setColor(tones.highlight());
+        g.fill(new Ellipse2D.Double(x - radius * 0.62, cy - radius * 0.62, radius * 0.56, radius * 0.56));
     }
 
     private static void dragonTurn(File file) throws IOException {

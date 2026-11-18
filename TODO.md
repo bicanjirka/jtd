@@ -14,6 +14,9 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Balance after the next-gen towers** (`docs/features/FEATURE-balance-after-next-gen-towers.md`): the second pass,
   played by the built towers: the game's absolute difficulty, the floor and ceiling in play, lives, the bosses.
   Request written; waits for the towers.
+- **The White tower** (`docs/features/FEATURE-tower-visual-polish.md`): a third Aerie identity, pure and white; its
+  look (`TowerLook.WHITE`, eagles for birds) comes with the visual polish, unused on purpose. It needs a name, a node
+  and a missile of its own. Idea only.
 - **Call-to-arms banner**: wherever an enemy will call reinforcements (a Relay, a Knight boss, a Keeper), a banner on
   the board, clickable for what will come and when, with a bar to the next call and a count of the calls left.
   Idea only.
