@@ -20,15 +20,16 @@
   for the ranks it skips up to `BOSS`; a rank step's `withHealthAndPrice` overrides both for that
   rank alone. A growth is a curve (`of`, `bending`) or health written rank by rank (`stepped`), and writes its bounty
   rank by rank with `paying`. Only the enemy every other is weighed against grows by a curve; the others' health and
-  bounty are what `td.balance.EnemyPowerReport` says their weight asks for, never a guess. A reinforcement a caller
+  bounty are written against what `td.balance.EnemyPowerReport` says they weigh, and no enemy weighs less than the
+  Walker of its rank but the Courier and the Mite. A reinforcement a caller
   sends on a timer spawns `unpaid()`, so what a round pays is bounded; the Warden's Drones are the one exception. A unique enemy that leaks ends the level (`EnemyDefinition.ALL_LIVES`). Every
   enemy gains something of its identity from Elite on.
 - Stat, trait, ability, effect, each thing is exactly one:
   - A **base stat** is a number every enemy has on its sheet. It is authored with its named method
     (`withArmor`, `withMagicResist`, `withPlating`, `withInsulation`, `withResilience`,
     `withAgility`, `withSpirit`, `withTenacity`; plating and insulation in points), and a rank step replaces it. A step
-    that authors most of them uses `withStats`, which sets all seven but tenacity, so it repeats the inherited ones.
-    Tenacity comes from an enemy's identity, never from rank. Never a trait.
+    that authors most of them uses `withStats`, which sets all eight, so it repeats the inherited ones; never follow it
+    with a named method for one of them. Never a trait.
   - A **trait** is passive identity an enemy has or hasn't: an immunity (`ImmunityTrait`, naming any kind), regeneration, a stat
     that follows its state or adapts to the level. A trait that only adds a constant to a stat is a
     base stat instead.
@@ -64,7 +65,8 @@
 - `withAdditionalTraits`/`withAdditionalAbilities` replace an entry the definition already had with the same
   `TraitId.named(...)` id and stack anonymous ones; entries added in one call never replace each other, so an affix
   may add several. Name an entry only when a later step replaces
-  it (e.g. `"armor"`, which a later rank step replaces).
+  it (e.g. `"armor"`, which a later rank step replaces). A list whose entries are all anonymous is authored with
+  `withTraits`/`withAbilities`, never by wrapping each in `anonymous(...)`.
 - Every enemy has a `FreezeMeter`, draining at its rank's `Rank.freezeDrain()`; there is no opt-in.
 - `DefinedEnemyMob.applyEffect` keeps out what a trait makes it immune to, and scales what doesn't help it
   (`Side.DEBUFF`) by `StatCurves.durationFactor(tenacity)` (a pool's fuel, not its duration), and a freeze by its meter too, before `ActiveEffects` sees it.

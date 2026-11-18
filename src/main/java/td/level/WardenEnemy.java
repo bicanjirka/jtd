@@ -47,30 +47,30 @@ final class WardenEnemy {
                         // heaviest hits and each later one gives something up, until the last can simply be shot.
                         egg("wardensFinalEgg", "Warden's Final Egg",
                                 "The last egg, sealed in amber: destroy it to end the encounter.",
-                                new Shell(25f, 1f, 0f), List.of()),
+                                new Shell(100f, 5f, 0f), List.of()),
                         // High enough that an un-upgraded weak tower does nothing; later stages weaken it.
                         warden("exhaustedWarden", "The Exhausted Warden", 5100, "guardian of the hive, barely standing",
-                                new Shell(2f, 2f, 0f), "wardensFinalEgg"),
+                                new Shell(25f, 4f, 0f), "wardensFinalEgg"),
                         egg("wardensSecondEgg", "Warden's Second Egg",
                                 "Sealed in amber, it hatches into a weaker Warden if not destroyed in time.",
-                                new Shell(100f, 4f, 0f),
+                                new Shell(200f, 10f, 50f),
                                 List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                                 .withAbilities(hatchInto("exhaustedWarden")),
                         warden("weakenedWarden", "The Weakened Warden", 8250,
-                                "guardian of the hive, worn down from its last hatching", new Shell(6f, 4f, 0f),
-                                "wardensSecondEgg"),
+                                "guardian of the hive, worn down from its last hatching",
+                                new Shell(75f, 6f, 25f), "wardensSecondEgg"),
                         egg("wardensFirstEgg", "Warden's First Egg",
                                 "Sealed in amber, it hatches into a weaker Warden if not destroyed in time.",
-                                new Shell(400f, 12f, 100f),
+                                new Shell(400f, 20f, 100f),
                                 List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.CHILL)),
                                         IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
                                 .withAbilities(hatchInto("weakenedWarden")),
-                        warden("warden", "The Warden", 13500, "guardian of the hive, crested in gold", new Shell(10f, 8f, 0f),
-                                "wardensFirstEgg"))
+                        warden("warden", "The Warden", 13500, "guardian of the hive, crested in gold",
+                                new Shell(100f, 8f, 40f), "wardensFirstEgg"))
                 .map(RankedEnemy::unique)
                 .toList();
     }
@@ -90,38 +90,38 @@ final class WardenEnemy {
                                        List<IdentifiedTrait> traits) {
         return EnemyDefinition.of(id, name, 2250, 10, 0f, BodyArchetype.WARDEN_EGG)
                 .withDescription(description)
-                .withStats(shell.resist(), shell.resist(), shell.plating(), shell.plating(), shell.resilience(), 0f, 0f)
+                .withStats(shell.resist(), shell.resist(), shell.plating(), shell.plating(), 0f, 0f, shell.resilience(), 0f)
                 .withIdentifiedTraits(traits);
     }
 
     private static List<Ability> hatchInto(String wardenId) {
-        return List.of(new Ability(AbilityTerm.HATCH, new OnceTrigger(160), new SpawnEnemiesAction(wardenId, 1, true)));
+        return List.of(new Ability(AbilityTerm.HATCH, new OnceTrigger(200), new SpawnEnemiesAction(wardenId, 1, true)));
     }
 
     /** One stage: "A {@code lead}.", the standing abilities every stage shares, and {@code eggId} left on death. */
-    private static EnemyDefinition warden(String id, String name, int health, String lead, Shell shell,
-                                          String eggId) {
+    private static EnemyDefinition warden(String id, String name, int health, String lead, Shell shell, String eggId) {
         List<IdentifiedAbility> abilities = new ArrayList<>(List.of(
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(100),
                         new SpawnEnemiesAction("drone", 2, false).atRank(Rank.ELITE))),
                 // Its plating only answers physical hits, so its own shield covers the other type.
-                IdentifiedAbility.anonymous(new Ability(AbilityTerm.ARCANE_WARD, new PeriodicTrigger(400),
-                        new ApplyEffectAction(ShieldTemplate.magicOnly(health * 0.1f, 100), new SelfTarget()))),
+                IdentifiedAbility.anonymous(new Ability(AbilityTerm.ARCANE_WARD, new PeriodicTrigger(200),
+                        new ApplyEffectAction(ShieldTemplate.magicOnly(health * 0.075f, 200), new SelfTarget()))),
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.AEGIS, new HealthThresholdTrigger(0.5f),
-                        new ApplyEffectAction(new ShieldTemplate(60f, 150), new RadiusTarget(150f)))),
+                        new ApplyEffectAction(ShieldTemplate.untilBroken(1000), new RadiusTarget(150f)))),
                 // Re-arms after each hit, so it fires every time it is left alone, not just once.
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(200),
-                        new ApplyEffectAction(new HealTemplate(health * 0.0015f, 100), new SelfTarget()))),
+                        new ApplyEffectAction(new HealTemplate(health * 0.004f, 100), new SelfTarget()))),
                 IdentifiedAbility.anonymous(new Ability(AbilityTerm.HARDEN, new OnCriticalHitTakenTrigger(),
-                        new ApplyEffectAction(new ShieldTemplate(health * 0.03f, 30), new SelfTarget())))));
+                        new ApplyEffectAction(new ShieldTemplate(100f, 40), new SelfTarget())))));
         abilities.add(IdentifiedAbility.anonymous(new Ability(AbilityTerm.LAY_EGG, new OnDeathTrigger(),
                 new SpawnEnemiesAction(eggId, 1, false))));
-        return EnemyDefinition.of(id, name, health, 50, 0.8f, BodyArchetype.WARDEN)
+        return EnemyDefinition.of(id, name, health, 100, 0.64f, BodyArchetype.WARDEN)
                 .withDescription("A " + lead + ".")
                 .withMovement(new RotorMovement((float) Math.toRadians(2.0)))
-                .withStats(shell.resist(), shell.resist(), shell.plating(), 0f, shell.resilience(), 0f, 0f)
-                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new HivemindTrait(5f, 6)),
-                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
+                .withStats(shell.resist(), shell.resist(), shell.plating(), 0f, -30f, 0f, shell.resilience(), 0f)
+                .withTraits(List.of(
+                        new HivemindTrait(5f, 10),
+                        new ImmunityTrait(EffectKind.DAZED)))
                 .withIdentifiedAbilities(List.copyOf(abilities));
     }
 }

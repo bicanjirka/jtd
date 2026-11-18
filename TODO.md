@@ -14,6 +14,9 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 - **Balance after the next-gen towers** (`docs/features/FEATURE-balance-after-next-gen-towers.md`): the second pass,
   played by the built towers: the game's absolute difficulty, the floor and ceiling in play, lives, the bosses.
   Request written; waits for the towers.
+- **Call-to-arms banner**: wherever an enemy will call reinforcements (a Relay, a Knight boss, a Keeper), a banner on
+  the board, clickable for what will come and when, with a bar to the next call and a count of the calls left.
+  Idea only.
 
 ## Feature request implementation order
 
@@ -236,6 +239,16 @@ fight changes resets there, so a field that misses it carries one wave into the 
   `endFight()` both build with `new`, so a new fight field is reset by being in it. Delete the
   `tower/CLAUDE.md` rule once every leaf has one.
 
+### Ability radii are in pixels, the rest of the engine in cells
+
+`RadiusTarget`, the radii a cast reaches and the aura rings drawn from them are pixels, while zones, towers and the
+text that describes them speak in cells, so every ability radius is divided by the cell size wherever it is shown.
+
+- **Where:** `RadiusTarget`, the `RadiusTarget(...)` call sites in the enemy and level classes, `AbilityText`,
+  `EnemyDefinition.supportAura` and what reads it.
+- **Approach:** make `RadiusTarget` take cells and convert once where the mob measures distance, then let the
+  compiler find every call site; no save or wave-script format holds a radius.
+
 ## Balance tools
 
 ### No test runs the whole lab
@@ -378,21 +391,18 @@ every round's strength.
   1.0), and run the full `PlayCheck`: bare towers and every single tower must still lose. The Mortar alone loses
   only in round 10 on three leaks, so watch it first.
 
-### Higher ranks get more health, not more to do
+### The rank retune has not reached the tower sheets
 
-An enemy's Veteran, Elite and Boss ranks are mostly the same enemy with more health. The retune wanted: keep each
-rank's health and bounty, and give the higher ranks stronger stats, traits and abilities, so a late round is
-harder without paying more.
+Every ladder and level enemy now gives its higher ranks stronger stats, traits and abilities, and `EnemyPowerReport`
+and `WavePowerReport` were rerun on it; the sheets downstream were not. The tower bench's defence scenarios are
+Veteran Knights, Juggernauts, Templars, Ghosts and Runners, so tower worths and prices are measured against the old
+enemies. The Warden, the Keeper of Hours and Talos were left as they were.
 
-- **Where:** the rank ladders in `td.enemy.*Enemy` (`RankGrowth`, the per-rank stats, traits and abilities);
-  `EnemyPowerReport` for what each change weighs.
-- **Approach:** change one kind, run `EnemyPowerReport --kinds <it>`: `blind` is its new power in Walkers and the
-  verdict holds it to the limit per rank (1.75 Walkers, 1.25 times that at Elite, 1.5 at Boss, more only with a
-  clear answer). The `fair` column is the bounty that power would earn; holding the bounty under it is the point,
-  so read it as how much harder than its pay the rank now is. Nothing else is entered by hand: a full
-  `EnemyPowerReport`, `TowerBench`, `TowerReport`, `TowerPriceWriter` (the bench's defence scenarios are Veteran
-  Knights, Juggernauts, Templars, Ghosts and Runners, so their retune moves tower worths and prices), then
-  `WavePowerReport` and `PlayCheck` recompute every sheet. Keep the Walker as it is: it is the unit.
+- **Where:** `TowerBench`, `TowerReport`, `TowerPriceWriter`, `PlayCheck`; the Warden in `WardenEnemy`, the Keeper in
+  `KeeperEnemy`, Talos in `LabyrinthLevel`.
+- **Approach:** run the pipeline in order (`TowerBench`, `TowerReport`, `TowerPriceWriter`, then `WavePowerReport`
+  and `PlayCheck`) and read what moved. For a boss, change it and run `EnemyPowerReport --kinds <it>`; the verdict
+  only asks that it not fall below the Walker of its rank, and its bounty is written against `fair`, under it.
 
 ### A round always pays its full bounty
 
@@ -605,13 +615,10 @@ Warden/egg chain's health, price, ability intervals, shield percentages/radii an
 `EGG_HATCH_DELAY_TICKS` - was chosen to be plausible, not tuned, the same situation the
 tower-upgrade and new-tower-numbers entries above were in before their own balance passes.
 
-- Heals are starting values from the stat-driven plan, meant to be visibly significant: the Mender's ally
-  heal (0.15 to 2 points a tick by rank) and self-heal (0.35 to 1.4), the Warden's neglect heal (15% of the
-  stage's health over 5 s), the Frenzied boss's threshold heal (1 a tick for 10 s) and the Frenzy
-  Spawnling's death heal (0.5 a tick for 2 s).
-- Shields are absorb pools with starting values: the Warden's magic self-shield (10% of the stage's
-  health), its half-health ally shield (60 points) and crit-survived shield (3% of the stage's health), the
-  Warding affix's ally shield (40 to 640 points by rank) and the Reaver's panic shield (35 to 370 points by rank).
+- Heals are starting values, meant to be visibly significant: the Mender's ally heal, self-heal and last rites,
+  the Warden's neglect heal, the Runner boss's idle heal and the Frenzy Spawnling's death heal.
+- Shields are absorb pools with starting values: the Warden's magic self-shield, its ally shield and crit-survived
+  shield, the Warding affix's ally shield and the Reaver's panic shield.
 - Every ranked enemy's health and bounty are no longer placeholders: they are weighed against the Walker
   (`docs/BALANCE.md`). The numbers inside a trait or an ability, and every unique boss's, still are.
 - **Where:** the enemy classes (`WardenEnemy` and the others in `td.enemy`), `HurtSpeedTrait`.
@@ -642,6 +649,17 @@ the feature request's paper values and were never measured in play. The Warden's
   `WardenEnemy`'s `OnCriticalHitTakenTrigger` ability.
 - **Approach:** in the bundle's final balancing, measure each Sniper build with `td.BuildHarness`; every number
   here is a named constant.
+
+### A Larva always pupates at the same moment
+
+A Larva spins its cocoon a fixed time after it appears, so every Larva of a column pupates on the same stretch of
+path and the cocoons line up where a player learns to aim.
+
+- **Where:** `OnceTrigger`, `AbilityEvaluator`, the per-mob `AbilityState` built in `DefinedEnemyMob`'s constructor,
+  and the Larva in `AmberHiveLevel`.
+- **Approach:** a once-trigger over a window of ticks, its moment drawn once per mob at spawn from
+  `GameWorld.random()` so headless runs still reproduce; `AbilityText` says "once, after 6 to 14 s". Give the Larva's
+  Pupate a window around its present delay.
 
 ## Interface
 

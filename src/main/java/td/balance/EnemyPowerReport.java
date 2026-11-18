@@ -46,10 +46,13 @@ import java.util.function.DoubleFunction;
 public final class EnemyPowerReport {
 
     static final String BASELINE = TowerLab.PLAIN;
-    /** How far above the Walker an enemy may stand at the low ranks before it needs a weakness. */
-    private static final double BLIND_LIMIT = 1.75;
-    /** The share of its blind power an enemy over the limit may keep against its best answer. */
-    private static final double WEAKNESS_SHARE = 0.6;
+    /** The Walker is the weakest enemy of every rank: nothing else may weigh less blind. */
+    private static final double BLIND_FLOOR = 1.0;
+    /**
+     * The kinds allowed under the floor: one fragile on purpose and paid as a prize for catching it, one a swarm member
+     * a single probe hit kills whatever its numbers.
+     */
+    private static final Set<String> UNDER_THE_FLOOR = Set.of("courier", "mite");
     private static final double MIX_HEADROOM = 1.15;
     private static final long PAY_SEED = 1L;
     private static final DamageMix ALL_PHYSICAL = new DamageMix(1_000_000, 0);
@@ -151,9 +154,10 @@ public final class EnemyPowerReport {
             ReportPage.store("enemy-power", matrix);
             ReportPage.store("enemy-baseline", unit);
             ReportPage.publish("enemies", "Enemy power", """
-                    Stage 1 of the balance pipeline: every enemy weighed against a rig of probes, with no tower. The
-                    limit is 1.75 Walkers blind (a quarter more at Elite, half more at Boss) unless the enemy has a clear
-                    answer. Click a column to sort.""", List.of(matrix, unit));
+                    Stage 1 of the balance pipeline: every enemy weighed against a rig of probes, with no tower. No
+                    enemy but the Courier and the Mite may weigh less than the Walker of its rank blind; there is no
+                    ceiling. Click a
+                    column to sort.""", List.of(matrix, unit));
         }
     }
 
@@ -194,8 +198,8 @@ public final class EnemyPowerReport {
     }
 
     /**
-     * How many times its weight at the low ranks an enemy may weigh at {@code rank}: what makes it special comes in
-     * from Elite, and a Boss's strengths are stronger still.
+     * How many times its weight at the low ranks {@code --fit} aims an enemy at {@code rank}: what makes it special
+     * comes in from Elite, and a Boss's strengths are stronger still.
      */
     static double weightGrowthAt(Rank rank) {
         return switch (rank) {
@@ -406,12 +410,10 @@ public final class EnemyPowerReport {
             if (this.subject.unique() || this.subject.rank() == Rank.BOSS) {
                 return "estimate";
             }
-            double limit = BLIND_LIMIT * weightGrowthAt(this.subject.rank());
-            if (this.blind <= limit) {
+            if (this.blind >= BLIND_FLOOR) {
                 return "ok";
             }
-            return this.countered <= WEAKNESS_SHARE * this.blind && this.countered <= limit
-                    ? "ok: has an answer" : "BREACH";
+            return UNDER_THE_FLOOR.contains(this.subject.kind()) ? "ok: under the floor by design" : "BREACH: under the Walker";
         }
 
         private String notes() {

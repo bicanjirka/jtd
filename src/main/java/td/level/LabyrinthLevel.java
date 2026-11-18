@@ -14,7 +14,6 @@ import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.HurtSpeedTrait;
-import td.enemy.IdentifiedAbility;
 import td.enemy.IdentifiedTrait;
 import td.enemy.ImmunityTrait;
 import td.enemy.OnceTrigger;
@@ -25,6 +24,7 @@ import td.enemy.StrideMovement;
 import td.enemy.SwingCurve;
 import td.enemy.SwingMovement;
 import td.stat.DisruptionAura;
+import td.stat.EnemyStat;
 import td.wave.PathColor;
 import td.wave.PathDefinition;
 import td.wave.Point;
@@ -46,15 +46,16 @@ final class LabyrinthLevel {
     private static final int STARTING_CREDITS = 150;
     private static final int STARTING_LIVES = 5;
 
-    /** A Runner in bronze: fireproof and thick-skinned, so it asks for more than a Scorcher. */
+    /** A Runner in bronze: fireproof, plated and hard to hold back, so it asks for more than a Scorcher. */
     private static final RankedEnemy BRONZE_BULL = EnemyCatalog.builtIn().ranked("runner").cloneAs("bronzeBull",
             fast -> fast
                     .withDisplayName("Bronze Bull")
                     .withArchetype(BodyArchetype.BRONZE_BULL)
                     .withMovement(new StrideMovement((float) Math.toRadians(15.0), 12))
                     .withDescription("A bull cast in bronze, faster the more it is dented.")
-                    .withHealthAndPrice(fast.baseHealth() / 2, fast.price())
-                    .withPlating(3f)
+                    .withHealthAndPrice((int) (fast.baseHealth() / 1.5f), fast.price())
+                    .withPlating(fast.baseStats().value(EnemyStat.PLATING) + 10f)
+                    .withTenacity(fast.baseStats().value(EnemyStat.TENACITY) + 40f)
                     .withAdditionalTraits(List.of(IdentifiedTrait.named("bronze",
                             new ImmunityTrait(EffectKind.BURN)))));
 
@@ -67,13 +68,13 @@ final class LabyrinthLevel {
                     .withDescription("The bronze guardian of the island. One vein of ichor runs through it, "
                             + "and the shield never stops.")
                     .withMovement(new SwingMovement((float) Math.toRadians(8.0), 40, SwingCurve.SMOOTH))
-                    .withStats(30f, 30f, 0f, 0f, -60f, 0f, 0f)
-                    .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
-                    .withIdentifiedAbilities(List.of(
-                            IdentifiedAbility.anonymous(new Ability(AbilityTerm.BRONZE_SHELL, new OnceTrigger(1),
-                                    new ApplyEffectAction(ShieldTemplate.untilBroken(6000f), new SelfTarget()))),
-                            IdentifiedAbility.anonymous(new Ability(AbilityTerm.BRONZE_SHELL, new PeriodicTrigger(240),
-                                    new ApplyEffectAction(ShieldTemplate.untilBroken(3000f), new SelfTarget()))))));
+                    .withStats(75f, 75f, 0f, 0f, -25f, 0f, -60f, 25f)
+                    .withTraits(List.of(new ImmunityTrait(EffectKind.DAZED), new ImmunityTrait(EffectKind.FREEZE)))
+                    .withAbilities(List.of(
+                            new Ability(AbilityTerm.BRONZE_SHELL, new OnceTrigger(1),
+                                    new ApplyEffectAction(ShieldTemplate.untilBroken(6000f), new SelfTarget())),
+                            new Ability(AbilityTerm.BRONZE_SHELL, new PeriodicTrigger(240),
+                                    new ApplyEffectAction(ShieldTemplate.untilBroken(3000f), new SelfTarget())))));
 
     /**
      * The Minotaur: thick-hided and hard to slow, bellowing so the towers near it falter, charging from time to
@@ -83,18 +84,20 @@ final class LabyrinthLevel {
             EnemyDefinition.of("minotaur", "The Minotaur", 12000, 0, 0.5f, BodyArchetype.MINOTAUR)
                     .withDescription("Born of a queen and a bull, kept at the heart of the maze. It knows every turn.")
                     .withMovement(new StrideMovement((float) Math.toRadians(12.0), 18))
-                    .withStats(40f, 15f, 8f, 0f, 60f, 0f, 40f)
-                    .withTenacity(100f)
+                    .withStats(90f, 60f, 8f, 0f, 0f, 100f, 60f, 50f)
                     .withDisruption(new DisruptionAura(110f, 0.35f, 0.8f))
-                    .withIdentifiedTraits(List.of(
-                            IdentifiedTrait.anonymous(new HurtSpeedTrait(1.6f))))
-                    .withIdentifiedAbilities(List.of(
-                            IdentifiedAbility.anonymous(new Ability(AbilityTerm.CHARGE, new PeriodicTrigger(200),
-                                    new ApplyEffectAction(new SprintTemplate(30), new SelfTarget()))),
-                            IdentifiedAbility.anonymous(new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.5f),
-                                    new ApplyEffectAction(new HealTemplate(15f, 100), new SelfTarget()))),
-                            IdentifiedAbility.anonymous(new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.5f),
-                                    new ApplyEffectAction(new SprintTemplate(60), new SelfTarget()))))));
+                    .withTraits(List.of(new HurtSpeedTrait(2.25f), new ImmunityTrait(EffectKind.FREEZE)))
+                    .withAbilities(List.of(
+                            new Ability(AbilityTerm.CHARGE, new PeriodicTrigger(200),
+                                    new ApplyEffectAction(new SprintTemplate(30), new SelfTarget())),
+                            new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.666f),
+                                    new ApplyEffectAction(new HealTemplate(10f, 100), new SelfTarget())),
+                            new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.666f),
+                                    new ApplyEffectAction(new SprintTemplate(40), new SelfTarget())),
+                            new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.333f),
+                                    new ApplyEffectAction(new HealTemplate(10f, 200), new SelfTarget())),
+                            new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.333f),
+                                    new ApplyEffectAction(new SprintTemplate(80), new SelfTarget())))));
 
     /** Square corners, as a maze's are: a rounded one would leave a corner cell buildable. */
     private static final PathColor STONE_COLOR = PathColor.of(200, 170, 120);
@@ -106,13 +109,13 @@ final class LabyrinthLevel {
                             new Point(1, 7), new Point(6, 7), new Point(6, 8), new Point(0, 8), new Point(0, 0),
                             new Point(-1, 0)),
                     List.of(
-                            new WaveDefinition("10 walker 3 knight 8 walker 4 runner e 6 soldier walker 3 soldier knight "
-                                    + "2 soldier ghost 2 soldier templar 4 soldier walker soldier yeti soldier golem e 4 soldier runner 6 veteran walker "
-                                    + "3 veteran knight veteran mender 2 veteran ghost 2 veteran templar 4 veteran walker veteran yeti veteran golem e "
-                                    + "4 veteran runner veteran magma 6 veteran walker 2 veteran knight e 4 elite walker elite golem elite knight "
-                                    + "3 elite walker elite templar elite magma"),
-                            new WaveDefinition("w220 elite: 2 magma 3 golem 4 bronzeBull e talos e 4 bronzeBull 3 golem 2 magma"),
-                            new WaveDefinition("elite: 4 unstoppable bronzeBull e 2 golem e minotaur e 4 vengeful bronzeBull")))
+                            new WaveDefinition("10 walker 3 knight 8 walker 4 runner 3 e 6 soldier walker 3 soldier knight "
+                                    + "2 soldier ghost 2 soldier templar 4 soldier walker soldier yeti soldier golem 4 e 4 soldier runner 6 veteran walker "
+                                    + "3 veteran knight veteran taunting exalted golem e veteran exalted mender 2 veteran ghost 2 veteran templar 4 veteran armored walker veteran unstoppable yeti veteran golem e "
+                                    + "4 veteran runner veteran mending magma 6 veteran regenerating shielded walker 2 veteran knight e 4 elite walker elite golem elite knight "
+                                    + "3 elite walker e 2 elite unstoppable templar 8 e elite exalted regenerating magma"),
+                            new WaveDefinition("w100 elite: 2 magma 3 golem 4 bronzeBull e talos e exalted bronzeBull bronzeBull exalted bronzeBull bronzeBull 2 regenerating golem golem 2 magma"),
+                            new WaveDefinition("elite: 4 unstoppable bronzeBull e 2 golem e minotaur 3 e 4 vengeful exalted bronzeBull")))
             .withColor(STONE_COLOR);
 
     static final LevelDefinition DEFINITION = LevelDefinition

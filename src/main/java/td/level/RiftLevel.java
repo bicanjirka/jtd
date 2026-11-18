@@ -17,7 +17,6 @@ import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.IdentifiedAbility;
-import td.enemy.IdentifiedTrait;
 import td.enemy.ImmunityTrait;
 import td.enemy.LeaveZoneAction;
 import td.enemy.OnDodgeTrigger;
@@ -56,7 +55,7 @@ final class RiftLevel {
     private static final int STARTING_LIVES = 3;
 
     /** What a Mirage leaves where a shot missed it: no bounty, and stronger behind a stronger Mirage. */
-    private static final EnemyDefinition ECHO = EnemyDefinition.of("mirrorImage", "Mirror Image", 30, 1, 1.6f,
+    private static final EnemyDefinition ECHO = EnemyDefinition.of("mirrorImage", "Mirror Image", 50, 1, 1.6f,
                     BodyArchetype.MIRROR_IMAGE)
             .withDescription("What was left where a shot missed a Mirage.");
 
@@ -86,15 +85,18 @@ final class RiftLevel {
                     .withDescription("A shard of the dark inside the rift. Its company keeps vanishing.")
                     .withMovement(new RotorMovement((float) Math.toRadians(4.0)))
                     .withMagicResist(20f)
-                    .withIdentifiedAbilities(List.of(eclipse(30))), RankGrowth.stepped(173, 600, 1192, 2257).paying(4, 5, 12, 20))
+                    .withIdentifiedAbilities(List.of(eclipse(30))),
+                    RankGrowth.stepped(173, 600, 1192, 2257).paying(4, 5, 12, 20))
             .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(eclipse(40))))
-            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(eclipse(50))))
+            .thenAt(Rank.VETERAN, e -> e
+                    .withStats(10f, 25f, 0f, 2f, 10f, 15f, 10f, 15f)
+                    .withAdditionalAbilities(List.of(eclipse(50))))
             .thenAt(Rank.ELITE, e -> e
-                    .withStats(10f, 30f, 0f, 2f, 20f, 10f, 20f)
+                    .withStats(20f, 45f, 0f, 4f, 20f, 25f, 25f, 30f)
                     .withAdditionalAbilities(List.of(eclipse(60))))
             .thenAt(Rank.BOSS, e -> e
-                    .withStats(20f, 40f, 0f, 4f, 30f, 10f, 30f)
-                    .withAdditionalAbilities(List.of(eclipse(80))))
+                    .withStats(30f, 60f, 0f, 6f, 25f, 40f, 40f, 40f)
+                    .withAdditionalAbilities(List.of(eclipse(80, 150f))))
             .build();
 
     /**
@@ -102,24 +104,24 @@ final class RiftLevel {
      * and hardening twice more on the way down. Letting it through ends the level.
      */
     private static final RankedEnemy MONOLITH = RankedEnemy.unique(
-            EnemyDefinition.of("monolith", "The Monolith", 3800, 80, 0.22f, BodyArchetype.MONOLITH)
+            EnemyDefinition.of("monolith", "The Monolith", 6000, 80, 0.22f, BodyArchetype.MONOLITH)
                     .withDescription("It has walked out of the rift before. It does not hurry, and it does not stop.")
-                    .withStats(25f, 25f, 4f, 4f, 100f, 0f, 50f)
-                    .withIdentifiedTraits(List.of(
-                            IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(50f)),
-                            IdentifiedTrait.anonymous(new RegenerationTrait(10f)),
-                            IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
-                            IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.CHILL)),
-                            IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
-                    .withIdentifiedAbilities(List.of(
-                            IdentifiedAbility.anonymous(new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(40),
-                                    new ApplyEffectAction(new HealTemplate(4f, 40), new SelfTarget()))),
-                            IdentifiedAbility.anonymous(new Ability(AbilityTerm.STONE_SKIN, new HealthThresholdTrigger(0.66f),
-                                    new ApplyEffectAction(ShieldTemplate.untilBroken(600f), new SelfTarget()))),
-                            IdentifiedAbility.anonymous(new Ability(AbilityTerm.STONE_SKIN, new HealthThresholdTrigger(0.33f),
-                                    new ApplyEffectAction(ShieldTemplate.untilBroken(600f), new SelfTarget()))),
-                            IdentifiedAbility.anonymous(new Ability(AbilityTerm.LAST_STAND, new HealthThresholdTrigger(0.08f),
-                                    new ApplyEffectAction(new UnyieldingTemplate(100), new SelfTarget()))))));
+                    .withStats(50f, 50f, 8f, 8f, 0f, 100f, 100f, 50f)
+                    .withTraits(List.of(
+                            AdaptiveResist.againstDominant(50f),
+                            new RegenerationTrait(10f),
+                            new ImmunityTrait(EffectKind.FREEZE),
+                            new ImmunityTrait(EffectKind.CHILL),
+                            new ImmunityTrait(EffectKind.DAZED)))
+                    .withAbilities(List.of(
+                            new Ability(AbilityTerm.RECOVER, new TimeSinceLastHitTrigger(40),
+                                    new ApplyEffectAction(new HealTemplate(8f, 40), new SelfTarget())),
+                            new Ability(AbilityTerm.STONE_SKIN, new HealthThresholdTrigger(0.66f),
+                                    new ApplyEffectAction(ShieldTemplate.untilBroken(1200f), new SelfTarget())),
+                            new Ability(AbilityTerm.STONE_SKIN, new HealthThresholdTrigger(0.33f),
+                                    new ApplyEffectAction(ShieldTemplate.untilBroken(1800f), new SelfTarget())),
+                            new Ability(AbilityTerm.LAST_STAND, new HealthThresholdTrigger(0.08f),
+                                    new ApplyEffectAction(new UnyieldingTemplate(100), new SelfTarget())))));
 
     private static final ArcCornerSmoothing SMOOTHING = new ArcCornerSmoothing(0.3, 10);
 
@@ -212,7 +214,11 @@ final class RiftLevel {
 
     /** Every few seconds, the allies around it vanish from aimed shots for {@code ticks}. */
     private static IdentifiedAbility eclipse(int ticks) {
+        return eclipse(ticks, 110f);
+    }
+
+    private static IdentifiedAbility eclipse(int ticks, float radius) {
         return IdentifiedAbility.named("eclipse", new Ability(AbilityTerm.SHROUD, new PeriodicTrigger(100),
-                new ApplyEffectAction(new InvisibleTemplate(ticks), new RadiusTarget(110f))));
+                new ApplyEffectAction(new InvisibleTemplate(ticks), new RadiusTarget(radius))));
     }
 }

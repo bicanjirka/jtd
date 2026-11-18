@@ -8,8 +8,6 @@ import td.enemy.BodyArchetype;
 import td.enemy.EnemyDefinition;
 import td.enemy.HealthThresholdTrigger;
 import td.enemy.HurtSpeedTrait;
-import td.enemy.IdentifiedAbility;
-import td.enemy.IdentifiedTrait;
 import td.enemy.ImmunityTrait;
 import td.enemy.LeaveZoneAction;
 import td.enemy.OnDeathTrigger;
@@ -38,7 +36,7 @@ final class ColossusEnemy {
         return EnemyDefinition.of("ember", "Ember", 160, 1, 1.7f, BodyArchetype.EMBER)
                 .withDescription("A burning shard of a Molten Core, quick and fireproof.")
                 .withAgility(20f)
-                .withIdentifiedTraits(List.of(IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN))));
+                .withTraits(List.of(new ImmunityTrait(EffectKind.BURN)));
     }
 
     /** The core first, so the shell's reforge names a registered id. */
@@ -50,33 +48,32 @@ final class ColossusEnemy {
         return EnemyDefinition.of("ironColossus", "The Iron Colossus", 5000, 40, 0.45f, BodyArchetype.COLOSSUS)
                 .withDescription("A walking foundry in an iron shell. Break the shell and what is inside comes out running.")
                 .withMovement(new SwingMovement((float) Math.toRadians(10.0), 60, SwingCurve.SMOOTH))
-                .withStats(35f, 10f, 15f, 0f, 100f, 0f, 0f)
-                .withTenacity(100f)
-                .withIdentifiedTraits(List.of(
-                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
-                .withIdentifiedAbilities(List.of(
-                        IdentifiedAbility.anonymous(new Ability(AbilityTerm.WARD_MINE, new PeriodicTrigger(60),
-                                LeaveZoneAction.wardMine(0.6f, 240, 150f))),
-                        IdentifiedAbility.anonymous(new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(300),
-                                new SpawnEnemiesAction("knight", new AbilitySpawnShape(2, 0.0).unpaid(), false).atRank(Rank.SOLDIER))),
-                        IdentifiedAbility.anonymous(new Ability(AbilityTerm.REFORGE, new HealthThresholdTrigger(0.5f),
-                                new SpawnEnemiesAction("moltenCore", 1, true)))));
+                .withStats(60f, 30f, 15f, 0f, 0f, 100f, 100f, 0f)
+                .withTraits(List.of(
+                        new ImmunityTrait(EffectKind.DAZED)))
+                .withAbilities(List.of(
+                        new Ability(AbilityTerm.WARD_MINE, new PeriodicTrigger(60),
+                                LeaveZoneAction.wardMine(0.6f, 240, 300f)),
+                        new Ability(AbilityTerm.REINFORCE, new PeriodicTrigger(300),
+                                new SpawnEnemiesAction("knight", new AbilitySpawnShape(2, 0.0).unpaid(), false).atRank(Rank.VETERAN)),
+                        new Ability(AbilityTerm.REFORGE, new HealthThresholdTrigger(0.5f),
+                                new SpawnEnemiesAction("moltenCore", 1, true))));
     }
 
     private static EnemyDefinition moltenCore() {
         return EnemyDefinition.of("moltenCore", "The Molten Core", 3800, 40, 0.6f, BodyArchetype.MOLTEN_CORE)
                 .withDescription("The Colossus's burning heart, loose at last.")
                 .withMovement(new PulseMovement(0.12f, 30, 15))
-                .withStats(0f, 60f, 0f, 4f, 60f, 0f, 0f)
-                .withIdentifiedTraits(List.of(
-                        IdentifiedTrait.anonymous(new HurtSpeedTrait(1.5f)),
-                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.BURN)),
-                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.FREEZE)),
-                        IdentifiedTrait.anonymous(new ImmunityTrait(EffectKind.DAZED))))
-                .withIdentifiedAbilities(List.of(
-                        IdentifiedAbility.anonymous(new Ability(AbilityTerm.HEALING_POOL, new PeriodicTrigger(30),
-                                LeaveZoneAction.healingGround(1f, 120, 1f))),
-                        IdentifiedAbility.anonymous(new Ability(AbilityTerm.BROOD, new OnDeathTrigger(),
-                                new SpawnEnemiesAction("ember", AbilitySpawnShape.brood(4, 1f, 1f), false)))));
+                .withStats(0f, 100f, 0f, 4f, 0f, 0f, 60f, 0f)
+                .withTraits(List.of(
+                        new HurtSpeedTrait(1.5f),
+                        new ImmunityTrait(EffectKind.BURN),
+                        new ImmunityTrait(EffectKind.FREEZE),
+                        new ImmunityTrait(EffectKind.DAZED)))
+                .withAbilities(List.of(
+                        new Ability(AbilityTerm.HEALING_POOL, new PeriodicTrigger(30),
+                                LeaveZoneAction.healingGround(1f, 120, 2f)),
+                        new Ability(AbilityTerm.BROOD, new OnDeathTrigger(),
+                                new SpawnEnemiesAction("ember", AbilitySpawnShape.brood(4, 1f, 1f), false))));
     }
 }

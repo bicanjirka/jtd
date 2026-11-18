@@ -156,13 +156,14 @@ public record EnemyDefinition(
      * named method says, plating and insulation in points.
      */
     public EnemyDefinition withStats(float armor, float magicResist, float plating, float insulation,
-            float resilience, float agility, float spirit) {
+                                     float agility, float tenacity, float resilience, float spirit) {
         return this.withArmor(armor)
                 .withMagicResist(magicResist)
                 .withPlating(plating)
                 .withInsulation(insulation)
-                .withResilience(resilience)
                 .withAgility(agility)
+                .withTenacity(tenacity)
+                .withResilience(resilience)
                 .withSpirit(spirit);
     }
 
@@ -292,8 +293,8 @@ public record EnemyDefinition(
      * Replaces every trait, each anonymous. Use {@link #withAdditionalTraits} to add or replace by
      * id.
      */
-    public EnemyDefinition withTraits(List<Trait> traits) {
-        return withIdentifiedTraits(traits.stream().map(IdentifiedTrait::anonymous).toList());
+    public EnemyDefinition withTraits(List<? extends TraitTemplate> traits) {
+        return withIdentifiedTraits(traits.stream().<IdentifiedTrait>map(IdentifiedTrait::anonymous).toList());
     }
 
     public EnemyDefinition withIdentifiedTraits(List<IdentifiedTrait> traitSlots) {

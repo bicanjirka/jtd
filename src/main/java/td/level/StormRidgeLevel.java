@@ -45,22 +45,30 @@ final class StormRidgeLevel {
     private static final EnemyDefinition RAINDROP = EnemyDefinition.of("raindrop", "Raindrop", 30, 1, 2.0f, BodyArchetype.RAINDROP)
             .withDescription("One drop of a burst cloud. There are always more.")
             .withMovement(new PathDirectionalMovement())
-            .withAgility(20f);
+            .withAgility(40f);
 
-    /** A slow cloud that bursts into rain when it dies, and from Elite leaves rain behind it that heals. */
+    /**
+     * A slow cloud that bursts into rain when it dies, and from Elite leaves rain behind it that heals. At Boss its
+     * drops are heavier instead of more, since the drops do not rank up with it.
+     */
     private static final RankedEnemy RAINCLOUD = RankedEnemy
             .startingAt(EnemyDefinition.of("raincloud", "Raincloud", 100, 2, 0.9f, BodyArchetype.RAINCLOUD)
                     .withDescription("Heavy with rain. Burst it, and the rain still comes down the lane.")
                     .withMovement(new PulseMovement(0.1f, 30, 10))
-                    .withMagicResist(15f)
-                    .withIdentifiedAbilities(List.of(downpour(2))), RankGrowth.stepped(200, 800, 2000, 4000).paying(2, 3, 9, 9))
-            .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(downpour(3))))
-            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(downpour(4))))
+                    .withMagicResist(30f)
+                    .withIdentifiedAbilities(List.of(downpour(2))),
+                    RankGrowth.stepped(200, 800, 2000, 6000).paying(2, 3, 7, 9))
+            .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(downpour(5))))
+            .thenAt(Rank.VETERAN, e -> e
+                    .withStats(0f, 25f, 0f, 4f, 10f, 0f, 0f, 40f)
+                    .withAdditionalAbilities(List.of(downpour(12))))
             .thenAt(Rank.ELITE, e -> e
-                    .withStats(0f, 25f, 0f, 1f, 0f, 10f, 20f)
+                    .withStats(0f, 60f, 0f, 8f, 25f, 0f, 0f, 70f)
                     .withAdditionalAbilities(List.of(IdentifiedAbility.named("rain", new Ability(AbilityTerm.HEALING_POOL,
-                            new PeriodicTrigger(60), LeaveZoneAction.healingGround(0.8f, 80, 0.3f))))))
-            .thenAt(Rank.BOSS, e -> e.withAdditionalAbilities(List.of(downpour(8))))
+                            new PeriodicTrigger(60), LeaveZoneAction.healingGround(0.8f, 80, 2f))))))
+            .thenAt(Rank.BOSS, e -> e
+                    .withStats(0f, 90f, 0f, 12f, 25f, 0f, 0f, 70f)
+                    .withAdditionalAbilities(List.of(heavyDownpour(12))))
             .build();
 
     /** A whirlwind that shoves the enemies beside it further along the lane, harder with rank. */
@@ -69,12 +77,15 @@ final class StormRidgeLevel {
                     .withDescription("The wind at the storm's back. Whatever walks beside it walks faster than it should.")
                     .withMovement(new RotorMovement((float) Math.toRadians(9.0)))
                     .withAgility(15f)
-                    .withIdentifiedAbilities(List.of(gust(1.5f, 1.2f))), RankGrowth.stepped(130, 400, 800, 1500).paying(5, 5, 24, 40))
+                    .withIdentifiedAbilities(List.of(gust(1.5f, 1.2f))),
+                    RankGrowth.stepped(130, 400, 800, 1500).paying(5, 5, 24, 30))
             .thenAt(Rank.SOLDIER, e -> e.withAdditionalAbilities(List.of(gust(1.5f, 1.2f))))
-            .thenAt(Rank.VETERAN, e -> e.withAdditionalAbilities(List.of(gust(1.5f, 1.3f))))
+            .thenAt(Rank.VETERAN, e -> e
+                    .withStats(10f, 20f, 0f, 0f, 20f, 15f, 0f, 20f)
+                    .withAdditionalAbilities(List.of(gust(1.5f, 1.3f))))
             .thenAt(Rank.ELITE, e -> e
-                    .withStats(5f, 15f, 0f, 0f, 0f, 30f, 10f)
-                    .withAdditionalAbilities(List.of(gust(1.6f, 1.5f))))
+                    .withStats(15f, 35f, 0f, 0f, 30f, 30f, 0f, 40f)
+                    .withAdditionalAbilities(List.of(gust(1.8f, 1.6f))))
             .thenAt(Rank.BOSS, e -> e.withAdditionalAbilities(List.of(gust(2.0f, 2.0f))))
             .build();
 
@@ -140,6 +151,12 @@ final class StormRidgeLevel {
     private static IdentifiedAbility downpour(int drops) {
         return IdentifiedAbility.named("downpour", new Ability(AbilityTerm.BROOD, new OnDeathTrigger(),
                 new SpawnEnemiesAction("raindrop", AbilitySpawnShape.brood(drops, 1f, 1f), false)));
+    }
+
+    /** The same burst of heavier drops, which pay nothing, since a drop pays a Grunt's bounty whatever its health. */
+    private static IdentifiedAbility heavyDownpour(int drops) {
+        return IdentifiedAbility.named("downpour", new Ability(AbilityTerm.BROOD, new OnDeathTrigger(),
+                new SpawnEnemiesAction("raindrop", AbilitySpawnShape.brood(drops, 8f, 0f), false)));
     }
 
     /** Every four seconds, shoves the enemies within {@code reachCells} {@code distanceCells} further along. */

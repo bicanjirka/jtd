@@ -4,7 +4,8 @@ import java.util.List;
 
 /**
  * The Walker ({@code walker}): no abilities and, up to Veteran, nothing but health. From Elite an armor that hardens
- * against what hurts it most and a little of every stat, and at Boss a steadiness that blunts crits.
+ * against what hurts it most and a little of every stat but tenacity; at Boss more of each, and a steadiness that
+ * blunts crits. It is the floor every other enemy stands on.
  */
 final class WalkerEnemy {
 
@@ -16,10 +17,10 @@ final class WalkerEnemy {
                 .startingAt(EnemyDefinition.of("walker", "Walker", 75, 2, 1.28f, BodyArchetype.CIRCLE)
                         .withDescription("The plain foot soldier of every wave."), RankGrowth.of(32f).bending(2.6f))
                 .thenAt(Rank.ELITE, e -> e
-                        .withStats(10f, 10f, 0f, 0f, 10f, 10f, 10f)
+                        .withStats(10f, 10f, 0f, 0f, 10f, 0f, 10f, 10f)
                         .withAdditionalTraits(List.of(IdentifiedTrait.anonymous(AdaptiveResist.againstDominant(67f)))))
                 .thenAt(Rank.BOSS, e -> e
-                        .withStats(40f, 40f, 0f, 0f, 40f, 40f, 40f))
+                        .withStats(40f, 40f, 0f, 0f, 20f, 0f, 40f, 40f))
                 .build());
     }
 }
