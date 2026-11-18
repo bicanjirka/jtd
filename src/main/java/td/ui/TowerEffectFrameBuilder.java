@@ -14,6 +14,9 @@ import td.tower.Tower;
 import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
 import td.tower.aura.RevealedEnemy;
+import td.tower.cinder.Caught;
+import td.tower.cinder.Flash;
+import td.tower.cinder.StreamLook;
 import td.tower.mortar.BlastMark;
 import td.tower.pulse.StoneLook;
 import td.tower.seeker.ShatterMark;
@@ -21,7 +24,12 @@ import td.tower.sniper.Bullet;
 import td.tower.sniper.Execution;
 import td.tower.sniper.Hop;
 import td.tower.sniper.ShotTrace;
+import td.tower.splash.Blast;
+import td.tower.splash.Bolt;
+import td.tower.splash.Curse;
 import td.tower.splash.Passive;
+import td.tower.splash.Stone;
+import td.tower.splash.Wisp;
 import td.ui.render.BeamDraw;
 import td.ui.render.BulletDraw;
 import td.ui.render.BulletRound;
@@ -357,27 +365,27 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      */
     public Void visitSplashTower(SplashTower tower) {
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
-        for (SplashTower.Stone stone : tower.stonesInFlight()) {
+        for (Stone stone : tower.stonesInFlight()) {
             this.stone(tower, tier, stone);
         }
-        for (SplashTower.Curse curse : tower.cursesInFlight()) {
+        for (Curse curse : tower.cursesInFlight()) {
             this.streak(Palette.TOWER_SPLASH_CAST, curse.from(), curse.target().position(),
                     curse.flight());
         }
-        for (SplashTower.Wisp wisp : tower.wispsInFlight()) {
+        for (Wisp wisp : tower.wispsInFlight()) {
             Palette tone = wisp.passive() == Passive.STATIC ? Palette.TOWER_SPLASH_ARC : Palette.TOWER_SPLASH_CAST;
             this.streak(tone, wisp.from(), new Vec2(tower.getX(), tower.getY()), wisp.flight());
         }
         BlastLook look = BlastLook.of(tower.fork());
-        for (SplashTower.Blast blast : tower.recentBlasts()) {
+        for (Blast blast : tower.recentBlasts()) {
             float progress = (this.gameTime - blast.tick()) / DETONATION_TICKS;
             if (progress < 1f) {
                 this.detonation((float) blast.at().x(), (float) blast.at().y(), blast.edge(), progress, look);
             }
         }
-        List<SplashTower.Bolt> bolts = tower.recentBolts();
+        List<Bolt> bolts = tower.recentBolts();
         for (int i = 0; i < bolts.size(); i++) {
-            SplashTower.Bolt bolt = bolts.get(i);
+            Bolt bolt = bolts.get(i);
             float progress = (this.gameTime - bolt.tick()) / DETONATION_TICKS;
             if (progress < 1f) {
                 this.lightning((float) bolt.from().x(), (float) bolt.from().y(), (float) bolt.to().x(),
@@ -397,7 +405,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      * A stone over its point on the ground, lifted on the one lob every thrown shot shares, from the height of the arm
      * that threw it.
      */
-    private void stone(SplashTower tower, int tier, SplashTower.Stone stone) {
+    private void stone(SplashTower tower, int tier, Stone stone) {
         double flown = this.flown(stone.flight());
         double heading = Math.atan2(stone.to().y() - tower.getY(), stone.to().x() - tower.getX());
         Point2D.Float muzzle = TowerSprites.muzzle(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
@@ -724,7 +732,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             this.steam(tower);
             return null;
         }
-        CinderTower.StreamLook look = tower.streamLook();
+        StreamLook look = tower.streamLook();
         int flicker = this.gameTime / STREAM_FLICKER_TICKS;
         double heading = tower.getTurretAim().radiansAt(this.interpolationAlpha);
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
@@ -736,11 +744,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         this.streams.add(new FlameDraw.Stream(muzzle.x, muzzle.y, (float) heading, reach,
                 (float) tower.halfWidthRadians(), heatOf(tower.fuelPerSecond()), look.coreHalfWidth(), look.soulfire(),
                 flicker));
-        for (CinderTower.Caught fed : tower.caught()) {
+        for (Caught fed : tower.caught()) {
             this.burning.merge(fed.enemy(), new Burning(new Cone(fed.fuelPerSecond(), muzzle, look.soulfire()),
                     fed.inCore(), 1), Burning::with);
         }
-        for (CinderTower.Flash flash : tower.flashes()) {
+        for (Flash flash : tower.flashes()) {
             this.draws.add(flashover(look.soulfire(), (float) flash.fromX(), (float) flash.fromY(), (float) flash.toX(),
                     (float) flash.toY(), flicker));
         }

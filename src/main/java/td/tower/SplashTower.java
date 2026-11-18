@@ -16,13 +16,17 @@ import td.tower.proc.HitKind;
 import td.tower.splash.AgonyMechanic;
 import td.tower.splash.ArcMechanic;
 import td.tower.splash.ArcSpec;
+import td.tower.splash.Blast;
 import td.tower.splash.BlightCloudMechanic;
 import td.tower.splash.BlightHex;
+import td.tower.splash.Bolt;
+import td.tower.splash.BoltKind;
 import td.tower.splash.CastActions;
 import td.tower.splash.ChainLightningMechanic;
 import td.tower.splash.ChokingBlightMechanic;
 import td.tower.splash.ConductorMechanic;
 import td.tower.splash.ContagionMechanic;
+import td.tower.splash.Curse;
 import td.tower.splash.DeepDoomMechanic;
 import td.tower.splash.DoomHex;
 import td.tower.splash.FeedbackMechanic;
@@ -43,11 +47,13 @@ import td.tower.splash.SoulbrandMechanic;
 import td.tower.splash.SplashMechanic;
 import td.tower.splash.SplashSpec;
 import td.tower.splash.StaticMechanic;
+import td.tower.splash.Stone;
 import td.tower.splash.TagLedger;
 import td.tower.splash.ThunderclapMechanic;
 import td.tower.splash.ThunderstrikeMechanic;
 import td.tower.splash.TwinHexMechanic;
 import td.tower.splash.WildArcMechanic;
+import td.tower.splash.Wisp;
 import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
@@ -771,48 +777,7 @@ public final class SplashTower extends AbstractTower {
         HEXER
     }
 
-    /** What struck: a jump of the Arc, or a cast. */
-    public enum BoltKind {
-        ARC,
-        THUNDERCLAP,
-        THUNDERSTRIKE
-    }
-
-    /**
-     * A stone on its way: unguided, from the tower to where its target stood, with the stats it was thrown with.
-     *
-     * @param charged whether it carries an Arc
-     */
-    public record Stone(Vec2 to, TowerStats stats, boolean charged, ShotFlight flight) {
-    }
-
-    /**
-     * A stone that burst.
-     *
-     * @param core    the radius it dealt full damage within, in pixels
-     * @param edge    the radius its weaker edge reached, in pixels
-     * @param tick when it landed
-     */
-    public record Blast(Vec2 at, float core, float edge, int tick) {
-    }
-
     /** A jump of an Arc on its way, from where it is to the enemy it strikes. */
-    public record Hop(Vec2 from, EnemyMob to, ShotFlight flight) {
-    }
-
-    /** A bolt that struck. */
-    public record Bolt(Vec2 from, Vec2 to, int tick, BoltKind kind) {
-    }
-
-    /** A hex on its way to the enemy it curses. */
-    public record Curse(EffectKind kind, Vec2 from, EnemyMob target, ShotFlight flight) {
-    }
-
-    /**
-     * A soul or a spark flying home with what its passive pays.
-     *
-     * @param passive Soulbrand for a soul, Static for a spark
-     */
-    public record Wisp(Vec2 from, Passive passive, ShotFlight flight) {
+    private record Hop(Vec2 from, EnemyMob to, ShotFlight flight) {
     }
 }
