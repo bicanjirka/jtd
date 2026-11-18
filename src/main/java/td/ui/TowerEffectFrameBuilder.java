@@ -25,6 +25,7 @@ import td.ui.render.CasingDraw;
 import td.ui.render.EmbersDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.ExecutionDraw;
+import td.ui.render.FlameDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.FlockLook;
@@ -87,6 +88,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float STREAK_SHARE = 0.25f;
     /** How long the streak a bullet leaves stays drawn once it has arrived: far less than a reload. */
     private static final float TRACER_FADE_TICKS = 4f;
+    /** The Burst's thrown stone is drawn at this share of a lobbed shot's size, its shadow with it. */
+    private static final float STONE_SIZE = 0.5f;
     /** How far a ricochet's arc bows out, as a share of the hop's length. */
     private static final float HOP_BOW = 0.25f;
     private static final float EXECUTION_TICKS = 0.6f * TickRate.TICKS_PER_SECOND;
@@ -121,16 +124,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int STREAM_FLICKER_TICKS = 3;
     /** The outer tongue fills the cone; the middle one reaches part of it, narrower; the core less again. */
     private static final float STREAM_OUTER_ALPHA = 0.55f;
-    private static final int STREAM_OUTER_TIPS = 9;
     private static final float STREAM_MIDDLE_ALPHA = 0.75f;
     private static final float STREAM_MIDDLE_REACH = 0.78f;
     private static final float STREAM_MIDDLE_WIDTH = 0.66f;
-    private static final int STREAM_MIDDLE_TIPS = 7;
-    private static final float STREAM_CORE_ALPHA = 0.9f;
     /** How far the core reaches: most of the cone with the Core or a White Flame, a short heart at the nozzle without. */
-    private static final float STREAM_CORE_LONG = 0.72f;
-    private static final float STREAM_CORE_SHORT = 0.42f;
-    private static final float STREAM_CORE_WIDTH = 0.26f;
     private static final int STREAM_CORE_TIPS = 5;
     /** How wide a Flashover's tongue spreads either side, in radians. */
     private static final float FLASHOVER_HALF_WIDTH = 0.22f;
@@ -151,6 +148,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private final GameWorld world;
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final List<ZoneDraw> wards = new ArrayList<>();
+    private final List<FlameDraw.Stream> streams = new ArrayList<>();
+    private final List<FlameDraw.Caught> caught = new ArrayList<>();
     private final int scale;
     private final int gameTime;
     private final double interpolationAlpha;
@@ -179,6 +178,9 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     public List<TowerEffectDraw> build() {
         if (!this.wards.isEmpty()) {
             this.draws.add(new WardOutlineDraw(ZoneOutlineTracer.trace(this.wards), this.scale));
+        }
+        if (!this.streams.isEmpty()) {
+            this.draws.add(new FlameDraw(this.streams, this.caught, this.scale, this.tickSeconds()));
         }
         return this.draws;
     }
@@ -281,11 +283,25 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 this.scale, this.tickSeconds()));
     }
 
-    /** How far above its point on the ground {@code enemy}'s body's centre is drawn, in pixels. */
-    private static float bodyLiftOf(EnemyMob enemy) {
-        EnemyLook look = enemy.accept(mob -> EnemyFrameBuilder.lookFor(mob.archetype()));
-        EnemyLooks.Form form = EnemyLooks.of(look).form();
-        return enemy.getBodyScale() * (form.hover() + form.height() / 2f);
+    /**
+     * Where {@code enemy}'s body stands round its point: its top is drawn there, lifted by any hover, and its sides hang
+     * below it. {@code feet} is how far below its point they reach the ground, {@code lift} how far above its feet its
+     * body's middle is, in pixels.
+     */
+    private record Body(float feet, float lift) {
+
+        static Body of(EnemyMob enemy) {
+            EnemyLook look = enemy.accept(mob -> EnemyFrameBuilder.lookFor(mob.archetype()));
+            EnemyLooks.Form form = EnemyLooks.of(look).form();
+            float height = form.height() * enemy.getBodyScale();
+            float hover = form.hover() * enemy.getBodyScale();
+            return new Body(height - hover, hover + height / 2f);
+        }
+    }
+
+    /** Between {@code previous} and {@code now} by the frame's share of the next tick. */
+    private float lerp(double previous, double now) {
+        return (float) (previous + (now - previous) * this.interpolationAlpha);
     }
 
     /** The headsman's cut on the enemy an execution killed. */
@@ -294,8 +310,9 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         if (progress >= 1f) {
             return;
         }
-        this.draws.add(new ExecutionDraw((float) execution.at().x(), (float) execution.at().y(),
-                bodyLiftOf(execution.enemy()), this.scale, progress, execution.tick()));
+        Body body = Body.of(execution.enemy());
+        this.draws.add(new ExecutionDraw((float) execution.at().x(), (float) execution.at().y() + body.feet(),
+                body.lift(), this.scale, progress, execution.tick()));
     }
 
     /** The hunting scope's laser from its lens to the enemy it singles out, while it does. */
@@ -312,10 +329,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         float lensY = (float) (tower.getY()
                 + (Math.sin(aim) * LENS_ALONG_CELLS + Math.cos(aim) * LENS_ACROSS_CELLS) * this.scale
                 - TowerFoundations.LIFT * (foundation.top() + LENS_ABOVE_CELLS) * this.scale);
-        Point2D.Float at = target.accept(mob -> new Point2D.Float(
-                (float) (mob.getPrevX() + (mob.getX() - mob.getPrevX()) * this.interpolationAlpha),
-                (float) (mob.getPrevY() + (mob.getY() - mob.getPrevY()) * this.interpolationAlpha)));
-        this.draws.add(new LaserDraw(lensX, lensY, at.x, at.y - bodyLiftOf(target), this.scale,
+        Point2D.Float at = target.accept(mob -> new Point2D.Float(this.lerp(mob.getPrevX(), mob.getX()),
+                this.lerp(mob.getPrevY(), mob.getY())));
+        Body body = Body.of(target);
+        this.draws.add(new LaserDraw(lensX, lensY, at.x, at.y + body.feet() - body.lift(), this.scale,
                 (float) this.animationSeconds));
     }
 
@@ -377,7 +394,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         float peak = ProjectileFrameBuilder.lobPeak(stone.flight().landsAt() - stone.flight().firedAt(), this.scale);
         float lift = ProjectileFrameBuilder.lobLift(peak, flown) + released;
         Palette tone = stone.charged() ? Palette.TOWER_SPLASH_ARC : Palette.PROJECTILE_CANNONBALL;
-        this.draws.add(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(lift - released, peak), 1f, x,
+        this.draws.add(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(lift - released, peak),
+                STONE_SIZE, x,
                 y - lift, Optional.empty()));
     }
 
@@ -617,21 +635,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
     }
 
-    /** The stream's cone, at full range while it streams. */
-    /** A stream's three tongues as {@code look} shapes them, the outermost {@code reach} long and {@code half} wide. */
-    static List<StreamDraw.Tongue> streamTongues(CinderTower.StreamLook look, float reach, float half) {
-        boolean longCore = look.coreHalfWidth() > 0f || look.whiteCore();
-        Palette core = look.whiteCore() ? Palette.TOWER_STREAM_WHITE
-                : look.soulfire() ? Palette.TOWER_SOULFIRE_CORE : Palette.TOWER_STREAM_CORE;
-        Palette outer = look.soulfire() ? Palette.TOWER_SOULFIRE_OUTER : Palette.TOWER_STREAM_OUTER;
-        Palette middle = look.soulfire() ? Palette.TOWER_SOULFIRE_MIDDLE : Palette.TOWER_STREAM_MIDDLE;
-        return List.of(new StreamDraw.Tongue(outer, STREAM_OUTER_ALPHA, reach, half, STREAM_OUTER_TIPS),
-                new StreamDraw.Tongue(middle, STREAM_MIDDLE_ALPHA, reach * STREAM_MIDDLE_REACH,
-                        half * STREAM_MIDDLE_WIDTH, STREAM_MIDDLE_TIPS),
-                new StreamDraw.Tongue(core, STREAM_CORE_ALPHA, reach * (longCore ? STREAM_CORE_LONG : STREAM_CORE_SHORT),
-                        look.coreHalfWidth() > 0f ? look.coreHalfWidth() : half * STREAM_CORE_WIDTH, STREAM_CORE_TIPS));
-    }
-
     /** A Flashover: a small tongue of the stream's fire from {@code fromX, fromY} reaching {@code toX, toY}. */
     static StreamDraw flashover(boolean soulfire, float fromX, float fromY, float toX, float toY, int flicker) {
         float length = (float) Math.hypot(toX - fromX, toY - fromY);
@@ -643,9 +646,15 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                         FLASHOVER_HALF_WIDTH * STREAM_MIDDLE_WIDTH, STREAM_CORE_TIPS)), flicker);
     }
 
+    /** How hot fuel of {@code fuelPerSecond} points looks: 0 the bare flame's, 1 as hot as the flame is drawn. */
+    static float heatOf(float fuelPerSecond) {
+        return (float) Math.max(0, (fuelPerSecond - CinderTower.FLAME_POINTS)
+                / (FlameArt.FULL_FUEL - CinderTower.FLAME_POINTS));
+    }
+
     /**
-     * While it streams, three nested tongues from the nozzle to its range: the Core or a White Flame draws the inner one
-     * out over most of the cone. Each Flashover is a small tongue from the hot enemy to the one beside it.
+     * While it streams, its cone from the nozzle to its range, which the frame's flame paints with every other, and each
+     * enemy it fed. Each Flashover is a small tongue from the hot enemy to the one beside it.
      */
     public Void visitCinderTower(CinderTower tower) {
         if (!tower.isStreaming()) {
@@ -661,8 +670,15 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         // The cone pours as far as its range from the tower's centre, so it is drawn to there from the nozzle.
         float reach = tower.getRangeReal() - (float) ((muzzle.x - tower.getX()) * Math.cos(heading)
                 + (muzzle.y - tower.getY()) * Math.sin(heading));
-        this.draws.add(new StreamDraw(muzzle.x, muzzle.y, (float) heading,
-                streamTongues(look, reach, (float) tower.halfWidthRadians()), flicker));
+        this.streams.add(new FlameDraw.Stream(muzzle.x, muzzle.y, (float) heading, reach,
+                (float) tower.halfWidthRadians(), heatOf(tower.fuelPerSecond()), look.coreHalfWidth(), look.soulfire(),
+                flicker));
+        for (CinderTower.Caught fed : tower.caught()) {
+            float heat = heatOf(fed.fuelPerSecond()) + (fed.inCore() ? (float) FlameArt.CORE_HEAT : 0f);
+            this.caught.add(fed.enemy().accept(mob -> new FlameDraw.Caught(EnemyFrameBuilder.lookFor(mob.archetype()),
+                    this.lerp(mob.getPrevX(), mob.getX()), this.lerp(mob.getPrevY(), mob.getY()), mob.getBodyScale(),
+                    (float) mob.getFacingRadians(), heat, muzzle.x, muzzle.y, look.soulfire())));
+        }
         for (CinderTower.Flash flash : tower.flashes()) {
             this.draws.add(flashover(look.soulfire(), (float) flash.fromX(), (float) flash.fromY(), (float) flash.toX(),
                     (float) flash.toY(), flicker));

@@ -32,6 +32,7 @@ import td.ui.render.BulletDraw;
 import td.ui.render.BulletRound;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CasingDraw;
+import td.ui.render.FlameDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.LaserDraw;
 import td.ui.render.LoadedMissile;
@@ -585,7 +586,7 @@ class TowerEffectFrameBuilderTest {
     void aScorcherLetsOffSteamOnlyAsItsStreamEnds() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         CinderTower scorcher = scorcherWith(context);
-        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(scorcher.getX() + 40, scorcher.getY())});
+        context.enemies().setEnemies(new EnemyMob[]{walkerBefore(context, scorcher, 40)});
         int tick = 1;
         scorcher.doTick(tick++);
         List<SteamDraw> streaming = effectsOf(scorcher, context, tick - 1, SteamDraw.class);
@@ -628,13 +629,32 @@ class TowerEffectFrameBuilderTest {
         return scorcher;
     }
 
-    /** The streams the Scorcher draws on its first tick, with {@code enemies} standing before it. */
-    private static List<StreamDraw> streamsOf(GameWorld context, CinderTower scorcher, EnemyMob... enemies) {
+    /** A live enemy standing {@code dx} east of {@code tower}, on a path that runs on east from there. */
+    private static EnemyMob walkerBefore(GameWorld context, Tower tower, int dx) {
+        context.setPath(new Path(List.of(new Vec2(tower.getX() + dx, tower.getY()),
+                new Vec2(tower.getX() + dx + 10 * BoardFixtures.SCALE, tower.getY()))));
+        return EnemyFixtures.liveMob(context, EnemyFixtures.simpleDefinition("walker"));
+    }
+
+    /** What every Scorcher of {@code context} draws on its first tick, with {@code enemies} standing before them. */
+    private static List<TowerEffectDraw> firstTickOf(GameWorld context, EnemyMob... enemies) {
         context.enemies().setEnemies(enemies);
-        scorcher.doTick(1);
         TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, 1, 0.0, 0.0);
-        scorcher.accept(builder);
-        return builder.build().stream().filter(StreamDraw.class::isInstance).map(StreamDraw.class::cast).toList();
+        for (Tower tower : context.towers().all()) {
+            tower.doTick(1);
+        }
+        for (Tower tower : context.towers().all()) {
+            tower.accept(builder);
+        }
+        return builder.build();
+    }
+
+    /** The one flame the frame draws on the Scorchers' first tick. */
+    private static FlameDraw flameOf(GameWorld context, EnemyMob... enemies) {
+        List<FlameDraw> flames = firstTickOf(context, enemies).stream().filter(FlameDraw.class::isInstance)
+                .map(FlameDraw.class::cast).toList();
+        assertThat(flames).hasSize(1);
+        return flames.getFirst();
     }
 
     @Test
@@ -642,48 +662,72 @@ class TowerEffectFrameBuilderTest {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         CinderTower scorcher = scorcherWith(context);
 
-        StreamDraw stream = streamsOf(context, scorcher, FakeEnemyMob.at(scorcher.getX() + 40, scorcher.getY()))
-                .getFirst();
+        FlameDraw.Stream stream = flameOf(context, walkerBefore(context, scorcher, 40)).streams().getFirst();
 
         float muzzle = TowerSprites.muzzle(TowerLook.CINDER, 0, TowerSpriteFrameBuilder.poseOf(scorcher),
                 scorcher.getX(), scorcher.getY(), BoardFixtures.SCALE, 0.0).x;
-        assertThat(stream.originX()).isEqualTo(muzzle);
-        assertThat(muzzle + stream.tongues().getFirst().reach()).isCloseTo(scorcher.getX() + scorcher.getRangeReal(),
-                within(1e-3f));
+        assertThat(stream.x()).isEqualTo(muzzle);
+        assertThat(muzzle + stream.reach()).isCloseTo(scorcher.getX() + scorcher.getRangeReal(), within(1e-3f));
     }
 
     @Test
-    void theCoreDrawsTheStreamsInnerTongueFurtherOut() {
+    void crossingStreamsAreOneFlameOverEveryEnemyTheyFeed() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        CinderTower west = scorcherWith(context);
+        CinderTower north = new CinderTower(context, 4, 2);
+        context.towers().add(north);
+        EnemyMob enemy = walkerBefore(context, west, BoardFixtures.SCALE);
+
+        FlameDraw flame = flameOf(context, enemy);
+
+        assertThat(flame.streams()).hasSize(2);
+        assertThat(flame.caught()).isNotEmpty().allSatisfy(caught -> {
+            assertThat(caught.x()).isEqualTo((float) enemy.getX());
+            assertThat(caught.bodyScale()).isEqualTo(enemy.getBodyScale());
+        });
+    }
+
+    @Test
+    void theCoreGivesTheStreamACoreOfItsOwn() {
         GameWorld plainWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         CinderTower plain = scorcherWith(plainWorld);
         GameWorld coreWorld = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         CinderTower cored = scorcherWith(coreWorld, "Core");
 
-        float plainCore = streamsOf(plainWorld, plain, FakeEnemyMob.at(plain.getX() + 40, plain.getY()))
-                .getFirst().tongues().getLast().reach();
-        float core = streamsOf(coreWorld, cored, FakeEnemyMob.at(cored.getX() + 40, cored.getY()))
-                .getFirst().tongues().getLast().reach();
+        float plainCore = flameOf(plainWorld, walkerBefore(plainWorld, plain, 40)).streams().getFirst()
+                .coreHalfWidthRadians();
+        float core = flameOf(coreWorld, walkerBefore(coreWorld, cored, 40)).streams().getFirst()
+                .coreHalfWidthRadians();
 
-        assertThat(core).isGreaterThan(plainCore);
+        assertThat(plainCore).isZero();
+        assertThat(core).isPositive();
+    }
+
+    @Test
+    void aFlameIsAsHotAsItsFuelFromTheBareFlameToTheFullOne() {
+        assertThat(TowerEffectFrameBuilder.heatOf(CinderTower.FLAME_POINTS)).isZero();
+        assertThat(TowerEffectFrameBuilder.heatOf((float) FlameArt.FULL_FUEL)).isEqualTo(1f);
+        assertThat(TowerEffectFrameBuilder.heatOf(CinderTower.FLAME_POINTS / 2)).isZero();
     }
 
     @Test
     void aFlashoverIsDrawnAsATongueFromTheHotEnemyToTheOneBesideIt() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         CinderTower scorcher = scorcherWith(context, "Flashover");
-        FakeEnemyMob hot = FakeEnemyMob.at(scorcher.getX() + 40, scorcher.getY());
+        EnemyMob hot = walkerBefore(context, scorcher, 40);
         hot.applyEffect(Effect.burn(Damage.magic(DamageUnits.ofPoints(2 * FlashoverMechanic.HOT_FUEL_POINTS)),
                 DamageSink.none()));
         FakeEnemyMob beside = FakeEnemyMob.at(hot.getX(), hot.getY() + 38);
 
-        List<StreamDraw> streams = streamsOf(context, scorcher, hot, beside);
+        List<StreamDraw> flashes = firstTickOf(context, hot, beside).stream().filter(StreamDraw.class::isInstance)
+                .map(StreamDraw.class::cast).toList();
 
-        assertThat(streams).hasSize(2);
-        StreamDraw flash = streams.getLast();
-        assertThat(flash.originX()).isEqualTo((float) hot.getX());
-        assertThat(flash.originY()).isEqualTo((float) hot.getY());
-        assertThat(flash.headingRadians()).isCloseTo((float) (Math.PI / 2), within(1e-4f));
-        assertThat(flash.tongues().getFirst().reach()).isCloseTo(38f, within(1e-3f));
+        assertThat(flashes).singleElement().satisfies(flash -> {
+            assertThat(flash.originX()).isEqualTo((float) hot.getX());
+            assertThat(flash.originY()).isEqualTo((float) hot.getY());
+            assertThat(flash.headingRadians()).isCloseTo((float) (Math.PI / 2), within(1e-4f));
+            assertThat(flash.tongues().getFirst().reach()).isCloseTo(38f, within(1e-3f));
+        });
     }
 
     @Test

@@ -17,10 +17,10 @@ import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.render.CellGridDraw;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.FlameDraw;
 import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
 import td.ui.render.SheetLine;
-import td.ui.render.StreamDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerPose;
 import td.ui.render.TowerSheet;
@@ -309,7 +309,7 @@ class BoardRendererTest {
     }
 
     @Test
-    void aStreamingScorcherYieldsAStreamDraw() {
+    void aStreamingScorcherYieldsAFlameDraw() {
         GameEngine engine = newEngine();
         GameWorld context = engine.getGameWorld();
         CinderTower tower = new CinderTower(context, 1, 1);
@@ -323,7 +323,7 @@ class BoardRendererTest {
 
         assertThat(tower.isStreaming()).isTrue();
         assertThat(frame.towerEffects()).hasSize(1);
-        assertThat(frame.towerEffects().getFirst()).isInstanceOf(StreamDraw.class);
+        assertThat(frame.towerEffects().getFirst()).isInstanceOf(FlameDraw.class);
     }
 
     @Test

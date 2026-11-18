@@ -59,13 +59,14 @@ public final class TowerArtGame {
     }
 
     /**
-     * The game's stream from a nozzle at the pen's origin along +x, {@code range} cells long and {@code halfDegrees}
-     * either side, as {@code look} shapes it; {@code flicker} picks its tips.
+     * The game's flame from a nozzle at the pen's origin along +x, {@code range} cells long and {@code halfDegrees}
+     * either side, as {@code look} shapes it (a White Flame as hot as it is drawn); {@code flicker} picks its tips.
      */
     public static void paintStream(Graphics2D g, double range, double halfDegrees, td.tower.CinderTower.StreamLook look,
                                    int flicker) {
-        Java2DFrameRenderer.paintStream(g, new td.ui.render.StreamDraw(0f, 0f, 0f, TowerEffectFrameBuilder.streamTongues(
-                look, (float) range, (float) Math.toRadians(halfDegrees)), flicker));
+        FlameArt.paint(g, new td.ui.render.FlameDraw(List.of(new td.ui.render.FlameDraw.Stream(0f, 0f, 0f,
+                (float) range, (float) Math.toRadians(halfDegrees), look.whiteCore() ? 1f : 0f, look.coreHalfWidth(),
+                look.soulfire(), flicker)), List.of(), 1f, 0f));
     }
 
     /** The game's Flashover tongue from {@code fromX, fromY} to {@code toX, toY}, in cell units. */
