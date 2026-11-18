@@ -150,12 +150,6 @@ class UpgradeTreeTest {
     }
 
     @Test
-    void aForkInTierZeroIsRejected() {
-        assertThatThrownBy(() -> UpgradeTree.of(A1, B1).withFork(UpgradeCluster.of("Sides", A1, B1)))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
     void aTreeWhoseNodesRequireEachOtherIsRejected() {
         UpgradeNode first = UpgradeNode.of("loop.a", "Loop A", 10).withRequires(UpgradeCondition.owns("loop.b"));
         UpgradeNode second = UpgradeNode.of("loop.b", "Loop B", 10)

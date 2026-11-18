@@ -55,6 +55,15 @@ class UpgradeTreeCatalogueTest {
     }
 
     @Test
+    void everyTowersTiersOpenOnXpAlone() {
+        for (TowerFactory.Type type : TowerFactory.Type.values()) {
+            UpgradeTree tree = TowerFactory.createTower(type, this.context, 0, 0).upgradeTree();
+
+            assertThat(tree.tiers()).as("%s's tiers", type).noneMatch(UpgradeTier::isPaid);
+        }
+    }
+
+    @Test
     void pickingAClusterMemberLocksOutTheOthersOnEveryTower() {
         for (TowerFactory.Type type : TowerFactory.Type.values()) {
             UpgradeTree tree = TowerFactory.createTower(type, this.context, 0, 0).upgradeTree();

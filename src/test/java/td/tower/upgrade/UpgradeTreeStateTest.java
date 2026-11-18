@@ -68,6 +68,18 @@ class UpgradeTreeStateTest {
     }
 
     @Test
+    void aForksSidesSwitchAsAClustersMembersDo() {
+        UpgradeTree forked = UpgradeTree.of(A1, B1, LONE, A2, B2, MID).withFork(TierTrees.ROOTS);
+        Tower tower = towerOwning(this.context, ALL_XP, A1, A2, MID);
+
+        UpgradeSwitch change = forked.switchFor(B1, tower, this.context).orElseThrow();
+
+        assertThat(change.sold()).containsExactly(A2);
+        assertThat(change.kept().owned()).containsExactly(B1, MID);
+        assertThat(forked.isLockedOut(B2, state(A1))).isTrue();
+    }
+
+    @Test
     void thereIsNoSwitchToAMemberOfAClusterTheTowerHasNoPickIn() {
         Tower tower = towerOwning(this.context, ALL_XP, LONE);
 
