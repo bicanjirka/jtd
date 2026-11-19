@@ -330,6 +330,15 @@ class UpgradeSheetTextTest {
     }
 
     @Test
+    void aGatesHoverNamesItsTierWithTheXpTowardItAndWhatIsLeftToEarn() {
+        InfoSheet sheet = UpgradeSheetText.gate(1, 40, 100);
+
+        assertThat(sheet.lines()).containsExactly(
+                new SheetLine.Title(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET, "Tier I locked", "XP 40 / 100"),
+                SheetLine.Sentence.of(TermText.of("Earn 60 more XP to open it")));
+    }
+
+    @Test
     void anEmptySharedSlotsHoverNamesTheMembersToPickFrom() {
         assertThat(UpgradeSheetText.pickFirst(List.of("Left", "Right")).lines()).containsExactly(SheetLine.Sentence
                 .marked(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET, TermText.of("Pick Left or Right first")));

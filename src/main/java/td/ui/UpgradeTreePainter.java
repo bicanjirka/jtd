@@ -32,15 +32,14 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * Paints one tower's upgrade tree at the pixels of {@link UpgradeTreeLayout}: each tier's band with its numeral
- * strip, whose key chip buys the tier's singles, a locked tier's gate in the gap under its band, the links and badges,
+ * strip, whose key chip buys the tier's singles, a locked tier's gate line in the gap under its band (its numbers are
+ * the line's hover), the links and badges,
  * the cluster frames, and every node in its look with its price tag. A node that changes a number is a
  * circle, one that adds an ability a square. Glyphs take the tower's colour; prices stay neutral.
  */
@@ -130,14 +129,12 @@ final class UpgradeTreePainter {
     private static final float HOVER_BORDER = 0.35f;
     private static final Font NUMERAL_FONT = Hud.font(Font.BOLD, Hud.TITLE);
     private static final Font SMALL_NUMERAL_FONT = Hud.font(Font.BOLD, Hud.CAPTION);
-    private static final Font GATE_FONT = Hud.BODY_FONT;
-    private static final Font FRAME_FONT = Hud.BODY_FONT;
+    /** A cluster's name, titling its frame as a panel's title does its border. */
+    private static final Font FRAME_FONT = Hud.CAPTION_FONT;
     private static final Font LINE_NUMERAL_FONT = Hud.font(Font.BOLD, Hud.MICRO);
     /** The key chip at the foot of a numeral strip: its height, and its gap to the strip's bottom. */
     private static final float CHIP_HEIGHT = Hud.CHIP_SIZE;
     private static final float CHIP_BOTTOM = 5f;
-    private static final float GATE_LABEL_GAP = 5f;
-    private static final float LOCK_WIDTH = 13f;
     private static final float CASH_BADGE = 13f;
 
     private final UpgradeTreeLayout layout;
@@ -173,7 +170,7 @@ final class UpgradeTreePainter {
             Floor floor = floors.get(band.tier());
             this.faded(g, band.tier() > openTier, () -> this.paintBand(g, band, band.tier() <= openTier, floor));
             switch (floor) {
-                case Floor.Gate gate -> paintGate(g, band, gate, links);
+                case Floor.Gate gate -> paintGate(g, band, gate);
                 case Floor.Singles _, Floor.Bought _, Floor.Empty _ -> {
                 }
             }
@@ -280,11 +277,8 @@ final class UpgradeTreePainter {
         Hud.paintChipCentred(g, key, Math.round(centre), band.bottom() - CHIP_BOTTOM - CHIP_HEIGHT, border, ink);
     }
 
-    /**
-     * A locked tier's gate in the gap under its band: a track across, filled as far as the tower's XP has come, and
-     * the lock with the XP at its right, moved left of any link climbing through the gap there.
-     */
-    private static void paintGate(Graphics2D g, Band band, Floor.Gate gate, List<Link> links) {
+    /** A locked tier's gate in the gap under its band: a track across, filled as far as the tower's XP has come. */
+    private static void paintGate(Graphics2D g, Band band, Floor.Gate gate) {
         float y = band.gateY();
         float left = UpgradeTreeLayout.BAND_X + 2f;
         float right = UpgradeTreeLayout.WIDTH - UpgradeTreeLayout.BAND_X - 2f;
@@ -293,55 +287,12 @@ final class UpgradeTreePainter {
         g.fill(new RoundRectangle2D.Float(left, y - 1f, right - left, 2f, 2f, 2f));
         g.setColor(DIM);
         g.fill(new RoundRectangle2D.Float(left, y - 1f, (right - left) * share, 2f, 2f, 2f));
-        g.setFont(GATE_FONT);
-        String text = UpgradeSheetText.gateLabel(gate.xp(), gate.needed());
-        float width = LOCK_WIDTH + g.getFontMetrics().stringWidth(text);
-        float end = labelEnd(right, width, y, links);
-        float start = end - width;
-        g.setColor(Hud.BACKGROUND);
-        g.fill(new Rectangle2D.Float(start - GATE_LABEL_GAP, y - 6f, width + 2 * GATE_LABEL_GAP, 12f));
-        paintLock(g, start, y - 5f);
-        g.setColor(DIM);
-        g.drawString(text, start + LOCK_WIDTH, y + 4.5f);
     }
 
-    /** Where a label {@code width} wide on the line at {@code y} ends: at {@code right}, or left of the links there. */
-    private static float labelEnd(float right, float width, float y, List<Link> links) {
-        List<Float> crossings = links.stream().flatMap(link -> crossingsOf(link, y).stream())
-                .sorted(Comparator.reverseOrder()).toList();
-        float end = right;
-        for (float x : crossings) {
-            if (x > end - width - 2 * GATE_LABEL_GAP && x < end + GATE_LABEL_GAP) {
-                end = x - 2 * GATE_LABEL_GAP;
-            }
-        }
-        return end;
-    }
-
-    /** Where {@code link}'s upright stretches cross the line at {@code y}. */
-    private static List<Float> crossingsOf(Link link, float y) {
-        List<Float> xs = new ArrayList<>();
-        List<Point> path = link.path();
-        for (int i = 1; i < path.size(); i++) {
-            Point a = path.get(i - 1);
-            Point b = path.get(i);
-            if (a.x() == b.x() && Math.min(a.y(), b.y()) <= y && Math.max(a.y(), b.y()) >= y) {
-                xs.add(a.x());
-            }
-        }
-        return xs;
-    }
-
-    private static void paintLock(Graphics2D g, float x, float y) {
-        g.setColor(DIM);
-        g.fill(new Rectangle2D.Float(x + 0.5f, y + 3.5f, 7f, 5f));
-        g.setStroke(new BasicStroke(1f));
-        Path2D.Float shackle = new Path2D.Float();
-        shackle.moveTo(x + 1.8f, y + 3.6f);
-        shackle.lineTo(x + 1.8f, y + 2.2f);
-        shackle.curveTo(x + 1.8f, y - 0.7f, x + 6.2f, y - 0.7f, x + 6.2f, y + 2.2f);
-        shackle.lineTo(x + 6.2f, y + 3.6f);
-        g.draw(shackle);
+    /** The gap under {@code band}, where its gate line runs: hovering it tells the gate's numbers. */
+    static Rectangle2D.Float gateBox(Band band) {
+        return new Rectangle2D.Float(UpgradeTreeLayout.BAND_X, band.bottom(),
+                UpgradeTreeLayout.WIDTH - 2 * UpgradeTreeLayout.BAND_X, UpgradeTreeLayout.GAP);
     }
 
     private void paintFrame(Graphics2D g, Frame frame, Map<UpgradeNode, UpgradeNodeState> states) {
@@ -362,9 +313,9 @@ final class UpgradeTreePainter {
         String name = frame.cluster().name();
         float width = g.getFontMetrics().stringWidth(name);
         g.setColor(BAND_FILL);
-        g.fill(new Rectangle2D.Float(frame.box().left() + 5f, frame.box().top() - 7f, width + 6f, 13f));
+        g.fill(new Rectangle2D.Float(frame.box().left() + 5f, frame.box().top() - 6f, width + 6f, 11f));
         g.setColor(GLOSS);
-        g.drawString(name, frame.box().left() + 8f, frame.box().top() + 4.5f);
+        g.drawString(name, frame.box().left() + 8f, frame.box().top() + 4f);
     }
 
     private void paintLink(Graphics2D g, Link link, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight) {
@@ -373,7 +324,7 @@ final class UpgradeTreePainter {
         path.moveTo(points.getFirst().x(), points.getFirst().y());
         points.subList(1, points.size()).forEach(point -> path.lineTo(point.x(), point.y()));
         g.setColor(BAND_FILL);
-        g.setStroke(new BasicStroke(6f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+        g.setStroke(new BasicStroke(4f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
         g.draw(path);
         Color color = LINK_IDLE;
         Stroke stroke = new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
