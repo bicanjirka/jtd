@@ -14,7 +14,7 @@ import java.util.OptionalInt;
 record IconRowLayout(int count, int perLine, boolean timeLabels, int left) {
 
     static final int LABEL_WIDTH = 48;
-    static final int GAP = 2;
+    static final int GAP = 3;
     static final int LINE_GAP = 3;
 
     /** {@code count} faces beside the label in {@code width} px; with {@code timeLabels}, every line leaves room for one. */

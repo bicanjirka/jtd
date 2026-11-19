@@ -25,7 +25,7 @@ import java.util.Optional;
 public final class TermIconPainter {
 
     /** The size of a face on a sheet row. */
-    public static final int ROW = 20;
+    public static final int ROW = 24;
     /** The size of a face on a button. */
     public static final int BUTTON = 16;
     /** The size of a face inside a line of text. */
