@@ -31,11 +31,11 @@ final class StrategyBuilds {
                             "splash.piercing_stones"))),
             TowerFactory.Type.SNIPER, List.of(
                     new Strategy("crit", Set.of("sniper.steady_aim", "sniper.rifling", "sniper.heavy_rounds", "base.range",
-                            "sniper.fourth_shot", "sniper.keen_eye", "sniper.killshot", "sniper.hollow_point",
+                            "sniper.fourth_shot", "sniper.keen_eye", "sniper.deadeye", "sniper.hollow_point",
                             "sniper.ricochet", "sniper.sundering_crits", "sniper.headhunter",
                             "sniper.heavy_rounds.2")),
                     new Strategy("speed", Set.of("sniper.steady_aim", "sniper.rifling", "sniper.heavy_rounds",
-                            "sniper.fourth_shot", "sniper.killshot", "sniper.deep_breath", "base.range",
+                            "sniper.fourth_shot", "sniper.deadeye", "sniper.deep_breath", "base.range",
                             "sniper.silver_round", "sniper.ricochet", "sniper.sundering_crits", "sniper.executioner",
                             "sniper.killing_spree", "sniper.unbroken_aim", "sniper.heavy_rounds.2")))));
 

@@ -704,7 +704,7 @@ is a starting value, and the built-in waves that carry one were never rebalanced
 ### Critical-damage numbers are unbalanced placeholders
 
 Every tower crits for x1.5 (`AttackProfile.DEFAULT_CRIT_MULTIPLIER`), the next-gen Sniper too: its crits
-come from Steady Aim's stacks and its tree (Rifling, Keen Eye, Killshot, the Fourth Shot), whose numbers are
+come from Steady Aim's stacks and its tree (Rifling, Keen Eye, Deadeye, the Fourth Shot), whose numbers are
 the feature request's paper values and were never measured in play. The Warden's on-crit-survived shield
 (30% for 100 ticks) is from the first crit pass.
 

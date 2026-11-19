@@ -111,7 +111,7 @@ public final class SniperTower extends AbstractTower {
             .withHitBonus(perSteadyAimStack(HitAdjustment.critChance(0.03f)))
             .after(STEADY_AIM)
             .inTier(1);
-    private static final UpgradeNode KILLSHOT = UpgradeNode.of("sniper.killshot", "Killshot", 10)
+    private static final UpgradeNode DEADEYE = UpgradeNode.of("sniper.deadeye", "Deadeye", 10)
             .withModifiers(TowerModifiers.critMultiplier(1.0f))
             .inTier(1);
 
@@ -152,13 +152,14 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode KILLING_SPREE = UpgradeNode.of("sniper.killing_spree", "Killing Spree", 20)
             .withProc(Proc.onKill(GRANTS_FRENZY))
             .after(EXECUTIONER)
+            .withOwnArt()
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_AIM, RIFLING, HEAVY_ROUNDS))
-            .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, KILLSHOT, LONG_BARREL,
+            .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, DEADEYE, LONG_BARREL,
                     HEMORRHAGE, RICOCHET, SUNDERING_CRITS, EXPOSING_CRITS, SILVER_ROUND, HOLLOW_POINT,
                     HEAVY_ROUNDS_2, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, KILLING_SPREE)
-            .withCluster(UpgradeCluster.of("Steady Aim", DEEP_BREATH, KEEN_EYE))
+            .withCluster(UpgradeCluster.of("Aim", DEEP_BREATH, KEEN_EYE))
             .withCluster(UpgradeCluster.of("On crit", HEMORRHAGE, RICOCHET))
             .withCluster(UpgradeCluster.of("Crit wound", SUNDERING_CRITS, EXPOSING_CRITS))
             .withCluster(UpgradeCluster.of("Ammo", SILVER_ROUND, HOLLOW_POINT))

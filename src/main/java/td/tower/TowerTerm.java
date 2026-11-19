@@ -17,7 +17,6 @@ import java.util.Locale;
 public enum TowerTerm implements Term {
     STEADY_AIM("Steady Aim", Side.BUFF, "each shot adds a stack, kept across targets and kills; " + TermNumbers.seconds(AimFocus.STACK_SECONDS)
             + " after the last shot a stack fades, then the next"),
-    FOCUS("Focus", Side.BUFF, "hits on one target build it; it starts over on a new target"),
     FRENZY("Frenzy", Side.BUFF, "faster attacks for the next few shots; a second one starts them over"),
     HASTE("Haste", Side.BUFF, "faster attacks for a while"),
     FOURTH_SHOT("Fourth Shot", Side.BUFF, "a shot that is sure to crit"),

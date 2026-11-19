@@ -17,7 +17,7 @@ final class UpgradeTreePlans {
 
     private static final UpgradeTreePlan SNIPER = UpgradeTreePlan.of(
             tier(row(node("sniper.rifling", 0f), node("sniper.heavy_rounds", 1.2f), node("sniper.steady_aim", 3.3f))),
-            tier(row(node("sniper.fourth_shot", 0.5f), node("sniper.killshot", 1.5f), cluster("Steady Aim", 2.8f),
+            tier(row(node("sniper.fourth_shot", 0.5f), node("sniper.deadeye", 1.5f), cluster("Aim", 2.8f),
                     node("base.range", 5.6f))),
             tier(row(cluster("Ammo", 0f), cluster("On crit", 2.3f), cluster("Crit wound", 4.6f))),
             tier(row(cluster("Finisher", 0f), node("sniper.killing_spree", 2.3f), node("sniper.heavy_rounds.2", 3.5f),

@@ -370,7 +370,6 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Term | Side | What it does |
 |---|---|---|
 | Steady Aim | Buff | Each shot adds a stack, kept across targets and kills; 3 s after the last shot a stack fades, then the next. |
-| Focus | Buff | Hits on one target build it; it starts over on a new target. |
 | Frenzy | Buff | Faster attacks for the next few shots; a second one starts them over. |
 | Haste | Buff | Faster attacks for a while. |
 | Fourth Shot | Buff | A shot that is sure to crit. |

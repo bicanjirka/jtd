@@ -12,7 +12,7 @@ P = dict(
     damage=32.0, interval=2.5, range=3.0, crit=0.0, crit_damage=1.5,
     stacks=5, stack_speed=0.04, stack_crit=0.02,
     rifling=0.05, long_barrel=1.0, heavy_rounds=12.0,
-    fourth=4, deep_breath=3, keen_eye=0.02, killshot=2.0,
+    fourth=4, deep_breath=3, keen_eye=0.02, deadeye=2.0,
     frenzy=0.35, frenzy_shots=3, ricochet_reach=1.5,
     sunder_stacks=2, sunder_armor=5.0, sunder_cap=10, sunder_seconds=5.0,
     silver_pen=50.0, hollow=0.33, long_barrel_2=1.0,
@@ -27,7 +27,7 @@ NODES = {
     "Fourth Shot": "every n-th shot a sure crit",
     "Deep Breath": "more Steady Aim stacks",
     "Keen Eye": "crit chance per stack",
-    "Killshot": "crit damage",
+    "Deadeye": "crit damage",
     "Frenzy": "attack speed for the shots after a crit; a crit during it doesn't restart it",
     "Ricochet": "a crit's hop to the enemy behind, in a crowd only; it can't crit",
     "Sundering Crits": "armor off the crit's enemy, on a shared clock",
@@ -41,7 +41,7 @@ NODES = {
     "Momentum": "a kill grants Frenzy",
 }
 
-_CORE = ["Rifling", "Long Barrel", "Heavy Rounds", "Fourth Shot", "Killshot", "Long Barrel II", "Heavy Rounds II",
+_CORE = ["Rifling", "Long Barrel", "Heavy Rounds", "Fourth Shot", "Deadeye", "Long Barrel II", "Heavy Rounds II",
          "Unbroken Aim", "Momentum"]
 BUILDS = {
     "fast": _CORE + ["Deep Breath", "Frenzy", "Hollow Point", "Executioner"],
@@ -65,7 +65,7 @@ def rate(b, scenario, p):
     speed = stacks * p["stack_speed"]
     chance = p["crit"] + p["rifling"] * ("Rifling" in b) + stacks * (p["stack_crit"] + p["keen_eye"] * ("Keen Eye" in b))
     chance = paper.crit_chance(chance, foe)
-    multiplier = p["killshot"] if "Killshot" in b else p["crit_damage"]
+    multiplier = p["deadeye"] if "Deadeye" in b else p["crit_damage"]
     fourth = p["fourth"] if "Fourth Shot" in b else 0
     silver, hollow = "Silver Round" in b, "Hollow Point" in b
     ricochet = "Ricochet" in b and scenario.crowd
