@@ -221,9 +221,10 @@ time it buys, a kill for what it triggers, a miss for the leak it causes.
 | boss | one Boss Walker | one target with a boss's defences |
 | armored, plated, resist, hidden, fast | a stream of Veteran Knights, Juggernauts, Templars, Ghosts, Runners | each defence and trick |
 | elusive | a stream of Elusive Veteran Walkers | aimed hits that miss: the Elusive affix dodges them |
+| tank | a stream of Veteran Walkers at a third of their speed, fought beside five bare Snipers | what a hex or a mark adds to focused fire; the stream's kills feed what a tower earns by killing |
 
-Every scenario is fought twice: alone, and beside two fixed partners, a bare Sniper and a bare Burst (the column
-ending in `+`, counting what all three hold; `tower-scenarios.tsv` has what the partners hold by themselves). The
+Every scenario is fought twice: alone, and beside two fixed partners, a bare Sniper and a bare Burst, or five bare
+Snipers for tank (the column ending in `+`, counting what all of them hold; `tower-scenarios.tsv` has what the partners hold by themselves). The
 second is where a tower that only helps others shows, and where a tower that holds nothing alone shows what it adds.
 
 The builds are read off each tower's tree, so a new tier, node, cluster or tower needs no change to the tool. The
