@@ -97,20 +97,20 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode HEAVY_ROUNDS = UpgradeNode.of("sniper.heavy_rounds", "Heavy Rounds", 5)
             .withModifiers(TowerModifiers.damage(8f));
 
-    private static final UpgradeNode FOURTH_SHOT = UpgradeNode.of("sniper.fourth_shot", "Fourth Shot", 7)
+    private static final UpgradeNode FOURTH_SHOT = UpgradeNode.of("sniper.fourth_shot", "Fourth Shot", 10)
             .withProc(everyFourthShotIs(TowerStatus.nextShots(TowerTerm.FOURTH_SHOT, 1, StatModifiers.none())
                     .withCapability(TowerCapability.GUARANTEED_CRIT)))
             .inTier(1);
-    private static final UpgradeNode DEEP_BREATH = UpgradeNode.of("sniper.deep_breath", "Deep Breath", 3)
+    private static final UpgradeNode DEEP_BREATH = UpgradeNode.of("sniper.deep_breath", "Deep Breath", 10)
             .withModifiers(TowerModifiers.aimStacks(5))
             .after(STEADY_AIM)
             .inTier(1);
-    private static final UpgradeNode KEEN_EYE = UpgradeNode.of("sniper.keen_eye", "Keen Eye", 3)
+    private static final UpgradeNode KEEN_EYE = UpgradeNode.of("sniper.keen_eye", "Keen Eye", 10)
             .withHitBonus(perSteadyAimStack(HitAdjustment.critChance(0.03f)))
             .after(STEADY_AIM)
             .inTier(1);
-    private static final UpgradeNode KILLSHOT = UpgradeNode.of("sniper.killshot", "Killshot", 5)
-            .withModifiers(TowerModifiers.critMultiplier(0.5f))
+    private static final UpgradeNode KILLSHOT = UpgradeNode.of("sniper.killshot", "Killshot", 10)
+            .withModifiers(TowerModifiers.critMultiplier(1.0f))
             .inTier(1);
 
     private static final UpgradeNode FRENZY = UpgradeNode.of("sniper.frenzy", "Frenzy", 8)
