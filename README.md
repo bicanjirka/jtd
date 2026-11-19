@@ -420,7 +420,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Spark | Buff | The Stormcaller's currency: its stones earn it by the damage they deal, its passive by the enemies that discharge; all of it goes into each of its abilities at once. |
 | Soul | Buff | The Hexer's currency: its stones earn it by the damage they deal, its passive by the enemies that die; all of it goes into each of its abilities at once. |
 | Thunderclap | Buff | A discharge into every enemy in range, as magic. |
-| Thunderstrike | Buff | Lightning onto the healthiest enemy in range, as magic. |
+| Thunderstrike | Buff | Lightning onto the healthiest enemy in range, as magic, and leaves it Dazed. |
 
 Stacks wear off one per second once nothing adds more, and every other debuff runs out on its own clock, whatever the enemy's spirit. Effects don't change one another, with two exceptions: a pool earns its marks while it lasts, and a Reveal keeps Invisibility out.
 

@@ -240,6 +240,17 @@ class SplashTowerTest {
     }
 
     @Test
+    void thunderstrikeDazesTheEnemyItStrikes() {
+        SplashTower tower = this.casting("Thunderstrike");
+        FakeEnemyMob strong = near(tower, 1, 0).withHealth(900);
+        this.enemies(strong);
+
+        this.runUntil(tower, () -> !magicHits(strong).isEmpty());
+
+        assertThat(strong.hasEffect(EffectKind.DAZED)).isTrue();
+    }
+
+    @Test
     void aKilledEnemyTheHexerDamagedBurstsOnTheEnemiesAroundIt() {
         SplashTower tower = this.tower("Hexer");
         FakeEnemyMob victim = near(tower, 1, 0);

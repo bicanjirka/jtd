@@ -9,8 +9,11 @@ public interface CastActions {
     /** Discharges into every enemy in range, each for {@code share} of base damage as magic. */
     boolean thunderclap(float share);
 
-    /** Calls lightning onto the healthiest enemy in range, for {@code factor} times base damage as magic. */
-    boolean thunderstrike(float factor);
+    /**
+     * Calls lightning onto the healthiest enemy in range, for {@code factor} times base damage as magic, and dazes it
+     * for {@code dazeSeconds}.
+     */
+    boolean thunderstrike(float factor, float dazeSeconds);
 
     /** Sends {@code hex} at the enemies its rule picks. */
     boolean hex(Hex hex);
