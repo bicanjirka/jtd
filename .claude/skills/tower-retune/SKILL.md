@@ -122,6 +122,21 @@ The shop button's mark (`TowerIcons`) is drawn apart from the board art and may 
 check it against the tower on the board in its retune and redraw it in the table's language (a flat silhouette, the
 moving part lighter, a seam). The Burst's is redrawn; the Mortar's and the rest still show their old designs.
 
+## Names and glyphs, once per tower
+
+After the tower's last step, review every node's name and glyph against the tower's look on the board and its lore,
+then suggest changes and wait. Judge from pictures, not path strings: `PreviewIcons` (each face at 40 and 20 px) and
+`td.ui.PreviewUpgrades` (the panel and every node's sheet), both from `run-jtd`. Look for:
+- a name that fights the look or lore, or that another term already uses (enemy abilities in `AbilityTerm`, other
+  towers' nodes and `TowerTerm`s): one name for two things misleads the player;
+- one face on two nodes of the tree (a fork node reusing its passive's face, a tier 0 and a tier III node alike);
+- a face borrowed from an effect the node doesn't apply, or from another tower's node;
+- two faces that read the same at 20 px (a cut-out bolt reads as a crack), or a face that reads as something else.
+
+A rename follows "A new, renamed or moved node" above, renames code with the IDE's `rename_refactoring`, and updates
+the tower's `StrategyBuilds` names, `jtd-balance-tools` (its `trees/` model, `node-math.md`) and `README.md`; then
+`TowerBench --towers <it>` and `TowerReport --tower <it>` re-store the tables under the new names. One commit.
+
 ## Commits
 
 - On main, stage own files by name (other sessions share the checkout), no push. `mvn -q verify && git commit ...`
