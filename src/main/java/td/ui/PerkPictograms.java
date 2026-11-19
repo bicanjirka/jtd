@@ -26,8 +26,8 @@ final class PerkPictograms {
             // Sundering Crits
             Map.entry("sniper.sundering_crits", "=effect.sundered"),
             Map.entry("sniper.exposing_crits", "=effect.exposed"),
-            // Momentum
-            Map.entry("sniper.momentum", "F O15.4 12 5.4 ; T M1.8 8.6H8 M3.4 12H8.6 M1.8 15.4H8 ; K M13.4 9.4A3 3 0 0 1 17.8 9.6"),
+            // Killing Spree
+            Map.entry("sniper.killing_spree", "F O15.4 12 5.4 ; T M1.8 8.6H8 M3.4 12H8.6 M1.8 15.4H8 ; K M13.4 9.4A3 3 0 0 1 17.8 9.6"),
             // Ricochet
             Map.entry("sniper.ricochet", "T M2.6 20.6H21.4 ; S M3.4 4.6L10.4 18.4L16.6 8.2 ; F M19.2 4.2L14.6 6.6L18.6 10.2Z ; F O10.4 18.4 1.6"),
             // Headhunter

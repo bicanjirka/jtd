@@ -149,14 +149,15 @@ public final class SniperTower extends AbstractTower {
             .withModifiers(TowerModifiers.aimStacksPerShot(1))
             .after(STEADY_AIM)
             .inTier(3);
-    private static final UpgradeNode MOMENTUM = UpgradeNode.of("sniper.momentum", "Momentum", 9)
+    private static final UpgradeNode KILLING_SPREE = UpgradeNode.of("sniper.killing_spree", "Killing Spree", 9)
             .withProc(Proc.onKill(GRANTS_FRENZY))
+            .after(EXECUTIONER)
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_AIM, RIFLING, HEAVY_ROUNDS))
             .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, KILLSHOT, LONG_BARREL,
                     HEMORRHAGE, RICOCHET, SUNDERING_CRITS, EXPOSING_CRITS, SILVER_ROUND, HOLLOW_POINT,
-                    HEAVY_ROUNDS_2, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, MOMENTUM)
+                    HEAVY_ROUNDS_2, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, KILLING_SPREE)
             .withCluster(UpgradeCluster.of("Steady Aim", DEEP_BREATH, KEEN_EYE))
             .withCluster(UpgradeCluster.of("On crit", HEMORRHAGE, RICOCHET))
             .withCluster(UpgradeCluster.of("Crit wound", SUNDERING_CRITS, EXPOSING_CRITS))

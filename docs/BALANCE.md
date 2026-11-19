@@ -224,7 +224,8 @@ Every scenario is fought twice: alone, and beside two fixed partners, a bare Sni
 ending in `+`, counting what all three hold; `tower-scenarios.tsv` has what the partners hold by themselves). The
 second is where a tower that only helps others shows, and where a tower that holds nothing alone shows what it adds.
 
-The builds are read off each tower's tree, so a new tier, node, cluster or tower needs no change to the tool:
+The builds are read off each tower's tree, so a new tier, node, cluster or tower needs no change to the tool. The
+one exception is a `strategy`: a build a tower's retune names, listed by its nodes in `StrategyBuilds`:
 
 | Role | Build | Set against (`versus`) |
 | --- | --- | --- |
@@ -233,6 +234,7 @@ The builds are read off each tower's tree, so a new tier, node, cluster or tower
 | `full` | every node up to a tier; each cluster gives its first member, a fork one family per side, and each other cluster member a family of its own | |
 | `without` | a whole tier less one node, in the tier the node sits in | that tier whole |
 | `without-top` | the whole tree less one node | the whole tree |
+| `strategy` | the nodes a named strategy buys, whatever their tier | |
 
 A node's worth alone is its `line` over what that is set against; its worth in a build is the `full` build over the
 `without` one. `tower-pairs.tsv` sets every two towers side by side, bare and bought whole, against what each holds

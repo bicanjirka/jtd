@@ -53,6 +53,20 @@ class TowerBenchTest {
     }
 
     @Test
+    void everyNamedStrategyIsMeasuredAsABuildOwningEachOfItsNodes() {
+        for (TowerFactory.Type type : TowerFactory.Type.values()) {
+            List<TowerBench.Build> builds = TowerBench.buildsOf(type);
+
+            for (StrategyBuilds.Strategy strategy : StrategyBuilds.of(type)) {
+                TowerBench.Build build = builds.stream()
+                        .filter(each -> each.role().equals(TowerBench.STRATEGY) && each.label().endsWith(strategy.name()))
+                        .findFirst().orElseThrow();
+                assertThat(build.owned()).as(strategy.name()).containsAll(strategy.nodes());
+            }
+        }
+    }
+
+    @Test
     void theHealthABuildHoldsLiesBetweenOneItHoldsAndOneThatLeaks() {
         TowerBench bench = new TowerBench(1, 0.1, List.of(STREAM), TowerBench.Weights.plain());
         List<TowerBench.Stand> stands = List.of(new TowerBench.Stand(TowerFactory.Type.SNIPER, new Point(6, 0), List.of()));

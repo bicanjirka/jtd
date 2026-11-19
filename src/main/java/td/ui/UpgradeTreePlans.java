@@ -20,8 +20,8 @@ final class UpgradeTreePlans {
             tier(row(node("sniper.fourth_shot", 0.5f), node("sniper.killshot", 1.5f), cluster("Steady Aim", 2.8f),
                     node("base.range", 5.6f))),
             tier(row(cluster("Ammo", 0f), cluster("On crit", 2.3f), cluster("Crit wound", 4.6f))),
-            tier(row(cluster("Finisher", 0f), node("sniper.heavy_rounds.2", 2.5f), node("sniper.unbroken_aim", 5f),
-                    node("sniper.momentum", 6f))));
+            tier(row(cluster("Finisher", 0f), node("sniper.killing_spree", 2.3f), node("sniper.heavy_rounds.2", 3.5f),
+                    node("sniper.unbroken_aim", 5f))));
 
     private static final UpgradeTreePlan SPLASH = UpgradeTreePlan.of(
             tier(row(node("base.range", 0f), node("splash.wide_charge", 1f), node("splash.flint_stones", 2f))),
