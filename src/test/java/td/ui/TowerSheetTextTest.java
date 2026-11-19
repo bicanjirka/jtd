@@ -245,12 +245,12 @@ class TowerSheetTextTest {
     @Test
     void anUpgradeShowsInTheStatsItRaisesWhileTheUpgradesPanelNamesIt() {
         this.world.economy().startEconomy(1000, 5);
-        Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
-        UpgradeNode range = UpgradePaths.named(sniper, "Long Barrel");
+        Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
+        UpgradeNode range = UpgradePaths.named(mortar, "Elevation");
 
-        sniper.buyUpgrade(range);
+        mortar.buyUpgrade(range);
 
-        InfoSheet sheet = TowerSheetText.status(sniper.inspect());
+        InfoSheet sheet = TowerSheetText.status(mortar.inspect());
         assertThat(row(sheet, "Range").trend()).isEqualTo(Trend.BETTER);
         assertThat(rows(sheet)).noneMatch(row -> row.glyph() == Glyph.PIP);
         assertThat(labels(sheet)).doesNotContain("Awaken");

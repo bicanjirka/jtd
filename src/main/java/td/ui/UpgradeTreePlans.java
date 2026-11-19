@@ -16,8 +16,7 @@ import static td.ui.UpgradeTreePlan.tier;
 final class UpgradeTreePlans {
 
     private static final UpgradeTreePlan SNIPER = UpgradeTreePlan.of(
-            tier(row(node("sniper.rifling", 0f), node("base.range", 1.2f), node("sniper.heavy_rounds", 2.3f),
-                    node("sniper.steady_aim", 3.3f))),
+            tier(row(node("sniper.rifling", 0f), node("sniper.heavy_rounds", 1.2f), node("sniper.steady_aim", 3.3f))),
             tier(row(node("sniper.fourth_shot", 0.5f), node("sniper.killshot", 1.5f), cluster("Steady Aim", 2.8f))),
             tier(row(cluster("Ammo", 0f), cluster("On crit", 2.3f), node("base.range.2", 5.6f))),
             tier(row(cluster("Finisher", 0f), node("sniper.heavy_rounds.2", 2.5f), node("sniper.unbroken_aim", 5f),

@@ -124,14 +124,14 @@ class AbstractTowerTest {
     @Test
     void aFlatRangeNodeIsAmplifiedByAReceivedRangeShare() {
         GameWorld elsewhere = WorldFixtures.newWorld();
-        SniperTower buffed = new SniperTower(this.context, 0, 0);
-        SniperTower alone = new SniperTower(elsewhere, 0, 0);
+        SeekerTower buffed = new SeekerTower(this.context, 0, 0);
+        SeekerTower alone = new SeekerTower(elsewhere, 0, 0);
         this.context.towers().add(buffed);
         elsewhere.towers().add(alone);
         TowerFixtures.buffed(buffed, this.context, TowerModifiers.rangePercent(0.2f));
 
-        UpgradePaths.buy(buffed, this.context, "Long Barrel");
-        UpgradePaths.buy(alone, elsewhere, "Long Barrel");
+        UpgradePaths.buy(buffed, this.context, "Long Flight");
+        UpgradePaths.buy(alone, elsewhere, "Long Flight");
 
         assertThat(buffed.stats().range()).isCloseTo(alone.stats().range() * 1.2f, within(1e-5f));
     }
@@ -610,9 +610,9 @@ class AbstractTowerTest {
 
     @Test
     void aNodeNotYetOwnedPreviewsTheRowItMovesOnTheLastingStats() {
-        SniperTower tower = new SniperTower(this.context, 0, 0);
+        SeekerTower tower = new SeekerTower(this.context, 0, 0);
         this.context.towers().add(tower);
-        UpgradeNode range = UpgradePaths.named(tower, "Long Barrel");
+        UpgradeNode range = UpgradePaths.named(tower, "Long Flight");
 
         UpgradeBonus bonus = tower.wordsOf(range).stats().getFirst();
 
