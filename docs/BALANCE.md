@@ -31,7 +31,7 @@ person (`ReportPage` writes both).
 | --- | --- | --- | --- |
 | 1 Enemies | `EnemyPowerReport` (a full run, no `--kinds` or `--ranks`) | `enemy-power.tsv`: one row per enemy and rank, its power on every axis as a multiple of the Walker; `enemy-baseline.tsv`: what the Walker of each rank takes, which turns those multiples into damage a second | `enemies.html` |
 | 2 Towers, measured | `TowerBench` (reads `enemy-power.tsv`; with `--towers` it replaces only those towers' rows) | `towers.tsv`: one row per build of each tower, what it holds of each scenario in Walkers; `tower-pairs.tsv`: every two towers side by side; `tower-scenarios.tsv`: the scenarios and what a point of health is worth in each | `tower-bench.html` |
-| 3 Towers, judged | `TowerReport` (reads the bench's three sheets; rerun it after every bench run) | `tower-prices.tsv`: one row per tower and node, its price, worth, fair and suggested price and verdict; `tower-stages.tsv`: each tower bought whole to each tier, its cost, power, worth and value | `towers.html` |
+| 3 Towers, judged | `TowerReport` (reads the bench's three sheets; rerun it after every bench run) | `tower-prices.tsv`: one row per tower and node, its price, worth, fair and suggested price and verdict; `tower-stages.tsv`: each tower bought whole to each tier, its cost, power, worth and value; `tower-rounds.tsv`: each tower against the median before each round of Iron Crossing (reads `wave-power.tsv` when it exists) | `towers.html` |
 | 4 Waves | `WavePowerReport` (a full run; reads `towers.tsv` and `tower-scenarios.tsv`) | `wave-power.tsv`: one row per level and round, its strength, pay, bank, need, room, the experience a tower has by then, what it asks for and its verdict | `waves.html` |
 | 5 Play | `PlayCheck` (a full run; reads `wave-power.tsv` only to show each round's room beside the play) | `play.tsv`: one row per player, its leaks, spending and verdict; `play-rounds.tsv`: every round of every player; `play-script.tsv`: every purchase, in the words a play script replays | `play.html` |
 
@@ -300,6 +300,7 @@ much for where they sit: that is what to change a node's numbers for.
 | Nodes | the prices above | `WARN price`: off its suggestion. `DOMINANT node`: the whole tree loses over a third of its power without it |
 | Clusters and forks | each member in the whole tree bought with it | `DOMINANT pick`: a member a credit of which buys 15% more than any other, and that is behind in no scenario. `WARN weaker pick`: under 0.85 of the best |
 | Synergies | the bench's pairs, by the geometric mean over the paired scenarios | `WARN strong pair` from 2, `WARN clash` to 0.7 |
+| Rounds | each tower's best defence before each round of the reference level against the median of the round (below) | `DOMINANT` over 1.25, `WARN weak` under 0.8, naming the rounds |
 
 Roles compare what a **credit** holds, not what a tower holds: towers bought to the same tier cost up to three times
 each other, so the top tower of a role is the one a credit spent on holds the most there. The rules now:
@@ -318,6 +319,16 @@ median or rule counts it. Taking it off that list is all it needs to be judged.
 judges the new prices only after it. A price change moves no power, only cost, and with it value, the roles and the
 price verdicts; a change to what a node does moves its worth, and its neighbours' shares with it. A new tier or
 tower is priced the same way, with no change to the tools.
+
+**Rounds and gates.** The Stages table compares towers bought whole to a tier, which no player does by a given
+round. `TowerRounds` asks what the bank before each round of Iron Crossing buys in copies of one tower, each copy
+dearer by the copy surcharge, upgraded only as far as that tower's XP gates have opened. XP is a lane's bounty since
+the tower was built, kill or leak (`ExperienceAwarder`), so a gate is a round; both come from `wave-power.tsv`, which
+no tower changes, so the tables appear once `WavePowerReport` has run. Copies add their power, which ignores overlap:
+the table ranks towers and does not size a defence. "Proposed gates" searches each tower's tier I to III opening
+rounds for the defence closest to the median of each round under today's gates; within the bench's noise of the
+best it keeps the rounds nearest today's, and no top gate may keep a tower built before round 10 on the poorer lane
+waiting longer than today's. "Rounds with the proposed gates" is the Rounds table again on them.
 
 ## Whether the level is won
 

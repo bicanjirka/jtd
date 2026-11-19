@@ -108,8 +108,17 @@ public final class TowerReport {
             clusters.put(tower, found);
         }
         TowerReport report = new TowerReport(sheet, clusters, ReportPage.load(TowerBench.PAIR_SHEET));
-        List<ReportPage.Table> tables = List.of(report.towers(), report.stages(), report.roles(), report.profiles(),
-                report.tiers(), report.nodes(), report.clusterPicks(), report.synergies());
+        List<ReportPage.Table> tables = new ArrayList<>(List.of(report.towers(), report.stages(), report.roles(),
+                report.profiles(), report.tiers(), report.nodes(), report.clusterPicks(), report.synergies()));
+        Optional<TowerRounds> rounds = TowerRounds.stored(sheet);
+        rounds.ifPresentOrElse(byRound -> {
+            Map<String, List<Integer>> proposal = byRound.proposed();
+            tables.add(byRound.table());
+            tables.add(byRound.proposal(proposal));
+            tables.add(byRound.withGates(proposal));
+            ReportPage.store(TowerRounds.SHEET, byRound.table());
+        }, () -> System.out.println("No " + TowerRounds.LEVEL + " rounds in " + WavePowerReport.SHEET
+                + ".tsv: run WavePowerReport for the Rounds tables"));
         ReportPage.Table findings = report.findings(tables);
         ReportPage.store(PRICE_SHEET, report.prices());
         ReportPage.store(STAGE_SHEET, tables.get(1));
@@ -124,6 +133,8 @@ public final class TowerReport {
         print(tables.get(0));
         print(tables.get(1));
         print(findings);
+        tables.stream().filter(table -> table.title().contains("Rounds") || table.title().contains("gates"))
+                .forEach(TowerReport::print);
         tables.stream().filter(table -> table.header().getLast().equals("verdict"))
                 .forEach(table -> System.out.printf(Locale.ROOT, "%-34s %s%n", table.title(), tally(table)));
         System.out.println("Stored in " + ReportPage.FOLDER + ": " + PRICE_SHEET + ".tsv, " + STAGE_SHEET + ".tsv, "
