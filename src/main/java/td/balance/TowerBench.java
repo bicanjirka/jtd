@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
 import td.GameEngine;
+import td.enemy.Affix;
 import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
@@ -222,7 +223,8 @@ public final class TowerBench {
                 Scenario.stream("plated", "juggernaut").testing("heavy plating: small hits bounce, and it is slow"),
                 Scenario.stream("resist", "templar").testing("magic resist"),
                 Scenario.stream("hidden", "ghost").testing("enemies that fade out of sight"),
-                Scenario.stream("fast", "runner").testing("enemies that run faster the more they are hurt"));
+                Scenario.stream("fast", "runner").testing("enemies that run faster the more they are hurt"),
+                Scenario.stream("elusive", PLAIN).with(Affix.ELUSIVE).testing("plain enemies that dodge aimed hits"));
         List<Scenario> all = new ArrayList<>(alone);
         alone.stream().map(Scenario::withPartners).forEach(all::add);
         return List.copyOf(all);
@@ -238,8 +240,10 @@ public final class TowerBench {
      * @param count   how many it sends
      * @param beside  whether the partners stand beside the subject
      * @param tests   what it is there to show
+     * @param affix   what each of its enemies carries, if anything
      */
-    record Scenario(String name, String kind, Rank rank, int spacing, int count, boolean beside, String tests) {
+    record Scenario(String name, String kind, Rank rank, int spacing, int count, boolean beside, String tests,
+                    Optional<Affix> affix) {
 
         private static final int STREAM = 8;
         private static final int STREAM_SPACING = 100;
@@ -247,36 +251,43 @@ public final class TowerBench {
 
         /** One Veteran. */
         static Scenario lone(String name, String kind) {
-            return new Scenario(name, kind, Rank.VETERAN, STREAM_SPACING, 1, false, "");
+            return new Scenario(name, kind, Rank.VETERAN, STREAM_SPACING, 1, false, "", Optional.empty());
         }
 
         /** Veterans far enough apart that an area hit takes one. */
         static Scenario stream(String name, String kind) {
-            return new Scenario(name, kind, Rank.VETERAN, STREAM_SPACING, STREAM, false, "");
+            return new Scenario(name, kind, Rank.VETERAN, STREAM_SPACING, STREAM, false, "", Optional.empty());
         }
 
         Scenario ranked(Rank next) {
-            return new Scenario(this.name, this.kind, next, this.spacing, this.count, this.beside, this.tests);
+            return new Scenario(this.name, this.kind, next, this.spacing, this.count, this.beside, this.tests, this.affix);
         }
 
         /** {@code enemies} of them, {@code ticks} apart. */
         Scenario sending(int enemies, int ticks) {
-            return new Scenario(this.name, this.kind, this.rank, ticks, enemies, this.beside, this.tests);
+            return new Scenario(this.name, this.kind, this.rank, ticks, enemies, this.beside, this.tests, this.affix);
         }
 
         Scenario testing(String what) {
-            return new Scenario(this.name, this.kind, this.rank, this.spacing, this.count, this.beside, what);
+            return new Scenario(this.name, this.kind, this.rank, this.spacing, this.count, this.beside, what, this.affix);
+        }
+
+        /** Each of its enemies carrying {@code added}. */
+        Scenario with(Affix added) {
+            return new Scenario(this.name, this.kind, this.rank, this.spacing, this.count, this.beside, this.tests,
+                    Optional.of(added));
         }
 
         Scenario withPartners() {
             return new Scenario(this.name + BESIDE_MARK, this.kind, this.rank, this.spacing, this.count, true,
-                    this.tests + ", beside a bare Sniper and a bare Burst");
+                    this.tests + ", beside a bare Sniper and a bare Burst", this.affix);
         }
 
         /** The wave as a script of {@code id}, numbered when its enemies differ. */
         String script(String id) {
-            String slots = this.count == 1 ? id
-                    : IntStream.range(0, this.count).mapToObj(i -> id + i).collect(Collectors.joining(" "));
+            String carried = this.affix.map(added -> added.word() + " ").orElse("");
+            String slots = this.count == 1 ? carried + id
+                    : IntStream.range(0, this.count).mapToObj(i -> carried + id + i).collect(Collectors.joining(" "));
             return "w" + this.spacing + " " + WaveScript.headed(this.rank, slots);
         }
 
@@ -790,7 +801,8 @@ public final class TowerBench {
         List<Double> partners = this.thresholds(beside.stream()
                 .map(scenario -> new Job(scenario, PARTNERS, FIRST_GUESS)).toList());
         return this.scenarios.stream().map(scenario -> List.of(scenario.name(),
-                "w" + scenario.spacing() + " " + WaveScript.headed(scenario.rank(), scenario.count() + " " + scenario.kind()),
+                "w" + scenario.spacing() + " " + WaveScript.headed(scenario.rank(), scenario.count() + " "
+                        + scenario.affix().map(added -> added.word() + " ").orElse("") + scenario.kind()),
                 scenario.kind(), scenario.rank().name().toLowerCase(Locale.ROOT), String.valueOf(scenario.count()),
                 ReportPage.number(PowerBench.passage(scenario.lane(1)).walkTicks() / (double) TickRate.TICKS_PER_SECOND),
                 ReportPage.number(this.weights.toughnessOf(scenario)),
