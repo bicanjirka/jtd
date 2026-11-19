@@ -17,7 +17,7 @@ final class TowerSheet {
 
     /** How much of a mixed wave each scenario stands for: plain enemies one half, defences the other. */
     private static final Map<String, Double> MIX = Map.of("single", 1.0, "stream", 4.0, "group", 4.0, "boss", 2.0,
-            "armored", 2.5, "plated", 2.5, "resist", 1.5, "hidden", 1.0, "fast", 1.5);
+            "armored", 2.5, "plated", 2.5, "resist", 1.5, "hidden", 1.0, "fast", 1.5, "elusive", 1.0);
     private static final double UNLISTED = 1.0;
     /** Measured, but nothing is priced off them and no verdict counts them: their trees are not final. */
     private static final Set<String> NOT_JUDGED = Set.of("AURA");

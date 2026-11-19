@@ -219,6 +219,7 @@ time it buys, a kill for what it triggers, a miss for the leak it causes.
 | group | twelve Soldier Walkers in a tight column | area damage |
 | boss | one Boss Walker | one target with a boss's defences |
 | armored, plated, resist, hidden, fast | a stream of Veteran Knights, Juggernauts, Templars, Ghosts, Runners | each defence and trick |
+| elusive | a stream of Elusive Veteran Walkers | aimed hits that miss: the Elusive affix dodges them |
 
 Every scenario is fought twice: alone, and beside two fixed partners, a bare Sniper and a bare Burst (the column
 ending in `+`, counting what all three hold; `tower-scenarios.tsv` has what the partners hold by themselves). The
