@@ -126,8 +126,8 @@
   tier's unlock is a node the tree makes (`tier.N`), bought like any other and on every path that crosses it.
   `xpMet`/`isOpen` are the one check for a tier: never compare XP to a tier's number elsewhere.
 - Build a node with `UpgradeNode.of(id, name, PRICE)`, then `inTier(n)` and `after(previous)` for a follow-up in the
-  same tier or a later one. A node with nothing before it and nothing after is an orphan. `RangeNodes.of` builds the
-  Range line every tower shares.
+  same tier or a later one. A node with nothing before it and nothing after is an orphan. A tower's range upgrades
+  are its own nodes under the shared `RangeNodes` ids.
 - One-of choices are an `UpgradeCluster` on the tree (`withCluster`), never a condition in `requires`: members share
   a tier and a price, one is active, and switching between waves sells what followed the old one
   (`switchFor`). A tower whose identity is a fork has one `withFork` cluster, which
@@ -181,8 +181,9 @@
    `TowerFoundations` (a foundation per tier and pose, a head if it aims), the cases in
    `TowerSpriteFrameBuilder.lookFor` and `bodyPaletteFor`, and that tone's `Palette` constant, whose
    `colorFor` case reads the row.
-5. `upgradeTree()`: `UpgradeTree.of(RangeNodes.of(PRICE, RANGE))` with an Attune node in tier 0 for the tower's own
-   mechanic, then the tower's nodes by tier and its clusters.
+5. `upgradeTree()`: one static `UpgradeTree.of(tier 0 nodes)`, then `.with(...)` the later tiers' nodes and
+   `.withCluster`/`.withFork` its clusters. Anything the tower does beyond its basic attack is a tier 0 node, never
+   built into the bare tower.
 6. `targetingLabel()` and `baseApplies()`, and, for the shop only, a `description()` saying what no row does.
 7. `README.md`'s tower table.
 8. A `CLAUDE.md` in the tower's sub-package for its own constraints, and its name in this file's pointer.

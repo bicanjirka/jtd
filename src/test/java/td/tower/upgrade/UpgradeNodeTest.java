@@ -62,7 +62,7 @@ class UpgradeNodeTest {
 
     @Test
     void aRangeNodeReadsInCells() {
-        UpgradeNode range = RangeNodes.of(10, 4.0f).getFirst();
+        UpgradeNode range = UpgradeNode.of(RangeNodes.RANGE_ID, "Range", 10).withModifiers(TowerModifiers.range(0.6f));
 
         assertThat(words(range)).containsExactly("Range +0.6 cells");
     }
