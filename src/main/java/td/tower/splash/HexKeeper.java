@@ -4,12 +4,11 @@ import td.damage.Damage;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
-import td.tower.targeting.HighestHealthSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
-import td.tower.targeting.TargetSelector;
 import td.util.ThreadConfined;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,30 +71,37 @@ public final class HexKeeper {
 
     /**
      * The hex on the dead enemy jumps on with the time it had left as it was cast, the slow it had grown to and what
-     * it recorded. A Doom takes the nearest enemy without a Doom, else the nearest with one, and with Contagion the
-     * healthiest, starting over for its whole time; any other hex takes the nearest enemy without a hex.
+     * it recorded. A Doom takes the nearest enemy without a Doom, else the nearest with one; any other hex takes the
+     * nearest enemy without a hex. With Contagion the hex splits in two, each half to its own enemy, and a Doom's
+     * record is shared between them.
      */
     private void spread(EnemyMob dead, HexEvent.CarriedHex carried, HexSpec spec) {
         dead.activeEffect(carried.kind()).ifPresent(effect -> {
             boolean isDoom = carried.kind() == EffectKind.DOOM;
-            int ticks = isDoom && spec.contagion() ? carried.castTicks()
-                    : Math.max(1, Math.round((float) effect.remainingTicks() * carried.castTicks()
-                            / Math.max(1, effect.authoredDurationTicks())));
-            List<EnemyMob> around = InRangeTargetQuery.around(dead, this.caster.distance(HexSpec.SPREAD_CELLS))
+            int ticks = Math.max(1, Math.round((float) effect.remainingTicks() * carried.castTicks()
+                    / Math.max(1, effect.authoredDurationTicks())));
+            List<EnemyMob> around = new ArrayList<>(InRangeTargetQuery.around(dead, this.caster.distance(HexSpec.SPREAD_CELLS))
                     .matching(this.caster.enemies()).stream()
                     .filter(enemy -> !enemy.isDead())
-                    .toList();
-            TargetSelector aim = isDoom && spec.contagion() ? new HighestHealthSelector()
-                    : new NearestSelector(dead.getX(), dead.getY());
-            Optional<EnemyMob> next = aim.selectFrom(around.stream()
-                    .filter(enemy -> !this.hasHex(enemy, carried.kind(), isDoom))
                     .toList());
-            if (next.isEmpty() && isDoom) {
-                next = aim.selectFrom(around);
+            NearestSelector aim = new NearestSelector(dead.getX(), dead.getY());
+            List<EnemyMob> landing = new ArrayList<>();
+            for (int i = 0; i < (spec.contagion() ? 2 : 1); i++) {
+                Optional<EnemyMob> next = aim.selectFrom(around.stream()
+                        .filter(enemy -> !this.hasHex(enemy, carried.kind(), isDoom))
+                        .toList());
+                if (next.isEmpty() && isDoom) {
+                    next = aim.selectFrom(around);
+                }
+                next.ifPresent(landing::add);
+                next.ifPresent(around::remove);
             }
-            next.ifPresent(to -> this.caster.jump(new HexJump(
-                    new HexEvent.CarriedHex(carried.kind(), ticks, carried.stored()), dead.position(), to,
-                    effect.grownSlow())));
+            long each = carried.stored() / Math.max(1, landing.size());
+            for (int i = 0; i < landing.size(); i++) {
+                long stored = i == 0 ? carried.stored() - each * (landing.size() - 1) : each;
+                this.caster.jump(new HexJump(new HexEvent.CarriedHex(carried.kind(), ticks, stored), dead.position(),
+                        landing.get(i), effect.grownSlow()));
+            }
         });
     }
 

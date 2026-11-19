@@ -18,8 +18,10 @@ import td.tower.splash.SoulbrandMechanic;
 import td.tower.splash.StaticMechanic;
 import td.util.GameWorld;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -186,6 +188,19 @@ class SplashTowerTest {
     }
 
     @Test
+    void joltLeavesTheEnemyAJumpHitVulnerable() {
+        SplashTower tower = this.casting("Arc", "Jolt");
+        FakeEnemyMob target = near(tower, 1, 0);
+        FakeEnemyMob next = ghostBeside(target, (SplashTower.EDGE_CELLS + ArcSpec.REACH_CELLS) / 2);
+        this.enemies(target, next);
+
+        this.runUntil(tower, () -> !magicHits(next).isEmpty());
+        this.run(tower, 10);
+
+        assertThat(next.hasEffect(EffectKind.VULNERABLE)).isTrue();
+    }
+
+    @Test
     void wildArcStrikesALoneEnemyWithEveryJump() {
         SplashTower tower = this.casting("Wild Arc");
         FakeEnemyMob lone = near(tower, 1, 0);
@@ -329,26 +344,59 @@ class SplashTowerTest {
         this.enemies(target, close, apart);
 
         this.runUntil(tower, () -> target.hasEffect(EffectKind.BLIGHT));
+        this.runUntil(tower, () -> tower.cursesInFlight().isEmpty());
 
         assertThat(close.hasEffect(EffectKind.BLIGHT)).isTrue();
         assertThat(apart.hasEffect(EffectKind.BLIGHT)).isFalse();
     }
 
     @Test
-    void contagionSendsTheBlightOfAnEnemyThatDiedToTheNearestEnemyWithoutOne() {
+    void blightCloudForksItsCurseInFlightBeforeItReachesItsTarget() {
+        SplashTower tower = this.casting("Hex of Blight", "Blight Cloud");
+        FakeEnemyMob target = near(tower, 2, 0);
+        FakeEnemyMob close = ghostBeside(target, HexSpec.CLOUD_CELLS / 2);
+        this.enemies(target, close);
+
+        this.runUntil(tower, () -> tower.cursesInFlight().stream().anyMatch(curse -> curse.target() == close));
+
+        assertThat(tower.cursesInFlight()).anyMatch(curse -> curse.target() == close);
+        assertThat(target.hasEffect(EffectKind.BLIGHT)).isFalse();
+    }
+
+    @Test
+    void blightCloudCursesOnlyTheFewestEnemiesAroundItsTargetThatWouldLeaveSoonest() {
+        SplashTower tower = this.casting("Hex of Blight", "Blight Cloud");
+        FakeEnemyMob target = near(tower, 1, 0);
+        List<FakeEnemyMob> crowd = new ArrayList<>();
+        for (int i = 0; i < HexSpec.CLOUD_TARGETS + 2; i++) {
+            crowd.add(ghostBeside(target, HexSpec.CLOUD_CELLS / 2).withDistanceToExit(100 + 10 * i));
+        }
+        this.enemies(Stream.concat(Stream.of(target), crowd.stream()).toArray(FakeEnemyMob[]::new));
+
+        this.runUntil(tower, () -> target.hasEffect(EffectKind.BLIGHT));
+        this.runUntil(tower, () -> tower.cursesInFlight().isEmpty());
+
+        assertThat(crowd.stream().filter(enemy -> enemy.hasEffect(EffectKind.BLIGHT)).toList())
+                .isEqualTo(crowd.subList(0, HexSpec.CLOUD_TARGETS));
+    }
+
+    @Test
+    void contagionSplitsTheBlightOfAnEnemyThatDiedBetweenTheTwoNearestEnemiesWithoutOne() {
         SplashTower tower = this.casting("Hex of Blight", "Contagion");
         FakeEnemyMob carrier = near(tower, 1, 0);
         FakeEnemyMob nearest = ghostBeside(carrier, HexSpec.SPREAD_CELLS / 3);
         FakeEnemyMob further = ghostBeside(carrier, HexSpec.SPREAD_CELLS * 2 / 3);
-        this.enemies(carrier, nearest, further);
+        FakeEnemyMob farthest = ghostBeside(carrier, HexSpec.SPREAD_CELLS * 0.9f);
+        this.enemies(carrier, nearest, further, farthest);
         this.runUntil(tower, () -> carrier.hasEffect(EffectKind.BLIGHT));
 
         carrier.dieOnAnyHit();
         carrier.doDamage(Damage.physical(1), AttackProfile.none());
-        this.runUntil(tower, () -> nearest.hasEffect(EffectKind.BLIGHT));
+        this.runUntil(tower, () -> nearest.hasEffect(EffectKind.BLIGHT) && further.hasEffect(EffectKind.BLIGHT));
 
         assertThat(nearest.hasEffect(EffectKind.BLIGHT)).isTrue();
-        assertThat(further.hasEffect(EffectKind.BLIGHT)).isFalse();
+        assertThat(further.hasEffect(EffectKind.BLIGHT)).isTrue();
+        assertThat(farthest.hasEffect(EffectKind.BLIGHT)).isFalse();
     }
 
     @Test
@@ -374,19 +422,26 @@ class SplashTowerTest {
     }
 
     @Test
-    void aDoomWithContagionJumpsToTheHealthiestEnemyForItsWholeTimeAgain() {
+    void contagionSplitsADoomsRecordBetweenItsTwoHalves() {
         SplashTower tower = this.casting("Hex of Doom", "Contagion");
         FakeEnemyMob carrier = near(tower, 1, 0);
-        FakeEnemyMob nearest = ghostBeside(carrier, HexSpec.SPREAD_CELLS / 3).withHealth(5_000);
-        FakeEnemyMob healthiest = ghostBeside(carrier, HexSpec.SPREAD_CELLS * 2 / 3);
-        this.enemies(carrier, nearest, healthiest);
+        FakeEnemyMob first = ghostBeside(carrier, HexSpec.SPREAD_CELLS / 3);
+        FakeEnemyMob second = ghostBeside(carrier, HexSpec.SPREAD_CELLS * 2 / 3);
+        this.enemies(carrier, first, second);
         this.runUntil(tower, () -> carrier.hasEffect(EffectKind.DOOM));
+        carrier.doDamage(Damage.physical(10_000), AttackProfile.none());
 
         carrier.dieOnAnyHit();
         carrier.doDamage(Damage.physical(1), AttackProfile.none());
-        this.runUntil(tower, () -> healthiest.hasEffect(EffectKind.DOOM) || nearest.hasEffect(EffectKind.DOOM));
+        this.runUntil(tower, () -> first.hasEffect(EffectKind.DOOM) && second.hasEffect(EffectKind.DOOM));
+        int firstHits = first.hits().size();
+        int secondHits = second.hits().size();
+        first.expire(EffectKind.DOOM);
+        second.expire(EffectKind.DOOM);
+        this.run(tower, 1);
 
-        assertThat(healthiest.hasEffect(EffectKind.DOOM)).isTrue();
+        assertThat(first.hits().get(firstHits)).isEqualTo(Damage.magic(Math.round(5_000 * HexSpec.DOOM_SHARE)));
+        assertThat(second.hits().get(secondHits)).isEqualTo(Damage.magic(Math.round(5_000 * HexSpec.DOOM_SHARE)));
     }
 
     @Test

@@ -2,7 +2,6 @@ package td.tower;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
-import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -39,9 +38,9 @@ import td.tower.splash.HexMechanic;
 import td.tower.splash.HexSpec;
 import td.tower.splash.HighVoltageMechanic;
 import td.tower.splash.InversionHex;
+import td.tower.splash.JoltMechanic;
 import td.tower.splash.Passive;
 import td.tower.splash.PassivePayout;
-import td.tower.splash.ShortCircuitMechanic;
 import td.tower.splash.SoulHarvestMechanic;
 import td.tower.splash.SoulbrandMechanic;
 import td.tower.splash.SplashMechanic;
@@ -59,6 +58,7 @@ import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.RandomSelector;
+import td.tower.targeting.SoonestOutSelector;
 import td.tower.targeting.TargetSelector;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
@@ -168,7 +168,7 @@ public final class SplashTower extends AbstractTower {
             .after(ARC)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode SHORT_CIRCUIT = UpgradeNode.of("splash.short_circuit", "Short Circuit", 1)
+    private static final UpgradeNode JOLT = UpgradeNode.of("splash.jolt", "Jolt", 1)
             .after(ARC)
             .withOwnArt()
             .inTier(2);
@@ -218,7 +218,7 @@ public final class SplashTower extends AbstractTower {
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(LONG_THROW, WIDE_CHARGE, FLINT_STONES))
             .with(STORMCALLER, HEXER, ARC, HEX_OF_DOOM, HEX_OF_BLIGHT,
-                    DEEP_DOOM, BLIGHT_CLOUD, AGONY, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR, SHORT_CIRCUIT,
+                    DEEP_DOOM, BLIGHT_CLOUD, AGONY, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR, JOLT,
                     HEAVY_STONES, LONG_THROW_2,
                     SOUL_HARVEST, HEX_OF_INVERSION, CHOKING_BLIGHT, TWIN_HEX, THUNDERCLAP, THUNDERSTRIKE, HIGH_VOLTAGE,
                     FEEDBACK, QUICK_HANDS, PIERCING_STONES)
@@ -240,7 +240,7 @@ public final class SplashTower extends AbstractTower {
             entry(CHAIN_LIGHTNING.id(), ChainLightningMechanic::new),
             entry(WILD_ARC.id(), WildArcMechanic::new),
             entry(CONDUCTOR.id(), ConductorMechanic::new),
-            entry(SHORT_CIRCUIT.id(), ShortCircuitMechanic::new),
+            entry(JOLT.id(), JoltMechanic::new),
             entry(SOUL_HARVEST.id(), SoulHarvestMechanic::new),
             entry(HEX_OF_INVERSION.id(), () -> new HexMechanic(INVERSION, 3)),
             entry(CHOKING_BLIGHT.id(), ChokingBlightMechanic::new),
@@ -300,6 +300,7 @@ public final class SplashTower extends AbstractTower {
         this.forgetOldTraces();
         this.settlePassive(spec);
         this.hexKeeper.doTick(spec.hexes());
+        this.forkClouds(spec);
         this.landArrived(spec);
         boolean ready = this.clock.isReady();
         boolean casting = owned.stream().flatMap(mechanic -> mechanic.ability().stream()).anyMatch(AbilityCharge::isReady);
@@ -434,9 +435,9 @@ public final class SplashTower extends AbstractTower {
         TowerStats stats = run.stats();
         ArcSpec arc = run.spec();
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.ARC, 0f, stats);
-        int amount = Math.round(stats.damage() * arc.share() * adjustment.damageFactor()
-                * arc.factorAgainst(target.reductionAgainst(DamageType.PHYSICAL)));
+        int amount = Math.round(stats.damage() * arc.share() * adjustment.damageFactor());
         AttackProfile attack = adjustment.applyTo(stats.attack()).withCritChance(arc.critChance());
+        attack = attack.withCritMultiplier(Math.max(attack.critMultiplier(), arc.critMultiplier()));
         Vec2 at = target.position();
         HitResult hit = this.landHit(target, Damage.magic(amount), attack);
         run.spend(target);
@@ -447,6 +448,10 @@ public final class SplashTower extends AbstractTower {
                 this.earnAbilities(arc.critRefund());
             }
             this.bolts.add(new Bolt(hop.from(), at, this.tickNow(), BoltKind.ARC));
+            if (arc.jolt()) {
+                this.applyEffect(target, sink -> Effect.vulnerable(1,
+                        Math.round(ArcSpec.JOLT_SECONDS * TICKS_PER_SECOND), sink));
+            }
         }
         this.jumpOn(at, Optional.of(target), run);
     }
@@ -486,11 +491,53 @@ public final class SplashTower extends AbstractTower {
 
     /** Sends {@code hex} from {@code from} to {@code target}; it takes hold when it arrives. */
     private void sendCurse(Hex hex, Vec2 from, EnemyMob target, Dose dose) {
-        this.curses.add(new PendingCurse(new Curse(hex.kind(), from, target,
-                this.flightOver(from, target.position(), CURSE_CELLS_PER_TICK)), hex, this.stats(), dose));
+        Curse curse = new Curse(hex.kind(), from, target, this.flightOver(from, target.position(), CURSE_CELLS_PER_TICK));
+        PendingCurse pending = PendingCurse.of(curse, hex, this.stats(), dose);
+        this.curses.add(hex.kind() == EffectKind.BLIGHT
+                ? pending.withForkAt(Math.max(curse.flight().firedAt(), curse.flight().landsAt()
+                        - (int) Math.ceil(HexSpec.CLOUD_FORK_CELLS / CURSE_CELLS_PER_TICK)))
+                : pending);
     }
 
-    /** A curse that arrives takes hold, on the enemies around it too with Blight Cloud; one whose enemy died is lost. */
+    /**
+     * With Blight Cloud, a Blight curse that is {@code CLOUD_FORK_CELLS} short of its enemy forks: it picks the enemies
+     * around its target that would leave soonest, and a curse of its own leaves the fork point for each, while it flies
+     * on to its target.
+     */
+    private void forkClouds(SplashSpec spec) {
+        if (!spec.hexes().cloud()) {
+            return;
+        }
+        int now = this.tickNow();
+        for (int i = 0; i < this.curses.size(); i++) {
+            PendingCurse pending = this.curses.get(i);
+            if (pending.forkAt() > now) {
+                continue;
+            }
+            this.curses.set(i, pending.unforking());
+            EnemyMob target = pending.curse().target();
+            if (target.isDead()) {
+                continue;
+            }
+            ShotFlight flight = pending.curse().flight();
+            double flown = Math.min(1d, (double) (now - flight.firedAt()) / Math.max(1, flight.landsAt() - flight.firedAt()));
+            Vec2 from = pending.curse().from();
+            Vec2 at = new Vec2(from.x() + (target.getX() - from.x()) * flown, from.y() + (target.getY() - from.y()) * flown);
+            List<EnemyMob> around = new ArrayList<>(InRangeTargetQuery.around(target, HexSpec.CLOUD_CELLS * this.cellPixels())
+                    .matching(this.context.enemies()).stream()
+                    .filter(enemy -> enemy != target && !enemy.isDead())
+                    .toList());
+            for (int taken = 0; taken < HexSpec.CLOUD_TARGETS; taken++) {
+                Optional<EnemyMob> next = new SoonestOutSelector().selectFrom(around);
+                next.ifPresent(enemy -> this.curses.add(PendingCurse.of(new Curse(pending.curse().kind(), at, enemy,
+                        this.flightOver(at, enemy.position(), CURSE_CELLS_PER_TICK)), pending.hex(), pending.stats(),
+                        pending.dose())));
+                next.ifPresent(around::remove);
+            }
+        }
+    }
+
+    /** A curse that arrives takes hold; one whose enemy died is lost. */
     private void landCurse(PendingCurse pending, SplashSpec spec) {
         EnemyMob target = pending.curse().target();
         if (target.isDead()) {
@@ -498,12 +545,6 @@ public final class SplashTower extends AbstractTower {
         }
         HexSpec hexes = spec.hexes();
         this.lay(pending, target, hexes);
-        if (hexes.cloud() && pending.hex().kind() == EffectKind.BLIGHT) {
-            InRangeTargetQuery.around(target, HexSpec.CLOUD_CELLS * this.cellPixels())
-                    .matching(this.context.enemies()).stream()
-                    .filter(enemy -> !enemy.isDead())
-                    .forEach(enemy -> this.lay(pending, enemy, hexes));
-        }
     }
 
     private void lay(PendingCurse pending, EnemyMob target, HexSpec hexes) {
@@ -762,7 +803,22 @@ public final class SplashTower extends AbstractTower {
     private record PendingHop(Hop hop, ArcRun run) {
     }
 
-    private record PendingCurse(Curse curse, Hex hex, TowerStats stats, Dose dose) {
+    /** A curse on its way, and the tick it forks on, for a Blight that a cloud may fork. */
+    private record PendingCurse(Curse curse, Hex hex, TowerStats stats, Dose dose, int forkAt) {
+
+        static final int NEVER = Integer.MAX_VALUE;
+
+        static PendingCurse of(Curse curse, Hex hex, TowerStats stats, Dose dose) {
+            return new PendingCurse(curse, hex, stats, dose, NEVER);
+        }
+
+        PendingCurse withForkAt(int tick) {
+            return new PendingCurse(this.curse, this.hex, this.stats, this.dose, tick);
+        }
+
+        PendingCurse unforking() {
+            return this.withForkAt(NEVER);
+        }
     }
 
     /**

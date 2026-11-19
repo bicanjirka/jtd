@@ -5,7 +5,7 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
 
-/** Contagion: every hex jumps on from an enemy that dies with it, and a Doom starts over on the healthiest. */
+/** Contagion: a hex of an enemy killed with it splits in two, each half jumping on. */
 public final class ContagionMechanic implements SplashMechanic {
 
     @Override
@@ -15,8 +15,9 @@ public final class ContagionMechanic implements SplashMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("when a hexed enemy dies, its ").plus(TowerTerm.HEX).plus(" jumps, as it is, to the nearest enemy within "
-                + TermNumbers.cells(HexSpec.SPREAD_CELLS) + " without one; a ").plus(EffectKind.DOOM)
-                .plus(" starts over on the healthiest enemy in reach");
+        return TermText.of("when a hexed enemy is killed, its ").plus(TowerTerm.HEX)
+                .plus(" splits in two, each half jumping, with the time it had left, to the nearest enemy within "
+                + TermNumbers.cells(HexSpec.SPREAD_CELLS) + " without one; ").plus(EffectKind.DOOM)
+                .plus(" shares what it recorded between them");
     }
 }
