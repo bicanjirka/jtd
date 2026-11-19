@@ -31,9 +31,9 @@ final class StatusIcon extends JComponent {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final Font VALUE_FONT = Hud.LABEL_FONT.deriveFont(Font.BOLD, 13f);
+    private static final Font VALUE_FONT = Hud.font(Font.BOLD, Hud.BODY);
     private static final String WIDEST_NUMBER = "0000000";
-    private static final Font MORE_FONT = Hud.LABEL_FONT.deriveFont(Font.BOLD, 11f);
+    private static final Font MORE_FONT = Hud.font(Font.BOLD, Hud.CAPTION);
     private static final String WIDEST_MORE = "+99";
     private static final int PADDING = 4;
     private static final int GAP = 6;
@@ -55,7 +55,7 @@ final class StatusIcon extends JComponent {
     private static final int HOVER_ALPHA = 36;
     private static final int FLASH_ALPHA = 150;
     private static final int ARC = 6;
-    private static final Font INFINITY_FONT = Hud.LABEL_FONT.deriveFont(Font.BOLD, 20f);
+    private static final Font INFINITY_FONT = Hud.font(Font.BOLD, Hud.HEADING);
     private static final String FREE_TAG = "FREE";
     private static final int FREE_TAG_GAP = 5;
     private static final int FREE_TAG_PADDING = 3;

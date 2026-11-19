@@ -52,25 +52,24 @@ final class InfoSheetDocument {
     private static final Color BAR_BACKGROUND = new Color(28, 28, 29);
     private static final Color BAR_FILL = new Color(113, 113, 115);
     private static final Color BAR_FILL_GONE = new Color(70, 70, 71);
-    private static final Font BAR_FONT = new Font(Font.DIALOG, Font.PLAIN, 10);
+    private static final Font BAR_FONT = Hud.font(Font.PLAIN, Hud.CAPTION);
     private static final int GLYPH_BOX = 11;
     private static final float GLYPH_SIZE = 4.2f;
     private static final int BODY_BOX = 13;
     private static final float BODY_SIZE = 5f;
     private static final float BADGE_SIZE = 4.5f;
-    private static final int BAR_HEIGHT = 12;
+    private static final int BAR_HEIGHT = 14;
     private static final int BAR_VALUE_GAP = 8;
     private static final int STRIP_HEIGHT = 10;
     private static final int STRIP_GAP = 2;
-    private static final Font STRIP_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
+    private static final Font STRIP_FONT = Hud.font(Font.PLAIN, Hud.MICRO);
     private static final Color SHIELD_ANY = Java2DFrameRenderer.colorFor(Palette.STATUS_MARKER_SHIELD).darker().darker();
     private static final Color SHIELD_PHYSICAL = Java2DFrameRenderer.colorFor(Palette.DAMAGE_PHYSICAL).darker().darker();
     private static final Color SHIELD_MAGIC = Java2DFrameRenderer.colorFor(Palette.DAMAGE_MAGIC).darker().darker();
-    private static final int RANK_FONT_SIZE = 11;
-    private static final int PROSE_FONT_SIZE = 11;
+    private static final int RANK_FONT_SIZE = Hud.CAPTION;
+    private static final int PROSE_FONT_SIZE = Hud.CAPTION;
     private static final int GAP_FONT_SIZE = 4;
     private static final int DIVIDER_HEIGHT = 7;
-    private static final int ICON_LABEL_FONT_SIZE = 10;
     private static final int TITLE_GAP = 6;
     private static final int ARROW_BOX = 9;
     private static final int UNIT_WIDTH = 22;
@@ -586,7 +585,7 @@ final class InfoSheetDocument {
 
     private void paintIconRow(Graphics2D g2, SheetLine.IconRow row, IconRowLayout layout) {
         g2.translate(-this.width / 2.0, -layout.height() / 2.0);
-        g2.setFont(new Font(Font.DIALOG, Font.PLAIN, ICON_LABEL_FONT_SIZE));
+        g2.setFont(Hud.LABEL_FONT);
         FontMetrics labelMetrics = g2.getFontMetrics();
         g2.setColor(PROSE_COLOR);
         g2.drawString(row.label(), 0,

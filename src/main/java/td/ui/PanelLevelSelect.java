@@ -79,11 +79,11 @@ public class PanelLevelSelect extends JPanel {
         this.setBorder(new EmptyBorder(32, 32, 28, 32));
 
         JLabel title = new JLabel("TOWER DEFENSE", SwingConstants.CENTER);
-        title.setFont(new Font("SansSerif", Font.BOLD, 30));
+        title.setFont(Hud.font(Font.BOLD, Hud.DISPLAY));
         title.setForeground(FOREGROUND);
 
         JLabel subtitle = new JLabel("SELECT YOUR LEVEL", SwingConstants.CENTER);
-        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        subtitle.setFont(Hud.font(Font.PLAIN, Hud.BODY));
         subtitle.setForeground(SUBTITLE_FOREGROUND);
         subtitle.setBorder(new EmptyBorder(6, 0, 24, 0));
         subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -156,12 +156,12 @@ public class PanelLevelSelect extends JPanel {
         body.setBorder(new EmptyBorder(18, 14, 14, 14));
 
         // Wraps rather than truncates: a narrow card still shows the whole name.
-        JTextArea name = wrappingText(level.name(), new Font("SansSerif", Font.BOLD, 19), textTint);
+        JTextArea name = wrappingText(level.name(), Hud.font(Font.BOLD, Hud.HEADING), textTint);
         name.setBorder(new EmptyBorder(0, 0, 8, 0));
         body.add(name, BorderLayout.NORTH);
 
         JustifiedTextBlock description = new JustifiedTextBlock(level.description(), hyphenator);
-        description.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        description.setFont(Hud.BODY_FONT);
         description.setForeground(MUTED_FOREGROUND);
         body.add(description, BorderLayout.CENTER);
 
@@ -180,7 +180,7 @@ public class PanelLevelSelect extends JPanel {
         south.add(stats);
 
         JLabel prompt = new JLabel("CLICK TO DEPLOY", SwingConstants.CENTER);
-        prompt.setFont(new Font("SansSerif", Font.BOLD, 11));
+        prompt.setFont(Hud.font(Font.BOLD, Hud.CAPTION));
         prompt.setForeground(SUBTITLE_FOREGROUND);
         prompt.setAlignmentX(Component.CENTER_ALIGNMENT);
         south.add(prompt);
@@ -228,11 +228,11 @@ public class PanelLevelSelect extends JPanel {
         stat.setOpaque(false);
 
         JLabel labelText = new JLabel(label);
-        labelText.setFont(new Font("SansSerif", Font.BOLD, 10));
+        labelText.setFont(Hud.font(Font.BOLD, Hud.CAPTION));
         labelText.setForeground(STAT_LABEL);
 
         JLabel valueText = new JLabel(value, SwingConstants.RIGHT);
-        valueText.setFont(new Font("SansSerif", Font.BOLD, 15));
+        valueText.setFont(Hud.font(Font.BOLD, Hud.TITLE));
         valueText.setForeground(valueColor);
 
         stat.add(labelText, BorderLayout.WEST);

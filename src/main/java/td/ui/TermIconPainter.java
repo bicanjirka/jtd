@@ -34,9 +34,9 @@ public final class TermIconPainter {
     public static final int LABEL = 11;
 
     private static final float DESIGN = 20f;
-    private static final Font COUNT_FONT = new Font(Font.DIALOG, Font.BOLD, 9);
-    private static final Font NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 8);
-    private static final Font LABEL_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
+    private static final Font COUNT_FONT = Hud.font(Font.BOLD, Hud.MICRO);
+    private static final Font NUMERAL_FONT = Hud.font(Font.BOLD, Hud.MICRO);
+    private static final Font LABEL_FONT = Hud.font(Font.PLAIN, Hud.MICRO);
     private static final float FADED_ALPHA = 0.38f;
 
     private TermIconPainter() {
