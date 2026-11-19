@@ -3,6 +3,7 @@ package td.tower;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.effect.Effect;
 import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
@@ -20,6 +21,7 @@ import td.tower.sniper.Bullet;
 import td.tower.sniper.Execution;
 import td.tower.sniper.ExecutionerMechanic;
 import td.tower.sniper.HeadhunterMechanic;
+import td.tower.sniper.HemorrhageMechanic;
 import td.tower.sniper.Hop;
 import td.tower.sniper.RicochetMechanic;
 import td.tower.sniper.ShotActions;
@@ -30,7 +32,6 @@ import td.tower.sniper.SniperMechanic;
 import td.tower.sniper.SniperShot;
 import td.tower.sniper.SniperSpec;
 import td.tower.targeting.InRangeTargetQuery;
-import td.tower.targeting.NearestSelector;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
@@ -113,13 +114,15 @@ public final class SniperTower extends AbstractTower {
             .withModifiers(TowerModifiers.critMultiplier(1.0f))
             .inTier(1);
 
-    private static final UpgradeNode FRENZY = UpgradeNode.of("sniper.frenzy", "Frenzy", 8)
-            .withProc(Proc.onCrit(GRANTS_FRENZY))
+    private static final UpgradeNode HEMORRHAGE = UpgradeNode.of("sniper.hemorrhage", "Hemorrhage", 8)
             .inTier(2);
     private static final UpgradeNode RICOCHET = UpgradeNode.of("sniper.ricochet", "Ricochet", 8)
             .inTier(2);
     private static final UpgradeNode SUNDERING_CRITS = UpgradeNode.of("sniper.sundering_crits", "Sundering Crits", 8)
-            .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 2)))
+            .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 1)))
+            .inTier(2);
+    private static final UpgradeNode UNRAVELING_CRITS = UpgradeNode.of("sniper.unraveling_crits", "Unraveling Crits", 8)
+            .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1)))
             .inTier(2);
     private static final UpgradeNode SILVER_ROUND = UpgradeNode.of("sniper.silver_round", "Silver Round", 11)
             .withProc(everyFourthShotIs(TowerStatus.nextShots(TowerTerm.SILVER_ROUND, 1,
@@ -131,9 +134,9 @@ public final class SniperTower extends AbstractTower {
                     TowerModifiers.damagePercent(0.33f))))
             .after(FOURTH_SHOT)
             .inTier(2);
-    private static final UpgradeNode LONG_BARREL_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Barrel II", 15)
+    private static final UpgradeNode LONG_BARREL = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Barrel", 10)
             .withModifiers(TowerModifiers.range(1f))
-            .inTier(2);
+            .inTier(1);
 
     private static final UpgradeNode HEAVY_ROUNDS_2 = UpgradeNode.of("sniper.heavy_rounds.2", "Heavy Rounds II", 27)
             .withModifiers(TowerModifiers.damage(12f))
@@ -151,15 +154,17 @@ public final class SniperTower extends AbstractTower {
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_AIM, RIFLING, HEAVY_ROUNDS))
-            .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, KILLSHOT,
-                    FRENZY, RICOCHET, SUNDERING_CRITS, SILVER_ROUND, HOLLOW_POINT, LONG_BARREL_2,
+            .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, KILLSHOT, LONG_BARREL,
+                    HEMORRHAGE, RICOCHET, SUNDERING_CRITS, UNRAVELING_CRITS, SILVER_ROUND, HOLLOW_POINT,
                     HEAVY_ROUNDS_2, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, MOMENTUM)
             .withCluster(UpgradeCluster.of("Steady Aim", DEEP_BREATH, KEEN_EYE))
-            .withCluster(UpgradeCluster.of("On crit", FRENZY, RICOCHET, SUNDERING_CRITS))
+            .withCluster(UpgradeCluster.of("On crit", HEMORRHAGE, RICOCHET))
+            .withCluster(UpgradeCluster.of("Crit wound", SUNDERING_CRITS, UNRAVELING_CRITS))
             .withCluster(UpgradeCluster.of("Ammo", SILVER_ROUND, HOLLOW_POINT))
             .withCluster(UpgradeCluster.of("Finisher", EXECUTIONER, HEADHUNTER));
 
     private static final MechanicCatalogue<SniperMechanic> MECHANICS = MechanicCatalogue.of(
+            entry(HEMORRHAGE.id(), HemorrhageMechanic::new),
             entry(RICOCHET.id(), RicochetMechanic::new),
             entry(EXECUTIONER.id(), ExecutionerMechanic::new),
             entry(HEADHUNTER.id(), HeadhunterMechanic::new));
@@ -453,16 +458,31 @@ public final class SniperTower extends AbstractTower {
         }
 
         @Override
+        public void bleed(EnemyMob target, float sharePerCell, int ticks) {
+            int perCell = Math.round(this.landed.stats().damage() * sharePerCell);
+            AttackProfile bleed = this.landed.stats().attack().pastArmorAndPlating().asPeriodic();
+            SniperTower.this.applyEffect(target, _ -> Effect.bleeding(perCell, ticks,
+                    bled -> SniperTower.this.dealDamage(target, bled, bleed)));
+        }
+
+        @Override
+        public void expose(EnemyMob target, int ticks) {
+            SniperTower.this.applyEffect(target, sink -> Effect.exposed(ticks, sink));
+        }
+
+        @Override
         public void ricochet(EnemyMob from, float reachCells) {
             float reach = reachCells * SniperTower.this.cellPixels();
-            List<EnemyMob> beside = new ArrayList<>(InRangeTargetQuery.visible(from.position(), reach)
+            List<EnemyMob> others = new ArrayList<>(InRangeTargetQuery.visible(from.position(), reach)
                     .matching(SniperTower.this.context.enemies()));
-            beside.remove(from);
-            new NearestSelector(from.getX(), from.getY()).selectFrom(beside).ifPresent(next -> {
-                SniperShot hop = this.landed.shot().withAttack(AttackProfile::withoutCrits).asRounds(List.of());
-                SniperTower.this.hops.add(new Hop(from.position(), new Bullet(hop, this.landed.stats(), next,
-                        SniperTower.this.flightFrom(from.getX(), from.getY(), next)), this.landed.shot().rounds()));
-            });
+            others.remove(from);
+            if (others.isEmpty()) {
+                return;
+            }
+            EnemyMob next = others.get(SniperTower.this.context.random().nextIndex(others.size()));
+            SniperShot hop = this.landed.shot().asRounds(List.of());
+            SniperTower.this.hops.add(new Hop(from.position(), new Bullet(hop, this.landed.stats(), next,
+                    SniperTower.this.flightFrom(from.getX(), from.getY(), next)), this.landed.shot().rounds()));
         }
     }
 }

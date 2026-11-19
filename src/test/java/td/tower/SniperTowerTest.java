@@ -231,27 +231,49 @@ class SniperTowerTest {
     }
 
     @Test
-    void aCritHopsOnceWhenItArrivesToTheNearestOtherEnemyForTheShotsDamageAndTheHopCannotCrit() {
+    void aCritHopsOnceWhenItArrivesToAnEnemyBesideItForTheShotsDamageAndTheHopMayCrit() {
         SniperTower tower = this.sniperWith("Ricochet");
         float edge = tower.getRangeReal() * 0.85f;
-        FakeEnemyMob aimed = FakeEnemyMob.at(tower.getX() + edge, tower.getY());
+        FakeEnemyMob aimed = FakeEnemyMob.at(tower.getX() + edge, tower.getY()).withProgression(900);
         aimed.landEveryHitCritical();
-        FakeEnemyMob beside = FakeEnemyMob.at(aimed.getX() + 30, aimed.getY());
-        FakeEnemyMob next = FakeEnemyMob.at(beside.getX() + 30, beside.getY());
-        this.world.enemies().setEnemies(new EnemyMob[]{aimed, beside, next});
+        float cell = tower.getRangeReal() / tower.stats().range();
+        FakeEnemyMob other = FakeEnemyMob.at(aimed.getX() - Math.round(2 * cell), aimed.getY());
+        FakeEnemyMob outOfRange = FakeEnemyMob.at(aimed.getX() + Math.round(5 * cell), aimed.getY());
+        this.world.enemies().setEnemies(new EnemyMob[]{aimed, other, outOfRange});
         while (aimed.hits().isEmpty()) {
             this.tick(tower);
         }
-        boolean hopArrivedWithTheShot = !beside.hits().isEmpty();
+        boolean hopArrivedWithTheShot = !other.hits().isEmpty();
 
-        while (beside.hits().isEmpty()) {
+        while (other.hits().isEmpty()) {
             this.tick(tower);
         }
 
         assertThat(hopArrivedWithTheShot).isFalse();
-        assertThat(beside.onlyHitAmount()).isEqualTo(aimed.onlyHitAmount());
-        assertThat(beside.attackers().getFirst().critChance()).isZero();
-        assertThat(beside.attackers().getFirst().guaranteedCrit()).isFalse();
-        assertThat(next.hits()).isEmpty();
+        assertThat(other.onlyHitAmount()).isEqualTo(aimed.onlyHitAmount());
+        assertThat(other.attackers().getFirst().critChance()).isEqualTo(aimed.attackers().getFirst().critChance());
+        assertThat(outOfRange.hits()).isEmpty();
+    }
+
+    @Test
+    void aRicochetPicksItsEnemyBesideTheTargetAtRandomNotTheNearest() {
+        GameWorld lastPick = WorldFixtures.newWorldOnBoard(() -> 0.99, BoardFixtures.SCALE, 20, 20);
+        SniperTower tower = new SniperTower(lastPick, 3, 3);
+        UpgradePaths.buy(tower, lastPick, "Ricochet");
+        float edge = tower.getRangeReal() * 0.85f;
+        FakeEnemyMob aimed = FakeEnemyMob.at(tower.getX() + edge, tower.getY()).withProgression(900);
+        aimed.landEveryHitCritical();
+        float cell = tower.getRangeReal() / tower.stats().range();
+        FakeEnemyMob nearest = FakeEnemyMob.at(aimed.getX() - 10, aimed.getY());
+        FakeEnemyMob far = FakeEnemyMob.at(aimed.getX() - Math.round(2 * cell), aimed.getY());
+        lastPick.enemies().setEnemies(new EnemyMob[]{aimed, nearest, far});
+
+        for (int tick = 1; far.hits().isEmpty() && nearest.hits().isEmpty(); tick++) {
+            tower.beginTick(tick);
+            tower.doTick(tick);
+        }
+
+        assertThat(far.hits()).hasSize(1);
+        assertThat(nearest.hits()).isEmpty();
     }
 }

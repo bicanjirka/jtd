@@ -66,6 +66,34 @@ class SniperMechanicTest {
     }
 
     @Test
+    void hemorrhageBleedsACritTargetThatLivesButNotAPlainHitOrAKill() {
+        HemorrhageMechanic mechanic = new HemorrhageMechanic();
+        EnemyMob plain = FakeEnemyMob.at(0, 0);
+        EnemyMob crit = FakeEnemyMob.at(10, 0);
+        EnemyMob killed = FakeEnemyMob.at(20, 0);
+
+        mechanic.react(new ShotResult(plain, false, false), this.actions);
+        mechanic.react(new ShotResult(crit, true, false), this.actions);
+        mechanic.react(new ShotResult(killed, true, true), this.actions);
+
+        assertThat(this.actions.bled).containsExactly(crit);
+    }
+
+    @Test
+    void exposingCritsExposeACritTargetThatLivesButNotAPlainHitOrAKill() {
+        ExposingMechanic mechanic = new ExposingMechanic();
+        EnemyMob plain = FakeEnemyMob.at(0, 0);
+        EnemyMob crit = FakeEnemyMob.at(10, 0);
+        EnemyMob killed = FakeEnemyMob.at(20, 0);
+
+        mechanic.react(new ShotResult(plain, false, false), this.actions);
+        mechanic.react(new ShotResult(crit, true, false), this.actions);
+        mechanic.react(new ShotResult(killed, true, true), this.actions);
+
+        assertThat(this.actions.exposed).containsExactly(crit);
+    }
+
+    @Test
     void headhunterAddsDamageAgainstAnEliteAndABossButNotARankBelow() {
         HeadhunterMechanic mechanic = new HeadhunterMechanic();
 

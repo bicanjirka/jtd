@@ -14,6 +14,6 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   it lands, the mechanics `settle` what it counts as, the procs hear of it once (`report`), then the
   mechanics `react`. The wait after a shot is spent by that shot's own attack-speed bonus.
 - A mechanic reaches the tower only through `ShotActions`. An execution is not a hit: it never crits and
-  spends no mark. A ricochet's hop lands as the shot it came from but can't crit, and nothing triggers off
+  spends no mark. A ricochet's hop lands as the shot it came from, crits included, but nothing triggers off
   it: it is neither settled nor reported.
 - Whom it may shoot and whom it picks is a `SniperSpec`; the first owned node that sets an aim decides.
