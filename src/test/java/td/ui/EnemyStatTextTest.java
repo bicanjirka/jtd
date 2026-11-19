@@ -210,6 +210,54 @@ class EnemyStatTextTest {
         assertThat(iconOf(sheet, "Debuffs", "effect.sundered").face().corner()).isEqualTo("3");
     }
 
+    private static Optional<Row> effectRow(InfoSheet sheet, String pictogram, String label) {
+        return iconOf(sheet, "Debuffs", pictogram).tooltip().lines().stream()
+                .filter(Row.class::isInstance).map(Row.class::cast)
+                .filter(row -> row.label().equals(label)).findFirst();
+    }
+
+    @Test
+    void aCountShowsHowLongItsHoldRunsAndOnceFadingWhenItNextLosesAStack() {
+        DefinedEnemyMob mob = this.anEnemy();
+        mob.applyEffect(Effect.sundered(2));
+        InfoSheet holding = EnemyStatText.live(mob.inspect(), WORDING);
+        for (int tick = 1; tick <= Effect.HOLD_TICKS + 1; tick++) {
+            mob.doTick(tick);
+        }
+
+        InfoSheet fading = EnemyStatText.live(mob.inspect(), WORDING);
+
+        assertThat(effectRow(holding, "effect.sundered", "Held for")).isPresent();
+        assertThat(effectRow(fading, "effect.sundered", "Next stack lost in")).isPresent();
+        assertThat(effectRow(fading, "effect.sundered", "Held for")).isEmpty();
+    }
+
+    @Test
+    void aCountASourceHoldsShowsItIsHeldWithNoTime() {
+        DefinedEnemyMob mob = this.anEnemy();
+        mob.holdStacks(EffectKind.TOLL, 1, 3);
+        mob.doTick(1);
+
+        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
+
+        assertThat(effectRow(sheet, "effect.toll", "Held")).hasValueSatisfying(
+                row -> assertThat(row.value()).isEqualTo("while its source lasts"));
+    }
+
+    @Test
+    void aDebuffInSharesShowsHowManyTowersKeepItAndWhenTheNextShareEnds() {
+        DefinedEnemyMob mob = this.anEnemy();
+        mob.applyEffect(Effect.cracked(1, 100, DamageSink.none()), AttackOrigin.fresh());
+        mob.applyEffect(Effect.cracked(1, 40, DamageSink.none()), AttackOrigin.fresh());
+
+        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
+
+        assertThat(effectRow(sheet, "effect.cracked", "From")).hasValueSatisfying(
+                row -> assertThat(row.value()).isEqualTo("2 towers"));
+        assertThat(effectRow(sheet, "effect.cracked", "Next share ends in")).hasValueSatisfying(
+                row -> assertThat(row.value()).isEqualTo("2"));
+    }
+
     @Test
     void aTimedEffectSweepsAndShowsWholeSecondsUnderTen() {
         DefinedEnemyMob mob = this.anEnemy();

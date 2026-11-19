@@ -118,7 +118,19 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
                 .withLevel(live.slowNow(kind))
                 .withClockTicks(live.clockTicks(kind))
                 .withFullness(live.fullness(kind))
-                .withShares(live.find(kind).map(EnemyInspection::sharesOf).orElse(List.of()));
+                .withShares(live.find(kind).map(EnemyInspection::sharesOf).orElse(List.of()))
+                .withPhase(phaseOf(live, kind))
+                .withSources(live.sources(kind));
+    }
+
+    private static Optional<CountPhase> phaseOf(ActiveEffects live, EffectKind kind) {
+        if (!kind.isCount()) {
+            return Optional.empty();
+        }
+        if (live.isHeld(kind)) {
+            return Optional.of(CountPhase.HELD);
+        }
+        return live.find(kind).map(count -> count.remainingTicks() > 0 ? CountPhase.HOLDING : CountPhase.FADING);
     }
 
     private static List<ShareState> sharesOf(Effect effect) {
@@ -162,14 +174,18 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
     /**
      * One active effect.
      *
-     * @param remainingTicks ticks left; empty for a fuel pool, which decays rather than counting down
-     * @param stacks         a vulnerability's, burn's or poison's stack count; {@code 0} for other kinds
+     * @param remainingTicks ticks left, or until it next loses a stack; empty for a fuel pool and a held count
+     * @param stacks         a stacking kind's stack count; {@code 0} for other kinds
      * @param level          how much speed a chill takes away, from {@code 0} to {@code 1}; {@code 0} for other kinds
      * @param shares         each source's heal or shield; empty for other kinds
+     * @param phase          where a count stands: held by its source, holding after an application, or fading; empty
+     *                       for every other kind
+     * @param sources        how many towers keep a share of a kind in shares of stacks; {@code 0} for other kinds
      */
     public record EffectState(EffectKind kind, OptionalInt remainingTicks, int stacks, float level,
                               OptionalInt clockTicks, OptionalDouble fullness, boolean faded,
-                              OptionalDouble nextShare, List<ShareState> shares) {
+                              OptionalDouble nextShare, List<ShareState> shares, Optional<CountPhase> phase,
+                              int sources) {
 
         public EffectState {
             shares = List.copyOf(shares);
@@ -178,44 +194,65 @@ public record EnemyInspection(String name, String description, Rank rank, BodyAr
         /** An effect with no stacks, level or shares; add them with the {@code withX} copies. */
         public static EffectState of(EffectKind kind, OptionalInt remainingTicks) {
             return new EffectState(kind, remainingTicks, 0, 0f, OptionalInt.empty(),
-                    OptionalDouble.empty(), false, OptionalDouble.empty(), List.of());
+                    OptionalDouble.empty(), false, OptionalDouble.empty(), List.of(), Optional.empty(), 0);
         }
 
         /** A freeze that ended while its meter still runs. */
         public static EffectState faded(EffectKind kind) {
             return new EffectState(kind, OptionalInt.empty(), 0, 0f, OptionalInt.empty(),
-                    OptionalDouble.empty(), true, OptionalDouble.empty(), List.of());
+                    OptionalDouble.empty(), true, OptionalDouble.empty(), List.of(), Optional.empty(), 0);
         }
 
         public EffectState withStacks(int stacks) {
             return new EffectState(this.kind, this.remainingTicks, stacks, this.level, this.clockTicks,
-                    this.fullness, this.faded, this.nextShare, this.shares);
+                    this.fullness, this.faded, this.nextShare, this.shares, this.phase, this.sources);
         }
 
         public EffectState withLevel(float level) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, level, this.clockTicks,
-                    this.fullness, this.faded, this.nextShare, this.shares);
+                    this.fullness, this.faded, this.nextShare, this.shares, this.phase, this.sources);
         }
 
         public EffectState withClockTicks(OptionalInt clockTicks) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level, clockTicks,
-                    this.fullness, this.faded, this.nextShare, this.shares);
+                    this.fullness, this.faded, this.nextShare, this.shares, this.phase, this.sources);
         }
 
         public EffectState withFullness(OptionalDouble fullness) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level,
-                    this.clockTicks, fullness, this.faded, this.nextShare, this.shares);
+                    this.clockTicks, fullness, this.faded, this.nextShare, this.shares, this.phase, this.sources);
         }
 
         public EffectState withNextShare(float nextShare) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level,
-                    this.clockTicks, this.fullness, this.faded, OptionalDouble.of(nextShare), this.shares);
+                    this.clockTicks, this.fullness, this.faded, OptionalDouble.of(nextShare), this.shares, this.phase,
+                    this.sources);
         }
 
         public EffectState withShares(List<ShareState> shares) {
             return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level,
-                    this.clockTicks, this.fullness, this.faded, this.nextShare, shares);
+                    this.clockTicks, this.fullness, this.faded, this.nextShare, shares, this.phase, this.sources);
         }
+
+        public EffectState withPhase(Optional<CountPhase> phase) {
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level,
+                    this.clockTicks, this.fullness, this.faded, this.nextShare, this.shares, phase, this.sources);
+        }
+
+        public EffectState withSources(int sources) {
+            return new EffectState(this.kind, this.remainingTicks, this.stacks, this.level,
+                    this.clockTicks, this.fullness, this.faded, this.nextShare, this.shares, this.phase, sources);
+        }
+    }
+
+    /** Where a count stands, for the inspector. */
+    public enum CountPhase {
+        /** A pool, a field or an aura holds it: it loses nothing while that lasts. */
+        HELD,
+        /** An application's hold runs: it loses nothing until that ends. */
+        HOLDING,
+        /** Nothing holds it: it loses a stack each fade step. */
+        FADING
     }
 
     /**
