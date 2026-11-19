@@ -40,6 +40,13 @@ final class ReportPage {
             return new Table(this.title, text, this.header, this.rows, this.heat);
         }
 
+        /** The rows that name {@code tower}: a cell that is its type, or that starts with it, as a finding does. */
+        Table onlyOf(String tower) {
+            List<List<String>> kept = this.rows.stream().filter(row -> row.stream()
+                    .anyMatch(cell -> cell.equals(tower) || cell.startsWith(tower + " "))).toList();
+            return new Table(this.title, this.note, this.header, kept, this.heat);
+        }
+
         Table heating(String... columns) {
             return new Table(this.title, this.note, this.header, this.rows, Set.of(columns));
         }

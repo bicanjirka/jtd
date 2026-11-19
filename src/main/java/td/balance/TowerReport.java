@@ -1,5 +1,8 @@
 package td.balance;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
 import td.balance.TowerSheet.Held;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeTier;
@@ -98,6 +101,8 @@ public final class TowerReport {
 
     /** Judges the stored bench sheets, stores the prices and stages, and writes the page. */
     public static void main(String[] args) {
+        ((Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)).setLevel(Level.WARN);
+        Optional<String> only = towerNamed(args);
         TowerSheet sheet = TowerSheet.stored();
         Map<String, List<Cluster>> clusters = new LinkedHashMap<>();
         for (String tower : sheet.towers()) {
@@ -109,7 +114,8 @@ public final class TowerReport {
         }
         TowerReport report = new TowerReport(sheet, clusters, ReportPage.load(TowerBench.PAIR_SHEET));
         List<ReportPage.Table> tables = new ArrayList<>(List.of(report.towers(), report.stages(), report.roles(),
-                report.profiles(), report.tiers(), report.nodes(), report.clusterPicks(), report.synergies()));
+                report.profiles(), report.tiers(), report.nodes(), report.clusterPicks(), report.strategies(),
+                report.synergies()));
         Optional<TowerRounds> rounds = TowerRounds.stored(sheet);
         rounds.ifPresentOrElse(byRound -> {
             Map<String, List<Integer>> proposal = byRound.proposed();
@@ -130,6 +136,10 @@ public final class TowerReport {
                 what the judged towers sell bare. Every table ends in a verdict; the first table gathers the ones that
                 break a rule. Click a column to sort.""", sheet.rate()), page);
         System.out.printf(Locale.ROOT, "Going rate: %.3f Walkers of a mixed wave a credit%n%n", sheet.rate());
+        if (only.isPresent()) {
+            page.forEach(table -> print(table.onlyOf(only.get())));
+            return;
+        }
         print(tables.get(0));
         print(tables.get(1));
         print(findings);
@@ -141,7 +151,27 @@ public final class TowerReport {
                 + PAGE + ".html");
     }
 
+    /**
+     * The tower {@code --tower} names, by its type or its shop name in any case: the run then prints only that tower's
+     * rows of every table, and still stores and publishes them whole.
+     */
+    private static Optional<String> towerNamed(String[] args) {
+        List<String> given = List.of(args);
+        int at = given.indexOf("--tower");
+        if (at < 0 || at + 1 >= given.size()) {
+            return Optional.empty();
+        }
+        String named = given.get(at + 1).toLowerCase(Locale.ROOT);
+        return Stream.of(TowerFactory.Type.values())
+                .filter(type -> type.name().toLowerCase(Locale.ROOT).equals(named)
+                        || type.displayName().toLowerCase(Locale.ROOT).equals(named))
+                .map(TowerFactory.Type::name).findFirst();
+    }
+
     private static void print(ReportPage.Table table) {
+        if (table.rows().isEmpty()) {
+            return;
+        }
         System.out.println("== " + table.title());
         System.out.println(String.join(" | ", table.header()));
         table.rows().forEach(row -> System.out.println(String.join(" | ", row)));
@@ -388,6 +418,58 @@ public final class TowerReport {
             double most = this.rivalsAt(stage).stream().mapToDouble(rival -> this.perCredit(rival, stage, scenario)).max().orElse(0);
             return most > 0 && this.perCredit(tower, stage, scenario) >= most * (1 - NOISE);
         }).toList();
+    }
+
+    /**
+     * Every strategy a tower's retune named, set against that tower's other strategies: what a credit of it buys, where
+     * it holds the most for a credit, and whether it is the answer to everything or pays far less than a sibling.
+     */
+    ReportPage.Table strategies() {
+        List<List<String>> rows = new ArrayList<>();
+        for (String tower : this.sheet.towers()) {
+            List<Held> named = this.sheet.buildsOf(tower).stream()
+                    .filter(build -> build.role().equals(TowerBench.STRATEGY)).toList();
+            for (Held strategy : named) {
+                List<Held> others = named.stream().filter(other -> !other.label().equals(strategy.label())).toList();
+                List<String> leads = this.sheet.scenarios().stream()
+                        .filter(scenario -> leadsIn(strategy, others, scenario)).toList();
+                double share = leads.stream().mapToDouble(TowerSheet::weightOf).sum()
+                        / this.sheet.scenarios().stream().mapToDouble(TowerSheet::weightOf).sum();
+                double bestOther = others.stream().mapToDouble(this::value).max().orElse(Double.NaN);
+                List<String> row = new ArrayList<>(List.of(tower, strategy.label(), String.valueOf(strategy.cost()),
+                        ReportPage.number(this.sheet.power(strategy)), ReportPage.number(this.value(strategy))));
+                this.sheet.scenarios().forEach(scenario -> row.add(ReportPage.number(
+                        100 * strategy.alone(scenario) / strategy.cost())));
+                row.add(leads.isEmpty() ? NONE : String.join(", ", leads));
+                row.add(strategyVerdict(this.value(strategy), bestOther, share));
+                rows.add(row);
+            }
+        }
+        List<String> header = new ArrayList<>(List.of("tower", "strategy", "cost", "power", "value"));
+        this.sheet.scenarios().forEach(scenario -> header.add(scenario + " /100"));
+        header.addAll(List.of("leads in", "verdict"));
+        return ReportPage.Table.of("Strategies", header, rows).noted("""
+                The builds a tower's retune named (StrategyBuilds), each bought whole at its own cost. value: worth over
+                cost. /100: Walkers held alone for 100 credits. leads in: the scenarios where it holds the most for a
+                credit of the tower's strategies. A strategy is the go-to when it leads most of a mixed wave, and weak
+                when it pays well under the best of its siblings.""").heating("value");
+    }
+
+    private static boolean leadsIn(Held strategy, List<Held> others, String scenario) {
+        double own = strategy.alone(scenario) / strategy.cost();
+        double most = others.stream().mapToDouble(other -> other.alone(scenario) / other.cost()).max().orElse(0);
+        return own > 0 && !others.isEmpty() && own >= most * (1 - NOISE);
+    }
+
+    /** A strategy paying {@code value} beside a sibling paying {@code bestOther}, leading {@code share} of a mixed wave. */
+    static String strategyVerdict(double value, double bestOther, double share) {
+        if (Double.isNaN(bestOther)) {
+            return OK;
+        }
+        if (share >= GO_TO) {
+            return String.format(Locale.ROOT, "DOMINANT go-to: the best buy against %.0f%% of a mixed wave", share * 100);
+        }
+        return value < WEAK * bestOther ? "WARN weak: pays " + times(value / bestOther) + " its best sibling" : OK;
     }
 
     /** Every rule a tower's role sets, at every stage, in every scenario it names. */

@@ -15,7 +15,8 @@ mvn -q compile exec:java -Dexec.mainClass=td.balance.PlayCheck          # one le
 
 `EnemyPowerReport` takes `--kinds golem,yeti`, `--ranks grunt,elite` and `--fit golem=1.7,yeti=1.7`;
 `WavePowerReport` takes `--levels rift,hive`; `TowerBench` takes `--towers sniper,burst`, `--scenarios stream,group`
-and `--quick`; `TowerReport` takes nothing and reads what the bench stored; `PlayCheck` takes `--level rift`
+and `--quick`; `TowerReport` reads what the bench stored, and with `--tower <it>` prints only that tower's rows
+(it still stores and publishes every tower); `PlayCheck` takes `--level rift`
 (Iron Crossing without it), `--seed 7`, `--players best,mortar`, `--ahead 1` and `--verbose`. All store their rows in
 `target/balance/`. `WavePowerReport` reads the bench's sheets, so it runs after `TowerBench`; with `--levels` it
 prints and stores nothing, as `PlayCheck` does with `--players`.
@@ -302,6 +303,7 @@ much for where they sit: that is what to change a node's numbers for.
 | Tiers | each tier's cost at the suggested prices against the pace and the same tier of the other towers | `WARN`, saying which |
 | Nodes | the prices above | `WARN price`: off its suggestion. `DOMINANT node`: the whole tree loses over a third of its power without it |
 | Clusters and forks | each member in the whole tree bought with it | `DOMINANT pick`: a member a credit of which buys 15% more than any other, and that is behind in no scenario. `WARN weaker pick`: under 0.85 of the best |
+| Strategies | each build a tower's retune named (`StrategyBuilds`), against the tower's other strategies | `DOMINANT go-to`: it holds the most for a credit against 60% of a mixed wave. `WARN weak`: it pays under 0.8 of its best sibling |
 | Synergies | the bench's pairs, by the geometric mean over the paired scenarios | `WARN strong pair` from 2, `WARN clash` to 0.7 |
 | Rounds | each tower's best defence before each round of the reference level against the median of the round (below) | `DOMINANT` over 1.25, `WARN weak` under 0.8, naming the rounds |
 
