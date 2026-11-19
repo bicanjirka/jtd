@@ -39,11 +39,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Paints one tower's upgrade tree in the design units of {@link UpgradeTreeLayout}: each tier's band with its numeral
+ * Paints one tower's upgrade tree at the pixels of {@link UpgradeTreeLayout}: each tier's band with its numeral
  * strip, whose key chip buys the tier's singles, a locked tier's gate in the gap under its band, the links and badges,
  * the cluster frames, and every node in its look with its price tag. A node that changes a number is a
- * circle, one that adds an ability a square. Glyphs take the tower's colour; prices stay neutral. The caller scales
- * the graphics to the panel.
+ * circle, one that adds an ability a square. Glyphs take the tower's colour; prices stay neutral.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class UpgradeTreePainter {
@@ -130,18 +129,18 @@ final class UpgradeTreePainter {
     private static final float LOCKED_ALPHA = 0.55f;
     private static final float HOVER_BORDER = 0.35f;
     private static final float OWNED_FILL = 0.28f;
-    private static final Font NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 11);
-    private static final Font SMALL_NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 9);
-    private static final Font GATE_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
-    private static final Font CHIP_FONT = new Font(Font.DIALOG, Font.PLAIN, 7);
-    private static final Font FRAME_FONT = new Font(Font.DIALOG, Font.PLAIN, 8);
-    private static final Font LINE_NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 7);
+    private static final Font NUMERAL_FONT = Hud.font(Font.BOLD, Hud.TITLE);
+    private static final Font SMALL_NUMERAL_FONT = Hud.font(Font.BOLD, Hud.CAPTION);
+    private static final Font GATE_FONT = Hud.BODY_FONT;
+    private static final Font CHIP_FONT = Hud.font(Font.PLAIN, Hud.MICRO);
+    private static final Font FRAME_FONT = Hud.BODY_FONT;
+    private static final Font LINE_NUMERAL_FONT = Hud.font(Font.BOLD, Hud.MICRO);
     /** The key chip at the foot of a numeral strip: its height, and its gap to the strip's bottom. */
-    private static final float CHIP_HEIGHT = 10f;
-    private static final float CHIP_BOTTOM = 4f;
-    private static final float GATE_LABEL_GAP = 4f;
-    private static final float LOCK_WIDTH = 12f;
-    private static final float CASH_BADGE = 10f;
+    private static final float CHIP_HEIGHT = Hud.CHIP_SIZE;
+    private static final float CHIP_BOTTOM = 5f;
+    private static final float GATE_LABEL_GAP = 5f;
+    private static final float LOCK_WIDTH = 13f;
+    private static final float CASH_BADGE = 13f;
 
     private final UpgradeTreeLayout layout;
     private final UpgradeTree tree;
@@ -232,13 +231,14 @@ final class UpgradeTreePainter {
             case Floor.Gate _, Floor.Bought _, Floor.Empty _ -> false;
         };
         Color edge = open ? Hud.mix(tower, BAND_FILL, 0.55f) : BAND_LINE;
-        Shape ground = new RoundRectangle2D.Float(left, band.top(), right - left, height, 6f, 6f);
+        Shape ground = new RoundRectangle2D.Float(left + 0.5f, band.top() + 0.5f, right - left - 1f, height - 1f, 8f,
+                8f);
         g.setColor(BAND_FILL);
         g.fill(ground);
         Color strip = open ? Hud.mix(tower, BAND_FILL, 0.82f) : LOCKED_STRIP;
         g.setColor(hovered ? Hud.mix(strip, WHITE, 0.1f) : strip);
         g.fill(new RoundRectangle2D.Float(left + 0.5f, band.top() + 0.5f, UpgradeTreeLayout.NUMERAL_WIDTH,
-                height - 1f, 5f, 5f));
+                height - 1f, 7f, 7f));
         g.setStroke(new BasicStroke(1f));
         g.setColor(edge);
         g.draw(ground);
@@ -248,7 +248,7 @@ final class UpgradeTreePainter {
         float centre = left + UpgradeTreeLayout.NUMERAL_WIDTH / 2 + 0.5f;
         g.setColor(open ? tower : GLOSS);
         centred(g, numeral, numeral.length() > 2 ? SMALL_NUMERAL_FONT : NUMERAL_FONT, centre,
-                band.top() + (height - CHIP_HEIGHT - CHIP_BOTTOM) / 2 + 4f);
+                band.top() + (height - CHIP_HEIGHT - CHIP_BOTTOM) / 2 + 5.5f);
         this.paintKeyChip(g, band, floor, centre, hovered);
     }
 
@@ -278,16 +278,16 @@ final class UpgradeTreePainter {
                 return;
             }
         }
-        float width = UpgradeTreeLayout.NUMERAL_WIDTH - 5f;
+        float width = UpgradeTreeLayout.NUMERAL_WIDTH - 6f;
         float top = band.bottom() - CHIP_BOTTOM - CHIP_HEIGHT;
-        Shape chip = new RoundRectangle2D.Float(centre - width / 2, top, width, CHIP_HEIGHT, 3f, 3f);
+        Shape chip = new RoundRectangle2D.Float(centre - width / 2, top + 0.5f, width, CHIP_HEIGHT - 1f, 5f, 5f);
         g.setColor(TAG_FILL);
         g.fill(chip);
         g.setColor(border);
-        g.setStroke(new BasicStroke(0.8f));
+        g.setStroke(new BasicStroke(1f));
         g.draw(chip);
         g.setColor(ink);
-        centred(g, key, CHIP_FONT, centre, top + CHIP_HEIGHT - 2.5f);
+        centred(g, key, CHIP_FONT, centre, top + CHIP_HEIGHT - 3f);
     }
 
     /**
@@ -309,10 +309,10 @@ final class UpgradeTreePainter {
         float end = labelEnd(right, width, y, links);
         float start = end - width;
         g.setColor(Hud.BACKGROUND);
-        g.fill(new Rectangle2D.Float(start - GATE_LABEL_GAP, y - 4f, width + 2 * GATE_LABEL_GAP, 8.5f));
-        paintLock(g, start, y - 4.5f);
+        g.fill(new Rectangle2D.Float(start - GATE_LABEL_GAP, y - 6f, width + 2 * GATE_LABEL_GAP, 12f));
+        paintLock(g, start, y - 5f);
         g.setColor(DIM);
-        g.drawString(text, start + LOCK_WIDTH, y + 3.5f);
+        g.drawString(text, start + LOCK_WIDTH, y + 4.5f);
     }
 
     /** Where a label {@code width} wide on the line at {@code y} ends: at {@code right}, or left of the links there. */
@@ -358,11 +358,11 @@ final class UpgradeTreePainter {
         boolean taken = frame.cluster().memberIds().stream().map(id -> this.tree.node(id).orElseThrow())
                 .anyMatch(member -> states.get(member).look() == Look.OWNED);
         Shape box = new RoundRectangle2D.Float(frame.box().left(), frame.box().top(), frame.box().right() - frame.box().left(),
-                frame.box().bottom() - frame.box().top(), 12f, 12f);
+                frame.box().bottom() - frame.box().top(), 16f, 16f);
         g.setColor(BAND_FILL);
         g.fill(box);
         g.setColor(taken ? FRAME_TAKEN : FRAME_IDLE);
-        g.setStroke(taken ? new BasicStroke(1f) : dashed(1f, 3f, 2f));
+        g.setStroke(taken ? new BasicStroke(1f) : dashed(1f, 4f, 3f));
         g.draw(box);
     }
 
@@ -372,9 +372,9 @@ final class UpgradeTreePainter {
         String name = frame.cluster().name();
         float width = g.getFontMetrics().stringWidth(name);
         g.setColor(BAND_FILL);
-        g.fill(new Rectangle2D.Float(frame.box().left() + 4f, frame.box().top() - 5f, width + 4f, 9f));
+        g.fill(new Rectangle2D.Float(frame.box().left() + 5f, frame.box().top() - 7f, width + 6f, 13f));
         g.setColor(GLOSS);
-        g.drawString(name, frame.box().left() + 6f, frame.box().top() + 3f);
+        g.drawString(name, frame.box().left() + 8f, frame.box().top() + 4.5f);
     }
 
     private void paintLink(Graphics2D g, Link link, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight) {
@@ -383,16 +383,16 @@ final class UpgradeTreePainter {
         path.moveTo(points.getFirst().x(), points.getFirst().y());
         points.subList(1, points.size()).forEach(point -> path.lineTo(point.x(), point.y()));
         g.setColor(BAND_FILL);
-        g.setStroke(new BasicStroke(4f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+        g.setStroke(new BasicStroke(6f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
         g.draw(path);
         Color color = LINK_IDLE;
-        Stroke stroke = new BasicStroke(1.4f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
+        Stroke stroke = new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
         if (highlight.any(link.to(), Mark.DROP)) {
             color = DROP;
-            stroke = dashed(1.6f, 3f, 3f);
+            stroke = dashed(2f, 4f, 4f);
         } else if (highlight.any(link.to(), Mark.PATH)) {
             color = WHITE;
-            stroke = new BasicStroke(1.8f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
+            stroke = new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND);
         } else if (owns(link.from(), states)) {
             color = LINK_LIT;
         } else if (link.to().nodes().stream().allMatch(node -> isOut(states.get(node).look()))) {
@@ -418,11 +418,12 @@ final class UpgradeTreePainter {
         g.setColor(TAG_FILL);
         g.fill(circle);
         g.setColor(ring);
-        g.setStroke(new BasicStroke(ring == WHITE ? 1.4f : 1f));
+        g.setStroke(new BasicStroke(ring == WHITE ? 2f : 1f));
         g.draw(circle);
         UpgradeNode source = badge.from().nodes().stream().filter(node -> states.get(node).look() == Look.OWNED)
                 .findFirst().orElse(badge.from().nodes().getFirst());
-        this.paintGlyph(g, source, badge.x() - 4f, badge.y() - 4f, 8f, met ? this.towerColor() : NEED_INK, TAG_FILL);
+        this.paintGlyph(g, source, badge.x() - 5.5f, badge.y() - 5.5f, 11f, met ? this.towerColor() : NEED_INK,
+                TAG_FILL);
     }
 
     private void paintNode(Graphics2D g, UpgradeNode node, Spot spot, UpgradeNodeState state, Highlight highlight) {
@@ -437,7 +438,7 @@ final class UpgradeTreePainter {
         if (look == Look.SWITCHABLE) {
             paintHatch(g, box, spot);
         }
-        float inset = round ? 6.5f : 4.5f;
+        float inset = round ? 8.5f : 6f;
         float size = spot.size() - 2 * inset;
         Color ink = inkOf(look, tower);
         this.paintGlyph(g, node, spot.x() - size / 2, spot.y() - size / 2, size, ink,
@@ -446,9 +447,9 @@ final class UpgradeTreePainter {
         if (!face.numeral().isEmpty()) {
             g.setColor(ink);
             g.setFont(LINE_NUMERAL_FONT);
-            float right = spot.x() + spot.size() / 2 - (round ? 6f : 3f);
+            float right = spot.x() + spot.size() / 2 - (round ? 8f : 4f);
             g.drawString(face.numeral(), right - g.getFontMetrics().stringWidth(face.numeral()),
-                    spot.y() - spot.size() / 2 + 8f);
+                    spot.y() - spot.size() / 2 + 10.5f);
         }
         Color border = borderOf(look, tower);
         g.setColor(hovered ? Hud.mix(border, WHITE, HOVER_BORDER) : border);
@@ -457,11 +458,11 @@ final class UpgradeTreePainter {
         if (highlight.is(node, Mark.PATH) || highlight.is(node, Mark.DROP)) {
             Color edge = highlight.is(node, Mark.PATH) ? WHITE : DROP;
             g.setColor(Hud.withAlpha(edge, 0.35f));
-            g.setStroke(new BasicStroke(4f));
-            g.draw(shapeOf(spot, 2.5f, round));
+            g.setStroke(new BasicStroke(5f));
+            g.draw(shapeOf(spot, 3.5f, round));
             g.setColor(edge);
-            g.setStroke(new BasicStroke(1.6f));
-            g.draw(shapeOf(spot, 2f, round));
+            g.setStroke(new BasicStroke(2f));
+            g.draw(shapeOf(spot, 3f, round));
         }
         if (highlight.is(node, Mark.CRACK)) {
             paintCracks(g, spot);
@@ -478,10 +479,10 @@ final class UpgradeTreePainter {
         g.setColor(NODE_FILL);
         g.fill(box);
         g.setColor(hovered ? Hud.mix(NEED_BORDER, WHITE, HOVER_BORDER) : NEED_BORDER);
-        g.setStroke(dashed(1.2f, 3f, 2.5f));
+        g.setStroke(dashed(1f, 4f, 3f));
         g.draw(box);
         g.setColor(hovered ? NEED_INK.brighter() : NEED_INK);
-        centred(g, "?", NUMERAL_FONT, spot.x(), spot.y() + 4f);
+        centred(g, "?", NUMERAL_FONT, spot.x(), spot.y() + 5.5f);
     }
 
     /** The price on the node's bottom edge, or a tick once owned. */
@@ -526,10 +527,10 @@ final class UpgradeTreePainter {
             hatch.setColor(HATCH_FILL);
             hatch.fill(box);
             hatch.setColor(HATCH);
-            hatch.setStroke(new BasicStroke(2f));
+            hatch.setStroke(new BasicStroke(2.5f));
             float left = spot.x() - spot.size() / 2;
             float top = spot.y() - spot.size() / 2;
-            for (float d = -spot.size(); d < spot.size(); d += 4f) {
+            for (float d = -spot.size(); d < spot.size(); d += 5f) {
                 hatch.draw(new Line2D.Float(left + d, top + spot.size(), left + d + spot.size(), top));
             }
         } finally {
@@ -542,7 +543,7 @@ final class UpgradeTreePainter {
         float top = spot.y() - spot.size() / 2;
         float size = spot.size();
         g.setColor(DROP);
-        g.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         Path2D.Float crack = new Path2D.Float();
         crack.moveTo(left + size * 0.15f, top + size * 0.05f);
         crack.lineTo(left + size * 0.45f, top + size * 0.45f);

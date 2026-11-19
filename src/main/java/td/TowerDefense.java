@@ -104,8 +104,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final int MENU_WIDTH = 1100;
     private static final int MENU_HEIGHT = 700;
     /** The board's room across in a game window opened at its size. */
-    private static final int BOARD_WIDTH = 800;
+    private static final int BOARD_WIDTH = 850;
     private static final int GAME_WIDTH = BOARD_WIDTH + PanelGameConsole.WIDTH;
+    /** The height a game window opens at, and the least it can be: the column's panels never shrink to fit. */
     private static final int GAME_HEIGHT = 740;
     private static final KeyStroke DEV_PANEL_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_D,
             InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
@@ -355,6 +356,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.contentCardLayout.show(getContentPane(), CARD_GAME);
         this.gameBoard.recalculateBoard(level.width(), level.height());
         this.sizeWithoutDevPanel = null;
+        this.setMinimumSize(new Dimension(0, GAME_HEIGHT));
         this.setSize(GAME_WIDTH, GAME_HEIGHT);
         this.panelDev.refresh();
         this.fitDevPanel();
@@ -409,6 +411,7 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
         this.boardRenderer.setCellGridShown(false);
         this.sizeWithoutDevPanel = null;
         this.contentCardLayout.show(getContentPane(), CARD_MENU);
+        this.setMinimumSize(null);
         this.setSize(MENU_WIDTH, MENU_HEIGHT);
         this.setLocationRelativeTo(null);
     }

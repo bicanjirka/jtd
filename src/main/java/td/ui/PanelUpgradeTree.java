@@ -46,9 +46,9 @@ import java.util.OptionalInt;
  * tower's XP on the title line, every node in the look of its state. Hovering a node opens its sheet and marks what a
  * click does: a left click buys the node with every node it needs, all or nothing, or takes a cluster's other member
  * in the owned one's place; a right-click on an owned node asks to downgrade it with everything that depends on it. A
- * switch and a downgrade wait for the wave's end. Each open tier's floor strip has a button, and the tier's digit key,
- * that buy its singles. Replaces the wave preview while a tower is selected, and never scrolls: the tree scales to the
- * room it has.
+ * switch and a downgrade wait for the wave's end. A click on an open tier's numeral strip, or its digit key, buys its
+ * singles. Replaces the wave preview while a tower is selected, and is always drawn whole, at one size: it neither
+ * scrolls nor scales.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelUpgradeTree extends JPanel implements EconomyListener {
@@ -56,11 +56,6 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final float MAX_SCALE = BuyTileLook.SCALE;
-    /** What the Info panel above keeps at least when the window is short. */
-    private static final int INFO_FLOOR = 180;
-    /** The least height the tree is drawn at, a little over half size. */
-    private static final int MIN_HEIGHT = 240;
     private static final int HIT_SLACK = 2;
     /** Where the title line's XP ends, about as far in from the right as the title starts from the left. */
     private static final int TITLE_RIGHT = 10;
@@ -100,25 +95,19 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         this.addMouseMotionListener(mouse);
     }
 
-    /** The selected tower's tree at full size, so a short tree leaves the Info panel above the room it doesn't use. */
+    /** The selected tower's tree, so a short tree leaves the Info panel above the room it doesn't use. */
     @Override
     public Dimension getPreferredSize() {
         Insets insets = this.getInsets();
         float height = this.layout.map(UpgradeTreeLayout::height).orElse((float) UpgradeTreeLayout.HEIGHT);
-        return new Dimension((int) Math.ceil(UpgradeTreeLayout.WIDTH * MAX_SCALE) + insets.left + insets.right,
-                (int) Math.ceil(height * MAX_SCALE) + insets.top + insets.bottom);
+        return new Dimension(UpgradeTreeLayout.WIDTH + insets.left + insets.right,
+                (int) Math.ceil(height) + insets.top + insets.bottom);
     }
 
-    /**
-     * Its full height while the console has room for it above {@link #INFO_FLOOR}, else what is left, down to
-     * {@link #MIN_HEIGHT}: the console is shorter than its panels' preferred heights, so its layout gives each
-     * panel its minimum, and the tree scales to whatever it gets.
-     */
+    /** The whole tree: it never shrinks, and the window is never shorter than the column needs for it. */
     @Override
     public Dimension getMinimumSize() {
-        int full = this.getPreferredSize().height;
-        int room = this.getParent() == null ? full : this.getParent().getHeight() - INFO_FLOOR;
-        return new Dimension(this.getPreferredSize().width, Math.clamp(room, Math.min(MIN_HEIGHT, full), full));
+        return this.getPreferredSize();
     }
 
     /**
@@ -228,9 +217,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         }
         Graphics2D g2 = (Graphics2D) g.create();
         try {
-            float scale = this.scale();
-            g2.translate(this.originX(scale), this.getInsets().top);
-            g2.scale(scale, scale);
+            g2.translate(this.originX(), this.getInsets().top);
             UpgradeTree tree = this.tower.upgradeTree();
             new UpgradeTreePainter(this.layout.get(), tree, TowerSpriteFrameBuilder.bodyLookOf(this.tower),
                     this.tower.getType()).paint(g2, this.states, this.highlight(), this.showing(),
@@ -463,12 +450,8 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         if (this.tower == null || this.layout.isEmpty()) {
             return Optional.empty();
         }
-        float scale = this.scale();
-        if (scale <= 0f) {
-            return Optional.empty();
-        }
-        float x = (point.x - this.originX(scale)) / scale;
-        float y = (point.y - this.getInsets().top) / scale;
+        float x = point.x - this.originX();
+        float y = point.y - this.getInsets().top;
         Showing showing = this.showing();
         return this.layout.flatMap(laid -> laid.nodeAt(x, y, HIT_SLACK, showing));
     }
@@ -478,12 +461,8 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         if (this.tower == null || this.layout.isEmpty()) {
             return Optional.empty();
         }
-        float scale = this.scale();
-        if (scale <= 0f) {
-            return Optional.empty();
-        }
-        float x = (point.x - this.originX(scale)) / scale;
-        float y = (point.y - this.getInsets().top) / scale;
+        float x = point.x - this.originX();
+        float y = point.y - this.getInsets().top;
         Showing showing = this.showing();
         return this.layout.flatMap(laid -> laid.emptySlotAt(x, y, HIT_SLACK, showing));
     }
@@ -493,12 +472,8 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         if (this.tower == null || this.layout.isEmpty() || this.levelEnded) {
             return OptionalInt.empty();
         }
-        float scale = this.scale();
-        if (scale <= 0f) {
-            return OptionalInt.empty();
-        }
-        float x = (point.x - this.originX(scale)) / scale;
-        float y = (point.y - this.getInsets().top) / scale;
+        float x = point.x - this.originX();
+        float y = point.y - this.getInsets().top;
         for (Band band : this.layout.get().bands()) {
             if (UpgradeTreePainter.stripBox(band).contains(x, y)
                     && this.tower.upgradeTree().isOpen(band.tier(), this.tower, this.context)
@@ -518,35 +493,23 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         return new Rectangle(0, bounds.y, 0, bounds.height);
     }
 
-    /** The panel's left edge, level with a design span of {@code height} centred at {@code y}. */
+    /** The panel's left edge, level with a span of {@code height} centred at {@code y}. */
     private Rectangle anchorAt(float y, float height) {
-        float scale = this.scale();
-        return new Rectangle(0, Math.round(this.getInsets().top + (y - height / 2) * scale), 0,
-                Math.round(height * scale));
+        return new Rectangle(0, Math.round(this.getInsets().top + y - height / 2), 0, Math.round(height));
     }
 
     private Rectangle boundsOf(UpgradeNode node) {
-        float scale = this.scale();
         Optional<Spot> spot = this.layout.flatMap(laid -> laid.spotOf(node));
         if (spot.isEmpty()) {
             return new Rectangle(0, this.getHeight() / 2, 0, 0);
         }
-        float size = spot.get().size() * scale;
-        return new Rectangle(Math.round(this.originX(scale) + (spot.get().x() * scale) - size / 2),
-                Math.round(this.getInsets().top + spot.get().y() * scale - size / 2), Math.round(size),
-                Math.round(size));
+        float size = spot.get().size();
+        return new Rectangle(Math.round(this.originX() + spot.get().x() - size / 2),
+                Math.round(this.getInsets().top + spot.get().y() - size / 2), Math.round(size), Math.round(size));
     }
 
-    /** The whole design fits inside the border, never growing past {@link #MAX_SCALE}, at its top. */
-    private float scale() {
-        Insets insets = this.getInsets();
-        float height = this.layout.map(UpgradeTreeLayout::height).orElse((float) UpgradeTreeLayout.HEIGHT);
-        float fit = Math.min((this.getWidth() - insets.left - insets.right) / (float) UpgradeTreeLayout.WIDTH,
-                (this.getHeight() - insets.top - insets.bottom) / height);
-        return Math.min(MAX_SCALE, fit);
-    }
-
-    private float originX(float scale) {
-        return (this.getWidth() - UpgradeTreeLayout.WIDTH * scale) / 2f;
+    /** The tree's left edge: centred, on a whole pixel so its lines stay sharp. */
+    private int originX() {
+        return (this.getWidth() - UpgradeTreeLayout.WIDTH) / 2;
     }
 }

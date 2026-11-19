@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Where every node of a tree sits on the Upgrades panel, in design units {@value #WIDTH} wide, from the tower's
+ * Where every node of a tree sits on the Upgrades panel, in pixels, {@value #WIDTH} wide, from the tower's
  * hand-made {@link UpgradeTreePlan}: a band per tier, bottom up, each one or more rows of nodes with its numeral and its
  * singles' key in a strip at its left. The gap under a band holds that tier's gate while it is locked, high in the gap;
  * below it, in the channel just above the next band down, a link runs. A link leaves the top of what a node needs,
@@ -36,30 +36,30 @@ import java.util.function.Predicate;
 record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Frame> frames, List<Link> links,
                          List<Badge> badges, List<Shared> shared, float height) {
 
-    static final int WIDTH = 300;
-    /** The design height the panel asks for: five one-row tiers fit it. */
-    static final int HEIGHT = 380;
+    static final int WIDTH = 400;
+    /** The height the panel asks for before it knows its tree: five one-row tiers fit it. */
+    static final int HEIGHT = 400;
     static final float NODE = BuyTileLook.SIZE;
-    static final float PITCH = 37f;
-    static final float ROW = 46f;
-    static final float BAND_X = 6f;
-    static final float NUMERAL_WIDTH = 16f;
+    static final float PITCH = 49f;
+    static final float ROW = 61f;
+    static final float BAND_X = 8f;
+    static final float NUMERAL_WIDTH = 20f;
     static final float BODY_X = BAND_X + NUMERAL_WIDTH + 2f;
-    static final float FRAME_PAD = 4f;
-    static final float BADGE = 6f;
+    static final float FRAME_PAD = 5f;
+    static final float BADGE = 8f;
 
-    private static final float TOP = 4f;
-    private static final float GAP = 13f;
+    private static final float TOP = 5f;
+    private static final float GAP = 18f;
     /** From a band's bottom down to its gate's line. */
-    private static final float GATE_DROP = 5f;
+    private static final float GATE_DROP = 7f;
     /** From a row's top up to the channel its links run along. */
-    private static final float CHANNEL_RISE = 3f;
-    private static final float FIRST_SLOT = BODY_X + 4f + NODE / 2;
+    private static final float CHANNEL_RISE = 4f;
+    private static final float FIRST_SLOT = BODY_X + 5f + NODE / 2;
     /** From a row's top to its nodes' centre: the channel a link runs in sits above the nodes. */
-    private static final float NODE_DROP = 24f;
+    private static final float NODE_DROP = 32f;
     /** A frame's name, over its top edge, that an outgoing link keeps clear of: roughly its width per letter. */
-    private static final float LABEL_LETTER = 4.6f;
-    private static final float LABEL_PAD = 10f;
+    private static final float LABEL_LETTER = 6.4f;
+    private static final float LABEL_PAD = 13f;
 
     /** A tier's band: its rows. */
     record Band(int tier, float top, float bottom) {
@@ -451,7 +451,7 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
             float x = from.x();
             if (from.cluster().isPresent()) {
                 float clear = from.left() + from.cluster().get().name().length() * LABEL_LETTER + LABEL_PAD;
-                x = Math.clamp(to.x(), Math.min(clear, from.right() - 6f), from.right() - 6f);
+                x = Math.clamp(to.x(), Math.min(clear, from.right() - 8f), from.right() - 8f);
             }
             if (Math.abs(x - to.x()) < 0.5f) {
                 return List.of(new Point(x, from.top()), new Point(x, to.bottom()));
