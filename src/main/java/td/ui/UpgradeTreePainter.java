@@ -12,6 +12,8 @@ import td.ui.UpgradeTreeLayout.End;
 import td.ui.UpgradeTreeLayout.Frame;
 import td.ui.UpgradeTreeLayout.Link;
 import td.ui.UpgradeTreeLayout.Point;
+import td.ui.UpgradeTreeLayout.Shared;
+import td.ui.UpgradeTreeLayout.Showing;
 import td.ui.UpgradeTreeLayout.Spot;
 import td.ui.render.IconFace;
 import td.ui.render.TowerLook;
@@ -56,15 +58,15 @@ final class UpgradeTreePainter {
         CRACK
     }
 
-    /** The hovered node and what it marks. */
-    record Highlight(Optional<UpgradeNode> hovered, Map<UpgradeNode, Mark> marks) {
+    /** The hovered node and what it marks, or the hovered empty slot. */
+    record Highlight(Optional<UpgradeNode> hovered, Map<UpgradeNode, Mark> marks, Optional<Shared> slot) {
 
         Highlight {
             marks = Map.copyOf(marks);
         }
 
         static Highlight none() {
-            return new Highlight(Optional.empty(), Map.of());
+            return new Highlight(Optional.empty(), Map.of(), Optional.empty());
         }
 
         boolean is(UpgradeNode node, Mark mark) {
@@ -171,10 +173,10 @@ final class UpgradeTreePainter {
 
     /**
      * Paints the whole tree: the tiers up to {@code openTier} are open, {@code floors} says each tier's strip by
-     * tier.
+     * tier, {@code showing} what the shared slots show.
      */
-    void paint(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight, int openTier,
-               List<Floor> floors, Footer footer) {
+    void paint(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight, Showing showing,
+               int openTier, List<Floor> floors, Footer footer) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
@@ -182,20 +184,33 @@ final class UpgradeTreePainter {
             this.faded(g, band.tier() > openTier, () -> this.paintBand(g, band, band.tier() <= openTier,
                     floors.get(band.tier())));
         }
-        this.layout.links().forEach(link -> this.paintLink(g, link, states, highlight));
+        this.layout.links().stream().filter(link -> showing.shows(link.from()) && showing.shows(link.to()))
+                .forEach(link -> this.paintLink(g, link, states, highlight));
         for (Band band : this.layout.bands()) {
             this.faded(g, band.tier() > openTier, () -> this.paintFloor(g, band, floors.get(band.tier())));
         }
-        for (Frame frame : this.layout.frames()) {
+        List<Frame> frames = this.layout.frames().stream().filter(frame -> frame.cluster().memberIds().stream()
+                .anyMatch(id -> showing.shows(this.tree.node(id).orElseThrow()))).toList();
+        for (Frame frame : frames) {
             int tier = this.tree.node(frame.cluster().memberIds().getFirst()).orElseThrow().tier();
             this.faded(g, tier > openTier, () -> this.paintFrame(g, frame, states));
         }
-        this.layout.spots().forEach((node, spot) -> this.paintNode(g, node, spot, states.get(node), highlight));
-        for (Frame frame : this.layout.frames()) {
+        for (Shared slot : showing.empty()) {
+            int tier = slot.bySide().values().iterator().next().tier();
+            boolean hovered = highlight.slot().filter(slot::equals).isPresent();
+            this.faded(g, tier > openTier, () -> paintEmptySlot(g, slot.spot(), hovered));
+        }
+        this.layout.spots().forEach((node, spot) -> {
+            if (showing.shows(node)) {
+                this.paintNode(g, node, spot, states.get(node), highlight);
+            }
+        });
+        for (Frame frame : frames) {
             int tier = this.tree.node(frame.cluster().memberIds().getFirst()).orElseThrow().tier();
             this.faded(g, tier > openTier, () -> paintFrameName(g, frame));
         }
-        this.layout.badges().forEach(badge -> this.paintBadge(g, badge, states, highlight));
+        this.layout.badges().stream().filter(badge -> showing.shows(badge.from()) && showing.shows(badge.to()))
+                .forEach(badge -> this.paintBadge(g, badge, states, highlight));
         paintFooter(g, footer, this.layout.height());
     }
 
@@ -429,6 +444,18 @@ final class UpgradeTreePainter {
             CashMark.paint(g, spot.x() + spot.size() / 2 - 1f, spot.y() - spot.size() / 2 + 1f, CASH_BADGE);
         }
         this.paintTag(g, node, spot, look);
+    }
+
+    /** A shared slot before its cluster's pick: a dashed outline holding a question mark. */
+    private static void paintEmptySlot(Graphics2D g, Spot spot, boolean hovered) {
+        Shape box = shapeOf(spot, -0.5f, false);
+        g.setColor(NODE_FILL);
+        g.fill(box);
+        g.setColor(hovered ? Hud.mix(NEED_BORDER, WHITE, HOVER_BORDER) : NEED_BORDER);
+        g.setStroke(dashed(1.2f, 3f, 2.5f));
+        g.draw(box);
+        g.setColor(hovered ? NEED_INK.brighter() : NEED_INK);
+        centred(g, "?", NUMERAL_FONT, spot.x(), spot.y() + 4f);
     }
 
     /** The price on the node's bottom edge, or a tick once owned. */

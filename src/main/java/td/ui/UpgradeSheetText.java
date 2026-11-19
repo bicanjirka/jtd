@@ -313,4 +313,9 @@ final class UpgradeSheetText {
     static String singlesFooter(int count, int total) {
         return count + (count == 1 ? " single · " : " singles · ") + TermNumbers.cash(total);
     }
+
+    /** The footer over a slot that stands empty until one of {@code members} is picked: "Pick A or B first". */
+    static String pickFirst(List<String> members) {
+        return "Pick " + String.join(" or ", members) + " first";
+    }
 }

@@ -6,29 +6,34 @@ import td.tower.upgrade.UpgradeTree;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Where every node of a tree sits on the Upgrades panel, in design units {@value #WIDTH} wide, from the tower's
  * hand-made {@link UpgradeTreePlan}: a band per tier, bottom up, each one or more rows of nodes over a floor strip, with
  * its numeral in a strip at its left. A link leaves the top of what a node needs, runs in the channel above that row
  * and climbs into the node's bottom; a cluster's frame stands in for its members where the rule names the cluster or
- * all of them share one need. A need more than a tier below is a badge on a top corner instead. Pure.
+ * all of them share one need. A need more than a tier below is a badge on a top corner instead. Nodes that come after
+ * different members of one cluster may share a slot, since only one of them can ever be bought: the slot shows the
+ * node of the member picked, or hovered, and stands empty before either. Pure.
  *
  * @param bands  every tier's band, tier 0 first
  * @param spots  each node's place
  * @param frames a cluster's frame around its members
  * @param links  a need to what needs it, as a path
  * @param badges a need more than a tier below, on the corner of what needs it
+ * @param shared every slot more than one node shares
  * @param height the whole design's height, the footer included
  */
 record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Frame> frames, List<Link> links,
-                         List<Badge> badges, float height) {
+                         List<Badge> badges, List<Shared> shared, float height) {
 
     static final int WIDTH = 300;
     /** The design height the panel asks for: five one-row tiers fit it. */
@@ -128,12 +133,58 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
     record Badge(End from, End to, float x, float y) {
     }
 
+    /**
+     * A slot that nodes behind different members of {@code cluster} share.
+     *
+     * @param bySide each member of the cluster to the node the slot shows for it
+     */
+    record Shared(Spot spot, UpgradeCluster cluster, Map<UpgradeNode, UpgradeNode> bySide) {
+
+        Shared {
+            bySide = Map.copyOf(bySide);
+        }
+
+        /** The member that decides the slot: the hovered one of the cluster, else the one owned. */
+        Optional<UpgradeNode> pick(Predicate<UpgradeNode> owned, Optional<UpgradeNode> hovered) {
+            return hovered.filter(this.bySide::containsKey)
+                    .or(() -> this.bySide.keySet().stream().filter(owned).findFirst());
+        }
+    }
+
+    /**
+     * What the shared slots show now.
+     *
+     * @param hidden the nodes whose slot shows another member's node, or none
+     * @param empty  the shared slots whose cluster has no member picked
+     */
+    record Showing(Set<UpgradeNode> hidden, List<Shared> empty) {
+
+        Showing {
+            hidden = Set.copyOf(hidden);
+            empty = List.copyOf(empty);
+        }
+
+        static Showing all() {
+            return new Showing(Set.of(), List.of());
+        }
+
+        boolean shows(UpgradeNode node) {
+            return !this.hidden.contains(node);
+        }
+
+        /** Whether any of {@code end}'s nodes shows. */
+        boolean shows(End end) {
+            return end.nodes().stream().anyMatch(this::shows);
+        }
+    }
+
     UpgradeTreeLayout {
         bands = List.copyOf(bands);
         spots = Map.copyOf(spots);
         frames = List.copyOf(frames);
         links = List.copyOf(links);
         badges = List.copyOf(badges);
+        shared = List.copyOf(shared);
     }
 
     /**
@@ -148,10 +199,36 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
         return Optional.ofNullable(this.spots.get(node));
     }
 
-    /** The node at design point ({@code x}, {@code y}), within {@code slack} of its box. */
-    Optional<UpgradeNode> nodeAt(float x, float y, float slack) {
-        return this.spots.entrySet().stream().filter(entry -> entry.getValue().contains(x, y, slack))
-                .map(Map.Entry::getKey).findFirst();
+    /**
+     * What each shared slot shows when {@code owned} says what the tower owns and {@code hovered} is under the
+     * pointer: the node of the member hovered, else of the member owned, else nothing.
+     */
+    Showing showing(Predicate<UpgradeNode> owned, Optional<UpgradeNode> hovered) {
+        Set<UpgradeNode> hidden = new HashSet<>();
+        List<Shared> empty = new ArrayList<>();
+        for (Shared slot : this.shared) {
+            Optional<UpgradeNode> pick = slot.pick(owned, hovered);
+            if (pick.isEmpty()) {
+                empty.add(slot);
+            }
+            slot.bySide().forEach((side, node) -> {
+                if (pick.filter(side::equals).isEmpty()) {
+                    hidden.add(node);
+                }
+            });
+        }
+        return new Showing(hidden, empty);
+    }
+
+    /** The node {@code showing} shows at design point ({@code x}, {@code y}), within {@code slack} of its box. */
+    Optional<UpgradeNode> nodeAt(float x, float y, float slack, Showing showing) {
+        return this.spots.entrySet().stream().filter(entry -> showing.shows(entry.getKey()))
+                .filter(entry -> entry.getValue().contains(x, y, slack)).map(Map.Entry::getKey).findFirst();
+    }
+
+    /** The empty shared slot at design point ({@code x}, {@code y}), within {@code slack} of its box. */
+    Optional<Shared> emptySlotAt(float x, float y, float slack, Showing showing) {
+        return showing.empty().stream().filter(slot -> slot.spot().contains(x, y, slack)).findFirst();
     }
 
     /** {@code nodes} by where they sit, left to right, the lower row first where two share a column. */
@@ -200,6 +277,7 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
                     throw new IllegalArgumentException("The plan leaves out " + node.id());
                 }
             }
+            List<Shared> shared = this.shared();
             List<Link> links = new ArrayList<>();
             List<Badge> badges = new ArrayList<>();
             for (Need need : this.needs()) {
@@ -210,7 +288,44 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
                 }
             }
             return new UpgradeTreeLayout(this.bands, this.spots, List.copyOf(this.frames.values()), links, badges,
-                    y - GAP + FOOTER);
+                    shared, y - GAP + FOOTER);
+        }
+
+        /**
+         * Every slot more than one node is placed at. Throws unless the nodes there come after different members of
+         * one cluster.
+         */
+        private List<Shared> shared() {
+            Map<Spot, List<UpgradeNode>> bySpot = new LinkedHashMap<>();
+            this.spots.forEach((node, spot) -> bySpot.computeIfAbsent(spot, _ -> new ArrayList<>()).add(node));
+            List<Shared> shared = new ArrayList<>();
+            bySpot.forEach((spot, nodes) -> {
+                if (nodes.size() > 1) {
+                    shared.add(this.sharedOf(spot, nodes));
+                }
+            });
+            return shared;
+        }
+
+        private Shared sharedOf(Spot spot, List<UpgradeNode> nodes) {
+            Map<UpgradeNode, UpgradeNode> bySide = new LinkedHashMap<>();
+            Set<UpgradeCluster> clusters = new HashSet<>();
+            for (UpgradeNode node : nodes) {
+                Optional<UpgradeNode> side = this.tree.branchOf(node);
+                if (side.isEmpty() || bySide.putIfAbsent(side.get(), node) != null) {
+                    throw new IllegalArgumentException(sharers(nodes) + " share a slot but don't each come after a"
+                            + " different member of one cluster");
+                }
+                clusters.add(this.tree.clusterOf(side.get()).orElseThrow());
+            }
+            if (clusters.size() != 1) {
+                throw new IllegalArgumentException(sharers(nodes) + " share a slot but come after different clusters");
+            }
+            return new Shared(spot, clusters.iterator().next(), bySide);
+        }
+
+        private static String sharers(List<UpgradeNode> nodes) {
+            return String.join(" and ", nodes.stream().map(UpgradeNode::id).toList());
         }
 
         /**

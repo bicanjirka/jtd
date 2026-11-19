@@ -6,6 +6,8 @@ import td.tower.Tower;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.UpgradeTreeLayout.Band;
+import td.ui.UpgradeTreeLayout.Shared;
+import td.ui.UpgradeTreeLayout.Showing;
 import td.ui.UpgradeTreeLayout.Spot;
 import td.ui.UpgradeTreePainter.Floor;
 import td.ui.UpgradeTreePainter.Footer;
@@ -33,6 +35,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -72,6 +75,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private transient Optional<UpgradeTreeLayout> layout = Optional.empty();
     private transient Optional<UpgradeNode> hovered = Optional.empty();
     private OptionalInt hoveredTier = OptionalInt.empty();
+    private transient Optional<Shared> hoveredSlot = Optional.empty();
     private transient Optional<UpgradeHover> hover = Optional.empty();
     private transient Optional<ConfirmPopup> confirmation = Optional.empty();
 
@@ -136,6 +140,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         this.tower = tower;
         this.hovered = Optional.empty();
         this.hoveredTier = OptionalInt.empty();
+        this.hoveredSlot = Optional.empty();
         this.layout = Optional.ofNullable(tower)
                 .map(chosen -> UpgradeTreeLayout.of(chosen.upgradeTree(), UpgradeTreePlans.of(chosen.getType())));
         this.revalidate();
@@ -202,7 +207,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             g2.scale(scale, scale);
             UpgradeTree tree = this.tower.upgradeTree();
             new UpgradeTreePainter(this.layout.get(), tree, TowerSpriteFrameBuilder.bodyLookOf(this.tower),
-                    this.tower.getType()).paint(g2, this.states, this.highlight(),
+                    this.tower.getType()).paint(g2, this.states, this.highlight(), this.showing(),
                     tree.highestOpenTier(this.tower, this.context), this.floors(), this.footer());
         } finally {
             g2.dispose();
@@ -280,10 +285,10 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         if (this.hoveredTier.isPresent() && !this.levelEnded) {
             Map<UpgradeNode, Mark> marks = new HashMap<>();
             this.offeredSingles(this.hoveredTier.getAsInt()).forEach(node -> marks.put(node, Mark.PATH));
-            return new Highlight(Optional.empty(), marks);
+            return new Highlight(Optional.empty(), marks, Optional.empty());
         }
         if (this.hovered.isEmpty() || this.hover.isEmpty()) {
-            return Highlight.none();
+            return new Highlight(Optional.empty(), Map.of(), this.hoveredSlot);
         }
         Map<UpgradeNode, Mark> marks = new HashMap<>();
         switch (this.hover.get()) {
@@ -299,12 +304,23 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             case UpgradeHover.Downgrading downgrading ->
                     downgrading.removal().removed().forEach(removed -> marks.put(removed, Mark.DROP));
         }
-        return new Highlight(this.hovered, marks);
+        return new Highlight(this.hovered, marks, Optional.empty());
+    }
+
+    /** What the shared slots show: the side of the cluster member hovered, else of the one owned. */
+    private Showing showing() {
+        return this.layout.map(laid -> laid.showing(node -> this.states.containsKey(node)
+                && this.states.get(node).look() == UpgradeNodeState.Look.OWNED, this.hovered)).orElse(Showing.all());
     }
 
     private Footer footer() {
         if (this.levelEnded) {
             return new Footer(UpgradeSheetText.ENDED_FOOTER, false, false);
+        }
+        if (this.hoveredSlot.isPresent()) {
+            return new Footer(UpgradeSheetText.pickFirst(this.hoveredSlot.get().bySide().keySet().stream()
+                    .sorted(Comparator.comparingDouble(member -> this.layout.flatMap(laid -> laid.spotOf(member))
+                            .map(Spot::x).orElse(0f))).map(UpgradeNode::displayName).toList()), false, true);
         }
         if (this.hoveredTier.isPresent()) {
             List<UpgradeNode> offered = this.offeredSingles(this.hoveredTier.getAsInt());
@@ -319,11 +335,13 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private void pointerAt(Point point) {
         Optional<UpgradeNode> now = this.nodeAt(point);
         OptionalInt tier = now.isPresent() ? OptionalInt.empty() : this.buttonAt(point);
-        if (now.equals(this.hovered) && tier.equals(this.hoveredTier)) {
+        Optional<Shared> slot = now.isPresent() ? Optional.empty() : this.emptySlotAt(point);
+        if (now.equals(this.hovered) && tier.equals(this.hoveredTier) && slot.equals(this.hoveredSlot)) {
             return;
         }
         this.hovered = now;
         this.hoveredTier = tier;
+        this.hoveredSlot = slot;
         this.hover = now.filter(node -> this.tower != null && !this.levelEnded)
                 .map(node -> UpgradeHover.of(node, this.tower, this.context));
         this.repaint();
@@ -445,7 +463,23 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         }
         float x = (point.x - this.originX(scale)) / scale;
         float y = (point.y - this.getInsets().top) / scale;
-        return this.layout.flatMap(laid -> laid.nodeAt(x, y, HIT_SLACK));
+        Showing showing = this.showing();
+        return this.layout.flatMap(laid -> laid.nodeAt(x, y, HIT_SLACK, showing));
+    }
+
+    /** The shared slot under {@code point} that stands empty, its cluster's pick not made yet. */
+    private Optional<Shared> emptySlotAt(Point point) {
+        if (this.tower == null || this.layout.isEmpty()) {
+            return Optional.empty();
+        }
+        float scale = this.scale();
+        if (scale <= 0f) {
+            return Optional.empty();
+        }
+        float x = (point.x - this.originX(scale)) / scale;
+        float y = (point.y - this.getInsets().top) / scale;
+        Showing showing = this.showing();
+        return this.layout.flatMap(laid -> laid.emptySlotAt(x, y, HIT_SLACK, showing));
     }
 
     /** The tier whose singles' button is under {@code point}, while it shows. */
