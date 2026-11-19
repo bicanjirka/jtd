@@ -1,14 +1,14 @@
 # Feature Request: The Upgrades panel at full size
 
+Status: **implemented** (2026-11-19: `0f0ab905` shared slots, `abf87d53` the 1.5× panel in a 462 px column on a
+1262 × 740 window, `a6dd13cd` two-column stats). The column came out at 462 px (300 units at 1.5× and the panel's
+border), so the window is 1262 wide rather than 1280; the board keeps today's size either way.
+
 ## Summary
 
 The retuned Upgrades panel reads well in its mock but is too small in the game: icons, prices and every word on
 it. Draw it at the mock's size (1.5× its design) inside the right-hand column, without covering the board and
 without shrinking it.
-
-| Today, 1100 × 740 (the tree at about 0.9×) | Proposed, 1280 × 740 (Mortar at 1.5×, a composite) |
-|---|---|
-| ![Today](upgrade-panel-full-size/today.png) | ![Proposed](upgrade-panel-full-size/proposed-1280.png) |
 
 ## Current state (what exists today)
 
@@ -57,12 +57,12 @@ without shrinking it.
 
 ## Interconnections
 
-- `shipped/FEATURE-upgrade-panel-retune.md` approved the panel's design and made the Burst's fork a cluster. Its
+- `FEATURE-upgrade-panel-retune.md` approved the panel's design and made the Burst's fork a cluster. Its
   "Every Burst node is shown from the start" and "carry no fork geometry and no hidden-branch markers" are reversed
   for the shared slots only. The Stormcaller-or-Hexer pick stays an ordinary cluster.
 - `FEATURE-unified-buy-tiles.md` makes the nodes and the tower-building tiles one look. At 1.5× a node is about
   45 px, about the size of a tile in the Towers bar.
-- `shipped/FEATURE-next-gen-splash-tower.md` describes the Burst's two sides.
+- `FEATURE-next-gen-splash-tower.md` describes the Burst's two sides.
 
 ## Constraints and open risks
 
