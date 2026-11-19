@@ -25,7 +25,7 @@ final class PerkPictograms {
             Map.entry("sniper.unbroken_aim", "S M3.6 12C3.6 9.4 5.4 7.8 7.6 7.8C11.4 7.8 12.6 16.2 16.4 16.2C18.6 16.2 20.4 14.6 20.4 12C20.4 9.4 18.6 7.8 16.4 7.8C12.6 7.8 11.4 16.2 7.6 16.2C5.4 16.2 3.6 14.6 3.6 12Z"),
             // Sundering Crits
             Map.entry("sniper.sundering_crits", "=effect.sundered"),
-            Map.entry("sniper.unraveling_crits", "=effect.unraveled"),
+            Map.entry("sniper.exposing_crits", "=effect.exposed"),
             // Momentum
             Map.entry("sniper.momentum", "F O15.4 12 5.4 ; T M1.8 8.6H8 M3.4 12H8.6 M1.8 15.4H8 ; K M13.4 9.4A3 3 0 0 1 17.8 9.6"),
             // Ricochet

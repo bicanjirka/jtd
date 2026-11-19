@@ -20,6 +20,7 @@ import td.tower.sniper.AimLock;
 import td.tower.sniper.Bullet;
 import td.tower.sniper.Execution;
 import td.tower.sniper.ExecutionerMechanic;
+import td.tower.sniper.ExposingMechanic;
 import td.tower.sniper.HeadhunterMechanic;
 import td.tower.sniper.HemorrhageMechanic;
 import td.tower.sniper.Hop;
@@ -114,24 +115,23 @@ public final class SniperTower extends AbstractTower {
             .withModifiers(TowerModifiers.critMultiplier(1.0f))
             .inTier(1);
 
-    private static final UpgradeNode HEMORRHAGE = UpgradeNode.of("sniper.hemorrhage", "Hemorrhage", 8)
+    private static final UpgradeNode HEMORRHAGE = UpgradeNode.of("sniper.hemorrhage", "Hemorrhage", 15)
             .inTier(2);
-    private static final UpgradeNode RICOCHET = UpgradeNode.of("sniper.ricochet", "Ricochet", 8)
+    private static final UpgradeNode RICOCHET = UpgradeNode.of("sniper.ricochet", "Ricochet", 15)
             .inTier(2);
-    private static final UpgradeNode SUNDERING_CRITS = UpgradeNode.of("sniper.sundering_crits", "Sundering Crits", 8)
+    private static final UpgradeNode SUNDERING_CRITS = UpgradeNode.of("sniper.sundering_crits", "Sundering Crits", 15)
             .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 1)))
             .inTier(2);
-    private static final UpgradeNode UNRAVELING_CRITS = UpgradeNode.of("sniper.unraveling_crits", "Unraveling Crits", 8)
-            .withProc(Proc.onCrit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1)))
+    private static final UpgradeNode EXPOSING_CRITS = UpgradeNode.of("sniper.exposing_crits", "Exposing Crits", 15)
             .inTier(2);
-    private static final UpgradeNode SILVER_ROUND = UpgradeNode.of("sniper.silver_round", "Silver Round", 11)
+    private static final UpgradeNode SILVER_ROUND = UpgradeNode.of("sniper.silver_round", "Silver Round", 20)
             .withProc(everyFourthShotIs(TowerStatus.nextShots(TowerTerm.SILVER_ROUND, 1,
-                    TowerModifiers.magicPenetrationFlat(50f)).withCapability(TowerCapability.MAGIC_DAMAGE)))
+                    TowerModifiers.damage(20f).plus(TowerModifiers.magicPenetration(1f))).withCapability(TowerCapability.MAGIC_DAMAGE)))
             .after(FOURTH_SHOT)
             .inTier(2);
-    private static final UpgradeNode HOLLOW_POINT = UpgradeNode.of("sniper.hollow_point", "Hollow Point", 11)
+    private static final UpgradeNode HOLLOW_POINT = UpgradeNode.of("sniper.hollow_point", "Hollow Point", 20)
             .withProc(everyFourthShotIs(TowerStatus.nextShots(TowerTerm.HOLLOW_POINT, 1,
-                    TowerModifiers.damagePercent(0.33f))))
+                    TowerModifiers.damage(32f))))
             .after(FOURTH_SHOT)
             .inTier(2);
     private static final UpgradeNode LONG_BARREL = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Barrel", 10)
@@ -155,17 +155,18 @@ public final class SniperTower extends AbstractTower {
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_AIM, RIFLING, HEAVY_ROUNDS))
             .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, KILLSHOT, LONG_BARREL,
-                    HEMORRHAGE, RICOCHET, SUNDERING_CRITS, UNRAVELING_CRITS, SILVER_ROUND, HOLLOW_POINT,
+                    HEMORRHAGE, RICOCHET, SUNDERING_CRITS, EXPOSING_CRITS, SILVER_ROUND, HOLLOW_POINT,
                     HEAVY_ROUNDS_2, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, MOMENTUM)
             .withCluster(UpgradeCluster.of("Steady Aim", DEEP_BREATH, KEEN_EYE))
             .withCluster(UpgradeCluster.of("On crit", HEMORRHAGE, RICOCHET))
-            .withCluster(UpgradeCluster.of("Crit wound", SUNDERING_CRITS, UNRAVELING_CRITS))
+            .withCluster(UpgradeCluster.of("Crit wound", SUNDERING_CRITS, EXPOSING_CRITS))
             .withCluster(UpgradeCluster.of("Ammo", SILVER_ROUND, HOLLOW_POINT))
             .withCluster(UpgradeCluster.of("Finisher", EXECUTIONER, HEADHUNTER));
 
     private static final MechanicCatalogue<SniperMechanic> MECHANICS = MechanicCatalogue.of(
             entry(HEMORRHAGE.id(), HemorrhageMechanic::new),
             entry(RICOCHET.id(), RicochetMechanic::new),
+            entry(EXPOSING_CRITS.id(), ExposingMechanic::new),
             entry(EXECUTIONER.id(), ExecutionerMechanic::new),
             entry(HEADHUNTER.id(), HeadhunterMechanic::new));
 
