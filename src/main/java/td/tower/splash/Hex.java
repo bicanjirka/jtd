@@ -18,12 +18,8 @@ public interface Hex {
     /** How long it lasts as it is cast, in seconds. */
     float seconds();
 
-    /**
-     * Whom it would curse now of {@code candidates}, by its own rule; empty when nobody fits.
-     *
-     * @param cellPixels one cell, in pixels
-     */
-    Optional<EnemyMob> target(List<EnemyMob> candidates, float cellPixels);
+    /** Whom it would curse now of {@code candidates}, by its own rule; empty when nobody fits. */
+    Optional<EnemyMob> target(List<EnemyMob> candidates);
 
     /** Puts it on {@code target} for {@code ticks}; a hex that jumped brings the slow it had grown to. */
     void lay(EnemyMob target, int ticks, float grownSlow, HexHand hand);

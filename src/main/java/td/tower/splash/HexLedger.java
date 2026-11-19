@@ -22,7 +22,22 @@ public final class HexLedger {
     /** A hex of {@code kind}, cast for {@code castTicks}, just went on {@code enemy}; one it had already starts over. */
     public void record(EnemyMob enemy, EffectKind kind, int castTicks) {
         this.entries.removeIf(entry -> entry.enemy() == enemy && entry.kind() == kind);
-        this.entries.add(new Entry(enemy, kind, enemy.damageTaken(), castTicks));
+        this.entries.add(new Entry(enemy, kind, -enemy.damageTaken(), castTicks));
+    }
+
+    /**
+     * A hex of {@code kind} jumped onto {@code enemy} carrying {@code stored}: one it already had merges with it,
+     * keeping both records and the longer cast.
+     */
+    public void recordJump(EnemyMob enemy, EffectKind kind, int castTicks, long stored) {
+        long held = this.entries.stream()
+                .filter(entry -> entry.enemy() == enemy && entry.kind() == kind)
+                .mapToLong(Entry::stored).sum();
+        int cast = this.entries.stream()
+                .filter(entry -> entry.enemy() == enemy && entry.kind() == kind)
+                .mapToInt(Entry::castTicks).max().orElse(castTicks);
+        this.entries.removeIf(entry -> entry.enemy() == enemy && entry.kind() == kind);
+        this.entries.add(new Entry(enemy, kind, held + stored - enemy.damageTaken(), Math.max(cast, castTicks)));
     }
 
     public boolean isEmpty() {
@@ -40,20 +55,26 @@ public final class HexLedger {
         this.entries.removeIf(entry -> {
             if (entry.enemy().isDead()) {
                 gone.computeIfAbsent(entry.enemy(), enemy -> new ArrayList<>())
-                        .add(new HexEvent.CarriedHex(entry.kind(), entry.castTicks()));
+                        .add(new HexEvent.CarriedHex(entry.kind(), entry.castTicks(), entry.stored()));
                 return true;
             }
             if (entry.enemy().hasEffect(entry.kind())) {
                 return false;
             }
             events.add(new HexEvent.Ended(entry.enemy(), entry.kind(),
-                    entry.enemy().damageTaken() - entry.damageTakenAtCast()));
+                    entry.stored()));
             return true;
         });
         gone.forEach((enemy, hexes) -> events.add(new HexEvent.Gone(enemy, hexes)));
         return events;
     }
 
-    private record Entry(EnemyMob enemy, EffectKind kind, long damageTakenAtCast, int castTicks) {
+    /** {@code offset} is what the hex carried in less what the enemy had taken when it went on. */
+    private record Entry(EnemyMob enemy, EffectKind kind, long offset, int castTicks) {
+
+        /** What the enemy took under the hex, and what the hex carried in. */
+        long stored() {
+            return this.enemy.damageTaken() + this.offset;
+        }
     }
 }

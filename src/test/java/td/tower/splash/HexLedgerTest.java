@@ -54,7 +54,7 @@ class HexLedgerTest {
         enemy.doDamage(Damage.physical(1), AttackProfile.none());
 
         assertThat(ledger.settle()).containsExactly(new HexEvent.Gone(enemy, List.of(
-                new HexEvent.CarriedHex(EffectKind.DOOM, 80), new HexEvent.CarriedHex(EffectKind.BLIGHT, 40))));
+                new HexEvent.CarriedHex(EffectKind.DOOM, 80, 1), new HexEvent.CarriedHex(EffectKind.BLIGHT, 40, 1))));
         assertThat(ledger.isEmpty()).isTrue();
     }
 
@@ -70,5 +70,32 @@ class HexLedgerTest {
         enemy.expire(EffectKind.DOOM);
 
         assertThat(ledger.settle()).containsExactly(new HexEvent.Ended(enemy, EffectKind.DOOM, 100));
+    }
+
+    @Test
+    void aHexThatJumpedInReportsWhatItCarriedPlusWhatTheEnemyTookSince() {
+        HexLedger ledger = new HexLedger();
+        FakeEnemyMob enemy = doomed();
+        enemy.doDamage(Damage.physical(900), AttackProfile.none());
+        ledger.recordJump(enemy, EffectKind.DOOM, 80, 250);
+        enemy.doDamage(Damage.physical(100), AttackProfile.none());
+
+        enemy.expire(EffectKind.DOOM);
+
+        assertThat(ledger.settle()).containsExactly(new HexEvent.Ended(enemy, EffectKind.DOOM, 350));
+    }
+
+    @Test
+    void aHexThatJumpedOntoOneAlreadyThereMergesBothRecordsAndKeepsTheLongerCast() {
+        HexLedger ledger = new HexLedger();
+        FakeEnemyMob enemy = doomed();
+        ledger.record(enemy, EffectKind.DOOM, 100);
+        enemy.doDamage(Damage.physical(400), AttackProfile.none());
+        ledger.recordJump(enemy, EffectKind.DOOM, 60, 250);
+        enemy.doDamage(Damage.physical(100), AttackProfile.none());
+
+        enemy.expire(EffectKind.DOOM);
+
+        assertThat(ledger.settle()).containsExactly(new HexEvent.Ended(enemy, EffectKind.DOOM, 750));
     }
 }

@@ -22,6 +22,7 @@ import td.tower.TowerStat;
 import td.tower.TowerStatLine;
 import td.tower.TowerStatRow;
 import td.tower.TowerTerm;
+import td.tower.ability.AbilityBar;
 import td.tower.ability.AbilityUnits;
 import td.tower.mortar.MagazineView;
 import td.tower.mortar.ShellKind;
@@ -340,9 +341,9 @@ class TowerSheetTextTest {
         SheetLine.AbilityRow ability = sheet.lines().stream().filter(SheetLine.AbilityRow.class::isInstance)
                 .map(SheetLine.AbilityRow.class::cast).findFirst().orElseThrow();
         assertThat(ability.name()).isEqualTo(TowerTerm.HOLLOW_POINT.title());
-        assertThat(ability.capacity()).isEqualTo(3);
+        assertThat(ability.capacity()).isEqualTo(AbilityBar.CAPACITY);
         assertThat(ability.cost()).isEqualTo(2);
-        assertThat(row(ability.tooltip().sheet(), EffectKind.CHARGED.title()).value()).isEqualTo("1.3 / 3");
+        assertThat(row(ability.tooltip().sheet(), EffectKind.CHARGED.title()).value()).isEqualTo("1.3 / " + AbilityBar.CAPACITY);
     }
 
     @Test

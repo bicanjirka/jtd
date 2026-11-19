@@ -28,7 +28,7 @@ public final class InversionHex implements Hex {
     }
 
     @Override
-    public Optional<EnemyMob> target(List<EnemyMob> candidates, float cellPixels) {
+    public Optional<EnemyMob> target(List<EnemyMob> candidates) {
         return new FurthestAlongPathSelector().selectFrom(candidates.stream()
                 .filter(enemy -> (enemy.appliesEffects() || enemy.regenerates())
                         && !enemy.hasEffect(EffectKind.INVERSION))

@@ -57,7 +57,7 @@ final class EffectSentences {
             case CHARGED -> TermText.of("the next hit on it from another tower lands "
                     + TermNumbers.percent(Effect.CHARGE_DISCHARGE_SHARE)
                     + " of that hit again as magic, twice that on a crit, for the tower that applied it");
-            case DOOM -> TermText.of("when it ends, it takes a share of all the damage it took while it lasted");
+            case DOOM -> TermText.of("when it ends, it takes a share of all the damage it took while it lasted, as shadow damage");
             case BLIGHT -> TermText.of("it has ").plus(EffectKind.POISON)
                     .plus(" for as long as this lasts, and a slow that grows to its strongest as it ends");
             case INVERSION -> TermText.of("its ").plus(EnemyStat.REGENERATION)

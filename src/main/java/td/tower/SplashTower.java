@@ -513,7 +513,11 @@ public final class SplashTower extends AbstractTower {
         if (!target.hasEffect(hex.kind())) {
             return;
         }
-        this.hexKeeper.record(target, hex.kind(), ticks);
+        if (pending.dose().jumped()) {
+            this.hexKeeper.recordJump(target, hex.kind(), ticks, pending.dose().stored());
+        } else {
+            this.hexKeeper.record(target, hex.kind(), ticks);
+        }
         if (hexes.agony()) {
             this.applyEffect(target, sink -> Effect.vulnerable(1, ticks, sink));
         }
@@ -638,9 +642,8 @@ public final class SplashTower extends AbstractTower {
         public boolean hex(Hex hex) {
             List<EnemyMob> left = new ArrayList<>(this.inReach);
             List<EnemyMob> cursed = new ArrayList<>();
-            float cell = SplashTower.this.cellPixels();
             for (int i = 0; i < this.spec.hexes().cursesPerCast(); i++) {
-                Optional<EnemyMob> target = hex.target(left, cell);
+                Optional<EnemyMob> target = hex.target(left);
                 if (target.isEmpty()) {
                     break;
                 }
@@ -649,7 +652,7 @@ public final class SplashTower extends AbstractTower {
             }
             Vec2 from = SplashTower.this.center();
             int ticks = Math.round(hex.seconds() * TICKS_PER_SECOND);
-            cursed.forEach(target -> SplashTower.this.sendCurse(hex, from, target, new Dose(ticks, 0f)));
+            cursed.forEach(target -> SplashTower.this.sendCurse(hex, from, target, Dose.cast(ticks)));
             return !cursed.isEmpty();
         }
     }
@@ -694,8 +697,8 @@ public final class SplashTower extends AbstractTower {
     private final class Hexing implements HexCaster {
 
         @Override
-        public void dealPeriodicDamage(EnemyMob target, Damage damage) {
-            SplashTower.this.dealPeriodicDamage(target, damage);
+        public void dealShadowHit(EnemyMob target, Damage damage) {
+            SplashTower.this.landHit(target, damage, SplashTower.this.stats().attack().withoutCrits().asShadow());
         }
 
         @Override
@@ -711,7 +714,7 @@ public final class SplashTower extends AbstractTower {
         @Override
         public void jump(HexJump jump) {
             HEXES.stream().filter(hex -> hex.kind() == jump.hex().kind()).findFirst().ifPresent(hex ->
-                    SplashTower.this.sendCurse(hex, jump.from(), jump.to(), new Dose(jump.hex().castTicks(), jump.grownSlow())));
+                    SplashTower.this.sendCurse(hex, jump.from(), jump.to(), Dose.jumped(jump.hex().castTicks(), jump.grownSlow(), jump.hex().stored())));
         }
     }
 
@@ -762,8 +765,19 @@ public final class SplashTower extends AbstractTower {
     private record PendingCurse(Curse curse, Hex hex, TowerStats stats, Dose dose) {
     }
 
-    /** How long a hex lasts as cast, and the slow it starts from. */
-    private record Dose(int ticks, float grownSlow) {
+    /**
+     * How long a hex lasts as cast, the slow it starts from, and for one that jumped on from a dead carrier the damage
+     * it recorded there.
+     */
+    private record Dose(int ticks, float grownSlow, boolean jumped, long stored) {
+
+        static Dose cast(int ticks) {
+            return new Dose(ticks, 0f, false, 0);
+        }
+
+        static Dose jumped(int ticks, float grownSlow, long stored) {
+            return new Dose(ticks, grownSlow, true, stored);
+        }
     }
 
     private record PendingWisp(Wisp wisp, AbilityUnits pays) {
