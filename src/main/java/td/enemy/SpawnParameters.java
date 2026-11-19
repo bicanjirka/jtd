@@ -11,7 +11,10 @@ import td.wave.Vec2;
 public record SpawnParameters(int delayTicks, int health, int price, float sizeMultiplier, float speedMultiplier,
                                Vec2 localOffset, int pathIndex) {
 
-    /** Spawn-delay ticks per slot of wave ordering, at the mob's own speed, unless a wave says otherwise. */
+    /**
+     * Ticks one slot of spacing is worth to an enemy of speed 1, unless a wave says otherwise: a slot is a distance,
+     * so a slower enemy takes longer to walk it.
+     */
     public static final float DEFAULT_DELAY_TICKS_PER_SLOT = 22.4f;
 
     /** No multipliers or offset, on path 0. */
@@ -32,19 +35,18 @@ public record SpawnParameters(int delayTicks, int health, int price, float sizeM
 
     public static SpawnParameters of(double slotPosition, float baseSpeed, int health, int price,
                                       float sizeMultiplier, float speedMultiplier, Vec2 localOffset, int pathIndex) {
-        return of(slotPosition, DEFAULT_DELAY_TICKS_PER_SLOT, baseSpeed, health, price, sizeMultiplier,
-                speedMultiplier, localOffset, pathIndex);
-    }
-
-    /** With {@code delayTicksPerSlot} ticks between slots, where the others use the default. */
-    public static SpawnParameters of(double slotPosition, float delayTicksPerSlot, float baseSpeed, int health,
-                                      int price, float sizeMultiplier, float speedMultiplier, Vec2 localOffset,
-                                      int pathIndex) {
         float speed = baseSpeed * speedMultiplier;
         // Guarded rather than dividing by a zero speed, which would round to Integer.MAX_VALUE.
-        int delayTicks = slotPosition <= 0 || speed <= 0
-                ? 0
-                : (int) Math.round(delayTicksPerSlot * slotPosition / speed);
-        return new SpawnParameters(delayTicks, health, price, sizeMultiplier, speedMultiplier, localOffset, pathIndex);
+        double delayTicks = speed <= 0 ? 0 : DEFAULT_DELAY_TICKS_PER_SLOT * slotPosition / speed;
+        return afterTicks(delayTicks, health, price, sizeMultiplier, speedMultiplier, localOffset, pathIndex);
+    }
+
+    /**
+     * Spawning {@code delayTicks} ticks after its wave starts, rounded to whole ticks; none if that is not positive.
+     */
+    public static SpawnParameters afterTicks(double delayTicks, int health, int price, float sizeMultiplier,
+                                             float speedMultiplier, Vec2 localOffset, int pathIndex) {
+        int ticks = delayTicks <= 0 ? 0 : (int) Math.round(delayTicks);
+        return new SpawnParameters(ticks, health, price, sizeMultiplier, speedMultiplier, localOffset, pathIndex);
     }
 }

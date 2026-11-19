@@ -27,8 +27,8 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
 - An optional **head**, ended by `:`, holds the wave's defaults in slot order: `w<number>`, a
   rank, then affixes (`w30 soldier armored: 3 walker`). A script has a head only when every token before its first
-  `:` is a head word; a token ending in `:` reads as the word and the `:`. `w<number>` sets the ticks one slot of spacing is worth, default
-  `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`, and carries on `WaveContent`; it is positive, stands
+  `:` is a head word; a token ending in `:` reads as the word and the `:`. `w<number>` sets the ticks one slot of spacing is worth to an enemy of
+  speed 1, default `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`, and carries on `WaveContent`; it is positive, stands
   only in a head, and no enemy id may look like it. A level wave whose head names no rank is Grunt:
   the head is the only place a wave's rank is written.
 - **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
@@ -63,6 +63,9 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
 ## Composition rules
 
+- A slot enters once the enemy before it has walked one slot of spacing (`Wave`), so spawn order is script order;
+  a spacer is one more slot that enemy walks. Never time a slot from its index alone: a slow enemy would enter after
+  the faster ones scripted behind it.
 - `WaveContent.enemyCount()` counts **members**, not slots (it seeds the alive count). Spacers
   keep their slot for timing but aren't counted.
 - Health comes from the slot's resolved `EnemyDefinition` × shape multipliers; bounty and size from

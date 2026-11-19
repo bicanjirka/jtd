@@ -22,7 +22,7 @@ import java.util.stream.Stream;
  * {@code drip}, rejected for {@code flank}. {@link Affix} words go right before the id.
  * <p>
  * A head, ended by {@code :}, holds the wave's defaults: {@code w<number>} (such as {@code w30}),
- * how many ticks one slot of spacing is worth in place of
+ * how many ticks one slot of spacing is worth to an enemy of speed 1 in place of
  * {@link SpawnParameters#DEFAULT_DELAY_TICKS_PER_SLOT}, then the rank every slot takes unless it
  * names its own, then affixes every slot carries besides its own ({@code w30 soldier armored: 3 walker}).
  */

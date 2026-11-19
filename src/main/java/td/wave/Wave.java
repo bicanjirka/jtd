@@ -14,7 +14,7 @@ import java.util.Set;
 
 /**
  * One path's wave: its parsed {@link WaveContent}, turned into live enemies by {@link #spawn()}.
- * Each slot's delay comes from its position, and every {@link EnemySlot} already carries its
+ * Each slot's delay comes from the slots before it, and every {@link EnemySlot} already carries its
  * resolved definition and rank.
  * <p>
  * <strong>Spawning waits for {@link #spawn()}</strong>, because a mob binds to the installed path
@@ -59,53 +59,65 @@ public class Wave {
         return new Wave(this.gameWorld, this.content, this.scatterSeed, this.pathIndex, this.speedMultiplier, bonus);
     }
 
+    /**
+     * Each slot enters once the enemy before it has walked one slot of spacing, so the script's order is the order
+     * they enter in, and any two neighbours enter the same distance apart whatever their speeds. A spacer is one
+     * more slot that enemy walks.
+     */
     private static List<EnemyMob> spawnEnemies(GameWorld gameWorld, WaveContent content, long scatterSeed,
                                                  int pathIndex, float speedMultiplier) {
         List<EnemyMob> enemies = new ArrayList<>();
-        int delay = 0;
         float delayTicksPerSlot = content.delayTicksPerSlot() * gameWorld.playtestRules().spawnSpacingScale();
+        double startTicks = 0;
+        float previousSpeed = 1f;
+        int slotIndex = 0;
         for (WaveSlot slot : content.spawnSequence()) {
-            enemies.addAll(spawnSlot(slot, gameWorld, delay, delayTicksPerSlot, scatterSeed, pathIndex,
-                    speedMultiplier));
-            delay++;
+            previousSpeed = switch (slot) {
+                case EnemySlot enemySlot -> {
+                    float speed = walkingSpeed(enemySlot, speedMultiplier);
+                    enemies.addAll(spawnShaped(enemySlot, gameWorld, slotIndex, startTicks, delayTicksPerSlot / speed,
+                            scatterSeed, pathIndex, speedMultiplier));
+                    yield speed;
+                }
+                case EmptySlot _ -> previousSpeed;
+            };
+            startTicks += delayTicksPerSlot / previousSpeed;
+            slotIndex++;
         }
         return List.copyOf(enemies);
     }
 
-    private static List<EnemyMob> spawnSlot(WaveSlot slot, GameWorld gameWorld, int delay, float delayTicksPerSlot,
-                                              long scatterSeed, int pathIndex, float speedMultiplier) {
-        return switch (slot) {
-            case EnemySlot s -> spawnShaped(s, gameWorld, delay, delayTicksPerSlot, scatterSeed, pathIndex,
-                    speedMultiplier);
-            case EmptySlot ignored -> List.of();
-        };
+    /** A still enemy holds the one after it back by one slot, as an enemy of speed 1 would. */
+    private static float walkingSpeed(EnemySlot slot, float speedMultiplier) {
+        float speed = slot.definition().baseSpeed() * slot.shape().speedMultiplier() * speedMultiplier;
+        return speed > 0 ? speed : 1f;
     }
 
     /**
      * Builds every member of one shaped slot: health and bounty scaled and split here, size (the
      * shape's and the affixes') and speed passed on to the mob. Members are spaced by
-     * {@link SpawnShape#delaySpacingSlots()}.
+     * {@link SpawnShape#delaySpacingSlots()}, each slot of it {@code ticksPerSlot} at their speed.
      * <p>
      * Formation offsets draw from a random source seeded by the wave and slot, not the world's,
      * which tower targeting also uses - otherwise a formation would depend on firing order.
      */
-    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int delay,
-                                                float delayTicksPerSlot, long scatterSeed, int pathIndex,
-                                                float speedMultiplier) {
+    private static List<EnemyMob> spawnShaped(EnemySlot enemySlot, GameWorld gameWorld, int slotIndex,
+                                                double startTicks, double ticksPerSlot, long scatterSeed,
+                                                int pathIndex, float speedMultiplier) {
         EnemyDefinition definition = enemySlot.definition();
         Rank rank = enemySlot.rank();
         SpawnShape shape = enemySlot.shape();
         int health = Math.max(1, Math.round(definition.baseHealth() * shape.healthMultiplier()));
         int[] bountyShares = shape.bountyShares(definition.bounty());
         double maxRadius = gameWorld.getBoard().scale() * PathCoverage.PATH_WIDTH_CELLS / 2.0 * PATH_WIDTH_MARGIN_FRACTION;
-        RandomSource scatter = RandomSource.seeded(scatterSeed * 31 + delay);
+        RandomSource scatter = RandomSource.seeded(scatterSeed * 31 + slotIndex);
         List<EnemyMob> members = new ArrayList<>(shape.members());
         for (int i = 0; i < shape.members(); i++) {
-            double slotPosition = delay + i * shape.delaySpacingSlots();
+            double delayTicks = startTicks + i * shape.delaySpacingSlots() * ticksPerSlot;
             Vec2 localOffset = shape.spread().offsetFor(i, shape.members(), maxRadius, scatter);
-            SpawnParameters spawnParameters = SpawnParameters.of(slotPosition, delayTicksPerSlot,
-                    definition.baseSpeed(), health, bountyShares[i], shape.sizeMultiplier() * definition.sizeMultiplier(),
-                    shape.speedMultiplier() * speedMultiplier, localOffset, pathIndex);
+            SpawnParameters spawnParameters = SpawnParameters.afterTicks(delayTicks, health, bountyShares[i],
+                    shape.sizeMultiplier() * definition.sizeMultiplier(), shape.speedMultiplier() * speedMultiplier,
+                    localOffset, pathIndex);
             members.add(new DefinedEnemyMob(definition, gameWorld, spawnParameters, rank));
         }
         return List.copyOf(members);
