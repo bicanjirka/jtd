@@ -82,7 +82,6 @@ public final class TermLooks {
     private static TermLook tower(TowerTerm term) {
         return switch (term) {
             case STEADY_AIM -> new TermLook(Palette.TOWER_SNIPER_LASER, Palette.TERM_FRAME_TOWER_BUFF);
-            case FOCUS -> new TermLook(Palette.TOWER_SEEKER_BODY, Palette.TERM_FRAME_TOWER_BUFF);
             case FRENZY -> new TermLook(Palette.TERM_FRENZY, Palette.TERM_FRAME_TOWER_BUFF);
             case HASTE -> new TermLook(Palette.TERM_HASTE, Palette.TERM_FRAME_TOWER_BUFF);
             case FOURTH_SHOT -> new TermLook(Palette.TERM_FOURTH_SHOT, Palette.TERM_FRAME_TOWER_BUFF);

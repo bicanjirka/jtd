@@ -15,7 +15,7 @@ class SuggestionListTest {
 
     /** A usable buff, two greyed-out buffs with different reasons, then a usable debuff. */
     private static final List<Candidate> ROWS = List.of(Candidate.token("Haste", "buff"),
-            Candidate.token("Arc", "comes with an upgrade"), Candidate.token("Focus", "the tower keeps it itself"),
+            Candidate.token("Arc", "comes with an upgrade"), Candidate.token("Magazine", "the tower keeps it itself"),
             Candidate.token("Jammed", "debuff"));
     private static final Set<Integer> GREYED = Set.of(1, 2);
 

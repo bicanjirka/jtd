@@ -10,8 +10,6 @@ final class TowerTermPictograms {
             // Steady Aim
             Map.entry("tower.steady_aim", "S O12 12 8.4 ; T M12 3.6V8.4 M12 15.6V20.4 M3.6 12H8.4 M15.6 12H20.4 ; F O12 12 1.7"),
             // Crit Streak
-            // Focus
-            Map.entry("tower.focus", "S M3.8 9V3.8H9 M15 3.8H20.2V9 M20.2 15V20.2H15 M9 20.2H3.8V15 ; F O12 12 2.8"),
             // Frenzy
             Map.entry("tower.frenzy", "F M4 20.5V10.5C4 7.6 5.2 5.4 6 4C6.8 5.4 8 7.6 8 10.5V20.5Z M10 20.5V10.5C10 7.6 11.2 5.4 12 4C12.8 5.4 14 7.6 14 10.5V20.5Z M16 20.5V10.5C16 7.6 17.2 5.4 18 4C18.8 5.4 20 7.6 20 10.5V20.5Z ; X M4 12.8H8 M10 12.8H14 M16 12.8H20"),
             // Haste

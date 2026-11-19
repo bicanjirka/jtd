@@ -16,7 +16,7 @@ final class PerkPictograms {
             // Transcendent
             Map.entry("base.transcendent", "F M3.4 18.6L4.6 7.4L8.8 12.4L12 4.6L15.2 12.4L19.4 7.4L20.6 18.6Z ; T M3.4 21H20.6"),
             // Heavy Rounds
-            Map.entry("sniper.heavy_rounds", "S O10 10 6.8 ; F M14.6 16.8L16.8 14.6L21.8 19.6L19.6 21.8Z ; T M10 6V14 M6 10H14"),
+            Map.entry("sniper.heavy_rounds", "F M5.4 21.6V11.8C5.4 6.8 8.2 3.2 12 1.6C15.8 3.2 18.6 6.8 18.6 11.8V21.6Z ; X M5.4 15H18.6 M5.4 18.2H18.6"),
             // Executioner
             Map.entry("sniper.executioner", "S M3.6 20.6L14 8.2 ; F M10.8 2.8C15.6 3 19.8 6.6 20.8 11.4L13.8 12.6L10.6 9.6Z"),
             // Keen Eye
@@ -36,10 +36,10 @@ final class PerkPictograms {
             Map.entry("sniper.hollow_point", "=tower.hollow_point"),
             // Fourth Shot
             Map.entry("sniper.fourth_shot", "F M2.8 6.4H5V17.6H2.8Z M7 6.4H9.2V17.6H7Z M11.2 6.4H13.4V17.6H11.2Z ; F M18.4 4.6L19.8 9.8L21.8 12L19.8 14.2L18.4 19.4L17 14.2L15 12L17 9.8Z"),
-            // Killshot
-            Map.entry("sniper.killshot", "=tower.shatter"),
+            // Deadeye
+            Map.entry("sniper.deadeye", "F M1.6 9.4H8.6C11 9.4 12.8 10.6 13.8 12C12.8 13.4 11 14.6 8.6 14.6H1.6Z ; X M5 9.4V14.6 ; F M18.4 2.8L19.9 10.3L22.8 12L19.9 13.7L18.4 21.2L16.9 13.7L14 12L16.9 10.3Z"),
             // Rifling
-            Map.entry("sniper.rifling", "=tower.shatter"),
+            Map.entry("sniper.rifling", "S O12 12 8.8 ; F O12 12 2.4 ; T M12 3.2C15.8 5.4 16.4 8.4 14 10.2 M20.8 12C18.6 15.8 15.6 16.4 13.8 14 M12 20.8C8.2 18.6 7.6 15.6 10 13.8 M3.2 12C5.4 8.2 8.4 7.6 10.2 10"),
             // Heavy Rounds II
             Map.entry("sniper.heavy_rounds.2", "=sniper.heavy_rounds"),
             // Steady Aim
