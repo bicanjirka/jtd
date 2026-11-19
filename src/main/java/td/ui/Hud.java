@@ -37,8 +37,19 @@ public final class Hud {
 
     public static final Color BACKGROUND = new Color(13, 14, 16);
     public static final Color FOREGROUND = new Color(234, 234, 239);
-    static final Font LABEL_FONT = new Font("Dialog", Font.PLAIN, 11);
-    static final Font GLYPH_FONT = new Font("Dialog", Font.PLAIN, 14);
+    /** Chips, tags, and what is written across a bar. */
+    static final int MICRO = 9;
+    /** Panel titles, control labels, captions and fine print. */
+    static final int CAPTION = 11;
+    /** What is read: sheets, tooltips, the Upgrades panel's words and prices. */
+    static final int BODY = 12;
+    /** A number or glyph that is the point of its control. */
+    static final int TITLE = 15;
+    static final int HEADING = 19;
+    static final int DISPLAY = 30;
+    static final Font LABEL_FONT = font(Font.PLAIN, CAPTION);
+    static final Font BODY_FONT = font(Font.PLAIN, BODY);
+    static final Font GLYPH_FONT = font(Font.PLAIN, TITLE);
     static final Color BORDER_IDLE = new Color(103, 103, 105);
     static final Color BORDER_DISABLED = new Color(62, 62, 63);
     static final Color BORDER_HOVER = new Color(158, 158, 161);
@@ -57,8 +68,8 @@ public final class Hud {
     static final Color CHIP_BORDER = new Color(141, 141, 144);
     /** A price the player can't pay now. */
     static final Color SHORT = new Color(255, 107, 107);
-    static final Font CHIP_FONT = new Font("Dialog", Font.BOLD, 8);
-    static final Font PRICE_FONT = new Font("Dialog", Font.BOLD, 9);
+    static final Font CHIP_FONT = font(Font.BOLD, MICRO);
+    static final Font PRICE_FONT = font(Font.BOLD, MICRO);
     /** Padding inside a control, since {@link #paintControl} draws the border. */
     private static final Border CONTROL_PADDING = new EmptyBorder(3, 8, 3, 8);
     private static final int CHIP_INSET = 2;
@@ -76,6 +87,14 @@ public final class Hud {
     private static final String ELLIPSIS = "…";
 
     private Hud() {
+    }
+
+    /**
+     * A font of the UI's one family in one of the type scale's sizes ({@link #MICRO} to {@link #DISPLAY}). Every text
+     * takes its font from here, never from the look-and-feel, whose default differs between platforms.
+     */
+    static Font font(int style, int size) {
+        return new Font(Font.DIALOG, style, size);
     }
 
     /**

@@ -43,6 +43,7 @@ final class SheetPane extends JTextPane {
         this.setEditable(false);
         this.setBackground(Hud.BACKGROUND);
         this.setForeground(Hud.FOREGROUND);
+        this.setFont(Hud.BODY_FONT);
         this.setBorder(null);
         this.setFocusable(false);
     }

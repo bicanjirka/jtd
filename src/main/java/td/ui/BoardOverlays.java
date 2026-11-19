@@ -57,7 +57,7 @@ public class BoardOverlays {
         JPanel plate = new Plate();
 
         JLabel label = new JLabel();
-        label.setFont(new Font("SansSerif", Font.BOLD, 18));
+        label.setFont(Hud.font(Font.BOLD, Hud.HEADING));
         label.setForeground(BANNER_TEXT);
         label.setText(text);
         GridBagConstraints labelConstraints = new GridBagConstraints();
