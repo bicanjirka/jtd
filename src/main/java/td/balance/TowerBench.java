@@ -229,6 +229,8 @@ public final class TowerBench {
                 Scenario.stream("hidden", "ghost").testing("enemies that fade out of sight"),
                 Scenario.stream("fast", "runner").testing("enemies that run faster the more they are hurt"),
                 Scenario.stream("elusive", PLAIN).with(Affix.ELUSIVE).testing("plain enemies that dodge aimed hits"),
+                Scenario.stream("regen", PLAIN).with(Affix.REGENERATING)
+                        .testing("plain enemies that heal themselves, for what turns a heal against them"),
                 Scenario.stream("tank", PLAIN).slowedTo(TANK_SPEED).besideTeam(FOCUS)
                         .testing("slow plain enemies under focused fire, for the damage a hex or a mark adds to what "
                                 + "others deal"));

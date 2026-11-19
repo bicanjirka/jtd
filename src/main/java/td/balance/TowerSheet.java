@@ -19,7 +19,7 @@ final class TowerSheet {
     private static final Map<String, Double> MIX = Map.ofEntries(Map.entry("single", 1.0), Map.entry("stream", 4.0),
             Map.entry("group", 4.0), Map.entry("boss", 2.0), Map.entry("armored", 2.5), Map.entry("plated", 2.5),
             Map.entry("resist", 1.5), Map.entry("hidden", 1.0), Map.entry("fast", 1.5), Map.entry("elusive", 1.0),
-            Map.entry("tank", 2.0));
+            Map.entry("regen", 1.0), Map.entry("tank", 2.0));
     private static final double UNLISTED = 1.0;
     /** Measured, but nothing is priced off them and no verdict counts them: their trees are not final. */
     private static final Set<String> NOT_JUDGED = Set.of("AURA");
