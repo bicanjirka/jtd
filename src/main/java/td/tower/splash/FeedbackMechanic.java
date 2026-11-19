@@ -1,5 +1,6 @@
 package td.tower.splash;
 
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
 import td.tower.ability.AbilityUnits;
@@ -7,7 +8,7 @@ import td.tower.ability.AbilityUnits;
 /** Feedback: a crit of the Arc gives back part of a Spark. */
 public final class FeedbackMechanic implements SplashMechanic {
 
-    private static final float REFUND = 0.5f;
+    private static final float REFUND = 1f;
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {
@@ -16,6 +17,6 @@ public final class FeedbackMechanic implements SplashMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("an ").plus(TowerTerm.ARC).plus(" crit gives half a ").plus(TowerTerm.SPARK);
+        return TermText.of("an ").plus(TowerTerm.ARC).plus(" crit gives back " + TermNumbers.percent(REFUND) + " of a ").plus(TowerTerm.SPARK);
     }
 }

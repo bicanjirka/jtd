@@ -7,7 +7,7 @@ import td.tower.TowerTerm;
 /** High Voltage: the Arc's jumps hit harder. */
 public final class HighVoltageMechanic implements SplashMechanic {
 
-    private static final float SHARE = 0.6f;
+    private static final float SHARE = 1f;
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {
