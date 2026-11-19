@@ -17,18 +17,21 @@ whatever else blocks the step. Before you ask, read the tower's class, its tree,
 
 ## Fixed rules
 
-- **Prices are a menu, not a result:** tower 15 or 20 (25 only for a strong, stated reason); tier0 node 5; tier I 10 or
-  15; tier II 20 or 25; tier III 30 or 35. Never `TowerPriceWriter` and never TowerReport's "suggested" price: pick from
-  the menu, then tune the parameters to fit the price. Copy surcharge (x1.25) and sell refund (0.75) stay fixed.
+- **Prices are a menu, not a result:** tower 15 or 20 (25 only for a strong, stated reason); every tier0 node 5;
+  per node, tier I 10 or 15, tier II 20 or 25, tier III 30 or 35. A tier may mix both; its stronger nodes take the
+  higher price (a cluster's members share one). A price off the menu is only a concern you raise, when it would
+  simplify the design or the balance; the menu stays preferred. Never `TowerPriceWriter` and never TowerReport's
+  "suggested" price: pick from the menu, then tune the parameters to fit the price. Copy surcharge (x1.25) and sell
+  refund (0.75) stay fixed.
 - **No implicit passive.** A tower whose bare self does something beyond its basic attack (on-hit effect, trait,
   aura, hidden bonus) moves it into a tier0 node in the `base` step: a mechanics change (commit 1, below). If a node id
   changes, raise the save format; ids follow names, no legacy ids.
 - **XP gates are yours to set, per tower** (`UpgradeTree.withTiers`; `UpgradeTier.standard()` is only the default).
   XP is the bounty of every enemy whose walk passed within the tower's reach, hit or not (`ExperienceAwarder`), so
   every tower beside a lane earns about that lane's whole bounty: a gate is in effect a round. Read the rounds off
-  WavePowerReport's `xp` and `opens` columns on Iron Crossing. Pick each tower's gates by its own curve: a tier whose
-  power per credit jumps opens later, so that at every round the tower's best affordable build stays in the band of
-  the others'. State each gate as "XP n = round r". The Beacon earns through the towers it lights (plus Kinship,
+  WavePowerReport's `xp` and `opens` columns on Iron Crossing. Each tower gets its own XP curve (its gate per tier),
+  picked by how its power grows: a tier whose power per credit jumps opens later, so that at every round the tower's
+  best affordable build stays in the band of the others'. State each gate as "XP n = round r". The Beacon earns through the towers it lights (plus Kinship,
   Mentor and Breakthrough bonuses), so its pace is its partners'. Gates are provisional until the levels are final.
 - Memories that hold: bare Burst (base tree) is every tower's damage floor, Sniper the single-target ceiling, Aerie
   the top single-target vs armor/plating; report any breach. No tower allows for the Beacon; its combos are tuned in
