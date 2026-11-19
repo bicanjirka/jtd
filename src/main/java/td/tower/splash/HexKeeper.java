@@ -31,11 +31,6 @@ public final class HexKeeper {
         this.ledger.record(enemy, kind, castTicks);
     }
 
-    /** Whether no hex is out, so a tick has nothing to pay. */
-    public boolean isEmpty() {
-        return this.ledger.isEmpty();
-    }
-
     /** Pays out what happened to the hexes since the last tick, as {@code spec} has them bite. */
     public void doTick(HexSpec spec) {
         if (this.ledger.isEmpty()) {
@@ -70,19 +65,16 @@ public final class HexKeeper {
      * was cast and the slow it had grown to.
      */
     private void spread(EnemyMob dead, HexEvent.CarriedHex carried) {
-        Optional<Effect> left = dead.activeEffects().stream().filter(effect -> effect.kind() == carried.kind())
-                .findFirst();
-        if (left.isEmpty()) {
-            return;
-        }
-        Effect effect = left.get();
+        dead.activeEffect(carried.kind()).ifPresent(left -> this.spread(dead, carried, left));
+    }
+
+    private void spread(EnemyMob dead, HexEvent.CarriedHex carried, Effect effect) {
         int ticks = Math.max(1, Math.round((float) effect.remainingTicks() * carried.castTicks()
                 / Math.max(1, effect.authoredDurationTicks())));
         Optional<EnemyMob> next = new NearestSelector(dead.getX(), dead.getY()).selectFrom(
-                InRangeTargetQuery.everyone((int) dead.getX(), (int) dead.getY(),
-                                this.caster.distance(HexSpec.SPREAD_CELLS))
+                InRangeTargetQuery.around(dead, this.caster.distance(HexSpec.SPREAD_CELLS))
                         .matching(this.caster.enemies()).stream()
-                        .filter(enemy -> enemy != dead && !enemy.isDead() && enemy.validTarget()
+                        .filter(enemy -> !enemy.isDead()
                                 && enemy.activeEffectKinds().stream()
                                 .noneMatch(kind -> kind.category() == EffectCategory.HEX))
                         .toList());

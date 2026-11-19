@@ -13,6 +13,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
+import td.enemy.EnemyTarget;
 import td.enemy.EnemyWalk;
 import td.enemy.HitResult;
 import td.stat.DisruptionPenalty;
@@ -39,6 +40,7 @@ import td.tower.proc.Proc;
 import td.tower.proc.ProcActions;
 import td.tower.proc.ProcPayload;
 import td.tower.proc.ProcRunner;
+import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.Mechanic;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
@@ -52,13 +54,12 @@ import td.tower.upgrade.UpgradeState;
 import td.tower.upgrade.UpgradeSwitch;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
-import td.util.PathRuntime;
 import td.util.ThreadConfined;
 import td.util.TickRate;
-import td.wave.Vec2;
 import td.wave.WaveClock;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -174,19 +175,15 @@ public abstract class AbstractTower implements Tower {
 
     /** Toward the nearest point of any path, so a turret at rest loses little time turning to its first target. */
     private static double restHeadingOf(GameWorld context, int x, int y) {
-        Vec2 nearest = null;
-        double best = Double.MAX_VALUE;
-        for (PathRuntime path : context.level().paths()) {
-            for (Vec2 point : path.path().points()) {
-                double dx = point.x() - x;
-                double dy = point.y() - y;
-                if (dx * dx + dy * dy < best) {
-                    best = dx * dx + dy * dy;
-                    nearest = point;
-                }
-            }
-        }
-        return nearest == null ? 0d : TurretAim.angleTo(x, y, nearest.x(), nearest.y());
+        return context.level().paths().stream()
+                .flatMap(path -> path.path().points().stream())
+                .min(Comparator.comparingDouble(point -> {
+                    double dx = point.x() - x;
+                    double dy = point.y() - y;
+                    return dx * dx + dy * dy;
+                }))
+                .map(nearest -> TurretAim.angleTo(x, y, nearest.x(), nearest.y()))
+                .orElse(0d);
     }
 
     /** The heading a turret or beam rests at between waves and starts each wave at. */
@@ -226,6 +223,35 @@ public abstract class AbstractTower implements Tower {
     /** Whether no wave is out, so a turret with nothing to aim at turns to its rest pose. */
     protected final boolean betweenWaves() {
         return this.context.waves().betweenWaves();
+    }
+
+    /** One cell of the board, in pixels. */
+    protected final int cellPixels() {
+        return this.context.getBoard().scale();
+    }
+
+    /** Whether a range upgrade carries it past its base range, which a longer barrel shows. */
+    public final boolean reachesPastItsBase() {
+        return this.stats().reachReal() > this.rangeBase * this.cellPixels();
+    }
+
+    /** Where it stands and how far it reaches now: what its reach is measured from. */
+    protected final Viewpoint viewpoint() {
+        return new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.cellPixels());
+    }
+
+    /** The bearing from its centre to {@code enemy}, in radians. */
+    protected final double bearingTo(EnemyTarget enemy) {
+        return TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY());
+    }
+
+    /** Turns {@code turret} toward {@code target}; with none, between waves, toward its rest. */
+    protected final void turnTurret(TurretAim turret, Optional<? extends EnemyTarget> target) {
+        target.ifPresentOrElse(enemy -> turret.tick(this.bearingTo(enemy)), () -> {
+            if (this.betweenWaves()) {
+                turret.settle();
+            }
+        });
     }
 
     /** The stats as authored, before any upgrade or buff. */
@@ -340,7 +366,7 @@ public abstract class AbstractTower implements Tower {
         Set<TowerCapability> capabilities = EnumSet.noneOf(TowerCapability.class);
         capabilities.addAll(upgrades.capabilities());
         capabilities.addAll(layer.capabilities());
-        this.stats = TowerStats.of(this.baseStats, own, received, this.disruption, this.context.getBoard().scale(),
+        this.stats = TowerStats.of(this.baseStats, own, received, this.disruption, this.cellPixels(),
                 capabilities);
     }
 
@@ -555,10 +581,8 @@ public abstract class AbstractTower implements Tower {
      */
     protected final <M extends Mechanic> void castReadyAbilities(List<M> owned, Predicate<M> cast) {
         for (M mechanic : owned) {
-            Optional<AbilityCharge> charge = mechanic.ability().filter(AbilityCharge::isReady);
-            if (charge.isPresent() && cast.test(mechanic)) {
-                charge.get().spend();
-            }
+            mechanic.ability().filter(AbilityCharge::isReady).filter(ready -> cast.test(mechanic))
+                    .ifPresent(AbilityCharge::spend);
         }
     }
 
@@ -1040,7 +1064,7 @@ public abstract class AbstractTower implements Tower {
         StatModifier adding = sourceParts.stream().filter(StatPart::adds).map(part -> part.added().modifier())
                 .reduce(StatModifier.none(), StatModifier::plus);
         TowerStats summed = TowerStats.of(this.baseStats, StatModifiers.of(source, adding), StatModifiers.none(),
-                DisruptionPenalty.none(), this.context.getBoard().scale(), Set.of());
+                DisruptionPenalty.none(), this.cellPixels(), Set.of());
         return new TowerStatLine(StatBreakdown.of(row, base, sourceParts, read.apply(summed), read.apply(stats)),
                 source);
     }
@@ -1340,7 +1364,7 @@ public abstract class AbstractTower implements Tower {
             upgrades = upgrades.owned().contains(node) ? upgrades : upgrades.with(node);
         }
         return TowerStats.of(this.baseStats, upgrades.totalModifiers(), this.stats.received(),
-                DisruptionPenalty.none(), this.context.getBoard().scale(), upgrades.capabilities());
+                DisruptionPenalty.none(), this.cellPixels(), upgrades.capabilities());
     }
 
     public TowerInspection inspect() {

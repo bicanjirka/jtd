@@ -26,7 +26,7 @@ import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
 import td.tower.targeting.PreferringSelector;
-import td.tower.targeting.Viewpoint;
+import td.tower.targeting.TargetSelector;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.RangeNodes;
@@ -139,6 +139,7 @@ public final class CinderTower extends AbstractTower {
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<CinderMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
+    private final TargetSelector nearest = PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY));
     /** The enemies this stream has touched, which Sear has already scorched; it only answers membership. */
     private final Set<EnemyMob> touched = new HashSet<>();
     /** Each hot enemy that flashed over this tick and an enemy it reached, in pairs, for the look. */
@@ -169,8 +170,7 @@ public final class CinderTower extends AbstractTower {
 
     /** Whom it aims at and what it pours, as the mechanics in {@code owned} make it. */
     private CinderSpec spec(List<CinderMechanic> owned) {
-        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
-        CinderSpec spec = CinderSpec.from(view, SEAR_STACKS);
+        CinderSpec spec = CinderSpec.from(this.viewpoint(), SEAR_STACKS);
         for (CinderMechanic mechanic : owned) {
             spec = mechanic.refineSpec(spec);
         }
@@ -190,15 +190,9 @@ public final class CinderTower extends AbstractTower {
             this.target = Optional.empty();
         }
         if (this.streamLeft > 0 && this.target.filter(inRange::contains).isEmpty()) {
-            this.target = PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY)).selectFrom(inRange);
+            this.target = this.nearest.selectFrom(inRange);
         }
-        Optional<EnemyMob> aim = this.streamLeft > 0 ? this.target
-                : PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY)).selectFrom(inRange);
-        if (aim.isPresent()) {
-            this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, aim.get().getX(), aim.get().getY()));
-        } else if (this.betweenWaves()) {
-            this.turretAim.settle();
-        }
+        this.turnTurret(this.turretAim, this.streamLeft > 0 ? this.target : this.nearest.selectFrom(inRange));
         if (this.streamLeft > 0) {
             this.pour(spec);
             this.streamLeft--;
@@ -235,14 +229,11 @@ public final class CinderTower extends AbstractTower {
                 hotOnes.add(enemy);
             }
         }
-        float radius = FlashoverMechanic.REACH_CELLS * this.context.getBoard().scale();
+        float radius = FlashoverMechanic.REACH_CELLS * this.cellPixels();
         for (EnemyMob source : hotOnes) {
-            for (EnemyMob beside : InRangeTargetQuery.everyone((int) source.getX(), (int) source.getY(), radius)
-                    .matching(this.context.enemies())) {
-                if (beside != source) {
-                    this.feed(beside, perTick * FlashoverMechanic.SHARE, spec);
-                    this.flashes.add(new Flash(source.getX(), source.getY(), beside.getX(), beside.getY()));
-                }
+            for (EnemyMob beside : InRangeTargetQuery.around(source, radius).matching(this.context.enemies())) {
+                this.feed(beside, perTick * FlashoverMechanic.SHARE, spec);
+                this.flashes.add(new Flash(source.position(), beside.position()));
             }
         }
     }
@@ -261,14 +252,12 @@ public final class CinderTower extends AbstractTower {
     }
 
     private static float fuelOf(EnemyMob enemy, EffectKind fire) {
-        return enemy.activeEffects().stream().filter(effect -> effect.kind() == fire).findFirst()
-                .map(Effect::fuelLevel).orElse(0f);
+        return enemy.activeEffect(fire).map(Effect::fuelLevel).orElse(0f);
     }
 
     /** How far {@code enemy}'s bearing is from {@code heading}, in radians. */
     private double offAxis(EnemyMob enemy, double heading) {
-        double bearing = TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY());
-        double off = Math.abs(bearing - heading) % (2 * Math.PI);
+        double off = Math.abs(this.bearingTo(enemy) - heading) % (2 * Math.PI);
         return off > Math.PI ? 2 * Math.PI - off : off;
     }
 
@@ -332,11 +321,6 @@ public final class CinderTower extends AbstractTower {
     public float reloadLeft() {
         return this.isStreaming() ? 0f
                 : this.clock.remaining(this.streamStats.value(TowerStat.RELOAD) / RELOAD_PERIOD_TICKS);
-    }
-
-    /** Whether a range upgrade carries it past its base range. */
-    public boolean reachesPastItsBase() {
-        return this.stats().reachReal() > RANGE * this.context.getBoard().scale();
     }
 
     /** What its stream looks like now, as its nodes shape it. */

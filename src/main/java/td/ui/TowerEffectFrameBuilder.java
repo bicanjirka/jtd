@@ -537,10 +537,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                     / MortarTower.NUKE_FLASH_TICKS;
             if (progress >= 0f && progress < 1f) {
                 float fade = 1f - progress;
-                this.draws.add(new FlashDraw(Palette.TOWER_MORTAR_NUKE_FLASH, (float) flash.x(), (float) flash.y(),
-                        flash.radius() * NUKE_FLASH_SHARE, fade * NUKE_FLASH_ALPHA));
-                this.draws.add(new RingDraw(Palette.TOWER_MORTAR_NUKE_FLASH, (float) flash.x(), (float) flash.y(),
-                        flash.radius() * progress, fade));
+                float x = (float) flash.at().x();
+                float y = (float) flash.at().y();
+                this.draws.add(new FlashDraw(Palette.TOWER_MORTAR_NUKE_FLASH, x, y, flash.radius() * NUKE_FLASH_SHARE,
+                        fade * NUKE_FLASH_ALPHA));
+                this.draws.add(new RingDraw(Palette.TOWER_MORTAR_NUKE_FLASH, x, y, flash.radius() * progress, fade));
             }
         });
         this.shellCarry(tower);
@@ -749,8 +750,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                     fed.inCore(), 1), Burning::with);
         }
         for (Flash flash : tower.flashes()) {
-            this.draws.add(flashover(look.soulfire(), (float) flash.fromX(), (float) flash.fromY(), (float) flash.toX(),
-                    (float) flash.toY(), flicker));
+            this.draws.add(flashover(look.soulfire(), (float) flash.from().x(), (float) flash.from().y(),
+                    (float) flash.to().x(), (float) flash.to().y(), flicker));
         }
         return null;
     }

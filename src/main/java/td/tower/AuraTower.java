@@ -1,7 +1,5 @@
 package td.tower;
 
-import td.damage.Damage;
-import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.StackingDebuff;
@@ -41,6 +39,7 @@ import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -273,13 +272,7 @@ public final class AuraTower extends AbstractTower {
 
     /** The towers in the light, in the order they were built, derived on each call rather than tracked. */
     public List<Tower> litTowers() {
-        List<Tower> lit = new ArrayList<>();
-        for (Tower tower : this.context.towers().all()) {
-            if (this.lights(tower)) {
-                lit.add(tower);
-            }
-        }
-        return lit;
+        return this.context.towers().all().stream().filter(this::lights).toList();
     }
 
     /** The Beacon has no reach on the path: it earns through the towers it lights. */
@@ -296,7 +289,7 @@ public final class AuraTower extends AbstractTower {
         }
         return switch (this.spec().lesson()) {
             case KINSHIP -> KinshipMechanic.xpFor(this.otherTypesFor(earner));
-            case MENTOR -> earner == this.apprentice().orElse(null) ? MentorMechanic.XP : 0f;
+            case MENTOR -> this.apprentice().filter(apprentice -> apprentice == earner).isPresent() ? MentorMechanic.XP : 0f;
             case NONE, BREAKTHROUGH -> 0f;
         };
     }
@@ -314,13 +307,7 @@ public final class AuraTower extends AbstractTower {
 
     /** The Lit tower with the least XP, the earliest built on a tie; empty when the light holds none. */
     private Optional<Tower> apprentice() {
-        Tower least = null;
-        for (Tower tower : this.litTowers()) {
-            if (least == null || tower.experience().xp() < least.experience().xp()) {
-                least = tower;
-            }
-        }
-        return Optional.ofNullable(least);
+        return this.litTowers().stream().min(Comparator.comparingInt(tower -> tower.experience().xp()));
     }
 
     /** Whether the light reads which tower types it holds (Kinship, Prism), so the lantern shows them. */
@@ -411,8 +398,7 @@ public final class AuraTower extends AbstractTower {
             return;
         }
         Optional<EnemyMob> keep = this.held.filter(enemy -> !enemy.isDead() && inside.contains(enemy));
-        Optional<EnemyMob> next = keep.isPresent() ? keep
-                : spotlight.selector(this.context.getBoard().scale()).selectFrom(inside);
+        Optional<EnemyMob> next = keep.or(() -> spotlight.selector(this.cellPixels()).selectFrom(inside));
         next.ifPresent(enemy -> this.applyEffect(enemy, sink -> Effect.priority(LINGER_TICKS, sink)));
         this.held = next;
     }
@@ -424,18 +410,18 @@ public final class AuraTower extends AbstractTower {
     private void carry(PrismMark mark, EnemyMob enemy, boolean entered) {
         switch (mark) {
             case SUNDER -> {
-                if (entered || enemy.effectStacks(EffectKind.SUNDERED) == 0) {
+                if (landsAgain(enemy, EffectKind.SUNDERED, entered)) {
                     this.applyStacks(enemy, StackingDebuff.SUNDERED, mark.stacks());
                 }
             }
             case SCORCH -> {
-                if (entered || enemy.effectStacks(EffectKind.SCORCHED) == 0) {
-                    this.applyEffect(enemy, sink -> Effect.scorched(mark.stacks()));
+                if (landsAgain(enemy, EffectKind.SCORCHED, entered)) {
+                    this.applyEffect(enemy, _ -> Effect.scorched(mark.stacks()));
                 }
             }
             case TOLL -> {
-                if (entered || enemy.effectStacks(EffectKind.TOLL) == 0) {
-                    this.applyEffect(enemy, sink -> Effect.toll(mark.stacks(), PulseSpec.TOLL_CAP));
+                if (landsAgain(enemy, EffectKind.TOLL, entered)) {
+                    this.applyEffect(enemy, _ -> Effect.toll(mark.stacks(), PulseSpec.TOLL_CAP));
                 }
             }
             case CRACK -> this.applyEffect(enemy, sink -> Effect.cracked(MortarTower.CRACKED_TICKS, sink));
@@ -445,26 +431,23 @@ public final class AuraTower extends AbstractTower {
         }
     }
 
+    /** A stacking mark lands as the enemy enters, and again while it stays once the mark has worn off it. */
+    private static boolean landsAgain(EnemyMob enemy, EffectKind mark, boolean entered) {
+        return entered || enemy.effectStacks(mark) == 0;
+    }
+
     /** The light's Static discharges once badly hurt and its Soulbrand bursts once killed, as the Burst's do. */
     private void settleTags() {
-        this.lightStatic.take(enemy -> enemy.isDead() || enemy.getHealthFraction() <= StaticMechanic.DISCHARGE_AT)
-                .stream()
-                .filter(enemy -> !enemy.isDead())
-                .forEach(enemy -> this.dealDamage(enemy,
-                        Damage.magic(DamageUnits.ofPoints(StaticMechanic.DISCHARGE_POINTS)),
-                        this.stats().attack().withoutCrits()));
-        this.lightSoulbrand.take(EnemyMob::isDead).stream()
-                .filter(EnemyMob::wasKilled)
-                .forEach(this::burstSoul);
+        this.lightStatic.settleStatic(
+                enemy -> this.dealDamage(enemy, StaticMechanic.discharge(), this.stats().attack().withoutCrits()));
+        this.lightSoulbrand.settleSoulbrand(this::burstSoul);
     }
 
     private void burstSoul(EnemyMob dead) {
-        float reach = SoulbrandMechanic.BURST_CELLS * this.context.getBoard().scale();
-        InRangeTargetQuery.everyone((int) dead.getX(), (int) dead.getY(), reach)
+        InRangeTargetQuery.around(dead, SoulbrandMechanic.BURST_CELLS * this.cellPixels())
                 .matching(this.context.enemies()).stream()
-                .filter(enemy -> enemy != dead && !enemy.isDead())
-                .forEach(enemy -> this.dealDamage(enemy, Damage.magic(DamageUnits.ofPoints(SoulbrandMechanic.BURST_POINTS)),
-                        this.stats().attack().withoutCrits()));
+                .filter(enemy -> !enemy.isDead())
+                .forEach(enemy -> this.dealDamage(enemy, SoulbrandMechanic.burst(), this.stats().attack().withoutCrits()));
     }
 
     /** Breakthrough: a Lit tower whose tier rose this tick teaches every other Lit tower. */

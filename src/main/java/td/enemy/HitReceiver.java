@@ -8,6 +8,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /** An enemy as a hit sees it: what lands, what it is already suffering, and whether it died. */
@@ -68,6 +69,11 @@ public interface HitReceiver {
 
     /** Every effect active on it now, in kind order; a dead enemy keeps the ones it died under. */
     List<Effect> activeEffects();
+
+    /** The active effect of {@code kind}, if there is one. */
+    default Optional<Effect> activeEffect(EffectKind kind) {
+        return this.activeEffects().stream().filter(effect -> effect.kind() == kind).findFirst();
+    }
 
     /** Whether an effect that {@link EffectKind#stopsEnemy() stops it} is active. */
     default boolean isStopped() {

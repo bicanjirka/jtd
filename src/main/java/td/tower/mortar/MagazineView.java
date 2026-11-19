@@ -1,7 +1,7 @@
 package td.tower.mortar;
 
-import java.util.Collections;
-import java.util.EnumMap;
+import td.tower.DrawnShares;
+
 import java.util.List;
 import java.util.Map;
 
@@ -13,12 +13,6 @@ public record MagazineView(List<ShellKind> shells, int loading, Map<ShellKind, F
 
     public MagazineView {
         shells = List.copyOf(shells);
-        Map<ShellKind, Float> drawn = new EnumMap<>(ShellKind.class);
-        chances.forEach((kind, share) -> {
-            if (share > 0f) {
-                drawn.put(kind, share);
-            }
-        });
-        chances = Collections.unmodifiableMap(drawn);
+        chances = DrawnShares.of(ShellKind.class, chances);
     }
 }

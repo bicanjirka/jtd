@@ -4,9 +4,9 @@ import td.wave.ArcLengthPath;
 import td.wave.Path;
 import td.wave.Vec2;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 /** Points along the enemies' path, measured from where a shell landed. */
 public final class PathLine {
@@ -20,26 +20,17 @@ public final class PathLine {
      * path has a length.
      */
     public static List<Vec2> along(List<Path> paths, double x, double y, double[] offsets) {
-        Optional<ArcLengthPath> nearest = Optional.empty();
-        double nearestDistance = Double.MAX_VALUE;
-        double along = 0.0;
-        for (Path path : paths) {
-            Optional<ArcLengthPath> measured = ArcLengthPath.of(path);
-            if (measured.isPresent()) {
-                ArcLengthPath.Nearest here = measured.get().nearest(x, y);
-                if (here.distance() < nearestDistance) {
-                    nearestDistance = here.distance();
-                    along = here.along();
-                    nearest = measured;
-                }
-            }
-        }
-        List<Vec2> points = new ArrayList<>();
-        if (nearest.isPresent()) {
-            for (double offset : offsets) {
-                points.add(nearest.get().poseAt(along + offset).position());
-            }
-        }
-        return points;
+        return paths.stream()
+                .flatMap(path -> ArcLengthPath.of(path).stream())
+                .map(measured -> new Spot(measured, measured.nearest(x, y)))
+                .min(Comparator.comparingDouble(spot -> spot.at().distance()))
+                .map(spot -> Arrays.stream(offsets)
+                        .mapToObj(offset -> spot.path().poseAt(spot.at().along() + offset).position())
+                        .toList())
+                .orElse(List.of());
+    }
+
+    /** The point of {@code path} nearest where the shell landed. */
+    private record Spot(ArcLengthPath path, ArcLengthPath.Nearest at) {
     }
 }

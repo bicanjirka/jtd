@@ -39,10 +39,8 @@ public record BroodSpec(Optional<MissileKind> second, boolean rich) {
 
     /** The kind of a new missile, one roll of {@code random}; Frost alone rolls nothing. */
     public MissileKind draw(RandomSource random) {
-        if (this.second.isEmpty()) {
-            return MissileKind.FROST;
-        }
-        return random.nextDouble() < this.secondShare() ? this.second.get() : MissileKind.FROST;
+        return this.second.map(kind -> random.nextDouble() < this.secondShare() ? kind : MissileKind.FROST)
+                .orElse(MissileKind.FROST);
     }
 
     /** Whether a missile of {@code kind} may stay in the nest. */

@@ -89,7 +89,7 @@ public record MagazineSpec(Map<ShellKind, Integer> weights, boolean fuses, boole
 
     /** Whether {@code kind} is in the draw behind {@code inFront}: Rich Mix leaves out the kind in front. */
     private boolean counts(ShellKind kind, Optional<ShellKind> inFront) {
-        return this.weightOf(kind) > 0 && !(this.mixes && inFront.isPresent() && inFront.get() == kind);
+        return this.weightOf(kind) > 0 && !(this.mixes && inFront.filter(front -> front == kind).isPresent());
     }
 
     /**
