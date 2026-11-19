@@ -64,7 +64,7 @@ public final class SniperTower extends AbstractTower {
 
     public static final int PRICE = 15;
     public static final float DAMAGE_POINTS = 32f;
-    public static final float RANGE = 2.5f;
+    public static final float RANGE = 3.5f;
     public static final float CRIT_CHANCE = 0f;
     public static final float CRIT_MULTIPLIER = 1.5f;
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
@@ -92,12 +92,10 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode STEADY_AIM = UpgradeNode.of("sniper.steady_aim", "Steady Aim", 5)
             .withModifiers(TowerModifiers.aimStacks(5))
             .withHitBonus(STEADY_AIM_BONUS);
-    private static final UpgradeNode RIFLING = UpgradeNode.of("sniper.rifling", "Rifling", 2)
-            .withModifiers(TowerModifiers.critChance(0.05f));
-    private static final UpgradeNode LONG_BARREL = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Barrel", 5)
-            .withModifiers(TowerModifiers.range(0.75f));
-    private static final UpgradeNode HEAVY_ROUNDS = UpgradeNode.of("sniper.heavy_rounds", "Heavy Rounds", 9)
-            .withModifiers(TowerModifiers.damage(12f));
+    private static final UpgradeNode RIFLING = UpgradeNode.of("sniper.rifling", "Rifling", 5)
+            .withModifiers(TowerModifiers.critChance(0.10f));
+    private static final UpgradeNode HEAVY_ROUNDS = UpgradeNode.of("sniper.heavy_rounds", "Heavy Rounds", 5)
+            .withModifiers(TowerModifiers.damage(8f));
 
     private static final UpgradeNode FOURTH_SHOT = UpgradeNode.of("sniper.fourth_shot", "Fourth Shot", 7)
             .withProc(everyFourthShotIs(TowerStatus.nextShots(TowerTerm.FOURTH_SHOT, 1, StatModifiers.none())
@@ -152,7 +150,7 @@ public final class SniperTower extends AbstractTower {
             .withProc(Proc.onKill(GRANTS_FRENZY))
             .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_AIM, RIFLING, LONG_BARREL, HEAVY_ROUNDS))
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_AIM, RIFLING, HEAVY_ROUNDS))
             .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, KILLSHOT,
                     FRENZY, RICOCHET, SUNDERING_CRITS, SILVER_ROUND, HOLLOW_POINT, LONG_BARREL_2,
                     HEAVY_ROUNDS_2, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, MOMENTUM)
