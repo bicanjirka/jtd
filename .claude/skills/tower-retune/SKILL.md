@@ -47,6 +47,8 @@ power) are answered with a bracket of two or three bench runs, never guessed: "b
   for the Aerie's step). No tower allows for the Beacon; its combos are tuned in the Beacon's nodes. It holds nothing
   alone, so it is judged on the `+` (beside-partners) columns only, and TowerReport prints it "not judged"
   (`TowerSheet.isJudged`): its step first makes the report judge it on those columns (tooling, commit 1).
+  The Prism node must apply Vulnerable, the Burst's signature debuff (its Jolt and Agony apply it); set it in the
+  Beacon's step.
 
 ## What is judged, at which states
 
