@@ -111,7 +111,7 @@ final class AbilityText {
                             + seconds(heal.durationTicks()));
             case SprintTemplate sprint -> TermText.of(EffectKind.SPRINTING).plus(lasting(sprint.durationTicks()));
             case SpellproofTemplate spellproof -> TermText.of(EffectKind.SPELLPROOF)
-                    .plus(" of " + TermNumbers.number(spellproof.stacks()) + " stacks" + lasting(spellproof.durationTicks()));
+                    .plus(" of " + TermNumbers.number(spellproof.stacks()) + " stacks");
             case ResolveTemplate resolve -> TermText.of(EffectKind.RESOLVE)
                     .plus(" of " + TermNumbers.number(resolve.stacks()) + " stacks" + lasting(resolve.durationTicks()));
             case UnyieldingTemplate unyielding -> TermText.of(EffectKind.UNYIELDING)

@@ -18,8 +18,8 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   between kinds is a value in the spec (`HeavyRider`), not a branch per mechanic.
 - The chances the panel shows come from `MagazineSpec.chances()` (`MagazineOdds`, which counts Fusion and Rich Mix),
   never from the weights, which no player sees.
-- A shell lands in two zones: its core at full damage and its edge at its kind's share. Every shell Cracks what it
-  hits (Deep Crack swaps in its own effect). A shell's ground is one zone, owned by the Mortar (`ZoneOwner`); a
+- A shell lands in two zones: its core at full damage and its edge at its kind's share. Every shell gives what it
+  hits the Mortar's share of Crack (Deep Crack makes the share worth more stacks). A shell's ground is one zone, owned by the Mortar (`ZoneOwner`); a
   Mortar keeps only its newest flares and puts out the oldest (`Zone.putOut`).
 - Carpet Bombing lays a volley along the enemy path back from the target (`PathLine`), never by geometry around the
   impact; a Barrage's later shells re-pick their target when they fire.

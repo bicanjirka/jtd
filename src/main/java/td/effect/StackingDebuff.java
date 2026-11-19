@@ -1,30 +1,25 @@
 package td.effect;
 
-import td.util.TickRate;
-
 /**
- * The stacking debuffs that last the same whoever adds them, each for its own time on its kind's one shared clock.
- * Naming a kind that isn't one of these doesn't compile.
+ * The shared counts a tower's proc may add stacks to, each held and faded the same whoever adds them. Naming a kind
+ * that isn't one of these doesn't compile.
  */
 public enum StackingDebuff {
-    VULNERABLE(EffectKind.VULNERABLE, 4f),
-    SUNDERED(EffectKind.SUNDERED, 5f),
-    UNRAVELED(EffectKind.UNRAVELED, 5f);
+    SUNDERED(EffectKind.SUNDERED),
+    UNRAVELED(EffectKind.UNRAVELED);
 
     private final EffectKind kind;
-    private final int durationTicks;
 
-    StackingDebuff(EffectKind kind, float seconds) {
+    StackingDebuff(EffectKind kind) {
         this.kind = kind;
-        this.durationTicks = Math.round(seconds * TickRate.TICKS_PER_SECOND);
     }
 
     public EffectKind kind() {
         return this.kind;
     }
 
-    /** {@code stacks} more of this debuff, its damage if any going to {@code sink}. */
-    public Effect effect(int stacks, DamageSink sink) {
-        return Effect.stacking(this.kind, stacks, this.durationTicks, sink);
+    /** {@code stacks} more of this debuff. */
+    public Effect effect(int stacks) {
+        return Effect.counting(this.kind, stacks);
     }
 }

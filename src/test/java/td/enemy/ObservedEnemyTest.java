@@ -151,9 +151,9 @@ class ObservedEnemyTest {
     @Test
     void anotherStackIsReportedAsTheCountChanging() {
         DefinedEnemyMob mob = this.observed(this.world, plain());
-        mob.applyEffect(Effect.vulnerable(1, 100, DamageSink.none()));
+        mob.applyEffect(Effect.sundered(1));
 
-        mob.applyEffect(Effect.vulnerable(1, 100, DamageSink.none()));
+        mob.applyEffect(Effect.sundered(1));
 
         MobEvent.EffectChanged stacks = this.events.changes(MobEvent.Change.STACKS).getFirst();
         assertThat(stacks.before().stacks()).isEqualTo(1);

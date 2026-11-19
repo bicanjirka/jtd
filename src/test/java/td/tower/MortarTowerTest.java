@@ -23,6 +23,7 @@ import td.term.TermText;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.Magazine;
 import td.tower.mortar.MagazineSpec;
+import td.tower.mortar.MortarSpec;
 import td.tower.mortar.PayloadMechanic;
 import td.tower.mortar.ShellKind;
 import td.tower.upgrade.UpgradeNode;
@@ -478,14 +479,14 @@ class MortarTowerTest {
     }
 
     @Test
-    void deepCrackLeavesItsDeeperCrackInPlaceOfCrack() {
+    void deepCrackMakesEachShellsShareOfCrackWorthMoreStacks() {
         MortarTower tower = this.towerWith("Deep Crack");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
         this.landAShell(tower);
 
-        assertThat(target.activeEffectKinds()).contains(EffectKind.DEEP_CRACKED).doesNotContain(EffectKind.CRACKED);
+        assertThat(target.effectStacks(EffectKind.CRACKED)).isEqualTo(MortarSpec.DEEP_CRACK_STACKS);
     }
 
     @Test

@@ -74,7 +74,7 @@ class BoardRendererTest {
         UpgradePaths.buy(tower, context, "Knell");
         context.towers().add(tower);
         FakeEnemyMob full = FakeEnemyMob.at(tower.getX(), tower.getY());
-        full.applyEffect(Effect.toll(PulseSpec.TOLL_CAP, PulseSpec.TOLL_CAP));
+        full.applyEffect(Effect.toll(PulseSpec.TOLL_CAP));
         float before = poseIn(context, 0).recoil();
         context.enemies().setEnemies(new EnemyMob[]{full});
         int tick = 0;

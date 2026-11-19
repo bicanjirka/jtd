@@ -69,6 +69,17 @@ class CinderTowerTest {
     }
 
     @Test
+    void aStreamSingesAnEnemyInItsConeWithOneShareForTheTower() {
+        CinderTower tower = this.tower();
+        FakeEnemyMob ahead = FakeEnemyMob.at(150, 112);
+        this.enemies(ahead);
+
+        tickThrough(tower, 1, 3);
+
+        assertThat(ahead.effectStacks(EffectKind.SINGED)).isEqualTo(1);
+    }
+
+    @Test
     void aStreamPoursForItsLengthThenWaitsOutItsReload() {
         CinderTower tower = this.tower();
         FakeEnemyMob ahead = FakeEnemyMob.at(150, 112);
@@ -299,10 +310,11 @@ class CinderTowerTest {
     }
 
     @Test
-    void itAppliesBurnAndItsSearsScorchedOnceEachFromItself() {
+    void itAppliesBurnItsSearsScorchedAndItsSingeOnceEachFromItself() {
         CinderTower tower = this.tower();
 
-        assertThat(tower.applies()).extracting(AppliedEffect::term).containsExactly(EffectKind.BURN, EffectKind.SCORCHED);
+        assertThat(tower.applies()).extracting(AppliedEffect::term)
+                .containsExactly(EffectKind.BURN, EffectKind.SCORCHED, EffectKind.SINGED);
         assertThat(tower.applies().getFirst().sources()).hasSize(1);
         assertThat(tower.inspect().targeting()).isEqualTo("nearest");
     }

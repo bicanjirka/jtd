@@ -33,22 +33,21 @@ final class EffectSentences {
             case VULNERABLE -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
-                    .plus(", up to " + kind.maxStacks() + " stacks");
+                    .plus(inShares(kind));
             case REVEALED -> TermText.of("every tower can see and aim at it, and it can't gain ")
                     .plus(EffectKind.INVISIBLE);
             case POISON -> pool().plus("; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS) + " while it lasts");
             case SCORCHED -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE))
-                    .plus(", up to " + kind.maxStacks() + "; once nothing adds more, it loses a stack every "
-                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
+                    .plus(counted(kind));
             case SICKENED -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)), EnemyStat.SPIRIT))
-                    .plus(", up to " + kind.maxStacks() + "; once nothing adds more, it loses a stack every "
-                            + seconds(ActiveEffects.STACK_DECAY_INTERVAL_TICKS));
-            case SUNDERED -> stacked(kind, EnemyStat.ARMOR);
-            case EXPOSED -> changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.AGILITY, EnemyStat.RESILIENCE)
-                    .plus(": more and stronger crits on it");
+                    .plus(counted(kind));
+            case SUNDERED -> stacked(kind, EnemyStat.ARMOR).plus(counted(kind));
+            case EXPOSED -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.AGILITY, EnemyStat.RESILIENCE))
+                    .plus(", more and stronger crits on it").plus(inShares(kind));
             case MARKED -> TermText.of("the next hit on it is a crit, which spends this");
             case PRIORITY -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                     EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN)
@@ -69,23 +68,25 @@ final class EffectSentences {
                     .plus(" to at most " + TermNumbers.percent(1f - kind.rule().slowPerStack())
                             + " of its base, whatever raises it, and it comes back over its last "
                             + seconds(ActiveEffects.SLOW_FADE_TICKS));
-            case UNRAVELED -> stacked(kind, EnemyStat.MAGIC_RESIST);
+            case UNRAVELED -> stacked(kind, EnemyStat.MAGIC_RESIST).plus(counted(kind));
             case BRITTLE -> changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                     EnemyStat.PHYSICAL_DAMAGE_TAKEN);
-            case TOLL -> TermText.of("time spent in an Obelisk's field, a stack a second, lost a stack a second "
-                    + "outside every field; each stack: ")
+            case TOLL -> TermText.of("time spent in an Obelisk's field, a stack a second; each stack: ")
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
-                    .plus(", up to " + kind.maxStacks() + " stacks");
+                    .plus(counted(kind));
             case DRAGGED -> TermText.of("slows by as much as the field gives, deeper with every stack of ")
                     .plus(EffectKind.TOLL).plus("; only the strongest slow counts, and speed comes back over its last "
                             + seconds(ActiveEffects.SLOW_FADE_TICKS));
             case DEAD_ZONE -> changes(TermNumbers.signed(kind.rule().perStack().get(EnemyStat.SPIRIT).setTo()), EnemyStat.SPIRIT)
                     .plus(", so ").plus(EffectKind.HEAL).plus(" and ").plus(EffectKind.SHIELD).plus(" are worth nothing");
-            case CRACKED, DEEP_CRACKED -> changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind, EnemyStat.PLATING))),
-                    EnemyStat.PLATING)
-                    .plus(" and ").plus(changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind,
-                            EnemyStat.INSULATION))), EnemyStat.INSULATION));
+            case CRACKED -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind, EnemyStat.PLATING))), EnemyStat.PLATING))
+                    .plus(inShares(kind));
+            case SINGED -> TermText.of("each stack: ")
+                    .plus(changes(TermNumbers.signed(DamageUnits.inPoints(perStack(kind, EnemyStat.INSULATION))),
+                            EnemyStat.INSULATION))
+                    .plus(inShares(kind));
             case TARRED -> slowing("slows by " + TermNumbers.percent(kind.rule().slowPerStack()));
             case BLEEDING -> TermText.of("physical damage for every cell it travels, ignoring ").plus(EnemyStat.ARMOR)
                     .plus(" and ").plus(EnemyStat.PLATING).plus("; standing still, it takes none");
@@ -96,11 +97,12 @@ final class EffectSentences {
             case SPRINTING -> changes(
                     TermNumbers.signedPercent(kind.rule().perStack().get(EnemyStat.MOVE_SPEED).percentAdd()),
                     EnemyStat.MOVE_SPEED);
-            case SPELLPROOF -> stacked(kind, EnemyStat.MAGIC_RESIST);
+            case SPELLPROOF -> stacked(kind, EnemyStat.MAGIC_RESIST).plus(counted(kind));
             case RESOLVE -> TermText.of("each stack: ")
                     .plus(changes(TermNumbers.signedPercent(perStack(kind, EnemyStat.PHYSICAL_DAMAGE_TAKEN)),
                             EnemyStat.PHYSICAL_DAMAGE_TAKEN, EnemyStat.MAGIC_DAMAGE_TAKEN))
-                    .plus(", as many stacks as the ally that gives it has to give");
+                    .plus(", held at as many stacks as the ally that gives it has to give; away from it, it loses a stack every "
+                            + seconds(Effect.FADE_STEP_TICKS));
             case UNYIELDING -> TermText.join(", ", List.of(
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.RESILIENCE)), EnemyStat.RESILIENCE),
                     changes(TermNumbers.signed(perStack(kind, EnemyStat.SPIRIT)), EnemyStat.SPIRIT),
@@ -131,10 +133,22 @@ final class EffectSentences {
         return TermText.of("it can't dodge: its ").plus(EnemyStat.AGILITY).plus(" counts as none unless it is lower still");
     }
 
-    /** "each stack: Armor -5, up to 3 stacks", the change read from {@code kind}'s rule. */
+    /** "each stack: Armor -5", the change read from {@code kind}'s rule. */
     private static TermText stacked(EffectKind kind, EnemyStat stat) {
-        return TermText.of("each stack: ").plus(changes(TermNumbers.signed(perStack(kind, stat)), stat))
-                .plus(", up to " + kind.maxStacks() + " stacks");
+        return TermText.of("each stack: ").plus(changes(TermNumbers.signed(perStack(kind, stat)), stat));
+    }
+
+    /** The rule every shared count keeps: its cap, its hold and its fade. */
+    private static TermText counted(EffectKind kind) {
+        return TermText.of(", up to " + kind.maxStacks() + " stacks; what adds stacks holds them " + seconds(Effect.HOLD_TICKS)
+                + ", and what builds them over time holds them while it lasts; after that it loses a stack every "
+                + seconds(Effect.FADE_STEP_TICKS));
+    }
+
+    /** The rule every kind in shares keeps: a share from each source, each on its own clock. */
+    private static TermText inShares(EffectKind kind) {
+        return TermText.of(", up to " + kind.maxStacks() + " stacks; each tower keeps its own share for as long as it "
+                + "keeps it up");
     }
 
     /** Each of {@code stats} named, then {@code change}: "Armor and Magic resist -5". */

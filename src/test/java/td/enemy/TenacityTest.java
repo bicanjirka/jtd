@@ -24,6 +24,11 @@ class TenacityTest {
                 .remainingTicks();
     }
 
+    private static int fadeStepOf(DefinedEnemyMob mob, EffectKind kind) {
+        return mob.activeEffects().stream().filter(effect -> effect.kind() == kind).findFirst().orElseThrow()
+                .fadeTicks();
+    }
+
     @Test
     void theFactorShrinksAboveZeroAndGrowsBelow() {
         assertThat(StatCurves.durationFactor(0f)).isEqualTo(1f);
@@ -50,6 +55,26 @@ class TenacityTest {
         tough.applyEffect(Effect.hastened(100, DamageSink.none()));
 
         assertThat(ticksLeft(tough, EffectKind.HASTENED)).isEqualTo(100);
+    }
+
+    @Test
+    void itShortensACountsHoldAndItsFadeStepAlikeAsItIsApplied() {
+        DefinedEnemyMob tough = mobWithTenacity(100f);
+
+        tough.applyEffect(Effect.sundered(2));
+
+        assertThat(ticksLeft(tough, EffectKind.SUNDERED)).isEqualTo(Effect.HOLD_TICKS / 2);
+        assertThat(fadeStepOf(tough, EffectKind.SUNDERED)).isEqualTo(Effect.FADE_STEP_TICKS / 2);
+    }
+
+    @Test
+    void aFieldsHoldLeavesTheFadeStepTenacitySetsWhileItHolds() {
+        DefinedEnemyMob tough = mobWithTenacity(100f);
+
+        tough.holdStacks(EffectKind.TOLL, 1, 3);
+        tough.doTick(1);
+
+        assertThat(fadeStepOf(tough, EffectKind.TOLL)).isEqualTo(Effect.FADE_STEP_TICKS / 2);
     }
 
     @Test

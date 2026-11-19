@@ -14,7 +14,8 @@ import java.util.Set;
  *
  * @param category   the group for the inspector
  * @param stacking   how applications combine
- * @param stackCap   the most stacks it holds; 1 for a kind that does not stack
+ * @param stackCap   the most stacks it holds, the one cap nothing raises; 1 for a kind that does not stack, 0 for
+ *                   shares that carry no stacks (a heal, a shield)
  * @param perStack   what each stack does to the enemy's stats
  * @param slowPerStack the share of speed each stack takes away; {@code 0} for a kind whose strength comes with
  *                   each application, or that doesn't slow
@@ -30,24 +31,27 @@ public record EffectRule(EffectCategory category, EffectStacking stacking, int s
 
     /** A kind of {@code category} that refreshes, does nothing to stats and has no tags. */
     public static EffectRule of(EffectCategory category) {
-        return new EffectRule(category, EffectStacking.REFRESH, 1,
+        return new EffectRule(category, EffectStacking.TIMED, 1,
                 StatModifiers.none(), 0f, Set.of(), Side.DEBUFF);
     }
 
-    public EffectRule stackingOnASharedClock(int cap) {
-        return this.stackingAs(EffectStacking.SHARED_CLOCK, cap);
+    /** A shared count of up to {@code cap} stacks, held while anything holds it and lost a stack at a time after. */
+    public EffectRule countingUpTo(int cap) {
+        return this.stackingAs(EffectStacking.COUNT, cap);
     }
 
-    public EffectRule earnedUpTo(int cap) {
-        return this.stackingAs(EffectStacking.EARNED, cap);
+    /** One share per source, each worth its own stacks, summed up to {@code cap}. */
+    public EffectRule inSharesUpTo(int cap) {
+        return this.stackingAs(EffectStacking.SHARES, cap);
+    }
+
+    /** One share per source, carrying its own amount rather than stacks: a heal, a shield. */
+    public EffectRule inShares() {
+        return this.stackingAs(EffectStacking.SHARES, 0);
     }
 
     public EffectRule asAPool() {
         return this.stackingAs(EffectStacking.POOL, 1);
-    }
-
-    public EffectRule perSource() {
-        return this.stackingAs(EffectStacking.PER_SOURCE, 1);
     }
 
     /** Each stack adds {@code amount} flat to {@code stat}. */

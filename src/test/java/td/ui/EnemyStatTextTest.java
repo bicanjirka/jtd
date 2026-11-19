@@ -110,7 +110,7 @@ class EnemyStatTextTest {
     @Test
     void aStatBetterForThePlayerThanItsBaseIsBetter() {
         DefinedEnemyMob mob = this.armored();
-        mob.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
+        mob.applyEffect(Effect.sundered(2));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
 
@@ -130,7 +130,7 @@ class EnemyStatTextTest {
     @Test
     void aStatRowOpensItsBreakdown() {
         DefinedEnemyMob mob = this.armored();
-        mob.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
+        mob.applyEffect(Effect.sundered(2));
         int now = Math.round(mob.stats().value(EnemyStat.ARMOR));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
@@ -203,7 +203,7 @@ class EnemyStatTextTest {
     @Test
     void aStackingDebuffShowsItsStacks() {
         DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.sundered(3, 100, DamageSink.none()));
+        mob.applyEffect(Effect.sundered(3));
 
         InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
 

@@ -21,27 +21,27 @@ public enum EffectKind implements Term {
     FREEZE("Freeze", EffectRule.of(EffectCategory.HARD_CC)
             .perStack(EnemyStat.MOVE_SPEED, StatModifier.setTo(0f)).perStack(EnemyStat.AGILITY, StatModifier.capAtShareOfBase(0f))
             .tagged(EffectTag.STOPS, EffectTag.NOT_RENEWED)),
-    SHIELD("Shield", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
+    SHIELD("Shield", EffectRule.of(EffectCategory.RESTORATIVE).inShares().helpsCarrier()),
     INVISIBLE("Invisibility", EffectRule.of(EffectCategory.STEALTH).perStack(EnemyStat.STEALTH, StatModifier.setTo(1f)).helpsCarrier()),
-    HEAL("Heal", EffectRule.of(EffectCategory.RESTORATIVE).perSource().helpsCarrier()),
-    VULNERABLE("Vulnerable", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(3)
-            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.15f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.15f)
-            ),
+    HEAL("Heal", EffectRule.of(EffectCategory.RESTORATIVE).inShares().helpsCarrier()),
+    /** Each stack, one per source, takes extra damage of either type. */
+    VULNERABLE("Vulnerable", EffectRule.of(EffectCategory.DEBUFF).inSharesUpTo(3)
+            .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.15f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.15f)),
     REVEALED("Reveal", EffectRule.of(EffectCategory.STEALTH)
             .perStack(EnemyStat.STEALTH, StatModifier.setTo(0f))),
     POISON("Poison", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asAPool()),
     /** The lasting mark of burning: each stack lowers resilience by one. */
-    SCORCHED("Scorch", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100)
+    SCORCHED("Scorch", EffectRule.of(EffectCategory.DEBUFF).countingUpTo(200)
             .perStack(EnemyStat.RESILIENCE, -1f)),
     /** The lasting mark of poison: each stack lowers spirit by one. */
-    SICKENED("Sicken", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(100)
+    SICKENED("Sicken", EffectRule.of(EffectCategory.DEBUFF).countingUpTo(200)
             .perStack(EnemyStat.SPIRIT, -1f)),
     /** Each stack lowers armor by five. */
-    SUNDERED("Sunder", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(10)
+    SUNDERED("Sunder", EffectRule.of(EffectCategory.DEBUFF).countingUpTo(20)
             .perStack(EnemyStat.ARMOR, -5f)),
-    /** Takes agility and resilience: it dodges less, and crits come more often and hit harder. */
-    EXPOSED("Expose", EffectRule.of(EffectCategory.SPOTTED).perStack(EnemyStat.AGILITY, -25f).perStack(EnemyStat.RESILIENCE, -25f)
-            ),
+    /** Each stack, one per source, takes agility and resilience: it dodges less, and crits come more often and hit harder. */
+    EXPOSED("Expose", EffectRule.of(EffectCategory.SPOTTED).inSharesUpTo(3)
+            .perStack(EnemyStat.AGILITY, -25f).perStack(EnemyStat.RESILIENCE, -25f)),
     /** The next hit lands as a guaranteed crit and spends the mark. */
     MARKED("Mark", EffectRule.of(EffectCategory.SPOTTED)),
     /** Takes extra damage from every tower, and single-target towers aim at it. */
@@ -63,29 +63,27 @@ public enum EffectKind implements Term {
     /** Its speed is held to a share of its base, whatever raises it. */
     ANCHORED("Anchor", EffectRule.of(EffectCategory.SOFT_CC)
             .slowingBy(0.25f).tagged(EffectTag.SPEED_CEILING)),
-    /** Each stack lowers magic resist by ten. */
-    UNRAVELED("Unravel", EffectRule.of(EffectCategory.DEBUFF).stackingOnASharedClock(5)
-            .perStack(EnemyStat.MAGIC_RESIST, -10f)),
+    /** Each stack lowers magic resist by five. */
+    UNRAVELED("Unravel", EffectRule.of(EffectCategory.DEBUFF).countingUpTo(20)
+            .perStack(EnemyStat.MAGIC_RESIST, -5f)),
     /** Takes extra physical damage. */
     BRITTLE("Brittle", EffectRule.of(EffectCategory.DEBUFF).perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.3f)),
     /**
      * Time spent in a field, held by the fields it stands in and lost a stack at a time outside every one; each stack
      * is Frailty, more damage taken from every source.
      */
-    TOLL("Toll", EffectRule.of(EffectCategory.DEBUFF).earnedUpTo(10)
+    TOLL("Toll", EffectRule.of(EffectCategory.DEBUFF).countingUpTo(10)
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, 0.04f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, 0.04f)),
     /** The field's slow, as strong as the field that gives it; of two fields the deeper holds. */
     DRAGGED("Drag", EffectRule.of(EffectCategory.SOFT_CC)),
     /** Spirit at its lowest while it lasts, so heals, shields and rewinds are worth nothing. */
     DEAD_ZONE("Dead Zone", EffectRule.of(EffectCategory.DEBUFF)
             .perStack(EnemyStat.SPIRIT, StatModifier.setTo(-100f))),
-    /** Takes five points of plating and five of insulation. */
-    CRACKED("Crack", EffectRule.of(EffectCategory.DEBUFF)
-            .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(5f))
-            .perStack(EnemyStat.INSULATION, -DamageUnits.ofPoints(5f))),
-    /** Crack cut deeper: twice its plating, the same insulation. */
-    DEEP_CRACKED("Deep Crack", EffectRule.of(EffectCategory.DEBUFF)
-            .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(10f))
+    /** Each stack takes five points of plating; each source keeps its own share. */
+    CRACKED("Crack", EffectRule.of(EffectCategory.DEBUFF).inSharesUpTo(10)
+            .perStack(EnemyStat.PLATING, -DamageUnits.ofPoints(5f))),
+    /** Each stack takes five points of insulation; each source keeps its own share. */
+    SINGED("Singe", EffectRule.of(EffectCategory.DEBUFF).inSharesUpTo(10)
             .perStack(EnemyStat.INSULATION, -DamageUnits.ofPoints(5f))),
     /** Stuck in tar: a plain slow. */
     TARRED("Tar", EffectRule.of(EffectCategory.DEBUFF).slowingBy(0.4f)),
@@ -98,20 +96,18 @@ public enum EffectKind implements Term {
     SPRINTING("Sprint", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.percent(0.6f)).helpsCarrier()),
     /** Twice the speed; a freeze or daze still stops it. */
     HASTENED("Hasten", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.MOVE_SPEED, StatModifier.times(2f)).helpsCarrier()),
-    /** Magic resist that stacks, on one shared clock. */
-    SPELLPROOF("Spellproof", EffectRule.of(EffectCategory.BUFF).stackingOnASharedClock(200)
+    /** Magic resist that stacks, a point a stack. */
+    SPELLPROOF("Spellproof", EffectRule.of(EffectCategory.BUFF).countingUpTo(200)
             .perStack(EnemyStat.MAGIC_RESIST, 1f).helpsCarrier()),
     /** A last stand: far more armor, magic resist, resilience, tenacity and spirit. */
     UNYIELDING("Unyielding", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.RESILIENCE, 100f)
             .perStack(EnemyStat.SPIRIT, 100f).perStack(EnemyStat.MAGIC_RESIST, 100f)
             .perStack(EnemyStat.TENACITY, 100f).perStack(EnemyStat.ARMOR, 100f).helpsCarrier()),
-    /** Less damage taken of either type, a stack a point; an application holds it at its own stacks. */
-    RESOLVE("Resolve", EffectRule.of(EffectCategory.BUFF).stackingOnASharedClock(100)
+    /** Less damage taken of either type, a stack a point; what gives it holds it at its own stacks. */
+    RESOLVE("Resolve", EffectRule.of(EffectCategory.BUFF).countingUpTo(100)
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, -0.01f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, -0.01f)
             .helpsCarrier());
 
-    /** The most stacks any stacking kind reaches, so a cap an application raises (Fault Line) still has a bundle. */
-    private static final int MOST_STACKS = 100;
     private static final List<EffectKind> STOPPING = Arrays.stream(values()).filter(EffectKind::stopsEnemy).toList();
 
     private final String title;
@@ -121,8 +117,7 @@ public enum EffectKind implements Term {
     EffectKind(String title, EffectRule rule) {
         this.title = title;
         this.rule = rule;
-        boolean stacks = rule.stacking() == EffectStacking.SHARED_CLOCK || rule.stacking() == EffectStacking.EARNED;
-        int most = stacks ? Math.max(rule.stackCap(), MOST_STACKS) : 1;
+        int most = Math.max(1, maxStacksOf(rule));
         List<StatModifiers<EnemyStat>> bundles = new ArrayList<>();
         for (int n = 0; n <= most; n++) {
             bundles.add(rule.perStack().times(n));
@@ -185,12 +180,12 @@ public enum EffectKind implements Term {
 
     /**
      * Whether this kind is a decaying level rather than a countdown: it ends when the level runs
-     * out, and has no time left to show.
+     * out, not when one clock does.
      */
     public boolean isDecaying() {
         return switch (this.rule.stacking()) {
-            case POOL, EARNED -> true;
-            case REFRESH, SHARED_CLOCK, PER_SOURCE -> false;
+            case POOL, COUNT -> true;
+            case TIMED, SHARES -> false;
         };
     }
 
@@ -207,20 +202,20 @@ public enum EffectKind implements Term {
         return this.rule.tags().contains(EffectTag.BURNING);
     }
 
-    /**
-     * Whether this kind is a count of stacks that wear off one at a time. A pool earns {@code SCORCHED} and {@code SICKENED}.
-     */
-    public boolean isStackDebuff() {
-        return this.rule.stacking() == EffectStacking.EARNED;
+    /** Whether this kind is a shared count that is held, then loses a stack at a time. */
+    public boolean isCount() {
+        return this.rule.stacking() == EffectStacking.COUNT;
     }
 
     /** The most stacks a stacking kind holds; 0 for a kind that does not stack. */
     public int maxStacks() {
-        return switch (this.rule.stacking()) {
-            case SHARED_CLOCK, EARNED -> this.rule.stackCap();
-            case REFRESH, POOL, PER_SOURCE -> 0;
-        };
+        return maxStacksOf(this.rule);
     }
 
-
+    private static int maxStacksOf(EffectRule rule) {
+        return switch (rule.stacking()) {
+            case COUNT, SHARES -> rule.stackCap();
+            case TIMED, POOL -> 0;
+        };
+    }
 }

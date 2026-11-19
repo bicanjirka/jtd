@@ -1,11 +1,11 @@
 package td.effect;
 
-/** {@code stacks} stacks of magic resist for {@code durationTicks}. */
-public record SpellproofTemplate(int stacks, int durationTicks) implements EffectTemplate {
+/** {@code stacks} stacks of magic resist, held and faded like every shared count. */
+public record SpellproofTemplate(int stacks) implements EffectTemplate {
 
     @Override
     public Effect toEffect(DamageSink sink) {
-        return Effect.spellproof(this.stacks, this.durationTicks, sink);
+        return Effect.spellproof(this.stacks);
     }
 
     @Override

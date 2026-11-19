@@ -18,7 +18,6 @@ final class MagmaEnemy {
 
     private static final float POOL_INTERVAL_SECONDS = 1.5f;
     private static final float POOL_LIFETIME_SECONDS = 5f;
-    private static final float SPELL_WARD_SECONDS = 15f;
     private static final float LAST_STAND_SECONDS = 10f;
     private static final float SPELL_WARD_RADIUS = 120f;
 
@@ -66,7 +65,7 @@ final class MagmaEnemy {
     private static IdentifiedAbility spellWard(int stacks) {
         return IdentifiedAbility.named("spellWard", new Ability(AbilityTerm.SPELL_WARD, new HealthThresholdTrigger(0.65f),
                 new ApplyEffectAction(
-                        new SpellproofTemplate(stacks, Math.round(SPELL_WARD_SECONDS * TickRate.TICKS_PER_SECOND)),
+                        new SpellproofTemplate(stacks),
                         new RadiusTarget(SPELL_WARD_RADIUS))));
     }
 

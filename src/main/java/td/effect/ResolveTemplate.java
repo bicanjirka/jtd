@@ -1,6 +1,6 @@
 package td.effect;
 
-/** {@code stacks} stacks of less damage taken for {@code durationTicks}, held at {@code stacks} by a recast. */
+/** Less damage taken, held at {@code stacks} for {@code durationTicks} by each recast, never added to. */
 public record ResolveTemplate(int stacks, int durationTicks) implements EffectTemplate {
 
     @Override

@@ -33,6 +33,18 @@ class DefinedEnemyMobEffectTest {
     }
 
     @Test
+    void eachTowerKeepsItsOwnShareOfADebuffInSharesAndARecastRenewsOnlyItsOwn() {
+        EnemyMob enemy = EnemyFixtures.plainMob(newContext(), 50, 3);
+        AttackOrigin first = AttackOrigin.fresh();
+
+        enemy.applyEffect(Effect.exposed(100, DamageSink.none()), first);
+        enemy.applyEffect(Effect.exposed(100, DamageSink.none()), first);
+        enemy.applyEffect(Effect.exposed(100, DamageSink.none()), AttackOrigin.fresh());
+
+        assertThat(enemy.effectStacks(EffectKind.EXPOSED)).isEqualTo(2);
+    }
+
+    @Test
     void aSlowReducesTheDistanceCoveredInOneTick() {
         GameWorld context = newContext();
         context.setPath(LevelFixtures.straightPath(1, 0, 100));

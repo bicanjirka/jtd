@@ -447,11 +447,7 @@ public final class MortarTower extends AbstractTower {
     }
 
     private void crack(EnemyMob enemy, MortarSpec spec) {
-        if (spec.deepCrack()) {
-            this.applyEffect(enemy, sink -> Effect.deeplyCracked(CRACKED_TICKS, sink));
-        } else {
-            this.applyEffect(enemy, sink -> Effect.cracked(CRACKED_TICKS, sink));
-        }
+        this.applyEffect(enemy, sink -> Effect.cracked(spec.crackStacks(), CRACKED_TICKS, sink));
     }
 
     /** What a Heavy's pick puts on an enemy its blast reached: a Daze by zone, or a Bleed by the shell's damage. */
@@ -656,9 +652,10 @@ public final class MortarTower extends AbstractTower {
 
     @Override
     protected List<AppliedEffect> baseApplies() {
-        EffectKind crack = this.spec(this.mechanics.all()).deepCrack() ? EffectKind.DEEP_CRACKED : EffectKind.CRACKED;
-        return List.of(new AppliedEffect(crack, List.of(new AppliedEffect.Source(this.displayName(),
-                TermText.of("every shell applies ").plus(crack)
+        int stacks = this.spec(this.mechanics.all()).crackStacks();
+        return List.of(new AppliedEffect(EffectKind.CRACKED, List.of(new AppliedEffect.Source(this.displayName(),
+                TermText.of("every shell gives a share of " + (stacks == 1 ? "a stack" : stacks + " stacks") + " of ")
+                        .plus(EffectKind.CRACKED)
                         .plus(" for " + TermNumbers.seconds(CRACKED_TICKS / TickRate.TICKS_PER_SECOND))))));
     }
 

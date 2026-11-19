@@ -3,6 +3,7 @@ package td.effect;
 import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.util.TickRate;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,11 +22,12 @@ import java.util.function.IntUnaryOperator;
 public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTicks, DamageSink sink,
                      AttackOrigin origin, EffectDynamics dynamics) {
 
-    /** A heal's or a shield's time is always its last share's, so the two can never disagree. */
+    /** An effect kept in shares always has its last share's time, so the two can never disagree. */
     public Effect {
         remainingTicks = switch (dynamics) {
             case EffectDynamics.HealOverTime heal -> heal.remainingTicks();
             case EffectDynamics.ShieldPool shield -> shield.remainingTicks();
+            case EffectDynamics.StackShares shares -> shares.remainingTicks();
             default -> remainingTicks;
         };
     }
@@ -34,8 +36,10 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     static final int STACK_INTERVAL_TICKS = 10;
     /** A discharged charge lands this share of the hit that discharged it. */
     public static final float CHARGE_DISCHARGE_SHARE = 0.3f;
-    /** Spirit runs from 0 down to -100, so a hundred stacks of Sickened is all there is to lose. */
-    private static final int SICKENED_STACK_CAP = 100;
+    /** Every application of a shared count holds it this long: it loses nothing until then. */
+    public static final int HOLD_TICKS = Math.round(5 * TickRate.TICKS_PER_SECOND);
+    /** Once nothing holds a shared count, it loses a stack this often: one per second. */
+    public static final int FADE_STEP_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     /** A duration that never runs out: the effect holds until it breaks, something removes it, or its carrier dies. */
     public static final int LASTING_TICKS = Integer.MAX_VALUE;
     private static final EffectDynamics FLAG = new EffectDynamics.Flag();
@@ -85,7 +89,8 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
 
     /** A pool has no clock: it lasts until its fuel is burned. */
     private static Effect pool(EffectKind kind, Damage fuel, DamageSink sink) {
-        return of(kind, LASTING_TICKS, sink, EffectDynamics.FuelPool.started(fuel, sink, STACK_INTERVAL_TICKS));
+        return of(kind, LASTING_TICKS, sink, EffectDynamics.FuelPool.started(fuel, sink, STACK_INTERVAL_TICKS,
+                FADE_STEP_TICKS));
     }
 
     /**
@@ -112,17 +117,18 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.HASTENED, durationTicks, sink);
     }
 
-    /** {@code stacks} more stacks of magic resist, on one shared clock. */
-    public static Effect spellproof(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.SPELLPROOF, stacks, durationTicks, sink);
+    /** {@code stacks} more stacks of magic resist. */
+    public static Effect spellproof(int stacks) {
+        return counting(EffectKind.SPELLPROOF, stacks);
     }
 
     /**
-     * {@code stacks} of less damage taken, which its own applications hold at {@code stacks} however often they
-     * come: the cap is what it brings.
+     * Less damage taken, held at {@code stacks} for {@code holdTicks}: a holder, so its applications never add, however
+     * often they come, and of two the higher holds.
      */
-    public static Effect resolve(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.RESOLVE, stacks, durationTicks, sink).withStackCap(stacks);
+    public static Effect resolve(int stacks, int holdTicks, DamageSink sink) {
+        return new Effect(EffectKind.RESOLVE, holdTicks, holdTicks, sink, AttackOrigin.none(),
+                new EffectDynamics.Stacks(stacks, FADE_STEP_TICKS, true));
     }
 
     /** Far more resilience, spirit and magic resist while active. */
@@ -136,47 +142,46 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     /**
-     * A stack debuff with {@code stacks} stacks that wear off one at a time: a burn's or poison's lasting mark, made by
-     * {@code ActiveEffects} as a pool earns them, or Toll.
+     * {@code stacks} more of the shared count {@code kind}, held for {@link #HOLD_TICKS} and then lost a stack every
+     * {@link #FADE_STEP_TICKS}.
      */
-    static Effect stackDebuff(EffectKind kind, int stacks) {
-        return of(kind, 0, DamageSink.none(), new EffectDynamics.Stacks(stacks, 0));
+    public static Effect counting(EffectKind kind, int stacks) {
+        if (!kind.isCount()) {
+            throw new IllegalArgumentException(kind + " is not a shared count");
+        }
+        return of(kind, HOLD_TICKS, DamageSink.none(), new EffectDynamics.Stacks(stacks, FADE_STEP_TICKS, false));
     }
 
-    /**
-     * {@code stacks} more points of lost resilience, which wear off one at a time. Allowed up to a
-     * hundred, the whole of resilience.
-     */
+    /** {@code stacks} more points of lost resilience. */
     public static Effect scorched(int stacks) {
-        return stackDebuff(EffectKind.SCORCHED, stacks).withStackCap(SICKENED_STACK_CAP);
+        return counting(EffectKind.SCORCHED, stacks);
+    }
+
+    /** {@code stacks} more points of lost spirit. */
+    public static Effect sickened(int stacks) {
+        return counting(EffectKind.SICKENED, stacks);
+    }
+
+    /** A share of extra damage taken worth {@code stacks}, for {@code durationTicks}. */
+    public static Effect vulnerable(int stacks, int durationTicks, DamageSink sink) {
+        return shares(EffectKind.VULNERABLE, stacks, durationTicks, sink);
+    }
+
+    /** {@code stacks} more of lost armor, five points each. */
+    public static Effect sundered(int stacks) {
+        return counting(EffectKind.SUNDERED, stacks);
     }
 
     /**
-     * {@code stacks} more points of lost spirit, which wear off one at a time. Allowed up to a hundred,
-     * the whole of spirit.
+     * A share of the stat debuff {@code kind} worth {@code stacks}, for {@code durationTicks}; a source's own share is
+     * refreshed by its next.
      */
-    public static Effect sickened(int stacks) {
-        return stackDebuff(EffectKind.SICKENED, stacks).withStackCap(SICKENED_STACK_CAP);
-    }
-
-    /** {@code stacks} more hits' worth of extra damage taken, on one shared clock. */
-    public static Effect vulnerable(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.VULNERABLE, stacks, durationTicks, sink);
-    }
-
-    /** {@code stacks} more points of lost armor, five each, on one shared clock. */
-    public static Effect sundered(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.SUNDERED, stacks, durationTicks, sink);
-    }
-
-    /** This stacking effect allowed up to {@code stackCap} stacks instead of its kind's cap. */
-    public Effect withStackCap(int stackCap) {
-        return this.withDynamics(this.stacksFamily().withStackCap(stackCap));
-    }
-
-    /** The most stacks it may reach: its own cap, else its kind's. */
-    public int effectiveStackCap() {
-        return this.stackCap() > 0 ? this.stackCap() : this.kind.maxStacks();
+    public static Effect shares(EffectKind kind, int stacks, int durationTicks, DamageSink sink) {
+        if (kind.rule().stacking() != EffectStacking.SHARES || kind.maxStacks() == 0) {
+            throw new IllegalArgumentException(kind + " is not kept in shares of stacks");
+        }
+        return of(kind, durationTicks, sink, new EffectDynamics.StackShares(
+                List.of(new StackShare(AttackOrigin.none(), stacks, durationTicks))));
     }
 
 
@@ -214,9 +219,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.ANCHORED, durationTicks, sink);
     }
 
-    /** {@code stacks} more steps of lost magic resist, on one shared clock. */
-    public static Effect unraveled(int stacks, int durationTicks, DamageSink sink) {
-        return stacking(EffectKind.UNRAVELED, stacks, durationTicks, sink);
+    /** {@code stacks} more steps of lost magic resist. */
+    public static Effect unraveled(int stacks) {
+        return counting(EffectKind.UNRAVELED, stacks);
     }
 
     /** Extra physical damage taken while it lasts. */
@@ -224,9 +229,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.BRITTLE, durationTicks, sink);
     }
 
-    /** {@code stacks} more Toll, up to {@code cap}; they wear off a stack at a time outside every field. */
-    public static Effect toll(int stacks, int cap) {
-        return stackDebuff(EffectKind.TOLL, stacks).withStackCap(cap);
+    /** {@code stacks} more Toll. */
+    public static Effect toll(int stacks) {
+        return counting(EffectKind.TOLL, stacks);
     }
 
     /** Takes {@code strength} of speed away for {@code durationTicks}: the field's slow. */
@@ -247,14 +252,14 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return of(EffectKind.BLEEDING, durationTicks, sink, new EffectDynamics.Distance(Damage.physical(damagePerCell)));
     }
 
-    /** Plating halved for {@code durationTicks}. */
-    public static Effect cracked(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.CRACKED, durationTicks, sink);
+    /** A share of lost plating worth {@code stacks}, for {@code durationTicks}. */
+    public static Effect cracked(int stacks, int durationTicks, DamageSink sink) {
+        return shares(EffectKind.CRACKED, stacks, durationTicks, sink);
     }
 
-    /** Crack that takes more plating, for {@code durationTicks}. */
-    public static Effect deeplyCracked(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.DEEP_CRACKED, durationTicks, sink);
+    /** A share of lost insulation worth a stack, for {@code durationTicks}. */
+    public static Effect singed(int durationTicks, DamageSink sink) {
+        return shares(EffectKind.SINGED, 1, durationTicks, sink);
     }
 
     /** Stuck in tar for {@code durationTicks}. */
@@ -262,9 +267,9 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.TARRED, durationTicks, sink);
     }
 
-    /** Crits find it more often and hit it harder while it lasts. */
+    /** A share worth a stack: crits find it more often and hit it harder while it lasts. */
     public static Effect exposed(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.EXPOSED, durationTicks, sink);
+        return shares(EffectKind.EXPOSED, 1, durationTicks, sink);
     }
 
     /** The next hit lands as a guaranteed crit and ends the mark; it ends by itself after {@code durationTicks}. */
@@ -275,10 +280,6 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     /** Extra damage from every tower, and the preferred target of towers that pick one. */
     public static Effect priority(int durationTicks, DamageSink sink) {
         return timed(EffectKind.PRIORITY, durationTicks, sink);
-    }
-
-    static Effect stacking(EffectKind kind, int stacks, int durationTicks, DamageSink sink) {
-        return of(kind, durationTicks, sink, new EffectDynamics.Stacks(stacks, 0));
     }
 
     private static Effect timed(EffectKind kind, int durationTicks, DamageSink sink) {
@@ -304,17 +305,19 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
             case EffectDynamics.HealOverTime heal -> heal.from(origin);
             case EffectDynamics.ShieldPool shield -> shield.from(origin);
             case EffectDynamics.FuelPool pool -> pool.from(origin);
+            case EffectDynamics.StackShares shares -> shares.from(origin);
             default -> this.dynamics;
         };
         return new Effect(this.kind, this.remainingTicks, this.authoredDurationTicks, this.sink, origin, keyed);
     }
 
-    /** With {@code incoming}, a heal or a shield like this one, joined in: its shares refresh or add to these. */
+    /** With {@code incoming}, an effect in shares like this one, joined in: its shares refresh or add to these. */
     Effect joinedBy(Effect incoming) {
         EffectDynamics joined = switch (incoming.dynamics()) {
             case EffectDynamics.HealOverTime more -> this.healFamily().with(more);
             case EffectDynamics.ShieldPool more -> this.shieldPool().with(more);
-            default -> throw incoming.wrongFamily("a heal or a shield");
+            case EffectDynamics.StackShares more -> this.stackSharesFamily().with(more);
+            default -> throw incoming.wrongFamily("kept in shares");
         };
         return new Effect(this.kind, this.remainingTicks, Math.max(this.authoredDurationTicks,
                 incoming.authoredDurationTicks()), this.sink, this.origin, joined);
@@ -359,7 +362,7 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
     }
 
-    /** The ticks until a pool earns its next stack, one every {@link #STACK_INTERVAL_TICKS}. */
+    /** The ticks until a pool's stack clock comes round again, every {@link #STACK_INTERVAL_TICKS}. */
     public int stackClock() {
         return switch (this.dynamics) {
             case EffectDynamics.FuelPool pool -> pool.stackClock();
@@ -380,18 +383,44 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return immunities.contains(this.kind) && !this.ice().holdsTheImmune();
     }
 
-    /** A stacking kind's stack count. */
+    /** A stacking kind's stack count: a count's own, or what its shares are worth together up to the cap. */
     public int stacks() {
         return switch (this.dynamics) {
             case EffectDynamics.Stacks stacks -> stacks.stacks();
+            case EffectDynamics.StackShares shares -> Math.min(this.kind.maxStacks(), shares.stacks());
             default -> 0;
         };
     }
 
-    /** The most stacks a stacking kind may reach, {@code 0} for its kind's own cap. */
-    public int stackCap() {
+    /** The ticks a shared count takes to lose each stack once nothing holds it; {@code 0} for any other family. */
+    public int fadeTicks() {
         return switch (this.dynamics) {
-            case EffectDynamics.Stacks stacks -> stacks.stackCap();
+            case EffectDynamics.Stacks stacks -> stacks.fadeTicks();
+            case EffectDynamics.FuelPool pool -> pool.fadeTicks();
+            default -> 0;
+        };
+    }
+
+    /** Whether a shared count came from a holder, which holds it at its level rather than adding. */
+    public boolean isHolder() {
+        return switch (this.dynamics) {
+            case EffectDynamics.Stacks stacks -> stacks.held();
+            default -> false;
+        };
+    }
+
+    /** Each source's share of a stat debuff kept in shares; empty for any other family. */
+    public List<StackShare> stackShares() {
+        return switch (this.dynamics) {
+            case EffectDynamics.StackShares shares -> shares.shares();
+            default -> List.of();
+        };
+    }
+
+    /** The ticks until the first share of a stat debuff kept in shares ends; {@code 0} for any other family. */
+    public int nextShareEnd() {
+        return switch (this.dynamics) {
+            case EffectDynamics.StackShares shares -> shares.nextEnd();
             default -> 0;
         };
     }
@@ -448,12 +477,19 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return this.withDynamics(this.shieldPool().restrictedTo(type));
     }
 
-    /** Both the remaining and the authored duration times {@code factor}, rounded and never below a tick. */
+    /**
+     * Both the remaining and the authored duration times {@code factor}, rounded and never below a tick, and a shared
+     * count's fade step with them.
+     */
     public Effect withDurationScaledBy(float factor) {
         if (this.isLasting() && factor > 0f) {
             return this;
         }
-        EffectDynamics scaled = this.retimed(ticks -> Math.round(ticks * factor));
+        EffectDynamics retimed = this.retimed(ticks -> Math.max(1, Math.round(ticks * factor)));
+        EffectDynamics scaled = switch (retimed) {
+            case EffectDynamics.Stacks stacks -> stacks.withFadeTicks(Math.max(1, Math.round(stacks.fadeTicks() * factor)));
+            default -> retimed;
+        };
         return new Effect(this.kind, Math.max(1, Math.round(this.remainingTicks * factor)),
                 Math.max(1, Math.round(this.authoredDurationTicks * factor)), this.sink, this.origin, scaled);
     }
@@ -484,16 +520,18 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return switch (this.dynamics) {
             case EffectDynamics.HealOverTime heal -> throw this.wrongFamily("on one clock");
             case EffectDynamics.ShieldPool shield -> throw this.wrongFamily("on one clock");
+            case EffectDynamics.StackShares shares -> throw this.wrongFamily("on one clock");
             default -> new Effect(this.kind, remainingTicks, this.authoredDurationTicks, this.sink, this.origin,
                     this.dynamics);
         };
     }
 
-    /** The shares' clocks through {@code time}, for a heal or a shield; any other family keeps its dynamics. */
+    /** The shares' clocks through {@code time}, for an effect kept in shares; any other family keeps its dynamics. */
     private EffectDynamics retimed(IntUnaryOperator time) {
         return switch (this.dynamics) {
             case EffectDynamics.HealOverTime heal -> heal.retimed(time);
             case EffectDynamics.ShieldPool shield -> shield.retimed(time);
+            case EffectDynamics.StackShares shares -> shares.retimed(time);
             default -> this.dynamics;
         };
     }
@@ -511,15 +549,25 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return this.withDynamics(this.poolFamily().scaledBy(factor));
     }
 
+    /** This pool holding the marks it earns with a fade step of {@code fadeTicks}. */
+    Effect withFuelFade(int fadeTicks) {
+        return this.withDynamics(this.poolFamily().withFadeTicks(fadeTicks));
+    }
+
     /** The type of damage a pool deals. */
     DamageType poolType() {
         return this.poolFamily().type();
     }
 
-    /** The same effect with a new stack count and a fresh clock of {@code remainingTicks}. */
+    /** The same count with a new stack count and {@code remainingTicks} of its hold left. */
     Effect withStacks(int stacks, int remainingTicks) {
         return new Effect(this.kind, remainingTicks, this.authoredDurationTicks, this.sink, this.origin,
                 this.stacksFamily().withStacks(stacks));
+    }
+
+    /** The same count losing a stack every {@code fadeTicks} once nothing holds it. */
+    Effect withFadeTicks(int fadeTicks) {
+        return this.withDynamics(this.stacksFamily().withFadeTicks(fadeTicks));
     }
 
     /** The same pool with its clock to the next stack set to {@code stackClock}. */
@@ -535,6 +583,13 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return switch (this.dynamics) {
             case EffectDynamics.Stacks stacks -> stacks;
             default -> throw this.wrongFamily("a stack count");
+        };
+    }
+
+    private EffectDynamics.StackShares stackSharesFamily() {
+        return switch (this.dynamics) {
+            case EffectDynamics.StackShares shares -> shares;
+            default -> throw this.wrongFamily("kept in shares of stacks");
         };
     }
 

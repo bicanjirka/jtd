@@ -34,12 +34,6 @@ final class EffectInteractions {
         return EARNS.getOrDefault(pool, List.of());
     }
 
-    /** Whether any pool in {@code active} is still earning stacks of {@code debuff}. */
-    static boolean isEarnedBy(EffectKind debuff, Set<EffectKind> active) {
-        return EARNS.entrySet().stream()
-                .anyMatch(earns -> active.contains(earns.getKey()) && earns.getValue().contains(debuff));
-    }
-
     /** The first of the {@code active} kinds, in kind order, that keeps {@code kind} out. */
     static Optional<EffectKind> keptOutBy(EffectKind kind, Set<EffectKind> active) {
         for (EffectKind other : EffectKind.values()) {

@@ -272,7 +272,7 @@ public final class PulseTower extends AbstractTower {
                 continue;
             }
             if (enemy.effectStacks(EffectKind.TOLL) < PulseSpec.TOLL_CAP) {
-                this.applyEffect(enemy, _ -> Effect.toll(1, PulseSpec.TOLL_CAP));
+                this.applyEffect(enemy, _ -> Effect.toll(1));
             }
             this.report(enemy, HitKind.BEAM, result.critical(), enemy.isDead());
         }

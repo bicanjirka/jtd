@@ -73,12 +73,12 @@ class EffectTest {
     }
 
     @Test
-    void aVulnerableIsAStackCount() {
-        Effect vulnerable = Effect.vulnerable(2, 60, DamageSink.none()).withStackCap(8);
+    void aVulnerableIsAShareWorthItsStacks() {
+        Effect vulnerable = Effect.vulnerable(2, 60, DamageSink.none());
 
-        assertThat(vulnerable.dynamics()).isInstanceOf(EffectDynamics.Stacks.class);
+        assertThat(vulnerable.dynamics()).isInstanceOf(EffectDynamics.StackShares.class);
         assertThat(vulnerable.stacks()).isEqualTo(2);
-        assertThat(vulnerable.effectiveStackCap()).isEqualTo(8);
+        assertThat(vulnerable.stackShares()).singleElement().satisfies(share -> assertThat(share.stacks()).isEqualTo(2));
         assertThat(vulnerable.shieldShares()).isEmpty();
     }
 

@@ -23,7 +23,6 @@ import td.tower.aura.RevealedEnemy;
 import td.tower.aura.RingleaderMechanic;
 import td.tower.aura.SearchlightMechanic;
 import td.tower.aura.Spotlight;
-import td.tower.pulse.PulseSpec;
 import td.tower.splash.SoulbrandMechanic;
 import td.tower.splash.StaticMechanic;
 import td.tower.splash.TagLedger;
@@ -421,10 +420,10 @@ public final class AuraTower extends AbstractTower {
             }
             case TOLL -> {
                 if (landsAgain(enemy, EffectKind.TOLL, entered)) {
-                    this.applyEffect(enemy, _ -> Effect.toll(mark.stacks(), PulseSpec.TOLL_CAP));
+                    this.applyEffect(enemy, _ -> Effect.toll(mark.stacks()));
                 }
             }
-            case CRACK -> this.applyEffect(enemy, sink -> Effect.cracked(MortarTower.CRACKED_TICKS, sink));
+            case CRACK -> this.applyEffect(enemy, sink -> Effect.cracked(mark.stacks(), MortarTower.CRACKED_TICKS, sink));
             case CHILL -> this.applyEffect(enemy, sink -> Effect.chill(PrismMark.CHILL_STRENGTH, CHILL_TICKS, sink));
             case STATIC -> this.lightStatic.tag(enemy);
             case SOULBRAND -> this.lightSoulbrand.tag(enemy);

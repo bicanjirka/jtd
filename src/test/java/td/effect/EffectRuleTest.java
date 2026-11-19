@@ -13,7 +13,7 @@ class EffectRuleTest {
     void ofIsARefreshingKindWithNoStatsOrTags() {
         EffectRule rule = EffectRule.of(EffectCategory.DEBUFF);
 
-        assertThat(rule.stacking()).isEqualTo(EffectStacking.REFRESH);
+        assertThat(rule.stacking()).isEqualTo(EffectStacking.TIMED);
         assertThat(rule.stackCap()).isEqualTo(1);
         assertThat(rule.perStack().isNone()).isTrue();
         assertThat(rule.tags()).isEmpty();

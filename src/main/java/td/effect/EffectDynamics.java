@@ -22,15 +22,62 @@ public sealed interface EffectDynamics {
     record Encasing(IceKind ice) implements EffectDynamics {
     }
 
-    /** A stack count and its cap ({@code 0} for its kind's own). */
-    record Stacks(int stacks, int stackCap) implements EffectDynamics {
+    /**
+     * A shared count: its stacks, the ticks each stack takes to fade once nothing holds it, and whether it came from
+     * a holder (an aura that holds it at its own level) rather than an application that adds.
+     */
+    record Stacks(int stacks, int fadeTicks, boolean held) implements EffectDynamics {
 
         public Stacks withStacks(int stacks) {
-            return new Stacks(stacks, this.stackCap);
+            return new Stacks(stacks, this.fadeTicks, this.held);
         }
 
-        public Stacks withStackCap(int stackCap) {
-            return new Stacks(this.stacks, stackCap);
+        public Stacks withFadeTicks(int fadeTicks) {
+            return new Stacks(this.stacks, fadeTicks, this.held);
+        }
+    }
+
+    /** A stat debuff kept in shares: one share per source, each worth its own stacks on its own clock. */
+    record StackShares(List<StackShare> shares) implements EffectDynamics {
+
+        public StackShares {
+            shares = List.copyOf(shares);
+        }
+
+        /** What every share is worth together, before any cap. */
+        public int stacks() {
+            int sum = 0;
+            for (StackShare share : this.shares) {
+                sum += share.stacks();
+            }
+            return sum;
+        }
+
+        /** The ticks until the last share runs out. */
+        public int remainingTicks() {
+            return SourceShares.lastEnd(this.shares);
+        }
+
+        /** The ticks until the first share runs out. */
+        public int nextEnd() {
+            int least = Integer.MAX_VALUE;
+            for (StackShare share : this.shares) {
+                least = Math.min(least, share.remainingTicks());
+            }
+            return this.shares.isEmpty() ? 0 : least;
+        }
+
+        StackShares from(AttackOrigin source) {
+            return new StackShares(SourceShares.keyedTo(this.shares, source));
+        }
+
+        StackShares with(StackShares incoming) {
+            return new StackShares(SourceShares.joined(this.shares, incoming.shares));
+        }
+
+        /** Every share's time through {@code time}, without the shares then gone. */
+        StackShares retimed(IntUnaryOperator time) {
+            return new StackShares(SourceShares.retimed(this.shares, time));
         }
     }
 
@@ -39,27 +86,31 @@ public sealed interface EffectDynamics {
     }
 
     /**
-     * A burn, poison or Soulfire pool: the type it deals, one contribution per source, and the ticks to the next stack
-     * it earns.
+     * A burn, poison or Soulfire pool: the type it deals, one contribution per source, the ticks to its next pulse,
+     * and the fade step its last application set for the marks it holds.
      */
-    record FuelPool(DamageType type, List<FuelContribution> fuel, int stackClock) implements EffectDynamics {
+    record FuelPool(DamageType type, List<FuelContribution> fuel, int stackClock, int fadeTicks) implements EffectDynamics {
 
         public FuelPool {
             fuel = List.copyOf(fuel);
         }
 
         /** A new pool of {@code fuel}, all of it fed through {@code sink}. */
-        public static FuelPool started(Damage fuel, DamageSink sink, int stackClock) {
+        public static FuelPool started(Damage fuel, DamageSink sink, int stackClock, int fadeTicks) {
             return new FuelPool(fuel.type(), List.of(FuelContribution.of(sink, AttackOrigin.none(), fuel.amount())),
-                    stackClock);
+                    stackClock, fadeTicks);
         }
 
         public FuelPool withFuel(List<FuelContribution> fuel) {
-            return new FuelPool(this.type, fuel, this.stackClock);
+            return new FuelPool(this.type, fuel, this.stackClock, this.fadeTicks);
         }
 
         public FuelPool withStackClock(int stackClock) {
-            return new FuelPool(this.type, this.fuel, stackClock);
+            return new FuelPool(this.type, this.fuel, stackClock, this.fadeTicks);
+        }
+
+        public FuelPool withFadeTicks(int fadeTicks) {
+            return new FuelPool(this.type, this.fuel, this.stackClock, fadeTicks);
         }
 
         /** Every contribution put on by {@code origin}, so a source's later fuel joins its own. */
@@ -68,10 +119,11 @@ public sealed interface EffectDynamics {
                     .map(each -> new FuelContribution(each.sink(), origin, each.fuel(), each.owed())).toList());
         }
 
-        /** Every contribution's fuel times {@code factor}. */
+        /** Every contribution's fuel times {@code factor}, and the fade step of the marks it holds with it. */
         FuelPool scaledBy(float factor) {
-            return this.withFuel(this.fuel.stream()
-                    .map(each -> new FuelContribution(each.sink(), each.origin(), each.fuel() * factor, each.owed())).toList());
+            return new FuelPool(this.type, this.fuel.stream()
+                    .map(each -> new FuelContribution(each.sink(), each.origin(), each.fuel() * factor, each.owed())).toList(),
+                    this.stackClock, Math.max(1, Math.round(this.fadeTicks * factor)));
         }
     }
 

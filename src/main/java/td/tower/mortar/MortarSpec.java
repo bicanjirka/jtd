@@ -14,10 +14,13 @@ import td.tower.targeting.Viewpoint;
  * @param payload     how far a payload's blast and ground grow
  * @param volley      how many shells a firing loads
  * @param leadsTarget whether it aims where the enemy will be when the shell lands
- * @param deepCrack   whether its Crack takes more plating
+ * @param deepCrack   whether its share of Crack is worth {@link #DEEP_CRACK_STACKS} stacks rather than one
  */
 public record MortarSpec(Reach reach, MagazineSpec magazine, HeavyRider heavy, PayloadSpec payload, VolleySpec volley,
                          boolean leadsTarget, boolean deepCrack) {
+
+    /** The stacks a Deep Crack shell's share of Crack is worth. */
+    public static final int DEEP_CRACK_STACKS = 2;
 
     /** The visible enemies in range, a magazine of Normals and Heavies, one shell a firing. */
     public static MortarSpec from(Viewpoint view) {
@@ -52,6 +55,11 @@ public record MortarSpec(Reach reach, MagazineSpec magazine, HeavyRider heavy, P
 
     public MortarSpec withLeadingTheTarget() {
         return new MortarSpec(this.reach, this.magazine, this.heavy, this.payload, this.volley, true, this.deepCrack);
+    }
+
+    /** The stacks each shell's share of Crack is worth. */
+    public int crackStacks() {
+        return this.deepCrack ? DEEP_CRACK_STACKS : 1;
     }
 
     public MortarSpec withDeepCrack() {
