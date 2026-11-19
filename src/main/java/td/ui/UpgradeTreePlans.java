@@ -26,7 +26,7 @@ final class UpgradeTreePlans {
     private static final UpgradeTreePlan SPLASH = UpgradeTreePlan.of(
             tier(row(node("base.range", 0f), node("splash.wide_charge", 1f), node("splash.flint_stones", 2f))),
             tier(row(node("splash.arc", 0f), cluster("Stormcaller or Hexer", 1.6f), cluster("Hex", 4f))),
-            tier(row(node("base.range.2", 0f), node("splash.heavy_stones", 1f), node("splash.short_circuit", 2.4f),
+            tier(row(node("base.range.2", 0f), node("splash.heavy_stones", 1f), node("splash.jolt", 2.4f),
                     node("splash.agony", 2.4f), node("splash.conductor", 3.4f), node("splash.contagion", 3.4f),
                     cluster("Arc's path", 4.4f), node("splash.deep_doom", 4.4f), node("splash.blight_cloud", 5.4f))),
             tier(row(node("splash.quick_hands", 0f), node("splash.piercing_stones", 1f),

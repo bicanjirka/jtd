@@ -90,8 +90,8 @@ final class PerkPictograms {
             Map.entry("splash.thunderclap", "F M13.4 3L8.4 12.4H11.6L10.4 21L15.8 10.8H12.6Z ; S M6.4 8A6 6 0 0 0 6.4 16 M17.6 8A6 6 0 0 1 17.6 16 ; T M3 5.4A9.6 9.6 0 0 0 3 18.6 M21 5.4A9.6 9.6 0 0 1 21 18.6"),
             // Thunderstrike
             Map.entry("splash.thunderstrike", "F M6.4 13C4.4 13 3 11.6 3 9.8C3 8 4.4 6.6 6.2 6.6C6.8 4.4 8.8 3 11.2 3C14 3 16.2 5 16.6 7.6C18.8 7.6 20.6 9.2 20.6 11.2C20.6 13 19.2 13 17.4 13Z ; F M12.8 13.8L9.4 18.6H12L10.8 22.4L15.6 16.6H12.8L14.6 13.8Z"),
-            // Short Circuit
-            Map.entry("splash.short_circuit", "S M12 2.6L20 5.6V12C20 17 16.4 20.2 12 21.8C7.6 20.2 4 17 4 12V5.6Z ; F M13.2 6.6L8.6 13.2H11.6L10.6 18.2L15.6 11.4H12.4Z"),
+            // Jolt
+            Map.entry("splash.jolt", "F M12 20.8C5 15.8 2.5 11.6 2.5 8.4A4.9 4.9 0 0 1 12 6.6A4.9 4.9 0 0 1 21.5 8.4C21.5 11.6 19 15.8 12 20.8Z ; X M13.6 6.2L9.6 12.4H12.8L10.4 18.2"),
             // Conductor
             Map.entry("splash.conductor", "F O5 6.6 2.4 O19 6.6 2.4 ; S M7.4 6.6L10.4 11L13.6 4.8L16.6 6.6 ; F M12 13.4L13.2 16.6L16.4 17.8L13.2 19L12 22.2L10.8 19L7.6 17.8L10.8 16.6Z"),
             // High Voltage

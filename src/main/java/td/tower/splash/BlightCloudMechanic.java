@@ -14,7 +14,7 @@ public final class BlightCloudMechanic implements SplashMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of(EffectKind.BLIGHT).plus(" also curses every enemy within " + TermNumbers.cells(HexSpec.CLOUD_CELLS)
-                + " of its target");
+        return TermText.of(EffectKind.BLIGHT).plus(" forks as it nears its target, flying on to the " + HexSpec.CLOUD_TARGETS
+                + " enemies within " + TermNumbers.cells(HexSpec.CLOUD_CELLS) + " of it that would leave soonest");
     }
 }

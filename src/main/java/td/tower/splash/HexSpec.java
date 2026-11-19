@@ -17,6 +17,10 @@ public record HexSpec(float doomShare, boolean cloud, boolean agony, boolean con
     public static final float DOOM_SHARE = 0.3f;
     /** How far around its target Blight Cloud curses, in cells. */
     public static final float CLOUD_CELLS = 1f;
+    /** How far short of its enemy a Blight curse forks, with Blight Cloud, in cells. */
+    public static final float CLOUD_FORK_CELLS = 2 * CLOUD_CELLS;
+    /** How many enemies besides its target Blight Cloud curses: the ones that would leave soonest. */
+    public static final int CLOUD_TARGETS = 3;
     /** How far a hex jumps from an enemy that died with it, in cells. */
     public static final float SPREAD_CELLS = 1.5f;
 
