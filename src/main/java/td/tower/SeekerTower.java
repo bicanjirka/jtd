@@ -34,7 +34,6 @@ import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.SoonestOutSelector;
 import td.tower.targeting.TargetSelector;
-import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.RangeNodes;
@@ -222,16 +221,11 @@ public final class SeekerTower extends AbstractTower {
 
     /** Whom it may hunt and what its freezes, nest and ice do, as its owned mechanics make them. */
     private SeekerSpec spec() {
-        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.cell());
-        SeekerSpec spec = SeekerSpec.from(view);
+        SeekerSpec spec = SeekerSpec.from(this.viewpoint());
         for (SeekerMechanic mechanic : this.mechanics.all()) {
             spec = mechanic.refineSpec(spec);
         }
         return spec;
-    }
-
-    private int cell() {
-        return this.context.getBoard().scale();
     }
 
     private int capacity() {
@@ -325,7 +319,7 @@ public final class SeekerTower extends AbstractTower {
     private void launch(MissileKind kind, EnemyMob target, double slotRadians) {
         Shot shot = new Shot(kind, this.beginShot());
         this.context.projectiles().add(new MissileProjectile(this.centerX, this.centerY, slotRadians + Math.PI / 2,
-                target, this.missileStats(shot.stats(), kind), new Flight(shot, target)));
+                target, this.missileStats(shot.stats(), kind), new Guide(shot, target)));
     }
 
     private ProjectileStats missileStats(TowerStats stats, MissileKind kind) {
@@ -390,9 +384,9 @@ public final class SeekerTower extends AbstractTower {
             }
         }
         if (spec.ice() == IceRider.ICE_WAKE) {
-            float radius = IceWakeMechanic.RADIUS_CELLS * this.cell();
+            float radius = IceWakeMechanic.RADIUS_CELLS * this.cellPixels();
             for (EnemyMob held : this.frozen.holding()) {
-                for (EnemyMob passing : this.around(held, radius)) {
+                for (EnemyMob passing : InRangeTargetQuery.around(held, radius).matching(this.context.enemies())) {
                     this.applyEffect(passing, sink -> Effect.chill(IceWakeMechanic.CHILL, IceWakeMechanic.CHILL_TICKS,
                             sink));
                 }
@@ -406,18 +400,11 @@ public final class SeekerTower extends AbstractTower {
         Damage damage = Damage.magic(Math.round(freeze.stats().damage() * freeze.kind().damageFactor()
                 * ShatterMechanic.SHARE));
         AttackProfile profile = this.profileOf(shot, HitAdjustment.none());
-        float radius = ShatterMechanic.RADIUS_CELLS * this.cell();
-        this.around(freeze.enemy(), radius).forEach(enemy -> this.dealDamage(enemy, damage, profile));
+        float radius = ShatterMechanic.RADIUS_CELLS * this.cellPixels();
+        InRangeTargetQuery.around(freeze.enemy(), radius).matching(this.context.enemies())
+                .forEach(enemy -> this.dealDamage(enemy, damage, profile));
         this.shatterMarks.add(new ShatterMark(freeze.enemy().position(), radius,
                 this.tickNow(), freeze.kind()));
-    }
-
-    /** Every enemy within {@code radius} pixels of {@code center}, hidden ones too, but itself. */
-    private List<EnemyMob> around(EnemyMob center, float radius) {
-        return InRangeTargetQuery.everyone((int) center.getX(), (int) center.getY(), radius)
-                .matching(this.context.enemies()).stream()
-                .filter(enemy -> enemy != center)
-                .toList();
     }
 
     /** The missiles it holds ready, the next to leave first, each of its kind. */
@@ -435,7 +422,7 @@ public final class SeekerTower extends AbstractTower {
 
     /** How far an Ice Wake reaches round the ice, in pixels. */
     public float iceWakeRadius() {
-        return IceWakeMechanic.RADIUS_CELLS * this.cell();
+        return IceWakeMechanic.RADIUS_CELLS * this.cellPixels();
     }
 
     /** The ice that burst lately, for the shards the board draws. */
@@ -453,16 +440,12 @@ public final class SeekerTower extends AbstractTower {
      * first tick.
      */
     public OptionalInt ticksQuiet(int gameTime) {
-        if (this.quietSince.isEmpty()) {
-            return OptionalInt.empty();
-        }
-        return OptionalInt.of(this.fightingSince.orElse(gameTime) - this.quietSince.getAsInt());
+        return this.quietSince.stream().map(since -> this.fightingSince.orElse(gameTime) - since).findFirst();
     }
 
     /** How long its present fight has run, an enemy in its reach all along; empty while it is quiet. */
     public OptionalInt ticksFighting(int gameTime) {
-        return this.fightingSince.isPresent() ? OptionalInt.of(gameTime - this.fightingSince.getAsInt())
-                : OptionalInt.empty();
+        return this.fightingSince.stream().map(since -> gameTime - since).findFirst();
     }
 
     /** Whether the next freeze it lands sets off a Release. */
@@ -498,7 +481,7 @@ public final class SeekerTower extends AbstractTower {
     @Override
     protected List<TowerStatLine> ownStats(TowerStats stats) {
         ProjectileStats missile = this.missileStats(stats, MissileKind.FROST);
-        float cellsPerSecond = missile.speed() * TICKS_PER_SECOND / this.cell();
+        float cellsPerSecond = missile.speed() * TICKS_PER_SECOND / this.cellPixels();
         return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, cellsPerSecond),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, missile.size()));
     }
@@ -555,13 +538,13 @@ public final class SeekerTower extends AbstractTower {
      * close by that isn't frozen, and stays on it when there is none. With no enemy left it flies home into the nest,
      * or fades when the nest is full.
      */
-    private final class Flight implements MissileGuide {
+    private final class Guide implements MissileGuide {
 
         private final Shot shot;
         private EnemyMob pick;
         private boolean frozenAtPick;
 
-        Flight(Shot shot, EnemyMob target) {
+        Guide(Shot shot, EnemyMob target) {
             this.shot = shot;
             this.pick = target;
             this.frozenAtPick = target.hasEffect(EffectKind.FREEZE);
@@ -574,15 +557,13 @@ public final class SeekerTower extends AbstractTower {
 
         @Override
         public Optional<EnemyMob> retarget(double x, double y) {
-            float radius = RETARGET_CELLS * SeekerTower.this.cell();
+            float radius = RETARGET_CELLS * SeekerTower.this.cellPixels();
             List<EnemyMob> near = InRangeTargetQuery.visible((int) Math.round(x), (int) Math.round(y), radius)
                     .matching(SeekerTower.this.context.enemies()).stream()
                     .filter(enemy -> !enemy.hasEffect(EffectKind.FREEZE))
                     .toList();
-            Optional<EnemyMob> next = SOONEST_OUT.selectFrom(near);
-            if (next.isEmpty() && this.pick.validTarget()) {
-                next = Optional.of(this.pick);
-            }
+            Optional<EnemyMob> next = SOONEST_OUT.selectFrom(near)
+                    .or(() -> Optional.of(this.pick).filter(EnemyMob::validTarget));
             next.ifPresent(enemy -> {
                 this.pick = enemy;
                 this.frozenAtPick = enemy.hasEffect(EffectKind.FREEZE);

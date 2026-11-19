@@ -1,5 +1,7 @@
 package td.tower.splash;
 
+import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
@@ -14,6 +16,11 @@ public final class StaticMechanic implements SplashMechanic {
     public static final float DISCHARGE_AT = 0.1f;
     /** What one stack discharges, in points of magic damage. */
     public static final float DISCHARGE_POINTS = 15f;
+
+    /** What one stack discharges into its enemy. */
+    public static Damage discharge() {
+        return Damage.magic(DamageUnits.ofPoints(DISCHARGE_POINTS));
+    }
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {

@@ -208,7 +208,7 @@ public final class SniperTower extends AbstractTower {
 
     /** Whom it may shoot and how it picks. */
     private SniperSpec spec() {
-        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
+        Viewpoint view = this.viewpoint();
         SniperSpec spec = SniperSpec.from(view);
         return this.upgrades().targeting()
                 .map(priority -> spec.aimingAt(new SniperAim(priority.selector(view.cellSize()), priority.label())))
@@ -229,13 +229,7 @@ public final class SniperTower extends AbstractTower {
             this.target.ifPresent(enemy -> this.fire(enemy, this.mechanics.all()));
         }
         this.clock.advance(this.attackRate());
-        this.target.ifPresentOrElse(
-                enemy -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY())),
-                () -> {
-                    if (this.betweenWaves()) {
-                        this.turretAim.settle();
-                    }
-                });
+        this.turnTurret(this.turretAim, this.target);
     }
 
     @Override
@@ -280,10 +274,8 @@ public final class SniperTower extends AbstractTower {
 
     /** A flight from {@code x, y} to {@code target}, starting now. */
     private ShotFlight flightFrom(double x, double y, EnemyMob target) {
-        double distance = Math.hypot(target.getX() - x, target.getY() - y);
-        int ticks = Math.max(MIN_FLIGHT_TICKS,
-                (int) Math.ceil(distance / (BULLET_CELLS_PER_TICK * this.context.getBoard().scale())));
-        return new ShotFlight(this.tickNow(), this.tickNow() + ticks);
+        return ShotFlight.across(this.tickNow(), Math.hypot(target.getX() - x, target.getY() - y),
+                BULLET_CELLS_PER_TICK * this.cellPixels(), MIN_FLIGHT_TICKS);
     }
 
     /** Lands every hop and every bullet whose flight ends now. */
@@ -369,11 +361,6 @@ public final class SniperTower extends AbstractTower {
     /** Whether Frenzy runs now. */
     public boolean frenzied() {
         return this.holdsStatus(TowerTerm.FRENZY);
-    }
-
-    /** Whether it reaches past its bare range, which a longer barrel shows. */
-    public boolean reachesPastItsBase() {
-        return this.stats().reachReal() > RANGE * this.context.getBoard().scale();
     }
 
     /** Whether a mechanic it owns singles out the enemy it aims at now. */
@@ -468,8 +455,8 @@ public final class SniperTower extends AbstractTower {
 
         @Override
         public void ricochet(EnemyMob from, float reachCells) {
-            float reach = reachCells * SniperTower.this.context.getBoard().scale();
-            List<EnemyMob> beside = new ArrayList<>(InRangeTargetQuery.visible((int) from.getX(), (int) from.getY(), reach)
+            float reach = reachCells * SniperTower.this.cellPixels();
+            List<EnemyMob> beside = new ArrayList<>(InRangeTargetQuery.visible(from.position(), reach)
                     .matching(SniperTower.this.context.enemies()));
             beside.remove(from);
             new NearestSelector(from.getX(), from.getY()).selectFrom(beside).ifPresent(next -> {

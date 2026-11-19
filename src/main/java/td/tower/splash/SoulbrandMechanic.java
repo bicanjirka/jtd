@@ -1,5 +1,7 @@
 package td.tower.splash;
 
+import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
@@ -14,6 +16,11 @@ public final class SoulbrandMechanic implements SplashMechanic {
     public static final float BURST_POINTS = 10f;
     /** How far the burst reaches, in cells. */
     public static final float BURST_CELLS = 1f;
+
+    /** What one stack's burst deals each enemy it reaches. */
+    public static Damage burst() {
+        return Damage.magic(DamageUnits.ofPoints(BURST_POINTS));
+    }
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {

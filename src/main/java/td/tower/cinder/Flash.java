@@ -1,5 +1,7 @@
 package td.tower.cinder;
 
-/** A Flashover from a hot enemy at {@code fromX, fromY} to one beside it, in board pixels. */
-public record Flash(double fromX, double fromY, double toX, double toY) {
+import td.wave.Vec2;
+
+/** A Flashover from a hot enemy at {@code from} to one beside it at {@code to}, in board pixels. */
+public record Flash(Vec2 from, Vec2 to) {
 }

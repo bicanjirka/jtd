@@ -28,7 +28,6 @@ import td.tower.pulse.SwiftShadowMechanic;
 import td.tower.pulse.UmbraMechanic;
 import td.tower.pulse.WardMechanic;
 import td.tower.targeting.InRangeTargetQuery;
-import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.RangeNodes;
@@ -42,6 +41,7 @@ import td.util.TickRate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 
 import static td.tower.upgrade.MechanicCatalogue.entry;
 
@@ -145,7 +145,7 @@ public final class PulseTower extends AbstractTower {
     private SonarSweep shadow = SonarSweep.perRevolution(1, TickRate.TICKS_PER_SECOND);
     private int shadowLeft;
     private boolean fullTollInside;
-    private int lastKnellTick = Integer.MIN_VALUE;
+    private OptionalInt lastKnell = OptionalInt.empty();
 
     public PulseTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.PULSE, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0)
@@ -165,8 +165,7 @@ public final class PulseTower extends AbstractTower {
 
     /** The field and the shadow, as the mechanics in {@code owned} make them. */
     private PulseSpec spec(List<PulseMechanic> owned) {
-        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.context.getBoard().scale());
-        PulseSpec spec = PulseSpec.from(view);
+        PulseSpec spec = PulseSpec.from(this.viewpoint());
         for (PulseMechanic mechanic : owned) {
             spec = mechanic.refineSpec(spec);
         }
@@ -230,7 +229,7 @@ public final class PulseTower extends AbstractTower {
             boolean critical = this.dealDamage(enemy, ring.scaledBy(adjustment.damageFactor()), shot.attack());
             this.report(enemy, HitKind.FIELD, critical, enemy.isDead());
         }
-        this.lastKnellTick = gameTime;
+        this.lastKnell = OptionalInt.of(gameTime);
     }
 
     /**
@@ -243,7 +242,7 @@ public final class PulseTower extends AbstractTower {
             this.shadowLeft = 0;
             return;
         }
-        float reach = sundial.reachCells() * this.context.getBoard().scale();
+        float reach = sundial.reachCells() * this.cellPixels();
         List<EnemyMob> within = InRangeTargetQuery.visible(this.centerX, this.centerY, reach)
                 .matching(this.context.enemies());
         if (this.shadowLeft == 0 && this.shadowClock.isReady() && !within.isEmpty()) {
@@ -261,7 +260,7 @@ public final class PulseTower extends AbstractTower {
         TowerStats shot = this.stats();
         AttackProfile aimed = sundial.shadow() ? shot.attack().asShadow().asAimed() : shot.attack().asAimed();
         for (EnemyMob enemy : within) {
-            if (!this.shadow.sweptThisTick(TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY()))) {
+            if (!this.shadow.sweptThisTick(this.bearingTo(enemy))) {
                 continue;
             }
             float factor = inside.contains(enemy) ? sundial.inFieldFactor() : 1f;
@@ -273,7 +272,7 @@ public final class PulseTower extends AbstractTower {
                 continue;
             }
             if (enemy.effectStacks(EffectKind.TOLL) < PulseSpec.TOLL_CAP) {
-                this.applyEffect(enemy, sink -> Effect.toll(1, PulseSpec.TOLL_CAP));
+                this.applyEffect(enemy, _ -> Effect.toll(1, PulseSpec.TOLL_CAP));
             }
             this.report(enemy, HitKind.BEAM, result.critical(), enemy.isDead());
         }
@@ -286,7 +285,7 @@ public final class PulseTower extends AbstractTower {
         this.shadowClock = new FireClock(SHADOW_PERIOD_TICKS - 1);
         this.shadowLeft = 0;
         this.fullTollInside = false;
-        this.lastKnellTick = Integer.MIN_VALUE;
+        this.lastKnell = OptionalInt.empty();
     }
 
     /** Whether an enemy at full Toll stood in the field at the last tick. */
@@ -296,7 +295,7 @@ public final class PulseTower extends AbstractTower {
 
     /** How many ticks ago the stone last rang; a large number before the first. */
     public int ticksSinceKnell(int gameTime) {
-        return this.lastKnellTick == Integer.MIN_VALUE ? Integer.MAX_VALUE : gameTime - this.lastKnellTick;
+        return this.lastKnell.stream().map(rang -> gameTime - rang).findFirst().orElse(Integer.MAX_VALUE);
     }
 
     /** Whether the shadow is turning now. */
@@ -311,7 +310,7 @@ public final class PulseTower extends AbstractTower {
 
     /** How far the shadow reaches, in board pixels; 0 without the Sundial. */
     public float shadowReach() {
-        return this.spec(this.mechanics.all()).sundial().reachCells() * this.context.getBoard().scale();
+        return this.spec(this.mechanics.all()).sundial().reachCells() * this.cellPixels();
     }
 
     /** What share of the shadow's turn is still to come; 0 while it is not turning. */
@@ -328,11 +327,6 @@ public final class PulseTower extends AbstractTower {
     /** Which stone the identity pick made it. */
     public StoneLook stoneLook() {
         return this.spec(this.mechanics.all()).look();
-    }
-
-    /** Whether a range upgrade carries it past its base range. */
-    public boolean reachesPastItsBase() {
-        return this.stats().reachReal() > RANGE * this.context.getBoard().scale();
     }
 
     @Override

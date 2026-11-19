@@ -32,14 +32,11 @@ final class DevHexCaster implements HexCaster {
 
     /** A hex of {@code kind} the panel just put on {@code enemy}, paid out over the length it was put on for. */
     void record(EnemyMob enemy, EffectKind kind) {
-        enemy.activeEffects().stream().filter(effect -> effect.kind() == kind).findFirst()
-                .ifPresent(effect -> this.keeper.record(enemy, kind, effect.authoredDurationTicks()));
+        enemy.activeEffect(kind).ifPresent(effect -> this.keeper.record(enemy, kind, effect.authoredDurationTicks()));
     }
 
     void doTick() {
-        if (!this.keeper.isEmpty()) {
-            this.keeper.doTick(SPEC);
-        }
+        this.keeper.doTick(SPEC);
     }
 
     @Override

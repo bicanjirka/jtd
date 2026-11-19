@@ -1,7 +1,7 @@
 package td.tower.seeker;
 
-import java.util.Collections;
-import java.util.EnumMap;
+import td.tower.DrawnShares;
+
 import java.util.List;
 import java.util.Map;
 
@@ -13,12 +13,6 @@ public record NestView(List<MissileKind> missiles, Map<MissileKind, Float> chanc
 
     public NestView {
         missiles = List.copyOf(missiles);
-        Map<MissileKind, Float> drawn = new EnumMap<>(MissileKind.class);
-        chances.forEach((kind, share) -> {
-            if (share > 0f) {
-                drawn.put(kind, share);
-            }
-        });
-        chances = Collections.unmodifiableMap(drawn);
+        chances = DrawnShares.of(MissileKind.class, chances);
     }
 }

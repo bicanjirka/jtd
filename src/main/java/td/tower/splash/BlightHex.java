@@ -42,7 +42,7 @@ public final class BlightHex implements Hex {
         Optional<EnemyMob> fresh = crowded.selectFrom(candidates.stream()
                 .filter(enemy -> !enemy.hasEffect(EffectKind.BLIGHT))
                 .toList());
-        return fresh.isPresent() ? fresh : crowded.selectFrom(candidates);
+        return fresh.or(() -> crowded.selectFrom(candidates));
     }
 
     @Override

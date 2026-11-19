@@ -31,7 +31,7 @@ public enum Spotlight {
     /** What picks the held enemy among those in the light, on a board of {@code cellPixels}. */
     public TargetSelector selector(float cellPixels) {
         return switch (this) {
-            case NONE -> candidates -> Optional.empty();
+            case NONE -> _ -> Optional.empty();
             case SEARCHLIGHT -> candidates -> candidates.stream()
                     .max(Comparator.comparing(EnemyMob::getRank).thenComparingInt(EnemyMob::getHealth));
             case LAST_LIGHT -> new SoonestOutSelector();

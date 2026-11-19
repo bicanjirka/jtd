@@ -3,13 +3,13 @@ package td.tower;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
-import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.enemy.EnemyRegistry;
 import td.enemy.HitResult;
 import td.stat.StatModifiers;
+import td.tower.ability.AbilityCharge;
 import td.tower.ability.AbilityUnits;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
@@ -60,7 +60,6 @@ import td.tower.targeting.NearestSelector;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.RandomSelector;
 import td.tower.targeting.TargetSelector;
-import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.RangeNodes;
@@ -271,16 +270,15 @@ public final class SplashTower extends AbstractTower {
 
     /** What its fork, Arc and hexes are like, as the mechanics in {@code owned} make them. */
     private SplashSpec spec(List<SplashMechanic> owned) {
-        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.cell());
-        SplashSpec spec = SplashSpec.from(view);
+        SplashSpec spec = SplashSpec.from(this.viewpoint());
         for (SplashMechanic mechanic : owned) {
             spec = mechanic.refineSpec(spec);
         }
         return spec;
     }
 
-    private int cell() {
-        return this.context.getBoard().scale();
+    private Vec2 center() {
+        return new Vec2(this.centerX, this.centerY);
     }
 
     @Override
@@ -289,12 +287,10 @@ public final class SplashTower extends AbstractTower {
         SplashSpec spec = this.spec(owned);
         this.forgetOldTraces();
         this.settlePassive(spec);
-        if (!this.hexKeeper.isEmpty()) {
-            this.hexKeeper.doTick(spec.hexes());
-        }
+        this.hexKeeper.doTick(spec.hexes());
         this.landArrived(spec);
         boolean ready = this.clock.isReady();
-        boolean casting = owned.stream().anyMatch(m -> m.ability().filter(c -> c.isReady()).isPresent());
+        boolean casting = owned.stream().flatMap(mechanic -> mechanic.ability().stream()).anyMatch(AbilityCharge::isReady);
         if (ready || casting) {
             List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
             if (!inReach.isEmpty()) {
@@ -330,16 +326,15 @@ public final class SplashTower extends AbstractTower {
     private void throwAt(EnemyMob target) {
         boolean charged = this.holdsStatus(TowerTerm.ARC);
         TowerStats stats = this.beginShot();
-        Vec2 from = new Vec2(this.centerX, this.centerY);
         Vec2 to = target.position();
-        this.stones.add(new Stone(to, stats, charged, new ShotFlight(this.tickNow(),
-                this.tickNow() + this.flightTicks(from, to, STONE_CELLS_PER_TICK))));
+        this.stones.add(new Stone(to, stats, charged, this.flightOver(this.center(), to, STONE_CELLS_PER_TICK)));
         this.clock.spend();
     }
 
-    private int flightTicks(Vec2 from, Vec2 to, float cellsPerTick) {
-        double distance = Math.hypot(to.x() - from.x(), to.y() - from.y());
-        return Math.max(MIN_FLIGHT_TICKS, (int) Math.ceil(distance / (cellsPerTick * this.cell())));
+    /** A flight from {@code from} to {@code to} at {@code cellsPerTick}, starting now. */
+    private ShotFlight flightOver(Vec2 from, Vec2 to, float cellsPerTick) {
+        return ShotFlight.across(this.tickNow(), Math.hypot(to.x() - from.x(), to.y() - from.y()),
+                cellsPerTick * this.cellPixels(), MIN_FLIGHT_TICKS);
     }
 
     /** Lands every stone, jump, curse and soul or spark whose flight ends now. */
@@ -360,11 +355,10 @@ public final class SplashTower extends AbstractTower {
      */
     private void land(Stone stone, SplashSpec spec) {
         TowerStats stats = stone.stats();
-        float core = stats.value(TowerStat.AREA_RADIUS) * this.cell();
-        float edge = Math.max(core, stats.value(TowerStat.BLAST_EDGE) * this.cell());
+        float core = stats.value(TowerStat.AREA_RADIUS) * this.cellPixels();
+        float edge = Math.max(core, stats.value(TowerStat.BLAST_EDGE) * this.cellPixels());
         Vec2 at = stone.to();
-        List<EnemyMob> caught = InRangeTargetQuery.everyone((int) at.x(), (int) at.y(), edge)
-                .matching(this.context.enemies());
+        List<EnemyMob> caught = InRangeTargetQuery.everyone(at, edge).matching(this.context.enemies());
         float core2 = core * core;
         long credited = 0L;
         for (EnemyMob enemy : caught) {
@@ -387,7 +381,7 @@ public final class SplashTower extends AbstractTower {
         this.blasts.add(new Blast(at, core, edge, this.tickNow()));
         if (stone.charged()) {
             ArcRun run = new ArcRun(stats, spec.arc());
-            this.nextJump(at, null, run);
+            this.jumpOn(at, Optional.empty(), run);
         }
     }
 
@@ -398,22 +392,23 @@ public final class SplashTower extends AbstractTower {
         }
     }
 
-    /** Sends the Arc on from {@code from} to the nearest enemy it may strike, if it has a jump left. */
-    private void nextJump(Vec2 from, EnemyMob current, ArcRun run) {
+    /**
+     * Sends the Arc on from {@code from}, off {@code current}, to the nearest enemy it may strike, if it has a jump
+     * left; one that may revisit stays on {@code current} when no other is near.
+     */
+    private void jumpOn(Vec2 from, Optional<EnemyMob> current, ArcRun run) {
         if (run.jumpsLeft() <= 0) {
             return;
         }
-        List<EnemyMob> near = InRangeTargetQuery.everyone((int) from.x(), (int) from.y(),
-                ArcSpec.REACH_CELLS * this.cell()).matching(this.context.enemies()).stream()
-                .filter(enemy -> enemy != current && enemy.validTarget()
+        List<EnemyMob> near = InRangeTargetQuery.everyone(from, ArcSpec.REACH_CELLS * this.cellPixels())
+                .matching(this.context.enemies()).stream()
+                .filter(enemy -> current.stream().noneMatch(off -> off == enemy) && enemy.validTarget()
                         && (run.spec().revisits() || !run.struck(enemy)))
                 .toList();
-        Optional<EnemyMob> next = new NearestSelector(from.x(), from.y()).selectFrom(near);
-        if (next.isEmpty() && run.spec().revisits() && current != null && !current.isDead()) {
-            next = Optional.of(current);
-        }
-        next.ifPresent(to -> this.hops.add(new PendingHop(new Hop(from, to,
-                new ShotFlight(this.tickNow(), this.tickNow() + HOP_TICKS)), run)));
+        Optional<EnemyMob> next = new NearestSelector(from.x(), from.y()).selectFrom(near)
+                .or(() -> current.filter(stay -> run.spec().revisits() && !stay.isDead()));
+        next.ifPresent(to -> this.hops.add(new PendingHop(new Hop(from, to, ShotFlight.lasting(this.tickNow(), HOP_TICKS)),
+                run)));
     }
 
     /** One jump of an Arc lands as magic, unable to crit unless the Arc can, then the Arc jumps on. */
@@ -441,7 +436,7 @@ public final class SplashTower extends AbstractTower {
             }
             this.bolts.add(new Bolt(hop.from(), at, this.tickNow(), BoltKind.ARC));
         }
-        this.nextJump(at, target, run);
+        this.jumpOn(at, Optional.of(target), run);
     }
 
     /** Static discharges what it tagged once badly hurt; Soulbrand bursts what it tagged once killed. */
@@ -450,47 +445,37 @@ public final class SplashTower extends AbstractTower {
             return;
         }
         switch (spec.passive()) {
-            case STATIC -> this.tags.take(enemy -> enemy.isDead()
-                            || enemy.getHealthFraction() <= StaticMechanic.DISCHARGE_AT).stream()
-                    .filter(enemy -> !enemy.isDead())
-                    .forEach(this::discharge);
-            case SOULBRAND -> this.tags.take(EnemyMob::isDead).stream()
-                    .filter(EnemyMob::wasKilled)
-                    .forEach(this::burstSoul);
-            case NONE -> this.tags.take(enemy -> true);
+            case STATIC -> this.tags.settleStatic(this::discharge);
+            case SOULBRAND -> this.tags.settleSoulbrand(this::burstSoul);
+            case NONE -> this.tags.clear();
         }
     }
 
     /** Static: this tower's stack discharges into the enemy alone, and a spark runs home with Sparks. */
     private void discharge(EnemyMob enemy) {
-        this.dealDamage(enemy, Damage.magic(DamageUnits.ofPoints(StaticMechanic.DISCHARGE_POINTS)),
-                this.stats().attack().withoutCrits());
+        this.dealDamage(enemy, StaticMechanic.discharge(), this.stats().attack().withoutCrits());
         this.sendHome(enemy, Passive.STATIC);
     }
 
     /** Soulbrand: this tower's stack bursts around where the enemy died, tagging nothing, and its soul flies home. */
     private void burstSoul(EnemyMob dead) {
-        InRangeTargetQuery.everyone((int) dead.getX(), (int) dead.getY(), SoulbrandMechanic.BURST_CELLS * this.cell())
+        InRangeTargetQuery.around(dead, SoulbrandMechanic.BURST_CELLS * this.cellPixels())
                 .matching(this.context.enemies()).stream()
-                .filter(enemy -> enemy != dead && !enemy.isDead())
-                .forEach(enemy -> this.dealDamage(enemy, Damage.magic(DamageUnits.ofPoints(SoulbrandMechanic.BURST_POINTS)),
-                        this.stats().attack().withoutCrits()));
+                .filter(enemy -> !enemy.isDead())
+                .forEach(enemy -> this.dealDamage(enemy, SoulbrandMechanic.burst(), this.stats().attack().withoutCrits()));
         this.sendHome(dead, Passive.SOULBRAND);
     }
 
     private void sendHome(EnemyMob enemy, Passive passive) {
         Vec2 from = enemy.position();
-        Vec2 home = new Vec2(this.centerX, this.centerY);
-        this.wisps.add(new PendingWisp(new Wisp(from, passive, new ShotFlight(this.tickNow(),
-                this.tickNow() + this.flightTicks(from, home, WISP_CELLS_PER_TICK))),
+        this.wisps.add(new PendingWisp(new Wisp(from, passive, this.flightOver(from, this.center(), WISP_CELLS_PER_TICK)),
                 PassivePayout.forMaxHealth(enemy.getMaxHealthPoints())));
     }
 
     /** Sends {@code hex} from {@code from} to {@code target}; it takes hold when it arrives. */
     private void sendCurse(Hex hex, Vec2 from, EnemyMob target, Dose dose) {
-        Vec2 to = target.position();
-        this.curses.add(new PendingCurse(new Curse(hex.kind(), from, target, new ShotFlight(this.tickNow(),
-                this.tickNow() + this.flightTicks(from, to, CURSE_CELLS_PER_TICK))), hex, this.stats(), dose));
+        this.curses.add(new PendingCurse(new Curse(hex.kind(), from, target,
+                this.flightOver(from, target.position(), CURSE_CELLS_PER_TICK)), hex, this.stats(), dose));
     }
 
     /** A curse that arrives takes hold, on the enemies around it too with Blight Cloud; one whose enemy died is lost. */
@@ -502,9 +487,9 @@ public final class SplashTower extends AbstractTower {
         HexSpec hexes = spec.hexes();
         this.lay(pending, target, hexes);
         if (hexes.cloud() && pending.hex().kind() == EffectKind.BLIGHT) {
-            InRangeTargetQuery.everyone((int) target.getX(), (int) target.getY(), HexSpec.CLOUD_CELLS * this.cell())
+            InRangeTargetQuery.around(target, HexSpec.CLOUD_CELLS * this.cellPixels())
                     .matching(this.context.enemies()).stream()
-                    .filter(enemy -> enemy != target && !enemy.isDead())
+                    .filter(enemy -> !enemy.isDead())
                     .forEach(enemy -> this.lay(pending, enemy, hexes));
         }
     }
@@ -620,7 +605,7 @@ public final class SplashTower extends AbstractTower {
         @Override
         public boolean thunderclap(float share) {
             TowerStats stats = SplashTower.this.stats();
-            Vec2 from = new Vec2(SplashTower.this.centerX, SplashTower.this.centerY);
+            Vec2 from = SplashTower.this.center();
             for (EnemyMob enemy : this.inReach) {
                 SplashTower.this.strike(enemy, from, Math.round(stats.damage() * share), stats, BoltKind.THUNDERCLAP);
             }
@@ -629,20 +614,19 @@ public final class SplashTower extends AbstractTower {
 
         @Override
         public boolean thunderstrike(float factor) {
-            Optional<EnemyMob> target = THUNDERSTRIKE_AIM.selectFrom(this.inReach);
-            target.ifPresent(enemy -> {
+            return THUNDERSTRIKE_AIM.selectFrom(this.inReach).map(enemy -> {
                 TowerStats stats = SplashTower.this.stats();
-                Vec2 above = new Vec2(enemy.getX(), enemy.getY() - THUNDERSTRIKE_HEIGHT_CELLS * SplashTower.this.cell());
+                Vec2 above = new Vec2(enemy.getX(), enemy.getY() - THUNDERSTRIKE_HEIGHT_CELLS * SplashTower.this.cellPixels());
                 SplashTower.this.strike(enemy, above, Math.round(stats.damage() * factor), stats, BoltKind.THUNDERSTRIKE);
-            });
-            return target.isPresent();
+                return true;
+            }).orElse(false);
         }
 
         @Override
         public boolean hex(Hex hex) {
             List<EnemyMob> left = new ArrayList<>(this.inReach);
             List<EnemyMob> cursed = new ArrayList<>();
-            float cell = SplashTower.this.cell();
+            float cell = SplashTower.this.cellPixels();
             for (int i = 0; i < this.spec.hexes().cursesPerCast(); i++) {
                 Optional<EnemyMob> target = hex.target(left, cell);
                 if (target.isEmpty()) {
@@ -651,7 +635,7 @@ public final class SplashTower extends AbstractTower {
                 cursed.add(target.get());
                 left.remove(target.get());
             }
-            Vec2 from = new Vec2(SplashTower.this.centerX, SplashTower.this.centerY);
+            Vec2 from = SplashTower.this.center();
             int ticks = Math.round(hex.seconds() * TICKS_PER_SECOND);
             cursed.forEach(target -> SplashTower.this.sendCurse(hex, from, target, new Dose(ticks, 0f)));
             return !cursed.isEmpty();
@@ -683,8 +667,7 @@ public final class SplashTower extends AbstractTower {
 
         @Override
         public void blight(EnemyMob target, int ticks, float slowPerTick, float start) {
-            float held = target.activeEffects().stream().filter(effect -> effect.kind() == EffectKind.BLIGHT)
-                    .map(Effect::grownSlow).findFirst().orElse(0f);
+            float held = target.activeEffect(EffectKind.BLIGHT).map(Effect::grownSlow).orElse(0f);
             SplashTower.this.applyEffect(target, sink -> Effect.blight(ticks, slowPerTick, start, held, sink));
         }
 
@@ -705,7 +688,7 @@ public final class SplashTower extends AbstractTower {
 
         @Override
         public float distance(float cells) {
-            return cells * SplashTower.this.cell();
+            return cells * SplashTower.this.cellPixels();
         }
 
         @Override
@@ -757,6 +740,10 @@ public final class SplashTower extends AbstractTower {
         }
     }
 
+    /** A jump of an Arc on its way, from where it is to the enemy it strikes. */
+    private record Hop(Vec2 from, EnemyMob to, ShotFlight flight) {
+    }
+
     private record PendingHop(Hop hop, ArcRun run) {
     }
 
@@ -775,9 +762,5 @@ public final class SplashTower extends AbstractTower {
         NONE,
         STORMCALLER,
         HEXER
-    }
-
-    /** A jump of an Arc on its way, from where it is to the enemy it strikes. */
-    private record Hop(Vec2 from, EnemyMob to, ShotFlight flight) {
     }
 }

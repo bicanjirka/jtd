@@ -227,11 +227,11 @@ public final class MortarTower extends AbstractTower {
     private volatile Magazine magazine = Magazine.opener();
     private volatile int loading = 1;
     private FireClock clock = new FireClock(COOLDOWN_MAX);
-    private volatile NukeFlash nukeFlash;
+    private volatile Optional<NukeFlash> nukeFlash = Optional.empty();
     /** The chances last worked out, and the draw they were worked out for. */
-    private volatile ShellOdds odds;
+    private volatile Optional<ShellOdds> odds = Optional.empty();
     /** The kinds it can load, and the mechanics they were worked out for. */
-    private volatile LoadableKinds loadable;
+    private volatile Optional<LoadableKinds> loadable = Optional.empty();
     private OptionalInt firedAt = OptionalInt.empty();
     private Optional<EnemyMob> target = Optional.empty();
 
@@ -255,16 +255,12 @@ public final class MortarTower extends AbstractTower {
 
     /** Whom it may shell and how its shells are drawn, fly and land, as the mechanics in {@code owned} make it. */
     private MortarSpec spec(List<MortarMechanic> owned) {
-        Viewpoint view = new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.cell());
+        Viewpoint view = this.viewpoint();
         MortarSpec spec = MortarSpec.from(view);
         for (MortarMechanic mechanic : owned) {
             spec = mechanic.refineSpec(spec);
         }
         return spec.withReach(spec.reach().withDeadZone(this.stats().value(TowerStat.MINIMUM_RANGE) * view.cellSize()));
-    }
-
-    private int cell() {
-        return this.context.getBoard().scale();
     }
 
     private Optional<EnemyMob> findTarget(MortarSpec spec) {
@@ -287,13 +283,7 @@ public final class MortarTower extends AbstractTower {
             });
         }
         this.clock.advance(this.attackRate());
-        this.target.ifPresentOrElse(
-                enemy -> this.turretAim.tick(TurretAim.angleTo(this.centerX, this.centerY, enemy.getX(), enemy.getY())),
-                () -> {
-                    if (this.betweenWaves()) {
-                        this.turretAim.settle();
-                    }
-                });
+        this.turnTurret(this.turretAim, this.target);
     }
 
     @Override
@@ -336,7 +326,7 @@ public final class MortarTower extends AbstractTower {
         }
         double[] offsets = new double[shells];
         for (int i = 0; i < shells; i++) {
-            offsets[i] = -i * volley.spacingCells() * this.cell();
+            offsets[i] = -i * volley.spacingCells() * this.cellPixels();
         }
         List<Path> paths = this.context.level().paths().stream().map(PathRuntime::path).toList();
         List<Vec2> points = PathLine.along(paths, target.getX(), target.getY(), offsets);
@@ -351,12 +341,10 @@ public final class MortarTower extends AbstractTower {
     private void fireVolleyLeft(MortarSpec spec) {
         while (!this.volleyLeft.isEmpty() && this.volleyLeft.getFirst().firesAt() <= this.tickNow()) {
             VolleyShell next = this.volleyLeft.removeFirst();
-            if (next.laidAt().isPresent()) {
-                this.fireAt(next.kind(), next.laidAt().get());
-                continue;
-            }
-            this.target = this.target.filter(enemy -> !enemy.isDead()).or(() -> this.findTarget(spec));
-            this.target.ifPresent(enemy -> this.fireAt(next.kind(), this.aimPoint(enemy, spec, next.kind())));
+            next.laidAt().ifPresentOrElse(laid -> this.fireAt(next.kind(), laid), () -> {
+                this.target = this.target.filter(enemy -> !enemy.isDead()).or(() -> this.findTarget(spec));
+                this.target.ifPresent(enemy -> this.fireAt(next.kind(), this.aimPoint(enemy, spec, next.kind())));
+            });
         }
     }
 
@@ -409,16 +397,16 @@ public final class MortarTower extends AbstractTower {
     }
 
     /** One shell's blast, in pixels: its full-damage core, its edge, and what the edge deals. */
-    private record Blast(float core, float edge, float edgeShare) {
+    private record BlastRadii(float core, float edge, float edgeShare) {
     }
 
-    private Blast blastOf(Shell shell, MortarSpec spec) {
+    private BlastRadii blastOf(Shell shell, MortarSpec spec) {
         TowerStats stats = shell.stats();
         ShellKind kind = shell.kind();
         float extra = kind.isPayload() ? spec.payload().extraCells() : 0f;
-        float core = (stats.value(TowerStat.AREA_RADIUS) + kind.blast().extraCoreCells() + extra) * this.cell();
-        float edge = (stats.value(TowerStat.BLAST_EDGE) + kind.blast().extraEdgeCells() + extra) * this.cell();
-        return new Blast(core, Math.max(core, edge), kind.blast().edgeShare());
+        float core = (stats.value(TowerStat.AREA_RADIUS) + kind.blast().extraCoreCells() + extra) * this.cellPixels();
+        float edge = (stats.value(TowerStat.BLAST_EDGE) + kind.blast().extraEdgeCells() + extra) * this.cellPixels();
+        return new BlastRadii(core, Math.max(core, edge), kind.blast().edgeShare());
     }
 
     /**
@@ -429,7 +417,7 @@ public final class MortarTower extends AbstractTower {
         MortarSpec spec = this.spec(this.mechanics.all());
         ShellKind kind = shell.kind();
         TowerStats stats = shell.stats();
-        Blast blast = this.blastOf(shell, spec);
+        BlastRadii blast = this.blastOf(shell, spec);
         float damage = stats.damage() * kind.damageFactor(stats.value(TowerStat.HEAVY_MULTIPLIER));
         float core2 = blast.core() * blast.core();
         for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(x), (int) Math.round(y), blast.edge())
@@ -450,7 +438,7 @@ public final class MortarTower extends AbstractTower {
             }
         }
         if (kind == ShellKind.NUKE) {
-            this.nukeFlash = new NukeFlash(x, y, blast.edge(), gameTime);
+            this.nukeFlash = Optional.of(new NukeFlash(new Vec2(x, y), blast.edge(), gameTime));
         }
         boolean fragments = kind == ShellKind.HEAVY && spec.heavy() == HeavyRider.SHRAPNEL;
         this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), gameTime, kind.look())
@@ -484,12 +472,12 @@ public final class MortarTower extends AbstractTower {
     }
 
     /** The ground a shell's kind leaves where it lands; only the newest flares keep burning. */
-    private void leaveGround(double x, double y, Shell shell, Blast blast, MortarSpec spec) {
+    private void leaveGround(double x, double y, Shell shell, BlastRadii blast, MortarSpec spec) {
         ShellKind kind = shell.kind();
         kind.ground().ifPresent(ground -> {
             boolean payload = kind.isPayload();
             float radius = ground.blastShare() > 0f ? ground.blastShare() * blast.edge()
-                    : (ground.radiusCells() + (payload ? spec.payload().extraCells() : 0f)) * this.cell();
+                    : (ground.radiusCells() + (payload ? spec.payload().extraCells() : 0f)) * this.cellPixels();
             int lifetime = ground.lastsTheWave() ? Zone.UNTIL_WAVE_END
                     : this.lengthened(ground.lifetimeTicks() + (payload ? spec.payload().extraTicks() : 0));
             Zone zone = new Zone(ground.kind(), x, y, radius, lifetime,
@@ -514,11 +502,6 @@ public final class MortarTower extends AbstractTower {
         return this.magazine;
     }
 
-    /** Whether a range upgrade carries it past its base range. */
-    public boolean reachesPastItsBase() {
-        return this.stats().reachReal() > RANGE * this.cell();
-    }
-
     /** How many front shells one firing loads: one, or a volley's. Any thread. */
     public int loadingCount() {
         return this.loading;
@@ -527,26 +510,22 @@ public final class MortarTower extends AbstractTower {
     /** Every kind of shell it can load, in the kinds' order: each kind it draws, and the Nuke while Heavies fuse. */
     public List<ShellKind> loadableKinds() {
         List<MortarMechanic> owned = this.mechanics.all();
-        LoadableKinds last = this.loadable;
-        if (last != null && last.owned().equals(owned)) {
-            return last.kinds();
-        }
-        MagazineSpec spec = this.spec(owned).magazine();
-        LoadableKinds fresh = new LoadableKinds(owned, Arrays.stream(ShellKind.values()).filter(spec::owns).toList());
-        this.loadable = fresh;
-        return fresh.kinds();
+        return this.loadable.filter(last -> last.owned().equals(owned)).orElseGet(() -> {
+            MagazineSpec spec = this.spec(owned).magazine();
+            LoadableKinds fresh = new LoadableKinds(owned, Arrays.stream(ShellKind.values()).filter(spec::owns).toList());
+            this.loadable = Optional.of(fresh);
+            return fresh;
+        }).kinds();
     }
 
     /** What share of the shells it fires are each kind, over a long run of draws; worked out again only as it changes. */
     public Map<ShellKind, Float> shellChances() {
         MagazineSpec spec = this.spec(this.mechanics.all()).magazine();
-        ShellOdds last = this.odds;
-        if (last != null && last.spec().equals(spec)) {
-            return last.chances();
-        }
-        ShellOdds fresh = new ShellOdds(spec, spec.chances());
-        this.odds = fresh;
-        return fresh.chances();
+        return this.odds.filter(last -> last.spec().equals(spec)).orElseGet(() -> {
+            ShellOdds fresh = new ShellOdds(spec, spec.chances());
+            this.odds = Optional.of(fresh);
+            return fresh;
+        }).chances();
     }
 
     /**
@@ -563,18 +542,16 @@ public final class MortarTower extends AbstractTower {
         Optional<UpgradeCluster> cluster = this.upgradeTree().clusterOf(node);
         List<MortarMechanic> after = new ArrayList<>();
         for (UpgradeNode kept : owned) {
-            if (cluster.isEmpty() || !cluster.get().contains(kept.id())) {
+            if (cluster.filter(replaced -> replaced.contains(kept.id())).isEmpty()) {
                 after.addAll(MECHANICS.mechanicsOf(kept));
             }
         }
         after.addAll(MECHANICS.mechanicsOf(node));
-        Optional<TermText> change = chanceChange(this.shellChances(), this.spec(after).magazine().chances());
-        if (change.isEmpty()) {
-            return words;
-        }
-        List<TermText> sentences = new ArrayList<>(words.sentences());
-        sentences.add(change.get());
-        return NodeWords.of(words.name(), words.stats(), sentences).withChosenOver(words.chosenOver());
+        return chanceChange(this.shellChances(), this.spec(after).magazine().chances()).map(change -> {
+            List<TermText> sentences = new ArrayList<>(words.sentences());
+            sentences.add(change);
+            return NodeWords.of(words.name(), words.stats(), sentences).withChosenOver(words.chosenOver());
+        }).orElse(words);
     }
 
     /** "Heavy 18% → 31%, Normal 82% → 69%" for every kind whose shown share moves; empty when none does. */
@@ -591,7 +568,7 @@ public final class MortarTower extends AbstractTower {
             }
             text = text.plus(kind.mention()).plus(" " + was + " → " + will);
         }
-        return text.isEmpty() ? Optional.empty() : Optional.of(text);
+        return Optional.of(text).filter(said -> !said.isEmpty());
     }
 
     /** Its magazine as the pane shows it. */
@@ -642,7 +619,7 @@ public final class MortarTower extends AbstractTower {
 
     /** The flash of the last nuke, for the frame build; empty before the first one. */
     public Optional<NukeFlash> getNukeFlash() {
-        return Optional.ofNullable(this.nukeFlash);
+        return this.nukeFlash;
     }
 
     /** Blasts that went off in the last few ticks, for the fading flash the board draws. */
@@ -665,7 +642,7 @@ public final class MortarTower extends AbstractTower {
     @Override
     protected List<TowerStatLine> ownStats(TowerStats stats) {
         ProjectileStats shell = this.shellStats(new Shell(ShellKind.NORMAL, stats));
-        float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.cell();
+        float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.cellPixels();
         return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, cellsPerSecond),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, shell.size()));
     }
