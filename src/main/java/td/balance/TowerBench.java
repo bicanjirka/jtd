@@ -88,6 +88,10 @@ public final class TowerBench {
             new Stand(TowerFactory.Type.SPLASH, SECOND, List.of()));
     /** The scenarios pairs of towers fight. */
     private static final List<String> PAIRED = List.of("stream", "group", "armored", "hidden");
+    /** Five Snipers beside the subject: the focused fire a support's payout is measured on. */
+    private static final List<Stand> FOCUS = Stream.of(new Point(3, 0), new Point(4, 0), new Point(5, 0), new Point(7, 0),
+            new Point(8, 0)).map(cell -> new Stand(TowerFactory.Type.SNIPER, cell, List.of())).toList();
+    private static final double TANK_SPEED = 0.3;
     private static final List<Scenario> SCENARIOS = scenarios();
     private static final List<String> SCENARIO_HEADER = List.of("scenario", "wave", "enemy", "rank", "enemies", "walk s", "toughness",
             "walkers a point", "partners", "tests");
@@ -224,7 +228,10 @@ public final class TowerBench {
                 Scenario.stream("resist", "templar").testing("magic resist"),
                 Scenario.stream("hidden", "ghost").testing("enemies that fade out of sight"),
                 Scenario.stream("fast", "runner").testing("enemies that run faster the more they are hurt"),
-                Scenario.stream("elusive", PLAIN).with(Affix.ELUSIVE).testing("plain enemies that dodge aimed hits"));
+                Scenario.stream("elusive", PLAIN).with(Affix.ELUSIVE).testing("plain enemies that dodge aimed hits"),
+                Scenario.stream("tank", PLAIN).slowedTo(TANK_SPEED).besideTeam(FOCUS)
+                        .testing("slow plain enemies under focused fire, for the damage a hex or a mark adds to what "
+                                + "others deal"));
         List<Scenario> all = new ArrayList<>(alone);
         alone.stream().map(Scenario::withPartners).forEach(all::add);
         return List.copyOf(all);
@@ -241,9 +248,11 @@ public final class TowerBench {
      * @param beside  whether the partners stand beside the subject
      * @param tests   what it is there to show
      * @param affix   what each of its enemies carries, if anything
+     * @param speed   how fast they walk, a share of their kind's speed
+     * @param team    who stands beside the subject when {@code beside}, the two partners if empty
      */
     record Scenario(String name, String kind, Rank rank, int spacing, int count, boolean beside, String tests,
-                    Optional<Affix> affix) {
+                    Optional<Affix> affix, double speed, List<Stand> team) {
 
         private static final int STREAM = 8;
         private static final int STREAM_SPACING = 100;
@@ -251,36 +260,61 @@ public final class TowerBench {
 
         /** One Veteran. */
         static Scenario lone(String name, String kind) {
-            return new Scenario(name, kind, Rank.VETERAN, STREAM_SPACING, 1, false, "", Optional.empty());
+            return new Scenario(name, kind, Rank.VETERAN, STREAM_SPACING, 1, false, "", Optional.empty(), 1, List.of());
         }
 
         /** Veterans far enough apart that an area hit takes one. */
         static Scenario stream(String name, String kind) {
-            return new Scenario(name, kind, Rank.VETERAN, STREAM_SPACING, STREAM, false, "", Optional.empty());
+            return new Scenario(name, kind, Rank.VETERAN, STREAM_SPACING, STREAM, false, "", Optional.empty(), 1, List.of());
         }
 
         Scenario ranked(Rank next) {
-            return new Scenario(this.name, this.kind, next, this.spacing, this.count, this.beside, this.tests, this.affix);
+            return new Scenario(this.name, this.kind, next, this.spacing, this.count, this.beside, this.tests, this.affix,
+                    this.speed, this.team);
         }
 
         /** {@code enemies} of them, {@code ticks} apart. */
         Scenario sending(int enemies, int ticks) {
-            return new Scenario(this.name, this.kind, this.rank, ticks, enemies, this.beside, this.tests, this.affix);
+            return new Scenario(this.name, this.kind, this.rank, ticks, enemies, this.beside, this.tests, this.affix,
+                    this.speed, this.team);
         }
 
         Scenario testing(String what) {
-            return new Scenario(this.name, this.kind, this.rank, this.spacing, this.count, this.beside, what, this.affix);
+            return new Scenario(this.name, this.kind, this.rank, this.spacing, this.count, this.beside, what, this.affix,
+                    this.speed, this.team);
         }
 
         /** Each of its enemies carrying {@code added}. */
         Scenario with(Affix added) {
             return new Scenario(this.name, this.kind, this.rank, this.spacing, this.count, this.beside, this.tests,
-                    Optional.of(added));
+                    Optional.of(added), this.speed, this.team);
+        }
+
+        /** Walking at {@code share} of their kind's speed, so a tower has longer to work on each. */
+        Scenario slowedTo(double share) {
+            return new Scenario(this.name, this.kind, this.rank, this.spacing, this.count, this.beside, this.tests,
+                    this.affix, share, this.team);
+        }
+
+        /** Fought beside {@code stands} instead of the two partners. */
+        Scenario besideTeam(List<Stand> stands) {
+            return new Scenario(this.name, this.kind, this.rank, this.spacing, this.count, this.beside, this.tests,
+                    this.affix, this.speed, stands);
+        }
+
+        /** Who stands beside the subject here. */
+        List<Stand> partners() {
+            return this.team.isEmpty() ? PARTNERS : this.team;
         }
 
         Scenario withPartners() {
             return new Scenario(this.name + BESIDE_MARK, this.kind, this.rank, this.spacing, this.count, true,
-                    this.tests + ", beside a bare Sniper and a bare Burst", this.affix);
+                    this.tests + this.besideWords(), this.affix, this.speed, this.team);
+        }
+
+        private String besideWords() {
+            return this.team.isEmpty() ? ", beside a bare Sniper and a bare Burst"
+                    : ", beside " + this.team.size() + " bare " + this.team.getFirst().type().displayName() + "s";
         }
 
         /** The wave as a script of {@code id}, numbered when its enemies differ. */
@@ -315,7 +349,8 @@ public final class TowerBench {
             for (int slot = 0; slot < this.count; slot++) {
                 double points = health * this.share(slot);
                 mobs.add(ladder.cloneAs(this.count == 1 ? MOB : MOB + slot, definition -> definition.withHealthAndPrice(
-                        Math.max(1, (int) Math.round(points * definition.healthDivisor())), 0)));
+                        Math.max(1, (int) Math.round(points * definition.healthDivisor())), 0)
+                        .withBaseSpeed((float) (definition.baseSpeed() * this.speed))));
             }
             return PowerBench.lane(EnemyPowerReport.NO_CONTENT.withCustomRankedEnemies(mobs), this.script(MOB));
         }
@@ -368,7 +403,7 @@ public final class TowerBench {
 
         /** The Walkers a wave of {@code scenario} is worth for each point of health its enemies have. */
         double walkersAPoint(Scenario scenario) {
-            return scenario.count() * this.toughnessOf(scenario) / this.walker;
+            return scenario.count() * this.toughnessOf(scenario) * scenario.speed() / this.walker;
         }
     }
 
@@ -622,7 +657,7 @@ public final class TowerBench {
     private static List<Stand> stands(TowerFactory.Type type, Build build, Scenario scenario) {
         List<Stand> stands = new ArrayList<>(List.of(new Stand(type, SUBJECT, build.owned())));
         if (scenario.beside()) {
-            stands.addAll(PARTNERS);
+            stands.addAll(scenario.partners());
         }
         return stands;
     }
@@ -799,7 +834,7 @@ public final class TowerBench {
     List<List<String>> described() {
         List<Scenario> beside = this.scenarios.stream().filter(Scenario::beside).toList();
         List<Double> partners = this.thresholds(beside.stream()
-                .map(scenario -> new Job(scenario, PARTNERS, FIRST_GUESS)).toList());
+                .map(scenario -> new Job(scenario, scenario.partners(), FIRST_GUESS)).toList());
         return this.scenarios.stream().map(scenario -> List.of(scenario.name(),
                 "w" + scenario.spacing() + " " + WaveScript.headed(scenario.rank(), scenario.count() + " "
                         + scenario.affix().map(added -> added.word() + " ").orElse("") + scenario.kind()),
