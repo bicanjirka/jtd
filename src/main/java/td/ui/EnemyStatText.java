@@ -197,13 +197,23 @@ final class EnemyStatText {
     private static List<SheetLine> effectRows(EnemyInspection.EffectState effect) {
         EffectKind kind = effect.kind();
         List<SheetLine> rows = new ArrayList<>();
-        if (effect.remainingTicks().isPresent()) {
-            rows.add(Row.plain(Glyph.DOT, "Time left",
-                    TermNumbers.number(effect.remainingTicks().getAsInt() / TickRate.TICKS_PER_SECOND))
-                    .withGloss("s", ""));
-        }
         if (kind.maxStacks() > 0 && effect.stacks() > 0) {
             rows.add(Row.plain(Glyph.DOT, "Stacks", effect.stacks() + " / " + kind.maxStacks()));
+        }
+        if (effect.sources() > 0) {
+            rows.add(Row.plain(Glyph.DOT, "From", effect.sources() + (effect.sources() == 1 ? " tower" : " towers")));
+        }
+        String timeLabel = effect.phase().map(phase -> switch (phase) {
+            case HELD -> "Held";
+            case HOLDING -> "Held for";
+            case FADING -> "Next stack lost in";
+        }).orElse(effect.sources() > 0 ? "Next share ends in" : "Time left");
+        if (effect.phase().equals(Optional.of(EnemyInspection.CountPhase.HELD))) {
+            rows.add(Row.plain(Glyph.DOT, timeLabel, "while its source lasts"));
+        } else if (effect.remainingTicks().isPresent()) {
+            rows.add(Row.plain(Glyph.DOT, timeLabel,
+                    TermNumbers.number(effect.remainingTicks().getAsInt() / TickRate.TICKS_PER_SECOND))
+                    .withGloss("s", ""));
         }
         for (EnemyInspection.ShareState share : effect.shares()) {
             rows.add(kind == EffectKind.SHIELD ? shieldShareRow(share) : healShareRow(share));
