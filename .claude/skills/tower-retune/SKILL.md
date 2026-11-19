@@ -28,13 +28,16 @@ whatever else blocks the step. Before you ask, read the tower's class, its tree,
   changes, raise the save format; ids follow names, no legacy ids.
 - **XP gates are yours to set, per tower** (`UpgradeTree.withTiers`; `UpgradeTier.standard()` is only the default).
   XP is the bounty of every enemy whose walk passed within the tower's reach, hit or not (`ExperienceAwarder`), so
-  every tower beside a lane earns about that lane's whole bounty: a gate is in effect a round. Read the rounds off
-  WavePowerReport's `xp` and `opens` columns on Iron Crossing. Each tower gets its own XP curve (its gate per tier),
-  picked by how its power grows: a tier whose power per credit jumps opens later, so that at every round the tower's
-  best affordable build stays in the band of the others'. State each gate as "XP n = round r". The Beacon earns through the towers it lights (plus Kinship,
-  Mentor and Breakthrough bonuses), so its pace is its partners'. A round's bounty grows faster than the gates, and
-  that is the catch-up: keep each gate step under a late round's bounty on the poorer lane, so a tower built late
-  opens its tiers within about two rounds. Gates are provisional until the levels are final.
+  every tower beside a lane earns about that lane's whole bounty: a gate is in effect a round. Each tower gets its own
+  XP curve (its gate per tier), picked by how its power grows: a tier whose power per credit jumps opens later, so
+  that at every round the tower's best affordable defence stays in the band of the others'. TowerReport's "Rounds",
+  "Proposed gates" and "Rounds with the proposed gates" tables judge exactly that (they need one `WavePowerReport`
+  run; its XP and bank don't change with towers). A gate step is worth taking only when it fixes a `DOMINANT` or
+  `weak` round. Fix a tier that is strong at every round in its nodes, not by its gate. State each gate as "XP n =
+  round r". A round's bounty grows faster than the gates, and that is the catch-up: no top gate may keep a tower built
+  late waiting longer than today's (the table's "late wait"). The Beacon earns through the towers it lights (plus
+  Kinship, Mentor and Breakthrough bonuses), so its pace is its partners', and the Rounds tables skip it until its
+  step judges it. Gates are provisional until the levels are final.
 - Memories that hold: bare Burst (base tree) is every tower's damage floor, Sniper the single-target ceiling, Aerie
   the top single-target vs armor/plating; report any breach. No tower allows for the Beacon; its combos are tuned in
   the Beacon's nodes. It holds nothing alone, so it is judged on the `+` (beside-partners) columns only, and
