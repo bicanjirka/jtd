@@ -34,7 +34,7 @@ final class BuyTileLook {
     static final float CORNER = Hud.ARC;
     static final float TAG_HEIGHT = 14f;
 
-    private static final Font TAG_FONT = Hud.BODY_FONT;
+    private static final Font TAG_FONT = Hud.CAPTION_FONT;
     private static final Font TAG_BOLD = TAG_FONT.deriveFont(Font.BOLD);
     private static final Color TAG_FILL = new Color(16, 16, 18);
     private static final Color TAG_BORDER = new Color(58, 58, 61);
