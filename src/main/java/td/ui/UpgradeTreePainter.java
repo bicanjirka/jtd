@@ -128,11 +128,9 @@ final class UpgradeTreePainter {
     private static final Color FRAME_TAKEN = new Color(142, 142, 146);
     private static final float LOCKED_ALPHA = 0.55f;
     private static final float HOVER_BORDER = 0.35f;
-    private static final float OWNED_FILL = 0.28f;
     private static final Font NUMERAL_FONT = Hud.font(Font.BOLD, Hud.TITLE);
     private static final Font SMALL_NUMERAL_FONT = Hud.font(Font.BOLD, Hud.CAPTION);
     private static final Font GATE_FONT = Hud.BODY_FONT;
-    private static final Font CHIP_FONT = Hud.font(Font.PLAIN, Hud.MICRO);
     private static final Font FRAME_FONT = Hud.BODY_FONT;
     private static final Font LINE_NUMERAL_FONT = Hud.font(Font.BOLD, Hud.MICRO);
     /** The key chip at the foot of a numeral strip: its height, and its gap to the strip's bottom. */
@@ -245,7 +243,7 @@ final class UpgradeTreePainter {
         float numeralEdge = left + UpgradeTreeLayout.NUMERAL_WIDTH + 0.5f;
         g.draw(new Line2D.Float(numeralEdge, band.top(), numeralEdge, band.bottom()));
         String numeral = UpgradeTier.numeralOf(band.tier());
-        float centre = left + UpgradeTreeLayout.NUMERAL_WIDTH / 2 + 0.5f;
+        float centre = left + UpgradeTreeLayout.NUMERAL_WIDTH / 2;
         g.setColor(open ? tower : GLOSS);
         centred(g, numeral, numeral.length() > 2 ? SMALL_NUMERAL_FONT : NUMERAL_FONT, centre,
                 band.top() + (height - CHIP_HEIGHT - CHIP_BOTTOM) / 2 + 5.5f);
@@ -253,8 +251,9 @@ final class UpgradeTreePainter {
     }
 
     /**
-     * The tier's digit key: bright while it buys singles (red when the credits cover none), a tick in the tower's
-     * colour once they are all owned, grey while the tier is locked, and absent when there is nothing to buy.
+     * The tier's digit key in the one chip: plain while it buys singles (red ink when the credits cover none), a tick
+     * in the tower's colour once they are all owned, disabled while the tier is locked, and absent when there is
+     * nothing to buy.
      */
     private void paintKeyChip(Graphics2D g, Band band, Floor floor, float centre, boolean hovered) {
         String key = String.valueOf(GameKey.singlesKey(band.tier()));
@@ -262,15 +261,15 @@ final class UpgradeTreePainter {
         Color ink;
         switch (floor) {
             case Floor.Gate _ -> {
-                border = LOCKED_BORDER;
-                ink = LOCKED_INK;
+                border = Hud.BORDER_DISABLED;
+                ink = Hud.TEXT_DISABLED;
             }
             case Floor.Singles singles -> {
-                border = hovered ? Hud.mix(GLOSS, WHITE, 0.5f) : GLOSS;
+                border = hovered ? Hud.BORDER_HOVER : Hud.CHIP_BORDER;
                 ink = singles.shortOfCash() ? SHORT : FOREGROUND;
             }
             case Floor.Bought _ -> {
-                border = Hud.mix(this.towerColor(), BAND_FILL, 0.4f);
+                border = this.towerColor();
                 ink = this.towerColor();
                 key = "✓";
             }
@@ -278,16 +277,7 @@ final class UpgradeTreePainter {
                 return;
             }
         }
-        float width = UpgradeTreeLayout.NUMERAL_WIDTH - 6f;
-        float top = band.bottom() - CHIP_BOTTOM - CHIP_HEIGHT;
-        Shape chip = new RoundRectangle2D.Float(centre - width / 2, top + 0.5f, width, CHIP_HEIGHT - 1f, 5f, 5f);
-        g.setColor(TAG_FILL);
-        g.fill(chip);
-        g.setColor(border);
-        g.setStroke(new BasicStroke(1f));
-        g.draw(chip);
-        g.setColor(ink);
-        centred(g, key, CHIP_FONT, centre, top + CHIP_HEIGHT - 3f);
+        Hud.paintChipCentred(g, key, Math.round(centre), band.bottom() - CHIP_BOTTOM - CHIP_HEIGHT, border, ink);
     }
 
     /**
@@ -432,7 +422,7 @@ final class UpgradeTreePainter {
         boolean hovered = highlight.hovered().filter(node::equals).isPresent();
         boolean round = !state.ability();
         Shape box = shapeOf(spot, 0f, round);
-        Color fill = look == Look.OWNED ? Hud.mix(NODE_FILL, tower, OWNED_FILL) : NODE_FILL;
+        Color fill = look == Look.OWNED ? Hud.mix(NODE_FILL, tower, Hud.SELECTED_TINT) : NODE_FILL;
         g.setColor(fill);
         g.fill(box);
         if (look == Look.SWITCHABLE) {
@@ -453,8 +443,9 @@ final class UpgradeTreePainter {
         }
         Color border = borderOf(look, tower);
         g.setColor(hovered ? Hud.mix(border, WHITE, HOVER_BORDER) : border);
-        g.setStroke(new BasicStroke(look == Look.OWNED ? BuyTileLook.BORDER_TAKEN : BuyTileLook.BORDER));
-        g.draw(shapeOf(spot, -0.5f, round));
+        float width = look == Look.OWNED ? BuyTileLook.BORDER_TAKEN : BuyTileLook.BORDER;
+        g.setStroke(new BasicStroke(width));
+        g.draw(shapeOf(spot, -width / 2, round));
         if (highlight.is(node, Mark.PATH) || highlight.is(node, Mark.DROP)) {
             Color edge = highlight.is(node, Mark.PATH) ? WHITE : DROP;
             g.setColor(Hud.withAlpha(edge, 0.35f));

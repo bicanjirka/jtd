@@ -346,7 +346,7 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
         private void placeRow(int tier, UpgradeTreePlan.Row row, float rowTop) {
             float centre = rowTop + NODE_DROP;
             for (UpgradeTreePlan.Slot slot : row.slots()) {
-                float x = FIRST_SLOT + slot.at() * PITCH;
+                float x = Math.round(FIRST_SLOT + slot.at() * PITCH);
                 if (!slot.cluster()) {
                     UpgradeNode node = this.nodeOf(slot.key(), tier);
                     if (this.tree.clusterOf(node).isPresent()) {

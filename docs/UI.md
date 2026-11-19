@@ -51,7 +51,6 @@ text, which had more contrast than it needs (19.4:1).
 | Background | `#0D0E10` | | Window, panels, cards |
 | Raised | `#171717` | 1.1:1 | Tooltips, popups |
 | Hover fill | `#29292A` | 1.3:1 | A control under the pointer |
-| Selected fill | `#39393A` | 1.7:1 | A chosen tile |
 | Pressed fill | `#424243` | 1.9:1 | A control held down |
 | Border, disabled | `#3E3E3F` | 1.8:1 | |
 | Border | `#676769` | 3.4:1 | Every panel and control outline |
@@ -63,7 +62,8 @@ text, which had more contrast than it needs (19.4:1).
 | Text, prose | `#ACACAF` | 8.5:1 | Sentences |
 | Text | `#EAEAEF` | 16.1:1 | Everything read first, values included |
 
-A chosen button inverts: Text as its fill, Background as its text. A tile says it is chosen with its accent border instead.
+A chosen button or tile looks one way: a two-pixel border in its accent (a button's is the level's voice, or Text) and a
+fill a quarter of the way from Background toward that accent, under its usual text.
 
 A painter's own states (the upgrade tree's nodes, a text field's fill, the Info pane's bars) sit between these steps and stay
 private to that painter. They are greys too; a new control uses the ramp.

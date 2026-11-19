@@ -40,23 +40,24 @@ class HudVoiceTest {
     }
 
     @Test
-    void aSelectedButtonIsFilledWithItsColourUnderDarkText() {
+    void aSelectedButtonsFillLeansTowardItsColourUnderItsOwnText() {
         ControlFace face = ControlFace.button().withSelectedColor(VOICE);
         DefaultButtonModel model = new DefaultButtonModel();
 
         model.setSelected(true);
 
-        assertThat(Hud.fillFor(face, model, true)).isEqualTo(VOICE);
-        assertThat(Hud.inkFor(face, model, true, Hud.FOREGROUND)).isEqualTo(Hud.BACKGROUND);
+        assertThat(Hud.fillFor(face, model, true)).isEqualTo(Hud.mix(Hud.BACKGROUND, VOICE, Hud.SELECTED_TINT));
+        assertThat(Hud.inkFor(face, model, true, Hud.FOREGROUND)).isEqualTo(Hud.FOREGROUND);
     }
 
     @Test
-    void aSelectedButtonWithNoColourOfItsOwnIsFilledWithTheTextColour() {
+    void aSelectedButtonWithNoColourOfItsOwnLeansTowardTheTextColour() {
         DefaultButtonModel model = new DefaultButtonModel();
 
         model.setSelected(true);
 
-        assertThat(Hud.fillFor(ControlFace.button(), model, true)).isEqualTo(Hud.FOREGROUND);
+        assertThat(Hud.fillFor(ControlFace.button(), model, true))
+                .isEqualTo(Hud.mix(Hud.BACKGROUND, Hud.FOREGROUND, Hud.SELECTED_TINT));
     }
 
     @Test
@@ -73,13 +74,13 @@ class HudVoiceTest {
     }
 
     @Test
-    void aSelectedTileKeepsItsQuietFillAndItsText() {
+    void aSelectedTileLeansTowardItsAccentLikeAButton() {
         ControlFace tile = ControlFace.tile(VOICE);
         DefaultButtonModel model = new DefaultButtonModel();
 
         model.setSelected(true);
 
-        assertThat(Hud.fillFor(tile, model, true)).isEqualTo(Hud.FILL_SELECTED);
+        assertThat(Hud.fillFor(tile, model, true)).isEqualTo(Hud.mix(Hud.BACKGROUND, VOICE, Hud.SELECTED_TINT));
         assertThat(Hud.inkFor(tile, model, true, Hud.FOREGROUND)).isEqualTo(Hud.FOREGROUND);
     }
 

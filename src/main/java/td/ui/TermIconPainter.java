@@ -62,8 +62,8 @@ public final class TermIconPainter {
             Color tone = Java2DFrameRenderer.colorFor(face.tone());
             Color fill = fillOf(tone);
             Color ink = inkOf(tone);
-            RoundRectangle2D.Float box = new RoundRectangle2D.Float(0.5f * k, 0.5f * k, size - k, size - k, 4f * k,
-                    4f * k);
+            float arc = Hud.ARC * Math.min(1f, k);
+            RoundRectangle2D.Float box = new RoundRectangle2D.Float(0.5f, 0.5f, size - 1f, size - 1f, arc, arc);
             canvas.setColor(fill);
             canvas.fill(box);
             paintSymbol(canvas, face, k, ink, fill);
@@ -71,7 +71,7 @@ public final class TermIconPainter {
             paintBar(canvas, face, k, size, ink);
             paintWard(canvas, face, k, size, fill);
             canvas.setColor(Java2DFrameRenderer.colorFor(face.frame()));
-            canvas.setStroke(new BasicStroke(Math.max(1f, 1.25f * k)));
+            canvas.setStroke(new BasicStroke(Hud.STROKE));
             canvas.draw(box);
             paintTexts(canvas, face, size);
         } finally {
