@@ -126,17 +126,17 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeNode FLINT_STONES = UpgradeNode.of("splash.flint_stones", "Flint Stones", 5)
             .withModifiers(TowerModifiers.armorPenetrationFlat(30f));
 
-    private static final UpgradeNode STORMCALLER = UpgradeNode.of("splash.stormcaller", "Stormcaller", 5)
+    private static final UpgradeNode STORMCALLER = UpgradeNode.of("splash.stormcaller", "Stormcaller", 10)
             .inTier(1);
-    private static final UpgradeNode HEXER = UpgradeNode.of("splash.hexer", "Hexer", 5)
+    private static final UpgradeNode HEXER = UpgradeNode.of("splash.hexer", "Hexer", 10)
             .inTier(1);
-    private static final UpgradeNode ARC = UpgradeNode.of("splash.arc", "Arc", 3)
+    private static final UpgradeNode ARC = UpgradeNode.of("splash.arc", "Arc", 10)
             .after(STORMCALLER)
             .inTier(1);
-    private static final UpgradeNode HEX_OF_DOOM = UpgradeNode.of("splash.hex_of_doom", "Hex of Doom", 5)
+    private static final UpgradeNode HEX_OF_DOOM = UpgradeNode.of("splash.hex_of_doom", "Hex of Doom", 10)
             .after(HEXER)
             .inTier(1);
-    private static final UpgradeNode HEX_OF_BLIGHT = UpgradeNode.of("splash.hex_of_blight", "Hex of Blight", 5)
+    private static final UpgradeNode HEX_OF_BLIGHT = UpgradeNode.of("splash.hex_of_blight", "Hex of Blight", 10)
             .after(HEXER)
             .inTier(1);
     private static final UpgradeCondition A_HEX = UpgradeCondition.owns(HEX_OF_DOOM.id())
