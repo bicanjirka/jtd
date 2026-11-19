@@ -241,23 +241,36 @@ class SplashTowerTest {
     }
 
     @Test
-    void hexOfDoomCursesTheHealthiestEnemyOnlyOnceItsCurseArrives() {
+    void hexOfDoomCursesTheEnemyClosestToLeakingOnlyOnceItsCurseArrives() {
         SplashTower tower = this.casting("Hex of Doom");
-        FakeEnemyMob weak = near(tower, 1, 0).withHealth(100);
-        FakeEnemyMob strong = near(tower, -1, 0).withHealth(900);
-        this.enemies(weak, strong);
+        FakeEnemyMob behind = near(tower, 1, 0).withProgression(100);
+        FakeEnemyMob ahead = near(tower, -1, 0).withProgression(900);
+        this.enemies(behind, ahead);
 
         this.runUntil(tower, () -> !tower.cursesInFlight().isEmpty());
-        boolean cursedAtCast = strong.hasEffect(EffectKind.DOOM);
-        this.runUntil(tower, () -> strong.hasEffect(EffectKind.DOOM));
+        boolean cursedAtCast = ahead.hasEffect(EffectKind.DOOM);
+        this.runUntil(tower, () -> ahead.hasEffect(EffectKind.DOOM));
 
         assertThat(cursedAtCast).isFalse();
-        assertThat(strong.hasEffect(EffectKind.DOOM)).isTrue();
-        assertThat(weak.hasEffect(EffectKind.DOOM)).isFalse();
+        assertThat(ahead.hasEffect(EffectKind.DOOM)).isTrue();
+        assertThat(behind.hasEffect(EffectKind.DOOM)).isFalse();
     }
 
     @Test
-    void whenDoomEndsItsEnemyTakesItsShareOfWhatItTookMeanwhileAsPeriodicMagic() {
+    void hexOfBlightCursesTheEnemyThatWouldLeaveSoonest() {
+        SplashTower tower = this.casting("Hex of Blight");
+        FakeEnemyMob far = near(tower, 1, 0).withDistanceToExit(900);
+        FakeEnemyMob close = near(tower, -1, 0).withDistanceToExit(100);
+        this.enemies(far, close);
+
+        this.runUntil(tower, () -> close.hasEffect(EffectKind.BLIGHT));
+
+        assertThat(close.hasEffect(EffectKind.BLIGHT)).isTrue();
+        assertThat(far.hasEffect(EffectKind.BLIGHT)).isFalse();
+    }
+
+    @Test
+    void whenDoomEndsItsEnemyTakesItsShareOfWhatItTookMeanwhileAsAShadowHit() {
         SplashTower tower = this.casting("Hex of Doom");
         FakeEnemyMob enemy = near(tower, 1, 0);
         this.enemies(enemy);
@@ -269,7 +282,8 @@ class SplashTowerTest {
         this.run(tower, 1);
 
         assertThat(enemy.hits().get(hitsBeforeEnd)).isEqualTo(Damage.magic(Math.round(10_000 * HexSpec.DOOM_SHARE)));
-        assertThat(enemy.attackers().get(hitsBeforeEnd).delivery().name()).isEqualTo("PERIODIC");
+        assertThat(enemy.attackers().get(hitsBeforeEnd).piercesShields(false)).isTrue();
+        assertThat(enemy.attackers().get(hitsBeforeEnd).delivery().name()).isEqualTo("HIT");
     }
 
     @Test
@@ -321,20 +335,58 @@ class SplashTowerTest {
     }
 
     @Test
-    void contagionSendsTheHexOfAnEnemyThatDiedToTheNearestEnemyWithoutOne() {
-        SplashTower tower = this.casting("Hex of Doom", "Contagion");
+    void contagionSendsTheBlightOfAnEnemyThatDiedToTheNearestEnemyWithoutOne() {
+        SplashTower tower = this.casting("Hex of Blight", "Contagion");
+        FakeEnemyMob carrier = near(tower, 1, 0);
+        FakeEnemyMob nearest = ghostBeside(carrier, HexSpec.SPREAD_CELLS / 3);
+        FakeEnemyMob further = ghostBeside(carrier, HexSpec.SPREAD_CELLS * 2 / 3);
+        this.enemies(carrier, nearest, further);
+        this.runUntil(tower, () -> carrier.hasEffect(EffectKind.BLIGHT));
+
+        carrier.dieOnAnyHit();
+        carrier.doDamage(Damage.physical(1), AttackProfile.none());
+        this.runUntil(tower, () -> nearest.hasEffect(EffectKind.BLIGHT));
+
+        assertThat(nearest.hasEffect(EffectKind.BLIGHT)).isTrue();
+        assertThat(further.hasEffect(EffectKind.BLIGHT)).isFalse();
+    }
+
+    @Test
+    void aDoomWhoseEnemyDiedJumpsToTheNearestEnemyWithoutOneCarryingWhatItRecorded() {
+        SplashTower tower = this.casting("Hex of Doom");
         FakeEnemyMob carrier = near(tower, 1, 0);
         FakeEnemyMob nearest = ghostBeside(carrier, HexSpec.SPREAD_CELLS / 3);
         FakeEnemyMob further = ghostBeside(carrier, HexSpec.SPREAD_CELLS * 2 / 3);
         this.enemies(carrier, nearest, further);
         this.runUntil(tower, () -> carrier.hasEffect(EffectKind.DOOM));
+        carrier.doDamage(Damage.physical(10_000), AttackProfile.none());
 
         carrier.dieOnAnyHit();
         carrier.doDamage(Damage.physical(1), AttackProfile.none());
         this.runUntil(tower, () -> nearest.hasEffect(EffectKind.DOOM));
+        int hitsBeforeEnd = nearest.hits().size();
+        nearest.expire(EffectKind.DOOM);
+        this.run(tower, 1);
 
-        assertThat(nearest.hasEffect(EffectKind.DOOM)).isTrue();
         assertThat(further.hasEffect(EffectKind.DOOM)).isFalse();
+        assertThat(nearest.hits().get(hitsBeforeEnd))
+                .isEqualTo(Damage.magic(Math.round(10_000 * HexSpec.DOOM_SHARE)));
+    }
+
+    @Test
+    void aDoomWithContagionJumpsToTheHealthiestEnemyForItsWholeTimeAgain() {
+        SplashTower tower = this.casting("Hex of Doom", "Contagion");
+        FakeEnemyMob carrier = near(tower, 1, 0);
+        FakeEnemyMob nearest = ghostBeside(carrier, HexSpec.SPREAD_CELLS / 3).withHealth(5_000);
+        FakeEnemyMob healthiest = ghostBeside(carrier, HexSpec.SPREAD_CELLS * 2 / 3);
+        this.enemies(carrier, nearest, healthiest);
+        this.runUntil(tower, () -> carrier.hasEffect(EffectKind.DOOM));
+
+        carrier.dieOnAnyHit();
+        carrier.doDamage(Damage.physical(1), AttackProfile.none());
+        this.runUntil(tower, () -> healthiest.hasEffect(EffectKind.DOOM) || nearest.hasEffect(EffectKind.DOOM));
+
+        assertThat(healthiest.hasEffect(EffectKind.DOOM)).isTrue();
     }
 
     @Test

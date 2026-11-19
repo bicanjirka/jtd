@@ -16,13 +16,14 @@ class AbilityBarTest {
     }
 
     @Test
-    void aBarHoldsOneUnitMoreThanItsCostAndLosesWhatComesPastIt() {
-        AbilityBar bar = AbilityBar.atWaveStart(2);
+    void everyBarHoldsTheSameWhateverItsCostAndLosesWhatComesPastIt() {
+        AbilityBar cheap = AbilityBar.atWaveStart(1);
+        AbilityBar dear = AbilityBar.atWaveStart(3);
 
-        AbilityBar full = bar.earning(AbilityUnits.whole(5));
+        AbilityBar full = cheap.earning(AbilityUnits.whole(9));
 
-        assertThat(full.capacity()).isEqualTo(3);
-        assertThat(full.fill()).isEqualTo(AbilityUnits.whole(3));
+        assertThat(full.capacity()).isEqualTo(dear.capacity());
+        assertThat(full.fill()).isEqualTo(AbilityUnits.whole(full.capacity()));
     }
 
     @Test

@@ -5,7 +5,7 @@ import td.enemy.EnemyMob;
 import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.targeting.MostNeighboursSelector;
+import td.tower.targeting.SoonestOutSelector;
 import td.util.TickRate;
 
 import java.util.List;
@@ -13,8 +13,8 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Hex of Blight: poison, and a slow that grows over its time. Picks the most crowded enemy, one without Blight first,
- * so it spreads before it deepens.
+ * Hex of Blight: poison, and a slow that grows over its time. Picks the enemy that would leave soonest, one without
+ * Blight first, so it spreads before it deepens.
  */
 public final class BlightHex implements Hex {
 
@@ -37,12 +37,12 @@ public final class BlightHex implements Hex {
     }
 
     @Override
-    public Optional<EnemyMob> target(List<EnemyMob> candidates, float cellPixels) {
-        MostNeighboursSelector crowded = new MostNeighboursSelector(HexSpec.CLOUD_CELLS * cellPixels);
-        Optional<EnemyMob> fresh = crowded.selectFrom(candidates.stream()
+    public Optional<EnemyMob> target(List<EnemyMob> candidates) {
+        SoonestOutSelector soonest = new SoonestOutSelector();
+        Optional<EnemyMob> fresh = soonest.selectFrom(candidates.stream()
                 .filter(enemy -> !enemy.hasEffect(EffectKind.BLIGHT))
                 .toList());
-        return fresh.or(() -> crowded.selectFrom(candidates));
+        return fresh.or(() -> soonest.selectFrom(candidates));
     }
 
     @Override

@@ -13,8 +13,8 @@ import td.term.Term;
 public record Ability(Term term, Term currency, int cost) {
 
     public Ability {
-        if (cost < 1) {
-            throw new IllegalArgumentException("An ability costs at least one unit: " + cost);
+        if (cost < 1 || cost > AbilityBar.CAPACITY) {
+            throw new IllegalArgumentException("An ability costs from one unit to what a bar holds: " + cost);
         }
     }
 

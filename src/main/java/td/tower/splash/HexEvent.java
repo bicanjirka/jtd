@@ -32,7 +32,8 @@ public sealed interface HexEvent {
      * One hex an enemy carried.
      *
      * @param castTicks how long it was cast for, before the enemy lengthened or shortened it
+     * @param stored    the damage the enemy took while it carried the hex, in units
      */
-    record CarriedHex(EffectKind kind, int castTicks) {
+    record CarriedHex(EffectKind kind, int castTicks, long stored) {
     }
 }

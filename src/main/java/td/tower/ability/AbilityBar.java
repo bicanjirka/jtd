@@ -1,23 +1,28 @@
 package td.tower.ability;
 
 /**
- * One ability's store of its tower's currency. It holds a unit more than the ability costs, so a full ability waiting
- * for a target, or a large payout landing at once, loses less; past that the rest is lost.
+ * One ability's store of its tower's currency. Every bar holds the same number of units however little its ability
+ * costs, so a payout landing while the ability waits for a target is kept for the casts after it; past that the rest is
+ * lost.
  *
  * @param cost what one cast takes, in whole units
  * @param fill what it holds now
  */
 public record AbilityBar(int cost, AbilityUnits fill) {
 
-    private static final int SPARE_UNITS = 1;
+    /** How many whole units a bar holds when full: the most any ability may cost. */
+    public static final int CAPACITY = 5;
     private static final int UNITS_AT_WAVE_START = 1;
 
     public AbilityBar {
         if (cost < 1) {
             throw new IllegalArgumentException("An ability costs at least one unit: " + cost);
         }
-        if (fill.compareTo(AbilityUnits.whole(cost + SPARE_UNITS)) > 0) {
-            throw new IllegalArgumentException("A bar holds at most its cost and a spare unit: " + fill);
+        if (cost > CAPACITY) {
+            throw new IllegalArgumentException("An ability costs at most what a bar holds: " + cost);
+        }
+        if (fill.compareTo(AbilityUnits.whole(CAPACITY)) > 0) {
+            throw new IllegalArgumentException("A bar holds at most " + CAPACITY + " units: " + fill);
         }
     }
 
@@ -28,7 +33,7 @@ public record AbilityBar(int cost, AbilityUnits fill) {
 
     /** How many whole units it holds when full, as long as it is drawn. */
     public int capacity() {
-        return this.cost + SPARE_UNITS;
+        return CAPACITY;
     }
 
     /** With {@code earned} added; what does not fit is lost. */

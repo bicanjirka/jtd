@@ -40,8 +40,8 @@ final class DevHexCaster implements HexCaster {
     }
 
     @Override
-    public void dealPeriodicDamage(EnemyMob target, Damage damage) {
-        target.doDamage(damage, this.attack);
+    public void dealShadowHit(EnemyMob target, Damage damage) {
+        target.doDamage(damage, this.attack.asShadow());
     }
 
     @Override
@@ -56,6 +56,6 @@ final class DevHexCaster implements HexCaster {
 
     @Override
     public void jump(HexJump jump) {
-        throw new IllegalStateException("The panel's hexes never jump: its spec has no Contagion");
+        // The panel's hexes end where they were put.
     }
 }

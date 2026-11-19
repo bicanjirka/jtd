@@ -10,8 +10,8 @@ import td.enemy.EnemyRegistry;
  */
 public interface HexCaster {
 
-    /** A hex's payout: periodic, so it never crits. */
-    void dealPeriodicDamage(EnemyMob target, Damage damage);
+    /** A hex's payout: a shadow hit that never crits. */
+    void dealShadowHit(EnemyMob target, Damage damage);
 
     /** {@code cells} in pixels. */
     float distance(float cells);

@@ -343,7 +343,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Priority | Mark | Debuff | Physical damage taken and Magic damage taken +15%, and a tower that picks one target picks it. |
 | Daze | Control | Debuff | Stops it and keeps its abilities from firing, like Freeze; it can't dodge: its Agility counts as none unless it is lower still. |
 | Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
-| Doom | Hex | Debuff | When it ends, it takes a share of all the damage it took while it lasted. |
+| Doom | Hex | Debuff | When it ends, it takes a share of all the damage it took while it lasted, as shadow damage. |
 | Blight | Hex | Debuff | It has Poison for as long as this lasts, and a slow that grows to its strongest as it ends. |
 | Inversion | Hex | Debuff | Its Regeneration deals it damage instead of restoring health, and a Shield it receives strikes it instead. |
 | Reckoning | Hex | Debuff | When it dies, each Doom from the same tower near it releases at once and starts again. |
