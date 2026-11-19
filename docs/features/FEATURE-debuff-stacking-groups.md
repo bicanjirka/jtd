@@ -1,6 +1,6 @@
 # Feature Request: Debuff stacking groups
 
-> **Status.** Reviewed; the review's answers are folded in below. Ready for planning.
+> **Status.** Final: reviewed, every question answered. Ready for planning.
 
 ## Summary
 
@@ -104,6 +104,17 @@ The shared-clock mode, where every stack ends together, is gone. Deep Crack stop
 - a debuff a source builds over time (a pool, a field, an aura) is **Count**, held by that source;
 - an effect with no stacks is **Timed**.
 
+### Holds
+
+- **One hold for every Count.** Every application of a Count debuff holds it for 5 s: a Sniper's crit, a Prism mark,
+  Sear, fallout's Sicken. Each application restarts the hold. A pool, a field or an aura holds it for as long as that
+  source lasts, and no hold timer follows when it ends.
+- **Holders never add.** Of several holders of one Count, the quickest pace and the highest level count, as fields do
+  today. Burn and Soulfire on one enemy earn Scorch at one pace together, not each at its own. Applications do add:
+  every crit, Sear and Prism mark brings its stacks.
+- **The fade starts one step after the hold.** The step's countdown starts the moment nothing holds the Count, so the
+  first stack goes one step after the hold ends, as earned stacks do today.
+
 ### Fade and tenacity
 
 - The fade step is one stack a second.
@@ -116,6 +127,15 @@ The shared-clock mode, where every stack ends together, is gone. Deep Crack stop
 - Buffs (Spellproof, Resolve) help their carrier, so tenacity scales neither their hold nor their fade.
 - The package invariant stays as written: nothing about the enemy paces a timer, and tenacity changes a length only
   as it is applied.
+
+### What the inspector shows
+
+One rule: every stacking effect shows its stacks and when it next loses one.
+
+- **Count:** "held" with no time while a pool, a field or an aura holds it; the hold's time left while an
+  application's hold does; the time to the next stack lost while it fades.
+- **Shares:** the stacks, "from N towers", and when the next share ends. Heal and Shield show their sum in their own
+  units (regeneration, points), as today.
 
 ### Cap rules
 
@@ -139,19 +159,20 @@ The shared-clock mode, where every stack ends together, is gone. Deep Crack stop
 | Sunder | -5 armor, cap 10, all stacks end together after 5 s | -5 armor, **cap 20**, Count, hold 5 s, then one stack a step |
 | Unravel | -10 magic resist, cap 5, all at once | **-5 magic resist, cap 20**, Count, hold 5 s, then one stack a step |
 | Vulnerable | cap 3, shared clock | cap 3, **Shares: one stack per Hexer with Agony, lasting exactly the hex that Hexer laid** |
-| Scorch, Sicken | cap 100 | **cap 200**, Count |
-| Toll | earned, cap 10 | Count, cap 10 (unchanged in play) |
+| Scorch, Sicken | cap 100, a direct application starts fading at once | **cap 200**, Count; a direct application holds 5 s |
+| Toll | earned, cap 10 | Count, cap 10; the Prism's Toll holds 5 s |
 | Crack | -5 plating and -5 insulation, refreshes | **-5 plating only, Shares, cap 10 stacks**: a Mortar's share is 1 stack, a Deep Crack Mortar's 2, the Prism's 1 |
 | Deep Crack | -10 plating and -5 insulation, its own kind | **gone as a kind**: the node makes the Mortar's shells give 2 stacks of Crack |
 | Expose | -25 agility and -25 resilience, refreshes | same values, **Shares: one stack per Beacon with Glare, cap 3**, on the 0.5 s linger it has today |
 | **Singe** (new) | | **-5 insulation, Shares: one stack per Scorcher, cap 10** |
-| Spellproof | shared clock, all at once | Count: hold, then one stack a step; its hold shortens so its strength stays about the same |
+| Spellproof | shared clock, 15 s, all at once | Count: hold 5 s like every Count, then one stack a step; stronger (see "Constraints"), its stack counts retuned in the balance pass |
 | Resolve | shared clock, held by Command | Count, held by Command; once an ally leaves Command it loses one stack a step |
 
 Insulation moves out of Crack and into Singe; plating stays with the Mortar. With 10 Mortars, or 5 with Deep Crack,
 an enemy carries -50 plating.
 
-A lone Hexer drops from up to 3 Vulnerable stacks to 1. That nerf is accepted.
+A lone Hexer drops from up to 3 Vulnerable stacks to 1, and an enemy burning from both a Soulfire Scorcher and a plain
+one earns Scorch at one pace instead of two. Both nerfs are accepted.
 
 ### Singe
 
@@ -181,7 +202,8 @@ on the next feature for its source. A tenacity debuff idea is one line under "Fe
 
 - `FEATURE-balance-after-next-gen-towers.md` (written, not shipped): every number here moves tower value. Sunder's
   strip doubles, Unravel's doubles, Crack loses insulation, the Scorcher gains Singe, a lone Hexer's Vulnerable falls,
-  pools last 2.3 times longer. That pass should start after this one ships, or be told what moved.
+  pools last 2.3 times longer, and the Magma's Spell Ward grows stronger (its stack counts are enemy content to
+  retune there). That pass should start after this one ships, or be told what moved.
 - The Scorcher's tree feature (not yet written): this request leaves the tree alone but moves Flashover's threshold
   to 250 as a stopgap. That feature settles Flashover's final form.
 - The next feature, which gives Unravel a source.
@@ -200,6 +222,30 @@ Facts and tensions, not solutions.
 - **Stacks past the floor are time.** A Count stack beyond what takes its stat to the floor changes no stat; under a
   fade it only adds time at full strength. Scorch and Sicken at 200 can floor any enemy's resilience or spirit (both
   are 200 wide); Sunder at 20 strips 100 armor, nearly all of the highest built-in 110.
+- **How strong the 5 s hold is.** Simulated for Sunder: 2 stacks per Sniper crit at even intervals, one enemy in range
+  for 30 s, stacks averaged over that time. The 5 s hold matches today's 5 s clock, so while the crits keep coming it
+  is about today's strength. It gains in three places: the cap of 20 when crits come fast; crits 5-7 s apart, where
+  today's stack falls apart before the next crit; and the tail after the last crit.
+
+  | Crit every | Today (cap 10) | 5 s hold, fade (cap 20) | 3 s hold, fade |
+  |---|---|---|---|
+  | 2.5 s | 7.9 | 11.7 | 11.7 |
+  | 4 s | 6.7 | 7.5 | 6.7 |
+  | 5 s | 5.8 | 6.0 | 3.7 |
+  | 6 s | 1.5 | 5.0 | 1.4 |
+  | 8 s | 1.1 | 1.4 | 1.0 |
+  | 10 s | 1.0 | 1.2 | 0.9 |
+
+  A shorter hold, such as 3 s, would make Sunder weaker than today between crits 5 s apart; 5 s is the shortest hold
+  that never loses to today. After the last crit, N stacks last 5N stack-seconds today and 5N + N(N+1)/2 under hold and
+  fade: 2.1 times at 10 stacks, and at 20 stacks 310 against today's capped 50. That tail is what the towers after
+  the Sniper meet.
+- **High tenacity still breaks a slow stack.** At tenacity 100 (hold 2.5 s, step 0.5 s), crits 4 s apart average 1.5
+  stacks against today's 1.2: the stack now drops a stack at a time instead of at once, but tenacity shortens the
+  whole of it, as it should. Crits 1.5 s apart average 15 against 8.7.
+- **Spellproof under the 5 s hold.** The Magma's Spell Ward gives 30 or 50 stacks for 15 s today. Counted in
+  stack-seconds, 30 stacks become 615 against 450 (1.4 times, lasting 35 s) and 50 become 1525 against 750 (2 times,
+  lasting 55 s). No hold keeps today's strength above 30 stacks, because the fade alone outlasts 15 s.
 - **Slow fade at cap 200.** Full Scorch takes several Scorchers about 30 s to build and 200 s to fade. Enemies don't
   live that long, so the fade's length is rarely seen.
 - **Pools at 4 s ripple.**
@@ -230,6 +276,9 @@ Facts and tensions, not solutions.
 
 - Four modes (Timed, Count, Shares, Pool) and the placement rule, with the members in the table. Shared clock goes.
 - Spellproof and Resolve move to Count; tenacity does not touch them.
+- Every Count shares one hold (5 s, every application, restarted by each) and one fade step (1 s); a pool, field or
+  aura holds for as long as it lasts. Holders never add; applications do. The fade starts one step after the hold.
+- The inspector shows every stacking effect's stacks and when it next loses one.
 - Vulnerable moves to Shares, per Hexer, lasting the hex; the lone-Hexer nerf is accepted.
 - The tenacity invariant is kept: the fade step is scaled as a stack is applied or held, never live.
 - Cap rules: caps count stacks, one cap per kind that nothing raises, twin stats share numbers.
@@ -246,13 +295,7 @@ Facts and tensions, not solutions.
 
 ## Open questions
 
-- Does a direct application of a held mark (the Prism's Scorch, Sear, fallout's Sicken) bring a hold timer of its own,
-  or start fading at once unless a pool holds it, as today?
-- Of several holders of one Count, which count: the quickest pace and highest level, as fields do today (burn and
-  Soulfire would then earn Scorch at one pace together), or each pool's own pace added?
-- Does a fade start the tick the hold ends, or after one step of grace?
-- How the inspector names the phases: a Count as held or fading, a Shares effect as "from N towers"?
-- Spellproof's new hold length (a balance number).
+None. The balance pass after this request retunes the numbers it moves, the Magma's Spell Ward among them.
 
 ---
 
