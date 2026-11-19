@@ -83,7 +83,7 @@ public enum TowerTerm implements Term {
     SOULBRAND("Soulbrand", Side.BUFF, "every enemy its stones damage carries a stack, one per Hexer; when it dies it bursts for each stack, and pays each Hexer that tagged it in its currency"),
     SPARK("Spark", Side.BUFF, "the Stormcaller's currency: its stones earn it by the damage they deal, its passive by the enemies that discharge; all of it goes into each of its abilities at once"),
     SOUL("Soul", Side.BUFF, "the Hexer's currency: its stones earn it by the damage they deal, its passive by the enemies that die; all of it goes into each of its abilities at once"),
-    THUNDERCLAP("Thunderclap", Side.BUFF, "a discharge into every enemy in range, as magic"),
+    SHOCKWAVE("Shockwave", Side.BUFF, "a discharge into every enemy in range, as magic"),
     THUNDERSTRIKE("Thunderstrike", Side.BUFF, "lightning onto the healthiest enemy in range, as magic");
 
     private final String title;

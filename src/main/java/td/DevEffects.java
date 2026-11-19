@@ -159,10 +159,10 @@ public final class DevEffects {
                     new DisruptionAura(JAM_REACH_CELLS * in.scale(), in.value(1) / 100f, in.value(2))));
             case STEADY_AIM, FOCUS, MAGAZINE, NEST -> new Refuses<>(KEPT_BY_THE_TOWER);
             case FLAME, STREAM, CORE, DRAGONS_BREATH, FLASHOVER, THERMAL_SHOCK, MELTDOWN,
-                    HEAVY_SHELL, NUKE_SHELL, PAYLOAD, NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, FLARE, BARRAGE, CARPET_BOMBING,
-                    FROST_MISSILE, RUBY, SHADE, SWARM, HATCHING, ICE_WAKE,
-                    SHATTER, ARC, HEX, STATIC, SOULBRAND, SPARK, SOUL, THUNDERCLAP,
-                    THUNDERSTRIKE, SUNDIAL, FRAILTY, SHADOW -> new Refuses<>(FROM_AN_UPGRADE);
+                 HEAVY_SHELL, NUKE_SHELL, PAYLOAD, NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, FLARE, BARRAGE, CARPET_BOMBING,
+                 FROST_MISSILE, RUBY, SHADE, SWARM, HATCHING, ICE_WAKE,
+                 SHATTER, ARC, HEX, STATIC, SOULBRAND, SPARK, SOUL, SHOCKWAVE,
+                 THUNDERSTRIKE, SUNDIAL, FRAILTY, SHADOW -> new Refuses<>(FROM_AN_UPGRADE);
             case LIGHT, LIT, SPOTLIGHT, KINSHIP, MENTOR, BREAKTHROUGH, DAYLIGHT, PRISM -> new Refuses<>("comes from a Beacon");
         };
     }

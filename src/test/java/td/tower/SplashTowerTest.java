@@ -213,8 +213,8 @@ class SplashTowerTest {
     }
 
     @Test
-    void thunderclapStrikesEveryEnemyInRangeAlikeAndNothingBeyond() {
-        SplashTower tower = this.casting("Thunderclap");
+    void shockwaveStrikesEveryEnemyInRangeAlikeAndNothingBeyond() {
+        SplashTower tower = this.casting("Shockwave");
         FakeEnemyMob first = near(tower, 1, 0);
         FakeEnemyMob second = near(tower, -1, 0);
         FakeEnemyMob outOfRange = near(tower, 0, SplashTower.RANGE * 2);

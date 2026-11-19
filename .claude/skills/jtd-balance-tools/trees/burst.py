@@ -15,8 +15,8 @@ P = dict(
     bar=200.0, soul_harvest=2.0,
     static=15.0, static_below=0.1, soulbrand=10.0, soulbrand_reach=1.0,
     arc_cost=2.0, arc_jumps=3, arc_share=0.4, chain=3, high_voltage=0.6, conductor=0.15, crit_damage=1.5,
-    feedback=0.5, thunder_cost=3.0, thunderclap=0.4, thunderstrike=2.0,
-    hex_cost=2.0, hex_seconds=4.0, doom=0.3, deep_doom=0.45, vulnerable=0.15,
+    feedback=0.5, thunder_cost=3.0, shockwave=0.4, thunderstrike=2.0,
+    hex_cost=2.0, hex_seconds=4.0, doom=0.3, reckoning=0.45, vulnerable=0.15,
     blight_share=0.03, blight_slow=0.3, cloud_reach=1.0, twin=2,
 )
 
@@ -29,7 +29,7 @@ NODES = {
     "Arc": "jumps from the landing, magic; a lone enemy takes none without Wild Arc",
     "Hex of Doom": "returns a share of what its enemy took while hexed, from this tower and the towers around it; nothing if it dies first",
     "Hex of Blight": "poison while it lasts, and its slow, growing to its top as the hex ends (control)",
-    "Deep Doom": "Doom's share",
+    "Reckoning": "Doom's share",
     "Choking Blight": "utility: Silence on a Blighted enemy",
     "Agony": "hexed enemies Vulnerable, by the share of the range the hexes cover",
     "Contagion": "a hex outlives its enemy: without it a hex ends with the enemy",
@@ -41,7 +41,7 @@ NODES = {
     "Wild Arc": "the Arc may hit an enemy again: a lone enemy takes every jump",
     "Conductor": "Arc jumps crit",
     "Short Circuit": "armor raises the Arc's damage",
-    "Thunderclap": "magic to every enemy in range",
+    "Shockwave": "magic to every enemy in range",
     "Thunderstrike": "magic to the healthiest enemy",
     "High Voltage": "Arc's share",
     "Feedback": "an Arc crit gives back part of a Spark",
@@ -58,9 +58,9 @@ _HEX = ["Hexer", "Agony", "Contagion", "Soul Harvest", "Twin Hex"]
 BUILDS = {
     # Neither fork, only the base tree: the floor no tower may fall below (tree_calc's bounds)
     "base": _T0 + _SHARED,
-    "storm crowd": _T0 + _STORM + ["Chain Lightning", "Thunderclap"] + _SHARED,
+    "storm crowd": _T0 + _STORM + ["Chain Lightning", "Shockwave"] + _SHARED,
     "storm boss": _T0 + _STORM + ["Wild Arc", "Thunderstrike"] + _SHARED,
-    "doom": _T0 + _HEX + ["Hex of Doom", "Deep Doom", "Hex of Inversion"] + _SHARED,
+    "doom": _T0 + _HEX + ["Hex of Doom", "Reckoning", "Hex of Inversion"] + _SHARED,
     "blight": _T0 + _HEX + ["Hex of Blight", "Blight Cloud", "Choking Blight"] + _SHARED,
 }
 
@@ -117,8 +117,8 @@ def rate(b, scenario, p):
             extra += deaths * magic(min(p["static"], p["static_below"] * health))
             if "Arc" in b:
                 extra += units / p["arc_cost"] * jumps * arc_hit
-            if "Thunderclap" in b:
-                extra += units / p["thunder_cost"] * in_range * magic(damage * p["thunderclap"])
+            if "Shockwave" in b:
+                extra += units / p["thunder_cost"] * in_range * magic(damage * p["shockwave"])
             if "Thunderstrike" in b:
                 extra += units / p["thunder_cost"] * magic(damage * p["thunderstrike"])
         if hexer:
@@ -140,7 +140,7 @@ def rate(b, scenario, p):
                 if lives >= p["hex_seconds"]:
                     dooms = min(casts * targets, in_range / p["hex_seconds"])
                     taken = min(per_enemy * p["hex_seconds"], health)
-                    extra += dooms * magic(taken * (p["deep_doom"] if "Deep Doom" in b else p["doom"]))
+                    extra += dooms * magic(taken * (p["reckoning"] if "Reckoning" in b else p["doom"]))
             if "Hex of Blight" in b:
                 tick = paper.hit(p["blight_share"] * damage, foe)
                 extra += hexed / seconds * min(tick * paper.TICKS_PER_SECOND * seconds, health)

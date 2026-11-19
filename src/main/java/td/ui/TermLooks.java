@@ -112,7 +112,7 @@ public final class TermLooks {
             case SHATTER -> new TermLook(Palette.FREEZE_CRYSTAL, Palette.TERM_FRAME_MECHANIC);
             case ARC -> new TermLook(Palette.TOWER_SPLASH_ARC, Palette.TERM_FRAME_MECHANIC);
             case HEX -> new TermLook(Palette.HEX_RUNE, Palette.TERM_FRAME_MECHANIC);
-            case STATIC, SPARK, THUNDERCLAP, THUNDERSTRIKE -> new TermLook(Palette.TOWER_SPLASH_ARC, Palette.TERM_FRAME_MECHANIC);
+            case STATIC, SPARK, SHOCKWAVE, THUNDERSTRIKE -> new TermLook(Palette.TOWER_SPLASH_ARC, Palette.TERM_FRAME_MECHANIC);
             case SOULBRAND, SOUL -> new TermLook(Palette.HEX_RUNE, Palette.TERM_FRAME_MECHANIC);
             case BARRAGE, CARPET_BOMBING -> new TermLook(Palette.TERM_MAGAZINE, Palette.TERM_FRAME_MECHANIC);
         };
