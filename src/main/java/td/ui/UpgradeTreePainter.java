@@ -103,7 +103,7 @@ final class UpgradeTreePainter {
         }
     }
 
-    static final Font BUTTON_FONT = new Font(Font.DIALOG, Font.PLAIN, 8);
+    static final Font BUTTON_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
     private static final float BUTTON_RIGHT = UpgradeTreeLayout.WIDTH - UpgradeTreeLayout.BAND_X - 4f;
     private static final float BUTTON_PAD = 22f;
 
@@ -142,11 +142,11 @@ final class UpgradeTreePainter {
     private static final float OWNED_FILL = 0.28f;
     private static final Font NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 11);
     private static final Font SMALL_NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 9);
-    private static final Font GATE_FONT = new Font(Font.DIALOG, Font.PLAIN, 8);
-    private static final Font CHIP_FONT = new Font(Font.DIALOG, Font.PLAIN, 6);
-    private static final Font FRAME_FONT = new Font(Font.DIALOG, Font.PLAIN, 6);
-    private static final Font LINE_NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 6);
-    private static final Font TAG_FONT = new Font(Font.DIALOG, Font.PLAIN, 7);
+    private static final Font GATE_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
+    private static final Font CHIP_FONT = new Font(Font.DIALOG, Font.PLAIN, 7);
+    private static final Font FRAME_FONT = new Font(Font.DIALOG, Font.PLAIN, 8);
+    private static final Font LINE_NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 7);
+    private static final Font TAG_FONT = new Font(Font.DIALOG, Font.PLAIN, 8);
     private static final Font TAG_BOLD = TAG_FONT.deriveFont(Font.BOLD);
     private static final Font FOOTER_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
     private static final Font FOOTER_BOLD = FOOTER_FONT.deriveFont(Font.BOLD);
@@ -255,7 +255,7 @@ final class UpgradeTreePainter {
         g.draw(new Line2D.Float(UpgradeTreeLayout.BODY_X - 2f, band.stripTop() + 0.5f, right, band.stripTop() + 0.5f));
         switch (floor) {
             case Floor.Gate gate -> {
-                float trackLeft = UpgradeTreeLayout.BODY_X + 74f;
+                float trackLeft = UpgradeTreeLayout.BODY_X + 82f;
                 float trackWidth = right - 8f - trackLeft;
                 float share = gate.needed() == 0 ? 1f : Math.min(1f, gate.xp() / (float) gate.needed());
                 g.setColor(TRACK);
@@ -279,7 +279,7 @@ final class UpgradeTreePainter {
             case Floor.Gate gate -> {
                 float x = UpgradeTreeLayout.BODY_X;
                 g.setColor(BAND_FILL);
-                g.fill(new Rectangle2D.Float(x + 1f, top + 2f, 68f, UpgradeTreeLayout.STRIP - 3f));
+                g.fill(new Rectangle2D.Float(x + 1f, top + 2f, 76f, UpgradeTreeLayout.STRIP - 3f));
                 paintLock(g, x + 4f, top + 3.5f);
                 g.setColor(DIM);
                 g.setFont(GATE_FONT);
@@ -298,12 +298,12 @@ final class UpgradeTreePainter {
                 g.draw(button);
                 g.setColor(GLOSS);
                 g.setStroke(new BasicStroke(0.8f));
-                g.draw(new RoundRectangle2D.Float(box.x + 3f, box.y + 1.5f, 9f, 8f, 3f, 3f));
+                g.draw(new RoundRectangle2D.Float(box.x + 3f, box.y + 1.5f, 10f, 8f, 3f, 3f));
                 g.setColor(DIM);
-                centred(g, singles.key(), CHIP_FONT, box.x + 7.5f, box.y + 7.6f);
+                centred(g, singles.key(), CHIP_FONT, box.x + 8f, box.y + 7.9f);
                 g.setColor(singles.shortOfCash() ? SHORT : FOREGROUND);
                 g.setFont(BUTTON_FONT);
-                g.drawString(singles.label(), box.x + 15f, box.y + 8.4f);
+                g.drawString(singles.label(), box.x + 16f, box.y + 8.7f);
             }
             case Floor.Bought bought -> {
                 g.setFont(BUTTON_FONT);
@@ -346,9 +346,9 @@ final class UpgradeTreePainter {
         String name = frame.cluster().name();
         float width = g.getFontMetrics().stringWidth(name);
         g.setColor(BAND_FILL);
-        g.fill(new Rectangle2D.Float(frame.box().left() + 4f, frame.box().top() - 4f, width + 4f, 7f));
+        g.fill(new Rectangle2D.Float(frame.box().left() + 4f, frame.box().top() - 5f, width + 4f, 9f));
         g.setColor(GLOSS);
-        g.drawString(name, frame.box().left() + 6f, frame.box().top() + 2f);
+        g.drawString(name, frame.box().left() + 6f, frame.box().top() + 3f);
     }
 
     private void paintLink(Graphics2D g, Link link, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight) {
@@ -464,9 +464,9 @@ final class UpgradeTreePainter {
         String text = owned ? "✓" : TermNumbers.cash(node.price());
         Font font = owned || look == Look.BUYABLE ? TAG_BOLD : TAG_FONT;
         g.setFont(font);
-        float width = owned ? 11f : g.getFontMetrics().stringWidth(text) + 5f;
+        float width = owned ? 12f : g.getFontMetrics().stringWidth(text) + 5f;
         float y = spot.y() + spot.size() / 2;
-        Shape tag = new RoundRectangle2D.Float(spot.x() - width / 2, y - 4.5f, width, 9f, 4f, 4f);
+        Shape tag = new RoundRectangle2D.Float(spot.x() - width / 2, y - 5f, width, 10f, 4f, 4f);
         g.setColor(TAG_FILL);
         g.fill(tag);
         g.setColor(owned ? this.towerColor() : TAG_BORDER);
@@ -478,7 +478,7 @@ final class UpgradeTreePainter {
             case SHORT_OF_CASH -> SHORT;
             default -> GLOSS;
         });
-        centred(g, text, font, spot.x(), y + 2.5f);
+        centred(g, text, font, spot.x(), y + 3f);
     }
 
     private void paintGlyph(Graphics2D g, UpgradeNode node, float x, float y, float size, Color ink, Color fill) {

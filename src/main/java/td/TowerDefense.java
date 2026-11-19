@@ -103,7 +103,9 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
     private static final String CARD_GAME = "game";
     private static final int MENU_WIDTH = 1100;
     private static final int MENU_HEIGHT = 700;
-    private static final int GAME_WIDTH = 1100;
+    /** The board's room across in a game window opened at its size. */
+    private static final int BOARD_WIDTH = 800;
+    private static final int GAME_WIDTH = BOARD_WIDTH + PanelGameConsole.WIDTH;
     private static final int GAME_HEIGHT = 740;
     private static final KeyStroke DEV_PANEL_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_D,
             InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);

@@ -21,7 +21,7 @@ import java.io.Serial;
 public class PanelGameConsole extends JPanel {
 
     /** The console's width; the header's speed buttons are as wide, so they stand above it. */
-    public static final int WIDTH = 300;
+    public static final int WIDTH = 462;
 
     @Serial
     private static final long serialVersionUID = 1L;
