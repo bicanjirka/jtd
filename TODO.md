@@ -18,6 +18,12 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
   the board, clickable for what will come and when, with a bar to the next call and a count of the calls left.
   Idea only.
 
+- **Debuff stacking groups** (`docs/features/FEATURE-debuff-stacking-groups.md`): four stacking modes (timed, count,
+  shares, pool), stacks lost one at a time, tenacity on every stack debuff, a Scorcher debuff (Singe), pools of 100
+  fuel lasting 4 s. Request reviewed, ready for planning.
+- **A tenacity debuff**: a debuff that lowers tenacity; it lengthens every debuff applied afterwards and multiplies
+  pool damage, so it belongs on a crowd-control tower, with small per-stack values. Idea only.
+
 ## Feature request implementation order
 
 The tower rework, in this order (each needs the ones before it):
@@ -281,6 +287,17 @@ text that describes them speak in cells, so every ability radius is divided by t
 - **Approach:** make `RadiusTarget` take cells and convert once where the mob measures distance, then let the
   compiler find every call site; no save or wave-script format holds a radius.
 
+### Brittle, Mark, Charge and Unravel are dead content
+
+`BRITTLE`, `MARKED`, `CHARGED` and `UNRAVELED` are effect kinds with rules, sentences, pictograms and tests, but no
+built-in tower, node or enemy ability applies them; only the dev panel and tests reach them.
+
+- **Where:** `EffectKind` rows `BRITTLE`, `MARKED`, `CHARGED`, `UNRAVELED`; `Effect.brittle`, `Effect.marked`,
+  `Effect.charged`, `Effect.unraveled`, `StackingDebuff.UNRAVELED`; `ProcPayload.Charge`; `DevEffects`.
+- **Approach:** Unravel gets its source in the next feature; keep it. Give the other three a source (a node, a proc
+  or an ability) when their tower is next reworked, or delete the kind with its sentence, pictogram and tests; do not
+  leave a kind half-wired once it has a source.
+
 ## Balance tools
 
 ### No test runs the whole lab
@@ -516,6 +533,19 @@ tower's own.
 - **Approach:** a cone and reach factor on `CinderSpec` from the mechanic, read by the cone test and the stream's
   look alike, so what is drawn is what pours; then weigh it again with `tree_calc.py`, since a narrower cone reaches
   fewer enemies.
+
+### Flashover's threshold is a stopgap
+
+When pools last 4 s (`FEATURE-debuff-stacking-groups.md`), Flashover's threshold moves from 100 to 250 fuel only so it
+keeps about the share of a stream it fires today; 100 would make it fire on almost every stream, even outside the
+Core. 250 is a hidden number the player can't read off the board.
+
+- **Where:** `td.tower.cinder.FlashoverMechanic.HOT_FUEL_POINTS` and its sentence.
+- **Approach:** in the Scorcher's balance, make it "a burn whose bar is full flashes over" (400 fuel). It reuses the
+  burn bar the player already sees, so it drops a number. Simulated on one enemy standing in the cone, it keeps
+  deep builds (Core, Long Stream II and Bellows: 62% of the stream against 52% today) and several Scorchers on one
+  enemy, and drops a mid-size Core build (19% today) to none; weigh that loss there. Pools have no cap, so fuel
+  still rises past a full bar.
 
 ### Effect duration does nothing for a pool
 
