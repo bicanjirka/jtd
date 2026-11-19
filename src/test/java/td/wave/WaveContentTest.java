@@ -1,9 +1,12 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
+import td.enemy.Affix;
+import td.enemy.AffixContext;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.Rank;
+import td.fixtures.EnemyFixtures;
 
 import java.util.List;
 
@@ -14,6 +17,18 @@ class WaveContentTest {
     private final EnemyCatalog catalog = EnemyCatalog.builtIn();
     private final EnemyDefinition simple = this.catalog.get("walker");
     private final EnemyDefinition armored = this.catalog.get("knight");
+
+    @Test
+    void anAffixsBountyMultiplierScalesTheSlotsBountyRoundedOnceOverItsMembers() {
+        EnemyDefinition poor = EnemyFixtures.simpleDefinition("grub")
+                .withAffixes(List.of(Affix.POOR), new AffixContext(Rank.GRUNT, 1f));
+        int members = 5;
+        WaveContent content = new WaveContent(List.of(new EnemySlot(poor, Rank.GRUNT, SpawnShape.line(members), false)));
+
+        int bounty = content.bounty();
+
+        assertThat(bounty).isEqualTo(Math.round(poor.price() * Affix.POOR.bountyMultiplier() * members));
+    }
 
     @Test
     void aNormalSlotCountsAsOneMember() {

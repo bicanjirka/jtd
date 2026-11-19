@@ -333,11 +333,45 @@ public enum Affix implements Term {
                     EffectKind.CHILL, EffectKind.TARRED, EffectKind.DRAGGED, EffectKind.ANCHORED, EffectKind.FREEZE,
                     EffectKind.DAZED);
         }
+    },
+    POOR("Poor") {
+        @Override
+        public float bountyMultiplier() {
+            return POOR_BOUNTY;
+        }
+
+        @Override
+        public boolean excludes(Affix other) {
+            return other == RICH;
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.of("pays " + TermNumbers.percent(POOR_BOUNTY) + " of its bounty");
+        }
+    },
+    RICH("Rich") {
+        @Override
+        public float bountyMultiplier() {
+            return RICH_BOUNTY;
+        }
+
+        @Override
+        public boolean excludes(Affix other) {
+            return other == POOR;
+        }
+
+        @Override
+        public TermText describe() {
+            return TermText.of("pays " + TermNumbers.times(RICH_BOUNTY) + " bounty");
+        }
     };
 
     private static final float HULKING_HEALTH = 2.5f;
     private static final float HULKING_SPEED = 0.75f;
     private static final float HULKING_SIZE = 1.4f;
+    private static final float POOR_BOUNTY = 0.5f;
+    private static final float RICH_BOUNTY = 2f;
     private static final float EXALTED_STRENGTH = 2f;
     private static final float EXALTED_WEAKNESS = 0.5f;
     private static final AdaptiveResist PHYSICAL_ARMOR = AdaptiveResist.against(DamageType.PHYSICAL, 25f, 400f);
@@ -390,6 +424,11 @@ public enum Affix implements Term {
 
     /** What it scales the enemy's body by. */
     public float sizeMultiplier() {
+        return 1f;
+    }
+
+    /** What it scales the enemy's bounty by. */
+    public float bountyMultiplier() {
         return 1f;
     }
 

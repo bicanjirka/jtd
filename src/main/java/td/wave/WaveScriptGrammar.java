@@ -23,10 +23,9 @@ import java.util.stream.Stream;
  * read and the cursor after it, so no rule remembers anything between calls.
  * <pre>
  * script := head? item*
- * head   := spacing? rank? affix* ':'
- * item   := count? rank? (shape count?)? affix* (enemy | 'e')
  * </pre>
- * The head holds the wave's defaults, and is the only place a spacing may stand; a script without one takes the
+ * {@link #RULES} states a head and an item; every fault repeats it, so a script typed in the dev panel shows the order
+ * it broke. The head holds the wave's defaults, and is the only place a spacing may stand; a script without one takes the
  * fallback rank. A token ending in {@code :} reads as the word and then the {@code :}. A script is headed only when
  * every token before its first {@code :} is a head word. A slot's rank replaces the head's, and its affixes add to the
  * head's. The count before a slot repeats it; the one after a shape is its member count.
@@ -35,6 +34,8 @@ import java.util.stream.Stream;
  * accept after it.
  */
 final class WaveScriptGrammar {
+
+    static final String RULES = "item := count? rank? (shape count?)? affix* (enemy | e); head := w<n>? rank? affix* :";
 
     private final Rank fallbackRank;
     private final EnemyCatalog catalog;
@@ -484,11 +485,11 @@ final class WaveScriptGrammar {
         ScriptFault fail(String message) {
             String before = String.join(" ", this.tokens.subList(0, Math.min(this.index, this.tokens.size())));
             if (atEnd()) {
-                return new ScriptFault("Wave script ends early, in \"" + before + " »«\": " + message);
+                return new ScriptFault("Wave script ends early, in \"" + before + " »«\": " + message + ". " + RULES);
             }
             String after = String.join(" ", this.tokens.subList(this.index + 1, this.tokens.size()));
             return new ScriptFault("Wave script token " + (this.index + 1) + " '" + peek() + "', in \""
-                    + before + " »" + peek() + "« " + after + "\": " + message);
+                    + before + " »" + peek() + "« " + after + "\": " + message + ". " + RULES);
         }
     }
 }

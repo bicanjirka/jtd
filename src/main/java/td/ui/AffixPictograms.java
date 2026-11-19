@@ -45,7 +45,11 @@ final class AffixPictograms {
             // Fireproof: a flame struck through
             Map.entry("affix.fireproof", "E M12 2C12 2 19.5 8 19.5 14.2A7.5 7.5 0 0 1 4.5 14.2C4.5 10.8 6.6 8.6 8.2 7.2C8.6 9.6 9.8 11 11 11.4C10.4 8.2 10.9 4.8 12 2Z M12 12.6C13.6 14.2 14.6 15.6 14.6 17.1A2.6 2.6 0 0 1 9.4 17.1C9.4 15.6 10.4 14.2 12 12.6Z ; X M3.4 20.6L20.6 3.4 ; S M3.4 20.6L20.6 3.4"),
             // Unstoppable: a ram's charge
-            Map.entry("affix.unstoppable", "F M2.4 8.4H12.6V4L21.6 12L12.6 20V15.6H2.4Z"));
+            Map.entry("affix.unstoppable", "F M2.4 8.4H12.6V4L21.6 12L12.6 20V15.6H2.4Z"),
+            // Poor: half a coin
+            Map.entry("affix.poor", "F M11 2.2A9.8 9.8 0 0 0 11 21.8Z ; D M13 2.2A9.8 9.8 0 0 1 13 21.8Z"),
+            // Rich: a pile of coins
+            Map.entry("affix.rich", "F O7 16.4 5.2 ; X O7 16.4 3.2 ; F O17 16.4 5.2 ; X O17 16.4 3.2 ; F O12 7.6 5.2 ; X O12 7.6 3.2"));
 
     private AffixPictograms() {
     }

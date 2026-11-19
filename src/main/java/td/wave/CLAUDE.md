@@ -50,7 +50,8 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
   a second `:`, a head after a slot, a spacing outside a head, a rank after a shape, a rank right before
   `e`, two ranks in a row, a count out of place or left at the end, a missing or forbidden member count, a repeat
   count over `WaveScript.MAX_REPEAT`. Blank tokens are skipped. An error
-  marks the offending token in the script, and a level's load adds its level, path and wave.
+  marks the offending token in the script and ends with `WaveScriptGrammar.RULES`, and a level's load adds its
+  level, path and wave.
 - `WaveScriptGrammar` parses: each rule takes an immutable cursor and returns what it
   read with the cursor after it, and a broken rule throws its checked `ScriptFault`. A spawn-type keyword is one
   `ShapeKeyword` row, a rank one `RankKeyword` row.
@@ -64,8 +65,8 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
 - `WaveContent.enemyCount()` counts **members**, not slots (it seeds the alive count). Spacers
   keep their slot for timing but aren't counted.
-- Health and bounty come from the slot's resolved `EnemyDefinition` × shape multipliers, size from
-  the shape's times the definition's affixes'.
+- Health comes from the slot's resolved `EnemyDefinition` × shape multipliers; bounty and size from
+  the shape's times the definition's affixes'. A slot's bounty is rounded once, over all its members.
 - Formation scatter uses `RandomSource.seeded(scatterSeed * 31 + slotIndex)`, never
   `GameWorld.random()`. `scatterSeed` comes from the level name and wave index, so formations
   reproduce.

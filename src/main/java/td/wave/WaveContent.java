@@ -85,7 +85,7 @@ public record WaveContent(List<WaveSlot> spawnSequence, float delayTicksPerSlot)
         int bounty = 0;
         for (WaveSlot slot : this.spawnSequence) {
             switch (slot) {
-                case EnemySlot s -> bounty += Arrays.stream(s.shape().bountyShares(s.definition().price())).sum();
+                case EnemySlot s -> bounty += Arrays.stream(s.shape().bountyShares(s.definition().bounty())).sum();
                 case EmptySlot ignored -> {
                 }
             }

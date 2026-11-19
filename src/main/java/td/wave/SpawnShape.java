@@ -64,8 +64,8 @@ public record SpawnShape(int members, float sizeMultiplier, float speedMultiplie
      * with a share of it is worth that share, the remainder going to the first members so the shares sum
      * exactly. Fixed at spawn, so kill order never changes the payout.
      */
-    public int[] bountyShares(int price) {
-        int total = Math.round(price * this.bountyMultiplier * this.members * this.healthMultiplier);
+    public int[] bountyShares(float bounty) {
+        int total = Math.round(bounty * this.bountyMultiplier * this.members * this.healthMultiplier);
         int base = total / this.members;
         int remainder = total % this.members;
         int[] shares = new int[this.members];
