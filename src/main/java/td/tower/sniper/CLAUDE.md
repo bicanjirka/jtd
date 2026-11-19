@@ -3,9 +3,10 @@
 Constraints for `SniperTower` (in `td.tower`) and its mechanics in this package. The
 rules shared by every tower are in `td/tower/CLAUDE.md`.
 
-- Steady Aim builds with every shot, whichever enemy it is fired at, and `AimFocus` is the only memory of
-  that rhythm: a shot is fired under the stacks the shots before it built (`AimLock`), never its own. The
-  cap and the gain per shot are tower stats, so a node changes them as data. A counted shot (every n-th) is
+- Steady Aim is a node: the bare tower holds no stacks. Owned, it builds with every shot, whichever enemy it
+  is fired at, and `AimFocus` is the only memory of that rhythm: a shot is fired under the stacks the shots
+  before it built (`AimLock`), never its own. The cap and the gain per shot are tower stats, so a node changes
+  them as data. A counted shot (every n-th) is
   a proc that grants a next-shot status; a new kind of round is also a term in `ROUNDS`, which is how its
   bullet and the rifle show it.
 - A shot is one `SniperShot`: the owned mechanics `shape` it in purchase order, and it flies as a `Bullet`

@@ -47,13 +47,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.stream.Stream;
 
 import static td.tower.upgrade.MechanicCatalogue.entry;
 
 /**
- * The rhythmic single-target tower: each shot builds Steady Aim, whichever enemy it hits, until it stops firing for a
- * while. It fires at the visible enemy in range furthest along the path, and its crits are what its upgrades pay out.
+ * The rhythmic single-target tower: once it owns Steady Aim, each shot builds on the last, whichever enemy it hits, until
+ * it stops firing for a while. It fires at the visible enemy in range furthest along the path, and its crits are what
+ * its upgrades pay out.
  * The turret turns at a capped rate and holds its heading when idle.
  * <p>
  * What each owned node does lives in its data or in a {@link SniperMechanic}: the tower shapes every shot through them
@@ -70,7 +70,6 @@ public final class SniperTower extends AbstractTower {
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
     /** A shot every 2.5 s. */
     private static final int COOLDOWN_MAX = 49;
-    private static final int STEADY_AIM_STACKS = 5;
 
     /** More damage than any enemy has health, so that no reduction leaves an executed enemy alive. */
     private static final int EXECUTION_DAMAGE = 1_000_000_000;
@@ -83,13 +82,16 @@ public final class SniperTower extends AbstractTower {
     private static final List<TowerTerm> ROUNDS = List.of(TowerTerm.FOURTH_SHOT, TowerTerm.SILVER_ROUND,
             TowerTerm.HOLLOW_POINT);
 
-    private static final List<HitBonus> STEADY_AIM = List.of(perSteadyAimStack(
-            HitAdjustment.attackSpeed(0.04f).plus(HitAdjustment.critChance(0.02f))));
-
     /** Reads the same whichever node grants it. */
     private static final ProcPayload GRANTS_FRENZY = new ProcPayload.GrantStatus(TowerStatus.nextShots(TowerTerm.FRENZY, 3,
             TowerModifiers.attackSpeed(0.35f)).lengthenedByBuffs());
 
+    private static final HitBonus STEADY_AIM_BONUS = perSteadyAimStack(
+            HitAdjustment.attackSpeed(0.04f).plus(HitAdjustment.critChance(0.02f)));
+
+    private static final UpgradeNode STEADY_AIM = UpgradeNode.of("sniper.steady_aim", "Steady Aim", 5)
+            .withModifiers(TowerModifiers.aimStacks(5))
+            .withHitBonus(STEADY_AIM_BONUS);
     private static final UpgradeNode RIFLING = UpgradeNode.of("sniper.rifling", "Rifling", 2)
             .withModifiers(TowerModifiers.critChance(0.05f));
     private static final UpgradeNode LONG_BARREL = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Barrel", 5)
@@ -103,9 +105,11 @@ public final class SniperTower extends AbstractTower {
             .inTier(1);
     private static final UpgradeNode DEEP_BREATH = UpgradeNode.of("sniper.deep_breath", "Deep Breath", 3)
             .withModifiers(TowerModifiers.aimStacks(3))
+            .after(STEADY_AIM)
             .inTier(1);
     private static final UpgradeNode KEEN_EYE = UpgradeNode.of("sniper.keen_eye", "Keen Eye", 3)
             .withHitBonus(perSteadyAimStack(HitAdjustment.critChance(0.02f)))
+            .after(STEADY_AIM)
             .inTier(1);
     private static final UpgradeNode KILLSHOT = UpgradeNode.of("sniper.killshot", "Killshot", 5)
             .withModifiers(TowerModifiers.critMultiplier(0.5f))
@@ -142,12 +146,13 @@ public final class SniperTower extends AbstractTower {
             .inTier(3);
     private static final UpgradeNode UNBROKEN_AIM = UpgradeNode.of("sniper.unbroken_aim", "Unbroken Aim", 6)
             .withModifiers(TowerModifiers.aimStacksPerShot(1))
+            .after(STEADY_AIM)
             .inTier(3);
     private static final UpgradeNode MOMENTUM = UpgradeNode.of("sniper.momentum", "Momentum", 9)
             .withProc(Proc.onKill(GRANTS_FRENZY))
             .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(List.of(RIFLING, LONG_BARREL, HEAVY_ROUNDS))
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_AIM, RIFLING, LONG_BARREL, HEAVY_ROUNDS))
             .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, KILLSHOT,
                     FRENZY, RICOCHET, SUNDERING_CRITS, SILVER_ROUND, HOLLOW_POINT, LONG_BARREL_2,
                     HEAVY_ROUNDS_2, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, MOMENTUM)
@@ -175,7 +180,7 @@ public final class SniperTower extends AbstractTower {
     public SniperTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SNIPER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .withCritChance(CRIT_CHANCE).withCritMultiplier(CRIT_MULTIPLIER)
-                .with(TowerStat.AIM_STACKS, STEADY_AIM_STACKS).with(TowerStat.AIM_STACKS_PER_SHOT, 1f), context, x, y);
+                .with(TowerStat.AIM_STACKS, 0f).with(TowerStat.AIM_STACKS_PER_SHOT, 1f), context, x, y);
     }
 
     private static HitBonus perSteadyAimStack(HitAdjustment adjustment) {
@@ -199,11 +204,6 @@ public final class SniperTower extends AbstractTower {
     @Override
     public UpgradeTree upgradeTree() {
         return TREE;
-    }
-
-    @Override
-    protected List<HitBonus> baseHitBonuses() {
-        return STEADY_AIM;
     }
 
     /** Whom it may shoot and how it picks. */
@@ -385,10 +385,11 @@ public final class SniperTower extends AbstractTower {
         return Math.min(this.aimStackCap(), this.focus.stacks());
     }
 
-    /** Whether its focus is full and a hit bonus grows with every stack of it. */
+    /** Whether its focus is full and a hit bonus beyond Steady Aim's own grows with every stack of it. */
     public boolean keenAtFullFocus() {
         return this.focus.stacks() >= this.aimStackCap()
-                && this.upgrades().hitBonuses().stream().anyMatch(SniperTower::growsWithSteadyAim);
+                && this.upgrades().hitBonuses().stream()
+                        .anyMatch(bonus -> growsWithSteadyAim(bonus) && !bonus.equals(STEADY_AIM_BONUS));
     }
 
     private int aimStackCap() {
@@ -412,7 +413,7 @@ public final class SniperTower extends AbstractTower {
         List<TowerBuffState> states = new ArrayList<>();
         int stacks = this.steadyAimStacks();
         if (stacks > 0) {
-            List<TermText> parts = new ArrayList<>(Stream.concat(STEADY_AIM.stream(), this.upgrades().hitBonuses().stream())
+            List<TermText> parts = new ArrayList<>(this.upgrades().hitBonuses().stream()
                     .filter(SniperTower::growsWithSteadyAim)
                     .map(bonus -> bonus.adjustment().describe())
                     .toList());
