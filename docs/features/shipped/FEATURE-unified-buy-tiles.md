@@ -1,5 +1,9 @@
 # Feature Request: One look for upgrade nodes and tower tiles
 
+Status: **implemented** (2026-11-19: `07a4ecc0`). A tile and a node share `BuyTileLook`: a tile is drawn at the
+tree's full scale (1.5×), so the two match while the tree has its room and a tile stays that size when a short
+window shrinks the tree. The tree's short-of-cash red became the HUD's.
+
 ## Summary
 
 An upgrade node and a tower in the Towers bar are the same thing to the player: something to buy, with a picture
@@ -47,9 +51,9 @@ of states.
 
 - `FEATURE-upgrade-panel-full-size.md` brings the nodes to about the tower tiles' size. Building it first gives this
   one equal sizes to start from.
-- `shipped/FEATURE-upgrade-panel-retune.md` approved the node look (price tag on the edge, owned tick). That look is
+- `FEATURE-upgrade-panel-retune.md` approved the node look (price tag on the edge, owned tick). That look is
   the base here.
-- `shipped/FEATURE-key-hints-and-hud-unification.md` and `shipped/FEATURE-hud-identity.md` set today's controls and
+- `FEATURE-key-hints-and-hud-unification.md` and `FEATURE-hud-identity.md` set today's controls and
   tiles.
 
 ## Constraints and open risks
