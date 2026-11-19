@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ProcRunnerTest {
 
-    private static final ProcPayload VULNERABLE = new ProcPayload.ApplyStacks(StackingDebuff.VULNERABLE, 1);
+    private static final ProcPayload SUNDER = new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 1);
 
     private final RecordingProcActions actions = new RecordingProcActions();
     private final FakeEnemyMob target = FakeEnemyMob.at(0, 0);
@@ -28,22 +28,22 @@ class ProcRunnerTest {
 
     @Test
     void anOnHitProcRunsOncePerOutcome() {
-        List<Proc> procs = List.of(Proc.onHit(VULNERABLE));
+        List<Proc> procs = List.of(Proc.onHit(SUNDER));
 
         ProcRunner.onOutcome(procs, this.outcome(HitKind.DIRECT, false, false), this.actions);
         ProcRunner.onOutcome(procs, this.outcome(HitKind.DIRECT, true, false), this.actions);
 
-        assertThat(this.actions.calls()).containsExactly("stacks VULNERABLE 1", "stacks VULNERABLE 1");
+        assertThat(this.actions.calls()).containsExactly("stacks SUNDERED 1", "stacks SUNDERED 1");
     }
 
     @Test
     void anOnCritProcRunsOnlyOnACrit() {
-        List<Proc> procs = List.of(Proc.onCrit(VULNERABLE));
+        List<Proc> procs = List.of(Proc.onCrit(SUNDER));
 
         ProcRunner.onOutcome(procs, this.outcome(HitKind.DIRECT, false, false), this.actions);
         ProcRunner.onOutcome(procs, this.outcome(HitKind.DIRECT, true, false), this.actions);
 
-        assertThat(this.actions.calls()).containsExactly("stacks VULNERABLE 1");
+        assertThat(this.actions.calls()).containsExactly("stacks SUNDERED 1");
     }
 
     @Test
@@ -58,12 +58,12 @@ class ProcRunnerTest {
 
     @Test
     void aConditionThatFailsStopsTheProc() {
-        List<Proc> procs = List.of(Proc.onHit(VULNERABLE).when(new ProcCondition.HitKindIn(Set.of(HitKind.ARC))));
+        List<Proc> procs = List.of(Proc.onHit(SUNDER).when(new ProcCondition.HitKindIn(Set.of(HitKind.ARC))));
 
         ProcRunner.onOutcome(procs, this.outcome(HitKind.BLAST, false, false), this.actions);
         ProcRunner.onOutcome(procs, this.outcome(HitKind.ARC, false, false), this.actions);
 
-        assertThat(this.actions.calls()).containsExactly("stacks VULNERABLE 1");
+        assertThat(this.actions.calls()).containsExactly("stacks SUNDERED 1");
     }
 
     @Test
@@ -78,7 +78,7 @@ class ProcRunnerTest {
 
     @Test
     void aPayloadSkipsADeadTarget() {
-        List<Proc> procs = List.of(Proc.onHit(VULNERABLE), Proc.onHit(new ProcPayload.Dispel()));
+        List<Proc> procs = List.of(Proc.onHit(SUNDER), Proc.onHit(new ProcPayload.Dispel()));
         this.target.dieOnAnyHit();
         this.target.takeHit(Damage.physical(1), AttackProfile.none());
 

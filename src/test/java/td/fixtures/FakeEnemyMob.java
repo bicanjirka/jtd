@@ -279,7 +279,7 @@ public final class FakeEnemyMob implements EnemyMob {
 
     @Override
     public void holdStacks(EffectKind kind, int ticksPerStack, int cap) {
-        this.live.hold(kind, ticksPerStack, cap);
+        this.live.hold(kind, ticksPerStack, cap, Effect.FADE_STEP_TICKS);
     }
 
     @Override

@@ -6,7 +6,7 @@ import td.term.TermText;
 
 import java.util.Set;
 
-/** Deep Crack: every shell's Crack cuts deeper. */
+/** Deep Crack: every shell's share of Crack is worth more stacks. */
 public final class DeepCrackMechanic implements MortarMechanic {
 
     @Override
@@ -16,12 +16,12 @@ public final class DeepCrackMechanic implements MortarMechanic {
 
     @Override
     public Set<Term> applies() {
-        return Set.of(EffectKind.DEEP_CRACKED);
+        return Set.of(EffectKind.CRACKED);
     }
 
     @Override
     public TermText describe() {
-        return TermText.of("every shell applies ").plus(EffectKind.DEEP_CRACKED).plus(" in place of ")
-                .plus(EffectKind.CRACKED);
+        return TermText.of("every shell's share of ").plus(EffectKind.CRACKED)
+                .plus(" is worth " + MortarSpec.DEEP_CRACK_STACKS + " stacks");
     }
 }

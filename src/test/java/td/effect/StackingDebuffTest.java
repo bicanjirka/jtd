@@ -7,10 +7,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class StackingDebuffTest {
 
     @Test
-    void everyDebuffStacksOnItsKindsSharedClock() {
+    void everyDebuffIsASharedCountWithAHold() {
         for (StackingDebuff debuff : StackingDebuff.values()) {
-            assertThat(debuff.kind().maxStacks()).as(debuff.name()).isGreaterThan(0);
-            assertThat(debuff.effect(1, DamageSink.none()).remainingTicks()).as(debuff.name()).isGreaterThan(0);
+            assertThat(debuff.kind().isCount()).as(debuff.name()).isTrue();
+            assertThat(debuff.effect(1).remainingTicks()).as(debuff.name()).isEqualTo(Effect.HOLD_TICKS);
         }
     }
 }

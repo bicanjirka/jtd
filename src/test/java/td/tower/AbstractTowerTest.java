@@ -728,12 +728,12 @@ class AbstractTowerTest {
     @Test
     void anOnHitProcThatAppliesStacksPutsThemOnTheEnemyHit() {
         FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.none())
-                .withBaseProcs(List.of(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.VULNERABLE, 2))));
+                .withBaseProcs(List.of(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 2))));
         FakeEnemyMob target = FakeEnemyMob.at(0, 0);
 
         tower.reportHit(target);
 
-        assertThat(target.effectStacks(EffectKind.VULNERABLE)).isEqualTo(2);
+        assertThat(target.effectStacks(EffectKind.SUNDERED)).isEqualTo(2);
     }
 
     @Test

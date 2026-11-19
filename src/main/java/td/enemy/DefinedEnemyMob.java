@@ -10,6 +10,7 @@ import td.effect.ActiveEffects;
 import td.effect.Effect;
 import td.effect.EffectCategory;
 import td.effect.EffectKind;
+import td.effect.EffectStacking;
 import td.effect.EffectTransitions;
 import td.effect.FreezeMeter;
 import td.effect.IceKind;
@@ -523,8 +524,9 @@ public final class DefinedEnemyMob implements EnemyMob {
             this.strikeInsteadOfShielding(effect, inversion.get());
             return;
         }
-        // A pool keeps one share per source, so whoever feeds it every tick stays one share.
-        boolean keyed = effect.kind().isFuelPool() && from != AttackOrigin.none() && effect.origin() == AttackOrigin.none();
+        // A pool and a kind in shares keep one share per source, so whoever renews it every tick stays one share.
+        boolean perSource = effect.kind().isFuelPool() || effect.kind().rule().stacking() == EffectStacking.SHARES;
+        boolean keyed = perSource && from != AttackOrigin.none() && effect.origin() == AttackOrigin.none();
         this.applyRetimed(keyed ? effect.from(from) : effect);
     }
 
@@ -620,7 +622,10 @@ public final class DefinedEnemyMob implements EnemyMob {
     @Override
     public void holdStacks(EffectKind kind, int ticksPerStack, int cap) {
         if (!this.immunities.contains(kind)) {
-            this.activeEffects.hold(kind, ticksPerStack, cap);
+            // A holder's fade step is a length like any other: tenacity sets it on each tick it holds, never later.
+            float tenacity = kind.side() == Side.DEBUFF
+                    ? StatCurves.durationFactor(this.stats.value(EnemyStat.TENACITY)) : 1f;
+            this.activeEffects.hold(kind, ticksPerStack, cap, Math.round(Effect.FADE_STEP_TICKS * tenacity));
         }
     }
 

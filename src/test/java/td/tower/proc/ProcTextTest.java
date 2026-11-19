@@ -34,10 +34,10 @@ class ProcTextTest {
 
     @Test
     void aPayloadSaysWhatItApplies() {
-        Proc hollowPoint = Proc.onCrit(new ProcPayload.ApplyStacks(StackingDebuff.VULNERABLE, 1))
+        Proc hollowPoint = Proc.onCrit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 1))
                 .when(new ProcCondition.HitKindIn(Set.of(HitKind.DIRECT)));
 
-        assertThat(hollowPoint.describe().plain()).isEqualTo("a crit shot applies a stack of Vulnerable");
+        assertThat(hollowPoint.describe().plain()).isEqualTo("a crit shot applies a stack of Sunder");
     }
 
     @Test

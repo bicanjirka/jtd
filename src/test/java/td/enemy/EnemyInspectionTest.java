@@ -101,7 +101,7 @@ class EnemyInspectionTest {
     void theArmorBreakdownListsBaseEachSourceAndResult() {
         DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("armored").withArmor(30f));
         float base = mob.baseStat(EnemyStat.ARMOR);
-        mob.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
+        mob.applyEffect(Effect.sundered(2));
 
         StatBreakdown armor = mob.inspect().breakdowns().get(EnemyStat.ARMOR);
 

@@ -85,8 +85,8 @@
   attack; use them, not `damageCurrent()`. A hit that lands ticks after its shot (a bullet, a shell)
   carries those stats to where it lands and never reads the live ones there.
 - How long a tower's effects and timed buffs last is a stat (`EFFECT_DURATION`, `BUFF_DURATION`).
-  Every effect goes through `applyEffect`, which scales it, but a pool lasts as long as its fuel, so the stat leaves
-  it as it is; what a tower leaves on the ground takes its lifetime through `lengthened(ticks)`.
+  Every effect goes through `applyEffect`, which scales it, but a pool lasts as long as its fuel and a shared count holds and
+  fades the same whoever adds to it, so the stat leaves both as they are; what a tower leaves on the ground takes its lifetime through `lengthened(ticks)`.
 - `dealDamage` sends the hit with `TowerStats.attack()`; a special shot passes a one-off profile.
   Damage that ticks goes through `dealPeriodicDamage` and never crits. The hit that starts a pool
   scales it by `potencyOfHit`.

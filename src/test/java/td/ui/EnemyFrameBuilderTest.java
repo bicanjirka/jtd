@@ -382,7 +382,7 @@ class EnemyFrameBuilderTest {
         EnemyMob enemy = EnemyFixtures.plainMob(contextWithStraightPath(), 50, 3);
         enemy.applyEffect(Effect.marked(50, DamageSink.none()));
         enemy.applyEffect(Effect.vulnerable(1, 50, DamageSink.none()));
-        enemy.applyEffect(Effect.sundered(1, 50, DamageSink.none()));
+        enemy.applyEffect(Effect.sundered(1));
 
         assertThat(dotsOf(enemy).dots()).containsExactly(EnemyDotLook.DEBUFF, EnemyDotLook.SPOTTED);
     }

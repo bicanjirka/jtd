@@ -152,7 +152,7 @@ class PulseTowerTest {
         PulseTower tower = this.pulseWith();
         FakeEnemyMob fresh = FakeEnemyMob.at(tower.getX(), tower.getY());
         FakeEnemyMob tolled = FakeEnemyMob.at(tower.getX(), tower.getY());
-        tolled.applyEffect(Effect.toll(3, PulseSpec.TOLL_CAP));
+        tolled.applyEffect(Effect.toll(3));
         this.spawn(fresh, tolled);
 
         tower.doTick(1);
@@ -170,8 +170,8 @@ class PulseTowerTest {
         UpgradePaths.buy(burden, this.board, "Burden");
         FakeEnemyMob atPlain = FakeEnemyMob.at(plain.getX(), plain.getY());
         FakeEnemyMob atBurden = FakeEnemyMob.at(burden.getX(), burden.getY());
-        atPlain.applyEffect(Effect.toll(PulseSpec.TOLL_CAP, PulseSpec.TOLL_CAP));
-        atBurden.applyEffect(Effect.toll(PulseSpec.TOLL_CAP, PulseSpec.TOLL_CAP));
+        atPlain.applyEffect(Effect.toll(PulseSpec.TOLL_CAP));
+        atBurden.applyEffect(Effect.toll(PulseSpec.TOLL_CAP));
         this.spawn(atPlain, atBurden);
 
         plain.doTick(1);
@@ -285,7 +285,7 @@ class PulseTowerTest {
     void knellRingsOnceASecondWhileAnEnemyAtFullTollIsInsideHittingEveryoneInside() {
         PulseTower tower = this.pulseWith("Knell");
         FakeEnemyMob full = FakeEnemyMob.at(tower.getX(), tower.getY());
-        full.applyEffect(Effect.toll(PulseSpec.TOLL_CAP, PulseSpec.TOLL_CAP));
+        full.applyEffect(Effect.toll(PulseSpec.TOLL_CAP));
         FakeEnemyMob fresh = FakeEnemyMob.at(tower.getX(), tower.getY());
         this.spawn(full, fresh);
 
@@ -299,7 +299,7 @@ class PulseTowerTest {
     void knellStaysSilentWhileNobodyInsideHasFullToll() {
         PulseTower tower = this.pulseWith("Knell");
         FakeEnemyMob enemy = FakeEnemyMob.at(tower.getX(), tower.getY());
-        enemy.applyEffect(Effect.toll(PulseSpec.TOLL_CAP - 1, PulseSpec.TOLL_CAP));
+        enemy.applyEffect(Effect.toll(PulseSpec.TOLL_CAP - 1));
         this.spawn(enemy);
 
         run(1, 2 * SECOND, List.of(tower));

@@ -1,7 +1,6 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
-import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -246,7 +245,7 @@ class AuraTowerTest {
         AuraTower beacon = this.beaconWith("Prism");
         this.place(new SniperTower(this.context, 0, 0));
         FakeEnemyMob enemy = FakeEnemyMob.at(0, 0);
-        enemy.applyEffect(Effect.sundered(2, 100, DamageSink.none()));
+        enemy.applyEffect(Effect.sundered(2));
         this.enemies(enemy);
 
         beacon.doTick(1);

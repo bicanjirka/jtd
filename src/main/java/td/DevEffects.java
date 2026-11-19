@@ -19,6 +19,7 @@ import td.util.TickRate;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 /**
  * What the dev panel can put on a unit: every enemy effect and every tower term, each built from its own
@@ -118,8 +119,8 @@ public final class DevEffects {
             case SILENCED -> timed(Effect::silenced);
             case ANCHORED -> timed(Effect::anchored);
             case BRITTLE -> timed(Effect::brittle);
-            case CRACKED -> timed(Effect::cracked);
-            case DEEP_CRACKED -> timed(Effect::deeplyCracked);
+            case CRACKED -> stacking(kind, Effect::cracked);
+            case SINGED -> timed(Effect::singed);
             case TARRED -> timed(Effect::tarred);
             case DEAD_ZONE -> timed(Effect::deadZone);
             case EXPOSED -> timed(Effect::exposed);
@@ -127,14 +128,14 @@ public final class DevEffects {
             case PRIORITY -> timed(Effect::priority);
             case CHARGED -> one(List.of(SECONDS), in -> Effect.charged(in.ticks(0), in.origin(), in.sink()));
             case VULNERABLE -> stacking(kind, Effect::vulnerable);
-            case SUNDERED -> stacking(kind, Effect::sundered);
-            case UNRAVELED -> stacking(kind, Effect::unraveled);
-            case TOLL -> one(List.of(stacks(kind)), in -> Effect.toll(in.whole(0), kind.maxStacks()));
-            case SPELLPROOF -> stacking(kind, Effect::spellproof);
+            case SUNDERED -> counting(kind, Effect::sundered);
+            case UNRAVELED -> counting(kind, Effect::unraveled);
+            case TOLL -> counting(kind, Effect::toll);
+            case SPELLPROOF -> counting(kind, Effect::spellproof);
             case RESOLVE -> stacking(kind, Effect::resolve);
             case DRAGGED -> one(List.of(SECONDS, SLOW), in -> Effect.dragged(in.value(1) / 100f, in.ticks(0), in.sink()));
-            case SCORCHED -> one(List.of(stacks(kind)), in -> Effect.scorched(in.whole(0)));
-            case SICKENED -> one(List.of(stacks(kind)), in -> Effect.sickened(in.whole(0)));
+            case SCORCHED -> counting(kind, Effect::scorched);
+            case SICKENED -> counting(kind, Effect::sickened);
             case INVERSION, DOOM -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
             case BLIGHT -> new Builds<>(List.of(SECONDS, FUEL), in -> List.of(
                     Effect.blight(in.ticks(0), BlightHex.SLOW_PER_TICK, 0f, 0f, in.sink()),
@@ -176,6 +177,11 @@ public final class DevEffects {
 
     private static Offer<List<Effect>> stacking(EffectKind kind, StackingMaker maker) {
         return one(List.of(SECONDS, stacks(kind)), in -> maker.make(in.whole(1), in.ticks(0), in.sink()));
+    }
+
+    /** A shared count: its stacks alone, since every application holds and fades it the same. */
+    private static Offer<List<Effect>> counting(EffectKind kind, IntFunction<Effect> maker) {
+        return one(List.of(stacks(kind)), in -> maker.apply(in.whole(0)));
     }
 
     private static Offer<TowerGrant> status(List<DevField> fields, Function<Inputs, TowerStatus> builder) {

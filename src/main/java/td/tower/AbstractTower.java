@@ -472,7 +472,9 @@ public abstract class AbstractTower implements Tower {
     protected void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
         Effect applied = effect.apply(d -> this.dealPeriodicDamage(target, d));
         float length = this.stats.effectLength();
-        target.applyEffect(length == 1f ? applied : applied.withDurationScaledBy(length), this.origin);
+        // A shared count holds and fades the same whoever adds to it, so a tower's length never reaches it.
+        boolean scaled = length != 1f && !applied.kind().isCount();
+        target.applyEffect(scaled ? applied.withDurationScaledBy(length) : applied, this.origin);
     }
 
     /** {@code ticks} as long as the effects this tower makes last, for what a tower leaves on the ground. */
@@ -481,11 +483,11 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * Adds {@code stacks} of a stacking debuff to {@code target}, on the debuff's own clock; the
+     * Adds {@code stacks} to a shared count on {@code target}, held and faded by the count's own rule; the
      * stacks belong to the enemy, not this tower.
      */
     protected void applyStacks(EnemyMob target, StackingDebuff debuff, int stacks) {
-        this.applyEffect(target, sink -> debuff.effect(stacks, sink));
+        this.applyEffect(target, _ -> debuff.effect(stacks));
     }
 
     /**

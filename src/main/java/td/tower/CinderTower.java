@@ -7,6 +7,7 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.stat.StatPart;
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.cinder.Caught;
 import td.tower.cinder.CinderMechanic;
@@ -70,6 +71,8 @@ public final class CinderTower extends AbstractTower {
     /** The reload is paid on the fire clock in periods of this many ticks, so attack speed shortens it alone. */
     private static final int RELOAD_PERIOD_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     private static final int SEAR_STACKS = 5;
+    /** The stream's Singe outlasts its last touch by this, so an enemy at the cone's edge keeps it as the head turns. */
+    private static final int SINGE_LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
 
     private static final UpgradeNode HOT_FLAME = UpgradeNode.of("cinder.hot_flame", "Hot Flame", 13)
@@ -207,8 +210,8 @@ public final class CinderTower extends AbstractTower {
     }
 
     /**
-     * One tick of the stream: Flame into every enemy in the cone, more in the Core, Sear on the first touch of each
-     * enemy, then a hot burn's Flashover onto the enemies beside it.
+     * One tick of the stream: Flame and this Scorcher's share of Singe into every enemy in the cone, more Flame in the
+     * Core, Sear on the first touch of each enemy, then a hot burn's Flashover onto the enemies beside it.
      */
     private void pour(CinderSpec spec) {
         double heading = this.turretAim.currentRadians();
@@ -222,6 +225,7 @@ public final class CinderTower extends AbstractTower {
             boolean inCore = spec.core().isActive() && this.offAxis(enemy, heading) <= halfWidth * spec.core().share();
             float fed = this.feed(enemy, perTick * (inCore ? spec.core().factor() : 1f), spec);
             this.caught.add(new Caught(enemy, DamageUnits.inPoints(fed) * TickRate.TICKS_PER_SECOND, inCore));
+            this.applyEffect(enemy, sink -> Effect.singed(SINGE_LINGER_TICKS, sink));
             if (this.touched.add(enemy)) {
                 this.applyEffect(enemy, sink -> Effect.scorched(spec.searStacks()));
             }
@@ -345,7 +349,10 @@ public final class CinderTower extends AbstractTower {
         return List.of(new AppliedEffect(EffectKind.BURN, List.of(new AppliedEffect.Source(this.displayName(),
                         TermText.of("its stream pours ").plus(TowerTerm.FLAME).plus(" into ").plus(EffectKind.BURN)))),
                 new AppliedEffect(EffectKind.SCORCHED, List.of(new AppliedEffect.Source(this.displayName(),
-                        TermText.of("Sear: the first touch of each stream gives " + SEAR_STACKS + " stacks")))));
+                        TermText.of("Sear: the first touch of each stream gives " + SEAR_STACKS + " stacks")))),
+                new AppliedEffect(EffectKind.SINGED, List.of(new AppliedEffect.Source(this.displayName(),
+                        TermText.of("its stream gives its own share while it touches, and "
+                                + TermNumbers.seconds(SINGE_LINGER_TICKS / TickRate.TICKS_PER_SECOND) + " after")))));
     }
 
     @Override

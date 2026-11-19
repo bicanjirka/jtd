@@ -547,16 +547,20 @@ Core. 250 is a hidden number the player can't read off the board.
   enemy, and drops a mid-size Core build (19% today) to none; weigh that loss there. Pools have no cap, so fuel
   still rises past a full bar.
 
-### Effect duration does nothing for a pool
+### Effect duration has no source and reaches only some effects
 
-A pool lasts as long as its fuel, so the `EFFECT_DURATION` stat no longer
-reaches a burn, a poison or Soulfire, though the info pane still shows the row on a tower that applies one.
+Nothing gives a tower the `EFFECT_DURATION` stat: no node, emission, status or dev grant raises or lowers it from its
+base of 100%, and `TowerModifiers.effectDuration` has no caller. Yet `AbstractTower.applyEffect` scales every effect
+by it, so the first thing to grant it would quietly lengthen far more than intended. It stretches every timed effect
+and every share (Crack, Singe, Expose, Vulnerable, a heal, a shield). It never reaches a pool, which lasts as long as
+its fuel, nor a shared count (Sunder, Scorch, Toll and the rest), whose 5 s hold and fade step are the same for every
+source. The info pane still shows the row on a tower that applies only those.
 
-- **Where:** `AbstractTower.applyEffect` (`withDurationScaledBy` leaves a lasting effect as it is),
+- **Where:** `AbstractTower.applyEffect`, `TowerStat.EFFECT_DURATION`, `TowerModifiers.effectDuration`,
   `td.tower.TowerStatRow`'s Effect duration row.
-- **Approach:** decide whether Effect duration should add fuel to a pool (a pool fed more lasts longer, so
-  `withFuelScaledBy(length)` is the honest reading) or leave pools alone and hide the row on a tower whose only
-  effects are pools.
+- **Approach:** decide what the stat is for before anything grants it: which modes it lengthens (timed and shares
+  only, or a pool's fuel too, through `withFuelScaledBy`), and hide the row on a tower whose effects it never
+  reaches. If nothing should grant it, delete the stat and its row.
 
 ### No tower denies heals or shields along a whole lane
 

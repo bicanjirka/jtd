@@ -142,18 +142,18 @@ class AffixTest {
     }
 
     @Test
-    void anAllyBesideACommanderIsGivenResolveAndLosesItAfterTheCommanderFalls() {
+    void anAllyBesideACommanderIsGivenResolveAndLosesItAStackAtATimeAfterTheCommanderFalls() {
         DefinedEnemyMob commander = EnemyFixtures.liveMob(this.world, this.grub.withAffixes(List.of(Affix.COMMANDING), WHOLE));
         DefinedEnemyMob ally = EnemyFixtures.liveMob(this.world, this.grub);
 
         EnemyFixtures.tickEnemies(this.world, 1, SECONDS_3);
-        boolean heldWhileItLived = ally.hasEffect(EffectKind.RESOLVE);
+        int heldWhileItLived = ally.effectStacks(EffectKind.RESOLVE);
         commander.doDamage(LETHAL);
         EnemyFixtures.tickEnemies(this.world, SECONDS_3 + 1, 3 * SECONDS_3);
 
-        assertThat(heldWhileItLived).isTrue();
+        assertThat(heldWhileItLived).isPositive();
         assertThat(commander.hasEffect(EffectKind.RESOLVE)).isFalse();
-        assertThat(ally.hasEffect(EffectKind.RESOLVE)).isFalse();
+        assertThat(ally.effectStacks(EffectKind.RESOLVE)).isLessThan(heldWhileItLived);
     }
 
     @Test
