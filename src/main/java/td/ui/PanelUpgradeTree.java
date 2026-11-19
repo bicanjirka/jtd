@@ -10,7 +10,6 @@ import td.ui.UpgradeTreeLayout.Shared;
 import td.ui.UpgradeTreeLayout.Showing;
 import td.ui.UpgradeTreeLayout.Spot;
 import td.ui.UpgradeTreePainter.Floor;
-import td.ui.UpgradeTreePainter.Footer;
 import td.ui.UpgradeTreePainter.Highlight;
 import td.ui.UpgradeTreePainter.Mark;
 import td.ui.render.InfoSheet;
@@ -32,7 +31,6 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -123,12 +121,39 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         return new Dimension(this.getPreferredSize().width, Math.clamp(room, Math.min(MIN_HEIGHT, full), full));
     }
 
-    /** Each node's hover is a tooltip of what it is and what a click on it does now. */
+    /**
+     * Each node's hover is a tooltip of what it is and what a click on it does now; a numeral strip's, of the singles
+     * it buys; an empty shared slot's, of the pick it waits for.
+     */
     public void setTooltips(TooltipLayer tooltips) {
         this.tooltips = tooltips;
-        tooltips.watchSpots(this, point -> this.nodeAt(point).filter(node -> this.tower != null)
+        tooltips.watchSpots(this, point -> this.tower == null ? Optional.empty() : this.nodeAt(point)
                 .map(node -> new TooltipSpot(new SheetTooltip(TooltipKey.of("upgrade", node.id()), this.sheetOf(node)),
-                        this.anchorOf(node))));
+                        this.anchorOf(node)))
+                .or(() -> this.stripSpot(point))
+                .or(() -> this.emptySlotAt(point).map(slot -> new TooltipSpot(new SheetTooltip(
+                        TooltipKey.of("upgrade-slot", slot.cluster().name() + "@" + slot.spot().x()),
+                        UpgradeSheetText.pickFirst(this.membersLeftToRight(slot))), this.anchorAt(slot.spot().y(),
+                        slot.spot().size())))));
+    }
+
+    /** The tooltip of the numeral strip under {@code point}, while it buys singles. */
+    private Optional<TooltipSpot> stripSpot(Point point) {
+        OptionalInt tier = this.buttonAt(point);
+        if (tier.isEmpty()) {
+            return Optional.empty();
+        }
+        List<UpgradeNode> offered = this.offeredSingles(tier.getAsInt());
+        Band band = this.layout.orElseThrow().bandOf(tier.getAsInt());
+        return Optional.of(new TooltipSpot(new SheetTooltip(TooltipKey.of("upgrade-singles",
+                String.valueOf(tier.getAsInt())), UpgradeSheetText.singles(offered,
+                String.valueOf(GameKey.singlesKey(tier.getAsInt())), !this.anyAffordable(offered))),
+                this.anchorAt((band.top() + band.bottom()) / 2, band.bottom() - band.top())));
+    }
+
+    private List<String> membersLeftToRight(Shared slot) {
+        return slot.bySide().keySet().stream().sorted(Comparator.comparingDouble(member -> this.layout
+                .flatMap(laid -> laid.spotOf(member)).map(Spot::x).orElse(0f))).map(UpgradeNode::displayName).toList();
     }
 
     public void setGameWorld(GameWorld context) {
@@ -209,7 +234,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             UpgradeTree tree = this.tower.upgradeTree();
             new UpgradeTreePainter(this.layout.get(), tree, TowerSpriteFrameBuilder.bodyLookOf(this.tower),
                     this.tower.getType()).paint(g2, this.states, this.highlight(), this.showing(),
-                    tree.highestOpenTier(this.tower, this.context), this.floors(), this.footer());
+                    tree.highestOpenTier(this.tower, this.context), this.floors());
         } finally {
             g2.dispose();
         }
@@ -251,9 +276,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             }
             List<UpgradeNode> offered = this.offeredSingles(tier);
             if (!offered.isEmpty()) {
-                int total = offered.stream().mapToInt(UpgradeNode::price).sum();
-                floors.add(new Floor.Singles(UpgradeSheetText.singlesButton(total),
-                        String.valueOf(GameKey.singlesKey(tier)), !this.anyAffordable(offered),
+                floors.add(new Floor.Singles(!this.anyAffordable(offered),
                         this.hoveredTier.isPresent() && this.hoveredTier.getAsInt() == tier));
             } else if (this.allOwned(tree.singlesIn(tier))) {
                 floors.add(new Floor.Bought());
@@ -314,24 +337,6 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                 && this.states.get(node).look() == UpgradeNodeState.Look.OWNED, this.hovered)).orElse(Showing.all());
     }
 
-    private Footer footer() {
-        if (this.levelEnded) {
-            return new Footer(UpgradeSheetText.ENDED_FOOTER, false, false);
-        }
-        if (this.hoveredSlot.isPresent()) {
-            return new Footer(UpgradeSheetText.pickFirst(this.hoveredSlot.get().bySide().keySet().stream()
-                    .sorted(Comparator.comparingDouble(member -> this.layout.flatMap(laid -> laid.spotOf(member))
-                            .map(Spot::x).orElse(0f))).map(UpgradeNode::displayName).toList()), false, true);
-        }
-        if (this.hoveredTier.isPresent()) {
-            List<UpgradeNode> offered = this.offeredSingles(this.hoveredTier.getAsInt());
-            int total = offered.stream().mapToInt(UpgradeNode::price).sum();
-            return new Footer(UpgradeSheetText.singlesFooter(offered.size(), total), !this.anyAffordable(offered),
-                    true);
-        }
-        return new Footer(UpgradeSheetText.footer(this.hover), UpgradeSheetText.footerWarns(this.hover),
-                this.hover.isPresent());
-    }
 
     private void pointerAt(Point point) {
         Optional<UpgradeNode> now = this.nodeAt(point);
@@ -494,18 +499,10 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         }
         float x = (point.x - this.originX(scale)) / scale;
         float y = (point.y - this.getInsets().top) / scale;
-        FontMetrics metrics = this.getFontMetrics(UpgradeTreePainter.BUTTON_FONT);
         for (Band band : this.layout.get().bands()) {
-            if (!this.tower.upgradeTree().isOpen(band.tier(), this.tower, this.context)) {
-                continue;
-            }
-            List<UpgradeNode> offered = this.offeredSingles(band.tier());
-            if (offered.isEmpty()) {
-                continue;
-            }
-            String label = UpgradeSheetText.singlesButton(offered.stream().mapToInt(UpgradeNode::price).sum());
-            Rectangle2D.Float box = UpgradeTreePainter.buttonBox(metrics, label, band);
-            if (box.contains(x, y)) {
+            if (UpgradeTreePainter.stripBox(band).contains(x, y)
+                    && this.tower.upgradeTree().isOpen(band.tier(), this.tower, this.context)
+                    && !this.offeredSingles(band.tier()).isEmpty()) {
                 return OptionalInt.of(band.tier());
             }
         }
@@ -519,6 +516,13 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     private Rectangle anchorOf(UpgradeNode node) {
         Rectangle bounds = this.boundsOf(node);
         return new Rectangle(0, bounds.y, 0, bounds.height);
+    }
+
+    /** The panel's left edge, level with a design span of {@code height} centred at {@code y}. */
+    private Rectangle anchorAt(float y, float height) {
+        float scale = this.scale();
+        return new Rectangle(0, Math.round(this.getInsets().top + (y - height / 2) * scale), 0,
+                Math.round(height * scale));
     }
 
     private Rectangle boundsOf(UpgradeNode node) {

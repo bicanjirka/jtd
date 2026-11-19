@@ -20,15 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** The words for an upgrade node: its hover sheet, the panel's footer and the downgrade confirmation. Pure. */
+/** The words for the Upgrades panel: a node's hover sheet, the strips' and slots' hovers, the confirmations. Pure. */
 final class UpgradeSheetText {
 
-    /** The footer while nothing is hovered. */
-    static final String IDLE_FOOTER = "Click: buy · Right-click: downgrade";
-    /** The footer once the level is over and nothing can be bought or downgraded. */
-    static final String ENDED_FOOTER = "Level over";
-    /** A tier's floor strip once every single in it is owned. */
-    static final String SINGLES_BOUGHT = "Singles bought";
     /** Why a switch or a downgrade waits while a wave is out. */
     static final String BETWEEN_WAVES = "Changes between waves";
 
@@ -140,45 +134,6 @@ final class UpgradeSheetText {
     /** "Downgrade ( +$29 )", the confirmation's button. */
     static String downgradeButton(UpgradeHover.Downgrading downgrading) {
         return "Downgrade ( +$" + downgrading.refund().total() + " )";
-    }
-
-    /**
-     * The panel's footer for what is hovered: "2 steps · $48" for a path, with what stops it, or "Right-click:
-     * downgrade 3 · +$87" on an owned node; {@link #IDLE_FOOTER} for none.
-     */
-    static String footer(Optional<UpgradeHover> hover) {
-        if (hover.isEmpty()) {
-            return IDLE_FOOTER;
-        }
-        return switch (hover.get()) {
-            case UpgradeHover.Buying buying -> {
-                UpgradePath path = buying.path();
-                String steps = path.steps().size() == 1 ? "1 step" : path.steps().size() + " steps";
-                String text = steps + " · $" + path.total();
-                if (path.block().isPresent()) {
-                    yield text + " · blocked: " + reasonWord(path.block().get().reason());
-                }
-                yield buying.affordable() ? text : text + " · short $" + buying.shortBy();
-            }
-            case UpgradeHover.Switching switching when !switching.allowed() -> BETWEEN_WAVES;
-            case UpgradeHover.Switching switching -> switching.change().sold().isEmpty() ? "Click: switch · free"
-                    : "Click: switch · sells " + switching.change().sold().size() + " · +$" + switching.refund().total();
-            case UpgradeHover.Downgrading downgrading when !downgrading.allowed() -> BETWEEN_WAVES;
-            case UpgradeHover.Downgrading downgrading -> "Right-click: downgrade " + downgrading.removal().removed().size()
-                    + " · +$" + downgrading.refund().total() + (downgrading.refund().isFull() ? " · full" : "");
-        };
-    }
-
-    /**
-     * Whether the footer for {@code hover} warns: a path that a click won't buy, a change that waits for the wave's
-     * end, or a downgrade that loses money.
-     */
-    static boolean footerWarns(Optional<UpgradeHover> hover) {
-        return hover.map(h -> switch (h) {
-            case UpgradeHover.Buying buying -> !buying.buys();
-            case UpgradeHover.Switching switching -> !switching.allowed();
-            case UpgradeHover.Downgrading downgrading -> !downgrading.allowed() || !downgrading.refund().isFull();
-        }).orElse(false);
     }
 
     /** What a switch sells back, and the refund. */
@@ -304,18 +259,25 @@ final class UpgradeSheetText {
         return "XP " + Math.min(xp, needed) + " / " + needed;
     }
 
-    /** The button that buys a tier's singles on offer, for {@code total} credits together. */
-    static String singlesButton(int total) {
-        return "Buy singles · " + TermNumbers.cash(total);
+    /**
+     * A tier's numeral strip while it buys singles: what a click, or {@code key}, buys, left to right, and the total,
+     * or that the credits cover none of it.
+     */
+    static InfoSheet singles(List<UpgradeNode> offered, String key, boolean shortOfCash) {
+        int total = offered.stream().mapToInt(UpgradeNode::price).sum();
+        List<SheetLine> lines = new ArrayList<>();
+        lines.add(new SheetLine.Title(Glyph.CASH, Palette.TERM_STATUS_CASH, "Buy singles", TermNumbers.cash(total)));
+        offered.forEach(node -> lines.add(Row.plain(Glyph.DOT, node.displayName(), TermNumbers.cash(node.price()))));
+        lines.add(shortOfCash
+                ? SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET, TermText.of("Short of credits"))
+                : SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET,
+                        TermText.of("Click, or press " + key + ", to buy what the credits cover")));
+        return new InfoSheet(lines);
     }
 
-    /** The footer while the singles' button is hovered: "3 singles · $24". */
-    static String singlesFooter(int count, int total) {
-        return count + (count == 1 ? " single · " : " singles · ") + TermNumbers.cash(total);
-    }
-
-    /** The footer over a slot that stands empty until one of {@code members} is picked: "Pick A or B first". */
-    static String pickFirst(List<String> members) {
-        return "Pick " + String.join(" or ", members) + " first";
+    /** A shared slot before its cluster's pick: which members to pick from, in the order they sit. */
+    static InfoSheet pickFirst(List<String> members) {
+        return new InfoSheet(List.of(SheetLine.Sentence.marked(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET,
+                TermText.of("Pick " + String.join(" or ", members) + " first"))));
     }
 }

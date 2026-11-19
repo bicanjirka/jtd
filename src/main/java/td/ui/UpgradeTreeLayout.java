@@ -17,9 +17,10 @@ import java.util.function.Predicate;
 
 /**
  * Where every node of a tree sits on the Upgrades panel, in design units {@value #WIDTH} wide, from the tower's
- * hand-made {@link UpgradeTreePlan}: a band per tier, bottom up, each one or more rows of nodes over a floor strip, with
- * its numeral in a strip at its left. A link leaves the top of what a node needs, runs in the channel above that row
- * and climbs into the node's bottom; a cluster's frame stands in for its members where the rule names the cluster or
+ * hand-made {@link UpgradeTreePlan}: a band per tier, bottom up, each one or more rows of nodes with its numeral and its
+ * singles' key in a strip at its left. The gap under a band holds that tier's gate while it is locked, high in the gap;
+ * below it, in the channel just above the next band down, a link runs. A link leaves the top of what a node needs,
+ * runs in the channel above that row and climbs into the node's bottom; a cluster's frame stands in for its members where the rule names the cluster or
  * all of them share one need. A need more than a tier below is a badge on a top corner instead. Nodes that come after
  * different members of one cluster may share a slot, since only one of them can ever be bought: the slot shows the
  * node of the member picked, or hovered, and stands empty before either. Pure.
@@ -30,7 +31,7 @@ import java.util.function.Predicate;
  * @param links  a need to what needs it, as a path
  * @param badges a need more than a tier below, on the corner of what needs it
  * @param shared every slot more than one node shares
- * @param height the whole design's height, the footer included
+ * @param height the whole design's height
  */
 record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Frame> frames, List<Link> links,
                          List<Badge> badges, List<Shared> shared, float height) {
@@ -41,16 +42,18 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
     static final float NODE = BuyTileLook.SIZE;
     static final float PITCH = 37f;
     static final float ROW = 46f;
-    static final float STRIP = 15f;
     static final float BAND_X = 6f;
     static final float NUMERAL_WIDTH = 16f;
     static final float BODY_X = BAND_X + NUMERAL_WIDTH + 2f;
-    static final float FOOTER = 16f;
     static final float FRAME_PAD = 4f;
     static final float BADGE = 6f;
 
     private static final float TOP = 4f;
-    private static final float GAP = 6f;
+    private static final float GAP = 13f;
+    /** From a band's bottom down to its gate's line. */
+    private static final float GATE_DROP = 5f;
+    /** From a row's top up to the channel its links run along. */
+    private static final float CHANNEL_RISE = 3f;
     private static final float FIRST_SLOT = BODY_X + 4f + NODE / 2;
     /** From a row's top to its nodes' centre: the channel a link runs in sits above the nodes. */
     private static final float NODE_DROP = 24f;
@@ -58,11 +61,12 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
     private static final float LABEL_LETTER = 4.6f;
     private static final float LABEL_PAD = 10f;
 
-    /** A tier's band: its rows over its floor strip. */
+    /** A tier's band: its rows. */
     record Band(int tier, float top, float bottom) {
 
-        float stripTop() {
-            return this.bottom - STRIP;
+        /** The line of this tier's gate, in the gap under the band. */
+        float gateY() {
+            return this.bottom + GATE_DROP;
         }
     }
 
@@ -264,7 +268,7 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
             Band[] placed = new Band[tiers];
             for (int tier = tiers - 1; tier >= 0; tier--) {
                 List<UpgradeTreePlan.Row> rows = this.plan.tiers().get(tier).rows();
-                float bottom = y + rows.size() * ROW + STRIP;
+                float bottom = y + rows.size() * ROW;
                 placed[tier] = new Band(tier, y, bottom);
                 for (int r = 0; r < rows.size(); r++) {
                     this.placeRow(tier, rows.get(r), y + (rows.size() - 1 - r) * ROW);
@@ -288,7 +292,7 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
                 }
             }
             return new UpgradeTreeLayout(this.bands, this.spots, List.copyOf(this.frames.values()), links, badges,
-                    shared, y - GAP + FOOTER);
+                    shared, y - GAP + TOP);
         }
 
         /**
@@ -452,7 +456,7 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
             if (Math.abs(x - to.x()) < 0.5f) {
                 return List.of(new Point(x, from.top()), new Point(x, to.bottom()));
             }
-            float channel = from.rowTop() - GAP / 2;
+            float channel = from.rowTop() - CHANNEL_RISE;
             return List.of(new Point(x, from.top()), new Point(x, channel), new Point(to.x(), channel),
                     new Point(to.x(), to.bottom()));
         }
