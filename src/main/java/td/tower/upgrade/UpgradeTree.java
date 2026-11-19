@@ -402,11 +402,11 @@ public final class UpgradeTree {
     }
 
     /**
-     * The node whose art {@code node} shows: a cluster member's or a line's first node its own, a later step its line's
+     * The node whose art {@code node} shows: a cluster member's, a node that asks for one, or a line's first node its own, a later step its line's
      * first, and a line that starts after a fork's side that side's.
      */
     public UpgradeNode artNodeOf(UpgradeNode node) {
-        if (this.clusterByMember.containsKey(node.id())) {
+        if (node.ownArt() || this.clusterByMember.containsKey(node.id())) {
             return node;
         }
         UpgradeNode first = this.firstOf(node);
@@ -436,8 +436,14 @@ public final class UpgradeTree {
         return level;
     }
 
-    /** The highest-tier node {@code node} comes after, the fork's sides aside: their column says it already. */
+    /**
+     * The highest-tier node {@code node} comes after, the fork's sides aside: their column says it already. A node
+     * that comes after one of several is after none of them in particular, so it is no line's step.
+     */
     public Optional<UpgradeNode> previousInLine(UpgradeNode node) {
+        if (!node.requires().mentionedNodes().equals(node.requires().requiredNodes())) {
+            return Optional.empty();
+        }
         UpgradeNode previous = null;
         for (UpgradeNode candidate : this.nodes) {
             if (node.requires().requiredNodes().contains(candidate.id()) && !this.isForkSide(candidate)
