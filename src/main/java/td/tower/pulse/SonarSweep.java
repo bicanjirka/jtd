@@ -22,18 +22,11 @@ public final class SonarSweep {
     private final double radiansPerTick;
     private double previousRadians;
     private double currentRadians;
-    /** What the last step turned, signed: a sweep's own step, or a settle's turn toward rest. */
-    private double lastStep;
-    /** How far round the current revolution the beam is, in {@code [0, 2PI)}. */
-    private double swept;
-    private boolean completedRevolution;
 
-    private SonarSweep(double radiansPerTick, double previousRadians, double currentRadians, double swept) {
+    private SonarSweep(double radiansPerTick, double previousRadians, double currentRadians) {
         this.radiansPerTick = radiansPerTick;
         this.previousRadians = previousRadians;
         this.currentRadians = currentRadians;
-        this.swept = swept;
-        this.lastStep = -radiansPerTick;
     }
 
     /** One revolution every {@code secondsPerRevolution} of simulation time. */
@@ -44,21 +37,12 @@ public final class SonarSweep {
         if (ticksPerSecond <= 0) {
             throw new IllegalArgumentException("ticksPerSecond must be positive: " + ticksPerSecond);
         }
-        return new SonarSweep(TWO_PI / (secondsPerRevolution * ticksPerSecond), 0, 0, 0);
+        return new SonarSweep(TWO_PI / (secondsPerRevolution * ticksPerSecond), 0, 0);
     }
 
     /** This sweep pointing at {@code radians}, at the start of a revolution. */
     public SonarSweep startingAt(double radians) {
-        return new SonarSweep(this.radiansPerTick, radians, radians, 0);
-    }
-
-    /**
-     * A sweep at another speed that carries on from where this one points, mid-revolution; its next
-     * {@link #advance()} sweeps on from there.
-     */
-    public SonarSweep retimed(double secondsPerRevolution, double ticksPerSecond) {
-        SonarSweep faster = perRevolution(secondsPerRevolution, ticksPerSecond);
-        return new SonarSweep(faster.radiansPerTick, this.currentRadians, this.currentRadians, this.swept);
+        return new SonarSweep(this.radiansPerTick, radians, radians);
     }
 
     /** Wraps to {@code [0, 2PI)}. */
@@ -71,25 +55,6 @@ public final class SonarSweep {
     public void advance() {
         this.previousRadians = this.currentRadians;
         this.currentRadians = TurretAim.normalizeRadians(this.currentRadians - this.radiansPerTick);
-        this.lastStep = -this.radiansPerTick;
-        this.swept += this.radiansPerTick;
-        this.completedRevolution = this.swept >= TWO_PI - 1e-9;
-        if (this.completedRevolution) {
-            this.swept -= TWO_PI;
-        }
-    }
-
-    /** Turns at most {@code maxRadians} toward {@code radians}, the shorter way, sweeping nothing. */
-    public void turnToward(double radians, double maxRadians) {
-        this.previousRadians = this.currentRadians;
-        this.lastStep = Math.clamp(TurretAim.normalizeRadians(radians - this.currentRadians), -maxRadians, maxRadians);
-        this.currentRadians = TurretAim.normalizeRadians(this.currentRadians + this.lastStep);
-        this.completedRevolution = false;
-    }
-
-    /** Whether the last {@link #advance()} finished a full turn. */
-    public boolean completedRevolution() {
-        return this.completedRevolution;
     }
 
     /**
@@ -105,7 +70,7 @@ public final class SonarSweep {
      * across the wrap point.
      */
     public double radiansAt(double interpolationAlpha) {
-        return this.previousRadians + this.lastStep * interpolationAlpha;
+        return this.previousRadians - this.radiansPerTick * interpolationAlpha;
     }
 
     public double radiansPerTick() {
