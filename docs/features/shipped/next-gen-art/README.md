@@ -1,7 +1,7 @@
 # Next-gen art sheets
 
 The art for `FEATURE-next-gen.md`, in the raised view. The sheets are what to build; the decisions behind them are in
-`../shipped/FEATURE-next-gen-tower-looks.md` ("Art direction", "Palette") and in each tower's Look section.
+`FEATURE-next-gen-tower-looks.md` ("Art direction", "Palette") and in each tower's Look section.
 
 Every tower on a sheet is painted by the game: `td.ui.TowerFoundations` builds it and `td.ui.TowerSprites` paints it.
 The sheets hold no tower drawing of their own, so a sheet cannot show a tower the game would draw differently.
@@ -26,9 +26,9 @@ From the repository root, after `mvn -q compile` and with `target/runtime-classp
 ```bash
 CP="target/classes;.claude/skills/run-jtd;$(cat target/runtime-classpath.txt)"
 javac -cp "$CP" -d .claude/skills/run-jtd .claude/skills/run-jtd/td/ui/TowerArtGame.java .claude/skills/run-jtd/TowerArt*.java
-java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/features/next-gen-art            # every sheet
-java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/features/next-gen-art heads shots # some of them
-java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/features/next-gen-art bench       # the paint timing
+java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/features/shipped/next-gen-art            # every sheet
+java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/features/shipped/next-gen-art heads shots # some of them
+java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/features/shipped/next-gen-art bench       # the paint timing
 ```
 
 A change to a tower's look is a change to its builder in `TowerFoundations`; render the sheets after it and read
@@ -53,7 +53,7 @@ A radius, an offset or a colour that a doc does not state is in the builder.
 | The shared plinth, footprint by tier | `FOOTPRINT`, `PLINTH_STEP`, `STEP_HEIGHT`, `footprint(tier)` | none |
 | Sniper and its rifle | `sniper` (`Row.aiming`) | `LONG_BARREL`, `SILVER_ROUND`, `HOLLOW_POINT`, `FOURTH_SHOT`, `FRENZY`, `HEADHUNTER`, `KEEN_FOCUS`; `stacks` is Steady Aim, the scope's focus; `beat` is Frenzy's shake; recoil, flash |
 | Burst | `thrower` (the onager), `stormcaller`, `hexer` | `CHARGED` is an ability waiting; `fired()` and `reloading` drive the arm, the spark, the bubble |
-| Mortar (the Strider), its barrel and shells | `striderMortar` (`Row.posed`, no head), `shell(LoadedShell, r)`; `../shipped/FEATURE-mortar-strider.md` | `VOLLEY`, `LONG_BARREL`; `load` is what this reload carries up, `stock` the rack; `beat` is its moment (a shot frame, a pump step, cocked: `strideShot`, `stridePump`); reload |
+| Mortar (the Strider), its barrel and shells | `striderMortar` (`Row.posed`, no head), `shell(LoadedShell, r)`; `FEATURE-mortar-strider.md` | `VOLLEY`, `LONG_BARREL`; `load` is what this reload carries up, `stock` the rack; `beat` is its moment (a shot frame, a pump step, cocked: `strideShot`, `stridePump`); reload |
 | Scorcher and its nozzle | `scorcher` (`CINDER`, `SOULFIRE`; a dragon's head or a soul cage for its head) | `STREAMING`, `DRAGONS_BREATH`, `LONG_BARREL`; reload cools the nozzle |
 | Aerie | `aerie`, `ruby`, `shade`, `white` (`SEEKER`, `RUBY`, `SHADE`, `WHITE`) | `RELEASE_READY` whitens the tip; `Foundation.nest` is the top the missiles circle |
 | Obelisk, a menhir, and its runes | `obelisk` (`PULSE`, `BURDEN`, `GRAVITY`, `UMBRA`) | `CHARGED` is a full Toll inside; `reloading` is the knell's throw |

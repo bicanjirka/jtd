@@ -8,12 +8,9 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 
 ## Feature ideas
 
-- **Next-gen towers** (`docs/features/FEATURE-next-gen.md`): every tower's art, passive, upgrade tree and prices
-  redone on a new tier system, with shared features for tiers, looks, shot flight and abilities; the Radar leaves.
-  Draft: every doc written to Tiers III and reviewed as a whole; ready for planning, with its open questions.
 - **Balance after the next-gen towers** (`docs/features/FEATURE-balance-after-next-gen-towers.md`): the second pass,
   played by the built towers: the game's absolute difficulty, the floor and ceiling in play, lives, the bosses.
-  Request written; waits for the towers.
+  Request written; the towers are built.
 - **The White tower** (`docs/features/shipped/FEATURE-tower-visual-polish.md`): a third Aerie identity, pure and white; its
   look (`TowerLook.WHITE`, eagles for birds) comes with the visual polish, unused on purpose. It needs a name, a node
   and a missile of its own. Idea only.
