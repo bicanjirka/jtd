@@ -23,7 +23,6 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -33,14 +32,16 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * Paints one tower's upgrade tree in the design units of {@link UpgradeTreeLayout}: each tier's band with its numeral
- * and floor strip (the gate's XP while locked, else the button that buys its singles), the links and badges, the
- * cluster frames, and every node in its look with its price tag, and the footer. A node that changes a number is a
+ * strip, whose key chip buys the tier's singles, a locked tier's gate in the gap under its band, the links and badges,
+ * the cluster frames, and every node in its look with its price tag. A node that changes a number is a
  * circle, one that adds an ability a square. Glyphs take the tower's colour; prices stay neutral. The caller scales
  * the graphics to the panel.
  */
@@ -78,19 +79,15 @@ final class UpgradeTreePainter {
         }
     }
 
-    /** The footer's words; a warning is red, words about the hovered node bold. */
-    record Footer(String text, boolean warns, boolean active) {
-    }
-
-    /** What a tier's floor strip shows. */
+    /** What a tier's numeral strip and the gap under its band show. */
     sealed interface Floor {
 
-        /** A locked tier: the tower's XP toward the gate's. */
+        /** A locked tier: the tower's XP toward the gate's, in the gap under its band. */
         record Gate(int xp, int needed) implements Floor {
         }
 
-        /** The button that buys the tier's singles, with its key. */
-        record Singles(String label, String key, boolean shortOfCash, boolean hovered) implements Floor {
+        /** The strip buys the tier's singles, with its key. */
+        record Singles(boolean shortOfCash, boolean hovered) implements Floor {
         }
 
         /** Every single of the tier is owned. */
@@ -102,9 +99,6 @@ final class UpgradeTreePainter {
         }
     }
 
-    static final Font BUTTON_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
-    private static final float BUTTON_RIGHT = UpgradeTreeLayout.WIDTH - UpgradeTreeLayout.BAND_X - 4f;
-    private static final float BUTTON_PAD = 22f;
 
     private static final Color FOREGROUND = new Color(234, 234, 239);
     private static final Color DIM = new Color(169, 169, 172);
@@ -133,8 +127,6 @@ final class UpgradeTreePainter {
     private static final Color LINK_OUT = new Color(46, 46, 48);
     private static final Color FRAME_IDLE = new Color(88, 88, 92);
     private static final Color FRAME_TAKEN = new Color(142, 142, 146);
-    private static final Color BUTTON_FILL = new Color(41, 41, 43);
-    private static final Color BUTTON_BORDER = new Color(103, 103, 105);
     private static final float LOCKED_ALPHA = 0.55f;
     private static final float HOVER_BORDER = 0.35f;
     private static final float OWNED_FILL = 0.28f;
@@ -144,8 +136,11 @@ final class UpgradeTreePainter {
     private static final Font CHIP_FONT = new Font(Font.DIALOG, Font.PLAIN, 7);
     private static final Font FRAME_FONT = new Font(Font.DIALOG, Font.PLAIN, 8);
     private static final Font LINE_NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 7);
-    private static final Font FOOTER_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
-    private static final Font FOOTER_BOLD = FOOTER_FONT.deriveFont(Font.BOLD);
+    /** The key chip at the foot of a numeral strip: its height, and its gap to the strip's bottom. */
+    private static final float CHIP_HEIGHT = 10f;
+    private static final float CHIP_BOTTOM = 4f;
+    private static final float GATE_LABEL_GAP = 4f;
+    private static final float LOCK_WIDTH = 12f;
     private static final float CASH_BADGE = 10f;
 
     private final UpgradeTreeLayout layout;
@@ -160,30 +155,33 @@ final class UpgradeTreePainter {
         this.type = type;
     }
 
-    /** Where the button of a strip labelled {@code label} sits in {@code band}, measured with {@code metrics}. */
-    static Rectangle2D.Float buttonBox(FontMetrics metrics, String label, Band band) {
-        float width = metrics.stringWidth(label) + BUTTON_PAD;
-        return new Rectangle2D.Float(BUTTON_RIGHT - width, band.stripTop() + 2f, width, UpgradeTreeLayout.STRIP - 4f);
+    /** The numeral strip of {@code band}: a click on it buys the tier's singles. */
+    static Rectangle2D.Float stripBox(Band band) {
+        return new Rectangle2D.Float(UpgradeTreeLayout.BAND_X, band.top(), UpgradeTreeLayout.NUMERAL_WIDTH,
+                band.bottom() - band.top());
     }
 
     /**
-     * Paints the whole tree: the tiers up to {@code openTier} are open, {@code floors} says each tier's strip by
-     * tier, {@code showing} what the shared slots show.
+     * Paints the whole tree: the tiers up to {@code openTier} are open, {@code floors} says each tier's strip and gate
+     * by tier, {@code showing} what the shared slots show.
      */
     void paint(Graphics2D g, Map<UpgradeNode, UpgradeNodeState> states, Highlight highlight, Showing showing,
-               int openTier, List<Floor> floors, Footer footer) {
+               int openTier, List<Floor> floors) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+        List<Link> links = this.layout.links().stream()
+                .filter(link -> showing.shows(link.from()) && showing.shows(link.to())).toList();
         for (Band band : this.layout.bands()) {
-            this.faded(g, band.tier() > openTier, () -> this.paintBand(g, band, band.tier() <= openTier,
-                    floors.get(band.tier())));
+            Floor floor = floors.get(band.tier());
+            this.faded(g, band.tier() > openTier, () -> this.paintBand(g, band, band.tier() <= openTier, floor));
+            switch (floor) {
+                case Floor.Gate gate -> paintGate(g, band, gate, links);
+                case Floor.Singles _, Floor.Bought _, Floor.Empty _ -> {
+                }
+            }
         }
-        this.layout.links().stream().filter(link -> showing.shows(link.from()) && showing.shows(link.to()))
-                .forEach(link -> this.paintLink(g, link, states, highlight));
-        for (Band band : this.layout.bands()) {
-            this.faded(g, band.tier() > openTier, () -> this.paintFloor(g, band, floors.get(band.tier())));
-        }
+        links.forEach(link -> this.paintLink(g, link, states, highlight));
         List<Frame> frames = this.layout.frames().stream().filter(frame -> frame.cluster().memberIds().stream()
                 .anyMatch(id -> showing.shows(this.tree.node(id).orElseThrow()))).toList();
         for (Frame frame : frames) {
@@ -206,7 +204,6 @@ final class UpgradeTreePainter {
         }
         this.layout.badges().stream().filter(badge -> showing.shows(badge.from()) && showing.shows(badge.to()))
                 .forEach(badge -> this.paintBadge(g, badge, states, highlight));
-        paintFooter(g, footer, this.layout.height());
     }
 
     /** {@code paint} at the locked tiers' alpha when {@code locked}. */
@@ -224,17 +221,22 @@ final class UpgradeTreePainter {
         }
     }
 
-    /** The band's ground, its numeral strip, the floor strip's line and, while locked, the gate's track. */
+    /** The band's ground and its numeral strip: the numeral, and at its foot the key chip that buys its singles. */
     private void paintBand(Graphics2D g, Band band, boolean open, Floor floor) {
         Color tower = this.towerColor();
         float left = UpgradeTreeLayout.BAND_X;
         float right = UpgradeTreeLayout.WIDTH - UpgradeTreeLayout.BAND_X;
         float height = band.bottom() - band.top();
+        boolean hovered = switch (floor) {
+            case Floor.Singles singles -> singles.hovered();
+            case Floor.Gate _, Floor.Bought _, Floor.Empty _ -> false;
+        };
         Color edge = open ? Hud.mix(tower, BAND_FILL, 0.55f) : BAND_LINE;
         Shape ground = new RoundRectangle2D.Float(left, band.top(), right - left, height, 6f, 6f);
         g.setColor(BAND_FILL);
         g.fill(ground);
-        g.setColor(open ? Hud.mix(tower, BAND_FILL, 0.82f) : LOCKED_STRIP);
+        Color strip = open ? Hud.mix(tower, BAND_FILL, 0.82f) : LOCKED_STRIP;
+        g.setColor(hovered ? Hud.mix(strip, WHITE, 0.1f) : strip);
         g.fill(new RoundRectangle2D.Float(left + 0.5f, band.top() + 0.5f, UpgradeTreeLayout.NUMERAL_WIDTH,
                 height - 1f, 5f, 5f));
         g.setStroke(new BasicStroke(1f));
@@ -243,72 +245,101 @@ final class UpgradeTreePainter {
         float numeralEdge = left + UpgradeTreeLayout.NUMERAL_WIDTH + 0.5f;
         g.draw(new Line2D.Float(numeralEdge, band.top(), numeralEdge, band.bottom()));
         String numeral = UpgradeTier.numeralOf(band.tier());
+        float centre = left + UpgradeTreeLayout.NUMERAL_WIDTH / 2 + 0.5f;
         g.setColor(open ? tower : GLOSS);
-        centred(g, numeral, numeral.length() > 2 ? SMALL_NUMERAL_FONT : NUMERAL_FONT,
-                left + UpgradeTreeLayout.NUMERAL_WIDTH / 2 + 0.5f, band.top() + height / 2 + 4f);
-        g.setColor(BAND_LINE);
-        g.draw(new Line2D.Float(UpgradeTreeLayout.BODY_X - 2f, band.stripTop() + 0.5f, right, band.stripTop() + 0.5f));
-        switch (floor) {
-            case Floor.Gate gate -> {
-                float trackLeft = UpgradeTreeLayout.BODY_X + 82f;
-                float trackWidth = right - 8f - trackLeft;
-                float share = gate.needed() == 0 ? 1f : Math.min(1f, gate.xp() / (float) gate.needed());
-                g.setColor(TRACK);
-                g.fill(new RoundRectangle2D.Float(trackLeft, band.stripTop() + 6f, trackWidth, 3f, 3f, 3f));
-                g.setColor(DIM);
-                g.fill(new RoundRectangle2D.Float(trackLeft, band.stripTop() + 6f, trackWidth * share, 3f, 3f, 3f));
-            }
-            case Floor.Singles singles -> {
-            }
-            case Floor.Bought bought -> {
-            }
-            case Floor.Empty empty -> {
-            }
-        }
+        centred(g, numeral, numeral.length() > 2 ? SMALL_NUMERAL_FONT : NUMERAL_FONT, centre,
+                band.top() + (height - CHIP_HEIGHT - CHIP_BOTTOM) / 2 + 4f);
+        this.paintKeyChip(g, band, floor, centre, hovered);
     }
 
-    /** The strip's words and button, over the links that pass under them. */
-    private void paintFloor(Graphics2D g, Band band, Floor floor) {
-        float top = band.stripTop();
+    /**
+     * The tier's digit key: bright while it buys singles (red when the credits cover none), a tick in the tower's
+     * colour once they are all owned, grey while the tier is locked, and absent when there is nothing to buy.
+     */
+    private void paintKeyChip(Graphics2D g, Band band, Floor floor, float centre, boolean hovered) {
+        String key = String.valueOf(GameKey.singlesKey(band.tier()));
+        Color border;
+        Color ink;
         switch (floor) {
-            case Floor.Gate gate -> {
-                float x = UpgradeTreeLayout.BODY_X;
-                g.setColor(BAND_FILL);
-                g.fill(new Rectangle2D.Float(x + 1f, top + 2f, 76f, UpgradeTreeLayout.STRIP - 3f));
-                paintLock(g, x + 4f, top + 3.5f);
-                g.setColor(DIM);
-                g.setFont(GATE_FONT);
-                g.drawString(UpgradeSheetText.gateLabel(gate.xp(), gate.needed()), x + 16f, top + 10.5f);
+            case Floor.Gate _ -> {
+                border = LOCKED_BORDER;
+                ink = LOCKED_INK;
             }
             case Floor.Singles singles -> {
-                g.setFont(BUTTON_FONT);
-                Rectangle2D.Float box = buttonBox(g.getFontMetrics(), singles.label(), band);
-                g.setColor(BAND_FILL);
-                g.fill(new Rectangle2D.Float(box.x - 2f, top + 1f, box.width + 4f, UpgradeTreeLayout.STRIP - 2f));
-                Shape button = new RoundRectangle2D.Float(box.x, box.y, box.width, box.height, 4f, 4f);
-                g.setColor(singles.hovered() ? Hud.mix(BUTTON_FILL, WHITE, 0.08f) : BUTTON_FILL);
-                g.fill(button);
-                g.setColor(singles.hovered() ? Hud.mix(BUTTON_BORDER, WHITE, 0.5f) : BUTTON_BORDER);
-                g.setStroke(new BasicStroke(1f));
-                g.draw(button);
-                g.setColor(GLOSS);
-                g.setStroke(new BasicStroke(0.8f));
-                g.draw(new RoundRectangle2D.Float(box.x + 3f, box.y + 1.5f, 10f, 8f, 3f, 3f));
-                g.setColor(DIM);
-                centred(g, singles.key(), CHIP_FONT, box.x + 8f, box.y + 7.9f);
-                g.setColor(singles.shortOfCash() ? SHORT : FOREGROUND);
-                g.setFont(BUTTON_FONT);
-                g.drawString(singles.label(), box.x + 16f, box.y + 8.7f);
+                border = hovered ? Hud.mix(GLOSS, WHITE, 0.5f) : GLOSS;
+                ink = singles.shortOfCash() ? SHORT : FOREGROUND;
             }
-            case Floor.Bought bought -> {
-                g.setFont(BUTTON_FONT);
-                g.setColor(GLOSS);
-                String label = UpgradeSheetText.SINGLES_BOUGHT;
-                g.drawString(label, BUTTON_RIGHT - 2f - g.getFontMetrics().stringWidth(label), top + 10.4f);
+            case Floor.Bought _ -> {
+                border = Hud.mix(this.towerColor(), BAND_FILL, 0.4f);
+                ink = this.towerColor();
+                key = "✓";
             }
-            case Floor.Empty empty -> {
+            case Floor.Empty _ -> {
+                return;
             }
         }
+        float width = UpgradeTreeLayout.NUMERAL_WIDTH - 5f;
+        float top = band.bottom() - CHIP_BOTTOM - CHIP_HEIGHT;
+        Shape chip = new RoundRectangle2D.Float(centre - width / 2, top, width, CHIP_HEIGHT, 3f, 3f);
+        g.setColor(TAG_FILL);
+        g.fill(chip);
+        g.setColor(border);
+        g.setStroke(new BasicStroke(0.8f));
+        g.draw(chip);
+        g.setColor(ink);
+        centred(g, key, CHIP_FONT, centre, top + CHIP_HEIGHT - 2.5f);
+    }
+
+    /**
+     * A locked tier's gate in the gap under its band: a track across, filled as far as the tower's XP has come, and
+     * the lock with the XP at its right, moved left of any link climbing through the gap there.
+     */
+    private static void paintGate(Graphics2D g, Band band, Floor.Gate gate, List<Link> links) {
+        float y = band.gateY();
+        float left = UpgradeTreeLayout.BAND_X + 2f;
+        float right = UpgradeTreeLayout.WIDTH - UpgradeTreeLayout.BAND_X - 2f;
+        float share = gate.needed() == 0 ? 1f : Math.min(1f, gate.xp() / (float) gate.needed());
+        g.setColor(TRACK);
+        g.fill(new RoundRectangle2D.Float(left, y - 1f, right - left, 2f, 2f, 2f));
+        g.setColor(DIM);
+        g.fill(new RoundRectangle2D.Float(left, y - 1f, (right - left) * share, 2f, 2f, 2f));
+        g.setFont(GATE_FONT);
+        String text = UpgradeSheetText.gateLabel(gate.xp(), gate.needed());
+        float width = LOCK_WIDTH + g.getFontMetrics().stringWidth(text);
+        float end = labelEnd(right, width, y, links);
+        float start = end - width;
+        g.setColor(Hud.BACKGROUND);
+        g.fill(new Rectangle2D.Float(start - GATE_LABEL_GAP, y - 4f, width + 2 * GATE_LABEL_GAP, 8.5f));
+        paintLock(g, start, y - 4.5f);
+        g.setColor(DIM);
+        g.drawString(text, start + LOCK_WIDTH, y + 3.5f);
+    }
+
+    /** Where a label {@code width} wide on the line at {@code y} ends: at {@code right}, or left of the links there. */
+    private static float labelEnd(float right, float width, float y, List<Link> links) {
+        List<Float> crossings = links.stream().flatMap(link -> crossingsOf(link, y).stream())
+                .sorted(Comparator.reverseOrder()).toList();
+        float end = right;
+        for (float x : crossings) {
+            if (x > end - width - 2 * GATE_LABEL_GAP && x < end + GATE_LABEL_GAP) {
+                end = x - 2 * GATE_LABEL_GAP;
+            }
+        }
+        return end;
+    }
+
+    /** Where {@code link}'s upright stretches cross the line at {@code y}. */
+    private static List<Float> crossingsOf(Link link, float y) {
+        List<Float> xs = new ArrayList<>();
+        List<Point> path = link.path();
+        for (int i = 1; i < path.size(); i++) {
+            Point a = path.get(i - 1);
+            Point b = path.get(i);
+            if (a.x() == b.x() && Math.min(a.y(), b.y()) <= y && Math.max(a.y(), b.y()) >= y) {
+                xs.add(a.x());
+            }
+        }
+        return xs;
     }
 
     private static void paintLock(Graphics2D g, float x, float y) {
@@ -520,12 +551,6 @@ final class UpgradeTreePainter {
         crack.moveTo(left + size * 0.45f, top + size * 0.45f);
         crack.lineTo(left + size * 0.85f, top + size * 0.3f);
         g.draw(crack);
-    }
-
-    private static void paintFooter(Graphics2D g, Footer footer, float height) {
-        g.setColor(footer.warns() ? SHORT : footer.active() ? WHITE : DIM);
-        centred(g, footer.text(), footer.active() ? FOOTER_BOLD : FOOTER_FONT, UpgradeTreeLayout.WIDTH / 2f,
-                height - 5f);
     }
 
     private static void centred(Graphics2D g, String text, Font font, float x, float baseline) {

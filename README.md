@@ -111,8 +111,8 @@ Mouse: move to preview placement, click to place or to select a placed tower. In
 hovering a node shows what it does and what a click would do; a click buys it with every node it
 needs first, in one payment or not at all, and a right-click on an owned node downgrades it (after a
 confirmation, unless all of it refunds in full) with every node that depends on it. Between waves, a click on a
-cluster's other member switches to it. Each open tier's strip has a **Buy singles** button, the same as its digit
-key: it buys, left to right, each of the tier's nodes in no cluster that is on offer and affordable. Click a moving enemy, invisible ones too (when not placing a
+cluster's other member switches to it. A click on an open tier's numeral strip, whose foot shows its digit key, does
+what that key does: it buys, left to right, each of the tier's nodes in no cluster that is on offer and affordable. Click a moving enemy, invisible ones too (when not placing a
 tower), to inspect it: the side panel shows its live health, stats, effects and traits, updating even while paused,
 and keeps a "Killed" or "Leaked" line after it's gone until your next click. Hovering an enemy in
 the wave preview opens a tooltip of the stats that enemy type spawns with.
@@ -212,7 +212,8 @@ they cost (selling afterwards pays what selling would have) and reopens the choi
 prices are multiples of the tower's price. A tower stands on one plinth step for each tier it has open, and its
 foundation grows wider and richer with each; when a tier opens, the new foundation spreads over the old with a ring
 in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade now. The Upgrades panel shows the tower's XP on
-its title line, each tier as a band with its numeral, and a locked tier's XP toward its gate on the band's strip.
+its title line, each tier as a band with its numeral, and under a locked tier's band a line filling with the XP
+toward its gate.
 A round node changes a number and a square one adds an ability; where a tree holds two builds, one leans left and
 the other right. Where the builds are the two members of a cluster (the Burst's Stormcaller and Hexer), their
 nodes share slots: a slot shows the picked side's node, the hovered side's while you hover one, and a dashed `?`

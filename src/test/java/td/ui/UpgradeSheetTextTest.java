@@ -20,7 +20,6 @@ import td.ui.render.SheetLine.Row;
 import td.util.GameWorld;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static td.fixtures.TierTrees.A1;
@@ -217,8 +216,6 @@ class UpgradeSheetTextTest {
 
         assertThat(sheet.lines()).contains(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
                 TermText.of("Short $" + (path.total() - 1))));
-        assertThat(UpgradeSheetText.footer(Optional.of(UpgradeHover.of(MID, fresh, this.world))))
-                .isEqualTo("2 steps · $" + path.total() + " · short $" + (path.total() - 1));
     }
 
     @Test
@@ -227,10 +224,8 @@ class UpgradeSheetTextTest {
         this.world.economy().startEconomy(1, 5);
         this.world.economy().setFreeBuild(true);
 
-        UpgradeHover hover = UpgradeHover.of(MID, fresh, this.world);
         InfoSheet sheet = this.sheet(fresh, MID);
 
-        assertThat(UpgradeSheetText.footerWarns(Optional.of(hover))).isFalse();
         assertThat(sheet.lines()).contains(SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET,
                 TermText.of("Click to buy all 2")));
     }
@@ -239,27 +234,22 @@ class UpgradeSheetTextTest {
     void aBlockedPathNamesTheStepThatStopsIt() {
         FakeTower novice = this.choosing(0);
 
-        UpgradePath path = TREE.planPath(A2, novice, this.world);
         InfoSheet sheet = this.sheet(novice, A2);
 
         assertThat(sheet.lines()).contains(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
                 TermText.of("Blocked: " + TIER_ONE.displayName() + " needs more XP")));
-        assertThat(UpgradeSheetText.footer(Optional.of(UpgradeHover.of(A2, novice, this.world))))
-                .isEqualTo("3 steps · $" + path.total() + " · blocked: XP");
     }
 
     @Test
-    void downgradingWhatNoWaveHasUsedRefundsItInFullAndTheFooterSaysSo() {
+    void downgradingWhatNoWaveHasUsedRefundsItInFull() {
         FakeTower fresh = this.choosing(0, LONE);
-        Optional<UpgradeHover> hover = Optional.of(UpgradeHover.of(LONE, fresh, this.world));
+        UpgradeHover.Downgrading downgrading = (UpgradeHover.Downgrading) UpgradeHover.of(LONE, fresh, this.world);
 
-        InfoSheet sheet = UpgradeSheetText.downgradeConfirmation((UpgradeHover.Downgrading) hover.get(), TREE);
+        InfoSheet sheet = UpgradeSheetText.downgradeConfirmation(downgrading, TREE);
 
         assertThat(sheet.lines()).contains(Row.toned(Glyph.CASH, Palette.TERM_STATUS_CASH, "Refund 100%",
                 "+$" + LONE.price()));
         assertThat(sheet.lines()).noneMatch(line -> line instanceof Row row && row.label().equals("Refund 75%"));
-        assertThat(UpgradeSheetText.footer(hover)).endsWith(" · full");
-        assertThat(UpgradeSheetText.footerWarns(hover)).isFalse();
     }
 
     @Test
@@ -274,7 +264,6 @@ class UpgradeSheetTextTest {
         assertThat(sheet.lines()).containsSubsequence(
                 Row.toned(Glyph.CASH, Palette.TERM_STATUS_CASH, "Refund 100%", "+$" + A2.price()),
                 Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund 75%", "+$" + downgrading.refund().shared()));
-        assertThat(UpgradeSheetText.footer(Optional.of(downgrading))).doesNotContain("full");
     }
 
     @Test
@@ -290,8 +279,6 @@ class UpgradeSheetTextTest {
                 Row.toned(Glyph.CHEVRON, Palette.UPGRADE_GATE_MET, "Refund 75%", "+$" + downgrading.refund().total()),
                 Row.plain(Glyph.LOCK, "Reopens", ""),
                 Row.plain(Glyph.DOT, B1.displayName() + " line", ""));
-        assertThat(UpgradeSheetText.footer(Optional.of(downgrading)))
-                .isEqualTo("Right-click: downgrade 1 · +$" + downgrading.refund().total());
         assertThat(UpgradeSheetText.downgradeButton(downgrading))
                 .isEqualTo("Downgrade ( +$" + downgrading.refund().total() + " )");
     }
@@ -300,7 +287,6 @@ class UpgradeSheetTextTest {
     void aSwitchsHoverNamesTheMemberItReplacesAndWhatItSellsBack() {
         FakeTower picked = this.choosing(TIER_ONE_XP, A2);
         WorldFixtures.passAWave(this.world);
-        UpgradeHover.Switching switching = (UpgradeHover.Switching) UpgradeHover.of(B1, picked, this.world);
 
         InfoSheet sheet = this.sheet(picked, B1);
 
@@ -309,27 +295,18 @@ class UpgradeSheetTextTest {
                 Row.plain(Glyph.CROSS, "Sells back", ""),
                 Row.plain(Glyph.DOT, A2.displayName(), "$" + A2.price()),
                 SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET, TermText.of("Click to switch")));
-        assertThat(UpgradeSheetText.footer(Optional.of(switching)))
-                .isEqualTo("Click: switch · sells 1 · +$" + switching.refund().total());
     }
 
     @Test
-    void whileAWaveIsOutASwitchAndADowngradeSayTheyWaitAndTheFooterWarns() {
+    void whileAWaveIsOutASwitchAndADowngradeSayTheyWait() {
         FakeTower picked = this.choosing(0, A1);
         this.world.waves().announce(0);
-        Optional<UpgradeHover> switching = Optional.of(UpgradeHover.of(B1, picked, this.world));
-        Optional<UpgradeHover> downgrading = Optional.of(UpgradeHover.of(A1, picked, this.world));
 
-        assertThat(UpgradeSheetText.footer(switching)).isEqualTo(UpgradeSheetText.BETWEEN_WAVES);
-        assertThat(UpgradeSheetText.footer(downgrading)).isEqualTo(UpgradeSheetText.BETWEEN_WAVES);
-        assertThat(UpgradeSheetText.footerWarns(switching)).isTrue();
-        assertThat(this.sheet(picked, B1).lines()).contains(SheetLine.Sentence.marked(Glyph.CROSS,
-                Palette.UPGRADE_GATE_UNMET, TermText.of(UpgradeSheetText.BETWEEN_WAVES)));
-    }
+        SheetLine waits = SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
+                TermText.of(UpgradeSheetText.BETWEEN_WAVES));
 
-    @Test
-    void withNothingHoveredTheFooterSaysWhatTheButtonsDo() {
-        assertThat(UpgradeSheetText.footer(Optional.empty())).isEqualTo("Click: buy · Right-click: downgrade");
+        assertThat(this.sheet(picked, B1).lines()).contains(waits);
+        assertThat(this.sheet(picked, A1).lines()).contains(waits);
     }
 
     @Test
@@ -340,8 +317,21 @@ class UpgradeSheetTextTest {
     }
 
     @Test
-    void theSinglesFooterCountsWhatTheButtonBuysAndItsTotal() {
-        assertThat(UpgradeSheetText.singlesFooter(1, 5)).isEqualTo("1 single · $5");
-        assertThat(UpgradeSheetText.singlesFooter(3, 24)).isEqualTo("3 singles · $24");
+    void theSinglesHoverListsWhatTheStripBuysWithItsTotalAndSaysWhenTheCreditsCoverNone() {
+        InfoSheet affordable = UpgradeSheetText.singles(List.of(A1, LONE), "1", false);
+        InfoSheet shortOfCash = UpgradeSheetText.singles(List.of(A1), "1", true);
+
+        assertThat(affordable.lines()).containsSubsequence(
+                new SheetLine.Title(Glyph.CASH, Palette.TERM_STATUS_CASH, "Buy singles", "$" + (A1.price() + LONE.price())),
+                Row.plain(Glyph.DOT, A1.displayName(), "$" + A1.price()),
+                Row.plain(Glyph.DOT, LONE.displayName(), "$" + LONE.price()));
+        assertThat(shortOfCash.lines()).contains(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
+                TermText.of("Short of credits")));
+    }
+
+    @Test
+    void anEmptySharedSlotsHoverNamesTheMembersToPickFrom() {
+        assertThat(UpgradeSheetText.pickFirst(List.of("Left", "Right")).lines()).containsExactly(SheetLine.Sentence
+                .marked(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET, TermText.of("Pick Left or Right first")));
     }
 }
