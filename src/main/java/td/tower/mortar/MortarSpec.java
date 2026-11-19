@@ -57,8 +57,4 @@ public record MortarSpec(Reach reach, MagazineSpec magazine, HeavyRider heavy, P
     public MortarSpec withDeepCrack() {
         return new MortarSpec(this.reach, this.magazine, this.heavy, this.payload, this.volley, this.leadsTarget, true);
     }
-
-    public Viewpoint view() {
-        return this.reach.view();
-    }
 }
