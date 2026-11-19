@@ -15,6 +15,7 @@ import td.util.GameWorld;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,6 +43,10 @@ class UpgradeTreeLayoutTest {
             tier(row(node("either", 0.5f), cluster("Twins", 3f))),
             tier(row(node("far", 3f))),
             tier());
+
+    private static final UpgradeNode BY_LEFT = UpgradeNode.of("by.left", "By Left", 10).inTier(1).after(LEFT);
+    private static final UpgradeNode BY_RIGHT = UpgradeNode.of("by.right", "By Right", 10).inTier(1).after(RIGHT);
+    private static final UpgradeTree SIDES = UpgradeTree.of(LEFT, RIGHT, BY_LEFT, BY_RIGHT, SOLO).withCluster(PAIR);
 
     private final GameWorld context = WorldFixtures.newWorld();
 
@@ -128,20 +133,56 @@ class UpgradeTreeLayoutTest {
         assertThat(layout.leftToRight(List.of(SOLO, RIGHT, LEFT))).containsExactly(LEFT, RIGHT, SOLO);
     }
 
-    /** Every pair of nodes that touch, and every node a frame it isn't in covers. */
+    @Test
+    void nodesBehindDifferentMembersOfOneClusterShareASlotThatShowsThePickedOrHoveredSide() {
+        UpgradeTreeLayout layout = UpgradeTreeLayout.of(SIDES, UpgradeTreePlan.of(
+                tier(row(cluster("Pair", 0f), node("solo", 3f))),
+                tier(row(node("by.left", 1f), node("by.right", 1f))), tier(), tier()));
+
+        UpgradeTreeLayout.Showing none = layout.showing(_ -> false, Optional.empty());
+        UpgradeTreeLayout.Showing picked = layout.showing(RIGHT::equals, Optional.empty());
+        UpgradeTreeLayout.Showing previewed = layout.showing(RIGHT::equals, Optional.of(LEFT));
+
+        assertThat(layout.shared()).singleElement().satisfies(slot -> assertThat(slot.cluster()).isEqualTo(PAIR));
+        assertThat(none.hidden()).containsExactlyInAnyOrder(BY_LEFT, BY_RIGHT);
+        assertThat(none.empty()).hasSize(1);
+        assertThat(picked.hidden()).containsExactly(BY_LEFT);
+        assertThat(picked.empty()).isEmpty();
+        assertThat(previewed.hidden()).containsExactly(BY_RIGHT);
+    }
+
+    @Test
+    void nodesNotBehindDifferentMembersOfOneClusterMayNotShareASlot() {
+        UpgradeTreePlan onAMember = UpgradeTreePlan.of(tier(row(cluster("Pair", 0f), node("solo", 0f))),
+                tier(row(node("by.left", 1f), node("by.right", 2f))), tier(), tier());
+
+        assertThatThrownBy(() -> UpgradeTreeLayout.of(SIDES, onAMember)).hasMessageContaining("share a slot");
+    }
+
+    /**
+     * Every pair of nodes that touch, and every node a frame it isn't in covers, but for the nodes of a shared slot,
+     * which only ever show one at a time.
+     */
     private static List<String> overlaps(UpgradeTreeLayout layout) {
         List<String> found = new ArrayList<>();
         List<Map.Entry<UpgradeNode, Spot>> spots = List.copyOf(layout.spots().entrySet());
         for (int i = 0; i < spots.size(); i++) {
             Spot a = spots.get(i).getValue();
+            UpgradeNode node = spots.get(i).getKey();
             for (int j = i + 1; j < spots.size(); j++) {
                 Spot b = spots.get(j).getValue();
-                if (Math.abs(a.x() - b.x()) < UpgradeTreeLayout.NODE && Math.abs(a.y() - b.y()) < UpgradeTreeLayout.NODE) {
-                    found.add(spots.get(i).getKey().id() + " / " + spots.get(j).getKey().id());
+                UpgradeNode other = spots.get(j).getKey();
+                boolean shared = layout.shared().stream().anyMatch(slot -> slot.bySide().containsValue(node)
+                        && slot.bySide().containsValue(other));
+                if (!shared && Math.abs(a.x() - b.x()) < UpgradeTreeLayout.NODE
+                        && Math.abs(a.y() - b.y()) < UpgradeTreeLayout.NODE) {
+                    found.add(node.id() + " / " + other.id());
                 }
             }
             for (UpgradeTreeLayout.Frame frame : layout.frames()) {
-                boolean member = frame.cluster().contains(spots.get(i).getKey().id());
+                boolean member = frame.cluster().contains(node.id()) || layout.shared().stream()
+                        .anyMatch(slot -> slot.bySide().containsValue(node) && slot.bySide().values().stream()
+                                .anyMatch(sharer -> frame.cluster().contains(sharer.id())));
                 if (!member && a.x() + a.size() / 2 > frame.box().left() && a.x() - a.size() / 2 < frame.box().right()
                         && a.y() + a.size() / 2 > frame.box().top() && a.y() - a.size() / 2 < frame.box().bottom()) {
                     found.add(spots.get(i).getKey().id() + " in " + frame.cluster().name());

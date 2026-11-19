@@ -9,7 +9,9 @@ import static td.ui.UpgradeTreePlan.tier;
 
 /**
  * Every tower's hand-placed Upgrades panel. Where a tree holds two builds, one build's nodes lean left, the other's
- * right, and what serves both sits between; the lean wins over a straight link. A slot runs from 0 to a little over 6.
+ * right, and what serves both sits between; the lean wins over a straight link. Where the builds are the two members
+ * of a cluster, their nodes may share slots instead, so each tier keeps to one row. A slot runs from 0 to a little
+ * over 6.
  */
 final class UpgradeTreePlans {
 
@@ -23,14 +25,13 @@ final class UpgradeTreePlans {
     private static final UpgradeTreePlan SPLASH = UpgradeTreePlan.of(
             tier(row(node("base.range", 0f), node("splash.wide_charge", 1f), node("splash.flint_stones", 2f))),
             tier(row(node("splash.arc", 0f), cluster("Stormcaller or Hexer", 1.6f), cluster("Hex", 4f))),
-            tier(row(node("splash.short_circuit", 0f), node("splash.conductor", 1f), node("splash.heavy_stones", 2.4f),
-                            node("base.range.2", 3.4f), node("splash.agony", 5.25f), node("splash.contagion", 6.25f)),
-                    row(cluster("Arc's path", 0f), node("splash.deep_doom", 4f), node("splash.blight_cloud", 5f))),
-            tier(row(node("splash.high_voltage", 0f), node("splash.feedback", 1f), node("splash.quick_hands", 2.4f),
-                            node("splash.piercing_stones", 3.4f), node("splash.choking_blight", 5f),
-                            node("splash.twin_hex", 6.15f)),
-                    row(cluster("Storm", 0.5f), node("splash.soul_harvest", 3.4f),
-                            node("splash.hex_of_inversion", 4.4f))));
+            tier(row(node("base.range.2", 0f), node("splash.heavy_stones", 1f), node("splash.short_circuit", 2.4f),
+                    node("splash.agony", 2.4f), node("splash.conductor", 3.4f), node("splash.contagion", 3.4f),
+                    cluster("Arc's path", 4.4f), node("splash.deep_doom", 4.4f), node("splash.blight_cloud", 5.4f))),
+            tier(row(node("splash.quick_hands", 0f), node("splash.piercing_stones", 1f),
+                    node("splash.high_voltage", 2.4f), node("splash.soul_harvest", 2.4f), node("splash.feedback", 3.4f),
+                    node("splash.hex_of_inversion", 3.4f), cluster("Storm", 4.4f), node("splash.twin_hex", 4.4f),
+                    node("splash.choking_blight", 5.4f))));
 
     private static final UpgradeTreePlan MORTAR = UpgradeTreePlan.of(
             tier(row(node("mortar.big_bore", 0f), node("base.range", 2f), node("mortar.heavy_charge", 3f),

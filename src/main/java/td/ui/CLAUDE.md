@@ -128,7 +128,9 @@ keeps the seam honest.
   never a change to flash.
 - The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) at the places `UpgradeTreeLayout` takes
   from the tower's hand-made `UpgradeTreePlans` row, scaled to fit, never scrolled. Every tower has a row, and it
-  places every node once; nothing in the panel is special to one tower. A node's look is an `UpgradeNodeState`, and
+  places every node once; nothing in the panel is special to one tower. Two nodes share a slot only when they come
+  after different members of one cluster: the slot shows the picked or hovered member's node, else stands empty. A
+  node's look is an `UpgradeNodeState`, and
   its hover is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).
 - A question is a `ConfirmPopup` on the popup layer, never a platform dialog.
 - A key chip shows the binding its key runs, never a copy: a tower's `placementKey`, a tier's `GameKey.singlesKey`,
