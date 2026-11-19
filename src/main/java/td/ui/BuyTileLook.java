@@ -28,10 +28,10 @@ final class BuyTileLook {
     }
 
     static final float SIZE = 40f;
-    static final float BORDER = 2f;
-    static final float BORDER_TAKEN = 3f;
+    static final float BORDER = Hud.STROKE;
+    static final float BORDER_TAKEN = Hud.STROKE_STRONG;
     /** A square's corner, as an arc's width. */
-    static final float CORNER = 8f;
+    static final float CORNER = Hud.ARC;
     static final float TAG_HEIGHT = 14f;
 
     private static final Font TAG_FONT = Hud.BODY_FONT;
@@ -41,7 +41,7 @@ final class BuyTileLook {
     private static final Color GLOSS = new Color(141, 141, 144);
     private static final float TICK_WIDTH = 16f;
     private static final float TAG_PAD = 7f;
-    private static final float TAG_ARC = 5f;
+    private static final float TAG_ARC = Hud.ARC_SMALL;
     private static final float BASELINE = 4.5f;
 
     private BuyTileLook() {
@@ -61,11 +61,12 @@ final class BuyTileLook {
         Font font = owned || tone == Tone.BUYABLE ? TAG_BOLD : TAG_FONT;
         g.setFont(font);
         float width = owned ? TICK_WIDTH : g.getFontMetrics().stringWidth(text) + TAG_PAD;
-        Shape tag = new RoundRectangle2D.Float(x - width / 2, y - TAG_HEIGHT / 2, width, TAG_HEIGHT, TAG_ARC, TAG_ARC);
+        Shape tag = new RoundRectangle2D.Float(Math.round(x - width / 2) + 0.5f, y - TAG_HEIGHT / 2 + 0.5f,
+                Math.round(width) - 1f, TAG_HEIGHT - 1f, TAG_ARC, TAG_ARC);
         g.setColor(TAG_FILL);
         g.fill(tag);
         g.setColor(owned ? accent : TAG_BORDER);
-        g.setStroke(new BasicStroke(0.8f));
+        g.setStroke(new BasicStroke(Hud.STROKE));
         g.draw(tag);
         g.setColor(switch (tone) {
             case OWNED -> accent;

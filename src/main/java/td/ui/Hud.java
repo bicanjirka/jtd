@@ -7,6 +7,7 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonModel;
 import javax.swing.Icon;
 import javax.swing.JComponent;
+import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -21,8 +22,8 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.io.Serial;
 
 /**
  * The HUD's look: palette, fonts, panel border, and how every control paints itself.
@@ -67,11 +68,20 @@ public final class Hud {
     static final Color RAISED = new Color(23, 23, 23);
     static final Color FILL_HOVER = new Color(41, 41, 42);
     static final Color FILL_PRESSED = new Color(66, 66, 67);
-    static final Color FILL_SELECTED = new Color(57, 57, 58);
     static final Color CHIP_BORDER = new Color(141, 141, 144);
     /** A price the player can't pay now. */
     static final Color SHORT = new Color(255, 107, 107);
     static final Font CHIP_FONT = font(Font.BOLD, MICRO);
+    /** Every idle border: a control's, a tile's, a node's, an icon's, a chip's, a tag's, a panel's. */
+    static final float STROKE = 1f;
+    /** A border that is selected, owned or active: one step heavier than {@link #STROKE}. */
+    static final float STROKE_STRONG = 2f;
+    /** The corner of a control, tile, node or icon, as an arc's width. */
+    static final float ARC = 8f;
+    /** The corner of a chip or tag, as an arc's width. */
+    static final float ARC_SMALL = 5f;
+    /** How far a selected or owned thing's fill leans from the ground toward its accent. */
+    static final float SELECTED_TINT = 0.25f;
     static final Font PRICE_FONT = font(Font.BOLD, MICRO);
     /** Padding inside a control, since {@link #paintControl} draws the border. */
     private static final Border CONTROL_PADDING = new EmptyBorder(3, 8, 3, 8);
@@ -79,9 +89,7 @@ public final class Hud {
     static final int CHIP_SIZE = 12;
     private static final int CHIP_PADDING = 2;
     private static final int CHIP_GAP = 2;
-    private static final float CHIP_ARC = 6f;
-    private static final float DIM_BORDER = 0.4f;
-    private static final float DIM_CHIP = 0.45f;
+    private static final float DIM_BORDER = 0.65f;
     private static final float HOVER_LIGHTEN = 0.35f;
     /** Inset and minimum gap of a row-style face's two parts. */
     private static final int ROW_PADDING = 6;
@@ -135,10 +143,10 @@ public final class Hud {
 
     /**
      * Draws a control: a flat fill reacting to the mouse, its border, its icon or else its text, centred, and its
-     * key chip in the top-left corner. A button is square with a neutral border; a tile is drawn as an upgrade node
-     * is, its accent for a border and its price on a tag hanging from its bottom edge. Hover brightens the border;
-     * selected thickens a tile's, and fills a button with its colour
-     * under dark text, which no hover can be mistaken for. A button with an icon and a
+     * key chip in the top-left corner. A button has a neutral border; a tile is drawn as an upgrade node is, its accent
+     * for a border and its price on a tag hanging from its bottom edge. Hover brightens the border; selected, on a
+     * button and a tile alike, thickens it in the accent (a button's selected colour) and tints the fill toward it.
+     * A button with an icon and a
      * row-style text (one with a tab) paints the icon first and the row beside it. Text keeps clear of a chip when
      * there is room beside it.
      */
@@ -153,14 +161,13 @@ public final class Hud {
 
         g2.setColor(BACKGROUND);
         g2.fillRect(0, 0, width, height);
-        boolean thick = face.isTile() && enabled && model.isSelected();
-        float stroke = strokeOf(face, thick);
+        float stroke = enabled && model.isSelected() ? STROKE_STRONG : STROKE;
         int body = face.price().isPresent() ? height - BuyTileLook.tagOverhang() : height;
         g2.setColor(fillFor(face, model, enabled));
-        g2.fill(outline(face, width, body, 0f));
+        g2.fill(outline(width, body, 0f));
         g2.setColor(borderFor(face, model, enabled));
         g2.setStroke(new BasicStroke(stroke));
-        g2.draw(outline(face, width, body, stroke / 2));
+        g2.draw(outline(width, body, stroke / 2));
 
         Icon icon = iconFor(button, enabled);
         String text = button.getText();
@@ -189,18 +196,10 @@ public final class Hud {
             }
         }
         if (face.hasChip()) {
-            paintChip(g2, face.chip(), CHIP_INSET, CHIP_INSET, chipBorderFor(face, enabled), chipInkFor(face, enabled));
+            paintChip(g2, face.chip(), CHIP_INSET, CHIP_INSET, chipBorderFor(enabled), chipInkFor(face, enabled));
         }
         face.price().ifPresent(price -> paintPriceTag(g2, face, enabled, width / 2f, body, price));
         g2.dispose();
-    }
-
-    /** A tile's border as wide as an upgrade node's on screen; a button's a hairline. */
-    private static float strokeOf(ControlFace face, boolean thick) {
-        if (!face.isTile()) {
-            return thick ? 2f : 1f;
-        }
-        return thick ? BuyTileLook.BORDER_TAKEN : BuyTileLook.BORDER;
     }
 
     private static void paintPriceTag(Graphics2D g2, ControlFace face, boolean enabled, float x, int edge, int price) {
@@ -230,7 +229,17 @@ public final class Hud {
         return Math.max(CHIP_SIZE, metrics.stringWidth(label) + 2 * CHIP_PADDING + 2);
     }
 
-    /** An outlined keycap at ({@code x}, {@code y}): black inside, {@code border} round it, the label in {@code ink}. */
+    /** {@link #paintChip} centred across {@code centre}, its top at {@code y}. */
+    static void paintChipCentred(Graphics2D g2, String label, float centre, float y, Color border, Color ink) {
+        paintChip(g2, label, centre - chipWidth(g2.getFontMetrics(CHIP_FONT), label) / 2f, y, border, ink);
+    }
+
+    /**
+     * The one keycap every key is shown in, at ({@code x}, {@code y}): dark inside, {@code border} round it, the label
+     * in {@code ink}. A chip's state is only its colours: {@link #CHIP_BORDER} and {@link #FOREGROUND} while its key
+     * works, {@link #SHORT} ink while what it buys can't be paid for, the owner's colour once it is done, and the
+     * disabled greys while it can't be used.
+     */
     static void paintChip(Graphics2D g2, String label, float x, float y, Color border, Color ink) {
         Graphics2D chip = (Graphics2D) g2.create();
         chip.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -238,11 +247,11 @@ public final class Hud {
         chip.setFont(CHIP_FONT);
         FontMetrics metrics = chip.getFontMetrics();
         float width = chipWidth(metrics, label);
-        Shape cap = new RoundRectangle2D.Float(x + 0.5f, y + 0.5f, width - 1, CHIP_SIZE - 1, CHIP_ARC, CHIP_ARC);
+        Shape cap = new RoundRectangle2D.Float(x + 0.5f, y + 0.5f, width - 1, CHIP_SIZE - 1, ARC_SMALL, ARC_SMALL);
         chip.setColor(BACKGROUND);
         chip.fill(cap);
         chip.setColor(border);
-        chip.setStroke(new BasicStroke(1f));
+        chip.setStroke(new BasicStroke(STROKE));
         chip.draw(cap);
         chip.setColor(ink);
         chip.drawString(label, x + (width - metrics.stringWidth(label)) / 2f,
@@ -250,15 +259,42 @@ public final class Hud {
         chip.dispose();
     }
 
-    /** A control's outline grown inward by {@code inset}: square for a button, rounded for a tile. */
-    private static Shape outline(ControlFace face, int width, int height, float inset) {
-        float w = width - 2 * inset;
-        float h = height - 2 * inset;
-        if (!face.isTile()) {
-            return new Rectangle2D.Float(inset, inset, w, h);
+    /** A control's outline grown inward by {@code inset}, with the one corner of {@link #ARC}. */
+    private static Shape outline(int width, int height, float inset) {
+        float arc = Math.max(0f, ARC - 2 * inset);
+        return new RoundRectangle2D.Float(inset, inset, width - 2 * inset, height - 2 * inset, arc, arc);
+    }
+
+    /** The rounded one-pixel outline of a control that is not a button, such as a text field. */
+    static Border controlBorder(int padTopBottom, int padSides) {
+        return BorderFactory.createCompoundBorder(new RoundedLineBorder(), new EmptyBorder(padTopBottom, padSides,
+                padTopBottom, padSides));
+    }
+
+    /** {@link #STROKE} in {@link #BORDER_IDLE} with the control corner, inside a one-pixel inset. */
+    private static final class RoundedLineBorder extends AbstractBorder {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void paintBorder(Component component, Graphics g, int x, int y, int width, int height) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(BORDER_IDLE);
+                g2.setStroke(new BasicStroke(STROKE));
+                g2.draw(new RoundRectangle2D.Float(x + 0.5f, y + 0.5f, width - 1f, height - 1f, ARC, ARC));
+            } finally {
+                g2.dispose();
+            }
         }
-        float arc = Math.max(0f, BuyTileLook.CORNER - 2 * inset);
-        return new RoundRectangle2D.Float(inset, inset, w, h, arc, arc);
+
+        @Override
+        public Insets getBorderInsets(Component component, Insets insets) {
+            insets.set(1, 1, 1, 1);
+            return insets;
+        }
     }
 
     static Color borderFor(ControlFace face, ButtonModel model, boolean enabled) {
@@ -285,18 +321,16 @@ public final class Hud {
         return face.dimmed() ? withAlpha(accent, DIM_BORDER) : accent;
     }
 
-    private static Color chipBorderFor(ControlFace face, boolean enabled) {
-        if (!enabled) {
-            return BORDER_DISABLED;
-        }
-        return face.accent().map(accent -> withAlpha(accent, face.dimmed() ? DIM_CHIP / 2 : 0.6f)).orElse(CHIP_BORDER);
+    private static Color chipBorderFor(boolean enabled) {
+        return enabled ? CHIP_BORDER : BORDER_DISABLED;
     }
 
+    /** A chip's ink: plain, red while a tile's price can't be paid, grey while disabled. */
     private static Color chipInkFor(ControlFace face, boolean enabled) {
         if (!enabled) {
             return TEXT_DISABLED;
         }
-        return face.accent().map(accent -> face.dimmed() ? withAlpha(accent, DIM_CHIP) : accent).orElse(FOREGROUND);
+        return face.dimmed() ? SHORT : FOREGROUND;
     }
 
     /** The colour a loaded level gives the HUD: its card colour, in the tint that reads as small text. */
@@ -333,18 +367,14 @@ public final class Hud {
             return FILL_PRESSED;
         }
         if (model.isSelected()) {
-            return face.isTile() ? FILL_SELECTED : face.selectedColor().orElse(FOREGROUND);
+            return mix(BACKGROUND, face.accent().or(face::selectedColor).orElse(FOREGROUND), SELECTED_TINT);
         }
         return model.isRollover() ? FILL_HOVER : BACKGROUND;
     }
 
-    /** The text colour on {@link #fillFor}: {@code plain}, unless the fill is a selected button's own colour. */
+    /** The text colour on {@link #fillFor}: {@code plain}, or the disabled grey. */
     static Color inkFor(ControlFace face, ButtonModel model, boolean enabled, Color plain) {
-        if (!enabled) {
-            return TEXT_DISABLED;
-        }
-        boolean held = model.isPressed() && model.isArmed();
-        return model.isSelected() && !face.isTile() && !held ? BACKGROUND : plain;
+        return enabled ? plain : TEXT_DISABLED;
     }
 
     private static Icon iconFor(AbstractButton button, boolean enabled) {

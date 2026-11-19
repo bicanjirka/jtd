@@ -60,7 +60,7 @@ public class PanelLevelSelect extends JPanel {
     private static final Color STAT_LABEL = Hud.BORDER_HOVER;
     /** Cell size the floor's motif is drawn at: finer than the board's, since the preview is smaller. */
     private static final int PREVIEW_MOTIF_SCALE = 16;
-    private static final int CARD_BORDER = 2;
+    private static final int CARD_BORDER = 1;
     private static final int CHIP_INSET = 8;
     private static final int KEYED_CARDS = 9;
     /** A second row of cards leaves too little height for a card's preview, name and stats at the menu's size. */
@@ -140,7 +140,7 @@ public class PanelLevelSelect extends JPanel {
                 super.paintChildren(g);
                 if (index < KEYED_CARDS) {
                     Hud.paintChip((Graphics2D) g, String.valueOf(index + 1), CHIP_INSET, CHIP_INSET,
-                            Hud.withAlpha(accent, 0.6f), accent);
+                            Hud.CHIP_BORDER, Hud.FOREGROUND);
                 }
             }
         };

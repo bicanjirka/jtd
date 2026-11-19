@@ -2,7 +2,6 @@ package td.ui;
 
 import td.util.ThreadConfined;
 
-import javax.swing.BorderFactory;
 import javax.swing.JTextField;
 import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.BadLocationException;
@@ -10,7 +9,9 @@ import javax.swing.text.BadLocationException;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.io.Serial;
 
 /**
@@ -39,7 +40,8 @@ final class HudTextField extends JTextField {
         setCaretColor(Hud.FOREGROUND);
         setSelectionColor(SELECTION);
         setSelectedTextColor(Hud.FOREGROUND);
-        setBorder(BorderFactory.createCompoundBorder(Hud.outlineBorder(), BorderFactory.createEmptyBorder(2, 4, 2, 4)));
+        setBorder(Hud.controlBorder(2, 4));
+        setOpaque(false);
     }
 
     /** Muted text drawn after the caret, which Tab can accept; empty for none. */
@@ -58,8 +60,17 @@ final class HudTextField extends JTextField {
         }
     }
 
+    /** Its fill inside the rounded border, which an opaque field would square off. */
     @Override
     protected void paintComponent(Graphics g) {
+        Graphics2D fill = (Graphics2D) g.create();
+        try {
+            fill.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            fill.setColor(getBackground());
+            fill.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), Hud.ARC, Hud.ARC));
+        } finally {
+            fill.dispose();
+        }
         super.paintComponent(g);
         if (!this.chip.isEmpty()) {
             Hud.paintChip((Graphics2D) g, this.chip, 1, 1, Hud.CHIP_BORDER, Hud.FOREGROUND);
