@@ -39,16 +39,19 @@ public final class Hud {
     public static final Color FOREGROUND = new Color(234, 234, 239);
     /** Chips, tags, and what is written across a bar. */
     static final int MICRO = 9;
-    /** Panel titles, control labels, captions and fine print. */
+    /** Panel titles and fine print beside a value. */
     static final int CAPTION = 11;
-    /** What is read: sheets, tooltips, the Upgrades panel's words and prices. */
+    /** Everything read: sheets, tooltips, controls, rows, fields, the Upgrades panel's words and prices. */
     static final int BODY = 12;
     /** A number or glyph that is the point of its control. */
     static final int TITLE = 15;
     static final int HEADING = 19;
     static final int DISPLAY = 30;
-    static final Font LABEL_FONT = font(Font.PLAIN, CAPTION);
+    /** A panel's title, and what shares its title line. */
+    static final Font CAPTION_FONT = font(Font.PLAIN, CAPTION);
     static final Font BODY_FONT = font(Font.PLAIN, BODY);
+    /** A control's or label's text: the body size, so nothing read is smaller than the sheets. */
+    static final Font LABEL_FONT = BODY_FONT;
     static final Font GLYPH_FONT = font(Font.PLAIN, TITLE);
     static final Color BORDER_IDLE = new Color(103, 103, 105);
     static final Color BORDER_DISABLED = new Color(62, 62, 63);
@@ -114,7 +117,7 @@ public final class Hud {
     /** The titled border every HUD panel wears. */
     public static Border panelBorder(String title) {
         return BorderFactory.createTitledBorder(outlineBorder(), title, TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION, LABEL_FONT, FOREGROUND);
+                TitledBorder.DEFAULT_POSITION, CAPTION_FONT, FOREGROUND);
     }
 
     /** Shared control setup: colours, font, padding, and no look-and-feel chrome. */
