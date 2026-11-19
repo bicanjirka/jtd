@@ -49,7 +49,7 @@ public enum Affix implements Term {
         @Override
         EnemyDefinition applyTo(EnemyDefinition definition, AffixContext context) {
             return exaltedStats().reduce(definition, (exalted, stat) -> exalted.withBase(stat,
-                    exaltedBase(stat, definition.baseStats().value(stat))), (a, b) -> b);
+                    exaltedBase(stat, definition.baseStats().value(stat))), (_, b) -> b);
         }
 
         @Override

@@ -106,7 +106,7 @@ public record EnemyDefinition(
      */
     public EnemyDefinition withAffixes(List<Affix> written, AffixContext context) {
         EnemyDefinition applied = written.stream().sorted()
-                .reduce(this, (definition, affix) -> affix.applyTo(definition, context), (a, b) -> b);
+                .reduce(this, (definition, affix) -> affix.applyTo(definition, context), (_, b) -> b);
         List<Affix> affixes = new ArrayList<>(this.affixes);
         affixes.addAll(written);
         return new EnemyDefinition(applied.id, applied.displayName, applied.description, applied.baseHealth,
@@ -299,7 +299,7 @@ public record EnemyDefinition(
      * id.
      */
     public EnemyDefinition withTraits(List<? extends TraitTemplate> traits) {
-        return withIdentifiedTraits(traits.stream().<IdentifiedTrait>map(IdentifiedTrait::anonymous).toList());
+        return withIdentifiedTraits(traits.stream().map(IdentifiedTrait::anonymous).toList());
     }
 
     public EnemyDefinition withIdentifiedTraits(List<IdentifiedTrait> traitSlots) {

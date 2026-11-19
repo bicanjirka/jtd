@@ -203,13 +203,13 @@ public class PanelEnemy extends JPanel {
         setForeground(Hud.FOREGROUND);
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent evt) {
-                onResized(evt);
+                onResized();
             }
         });
 
     }
 
-    private void onResized(ComponentEvent evt) {
+    private void onResized() {
         this.recalculateSize();
     }
 
