@@ -12,6 +12,7 @@ import td.tower.TowerFactory;
 import td.tower.TowerTerm;
 import td.util.GameHost;
 import td.util.GameWorld;
+import td.wave.ShapeKeyword;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +26,7 @@ class PictogramCatalogueTest {
     @Test
     void everyTermHasAPictogram() {
         List<String> missing = Stream.<Term[]>of(EffectKind.values(), TowerTerm.values(), TraitTerm.values(),
-                        AbilityTerm.values(), StatusTerm.values(), Affix.values())
+                        AbilityTerm.values(), StatusTerm.values(), Affix.values(), ShapeKeyword.values())
                 .flatMap(Arrays::stream)
                 .map(Term::key)
                 .filter(key -> PictogramCatalogue.of(key).isEmpty())

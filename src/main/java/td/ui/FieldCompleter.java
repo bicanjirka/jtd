@@ -12,39 +12,48 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import java.awt.KeyboardFocusManager;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.io.Serial;
+import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 
 /**
- * Suggests the next token of a field. The best match shows as ghost text that Tab or
- * Right accepts; Down opens the list of every match, and Enter or a click takes a row. Esc closes
- * the list before it leaves the field, Enter with the list closed applies the field as ever, and Tab
- * with nothing typed moves focus on.
+ * Suggests the next token of a field. The best match shows as ghost text that Tab or Right accepts; Down or Up opens
+ * the list of every match, all of it in view, and Enter or a click takes a row. While the list is open the arrows move
+ * in it, Left and Right between its columns. Esc closes the list before it leaves the field, Enter with the list
+ * closed applies the field as ever, and Tab with nothing typed moves focus on. A row of a term or an enemy shows its
+ * glyph, and hovering it opens its card.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class FieldCompleter {
 
-    private static final int MAX_ROWS = 8;
-
     private final HudTextField field;
     private final BiFunction<String, Integer, Result> source;
+    private final CandidateLooks looks;
     private final SuggestionList list;
 
     private Result result = Result.none();
     private boolean open;
+    /** The open list's rows and their looks, set together. */
+    private List<Candidate> shown = List.of();
+    private List<Optional<RowLook>> shownLooks = List.of();
+    private Runnable closeTooltips = () -> {
+    };
 
     /** {@code source} gets the field's text and caret, and answers what could be typed there. */
-    FieldCompleter(HudTextField field, BiFunction<String, Integer, Result> source) {
+    FieldCompleter(HudTextField field, BiFunction<String, Integer, Result> source, CandidateLooks looks) {
         this.field = field;
         this.source = source;
-        this.list = new SuggestionList(index -> Optional.empty(),this::acceptSelected);
+        this.looks = looks;
+        this.list = new SuggestionList(index -> this.shownLooks.get(index), this::acceptSelected);
         field.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, Set.of());
         DocumentListener changes = new DocumentListener() {
             @Override
@@ -78,11 +87,27 @@ final class FieldCompleter {
             }
         });
         this.wrap(KeyEvent.VK_DOWN, () -> this.step(1));
-        this.wrap(KeyEvent.VK_UP, () -> this.open && this.step(-1));
+        this.wrap(KeyEvent.VK_UP, () -> this.step(-1));
         this.wrap(KeyEvent.VK_TAB, this::acceptBest);
-        this.wrap(KeyEvent.VK_RIGHT, this::acceptGhost);
+        this.wrap(KeyEvent.VK_RIGHT, () -> this.open ? this.across(1) : this.acceptGhost());
+        this.wrap(KeyEvent.VK_LEFT, () -> this.open && this.across(-1));
         this.wrap(KeyEvent.VK_ENTER, this::acceptSelected);
         this.wrap(KeyEvent.VK_ESCAPE, this::close);
+    }
+
+    /** Hovering a row of the open list opens its card on {@code tooltips}; closing the list closes it. */
+    void setTooltips(TooltipLayer tooltips) {
+        tooltips.watchSpots(this.list, this::spotAt);
+        this.closeTooltips = tooltips::closeAll;
+    }
+
+    private Optional<TooltipSpot> spotAt(Point point) {
+        OptionalInt row = this.list.rowAt(point);
+        if (row.isEmpty()) {
+            return Optional.empty();
+        }
+        return this.looks.tooltip(this.shown.get(row.getAsInt()))
+                .map(tooltip -> new TooltipSpot(tooltip, this.list.rowBounds(row.getAsInt())));
     }
 
     /** Puts a handler before whatever the key did, which runs when the handler leaves the key alone. */
@@ -116,9 +141,8 @@ final class FieldCompleter {
         if (this.open) {
             if (this.result.candidates().isEmpty()) {
                 this.close();
-            } else {
-                this.list.show(this.result.candidates());
-                this.list.hangUnder(this.field, MAX_ROWS);
+            } else if (!this.result.candidates().equals(this.shown)) {
+                this.showAll();
             }
         }
     }
@@ -131,10 +155,23 @@ final class FieldCompleter {
             this.list.move(delta);
         } else {
             this.open = true;
-            this.list.show(this.result.candidates());
+            this.showAll();
         }
-        this.list.hangUnder(this.field, MAX_ROWS);
         return true;
+    }
+
+    private boolean across(int delta) {
+        this.list.moveAcross(delta);
+        return true;
+    }
+
+    /** Hangs every match, the card of a row it replaces closed. */
+    private void showAll() {
+        this.closeTooltips.run();
+        this.shown = this.result.candidates();
+        this.shownLooks = this.shown.stream().map(this.looks::look).toList();
+        this.list.show(this.shown);
+        this.list.hangInColumnsBy(this.field);
     }
 
     /** The ghost: the best match, when the caret ends a part-typed token that it would lengthen. */
@@ -191,7 +228,11 @@ final class FieldCompleter {
     private boolean close() {
         boolean wasOpen = this.open;
         this.open = false;
+        if (this.list.isHung()) {
+            this.closeTooltips.run();
+        }
         this.list.takeDown();
+        this.shown = List.of();
         return wasOpen;
     }
 }

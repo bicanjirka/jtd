@@ -2,7 +2,10 @@ package td.wave;
 
 import td.enemy.Affix;
 import td.enemy.EnemyCatalog;
+import td.enemy.EnemyDefinition;
 import td.enemy.Rank;
+import td.enemy.RankedEnemy;
+import td.term.Term;
 import td.wave.WaveScriptGrammar.NextWords;
 
 import java.util.ArrayList;
@@ -26,17 +29,46 @@ public final class WaveScriptSuggestions {
     }
 
     /**
-     * One thing that can be typed, and a few words on what it is. A stem is only the start of a
+     * One thing that can be typed, a few words on what it is, and what it names. A stem is only the start of a
      * token, so taking it leaves the caret on the token rather than past it.
      */
-    public record Candidate(String text, String hint, boolean complete) {
+    public record Candidate(String text, String hint, boolean complete, Subject subject) {
 
         public static Candidate token(String text, String hint) {
-            return new Candidate(text, hint, true);
+            return token(text, hint, Subject.syntax());
+        }
+
+        public static Candidate token(String text, String hint, Subject subject) {
+            return new Candidate(text, hint, true, subject);
         }
 
         public static Candidate stem(String text, String hint) {
-            return new Candidate(text, hint, false);
+            return new Candidate(text, hint, false, Subject.syntax());
+        }
+    }
+
+    /** What a candidate names, so a list can show it as what it is. */
+    public sealed interface Subject {
+
+        /** A word of the script's own grammar, naming nothing of the game. */
+        static Subject syntax() {
+            return SyntaxSubject.INSTANCE;
+        }
+
+        /** A word of the grammar. */
+        enum SyntaxSubject implements Subject {
+            INSTANCE
+        }
+
+        record RankSubject(Rank rank) implements Subject {
+        }
+
+        /** A word that is one of the game's terms. */
+        record TermSubject(Term term) implements Subject {
+        }
+
+        /** An enemy as it spawns when nothing ranks it. */
+        record EnemySubject(EnemyDefinition definition, Rank rank) implements Subject {
         }
     }
 
@@ -93,7 +125,7 @@ public final class WaveScriptSuggestions {
         }
         if (next.accepts(NextWords.Kind.RANK)) {
             for (RankKeyword rank : RankKeyword.values()) {
-                all.add(Candidate.token(rank.token(), "rank"));
+                all.add(Candidate.token(rank.token(), "rank", new Subject.RankSubject(rank.rank())));
             }
         }
         if (next.accepts(NextWords.Kind.SPACER)) {
@@ -101,16 +133,20 @@ public final class WaveScriptSuggestions {
         }
         if (next.accepts(NextWords.Kind.SHAPE)) {
             for (ShapeKeyword shape : SHAPES) {
-                all.add(Candidate.token(shape.token(), shape.takesMemberCount() ? "shape, needs a count" : "shape"));
+                all.add(Candidate.token(shape.token(), shape.takesMemberCount() ? "shape, needs a count" : "shape",
+                        new Subject.TermSubject(shape)));
             }
         }
         for (Affix affix : next.affixes()) {
-            all.add(Candidate.token(affix.word(), "affix"));
+            all.add(Candidate.token(affix.word(), "affix", new Subject.TermSubject(affix)));
         }
         for (String id : catalog.ids()) {
-            boolean unique = catalog.ranked(id).isUnique();
+            RankedEnemy enemy = catalog.ranked(id);
+            boolean unique = enemy.isUnique();
             if (next.accepts(unique ? NextWords.Kind.UNIQUE_ENEMY : NextWords.Kind.ENEMY)) {
-                all.add(Candidate.token(id, unique ? "enemy, boss only" : "enemy"));
+                Rank rank = enemy.spawnRank(Rank.GRUNT);
+                all.add(Candidate.token(id, unique ? "enemy, boss only" : "enemy",
+                        new Subject.EnemySubject(enemy.definitionFor(rank), rank)));
             }
         }
         return all;

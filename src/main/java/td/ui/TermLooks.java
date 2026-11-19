@@ -14,6 +14,7 @@ import td.tower.TowerTerm;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.render.IconFace;
 import td.ui.render.Palette;
+import td.wave.ShapeKeyword;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -68,6 +69,7 @@ public final class TermLooks {
         Arrays.stream(AbilityTerm.values()).forEach(term -> looks.put(term.key(), ability(term)));
         Arrays.stream(StatusTerm.values()).forEach(term -> looks.put(term.key(), status(term)));
         Arrays.stream(Affix.values()).forEach(affix -> looks.put(affix.key(), affix()));
+        Arrays.stream(ShapeKeyword.values()).forEach(shape -> looks.put(shape.key(), shape()));
         return Map.copyOf(looks);
     }
 
@@ -140,6 +142,11 @@ public final class TermLooks {
     /** One tone for every affix: the pips on the board say an enemy has one, and their shapes say which. */
     private static TermLook affix() {
         return new TermLook(Palette.AFFIXED, Palette.TERM_FRAME_TRAIT);
+    }
+
+    /** A shape says how a wave sends a slot, so it wears the round's colours. */
+    private static TermLook shape() {
+        return new TermLook(Palette.TERM_STATUS_WAVE, Palette.TERM_FRAME_STATUS);
     }
 
     private static TermLook ability(AbilityTerm term) {

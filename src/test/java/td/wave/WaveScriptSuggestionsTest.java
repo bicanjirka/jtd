@@ -1,11 +1,14 @@
 package td.wave;
 
 import org.junit.jupiter.api.Test;
+import td.enemy.Affix;
 import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
+import td.enemy.Rank;
 import td.enemy.RankedEnemy;
 import td.fixtures.EnemyFixtures;
 import td.wave.WaveScriptSuggestions.Candidate;
+import td.wave.WaveScriptSuggestions.Subject;
 
 import java.util.List;
 
@@ -159,5 +162,26 @@ class WaveScriptSuggestionsTest {
     void aTokenTypedInFullComesBeforeLongerOnesItStarts() {
         assertThat(WaveScriptSuggestions.suggest("e", 1, this.catalog).best()).get()
                 .extracting(Candidate::text).isEqualTo("e");
+    }
+
+    private Subject subjectOf(String text, String token) {
+        return WaveScriptSuggestions.suggest(text, text.length(), this.catalog).candidates().stream()
+                .filter(candidate -> candidate.text().equals(token)).findFirst().orElseThrow().subject();
+    }
+
+    @Test
+    void eachWordNamesWhatItIs() {
+        assertThat(this.subjectOf("", "soldier")).isEqualTo(new Subject.RankSubject(Rank.SOLDIER));
+        assertThat(this.subjectOf("", "flank")).isEqualTo(new Subject.TermSubject(ShapeKeyword.FLANK));
+        assertThat(this.subjectOf("", "armored")).isEqualTo(new Subject.TermSubject(Affix.ARMORED));
+        assertThat(this.subjectOf("", "e")).isEqualTo(Subject.syntax());
+    }
+
+    @Test
+    void anEnemyIsNamedAtTheRankItSpawnsAtWhenNothingRanksIt() {
+        assertThat(this.subjectOf("", "alpha")).isEqualTo(
+                new Subject.EnemySubject(this.catalog.ranked("alpha").definitionFor(Rank.GRUNT), Rank.GRUNT));
+        assertThat(this.subjectOf("", "lord")).isEqualTo(
+                new Subject.EnemySubject(this.catalog.ranked("lord").definitionFor(Rank.BOSS), Rank.BOSS));
     }
 }

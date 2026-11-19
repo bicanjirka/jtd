@@ -11,6 +11,7 @@ import td.tower.TowerFactory;
 import td.tower.TowerTerm;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
+import td.wave.ShapeKeyword;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -106,6 +107,9 @@ class TermWordingTest {
         }
         for (Affix affix : Affix.values()) {
             corpus.add(new Source("affix " + affix, affix.describe(), false));
+        }
+        for (ShapeKeyword shape : ShapeKeyword.values()) {
+            corpus.add(new Source("shape " + shape, shape.describe(), false));
         }
         for (AbilityTerm term : AbilityTerm.values()) {
             corpus.add(new Source("ability " + term, term.describe(), false));
