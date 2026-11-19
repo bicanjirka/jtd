@@ -20,10 +20,6 @@ public record SeekerSpec(Reach reach, Release release, boolean feeds, BroodSpec 
         return new SeekerSpec(Reach.visible(view), Release.NONE, false, BroodSpec.frostOnly(), IceRider.NONE);
     }
 
-    public SeekerSpec withReach(Reach reach) {
-        return new SeekerSpec(reach, this.release, this.feeds, this.brood, this.ice);
-    }
-
     public SeekerSpec withRelease(Release release) {
         return new SeekerSpec(this.reach, release, this.feeds, this.brood, this.ice);
     }
