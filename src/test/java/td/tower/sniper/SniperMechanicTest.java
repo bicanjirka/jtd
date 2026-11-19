@@ -94,15 +94,15 @@ class SniperMechanicTest {
     }
 
     @Test
-    void headhunterAddsDamageAgainstAnEliteAndABossButNotARankBelow() {
+    void headhunterRaisesCritChanceAgainstAnEliteAndABossButNotARankBelow() {
         HeadhunterMechanic mechanic = new HeadhunterMechanic();
 
-        float veteran = mechanic.shape(BASE, FakeEnemyMob.at(0, 0).ranked(Rank.VETERAN)).bonusDamage();
-        float elite = mechanic.shape(BASE, FakeEnemyMob.at(0, 0).ranked(Rank.ELITE)).bonusDamage();
-        float boss = mechanic.shape(BASE, FakeEnemyMob.at(0, 0).ranked(Rank.BOSS)).bonusDamage();
+        float veteran = mechanic.shape(BASE, FakeEnemyMob.at(0, 0).ranked(Rank.VETERAN)).attack().critChance();
+        float elite = mechanic.shape(BASE, FakeEnemyMob.at(0, 0).ranked(Rank.ELITE)).attack().critChance();
+        float boss = mechanic.shape(BASE, FakeEnemyMob.at(0, 0).ranked(Rank.BOSS)).attack().critChance();
 
-        assertThat(veteran).isZero();
-        assertThat(elite).isPositive();
+        assertThat(veteran).isEqualTo(BASE.attack().critChance());
+        assertThat(elite).isGreaterThan(veteran);
         assertThat(boss).isEqualTo(elite);
     }
 }

@@ -72,6 +72,7 @@ public final class TowerBench {
     static final String FULL = "full";
     static final String WITHOUT = "without";
     static final String WITHOUT_AT_TOP = "without-top";
+    static final String STRATEGY = "strategy";
     /** What ends the name of a scenario fought beside the partners. */
     static final String BESIDE_MARK = "+";
     private static final String PAGE = "tower-bench";
@@ -455,6 +456,10 @@ public final class TowerBench {
                     }
                 }
             }
+        }
+        for (StrategyBuilds.Strategy strategy : StrategyBuilds.of(type)) {
+            String label = label(STRATEGY, strategy.name());
+            builds.put(label, Build.of(label, STRATEGY, resolve(type, strategy.nodes())));
         }
         return List.copyOf(builds.values());
     }
