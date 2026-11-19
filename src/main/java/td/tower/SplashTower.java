@@ -92,7 +92,7 @@ import static td.tower.upgrade.MechanicCatalogue.entry;
 public final class SplashTower extends AbstractTower {
 
     public static final int PRICE = 15;
-    public static final float DAMAGE_POINTS = 14f;
+    public static final float DAMAGE_POINTS = 15f;
     public static final float RANGE = 2.5f;
     public static final float CORE_CELLS = 0.75f;
     public static final float EDGE_CELLS = 1.25f;
@@ -102,7 +102,7 @@ public final class SplashTower extends AbstractTower {
     /** A throw a second. */
     private static final int COOLDOWN_MAX = 19;
     /** How far a stone flies over the ground in a tick, in cells: a walking enemy is still in the core when it lands. */
-    private static final float STONE_CELLS_PER_TICK = 0.4f;
+    private static final float STONE_CELLS_PER_TICK = 0.2f;
     private static final float WISP_CELLS_PER_TICK = 0.3f;
     private static final float CURSE_CELLS_PER_TICK = 0.35f;
     private static final int MIN_FLIGHT_TICKS = 2;
@@ -119,12 +119,12 @@ public final class SplashTower extends AbstractTower {
     private static final Hex INVERSION = new InversionHex();
     private static final List<Hex> HEXES = List.of(DOOM, BLIGHT, INVERSION);
 
-    private static final UpgradeNode LONG_THROW = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Throw", 4)
+    private static final UpgradeNode LONG_THROW = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Throw", 5)
             .withModifiers(TowerModifiers.range(0.7f));
     private static final UpgradeNode WIDE_CHARGE = UpgradeNode.of("splash.wide_charge", "Wide Charge", 5)
             .withModifiers(TowerModifiers.areaRadius(0.25f).plus(TowerModifiers.blastEdge(0.5f)));
-    private static final UpgradeNode FLINT_STONES = UpgradeNode.of("splash.flint_stones", "Flint Stones", 2)
-            .withModifiers(TowerModifiers.armorPenetrationFlat(10f));
+    private static final UpgradeNode FLINT_STONES = UpgradeNode.of("splash.flint_stones", "Flint Stones", 5)
+            .withModifiers(TowerModifiers.armorPenetrationFlat(30f));
 
     private static final UpgradeNode STORMCALLER = UpgradeNode.of("splash.stormcaller", "Stormcaller", 5)
             .inTier(1);

@@ -18,6 +18,22 @@ final class StrategyBuilds {
     }
 
     private static final Map<TowerFactory.Type, List<Strategy>> STRATEGIES = new EnumMap<>(Map.of(
+            TowerFactory.Type.SPLASH, List.of(
+                    new Strategy("doom", Set.of("base.range", "splash.wide_charge", "splash.hexer",
+                            "splash.hex_of_doom", "splash.deep_doom", "splash.agony", "splash.heavy_stones",
+                            "base.range.2", "splash.hex_of_inversion", "splash.quick_hands",
+                            "splash.piercing_stones")),
+                    new Strategy("blight", Set.of("base.range", "splash.wide_charge", "splash.hexer",
+                            "splash.hex_of_blight", "splash.blight_cloud", "splash.agony", "splash.heavy_stones",
+                            "base.range.2", "splash.quick_hands", "splash.piercing_stones")),
+                    new Strategy("thunderclap", Set.of("base.range", "splash.wide_charge", "splash.stormcaller",
+                            "splash.arc", "splash.chain_lightning", "splash.heavy_stones", "base.range.2",
+                            "splash.thunderclap", "splash.high_voltage", "splash.quick_hands",
+                            "splash.piercing_stones")),
+                    new Strategy("thunderstrike", Set.of("base.range", "splash.wide_charge", "splash.stormcaller",
+                            "splash.arc", "splash.chain_lightning", "splash.heavy_stones", "base.range.2",
+                            "splash.thunderstrike", "splash.high_voltage", "splash.quick_hands",
+                            "splash.piercing_stones"))),
             TowerFactory.Type.SNIPER, List.of(
                     new Strategy("crit", Set.of("sniper.steady_aim", "sniper.rifling", "sniper.heavy_rounds", "base.range",
                             "sniper.fourth_shot", "sniper.keen_eye", "sniper.killshot", "sniper.hollow_point",
