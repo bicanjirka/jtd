@@ -9,7 +9,6 @@ import td.term.Side;
 import td.term.TermNumbers;
 import td.tower.TowerTerm;
 import td.ui.render.Palette;
-import td.ui.render.RankBadge;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.wave.WaveScriptSuggestions.Result;
@@ -68,7 +67,6 @@ public class PanelDev extends JPanel {
 
     /** A rank's badge as it shows in the info pane, and a path's chevron beside it. */
     private static final int GLYPH_ICON = 11;
-    private static final float RANK_BADGE_SIZE = 4.5f;
     private static final float PATH_CHEVRON_SIZE = 4f;
     private static final Color PROBLEM = new Color(255, 140, 120);
     private static final Color MUTED = Hud.TEXT_PROSE;
@@ -111,8 +109,9 @@ public class PanelDev extends JPanel {
     private final CardLayout selectionCards = new CardLayout();
     private final JPanel selectionArea = new JPanel(this.selectionCards);
     private final Java2DFrameRenderer glyphRenderer = new Java2DFrameRenderer();
+    private final CandidateLooks candidateLooks = new CandidateLooks(this::cellPixels);
     private final ChoiceButton<Rank> rankChoice = new ChoiceButton<>(new Choices<>(List.of(Rank.values()),
-            Comparator.naturalOrder(), TermNumbers::titleCase, rank -> "", this::rankLook), Rank.GRUNT, this::spawnChoiceClosed);
+            Comparator.naturalOrder(), TermNumbers::titleCase, rank -> "", this.candidateLooks::rank), Rank.GRUNT, this::spawnChoiceClosed);
     private final ChoiceButton<Integer> pathChoice = new ChoiceButton<>(this.pathChoices(1), 0,
             this::spawnChoiceClosed);
     private final HudToggleButton cellGridToggle = toggle("Cell grid");
@@ -131,6 +130,7 @@ public class PanelDev extends JPanel {
 
     private GameWorld world;
     private DevControls dev;
+    private FieldCompleter scriptCompleter;
     private DevSelection shownSelection = DevSelection.none();
     private long shownReport;
     private boolean chipsRevealed = false;
@@ -167,6 +167,7 @@ public class PanelDev extends JPanel {
         this.preview.setTooltips(tooltips);
         this.effectChoice.setTooltips(tooltips);
         this.buffChoice.setTooltips(tooltips);
+        this.scriptCompleter.setTooltips(tooltips);
     }
 
     public void setGameWorld(GameWorld world, DevControls dev) {
@@ -371,10 +372,13 @@ public class PanelDev extends JPanel {
                 you type; hover it to inspect.
                 The script field suggests the
                 next token: tab or right takes
-                the grey completion, down opens
-                the list, enter takes the
-                highlighted row, a click takes
-                any row, esc closes it.
+                the grey completion, down or up
+                opens the list, left and right
+                move between its columns, enter
+                takes the highlighted row, a
+                click takes any row, hover a
+                row with an icon for its card,
+                esc closes it.
                 Health % applies to enemies
                 that walk in after it is set.
                 Kill all pays bounty and XP,
@@ -447,8 +451,9 @@ public class PanelDev extends JPanel {
         fields.addAll(this.effectFields.textFields());
         fields.addAll(this.buffFields.textFields());
         fields.forEach(this::releaseFocusOnEscape);
-        new FieldCompleter(this.script,
-                (text, caret) -> this.dev == null ? Result.none() : this.dev.suggestWaveScript(text, caret));
+        this.scriptCompleter = new FieldCompleter(this.script,
+                (text, caret) -> this.dev == null ? Result.none() : this.dev.suggestWaveScript(text, caret),
+                this.candidateLooks);
 
         this.addEconomySection();
         this.addLevelSection();
@@ -627,13 +632,9 @@ public class PanelDev extends JPanel {
         this.previewCards.show(this.previewArea, check.wave().isPresent() ? CARD_PREVIEW : CARD_PROBLEM);
     }
 
-    /** A rank shows its badge, in the badge's colour; a grunt has none. */
-    private RowLook rankLook(Rank rank) {
-        RankBadge badge = EnemyFrameBuilder.badgeFor(rank);
-        Color color = Java2DFrameRenderer.rankBadgePalette(badge).map(Java2DFrameRenderer::colorFor)
-                .orElse(Hud.FOREGROUND);
-        return new RowLook(new PaintedIcon(GLYPH_ICON, GLYPH_ICON,
-                g2 -> this.glyphRenderer.paintRankBadgeGlyph(g2, badge, RANK_BADGE_SIZE)), color, color);
+    /** The game board's cell size, asked only for an enemy's card, which the script field offers once a level is in. */
+    private int cellPixels() {
+        return this.world.getBoard().scale();
     }
 
     private Choices<Integer> pathChoices(int paths) {

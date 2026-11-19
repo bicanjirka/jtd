@@ -25,8 +25,8 @@ import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
 /**
- * A list of candidates hung on the window's popup layer by the control it serves: a scrolling column of a few rows,
- * or every row at once, in as many columns as the window's height needs. The pointer highlights a row, the wheel
+ * A list of candidates hung on the window's popup layer by the control it serves: every row at once, in as many
+ * columns as the window's height needs. The pointer highlights a row, the wheel
  * moves the highlight and a click takes the row. A row with a look shows its icon and colours, and rows whose hints
  * differ are ruled apart. A row that can't be taken is never highlighted, and rows that can't are ruled apart only
  * from those that can.
@@ -50,7 +50,6 @@ final class SuggestionList extends JComponent {
 
     private List<Candidate> rows = List.of();
     private int selected;
-    private int top;
     private int perColumn = 1;
     private int columns = 1;
 
@@ -90,7 +89,6 @@ final class SuggestionList extends JComponent {
     void show(List<Candidate> candidates) {
         this.rows = candidates;
         this.selected = 0;
-        this.top = 0;
     }
 
     /** Moves the highlight {@code delta} rows that can be taken on, wrapping round. */
@@ -130,15 +128,8 @@ final class SuggestionList extends JComponent {
         return true;
     }
 
-    /** Highlights row {@code index}, scrolling it into view. */
     void select(int index) {
         this.selected = index;
-        int shown = this.perColumn * this.columns;
-        if (this.selected < this.top) {
-            this.top = this.selected;
-        } else if (this.selected >= this.top + shown) {
-            this.top = this.selected - shown + 1;
-        }
         repaint();
     }
 
@@ -163,13 +154,6 @@ final class SuggestionList extends JComponent {
         return getParent() != null;
     }
 
-    /** Hangs one column of up to {@code maxRows} rows under {@code anchor}, scrolling the rest. */
-    void hangUnder(JComponent anchor, int maxRows) {
-        this.perColumn = Math.max(1, Math.min(this.rows.size(), maxRows));
-        this.columns = 1;
-        this.hang(anchor);
-    }
-
     /**
      * Hangs every row by {@code anchor}, on whichever side has more room, in as few columns as that side's height
      * allows, the rows shared evenly between them.
@@ -181,7 +165,6 @@ final class SuggestionList extends JComponent {
         int count = Math.max(1, this.rows.size());
         this.columns = Math.ceilDiv(count, Math.clamp(room / ROW_HEIGHT, 1, count));
         this.perColumn = Math.ceilDiv(count, this.columns);
-        this.top = 0;
         this.hang(anchor);
     }
 
@@ -226,18 +209,17 @@ final class SuggestionList extends JComponent {
     OptionalInt rowAt(Point point) {
         int column = point.x / Math.max(1, getWidth() / this.columns);
         int line = Math.floorDiv(point.y - 1, ROW_HEIGHT);
-        int index = this.top + column * this.perColumn + line;
+        int index = column * this.perColumn + line;
         if (point.x < 0 || point.y < 1 || line >= this.perColumn || column >= this.columns || index >= this.rows.size()) {
             return OptionalInt.empty();
         }
         return OptionalInt.of(index);
     }
 
-    /** Where the shown row {@code index} is painted. */
+    /** Where row {@code index} is painted. */
     Rectangle rowBounds(int index) {
-        int shown = index - this.top;
         int columnWidth = getWidth() / this.columns;
-        return new Rectangle((shown / this.perColumn) * columnWidth, 1 + (shown % this.perColumn) * ROW_HEIGHT,
+        return new Rectangle((index / this.perColumn) * columnWidth, 1 + (index % this.perColumn) * ROW_HEIGHT,
                 columnWidth, ROW_HEIGHT);
     }
 
@@ -279,10 +261,9 @@ final class SuggestionList extends JComponent {
         FontMetrics metrics = g2.getFontMetrics();
         int columnWidth = getWidth() / this.columns;
         int iconRoom = this.iconRoom();
-        int shown = Math.min(this.rows.size() - this.top, this.perColumn * this.columns);
-        for (int i = 0; i < shown; i++) {
-            Candidate row = this.rows.get(this.top + i);
-            Optional<RowLook> look = this.looks.apply(this.top + i);
+        for (int i = 0; i < this.rows.size(); i++) {
+            Candidate row = this.rows.get(i);
+            Optional<RowLook> look = this.looks.apply(i);
             int left = (i / this.perColumn) * columnWidth;
             int line = i % this.perColumn;
             int y = 1 + line * ROW_HEIGHT;
@@ -290,11 +271,11 @@ final class SuggestionList extends JComponent {
                 g2.setColor(Hud.BORDER_IDLE);
                 g2.drawLine(left, 1, left, getHeight() - 2);
             }
-            if (this.top + i == this.selected) {
+            if (i == this.selected) {
                 g2.setColor(SELECTED_FILL);
                 g2.fillRect(left + 1, y, columnWidth - 2, ROW_HEIGHT);
             }
-            if (line > 0 && this.startsGroup(this.top + i)) {
+            if (line > 0 && this.startsGroup(i)) {
                 g2.setColor(Hud.BORDER_IDLE);
                 g2.drawLine(left + PADDING, y, left + columnWidth - PADDING, y);
             }

@@ -1,5 +1,8 @@
 package td.ui;
 
+import td.ui.render.IconFace;
+import td.ui.render.Palette;
+
 import javax.swing.Icon;
 
 import java.awt.AlphaComposite;
@@ -13,6 +16,14 @@ record RowLook(Icon icon, Color text, Color hint) {
 
     private static final Color DIM = new Color(116, 116, 118);
     private static final float DIM_ICON_ALPHA = 0.35f;
+
+    /** A term's row: its icon at mention size, its title in its tone and its hint in {@code hint}'s ink. */
+    static RowLook ofTerm(IconFace face, Palette hint) {
+        return new RowLook(new PaintedIcon(TermIconPainter.MENTION, TermIconPainter.MENTION, g2 -> {
+            g2.translate(-TermIconPainter.MENTION / 2.0, -TermIconPainter.MENTION / 2.0);
+            TermIconPainter.paint(g2, face, TermIconPainter.MENTION);
+        }), TermIconPainter.ink(face.tone()), TermIconPainter.ink(hint));
+    }
 
     /** The same row greyed out, for a choice that can't be taken. */
     RowLook dimmed() {

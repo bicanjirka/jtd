@@ -64,13 +64,7 @@ final class Choices<T> {
             Function<T, Palette> typeFrame, Function<T, IconFace> faces, Function<T, Optional<String>> unusable) {
         Comparator<T> usableFirst = Comparator.comparing(term -> unusable.apply(term).isPresent());
         return new Choices<>(terms, byType.thenComparing(usableFirst).thenComparing(Term::title, String.CASE_INSENSITIVE_ORDER),
-                Term::title, typeLabel, term -> {
-                    IconFace face = faces.apply(term);
-                    return new RowLook(new PaintedIcon(TermIconPainter.MENTION, TermIconPainter.MENTION, g2 -> {
-                        g2.translate(-TermIconPainter.MENTION / 2.0, -TermIconPainter.MENTION / 2.0);
-                        TermIconPainter.paint(g2, face, TermIconPainter.MENTION);
-                    }), TermIconPainter.ink(face.tone()), TermIconPainter.ink(typeFrame.apply(term)));
-                }, unusable, term -> Optional.of(new SheetTooltip(TooltipKey.ofTerm("choice", term),
+                Term::title, typeLabel, term -> RowLook.ofTerm(faces.apply(term), typeFrame.apply(term)), unusable, term -> Optional.of(new SheetTooltip(TooltipKey.ofTerm("choice", term),
                         TermSheets.of(faces.apply(term), term, term.describe(), List.of()))));
     }
 
