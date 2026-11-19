@@ -22,7 +22,7 @@ and the commit body names the numbers that moved and why.
 A cluster's members are **even** (damage a second within a few points of each other in the build they fit) or
 **situational**: each wins in its own situation, such as one enemy against a crowd, an Elite or a Boss against the
 rest, plain against armored. A situational pair states its break-even ("the Silver Round wins from armor 33 up",
-"Thunderclap matches it from 10 enemies up"), and the break-even must fall inside what the game's enemies span.
+"Shockwave matches it from 10 enemies up"), and the break-even must fall inside what the game's enemies span.
 A member that wins everywhere is a pick with one right answer: retune it.
 
 A node outside a cluster is weighed against the other nodes of its tier, so no one of them is a must-buy or a

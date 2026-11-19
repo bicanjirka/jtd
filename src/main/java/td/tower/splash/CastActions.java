@@ -7,7 +7,7 @@ public interface CastActions {
     boolean primeArc();
 
     /** Discharges into every enemy in range, each for {@code share} of base damage as magic. */
-    boolean thunderclap(float share);
+    boolean shockwave(float share);
 
     /**
      * Calls lightning onto the healthiest enemy in range, for {@code factor} times base damage as magic, and dazes it

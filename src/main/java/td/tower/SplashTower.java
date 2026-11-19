@@ -26,7 +26,6 @@ import td.tower.splash.ChokingBlightMechanic;
 import td.tower.splash.ConductorMechanic;
 import td.tower.splash.ContagionMechanic;
 import td.tower.splash.Curse;
-import td.tower.splash.DeepDoomMechanic;
 import td.tower.splash.DoomHex;
 import td.tower.splash.FeedbackMechanic;
 import td.tower.splash.Hex;
@@ -41,6 +40,8 @@ import td.tower.splash.InversionHex;
 import td.tower.splash.JoltMechanic;
 import td.tower.splash.Passive;
 import td.tower.splash.PassivePayout;
+import td.tower.splash.ReckoningMechanic;
+import td.tower.splash.ShockwaveMechanic;
 import td.tower.splash.SoulHarvestMechanic;
 import td.tower.splash.SoulbrandMechanic;
 import td.tower.splash.SplashMechanic;
@@ -48,7 +49,6 @@ import td.tower.splash.SplashSpec;
 import td.tower.splash.StaticMechanic;
 import td.tower.splash.Stone;
 import td.tower.splash.TagLedger;
-import td.tower.splash.ThunderclapMechanic;
 import td.tower.splash.ThunderstrikeMechanic;
 import td.tower.splash.TwinHexMechanic;
 import td.tower.splash.WildArcMechanic;
@@ -142,7 +142,7 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeCondition A_HEX = UpgradeCondition.owns(HEX_OF_DOOM.id())
             .or(UpgradeCondition.owns(HEX_OF_BLIGHT.id()));
 
-    private static final UpgradeNode DEEP_DOOM = UpgradeNode.of("splash.deep_doom", "Deep Doom", 15)
+    private static final UpgradeNode RECKONING = UpgradeNode.of("splash.reckoning", "Reckoning", 15)
             .after(HEX_OF_DOOM)
             .withOwnArt()
             .inTier(2);
@@ -195,7 +195,7 @@ public final class SplashTower extends AbstractTower {
             .withRequires(A_HEX)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode THUNDERCLAP = UpgradeNode.of("splash.thunderclap", "Thunderclap", 25)
+    private static final UpgradeNode SHOCKWAVE = UpgradeNode.of("splash.shockwave", "Shockwave", 25)
             .after(STORMCALLER)
             .inTier(3);
     private static final UpgradeNode THUNDERSTRIKE = UpgradeNode.of("splash.thunderstrike", "Thunderstrike", 25)
@@ -218,14 +218,14 @@ public final class SplashTower extends AbstractTower {
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(LONG_THROW, WIDE_CHARGE, FLINT_STONES))
             .with(STORMCALLER, HEXER, ARC, HEX_OF_DOOM, HEX_OF_BLIGHT,
-                    DEEP_DOOM, BLIGHT_CLOUD, AGONY, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR, JOLT,
+                    RECKONING, BLIGHT_CLOUD, AGONY, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR, JOLT,
                     HEAVY_STONES, LONG_THROW_2,
-                    SOUL_HARVEST, HEX_OF_INVERSION, CHOKING_BLIGHT, TWIN_HEX, THUNDERCLAP, THUNDERSTRIKE, HIGH_VOLTAGE,
+                    SOUL_HARVEST, HEX_OF_INVERSION, CHOKING_BLIGHT, TWIN_HEX, SHOCKWAVE, THUNDERSTRIKE, HIGH_VOLTAGE,
                     FEEDBACK, QUICK_HANDS, PIERCING_STONES)
             .withFork(UpgradeCluster.of("Stormcaller or Hexer", STORMCALLER, HEXER))
             .withCluster(UpgradeCluster.of("Hex", HEX_OF_DOOM, HEX_OF_BLIGHT))
             .withCluster(UpgradeCluster.of("Arc's path", CHAIN_LIGHTNING, WILD_ARC))
-            .withCluster(UpgradeCluster.of("Storm", THUNDERCLAP, THUNDERSTRIKE));
+            .withCluster(UpgradeCluster.of("Storm", SHOCKWAVE, THUNDERSTRIKE));
 
     private static final MechanicCatalogue<SplashMechanic> MECHANICS = MechanicCatalogue.of(
             entry(STORMCALLER.id(), StaticMechanic::new),
@@ -233,7 +233,7 @@ public final class SplashTower extends AbstractTower {
             entry(ARC.id(), ArcMechanic::new),
             entry(HEX_OF_DOOM.id(), () -> new HexMechanic(DOOM, 2)),
             entry(HEX_OF_BLIGHT.id(), () -> new HexMechanic(BLIGHT, 2)),
-            entry(DEEP_DOOM.id(), DeepDoomMechanic::new),
+            entry(RECKONING.id(), ReckoningMechanic::new),
             entry(BLIGHT_CLOUD.id(), BlightCloudMechanic::new),
             entry(AGONY.id(), AgonyMechanic::new),
             entry(CONTAGION.id(), ContagionMechanic::new),
@@ -245,7 +245,7 @@ public final class SplashTower extends AbstractTower {
             entry(HEX_OF_INVERSION.id(), () -> new HexMechanic(INVERSION, 3)),
             entry(CHOKING_BLIGHT.id(), ChokingBlightMechanic::new),
             entry(TWIN_HEX.id(), TwinHexMechanic::new),
-            entry(THUNDERCLAP.id(), ThunderclapMechanic::new),
+            entry(SHOCKWAVE.id(), ShockwaveMechanic::new),
             entry(THUNDERSTRIKE.id(), ThunderstrikeMechanic::new),
             entry(HIGH_VOLTAGE.id(), HighVoltageMechanic::new),
             entry(FEEDBACK.id(), FeedbackMechanic::new));
@@ -660,11 +660,11 @@ public final class SplashTower extends AbstractTower {
         }
 
         @Override
-        public boolean thunderclap(float share) {
+        public boolean shockwave(float share) {
             TowerStats stats = SplashTower.this.stats();
             Vec2 from = SplashTower.this.center();
             for (EnemyMob enemy : this.inReach) {
-                SplashTower.this.strike(enemy, from, Math.round(stats.damage() * share), stats, BoltKind.THUNDERCLAP);
+                SplashTower.this.strike(enemy, from, Math.round(stats.damage() * share), stats, BoltKind.SHOCKWAVE);
             }
             return true;
         }

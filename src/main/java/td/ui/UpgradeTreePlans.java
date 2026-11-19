@@ -28,7 +28,7 @@ final class UpgradeTreePlans {
             tier(row(node("splash.arc", 0f), cluster("Stormcaller or Hexer", 1.6f), cluster("Hex", 4f))),
             tier(row(node("base.range.2", 0f), node("splash.heavy_stones", 1f), node("splash.jolt", 2.4f),
                     node("splash.agony", 2.4f), node("splash.conductor", 3.4f), node("splash.contagion", 3.4f),
-                    cluster("Arc's path", 4.4f), node("splash.deep_doom", 4.4f), node("splash.blight_cloud", 5.4f))),
+                    cluster("Arc's path", 4.4f), node("splash.reckoning", 4.4f), node("splash.blight_cloud", 5.4f))),
             tier(row(node("splash.quick_hands", 0f), node("splash.piercing_stones", 1f),
                     node("splash.high_voltage", 2.4f), node("splash.soul_harvest", 2.4f), node("splash.feedback", 3.4f),
                     node("splash.hex_of_inversion", 3.4f), cluster("Storm", 4.4f), node("splash.twin_hex", 4.4f),

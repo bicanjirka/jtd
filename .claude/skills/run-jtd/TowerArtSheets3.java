@@ -432,7 +432,7 @@ final class TowerArtSheets3 {
             gg.draw(bolt(1.2, -0.1, -1.2, 0.1, 7, 0.22, 9));
         });
         y += h + 22 + 44;
-        tile(g, 20, y, w, h, px, "Thunderclap: one discharge over the range|Static: a thin quiet spark to each tagger", gg -> {
+        tile(g, 20, y, w, h, px, "Shockwave: one discharge over the range|Static: a thin quiet spark to each tagger", gg -> {
             gg.translate(-0.9, 0.1);
             TowerArt.paintCell(gg, TowerArt.build("stormcaller", 3, st().fire(1)), px);
             gg.setColor(TowerArt.alpha(TowerArt.STORM, 0.5));

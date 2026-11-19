@@ -55,19 +55,19 @@ final class PerkPictograms {
             // Wide Charge
             Map.entry("splash.wide_charge", "F O10.4 14.2 6.8 ; S M15 9.6C16 7.6 17.2 6 19 5.2 ; F M20.4 1.8L21.1 3.7L23 4.4L21.1 5.1L20.4 7L19.7 5.1L17.8 4.4L19.7 3.7Z ; K O8 11.8 1.6"),
             // Flint Stones
-            Map.entry("splash.flint_stones", "=effect.sundered"),
+            Map.entry("splash.flint_stones", "F M3.4 17.6L7.6 6.4L13.6 2.8L20.6 9.4L18.4 18.8L10.4 21.4Z ; X M7.6 6.4L11.6 12.2L20.6 9.4 M11.6 12.2L10.4 21.4"),
             // Stormcaller
-            Map.entry("splash.stormcaller", "=tower.static"),
+            Map.entry("splash.stormcaller", "F M7 20.4H17V22.4H7Z ; F M9.8 10.4H14.2V20.4H9.8Z ; X M9.8 13.2H14.2 M9.8 15.8H14.2 M9.8 18.4H14.2 ; F O12 6.8 3.4 ; T M15.4 5.4L17.8 3.6L18.2 6L21.2 4.4 M8.6 5.4L6.2 3.6L5.8 6L2.8 4.4"),
             // Hexer
-            Map.entry("splash.hexer", "=tower.soulbrand"),
+            Map.entry("splash.hexer", "F O12 9 6.6 ; X M12 13.2L8.4 6.8H15.6Z ; S M5.6 12.4C6.6 16.4 9 17.8 12 17.8C15 17.8 17.4 16.4 18.4 12.4 M12 17.8V20.6 ; F M8 20.4H16V22.4H8Z"),
             // Arc
             Map.entry("splash.arc", "=tower.arc"),
             // Hex of Doom
             Map.entry("splash.hex_of_doom", "=effect.doom"),
             // Hex of Blight
             Map.entry("splash.hex_of_blight", "=effect.blight"),
-            // Deep Doom
-            Map.entry("splash.deep_doom", "F M 12 2.6 C 7.2 2.6 4 6.2 4 10.4 C 4 13.2 5.4 15.2 7.4 16.2 V 19.6 C 7.4 20.4 8 21.2 9 21.2 H 15 C 16 21.2 16.6 20.4 16.6 19.6 V 16.2 C 18.6 15.2 20 13.2 20 10.4 C 20 6.2 16.8 2.6 12 2.6 Z ; K O8.9 11.0 2.1 ; K O15.1 11.0 2.1 ; T O12 12 11.4"),
+            // Reckoning
+            Map.entry("splash.reckoning", "F M 12 2.6 C 7.2 2.6 4 6.2 4 10.4 C 4 13.2 5.4 15.2 7.4 16.2 V 19.6 C 7.4 20.4 8 21.2 9 21.2 H 15 C 16 21.2 16.6 20.4 16.6 19.6 V 16.2 C 18.6 15.2 20 13.2 20 10.4 C 20 6.2 16.8 2.6 12 2.6 Z ; K O8.9 11.0 2.1 ; K O15.1 11.0 2.1 ; T O12 12 11.4"),
             // Blight Cloud
             Map.entry("splash.blight_cloud", "F O8 15 4 O13 11.6 5.2 O18 15.6 3.6 M4 15H22V19H4Z ; K O9 16.4 1 O13.6 15 1.1 O17 17.4 0.9 ; F M5.4 8.4C5.4 5.6 7.4 3.8 10 3.6C10 6.4 8.2 8.4 5.4 8.4Z"),
             // Agony
@@ -77,21 +77,21 @@ final class PerkPictograms {
             // Chain Lightning
             Map.entry("splash.chain_lightning", "S M3 3.4L8.8 10L5.6 12.8L11.4 20.6 ; S M8.8 10L15 9L13 13L20.8 15.2 ; S M15 9L20.6 3.4 ; F O11.4 20.6 1.6 O20.8 15.2 1.6 O20.6 3.4 1.6"),
             // Wild Arc
-            Map.entry("splash.wild_arc", "S M14.6 21.4V8.4 M11.2 21.4H18 ; F O14.6 5.6 2.6 ; F M7.6 2.4L3 10H6.2L4.6 15.4L10 7.8H6.8Z"),
+            Map.entry("splash.wild_arc", "F O4.6 16.4 2.8 O19.4 16.4 2.8 ; S M4.6 13.6L7.4 6.4L10.6 9.4L13.4 3.4L19.4 13.6 ; S M17 20C14.4 22.4 9.8 22.4 7.6 20.4 ; F M4.6 22.6L5.4 17.4L10 20.6Z"),
             // Soul Harvest
             Map.entry("splash.soul_harvest", "F M11 2.4C7.4 7 5.6 10.2 5.6 13.4A5.4 5.4 0 0 0 16.4 13.4C16.4 10.2 14.6 7 11 2.4Z ; K O8.8 13 1.1 O13.2 13 1.1 ; S M3 21.4C10 21.4 18 18.4 21.2 8.4 ; F M21.8 5.2L22.4 10.6L17.8 8.2Z"),
             // Hex of Inversion
             Map.entry("splash.hex_of_inversion", "=effect.inversion"),
             // Choking Blight
-            Map.entry("splash.choking_blight", "F M4.5 19.5C4.5 10 10 4 20 3.5C20 13.5 14 19.5 4.5 19.5Z ; X M4.5 19.5L15.2 8.8 ; S M8 7.4L16.6 16"),
+            Map.entry("splash.choking_blight", "F M3 17C3 9.4 7.6 4.4 16 4C16 8 15 11 13.2 13.2C12 13.2 11 14 11 15.2V17C8 17.6 5.4 17.6 3 17Z ; X M3 17L11.6 8.4 ; S M12.6 14H21.6V19.6H17.6L14.8 22V19.6H12.6Z ; F M14.6 16.2H19.6V17.4H14.6Z"),
             // Twin Hex
             Map.entry("splash.twin_hex", "S O8 8.4 5.2 ; S M8 12.8L3.9 5.7H12.1Z ; F O8 7.9 1.1 ; S O16 15.6 5.2 ; S M16 20L11.9 12.9H20.1Z ; F O16 15.1 1.1"),
-            // Thunderclap
-            Map.entry("splash.thunderclap", "F M13.4 3L8.4 12.4H11.6L10.4 21L15.8 10.8H12.6Z ; S M6.4 8A6 6 0 0 0 6.4 16 M17.6 8A6 6 0 0 1 17.6 16 ; T M3 5.4A9.6 9.6 0 0 0 3 18.6 M21 5.4A9.6 9.6 0 0 1 21 18.6"),
+            // Shockwave
+            Map.entry("splash.shockwave", "F M13.4 3L8.4 12.4H11.6L10.4 21L15.8 10.8H12.6Z ; S M6.4 8A6 6 0 0 0 6.4 16 M17.6 8A6 6 0 0 1 17.6 16 ; T M3 5.4A9.6 9.6 0 0 0 3 18.6 M21 5.4A9.6 9.6 0 0 1 21 18.6"),
             // Thunderstrike
             Map.entry("splash.thunderstrike", "F M6.4 13C4.4 13 3 11.6 3 9.8C3 8 4.4 6.6 6.2 6.6C6.8 4.4 8.8 3 11.2 3C14 3 16.2 5 16.6 7.6C18.8 7.6 20.6 9.2 20.6 11.2C20.6 13 19.2 13 17.4 13Z ; F M12.8 13.8L9.4 18.6H12L10.8 22.4L15.6 16.6H12.8L14.6 13.8Z"),
             // Jolt
-            Map.entry("splash.jolt", "F M12 20.8C5 15.8 2.5 11.6 2.5 8.4A4.9 4.9 0 0 1 12 6.6A4.9 4.9 0 0 1 21.5 8.4C21.5 11.6 19 15.8 12 20.8Z ; X M13.6 6.2L9.6 12.4H12.8L10.4 18.2"),
+            Map.entry("splash.jolt", "F M10.6 20C4.4 15.4 2 11.4 2 8.4A4.6 4.6 0 0 1 10.6 6.8A4.6 4.6 0 0 1 19.2 8.4C19.2 11.4 16.8 15.4 10.6 20Z ; X M10.8 6.6L9 10.4L12 12.8L10 17 ; X M17.4 8.4L12.6 15.8H15.6L14 22.8L21.4 13H18L20.2 8.4Z ; F M17.4 8.4L12.6 15.8H15.6L14 22.8L21.4 13H18L20.2 8.4Z"),
             // Conductor
             Map.entry("splash.conductor", "F O5 6.6 2.4 O19 6.6 2.4 ; S M7.4 6.6L10.4 11L13.6 4.8L16.6 6.6 ; F M12 13.4L13.2 16.6L16.4 17.8L13.2 19L12 22.2L10.8 19L7.6 17.8L10.8 16.6Z"),
             // High Voltage
@@ -99,11 +99,11 @@ final class PerkPictograms {
             // Feedback
             Map.entry("splash.feedback", "S M17.4 7.6A7.4 7.4 0 1 0 19.4 13.4 ; F M21.6 3.8L21 9.6L15.6 7.4Z ; F M13.4 7.6L9.6 12.6H12.2L11 17.2L15.2 11.6H12.6Z"),
             // Heavy Stones
-            Map.entry("splash.heavy_stones", "=sniper.heavy_rounds"),
+            Map.entry("splash.heavy_stones", "F O12 11.2 7.6 ; K O9 8.4 1.7 ; S M2.6 21.6H21.4 ; T M5.4 18.6L3.6 16.8 M18.6 18.6L20.4 16.8"),
             // Quick Hands
             Map.entry("splash.quick_hands", "=tower.haste"),
             // Piercing Stones
-            Map.entry("splash.piercing_stones", "=effect.sundered"),
+            Map.entry("splash.piercing_stones", "F O7 12 4.6 ; F M10.6 9.6L16.8 12L10.6 14.4Z ; F M15.4 3.4H19.8V9.6L17.4 12L19.8 14.4V20.6H15.4V14.6L17 12L15.4 9.4Z ; T M2.4 6.6L5 8.2 M2.4 17.4L5 15.8"),
             // Heavy Charge
             Map.entry("mortar.heavy_charge", "=tower.heavy_shell"),
             // Big Bore
