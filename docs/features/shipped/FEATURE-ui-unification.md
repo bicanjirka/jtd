@@ -1,5 +1,12 @@
 # Feature Request: One look across the game
 
+Status: **implemented** (2026-11-19: `b46385d4` type scale, `8c2bdb04` the Upgrades panel at 1x with 40 px tiles,
+`44ab4cb7` controls and rows in the body size, `ea1f86e8` one border, corner, selection and chip rule, `da523bd7`
+24 px Info icons). Buttons, the Waves panel and the dev panel came up to 12 px too, so nothing read is smaller than
+the sheets; only panel titles and fine print stay at 11. Panels, popups and level cards are containers and keep
+square corners. Two findings were not built: the dev panel's rows don't line up in columns, and opening it makes the
+window about 930 px tall, more than the 864 px screen this is played on.
+
 ## Summary
 
 The game's parts were tuned one at a time, and it shows. The Info panel and the Upgrades panel next to it
