@@ -39,8 +39,4 @@ public record SplashSpec(Reach reach, Passive passive, ArcSpec arc, HexSpec hexe
     public SplashSpec withDamagePerUnitAtMost(float points) {
         return new SplashSpec(this.reach, this.passive, this.arc, this.hexes, Math.min(this.damagePerUnit, points));
     }
-
-    public Viewpoint view() {
-        return this.reach.view();
-    }
 }
