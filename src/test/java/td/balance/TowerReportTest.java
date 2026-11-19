@@ -77,6 +77,30 @@ class TowerReportTest {
     }
 
     @Test
+    void aStrategyLeadingMostOfAMixedWaveIsTheGoToWhateverItPays() {
+        String verdict = TowerReport.strategyVerdict(1, 1, 0.9);
+
+        assertThat(verdict).startsWith("DOMINANT go-to");
+    }
+
+    @Test
+    void aStrategyPayingWellUnderItsBestSiblingIsWeakAndOneNearItIsNot() {
+        String weak = TowerReport.strategyVerdict(0.5, 1, 0.2);
+        String near = TowerReport.strategyVerdict(0.9, 1, 0.2);
+
+        assertThat(weak).startsWith("WARN weak");
+        assertThat(near).isEqualTo(TowerReport.OK);
+    }
+
+    @Test
+    void aTowersOnlyStrategyHasNoSiblingToBeJudgedAgainst() {
+        List<List<String>> rows = new TowerReport(sheet(List.of(build("T", TowerBench.BARE, TowerBench.BARE, 10, 4),
+                build("T", "strategy:alone", TowerBench.STRATEGY, 40, 12))), Map.of(), NO_PAIRS).strategies().rows();
+
+        assertThat(rows).singleElement().satisfies(row -> assertThat(row.getLast()).isEqualTo(TowerReport.OK));
+    }
+
+    @Test
     void aCeilingIsBrokenOnlyByARivalClearlyAboveIt() {
         Map<String, Double> rivals = new LinkedHashMap<>();
         rivals.put("level", 10 * (1 + TowerReport.NOISE / 2));
