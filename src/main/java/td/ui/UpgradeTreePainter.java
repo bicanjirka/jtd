@@ -1,6 +1,5 @@
 package td.ui;
 
-import td.term.TermNumbers;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTier;
@@ -112,14 +111,13 @@ final class UpgradeTreePainter {
     private static final Color GLOSS = new Color(141, 141, 144);
     private static final Color WHITE = Color.WHITE;
     private static final Color DROP = new Color(255, 90, 90);
-    private static final Color SHORT = new Color(255, 138, 138);
+    private static final Color SHORT = Hud.SHORT;
     private static final Color BAND_FILL = new Color(24, 24, 26);
     private static final Color BAND_LINE = new Color(42, 42, 44);
     private static final Color LOCKED_STRIP = new Color(21, 21, 23);
     private static final Color TRACK = new Color(42, 42, 44);
     private static final Color NODE_FILL = new Color(22, 22, 24);
     private static final Color TAG_FILL = new Color(16, 16, 18);
-    private static final Color TAG_BORDER = new Color(58, 58, 61);
     private static final Color LOCKED_BORDER = new Color(58, 58, 61);
     private static final Color LOCKED_INK = new Color(78, 78, 82);
     private static final Color NEED_BORDER = new Color(88, 88, 92);
@@ -146,11 +144,8 @@ final class UpgradeTreePainter {
     private static final Font CHIP_FONT = new Font(Font.DIALOG, Font.PLAIN, 7);
     private static final Font FRAME_FONT = new Font(Font.DIALOG, Font.PLAIN, 8);
     private static final Font LINE_NUMERAL_FONT = new Font(Font.DIALOG, Font.BOLD, 7);
-    private static final Font TAG_FONT = new Font(Font.DIALOG, Font.PLAIN, 8);
-    private static final Font TAG_BOLD = TAG_FONT.deriveFont(Font.BOLD);
     private static final Font FOOTER_FONT = new Font(Font.DIALOG, Font.PLAIN, 9);
     private static final Font FOOTER_BOLD = FOOTER_FONT.deriveFont(Font.BOLD);
-    private static final float SQUARE_CORNER = 6f;
     private static final float CASH_BADGE = 10f;
 
     private final UpgradeTreeLayout layout;
@@ -426,7 +421,7 @@ final class UpgradeTreePainter {
         }
         Color border = borderOf(look, tower);
         g.setColor(hovered ? Hud.mix(border, WHITE, HOVER_BORDER) : border);
-        g.setStroke(new BasicStroke(look == Look.OWNED ? 2f : 1.6f));
+        g.setStroke(new BasicStroke(look == Look.OWNED ? BuyTileLook.BORDER_TAKEN : BuyTileLook.BORDER));
         g.draw(shapeOf(spot, -0.5f, round));
         if (highlight.is(node, Mark.PATH) || highlight.is(node, Mark.DROP)) {
             Color edge = highlight.is(node, Mark.PATH) ? WHITE : DROP;
@@ -443,7 +438,7 @@ final class UpgradeTreePainter {
         if (state.unused()) {
             CashMark.paint(g, spot.x() + spot.size() / 2 - 1f, spot.y() - spot.size() / 2 + 1f, CASH_BADGE);
         }
-        this.paintTag(g, node, spot, look);
+        this.paintTag(node, g, spot, look);
     }
 
     /** A shared slot before its cluster's pick: a dashed outline holding a question mark. */
@@ -459,26 +454,13 @@ final class UpgradeTreePainter {
     }
 
     /** The price on the node's bottom edge, or a tick once owned. */
-    private void paintTag(Graphics2D g, UpgradeNode node, Spot spot, Look look) {
-        boolean owned = look == Look.OWNED;
-        String text = owned ? "✓" : TermNumbers.cash(node.price());
-        Font font = owned || look == Look.BUYABLE ? TAG_BOLD : TAG_FONT;
-        g.setFont(font);
-        float width = owned ? 12f : g.getFontMetrics().stringWidth(text) + 5f;
-        float y = spot.y() + spot.size() / 2;
-        Shape tag = new RoundRectangle2D.Float(spot.x() - width / 2, y - 5f, width, 10f, 4f, 4f);
-        g.setColor(TAG_FILL);
-        g.fill(tag);
-        g.setColor(owned ? this.towerColor() : TAG_BORDER);
-        g.setStroke(new BasicStroke(0.8f));
-        g.draw(tag);
-        g.setColor(switch (look) {
-            case OWNED -> this.towerColor();
-            case BUYABLE -> FOREGROUND;
-            case SHORT_OF_CASH -> SHORT;
-            default -> GLOSS;
-        });
-        centred(g, text, font, spot.x(), y + 3f);
+    private void paintTag(UpgradeNode node, Graphics2D g, Spot spot, Look look) {
+        BuyTileLook.paintTag(g, spot.x(), spot.y() + spot.size() / 2, node.price(), switch (look) {
+            case OWNED -> BuyTileLook.Tone.OWNED;
+            case BUYABLE -> BuyTileLook.Tone.BUYABLE;
+            case SHORT_OF_CASH -> BuyTileLook.Tone.SHORT_OF_CASH;
+            case NEEDS_PREVIOUS, SWITCHABLE, TIER_LOCKED, LOCKED_OUT -> BuyTileLook.Tone.UNAVAILABLE;
+        }, this.towerColor());
     }
 
     private void paintGlyph(Graphics2D g, UpgradeNode node, float x, float y, float size, Color ink, Color fill) {
@@ -556,7 +538,7 @@ final class UpgradeTreePainter {
         float size = spot.size() + 2 * grow;
         float left = spot.x() - size / 2;
         float top = spot.y() - size / 2;
-        float corner = SQUARE_CORNER + grow;
+        float corner = BuyTileLook.CORNER + grow;
         return round ? new Ellipse2D.Float(left, top, size, size)
                 : new RoundRectangle2D.Float(left, top, size, size, corner, corner);
     }

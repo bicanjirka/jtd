@@ -214,7 +214,9 @@ foundation grows wider and richer with each; when a tier opens, the new foundati
 in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade now. The Upgrades panel shows the tower's XP on
 its title line, each tier as a band with its numeral, and a locked tier's XP toward its gate on the band's strip.
 A round node changes a number and a square one adds an ability; where a tree holds two builds, one leans left and
-the other right. A small badge on a node's corner stands for a need more than a tier below. Selecting a Beacon marks every
+the other right. Where the builds are the two members of a cluster (the Burst's Stormcaller and Hexer), their
+nodes share slots: a slot shows the picked side's node, the hovered side's while you hover one, and a dashed `?`
+before either is picked. A tower in the Towers bar is drawn as a node is, its price on the tag at its foot. A small badge on a node's corner stands for a need more than a tier below. Selecting a Beacon marks every
 tower in its light with a small gold diamond.
 
 ```mermaid
