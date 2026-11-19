@@ -61,6 +61,23 @@ class InfoSheetDocumentTest {
     }
 
     @Test
+    void onAWidePaneARunOfStatRowsFillsTheLeftColumnFirstAcrossTheGapsBetweenThem() throws BadLocationException {
+        FontMetrics metrics = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics()
+                .getFontMetrics(new Font(Font.DIALOG, Font.PLAIN, 12));
+        InfoSheet sheet = new InfoSheet(List.of(Row.plain(Glyph.RING, "Range", "3"), Row.plain(Glyph.DOT, "Blast", "1"),
+                new SheetLine.Gap(), Row.plain(Glyph.CHEVRON, "Fire rate", "2")));
+
+        StyledDocument wide = InfoSheetDocument.of(sheet, new Java2DFrameRenderer(),
+                InfoSheetDocument.TWO_COLUMN_WIDTH, metrics);
+        StyledDocument narrow = layOutLines(sheet.lines().toArray(SheetLine[]::new));
+
+        List<String> wideLines = wide.getText(0, wide.getLength()).lines().toList();
+        assertThat(wideLines).hasSize(2);
+        assertThat(wideLines.getFirst()).contains("Range", "Fire rate");
+        assertThat(narrow.getText(0, narrow.getLength()).lines()).hasSize(4);
+    }
+
+    @Test
     void aMentionIsItsFaceThenItsTitleInItsInk() {
         StyledDocument doc = layOutLines(SheetLine.Sentence.of(TermText.of("applies ").plus(EffectKind.UNRAVELED)));
 

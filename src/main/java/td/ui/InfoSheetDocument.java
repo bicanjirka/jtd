@@ -29,12 +29,16 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
  * Lays an {@link InfoSheet} out as a styled document: one paragraph per line, each row's glyph
  * painted by {@link Java2DFrameRenderer} in its own colour, the label muted, values bright on a
- * right-aligned tab stop at the pane's edge with their unit and meaning dim after them.
+ * right-aligned tab stop at the pane's edge with their unit and meaning dim after them. On a pane wide enough, a run
+ * of stat rows with no meaning after them takes two columns, filled down the left one first, so a tall sheet leaves
+ * the room under it free.
  */
 @ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 final class InfoSheetDocument {
@@ -85,11 +89,15 @@ final class InfoSheetDocument {
     private static final Color SLOT_BACKGROUND = new Color(28, 28, 29);
     /** A value ending exactly at the pane's edge wraps on rounding, so the column stops short. */
     private static final int EDGE_MARGIN = 4;
+    /** The least text width that splits a run of stat rows into two columns; a tooltip is narrower. */
+    static final int TWO_COLUMN_WIDTH = 360;
+    private static final int COLUMN_GAP = 16;
 
     private final Java2DFrameRenderer renderer;
     private final DefaultStyledDocument doc = new DefaultStyledDocument();
     private final int width;
     private final FontMetrics metrics;
+    private final List<int[]> pairedParagraphs = new ArrayList<>();
     private HoverRun hover;
 
     private InfoSheetDocument(Java2DFrameRenderer renderer, int width, FontMetrics metrics) {
@@ -104,9 +112,66 @@ final class InfoSheetDocument {
      */
     static StyledDocument of(InfoSheet sheet, Java2DFrameRenderer renderer, int width, FontMetrics metrics) {
         InfoSheetDocument writer = new InfoSheetDocument(renderer, width, metrics);
-        sheet.lines().forEach(writer::append);
+        List<SheetLine> lines = sheet.lines();
+        int i = 0;
+        while (i < lines.size()) {
+            Run run = writer.twoColumnRunAt(lines, i);
+            if (run.rows().size() < 2) {
+                writer.append(lines.get(i));
+                i++;
+                continue;
+            }
+            writer.columns(run.rows());
+            i = run.end();
+        }
         writer.finish();
         return writer.doc;
+    }
+
+    /** The stat rows of a run, and the index of the line after its last row. */
+    private record Run(List<SheetLine.Row> rows, int end) {
+    }
+
+    /**
+     * The run of stat rows from {@code start} on, across the gaps between them, that takes two columns: none on a
+     * narrow pane, and it stops at a row that says what it means after its value.
+     */
+    private Run twoColumnRunAt(List<SheetLine> lines, int start) {
+        List<SheetLine.Row> rows = new ArrayList<>();
+        int end = start;
+        if (this.width + EDGE_MARGIN < TWO_COLUMN_WIDTH) {
+            return new Run(rows, end);
+        }
+        for (int i = start; i < lines.size(); i++) {
+            boolean goesOn = switch (lines.get(i)) {
+                case SheetLine.Row row when row.meaning().isEmpty() -> {
+                    rows.add(row);
+                    end = i + 1;
+                    yield true;
+                }
+                case SheetLine.Gap gap -> true;
+                default -> false;
+            };
+            if (!goesOn) {
+                break;
+            }
+        }
+        return new Run(rows, end);
+    }
+
+    /** {@code rows} in two columns, the left one the longer, each line a paragraph with the columns' tab stops. */
+    private void columns(List<SheetLine.Row> rows) {
+        int left = (rows.size() + 1) / 2;
+        for (int i = 0; i < left; i++) {
+            int start = this.doc.getLength();
+            this.row(rows.get(i));
+            if (left + i < rows.size()) {
+                this.insert("\t", new SimpleAttributeSet());
+                this.row(rows.get(left + i));
+            }
+            this.insert("\n", new SimpleAttributeSet());
+            this.pairedParagraphs.add(new int[]{start, this.doc.getLength() - start});
+        }
     }
 
     private void append(SheetLine line) {
@@ -594,5 +659,15 @@ final class InfoSheetDocument {
         SimpleAttributeSet paragraph = new SimpleAttributeSet();
         StyleConstants.setTabSet(paragraph, new TabSet(new TabStop[]{new TabStop(this.width, TabStop.ALIGN_RIGHT, TabStop.LEAD_NONE)}));
         this.doc.setParagraphAttributes(0, this.doc.getLength(), paragraph, false);
+        float middle = this.width / 2f;
+        SimpleAttributeSet paired = new SimpleAttributeSet();
+        StyleConstants.setTabSet(paired, new TabSet(new TabStop[]{
+                new TabStop(middle - COLUMN_GAP / 2f, TabStop.ALIGN_RIGHT, TabStop.LEAD_NONE),
+                new TabStop(middle + COLUMN_GAP / 2f, TabStop.ALIGN_LEFT, TabStop.LEAD_NONE),
+                new TabStop(this.width, TabStop.ALIGN_RIGHT, TabStop.LEAD_NONE)}));
+        for (int[] range : this.pairedParagraphs) {
+            this.doc.setParagraphAttributes(range[0], Math.max(0, Math.min(range[1], this.doc.getLength() - range[0])),
+                    paired, false);
+        }
     }
 }
