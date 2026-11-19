@@ -116,6 +116,10 @@ Each of these fails `mvn verify` or misleads a player when forgotten:
 After the tower's last step, one look at its Upgrades panel: `td.ui.PreviewUpgrades` (headless, `run-jtd`) for the
 layout of every tier and each changed node's sheet; the `Driver` only for what that can't show. Never per step.
 
+The shop button's mark (`TowerIcons`) is drawn apart from the board art and may still show a tower's earlier design:
+check it against the tower on the board in its retune and redraw it in the table's language (a flat silhouette, the
+moving part lighter, a seam). The Burst's is redrawn; the Mortar's and the rest still show their old designs.
+
 ## Commits
 
 - On main, stage own files by name (other sessions share the checkout), no push. `mvn -q verify && git commit ...`

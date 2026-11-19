@@ -120,14 +120,12 @@ final class TowerIcons {
                 both(rot(box(0.14, 0, 0.62, 0.075), -40), circ(0, 0, 0.085)));
     }
 
-    /** A ring of stones and the arm inside it. */
+    /** An onager from above, set to throw to the north-east: two rails and the frames across them, and the arm with its stone. */
     private static Icon burst() {
-        int stones = 7;
-        Shape[] ring = new Shape[stones];
-        for (int i = 0; i < stones; i++) {
-            ring[i] = at(ngon(0, 0, 6, 0.115, i * 20), i * 360.0 / stones, 0.30);
-        }
-        return Icon.of(both(ring), both(rot(box(0.09, 0, 0.26, 0.07), 140), circ(0, 0, 0.09)));
+        Shape frame = both(box(0, -0.20, 0.80, 0.12), box(0, 0.20, 0.80, 0.12), box(0.30, 0, 0.12, 0.52),
+                box(-0.30, 0, 0.12, 0.52));
+        Shape arm = both(box(-0.08, 0, 0.46, 0.10), circ(-0.30, 0, 0.13));
+        return Icon.of(rot(frame, -40), rot(arm, -40)).withSeam(rot(circ(-0.30, 0, 0.055), -40));
     }
 
     /** A pit and the barrel in it, seen down its bore. */
