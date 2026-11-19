@@ -13,7 +13,7 @@ import java.util.Optional;
 public final class ThunderstrikeMechanic implements SplashMechanic {
 
     private static final int COST = 3;
-    private static final float FACTOR = 2f;
+    private static final float FACTOR = 4f;
     private static final float DAZE_SECONDS = 1.5f;
 
     private final AbilityCharge charge = new AbilityCharge(Ability.of(TowerTerm.THUNDERSTRIKE, TowerTerm.SPARK, COST));

@@ -179,41 +179,41 @@ public final class SplashTower extends AbstractTower {
             .withModifiers(TowerModifiers.range(1f))
             .inTier(2);
 
-    private static final UpgradeNode SOUL_HARVEST = UpgradeNode.of("splash.soul_harvest", "Soul Harvest", 19)
+    private static final UpgradeNode SOUL_HARVEST = UpgradeNode.of("splash.soul_harvest", "Soul Harvest", 20)
             .after(HEXER)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode HEX_OF_INVERSION = UpgradeNode.of("splash.hex_of_inversion", "Hex of Inversion", 6)
+    private static final UpgradeNode HEX_OF_INVERSION = UpgradeNode.of("splash.hex_of_inversion", "Hex of Inversion", 30)
             .after(HEXER)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode CHOKING_BLIGHT = UpgradeNode.of("splash.choking_blight", "Choking Blight", 1)
+    private static final UpgradeNode CHOKING_BLIGHT = UpgradeNode.of("splash.choking_blight", "Choking Blight", 20)
             .after(HEX_OF_BLIGHT)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode TWIN_HEX = UpgradeNode.of("splash.twin_hex", "Twin Hex", 14)
+    private static final UpgradeNode TWIN_HEX = UpgradeNode.of("splash.twin_hex", "Twin Hex", 20)
             .withRequires(A_HEX)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode THUNDERCLAP = UpgradeNode.of("splash.thunderclap", "Thunderclap", 9)
+    private static final UpgradeNode THUNDERCLAP = UpgradeNode.of("splash.thunderclap", "Thunderclap", 25)
             .after(STORMCALLER)
             .inTier(3);
-    private static final UpgradeNode THUNDERSTRIKE = UpgradeNode.of("splash.thunderstrike", "Thunderstrike", 9)
+    private static final UpgradeNode THUNDERSTRIKE = UpgradeNode.of("splash.thunderstrike", "Thunderstrike", 25)
             .after(STORMCALLER)
             .inTier(3);
-    private static final UpgradeNode HIGH_VOLTAGE = UpgradeNode.of("splash.high_voltage", "High Voltage", 6)
+    private static final UpgradeNode HIGH_VOLTAGE = UpgradeNode.of("splash.high_voltage", "High Voltage", 20)
             .after(ARC)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode FEEDBACK = UpgradeNode.of("splash.feedback", "Feedback", 6)
+    private static final UpgradeNode FEEDBACK = UpgradeNode.of("splash.feedback", "Feedback", 20)
             .after(CONDUCTOR)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode QUICK_HANDS = UpgradeNode.of("splash.quick_hands", "Quick Hands", 17)
-            .withModifiers(TowerModifiers.attackSpeed(1f / 0.85f - 1f))
+    private static final UpgradeNode QUICK_HANDS = UpgradeNode.of("splash.quick_hands", "Quick Hands", 30)
+            .withModifiers(TowerModifiers.attackSpeed(1f / 0.8f - 1f))
             .inTier(3);
-    private static final UpgradeNode PIERCING_STONES = UpgradeNode.of("splash.piercing_stones", "Piercing Stones", 6)
-            .withModifiers(TowerModifiers.armorPenetrationFlat(40f))
+    private static final UpgradeNode PIERCING_STONES = UpgradeNode.of("splash.piercing_stones", "Piercing Stones", 20)
+            .withModifiers(TowerModifiers.armorPenetrationFlat(100f).plus(TowerModifiers.damage(3f)))
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(LONG_THROW, WIDE_CHARGE, FLINT_STONES))

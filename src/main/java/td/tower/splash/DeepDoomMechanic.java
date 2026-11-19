@@ -7,7 +7,7 @@ import td.term.TermText;
 /** Deep Doom: Doom returns more of the damage. */
 public final class DeepDoomMechanic implements SplashMechanic {
 
-    private static final float SHARE = 1.0f;
+    private static final float SHARE = 0.8f;
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {

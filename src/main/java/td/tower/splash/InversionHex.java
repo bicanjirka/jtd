@@ -15,7 +15,7 @@ import java.util.Optional;
  */
 public final class InversionHex implements Hex {
 
-    private static final float SECONDS = 6f;
+    private static final float SECONDS = 8f;
 
     @Override
     public EffectKind kind() {

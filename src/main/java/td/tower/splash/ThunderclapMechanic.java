@@ -12,7 +12,7 @@ import java.util.Optional;
 public final class ThunderclapMechanic implements SplashMechanic {
 
     private static final int COST = 3;
-    private static final float SHARE = 0.4f;
+    private static final float SHARE = 1f;
 
     private final AbilityCharge charge = new AbilityCharge(Ability.of(TowerTerm.THUNDERCLAP, TowerTerm.SPARK, COST));
 
