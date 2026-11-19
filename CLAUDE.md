@@ -108,7 +108,9 @@ frame build reads them.
 
 - **Value types** are immutable records with named factories (`Damage.physical(400)`,
   `EconomyDelta.kill(bounty)`). Absence is a value (`none()`, `empty()`) or `Optional`, never
-  `null`. The one exception: `td.ui` frame builders return `null` for "no draw command".
+  `null` or a sentinel number. The one exception: `td.ui` frame builders return `null` for "no draw command".
+  An `Optional` is read through `map`, `or`, `filter` and `ifPresent`, never `isPresent()` then `get()`.
+- A lambda parameter the body doesn't read is `_`.
 - A record with 5+ components has a narrow factory and grows by fluent `withX` copies, never a
   wider constructor (`PathDefinition`, `EnemyDefinition`). `td.ui.render` draw records are
   exempt.

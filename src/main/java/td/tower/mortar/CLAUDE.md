@@ -14,8 +14,8 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   longer owned and draws behind. Never draw at purchase, on the EDT.
 - A shell's `ShellKind` is fixed when it is drawn, so the pane shows it in the magazine and the board draws it in its
   look in flight. Everything a kind does differently (blast, damage type, flight speed, ground) is on the kind;
-  the tower never compares kinds but for a Heavy's pick and a Nuke's flash. A pick a node makes between kinds is a
-  value in the spec (`HeavyRider`), not a branch per mechanic.
+  the tower never compares kinds but for a Heavy's pick, a Nuke's flash and the Flares it keeps. A pick a node makes
+  between kinds is a value in the spec (`HeavyRider`), not a branch per mechanic.
 - The chances the panel shows come from `MagazineSpec.chances()` (`MagazineOdds`, which counts Fusion and Rich Mix),
   never from the weights, which no player sees.
 - A shell lands in two zones: its core at full damage and its edge at its kind's share. Every shell Cracks what it

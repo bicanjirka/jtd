@@ -13,7 +13,7 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   timed Prism mark are refreshed every tick the enemy stays, so they end a moment after it leaves.
 - Prism's stacked marks land on top of what the enemy carries, up to the mark's own cap, as it enters each light, and
   again while it stays once the mark has worn off it; never every tick. The light's Static and Soulbrand are tags in
-  the Beacon's own `TagLedger`s, settled by the Burst's rules (`StaticMechanic`, `SoulbrandMechanic`); they pay no
+  the Beacon's own `TagLedger`s, settled by the Burst's rules (`TagLedger.settleStatic`, `settleSoulbrand`); they pay no
   currency, and their damage is the Beacon's.
 - Daylight reaches the enemies only through `GameWorld.daylight()`: the Beacon adds its circle in the towers phase,
   and an enemy reads it on its next tick.

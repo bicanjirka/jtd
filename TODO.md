@@ -242,6 +242,38 @@ fight changes resets there, so a field that misses it carries one wave into the 
   `endFight()` both build with `new`, so a new fight field is reset by being in it. Delete the
   `tower/CLAUDE.md` rule once every leaf has one.
 
+### A query around a point cuts the point in some places and rounds it in others
+
+`InRangeTargetQuery` is centred on a whole pixel. Most callers cut a `double` to it (`everyone(Vec2, range)`), but
+where a shell lands, where a missile retargets and where a zone stands round it, so an enemy at the very edge of a
+radius is in or out depending on which tower asks.
+
+- **Where:** `InRangeTargetQuery` (its `int` centre), `MortarTower.onImpact`, `SeekerTower.Guide.retarget`,
+  `ZoneRoster` (two queries).
+- **Approach:** centre the query on a `Vec2` and drop the `int` factories. Who stands at an edge changes, so it is a
+  behaviour change in its own commit: run the tests and the harness, and expect seeded balance runs to move a little.
+
+### The Sundial's shadow keeps its heading from one wave to the next
+
+`PulseTower.shadow` is never reset: each turn starts where the last one stopped, the first of a wave included, and a
+save doesn't keep it, so a loaded game's first turn starts at heading 0 where a played-on one doesn't. Which enemy
+the first sweep reaches first depends on it.
+
+- **Where:** `PulseTower` (`shadow`, `endFight`, `takeRestPose`).
+- **Approach:** put the shadow at one heading as a wave starts (`takeRestPose`, at `restHeading()` like a turret),
+  with a test that two waves' first turns start alike.
+
+### A cache kept until what it was worked out for changes is written six ways
+
+Each keeps the last answer with the key it was worked out for and works it out again when the key moves: by identity
+(`AbstractTower.offeredUpgrades`, `cachedForUpgrades`, `AuraTower.spec`) or by equality (`MortarTower.loadableKinds`,
+`shellChances`), behind a `volatile`, some with `null` for "none yet".
+
+- **Where:** those five methods and their record holders (`OfferedUpgrades`, `InspectionCache`, `FoldedSpec`,
+  `LoadableKinds`, `ShellOdds`).
+- **Approach:** one small holder (the key, the value, one `volatile`) with `get(key, compute)`, the key compared as
+  each site does now; `AbstractTower`'s `null` goes with it.
+
 ### Ability radii are in pixels, the rest of the engine in cells
 
 `RadiusTarget`, the radii a cast reaches and the aura rings drawn from them are pixels, while zones, towers and the
