@@ -33,7 +33,7 @@ public final class ActiveEffects {
     private static final int POOL_PULSE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 4f);
     /** A pool of this much fuel, in points, burns out in {@link #REFERENCE_BURN_SECONDS}. */
     static final float REFERENCE_FUEL_POINTS = 100f;
-    static final float REFERENCE_BURN_SECONDS = 1.75f;
+    static final float REFERENCE_BURN_SECONDS = 4f;
     /**
      * A pool burns this times the square root of its fuel a tick, in damage units: the root falls by half of it every
      * tick, so the pool empties in a time that grows with the root of what it held.

@@ -12,7 +12,7 @@ import td.tower.TowerTerm;
 public final class FlashoverMechanic implements CinderMechanic {
 
     /** The fuel, in points, a burn holds from which it flashes over. */
-    public static final float HOT_FUEL_POINTS = 100f;
+    public static final float HOT_FUEL_POINTS = 250f;
     /** The share of the Flame each enemy beside a hot one takes. */
     public static final float SHARE = 0.5f;
     public static final float REACH_CELLS = 1.5f;

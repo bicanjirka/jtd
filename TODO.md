@@ -536,9 +536,8 @@ tower's own.
 
 ### Flashover's threshold is a stopgap
 
-When pools last 4 s (`FEATURE-debuff-stacking-groups.md`), Flashover's threshold moves from 100 to 250 fuel only so it
-keeps about the share of a stream it fires today; 100 would make it fire on almost every stream, even outside the
-Core. 250 is a hidden number the player can't read off the board.
+Since pools last 4 s, Flashover's threshold is 250 fuel, raised from 100 only so it keeps about the share of a stream
+it fired before; 100 would make it fire on almost every stream, even outside the Core. 250 is a hidden number the player can't read off the board.
 
 - **Where:** `td.tower.cinder.FlashoverMechanic.HOT_FUEL_POINTS` and its sentence.
 - **Approach:** in the Scorcher's balance, make it "a burn whose bar is full flashes over" (400 fuel). It reuses the

@@ -327,14 +327,14 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Effect | Group | Side | What it does |
 |---|---|---|---|
 | Chill | Control | Debuff | Slows by what its source gives; only the strongest slow counts, and speed comes back over its last 0.5 s. |
-| Burn | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 1.75 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in; it adds a stack of Scorch every 0.5 s while it lasts, and every tower can see and aim at it. |
+| Burn | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 4 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in; it adds a stack of Scorch every 0.5 s while it lasts, and every tower can see and aim at it. |
 | Freeze | Control | Debuff | Stops it where it stands and keeps its abilities from firing; it can't dodge: its Agility counts as none unless it is lower still; time under it shortens the next one, and walking wins that back, more slowly at higher rank. |
 | Shield | Boon | Buff | Takes a hit before armor does, until its amount is spent or it runs out; more Spirit makes it hold more, shields from different sources add up, and damage over time goes past it. |
 | Invisibility | Boon | Buff | Towers can't aim at it, though damage on an area still reaches it. |
 | Heal | Boon | Buff | Adds to its Regeneration while it lasts; heals from different sources add up. |
 | Vulnerable | Weakness | Debuff | Each stack: Physical damage taken and Magic damage taken +15%, up to 3 stacks; each tower keeps its own share for as long as it keeps it up. |
 | Reveal | Mark | Debuff | Every tower can see and aim at it, and it can't gain Invisibility. |
-| Poison | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 1.75 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in; it adds a stack of Sicken every 0.5 s while it lasts. |
+| Poison | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 4 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in; it adds a stack of Sicken every 0.5 s while it lasts. |
 | Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 200 stacks; what adds stacks holds them 5 s, and what builds them over time holds them while it lasts; after that it loses a stack every 1 s. |
 | Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 200 stacks; what adds stacks holds them 5 s, and what builds them over time holds them while it lasts; after that it loses a stack every 1 s. |
 | Sunder | Weakness | Debuff | Each stack: Armor -5, up to 20 stacks; what adds stacks holds them 5 s, and what builds them over time holds them while it lasts; after that it loses a stack every 1 s. |
@@ -358,7 +358,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Singe | Weakness | Debuff | Each stack: Insulation -5, up to 10 stacks; each tower keeps its own share for as long as it keeps it up. |
 | Tar | Weakness | Debuff | Slows by 40%; only the strongest slow counts, and speed comes back over its last 0.5 s. |
 | Bleed | Affliction | Debuff | Physical damage for every cell it travels, ignoring Armor and Plating; standing still, it takes none. |
-| Soulfire | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 1.75 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in, its own beside Burn and Poison; it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and every tower can see and aim at it. |
+| Soulfire | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 4 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in, its own beside Burn and Poison; it adds a stack of Scorch and Sicken every 0.5 s while it lasts, and every tower can see and aim at it. |
 | Sprint | Boon | Buff | Move speed +60%. |
 | Hasten | Boon | Buff | Move speed x2; Freeze and Daze still stop it. |
 | Resolve | Boon | Buff | Each stack: Physical damage taken and Magic damage taken -1%, held at as many stacks as the ally that gives it has to give; away from it, it loses a stack every 1 s. |

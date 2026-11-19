@@ -79,7 +79,7 @@ class DefinedEnemyMobEffectTest {
         context.setPath(LevelFixtures.straightPath(1, 0, 100));
         EnemyMob enemy = EnemyFixtures.plainMob(context, 1, 3); // 100 health
 
-        enemy.applyEffect(Effect.burn(Damage.magic(1000), enemy::doDamage));
+        enemy.applyEffect(Effect.burn(Damage.magic(100_000), enemy::doDamage));
         enemy.doTick(1);
 
         assertThat(enemy.isDead()).isTrue();
