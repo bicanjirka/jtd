@@ -128,7 +128,7 @@ class SniperTowerTest {
 
     @Test
     void aSteadyAimStackRaisesTheNextShotsCritChance() {
-        SniperTower tower = new SniperTower(this.world, 3, 3);
+        SniperTower tower = this.sniperWith("Steady Aim");
         FakeEnemyMob target = this.onlyTarget();
 
         this.fireShots(tower, target, 2);
@@ -138,7 +138,7 @@ class SniperTowerTest {
 
     @Test
     void anIdleSnipersSteadyAimFadesOnceItHasHadNoTargetForAStacksTime() {
-        SniperTower tower = new SniperTower(this.world, 3, 3);
+        SniperTower tower = this.sniperWith("Steady Aim");
         FakeEnemyMob target = this.onlyTarget();
         this.fireShots(tower, target, 2);
         this.world.enemies().setEnemies(new EnemyMob[]{});
@@ -166,9 +166,8 @@ class SniperTowerTest {
 
     @Test
     void aFocusIsKeenOnlyOnceItIsFullAndOnlyWhileAHitBonusGrowsWithIt() {
-        SniperTower plain = new SniperTower(this.world, 3, 3);
-        SniperTower keen = new SniperTower(this.world, 3, 3);
-        UpgradePaths.buy(keen, this.world, "Keen Eye");
+        SniperTower plain = this.sniperWith("Steady Aim");
+        SniperTower keen = this.sniperWith("Steady Aim", "Keen Eye");
         boolean keenBefore = keen.keenAtFullFocus();
 
         this.fireShots(plain, this.onlyTarget(), 8);
@@ -181,7 +180,7 @@ class SniperTowerTest {
 
     @Test
     void steadyAimShowsItsStacksAndTheTimeToItsNextFade() {
-        SniperTower tower = new SniperTower(this.world, 3, 3);
+        SniperTower tower = this.sniperWith("Steady Aim");
         FakeEnemyMob target = this.onlyTarget();
         this.fireShots(tower, target, 3);
 
@@ -222,7 +221,7 @@ class SniperTowerTest {
 
     @Test
     void eachShotAddsAsManySteadyAimStacksAsItsStacksAShotAllow() {
-        SniperTower tower = TowerFixtures.buffed(new SniperTower(this.world, 3, 3), this.world,
+        SniperTower tower = TowerFixtures.buffed(this.sniperWith("Steady Aim"), this.world,
                 TowerModifiers.aimStacksPerShot(1));
         FakeEnemyMob target = this.onlyTarget();
 

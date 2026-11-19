@@ -41,6 +41,8 @@ final class PerkPictograms {
             Map.entry("sniper.rifling", "=tower.shatter"),
             // Heavy Rounds II
             Map.entry("sniper.heavy_rounds.2", "=sniper.heavy_rounds"),
+            // Steady Aim
+            Map.entry("sniper.steady_aim", "=tower.steady_aim"),
             // Deep Breath
             Map.entry("sniper.deep_breath", "=tower.steady_aim"),
             // Frenzy
