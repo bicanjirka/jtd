@@ -237,7 +237,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         Graphics2D g2 = (Graphics2D) g.create();
         try {
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g2.setFont(Hud.LABEL_FONT);
+            g2.setFont(Hud.CAPTION_FONT);
             FontMetrics metrics = g2.getFontMetrics();
             String xp = UpgradeSheetText.titleXp(this.tower.experience().xp());
             int width = metrics.stringWidth(xp);
