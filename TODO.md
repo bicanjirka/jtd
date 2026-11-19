@@ -297,6 +297,17 @@ built-in tower, node or enemy ability applies them; only the dev panel and tests
 
 ## Balance tools
 
+### The balance-tools skill still documents the retired tools
+
+`jtd-balance-tools` describes the Python paper tools (`tree_calc.py`, `node_sim.py`, `area_sim.py`, `reference.json`)
+and the old harnesses (`BalanceReport`, `WaveCheckReport`, `PurchaseHarness`, `BuildHarness`), which the measured
+pipeline (`TowerBench`, `TowerReport`, `WavePowerReport`, `PlayCheck`) replaced. An agent that loads it tunes with the
+wrong yardstick; `tower-retune` tells it to ignore them meanwhile.
+
+- **Where:** `.claude/skills/jtd-balance-tools/`, the superseded classes in `td.balance` and `td`.
+- **Approach:** delete the Python tools and the harnesses nothing else uses, rewrite the skill around the pipeline
+  in `docs/BALANCE.md`, and drop the line in `tower-retune` that warns against them.
+
 ### No test runs the whole lab
 
 `TowerLabTest` runs each measurement alone, because `TowerLab.of` on even a small level takes most of a test's limit, and
