@@ -142,40 +142,40 @@ public final class SplashTower extends AbstractTower {
     private static final UpgradeCondition A_HEX = UpgradeCondition.owns(HEX_OF_DOOM.id())
             .or(UpgradeCondition.owns(HEX_OF_BLIGHT.id()));
 
-    private static final UpgradeNode DEEP_DOOM = UpgradeNode.of("splash.deep_doom", "Deep Doom", 5)
+    private static final UpgradeNode DEEP_DOOM = UpgradeNode.of("splash.deep_doom", "Deep Doom", 15)
             .after(HEX_OF_DOOM)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode BLIGHT_CLOUD = UpgradeNode.of("splash.blight_cloud", "Blight Cloud", 32)
+    private static final UpgradeNode BLIGHT_CLOUD = UpgradeNode.of("splash.blight_cloud", "Blight Cloud", 20)
             .after(HEX_OF_BLIGHT)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode AGONY = UpgradeNode.of("splash.agony", "Agony", 8)
+    private static final UpgradeNode AGONY = UpgradeNode.of("splash.agony", "Agony", 15)
             .withRequires(A_HEX)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode CONTAGION = UpgradeNode.of("splash.contagion", "Contagion", 5)
+    private static final UpgradeNode CONTAGION = UpgradeNode.of("splash.contagion", "Contagion", 15)
             .withRequires(A_HEX)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode CHAIN_LIGHTNING = UpgradeNode.of("splash.chain_lightning", "Chain Lightning", 5)
+    private static final UpgradeNode CHAIN_LIGHTNING = UpgradeNode.of("splash.chain_lightning", "Chain Lightning", 15)
             .after(ARC)
             .inTier(2);
-    private static final UpgradeNode WILD_ARC = UpgradeNode.of("splash.wild_arc", "Wild Arc", 5)
+    private static final UpgradeNode WILD_ARC = UpgradeNode.of("splash.wild_arc", "Wild Arc", 15)
             .after(ARC)
             .inTier(2);
-    private static final UpgradeNode CONDUCTOR = UpgradeNode.of("splash.conductor", "Conductor", 5)
-            .after(ARC)
-            .withOwnArt()
-            .inTier(2);
-    private static final UpgradeNode JOLT = UpgradeNode.of("splash.jolt", "Jolt", 1)
+    private static final UpgradeNode CONDUCTOR = UpgradeNode.of("splash.conductor", "Conductor", 15)
             .after(ARC)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode HEAVY_STONES = UpgradeNode.of("splash.heavy_stones", "Heavy Stones", 26)
+    private static final UpgradeNode JOLT = UpgradeNode.of("splash.jolt", "Jolt", 15)
+            .after(ARC)
+            .withOwnArt()
+            .inTier(2);
+    private static final UpgradeNode HEAVY_STONES = UpgradeNode.of("splash.heavy_stones", "Heavy Stones", 25)
             .withModifiers(TowerModifiers.damage(7f))
             .inTier(2);
-    private static final UpgradeNode LONG_THROW_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Throw II", 12)
+    private static final UpgradeNode LONG_THROW_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Throw II", 15)
             .withModifiers(TowerModifiers.range(1f))
             .inTier(2);
 
