@@ -1,6 +1,10 @@
 # Feature Request: Debuff stacking groups
 
-> **Status.** Final: reviewed, every question answered. Ready for planning.
+> **Status.** Implemented (78866e77, 585ca7f5, fa58edb4). The balance pass in
+> `FEATURE-balance-after-next-gen-towers.md` retunes the numbers this moved; nothing here is deferred.
+>
+> One rule was added in implementation: a tower's Effect duration stat no longer reaches a count, so every
+> application holds exactly 5 s whatever tower adds it. Nothing grants that stat yet; `TODO.md` asks what it is for.
 
 ## Summary
 
