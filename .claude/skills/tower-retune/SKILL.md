@@ -32,7 +32,9 @@ whatever else blocks the step. Before you ask, read the tower's class, its tree,
   WavePowerReport's `xp` and `opens` columns on Iron Crossing. Each tower gets its own XP curve (its gate per tier),
   picked by how its power grows: a tier whose power per credit jumps opens later, so that at every round the tower's
   best affordable build stays in the band of the others'. State each gate as "XP n = round r". The Beacon earns through the towers it lights (plus Kinship,
-  Mentor and Breakthrough bonuses), so its pace is its partners'. Gates are provisional until the levels are final.
+  Mentor and Breakthrough bonuses), so its pace is its partners'. A round's bounty grows faster than the gates, and
+  that is the catch-up: keep each gate step under a late round's bounty on the poorer lane, so a tower built late
+  opens its tiers within about two rounds. Gates are provisional until the levels are final.
 - Memories that hold: bare Burst (base tree) is every tower's damage floor, Sniper the single-target ceiling, Aerie
   the top single-target vs armor/plating; report any breach. No tower allows for the Beacon; its combos are tuned in
   the Beacon's nodes. It holds nothing alone, so it is judged on the `+` (beside-partners) columns only, and
