@@ -128,7 +128,8 @@ keeps the seam honest.
   `StatusIcon` opens its tooltip under itself (`TooltipLayer.watchBelow`), and a level's first numbers are a baseline,
   never a change to flash.
 - The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) at the places `UpgradeTreeLayout` takes
-  from the tower's hand-made `UpgradeTreePlans` row, scaled to fit, never scrolled. Every tower has a row, and it
+  from the tower's hand-made `UpgradeTreePlans` row, in pixels: never scaled, never scrolled; the window's minimum
+  height keeps it whole. Every tower has a row, and it
   places every node once; nothing in the panel is special to one tower. Two nodes share a slot only when they come
   after different members of one cluster: the slot shows the picked or hovered member's node, else stands empty. A
   node's look is an `UpgradeNodeState`, and

@@ -172,12 +172,12 @@ public final class PreviewUpgrades {
 
     /** The panel and every hover sheet on one image; returns the panel's nodes with where each sits. */
     private Map<String, Object> dumpPanel(Tower tower, File out) throws IOException, ReflectiveOperationException {
-        int w = UpgradeTreeLayout.WIDTH;
-        int h = UpgradeTreeLayout.HEIGHT;
         PanelUpgradeTree panel = new PanelUpgradeTree();
         panel.setGameWorld(this.world);
-        panel.setSize(w, h);
         panel.setTower(tower);
+        int w = panel.getPreferredSize().width;
+        int h = panel.getPreferredSize().height;
+        panel.setSize(w, h);
         panel.doLayout();
         BufferedImage panelImage = image(w * ZOOM, h * ZOOM);
         Graphics2D pg = graphics(panelImage);

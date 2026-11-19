@@ -197,13 +197,12 @@ public final class Hud {
         if (!face.isTile()) {
             return thick ? 2f : 1f;
         }
-        return (thick ? BuyTileLook.BORDER_TAKEN : BuyTileLook.BORDER) * BuyTileLook.SCALE;
+        return thick ? BuyTileLook.BORDER_TAKEN : BuyTileLook.BORDER;
     }
 
     private static void paintPriceTag(Graphics2D g2, ControlFace face, boolean enabled, float x, int edge, int price) {
         Graphics2D tag = (Graphics2D) g2.create();
         tag.translate(x, edge);
-        tag.scale(BuyTileLook.SCALE, BuyTileLook.SCALE);
         BuyTileLook.Tone tone = !enabled ? BuyTileLook.Tone.UNAVAILABLE
                 : face.dimmed() ? BuyTileLook.Tone.SHORT_OF_CASH : BuyTileLook.Tone.BUYABLE;
         BuyTileLook.paintTag(tag, 0f, 0f, price, tone, face.accent().orElse(FOREGROUND));
@@ -255,7 +254,7 @@ public final class Hud {
         if (!face.isTile()) {
             return new Rectangle2D.Float(inset, inset, w, h);
         }
-        float arc = Math.max(0f, BuyTileLook.CORNER * BuyTileLook.SCALE - 2 * inset);
+        float arc = Math.max(0f, BuyTileLook.CORNER - 2 * inset);
         return new RoundRectangle2D.Float(inset, inset, w, h, arc, arc);
     }
 

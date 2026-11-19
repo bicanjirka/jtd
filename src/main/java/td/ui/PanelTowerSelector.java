@@ -29,14 +29,14 @@ import java.util.OptionalInt;
 
 /**
  * The tower toolbar: one tile per {@link TowerFactory.Type}, in enum order, bordered in the tower's colour with its
- * price under it. A tower the player can't afford keeps its colours: its border dims and its price turns red. Icons
+ * price on a tag on its bottom edge. A tower the player can't afford keeps its colours: its border dims and its price turns red. Icons
  * come from {@link Java2DFrameRenderer#renderTowerIcon}.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public class PanelTowerSelector extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
-    private static final int ICON_SIZE = 32;
+    private static final int ICON_SIZE = 28;
 
     private final HudToggleButton[] buttons;
     private final TowerInspection[] shopTowers;
@@ -61,9 +61,9 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         this.towerRanges = new float[this.towerTypes.size()];
     }
 
-    /** Each tile as large on screen as an upgrade node at full size, with room under it for its price tag. */
+    /** Each tile as large as an upgrade node, with room under it for its price tag. */
     private void makeButtons() {
-        int side = Math.round(BuyTileLook.SIZE * BuyTileLook.SCALE);
+        int side = Math.round(BuyTileLook.SIZE);
         Dimension size = new Dimension(side, side + BuyTileLook.tagOverhang());
         for (int i = 0; i < this.towerTypes.size(); i++) {
             HudToggleButton tile = new HudToggleButton();

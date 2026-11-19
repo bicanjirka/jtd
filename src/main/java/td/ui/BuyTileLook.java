@@ -12,8 +12,7 @@ import java.awt.geom.RoundRectangle2D;
 
 /**
  * The one look of whatever a click buys, an upgrade node and a tower tile alike: its size on screen, border, corner,
- * and the price tag on its bottom edge, in the tree's design units. The tree draws them at its own scale; a tower
- * tile at {@link #SCALE}, so the two match while the tree has its room.
+ * and the price tag on its bottom edge, in pixels.
  */
 @ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 final class BuyTileLook {
@@ -28,31 +27,29 @@ final class BuyTileLook {
         UNAVAILABLE
     }
 
-    /** The scale the Upgrades panel draws at when it has room, and every tower tile always. */
-    static final float SCALE = 1.5f;
-    static final float SIZE = 30f;
-    static final float BORDER = 1.6f;
-    static final float BORDER_TAKEN = 2f;
+    static final float SIZE = 40f;
+    static final float BORDER = 2f;
+    static final float BORDER_TAKEN = 3f;
     /** A square's corner, as an arc's width. */
-    static final float CORNER = 6f;
-    static final float TAG_HEIGHT = 10f;
+    static final float CORNER = 8f;
+    static final float TAG_HEIGHT = 14f;
 
-    private static final Font TAG_FONT = new Font(Font.DIALOG, Font.PLAIN, 8);
+    private static final Font TAG_FONT = Hud.BODY_FONT;
     private static final Font TAG_BOLD = TAG_FONT.deriveFont(Font.BOLD);
     private static final Color TAG_FILL = new Color(16, 16, 18);
     private static final Color TAG_BORDER = new Color(58, 58, 61);
     private static final Color GLOSS = new Color(141, 141, 144);
-    private static final float TICK_WIDTH = 12f;
-    private static final float TAG_PAD = 5f;
-    private static final float TAG_ARC = 4f;
-    private static final float BASELINE = 3f;
+    private static final float TICK_WIDTH = 16f;
+    private static final float TAG_PAD = 7f;
+    private static final float TAG_ARC = 5f;
+    private static final float BASELINE = 4.5f;
 
     private BuyTileLook() {
     }
 
-    /** How far a tag hangs below the edge it sits on, in pixels at {@link #SCALE}. */
+    /** How far a tag hangs below the edge it sits on. */
     static int tagOverhang() {
-        return Math.round(TAG_HEIGHT / 2 * SCALE);
+        return Math.round(TAG_HEIGHT / 2);
     }
 
     /**
