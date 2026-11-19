@@ -473,8 +473,10 @@ the shapes that take one (`swarm 4 walker`):
 | Drip    | `drip`   | *N* enemies stretched over more time than *N* separate spawns           |
 
 A wave's script can also open with a head that sets `w<number>` (`w30: 8 walker`, or `w30 soldier:
-8 walker` with a rank), how many ticks one slot of spacing is worth. The default is 22.4; a bigger number spreads the wave out, a smaller one
-packs it tighter.
+8 walker` with a rank), how many ticks one slot of spacing is worth to an enemy of speed 1. Each enemy enters once
+the one before it has walked one slot, so a wave enters in script order and its neighbours start the same distance
+apart whatever their speeds; an `e` is one more slot the enemy before it walks. The default is 22.4; a bigger number
+spreads the wave out, a smaller one packs it tighter.
 
 ### Affixes
 

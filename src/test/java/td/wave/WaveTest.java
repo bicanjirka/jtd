@@ -8,6 +8,7 @@ import td.enemy.EnemyCatalog;
 import td.enemy.EnemyDefinition;
 import td.enemy.EnemyMob;
 import td.enemy.Rank;
+import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
 import td.util.GameWorld;
 
@@ -263,6 +264,29 @@ class WaveTest {
         assertThat(normal[0]).isZero();
         assertThat(normal[1]).isGreaterThan(0);
         assertThat(doubled[1]).isCloseTo(normal[1] * 2, within(1));
+    }
+
+    @Test
+    void eachEnemyEntersOnceTheOneBeforeItHasWalkedOneSlot() {
+        this.setStraightHorizontalPath();
+        this.catalog.register(EnemyFixtures.simpleDefinition("hare").withBaseSpeed(2f));
+        this.catalog.register(EnemyFixtures.simpleDefinition("tortoise").withBaseSpeed(0.5f));
+
+        int[] ticks = activationTicks(wave("w20: hare tortoise hare").spawn());
+
+        assertThat(ticks[1] - ticks[0]).isEqualTo(10);
+        assertThat(ticks[2] - ticks[1]).isEqualTo(40);
+    }
+
+    @Test
+    void aSpacerIsOneMoreSlotTheEnemyBeforeItWalks() {
+        this.setStraightHorizontalPath();
+        this.catalog.register(EnemyFixtures.simpleDefinition("hare").withBaseSpeed(2f));
+        this.catalog.register(EnemyFixtures.simpleDefinition("tortoise").withBaseSpeed(0.5f));
+
+        int[] ticks = activationTicks(wave("w20: hare e tortoise").spawn());
+
+        assertThat(ticks[1] - ticks[0]).isEqualTo(20);
     }
 
     /**
