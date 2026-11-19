@@ -58,7 +58,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final float MAX_SCALE = 1.5f;
+    private static final float MAX_SCALE = BuyTileLook.SCALE;
     /** What the Info panel above keeps at least when the window is short. */
     private static final int INFO_FLOOR = 180;
     /** The least height the tree is drawn at, a little over half size. */

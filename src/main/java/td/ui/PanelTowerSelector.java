@@ -13,11 +13,10 @@ import td.util.GameHost;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -40,7 +39,6 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
     private static final int ICON_SIZE = 32;
 
     private final HudToggleButton[] buttons;
-    private final JLabel[] prices;
     private final TowerInspection[] shopTowers;
     private final float[] towerRanges;
     private final List<TowerFactory.Type> towerTypes;
@@ -59,33 +57,26 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         }
 
         this.buttons = new HudToggleButton[this.towerTypes.size()];
-        this.prices = new JLabel[this.towerTypes.size()];
         this.shopTowers = new TowerInspection[this.towerTypes.size()];
         this.towerRanges = new float[this.towerTypes.size()];
     }
 
+    /** Each tile as large on screen as an upgrade node at full size, with room under it for its price tag. */
     private void makeButtons() {
-        GridBagConstraints gridBagConstraints;
-        HudToggleButton tempToggle;
+        int side = Math.round(BuyTileLook.SIZE * BuyTileLook.SCALE);
+        Dimension size = new Dimension(side, side + BuyTileLook.tagOverhang());
         for (int i = 0; i < this.towerTypes.size(); i++) {
-            tempToggle = new HudToggleButton();
-            this.buttons[i] = tempToggle;
+            HudToggleButton tile = new HudToggleButton();
+            this.buttons[i] = tile;
             final int n = i;
-            tempToggle.addActionListener(evt -> doPlace(n));
-            gridBagConstraints = new GridBagConstraints();
+            tile.addActionListener(evt -> doPlace(n));
+            tile.setPreferredSize(size);
+            tile.setMinimumSize(size);
+            GridBagConstraints gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.gridx = n;
             gridBagConstraints.gridy = 0;
-            gridBagConstraints.insets = new Insets(0, 0, 0, 4);
-            add(tempToggle, gridBagConstraints);
-            JLabel price = new JLabel(" ", SwingConstants.CENTER);
-            price.setFont(Hud.PRICE_FONT);
-            price.setForeground(Hud.FOREGROUND);
-            this.prices[i] = price;
-            gridBagConstraints = new GridBagConstraints();
-            gridBagConstraints.gridx = n;
-            gridBagConstraints.gridy = 1;
-            gridBagConstraints.insets = new Insets(1, 0, 0, 4);
-            add(price, gridBagConstraints);
+            gridBagConstraints.insets = new Insets(0, 0, 0, 6);
+            add(tile, gridBagConstraints);
         }
     }
 
@@ -150,14 +141,12 @@ public class PanelTowerSelector extends JPanel implements EconomyListener {
         });
     }
 
-    /** Each tower's price now, red and its tile dimmed while it costs more than the cash. */
+    /** Each tower's price now on its tile's tag, red and the tile dimmed while it costs more than the cash. */
     private void showPrices() {
         for (int i = 0; i < this.buttons.length; i++) {
             int price = this.context.towers().priceOf(this.towerTypes.get(i));
             boolean affordable = this.context.economy().canPay(price);
-            this.buttons[i].setFace(this.buttons[i].face().withDimmed(!affordable));
-            this.prices[i].setText("$" + price);
-            this.prices[i].setForeground(affordable ? Hud.FOREGROUND : Hud.SHORT);
+            this.buttons[i].setFace(this.buttons[i].face().withDimmed(!affordable).withPrice(price));
         }
     }
 

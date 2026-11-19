@@ -59,8 +59,6 @@ public final class Hud {
     static final Color SHORT = new Color(255, 107, 107);
     static final Font CHIP_FONT = new Font("Dialog", Font.BOLD, 8);
     static final Font PRICE_FONT = new Font("Dialog", Font.BOLD, 9);
-    /** A tile's corner radius; a button is square. */
-    static final float TILE_CORNER = 7f;
     /** Padding inside a control, since {@link #paintControl} draws the border. */
     private static final Border CONTROL_PADDING = new EmptyBorder(3, 8, 3, 8);
     private static final int CHIP_INSET = 2;
@@ -115,8 +113,9 @@ public final class Hud {
 
     /**
      * Draws a control: a flat fill reacting to the mouse, its border, its icon or else its text, centred, and its
-     * key chip in the top-left corner. A button is square with a neutral border; a tile has rounded corners and its
-     * accent for a border. Hover brightens the border; selected thickens a tile's, and fills a button with its colour
+     * key chip in the top-left corner. A button is square with a neutral border; a tile is drawn as an upgrade node
+     * is, its accent for a border and its price on a tag hanging from its bottom edge. Hover brightens the border;
+     * selected thickens a tile's, and fills a button with its colour
      * under dark text, which no hover can be mistaken for. A button with an icon and a
      * row-style text (one with a tab) paints the icon first and the row beside it. Text keeps clear of a chip when
      * there is room beside it.
@@ -133,11 +132,13 @@ public final class Hud {
         g2.setColor(BACKGROUND);
         g2.fillRect(0, 0, width, height);
         boolean thick = face.isTile() && enabled && model.isSelected();
+        float stroke = strokeOf(face, thick);
+        int body = face.price().isPresent() ? height - BuyTileLook.tagOverhang() : height;
         g2.setColor(fillFor(face, model, enabled));
-        g2.fill(outline(face, width, height, 0f));
+        g2.fill(outline(face, width, body, 0f));
         g2.setColor(borderFor(face, model, enabled));
-        g2.setStroke(new BasicStroke(thick ? 2f : 1f));
-        g2.draw(outline(face, width, height, thick ? 1f : 0.5f));
+        g2.setStroke(new BasicStroke(stroke));
+        g2.draw(outline(face, width, body, stroke / 2));
 
         Icon icon = iconFor(button, enabled);
         String text = button.getText();
@@ -150,7 +151,7 @@ public final class Hud {
             paintCentredText(row, button, width - taken, height, ink);
             row.dispose();
         } else if (icon != null) {
-            icon.paintIcon(button, g2, (width - icon.getIconWidth()) / 2, (height - icon.getIconHeight()) / 2);
+            icon.paintIcon(button, g2, (width - icon.getIconWidth()) / 2, (body - icon.getIconHeight()) / 2);
         } else {
             int clear = face.hasChip() ? chipRoom(button, face.chip()) : 0;
             int textWidth = text == null ? 0 : button.getFontMetrics(button.getFont()).stringWidth(text);
@@ -168,7 +169,26 @@ public final class Hud {
         if (face.hasChip()) {
             paintChip(g2, face.chip(), CHIP_INSET, CHIP_INSET, chipBorderFor(face, enabled), chipInkFor(face, enabled));
         }
+        face.price().ifPresent(price -> paintPriceTag(g2, face, enabled, width / 2f, body, price));
         g2.dispose();
+    }
+
+    /** A tile's border as wide as an upgrade node's on screen; a button's a hairline. */
+    private static float strokeOf(ControlFace face, boolean thick) {
+        if (!face.isTile()) {
+            return thick ? 2f : 1f;
+        }
+        return (thick ? BuyTileLook.BORDER_TAKEN : BuyTileLook.BORDER) * BuyTileLook.SCALE;
+    }
+
+    private static void paintPriceTag(Graphics2D g2, ControlFace face, boolean enabled, float x, int edge, int price) {
+        Graphics2D tag = (Graphics2D) g2.create();
+        tag.translate(x, edge);
+        tag.scale(BuyTileLook.SCALE, BuyTileLook.SCALE);
+        BuyTileLook.Tone tone = !enabled ? BuyTileLook.Tone.UNAVAILABLE
+                : face.dimmed() ? BuyTileLook.Tone.SHORT_OF_CASH : BuyTileLook.Tone.BUYABLE;
+        BuyTileLook.paintTag(tag, 0f, 0f, price, tone, face.accent().orElse(FOREGROUND));
+        tag.dispose();
     }
 
     /**
@@ -216,7 +236,7 @@ public final class Hud {
         if (!face.isTile()) {
             return new Rectangle2D.Float(inset, inset, w, h);
         }
-        float arc = 2 * Math.max(0f, TILE_CORNER - inset);
+        float arc = Math.max(0f, BuyTileLook.CORNER * BuyTileLook.SCALE - 2 * inset);
         return new RoundRectangle2D.Float(inset, inset, w, h, arc, arc);
     }
 

@@ -38,7 +38,7 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
     static final int WIDTH = 300;
     /** The design height the panel asks for: five one-row tiers fit it. */
     static final int HEIGHT = 380;
-    static final float NODE = 30f;
+    static final float NODE = BuyTileLook.SIZE;
     static final float PITCH = 37f;
     static final float ROW = 46f;
     static final float STRIP = 15f;
