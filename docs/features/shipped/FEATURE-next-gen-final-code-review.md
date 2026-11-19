@@ -1,6 +1,7 @@
 # Feature Request: The final code review, once the next-gen towers are in code
 
-**Status:** implemented 2026-11-18 (498d2b9f..). What each finding became is under "Outcome".
+**Status:** implemented 2026-11-18 (498d2b9f..), second pass over the other six towers 2026-11-19 (11568ef1..). What
+each finding became is under "Outcome".
 
 ## Summary
 
@@ -82,6 +83,33 @@ Out of scope: balance, looks and any change a player can see.
 | `lastShot` not reset in `endFight` | Kept: both traces fade by their own tick, and a reset would change what is drawn |
 | `OwnedMechanics`' parallel lists | One list of pairs; `renew` takes the distinct nodes |
 | Looks built ahead | Every `TowerCue` and `LoadedShell` is sent; only `TowerLook.WHITE` goes unworn, on purpose. Dead accessors removed: `glares`, `isHolding`, `buildsDeepToll` |
+
+The second pass read the Burst, Mortar, Aerie, Beacon, Scorcher and Obelisk in full, with their packages, against the
+table above and the smells the first pass named.
+
+| Finding (second pass) | Where | What became of it |
+|---|---|---|
+| The board scale read as `context.getBoard().scale()` or a private `cell()` | Seven towers | `AbstractTower.cellPixels()`; a rule |
+| One `new Viewpoint(centerX, centerY, rangeReal(), scale)` per spec | Six towers | `AbstractTower.viewpoint()` |
+| `TurretAim.angleTo(centerX, centerY, enemy...)`; aim at the target or settle between waves | Four towers; three turrets | `bearingTo`, `turnTurret` |
+| `reachesPastItsBase()` written four times | Sniper, Mortar, Scorcher, Obelisk | One in `AbstractTower`, from the base range |
+| `(int)` casts to ask a query; "everyone near an enemy but itself" | Nine sites; six of them | `InRangeTargetQuery.everyone`/`visible(Vec2, range)` and `around(enemy, range)`. The sites that round, not cut, stay: `TODO.md` |
+| An enemy's effects filtered by kind in a stream | Burst, Scorcher, `HexKeeper`, the dev caster | `HitReceiver.activeEffect(kind)` |
+| Static and Soulbrand settled twice, rules and damage written out each time | Burst, Beacon | `TagLedger.settleStatic`/`settleSoulbrand`, `StaticMechanic.discharge()`, `SoulbrandMechanic.burst()`; `take` private, `carries` gone; `NONE` clears instead of taking with an unused parameter |
+| A flight's ticks computed twice; `new ShotFlight(now, now + n)` | Sniper, Burst | `ShotFlight.lasting`, `across` |
+| The pane's zero chances dropped by the same seven lines | `MagazineView`, `NestView` | `DrawnShares.of` |
+| A drawn record with loose coordinates beside siblings holding a `Vec2` | Scorcher's `Flash`, Mortar's `NukeFlash` | Both hold a `Vec2`; the drawn-records rule says so |
+| `null` and sentinels as absence | Burst's Arc (`nextJump(at, null, ...)`), Beacon's apprentice and Mentor, Mortar's nuke flash and caches, Obelisk's `Integer.MIN_VALUE` knell | `Optional`/`OptionalInt`; the root rule names sentinels |
+| `isPresent()`/`get()` pairs, `x.isPresent() ? x : y` | Scorcher's aim, Mortar's volley and node words, `PathLine`, `HexKeeper`, `BroodSpec`, `MagazineSpec`, `BlightHex`, Aerie's retarget and ticks, Beacon's Spotlight, `castReadyAbilities` | `map`, `or`, `ifPresentOrElse`, `OptionalInt.stream()`; a rule. Kept: the Burst's hex loop, which stops at the first enemy that doesn't fit |
+| Unused lambda parameters | Burst, Beacon (and its `Spotlight`), Obelisk | `_`; a rule |
+| A pass-through guard: `if (!keeper.isEmpty()) keeper.doTick(...)` that `doTick` makes itself | Burst, dev caster | Guards and `HexKeeper.isEmpty` gone |
+| One name, two meanings: the Mortar's private `Blast` beside `ShellKind.Blast` | Mortar | `BlastRadii` |
+| A name that doesn't say what it is: the Aerie's `Flight` is its `MissileGuide` | Aerie | `Guide` |
+| One selector built twice a tick; three stacking marks with one condition | Scorcher; Beacon | A `nearest` field; `landsAgain` |
+| Dead code | `SonarSweep` (`retimed`, `turnToward`, `completedRevolution`), `PulseSpec.view`, `SplashSpec.view`, `MortarSpec.view`, `SeekerSpec.withReach` | Deleted |
+| `endFight` against what a fight changes | All six | Each resets its fight state. Kept, as the Sniper's `lastShot`: traces that fade by their own tick (the Mortar's marks, flash and recoil, the Scorcher's stream end, the Aerie's quiet and fight ticks). Found: the Sundial's shadow keeps its heading into the next wave and out of a save (`TODO.md`) |
+| A cache kept until what it was worked out for changes, written six ways | `AbstractTower` (offers, inspection), Mortar (kinds, odds), Beacon (spec) | The Mortar's are `Optional`; one shared holder is in `TODO.md` |
+| Fine as they are | Each tower's `*Spec` `withX` copies, its `TowerVisitor` adapters, its private `Pending*` records; the Burst's `fork()` and the Aerie's and Obelisk's queries folding their spec per call | Kept: the record rule allows the copies, and a spec fold is a few small records |
 
 ## Interconnections
 

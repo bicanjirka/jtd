@@ -18,7 +18,10 @@
 - What a tower has in flight (bullets, stones, hops, curses) lands through `Arrivals.takeDue`, never by popping the
   head of its list: a shot fired later may land sooner.
 - What the renderer reads of a tower's shots, traces and marks is a record in the tower's sub-package, never one nested
-  in the tower class; a record only the tower reads stays private in it.
+  in the tower class, and a point in it is a `Vec2`; a record only the tower reads stays private in it.
+- What every tower measures from comes from `AbstractTower`: `cellPixels()` for the board scale, `viewpoint()` for its
+  spec's reach, `bearingTo` and `turnTurret` for a turret, `reachesPastItsBase()`. A leaf never reads
+  `getBoard().scale()` or builds a `Viewpoint` of its own.
 - Range checks compare squared distances (`rangeReal2()`); no `Math.sqrt` in per-tick scans.
 - A tower that hits every tick passes `coolDownMax = 0`; one whose cadence is not a cooldown also overrides
   `cadence()`.
@@ -47,8 +50,9 @@
 - Compose a `TargetQuery` (filter; `and`, `or`, identity `all()`, absorber `none()`) with a
   `TargetSelector` (picks one). Don't hand-roll a scan over `EnemyRegistry.getEnemies()`.
 - Targeting takes an `EnemyRegistry`, never `GameWorld`, so `td.projectile` can reuse it.
-- `InRangeTargetQuery` only through `visible` (what a tower may aim at or be triggered by) or
-  `everyone` (what an area effect touches, hidden enemies included). Test invisibility nowhere else:
+- `InRangeTargetQuery` only through `visible` (what a tower may aim at or be triggered by),
+  `everyone` (what an area effect touches, hidden enemies included) or `around` (everyone near an enemy but itself);
+  a point the caller holds goes in as a `Vec2`, never cut with `(int)` to ask. Test invisibility nowhere else:
   a tower picks per action, never per tower kind. `NearestSelector` is centred on any point
   (missiles retarget around themselves). `RandomSelector` takes a `RandomSource`. A tower that picks
   one target wraps its selector in `PreferringSelector.priority`, so an enemy under `PRIORITY` wins
