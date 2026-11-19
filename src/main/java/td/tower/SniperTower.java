@@ -64,7 +64,7 @@ public final class SniperTower extends AbstractTower {
 
     public static final int PRICE = 15;
     public static final float DAMAGE_POINTS = 32f;
-    public static final float RANGE = 3.0f;
+    public static final float RANGE = 2.5f;
     public static final float CRIT_CHANCE = 0f;
     public static final float CRIT_MULTIPLIER = 1.5f;
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.4;
@@ -87,7 +87,7 @@ public final class SniperTower extends AbstractTower {
             TowerModifiers.attackSpeed(0.35f)).lengthenedByBuffs());
 
     private static final HitBonus STEADY_AIM_BONUS = perSteadyAimStack(
-            HitAdjustment.attackSpeed(0.04f).plus(HitAdjustment.critChance(0.02f)));
+            HitAdjustment.attackSpeed(0.05f).plus(HitAdjustment.critChance(0.02f)).plus(HitAdjustment.accuracy(2f)));
 
     private static final UpgradeNode STEADY_AIM = UpgradeNode.of("sniper.steady_aim", "Steady Aim", 5)
             .withModifiers(TowerModifiers.aimStacks(5))
@@ -95,7 +95,7 @@ public final class SniperTower extends AbstractTower {
     private static final UpgradeNode RIFLING = UpgradeNode.of("sniper.rifling", "Rifling", 2)
             .withModifiers(TowerModifiers.critChance(0.05f));
     private static final UpgradeNode LONG_BARREL = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Barrel", 5)
-            .withModifiers(TowerModifiers.range(1f));
+            .withModifiers(TowerModifiers.range(0.75f));
     private static final UpgradeNode HEAVY_ROUNDS = UpgradeNode.of("sniper.heavy_rounds", "Heavy Rounds", 9)
             .withModifiers(TowerModifiers.damage(12f));
 
@@ -104,11 +104,11 @@ public final class SniperTower extends AbstractTower {
                     .withCapability(TowerCapability.GUARANTEED_CRIT)))
             .inTier(1);
     private static final UpgradeNode DEEP_BREATH = UpgradeNode.of("sniper.deep_breath", "Deep Breath", 3)
-            .withModifiers(TowerModifiers.aimStacks(3))
+            .withModifiers(TowerModifiers.aimStacks(5))
             .after(STEADY_AIM)
             .inTier(1);
     private static final UpgradeNode KEEN_EYE = UpgradeNode.of("sniper.keen_eye", "Keen Eye", 3)
-            .withHitBonus(perSteadyAimStack(HitAdjustment.critChance(0.02f)))
+            .withHitBonus(perSteadyAimStack(HitAdjustment.critChance(0.03f)))
             .after(STEADY_AIM)
             .inTier(1);
     private static final UpgradeNode KILLSHOT = UpgradeNode.of("sniper.killshot", "Killshot", 5)
