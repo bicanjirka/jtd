@@ -12,8 +12,17 @@ public interface ShotActions {
     boolean execute(EnemyMob target);
 
     /**
-     * Sends the shot that just landed on from {@code from} to the nearest other enemy within {@code reachCells}, if
-     * there is one. The hop deals the shot's damage when it arrives and can't crit.
+     * Makes {@code target} Bleed for {@code ticks}: for every cell it walks, {@code sharePerCell} of the damage the
+     * shot that just landed was fired with, past armor and plating.
+     */
+    void bleed(EnemyMob target, float sharePerCell, int ticks);
+
+    /** Exposes {@code target} for {@code ticks}: the Sniper's own share, refreshed rather than added to. */
+    void expose(EnemyMob target, int ticks);
+
+    /**
+     * Sends the shot that just landed on from {@code from} to another enemy within {@code reachCells} of it, picked at
+     * random, if there is one. The hop deals the shot's damage when it arrives and may crit.
      */
     void ricochet(EnemyMob from, float reachCells);
 }

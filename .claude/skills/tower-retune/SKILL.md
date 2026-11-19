@@ -18,9 +18,9 @@ whatever else blocks the step. Before you ask, read the tower's class, its tree,
 ## Fixed rules
 
 - **Prices are a menu, not a result:** tower 15 or 20 (25 only for a strong, stated reason); every tier0 node 5;
-  per node, tier I 10 or 15, tier II 20 or 25, tier III 30 or 35. A tier may mix both; its stronger nodes take the
-  higher price (a cluster's members share one). A price off the menu is only a concern you raise, when it would
-  simplify the design or the balance; the menu stays preferred. Never `TowerPriceWriter` and never TowerReport's
+  per node, tier I 10 or 15, tier II 15, 20 or 25, tier III 20 to 50 in steps of 5, never more. A tier may mix
+  prices; its stronger nodes take the higher ones (a cluster's members share one). A price off the menu is only a
+  concern you raise, when it would simplify the design or the balance; the menu stays preferred. Never `TowerPriceWriter` and never TowerReport's
   "suggested" price: pick from the menu, then tune the parameters to fit the price. Copy surcharge (x1.25) and sell
   refund (0.75) stay fixed.
 - **No implicit passive.** A tower whose bare self does something beyond its basic attack (on-hit effect, trait,
