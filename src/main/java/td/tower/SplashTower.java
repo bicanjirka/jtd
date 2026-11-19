@@ -670,11 +670,15 @@ public final class SplashTower extends AbstractTower {
         }
 
         @Override
-        public boolean thunderstrike(float factor) {
+        public boolean thunderstrike(float factor, float dazeSeconds) {
             return THUNDERSTRIKE_AIM.selectFrom(this.inReach).map(enemy -> {
                 TowerStats stats = SplashTower.this.stats();
                 Vec2 above = new Vec2(enemy.getX(), enemy.getY() - THUNDERSTRIKE_HEIGHT_CELLS * SplashTower.this.cellPixels());
                 SplashTower.this.strike(enemy, above, Math.round(stats.damage() * factor), stats, BoltKind.THUNDERSTRIKE);
+                if (!enemy.isDead()) {
+                    SplashTower.this.applyEffect(enemy,
+                            sink -> Effect.dazed(Math.round(dazeSeconds * TICKS_PER_SECOND), sink));
+                }
                 return true;
             }).orElse(false);
         }
