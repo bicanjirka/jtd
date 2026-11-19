@@ -144,15 +144,19 @@ public final class SplashTower extends AbstractTower {
 
     private static final UpgradeNode DEEP_DOOM = UpgradeNode.of("splash.deep_doom", "Deep Doom", 5)
             .after(HEX_OF_DOOM)
+            .withOwnArt()
             .inTier(2);
     private static final UpgradeNode BLIGHT_CLOUD = UpgradeNode.of("splash.blight_cloud", "Blight Cloud", 32)
             .after(HEX_OF_BLIGHT)
+            .withOwnArt()
             .inTier(2);
     private static final UpgradeNode AGONY = UpgradeNode.of("splash.agony", "Agony", 8)
             .withRequires(A_HEX)
+            .withOwnArt()
             .inTier(2);
     private static final UpgradeNode CONTAGION = UpgradeNode.of("splash.contagion", "Contagion", 5)
             .withRequires(A_HEX)
+            .withOwnArt()
             .inTier(2);
     private static final UpgradeNode CHAIN_LIGHTNING = UpgradeNode.of("splash.chain_lightning", "Chain Lightning", 5)
             .after(ARC)
@@ -162,9 +166,11 @@ public final class SplashTower extends AbstractTower {
             .inTier(2);
     private static final UpgradeNode CONDUCTOR = UpgradeNode.of("splash.conductor", "Conductor", 5)
             .after(ARC)
+            .withOwnArt()
             .inTier(2);
     private static final UpgradeNode SHORT_CIRCUIT = UpgradeNode.of("splash.short_circuit", "Short Circuit", 1)
             .after(ARC)
+            .withOwnArt()
             .inTier(2);
     private static final UpgradeNode HEAVY_STONES = UpgradeNode.of("splash.heavy_stones", "Heavy Stones", 26)
             .withModifiers(TowerModifiers.damage(7f))
@@ -175,15 +181,19 @@ public final class SplashTower extends AbstractTower {
 
     private static final UpgradeNode SOUL_HARVEST = UpgradeNode.of("splash.soul_harvest", "Soul Harvest", 19)
             .after(HEXER)
+            .withOwnArt()
             .inTier(3);
     private static final UpgradeNode HEX_OF_INVERSION = UpgradeNode.of("splash.hex_of_inversion", "Hex of Inversion", 6)
             .after(HEXER)
+            .withOwnArt()
             .inTier(3);
     private static final UpgradeNode CHOKING_BLIGHT = UpgradeNode.of("splash.choking_blight", "Choking Blight", 1)
             .after(HEX_OF_BLIGHT)
+            .withOwnArt()
             .inTier(3);
     private static final UpgradeNode TWIN_HEX = UpgradeNode.of("splash.twin_hex", "Twin Hex", 14)
             .withRequires(A_HEX)
+            .withOwnArt()
             .inTier(3);
     private static final UpgradeNode THUNDERCLAP = UpgradeNode.of("splash.thunderclap", "Thunderclap", 9)
             .after(STORMCALLER)
@@ -193,9 +203,11 @@ public final class SplashTower extends AbstractTower {
             .inTier(3);
     private static final UpgradeNode HIGH_VOLTAGE = UpgradeNode.of("splash.high_voltage", "High Voltage", 6)
             .after(ARC)
+            .withOwnArt()
             .inTier(3);
     private static final UpgradeNode FEEDBACK = UpgradeNode.of("splash.feedback", "Feedback", 6)
             .after(CONDUCTOR)
+            .withOwnArt()
             .inTier(3);
     private static final UpgradeNode QUICK_HANDS = UpgradeNode.of("splash.quick_hands", "Quick Hands", 17)
             .withModifiers(TowerModifiers.attackSpeed(1f / 0.85f - 1f))

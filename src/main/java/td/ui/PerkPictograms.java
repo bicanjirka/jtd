@@ -67,9 +67,9 @@ final class PerkPictograms {
             // Hex of Blight
             Map.entry("splash.hex_of_blight", "=effect.blight"),
             // Deep Doom
-            Map.entry("splash.deep_doom", "=effect.doom"),
+            Map.entry("splash.deep_doom", "F M 12 2.6 C 7.2 2.6 4 6.2 4 10.4 C 4 13.2 5.4 15.2 7.4 16.2 V 19.6 C 7.4 20.4 8 21.2 9 21.2 H 15 C 16 21.2 16.6 20.4 16.6 19.6 V 16.2 C 18.6 15.2 20 13.2 20 10.4 C 20 6.2 16.8 2.6 12 2.6 Z ; K O8.9 11.0 2.1 ; K O15.1 11.0 2.1 ; T O12 12 11.4"),
             // Blight Cloud
-            Map.entry("splash.blight_cloud", "=effect.blight"),
+            Map.entry("splash.blight_cloud", "F O8 15 4 O13 11.6 5.2 O18 15.6 3.6 M4 15H22V19H4Z ; K O9 16.4 1 O13.6 15 1.1 O17 17.4 0.9 ; F M5.4 8.4C5.4 5.6 7.4 3.8 10 3.6C10 6.4 8.2 8.4 5.4 8.4Z"),
             // Agony
             Map.entry("splash.agony", "=effect.vulnerable"),
             // Contagion
@@ -79,21 +79,25 @@ final class PerkPictograms {
             // Wild Arc
             Map.entry("splash.wild_arc", "S M14.6 21.4V8.4 M11.2 21.4H18 ; F O14.6 5.6 2.6 ; F M7.6 2.4L3 10H6.2L4.6 15.4L10 7.8H6.8Z"),
             // Soul Harvest
-            Map.entry("splash.soul_harvest", "=sniper.killshot"),
+            Map.entry("splash.soul_harvest", "F M11 2.4C7.4 7 5.6 10.2 5.6 13.4A5.4 5.4 0 0 0 16.4 13.4C16.4 10.2 14.6 7 11 2.4Z ; K O8.8 13 1.1 O13.2 13 1.1 ; S M3 21.4C10 21.4 18 18.4 21.2 8.4 ; F M21.8 5.2L22.4 10.6L17.8 8.2Z"),
             // Hex of Inversion
             Map.entry("splash.hex_of_inversion", "=effect.inversion"),
             // Choking Blight
-            Map.entry("splash.choking_blight", "=effect.silenced"),
+            Map.entry("splash.choking_blight", "F M4.5 19.5C4.5 10 10 4 20 3.5C20 13.5 14 19.5 4.5 19.5Z ; X M4.5 19.5L15.2 8.8 ; S M8 7.4L16.6 16"),
             // Twin Hex
-            Map.entry("splash.twin_hex", "=tower.hex"),
+            Map.entry("splash.twin_hex", "S O8 8.4 5.2 ; S M8 12.8L3.9 5.7H12.1Z ; F O8 7.9 1.1 ; S O16 15.6 5.2 ; S M16 20L11.9 12.9H20.1Z ; F O16 15.1 1.1"),
             // Thunderclap
             Map.entry("splash.thunderclap", "F M13.4 3L8.4 12.4H11.6L10.4 21L15.8 10.8H12.6Z ; S M6.4 8A6 6 0 0 0 6.4 16 M17.6 8A6 6 0 0 1 17.6 16 ; T M3 5.4A9.6 9.6 0 0 0 3 18.6 M21 5.4A9.6 9.6 0 0 1 21 18.6"),
             // Thunderstrike
             Map.entry("splash.thunderstrike", "F M6.4 13C4.4 13 3 11.6 3 9.8C3 8 4.4 6.6 6.2 6.6C6.8 4.4 8.8 3 11.2 3C14 3 16.2 5 16.6 7.6C18.8 7.6 20.6 9.2 20.6 11.2C20.6 13 19.2 13 17.4 13Z ; F M12.8 13.8L9.4 18.6H12L10.8 22.4L15.6 16.6H12.8L14.6 13.8Z"),
+            // Short Circuit
+            Map.entry("splash.short_circuit", "S M12 2.6L20 5.6V12C20 17 16.4 20.2 12 21.8C7.6 20.2 4 17 4 12V5.6Z ; F M13.2 6.6L8.6 13.2H11.6L10.6 18.2L15.6 11.4H12.4Z"),
+            // Conductor
+            Map.entry("splash.conductor", "F O5 6.6 2.4 O19 6.6 2.4 ; S M7.4 6.6L10.4 11L13.6 4.8L16.6 6.6 ; F M12 13.4L13.2 16.6L16.4 17.8L13.2 19L12 22.2L10.8 19L7.6 17.8L10.8 16.6Z"),
             // High Voltage
-            Map.entry("splash.high_voltage", "=tower.arc"),
+            Map.entry("splash.high_voltage", "F M9.2 2.6L3.4 12.6H7.6L6.4 21.4L12.4 10.6H8.2Z ; F M17.6 6L12.4 14.8H16L15 21.6L20.8 12.4H17Z"),
             // Feedback
-            Map.entry("splash.feedback", "=effect.charged"),
+            Map.entry("splash.feedback", "S M17.4 7.6A7.4 7.4 0 1 0 19.4 13.4 ; F M21.6 3.8L21 9.6L15.6 7.4Z ; F M13.4 7.6L9.6 12.6H12.2L11 17.2L15.2 11.6H12.6Z"),
             // Heavy Stones
             Map.entry("splash.heavy_stones", "=sniper.heavy_rounds"),
             // Quick Hands
@@ -113,6 +117,7 @@ final class PerkPictograms {
             Map.entry("mortar.shrapnel", "F O9 10.4 2.2 ; F M3.4 3.4L6.8 4.4L4.4 6.8Z M14.6 3.4L13.6 6.8L11.2 4.4Z M3.4 17.4L4.4 14L6.8 16.4Z ; T M9 6.4V3 M9 14.4V17.6 M5 10.4H2 M13 10.4H16 ; F M17.6 11.6C17.6 11.6 21.6 16.2 21.6 18.6A4 4 0 0 1 13.6 18.6C13.6 16.2 17.6 11.6 17.6 11.6Z"),
             // Napalm, Tar, Cryo
             Map.entry("mortar.napalm", "=tower.napalm_shell"),
+            Map.entry("mortar.thick_mix", "=tower.napalm_shell"),
             Map.entry("mortar.tar", "=tower.tar_shell"),
             Map.entry("mortar.cryo", "=tower.cryo_shell"),
             // Flare

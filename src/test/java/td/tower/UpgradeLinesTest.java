@@ -1,8 +1,11 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeLine;
+import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeState;
+import td.tower.upgrade.UpgradeTree;
 
 import java.util.List;
 
@@ -42,5 +45,28 @@ class UpgradeLinesTest {
                 .toList();
 
         assertThat(firsts).containsExactly(LONE.displayName(), A1.displayName());
+    }
+
+    @Test
+    void aNodeThatAsksForItsOwnArtShowsItInsteadOfItsLinesFirst() {
+        UpgradeNode first = UpgradeNode.of("first", "First", 5);
+        UpgradeNode later = UpgradeNode.of("later", "Later", 5).after(first).withOwnArt();
+        UpgradeNode plain = UpgradeNode.of("plain", "Plain", 5).after(first);
+        UpgradeTree tree = UpgradeTree.of(first, later, plain);
+
+        assertThat(tree.artNodeOf(later)).isEqualTo(later);
+        assertThat(tree.artNodeOf(plain)).isEqualTo(first);
+    }
+
+    @Test
+    void aNodeThatComesAfterOneOfSeveralIsNoLinesStep() {
+        UpgradeNode left = UpgradeNode.of("left", "Left", 5);
+        UpgradeNode right = UpgradeNode.of("right", "Right", 5);
+        UpgradeNode either = UpgradeNode.of("either", "Either", 5)
+                .withRequires(UpgradeCondition.owns(left.id()).or(UpgradeCondition.owns(right.id())));
+        UpgradeTree tree = UpgradeTree.of(left, right, either);
+
+        assertThat(tree.previousInLine(either)).isEmpty();
+        assertThat(tree.firstOf(either)).isEqualTo(either);
     }
 }

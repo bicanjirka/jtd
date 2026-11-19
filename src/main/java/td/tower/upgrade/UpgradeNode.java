@@ -12,10 +12,11 @@ import td.tower.targeting.TargetPriority;
  * One upgrade in a tower's tree. Hooks and prerequisites match nodes by their {@code id}, unique within one tree.
  * <p>
  * It sits in {@code tier}, which must be open before it is bought; {@code requires} names the nodes it comes after.
- * Once both hold, it costs only its {@code price}.
+ * Once both hold, it costs only its {@code price}. {@code ownArt} gives it a glyph of its own, where it would show the
+ * one of the line it comes after.
  */
 public record UpgradeNode(String id, String displayName, int price, NodeEffects effects, UpgradeCondition requires,
-                          int tier) {
+                          int tier, boolean ownArt) {
 
     public UpgradeNode {
         if (tier < 0) {
@@ -25,7 +26,7 @@ public record UpgradeNode(String id, String displayName, int price, NodeEffects 
 
     /** A node of tier 0 that needs nothing before it; add the rest with the {@code withX} copies. */
     public static UpgradeNode of(String id, String displayName, int price) {
-        return new UpgradeNode(id, displayName, price, NodeEffects.none(), UpgradeCondition.always(), 0);
+        return new UpgradeNode(id, displayName, price, NodeEffects.none(), UpgradeCondition.always(), 0, false);
     }
 
     /** This node with {@code modifiers} added to what it does to its tower's stats. */
@@ -56,21 +57,26 @@ public record UpgradeNode(String id, String displayName, int price, NodeEffects 
 
     /** This node with {@code effects} as everything it does. */
     public UpgradeNode withEffects(NodeEffects effects) {
-        return new UpgradeNode(this.id, this.displayName, this.price, effects, this.requires, this.tier);
+        return new UpgradeNode(this.id, this.displayName, this.price, effects, this.requires, this.tier, this.ownArt);
     }
 
     /** This node in {@code tier}. */
     public UpgradeNode inTier(int tier) {
-        return new UpgradeNode(this.id, this.displayName, this.price, this.effects, this.requires, tier);
+        return new UpgradeNode(this.id, this.displayName, this.price, this.effects, this.requires, tier, this.ownArt);
     }
 
     public UpgradeNode withRequires(UpgradeCondition requires) {
-        return new UpgradeNode(this.id, this.displayName, this.price, this.effects, requires, this.tier);
+        return new UpgradeNode(this.id, this.displayName, this.price, this.effects, requires, this.tier, this.ownArt);
     }
 
     /** This node, offered only once {@code previous}, the node it does nothing without, is owned too. */
     public UpgradeNode after(UpgradeNode previous) {
         return this.withRequires(this.requires.and(UpgradeCondition.owns(previous.id())));
+    }
+
+    /** This node with a glyph of its own, not its line's. */
+    public UpgradeNode withOwnArt() {
+        return new UpgradeNode(this.id, this.displayName, this.price, this.effects, this.requires, this.tier, true);
     }
 
     /** This node with {@code note} as the words for what its data can't say. */
