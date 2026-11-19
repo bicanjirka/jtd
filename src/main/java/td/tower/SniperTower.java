@@ -138,18 +138,18 @@ public final class SniperTower extends AbstractTower {
             .withModifiers(TowerModifiers.range(1f))
             .inTier(1);
 
-    private static final UpgradeNode HEAVY_ROUNDS_2 = UpgradeNode.of("sniper.heavy_rounds.2", "Heavy Rounds II", 27)
+    private static final UpgradeNode HEAVY_ROUNDS_2 = UpgradeNode.of("sniper.heavy_rounds.2", "Heavy Rounds II", 30)
             .withModifiers(TowerModifiers.damage(12f))
             .inTier(3);
-    private static final UpgradeNode EXECUTIONER = UpgradeNode.of("sniper.executioner", "Executioner", 6)
+    private static final UpgradeNode EXECUTIONER = UpgradeNode.of("sniper.executioner", "Executioner", 20)
             .inTier(3);
-    private static final UpgradeNode HEADHUNTER = UpgradeNode.of("sniper.headhunter", "Headhunter", 6)
+    private static final UpgradeNode HEADHUNTER = UpgradeNode.of("sniper.headhunter", "Headhunter", 20)
             .inTier(3);
-    private static final UpgradeNode UNBROKEN_AIM = UpgradeNode.of("sniper.unbroken_aim", "Unbroken Aim", 6)
-            .withModifiers(TowerModifiers.aimStacksPerShot(1))
-            .after(STEADY_AIM)
+    private static final UpgradeNode UNBROKEN_AIM = UpgradeNode.of("sniper.unbroken_aim", "Unbroken Aim", 20)
+            .withModifiers(TowerModifiers.aimStacks(5))
+            .after(DEEP_BREATH)
             .inTier(3);
-    private static final UpgradeNode KILLING_SPREE = UpgradeNode.of("sniper.killing_spree", "Killing Spree", 9)
+    private static final UpgradeNode KILLING_SPREE = UpgradeNode.of("sniper.killing_spree", "Killing Spree", 20)
             .withProc(Proc.onKill(GRANTS_FRENZY))
             .after(EXECUTIONER)
             .inTier(3);
