@@ -296,7 +296,7 @@ Elite Golem and the Wardens; none on the eggs) and resilience on the Wardens, wh
 | The Monolith | standing stone with a glowing rune | A lone, very slow boss: armor, magic resist, plating and insulation, +100 tenacity, crit immune, immune to freeze, chill and Daze, armor that hardens against the damage type that hurts it most, regeneration, a heal whenever it is left alone, a stone-skin shield at two thirds and at one third of its health, and a last stand once nearly dead. If it escapes, the level is lost. Walks alone in one round of The Rift. |
 | Bronze Bull | horned bull's head, striding | A Runner cast in bronze: two thirds of its health, 10 more plating and 40 more tenacity than the Runner of its rank, and immune to burn, on the Runner's ladder and abilities. Appears on The Labyrinth — a level-authored enemy. |
 | Talos      | bronze giant with a vein of ichor, swaying | A boss: the bronze guardian. A body that crits cut deep (-60 resilience) inside a huge shield that holds until broken, recast again and again; shooting through it is hopeless, so it asks for a tower that strips, pierces, blocks or inverts shields. Immune to Daze and freeze. If it escapes, the level is lost. Round 2 of The Labyrinth. |
-| The Minotaur | large horned bull's head, striding | A boss: thick hide (armor, magic resist, plating, resilience), +100 tenacity, immune to freeze, a bellow that jams the towers near it, a charge every ten seconds, far faster the more it bleeds, and a bloodlust at two thirds and again at a third of its health that heals it and sends it running. If it escapes, the level is lost. The last round of The Labyrinth. |
+| The Minotaur | large horned bull's head, striding | A boss: thick hide (armor, magic resist, plating, resilience), +100 tenacity, immune to freeze, an oxhide shield it starts behind that holds until broken, a bellow that jams the towers near it, a charge every five seconds, faster the more it bleeds, and a bloodlust at two thirds of its health that sends it running and again at a third that heals it and sends it running longer. If it escapes, the level is lost. The last round of The Labyrinth. |
 
 ### Rank
 
@@ -506,6 +506,8 @@ member's share is its own; Hulking counts first, so the others measure its extra
 | Fireproof | `fireproof` | Immune to Burn, so it never builds Scorch from one; Soulfire still burns it |
 | Unstoppable | `unstoppable` | Immune to every slow: Chill, Tar, Drag and Anchor; a Freeze or a Daze still stops it; never with Coldblooded |
 | Plated | `plated` | Plating on top of its own, a fixed loss on every physical hit: +5, rising to +30 as the level's landed damage leans physical; never with Armored |
+| Poor | `poor` | Pays half its bounty, rounded once over the whole slot; never with Rich |
+| Rich | `rich` | Pays double its bounty; never with Poor |
 
 ### Wave script ids
 

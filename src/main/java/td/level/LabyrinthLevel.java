@@ -43,7 +43,7 @@ final class LabyrinthLevel {
     private static final String LEVEL_NAME = "The Labyrinth";
     private static final String LEVEL_DESCRIPTION = "Every cell is corridor but the nine at its heart. Build there - "
             + "and choose well, for something waits at the end of the maze.";
-    private static final int STARTING_CREDITS = 150;
+    private static final int STARTING_CREDITS = 75;
     private static final int STARTING_LIVES = 5;
 
     /** A Runner in bronze: fireproof, plated and hard to hold back, so it asks for more than a Scorcher. */
@@ -85,19 +85,19 @@ final class LabyrinthLevel {
                     .withDescription("Born of a queen and a bull, kept at the heart of the maze. It knows every turn.")
                     .withMovement(new StrideMovement((float) Math.toRadians(12.0), 18))
                     .withStats(90f, 60f, 8f, 0f, 0f, 100f, 60f, 50f)
-                    .withDisruption(new DisruptionAura(110f, 0.35f, 0.8f))
-                    .withTraits(List.of(new HurtSpeedTrait(2.25f), new ImmunityTrait(EffectKind.FREEZE)))
+                    .withDisruption(new DisruptionAura(110f, 0.65f, 1.5f))
+                    .withTraits(List.of(new HurtSpeedTrait(2.05f), new ImmunityTrait(EffectKind.FREEZE)))
                     .withAbilities(List.of(
-                            new Ability(AbilityTerm.CHARGE, new PeriodicTrigger(200),
+                            new Ability(AbilityTerm.OXHIDE_SHIELD, new OnceTrigger(1),
+                                    new ApplyEffectAction(ShieldTemplate.untilBroken(1500), new SelfTarget())),
+                            new Ability(AbilityTerm.CHARGE, new PeriodicTrigger(100),
                                     new ApplyEffectAction(new SprintTemplate(30), new SelfTarget())),
                             new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.666f),
-                                    new ApplyEffectAction(new HealTemplate(10f, 100), new SelfTarget())),
-                            new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.666f),
-                                    new ApplyEffectAction(new SprintTemplate(40), new SelfTarget())),
+                                    new ApplyEffectAction(new SprintTemplate(80), new SelfTarget())),
                             new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.333f),
                                     new ApplyEffectAction(new HealTemplate(10f, 200), new SelfTarget())),
                             new Ability(AbilityTerm.BLOODLUST, new HealthThresholdTrigger(0.333f),
-                                    new ApplyEffectAction(new SprintTemplate(80), new SelfTarget())))));
+                                    new ApplyEffectAction(new SprintTemplate(160), new SelfTarget())))));
 
     /** Square corners, as a maze's are: a rounded one would leave a corner cell buildable. */
     private static final PathColor STONE_COLOR = PathColor.of(200, 170, 120);
@@ -109,13 +109,21 @@ final class LabyrinthLevel {
                             new Point(1, 7), new Point(6, 7), new Point(6, 8), new Point(0, 8), new Point(0, 0),
                             new Point(-1, 0)),
                     List.of(
-                            new WaveDefinition("10 walker 3 knight 8 walker 4 runner 3 e 6 soldier walker 3 soldier knight "
-                                    + "2 soldier ghost 2 soldier templar 4 soldier walker soldier yeti soldier golem 4 e 4 soldier runner 6 veteran walker "
-                                    + "3 veteran knight veteran taunting exalted golem e veteran exalted mender 2 veteran ghost 2 veteran templar 4 veteran armored walker veteran unstoppable yeti veteran golem e "
-                                    + "4 veteran runner veteran mending magma 6 veteran regenerating shielded walker 2 veteran knight e 4 elite walker elite golem elite knight "
-                                    + "3 elite walker e 2 elite unstoppable templar 8 e elite exalted regenerating magma"),
-                            new WaveDefinition("w100 elite: 2 magma 3 golem 4 bronzeBull e talos e exalted bronzeBull bronzeBull exalted bronzeBull bronzeBull 2 regenerating golem golem 2 magma"),
-                            new WaveDefinition("elite: 4 unstoppable bronzeBull e 2 golem e minotaur 3 e 4 vengeful exalted bronzeBull")))
+                            new WaveDefinition("10 walker 3 knight 8 walker 4 runner " +
+                                    "3 e 2 soldier column 3 poor walker 3 soldier column 3 poor knight 2 soldier templar 4 soldier swarm 4 walker soldier yeti soldier golem " +
+                                    "4 e 5 soldier column 5 poor knight " +
+                                    "4 e 4 soldier runner 6 veteran walker 3 veteran knight veteran taunting exalted golem " +
+                                    "e veteran exalted mender 2 veteran swarm 3 templar veteran templar veteran column 2 juggernaut " +
+                                    "2 e 4 veteran armored walker veteran unstoppable yeti veteran golem " +
+                                    "e 4 veteran runner veteran mending magma 6 veteran regenerating shielded walker 2 veteran knight " +
+                                    "e 4 elite walker elite golem elite knight 3 elite walker " +
+                                    "e 2 elite unstoppable templar " +
+                                    "8 e elite exalted regenerating magma"),
+                            new WaveDefinition("w100 elite: 2 armored magma 3 warding golem 4 elusive rich bronzeBull " +
+                                    "e talos e " +
+                                    "exalted rich bronzeBull unstoppable bronzeBull exalted rich bronzeBull unstoppable bronzeBull " +
+                                    "2 regenerating hulking golem commanding golem 2 vengeful magma"),
+                            new WaveDefinition("elite: 4 unstoppable bronzeBull e golem e minotaur 3 e 4 vengeful exalted bronzeBull")))
             .withColor(STONE_COLOR);
 
     static final LevelDefinition DEFINITION = LevelDefinition

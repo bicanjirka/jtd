@@ -148,7 +148,7 @@ public class PanelEnemy extends JPanel {
      */
     static DefinedEnemyMob previewMob(EnemyDefinition definition, Rank rank, GameWorld world) {
         SpawnParameters spawnParameters = SpawnParameters.atSlot(0, definition.baseSpeed(), definition.baseHealth(),
-                definition.price());
+                Math.round(definition.bounty()));
         return new DefinedEnemyMob(definition, world, spawnParameters, rank);
     }
 

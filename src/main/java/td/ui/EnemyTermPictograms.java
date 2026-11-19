@@ -111,6 +111,8 @@ final class EnemyTermPictograms {
             Map.entry("ability.mirror_image", "F M8.4 3.6L13.2 12L8.4 20.4L3.6 12Z ; S M15.6 3.6L20.4 12L15.6 20.4L10.8 12Z"),
             // Bronze Shell
             Map.entry("ability.bronze_shell", "F M12 2.2L20.6 5.6V11.4C20.6 16.6 16.8 20.4 12 22C7.2 20.4 3.4 16.6 3.4 11.4V5.6Z ; K M12 5.4L17.4 7.6V11.4C17.4 14.8 15 17.4 12 18.6C9 17.4 6.6 14.8 6.6 11.4V7.6Z ; F M12 8.2L14.6 9.4V11.6C14.6 13.4 13.4 14.8 12 15.4C10.6 14.8 9.4 13.4 9.4 11.6V9.4Z"),
+            // Oxhide Shield: a figure-eight shield of hide, stitched down its middle
+            Map.entry("ability.oxhide_shield", "F O12 6.8 5.2 ; F O12 17.2 5.2 ; F M8.2 8.6H15.8V15.4H8.2Z ; X M12 3.2V20.8"),
             // Charge
             Map.entry("ability.charge", "F M3 9.6C3 6.4 4.4 4.2 6.6 3.2C5.8 5 6 6.6 7.4 7.6H16.6C18 6.6 18.2 5 17.4 3.2C19.6 4.2 21 6.4 21 9.6C21 13.2 18.6 15.4 16.2 16.2L12 21L7.8 16.2C5.4 15.4 3 13.2 3 9.6Z ; K O9 11 1.2 O15 11 1.2"),
             // Bloodlust

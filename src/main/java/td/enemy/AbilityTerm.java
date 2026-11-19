@@ -40,6 +40,7 @@ public enum AbilityTerm implements Term {
     HATCH("Hatch", "hatches unless it is destroyed in time"),
     PUPATE("Pupate", "spins itself a cocoon after a while, unless it is killed first"),
     BRONZE_SHELL("Bronze Shell", "wears a huge shield that holds until broken, and recasts it again and again"),
+    OXHIDE_SHIELD("Oxhide Shield", "starts behind a great shield of hide that holds until broken"),
     CHARGE("Charge", "charges ahead from time to time"),
     GUST("Gust", "shoves the allies near it further along the path from time to time"),
     BOND("Bond", "calls its fallen twin back, reborn and stronger, unless both fall close together"),

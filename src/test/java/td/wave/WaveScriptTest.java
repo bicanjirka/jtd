@@ -37,6 +37,13 @@ class WaveScriptTest {
     }
 
     @Test
+    void aFaultEndsWithTheGrammarsRulesSoTheOrderItBrokeIsInSight() {
+        assertThatThrownBy(() -> WaveScript.parse("line 3 soldier walker", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageEndingWith(WaveScriptGrammar.RULES);
+    }
+
+    @Test
     void aWaveWithNoSpacingTokenUsesTheDefaultSpacing() {
         WaveContent content = WaveScript.parse("2 walker", Rank.GRUNT, this.catalog);
 

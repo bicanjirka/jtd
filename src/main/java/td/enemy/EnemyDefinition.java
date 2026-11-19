@@ -95,6 +95,11 @@ public record EnemyDefinition(
         return this.affixes.stream().map(Affix::sizeMultiplier).reduce(1f, (a, b) -> a * b);
     }
 
+    /** What one member sent at full health pays: its price as its affixes scale it, rounded only once a slot is summed. */
+    public float bounty() {
+        return this.affixes.stream().map(Affix::bountyMultiplier).reduce((float) this.price, (a, b) -> a * b);
+    }
+
     /**
      * Applies {@code written} and records it. The affixes apply in their declared order, whatever the order written,
      * so one that measures health measures what an earlier one added; the title keeps the written order.

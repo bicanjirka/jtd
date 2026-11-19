@@ -96,7 +96,7 @@ public class Wave {
         Rank rank = enemySlot.rank();
         SpawnShape shape = enemySlot.shape();
         int health = Math.max(1, Math.round(definition.baseHealth() * shape.healthMultiplier()));
-        int[] bountyShares = shape.bountyShares(definition.price());
+        int[] bountyShares = shape.bountyShares(definition.bounty());
         double maxRadius = gameWorld.getBoard().scale() * PathCoverage.PATH_WIDTH_CELLS / 2.0 * PATH_WIDTH_MARGIN_FRACTION;
         RandomSource scatter = RandomSource.seeded(scatterSeed * 31 + delay);
         List<EnemyMob> members = new ArrayList<>(shape.members());
