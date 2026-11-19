@@ -275,6 +275,14 @@ final class UpgradeSheetText {
         return new InfoSheet(lines);
     }
 
+    /** A locked tier's gate line: its tier, the tower's XP toward the gate, and how much is still to earn. */
+    static InfoSheet gate(int tier, int xp, int needed) {
+        return new InfoSheet(List.of(
+                new SheetLine.Title(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET, "Tier " + UpgradeTier.numeralOf(tier)
+                        + " locked", gateLabel(xp, needed)),
+                SheetLine.Sentence.of(TermText.of("Earn " + Math.max(0, needed - xp) + " more XP to open it"))));
+    }
+
     /** A shared slot before its cluster's pick: which members to pick from, in the order they sit. */
     static InfoSheet pickFirst(List<String> members) {
         return new InfoSheet(List.of(SheetLine.Sentence.marked(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET,

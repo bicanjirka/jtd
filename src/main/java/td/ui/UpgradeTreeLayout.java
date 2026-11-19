@@ -18,8 +18,8 @@ import java.util.function.Predicate;
 /**
  * Where every node of a tree sits on the Upgrades panel, in pixels, {@value #WIDTH} wide, from the tower's
  * hand-made {@link UpgradeTreePlan}: a band per tier, bottom up, each one or more rows of nodes with its numeral and its
- * singles' key in a strip at its left. The gap under a band holds that tier's gate while it is locked, high in the gap;
- * below it, in the channel just above the next band down, a link runs. A link leaves the top of what a node needs,
+ * singles' key in a strip at its left. The gap under a band, as wide as the margin at the sides, holds that tier's gate
+ * line while it is locked, high in the gap; below it, in the channel just above the next band down, a link runs. A link leaves the top of what a node needs,
  * runs in the channel above that row and climbs into the node's bottom; a cluster's frame stands in for its members where the rule names the cluster or
  * all of them share one need. A need more than a tier below is a badge on a top corner instead. Nodes that come after
  * different members of one cluster may share a slot, since only one of them can ever be bought: the slot shows the
@@ -48,17 +48,18 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
     static final float FRAME_PAD = 5f;
     static final float BADGE = 8f;
 
-    private static final float TOP = 5f;
-    private static final float GAP = 18f;
+    /** The margin above, below and between the bands: the bands' own margin at the sides. */
+    static final float GAP = BAND_X;
+    private static final float TOP = GAP;
     /** From a band's bottom down to its gate's line. */
-    private static final float GATE_DROP = 7f;
+    private static final float GATE_DROP = 2f;
     /** From a row's top up to the channel its links run along. */
-    private static final float CHANNEL_RISE = 4f;
+    private static final float CHANNEL_RISE = 2f;
     private static final float FIRST_SLOT = BODY_X + 5f + NODE / 2;
     /** From a row's top to its nodes' centre: the channel a link runs in sits above the nodes. */
     private static final float NODE_DROP = 32f;
     /** A frame's name, over its top edge, that an outgoing link keeps clear of: roughly its width per letter. */
-    private static final float LABEL_LETTER = 6.4f;
+    private static final float LABEL_LETTER = 5.8f;
     private static final float LABEL_PAD = 13f;
 
     /** A tier's band: its rows. */

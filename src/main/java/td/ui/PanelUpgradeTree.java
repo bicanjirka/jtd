@@ -120,6 +120,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                 .map(node -> new TooltipSpot(new SheetTooltip(TooltipKey.of("upgrade", node.id()), this.sheetOf(node)),
                         this.anchorOf(node)))
                 .or(() -> this.stripSpot(point))
+                .or(() -> this.gateSpot(point))
                 .or(() -> this.emptySlotAt(point).map(slot -> new TooltipSpot(new SheetTooltip(
                         TooltipKey.of("upgrade-slot", slot.cluster().name() + "@" + slot.spot().x()),
                         UpgradeSheetText.pickFirst(this.membersLeftToRight(slot))), this.anchorAt(slot.spot().y(),
@@ -138,6 +139,24 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
                 String.valueOf(tier.getAsInt())), UpgradeSheetText.singles(offered,
                 String.valueOf(GameKey.singlesKey(tier.getAsInt())), !this.anyAffordable(offered))),
                 this.anchorAt((band.top() + band.bottom()) / 2, band.bottom() - band.top())));
+    }
+
+    /** A locked tier's gate line, or its numeral strip: the gate's numbers, which the line has no room to write. */
+    private Optional<TooltipSpot> gateSpot(Point point) {
+        if (this.layout.isEmpty()) {
+            return Optional.empty();
+        }
+        float x = point.x - this.originX();
+        float y = point.y - this.getInsets().top;
+        UpgradeTree tree = this.tower.upgradeTree();
+        return this.layout.get().bands().stream()
+                .filter(band -> !tree.isOpen(band.tier(), this.tower, this.context))
+                .filter(band -> UpgradeTreePainter.gateBox(band).contains(x, y)
+                        || UpgradeTreePainter.stripBox(band).contains(x, y))
+                .findFirst().map(band -> new TooltipSpot(new SheetTooltip(TooltipKey.of("upgrade-gate",
+                        String.valueOf(band.tier())), UpgradeSheetText.gate(band.tier(),
+                        this.tower.experience().xp(), tree.tiers().get(band.tier()).xp())),
+                        this.anchorAt((band.top() + band.bottom()) / 2, band.bottom() - band.top())));
     }
 
     private List<String> membersLeftToRight(Shared slot) {
