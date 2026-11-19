@@ -58,7 +58,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final float MAX_SCALE = 1.15f;
+    private static final float MAX_SCALE = 1.5f;
     /** What the Info panel above keeps at least when the window is short. */
     private static final int INFO_FLOOR = 180;
     /** The least height the tree is drawn at, a little over half size. */
@@ -107,7 +107,8 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     public Dimension getPreferredSize() {
         Insets insets = this.getInsets();
         float height = this.layout.map(UpgradeTreeLayout::height).orElse((float) UpgradeTreeLayout.HEIGHT);
-        return new Dimension(UpgradeTreeLayout.WIDTH, (int) Math.ceil(height) + insets.top + insets.bottom);
+        return new Dimension((int) Math.ceil(UpgradeTreeLayout.WIDTH * MAX_SCALE) + insets.left + insets.right,
+                (int) Math.ceil(height * MAX_SCALE) + insets.top + insets.bottom);
     }
 
     /**
@@ -119,7 +120,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
     public Dimension getMinimumSize() {
         int full = this.getPreferredSize().height;
         int room = this.getParent() == null ? full : this.getParent().getHeight() - INFO_FLOOR;
-        return new Dimension(UpgradeTreeLayout.WIDTH, Math.clamp(room, Math.min(MIN_HEIGHT, full), full));
+        return new Dimension(this.getPreferredSize().width, Math.clamp(room, Math.min(MIN_HEIGHT, full), full));
     }
 
     /** Each node's hover is a tooltip of what it is and what a click on it does now. */

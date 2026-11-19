@@ -55,7 +55,7 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
     /** From a row's top to its nodes' centre: the channel a link runs in sits above the nodes. */
     private static final float NODE_DROP = 24f;
     /** A frame's name, over its top edge, that an outgoing link keeps clear of: roughly its width per letter. */
-    private static final float LABEL_LETTER = 3.7f;
+    private static final float LABEL_LETTER = 4.6f;
     private static final float LABEL_PAD = 10f;
 
     /** A tier's band: its rows over its floor strip. */
