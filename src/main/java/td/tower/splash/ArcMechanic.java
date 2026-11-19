@@ -11,7 +11,7 @@ import java.util.Optional;
 /** Arc: once its Sparks are in, the next stone carries lightning on from where it lands. */
 public final class ArcMechanic implements SplashMechanic {
 
-    private static final int COST = 2;
+    private static final int COST = 1;
 
     private final AbilityCharge charge = new AbilityCharge(Ability.of(TowerTerm.ARC, TowerTerm.SPARK, COST));
 

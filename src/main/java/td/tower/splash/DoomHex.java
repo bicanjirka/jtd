@@ -12,7 +12,7 @@ import java.util.Optional;
 /** Hex of Doom: when it ends, a share of all the damage the enemy took meanwhile hits it again. Picks the healthiest. */
 public final class DoomHex implements Hex {
 
-    private static final float SECONDS = 4f;
+    private static final float SECONDS = 5f;
 
     @Override
     public EffectKind kind() {

@@ -17,7 +17,7 @@ public record ArcSpec(int jumps, float share, boolean revisits, float critChance
                       AbilityUnits critRefund) {
 
     public static final int JUMPS = 3;
-    public static final float SHARE = 0.4f;
+    public static final float SHARE = 0.5f;
     /** How far a jump reaches from where it is, in cells. */
     public static final float REACH_CELLS = 1.5f;
 

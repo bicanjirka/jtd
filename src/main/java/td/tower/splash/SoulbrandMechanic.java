@@ -13,7 +13,7 @@ import java.util.Set;
 public final class SoulbrandMechanic implements SplashMechanic {
 
     /** What one stack bursts for, in points of magic damage. */
-    public static final float BURST_POINTS = 10f;
+    public static final float BURST_POINTS = 6f;
     /** How far the burst reaches, in cells. */
     public static final float BURST_CELLS = 1f;
 
