@@ -18,9 +18,6 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
   the board, clickable for what will come and when, with a bar to the next call and a count of the calls left.
   Idea only.
 
-- **Debuff stacking groups** (`docs/features/FEATURE-debuff-stacking-groups.md`): four stacking modes (timed, count,
-  shares, pool), stacks lost one at a time, tenacity on every stack debuff, a Scorcher debuff (Singe), pools of 100
-  fuel lasting 4 s. Request reviewed, ready for planning.
 - **A tenacity debuff**: a debuff that lowers tenacity; it lengthens every debuff applied afterwards and multiplies
   pool damage, so it belongs on a crowd-control tower, with small per-stack values. Idea only.
 
@@ -638,15 +635,15 @@ each set to what one application dealt under the old decaying rule.
 ### Effect and specialization numbers are unbalanced placeholders
 
 Every number the effect-interactions and specialization work introduced was chosen to be plausible,
-not tuned: vulnerable (+15% per stack, cap 3, 4 s), the Blight's poison fuel (a share of the tower's damage) and the half-second
+not tuned: vulnerable (+15% per stack, cap 3), the Blight's poison fuel (a share of the tower's damage) and the half-second
 stack interval of burning and poisoned, revealed (3 s from Wide Band, 2 s from Resonant Field II),
 Momentum's cooldown cut and 5 s, the shatter and explosion share and radius, shrapnel's ring width and
-share, Warding Field's 10% chance, and Long Reach II's scaling. Burning's resilience loss (-1 per stack) and poisoned's spirit loss (-1 per stack) grow without
-limit up to their stat floors of -100. Scorched and Sickened hold while a pool that earns them is active, then lose a stack per second
-(one per 20 ticks, `ActiveEffects.STACK_DECAY_INTERVAL_TICKS`).
-A burning enemy earns 2 stacks per second, so it reaches the floor in about 50 s of steady burning.
+share, Warding Field's 10% chance, and Long Reach II's scaling. Scorch's resilience loss (-1 per stack) and Sicken's spirit loss (-1 per stack) build to 200 stacks, enough to take
+either stat to its floor from any enemy. They hold while a pool is active, then lose a stack per second
+(`Effect.FADE_STEP_TICKS`). A burning enemy earns 2 stacks per second, so steady burning floors its resilience in
+under two minutes.
 
-- Cracked takes a flat 5 points of plating and insulation (its `EffectKind.CRACKED` row), a starting value.
+- Crack and Singe take a flat 5 points of plating or insulation a stack (their `EffectKind` rows), starting values.
 - **Where:** the named constants in `td.effect.ActiveEffects`, `AbstractTower` and each tower.
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
