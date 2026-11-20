@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.stat.StatBreakdown;
 import td.stat.StatWording;
@@ -13,12 +14,14 @@ import td.tower.NodeWords;
 import td.tower.TowerBuffState;
 import td.tower.TowerInspection;
 import td.tower.TowerStatLine;
+import td.tower.TowerStatRow;
 import td.tower.TowerTerm;
 import td.tower.ability.Ability;
 import td.tower.ability.AbilityBar;
 import td.tower.ability.AbilityState;
 import td.tower.mortar.MagazineView;
 import td.tower.mortar.ShellKind;
+import td.tower.mortar.ShellProfile;
 import td.tower.seeker.MissileKind;
 import td.tower.seeker.NestView;
 import td.tower.upgrade.UpgradeBonus;
@@ -38,6 +41,7 @@ import td.ui.render.TooltipKey;
 import td.util.TickRate;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -198,21 +202,65 @@ final class TowerSheetText {
                 new SheetTooltip(TooltipKey.ofTerm("ability", ability.term()), hover));
     }
 
-    /** The magazine's slots and strip, then each kind's share in words, every named kind a mention. */
+    /**
+     * The shells it holds, front first, then a row per kind it can load with its share of the shots; a shell and a
+     * kind's row both open what that kind does.
+     */
     private static List<SheetLine> magazineLines(MagazineView magazine) {
-        List<SheetLine.ShellShare> shares = magazine.chances().entrySet().stream()
-                .map(entry -> new SheetLine.ShellShare(shellOf(entry.getKey()), shareTone(entry.getKey()),
-                        entry.getValue()))
+        Map<ShellKind, SheetTooltip> sheets = new EnumMap<>(ShellKind.class);
+        magazine.profiles().forEach(profile -> sheets.put(profile.kind(), new SheetTooltip(
+                TooltipKey.of("shell", profile.kind().name()),
+                shellSheet(profile, magazine.chances().getOrDefault(profile.kind(), 0f)))));
+        List<SheetLine.MagazineSlot> slots = magazine.shells().stream()
+                .map(kind -> new SheetLine.MagazineSlot(shellOf(kind), Optional.ofNullable(sheets.get(kind))))
                 .toList();
-        TermText chances = chancesText(magazine.chances());
+        List<SheetLine> lines = new ArrayList<>();
+        lines.add(new SheetLine.Gap());
+        lines.add(new SheetLine.MagazineRow(slots, magazine.loading()));
+        magazine.chances().forEach((kind, share) -> {
+            Row row = Row.toned(Glyph.DOT, shareTone(kind), kind.title(), TermNumbers.percent(share));
+            lines.add(Optional.ofNullable(sheets.get(kind))
+                    .map(sheet -> row.withTooltip(sheet.key(), sheet.sheet())).orElse(row));
+        });
+        lines.add(new SheetLine.Gap());
+        return lines;
+    }
+
+    /** What one kind of shell does: its hit, flight and blast, its share of the shots, and the effects it leaves. */
+    static InfoSheet shellSheet(ShellProfile profile, float share) {
+        ShellKind kind = profile.kind();
+        ShellProfile.Blast blast = profile.blast();
         List<SheetLine> rows = new ArrayList<>();
-        magazine.chances().forEach((kind, share) -> rows.add(Row.toned(Glyph.DOT, shareTone(kind),
-                kind.title(), TermNumbers.percent(share))));
-        InfoSheet hover = TermSheets.of(TowerTerm.MAGAZINE, TowerTerm.MAGAZINE.describe(), rows);
-        SheetLine.MagazineRow row = new SheetLine.MagazineRow(magazine.shells().stream().map(TowerSheetText::shellOf)
-                .toList(), magazine.loading(), shares,
-                new SheetTooltip(TooltipKey.ofTerm("magazine", TowerTerm.MAGAZINE), hover));
-        return List.of(row, SheetLine.Sentence.of(chances));
+        rows.add(Row.plain(Glyph.DOT, damageLabel(profile.hit().type()), TermNumbers.number(DamageUnits.inPoints(profile.hit().amount())))
+                .withGloss("/hit", ""));
+        rows.add(Row.plain(Glyph.DOT, "Speed", TermNumbers.number(profile.cellsPerSecond())).withGloss("cells/s", ""));
+        rows.add(Row.plain(Glyph.DOT, "Blast radius", TermNumbers.number(blast.coreCells()))
+                .withGloss(blast.coreCells() == 1f ? "cell" : "cells", ""));
+        if (blast.hasEdge()) {
+            rows.add(Row.plain(Glyph.DOT, "Blast edge", TermNumbers.number(blast.edgeCells()))
+                    .withGloss("cells", TermNumbers.percent(blast.edgeShare()) + " dmg"));
+        }
+        rows.add(Row.toned(Glyph.DOT, shareTone(kind), "Share", TermNumbers.percent(share)));
+        TermText applies = TermText.of("Applies ");
+        for (int i = 0; i < blast.applies().size(); i++) {
+            applies = (i == 0 ? applies : applies.plus(", ")).plus(blast.applies().get(i));
+        }
+        rows.add(SheetLine.Sentence.of(applies.asSentence()));
+        return kind.term().map(term -> TermSheets.of(term, term.describe(), rows)).orElseGet(() -> {
+            List<SheetLine> lines = new ArrayList<>();
+            lines.add(new SheetLine.Title(Glyph.DOT, shareTone(kind), kind.title(), ""));
+            lines.add(SheetLine.Sentence.of(TermText.of("a plain shell, the one every other kind is measured against")
+                    .asSentence()));
+            lines.addAll(rows);
+            return new InfoSheet(lines);
+        });
+    }
+
+    private static String damageLabel(DamageType type) {
+        return switch (type) {
+            case PHYSICAL -> TowerStatRow.PHYSICAL_DAMAGE.shortName();
+            case MAGIC -> TowerStatRow.MAGIC_DAMAGE.shortName();
+        };
     }
 
     /** The nest's slots and strip once it draws more than one kind, then each kind's share in words. */
@@ -238,18 +286,6 @@ final class TowerSheetText {
 
     private static LoadedMissile missileOf(MissileKind kind) {
         return ProjectileFrameBuilder.loadedMissileOf(kind.look());
-    }
-
-    /** "Normal 60% · Heavy 40%". */
-    static TermText chancesText(Map<ShellKind, Float> chances) {
-        TermText text = TermText.empty();
-        for (Map.Entry<ShellKind, Float> entry : chances.entrySet()) {
-            if (!text.spans().isEmpty()) {
-                text = text.plus(" · ");
-            }
-            text = text.plus(entry.getKey().mention()).plus(" " + TermNumbers.percent(entry.getValue()));
-        }
-        return text;
     }
 
     private static LoadedShell shellOf(ShellKind kind) {

@@ -81,7 +81,9 @@ final class InfoSheetDocument {
     /** A magazine's slots: at most this wide each, a gap between, the shell this share of a slot round. */
     private static final int SLOT_MAX = 20;
     private static final int SLOT_GAP = 2;
-    private static final float SLOT_SHELL_SHARE = 0.24f;
+    private static final int SHELL_SLOT_MAX = 26;
+    private static final int SHELL_SLOT_GAP = 4;
+    private static final float SLOT_SHELL_SHARE = 0.27f;
     private static final float SLOT_MISSILE_SHARE = 0.7f;
     private static final int SHARE_STRIP_HEIGHT = 5;
     private static final int SHARE_STRIP_GAP = 3;
@@ -479,32 +481,25 @@ final class InfoSheetDocument {
     }
 
     /**
-     * One embedded icon as wide as its slots, so a scrollbar never pushes it past the pane: a slot per shell, front first, the loading ones in a bright border, each
-     * shell drawn as it is in the bore, and under them the strip of each kind's share. The line opens its tooltip.
+     * One embedded icon as wide as its slots, so a scrollbar never pushes it past the pane: a slot per shell, front
+     * first, the loading ones in a bright border, each shell drawn as it is in the bore. Each slot opens its tooltip.
      */
     private void magazineRow(SheetLine.MagazineRow magazine) {
-        this.hover = new HoverRun.RowRun(magazine.tooltip());
-        int count = magazine.shells().size();
-        int room = this.width - EDGE_MARGIN * 2 - SLOT_GAP * (count - 1);
-        int slot = Math.max(1, Math.min(SLOT_MAX, room / Math.max(1, count)));
-        int height = slot + SHARE_STRIP_GAP + SHARE_STRIP_HEIGHT;
-        int rowWidth = count * (slot + SLOT_GAP) - SLOT_GAP;
-        this.icon(new PaintedIcon(rowWidth, height, g2 -> {
-            g2.translate(-rowWidth / 2.0, -height / 2.0);
-            for (int i = 0; i < count; i++) {
-                int x = i * (slot + SLOT_GAP);
+        int count = Math.max(1, magazine.slots().size());
+        int room = this.width - EDGE_MARGIN * 2 - SHELL_SLOT_GAP * (count - 1);
+        int slot = Math.max(1, Math.min(SHELL_SLOT_MAX, room / count));
+        int rowWidth = count * (slot + SHELL_SLOT_GAP) - SHELL_SLOT_GAP;
+        this.hover = new HoverRun.SlotRowRun(magazine, new SlotRowLayout(slot, SHELL_SLOT_GAP));
+        this.icon(new PaintedIcon(rowWidth, slot, g2 -> {
+            g2.translate(-rowWidth / 2.0, -slot / 2.0);
+            for (int i = 0; i < magazine.slots().size(); i++) {
+                int x = i * (slot + SHELL_SLOT_GAP);
                 g2.setColor(SLOT_BACKGROUND);
                 g2.fill(new Rectangle2D.Float(x, 0, slot, slot));
                 g2.setColor(i < magazine.loading() ? Hud.FOREGROUND : Hud.BORDER_IDLE);
                 g2.draw(new Rectangle2D.Float(x + 0.5f, 0.5f, slot - 1, slot - 1));
-                TowerSprites.paintShell(g2, magazine.shells().get(i), x + slot / 2f, slot / 2f, slot * SLOT_SHELL_SHARE);
-            }
-            float from = 0f;
-            for (SheetLine.ShellShare share : magazine.shares()) {
-                float to = from + rowWidth * share.share();
-                g2.setColor(Java2DFrameRenderer.colorFor(share.tone()));
-                g2.fill(new Rectangle2D.Float(from, slot + SHARE_STRIP_GAP, to - from, SHARE_STRIP_HEIGHT));
-                from = to;
+                TowerSprites.paintShell(g2, magazine.slots().get(i).shell(), x + slot / 2f, slot / 2f,
+                        slot * SLOT_SHELL_SHARE);
             }
         }));
     }

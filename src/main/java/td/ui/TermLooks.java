@@ -87,7 +87,6 @@ public final class TermLooks {
             case FOURTH_SHOT -> new TermLook(Palette.TERM_FOURTH_SHOT, Palette.TERM_FRAME_TOWER_BUFF);
             case SILVER_ROUND -> new TermLook(Palette.TOWER_SNIPER_SILVER, Palette.TERM_FRAME_TOWER_BUFF);
             case HOLLOW_POINT -> new TermLook(Palette.DAMAGE_PHYSICAL, Palette.TERM_FRAME_TOWER_BUFF);
-            case MAGAZINE -> new TermLook(Palette.TERM_MAGAZINE, Palette.TERM_FRAME_MECHANIC);
             case HEAVY_SHELL -> new TermLook(Palette.TERM_HEAVY_SHELL, Palette.TERM_FRAME_TOWER_BUFF);
             case PAYLOAD -> new TermLook(Palette.PROJECTILE_NAPALM, Palette.TERM_FRAME_TOWER_BUFF);
             case FLARE -> new TermLook(Palette.ZONE_FLARE, Palette.TERM_FRAME_TOWER_BUFF);

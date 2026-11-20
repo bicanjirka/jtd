@@ -508,9 +508,9 @@ class DevControlsTest {
         tower.setSelected(true);
         this.dev.runPending();
 
-        String message = this.dev.grantToSelectedTower(TowerTerm.MAGAZINE, List.of());
+        String message = this.dev.grantToSelectedTower(TowerTerm.NEST, List.of());
 
-        assertThat(message).isEqualTo(TowerTerm.MAGAZINE.title() + " " + DevEffects.whyUngrantable(TowerTerm.MAGAZINE).orElseThrow());
+        assertThat(message).isEqualTo(TowerTerm.NEST.title() + " " + DevEffects.whyUngrantable(TowerTerm.NEST).orElseThrow());
     }
 
     @Test

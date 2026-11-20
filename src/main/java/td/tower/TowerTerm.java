@@ -22,7 +22,6 @@ public enum TowerTerm implements Term {
     FOURTH_SHOT("Fourth Shot", Side.BUFF, "a shot that is sure to crit"),
     SILVER_ROUND("Silver Round", Side.BUFF, "a shot of magic damage that ignores some magic resist"),
     HOLLOW_POINT("Hollow Point", Side.BUFF, "a shot that hits harder"),
-    MAGAZINE("Magazine", Side.BUFF, "the shells it has ready, in the order it fires them; a new one at the back draws its kind by lot, each kind as likely as its weight among the kinds it owns"),
     HEAVY_SHELL("Heavy", Side.BUFF, "a shell that hits harder than a Normal one in the same blast, and flies slower"),
     NUKE_SHELL("Nuke", Side.BUFF, "two Heavies fused: their damage together in a wider blast that leaves fallout applying {}, {} and {}", EffectKind.DEAD_ZONE, EffectKind.SICKENED, EffectKind.POISON),
     PAYLOAD("Payload", Side.BUFF, "a special shell: half a Normal one's damage, and ground it leaves where it lands"),

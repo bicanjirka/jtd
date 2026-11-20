@@ -16,6 +16,7 @@ import td.tower.mortar.BigBoreMechanic;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.CarpetBombingMechanic;
 import td.tower.mortar.ConcussionMechanic;
+import td.tower.mortar.CrackingShellsMechanic;
 import td.tower.mortar.DeepCrackMechanic;
 import td.tower.mortar.FlareMechanic;
 import td.tower.mortar.FusionMechanic;
@@ -32,6 +33,7 @@ import td.tower.mortar.PayloadMechanic;
 import td.tower.mortar.PredictiveFireMechanic;
 import td.tower.mortar.RichMixMechanic;
 import td.tower.mortar.ShellKind;
+import td.tower.mortar.ShellProfile;
 import td.tower.mortar.ShrapnelMechanic;
 import td.tower.mortar.ThickMixMechanic;
 import td.tower.mortar.VolleySpec;
@@ -40,6 +42,8 @@ import td.tower.proc.HitKind;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.PreferringSelector;
+import td.tower.targeting.TargetPriority;
+import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
@@ -59,10 +63,12 @@ import td.zone.ZoneOwner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.Function;
 
 import static td.tower.upgrade.MechanicCatalogue.entry;
@@ -70,7 +76,7 @@ import static td.tower.upgrade.MechanicCatalogue.entry;
 /**
  * The area cannon: it lobs a slow, unguided shell at the visible enemy furthest along the path, beyond its minimum
  * range, and the shell bursts where it lands, at full damage in its core and less at its edge, hidden enemies
- * included, Cracking all it reaches. It fires the shells of its magazine in order, each kind drawn by lot as it joins
+ * included. It fires the shells of its magazine in order, each kind drawn by lot as it joins
  * the back: Normals, Heavies, and the kinds its nodes add.
  * <p>
  * What each owned node does lives in its data or in a {@link MortarMechanic}: the tower reads one spec from them
@@ -102,12 +108,12 @@ public final class MortarTower extends AbstractTower {
     /** Flight time depends on where the shell is going, so the aim is refined this many times. */
     private static final int PREDICTION_PASSES = 3;
 
-    private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 5)
-            .withModifiers(TowerModifiers.range(1f));
     private static final UpgradeNode HEAVY_CHARGE = UpgradeNode.of("mortar.heavy_charge", "Heavy Charge", 9)
             .withModifiers(TowerModifiers.damage(10f));
     private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 2);
-    private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 2);
+    private static final UpgradeNode CRACKING_SHELLS = UpgradeNode.of("mortar.cracking_shells", "Cracking Shells", 5);
+    private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 2)
+            .withTargeting(TargetPriority.MOST_NEIGHBOURS);
 
     private static final UpgradeNode CONCUSSION = UpgradeNode.of("mortar.concussion", "Concussion", 6)
             .inTier(1);
@@ -128,6 +134,9 @@ public final class MortarTower extends AbstractTower {
             .inTier(2);
     private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 31)
             .inTier(2);
+    private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 5)
+            .withModifiers(TowerModifiers.range(1f))
+            .inTier(2);
     private static final UpgradeNode OVERCHARGE = UpgradeNode.of("mortar.overcharge", "Overcharge", 8)
             .withModifiers(TowerModifiers.heavyMultiplier(1f))
             .inTier(2);
@@ -145,18 +154,16 @@ public final class MortarTower extends AbstractTower {
             .after(THICK_MIX)
             .inTier(3);
     private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 5)
+            .after(CRACKING_SHELLS)
             .inTier(3);
     private static final UpgradeNode QUICK_RELOAD = UpgradeNode.of("mortar.quick_reload", "Quick Reload", 39)
             .withModifiers(TowerModifiers.attackSpeed(3.5f / 3f - 1f))
             .inTier(3);
-    private static final UpgradeNode ELEVATION_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Elevation II", 16)
-            .withModifiers(TowerModifiers.range(1f))
-            .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(List.of(ELEVATION, HEAVY_CHARGE, BIG_BORE, PREDICTIVE_FIRE))
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(HEAVY_CHARGE, BIG_BORE, PREDICTIVE_FIRE, CRACKING_SHELLS))
             .with(CONCUSSION, SHRAPNEL, NAPALM, TAR, CRYO, FLARE,
-                    BARRAGE, CARPET_BOMBING, OVERCHARGE, BIG_BORE_2, THICK_MIX,
-                    FUSION, RICH_MIX, LASTING_MIX, DEEP_CRACK, QUICK_RELOAD, ELEVATION_2)
+                    BARRAGE, CARPET_BOMBING, ELEVATION, OVERCHARGE, BIG_BORE_2, THICK_MIX,
+                    FUSION, RICH_MIX, LASTING_MIX, DEEP_CRACK, QUICK_RELOAD)
             .withCluster(UpgradeCluster.of("Heavy shell", CONCUSSION, SHRAPNEL))
             .withCluster(UpgradeCluster.of("Payload", NAPALM, TAR, CRYO))
             .withCluster(UpgradeCluster.of("Volley", BARRAGE, CARPET_BOMBING))
@@ -165,6 +172,7 @@ public final class MortarTower extends AbstractTower {
     private static final MechanicCatalogue<MortarMechanic> MECHANICS = MechanicCatalogue.of(
             entry(BIG_BORE.id(), () -> new BigBoreMechanic(1)),
             entry(PREDICTIVE_FIRE.id(), PredictiveFireMechanic::new),
+            entry(CRACKING_SHELLS.id(), CrackingShellsMechanic::new),
             entry(CONCUSSION.id(), ConcussionMechanic::new),
             entry(SHRAPNEL.id(), ShrapnelMechanic::new),
             entry(NAPALM.id(), () -> new PayloadMechanic(ShellKind.NAPALM)),
@@ -232,6 +240,8 @@ public final class MortarTower extends AbstractTower {
     private volatile Optional<ShellOdds> odds = Optional.empty();
     /** The kinds it can load, and the mechanics they were worked out for. */
     private volatile Optional<LoadableKinds> loadable = Optional.empty();
+    /** What each kind does, and the stats and mechanics it was worked out for. */
+    private volatile Optional<ShellProfiles> profiles = Optional.empty();
     private OptionalInt firedAt = OptionalInt.empty();
     private Optional<EnemyMob> target = Optional.empty();
 
@@ -265,7 +275,9 @@ public final class MortarTower extends AbstractTower {
 
     private Optional<EnemyMob> findTarget(MortarSpec spec) {
         List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
-        return PreferringSelector.priority(new FurthestAlongPathSelector()).selectFrom(inReach);
+        TargetSelector own = this.upgrades().targeting().map(priority -> priority.selector(this.cellPixels()))
+                .orElseGet(FurthestAlongPathSelector::new);
+        return PreferringSelector.priority(own).selectFrom(inReach);
     }
 
     @Override
@@ -353,6 +365,9 @@ public final class MortarTower extends AbstractTower {
     }
 
     private record ShellOdds(MagazineSpec spec, Map<ShellKind, Float> chances) {
+    }
+
+    private record ShellProfiles(TowerStats stats, List<MortarMechanic> owned, List<ShellProfile> profiles) {
     }
 
     /** A shell of a volley still to fire: its kind, where it is laid with Carpet Bombing, and the tick it fires. */
@@ -447,6 +462,9 @@ public final class MortarTower extends AbstractTower {
     }
 
     private void crack(EnemyMob enemy, MortarSpec spec) {
+        if (spec.crackStacks() == 0) {
+            return;
+        }
         this.applyEffect(enemy, sink -> Effect.cracked(spec.crackStacks(), CRACKED_TICKS, sink));
     }
 
@@ -569,7 +587,38 @@ public final class MortarTower extends AbstractTower {
 
     /** Its magazine as the pane shows it. */
     public MagazineView magazineView() {
-        return new MagazineView(this.magazine.shells(), this.loading, this.shellChances());
+        return new MagazineView(this.magazine.shells(), this.loading, this.shellChances(), this.shellProfiles());
+    }
+
+    /** What each kind it can load does as it would fire it now; worked out again only as its stats or nodes change. */
+    public List<ShellProfile> shellProfiles() {
+        List<MortarMechanic> owned = this.mechanics.all();
+        TowerStats stats = this.stats();
+        return this.profiles.filter(last -> last.stats() == stats && last.owned().equals(owned)).orElseGet(() -> {
+            MortarSpec spec = this.spec(owned);
+            ShellProfiles fresh = new ShellProfiles(stats, owned,
+                    this.loadableKinds().stream().map(kind -> this.profileOf(kind, stats, spec)).toList());
+            this.profiles = Optional.of(fresh);
+            return fresh;
+        }).profiles();
+    }
+
+    private ShellProfile profileOf(ShellKind kind, TowerStats stats, MortarSpec spec) {
+        Shell shell = new Shell(kind, stats);
+        BlastRadii radii = this.blastOf(shell, spec);
+        float cell = this.cellPixels();
+        int damage = Math.round(stats.damage() * kind.damageFactor(stats.value(TowerStat.HEAVY_MULTIPLIER)));
+        Set<EffectKind> applies = EnumSet.noneOf(EffectKind.class);
+        if (spec.crackStacks() > 0) {
+            applies.add(EffectKind.CRACKED);
+        }
+        applies.addAll(kind.applies());
+        if (kind == ShellKind.HEAVY) {
+            spec.heavy().applies().ifPresent(applies::add);
+        }
+        return new ShellProfile(kind, Damage.of(kind.damageType(), damage),
+                this.shellStats(shell).speed() * TICKS_PER_SECOND / cell,
+                new ShellProfile.Blast(radii.core() / cell, radii.edge() / cell, radii.edgeShare(), List.copyOf(applies)));
     }
 
     /** {@code tower}'s magazine as the pane shows it, when it is a Mortar. */
@@ -653,6 +702,9 @@ public final class MortarTower extends AbstractTower {
     @Override
     protected List<AppliedEffect> baseApplies() {
         int stacks = this.spec(this.mechanics.all()).crackStacks();
+        if (stacks == 0) {
+            return List.of();
+        }
         return List.of(new AppliedEffect(EffectKind.CRACKED, List.of(new AppliedEffect.Source(this.displayName(),
                 TermText.of("every shell gives a share of " + (stacks == 1 ? "a stack" : stacks + " stacks") + " of ")
                         .plus(EffectKind.CRACKED)
@@ -661,7 +713,7 @@ public final class MortarTower extends AbstractTower {
 
     @Override
     protected String targetingLabel() {
-        return "first";
+        return this.upgrades().targeting().map(TargetPriority::label).orElse("first");
     }
 
     @Override

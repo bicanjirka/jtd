@@ -3,7 +3,6 @@ package td.tower.mortar;
 import td.term.Term;
 import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.TowerTerm;
 
 import java.util.Set;
 
@@ -33,8 +32,8 @@ public final class PayloadMechanic implements MortarMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("adds ").plus(this.kind.mention()).plus(" shells to the ").plus(TowerTerm.MAGAZINE)
-                .plus("; each deals " + TermNumbers.percent(ShellKind.PAYLOAD_DAMAGE_SHARE) + " damage and ")
+        return TermText.of("adds ").plus(this.kind.mention()).plus(" shells to what it fires; each deals ")
+                .plus(TermNumbers.percent(ShellKind.PAYLOAD_DAMAGE_SHARE) + " damage and ")
                 .plus(this.kind.groundText());
     }
 }

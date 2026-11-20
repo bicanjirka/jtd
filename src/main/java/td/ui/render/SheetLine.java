@@ -187,26 +187,26 @@ public sealed interface SheetLine {
     }
 
     /**
-     * A row of shells, front first, the ones the next firing loads marked, over one strip split into each kind's
-     * share of the shots.
+     * A row of shells, front first, the ones the next firing loads marked; each shell opens what its kind does.
      *
-     * @param shells  the shells, front first
+     * @param slots   the shells, front first
      * @param loading how many front shells the next firing loads
-     * @param shares  each kind it can draw with its share, in order; the shares add to one
-     * @param tooltip what hovering it opens: each kind's chance and what it does
      */
-    record MagazineRow(List<LoadedShell> shells, int loading, List<ShellShare> shares, SheetTooltip tooltip)
-            implements SheetLine {
+    record MagazineRow(List<MagazineSlot> slots, int loading) implements SheetLine {
 
         public MagazineRow {
-            shells = List.copyOf(shells);
-            shares = List.copyOf(shares);
+            slots = List.copyOf(slots);
         }
 
         @Override
         public Optional<InfoSheet> tooltipFor(TooltipKey key) {
-            return this.tooltip.key().equals(key) ? Optional.of(this.tooltip.sheet()) : Optional.empty();
+            return this.slots.stream().flatMap(slot -> slot.tooltip().stream())
+                    .filter(tooltip -> tooltip.key().equals(key)).map(SheetTooltip::sheet).findFirst();
         }
+    }
+
+    /** One shell in a magazine's row, and what hovering it opens; nothing for a kind about to leave it. */
+    record MagazineSlot(LoadedShell shell, Optional<SheetTooltip> tooltip) {
     }
 
     /**
@@ -232,10 +232,6 @@ public sealed interface SheetLine {
 
     /** One kind's piece of a nest's strip. */
     record MissileShare(LoadedMissile missile, float share) {
-    }
-
-    /** One kind's piece of a magazine's strip, in {@code tone}. */
-    record ShellShare(LoadedShell shell, Palette tone, float share) {
     }
 
     /** A face, a bold name in the face's tone, and a value on the right: the head of a tooltip. */

@@ -1,6 +1,8 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.fixtures.FakeAbilityMechanic;
 import td.fixtures.FakeTower;
@@ -9,6 +11,7 @@ import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
+import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.MortarTower;
 import td.tower.NodeProgress;
@@ -26,6 +29,7 @@ import td.tower.ability.AbilityBar;
 import td.tower.ability.AbilityUnits;
 import td.tower.mortar.MagazineView;
 import td.tower.mortar.ShellKind;
+import td.tower.mortar.ShellProfile;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
@@ -40,12 +44,9 @@ import td.ui.render.TowerLook;
 import td.util.GameHost;
 import td.util.GameWorld;
 
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 import static td.tower.upgrade.MechanicCatalogue.entry;
 
 class TowerSheetTextTest {
@@ -141,11 +142,11 @@ class TowerSheetTextTest {
 
     @Test
     void theShopListsStatsThenWhomItTargetsThenWhatItAppliesThenWhatNoRowSays() {
-        InfoSheet sheet = shopSheet(TowerFactory.Type.MORTAR);
+        InfoSheet sheet = shopSheet(TowerFactory.Type.CINDER);
 
         assertThat(labels(sheet)).startsWith("Range").endsWith("Targets");
         assertThat(iconRow(sheet, "Applies").icons()).isNotEmpty();
-        assertThat(sheet.lines()).endsWith(new SheetLine.Prose(TermText.of(TowerFactory.createTower(TowerFactory.Type.MORTAR, this.world, 0, 0).inspect().description())),
+        assertThat(sheet.lines()).endsWith(new SheetLine.Prose(TermText.of(TowerFactory.createTower(TowerFactory.Type.CINDER, this.world, 0, 0).inspect().description())),
                 new SheetLine.Gap(), new SheetLine.Prose(TermText.of(TowerSheetText.PLACING_HINT)));
     }
 
@@ -246,12 +247,12 @@ class TowerSheetTextTest {
     @Test
     void anUpgradeShowsInTheStatsItRaisesWhileTheUpgradesPanelNamesIt() {
         this.world.economy().startEconomy(1000, 5);
-        Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
-        UpgradeNode range = UpgradePaths.named(mortar, "Elevation");
+        Tower burst = this.place(TowerFactory.Type.SPLASH, 0, 0);
+        UpgradeNode range = UpgradePaths.named(burst, "Long Throw");
 
-        mortar.buyUpgrade(range);
+        burst.buyUpgrade(range);
 
-        InfoSheet sheet = TowerSheetText.status(mortar.inspect());
+        InfoSheet sheet = TowerSheetText.status(burst.inspect());
         assertThat(row(sheet, "Range").trend()).isEqualTo(Trend.BETTER);
         assertThat(rows(sheet)).noneMatch(row -> row.glyph() == Glyph.PIP);
         assertThat(labels(sheet)).doesNotContain("Awaken");
@@ -347,7 +348,7 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void aMortarsPaneShowsItsMagazineFrontFirstThenEachKindsShareInWords() {
+    void aMortarsPaneShowsItsShellsFrontFirstThenARowPerKindWithItsShareBothOpeningThatKindsSheet() {
         Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
         UpgradePaths.buy(mortar, this.world, "Tar");
         MortarTower.loadMagazine(mortar, MagazineFixtures.frontedBy(ShellKind.TAR, ShellKind.HEAVY));
@@ -358,23 +359,29 @@ class TowerSheetTextTest {
         SheetLine.MagazineRow row = lines.stream().filter(SheetLine.MagazineRow.class::isInstance)
                 .map(SheetLine.MagazineRow.class::cast).findFirst().orElseThrow();
         MagazineView view = MortarTower.magazineViewOf(mortar).orElseThrow();
-        assertThat(row.shells()).hasSize(view.shells().size()).startsWith(LoadedShell.TAR, LoadedShell.HEAVY);
+        assertThat(row.slots()).hasSize(view.shells().size()).extracting(SheetLine.MagazineSlot::shell)
+                .startsWith(LoadedShell.TAR, LoadedShell.HEAVY);
         assertThat(row.loading()).isEqualTo(1);
-        assertThat(row.shares()).extracting(SheetLine.ShellShare::shell)
-                .containsExactly(LoadedShell.NORMAL, LoadedShell.HEAVY, LoadedShell.TAR);
-        assertThat(row.shares().stream().mapToDouble(SheetLine.ShellShare::share).sum()).isCloseTo(1.0, within(1e-3));
-        assertThat(lines.get(lines.indexOf(row) + 1))
-                .isEqualTo(SheetLine.Sentence.of(TowerSheetText.chancesText(view.chances())));
+        List<Row> kinds = lines.subList(lines.indexOf(row) + 1, lines.indexOf(row) + 4).stream()
+                .map(Row.class::cast).toList();
+        assertThat(kinds).extracting(Row::label).containsExactly(ShellKind.NORMAL.title(), ShellKind.HEAVY.title(),
+                ShellKind.TAR.title());
+        assertThat(kinds.get(2).value()).isEqualTo(TermNumbers.percent(view.chances().get(ShellKind.TAR)));
+        assertThat(row.slots().getFirst().tooltip().orElseThrow()).isEqualTo(kinds.get(2).tooltip().orElseThrow());
     }
 
     @Test
-    void theChancesInWordsNameEachKindWithItsShareInOrder() {
-        Map<ShellKind, Float> chances = new EnumMap<>(ShellKind.class);
-        chances.put(ShellKind.NORMAL, 0.6f);
-        chances.put(ShellKind.HEAVY, 0.4f);
+    void aShellsSheetGivesWhatItDealsFliesAndAppliesAsTheTowerFiresItNow() {
+        ShellProfile heavy = new ShellProfile(ShellKind.HEAVY, Damage.physical(DamageUnits.ofPoints(77)), 3f,
+                new ShellProfile.Blast(1f, 2f, 0.5f, List.of(EffectKind.CRACKED, EffectKind.DAZED)));
 
-        TermText text = TowerSheetText.chancesText(chances);
+        InfoSheet sheet = TowerSheetText.shellSheet(heavy, 0.25f);
 
-        assertThat(text).isEqualTo(TermText.of("Normal 60% · ").plus(TowerTerm.HEAVY_SHELL).plus(" 40%"));
+        assertThat(row(sheet, TowerStatRow.PHYSICAL_DAMAGE.shortName()).value()).isEqualTo("77");
+        assertThat(row(sheet, "Speed").value()).isEqualTo("3");
+        assertThat(row(sheet, "Blast edge").value()).isEqualTo("2");
+        assertThat(row(sheet, "Share").value()).isEqualTo(TermNumbers.percent(0.25f));
+        assertThat(sheet.lines()).contains(SheetLine.Sentence.of(TermText.of("Applies ").plus(EffectKind.CRACKED)
+                .plus(", ").plus(EffectKind.DAZED).asSentence()));
     }
 }

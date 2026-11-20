@@ -35,13 +35,14 @@ final class UpgradeTreePlans {
                     node("splash.choking_blight", 5.4f))));
 
     private static final UpgradeTreePlan MORTAR = UpgradeTreePlan.of(
-            tier(row(node("mortar.big_bore", 0f), node("base.range", 2f), node("mortar.heavy_charge", 3f),
-                    node("mortar.predictive_fire", 4f))),
+            tier(row(node("mortar.big_bore", 0f), node("mortar.heavy_charge", 2f),
+                    node("mortar.predictive_fire", 3f),
+                    node("mortar.cracking_shells", 4f))),
             tier(row(cluster("Heavy shell", 0f), node("mortar.flare", 2.6f), cluster("Payload", 4.25f))),
-            tier(row(node("mortar.overcharge", 0f), node("mortar.big_bore_2", 1f), cluster("Volley", 2.3f),
-                    node("mortar.thick_mix", 5.25f))),
+            tier(row(node("mortar.overcharge", 0f), node("mortar.big_bore_2", 1f), node("base.range", 2f),
+                    cluster("Volley", 3.3f), node("mortar.thick_mix", 5.6f))),
             tier(row(cluster("Order", 0f), node("mortar.deep_crack", 2.25f), node("mortar.quick_reload", 3.25f),
-                    node("base.range.2", 4.25f), node("mortar.lasting_mix", 5.25f))));
+                    node("mortar.lasting_mix", 5.6f))));
 
     private static final UpgradeTreePlan CINDER = UpgradeTreePlan.of(
             tier(row(node("cinder.hot_flame", 0f), node("cinder.long_stream", 1f), node("cinder.wide_nozzle", 2f),

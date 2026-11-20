@@ -22,8 +22,6 @@ final class TowerTermPictograms {
             // Hollow Point
             Map.entry("tower.hollow_point", "F M8.6 21.2V10.2C8.6 6.6 10.2 4 12 2.6C13.8 4 15.4 6.6 15.4 10.2V21.2Z ; K O12 6.6 1.7 ; X M8.6 13.6H15.4"),
             Map.entry("tower.silver_round", "F M5.8 21V10C5.8 6.6 7.3 4.2 8.3 2.6C9.3 4.2 10.8 6.6 10.8 10V21Z ; X M5.8 13.4H10.8 ; F M17 3.4L18.2 7.3L22.1 8.5L18.2 9.7L17 13.6L15.8 9.7L11.9 8.5L15.8 7.3Z ; F M18.2 15.6L18.8 17.4L20.6 18L18.8 18.6L18.2 20.4L17.6 18.6L15.8 18L17.6 17.4Z"),
-            // Magazine
-            Map.entry("tower.magazine", "F O4.4 19.4 1.6 ; S O9.8 14 2.8 ; S O16.8 7.2 4.6 ; F O16.8 7.2 1.6"),
             // Napalm Shell
             Map.entry("tower.napalm_shell", "F M8 20.4H16V11C16 7 14.2 4.2 12 2.6C9.8 4.2 8 7 8 11Z M8 20.4L5.4 22V17.4L8 15.4Z M16 20.4L18.6 22V17.4L16 15.4Z ; K M12 10.4C12 10.4 14.4 12.6 14.4 14.8A2.4 2.4 0 0 1 9.6 14.8C9.6 13.4 10.6 12.2 11.2 11.8C11.4 12.8 12 13.2 12 13.2C12 12.2 11.8 11.2 12 10.4Z"),
             // Tar Shell

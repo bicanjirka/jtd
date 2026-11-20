@@ -26,6 +26,7 @@ import td.tower.mortar.MagazineSpec;
 import td.tower.mortar.MortarSpec;
 import td.tower.mortar.PayloadMechanic;
 import td.tower.mortar.ShellKind;
+import td.tower.mortar.ShellProfile;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
 import td.wave.Path;
@@ -38,6 +39,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -147,7 +149,7 @@ class MortarTowerTest {
 
     @Test
     void theBlastDealsFullDamageInItsCoreAndCracksPlatingWithoutSlowing() {
-        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL));
+        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL), "Cracking Shells");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -159,8 +161,20 @@ class MortarTowerTest {
     }
 
     @Test
-    void theBlastsEdgeDealsLessThanItsCoreAndNothingReachesPastIt() {
+    void aMortarWithoutCrackingShellsCracksNothing() {
         MortarTower tower = this.loaded(List.of(ShellKind.NORMAL));
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+
+        this.landAShell(tower);
+
+        assertThat(target.hits()).isNotEmpty();
+        assertThat(target.activeEffectKinds()).doesNotContain(EffectKind.CRACKED);
+    }
+
+    @Test
+    void theBlastsEdgeDealsLessThanItsCoreAndNothingReachesPastIt() {
+        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL), "Cracking Shells");
         float core = tower.stats().value(TowerStat.AREA_RADIUS) * SCALE;
         float edge = tower.stats().value(TowerStat.BLAST_EDGE) * SCALE;
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
@@ -505,6 +519,36 @@ class MortarTowerTest {
         double predictiveLanding = predictive.getBlastMarks().getFirst().at().y();
         assertThat(plainLanding).isEqualTo(walker.getY());
         assertThat(predictiveLanding).isGreaterThan(walker2.getY());
+    }
+
+    @Test
+    void predictiveFireShellsThePackOverTheLoneEnemyFurthestAlong() {
+        MortarTower tower = this.towerWith("Predictive Fire");
+        FakeEnemyMob lone = this.enemyAt(tower, 0, -OUT).withProgression(900);
+        FakeEnemyMob packed = this.enemyAt(tower, OUT, 0).withProgression(10);
+        FakeEnemyMob near = this.enemyAt(tower, OUT, SCALE / 2.0).withProgression(5);
+        this.context.enemies().setEnemies(new EnemyMob[]{lone, packed, near});
+
+        this.landAShell(tower);
+
+        assertThat(packed.hits()).isNotEmpty();
+        assertThat(lone.hits()).isEmpty();
+    }
+
+    @Test
+    void aShellsProfileIsTheHitItWouldLandWithAndWhatItsPickAdds() {
+        MortarTower tower = this.towerWith("Concussion", "Cracking Shells");
+        TowerStats stats = tower.stats();
+
+        Map<ShellKind, ShellProfile> profiles = tower.shellProfiles().stream()
+                .collect(Collectors.toMap(ShellProfile::kind, profile -> profile));
+
+        ShellProfile heavy = profiles.get(ShellKind.HEAVY);
+        ShellProfile normal = profiles.get(ShellKind.NORMAL);
+        assertThat(heavy.hit().amount()).isEqualTo(Math.round(stats.damage() * stats.value(TowerStat.HEAVY_MULTIPLIER)));
+        assertThat(heavy.blast().applies()).containsExactly(EffectKind.DAZED, EffectKind.CRACKED);
+        assertThat(normal.blast().applies()).containsExactly(EffectKind.CRACKED);
+        assertThat(heavy.cellsPerSecond()).isLessThan(normal.cellsPerSecond());
     }
 
     @Test

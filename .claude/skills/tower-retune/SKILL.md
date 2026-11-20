@@ -120,7 +120,7 @@ layout of every tier and each changed node's sheet; the `Driver` only for what t
 
 The shop button's mark (`TowerIcons`) is drawn apart from the board art and may still show a tower's earlier design:
 check it against the tower on the board in its retune and redraw it in the table's language (a flat silhouette, the
-moving part lighter, a seam). The Burst's is redrawn; the Mortar's and the rest still show their old designs.
+moving part lighter, a seam). The Burst's and the Mortar's are redrawn; the rest still show their old designs.
 
 ## Names and glyphs, once per tower
 
