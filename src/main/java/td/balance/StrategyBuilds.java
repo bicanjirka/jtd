@@ -2,10 +2,13 @@ package td.balance;
 
 import td.tower.TowerFactory;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The builds a tower's retune names as its strategies, each a set of nodes bought whole: the bench measures them beside
@@ -37,7 +40,49 @@ final class StrategyBuilds {
                     new Strategy("speed", Set.of("sniper.steady_aim", "sniper.rifling", "sniper.heavy_rounds",
                             "sniper.fourth_shot", "sniper.deadeye", "sniper.deep_breath", "base.range",
                             "sniper.silver_round", "sniper.ricochet", "sniper.sundering_crits", "sniper.executioner",
-                            "sniper.killing_spree", "sniper.unbroken_aim", "sniper.heavy_rounds.2")))));
+                            "sniper.killing_spree", "sniper.unbroken_aim", "sniper.heavy_rounds.2"))),
+            TowerFactory.Type.MORTAR, mortar()));
+
+    private static final String CRACKING = "mortar.cracking_shells";
+    private static final String CONCUSSION = "mortar.concussion";
+    private static final String SHRAPNEL = "mortar.shrapnel";
+    private static final String OVERCHARGE = "mortar.overcharge";
+
+    /**
+     * Nuke, Heavy shells (to tier II with both Big Bores, then the whole build without them) and a Payload per kind;
+     * every one with Concussion also with Shrapnel, and the Payloads also without Concussion or Overcharge.
+     */
+    private static List<Strategy> mortar() {
+        Set<String> nuke = Set.of("mortar.big_bore", "mortar.heavy_charge", CRACKING, CONCUSSION, OVERCHARGE, "mortar.big_bore_2",
+                "base.range", "mortar.barrage", "mortar.fusion", "mortar.deep_crack", "mortar.quick_reload");
+        Set<String> bores = Set.of("mortar.big_bore", "mortar.heavy_charge", CRACKING, CONCUSSION, OVERCHARGE,
+                "mortar.big_bore_2", "base.range", "mortar.barrage");
+        Set<String> heavy = Set.of("mortar.heavy_charge", CRACKING, CONCUSSION, OVERCHARGE, "base.range", "mortar.barrage",
+                "mortar.rich_mix", "mortar.deep_crack", "mortar.quick_reload");
+        List<Strategy> strategies = new ArrayList<>(List.of(new Strategy("nuke", nuke), bled("nuke", nuke),
+                new Strategy("heavy-bores", bores), bled("heavy-bores", bores),
+                new Strategy("heavy", heavy), bled("heavy", heavy)));
+        for (String payload : List.of("napalm", "tar", "cryo")) {
+            Set<String> nodes = Set.of("mortar.heavy_charge", CRACKING, CONCUSSION, "mortar." + payload, OVERCHARGE, "base.range",
+                    "mortar.barrage", "mortar.thick_mix", "mortar.rich_mix", "mortar.deep_crack",
+                    "mortar.quick_reload", "mortar.lasting_mix");
+            strategies.addAll(List.of(new Strategy(payload, nodes), bled(payload, nodes),
+                    new Strategy(payload + "-no-concussion", without(nodes, CONCUSSION)),
+                    new Strategy(payload + "-no-overcharge", without(nodes, OVERCHARGE))));
+        }
+        return List.copyOf(strategies);
+    }
+
+    /** {@code nodes} with Shrapnel's Bleed in place of Concussion's Daze. */
+    private static Strategy bled(String name, Set<String> nodes) {
+        Set<String> swapped = new LinkedHashSet<>(without(nodes, CONCUSSION));
+        swapped.add(SHRAPNEL);
+        return new Strategy(name + "-bleed", Set.copyOf(swapped));
+    }
+
+    private static Set<String> without(Set<String> nodes, String left) {
+        return nodes.stream().filter(node -> !node.equals(left)).collect(Collectors.toUnmodifiableSet());
+    }
 
     private StrategyBuilds() {
     }

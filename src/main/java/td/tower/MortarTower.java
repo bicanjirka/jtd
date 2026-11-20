@@ -91,7 +91,7 @@ public final class MortarTower extends AbstractTower {
     public static final float CORE_CELLS = 1f;
     public static final float EDGE_CELLS = 1.75f;
     /** Pixels a tick: slow enough to watch a shell fly and for a fast enemy to dodge it. */
-    public static final float SHELL_SPEED = 8f;
+    public static final float SHELL_SPEED = 6.4f;
     /** Ticks a nuke's flash and ring last. */
     public static final int NUKE_FLASH_TICKS = 10;
     /** Ticks the mark of any blast stays on the board. */
@@ -108,11 +108,11 @@ public final class MortarTower extends AbstractTower {
     /** Flight time depends on where the shell is going, so the aim is refined this many times. */
     private static final int PREDICTION_PASSES = 3;
 
-    private static final UpgradeNode HEAVY_CHARGE = UpgradeNode.of("mortar.heavy_charge", "Heavy Charge", 9)
-            .withModifiers(TowerModifiers.damage(10f));
-    private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 2);
+    private static final UpgradeNode HEAVY_CHARGE = UpgradeNode.of("mortar.heavy_charge", "Heavy Charge", 5)
+            .withModifiers(TowerModifiers.damage(12f));
+    private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 5);
     private static final UpgradeNode CRACKING_SHELLS = UpgradeNode.of("mortar.cracking_shells", "Cracking Shells", 5);
-    private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 2)
+    private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 5)
             .withTargeting(TargetPriority.MOST_NEIGHBOURS);
 
     private static final UpgradeNode CONCUSSION = UpgradeNode.of("mortar.concussion", "Concussion", 6)

@@ -144,7 +144,7 @@ class MortarTowerTest {
 
         this.context.projectiles().doTick(2);
 
-        assertThat(shell.getX() - tower.getX()).isEqualTo(MortarTower.SHELL_SPEED);
+        assertThat(shell.getX() - tower.getX()).isCloseTo(MortarTower.SHELL_SPEED, within(1e-4));
     }
 
     @Test
