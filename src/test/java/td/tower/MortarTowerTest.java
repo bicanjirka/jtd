@@ -476,6 +476,20 @@ class MortarTowerTest {
     }
 
     @Test
+    void withThickMixANormalShellFliesShowingThePayloadItCarries() {
+        MortarTower plain = this.loaded(List.of(ShellKind.NORMAL), "Napalm");
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(plain, OUT, 0)});
+        CannonballProjectile bare = (CannonballProjectile) this.fire(plain);
+        this.context.projectiles().clear();
+        MortarTower thick = this.loaded(List.of(ShellKind.NORMAL), "Napalm", "Thick Mix");
+
+        CannonballProjectile carrying = (CannonballProjectile) this.fire(thick);
+
+        assertThat(bare.carried()).isEmpty();
+        assertThat(carrying.carried()).contains(ShellLook.NAPALM);
+    }
+
+    @Test
     void lastingMixMakesAPayloadsGroundLastLonger() {
         Zone plain = payloadGround("Cryo");
 

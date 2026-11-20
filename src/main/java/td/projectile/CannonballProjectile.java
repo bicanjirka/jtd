@@ -1,5 +1,7 @@
 package td.projectile;
 
+import java.util.Optional;
+
 /**
  * Flies straight to the point it was aimed at and never re-aims, so a fast enemy can dodge it.
  * Detonates there whether or not anything is left to hit. It is lobbed: its position is where it is
@@ -13,6 +15,7 @@ public final class CannonballProjectile extends AbstractProjectile {
     private final double destinationY;
     private final ProjectileStats stats;
     private final ShellLook look;
+    private final Optional<ShellLook> carried;
     private final PointImpact impact;
 
     public CannonballProjectile(double startX, double startY, double destinationX, double destinationY,
@@ -22,6 +25,13 @@ public final class CannonballProjectile extends AbstractProjectile {
 
     public CannonballProjectile(double startX, double startY, double destinationX, double destinationY,
                                 ProjectileStats stats, ShellLook look, PointImpact impact) {
+        this(startX, startY, destinationX, destinationY, stats, look, Optional.empty(), impact);
+    }
+
+    /** A shell of {@code look} that also carries a share of a {@code carried} payload, drawn as that payload's tail. */
+    public CannonballProjectile(double startX, double startY, double destinationX, double destinationY,
+                                ProjectileStats stats, ShellLook look, Optional<ShellLook> carried,
+                                PointImpact impact) {
         super(startX, startY);
         this.startX = startX;
         this.startY = startY;
@@ -29,6 +39,7 @@ public final class CannonballProjectile extends AbstractProjectile {
         this.destinationY = destinationY;
         this.stats = stats;
         this.look = look;
+        this.carried = carried;
         this.impact = impact;
     }
 
@@ -39,6 +50,11 @@ public final class CannonballProjectile extends AbstractProjectile {
     /** What this shell carries. */
     public ShellLook look() {
         return this.look;
+    }
+
+    /** The payload it carries a share of besides its own kind, if any. */
+    public Optional<ShellLook> carried() {
+        return this.carried;
     }
 
     /** How far it flies over the ground, from the muzzle to where it lands, in pixels. */

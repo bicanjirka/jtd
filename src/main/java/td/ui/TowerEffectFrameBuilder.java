@@ -31,6 +31,9 @@ import td.tower.splash.Passive;
 import td.tower.splash.Stone;
 import td.tower.splash.Wisp;
 import td.ui.render.BeamDraw;
+import td.ui.render.BlastDraw;
+import td.ui.render.BlastLook;
+import td.ui.render.BoardFlashDraw;
 import td.ui.render.BulletDraw;
 import td.ui.render.BulletRound;
 import td.ui.render.CannonballDraw;
@@ -71,6 +74,7 @@ import td.wave.Vec2;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,15 +133,22 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int SHATTER_SHARDS = 10;
     private static final float SHATTER_SHARD_CELLS = 0.18f;
     private static final float SHATTER_STROKE_CELLS = 0.06f;
-    private static final float NUKE_FLASH_SHARE = 0.6f;
     private static final float BLAST_MARK_ALPHA = 0.4f;
-    private static final float NUKE_FLASH_ALPHA = 0.8f;
     private static final float BLAST_CORE_RING_ALPHA = 0.7f;
     private static final float BLAST_EDGE_RING_ALPHA = 0.3f;
     /** A Heavy's fragments: how many fly out, how long each streak is as a share of the edge, and how thick. */
     private static final int BLAST_FRAGMENTS = 8;
     private static final float FRAGMENT_SHARE = 0.25f;
     private static final float FRAGMENT_STROKE_CELLS = 0.05f;
+    /**
+     * How long each blast is drawn, in ticks: a Normal's or a flare's flash, a Heavy's brief fireball, a payload's burst,
+     * a nuke's mushroom cloud for as long as its mark stays; and the first ticks of a nuke, which whiten the board.
+     */
+    private static final int FLASH_BLAST_TICKS = 6;
+    private static final int HEAVY_BLAST_TICKS = 9;
+    private static final int PAYLOAD_BLAST_TICKS = 16;
+    private static final int NUKE_BLAST_TICKS = MortarTower.BLAST_MARK_TICKS;
+    private static final int NUKE_WHITEOUT_TICKS = 6;
     /** A stream's tongues take new tips this often, which is all the flicker it needs. */
     private static final int STREAM_FLICKER_TICKS = 3;
     /** The outer tongue fills the cone; the middle one reaches part of it, narrower; the core less again. */
@@ -174,6 +185,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private final int gameTime;
     private final double interpolationAlpha;
     private final double animationSeconds;
+    private final List<BoardFlashDraw> flashes = new ArrayList<>();
 
     public TowerEffectFrameBuilder(GameWorld world, int gameTime, double interpolationAlpha, double animationSeconds) {
         this.world = world;
@@ -376,7 +388,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             Palette tone = wisp.passive() == Passive.STATIC ? Palette.TOWER_SPLASH_ARC : Palette.TOWER_SPLASH_CAST;
             this.streak(tone, wisp.from(), new Vec2(tower.getX(), tower.getY()), wisp.flight());
         }
-        BlastLook look = BlastLook.of(tower.fork());
+        SplashBlastLook look = SplashBlastLook.of(tower.fork());
         for (Blast blast : tower.recentBlasts()) {
             float progress = (this.gameTime - blast.tick()) / DETONATION_TICKS;
             if (progress < 1f) {
@@ -418,7 +430,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         float lift = ProjectileFrameBuilder.lobLift(launch, peak, flown);
         Palette tone = stone.charged() ? Palette.TOWER_SPLASH_ARC : Palette.PROJECTILE_CANNONBALL;
         this.draws.add(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(flown), STONE_SIZE, x,
-                y - lift, Optional.empty()));
+                y - lift, Optional.empty(), Optional.empty()));
     }
 
     /** Something flying straight to where it lands, its streak trailing behind its head. */
@@ -430,7 +442,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 (float) (from.y() + (to.y() - from.y()) * flown), TRACER_WIDTH_CELLS * this.scale, 1f));
     }
 
-    private void detonation(float centerX, float centerY, float edge, float progress, BlastLook look) {
+    private void detonation(float centerX, float centerY, float edge, float progress, SplashBlastLook look) {
         float radius = edge * progress;
         if (progress < FLASH_SHARE) {
             this.draws.add(new SplashDraw(look.flash(), centerX, centerY, edge * (FLASH_SHARE + progress)));
@@ -441,15 +453,15 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /** The colours of a Burst's blast: the fork it took tints it like its body. */
-    private record BlastLook(Palette flash, Palette detonation, Palette detonationDark) {
+    private record SplashBlastLook(Palette flash, Palette detonation, Palette detonationDark) {
 
-        static BlastLook of(SplashTower.Fork fork) {
+        static SplashBlastLook of(SplashTower.Fork fork) {
             return switch (fork) {
-                case NONE -> new BlastLook(Palette.TOWER_SPLASH_FLASH,
+                case NONE -> new SplashBlastLook(Palette.TOWER_SPLASH_FLASH,
                         Palette.TOWER_SPLASH_DETONATION, Palette.TOWER_SPLASH_DETONATION_DARK);
-                case STORMCALLER -> new BlastLook(Palette.TOWER_STORMCALLER_FLASH,
+                case STORMCALLER -> new SplashBlastLook(Palette.TOWER_STORMCALLER_FLASH,
                         Palette.TOWER_STORMCALLER_DETONATION, Palette.TOWER_STORMCALLER_DETONATION_DARK);
-                case HEXER -> new BlastLook(Palette.TOWER_HEXER_FLASH,
+                case HEXER -> new SplashBlastLook(Palette.TOWER_HEXER_FLASH,
                         Palette.TOWER_HEXER_DETONATION, Palette.TOWER_HEXER_DETONATION_DARK);
             };
         }
@@ -523,27 +535,21 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return null;
     }
 
-    /** The flash of each blast that just went off, and a nuke's ring; the shell is a projectile. */
+    /** Each blast that just went off, the strongest nuke's flash over the board; the shell is a projectile. */
     public Void visitMortarTower(MortarTower tower) {
         for (BlastMark mark : tower.getBlastMarks()) {
-            float progress = (this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha)
-                    / MortarTower.BLAST_MARK_TICKS;
-            if (progress >= 0f && progress < 1f) {
-                this.blastMark(mark, progress);
+            float ticks = this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha;
+            Optional<BlastLook> look = blastLookOf(mark.look());
+            float progress = ticks / look.map(TowerEffectFrameBuilder::blastTicks).orElse(FLASH_BLAST_TICKS);
+            if (progress < 0f || progress >= 1f) {
+                continue;
+            }
+            look.ifPresentOrElse(detonation -> this.detonation(mark, detonation, progress),
+                    () -> this.blastMark(mark, progress));
+            if (mark.look() == ShellLook.NUKE && ticks < NUKE_WHITEOUT_TICKS) {
+                this.whiteOut(mark, 1f - ticks / NUKE_WHITEOUT_TICKS);
             }
         }
-        tower.getNukeFlash().ifPresent(flash -> {
-            float progress = (this.gameTime - flash.startedAtTick() + (float) this.interpolationAlpha)
-                    / MortarTower.NUKE_FLASH_TICKS;
-            if (progress >= 0f && progress < 1f) {
-                float fade = 1f - progress;
-                float x = (float) flash.at().x();
-                float y = (float) flash.at().y();
-                this.draws.add(new FlashDraw(Palette.TOWER_MORTAR_NUKE_FLASH, x, y, flash.radius() * NUKE_FLASH_SHARE,
-                        fade * NUKE_FLASH_ALPHA));
-                this.draws.add(new RingDraw(Palette.TOWER_MORTAR_NUKE_FLASH, x, y, flash.radius() * progress, fade));
-            }
-        });
         this.shellCarry(tower);
         this.stride(tower);
         return null;
@@ -609,10 +615,45 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 1f - coolDown, pose.has(TowerCue.VOLLEY), pose.stock(), pose.load()));
     }
 
-    /**
-     * A blast's flash over its edge, a white ring round its full-damage core and a fainter one, or a nuke's yellow-green
-     * one, round its edge; a Heavy with shrapnel throws fragments out over it.
-     */
+    /** The detonation a shell of {@code look} goes off in; a Normal's and a flare's are a flash with rings. */
+    private static Optional<BlastLook> blastLookOf(ShellLook look) {
+        return switch (look) {
+            case NORMAL, FLARE -> Optional.empty();
+            case HEAVY -> Optional.of(BlastLook.HEAVY);
+            case NAPALM -> Optional.of(BlastLook.NAPALM);
+            case TAR -> Optional.of(BlastLook.TAR);
+            case CRYO -> Optional.of(BlastLook.CRYO);
+            case NUKE -> Optional.of(BlastLook.NUKE);
+        };
+    }
+
+    private static int blastTicks(BlastLook look) {
+        return switch (look) {
+            case HEAVY -> HEAVY_BLAST_TICKS;
+            case NAPALM, TAR, CRYO -> PAYLOAD_BLAST_TICKS;
+            case NUKE -> NUKE_BLAST_TICKS;
+        };
+    }
+
+    /** A shell's own detonation; a Heavy with shrapnel throws fragments out over it. */
+    private void detonation(BlastMark mark, BlastLook look, float progress) {
+        int seed = mark.startedAtTick() * 31 + (int) mark.at().x() * 7 + (int) mark.at().y() * 13;
+        this.draws.add(new BlastDraw(look, (float) mark.at().x(), (float) mark.at().y(), mark.core(), mark.edge(),
+                progress, this.scale, seed));
+        this.fragments(mark, progress * blastTicks(look) / FLASH_BLAST_TICKS);
+    }
+
+    /** A nuke's flash over the whole board. */
+    private void whiteOut(BlastMark mark, float strength) {
+        this.flashes.add(new BoardFlashDraw((float) mark.at().x(), (float) mark.at().y(), strength));
+    }
+
+    /** A nuke's flash whitening the board, while one is going off; of two at once, the stronger shows. */
+    public Optional<BoardFlashDraw> boardFlash() {
+        return this.flashes.stream().max(Comparator.comparingDouble(BoardFlashDraw::strength));
+    }
+
+    /** A Normal's or a flare's blast: a flash over its edge, a white ring round its full-damage core, a fainter one round its edge. */
     private void blastMark(BlastMark mark, float progress) {
         float fade = 1f - progress;
         float x = (float) mark.at().x();
@@ -621,11 +662,16 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 fade * BLAST_MARK_ALPHA));
         this.draws.add(new RingDraw(Palette.BLAST_RING, x, y, mark.core(), fade * BLAST_CORE_RING_ALPHA));
         if (mark.edge() > mark.core()) {
-            boolean nuke = mark.look() == ShellLook.NUKE;
-            this.draws.add(new RingDraw(nuke ? Palette.BLAST_NUKE_RING : Palette.BLAST_RING, x, y, mark.edge(),
-                    fade * (nuke ? BLAST_CORE_RING_ALPHA : BLAST_EDGE_RING_ALPHA)));
+            this.draws.add(new RingDraw(Palette.BLAST_RING, x, y, mark.edge(), fade * BLAST_EDGE_RING_ALPHA));
         }
-        if (mark.fragments()) {
+    }
+
+    /** The fragments a Heavy with shrapnel throws out over its blast, {@code progress} through their flight. */
+    private void fragments(BlastMark mark, float progress) {
+        if (mark.fragments() && progress < 1f) {
+            float fade = 1f - progress;
+            float x = (float) mark.at().x();
+            float y = (float) mark.at().y();
             float head = mark.edge() * progress;
             float tail = Math.max(0f, head - mark.edge() * FRAGMENT_SHARE);
             for (int i = 0; i < BLAST_FRAGMENTS; i++) {

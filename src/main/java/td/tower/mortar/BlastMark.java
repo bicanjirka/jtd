@@ -4,7 +4,7 @@ import td.projectile.ShellLook;
 import td.wave.Vec2;
 
 /**
- * Where a blast just went off, for the fading flash the board draws: its full-damage {@code core}, its {@code edge},
+ * Where a blast just went off, for the detonation the board draws: its full-damage {@code core}, its {@code edge},
  * and whether it threw {@code fragments}.
  */
 public record BlastMark(Vec2 at, float core, float edge, int startedAtTick, ShellLook look, boolean fragments) {

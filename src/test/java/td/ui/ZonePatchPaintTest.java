@@ -28,7 +28,7 @@ class ZonePatchPaintTest {
         ZonePatchDraw patch = new ZonePatchDraw(Palette.ZONE_HEALING, discs, ZoneOutlineTracer.trace(discs));
         RenderFrame frame = new RenderFrame(32, SIZE, SIZE, List.of(), List.of(patch), List.of(), List.of(), List.of(), List.of(),
                 List.of(), List.of(), List.of(), Optional.empty(), Optional.empty(), Optional.empty(),
-                BoardGround.floor(0));
+                BoardGround.floor(0), Optional.empty());
         BufferedImage image = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = image.createGraphics();
         try {

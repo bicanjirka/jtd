@@ -9,9 +9,12 @@ import td.ui.render.LoadedShell;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
 import td.ui.render.ProjectileDraw;
+import td.ui.render.ShellTrail;
 import td.ui.render.SmokeDraw;
+import td.ui.render.TrailLook;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -24,7 +27,7 @@ class ProjectileFrameBuilderTest {
         });
         shell.doTick(1); // prevX/Y = (0,0), x/y = (10,0)
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0.5, BoardFixtures.SCALE);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0, 0.5, BoardFixtures.SCALE);
         shell.accept(builder);
         List<ProjectileDraw> draws = builder.build();
 
@@ -39,7 +42,7 @@ class ProjectileFrameBuilderTest {
         for (int t = 1; t <= ticks; t++) {
             shell.doTick(t);
         }
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0, 1.0, BoardFixtures.SCALE);
         shell.accept(builder);
         return ((CannonballDraw) builder.build().getFirst()).lift();
     }
@@ -78,7 +81,7 @@ class ProjectileFrameBuilderTest {
                 ShellLook.CRYO, (x, y, gameTime) -> {
                 });
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0, 1.0, BoardFixtures.SCALE);
         shell.accept(builder);
 
         CannonballDraw draw = (CannonballDraw) builder.build().getFirst();
@@ -97,7 +100,7 @@ class ProjectileFrameBuilderTest {
         napalm.doTick(1);
         heavy.doTick(1);
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0, 1.0, BoardFixtures.SCALE);
         napalm.accept(builder);
         heavy.accept(builder);
 
@@ -105,8 +108,30 @@ class ProjectileFrameBuilderTest {
         CannonballDraw plain = (CannonballDraw) builder.build().getLast();
         assertThat(burning.kind()).contains(LoadedShell.NAPALM);
         assertThat(plain.kind()).contains(LoadedShell.HEAVY);
-        assertThat(burning.tailX()).isLessThan(burning.x());
-        assertThat(plain.tailX()).isEqualTo(plain.x());
+        assertThat(burning.trail()).map(ShellTrail::look).contains(TrailLook.NAPALM);
+        assertThat(burning.trail().orElseThrow().points().getLast().x()).isLessThan(burning.x());
+        assertThat(plain.trail()).isEmpty();
+    }
+
+    @Test
+    void aNormalCarryingAPayloadTrailsAThinnerTailOfIt() {
+        CannonballProjectile carrying = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f),
+                ShellLook.NORMAL, Optional.of(ShellLook.CRYO), (x, y, gameTime) -> {
+                });
+        CannonballProjectile cryo = new CannonballProjectile(0, 0, 100, 0, ProjectileStats.of(10f), ShellLook.CRYO,
+                (x, y, gameTime) -> {
+                });
+        carrying.doTick(1);
+        cryo.doTick(1);
+
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0, 1.0, BoardFixtures.SCALE);
+        carrying.accept(builder);
+        cryo.accept(builder);
+
+        ShellTrail carried = ((CannonballDraw) builder.build().getFirst()).trail().orElseThrow();
+        ShellTrail own = ((CannonballDraw) builder.build().getLast()).trail().orElseThrow();
+        assertThat(carried.look()).isEqualTo(TrailLook.CRYO);
+        assertThat(carried.width()).isLessThan(own.width());
     }
 
     @Test
@@ -117,7 +142,7 @@ class ProjectileFrameBuilderTest {
 
         missile.doTick(1);
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0, 1.0, BoardFixtures.SCALE);
         missile.accept(builder);
         MissileDraw draw = (MissileDraw) builder.build().getLast();
 
@@ -135,7 +160,7 @@ class ProjectileFrameBuilderTest {
             missile.doTick(t);
         }
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(1.0, BoardFixtures.SCALE);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0, 1.0, BoardFixtures.SCALE);
         standard.accept(builder);
         float standardLength = ((MissileDraw) builder.build().getLast()).length();
         missile.accept(builder);

@@ -86,7 +86,6 @@ public enum Palette {
     /** The veil a lobbed shot casts on the ground: lighter than the floors, which are near black. */
     PROJECTILE_SHADOW,
     /** The white flash and expanding ring a nuke lands in. */
-    TOWER_MORTAR_NUKE_FLASH,
     /** The ring round a blast's full-damage core, and fainter round its edge. */
     BLAST_RING,
     /** The ring round a nuke's stronger edge. */

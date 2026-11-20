@@ -31,6 +31,8 @@ import td.tower.mortar.BlastMark;
 import td.tower.mortar.ShellKind;
 import td.tower.sniper.Hop;
 import td.ui.render.BeamDraw;
+import td.ui.render.BlastDraw;
+import td.ui.render.BlastLook;
 import td.ui.render.BulletDraw;
 import td.ui.render.BulletRound;
 import td.ui.render.CannonballDraw;
@@ -469,29 +471,45 @@ class TowerEffectFrameBuilderTest {
     }
 
     @Test
-    void aNukeLandsInAWhiteFlashAndAnExpandingRingThatEndAfterTenTicks() {
+    void aNukeWhitensTheWholeBoardForAMomentAndItsCloudStaysUntilItsMarkGoes() {
         GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
         MortarTower mortar = new MortarTower(context, 3, 3);
         UpgradePaths.buy(mortar, context, "Fusion");
         MortarTower.loadMagazine(mortar, MagazineFixtures.frontedBy(ShellKind.NUKE));
-        FakeEnemyMob target = FakeEnemyMob.at(mortar.getX() + 3 * BoardFixtures.SCALE, mortar.getY());
-        context.enemies().setEnemies(new EnemyMob[]{target});
-        int landedAt = 0;
-        for (int t = 1; t < 2000 && landedAt == 0; t++) {
-            mortar.doTick(t);
-            context.projectiles().doTick(t);
-            if (mortar.getNukeFlash().isPresent()) {
-                landedAt = t;
-            }
-        }
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(mortar.getX() + 3 * BoardFixtures.SCALE,
+                mortar.getY())});
+        int landed = firstLanding(mortar, context);
 
-        TowerEffectFrameBuilder during = new TowerEffectFrameBuilder(context, landedAt + 2, 0.0, 0.0);
-        mortar.accept(during);
-        TowerEffectFrameBuilder after = new TowerEffectFrameBuilder(context, landedAt + 12, 0.0, 0.0);
-        mortar.accept(after);
+        TowerEffectFrameBuilder flashing = new TowerEffectFrameBuilder(context, landed + 1, 0.0, 0.0);
+        mortar.accept(flashing);
+        TowerEffectFrameBuilder rising = new TowerEffectFrameBuilder(context, landed + MortarTower.BLAST_MARK_TICKS / 2,
+                0.0, 0.0);
+        mortar.accept(rising);
 
-        assertThat(during.build()).extracting(draw -> draw.getClass().getSimpleName()).contains("FlashDraw", "RingDraw");
-        assertThat(after.build()).extracting(draw -> draw.getClass().getSimpleName()).doesNotContain("FlashDraw");
+        assertThat(flashing.boardFlash()).isPresent();
+        assertThat(rising.boardFlash()).isEmpty();
+        assertThat(blastsIn(rising.build())).extracting(BlastDraw::look).containsExactly(BlastLook.NUKE);
+    }
+
+    @Test
+    void aHeavyGoesOffInItsOwnDetonationWhileANormalFlashesInRings() {
+        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
+        MortarTower heavy = new MortarTower(context, 3, 3);
+        MortarTower.loadMagazine(heavy, MagazineFixtures.frontedBy(ShellKind.HEAVY));
+        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(heavy.getX() + 3 * BoardFixtures.SCALE,
+                heavy.getY())});
+        int landed = firstLanding(heavy, context);
+
+        TowerEffectFrameBuilder builder = new TowerEffectFrameBuilder(context, landed + 1, 0.0, 0.0);
+        heavy.accept(builder);
+
+        assertThat(blastsIn(builder.build())).extracting(BlastDraw::look).containsExactly(BlastLook.HEAVY);
+        assertThat(builder.build()).noneMatch(RingDraw.class::isInstance);
+        assertThat(builder.boardFlash()).isEmpty();
+    }
+
+    private static List<BlastDraw> blastsIn(List<TowerEffectDraw> draws) {
+        return draws.stream().filter(BlastDraw.class::isInstance).map(BlastDraw.class::cast).toList();
     }
 
     /** Ticks {@code mortar} at {@code target} until its first shell lands, and returns that tick. */
@@ -528,23 +546,6 @@ class TowerEffectFrameBuilderTest {
         assertThat(core.palette()).isEqualTo(Palette.BLAST_RING);
         assertThat(edge.palette()).isEqualTo(Palette.BLAST_RING);
         assertThat(core.alpha()).isGreaterThan(edge.alpha());
-    }
-
-    @Test
-    void aNukesStrongerEdgeIsRingedInItsOwnColour() {
-        GameWorld context = WorldFixtures.newWorldOnBoard(BoardFixtures.SCALE, 20, 20);
-        MortarTower mortar = new MortarTower(context, 3, 3);
-        UpgradePaths.buy(mortar, context, "Fusion");
-        MortarTower.loadMagazine(mortar, MagazineFixtures.frontedBy(ShellKind.NUKE));
-        context.enemies().setEnemies(new EnemyMob[]{FakeEnemyMob.at(mortar.getX() + 3 * BoardFixtures.SCALE,
-                mortar.getY())});
-        int landed = firstLanding(mortar, context);
-        BlastMark mark = mortar.getBlastMarks().getFirst();
-
-        List<RingDraw> rings = ringsOf(mortar, context, landed + 1);
-
-        assertThat(rings).filteredOn(ring -> ring.radius() == mark.edge()).extracting(RingDraw::palette)
-                .containsExactly(Palette.BLAST_NUKE_RING);
     }
 
     @Test

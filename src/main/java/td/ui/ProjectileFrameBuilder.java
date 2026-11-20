@@ -11,7 +11,9 @@ import td.ui.render.LoadedShell;
 import td.ui.render.MissileDraw;
 import td.ui.render.Palette;
 import td.ui.render.ProjectileDraw;
+import td.ui.render.ShellTrail;
 import td.ui.render.SmokeDraw;
+import td.ui.render.TrailLook;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,12 +42,20 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
     static final float SHELL_LAUNCH_CELLS = 0.55f;
     /** At its peak the shadow is this much smaller than on the ground. */
     private static final float SHADOW_SHRINK = 0.45f;
+    /** A shell's tail runs back over the ground it flew in this many ticks, drawn through this many points. */
+    private static final float TRAIL_TICKS = 7f;
+    private static final int TRAIL_POINTS = 10;
+    /** A Normal carrying a share of a payload draws a thinner tail than the payload shell itself. */
+    private static final float CARRIED_TRAIL_WIDTH = 0.6f;
 
     private final List<ProjectileDraw> draws = new ArrayList<>();
     private final double interpolationAlpha;
     private final int scale;
+    private final int tick;
 
-    public ProjectileFrameBuilder(double interpolationAlpha, int scale) {
+    /** A builder for the frame at {@code tick}, which a tail's flicker follows. */
+    public ProjectileFrameBuilder(int tick, double interpolationAlpha, int scale) {
+        this.tick = tick;
         this.interpolationAlpha = interpolationAlpha;
         this.scale = scale;
     }
@@ -87,11 +97,15 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         };
     }
 
-    /** A burning, freezing or glowing shell leaves a trail in flight. */
-    private static boolean trails(LoadedShell kind) {
-        return switch (kind) {
-            case NAPALM, CRYO, FLARE -> true;
-            case NORMAL, HEAVY, NUKE, TAR -> false;
+    /** The tail a shell of {@code look} draws in flight: every payload's, a flare's and a nuke's glow. */
+    private static Optional<TrailLook> trailOf(ShellLook look) {
+        return switch (look) {
+            case NAPALM -> Optional.of(TrailLook.NAPALM);
+            case TAR -> Optional.of(TrailLook.TAR);
+            case CRYO -> Optional.of(TrailLook.CRYO);
+            case FLARE -> Optional.of(TrailLook.FLARE);
+            case NUKE -> Optional.of(TrailLook.NUKE);
+            case NORMAL, HEAVY -> Optional.empty();
         };
     }
 
@@ -143,13 +157,36 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         float lift = this.liftAt(projectile, peak, x, y);
         float shadowScale = lobShadowScale(flownShare(projectile, x, y));
         LoadedShell kind = loadedShellOf(projectile.look());
-        boolean streak = projectile.stats().streak() || trails(kind);
+        Optional<ShellTrail> trail = trailOf(projectile.look()).map(look -> this.trail(projectile, peak, x, y, look, 1f))
+                .or(() -> projectile.carried().flatMap(ProjectileFrameBuilder::trailOf)
+                        .map(look -> this.trail(projectile, peak, x, y, look, CARRIED_TRAIL_WIDTH)));
+        boolean streak = projectile.stats().streak() && trail.isEmpty();
         float tailX = streak ? (float) projectile.getPrevX() : x;
         float tailY = streak ? (float) projectile.getPrevY()
                 - this.liftAt(projectile, peak, projectile.getPrevX(), projectile.getPrevY()) : y - lift;
         this.draws.add(new CannonballDraw(paletteFor(projectile.look()), x, y, lift, shadowScale,
-                projectile.stats().size(), tailX, tailY, Optional.of(kind)));
+                projectile.stats().size(), tailX, tailY, Optional.of(kind), trail));
         return null;
+    }
+
+    /**
+     * The tail of a shell now over {@code x, y}: back along the ground it came over, each point lifted to where the arc
+     * had it, so the tail bends with the arc. It is no longer than the way flown so far.
+     */
+    private ShellTrail trail(CannonballProjectile projectile, float peak, float x, float y, TrailLook look,
+                             float width) {
+        double dx = projectile.getX() - projectile.getPrevX();
+        double dy = projectile.getY() - projectile.getPrevY();
+        double step = Math.hypot(dx, dy);
+        double length = step > 0 ? Math.min(projectile.flownAt(x, y), TRAIL_TICKS * projectile.stats().speed()) : 0;
+        List<ShellTrail.Point> points = new ArrayList<>(TRAIL_POINTS);
+        for (int i = 0; i < TRAIL_POINTS; i++) {
+            double back = length * i / (TRAIL_POINTS - 1);
+            double px = x - (step > 0 ? dx / step * back : 0);
+            double py = y - (step > 0 ? dy / step * back : 0);
+            points.add(new ShellTrail.Point((float) px, (float) py - this.liftAt(projectile, peak, px, py)));
+        }
+        return new ShellTrail(look, width * projectile.stats().size(), List.copyOf(points), this.tick);
     }
 
     @Override

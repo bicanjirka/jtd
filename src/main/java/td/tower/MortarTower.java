@@ -8,6 +8,7 @@ import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
+import td.projectile.ShellLook;
 import td.stat.StatPart;
 import td.term.TermNumbers;
 import td.term.TermText;
@@ -27,7 +28,6 @@ import td.tower.mortar.MagazineSpec;
 import td.tower.mortar.MagazineView;
 import td.tower.mortar.MortarMechanic;
 import td.tower.mortar.MortarSpec;
-import td.tower.mortar.NukeFlash;
 import td.tower.mortar.PathLine;
 import td.tower.mortar.PayloadMechanic;
 import td.tower.mortar.PredictiveFireMechanic;
@@ -93,10 +93,8 @@ public final class MortarTower extends AbstractTower {
     public static final float EDGE_CELLS = 1.75f;
     /** Pixels a tick: slow enough to watch a shell fly and for a fast enemy to dodge it. */
     public static final float SHELL_SPEED = 6.4f;
-    /** Ticks a nuke's flash and ring last. */
-    public static final int NUKE_FLASH_TICKS = 10;
-    /** Ticks the mark of any blast stays on the board. */
-    public static final int BLAST_MARK_TICKS = 6;
+    /** Ticks the mark of any blast stays on the board: as long as the longest blast, a nuke's, is drawn. */
+    public static final int BLAST_MARK_TICKS = 60;
 
     private static final float MINIMUM_RANGE_CELLS = 1.5f;
     private static final float HEAVY_TIMES = 1.75f;
@@ -240,7 +238,6 @@ public final class MortarTower extends AbstractTower {
     private volatile Magazine magazine = Magazine.opener();
     private volatile int loading = 1;
     private FireClock clock = new FireClock(COOLDOWN_MAX);
-    private volatile Optional<NukeFlash> nukeFlash = Optional.empty();
     /** The chances last worked out, and the draw they were worked out for. */
     private volatile Optional<ShellOdds> odds = Optional.empty();
     /** The kinds it can load, and the mechanics they were worked out for. */
@@ -327,7 +324,7 @@ public final class MortarTower extends AbstractTower {
         List<ShellKind> loaded = volley.sequence(front);
         List<Optional<Vec2>> laid = this.laidAlongThePath(target, volley, loaded.size());
         ShellKind first = loaded.getFirst();
-        this.fireAt(first, laid.getFirst().orElseGet(() -> this.aimPoint(target, spec, first)));
+        this.fireAt(first, laid.getFirst().orElseGet(() -> this.aimPoint(target, spec, first)), spec);
         for (int i = 1; i < loaded.size(); i++) {
             this.volleyLeft.add(new VolleyShell(loaded.get(i), laid.get(i), this.tickNow() + i * volley.gapTicks()));
         }
@@ -359,9 +356,9 @@ public final class MortarTower extends AbstractTower {
     private void fireVolleyLeft(MortarSpec spec) {
         while (!this.volleyLeft.isEmpty() && this.volleyLeft.getFirst().firesAt() <= this.tickNow()) {
             VolleyShell next = this.volleyLeft.removeFirst();
-            next.laidAt().ifPresentOrElse(laid -> this.fireAt(next.kind(), laid), () -> {
+            next.laidAt().ifPresentOrElse(laid -> this.fireAt(next.kind(), laid, spec), () -> {
                 this.target = this.target.filter(enemy -> !enemy.isDead()).or(() -> this.findTarget(spec));
-                this.target.ifPresent(enemy -> this.fireAt(next.kind(), this.aimPoint(enemy, spec, next.kind())));
+                this.target.ifPresent(enemy -> this.fireAt(next.kind(), this.aimPoint(enemy, spec, next.kind()), spec));
             });
         }
     }
@@ -380,11 +377,14 @@ public final class MortarTower extends AbstractTower {
     private record VolleyShell(ShellKind kind, Optional<Vec2> laidAt, int firesAt) {
     }
 
-    private void fireAt(ShellKind kind, Vec2 aim) {
+    /** Fires a shell of {@code kind} at {@code aim}; a Normal that carries a payload with Thick Mix shows it. */
+    private void fireAt(ShellKind kind, Vec2 aim, MortarSpec spec) {
         Shell shell = new Shell(kind, this.beginShot());
         this.firedAt = OptionalInt.of(this.tickNow());
+        Optional<ShellLook> carried = kind == ShellKind.NORMAL ? carriedPayload(spec).map(ShellKind::look)
+                : Optional.empty();
         this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, aim.x(), aim.y(),
-                this.shellStats(shell), kind.look(), (x, y, gameTime) -> this.onImpact(x, y, shell, gameTime)));
+                this.shellStats(shell), kind.look(), carried, (x, y, gameTime) -> this.onImpact(x, y, shell, gameTime)));
     }
 
     /** What was fired: the kind of shell, and the stats it lands with however the Mortar changes meanwhile. */
@@ -460,9 +460,6 @@ public final class MortarTower extends AbstractTower {
             if (kind == ShellKind.HEAVY) {
                 this.rideHeavy(enemy, spec.heavy(), inCore, Math.round(damage * ShrapnelMechanic.SHARE_PER_CELL), stats);
             }
-        }
-        if (kind == ShellKind.NUKE) {
-            this.nukeFlash = Optional.of(new NukeFlash(new Vec2(x, y), blast.edge(), gameTime));
         }
         boolean fragments = kind == ShellKind.HEAVY && spec.heavy() == HeavyRider.SHRAPNEL;
         this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), gameTime, kind.look())
@@ -708,12 +705,7 @@ public final class MortarTower extends AbstractTower {
         return this.turretAim;
     }
 
-    /** The flash of the last nuke, for the frame build; empty before the first one. */
-    public Optional<NukeFlash> getNukeFlash() {
-        return this.nukeFlash;
-    }
-
-    /** Blasts that went off in the last few ticks, for the fading flash the board draws. */
+    /** Blasts that went off in the last few ticks, for the detonation the board draws. */
     public List<BlastMark> getBlastMarks() {
         return List.copyOf(this.blastMarks);
     }

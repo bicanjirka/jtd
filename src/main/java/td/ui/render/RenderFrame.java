@@ -8,7 +8,8 @@ import java.util.Optional;
 /**
  * Everything needed to draw one frame of the board, without AWT, plus the selected enemy's
  * inspector sheet, so the EDT never reads a live mob. {@code cellGrid} is present only while the
- * dev panel's grid is on. {@code towerSprites} runs back to front, the northern rows first.
+ * dev panel's grid is on. {@code towerSprites} runs back to front, the northern rows first. {@code boardFlash} is
+ * present while a nuke's flash whitens the board, over everything else.
  */
 public record RenderFrame(int scale, int maxX, int maxY,
                           List<CellDraw> cells,
@@ -23,5 +24,6 @@ public record RenderFrame(int scale, int maxX, int maxY,
                           Optional<InfoSheet> enemyInspection,
                           Optional<TowerSheet> towerSheet,
                           Optional<CellGridDraw> cellGrid,
-                          BoardGround ground) {
+                          BoardGround ground,
+                          Optional<BoardFlashDraw> boardFlash) {
 }
