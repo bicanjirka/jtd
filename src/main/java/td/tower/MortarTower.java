@@ -123,14 +123,14 @@ public final class MortarTower extends AbstractTower {
             .inTier(1);
     private static final UpgradeNode NAPALM = UpgradeNode.of("mortar.napalm", "Napalm", 15)
             .inTier(1);
-    private static final UpgradeNode TAR = UpgradeNode.of("mortar.tar", "Tar", 15)
+    private static final UpgradeNode TAR_SHELL = UpgradeNode.of("mortar.tar_shell", "Tar Shell", 15)
             .inTier(1);
     private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 15)
             .inTier(1);
     private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 15)
             .inTier(1);
     private static final UpgradeCondition A_PAYLOAD = UpgradeCondition.owns(NAPALM.id())
-            .or(UpgradeCondition.owns(TAR.id())).or(UpgradeCondition.owns(CRYO.id()));
+            .or(UpgradeCondition.owns(TAR_SHELL.id())).or(UpgradeCondition.owns(CRYO.id()));
 
     private static final UpgradeNode BARRAGE = UpgradeNode.of("mortar.barrage", "Barrage", 50)
             .inTier(3);
@@ -155,20 +155,22 @@ public final class MortarTower extends AbstractTower {
             .inTier(3);
     private static final UpgradeNode LASTING_MIX = UpgradeNode.of("mortar.lasting_mix", "Lasting Mix", 30)
             .after(THICK_MIX)
+            .withOwnArt()
             .inTier(3);
     private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 15)
             .after(CRACKING_SHELLS)
+            .withOwnArt()
             .inTier(2);
     private static final UpgradeNode QUICK_RELOAD = UpgradeNode.of("mortar.quick_reload", "Quick Reload", 40)
             .withModifiers(TowerModifiers.attackSpeed(3.5f / 3f - 1f))
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(HEAVY_CHARGE, BIG_BORE, PREDICTIVE_FIRE, CRACKING_SHELLS))
-            .with(CONCUSSION, SHRAPNEL, NAPALM, TAR, CRYO, FLARE,
+            .with(CONCUSSION, SHRAPNEL, NAPALM, TAR_SHELL, CRYO, FLARE,
                     BARRAGE, CARPET_BOMBING, ELEVATION, OVERCHARGE, BIG_BORE_2, THICK_MIX,
                     FUSION, RICH_MIX, LASTING_MIX, DEEP_CRACK, QUICK_RELOAD)
             .withCluster(UpgradeCluster.of("Heavy shell", CONCUSSION, SHRAPNEL))
-            .withCluster(UpgradeCluster.of("Payload", NAPALM, TAR, CRYO))
+            .withCluster(UpgradeCluster.of("Payload", NAPALM, TAR_SHELL, CRYO))
             .withCluster(UpgradeCluster.of("Volley", BARRAGE, CARPET_BOMBING))
             .withCluster(UpgradeCluster.of("Order", FUSION, RICH_MIX));
 
@@ -179,7 +181,7 @@ public final class MortarTower extends AbstractTower {
             entry(CONCUSSION.id(), ConcussionMechanic::new),
             entry(SHRAPNEL.id(), ShrapnelMechanic::new),
             entry(NAPALM.id(), () -> new PayloadMechanic(ShellKind.NAPALM)),
-            entry(TAR.id(), () -> new PayloadMechanic(ShellKind.TAR)),
+            entry(TAR_SHELL.id(), () -> new PayloadMechanic(ShellKind.TAR)),
             entry(CRYO.id(), () -> new PayloadMechanic(ShellKind.CRYO)),
             entry(FLARE.id(), FlareMechanic::new),
             entry(BARRAGE.id(), BarrageMechanic::new),

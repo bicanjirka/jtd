@@ -105,10 +105,10 @@ final class PerkPictograms {
             // Piercing Stones
             Map.entry("splash.piercing_stones", "F O7 12 4.6 ; F M10.6 9.6L16.8 12L10.6 14.4Z ; F M15.4 3.4H19.8V9.6L17.4 12L19.8 14.4V20.6H15.4V14.6L17 12L15.4 9.4Z ; T M2.4 6.6L5 8.2 M2.4 17.4L5 15.8"),
             // Heavy Charge
-            Map.entry("mortar.heavy_charge", "=tower.heavy_shell"),
+            Map.entry("mortar.heavy_charge", "F M6 21.6H18C19.6 21.6 20.4 20.4 20 18.8L17.6 9.6H6.4L4 18.8C3.6 20.4 4.4 21.6 6 21.6Z ; F M8.4 6.6H15.6V9H8.4Z ; F M9.4 6.6L8 2.8L12 4.6L16 2.8L14.6 6.6Z ; X M12 12.6V19 M8.8 15.8H15.2"),
             // Big Bore
-            Map.entry("mortar.big_bore", "=tower.heavy_shell"),
-            Map.entry("mortar.big_bore_2", "=tower.heavy_shell"),
+            Map.entry("mortar.big_bore", "F M8 20.4H16L18 7H6Z ; F M4.4 7A7.6 2.8 0 0 1 19.6 7A7.6 2.8 0 0 1 4.4 7Z ; K M7.4 7A4.6 1.4 0 0 1 16.6 7A4.6 1.4 0 0 1 7.4 7Z ; F M5.6 20.4H18.4V22.6H5.6Z"),
+            Map.entry("mortar.big_bore_2", "=mortar.big_bore"),
             // Predictive Fire
             Map.entry("mortar.predictive_fire", "S M3.2 19.6C5.4 7 14.6 5 19.4 14.8 ; S O19.4 16.4 3 ; T M19.4 11.4V13 M19.4 19.8V21.4 M14.4 16.4H16 M22.8 16.4H24"),
             // Concussion
@@ -117,8 +117,8 @@ final class PerkPictograms {
             Map.entry("mortar.shrapnel", "F O9 10.4 2.2 ; F M3.4 3.4L6.8 4.4L4.4 6.8Z M14.6 3.4L13.6 6.8L11.2 4.4Z M3.4 17.4L4.4 14L6.8 16.4Z ; T M9 6.4V3 M9 14.4V17.6 M5 10.4H2 M13 10.4H16 ; F M17.6 11.6C17.6 11.6 21.6 16.2 21.6 18.6A4 4 0 0 1 13.6 18.6C13.6 16.2 17.6 11.6 17.6 11.6Z"),
             // Napalm, Tar, Cryo
             Map.entry("mortar.napalm", "=tower.napalm_shell"),
-            Map.entry("mortar.thick_mix", "=tower.napalm_shell"),
-            Map.entry("mortar.tar", "=tower.tar_shell"),
+            Map.entry("mortar.thick_mix", "F O12 9.4 6.4 ; K O9.8 7.2 1.6 ; F M7.6 16C7.6 16 10 18.8 10 20.2A2.4 2.4 0 0 1 5.2 20.2C5.2 18.8 7.6 16 7.6 16Z M16.4 16.8C16.4 16.8 18.6 19.4 18.6 20.6A2.2 2.2 0 0 1 14.2 20.6C14.2 19.4 16.4 16.8 16.4 16.8Z M12 17.2C12 17.2 13.4 18.8 13.4 19.8A1.4 1.4 0 0 1 10.6 19.8C10.6 18.8 12 17.2 12 17.2Z"),
+            Map.entry("mortar.tar_shell", "=tower.tar_shell"),
             Map.entry("mortar.cryo", "=tower.cryo_shell"),
             // Flare
             Map.entry("mortar.flare", "=effect.revealed"),
@@ -135,9 +135,10 @@ final class PerkPictograms {
             // Cracking Shells
             Map.entry("mortar.cracking_shells", "=effect.cracked"),
             // Deep Crack
-            Map.entry("mortar.deep_crack", "=effect.cracked"),
+            Map.entry("mortar.lasting_mix", "F M3.6 20.4H10V12C10 8.6 8.6 6.2 6.8 4.8C5 6.2 3.6 8.6 3.6 12Z ; F M13.6 8.4H20.8L17.2 14.4Z M13.6 20.4H20.8L17.2 14.4Z ; T M12.8 7.6H21.6 M12.8 21.2H21.6"),
+            Map.entry("mortar.deep_crack", "F M5 4H19A1.5 1.5 0 0 1 20.5 5.5V18.5A1.5 1.5 0 0 1 19 20H5A1.5 1.5 0 0 1 3.5 18.5V5.5A1.5 1.5 0 0 1 5 4Z ; K O6.6 7.1 1 O17.4 7.1 1 O6.6 16.9 1 O17.4 16.9 1 ; X M9.6 4L8 8.8L10.6 12L8.4 16.4L9.4 20 M15 4L13.4 8.4L16 11.8L13.6 16L14.8 20"),
             // Quick Reload
-            Map.entry("mortar.quick_reload", "S M3.2 19.6C5.4 7 14.6 5 19.4 14.8 ; F O20.4 17.6 2.4 ; T M1.8 21.6H22.2 ; F M3.2 19.6L1.6 16.6L5 17Z"),
+            Map.entry("mortar.quick_reload", "F O12 12 4.2 ; S M19.6 8.4A8.4 8.4 0 1 0 20 14.8 ; F M22.4 4.6L21.2 10.6L16.4 8Z"),
             // Hot Flame
             Map.entry("cinder.hot_flame", "=tower.flame"),
             // Long Stream

@@ -350,7 +350,7 @@ class TowerSheetTextTest {
     @Test
     void aMortarsPaneShowsItsShellsFrontFirstThenARowPerKindWithItsShareBothOpeningThatKindsSheet() {
         Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
-        UpgradePaths.buy(mortar, this.world, "Tar");
+        UpgradePaths.buy(mortar, this.world, "Tar Shell");
         MortarTower.loadMagazine(mortar, MagazineFixtures.frontedBy(ShellKind.TAR, ShellKind.HEAVY));
 
         InfoSheet sheet = TowerSheetText.status(BoardRenderer.liveInspection(mortar));
