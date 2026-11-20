@@ -19,6 +19,6 @@ public final class BigBoreMechanic implements MortarMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of(TowerTerm.HEAVY_SHELL).plus(" shells come up more often in the ").plus(TowerTerm.MAGAZINE);
+        return TermText.of(TowerTerm.HEAVY_SHELL).plus(" shells come up more often");
     }
 }

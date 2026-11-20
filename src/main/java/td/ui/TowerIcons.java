@@ -128,10 +128,17 @@ final class TowerIcons {
         return Icon.of(rot(frame, -40), rot(arm, -40)).withSeam(rot(circ(-0.30, 0, 0.055), -40));
     }
 
-    /** A pit and the barrel in it, seen down its bore. */
+    /**
+     * The strider from above: four jointed legs, each bent at its knee to a pointed foot, and the fat barrel seen down
+     * its bore with a shell in it.
+     */
     private static Icon mortar() {
-        return Icon.of(minus(circ(0, 0, 0.40), circ(0, 0, 0.27)),
-                rot(minus(box(0.1, 0, 0.42, 0.30), circ(0.2, 0, 0.085)), -40));
+        Shape thigh = both(box(0.24, 0, 0.22, 0.09), circ(0.35, 0, 0.065));
+        Shape shin = mv(rot(poly(0, -0.045, 0.15, 0, 0, 0.045), 35), 0.35, 0);
+        Shape leg = both(thigh, shin);
+        Shape legs = both(rot(leg, 45), rot(leg, 135), rot(leg, 225), rot(leg, 315));
+        return Icon.of(legs, both(minus(circ(0, 0, 0.26), circ(0, 0, 0.14)), circ(0.02, 0.02, 0.075)))
+                .withSeam(minus(circ(0, 0, 0.14), circ(0.02, 0.02, 0.075)));
     }
 
     /** A tank and the flared nozzle. */

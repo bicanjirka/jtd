@@ -11,7 +11,7 @@ public final class DeepCrackMechanic implements MortarMechanic {
 
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {
-        return spec.withDeepCrack();
+        return spec.withCrackStacks(MortarSpec.DEEP_CRACK_STACKS);
     }
 
     @Override

@@ -1,7 +1,6 @@
 package td.tower.mortar;
 
 import td.term.TermText;
-import td.tower.TowerTerm;
 
 /** Rich Mix: a new shell is never the kind of the one in front of it. */
 public final class RichMixMechanic implements MortarMechanic {
@@ -13,7 +12,6 @@ public final class RichMixMechanic implements MortarMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("a new shell in the ").plus(TowerTerm.MAGAZINE)
-                .plus(" is never the same kind as the one in front of it");
+        return TermText.of("a new shell is never the same kind as the one loaded before it");
     }
 }

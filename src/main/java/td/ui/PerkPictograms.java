@@ -132,6 +132,8 @@ final class PerkPictograms {
             Map.entry("mortar.fusion", "=tower.nuke_shell"),
             // Rich Mix
             Map.entry("mortar.rich_mix", "F O7.4 13 3.6 ; S O16.6 13 3.6 ; T M7.4 6.4V8 M16.6 6.4V8"),
+            // Cracking Shells
+            Map.entry("mortar.cracking_shells", "=effect.cracked"),
             // Deep Crack
             Map.entry("mortar.deep_crack", "=effect.cracked"),
             // Quick Reload

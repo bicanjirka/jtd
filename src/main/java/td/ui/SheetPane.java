@@ -2,6 +2,7 @@ package td.ui;
 
 import td.ui.render.InfoSheet;
 import td.ui.render.SheetIcon;
+import td.ui.render.SheetLine;
 import td.util.ThreadConfined;
 
 import javax.swing.JTextPane;
@@ -76,6 +77,7 @@ final class SheetPane extends JTextPane {
             Object prior = before.getAttributes().getAttribute(HoverKey.INSTANCE);
             if (switch (prior) {
                 case HoverRun.IconRowRun row -> true;
+                case HoverRun.SlotRowRun row -> true;
                 case null, default -> false;
             }) {
                 element = before;
@@ -86,6 +88,7 @@ final class SheetPane extends JTextPane {
             return switch (run) {
                 case HoverRun.MentionRun mention -> this.mentionAt(point, element, mention);
                 case HoverRun.IconRowRun row -> this.iconAt(point, element, row);
+                case HoverRun.SlotRowRun row -> this.slotAt(point, element, row);
                 case HoverRun.RowRun row -> Optional.of(this.rowTarget(element, row));
                 case null, default -> Optional.empty();
             };
@@ -168,6 +171,19 @@ final class SheetPane extends JTextPane {
         Point cell = run.layout().cell(index.getAsInt());
         Rectangle bounds = new Rectangle(box.x + cell.x, box.y + cell.y, TermIconPainter.ROW, TermIconPainter.ROW);
         return Optional.of(new HoverTarget.Icon(icon, bounds));
+    }
+
+    private Optional<HoverTarget> slotAt(Point point, Element element, HoverRun.SlotRowRun run)
+            throws BadLocationException {
+        Rectangle box = this.modelToView2D(element.getStartOffset()).getBounds();
+        List<SheetLine.MagazineSlot> slots = run.row().slots();
+        OptionalInt index = run.layout().slotAt(point.x - box.x, point.y - box.y, slots.size());
+        if (index.isEmpty()) {
+            return Optional.empty();
+        }
+        int slot = run.layout().slot();
+        Rectangle bounds = new Rectangle(box.x + run.layout().left(index.getAsInt()), box.y, slot, slot);
+        return slots.get(index.getAsInt()).tooltip().map(tooltip -> new HoverTarget.Row(tooltip, bounds));
     }
 
     private HoverTarget rowTarget(Element element, HoverRun.RowRun run) {

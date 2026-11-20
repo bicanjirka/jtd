@@ -27,7 +27,6 @@ public final class FlareMechanic implements MortarMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("adds ").plus(TowerTerm.FLARE).plus(" shells to the ").plus(TowerTerm.MAGAZINE)
-                .plus("; each ").plus(ShellKind.FLARE.groundText()).plus(", and only its newest " + FLARES_KEPT + " stay");
+        return TermText.of("adds ").plus(TowerTerm.FLARE).plus(" shells to what it fires; each ").plus(ShellKind.FLARE.groundText()).plus(", and only its newest " + FLARES_KEPT + " stay");
     }
 }

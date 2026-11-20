@@ -15,6 +15,10 @@ sealed interface HoverRun {
     record IconRowRun(SheetLine.IconRow row, IconRowLayout layout) implements HoverRun {
     }
 
+    /** One embedded icon holding a magazine's slots, each opening its own tooltip. */
+    record SlotRowRun(SheetLine.MagazineRow row, SlotRowLayout layout) implements HoverRun {
+    }
+
     /** A whole line that opens a tooltip: a row, an ability's bar. */
     record RowRun(SheetTooltip tooltip) implements HoverRun {
     }
