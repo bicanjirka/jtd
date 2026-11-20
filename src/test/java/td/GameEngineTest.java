@@ -1530,7 +1530,7 @@ class GameEngineTest {
         saved.loadLevel(LevelFixtures.levelWith(CHECKPOINT_WAVES, 100_000));
         saved.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
         Tower mortar = placeTower(saved, TowerFactory.Type.MORTAR, 2, 1);
-        UpgradePaths.buy(mortar, saved.getGameWorld(), "Tar");
+        UpgradePaths.buy(mortar, saved.getGameWorld(), "Tar Shell");
         Magazine loadedThen = MagazineFixtures.frontedBy(ShellKind.TAR, ShellKind.HEAVY, ShellKind.TAR);
         MortarTower.loadMagazine(mortar, loadedThen);
         GameSave save = saved.save().orElseThrow();

@@ -410,7 +410,7 @@ class MortarTowerTest {
 
     @Test
     void aTarShellLeavesTarWhereItLands() {
-        MortarTower tower = this.loaded(List.of(ShellKind.TAR), "Tar");
+        MortarTower tower = this.loaded(List.of(ShellKind.TAR), "Tar Shell");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -713,12 +713,12 @@ class MortarTowerTest {
     @Test
     void aNodeNotYetOwnedSaysHowItWouldMoveEachKindsShareAndAnOwnedOneDoesNot() {
         MortarTower tower = this.towerAt(3, 3);
-        UpgradeNode tar = UpgradePaths.named(tower, "Tar");
+        UpgradeNode tar = UpgradePaths.named(tower, "Tar Shell");
         Map<ShellKind, Float> before = tower.shellChances();
         Map<ShellKind, Float> after = MagazineSpec.standard().withWeight(ShellKind.TAR, PayloadMechanic.WEIGHT).chances();
 
         List<TermText> offered = tower.wordsOf(tar).sentences();
-        UpgradePaths.buy(tower, this.context, "Tar");
+        UpgradePaths.buy(tower, this.context, "Tar Shell");
         List<TermText> owned = tower.wordsOf(tar).sentences();
 
         assertThat(offered).endsWith(MortarTower.chanceChange(before, after).orElseThrow());
@@ -731,7 +731,7 @@ class MortarTowerTest {
         Map<ShellKind, Float> withTarInstead = MagazineSpec.standard().withWeight(ShellKind.TAR, PayloadMechanic.WEIGHT)
                 .chances();
 
-        List<TermText> offered = tower.wordsOf(UpgradePaths.named(tower, "Tar")).sentences();
+        List<TermText> offered = tower.wordsOf(UpgradePaths.named(tower, "Tar Shell")).sentences();
 
         assertThat(offered).endsWith(MortarTower.chanceChange(tower.shellChances(), withTarInstead).orElseThrow());
     }

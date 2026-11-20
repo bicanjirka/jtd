@@ -62,7 +62,7 @@ final class StrategyBuilds {
         List<Strategy> strategies = new ArrayList<>(List.of(new Strategy("nuke", nuke), bled("nuke", nuke),
                 new Strategy("heavy-bores", bores), bled("heavy-bores", bores),
                 new Strategy("heavy", heavy), bled("heavy", heavy)));
-        for (String payload : List.of("napalm", "tar", "cryo")) {
+        for (String payload : List.of("napalm", "tar_shell", "cryo")) {
             Set<String> nodes = Set.of("mortar.heavy_charge", CRACKING, CONCUSSION, "mortar." + payload, OVERCHARGE, "base.range",
                     "mortar.barrage", "mortar.thick_mix", "mortar.rich_mix", "mortar.deep_crack",
                     "mortar.quick_reload", "mortar.lasting_mix");
