@@ -27,6 +27,11 @@ public record Magazine(List<ShellKind> shells) {
         return OPENER;
     }
 
+    /** A magazine drawn full from {@code spec}, front to back, as one that has fired long enough holds. */
+    public static Magazine drawn(MagazineSpec spec, RandomSource random) {
+        return filled(new ArrayList<>(), spec, random);
+    }
+
     /** The front shell, the one loading. */
     public ShellKind front() {
         return this.shells.getFirst();

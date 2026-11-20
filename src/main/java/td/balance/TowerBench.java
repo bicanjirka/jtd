@@ -9,6 +9,7 @@ import td.enemy.EnemyCatalog;
 import td.enemy.Rank;
 import td.enemy.RankedEnemy;
 import td.level.LevelDefinition;
+import td.tower.MortarTower;
 import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeCluster;
@@ -600,6 +601,7 @@ public final class TowerBench {
                     throw new IllegalStateException(stand.type() + " cannot buy " + id + " of " + stand.owned());
                 }
             }
+            MortarTower.drawMagazineAfresh(tower);
         }
         engine.requestNextWave();
         int tick = 1;
