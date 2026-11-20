@@ -233,6 +233,9 @@ final class TowerSheetText {
         List<SheetLine> rows = new ArrayList<>();
         rows.add(Row.plain(Glyph.DOT, damageLabel(profile.hit().type()), TermNumbers.number(DamageUnits.inPoints(profile.hit().amount())))
                 .withGloss("/hit", ""));
+        profile.groundPulse().ifPresent(fuel -> kind.ground().flatMap(ground -> ground.kind().fuels())
+                .ifPresent(pool -> rows.add(Row.faced(TermLooks.faceOf(pool), pool.title(),
+                        TermNumbers.number(DamageUnits.inPoints(fuel.amount()))).withGloss("/pulse", ""))));
         rows.add(Row.plain(Glyph.DOT, "Speed", TermNumbers.number(profile.cellsPerSecond())).withGloss("cells/s", ""));
         rows.add(Row.plain(Glyph.DOT, "Blast radius", TermNumbers.number(blast.coreCells()))
                 .withGloss(blast.coreCells() == 1f ? "cell" : "cells", ""));

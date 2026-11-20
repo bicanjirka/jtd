@@ -494,13 +494,18 @@ public final class MortarTower extends AbstractTower {
                     : (ground.radiusCells() + (payload ? spec.payload().extraCells() : 0f)) * this.cellPixels();
             int lifetime = ground.lastsTheWave() ? Zone.UNTIL_WAVE_END
                     : this.lengthened(ground.lifetimeTicks() + (payload ? spec.payload().extraTicks() : 0));
-            Zone zone = new Zone(ground.kind(), x, y, radius, lifetime,
-                    Math.round(shell.stats().damage() * ground.damageShare()), this.zoneOwner);
+            Zone zone = new Zone(ground.kind(), x, y, radius, lifetime, groundStrength(shell.stats(), ground),
+                    this.zoneOwner);
             this.context.zones().add(zone);
             if (kind == ShellKind.FLARE) {
                 this.keepNewestFlares(zone);
             }
         });
+    }
+
+    /** What each pulse of {@code ground} adds to a burn or a poison, for a shell fired with {@code stats}. */
+    private static int groundStrength(TowerStats stats, ShellKind.Ground ground) {
+        return Math.round(stats.damage() * ground.damageShare());
     }
 
     private void keepNewestFlares(Zone flare) {
@@ -616,9 +621,12 @@ public final class MortarTower extends AbstractTower {
         if (kind == ShellKind.HEAVY) {
             spec.heavy().applies().ifPresent(applies::add);
         }
-        return new ShellProfile(kind, Damage.of(kind.damageType(), damage),
+        ShellProfile profile = ShellProfile.of(kind, Damage.of(kind.damageType(), damage),
                 this.shellStats(shell).speed() * TICKS_PER_SECOND / cell,
                 new ShellProfile.Blast(radii.core() / cell, radii.edge() / cell, radii.edgeShare(), List.copyOf(applies)));
+        return kind.ground().filter(ground -> ground.damageShare() > 0f)
+                .map(ground -> profile.withGroundPulse(Damage.magic(groundStrength(stats, ground))))
+                .orElse(profile);
     }
 
     /** {@code tower}'s magazine as the pane shows it, when it is a Mortar. */

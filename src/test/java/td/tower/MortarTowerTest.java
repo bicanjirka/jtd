@@ -552,6 +552,17 @@ class MortarTowerTest {
     }
 
     @Test
+    void aPayloadsProfileSaysWhatEachPulseOfItsGroundDealsAsItsShareOfTheMortarsDamage() {
+        MortarTower tower = this.towerWith("Napalm");
+        ShellKind.Ground ground = ShellKind.NAPALM.ground().orElseThrow();
+
+        ShellProfile napalm = tower.shellProfiles().stream().filter(profile -> profile.kind() == ShellKind.NAPALM)
+                .findFirst().orElseThrow();
+
+        assertThat(napalm.groundPulse()).hasValue(Damage.magic(Math.round(tower.stats().damage() * ground.damageShare())));
+    }
+
+    @Test
     void predictiveFireLeadsAFasterShellLess() {
         double slowLead = predictiveLead(StatModifiers.none());
 
