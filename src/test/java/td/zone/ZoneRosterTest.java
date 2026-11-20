@@ -1,6 +1,7 @@
 package td.zone;
 
 import org.junit.jupiter.api.Test;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -129,6 +130,36 @@ class ZoneRosterTest {
         assertThat(frozenTooSoon).isFalse();
         assertThat(this.applied(enemy, EffectKind.CHILL)).isEqualTo(Zone.FROST_PULSES_TO_FREEZE);
         assertThat(this.applied(enemy, EffectKind.FREEZE)).isEqualTo(1);
+    }
+
+    @Test
+    void aFrozenEnemyCountsNoPulsesTowardItsNextFreeze() {
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.world.enemies().setEnemies(new EnemyMob[]{enemy});
+        this.world.zones().add(this.zone(ZoneKind.FROST_GROUND));
+        int firstFreeze = (Zone.FROST_PULSES_TO_FREEZE - 1) * ZoneEffects.PULSE_TICKS + 1;
+        this.tick(0, firstFreeze);
+
+        this.tick(firstFreeze, firstFreeze + Zone.FROST_PULSES_TO_FREEZE * ZoneEffects.PULSE_TICKS);
+
+        assertThat(this.applied(enemy, EffectKind.FREEZE)).isEqualTo(1);
+    }
+
+    @Test
+    void aFreezeFromElsewherePausesTheFrostCountWithoutLosingIt() {
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.world.enemies().setEnemies(new EnemyMob[]{enemy});
+        this.world.zones().add(this.zone(ZoneKind.FROST_GROUND));
+        int allButLast = (Zone.FROST_PULSES_TO_FREEZE - 1) * ZoneEffects.PULSE_TICKS;
+        this.tick(0, allButLast);
+        enemy.applyEffect(Effect.freeze(LIFETIME, DamageSink.none()));
+        this.tick(allButLast, allButLast + 2 * ZoneEffects.PULSE_TICKS);
+        enemy.expire(EffectKind.FREEZE);
+
+        int thawed = allButLast + 2 * ZoneEffects.PULSE_TICKS;
+        this.tick(thawed, thawed + 1);
+
+        assertThat(this.applied(enemy, EffectKind.FREEZE)).isEqualTo(2);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package td.zone;
 
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.stat.DisruptionPenalty;
 import td.util.ThreadConfined;
@@ -23,7 +24,7 @@ public final class Zone {
     /** A ward mine ignores whatever is on it this long after it is laid, so the enemy that laid it walks off first. */
     private static final int WARD_ARMING_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
 
-    /** Pulses in a row inside a frost zone before it freezes what stands there. */
+    /** Pulses in a row inside a frost zone before it freezes what stands there; while frozen, they wait. */
     static final int FROST_PULSES_TO_FREEZE = 4;
     private static final int FROST_FREEZE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 1.5f);
 
@@ -178,7 +179,8 @@ public final class Zone {
 
     /** Puts this pulse's effects on {@code enemy}, which stands inside. */
     void touch(EnemyMob enemy) {
-        int pulses = this.pulsesInside.merge(enemy, 1, Integer::sum);
+        boolean frozen = enemy.activeEffectKinds().contains(EffectKind.FREEZE);
+        int pulses = frozen ? 0 : this.pulsesInside.merge(enemy, 1, Integer::sum);
         ZoneEffects.touch(this.kind, this.strength, this.owner, enemy);
         if (this.kind == ZoneKind.FROST_GROUND && pulses >= FROST_PULSES_TO_FREEZE) {
             this.pulsesInside.put(enemy, 0);

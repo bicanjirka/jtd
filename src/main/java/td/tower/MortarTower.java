@@ -59,6 +59,7 @@ import td.util.TickRate;
 import td.wave.Path;
 import td.wave.Vec2;
 import td.zone.Zone;
+import td.zone.ZoneEffects;
 import td.zone.ZoneOwner;
 
 import java.util.ArrayList;
@@ -131,9 +132,9 @@ public final class MortarTower extends AbstractTower {
             .or(UpgradeCondition.owns(TAR.id())).or(UpgradeCondition.owns(CRYO.id()));
 
     private static final UpgradeNode BARRAGE = UpgradeNode.of("mortar.barrage", "Barrage", 31)
-            .inTier(2);
+            .inTier(3);
     private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 31)
-            .inTier(2);
+            .inTier(3);
     private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 5)
             .withModifiers(TowerModifiers.range(1f))
             .inTier(2);
@@ -155,7 +156,7 @@ public final class MortarTower extends AbstractTower {
             .inTier(3);
     private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 5)
             .after(CRACKING_SHELLS)
-            .inTier(3);
+            .inTier(2);
     private static final UpgradeNode QUICK_RELOAD = UpgradeNode.of("mortar.quick_reload", "Quick Reload", 39)
             .withModifiers(TowerModifiers.attackSpeed(3.5f / 3f - 1f))
             .inTier(3);
@@ -181,7 +182,7 @@ public final class MortarTower extends AbstractTower {
             entry(FLARE.id(), FlareMechanic::new),
             entry(BARRAGE.id(), BarrageMechanic::new),
             entry(CARPET_BOMBING.id(), CarpetBombingMechanic::new),
-            entry(BIG_BORE_2.id(), () -> new BigBoreMechanic(2)),
+            entry(BIG_BORE_2.id(), () -> new BigBoreMechanic(1)),
             entry(THICK_MIX.id(), ThickMixMechanic::new),
             entry(FUSION.id(), FusionMechanic::new),
             entry(RICH_MIX.id(), RichMixMechanic::new),
@@ -313,12 +314,13 @@ public final class MortarTower extends AbstractTower {
 
     /**
      * Takes the front shells off the magazine, as many as a firing loads, and fires the first at {@code target}; a
-     * volley's others wait their turn, laid along the path behind it with Carpet Bombing.
+     * volley's others wait their turn, laid along the path behind it with Carpet Bombing, Normals sneaked between.
      */
     private void load(EnemyMob target, MortarSpec spec) {
         VolleySpec volley = spec.volley();
-        List<ShellKind> loaded = this.magazine.front(volley.shells());
-        this.magazine = this.magazine.fired(loaded.size(), spec.magazine(), this.context.random());
+        List<ShellKind> front = this.magazine.front(volley.shells());
+        this.magazine = this.magazine.fired(front.size(), spec.magazine(), this.context.random());
+        List<ShellKind> loaded = volley.sequence(front);
         List<Optional<Vec2>> laid = this.laidAlongThePath(target, volley, loaded.size());
         ShellKind first = loaded.getFirst();
         this.fireAt(first, laid.getFirst().orElseGet(() -> this.aimPoint(target, spec, first)));
@@ -327,7 +329,7 @@ public final class MortarTower extends AbstractTower {
         }
     }
 
-    /** Where each shell of a volley lands with Carpet Bombing, from the target back along the path; empty to aim. */
+    /** Where each shell of a volley lands with Carpet Bombing, centred on the target along the path; empty to aim. */
     private List<Optional<Vec2>> laidAlongThePath(EnemyMob target, VolleySpec volley, int shells) {
         List<Optional<Vec2>> laid = new ArrayList<>();
         if (!volley.alongPath()) {
@@ -338,7 +340,7 @@ public final class MortarTower extends AbstractTower {
         }
         double[] offsets = new double[shells];
         for (int i = 0; i < shells; i++) {
-            offsets[i] = -i * volley.spacingCells() * this.cellPixels();
+            offsets[i] = ((shells - 1) / 2.0 - i) * volley.spacingCells() * this.cellPixels();
         }
         List<Path> paths = this.context.level().paths().stream().map(PathRuntime::path).toList();
         List<Vec2> points = PathLine.along(paths, target.getX(), target.getY(), offsets);
@@ -448,6 +450,9 @@ public final class MortarTower extends AbstractTower {
             }
             this.report(enemy, HitKind.BLAST, hit.critical(), enemy.isDead());
             this.crack(enemy, spec);
+            if (kind == ShellKind.NORMAL) {
+                this.carryPayload(enemy, spec, stats);
+            }
             if (kind == ShellKind.HEAVY) {
                 this.rideHeavy(enemy, spec.heavy(), inCore, Math.round(damage * ShrapnelMechanic.SHARE_PER_CELL), stats);
             }
@@ -459,6 +464,22 @@ public final class MortarTower extends AbstractTower {
         this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), gameTime, kind.look())
                 .withFragments(fragments));
         this.leaveGround(x, y, shell, blast, spec);
+    }
+
+    /** With Thick Mix, a Normal's blast puts a share of a pulse of the payload's ground on what it reaches. */
+    private void carryPayload(EnemyMob enemy, MortarSpec spec, TowerStats stats) {
+        float share = spec.payload().normalsCarry();
+        carriedPayload(spec).flatMap(ShellKind::ground)
+                .ifPresent(ground -> ZoneEffects.touch(ground.kind(), Math.round(groundStrength(stats, ground) * share),
+                        this.zoneOwner, enemy));
+    }
+
+    /** The payload a Normal shell carries with Thick Mix: the one the Mortar loads, if it carries any. */
+    private static Optional<ShellKind> carriedPayload(MortarSpec spec) {
+        if (spec.payload().normalsCarry() <= 0f) {
+            return Optional.empty();
+        }
+        return Arrays.stream(ShellKind.values()).filter(ShellKind::isPayload).filter(spec.magazine()::owns).findFirst();
     }
 
     private void crack(EnemyMob enemy, MortarSpec spec) {
@@ -618,6 +639,9 @@ public final class MortarTower extends AbstractTower {
             applies.add(EffectKind.CRACKED);
         }
         applies.addAll(kind.applies());
+        if (kind == ShellKind.NORMAL) {
+            carriedPayload(spec).ifPresent(payload -> applies.addAll(payload.applies()));
+        }
         if (kind == ShellKind.HEAVY) {
             spec.heavy().applies().ifPresent(applies::add);
         }
@@ -698,7 +722,7 @@ public final class MortarTower extends AbstractTower {
             return super.cadence(stats, parts);
         }
         return this.derivedRow(TowerStatRow.FIRE_RATE, TowerStat.ATTACK_SPEED, stats, parts,
-                at -> (float) (volley.shells() * TICKS_PER_SECOND * at.attackRate()
+                at -> (float) (volley.fired() * TICKS_PER_SECOND * at.attackRate()
                         / ((this.coolDownMax + 1) * volley.reloadFactor())));
     }
 

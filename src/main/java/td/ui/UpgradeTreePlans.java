@@ -40,8 +40,8 @@ final class UpgradeTreePlans {
                     node("mortar.cracking_shells", 4f))),
             tier(row(cluster("Heavy shell", 0f), node("mortar.flare", 2.6f), cluster("Payload", 4.25f))),
             tier(row(node("mortar.overcharge", 0f), node("mortar.big_bore_2", 1f), node("base.range", 2f),
-                    cluster("Volley", 3.3f), node("mortar.thick_mix", 5.6f))),
-            tier(row(cluster("Order", 0f), node("mortar.deep_crack", 2.25f), node("mortar.quick_reload", 3.25f),
+                    node("mortar.deep_crack", 3.3f), node("mortar.thick_mix", 5.6f))),
+            tier(row(cluster("Order", 0f), cluster("Volley", 2.25f), node("mortar.quick_reload", 4.5f),
                     node("mortar.lasting_mix", 5.6f))));
 
     private static final UpgradeTreePlan CINDER = UpgradeTreePlan.of(

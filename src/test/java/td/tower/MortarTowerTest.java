@@ -447,12 +447,32 @@ class MortarTowerTest {
     }
 
     @Test
-    void thickMixWidensAPayloadsGround() {
-        Zone plain = payloadGround("Cryo");
+    void bigBoreDrawsHeaviesInPlaceOfNormalsAndLeavesAPayloadsChanceAsItWas() {
+        MortarTower plain = this.towerWith("Napalm");
+        MortarTower bored = this.towerWith("Napalm", "Big Bore");
 
-        Zone thick = payloadGround("Cryo", "Thick Mix");
+        Map<ShellKind, Float> before = plain.shellChances();
+        Map<ShellKind, Float> after = bored.shellChances();
 
-        assertThat(thick.radius()).isGreaterThan(plain.radius());
+        assertThat(after.get(ShellKind.HEAVY)).isGreaterThan(before.get(ShellKind.HEAVY));
+        assertThat(after.get(ShellKind.NORMAL)).isLessThan(before.get(ShellKind.NORMAL));
+        assertThat(after.get(ShellKind.NAPALM)).isCloseTo(before.get(ShellKind.NAPALM), within(1e-6f));
+    }
+
+    @Test
+    void withThickMixANormalShellsBlastCarriesThePayloadsGround() {
+        MortarTower plain = this.loaded(List.of(ShellKind.NORMAL), "Napalm");
+        FakeEnemyMob unburnt = this.enemyAt(plain, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{unburnt});
+        this.landAShell(plain);
+        MortarTower thick = this.loaded(List.of(ShellKind.NORMAL), "Napalm", "Thick Mix");
+        FakeEnemyMob burnt = this.enemyAt(thick, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{burnt});
+
+        this.landAShell(thick);
+
+        assertThat(unburnt.hasEffect(EffectKind.BURN)).isFalse();
+        assertThat(burnt.hasEffect(EffectKind.BURN)).isTrue();
     }
 
     @Test
@@ -635,22 +655,34 @@ class MortarTowerTest {
     }
 
     @Test
-    void carpetBombingLaysItsShellsAlongThePathBackFromTheTarget() {
+    void carpetBombingSneaksANormalBetweenEachTwoShellsItLoads() {
+        MortarTower tower = this.loaded(List.of(ShellKind.HEAVY, ShellKind.HEAVY, ShellKind.HEAVY), "Carpet Bombing");
+        this.context.setPath(new Path(List.of(new Vec2(0, tower.getY()), new Vec2(2000, tower.getY()))));
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT + SCALE, 0)});
+
+        Firing carpet = this.fireFor(tower, 400);
+
+        assertThat(carpet.looks().subList(0, 5)).containsExactly(ShellLook.HEAVY, ShellLook.NORMAL, ShellLook.HEAVY,
+                ShellLook.NORMAL, ShellLook.HEAVY);
+    }
+
+    @Test
+    void carpetBombingLaysItsShellsAlongThePathCentredOnTheTarget() {
         MortarTower tower = this.towerWith("Carpet Bombing");
         FakeEnemyMob target = this.enemyAt(tower, OUT + SCALE, 0);
         this.context.setPath(new Path(List.of(new Vec2(0, tower.getY()), new Vec2(2000, tower.getY()))));
         this.context.enemies().setEnemies(new EnemyMob[]{target});
         Set<BlastMark> landed = new LinkedHashSet<>();
 
-        for (int t = 1; t <= 200 && landed.size() < 3; t++) {
+        for (int t = 1; t <= 200 && landed.size() < 5; t++) {
             tower.doTick(t);
             this.context.projectiles().doTick(t);
             landed.addAll(tower.getBlastMarks());
         }
 
         List<Double> landedAt = landed.stream().map(mark -> mark.at().x()).toList();
-        assertThat(landed).hasSize(3).allMatch(mark -> mark.at().y() == tower.getY());
-        assertThat(landedAt.getFirst()).isCloseTo(target.getX(), within(1.0));
+        assertThat(landed).hasSize(5).allMatch(mark -> mark.at().y() == tower.getY());
+        assertThat(landedAt.get(2)).isCloseTo(target.getX(), within(1.0));
         assertThat(landedAt).isSortedAccordingTo((a, b) -> Double.compare(b, a));
     }
 

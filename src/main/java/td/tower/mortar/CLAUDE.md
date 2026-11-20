@@ -23,6 +23,9 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
 - A shell lands in two zones: its core at full damage and its edge at its kind's share. With Cracking Shells every
   shell gives what it hits the Mortar's share of Crack (Deep Crack makes the share worth more stacks). A shell's ground is one zone, owned by the Mortar (`ZoneOwner`); a
   Mortar keeps only its newest flares and puts out the oldest (`Zone.putOut`).
-- Carpet Bombing lays a volley along the enemy path back from the target (`PathLine`), never by geometry around the
-  impact; a Barrage's later shells re-pick their target when they fire.
+- Carpet Bombing lays a volley along the enemy path centred on the target (`PathLine`), never by geometry around the
+  impact, with a Normal sneaked between each two loaded shells (`VolleySpec.sequence`), never taken from the magazine;
+  a Barrage's later shells re-pick their target when they fire.
+- With Thick Mix a Normal's blast puts a share of a pulse of the loaded payload's ground on what it reaches, through
+  the ground's own `ZoneEffects.touch`, never a zone of its own.
 - Every blast leaves a `BlastMark` the board draws as a fading flash; a nuke adds its own `NukeFlash`.

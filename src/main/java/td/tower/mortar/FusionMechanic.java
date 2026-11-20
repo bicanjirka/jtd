@@ -11,7 +11,7 @@ public final class FusionMechanic implements MortarMechanic {
 
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {
-        return spec.withMagazine(spec.magazine().fusing());
+        return spec.withMagazine(spec.magazine().fusing().withWeight(ShellKind.NORMAL, -1));
     }
 
     @Override
@@ -23,6 +23,7 @@ public final class FusionMechanic implements MortarMechanic {
     public TermText describe() {
         return TermText.of("a ").plus(TowerTerm.HEAVY_SHELL).plus(" shell drawn right behind a ")
                 .plus(TowerTerm.HEAVY_SHELL).plus(" fuses with it into a ").plus(TowerTerm.NUKE_SHELL)
-                .plus(", which ").plus(ShellKind.NUKE.groundText());
+                .plus(", which ").plus(ShellKind.NUKE.groundText())
+                .plus("; Normals come up less often");
     }
 }
