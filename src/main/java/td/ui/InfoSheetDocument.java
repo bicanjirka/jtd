@@ -503,6 +503,7 @@ final class InfoSheetDocument {
                         slot * SLOT_SHELL_SHARE);
             }
         }));
+        this.hover = null;
     }
 
     /**

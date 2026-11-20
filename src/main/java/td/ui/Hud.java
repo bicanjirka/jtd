@@ -316,7 +316,9 @@ public final class Hud {
             return accent;
         }
         if (hot) {
-            return face.dimmed() ? withAlpha(accent, 2 * DIM_BORDER) : mix(accent, Color.WHITE, HOVER_LIGHTEN);
+            // Hover lightens a dimmed border the way it lightens a full one: part of the way toward opaque.
+            return face.dimmed() ? withAlpha(accent, DIM_BORDER + (1f - DIM_BORDER) * HOVER_LIGHTEN)
+                    : mix(accent, Color.WHITE, HOVER_LIGHTEN);
         }
         return face.dimmed() ? withAlpha(accent, DIM_BORDER) : accent;
     }
