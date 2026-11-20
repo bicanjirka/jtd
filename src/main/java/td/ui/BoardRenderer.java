@@ -81,7 +81,8 @@ public final class BoardRenderer {
             effectFrameBuilder.addStatus(tower);
         }
 
-        ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(interpolationAlpha, level.board().scale());
+        ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(gameTime, interpolationAlpha,
+                level.board().scale());
         for (Projectile projectile : this.world.projectiles().getProjectiles()) {
             projectile.accept(projectileFrameBuilder);
         }
@@ -102,7 +103,8 @@ public final class BoardRenderer {
                 cells, ZoneFrameBuilder.build(this.world.zones(), this.world.towers().all(), animationSeconds), enemyFrameBuilder.build(), enemyFrameBuilder.buildCritSparks(),
                 spriteFrameBuilder.build(),
                 effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers,
-                enemyFrameBuilder.buildOverlays(), enemySheet, towerSheet, this.cellGrid(level), level.ground());
+                enemyFrameBuilder.buildOverlays(), enemySheet, towerSheet, this.cellGrid(level), level.ground(),
+                effectFrameBuilder.boardFlash());
     }
 
     /** Blocked means unbuildable with no tower on it: a path covers the cell. */

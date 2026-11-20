@@ -28,4 +28,5 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   a Barrage's later shells re-pick their target when they fire.
 - With Thick Mix a Normal's blast puts a share of a pulse of the loaded payload's ground on what it reaches, through
   the ground's own `ZoneEffects.touch`, never a zone of its own.
-- Every blast leaves a `BlastMark` the board draws as a fading flash; a nuke adds its own `NukeFlash`.
+- Every blast leaves a `BlastMark`, kept as long as the longest detonation is drawn; the board turns it into that
+  shell's detonation (and, for a nuke, a moment's whiteout of the whole board), so the tower stores nothing more.

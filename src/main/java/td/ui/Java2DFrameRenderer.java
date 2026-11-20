@@ -3,6 +3,7 @@ package td.ui;
 import td.term.Term;
 import td.ui.render.AffixPipsDraw;
 import td.ui.render.BeamDraw;
+import td.ui.render.BlastDraw;
 import td.ui.render.BulletDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CasingDraw;
@@ -173,12 +174,6 @@ public final class Java2DFrameRenderer {
     private static final int ZONE_EDGE_ALPHA = 170;
     /** Round caps, so the arcs of a patch's outline join without a notch where two rims cross. */
     private static final Stroke ZONE_EDGE_STROKE = new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-    private static final int ZONE_FLAMES = 6;
-    private static final int ZONE_BUBBLES = 3;
-    private static final int ZONE_CRYSTALS = 5;
-    private static final Tones ZONE_ICE = Tones.of(new Color(170, 225, 255));
-    private static final Color ZONE_FLAME_OUTER = new Color(255, 130, 40);
-    private static final Color ZONE_FLAME_HEART = new Color(255, 220, 90);
     private static final Tones ZONE_MINE_CASING = Tones.of(new Color(72, 74, 88));
     private static final Color ZONE_MINE_LIT = new Color(255, 70, 70);
     private static final Color ZONE_MINE_UNLIT = new Color(110, 30, 30);
@@ -392,7 +387,6 @@ public final class Java2DFrameRenderer {
             case PROJECTILE_FROST -> new Color(170, 225, 255);
             case PROJECTILE_NUKE -> new Color(245, 245, 235);
             case PROJECTILE_SHADOW -> new Color(0x6a, 0x70, 0x84, 150);
-            case TOWER_MORTAR_NUKE_FLASH -> new Color(255, 255, 240);
             case BLAST_RING -> new Color(255, 255, 255);
             case BLAST_NUKE_RING -> new Color(200, 240, 74);
             case PROJECTILE_MISSILE -> new Color(0x5c, 0xc4, 0xe2);
@@ -519,7 +513,11 @@ public final class Java2DFrameRenderer {
             this.paintCell(g2, cell, frame);
         }
         for (ZonePatchDraw patch : frame.zones()) {
-            this.paintZonePatch(g2, patch);
+            if (GroundArt.draws(patch.palette())) {
+                GroundArt.paint(g2, patch, frame.scale());
+            } else {
+                this.paintZonePatch(g2, patch);
+            }
         }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
             this.paintTowerGround(g2, sprite, frame.scale());
@@ -548,6 +546,7 @@ public final class Java2DFrameRenderer {
         for (ProjectileDraw projectile : frame.projectiles()) {
             this.paintProjectile(g2, projectile);
         }
+        frame.boardFlash().ifPresent(flash -> BlastArt.whiteOut(g2, flash, frame.enemies(), frame.maxX(), frame.maxY()));
     }
 
     /**
@@ -593,9 +592,6 @@ public final class Java2DFrameRenderer {
         float fade = zone.fade();
         switch (look) {
             case ZONE_FIELD_GRAVITY -> paintGravityWell(g2, zone);
-            case ZONE_BURNING -> this.paintZoneFlames(g2, zone, fade);
-            case ZONE_TAR -> this.paintZoneTarGloss(g2, zone, fade);
-            case ZONE_FROST -> this.paintZoneCrystals(g2, zone, fade);
             case ZONE_FALLOUT -> this.paintZoneFallout(g2, zone, fade);
             case ZONE_WARD -> this.paintZoneMine(g2, zone, fade);
             case ZONE_FLARE -> this.paintZoneSpark(g2, zone, fade);
@@ -610,48 +606,6 @@ public final class Java2DFrameRenderer {
         g2.setPaint(new RadialGradientPaint(zone.centerX(), zone.centerY(), r, new float[]{0f, 1f},
                 new Color[]{withAlpha(GRAVITY_WELL, GRAVITY_WELL_ALPHA), withAlpha(GRAVITY_WELL, 0)}));
         g2.fill(new Ellipse2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2));
-    }
-
-    /** Tongues of flame that rise up the screen, each an outer flame with a hotter heart, flickering. */
-    private void paintZoneFlames(Graphics2D g2, ZoneDraw zone, float fade) {
-        for (int i = 0; i < ZONE_FLAMES; i++) {
-            double angle = i * 2 * Math.PI / ZONE_FLAMES + i;
-            float distance = zone.radius() * (0.25f + 0.5f * ((i * 7) % ZONE_FLAMES) / ZONE_FLAMES);
-            float flicker = 0.5f + 0.5f * (float) Math.sin(zone.phase() * 9 + i * 1.7);
-            float size = zone.radius() * (0.12f + 0.12f * flicker);
-            float fx = zone.centerX() + (float) Math.cos(angle) * distance;
-            float fy = zone.centerY() + (float) Math.sin(angle) * distance;
-            int alpha = Math.round(230 * (0.45f + 0.55f * flicker) * fade);
-            g2.setColor(withAlpha(ZONE_FLAME_OUTER, alpha));
-            g2.fill(flameTongue(fx, fy, size));
-            g2.setColor(withAlpha(ZONE_FLAME_HEART, alpha));
-            g2.fill(flameTongue(fx, fy, size * 0.55f));
-        }
-    }
-
-    /** A flame standing on {@code baseY}: round at its foot, drawn up to a point. */
-    private static Shape flameTongue(float x, float baseY, float size) {
-        Path2D.Float tongue = new Path2D.Float();
-        tongue.moveTo(x, baseY - size * 2.6f);
-        tongue.quadTo(x + size * 1.3f, baseY - size * 0.9f, x + size * 0.75f, baseY - size * 0.2f);
-        tongue.quadTo(x, baseY + size * 0.5f, x - size * 0.75f, baseY - size * 0.2f);
-        tongue.quadTo(x - size * 1.3f, baseY - size * 0.9f, x, baseY - size * 2.6f);
-        tongue.closePath();
-        return tongue;
-    }
-
-    private void paintZoneTarGloss(Graphics2D g2, ZoneDraw zone, float fade) {
-        float r = zone.radius();
-        g2.setColor(withAlpha(new Color(130, 120, 150), Math.round(90 * fade)));
-        g2.fill(new Ellipse2D.Float(zone.centerX() - r * 0.6f, zone.centerY() - r * 0.65f, r * 0.7f, r * 0.35f));
-        for (int i = 0; i < ZONE_BUBBLES; i++) {
-            float pulse = (zone.phase() * 0.6f + i * 0.37f) % 1f;
-            float bx = zone.centerX() + r * 0.5f * (float) Math.cos(i * 2.4);
-            float by = zone.centerY() + r * 0.5f * (float) Math.sin(i * 2.4);
-            float size = 1.5f + 2.5f * pulse;
-            g2.setColor(withAlpha(new Color(90, 80, 100), Math.round(140 * (1f - pulse) * fade)));
-            g2.draw(new Ellipse2D.Float(bx - size, by - size, size * 2, size * 2));
-        }
     }
 
     /** Three fan blades turning slowly: the radiation sign. */
@@ -710,41 +664,6 @@ public final class Java2DFrameRenderer {
         g2.setComposite(composite);
     }
 
-
-    /** Shards of ice standing on the frost, each lit on its left face. */
-    private void paintZoneCrystals(Graphics2D g2, ZoneDraw zone, float fade) {
-        Composite composite = g2.getComposite();
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.clamp(fade, 0f, 1f)));
-        for (int i = 0; i < ZONE_CRYSTALS; i++) {
-            double angle = i * 2 * Math.PI / ZONE_CRYSTALS + 0.6;
-            float distance = zone.radius() * (i % 2 == 0 ? 0.55f : 0.22f);
-            float x = zone.centerX() + (float) Math.cos(angle) * distance;
-            float y = zone.centerY() + (float) Math.sin(angle) * distance;
-            float size = zone.radius() * (0.16f + 0.05f * (i % 3));
-            g2.setColor(ZONE_ICE.shade());
-            g2.fill(iceShard(x, y, size, 1f));
-            g2.setColor(ZONE_ICE.body());
-            g2.fill(iceShard(x, y, size, 0f));
-            g2.setColor(ZONE_ICE.highlight());
-            g2.fill(iceShard(x, y, size, -1f));
-        }
-        g2.setComposite(composite);
-    }
-
-    /** One face of a shard whose foot is at {@code x, y}: the left face, the right face, or both as one. */
-    private static Shape iceShard(float x, float y, float size, float face) {
-        Path2D.Float shard = new Path2D.Float();
-        shard.moveTo(x + size * 0.1f, y - size * 2.2f);
-        if (face >= 0f) {
-            shard.lineTo(x + size * 0.6f, y - size * 0.6f);
-        }
-        shard.lineTo(x, y + size * 0.3f);
-        if (face <= 0f) {
-            shard.lineTo(x - size * 0.55f, y - size * 0.5f);
-        }
-        shard.closePath();
-        return shard;
-    }
 
     /** One-pixel lines on each cell's right and bottom edge only, so neighbours share one line. */
     private void paintCellGrid(Graphics2D g2, CellGridDraw grid, RenderFrame frame) {
@@ -1364,6 +1283,7 @@ public final class Java2DFrameRenderer {
             case LaserDraw laser -> SniperShotArt.laser(g2, laser);
             case ExecutionDraw execution -> SniperShotArt.execution(g2, execution);
             case FlameDraw flame -> FlameArt.paint(g2, flame);
+            case BlastDraw blast -> BlastArt.paint(g2, blast);
             case IceWakeDraw wake -> paintIceWake(g2, wake);
             case TowerStatusDraw status -> this.paintTowerStatus(g2, status);
             case RefundMarkDraw mark -> CashMark.paint(g2, mark.x(), mark.y(), mark.height());
@@ -1520,6 +1440,7 @@ public final class Java2DFrameRenderer {
         g2.fill(new Ellipse2D.Float(shell.x() - shadowX, shell.y() - shadowY, shadowX * 2, shadowY * 2));
         float x = shell.x();
         float y = shell.y() - shell.lift();
+        shell.trail().ifPresent(trail -> BlastArt.trail(g2, trail, PROJECTILE_SIZE));
         if (shell.tailX() != x || shell.tailY() != y) {
             Stroke defaultStroke = g2.getStroke();
             g2.setColor(scaleAlpha(colorFor(shell.palette()), SHELL_STREAK_ALPHA));
