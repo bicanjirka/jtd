@@ -92,6 +92,11 @@ public final class TowerBench {
     private static final List<Stand> FOCUS = Stream.of(new Point(3, 0), new Point(4, 0), new Point(5, 0), new Point(7, 0),
             new Point(8, 0)).map(cell -> new Stand(TowerFactory.Type.SNIPER, cell, List.of())).toList();
     private static final double TANK_SPEED = 0.3;
+    /** A Sniper beside towers that slow and freeze, as most boards have: what a hit is worth on enemies held in place. */
+    private static final List<Stand> CONTROL = List.of(
+            new Stand(TowerFactory.Type.PULSE, new Point(4, 0), List.of()),
+            new Stand(TowerFactory.Type.SNIPER, new Point(5, 0), List.of()),
+            new Stand(TowerFactory.Type.SEEKER, SECOND, List.of()));
     private static final List<Scenario> SCENARIOS = scenarios();
     private static final List<String> SCENARIO_HEADER = List.of("scenario", "wave", "enemy", "rank", "enemies", "walk s", "toughness",
             "walkers a point", "partners", "tests");
@@ -233,7 +238,10 @@ public final class TowerBench {
                         .testing("plain enemies that heal themselves, for what turns a heal against them"),
                 Scenario.stream("tank", PLAIN).slowedTo(TANK_SPEED).besideTeam(FOCUS)
                         .testing("slow plain enemies under focused fire, for the damage a hex or a mark adds to what "
-                                + "others deal"));
+                                + "others deal"),
+                Scenario.stream("controlled", PLAIN).besideTeam(CONTROL)
+                        .testing("plain enemies slowed and frozen by the towers beside it, for what walking or stopping "
+                                + "changes: a bleed that runs on cells walked, a stop that adds to one already there"));
         List<Scenario> all = new ArrayList<>(alone);
         alone.stream().map(Scenario::withPartners).forEach(all::add);
         return List.copyOf(all);
