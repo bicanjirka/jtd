@@ -17,7 +17,7 @@ from functools import lru_cache
 
 import paper
 
-DOC = "docs/features/FEATURE-next-gen-pulse-tower.md"
+DOC = "docs/features/shipped/FEATURE-next-gen-pulse-tower.md"
 PRICE = 20
 ROLE = "crowd"
 

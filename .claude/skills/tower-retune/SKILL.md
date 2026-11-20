@@ -134,7 +134,8 @@ then suggest changes and wait. Judge from pictures, not path strings: `PreviewIc
 - two faces that read the same at 20 px (a cut-out bolt reads as a crack), or a face that reads as something else.
 
 A rename follows "A new, renamed or moved node" above, renames code with the IDE's `rename_refactoring`, and updates
-the tower's `StrategyBuilds` names, `jtd-balance-tools` (its `trees/` model, `node-math.md`) and `README.md`; then
+the tower's `StrategyBuilds` names and `README.md`, never `jtd-balance-tools`' `trees/` model, which mirrors the
+shipped design doc and breaks on a name the doc lacks; then
 `TowerBench --towers <it>` and `TowerReport --tower <it>` re-store the tables under the new names. One commit.
 
 ## Commits
