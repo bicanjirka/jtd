@@ -22,8 +22,8 @@ public enum ShellKind {
     /** Its damage is the Mortar's Heavy multiplier, a stat. */
     HEAVY(ShellLook.HEAVY, DamageType.PHYSICAL, Blast.NORMAL, 0.75f, Optional.empty()),
     /** Two Heavies fused: their damage together, a blast of its own, and fallout over most of it. */
-    NUKE(ShellLook.NUKE, DamageType.PHYSICAL, new Blast(1f, 1f, 0.75f), 0.7f,
-            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 0.39f))),
+    NUKE(ShellLook.NUKE, DamageType.PHYSICAL, new Blast(1f, 1f, 0.75f), 0.75f,
+            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 0.6f))),
     /** The Mortar's one way to deal magic: its blast burns, and the ground where it lands too. */
     NAPALM(ShellLook.NAPALM, DamageType.MAGIC, Blast.NORMAL, 1.25f,
             Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 1f))),

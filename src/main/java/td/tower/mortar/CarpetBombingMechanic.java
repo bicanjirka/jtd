@@ -12,7 +12,7 @@ public final class CarpetBombingMechanic implements MortarMechanic {
 
     private static final int LOADED = 3;
     private static final float SPACING_CELLS = 1f;
-    private static final float RELOAD_FACTOR = 2f;
+    private static final float RELOAD_FACTOR = 2.3f;
     /** Its shells leave over the same span as a Barrage's, however many more of them there are. */
     private static final int GAP_TICKS = BarrageMechanic.GAP_TICKS * (BarrageMechanic.SHELLS - 1) / (2 * LOADED - 2);
     private static final VolleySpec VOLLEY = VolleySpec.alongThePath(LOADED, GAP_TICKS, RELOAD_FACTOR,
