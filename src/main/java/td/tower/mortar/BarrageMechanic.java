@@ -9,7 +9,7 @@ public final class BarrageMechanic implements MortarMechanic {
 
     static final int SHELLS = 3;
     static final int GAP_TICKS = 10;
-    static final float RELOAD_FACTOR = 2f;
+    static final float RELOAD_FACTOR = 2.1f;
 
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {

@@ -8,7 +8,7 @@ import td.util.TickRate;
 /** Lasting Mix: a payload shell's ground lasts longer. */
 public final class LastingMixMechanic implements MortarMechanic {
 
-    private static final int EXTRA_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    private static final int EXTRA_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 3f);
 
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {

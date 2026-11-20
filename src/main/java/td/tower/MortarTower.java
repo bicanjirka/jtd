@@ -132,9 +132,9 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeCondition A_PAYLOAD = UpgradeCondition.owns(NAPALM.id())
             .or(UpgradeCondition.owns(TAR.id())).or(UpgradeCondition.owns(CRYO.id()));
 
-    private static final UpgradeNode BARRAGE = UpgradeNode.of("mortar.barrage", "Barrage", 31)
+    private static final UpgradeNode BARRAGE = UpgradeNode.of("mortar.barrage", "Barrage", 50)
             .inTier(3);
-    private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 31)
+    private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 50)
             .inTier(3);
     private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 20)
             .withModifiers(TowerModifiers.range(1.6f))
@@ -149,17 +149,17 @@ public final class MortarTower extends AbstractTower {
             .withRequires(A_PAYLOAD)
             .inTier(2);
 
-    private static final UpgradeNode FUSION = UpgradeNode.of("mortar.fusion", "Fusion", 8)
+    private static final UpgradeNode FUSION = UpgradeNode.of("mortar.fusion", "Fusion", 40)
             .inTier(3);
-    private static final UpgradeNode RICH_MIX = UpgradeNode.of("mortar.rich_mix", "Rich Mix", 8)
+    private static final UpgradeNode RICH_MIX = UpgradeNode.of("mortar.rich_mix", "Rich Mix", 40)
             .inTier(3);
-    private static final UpgradeNode LASTING_MIX = UpgradeNode.of("mortar.lasting_mix", "Lasting Mix", 8)
+    private static final UpgradeNode LASTING_MIX = UpgradeNode.of("mortar.lasting_mix", "Lasting Mix", 30)
             .after(THICK_MIX)
             .inTier(3);
     private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 15)
             .after(CRACKING_SHELLS)
             .inTier(2);
-    private static final UpgradeNode QUICK_RELOAD = UpgradeNode.of("mortar.quick_reload", "Quick Reload", 39)
+    private static final UpgradeNode QUICK_RELOAD = UpgradeNode.of("mortar.quick_reload", "Quick Reload", 40)
             .withModifiers(TowerModifiers.attackSpeed(3.5f / 3f - 1f))
             .inTier(3);
 
