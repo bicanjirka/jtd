@@ -436,6 +436,17 @@ class MortarTowerTest {
     }
 
     @Test
+    void aMagazineDrawnAfreshHoldsWhatItsBuildDrawsInPlaceOfTheOpener() {
+        GameWorld rolledHigh = WorldFixtures.newWorldOnBoard(() -> 0.99, SCALE, 20, 20);
+        MortarTower tower = new MortarTower(rolledHigh, 3, 3);
+        UpgradePaths.buy(tower, rolledHigh, "Napalm");
+
+        MortarTower.drawMagazineAfresh(tower);
+
+        assertThat(tower.magazine().shells()).hasSize(Magazine.SIZE).containsOnly(ShellKind.NAPALM);
+    }
+
+    @Test
     void thickMixWidensAPayloadsGround() {
         Zone plain = payloadGround("Cryo");
 

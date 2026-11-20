@@ -651,6 +651,16 @@ public final class MortarTower extends AbstractTower {
         return mortar.isPresent();
     }
 
+    /**
+     * Draws {@code tower}'s magazine full from what it owns, when it is a Mortar, so that a fight starts with the shells
+     * its build draws rather than the ones it held before its nodes: a bench fight stands for a wave long after them.
+     * Only while no tick runs.
+     */
+    public static void drawMagazineAfresh(Tower tower) {
+        tower.accept(AS_MORTAR).ifPresent(it -> it.magazine = Magazine.drawn(it.spec(it.mechanics.all()).magazine(),
+                it.context.random()));
+    }
+
     /** How much of the reload is still to run: 1 as a shell leaves, 0 once the next is ready. */
     public float getCoolDownFraction() {
         return this.clock.remaining();
