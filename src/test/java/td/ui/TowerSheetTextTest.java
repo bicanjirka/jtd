@@ -372,7 +372,7 @@ class TowerSheetTextTest {
 
     @Test
     void aShellsSheetGivesWhatItDealsFliesAndAppliesAsTheTowerFiresItNow() {
-        ShellProfile heavy = new ShellProfile(ShellKind.HEAVY, Damage.physical(DamageUnits.ofPoints(77)), 3f,
+        ShellProfile heavy = ShellProfile.of(ShellKind.HEAVY, Damage.physical(DamageUnits.ofPoints(77)), 3f,
                 new ShellProfile.Blast(1f, 2f, 0.5f, List.of(EffectKind.CRACKED, EffectKind.DAZED)));
 
         InfoSheet sheet = TowerSheetText.shellSheet(heavy, 0.25f);
@@ -383,5 +383,16 @@ class TowerSheetTextTest {
         assertThat(row(sheet, "Share").value()).isEqualTo(TermNumbers.percent(0.25f));
         assertThat(sheet.lines()).contains(SheetLine.Sentence.of(TermText.of("Applies ").plus(EffectKind.CRACKED)
                 .plus(", ").plus(EffectKind.DAZED).asSentence()));
+    }
+
+    @Test
+    void aShellWhoseGroundBurnsSaysWhatEachPulseAddsToTheBurn() {
+        ShellProfile napalm = ShellProfile.of(ShellKind.NAPALM, Damage.magic(DamageUnits.ofPoints(20)), 5f,
+                new ShellProfile.Blast(1f, 2f, 0.5f, List.of(EffectKind.BURN))).withGroundPulse(
+                Damage.magic(DamageUnits.ofPoints(37)));
+
+        InfoSheet sheet = TowerSheetText.shellSheet(napalm, 0.25f);
+
+        assertThat(row(sheet, EffectKind.BURN.title()).value()).isEqualTo("37");
     }
 }
