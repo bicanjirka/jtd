@@ -649,9 +649,11 @@ public final class MortarTower extends AbstractTower {
         ShellProfile profile = ShellProfile.of(kind, Damage.of(kind.damageType(), damage),
                 this.shellStats(shell).speed() * TICKS_PER_SECOND / cell,
                 new ShellProfile.Blast(radii.core() / cell, radii.edge() / cell, radii.edgeShare(), List.copyOf(applies)));
+        ShellProfile carrying = kind == ShellKind.NORMAL ? carriedPayload(spec).map(profile::withCarried).orElse(profile)
+                : profile;
         return kind.ground().filter(ground -> ground.damageShare() > 0f)
-                .map(ground -> profile.withGroundPulse(Damage.magic(groundStrength(stats, ground))))
-                .orElse(profile);
+                .map(ground -> carrying.withGroundPulse(Damage.magic(groundStrength(stats, ground))))
+                .orElse(carrying);
     }
 
     /** {@code tower}'s magazine as the pane shows it, when it is a Mortar. */

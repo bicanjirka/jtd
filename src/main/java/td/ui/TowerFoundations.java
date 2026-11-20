@@ -1444,6 +1444,22 @@ final class TowerFoundations {
         return List.copyOf(b.parts);
     }
 
+    /** A band in {@code payload}'s colour round a standard shell {@code r} round, marking the share of it it carries. */
+    static List<Part> carriedBand(LoadedShell payload, double r) {
+        Color fill = switch (payload) {
+            case NORMAL -> new Color(0xc4cad6);
+            case HEAVY -> new Color(0xf2d28a);
+            case NUKE -> new Color(0xc8f04a);
+            case NAPALM -> new Color(0xff7a2a);
+            case TAR -> new Color(0x8a76aa);
+            case CRYO -> new Color(0xaae6ff);
+            case FLARE -> new Color(0xfff2a8);
+        };
+        Build b = new Build();
+        b.flat(box(0, r * 0.15, r * 1.8, r * 0.6), 0.03, fill);
+        return List.copyOf(b.parts);
+    }
+
     /** One shell kind: the same drawing in the barrel, on the tray and on its own. */
     private static void shell(Build b, LoadedShell kind, double x, double y, double r, double z) {
         switch (kind) {

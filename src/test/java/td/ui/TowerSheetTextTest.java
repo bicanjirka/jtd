@@ -371,6 +371,23 @@ class TowerSheetTextTest {
     }
 
     @Test
+    void withThickMixANormalShellShowsThePayloadItCarriesInItsSlotAndItsSheet() {
+        Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
+        UpgradePaths.buy(mortar, this.world, "Napalm", "Thick Mix");
+        MortarTower.loadMagazine(mortar, MagazineFixtures.frontedBy(ShellKind.NORMAL, ShellKind.NAPALM));
+
+        InfoSheet sheet = TowerSheetText.status(BoardRenderer.liveInspection(mortar));
+
+        SheetLine.MagazineRow row = sheet.lines().stream().filter(SheetLine.MagazineRow.class::isInstance)
+                .map(SheetLine.MagazineRow.class::cast).findFirst().orElseThrow();
+        SheetLine.MagazineSlot normal = row.slots().getFirst();
+        assertThat(normal.carried()).contains(LoadedShell.NAPALM);
+        assertThat(row.slots().get(1).carried()).isEmpty();
+        assertThat(normal.tooltip().orElseThrow().sheet().lines()).contains(SheetLine.Sentence.of(
+                TermText.of("Carries some ").plus(ShellKind.NAPALM.mention()).asSentence()));
+    }
+
+    @Test
     void aShellsSheetGivesWhatItDealsFliesAndAppliesAsTheTowerFiresItNow() {
         ShellProfile heavy = ShellProfile.of(ShellKind.HEAVY, Damage.physical(DamageUnits.ofPoints(77)), 3f,
                 new ShellProfile.Blast(1f, 2f, 0.5f, List.of(EffectKind.CRACKED, EffectKind.DAZED)));

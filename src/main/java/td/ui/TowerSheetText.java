@@ -212,7 +212,9 @@ final class TowerSheetText {
                 TooltipKey.of("shell", profile.kind().name()),
                 shellSheet(profile, magazine.chances().getOrDefault(profile.kind(), 0f)))));
         List<SheetLine.MagazineSlot> slots = magazine.shells().stream()
-                .map(kind -> new SheetLine.MagazineSlot(shellOf(kind), Optional.ofNullable(sheets.get(kind))))
+                .map(kind -> new SheetLine.MagazineSlot(shellOf(kind),
+                        magazine.profileOf(kind).flatMap(ShellProfile::carried).map(TowerSheetText::shellOf),
+                        Optional.ofNullable(sheets.get(kind))))
                 .toList();
         List<SheetLine> lines = new ArrayList<>();
         lines.add(new SheetLine.Gap());
@@ -244,11 +246,15 @@ final class TowerSheetText {
                     .withGloss("cells", TermNumbers.percent(blast.edgeShare()) + " dmg"));
         }
         rows.add(Row.toned(Glyph.DOT, shareTone(kind), "Share", TermNumbers.percent(share)));
-        TermText applies = TermText.of("Applies ");
-        for (int i = 0; i < blast.applies().size(); i++) {
-            applies = (i == 0 ? applies : applies.plus(", ")).plus(blast.applies().get(i));
+        profile.carried().ifPresent(payload -> rows.add(SheetLine.Sentence.of(
+                TermText.of("Carries some ").plus(payload.mention()).asSentence())));
+        if (!blast.applies().isEmpty()) {
+            TermText applies = TermText.of("Applies ");
+            for (int i = 0; i < blast.applies().size(); i++) {
+                applies = (i == 0 ? applies : applies.plus(", ")).plus(blast.applies().get(i));
+            }
+            rows.add(SheetLine.Sentence.of(applies.asSentence()));
         }
-        rows.add(SheetLine.Sentence.of(applies.asSentence()));
         return kind.term().map(term -> TermSheets.of(term, term.describe(), rows)).orElseGet(() -> {
             List<SheetLine> lines = new ArrayList<>();
             lines.add(new SheetLine.Title(Glyph.DOT, shareTone(kind), kind.title(), ""));
