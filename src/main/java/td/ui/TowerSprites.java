@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -96,6 +97,7 @@ final class TowerSprites {
     private static final Map<Key, Sprite> SPRITES = new ConcurrentHashMap<>();
     /** Every shell kind's drawing at the bore's size, built once: the kinds are few and never change. */
     private static final Map<LoadedShell, List<TowerFoundations.Part>> SHELLS = shells();
+    private static final Map<LoadedShell, List<TowerFoundations.Part>> BANDS = bands();
     private static final AtomicLong KEPT_PIXELS = new AtomicLong();
 
     private TowerSprites() {
@@ -465,12 +467,28 @@ final class TowerSprites {
      * look's bore holds, scaled up.
      */
     static void paintShell(Graphics2D g2, LoadedShell kind, float x, float y, float radius) {
+        paintShell(g2, kind, Optional.empty(), x, y, radius);
+    }
+
+    /** A shell as {@link #paintShell(Graphics2D, LoadedShell, float, float, float)}, banded in a payload it carries. */
+    static void paintShell(Graphics2D g2, LoadedShell kind, Optional<LoadedShell> carried, float x, float y,
+                           float radius) {
         Graphics2D g = (Graphics2D) g2.create();
         double toPixels = radius / TowerFoundations.BORE_SHELL;
         g.translate(x, y);
         g.scale(toPixels, toPixels);
-        paintParts(g, SHELLS.get(kind), toPixels * Math.max(1.0, g2.getTransform().getScaleX()));
+        double pixels = toPixels * Math.max(1.0, g2.getTransform().getScaleX());
+        paintParts(g, SHELLS.get(kind), pixels);
+        carried.ifPresent(payload -> paintParts(g, BANDS.get(payload), pixels));
         g.dispose();
+    }
+
+    private static Map<LoadedShell, List<TowerFoundations.Part>> bands() {
+        Map<LoadedShell, List<TowerFoundations.Part>> bands = new EnumMap<>(LoadedShell.class);
+        for (LoadedShell kind : LoadedShell.values()) {
+            bands.put(kind, TowerFoundations.carriedBand(kind, TowerFoundations.BORE_SHELL));
+        }
+        return Collections.unmodifiableMap(bands);
     }
 
     private static Map<LoadedShell, List<TowerFoundations.Part>> shells() {

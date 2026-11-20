@@ -206,7 +206,8 @@ public sealed interface SheetLine {
     }
 
     /** One shell in a magazine's row, and what hovering it opens; nothing for a kind about to leave it. */
-    record MagazineSlot(LoadedShell shell, Optional<SheetTooltip> tooltip) {
+    /** One shell in the magazine: its kind, the payload it carries a share of, and what hovering it opens. */
+    record MagazineSlot(LoadedShell shell, Optional<LoadedShell> carried, Optional<SheetTooltip> tooltip) {
     }
 
     /**

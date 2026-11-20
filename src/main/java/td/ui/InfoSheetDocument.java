@@ -498,7 +498,8 @@ final class InfoSheetDocument {
                 g2.fill(new Rectangle2D.Float(x, 0, slot, slot));
                 g2.setColor(i < magazine.loading() ? Hud.FOREGROUND : Hud.BORDER_IDLE);
                 g2.draw(new Rectangle2D.Float(x + 0.5f, 0.5f, slot - 1, slot - 1));
-                TowerSprites.paintShell(g2, magazine.slots().get(i).shell(), x + slot / 2f, slot / 2f,
+                SheetLine.MagazineSlot shell = magazine.slots().get(i);
+                TowerSprites.paintShell(g2, shell.shell(), shell.carried(), x + slot / 2f, slot / 2f,
                         slot * SLOT_SHELL_SHARE);
             }
         }));

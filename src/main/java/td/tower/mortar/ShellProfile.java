@@ -13,16 +13,23 @@ import java.util.Optional;
  * @param hit            what its core deals, before the enemy's defences
  * @param cellsPerSecond how fast it flies
  * @param groundPulse    the fuel each pulse of its ground adds to a burn or a poison; empty for ground that deals none
+ * @param carried        the payload it carries a share of; empty for a shell that carries none
  */
-public record ShellProfile(ShellKind kind, Damage hit, float cellsPerSecond, Blast blast, Optional<Damage> groundPulse) {
+public record ShellProfile(ShellKind kind, Damage hit, float cellsPerSecond, Blast blast, Optional<Damage> groundPulse,
+                           Optional<ShellKind> carried) {
 
-    /** A shell whose ground, if it leaves one, deals nothing. */
+    /** A shell whose ground, if it leaves one, deals nothing, and that carries no payload. */
     public static ShellProfile of(ShellKind kind, Damage hit, float cellsPerSecond, Blast blast) {
-        return new ShellProfile(kind, hit, cellsPerSecond, blast, Optional.empty());
+        return new ShellProfile(kind, hit, cellsPerSecond, blast, Optional.empty(), Optional.empty());
     }
 
     public ShellProfile withGroundPulse(Damage fuel) {
-        return new ShellProfile(this.kind, this.hit, this.cellsPerSecond, this.blast, Optional.of(fuel));
+        return new ShellProfile(this.kind, this.hit, this.cellsPerSecond, this.blast, Optional.of(fuel), this.carried);
+    }
+
+    public ShellProfile withCarried(ShellKind payload) {
+        return new ShellProfile(this.kind, this.hit, this.cellsPerSecond, this.blast, this.groundPulse,
+                Optional.of(payload));
     }
 
     /**
