@@ -20,18 +20,18 @@ import java.util.Set;
 public enum ShellKind {
     NORMAL(ShellLook.NORMAL, DamageType.PHYSICAL, Blast.NORMAL, 1f, Optional.empty()),
     /** Its damage is the Mortar's Heavy multiplier, a stat. */
-    HEAVY(ShellLook.HEAVY, DamageType.PHYSICAL, Blast.NORMAL, 0.8f, Optional.empty()),
+    HEAVY(ShellLook.HEAVY, DamageType.PHYSICAL, Blast.NORMAL, 0.75f, Optional.empty()),
     /** Two Heavies fused: their damage together, a blast of its own, and fallout over most of it. */
     NUKE(ShellLook.NUKE, DamageType.PHYSICAL, new Blast(1f, 1f, 0.75f), 0.7f,
             Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 0.39f))),
     /** The Mortar's one way to deal magic: its blast burns, and the ground where it lands too. */
-    NAPALM(ShellLook.NAPALM, DamageType.MAGIC, Blast.NORMAL, 1f,
+    NAPALM(ShellLook.NAPALM, DamageType.MAGIC, Blast.NORMAL, 1.25f,
             Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 0.78f))),
-    TAR(ShellLook.TAR, DamageType.PHYSICAL, Blast.NORMAL, 1f, Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 0.29f))),
-    CRYO(ShellLook.CRYO, DamageType.PHYSICAL, Blast.NORMAL, 1f,
+    TAR(ShellLook.TAR, DamageType.PHYSICAL, Blast.NORMAL, 1.25f, Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 0.29f))),
+    CRYO(ShellLook.CRYO, DamageType.PHYSICAL, Blast.NORMAL, 1.25f,
             Optional.of(Ground.fixed(ZoneKind.FROST_GROUND, 1.2f, 60, 0f))),
     /** A small blast with no edge, and a flare that burns until the wave is over. */
-    FLARE(ShellLook.FLARE, DamageType.PHYSICAL, new Blast(-0.25f, -1f, 0f), 1f,
+    FLARE(ShellLook.FLARE, DamageType.PHYSICAL, new Blast(-0.25f, -1f, 0f), 1.25f,
             Optional.of(Ground.fixed(ZoneKind.FLARE, 1.5f, Zone.UNTIL_WAVE_END, 0f)));
 
     /** What a payload shell deals, a share of a Normal one's damage. */
