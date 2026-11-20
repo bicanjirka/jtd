@@ -99,7 +99,7 @@ public final class MortarTower extends AbstractTower {
     public static final int BLAST_MARK_TICKS = 6;
 
     private static final float MINIMUM_RANGE_CELLS = 1.5f;
-    private static final float HEAVY_TIMES = 2f;
+    private static final float HEAVY_TIMES = 1.75f;
     /** A rate below this counts as it, so a stalled tower's reload is long rather than endless. */
     private static final double MINIMUM_RATE = 1e-3;
     /** A shot every 3.5 s. */
@@ -111,7 +111,8 @@ public final class MortarTower extends AbstractTower {
 
     private static final UpgradeNode HEAVY_CHARGE = UpgradeNode.of("mortar.heavy_charge", "Heavy Charge", 5)
             .withModifiers(TowerModifiers.damage(12f));
-    private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 5);
+    private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 5)
+            .withModifiers(TowerModifiers.heavyMultiplier(HEAVY_TIMES * 0.25f));
     private static final UpgradeNode CRACKING_SHELLS = UpgradeNode.of("mortar.cracking_shells", "Cracking Shells", 5);
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 5)
             .withTargeting(TargetPriority.MOST_NEIGHBOURS);
@@ -135,15 +136,16 @@ public final class MortarTower extends AbstractTower {
             .inTier(3);
     private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 31)
             .inTier(3);
-    private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 5)
-            .withModifiers(TowerModifiers.range(1f))
+    private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 20)
+            .withModifiers(TowerModifiers.range(1.6f))
             .inTier(2);
-    private static final UpgradeNode OVERCHARGE = UpgradeNode.of("mortar.overcharge", "Overcharge", 8)
-            .withModifiers(TowerModifiers.heavyMultiplier(1f))
+    private static final UpgradeNode OVERCHARGE = UpgradeNode.of("mortar.overcharge", "Overcharge", 25)
+            .withModifiers(TowerModifiers.heavyMultiplier(2f))
             .inTier(2);
-    private static final UpgradeNode BIG_BORE_2 = UpgradeNode.of("mortar.big_bore_2", "Big Bore II", 6)
+    private static final UpgradeNode BIG_BORE_2 = UpgradeNode.of("mortar.big_bore_2", "Big Bore II", 20)
+            .withModifiers(TowerModifiers.heavyMultiplier(HEAVY_TIMES * 0.75f))
             .inTier(2);
-    private static final UpgradeNode THICK_MIX = UpgradeNode.of("mortar.thick_mix", "Thick Mix", 6)
+    private static final UpgradeNode THICK_MIX = UpgradeNode.of("mortar.thick_mix", "Thick Mix", 20)
             .withRequires(A_PAYLOAD)
             .inTier(2);
 
@@ -154,7 +156,7 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeNode LASTING_MIX = UpgradeNode.of("mortar.lasting_mix", "Lasting Mix", 8)
             .after(THICK_MIX)
             .inTier(3);
-    private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 5)
+    private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 15)
             .after(CRACKING_SHELLS)
             .inTier(2);
     private static final UpgradeNode QUICK_RELOAD = UpgradeNode.of("mortar.quick_reload", "Quick Reload", 39)
