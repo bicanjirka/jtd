@@ -12,7 +12,7 @@ import java.util.Set;
 /** Concussion: a Heavy shell Dazes everything its blast reaches, longer in its full-damage zone than at its edge. */
 public final class ConcussionMechanic implements MortarMechanic {
 
-    public static final int CORE_DAZE_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
+    public static final int CORE_DAZE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 0.75f);
     public static final int EDGE_DAZE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
 
     @Override

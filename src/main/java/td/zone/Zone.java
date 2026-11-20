@@ -24,7 +24,7 @@ public final class Zone {
     private static final int WARD_ARMING_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
 
     /** Pulses in a row inside a frost zone before it freezes what stands there. */
-    private static final int FROST_PULSES_TO_FREEZE = 4;
+    static final int FROST_PULSES_TO_FREEZE = 4;
     private static final int FROST_FREEZE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 1.5f);
 
     private final ZoneKind kind;

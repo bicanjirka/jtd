@@ -115,17 +115,17 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 5)
             .withTargeting(TargetPriority.MOST_NEIGHBOURS);
 
-    private static final UpgradeNode CONCUSSION = UpgradeNode.of("mortar.concussion", "Concussion", 6)
+    private static final UpgradeNode CONCUSSION = UpgradeNode.of("mortar.concussion", "Concussion", 10)
             .inTier(1);
-    private static final UpgradeNode SHRAPNEL = UpgradeNode.of("mortar.shrapnel", "Shrapnel", 6)
+    private static final UpgradeNode SHRAPNEL = UpgradeNode.of("mortar.shrapnel", "Shrapnel", 10)
             .inTier(1);
-    private static final UpgradeNode NAPALM = UpgradeNode.of("mortar.napalm", "Napalm", 4)
+    private static final UpgradeNode NAPALM = UpgradeNode.of("mortar.napalm", "Napalm", 15)
             .inTier(1);
-    private static final UpgradeNode TAR = UpgradeNode.of("mortar.tar", "Tar", 4)
+    private static final UpgradeNode TAR = UpgradeNode.of("mortar.tar", "Tar", 15)
             .inTier(1);
-    private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 4)
+    private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 15)
             .inTier(1);
-    private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 4)
+    private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 15)
             .inTier(1);
     private static final UpgradeCondition A_PAYLOAD = UpgradeCondition.owns(NAPALM.id())
             .or(UpgradeCondition.owns(TAR.id())).or(UpgradeCondition.owns(CRYO.id()));
