@@ -435,7 +435,7 @@ burning through a freeze.
 |----------------|----------------------------|--------------------------------|
 | Burning ground | Mortar's Napalm            | Burns them |
 | Tar            | Mortar's Tar               | Poisons them and leaves them Tarred (slowed 40%) |
-| Frost ground   | Mortar's Cryo              | Chills them, and freezes one that stays 2 s |
+| Frost ground   | Mortar's Cryo              | Chills them, and freezes one still inside at its next pulse |
 | Fallout        | Mortar's Nuke              | Drains their spirit, poisons them and leaves them in a Dead Zone |
 | Flare          | Mortar's Flare             | Reveals them for 3 s; it lasts until the wave is over, and a Mortar keeps only its newest three |
 | Healing ground | Mender, from Soldier       | Heals them; it lasts 5 s |

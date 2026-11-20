@@ -18,7 +18,7 @@ public final class ZoneEffects {
     private static final int FLARE_REVEAL_TICKS = Math.round(3 * TickRate.TICKS_PER_SECOND);
     /** Tar lets go of an enemy this long after its last pulse. */
     private static final int TARRED_TICKS = 2 * PULSE_TICKS;
-    private static final float FROST_CHILL = 0.2f;
+    private static final float FROST_CHILL = 0.4f;
     private static final int FROST_CHILL_TICKS = 40;
     /** Sickened stacks fallout adds each pulse: more than spirit wears off in half a second. */
     private static final int FALLOUT_SICKENED_STACKS = 4;
