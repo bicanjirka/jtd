@@ -508,14 +508,18 @@ no place for a price at a gate, but the tree can still make a paid tier's unlock
 - **Approach:** delete the unlock with the next change to tier gates, moving `TierTrees` to standard tiers; or, if a
   paid gate comes back, give the panel's floor strip a pay button.
 
-### A shell in the Mortar's magazine has no hover of its own
+### Thick Mix may be meant for the Normals behind a payload, not every Normal
 
-The pane's magazine row opens one tooltip for the whole row: the magazine and each kind's chance. The feature doc
-asks that hovering one shell show that shell's damage, blast, flight speed and reach.
+With Thick Mix every Normal shell carries the loaded payload, and the magazine bands every Normal to match. A
+narrower rule, a Normal carrying it only when it follows a payload shell in the magazine, may read better: the band
+would then tell shells apart rather than mark them all. It would weaken the node, which was priced on every Normal
+carrying.
 
-- **Where:** `td.ui.InfoSheetDocument.magazineRow`, `td.ui.SheetPane.hoverAt`, `td.ui.HoverRun`.
-- **Approach:** a `HoverRun` for the row with a slot layout, as `IconRowRun` has with `IconRowLayout`, and a tooltip
-  per kind in `SheetLine.MagazineRow`, built from `ShellKind` and the tower's stats in `TowerSheetText`.
+- **Where:** `MortarTower.carriedPayload` (the rule, read at firing, at impact and for `profileOf`),
+  `TowerSheetText.magazineLines` (which slots are banded).
+- **Approach:** measure first: the node's worth under each rule with the tuning harnesses, at today's price. Change the
+  rule only if the narrower one is still worth its price or the price moves with it; the carry then follows the
+  shell, decided when it is drawn, so the pane and the shot agree.
 
 ### The Obelisk's smallest cues are not drawn
 

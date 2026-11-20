@@ -5,8 +5,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import td.effect.EffectKind;
 import td.term.TermText;
 import td.ui.render.InfoSheet;
+import td.ui.render.LoadedShell;
 import td.ui.render.SheetIcon;
 import td.ui.render.SheetLine;
+import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 
 import javax.swing.text.BadLocationException;
@@ -114,6 +116,26 @@ class SheetPaneTest {
 
             assertThat(pane.hoverAt(centre)).as("icon %d", i).isPresent();
             assertThat(pane.hoverAt(centre).get().key()).isEqualTo(icons.get(i).key());
+        }
+    }
+
+    @Test
+    void everyShellOfAMagazineIsHoverableNotOnlyThoseInTheLeftHalf() throws BadLocationException {
+        List<SheetLine.MagazineSlot> slots = Stream.of("a", "b", "c", "d", "e", "f").map(name -> new SheetLine.MagazineSlot(
+                LoadedShell.NORMAL, Optional.empty(), Optional.of(new SheetTooltip(TooltipKey.of("shell", name),
+                        new InfoSheet(List.of()))))).toList();
+        SheetPane pane = paneWith(new SheetLine.MagazineRow(slots, 1), SheetLine.Sentence.of(TermText.of("after")));
+        HoverRun.SlotRowRun run = (HoverRun.SlotRowRun) pane.getStyledDocument().getCharacterElement(0).getAttributes()
+                .getAttribute(HoverKey.INSTANCE);
+        Rectangle row = pane.modelToView2D(0).getBounds();
+        int slot = run.layout().slot();
+
+        for (int i = 0; i < slots.size(); i++) {
+            Point centre = new Point(row.x + run.layout().left(i) + slot / 2, row.y + slot / 2);
+            System.out.println("DBG " + centre + " model " + pane.viewToModel2D(centre) + " row " + row + " len " + pane.getDocument().getLength() + " " + pane.hoverAt(centre));
+
+            assertThat(pane.hoverAt(centre)).as("shell %d", i).map(HoverTarget::key)
+                    .contains(slots.get(i).tooltip().orElseThrow().key());
         }
     }
 }

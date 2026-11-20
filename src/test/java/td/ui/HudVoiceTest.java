@@ -40,6 +40,18 @@ class HudVoiceTest {
     }
 
     @Test
+    void aHoveredDimmedTileWearsABrighterBorderThanAnIdleOneAndNoBrighterThanAnUndimmedTile() {
+        ControlFace tile = ControlFace.tile(VOICE).withDimmed(true);
+        DefaultButtonModel model = new DefaultButtonModel();
+
+        Color idle = Hud.borderFor(tile, model, true);
+        model.setRollover(true);
+        Color hovered = Hud.borderFor(tile, model, true);
+
+        assertThat(hovered.getAlpha()).isGreaterThan(idle.getAlpha()).isLessThanOrEqualTo(VOICE.getAlpha());
+    }
+
+    @Test
     void aSelectedButtonsFillLeansTowardItsColourUnderItsOwnText() {
         ControlFace face = ControlFace.button().withSelectedColor(VOICE);
         DefaultButtonModel model = new DefaultButtonModel();
