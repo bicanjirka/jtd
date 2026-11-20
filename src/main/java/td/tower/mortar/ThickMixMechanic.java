@@ -4,19 +4,19 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
 
-/** Thick Mix: a payload shell's blast reaches further, and its ground with it. */
+/** Thick Mix: a Normal shell carries some of the payload, so its blast burns, poisons or chills what it reaches. */
 public final class ThickMixMechanic implements MortarMechanic {
 
-    private static final float EXTRA_CELLS = 0.5f;
+    static final float SHARE = 1f;
 
     @Override
     public MortarSpec refineSpec(MortarSpec spec) {
-        return spec.withPayload(spec.payload().wider(EXTRA_CELLS));
+        return spec.withPayload(spec.payload().carriedByNormals(SHARE));
     }
 
     @Override
     public TermText describe() {
-        return TermText.of("a ").plus(TowerTerm.PAYLOAD).plus(" shell's blast reaches "
-                + TermNumbers.cells(EXTRA_CELLS) + " further, and its ground with it");
+        return TermText.of("a Normal shell's blast carries " + TermNumbers.percent(SHARE) + " of a pulse of the ")
+                .plus(TowerTerm.PAYLOAD).plus("'s ground");
     }
 }

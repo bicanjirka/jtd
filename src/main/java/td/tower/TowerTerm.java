@@ -30,7 +30,7 @@ public enum TowerTerm implements Term {
     CRYO_SHELL("Cryo", Side.BUFF, "a payload that leaves frost applying {}, and {} to an enemy that stays", EffectKind.CHILL, EffectKind.FREEZE),
     FLARE("Flare", Side.BUFF, "a shell that leaves a flare lasting until the wave ends; every enemy that enters it gains {}", EffectKind.REVEALED),
     BARRAGE("Barrage", Side.BUFF, "the front shells loaded together and fired one after another at one target"),
-    CARPET_BOMBING("Carpet Bombing", Side.BUFF, "the front shells loaded together and laid along the path, from the target back toward where the enemies come from"),
+    CARPET_BOMBING("Carpet Bombing", Side.BUFF, "the front shells loaded together, a Normal between each two, and laid along the path with the middle one on the target"),
     FROST_MISSILE("Frost", Side.BUFF, "the plain missile: it applies {} to the enemy it hits", EffectKind.FREEZE),
     RUBY("Ruby", Side.BUFF, "a missile that deals double damage, and whose {} also holds an enemy immune to it",
             EffectKind.FREEZE),
