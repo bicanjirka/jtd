@@ -23,7 +23,7 @@ import math
 
 import paper
 
-DOC = "docs/features/FEATURE-next-gen-aura-tower.md"
+DOC = "docs/features/shipped/FEATURE-next-gen-aura-tower.md"
 PRICE = 15
 ROLE = "crowd"
 

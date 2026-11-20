@@ -4,7 +4,7 @@ import random
 
 import paper
 
-DOC = "docs/features/FEATURE-next-gen-sniper-tower.md"
+DOC = "docs/features/shipped/FEATURE-next-gen-sniper-tower.md"
 PRICE = 15
 ROLE = "single"
 

@@ -4,7 +4,7 @@ enemy's health, at most the stream), so a full defence, where other towers' kill
 """
 import paper
 
-DOC = "docs/features/FEATURE-next-gen-splash-tower.md"
+DOC = "docs/features/shipped/FEATURE-next-gen-splash-tower.md"
 PRICE = 15
 ROLE = "crowd"
 

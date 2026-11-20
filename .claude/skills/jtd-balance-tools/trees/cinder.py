@@ -12,7 +12,7 @@ from functools import lru_cache
 
 import paper
 
-DOC = "docs/features/FEATURE-next-gen-cinder-tower.md"
+DOC = "docs/features/shipped/FEATURE-next-gen-cinder-tower.md"
 PRICE = 20
 ROLE = "crowd"
 # Two Scorchers on one crowd pour into the same pools, so together they reach a Flashover neither reaches alone

@@ -7,7 +7,7 @@ from functools import lru_cache
 import area_sim
 import paper
 
-DOC = "docs/features/FEATURE-next-gen-mortar-tower.md"
+DOC = "docs/features/shipped/FEATURE-next-gen-mortar-tower.md"
 PRICE = 20
 ROLE = "crowd"
 

@@ -8,7 +8,7 @@ from functools import lru_cache
 
 import paper
 
-DOC = "docs/features/FEATURE-next-gen-seeker-tower.md"
+DOC = "docs/features/shipped/FEATURE-next-gen-seeker-tower.md"
 PRICE = 30
 ROLE = "crowd"
 
