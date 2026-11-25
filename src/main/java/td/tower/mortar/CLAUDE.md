@@ -4,9 +4,9 @@ Constraints for `MortarTower` (in `td.tower`) and its mechanics in this package.
 rules shared by every tower are in `td/tower/CLAUDE.md`.
 
 - The Mortar's shell is slow and unguided: it flies to where its target stood, so a fast enemy dodges it. Its minimum
-  range is `TowerStat.MINIMUM_RANGE`, put on the `Reach` as its dead zone. Predictive Fire picks the enemy with the
-  most neighbours (its node's `TargetPriority`), asks it where it will stand (`EnemyTarget.positionAfter`) and re-aims
-  a few times, since flight time depends on where the shell is going.
+  range is `TowerStat.MINIMUM_RANGE`, put on the `Reach` as its dead zone. Predictive Fire picks the biggest group
+  weighed by how far along it is (its node's `TargetPriority`), asks its enemy where it will stand
+  (`EnemyTarget.positionAfter`) and re-aims a few times, since flight time depends on where the shell is going.
 - What it fires comes from its `Magazine`, a fixed number of shells, front first. A firing takes the front
   shells (one, or a volley's), and the back is drawn full again from `MagazineSpec`, the weights the owned nodes
   set. The magazine is build state, not fight state (ADR 0024): no wave clear resets it and the save keeps it shell by

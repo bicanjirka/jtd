@@ -115,7 +115,7 @@ public final class MortarTower extends AbstractTower {
             .withModifiers(TowerModifiers.heavyDamage(14f));
     private static final UpgradeNode CRACKING_SHELLS = UpgradeNode.of("mortar.cracking_shells", "Cracking Shells", 5);
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 5)
-            .withTargeting(TargetPriority.MOST_NEIGHBOURS);
+            .withTargeting(TargetPriority.BIGGEST_GROUP_AHEAD);
 
     private static final UpgradeNode CONCUSSION = UpgradeNode.of("mortar.concussion", "Concussion", 10)
             .inTier(1);

@@ -559,9 +559,9 @@ class MortarTowerTest {
     @Test
     void predictiveFireShellsThePackOverTheLoneEnemyFurthestAlong() {
         MortarTower tower = this.towerWith("Predictive Fire");
-        FakeEnemyMob lone = this.enemyAt(tower, 0, -OUT).withProgression(900);
-        FakeEnemyMob packed = this.enemyAt(tower, OUT, 0).withProgression(10);
-        FakeEnemyMob near = this.enemyAt(tower, OUT, SCALE / 2.0).withProgression(5);
+        FakeEnemyMob lone = this.enemyAt(tower, 0, -OUT).withProgression(900).atPathShare(0.6f);
+        FakeEnemyMob packed = this.enemyAt(tower, OUT, 0).withProgression(10).atPathShare(0.5f);
+        FakeEnemyMob near = this.enemyAt(tower, OUT, SCALE / 2.0).withProgression(5).atPathShare(0.5f);
         this.context.enemies().setEnemies(new EnemyMob[]{lone, packed, near});
 
         this.landAShell(tower);
