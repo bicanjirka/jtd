@@ -11,6 +11,7 @@ import td.ui.render.CasingDraw;
 import td.ui.render.CellDraw;
 import td.ui.render.CellGridDraw;
 import td.ui.render.CritSparkDraw;
+import td.ui.render.CurseDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EmbersDraw;
 import td.ui.render.EnemyBarsDraw;
@@ -31,7 +32,6 @@ import td.ui.render.FlameDraw;
 import td.ui.render.FlashDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.FootDustDraw;
-import td.ui.render.HexGlyph;
 import td.ui.render.HexRuneDraw;
 import td.ui.render.IceWakeDraw;
 import td.ui.render.LaserDraw;
@@ -53,11 +53,15 @@ import td.ui.render.RingDraw;
 import td.ui.render.ShadowDraw;
 import td.ui.render.SheetLine;
 import td.ui.render.ShellCarryDraw;
+import td.ui.render.ShockDraw;
 import td.ui.render.SilenceMarkDraw;
 import td.ui.render.SmokeDraw;
+import td.ui.render.SpellBlastDraw;
+import td.ui.render.SpellOrbDraw;
 import td.ui.render.SplashDraw;
 import td.ui.render.SteamDraw;
 import td.ui.render.StreamDraw;
+import td.ui.render.ThunderboltDraw;
 import td.ui.render.TollMarkDraw;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
@@ -378,6 +382,7 @@ public final class Java2DFrameRenderer {
             case TOWER_SPLASH_DETONATION -> new Color(255, 200, 90);
             case TOWER_SPLASH_DETONATION_DARK -> new Color(120, 30, 20);
             case TOWER_SPLASH_ARC -> new Color(170, 210, 255);
+            case TOWER_SPLASH_STONE -> new Color(236, 214, 168);
             case TOWER_STORMCALLER_FLASH -> withAlpha(new Color(210, 230, 255), 170);
             case TOWER_STORMCALLER_DETONATION -> new Color(130, 190, 255);
             case TOWER_STORMCALLER_DETONATION_DARK -> new Color(20, 40, 120);
@@ -1111,7 +1116,7 @@ public final class Java2DFrameRenderer {
             case EnemyRingDraw ring -> this.paintEnemyRing(g2, ring);
             case EffectPulseDraw pulse -> this.paintEffectPulse(g2, pulse);
             case EnemyIceDraw ice -> EnemyEffects.paintIce(g2, ice);
-            case HexRuneDraw rune -> this.paintHexRune(g2, rune);
+            case HexRuneDraw rune -> SpellArt.rune(g2, rune);
             case MissMarkDraw miss -> this.paintMissMark(g2, miss);
             case EnemyBarsDraw bars -> this.paintEnemyBars(g2, bars);
             case EnemyDotsDraw dots -> this.paintEnemyDots(g2, dots);
@@ -1199,43 +1204,6 @@ public final class Java2DFrameRenderer {
         g2.setColor(withAlpha(colorFor(Palette.MISS_MARK), Math.round((1f - miss.fadeProgress()) * 255f)));
         float baseline = miss.y() + g2.getFontMetrics().getAscent() / 2f - MISS_MARK_RISE * miss.fadeProgress();
         g2.drawString(MISS_TEXT, miss.x() + MISS_MARK_GAP, baseline);
-    }
-
-    /** A hex's rune: a thin glyph in the rune colour, its shape saying what the hex does. */
-    private void paintHexRune(Graphics2D g2, HexRuneDraw rune) {
-        AffineTransform save = g2.getTransform();
-        Stroke defaultStroke = g2.getStroke();
-        g2.translate(rune.x(), rune.y());
-        g2.setColor(colorFor(Palette.HEX_RUNE));
-        g2.setStroke(new BasicStroke(1.2f));
-        g2.draw(runeShape(rune.glyph(), rune.scale()));
-        g2.setStroke(defaultStroke);
-        g2.setTransform(save);
-    }
-
-    private static Shape runeShape(HexGlyph glyph, float s) {
-        Path2D.Float path = new Path2D.Float();
-        switch (glyph) {
-            case DOOM -> {
-                path.moveTo(-s, -s);
-                path.lineTo(s, -s);
-                path.lineTo(-s, s);
-                path.lineTo(s, s);
-                path.closePath();
-            }
-            case BLIGHT -> {
-                path.moveTo(0, -s);
-                path.quadTo(s, 0, 0, s);
-                path.quadTo(-s, 0, 0, -s);
-            }
-            case BACKLASH -> {
-                path.moveTo(-s, -s);
-                path.lineTo(s, -s);
-                path.lineTo(0, s);
-                path.closePath();
-            }
-        }
-        return path;
     }
 
     /** A small filled diamond beside a tower for a status it carries. */
@@ -1354,6 +1322,11 @@ public final class Java2DFrameRenderer {
             case ExecutionDraw execution -> SniperShotArt.execution(g2, execution);
             case FlameDraw flame -> FlameArt.paint(g2, flame);
             case BlastDraw blast -> BlastArt.paint(g2, blast);
+            case SpellOrbDraw orb -> SpellArt.orb(g2, orb);
+            case CurseDraw curse -> SpellArt.curse(g2, curse);
+            case ShockDraw shock -> SpellArt.shock(g2, shock);
+            case ThunderboltDraw bolt -> SpellArt.thunderbolt(g2, bolt);
+            case SpellBlastDraw blast -> SpellArt.blast(g2, blast);
             case IceWakeDraw wake -> paintIceWake(g2, wake);
             case TowerStatusDraw status -> this.paintTowerStatus(g2, status);
             case RefundMarkDraw mark -> CashMark.paint(g2, mark.x(), mark.y(), mark.height());

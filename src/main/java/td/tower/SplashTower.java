@@ -445,7 +445,7 @@ public final class SplashTower extends AbstractTower {
             if (hit.critical()) {
                 this.earnAbilities(arc.critRefund());
             }
-            this.bolts.add(new Bolt(hop.from(), at, this.tickNow(), BoltKind.ARC));
+            this.bolts.add(Bolt.jump(hop.from(), target, this.tickNow(), hit.critical()));
             if (arc.jolt()) {
                 this.applyEffect(target, sink -> Effect.vulnerable(1,
                         Math.round(ArcSpec.JOLT_SECONDS * TICKS_PER_SECOND), sink));
@@ -706,7 +706,8 @@ public final class SplashTower extends AbstractTower {
         if (!hit.dodged()) {
             this.report(enemy, HitKind.ARC, false, enemy.isDead());
         }
-        this.bolts.add(new Bolt(from, enemy.position(), this.tickNow(), kind));
+        Bolt bolt = Bolt.cast(from, enemy, this.tickNow(), kind);
+        this.bolts.add(hit.dodged() ? bolt.missed() : bolt);
     }
 
     /** What a hex puts on an enemy as it lands, at the strength of the tower when it was cast. */

@@ -26,6 +26,7 @@ import td.tower.sniper.Hop;
 import td.tower.sniper.ShotTrace;
 import td.tower.splash.Blast;
 import td.tower.splash.Bolt;
+import td.tower.splash.BoltKind;
 import td.tower.splash.Curse;
 import td.tower.splash.Passive;
 import td.tower.splash.Stone;
@@ -38,6 +39,7 @@ import td.ui.render.BulletDraw;
 import td.ui.render.BulletRound;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CasingDraw;
+import td.ui.render.CurseDraw;
 import td.ui.render.EmbersDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.ExecutionDraw;
@@ -57,15 +59,23 @@ import td.ui.render.RefundMarkDraw;
 import td.ui.render.RingDraw;
 import td.ui.render.ShadowDraw;
 import td.ui.render.ShellCarryDraw;
+import td.ui.render.ShellTrail;
+import td.ui.render.ShockDraw;
+import td.ui.render.SpellBlastDraw;
+import td.ui.render.SpellBlastLook;
+import td.ui.render.SpellOrbDraw;
+import td.ui.render.SpellOrbLook;
 import td.ui.render.SplashDraw;
 import td.ui.render.SteamDraw;
 import td.ui.render.StreamDraw;
+import td.ui.render.ThunderboltDraw;
 import td.ui.render.TowerCue;
 import td.ui.render.TowerEffectDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerPose;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
+import td.ui.render.TrailLook;
 import td.ui.render.WardOutlineDraw;
 import td.ui.render.ZoneDraw;
 import td.util.GameWorld;
@@ -80,6 +90,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.function.DoubleFunction;
 
 /**
  * Describes each tower's transient effect - beam, splash, pulse, cone, or an aura's ring - as draw
@@ -106,12 +117,26 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float NEST_RADIUS_CELLS = 0.30f;
     private static final double NEST_TURN = 0.6;
     private static final float TRACER_WIDTH_CELLS = 0.028f;
-    /** How much of its way a curse, spark or soul in flight trails behind it. */
+    /** A fork's spell: its head's radius, and how high its flight bows, in cells. */
+    private static final float ORB_CELLS = 0.18f;
+    private static final float ORB_BOW_CELLS = 0.18f;
+    /** A curse: its head's radius, and how high it floats over the enemies it passes, in cells. */
+    private static final float CURSE_CELLS = 0.2f;
+    private static final float CURSE_HOVER_CELLS = 0.6f;
+    /** A spell's or a curse's tail: how long it is in cells, how many points it bends at, and its width at the head. */
+    private static final float SPELL_TRAIL_CELLS = 1.1f;
+    private static final int SPELL_TRAIL_POINTS = 8;
+    private static final float SPELL_TRAIL_WIDTH = 0.55f;
+    /** How long a fork's impact, a Thunderstrike's bolt and the shock of a spell's hit are drawn. */
+    private static final int SPELL_BLAST_TICKS = MomentLength.BEAT.ticks();
+    private static final int THUNDERBOLT_TICKS = MomentLength.LONG.ticks();
+    private static final int SHOCK_TICKS = MomentLength.BEAT.ticks();
+    /** How much of its way a spark or soul in flight trails behind it. */
     private static final float STREAK_SHARE = 0.25f;
     /** How long the streak a bullet leaves stays drawn once it has arrived: far less than a reload. */
     private static final float TRACER_FADE_TICKS = MomentLength.BLINK.ticks();
     /** The Burst's thrown stone is drawn at this share of a lobbed shot's size, its shadow with it. */
-    private static final float STONE_SIZE = 0.5f;
+    private static final float STONE_SIZE = 0.8f;
     /** How far a ricochet's arc bows out, as a share of the hop's length. */
     private static final float HOP_BOW = 0.25f;
     private static final float EXECUTION_TICKS = MomentLength.BEAT.ticks();
@@ -372,40 +397,170 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     }
 
     /**
-     * Each stone on its lob with its shadow under it, each blast as a detonation that spreads as a ring to its edge and
-     * darkens as it grows, each bolt that struck as jagged lightning, and each curse, spark and soul as a streak flying
-     * to where it lands.
+     * Each stone on its lob with its shadow under it, or a fork's spell flying almost straight off its crown; each
+     * blast as a detonation that spreads as a ring to its edge and darkens as it grows, or a fork's impact; each bolt
+     * that struck as jagged lightning, a Thunderstrike as one great bolt from the sky, and the enemy it hit shocked;
+     * each curse as its rune flying to its enemy, and each spark and soul as a streak flying home.
      */
     public Void visitSplashTower(SplashTower tower) {
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
+        Optional<SpellOrbLook> orb = orbOf(tower.fork());
         for (Stone stone : tower.stonesInFlight()) {
-            this.stone(tower, tier, stone);
+            orb.ifPresentOrElse(look -> this.spellOrb(tower, tier, stone, look), () -> this.stone(tower, tier, stone));
         }
         for (Curse curse : tower.cursesInFlight()) {
-            this.streak(Palette.TOWER_SPLASH_CAST, curse.from(), curse.target().position(),
-                    curse.flight());
+            this.curse(tower, tier, curse);
         }
         for (Wisp wisp : tower.wispsInFlight()) {
             Palette tone = wisp.passive() == Passive.STATIC ? Palette.TOWER_SPLASH_ARC : Palette.TOWER_SPLASH_CAST;
             this.streak(tone, wisp.from(), new Vec2(tower.getX(), tower.getY()), wisp.flight());
         }
+        Optional<SpellBlastLook> spellBlast = spellBlastOf(tower.fork());
         SplashBlastLook look = SplashBlastLook.of(tower.fork());
         for (Blast blast : tower.recentBlasts()) {
-            float progress = (this.gameTime - blast.tick()) / DETONATION_TICKS;
-            if (progress < 1f) {
-                this.detonation((float) blast.at().x(), (float) blast.at().y(), blast.edge(), progress, look);
-            }
+            float x = (float) blast.at().x();
+            float y = (float) blast.at().y();
+            spellBlast.ifPresentOrElse(spell -> {
+                float progress = this.momentProgress(blast.tick(), SPELL_BLAST_TICKS);
+                if (progress < 1f) {
+                    this.draws.add(new SpellBlastDraw(spell, x, y, blast.core(), blast.edge(), progress, this.scale,
+                            blast.tick()));
+                }
+            }, () -> {
+                float progress = (this.gameTime - blast.tick()) / DETONATION_TICKS;
+                if (progress < 1f) {
+                    this.detonation(x, y, blast.edge(), progress, look);
+                }
+            });
         }
         List<Bolt> bolts = tower.recentBolts();
         for (int i = 0; i < bolts.size(); i++) {
-            Bolt bolt = bolts.get(i);
+            this.bolt(bolts.get(i), i);
+        }
+        return null;
+    }
+
+    /** What a fork throws in place of a stone; the bare Burst throws stones. */
+    private static Optional<SpellOrbLook> orbOf(SplashTower.Fork fork) {
+        return switch (fork) {
+            case NONE -> Optional.empty();
+            case STORMCALLER -> Optional.of(SpellOrbLook.BALL_LIGHTNING);
+            case HEXER -> Optional.of(SpellOrbLook.ARCANE_ORB);
+        };
+    }
+
+    private static Optional<SpellBlastLook> spellBlastOf(SplashTower.Fork fork) {
+        return switch (fork) {
+            case NONE -> Optional.empty();
+            case STORMCALLER -> Optional.of(SpellBlastLook.STORM);
+            case HEXER -> Optional.of(SpellBlastLook.HEX);
+        };
+    }
+
+    /** How far a moment of {@code ticks} that began at {@code tick} has run, between the last two ticks. */
+    private float momentProgress(int tick, int ticks) {
+        return (float) ((this.gameTime - tick + this.interpolationAlpha) / ticks);
+    }
+
+    /** A bolt as jagged lightning, a Thunderstrike's from the sky, and the enemy it hit shocked. */
+    private void bolt(Bolt bolt, int order) {
+        if (bolt.kind() == BoltKind.THUNDERSTRIKE) {
+            float progress = this.momentProgress(bolt.tick(), THUNDERBOLT_TICKS);
+            if (progress < 1f) {
+                this.draws.add(new ThunderboltDraw((float) bolt.to().x(), (float) bolt.to().y(), progress, this.scale,
+                        bolt.tick() * 31 + order));
+            }
+        } else {
             float progress = (this.gameTime - bolt.tick()) / DETONATION_TICKS;
             if (progress < 1f) {
                 this.lightning((float) bolt.from().x(), (float) bolt.from().y(), (float) bolt.to().x(),
-                        (float) bolt.to().y(), i, 1f - progress);
+                        (float) bolt.to().y(), order, 1f - progress);
             }
         }
-        return null;
+        float shocked = this.momentProgress(bolt.tick(), SHOCK_TICKS);
+        if (shocked < 1f) {
+            bolt.shocked().ifPresent(enemy -> this.draws.add(new ShockDraw(
+                    EnemyFrameBuilder.bodyOf(enemy, this.interpolationAlpha),
+                    bolt.critical() || bolt.kind() == BoltKind.THUNDERSTRIKE, shocked, bolt.tick() * 7 + order)));
+        }
+    }
+
+    /** The point {@code share} of the way from {@code from} to {@code to}. */
+    private static Vec2 along(Vec2 from, Vec2 to, double share) {
+        return new Vec2(from.x() + (to.x() - from.x()) * share, from.y() + (to.y() - from.y()) * share);
+    }
+
+    /** How high a spell is over the ground {@code share} of its way: from its launch onto its landing, bowing a little. */
+    private float orbLift(float launch, double share) {
+        return (float) (launch * (1 - share) + ORB_BOW_CELLS * this.scale * 4 * share * (1 - share));
+    }
+
+    /**
+     * A fork's spell over its point on the ground, leaving the crown of its tower and flying almost straight to where
+     * its stone would land, its tail bending with it.
+     */
+    private void spellOrb(SplashTower tower, int tier, Stone stone, SpellOrbLook look) {
+        double flown = this.flown(stone.flight());
+        Vec2 from = new Vec2(tower.getX(), tower.getY());
+        float launch = this.crownHeight(tower, tier);
+        Vec2 at = along(from, stone.to(), flown);
+        double length = Math.hypot(stone.to().x() - from.x(), stone.to().y() - from.y());
+        List<ShellTrail.Point> points = this.tail(length, flown, share -> {
+            Vec2 point = along(from, stone.to(), share);
+            return new ShellTrail.Point((float) point.x(), (float) (point.y() - this.orbLift(launch, share)));
+        });
+        TrailLook trail = look == SpellOrbLook.BALL_LIGHTNING ? TrailLook.STORM : TrailLook.ARCANE;
+        this.draws.add(new SpellOrbDraw(look, (float) at.x(), (float) at.y(), this.orbLift(launch, flown),
+                ORB_CELLS * this.scale, new ShellTrail(trail, SPELL_TRAIL_WIDTH, points, this.gameTime),
+                (float) this.animationSeconds));
+    }
+
+    /** How high over its centre on the ground a tower's crowning ball is, in pixels. */
+    private float crownHeight(SplashTower tower, int tier) {
+        return tower.getY() - TowerSprites.crown(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
+                TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale).y;
+    }
+
+    /**
+     * The points of a tail behind a shot {@code flown} of a way {@code length} pixels long, from its head back, each
+     * where {@code at} puts that share of the way; never longer than the way flown.
+     */
+    private List<ShellTrail.Point> tail(double length, double flown, DoubleFunction<ShellTrail.Point> at) {
+        double reach = length > 0 ? Math.min(flown, SPELL_TRAIL_CELLS * this.scale / length) : 0;
+        List<ShellTrail.Point> points = new ArrayList<>(SPELL_TRAIL_POINTS);
+        for (int i = 0; i < SPELL_TRAIL_POINTS; i++) {
+            points.add(at.apply(flown - reach * i / (SPELL_TRAIL_POINTS - 1)));
+        }
+        return List.copyOf(points);
+    }
+
+    /**
+     * A curse as its rune flying to the enemy it curses, floating over the heads it passes: a cast leaves the crown of
+     * its tower, one that forked or jumped leaves from where it was.
+     */
+    private void curse(SplashTower tower, int tier, Curse curse) {
+        EnemyFrameBuilder.runeFor(curse.kind()).ifPresent(glyph -> {
+            double flown = this.flown(curse.flight());
+            Vec2 from = curse.from();
+            Vec2 to = curse.target().position();
+            float hover = CURSE_HOVER_CELLS * this.scale;
+            boolean cast = Math.hypot(from.x() - tower.getX(), from.y() - tower.getY()) < 1;
+            float launch = cast ? this.crownHeight(tower, tier) : hover;
+            DoubleFunction<ShellTrail.Point> at = share -> {
+                Vec2 point = along(from, to, share);
+                return new ShellTrail.Point((float) point.x(),
+                        (float) (point.y() - (launch * (1 - share) + hover * share)));
+            };
+            ShellTrail.Point head = at.apply(flown);
+            List<ShellTrail.Point> points = this.tail(Math.hypot(to.x() - from.x(), to.y() - from.y()), flown, at);
+            TrailLook trail = switch (glyph) {
+                case DOOM -> TrailLook.DOOM;
+                case BLIGHT -> TrailLook.BLIGHT;
+                case BACKLASH -> TrailLook.BACKLASH;
+            };
+            this.draws.add(new CurseDraw(glyph, head.x(), head.y(), CURSE_CELLS * this.scale,
+                    new ShellTrail(trail, SPELL_TRAIL_WIDTH, points, this.gameTime), (float) this.animationSeconds));
+        });
     }
 
     /** How far along its way something flying is now, between the last two ticks. */
@@ -429,7 +584,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         float peak = ProjectileFrameBuilder.lobPeak(Math.hypot(stone.to().x() - tower.getX(),
                 stone.to().y() - tower.getY()) / this.scale, this.scale);
         float lift = ProjectileFrameBuilder.lobLift(launch, peak, flown);
-        Palette tone = stone.charged() ? Palette.TOWER_SPLASH_ARC : Palette.PROJECTILE_CANNONBALL;
+        Palette tone = stone.charged() ? Palette.TOWER_SPLASH_ARC : Palette.TOWER_SPLASH_STONE;
         this.draws.add(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(flown), STONE_SIZE, x,
                 y - lift, Optional.empty(), Optional.empty()));
     }

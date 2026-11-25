@@ -38,6 +38,8 @@ import java.util.function.Consumer;
 final class TowerSprites {
 
     private static final double LIFT = TowerFoundations.LIFT;
+    /** How far below a look's very top its crowning ball's middle is, in cells. */
+    private static final double CROWN_DROP = 0.05;
     /** The lit rim along a part's top-left edge, in cells. */
     private static final double RIM = 0.024;
     /** A head turns in this many steps; between two of them it reuses the nearer picture. */
@@ -232,6 +234,12 @@ final class TowerSprites {
         return new Point2D.Float((float) (centerX + Math.cos(heading) * foundation.muzzle() * scale),
                 (float) (centerY + Math.sin(heading) * foundation.muzzle() * scale
                         - LIFT * foundation.muzzleHeight() * scale));
+    }
+
+    /** The top of {@code look} in {@code pose}, in board pixels: where a spell leaves a coil's or an orb's ball. */
+    static Point2D.Float crown(TowerLook look, int tier, TowerPose pose, float centerX, float centerY, int scale) {
+        TowerFoundations.Foundation foundation = TowerFoundations.of(look, tier, pose);
+        return new Point2D.Float(centerX, (float) (centerY - LIFT * (foundation.top() - CROWN_DROP) * scale));
     }
 
     /** The centre of the ring a nest circles on round {@code look} in {@code pose}, in board pixels: its top. */

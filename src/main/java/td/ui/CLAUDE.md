@@ -86,7 +86,9 @@ keeps the seam honest.
   them again and explain every sheet that changed.
 - A lobbed shot's position is its point on the ground; how high it is drawn comes from the one arc in
   `ProjectileFrameBuilder`, never from the shot or its tower. The arc starts at the shot's launch height (a stone at
-  the arm that threw it, a shell at the muzzle's one constant height) and climbs by its length on the ground.
+  the arm that threw it, a shell at the muzzle's one constant height) and climbs by its length on the ground. A
+  spellcasting Burst's spell is no lob: it leaves its tower's crown (`TowerSprites.crown`) on a near-flat line, and a
+  curse floats over the heads it passes; both trail a `ShellTrail` and are painted by `SpellArt`.
 
 ## Two clocks
 

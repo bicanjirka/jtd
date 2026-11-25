@@ -1,11 +1,11 @@
 package td.ui.render;
 
-/** The rune a hex is drawn as over the enemy carrying it: its shape says what the hex does. */
+/** The rune a hex is drawn as, over the enemy carrying it and at the head of its curse: its shape says what it does. */
 public enum HexGlyph {
-    /** An hourglass: the damage it stores runs out on the enemy when the time is up. */
+    /** A skull: when it ends, death comes due. */
     DOOM,
-    /** A drop: poison. */
+    /** A poison drop: it poisons and slows. */
     BLIGHT,
-    /** A triangle turned on its head: what helps it hurts it. */
+    /** A broken heart: what would mend it hurts it. */
     BACKLASH
 }

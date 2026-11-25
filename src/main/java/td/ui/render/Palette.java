@@ -41,6 +41,7 @@ public enum Palette {
     TOWER_SPLASH_DETONATION_DARK,
     /** The Stormcaller's arcs. */
     TOWER_SPLASH_ARC,
+    TOWER_SPLASH_STONE,
     /** The Stormcaller's shot, in the colour of its body... */
     TOWER_STORMCALLER_FLASH,
     TOWER_STORMCALLER_DETONATION,

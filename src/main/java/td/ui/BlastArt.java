@@ -6,6 +6,7 @@ import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyDraw;
 import td.ui.render.EnemyEmissionDraw;
 import td.ui.render.EnemyFadeDraw;
+import td.ui.render.Palette;
 import td.ui.render.ShellTrail;
 import td.ui.render.TrailLook;
 
@@ -733,7 +734,18 @@ final class BlastArt {
             case CRYO -> new TrailTones(CRYO_GLOW, CRYO_GLOW, Color.WHITE);
             case FLARE -> new TrailTones(FLARE_GLOW, FLARE_GLOW, new Color(0xfffbe0));
             case NUKE -> new TrailTones(NUKE_GLOW, new Color(0xe8f4b0), WHITE_HOT);
+            case STORM -> new TrailTones(SpellArt.STORM_GLOW, SpellArt.STORM_BODY, Color.WHITE);
+            case ARCANE -> new TrailTones(SpellArt.ARCANE_GLOW, SpellArt.ARCANE_BODY, SpellArt.ARCANE_HOT);
+            case DOOM -> hexTones(Palette.STATUS_MARKER_DOOM);
+            case BLIGHT -> hexTones(Palette.STATUS_MARKER_BLIGHT);
+            case BACKLASH -> hexTones(Palette.STATUS_MARKER_BACKLASH);
         };
+    }
+
+    /** A curse's tail: its hex's colour, white at its head. */
+    private static TrailTones hexTones(Palette hex) {
+        Color color = Java2DFrameRenderer.colorFor(hex);
+        return new TrailTones(color, mix(color, Color.WHITE, 0.3), mix(color, Color.WHITE, 0.8));
     }
 
     /**
@@ -758,7 +770,7 @@ final class BlastArt {
                 case TAR -> smoke(g2, point, r, s, 0.2, TAR_SMOKE, 0.55);
                 case CRYO -> smoke(g2, point, r, s, 0.3, Color.WHITE, 0.25);
                 case FLARE -> smoke(g2, point, r, s, 0.4, FLARE_SMOKE, 0.35);
-                case NUKE -> {
+                case NUKE, STORM, ARCANE, DOOM, BLIGHT, BACKLASH -> {
                 }
             }
         }
@@ -786,6 +798,11 @@ final class BlastArt {
                 case FLARE -> flat(g2, point.x() + dx, point.y() + fall, r * 0.24, FLARE_SPARK, 1 - s);
                 case TAR -> glob(g2, point.x() + dx * 0.5, point.y() + fall, r * 0.28, 1 - s);
                 case NAPALM -> flat(g2, point.x() + dx, point.y() + fall * 0.6, r * 0.2, YELLOW_FIRE, 1 - s);
+                case STORM -> glint(g2, point.x() + dx * 1.4, point.y() + (hash(seed, 20 + k) - 0.5) * r * 2.8,
+                        r * 0.9 * (1 - s), tones.body(), 1 - s);
+                case ARCANE, DOOM, BACKLASH -> glint(g2, point.x() + dx, point.y() - fall * 0.5,
+                        r * 0.7 * (1 - s), tones.hot(), 1 - s);
+                case BLIGHT -> flat(g2, point.x() + dx * 0.5, point.y() + fall, r * 0.26, tones.body(), 1 - s);
                 case NUKE -> {
                 }
             }

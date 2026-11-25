@@ -103,8 +103,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     static final int EFFECT_PULSE_DURATION_TICKS = MomentLength.SHORT.ticks();
     /** Runes sit in a row over the body; their size is fixed. */
     private static final float RUNE_ROW_OFFSET_FRACTION = 0.6f;
-    private static final float RUNE_FIXED_SCALE = 4f;
-    private static final float RUNE_SPACING = 11f;
+    private static final float RUNE_FIXED_SCALE = 5.5f;
+    private static final float RUNE_SPACING = 19f;
     /** Toll's ring has a segment for each stack a plain field builds, just outside the selection ring. */
     private static final int TOLL_SEGMENTS = 5;
     private static final float TOLL_RING_MARGIN = 2f;
@@ -600,7 +600,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                 .toList();
         float left = x - RUNE_SPACING * (glyphs.size() - 1) / 2f;
         for (int i = 0; i < glyphs.size(); i++) {
-            this.markDraws.add(new HexRuneDraw(glyphs.get(i), left + RUNE_SPACING * i, y, RUNE_FIXED_SCALE));
+            this.markDraws.add(new HexRuneDraw(glyphs.get(i), left + RUNE_SPACING * i, y, RUNE_FIXED_SCALE,
+                    this.animationSeconds));
         }
     }
 
@@ -639,6 +640,20 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     static float fadeProgress(Rank rank, int ticksSinceDeath) {
         int alpha = 255 - (ticksSinceDeath * (255 / (fadeDurationTicks(rank) + 1)));
         return 1f - (Math.clamp(alpha, 0, 255) / 255f);
+    }
+
+    /**
+     * {@code enemy}'s body as it stands between the last two ticks, for what is drawn over it from elsewhere; a hidden
+     * enemy's is fully cloaked, so it gives nothing away.
+     */
+    static EnemyBodyDraw bodyOf(EnemyMob enemy, double interpolationAlpha) {
+        return enemy.accept(mob -> {
+            boolean dead = mob.isDead();
+            float x = dead ? (float) mob.getX() : lerp(mob.getPrevX(), mob.getX(), interpolationAlpha);
+            float y = dead ? (float) mob.getY() : lerp(mob.getPrevY(), mob.getY(), interpolationAlpha);
+            return new EnemyBodyDraw(lookFor(mob.archetype()), x, y, mob.getFacingRadians(), mob.getDrawScale(),
+                    mob.isHidden() ? 1f : 0f);
+        });
     }
 
     public Void visitDefined(DefinedEnemyMob mob) {
