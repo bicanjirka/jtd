@@ -132,7 +132,6 @@ class SheetPaneTest {
 
         for (int i = 0; i < slots.size(); i++) {
             Point centre = new Point(row.x + run.layout().left(i) + slot / 2, row.y + slot / 2);
-            System.out.println("DBG " + centre + " model " + pane.viewToModel2D(centre) + " row " + row + " len " + pane.getDocument().getLength() + " " + pane.hoverAt(centre));
 
             assertThat(pane.hoverAt(centre)).as("shell %d", i).map(HoverTarget::key)
                     .contains(slots.get(i).tooltip().orElseThrow().key());
