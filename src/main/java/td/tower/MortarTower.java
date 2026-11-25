@@ -2,6 +2,7 @@ package td.tower;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -96,7 +97,8 @@ public final class MortarTower extends AbstractTower {
     public static final float SHELL_SPEED = 6.4f;
 
     private static final float MINIMUM_RANGE_CELLS = 1.5f;
-    private static final float HEAVY_TIMES = 1.75f;
+    /** What a Heavy shell deals past a Normal one, in points. */
+    private static final float HEAVY_POINTS = 24f;
     /** A rate below this counts as it, so a stalled tower's reload is long rather than endless. */
     private static final double MINIMUM_RATE = 1e-3;
     /** A shot every 3.5 s. */
@@ -109,7 +111,7 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeNode HEAVY_CHARGE = UpgradeNode.of("mortar.heavy_charge", "Heavy Charge", 5)
             .withModifiers(TowerModifiers.damage(12f));
     private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 5)
-            .withModifiers(TowerModifiers.heavyMultiplier(HEAVY_TIMES * 0.25f));
+            .withModifiers(TowerModifiers.heavyDamage(14f));
     private static final UpgradeNode CRACKING_SHELLS = UpgradeNode.of("mortar.cracking_shells", "Cracking Shells", 5);
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 5)
             .withTargeting(TargetPriority.MOST_NEIGHBOURS);
@@ -137,10 +139,10 @@ public final class MortarTower extends AbstractTower {
             .withModifiers(TowerModifiers.range(1.6f))
             .inTier(2);
     private static final UpgradeNode OVERCHARGE = UpgradeNode.of("mortar.overcharge", "Overcharge", 25)
-            .withModifiers(TowerModifiers.heavyMultiplier(2f))
+            .withModifiers(TowerModifiers.heavyDamage(64f))
             .inTier(2);
     private static final UpgradeNode BIG_BORE_2 = UpgradeNode.of("mortar.big_bore_2", "Big Bore II", 20)
-            .withModifiers(TowerModifiers.heavyMultiplier(HEAVY_TIMES * 0.75f))
+            .withModifiers(TowerModifiers.heavyDamage(42f))
             .inTier(2);
     private static final UpgradeNode THICK_MIX = UpgradeNode.of("mortar.thick_mix", "Thick Mix", 20)
             .withRequires(A_PAYLOAD)
@@ -250,7 +252,7 @@ public final class MortarTower extends AbstractTower {
         super(TowerFactory.Type.MORTAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .with(TowerStat.AREA_RADIUS, CORE_CELLS).with(TowerStat.BLAST_EDGE, EDGE_CELLS)
                 .with(TowerStat.PROJECTILE_SPEED, 1f).with(TowerStat.PROJECTILE_SIZE, 1f)
-                .with(TowerStat.MINIMUM_RANGE, MINIMUM_RANGE_CELLS).with(TowerStat.HEAVY_MULTIPLIER, HEAVY_TIMES),
+                .with(TowerStat.MINIMUM_RANGE, MINIMUM_RANGE_CELLS).with(TowerStat.HEAVY_DAMAGE, DamageUnits.ofPoints(HEAVY_POINTS)),
                 context, x, y);
     }
 
@@ -438,7 +440,7 @@ public final class MortarTower extends AbstractTower {
         ShellKind kind = shell.kind();
         TowerStats stats = shell.stats();
         BlastRadii blast = this.blastOf(shell, spec);
-        float damage = stats.damage() * kind.damageFactor(stats.value(TowerStat.HEAVY_MULTIPLIER));
+        int damage = kind.damage(stats.damage(), stats.value(TowerStat.HEAVY_DAMAGE));
         float core2 = blast.core() * blast.core();
         for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(x), (int) Math.round(y), blast.edge())
                 .matching(this.context.enemies())) {
@@ -454,10 +456,10 @@ public final class MortarTower extends AbstractTower {
             this.report(enemy, HitKind.BLAST, hit.critical(), enemy.isDead());
             this.crack(enemy, spec);
             if (kind == ShellKind.NORMAL) {
-                this.carryPayload(enemy, spec, stats);
+                this.carryPayload(enemy, spec);
             }
             if (kind == ShellKind.HEAVY) {
-                this.rideHeavy(enemy, spec.heavy(), inCore, Math.round(damage * ShrapnelMechanic.SHARE_PER_CELL), stats);
+                this.rideHeavy(enemy, spec.heavy(), inCore, stats);
             }
         }
         boolean fragments = kind == ShellKind.HEAVY && spec.heavy() == HeavyRider.SHRAPNEL;
@@ -467,10 +469,10 @@ public final class MortarTower extends AbstractTower {
     }
 
     /** With Thick Mix, a Normal's blast puts a share of a pulse of the payload's ground on what it reaches. */
-    private void carryPayload(EnemyMob enemy, MortarSpec spec, TowerStats stats) {
+    private void carryPayload(EnemyMob enemy, MortarSpec spec) {
         float share = spec.payload().normalsCarry();
         carriedPayload(spec).flatMap(ShellKind::ground)
-                .ifPresent(ground -> ZoneEffects.touch(ground.kind(), Math.round(groundStrength(stats, ground) * share),
+                .ifPresent(ground -> ZoneEffects.touch(ground.kind(), Math.round(ground.pulse() * share),
                         this.zoneOwner, enemy));
     }
 
@@ -489,8 +491,8 @@ public final class MortarTower extends AbstractTower {
         this.applyEffect(enemy, sink -> Effect.cracked(spec.crackStacks(), CRACKED_TICKS, sink));
     }
 
-    /** What a Heavy's pick puts on an enemy its blast reached: a Daze by zone, or a Bleed by the shell's damage. */
-    private void rideHeavy(EnemyMob enemy, HeavyRider rider, boolean inCore, int bleedPerCell, TowerStats stats) {
+    /** What a Heavy's pick puts on an enemy its blast reached: a Daze by zone, or a Bleed. */
+    private void rideHeavy(EnemyMob enemy, HeavyRider rider, boolean inCore, TowerStats stats) {
         switch (rider) {
             case NONE -> {
             }
@@ -500,7 +502,7 @@ public final class MortarTower extends AbstractTower {
             }
             case SHRAPNEL -> {
                 AttackProfile bleed = stats.attack().pastArmorAndPlating().asPeriodic();
-                this.applyEffect(enemy, _ -> Effect.bleeding(bleedPerCell, ShrapnelMechanic.BLEED_TICKS,
+                this.applyEffect(enemy, _ -> Effect.bleeding(DamageUnits.ofPoints(ShrapnelMechanic.POINTS_PER_CELL), ShrapnelMechanic.BLEED_TICKS,
                         bled -> this.dealDamage(enemy, bled, bleed)));
             }
         }
@@ -515,18 +517,13 @@ public final class MortarTower extends AbstractTower {
                     : (ground.radiusCells() + (payload ? spec.payload().extraCells() : 0f)) * this.cellPixels();
             int lifetime = ground.lastsTheWave() ? Zone.UNTIL_WAVE_END
                     : this.lengthened(ground.lifetimeTicks() + (payload ? spec.payload().extraTicks() : 0));
-            Zone zone = new Zone(ground.kind(), x, y, radius, lifetime, groundStrength(shell.stats(), ground),
+            Zone zone = new Zone(ground.kind(), x, y, radius, lifetime, ground.pulse(),
                     this.zoneOwner);
             this.context.zones().add(zone);
             if (kind == ShellKind.FLARE) {
                 this.keepNewestFlares(zone);
             }
         });
-    }
-
-    /** What each pulse of {@code ground} adds to a burn or a poison, for a shell fired with {@code stats}. */
-    private static int groundStrength(TowerStats stats, ShellKind.Ground ground) {
-        return Math.round(stats.damage() * ground.damageShare());
     }
 
     private void keepNewestFlares(Zone flare) {
@@ -633,7 +630,7 @@ public final class MortarTower extends AbstractTower {
         Shell shell = new Shell(kind, stats);
         BlastRadii radii = this.blastOf(shell, spec);
         float cell = this.cellPixels();
-        int damage = Math.round(stats.damage() * kind.damageFactor(stats.value(TowerStat.HEAVY_MULTIPLIER)));
+        int damage = kind.damage(stats.damage(), stats.value(TowerStat.HEAVY_DAMAGE));
         Set<EffectKind> applies = EnumSet.noneOf(EffectKind.class);
         if (spec.crackStacks() > 0) {
             applies.add(EffectKind.CRACKED);
@@ -650,8 +647,8 @@ public final class MortarTower extends AbstractTower {
                 new ShellProfile.Blast(radii.core() / cell, radii.edge() / cell, radii.edgeShare(), List.copyOf(applies)));
         ShellProfile carrying = kind == ShellKind.NORMAL ? carriedPayload(spec).map(profile::withCarried).orElse(profile)
                 : profile;
-        return kind.ground().filter(ground -> ground.damageShare() > 0f)
-                .map(ground -> carrying.withGroundPulse(Damage.magic(groundStrength(stats, ground))))
+        return kind.ground().filter(ground -> ground.pulsePoints() > 0f)
+                .map(ground -> carrying.withGroundPulse(Damage.magic(ground.pulse())))
                 .orElse(carrying);
     }
 

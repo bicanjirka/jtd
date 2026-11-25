@@ -9,11 +9,11 @@ import td.util.TickRate;
 
 import java.util.Set;
 
-/** Shrapnel: a Heavy shell makes everything its blast reaches Bleed, a share of the shell's damage a cell. */
+/** Shrapnel: a Heavy shell makes everything its blast reaches Bleed, so many points a cell. */
 public final class ShrapnelMechanic implements MortarMechanic {
 
-    /** What a Bleed costs a cell walked, a share of the shell's damage. */
-    public static final float SHARE_PER_CELL = 0.05f;
+    /** What a Bleed costs a cell walked, in points. */
+    public static final float POINTS_PER_CELL = 2.8f;
     public static final int BLEED_TICKS = Math.round(4 * TickRate.TICKS_PER_SECOND);
 
     @Override
@@ -29,8 +29,8 @@ public final class ShrapnelMechanic implements MortarMechanic {
     @Override
     public TermText describe() {
         return TermText.of("a ").plus(TowerTerm.HEAVY_SHELL).plus(" shell applies ").plus(EffectKind.BLEEDING)
-                .plus(" to every enemy its blast reaches: " + TermNumbers.percent(SHARE_PER_CELL)
-                        + " of the shell's damage a cell for "
+                .plus(" to every enemy its blast reaches: " + TermNumbers.number(POINTS_PER_CELL)
+                        + " damage a cell for "
                         + TermNumbers.seconds(BLEED_TICKS / TickRate.TICKS_PER_SECOND));
     }
 }

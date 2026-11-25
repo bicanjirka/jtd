@@ -9,7 +9,7 @@ public enum HeavyRider {
     NONE,
     /** Daze, longer in its full-damage zone than at its edge. */
     CONCUSSION,
-    /** Bleed, a share of the shell's damage for every cell walked. */
+    /** Bleed, so many points for every cell walked. */
     SHRAPNEL;
 
     /** The effect it puts on what a Heavy's blast reaches. */

@@ -103,8 +103,8 @@ public final class TowerModifiers {
         return flat(TowerStat.PROJECTILE_SIZE, fraction);
     }
 
-    public static StatModifiers<TowerStat> heavyMultiplier(float fraction) {
-        return flat(TowerStat.HEAVY_MULTIPLIER, fraction);
+    public static StatModifiers<TowerStat> heavyDamage(float points) {
+        return flat(TowerStat.HEAVY_DAMAGE, DamageUnits.ofPoints(points));
     }
 
     /** The cone {@code factor} times as wide, after every flat and percent bonus. */

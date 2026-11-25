@@ -80,7 +80,7 @@ final class StatLooks {
             case CONE_WIDTH -> StatLook.plain(Glyph.WEDGE);
             case DAMAGE -> StatLook.plain(Glyph.DOT);
             case ATTACK_SPEED -> StatLook.plain(Glyph.CHEVRON);
-            case HEAVY_MULTIPLIER -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
+            case HEAVY_DAMAGE -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
             case STREAM -> StatLook.face(TermLooks.faceOf(TowerTerm.STREAM));
             case RELOAD -> StatLook.plain(Glyph.FILLED_DIAMOND);
             case CRIT_CHANCE, CRIT_MULTIPLIER -> StatLook.toned(Glyph.SPARK, Palette.CRIT_SPARK);

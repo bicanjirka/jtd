@@ -36,7 +36,8 @@ public enum TowerStat implements StatKey, StatTerm {
     /** Attacks per second are the base rate times {@code 1 + attack speed}. */
     ATTACK_SPEED(0f, -0.75f, 9f, StatUnit.SIGNED_PERCENT, "Fire rate", "Fire rate", StatDirection.HIGHER,
             StatGroup.DAMAGE, Shows.IN_CORE_ROW, true),
-    HEAVY_MULTIPLIER(0f, 0f, Float.MAX_VALUE, StatUnit.PERCENT, "Heavy dmg", "Heavy damage",
+    /** What a Heavy shell deals past a Normal one, in hundredths of a point. */
+    HEAVY_DAMAGE(0f, 0f, Float.MAX_VALUE, StatUnit.DAMAGE_PER_HIT, "Heavy dmg", "Heavy damage",
             StatDirection.HIGHER, StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
     /** How long a stream pours. */
     STREAM(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Stream", "Stream", StatDirection.HIGHER, StatGroup.DAMAGE,
@@ -194,7 +195,7 @@ public enum TowerStat implements StatKey, StatTerm {
             case ATTACK_SPEED -> TermText.of("how often it attacks");
             case STREAM -> TermText.format("how long it pours before it reloads: {}", TowerTerm.STREAM);
             case RELOAD -> TermText.of("how long it waits after a stream before the next; attack speed shortens it");
-            case HEAVY_MULTIPLIER -> TermText.format("what a {} deals, as a share of a Normal shell", TowerTerm.HEAVY_SHELL);
+            case HEAVY_DAMAGE -> TermText.format("what a {} deals past a Normal shell", TowerTerm.HEAVY_SHELL);
             case CRIT_CHANCE -> TermText.of("the chance a hit crits");
             case CRIT_MULTIPLIER -> TermText.of("what a crit deals, as a share of a normal hit");
             case AIM_STACKS -> TermText.format("how many stacks of {} it can hold", TowerTerm.STEADY_AIM);

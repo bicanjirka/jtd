@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.damage.Delivery;
 import td.effect.DamageSink;
 import td.effect.Effect;
@@ -307,7 +308,7 @@ class MortarTowerTest {
     }
 
     @Test
-    void aHeavyShellHitsByItsMultiplierInANormalBlastAndFliesSlower() {
+    void aHeavyShellHitsForANormalsDamageAndItsOwnInANormalBlastAndFliesSlower() {
         MortarTower tower = this.loaded(List.of(ShellKind.HEAVY));
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
@@ -318,17 +319,17 @@ class MortarTowerTest {
 
         assertThat(speed).isLessThan(MortarTower.SHELL_SPEED);
         assertThat(target.onlyHitAmount()).isEqualTo(
-                Math.round(tower.damageCurrent() * tower.stats().value(TowerStat.HEAVY_MULTIPLIER)));
+                Math.round(tower.damageCurrent() + tower.stats().value(TowerStat.HEAVY_DAMAGE)));
     }
 
     @Test
-    void aHigherHeavyMultiplierMakesAHeavyHitHarder() {
+    void moreHeavyDamageMakesAHeavyHitHarder() {
         MortarTower plain = this.loaded(List.of(ShellKind.HEAVY));
         FakeEnemyMob plainTarget = this.enemyAt(plain, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{plainTarget});
         this.landAShell(plain);
         MortarTower charged = TowerFixtures.buffed(this.loaded(List.of(ShellKind.HEAVY)), this.context,
-                TowerModifiers.heavyMultiplier(1f));
+                TowerModifiers.heavyDamage(10f));
         FakeEnemyMob chargedTarget = this.enemyAt(charged, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{chargedTarget});
 
@@ -393,7 +394,7 @@ class MortarTowerTest {
     }
 
     @Test
-    void aNapalmShellBlastsForMagicAtLessDamageAndItsGroundSetsEnemiesAlight() {
+    void aNapalmShellBlastsForMagicAndItsGroundSetsEnemiesAlight() {
         MortarTower tower = this.loaded(List.of(ShellKind.NAPALM), "Napalm");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
@@ -403,7 +404,7 @@ class MortarTowerTest {
 
         assertThat(target.hits().getFirst().type()).isEqualTo(DamageType.MAGIC);
         assertThat(target.hits().getFirst().amount())
-                .isEqualTo(Math.round(tower.damageCurrent() * ShellKind.PAYLOAD_DAMAGE_SHARE));
+                .isEqualTo(Math.round(tower.damageCurrent() + DamageUnits.ofPoints(ShellKind.NAPALM.extraPoints())));
         assertThat(this.zoneKinds()).containsExactly(ZoneKind.BURNING_GROUND);
         assertThat(target.activeEffectKinds()).contains(EffectKind.BURN);
     }
@@ -482,7 +483,7 @@ class MortarTowerTest {
         this.landAShell(tower);
         this.context.zones().doTick(1);
 
-        int twoHeavies = Math.round(2 * tower.damageCurrent() * tower.stats().value(TowerStat.HEAVY_MULTIPLIER));
+        int twoHeavies = Math.round(2 * (tower.damageCurrent() + tower.stats().value(TowerStat.HEAVY_DAMAGE)));
         assertThat(target.hits().getFirst().amount()).isEqualTo(twoHeavies);
         assertThat(pastANormalCore.hits().getFirst().amount()).isEqualTo(twoHeavies);
         assertThat(this.zoneKinds()).containsExactly(ZoneKind.FALLOUT);
@@ -563,21 +564,41 @@ class MortarTowerTest {
 
         ShellProfile heavy = profiles.get(ShellKind.HEAVY);
         ShellProfile normal = profiles.get(ShellKind.NORMAL);
-        assertThat(heavy.hit().amount()).isEqualTo(Math.round(stats.damage() * stats.value(TowerStat.HEAVY_MULTIPLIER)));
+        assertThat(heavy.hit().amount()).isEqualTo(Math.round(stats.damage() + stats.value(TowerStat.HEAVY_DAMAGE)));
         assertThat(heavy.blast().applies()).containsExactly(EffectKind.DAZED, EffectKind.CRACKED);
         assertThat(normal.blast().applies()).containsExactly(EffectKind.CRACKED);
         assertThat(heavy.cellsPerSecond()).isLessThan(normal.cellsPerSecond());
     }
 
     @Test
-    void aPayloadsProfileSaysWhatEachPulseOfItsGroundDealsAsItsShareOfTheMortarsDamage() {
+    void aPayloadsProfileSaysWhatEachPulseOfItsGroundDeals() {
         MortarTower tower = this.towerWith("Napalm");
         ShellKind.Ground ground = ShellKind.NAPALM.ground().orElseThrow();
 
         ShellProfile napalm = tower.shellProfiles().stream().filter(profile -> profile.kind() == ShellKind.NAPALM)
                 .findFirst().orElseThrow();
 
-        assertThat(napalm.groundPulse()).hasValue(Damage.magic(Math.round(tower.stats().damage() * ground.damageShare())));
+        assertThat(napalm.groundPulse()).hasValue(Damage.magic(ground.pulse()));
+    }
+
+    @Test
+    void moreDamageMakesEveryKindOfShellHitHarderByTheSamePointsAndANukeByTwice() {
+        MortarTower plain = this.towerWith("Napalm", "Fusion");
+        MortarTower buffed = TowerFixtures.buffed(this.towerWith("Napalm", "Fusion"), this.context,
+                TowerModifiers.damage(10f));
+
+        Map<ShellKind, Integer> plainHits = hitsByKind(plain);
+        Map<ShellKind, Integer> buffedHits = hitsByKind(buffed);
+
+        int more = DamageUnits.ofPoints(10f);
+        assertThat(plainHits).containsKeys(ShellKind.NORMAL, ShellKind.HEAVY, ShellKind.NAPALM, ShellKind.NUKE);
+        plainHits.forEach((kind, hit) -> assertThat(buffedHits.get(kind))
+                .as(kind.name()).isEqualTo(hit + (kind == ShellKind.NUKE ? 2 * more : more)));
+    }
+
+    private static Map<ShellKind, Integer> hitsByKind(MortarTower tower) {
+        return tower.shellProfiles().stream()
+                .collect(Collectors.toMap(ShellProfile::kind, profile -> profile.hit().amount()));
     }
 
     @Test

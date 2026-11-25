@@ -1,6 +1,7 @@
 package td.tower.mortar;
 
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.effect.EffectKind;
 import td.projectile.ShellLook;
 import td.term.TermNumbers;
@@ -15,37 +16,39 @@ import java.util.Set;
 
 /**
  * One kind of shell in the Mortar's magazine: how it looks, how hard and how wide it hits against a Normal shell, how
- * fast it flies, and the ground it leaves where it lands.
+ * fast it flies, and the ground it leaves where it lands. Every kind hits for the Mortar's damage, a Normal shell's,
+ * plus points of its own, so whatever raises a Normal raises every kind alike.
  */
 public enum ShellKind {
-    NORMAL(ShellLook.NORMAL, DamageType.PHYSICAL, Blast.NORMAL, 1f, Optional.empty()),
-    /** Its damage is the Mortar's Heavy multiplier, a stat. */
-    HEAVY(ShellLook.HEAVY, DamageType.PHYSICAL, Blast.NORMAL, 0.75f, Optional.empty()),
+    NORMAL(ShellLook.NORMAL, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1f, Optional.empty()),
+    /** What it deals past a Normal is the Mortar's Heavy damage, a stat. */
+    HEAVY(ShellLook.HEAVY, DamageType.PHYSICAL, 0f, Blast.NORMAL, 0.75f, Optional.empty()),
     /** Two Heavies fused: their damage together, a blast of its own, and fallout over most of it. */
-    NUKE(ShellLook.NUKE, DamageType.PHYSICAL, new Blast(1f, 1f, 0.75f), 0.75f,
-            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 0.6f))),
+    NUKE(ShellLook.NUKE, DamageType.PHYSICAL, 0f, new Blast(1f, 1f, 0.75f), 0.75f,
+            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 19.2f))),
     /** The Mortar's one way to deal magic: its blast burns, and the ground where it lands too. */
-    NAPALM(ShellLook.NAPALM, DamageType.MAGIC, Blast.NORMAL, 1.25f,
-            Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 1f))),
-    TAR(ShellLook.TAR, DamageType.PHYSICAL, Blast.NORMAL, 1.25f, Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 0.45f))),
-    CRYO(ShellLook.CRYO, DamageType.PHYSICAL, Blast.NORMAL, 1.25f,
+    NAPALM(ShellLook.NAPALM, DamageType.MAGIC, 0f, Blast.NORMAL, 1.25f,
+            Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 32f))),
+    TAR(ShellLook.TAR, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1.25f,
+            Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 14.4f))),
+    CRYO(ShellLook.CRYO, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1.25f,
             Optional.of(Ground.fixed(ZoneKind.FROST_GROUND, 1.6f, 100, 0f))),
     /** A small blast with no edge, and a flare that burns until the wave is over. */
-    FLARE(ShellLook.FLARE, DamageType.PHYSICAL, new Blast(-0.25f, -1f, 0f), 1.25f,
+    FLARE(ShellLook.FLARE, DamageType.PHYSICAL, 0f, new Blast(-0.25f, -1f, 0f), 1.25f,
             Optional.of(Ground.fixed(ZoneKind.FLARE, 1.5f, Zone.UNTIL_WAVE_END, 0f)));
-
-    /** What a payload shell deals, a share of a Normal one's damage. */
-    public static final float PAYLOAD_DAMAGE_SHARE = 0.5f;
 
     private final ShellLook look;
     private final DamageType damageType;
+    private final float extraPoints;
     private final Blast blast;
     private final float speedFactor;
     private final Optional<Ground> ground;
 
-    ShellKind(ShellLook look, DamageType damageType, Blast blast, float speedFactor, Optional<Ground> ground) {
+    ShellKind(ShellLook look, DamageType damageType, float extraPoints, Blast blast, float speedFactor,
+            Optional<Ground> ground) {
         this.look = look;
         this.damageType = damageType;
+        this.extraPoints = extraPoints;
         this.blast = blast;
         this.speedFactor = speedFactor;
         this.ground = ground;
@@ -78,16 +81,27 @@ public enum ShellKind {
         return this == NAPALM || this == TAR || this == CRYO;
     }
 
+    /** The points it deals past a Normal shell; a Heavy's are the Mortar's stat, a Nuke's two Heavies'. */
+    public float extraPoints() {
+        return this.extraPoints;
+    }
+
     /**
-     * What it deals, as a share of the Mortar's damage, for a Heavy that deals {@code heavyMultiplier} times a Normal.
+     * What it deals, in hundredths of a point, for a Mortar whose Normal shell deals {@code normal} and whose Heavy deals
+     * {@code heavyExtra} more: a Heavy's extra is the Mortar's stat, a Nuke two Heavies, any other kind its own points.
      */
-    public float damageFactor(float heavyMultiplier) {
-        return switch (this) {
-            case NORMAL, FLARE -> 1f;
-            case HEAVY -> heavyMultiplier;
-            case NUKE -> 2f * heavyMultiplier;
-            case NAPALM, TAR, CRYO -> PAYLOAD_DAMAGE_SHARE;
-        };
+    public int damage(float normal, float heavyExtra) {
+        float heavy = normal + heavyExtra;
+        return Math.round(switch (this) {
+            case HEAVY -> heavy;
+            case NUKE -> 2f * heavy;
+            case NORMAL, NAPALM, TAR, CRYO, FLARE -> normal + DamageUnits.ofPoints(this.extraPoints);
+        });
+    }
+
+    /** What it hits for, said after "each deals": "a Normal shell's damage", "a Normal shell's damage +4". */
+    public String damageText() {
+        return "a Normal shell's damage" + (this.extraPoints == 0f ? "" : " " + TermNumbers.signed(this.extraPoints));
     }
 
     /** Its name as the player reads it: "Normal", or its term. */
@@ -158,16 +172,21 @@ public enum ShellKind {
      * that is above zero.
      *
      * @param lifetimeTicks how long it lasts
-     * @param damageShare   a burn's or poison's fuel a pulse, as a share of the Mortar's damage
+     * @param pulsePoints   a burn's or poison's fuel a pulse, in points of magic damage; 0 for none
      */
-    public record Ground(ZoneKind kind, float radiusCells, float blastShare, int lifetimeTicks, float damageShare) {
+    public record Ground(ZoneKind kind, float radiusCells, float blastShare, int lifetimeTicks, float pulsePoints) {
 
-        static Ground fixed(ZoneKind kind, float radiusCells, int lifetimeTicks, float damageShare) {
-            return new Ground(kind, radiusCells, 0f, lifetimeTicks, damageShare);
+        static Ground fixed(ZoneKind kind, float radiusCells, int lifetimeTicks, float pulsePoints) {
+            return new Ground(kind, radiusCells, 0f, lifetimeTicks, pulsePoints);
         }
 
-        static Ground ofBlast(ZoneKind kind, float blastShare, int lifetimeTicks, float damageShare) {
-            return new Ground(kind, 0f, blastShare, lifetimeTicks, damageShare);
+        static Ground ofBlast(ZoneKind kind, float blastShare, int lifetimeTicks, float pulsePoints) {
+            return new Ground(kind, 0f, blastShare, lifetimeTicks, pulsePoints);
+        }
+
+        /** What each pulse adds to a burn or a poison, in hundredths of a point. */
+        public int pulse() {
+            return DamageUnits.ofPoints(this.pulsePoints);
         }
 
         /** Whether it lasts until the wave is over rather than for a time. */
