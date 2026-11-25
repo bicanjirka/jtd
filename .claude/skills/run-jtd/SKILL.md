@@ -11,7 +11,8 @@ description: Build, run and drive jTD (the Swing tower-defense app) to check wha
 3. Swing wiring (input routing, hover, panel text and layout, selection, keys): `Driver`, the
    live window.
 
-Never re-check live what a test already asserts. One `Driver` pass per feature, after its last
+Never re-check live what a test already asserts, and never write a test only to spare a look its
+live check: a look gets no test (root `CLAUDE.md`, "Tests"). One `Driver` pass per feature, after its last
 phase, as one script. Assert with `text`, `state` and `enemies`; screenshot only what must be
 seen, and prefer `ssboard` crops. When a step misbehaves, read `GOTCHAS.md` in this directory.
 

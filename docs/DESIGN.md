@@ -384,6 +384,9 @@ property.
   it isn't about is a design leak.
 - **Content is data and isn't tested.** Mechanics are tested on definitions built in the test
   (root `CLAUDE.md`, "Tests").
+- **Looks aren't tested.** A test guards what a defect would decide or hide, not how the game
+  looks or words it (record 0025). Keep a rule a look depends on (what is hidden, which random
+  it draws from) apart from the look, so it can be tested alone.
 
 ## 13. Performance and structure
 

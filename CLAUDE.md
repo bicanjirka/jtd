@@ -22,12 +22,14 @@ violation. They are not restated here.
 - Verify with the cheapest thing that can prove it: a test (`GameEngineTest` for rules) →
   `PreviewBoard`/`PreviewEnemy` render for how the board looks → `td.balance.BalanceReport` for
   numbers → the live game (`run-jtd` Driver) only for Swing wiring: input routing, panel text
-  and layout. Never re-check live what a test already asserts.
+  and layout. Never re-check live what a test already asserts. A check that proves a change is
+  not a test to keep: keep it only if "Tests" below asks for it.
 - One live `run-jtd` pass per feature, after its last phase, in the same session.
 - To find out why something happens at runtime, when the IDE is open: the debugger (`idea` MCP server; the
   `ij-debugger` skill when the session lists it), not debug code added and reverted. In a live game, a logpoint that suspends nothing;
   `run-jtd` has the attach recipe. Enemies have Observe traces first.
-- A test for UI text builds its input the way the panel does, not through a convenient factory.
+- A test of a figure a panel shows builds its input the way the panel does, not through a
+  convenient factory.
 - Performance budget (p99, the built-in level with the most buildable cells, every one a tower): tick ≤ 1 ms,
   frame build ≤ 1 ms, ≤ 512 KB allocated per frame build. `td.PerformanceHarness` exits non-zero
   when over; run it after changing per-tick or per-frame code. Tests: 5 s each, 60 s per fork.
@@ -141,6 +143,25 @@ frame build reads them.
 
 ## Tests
 
+What gets a test (ADR 0025):
+
+- **Test what does harm:** a defect that changes what the game decides (rules, money, lives,
+  saves, balance numbers, thread hand-offs, a tick that throws) or what the player may know
+  (hidden information, a figure the player decides on). Test it however visible it is.
+- **Don't test what decides nothing:** looks, wording, draw order, a paint or frame-build crash.
+  Check it once (`PreviewBoard`, a `run-jtd` shot) and keep no test.
+- UI behaviour that decides nothing (hover, tooltips, keys) gets a test only when it is rare or
+  fiddly enough that normal play would miss it. Layout, hit-test and wrapping math is tested on
+  plain values.
+- A bug fix gets a test only when the defect is harm; the test states the broken invariant for
+  every case, not the one seen.
+- A test written to find or prove a change is scratch: delete it before commit unless it meets
+  the above. No console output, no casts into private structure.
+- Delete a test when a legitimate change would rewrite its expected value, when a content
+  rename breaks it, or when another test proves the same.
+
+How a test is written:
+
 - AssertJ `assertThat`. Package-private classes and methods.
 - Method names are behaviour sentences (`placingOnAPathCellIsRejectedAndCostsNothing`): no
   `test`/`should` prefix, no underscores, no `@DisplayName`, no `@Nested`.
@@ -153,19 +174,20 @@ frame build reads them.
 - Arrange / act / assert separated by blank lines, no `// given` comments.
 - Build wide records through their factory or `td.fixtures`, not a full positional literal
   (except in that record's own test).
-- `GameEngineTest` is the integration surface; new gameplay rules should be provable there.
+- `GameEngineTest` is the integration surface: a gameplay rule must be reachable there, and gets
+  a test there only for wiring its unit test cannot see.
 - **Test mechanics, never content.** Content is data: an enemy's rank ladder, a tower's base
   stats, an upgrade node made only of `NodeEffects`, an `EffectKind`'s rule, a level's waves. A
   mechanic is code: a trigger, action or trait, a node's `Mechanic`, a `HitBonus` or `Proc`
   piece, targeting, how a tower fires. Test a mechanic on a definition built in the test
   (`EnemyFixtures.liveMob`, `FakeTower`); never assert a built-in entry's stats, abilities,
-  numbers or wording.
+  numbers or wording. A new test never names a built-in node, enemy or level.
 - Built-in content is tested only by rules every entry keeps (`BuiltInEnemiesTest`,
   `TowerStatCatalogueTest`, `TermWordingTest`); `BalanceReport` judges its numbers. A content
   change adds no test. When one breaks a test, rewrite that test on a fixture or delete it; never
-  edit its expected value. Before deleting one, make sure what it exercised in passing (a stat a
-  tower reads, a capability, a proc payload) has a test of its own: a stat a tower reads is
-  tested by changing it with `TowerFixtures.buffed`.
-- Expected numbers come from the test's own input or the mechanic's formula, never from content.
-- Each test proves one behaviour no other test proves. A mechanic its unit test covers gets an
-  integration test only for wiring the unit test cannot see.
+  edit its expected value. Before deleting a test, make sure the harm it guarded in passing (a
+  stat a tower reads, a capability, a proc payload) has a test of its own: a stat a tower reads
+  is tested by changing it with `TowerFixtures.buffed`. What decides nothing needs no replacement.
+- Expected numbers come from the test's own input or a game rule's formula, never from content
+  or from cosmetic constants.
+- Each test proves one behaviour no other test proves.

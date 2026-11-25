@@ -161,4 +161,6 @@ keeps the seam honest.
   the term's key in `PictogramCatalogue`, its colours come from `TermLooks`. A new term needs a row in a
   `*Pictograms` table (or it shows its monogram) and a case in `TermLooks`.
 - Verify a board-look change from a `PreviewBoard` render, a panel or control change from a
-  `run-jtd` screenshot.
+  `run-jtd` screenshot. A look or wording change adds no test; a frame-builder test guards only
+  what the player may know (a hidden enemy gives nothing away) or that drawing never takes from
+  the game's random.
