@@ -9,8 +9,8 @@ import java.awt.Insets;
 import java.awt.LayoutManager;
 
 /**
- * Sizes the bordered board as large as its container allows at the board's own proportions, and
- * centres it. The board's preferred size, less its border, is the board at its natural zoom.
+ * Sizes the board as large as its container allows at the board's own proportions, and centres it
+ * both ways. The board's preferred size, less any insets, is the board at its natural zoom.
  */
 public final class BoardFitLayout implements LayoutManager {
 

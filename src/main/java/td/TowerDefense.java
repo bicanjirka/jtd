@@ -880,7 +880,6 @@ public class TowerDefense extends JFrame implements EconomyListener, GameHost {
 
         boardPanel.setBackground(Hud.BACKGROUND);
         boardPanel.setForeground(Hud.FOREGROUND);
-        boardPanel.setBorder(Hud.outlineBorder());
         boardPanel.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
                 onBoardClicked(evt);
