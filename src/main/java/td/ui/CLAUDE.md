@@ -65,6 +65,9 @@ keeps the seam honest.
   constant, an identity a `TowerLook` row. Never a new draw record, a field on `TowerSpriteDraw` or a painter branch
   for one tower. A pose is snapped to a few steps, so the kept pictures stay few.
 - A look whose body is the same in every pose is `Row.aiming`; any other is `Row.posed`.
+- Painting is gated in the performance harness, so what many things draw alike every frame is a kept picture: a
+  small mark or shadow through `Stamps` (keyed by everything its drawing reads), a soft light through `Glows`, a
+  patch that lies still (a tower's field) through `KeptPatches`. Shapes are filled live only for what moves.
 - Of a tower's own picture only its idle lights (`Build.light`, sparks, a swirl and runes among them), a tier's rise
   and a placed tower settling are painted live; what moves round it (the nest, birds, a flame, a casing, steam) is a
   `TowerEffectDraw`. A live stroke or size is a share of `scale`, never a pixel constant: the art sheets paint with a

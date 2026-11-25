@@ -31,8 +31,8 @@ violation. They are not restated here.
 - A test of a figure a panel shows builds its input the way the panel does, not through a
   convenient factory.
 - Performance budget (p99, the built-in level with the most buildable cells, every one a tower): tick ≤ 1 ms,
-  frame build ≤ 1 ms, ≤ 512 KB allocated per frame build. `td.PerformanceHarness` exits non-zero
-  when over; run it after changing per-tick or per-frame code. Tests: 5 s each, 60 s per fork.
+  frame build ≤ 1 ms, ≤ 512 KB allocated per frame build, paint ≤ 10 ms (headless at 1x). `td.PerformanceHarness`
+  exits non-zero when over; run it after changing per-tick, per-frame or painting code. Tests: 5 s each, 60 s per fork.
 - Feature requests live in `docs/features/`, one doc per feature. Content tables (towers,
   enemies, levels, controls) live in `README.md`.
 - Known gaps go in `TODO.md` (with **Where** and **Approach**), never an inline TODO. Closing a

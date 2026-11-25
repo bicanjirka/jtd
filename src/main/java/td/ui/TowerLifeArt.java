@@ -7,7 +7,6 @@ import td.ui.render.NestDraw;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.RadialGradientPaint;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
@@ -157,9 +156,7 @@ final class TowerLifeArt {
         if (radius <= 0 || alpha <= 0) {
             return;
         }
-        g2.setPaint(new RadialGradientPaint((float) x, (float) y, (float) radius, new float[] {0f, 1f},
-                new Color[] {faded(color, alpha), faded(color, 0)}));
-        g2.fill(new Ellipse2D.Double(x - radius, y - radius, radius * 2, radius * 2));
+        Glows.paint(g2, x, y, radius, color, alpha);
     }
 
     private static BasicStroke round(double width) {

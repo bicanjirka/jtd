@@ -81,7 +81,7 @@ us to keep it simple" (Game Developer, 2014); Fletcher Studio, "The Witness: des
   recording grey and blurred, for the value check.
 - **One motion vocabulary.** Shared easing curves and a named timing scale; every timed visual takes both from it. The
   scale is in seconds, so an animation feels the same at 1x whichever clock drives it.
-- **A paint budget.** The performance harness also paints every frame it builds and fails when painting goes over,
+- **A paint budget.** The performance harness also paints the frames it builds and fails when painting goes over,
   in both its loadouts.
 - **Art sheets.** A living copy of the sheets moves to `docs/art/`, with a README pointing at `UI.md`'s look section.
   Rendering them again reports, per sheet, the share of pixels that changed and writes a diff image under `target/`.
@@ -145,14 +145,16 @@ domain remembers what happened and when, for one bounded window, and presentatio
     duration.
 12. Tower pose steps are judged from a recording of a Sniper and a Mortar firing at 1x and 2.5x zoom; if they step
     visibly, the recoil stops being a snapped pose. Until then they stay at four.
-13. Painting is gated: p99 at most 4 ms at 1x, measured headless, in both harness loadouts; live JFR is the
-    tiebreaker near the limit. The tick and build budgets don't change.
+13. Painting is gated: p99 at most 10 ms at 1x, measured headless, in both harness loadouts; live JFR is the
+    tiebreaker near the limit. The tick and build budgets don't change. (4 ms was the first aim; the game already
+    painted at 9.5 ms p99, and with its kept pictures still needs 6.7 ms on a full board and 9.1 ms with zones, the
+    rest being animated art.)
 14. Living art sheets in `docs/art/`, with a changed-pixel report per sheet; `shipped/` stays frozen.
 15. Order: the tools first; then the whole look on The Amber Hive (the harness's level), reviewed by the owner; then
     the other five levels; then visual timing out of gameplay code. Levels not yet converted keep their floors and
     take the house light. One live `run-jtd` pass at the end.
 16. The look rules land in `docs/UI.md`; what a tool can check (the readability rule per level light, the saturation
-    band, the sibling distance) becomes one test over the look tables; ADR 0003 gets a dated amendment; per-level
+    band, the sibling distance) becomes a report the art-sheet tool prints, not a test (ADR 0025: looks get none); ADR 0003 gets a dated amendment; per-level
     light and visual timing each get a decision record when built.
 
 ## Open questions

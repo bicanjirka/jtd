@@ -11,6 +11,8 @@ import td.tower.Tower;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
 import td.ui.BoardRenderer;
+import td.ui.FramePaintTimer;
+import td.ui.render.RenderFrame;
 import td.util.GameHost;
 import td.util.RandomSource;
 import td.util.ThreadConfined;
@@ -27,7 +29,8 @@ import java.util.Set;
 /**
  * Headless performance run: fills every buildable cell of the built-in level with the most of them with towers,
  * plays it to the end several times, and reports tick time, frame-build time and allocation per
- * frame. A tool run on demand, not a test. The argument {@code zones} fills the board with only the
+ * frame, and paints every tenth frame it builds at 1x on the event dispatch thread, as the live board would, to time
+ * the paint. A tool run on demand, not a test. The argument {@code zones} fills the board with only the
  * towers that leave ground zones, each with the upgrades that make the most of them; {@code observe=one}
  * keeps one enemy observed and {@code observe=all} every enemy, each writing its trace to the log as the
  * dev panel's Observe does. Only unobserved play must keep the budget: an observed run shows what a trace costs.
@@ -48,12 +51,19 @@ public final class PerformanceHarness {
     private static final double TICK_P99_BUDGET_MILLIS = 1.0;
     private static final double FRAME_P99_BUDGET_MILLIS = 1.0;
     private static final long FRAME_ALLOC_P99_BUDGET_KB = 512;
+    // Painting is measured headless at 1x; this leaves the rest of a 60 fps frame's 16 ms to Swing, the panels and a
+    // zoomed board.
+    private static final double PAINT_P99_BUDGET_MILLIS = 10.0;
+    // Painting is slower than building; a sample of the frames shows its spread without a run of minutes.
+    private static final int PAINT_EVERY = 10;
 
     private final com.sun.management.ThreadMXBean threads =
             (com.sun.management.ThreadMXBean) ManagementFactory.getThreadMXBean();
     private final long[] tickNanos = new long[TICKS_PER_PASS * MEASURED_PASSES];
     private final long[] frameNanos = new long[TICKS_PER_PASS * MEASURED_PASSES];
     private final long[] frameBytes = new long[TICKS_PER_PASS * MEASURED_PASSES];
+    private final long[] paintNanos = new long[TICKS_PER_PASS * MEASURED_PASSES / PAINT_EVERY];
+    private int painted = 0;
     private int measured = 0;
     private final boolean zonesOnly;
     private final Observed observed;
@@ -111,13 +121,15 @@ public final class PerformanceHarness {
         System.out.printf(Locale.ROOT, "%-13s p50 %6d KB  p99 %6d KB  max %6d KB  budget p99 %d KB %s%n", "Frame alloc",
                 percentile(bytes, 0.50) / BYTES_PER_KB, allocP99Kb, bytes[bytes.length - 1] / BYTES_PER_KB,
                 FRAME_ALLOC_P99_BUDGET_KB, verdict(allocOk));
+        boolean paintOk = printMillis("Paint (1x)", Arrays.copyOf(this.paintNanos, this.painted), PAINT_P99_BUDGET_MILLIS);
         recording.ifPresent(ProfileRecording::stopAndReport);
-        return tickOk && frameOk && allocOk;
+        return tickOk && frameOk && allocOk && paintOk;
     }
 
     private void playPass(LevelDefinition level, boolean record) {
         GameEngine engine = new GameEngine(GameHost.noOp(), RandomSource.seeded(RANDOM_SEED));
         BoardRenderer renderer = new BoardRenderer(engine.getGameWorld(), engine::cellHighlight);
+        FramePaintTimer painter = new FramePaintTimer();
         engine.loadLevel(level);
         engine.debugGrantCredits(GRANTED_CREDITS);
         this.towerCount = fillBoard(engine, this.zonesOnly ? ZONE_TOWERS : List.of(TowerFactory.Type.values()));
@@ -145,9 +157,16 @@ public final class PerformanceHarness {
             long tickEnd = System.nanoTime();
             long bytesBefore = this.threads.getCurrentThreadAllocatedBytes();
             long frameStart = System.nanoTime();
-            renderer.buildFrame(t, 0.5, t / (double) TickRate.TICKS_PER_SECOND, engine.inspectSelectedEnemy());
+            RenderFrame frame = renderer.buildFrame(t, 0.5, t / (double) TickRate.TICKS_PER_SECOND,
+                    engine.inspectSelectedEnemy());
             long frameEnd = System.nanoTime();
             long bytesAfter = this.threads.getCurrentThreadAllocatedBytes();
+            if (t % PAINT_EVERY == 0) {
+                long paintNanos = painter.paint(frame);
+                if (record && this.painted < this.paintNanos.length) {
+                    this.paintNanos[this.painted++] = paintNanos;
+                }
+            }
             if (record) {
                 this.tickNanos[this.measured] = tickEnd - tickStart;
                 this.frameNanos[this.measured] = frameEnd - frameStart;

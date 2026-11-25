@@ -174,6 +174,8 @@ public final class Java2DFrameRenderer {
     private static final int ZONE_EDGE_ALPHA = 170;
     /** Round caps, so the arcs of a patch's outline join without a notch where two rims cross. */
     private static final Stroke ZONE_EDGE_STROKE = new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    private static final double ZONE_EDGE_REACH = 1.5;
+    private static final int PATH_MARKER_FACINGS = 64;
     private static final Tones ZONE_MINE_CASING = Tones.of(new Color(72, 74, 88));
     private static final Color ZONE_MINE_LIT = new Color(255, 70, 70);
     private static final Color ZONE_MINE_UNLIT = new Color(110, 30, 30);
@@ -199,6 +201,7 @@ public final class Java2DFrameRenderer {
     private static final int STREAM_TONGUE_SEEDS = 7;
 
     private final GroundPainter groundPainter = new GroundPainter();
+    private final KeptPatches keptPatches = new KeptPatches();
 
     private static Shape markerShape(PathMarkerShape shape, float size) {
         return switch (shape) {
@@ -515,6 +518,8 @@ public final class Java2DFrameRenderer {
         for (ZonePatchDraw patch : frame.zones()) {
             if (GroundArt.draws(patch.palette())) {
                 GroundArt.paint(g2, patch, frame.scale());
+            } else if (isField(patch.palette())) {
+                this.keptPatches.paint(g2, patch, ZONE_EDGE_REACH, this::paintZonePatch);
             } else {
                 this.paintZonePatch(g2, patch);
             }
@@ -547,6 +552,15 @@ public final class Java2DFrameRenderer {
             this.paintProjectile(g2, projectile);
         }
         frame.boardFlash().ifPresent(flash -> BlastArt.whiteOut(g2, flash, frame.enemies(), frame.maxX(), frame.maxY()));
+        this.keptPatches.endFrame();
+    }
+
+    /** A tower's field lies still as long as its tower stands, so its picture is kept. */
+    private static boolean isField(Palette look) {
+        return switch (look) {
+            case ZONE_FIELD, ZONE_FIELD_GRAVITY, ZONE_FIELD_UMBRA, ZONE_FIELD_BURDEN -> true;
+            default -> false;
+        };
     }
 
     /**
@@ -623,9 +637,7 @@ public final class Java2DFrameRenderer {
         float glow = zone.radius() * 0.6f;
         float flicker = 0.85f + 0.15f * (float) Math.sin(zone.phase() * 5);
         Color warm = colorFor(Palette.ZONE_FLARE);
-        g2.setPaint(new RadialGradientPaint(zone.centerX(), zone.centerY(), glow, new float[]{0f, 1f},
-                new Color[]{withAlpha(warm, Math.round(110 * fade * flicker)), withAlpha(warm, 0)}));
-        g2.fill(new Ellipse2D.Float(zone.centerX() - glow, zone.centerY() - glow, glow * 2, glow * 2));
+        Glows.paint(g2, zone.centerX(), zone.centerY(), glow, warm, 110 * fade * flicker / 255f);
         float spark = zone.radius() * 0.18f * flicker;
         float waist = spark * 0.28f;
         Path2D.Float star = new Path2D.Float();
@@ -730,14 +742,21 @@ public final class Java2DFrameRenderer {
         g2.drawRect(x - 1, y - 1, scale + 1, scale + 1);
     }
 
+    /** A mark turns in steps, so the few pictures of each are kept rather than filled again every frame. */
     private void paintPathMarker(Graphics2D g2, PathMarkerDraw marker) {
-        AffineTransform save = g2.getTransform();
-        g2.translate(marker.x(), marker.y());
-        g2.rotate(marker.facingRadians());
+        int facing = Math.floorMod((int) Math.round(marker.facingRadians() / (2 * Math.PI) * PATH_MARKER_FACINGS),
+                PATH_MARKER_FACINGS);
         PathColor color = marker.color();
-        g2.setColor(withAlpha(new Color(color.r(), color.g(), color.b()), pathMarkerAlpha(marker.brightness())));
-        g2.fill(markerShape(marker.shape(), marker.size()));
-        g2.setTransform(save);
+        Color fill = withAlpha(new Color(color.r(), color.g(), color.b()), pathMarkerAlpha(marker.brightness()));
+        Stamps.paint(g2, new PathMarkerLook(marker.shape(), fill, marker.size(), facing), marker.x(), marker.y(),
+                marker.size() * 1.5, g -> {
+                    g.rotate(facing * 2 * Math.PI / PATH_MARKER_FACINGS);
+                    g.setColor(fill);
+                    g.fill(markerShape(marker.shape(), marker.size()));
+                });
+    }
+
+    private record PathMarkerLook(PathMarkerShape shape, Color fill, float size, int facing) {
     }
 
     /** Dim for the trail, bright for the moving chevrons. */
@@ -1232,9 +1251,17 @@ public final class Java2DFrameRenderer {
 
     /** One green up arrow in the cell's top-left corner, the same whichever tier the upgrade is in. */
     private void paintUpgradeArrow(Graphics2D g2, TowerSpriteDraw sprite, int scale) {
+        Color fill = colorFor(Palette.TOWER_UPGRADE_READY);
+        Stamps.paint(g2, new UpgradeArrowLook(scale, fill), sprite.centerX() - scale * (0.5f - UPGRADE_ARROW_INSET),
+                sprite.centerY() - scale * (0.5f - UPGRADE_ARROW_INSET), scale * UPGRADE_ARROW_SIZE * 1.5,
+                g -> paintUpgradeArrow(g, scale, fill));
+    }
+
+    private record UpgradeArrowLook(int scale, Color fill) {
+    }
+
+    private static void paintUpgradeArrow(Graphics2D g2, int scale, Color fill) {
         AffineTransform save = g2.getTransform();
-        g2.translate(sprite.centerX() - scale * (0.5f - UPGRADE_ARROW_INSET),
-                sprite.centerY() - scale * (0.5f - UPGRADE_ARROW_INSET));
         g2.scale(scale, scale);
         float a = UPGRADE_ARROW_SIZE;
         float shaft = a * 0.36f;
@@ -1247,12 +1274,10 @@ public final class Java2DFrameRenderer {
         arrow.lineTo(-shaft, 0);
         arrow.lineTo(-a * 0.9f, 0);
         arrow.closePath();
-        Stroke previous = g2.getStroke();
         g2.setStroke(new BasicStroke(UPGRADE_ARROW_OUTLINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.setColor(UPGRADE_ARROW_EDGE);
         g2.draw(arrow);
-        g2.setStroke(previous);
-        g2.setColor(colorFor(Palette.TOWER_UPGRADE_READY));
+        g2.setColor(fill);
         g2.fill(arrow);
         g2.setTransform(save);
     }

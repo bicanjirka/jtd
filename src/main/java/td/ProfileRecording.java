@@ -6,6 +6,7 @@ import jdk.jfr.consumer.RecordedFrame;
 import jdk.jfr.consumer.RecordedStackTrace;
 import jdk.jfr.consumer.RecordingFile;
 import td.ui.BoardRenderer;
+import td.ui.Java2DFrameRenderer;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -108,7 +109,7 @@ final class ProfileRecording {
     }
 
     /**
-     * Each phase's share of {@code events}, then for the tick and the frame build the game methods with the most of
+     * Each phase's share of {@code events}, then for the tick, the frame build and the paint the game methods with the most of
      * theirs, counting a method once per event wherever it sits on the stack: the method with all it calls.
      */
     private static void printByPhase(String title, List<RecordedEvent> events, Function<RecordedEvent, Long> weight) {
@@ -124,7 +125,7 @@ final class ProfileRecording {
                     .forEach(method -> methods.merge(method, weighed, Long::sum));
         }
         System.out.println("-- " + title + " by phase: " + totals);
-        for (Phase phase : List.of(Phase.TICK, Phase.FRAME_BUILD)) {
+        for (Phase phase : List.of(Phase.TICK, Phase.FRAME_BUILD, Phase.PAINT)) {
             long all = totals.getOrDefault(phase, 0L);
             System.out.println("   " + phase + ", with all it calls (share of the " + phase + ")");
             inclusive.getOrDefault(phase, Map.of()).entrySet().stream()
@@ -137,7 +138,7 @@ final class ProfileRecording {
     /** What a sample was doing, told by the entry point on its stack. */
     private enum Phase {
         TICK(GameEngine.class.getName(), "doTick"), FRAME_BUILD(BoardRenderer.class.getName(), "buildFrame"),
-        OTHER("", "");
+        PAINT(Java2DFrameRenderer.class.getName(), "paint"), OTHER("", "");
 
         private final String type;
         private final String method;
@@ -148,7 +149,7 @@ final class ProfileRecording {
         }
 
         static Phase of(List<RecordedFrame> frames) {
-            for (Phase phase : List.of(FRAME_BUILD, TICK)) {
+            for (Phase phase : List.of(FRAME_BUILD, TICK, PAINT)) {
                 if (frames.stream().anyMatch(frame -> frame.getMethod().getName().equals(phase.method)
                         && frame.getMethod().getType().getName().equals(phase.type))) {
                     return phase;

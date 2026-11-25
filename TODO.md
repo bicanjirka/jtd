@@ -65,6 +65,13 @@ Implemented, for reference: `FEATURE-enemy-spawn-types.md`, `FEATURE-multiple-en
 
 ## Architecture and correctness
 
+### The zones loadout allocates over budget in the frame build
+
+**Where:** `td.PerformanceHarness zones` reports a frame-build allocation p99 of about 517 KB against 512 KB (it read
+519 KB before the board look revamp touched anything), so the harness fails in that loadout.
+**Approach:** profile it with `--jfr`, find what the zone frames allocate per disc (`ZoneFrameBuilder`,
+`ZoneOutlineTracer`) and build those without a copy per frame.
+
 Findings from the architecture audits of 2026-09-17, highest-severity first. The threading
 group and the external audit's critical/high/moderate findings have landed; what remains is
 listed below.

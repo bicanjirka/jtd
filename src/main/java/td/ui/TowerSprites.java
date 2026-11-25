@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * Paints a tower in the raised view: a body of lit parts, the head it aims, a soft shadow on the ground and the lights
@@ -47,6 +48,10 @@ final class TowerSprites {
     /** Past this many kept pixels every picture is dropped and drawn again as it is needed. */
     private static final long PIXEL_BUDGET = 12_000_000L;
     private static final int PADDING = 2;
+    // A shell grows as it climbs; its kept pictures come in quarter-pixel sizes.
+    private static final float SHELL_SIZE_STEPS = 4f;
+    // How far a shell's drawing reaches from its centre, in shell radii: its fins and its lit side.
+    private static final double SHELL_REACH = 2.5;
     private static final Color SHADOW = new Color(0, 0, 0, 150);
 
     /** How far the new foundation has spread when the rise ends, and how far above the cell's centre it spreads from. */
@@ -134,9 +139,22 @@ final class TowerSprites {
     /** The soft shadow a foundation casts on the ground, down and to the right; it grows as a placed tower settles. */
     static void paintShadow(Graphics2D g2, TowerSpriteDraw tower, int scale) {
         double footprint = TowerFoundations.footprint(tower.tier()) * scale * settled(tower.buildProgress());
-        g2.setColor(SHADOW);
-        g2.fill(new Ellipse2D.Double(tower.centerX() + footprint * 0.14 - footprint * 1.06,
-                tower.centerY() + footprint * 0.16 - footprint * 1.02, footprint * 2.12, footprint * 2.04));
+        Consumer<Graphics2D> shadow = g -> {
+            g.setColor(SHADOW);
+            g.fill(new Ellipse2D.Double(footprint * 0.14 - footprint * 1.06, footprint * 0.16 - footprint * 1.02,
+                    footprint * 2.12, footprint * 2.04));
+        };
+        if (tower.buildProgress() < 1f) {
+            g2.translate(tower.centerX(), tower.centerY());
+            shadow.accept(g2);
+            g2.translate(-tower.centerX(), -tower.centerY());
+        } else {
+            Stamps.paint(g2, new ShadowLook(tower.tier(), scale), tower.centerX(), tower.centerY(), footprint * 1.3,
+                    shadow);
+        }
+    }
+
+    private record ShadowLook(int tier, int scale) {
     }
 
     /**
@@ -382,9 +400,7 @@ final class TowerSprites {
         if (radius <= 0f || alpha <= 0f) {
             return;
         }
-        g2.setPaint(new RadialGradientPaint(x, y, radius, new float[] {0f, 1f},
-                new Color[] {faded(color, alpha), faded(color, 0f)}));
-        g2.fill(new Ellipse2D.Float(x - radius, y - radius, radius * 2, radius * 2));
+        Glows.paint(g2, x, y, radius, color, alpha);
     }
 
     private static Shape glint(float x, float y, float size) {
@@ -473,14 +489,17 @@ final class TowerSprites {
     /** A shell as {@link #paintShell(Graphics2D, LoadedShell, float, float, float)}, banded in a payload it carries. */
     static void paintShell(Graphics2D g2, LoadedShell kind, Optional<LoadedShell> carried, float x, float y,
                            float radius) {
-        Graphics2D g = (Graphics2D) g2.create();
-        double toPixels = radius / TowerFoundations.BORE_SHELL;
-        g.translate(x, y);
-        g.scale(toPixels, toPixels);
+        float stepped = Math.max(1, Math.round(radius * SHELL_SIZE_STEPS)) / SHELL_SIZE_STEPS;
+        double toPixels = stepped / TowerFoundations.BORE_SHELL;
         double pixels = toPixels * Math.max(1.0, g2.getTransform().getScaleX());
-        paintParts(g, SHELLS.get(kind), pixels);
-        carried.ifPresent(payload -> paintParts(g, BANDS.get(payload), pixels));
-        g.dispose();
+        Stamps.paint(g2, new ShellLook(kind, carried, stepped), x, y, stepped * SHELL_REACH, g -> {
+            g.scale(toPixels, toPixels);
+            paintParts(g, SHELLS.get(kind), pixels);
+            carried.ifPresent(payload -> paintParts(g, BANDS.get(payload), pixels));
+        });
+    }
+
+    private record ShellLook(LoadedShell kind, Optional<LoadedShell> carried, float radius) {
     }
 
     private static Map<LoadedShell, List<TowerFoundations.Part>> bands() {
