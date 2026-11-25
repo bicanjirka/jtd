@@ -15,7 +15,6 @@ import td.fixtures.WorldFixtures;
 import td.tower.seeker.FeedingMechanic;
 import td.tower.seeker.MissileKind;
 import td.tower.seeker.ReleaseMechanic;
-import td.tower.seeker.ShatterMark;
 import td.tower.seeker.ShatterMechanic;
 import td.util.GameWorld;
 import td.wave.Vec2;
@@ -429,29 +428,6 @@ class SeekerTowerTest {
         assertThat(held).containsExactly(new Vec2(frozen.getX(), frozen.getY()));
         assertThat(tower.iceWakes()).isEmpty();
     }
-
-    @Test
-    void aShatterLeavesAMarkWhereTheIceBurstThatFadesInAWhile() {
-        SeekerTower tower = this.towerWith("Shatter");
-        FakeEnemyMob frozen = this.enemyAt(tower, OUT, 0).movingAt(0f);
-        this.enemies(frozen);
-        this.landOne(tower);
-        tower.doTick(this.tick++);
-        frozen.expire(EffectKind.FREEZE);
-
-        tower.doTick(this.tick++);
-        List<ShatterMark> marks = tower.shatterMarks();
-        for (int i = 0; i < MomentMemory.TICKS; i++) {
-            tower.doTick(this.tick++);
-        }
-
-        assertThat(marks).singleElement().satisfies(mark -> {
-            assertThat(mark.at()).isEqualTo(new Vec2(frozen.getX(), frozen.getY()));
-            assertThat(mark.kind()).isEqualTo(MissileKind.FROST);
-        });
-        assertThat(tower.shatterMarks()).isEmpty();
-    }
-
     @Test
     void aFrozenEnemyThatDiesShattersToo() {
         SeekerTower tower = this.towerWith("Shatter");

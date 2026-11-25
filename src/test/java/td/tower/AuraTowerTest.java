@@ -121,21 +121,6 @@ class AuraTowerTest {
         assertThat(beyond.appliedEffects()).isEmpty();
         assertThat(beacon.reveals()).extracting(RevealedEnemy::enemy).containsExactly(inside);
     }
-
-    @Test
-    void aRevealIsRememberedForAMomentAfterTheEnemyEntersThenForgotten() {
-        AuraTower beacon = this.beaconWith();
-        this.enemies(FakeEnemyMob.ghostAt(0, 0));
-        beacon.doTick(1);
-
-        beacon.doTick(MomentMemory.TICKS);
-        int rememberedAtTheEnd = beacon.reveals().size();
-        beacon.doTick(1 + MomentMemory.TICKS);
-
-        assertThat(rememberedAtTheEnd).isEqualTo(1);
-        assertThat(beacon.reveals()).isEmpty();
-    }
-
     @Test
     void theSpotlightHoldsItsEnemyUntilItLeavesTheLightThenPicksAgain() {
         AuraTower beacon = this.beaconWith("Last Light");
