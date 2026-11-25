@@ -70,8 +70,7 @@ final class TowerArtSheets3 {
             double len = (s.has("dragon") ? 0.28 : 0.25) + 0.07;
             g.translate(len, TowerArt.LIFT * b.top());
             float core = look.contains("core") ? (float) Math.toRadians(half) * 0.25f : 0f;
-            td.ui.TowerArtGame.paintStream(g, range, half, new td.tower.CinderTower.StreamLook(look.contains("soul"),
-                    look.contains("white"), s.has("dragon"), core), 11);
+            td.ui.TowerArtGame.paintStream(g, range, half, look.contains("soul"), look.contains("white"), core, 11);
             g.setTransform(save);
             TowerArt.paintCell(g, b, PX);
         };

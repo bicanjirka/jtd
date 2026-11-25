@@ -77,7 +77,7 @@ keeps the seam honest.
 - The nest circles the top of its tower, so no missile is drawn behind the tower.
 - The Mortar has no head: it is stationary, its barrel part of its posed body.
 - The toolbar icon and the Info pane's glyph are the look's `TowerIcons` row.
-- The art sheets in `docs/features/next-gen-art` are rendered from these tables. After a change to a look, render
+- The art sheets in `docs/art` are rendered from these tables. After a change to a look, render
   them again and explain every sheet that changed.
 - A lobbed shot's position is its point on the ground; how high it is drawn comes from the one arc in
   `ProjectileFrameBuilder`, never from the shot or its tower. The arc starts at the shot's launch height (a stone at

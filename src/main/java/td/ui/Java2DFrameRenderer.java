@@ -1260,7 +1260,8 @@ public final class Java2DFrameRenderer {
     private record UpgradeArrowLook(int scale, Color fill) {
     }
 
-    private static void paintUpgradeArrow(Graphics2D g2, int scale, Color fill) {
+    /** The arrow round the pen's origin, {@code scale} pixels to a cell; the art sheets draw it with a scale of 1. */
+    static void paintUpgradeArrow(Graphics2D g2, int scale, Color fill) {
         AffineTransform save = g2.getTransform();
         g2.scale(scale, scale);
         float a = UPGRADE_ARROW_SIZE;

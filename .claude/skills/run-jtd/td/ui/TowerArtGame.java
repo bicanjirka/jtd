@@ -24,6 +24,31 @@ public final class TowerArtGame {
     private TowerArtGame() {
     }
 
+    /** The missile of {@code kind} ("frost", "ruby", "shade") heading +x, {@code length} cells long. */
+    public static void paintMissile(Graphics2D g, String kind, double length, boolean bright) {
+        MissileArt.paint(g, missile(kind), (float) length, bright);
+    }
+
+    /** The nest's {@code count} missiles round the pen's origin, as the game circles them over a tower's top. */
+    public static void paintNest(Graphics2D g, int count, double phaseDegrees, double ringRadius, String kind,
+                                 boolean bright) {
+        TowerLifeArt.nest(g, new td.ui.render.NestDraw(0f, 0f, (float) ringRadius,
+                java.util.Collections.nCopies(count, missile(kind)), Math.toRadians(phaseDegrees), 0.12f, bright));
+    }
+
+    /** The "an upgrade is ready" arrow round the pen's origin. */
+    public static void paintUpgradeArrow(Graphics2D g) {
+        Java2DFrameRenderer.paintUpgradeArrow(g, 1, Java2DFrameRenderer.colorFor(td.ui.render.Palette.TOWER_UPGRADE_READY));
+    }
+
+    private static td.ui.render.LoadedMissile missile(String kind) {
+        return switch (kind) {
+            case "ruby" -> td.ui.render.LoadedMissile.RUBY;
+            case "shade" -> td.ui.render.LoadedMissile.SHADE;
+            default -> td.ui.render.LoadedMissile.FROST;
+        };
+    }
+
     /** The tower with its shadow, its head turned to {@code aimDegrees} (0 east, -90 north). */
     public static void paint(Graphics2D g, TowerLook look, int tier, TowerPose pose, double aimDegrees) {
         TowerSprites.paintShadow(g, TowerSpriteDraw.still(look, tier, 0, 0, 0f, 0f, 0f), 1);
@@ -60,13 +85,13 @@ public final class TowerArtGame {
 
     /**
      * The game's flame from a nozzle at the pen's origin along +x, {@code range} cells long and {@code halfDegrees}
-     * either side, as {@code look} shapes it (a White Flame as hot as it is drawn); {@code flicker} picks its tips.
+     * either side, a White Flame as hot as it is drawn; {@code flicker} picks its tips.
      */
-    public static void paintStream(Graphics2D g, double range, double halfDegrees, td.tower.CinderTower.StreamLook look,
-                                   int flicker) {
+    public static void paintStream(Graphics2D g, double range, double halfDegrees, boolean soulfire, boolean white,
+                                   float coreHalfWidth, int flicker) {
         FlameArt.paint(g, new td.ui.render.FlameDraw(List.of(new td.ui.render.FlameDraw.Stream(0f, 0f, 0f,
-                (float) range, (float) Math.toRadians(halfDegrees), look.whiteCore() ? 1f : 0f, look.coreHalfWidth(),
-                look.soulfire(), flicker)), List.of(), 1f, 0f));
+                (float) range, (float) Math.toRadians(halfDegrees), white ? 1f : 0f, coreHalfWidth, soulfire,
+                flicker)), List.of(), 1f, 0f));
     }
 
     /** The game's Flashover tongue from {@code fromX, fromY} to {@code toX, toY}, in cell units. */

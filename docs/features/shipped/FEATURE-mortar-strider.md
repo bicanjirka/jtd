@@ -31,7 +31,9 @@ All in `docs/features/shipped/mortar-art/`:
 | `mortar-arcs.png` | three arc options from one tower to seven targets; **B is the one chosen** |
 | `mortar-arcs.gif` | the same arcs with shells flying at their real speed; not committed |
 
-The lab that drew them is in `docs/features/shipped/mortar-art/lab/`:
+The lab that drew them was in `docs/features/shipped/mortar-art/lab/`. It was deleted once the game drew all of it (the
+board look revamp; the last version is at commit `3d2105b5`). Motion is now recorded from the game itself with
+`PreviewBoard`'s `record` (run-jtd). What the lab held:
 
 - `strider-mortar-builder.java.txt`: the new body, written as extra members of `td.ui.TowerFoundations`, in the game's
   own part vocabulary (`Build.solid/flat/glow/line`, `LIFT`, `plinth`, `shell`, `rackedShell`, `arcOver`,

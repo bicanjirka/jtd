@@ -1,5 +1,7 @@
 # Next-gen art sheets
 
+Frozen as shipped. The living sheets, rendered from the game as it is, are in `docs/art`.
+
 The art for `FEATURE-next-gen.md`, in the raised view. The sheets are what to build; the decisions behind them are in
 `FEATURE-next-gen-tower-looks.md` ("Art direction", "Palette") and in each tower's Look section.
 

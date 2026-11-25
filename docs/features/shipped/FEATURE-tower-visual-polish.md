@@ -17,7 +17,9 @@ verification instructions with the art.
 
 - A tower is a stack of vector parts built in `td.ui.TowerFoundations` from a tier and a `TowerPose`, painted by
   `td.ui.TowerSprites`; `FEATURE-next-gen-tower-looks.md` ("Building a tower's look") is the recipe.
-- The art lab for this request, package `td.ui`, outside `src`:
+- The art lab for this request, package `td.ui`, outside `src`. It was deleted once the game drew all of it (the
+  board look revamp; the last version is at commit `3d2105b5`). Motion is now recorded from the game itself with
+  `PreviewBoard`'s `record` (run-jtd), so the commands below no longer run:
 
   | File (`.claude/skills/run-jtd/td/ui/`) | Holds |
   |---|---|

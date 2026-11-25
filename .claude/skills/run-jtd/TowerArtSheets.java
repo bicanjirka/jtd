@@ -8,8 +8,8 @@ import java.io.File;
 import javax.imageio.ImageIO;
 
 /**
- * Renders the next-gen art sheets (docs/features/next-gen-art) from {@link TowerArt}. Throwaway lab code.
- * {@code java TowerArtSheets <outDir> [sheet...]}
+ * Renders the living art sheets (docs/art) from {@link TowerArt}, reporting per sheet what share of it changed. Lab
+ * code. {@code java TowerArtSheets <outDir> [sheet...]}
  */
 public final class TowerArtSheets {
 
@@ -123,9 +123,50 @@ public final class TowerArtSheets {
         text(g, s, x, y, TEXT, 15, true);
     }
 
+    /**
+     * Writes the sheet and reports how much of it changed from the one it replaces: the share of pixels that differ
+     * visibly, and a diff image under target/art-diff (changed pixels bright over a dimmed copy of the new sheet).
+     */
     static void save(BufferedImage img, String name) throws Exception {
-        ImageIO.write(img, "png", new File(out, name));
-        System.out.println("wrote " + name + " " + img.getWidth() + "x" + img.getHeight());
+        File file = new File(out, name);
+        BufferedImage before = file.exists() ? ImageIO.read(file) : null;
+        ImageIO.write(img, "png", file);
+        System.out.println("wrote " + name + " " + img.getWidth() + "x" + img.getHeight() + ": " + changeOf(before, img, name));
+    }
+
+    private static final int VISIBLE_CHANGE = 12;
+
+    private static String changeOf(BufferedImage before, BufferedImage after, String name) throws Exception {
+        if (before == null) {
+            return "new sheet";
+        }
+        if (before.getWidth() != after.getWidth() || before.getHeight() != after.getHeight()) {
+            return "size changed from " + before.getWidth() + "x" + before.getHeight();
+        }
+        BufferedImage diff = new BufferedImage(after.getWidth(), after.getHeight(), BufferedImage.TYPE_INT_RGB);
+        long changed = 0;
+        for (int y = 0; y < after.getHeight(); y++) {
+            for (int x = 0; x < after.getWidth(); x++) {
+                int a = before.getRGB(x, y);
+                int b = after.getRGB(x, y);
+                int most = Math.max(Math.abs((a >> 16 & 0xff) - (b >> 16 & 0xff)),
+                        Math.max(Math.abs((a >> 8 & 0xff) - (b >> 8 & 0xff)), Math.abs((a & 0xff) - (b & 0xff))));
+                if (most > VISIBLE_CHANGE) {
+                    changed++;
+                    diff.setRGB(x, y, 0xff3060);
+                } else {
+                    diff.setRGB(x, y, (b >> 16 & 0xff) / 4 << 16 | (b >> 8 & 0xff) / 4 << 8 | (b & 0xff) / 4);
+                }
+            }
+        }
+        if (changed == 0) {
+            return "unchanged";
+        }
+        File diffs = new File("target/art-diff");
+        diffs.mkdirs();
+        ImageIO.write(diff, "png", new File(diffs, name));
+        return String.format(java.util.Locale.ROOT, "%.2f%% of pixels changed (target/art-diff/%s)",
+                100.0 * changed / ((long) after.getWidth() * after.getHeight()), name);
     }
 
     /** A dark floor tile behind one drawing, so a sheet shows the art on the board's own ground. */

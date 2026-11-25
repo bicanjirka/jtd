@@ -22,7 +22,7 @@ import java.util.Random;
 import java.util.Set;
 
 /**
- * The art sheets' pen (docs/features/next-gen-art). Every tower is drawn by the game itself, through
+ * The art sheets' pen (docs/art). Every tower is drawn by the game itself, through
  * td.ui.TowerArtGame: a sheet names a tower, a tier and a State, and the game's own tables build and paint it. What is
  * drawn here with plain shapes is only what the game does not paint yet: shots in flight, the nest's missiles, the
  * stream. Nothing here is game code; TowerArtSheets renders the sheets.
@@ -352,34 +352,15 @@ final class TowerArt {
         }
     }
 
-    /** The nest: {@code count} stored missiles on one even ring, each the missile that will fly. */
-    static void nest(Graphics2D g, int count, double phaseDeg, double ringRadius, String kind, boolean bright) {
-        nest(g, count, phaseDeg, ringRadius, kind, bright, 0);
+    /** The nest, as the game draws it: {@code half} 1 paints it, -1 nothing, since no missile is drawn behind a tower. */
+    static void nest(Graphics2D g, int count, double phaseDeg, double ringRadius, String kind, boolean bright, int half) {
+        if (half >= 0) {
+            td.ui.TowerArtGame.paintNest(g, count, phaseDeg, ringRadius, kind, bright);
+        }
     }
 
-    /** {@code half} -1 paints the missiles behind the spire and the ring's far arc, 1 those in front, 0 all. */
-    static void nest(Graphics2D g, int count, double phaseDeg, double ringRadius, String kind, boolean bright, int half) {
-        if (bright) {
-            g.setColor(alpha(missileColour(kind), 0.55));
-            g.setStroke(new BasicStroke(0.014f));
-            if (half == 0) {
-                g.draw(circ(0, 0, ringRadius));
-            } else {
-                g.draw(new java.awt.geom.Arc2D.Double(-ringRadius, -ringRadius, ringRadius * 2, ringRadius * 2, half < 0 ? 0 : 180, 180,
-                        java.awt.geom.Arc2D.OPEN));
-            }
-        }
-        for (int i = 0; i < count; i++) {
-            double a = phaseDeg + 360.0 * i / count;
-            if (half != 0 && (sin(a) >= 0) != (half > 0)) {
-                continue;
-            }
-            AffineTransform save = g.getTransform();
-            g.translate(cos(a) * ringRadius, sin(a) * ringRadius);
-            g.rotate(Math.toRadians(a + 90));
-            missile(g, kind, bright);
-            g.setTransform(save);
-        }
+    static void nest(Graphics2D g, int count, double phaseDeg, double ringRadius, String kind, boolean bright) {
+        nest(g, count, phaseDeg, ringRadius, kind, bright, 0);
     }
 
     static Color missileColour(String kind) {
@@ -390,47 +371,16 @@ final class TowerArt {
         };
     }
 
-    /** One missile heading +x, about a tenth of a cell long. */
+    /** One missile heading +x, as the game draws it. */
     static void missile(Graphics2D g, String kind, boolean bright) {
-        Color c = missileColour(kind);
-        if (bright) {
-            g.setPaint(new RadialGradientPaint(0f, 0f, 0.09f, new float[] {0f, 1f}, new Color[] {alpha(c, 0.8), alpha(c, 0)}));
-            g.fill(circ(0, 0, 0.09));
-        }
-        switch (kind) {
-            case "ruby" -> {
-                g.setColor(mix(c, Color.BLACK, 0.35));
-                g.fill(poly(0.07, 0, 0, 0.034, -0.05, 0, 0, -0.034));
-                g.setColor(mix(c, Color.WHITE, 0.35));
-                g.fill(poly(0.07, 0, 0, -0.034, -0.05, 0));
-            }
-            case "shade" -> {
-                g.setColor(alpha(c, 0.35));
-                g.fill(poly(0.0, -0.03, -0.11, 0, 0.0, 0.03));
-                g.setColor(alpha(c, 0.9));
-                g.fill(circ(0.01, 0, 0.032));
-                g.setColor(col(0x1d1f26));
-                g.fill(circ(0.018, 0, 0.013));
-            }
-            default -> {
-                g.setColor(mix(c, Color.BLACK, 0.3));
-                g.fill(poly(0.065, 0, -0.045, 0.036, -0.022, 0, -0.045, -0.036));
-                g.setColor(mix(c, Color.WHITE, 0.5));
-                g.fill(poly(0.065, 0, -0.022, 0, -0.045, -0.036));
-            }
-        }
+        td.ui.TowerArtGame.paintMissile(g, kind, 0.12, bright);
     }
 
     // ---- shared marks ----------------------------------------------------------------------------------------
 
-    /** The one "an upgrade is ready" mark, in cell units, for the cell's top-left corner. */
+    /** The one "an upgrade is ready" mark, as the game draws it, for the cell's top-left corner. */
     static void upgradeArrow(Graphics2D g) {
-        Shape arrow = poly(0, -0.085, 0.075, 0.0, 0.03, 0.0, 0.03, 0.075, -0.03, 0.075, -0.03, 0.0, -0.075, 0.0);
-        g.setColor(new Color(0x0d0e10));
-        g.setStroke(new BasicStroke(0.045f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g.draw(arrow);
-        g.setColor(col(UPGRADE));
-        g.fill(arrow);
+        td.ui.TowerArtGame.paintUpgradeArrow(g);
     }
 
     static Line2D line(double x0, double y0, double x1, double y1) {
