@@ -21,6 +21,9 @@ public final class LookChecks {
 
     private static final double READABLE = 3.0;
     private static final double SIBLING_DISTANCE = 10.0;
+    /** A lane's moving chevron, painted at its alpha over the floor, reads as a mark on the ground. */
+    private static final double LANE_READABLE = 2.5;
+    private static final int CHEVRON_ALPHA = 210;
     /** Tower identities are the band's ceiling: nothing that persists is more saturated than the most saturated one. */
     private static final List<TowerLook> IDENTITIES = List.of(TowerLook.SNIPER, TowerLook.SPLASH,
             TowerLook.STORMCALLER, TowerLook.HEXER, TowerLook.MORTAR, TowerLook.CINDER, TowerLook.SEEKER,
@@ -79,6 +82,16 @@ public final class LookChecks {
         }
         out.append(String.format(Locale.ROOT, "  weakest tower %.2f, weakest enemy %.2f (body or lit rim, need %.1f)%n",
                 weakestTower, weakestEnemy, READABLE));
+        double weakestLane = Double.MAX_VALUE;
+        for (var path : level.paths()) {
+            Color lane = new Color(path.color().r(), path.color().g(), path.color().b());
+            double c = contrast(over(lane, CHEVRON_ALPHA, lightest), lightest);
+            weakestLane = Math.min(weakestLane, c);
+            if (c < LANE_READABLE) {
+                failing.add(String.format(Locale.ROOT, "lane #%06X %.2f", lane.getRGB() & 0xFFFFFF, c));
+            }
+        }
+        out.append(String.format(Locale.ROOT, "  weakest lane chevron %.2f (need %.1f)%n", weakestLane, LANE_READABLE));
         failing.forEach(line -> out.append("  FAIL ").append(line).append('\n'));
         return failing.size();
     }
@@ -126,6 +139,13 @@ public final class LookChecks {
     }
 
     // ---- colour maths -------------------------------------------------------------------------------------------
+
+    private static Color over(Color top, int alpha, Color under) {
+        float a = alpha / 255f;
+        return new Color(Math.round(top.getRed() * a + under.getRed() * (1 - a)),
+                Math.round(top.getGreen() * a + under.getGreen() * (1 - a)),
+                Math.round(top.getBlue() * a + under.getBlue() * (1 - a)));
+    }
 
     private static Color lighter(Color a, Color b) {
         return luminance(a) >= luminance(b) ? a : b;

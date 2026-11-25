@@ -84,20 +84,21 @@ private to that painter. They are greys too; a new control uses the ramp.
 
 **Towers.** "Nearest" is the closest other tower by CIEDE2000 distance (section 7).
 
-| Tower | Value | On the lightest floor | Nearest | Note |
+| Tower | Value | On the lightest floor stop (`#4D3D2A`) | Nearest | Note |
 |---|---|---|---|---|
-| Sniper | `#A6D674` | 11.7:1 | Beacon, 20.4 | 10.0 from the healing ground's green: the softest green that keeps that distance |
-| Burst | `#E2746C` | 6.5:1 | Mortar, 19.1 | 5.1 from Problem red, which is only ever text |
-| Stormcaller | `#8496FF` | 7.3:1 | Hexer, 14.1 | |
-| Hexer | `#B88AE8` | 7.3:1 | Obelisk, 11.1 | |
-| Mortar | `#C39062` | 7.0:1 | Scorcher, 10.8 | 8.6 from Physical orange, which is text and numbers |
-| Scorcher | `#EA862A` | 7.4:1 | Mortar, 10.8 | 4.9 from Physical orange |
-| Aerie | `#5CC4E2` | 9.8:1 | Stormcaller, 22.9 | 9.8 from Magic blue |
-| Obelisk | `#8F86B8` | 5.9:1 | Hexer, 11.1 | |
-| Beacon | `#D8B866` | 10.2:1 | Mortar, 15.2 | |
+| Sniper | `#A6D674` | 6.2:1 | Beacon, 20.4 | 10.0 from the healing ground's green: the softest green that keeps that distance |
+| Burst | `#E2746C` | 3.4:1 | Mortar, 19.1 | 5.1 from Problem red, which is only ever text |
+| Stormcaller | `#8496FF` | 3.9:1 | Hexer, 14.1 | |
+| Hexer | `#B88AE8` | 3.9:1 | Obelisk, 11.1 | |
+| Mortar | `#C39062` | 3.7:1 | Scorcher, 10.8 | 8.6 from Physical orange, which is text and numbers |
+| Scorcher | `#EA862A` | 3.9:1 | Mortar, 10.8 | 4.9 from Physical orange |
+| Aerie | `#5CC4E2` | 5.2:1 | Stormcaller, 22.9 | 9.8 from Magic blue |
+| Obelisk | `#8F86B8` | 3.1:1 | Hexer, 11.1 | |
+| Beacon | `#D8B866` | 5.4:1 | Mortar, 15.2 | |
 
-The three misses against text colours (Burst, Mortar, Scorcher) are accepted: a tower's art and a line of text are
-never read against each other.
+The weakest bodies (Obelisk, Burst) also read by their lit rim; section 8's report measures body and rim under each
+level's light. The three misses against text colours (Burst, Mortar, Scorcher) are accepted: a tower's art and a line
+of text are never read against each other.
 
 **Levels.** Each level has one card colour, from its own lanes (`withCardColor`, the first lane's by default), and its floor.
 Text on the card uses the text tint, which `TextTint` computes: the lane colour lightened only as far as 7:1.
@@ -107,11 +108,11 @@ speed button and the XP bar. Every panel stays Graphite.
 | Level | Card lane | Lane colour | Text tint | Floor |
 |---|---|---|---|---|
 | The Amber Hive | Honey | `#F0AF28` | same (10.0:1) | `#33251A`, far `#4D3D2A` |
-| The Labyrinth | Stone | `#C8AA78` | same (8.7:1) | `#0D0B06` |
-| The Last Hour | Glass | `#8CD7E1` | same (11.9:1) | `#070C0E` |
-| The Storm Ridge | Thunder | `#5F73EB` | `#8796F0` (7.0:1) | `#06090E` |
-| The Rift | Violet | `#A05AE6` | `#B985EC` (7.0:1) | `#07040C` |
-| Iron Crossing | Rush | `#EB5F2D` | `#EF7C53` (7.1:1) | `#08090C` |
+| The Labyrinth | Stone | `#C8AA78` | same (8.7:1) | `#2E2A22`, far `#3E392F` |
+| The Last Hour | Glass | `#8CD7E1` | same (11.9:1) | `#1E2A2C`, far `#2C3D40` |
+| The Storm Ridge | Thunder | `#5F73EB` | `#8796F0` (7.0:1) | `#1C2230`, far `#2C3446` |
+| The Rift | Violet | `#A05AE6` | `#B985EC` (7.0:1) | `#22182E`, far `#302441` |
+| Iron Crossing | Rush | `#EB5F2D` | `#EF7C53` (7.1:1) | `#24262A`, far `#2F3032` |
 
 ## 6. What each hue already means
 

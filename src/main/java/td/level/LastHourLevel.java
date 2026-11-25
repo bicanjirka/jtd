@@ -1,6 +1,7 @@
 package td.level;
 
 import td.board.BoardGround;
+import td.board.BoardLight;
 import td.board.GroundMotif;
 import td.effect.EffectKind;
 import td.effect.ShieldTemplate;
@@ -231,7 +232,8 @@ final class LastHourLevel {
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
             .withCardColor(GLASS_COLOR)
-            .withGround(BoardGround.of(0x070C0E, GroundMotif.DUNES, 0x111C1E))
+            .withGround(BoardGround.of(0x1E2A2C, GroundMotif.DUNES, 0x283739)
+                    .withLight(BoardLight.of(0xFFC890, 0x10203A, 0x4E6A70)).withHaze(0.3f))
             // What the Reaver and the Keeper call, before them.
             .withCustomRankedEnemies(List.of(SAND_GRAIN, SANDLING, TIMEKEEPER, GLASS_SENTINEL, REAVER, KeeperEnemy.keeper()));
 

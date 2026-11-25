@@ -810,7 +810,7 @@ public final class Java2DFrameRenderer {
     private static int pathMarkerAlpha(PathMarkerBrightness brightness) {
         return switch (brightness) {
             case STATIC -> 70;
-            case MOVING -> 150;
+            case MOVING -> 210;
         };
     }
 

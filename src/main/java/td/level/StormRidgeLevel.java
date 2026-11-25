@@ -1,6 +1,7 @@
 package td.level;
 
 import td.board.BoardGround;
+import td.board.BoardLight;
 import td.board.GroundMotif;
 import td.enemy.Ability;
 import td.enemy.AbilitySpawnShape;
@@ -140,7 +141,8 @@ final class StormRidgeLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
-            .withGround(BoardGround.of(0x06090E, GroundMotif.RAIN, 0x121A2A))
+            .withGround(BoardGround.of(0x1C2230, GroundMotif.RAIN, 0x252D3E)
+                    .withLight(BoardLight.of(0xC8D8FF, 0x0A0E1C, 0x4A5670)).withHaze(0.35f))
             .withCustomEnemies(List.of(RAINDROP))
             .withCustomRankedEnemies(Stream.concat(Stream.of(RAINCLOUD, GALE), StormTwinsEnemy.pair().stream()).toList());
 
