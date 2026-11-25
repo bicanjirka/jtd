@@ -27,7 +27,8 @@ Every colour is exactly one of these. Decide which before choosing a value.
 ## 3. Rules
 
 1. **Loudness follows information density.** The level select may be loud, the HUD stays medium, and the board is the
-   quietest ground of all, because the board is where the player reads the game. A new decoration goes on the loudest
+   quietest ground of all, because the board is where the player reads the game. Quiet means calm in saturation, not
+   dark: section 8. A new decoration goes on the loudest
    surface it can.
 2. **A problem has a colour; good news needs none.** Can't afford, an unmet gate and a value getting worse are rose. A
    met gate or an improvement is plain text with its ✓ or →.
@@ -105,7 +106,7 @@ speed button and the XP bar. Every panel stays Graphite.
 
 | Level | Card lane | Lane colour | Text tint | Floor |
 |---|---|---|---|---|
-| The Amber Hive | Honey | `#F0AF28` | same (10.0:1) | `#100B04` |
+| The Amber Hive | Honey | `#F0AF28` | same (10.0:1) | `#33251A`, far `#4D3D2A` |
 | The Labyrinth | Stone | `#C8AA78` | same (8.7:1) | `#0D0B06` |
 | The Last Hour | Glass | `#8CD7E1` | same (11.9:1) | `#070C0E` |
 | The Storm Ridge | Thunder | `#5F73EB` | `#8796F0` (7.0:1) | `#06090E` |
@@ -148,9 +149,42 @@ their name and lane shape. Honey and stone share a hue and differ by strength (1
 |---|---|---|
 | Small text | at least 7:1 on the background | What today's values read at |
 | Fine print beside a value | at least 5.5:1 | Secondary, and always beside something brighter |
-| A shape on the board | at least 3:1 on the lightest floor, `#100B04` | It has to read in play. The darkest floors only help |
+| A shape on the board | its body or its key-lit rim at least 3:1 on each level's lightest floor stop, under that level's light | It has to read in play. `LookChecks` (section 8) measures it |
 | Distance from its nearest sibling | at least 10 (CIEDE2000) | Under that, two towers or two effects look like one at a glance |
 | Primaries | no channel at 0 paired with one at 255 | Rule 4 |
 
 Then look at it in the game, beside the things it will appear with: `PreviewBoard` for the board, one `run-jtd` screenshot
 for a panel. Numbers rule colours out; they don't choose one.
+
+## 8. The board's look
+
+The board is a lit place, not icons on a black slab: one palette per level, coloured light, values in layers, a calm
+ground, and loud colour only where something just happened. The living art sheets in `docs/art` show it; its sources
+are in `docs/features/FEATURE-board-look-revamp.md`.
+
+1. **One palette per level.** A level's floor, motif, haze and light are one family (its `BoardGround` and
+   `BoardLight`); what stands on it keeps its own identity beside that family.
+2. **Values in layers.** Ground, what stands, effects, signals: a squinted render (`PreviewBoard`'s `squint`) shows them
+   as separate bands of value.
+3. **The floor is a mid-dark ground in the level's hue**, lighter and hazier toward the far (north) edge, where it
+   leans toward the level's air colour. Its lightest stop is capped by rule 6.
+4. **Light has colour.** A thing's top face keeps its exact identity colour, so the board, the toolbar and the Info pane
+   agree. Its shaded side leans toward the level's shadow colour and its rim toward the key light (`SceneLight`). Cast
+   shadows take the shadow colour. Panels and the art sheets paint unlit.
+5. **Saturation is spent.** What persists (bodies, idle life, a tower's field, what stands on a zone) stays at or under
+   the most saturated tower's OKLCH chroma. A moment (what runs on the tick clock and ends), a signal and the selection
+   may go to full chroma.
+6. **One readability rule for what stands**: its body or its key-lit rim clears 3:1 against the floor's lightest stop,
+   under every level's light.
+7. **Siblings stay apart.** Towers and effects keep 10 CIEDE2000 from their nearest sibling. Enemies differ by shape
+   first.
+8. **Shapes separate by value, not outlines. A round mark lying on the ground means an area that acts**, so the path
+   trail is dashes and its moving marks chevrons; what stands may be round.
+9. **Fields get gradients, objects stay flat.** A zone or a field is fainter in its middle and soft along its thin,
+   quiet edge. Every line on the ground (an edge, a range, a ring) is a hairline over a faint halo of its colour,
+   never a heavy stroke. Rasters generated in code are fine (the ground, a kept
+   picture); image files and grain are not.
+10. **One motion vocabulary.** A timed visual eases through `Easing` and lasts a `MomentLength` step.
+
+Rules 5, 6 and 7 are measured, not tested (ADR 0025): `TowerArtSheets docs/art looks` prints `LookChecks`' report.
+Read it after any change to a colour, a floor or a light.

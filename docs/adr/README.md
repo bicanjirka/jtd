@@ -63,3 +63,4 @@ Each alternative, with why it lost.
 | [0023](0023-saves-load-only-in-their-own-format.md) | A save loads only in its own format | Accepted |
 | [0024](0024-the-mortars-magazine-is-build-state.md) | The Mortar's magazine is build state a save keeps | Accepted |
 | [0025](0025-tests-guard-harm-not-looks.md) | Tests guard harm, not looks | Accepted |
+| [0026](0026-each-level-has-its-own-light.md) | Each level has its own light | Accepted |

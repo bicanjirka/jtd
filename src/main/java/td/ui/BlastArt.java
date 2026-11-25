@@ -135,13 +135,16 @@ final class BlastArt {
             return;
         }
         Tones tones = Tones.of(p.color());
-        double r = p.r();
-        g2.setColor(faded(tones.shade(), p.alpha()));
-        g2.fill(disc(p.x() + r * PUFF_LIT_SHIFT, p.y() + r * PUFF_SHADE_DROP, r));
-        g2.setColor(faded(tones.highlight(), p.alpha()));
-        g2.fill(disc(p.x() - r * PUFF_LIT_SHIFT * 0.5, p.y() - r * PUFF_LIT_SHIFT, r * 0.94));
-        g2.setColor(faded(p.color(), p.alpha()));
-        g2.fill(disc(p.x() + r * PUFF_LIT_SHIFT * 0.5, p.y() + r * PUFF_LIT_SHIFT * 0.4, r * 0.86));
+        double r = stepped(p.r());
+        double a = Math.round(p.alpha() * ALPHA_STEPS) / (double) ALPHA_STEPS;
+        Stamps.paint(g2, new PuffLook(r, p.color().getRGB(), a), (float) p.x(), (float) p.y(), r * 1.3, g -> {
+            g.setColor(faded(tones.shade(), a));
+            g.fill(disc(r * PUFF_LIT_SHIFT, r * PUFF_SHADE_DROP, r));
+            g.setColor(faded(tones.highlight(), a));
+            g.fill(disc(-r * PUFF_LIT_SHIFT * 0.5, -r * PUFF_LIT_SHIFT, r * 0.94));
+            g.setColor(faded(p.color(), a));
+            g.fill(disc(r * PUFF_LIT_SHIFT * 0.5, r * PUFF_LIT_SHIFT * 0.4, r * 0.86));
+        });
     }
 
     /** Puffs back to front. */
@@ -169,12 +172,31 @@ final class BlastArt {
         if (height <= 0.5 || alpha <= 0) {
             return;
         }
-        g2.setColor(faded(RED_FIRE, alpha * 0.9));
-        g2.fill(tongue(x, baseY, width, height));
-        g2.setColor(faded(ORANGE_FIRE, alpha));
-        g2.fill(tongue(x, baseY, width * 0.68, height * 0.74));
-        g2.setColor(faded(YELLOW_FIRE, alpha));
-        g2.fill(tongue(x, baseY + width * 0.05, width * 0.38, height * 0.45));
+        double w = stepped(width);
+        double h = stepped(height);
+        double a = Math.round(alpha * ALPHA_STEPS) / (double) ALPHA_STEPS;
+        Stamps.paint(g2, new FlameLook(w, h, a), (float) x, (float) baseY, Math.max(w, h) * 1.2, g -> {
+            g.setColor(faded(RED_FIRE, a * 0.9));
+            g.fill(tongue(0, 0, w, h));
+            g.setColor(faded(ORANGE_FIRE, a));
+            g.fill(tongue(0, 0, w * 0.68, h * 0.74));
+            g.setColor(faded(YELLOW_FIRE, a));
+            g.fill(tongue(0, w * 0.05, w * 0.38, h * 0.45));
+        });
+    }
+
+    // Flames and puffs flicker every frame; their sizes and strengths come in steps, so their pictures are kept.
+    private static final double SIZE_STEPS = 2;
+    private static final int ALPHA_STEPS = 16;
+
+    private record FlameLook(double width, double height, double alpha) {
+    }
+
+    private record PuffLook(double r, int rgb, double alpha) {
+    }
+
+    private static double stepped(double size) {
+        return Math.round(size * SIZE_STEPS) / SIZE_STEPS;
     }
 
     /** A shard of ice standing on {@code x, y}: its left face lit, its right in shade. */

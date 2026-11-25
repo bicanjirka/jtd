@@ -106,6 +106,7 @@ public class PreviewBoard {
                 System.out.println("OK squint " + (squint ? "on" : "off"));
             }
             case "crop" -> setCrop(rest.trim());
+            case "ground" -> tryGround(rest.trim());
             case "grid" -> {
                 cellGrid = !rest.trim().equals("off");
                 System.out.println("OK grid " + (cellGrid ? "on" : "off"));
@@ -131,7 +132,10 @@ public class PreviewBoard {
         }
     }
 
+    private static int levelIndex = 0;
+
     private static void loadLevel(int index) {
+        levelIndex = index;
         LevelDefinition level = new BuiltInLevelCatalog().levels().get(index);
         engine.loadLevel(level);
         gameTime = 0;
@@ -264,7 +268,7 @@ public class PreviewBoard {
     private static void hoverPlace(String args) {
         String[] parts = args.split("\s+");
         int scale = engine.getGameWorld().getBoard().scale();
-        engine.startPlacing(td.tower.TowerFactory.Type.valueOf(parts[0].toUpperCase()), 0f);
+        engine.startPlacing(td.tower.TowerFactory.Type.valueOf(parts[0].toUpperCase()), parts.length > 3 ? Float.parseFloat(parts[3]) : 0f);
         engine.highlightCell(Integer.parseInt(parts[1]) * scale + scale / 2, Integer.parseInt(parts[2]) * scale + scale / 2);
         System.out.println("OK hoverplace " + args);
     }
@@ -312,6 +316,39 @@ public class PreviewBoard {
         Film.png(new File(strip), Film.strip(frames, labels, 18));
         System.out.println("OK recorded " + frames.size() + " frames to " + path + " and " + strip
                 + " (gameTime=" + gameTime + ")");
+    }
+
+    /**
+     * {@code ground [floor=RRGGBB] [motif=RRGGBB] [haze=0.4] [air=RRGGBB] [key=RRGGBB] [shadow=RRGGBB]}: reloads the
+     * current level with its ground and light changed as given, to try a level's look before writing it down. Clears
+     * the board, so give it before placing anything.
+     */
+    private static void tryGround(String args) {
+        LevelDefinition level = new BuiltInLevelCatalog().levels().get(levelIndex);
+        td.board.BoardGround ground = level.ground();
+        td.board.BoardLight light = ground.light();
+        int floor = ground.floorRgb();
+        int motif = ground.motifRgb();
+        float haze = ground.haze();
+        int air = light.hazeRgb();
+        int key = light.keyRgb();
+        int shadow = light.shadowRgb();
+        for (String pair : args.split("\\s+")) {
+            String[] kv = pair.split("=");
+            switch (kv[0]) {
+                case "floor" -> floor = Integer.parseInt(kv[1], 16);
+                case "motif" -> motif = Integer.parseInt(kv[1], 16);
+                case "haze" -> haze = Float.parseFloat(kv[1]);
+                case "air" -> air = Integer.parseInt(kv[1], 16);
+                case "key" -> key = Integer.parseInt(kv[1], 16);
+                case "shadow" -> shadow = Integer.parseInt(kv[1], 16);
+                default -> throw new IllegalArgumentException("unknown ground key " + kv[0]);
+            }
+        }
+        engine.loadLevel(level.withGround(td.board.BoardGround.of(floor, ground.motif(), motif)
+                .withLight(td.board.BoardLight.of(key, shadow, air)).withHaze(haze)));
+        gameTime = 0;
+        System.out.println("OK ground " + args);
     }
 
     private static void setCrop(String args) {

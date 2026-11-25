@@ -27,11 +27,12 @@ From the repository root, after `mvn -q compile` and with `target/runtime-classp
 
 ```bash
 CP="target/classes;.claude/skills/run-jtd;$(cat target/runtime-classpath.txt)"
-javac -cp "$CP" -d .claude/skills/run-jtd .claude/skills/run-jtd/td/ui/TowerArtGame.java .claude/skills/run-jtd/TowerArt*.java
+javac -cp "$CP" -d .claude/skills/run-jtd .claude/skills/run-jtd/td/ui/TowerArtGame.java .claude/skills/run-jtd/td/ui/LookChecks.java .claude/skills/run-jtd/TowerArt*.java
 java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/art            # every sheet
 java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/art heads shots # some of them
+java -Djava.awt.headless=true -cp "$CP" TowerArtSheets docs/art looks       # the look checks only
 ```
 
-Each sheet written prints the share of its pixels that changed from the one it replaced and writes a diff image
+Every run first prints the look checks (`docs/UI.md` section 8: readability under each level's light, the saturation band, sibling distance). Each sheet written prints the share of its pixels that changed from the one it replaced and writes a diff image
 (changed pixels bright over the dimmed new sheet) to `target/art-diff/`. Every sheet that changed must be one the
 change explains; read the diff images, not `git diff --stat`.

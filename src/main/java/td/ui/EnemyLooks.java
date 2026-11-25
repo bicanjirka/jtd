@@ -214,9 +214,9 @@ final class EnemyLooks {
         rows.put(EnemyLook.TRIANGLE, Row.of(new Color(226, 212, 80), EnemyLooks::triangle)
                 .withDetail(new Color(135, 120, 30), s -> Java2DFrameRenderer.triangleShape(s * 0.42f, true))
                 .withFade(EnemyLooks::crossingTriangles).capped(0.62f, 0.18f));
-        rows.put(EnemyLook.WARDEN, Row.of(new Color(190, 30, 30), s -> star(8, s, s * 0.55f))
+        rows.put(EnemyLook.WARDEN, Row.of(new Color(173, 60, 52), s -> star(8, s, s * 0.55f))
                 .withDetail(new Color(240, 190, 60), s -> circle(s * 0.28f)).standing(0.3f).raised(0.2f).glowing());
-        rows.put(EnemyLook.WARDEN_EGG, Row.of(new Color(190, 30, 30), EnemyShapes::wardenEggShape).standing(0.3f).glossy());
+        rows.put(EnemyLook.WARDEN_EGG, Row.of(new Color(173, 60, 52), EnemyShapes::wardenEggShape).standing(0.3f).glossy());
         rows.put(EnemyLook.MENDER, Row.of(new Color(120, 220, 150), EnemyShapes::crossShape).capped(0.55f, 0.16f));
         rows.put(EnemyLook.JUGGERNAUT, Row.of(new Color(120, 135, 160), EnemyLooks::square)
                 .withDetail(new Color(85, 95, 115), s -> new Rectangle2D.Float(-s * 0.55f, -s * 0.55f, s * 1.1f, s * 1.1f))
@@ -224,16 +224,16 @@ final class EnemyLooks {
         rows.put(EnemyLook.MITE, Row.of(new Color(190, 140, 80), EnemyLooks::circle)
                 .withDetail(new Color(95, 62, 30), s -> new Rectangle2D.Float(-s * 0.2f, -s * 0.95f, s * 0.4f, s * 1.9f))
                 .standing(0.2f).glossy());
-        rows.put(EnemyLook.COURIER, Row.of(new Color(170, 255, 80), EnemyLooks::triangle).withFade(EnemyLooks::crossingTriangles)
+        rows.put(EnemyLook.COURIER, Row.of(new Color(189, 247, 139), EnemyLooks::triangle).withFade(EnemyLooks::crossingTriangles)
                 .standing(0.14f));
         rows.put(EnemyLook.SKIRMISHER, Row.of(new Color(80, 220, 200), Java2DFrameRenderer::diamondShape).capped(0.5f, 0.18f));
-        rows.put(EnemyLook.SALAMANDER, Row.of(new Color(255, 120, 30), EnemyShapes::lizardShape)
+        rows.put(EnemyLook.SALAMANDER, Row.of(new Color(239, 132, 73), EnemyShapes::lizardShape)
                 .withDetail(new Color(255, 215, 60), s -> new Ellipse2D.Float(-s * 0.6f, -s * 0.1f, s * 1.2f, s * 0.2f))
                 .standing(0.14f).raised(0.08f));
         rows.put(EnemyLook.YETI, Row.of(new Color(200, 235, 255), s -> star(16, s, s * 0.84f))
                 .withDetail(new Color(50, 80, 120), s -> EnemyShapes.eyesShape(s, -s * 0.15f, s * 0.13f))
                 .standing(0.32f).capped(0.74f, 0.22f));
-        rows.put(EnemyLook.MAGMA, Row.of(new Color(220, 45, 35), EnemyShapes::magmaShape)
+        rows.put(EnemyLook.MAGMA, Row.of(new Color(196, 81, 68), EnemyShapes::magmaShape)
                 .withDetail(new Color(255, 170, 60), s -> circle(s * 0.4f)).standing(0.3f).raised(0.1f).glowing());
         rows.put(EnemyLook.GOLEM, Row.of(new Color(150, 140, 125), s -> star(6, s, s * 0.87f))
                 .withDetail(new Color(85, 76, 66), EnemyShapes::crackShape).standing(0.38f).capped(0.7f, 0.24f));
@@ -246,15 +246,15 @@ final class EnemyLooks {
         rows.put(EnemyLook.COLOSSUS, Row.of(new Color(95, 105, 128), s -> star(8, s, s * 0.93f))
                 .withDetail(new Color(255, 140, 40), s -> new RoundRectangle2D.Float(-s * 0.6f, -s * 0.16f, s * 1.2f, s * 0.32f,
                         s * 0.2f, s * 0.2f)).standing(0.45f).capped(0.76f, 0.3f).raised(0.06f));
-        rows.put(EnemyLook.MOLTEN_CORE, Row.of(new Color(255, 110, 20), s -> star(10, s, s * 0.7f))
+        rows.put(EnemyLook.MOLTEN_CORE, Row.of(new Color(235, 126, 74), s -> star(10, s, s * 0.7f))
                 .withDetail(new Color(255, 235, 120), s -> circle(s * 0.4f)).standing(0.3f).raised(0.12f).glowing());
-        rows.put(EnemyLook.EMBER, Row.of(new Color(255, 175, 40), EnemyShapes::emberShape).hovering(0.35f).glowing());
+        rows.put(EnemyLook.EMBER, Row.of(new Color(251, 177, 63), EnemyShapes::emberShape).hovering(0.35f).glowing());
         rows.put(EnemyLook.MONOLITH, Row.of(new Color(118, 115, 152), EnemyShapes::slabShape)
                 .withDetail(new Color(175, 120, 255), Java2DFrameRenderer::runeShape).standing(0.7f).glowing());
-        rows.put(EnemyLook.ECLIPSE, Row.of(new Color(125, 70, 200), EnemyShapes::crescentShape).hovering(0.3f));
+        rows.put(EnemyLook.ECLIPSE, Row.of(new Color(120, 82, 180), EnemyShapes::crescentShape).hovering(0.3f));
         rows.put(EnemyLook.MIRAGE, Row.of(new Color(185, 155, 255), EnemyShapes::twinDiamondShape).hovering(0.25f));
         rows.put(EnemyLook.MIRROR_IMAGE, Row.of(new Color(220, 210, 255), Java2DFrameRenderer::diamondShape).hovering(0.25f));
-        rows.put(EnemyLook.HERALD, Row.of(new Color(255, 205, 60), EnemyShapes::sweptArrowShape).standing(0.16f));
+        rows.put(EnemyLook.HERALD, Row.of(new Color(252, 206, 78), EnemyShapes::sweptArrowShape).standing(0.16f));
         rows.put(EnemyLook.TALOS, Row.of(new Color(205, 135, 60), EnemyShapes::giantShape)
                 .withDetail(new Color(200, 25, 30), s -> new Rectangle2D.Float(-s * 0.07f, -s * 0.35f, s * 0.14f, s * 1.2f))
                 .standing(0.5f));
@@ -280,7 +280,7 @@ final class EnemyLooks {
         rows.put(EnemyLook.THUNDER, Row.of(new Color(108, 120, 172), EnemyShapes::thunderheadShape)
                 .withDetail(new Color(255, 225, 80), s -> AffineTransform.getTranslateInstance(0, s * 0.55f)
                         .createTransformedShape(EnemyShapes.boltShape(s * 0.6f))).hovering(0.6f));
-        rows.put(EnemyLook.HORNET, Row.of(new Color(235, 115, 30), EnemyShapes::hornetShape)
+        rows.put(EnemyLook.HORNET, Row.of(new Color(226, 122, 58), EnemyShapes::hornetShape)
                 .withDetail(new Color(35, 22, 10), EnemyShapes::hornetStripesShape).hovering(0.45f));
         rows.put(EnemyLook.COCOON, Row.of(new Color(220, 210, 185), s -> new Ellipse2D.Float(-s * 0.7f, -s * 1.15f, s * 1.4f, s * 2.3f))
                 .withDetail(new Color(150, 130, 95), EnemyShapes::cocoonBandsShape).standing(0.3f).glossy());
@@ -292,7 +292,7 @@ final class EnemyLooks {
         rows.put(EnemyLook.HIVE_GUARD, Row.of(new Color(170, 105, 35), EnemyShapes::beetleShape)
                 .withDetail(new Color(70, 40, 12), s -> new Rectangle2D.Float(-s * 0.85f, -s * 0.05f, s * 1.4f, s * 0.1f))
                 .standing(0.34f).glossy());
-        rows.put(EnemyLook.DRONE, Row.of(new Color(245, 190, 45), EnemyShapes::beeShape)
+        rows.put(EnemyLook.DRONE, Row.of(new Color(242, 191, 62), EnemyShapes::beeShape)
                 .withDetail(new Color(70, 40, 10), EnemyShapes::beeStripesShape).hovering(0.45f));
         return rows;
     }

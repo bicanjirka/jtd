@@ -29,6 +29,12 @@ public final class TowerArtSheets {
         out = new File(args[0]);
         out.mkdirs();
         java.util.Set<String> only = new java.util.HashSet<>(java.util.List.of(args).subList(1, args.length));
+        if (only.isEmpty() || only.contains("looks")) {
+            System.out.println(td.ui.LookChecks.report());
+            if (only.contains("looks")) {
+                return;
+            }
+        }
         if (only.isEmpty() || only.contains("catalogue")) {
             catalogue();
         }

@@ -48,8 +48,11 @@ keeps the seam honest.
 - An effect with no picture of its own earns at most one dot, by `EnemyFrameBuilder.dotFor`; a dot says only its group,
   and the Info pane says which effect.
 - What stands on the board is lit from the top left and shows its side down the screen; what lies on the ground
-  (zone patches, path marks, range circles, a tower's shadow) stays flat. A mine goes through `paintStanding` with the
-  three `Tones` of its colour.
+  (zone patches, path marks, range circles, a tower's shadow) stays flat. What stands is painted under the level's
+  `SceneLight` (ADR 0026), which is part of every kept picture's key; panels and art sheets paint `SceneLight.none()`.
+  A mine goes through `paintStanding` with the three `Tones` of its colour.
+- A colour, floor or light change is checked with the look report (`TowerArtSheets docs/art looks`) against
+  `docs/UI.md` section 8, not a test.
 - An enemy body is painted by `EnemySprites` alone, from its `EnemyLooks.Form` (height, hover, cap, raised detail,
   glint, glow): the stack of parts is drawn once into a kept picture per look, size, heading step and zoom, so a new
   part costs nothing a frame. What changes with every step (the hop, the hover, a glow) is a function of the body's
@@ -67,7 +70,8 @@ keeps the seam honest.
 - A look whose body is the same in every pose is `Row.aiming`; any other is `Row.posed`.
 - Painting is gated in the performance harness, so what many things draw alike every frame is a kept picture: a
   small mark or shadow through `Stamps` (keyed by everything its drawing reads), a soft light through `Glows`, a
-  patch that lies still (a tower's field) through `KeptPatches`. Shapes are filled live only for what moves.
+  zone's or field's ground through `KeptPatches` (only what stands or flickers on it is painted live), a flame or a
+  puff through `Stamps` in size and strength steps. Shapes are filled live only for what moves.
 - Of a tower's own picture only its idle lights (`Build.light`, sparks, a swirl and runes among them), a tier's rise
   and a placed tower settling are painted live; what moves round it (the nest, birds, a flame, a casing, steam) is a
   `TowerEffectDraw`. A live stroke or size is a share of `scale`, never a pixel constant: the art sheets paint with a

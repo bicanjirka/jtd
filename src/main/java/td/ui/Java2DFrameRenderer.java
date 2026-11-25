@@ -1,5 +1,6 @@
 package td.ui;
 
+import td.board.BoardLight;
 import td.term.Term;
 import td.ui.render.AffixPipsDraw;
 import td.ui.render.BeamDraw;
@@ -67,6 +68,7 @@ import td.ui.render.WardOutlineDraw;
 import td.ui.render.ZoneArcDraw;
 import td.ui.render.ZoneDraw;
 import td.ui.render.ZonePatchDraw;
+import td.util.ThreadConfined;
 import td.wave.PathColor;
 
 import java.awt.AlphaComposite;
@@ -100,13 +102,14 @@ import java.util.Optional;
  * {@link #paintEnemies}, {@link #renderTowerIcon} and the {@code paint*Glyph} methods exist for
  * them.
  */
+@ThreadConfined(value = ThreadConfined.Owner.EVENT_DISPATCH_THREAD)
 public final class Java2DFrameRenderer {
 
     private static final Color CELL_OK = Color.GRAY;
     private static final Color CELL_NOK = Color.RED;
     /** A free cell the credits can't build the tower on yet: amber, apart from the red of a cell nothing builds on. */
     private static final Color CELL_SHORT = new Color(255, 170, 60);
-    private static final Color CELL_RANGE = new Color(250, 250, 210, 150);
+    private static final Color CELL_RANGE = new Color(250, 250, 210, 120);
     /** The HUD's own border, so the dev grid reads as part of the panel chrome. */
     private static final Color CELL_GRID_LINE = Hud.BORDER_DISABLED;
     /** A Ley Line's width, and the dash it is drawn with once the player has pinned it. */
@@ -144,7 +147,7 @@ public final class Java2DFrameRenderer {
     private static final Color AFFIX_PIP_DISC = new Color(13, 14, 16);
     private static final float AFFIX_PIP_SYMBOL_SHARE = 0.8f;
     private static final int EFFECT_PULSE_ALPHA = 130;
-    private static final float EFFECT_PULSE_STROKE_WIDTH = 1.2f;
+    private static final float EFFECT_PULSE_STROKE_WIDTH = 0.9f;
     private static final float STANDING_ONE_STEP_HEIGHT = 3f;
     /** The lit rim's width, as a share of the height it belongs to. */
     private static final float STANDING_RIM = 0.3f;
@@ -171,11 +174,27 @@ public final class Java2DFrameRenderer {
     private static final float TOLL_FULL_STROKE = 1.9f;
     private static final float TOLL_UNLIT_SHARE = 0.22f;
     private static final Color SILENCE_INK = new Color(0x0d0e10);
-    private static final int ZONE_EDGE_ALPHA = 170;
+    private static final int ZONE_EDGE_ALPHA = 95;
     /** Round caps, so the arcs of a patch's outline join without a notch where two rims cross. */
-    private static final Stroke ZONE_EDGE_STROKE = new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    private static final Stroke ZONE_EDGE_STROKE = new BasicStroke(0.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+    /** A line on the ground (a range, a ring) is thin and soft: a hairline over a faint halo of its own colour. */
+    private static final Stroke HAIRLINE = new BasicStroke(0.8f);
+    private static final Stroke HALO = new BasicStroke(3.5f);
+    private static final float HALO_SHARE = 0.18f;
     private static final double ZONE_EDGE_REACH = 1.5;
+    /**
+     * A patch is fainter in its middle than at its edge: the fill is this share of the patch's alpha, and the rest
+     * builds up in soft bands along the outline, widest first, so the patch reads as soft while its thin edge line
+     * still says where it ends.
+     */
+    private static final float ZONE_CENTRE_SHARE = 0.55f;
+    private static final float[] ZONE_SOFT_WIDTHS = {10f};
     private static final int PATH_MARKER_FACINGS = 64;
+    private static final float SPARK_SIZE_STEPS = 2f;
+    private static final int SPARK_ALPHA_STEP = 16;
+    /** A dash's half length and half thickness, in its marker size. */
+    private static final float DASH_LENGTH = 1.9f;
+    private static final float DASH_THICKNESS = 0.7f;
     private static final Tones ZONE_MINE_CASING = Tones.of(new Color(72, 74, 88));
     private static final Color ZONE_MINE_LIT = new Color(255, 70, 70);
     private static final Color ZONE_MINE_UNLIT = new Color(110, 30, 30);
@@ -202,10 +221,13 @@ public final class Java2DFrameRenderer {
 
     private final GroundPainter groundPainter = new GroundPainter();
     private final KeptPatches keptPatches = new KeptPatches();
+    private SceneLight light = SceneLight.none();
+    private BoardLight lightFor = BoardLight.house();
 
     private static Shape markerShape(PathMarkerShape shape, float size) {
         return switch (shape) {
-            case DOT -> circleShape(size);
+            case DASH -> new RoundRectangle2D.Float(-size * DASH_LENGTH, -size * DASH_THICKNESS, size * DASH_LENGTH * 2,
+                    size * DASH_THICKNESS * 2, size * DASH_THICKNESS * 2, size * DASH_THICKNESS * 2);
             case CHEVRON -> chevronShape(size);
         };
     }
@@ -366,15 +388,15 @@ public final class Java2DFrameRenderer {
             case HEX_RUNE -> new Color(225, 170, 255);
             case SHELL_NORMAL -> new Color(123, 132, 150);
             case TERM_HEAVY_SHELL -> new Color(242, 210, 138);
-            case ZONE_BURNING -> new Color(255, 120, 30);
+            case ZONE_BURNING -> new Color(239, 132, 73);
             case ZONE_TAR -> new Color(98, 82, 116);
             case ZONE_FROST -> new Color(170, 225, 255);
-            case ZONE_FALLOUT -> new Color(150, 220, 60);
+            case ZONE_FALLOUT -> new Color(162, 215, 106);
             case ZONE_FLARE -> new Color(255, 240, 190);
-            case ZONE_HEALING -> new Color(90, 220, 120);
+            case ZONE_HEALING -> new Color(114, 215, 133);
             case ZONE_HASTE -> new Color(130, 240, 180);
             case ZONE_WARD -> new Color(120, 190, 255);
-            case ZONE_BLINDING -> new Color(190, 90, 230);
+            case ZONE_BLINDING -> new Color(176, 111, 204);
             case ZONE_FIELD, TOWER_SUNDIAL -> TowerLooks.color(TowerLook.PULSE);
             case ZONE_FIELD_BURDEN -> new Color(0x7a6a52);
             case ZONE_FIELD_GRAVITY -> new Color(0x4d6fb8);
@@ -507,6 +529,7 @@ public final class Java2DFrameRenderer {
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
         // paint() skips super.paint(), so the ground's fill is what clears the previous frame.
         this.groundPainter.paint(g2, frame.ground(), frame.scale(), frame.maxX(), frame.maxY());
+        this.light = this.lightOf(frame.ground().light());
 
         frame.cellGrid().ifPresent(grid -> this.paintCellGrid(g2, grid, frame));
         for (PathMarkerDraw marker : frame.pathMarkers()) {
@@ -518,10 +541,9 @@ public final class Java2DFrameRenderer {
         for (ZonePatchDraw patch : frame.zones()) {
             if (GroundArt.draws(patch.palette())) {
                 GroundArt.paint(g2, patch, frame.scale());
-            } else if (isField(patch.palette())) {
-                this.keptPatches.paint(g2, patch, ZONE_EDGE_REACH, this::paintZonePatch);
             } else {
-                this.paintZonePatch(g2, patch);
+                this.keptPatches.paint(g2, patch, ZONE_EDGE_REACH, Java2DFrameRenderer::paintZoneGround);
+                this.paintZoneDetails(g2, patch);
             }
         }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
@@ -534,7 +556,7 @@ public final class Java2DFrameRenderer {
             this.paintCritSpark(g2, spark);
         }
         for (TowerSpriteDraw sprite : frame.towerSprites()) {
-            TowerSprites.paint(g2, sprite, frame.scale());
+            TowerSprites.paint(g2, sprite, frame.scale(), this.light);
         }
         // A tall tower may stand over an enemy north of it; its bars and marks still show where it is and how it fares.
         for (EnemyOverlayDraw overlay : frame.enemyOverlays()) {
@@ -555,12 +577,14 @@ public final class Java2DFrameRenderer {
         this.keptPatches.endFrame();
     }
 
-    /** A tower's field lies still as long as its tower stands, so its picture is kept. */
-    private static boolean isField(Palette look) {
-        return switch (look) {
-            case ZONE_FIELD, ZONE_FIELD_GRAVITY, ZONE_FIELD_UMBRA, ZONE_FIELD_BURDEN -> true;
-            default -> false;
-        };
+    /** The frame's light, the same object while the level's light stays, so kept pictures find their key fast. */
+    private SceneLight lightOf(BoardLight board) {
+        return this.lightFor.equals(board) ? this.light : this.keepLight(board);
+    }
+
+    private SceneLight keepLight(BoardLight board) {
+        this.lightFor = board;
+        return SceneLight.of(board);
     }
 
     /**
@@ -568,29 +592,42 @@ public final class Java2DFrameRenderer {
      * with crossed crystal lines. The discs go on one path and fill once, and the outline's arcs on another and stroke
      * once, so neither grows darker where its parts overlap.
      */
-    private void paintZonePatch(Graphics2D g2, ZonePatchDraw patch) {
+    private static void paintZoneGround(Graphics2D g2, ZonePatchDraw patch) {
         Color base = colorFor(patch.palette());
         Path2D ground = new Path2D.Float(Path2D.WIND_NON_ZERO);
         for (ZoneDraw zone : patch.discs()) {
             float r = zone.radius();
             ground.append(new Ellipse2D.Float(zone.centerX() - r, zone.centerY() - r, r * 2, r * 2), false);
         }
-        g2.setColor(withAlpha(base, zoneFillAlpha(patch.palette())));
+        int alpha = zoneFillAlpha(patch.palette());
+        g2.setColor(withAlpha(base, Math.round(alpha * ZONE_CENTRE_SHARE)));
         g2.fill(ground);
         Stroke defaultStroke = g2.getStroke();
-        g2.setStroke(ZONE_EDGE_STROKE);
-        g2.setColor(withAlpha(base, ZONE_EDGE_ALPHA));
         Path2D edge = new Path2D.Float(Path2D.WIND_NON_ZERO);
         for (ZoneArcDraw arc : patch.edge()) {
             float r = arc.radius();
             edge.append(new Arc2D.Float(arc.centerX() - r, arc.centerY() - r, r * 2, r * 2,
                     (float) -Math.toDegrees(arc.startRadians()), (float) -Math.toDegrees(arc.sweepRadians()), Arc2D.OPEN), false);
         }
+        Shape clip = g2.getClip();
+        g2.clip(ground);
+        g2.setColor(withAlpha(base, Math.round(alpha * (1 - ZONE_CENTRE_SHARE) / ZONE_SOFT_WIDTHS.length)));
+        for (float width : ZONE_SOFT_WIDTHS) {
+            g2.setStroke(new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.draw(edge);
+        }
+        g2.setClip(clip);
+        g2.setStroke(ZONE_EDGE_STROKE);
+        g2.setColor(withAlpha(base, ZONE_EDGE_ALPHA));
         g2.draw(edge);
+        g2.setStroke(defaultStroke);
+    }
+
+    /** What stands or flickers on each disc of a patch, over its ground. */
+    private void paintZoneDetails(Graphics2D g2, ZonePatchDraw patch) {
         for (ZoneDraw zone : patch.discs()) {
             this.paintZoneDetail(g2, patch.palette(), zone);
         }
-        g2.setStroke(defaultStroke);
     }
 
     /** A Burden field reads heavier; every other field is fainter than a zone. */
@@ -638,23 +675,33 @@ public final class Java2DFrameRenderer {
         float flicker = 0.85f + 0.15f * (float) Math.sin(zone.phase() * 5);
         Color warm = colorFor(Palette.ZONE_FLARE);
         Glows.paint(g2, zone.centerX(), zone.centerY(), glow, warm, 110 * fade * flicker / 255f);
-        float spark = zone.radius() * 0.18f * flicker;
-        float waist = spark * 0.28f;
-        Path2D.Float star = new Path2D.Float();
-        for (int i = 0; i < 8; i++) {
-            double angle = i * Math.PI / 4;
-            float reach = i % 2 == 0 ? spark : waist;
-            float px = zone.centerX() + (float) Math.cos(angle) * reach;
-            float py = zone.centerY() + (float) Math.sin(angle) * reach;
-            if (i == 0) {
-                star.moveTo(px, py);
-            } else {
-                star.lineTo(px, py);
-            }
+        // The star flickers and fades in steps, so its few pictures are kept.
+        float spark = Math.round(zone.radius() * 0.18f * flicker * SPARK_SIZE_STEPS) / SPARK_SIZE_STEPS;
+        int alpha = Math.round(255 * fade / SPARK_ALPHA_STEP) * SPARK_ALPHA_STEP;
+        if (spark <= 0f || alpha <= 0) {
+            return;
         }
-        star.closePath();
-        g2.setColor(withAlpha(new Color(255, 251, 224), Math.round(255 * fade)));
-        g2.fill(star);
+        Stamps.paint(g2, new SparkLook(spark, alpha), zone.centerX(), zone.centerY(), spark, g -> {
+            float waist = spark * 0.28f;
+            Path2D.Float star = new Path2D.Float();
+            for (int i = 0; i < 8; i++) {
+                double angle = i * Math.PI / 4;
+                float reach = i % 2 == 0 ? spark : waist;
+                float px = (float) Math.cos(angle) * reach;
+                float py = (float) Math.sin(angle) * reach;
+                if (i == 0) {
+                    star.moveTo(px, py);
+                } else {
+                    star.lineTo(px, py);
+                }
+            }
+            star.closePath();
+            g.setColor(withAlpha(new Color(255, 251, 224), Math.min(255, alpha)));
+            g.fill(star);
+        });
+    }
+
+    private record SparkLook(float size, int alpha) {
     }
 
     /** A dark casing standing on the ground, with a red light that blinks. */
@@ -665,7 +712,7 @@ public final class Java2DFrameRenderer {
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.clamp(fade, 0f, 1f)));
         g2.translate(zone.centerX(), zone.centerY());
         Shape casing = new Ellipse2D.Float(-r, -r, r * 2, r * 2);
-        paintStanding(g2, casing, ZONE_MINE_CASING, 0, r * 0.45f);
+        paintStanding(g2, casing, this.light.on(ZONE_MINE_CASING), 0, r * 0.45f);
         g2.setColor(ZONE_MINE_CASING.body());
         g2.fill(casing);
         boolean lit = Math.sin(zone.phase() * 8) > 0;
@@ -710,14 +757,14 @@ public final class Java2DFrameRenderer {
 
         this.paintRangeCircle(g2, cell, frame);
 
-        g2.setColor(withAlpha(highlightColor, 80));
+        g2.setColor(withAlpha(highlightColor, 55));
         g2.drawLine(x, 0, x, frame.maxY());
         g2.drawLine(x + scale, 0, x + scale, frame.maxY());
         g2.drawLine(0, y, frame.maxX(), y);
         g2.drawLine(0, y + scale, frame.maxX(), y + scale);
         g2.fillRect(x, y, scale, scale);
 
-        g2.setColor(withAlpha(highlightColor, 140));
+        g2.setColor(withAlpha(highlightColor, 90));
         g2.drawRoundRect(x - scale, y - scale, scale * 3, scale * 3, 40, 40);
 
         g2.setColor(highlightColor);
@@ -728,8 +775,8 @@ public final class Java2DFrameRenderer {
         int scale = frame.scale();
         float realRange = cell.rangeCells() * scale;
         float halfScale = (float) scale / 2;
-        g2.setColor(CELL_RANGE);
-        g2.draw(new Ellipse2D.Float(cell.x() - realRange + halfScale, cell.y() - realRange + halfScale, realRange * 2, realRange * 2));
+        softLine(g2, new Ellipse2D.Float(cell.x() - realRange + halfScale, cell.y() - realRange + halfScale,
+                realRange * 2, realRange * 2), CELL_RANGE);
     }
 
     private void paintSelectHighlight(Graphics2D g2, CellDraw cell, RenderFrame frame) {
@@ -762,8 +809,8 @@ public final class Java2DFrameRenderer {
     /** Dim for the trail, bright for the moving chevrons. */
     private static int pathMarkerAlpha(PathMarkerBrightness brightness) {
         return switch (brightness) {
-            case STATIC -> 40;
-            case MOVING -> 100;
+            case STATIC -> 70;
+            case MOVING -> 150;
         };
     }
 
@@ -793,7 +840,7 @@ public final class Java2DFrameRenderer {
     }
 
     private void paintEnemyBody(Graphics2D g2, EnemyBodyDraw body) {
-        EnemySprites.paint(g2, body);
+        EnemySprites.paint(g2, body, this.light);
     }
 
     /**
@@ -1205,11 +1252,8 @@ public final class Java2DFrameRenderer {
         if (ring.radius() <= 0) {
             return;
         }
-        Stroke defaultStroke = g2.getStroke();
-        g2.setColor(withAlpha(colorFor(ring.palette()), Math.round(ring.alpha() * 255)));
-        g2.setStroke(new BasicStroke(2.0f));
-        g2.draw(new Ellipse2D.Float(ring.centerX() - ring.radius(), ring.centerY() - ring.radius(), ring.radius() * 2, ring.radius() * 2));
-        g2.setStroke(defaultStroke);
+        softLine(g2, new Ellipse2D.Float(ring.centerX() - ring.radius(), ring.centerY() - ring.radius(),
+                ring.radius() * 2, ring.radius() * 2), withAlpha(colorFor(ring.palette()), Math.round(ring.alpha() * 255)));
     }
 
     /** A ring growing from nothing as it fades, for a cast or a spawn; quiet, since many can fire at once. */
@@ -1246,7 +1290,7 @@ public final class Java2DFrameRenderer {
             g2.setColor(Color.PINK);
             g2.draw(new Ellipse2D.Float(sprite.centerX() - r, sprite.centerY() - r, r * 2, r * 2));
         }
-        TowerSprites.paintShadow(g2, sprite, scale);
+        TowerSprites.paintShadow(g2, sprite, scale, this.light);
     }
 
     /** One green up arrow in the cell's top-left corner, the same whichever tier the upgrade is in. */
@@ -1407,10 +1451,18 @@ public final class Java2DFrameRenderer {
         if (ring.radius() <= 0) {
             return;
         }
+        softLine(g2, new Ellipse2D.Float(ring.centerX() - ring.radius(), ring.centerY() - ring.radius(),
+                ring.radius() * 2, ring.radius() * 2), withAlpha(colorFor(ring.palette()), Math.round(ring.alpha() * 255)));
+    }
+
+    private static void softLine(Graphics2D g2, Shape line, Color color) {
         Stroke defaultStroke = g2.getStroke();
-        g2.setColor(withAlpha(colorFor(ring.palette()), Math.round(ring.alpha() * 255)));
-        g2.setStroke(new BasicStroke(2.0f));
-        g2.draw(new Ellipse2D.Float(ring.centerX() - ring.radius(), ring.centerY() - ring.radius(), ring.radius() * 2, ring.radius() * 2));
+        g2.setColor(withAlpha(color, Math.round(color.getAlpha() * HALO_SHARE)));
+        g2.setStroke(HALO);
+        g2.draw(line);
+        g2.setColor(color);
+        g2.setStroke(HAIRLINE);
+        g2.draw(line);
         g2.setStroke(defaultStroke);
     }
 

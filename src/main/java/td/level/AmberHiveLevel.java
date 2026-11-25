@@ -1,6 +1,7 @@
 package td.level;
 
 import td.board.BoardGround;
+import td.board.BoardLight;
 import td.board.GroundMotif;
 import td.effect.ShieldTemplate;
 import td.effect.SprintTemplate;
@@ -172,7 +173,8 @@ final class AmberHiveLevel {
             .withDescription(LEVEL_DESCRIPTION)
             .withStartingCredits(STARTING_CREDITS)
             .withStartingLives(STARTING_LIVES)
-            .withGround(BoardGround.of(0x100B04, GroundMotif.COMB, 0x1C1408))
+            .withGround(BoardGround.of(0x33251A, GroundMotif.COMB, 0x3F2E1F)
+                    .withLight(BoardLight.of(0xFFE0A0, 0x1E1430, 0x8A7450)).withHaze(0.3f))
             // The drone first, so the Warden's reinforcements name a registered id; each hatch's target before it.
             .withCustomRankedEnemies(Stream.concat(Stream.of(DRONE, HIVE_GUARD, NURSE, HORNET, COCOON, LARVA),
                     WardenEnemy.chain().stream()).toList());

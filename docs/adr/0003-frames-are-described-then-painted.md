@@ -32,6 +32,9 @@ build or check without a display.
   shape; a foundation of lit parts is unreadable at icon size, so the mark is drawn for that size.
   Amended 2026-11-18: the Upgrades panel no longer shows a tier's foundation as a thumbnail; a tier is its
   numeral there.
+- Amended 2026-11-25: rasters generated in code are allowed (the ground, kept pictures of sprites, marks and patches),
+  since painting is gated by the harness; image files still are not. Gradients go on fields and the ground only; what
+  stands stays in flat tones.
 
 ## Consequences
 - A frame can be built and checked headless (`PreviewBoard`, `td.PerformanceHarness`).

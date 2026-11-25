@@ -52,7 +52,7 @@ final class TowerSprites {
     private static final float SHELL_SIZE_STEPS = 4f;
     // How far a shell's drawing reaches from its centre, in shell radii: its fins and its lit side.
     private static final double SHELL_REACH = 2.5;
-    private static final Color SHADOW = new Color(0, 0, 0, 150);
+    private static final int SHADOW_ALPHA = 150;
 
     /** How far the new foundation has spread when the rise ends, and how far above the cell's centre it spreads from. */
     private static final float RISE_SPREAD_CELLS = 1.2f;
@@ -116,7 +116,7 @@ final class TowerSprites {
      * {@code layer} is a head's heading step, or the body or its front; {@code pixelSteps} is the device pixels to a
      * cell, in sixteenths, so a zoom or a HiDPI scale gets its own.
      */
-    private record Key(Posture posture, int layer, int pixelSteps) {
+    private record Key(Posture posture, int layer, int pixelSteps, SceneLight light) {
     }
 
     /** A picture and where the tower's centre sits in it, in device pixels. */
@@ -137,10 +137,11 @@ final class TowerSprites {
     }
 
     /** The soft shadow a foundation casts on the ground, down and to the right; it grows as a placed tower settles. */
-    static void paintShadow(Graphics2D g2, TowerSpriteDraw tower, int scale) {
+    static void paintShadow(Graphics2D g2, TowerSpriteDraw tower, int scale, SceneLight light) {
         double footprint = TowerFoundations.footprint(tower.tier()) * scale * settled(tower.buildProgress());
+        Color colour = light.shadowOf(SHADOW_ALPHA);
         Consumer<Graphics2D> shadow = g -> {
-            g.setColor(SHADOW);
+            g.setColor(colour);
             g.fill(new Ellipse2D.Double(footprint * 0.14 - footprint * 1.06, footprint * 0.16 - footprint * 1.02,
                     footprint * 2.12, footprint * 2.04));
         };
@@ -149,12 +150,12 @@ final class TowerSprites {
             shadow.accept(g2);
             g2.translate(-tower.centerX(), -tower.centerY());
         } else {
-            Stamps.paint(g2, new ShadowLook(tower.tier(), scale), tower.centerX(), tower.centerY(), footprint * 1.3,
+            Stamps.paint(g2, new ShadowLook(tower.tier(), scale, colour), tower.centerX(), tower.centerY(), footprint * 1.3,
                     shadow);
         }
     }
 
-    private record ShadowLook(int tier, int scale) {
+    private record ShadowLook(int tier, int scale, Color colour) {
     }
 
     /**
@@ -162,15 +163,15 @@ final class TowerSprites {
      * of the old one from the centre, swelling past its size before it settles, under a flash, a ring in the new tier's
      * colour that runs out past the cell's edge, and sparks. A tower just placed grows out of its cell and settles.
      */
-    static void paint(Graphics2D g2, TowerSpriteDraw tower, int scale) {
+    static void paint(Graphics2D g2, TowerSpriteDraw tower, int scale, SceneLight light) {
         float build = tower.buildProgress();
         float rise = tower.riseProgress();
         if (build < 1f) {
-            paintSettling(g2, tower, scale, build);
+            paintSettling(g2, tower, scale, build, light);
         } else if (rise < 1f) {
-            paintRising(g2, tower, scale, rise);
+            paintRising(g2, tower, scale, rise, light);
         } else {
-            paintTower(g2, tower, tower.tier(), scale, 1f, 1f);
+            paintTower(g2, tower, tower.tier(), scale, 1f, 1f, light);
         }
         if (build >= 1f) {
             paintLights(g2, tower, scale);
@@ -180,7 +181,7 @@ final class TowerSprites {
     /** {@code look} at {@code tier} in {@code pose}, still: no lights, nothing rising. */
     static void paint(Graphics2D g2, TowerLook look, int tier, TowerPose pose, float centerX, float centerY, int scale,
                       double heading) {
-        paintTower(g2, look, tier, pose, centerX, centerY, scale, heading, 1f, 1f);
+        paintTower(g2, look, tier, pose, centerX, centerY, scale, heading, 1f, 1f, SceneLight.none());
     }
 
     /**
@@ -191,7 +192,7 @@ final class TowerSprites {
         AffineTransform pen = g2.getTransform();
         if (!drained) {
             g2.scale(cell, cell);
-            paintTower(g2, look, tier, TowerPose.idle(), 0f, 0f, 1, STILL_HEADING, 1f, 1f);
+            paintTower(g2, look, tier, TowerPose.idle(), 0f, 0f, 1, STILL_HEADING, 1f, 1f, SceneLight.none());
             g2.setTransform(pen);
             return;
         }
@@ -201,7 +202,7 @@ final class TowerSprites {
         Graphics2D g = picture.createGraphics();
         g.translate(side / 2.0, side / 2.0);
         g.scale(device, device);
-        paintTower(g, look, tier, TowerPose.idle(), 0f, 0f, 1, STILL_HEADING, 1f, 1f);
+        paintTower(g, look, tier, TowerPose.idle(), 0f, 0f, 1, STILL_HEADING, 1f, 1f, SceneLight.none());
         g.dispose();
         drain(picture);
         g2.scale(cell / device, cell / device);
@@ -239,16 +240,16 @@ final class TowerSprites {
         return new Point2D.Float(centerX, (float) (centerY - LIFT * foundation.nest() * scale));
     }
 
-    private static void paintRising(Graphics2D g2, TowerSpriteDraw tower, int scale, float progress) {
+    private static void paintRising(Graphics2D g2, TowerSpriteDraw tower, int scale, float progress, SceneLight light) {
         float x = tower.centerX();
         float y = tower.centerY();
         Color tier = TowerLooks.tierColor(tower.look(), tower.tier());
-        paintTower(g2, tower, tower.risenFrom(), scale, 1f, 1f);
+        paintTower(g2, tower, tower.risenFrom(), scale, 1f, 1f, light);
         Shape clip = g2.getClip();
         float spread = scale * RISE_SPREAD_CELLS * progress;
         float spreadY = y - scale * RISE_SPREAD_LIFT_CELLS;
         g2.clip(new Ellipse2D.Float(x - spread, spreadY - spread, spread * 2, spread * 2));
-        paintTower(g2, tower, tower.tier(), scale, 1f + RISE_SWELL * (float) Math.sin(Math.PI * progress), 1f);
+        paintTower(g2, tower, tower.tier(), scale, 1f + RISE_SWELL * (float) Math.sin(Math.PI * progress), 1f, light);
         g2.setClip(clip);
         if (progress < RISE_FLASH_SHARE) {
             float fade = 1f - progress / RISE_FLASH_SHARE;
@@ -275,7 +276,8 @@ final class TowerSprites {
         }
     }
 
-    private static void paintSettling(Graphics2D g2, TowerSpriteDraw tower, int scale, float progress) {
+    private static void paintSettling(Graphics2D g2, TowerSpriteDraw tower, int scale, float progress,
+                                      SceneLight light) {
         float footprint = scale * (float) TowerFoundations.footprint(tower.tier());
         float dust = footprint + (scale * BUILD_DUST_TO_CELLS - footprint) * progress;
         Stroke stroke = g2.getStroke();
@@ -283,7 +285,7 @@ final class TowerSprites {
         g2.setColor(faded(BUILD_DUST, BUILD_DUST_ALPHA * (1f - progress)));
         g2.draw(new Ellipse2D.Float(tower.centerX() - dust, tower.centerY() - dust * 0.8f, dust * 2, dust * 1.6f));
         g2.setStroke(stroke);
-        paintTower(g2, tower, tower.tier(), scale, settled(progress), Math.min(1f, progress / BUILD_FADE_SHARE));
+        paintTower(g2, tower, tower.tier(), scale, settled(progress), Math.min(1f, progress / BUILD_FADE_SHARE), light);
     }
 
     /** A placed tower's size as it settles: it grows quickly, runs a little past its size and comes back. */
@@ -296,24 +298,25 @@ final class TowerSprites {
         return BUILD_FROM + (1f - BUILD_FROM) * eased + over;
     }
 
-    private static void paintTower(Graphics2D g2, TowerSpriteDraw tower, int tier, int scale, float size, float alpha) {
+    private static void paintTower(Graphics2D g2, TowerSpriteDraw tower, int tier, int scale, float size, float alpha,
+                                   SceneLight light) {
         paintTower(g2, tower.look(), tier, tower.pose(), tower.centerX(), tower.centerY(), scale,
-                tower.headingRadians(), size, alpha);
+                tower.headingRadians(), size, alpha, light);
     }
 
     private static void paintTower(Graphics2D g2, TowerLook look, int tier, TowerPose pose, float centerX,
-                                   float centerY, int scale, double heading, float size, float alpha) {
+                                   float centerY, int scale, double heading, float size, float alpha, SceneLight light) {
         Pen pen = Pen.of(g2);
         TowerPose snapped = pose.snapped(TowerFoundations.POSE_STEPS);
         TowerPose body = TowerFoundations.stillBody(look) ? TowerPose.idle() : snapped;
-        place(g2, pen, sprite(look, tier, body, BODY, scale, pen.device()), centerX, centerY, size, alpha);
+        place(g2, pen, sprite(look, tier, body, BODY, scale, pen.device(), light), centerX, centerY, size, alpha);
         TowerFoundations.Foundation foundation = TowerFoundations.of(look, tier, snapped);
         if (foundation.aims()) {
             int facing = Math.floorMod((int) Math.round(heading / (2 * Math.PI) * FACINGS), FACINGS);
-            place(g2, pen, sprite(look, tier, snapped, facing, scale, pen.device()), centerX, centerY, size, alpha);
+            place(g2, pen, sprite(look, tier, snapped, facing, scale, pen.device(), light), centerX, centerY, size, alpha);
         }
         if (!foundation.front().isEmpty()) {
-            place(g2, pen, sprite(look, tier, body, FRONT, scale, pen.device()), centerX, centerY, size, alpha);
+            place(g2, pen, sprite(look, tier, body, FRONT, scale, pen.device(), light), centerX, centerY, size, alpha);
         }
     }
 
@@ -439,9 +442,11 @@ final class TowerSprites {
 
     // ---- pictures ------------------------------------------------------------------------------------------------
 
-    private static Sprite sprite(TowerLook look, int tier, TowerPose pose, int facing, int scale, float device) {
+    private static Sprite sprite(TowerLook look, int tier, TowerPose pose, int facing, int scale, float device,
+                                 SceneLight light) {
         int shown = Math.clamp(tier, 0, TowerFoundations.TIERS - 1);
-        Key key = new Key(new Posture(look, shown, pose), facing, Math.round(scale * device * DEVICE_STEPS_PER_UNIT));
+        Key key = new Key(new Posture(look, shown, pose), facing, Math.round(scale * device * DEVICE_STEPS_PER_UNIT),
+                light);
         Sprite kept = SPRITES.get(key);
         if (kept != null) {
             return kept;
@@ -461,7 +466,7 @@ final class TowerSprites {
             parts = foundation.head().stream().map(part -> part.withShape(turn.createTransformedShape(part.shape())))
                     .toList();
         }
-        Sprite drawn = draw(parts, scale * device);
+        Sprite drawn = draw(parts, scale * device, light);
         if (SPRITES.putIfAbsent(key, drawn) == null) {
             KEPT_PIXELS.addAndGet((long) drawn.image().getWidth() * drawn.image().getHeight());
         }
@@ -474,7 +479,7 @@ final class TowerSprites {
      */
     static void paintParts(Graphics2D g, List<TowerFoundations.Part> parts, double pixels) {
         for (TowerFoundations.Part part : parts) {
-            paintPart(g, part, pixels);
+            paintPart(g, part, pixels, SceneLight.none());
         }
     }
 
@@ -519,7 +524,7 @@ final class TowerSprites {
     }
 
     /** Draws {@code parts} into a picture, {@code pixels} device pixels to a cell. */
-    private static Sprite draw(List<TowerFoundations.Part> parts, double pixels) {
+    private static Sprite draw(List<TowerFoundations.Part> parts, double pixels, SceneLight light) {
         Rectangle2D reach = new Rectangle2D.Double();
         boolean first = true;
         for (TowerFoundations.Part part : parts) {
@@ -546,7 +551,7 @@ final class TowerSprites {
         g.translate(centreX, centreY);
         g.scale(pixels, pixels);
         for (TowerFoundations.Part part : parts) {
-            paintPart(g, part, pixels);
+            paintPart(g, part, pixels, light);
         }
         g.dispose();
         return new Sprite(image, centreX, centreY);
@@ -556,22 +561,23 @@ final class TowerSprites {
      * One part: a solid one's side swept from its foot to its top a half pixel at a time, its top in the highlight,
      * then in its body tone shifted down and right inside the top, which leaves a lit rim along the top-left edge.
      */
-    private static void paintPart(Graphics2D g, TowerFoundations.Part part, double pixels) {
+    private static void paintPart(Graphics2D g, TowerFoundations.Part part, double pixels, SceneLight light) {
         double foot = -LIFT * part.z0();
         double top = -LIFT * (part.z0() + part.height());
         switch (part.kind()) {
             case SOLID -> {
                 int steps = Math.max(1, (int) Math.ceil(Math.abs(top - foot) * pixels / 0.5));
-                g.setColor(part.tones().shade());
+                Tones tones = light.on(part.tones());
+                g.setColor(tones.shade());
                 for (int i = 0; i <= steps; i++) {
                     g.fill(moved(part.shape(), 0, foot + (top - foot) * i / steps));
                 }
                 Shape lid = moved(part.shape(), 0, top);
-                g.setColor(part.tones().highlight());
+                g.setColor(tones.highlight());
                 g.fill(lid);
                 Shape clip = g.getClip();
                 g.clip(lid);
-                g.setColor(part.tones().body());
+                g.setColor(tones.body());
                 g.fill(moved(lid, RIM, RIM));
                 g.setClip(clip);
             }

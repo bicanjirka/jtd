@@ -51,7 +51,7 @@ public final class TowerArtGame {
 
     /** The tower with its shadow, its head turned to {@code aimDegrees} (0 east, -90 north). */
     public static void paint(Graphics2D g, TowerLook look, int tier, TowerPose pose, double aimDegrees) {
-        TowerSprites.paintShadow(g, TowerSpriteDraw.still(look, tier, 0, 0, 0f, 0f, 0f), 1);
+        TowerSprites.paintShadow(g, TowerSpriteDraw.still(look, tier, 0, 0, 0f, 0f, 0f), 1, SceneLight.none());
         TowerSprites.paint(g, look, tier, pose, 0f, 0f, 1, Math.toRadians(aimDegrees));
     }
 
@@ -64,8 +64,8 @@ public final class TowerArtGame {
                                  double rise, double build, double seconds) {
         TowerSpriteDraw draw = new TowerSpriteDraw(look, tier, pose, 0, 0, false, 0f, 0f, 0f,
                 (float) Math.toRadians(aimDegrees), false, fromTier, (float) rise, (float) build, (float) seconds);
-        TowerSprites.paintShadow(g, draw, 1);
-        TowerSprites.paint(g, draw, 1);
+        TowerSprites.paintShadow(g, draw, 1, SceneLight.none());
+        TowerSprites.paint(g, draw, 1, SceneLight.none());
     }
 
     /** The tower's icon, a cell wide, at the pen's origin. */

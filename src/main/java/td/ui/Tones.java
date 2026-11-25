@@ -15,7 +15,7 @@ record Tones(Color shade, Color body, Color highlight) {
         return new Tones(toward(body, Color.BLACK, SHADE), body, toward(body, Color.WHITE, HIGHLIGHT));
     }
 
-    private static Color toward(Color from, Color to, float share) {
+    static Color toward(Color from, Color to, float share) {
         return new Color(Math.round(from.getRed() + (to.getRed() - from.getRed()) * share),
                 Math.round(from.getGreen() + (to.getGreen() - from.getGreen()) * share),
                 Math.round(from.getBlue() + (to.getBlue() - from.getBlue()) * share));

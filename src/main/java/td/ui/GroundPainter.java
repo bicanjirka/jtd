@@ -6,6 +6,7 @@ import td.util.ThreadConfined;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.GradientPaint;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.RenderingHints;
@@ -90,6 +91,28 @@ final class GroundPainter {
     static void paintGround(Graphics2D g2, BoardGround ground, int scale, int width, int height) {
         g2.setColor(new Color(ground.floorRgb()));
         g2.fillRect(0, 0, width, height);
+        paintMotif(g2, ground, scale, width, height);
+        paintHaze(g2, ground, width, height);
+    }
+
+    /**
+     * The air of the level over the floor and its motif, thickest at the far (north) edge and gone at the near one, so
+     * the board reads as a place that recedes. What stands on the board is painted over it, clear.
+     */
+    private static void paintHaze(Graphics2D g2, BoardGround ground, int width, int height) {
+        if (ground.haze() <= 0f) {
+            return;
+        }
+        Color air = new Color(ground.light().hazeRgb());
+        g2.setPaint(new GradientPaint(0, 0, withAlpha(air, ground.haze()), 0, height, withAlpha(air, 0f)));
+        g2.fillRect(0, 0, width, height);
+    }
+
+    private static Color withAlpha(Color color, float alpha) {
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), Math.round(Math.clamp(alpha, 0f, 1f) * 255));
+    }
+
+    private static void paintMotif(Graphics2D g2, BoardGround ground, int scale, int width, int height) {
         if (ground.motif() == GroundMotif.NONE || scale <= 0) {
             return;
         }

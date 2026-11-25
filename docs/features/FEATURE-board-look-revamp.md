@@ -67,7 +67,8 @@ us to keep it simple" (Game Developer, 2014); Fletcher Studio, "The Witness: des
   the board agree. Its shade takes the level's shadow colour, with a darkening of its own so sides keep their depth,
   and its rim takes the key light. Mock: [tones](board-look-revamp-art/tones-options.png) (column a).
 - **Fields.** A ground zone or range area has a soft gradient fill and a quiet, thin edge in the saturation band; its
-  edge stays, because it says where the zone acts. The selected tower's range keeps its crisp line.
+  edge stays, because it says where the zone acts. The range circle and other lines on the ground are thin and soft
+  too (owner, 2026-11-25), a hairline over a faint halo.
 - **Ground circles.** A round mark lying on the ground means an area that acts. The path trail's dots become dashes
   or chevrons. Round bodies and plinths, which stand, are unaffected.
 - **Saturation band.** Everything that persists on the board (bodies, idle life, zone fields and what stands on them)
@@ -136,7 +137,7 @@ domain remembers what happened and when, for one bounded window, and presentatio
 6. The 10 CIEDE2000 sibling distance applies to towers and effects. Enemies differ by shape first.
 7. Rasters generated in code are allowed, kept per level and zoom; gradients for fields only, objects flat; no image
    files, no grain.
-8. Fields: soft gradient fill and a quiet edge; the selection circle stays crisp. A round mark on the ground means an
+8. Fields: soft gradient fill and a quiet edge; the range circle and rings are thin, soft hairlines. A round mark on the ground means an
    area that acts.
 9. One shared motion vocabulary: curves and a named timing scale in seconds.
 10. Recording writes a GIF and a frame strip; "squint" works on stills and recordings; labs never re-draw shipped

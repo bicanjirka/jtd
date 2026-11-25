@@ -24,7 +24,7 @@ final class PathMarkerFrameBuilder {
     private static final float MOVING_CELLS_PER_SECOND = 0.4f;
 
     private static final MarkerStyle STATIC =
-            MarkerStyle.of(PathMarkerShape.DOT, PathMarkerBrightness.STATIC, 0.5f, 0.06f);
+            MarkerStyle.of(PathMarkerShape.DASH, PathMarkerBrightness.STATIC, 0.5f, 0.06f);
     private static final MarkerStyle MOVING =
             MarkerStyle.of(PathMarkerShape.CHEVRON, PathMarkerBrightness.MOVING, 1.5f, 0.12f);
 

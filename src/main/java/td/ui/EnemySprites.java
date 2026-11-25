@@ -38,7 +38,7 @@ final class EnemySprites {
     private static final float CAP_LIGHTENING = 0.14f;
     private static final float SHADOW_SIDEWAYS = 0.16f;
     private static final float SHADOW_DOWN = 0.1f;
-    private static final Color CAST_SHADOW = new Color(0, 0, 0, 105);
+    private static final int CAST_SHADOW_ALPHA = 105;
     private static final Color GLINT = new Color(255, 255, 255, 135);
     private static final Color HOVER_SHADOW = new Color(104, 112, 136);
     private static final float HOVER_SHADOW_ALPHA = 0.36f;
@@ -55,7 +55,11 @@ final class EnemySprites {
     private EnemySprites() {
     }
 
-    private record Key(EnemyLook look, int scaleSteps, int facing, int deviceSteps) {
+    /** A picture's size: the body's size and the zoom, each in steps. */
+    private record Size(int scaleSteps, int deviceSteps) {
+    }
+
+    private record Key(EnemyLook look, Size size, int facing, SceneLight light) {
     }
 
     /** A body's picture and where its centre sits in it, in device pixels. */
@@ -79,7 +83,7 @@ final class EnemySprites {
         return (x * 0.71 + y * 1.13) / (scale * STRIDE_SCALES) * Math.PI;
     }
 
-    static void paint(Graphics2D g2, EnemyBodyDraw body) {
+    static void paint(Graphics2D g2, EnemyBodyDraw body, SceneLight light) {
         EnemyLooks.Row row = EnemyLooks.of(body.look());
         EnemyLooks.Form form = row.form();
         float visibility = 1f - body.cloakProgress();
@@ -91,7 +95,7 @@ final class EnemySprites {
         boolean plain = board.getShearX() == 0 && board.getShearY() == 0 && board.getScaleX() > 0
                 && Math.abs(board.getScaleX() - board.getScaleY()) < 1e-6;
         float device = plain ? Math.round((float) board.getScaleX() * DEVICE_STEPS_PER_UNIT) / DEVICE_STEPS_PER_UNIT : 1f;
-        Sprite sprite = sprite(body, row, Math.max(device, 1f / DEVICE_STEPS_PER_UNIT));
+        Sprite sprite = sprite(body, row, Math.max(device, 1f / DEVICE_STEPS_PER_UNIT), light);
         Composite composite = g2.getComposite();
         if (visibility < 1f) {
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.clamp(visibility, 0f, 1f)));
@@ -134,10 +138,10 @@ final class EnemySprites {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), Math.round(Math.clamp(alpha, 0f, 1f) * 255f));
     }
 
-    private static Sprite sprite(EnemyBodyDraw body, EnemyLooks.Row row, float device) {
+    private static Sprite sprite(EnemyBodyDraw body, EnemyLooks.Row row, float device, SceneLight light) {
         int scaleSteps = Math.max(1, Math.round(body.scale() * SCALE_STEPS_PER_PIXEL));
         int facing = Math.floorMod(Math.round((float) (body.facingRadians() / (2 * Math.PI) * FACINGS)), FACINGS);
-        Key key = new Key(body.look(), scaleSteps, facing, Math.round(device * DEVICE_STEPS_PER_UNIT));
+        Key key = new Key(body.look(), new Size(scaleSteps, Math.round(device * DEVICE_STEPS_PER_UNIT)), facing, light);
         Sprite kept = SPRITES.get(key);
         if (kept != null) {
             return kept;
@@ -146,14 +150,14 @@ final class EnemySprites {
             SPRITES.clear();
             KEPT_PIXELS.set(0);
         }
-        Sprite drawn = draw(row, scaleSteps / SCALE_STEPS_PER_PIXEL, facing * 2 * Math.PI / FACINGS, device);
+        Sprite drawn = draw(row, scaleSteps / SCALE_STEPS_PER_PIXEL, facing * 2 * Math.PI / FACINGS, device, light);
         if (SPRITES.putIfAbsent(key, drawn) == null) {
             KEPT_PIXELS.addAndGet((long) drawn.image().getWidth() * drawn.image().getHeight());
         }
         return drawn;
     }
 
-    private static Sprite draw(EnemyLooks.Row row, float scale, double facing, float device) {
+    private static Sprite draw(EnemyLooks.Row row, float scale, double facing, float device, SceneLight light) {
         EnemyLooks.Form form = row.form();
         AffineTransform turn = AffineTransform.getRotateInstance(facing);
         Shape top = turn.createTransformedShape(row.body().at(scale));
@@ -184,22 +188,22 @@ final class EnemySprites {
         g.scale(device, device);
 
         if (grounded) {
-            g.setColor(CAST_SHADOW);
+            g.setColor(light.shadowOf(CAST_SHADOW_ALPHA));
             g.fill(moved(top, scale * SHADOW_SIDEWAYS, height + scale * SHADOW_DOWN));
         }
-        Tones tones = row.tones();
+        Tones tones = light.on(row.tones());
         side(g, top, tones.shade(), height, 0f, device);
         face(g, top, tones, 0f, rim, farEdge);
         if (capLift > 0f) {
             Shape cap = turn.createTransformedShape(row.body().at(scale * form.capShare()));
-            Tones capTones = Tones.of(toward(tones.body(), Color.WHITE, CAP_LIGHTENING));
+            Tones capTones = light.on(Tones.of(toward(tones.body(), Color.WHITE, CAP_LIGHTENING)));
             side(g, cap, toward(tones.shade(), tones.body(), 0.35f), 0f, -capLift, device);
             face(g, cap, capTones, -capLift, rim, farEdge * form.capShare());
         }
         if (row.detail().isPresent()) {
             EnemyLooks.Detail detail = row.detail().get();
             Shape shape = turn.createTransformedShape(detail.shape().at(scale));
-            Tones detailTones = Tones.of(detail.color());
+            Tones detailTones = light.on(Tones.of(detail.color()));
             if (form.detailHeight() > 0f) {
                 side(g, shape, detailTones.shade(), -capLift, -detailLift, device);
                 face(g, shape, detailTones, -detailLift, rim * 0.7f, 0f);
