@@ -16,9 +16,10 @@ class VolleySpecTest {
         HeldShell carrying = new HeldShell(ShellKind.NORMAL, Optional.of(ShellKind.TAR));
         HeldShell heavy = new HeldShell(ShellKind.HEAVY, Optional.empty());
 
-        List<HeldShell> sent = volley.sequence(List.of(payload, carrying, heavy));
+        List<LinedUpShell> sent = volley.sequence(List.of(payload, carrying, heavy));
 
-        assertThat(sent).containsExactly(payload, carrying, carrying, new HeldShell(ShellKind.NORMAL, Optional.empty()),
-                heavy);
+        assertThat(sent).containsExactly(LinedUpShell.held(payload), LinedUpShell.sneaked(carrying),
+                LinedUpShell.held(carrying), LinedUpShell.sneaked(new HeldShell(ShellKind.NORMAL, Optional.empty())),
+                LinedUpShell.held(heavy));
     }
 }

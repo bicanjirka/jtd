@@ -214,8 +214,10 @@ final class TowerSheetText {
                         + profile.carried().map(payload -> "+" + payload.name()).orElse("")),
                         shellSheet(profile, magazine.chances().getOrDefault(profile.kind(), 0f)))));
         List<SheetLine.MagazineSlot> slots = magazine.shells().stream()
-                .map(held -> new SheetLine.MagazineSlot(shellOf(held.kind()), held.carried().map(TowerSheetText::shellOf),
-                        Optional.ofNullable(sheets.get(held))))
+                .map(lined -> new SheetLine.MagazineSlot(shellOf(lined.shell().kind()),
+                        lined.shell().carried().map(TowerSheetText::shellOf), lined.fromMagazine(),
+                        Optional.ofNullable(sheets.get(lined.shell()))
+                                .map(sheet -> lined.fromMagazine() ? sheet : sneakedSheet(sheet))))
                 .toList();
         List<SheetLine> lines = new ArrayList<>();
         lines.add(new SheetLine.Gap());
@@ -227,6 +229,14 @@ final class TowerSheetText {
         });
         lines.add(new SheetLine.Gap());
         return lines;
+    }
+
+    /** A sneaked Normal's sheet: a Normal's, and that no draw put it there. */
+    private static SheetTooltip sneakedSheet(SheetTooltip normal) {
+        List<SheetLine> lines = new ArrayList<>(normal.sheet().lines());
+        lines.add(SheetLine.Sentence.of(TermText.of(TowerTerm.CARPET_BOMBING)
+                .plus(" sneaks it between the shells it loads; it isn't drawn from the magazine").asSentence()));
+        return new SheetTooltip(new TooltipKey(normal.key().id() + "+sneaked", normal.key().term()), new InfoSheet(lines));
     }
 
     /** What one kind of shell does: its hit, flight and blast, its share of the shots, and the effects it leaves. */

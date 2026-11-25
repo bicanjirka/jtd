@@ -24,6 +24,7 @@ import td.tower.TowerStatRow;
 import td.tower.TowerTerm;
 import td.tower.ability.AbilityBar;
 import td.tower.ability.AbilityUnits;
+import td.tower.mortar.Magazine;
 import td.tower.mortar.MagazineView;
 import td.tower.mortar.ShellKind;
 import td.tower.mortar.ShellProfile;
@@ -209,6 +210,29 @@ class TowerSheetTextTest {
         assertThat(ability.capacity()).isEqualTo(AbilityBar.CAPACITY);
         assertThat(ability.cost()).isEqualTo(2);
         assertThat(row(ability.tooltip().sheet(), EffectKind.CHARGED.title()).value()).isEqualTo("1.3 / " + AbilityBar.CAPACITY);
+    }
+
+    @Test
+    void withCarpetBombingTheStripShowsTheSneakedNormalsAmongTheShellsTheNextFiringSends() {
+        Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
+        UpgradePaths.buy(mortar, this.world, "Carpet Bombing");
+        MortarTower.loadMagazine(mortar, MagazineFixtures.frontedBy(ShellKind.HEAVY, ShellKind.HEAVY, ShellKind.HEAVY));
+
+        InfoSheet sheet = TowerSheetText.status(BoardRenderer.liveInspection(mortar));
+
+        SheetLine.MagazineRow row = sheet.lines().stream().filter(SheetLine.MagazineRow.class::isInstance)
+                .map(SheetLine.MagazineRow.class::cast).findFirst().orElseThrow();
+        List<SheetLine.MagazineSlot> sent = row.slots().subList(0, row.loading());
+        List<SheetLine.MagazineSlot> sneaked = sent.stream().filter(slot -> !slot.fromMagazine()).toList();
+        assertThat(sent).hasSizeGreaterThan(1);
+        for (int i = 0; i < sent.size(); i++) {
+            assertThat(sent.get(i).fromMagazine()).as("slot " + i).isEqualTo(i % 2 == 0);
+            assertThat(sent.get(i).shell()).as("slot " + i).isEqualTo(i % 2 == 0 ? LoadedShell.HEAVY : LoadedShell.NORMAL);
+        }
+        assertThat(row.slots()).hasSize(Magazine.SIZE + sneaked.size());
+        assertThat(row.slots().subList(row.loading(), row.slots().size())).allMatch(SheetLine.MagazineSlot::fromMagazine);
+        assertThat(sneaked.getFirst().tooltip().orElseThrow().key())
+                .isNotEqualTo(row.slots().getLast().tooltip().orElseThrow().key());
     }
 
     @Test

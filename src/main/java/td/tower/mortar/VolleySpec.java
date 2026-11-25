@@ -43,12 +43,13 @@ public record VolleySpec(int shells, int gapTicks, float reloadFactor, float spa
      * The shells one firing sends, in order: {@code loaded}, a Normal between each two when it sneaks them in, each
      * sneaked one carrying the payload it flies right behind.
      */
-    public List<HeldShell> sequence(List<HeldShell> loaded) {
+    public List<LinedUpShell> sequence(List<HeldShell> loaded) {
         if (!this.normalsBetween) {
-            return loaded;
+            return loaded.stream().map(LinedUpShell::held).toList();
         }
-        return IntStream.range(0, 2 * loaded.size() - 1).mapToObj(i -> i % 2 == 0 ? loaded.get(i / 2)
-                : HeldShell.behind(ShellKind.NORMAL, Optional.of(loaded.get(i / 2).kind()))).toList();
+        return IntStream.range(0, 2 * loaded.size() - 1).mapToObj(i -> i % 2 == 0 ? LinedUpShell.held(loaded.get(i / 2))
+                : LinedUpShell.sneaked(HeldShell.behind(ShellKind.NORMAL, Optional.of(loaded.get(i / 2).kind()))))
+                .toList();
     }
 
     public boolean isVolley() {

@@ -7,11 +7,12 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A Mortar's magazine as its pane shows it: the shells front first, each with the payload it carries, how many of them
- * one firing loads, and the share of its shots each kind it can draw comes to, in the kinds' order, and what each of
- * those kinds does, a Normal also as it carries each payload.
+ * A Mortar's magazine as its pane shows it: the shells in the order it sends them, each with the payload it carries,
+ * the Normals a volley sneaks in among them; how many front ones the next firing sends; and the share of its shots
+ * each kind it can draw comes to, in the kinds' order, and what each of those kinds does, a Normal also as it carries
+ * each payload.
  */
-public record MagazineView(List<HeldShell> shells, int loading, Map<ShellKind, Float> chances,
+public record MagazineView(List<LinedUpShell> shells, int loading, Map<ShellKind, Float> chances,
                            List<ShellProfile> profiles) {
 
     public MagazineView {

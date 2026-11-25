@@ -189,8 +189,8 @@ public sealed interface SheetLine {
     /**
      * A row of shells, front first, the ones the next firing loads marked; each shell opens what its kind does.
      *
-     * @param slots   the shells, front first
-     * @param loading how many front shells the next firing loads
+     * @param slots   the shells, in the order they are sent
+     * @param loading how many front shells the next firing sends
      */
     record MagazineRow(List<MagazineSlot> slots, int loading) implements SheetLine {
 
@@ -205,9 +205,12 @@ public sealed interface SheetLine {
         }
     }
 
-    /** One shell in a magazine's row, and what hovering it opens; nothing for a kind about to leave it. */
-    /** One shell in the magazine: its kind, the payload it carries a share of, and what hovering it opens. */
-    record MagazineSlot(LoadedShell shell, Optional<LoadedShell> carried, Optional<SheetTooltip> tooltip) {
+    /**
+     * One shell in a magazine's row: its kind, the payload it carries a share of, whether the magazine holds it (a
+     * volley's sneaked Normal it doesn't), and what hovering it opens; nothing for a kind about to leave it.
+     */
+    record MagazineSlot(LoadedShell shell, Optional<LoadedShell> carried, boolean fromMagazine,
+                        Optional<SheetTooltip> tooltip) {
     }
 
     /**

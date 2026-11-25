@@ -24,6 +24,7 @@ import td.tower.mortar.FusionMechanic;
 import td.tower.mortar.HeavyRider;
 import td.tower.mortar.HeldShell;
 import td.tower.mortar.LastingMixMechanic;
+import td.tower.mortar.LinedUpShell;
 import td.tower.mortar.Magazine;
 import td.tower.mortar.MagazineSpec;
 import td.tower.mortar.MagazineView;
@@ -323,7 +324,7 @@ public final class MortarTower extends AbstractTower {
         List<HeldShell> held = this.magazine.held();
         List<HeldShell> front = held.subList(0, Math.min(volley.shells(), held.size()));
         this.magazine = this.magazine.fired(front.size(), spec.magazine(), this.context.random());
-        List<HeldShell> loaded = volley.sequence(front).stream().map(shell -> asFired(shell, spec)).toList();
+        List<HeldShell> loaded = volley.sequence(front).stream().map(shell -> asFired(shell.shell(), spec)).toList();
         List<Optional<Vec2>> laid = this.laidAlongThePath(target, volley, loaded.size());
         HeldShell first = loaded.getFirst();
         this.fireAt(first, laid.getFirst().orElseGet(() -> this.aimPoint(target, spec, first.kind())));
@@ -622,8 +623,13 @@ public final class MortarTower extends AbstractTower {
     /** Its magazine as the pane shows it. */
     public MagazineView magazineView() {
         MortarSpec spec = this.spec(this.mechanics.all());
-        List<HeldShell> held = this.magazine.held().stream().map(shell -> asFired(shell, spec)).toList();
-        return new MagazineView(held, this.loading, this.shellChances(), this.shellProfiles());
+        List<HeldShell> held = this.magazine.held();
+        int loads = Math.min(spec.volley().shells(), held.size());
+        List<LinedUpShell> next = spec.volley().sequence(held.subList(0, loads));
+        List<LinedUpShell> lined = new ArrayList<>(next);
+        held.subList(loads, held.size()).forEach(shell -> lined.add(LinedUpShell.held(shell)));
+        return new MagazineView(lined.stream().map(shell -> shell.withShell(asFired(shell.shell(), spec))).toList(),
+                next.size(), this.shellChances(), this.shellProfiles());
     }
 
     /** What each kind it can load does as it would fire it now; worked out again only as its stats or nodes change. */

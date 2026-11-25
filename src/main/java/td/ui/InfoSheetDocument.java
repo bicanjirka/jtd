@@ -24,6 +24,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
@@ -88,6 +89,9 @@ final class InfoSheetDocument {
     private static final int SHARE_STRIP_HEIGHT = 5;
     private static final int SHARE_STRIP_GAP = 3;
     private static final Color SLOT_BACKGROUND = new Color(28, 28, 29);
+    /** A volley's sneaked Normal: framed in dashes over no slot, since the magazine doesn't hold it. */
+    private static final BasicStroke SNEAKED_SLOT = new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f,
+            new float[]{2f, 2f}, 0f);
     /** A value ending exactly at the pane's edge wraps on rounding, so the column stops short. */
     private static final int EDGE_MARGIN = 4;
     /** The least text width that splits a run of stat rows into two columns; a tooltip is narrower. */
@@ -481,8 +485,9 @@ final class InfoSheetDocument {
     }
 
     /**
-     * One embedded icon as wide as its slots, so a scrollbar never pushes it past the pane: a slot per shell, front
-     * first, the loading ones in a bright border, each shell drawn as it is in the bore. Each slot opens its tooltip.
+     * One embedded icon as wide as its slots, so a scrollbar never pushes it past the pane: a slot per shell in the
+     * order they are sent, the next firing's in a bright border and a volley's sneaked Normals framed in dashes over no
+     * slot, each shell drawn as it is in the bore. Each slot opens its tooltip.
      */
     private void magazineRow(SheetLine.MagazineRow magazine) {
         int count = Math.max(1, magazine.slots().size());
@@ -494,11 +499,16 @@ final class InfoSheetDocument {
             g2.translate(-rowWidth / 2.0, -slot / 2.0);
             for (int i = 0; i < magazine.slots().size(); i++) {
                 int x = i * (slot + SHELL_SLOT_GAP);
-                g2.setColor(SLOT_BACKGROUND);
-                g2.fill(new Rectangle2D.Float(x, 0, slot, slot));
+                SheetLine.MagazineSlot shell = magazine.slots().get(i);
+                if (shell.fromMagazine()) {
+                    g2.setColor(SLOT_BACKGROUND);
+                    g2.fill(new Rectangle2D.Float(x, 0, slot, slot));
+                }
+                Stroke solid = g2.getStroke();
+                g2.setStroke(shell.fromMagazine() ? solid : SNEAKED_SLOT);
                 g2.setColor(i < magazine.loading() ? Hud.FOREGROUND : Hud.BORDER_IDLE);
                 g2.draw(new Rectangle2D.Float(x + 0.5f, 0.5f, slot - 1, slot - 1));
-                SheetLine.MagazineSlot shell = magazine.slots().get(i);
+                g2.setStroke(solid);
                 TowerSprites.paintShell(g2, shell.shell(), shell.carried(), x + slot / 2f, slot / 2f,
                         slot * SLOT_SHELL_SHARE);
             }

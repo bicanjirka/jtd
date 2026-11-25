@@ -27,7 +27,8 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   Mortar keeps only its newest flares and puts out the oldest (`Zone.putOut`).
 - Carpet Bombing lays a volley along the enemy path centred on the target (`PathLine`), never by geometry around the
   impact, with a Normal sneaked between each two loaded shells (`VolleySpec.sequence`), never taken from the magazine;
-  a Barrage's later shells re-pick their target when they fire.
+  a Barrage's later shells re-pick their target when they fire. The pane shows the next firing as it is sent, sneaked
+  Normals in place (`LinedUpShell`), then the rest of the magazine.
 - With Thick Mix a Normal right behind a payload carries it (`HeldShell`): in the magazine, where the front shell is
   behind the one fired last (`Magazine.lastFired`, kept by the save), and in a volley, where a sneaked Normal is behind
   the loaded shell before it. Its blast puts a share of a pulse of that payload's ground on what it reaches, through
