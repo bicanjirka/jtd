@@ -14,8 +14,4 @@ public record RoundPay(int bounty, int clearBonus, int bonusPaid) {
     public static RoundPay none() {
         return NONE;
     }
-
-    public RoundPay withBonusPaid(int paid) {
-        return new RoundPay(this.bounty, this.clearBonus, paid);
-    }
 }

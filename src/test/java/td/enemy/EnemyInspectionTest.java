@@ -2,6 +2,7 @@ package td.enemy;
 
 import org.junit.jupiter.api.Test;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -77,6 +78,18 @@ class EnemyInspectionTest {
         mob.applyEffect(Effect.burn(Damage.magic(10), DamageSink.none()));
 
         assertThat(stateOf(mob, EffectKind.BURN).fullness().orElseThrow()).isBetween(0.0, 1.0);
+    }
+
+    @Test
+    void aHealShareReportsWhatItRegeneratesEachSecondAndTheTicksItHasLeft() {
+        DefinedEnemyMob mob = this.anEnemy();
+        mob.applyEffect(Effect.heal(100, 40, DamageSink.none()));
+
+        EnemyInspection.ShareState share = stateOf(mob, EffectKind.HEAL).shares().getFirst();
+
+        float perSecond = DamageUnits.inPoints(100) * TickRate.TICKS_PER_SECOND;
+        assertThat(share.amount()).isCloseTo(perSecond, within(1e-4f));
+        assertThat(share.remainingTicks()).hasValue(40);
     }
 
     @Test

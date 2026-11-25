@@ -21,10 +21,6 @@ public record RoundSummary(Rank highestRank, boolean unique, boolean leaked, Rou
         return new RoundSummary(this.highestRank, this.unique, this.leaked, paying);
     }
 
-    public RoundSummary withBonusPaid(int paid) {
-        return this.withPay(this.pay.withBonusPaid(paid));
-    }
-
     /** The credits it paid for clearing with no leak; 0 until it is over. */
     public int bonusPaid() {
         return this.pay.bonusPaid();
