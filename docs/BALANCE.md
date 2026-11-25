@@ -271,30 +271,25 @@ therefore a share, the mean of two:
 
 A tower's node worths add up to its tree, and a node others need is not credited with them. Then:
 
-- **fair price** = worth × the tier's **premium**, 1.25 to the power of tier + 1: the copy surcharge of the copy of
-  the tower a player would be buying instead by then. An upgrade takes no cell and no surcharge, so it costs more
-  than the same power as bare towers, and more the later its tier. A whole tree comes to about half its cost in
-  worth.
-- No node costs less than its tier's **floor**, a tenth of the tower's price for each tier up from the tower.
+- **fair price** = worth as a multiple of five, and five at the least: one rate in every tier, so a later node
+  costs more only by doing more. No tier sets a price and none has a premium or a cap.
 - The members of a cluster and the sides of a fork share the dearest measured member's price: a tower that owns
   one switches to another for nothing, so a cheaper member would be a way round the dearer one's price.
 - A price within a quarter of the suggestion, or two credits of it, is right.
 - A node that moves no build's power by a fortieth is **unmeasured**: a utility the bench's scenarios do not show
   (a reveal with nothing hidden left to find, a counter to an ability no scenario enemy has). It is listed and
   keeps the price it has, unless its cluster gives it one. A node that adds to one build and takes from another is
-  unmeasured too, says so, and is priced at its tier's floor.
+  unmeasured too, says so, and is priced at five.
 - A node every build holds less with is a **breach**, as is one the whole tree holds a tenth more without.
 
 `TowerPriceWriter` writes every tower and node price the report calls off into the tower's source, by the node's
 name, and leaves the ones it calls right, so writing, measuring and judging again settles in two rounds instead of
 chasing the bench's noise.
 
-**The pace of tiers.** Prices follow what nodes do, so the pace the game wants of its tiers is a check on the nodes,
-not a rule the prices are bent to. The Tiers table adds up each tier of a tower's best whole tree at the suggested
-prices, in tower prices: the first tier should come to less than the tower, the second to about the tower (0.6 to
-1.6), and each later tier to more than the one before. It also sets each tier against the same tier of the other
-towers. A tier off the pace, or more than twice or under half its rivals', is one whose nodes do too little or too
-much for where they sit: that is what to change a node's numbers for.
+**Tiers against rivals.** The Tiers table adds up each tier of a tower's best whole tree at the suggested prices,
+in tower prices, and sets it against the same tier of the other towers. A tier more than twice or under half its
+rivals' is one whose nodes do too little or too much for where they sit: that is what to change a node's numbers
+for.
 
 **Verdicts.**
 
@@ -303,7 +298,7 @@ much for where they sit: that is what to change a node's numbers for.
 | Stages | what a credit buys of each tower bought whole to each tier, by its best build, against the median of the judged towers at that tier | `DOMINANT`: it pays 1.25 times its rivals, or no rival holds more for a credit against 60% of a mixed wave. `WARN weak`: it pays under 0.8 |
 | Roles | the rules in `TowerReport.RULES`, at every tier, by what a credit holds alone | `BREACH`, naming each rival on the wrong side and by how much |
 | Profiles | what a credit holds alone in each scenario over the median tower | no verdict: a row warm everywhere is a tower with no weakness |
-| Tiers | each tier's cost at the suggested prices against the pace and the same tier of the other towers | `WARN`, saying which |
+| Tiers | each tier's cost at the suggested prices against the same tier of the other towers | `WARN`, saying which |
 | Nodes | the prices above | `WARN price`: off its suggestion. `DOMINANT node`: the whole tree loses over a third of its power without it |
 | Clusters and forks | each member in the whole tree bought with it | `DOMINANT pick`: a member a credit of which buys 15% more than any other, and that is behind in no scenario. `WARN weaker pick`: under 0.85 of the best |
 | Strategies | each build a tower's retune named (`StrategyBuilds`), against the tower's other strategies | `DOMINANT go-to`: it holds the most for a credit against 60% of a mixed wave. `WARN weak`: it pays under 0.8 of its best sibling |

@@ -1,7 +1,6 @@
 package td.balance;
 
 import org.junit.jupiter.api.Test;
-import td.tower.TowerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,8 +15,6 @@ import static td.balance.TowerSheetTest.weighing;
 /** How measured builds become node worths, prices and verdicts. */
 class TowerReportTest {
 
-    private static final int TOWER_PRICE = 20;
-    private static final int TIER = 2;
     private static final int WORTH = 8;
     private static final int SUGGESTED = 10;
     private static final int VERDICT = 13;
@@ -28,20 +25,12 @@ class TowerReportTest {
     }
 
     @Test
-    void aNodeOfALaterTierIsSetAgainstADearerCopyOfItsTower() {
-        double step = TowerReport.premium(TIER + 1) / TowerReport.premium(TIER);
+    void aNodeIsPricedAtItsWorthAsAMultipleOfFiveWhateverItsTier() {
+        double worth = 41;
+        int fair = 40;
 
-        assertThat(step).isCloseTo(TowerFactory.Type.COPY_PRICE_GROWTH, within(1e-9));
-        assertThat(TowerReport.premium(0)).isGreaterThan(1);
-    }
-
-    @Test
-    void aNodeIsPricedAtItsWorthTimesItsTiersPremium() {
-        double worth = 40;
-        int fair = (int) Math.round(worth * TowerReport.premium(TIER));
-
-        TowerReport.Price right = TowerReport.priced(TowerReport.Reading.MEASURED, worth, TIER, TOWER_PRICE, fair);
-        TowerReport.Price off = TowerReport.priced(TowerReport.Reading.MEASURED, worth, TIER, TOWER_PRICE, fair * 2);
+        TowerReport.Price right = TowerReport.priced(TowerReport.Reading.MEASURED, worth, fair);
+        TowerReport.Price off = TowerReport.priced(TowerReport.Reading.MEASURED, worth, fair * 2);
 
         assertThat(right.suggested()).isEqualTo(fair);
         assertThat(right.verdict()).isEqualTo(TowerReport.OK);
@@ -49,11 +38,10 @@ class TowerReportTest {
     }
 
     @Test
-    void aNodeWorthNextToNothingStillCostsItsTiersFloorAndALaterTiersFloorIsHigher() {
-        TowerReport.Price price = TowerReport.priced(TowerReport.Reading.MEASURED, 0.01, TIER, TOWER_PRICE, 1);
+    void aNodeWorthNextToNothingStillCostsFive() {
+        TowerReport.Price price = TowerReport.priced(TowerReport.Reading.MEASURED, 0.01, 1);
 
-        assertThat(price.suggested()).isEqualTo(TowerReport.floorOf(TIER, TOWER_PRICE)).isPositive();
-        assertThat(TowerReport.floorOf(TIER + 1, TOWER_PRICE)).isGreaterThan(TowerReport.floorOf(TIER, TOWER_PRICE));
+        assertThat(price.suggested()).isEqualTo(5);
     }
 
     @Test
@@ -68,8 +56,8 @@ class TowerReportTest {
     void aNodeTheBenchDoesNotShowKeepsItsPriceAndOneThatLowersItsBuildsIsABreach() {
         int kept = 7;
 
-        TowerReport.Price quiet = TowerReport.priced(TowerReport.Reading.QUIET, 0, TIER, TOWER_PRICE, kept);
-        TowerReport.Price lowers = TowerReport.priced(TowerReport.Reading.LOWERS, -5, TIER, TOWER_PRICE, kept);
+        TowerReport.Price quiet = TowerReport.priced(TowerReport.Reading.QUIET, 0, kept);
+        TowerReport.Price lowers = TowerReport.priced(TowerReport.Reading.LOWERS, -5, kept);
 
         assertThat(quiet.verdict()).startsWith("UNMEASURED");
         assertThat(quiet.suggested()).isEqualTo(kept);

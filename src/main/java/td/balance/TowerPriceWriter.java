@@ -65,7 +65,7 @@ public final class TowerPriceWriter {
 
     /**
      * Whether {@code row}'s price is to be written: the report calls it off, or the node's verdict is about what it
-     * does and so says nothing of its price, which a cluster or a floor still sets.
+     * does and so says nothing of its price, which a cluster or the least price still sets.
      */
     static boolean isOff(List<String> row) {
         String verdict = row.getLast();

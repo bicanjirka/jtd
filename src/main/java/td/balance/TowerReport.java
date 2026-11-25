@@ -24,9 +24,9 @@ import java.util.stream.Stream;
  *
  * <p>A build's power is worth credits at the going rate, the power a credit buys of a bare tower. A tower's fair
  * price is its bare worth. A node's worth is its share of what its tree adds to the bare tower, and its price is that
- * worth times a premium that grows with its tier: prices follow what the nodes do, and a tier's nodes come to what
- * they come to. Each tier's total is then set against the pace the game wants of its tiers and against the same tier
- * of the other towers, which is where a tier whose nodes do too little or too much shows. The towers' roles, the
+ * worth, rounded, at the same rate in every tier: a later node costs more only by doing more. Each tier's total is
+ * then set against the same tier of the other towers, which is where a tier whose nodes do too little or too much
+ * shows. The towers' roles, the
  * balance inside each cluster, towers that pay better than every rival, and pairs that hold far more together than
  * apart are each a table with a verdict. A node that moves nothing measured is listed as unmeasured and keeps its
  * price.
@@ -67,15 +67,10 @@ public final class TowerReport {
     private static final double SYNERGY_LOW = 0.7;
     private static final double MOVE = 1.12;
     private static final int MOVES = 3;
+    /** The step every price is a multiple of, and so the least a node costs. */
     private static final int READABLE = 5;
     private static final int PRICE = 4;
     private static final int SUGGESTED = 10;
-    /** The least a node costs, in tower prices, for each tier it is up from the tower: no node is next to free. */
-    private static final double FLOOR = 0.1;
-    /** The most the first tier may cost, and the band the second sits in, in tower prices. */
-    private static final double FIRST_TIER_MOST = 1.0;
-    private static final double SECOND_TIER_LEAST = 0.6;
-    private static final double SECOND_TIER_MOST = 1.6;
     /** How far a tier's cost may sit from the same tier of the other towers, each in its own tower's prices. */
     private static final double TIER_APART = 2;
     private static final List<Rule> RULES = List.of(
@@ -219,48 +214,33 @@ public final class TowerReport {
         }
     }
 
-    /** The least a node of {@code tier} costs on a tower that costs {@code towerPrice}. */
-    static int floorOf(int tier, int towerPrice) {
-        return atLeastOne(FLOOR * (tier + 1) * towerPrice);
-    }
-
     /** What the bench read of a node: nothing, a gain in one build and a loss in another, a loss in each, or a worth. */
     enum Reading { QUIET, MIXED, LOWERS, MEASURED }
 
     /**
      * A node's price as measured.
      *
-     * @param fair      its worth times its tier's premium, and its tier's floor at the least; nothing when it has no
-     *                  measured worth
+     * @param fair      its worth as a round price; nothing when it has no measured worth
      * @param suggested the price to give it
      */
     record Price(int fair, int suggested, String verdict) {
     }
 
     /**
-     * What a credit spent on a node of {@code tier} is set against: the copy of its tower a player would be buying
-     * by then, each copy dearer than the last.
+     * The price of a node worth {@code worth} credits, at the same rate in every tier: a later node costs more only
+     * by doing more. A node with no measured worth keeps the price it has: there is nothing to move it by.
      */
-    static double premium(int tier) {
-        return Math.pow(TowerFactory.Type.COPY_PRICE_GROWTH, tier + 1);
-    }
-
-    /**
-     * The price of a node worth {@code worth} credits in {@code tier} of a tower that costs {@code towerPrice}. A
-     * node with no measured worth keeps the price it has: there is nothing to move it by.
-     */
-    static Price priced(Reading reading, double worth, int tier, int towerPrice, int now) {
-        int floor = floorOf(tier, towerPrice);
+    static Price priced(Reading reading, double worth, int now) {
         if (reading == Reading.QUIET) {
             return new Price(0, now, "UNMEASURED utility: nothing the bench fights shows it; its price is kept");
         }
         if (reading == Reading.MIXED) {
-            return new Price(0, floor, "UNMEASURED: it adds to one build and takes from another");
+            return new Price(0, READABLE, "UNMEASURED: it adds to one build and takes from another");
         }
         if (reading == Reading.LOWERS) {
-            return new Price(0, floor, "BREACH lowers what its builds hold");
+            return new Price(0, READABLE, "BREACH lowers what its builds hold");
         }
-        int fair = Math.max(floor, atLeastOne(worth * premium(tier)));
+        int fair = readable(worth);
         return new Price(fair, fair, priceVerdict(now, fair));
     }
 
@@ -356,7 +336,7 @@ public final class TowerReport {
                 at the going rate. suggested: the price it has when that is near its fair one, else the fair one as
                 a round number. top build: its best way to buy the whole tree, what that costs now, what it is
                 worth, and value, worth over cost: under 1 the tree costs more than the same power bought as bare
-                towers, which is the premium an upgrade carries. top suggested and value then: the same build at
+                towers. top suggested and value then: the same build at
                 the suggested tower and node prices.""").heating("top value", "value then");
     }
 
@@ -560,8 +540,8 @@ public final class TowerReport {
                 each other, so those grow with the build and add up to more than the tree. worth: the mean of the
                 node's share of what its tier adds to the tiers below it, which is what it gives when bought, and its
                 share of what the whole tree adds to the bare tower, which is what it gives in the end; a tower's
-                worths add up to its tree. fair: worth times its tier's premium, the price of the copy of the tower a
-                player would be buying instead, and never under the tier's floor. suggested: the fair price; the
+                worths add up to its tree. fair: worth as a multiple of five, at the same rate in every tier, and five at
+                the least. suggested: the fair price; the
                 members of a cluster and the sides of a fork are switched for free, so they share the dearest
                 member's. share: the part of the whole tree's power lost without it. moves: the scenarios it changes
                 most at the top, alone.""");
@@ -590,8 +570,7 @@ public final class TowerReport {
     /** The price the node {@code line} weighs comes to by itself. */
     private Price ownPrice(String tower, Held line) {
         NodeWorth worth = this.worthOf(tower, line);
-        return priced(worth.reading(), worth.worth(), Integer.parseInt(line.tier()), this.sheet.bare(tower).cost(),
-                line.cost() - this.versus(line).cost());
+        return priced(worth.reading(), worth.worth(), line.cost() - this.versus(line).cost());
     }
 
     /**
@@ -721,7 +700,7 @@ public final class TowerReport {
         return step > 0 && sum > 0 ? step / sum : 1;
     }
 
-    /** What each tier of each tower's best whole tree costs, now and as suggested, against the pace and its rivals. */
+    /** What each tier of each tower's best whole tree costs, now and as suggested, against its rivals. */
     ReportPage.Table tiers() {
         List<List<String>> rows = new ArrayList<>();
         for (String tower : this.sheet.towers()) {
@@ -733,16 +712,15 @@ public final class TowerReport {
                 rows.add(List.of(tower, this.sheet.bare(tower).name(), UpgradeTier.nameOf(tier),
                         String.valueOf(this.tierNodes(tower, tier).size()), ReportPage.number(this.tierCost(tower, tier, PRICE)),
                         ReportPage.number(this.tierCost(tower, tier, SUGGESTED)), ReportPage.number(mine),
-                        ReportPage.number(mine / rivals), this.tierVerdict(tower, tier, mine, mine / rivals)));
+                        ReportPage.number(mine / rivals), this.tierVerdict(tower, mine / rivals)));
             }
         }
         return ReportPage.Table.of("Tiers", List.of("tower", "name", "tier", "nodes", "cost", "suggested", "tower prices",
                 "vs rivals", "verdict"), rows).noted("""
                 Each tier of the tower's best whole tree: how many nodes it buys there, what they cost now and at
                 the suggested prices, that in suggested tower prices, and that over the median of the judged towers'
-                same tier. The pace: the first tier comes to less than the tower, the second to about the tower, and
-                each later tier to more than the one before. Prices follow what nodes do, so a tier off the pace or
-                far from its rivals is one whose nodes do too little or too much for where they sit.""")
+                same tier. Prices follow what nodes do, so a tier far from its rivals is one whose nodes do too little
+                or too much for where they sit.""")
                 .heating("vs rivals");
     }
 
@@ -759,18 +737,9 @@ public final class TowerReport {
         return this.tierNodes(tower, tier).stream().mapToInt(node -> Integer.parseInt(node.get(column))).sum();
     }
 
-    private String tierVerdict(String tower, int tier, double towerPrices, double againstRivals) {
+    private String tierVerdict(String tower, double againstRivals) {
         if (!TowerSheet.isJudged(tower)) {
             return NOT_JUDGED;
-        }
-        if (tier == 0 && towerPrices > FIRST_TIER_MOST) {
-            return "WARN dearer than its tower: " + times(towerPrices);
-        }
-        if (tier == 1 && (towerPrices < SECOND_TIER_LEAST || towerPrices > SECOND_TIER_MOST)) {
-            return "WARN not about its tower's price: " + times(towerPrices);
-        }
-        if (tier > 1 && towerPrices <= this.tierCost(tower, tier - 1, SUGGESTED) / this.towerPrice(tower)) {
-            return "WARN no dearer than the tier before";
         }
         if (againstRivals > TIER_APART || againstRivals * TIER_APART < 1) {
             return "WARN " + times(againstRivals) + " the same tier of its rivals";
