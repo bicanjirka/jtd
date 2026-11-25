@@ -1,0 +1,36 @@
+tower	name	stage	bought to	build	cost	power	worth	value	vs rivals	best buy against	verdict
+SNIPER	Sniper	-1	bare	bare	15	4.80	14.42	0.96	0.94	armored, resist, regen, tank	ok
+SNIPER	Sniper	0	Tier 0	full:0	30	7.38	22.16	0.74	1.11	stream, armored, resist, elusive, regen, tank, controlled	ok
+SNIPER	Sniper	1	Tier I	full:1	70	13.55	40.70	0.58	1.16	stream, resist, fast, elusive, regen, tank, controlled	ok
+SNIPER	Sniper	2	Tier II	full:2:sniper.hollow_point	120	16.63	49.93	0.42	1.02	resist, elusive, regen, tank	ok
+SNIPER	Sniper	3	Tier III	full:3:sniper.hollow_point	210	29.94	89.93	0.43	0.93	stream, resist, fast, elusive, regen, tank, controlled	ok
+SPLASH	Burst	-1	bare	bare	15	5.40	16.22	1.08	1.05	stream, group, resist, elusive, regen, tank, controlled	ok
+SPLASH	Burst	0	Tier 0	full:0	30	6.84	20.55	0.69	1.03	group	ok
+SPLASH	Burst	1	Tier I	full:splash.hexer:1:splash.hex_of_blight	50	8.44	25.35	0.51	1.01	-	ok
+SPLASH	Burst	2	Tier II	full:splash.stormcaller:2:splash.wild_arc	135	17.14	51.49	0.38	0.93	group	ok
+SPLASH	Burst	3	Tier III	full:splash.stormcaller:3:splash.wild_arc	250	40.94	122.94	0.49	1.06	-	ok
+MORTAR	Mortar	-1	bare	bare	20	5.55	16.67	0.83	0.81	group	ok
+MORTAR	Mortar	0	Tier 0	full:0	40	8.59	25.79	0.64	0.97	-	ok
+MORTAR	Mortar	1	Tier I	full:1	65	12.52	37.61	0.58	1.15	group, boss	ok
+MORTAR	Mortar	2	Tier II	full:2:mortar.shrapnel	165	27.75	83.33	0.51	1.24	group	ok
+MORTAR	Mortar	3	Tier III	full:3:mortar.cryo	325	63.88	191.83	0.59	1.28	group	DOMINANT pays x1.28 its rivals
+CINDER	Scorcher	-1	bare	bare	20	6.69	20.08	1.00	0.98	plated, fast	ok
+CINDER	Scorcher	0	Tier 0	full:0	63	11.49	34.52	0.55	0.82	plated	ok
+CINDER	Scorcher	1	Tier I	full:1:cinder.fan	111	16.21	48.68	0.44	0.87	plated	ok
+CINDER	Scorcher	2	Tier II	full:2:cinder.fan	225	28.76	86.36	0.38	0.94	fast	ok
+CINDER	Scorcher	3	Tier III	full:3:cinder.fan	441	50.11	150.50	0.34	0.74	-	WARN weak: pays x0.74 its rivals
+SEEKER	Aerie	-1	bare	bare	15	5.36	16.09	1.07	1.05	single, boss, hidden, fast	ok
+SEEKER	Aerie	0	Tier 0	full:0	33	7.70	23.13	0.70	1.05	single, boss, plated, hidden, fast	ok
+SEEKER	Aerie	1	Tier I	full:1:seeker.hatching	67	11.09	33.31	0.50	0.99	single, armored, hidden	ok
+SEEKER	Aerie	2	Tier II	full:2:seeker.hatching	135	22.16	66.56	0.49	1.21	single, stream, boss, armored, plated, hidden, fast, regen, controlled	DOMINANT the best buy against 67% of a mixed wave
+SEEKER	Aerie	3	Tier III	full:3:seeker.hatching	222	35.84	107.64	0.48	1.05	single, boss, armored, plated, hidden	ok
+PULSE	Obelisk	-1	bare	bare	15	5.23	15.70	1.05	1.02	-	ok
+PULSE	Obelisk	0	Tier 0	full:0	55	11.29	33.91	0.62	0.93	plated	ok
+PULSE	Obelisk	1	Tier I	full:1	129	20.18	60.59	0.47	0.94	-	ok
+PULSE	Obelisk	2	Tier II	full:2	290	38.76	116.41	0.40	0.98	-	ok
+PULSE	Obelisk	3	Tier III	full:3:pulse.deep_toll	590	86.36	259.34	0.44	0.95	-	ok
+AURA	Beacon	-1	bare	bare	15	0.24	0.72	0.05	0.05	-	not judged
+AURA	Beacon	0	Tier 0	full:0	27	0.32	0.95	0.04	0.05	-	not judged
+AURA	Beacon	1	Tier I	full:1:aura.last_light	83	1.85	5.57	0.07	0.13	-	not judged
+AURA	Beacon	2	Tier II	full:2:aura.glare	152	1.81	5.43	0.04	0.09	-	not judged
+AURA	Beacon	3	Tier III	full:3:aura.glare	291	2.03	6.09	0.02	0.05	-	not judged

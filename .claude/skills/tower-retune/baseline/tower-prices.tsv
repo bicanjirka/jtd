@@ -1,0 +1,138 @@
+tower	node	name	tier	price	worth	fair	suggested	verdict
+SNIPER		Sniper		15	14.42	14	15	ok
+SNIPER	sniper.steady_aim	Steady Aim	0	5	4.19	5	5	ok
+SNIPER	sniper.rifling	Rifling	0	5	2.69	5	5	ok
+SNIPER	sniper.heavy_rounds	Heavy Rounds	0	5	4.68	5	5	ok
+SNIPER	sniper.fourth_shot	Fourth Shot	1	10	5.34	5	5	WARN price 10 -> 5
+SNIPER	sniper.deep_breath	Deep Breath	1	10	4.70	5	5	WARN price 10 -> 5
+SNIPER	sniper.keen_eye	Keen Eye	1	10	3.51	5	5	WARN price 10 -> 5
+SNIPER	sniper.deadeye	Deadeye	1	10	6.31	5	5	WARN price 10 -> 5
+SNIPER	base.range	Long Barrel	1	10	6.28	5	5	WARN price 10 -> 5
+SNIPER	sniper.hemorrhage	Hemorrhage	2	15	0.18	-	5	UNMEASURED utility: nothing the bench fights shows it; its price is kept
+SNIPER	sniper.ricochet	Ricochet	2	15	1.11	5	5	WARN price 15 -> 5
+SNIPER	sniper.sundering_crits	Sundering Crits	2	15	-0.83	-	5	UNMEASURED utility: nothing the bench fights shows it; its price is kept
+SNIPER	sniper.exposing_crits	Exposing Crits	2	15	0.55	5	5	WARN price 15 -> 5
+SNIPER	sniper.silver_round	Silver Round	2	20	5.79	5	10	WARN price 20 -> 10
+SNIPER	sniper.hollow_point	Hollow Point	2	20	8.50	10	10	WARN price 20 -> 10
+SNIPER	sniper.heavy_rounds.2	Heavy Rounds II	3	30	10.91	10	10	WARN price 30 -> 10
+SNIPER	sniper.executioner	Executioner	3	20	1.59	5	5	WARN price 20 -> 5
+SNIPER	sniper.headhunter	Headhunter	3	20	-0.15	-	5	UNMEASURED utility: nothing the bench fights shows it; its price is kept
+SNIPER	sniper.unbroken_aim	Unbroken Aim	3	20	6.25	5	5	WARN price 20 -> 5
+SNIPER	sniper.killing_spree	Killing Spree	3	20	10.01	10	10	WARN price 20 -> 10
+SPLASH		Burst		15	16.22	16	15	ok
+SPLASH	base.range	Long Throw	0	5	2.64	5	5	ok
+SPLASH	splash.wide_charge	Wide Charge	0	5	3.61	5	5	ok
+SPLASH	splash.flint_stones	Flint Stones	0	5	0.36	5	5	ok
+SPLASH	splash.stormcaller	Stormcaller	1	10	1.40	5	5	WARN price 10 -> 5
+SPLASH	splash.hexer	Hexer	1	10	1.18	5	5	WARN price 10 -> 5
+SPLASH	splash.arc	Arc	1	10	0.92	5	5	WARN price 10 -> 5
+SPLASH	splash.hex_of_doom	Hex of Doom	1	10	1.12	5	5	WARN price 10 -> 5
+SPLASH	splash.hex_of_blight	Hex of Blight	1	10	3.67	5	5	WARN price 10 -> 5
+SPLASH	splash.reckoning	Reckoning	2	15	7.81	10	10	WARN price 15 -> 10
+SPLASH	splash.blight_cloud	Blight Cloud	2	20	4.91	5	5	WARN price 20 -> 5
+SPLASH	splash.agony	Agony	2	15	4.76	5	5	WARN price 15 -> 5
+SPLASH	splash.contagion	Contagion	2	15	-0.15	-	5	UNMEASURED: it adds to one build and takes from another
+SPLASH	splash.chain_lightning	Chain Lightning	2	15	5.91	5	10	WARN price 15 -> 10
+SPLASH	splash.wild_arc	Wild Arc	2	15	11.30	10	10	WARN price 15 -> 10
+SPLASH	splash.conductor	Conductor	2	15	2.32	5	5	WARN price 15 -> 5
+SPLASH	splash.jolt	Jolt	2	15	5.61	5	5	WARN price 15 -> 5
+SPLASH	splash.heavy_stones	Heavy Stones	2	25	12.84	15	15	WARN price 25 -> 15
+SPLASH	base.range.2	Long Throw II	2	15	4.18	5	5	WARN price 15 -> 5
+SPLASH	splash.soul_harvest	Soul Harvest	3	20	11.54	10	10	WARN price 20 -> 10
+SPLASH	splash.hex_of_inversion	Hex of Inversion	3	30	3.13	5	5	WARN price 30 -> 5
+SPLASH	splash.choking_blight	Choking Blight	3	20	-0.53	-	20	UNMEASURED utility: nothing the bench fights shows it; its price is kept
+SPLASH	splash.twin_hex	Twin Hex	3	20	7.10	5	5	WARN price 20 -> 5
+SPLASH	splash.shockwave	Shockwave	3	25	14.75	15	20	ok
+SPLASH	splash.thunderstrike	Thunderstrike	3	25	17.70	20	20	ok
+SPLASH	splash.high_voltage	High Voltage	3	20	5.87	5	5	WARN price 20 -> 5
+SPLASH	splash.feedback	Feedback	3	20	8.15	10	10	WARN price 20 -> 10
+SPLASH	splash.quick_hands	Quick Hands	3	30	10.90	10	10	WARN price 30 -> 10
+SPLASH	splash.piercing_stones	Piercing Stones	3	20	7.67	10	10	WARN price 20 -> 10
+MORTAR		Mortar		20	16.67	17	20	ok
+MORTAR	mortar.heavy_charge	Heavy Charge	0	5	15.54	15	15	WARN price 5 -> 15
+MORTAR	mortar.big_bore	Big Bore	0	5	3.99	5	5	ok
+MORTAR	mortar.predictive_fire	Predictive Fire	0	5	-3.24	-	5	UNMEASURED: it adds to one build and takes from another
+MORTAR	mortar.cracking_shells	Cracking Shells	0	5	0.93	5	5	ok
+MORTAR	mortar.concussion	Concussion	1	10	4.42	5	5	WARN price 10 -> 5
+MORTAR	mortar.shrapnel	Shrapnel	1	10	1.46	5	5	WARN price 10 -> 5
+MORTAR	mortar.napalm	Napalm	1	15	10.14	10	15	ok
+MORTAR	mortar.tar_shell	Tar Shell	1	15	13.52	15	15	ok
+MORTAR	mortar.cryo	Cryo	1	15	15.75	15	15	ok
+MORTAR	mortar.barrage	Barrage	3	50	25.79	25	25	WARN price 50 -> 25
+MORTAR	mortar.carpet_bombing	Carpet Bombing	3	50	20.44	20	25	WARN price 50 -> 25
+MORTAR	base.range	Elevation	2	20	9.89	10	10	WARN price 20 -> 10
+MORTAR	mortar.overcharge	Overcharge	2	25	11.43	10	10	WARN price 25 -> 10
+MORTAR	mortar.big_bore_2	Big Bore II	2	20	11.65	10	10	WARN price 20 -> 10
+MORTAR	mortar.thick_mix	Thick Mix	2	20	11.20	10	10	WARN price 20 -> 10
+MORTAR	mortar.fusion	Fusion	3	40	17.69	20	20	WARN price 40 -> 20
+MORTAR	mortar.rich_mix	Rich Mix	3	40	12.96	15	20	WARN price 40 -> 20
+MORTAR	mortar.lasting_mix	Lasting Mix	3	30	10.88	10	10	WARN price 30 -> 10
+MORTAR	mortar.deep_crack	Deep Crack	2	15	0.94	-	15	UNMEASURED utility: nothing the bench fights shows it; its price is kept
+MORTAR	mortar.quick_reload	Quick Reload	3	40	10.46	10	10	WARN price 40 -> 10
+CINDER		Scorcher		20	20.08	20	20	ok
+CINDER	cinder.hot_flame	Hot Flame	0	13	8.43	10	10	WARN price 13 -> 10
+CINDER	cinder.long_stream	Long Stream	0	17	9.56	10	10	WARN price 17 -> 10
+CINDER	cinder.wide_nozzle	Wide Nozzle	0	6	3.30	5	5	ok
+CINDER	base.range	Long Nozzle	0	7	5.06	5	5	ok
+CINDER	cinder.core	Core	1	38	14.05	15	15	DOMINANT node: 38% of the whole tree's power; WARN price 38 -> 15
+CINDER	base.range.2	Lance	1	9	1.47	5	5	WARN price 9 -> 5
+CINDER	cinder.fan	Fan	1	9	2.73	5	5	WARN price 9 -> 5
+CINDER	cinder.kindling	Kindling	1	1	0.04	-	1	UNMEASURED utility: nothing the bench fights shows it; its price is kept
+CINDER	cinder.soulfire	Soulfire	2	23	8.76	10	10	WARN price 23 -> 10
+CINDER	cinder.dragons_breath	Dragon's Breath	2	23	1.83	5	10	BREACH the whole tree holds 14% more without it; WARN price 23 -> 10
+CINDER	cinder.white_flame	White Flame	2	59	16.01	15	15	DOMINANT node: 36% of the whole tree's power; WARN price 59 -> 15
+CINDER	cinder.bellows	Bellows	2	32	12.44	10	10	WARN price 32 -> 10
+CINDER	cinder.flashover	Flashover	3	66	10.99	10	10	WARN price 66 -> 10
+CINDER	cinder.meltdown	Meltdown	3	66	3.53	5	10	WARN price 66 -> 10
+CINDER	cinder.thermal_shock	Thermal Shock	3	66	0.04	-	10	UNMEASURED utility: nothing the bench fights shows it; its price is kept
+CINDER	cinder.hot_flame_2	Hot Flame II	3	43	16.17	15	15	WARN price 43 -> 15
+CINDER	cinder.long_stream_2	Long Stream II	3	107	22.99	25	25	DOMINANT node: 37% of the whole tree's power; WARN price 107 -> 25
+SEEKER		Aerie		15	16.09	16	15	ok
+SEEKER	seeker.quick_brood	Quick Brood	0	9	5.71	5	5	WARN price 9 -> 5
+SEEKER	seeker.deep_freeze	Deep Freeze	0	3	0.05	5	5	ok
+SEEKER	seeker.wide_comb	Wide Comb	0	3	1.77	5	5	ok
+SEEKER	base.range	Long Flight	0	3	2.45	5	5	ok
+SEEKER	seeker.swarm	Swarm	1	16	4.04	5	10	WARN price 16 -> 10
+SEEKER	seeker.hatching	Hatching	1	16	9.47	10	10	WARN price 16 -> 10
+SEEKER	seeker.feeding	Feeding	1	8	5.38	5	5	WARN price 8 -> 5
+SEEKER	seeker.swift_wings	Swift Wings	1	6	0.92	5	5	ok
+SEEKER	seeker.wide_comb_2	Wide Comb II	1	4	1.39	5	5	ok
+SEEKER	seeker.ruby	Ruby	2	19	10.32	10	10	WARN price 19 -> 10
+SEEKER	seeker.shade	Shade	2	19	0.63	5	10	WARN price 19 -> 10
+SEEKER	seeker.sharp_sting	Sharp Sting	2	39	15.24	15	15	DOMINANT node: 35% of the whole tree's power; WARN price 39 -> 15
+SEEKER	base.range.2	Long Flight II	2	10	2.14	5	5	WARN price 10 -> 5
+SEEKER	seeker.ice_wake	Ice Wake	3	22	4.51	5	10	WARN price 22 -> 10
+SEEKER	seeker.shatter	Shatter	3	22	8.30	10	10	WARN price 22 -> 10
+SEEKER	seeker.rich_brood	Rich Brood	3	14	5.16	5	5	WARN price 14 -> 5
+SEEKER	seeker.deep_freeze_2	Deep Freeze II	3	20	4.76	5	5	WARN price 20 -> 5
+SEEKER	seeker.quick_brood_2	Quick Brood II	3	31	12.04	10	10	WARN price 31 -> 10
+PULSE		Obelisk		15	15.70	16	15	ok
+PULSE	base.range	Wide Field	0	26	18.80	20	20	WARN price 26 -> 20
+PULSE	pulse.hum	Hum	0	14	8.82	10	10	WARN price 14 -> 10
+PULSE	pulse.sundial	Sundial	1	35	20.41	20	20	WARN price 35 -> 20
+PULSE	pulse.ward	Ward	1	1	0.62	-	1	UNMEASURED utility: nothing the bench fights shows it; its price is kept
+PULSE	pulse.quick_toll	Quick Toll	1	9	2.58	5	5	WARN price 9 -> 5
+PULSE	pulse.deep_pull	Deep Pull	1	29	15.03	15	15	WARN price 29 -> 15
+PULSE	pulse.burden	Burden	2	62	25.38	25	25	WARN price 62 -> 25
+PULSE	pulse.gravity	Gravity	2	62	6.02	5	25	WARN price 62 -> 25
+PULSE	pulse.umbra	Umbra	2	62	10.02	10	25	WARN price 62 -> 25
+PULSE	pulse.hum_2	Hum II	2	29	12.05	10	10	WARN price 29 -> 10
+PULSE	pulse.deep_shadow	Deep Shadow	2	18	1.80	5	5	WARN price 18 -> 5
+PULSE	base.range.2	Wide Field II	2	52	23.74	25	25	WARN price 52 -> 25
+PULSE	pulse.knell	Knell	3	152	42.56	45	60	WARN price 152 -> 60
+PULSE	pulse.deep_toll	Deep Toll	3	152	57.66	60	60	WARN price 152 -> 60
+PULSE	pulse.deep_pull_2	Deep Pull II	3	102	34.01	35	35	WARN price 102 -> 35
+PULSE	pulse.swift_shadow	Swift Shadow	3	46	14.38	15	15	WARN price 46 -> 15
+AURA		Beacon		15	0.72	1	15	not judged
+AURA	aura.steady_light	Steady Light	0	11	0.10	5	5	not judged
+AURA	aura.afterglow	Afterglow	0	1	0.05	5	5	not judged
+AURA	aura.searchlight	Searchlight	1	35	4.09	5	5	not judged
+AURA	aura.last_light	Last Light	1	35	4.53	5	5	not judged
+AURA	aura.ringleader	Ringleader	1	35	4.09	5	5	not judged
+AURA	aura.kinship	Kinship	1	21	0.12	5	5	not judged
+AURA	aura.mentor	Mentor	1	21	0.12	5	5	not judged
+AURA	aura.breakthrough	Breakthrough	1	21	0.12	5	5	not judged
+AURA	aura.daylight	Daylight	2	69	-0.15	-	5	not judged
+AURA	aura.glare	Glare	2	69	0.34	5	5	not judged
+AURA	aura.sanctuary	Sanctuary	3	50	-0.14	-	5	not judged
+AURA	aura.prism	Prism	3	89	0.62	5	5	not judged

@@ -1,0 +1,27 @@
+scenario	wave	enemy	rank	enemies	walk s	toughness	walkers a point	partners	tests
+single	w100 veteran: 1 walker	walker	veteran	1	18.80	1.00	0.0133	-	one plain enemy: damage on a single target over one pass
+stream	w100 veteran: 8 walker	walker	veteran	8	18.80	1.00	0.1067	-	plain enemies one at a time: sustained single-target damage
+group	w7 soldier: 12 walker	walker	soldier	12	18.80	1.00	0.1600	-	a tight column of plain enemies: area damage
+boss	w100 boss: 1 walker	walker	boss	1	18.80	1.00	0.0133	-	one Boss Walker: a single target with a boss's defences
+armored	w100 veteran: 8 knight	knight	veteran	8	18.80	1.97	0.2103	-	armor, magic resist and a little plating; no crits
+plated	w100 veteran: 8 juggernaut	juggernaut	veteran	8	37.55	1.58	0.1688	-	heavy plating: small hits bounce, and it is slow
+resist	w100 veteran: 8 templar	templar	veteran	8	18.80	2.41	0.2569	-	magic resist
+hidden	w100 veteran: 8 ghost	ghost	veteran	8	18.80	1.05	0.1122	-	enemies that fade out of sight
+fast	w100 veteran: 8 runner	runner	veteran	8	18.80	2.67	0.2851	-	enemies that run faster the more they are hurt
+elusive	w100 veteran: 8 elusive walker	walker	veteran	8	18.80	1.00	0.1067	-	plain enemies that dodge aimed hits
+regen	w100 veteran: 8 regenerating walker	walker	veteran	8	18.80	1.00	0.1067	-	plain enemies that heal themselves, for what turns a heal against them
+tank	w100 veteran: 8 walker	walker	veteran	8	62.50	1.00	0.0320	-	slow plain enemies under focused fire, for the damage a hex or a mark adds to what others deal
+controlled	w100 veteran: 8 walker	walker	veteran	8	18.80	1.00	0.1067	-	plain enemies slowed and frozen by the towers beside it, for what walking or stopping changes: a bleed that runs on cells walked, a stop that adds to one already there
+single+	w100 veteran: 1 walker	walker	veteran	1	18.80	1.00	0.0133	2.93	one plain enemy: damage on a single target over one pass, beside a bare Sniper and a bare Burst
+stream+	w100 veteran: 8 walker	walker	veteran	8	18.80	1.00	0.1067	8.84	plain enemies one at a time: sustained single-target damage, beside a bare Sniper and a bare Burst
+group+	w7 soldier: 12 walker	walker	soldier	12	18.80	1.00	0.1600	7.22	a tight column of plain enemies: area damage, beside a bare Sniper and a bare Burst
+boss+	w100 boss: 1 walker	walker	boss	1	18.80	1.00	0.0133	1.89	one Boss Walker: a single target with a boss's defences, beside a bare Sniper and a bare Burst
+armored+	w100 veteran: 8 knight	knight	veteran	8	18.80	1.97	0.2103	8.91	armor, magic resist and a little plating; no crits, beside a bare Sniper and a bare Burst
+plated+	w100 veteran: 8 juggernaut	juggernaut	veteran	8	37.55	1.58	0.1688	0.00	heavy plating: small hits bounce, and it is slow, beside a bare Sniper and a bare Burst
+resist+	w100 veteran: 8 templar	templar	veteran	8	18.80	2.41	0.2569	16.66	magic resist, beside a bare Sniper and a bare Burst
+hidden+	w100 veteran: 8 ghost	ghost	veteran	8	18.80	1.05	0.1122	1.95	enemies that fade out of sight, beside a bare Sniper and a bare Burst
+fast+	w100 veteran: 8 runner	runner	veteran	8	18.80	2.67	0.2851	9.54	enemies that run faster the more they are hurt, beside a bare Sniper and a bare Burst
+elusive+	w100 veteran: 8 elusive walker	walker	veteran	8	18.80	1.00	0.1067	8.68	plain enemies that dodge aimed hits, beside a bare Sniper and a bare Burst
+regen+	w100 veteran: 8 regenerating walker	walker	veteran	8	18.80	1.00	0.1067	8.24	plain enemies that heal themselves, for what turns a heal against them, beside a bare Sniper and a bare Burst
+tank+	w100 veteran: 8 walker	walker	veteran	8	62.50	1.00	0.0320	27.65	slow plain enemies under focused fire, for the damage a hex or a mark adds to what others deal, beside 5 bare Snipers
+controlled+	w100 veteran: 8 walker	walker	veteran	8	18.80	1.00	0.1067	13.60	plain enemies slowed and frozen by the towers beside it, for what walking or stopping changes: a bleed that runs on cells walked, a stop that adds to one already there, beside 3 bare Obelisks
