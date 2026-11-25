@@ -1,6 +1,6 @@
 # Feature Request: Burst Backlash and spell visuals
 
-Status: in progress.
+Status: implemented.
 
 ## Summary
 
