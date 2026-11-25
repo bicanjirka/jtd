@@ -12,6 +12,6 @@ public interface HexHand {
     /** Blight for {@code ticks}: a slow growing by {@code slowPerTick} from {@code start}. */
     void blight(EnemyMob target, int ticks, float slowPerTick, float start);
 
-    /** Poison whose fuel is {@code baseShare} of base damage, as magic. */
-    void poison(EnemyMob target, float baseShare);
+    /** Poison whose fuel is {@code points} of magic damage. */
+    void poison(EnemyMob target, float points);
 }

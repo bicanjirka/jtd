@@ -21,8 +21,8 @@ public final class BlightHex implements Hex {
     private static final float SECONDS = 4f;
     /** The slow it has grown to when it ends, as it was cast. */
     private static final float SLOW_AT_END = 0.3f;
-    /** The poison's fuel, as a share of base damage. */
-    private static final float POISON_SHARE = 1f;
+    /** The poison's fuel, in points of magic damage. */
+    private static final float POISON_POINTS = 7f;
     /** How much its slow grows a tick, as cast. */
     public static final float SLOW_PER_TICK = SLOW_AT_END / (SECONDS * TickRate.TICKS_PER_SECOND);
 
@@ -48,7 +48,7 @@ public final class BlightHex implements Hex {
     @Override
     public void lay(EnemyMob target, int ticks, float grownSlow, HexHand hand) {
         hand.blight(target, ticks, SLOW_PER_TICK, grownSlow);
-        hand.poison(target, POISON_SHARE);
+        hand.poison(target, POISON_POINTS);
     }
 
     @Override
@@ -59,8 +59,8 @@ public final class BlightHex implements Hex {
     @Override
     public TermText describe() {
         return TermText.of(EffectKind.BLIGHT, TermText.of("for " + TermNumbers.seconds(SECONDS) + ": ")
-                .plus(EffectKind.POISON).plus(" of " + TermNumbers.percent(POISON_SHARE)
-                        + " of base damage, and a slow that grows steadily to "
+                .plus(EffectKind.POISON).plus(" of " + TermNumbers.number(POISON_POINTS)
+                        + " magic damage, and a slow that grows steadily to "
                         + TermNumbers.percent(SLOW_AT_END) + " at its end; cast again, it starts over and never slows less"));
     }
 }

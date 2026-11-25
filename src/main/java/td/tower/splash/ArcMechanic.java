@@ -30,6 +30,6 @@ public final class ArcMechanic implements SplashMechanic {
         return TermText.of("costs " + COST + " ").plus(TowerTerm.SPARK).plus("s: the next stone carries an ").plus(TowerTerm.ARC)
                 .plus(" that jumps " + ArcSpec.JUMPS + " times, to the nearest enemy within "
                         + TermNumbers.cells(ArcSpec.REACH_CELLS) + " it hasn't hit, each jump "
-                        + TermNumbers.percent(ArcSpec.SHARE) + " of base damage as magic");
+                        + TermNumbers.number(ArcSpec.POINTS) + " magic damage");
     }
 }

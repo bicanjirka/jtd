@@ -12,7 +12,7 @@ import java.util.Optional;
 public final class ShockwaveMechanic implements SplashMechanic {
 
     private static final int COST = 3;
-    private static final float SHARE = 1f;
+    private static final float POINTS = 7f;
 
     private final AbilityCharge charge = new AbilityCharge(Ability.of(TowerTerm.SHOCKWAVE, TowerTerm.SPARK, COST));
 
@@ -23,12 +23,12 @@ public final class ShockwaveMechanic implements SplashMechanic {
 
     @Override
     public boolean cast(CastActions actions) {
-        return actions.shockwave(SHARE);
+        return actions.shockwave(POINTS);
     }
 
     @Override
     public TermText describe() {
         return TermText.of("costs " + COST + " ").plus(TowerTerm.SPARK).plus("s: a ").plus(TowerTerm.SHOCKWAVE)
-                .plus(" into every enemy in range for " + TermNumbers.percent(SHARE) + " of base damage as magic");
+                .plus(" into every enemy in range for " + TermNumbers.number(POINTS) + " magic damage");
     }
 }

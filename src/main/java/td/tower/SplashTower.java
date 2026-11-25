@@ -2,6 +2,7 @@ package td.tower;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -433,7 +434,7 @@ public final class SplashTower extends AbstractTower {
         TowerStats stats = run.stats();
         ArcSpec arc = run.spec();
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.ARC, 0f, stats);
-        int amount = Math.round(stats.damage() * arc.share() * adjustment.damageFactor());
+        int amount = DamageUnits.ofPoints(arc.points() * adjustment.damageFactor());
         AttackProfile attack = adjustment.applyTo(stats.attack()).withCritChance(arc.critChance());
         attack = attack.withCritMultiplier(Math.max(attack.critMultiplier(), arc.critMultiplier()));
         Vec2 at = target.position();
@@ -490,7 +491,7 @@ public final class SplashTower extends AbstractTower {
     /** Sends {@code hex} from {@code from} to {@code target}; it takes hold when it arrives. */
     private void sendCurse(Hex hex, Vec2 from, EnemyMob target, Dose dose) {
         Curse curse = new Curse(hex.kind(), from, target, this.flightOver(from, target.position(), CURSE_CELLS_PER_TICK));
-        PendingCurse pending = PendingCurse.of(curse, hex, this.stats(), dose);
+        PendingCurse pending = PendingCurse.of(curse, hex, dose);
         this.curses.add(hex.kind() == EffectKind.BLIGHT
                 ? pending.withForkAt(Math.max(curse.flight().firedAt(), curse.flight().landsAt()
                         - (int) Math.ceil(HexSpec.CLOUD_FORK_CELLS / CURSE_CELLS_PER_TICK)))
@@ -528,8 +529,7 @@ public final class SplashTower extends AbstractTower {
             for (int taken = 0; taken < HexSpec.CLOUD_TARGETS; taken++) {
                 Optional<EnemyMob> next = new SoonestOutSelector().selectFrom(around);
                 next.ifPresent(enemy -> this.curses.add(PendingCurse.of(new Curse(pending.curse().kind(), at, enemy,
-                        this.flightOver(at, enemy.position(), CURSE_CELLS_PER_TICK)), pending.hex(), pending.stats(),
-                        pending.dose())));
+                        this.flightOver(at, enemy.position(), CURSE_CELLS_PER_TICK)), pending.hex(), pending.dose())));
                 next.ifPresent(around::remove);
             }
         }
@@ -548,7 +548,7 @@ public final class SplashTower extends AbstractTower {
     private void lay(PendingCurse pending, EnemyMob target, HexSpec hexes) {
         Hex hex = pending.hex();
         int ticks = pending.dose().ticks();
-        hex.lay(target, ticks, pending.dose().grownSlow(), new Laying(pending.stats()));
+        hex.lay(target, ticks, pending.dose().grownSlow(), new Laying());
         if (!target.hasEffect(hex.kind())) {
             return;
         }
@@ -658,21 +658,21 @@ public final class SplashTower extends AbstractTower {
         }
 
         @Override
-        public boolean shockwave(float share) {
+        public boolean shockwave(float points) {
             TowerStats stats = SplashTower.this.stats();
             Vec2 from = SplashTower.this.center();
             for (EnemyMob enemy : this.inReach) {
-                SplashTower.this.strike(enemy, from, Math.round(stats.damage() * share), stats, BoltKind.SHOCKWAVE);
+                SplashTower.this.strike(enemy, from, DamageUnits.ofPoints(points), stats, BoltKind.SHOCKWAVE);
             }
             return true;
         }
 
         @Override
-        public boolean thunderstrike(float factor, float dazeSeconds) {
+        public boolean thunderstrike(float points, float dazeSeconds) {
             return THUNDERSTRIKE_AIM.selectFrom(this.inReach).map(enemy -> {
                 TowerStats stats = SplashTower.this.stats();
                 Vec2 above = new Vec2(enemy.getX(), enemy.getY() - THUNDERSTRIKE_HEIGHT_CELLS * SplashTower.this.cellPixels());
-                SplashTower.this.strike(enemy, above, Math.round(stats.damage() * factor), stats, BoltKind.THUNDERSTRIKE);
+                SplashTower.this.strike(enemy, above, DamageUnits.ofPoints(points), stats, BoltKind.THUNDERSTRIKE);
                 if (!enemy.isDead()) {
                     SplashTower.this.applyEffect(enemy,
                             sink -> Effect.dazed(Math.round(dazeSeconds * TICKS_PER_SECOND), sink));
@@ -710,14 +710,8 @@ public final class SplashTower extends AbstractTower {
         this.bolts.add(hit.dodged() ? bolt.missed() : bolt);
     }
 
-    /** What a hex puts on an enemy as it lands, at the strength of the tower when it was cast. */
+    /** What a hex puts on an enemy as it lands. */
     private final class Laying implements HexHand {
-
-        private final TowerStats stats;
-
-        private Laying(TowerStats stats) {
-            this.stats = stats;
-        }
 
         @Override
         public void curse(EnemyMob target, EffectKind kind, int ticks) {
@@ -731,8 +725,8 @@ public final class SplashTower extends AbstractTower {
         }
 
         @Override
-        public void poison(EnemyMob target, float baseShare) {
-            Damage fuel = Damage.magic(Math.round(this.stats.damage() * baseShare));
+        public void poison(EnemyMob target, float points) {
+            Damage fuel = Damage.magic(DamageUnits.ofPoints(points));
             SplashTower.this.applyEffect(target, sink -> Effect.poison(fuel, sink));
         }
     }
@@ -807,16 +801,16 @@ public final class SplashTower extends AbstractTower {
     }
 
     /** A curse on its way, and the tick it forks on, for a Blight that a cloud may fork. */
-    private record PendingCurse(Curse curse, Hex hex, TowerStats stats, Dose dose, int forkAt) {
+    private record PendingCurse(Curse curse, Hex hex, Dose dose, int forkAt) {
 
         static final int NEVER = Integer.MAX_VALUE;
 
-        static PendingCurse of(Curse curse, Hex hex, TowerStats stats, Dose dose) {
-            return new PendingCurse(curse, hex, stats, dose, NEVER);
+        static PendingCurse of(Curse curse, Hex hex, Dose dose) {
+            return new PendingCurse(curse, hex, dose, NEVER);
         }
 
         PendingCurse withForkAt(int tick) {
-            return new PendingCurse(this.curse, this.hex, this.stats, this.dose, tick);
+            return new PendingCurse(this.curse, this.hex, this.dose, tick);
         }
 
         PendingCurse unforking() {

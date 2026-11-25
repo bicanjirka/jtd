@@ -6,14 +6,14 @@ public interface CastActions {
     /** Charges the next stone with an Arc. */
     boolean primeArc();
 
-    /** Discharges into every enemy in range, each for {@code share} of base damage as magic. */
-    boolean shockwave(float share);
+    /** Discharges into every enemy in range, each for {@code points} of magic damage. */
+    boolean shockwave(float points);
 
     /**
-     * Calls lightning onto the healthiest enemy in range, for {@code factor} times base damage as magic, and dazes it
+     * Calls lightning onto the healthiest enemy in range, for {@code points} of magic damage, and dazes it
      * for {@code dazeSeconds}.
      */
-    boolean thunderstrike(float factor, float dazeSeconds);
+    boolean thunderstrike(float points, float dazeSeconds);
 
     /** Sends {@code hex} at the enemies its rule picks. */
     boolean hex(Hex hex);

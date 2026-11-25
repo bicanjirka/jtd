@@ -16,6 +16,8 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   never a tower method a mechanic calls itself.
 - An Arc starts from where a charged stone landed, carries the stats that stone was thrown with, and jumps hop by hop
   with a pause between.
+- A spell's damage (an Arc's jump, a cast's bolt, a hex's poison) is a flat number of points its mechanic holds,
+  never a share of the tower's damage; only the hit's own adjustments move it.
 - A Hexer's hex is an enemy effect in `EffectCategory.HEX`, applied through `applyEffect` once its curse arrives, and
   that effect is the hex's only timer. The Hexer's `HexKeeper` only watches it: what a hex pays out when it ends, and
   where it jumps when its carrier is killed, is settled at the start of the Hexer's tick, never by the enemy. The keeper

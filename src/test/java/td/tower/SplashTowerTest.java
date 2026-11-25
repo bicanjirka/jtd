@@ -1,10 +1,13 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.effect.Effect;
 import td.effect.EffectKind;
 import td.fixtures.BoardFixtures;
 import td.fixtures.FakeEnemyMob;
@@ -79,6 +82,30 @@ class SplashTowerTest {
 
     private static FakeEnemyMob ghostBeside(FakeEnemyMob enemy, float cells) {
         return FakeEnemyMob.ghostAt(enemy.getX() + cells * S, enemy.getY());
+    }
+
+    /**
+     * A heavy enemy beside a tower of its own world that owns {@code spell}, its damage {@code damageTimes} over, once
+     * the spell's first magic hit or poison reached it.
+     */
+    private static FakeEnemyMob struckBySpell(float damageTimes, String spell) {
+        GameWorld world = WorldFixtures.newWorldOnBoard(S, 20, 20);
+        SplashTower tower = new SplashTower(world, 3, 3);
+        UpgradePaths.buy(tower, world, spell);
+        TowerFixtures.buffed(tower, world, TowerModifiers.damageTimes(damageTimes));
+        FakeEnemyMob heavy = near(tower, 1, 0).withMaxHealthPoints(1_000_000);
+        world.enemies().setEnemies(new FakeEnemyMob[] {heavy});
+        for (int t = 0; t < PATIENCE && magicHits(heavy).isEmpty() && !heavy.hasEffect(EffectKind.POISON); t++) {
+            tower.doTick(t);
+        }
+        return heavy;
+    }
+
+    private static float poisonFuel(FakeEnemyMob enemy) {
+        return (float) enemy.appliedEffects().stream()
+                .filter(effect -> effect.kind() == EffectKind.POISON)
+                .mapToDouble(Effect::fuelLevel)
+                .sum();
     }
 
     private static List<Damage> magicHits(FakeEnemyMob enemy) {
@@ -172,7 +199,6 @@ class SplashTowerTest {
     @Test
     void anArcJumpsFromWhereItsStoneLandsToTheNearestEnemiesAsMagic() {
         SplashTower tower = this.casting("Arc");
-        int full = tower.damageCurrent();
         FakeEnemyMob target = near(tower, 1, 0);
         FakeEnemyMob next = ghostBeside(target, (SplashTower.EDGE_CELLS + ArcSpec.REACH_CELLS) / 2);
         FakeEnemyMob tooFar = ghostBeside(next, ArcSpec.REACH_CELLS * 1.2f);
@@ -181,10 +207,25 @@ class SplashTowerTest {
         this.runUntil(tower, () -> !magicHits(next).isEmpty());
         this.run(tower, 10);
 
-        Damage jump = Damage.magic(Math.round(full * ArcSpec.SHARE));
-        assertThat(magicHits(target)).containsExactly(jump);
-        assertThat(magicHits(next)).containsExactly(jump);
+        assertThat(magicHits(target)).hasSize(1).isEqualTo(magicHits(next));
         assertThat(tooFar.hits()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Arc", "Shockwave", "Thunderstrike"})
+    void aSparkSpellDealsTheSameWhateverTheTowersDamage(String spell) {
+        FakeEnemyMob weaker = struckBySpell(1000f, spell);
+        FakeEnemyMob stronger = struckBySpell(2000f, spell);
+
+        assertThat(magicHits(stronger)).isNotEmpty().first().isEqualTo(magicHits(weaker).getFirst());
+    }
+
+    @Test
+    void blightsPoisonCarriesTheSameFuelWhateverTheTowersDamage() {
+        FakeEnemyMob weaker = struckBySpell(1000f, "Hex of Blight");
+        FakeEnemyMob stronger = struckBySpell(2000f, "Hex of Blight");
+
+        assertThat(poisonFuel(stronger)).isPositive().isEqualTo(poisonFuel(weaker));
     }
 
     @Test
