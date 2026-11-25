@@ -8,7 +8,7 @@ package td.tower.splash;
  * @param cloud         whether Blight also curses the enemies around its target
  * @param agony         whether a hexed enemy is Vulnerable while its hex lasts
  * @param contagion     whether a hex jumps on from an enemy that dies with it
- * @param choking       whether Blight also Silences
+ * @param choking       whether every hex also Silences
  * @param cursesPerCast how many enemies one cast curses
  */
 public record HexSpec(float doomShare, boolean cloud, boolean agony, boolean contagion, boolean choking,
@@ -46,7 +46,7 @@ public record HexSpec(float doomShare, boolean cloud, boolean agony, boolean con
         return new HexSpec(this.doomShare, this.cloud, this.agony, true, this.choking, this.cursesPerCast);
     }
 
-    public HexSpec chokingBlight() {
+    public HexSpec chokingHexes() {
         return new HexSpec(this.doomShare, this.cloud, this.agony, this.contagion, true, this.cursesPerCast);
     }
 

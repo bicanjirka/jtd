@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import td.damage.AttackProfile;
 import td.damage.Damage;
@@ -106,6 +107,11 @@ class SplashTowerTest {
                 .filter(effect -> effect.kind() == EffectKind.POISON)
                 .mapToDouble(Effect::fuelLevel)
                 .sum();
+    }
+
+    private static List<Integer> remainingTicks(FakeEnemyMob enemy, EffectKind kind) {
+        return enemy.activeEffects().stream().filter(effect -> effect.kind() == kind).map(Effect::remainingTicks)
+                .toList();
     }
 
     private static List<Damage> magicHits(FakeEnemyMob enemy) {
@@ -376,15 +382,16 @@ class SplashTowerTest {
         assertThat(enemy.hasEffect(EffectKind.VULNERABLE)).isTrue();
     }
 
-    @Test
-    void chokingBlightSilencesWhatBlightCurses() {
-        SplashTower tower = this.casting("Hex of Blight", "Choking Blight");
-        FakeEnemyMob enemy = near(tower, 1, 0);
+    @ParameterizedTest
+    @CsvSource({"Hex of Doom, DOOM", "Hex of Blight, BLIGHT", "Hex of Backlash, BACKLASH"})
+    void chokingHexesSilenceAHexedEnemyForAsLongAsItsHexLasts(String hexNode, EffectKind hex) {
+        SplashTower tower = this.casting(hexNode, "Choking Hexes");
+        FakeEnemyMob enemy = near(tower, 1, 0).thatRegenerates();
         this.enemies(enemy);
 
-        this.runUntil(tower, () -> enemy.hasEffect(EffectKind.BLIGHT));
+        this.runUntil(tower, () -> enemy.hasEffect(hex));
 
-        assertThat(enemy.hasEffect(EffectKind.SILENCED)).isTrue();
+        assertThat(remainingTicks(enemy, EffectKind.SILENCED)).isNotEmpty().isEqualTo(remainingTicks(enemy, hex));
     }
 
     @Test

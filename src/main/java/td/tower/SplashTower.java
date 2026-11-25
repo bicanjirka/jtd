@@ -24,7 +24,7 @@ import td.tower.splash.Bolt;
 import td.tower.splash.BoltKind;
 import td.tower.splash.CastActions;
 import td.tower.splash.ChainLightningMechanic;
-import td.tower.splash.ChokingBlightMechanic;
+import td.tower.splash.ChokingHexesMechanic;
 import td.tower.splash.ConductorMechanic;
 import td.tower.splash.ContagionMechanic;
 import td.tower.splash.Curse;
@@ -186,8 +186,8 @@ public final class SplashTower extends AbstractTower {
             .after(HEXER)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode CHOKING_BLIGHT = UpgradeNode.of("splash.choking_blight", "Choking Blight", 20)
-            .after(HEX_OF_BLIGHT)
+    private static final UpgradeNode CHOKING_HEXES = UpgradeNode.of("splash.choking_hexes", "Choking Hexes", 20)
+            .after(HEXER)
             .withOwnArt()
             .inTier(3);
     private static final UpgradeNode TWIN_HEX = UpgradeNode.of("splash.twin_hex", "Twin Hex", 20)
@@ -219,7 +219,7 @@ public final class SplashTower extends AbstractTower {
             .with(STORMCALLER, HEXER, ARC, HEX_OF_DOOM, HEX_OF_BLIGHT,
                     RECKONING, BLIGHT_CLOUD, AGONY, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR, JOLT,
                     HEAVY_STONES, LONG_THROW_2,
-                    SOUL_HARVEST, HEX_OF_BACKLASH, CHOKING_BLIGHT, TWIN_HEX, SHOCKWAVE, THUNDERSTRIKE, HIGH_VOLTAGE,
+                    SOUL_HARVEST, HEX_OF_BACKLASH, CHOKING_HEXES, TWIN_HEX, SHOCKWAVE, THUNDERSTRIKE, HIGH_VOLTAGE,
                     FEEDBACK, QUICK_HANDS, PIERCING_STONES)
             .withFork(UpgradeCluster.of("Stormcaller or Hexer", STORMCALLER, HEXER))
             .withCluster(UpgradeCluster.of("Hex", HEX_OF_DOOM, HEX_OF_BLIGHT))
@@ -242,7 +242,7 @@ public final class SplashTower extends AbstractTower {
             entry(JOLT.id(), JoltMechanic::new),
             entry(SOUL_HARVEST.id(), SoulHarvestMechanic::new),
             entry(HEX_OF_BACKLASH.id(), () -> new HexMechanic(BACKLASH, 3)),
-            entry(CHOKING_BLIGHT.id(), ChokingBlightMechanic::new),
+            entry(CHOKING_HEXES.id(), ChokingHexesMechanic::new),
             entry(TWIN_HEX.id(), TwinHexMechanic::new),
             entry(SHOCKWAVE.id(), ShockwaveMechanic::new),
             entry(THUNDERSTRIKE.id(), ThunderstrikeMechanic::new),
@@ -560,7 +560,7 @@ public final class SplashTower extends AbstractTower {
         if (hexes.agony()) {
             this.applyEffect(target, sink -> Effect.vulnerable(1, ticks, sink));
         }
-        if (hexes.choking() && hex.kind() == EffectKind.BLIGHT) {
+        if (hexes.choking()) {
             this.applyEffect(target, sink -> Effect.silenced(ticks, sink));
         }
     }
