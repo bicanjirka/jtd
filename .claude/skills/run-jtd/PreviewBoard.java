@@ -30,7 +30,9 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * In-process, headless REPL for composing and rendering any board scene - a level's cells/path
@@ -52,6 +54,9 @@ public class PreviewBoard {
     private static GameEngine engine;
     private static int gameTime = 0;
     private static boolean cellGrid = false;
+    private static double zoom = 1;
+    private static boolean squint = false;
+    private static int[] crop = null;
 
     public static void main(String[] args) throws Exception {
         engine = new GameEngine(GameHost.noOp());
@@ -91,6 +96,16 @@ public class PreviewBoard {
             case "tick" -> tick(Integer.parseInt(rest.trim()));
             case "kill" -> killEnemies();
             case "render" -> render(rest.trim());
+            case "record" -> record(rest.trim());
+            case "zoom" -> {
+                zoom = Double.parseDouble(rest.trim());
+                System.out.println("OK zoom " + zoom);
+            }
+            case "squint" -> {
+                squint = !rest.trim().equals("off");
+                System.out.println("OK squint " + (squint ? "on" : "off"));
+            }
+            case "crop" -> setCrop(rest.trim());
             case "grid" -> {
                 cellGrid = !rest.trim().equals("off");
                 System.out.println("OK grid " + (cellGrid ? "on" : "off"));
@@ -262,26 +277,77 @@ public class PreviewBoard {
     }
 
     private static void render(String path) throws Exception {
-        GameWorld world = engine.getGameWorld();
-        BoardRenderer boardRenderer = new BoardRenderer(world, engine::cellHighlight);
-        boardRenderer.setCellGridShown(cellGrid);
-        double animationSeconds = gameTime / TickRate.TICKS_PER_SECOND;
+        BoardRenderer boardRenderer = renderer();
         // alpha 1.0: this is always a snapshot exactly at gameTime (the last doTick that ran),
         // never mid-interpolation into a tick that hasn't happened.
-        RenderFrame frame = boardRenderer.buildFrame(gameTime, 1.0, animationSeconds);
+        BufferedImage image = paint(boardRenderer, gameTime, 1.0);
+        Film.png(new File(path), image);
+        System.out.println("OK wrote " + path + " (" + image.getWidth() + "x" + image.getHeight() + ")");
+    }
 
-        BufferedImage image = new BufferedImage(frame.maxX(), frame.maxY(), BufferedImage.TYPE_INT_ARGB);
+    /**
+     * {@code record <path.gif> <ticks> [frames per tick]}: plays that many ticks and paints every frame between them,
+     * as the live board would at 1x, into a looping GIF and a strip of evenly picked frames beside it.
+     */
+    private static void record(String args) throws Exception {
+        String[] parts = args.split("\\s+");
+        String path = parts[0];
+        int ticks = Integer.parseInt(parts[1]);
+        int perTick = parts.length > 2 ? Integer.parseInt(parts[2]) : 2;
+        BoardRenderer boardRenderer = renderer();
+        List<BufferedImage> frames = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        for (int t = 0; t < ticks; t++) {
+            gameTime++;
+            engine.doTick(gameTime);
+            for (int f = 1; f <= perTick; f++) {
+                double alpha = f / (double) perTick;
+                frames.add(paint(boardRenderer, gameTime, alpha));
+                labels.add(String.format(Locale.ROOT, "t%d %+.2fs", gameTime, (gameTime - 1 + alpha) / TickRate.TICKS_PER_SECOND));
+            }
+        }
+        int delayMillis = Math.round(1000 / (TickRate.TICKS_PER_SECOND * perTick));
+        Film.gif(new File(path), frames, delayMillis);
+        String strip = path.replaceFirst("\\.gif$", "") + "-strip.png";
+        Film.png(new File(strip), Film.strip(frames, labels, 18));
+        System.out.println("OK recorded " + frames.size() + " frames to " + path + " and " + strip
+                + " (gameTime=" + gameTime + ")");
+    }
+
+    private static void setCrop(String args) {
+        if (args.equals("off")) {
+            crop = null;
+            System.out.println("OK crop off");
+            return;
+        }
+        String[] parts = args.split("\\s+");
+        crop = new int[] {Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]),
+                Integer.parseInt(parts[3])};
+        System.out.println("OK crop " + args + " (board pixels)");
+    }
+
+    private static BoardRenderer renderer() {
+        BoardRenderer boardRenderer = new BoardRenderer(engine.getGameWorld(), engine::cellHighlight);
+        boardRenderer.setCellGridShown(cellGrid);
+        return boardRenderer;
+    }
+
+    /** The frame at {@code tick} and {@code alpha}, at the preview's zoom and crop, squinted if asked. */
+    private static BufferedImage paint(BoardRenderer boardRenderer, int tick, double alpha) {
+        double animationSeconds = (tick - 1 + alpha) / TickRate.TICKS_PER_SECOND;
+        RenderFrame frame = boardRenderer.buildFrame(tick, alpha, animationSeconds);
+        int x = crop == null ? 0 : crop[0];
+        int y = crop == null ? 0 : crop[1];
+        int w = crop == null ? frame.maxX() : crop[2];
+        int h = crop == null ? frame.maxY() : crop[3];
+        BufferedImage image = new BufferedImage((int) Math.ceil(w * zoom), (int) Math.ceil(h * zoom),
+                BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = image.createGraphics();
+        g2.scale(zoom, zoom);
+        g2.translate(-x, -y);
         new Java2DFrameRenderer().paint(g2, frame);
         g2.dispose();
-
-        File outFile = new File(path);
-        File parent = outFile.getParentFile();
-        if (parent != null) {
-            parent.mkdirs();
-        }
-        ImageIO.write(image, "png", outFile);
-        System.out.println("OK wrote " + path + " (" + frame.maxX() + "x" + frame.maxY() + ")");
+        return squint ? Film.squint(image, zoom) : image;
     }
 
     private static void state() {

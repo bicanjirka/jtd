@@ -151,9 +151,17 @@ or `gates off` to waive every tier's XP as the dev panel does),
 `spawn <id> [rank]`, `script <wave script>` (spawns it on the first path as the dev spawn box does, so affixes and shapes show), `effect <kind> [ticks]` (on every enemy), `zone <kind> <x> <y> [radiusCells] [ticks]`
 (a ground zone no tower owns: `burning_ground`, `tar`, `frost_ground`, `fallout`, `flare`), `wave`, `tick <n>`, `kill`,
 `grid [off]` (the dev cell grid), `hoverplace <tower> <x> <y>` (the placement highlight on a cell),
-`render <path>`, `state`, `quit`. `tick` advances
+`render <path>`, `record <path.gif> <ticks> [frames per tick]`, `zoom <z>`, `crop <x> <y> <w> <h>|off` (board
+pixels), `squint [off]`, `state`, `quit`. `tick` advances
 the real `GameEngine`, and `render` paints through the real `BoardRenderer` /
 `Java2DFrameRenderer` pipeline. Two spawns with no `tick` between them land on the same pixel.
+
+`record` plays the ticks and paints every frame between them (2 per tick by default) as the live board would at 1x,
+into a looping GIF and `<path>-strip.png`: up to 18 evenly picked frames side by side, each labelled with its tick.
+Read the strip; the GIF is for a person. For a moment, crop to it and record a few ticks at 3 frames per tick so the
+strip holds consecutive frames. `squint` renders stills and recordings grey and blurred: the value check, where the
+ground, what stands on it and the effects should read as separate bands. `zoom` and `crop` apply to both. Pass Java a
+Windows path (`C:\...`), never `/c/...`, which Java reads as `C:\c\...`.
 
 ```bash
 cat <<'EOF' | java -cp "$CP" PreviewBoard
