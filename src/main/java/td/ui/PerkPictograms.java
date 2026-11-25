@@ -50,8 +50,10 @@ final class PerkPictograms {
             Map.entry("sniper.silver_round", "=tower.silver_round"),
             // Long Barrel II
             Map.entry("base.range.2", "=base.range"),
-            // Wide Charge
             // Flint Stones
+            Map.entry("tier.1", "S M5 15L12 8L19 15"),
+            Map.entry("tier.2", "S M5 11L12 4L19 11 ; S M5 19L12 12L19 19"),
+            Map.entry("tier.3", "S M5 8L12 3L19 8 ; S M5 14L12 9L19 14 ; S M5 20L12 15L19 20"),
             Map.entry("splash.sharp_stones", "F M12 2.4L19.6 12L12 21.6L4.4 12Z ; X M12 6.4V17.6 M8.2 12H15.8"),
             Map.entry("splash.flint_stones", "F M3.4 17.6L7.6 6.4L13.6 2.8L20.6 9.4L18.4 18.8L10.4 21.4Z ; X M7.6 6.4L11.6 12.2L20.6 9.4 M11.6 12.2L10.4 21.4"),
             // Stormcaller
@@ -96,9 +98,6 @@ final class PerkPictograms {
             Map.entry("splash.high_voltage", "F M9.2 2.6L3.4 12.6H7.6L6.4 21.4L12.4 10.6H8.2Z ; F M17.6 6L12.4 14.8H16L15 21.6L20.8 12.4H17Z"),
             // Feedback
             Map.entry("splash.feedback", "S M17.4 7.6A7.4 7.4 0 1 0 19.4 13.4 ; F M21.6 3.8L21 9.6L15.6 7.4Z ; F M13.4 7.6L9.6 12.6H12.2L11 17.2L15.2 11.6H12.6Z"),
-            // Heavy Stones
-            // Quick Hands
-            // Piercing Stones
             Map.entry("splash.wide_blast", "F O10.4 14.2 6.8 ; S M15 9.6C16 7.6 17.2 6 19 5.2 ; F M20.4 1.8L21.1 3.7L23 4.4L21.1 5.1L20.4 7L19.7 5.1L17.8 4.4L19.7 3.7Z ; K O8 11.8 1.6"),
             // Heavy Charge
             Map.entry("mortar.heavy_charge", "F M6 21.6H18C19.6 21.6 20.4 20.4 20 18.8L17.6 9.6H6.4L4 18.8C3.6 20.4 4.4 21.6 6 21.6Z ; F M8.4 6.6H15.6V9H8.4Z ; F M9.4 6.6L8 2.8L12 4.6L16 2.8L14.6 6.6Z ; X M12 12.6V19 M8.8 15.8H15.2"),
