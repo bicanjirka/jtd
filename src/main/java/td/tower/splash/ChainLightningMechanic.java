@@ -6,7 +6,7 @@ import td.tower.TowerTerm;
 /** Chain Lightning: the Arc jumps more times. */
 public final class ChainLightningMechanic implements SplashMechanic {
 
-    private static final int MORE_JUMPS = 5;
+    private static final int MORE_JUMPS = 8;
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {

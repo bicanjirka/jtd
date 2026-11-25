@@ -7,7 +7,7 @@ import td.term.TermText;
 /** Reckoning: Doom returns more of the damage. */
 public final class ReckoningMechanic implements SplashMechanic {
 
-    private static final float SHARE = 0.8f;
+    private static final float SHARE = 1.0f;
 
     @Override
     public SplashSpec refineSpec(SplashSpec spec) {

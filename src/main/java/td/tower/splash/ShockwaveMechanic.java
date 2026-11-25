@@ -11,8 +11,8 @@ import java.util.Optional;
 /** Shockwave: once its Sparks are in, the Stormcaller discharges into every enemy in range. */
 public final class ShockwaveMechanic implements SplashMechanic {
 
-    private static final int COST = 3;
-    private static final float POINTS = 7f;
+    private static final int COST = 4;
+    private static final float POINTS = 30f;
 
     private final AbilityCharge charge = new AbilityCharge(Ability.of(TowerTerm.SHOCKWAVE, TowerTerm.SPARK, COST));
 

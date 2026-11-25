@@ -18,7 +18,7 @@ public record ArcSpec(int jumps, float points, boolean revisits, float critChanc
                       boolean jolt, AbilityUnits critRefund) {
 
     public static final int JUMPS = 3;
-    public static final float POINTS = 7f;
+    public static final float POINTS = 12f;
     /** How far a jump reaches from where it is, in cells. */
     public static final float REACH_CELLS = 1.5f;
     /** How long a jump with Jolt leaves its enemy Vulnerable, in seconds. */

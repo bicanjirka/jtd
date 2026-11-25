@@ -51,8 +51,8 @@ final class PerkPictograms {
             // Long Barrel II
             Map.entry("base.range.2", "=base.range"),
             // Wide Charge
-            Map.entry("splash.wide_charge", "F O10.4 14.2 6.8 ; S M15 9.6C16 7.6 17.2 6 19 5.2 ; F M20.4 1.8L21.1 3.7L23 4.4L21.1 5.1L20.4 7L19.7 5.1L17.8 4.4L19.7 3.7Z ; K O8 11.8 1.6"),
             // Flint Stones
+            Map.entry("splash.sharp_stones", "F M12 2.4L19.6 12L12 21.6L4.4 12Z ; X M12 6.4V17.6 M8.2 12H15.8"),
             Map.entry("splash.flint_stones", "F M3.4 17.6L7.6 6.4L13.6 2.8L20.6 9.4L18.4 18.8L10.4 21.4Z ; X M7.6 6.4L11.6 12.2L20.6 9.4 M11.6 12.2L10.4 21.4"),
             // Stormcaller
             Map.entry("splash.stormcaller", "F M7 20.4H17V22.4H7Z ; F M9.8 10.4H14.2V20.4H9.8Z ; X M9.8 13.2H14.2 M9.8 15.8H14.2 M9.8 18.4H14.2 ; F O12 6.8 3.4 ; T M15.4 5.4L17.8 3.6L18.2 6L21.2 4.4 M8.6 5.4L6.2 3.6L5.8 6L2.8 4.4"),
@@ -97,11 +97,9 @@ final class PerkPictograms {
             // Feedback
             Map.entry("splash.feedback", "S M17.4 7.6A7.4 7.4 0 1 0 19.4 13.4 ; F M21.6 3.8L21 9.6L15.6 7.4Z ; F M13.4 7.6L9.6 12.6H12.2L11 17.2L15.2 11.6H12.6Z"),
             // Heavy Stones
-            Map.entry("splash.heavy_stones", "F O12 11.2 7.6 ; K O9 8.4 1.7 ; S M2.6 21.6H21.4 ; T M5.4 18.6L3.6 16.8 M18.6 18.6L20.4 16.8"),
             // Quick Hands
-            Map.entry("splash.quick_hands", "=tower.haste"),
             // Piercing Stones
-            Map.entry("splash.piercing_stones", "F O7 12 4.6 ; F M10.6 9.6L16.8 12L10.6 14.4Z ; F M15.4 3.4H19.8V9.6L17.4 12L19.8 14.4V20.6H15.4V14.6L17 12L15.4 9.4Z ; T M2.4 6.6L5 8.2 M2.4 17.4L5 15.8"),
+            Map.entry("splash.wide_blast", "F O10.4 14.2 6.8 ; S M15 9.6C16 7.6 17.2 6 19 5.2 ; F M20.4 1.8L21.1 3.7L23 4.4L21.1 5.1L20.4 7L19.7 5.1L17.8 4.4L19.7 3.7Z ; K O8 11.8 1.6"),
             // Heavy Charge
             Map.entry("mortar.heavy_charge", "F M6 21.6H18C19.6 21.6 20.4 20.4 20 18.8L17.6 9.6H6.4L4 18.8C3.6 20.4 4.4 21.6 6 21.6Z ; F M8.4 6.6H15.6V9H8.4Z ; F M9.4 6.6L8 2.8L12 4.6L16 2.8L14.6 6.6Z ; X M12 12.6V19 M8.8 15.8H15.2"),
             // Big Bore

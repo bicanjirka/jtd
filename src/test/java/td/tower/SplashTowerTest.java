@@ -519,6 +519,6 @@ class SplashTowerTest {
 
         assertThat(SplashTower.forkOf(UpgradePaths.named(tower, "Arc"))).isEqualTo(SplashTower.Fork.STORMCALLER);
         assertThat(SplashTower.forkOf(UpgradePaths.named(tower, "Agony"))).isEqualTo(SplashTower.Fork.HEXER);
-        assertThat(SplashTower.forkOf(UpgradePaths.named(tower, "Heavy Stones"))).isEqualTo(SplashTower.Fork.NONE);
+        assertThat(SplashTower.forkOf(UpgradePaths.named(tower, "Sharp Stones"))).isEqualTo(SplashTower.Fork.NONE);
     }
 }

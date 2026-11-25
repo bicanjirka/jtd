@@ -12,8 +12,8 @@ import java.util.Optional;
 /** Thunderstrike: once its Sparks are in, the Stormcaller calls lightning onto the healthiest enemy in range. */
 public final class ThunderstrikeMechanic implements SplashMechanic {
 
-    private static final int COST = 3;
-    private static final float POINTS = 28f;
+    private static final int COST = 5;
+    private static final float POINTS = 145f;
     private static final float DAZE_SECONDS = 1.5f;
 
     private final AbilityCharge charge = new AbilityCharge(Ability.of(TowerTerm.THUNDERSTRIKE, TowerTerm.SPARK, COST));

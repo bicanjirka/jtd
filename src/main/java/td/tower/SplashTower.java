@@ -67,6 +67,7 @@ import td.tower.upgrade.RangeNodes;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -93,7 +94,7 @@ import static td.tower.upgrade.MechanicCatalogue.entry;
 public final class SplashTower extends AbstractTower {
 
     public static final int PRICE = 15;
-    public static final float DAMAGE_POINTS = 15f;
+    public static final float DAMAGE_POINTS = 7f;
     public static final float RANGE = 2.5f;
     public static final float CORE_CELLS = 0.75f;
     public static final float EDGE_CELLS = 1.25f;
@@ -119,112 +120,111 @@ public final class SplashTower extends AbstractTower {
     private static final List<Hex> HEXES = List.of(DOOM, BLIGHT, BACKLASH);
 
     private static final UpgradeNode LONG_THROW = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Throw", 5)
-            .withModifiers(TowerModifiers.range(0.7f));
-    private static final UpgradeNode WIDE_CHARGE = UpgradeNode.of("splash.wide_charge", "Wide Charge", 5)
-            .withModifiers(TowerModifiers.areaRadius(0.25f).plus(TowerModifiers.blastEdge(0.5f)));
+            .withModifiers(TowerModifiers.range(0.5f));
     private static final UpgradeNode FLINT_STONES = UpgradeNode.of("splash.flint_stones", "Flint Stones", 5)
-            .withModifiers(TowerModifiers.armorPenetrationFlat(30f));
+            .withModifiers(TowerModifiers.armorPenetrationFlat(70f));
+    private static final UpgradeNode SHARP_STONES = UpgradeNode.of("splash.sharp_stones", "Sharp Stones", 5)
+            .withModifiers(TowerModifiers.damage(1f));
 
     private static final UpgradeNode STORMCALLER = UpgradeNode.of("splash.stormcaller", "Stormcaller", 10)
             .inTier(1);
     private static final UpgradeNode HEXER = UpgradeNode.of("splash.hexer", "Hexer", 10)
             .inTier(1);
-    private static final UpgradeNode ARC = UpgradeNode.of("splash.arc", "Arc", 10)
+    private static final UpgradeNode ARC = UpgradeNode.of("splash.arc", "Arc", 5)
             .after(STORMCALLER)
             .inTier(1);
-    private static final UpgradeNode HEX_OF_DOOM = UpgradeNode.of("splash.hex_of_doom", "Hex of Doom", 10)
+    private static final UpgradeNode HEX_OF_DOOM = UpgradeNode.of("splash.hex_of_doom", "Hex of Doom", 5)
             .after(HEXER)
             .inTier(1);
-    private static final UpgradeNode HEX_OF_BLIGHT = UpgradeNode.of("splash.hex_of_blight", "Hex of Blight", 10)
+    private static final UpgradeNode HEX_OF_BLIGHT = UpgradeNode.of("splash.hex_of_blight", "Hex of Blight", 5)
             .after(HEXER)
             .inTier(1);
+    private static final UpgradeNode HEX_OF_BACKLASH = UpgradeNode.of("splash.hex_of_backlash", "Hex of Backlash", 15)
+            .after(HEXER)
+            .withOwnArt()
+            .inTier(3);
     private static final UpgradeCondition A_HEX = UpgradeCondition.owns(HEX_OF_DOOM.id())
-            .or(UpgradeCondition.owns(HEX_OF_BLIGHT.id()));
+            .or(UpgradeCondition.owns(HEX_OF_BLIGHT.id()))
+            .or(UpgradeCondition.owns(HEX_OF_BACKLASH.id()));
 
-    private static final UpgradeNode RECKONING = UpgradeNode.of("splash.reckoning", "Reckoning", 15)
+    private static final UpgradeNode RECKONING = UpgradeNode.of("splash.reckoning", "Reckoning", 10)
             .after(HEX_OF_DOOM)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode BLIGHT_CLOUD = UpgradeNode.of("splash.blight_cloud", "Blight Cloud", 20)
+    private static final UpgradeNode BLIGHT_CLOUD = UpgradeNode.of("splash.blight_cloud", "Blight Cloud", 10)
             .after(HEX_OF_BLIGHT)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode AGONY = UpgradeNode.of("splash.agony", "Agony", 15)
-            .withRequires(A_HEX)
+    private static final UpgradeNode AGONY = UpgradeNode.of("splash.agony", "Agony", 5)
+            .after(HEXER)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode CONTAGION = UpgradeNode.of("splash.contagion", "Contagion", 15)
-            .withRequires(A_HEX)
+    private static final UpgradeNode CONTAGION = UpgradeNode.of("splash.contagion", "Contagion", 5)
+            .after(HEXER)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode CHAIN_LIGHTNING = UpgradeNode.of("splash.chain_lightning", "Chain Lightning", 15)
+    private static final UpgradeNode CHAIN_LIGHTNING = UpgradeNode.of("splash.chain_lightning", "Chain Lightning", 10)
             .after(ARC)
             .inTier(2);
-    private static final UpgradeNode WILD_ARC = UpgradeNode.of("splash.wild_arc", "Wild Arc", 15)
+    private static final UpgradeNode WILD_ARC = UpgradeNode.of("splash.wild_arc", "Wild Arc", 10)
             .after(ARC)
             .inTier(2);
-    private static final UpgradeNode CONDUCTOR = UpgradeNode.of("splash.conductor", "Conductor", 15)
-            .after(ARC)
-            .withOwnArt()
-            .inTier(2);
-    private static final UpgradeNode JOLT = UpgradeNode.of("splash.jolt", "Jolt", 15)
+    private static final UpgradeNode CONDUCTOR = UpgradeNode.of("splash.conductor", "Conductor", 5)
             .after(ARC)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode HEAVY_STONES = UpgradeNode.of("splash.heavy_stones", "Heavy Stones", 25)
-            .withModifiers(TowerModifiers.damage(7f))
+    private static final UpgradeNode JOLT = UpgradeNode.of("splash.jolt", "Jolt", 5)
+            .after(ARC)
+            .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode LONG_THROW_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Throw II", 15)
-            .withModifiers(TowerModifiers.range(1f))
+    private static final UpgradeNode LONG_THROW_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Throw II", 10)
+            .withModifiers(TowerModifiers.range(1.2f))
             .inTier(2);
 
-    private static final UpgradeNode SOUL_HARVEST = UpgradeNode.of("splash.soul_harvest", "Soul Harvest", 20)
+    private static final UpgradeNode SOUL_HARVEST = UpgradeNode.of("splash.soul_harvest", "Soul Harvest", 10)
             .after(HEXER)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode HEX_OF_BACKLASH = UpgradeNode.of("splash.hex_of_backlash", "Hex of Backlash", 30)
+    private static final UpgradeNode CHOKING_HEXES = UpgradeNode.of("splash.choking_hexes", "Choking Hexes", 10)
             .after(HEXER)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode CHOKING_HEXES = UpgradeNode.of("splash.choking_hexes", "Choking Hexes", 20)
-            .after(HEXER)
-            .withOwnArt()
-            .inTier(3);
-    private static final UpgradeNode TWIN_HEX = UpgradeNode.of("splash.twin_hex", "Twin Hex", 20)
+    private static final UpgradeNode TWIN_HEX = UpgradeNode.of("splash.twin_hex", "Twin Hex", 10)
             .withRequires(A_HEX)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode SHOCKWAVE = UpgradeNode.of("splash.shockwave", "Shockwave", 25)
+    private static final UpgradeNode SHOCKWAVE = UpgradeNode.of("splash.shockwave", "Shockwave", 15)
             .after(STORMCALLER)
             .inTier(3);
-    private static final UpgradeNode THUNDERSTRIKE = UpgradeNode.of("splash.thunderstrike", "Thunderstrike", 25)
+    private static final UpgradeNode THUNDERSTRIKE = UpgradeNode.of("splash.thunderstrike", "Thunderstrike", 15)
             .after(STORMCALLER)
             .inTier(3);
-    private static final UpgradeNode HIGH_VOLTAGE = UpgradeNode.of("splash.high_voltage", "High Voltage", 20)
+    private static final UpgradeNode HIGH_VOLTAGE = UpgradeNode.of("splash.high_voltage", "High Voltage", 5)
             .after(ARC)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode FEEDBACK = UpgradeNode.of("splash.feedback", "Feedback", 20)
+    private static final UpgradeNode FEEDBACK = UpgradeNode.of("splash.feedback", "Feedback", 10)
             .after(CONDUCTOR)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode QUICK_HANDS = UpgradeNode.of("splash.quick_hands", "Quick Hands", 30)
-            .withModifiers(TowerModifiers.attackSpeed(1f / 0.8f - 1f))
-            .inTier(3);
-    private static final UpgradeNode PIERCING_STONES = UpgradeNode.of("splash.piercing_stones", "Piercing Stones", 20)
-            .withModifiers(TowerModifiers.armorPenetrationFlat(100f).plus(TowerModifiers.damage(3f)))
+    private static final UpgradeNode WIDE_BLAST = UpgradeNode.of("splash.wide_blast", "Wide Blast", 10)
+            .withModifiers(TowerModifiers.areaRadius(0.5f).plus(TowerModifiers.blastEdge(1.0f)))
             .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(List.of(LONG_THROW, WIDE_CHARGE, FLINT_STONES))
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(LONG_THROW, FLINT_STONES, SHARP_STONES))
             .with(STORMCALLER, HEXER, ARC, HEX_OF_DOOM, HEX_OF_BLIGHT,
                     RECKONING, BLIGHT_CLOUD, AGONY, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR, JOLT,
-                    HEAVY_STONES, LONG_THROW_2,
+                    LONG_THROW_2,
                     SOUL_HARVEST, HEX_OF_BACKLASH, CHOKING_HEXES, TWIN_HEX, SHOCKWAVE, THUNDERSTRIKE, HIGH_VOLTAGE,
-                    FEEDBACK, QUICK_HANDS, PIERCING_STONES)
+                    FEEDBACK, WIDE_BLAST)
+            .withCluster(UpgradeCluster.of("Stones", FLINT_STONES, SHARP_STONES))
             .withFork(UpgradeCluster.of("Stormcaller or Hexer", STORMCALLER, HEXER))
             .withCluster(UpgradeCluster.of("Hex", HEX_OF_DOOM, HEX_OF_BLIGHT))
             .withCluster(UpgradeCluster.of("Arc's path", CHAIN_LIGHTNING, WILD_ARC))
-            .withCluster(UpgradeCluster.of("Storm", SHOCKWAVE, THUNDERSTRIKE));
+            .withCluster(UpgradeCluster.of("Storm", SHOCKWAVE, THUNDERSTRIKE))
+            .withTiers(List.of(UpgradeTier.open(),
+                    UpgradeTier.gated(60, 0).withBonus(TowerModifiers.areaRadius(0.6f).plus(TowerModifiers.blastEdge(1.2f))),
+                    UpgradeTier.gated(120, 0).withBonus(TowerModifiers.damage(7f)), UpgradeTier.gated(200, 0).withBonus(TowerModifiers.attackSpeed(0.25f))));
 
     private static final MechanicCatalogue<SplashMechanic> MECHANICS = MechanicCatalogue.of(
             entry(STORMCALLER.id(), StaticMechanic::new),

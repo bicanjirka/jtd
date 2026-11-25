@@ -24,12 +24,12 @@ final class UpgradeTreePlans {
                     node("sniper.killing_spree", 4.5f), node("sniper.unbroken_aim", 5.6f))));
 
     private static final UpgradeTreePlan SPLASH = UpgradeTreePlan.of(
-            tier(row(node("base.range", 0f), node("splash.wide_charge", 1f), node("splash.flint_stones", 2f))),
-            tier(row(node("splash.arc", 0f), cluster("Stormcaller or Hexer", 1.6f), cluster("Hex", 4f))),
-            tier(row(node("base.range.2", 0f), node("splash.heavy_stones", 1f), node("splash.jolt", 2.4f),
+            tier(row(node("base.range", 0f), cluster("Stones", 1.5f))),
+            tier(row(node("tier.1", 0f), node("splash.arc", 1f), cluster("Stormcaller or Hexer", 2.4f), cluster("Hex", 4.4f))),
+            tier(row(node("tier.2", 0f), node("base.range.2", 1f), node("splash.jolt", 2.4f),
                     node("splash.agony", 2.4f), node("splash.conductor", 3.4f), node("splash.contagion", 3.4f),
                     cluster("Arc's path", 4.4f), node("splash.reckoning", 4.4f), node("splash.blight_cloud", 5.4f))),
-            tier(row(node("splash.quick_hands", 0f), node("splash.piercing_stones", 1f),
+            tier(row(node("tier.3", 0f), node("splash.wide_blast", 1f),
                     node("splash.high_voltage", 2.4f), node("splash.soul_harvest", 2.4f), node("splash.feedback", 3.4f),
                     node("splash.hex_of_backlash", 3.4f), cluster("Storm", 4.4f), node("splash.twin_hex", 4.4f),
                     node("splash.choking_hexes", 5.4f))));

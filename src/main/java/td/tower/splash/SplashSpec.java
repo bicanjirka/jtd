@@ -16,7 +16,7 @@ import td.tower.targeting.Viewpoint;
 public record SplashSpec(Reach reach, Passive passive, ArcSpec arc, HexSpec hexes, float damagePerUnit) {
 
     /** The damage a stone deals for one Spark or Soul, in points. */
-    public static final float DAMAGE_PER_UNIT = 200f;
+    public static final float DAMAGE_PER_UNIT = 100f;
 
     /** The visible enemies in range, no passive, and the bare Arc and hexes. */
     public static SplashSpec from(Viewpoint view) {
