@@ -34,7 +34,8 @@ violation. They are not restated here.
   frame build ≤ 1 ms, ≤ 512 KB allocated per frame build, paint ≤ 10 ms (headless at 1x). `td.PerformanceHarness`
   exits non-zero when over; run it after changing per-tick, per-frame or painting code. Tests: 5 s each, 60 s per fork.
 - Feature requests live in `docs/features/`, one doc per feature. Content tables (towers,
-  enemies, levels, controls) live in `README.md`.
+  enemies, levels) live in `docs/CONTENT.md`, the rules and controls in `docs/GAMEPLAY.md`, the
+  wave-script tables in `docs/WAVE-SCRIPTS.md`; `README.md` is the landing page.
 - Known gaps go in `TODO.md` (with **Where** and **Approach**), never an inline TODO. Closing a
   gap deletes its entry in the same commit. Feature ideas not yet shipped are one line each under
   its "Feature ideas".

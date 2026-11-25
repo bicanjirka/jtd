@@ -11,7 +11,7 @@ fresh one.
 
 ## Each step: ask, rework, tune
 
-1. **Read first:** the tower's class, its tree, its mechanics, its sub-package's `CLAUDE.md`, its `README.md` row, its
+1. **Read first:** the tower's class, its tree, its mechanics, its sub-package's `CLAUDE.md`, its `docs/CONTENT.md` row, its
    `StrategyBuilds` entries and its rows from one `TowerReport --tower <it>`.
 2. **Ask for changes before knobs.** The user usually reshapes the tier first (moves, renames, new or replaced nodes,
    cluster changes) and only then names knobs. Ask: what changes in this tier's design, what is fixed, which knobs
@@ -103,7 +103,7 @@ Each of these fails `mvn verify` or misleads a player when forgotten:
 - a changed id raises `GameSaveText.FORMAT` once per unpushed series (check against `origin/main` first); ids follow
   names, no legacy ids;
 - its text: no number the code beside it holds that a tuning edit can make false; the sub-package's `CLAUDE.md` and
-  the `README.md` row when behaviour changes;
+  the `docs/CONTENT.md` row when behaviour changes;
 - tests of other towers that bought it by name (move them to another tower's node of the same kind).
 
 ## Output
@@ -134,7 +134,7 @@ then suggest changes and wait. Judge from pictures, not path strings: `PreviewIc
 - two faces that read the same at 20 px (a cut-out bolt reads as a crack), or a face that reads as something else.
 
 A rename follows "A new, renamed or moved node" above, renames code with the IDE's `rename_refactoring`, and updates
-the tower's `StrategyBuilds` names and `README.md`, never `jtd-balance-tools`' `trees/` model, which mirrors the
+the tower's `StrategyBuilds` names and `docs/CONTENT.md`, never `jtd-balance-tools`' `trees/` model, which mirrors the
 shipped design doc and breaks on a name the doc lacks; then
 `TowerBench --towers <it>` and `TowerReport --tower <it>` re-store the tables under the new names. One commit.
 
@@ -154,4 +154,4 @@ shipped design doc and breaks on a name the doc lacks; then
   touched those lines; resolve each by script. Before: `git tag retune-backup`. After: `git diff retune-backup` is
   empty, every commit compiles (`git rev-list` + `mvn -q compile`), `mvn verify` passes, delete the tag.
 - A content change adds no test. A test it breaks is rewritten on a fixture or deleted, never given a new expected
-  number. Update `README.md`'s tower table and any `docs/BALANCE.md` or `CLAUDE.md` line the step makes false.
+  number. Update `docs/CONTENT.md`'s tower table and any `docs/BALANCE.md` or `CLAUDE.md` line the step makes false.

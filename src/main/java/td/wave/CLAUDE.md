@@ -59,7 +59,7 @@ counts, use `enemyCount()`/`enemySet()`, which need no spawn.
   reads the script itself. A new keyword is its row plus the rule that reads it, and `next` answers for it.
 - Reserved tokens are matched before catalog lookup, and `EnemyCatalog.register` rejects ids that
   collide with them. Built-in and per-level ids resolve identically.
-- A new enemy id gets a row in `README.md`'s "Wave script ids" table.
+- A new enemy id gets a row in `docs/WAVE-SCRIPTS.md`'s "Enemy ids" table.
 
 ## Composition rules
 

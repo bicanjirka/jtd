@@ -185,5 +185,5 @@
    `.withCluster`/`.withFork` its clusters. Anything the tower does beyond its basic attack is a tier 0 node, never
    built into the bare tower.
 6. `targetingLabel()` and `baseApplies()`, and, for the shop only, a `description()` saying what no row does.
-7. `README.md`'s tower table.
+7. `docs/CONTENT.md`'s tower table.
 8. A `CLAUDE.md` in the tower's sub-package for its own constraints, and its name in this file's pointer.

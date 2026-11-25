@@ -14,7 +14,7 @@ and the commit body names the numbers that moved and why.
 3. **Measure damage a second against the target the node is for**, relative to the same build without the node:
    "+20%". A bonus against Elites and Bosses is weighed against an Elite or a Boss, a crowd node in a crowd.
 4. **Enemy numbers come from the code**, never from memory: `src/main/java/td/enemy/*Enemy.java` (`withArmor`,
-   `withPlating`, `withMagicResist`, `withInsulation`, per rank) and the affixes in README's affix table
+   `withPlating`, `withMagicResist`, `withInsulation`, per rank) and the affixes in `docs/WAVE-SCRIPTS.md`'s affix table
    (Armored and Plated grow with the level's physical damage).
 
 ## What a cluster must be
