@@ -32,8 +32,8 @@ import java.awt.geom.Rectangle2D;
 final class TowerMomentArt {
 
     /** A spent cartridge flies for this long, and steam is let off for this long once a reload starts. */
-    static final double CASING_SECONDS = 0.45;
-    static final double STEAM_SECONDS = 0.9;
+    static final MomentLength CASING_LENGTH = MomentLength.SHORT;
+    static final MomentLength STEAM_LENGTH = MomentLength.LONG;
     private static final Color CASING_BRASS = new Color(0xe8c060);
     private static final int STEAM_PUFFS = 5;
     private static final Color STEAM = new Color(0xdfe6ee);
@@ -47,9 +47,9 @@ final class TowerMomentArt {
      * A mortar's moments, in ticks: the smoke off its mouth after a shot (the flash shows on the first of them), the
      * dust at its feet from the slam, and a puff of steam off its pump.
      */
-    static final int MUZZLE_SMOKE_TICKS = 9;
-    static final int FOOT_DUST_TICKS = 4;
-    static final int PUMP_STEAM_TICKS = 4;
+    static final int MUZZLE_SMOKE_TICKS = MomentLength.SHORT.ticks();
+    static final int FOOT_DUST_TICKS = MomentLength.BLINK.ticks();
+    static final int PUMP_STEAM_TICKS = MomentLength.BLINK.ticks();
     private static final Color MUZZLE_FLASH = new Color(0xffe0a0);
     private static final Color MUZZLE_PUFF = new Color(0xb4b7c0);
     private static final Color MUZZLE_RING = new Color(0xc9ccd4);
@@ -96,7 +96,7 @@ final class TowerMomentArt {
         double heading = casing.headingRadians();
         double breech = casing.breechCells();
         double side = heading + Math.PI / 2;
-        double out = 0.30 * (1 - (1 - progress) * (1 - progress));
+        double out = 0.30 * Easing.out(progress);
         double high = breech + 0.9 * progress - (breech + 0.9) * progress * progress;
         double x = casing.centerX() + (Math.cos(side) * out - Math.cos(heading) * 0.06 * progress) * scale;
         double groundY = casing.centerY() + (Math.sin(side) * out - Math.sin(heading) * 0.06 * progress) * scale;
@@ -152,7 +152,7 @@ final class TowerMomentArt {
         LoadedShell kind = volley ? carry.load().get(carry.load().size() - 1 - slot) : carry.load().getFirst();
         int tier = carry.tier();
         double u = (reload - from) / length;
-        double s = u * u * (3 - 2 * u);
+        double s = Easing.inOut(u);
         double[] a = TowerFoundations.mortarPiece(tier, TowerFoundations.mortarPlace(carry.stock(), kind),
                 carry.stock().size());
         double[] m = TowerFoundations.mortarMouth(tier, TowerPose.idle().with(TowerCue.LONG_BARREL,

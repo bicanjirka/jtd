@@ -1108,7 +1108,7 @@ final class TowerFoundations {
             }
             if (beat > STRIDE_SHOT_FRAMES && beat <= STRIDE_COCKED) {
                 double u = (beat - STRIDE_SHOT_FRAMES) / (STRIDE_PUMP_STEPS + 1.0);
-                double eased = u * u * (3 - 2 * u);
+                double eased = Easing.inOut(u);
                 return new Stride(1 - STRIDE_PUMP_SQUAT * eased, STRIDE_PUMP_CROUCH * eased, eased);
             }
             return REST;

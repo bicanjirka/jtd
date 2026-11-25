@@ -55,19 +55,19 @@ import java.util.Set;
  */
 public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
 
-    static final int CRIT_SPARK_DURATION_TICKS = 8;
+    static final int CRIT_SPARK_DURATION_TICKS = MomentLength.SHORT.ticks();
     /** Fixed, so a crit looks the same on every enemy. */
     private static final float CRIT_SPARK_FIXED_SCALE = 12f;
     /** Where Exposed's glint sits off the body's centre, and its size, as shares of the body. */
     private static final float GLINT_OFFSET_SHARE = 0.75f;
     private static final float GLINT_SIZE_SHARE = 0.45f;
-    static final int MISS_MARK_DURATION_TICKS = 12;
-    static final int CLOAK_FADE_DURATION_TICKS = 8;
-    static final int SHIELD_FLASH_DURATION_TICKS = 4;
-    static final int SHIELD_POP_DURATION_TICKS = 7;
-    static final int ICE_SHARDS_DURATION_TICKS = 8;
+    static final int MISS_MARK_DURATION_TICKS = MomentLength.BEAT.ticks();
+    static final int CLOAK_FADE_DURATION_TICKS = MomentLength.SHORT.ticks();
+    static final int SHIELD_FLASH_DURATION_TICKS = MomentLength.BLINK.ticks();
+    static final int SHIELD_POP_DURATION_TICKS = MomentLength.SHORT.ticks();
+    static final int ICE_SHARDS_DURATION_TICKS = MomentLength.SHORT.ticks();
     /** How long plus signs keep rising after health is turned back at once. */
-    static final int REWIND_HEAL_DURATION_TICKS = 24;
+    static final int REWIND_HEAL_DURATION_TICKS = MomentLength.SLOW.ticks();
     /** The share of full health a second at which plus signs reach their most. */
     private static final float MOST_HEALING_PER_SECOND = 0.06f;
     private static final float DAZE_SWAY_RADIANS = 0.09f;
@@ -100,7 +100,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private static final float SELECTION_RING_ALPHA = 0.9f;
     // Always on and only a few enemies have it, so it can stay faint: it says which towers are being harmed.
     private static final float DISRUPTION_RING_ALPHA = 0.2f;
-    static final int EFFECT_PULSE_DURATION_TICKS = 8;
+    static final int EFFECT_PULSE_DURATION_TICKS = MomentLength.SHORT.ticks();
     /** Runes sit in a row over the body; their size is fixed. */
     private static final float RUNE_ROW_OFFSET_FRACTION = 0.6f;
     private static final float RUNE_FIXED_SCALE = 4f;

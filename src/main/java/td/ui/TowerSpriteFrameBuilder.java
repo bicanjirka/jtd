@@ -23,7 +23,6 @@ import td.ui.render.TowerLook;
 import td.ui.render.TowerPose;
 import td.ui.render.TowerSpriteDraw;
 import td.util.GameWorld;
-import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -37,11 +36,11 @@ import java.util.OptionalInt;
 public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
 
     /** How long a knell throws the stone about. */
-    private static final int KNELL_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 0.4f);
+    private static final int KNELL_TICKS = MomentLength.SHORT.ticks();
     /** A tier's rise takes half a second on the tick clock, so it pauses and speeds with the game. */
-    private static final int RISE_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2);
+    private static final int RISE_TICKS = MomentLength.BEAT.ticks();
     /** A placed tower settles onto its cell a little faster than a tier rises. */
-    private static final int SETTLE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 0.35f);
+    private static final int SETTLE_TICKS = MomentLength.SHORT.ticks();
     /** Neighbours' lights run this far apart, a cell to the next, so a row of towers never breathes as one. */
     private static final float LIFE_OFFSET_SECONDS = 0.83f;
     /** The life clock starts over this often, so it keeps its precision in a float through a long game. */

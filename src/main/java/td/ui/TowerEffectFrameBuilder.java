@@ -109,18 +109,18 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     /** How much of its way a curse, spark or soul in flight trails behind it. */
     private static final float STREAK_SHARE = 0.25f;
     /** How long the streak a bullet leaves stays drawn once it has arrived: far less than a reload. */
-    private static final float TRACER_FADE_TICKS = 4f;
+    private static final float TRACER_FADE_TICKS = MomentLength.BLINK.ticks();
     /** The Burst's thrown stone is drawn at this share of a lobbed shot's size, its shadow with it. */
     private static final float STONE_SIZE = 0.5f;
     /** How far a ricochet's arc bows out, as a share of the hop's length. */
     private static final float HOP_BOW = 0.25f;
-    private static final float EXECUTION_TICKS = 0.6f * TickRate.TICKS_PER_SECOND;
+    private static final float EXECUTION_TICKS = MomentLength.BEAT.ticks();
     /** The hunting scope's lens on the head, in cells along and across its aim, and how far above the rifle's top. */
     private static final double LENS_ALONG_CELLS = 0.09;
     private static final double LENS_ACROSS_CELLS = -0.05;
     private static final double LENS_ABOVE_CELLS = 0.08;
     /** How long a blast's detonation and its arcs stay drawn. */
-    private static final float DETONATION_TICKS = 8f;
+    private static final float DETONATION_TICKS = MomentLength.SHORT.ticks();
     /** The detonation's first flash lasts this share of it. */
     private static final float FLASH_SHARE = 0.25f;
     private static final float DARK_RING_ALPHA = 0.8f;
@@ -144,11 +144,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      * How long each blast is drawn, in ticks: a Normal's or a flare's flash, a Heavy's brief fireball, a payload's burst,
      * a nuke's mushroom cloud for as long as its mark stays; and the first ticks of a nuke, which whiten the board.
      */
-    private static final int FLASH_BLAST_TICKS = 6;
-    private static final int HEAVY_BLAST_TICKS = 9;
-    private static final int PAYLOAD_BLAST_TICKS = 16;
+    private static final int FLASH_BLAST_TICKS = MomentLength.QUICK.ticks();
+    private static final int HEAVY_BLAST_TICKS = MomentLength.SHORT.ticks();
+    private static final int PAYLOAD_BLAST_TICKS = MomentLength.LONG.ticks();
     private static final int NUKE_BLAST_TICKS = MortarTower.BLAST_MARK_TICKS;
-    private static final int NUKE_WHITEOUT_TICKS = 6;
+    private static final int NUKE_WHITEOUT_TICKS = MomentLength.QUICK.ticks();
     /** A stream's tongues take new tips this often, which is all the flicker it needs. */
     private static final int STREAM_FLICKER_TICKS = 3;
     /** The outer tongue fills the cone; the middle one reaches part of it, narrower; the core less again. */
@@ -163,13 +163,13 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     /** A Ward's rune circle runs just inside its field's outline. */
     private static final float WARD_INSET_CELLS = 0.07f;
     /** The knell's ring runs out to the field's edge in this long. */
-    private static final int KNELL_RING_TICKS = 10;
+    private static final int KNELL_RING_TICKS = MomentLength.BEAT.ticks();
     /** The Sundial's veil, in cells: narrow at the stone, wider at its tip, with a thin leading edge. */
     /** A spent cartridge leaves from a little above the rifle's top; embers from a little above the turret's. */
     private static final double CASING_ABOVE_CELLS = 0.05;
     private static final double EMBERS_ABOVE_CELLS = 0.06;
-    private static final int CASING_TICKS = Math.round((float) TowerMomentArt.CASING_SECONDS * TickRate.TICKS_PER_SECOND);
-    private static final int STEAM_TICKS = Math.round((float) TowerMomentArt.STEAM_SECONDS * TickRate.TICKS_PER_SECOND);
+    private static final int CASING_TICKS = TowerMomentArt.CASING_LENGTH.ticks();
+    private static final int STEAM_TICKS = TowerMomentArt.STEAM_LENGTH.ticks();
     /** A cocked mortar waiting for a target hisses about this often. */
     private static final int HISS_TICKS = Math.round(1.5f * TickRate.TICKS_PER_SECOND);
     /** The veil keeps its strength for most of its turn and fades over the rest. */
@@ -742,7 +742,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         float x = (float) mark.at().x();
         float y = (float) mark.at().y();
         Palette ice = MissileArt.paletteOf(ProjectileFrameBuilder.loadedMissileOf(mark.kind().look()));
-        float head = mark.radius() * (1f - (1f - progress) * (1f - progress));
+        float head = mark.radius() * (float) Easing.out(progress);
         float tail = Math.max(0f, head - this.scale * SHATTER_SHARD_CELLS);
         for (int i = 0; i < SHATTER_SHARDS; i++) {
             double angle = i * 2 * Math.PI / SHATTER_SHARDS + mark.startedAtTick();

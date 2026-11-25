@@ -74,23 +74,8 @@ final class BlastArt {
 
     // ---- shared, also with the payload grounds ---------------------------------------------------------------------
 
-    static double clamp01(double v) {
-        return Math.clamp(v, 0, 1);
-    }
-
-    static double easeOut(double t) {
-        double s = 1 - clamp01(t);
-        return 1 - s * s * s;
-    }
-
-    /** 0 below {@code from}, 1 above {@code to}, smooth between. */
-    static double smooth(double from, double to, double t) {
-        double s = clamp01((t - from) / (to - from));
-        return s * s * (3 - 2 * s);
-    }
-
     static Color mix(Color a, Color b, double t) {
-        double s = clamp01(t);
+        double s = Easing.clamp01(t);
         return new Color((int) Math.round(a.getRed() + (b.getRed() - a.getRed()) * s),
                 (int) Math.round(a.getGreen() + (b.getGreen() - a.getGreen()) * s),
                 (int) Math.round(a.getBlue() + (b.getBlue() - a.getBlue()) * s));
@@ -98,7 +83,7 @@ final class BlastArt {
 
     /** A ramp through {@code stops} at {@code t} 0, 1/(n-1), .. 1, held past its ends. */
     private static Color ramp(double t, Color... stops) {
-        double at = clamp01(t) * (stops.length - 1);
+        double at = Easing.clamp01(t) * (stops.length - 1);
         int i = Math.min(stops.length - 2, (int) Math.floor(at));
         return mix(stops[i], stops[i + 1], at - i);
     }
@@ -257,7 +242,7 @@ final class BlastArt {
 
     /** Where something thrown out at {@code share} of its flight is: out along the ground, up and back down. */
     private static double[] thrown(double x, double y, double angle, double reach, double height, double share) {
-        double s = clamp01(share);
+        double s = Easing.clamp01(share);
         return new double[] {x + Math.cos(angle) * reach * s, y + Math.sin(angle) * reach * s,
                 height * 4 * s * (1 - s)};
     }
@@ -286,11 +271,11 @@ final class BlastArt {
     private static void heavy(Graphics2D g2, BlastDraw b) {
         double p = b.progress();
         double u = b.unit();
-        TowerLifeArt.glow(g2, b.x(), b.y(), b.core() * 1.1, SCORCH, 0.7 * (1 - smooth(0.5, 1, p)));
-        ring(g2, b.x(), b.y(), b.edge() * easeOut(p / 0.4), u * 0.08 * (1 - p), SHOCK, 0.85 * (1 - clamp01(p / 0.4)));
+        TowerLifeArt.glow(g2, b.x(), b.y(), b.core() * 1.1, SCORCH, 0.7 * (1 - Easing.inOut(0.5, 1, p)));
+        ring(g2, b.x(), b.y(), b.edge() * Easing.outStrong(p / 0.4), u * 0.08 * (1 - p), SHOCK, 0.85 * (1 - Easing.clamp01(p / 0.4)));
         flash(g2, b.x(), b.y(), b.core() * 1.1, YELLOW_FIRE, p / 0.3);
-        double grow = easeOut(p / 0.4);
-        double fade = 1 - smooth(0.6, 1, p);
+        double grow = Easing.outStrong(p / 0.4);
+        double fade = 1 - Easing.inOut(0.6, 1, p);
         List<Puff> puffs = new ArrayList<>();
         for (int i = 0; i < HEAVY_PUFFS; i++) {
             double h = hash(b.seed(), i);
@@ -300,8 +285,8 @@ final class BlastArt {
             double out = b.core() * 0.32 * spiral(i, HEAVY_PUFFS) * (0.5 + grow);
             double gx = b.x() + Math.cos(angle) * out;
             double gy = b.y() + Math.sin(angle) * out * 0.75;
-            double rise = u * (0.12 + (0.2 + 0.45 * inner) * easeOut(p * 1.2));
-            double r = b.core() * 0.25 * size * (0.45 + 0.75 * grow) * (1 - 0.3 * smooth(0.6, 1, p));
+            double rise = u * (0.12 + (0.2 + 0.45 * inner) * Easing.outStrong(p * 1.2));
+            double r = b.core() * 0.25 * size * (0.45 + 0.75 * grow) * (1 - 0.3 * Easing.inOut(0.6, 1, p));
             Color color = ramp(1.05 - p * (1.3 + 0.6 * h) - 0.15 * (1 - inner), HEAVY_SMOKE, RED_FIRE, ORANGE_FIRE,
                     YELLOW_FIRE, WHITE_HOT);
             puffs.add(new Puff(gx, gy - rise, r, color, fade, gy - rise * 0.3));
@@ -338,9 +323,9 @@ final class BlastArt {
     private static void napalm(Graphics2D g2, BlastDraw b) {
         double p = b.progress();
         double u = b.unit();
-        double spread = easeOut(p / 0.3);
+        double spread = Easing.outStrong(p / 0.3);
         TowerLifeArt.glow(g2, b.x(), b.y(), b.edge() * (0.5 + 0.5 * spread), ORANGE_FIRE,
-                0.5 * (1 - smooth(0.5, 1, p)));
+                0.5 * (1 - Easing.inOut(0.5, 1, p)));
         flash(g2, b.x(), b.y(), b.core() * 1.2, ORANGE_FIRE, p / 0.22);
         double burn = Math.pow(1 - p, 0.6);
         List<double[]> flames = new ArrayList<>();
@@ -354,7 +339,7 @@ final class BlastArt {
         flames.sort(Comparator.comparingDouble(f -> f[1]));
         List<Puff> back = new ArrayList<>();
         List<Puff> front = new ArrayList<>();
-        double grow = easeOut(p / 0.45);
+        double grow = Easing.outStrong(p / 0.45);
         for (int i = 0; i < NAPALM_PUFFS; i++) {
             double h = hash(b.seed(), 20 + i);
             double size = 0.7 + 0.6 * hash(b.seed(), 120 + i);
@@ -363,17 +348,17 @@ final class BlastArt {
             double out = b.core() * 0.35 * spiral(i, NAPALM_PUFFS) * (0.5 + grow);
             double gx = b.x() + Math.cos(angle) * out;
             double gy = b.y() + Math.sin(angle) * out * 0.7;
-            double rise = u * (0.15 + (0.6 + 0.9 * inner) * easeOut(p * 1.05));
+            double rise = u * (0.15 + (0.6 + 0.9 * inner) * Easing.outStrong(p * 1.05));
             double r = b.core() * 0.27 * size * (0.45 + 0.8 * grow);
             Color color = ramp(1 - p * (1.5 + 0.6 * h) - 0.25 * inner, SOOT, RED_FIRE, ORANGE_FIRE, YELLOW_FIRE);
-            Puff puff = new Puff(gx, gy - rise, r, color, 1 - smooth(0.62, 1, p));
+            Puff puff = new Puff(gx, gy - rise, r, color, 1 - Easing.inOut(0.62, 1, p));
             (rise > u * 0.45 ? back : front).add(puff);
         }
         puffs(g2, back);
         for (double[] f : flames) {
             double flicker = 0.8 + 0.2 * Math.sin(p * 37 + f[4] * 2.1 + b.seed());
             double height = u * (0.35 + 0.35 * f[2]) * (1.35 - 0.6 * f[3]) * burn * flicker;
-            flame(g2, f[0], f[1], u * (0.13 + 0.05 * f[2]), height, 1 - smooth(0.8, 1, p));
+            flame(g2, f[0], f[1], u * (0.13 + 0.05 * f[2]), height, 1 - Easing.inOut(0.8, 1, p));
         }
         puffs(g2, front);
         for (int i = 0; i < NAPALM_DROPS; i++) {
@@ -386,7 +371,7 @@ final class BlastArt {
                 flat(g2, at[0] - u * 0.012, at[1] - at[2] - u * 0.012, u * 0.03, YELLOW_FIRE, 1);
             } else {
                 double flicker = 0.8 + 0.2 * Math.sin(p * 41 + i * 1.3);
-                flame(g2, at[0], at[1], u * 0.06, u * 0.2 * (1 - p) * flicker, 1 - smooth(0.8, 1, p));
+                flame(g2, at[0], at[1], u * 0.06, u * 0.2 * (1 - p) * flicker, 1 - Easing.inOut(0.8, 1, p));
             }
         }
     }
@@ -404,7 +389,7 @@ final class BlastArt {
         double p = b.progress();
         double u = b.unit();
         flash(g2, b.x(), b.y(), b.core() * 0.9, TAR_FLASH, p / 0.18);
-        double fade = 1 - smooth(0.7, 1, p);
+        double fade = 1 - Easing.inOut(0.7, 1, p);
         for (int i = 0; i < TAR_GLOBS; i++) {
             double h = hash(b.seed(), 40 + i);
             double share = p * 2.4 / (0.8 + 0.4 * h);
@@ -414,8 +399,8 @@ final class BlastArt {
                 splat(g2, at[0], at[1], u * (0.08 + 0.05 * h), fade);
             }
         }
-        double crown = Math.sin(Math.PI * clamp01(p / 0.6));
-        double ringR = b.core() * (0.22 + 0.32 * easeOut(p / 0.4));
+        double crown = Math.sin(Math.PI * Easing.clamp01(p / 0.6));
+        double ringR = b.core() * (0.22 + 0.32 * Easing.outStrong(p / 0.4));
         splat(g2, b.x(), b.y(), ringR * 1.3, fade);
         List<double[]> spikes = new ArrayList<>();
         for (int i = 0; i < TAR_SPIKES; i++) {
@@ -437,7 +422,7 @@ final class BlastArt {
                 glob(g2, at[0], at[1] - at[2], u * (0.055 + 0.035 * h), 1);
             }
         }
-        double smoke = smooth(0.1, 0.4, p) * (1 - smooth(0.6, 1, p));
+        double smoke = Easing.inOut(0.1, 0.4, p) * (1 - Easing.inOut(0.6, 1, p));
         List<Puff> puffs = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             double h = hash(b.seed(), 90 + i);
@@ -494,15 +479,15 @@ final class BlastArt {
     private static void cryo(Graphics2D g2, BlastDraw b) {
         double p = b.progress();
         double u = b.unit();
-        double spread = easeOut(p / 0.5);
-        double fade = 1 - smooth(0.5, 1, p);
+        double spread = Easing.outStrong(p / 0.5);
+        double fade = 1 - Easing.inOut(0.5, 1, p);
         TowerLifeArt.glow(g2, b.x(), b.y(), b.edge() * (0.4 + 0.7 * spread), VAPOUR, 0.4 * fade);
         ring(g2, b.x(), b.y(), b.edge() * spread, u * 0.05, Color.WHITE, 0.6 * fade);
         flash(g2, b.x(), b.y(), b.core() * 1.2, FROST_FLASH, p / 0.22);
         Bank vapour = new Bank(b, b.edge() * 0.72 * spread, u * 0.36 * (0.5 + 0.5 * spread)
-                * (1 - 0.5 * smooth(0.55, 1, p)), VAPOUR, 1 - smooth(0.75, 1, p));
+                * (1 - 0.5 * Easing.inOut(0.55, 1, p)), VAPOUR, 1 - Easing.inOut(0.75, 1, p));
         bank(g2, vapour, true);
-        double jut = easeOut(p / 0.12) * (1 - smooth(0.7, 1, p));
+        double jut = Easing.outStrong(p / 0.12) * (1 - Easing.inOut(0.7, 1, p));
         List<double[]> shards = new ArrayList<>();
         for (int i = 0; i < CRYO_SHARDS; i++) {
             double h = hash(b.seed(), i);
@@ -546,30 +531,30 @@ final class BlastArt {
         double u = b.unit();
         double x = b.x();
         double y = b.y();
-        double vanish = 1 - smooth(0.72, 1, p);
-        TowerLifeArt.glow(g2, x, y, b.edge() * 1.3, NUKE_HEAT, 0.75 * (1 - smooth(0, 0.35, p)));
-        TowerLifeArt.glow(g2, x, y, b.edge(), SCORCH, 0.6 * smooth(0.1, 0.35, p) * vanish);
+        double vanish = 1 - Easing.inOut(0.72, 1, p);
+        TowerLifeArt.glow(g2, x, y, b.edge() * 1.3, NUKE_HEAT, 0.75 * (1 - Easing.inOut(0, 0.35, p)));
+        TowerLifeArt.glow(g2, x, y, b.edge(), SCORCH, 0.6 * Easing.inOut(0.1, 0.35, p) * vanish);
         double shock = p / 0.2;
-        ring(g2, x, y, b.edge() * 1.6 * easeOut(shock), u * 0.12 * (1 - clamp01(shock)), SHOCK,
-                0.9 * (1 - clamp01(shock)));
+        ring(g2, x, y, b.edge() * 1.6 * Easing.outStrong(shock), u * 0.12 * (1 - Easing.clamp01(shock)), SHOCK,
+                0.9 * (1 - Easing.clamp01(shock)));
         double dust = p / 0.55;
-        ring(g2, x, y, b.edge() * 2.1 * easeOut(dust), u * 0.35, NUKE_DUST, 0.22 * (1 - clamp01(dust)));
+        ring(g2, x, y, b.edge() * 2.1 * Easing.outStrong(dust), u * 0.35, NUKE_DUST, 0.22 * (1 - Easing.clamp01(dust)));
 
-        double heat = 1 - clamp01(p / 0.4);
+        double heat = 1 - Easing.clamp01(p / 0.4);
         Color fire = ramp(heat, NUKE_SMOKE, ORANGE_FIRE, YELLOW_FIRE, WHITE_HOT);
-        double capR = Math.min(b.edge() * 0.5, u * 1.25) * (0.6 + 0.4 * easeOut(p / 0.45)) * (1 + 0.12 * p);
-        double lift = u * (0.2 + 3.9 * easeOut((p - 0.04) / 0.6));
+        double capR = Math.min(b.edge() * 0.5, u * 1.25) * (0.6 + 0.4 * Easing.outStrong(p / 0.45)) * (1 + 0.12 * p);
+        double lift = u * (0.2 + 3.9 * Easing.outStrong((p - 0.04) / 0.6));
         double capY = y - lift;
         double roll = p * 2.4;
-        double cloudIn = smooth(0.03, 0.1, p);
+        double cloudIn = Easing.inOut(0.03, 0.1, p);
 
-        double surgeOut = easeOut(p / 0.5);
-        double surgeShow = 0.85 * smooth(0, 0.05, p) * (1 - smooth(0.4, 0.7, p));
+        double surgeOut = Easing.outStrong(p / 0.5);
+        double surgeShow = 0.85 * Easing.inOut(0, 0.05, p) * (1 - Easing.inOut(0.4, 0.7, p));
         Bank surge = new Bank(b, b.edge() * (0.3 + 0.5 * surgeOut), u * 0.6 * (0.5 + 0.5 * surgeOut)
-                * (1 - 0.5 * smooth(0.3, 0.7, p)), mix(NUKE_DUST, fire, heat * 0.5), surgeShow);
+                * (1 - 0.5 * Easing.inOut(0.3, 0.7, p)), mix(NUKE_DUST, fire, heat * 0.5), surgeShow);
         bank(g2, surge, true);
         if (p < 0.14) {
-            double ball = b.edge() * 0.55 * easeOut(p / 0.05);
+            double ball = b.edge() * 0.55 * Easing.outStrong(p / 0.05);
             TowerLifeArt.glow(g2, x, y - ball * 0.5, ball * 2, YELLOW_FIRE, 0.8 * (1 - p / 0.14));
             puff(g2, new Puff(x, y - ball * 0.55, ball * (1 - 0.4 * cloudIn), ramp(heat, ORANGE_FIRE, YELLOW_FIRE,
                     WHITE_HOT), 1 - cloudIn, 0));
@@ -819,7 +804,7 @@ final class BlastArt {
         g2.setColor(faded(FLASH_LIGHT, FLASH_ALPHA * s));
         g2.fillRect(0, 0, width + 1, height + 1);
         TowerLifeArt.glow(g2, flash.x(), flash.y(), Math.max(width, height) * 0.6, Color.WHITE, 0.6 * s);
-        double show = clamp01((s - SILHOUETTE_FROM) / 0.25);
+        double show = Easing.clamp01((s - SILHOUETTE_FROM) / 0.25);
         if (show <= 0) {
             return;
         }

@@ -244,7 +244,7 @@ final class TowerSprites {
         g2.setColor(faded(tier, 0.9f * (1f - progress)));
         g2.draw(new Ellipse2D.Float(x - radius, y - radius, radius * 2, radius * 2));
         g2.setStroke(stroke);
-        float eased = 1f - (1f - progress) * (1f - progress);
+        float eased = (float) Easing.out(progress);
         float reach = scale * (RISE_SPARK_FROM_CELLS + (RISE_SPARK_TO_CELLS - RISE_SPARK_FROM_CELLS) * eased);
         float climb = scale * RISE_SPARK_CLIMB_CELLS * (float) Math.sin(Math.PI * progress);
         float size = scale * RISE_SPARK_CELLS * (1f - 0.5f * progress);
@@ -273,7 +273,7 @@ final class TowerSprites {
         if (progress >= 1f) {
             return 1f;
         }
-        float eased = 1f - (1f - progress) * (1f - progress);
+        float eased = (float) Easing.out(progress);
         float over = BUILD_OVERSHOOT * (float) Math.sin(Math.PI * progress) * progress;
         return BUILD_FROM + (1f - BUILD_FROM) * eased + over;
     }

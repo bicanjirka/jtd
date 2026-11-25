@@ -293,7 +293,7 @@ final class TowerLifeArt {
             if (in <= 0 || out >= 1) {
                 continue;
             }
-            double far = 1 - in * in * (3 - 2 * in);
+            double far = 1 - Easing.inOut(in);
             double away = Math.pow(out, 1.6);
             double wander = 1 + BIRD_WANDER * Math.sin(seconds * (0.25 + 0.2 * h1) + h3 * 6.28);
             double ring = (0.36 + 0.16 * h1) * wander * (1 + BIRD_COME_FROM * far + BIRD_FLEE_TO * away) * scale;

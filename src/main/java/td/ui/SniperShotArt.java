@@ -227,7 +227,7 @@ final class SniperShotArt {
             return;
         }
         double flight = (progress - EXECUTION_STRIKE) / (1 - EXECUTION_STRIKE);
-        double out = 1 - (1 - flight) * (1 - flight);
+        double out = Easing.out(flight);
         for (int i = 0; i < EXECUTION_SHARDS; i++) {
             double side = i % 2 == 0 ? 1 : -1;
             double along = (TowerLifeArt.hash(seed, i) - 0.5) * 1.6;

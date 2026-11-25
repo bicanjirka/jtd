@@ -233,7 +233,7 @@ final class EnemyEffects {
         for (int i = 0; i < ICE_SHARDS; i++) {
             double s = burst.seed() + i * 5.3;
             double angle = TAU * (i + hash(s)) / ICE_SHARDS;
-            double reach = 0.55 + (1 - (1 - p) * (1 - p)) * (0.7 + hash(s + 1) * 0.5);
+            double reach = 0.55 + Easing.out(p) * (0.7 + hash(s + 1) * 0.5);
             float size = (float) (1.6 + hash(s + 2) * 2.2) * (1f - p * 0.4f);
             double fall = p * p * 7;
             AffineTransform save = g2.getTransform();
