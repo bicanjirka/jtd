@@ -69,8 +69,6 @@ public final class AuraTower extends AbstractTower {
     private static final int AFTERGLOW_TICKS = Math.round(2f * TickRate.TICKS_PER_SECOND);
     /** How long what the light holds an enemy to lasts once it leaves: Priority, Glare's Expose, Prism's Chill. */
     private static final int LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
-    /** How long a reveal is remembered: long enough for its ray to fade. */
-    public static final int REVEAL_MEMORY_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     private static final int CHILL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
 
     private static final UpgradeNode STEADY_LIGHT = UpgradeNode.of("aura.steady_light", "Steady Light", 11)
@@ -325,7 +323,7 @@ public final class AuraTower extends AbstractTower {
         return this.held;
     }
 
-    /** The hidden enemies the light revealed as they entered, over the last {@link #REVEAL_MEMORY_TICKS}. */
+    /** The hidden enemies the light revealed as they entered, over the last {@link MomentMemory#TICKS}. */
     public List<RevealedEnemy> reveals() {
         return this.reveals;
     }
@@ -363,7 +361,7 @@ public final class AuraTower extends AbstractTower {
         int revealTicks = Math.round(this.stats().value(TowerStat.REVEAL_TIME));
         List<RevealedEnemy> revealed = new ArrayList<>();
         for (RevealedEnemy earlier : this.reveals) {
-            if (gameTime - earlier.atTick() < REVEAL_MEMORY_TICKS && !earlier.enemy().isDead()) {
+            if (!MomentMemory.forgets(earlier.atTick(), gameTime) && !earlier.enemy().isDead()) {
                 revealed.add(earlier);
             }
         }

@@ -73,8 +73,6 @@ public final class SeekerTower extends AbstractTower {
     public static final float MISSILE_SPEED = 8f;
     /** The ring the nest's missiles sit on turns this far a tick while the tower fights. */
     public static final double RING_RADIANS_PER_TICK = 0.08;
-    /** How long the shards of a burst ice fly. */
-    public static final int SHATTER_MARK_TICKS = 10;
 
     /** A load every 2 s. */
     private static final int COOLDOWN_MAX = 39;
@@ -234,7 +232,7 @@ public final class SeekerTower extends AbstractTower {
 
     @Override
     protected void act(int gameTime) {
-        this.shatterMarks.removeIf(mark -> gameTime - mark.startedAtTick() >= SHATTER_MARK_TICKS);
+        this.shatterMarks.removeIf(mark -> MomentMemory.forgets(mark.startedAtTick(), gameTime));
         SeekerSpec spec = this.spec();
         this.settleIce(spec);
         this.nest.keepOnly(spec.brood()::owns);

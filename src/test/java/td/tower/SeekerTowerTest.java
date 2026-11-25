@@ -441,7 +441,7 @@ class SeekerTowerTest {
 
         tower.doTick(this.tick++);
         List<ShatterMark> marks = tower.shatterMarks();
-        for (int i = 0; i < SeekerTower.SHATTER_MARK_TICKS; i++) {
+        for (int i = 0; i < MomentMemory.TICKS; i++) {
             tower.doTick(this.tick++);
         }
 

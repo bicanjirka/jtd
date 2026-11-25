@@ -128,9 +128,9 @@ class AuraTowerTest {
         this.enemies(FakeEnemyMob.ghostAt(0, 0));
         beacon.doTick(1);
 
-        beacon.doTick(AuraTower.REVEAL_MEMORY_TICKS);
+        beacon.doTick(MomentMemory.TICKS);
         int rememberedAtTheEnd = beacon.reveals().size();
-        beacon.doTick(1 + AuraTower.REVEAL_MEMORY_TICKS);
+        beacon.doTick(1 + MomentMemory.TICKS);
 
         assertThat(rememberedAtTheEnd).isEqualTo(1);
         assertThat(beacon.reveals()).isEmpty();

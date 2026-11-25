@@ -108,8 +108,6 @@ public final class SplashTower extends AbstractTower {
     private static final int MIN_FLIGHT_TICKS = 2;
     /** The pause between two jumps of an Arc, so each reads on its own. */
     private static final int HOP_TICKS = 4;
-    /** How long a landed blast, a jump's bolt or a cast stays to be drawn. */
-    private static final int TRACE_TICKS = 8;
     /** How far above its target a Thunderstrike's bolt starts, in cells. */
     private static final float THUNDERSTRIKE_HEIGHT_CELLS = 2f;
     private static final TargetSelector THUNDERSTRIKE_AIM = PreferringSelector.priority(new HighestHealthSelector());
@@ -331,8 +329,8 @@ public final class SplashTower extends AbstractTower {
     }
 
     private void forgetOldTraces() {
-        this.blasts.removeIf(blast -> this.tickNow() - blast.tick() > TRACE_TICKS);
-        this.bolts.removeIf(bolt -> this.tickNow() - bolt.tick() > TRACE_TICKS);
+        this.blasts.removeIf(blast -> MomentMemory.forgets(blast.tick(), this.tickNow()));
+        this.bolts.removeIf(bolt -> MomentMemory.forgets(bolt.tick(), this.tickNow()));
     }
 
     /** Throws a stone at where {@code target} stands: it flies with the stats it was thrown with, charged or not. */

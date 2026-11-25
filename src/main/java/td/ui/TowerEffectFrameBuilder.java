@@ -90,7 +90,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     // Two rings half a period apart read as one breathing aura, not a blinking ring.
     /** How far above its cell's centre the Beacon's lantern hangs, where its rays start. */
     private static final float LANTERN_LIFT_CELLS = 0.4f;
-    private static final int REVEAL_RAY_TICKS = AuraTower.REVEAL_MEMORY_TICKS;
+    private static final int REVEAL_RAY_TICKS = MomentLength.LONG.ticks();
     private static final float REVEAL_RAY_WIDTH_CELLS = 0.04f;
     private static final float SPOTLIGHT_WIDTH_CELLS = 0.3f;
 
@@ -121,6 +121,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final double LENS_ABOVE_CELLS = 0.08;
     /** How long a blast's detonation and its arcs stay drawn. */
     private static final float DETONATION_TICKS = MomentLength.SHORT.ticks();
+    private static final int SHATTER_TICKS = MomentLength.BEAT.ticks();
     /** The detonation's first flash lasts this share of it. */
     private static final float FLASH_SHARE = 0.25f;
     private static final float DARK_RING_ALPHA = 0.8f;
@@ -147,7 +148,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int FLASH_BLAST_TICKS = MomentLength.QUICK.ticks();
     private static final int HEAVY_BLAST_TICKS = MomentLength.SHORT.ticks();
     private static final int PAYLOAD_BLAST_TICKS = MomentLength.LONG.ticks();
-    private static final int NUKE_BLAST_TICKS = MortarTower.BLAST_MARK_TICKS;
+    private static final int NUKE_BLAST_TICKS = MomentLength.LINGER.ticks();
     private static final int NUKE_WHITEOUT_TICKS = MomentLength.QUICK.ticks();
     /** A stream's tongues take new tips this often, which is all the flicker it needs. */
     private static final int STREAM_FLICKER_TICKS = 3;
@@ -694,7 +695,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
         for (ShatterMark mark : tower.shatterMarks()) {
             float progress = (this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha)
-                    / SeekerTower.SHATTER_MARK_TICKS;
+                    / SHATTER_TICKS;
             if (progress >= 0f && progress < 1f) {
                 this.shatter(mark, progress);
             }

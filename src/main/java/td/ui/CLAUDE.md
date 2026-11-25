@@ -37,7 +37,8 @@ keeps the seam honest.
   `OptionalInt` that is empty when it never happened, and the frame builder turns it into a 0..1
   progress. A query the frame build makes for every kind of every enemy takes its window, so it
   builds no answer outside it. Draw records carry progress, never stored animation
-  state.
+  state. A tower keeps a moment it made for `MomentMemory.TICKS`; how long it is drawn is a `MomentLength` step
+  here, never a constant in the domain (ADR 0027), and it eases through `Easing`.
 - `Panel*` previews reuse `Java2DFrameRenderer`'s paint methods (`PanelEnemy` →
   `paintEnemies`) rather than drawing their own copy.
 - Exhaustive switches with no `default` (`lookFor`, `bodyPaletteFor`, `colorFor`, the sealed draw

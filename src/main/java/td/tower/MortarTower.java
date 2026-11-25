@@ -93,8 +93,6 @@ public final class MortarTower extends AbstractTower {
     public static final float EDGE_CELLS = 1.75f;
     /** Pixels a tick: slow enough to watch a shell fly and for a fast enemy to dodge it. */
     public static final float SHELL_SPEED = 6.4f;
-    /** Ticks the mark of any blast stays on the board: as long as the longest blast, a nuke's, is drawn. */
-    public static final int BLAST_MARK_TICKS = 60;
 
     private static final float MINIMUM_RANGE_CELLS = 1.5f;
     private static final float HEAVY_TIMES = 1.75f;
@@ -284,7 +282,7 @@ public final class MortarTower extends AbstractTower {
 
     @Override
     protected void act(int gameTime) {
-        this.blastMarks.removeIf(mark -> gameTime - mark.startedAtTick() >= BLAST_MARK_TICKS);
+        this.blastMarks.removeIf(mark -> MomentMemory.forgets(mark.startedAtTick(), gameTime));
         MortarSpec spec = this.spec(this.mechanics.all());
         this.magazine = this.magazine.keptTo(spec.magazine(), this.context.random());
         this.loading = spec.volley().shells();
