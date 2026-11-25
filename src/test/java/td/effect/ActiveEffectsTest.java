@@ -904,13 +904,13 @@ class ActiveEffectsTest {
     }
 
     @Test
-    void anInvisibleEnemyCanBeInvertedWithoutLosingItsCloak() {
+    void anInvisibleEnemyCanTakeBacklashWithoutLosingItsCloak() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.invisible(20, DamageSink.none()));
 
-        effects.apply(Effect.hex(EffectKind.INVERSION, 20, DamageSink.none()));
+        effects.apply(Effect.hex(EffectKind.BACKLASH, 20, DamageSink.none()));
 
-        assertThat(effects.activeKinds()).contains(EffectKind.INVISIBLE, EffectKind.INVERSION);
+        assertThat(effects.activeKinds()).contains(EffectKind.INVISIBLE, EffectKind.BACKLASH);
     }
 
     @Test

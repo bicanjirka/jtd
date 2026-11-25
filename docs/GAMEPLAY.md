@@ -174,7 +174,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Charge | Mark | Debuff | The next hit on it from another tower lands 30% of that hit again as magic, twice that on a crit, for the tower that applied it. |
 | Doom | Hex | Debuff | When it ends, it takes a share of all the damage it took while it lasted, as shadow damage. |
 | Blight | Hex | Debuff | It has Poison for as long as this lasts, and a slow that grows to its strongest as it ends. |
-| Inversion | Hex | Debuff | Its Regeneration deals it damage instead of restoring health, and a Shield it receives strikes it instead. |
+| Backlash | Hex | Debuff | Its Regeneration deals it damage instead of restoring health, and a Heal or a Shield strikes it at once with all it would give instead (a Heal it already had too); a renewed Heal strikes only what it adds. |
 | Reckoning | Hex | Debuff | When it dies, each Doom from the same tower near it releases at once and starts again. |
 | Silence | Control | Debuff | Its abilities don't fire; abilities on death and auras still do. |
 | Anchor | Control | Debuff | Holds Move speed to at most 75% of its base, whatever raises it, and it comes back over its last 0.5 s. |

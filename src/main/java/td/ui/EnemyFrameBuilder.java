@@ -180,7 +180,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case CHARGED -> Palette.STATUS_MARKER_CHARGED;
             case DOOM -> Palette.STATUS_MARKER_DOOM;
             case BLIGHT -> Palette.STATUS_MARKER_BLIGHT;
-            case INVERSION -> Palette.STATUS_MARKER_INVERSION;
+            case BACKLASH -> Palette.STATUS_MARKER_BACKLASH;
             case SILENCED -> Palette.STATUS_MARKER_SILENCED;
             case ANCHORED -> Palette.STATUS_MARKER_ANCHORED;
             case UNRAVELED -> Palette.STATUS_MARKER_UNRAVELED;
@@ -609,7 +609,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         return switch (kind) {
             case DOOM -> Optional.of(HexGlyph.DOOM);
             case BLIGHT -> Optional.of(HexGlyph.BLIGHT);
-            case INVERSION -> Optional.of(HexGlyph.INVERSION);
+            case BACKLASH -> Optional.of(HexGlyph.BACKLASH);
             default -> Optional.empty();
         };
     }
@@ -625,7 +625,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case BURN, SOULFIRE, POISON, BLEEDING, HEAL, SHIELD, CHILL, FREEZE, DAZED, INVISIBLE, TOLL,
                  SILENCED, EXPOSED -> Optional.empty();
             // A rune.
-            case DOOM, BLIGHT, INVERSION -> Optional.empty();
+            case DOOM, BLIGHT, BACKLASH -> Optional.empty();
             // The Info pane's, or the field on the ground says it.
             case SCORCHED, SICKENED, REVEALED, ANCHORED, DRAGGED, DEAD_ZONE -> Optional.empty();
         };

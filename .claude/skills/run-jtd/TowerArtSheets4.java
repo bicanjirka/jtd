@@ -20,7 +20,7 @@ final class TowerArtSheets4 {
     static final Color TOLL = new Color(255, 170, 70);
     static final Color DOOM = new Color(190, 90, 255);
     static final Color BLIGHT = new Color(140, 200, 60);
-    static final Color INVERSION = new Color(255, 70, 120);
+    static final Color BACKLASH = new Color(255, 70, 120);
 
     private TowerArtSheets4() {
     }
@@ -131,7 +131,7 @@ final class TowerArtSheets4 {
     static void marks() throws Exception {
         double zoom = 3;
         String[] names = {"Glare|a glint on an|Exposed enemy", "Shade thaw|dark shards", "Shade freeze|smoky dark, pale|green edge", "Ruby thaw|red shards",
-            "Ruby freeze|today's block in|ruby red", "Freeze|today's, unchanged", "Inversion", "Blight, grown|thicker with the slow", "Blight|a fresh one",
+            "Ruby freeze|today's block in|ruby red", "Freeze|today's, unchanged", "Backlash", "Blight, grown|thicker with the slow", "Blight|a fresh one",
             "Doom|a hex worn as a|curse", "Toll, full|5 of 5, bolder", "Toll, 3 stacks", "Toll, 1 stack|one ripple per|stack gained",
             "Silence|a mark over the|head, new"};
         String[] walkers = new String[names.length];
@@ -158,7 +158,7 @@ final class TowerArtSheets4 {
                     case 2 -> crystal(g, new Color(96, 108, 118), new Color(30, 34, 44), new Color(12, 14, 22), TowerArt.col(TowerArt.SHADE), 1.35);
                     case 3 -> shards(g, TowerArt.col(TowerArt.RUBY), new Color(0xffd6de));
                     case 4 -> crystal(g, new Color(255, 214, 222), new Color(224, 72, 104), new Color(150, 24, 60), new Color(0xffeef2), 1.0);
-                    case 6 -> hex(g, INVERSION, "inversion", 1);
+                    case 6 -> hex(g, BACKLASH, "backlash", 1);
                     case 7 -> hex(g, BLIGHT, "blight", 2.2);
                     case 8 -> hex(g, BLIGHT, "blight", 1);
                     case 9 -> hex(g, DOOM, "doom", 1);

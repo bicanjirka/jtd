@@ -53,7 +53,8 @@
   level and loses nothing. `DEAD_ZONE` sets `SPIRIT` to its floor, so heals,
   shields and rewinds are worth nothing and nothing is kept out or stripped; a fallout zone applies it too.
 - A `HEX` kind carries no stat of its own but `BLIGHT`'s growing slow; the tower that cast it watches it and pays it out.
-  `INVERSION` is the one hex the enemy itself reads: its regeneration is dealt through the hex's sink.
+  `BACKLASH` is the one hex the enemy itself reads: its regeneration, and every heal and shield it is given, are dealt
+  through the hex's sink.
 - `SOULFIRE` is a third fuel pool beside burn and poison (`EffectKind.isBurning()` covers it and burn), and it
   earns `SCORCHED` and `SICKENED` both. It is its own kind, so it burns what is burn-immune.
 - A burning pool sets `STEALTH` to 0 like a reveal, through its rule.

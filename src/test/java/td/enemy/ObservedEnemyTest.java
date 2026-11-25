@@ -197,9 +197,9 @@ class ObservedEnemyTest {
     }
 
     @Test
-    void anInvertedEnemysRegenerationIsReportedAsTheHitItDealsAndNeverAsAHeal() {
+    void aBacklashedEnemysRegenerationIsReportedAsTheHitItDealsAndNeverAsAHeal() {
         DefinedEnemyMob mob = this.observed(this.world, plain().withTraits(List.of(new RegenerationTrait(20f))));
-        mob.applyEffect(Effect.hex(EffectKind.INVERSION, 100, damage -> mob.takeHit(damage, PERIODIC)));
+        mob.applyEffect(Effect.hex(EffectKind.BACKLASH, 100, damage -> mob.takeHit(damage, PERIODIC)));
 
         mob.doTick(1);
 

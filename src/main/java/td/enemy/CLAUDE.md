@@ -70,14 +70,16 @@
 - Every enemy has a `FreezeMeter`, draining at its rank's `Rank.freezeDrain()`; there is no opt-in.
 - `DefinedEnemyMob.applyEffect` keeps out what a trait makes it immune to, and scales what doesn't help it
   (`Side.DEBUFF`) by `StatCurves.durationFactor(tenacity)` (a pool's fuel, not its duration), and a freeze by its meter too, before `ActiveEffects` sees it.
-  Scaling never leaves less than a tick, but a freeze that would last under one doesn't land. The one exception is `INVERSION`: it turns a shield into one hit, credited to its caster, before anything else.
+  Scaling never leaves less than a tick, but a freeze that would last under one doesn't land. The one exception is `BACKLASH`: it turns a shield or a heal into one hit, credited to its caster, before anything else,
+  and a heal already on when it lands. A heal is struck for all it has left to give, and `TurnedHeals` keeps what was
+  turned, so a source renewing its heal strikes only what the renewal adds.
 - Regeneration is restored on the mob's own tick, worth `StatCurves.restoreFactor(spirit)` times the stat, with the
-  part of a unit carried (`MobHealth.regenerationDue`). Under `INVERSION` the same units are dealt to it as magic
-  through the hex's sink instead. A heal only adds to the stat.
+  part of a unit carried (`MobHealth.regenerationDue`). Under `BACKLASH` the same units are dealt to it as magic
+  through the hex's sink instead, tick by tick. A heal only adds to the stat.
 - Regeneration below zero is a crumble (`CrumbleTrait`): lost on the mob's own tick at the stat's raw value, spirit
   playing no part, and a crumble to nothing is a kill. A rewind (`RewindAction`) reads `MobHealth`'s history, written
   every few ticks as far back as `RewindAction.LONGEST_TICKS`, and counts as a heal: worth what spirit makes it, and
-  inverted like one.
+  turned like one.
 - What an ability puts on others comes from that ability on that mob (`AbilityState.source`, `Effect.from`), so a
   per-source kind such as a heal adds up across casters and only refreshes on a recast.
 - An ability that leaves ground behind it is a `LeaveZoneAction` (`td.zone` does the rest); never a new mob or a

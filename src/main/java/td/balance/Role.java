@@ -33,7 +33,7 @@ enum Role {
     /** Only what is there to deny heals and shields: a line that does it on the side keeps its tower's damage. */
     ANTI_SUSTAIN(EnumSet.noneOf(TowerFactory.Type.class),
             Set.of("pulse.ward", "mortar.tar_shell",
-                    "mortar.fusion", "splash.hex_of_inversion",
+                    "mortar.fusion", "splash.hex_of_backlash",
                     "cinder.soulfire", "seeker.shade"));
 
     private final Set<TowerFactory.Type> types;

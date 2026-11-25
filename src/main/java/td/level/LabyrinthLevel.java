@@ -62,7 +62,7 @@ final class LabyrinthLevel {
 
     /**
      * The bronze guardian: a body that breaks easily under a crit, inside a shield too big to shoot through and
-     * recast again and again. A tower that strips, pierces, blocks or inverts shields is the way in.
+     * recast again and again. A tower that strips, pierces, blocks or turns shields is the way in.
      */
     private static final RankedEnemy TALOS = RankedEnemy.unique(
             EnemyDefinition.of("talos", "Talos", 3000, 60, 0.35f, BodyArchetype.TALOS)

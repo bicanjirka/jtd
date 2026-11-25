@@ -425,7 +425,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_CHARGED -> new Color(140, 200, 255);
             case STATUS_MARKER_DOOM -> new Color(190, 90, 255);
             case STATUS_MARKER_BLIGHT -> new Color(140, 200, 60);
-            case STATUS_MARKER_INVERSION -> new Color(255, 70, 120);
+            case STATUS_MARKER_BACKLASH -> new Color(255, 70, 120);
             case STATUS_MARKER_SILENCED -> new Color(170, 120, 255);
             case STATUS_MARKER_ANCHORED -> new Color(150, 150, 170);
             case STATUS_MARKER_UNRAVELED -> new Color(220, 120, 255);
@@ -1228,7 +1228,7 @@ public final class Java2DFrameRenderer {
                 path.quadTo(s, 0, 0, s);
                 path.quadTo(-s, 0, 0, -s);
             }
-            case INVERSION -> {
+            case BACKLASH -> {
                 path.moveTo(-s, -s);
                 path.lineTo(s, -s);
                 path.lineTo(0, s);

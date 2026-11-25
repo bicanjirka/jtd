@@ -46,7 +46,7 @@ public final class MobEventText {
             case MobEvent.EffectRetimed retimed -> "EFFECT " + retimed.kind().title() + " retimed "
                     + factor(retimed.factor()) + " length=" + retimed.ticks() + "t";
             case MobEvent.EffectBlocked blocked -> "EFFECT " + blocked.kind().title() + " blocked: " + blocked.why();
-            case MobEvent.EffectInverted inverted -> "EFFECT " + inverted.kind().title() + " inverted: " + inverted.into();
+            case MobEvent.EffectTurned turned -> "EFFECT " + turned.kind().title() + " turned: " + turned.into();
             case MobEvent.EffectChanged changed -> "EFFECT " + changed.kind().title() + " " + change(changed)
                     + " cause=" + changed.cause();
             case MobEvent.HealthChanged health -> "HEAL cause=" + health.cause() + " hp=" + points(health.before()) + "->"

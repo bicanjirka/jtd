@@ -78,8 +78,8 @@ final class PerkPictograms {
             Map.entry("splash.wild_arc", "F O4.6 16.4 2.8 O19.4 16.4 2.8 ; S M4.6 13.6L7.4 6.4L10.6 9.4L13.4 3.4L19.4 13.6 ; S M17 20C14.4 22.4 9.8 22.4 7.6 20.4 ; F M4.6 22.6L5.4 17.4L10 20.6Z"),
             // Soul Harvest
             Map.entry("splash.soul_harvest", "F M11 2.4C7.4 7 5.6 10.2 5.6 13.4A5.4 5.4 0 0 0 16.4 13.4C16.4 10.2 14.6 7 11 2.4Z ; K O8.8 13 1.1 O13.2 13 1.1 ; S M3 21.4C10 21.4 18 18.4 21.2 8.4 ; F M21.8 5.2L22.4 10.6L17.8 8.2Z"),
-            // Hex of Inversion
-            Map.entry("splash.hex_of_inversion", "=effect.inversion"),
+            // Hex of Backlash
+            Map.entry("splash.hex_of_backlash", "=effect.backlash"),
             // Choking Blight
             Map.entry("splash.choking_blight", "F M3 17C3 9.4 7.6 4.4 16 4C16 8 15 11 13.2 13.2C12 13.2 11 14 11 15.2V17C8 17.6 5.4 17.6 3 17Z ; X M3 17L11.6 8.4 ; S M12.6 14H21.6V19.6H17.6L14.8 22V19.6H12.6Z ; F M14.6 16.2H19.6V17.4H14.6Z"),
             // Twin Hex

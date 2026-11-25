@@ -15,6 +15,7 @@ import td.effect.EffectTransitions;
 import td.effect.FreezeMeter;
 import td.effect.IceKind;
 import td.effect.ShieldGauge;
+import td.effect.TurnedHeals;
 import td.enemy.MobMoments.Moment;
 import td.stat.BaseStats;
 import td.stat.EnemyStat;
@@ -72,6 +73,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     private final float bodyScale;
     private final List<AbilityState> abilityStates;
     private final ActiveEffects activeEffects = new ActiveEffects();
+    private final TurnedHeals turnedHeals = new TurnedHeals();
     private final EffectTransitions effectTransitions = new EffectTransitions();
     private final PathMotion motion;
     private final MobMoments moments = new MobMoments();
@@ -389,7 +391,7 @@ public final class DefinedEnemyMob implements EnemyMob {
 
     /**
      * Turns health back towards what it was {@code windowTicks} ago, if that was more: a heal, so worth what spirit
-     * makes it, and under Inversion what it would give back is dealt to it as magic instead.
+     * makes it, and under Backlash what it would give back is dealt to it as magic instead.
      */
     void rewind(int windowTicks) {
         int before = this.health.current();
@@ -397,10 +399,10 @@ public final class DefinedEnemyMob implements EnemyMob {
         if (gain <= 0 || this.isDead()) {
             return;
         }
-        Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
-        if (inversion.isPresent()) {
-            this.observer.dealing(EffectKind.INVERSION);
-            inversion.get().sink().apply(Damage.magic(gain));
+        Optional<Effect> backlash = this.activeEffects.find(EffectKind.BACKLASH);
+        if (backlash.isPresent()) {
+            this.observer.dealing(EffectKind.BACKLASH);
+            backlash.get().sink().apply(Damage.magic(gain));
             this.observer.dealt();
             return;
         }
@@ -508,7 +510,7 @@ public final class DefinedEnemyMob implements EnemyMob {
     /**
      * Applies the effect unless this mob is immune to its kind, with its duration scaled by this mob's tenacity and,
      * for a freeze, its meter. A freeze that would last under a tick doesn't land. Under
-     * Inversion a shield comes in as one hit.
+     * Backlash a shield or a heal comes in as one hit, and a heal it already had when the hex landed strikes at once.
      */
     public void applyEffect(Effect effect) {
         this.applyEffect(effect, AttackOrigin.none());
@@ -520,27 +522,60 @@ public final class DefinedEnemyMob implements EnemyMob {
             AttackOrigin origin = from == AttackOrigin.none() ? effect.origin() : from;
             this.observer.report(new MobEvent.EffectRequested(effect.kind(), this.nameOf(origin), effect.remainingTicks()));
         }
-        Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
-        if (inversion.isPresent() && effect.kind() == EffectKind.SHIELD) {
+        Optional<Effect> backlash = this.activeEffects.find(EffectKind.BACKLASH);
+        if (backlash.isPresent() && effect.kind() == EffectKind.SHIELD) {
             if (this.observer.isOn()) {
-                this.observer.report(new MobEvent.EffectInverted(EffectKind.SHIELD,
+                this.observer.report(new MobEvent.EffectTurned(EffectKind.SHIELD,
                         "struck as " + MobEventText.number(DamageUnits.inPoints(effect.shieldRemaining())) + " magic"));
             }
-            this.strikeInsteadOfShielding(effect, inversion.get());
+            this.strikeInsteadOfShielding(effect, backlash.get());
             return;
         }
         // A pool and a kind in shares keep one share per source, so whoever renews it every tick stays one share.
         boolean perSource = effect.kind().isFuelPool() || effect.kind().rule().stacking() == EffectStacking.SHARES;
         boolean keyed = perSource && from != AttackOrigin.none() && effect.origin() == AttackOrigin.none();
-        this.applyRetimed(keyed ? effect.from(from) : effect);
+        Effect incoming = keyed ? effect.from(from) : effect;
+        if (backlash.isPresent() && incoming.kind() == EffectKind.HEAL) {
+            if (!incoming.isKeptOffBy(this.immunities)) {
+                this.strikeInsteadOfHealing(incoming, backlash.get());
+            }
+            return;
+        }
+        this.applyRetimed(incoming);
+        if (incoming.kind() == EffectKind.BACKLASH) {
+            this.activeEffects.find(EffectKind.BACKLASH).ifPresent(landed ->
+                    this.activeEffects.find(EffectKind.HEAL).ifPresent(heal -> {
+                        this.activeEffects.consume(EffectKind.HEAL);
+                        this.stats.invalidate();
+                        this.strikeInsteadOfHealing(heal, landed);
+                        this.reportEffects(this.nameOf(from));
+                    }));
+        }
     }
 
     /**
-     * An Inverted enemy takes a shield as one hit of its authored pool, credited to whoever cast the
-     * inversion; the shield itself never goes on.
+     * An enemy under Backlash takes a heal as one hit of all it has left to give, worth what spirit makes it, credited
+     * to whoever cast the hex; the heal never goes on. A source renewing its heal strikes only what the renewal adds.
      */
-    private void strikeInsteadOfShielding(Effect shield, Effect inversion) {
-        inversion.sink().apply(Damage.magic(Math.round(shield.shieldRemaining())));
+    private void strikeInsteadOfHealing(Effect heal, Effect backlash) {
+        int units = Math.round(this.turnedHeals.turn(heal) * this.restoreFactor());
+        if (this.observer.isOn()) {
+            this.observer.report(new MobEvent.EffectTurned(EffectKind.HEAL,
+                    "struck as " + MobEventText.number(DamageUnits.inPoints(units)) + " magic"));
+        }
+        if (units > 0) {
+            this.observer.dealing(EffectKind.BACKLASH);
+            backlash.sink().apply(Damage.magic(units));
+            this.observer.dealt();
+        }
+    }
+
+    /**
+     * An enemy under Backlash takes a shield as one hit of its authored pool, credited to whoever cast the
+     * hex; the shield itself never goes on.
+     */
+    private void strikeInsteadOfShielding(Effect shield, Effect backlash) {
+        backlash.sink().apply(Damage.magic(Math.round(shield.shieldRemaining())));
     }
 
     private void applyRetimed(Effect effect) {
@@ -976,6 +1011,7 @@ public final class DefinedEnemyMob implements EnemyMob {
         float speed = this.stats.value(EnemyStat.MOVE_SPEED);
         this.freezeMeter.tick(this.activeEffects.has(EffectKind.FREEZE), !this.activeEffects.isStopped());
         boolean healthChanged = this.regenerate();
+        this.turnedHeals.tick();
         if (healthChanged || !this.activeEffects.isEmpty()) {
             this.tickEffects(speed);
         }
@@ -1002,8 +1038,8 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     /**
-     * A tick of regeneration, worth what spirit makes it. Under Inversion it lands as magic damage over time instead,
-     * credited to whoever cast the inversion.
+     * A tick of regeneration, worth what spirit makes it. Under Backlash it lands as magic damage over time instead,
+     * credited to whoever cast the hex.
      *
      * @return whether health changed
      */
@@ -1017,10 +1053,10 @@ public final class DefinedEnemyMob implements EnemyMob {
             return false;
         }
         int healthBefore = this.health.current();
-        Optional<Effect> inversion = this.activeEffects.find(EffectKind.INVERSION);
-        if (inversion.isPresent()) {
-            this.observer.dealing(EffectKind.INVERSION);
-            inversion.get().sink().apply(Damage.magic(units));
+        Optional<Effect> backlash = this.activeEffects.find(EffectKind.BACKLASH);
+        if (backlash.isPresent()) {
+            this.observer.dealing(EffectKind.BACKLASH);
+            backlash.get().sink().apply(Damage.magic(units));
             this.observer.dealt();
             return this.health.current() != healthBefore;
         }
@@ -1055,12 +1091,12 @@ public final class DefinedEnemyMob implements EnemyMob {
     /**
      * The share of its full health coming back each second, whatever the source. Steady between the whole units it
      * lands in, and {@code 0} whenever nothing comes back: at full health, while it crumbles, at no worth, or under
-     * Inversion, where regeneration lands as damage.
+     * Backlash, where regeneration lands as damage.
      */
     public float healingPerSecond() {
         float perTick = this.restoredPerTick();
         if (perTick <= 0f || this.isDead() || this.health.current() >= this.health.max()
-                || this.activeEffects.has(EffectKind.INVERSION)) {
+                || this.activeEffects.has(EffectKind.BACKLASH)) {
             return 0f;
         }
         return perTick * TickRate.TICKS_PER_SECOND / this.health.max();

@@ -105,9 +105,9 @@ class MobEventTextTest {
     }
 
     @Test
-    void anInvertedEffectSaysWhatItBecame() {
-        assertThat(line(new MobEvent.EffectInverted(EffectKind.SHIELD, "struck as 50 magic")))
-                .isEqualTo(PREFIX + "EFFECT " + EffectKind.SHIELD.title() + " inverted: struck as 50 magic");
+    void aTurnedEffectSaysWhatItBecame() {
+        assertThat(line(new MobEvent.EffectTurned(EffectKind.SHIELD, "struck as 50 magic")))
+                .isEqualTo(PREFIX + "EFFECT " + EffectKind.SHIELD.title() + " turned: struck as 50 magic");
     }
 
     @Test

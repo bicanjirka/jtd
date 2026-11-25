@@ -7,5 +7,5 @@ public enum HexGlyph {
     /** A drop: poison. */
     BLIGHT,
     /** A triangle turned on its head: what helps it hurts it. */
-    INVERSION
+    BACKLASH
 }

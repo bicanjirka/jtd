@@ -136,7 +136,7 @@ public final class DevEffects {
             case DRAGGED -> one(List.of(SECONDS, SLOW), in -> Effect.dragged(in.value(1) / 100f, in.ticks(0), in.sink()));
             case SCORCHED -> counting(kind, Effect::scorched);
             case SICKENED -> counting(kind, Effect::sickened);
-            case INVERSION, DOOM -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
+            case BACKLASH, DOOM -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
             case BLIGHT -> new Builds<>(List.of(SECONDS, FUEL), in -> List.of(
                     Effect.blight(in.ticks(0), BlightHex.SLOW_PER_TICK, 0f, 0f, in.sink()),
                     Effect.poison(in.magic(1), in.sink())));

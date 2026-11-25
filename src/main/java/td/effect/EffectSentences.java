@@ -60,9 +60,9 @@ final class EffectSentences {
             case DOOM -> TermText.of("when it ends, it takes a share of all the damage it took while it lasted, as shadow damage");
             case BLIGHT -> TermText.of("it has ").plus(EffectKind.POISON)
                     .plus(" for as long as this lasts, and a slow that grows to its strongest as it ends");
-            case INVERSION -> TermText.of("its ").plus(EnemyStat.REGENERATION)
-                    .plus(" deals it damage instead of restoring health, and a ").plus(EffectKind.SHIELD)
-                    .plus(" it receives strikes it instead");
+            case BACKLASH -> TermText.of("its ").plus(EnemyStat.REGENERATION)
+                    .plus(" deals it damage instead of restoring health, and a ").plus(EffectKind.HEAL)
+                    .plus(" or a ").plus(EffectKind.SHIELD).plus(" strikes it at once with all it would give instead");
             case SILENCED -> TermText.of("its abilities don't fire; abilities on death and auras still do");
             case ANCHORED -> TermText.of("holds ").plus(EnemyStat.MOVE_SPEED)
                     .plus(" to at most " + TermNumbers.percent(1f - kind.rule().slowPerStack())

@@ -604,7 +604,7 @@ enemy-ticks against 1,100 under heals, since it works only inside its field. The
 hit-by-hit (EMP, Nullifier), and raw damage beat a heal-heavy wave sooner than any of them.
 
 - **Where:** `PulseTower`'s Ward (`WardMechanic`, Silence in its field), the Hexer's Blight and
-  Inversion, `CauterizeMechanic`, `EmpPayload`, the Nullifier; `td.balance.Role.ANTI_SUSTAIN`.
+  Backlash, `CauterizeMechanic`, `EmpPayload`, the Nullifier; `td.balance.Role.ANTI_SUSTAIN`.
 - **Approach:** decide first whether any wave should require it. If one should, a design pass: one answer that reaches
   a stretch of path wide enough to matter, then prove it on that wave with
   `td.balance.WaveCheckReport --checks W:sustain --parts strong,strip`. The wave has to pressure the strong player, or

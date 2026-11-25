@@ -57,7 +57,7 @@ public enum EffectKind implements Term {
     /** The target is poisoned for as long as it lasts. */
     BLIGHT("Blight", EffectRule.of(EffectCategory.HEX)),
     /** Heals and shields it receives are dealt to it as damage instead. */
-    INVERSION("Inversion", EffectRule.of(EffectCategory.HEX)),
+    BACKLASH("Backlash", EffectRule.of(EffectCategory.HEX)),
     /** Its abilities don't fire; death abilities and auras still do. */
     SILENCED("Silence", EffectRule.of(EffectCategory.SOFT_CC)),
     /** Its speed is held to a share of its base, whatever raises it. */

@@ -101,11 +101,11 @@ class RewindTest {
     }
 
     @Test
-    void underInversionWhatARewindWouldGiveBackIsDealtAsMagic() {
+    void underBacklashWhatARewindWouldGiveBackIsDealtAsMagic() {
         DefinedEnemyMob keeper = this.rewinding(new SelfTarget());
         int full = keeper.getHealth();
         List<Damage> credited = new ArrayList<>();
-        keeper.applyEffect(Effect.hex(EffectKind.INVERSION, LONG, damage -> credited.add(damage)));
+        keeper.applyEffect(Effect.hex(EffectKind.BACKLASH, LONG, damage -> credited.add(damage)));
 
         this.hurtBeforeTheWindowThenCast(keeper, full / 4);
 

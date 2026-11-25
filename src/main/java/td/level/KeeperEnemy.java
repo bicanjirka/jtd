@@ -22,7 +22,7 @@ import java.util.List;
  * The Keeper of Hours: a boss that undoes what was done to it. Every few seconds it turns its health back to what it
  * was a moment before, it calls Timekeepers that turn it back further, and once nearly dead it turns the glass one
  * last, long way. What stops a cast stops a rewind (a freeze, a daze, a silence); what keeps heals out keeps it out;
- * an Inversion turns each one into damage; or it has to fall faster than it turns back. Unique.
+ * a Backlash turns each one into damage; or it has to fall faster than it turns back. Unique.
  */
 final class KeeperEnemy {
 

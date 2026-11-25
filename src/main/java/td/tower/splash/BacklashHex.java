@@ -10,16 +10,16 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Hex of Inversion: what helps the enemy hurts it, and it can't vanish. Picks the enemy closest to leaking that heals,
- * shields, vanishes or regenerates, without Inversion.
+ * Hex of Backlash: what helps the enemy hurts it, and it can't vanish. Picks the enemy closest to leaking that heals,
+ * shields, vanishes or regenerates, without Backlash.
  */
-public final class InversionHex implements Hex {
+public final class BacklashHex implements Hex {
 
     private static final float SECONDS = 8f;
 
     @Override
     public EffectKind kind() {
-        return EffectKind.INVERSION;
+        return EffectKind.BACKLASH;
     }
 
     @Override
@@ -31,18 +31,18 @@ public final class InversionHex implements Hex {
     public Optional<EnemyMob> target(List<EnemyMob> candidates) {
         return new FurthestAlongPathSelector().selectFrom(candidates.stream()
                 .filter(enemy -> (enemy.appliesEffects() || enemy.regenerates())
-                        && !enemy.hasEffect(EffectKind.INVERSION))
+                        && !enemy.hasEffect(EffectKind.BACKLASH))
                 .toList());
     }
 
     @Override
     public void lay(EnemyMob target, int ticks, float grownSlow, HexHand hand) {
-        hand.curse(target, EffectKind.INVERSION, ticks);
+        hand.curse(target, EffectKind.BACKLASH, ticks);
     }
 
     @Override
     public TermText describe() {
-        return TermText.of(EffectKind.INVERSION, TermText.of("for " + TermNumbers.seconds(SECONDS)
+        return TermText.of(EffectKind.BACKLASH, TermText.of("for " + TermNumbers.seconds(SECONDS)
                 + ", on an enemy that heals, shields, vanishes or regenerates"));
     }
 }

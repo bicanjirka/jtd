@@ -15,6 +15,7 @@ import td.tower.proc.HitKind;
 import td.tower.splash.AgonyMechanic;
 import td.tower.splash.ArcMechanic;
 import td.tower.splash.ArcSpec;
+import td.tower.splash.BacklashHex;
 import td.tower.splash.Blast;
 import td.tower.splash.BlightCloudMechanic;
 import td.tower.splash.BlightHex;
@@ -36,7 +37,6 @@ import td.tower.splash.HexKeeper;
 import td.tower.splash.HexMechanic;
 import td.tower.splash.HexSpec;
 import td.tower.splash.HighVoltageMechanic;
-import td.tower.splash.InversionHex;
 import td.tower.splash.JoltMechanic;
 import td.tower.splash.Passive;
 import td.tower.splash.PassivePayout;
@@ -114,8 +114,8 @@ public final class SplashTower extends AbstractTower {
 
     private static final Hex DOOM = new DoomHex();
     private static final Hex BLIGHT = new BlightHex();
-    private static final Hex INVERSION = new InversionHex();
-    private static final List<Hex> HEXES = List.of(DOOM, BLIGHT, INVERSION);
+    private static final Hex BACKLASH = new BacklashHex();
+    private static final List<Hex> HEXES = List.of(DOOM, BLIGHT, BACKLASH);
 
     private static final UpgradeNode LONG_THROW = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Throw", 5)
             .withModifiers(TowerModifiers.range(0.7f));
@@ -181,7 +181,7 @@ public final class SplashTower extends AbstractTower {
             .after(HEXER)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode HEX_OF_INVERSION = UpgradeNode.of("splash.hex_of_inversion", "Hex of Inversion", 30)
+    private static final UpgradeNode HEX_OF_BACKLASH = UpgradeNode.of("splash.hex_of_backlash", "Hex of Backlash", 30)
             .after(HEXER)
             .withOwnArt()
             .inTier(3);
@@ -218,7 +218,7 @@ public final class SplashTower extends AbstractTower {
             .with(STORMCALLER, HEXER, ARC, HEX_OF_DOOM, HEX_OF_BLIGHT,
                     RECKONING, BLIGHT_CLOUD, AGONY, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR, JOLT,
                     HEAVY_STONES, LONG_THROW_2,
-                    SOUL_HARVEST, HEX_OF_INVERSION, CHOKING_BLIGHT, TWIN_HEX, SHOCKWAVE, THUNDERSTRIKE, HIGH_VOLTAGE,
+                    SOUL_HARVEST, HEX_OF_BACKLASH, CHOKING_BLIGHT, TWIN_HEX, SHOCKWAVE, THUNDERSTRIKE, HIGH_VOLTAGE,
                     FEEDBACK, QUICK_HANDS, PIERCING_STONES)
             .withFork(UpgradeCluster.of("Stormcaller or Hexer", STORMCALLER, HEXER))
             .withCluster(UpgradeCluster.of("Hex", HEX_OF_DOOM, HEX_OF_BLIGHT))
@@ -240,7 +240,7 @@ public final class SplashTower extends AbstractTower {
             entry(CONDUCTOR.id(), ConductorMechanic::new),
             entry(JOLT.id(), JoltMechanic::new),
             entry(SOUL_HARVEST.id(), SoulHarvestMechanic::new),
-            entry(HEX_OF_INVERSION.id(), () -> new HexMechanic(INVERSION, 3)),
+            entry(HEX_OF_BACKLASH.id(), () -> new HexMechanic(BACKLASH, 3)),
             entry(CHOKING_BLIGHT.id(), ChokingBlightMechanic::new),
             entry(TWIN_HEX.id(), TwinHexMechanic::new),
             entry(SHOCKWAVE.id(), ShockwaveMechanic::new),

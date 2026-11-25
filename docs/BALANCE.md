@@ -221,7 +221,7 @@ time it buys, a kill for what it triggers, a miss for the leak it causes.
 | boss | one Boss Walker | one target with a boss's defences |
 | armored, plated, resist, hidden, fast | a stream of Veteran Knights, Juggernauts, Templars, Ghosts, Runners | each defence and trick |
 | elusive | a stream of Elusive Veteran Walkers | aimed hits that miss: the Elusive affix dodges them |
-| regen | a stream of Regenerating Veteran Walkers | enemies that heal themselves: a Regenerating enemy restores a share of its health every second, which Inversion turns into damage |
+| regen | a stream of Regenerating Veteran Walkers | enemies that heal themselves: a Regenerating enemy restores a share of its health every second, which Backlash turns into damage |
 | tank | a stream of Veteran Walkers at a third of their speed, fought beside five bare Snipers | what a hex or a mark adds to focused fire; the stream's kills feed what a tower earns by killing |
 | controlled | a stream of Veteran Walkers, fought beside a bare Obelisk, Sniper and Aerie | enemies slowed and frozen by other towers, as on most boards: a bleed that runs on cells walked is worth less, a stop that lengthens another is worth more |
 

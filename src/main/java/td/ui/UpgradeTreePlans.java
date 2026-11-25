@@ -31,7 +31,7 @@ final class UpgradeTreePlans {
                     cluster("Arc's path", 4.4f), node("splash.reckoning", 4.4f), node("splash.blight_cloud", 5.4f))),
             tier(row(node("splash.quick_hands", 0f), node("splash.piercing_stones", 1f),
                     node("splash.high_voltage", 2.4f), node("splash.soul_harvest", 2.4f), node("splash.feedback", 3.4f),
-                    node("splash.hex_of_inversion", 3.4f), cluster("Storm", 4.4f), node("splash.twin_hex", 4.4f),
+                    node("splash.hex_of_backlash", 3.4f), cluster("Storm", 4.4f), node("splash.twin_hex", 4.4f),
                     node("splash.choking_blight", 5.4f))));
 
     private static final UpgradeTreePlan MORTAR = UpgradeTreePlan.of(

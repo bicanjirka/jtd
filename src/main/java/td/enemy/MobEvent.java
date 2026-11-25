@@ -42,8 +42,8 @@ public sealed interface MobEvent {
     record EffectBlocked(EffectKind kind, String why) implements MobEvent {
     }
 
-    /** Inversion turned a heal or a shield into damage. */
-    record EffectInverted(EffectKind kind, String into) implements MobEvent {
+    /** Backlash turned a heal or a shield into damage. */
+    record EffectTurned(EffectKind kind, String into) implements MobEvent {
     }
 
     /** One effect changed in a way a trace reports: never a level that only fades. */

@@ -309,7 +309,7 @@ class DevControlsTest {
     void anEffectThatDoesNotTakeHoldIsReportedOnceTheGameLoopRunsIt() {
         this.engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
         this.spawnAndSelectOne();
-        this.dev.applyEffectToEnemy(EffectKind.INVERSION, List.of(5f));
+        this.dev.applyEffectToEnemy(EffectKind.BACKLASH, List.of(5f));
         this.dev.runPending();
         long before = this.dev.report().serial();
 

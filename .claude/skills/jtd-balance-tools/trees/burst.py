@@ -34,7 +34,7 @@ NODES = {
     "Agony": "hexed enemies Vulnerable, by the share of the range the hexes cover",
     "Contagion": "a hex outlives its enemy: without it a hex ends with the enemy",
     "Soul Harvest": "the base shot fills the Soul bar faster",
-    "Hex of Inversion": "utility: turns healing, shields and vanishing against its enemy",
+    "Hex of Backlash": "utility: turns healing, shields and vanishing against its enemy",
     "Blight Cloud": "Blight curses the enemies within reach of its target too",
     "Twin Hex": "each hex curses more enemies, in a crowd",
     "Chain Lightning": "more Arc jumps, in a crowd",
@@ -60,7 +60,7 @@ BUILDS = {
     "base": _T0 + _SHARED,
     "storm crowd": _T0 + _STORM + ["Chain Lightning", "Shockwave"] + _SHARED,
     "storm boss": _T0 + _STORM + ["Wild Arc", "Thunderstrike"] + _SHARED,
-    "doom": _T0 + _HEX + ["Hex of Doom", "Reckoning", "Hex of Inversion"] + _SHARED,
+    "doom": _T0 + _HEX + ["Hex of Doom", "Reckoning", "Hex of Backlash"] + _SHARED,
     "blight": _T0 + _HEX + ["Hex of Blight", "Blight Cloud", "Choking Blight"] + _SHARED,
 }
 

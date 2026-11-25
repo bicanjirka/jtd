@@ -2,7 +2,7 @@ package td.enemy;
 
 /**
  * Turns health back to what it was {@code windowTicks} ago, on the caster or on the allies around it; health only
- * ever comes back, never goes. It counts as a heal: what keeps heals out keeps it out too, and under Inversion what it
+ * ever comes back, never goes. It counts as a heal: what keeps heals out keeps it out too, and under Backlash what it
  * would give back is dealt as damage instead.
  */
 public record RewindAction(int windowTicks, EffectTarget target) implements AbilityAction {

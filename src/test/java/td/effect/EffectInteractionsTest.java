@@ -19,7 +19,7 @@ class EffectInteractionsTest {
     @Test
     void aRevealIsWhatKeepsInvisibilityOut() {
         assertThat(EffectInteractions.keptOutBy(EffectKind.INVISIBLE, EnumSet.of(EffectKind.REVEALED))).contains(EffectKind.REVEALED);
-        assertThat(EffectInteractions.keptOutBy(EffectKind.INVISIBLE, EnumSet.of(EffectKind.INVERSION))).isEmpty();
+        assertThat(EffectInteractions.keptOutBy(EffectKind.INVISIBLE, EnumSet.of(EffectKind.BACKLASH))).isEmpty();
         assertThat(EffectInteractions.blockedBy(EnumSet.of(EffectKind.REVEALED))).containsExactly(EffectKind.INVISIBLE);
     }
 }

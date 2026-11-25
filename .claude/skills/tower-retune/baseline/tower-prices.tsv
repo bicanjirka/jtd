@@ -39,7 +39,7 @@ SPLASH	splash.jolt	Jolt	2	15	5.61	5	5	WARN price 15 -> 5
 SPLASH	splash.heavy_stones	Heavy Stones	2	25	12.84	15	15	WARN price 25 -> 15
 SPLASH	base.range.2	Long Throw II	2	15	4.18	5	5	WARN price 15 -> 5
 SPLASH	splash.soul_harvest	Soul Harvest	3	20	11.54	10	10	WARN price 20 -> 10
-SPLASH	splash.hex_of_inversion	Hex of Inversion	3	30	3.13	5	5	WARN price 30 -> 5
+SPLASH	splash.hex_of_backlash	Hex of Backlash	3	30	3.13	5	5	WARN price 30 -> 5
 SPLASH	splash.choking_blight	Choking Blight	3	20	-0.53	-	20	UNMEASURED utility: nothing the bench fights shows it; its price is kept
 SPLASH	splash.twin_hex	Twin Hex	3	20	7.10	5	5	WARN price 20 -> 5
 SPLASH	splash.shockwave	Shockwave	3	25	14.75	15	20	ok

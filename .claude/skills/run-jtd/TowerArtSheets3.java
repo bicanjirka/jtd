@@ -453,7 +453,7 @@ final class TowerArtSheets3 {
             stroke(gg, 0.02);
             gg.draw(TowerArt.ell(0, 0.62, 0.42, 0.2));
         });
-        tile(g, 660, y, w, h, px, "Hexes fly as curses in their marker colours|Doom, Blight, Inversion", gg -> {
+        tile(g, 660, y, w, h, px, "Hexes fly as curses in their marker colours|Doom, Blight, Backlash", gg -> {
             gg.translate(-1.75, 0.2);
             TowerArt.paintCell(gg, TowerArt.build("hexer", 2, st().fire(1)), px);
             gg.translate(1.75, -0.2);
