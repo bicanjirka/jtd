@@ -154,7 +154,8 @@ class SniperTowerTest {
 
     @Test
     void steadyAimBuildsAsManyStacksAsItsAimStacksAllow() {
-        SniperTower tower = TowerFixtures.buffed(new SniperTower(this.world, 3, 3), this.world, TowerModifiers.aimStacks(2));
+        SniperTower tower = TowerFixtures.buffed(new SniperTower(this.world, 3, 3), this.world,
+                TowerModifiers.aimStacks(2).plus(TowerModifiers.aimStacksPerShot(1)));
         FakeEnemyMob target = this.onlyTarget();
 
         this.fireShots(tower, target, 8);

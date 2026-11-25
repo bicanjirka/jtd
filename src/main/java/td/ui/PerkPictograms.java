@@ -23,8 +23,8 @@ final class PerkPictograms {
             Map.entry("sniper.keen_eye", "S M2.4 12C6 6.2 18 6.2 21.6 12C18 17.8 6 17.8 2.4 12Z ; S O12 12 3.4 ; T M12 6.4V17.6 M6.4 12H17.6"),
             // Unbroken Aim
             Map.entry("sniper.unbroken_aim", "S M3.6 12C3.6 9.4 5.4 7.8 7.6 7.8C11.4 7.8 12.6 16.2 16.4 16.2C18.6 16.2 20.4 14.6 20.4 12C20.4 9.4 18.6 7.8 16.4 7.8C12.6 7.8 11.4 16.2 7.6 16.2C5.4 16.2 3.6 14.6 3.6 12Z"),
-            // Sundering Crits
-            Map.entry("sniper.sundering_crits", "=effect.sundered"),
+            // Sundering Rounds
+            Map.entry("sniper.sundering_rounds", "=effect.sundered"),
             Map.entry("sniper.exposing_crits", "=effect.exposed"),
             // Killing Spree
             Map.entry("sniper.killing_spree", "F O15.4 12 5.4 ; T M1.8 8.6H8 M3.4 12H8.6 M1.8 15.4H8 ; K M13.4 9.4A3 3 0 0 1 17.8 9.6"),
@@ -40,8 +40,6 @@ final class PerkPictograms {
             Map.entry("sniper.deadeye", "F M1.6 9.4H8.6C11 9.4 12.8 10.6 13.8 12C12.8 13.4 11 14.6 8.6 14.6H1.6Z ; X M5 9.4V14.6 ; F M18.4 2.8L19.9 10.3L22.8 12L19.9 13.7L18.4 21.2L16.9 13.7L14 12L16.9 10.3Z"),
             // Rifling
             Map.entry("sniper.rifling", "S O12 12 8.8 ; F O12 12 2.4 ; T M12 3.2C15.8 5.4 16.4 8.4 14 10.2 M20.8 12C18.6 15.8 15.6 16.4 13.8 14 M12 20.8C8.2 18.6 7.6 15.6 10 13.8 M3.2 12C5.4 8.2 8.4 7.6 10.2 10"),
-            // Heavy Rounds II
-            Map.entry("sniper.heavy_rounds.2", "=sniper.heavy_rounds"),
             // Steady Aim
             Map.entry("sniper.steady_aim", "=tower.steady_aim"),
             // Deep Breath

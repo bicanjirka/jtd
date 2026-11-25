@@ -30,7 +30,7 @@ public record AttackProfile(float critChance, float critMultiplier, float armorP
                             ShieldPiercing shieldPiercing, AttackOrigin origin,
                             float accuracy, boolean aimed) {
 
-    public static final float DEFAULT_CRIT_MULTIPLIER = 1.5f;
+    public static final float DEFAULT_CRIT_MULTIPLIER = 2f;
 
     private static final AttackProfile NONE = new AttackProfile(0f, DEFAULT_CRIT_MULTIPLIER, 0f, 0f, 0f, 0f, 0f, Delivery.HIT, false, 0f, 0f, ShieldPiercing.NONE, AttackOrigin.none(), 0f, false);
 

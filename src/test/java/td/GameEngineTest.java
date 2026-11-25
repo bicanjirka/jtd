@@ -1243,6 +1243,11 @@ class GameEngineTest {
         assertThat(engine.cells().at(0, 0).buildable()).isTrue();
     }
 
+    /** What the {@code copies}-th Sniper on the board costs: a quarter more than the one before it. */
+    private static int copyPrice(int copies) {
+        return Math.round(SniperTower.PRICE * (float) Math.pow(1.25, copies));
+    }
+
     @Test
     void eachCopyOfATowerAlreadyOnTheBoardRaisesTheNextOnesPriceByAQuarterOfThePrevious() {
         GameEngine engine = FakeGameHost.newBoundEngine();
@@ -1252,8 +1257,8 @@ class GameEngineTest {
         placeSniper(engine, 1, 0);
         placeSniper(engine, 2, 0);
 
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - 15 - 19 - 23);
-        assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SNIPER)).isEqualTo(29);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(100 - copyPrice(0) - copyPrice(1) - copyPrice(2));
+        assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SNIPER)).isEqualTo(copyPrice(3));
         assertThat(engine.getGameWorld().towers().priceOf(TowerFactory.Type.SPLASH)).isEqualTo(SplashTower.PRICE);
     }
 
@@ -1268,7 +1273,7 @@ class GameEngineTest {
 
         engine.getGameWorld().towers().sell(engine.cells().at(1, 0).getTower());
 
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuilds + 14);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterBuilds + Math.round(copyPrice(1) * 0.75f));
     }
 
     @Test
@@ -1283,8 +1288,8 @@ class GameEngineTest {
 
         placeSniper(engine, 0, 0);
 
-        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterSale - 19);
-        assertThat(creditsAfterSale).isEqualTo(100 - 15 - 19 + 11);
+        assertThat(engine.getGameWorld().economy().getCredits()).isEqualTo(creditsAfterSale - copyPrice(1));
+        assertThat(creditsAfterSale).isEqualTo(100 - copyPrice(0) - copyPrice(1) + Math.round(copyPrice(0) * 0.75f));
     }
 
     @Test

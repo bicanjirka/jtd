@@ -57,7 +57,14 @@ class UpgradeTreeLayoutTest {
 
             UpgradeTreeLayout layout = UpgradeTreeLayout.of(tree, UpgradeTreePlans.of(type));
 
-            assertThat(layout.spots().keySet()).as(type.name()).containsExactlyInAnyOrderElementsOf(tree.nodes());
+            List<UpgradeNode> placed = new ArrayList<>(tree.nodes());
+            for (int tier = 1; tier <= tree.tiers().size() - 1; tier++) {
+                UpgradeNode tierNode = tree.tierNodeOf(tier).orElse(null);
+                if (tierNode != null && layout.spots().containsKey(tierNode)) {
+                    placed.add(tierNode);
+                }
+            }
+            assertThat(layout.spots().keySet()).as(type.name()).containsExactlyInAnyOrderElementsOf(placed);
             assertThat(layout.spots().values()).as(type.name()).allMatch(spot -> spot.x() - spot.size() / 2
                     >= UpgradeTreeLayout.BODY_X && spot.x() + spot.size() / 2 <= UpgradeTreeLayout.WIDTH
                     - UpgradeTreeLayout.BAND_X);

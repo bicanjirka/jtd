@@ -14,7 +14,7 @@ import java.util.Set;
  */
 public final class ExposingMechanic implements SniperMechanic {
 
-    private static final int EXPOSE_TICKS = Math.round(2 * TickRate.TICKS_PER_SECOND);
+    private static final int EXPOSE_TICKS = Math.round(5 * TickRate.TICKS_PER_SECOND);
 
     @Override
     public void react(ShotResult result, ShotActions actions) {

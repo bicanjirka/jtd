@@ -9,7 +9,7 @@ import td.tower.TowerStat;
 /** Headhunter: a shot at an Elite or a Boss is likelier to crit. */
 public final class HeadhunterMechanic implements SniperMechanic {
 
-    private static final float BONUS_CRIT_CHANCE = 0.40f;
+    private static final float BONUS_CRIT_CHANCE = 0.50f;
     private static final Rank HUNTED_FROM = Rank.ELITE;
 
     @Override

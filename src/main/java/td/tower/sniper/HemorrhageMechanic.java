@@ -13,7 +13,7 @@ import java.util.Set;
 public final class HemorrhageMechanic implements SniperMechanic {
 
     /** What a Bleed costs a cell walked, a share of the shot's damage. */
-    private static final float SHARE_PER_CELL = 0.05f;
+    private static final float SHARE_PER_CELL = 0.10f;
     /** As long as every bleed lasts. */
     private static final int BLEED_TICKS = ShrapnelMechanic.BLEED_TICKS;
 

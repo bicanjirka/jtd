@@ -207,7 +207,7 @@ class HitResolutionTest {
 
         assertThat(glancing).isEqualTo(Damage.physical(1000));
         assertThat(crit.critical()).isTrue();
-        assertThat(crit.amount()).isEqualTo(Math.round(1000 * 1.5f * 100f / 200f - 300f));
+        assertThat(crit.amount()).isEqualTo(Math.round(1000 * AttackProfile.DEFAULT_CRIT_MULTIPLIER * 100f / 200f - 300f));
     }
 
     @Test

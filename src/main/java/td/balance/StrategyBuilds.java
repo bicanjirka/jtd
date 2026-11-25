@@ -33,14 +33,14 @@ final class StrategyBuilds {
                             "splash.thunderstrike", "splash.high_voltage", "splash.quick_hands",
                             "splash.piercing_stones"))),
             TowerFactory.Type.SNIPER, List.of(
-                    new Strategy("crit", Set.of("sniper.steady_aim", "sniper.rifling", "sniper.heavy_rounds", "base.range",
+                    new Strategy("crit", Set.of("sniper.steady_aim", "sniper.rifling",
                             "sniper.fourth_shot", "sniper.keen_eye", "sniper.deadeye", "sniper.hollow_point",
-                            "sniper.ricochet", "sniper.sundering_crits", "sniper.headhunter",
-                            "sniper.heavy_rounds.2")),
-                    new Strategy("speed", Set.of("sniper.steady_aim", "sniper.rifling", "sniper.heavy_rounds",
-                            "sniper.fourth_shot", "sniper.deadeye", "sniper.deep_breath", "base.range",
-                            "sniper.silver_round", "sniper.ricochet", "sniper.sundering_crits", "sniper.executioner",
-                            "sniper.killing_spree", "sniper.unbroken_aim", "sniper.heavy_rounds.2"))),
+                            "sniper.ricochet", "sniper.sundering_rounds", "sniper.headhunter",
+                            "sniper.heavy_rounds")),
+                    new Strategy("speed", Set.of("sniper.steady_aim", "sniper.rifling",
+                            "sniper.fourth_shot", "sniper.deadeye", "sniper.deep_breath",
+                            "sniper.silver_round", "sniper.ricochet", "sniper.sundering_rounds", "sniper.executioner",
+                            "sniper.killing_spree", "sniper.unbroken_aim"))),
             TowerFactory.Type.MORTAR, mortar()));
 
     private static final String CRACKING = "mortar.cracking_shells";

@@ -16,12 +16,12 @@ import static td.ui.UpgradeTreePlan.tier;
 final class UpgradeTreePlans {
 
     private static final UpgradeTreePlan SNIPER = UpgradeTreePlan.of(
-            tier(row(node("sniper.rifling", 0f), node("sniper.heavy_rounds", 1.2f), node("sniper.steady_aim", 3.3f))),
-            tier(row(node("sniper.fourth_shot", 0.5f), node("sniper.deadeye", 1.5f), cluster("Aim", 2.8f),
-                    node("base.range", 5.6f))),
-            tier(row(cluster("Ammo", 0f), cluster("On crit", 2.3f), cluster("Crit wound", 4.6f))),
-            tier(row(cluster("Finisher", 0f), node("sniper.killing_spree", 2.3f), node("sniper.heavy_rounds.2", 3.5f),
-                    node("sniper.unbroken_aim", 5f))));
+            tier(row(cluster("On crit", 0f), node("sniper.rifling", 2.6f), node("sniper.steady_aim", 4.4f))),
+            tier(row(node("tier.1", 0f), node("sniper.fourth_shot", 1.8f), node("sniper.deadeye", 2.9f),
+                    cluster("Aim", 3.9f))),
+            tier(row(node("tier.2", 0f), cluster("Ammo", 1.3f), cluster("Debuff", 4f))),
+            tier(row(node("tier.3", 0f), node("sniper.heavy_rounds", 1.3f), cluster("Finisher", 2.4f),
+                    node("sniper.killing_spree", 4.5f), node("sniper.unbroken_aim", 5.6f))));
 
     private static final UpgradeTreePlan SPLASH = UpgradeTreePlan.of(
             tier(row(node("base.range", 0f), node("splash.wide_charge", 1f), node("splash.flint_stones", 2f))),
