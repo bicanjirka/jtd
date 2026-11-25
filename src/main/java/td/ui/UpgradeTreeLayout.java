@@ -370,7 +370,8 @@ record UpgradeTreeLayout(List<Band> bands, Map<UpgradeNode, Spot> spots, List<Fr
         }
 
         private UpgradeNode nodeOf(String id, int tier) {
-            UpgradeNode node = this.tree.node(id).filter(found -> !this.tree.isUnlock(found))
+            UpgradeNode node = this.tree.tierNodeOf(tier).filter(own -> own.id().equals(id))
+                    .or(() -> this.tree.node(id).filter(found -> !this.tree.isUnlock(found)))
                     .orElseThrow(() -> new IllegalArgumentException("No node " + id));
             if (node.tier() != tier) {
                 throw new IllegalArgumentException(id + " is placed in tier " + tier + " but sits in " + node.tier());

@@ -48,6 +48,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private boolean leading;
     private float speed;
     private double distanceToExit = DISTANCE_TO_EXIT;
+    private float pathShare;
     private boolean frozen;
     private float spirit;
     private float armorAndPlating;
@@ -100,6 +101,7 @@ public final class FakeEnemyMob implements EnemyMob {
         this.taunting = other.taunting;
         this.speed = other.speed;
         this.distanceToExit = other.distanceToExit;
+        this.pathShare = other.pathShare;
         return this;
     }
 
@@ -401,6 +403,17 @@ public final class FakeEnemyMob implements EnemyMob {
     @Override
     public int getProgression() {
         return this.progression;
+    }
+
+    /** This fake itself, now {@code share} of the way along its path. */
+    public FakeEnemyMob atPathShare(float share) {
+        this.pathShare = share;
+        return this;
+    }
+
+    @Override
+    public float pathShare() {
+        return this.pathShare;
     }
 
     @Override

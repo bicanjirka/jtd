@@ -41,6 +41,7 @@ import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
 import td.tower.targeting.FurthestAlongPathSelector;
 import td.tower.targeting.InRangeTargetQuery;
+import td.tower.targeting.PickContext;
 import td.tower.targeting.PreferringSelector;
 import td.tower.targeting.TargetPriority;
 import td.tower.targeting.TargetSelector;
@@ -275,7 +276,7 @@ public final class MortarTower extends AbstractTower {
 
     private Optional<EnemyMob> findTarget(MortarSpec spec) {
         List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
-        TargetSelector own = this.upgrades().targeting().map(priority -> priority.selector(this.cellPixels()))
+        TargetSelector own = this.upgrades().targeting().map(priority -> priority.selector(PickContext.of(this.cellPixels())))
                 .orElseGet(FurthestAlongPathSelector::new);
         return PreferringSelector.priority(own).selectFrom(inReach);
     }

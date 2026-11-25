@@ -94,9 +94,4 @@ public record UpgradeState(List<UpgradeNode> owned) {
     public StatModifiers<TowerStat> totalEmission() {
         return this.owned.stream().map(n -> n.effects().emission()).reduce(StatModifiers.none(), StatModifiers::plus);
     }
-
-    /** Every owned node's stat modifiers, combined. */
-    public StatModifiers<TowerStat> totalModifiers() {
-        return this.owned.stream().map(n -> n.effects().modifiers()).reduce(StatModifiers.none(), StatModifiers::plus);
-    }
 }

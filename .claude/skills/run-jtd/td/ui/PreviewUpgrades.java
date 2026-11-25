@@ -189,11 +189,19 @@ public final class PreviewUpgrades {
         java.lang.reflect.Method boundsOf = PanelUpgradeTree.class.getDeclaredMethod("boundsOf", UpgradeNode.class);
         boundsOf.setAccessible(true);
 
+        // Each tier's own node first, as its row shows it, then the nodes bought.
+        List<UpgradeNode> shown = new ArrayList<>();
+        for (int tier = 0; tier < tree.tiers().size(); tier++) {
+            tree.tierNodeOf(tier).filter(tree::isGranted).ifPresent(shown::add);
+        }
+        shown.addAll(tree.nodes());
         List<BufferedImage> tips = new ArrayList<>();
-        for (UpgradeNode node : tree.nodes()) {
+        for (UpgradeNode node : shown) {
             TooltipPanel tip = new TooltipPanel();
-            tip.show(UpgradeSheetText.hover(UpgradeOffer.of(node, tower, this.world),
-                    UpgradeHover.of(node, tower, this.world), tree));
+            UpgradeOffer offer = UpgradeOffer.of(node, tower, this.world);
+            tip.show(tree.isGranted(node)
+                    ? UpgradeSheetText.granted(offer, tree.isHeld(node, tower.experience().xp(), tower.upgrades()))
+                    : UpgradeSheetText.hover(offer, UpgradeHover.of(node, tower, this.world), tree));
             layOut(tip);
             BufferedImage tipImage = image(tip.getWidth() * ZOOM, tip.getHeight() * ZOOM);
             Graphics2D tg = graphics(tipImage);
@@ -228,8 +236,8 @@ public final class PreviewUpgrades {
         ImageIO.write(sheet, "png", new File(out, "sheets/" + key(tower.getType()) + ".png"));
 
         List<Object> nodes = new ArrayList<>();
-        for (int i = 0; i < tree.nodes().size(); i++) {
-            UpgradeNode node = tree.nodes().get(i);
+        for (int i = 0; i < shown.size(); i++) {
+            UpgradeNode node = shown.get(i);
             java.awt.Rectangle box;
             try {
                 box = (java.awt.Rectangle) boundsOf.invoke(panel, node);
@@ -260,7 +268,7 @@ public final class PreviewUpgrades {
         t.put("sw", sheet.getWidth() / ZOOM);
         t.put("sh", sheet.getHeight() / ZOOM);
         t.put("nodes", nodes);
-        System.out.println("OK " + key(tower.getType()) + " " + tree.nodes().size() + " nodes");
+        System.out.println("OK " + key(tower.getType()) + " " + shown.size() + " nodes");
         return t;
     }
 

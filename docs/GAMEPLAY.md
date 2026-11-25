@@ -74,7 +74,9 @@ and its upgrades cost.
 Every tower, the Beacon included, has its own upgrade tree of four tiers, shown in place of the
 wave preview once the tower is selected. A tier opens with XP alone (Tier I at 60, Tier II at 120, Tier III at 200);
 every tower an enemy reached earns its bounty as XP when its walk ends,
-killed or leaked (a Beacon earns with the towers it lights). Once a tier is open its upgrades cost only credits. In a
+killed or leaked (a Beacon earns with the towers it lights). Once a tier is open its upgrades cost only credits, and
+a tier may give the tower stats of its own, free from the moment its XP opens it and never refunded: its tier node,
+first in the tier's row and marked with its numeral, which no click buys or sells. In a
 tier an upgrade stands alone, follows one it needs (in the same tier or the one below), or belongs to a cluster:
 one framed set of which a tower keeps one active, switched for free between waves, which sells back what came
 after the old one. Attune, in Tier 0, gives each tower its own mechanic. The Burst's Stormcaller or Hexer is a
@@ -85,7 +87,9 @@ prices are multiples of the tower's price. A tower stands on one plinth step for
 foundation grows wider and richer with each; when a tier opens, the new foundation spreads over the old with a ring
 in the tier's colour. A green arrow in a tower's top-left corner says it can buy an upgrade now. The Upgrades panel shows the tower's XP on
 its title line, each tier as a band with its numeral, and under a locked tier's band a line filling with the XP
-toward its gate.
+toward its gate. The Info pane shows a tier's free stats apart from the tower's base, as it shows an upgrade's.
+A tower that picks one target takes, in order: an enemy with Priority, one about to leak (most of the way along its
+path), one that taunts, then its own choice.
 A round node changes a number and a square one adds an ability; where a tree holds two builds, one leans left and
 the other right. Where the builds are the two members of a cluster (the Burst's Stormcaller and Hexer), their
 nodes share slots: a slot shows the picked side's node, the hovered side's while you hover one, and a dashed `?`

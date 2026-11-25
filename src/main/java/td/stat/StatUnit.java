@@ -14,6 +14,8 @@ public enum StatUnit {
     PERCENT(""),
     /** A fraction added on top, read with its sign: {@code "+10%"}. */
     SIGNED_PERCENT(""),
+    /** A factor, read as a multiple: {@code "x2.5"}. */
+    MULTIPLE(""),
     POINTS(""),
     STACKS("stacks", "stack"),
     MISSILES("missiles", "missile"),
@@ -59,7 +61,7 @@ public enum StatUnit {
     /** {@code stored} in the unit the player reads; {@code cellPixels} is the board's cell size. */
     public float shown(float stored, float cellPixels) {
         return switch (this) {
-            case CELLS, SECONDS, PERCENT, SIGNED_PERCENT, POINTS, STACKS, MISSILES, COUNT, DAMAGE_PER_SECOND,
+            case CELLS, SECONDS, PERCENT, SIGNED_PERCENT, MULTIPLE, POINTS, STACKS, MISSILES, COUNT, DAMAGE_PER_SECOND,
                  PER_SECOND, PER_TARGET, CELLS_PER_SECOND -> stored;
             case TICKS -> stored / TickRate.TICKS_PER_SECOND;
             case DEGREES -> (float) Math.toDegrees(stored);
@@ -75,6 +77,7 @@ public enum StatUnit {
         return switch (this) {
             case PERCENT -> TermNumbers.percent(shown);
             case SIGNED_PERCENT -> TermNumbers.signedPercent(shown);
+            case MULTIPLE -> TermNumbers.times(shown);
             case POINTS, STACKS, MISSILES, COUNT -> TermNumbers.number(Math.round(shown));
             case DEGREES -> Math.round(shown) + "°";
             case CELLS, TICKS, SECONDS, DAMAGE_PER_HIT, DAMAGE_PER_SECOND, PER_SECOND, PER_TARGET, LOSS_PER_HIT,
@@ -86,6 +89,7 @@ public enum StatUnit {
     String signed(float shown) {
         return switch (this) {
             case PERCENT, SIGNED_PERCENT -> TermNumbers.signedPercent(shown);
+            case MULTIPLE -> TermNumbers.signed(shown) + "x";
             case POINTS, STACKS, MISSILES, COUNT -> TermNumbers.signed(Math.round(shown));
             case DEGREES -> TermNumbers.signed(Math.round(shown)) + "°";
             case CELLS, TICKS, SECONDS, DAMAGE_PER_HIT, DAMAGE_PER_SECOND, PER_SECOND, PER_TARGET, LOSS_PER_HIT,

@@ -17,10 +17,20 @@ public sealed interface HitCondition {
     /** When it holds, after what it adds: "against Elite and Boss enemies". Empty for every hit. */
     TermText describe();
 
+    /** Whether it holds on every hit, so that what it adds is known before a target is picked. */
+    default boolean everyHit() {
+        return false;
+    }
+
     /** Every hit. */
     record Always() implements HitCondition {
         @Override
         public boolean holds(HitContext context) {
+            return true;
+        }
+
+        @Override
+        public boolean everyHit() {
             return true;
         }
 

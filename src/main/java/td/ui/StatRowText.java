@@ -8,6 +8,7 @@ import td.stat.StatPart;
 import td.stat.StatPreview;
 import td.stat.StatReading;
 import td.stat.StatTerm;
+import td.stat.StatUnit;
 import td.stat.StatWording;
 import td.term.Term;
 import td.term.TermText;
@@ -53,13 +54,21 @@ final class StatRowText {
         return marked(stat, wording.change(stat, modifier)).withTooltip(key(stat), meaningSheet(stat));
     }
 
-    /** A change, then what the row it moves would read: "Fire rate +25%  1.3 → 1.6 /s". */
+    /**
+     * A change, then what the row it moves would read: "Fire rate +25%  1.3 → 1.6 /s", the unit left out when the
+     * change already says it ("Damage +14 /hit  20 → 34"). A stat read as a multiple says only the multiple it comes
+     * to: "Crit dmg x3".
+     */
     static Row change(StatTerm stat, StatModifier modifier, StatPreview preview, StatWording wording) {
         StatReading before = wording.read(preview.stat(), preview.before());
         StatReading after = wording.read(preview.stat(), preview.after());
-        String shift = before.number() + " → " + after.number();
-        return change(stat, modifier, wording).withGloss(after.unit(), shift)
-                .withArrow(arrow(before, after, preview.before(), preview.after()));
+        Arrow arrow = arrow(before, after, preview.before(), preview.after());
+        if (preview.stat().unit() == StatUnit.MULTIPLE) {
+            return marked(stat, after.number()).withTooltip(key(stat), meaningSheet(stat)).withArrow(arrow);
+        }
+        Row row = change(stat, modifier, wording);
+        String unit = after.unit().isEmpty() || row.value().endsWith(" " + after.unit()) ? "" : " " + after.unit();
+        return row.withGloss("", before.number() + " → " + after.number() + unit).withArrow(arrow);
     }
 
     /** What hovering a stat or a mention of one opens: its mark and full name, and what it does. */

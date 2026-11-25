@@ -10,7 +10,8 @@ import java.util.Optional;
  * One stat an upgrade node changes, and how.
  *
  * @param given   whether the node hands the change to the towers around it rather than its own tower
- * @param preview the row it moves on the tower that would buy it, before and after; empty once owned
+ * @param preview the row it moves on the tower that would buy it, before and after; empty once owned, except on a
+ *                stat read as a multiple, which always says the total
  */
 public record UpgradeBonus(TowerStat stat, StatModifier change, boolean given, Optional<StatPreview> preview) {
 

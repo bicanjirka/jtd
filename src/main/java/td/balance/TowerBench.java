@@ -420,8 +420,16 @@ public final class TowerBench {
         }
     }
 
-    /** A tower on a cell owning {@code owned}, bought in that order. */
-    record Stand(TowerFactory.Type type, Point cell, List<String> owned) {
+    /**
+     * A tower on a cell owning {@code owned}, bought in that order, with {@code xp}: what opens the tiers whose free
+     * bonuses it holds.
+     */
+    record Stand(TowerFactory.Type type, Point cell, List<String> owned, int xp) {
+
+        /** A tower with no XP, holding no tier's bonus. */
+        Stand(TowerFactory.Type type, Point cell, List<String> owned) {
+            this(type, cell, owned, 0);
+        }
     }
 
     /**
@@ -434,20 +442,33 @@ public final class TowerBench {
      * @param versus the label of the build it is set against, or nothing
      * @param owned  the nodes it owns, in the order bought
      * @param cost   the tower and those nodes, at list price
+     * @param xp     the XP it stands at: the gate of the tier it is measured in, so it holds the free bonus of every
+     *               tier up to that one, and a build and the one it is set against hold the same
      */
-    record Build(String label, String role, String node, String versus, List<String> owned, int cost) {
+    record Build(String label, String role, String node, String versus, List<String> owned, int cost, int xp) {
 
         static Build of(String label, String role, Resolved bought) {
-            return new Build(label, role, "", "", bought.owned(), bought.cost());
+            return new Build(label, role, "", "", bought.owned(), bought.cost(), 0);
         }
 
         Build weighing(String weighed, String against) {
-            return new Build(this.label, this.role, weighed, against, this.owned, this.cost);
+            return new Build(this.label, this.role, weighed, against, this.owned, this.cost, this.xp);
         }
 
-        /** The same for any two builds that own the same nodes. */
+        /** The same build standing in {@code tier} of {@code tree}, with the XP that opens it. */
+        Build inTier(UpgradeTree tree, int tier) {
+            int xp = tree.tiers().get(Math.min(tier, tree.tiers().size() - 1)).xp();
+            return new Build(this.label, this.role, this.node, this.versus, this.owned, this.cost, xp);
+        }
+
+        /** It on {@code cell}, as a tower of {@code type}. */
+        Stand on(TowerFactory.Type type, Point cell) {
+            return new Stand(type, cell, this.owned, this.xp);
+        }
+
+        /** The same for any two builds that own the same nodes at the same XP. */
         String key() {
-            return this.owned.stream().sorted().collect(Collectors.joining(" "));
+            return this.xp + ":" + this.owned.stream().sorted().collect(Collectors.joining(" "));
         }
     }
 
@@ -475,9 +496,10 @@ public final class TowerBench {
             Resolved with = resolve(type, line);
             line.remove(node.id());
             Resolved before = resolve(type, line);
-            String versus = before.owned().isEmpty() ? BARE : label(BEFORE, node.id());
-            builds.putIfAbsent(versus, Build.of(versus, BEFORE, before).weighing(node.id(), ""));
-            builds.put(label(LINE, node.id()), Build.of(label(LINE, node.id()), LINE, with).weighing(node.id(), versus));
+            String versus = before.owned().isEmpty() && node.tier() == 0 ? BARE : label(BEFORE, node.id());
+            builds.putIfAbsent(versus, Build.of(versus, BEFORE, before).weighing(node.id(), "").inTier(tree, node.tier()));
+            builds.put(label(LINE, node.id()), Build.of(label(LINE, node.id()), LINE, with).weighing(node.id(), versus)
+                    .inTier(tree, node.tier()));
         }
         int top = tree.nodes().stream().mapToInt(UpgradeNode::tier).max().orElse(0);
         Optional<UpgradeCluster> fork = tree.fork();
@@ -501,19 +523,20 @@ public final class TowerBench {
                     }
                     String side = tier >= forkTier ? family : "";
                     String label = label(FULL, side, String.valueOf(tier), other);
-                    builds.putIfAbsent(label, Build.of(label, FULL, full).weighing(other, ""));
+                    builds.putIfAbsent(label, Build.of(label, FULL, full).weighing(other, "").inTier(tree, tier));
                     for (UpgradeNode node : tree.nodes()) {
                         if (node.tier() == tier && full.owned().contains(node.id())
                                 && weighed.add(side + SEPARATOR + node.id())) {
                             String less = label(WITHOUT, side, node.id());
                             builds.put(less, Build.of(less, WITHOUT, resolve(type, candidates(tree, tier, picks, node.id())))
-                                    .weighing(node.id(), label));
+                                    .weighing(node.id(), label).inTier(tree, tier));
                         }
                         if (tier == top && full.owned().contains(node.id())
                                 && weighed.add(WITHOUT_AT_TOP + side + SEPARATOR + node.id())) {
                             String less = label(WITHOUT_AT_TOP, side, node.id());
                             builds.put(less, Build.of(less, WITHOUT_AT_TOP,
-                                    resolve(type, candidates(tree, tier, picks, node.id()))).weighing(node.id(), label));
+                                    resolve(type, candidates(tree, tier, picks, node.id()))).weighing(node.id(), label)
+                                    .inTier(tree, tier));
                         }
                     }
                 }
@@ -521,7 +544,9 @@ public final class TowerBench {
         }
         for (StrategyBuilds.Strategy strategy : StrategyBuilds.of(type)) {
             String label = label(STRATEGY, strategy.name());
-            builds.put(label, Build.of(label, STRATEGY, resolve(type, strategy.nodes())));
+            Resolved bought = resolve(type, strategy.nodes());
+            int tier = bought.owned().stream().mapToInt(id -> tree.node(id).orElseThrow().tier()).max().orElse(0);
+            builds.put(label, Build.of(label, STRATEGY, bought).inTier(tree, tier));
         }
         return List.copyOf(builds.values());
     }
@@ -606,6 +631,7 @@ public final class TowerBench {
                     throw new IllegalStateException(stand.type() + " cannot buy " + id + " of " + stand.owned());
                 }
             }
+            tower.earnXp(stand.xp());
             MortarTower.drawMagazineAfresh(tower);
         }
         engine.requestNextWave();
@@ -672,7 +698,7 @@ public final class TowerBench {
     }
 
     private static List<Stand> stands(TowerFactory.Type type, Build build, Scenario scenario) {
-        List<Stand> stands = new ArrayList<>(List.of(new Stand(type, SUBJECT, build.owned())));
+        List<Stand> stands = new ArrayList<>(List.of(build.on(type, SUBJECT)));
         if (scenario.beside()) {
             stands.addAll(scenario.partners());
         }
@@ -792,7 +818,7 @@ public final class TowerBench {
             for (Build build : ends.get(type)) {
                 for (Point cell : List.of(SUBJECT, SECOND)) {
                     for (Scenario scenario : shared) {
-                        aloneJobs.add(new Job(scenario, List.of(new Stand(type, cell, build.owned())), FIRST_GUESS));
+                        aloneJobs.add(new Job(scenario, List.of(build.on(type, cell)), FIRST_GUESS));
                         aloneKeys.add(type + SEPARATOR + build.label() + SEPARATOR + cell + SEPARATOR + scenario.name());
                     }
                 }
@@ -824,8 +850,8 @@ public final class TowerBench {
                             String name = shared.get(s).name();
                             sums[s] = alone.get(first + SEPARATOR + left.label() + SEPARATOR + SUBJECT + SEPARATOR + name)
                                     + alone.get(second + SEPARATOR + right.label() + SEPARATOR + SECOND + SEPARATOR + name);
-                            jobs.add(new Job(shared.get(s), List.of(new Stand(first, SUBJECT, left.owned()),
-                                    new Stand(second, SECOND, right.owned())), Math.max(FIRST_GUESS, sums[s])));
+                            jobs.add(new Job(shared.get(s), List.of(left.on(first, SUBJECT), right.on(second, SECOND)),
+                                    Math.max(FIRST_GUESS, sums[s])));
                         }
                         apart.add(sums);
                         rows.add(new ArrayList<>(List.of(first.name(), left.label(), second.name(), right.label(),

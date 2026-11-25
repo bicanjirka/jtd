@@ -1,7 +1,6 @@
 package td.tower.upgrade;
 
 import org.junit.jupiter.api.Test;
-import td.stat.StatModifiers;
 import td.tower.TowerModifiers;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,12 +15,11 @@ class UpgradeStateTest {
             .withModifiers(TowerModifiers.damagePercent(0.25f));
 
     @Test
-    void noneOwnsNothingAndAddsNothing() {
+    void noneOwnsNothing() {
         UpgradeState state = UpgradeState.none();
 
         assertThat(state.owns(RANGE.id())).isFalse();
         assertThat(state.countInTier(0)).isZero();
-        assertThat(state.totalModifiers()).isEqualTo(StatModifiers.none());
     }
 
     @Test
@@ -40,12 +38,5 @@ class UpgradeStateTest {
 
         assertThat(state.countInTier(0)).isEqualTo(2);
         assertThat(state.countInTier(1)).isEqualTo(1);
-    }
-
-    @Test
-    void totalBuffCombinesEveryOwnedNodesStatBonusAdditively() {
-        UpgradeState state = UpgradeState.none().with(FIRST).with(SECOND);
-
-        assertThat(state.totalModifiers()).isEqualTo(TowerModifiers.damagePercent(0.5f));
     }
 }

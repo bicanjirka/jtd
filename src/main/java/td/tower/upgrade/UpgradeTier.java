@@ -1,15 +1,22 @@
 package td.tower.upgrade;
 
+import td.stat.StatModifiers;
+import td.tower.TowerStat;
+
 import java.util.List;
 
 /**
  * One tier of a tree, a row of upgrades that opens from the bottom up: once the tier below is open, it opens when its
  * tower has {@code xp} XP, by itself when it is free, or on the player's click that pays {@code unlockPrice}. Once it is
  * open, everything in it costs only credits.
+ * <p>
+ * Its {@code bonus}, any number of stats, is the tower's own: the tier's own node carries it, and the tower holds it
+ * from the moment its XP opens the tier, whatever it buys there, and keeps it. Selling pays nothing back for it. Tier 0
+ * is the tower's base and has none.
  */
-public record UpgradeTier(int xp, int unlockPrice) {
+public record UpgradeTier(int xp, int unlockPrice, StatModifiers<TowerStat> bonus) {
 
-    private static final UpgradeTier OPEN = new UpgradeTier(0, 0);
+    private static final UpgradeTier OPEN = new UpgradeTier(0, 0, StatModifiers.none());
     private static final List<UpgradeTier> STANDARD = List.of(OPEN, gated(60, 0), gated(120, 0), gated(200, 0));
 
     public UpgradeTier {
@@ -25,7 +32,12 @@ public record UpgradeTier(int xp, int unlockPrice) {
 
     /** A tier that opens at {@code xp} XP, paying {@code unlockPrice} for it when that is more than nothing. */
     public static UpgradeTier gated(int xp, int unlockPrice) {
-        return new UpgradeTier(xp, unlockPrice);
+        return new UpgradeTier(xp, unlockPrice, StatModifiers.none());
+    }
+
+    /** The same gate, with {@code bonus} for the tower once its XP opens the tier. */
+    public UpgradeTier withBonus(StatModifiers<TowerStat> bonus) {
+        return new UpgradeTier(this.xp, this.unlockPrice, bonus);
     }
 
     /** The tiers every tower climbs: 0, then I to III. */

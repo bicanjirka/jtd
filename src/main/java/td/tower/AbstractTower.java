@@ -23,6 +23,7 @@ import td.stat.StatModifiers;
 import td.stat.StatPart;
 import td.stat.StatPreview;
 import td.stat.StatTerm;
+import td.stat.StatUnit;
 import td.term.Side;
 import td.term.Term;
 import td.term.TermNumbers;
@@ -131,6 +132,8 @@ public abstract class AbstractTower implements Tower {
     private final ProcActions procActions = new TowerProcActions();
     // What the statuses add, published for the EDT's republish; the live list stays on the tick thread.
     private volatile StatusLayer statusLayer = StatusLayer.NONE;
+    // The focus its standing hit bonuses are part of its stats at; set on the tick thread, read by every republish.
+    private volatile int focus;
     private volatile TierRise tierRise = TierRise.none();
     // The tick of this tower's first turn when it was placed in play; empty for one a save brought back.
     private volatile OptionalInt placedAtTick = OptionalInt.empty();
@@ -238,6 +241,12 @@ public abstract class AbstractTower implements Tower {
     /** Where it stands and how far it reaches now: what its reach is measured from. */
     protected final Viewpoint viewpoint() {
         return new Viewpoint(this.centerX, this.centerY, this.rangeReal(), this.cellPixels());
+    }
+
+    /** Where it stands, and how far an attack reaches whose hit bonuses add {@code extraCells} of range. */
+    protected final Viewpoint viewpoint(float extraCells) {
+        return new Viewpoint(this.centerX, this.centerY, this.rangeReal() + extraCells * this.cellPixels(),
+                this.cellPixels());
     }
 
     /** The bearing from its centre to {@code enemy}, in radians. */
@@ -362,12 +371,50 @@ public abstract class AbstractTower implements Tower {
                 .map(t -> t.buffFor(this))
                 .reduce(StatModifiers.none(), StatModifiers::plus);
         StatusLayer layer = this.statusLayer;
-        StatModifiers<TowerStat> own = upgrades.totalModifiers().plus(layer.modifiers());
+        StatModifiers<TowerStat> own = this.lastingModifiers(upgrades).plus(layer.modifiers())
+                .plus(this.focusModifiers(upgrades, this.focus));
         Set<TowerCapability> capabilities = EnumSet.noneOf(TowerCapability.class);
         capabilities.addAll(upgrades.capabilities());
         capabilities.addAll(layer.capabilities());
         this.stats = TowerStats.of(this.baseStats, own, received, this.disruption, this.cellPixels(),
                 capabilities);
+    }
+
+    /** What the standing hit bonuses of the tower with {@code upgrades} add at {@code focus}. */
+    private StatModifiers<TowerStat> focusModifiers(UpgradeState upgrades, int focus) {
+        if (focus == 0) {
+            return StatModifiers.none();
+        }
+        return concatenated(this.baseHitBonuses(), upgrades.hitBonuses()).stream().filter(HitBonus::standing)
+                .map(bonus -> bonus.standingAt(focus)).reduce(StatModifiers.none(), StatModifiers::plus);
+    }
+
+    /**
+     * Its focus now stands at {@code focus}: the hit bonuses that grow with it alone are part of its stats, which
+     * follow it as it builds and fades. Tick thread only.
+     */
+    protected final void holdFocus(int focus) {
+        if (focus != this.focus) {
+            this.focus = focus;
+            this.publishStats(this.upgrades);
+        }
+    }
+
+    /** What {@code upgrades} add, with the own node of every tier its XP has opened. */
+    private StatModifiers<TowerStat> lastingModifiers(UpgradeState upgrades) {
+        return this.upgradeTree().heldModifiers(this.experience.xp(), upgrades);
+    }
+
+    /** The tiers its XP has opened now, whose bonuses it holds. */
+    private int tiersEarned() {
+        return this.upgradeTree().tiersEarned(this.experience.xp(), this.upgrades);
+    }
+
+    /** Every tower recomputes: what this one gives its neighbours may follow its own stats. */
+    private void recalculateEveryTower() {
+        for (Tower t : this.context.towers().all()) {
+            t.recalculateStats();
+        }
     }
 
     /**
@@ -654,7 +701,9 @@ public abstract class AbstractTower implements Tower {
         if (upgrades == this.armedFrom) {
             return;
         }
-        this.armedBonuses = concatenated(this.baseHitBonuses(), upgrades.hitBonuses());
+        // A standing bonus is in the stats already.
+        this.armedBonuses = concatenated(this.baseHitBonuses(), upgrades.hitBonuses()).stream()
+                .filter(bonus -> !bonus.standing()).toList();
         this.armedProcs = concatenated(this.baseProcs(), upgrades.procs());
         this.armedFrom = upgrades;
     }
@@ -775,7 +824,11 @@ public abstract class AbstractTower implements Tower {
         float exact = bounty * (1f + bonus) + this.xpRemainder;
         int whole = (int) Math.floor(exact + 1e-4f);
         this.xpRemainder = Math.max(0f, exact - whole);
+        int earnedBefore = this.tiersEarned();
         this.experience.earn(whole);
+        if (this.tiersEarned() != earnedBefore) {
+            this.recalculateEveryTower();
+        }
     }
 
     public boolean reached(EnemyWalk walk) {
@@ -804,6 +857,7 @@ public abstract class AbstractTower implements Tower {
         this.xpRemainder = tally.xpCarried();
         this.price = record.paid();
         this.restored = true;
+        this.recalculateEveryTower();
     }
 
     /** No upgrades by default. */
@@ -854,16 +908,23 @@ public abstract class AbstractTower implements Tower {
     /**
      * Each of the tower's own bonuses with the row it moves, as its lasting stats have it now and would with
      * {@code node}: the first row whose source is the bonus's stat. A node already owned moves nothing, so its
-     * bonuses carry no preview.
+     * bonuses carry no preview, except on a stat read as a multiple, whose bonus always says the total it comes to.
      */
     private List<UpgradeBonus> previewed(List<UpgradeBonus> bonuses, UpgradeNode node) {
         Function<TowerStat, List<StatPart>> noParts = stat -> List.of();
         boolean applies = !this.applies().isEmpty();
-        List<TowerStatLine> before = this.statRows(this.lasting(List.of()), noParts, applies);
-        List<TowerStatLine> after = this.statRows(this.lasting(List.of(node)), noParts, applies);
+        TowerStats now = this.lasting(List.of());
+        TowerStats with = this.lasting(List.of(node));
+        List<TowerStatLine> before = this.statRows(now, noParts, applies);
+        List<TowerStatLine> after = this.statRows(with, noParts, applies);
         return bonuses.stream().map(bonus -> {
             if (bonus.given()) {
                 return bonus;
+            }
+            if (bonus.stat().unit() == StatUnit.MULTIPLE) {
+                // Its row may not show yet: a crit multiple waits on a crit chance.
+                return bonus.withPreview(new StatPreview(bonus.stat(), now.value(bonus.stat()),
+                        with.value(bonus.stat())));
             }
             Optional<TowerStatLine> was = before.stream().filter(row -> row.source() == bonus.stat()).findFirst();
             Optional<TowerStatLine> will = after.stream().filter(row -> row.source() == bonus.stat()).findFirst();
@@ -1316,7 +1377,7 @@ public abstract class AbstractTower implements Tower {
      */
     private List<StatPart> partsOf(TowerStat stat, StatModifiers<TowerStat> jam) {
         List<StatPart> parts = new ArrayList<>();
-        for (UpgradeNode node : this.upgrades().owned()) {
+        for (UpgradeNode node : this.upgradeTree().heldNodes(this.experience.xp(), this.upgrades())) {
             StatModifier modifier = node.effects().modifiers().get(stat);
             if (!modifier.equals(StatModifier.none())) {
                 parts.add(new StatPart(TermText.of(node.displayName()), 1, stat, modifier));
@@ -1332,6 +1393,7 @@ public abstract class AbstractTower implements Tower {
                 parts.add(new StatPart(TermText.of(term), held.size(), stat, modifier));
             }
         });
+        this.focusPart(stat).ifPresent(parts::add);
         StatModifier received = this.stats.received().get(stat);
         if (!received.equals(StatModifier.none())) {
             int givers = (int) this.context.towers().all().stream()
@@ -1343,6 +1405,19 @@ public abstract class AbstractTower implements Tower {
             parts.add(new StatPart(TermText.of(TowerTerm.JAMMED), 1, stat, jammed));
         }
         return parts;
+    }
+
+    /** What its focus adds to {@code stat} now, under the name of what it counts, once for every step of it. */
+    private Optional<StatPart> focusPart(TowerStat stat) {
+        int now = this.focus;
+        UpgradeState upgrades = this.upgrades();
+        StatModifier modifier = this.focusModifiers(upgrades, now).get(stat);
+        if (modifier.equals(StatModifier.none())) {
+            return Optional.empty();
+        }
+        return concatenated(this.baseHitBonuses(), upgrades.hitBonuses()).stream().filter(HitBonus::standing)
+                .flatMap(bonus -> bonus.scaling().focusCounter().stream()).findFirst()
+                .map(counter -> new StatPart(TermText.of(counter), now, stat, modifier));
     }
 
     /** The jam as it reaches this tower: the enemy's penalty times what its disruption taken lets through. */
@@ -1360,12 +1435,12 @@ public abstract class AbstractTower implements Tower {
     }
 
     /** The stats that last: its base, its upgrades with {@code extra} and what it receives; no jam, no status. */
-    private TowerStats lasting(List<UpgradeNode> extra) {
+    protected final TowerStats lasting(List<UpgradeNode> extra) {
         UpgradeState upgrades = this.upgrades();
         for (UpgradeNode node : extra) {
             upgrades = upgrades.owned().contains(node) ? upgrades : upgrades.with(node);
         }
-        return TowerStats.of(this.baseStats, upgrades.totalModifiers(), this.stats.received(),
+        return TowerStats.of(this.baseStats, this.lastingModifiers(upgrades), this.stats.received(),
                 DisruptionPenalty.none(), this.cellPixels(), upgrades.capabilities());
     }
 

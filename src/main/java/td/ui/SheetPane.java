@@ -186,13 +186,28 @@ final class SheetPane extends JTextPane {
         return slots.get(index.getAsInt()).tooltip().map(tooltip -> new HoverTarget.Row(tooltip, bounds));
     }
 
+    /**
+     * The row's own cell: from its first character to its last, and on to the pane's edge when nothing follows it on
+     * the line, so a row in a column of stat rows lights up only its column.
+     */
     private HoverTarget rowTarget(Element element, HoverRun.RowRun run) {
         Element paragraph = element.getParentElement();
+        int start = element.getStartOffset();
+        int end = element.getEndOffset();
+        for (int i = 0; i < paragraph.getElementCount(); i++) {
+            Element sibling = paragraph.getElement(i);
+            if (sibling.getAttributes().getAttribute(HoverKey.INSTANCE) == run) {
+                start = Math.min(start, sibling.getStartOffset());
+                end = Math.max(end, sibling.getEndOffset());
+            }
+        }
         try {
-            Rectangle2D start = this.modelToView2D(paragraph.getStartOffset());
-            Rectangle2D end = this.modelToView2D(Math.max(paragraph.getStartOffset(), paragraph.getEndOffset() - 1));
-            Rectangle bounds = start.createUnion(end).getBounds();
-            bounds.width = Math.max(bounds.width, this.getWidth() - bounds.x);
+            Rectangle2D first = this.modelToView2D(start);
+            Rectangle2D last = this.modelToView2D(Math.min(end, this.getDocument().getLength()));
+            Rectangle bounds = first.createUnion(last).getBounds();
+            if (end >= paragraph.getEndOffset() - 1) {
+                bounds.width = Math.max(bounds.width, this.getWidth() - bounds.x);
+            }
             return new HoverTarget.Row(run.tooltip(), bounds);
         } catch (BadLocationException e) {
             throw new IllegalStateException("A run of the sheet lies outside its document", e);

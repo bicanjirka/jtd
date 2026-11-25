@@ -68,7 +68,8 @@ final class UpgradeSheetText {
     private static List<SheetLine> lines(UpgradeOffer offer, boolean rivals) {
         UpgradeNode node = offer.node();
         List<SheetLine> lines = new ArrayList<>();
-        lines.add(new SheetLine.IconTitle(offer.face(), node.displayName(), offer.face().tone(), TermNumbers.cash(node.price())));
+        lines.add(new SheetLine.IconTitle(offer.face(), node.displayName(), offer.face().tone(),
+                node.price() > 0 ? TermNumbers.cash(node.price()) : ""));
         if (!offer.tierOpen()) {
             lines.add(gate(false, TermText.of(offer.tierNeed())));
         }
@@ -87,6 +88,11 @@ final class UpgradeSheetText {
                 .map(preview -> StatRowText.change(bonus.stat(), bonus.change(), preview, TowerSheetText.WORDING))
                 .orElseGet(() -> TowerSheetText.bonusRow(bonus))));
         offer.words().sentences().forEach(text -> lines.add(SheetLine.Sentence.of(text.asSentence())));
+        // What the line comes to in all stands apart from what this node adds to it.
+        offer.words().totals().forEach(text -> {
+            lines.add(new SheetLine.Gap());
+            lines.add(SheetLine.Sentence.of(text.asSentence()));
+        });
         List<SheetLine> definitions = definitions(offer.words().sentences());
         if (!definitions.isEmpty()) {
             lines.add(new SheetLine.Divider());
@@ -281,6 +287,23 @@ final class UpgradeSheetText {
                 new SheetLine.Title(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET, "Tier " + UpgradeTier.numeralOf(tier)
                         + " locked", gateLabel(xp, needed)),
                 SheetLine.Sentence.of(TermText.of("Earn " + Math.max(0, needed - xp) + " more XP to open it"))));
+    }
+
+    /**
+     * A free tier's own node: what it adds, then that the tower holds it free from the moment its XP opens the tier.
+     * No click buys or sells it.
+     *
+     * @param held whether the tower holds it now
+     */
+    static InfoSheet granted(UpgradeOffer offer, boolean held) {
+        List<SheetLine> lines = new ArrayList<>(lines(offer, false));
+        lines.add(new SheetLine.Divider());
+        String tier = UpgradeTier.nameOf(offer.node().tier());
+        lines.add(held
+                ? SheetLine.Sentence.marked(Glyph.CHECK, Palette.UPGRADE_GATE_MET, TermText.of("Free with " + tier))
+                : SheetLine.Sentence.marked(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET,
+                        TermText.of("Free once " + tier + " opens")));
+        return new InfoSheet(lines);
     }
 
     /** A shared slot before its cluster's pick: which members to pick from, in the order they sit. */

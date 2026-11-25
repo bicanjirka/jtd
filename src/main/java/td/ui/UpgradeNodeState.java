@@ -43,9 +43,13 @@ record UpgradeNodeState(UpgradeNode node, Look look, boolean ability, boolean un
     static UpgradeNodeState of(UpgradeNode node, Tower tower, GameWorld world) {
         UpgradeTree tree = tower.upgradeTree();
         UpgradeState owned = tower.upgrades();
-        boolean ability = !tree.isUnlock(node) && !tower.wordsOf(node).sentences().isEmpty();
-        Look look = lookOf(node, tower, world, tree, owned);
-        return new UpgradeNodeState(node, look, ability, look == Look.OWNED && tower.use().isUnused(node));
+        boolean ability = tree.tierNodeOf(node.tier()).filter(node::equals).isEmpty()
+                && !tower.wordsOf(node).sentences().isEmpty();
+        Look look = tree.isGranted(node)
+                ? tree.isHeld(node, tower.experience().xp(), owned) ? Look.OWNED : Look.TIER_LOCKED
+                : lookOf(node, tower, world, tree, owned);
+        return new UpgradeNodeState(node, look, ability,
+                look == Look.OWNED && !tree.isGranted(node) && tower.use().isUnused(node));
     }
 
     private static Look lookOf(UpgradeNode node, Tower tower, GameWorld world, UpgradeTree tree, UpgradeState owned) {

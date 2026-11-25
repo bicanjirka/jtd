@@ -35,6 +35,10 @@ public final class TowerModifiers {
         return flat(TowerStat.CRIT_CHANCE, fraction);
     }
 
+    public static StatModifiers<TowerStat> accuracy(float points) {
+        return flat(TowerStat.ACCURACY, points);
+    }
+
     public static StatModifiers<TowerStat> critMultiplier(float bonus) {
         return flat(TowerStat.CRIT_MULTIPLIER, bonus);
     }

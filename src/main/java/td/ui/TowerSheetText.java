@@ -364,7 +364,8 @@ final class TowerSheetText {
 
     /** An owned node's change: the change only, or what it hands the towers around it. */
     static Row bonusRow(UpgradeBonus bonus) {
-        Row row = StatRowText.change(bonus.stat(), bonus.change(), WORDING);
+        Row row = bonus.preview().map(preview -> StatRowText.change(bonus.stat(), bonus.change(), preview, WORDING))
+                .orElseGet(() -> StatRowText.change(bonus.stat(), bonus.change(), WORDING));
         return bonus.given() ? row.withGloss("", GIVEN) : row;
     }
 }

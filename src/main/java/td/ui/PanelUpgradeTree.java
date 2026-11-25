@@ -217,11 +217,17 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             return;
         }
         Map<UpgradeNode, UpgradeNodeState> next = new LinkedHashMap<>();
-        for (UpgradeNode node : this.tower.upgradeTree().nodes()) {
+        UpgradeTree tree = this.tower.upgradeTree();
+        for (int tier = 0; tier < tree.tiers().size(); tier++) {
+            tree.tierNodeOf(tier).filter(own -> this.layout.flatMap(laid -> laid.spotOf(own)).isPresent())
+                    .ifPresent(own -> next.put(own, UpgradeNodeState.of(own, this.tower, this.context)));
+        }
+        for (UpgradeNode node : tree.nodes()) {
             next.put(node, UpgradeNodeState.of(node, this.tower, this.context));
         }
         this.states = next;
-        this.hover = this.hovered.filter(node -> !this.levelEnded).map(node -> UpgradeHover.of(node, this.tower, this.context));
+        this.hover = this.hovered.filter(this::clickable)
+                .map(node -> UpgradeHover.of(node, this.tower, this.context));
         this.repaint();
         if (this.tooltips != null) {
             this.tooltips.refreshButtons();
@@ -354,9 +360,13 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
         this.hovered = now;
         this.hoveredTier = tier;
         this.hoveredSlot = slot;
-        this.hover = now.filter(node -> this.tower != null && !this.levelEnded)
-                .map(node -> UpgradeHover.of(node, this.tower, this.context));
+        this.hover = now.filter(this::clickable).map(node -> UpgradeHover.of(node, this.tower, this.context));
         this.repaint();
+    }
+
+    /** Whether a click on {@code node} can do anything: never after the level, never on a tier's granted node. */
+    private boolean clickable(UpgradeNode node) {
+        return this.tower != null && !this.levelEnded && !this.tower.upgradeTree().isGranted(node);
     }
 
     private void clicked(MouseEvent event) {
@@ -366,7 +376,7 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
             return;
         }
         Optional<UpgradeNode> node = this.nodeAt(event.getPoint());
-        if (node.isEmpty() || this.tower == null || this.levelEnded) {
+        if (node.filter(this::clickable).isEmpty()) {
             return;
         }
         UpgradeNodeState.Look look = this.states.get(node.get()).look();
@@ -459,6 +469,11 @@ public class PanelUpgradeTree extends JPanel implements EconomyListener {
 
     private InfoSheet sheetOf(UpgradeNode node) {
         UpgradeOffer offer = UpgradeOffer.of(node, this.tower, this.context);
+        UpgradeTree tree = this.tower.upgradeTree();
+        if (tree.isGranted(node)) {
+            return UpgradeSheetText.granted(offer, tree.isHeld(node, this.tower.experience().xp(),
+                    this.tower.upgrades()));
+        }
         if (this.levelEnded) {
             return UpgradeSheetText.hover(offer);
         }

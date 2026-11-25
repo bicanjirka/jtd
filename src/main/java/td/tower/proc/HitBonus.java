@@ -1,6 +1,8 @@
 package td.tower.proc;
 
+import td.stat.StatModifiers;
 import td.term.TermText;
+import td.tower.TowerStat;
 
 
 /**
@@ -11,6 +13,13 @@ import td.term.TermText;
  * @param adjustment what it adds each time
  */
 public record HitBonus(HitCondition when, HitScaling scaling, HitAdjustment adjustment) {
+
+    public HitBonus {
+        if (adjustment.range() != 0f && (!when.everyHit() || scaling.focusCounter().isEmpty())) {
+            throw new IllegalArgumentException("Range picks the target, so a bonus that adds it holds on every hit"
+                    + " and scales by the tower's focus alone: " + when + ", " + scaling);
+        }
+    }
 
     /** {@code adjustment} once on every hit that meets {@code condition}. */
     public static HitBonus when(HitCondition condition, HitAdjustment adjustment) {
@@ -33,6 +42,20 @@ public record HitBonus(HitCondition when, HitScaling scaling, HitAdjustment adju
         }
         float factor = this.scaling.factor(context);
         return factor == 1f ? this.adjustment : this.adjustment.times(factor);
+    }
+
+    /**
+     * Whether it holds on every hit and grows with the tower's focus alone: what it adds is known before any target,
+     * so it is part of the tower's stats ({@link #standingAt}) rather than of a hit.
+     */
+    public boolean standing() {
+        return this.when.everyHit() && this.scaling.focusCounter().isPresent();
+    }
+
+    /** What it adds to the stats of a tower whose focus stands at {@code focus}. */
+    public StatModifiers<TowerStat> standingAt(int focus) {
+        double times = this.scaling.beforeTarget(focus).orElse(0);
+        return times == 0 ? StatModifiers.none() : this.adjustment.times((float) times).asModifiers();
     }
 
     /** "+75% damage against Elite and Boss enemies", "+20% damage per stack of [Focus], up to 5". */

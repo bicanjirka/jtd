@@ -368,6 +368,11 @@ public final class DefinedEnemyMob implements EnemyMob {
     }
 
     @Override
+    public float pathShare() {
+        return this.motion.share();
+    }
+
+    @Override
     public double distanceToExit() {
         return this.motion.distanceToEnd();
     }

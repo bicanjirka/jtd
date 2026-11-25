@@ -46,7 +46,7 @@ public enum TowerStat implements StatKey, StatTerm {
             Shows.OFF_DEFAULT, false),
     CRIT_CHANCE(0f, 0f, 1f, StatUnit.PERCENT, "Crit chance", "Crit chance", StatDirection.HIGHER, StatGroup.CRIT,
             Shows.OFF_DEFAULT, true),
-    CRIT_MULTIPLIER(AttackProfile.DEFAULT_CRIT_MULTIPLIER, 1f, Float.MAX_VALUE, StatUnit.PERCENT, "Crit dmg",
+    CRIT_MULTIPLIER(AttackProfile.DEFAULT_CRIT_MULTIPLIER, 1f, Float.MAX_VALUE, StatUnit.MULTIPLE, "Crit dmg",
             "Crit damage", StatDirection.HIGHER, StatGroup.CRIT, Shows.WHILE_IT_CRITS, true),
     AIM_STACKS(0f, 0f, Float.MAX_VALUE, StatUnit.STACKS, "Steady Aim", "Steady Aim stacks", StatDirection.HIGHER,
             StatGroup.CRIT, Shows.OFF_DEFAULT, false),

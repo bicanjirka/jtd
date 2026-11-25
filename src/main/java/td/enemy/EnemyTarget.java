@@ -15,6 +15,9 @@ public interface EnemyTarget {
     /** How far along its lap this mob is; for ranking only. */
     int getProgression();
 
+    /** How much of its own path it has walked, from {@code 0} at the start to {@code 1} at the exit. */
+    float pathShare();
+
     /** How far it still has to walk to the exit of its own path, in pixels. */
     double distanceToExit();
 

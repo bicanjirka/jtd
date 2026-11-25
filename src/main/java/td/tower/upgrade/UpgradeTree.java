@@ -1,6 +1,8 @@
 package td.tower.upgrade;
 
+import td.stat.StatModifiers;
 import td.tower.Tower;
+import td.tower.TowerStat;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -20,12 +22,14 @@ import java.util.Set;
  * {@link #offered(Tower, GameWorld)} is the query every caller shares.
  * <p>
  * A node needs its tier open and the nodes it comes after owned. A cluster's members exclude each other; what comes
- * after a member hides while another member is the active one. A paid tier is opened by a node of its own, its
- * unlock ({@link #unlockOf(int)}), so a purchase, a refund and a save treat it as any other.
+ * after a member hides while another member is the active one. A tier above tier 0 that has a price or a bonus has a
+ * node of its own ({@link #tierNodeOf(int)}) that carries its bonus. A paid tier's is its unlock
+ * ({@link #unlockOf(int)}), bought like any other node, so a purchase, a refund and a save treat it as any other. A
+ * free tier's is granted: the tower holds it once its XP opens the tier, and it is never bought, sold or saved.
  */
 public final class UpgradeTree {
 
-    private static final String UNLOCK_PREFIX = "tier.";
+    private static final String TIER_PREFIX = "tier.";
     private static final UpgradeTree NONE = new UpgradeTree(List.of(UpgradeTier.open()), List.of(), List.of(),
             Optional.empty());
 
@@ -33,14 +37,14 @@ public final class UpgradeTree {
     private final List<UpgradeNode> nodes;
     private final List<UpgradeCluster> clusters;
     private final Optional<UpgradeCluster> fork;
-    private final List<Optional<UpgradeNode>> unlocks;
+    private final List<Optional<UpgradeNode>> tierNodes;
     private final Map<String, UpgradeNode> byId;
     private final Map<String, UpgradeCluster> clusterByMember;
     private final Map<String, String> branchMember;
     private final Map<String, Set<String>> mentionedBefore;
 
     /**
-     * Rejects duplicate node ids, a node outside the tiers or before a node it comes after, a cluster member missing
+     * Rejects a bonus on tier 0, duplicate node ids, a node outside the tiers or before a node it comes after, a cluster member missing
      * or in two clusters, a cluster whose members differ in tier or price, and a node that comes
      * after itself through other nodes, on which every walk back along prerequisites would never end.
      */
@@ -49,17 +53,21 @@ public final class UpgradeTree {
         if (tiers.isEmpty() || tiers.getFirst().xp() != 0 || tiers.getFirst().isPaid()) {
             throw new IllegalArgumentException("Tier 0 is open from the start: " + tiers);
         }
+        if (!tiers.getFirst().bonus().equals(StatModifiers.none())) {
+            throw new IllegalArgumentException("Tier 0 is the tower's base and gives no bonus: " + tiers.getFirst());
+        }
         this.tiers = List.copyOf(tiers);
         this.nodes = List.copyOf(nodes);
         this.clusters = List.copyOf(clusters);
         this.fork = fork;
-        List<Optional<UpgradeNode>> unlocking = new ArrayList<>();
+        List<Optional<UpgradeNode>> own = new ArrayList<>();
         for (int tier = 0; tier < tiers.size(); tier++) {
             UpgradeTier gate = tiers.get(tier);
-            unlocking.add(gate.isPaid() ? Optional.of(UpgradeNode.of(UNLOCK_PREFIX + tier, UpgradeTier.nameOf(tier),
-                    gate.unlockPrice()).inTier(tier)) : Optional.empty());
+            boolean hasNode = tier > 0 && (gate.isPaid() || !gate.bonus().equals(StatModifiers.none()));
+            own.add(hasNode ? Optional.of(UpgradeNode.of(TIER_PREFIX + tier, UpgradeTier.nameOf(tier),
+                    gate.unlockPrice()).inTier(tier).withModifiers(gate.bonus())) : Optional.empty());
         }
-        this.unlocks = List.copyOf(unlocking);
+        this.tierNodes = List.copyOf(own);
         Map<String, UpgradeNode> ids = new LinkedHashMap<>();
         for (UpgradeNode node : this.nodes) {
             if (ids.putIfAbsent(node.id(), node) != null) {
@@ -69,11 +77,14 @@ public final class UpgradeTree {
                 throw new IllegalArgumentException("Upgrade node " + node.id() + " sits above the top tier");
             }
         }
-        this.unlocks.forEach(unlock -> unlock.ifPresent(node -> {
-            if (ids.putIfAbsent(node.id(), node) != null) {
-                throw new IllegalArgumentException("Upgrade node id taken by a tier's unlock: " + node.id());
-            }
-        }));
+        for (Optional<UpgradeNode> tierNode : this.tierNodes) {
+            tierNode.filter(node -> ids.containsKey(node.id())).ifPresent(node -> {
+                throw new IllegalArgumentException("Upgrade node id taken by a tier's own node: " + node.id());
+            });
+        }
+        for (int tier = 0; tier < tiers.size(); tier++) {
+            this.unlockOf(tier).ifPresent(unlock -> ids.put(unlock.id(), unlock));
+        }
         this.byId = Map.copyOf(ids);
         this.clusterByMember = clustersByMember(this.allClusters(), ids);
         Set<String> acyclic = new HashSet<>();
@@ -129,7 +140,7 @@ public final class UpgradeTree {
         return new UpgradeTree(next, this.nodes, this.clusters, this.fork);
     }
 
-    /** Every upgrade in declaration order, the fork's sides included, the tiers' unlocks not. */
+    /** Every upgrade in declaration order, the fork's sides included, the tiers' own nodes not. */
     public List<UpgradeNode> nodes() {
         return this.nodes;
     }
@@ -146,9 +157,17 @@ public final class UpgradeTree {
         return this.fork;
     }
 
+    /**
+     * {@code tier}'s own node, which carries its bonus: its unlock when the tier is paid, else granted with its XP.
+     * Empty for tier 0, for a free tier with no bonus and outside the tiers.
+     */
+    public Optional<UpgradeNode> tierNodeOf(int tier) {
+        return tier < 0 || tier >= this.tierNodes.size() ? Optional.empty() : this.tierNodes.get(tier);
+    }
+
     /** The node that pays {@code tier} open; empty for a free tier and outside the tiers. */
     public Optional<UpgradeNode> unlockOf(int tier) {
-        return tier < 0 || tier >= this.unlocks.size() ? Optional.empty() : this.unlocks.get(tier);
+        return this.tierNodeOf(tier).filter(_ -> this.tiers.get(tier).isPaid());
     }
 
     /** Whether {@code tier} needs no paying open, or {@code owned} paid it. */
@@ -159,6 +178,16 @@ public final class UpgradeTree {
     /** Whether {@code node} is a tier's unlock rather than an upgrade. */
     public boolean isUnlock(UpgradeNode node) {
         return this.unlockOf(node.tier()).filter(node::equals).isPresent();
+    }
+
+    /** Whether {@code node} is a free tier's own node, which the tower holds by its XP and never buys. */
+    public boolean isGranted(UpgradeNode node) {
+        return this.tierNodeOf(node.tier()).filter(node::equals).isPresent() && !this.isUnlock(node);
+    }
+
+    /** Whether a tower with {@code xp} that owns {@code owned} holds {@code node}: owns it, or earned its tier. */
+    public boolean isHeld(UpgradeNode node, int xp, UpgradeState owned) {
+        return this.isGranted(node) ? this.tiersEarned(xp, owned) >= node.tier() : owned.owns(node.id());
     }
 
     /** The node with {@code id}, a tier's unlock included; empty for an id outside this tree. */
@@ -217,9 +246,9 @@ public final class UpgradeTree {
 
     /** Whether {@code owned} holds the unlock of every paid tier up to {@code tier}. */
     private boolean unlocksHeld(int tier, UpgradeState owned) {
-        for (int t = 1; t <= tier && t < this.unlocks.size(); t++) {
-            Optional<UpgradeNode> unlock = this.unlocks.get(t);
-            if (unlock.isPresent() && !owned.owns(unlock.get().id())) {
+        for (int t = 1; t <= tier && t < this.tiers.size(); t++) {
+            Optional<UpgradeNode> own = this.tierNodes.get(t);
+            if (own.isPresent() && this.tiers.get(t).isPaid() && !owned.owns(own.get().id())) {
                 return false;
             }
         }
@@ -236,13 +265,48 @@ public final class UpgradeTree {
     }
 
     /**
+     * How many tiers above tier 0 a tower with {@code xp} that owns {@code owned} has opened, counting up from tier I
+     * while each has its XP and its unlock. Only earned XP counts, never playtesting's waiver: a tier's bonus is what
+     * the tower earns.
+     */
+    public int tiersEarned(int xp, UpgradeState owned) {
+        int earned = 0;
+        while (earned + 1 < this.tiers.size() && xp >= this.tiers.get(earned + 1).xp()
+                && this.unlocksHeld(earned + 1, owned)) {
+            earned++;
+        }
+        return earned;
+    }
+
+    /**
+     * Every node whose stats a tower with {@code xp} that owns {@code owned} holds: the own node of each tier it has
+     * earned, then its other owned nodes in purchase order. A paid tier's unlock counts only once its XP is earned
+     * too, so playtesting's waiver never grants a tier's bonus.
+     */
+    public List<UpgradeNode> heldNodes(int xp, UpgradeState owned) {
+        List<UpgradeNode> held = new ArrayList<>();
+        int earned = this.tiersEarned(xp, owned);
+        for (int tier = 1; tier <= earned; tier++) {
+            this.tierNodes.get(tier).ifPresent(held::add);
+        }
+        owned.owned().stream().filter(node -> !this.isUnlock(node)).forEach(held::add);
+        return held;
+    }
+
+    /** What {@link #heldNodes} add to the tower's own stats. */
+    public StatModifiers<TowerStat> heldModifiers(int xp, UpgradeState owned) {
+        return this.heldNodes(xp, owned).stream().map(node -> node.effects().modifiers())
+                .reduce(StatModifiers.none(), StatModifiers::plus);
+    }
+
+    /**
      * What {@code tower} may buy now, money aside: a paid tier's unlock once its XP is met, and every node whose tier is
      * open, whose prerequisites are owned and whose cluster is free, by tier and then declaration order.
      */
     public List<UpgradeNode> offered(Tower tower, GameWorld context) {
         List<UpgradeNode> offered = new ArrayList<>();
         for (int tier = 0; tier < this.tiers.size(); tier++) {
-            Optional<UpgradeNode> unlock = this.unlocks.get(tier);
+            Optional<UpgradeNode> unlock = this.unlockOf(tier);
             if (unlock.isPresent() && this.isOffered(unlock.get(), tower, context)) {
                 offered.add(unlock.get());
             }

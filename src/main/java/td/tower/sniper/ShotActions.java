@@ -22,7 +22,9 @@ public interface ShotActions {
 
     /**
      * Sends the shot that just landed on from {@code from} to another enemy within {@code reachCells} of it, picked at
-     * random, if there is one. The hop deals the shot's damage when it arrives and may crit.
+     * random, if there is one its shot has not struck yet and it has hopped fewer than {@code maxHops} times. The hop
+     * is a shot of its own, with the stats the shot was fired with: shaped for the enemy it flies to, and settled and
+     * reported when it lands.
      */
-    void ricochet(EnemyMob from, float reachCells);
+    void ricochet(EnemyMob from, float reachCells, int maxHops);
 }

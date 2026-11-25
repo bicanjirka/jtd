@@ -11,6 +11,7 @@ import td.tower.TowerFactory;
 import td.tower.TowerStat;
 import td.tower.TowerVisitor;
 import td.tower.ability.AbilityUnits;
+import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
 import td.tower.proc.Proc;
 import td.tower.upgrade.Mechanic;
@@ -147,6 +148,16 @@ public final class FakeTower extends AbstractTower {
     /** Sets the kill count directly, skipping real damage. */
     public void setKillCount(int killCount) {
         this.killCount = killCount;
+    }
+
+    /** Its focus now stands at {@code steps}, as its attacks would have built it. */
+    public void focusOn(int steps) {
+        this.holdFocus(steps);
+    }
+
+    /** What its hit bonuses add to a plain hit on {@code target} fired under {@code focus}. */
+    public HitAdjustment hitOn(EnemyMob target, int focus) {
+        return this.hitAdjustment(target, HitKind.DIRECT, 1f, this.stats(), focus, false);
     }
 
     /** Tells its procs it landed a plain hit on {@code target}, as an attack would. */

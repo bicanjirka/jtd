@@ -5,11 +5,17 @@ import td.term.TermText;
 import td.tower.TowerTerm;
 
 import java.util.Optional;
+import java.util.OptionalDouble;
 
 /** How many times a hit bonus applies to one hit; each record works it out and says it. */
 public sealed interface HitScaling {
 
     float factor(HitContext context);
+
+    /** How many times it applies to an attack fired under {@code focus}, when that is known before a target is picked. */
+    default OptionalDouble beforeTarget(int focus) {
+        return OptionalDouble.empty();
+    }
 
     /** The counter this scaling reads, if it reads one. */
     default Optional<TowerTerm> focusCounter() {
@@ -27,6 +33,11 @@ public sealed interface HitScaling {
         }
 
         @Override
+        public OptionalDouble beforeTarget(int focus) {
+            return OptionalDouble.of(1);
+        }
+
+        @Override
         public TermText around(TermText adjustment) {
             return adjustment;
         }
@@ -41,7 +52,16 @@ public sealed interface HitScaling {
 
         @Override
         public float factor(HitContext context) {
-            return this.max == 0 ? context.focus() : Math.min(context.focus(), this.max);
+            return this.at(context.focus());
+        }
+
+        @Override
+        public OptionalDouble beforeTarget(int focus) {
+            return OptionalDouble.of(this.at(focus));
+        }
+
+        private float at(int focus) {
+            return this.max == 0 ? focus : Math.min(focus, this.max);
         }
 
         @Override

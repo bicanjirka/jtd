@@ -291,6 +291,16 @@ text that describes them speak in cells, so every ability radius is divided by t
 - **Approach:** make `RadiusTarget` take cells and convert once where the mob measures distance, then let the
   compiler find every call site; no save or wave-script format holds a radius.
 
+### The round tables undercount a cheap build once a higher tier's bonus is open
+
+`TowerRounds` picks a round's best defence from builds the bench measured at their own top tier, so a build of tier
+0 still counts without tier I's free bonus in a round whose XP has opened tier I. Harmless while no tower sets a tier
+bonus; once one does, the Rounds tables read early cheap defences too low.
+
+- **Where:** `TowerRounds.best`, `TowerBench.buildsOf` (each build's `xp`).
+- **Approach:** have the bench measure each stage's whole build at every higher tier's XP as well (one more row per
+  stage and tier), and let `best` take the row at the round's open tier.
+
 ### Brittle, Mark, Charge and Unravel are dead content
 
 `BRITTLE`, `MARKED`, `CHARGED` and `UNRAVELED` are effect kinds with rules, sentences, pictograms and tests, but no

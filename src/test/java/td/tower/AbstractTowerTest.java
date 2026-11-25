@@ -20,7 +20,9 @@ import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.StatTerm;
 import td.tower.proc.HitAdjustment;
+import td.tower.proc.HitBonus;
 import td.tower.proc.HitKind;
+import td.tower.proc.HitScaling;
 import td.tower.proc.Proc;
 import td.tower.proc.ProcPayload;
 import td.tower.upgrade.UpgradeBonus;
@@ -579,6 +581,100 @@ class AbstractTowerTest {
 
         assertThat(tower.potencyOfHit(enemy, true)).isEqualTo(AttackProfile.DEFAULT_CRIT_MULTIPLIER + 0.5f);
         assertThat(tower.potencyOfHit(enemy, false)).isEqualTo(1f);
+    }
+
+    @Test
+    void aTiersBonusIsHeldFromTheXpThatOpensItAndSellingPaysNothingForIt() {
+        UpgradeNode node = UpgradeNode.of("veteran", "Veteran", 10).inTier(1);
+        UpgradeTree tree = UpgradeTree.of(node).withTiers(List.of(UpgradeTier.open(),
+                UpgradeTier.gated(150, 0).withBonus(TowerModifiers.range(1f))));
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, tree);
+        this.context.towers().add(tower);
+        float base = tower.stats().range();
+        int sellBare = tower.getSellPrice();
+        tower.earnXp(149);
+        float oneShort = tower.stats().range();
+
+        tower.earnXp(1);
+
+        assertThat(oneShort).isEqualTo(base);
+        assertThat(tower.stats().range()).isEqualTo(base + 1f);
+        assertThat(tower.getSellPrice()).isEqualTo(sellBare);
+    }
+
+    @Test
+    void aBonusThatGrowsWithFocusIsInThePublishedStatsAsTheFocusStandsAndNoHitAddsItAgain() {
+        this.context.economy().startEconomy(100, 5);
+        UpgradeNode focused = UpgradeNode.of("focused", "Focused", 1).withHitBonus(HitBonus.per(
+                new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 0), HitAdjustment.critChance(0.1f)
+                        .plus(HitAdjustment.range(0.5f))));
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.of(List.of(focused)));
+        tower.buyUpgrade(focused);
+        TowerStats unfocused = tower.stats();
+
+        tower.focusOn(3);
+        TowerStats built = tower.stats();
+        HitAdjustment onAHit = tower.hitOn(FakeEnemyMob.at(0, 0), 3);
+        tower.focusOn(1);
+        TowerStats faded = tower.stats();
+
+        assertThat(built.critChance()).isCloseTo(unfocused.critChance() + 0.3f, within(1e-6f));
+        assertThat(built.range()).isCloseTo(unfocused.range() + 1.5f, within(1e-6f));
+        assertThat(faded.critChance()).isCloseTo(unfocused.critChance() + 0.1f, within(1e-6f));
+        assertThat(onAHit).isEqualTo(HitAdjustment.none());
+    }
+
+    @Test
+    void aFreeTiersOwnNodeIsNeverBoughtOrOwnedSoNoSaveStoresIt() {
+        UpgradeNode node = UpgradeNode.of("veteran", "Veteran", 10).inTier(1);
+        UpgradeTree tree = UpgradeTree.of(node).withTiers(List.of(UpgradeTier.open(),
+                UpgradeTier.gated(150, 0).withBonus(TowerModifiers.range(1f))));
+        this.context.economy().startEconomy(100, 5);
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, tree);
+        this.context.towers().add(tower);
+        UpgradeNode granted = tree.tierNodeOf(1).orElseThrow();
+        tower.earnXp(150);
+        int credits = this.context.economy().state().credits();
+
+        boolean bought = tower.buyUpgrade(granted) || tower.buyPath(granted);
+
+        assertThat(bought).isFalse();
+        assertThat(tower.upgrades().owned()).isEmpty();
+        assertThat(this.context.economy().state().credits()).isEqualTo(credits);
+        assertThat(tree.isHeld(granted, tower.experience().xp(), tower.upgrades())).isTrue();
+    }
+
+    @Test
+    void aPaidTiersBonusWaitsForItsUnlockAsWellAsItsXp() {
+        UpgradeNode node = UpgradeNode.of("veteran", "Veteran", 10).inTier(1);
+        UpgradeTree tree = UpgradeTree.of(node).withTiers(List.of(UpgradeTier.open(),
+                UpgradeTier.gated(0, 25).withBonus(TowerModifiers.range(1f))));
+        this.context.economy().startEconomy(100, 5);
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, tree);
+        this.context.towers().add(tower);
+        float base = tower.stats().range();
+
+        tower.buyUpgrade(tree.unlockOf(1).orElseThrow());
+
+        assertThat(tower.stats().range()).isEqualTo(base + 1f);
+    }
+
+    @Test
+    void theInfoPanelShowsATiersBonusApartFromTheStatsBase() {
+        UpgradeNode node = UpgradeNode.of("veteran", "Veteran", 10).inTier(1);
+        UpgradeTree tree = UpgradeTree.of(node).withTiers(List.of(UpgradeTier.open(),
+                UpgradeTier.gated(150, 0).withBonus(TowerModifiers.range(1f))));
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, tree);
+        this.context.towers().add(tower);
+        tower.earnXp(150);
+
+        TowerStatLine range = tower.inspect().stats().getFirst();
+
+        assertThat(range.stat()).isEqualTo(TowerStat.RANGE);
+        assertThat(range.base()).isEqualTo(tower.baseRange());
+        assertThat(range.current()).isEqualTo(tower.baseRange() + 1f);
+        assertThat(range.breakdown().added()).extracting(part -> part.source().plain())
+                .containsExactly(UpgradeTier.nameOf(1));
     }
 
     @Test

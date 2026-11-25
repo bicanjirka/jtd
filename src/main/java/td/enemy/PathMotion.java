@@ -95,6 +95,12 @@ final class PathMotion {
                 .orElse(0);
     }
 
+    /** How much of the lap it has walked; none for a mob that holds where it stands. */
+    float share() {
+        return this.arcLengthPath.map(path -> (float) Math.clamp(this.distanceIntoLap / path.totalLength(), 0.0, 1.0))
+                .orElse(0f);
+    }
+
     /** How far it still has to walk to its path's end; none for a mob that holds where it stands. */
     double distanceToEnd() {
         return this.arcLengthPath.map(path -> Math.max(0.0, path.totalLength() - this.distanceIntoLap)).orElse(0.0);

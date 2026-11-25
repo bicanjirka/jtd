@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import td.fixtures.WorldFixtures;
 import td.tower.TowerFactory;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeTree;
 import td.wave.Point;
 
 import java.util.List;
@@ -61,6 +62,25 @@ class TowerBenchTest {
                 assertThat(labels).as(build.label()).contains(build.versus());
                 assertThat(build.owned().contains(build.node())).as(build.label()).isEqualTo(owns);
                 assertThat(against.owned().contains(build.node())).as(build.label()).isEqualTo(!owns);
+            }
+        }
+    }
+
+    @Test
+    void aBuildStandsAtTheXpOfItsTierAsDoesTheBuildItIsSetAgainst() {
+        for (TowerFactory.Type type : TowerFactory.Type.values()) {
+            List<TowerBench.Build> builds = TowerBench.buildsOf(type);
+            UpgradeTree tree = TowerBench.treeOf(type);
+
+            for (TowerBench.Build build : builds) {
+                if (build.versus().isEmpty() || build.role().equals(TowerBench.WITHOUT_AT_TOP)) {
+                    continue;
+                }
+                int tier = tree.node(build.node()).orElseThrow().tier();
+                TowerBench.Build against = builds.stream()
+                        .filter(other -> other.label().equals(build.versus())).findFirst().orElseThrow();
+                assertThat(build.xp()).as(build.label()).isEqualTo(tree.tiers().get(tier).xp());
+                assertThat(against.xp()).as(build.label()).isEqualTo(build.xp());
             }
         }
     }

@@ -382,10 +382,16 @@ final class UpgradeTreePainter {
         float inset = round ? 8.5f : 6f;
         float size = spot.size() - 2 * inset;
         Color ink = inkOf(look, tower);
-        this.paintGlyph(g, node, spot.x() - size / 2, spot.y() - size / 2, size, ink,
-                look == Look.SWITCHABLE ? HATCH_FILL : fill);
+        boolean tierNode = this.tree.tierNodeOf(node.tier()).filter(node::equals).isPresent();
+        if (tierNode) {
+            g.setColor(ink);
+            centred(g, UpgradeTier.numeralOf(node.tier()), NUMERAL_FONT, spot.x(), spot.y() + 5.5f);
+        } else {
+            this.paintGlyph(g, node, spot.x() - size / 2, spot.y() - size / 2, size, ink,
+                    look == Look.SWITCHABLE ? HATCH_FILL : fill);
+        }
         IconFace face = TermLooks.faceOfLine(this.type, this.tree.artNodeOf(node), this.tree.levelOf(node));
-        if (!face.numeral().isEmpty()) {
+        if (!tierNode && !face.numeral().isEmpty()) {
             g.setColor(ink);
             g.setFont(LINE_NUMERAL_FONT);
             float right = spot.x() + spot.size() / 2 - (round ? 8f : 4f);
@@ -412,7 +418,9 @@ final class UpgradeTreePainter {
         if (state.unused()) {
             CashMark.paint(g, spot.x() + spot.size() / 2 - 1f, spot.y() - spot.size() / 2 + 1f, CASH_BADGE);
         }
-        this.paintTag(node, g, spot, look);
+        if (look == Look.OWNED || node.price() > 0) {
+            this.paintTag(node, g, spot, look);
+        }
     }
 
     /** A shared slot before its cluster's pick: a dashed outline holding a question mark. */

@@ -143,7 +143,7 @@ keeps the seam honest.
 - The Upgrades panel paints the whole tree itself (`UpgradeTreePainter`) at the places `UpgradeTreeLayout` takes
   from the tower's hand-made `UpgradeTreePlans` row, in pixels: never scaled, never scrolled; the window's minimum
   height keeps it whole. Every tower has a row, and it
-  places every node once; nothing in the panel is special to one tower. Two nodes share a slot only when they come
+  places every node once (a tier's own node only once its tower is retuned, first in the tier's bottom row); nothing in the panel is special to one tower. Two nodes share a slot only when they come
   after different members of one cluster: the slot shows the picked or hovered member's node, else stands empty. A
   node's look is an `UpgradeNodeState`, and
   its hover is a spot tooltip (`watchSpots`) of the node and what a click on it does (`UpgradeHover`).

@@ -3,7 +3,8 @@ package td.tower.targeting;
 /** Whom a tower aims at instead of its own choice, as a node sets it. */
 public enum TargetPriority {
     HIGHEST_RANK("highest rank"), MOST_HEALTH("most health"),
-    STOPPED_FIRST("frozen or dazed first"), MOST_NEIGHBOURS("most neighbours");
+    STOPPED_FIRST("frozen or dazed first"), MOST_NEIGHBOURS("most neighbours"),
+    EXECUTABLE_FIRST("executable first"), HUNTED_FIRST("Elites and Bosses first");
 
     /** How near another enemy stands to count as a neighbour, about as far as a blast reaches. */
     private static final float NEIGHBOUR_CELLS = 1.5f;
@@ -14,13 +15,15 @@ public enum TargetPriority {
         this.label = label;
     }
 
-    /** The selector that picks this way on a board of {@code cellSize} pixels a cell. */
-    public TargetSelector selector(float cellSize) {
+    /** The selector that picks this way for a tower that tells it {@code pick}. */
+    public TargetSelector selector(PickContext pick) {
         return switch (this) {
             case HIGHEST_RANK -> new HighestRankSelector();
             case MOST_HEALTH -> new HighestHealthSelector();
             case STOPPED_FIRST -> PreferringSelector.stoppedFirst(new HighestHealthSelector());
-            case MOST_NEIGHBOURS -> new MostNeighboursSelector(NEIGHBOUR_CELLS * cellSize);
+            case MOST_NEIGHBOURS -> new MostNeighboursSelector(NEIGHBOUR_CELLS * pick.cellSize());
+            case EXECUTABLE_FIRST -> new ExecutionerSelector(ExecuteThreshold.EXECUTIONER, pick.critHit());
+            case HUNTED_FIRST -> new HuntedFirstSelector();
         };
     }
 

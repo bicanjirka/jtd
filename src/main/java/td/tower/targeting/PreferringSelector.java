@@ -2,6 +2,7 @@ package td.tower.targeting;
 
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
+import td.wave.FinishLine;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,12 +23,14 @@ public final class PreferringSelector implements TargetSelector {
     }
 
     /**
-     * A tower that picks one target picks the enemy carrying a priority while it is in range, else one that taunts,
-     * else what {@code inner} picks: the player's priority beats a taunt.
+     * A tower that picks one target picks the enemy carrying a priority while it is in range, else one past the
+     * {@link FinishLine}, about to leak, else one that taunts, else what {@code inner} picks: the player's priority
+     * beats a leak, and a leak beats a taunt.
      */
     public static PreferringSelector priority(TargetSelector inner) {
         return new PreferringSelector(enemy -> enemy.hasEffect(EffectKind.PRIORITY),
-                new PreferringSelector(EnemyMob::taunts, inner));
+                new PreferringSelector(enemy -> FinishLine.isPassedAt(enemy.pathShare()),
+                        new PreferringSelector(EnemyMob::taunts, inner)));
     }
 
     /** Picks among the enemies that give their allies an aura first. */

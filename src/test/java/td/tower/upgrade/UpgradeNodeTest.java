@@ -70,11 +70,11 @@ class UpgradeNodeTest {
     @Test
     void anEmissionRowSaysWhatNearbyTowersGet() {
         UpgradeNode node = UpgradeNode.of("id", "Keen Edge", 10)
-                .withEmission(TowerModifiers.critMultiplier(0.5f));
+                .withEmission(TowerModifiers.critChance(0.5f));
 
         assertThat(node.effects().statRows()).singleElement().satisfies(bonus -> {
             assertThat(bonus.given()).isTrue();
-            assertThat(bonus.stat().changeText(bonus.change()).plain()).isEqualTo("Crit damage +50%");
+            assertThat(bonus.stat().changeText(bonus.change()).plain()).isEqualTo("Crit chance +50%");
         });
     }
 

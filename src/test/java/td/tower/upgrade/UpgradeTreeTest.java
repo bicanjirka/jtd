@@ -5,7 +5,10 @@ import td.fixtures.FakeTower;
 import td.fixtures.TierTrees;
 import td.fixtures.WorldFixtures;
 import td.tower.Tower;
+import td.tower.TowerModifiers;
 import td.util.GameWorld;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -121,6 +124,14 @@ class UpgradeTreeTest {
 
         assertThatThrownBy(() -> UpgradeTree.of(high)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("high");
+    }
+
+    @Test
+    void aBonusOnTierZeroIsRejected() {
+        UpgradeTier based = new UpgradeTier(0, 0, TowerModifiers.damage(1f));
+
+        assertThatThrownBy(() -> UpgradeTree.of(A1).withTiers(List.of(based, UpgradeTier.gated(60, 0))))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

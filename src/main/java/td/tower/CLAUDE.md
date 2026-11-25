@@ -56,7 +56,12 @@
   a tower picks per action, never per tower kind. `NearestSelector` is centred on any point
   (missiles retarget around themselves). `RandomSelector` takes a `RandomSource`. A tower that picks
   one target wraps its selector in `PreferringSelector.priority`, so an enemy under `PRIORITY` wins
-  while in range; the preference is enemy state, never a player choice.
+  while in range, then one past `td.wave.FinishLine`, then a taunter; the preference is enemy state, never a player
+  choice. A `TargetPriority` picks from what the tower tells it in a `PickContext`.
+- A hit bonus that holds on every hit and scales by focus alone is standing (`HitBonus.standing`): it is part of the
+  tower's stats at the focus the tower holds (`holdFocus`), never folded into a hit, so the Info pane shows it live.
+  A hit bonus's range (`HitAdjustment.range`) picks and reaches the target, so only a standing bonus may add it
+  (`HitBonus` rejects any other).
 - `InWedgeTargetQuery` tests the *current* heading from `TurretAim.currentRadians()`, the same
   angle the head is drawn at. It is deliberately not built on `SonarSweep`.
 
@@ -65,7 +70,8 @@
 - A tower's stats are `TowerStat` keys resolved by the shared `td.stat` formula into one immutable
   `TowerStats` (correlated fields, read by the tick thread). Read them through `stats()` or the
   conveniences (`damageCurrent()`, `rangeReal()`, `rangeReal2()`, `attackRate()`).
-- Layers: base, owned nodes (`UpgradeState.totalModifiers`), held statuses, then received
+- Layers: base, held nodes (`UpgradeTree.heldModifiers`: owned ones and earned tiers'), held statuses, standing hit
+  bonuses at the focus held, then received
   emissions (`buffFor`), then disruption × `DISRUPTION_TAKEN`. An aura never receives an emission.
 - What a tower receives is **derived, never stored**: a fold of every tower's `buffFor(this)`.
   `recalculateStats()` runs on every tower whenever the roster or any upgrade changes, and in the
@@ -122,9 +128,14 @@
 
 ## Upgrade tree
 
-- A tree is tiers (`UpgradeTier`: the XP that opens it and an unlock price; `standard()` for every tower). A paid
-  tier's unlock is a node the tree makes (`tier.N`), bought like any other and on every path that crosses it.
-  `xpMet`/`isOpen` are the one check for a tier: never compare XP to a tier's number elsewhere.
+- A tree is tiers (`UpgradeTier`: the XP that opens it, an unlock price and a `bonus` of any stats; `standard()` for
+  every tower; tier 0 has no bonus). A tier above 0 with a price or a bonus has its own node, which the tree makes
+  (`tierNodeOf`, `tier.N`) and which carries the bonus. A paid tier's is its unlock, bought like any other and on
+  every path that crosses it. A free tier's is granted (`isGranted`): held from its XP, never offered, owned, sold or
+  saved. `xpMet`/`isOpen` are the one check for a tier: never compare XP to a tier's number elsewhere.
+- A tier's node counts from `tiersEarned` (earned XP and held unlocks, never playtesting's waiver): `heldNodes` is the
+  one list of what a tower's own stats, the info pane's parts and the node previews read. It is never refunded.
+  `earnXp` republishes every tower's stats when it opens a tier.
 - Build a node with `UpgradeNode.of(id, name, PRICE)`, then `inTier(n)` and `after(previous)` for a follow-up in the
   same tier or a later one. A node with nothing before it and nothing after is an orphan. A tower's range upgrades
   are its own nodes under the shared `RangeNodes` ids.

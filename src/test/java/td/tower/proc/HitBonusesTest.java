@@ -10,6 +10,7 @@ import td.fixtures.FakeEnemyMob;
 import td.stat.DisruptionPenalty;
 import td.stat.StatModifiers;
 import td.tower.TowerBaseStats;
+import td.tower.TowerStat;
 import td.tower.TowerStats;
 import td.tower.TowerTerm;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 class HitBonusesTest {
@@ -87,5 +89,40 @@ class HitBonusesTest {
         target.applyEffect(Effect.vulnerable(3, 100, DamageSink.none()));
 
         assertThat(toll.adjustmentFor(hit(target)).damage()).isCloseTo(0.3f, within(1e-6f));
+    }
+
+    @Test
+    void aBonusThatGrowsWithFocusAloneIsAStatChangePerStepUpToItsMax() {
+        HitAdjustment step = HitAdjustment.range(0.5f).plus(HitAdjustment.critChance(0.1f));
+        HitBonus perStack = HitBonus.per(new HitScaling.PerFocus(TowerTerm.STEADY_AIM, 3), step);
+
+        StatModifiers<TowerStat> none = perStack.standingAt(0);
+        StatModifiers<TowerStat> two = perStack.standingAt(2);
+        StatModifiers<TowerStat> pastMax = perStack.standingAt(9);
+
+        assertThat(perStack.standing()).isTrue();
+        assertThat(none).isEqualTo(StatModifiers.none());
+        assertThat(two).isEqualTo(step.times(2f).asModifiers());
+        assertThat(pastMax).isEqualTo(step.times(3f).asModifiers());
+        assertThat(pastMax.get(TowerStat.RANGE).flat()).isEqualTo(1.5f);
+    }
+
+    @Test
+    void aBonusThatWaitsOnTheTargetOrHoldsOnceIsNoStatChange() {
+        HitBonus elites = HitBonus.when(new HitCondition.TargetRankAtLeast(Rank.ELITE), HitAdjustment.critChance(0.5f));
+        HitBonus once = HitBonus.per(new HitScaling.Once(), HitAdjustment.critChance(0.5f));
+
+        assertThat(elites.standing()).isFalse();
+        assertThat(once.standing()).isFalse();
+    }
+
+    @Test
+    void aRangeBonusThatWaitsOnTheTargetIsRejected() {
+        assertThatThrownBy(() -> HitBonus.when(new HitCondition.TargetRankAtLeast(Rank.ELITE), HitAdjustment.range(1f)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> HitBonus.per(new HitScaling.PerRangeShare(), HitAdjustment.range(1f)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> HitBonus.per(new HitScaling.Once(), HitAdjustment.range(1f)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

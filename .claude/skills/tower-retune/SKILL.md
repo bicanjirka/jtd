@@ -54,12 +54,15 @@ power) are answered with a bracket of two or three bench runs, never guessed: "b
   factors (jam, Vulnerable). A damage or range percent left in a tree (`damagePercent`, `rangePercent`, `*Times`)
   is converted to a flat amount in that tower's retune. Any other move between relative and absolute gets discussed
   with the user first.
-- **Per-tier stats** are a tower's own flat bonuses, one set for each tier I, II and III. The tower gets them free
-  when the tier opens by XP, and they count in every state at and above that tier. They are tuned in that tier's
-  step, like any other knob: the user names which stats grow. Their source is still open, to be settled by trying
-  both in the Sniper's `tier1` step: **predefined** per-tier values, or a tier's **existing stat nodes turned into
-  its per-tier stats** (the node leaves the tree, its effect comes free with the tier). Measure both and show the
-  tier's panel for each before the user picks; the pick holds for every later tower and replaces this sentence.
+- **Per-tier stats** are a tower's own flat bonuses, one set for each tier I, II and III, authored as the tier's
+  bonus (`UpgradeTier.gated(xp, 0).withBonus(...)` in the tower's `withTiers`). The tree turns each into the tier's
+  **stat node** (`tier.N`, named "Tier N", drawn with its numeral): it carries any number of stats with any values,
+  has no price, and unlocks by itself when the tier opens by XP, so it counts in every state at and above that
+  tier and is never bought, sold, refunded or saved. It replaces the tier's existing stat nodes: in that tier's step
+  the tier's plain stat nodes leave the tree and their effect moves into the tier's bonus, so the node count stays
+  about the same. The user names which stats grow and by how much. In the same step, place the stat node first in
+  the tier's bottom row of `UpgradeTreePlans` (`node("tier.N", 0f)`), shifting that row right; until a tower's tier
+  is retuned its plan leaves the node out and the panel doesn't show it.
 - **XP gates stay as they are.** The user set them and doesn't retune them per tower. TowerReport's Rounds tables are
   information; mention a `DOMINANT` or `weak` round only as an open item. Touch a gate (`UpgradeTree.withTiers`) only
   when the user asks, then state it as "XP n = round r" from one `WavePowerReport` run.
