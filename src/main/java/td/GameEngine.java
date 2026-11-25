@@ -483,7 +483,7 @@ public class GameEngine {
                 .toList();
         List<MagazineLoad> magazines = built.stream()
                 .flatMap(mortar -> MortarTower.magazineOf(mortar).stream()
-                        .map(magazine -> new MagazineLoad(cellOf(board, mortar), magazine.shells())))
+                        .map(magazine -> new MagazineLoad(cellOf(board, mortar), magazine.shells(), magazine.lastFired())))
                 .toList();
         RoundState state = this.round;
         return Optional.of(GameSave.of(this.levelName, state.wave() + 1, this.gameWorld.economy().state(), towers)
@@ -576,7 +576,7 @@ public class GameEngine {
     /** Loads a rebuilt Mortar's magazine as it was saved; names the magazine if it could not be. */
     private Optional<String> reload(MagazineLoad saved) {
         boolean loaded = saved.shells().size() == Magazine.SIZE && towerOn(this.gameWorld.cells(), saved.mortar())
-                .filter(tower -> MortarTower.loadMagazine(tower, new Magazine(saved.shells())))
+                .filter(tower -> MortarTower.loadMagazine(tower, new Magazine(saved.shells(), saved.lastFired())))
                 .isPresent();
         return loaded ? Optional.empty()
                 : Optional.of("Magazine of the Mortar at " + saved.mortar().x() + "," + saved.mortar().y());

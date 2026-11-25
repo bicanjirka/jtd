@@ -5,7 +5,8 @@ package td.tower.mortar;
  *
  * @param extraCells    cells its blast, and its ground with it, reach further
  * @param extraTicks    ticks its ground lasts longer
- * @param normalsCarry  the share of a pulse of its ground that a Normal shell's blast puts on what it reaches; 0 for none
+ * @param normalsCarry  the share of a pulse of its ground that the blast of a Normal right behind it puts on what it
+ *                      reaches; 0 for none
  */
 public record PayloadSpec(float extraCells, int extraTicks, float normalsCarry) {
 

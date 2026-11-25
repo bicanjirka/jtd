@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -31,6 +32,29 @@ class MagazineTest {
         assertThat(chances.get(ShellKind.HEAVY)).isCloseTo((float) spec.weightOf(ShellKind.HEAVY) / total,
                 within(1e-3f));
         assertThat(chances.get(ShellKind.NAPALM)).isZero();
+    }
+
+    @Test
+    void aNormalHeldRightBehindAPayloadCarriesItAndTheFrontOneIsBehindTheShellFiredLast() {
+        Magazine magazine = new Magazine(List.of(ShellKind.NORMAL, ShellKind.TAR, ShellKind.NORMAL, ShellKind.NORMAL,
+                ShellKind.HEAVY, ShellKind.NORMAL), Optional.of(ShellKind.NAPALM));
+
+        List<Optional<ShellKind>> carried = magazine.held().stream().map(HeldShell::carried).toList();
+
+        assertThat(carried).containsExactly(Optional.of(ShellKind.NAPALM), Optional.empty(), Optional.of(ShellKind.TAR),
+                Optional.empty(), Optional.empty(), Optional.empty());
+    }
+
+    @Test
+    void firingRemembersTheLastShellItFired() {
+        Magazine magazine = new Magazine(List.of(ShellKind.NORMAL, ShellKind.CRYO, ShellKind.NORMAL, ShellKind.NORMAL,
+                ShellKind.NORMAL, ShellKind.NORMAL, ShellKind.NORMAL, ShellKind.NORMAL, ShellKind.NORMAL, ShellKind.NORMAL));
+        MagazineSpec cryo = MagazineSpec.standard().withWeight(ShellKind.CRYO, 1);
+
+        Magazine fired = magazine.fired(2, cryo, LAST_KIND);
+
+        assertThat(fired.lastFired()).hasValue(ShellKind.CRYO);
+        assertThat(fired.held().getFirst().carried()).hasValue(ShellKind.CRYO);
     }
 
     @Test

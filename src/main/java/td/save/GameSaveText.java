@@ -31,15 +31,15 @@ import java.util.Set;
  * bonus 0 40
  * damage 1250000 480000
  * tower SNIPER 6 11 400 123456 40 paid=120 xp+=0.25 sniper.head.x.1 sniper.head.x.2
- * magazine 3 5 NORMAL HEAVY NORMAL NAPALM NORMAL NORMAL HEAVY NORMAL NORMAL NORMAL
+ * magazine 3 5 fired=TAR NORMAL HEAVY NORMAL NAPALM NORMAL NORMAL HEAVY NORMAL NORMAL NORMAL
  * </pre>
  * The format line names the text's version: a save of another version is refused rather than read wrong, since the
  * upgrades a tower owns are kept by id and ids change between versions. The economy line is credits, score and lives. {@code leaked} lists the 0-based rounds an enemy escaped, and a
  * {@code bonus} line is a round and the clear bonus it paid. {@code damage} is the physical and magic damage landed. A
  * tower line is its type, cell, XP, damage dealt, kills, then {@code key=value} facts (what it was bought for,
  * {@code unused=tower} for a tower no wave has run with, the fraction of XP carried), then the upgrades it owns in the
- * order bought, a {@code +} before each one bought since the last wave ran. A {@code magazine} line is the cell of a Mortar and
- * the shells it had ready, front first. Every line but format, level, wave and economy may
+ * order bought, a {@code +} before each one bought since the last wave ran. A {@code magazine} line is the cell of a Mortar,
+ * the shell it fired last when it has fired one, and the shells it had ready, front first. Every line but format, level, wave and economy may
  * be left out.
  */
 public final class GameSaveText {
@@ -91,6 +91,7 @@ public final class GameSaveText {
         }
         for (MagazineLoad magazine : save.magazines()) {
             text.append("magazine ").append(magazine.mortar().x()).append(' ').append(magazine.mortar().y());
+            magazine.lastFired().ifPresent(fired -> text.append(" fired=").append(fired.name()));
             magazine.shells().forEach(shell -> text.append(' ').append(shell.name()));
             text.append('\n');
         }
@@ -177,15 +178,23 @@ public final class GameSaveText {
 
     private static Optional<MagazineLoad> magazine(String[] words) {
         List<ShellKind> shells = new ArrayList<>();
+        Optional<ShellKind> lastFired = Optional.empty();
         for (String word : List.of(words).subList(3, words.length)) {
-            Optional<ShellKind> kind = Arrays.stream(ShellKind.values()).filter(each -> each.name().equals(word))
+            boolean fired = word.startsWith("fired=");
+            String name = fired ? word.substring("fired=".length()) : word;
+            Optional<ShellKind> kind = Arrays.stream(ShellKind.values()).filter(each -> each.name().equals(name))
                     .findFirst();
             if (kind.isEmpty()) {
                 return Optional.empty();
             }
-            shells.add(kind.get());
+            if (fired) {
+                lastFired = kind;
+            } else {
+                shells.add(kind.get());
+            }
         }
-        return Optional.of(new MagazineLoad(new Point(Integer.parseInt(words[1]), Integer.parseInt(words[2])), shells));
+        return Optional.of(new MagazineLoad(new Point(Integer.parseInt(words[1]), Integer.parseInt(words[2])), shells,
+                lastFired));
     }
 
     private static Optional<TowerSave> tower(String[] words) {

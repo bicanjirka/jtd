@@ -9,7 +9,6 @@ import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
-import td.projectile.ShellLook;
 import td.stat.StatPart;
 import td.term.TermNumbers;
 import td.term.TermText;
@@ -23,6 +22,7 @@ import td.tower.mortar.DeepCrackMechanic;
 import td.tower.mortar.FlareMechanic;
 import td.tower.mortar.FusionMechanic;
 import td.tower.mortar.HeavyRider;
+import td.tower.mortar.HeldShell;
 import td.tower.mortar.LastingMixMechanic;
 import td.tower.mortar.Magazine;
 import td.tower.mortar.MagazineSpec;
@@ -320,12 +320,13 @@ public final class MortarTower extends AbstractTower {
      */
     private void load(EnemyMob target, MortarSpec spec) {
         VolleySpec volley = spec.volley();
-        List<ShellKind> front = this.magazine.front(volley.shells());
+        List<HeldShell> held = this.magazine.held();
+        List<HeldShell> front = held.subList(0, Math.min(volley.shells(), held.size()));
         this.magazine = this.magazine.fired(front.size(), spec.magazine(), this.context.random());
-        List<ShellKind> loaded = volley.sequence(front);
+        List<HeldShell> loaded = volley.sequence(front).stream().map(shell -> asFired(shell, spec)).toList();
         List<Optional<Vec2>> laid = this.laidAlongThePath(target, volley, loaded.size());
-        ShellKind first = loaded.getFirst();
-        this.fireAt(first, laid.getFirst().orElseGet(() -> this.aimPoint(target, spec, first)), spec);
+        HeldShell first = loaded.getFirst();
+        this.fireAt(first, laid.getFirst().orElseGet(() -> this.aimPoint(target, spec, first.kind())));
         for (int i = 1; i < loaded.size(); i++) {
             this.volleyLeft.add(new VolleyShell(loaded.get(i), laid.get(i), this.tickNow() + i * volley.gapTicks()));
         }
@@ -357,9 +358,9 @@ public final class MortarTower extends AbstractTower {
     private void fireVolleyLeft(MortarSpec spec) {
         while (!this.volleyLeft.isEmpty() && this.volleyLeft.getFirst().firesAt() <= this.tickNow()) {
             VolleyShell next = this.volleyLeft.removeFirst();
-            next.laidAt().ifPresentOrElse(laid -> this.fireAt(next.kind(), laid, spec), () -> {
+            next.laidAt().ifPresentOrElse(laid -> this.fireAt(next.shell(), laid), () -> {
                 this.target = this.target.filter(enemy -> !enemy.isDead()).or(() -> this.findTarget(spec));
-                this.target.ifPresent(enemy -> this.fireAt(next.kind(), this.aimPoint(enemy, spec, next.kind()), spec));
+                this.target.ifPresent(enemy -> this.fireAt(next.shell(), this.aimPoint(enemy, spec, next.shell().kind())));
             });
         }
     }
@@ -374,22 +375,29 @@ public final class MortarTower extends AbstractTower {
     private record ShellProfiles(TowerStats stats, List<MortarMechanic> owned, List<ShellProfile> profiles) {
     }
 
-    /** A shell of a volley still to fire: its kind, where it is laid with Carpet Bombing, and the tick it fires. */
-    private record VolleyShell(ShellKind kind, Optional<Vec2> laidAt, int firesAt) {
+    /** A shell of a volley still to fire: the shell, where it is laid with Carpet Bombing, and the tick it fires. */
+    private record VolleyShell(HeldShell shell, Optional<Vec2> laidAt, int firesAt) {
     }
 
-    /** Fires a shell of {@code kind} at {@code aim}; a Normal that carries a payload with Thick Mix shows it. */
-    private void fireAt(ShellKind kind, Vec2 aim, MortarSpec spec) {
-        Shell shell = new Shell(kind, this.beginShot());
+    /** {@code shell} as this Mortar fires it: a Normal carries the payload in front of it only with Thick Mix. */
+    private static HeldShell asFired(HeldShell shell, MortarSpec spec) {
+        return spec.payload().normalsCarry() > 0f ? shell : shell.plain();
+    }
+
+    /** Fires {@code held} at {@code aim}; a Normal that carries a payload shows it. */
+    private void fireAt(HeldShell held, Vec2 aim) {
+        Shell shell = new Shell(held.kind(), held.carried(), this.beginShot());
         this.firedAt = OptionalInt.of(this.tickNow());
-        Optional<ShellLook> carried = kind == ShellKind.NORMAL ? carriedPayload(spec).map(ShellKind::look)
-                : Optional.empty();
         this.context.projectiles().add(new CannonballProjectile(this.centerX, this.centerY, aim.x(), aim.y(),
-                this.shellStats(shell), kind.look(), carried, (x, y, gameTime) -> this.onImpact(x, y, shell, gameTime)));
+                this.shellStats(shell), held.kind().look(), held.carried().map(ShellKind::look),
+                (x, y, gameTime) -> this.onImpact(x, y, shell, gameTime)));
     }
 
-    /** What was fired: the kind of shell, and the stats it lands with however the Mortar changes meanwhile. */
-    private record Shell(ShellKind kind, TowerStats stats) {
+    /**
+     * What was fired: the kind of shell, the payload it carries, and the stats it lands with however the Mortar changes
+     * meanwhile.
+     */
+    private record Shell(ShellKind kind, Optional<ShellKind> carried, TowerStats stats) {
     }
 
     /**
@@ -455,9 +463,7 @@ public final class MortarTower extends AbstractTower {
             }
             this.report(enemy, HitKind.BLAST, hit.critical(), enemy.isDead());
             this.crack(enemy, spec);
-            if (kind == ShellKind.NORMAL) {
-                this.carryPayload(enemy, spec);
-            }
+            this.carryPayload(enemy, shell, spec);
             if (kind == ShellKind.HEAVY) {
                 this.rideHeavy(enemy, spec.heavy(), inCore, stats);
             }
@@ -468,20 +474,12 @@ public final class MortarTower extends AbstractTower {
         this.leaveGround(x, y, shell, blast, spec);
     }
 
-    /** With Thick Mix, a Normal's blast puts a share of a pulse of the payload's ground on what it reaches. */
-    private void carryPayload(EnemyMob enemy, MortarSpec spec) {
+    /** A Normal that carries a payload puts a share of a pulse of that payload's ground on what its blast reaches. */
+    private void carryPayload(EnemyMob enemy, Shell shell, MortarSpec spec) {
         float share = spec.payload().normalsCarry();
-        carriedPayload(spec).flatMap(ShellKind::ground)
+        shell.carried().flatMap(ShellKind::ground)
                 .ifPresent(ground -> ZoneEffects.touch(ground.kind(), Math.round(ground.pulse() * share),
                         this.zoneOwner, enemy));
-    }
-
-    /** The payload a Normal shell carries with Thick Mix: the one the Mortar loads, if it carries any. */
-    private static Optional<ShellKind> carriedPayload(MortarSpec spec) {
-        if (spec.payload().normalsCarry() <= 0f) {
-            return Optional.empty();
-        }
-        return Arrays.stream(ShellKind.values()).filter(ShellKind::isPayload).filter(spec.magazine()::owns).findFirst();
     }
 
     private void crack(EnemyMob enemy, MortarSpec spec) {
@@ -610,7 +608,9 @@ public final class MortarTower extends AbstractTower {
 
     /** Its magazine as the pane shows it. */
     public MagazineView magazineView() {
-        return new MagazineView(this.magazine.shells(), this.loading, this.shellChances(), this.shellProfiles());
+        MortarSpec spec = this.spec(this.mechanics.all());
+        List<HeldShell> held = this.magazine.held().stream().map(shell -> asFired(shell, spec)).toList();
+        return new MagazineView(held, this.loading, this.shellChances(), this.shellProfiles());
     }
 
     /** What each kind it can load does as it would fire it now; worked out again only as its stats or nodes change. */
@@ -620,14 +620,24 @@ public final class MortarTower extends AbstractTower {
         return this.profiles.filter(last -> last.stats() == stats && last.owned().equals(owned)).orElseGet(() -> {
             MortarSpec spec = this.spec(owned);
             ShellProfiles fresh = new ShellProfiles(stats, owned,
-                    this.loadableKinds().stream().map(kind -> this.profileOf(kind, stats, spec)).toList());
+                    this.profiledShells(spec).stream().map(shell -> this.profileOf(shell, stats, spec)).toList());
             this.profiles = Optional.of(fresh);
             return fresh;
         }).profiles();
     }
 
-    private ShellProfile profileOf(ShellKind kind, TowerStats stats, MortarSpec spec) {
-        Shell shell = new Shell(kind, stats);
+    /** Every kind it can load, and with Thick Mix a Normal carrying each payload it can load. */
+    private List<HeldShell> profiledShells(MortarSpec spec) {
+        List<ShellKind> kinds = this.loadableKinds();
+        List<HeldShell> shells = new ArrayList<>(kinds.stream().map(kind -> new HeldShell(kind, Optional.empty())).toList());
+        kinds.stream().filter(ShellKind::isPayload).map(payload -> HeldShell.behind(ShellKind.NORMAL, Optional.of(payload)))
+                .map(shell -> asFired(shell, spec)).filter(shell -> shell.carried().isPresent()).forEach(shells::add);
+        return List.copyOf(shells);
+    }
+
+    private ShellProfile profileOf(HeldShell held, TowerStats stats, MortarSpec spec) {
+        ShellKind kind = held.kind();
+        Shell shell = new Shell(kind, held.carried(), stats);
         BlastRadii radii = this.blastOf(shell, spec);
         float cell = this.cellPixels();
         int damage = kind.damage(stats.damage(), stats.value(TowerStat.HEAVY_DAMAGE));
@@ -636,17 +646,14 @@ public final class MortarTower extends AbstractTower {
             applies.add(EffectKind.CRACKED);
         }
         applies.addAll(kind.applies());
-        if (kind == ShellKind.NORMAL) {
-            carriedPayload(spec).ifPresent(payload -> applies.addAll(payload.applies()));
-        }
+        held.carried().ifPresent(payload -> applies.addAll(payload.applies()));
         if (kind == ShellKind.HEAVY) {
             spec.heavy().applies().ifPresent(applies::add);
         }
         ShellProfile profile = ShellProfile.of(kind, Damage.of(kind.damageType(), damage),
                 this.shellStats(shell).speed() * TICKS_PER_SECOND / cell,
                 new ShellProfile.Blast(radii.core() / cell, radii.edge() / cell, radii.edgeShare(), List.copyOf(applies)));
-        ShellProfile carrying = kind == ShellKind.NORMAL ? carriedPayload(spec).map(profile::withCarried).orElse(profile)
-                : profile;
+        ShellProfile carrying = held.carried().map(profile::withCarried).orElse(profile);
         return kind.ground().filter(ground -> ground.pulsePoints() > 0f)
                 .map(ground -> carrying.withGroundPulse(Damage.magic(ground.pulse())))
                 .orElse(carrying);
@@ -722,7 +729,7 @@ public final class MortarTower extends AbstractTower {
 
     @Override
     protected List<TowerStatLine> ownStats(TowerStats stats) {
-        ProjectileStats shell = this.shellStats(new Shell(ShellKind.NORMAL, stats));
+        ProjectileStats shell = this.shellStats(new Shell(ShellKind.NORMAL, Optional.empty(), stats));
         float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.cellPixels();
         return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, cellsPerSecond),
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, shell.size()));

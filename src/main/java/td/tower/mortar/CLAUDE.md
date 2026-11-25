@@ -28,7 +28,9 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
 - Carpet Bombing lays a volley along the enemy path centred on the target (`PathLine`), never by geometry around the
   impact, with a Normal sneaked between each two loaded shells (`VolleySpec.sequence`), never taken from the magazine;
   a Barrage's later shells re-pick their target when they fire.
-- With Thick Mix a Normal's blast puts a share of a pulse of the loaded payload's ground on what it reaches, through
+- With Thick Mix a Normal right behind a payload carries it (`HeldShell`): in the magazine, where the front shell is
+  behind the one fired last (`Magazine.lastFired`, kept by the save), and in a volley, where a sneaked Normal is behind
+  the loaded shell before it. Its blast puts a share of a pulse of that payload's ground on what it reaches, through
   the ground's own `ZoneEffects.touch`, never a zone of its own.
 - Every blast leaves a `BlastMark`, kept as long as the longest detonation is drawn; the board turns it into that
   shell's detonation (and, for a nuke, a moment's whiteout of the whole board), so the tower stores nothing more.

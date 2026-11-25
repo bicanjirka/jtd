@@ -1,6 +1,7 @@
 package td.tower.mortar;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 /**
@@ -38,13 +39,16 @@ public record VolleySpec(int shells, int gapTicks, float reloadFactor, float spa
         return this.normalsBetween ? 2 * this.shells - 1 : this.shells;
     }
 
-    /** The shells one firing sends, in order: {@code loaded}, a Normal between each two when it sneaks them in. */
-    public List<ShellKind> sequence(List<ShellKind> loaded) {
+    /**
+     * The shells one firing sends, in order: {@code loaded}, a Normal between each two when it sneaks them in, each
+     * sneaked one carrying the payload it flies right behind.
+     */
+    public List<HeldShell> sequence(List<HeldShell> loaded) {
         if (!this.normalsBetween) {
             return loaded;
         }
-        return IntStream.range(0, 2 * loaded.size() - 1)
-                .mapToObj(i -> i % 2 == 0 ? loaded.get(i / 2) : ShellKind.NORMAL).toList();
+        return IntStream.range(0, 2 * loaded.size() - 1).mapToObj(i -> i % 2 == 0 ? loaded.get(i / 2)
+                : HeldShell.behind(ShellKind.NORMAL, Optional.of(loaded.get(i / 2).kind()))).toList();
     }
 
     public boolean isVolley() {

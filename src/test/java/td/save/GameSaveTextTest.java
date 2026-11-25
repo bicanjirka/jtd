@@ -65,7 +65,7 @@ class GameSaveTextTest {
                 damage 1250000 480000
                 tower PULSE 4 7 400 123456 40 paid=97 xp+=0.25 base.attune +base.awaken
                 tower PULSE 9 7 0 0 0 paid=112 unused=tower base.attune
-                magazine 2 2 NORMAL HEAVY NUKE NAPALM TAR CRYO FLARE NORMAL NORMAL HEAVY
+                magazine 2 2 fired=TAR NORMAL HEAVY NUKE NAPALM TAR CRYO FLARE NORMAL NORMAL HEAVY
                 """;
 
         GameSave save = GameSaveText.read(text).save().orElseThrow();
@@ -81,6 +81,7 @@ class GameSaveTextTest {
         assertThat(save.towers().getLast().use().allUnused()).isTrue();
         assertThat(save.magazines()).singleElement().satisfies(magazine ->
                 assertThat(magazine.shells()).startsWith(ShellKind.NORMAL, ShellKind.HEAVY, ShellKind.NUKE));
+        assertThat(save.magazines().getFirst().lastFired()).hasValue(ShellKind.TAR);
         assertThat(GameSaveText.write(save)).isEqualTo(text);
     }
 

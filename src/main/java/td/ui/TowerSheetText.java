@@ -19,6 +19,7 @@ import td.tower.TowerTerm;
 import td.tower.ability.Ability;
 import td.tower.ability.AbilityBar;
 import td.tower.ability.AbilityState;
+import td.tower.mortar.HeldShell;
 import td.tower.mortar.MagazineView;
 import td.tower.mortar.ShellKind;
 import td.tower.mortar.ShellProfile;
@@ -41,7 +42,7 @@ import td.ui.render.TooltipKey;
 import td.util.TickRate;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -207,21 +208,21 @@ final class TowerSheetText {
      * kind's row both open what that kind does.
      */
     private static List<SheetLine> magazineLines(MagazineView magazine) {
-        Map<ShellKind, SheetTooltip> sheets = new EnumMap<>(ShellKind.class);
-        magazine.profiles().forEach(profile -> sheets.put(profile.kind(), new SheetTooltip(
-                TooltipKey.of("shell", profile.kind().name()),
-                shellSheet(profile, magazine.chances().getOrDefault(profile.kind(), 0f)))));
+        Map<HeldShell, SheetTooltip> sheets = new LinkedHashMap<>();
+        magazine.profiles().forEach(profile -> sheets.put(new HeldShell(profile.kind(), profile.carried()),
+                new SheetTooltip(TooltipKey.of("shell", profile.kind().name()
+                        + profile.carried().map(payload -> "+" + payload.name()).orElse("")),
+                        shellSheet(profile, magazine.chances().getOrDefault(profile.kind(), 0f)))));
         List<SheetLine.MagazineSlot> slots = magazine.shells().stream()
-                .map(kind -> new SheetLine.MagazineSlot(shellOf(kind),
-                        magazine.profileOf(kind).flatMap(ShellProfile::carried).map(TowerSheetText::shellOf),
-                        Optional.ofNullable(sheets.get(kind))))
+                .map(held -> new SheetLine.MagazineSlot(shellOf(held.kind()), held.carried().map(TowerSheetText::shellOf),
+                        Optional.ofNullable(sheets.get(held))))
                 .toList();
         List<SheetLine> lines = new ArrayList<>();
         lines.add(new SheetLine.Gap());
         lines.add(new SheetLine.MagazineRow(slots, magazine.loading()));
         magazine.chances().forEach((kind, share) -> {
             Row row = Row.toned(Glyph.DOT, shareTone(kind), kind.title(), TermNumbers.percent(share));
-            lines.add(Optional.ofNullable(sheets.get(kind))
+            lines.add(Optional.ofNullable(sheets.get(new HeldShell(kind, Optional.empty())))
                     .map(sheet -> row.withTooltip(sheet.key(), sheet.sheet())).orElse(row));
         });
         lines.add(new SheetLine.Gap());

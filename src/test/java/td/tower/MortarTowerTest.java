@@ -1,6 +1,8 @@
 package td.tower;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import td.damage.AttackProfile;
 import td.damage.Damage;
 import td.damage.DamageType;
@@ -447,20 +449,19 @@ class MortarTowerTest {
         assertThat(tower.magazine().shells()).hasSize(Magazine.SIZE).containsOnly(ShellKind.NAPALM);
     }
 
-    @Test
-    void withThickMixANormalShellsBlastCarriesThePayloadsGround() {
-        MortarTower plain = this.loaded(List.of(ShellKind.NORMAL), "Napalm");
-        FakeEnemyMob unburnt = this.enemyAt(plain, OUT, 0);
-        this.context.enemies().setEnemies(new EnemyMob[]{unburnt});
-        this.landAShell(plain);
-        MortarTower thick = this.loaded(List.of(ShellKind.NORMAL), "Napalm", "Thick Mix");
-        FakeEnemyMob burnt = this.enemyAt(thick, OUT, 0);
-        this.context.enemies().setEnemies(new EnemyMob[]{burnt});
+    @ParameterizedTest
+    @CsvSource({"NAPALM, true, true", "NORMAL, true, false", "NAPALM, false, false"})
+    void aNormalShellsBlastCarriesThePayloadsGroundOnlyRightBehindAPayloadWithThickMix(ShellKind inFront,
+            boolean thickMix, boolean burns) {
+        String[] nodes = thickMix ? new String[]{"Napalm", "Thick Mix"} : new String[]{"Napalm"};
+        MortarTower tower = this.towerWith(nodes);
+        MortarTower.loadMagazine(tower, MagazineFixtures.firedAfter(inFront, ShellKind.NORMAL));
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
 
-        this.landAShell(thick);
+        this.landAShell(tower);
 
-        assertThat(unburnt.hasEffect(EffectKind.BURN)).isFalse();
-        assertThat(burnt.hasEffect(EffectKind.BURN)).isTrue();
+        assertThat(target.hasEffect(EffectKind.BURN)).isEqualTo(burns);
     }
 
     @Test
