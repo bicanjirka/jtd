@@ -216,8 +216,8 @@ final class TowerSheetText {
         List<SheetLine.MagazineSlot> slots = magazine.shells().stream()
                 .map(lined -> new SheetLine.MagazineSlot(shellOf(lined.shell().kind()),
                         lined.shell().carried().map(TowerSheetText::shellOf), lined.fromMagazine(),
-                        Optional.ofNullable(sheets.get(lined.shell()))
-                                .map(sheet -> lined.fromMagazine() ? sheet : sneakedSheet(sheet))))
+                        lined.fromMagazine() ? Optional.ofNullable(sheets.get(lined.shell()))
+                                : magazine.profileOf(lined.shell()).map(TowerSheetText::sneakedSheet)))
                 .toList();
         List<SheetLine> lines = new ArrayList<>();
         lines.add(new SheetLine.Gap());
@@ -231,16 +231,22 @@ final class TowerSheetText {
         return lines;
     }
 
-    /** A sneaked Normal's sheet: a Normal's, and that no draw put it there. */
-    private static SheetTooltip sneakedSheet(SheetTooltip normal) {
-        List<SheetLine> lines = new ArrayList<>(normal.sheet().lines());
+    /** A sneaked Normal's sheet: a Normal's with no share of the draws, and that no draw put it there. */
+    private static SheetTooltip sneakedSheet(ShellProfile normal) {
+        List<SheetLine> lines = new ArrayList<>(shellSheet(normal, Optional.empty()).lines());
         lines.add(SheetLine.Sentence.of(TermText.of(TowerTerm.CARPET_BOMBING)
                 .plus(" sneaks it between the shells it loads; it isn't drawn from the magazine").asSentence()));
-        return new SheetTooltip(new TooltipKey(normal.key().id() + "+sneaked", normal.key().term()), new InfoSheet(lines));
+        return new SheetTooltip(TooltipKey.of("shell", normal.kind().name()
+                + normal.carried().map(payload -> "+" + payload.name()).orElse("") + "+sneaked"), new InfoSheet(lines));
     }
 
     /** What one kind of shell does: its hit, flight and blast, its share of the shots, and the effects it leaves. */
     static InfoSheet shellSheet(ShellProfile profile, float share) {
+        return shellSheet(profile, Optional.of(share));
+    }
+
+    /** {@link #shellSheet(ShellProfile, float)}, with no share row for a shell no draw puts in the magazine. */
+    private static InfoSheet shellSheet(ShellProfile profile, Optional<Float> share) {
         ShellKind kind = profile.kind();
         ShellProfile.Blast blast = profile.blast();
         List<SheetLine> rows = new ArrayList<>();
@@ -256,7 +262,7 @@ final class TowerSheetText {
             rows.add(Row.plain(Glyph.DOT, "Blast edge", TermNumbers.number(blast.edgeCells()))
                     .withGloss("cells", TermNumbers.percent(blast.edgeShare()) + " dmg"));
         }
-        rows.add(Row.toned(Glyph.DOT, shareTone(kind), "Share", TermNumbers.percent(share)));
+        share.ifPresent(drawn -> rows.add(Row.toned(Glyph.DOT, shareTone(kind), "Share", TermNumbers.percent(drawn))));
         profile.carried().ifPresent(payload -> rows.add(SheetLine.Sentence.of(
                 TermText.of("Carries some ").plus(payload.mention()).asSentence())));
         if (!blast.applies().isEmpty()) {
