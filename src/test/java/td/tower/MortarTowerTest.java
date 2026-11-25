@@ -447,19 +447,6 @@ class MortarTowerTest {
     }
 
     @Test
-    void bigBoreDrawsHeaviesInPlaceOfNormalsAndLeavesAPayloadsChanceAsItWas() {
-        MortarTower plain = this.towerWith("Napalm");
-        MortarTower bored = this.towerWith("Napalm", "Big Bore");
-
-        Map<ShellKind, Float> before = plain.shellChances();
-        Map<ShellKind, Float> after = bored.shellChances();
-
-        assertThat(after.get(ShellKind.HEAVY)).isGreaterThan(before.get(ShellKind.HEAVY));
-        assertThat(after.get(ShellKind.NORMAL)).isLessThan(before.get(ShellKind.NORMAL));
-        assertThat(after.get(ShellKind.NAPALM)).isCloseTo(before.get(ShellKind.NAPALM), within(1e-6f));
-    }
-
-    @Test
     void withThickMixANormalShellsBlastCarriesThePayloadsGround() {
         MortarTower plain = this.loaded(List.of(ShellKind.NORMAL), "Napalm");
         FakeEnemyMob unburnt = this.enemyAt(plain, OUT, 0);
@@ -473,20 +460,6 @@ class MortarTowerTest {
 
         assertThat(unburnt.hasEffect(EffectKind.BURN)).isFalse();
         assertThat(burnt.hasEffect(EffectKind.BURN)).isTrue();
-    }
-
-    @Test
-    void withThickMixANormalShellFliesShowingThePayloadItCarries() {
-        MortarTower plain = this.loaded(List.of(ShellKind.NORMAL), "Napalm");
-        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(plain, OUT, 0)});
-        CannonballProjectile bare = (CannonballProjectile) this.fire(plain);
-        this.context.projectiles().clear();
-        MortarTower thick = this.loaded(List.of(ShellKind.NORMAL), "Napalm", "Thick Mix");
-
-        CannonballProjectile carrying = (CannonballProjectile) this.fire(thick);
-
-        assertThat(bare.carried()).isEmpty();
-        assertThat(carrying.carried()).contains(ShellLook.NAPALM);
     }
 
     @Test

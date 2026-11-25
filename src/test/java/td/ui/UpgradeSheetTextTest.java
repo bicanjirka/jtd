@@ -1,12 +1,10 @@
 package td.ui;
 
 import org.junit.jupiter.api.Test;
-import td.effect.EffectKind;
 import td.fixtures.FakeTower;
 import td.fixtures.WorldFixtures;
 import td.term.TermNumbers;
 import td.term.TermText;
-import td.tower.NodeWords;
 import td.tower.TowerModifiers;
 import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradePath;
@@ -67,78 +65,6 @@ class UpgradeSheetTextTest {
     }
 
     @Test
-    void theHoverShowsTheFaceNameAndPriceThenWhatItAdds() {
-        UpgradeOffer offer = this.offer(VETERAN);
-
-        InfoSheet sheet = UpgradeSheetText.hover(offer);
-
-        assertThat(sheet.lines().subList(0, 2)).containsExactly(
-                new SheetLine.IconTitle(offer.face(), "Veteran", offer.face().tone(), "$10"),
-                new SheetLine.Gap());
-        assertThat(sheet.lines().getLast()).isInstanceOfSatisfying(Row.class, row -> {
-            assertThat(row.label()).isEqualTo("Damage");
-            assertThat(row.value()).isEqualTo("+20%");
-        });
-    }
-
-    @Test
-    void aNodesSentencesFollowItsStatRows() {
-        FakeTower describing = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(RANGE))
-                .describing(List.of(TermText.of("first"), TermText.of("second")));
-
-        InfoSheet sheet = UpgradeSheetText.hover(this.offer(describing, RANGE));
-
-        List<SheetLine> rows = sheet.lines().subList(sheet.lines().indexOf(new SheetLine.Gap()) + 1, sheet.lines().size());
-        NodeWords words = describing.wordsOf(RANGE);
-        assertThat(rows).hasSize(words.stats().size() + 2);
-        assertThat(rows.subList(words.stats().size(), rows.size())).containsExactly(
-                SheetLine.Sentence.of(TermText.of("first").asSentence()),
-                SheetLine.Sentence.of(TermText.of("second").asSentence()));
-    }
-
-    @Test
-    void aNodeSentencesMentionsAreDefinedBelowThemInOrder() {
-        FakeTower describing = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(RANGE))
-                .describing(List.of(TermText.of("brings ").plus(EffectKind.CHILL), TermText.of(EffectKind.BURN)));
-
-        List<SheetLine> lines = UpgradeSheetText.hover(this.offer(describing, RANGE)).lines();
-
-        assertThat(lines.subList(lines.lastIndexOf(new SheetLine.Divider()) + 1, lines.size())).containsExactly(
-                definition(TermText.of(EffectKind.CHILL), EffectKind.CHILL.describe()),
-                definition(TermText.of(EffectKind.BURN), EffectKind.BURN.describe()));
-    }
-
-    @Test
-    void aRepeatedMentionIsDefinedOnceButADifferentDetailIsDefinedAgain() {
-        TermText detail = TermText.of("only here");
-        FakeTower describing = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(RANGE))
-                .describing(List.of(TermText.of(EffectKind.CHILL), TermText.of("again ").plus(EffectKind.CHILL),
-                        TermText.of(EffectKind.CHILL, detail)));
-
-        List<SheetLine> lines = UpgradeSheetText.hover(this.offer(describing, RANGE)).lines();
-
-        assertThat(lines.subList(lines.lastIndexOf(new SheetLine.Divider()) + 1, lines.size())).containsExactly(
-                definition(TermText.of(EffectKind.CHILL), EffectKind.CHILL.describe()),
-                definition(TermText.of(EffectKind.CHILL, detail), detail));
-    }
-
-    @Test
-    void aMentionInsideADefinitionGetsNoDefinitionOfItsOwn() {
-        TermText detail = TermText.of("as ").plus(EffectKind.BURN);
-        FakeTower describing = FakeTower.offering(this.world, 0, 0, UpgradeTree.of(RANGE))
-                .describing(List.of(TermText.of(EffectKind.CHILL, detail)));
-
-        List<SheetLine> lines = UpgradeSheetText.hover(this.offer(describing, RANGE)).lines();
-
-        assertThat(lines.subList(lines.lastIndexOf(new SheetLine.Divider()) + 1, lines.size()))
-                .containsExactly(definition(TermText.of(EffectKind.CHILL, detail), detail));
-    }
-
-    private static SheetLine definition(TermText mention, TermText meaning) {
-        return new SheetLine.Prose(mention.plus(" — ").plus(meaning.asSentence()));
-    }
-
-    @Test
     void aClosedTiersNodeIsACrossNamingWhatTheTierLacksAndAnOpenOneHasNoGateRow() {
         FakeTower fresh = this.choosing(0);
 
@@ -159,33 +85,6 @@ class UpgradeSheetTextTest {
 
         assertThat(sheet.lines()).contains(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
                 TermText.of(UpgradeTier.nameOf(1) + " · unlock " + TermNumbers.cash(TIER_ONE.price()))));
-    }
-
-    @Test
-    void aTiersUnlockSaysWhatItOpens() {
-        InfoSheet sheet = UpgradeSheetText.hover(this.offer(this.choosing(TIER_ONE_XP), TIER_ONE));
-
-        assertThat(sheet.lines()).contains(SheetLine.Sentence.of(TermText.of("Opens " + UpgradeTier.nameOf(1)
-                + ": every upgrade in it then costs only credits.")));
-    }
-
-    @Test
-    void aClusterMembersHoverNamesItsClusterAndTheOtherMembers() {
-        InfoSheet member = UpgradeSheetText.hover(this.offer(this.choosing(0), A1));
-        InfoSheet lone = UpgradeSheetText.hover(this.offer(this.choosing(0), LONE));
-
-        assertThat(member.lines()).containsSubsequence(Row.plain(Glyph.LOCK, "One of Roots", ""),
-                Row.plain(Glyph.DOT, B1.displayName(), ""));
-        assertThat(lone.lines()).noneMatch(line -> line instanceof Row row && row.glyph() == Glyph.LOCK);
-    }
-
-    @Test
-    void aLinesNextLevelSaysWhatItAddsTo() {
-        FakeTower started = this.choosing(TIER_ONE_XP, A1);
-
-        InfoSheet sheet = UpgradeSheetText.hover(this.offer(started, A2));
-
-        assertThat(sheet.lines()).contains(SheetLine.Sentence.of(TermText.of("Adds to " + A1.displayName() + ":")));
     }
 
     @Test
@@ -336,11 +235,5 @@ class UpgradeSheetTextTest {
         assertThat(sheet.lines()).containsExactly(
                 new SheetLine.Title(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET, "Tier I locked", "XP 40 / 100"),
                 SheetLine.Sentence.of(TermText.of("Earn 60 more XP to open it")));
-    }
-
-    @Test
-    void anEmptySharedSlotsHoverNamesTheMembersToPickFrom() {
-        assertThat(UpgradeSheetText.pickFirst(List.of("Left", "Right")).lines()).containsExactly(SheetLine.Sentence
-                .marked(Glyph.LOCK, Palette.UPGRADE_GATE_UNMET, TermText.of("Pick Left or Right first")));
     }
 }

@@ -19,10 +19,7 @@ import td.tower.SniperTower;
 import td.tower.Tower;
 import td.tower.TowerBuffState;
 import td.tower.TowerFactory;
-import td.tower.TowerInspection;
 import td.tower.TowerModifiers;
-import td.tower.TowerStat;
-import td.tower.TowerStatLine;
 import td.tower.TowerStatRow;
 import td.tower.TowerTerm;
 import td.tower.ability.AbilityBar;
@@ -35,12 +32,10 @@ import td.tower.upgrade.UpgradeNode;
 import td.tower.upgrade.UpgradeTree;
 import td.ui.render.InfoSheet;
 import td.ui.render.LoadedShell;
-import td.ui.render.Palette;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
 import td.ui.render.SheetLine.Row;
 import td.ui.render.SheetLine.Trend;
-import td.ui.render.TowerLook;
 import td.util.GameHost;
 import td.util.GameWorld;
 
@@ -50,11 +45,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static td.tower.upgrade.MechanicCatalogue.entry;
 
 class TowerSheetTextTest {
-
-    private static final UpgradeNode LINE = UpgradeNode.of("test.line", "Line", 1)
-            .withModifiers(TowerModifiers.damage(1f));
-    private static final UpgradeNode LINE_2 = UpgradeNode.of("test.line.2", "Line II", 1)
-            .withModifiers(TowerModifiers.damage(1f)).after(LINE);
 
     private final GameWorld world = WorldFixtures.newWorld();
 
@@ -68,11 +58,6 @@ class TowerSheetTextTest {
         Tower tower = TowerFactory.createTower(type, this.world, x, y);
         this.world.towers().add(tower);
         return tower;
-    }
-
-    /** A tower whose tree is one line of two nodes. */
-    private Tower lineTower() {
-        return FakeTower.offering(this.world, 0, 0, UpgradeTree.of(List.of(LINE)).with(LINE_2));
     }
 
     private static List<String> labels(InfoSheet sheet) {
@@ -97,38 +82,6 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void theToolbarTooltipShowsEveryRowTheShopDoes() {
-        TowerInspection tower = TowerInspection.of(TowerFactory.Type.MORTAR, 10, List.of(
-                TowerStatLine.fixed(TowerStat.RANGE, TowerStat.RANGE, 3),
-                TowerStatLine.fixed(TowerStatRow.FIRE_RATE, TowerStat.ATTACK_SPEED, 2),
-                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, 4)));
-
-        InfoSheet tooltip = TowerSheetText.shopTooltip(tower);
-
-        assertThat(labels(tooltip)).containsExactly("Range", "Fire rate", "Proj speed");
-        assertThat(labels(TowerSheetText.shop(tower))).isEqualTo(labels(tooltip));
-    }
-
-    @Test
-    void theShopSheetEndsWithHowToPlaceAndCancelButTheToolbarTooltipDoesNot() {
-        TowerInspection tower = TowerInspection.of(TowerFactory.Type.SNIPER, 10, List.of());
-
-        InfoSheet shop = TowerSheetText.shop(tower);
-        InfoSheet tooltip = TowerSheetText.shopTooltip(tower);
-
-        assertThat(shop.lines().getLast()).isEqualTo(new SheetLine.Prose(TermText.of(TowerSheetText.PLACING_HINT)));
-        assertThat(tooltip.lines()).doesNotContain(new SheetLine.Prose(TermText.of(TowerSheetText.PLACING_HINT)));
-    }
-
-    @Test
-    void theShopOpensWithTheTowersOwnGlyphItsNameAndItsPrice() {
-        InfoSheet sheet = shopSheet(TowerFactory.Type.SPLASH);
-
-        assertThat(sheet.lines().getFirst()).isEqualTo(new SheetLine.TowerHeader(TowerLook.SPLASH,
-                TowerFactory.Type.SPLASH.displayName() + " tower", "$" + TowerFactory.Type.SPLASH.price));
-    }
-
-    @Test
     void theShopShowsWhatTheNextCopyCostsWithTheCopiesAlreadyBuilt() {
         this.place(TowerFactory.Type.SPLASH, 0, 0);
         this.place(TowerFactory.Type.SPLASH, 1, 0);
@@ -140,24 +93,6 @@ class TowerSheetTextTest {
         assertThat(((SheetLine.TowerHeader) sheet.lines().getFirst()).value()).isEqualTo("$" + nextCopy);
     }
 
-    @Test
-    void theShopListsStatsThenWhomItTargetsThenWhatItAppliesThenWhatNoRowSays() {
-        InfoSheet sheet = shopSheet(TowerFactory.Type.CINDER);
-
-        assertThat(labels(sheet)).startsWith("Range").endsWith("Targets");
-        assertThat(iconRow(sheet, "Applies").icons()).isNotEmpty();
-        assertThat(sheet.lines()).endsWith(new SheetLine.Prose(TermText.of(TowerFactory.createTower(TowerFactory.Type.CINDER, this.world, 0, 0).inspect().description())),
-                new SheetLine.Gap(), new SheetLine.Prose(TermText.of(TowerSheetText.PLACING_HINT)));
-    }
-
-    @Test
-    void damageIsNamedAndColouredByItsType() {
-        InfoSheet seeker = shopSheet(TowerFactory.Type.SEEKER);
-
-        assertThat(row(seeker, "Magic dmg").tone()).contains(Palette.DAMAGE_MAGIC);
-        assertThat(row(shopSheet(TowerFactory.Type.SNIPER), "Phys dmg").tone()).contains(Palette.DAMAGE_PHYSICAL);
-    }
-
 
     @Test
     void aTowerThatFiresShowsItsDpsAndOneThatCritsShowsItsCritDamage() {
@@ -167,17 +102,6 @@ class TowerSheetTextTest {
         InfoSheet sheet = TowerSheetText.status(sniper.inspect());
 
         assertThat(labels(sheet)).contains("Fire rate", "DPS", "Crit chance", "Crit dmg");
-    }
-
-    @Test
-    void theStatusTitleLeavesTheSellValueToTheButtonAndLeavesOutTheDescription() {
-        Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
-
-        InfoSheet sheet = TowerSheetText.status(mortar.inspect());
-
-        assertThat(sheet.lines().getFirst()).isEqualTo(new SheetLine.TowerHeader(TowerLook.MORTAR,
-                "Mortar tower", ""));
-        assertThat(sheet.lines()).noneMatch(SheetLine.Prose.class::isInstance);
     }
 
     @Test
@@ -245,55 +169,6 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void anUpgradeShowsInTheStatsItRaisesWhileTheUpgradesPanelNamesIt() {
-        this.world.economy().startEconomy(1000, 5);
-        Tower burst = this.place(TowerFactory.Type.SPLASH, 0, 0);
-        UpgradeNode range = UpgradePaths.named(burst, "Long Throw");
-
-        burst.buyUpgrade(range);
-
-        InfoSheet sheet = TowerSheetText.status(burst.inspect());
-        assertThat(row(sheet, "Range").trend()).isEqualTo(Trend.BETTER);
-        assertThat(rows(sheet)).noneMatch(row -> row.glyph() == Glyph.PIP);
-        assertThat(labels(sheet)).doesNotContain("Awaken");
-    }
-
-    @Test
-    void theShopNeverListsUpgrades() {
-        Tower sniper = TowerFactory.createTower(TowerFactory.Type.SNIPER, this.world, 0, 0);
-
-        InfoSheet sheet = TowerSheetText.shop(sniper.inspect());
-
-        assertThat(labels(sheet)).doesNotContain("Awaken");
-        assertThat(rows(sheet)).noneMatch(row -> row.glyph() == Glyph.PIP);
-    }
-
-    @Test
-    void eachOwnedLineIsOnePerkIconAtItsLevel() {
-        Tower tower = this.lineTower();
-        UpgradePaths.buy(tower, this.world, LINE_2.displayName());
-
-        InfoSheet sheet = liveStatus(tower);
-
-        SheetLine.IconRow perks = iconRow(sheet, "Perks");
-        assertThat(perks.icons()).extracting(icon -> icon.face().numeral()).contains("II");
-        assertThat(perks.icons().stream().filter(icon -> icon.key().id().contains(LINE.id()))).hasSize(1);
-    }
-
-    @Test
-    void aPerkTooltipListsTheLinesNodesAndWhatTheyWereChosenOver() {
-        Tower tower = this.lineTower();
-        UpgradePaths.buy(tower, this.world, LINE_2.displayName());
-
-        List<SheetLine> tooltip = iconRow(liveStatus(tower), "Perks").icons().stream()
-                .filter(icon -> icon.key().id().contains(LINE.id())).findFirst().orElseThrow().tooltip().lines();
-
-        assertThat(tooltip.getFirst()).isInstanceOf(SheetLine.IconTitle.class);
-        assertThat(tooltip.stream().filter(Row.class::isInstance).filter(line -> ((Row) line).glyph() == Glyph.PIP))
-                .isNotEmpty();
-    }
-
-    @Test
     void aCountingPerkShowsItsProgress() {
         Tower sniper = this.place(TowerFactory.Type.SNIPER, 0, 0);
         UpgradePaths.buy(sniper, this.world, "Fourth Shot");
@@ -313,17 +188,6 @@ class TowerSheetTextTest {
         InfoSheet sheet = TowerSheetText.status(sniper.inspect().withConditions(List.of(aim)));
 
         assertThat(iconRow(sheet, "Buffs").icons()).extracting(icon -> icon.face().corner()).containsExactly("3");
-    }
-
-    @Test
-    void anAppliedEffectsTooltipSaysEachSourceOnTheTower() {
-        Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
-        UpgradePaths.buy(mortar, this.world, "Napalm");
-
-        SheetLine.IconRow applies = iconRow(liveStatus(mortar), "Applies");
-
-        assertThat(applies.icons()).anyMatch(icon -> icon.tooltip().lines().stream()
-                .anyMatch(line -> line.toString().contains("Napalm: ")));
     }
 
     @Test

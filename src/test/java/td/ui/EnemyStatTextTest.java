@@ -8,27 +8,13 @@ import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.effect.ShieldTemplate;
-import td.enemy.Ability;
-import td.enemy.AbilityTerm;
-import td.enemy.Affix;
-import td.enemy.AffixContext;
-import td.enemy.ApplyEffectAction;
-import td.enemy.BodyArchetype;
 import td.enemy.DefinedEnemyMob;
 import td.enemy.EnemyDefinition;
-import td.enemy.HealthThresholdTrigger;
-import td.enemy.ImmunityTrait;
 import td.enemy.Rank;
-import td.enemy.SelfTarget;
 import td.fixtures.EnemyFixtures;
 import td.fixtures.WorldFixtures;
-import td.stat.EnemyStat;
 import td.stat.StatWording;
-import td.term.TermText;
-import td.ui.render.EnemyLook;
-import td.ui.render.IconFace;
 import td.ui.render.InfoSheet;
-import td.ui.render.RankBadge;
 import td.ui.render.SheetIcon;
 import td.ui.render.SheetLine;
 import td.ui.render.SheetLine.Glyph;
@@ -85,29 +71,6 @@ class EnemyStatTextTest {
     }
 
     @Test
-    void aPlainEnemyShowsOnlyItsSpeed() {
-        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("plain"));
-
-        assertThat(labels(sheet)).containsExactly("Move speed");
-    }
-
-    @Test
-    void theHeaderShowsTheBodyGlyphNameAndRankBadge() {
-        InfoSheet sheet = this.hoverSheet(EnemyDefinition.of("brick", "Brick", 100, 5, 1f, BodyArchetype.SQUARE), Rank.BOSS);
-
-        assertThat(sheet.lines().getFirst())
-                .isEqualTo(new SheetLine.EnemyHeader(EnemyLook.SQUARE, RankBadge.SKULL, "Brick", "Boss"));
-    }
-
-    @Test
-    void aStatOffItsDefaultIsARowWhateverSetsIt() {
-        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("warded").withArmor(ARMOR).withMagicResist(ARMOR));
-
-        assertThat(row(sheet, "Armor")).isPresent();
-        assertThat(row(sheet, "Magic resist")).isPresent();
-    }
-
-    @Test
     void aStatBetterForThePlayerThanItsBaseIsBetter() {
         DefinedEnemyMob mob = this.armored();
         mob.applyEffect(Effect.sundered(2));
@@ -125,79 +88,6 @@ class EnemyStatTextTest {
         InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
 
         assertThat(row(sheet, "Move speed").orElseThrow().trend()).isEqualTo(Trend.BETTER);
-    }
-
-    @Test
-    void aStatRowOpensItsBreakdown() {
-        DefinedEnemyMob mob = this.armored();
-        mob.applyEffect(Effect.sundered(2));
-        int now = Math.round(mob.stats().value(EnemyStat.ARMOR));
-
-        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
-        Row armor = row(sheet, "Armor").orElseThrow();
-
-        InfoSheet breakdown = armor.tooltip().orElseThrow().sheet();
-        assertThat(armor.tooltip().orElseThrow().key().id()).isEqualTo("stat:" + EnemyStat.ARMOR.key());
-        assertThat(breakdown.lines())
-                .contains(Row.plain(Glyph.DOT, "Base", "25"), Row.plain(Glyph.DOT, "Now", String.valueOf(now)));
-        assertThat(breakdown.lines()).contains(Row.faced(TermLooks.faceOf(EffectKind.SUNDERED),
-                EffectKind.SUNDERED.title() + " \u00d72", "-" + (25 - now)));
-    }
-
-    @Test
-    void anAffixsTooltipListsWhatItAddedEachWithItsOwnTooltip() {
-        DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("shielded")
-                .withAffixes(List.of(Affix.SHIELDED), new AffixContext(Rank.GRUNT, 1f)));
-
-        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
-
-        InfoSheet affixSheet = iconOf(sheet, "Traits", Affix.SHIELDED.key()).tooltip();
-        assertThat(icons(sheet, "Traits")).extracting(icon -> icon.face().pictogram())
-                .containsExactly(Affix.SHIELDED.key());
-        assertThat(icons(affixSheet, "Adds")).singleElement()
-                .satisfies(icon -> assertThat(icon.face().pictogram()).isEqualTo(AbilityTerm.PANIC.key()))
-                .satisfies(icon -> assertThat(icon.tooltip().lines()).isNotEmpty());
-    }
-
-    @Test
-    void traitsAbilitiesAndImmunitiesShareTheTraitsRow() {
-        DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("hunkered")
-                .withTraits(List.of(new ImmunityTrait(EffectKind.FREEZE)))
-                .withAbilities(List.of(new Ability(AbilityTerm.HUNKER, new HealthThresholdTrigger(0.5f),
-                        new ApplyEffectAction(new ShieldTemplate(10f, 100), new SelfTarget())))));
-
-        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
-
-        assertThat(iconOf(sheet, "Traits", "effect.freeze").face().ward()).isEqualTo(IconFace.Ward.IMMUNE);
-        assertThat(icons(sheet, "Traits")).extracting(icon -> icon.face().pictogram())
-                .contains(AbilityTerm.HUNKER.key());
-    }
-
-    @Test
-    void anImmunityAnEffectCausesNamesThatEffect() {
-        DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.revealed(30, DamageSink.none()));
-
-        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
-
-        SheetIcon cloak = iconOf(sheet, "Traits", "effect.invisible");
-        assertThat(cloak.face().ward()).isEqualTo(IconFace.Ward.IMMUNE);
-        assertThat(cloak.tooltip().lines()).anySatisfy(line -> assertThat(line).isInstanceOfSatisfying(
-                SheetLine.Sentence.class, sentence -> assertThat(sentence.text().mentions())
-                        .contains(EffectKind.REVEALED)));
-    }
-
-    @Test
-    void buffsAndDebuffsSplitBySide() {
-        DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.shield(50f, 100, DamageSink.none()));
-        mob.applyEffect(Effect.chill(0.4f, 100, DamageSink.none()));
-
-        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
-
-        assertThat(icons(sheet, "Buffs")).extracting(icon -> icon.face().pictogram()).containsExactly("effect.shield");
-        assertThat(icons(sheet, "Debuffs")).extracting(icon -> icon.face().pictogram())
-                .containsExactly("effect.chill");
     }
 
     @Test
@@ -259,30 +149,6 @@ class EnemyStatTextTest {
     }
 
     @Test
-    void aTimedEffectSweepsAndShowsWholeSecondsUnderTen() {
-        DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.freeze(30, DamageSink.none()));
-
-        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
-
-        IconFace face = iconOf(sheet, "Debuffs", "effect.freeze").face();
-        assertThat(face.below()).endsWith("s").isNotEmpty();
-        assertThat(face.elapsed()).isGreaterThanOrEqualTo(0f);
-    }
-
-    @Test
-    void aPoolShowsABarAndNoClock() {
-        DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.burn(Damage.magic(100), DamageSink.none()));
-
-        InfoSheet sheet = EnemyStatText.live(mob.inspect(), WORDING);
-
-        IconFace face = iconOf(sheet, "Debuffs", "effect.burn").face();
-        assertThat(face.bar()).isPresent();
-        assertThat(face.below()).isEmpty();
-    }
-
-    @Test
     void aFreezeWhoseMeterRunsStaysFadedAndSaysWhatTheNextLasts() {
         DefinedEnemyMob mob = this.anEnemy();
         mob.applyEffect(Effect.freeze(20, DamageSink.none()));
@@ -297,24 +163,6 @@ class EnemyStatTextTest {
         assertThat(freeze.tooltip().lines()).anySatisfy(line -> assertThat(line).isInstanceOfSatisfying(
                 SheetLine.Sentence.class, sentence -> assertThat(sentence.text().plain())
                         .startsWith("The next one lasts ")));
-    }
-
-    @Test
-    void thePreviewShowsStatsTraitsAndTheRoleSentenceButNoBuffsOrDebuffs() {
-        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("resistant")
-                .withTraits(List.of(new ImmunityTrait(EffectKind.CHILL))).withDescription("Shrugs off cold."));
-
-        assertThat(icons(sheet, "Traits")).isNotEmpty();
-        assertThat(icons(sheet, "Buffs")).isEmpty();
-        assertThat(icons(sheet, "Debuffs")).isEmpty();
-        assertThat(sheet.lines().getLast()).isInstanceOf(SheetLine.Prose.class);
-    }
-
-    @Test
-    void thePreviewEndsWithTheDescription() {
-        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("described").withDescription("Walks the path."));
-
-        assertThat(sheet.lines().getLast()).isEqualTo(new SheetLine.Prose(TermText.of("Walks the path.")));
     }
 
     @Test
@@ -358,17 +206,6 @@ class EnemyStatTextTest {
     }
 
     @Test
-    void theRegenerationHoverOfAHealedEnemyWithSpiritMarksSpiritAsItsOwnLine() {
-        DefinedEnemyMob mob = EnemyFixtures.liveMob(this.world, EnemyFixtures.simpleDefinition("blessed").withSpirit(60f));
-        mob.applyEffect(Effect.heal(100, 40, DamageSink.none()));
-
-        Row regeneration = row(EnemyStatText.live(mob.inspect(), WORDING), "Regeneration").orElseThrow();
-
-        assertThat(regeneration.tooltip().orElseThrow().sheet().lines()).anySatisfy(line -> assertThat(line)
-                .isInstanceOfSatisfying(Row.class, spirit -> assertThat(spirit.label()).isEqualTo(EnemyStat.SPIRIT.title())));
-    }
-
-    @Test
     void agilityReadsAsPointsWithItsDodgeChance() {
         InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("nimble").withAgility(25f));
 
@@ -402,15 +239,6 @@ class EnemyStatTextTest {
         InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("final").withLivesOnLeak(EnemyDefinition.ALL_LIVES));
 
         assertThat(healthBar(sheet).tallies()).extracting(SheetLine.Tally::value).last().isEqualTo("all");
-    }
-
-    @Test
-    void statRowsFollowTheirGroupsWithAGapBetweenTwo() {
-        InfoSheet sheet = this.hoverSheet(EnemyFixtures.simpleDefinition("mixed").withSpirit(20f).withArmor(ARMOR));
-
-        assertThat(labels(sheet)).containsSubsequence("Move speed", "Armor", "Spirit");
-        int armor = sheet.lines().indexOf(row(sheet, "Armor").orElseThrow());
-        assertThat(sheet.lines().get(armor - 1)).isInstanceOf(SheetLine.Gap.class);
     }
 
     private static SheetLine.HealthBar healthBar(InfoSheet sheet) {

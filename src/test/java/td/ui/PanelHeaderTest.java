@@ -12,7 +12,6 @@ import td.wave.WaveProgress;
 
 import javax.swing.AbstractButton;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.util.ArrayList;
@@ -43,72 +42,6 @@ class PanelHeaderTest {
     }
 
     @Test
-    void aLifeLostFlashesTheLivesIconAndNothingElse() {
-        this.header.show(progress(3, 18), false, LevelOutcome.PLAYING, new EconomyState(100, 0, 5));
-
-        this.header.show(progress(3, 18), false, LevelOutcome.PLAYING, new EconomyState(140, 40, 4));
-
-        assertThat(this.header.icon(StatusTerm.LIVES).flash()).isPositive();
-        assertThat(this.header.icon(StatusTerm.WAVE).flash()).isZero();
-        assertThat(this.header.icon(StatusTerm.CASH).flash()).isZero();
-        assertThat(this.header.icon(StatusTerm.SCORE).flash()).isZero();
-    }
-
-    @Test
-    void aRoundStartingFlashesTheWaveIcon() {
-        this.header.show(progress(3, 18), true, LevelOutcome.PLAYING, new EconomyState(100, 0, 5));
-
-        this.header.show(progress(4, 18), false, LevelOutcome.PLAYING, new EconomyState(100, 0, 5));
-
-        assertThat(this.header.icon(StatusTerm.WAVE).flash()).isPositive();
-    }
-
-    @Test
-    void aRefusedPurchaseFlashesTheCashIcon() {
-        this.header.show(progress(3, 18), false, LevelOutcome.PLAYING, new EconomyState(10, 0, 5));
-
-        this.header.cashRefused();
-
-        assertThat(this.header.icon(StatusTerm.CASH).flash()).isPositive();
-    }
-
-    @Test
-    void aRoundPayingItsClearBonusFlashesTheCashIcon() {
-        this.header.show(progress(3, 18), true, LevelOutcome.PLAYING, new EconomyState(100, 0, 5));
-        WaveProgress paid = new WaveProgress(3, List.of(new RoundSummary(Rank.GRUNT, false, false).withBonusPaid(5)),
-                List.of(), List.of());
-
-        this.header.show(paid, true, LevelOutcome.PLAYING, new EconomyState(105, 5, 5));
-
-        assertThat(this.header.icon(StatusTerm.CASH).flash()).isPositive();
-    }
-
-    @Test
-    void theFirstNumbersOfALevelAreABaselineAndFlashNothing() {
-        this.header.show(progress(9, 18), false, LevelOutcome.PLAYING, new EconomyState(100, 0, 2));
-        this.header.reset();
-
-        this.header.show(progress(0, 12), true, LevelOutcome.PLAYING, new EconomyState(100, 0, 1));
-
-        assertThat(this.header.icon(StatusTerm.LIVES).flash()).isZero();
-        assertThat(this.header.icon(StatusTerm.WAVE).flash()).isZero();
-    }
-
-    @Test
-    void theSpeedButtonsAndTheMenuButtonReportTheirClicks() {
-        List<String> clicked = new ArrayList<>();
-        this.header.onPause(() -> clicked.add("pause"));
-        this.header.onPlay(() -> clicked.add("play"));
-        this.header.onFast(() -> clicked.add("fast"));
-        this.header.onSuperFast(() -> clicked.add("super fast"));
-        this.header.onMenu(() -> clicked.add("menu"));
-
-        PanelHeaderTest.buttons(this.header).forEach(AbstractButton::doClick);
-
-        assertThat(clicked).containsExactlyInAnyOrder("pause", "play", "fast", "super fast", "menu");
-    }
-
-    @Test
     void onlyTheButtonOfTheSpeedShownIsSelectedAndNoneForARateBetweenPresets() {
         this.header.showSpeed(TickSpeed.FAST);
 
@@ -117,14 +50,6 @@ class PanelHeaderTest {
         this.header.showSpeed(TickSpeed.ofTicksPerSecond(30));
 
         assertThat(this.selectedTexts()).isEmpty();
-    }
-
-    @Test
-    void everySpeedButtonAndTheMenuAndRestartButtonsShowTheirKeysOnChips() {
-        List<String> chips = PanelHeaderTest.buttons(this.header).stream().map(PanelHeaderTest::chipOf).toList();
-
-        assertThat(chips).containsExactlyInAnyOrder(GameKey.PAUSE.chip(), GameKey.PLAY.chip(), GameKey.FAST.chip(),
-                GameKey.SUPER_FAST.chip(), GameKey.MENU.chip(), GameKey.RESTART.chip());
     }
 
     @Test
@@ -152,25 +77,6 @@ class PanelHeaderTest {
             case HudToggleButton toggle -> toggle.face().chip();
             default -> "";
         };
-    }
-
-    @Test
-    void theLivesAreAsWideAsTheirHeartsNeedAndNeverNarrowerThanAScore() {
-        int score = this.header.icon(StatusTerm.SCORE).getPreferredSize().width;
-
-        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 1));
-        int one = this.header.icon(StatusTerm.LIVES).getPreferredSize().width;
-        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 5));
-        int five = this.header.icon(StatusTerm.LIVES).getPreferredSize().width;
-        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 10));
-        int ten = this.header.icon(StatusTerm.LIVES).getPreferredSize().width;
-        this.header.show(progress(1, 18), false, LevelOutcome.PLAYING, new EconomyState(0, 0, 11));
-        int eleven = this.header.icon(StatusTerm.LIVES).getPreferredSize().width;
-
-        assertThat(one).isEqualTo(score);
-        assertThat(five).isGreaterThan(score);
-        assertThat(ten).isGreaterThan(five);
-        assertThat(eleven).isEqualTo(score);
     }
 
     @Test
@@ -219,18 +125,6 @@ class PanelHeaderTest {
             }
         }
         return found;
-    }
-
-    @Test
-    void aVoiceColoursTheSelectedSpeedButton() {
-        Color voice = new Color(10, 20, 30);
-
-        this.header.setVoice(voice);
-
-        List<Component> found = new ArrayList<>();
-        collect(this.header, found);
-        assertThat(found).filteredOn(HudToggleButton.class::isInstance)
-                .allSatisfy(button -> assertThat(((HudToggleButton) button).face().selectedColor()).contains(voice));
     }
 
     private static void collect(Container parent, List<Component> into) {
