@@ -161,7 +161,7 @@ for a panel. Numbers rule colours out; they don't choose one.
 
 The board is a lit place, not icons on a black slab: one palette per level, coloured light, values in layers, a calm
 ground, and loud colour only where something just happened. The living art sheets in `docs/art` show it; its sources
-are in `docs/features/FEATURE-board-look-revamp.md`.
+are in `docs/features/shipped/FEATURE-board-look-revamp.md`.
 
 1. **One palette per level.** A level's floor, motif, haze and light are one family (its `BoardGround` and
    `BoardLight`); what stands on it keeps its own identity beside that family.
@@ -185,7 +185,10 @@ are in `docs/features/FEATURE-board-look-revamp.md`.
    quiet edge. Every line on the ground (an edge, a range, a ring) is a hairline over a faint halo of its colour,
    never a heavy stroke. Rasters generated in code are fine (the ground, a kept
    picture); image files and grain are not.
-10. **One motion vocabulary.** A timed visual eases through `Easing` and lasts a `MomentLength` step.
+10. **One motion vocabulary.** A new or changed timed visual eases through `Easing` and lasts a `MomentLength` step;
+    older timings move onto the scale when they are next touched.
 
-Rules 5, 6 and 7 are measured, not tested (ADR 0025): `TowerArtSheets docs/art looks` prints `LookChecks`' report.
-Read it after any change to a colour, a floor or a light.
+What a tool can measure is measured, not tested (ADR 0025): `TowerArtSheets docs/art looks` prints `LookChecks`'
+report: rule 6 for towers, enemies and lane chevrons on every level, rule 5 for enemy bodies and zone colours, and
+rule 7 for towers. The rest of rules 5 and 7 (idle life, what stands on a zone, effects) is judged by eye. Read the
+report after any change to a colour, a floor or a light.

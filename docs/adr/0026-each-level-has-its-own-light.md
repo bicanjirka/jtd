@@ -7,7 +7,7 @@
 Every board was a near-black floor with the same white light on everything that stood on it. Levels differed only by
 a motif a few values above the floor, so a screenshot didn't say which level it was, and the darkest ground left no
 room for value layers: towers, enemies and effects were all simply "bright on black". The board-look revamp
-(`docs/features/FEATURE-board-look-revamp.md`) asks for a lit place with one palette per level.
+(`docs/features/shipped/FEATURE-board-look-revamp.md`) asks for a lit place with one palette per level.
 
 ## Decision
 - A level's `BoardGround` carries a `BoardLight`: a key colour, a shadow colour and an air colour, with a haze

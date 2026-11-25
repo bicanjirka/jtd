@@ -1,5 +1,9 @@
 # Feature Request: Board look revamp
 
+Status: **implemented** (2026-11-25: `e6f9932d`..`e9f2053e`; the tools first, then the Amber Hive in `584cbed9`, the
+other five levels in `070a7f21`, visual timing in `bcf47a21`). The motion vocabulary covers new and changed timed
+visuals; older timings move onto it when touched. The look report checks what `docs/UI.md` section 8 says it does.
+
 ## Summary
 
 Move the board from bright icons on a black slab toward the stylised, painterly look of *The Witness* and
