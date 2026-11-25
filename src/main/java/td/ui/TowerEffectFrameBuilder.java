@@ -167,7 +167,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float FRAGMENT_SHARE = 0.25f;
     private static final float FRAGMENT_STROKE_CELLS = 0.05f;
     /**
-     * How long each blast is drawn, in ticks: a Normal's or a flare's flash, a Heavy's brief fireball, a payload's burst,
+     * How long each blast is drawn, in ticks: a Normal's burst or a flare's flash, a Heavy's brief fireball, a payload's burst,
      * a nuke's mushroom cloud for as long as its mark stays; and the first ticks of a nuke, which whiten the board.
      */
     private static final int FLASH_BLAST_TICKS = MomentLength.QUICK.ticks();
@@ -695,7 +695,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     public Void visitMortarTower(MortarTower tower) {
         for (BlastMark mark : tower.getBlastMarks()) {
             float ticks = this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha;
-            Optional<BlastLook> look = blastLookOf(mark.look());
+            Optional<BlastLook> look = blastLookOf(mark);
             float progress = ticks / look.map(TowerEffectFrameBuilder::blastTicks).orElse(FLASH_BLAST_TICKS);
             if (progress < 0f || progress >= 1f) {
                 continue;
@@ -771,11 +771,16 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 1f - coolDown, pose.has(TowerCue.VOLLEY), pose.stock(), pose.load()));
     }
 
-    /** The detonation a shell of {@code look} goes off in; a Normal's and a flare's are a flash with rings. */
-    private static Optional<BlastLook> blastLookOf(ShellLook look) {
-        return switch (look) {
-            case NORMAL, FLARE -> Optional.empty();
-            case HEAVY -> Optional.of(BlastLook.HEAVY);
+    /** The detonation a blast goes off in, a Heavy's as its pick marks it; a flare's is a flash with rings. */
+    private static Optional<BlastLook> blastLookOf(BlastMark mark) {
+        return switch (mark.look()) {
+            case FLARE -> Optional.empty();
+            case NORMAL -> Optional.of(BlastLook.NORMAL);
+            case HEAVY -> Optional.of(switch (mark.rider()) {
+                case NONE -> BlastLook.HEAVY;
+                case SHRAPNEL -> BlastLook.SHRAPNEL;
+                case CONCUSSION -> BlastLook.CONCUSSION;
+            });
             case NAPALM -> Optional.of(BlastLook.NAPALM);
             case TAR -> Optional.of(BlastLook.TAR);
             case CRYO -> Optional.of(BlastLook.CRYO);
@@ -785,18 +790,27 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     private static int blastTicks(BlastLook look) {
         return switch (look) {
-            case HEAVY -> HEAVY_BLAST_TICKS;
+            case NORMAL -> FLASH_BLAST_TICKS;
+            case HEAVY, SHRAPNEL, CONCUSSION -> HEAVY_BLAST_TICKS;
             case NAPALM, TAR, CRYO -> PAYLOAD_BLAST_TICKS;
             case NUKE -> NUKE_BLAST_TICKS;
         };
     }
 
-    /** A shell's own detonation; a Heavy with shrapnel throws fragments out over it. */
+    /**
+     * A shell's own detonation; a Normal's keeps the rings of its reach round it, and a Heavy with shrapnel throws
+     * fragments out over it.
+     */
     private void detonation(BlastMark mark, BlastLook look, float progress) {
         int seed = mark.startedAtTick() * 31 + (int) mark.at().x() * 7 + (int) mark.at().y() * 13;
+        if (look == BlastLook.NORMAL) {
+            this.blastRings(mark, progress);
+        }
         this.draws.add(new BlastDraw(look, (float) mark.at().x(), (float) mark.at().y(), mark.core(), mark.edge(),
                 progress, this.scale, seed));
-        this.fragments(mark, progress * blastTicks(look) / FLASH_BLAST_TICKS);
+        if (look == BlastLook.SHRAPNEL) {
+            this.fragments(mark, progress * blastTicks(look) / FLASH_BLAST_TICKS);
+        }
     }
 
     /** A nuke's flash over the whole board. */
@@ -809,13 +823,18 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return this.flashes.stream().max(Comparator.comparingDouble(BoardFlashDraw::strength));
     }
 
-    /** A Normal's or a flare's blast: a flash over its edge, a white ring round its full-damage core, a fainter one round its edge. */
+    /** A flare's blast: a flash over its edge and the rings of its reach. */
     private void blastMark(BlastMark mark, float progress) {
+        this.draws.add(new FlashDraw(ProjectileFrameBuilder.paletteFor(mark.look()), (float) mark.at().x(),
+                (float) mark.at().y(), mark.edge(), (1f - progress) * BLAST_MARK_ALPHA));
+        this.blastRings(mark, progress);
+    }
+
+    /** A white ring round a blast's full-damage core, a fainter one round its edge. */
+    private void blastRings(BlastMark mark, float progress) {
         float fade = 1f - progress;
         float x = (float) mark.at().x();
         float y = (float) mark.at().y();
-        this.draws.add(new FlashDraw(ProjectileFrameBuilder.paletteFor(mark.look()), x, y, mark.edge(),
-                fade * BLAST_MARK_ALPHA));
         this.draws.add(new RingDraw(Palette.BLAST_RING, x, y, mark.core(), fade * BLAST_CORE_RING_ALPHA));
         if (mark.edge() > mark.core()) {
             this.draws.add(new RingDraw(Palette.BLAST_RING, x, y, mark.edge(), fade * BLAST_EDGE_RING_ALPHA));
@@ -824,7 +843,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /** The fragments a Heavy with shrapnel throws out over its blast, {@code progress} through their flight. */
     private void fragments(BlastMark mark, float progress) {
-        if (mark.fragments() && progress < 1f) {
+        if (progress < 1f) {
             float fade = 1f - progress;
             float x = (float) mark.at().x();
             float y = (float) mark.at().y();

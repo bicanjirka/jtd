@@ -65,7 +65,10 @@ final class BlastArt {
 
     static void paint(Graphics2D g2, BlastDraw blast) {
         switch (blast.look()) {
+            case NORMAL -> normal(g2, blast);
             case HEAVY -> heavy(g2, blast);
+            case SHRAPNEL -> shrapnel(g2, blast);
+            case CONCUSSION -> concussion(g2, blast);
             case NAPALM -> napalm(g2, blast);
             case TAR -> tar(g2, blast);
             case CRYO -> cryo(g2, blast);
@@ -285,6 +288,37 @@ final class BlastArt {
         return Math.sqrt((i + 0.5) / n);
     }
 
+    // ---- a Normal --------------------------------------------------------------------------------------------------
+
+    private static final int NORMAL_PUFFS = 5;
+    private static final int NORMAL_CLODS = 4;
+
+    /** A small burst: a quick flash, a little fireball that turns to smoke as it rises, a few clods. */
+    private static void normal(Graphics2D g2, BlastDraw b) {
+        double p = b.progress();
+        double u = b.unit();
+        TowerLifeArt.glow(g2, b.x(), b.y(), b.core() * 0.8, SCORCH, 0.5 * (1 - Easing.inOut(0.4, 1, p)));
+        ring(g2, b.x(), b.y(), b.core() * Easing.outStrong(p / 0.5), u * 0.05 * (1 - p), SHOCK,
+                0.6 * (1 - Easing.clamp01(p / 0.5)));
+        flash(g2, b.x(), b.y(), b.core() * 0.7, YELLOW_FIRE, p / 0.35);
+        double grow = Easing.outStrong(p / 0.5);
+        double fade = 1 - Easing.inOut(0.5, 1, p);
+        List<Puff> puffs = new ArrayList<>();
+        for (int i = 0; i < NORMAL_PUFFS; i++) {
+            double h = hash(b.seed(), i);
+            double angle = i * 2.4 + b.seed();
+            double out = b.core() * 0.25 * spiral(i, NORMAL_PUFFS) * (0.5 + grow);
+            double gx = b.x() + Math.cos(angle) * out;
+            double gy = b.y() + Math.sin(angle) * out * 0.75;
+            double rise = u * (0.06 + 0.22 * Easing.outStrong(p));
+            double r = b.core() * 0.2 * (0.7 + 0.5 * hash(b.seed(), 100 + i)) * (0.5 + 0.6 * grow);
+            Color color = ramp(1 - p * (1.4 + 0.5 * h), SOOT, HEAVY_SMOKE, ORANGE_FIRE, YELLOW_FIRE, WHITE_HOT);
+            puffs.add(new Puff(gx, gy - rise, r, color, fade, gy - rise * 0.3));
+        }
+        clods(g2, b, NORMAL_CLODS, p * 1.2);
+        puffs(g2, puffs);
+    }
+
     // ---- a Heavy ---------------------------------------------------------------------------------------------------
 
     private static final int HEAVY_PUFFS = 10;
@@ -316,6 +350,52 @@ final class BlastArt {
         }
         clods(g2, b, HEAVY_CLODS, p * 1.3);
         puffs(g2, puffs);
+    }
+
+    private static final int SHRAPNEL_SPARKS = 12;
+    private static final Color SPARK = new Color(0xfff0c0);
+
+    /** A Heavy's fireball with hot metal flying out of it to its edge, sparks that dim as they fly. */
+    private static void shrapnel(Graphics2D g2, BlastDraw b) {
+        heavy(g2, b);
+        double flight = b.progress() / 0.6;
+        if (flight >= 1) {
+            return;
+        }
+        for (int i = 0; i < SHRAPNEL_SPARKS; i++) {
+            double h = hash(b.seed(), 140 + i);
+            double angle = hash(b.seed(), 160 + i) * 2 * Math.PI;
+            double[] at = thrown(b.x(), b.y(), angle, b.edge() * (0.6 + 0.4 * h), b.unit() * 0.25 * h,
+                    Easing.outStrong(flight));
+            glint(g2, at[0], at[1] - at[2], b.unit() * (0.08 + 0.05 * h), mix(SPARK, ORANGE_FIRE, flight),
+                    1 - flight);
+        }
+    }
+
+    private static final int CONCUSSION_DUST = 14;
+
+    /**
+     * A Heavy's fireball with a pressure wave: a second, heavier shock ring behind the first and a wall of dust it
+     * rolls out along the ground to the blast's edge.
+     */
+    private static void concussion(Graphics2D g2, BlastDraw b) {
+        double p = b.progress();
+        double u = b.unit();
+        double wave = Easing.clamp01((p - 0.1) / 0.55);
+        if (wave < 1) {
+            double reach = b.edge() * Easing.outStrong(wave);
+            ring(g2, b.x(), b.y(), reach, u * 0.14 * (1 - wave), SHOCK, 0.7 * (1 - wave));
+            List<Puff> dust = new ArrayList<>();
+            for (int i = 0; i < CONCUSSION_DUST; i++) {
+                double angle = i * 2 * Math.PI / CONCUSSION_DUST + hash(b.seed(), 180 + i) * 0.3;
+                double gx = b.x() + Math.cos(angle) * reach;
+                double gy = b.y() + Math.sin(angle) * reach * 0.75;
+                double r = u * (0.07 + 0.06 * hash(b.seed(), 200 + i)) * (0.6 + wave);
+                dust.add(new Puff(gx, gy - r * 0.4, r, DIRT, 0.8 * (1 - wave)));
+            }
+            puffs(g2, dust);
+        }
+        heavy(g2, b);
     }
 
     /** Clods of earth thrown out over the blast, up and back down onto the ground. */

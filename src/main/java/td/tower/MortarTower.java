@@ -472,9 +472,8 @@ public final class MortarTower extends AbstractTower {
         if (kind.irradiatesTheBoard()) {
             this.irradiateTheBoard();
         }
-        boolean fragments = kind == ShellKind.HEAVY && spec.heavy() == HeavyRider.SHRAPNEL;
         this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), gameTime, kind.look())
-                .withFragments(fragments));
+                .withRider(kind == ShellKind.HEAVY ? spec.heavy() : HeavyRider.NONE));
         this.leaveGround(x, y, shell, blast, spec);
     }
 
