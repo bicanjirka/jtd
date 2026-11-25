@@ -18,6 +18,11 @@ final class EffectSentences {
     static TermText of(EffectKind kind) {
         return switch (kind) {
             case CHILL -> slowing("slows by what its source gives");
+            case IRRADIATED -> TermText.of("magic damage that halves at a steady pace as it runs, until it deals under "
+                    + TermNumbers.number(DamageUnits.inPoints(EffectDynamics.Dose.SPENT_PER_TICK) * TickRate.TICKS_PER_SECOND)
+                    + " a second; a second dose adds to what is left of the first; while it lasts its ")
+                    .plus(EnemyStat.REGENERATION).plus(" can't rise above 0, so a ").plus(EffectKind.HEAL)
+                    .plus(" restores nothing");
             case BURN -> pool().plus("; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
                             + " while it lasts, and every tower can see and aim at it");

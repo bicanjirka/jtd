@@ -474,7 +474,7 @@ class MortarTowerTest {
     }
 
     @Test
-    void aNukeHitsAsTwoHeaviesOverAWiderCoreAndLeavesFalloutThatPoisons() {
+    void aNukeHitsAsTwoHeaviesOverAWiderCoreAndLeavesFalloutThatSickens() {
         MortarTower tower = this.loaded(List.of(ShellKind.NUKE), "Fusion");
         float core = tower.stats().value(TowerStat.AREA_RADIUS) * SCALE;
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
@@ -488,7 +488,22 @@ class MortarTowerTest {
         assertThat(target.hits().getFirst().amount()).isEqualTo(twoHeavies);
         assertThat(pastANormalCore.hits().getFirst().amount()).isEqualTo(twoHeavies);
         assertThat(this.zoneKinds()).containsExactly(ZoneKind.FALLOUT);
-        assertThat(target.activeEffectKinds()).contains(EffectKind.SICKENED, EffectKind.DEAD_ZONE, EffectKind.POISON);
+        assertThat(target.activeEffectKinds()).contains(EffectKind.SICKENED, EffectKind.DEAD_ZONE)
+                .doesNotContain(EffectKind.POISON);
+    }
+
+    @Test
+    void aNukesFlashIrradiatesEveryEnemyOnTheBoardHiddenOrFarFromItsBlast() {
+        MortarTower tower = this.loaded(List.of(ShellKind.NUKE), "Fusion");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob farAndHidden = this.enemyAt(tower, -OUT, 10 * SCALE).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{target, farAndHidden});
+
+        this.landAShell(tower);
+
+        assertThat(farAndHidden.hits()).isEmpty();
+        assertThat(target.activeEffectKinds()).contains(EffectKind.IRRADIATED);
+        assertThat(farAndHidden.activeEffectKinds()).contains(EffectKind.IRRADIATED);
     }
 
     @Test

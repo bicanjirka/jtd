@@ -29,8 +29,8 @@ public enum ZoneKind {
     public Optional<EffectKind> fuels() {
         return switch (this) {
             case BURNING_GROUND -> Optional.of(EffectKind.BURN);
-            case TAR, FALLOUT -> Optional.of(EffectKind.POISON);
-            case FROST_GROUND, FLARE, HEALING_GROUND, HASTE_GROUND, WARD_MINE, BLINDING_FIELD -> Optional.empty();
+            case TAR -> Optional.of(EffectKind.POISON);
+            case FROST_GROUND, FALLOUT, FLARE, HEALING_GROUND, HASTE_GROUND, WARD_MINE, BLINDING_FIELD -> Optional.empty();
         };
     }
 }

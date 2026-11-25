@@ -170,6 +170,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             case VULNERABLE -> Palette.STATUS_MARKER_VULNERABLE;
             case REVEALED -> Palette.STATUS_MARKER_REVEALED;
             case POISON -> Palette.STATUS_MARKER_POISON;
+            case IRRADIATED -> Palette.STATUS_MARKER_IRRADIATED;
             case SCORCHED -> Palette.STATUS_MARKER_SCORCHED;
             case SICKENED -> Palette.STATUS_MARKER_SICKENED;
             case SUNDERED -> Palette.STATUS_MARKER_SUNDERED;
@@ -619,7 +620,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     static Optional<EnemyDotLook> dotFor(EffectKind kind) {
         return switch (kind) {
             case VULNERABLE, SUNDERED, BRITTLE, CRACKED, SINGED, TARRED,
-                 UNRAVELED -> Optional.of(EnemyDotLook.DEBUFF);
+                 UNRAVELED, IRRADIATED -> Optional.of(EnemyDotLook.DEBUFF);
             case MARKED, PRIORITY, CHARGED -> Optional.of(EnemyDotLook.SPOTTED);
             case SPRINTING, HASTENED, SPELLPROOF, UNYIELDING, RESOLVE -> Optional.of(EnemyDotLook.BUFF);
             // Drawn on the enemy.

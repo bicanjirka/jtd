@@ -32,5 +32,7 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   behind the one fired last (`Magazine.lastFired`, kept by the save), and in a volley, where a sneaked Normal is behind
   the loaded shell before it. Its blast puts a share of a pulse of that payload's ground on what it reaches, through
   the ground's own `ZoneEffects.touch`, never a zone of its own.
+- A Nuke's flash gives every enemy on the board, hidden ones too, a dose of Radiation (`ShellKind.irradiatesTheBoard`);
+  its fallout poisons nothing.
 - Every blast leaves a `BlastMark`, kept as long as the longest detonation is drawn; the board turns it into that
   shell's detonation (and, for a nuke, a moment's whiteout of the whole board), so the tower stores nothing more.

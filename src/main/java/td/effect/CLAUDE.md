@@ -1,15 +1,15 @@
 # `td.effect`
 
 - `Effect` is one effect-level record (kind, time, sink, origin) plus one `EffectDynamics` family:
-  flag, encasing (a freeze and its `IceKind`), stacks, stack shares, slow, growing slow, fuel pool, heal, shield pool or
-  distance. A family carries
+  flag, encasing (a freeze and its `IceKind`), stacks, stack shares, slow, growing slow, fuel pool, heal, shield pool,
+  distance or dose. A family carries
   only its own data. This package never depends on `td.enemy`: the producer binds a `DamageSink` when
   it creates the effect.
 - Each `EffectKind` is one row holding its `EffectRule`: category, stacking
   (`EffectStacking`), stack cap, what each stack does to stats, how much of speed it takes away, and tags.
   Every classification method reads the rule. `ActiveEffects` keeps one live effect per kind and
-  combines applications by the rule's mode, and every kind is in one of four: timed (one timer, the stronger and the
-  longer kept), count, shares, or pool. A kind's mode follows from how its source applies it: what a tower keeps up by
+  combines applications by the rule's mode, and every kind is in one of five: timed (one timer, the stronger and the
+  longer kept), count, shares, pool, or dose. A kind's mode follows from how its source applies it: what a tower keeps up by
   contact is shares, what separate events build is a count held by each application, what a source builds over time
   is a count held by that source, and what has no stacks is timed. `ActiveEffects` exposes queries only, never its map.
 - A kind in shares (`SHARES`) keeps one share per source on its own clock (`SourceShares`): a stat debuff's share is
@@ -41,6 +41,10 @@
   burn, `SICKENED` for poison, `EffectInteractions.earnedBy`): it earns a stack when it starts, unless another pool
   already holds that mark, and builds another every `STACK_INTERVAL_TICKS` while it lasts; several pools holding one
   mark build it at one pace. A top-up earns none, and the mark's fade step is the pool's last application's.
+- `IRRADIATED` is a dose (`EffectDynamics.Dose`): damage every tick that halves every half-life, spent once it deals
+  under `Dose.SPENT_PER_TICK`, so what it deals in all is bounded. A second dose adds its rate to what is left and the
+  sum halves as one; its time always follows its rate, so tenacity scales the rate, not the time. While it lasts,
+  `REGENERATION` is capped at 0 (`capAtShareOfBase(0)`), heals included; a crumble below 0 stays.
 - `SCORCHED` and `SICKENED` are counts: each stack lowers `RESILIENCE` or `SPIRIT` by one, and a tower can add them
   directly (`Effect.scorched`, `Effect.sickened`).
 - Every timer counts down one tick per tick; nothing about the enemy paces it. Only tenacity and

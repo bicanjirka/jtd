@@ -15,5 +15,7 @@ public enum EffectStacking {
      */
     SHARES,
     /** A decaying fuel pool (burn, poison, Soulfire). */
-    POOL
+    POOL,
+    /** One dose whose damage halves as it runs: applications add their rates, and its time follows the rate. */
+    DOSE
 }

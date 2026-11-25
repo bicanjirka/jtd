@@ -23,9 +23,12 @@ public enum ShellKind {
     NORMAL(ShellLook.NORMAL, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1f, Optional.empty()),
     /** What it deals past a Normal is the Mortar's Heavy damage, a stat. */
     HEAVY(ShellLook.HEAVY, DamageType.PHYSICAL, 0f, Blast.NORMAL, 0.75f, Optional.empty()),
-    /** Two Heavies fused: their damage together, a blast of its own, and fallout over most of it. */
+    /**
+     * Two Heavies fused: their damage together, a blast of its own, fallout over most of it, and a flash that gives
+     * every enemy on the board Radiation.
+     */
     NUKE(ShellLook.NUKE, DamageType.PHYSICAL, 0f, new Blast(1f, 1f, 0.75f), 0.75f,
-            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 19.2f))),
+            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 0f))),
     /** The Mortar's one way to deal magic: its blast burns, and the ground where it lands too. */
     NAPALM(ShellLook.NAPALM, DamageType.MAGIC, 0f, Blast.NORMAL, 1.25f,
             Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 32f))),
@@ -36,6 +39,11 @@ public enum ShellKind {
     /** A small blast with no edge, and a flare that burns until the wave is over. */
     FLARE(ShellLook.FLARE, DamageType.PHYSICAL, 0f, new Blast(-0.25f, -1f, 0f), 1.25f,
             Optional.of(Ground.fixed(ZoneKind.FLARE, 1.5f, Zone.UNTIL_WAVE_END, 0f)));
+
+    /** The magic damage a second of the Radiation a Nuke's flash gives, as it starts. */
+    public static final float RADIATION_POINTS_PER_SECOND = 8f;
+    /** How long that Radiation takes to fall to half. */
+    public static final int RADIATION_HALF_LIFE_TICKS = Math.round(2 * TickRate.TICKS_PER_SECOND);
 
     private final ShellLook look;
     private final DamageType damageType;
@@ -74,6 +82,18 @@ public enum ShellKind {
 
     public Optional<Ground> ground() {
         return this.ground;
+    }
+
+    /** Whether it flashes as it lands, giving every enemy on the board Radiation: a Nuke. */
+    public boolean irradiatesTheBoard() {
+        return this == NUKE;
+    }
+
+    /** What its flash gives every enemy on the board, said after "its flash gives every enemy on the board". */
+    public TermText flashText() {
+        return TermText.of(EffectKind.IRRADIATED).plus(" of " + TermNumbers.number(RADIATION_POINTS_PER_SECOND)
+                + " magic damage a second, halving every "
+                + TermNumbers.seconds(RADIATION_HALF_LIFE_TICKS / TickRate.TICKS_PER_SECOND));
     }
 
     /** Napalm, Tar or Cryo: the kinds a Payload node adds. */
@@ -131,7 +151,7 @@ public enum ShellKind {
     public Set<EffectKind> applies() {
         return switch (this) {
             case NORMAL, HEAVY -> Set.of();
-            case NUKE -> Set.of(EffectKind.DEAD_ZONE, EffectKind.SICKENED, EffectKind.POISON);
+            case NUKE -> Set.of(EffectKind.DEAD_ZONE, EffectKind.SICKENED, EffectKind.IRRADIATED);
             case NAPALM -> Set.of(EffectKind.BURN);
             case TAR -> Set.of(EffectKind.TARRED, EffectKind.POISON);
             case CRYO -> Set.of(EffectKind.CHILL, EffectKind.FREEZE);

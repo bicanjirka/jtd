@@ -165,6 +165,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Reveal | Mark | Debuff | Every tower can see and aim at it, and it can't gain Invisibility. |
 | Poison | Affliction | Debuff | A pool of fuel that it deals in full, faster the more it holds: 100 in 4 s, four times that in twice the time; fuel adds up whoever gives it, with no cap, and Tenacity shrinks it as it comes in; it adds a stack of Sicken every 0.5 s while it lasts. |
 | Scorch | Weakness | Debuff | Each stack: Resilience -1, up to 200 stacks; what adds stacks holds them 5 s, and what builds them over time holds them while it lasts; after that it loses a stack every 1 s. |
+| Radiation | Affliction | Debuff | Magic damage that halves at a steady pace as it runs, until it deals under 0.5 a second; a second dose adds to what is left of the first; while it lasts its Regeneration can't rise above 0, so a Heal restores nothing. |
 | Sicken | Weakness | Debuff | Each stack: Spirit -1, up to 200 stacks; what adds stacks holds them 5 s, and what builds them over time holds them while it lasts; after that it loses a stack every 1 s. |
 | Sunder | Weakness | Debuff | Each stack: Armor -5, up to 20 stacks; what adds stacks holds them 5 s, and what builds them over time holds them while it lasts; after that it loses a stack every 1 s. |
 | Expose | Mark | Debuff | Each stack: Agility and Resilience -25, more and stronger crits on it, up to 3 stacks; each tower keeps its own share for as long as it keeps it up. |
@@ -206,8 +207,8 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Silver Round | Buff | A shot of magic damage that ignores some magic resist. |
 | Magazine | Buff | The shells it has ready, in the order it fires them; a new one at the back draws its kind by lot, each kind as likely as its weight among the kinds it owns. |
 | Heavy | Buff | A shell that hits harder than a Normal one in the same blast, and flies slower. |
-| Nuke | Buff | Two Heavies fused: their damage together in a wider blast that leaves fallout applying Dead Zone, Sicken and Poison. |
-| Payload | Buff | A special shell: half a Normal one's damage, and ground it leaves where it lands. |
+| Nuke | Buff | Two Heavies fused: their damage together in a wider blast that leaves fallout applying Dead Zone and Sicken, and a flash that gives every enemy on the board Radiation. |
+| Payload | Buff | A special shell: a Normal one's damage, and ground it leaves where it lands. |
 | Napalm | Buff | A payload whose blast is magic and leaves flames that apply Burn. |
 | Tar Shell | Buff | A payload that leaves tar applying Tar and Poison. |
 | Cryo | Buff | A payload that leaves frost applying Chill, and Freeze to an enemy that stays. |
@@ -265,7 +266,7 @@ burning through a freeze.
 | Burning ground | Mortar's Napalm            | Burns them |
 | Tar            | Mortar's Tar Shell         | Poisons them and leaves them Tarred (slowed 40%) |
 | Frost ground   | Mortar's Cryo              | Chills them, and freezes one that stays inside a while; a frozen one's wait pauses |
-| Fallout        | Mortar's Nuke              | Drains their spirit, poisons them and leaves them in a Dead Zone |
+| Fallout        | Mortar's Nuke              | Drains their spirit and leaves them in a Dead Zone |
 | Flare          | Mortar's Flare             | Reveals them for 3 s; it lasts until the wave is over, and a Mortar keeps only its newest three |
 | Healing ground | Mender, from Soldier       | Heals them; it lasts 5 s |
 | Haste ground   | Runner, from Veteran       | Hastens them (twice the speed) for a second after each pulse; it lasts until the wave is over |

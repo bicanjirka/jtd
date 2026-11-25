@@ -468,10 +468,23 @@ public final class MortarTower extends AbstractTower {
                 this.rideHeavy(enemy, spec.heavy(), inCore, stats);
             }
         }
+        if (kind.irradiatesTheBoard()) {
+            this.irradiateTheBoard();
+        }
         boolean fragments = kind == ShellKind.HEAVY && spec.heavy() == HeavyRider.SHRAPNEL;
         this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), gameTime, kind.look())
                 .withFragments(fragments));
         this.leaveGround(x, y, shell, blast, spec);
+    }
+
+    /** A Nuke's flash: every enemy on the board, hidden or not, takes a dose of Radiation. */
+    private void irradiateTheBoard() {
+        for (EnemyMob enemy : this.context.enemies().getEnemies()) {
+            if (enemy.validTarget()) {
+                this.applyEffect(enemy, sink -> Effect.irradiated(ShellKind.RADIATION_POINTS_PER_SECOND,
+                        ShellKind.RADIATION_HALF_LIFE_TICKS, sink));
+            }
+        }
     }
 
     /** A Normal that carries a payload puts a share of a pulse of that payload's ground on what its blast reaches. */

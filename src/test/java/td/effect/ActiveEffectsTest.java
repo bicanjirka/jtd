@@ -1,6 +1,8 @@
 package td.effect;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
@@ -9,6 +11,7 @@ import td.stat.BaseStats;
 import td.stat.EnemyStat;
 import td.stat.StatCurves;
 import td.stat.StatSheet;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -553,6 +556,62 @@ class ActiveEffectsTest {
         effects.weakenShield(0.25f);
 
         assertThat(effects.shieldGauge().remaining()).isEqualTo(1.5f);
+    }
+
+    @Test
+    void aDoseDealsHalfAsMuchOverEachHalfLifeAsOverTheOneBeforeAndIsSpentOnceUnderItsFloor() {
+        int halfLife = 40;
+        float pointsPerSecond = 8f;
+        ActiveEffects effects = new ActiveEffects();
+        List<Damage> first = new ArrayList<>();
+        Effect dose = Effect.irradiated(pointsPerSecond, halfLife, recordingSink(first));
+        effects.apply(dose);
+
+        tickTimes(effects, halfLife);
+        int dealtFirst = first.stream().mapToInt(Damage::amount).sum();
+        first.clear();
+        tickTimes(effects, halfLife);
+        int dealtSecond = first.stream().mapToInt(Damage::amount).sum();
+
+        double halvings = Math.log(DamageUnits.ofPoints(pointsPerSecond) / TickRate.TICKS_PER_SECOND
+                / EffectDynamics.Dose.SPENT_PER_TICK) / Math.log(2);
+        assertThat(dose.remainingTicks()).isEqualTo((int) Math.ceil(halvings * halfLife));
+        assertThat(first).allMatch(hit -> hit.type() == DamageType.MAGIC);
+        assertThat(dealtFirst).isPositive();
+        assertThat((float) dealtSecond).isCloseTo(dealtFirst / 2f, within(2f));
+        tickTimes(effects, dose.remainingTicks());
+        assertThat(effects.has(EffectKind.IRRADIATED)).isFalse();
+    }
+
+    @Test
+    void aSecondDoseAddsItsRateToWhatIsLeftOfTheFirst() {
+        ActiveEffects apart = new ActiveEffects();
+        ActiveEffects together = new ActiveEffects();
+        List<Damage> fromApart = new ArrayList<>();
+        List<Damage> fromTogether = new ArrayList<>();
+
+        apart.apply(Effect.irradiated(8f, 40, recordingSink(fromApart)));
+        apart.apply(Effect.irradiated(8f, 40, recordingSink(fromApart)));
+        together.apply(Effect.irradiated(16f, 40, recordingSink(fromTogether)));
+        tickTimes(apart, 400);
+        tickTimes(together, 400);
+
+        assertThat(fromApart.stream().mapToInt(Damage::amount).sum())
+                .isEqualTo(fromTogether.stream().mapToInt(Damage::amount).sum()).isPositive();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"300", "-20", "-200"})
+    void aDoseHoldsRegenerationHealsIncludedToNoMoreThanZero(float regeneration) {
+        int heal = 50;
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.irradiated(8f, 40, DamageSink.none()));
+        effects.apply(Effect.heal(heal, 100, DamageSink.none()));
+
+        float resolved = new StatSheet(BaseStats.defaults(EnemyStat.class).with(EnemyStat.REGENERATION, regeneration),
+                effects::contributeTo).value(EnemyStat.REGENERATION);
+
+        assertThat(resolved).isEqualTo(Math.min(0f, regeneration + heal));
     }
 
     @Test

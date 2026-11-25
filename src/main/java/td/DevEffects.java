@@ -35,6 +35,8 @@ public final class DevEffects {
     private static final DevField SHIELD_POINTS = new DevField("Points", 50f, 1f, 100_000f);
     private static final DevField HEAL_PER_SECOND = new DevField("Heal/s", 10f, 0.1f, 100_000f);
     private static final DevField DAMAGE_PER_CELL = new DevField("Dmg/cell", 5f, 0.1f, 100_000f);
+    private static final DevField DAMAGE_PER_SECOND = new DevField("Dmg/s", 8f, 0.1f, 100_000f);
+    private static final DevField HALF_LIFE = new DevField("Half-life", 2f, 0.05f, 600f);
     private static final DevField ATTACK_SPEED = new DevField("Speed %", 50f, 1f, 900f);
     private static final DevField DAMAGE_TIMES = new DevField("Damage ×", 3f, 1f, 100f);
     private static final DevField MAGIC_IGNORED = new DevField("Ignored", 50f, 1f, 500f);
@@ -136,6 +138,8 @@ public final class DevEffects {
             case DRAGGED -> one(List.of(SECONDS, SLOW), in -> Effect.dragged(in.value(1) / 100f, in.ticks(0), in.sink()));
             case SCORCHED -> counting(kind, Effect::scorched);
             case SICKENED -> counting(kind, Effect::sickened);
+            case IRRADIATED -> one(List.of(DAMAGE_PER_SECOND, HALF_LIFE),
+                    in -> Effect.irradiated(in.value(0), in.ticks(1), in.sink()));
             case BACKLASH, DOOM -> timed((ticks, sink) -> Effect.hex(kind, ticks, sink));
             case BLIGHT -> new Builds<>(List.of(SECONDS, FUEL), in -> List.of(
                     Effect.blight(in.ticks(0), BlightHex.SLOW_PER_TICK, 0f, 0f, in.sink()),

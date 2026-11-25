@@ -93,6 +93,7 @@ public final class ActiveEffects {
             case EffectDynamics.ShieldPool shield -> shield.remaining();
             case EffectDynamics.Distance distance -> distance.perCell().amount();
             case EffectDynamics.GrowingSlow _ -> slowNow(effect);
+            case EffectDynamics.Dose dose -> dose.perTick();
         };
     }
 
@@ -110,6 +111,10 @@ public final class ActiveEffects {
             case SHARES -> {
                 Effect existing = this.active.get(incoming.kind());
                 this.active.put(incoming.kind(), existing == null ? incoming : existing.joinedBy(incoming));
+            }
+            case DOSE -> {
+                Effect existing = this.active.get(incoming.kind());
+                this.active.put(incoming.kind(), existing == null ? incoming : existing.dosedBy(incoming));
             }
             case TIMED -> {
                 Effect existing = this.active.get(incoming.kind());
@@ -399,7 +404,7 @@ public final class ActiveEffects {
                 case EffectDynamics.Slow _, EffectDynamics.GrowingSlow _ -> OptionalDouble.of(slowNow(effect));
                 default -> OptionalDouble.empty();
             };
-            case COUNT, SHARES -> OptionalDouble.empty();
+            case COUNT, SHARES, DOSE -> OptionalDouble.empty();
         };
     }
 
@@ -460,7 +465,7 @@ public final class ActiveEffects {
     private static void contribute(EffectKind kind, Effect effect, StatAccumulator<EnemyStat> accumulator) {
         switch (kind.rule().stacking()) {
             case COUNT -> kind.modifiersAt(effect.stacks()).applyTo(accumulator);
-            case TIMED, POOL -> kind.modifiersAt(1).applyTo(accumulator);
+            case TIMED, POOL, DOSE -> kind.modifiersAt(1).applyTo(accumulator);
             // A heal's shares carry regeneration instead of stacks; a shield's carry neither.
             case SHARES -> {
                 if (kind.maxStacks() > 0) {
@@ -532,6 +537,11 @@ public final class ActiveEffects {
                     this.bleed(effect, distance, cellsMoved);
                     yield countDown(effect);
                 }
+                case EffectDynamics.Dose dose -> {
+                    listener.dealing(kind);
+                    this.irradiate(effect, dose);
+                    yield countDown(effect.decayed());
+                }
                 case EffectDynamics.HealOverTime heal -> effect.afterTicks(1);
                 case EffectDynamics.ShieldPool shield -> effect.afterTicks(1);
                 case EffectDynamics.StackShares shares -> effect.afterTicks(1);
@@ -569,6 +579,17 @@ public final class ActiveEffects {
         this.progress[slot] = owed - whole;
         if (whole > 0) {
             bleeding.sink().apply(new Damage(whole, distance.perCell().type()));
+        }
+    }
+
+    /** Deals this tick's part of a dose, keeping the part of a unit that is not yet whole. */
+    private void irradiate(Effect dosed, EffectDynamics.Dose dose) {
+        int slot = dosed.kind().ordinal();
+        float owed = this.progress[slot] + dose.perTick();
+        int whole = (int) owed;
+        this.progress[slot] = owed - whole;
+        if (whole > 0) {
+            dosed.sink().apply(new Damage(whole, dose.type()));
         }
     }
 

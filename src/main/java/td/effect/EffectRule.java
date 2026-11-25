@@ -54,6 +54,11 @@ public record EffectRule(EffectCategory category, EffectStacking stacking, int s
         return this.stackingAs(EffectStacking.POOL, 1);
     }
 
+    /** A dose whose damage halves as it runs, applications adding their rates. */
+    public EffectRule asADose() {
+        return this.stackingAs(EffectStacking.DOSE, 1);
+    }
+
     /** Each stack adds {@code amount} flat to {@code stat}. */
     public EffectRule perStack(EnemyStat stat, float amount) {
         return this.perStack(stat, StatModifier.flat(amount));

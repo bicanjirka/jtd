@@ -3,6 +3,7 @@ package td.effect;
 import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.util.TickRate;
 
 import java.util.List;
@@ -282,6 +283,16 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.PRIORITY, durationTicks, sink);
     }
 
+    /**
+     * Radiation: {@code pointsPerSecond} of magic damage that halves every {@code halfLifeTicks}, and lasts until it is
+     * spent; a second dose adds to what is left of the first.
+     */
+    public static Effect irradiated(float pointsPerSecond, int halfLifeTicks, DamageSink sink) {
+        EffectDynamics.Dose dose = new EffectDynamics.Dose(DamageType.MAGIC,
+                DamageUnits.ofPoints(pointsPerSecond) / TickRate.TICKS_PER_SECOND, halfLifeTicks);
+        return of(EffectKind.IRRADIATED, dose.ticksLeft(), sink, dose);
+    }
+
     private static Effect timed(EffectKind kind, int durationTicks, DamageSink sink) {
         return of(kind, durationTicks, sink, FLAG);
     }
@@ -321,6 +332,18 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         };
         return new Effect(this.kind, this.remainingTicks, Math.max(this.authoredDurationTicks,
                 incoming.authoredDurationTicks()), this.sink, this.origin, joined);
+    }
+
+    /** This dose with {@code incoming}'s added, lasting as long as both together run. */
+    Effect dosedBy(Effect incoming) {
+        EffectDynamics.Dose dose = this.doseFamily().plus(incoming.doseFamily());
+        int ticks = dose.ticksLeft();
+        return new Effect(this.kind, ticks, Math.max(this.authoredDurationTicks, ticks), this.sink, this.origin, dose);
+    }
+
+    /** This dose a tick on, its damage that much lower; its clock runs down as any other. */
+    Effect decayed() {
+        return this.withDynamics(this.doseFamily().decayed());
     }
 
     /** This shield holding {@code shield}'s shares. */
@@ -485,6 +508,10 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         if (this.isLasting() && factor > 0f) {
             return this;
         }
+        if (this.kind.rule().stacking() == EffectStacking.DOSE) {
+            EffectDynamics.Dose scaled = this.doseFamily().scaledBy(factor);
+            return new Effect(this.kind, scaled.ticksLeft(), scaled.ticksLeft(), this.sink, this.origin, scaled);
+        }
         EffectDynamics retimed = this.retimed(ticks -> Math.max(1, Math.round(ticks * factor)));
         EffectDynamics scaled = switch (retimed) {
             case EffectDynamics.Stacks stacks -> stacks.withFadeTicks(Math.max(1, Math.round(stacks.fadeTicks() * factor)));
@@ -577,6 +604,13 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
 
     private Effect withDynamics(EffectDynamics dynamics) {
         return new Effect(this.kind, this.remainingTicks, this.authoredDurationTicks, this.sink, this.origin, dynamics);
+    }
+
+    private EffectDynamics.Dose doseFamily() {
+        return switch (this.dynamics) {
+            case EffectDynamics.Dose dose -> dose;
+            default -> throw this.wrongFamily("a dose");
+        };
     }
 
     private EffectDynamics.Stacks stacksFamily() {

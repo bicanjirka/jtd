@@ -103,6 +103,9 @@ public enum EffectKind implements Term {
     UNYIELDING("Unyielding", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.RESILIENCE, 100f)
             .perStack(EnemyStat.SPIRIT, 100f).perStack(EnemyStat.MAGIC_RESIST, 100f)
             .perStack(EnemyStat.TENACITY, 100f).perStack(EnemyStat.ARMOR, 100f).helpsCarrier()),
+    /** Radiation: magic damage that halves as it runs, and no regeneration above zero while it does. */
+    IRRADIATED("Radiation", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asADose()
+            .perStack(EnemyStat.REGENERATION, StatModifier.capAtShareOfBase(0f))),
     /** Less damage taken of either type, a stack a point; what gives it holds it at its own stacks. */
     RESOLVE("Resolve", EffectRule.of(EffectCategory.BUFF).countingUpTo(100)
             .perStack(EnemyStat.PHYSICAL_DAMAGE_TAKEN, -0.01f).perStack(EnemyStat.MAGIC_DAMAGE_TAKEN, -0.01f)
@@ -185,7 +188,7 @@ public enum EffectKind implements Term {
     public boolean isDecaying() {
         return switch (this.rule.stacking()) {
             case POOL, COUNT -> true;
-            case TIMED, SHARES -> false;
+            case TIMED, SHARES, DOSE -> false;
         };
     }
 
@@ -215,7 +218,7 @@ public enum EffectKind implements Term {
     private static int maxStacksOf(EffectRule rule) {
         return switch (rule.stacking()) {
             case COUNT, SHARES -> rule.stackCap();
-            case TIMED, POOL -> 0;
+            case TIMED, POOL, DOSE -> 0;
         };
     }
 }

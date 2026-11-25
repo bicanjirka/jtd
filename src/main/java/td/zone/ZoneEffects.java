@@ -52,9 +52,6 @@ public final class ZoneEffects {
             case FALLOUT -> {
                 owner.applyEffect(enemy, sink -> Effect.sickened(FALLOUT_SICKENED_STACKS));
                 owner.applyEffect(enemy, sink -> Effect.deadZone(FALLOUT_HOLD_TICKS, sink));
-                if (strength > 0) {
-                    owner.applyEffect(enemy, sink -> Effect.poison(Damage.magic(strength), sink));
-                }
             }
             case FLARE -> owner.applyEffect(enemy, sink -> Effect.revealed(FLARE_REVEAL_TICKS, sink));
         }

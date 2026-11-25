@@ -452,6 +452,7 @@ public final class Java2DFrameRenderer {
             case STATUS_MARKER_VULNERABLE -> new Color(235, 80, 150);
             case STATUS_MARKER_REVEALED -> new Color(200, 160, 255);
             case STATUS_MARKER_POISON -> new Color(170, 210, 40);
+            case STATUS_MARKER_IRRADIATED -> new Color(225, 240, 60);
             case STATUS_MARKER_SCORCHED -> new Color(170, 80, 40);
             case STATUS_MARKER_SICKENED -> new Color(110, 140, 70);
             case STATUS_MARKER_SUNDERED -> new Color(190, 190, 200);

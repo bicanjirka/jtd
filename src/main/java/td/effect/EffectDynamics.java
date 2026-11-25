@@ -3,6 +3,8 @@ package td.effect;
 import td.damage.AttackOrigin;
 import td.damage.Damage;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
+import td.util.TickRate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -250,6 +252,41 @@ public sealed interface EffectDynamics {
 
     /** Damage for every cell walked: a bleed. */
     record Distance(Damage perCell) implements EffectDynamics {
+    }
+
+    /**
+     * A dose: damage every tick that halves every {@code halfLifeTicks}, spent once it deals under {@link #SPENT_PER_TICK}.
+     * What it deals in all is bounded, however long it is given to run.
+     *
+     * @param perTick the damage units it deals this tick, the part of a unit left over carried to the next
+     */
+    record Dose(DamageType type, float perTick, int halfLifeTicks) implements EffectDynamics {
+
+        /** Half a point a second: a dose that deals less is spent. */
+        public static final float SPENT_PER_TICK = DamageUnits.ofPoints(0.5f) / TickRate.TICKS_PER_SECOND;
+
+        /** The same dose a tick later. */
+        public Dose decayed() {
+            return new Dose(this.type, this.perTick * (float) Math.pow(0.5, 1.0 / this.halfLifeTicks), this.halfLifeTicks);
+        }
+
+        /** Both doses together: their rates add, and they halve as one from now on. */
+        public Dose plus(Dose more) {
+            return new Dose(this.type, this.perTick + more.perTick, this.halfLifeTicks);
+        }
+
+        public Dose scaledBy(float factor) {
+            return new Dose(this.type, this.perTick * factor, this.halfLifeTicks);
+        }
+
+        /** The ticks it runs before it is spent, never under one. */
+        public int ticksLeft() {
+            if (this.perTick <= SPENT_PER_TICK) {
+                return 1;
+            }
+            double halvings = Math.log(this.perTick / SPENT_PER_TICK) / Math.log(2);
+            return Math.max(1, (int) Math.ceil(halvings * this.halfLifeTicks));
+        }
     }
 
     /**
