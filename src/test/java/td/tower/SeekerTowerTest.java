@@ -387,7 +387,7 @@ class SeekerTowerTest {
     }
 
     @Test
-    void aRubyDealsDoubleDamageAndFreezesWhatIsImmuneToFreezing() {
+    void aRubyDealsItsBonusOnTopOfTheTowersDamageAndFreezesWhatIsImmuneToFreezing() {
         SeekerTower tower = this.towerWith("Ruby");
         tower.readyForWave();
         this.spendTheFrostAhead(tower);
@@ -396,12 +396,13 @@ class SeekerTowerTest {
 
         this.landOne(tower);
 
-        assertThat(immune.onlyHitAmount()).isEqualTo(2 * tower.damageCurrent());
+        assertThat(immune.onlyHitAmount()).isEqualTo(
+                Math.round(tower.damageCurrent() + MissileKind.RUBY.damageBonus()));
         assertThat(immune.activeEffects()).anySatisfy(effect -> assertThat(effect.ice()).isEqualTo(IceKind.RUBY));
     }
 
     @Test
-    void aShadeGoesPastAShieldAndFreezes() {
+    void aShadeGoesPastAShieldWithItsBonusOnTopOfTheTowersDamageAndFreezes() {
         SeekerTower tower = this.towerWith("Shade");
         tower.readyForWave();
         this.spendTheFrostAhead(tower);
@@ -410,29 +411,9 @@ class SeekerTowerTest {
 
         this.landOne(tower);
 
+        assertThat(shielded.onlyHitAmount()).isEqualTo(
+                Math.round(tower.damageCurrent() + MissileKind.SHADE.damageBonus()));
         assertThat(shielded.hasEffect(EffectKind.FREEZE)).isTrue();
-    }
-
-    @Test
-    void aShadesEnemyStaysSilencedOnceItThawsForAsLongAsItWasFrozen() {
-        SeekerTower tower = this.towerWith("Shade");
-        tower.readyForWave();
-        this.spendTheFrostAhead(tower);
-        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
-        this.enemies(target);
-        this.launch(tower);
-        this.tick = TowerFixtures.flyProjectilesToCompletion(this.context, this.tick);
-        int frozenAt = this.tick - 1;
-        for (int i = 0; i < 10; i++) {
-            tower.doTick(this.tick++);
-        }
-
-        target.expire(EffectKind.FREEZE);
-        int thawedAt = this.tick;
-        tower.doTick(this.tick++);
-
-        assertThat(target.activeEffects()).filteredOn(effect -> effect.kind() == EffectKind.SILENCED)
-                .singleElement().satisfies(effect -> assertThat(effect.remainingTicks()).isEqualTo(thawedAt - frozenAt));
     }
 
     @Test
@@ -450,22 +431,25 @@ class SeekerTowerTest {
     }
 
     @Test
-    void aStrongerMissileOnTheIceTheTowerHoldsTurnsItToItsOwnAndActsAsItsKindAtTheThaw() {
-        SeekerTower tower = this.towerWith("Shade");
+    void aStrongerMissileOnTheIceTheTowerHoldsTurnsItToItsOwnAndShattersAsItsKindAtTheThaw() {
+        SeekerTower tower = this.towerWith("Shade", "Shatter");
         tower.readyForWave();
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob close = this.enemyAt(tower, OUT, SCALE * 0.5).movingAt(0f);
         this.enemies(target);
         while (tower.nestMissiles().getFirst() == MissileKind.FROST) {
             this.landOne(tower);
         }
         this.landOne(tower);
         IceKind ice = target.activeEffect(EffectKind.FREEZE).orElseThrow().ice();
+        this.enemies(target, close);
 
         target.expire(EffectKind.FREEZE);
         tower.doTick(this.tick++);
 
         assertThat(ice).isEqualTo(IceKind.SHADE);
-        assertThat(target.hasEffect(EffectKind.SILENCED)).isTrue();
+        assertThat(close.onlyHitAmount()).isEqualTo(
+                Math.round((tower.damageCurrent() + MissileKind.SHADE.damageBonus()) * ShatterMechanic.SHARE));
     }
 
     @Test
@@ -523,7 +507,8 @@ class SeekerTowerTest {
         tower.doTick(this.tick++);
 
         assertThat(beforeThaw).containsExactly(1, 0, 0);
-        assertThat(close.onlyHitAmount()).isEqualTo(Math.round(tower.damageCurrent() * ShatterMechanic.SHARE));
+        assertThat(close.onlyHitAmount()).isEqualTo(
+                Math.round((tower.damageCurrent() + MissileKind.FROST.damageBonus()) * ShatterMechanic.SHARE));
         assertThat(far.hits()).isEmpty();
         assertThat(frozen.hits()).hasSize(1);
     }

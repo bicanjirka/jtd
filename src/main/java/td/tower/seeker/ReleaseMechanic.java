@@ -10,7 +10,7 @@ import td.util.TickRate;
 public final class ReleaseMechanic implements SeekerMechanic {
 
     /** Freezes that set off one Release; every freeze counts, a released missile's too. */
-    public static final int EVERY = 14;
+    public static final int EVERY = 11;
     /** Ticks between the missiles a Hatching hatches. */
     public static final int HATCH_GAP_TICKS = 8;
 

@@ -10,31 +10,25 @@ import td.tower.TowerTerm;
  */
 public enum MissileKind {
     /** The plain missile: its freeze is ice. */
-    FROST(TowerTerm.FROST_MISSILE, 1f, IceKind.FROST, MissileLook.STANDARD, false, false, false),
-    /** Twice the damage, and a freeze in ruby that holds the freeze-immune. */
-    RUBY(TowerTerm.RUBY, 2f, IceKind.RUBY, MissileLook.RUBY, false, false, false),
-    /**
-     * Shadow damage, past every Shield; no regeneration for as long as its freeze, and a freeze that leaves its enemy
-     * Silenced as long again once it thaws.
-     */
-    SHADE(TowerTerm.SHADE, 1f, IceKind.SHADE, MissileLook.SHADE, true, true, true);
+    FROST(TowerTerm.FROST_MISSILE, 0f, IceKind.FROST, MissileLook.STANDARD, false, false),
+    /** More damage, and a freeze in ruby that holds the freeze-immune. */
+    RUBY(TowerTerm.RUBY, 40f, IceKind.RUBY, MissileLook.RUBY, false, false),
+    /** More damage, as Shadow, past every Shield; and no regeneration for as long as its freeze. */
+    SHADE(TowerTerm.SHADE, 40f, IceKind.SHADE, MissileLook.SHADE, true, true);
 
     private final TowerTerm term;
-    private final float damageFactor;
+    private final float damageBonus;
     private final IceKind ice;
     private final MissileLook look;
     private final boolean shadow;
-    private final boolean silencesAfterThaw;
     private final boolean withers;
 
-    MissileKind(TowerTerm term, float damageFactor, IceKind ice, MissileLook look, boolean shadow,
-                boolean silencesAfterThaw, boolean withers) {
+    MissileKind(TowerTerm term, float damageBonus, IceKind ice, MissileLook look, boolean shadow, boolean withers) {
         this.term = term;
-        this.damageFactor = damageFactor;
+        this.damageBonus = damageBonus;
         this.ice = ice;
         this.look = look;
         this.shadow = shadow;
-        this.silencesAfterThaw = silencesAfterThaw;
         this.withers = withers;
     }
 
@@ -42,9 +36,14 @@ public enum MissileKind {
         return this.term;
     }
 
-    /** Its hit's damage as a multiple of the tower's. */
-    public float damageFactor() {
-        return this.damageFactor;
+    /** The points its hit deals on top of the tower's damage. */
+    public float damageBonus() {
+        return this.damageBonus;
+    }
+
+    /** What its hit deals with the tower's {@code damage}, before the hit's adjustment. */
+    public float damageWith(float damage) {
+        return damage + this.damageBonus;
     }
 
     public IceKind ice() {
@@ -63,10 +62,5 @@ public enum MissileKind {
     /** Whether its hit stops its enemy's regeneration for as long as the freeze it brings. */
     public boolean withers() {
         return this.withers;
-    }
-
-    /** Whether its enemy stays Silenced, once it thaws, for as long as it was frozen. */
-    public boolean silencesAfterThaw() {
-        return this.silencesAfterThaw;
     }
 }

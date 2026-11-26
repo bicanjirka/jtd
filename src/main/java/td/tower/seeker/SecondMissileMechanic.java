@@ -31,9 +31,6 @@ public final class SecondMissileMechanic implements SeekerMechanic {
         if (this.kind.withers()) {
             applies.add(EffectKind.WITHERED);
         }
-        if (this.kind.silencesAfterThaw()) {
-            applies.add(EffectKind.SILENCED);
-        }
         return Set.copyOf(applies);
     }
 

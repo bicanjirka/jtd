@@ -105,13 +105,13 @@ public final class SeekerTower extends AbstractTower {
             .withModifiers(TowerModifiers.nestCapacity(2))
             .inTier(1);
 
-    private static final UpgradeNode RUBY = UpgradeNode.of("seeker.ruby", "Ruby", 19)
+    private static final UpgradeNode RUBY = UpgradeNode.of("seeker.ruby", "Ruby", 25)
             .inTier(2);
-    private static final UpgradeNode SHADE = UpgradeNode.of("seeker.shade", "Shade", 19)
+    private static final UpgradeNode SHADE = UpgradeNode.of("seeker.shade", "Shade", 25)
             .inTier(2);
-    private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 8)
+    private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 10)
             .inTier(2);
-    private static final UpgradeNode RIME = UpgradeNode.of("seeker.rime", "Rime", 12)
+    private static final UpgradeNode RIME = UpgradeNode.of("seeker.rime", "Rime", 0)
             .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1))
                     .when(new ProcCondition.TargetHasAnyOf(Set.of(EffectKind.FREEZE))))
             .inTier(2);
@@ -145,8 +145,8 @@ public final class SeekerTower extends AbstractTower {
             .withCluster(UpgradeCluster.of("Around the ice", ICE_WAKE, SHATTER))
             .withCluster(UpgradeCluster.of("Speed or sting", QUICK_BROOD_2, SHARP_STING_2))
             .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withBonus(TowerModifiers.huntRadius(2f).plus(TowerModifiers.projectileSpeed(3.75f))),
-                    UpgradeTier.gated(120, 0).withBonus(TowerModifiers.accuracy(50f)),
-                    UpgradeTier.gated(200, 0).withBonus(TowerModifiers.freezeDuration(20))));
+                    UpgradeTier.gated(120, 0),
+                    UpgradeTier.gated(200, 0).withBonus(TowerModifiers.freezeDuration(20).plus(TowerModifiers.accuracy(50f)))));
 
     private static final MechanicCatalogue<SeekerMechanic> MECHANICS = MechanicCatalogue.of(
             entry(SWARM.id(), () -> new ReleaseMechanic(Release.SWARM)),
@@ -312,12 +312,12 @@ public final class SeekerTower extends AbstractTower {
      * A missile lands with the stats it was launched with: its kind's hit, and a freeze unless a Shield took the whole
      * of it. A dodged missile does nothing.
      */
-    private void onImpact(EnemyMob target, Shot shot, int gameTime) {
+    private void onImpact(EnemyMob target, Shot shot) {
         TowerStats stats = shot.stats();
         MissileKind kind = shot.kind();
         Optional<IceKind> iceBefore = iceOn(target);
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.MISSILE, 0f, stats);
-        int amount = Math.round(stats.damage() * kind.damageFactor() * adjustment.damageFactor());
+        int amount = Math.round(kind.damageWith(stats.damage()) * adjustment.damageFactor());
         HitResult hit = this.landHit(target, Damage.magic(amount), this.profileOf(shot, adjustment).asAimed());
         if (hit.dodged()) {
             return;
@@ -331,11 +331,11 @@ public final class SeekerTower extends AbstractTower {
             }
             Optional<IceKind> iceAfter = iceOn(target);
             if (iceBefore.isEmpty() && iceAfter.isPresent()) {
-                this.frozen.record(target, kind, stats, gameTime);
+                this.frozen.record(target, kind, stats);
                 this.countFreeze();
             } else if (iceBefore.filter(before -> before != kind.ice()).isPresent()
                     && iceAfter.filter(kind.ice()::equals).isPresent()) {
-                this.frozen.retake(target, kind, stats, gameTime);
+                this.frozen.retake(target, kind, stats);
             }
         }
         this.report(target, HitKind.MISSILE, hit.critical(), target.isDead());
@@ -363,15 +363,11 @@ public final class SeekerTower extends AbstractTower {
         }
     }
 
-    /** The freezes that ended: a Shatter bursts and a Shade's enemy stays Silenced; an Ice Wake chills round the rest. */
+    /** The freezes that ended: a Shatter bursts; an Ice Wake chills round the rest. */
     private void settleIce(SeekerSpec spec) {
-        for (FrozenLedger.Thaw thaw : this.frozen.settle(this.tickNow())) {
-            FrozenLedger.Freeze freeze = thaw.freeze();
+        for (FrozenLedger.Freeze freeze : this.frozen.settle()) {
             if (spec.ice() == IceRider.SHATTER) {
                 this.shatter(freeze);
-            }
-            if (freeze.kind().silencesAfterThaw() && !freeze.enemy().isDead()) {
-                this.applyEffect(freeze.enemy(), sink -> Effect.silenced(thaw.heldTicks(), sink));
             }
         }
         if (spec.ice() == IceRider.ICE_WAKE) {
@@ -388,7 +384,7 @@ public final class SeekerTower extends AbstractTower {
     /** The ice bursts: every other enemy close by takes a share of the damage of the missile that froze it. */
     private void shatter(FrozenLedger.Freeze freeze) {
         Shot shot = new Shot(freeze.kind(), freeze.stats());
-        Damage damage = Damage.magic(Math.round(freeze.stats().damage() * freeze.kind().damageFactor()
+        Damage damage = Damage.magic(Math.round(freeze.kind().damageWith(freeze.stats().damage())
                 * ShatterMechanic.SHARE));
         AttackProfile profile = this.profileOf(shot, HitAdjustment.none());
         float radius = ShatterMechanic.RADIUS_CELLS * this.cellPixels();
@@ -549,7 +545,7 @@ public final class SeekerTower extends AbstractTower {
 
         @Override
         public void land(EnemyMob target, int gameTime) {
-            SeekerTower.this.onImpact(target, this.shot, gameTime);
+            SeekerTower.this.onImpact(target, this.shot);
         }
 
         @Override

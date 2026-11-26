@@ -42,8 +42,8 @@ and acts over a weaker one, Shade stops regeneration, and an Unravel node makes 
   of range and a cell to that look. No ring is drawn for it (the look is round the missile, not the tower). The
   Mortar's minimum-range ring is drawn thin.
 - **Stronger ice wins.** Ruby over Shade over Frost: a stronger missile on an enemy the Aerie already holds frozen
-  turns the ice to its own, in colour and in what it does (Ruby holds the freeze-immune, Shade Silences after the
-  thaw and stops regeneration), until the freeze ends as it would have. It is no new freeze for the Release or
+  turns the ice to its own, in colour and in what it does (Ruby holds the freeze-immune, Shade
+  stops regeneration), until the freeze ends as it would have. It is no new freeze for the Release or
   Feeding.
 - **Shade's look** is Frost's and Ruby's shape in its own grey, on the board and in its glyph.
 - **Wither** (new effect): regeneration held at zero, so a heal over time gives nothing; a Shade hit applies it for the
