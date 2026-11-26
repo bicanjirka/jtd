@@ -62,7 +62,7 @@ public final class TowerArtGame {
      */
     public static void paintLive(Graphics2D g, TowerLook look, int fromTier, int tier, TowerPose pose, double aimDegrees,
                                  double rise, double build, double seconds) {
-        TowerSpriteDraw draw = new TowerSpriteDraw(look, tier, pose, 0, 0, false, 0f, 0f, 0f,
+        TowerSpriteDraw draw = new TowerSpriteDraw(look, tier, pose, 0, 0, false, 0f, 0f, 0f, 0f,
                 (float) Math.toRadians(aimDegrees), false, fromTier, (float) rise, (float) build, (float) seconds);
         TowerSprites.paintShadow(g, draw, 1, SceneLight.none());
         TowerSprites.paint(g, draw, 1, SceneLight.none());
