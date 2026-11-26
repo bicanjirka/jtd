@@ -65,3 +65,4 @@ Each alternative, with why it lost.
 | [0025](0025-tests-guard-harm-not-looks.md) | Tests guard harm, not looks | Accepted |
 | [0026](0026-each-level-has-its-own-light.md) | Each level has its own light | Accepted |
 | [0027](0027-the-presentation-times-its-moments.md) | The presentation times its moments | Accepted |
+| [0028](0028-a-free-tier-brings-mechanics.md) | A free tier's node brings mechanics, granted by the XP it holds | Accepted |

@@ -13,18 +13,24 @@ import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.fixtures.EnemyFixtures;
+import td.fixtures.FakeAbilityMechanic;
 import td.fixtures.FakeEnemyMob;
 import td.fixtures.FakeTower;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
 import td.stat.StatTerm;
+import td.term.TermText;
+import td.tower.ability.AbilityState;
+import td.tower.ability.AbilityUnits;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitBonus;
 import td.tower.proc.HitKind;
 import td.tower.proc.HitScaling;
 import td.tower.proc.Proc;
 import td.tower.proc.ProcPayload;
+import td.tower.upgrade.Mechanic;
+import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.UpgradeBonus;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
@@ -39,6 +45,7 @@ import java.util.OptionalInt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static td.tower.upgrade.MechanicCatalogue.entry;
 
 /** In {@code AbstractTower}'s package so it can read protected stats directly. */
 class AbstractTowerTest {
@@ -662,6 +669,65 @@ class AbstractTowerTest {
         assertThat(after.effectStacks(EffectKind.SUNDERED)).isEqualTo(2);
         assertThat(tower.upgrades().owned()).isEmpty();
         assertThat(tree.isGranted(tree.tierNodeOf(1).orElseThrow())).isTrue();
+    }
+
+    /** A tower whose tier I, free at 150 XP, brings a Bolt ability through its mechanic catalogue. */
+    private FakeTower withBoltOnTierOne(int x) {
+        UpgradeNode node = UpgradeNode.of("veteran", "Veteran", 10).inTier(1);
+        UpgradeTree tree = UpgradeTree.of(node).withTiers(List.of(UpgradeTier.open(),
+                UpgradeTier.gated(150, 0).withMechanics()));
+        MechanicCatalogue<Mechanic> mechanics = MechanicCatalogue.of(
+                entry(UpgradeTree.tierNodeId(1), () -> FakeAbilityMechanic.costing("Bolt", 2)));
+        FakeTower tower = FakeTower.offering(this.context, x, 0, tree, mechanics);
+        this.context.towers().add(tower);
+        return tower;
+    }
+
+    @Test
+    void aFreeTiersMechanicActsOnlyOnceItsXpOpensTheTier() {
+        FakeTower tower = this.withBoltOnTierOne(0);
+        tower.earnXp(149);
+        List<AbilityState> oneShort = tower.abilities();
+
+        tower.earnXp(1);
+
+        assertThat(oneShort).isEmpty();
+        assertThat(tower.abilities()).extracting(state -> state.ability().term().title()).containsExactly("Bolt");
+        assertThat(tower.upgrades().owned()).isEmpty();
+    }
+
+    @Test
+    void aFreeTiersMechanicIsRenewedWithTheOthersAndNotDropped() {
+        FakeTower tower = this.withBoltOnTierOne(0);
+        tower.earnXp(150);
+        AbilityUnits fresh = tower.abilities().getFirst().bar().fill();
+        tower.earn(AbilityUnits.of(0.5f));
+
+        tower.endWave();
+
+        assertThat(tower.abilities()).extracting(state -> state.bar().fill()).containsExactly(fresh);
+    }
+
+    @Test
+    void aLoadedGameHoldsAFreeTiersMechanicOnceFromItsXpWithoutSavingTheTiersNode() {
+        FakeTower built = this.withBoltOnTierOne(0);
+        built.earnXp(150);
+        FakeTower loaded = this.withBoltOnTierOne(1);
+
+        loaded.restore(built.record());
+        loaded.beginTick(10);
+
+        assertThat(built.upgrades().owned()).isEmpty();
+        assertThat(loaded.abilities()).extracting(state -> state.ability().term().title()).containsExactly("Bolt");
+    }
+
+    @Test
+    void aFreeTiersNodeSaysWhatItsMechanicsAdd() {
+        FakeTower tower = this.withBoltOnTierOne(0);
+
+        NodeWords words = tower.wordsOf(tower.upgradeTree().tierNodeOf(1).orElseThrow());
+
+        assertThat(words.sentences()).extracting(TermText::plain).containsExactly("gives Bolt");
     }
 
     @Test

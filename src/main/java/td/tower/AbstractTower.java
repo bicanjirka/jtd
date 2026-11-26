@@ -141,6 +141,8 @@ public abstract class AbstractTower implements Tower {
     private int currentTick;
     // The highest open tier at this tower's last turn; -1 before its first, so a tower built or loaded high has not risen.
     private int seenTier = -1;
+    // The tiers earned when their own nodes' mechanics were last granted.
+    private int grantedTiers;
     private int shotsBegun;
     // The bonuses and procs of the upgrades and tiers last seen, so a hit with none allocates nothing.
     private UpgradeState armedFrom;
@@ -774,6 +776,7 @@ public abstract class AbstractTower implements Tower {
     public boolean beginTick(int gameTime) {
         this.currentTick = gameTime;
         this.noteTier(gameTime);
+        this.grantEarnedTiers();
         boolean republished = false;
         if (this.statuses.expire(gameTime)) {
             this.refreshStatusLayer();
@@ -795,6 +798,20 @@ public abstract class AbstractTower implements Tower {
             republished = true;
         }
         return republished;
+    }
+
+    /**
+     * Holds what the own nodes of the tiers it has earned bring, whenever their count moved. XP opens a tier on the game
+     * loop and a paid unlock on the EDT; watching the count catches either.
+     */
+    private void grantEarnedTiers() {
+        UpgradeState owned = this.upgrades;
+        int xp = this.experience.xp();
+        int earned = this.upgradeTree().tiersEarned(xp, owned);
+        if (earned != this.grantedTiers) {
+            this.grantedTiers = earned;
+            this.ownedMechanics().grant(this.upgradeTree().earnedTierNodes(xp, owned));
+        }
     }
 
     // XP and a paid unlock both open a tier, on different threads; watching the result catches either.
@@ -853,6 +870,7 @@ public abstract class AbstractTower implements Tower {
         int earnedBefore = this.tiersEarned();
         this.experience.earn(whole);
         if (this.tiersEarned() != earnedBefore) {
+            this.grantEarnedTiers();
             this.recalculateEveryTower();
         }
     }
@@ -883,6 +901,7 @@ public abstract class AbstractTower implements Tower {
         this.xpRemainder = tally.xpCarried();
         this.price = record.paid();
         this.restored = true;
+        this.grantEarnedTiers();
         this.recalculateEveryTower();
     }
 
@@ -912,8 +931,8 @@ public abstract class AbstractTower implements Tower {
     }
 
     /**
-     * The mechanics this tower's owned nodes brought, which buying and downgrading keep up to date; none by
-     * default. Return the same instance every call.
+     * The mechanics this tower's earned tiers and owned nodes brought, which earning, buying and downgrading keep up to
+     * date; none by default. Return the same instance every call.
      */
     protected OwnedMechanics<? extends Mechanic> ownedMechanics() {
         return NO_MECHANICS;
@@ -987,7 +1006,10 @@ public abstract class AbstractTower implements Tower {
     private void own(List<UpgradeNode> bought) {
         UpgradeState nextState = this.upgrades;
         for (UpgradeNode node : bought) {
-            this.ownedMechanics().add(node);
+            // A tier's unlock brings its mechanics once the tier is earned, with the free tiers' own.
+            if (!this.upgradeTree().isUnlock(node)) {
+                this.ownedMechanics().add(node);
+            }
             nextState = nextState.with(node);
             OptionalLong inBreak = this.currentBreak();
             this.purchases.updateAndGet(now -> now.withBought(node, inBreak));

@@ -23,8 +23,8 @@ import java.util.Set;
  * {@link #offered(Tower, GameWorld)} is the query every caller shares.
  * <p>
  * A node needs its tier open and the nodes it comes after owned. A cluster's members exclude each other; what comes
- * after a member hides while another member is the active one. A tier above tier 0 that has a price or a bonus has a
- * node of its own ({@link #tierNodeOf(int)}) that carries its bonus and its perks. A paid tier's is its unlock
+ * after a member hides while another member is the active one. A tier above tier 0 that has a price, a bonus, a perk
+ * or mechanics has a node of its own ({@link #tierNodeOf(int)}) that carries them. A paid tier's is its unlock
  * ({@link #unlockOf(int)}), bought like any other node, so a purchase, a refund and a save treat it as any other. A
  * free tier's is granted: the tower holds it once its XP opens the tier, and it is never bought, sold or saved.
  */
@@ -55,7 +55,7 @@ public final class UpgradeTree {
             throw new IllegalArgumentException("Tier 0 is open from the start: " + tiers);
         }
         if (tiers.getFirst().gives()) {
-            throw new IllegalArgumentException("Tier 0 is the tower's base and gives no bonus or perk: "
+            throw new IllegalArgumentException("Tier 0 is the tower's base and gives no bonus, perk or mechanic: "
                     + tiers.getFirst());
         }
         this.tiers = List.copyOf(tiers);
@@ -103,9 +103,14 @@ public final class UpgradeTree {
         this.branchMember = this.branchMembers();
     }
 
+    /** The id of {@code tier}'s own node, under which a tower's mechanic catalogue lists what the tier brings. */
+    public static String tierNodeId(int tier) {
+        return TIER_PREFIX + tier;
+    }
+
     /** {@code gate}'s own node at {@code tier}, carrying its bonus and its perks. */
     private static UpgradeNode tierNode(int tier, UpgradeTier gate) {
-        UpgradeNode node = UpgradeNode.of(TIER_PREFIX + tier, UpgradeTier.nameOf(tier), gate.unlockPrice()).inTier(tier)
+        UpgradeNode node = UpgradeNode.of(tierNodeId(tier), UpgradeTier.nameOf(tier), gate.unlockPrice()).inTier(tier)
                 .withModifiers(gate.bonus());
         for (Proc perk : gate.perks()) {
             node = node.withProc(perk);
@@ -169,8 +174,8 @@ public final class UpgradeTree {
     }
 
     /**
-     * {@code tier}'s own node, which carries its bonus: its unlock when the tier is paid, else granted with its XP.
-     * Empty for tier 0, for a free tier with no bonus and outside the tiers.
+     * {@code tier}'s own node, which carries what the tier gives: its unlock when the tier is paid, else granted with
+     * its XP. Empty for tier 0, for a free tier that gives nothing and outside the tiers.
      */
     public Optional<UpgradeNode> tierNodeOf(int tier) {
         return tier < 0 || tier >= this.tierNodes.size() ? Optional.empty() : this.tierNodes.get(tier);
@@ -295,13 +300,19 @@ public final class UpgradeTree {
      * too, so playtesting's waiver never grants a tier's bonus.
      */
     public List<UpgradeNode> heldNodes(int xp, UpgradeState owned) {
-        List<UpgradeNode> held = new ArrayList<>();
-        int earned = this.tiersEarned(xp, owned);
-        for (int tier = 1; tier <= earned; tier++) {
-            this.tierNodes.get(tier).ifPresent(held::add);
-        }
+        List<UpgradeNode> held = new ArrayList<>(this.earnedTierNodes(xp, owned));
         owned.owned().stream().filter(node -> !this.isUnlock(node)).forEach(held::add);
         return held;
+    }
+
+    /** The own node of every tier a tower with {@code xp} that owns {@code owned} has earned, lowest first. */
+    public List<UpgradeNode> earnedTierNodes(int xp, UpgradeState owned) {
+        List<UpgradeNode> earned = new ArrayList<>();
+        int top = this.tiersEarned(xp, owned);
+        for (int tier = 1; tier <= top; tier++) {
+            this.tierNodes.get(tier).ifPresent(earned::add);
+        }
+        return earned;
     }
 
     /** What {@link #heldNodes} add to the tower's own stats. */

@@ -132,10 +132,13 @@
 
 ## Upgrade tree
 
-- A tree is tiers (`UpgradeTier`: the XP that opens it, an unlock price, a `bonus` of any stats and `perks`, procs;
-  `standard()` for every tower; tier 0 has neither). A tier above 0 with a price, a bonus or a perk has its own node,
-  which the tree makes (`tierNodeOf`, `tier.N`) and which carries them; a tower reads procs from `heldNodes`, so a
-  granted tier's perk acts from its XP. A paid tier's is its unlock, bought like any other and on
+- A tree is tiers (`UpgradeTier`: the XP that opens it, an unlock price, a `bonus` of any stats, `perks`, procs, and
+  `withMechanics()`; `standard()` for every tower; tier 0 has none of them). A tier above 0 with a price, a bonus, a
+  perk or mechanics has its own node, which the tree makes (`tierNodeOf`, `tier.N`) and which carries them; its
+  mechanics are the catalogue's entries under `UpgradeTree.tierNodeId(n)`. A tower reads procs from `heldNodes`, and
+  `OwnedMechanics.grant` holds the earned tiers' mechanics, which it syncs on the game loop as the earned count moves,
+  so a granted tier's perk and mechanics act from its XP, are renewed with the rest and come back with a loaded game's
+  XP. A paid tier's is its unlock, bought like any other and on
   every path that crosses it. A free tier's is granted (`isGranted`): held from its XP, never offered, owned, sold or
   saved. `xpMet`/`isOpen` are the one check for a tier: never compare XP to a tier's number elsewhere.
 - A tier's node counts from `tiersEarned` (earned XP and held unlocks, never playtesting's waiver): `heldNodes` is the
@@ -153,7 +156,7 @@
 - Never hand-write a node's bonus into a tower's description: `UpgradeNode.bonuses()` derives it
   and the Upgrades panel shows every node's.
 - A mechanic says what it adds (`describe()`), built from its own constants; a node carries no note. A node's hover
-  lists `Tower.bonusesOf(node)`: the node's data rows, then its mechanics' words. A number a mechanic's words quote lives in the mechanic, or in the delegate or effect
+  lists `Tower.wordsOf(node)`: the node's data rows, then its mechanics' words. A number a mechanic's words quote lives in the mechanic, or in the delegate or effect
   rule it describes, never in the tower class.
 - `buyUpgrade` (one node) and `buyPath` (a node with every node it needs, one charge) are the only ways in,
   and `downgrade` the only way out; all three are check-and-act (they return `false` without effect).
@@ -175,8 +178,8 @@
 - Never check `owns(...)` in tower code; Checkstyle rejects it.
 - A node that adds a mechanic brings a `*Mechanic` class, in the tower's own package. A static `MechanicCatalogue`
   says which mechanics each node brings, and the tower's `OwnedMechanics`, which it hands over through
-  `ownedMechanics()`, builds its own as nodes are bought and downgraded. Mechanics run in
-  purchase order through `refineSpec` (and the tower's per-hit hooks); they are pure (no tower, no
+  `ownedMechanics()`, builds its own as tiers are earned and nodes are bought and downgraded. Mechanics run in
+  `heldNodes` order (earned tiers', then purchase order) through `refineSpec` (and the tower's per-hit hooks); they are pure (no tower, no
   `GameWorld`).
 - Mechanics widen or narrow whom a tower may hit through its `Reach`. A dead zone goes on the `Reach`
   (`withDeadZone`), which applies it last, so it holds whatever order the mechanics were bought in;
