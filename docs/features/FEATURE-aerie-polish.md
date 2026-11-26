@@ -1,6 +1,6 @@
 # Feature Request: Aerie polish
 
-Status: decided, not yet implemented.
+Status: implemented.
 
 ## Summary
 
