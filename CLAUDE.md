@@ -191,4 +191,6 @@ How a test is written:
   is tested by changing it with `TowerFixtures.buffed`. What decides nothing needs no replacement.
 - Expected numbers come from the test's own input or a game rule's formula, never from content
   or from cosmetic constants.
+- A damage figure is expected in points, from a bonus or base the test set itself (`TowerFixtures.buffed`), never by
+  repeating the code's sum, conversion included: a test that copies the code passes with its bug.
 - Each test proves one behaviour no other test proves.

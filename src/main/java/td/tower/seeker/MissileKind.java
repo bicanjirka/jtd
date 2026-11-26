@@ -1,5 +1,6 @@
 package td.tower.seeker;
 
+import td.damage.DamageUnits;
 import td.effect.IceKind;
 import td.projectile.MissileLook;
 import td.tower.TowerTerm;
@@ -43,7 +44,7 @@ public enum MissileKind {
 
     /** What its hit deals with the tower's {@code damage}, before the hit's adjustment. */
     public float damageWith(float damage) {
-        return damage + this.damageBonus;
+        return damage + DamageUnits.ofPoints(this.damageBonus);
     }
 
     public IceKind ice() {

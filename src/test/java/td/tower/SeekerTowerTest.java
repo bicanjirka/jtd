@@ -2,6 +2,7 @@ package td.tower;
 
 import org.junit.jupiter.api.Test;
 import td.damage.DamageType;
+import td.damage.DamageUnits;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -397,7 +398,7 @@ class SeekerTowerTest {
         this.landOne(tower);
 
         assertThat(immune.onlyHitAmount()).isEqualTo(
-                Math.round(tower.damageCurrent() + MissileKind.RUBY.damageBonus()));
+                Math.round(tower.damageCurrent() + DamageUnits.ofPoints(MissileKind.RUBY.damageBonus())));
         assertThat(immune.activeEffects()).anySatisfy(effect -> assertThat(effect.ice()).isEqualTo(IceKind.RUBY));
     }
 
@@ -412,7 +413,7 @@ class SeekerTowerTest {
         this.landOne(tower);
 
         assertThat(shielded.onlyHitAmount()).isEqualTo(
-                Math.round(tower.damageCurrent() + MissileKind.SHADE.damageBonus()));
+                Math.round(tower.damageCurrent() + DamageUnits.ofPoints(MissileKind.SHADE.damageBonus())));
         assertThat(shielded.hasEffect(EffectKind.FREEZE)).isTrue();
     }
 
@@ -449,7 +450,7 @@ class SeekerTowerTest {
 
         assertThat(ice).isEqualTo(IceKind.SHADE);
         assertThat(close.onlyHitAmount()).isEqualTo(
-                Math.round((tower.damageCurrent() + MissileKind.SHADE.damageBonus()) * ShatterMechanic.SHARE));
+                Math.round((tower.damageCurrent() + DamageUnits.ofPoints(MissileKind.SHADE.damageBonus())) * ShatterMechanic.SHARE));
     }
 
     @Test
@@ -508,7 +509,7 @@ class SeekerTowerTest {
 
         assertThat(beforeThaw).containsExactly(1, 0, 0);
         assertThat(close.onlyHitAmount()).isEqualTo(
-                Math.round((tower.damageCurrent() + MissileKind.FROST.damageBonus()) * ShatterMechanic.SHARE));
+                Math.round((tower.damageCurrent() + DamageUnits.ofPoints(MissileKind.FROST.damageBonus())) * ShatterMechanic.SHARE));
         assertThat(far.hits()).isEmpty();
         assertThat(frozen.hits()).hasSize(1);
     }

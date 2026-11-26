@@ -43,6 +43,9 @@
 - A missile's speed and size are tower stats: `TowerStat.PROJECTILE_SPEED` in cells a second, so it holds at any
   board scale, turned into pixels a tick only through `pixelsPerTick`, and `PROJECTILE_SIZE`. Shown as
   `TowerStatRow.PROJECTILE_SPEED` and `PROJECTILE_SIZE`, and drawn from the same `ProjectileStats`.
+- A flat damage figure a shot or missile kind adds to the tower's is a `TowerStat` with `StatUnit.DAMAGE_PER_HIT`, set
+  through a `TowerModifiers` factory that takes points (as `HEAVY_DAMAGE`); never a field added to `stats.damage()`,
+  which is in damage units.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.lights`' single "is this a Beacon" check stays the only role check.
 
