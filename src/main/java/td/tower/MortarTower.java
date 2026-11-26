@@ -2,6 +2,7 @@ package td.tower;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
+import td.damage.DamageType;
 import td.damage.DamageUnits;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -9,6 +10,7 @@ import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.projectile.CannonballProjectile;
 import td.projectile.ProjectileStats;
+import td.projectile.ShellLook;
 import td.stat.StatPart;
 import td.term.TermNumbers;
 import td.term.TermText;
@@ -445,6 +447,16 @@ public final class MortarTower extends AbstractTower {
      * meanwhile.
      */
     private record Shell(ShellKind kind, Optional<ShellKind> carried, TowerStats stats) {
+
+        /** What its blast deals: a Normal that carries a payload hits as that payload. */
+        DamageType damageType() {
+            return this.carried.map(ShellKind::damageType).orElse(this.kind.damageType());
+        }
+
+        /** How it goes off: a Normal that carries a payload goes off as that payload, at its own blast. */
+        ShellLook blastLook() {
+            return this.carried.map(ShellKind::look).orElse(this.kind.look());
+        }
     }
 
     /**
@@ -505,7 +517,7 @@ public final class MortarTower extends AbstractTower {
             boolean inCore = dx * dx + dy * dy <= core2;
             HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BLAST, 0f, stats);
             int amount = Math.round(damage * (inCore ? 1f : blast.edgeShare()) * adjustment.damageFactor());
-            HitResult hit = this.landHit(enemy, Damage.of(kind.damageType(), amount), adjustment.applyTo(stats.attack()));
+            HitResult hit = this.landHit(enemy, Damage.of(shell.damageType(), amount), adjustment.applyTo(stats.attack()));
             if (hit.dodged()) {
                 continue;
             }
@@ -519,7 +531,7 @@ public final class MortarTower extends AbstractTower {
         if (kind.irradiatesTheBoard()) {
             this.irradiateTheBoard();
         }
-        this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), gameTime, kind.look())
+        this.blastMarks.add(BlastMark.of(new Vec2(x, y), blast.core(), blast.edge(), gameTime, shell.blastLook())
                 .withRider(kind == ShellKind.HEAVY ? spec.heavy() : HeavyRider.NONE));
         this.leaveGround(x, y, shell, blast, spec);
     }
@@ -723,7 +735,7 @@ public final class MortarTower extends AbstractTower {
         if (kind == ShellKind.HEAVY) {
             spec.heavy().applies().ifPresent(applies::add);
         }
-        ShellProfile profile = ShellProfile.of(kind, Damage.of(kind.damageType(), damage),
+        ShellProfile profile = ShellProfile.of(kind, Damage.of(shell.damageType(), damage),
                 this.shellStats(shell).speed() * TICKS_PER_SECOND / cell,
                 new ShellProfile.Blast(radii.core() / cell, radii.edge() / cell, radii.edgeShare(), List.copyOf(applies)));
         ShellProfile carrying = held.carried().map(profile::withCarried).orElse(profile);

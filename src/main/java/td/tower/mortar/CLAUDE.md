@@ -40,7 +40,8 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
 - With Thick Mix a Normal right behind a payload carries it (`HeldShell`): in the magazine, where the front shell is
   behind the one fired last (`Magazine.lastFired`, kept by the save), and in a volley, where a sneaked Normal is behind
   the loaded shell before it. Its blast puts a share of a pulse of that payload's ground on what it reaches, through
-  the ground's own `ZoneEffects.touch`, never a zone of its own.
+  the ground's own `ZoneEffects.touch`, never a zone of its own, and hits and goes off as that payload (its damage
+  type and look) for the Normal's damage, at the Normal's blast.
 - A Nuke's flash gives every enemy on the board, hidden ones too, a dose of Radiation (`ShellKind.irradiatesTheBoard`);
   its fallout poisons nothing.
 - Every blast leaves a `BlastMark`, kept as long as the longest detonation is drawn; the board turns it into that

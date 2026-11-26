@@ -541,6 +541,33 @@ class MortarTowerTest {
         assertThat(target.hasEffect(EffectKind.BURN)).isEqualTo(burns);
     }
 
+    @ParameterizedTest
+    @CsvSource({"TAR, TAR", "NORMAL, NORMAL"})
+    void aNormalRightBehindAPayloadHitsForItsOwnDamageButAsThatPayloadAndGoesOffInItsLook(ShellKind inFront,
+            ShellKind hitsAs) {
+        MortarTower tower = this.towerWith("Tar Shell", "Thick Mix");
+        MortarTower.loadMagazine(tower, MagazineFixtures.firedAfter(inFront, ShellKind.NORMAL));
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+        TowerStats stats = tower.stats();
+
+        this.landAShell(tower);
+
+        assertThat(target.hits().getFirst()).isEqualTo(Damage.of(hitsAs.damageType(), ShellKind.NORMAL.damage(
+                stats.damage(), stats.value(TowerStat.NORMAL_DAMAGE), stats.value(TowerStat.HEAVY_DAMAGE))));
+        assertThat(tower.getBlastMarks().getFirst().look()).isEqualTo(hitsAs.look());
+    }
+
+    @Test
+    void aCarryingNormalsProfileHitsAsItsPayload() {
+        MortarTower tower = this.towerWith("Tar Shell", "Thick Mix");
+
+        ShellProfile carrying = tower.shellProfiles().stream().filter(profile -> profile.carried().isPresent())
+                .findFirst().orElseThrow();
+
+        assertThat(carrying.hit().type()).isEqualTo(ShellKind.TAR.damageType());
+    }
+
     @Test
     void lastingMixMakesAPayloadsGroundLastLonger() {
         Zone plain = payloadGround("Cryo");

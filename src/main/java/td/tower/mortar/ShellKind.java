@@ -156,9 +156,10 @@ public enum ShellKind {
         };
     }
 
-    /** What it hits for, said after "each deals": "the Mortar's damage", "the Mortar's damage +4". */
+    /** What it hits for, said after "each deals": "the Mortar's damage", "the Mortar's damage +4 as magic". */
     public String damageText() {
-        return "the Mortar's damage" + (this.extraPoints == 0f ? "" : " " + TermNumbers.signed(this.extraPoints));
+        return "the Mortar's damage" + (this.extraPoints == 0f ? "" : " " + TermNumbers.signed(this.extraPoints))
+                + (this.damageType == DamageType.MAGIC ? " as magic" : "");
     }
 
     /** Its name as the player reads it: "Normal", or its term. */
@@ -201,7 +202,7 @@ public enum ShellKind {
         Ground left = this.ground.orElseThrow();
         String wide = TermNumbers.cells(left.radiusCells()) + " wide";
         return switch (this) {
-            case NAPALM -> TermText.of("blasts as magic and leaves flames " + wide + " for " + seconds(left));
+            case NAPALM -> TermText.of("leaves flames " + wide + " for " + seconds(left));
             case TAR -> TermText.of("leaves tar " + wide + " for " + seconds(left));
             case CRYO -> TermText.of("leaves frost " + wide + " for " + seconds(left));
             case FLARE -> TermText.of("leaves a flare " + wide + " that lasts until the wave ends");

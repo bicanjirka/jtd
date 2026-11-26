@@ -5,8 +5,8 @@ import td.term.TermText;
 import td.tower.TowerTerm;
 
 /**
- * Thick Mix: a Normal shell right behind a payload carries some of it, so its blast burns, poisons or chills what it
- * reaches.
+ * Thick Mix: a Normal shell right behind a payload carries some of it, so its blast hits as that payload and burns,
+ * poisons or chills what it reaches.
  */
 public final class ThickMixMechanic implements MortarMechanic {
 
@@ -20,6 +20,7 @@ public final class ThickMixMechanic implements MortarMechanic {
     @Override
     public TermText describe() {
         return TermText.of("a Normal shell right behind a ").plus(TowerTerm.PAYLOAD)
-                .plus(" shell carries " + TermNumbers.percent(SHARE) + " of a pulse of its ground in its blast");
+                .plus(" shell carries " + TermNumbers.percent(SHARE)
+                + " of a pulse of its ground in its blast, and blasts as that payload does");
     }
 }
