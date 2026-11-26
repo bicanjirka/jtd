@@ -2,8 +2,8 @@ package td.tower;
 
 import td.damage.AttackProfile;
 import td.damage.Damage;
-import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
@@ -66,6 +66,7 @@ import td.wave.Vec2;
 import td.zone.Zone;
 import td.zone.ZoneEffects;
 import td.zone.ZoneOwner;
+import td.zone.ZonePulse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -243,7 +244,17 @@ public final class MortarTower extends AbstractTower {
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<MortarMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
-    private final ZoneOwner zoneOwner = this::applyEffect;
+    private final ZoneOwner zoneOwner = new ZoneOwner() {
+        @Override
+        public void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
+            MortarTower.this.applyEffect(target, effect);
+        }
+
+        @Override
+        public void dealPeriodicDamage(EnemyMob target, Damage damage) {
+            MortarTower.this.dealPeriodicDamage(target, damage);
+        }
+    };
     private final List<BlastMark> blastMarks = new ArrayList<>();
     private final List<Zone> flares = new ArrayList<>();
     private final List<VolleyShell> volleyLeft = new ArrayList<>();
@@ -448,11 +459,6 @@ public final class MortarTower extends AbstractTower {
      */
     private record Shell(ShellKind kind, Optional<ShellKind> carried, TowerStats stats) {
 
-        /** What its blast deals: a Normal that carries a payload hits as that payload. */
-        DamageType damageType() {
-            return this.carried.map(ShellKind::damageType).orElse(this.kind.damageType());
-        }
-
         /** How it goes off: a Normal that carries a payload goes off as that payload, at its own blast. */
         ShellLook blastLook() {
             return this.carried.map(ShellKind::look).orElse(this.kind.look());
@@ -517,7 +523,7 @@ public final class MortarTower extends AbstractTower {
             boolean inCore = dx * dx + dy * dy <= core2;
             HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BLAST, 0f, stats);
             int amount = Math.round(damage * (inCore ? 1f : blast.edgeShare()) * adjustment.damageFactor());
-            HitResult hit = this.landHit(enemy, Damage.of(shell.damageType(), amount), adjustment.applyTo(stats.attack()));
+            HitResult hit = this.landHit(enemy, Damage.of(kind.damageType(), amount), adjustment.applyTo(stats.attack()));
             if (hit.dodged()) {
                 continue;
             }
@@ -548,10 +554,12 @@ public final class MortarTower extends AbstractTower {
 
     /** A Normal that carries a payload puts a share of a pulse of that payload's ground on what its blast reaches. */
     private void carryPayload(EnemyMob enemy, Shell shell, MortarSpec spec) {
-        float share = spec.payload().normalsCarry();
-        shell.carried().flatMap(ShellKind::ground)
-                .ifPresent(ground -> ZoneEffects.touch(ground.kind(), Math.round(ground.pulse() * share),
-                        this.zoneOwner, enemy));
+        shell.carried().flatMap(ShellKind::ground).ifPresent(ground -> ZoneEffects.touch(ground.kind(),
+                carriedShare(ground, spec), this.zoneOwner, enemy));
+    }
+
+    private static ZonePulse carriedShare(ShellKind.Ground ground, MortarSpec spec) {
+        return ground.pulse().shareOf(spec.payload().normalsCarry());
     }
 
     private void crack(EnemyMob enemy, MortarSpec spec) {
@@ -585,18 +593,33 @@ public final class MortarTower extends AbstractTower {
     private void leaveGround(double x, double y, Shell shell, BlastRadii blast, MortarSpec spec) {
         ShellKind kind = shell.kind();
         kind.ground().ifPresent(ground -> {
-            boolean payload = kind.isPayload();
-            float radius = ground.blastShare() > 0f ? ground.blastShare() * blast.edge()
-                    : (ground.radiusCells() + (payload ? spec.payload().extraCells() : 0f)) * this.cellPixels();
-            int lifetime = ground.lastsTheWave() ? Zone.UNTIL_WAVE_END
-                    : this.lengthened(ground.lifetimeTicks() + (payload ? spec.payload().extraTicks() : 0));
-            Zone zone = new Zone(ground.kind(), x, y, radius, lifetime, ground.pulse(),
-                    this.zoneOwner);
+            Zone zone = new Zone(ground.kind(), x, y, this.groundRadius(kind, ground, blast, spec),
+                    this.groundLifetime(kind, ground, spec), ground.pulse(), this.zoneOwner);
             this.context.zones().add(zone);
             if (kind == ShellKind.FLARE) {
                 this.keepNewestFlares(zone);
             }
         });
+    }
+
+    /** How wide, in pixels, the ground a {@code kind} leaves is: a payload's widened by its Payload spec. */
+    private float groundRadius(ShellKind kind, ShellKind.Ground ground, BlastRadii blast, MortarSpec spec) {
+        return ground.blastShare() > 0f ? ground.blastShare() * blast.edge()
+                : (ground.radiusCells() + (kind.isPayload() ? spec.payload().extraCells() : 0f)) * this.cellPixels();
+    }
+
+    /** How long the ground a {@code kind} leaves lasts: a payload's lengthened by its Payload spec. */
+    private int groundLifetime(ShellKind kind, ShellKind.Ground ground, MortarSpec spec) {
+        return ground.lastsTheWave() ? Zone.UNTIL_WAVE_END
+                : this.lengthened(ground.lifetimeTicks() + (kind.isPayload() ? spec.payload().extraTicks() : 0));
+    }
+
+    /** {@code pulse} as an enemy gets it from this Mortar: its slow and freeze last as long as its effects do. */
+    private ZonePulse lengthenedPulse(ZonePulse pulse) {
+        ZonePulse.Slow slow = pulse.slow();
+        ZonePulse.Freeze freeze = pulse.freeze();
+        return pulse.withSlow(new ZonePulse.Slow(slow.strength(), this.lengthened(slow.holdTicks())))
+                .withFreeze(new ZonePulse.Freeze(freeze.pulses(), this.lengthened(freeze.ticks())));
     }
 
     private void keepNewestFlares(Zone flare) {
@@ -731,16 +754,22 @@ public final class MortarTower extends AbstractTower {
             applies.add(EffectKind.CRACKED);
         }
         applies.addAll(kind.applies());
-        held.carried().ifPresent(payload -> applies.addAll(payload.applies()));
+        held.carried().flatMap(ShellKind::ground).ifPresent(ground -> {
+            ground.kind().fuels().ifPresent(applies::add);
+            ground.kind().slows().ifPresent(applies::add);
+        });
         if (kind == ShellKind.HEAVY) {
             spec.heavy().applies().ifPresent(applies::add);
         }
-        ShellProfile profile = ShellProfile.of(kind, Damage.of(shell.damageType(), damage),
+        ShellProfile profile = ShellProfile.of(kind, Damage.of(kind.damageType(), damage),
                 this.shellStats(shell).speed() * TICKS_PER_SECOND / cell,
                 new ShellProfile.Blast(radii.core() / cell, radii.edge() / cell, radii.edgeShare(), List.copyOf(applies)));
-        ShellProfile carrying = held.carried().map(profile::withCarried).orElse(profile);
-        return kind.ground().filter(ground -> ground.pulsePoints() > 0f)
-                .map(ground -> carrying.withGroundPulse(Damage.magic(ground.pulse())))
+        ShellProfile carrying = held.carried().flatMap(payload -> payload.ground().map(ground -> profile.withCarry(
+                new ShellProfile.Carry(payload, ground.kind(), this.lengthenedPulse(carriedShare(ground, spec))))))
+                .orElse(profile);
+        return kind.ground().map(ground -> carrying.withGround(new ShellProfile.Ground(ground.kind(),
+                        this.groundRadius(kind, ground, radii, spec) / cell, this.groundLifetime(kind, ground, spec),
+                        this.lengthenedPulse(ground.pulse()))))
                 .orElse(carrying);
     }
 

@@ -2,6 +2,7 @@ package td.ui;
 
 import td.damage.DamageType;
 import td.damage.DamageUnits;
+import td.effect.EffectKind;
 import td.stat.StatBreakdown;
 import td.stat.StatWording;
 import td.term.Side;
@@ -40,6 +41,9 @@ import td.ui.render.SheetLine.Row;
 import td.ui.render.SheetTooltip;
 import td.ui.render.TooltipKey;
 import td.util.TickRate;
+import td.zone.Zone;
+import td.zone.ZoneKind;
+import td.zone.ZonePulse;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -252,9 +256,6 @@ final class TowerSheetText {
         List<SheetLine> rows = new ArrayList<>();
         rows.add(Row.plain(Glyph.DOT, damageLabel(profile.hit().type()), TermNumbers.number(DamageUnits.inPoints(profile.hit().amount())))
                 .withGloss("/hit", ""));
-        profile.groundPulse().ifPresent(fuel -> kind.ground().flatMap(ground -> ground.kind().fuels())
-                .ifPresent(pool -> rows.add(Row.faced(TermLooks.faceOf(pool), pool.title(),
-                        TermNumbers.number(DamageUnits.inPoints(fuel.amount()))).withGloss("/pulse", ""))));
         rows.add(Row.plain(Glyph.DOT, "Speed", TermNumbers.number(profile.cellsPerSecond())).withGloss("cells/s", ""));
         rows.add(Row.plain(Glyph.DOT, "Blast radius", TermNumbers.number(blast.coreCells()))
                 .withGloss(blast.coreCells() == 1f ? "cell" : "cells", ""));
@@ -262,9 +263,17 @@ final class TowerSheetText {
             rows.add(Row.plain(Glyph.DOT, "Blast edge", TermNumbers.number(blast.edgeCells()))
                     .withGloss("cells", TermNumbers.percent(blast.edgeShare()) + " dmg"));
         }
+        profile.ground().ifPresent(ground -> {
+            rows.add(Row.plain(Glyph.DOT, "Ground", TermNumbers.number(ground.radiusCells()))
+                    .withGloss(ground.radiusCells() == 1f ? "cell" : "cells", ground.lifetimeTicks() == Zone.UNTIL_WAVE_END
+                            ? "until the wave ends" : seconds(ground.lifetimeTicks())));
+            pulseRows(rows, ground.kind(), ground.pulse(), "/pulse");
+        });
         share.ifPresent(drawn -> rows.add(Row.toned(Glyph.DOT, shareTone(kind), "Share", TermNumbers.percent(drawn))));
-        profile.carried().ifPresent(payload -> rows.add(SheetLine.Sentence.of(
-                TermText.of("Carries some ").plus(payload.mention()).asSentence())));
+        profile.carry().ifPresent(carry -> {
+            rows.add(SheetLine.Sentence.of(TermText.of("Carries some ").plus(carry.payload().mention()).asSentence()));
+            pulseRows(rows, carry.ground(), carry.share(), "/hit");
+        });
         if (!blast.applies().isEmpty()) {
             TermText applies = TermText.of("Applies ");
             for (int i = 0; i < blast.applies().size(); i++) {
@@ -280,6 +289,35 @@ final class TowerSheetText {
             lines.addAll(rows);
             return new InfoSheet(lines);
         });
+    }
+
+    /**
+     * What {@code pulse} of {@code ground} does, a row each: its fuel for a pool or its magic hit, {@code per} pulse or
+     * hit, the slow it holds and the freeze it gives an enemy that stays.
+     */
+    private static void pulseRows(List<SheetLine> rows, ZoneKind ground, ZonePulse pulse, String per) {
+        String points = TermNumbers.number(DamageUnits.inPoints(pulse.strength()));
+        if (pulse.strength() > 0) {
+            ground.fuels().ifPresent(pool -> rows.add(Row.faced(TermLooks.faceOf(pool), pool.title(), points)
+                    .withGloss(per, "")));
+            if (ground.hitsDirectly()) {
+                rows.add(Row.plain(Glyph.DOT, damageLabel(DamageType.MAGIC), points).withGloss(per, ""));
+            }
+        }
+        ZonePulse.Slow slow = pulse.slow();
+        if (slow.slows()) {
+            ground.slows().ifPresent(by -> rows.add(Row.faced(TermLooks.faceOf(by), by.title(),
+                    TermNumbers.percent(slow.strength())).withGloss("slow", seconds(slow.holdTicks()))));
+        }
+        ZonePulse.Freeze freeze = pulse.freeze();
+        if (freeze.freezes()) {
+            rows.add(Row.faced(TermLooks.faceOf(EffectKind.FREEZE), EffectKind.FREEZE.title(), seconds(freeze.ticks()))
+                    .withGloss("", "after " + seconds(freeze.ticksInside()) + " inside"));
+        }
+    }
+
+    private static String seconds(int ticks) {
+        return TermNumbers.seconds(ticks / TickRate.TICKS_PER_SECOND);
     }
 
     private static String damageLabel(DamageType type) {

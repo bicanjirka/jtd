@@ -123,7 +123,7 @@ public final class DevEffects {
             case BRITTLE -> timed(Effect::brittle);
             case CRACKED -> stacking(kind, Effect::cracked);
             case SINGED -> timed(Effect::singed);
-            case TARRED -> timed(Effect::tarred);
+            case TARRED -> one(List.of(SECONDS, SLOW), in -> Effect.tarred(in.value(1) / 100f, in.ticks(0), in.sink()));
             case DEAD_ZONE -> timed(Effect::deadZone);
             case EXPOSED -> timed(Effect::exposed);
             case MARKED -> timed(Effect::marked);

@@ -219,8 +219,7 @@ public class PreviewBoard {
         double y = Integer.parseInt(parts[2]) * scale + scale / 2.0;
         float radius = (parts.length > 3 ? Float.parseFloat(parts[3]) : 1f) * scale;
         int ticks = parts.length > 4 ? Integer.parseInt(parts[4]) : 200;
-        engine.getGameWorld().zones().add(new Zone(kind, x, y, radius, ticks, 100,
-                (target, effect) -> target.applyEffect(effect.apply(DamageSink.none()))));
+        engine.getGameWorld().zones().add(new Zone(kind, x, y, radius, ticks, td.zone.ZonePulse.of(100), td.zone.ZoneOwner.nobody()));
         System.out.println("OK zone " + kind);
     }
 

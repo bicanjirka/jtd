@@ -541,31 +541,25 @@ class MortarTowerTest {
         assertThat(target.hasEffect(EffectKind.BURN)).isEqualTo(burns);
     }
 
-    @ParameterizedTest
-    @CsvSource({"TAR, TAR", "NORMAL, NORMAL"})
-    void aNormalRightBehindAPayloadHitsForItsOwnDamageButAsThatPayloadAndGoesOffInItsLook(ShellKind inFront,
-            ShellKind hitsAs) {
-        MortarTower tower = this.towerWith("Tar Shell", "Thick Mix");
-        MortarTower.loadMagazine(tower, MagazineFixtures.firedAfter(inFront, ShellKind.NORMAL));
+    @Test
+    void aNormalRightBehindAGroundThatHitsDirectlyLandsOnePhysicalHitAndTheShareItsSheetShowsAsMagic() {
+        MortarTower tower = this.towerWith("Cryo", "Thick Mix");
+        MortarTower.loadMagazine(tower, MagazineFixtures.firedAfter(ShellKind.CRYO, ShellKind.NORMAL));
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
         TowerStats stats = tower.stats();
+        ShellProfile.Carry carry = tower.shellProfiles().stream().flatMap(profile -> profile.carry().stream())
+                .findFirst().orElseThrow();
 
         this.landAShell(tower);
 
-        assertThat(target.hits().getFirst()).isEqualTo(Damage.of(hitsAs.damageType(), ShellKind.NORMAL.damage(
-                stats.damage(), stats.value(TowerStat.NORMAL_DAMAGE), stats.value(TowerStat.HEAVY_DAMAGE))));
-        assertThat(tower.getBlastMarks().getFirst().look()).isEqualTo(hitsAs.look());
-    }
-
-    @Test
-    void aCarryingNormalsProfileHitsAsItsPayload() {
-        MortarTower tower = this.towerWith("Tar Shell", "Thick Mix");
-
-        ShellProfile carrying = tower.shellProfiles().stream().filter(profile -> profile.carried().isPresent())
-                .findFirst().orElseThrow();
-
-        assertThat(carrying.hit().type()).isEqualTo(ShellKind.TAR.damageType());
+        assertThat(carry.share().strength()).isPositive();
+        assertThat(target.hits()).containsExactly(
+                Damage.physical(ShellKind.NORMAL.damage(stats.damage(), stats.value(TowerStat.NORMAL_DAMAGE),
+                        stats.value(TowerStat.HEAVY_DAMAGE))),
+                Damage.magic(carry.share().strength()));
+        assertThat(target.hasEffect(EffectKind.FREEZE)).isFalse();
+        assertThat(tower.getBlastMarks().getFirst().look()).isEqualTo(ShellKind.CRYO.look());
     }
 
     @Test
@@ -691,14 +685,19 @@ class MortarTowerTest {
     }
 
     @Test
-    void aPayloadsProfileSaysWhatEachPulseOfItsGroundDeals() {
-        MortarTower tower = this.towerWith("Napalm");
-        ShellKind.Ground ground = ShellKind.NAPALM.ground().orElseThrow();
+    void aPayloadsProfileShowsTheGroundItLeavesAndWhatItsFirstPulseDealsThere() {
+        MortarTower tower = this.loaded(List.of(ShellKind.CRYO), "Cryo", "Thick Mix", "Lasting Mix");
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{target});
+        ShellProfile.Ground shown = tower.shellProfiles().stream().filter(profile -> profile.kind() == ShellKind.CRYO)
+                .flatMap(profile -> profile.ground().stream()).findFirst().orElseThrow();
 
-        ShellProfile napalm = tower.shellProfiles().stream().filter(profile -> profile.kind() == ShellKind.NAPALM)
-                .findFirst().orElseThrow();
+        this.landAShell(tower);
+        this.context.zones().doTick(1);
 
-        assertThat(napalm.groundPulse()).hasValue(Damage.magic(ground.pulse()));
+        assertThat(this.context.zones().zones().getFirst().radius()).isCloseTo(shown.radiusCells() * SCALE, within(0.01f));
+        assertThat(target.hits()).last().isEqualTo(Damage.magic(shown.pulse().strength()));
+        assertThat(remainingTicksOf(target, EffectKind.CHILL)).isEqualTo(shown.pulse().slow().holdTicks());
     }
 
     @Test

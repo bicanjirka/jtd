@@ -8,6 +8,8 @@ import td.ui.render.ZonePatchDraw;
 import td.util.GameWorld;
 import td.zone.Zone;
 import td.zone.ZoneKind;
+import td.zone.ZoneOwner;
+import td.zone.ZonePulse;
 
 import java.util.List;
 
@@ -18,8 +20,7 @@ class ZoneFrameBuilderTest {
     private final GameWorld world = WorldFixtures.newWorld();
 
     private void addZone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks) {
-        this.world.zones().add(new Zone(kind, x, y, radius, lifetimeTicks, 100, (target, effect) -> {
-        }));
+        this.world.zones().add(new Zone(kind, x, y, radius, lifetimeTicks, ZonePulse.of(100), ZoneOwner.nobody()));
     }
 
     @Test

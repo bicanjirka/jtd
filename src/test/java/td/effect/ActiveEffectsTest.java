@@ -125,10 +125,9 @@ class ActiveEffectsTest {
     void aRefreshedSlowStaysFull() {
         ActiveEffects effects = new ActiveEffects();
         for (int i = 0; i < 3 * ActiveEffects.SLOW_FADE_TICKS; i++) {
-            effects.apply(Effect.tarred(ActiveEffects.SLOW_FADE_TICKS, DamageSink.none()));
+            effects.apply(Effect.tarred(0.4f, ActiveEffects.SLOW_FADE_TICKS, DamageSink.none()));
 
-            assertThat(resolved(effects, EnemyStat.MOVE_SPEED))
-                    .isCloseTo(1f - EffectKind.TARRED.rule().slowPerStack(), within(0.001f));
+            assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(1f - 0.4f, within(0.001f));
 
             effects.tick();
         }
@@ -172,7 +171,7 @@ class ActiveEffectsTest {
     void ofSlowsOfDifferentKindsOnlyTheStrongestApplies() {
         ActiveEffects effects = new ActiveEffects();
         effects.apply(Effect.chill(0.7f, 100, DamageSink.none()));
-        effects.apply(Effect.tarred(100, DamageSink.none()));
+        effects.apply(Effect.tarred(0.4f, 100, DamageSink.none()));
 
         assertThat(resolved(effects, EnemyStat.MOVE_SPEED)).isCloseTo(0.3f, within(0.001f));
     }

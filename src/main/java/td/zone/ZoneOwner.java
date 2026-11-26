@@ -1,6 +1,7 @@
 package td.zone;
 
 import td.damage.AttackOrigin;
+import td.damage.Damage;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.enemy.EnemyMob;
@@ -16,8 +17,22 @@ public interface ZoneOwner {
      */
     static ZoneOwner nobody() {
         AttackOrigin source = AttackOrigin.fresh();
-        return (target, effect) -> target.applyEffect(effect.apply(DamageSink.none()).from(source));
+        return new ZoneOwner() {
+            @Override
+            public void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
+                target.applyEffect(effect.apply(DamageSink.none()).from(source));
+            }
+
+            // What an effect from no one deals goes nowhere, and so does this: no enemy's ground hurts enemies.
+            @Override
+            public void dealPeriodicDamage(EnemyMob target, Damage damage) {
+                DamageSink.none().apply(damage);
+            }
+        };
     }
 
     void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect);
+
+    /** Deals {@code damage} to {@code target} at once, as periodic damage: it never crits. */
+    void dealPeriodicDamage(EnemyMob target, Damage damage);
 }

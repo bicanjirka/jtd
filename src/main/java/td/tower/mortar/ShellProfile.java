@@ -2,34 +2,59 @@ package td.tower.mortar;
 
 import td.damage.Damage;
 import td.effect.EffectKind;
+import td.zone.ZoneKind;
+import td.zone.ZonePulse;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
  * What one kind of shell does as the Mortar fires it now: the hit its core deals, how fast it flies, its blast, and
- * what its ground deals.
+ * the ground it leaves.
  *
  * @param hit            what its core deals, before the enemy's defences
  * @param cellsPerSecond how fast it flies
- * @param groundPulse    the fuel each pulse of its ground adds to a burn or a poison; empty for ground that deals none
- * @param carried        the payload it carries a share of; empty for a shell that carries none
+ * @param ground         the ground it leaves; empty for a shell that leaves none
+ * @param carry          the share of a payload's pulse its blast carries; empty for a shell that carries none
  */
-public record ShellProfile(ShellKind kind, Damage hit, float cellsPerSecond, Blast blast, Optional<Damage> groundPulse,
-                           Optional<ShellKind> carried) {
+public record ShellProfile(ShellKind kind, Damage hit, float cellsPerSecond, Blast blast, Optional<Ground> ground,
+                           Optional<Carry> carry) {
 
-    /** A shell whose ground, if it leaves one, deals nothing, and that carries no payload. */
+    /** A shell that leaves no ground and carries no payload. */
     public static ShellProfile of(ShellKind kind, Damage hit, float cellsPerSecond, Blast blast) {
         return new ShellProfile(kind, hit, cellsPerSecond, blast, Optional.empty(), Optional.empty());
     }
 
-    public ShellProfile withGroundPulse(Damage fuel) {
-        return new ShellProfile(this.kind, this.hit, this.cellsPerSecond, this.blast, Optional.of(fuel), this.carried);
+    public ShellProfile withGround(Ground left) {
+        return new ShellProfile(this.kind, this.hit, this.cellsPerSecond, this.blast, Optional.of(left), this.carry);
     }
 
-    public ShellProfile withCarried(ShellKind payload) {
-        return new ShellProfile(this.kind, this.hit, this.cellsPerSecond, this.blast, this.groundPulse,
-                Optional.of(payload));
+    public ShellProfile withCarry(Carry carried) {
+        return new ShellProfile(this.kind, this.hit, this.cellsPerSecond, this.blast, this.ground,
+                Optional.of(carried));
+    }
+
+    /** The payload it carries a share of; empty for a shell that carries none. */
+    public Optional<ShellKind> carried() {
+        return this.carry.map(Carry::payload);
+    }
+
+    /**
+     * The ground a shell leaves, as the Mortar would leave it now.
+     *
+     * @param lifetimeTicks how long it lasts; {@code Zone.UNTIL_WAVE_END} for ground that lasts the wave
+     * @param pulse         what each pulse does to an enemy inside
+     */
+    public record Ground(ZoneKind kind, float radiusCells, int lifetimeTicks, ZonePulse pulse) {
+    }
+
+    /**
+     * What a Normal right behind a payload puts on what its blast reaches, past its own hit.
+     *
+     * @param ground the kind of ground {@code payload} leaves, which says what {@code share} does
+     * @param share  the share of one pulse of that ground
+     */
+    public record Carry(ShellKind payload, ZoneKind ground, ZonePulse share) {
     }
 
     /**

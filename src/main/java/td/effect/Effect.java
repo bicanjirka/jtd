@@ -264,8 +264,8 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
     }
 
     /** Stuck in tar for {@code durationTicks}. */
-    public static Effect tarred(int durationTicks, DamageSink sink) {
-        return timed(EffectKind.TARRED, durationTicks, sink);
+    public static Effect tarred(float strength, int durationTicks, DamageSink sink) {
+        return of(EffectKind.TARRED, durationTicks, sink, new EffectDynamics.Slow(strength));
     }
 
     /** A share worth a stack: crits find it more often and hit it harder while it lasts. */

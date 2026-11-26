@@ -11,7 +11,10 @@ import td.tower.TowerTerm;
 import td.util.TickRate;
 import td.zone.Zone;
 import td.zone.ZoneKind;
+import td.zone.ZonePulse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -34,10 +37,10 @@ public enum ShellKind {
     /** The Mortar's one way to deal magic: its blast burns, and the ground where it lands too. */
     NAPALM(ShellLook.NAPALM, DamageType.MAGIC, 0f, Blast.NORMAL, 1.25f,
             Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 32f))),
-    TAR(ShellLook.TAR, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1.25f,
-            Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 14.4f))),
-    CRYO(ShellLook.CRYO, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1.25f,
-            Optional.of(Ground.fixed(ZoneKind.FROST_GROUND, 1.6f, 100, 0f))),
+    TAR(ShellLook.TAR, DamageType.MAGIC, 0f, Blast.NORMAL, 1.25f,
+            Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 15.5f).withSlow(0.4f, 1f))),
+    CRYO(ShellLook.CRYO, DamageType.MAGIC, 0f, Blast.NORMAL, 1.25f,
+            Optional.of(Ground.fixed(ZoneKind.FROST_GROUND, 1.6f, 100, 8f).withSlow(0.4f, 2f).withFreeze(4, 1.5f))),
     /** A Normal shell in all but the flare it leaves, which burns until the wave is over. */
     FLARE(ShellLook.FLARE, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1f,
             Optional.of(Ground.fixed(ZoneKind.FLARE, 1.5f, Zone.UNTIL_WAVE_END, 0f)));
@@ -159,7 +162,8 @@ public enum ShellKind {
     /** What it hits for, said after "each deals": "the Mortar's damage", "the Mortar's damage +4 as magic". */
     public String damageText() {
         return "the Mortar's damage" + (this.extraPoints == 0f ? "" : " " + TermNumbers.signed(this.extraPoints))
-                + (this.damageType == DamageType.MAGIC ? " as magic" : "");
+                + (this.damageType == DamageType.MAGIC ? " as magic" : "")
+                + (this.isPayload() ? " (no Normal bonus)" : "");
     }
 
     /** Its name as the player reads it: "Normal", or its term. */
@@ -197,14 +201,17 @@ public enum ShellKind {
         };
     }
 
-    /** Where it lands, said after "each": "leaves tar 1.2 cells wide for 3 s". */
+    /**
+     * Where it lands, said after "each": "leaves tar 1.2 cells wide for 3 s that, every 0.5 s, adds 15.5 to Poison and
+     * slows by 40% for 1 s".
+     */
     public TermText groundText() {
         Ground left = this.ground.orElseThrow();
         String wide = TermNumbers.cells(left.radiusCells()) + " wide";
         return switch (this) {
-            case NAPALM -> TermText.of("leaves flames " + wide + " for " + seconds(left));
-            case TAR -> TermText.of("leaves tar " + wide + " for " + seconds(left));
-            case CRYO -> TermText.of("leaves frost " + wide + " for " + seconds(left));
+            case NAPALM -> TermText.of("leaves flames " + wide + " for " + seconds(left)).plus(pulseText(left));
+            case TAR -> TermText.of("leaves tar " + wide + " for " + seconds(left)).plus(pulseText(left));
+            case CRYO -> TermText.of("leaves frost " + wide + " for " + seconds(left)).plus(pulseText(left));
             case FLARE -> TermText.of("leaves a flare " + wide + " that lasts until the wave ends");
             case NUKE -> TermText.of("leaves fallout over " + TermNumbers.percent(left.blastShare()) + " of its blast for "
                     + seconds(left));
@@ -213,7 +220,38 @@ public enum ShellKind {
     }
 
     private static String seconds(Ground ground) {
-        return TermNumbers.seconds(ground.lifetimeTicks() / TickRate.TICKS_PER_SECOND);
+        return seconds(ground.lifetimeTicks());
+    }
+
+    private static String seconds(int ticks) {
+        return TermNumbers.seconds(ticks / TickRate.TICKS_PER_SECOND);
+    }
+
+    /** What each pulse of {@code ground} does, from " that, every 0.5 s, " on; empty for one that does nothing. */
+    private static TermText pulseText(Ground ground) {
+        ZonePulse pulse = ground.pulse();
+        List<TermText> parts = new ArrayList<>();
+        String points = TermNumbers.number(ground.pulsePoints());
+        if (pulse.strength() > 0) {
+            ground.kind().fuels().ifPresent(pool -> parts.add(TermText.of("adds " + points + " to ").plus(pool)));
+            if (ground.kind().hitsDirectly()) {
+                parts.add(TermText.of("deals " + points + " magic damage"));
+            }
+        }
+        if (pulse.slow().slows()) {
+            ground.kind().slows().ifPresent(by -> parts.add(TermText.of("applies ").plus(by).plus(" of "
+                    + TermNumbers.percent(pulse.slow().strength()) + " for " + seconds(pulse.slow().holdTicks()))));
+        }
+        if (parts.isEmpty()) {
+            return TermText.empty();
+        }
+        TermText text = TermText.of(" that, every " + seconds(ZonePulse.PULSE_TICKS) + ", ");
+        for (int i = 0; i < parts.size(); i++) {
+            text = text.plus(i == 0 ? "" : i == parts.size() - 1 ? " and " : ", ").plus(parts.get(i));
+        }
+        ZonePulse.Freeze freeze = pulse.freeze();
+        return freeze.freezes() ? text.plus(", and gives an enemy that stays " + seconds(freeze.ticksInside()) + " ")
+                .plus(EffectKind.FREEZE).plus(" for " + seconds(freeze.ticks())) : text;
     }
 
     /**
@@ -227,24 +265,40 @@ public enum ShellKind {
 
     /**
      * The ground a shell leaves where it lands: {@code radiusCells} wide, or {@code blastShare} of its blast's edge when
-     * that is above zero.
+     * that is above zero. Each pulse puts its points on what stands in it as its kind takes them (a pool's fuel, or
+     * magic damage at once), holds its slow on, and freezes what stays.
      *
      * @param lifetimeTicks how long it lasts
-     * @param pulsePoints   a burn's or poison's fuel a pulse, in points of magic damage; 0 for none
+     * @param pulsePoints   what each pulse deals, in points of magic damage; 0 for none
      */
-    public record Ground(ZoneKind kind, float radiusCells, float blastShare, int lifetimeTicks, float pulsePoints) {
+    public record Ground(ZoneKind kind, float radiusCells, float blastShare, int lifetimeTicks, float pulsePoints,
+                         ZonePulse.Slow slow, ZonePulse.Freeze freeze) {
 
         static Ground fixed(ZoneKind kind, float radiusCells, int lifetimeTicks, float pulsePoints) {
-            return new Ground(kind, radiusCells, 0f, lifetimeTicks, pulsePoints);
+            return new Ground(kind, radiusCells, 0f, lifetimeTicks, pulsePoints, ZonePulse.Slow.none(),
+                    ZonePulse.Freeze.none());
         }
 
         static Ground ofBlast(ZoneKind kind, float blastShare, int lifetimeTicks, float pulsePoints) {
-            return new Ground(kind, 0f, blastShare, lifetimeTicks, pulsePoints);
+            return new Ground(kind, 0f, blastShare, lifetimeTicks, pulsePoints, ZonePulse.Slow.none(),
+                    ZonePulse.Freeze.none());
         }
 
-        /** What each pulse adds to a burn or a poison, in hundredths of a point. */
-        public int pulse() {
-            return DamageUnits.ofPoints(this.pulsePoints);
+        /** The same ground, each pulse holding a slow of {@code strength} on for {@code seconds}. */
+        Ground withSlow(float strength, float seconds) {
+            return new Ground(this.kind, this.radiusCells, this.blastShare, this.lifetimeTicks, this.pulsePoints,
+                    new ZonePulse.Slow(strength, Math.round(seconds * TickRate.TICKS_PER_SECOND)), this.freeze);
+        }
+
+        /** The same ground, freezing for {@code seconds} an enemy that stays {@code pulses} pulses in a row. */
+        Ground withFreeze(int pulses, float seconds) {
+            return new Ground(this.kind, this.radiusCells, this.blastShare, this.lifetimeTicks, this.pulsePoints,
+                    this.slow, new ZonePulse.Freeze(pulses, Math.round(seconds * TickRate.TICKS_PER_SECOND)));
+        }
+
+        /** What each of its pulses does to an enemy inside. */
+        public ZonePulse pulse() {
+            return new ZonePulse(DamageUnits.ofPoints(this.pulsePoints), this.slow, this.freeze);
         }
 
         /** Whether it lasts until the wave is over rather than for a time. */

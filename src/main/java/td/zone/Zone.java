@@ -24,16 +24,13 @@ public final class Zone {
     /** A ward mine ignores whatever is on it this long after it is laid, so the enemy that laid it walks off first. */
     private static final int WARD_ARMING_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
 
-    /** Pulses in a row inside a frost zone before it freezes what stands there; while frozen, they wait. */
-    static final int FROST_PULSES_TO_FREEZE = 4;
-    private static final int FROST_FREEZE_TICKS = Math.round(TickRate.TICKS_PER_SECOND * 1.5f);
 
     private final ZoneKind kind;
     private final double x;
     private final double y;
     private final float radius;
     private final int lifetimeTicks;
-    private final int strength;
+    private final ZonePulse pulse;
     private final ZoneOwner owner;
     private final ZoneTrigger trigger;
     private final DisruptionPenalty penalty;
@@ -48,22 +45,22 @@ public final class Zone {
     private float lifeAtClearing;
 
     /**
-     * @param radius   pixels
-     * @param strength a burn's or poison's fuel a pulse, or a heal a tick, in damage units; unused by the kinds with none
+     * @param radius pixels
+     * @param pulse  what each pulse does to an enemy inside
      */
-    public Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, int strength, ZoneOwner owner) {
-        this(kind, x, y, radius, lifetimeTicks, strength, owner, (mine, by) -> {
+    public Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, ZonePulse pulse, ZoneOwner owner) {
+        this(kind, x, y, radius, lifetimeTicks, pulse, owner, (mine, by) -> {
         }, DisruptionPenalty.none());
     }
 
-    private Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, int strength, ZoneOwner owner,
+    private Zone(ZoneKind kind, double x, double y, float radius, int lifetimeTicks, ZonePulse pulse, ZoneOwner owner,
                  ZoneTrigger trigger, DisruptionPenalty penalty) {
         this.kind = kind;
         this.x = x;
         this.y = y;
         this.radius = radius;
         this.lifetimeTicks = lifetimeTicks;
-        this.strength = strength;
+        this.pulse = pulse;
         this.owner = owner;
         this.trigger = trigger;
         this.penalty = penalty;
@@ -72,24 +69,24 @@ public final class Zone {
     /** A mine that {@code trigger} sets off, armed a moment after it is laid, for the enemy that steps on it. */
     public static Zone wardMine(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner,
                                 ZoneTrigger trigger) {
-        return new Zone(ZoneKind.WARD_MINE, x, y, radius, lifetimeTicks, 0, owner, trigger, DisruptionPenalty.none());
+        return new Zone(ZoneKind.WARD_MINE, x, y, radius, lifetimeTicks, ZonePulse.of(0), owner, trigger, DisruptionPenalty.none());
     }
 
     /** Ground that heals {@code unitsPerTick} (in damage units) each tick, for as long as an enemy stands on it. */
     public static Zone healing(double x, double y, float radius, int lifetimeTicks, int unitsPerTick, ZoneOwner owner) {
-        return new Zone(ZoneKind.HEALING_GROUND, x, y, radius, lifetimeTicks, unitsPerTick, owner, (mine, by) -> {
+        return new Zone(ZoneKind.HEALING_GROUND, x, y, radius, lifetimeTicks, ZonePulse.of(unitsPerTick), owner, (mine, by) -> {
         }, DisruptionPenalty.none());
     }
 
     public static Zone haste(double x, double y, float radius, int lifetimeTicks, ZoneOwner owner) {
-        return new Zone(ZoneKind.HASTE_GROUND, x, y, radius, lifetimeTicks, 0, owner, (mine, by) -> {
+        return new Zone(ZoneKind.HASTE_GROUND, x, y, radius, lifetimeTicks, ZonePulse.of(0), owner, (mine, by) -> {
         }, DisruptionPenalty.none());
     }
 
     /** A field that jams every tower within {@code radius} by {@code penalty}. */
     public static Zone blinding(double x, double y, float radius, int lifetimeTicks, DisruptionPenalty penalty,
                                 ZoneOwner owner) {
-        return new Zone(ZoneKind.BLINDING_FIELD, x, y, radius, lifetimeTicks, 0, owner, (mine, by) -> {
+        return new Zone(ZoneKind.BLINDING_FIELD, x, y, radius, lifetimeTicks, ZonePulse.of(0), owner, (mine, by) -> {
         }, penalty);
     }
 
@@ -181,10 +178,11 @@ public final class Zone {
     void touch(EnemyMob enemy) {
         boolean frozen = enemy.activeEffectKinds().contains(EffectKind.FREEZE);
         int pulses = frozen ? 0 : this.pulsesInside.merge(enemy, 1, Integer::sum);
-        ZoneEffects.touch(this.kind, this.strength, this.owner, enemy);
-        if (this.kind == ZoneKind.FROST_GROUND && pulses >= FROST_PULSES_TO_FREEZE) {
+        ZoneEffects.touch(this.kind, this.pulse, this.owner, enemy);
+        ZonePulse.Freeze freeze = this.pulse.freeze();
+        if (freeze.freezes() && pulses >= freeze.pulses()) {
             this.pulsesInside.put(enemy, 0);
-            this.owner.applyEffect(enemy, sink -> Effect.freeze(FROST_FREEZE_TICKS, sink));
+            this.owner.applyEffect(enemy, sink -> Effect.freeze(freeze.ticks(), sink));
         }
     }
 

@@ -87,6 +87,7 @@ import td.wave.smoothing.QuadraticBezierSmoothing;
 import td.zone.Zone;
 import td.zone.ZoneKind;
 import td.zone.ZoneOwner;
+import td.zone.ZonePulse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1655,8 +1656,7 @@ class GameEngineTest {
     void reloadingALevelClearsTheZonesOfThePreviousLevel() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        engine.getGameWorld().zones().add(new Zone(ZoneKind.TAR, 0, 0, 50, 100, 100, (target, effect) -> {
-        }));
+        engine.getGameWorld().zones().add(new Zone(ZoneKind.TAR, 0, 0, 50, 100, ZonePulse.of(100), ZoneOwner.nobody()));
 
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
 
@@ -1667,8 +1667,7 @@ class GameEngineTest {
     void aZoneAgesOnEveryTickOfTheEngine() {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(), 100));
-        engine.getGameWorld().zones().add(new Zone(ZoneKind.TAR, 0, 0, 50, 2, 100, (target, effect) -> {
-        }));
+        engine.getGameWorld().zones().add(new Zone(ZoneKind.TAR, 0, 0, 50, 2, ZonePulse.of(100), ZoneOwner.nobody()));
 
         engine.doTick(1);
         int afterOneTick = engine.getGameWorld().zones().zones().size();

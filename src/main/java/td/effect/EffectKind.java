@@ -85,8 +85,8 @@ public enum EffectKind implements Term {
     /** Each stack takes five points of insulation; each source keeps its own share. */
     SINGED("Singe", EffectRule.of(EffectCategory.DEBUFF).inSharesUpTo(10)
             .perStack(EnemyStat.INSULATION, -DamageUnits.ofPoints(5f))),
-    /** Stuck in tar: a plain slow. */
-    TARRED("Tar", EffectRule.of(EffectCategory.DEBUFF).slowingBy(0.4f)),
+    /** Stuck in tar: a plain slow, as strong as its source gives. */
+    TARRED("Tar", EffectRule.of(EffectCategory.DEBUFF)),
     /** Takes physical damage for every cell it travels; a stopped enemy takes none. */
     BLEEDING("Bleed", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME)),
     /** A third fuel pool: it stacks with burn and poison, burns what is immune to fire and marks resilience and spirit. */

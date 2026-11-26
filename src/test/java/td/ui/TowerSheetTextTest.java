@@ -39,6 +39,8 @@ import td.ui.render.SheetLine.Row;
 import td.ui.render.SheetLine.Trend;
 import td.util.GameHost;
 import td.util.GameWorld;
+import td.zone.ZoneKind;
+import td.zone.ZonePulse;
 
 import java.util.List;
 
@@ -295,8 +297,8 @@ class TowerSheetTextTest {
     @Test
     void aShellWhoseGroundBurnsSaysWhatEachPulseAddsToTheBurn() {
         ShellProfile napalm = ShellProfile.of(ShellKind.NAPALM, Damage.magic(DamageUnits.ofPoints(20)), 5f,
-                new ShellProfile.Blast(1f, 2f, 0.5f, List.of(EffectKind.BURN))).withGroundPulse(
-                Damage.magic(DamageUnits.ofPoints(37)));
+                new ShellProfile.Blast(1f, 2f, 0.5f, List.of(EffectKind.BURN))).withGround(
+                new ShellProfile.Ground(ZoneKind.BURNING_GROUND, 1f, 60, ZonePulse.of(DamageUnits.ofPoints(37))));
 
         InfoSheet sheet = TowerSheetText.shellSheet(napalm, 0.25f);
 

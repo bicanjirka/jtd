@@ -1,6 +1,7 @@
 package td.zone;
 
 import org.junit.jupiter.api.Test;
+import td.damage.Damage;
 import td.effect.DamageSink;
 import td.effect.Effect;
 import td.effect.EffectKind;
@@ -19,12 +20,21 @@ class ZoneRosterTest {
 
     private static final int RADIUS = 50;
     private static final int LIFETIME = 100;
+    private static final int STRENGTH = 100;
+    private static final ZonePulse.Slow SLOW = new ZonePulse.Slow(0.3f, 15);
+    private static final int FREEZE_PULSES = 3;
 
     private final GameWorld world = WorldFixtures.newWorld();
     private final FakeZoneOwner owner = new FakeZoneOwner();
 
     private Zone zone(ZoneKind kind) {
-        return new Zone(kind, 100, 100, RADIUS, LIFETIME, 100, this.owner);
+        return new Zone(kind, 100, 100, RADIUS, LIFETIME, ZonePulse.of(STRENGTH).withSlow(SLOW), this.owner);
+    }
+
+    /** Frost ground that freezes an enemy that stays {@link #FREEZE_PULSES} pulses. */
+    private Zone frost() {
+        return new Zone(ZoneKind.FROST_GROUND, 100, 100, RADIUS, LIFETIME, ZonePulse.of(STRENGTH).withSlow(SLOW)
+                .withFreeze(new ZonePulse.Freeze(FREEZE_PULSES, 30)), this.owner);
     }
 
     private long applied(FakeEnemyMob enemy, EffectKind kind) {
@@ -117,30 +127,54 @@ class ZoneRosterTest {
     }
 
     @Test
-    void frostGroundChillsEachPulseAndFreezesAnEnemyThatStaysItsPulses() {
+    void groundFreezesAnEnemyThatStaysItsPulsesAndNotBefore() {
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{enemy});
-        this.world.zones().add(this.zone(ZoneKind.FROST_GROUND));
-        int allButLast = (Zone.FROST_PULSES_TO_FREEZE - 1) * ZoneEffects.PULSE_TICKS;
+        this.world.zones().add(this.frost());
+        int allButLast = (FREEZE_PULSES - 1) * ZoneEffects.PULSE_TICKS;
 
         this.tick(0, allButLast);
         boolean frozenTooSoon = enemy.hasEffect(EffectKind.FREEZE);
         this.tick(allButLast, allButLast + 1);
 
         assertThat(frozenTooSoon).isFalse();
-        assertThat(this.applied(enemy, EffectKind.CHILL)).isEqualTo(Zone.FROST_PULSES_TO_FREEZE);
+        assertThat(this.applied(enemy, EffectKind.CHILL)).isEqualTo(FREEZE_PULSES);
         assertThat(this.applied(enemy, EffectKind.FREEZE)).isEqualTo(1);
+    }
+
+    @Test
+    void frostGroundHitsEachPulseForItsStrengthAsMagicAndChillsByItsSlow() {
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.world.enemies().setEnemies(new EnemyMob[]{enemy});
+        this.world.zones().add(this.zone(ZoneKind.FROST_GROUND));
+
+        this.tick(0, ZoneEffects.PULSE_TICKS + 1);
+
+        assertThat(enemy.hits()).containsExactly(Damage.magic(STRENGTH), Damage.magic(STRENGTH));
+        assertThat(enemy.activeEffect(EffectKind.CHILL).orElseThrow().slowStrength()).isEqualTo(SLOW.strength());
+    }
+
+    @Test
+    void groundThatFeedsAPoolDealsNothingAtOnceAndTarSlowsByItsPulsesSlow() {
+        FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
+        this.world.enemies().setEnemies(new EnemyMob[]{enemy});
+        this.world.zones().add(this.zone(ZoneKind.TAR));
+
+        this.tick(0, 1);
+
+        assertThat(enemy.hits()).isEmpty();
+        assertThat(enemy.activeEffect(EffectKind.TARRED).orElseThrow().slowStrength()).isEqualTo(SLOW.strength());
     }
 
     @Test
     void aFrozenEnemyCountsNoPulsesTowardItsNextFreeze() {
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{enemy});
-        this.world.zones().add(this.zone(ZoneKind.FROST_GROUND));
-        int firstFreeze = (Zone.FROST_PULSES_TO_FREEZE - 1) * ZoneEffects.PULSE_TICKS + 1;
+        this.world.zones().add(this.frost());
+        int firstFreeze = (FREEZE_PULSES - 1) * ZoneEffects.PULSE_TICKS + 1;
         this.tick(0, firstFreeze);
 
-        this.tick(firstFreeze, firstFreeze + Zone.FROST_PULSES_TO_FREEZE * ZoneEffects.PULSE_TICKS);
+        this.tick(firstFreeze, firstFreeze + FREEZE_PULSES * ZoneEffects.PULSE_TICKS);
 
         assertThat(this.applied(enemy, EffectKind.FREEZE)).isEqualTo(1);
     }
@@ -149,8 +183,8 @@ class ZoneRosterTest {
     void aFreezeFromElsewherePausesTheFrostCountWithoutLosingIt() {
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{enemy});
-        this.world.zones().add(this.zone(ZoneKind.FROST_GROUND));
-        int allButLast = (Zone.FROST_PULSES_TO_FREEZE - 1) * ZoneEffects.PULSE_TICKS;
+        this.world.zones().add(this.frost());
+        int allButLast = (FREEZE_PULSES - 1) * ZoneEffects.PULSE_TICKS;
         this.tick(0, allButLast);
         enemy.applyEffect(Effect.freeze(LIFETIME, DamageSink.none()));
         this.tick(allButLast, allButLast + 2 * ZoneEffects.PULSE_TICKS);
@@ -166,8 +200,8 @@ class ZoneRosterTest {
     void anEnemyThatLeavesAFrostGroundStartsItsTimeInsideOver() {
         FakeEnemyMob enemy = FakeEnemyMob.at(100, 100);
         this.world.enemies().setEnemies(new EnemyMob[]{enemy});
-        this.world.zones().add(this.zone(ZoneKind.FROST_GROUND));
-        int allButLast = (Zone.FROST_PULSES_TO_FREEZE - 1) * ZoneEffects.PULSE_TICKS;
+        this.world.zones().add(this.frost());
+        int allButLast = (FREEZE_PULSES - 1) * ZoneEffects.PULSE_TICKS;
         this.tick(0, allButLast);
 
         enemy.moveTo(100 + 2 * RADIUS, 100);

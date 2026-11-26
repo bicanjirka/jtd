@@ -1,7 +1,9 @@
 package td.zone;
 
 import td.damage.Damage;
+import td.effect.DamageSink;
 import td.effect.Effect;
+import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.util.TickRate;
 
@@ -16,10 +18,6 @@ public final class ZoneEffects {
 
     /** A flare reveals an enemy this long after its last pulse. */
     private static final int FLARE_REVEAL_TICKS = Math.round(3 * TickRate.TICKS_PER_SECOND);
-    /** Tar lets go of an enemy this long after its last pulse. */
-    private static final int TARRED_TICKS = 2 * PULSE_TICKS;
-    private static final float FROST_CHILL = 0.4f;
-    private static final int FROST_CHILL_TICKS = 40;
     /** Sickened stacks fallout adds each pulse: more than spirit wears off in half a second. */
     private static final int FALLOUT_SICKENED_STACKS = 4;
     private static final int FALLOUT_HOLD_TICKS = 2 * PULSE_TICKS;
@@ -30,21 +28,26 @@ public final class ZoneEffects {
     }
 
     /**
-     * One pulse of {@code kind} on {@code enemy}, credited to {@code owner}. A frost zone's freeze is
-     * a matter of how long an enemy stays, so it is the zone's own to add.
-     *
-     * @param strength a burn's or poison's fuel a pulse (fallout's poison too), or healing ground's heal a tick, in damage units; unused by
-     *                 the kinds with none
+     * One {@code pulse} of {@code kind} on {@code enemy}, credited to {@code owner}: its strength as the kind takes it
+     * (a pool's fuel, a direct hit of magic, a heal) and the slow it holds. A freeze is a matter of how long an enemy
+     * stays, so it is the zone's own to add.
      */
-    public static void touch(ZoneKind kind, int strength, ZoneOwner owner, EnemyMob enemy) {
-        switch (kind) {
-            case BURNING_GROUND -> owner.applyEffect(enemy,
-                    sink -> Effect.burn(Damage.magic(strength), sink));
-            case TAR -> {
-                owner.applyEffect(enemy, sink -> Effect.tarred(TARRED_TICKS, sink));
-                owner.applyEffect(enemy, sink -> Effect.poison(Damage.magic(strength), sink));
+    public static void touch(ZoneKind kind, ZonePulse pulse, ZoneOwner owner, EnemyMob enemy) {
+        int strength = pulse.strength();
+        if (strength > 0) {
+            Damage magic = Damage.magic(strength);
+            kind.fuels().ifPresent(pool -> owner.applyEffect(enemy, sink -> fuel(pool, magic, sink)));
+            if (kind.hitsDirectly()) {
+                owner.dealPeriodicDamage(enemy, magic);
             }
-            case FROST_GROUND -> owner.applyEffect(enemy, sink -> Effect.chill(FROST_CHILL, FROST_CHILL_TICKS, sink));
+        }
+        ZonePulse.Slow slow = pulse.slow();
+        if (slow.slows()) {
+            kind.slows().ifPresent(by -> owner.applyEffect(enemy, sink -> slowed(by, slow, sink)));
+        }
+        switch (kind) {
+            case BURNING_GROUND, TAR, FROST_GROUND -> {
+            }
             case HEALING_GROUND -> owner.applyEffect(enemy, sink -> Effect.heal(strength, BOON_TICKS, sink));
             case HASTE_GROUND -> owner.applyEffect(enemy, sink -> Effect.hastened(BOON_TICKS, sink));
             case WARD_MINE, BLINDING_FIELD -> {
@@ -55,5 +58,21 @@ public final class ZoneEffects {
             }
             case FLARE -> owner.applyEffect(enemy, sink -> Effect.revealed(FLARE_REVEAL_TICKS, sink));
         }
+    }
+
+    private static Effect fuel(EffectKind pool, Damage fuel, DamageSink sink) {
+        return switch (pool) {
+            case BURN -> Effect.burn(fuel, sink);
+            case POISON -> Effect.poison(fuel, sink);
+            default -> throw new IllegalArgumentException(pool + " is no pool a zone feeds");
+        };
+    }
+
+    private static Effect slowed(EffectKind by, ZonePulse.Slow slow, DamageSink sink) {
+        return switch (by) {
+            case TARRED -> Effect.tarred(slow.strength(), slow.holdTicks(), sink);
+            case CHILL -> Effect.chill(slow.strength(), slow.holdTicks(), sink);
+            default -> throw new IllegalArgumentException(by + " is no slow a zone holds");
+        };
     }
 }

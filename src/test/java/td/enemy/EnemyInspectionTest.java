@@ -128,8 +128,9 @@ class EnemyInspectionTest {
     @Test
     void aSpeedBreakdownListsOnlyTheSlowThatCounts() {
         DefinedEnemyMob mob = this.anEnemy();
-        mob.applyEffect(Effect.tarred(100, DamageSink.none()));
-        float strongest = EffectKind.TARRED.rule().slowPerStack() + 0.1f;
+        float tar = 0.4f;
+        mob.applyEffect(Effect.tarred(tar, 100, DamageSink.none()));
+        float strongest = tar + 0.1f;
         mob.applyEffect(Effect.chill(strongest, 100, DamageSink.none()));
 
         StatBreakdown speed = mob.inspect().breakdowns().get(EnemyStat.MOVE_SPEED);

@@ -23,8 +23,8 @@
   step, the first a whole step after the hold. The fade step is a length like any other: each application carries
   its own and each tick a holder holds sets it, so tenacity reaches it only then.
 - A kind has one stack cap and nothing raises it; every stack count has its bundle precomputed.
-- A slow (`Effect.slowStrength()`: `CHILL` and `DRAGGED`, whose strength each application brings, `TARRED` by its
-  rule's `slowPerStack`, and `BLIGHT`'s `GrowingSlow`) takes a share of the speed its carrier has, gains included, and only the strongest counts,
+- A slow (`Effect.slowStrength()`: `CHILL`, `TARRED` and `DRAGGED`, whose strength each application brings, and
+  `BLIGHT`'s `GrowingSlow`) takes a share of the speed its carrier has, gains included, and only the strongest counts,
   across kinds too. `ANCHORED` (`EffectTag.SPEED_CEILING`) is no such share: it holds speed to a share of base through
   `capAtShareOfBase`, the one answer to a speed gain. Each fades over its last `SLOW_FADE_TICKS`, or its whole length if
   shorter; one refreshed each pulse never gets there. A growing slow is the exception: it grows by the tick it has run,

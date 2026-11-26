@@ -234,8 +234,7 @@ final class TowerArtSheets4 {
     }
 
     static void zone(ZoneKind kind, double cellX, double cellY, double radius) {
-        TowerArtSheets2.engine.getGameWorld().zones().add(new Zone(kind, cellX * 32, cellY * 32, (float) (radius * 32), 400, 100,
-                (target, effect) -> target.applyEffect(effect.apply(DamageSink.none()))));
+        TowerArtSheets2.engine.getGameWorld().zones().add(new Zone(kind, cellX * 32, cellY * 32, (float) (radius * 32), 400, td.zone.ZonePulse.of(100), td.zone.ZoneOwner.nobody()));
     }
 
     static void grounds() throws Exception {

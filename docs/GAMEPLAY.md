@@ -211,7 +211,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Payload | Buff | A special shell: the Mortar's damage as magic, and ground it leaves where it lands. |
 | Napalm | Buff | A payload that leaves flames that apply Burn. |
 | Tar Shell | Buff | A payload that leaves tar applying Tar and Poison. |
-| Cryo | Buff | A payload that leaves frost applying Chill, and Freeze to an enemy that stays. |
+| Cryo | Buff | A payload that leaves frost dealing magic damage and applying Chill, and Freeze to an enemy that stays. |
 | Flare | Buff | A Normal shell that also leaves a flare lasting until the wave ends; every enemy that enters it gains Reveal. |
 | Barrage | Buff | The front shells loaded together and fired one after another at one target. |
 | Carpet Bombing | Buff | The front shells loaded together, a Normal between each two, and laid along the path from the target back toward where the enemies come from. |
