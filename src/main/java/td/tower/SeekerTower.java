@@ -5,6 +5,8 @@ import td.damage.Damage;
 import td.damage.DamageType;
 import td.effect.Effect;
 import td.effect.EffectKind;
+import td.effect.IceKind;
+import td.effect.StackingDebuff;
 import td.enemy.EnemyMob;
 import td.enemy.HitResult;
 import td.projectile.MissileGuide;
@@ -14,6 +16,9 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
+import td.tower.proc.Proc;
+import td.tower.proc.ProcCondition;
+import td.tower.proc.ProcPayload;
 import td.tower.seeker.FeedingMechanic;
 import td.tower.seeker.FrozenLedger;
 import td.tower.seeker.IceRider;
@@ -50,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 
 import static td.tower.upgrade.MechanicCatalogue.entry;
 
@@ -111,6 +117,10 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode SHARP_STING = UpgradeNode.of("seeker.sharp_sting", "Sharp Sting", 39)
             .withModifiers(TowerModifiers.damage(10f))
             .inTier(2);
+    private static final UpgradeNode RIME = UpgradeNode.of("seeker.rime", "Rime", 12)
+            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1))
+                    .when(new ProcCondition.TargetHasAnyOf(Set.of(EffectKind.FREEZE))))
+            .inTier(2);
     private static final UpgradeNode HIGH_PERCH = UpgradeNode.of(RangeNodes.RANGE_2_ID, "High Perch", 10)
             .withModifiers(TowerModifiers.range(1f).plus(TowerModifiers.huntRadius(1f)))
             .inTier(2);
@@ -131,7 +141,7 @@ public final class SeekerTower extends AbstractTower {
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(QUICK_BROOD, DEEP_FREEZE, WIDE_COMB, LONG_FLIGHT))
             .with(SWARM, HATCHING, FEEDING, SWIFT_WINGS, WIDE_COMB_2,
-                    RUBY, SHADE, SHARP_STING, HIGH_PERCH,
+                    RUBY, SHADE, SHARP_STING, HIGH_PERCH, RIME,
                     ICE_WAKE, SHATTER, RICH_BROOD, DEEP_FREEZE_2, QUICK_BROOD_2)
             .withCluster(UpgradeCluster.of("Release", SWARM, HATCHING))
             .withCluster(UpgradeCluster.of("Second missile", RUBY, SHADE))
@@ -305,7 +315,7 @@ public final class SeekerTower extends AbstractTower {
     private void onImpact(EnemyMob target, Shot shot, int gameTime) {
         TowerStats stats = shot.stats();
         MissileKind kind = shot.kind();
-        boolean wasFrozen = target.hasEffect(EffectKind.FREEZE);
+        Optional<IceKind> iceBefore = iceOn(target);
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.MISSILE, 0f, stats);
         int amount = Math.round(stats.damage() * kind.damageFactor() * adjustment.damageFactor());
         HitResult hit = this.landHit(target, Damage.magic(amount), this.profileOf(shot, adjustment).asAimed());
@@ -316,12 +326,24 @@ public final class SeekerTower extends AbstractTower {
         if (!shieldTookAll && !target.isDead()) {
             int ticks = Math.round(stats.value(TowerStat.FREEZE_DURATION));
             this.applyEffect(target, sink -> Effect.freeze(ticks, kind.ice(), sink));
-            if (!wasFrozen && target.hasEffect(EffectKind.FREEZE)) {
+            if (kind.withers()) {
+                this.applyEffect(target, sink -> Effect.withered(ticks, sink));
+            }
+            Optional<IceKind> iceAfter = iceOn(target);
+            if (iceBefore.isEmpty() && iceAfter.isPresent()) {
                 this.frozen.record(target, kind, stats, gameTime);
                 this.countFreeze();
+            } else if (iceBefore.filter(before -> before != kind.ice()).isPresent()
+                    && iceAfter.filter(kind.ice()::equals).isPresent()) {
+                this.frozen.retake(target, kind, stats, gameTime);
             }
         }
         this.report(target, HitKind.MISSILE, hit.critical(), target.isDead());
+    }
+
+    /** The ice {@code enemy} is frozen in, if it is frozen. */
+    private static Optional<IceKind> iceOn(EnemyMob enemy) {
+        return enemy.activeEffect(EffectKind.FREEZE).map(Effect::ice);
     }
 
     private AttackProfile profileOf(Shot shot, HitAdjustment adjustment) {

@@ -62,6 +62,8 @@ final class EffectPictograms {
             // Drag
             Map.entry("effect.dragged", "S M8.6 9.6V7.6A3.4 3.4 0 0 1 15.4 7.6V9.6 ; F M12 9C16.4 9 19.4 12.4 19.4 16.2C19.4 18.4 18.2 20.6 16.2 20.6H7.8C5.8 20.6 4.6 18.4 4.6 16.2C4.6 12.4 7.6 9 12 9Z"),
             // Dead Zone
+            // Wither: a drooping leaf
+            Map.entry("effect.withered", "F M12 3.6C16.8 6.4 18.4 11.6 15.2 16C13.6 18.2 11.8 19 10 19.2C8.6 14.6 9 8.4 12 3.6Z ; S M10 19.2C9.4 20.6 8.4 21.4 7 21.8"),
             Map.entry("effect.dead_zone", "S O12 12 9.2 ; S M3.6 12.6H7.4L9 8.6L11 16L12.6 12.6H20.4"),
             // Crack
             Map.entry("effect.cracked", "F M5 4H19A1.5 1.5 0 0 1 20.5 5.5V18.5A1.5 1.5 0 0 1 19 20H5A1.5 1.5 0 0 1 3.5 18.5V5.5A1.5 1.5 0 0 1 5 4Z ; K O6.6 7.1 1 O17.4 7.1 1 O6.6 16.9 1 O17.4 16.9 1 ; X M12.4 4L10.4 9L13.8 12.2L11 16.6L12.2 20"),

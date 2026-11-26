@@ -23,6 +23,8 @@ final class EffectSentences {
                     + " a second; a second dose adds to what is left of the first; while it lasts its ")
                     .plus(EnemyStat.REGENERATION).plus(" can't rise above 0, so a ").plus(EffectKind.HEAL)
                     .plus(" restores nothing");
+            case WITHERED -> TermText.of("while it lasts its ").plus(EnemyStat.REGENERATION)
+                    .plus(" can't rise above 0, so a ").plus(EffectKind.HEAL).plus(" restores nothing");
             case BURN -> pool().plus("; it adds a stack of ")
                     .plus(earned(kind)).plus(" every " + seconds(Effect.STACK_INTERVAL_TICKS)
                             + " while it lasts, and every tower can see and aim at it");

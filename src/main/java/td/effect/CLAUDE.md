@@ -78,7 +78,7 @@
 - Tenacity and the freeze meter only scale an authored duration (a count's hold and fade step, a share's clock),
   never change an effect's curve, and a pool's fuel (and the fade step of what it holds) in place of its duration: `duration = authored * durationFactor(tenacity)`, and `* FreezeMeter.nextShare()` for `FREEZE`; never under a tick,
   though a freeze that would last under one doesn't land. Only an immunity keeps a kind out (`Effect.isKeptOffBy`), and a ruby freeze holds the immune all the same. `FREEZE` isn't renewed
-  while it holds (`EffectTag.NOT_RENEWED`); `DAZED` refreshes like any other kind and has no meter.
+  while it holds (`EffectTag.NOT_RENEWED`), though a stronger ice landing on it turns it to its own; `DAZED` refreshes like any other kind and has no meter.
 - `EffectInteractions` is the one place for how an active kind acts on another: what a pool earns, and what a
   kind keeps out (a reveal keeps `INVISIBLE` out and strips nothing). Add a rule there, never a condition in
   `ActiveEffects`.

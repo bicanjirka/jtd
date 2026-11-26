@@ -55,7 +55,7 @@ final class UpgradeTreePlans {
                     node("seeker.wide_comb", 5f))),
             tier(row(node("seeker.feeding", 0f), node("seeker.swift_wings", 1.3f), cluster("Release", 2.6f),
                     node("seeker.wide_comb_2", 5f))),
-            tier(row(node("seeker.sharp_sting", 2.3f), node("base.range.2", 3.3f), cluster("Second missile", 4.6f))),
+            tier(row(node("seeker.rime", 0f), node("seeker.sharp_sting", 2.3f), node("base.range.2", 3.3f), cluster("Second missile", 4.6f))),
             tier(row(cluster("Around the ice", 0f), node("seeker.deep_freeze_2", 2.3f),
                     node("seeker.quick_brood_2", 4.6f), node("seeker.rich_brood", 5.8f))));
 

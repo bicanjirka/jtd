@@ -5,6 +5,7 @@ import td.term.Term;
 import td.term.TermText;
 import td.tower.TowerTerm;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /** Ruby or Shade: adds a second kind of missile to the nest, made in a fixed order beside Frost. */
@@ -26,7 +27,14 @@ public final class SecondMissileMechanic implements SeekerMechanic {
 
     @Override
     public Set<Term> applies() {
-        return this.kind.silencesAfterThaw() ? Set.of(EffectKind.SILENCED) : Set.of();
+        Set<Term> applies = new LinkedHashSet<>();
+        if (this.kind.withers()) {
+            applies.add(EffectKind.WITHERED);
+        }
+        if (this.kind.silencesAfterThaw()) {
+            applies.add(EffectKind.SILENCED);
+        }
+        return Set.copyOf(applies);
     }
 
     @Override

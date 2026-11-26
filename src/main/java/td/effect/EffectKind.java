@@ -103,6 +103,9 @@ public enum EffectKind implements Term {
     UNYIELDING("Unyielding", EffectRule.of(EffectCategory.BUFF).perStack(EnemyStat.RESILIENCE, 100f)
             .perStack(EnemyStat.SPIRIT, 100f).perStack(EnemyStat.MAGIC_RESIST, 100f)
             .perStack(EnemyStat.TENACITY, 100f).perStack(EnemyStat.ARMOR, 100f).helpsCarrier()),
+    /** No regeneration above zero while it lasts, so a heal over time gives nothing. */
+    WITHERED("Wither", EffectRule.of(EffectCategory.DEBUFF)
+            .perStack(EnemyStat.REGENERATION, StatModifier.capAtShareOfBase(0f))),
     /** Radiation: magic damage that halves as it runs, and no regeneration above zero while it does. */
     IRRADIATED("Radiation", EffectRule.of(EffectCategory.DAMAGE_OVER_TIME).asADose()
             .perStack(EnemyStat.REGENERATION, StatModifier.capAtShareOfBase(0f))),

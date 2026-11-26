@@ -183,6 +183,7 @@ that sets it up for another tower, or a buff. Selecting an enemy shows each effe
 | Brittle | Weakness | Debuff | Physical damage taken +30%. |
 | Toll | Weakness | Debuff | Time spent in an Obelisk's field, a stack a second; each stack: Physical damage taken and Magic damage taken +4%, up to 10 stacks; what adds stacks holds them 5 s, and what builds them over time holds them while it lasts; after that it loses a stack every 1 s. |
 | Drag | Control | Debuff | Slows by as much as the field gives, deeper with every stack of Toll; only the strongest slow counts, and speed comes back over its last 0.5 s. |
+| Wither | Weakness | Debuff | While it lasts its Regeneration can't rise above 0, so a Heal restores nothing. |
 | Dead Zone | Weakness | Debuff | Spirit -100, so Heal and Shield are worth nothing. |
 | Crack | Weakness | Debuff | Each stack: Plating -5, up to 10 stacks; each tower keeps its own share for as long as it keeps it up. |
 | Singe | Weakness | Debuff | Each stack: Insulation -5, up to 10 stacks; each tower keeps its own share for as long as it keeps it up. |
@@ -217,7 +218,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Carpet Bombing | Buff | The front shells loaded together, a Normal between each two, and laid along the path from the target back toward where the enemies come from. |
 | Frost | Buff | The plain missile: it applies Freeze to the enemy it hits. |
 | Ruby | Buff | A missile that deals double damage, and whose Freeze also holds an enemy immune to it. |
-| Shade | Buff | A missile whose hit goes past Shield and insulation, and whose Freeze leaves its enemy Silenced as long again once it thaws. |
+| Shade | Buff | A missile whose hit goes past Shield and insulation and applies Wither for as long as its Freeze, and whose Freeze leaves its enemy Silenced as long again once it thaws. |
 | Swarm | Buff | Missiles at once, each at a different enemy, soonest out first. |
 | Hatching | Buff | Missiles that hatch on top of the nest, one after another, and launch first while it keeps loading. |
 | Ice Wake | Buff | While a Freeze the tower landed holds, every enemy walking close past the ice gains Chill. |

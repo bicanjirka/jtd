@@ -234,6 +234,8 @@ final class PerkPictograms {
             Map.entry("seeker.feeding", "F M5.4 20.6V10.2C5.4 7.4 6.8 5.2 8.6 3.6C10.4 5.2 11.8 7.4 11.8 10.2V20.6Z ; X M5.4 10.6H11.8 ; S M15.4 19.6A6.2 6.2 0 0 0 17.6 7.6 ; F M14.6 5.2L19.8 4.6L18.4 9.8Z"),
             // Long Flight: a missile inside the ring it hunts round itself
             Map.entry("seeker.long_flight", "S O12 12 9 ; F M6.6 10.4H14.4L17.6 12L14.4 13.6H6.6Z"),
+            // Rime
+            Map.entry("seeker.rime", "=effect.unraveled"),
             // Swift Wings
             Map.entry("seeker.swift_wings", "F M8.4 9.6H17.4L21.6 12L17.4 14.4H8.4Z ; T M2.4 9.6H6 M1.6 12H6 M2.4 14.4H6"),
             // Wide Comb II

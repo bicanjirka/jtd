@@ -55,6 +55,27 @@ class ActiveEffectsTest {
     }
 
     @Test
+    void aStrongerIceLandingOnAHeldFreezeTurnsItToItsOwnAndEndsItWhenItWouldHaveEnded() {
+        ActiveEffects effects = new ActiveEffects();
+        effects.apply(Effect.freeze(30, IceKind.FROST, DamageSink.none()));
+
+        effects.apply(Effect.freeze(100, IceKind.SHADE, DamageSink.none()));
+        effects.apply(Effect.freeze(100, IceKind.FROST, DamageSink.none()));
+
+        assertThat(effects.find(EffectKind.FREEZE).orElseThrow()).satisfies(freeze -> {
+            assertThat(freeze.ice()).isEqualTo(IceKind.SHADE);
+            assertThat(freeze.remainingTicks()).isEqualTo(30);
+        });
+    }
+
+    @Test
+    void rubyIsStrongerIceThanShadeAndShadeThanFrost() {
+        assertThat(IceKind.SHADE.strongerOf(IceKind.RUBY)).isEqualTo(IceKind.RUBY);
+        assertThat(IceKind.RUBY.strongerOf(IceKind.SHADE)).isEqualTo(IceKind.RUBY);
+        assertThat(IceKind.FROST.strongerOf(IceKind.SHADE)).isEqualTo(IceKind.SHADE);
+    }
+
+    @Test
     void withNoActiveEffectsEveryStatKeepsItsBase() {
         BaseStats<EnemyStat> base = BaseStats.defaults(EnemyStat.class).with(EnemyStat.MOVE_SPEED, 1f);
 

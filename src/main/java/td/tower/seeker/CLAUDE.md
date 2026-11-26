@@ -14,7 +14,9 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
 - A missile in flight asks the tower through its `MissileGuide`: it keeps its pick unless that enemy was frozen since,
   turns to the soonest-out unfrozen enemy within its hunt radius (`TowerStat.HUNT_RADIUS`), stays on its pick when there is none, and flies home to reload
   only when no enemy is left. It lands with the stats its shot began with.
-- A hit freezes unless a shield took all of it. Each new freeze is counted for the release and for Feeding; a release
+- A hit freezes unless a shield took all of it. A stronger ice landing on a held freeze turns it to its own
+  (`IceKind.strongerOf`, in `ActiveEffects`) and it ends when it would have; the ledger then holds it as the new
+  kind's (`FrozenLedger.retake`), which is no new freeze. Each new freeze is counted for the release and for Feeding; a release
   that falls due fires on the tower's next tick, never from inside the hit.
 - The `FrozenLedger` only watches the enemies the tower froze, for the tick their freeze ends, death included: what
   rides the ice (`IceRider`) acts around the freezes the ledger holds or as one ends, never on a freeze another tower

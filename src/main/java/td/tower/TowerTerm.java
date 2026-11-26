@@ -34,8 +34,9 @@ public enum TowerTerm implements Term {
     FROST_MISSILE("Frost", Side.BUFF, "the plain missile: it applies {} to the enemy it hits", EffectKind.FREEZE),
     RUBY("Ruby", Side.BUFF, "a missile that deals double damage, and whose {} also holds an enemy immune to it",
             EffectKind.FREEZE),
-    SHADE("Shade", Side.BUFF, "a missile whose hit goes past {} and insulation, and whose {} leaves its enemy {} as "
-            + "long again once it thaws", EffectKind.SHIELD, EffectKind.FREEZE, EffectKind.SILENCED),
+    SHADE("Shade", Side.BUFF, "a missile whose hit goes past {} and insulation and applies {} for as long as its {}, "
+            + "and whose {} leaves its enemy {} as long again once it thaws", EffectKind.SHIELD, EffectKind.WITHERED,
+            EffectKind.FREEZE, EffectKind.FREEZE, EffectKind.SILENCED),
     SWARM("Swarm", Side.BUFF, "missiles at once, each at a different enemy, soonest out first"),
     HATCHING("Hatching", Side.BUFF, "missiles that hatch on top of the nest, one after another, and launch first while it "
             + "keeps loading"),

@@ -10,11 +10,14 @@ import td.tower.TowerTerm;
  */
 public enum MissileKind {
     /** The plain missile: its freeze is ice. */
-    FROST(TowerTerm.FROST_MISSILE, 1f, IceKind.FROST, MissileLook.STANDARD, false, false),
+    FROST(TowerTerm.FROST_MISSILE, 1f, IceKind.FROST, MissileLook.STANDARD, false, false, false),
     /** Twice the damage, and a freeze in ruby that holds the freeze-immune. */
-    RUBY(TowerTerm.RUBY, 2f, IceKind.RUBY, MissileLook.RUBY, false, false),
-    /** Shadow damage, past every Shield, and a freeze that leaves its enemy Silenced as long again once it thaws. */
-    SHADE(TowerTerm.SHADE, 1f, IceKind.SHADE, MissileLook.SHADE, true, true);
+    RUBY(TowerTerm.RUBY, 2f, IceKind.RUBY, MissileLook.RUBY, false, false, false),
+    /**
+     * Shadow damage, past every Shield; no regeneration for as long as its freeze, and a freeze that leaves its enemy
+     * Silenced as long again once it thaws.
+     */
+    SHADE(TowerTerm.SHADE, 1f, IceKind.SHADE, MissileLook.SHADE, true, true, true);
 
     private final TowerTerm term;
     private final float damageFactor;
@@ -22,15 +25,17 @@ public enum MissileKind {
     private final MissileLook look;
     private final boolean shadow;
     private final boolean silencesAfterThaw;
+    private final boolean withers;
 
     MissileKind(TowerTerm term, float damageFactor, IceKind ice, MissileLook look, boolean shadow,
-                boolean silencesAfterThaw) {
+                boolean silencesAfterThaw, boolean withers) {
         this.term = term;
         this.damageFactor = damageFactor;
         this.ice = ice;
         this.look = look;
         this.shadow = shadow;
         this.silencesAfterThaw = silencesAfterThaw;
+        this.withers = withers;
     }
 
     public TowerTerm term() {
@@ -53,6 +58,11 @@ public enum MissileKind {
     /** Whether it deals Shadow damage, which goes past Shield and insulation. */
     public boolean shadow() {
         return this.shadow;
+    }
+
+    /** Whether its hit stops its enemy's regeneration for as long as the freeze it brings. */
+    public boolean withers() {
+        return this.withers;
     }
 
     /** Whether its enemy stays Silenced, once it thaws, for as long as it was frozen. */

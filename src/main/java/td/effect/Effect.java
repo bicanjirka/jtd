@@ -215,6 +215,11 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return timed(EffectKind.SILENCED, durationTicks, sink);
     }
 
+    /** No regeneration above zero for {@code durationTicks}. */
+    public static Effect withered(int durationTicks, DamageSink sink) {
+        return timed(EffectKind.WITHERED, durationTicks, sink);
+    }
+
     /** Its speed is held to a share of its base, whatever raises it, for {@code durationTicks}. */
     public static Effect anchored(int durationTicks, DamageSink sink) {
         return timed(EffectKind.ANCHORED, durationTicks, sink);
@@ -390,6 +395,18 @@ public record Effect(EffectKind kind, int remainingTicks, int authoredDurationTi
         return switch (this.dynamics) {
             case EffectDynamics.FuelPool pool -> pool.stackClock();
             default -> 0;
+        };
+    }
+
+    /**
+     * This freeze, held as it is, but made of the stronger of its ice and {@code incoming}'s, which lands on it while it
+     * holds; any other effect as it is.
+     */
+    Effect encasedAlsoBy(Effect incoming) {
+        return switch (this.dynamics) {
+            case EffectDynamics.Encasing encasing -> this.withDynamics(new EffectDynamics.Encasing(
+                    encasing.ice().strongerOf(incoming.ice())));
+            default -> this;
         };
     }
 

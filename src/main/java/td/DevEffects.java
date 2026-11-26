@@ -119,6 +119,7 @@ public final class DevEffects {
             case UNYIELDING -> timed(Effect::unyielding);
             case REVEALED -> timed(Effect::revealed);
             case SILENCED -> timed(Effect::silenced);
+            case WITHERED -> timed(Effect::withered);
             case ANCHORED -> timed(Effect::anchored);
             case BRITTLE -> timed(Effect::brittle);
             case CRACKED -> stacking(kind, Effect::cracked);

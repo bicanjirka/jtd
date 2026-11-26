@@ -120,7 +120,7 @@ public final class ActiveEffects {
                 Effect existing = this.active.get(incoming.kind());
                 boolean holding = existing != null && incoming.kind().isNotRenewed();
                 this.active.put(incoming.kind(), existing == null ? incoming
-                        : holding ? existing
+                        : holding ? existing.encasedAlsoBy(incoming)
                         : incoming.slowStrength() > 0f ? strongerSlowOf(existing, incoming)
                         : strongerOf(existing, incoming));
             }

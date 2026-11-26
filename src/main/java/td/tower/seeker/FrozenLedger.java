@@ -20,6 +20,17 @@ public final class FrozenLedger {
         this.holding.add(new Freeze(enemy, kind, stats, tick));
     }
 
+    /**
+     * {@code enemy}'s freeze, held already, is now of {@code kind}'s ice, fired with {@code stats}: it ends as it would
+     * have, but what it does then is that kind's. From {@code tick} when the ledger held no freeze on it.
+     */
+    public void retake(EnemyMob enemy, MissileKind kind, TowerStats stats, int tick) {
+        int since = this.holding.stream().filter(freeze -> freeze.enemy() == enemy).findFirst()
+                .map(Freeze::frozenAtTick).orElse(tick);
+        this.holding.removeIf(freeze -> freeze.enemy() == enemy);
+        this.holding.add(new Freeze(enemy, kind, stats, since));
+    }
+
     /** The enemies whose freeze it landed still holds them, alive. */
     public List<EnemyMob> holding() {
         return this.holding.stream().map(Freeze::enemy).filter(enemy -> !enemy.isDead()).toList();

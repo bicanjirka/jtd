@@ -398,6 +398,39 @@ class SeekerTowerTest {
     }
 
     @Test
+    void aShadeHitStopsRegenerationForAsLongAsItsFreeze() {
+        SeekerTower tower = this.towerWith("Shade");
+        tower.readyForWave();
+        this.spendTheFrostAhead(tower);
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.enemies(target);
+
+        this.landOne(tower);
+
+        assertThat(target.activeEffect(EffectKind.WITHERED)).hasValueSatisfying(wither -> assertThat(
+                wither.remainingTicks()).isEqualTo(target.activeEffect(EffectKind.FREEZE).orElseThrow().remainingTicks()));
+    }
+
+    @Test
+    void aStrongerMissileOnTheIceTheTowerHoldsTurnsItToItsOwnAndActsAsItsKindAtTheThaw() {
+        SeekerTower tower = this.towerWith("Shade");
+        tower.readyForWave();
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.enemies(target);
+        while (tower.nestMissiles().getFirst() == MissileKind.FROST) {
+            this.landOne(tower);
+        }
+        this.landOne(tower);
+        IceKind ice = target.activeEffect(EffectKind.FREEZE).orElseThrow().ice();
+
+        target.expire(EffectKind.FREEZE);
+        tower.doTick(this.tick++);
+
+        assertThat(ice).isEqualTo(IceKind.SHADE);
+        assertThat(target.hasEffect(EffectKind.SILENCED)).isTrue();
+    }
+
+    @Test
     void everyWaveStartsTheNestsOrderOver() {
         SeekerTower tower = this.towerWith("Ruby");
         tower.readyForWave();
