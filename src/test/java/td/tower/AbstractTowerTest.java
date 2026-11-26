@@ -648,7 +648,7 @@ class AbstractTowerTest {
     void aFreeTiersPerkActsFromTheXpThatOpensItWithoutBeingOwned() {
         UpgradeNode node = UpgradeNode.of("veteran", "Veteran", 10).inTier(1);
         UpgradeTree tree = UpgradeTree.of(node).withTiers(List.of(UpgradeTier.open(),
-                UpgradeTier.gated(150, 0).withPerk(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 2)))));
+                UpgradeTier.gated(150, 0).withPerk("Mark", Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 2)))));
         FakeTower tower = FakeTower.offering(this.context, 0, 0, tree);
         this.context.towers().add(tower);
         FakeEnemyMob before = FakeEnemyMob.at(0, 0);

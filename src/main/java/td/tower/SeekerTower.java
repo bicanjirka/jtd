@@ -114,7 +114,6 @@ public final class SeekerTower extends AbstractTower {
             .inTier(2);
     private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 10)
             .inTier(2);
-    /** Rime: every freeze it lands adds a stack of Unravel. */
     private static final Proc RIME = Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1))
             .when(new ProcCondition.TargetHasAnyOf(Set.of(EffectKind.FREEZE)));
     private static final UpgradeNode HIGH_PERCH = UpgradeNode.of(RangeNodes.RANGE_2_ID, "High Perch", 10)
@@ -147,7 +146,7 @@ public final class SeekerTower extends AbstractTower {
             .withCluster(UpgradeCluster.of("Around the ice", ICE_WAKE, SHATTER))
             .withCluster(UpgradeCluster.of("Apex", QUICK_BROOD, SHARP_STING_2))
             .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withBonus(TowerModifiers.huntRadius(2f).plus(TowerModifiers.projectileSpeed(3.75f))),
-                    UpgradeTier.gated(120, 0).withPerk(RIME),
+                    UpgradeTier.gated(120, 0).withPerk("Rime", RIME),
                     UpgradeTier.gated(200, 0).withBonus(TowerModifiers.accuracy(100f))));
 
     private static final MechanicCatalogue<SeekerMechanic> MECHANICS = MechanicCatalogue.of(

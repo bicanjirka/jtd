@@ -43,10 +43,10 @@ public record UpgradeTier(int xp, int unlockPrice, StatModifiers<TowerStat> bonu
         return new UpgradeTier(this.xp, this.unlockPrice, bonus, this.perks);
     }
 
-    /** The same gate, with {@code perk} among what the tower holds once its XP opens the tier. */
-    public UpgradeTier withPerk(Proc perk) {
+    /** The same gate, with {@code perk}, called {@code name}, among what the tower holds once its XP opens the tier. */
+    public UpgradeTier withPerk(String name, Proc perk) {
         List<Proc> next = new ArrayList<>(this.perks);
-        next.add(perk);
+        next.add(perk.named(name));
         return new UpgradeTier(this.xp, this.unlockPrice, this.bonus, next);
     }
 
