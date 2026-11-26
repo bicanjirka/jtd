@@ -208,11 +208,11 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Silver Round | Buff | A shot of magic damage that ignores some magic resist. |
 | Magazine | Buff | The shells it has ready, in the order it fires them; a new one at the back draws its kind by lot, each kind as likely as its weight among the kinds it owns. |
 | Heavy | Buff | A shell that hits harder than a Normal one and flies slower. |
-| Nuke | Buff | Two Heavies fused: a harder hit in a wider blast that leaves fallout applying Dead Zone and Sicken, and a flash that gives every enemy on the board Radiation. |
+| Nuke | Buff | Two Heavy shells fused: a harder hit in a wider blast that leaves fallout applying Dead Zone and Sicken, and a flash that gives every enemy on the board Radiation. |
 | Payload | Buff | A special shell: the Mortar's damage as magic, and ground it leaves where it lands. |
-| Napalm | Buff | A payload that leaves flames that apply Burn. |
-| Tar Shell | Buff | A payload that leaves tar applying Tar and Poison. |
-| Cryo | Buff | A payload that leaves frost dealing magic damage and applying Chill, and Freeze to an enemy that stays. |
+| Napalm | Buff | A Payload that leaves flames that apply Burn. |
+| Tar Shell | Buff | A Payload that leaves tar applying Tar and Poison. |
+| Cryo | Buff | A Payload that leaves frost dealing magic damage and applying Chill, and Freeze to an enemy that stays. |
 | Flare | Buff | A Normal shell that also leaves a flare lasting until the wave ends; every enemy that enters it gains Reveal. |
 | Barrage | Buff | The front shells loaded together and fired one after another at one target. |
 | Carpet Bombing | Buff | The front shells loaded together, a Normal between each two, and laid along the path from the target back toward where the enemies come from. |
@@ -220,10 +220,10 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Ruby | Buff | A missile that deals more damage, and whose Freeze also holds an enemy immune to it. |
 | Shade | Buff | A missile that deals Shadow damage and more of it, applies Wither for as long as its Freeze. |
 | Swarm | Buff | Missiles at once, one at each enemy in range, soonest out first, and round again while missiles are left. |
-| Hatching | Buff | Missiles that hatch on top of the nest, one after another, and launch first while it keeps loading. |
+| Hatching | Buff | Missiles that hatch on top of the Nest, one after another, and launch first while it keeps loading. |
 | Ice Wake | Buff | While a Freeze the tower landed holds, every enemy walking close past the ice gains Chill. |
 | Light | Buff | A Beacon's circle: every enemy in it gains Reveal, while inside and a moment after, and every other tower whose centre is in it is Lit; lights that overlap stack. |
-| Lit | Buff | In a Beacon's light: it takes less of the jam and the blinding enemies put on it. |
+| Lit | Buff | In a Beacon's Light: it takes less of the jam and the blinding enemies put on it. |
 | Spotlight | Buff | The lantern's beam holds one enemy in the light until it dies or leaves, then picks again; the held enemy has Priority. |
 | Nest | Buff | The missiles it holds ready: it loads one whenever it has room, so it is full at every wave start, and with an enemy in range they launch one after another, each picking its own target. |
 | Jammed | Debuff | An enemy nearby slows its attacks and shortens its range. |
@@ -237,16 +237,16 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Flashover | Buff | A hot Burn in the stream spreads: the enemies beside it take part of the flame too. |
 | Thermal Shock | Buff | More flame into an enemy another tower holds with Chill, Freeze or Daze. |
 | Meltdown | Buff | An enemy's armor and plating add to the Burn it takes, a share for each point. |
-| Kinship | Buff | Towers in a Beacon's light learn faster for every other kind of tower in the same light. |
+| Kinship | Buff | Towers in a Beacon's Light learn faster for every other kind of tower in the same light. |
 | Mentor | Buff | The tower in a Beacon's light that has learned least learns twice as fast. |
 | Breakthrough | Buff | A tower in a Beacon's light opening a tier teaches every other tower in it a little. |
 | Daylight | Buff | An enemy in a Beacon's light gives its allies no aura: no shroud, command, mending, ward or jam reaches out of it. |
 | Prism | Buff | A Beacon's light carries the mark of every kind of tower it lights; the mark fades by its own rule once the enemy leaves. |
 | Shatter | Buff | As a Freeze the tower landed ends, the ice bursts on the enemies around it. |
 | Arc | Buff | Lightning a primed stone carries from where it lands, jumping from enemy to enemy as magic. |
-| Hex | Buff | A curse a Hexer casts with its Souls; each kind does its own thing. |
-| Static | Buff | Every enemy its stones or their lightning damage carries a stack, one per Stormcaller; badly hurt, the enemy discharges into itself for each stack and pays each Stormcaller that tagged it in its currency. |
-| Soulbrand | Buff | Every enemy its stones damage carries a stack, one per Hexer; when it dies it bursts for each stack, and pays each Hexer that tagged it in its currency. |
+| Hex | Buff | A curse a Hexer casts with its Soul; each kind does its own thing. |
+| Static | Buff | Every enemy its stones or their lightning damage carries a stack, one per Stormcaller; badly hurt, the enemy discharges into itself for each stack and pays each Stormcaller that tagged it in Spark. |
+| Soulbrand | Buff | Every enemy its stones damage carries a stack, one per Hexer; when it dies it bursts for each stack, and pays each Hexer that tagged it in Soul. |
 | Spark | Buff | The Stormcaller's currency: its stones earn it by the damage they deal, its passive by the enemies that discharge; all of it goes into each of its abilities at once. |
 | Soul | Buff | The Hexer's currency: its stones earn it by the damage they deal, its passive by the enemies that die; all of it goes into each of its abilities at once. |
 | Shockwave | Buff | A discharge into every enemy in range, as magic. |
