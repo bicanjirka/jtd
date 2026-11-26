@@ -51,13 +51,13 @@ final class UpgradeTreePlans {
             tier(row(cluster("Burning", 0f), node("cinder.hot_flame_2", 3.3f), node("cinder.long_stream_2", 4.3f))));
 
     private static final UpgradeTreePlan SEEKER = UpgradeTreePlan.of(
-            tier(row(node("seeker.deep_freeze", 0f), node("seeker.long_flight", 2f), node("seeker.quick_brood", 4f),
-                    node("seeker.wide_comb", 5f))),
-            tier(row(node("seeker.feeding", 0f), node("seeker.swift_wings", 1.3f), cluster("Release", 2.6f),
-                    node("seeker.wide_comb_2", 5f))),
-            tier(row(node("seeker.rime", 0f), node("seeker.sharp_sting", 2.3f), node("base.range.2", 3.3f), cluster("Second missile", 4.6f))),
-            tier(row(cluster("Around the ice", 0f), node("seeker.deep_freeze_2", 2.3f),
-                    node("seeker.quick_brood_2", 4.6f), node("seeker.rich_brood", 5.8f))));
+            tier(row(node("seeker.deep_freeze", 0f), node("seeker.wide_comb", 1f))),
+            tier(row(node("tier.1", 0f), cluster("Release", 1f), node("seeker.sharp_sting", 3f),
+                    node("seeker.wide_comb_2", 4f))),
+            tier(row(node("tier.2", 0f), node("seeker.feeding", 1f), node("base.range.2", 2f),
+                    cluster("Second missile", 3f))),
+            tier(row(node("tier.3", 0f), node("seeker.rich_brood", 1f), node("seeker.deep_freeze_2", 2f),
+                    cluster("Around the ice", 3f), cluster("Apex", 5f))));
 
     private static final UpgradeTreePlan PULSE = UpgradeTreePlan.of(
             tier(row(node("base.range", 2.5f), node("pulse.hum", 3.5f))),

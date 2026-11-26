@@ -3,6 +3,7 @@ package td.tower.upgrade;
 import td.stat.StatModifiers;
 import td.tower.Tower;
 import td.tower.TowerStat;
+import td.tower.proc.Proc;
 import td.util.GameWorld;
 
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ import java.util.Set;
  * <p>
  * A node needs its tier open and the nodes it comes after owned. A cluster's members exclude each other; what comes
  * after a member hides while another member is the active one. A tier above tier 0 that has a price or a bonus has a
- * node of its own ({@link #tierNodeOf(int)}) that carries its bonus. A paid tier's is its unlock
+ * node of its own ({@link #tierNodeOf(int)}) that carries its bonus and its perks. A paid tier's is its unlock
  * ({@link #unlockOf(int)}), bought like any other node, so a purchase, a refund and a save treat it as any other. A
  * free tier's is granted: the tower holds it once its XP opens the tier, and it is never bought, sold or saved.
  */
@@ -53,8 +54,9 @@ public final class UpgradeTree {
         if (tiers.isEmpty() || tiers.getFirst().xp() != 0 || tiers.getFirst().isPaid()) {
             throw new IllegalArgumentException("Tier 0 is open from the start: " + tiers);
         }
-        if (!tiers.getFirst().bonus().equals(StatModifiers.none())) {
-            throw new IllegalArgumentException("Tier 0 is the tower's base and gives no bonus: " + tiers.getFirst());
+        if (tiers.getFirst().gives()) {
+            throw new IllegalArgumentException("Tier 0 is the tower's base and gives no bonus or perk: "
+                    + tiers.getFirst());
         }
         this.tiers = List.copyOf(tiers);
         this.nodes = List.copyOf(nodes);
@@ -63,9 +65,8 @@ public final class UpgradeTree {
         List<Optional<UpgradeNode>> own = new ArrayList<>();
         for (int tier = 0; tier < tiers.size(); tier++) {
             UpgradeTier gate = tiers.get(tier);
-            boolean hasNode = tier > 0 && (gate.isPaid() || !gate.bonus().equals(StatModifiers.none()));
-            own.add(hasNode ? Optional.of(UpgradeNode.of(TIER_PREFIX + tier, UpgradeTier.nameOf(tier),
-                    gate.unlockPrice()).inTier(tier).withModifiers(gate.bonus())) : Optional.empty());
+            boolean hasNode = tier > 0 && (gate.isPaid() || gate.gives());
+            own.add(hasNode ? Optional.of(tierNode(tier, gate)) : Optional.empty());
         }
         this.tierNodes = List.copyOf(own);
         Map<String, UpgradeNode> ids = new LinkedHashMap<>();
@@ -100,6 +101,16 @@ public final class UpgradeTree {
         }
         this.mentionedBefore = this.mentionedClosures();
         this.branchMember = this.branchMembers();
+    }
+
+    /** {@code gate}'s own node at {@code tier}, carrying its bonus and its perks. */
+    private static UpgradeNode tierNode(int tier, UpgradeTier gate) {
+        UpgradeNode node = UpgradeNode.of(TIER_PREFIX + tier, UpgradeTier.nameOf(tier), gate.unlockPrice()).inTier(tier)
+                .withModifiers(gate.bonus());
+        for (Proc perk : gate.perks()) {
+            node = node.withProc(perk);
+        }
+        return node;
     }
 
     public static UpgradeTree none() {

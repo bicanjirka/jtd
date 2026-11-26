@@ -128,7 +128,7 @@ class UpgradeTreeTest {
 
     @Test
     void aBonusOnTierZeroIsRejected() {
-        UpgradeTier based = new UpgradeTier(0, 0, TowerModifiers.damage(1f));
+        UpgradeTier based = UpgradeTier.open().withBonus(TowerModifiers.damage(1f));
 
         assertThatThrownBy(() -> UpgradeTree.of(A1).withTiers(List.of(based, UpgradeTier.gated(60, 0))))
                 .isInstanceOf(IllegalArgumentException.class);

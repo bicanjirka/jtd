@@ -2,7 +2,9 @@ package td.tower.upgrade;
 
 import td.stat.StatModifiers;
 import td.tower.TowerStat;
+import td.tower.proc.Proc;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,19 +12,20 @@ import java.util.List;
  * tower has {@code xp} XP, by itself when it is free, or on the player's click that pays {@code unlockPrice}. Once it is
  * open, everything in it costs only credits.
  * <p>
- * Its {@code bonus}, any number of stats, is the tower's own: the tier's own node carries it, and the tower holds it
- * from the moment its XP opens the tier, whatever it buys there, and keeps it. Selling pays nothing back for it. Tier 0
- * is the tower's base and has none.
+ * Its {@code bonus}, any number of stats, and its {@code perks}, procs, are the tower's own: the tier's own node
+ * carries them, and the tower holds them from the moment its XP opens the tier, whatever it buys there, and keeps
+ * them. Selling pays nothing back for them. Tier 0 is the tower's base and has neither.
  */
-public record UpgradeTier(int xp, int unlockPrice, StatModifiers<TowerStat> bonus) {
+public record UpgradeTier(int xp, int unlockPrice, StatModifiers<TowerStat> bonus, List<Proc> perks) {
 
-    private static final UpgradeTier OPEN = new UpgradeTier(0, 0, StatModifiers.none());
+    private static final UpgradeTier OPEN = new UpgradeTier(0, 0, StatModifiers.none(), List.of());
     private static final List<UpgradeTier> STANDARD = List.of(OPEN, gated(60, 0), gated(120, 0), gated(200, 0));
 
     public UpgradeTier {
         if (xp < 0 || unlockPrice < 0) {
             throw new IllegalArgumentException("A tier's gate is never negative: XP " + xp + ", $" + unlockPrice);
         }
+        perks = List.copyOf(perks);
     }
 
     /** Tier 0: open from the moment the tower is built. */
@@ -32,12 +35,24 @@ public record UpgradeTier(int xp, int unlockPrice, StatModifiers<TowerStat> bonu
 
     /** A tier that opens at {@code xp} XP, paying {@code unlockPrice} for it when that is more than nothing. */
     public static UpgradeTier gated(int xp, int unlockPrice) {
-        return new UpgradeTier(xp, unlockPrice, StatModifiers.none());
+        return new UpgradeTier(xp, unlockPrice, StatModifiers.none(), List.of());
     }
 
     /** The same gate, with {@code bonus} for the tower once its XP opens the tier. */
     public UpgradeTier withBonus(StatModifiers<TowerStat> bonus) {
-        return new UpgradeTier(this.xp, this.unlockPrice, bonus);
+        return new UpgradeTier(this.xp, this.unlockPrice, bonus, this.perks);
+    }
+
+    /** The same gate, with {@code perk} among what the tower holds once its XP opens the tier. */
+    public UpgradeTier withPerk(Proc perk) {
+        List<Proc> next = new ArrayList<>(this.perks);
+        next.add(perk);
+        return new UpgradeTier(this.xp, this.unlockPrice, this.bonus, next);
+    }
+
+    /** Whether it gives the tower anything of its own, a bonus or a perk. */
+    public boolean gives() {
+        return !this.bonus.equals(StatModifiers.none()) || !this.perks.isEmpty();
     }
 
     /** The tiers every tower climbs: 0, then I to III. */

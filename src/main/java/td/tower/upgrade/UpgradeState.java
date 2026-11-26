@@ -4,7 +4,6 @@ import td.stat.StatModifiers;
 import td.tower.TowerCapability;
 import td.tower.TowerStat;
 import td.tower.proc.HitBonus;
-import td.tower.proc.Proc;
 import td.tower.targeting.TargetPriority;
 
 import java.util.ArrayList;
@@ -77,15 +76,6 @@ public record UpgradeState(List<UpgradeNode> owned) {
         List<HitBonus> all = new ArrayList<>();
         for (UpgradeNode node : this.owned) {
             all.addAll(node.effects().hitBonuses());
-        }
-        return all;
-    }
-
-    /** Every owned node's procs, in purchase order. */
-    public List<Proc> procs() {
-        List<Proc> all = new ArrayList<>();
-        for (UpgradeNode node : this.owned) {
-            all.addAll(node.effects().procs());
         }
         return all;
     }

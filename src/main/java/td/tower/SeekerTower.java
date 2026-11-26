@@ -111,42 +111,41 @@ public final class SeekerTower extends AbstractTower {
             .inTier(2);
     private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 10)
             .inTier(2);
-    private static final UpgradeNode RIME = UpgradeNode.of("seeker.rime", "Rime", 0)
-            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1))
-                    .when(new ProcCondition.TargetHasAnyOf(Set.of(EffectKind.FREEZE))))
-            .inTier(2);
+    /** Rime: every freeze it lands adds a stack of Unravel. */
+    private static final Proc RIME = Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1))
+            .when(new ProcCondition.TargetHasAnyOf(Set.of(EffectKind.FREEZE)));
     private static final UpgradeNode HIGH_PERCH = UpgradeNode.of(RangeNodes.RANGE_2_ID, "High Perch", 10)
             .withModifiers(TowerModifiers.range(1f).plus(TowerModifiers.huntRadius(1f)))
             .inTier(2);
 
-    private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 22)
+    private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 25)
             .inTier(3);
-    private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 22)
+    private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 25)
             .inTier(3);
-    private static final UpgradeNode RICH_BROOD = UpgradeNode.of("seeker.rich_brood", "Rich Brood", 14)
+    private static final UpgradeNode RICH_BROOD = UpgradeNode.of("seeker.rich_brood", "Rich Brood", 20)
             .withRequires(UpgradeCondition.owns(RUBY.id()).or(UpgradeCondition.owns(SHADE.id())))
             .inTier(3);
-    private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.deep_freeze_2", "Deep Freeze II", 20)
-            .withModifiers(TowerModifiers.freezeDuration(20))
+    private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.deep_freeze_2", "Deep Freeze II", 5)
+            .withModifiers(TowerModifiers.freezeDuration(40))
             .inTier(3);
-    private static final UpgradeNode QUICK_BROOD_2 = UpgradeNode.of("seeker.quick_brood_2", "Quick Brood II", 31)
-            .withModifiers(TowerModifiers.attackSpeed(2f / 1.3f - 2f / 1.6f))
+    private static final UpgradeNode QUICK_BROOD_2 = UpgradeNode.of("seeker.quick_brood_2", "Quick Brood II", 55)
+            .withModifiers(TowerModifiers.attackSpeed(0.5f))
             .inTier(3);
-    private static final UpgradeNode SHARP_STING_2 = UpgradeNode.of("seeker.sharp_sting_2", "Sharp Sting II", 31)
-            .withModifiers(TowerModifiers.damage(10f))
+    private static final UpgradeNode SHARP_STING_2 = UpgradeNode.of("seeker.sharp_sting_2", "Sharp Sting II", 55)
+            .withModifiers(TowerModifiers.damage(30f))
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(DEEP_FREEZE, WIDE_COMB))
             .with(SWARM, HATCHING, SHARP_STING, WIDE_COMB_2,
-                    RUBY, SHADE, HIGH_PERCH, RIME, FEEDING,
+                    RUBY, SHADE, HIGH_PERCH, FEEDING,
                     ICE_WAKE, SHATTER, RICH_BROOD, DEEP_FREEZE_2, QUICK_BROOD_2, SHARP_STING_2)
             .withCluster(UpgradeCluster.of("Release", SWARM, HATCHING))
             .withCluster(UpgradeCluster.of("Second missile", RUBY, SHADE))
             .withCluster(UpgradeCluster.of("Around the ice", ICE_WAKE, SHATTER))
-            .withCluster(UpgradeCluster.of("Speed or sting", QUICK_BROOD_2, SHARP_STING_2))
+            .withCluster(UpgradeCluster.of("Apex", QUICK_BROOD_2, SHARP_STING_2))
             .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withBonus(TowerModifiers.huntRadius(2f).plus(TowerModifiers.projectileSpeed(3.75f))),
-                    UpgradeTier.gated(120, 0),
-                    UpgradeTier.gated(200, 0).withBonus(TowerModifiers.freezeDuration(20).plus(TowerModifiers.accuracy(50f)))));
+                    UpgradeTier.gated(120, 0).withPerk(RIME),
+                    UpgradeTier.gated(200, 0).withBonus(TowerModifiers.accuracy(100f))));
 
     private static final MechanicCatalogue<SeekerMechanic> MECHANICS = MechanicCatalogue.of(
             entry(SWARM.id(), () -> new ReleaseMechanic(Release.SWARM)),

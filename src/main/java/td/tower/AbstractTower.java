@@ -142,8 +142,9 @@ public abstract class AbstractTower implements Tower {
     // The highest open tier at this tower's last turn; -1 before its first, so a tower built or loaded high has not risen.
     private int seenTier = -1;
     private int shotsBegun;
-    // The bonuses and procs of the upgrades last seen, so a hit with none allocates nothing.
+    // The bonuses and procs of the upgrades and tiers last seen, so a hit with none allocates nothing.
     private UpgradeState armedFrom;
+    private int armedTiers = -1;
     private List<HitBonus> armedBonuses = List.of();
     private List<Proc> armedProcs = List.of();
     private float xpRemainder;
@@ -708,14 +709,29 @@ public abstract class AbstractTower implements Tower {
 
     private void arm() {
         UpgradeState upgrades = this.upgrades;
-        if (upgrades == this.armedFrom) {
+        int tiers = this.upgradeTree().tiersEarned(this.experience.xp(), upgrades);
+        if (upgrades == this.armedFrom && tiers == this.armedTiers) {
             return;
         }
         // A standing bonus is in the stats already.
         this.armedBonuses = concatenated(this.baseHitBonuses(), upgrades.hitBonuses()).stream()
                 .filter(bonus -> !bonus.standing()).toList();
-        this.armedProcs = concatenated(this.baseProcs(), upgrades.procs());
+        this.armedProcs = concatenated(this.baseProcs(), procsOf(this.heldNodes()));
         this.armedFrom = upgrades;
+        this.armedTiers = tiers;
+    }
+
+    /** Every node whose effects it holds: its earned tiers' own nodes, then what it owns, in purchase order. */
+    private List<UpgradeNode> heldNodes() {
+        return this.upgradeTree().heldNodes(this.experience.xp(), this.upgrades());
+    }
+
+    private static List<Proc> procsOf(List<UpgradeNode> nodes) {
+        List<Proc> all = new ArrayList<>();
+        for (UpgradeNode node : nodes) {
+            all.addAll(node.effects().procs());
+        }
+        return all;
     }
 
     private static <T> List<T> concatenated(List<T> first, List<T> second) {
@@ -1171,7 +1187,7 @@ public abstract class AbstractTower implements Tower {
     @Override
     public final List<NodeProgress> progress() {
         List<NodeProgress> all = new ArrayList<>();
-        for (UpgradeNode node : this.upgrades().owned()) {
+        for (UpgradeNode node : this.heldNodes()) {
             for (Proc proc : node.effects().procs()) {
                 int every = proc.trigger().shotInterval();
                 if (every > 0) {
@@ -1193,7 +1209,7 @@ public abstract class AbstractTower implements Tower {
         for (AppliedEffect own : this.baseApplies()) {
             byTerm.computeIfAbsent(own.term(), term -> new ArrayList<>()).addAll(own.sources());
         }
-        for (UpgradeNode node : this.upgrades().owned()) {
+        for (UpgradeNode node : this.heldNodes()) {
             for (Proc proc : node.effects().procs()) {
                 this.appliedBy(proc.payload()).ifPresent(term -> byTerm.computeIfAbsent(term, t -> new ArrayList<>())
                         .add(new AppliedEffect.Source(node.displayName(),

@@ -132,13 +132,14 @@
 
 ## Upgrade tree
 
-- A tree is tiers (`UpgradeTier`: the XP that opens it, an unlock price and a `bonus` of any stats; `standard()` for
-  every tower; tier 0 has no bonus). A tier above 0 with a price or a bonus has its own node, which the tree makes
-  (`tierNodeOf`, `tier.N`) and which carries the bonus. A paid tier's is its unlock, bought like any other and on
+- A tree is tiers (`UpgradeTier`: the XP that opens it, an unlock price, a `bonus` of any stats and `perks`, procs;
+  `standard()` for every tower; tier 0 has neither). A tier above 0 with a price, a bonus or a perk has its own node,
+  which the tree makes (`tierNodeOf`, `tier.N`) and which carries them; a tower reads procs from `heldNodes`, so a
+  granted tier's perk acts from its XP. A paid tier's is its unlock, bought like any other and on
   every path that crosses it. A free tier's is granted (`isGranted`): held from its XP, never offered, owned, sold or
   saved. `xpMet`/`isOpen` are the one check for a tier: never compare XP to a tier's number elsewhere.
 - A tier's node counts from `tiersEarned` (earned XP and held unlocks, never playtesting's waiver): `heldNodes` is the
-  one list of what a tower's own stats, the info pane's parts and the node previews read. It is never refunded.
+  one list of what a tower's own stats, procs, applied effects, the info pane's parts and the node previews read. It is never refunded.
   `earnXp` republishes every tower's stats when it opens a tier.
 - Build a node with `UpgradeNode.of(id, name, PRICE)`, then `inTier(n)` and `after(previous)` for a follow-up in the
   same tier or a later one. A node with nothing before it and nothing after is an orphan. A tower's range upgrades

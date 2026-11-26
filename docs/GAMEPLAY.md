@@ -75,7 +75,7 @@ Every tower, the Beacon included, has its own upgrade tree of four tiers, shown 
 wave preview once the tower is selected. A tier opens with XP alone (Tier I at 60, Tier II at 120, Tier III at 200);
 every tower an enemy reached earns its bounty as XP when its walk ends,
 killed or leaked (a Beacon earns with the towers it lights). Once a tier is open its upgrades cost only credits, and
-a tier may give the tower stats of its own, free from the moment its XP opens it and never refunded: its tier node,
+a tier may give the tower stats or a perk of its own, free from the moment its XP opens it and never refunded: its tier node,
 first in the tier's row and marked with its numeral, which no click buys or sells. In a
 tier an upgrade stands alone, follows one it needs (in the same tier or the one below), or belongs to a cluster:
 one framed set of which a tower keeps one active, switched for free between waves, which sells back what came

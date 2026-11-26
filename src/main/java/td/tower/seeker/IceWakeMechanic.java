@@ -11,8 +11,8 @@ import java.util.Set;
 /** Ice Wake: an enemy the Aerie froze Chills the enemies walking close past it while the freeze lasts. */
 public final class IceWakeMechanic implements SeekerMechanic {
 
-    public static final float RADIUS_CELLS = 0.5f;
-    public static final float CHILL = 0.3f;
+    public static final float RADIUS_CELLS = 1.0f;
+    public static final float CHILL = 0.5f;
     /** How long the Chill holds once an enemy walks out of the wake. */
     public static final int CHILL_TICKS = 10;
 

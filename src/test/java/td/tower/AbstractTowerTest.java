@@ -645,6 +645,26 @@ class AbstractTowerTest {
     }
 
     @Test
+    void aFreeTiersPerkActsFromTheXpThatOpensItWithoutBeingOwned() {
+        UpgradeNode node = UpgradeNode.of("veteran", "Veteran", 10).inTier(1);
+        UpgradeTree tree = UpgradeTree.of(node).withTiers(List.of(UpgradeTier.open(),
+                UpgradeTier.gated(150, 0).withPerk(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 2)))));
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, tree);
+        this.context.towers().add(tower);
+        FakeEnemyMob before = FakeEnemyMob.at(0, 0);
+        tower.reportHit(before);
+        FakeEnemyMob after = FakeEnemyMob.at(0, 0);
+
+        tower.earnXp(150);
+        tower.reportHit(after);
+
+        assertThat(before.effectStacks(EffectKind.SUNDERED)).isZero();
+        assertThat(after.effectStacks(EffectKind.SUNDERED)).isEqualTo(2);
+        assertThat(tower.upgrades().owned()).isEmpty();
+        assertThat(tree.isGranted(tree.tierNodeOf(1).orElseThrow())).isTrue();
+    }
+
+    @Test
     void aPaidTiersBonusWaitsForItsUnlockAsWellAsItsXp() {
         UpgradeNode node = UpgradeNode.of("veteran", "Veteran", 10).inTier(1);
         UpgradeTree tree = UpgradeTree.of(node).withTiers(List.of(UpgradeTier.open(),

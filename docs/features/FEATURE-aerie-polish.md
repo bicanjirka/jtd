@@ -48,7 +48,8 @@ and acts over a weaker one, Shade stops regeneration, and an Unravel node makes 
 - **Shade's look** is Frost's and Ruby's shape in its own grey, on the board and in its glyph.
 - **Wither** (new effect): regeneration held at zero, so a heal over time gives nothing; a Shade hit applies it for the
   freeze's duration, which tenacity shortens and the freeze meter does not.
-- **Rime** (new node, tier 2): every freeze the Aerie lands adds a stack of Unravel.
+- **Rime** (tier II's perk, held once its XP opens the tier, never bought): every freeze the Aerie lands adds a
+  stack of Unravel.
 - **Launch from the ring.** A missile is drawn leaving the centre of the ring it circled on, descending to its flight.
 
 ## Decisions made
@@ -57,7 +58,7 @@ and acts over a weaker one, Shade stops regeneration, and an Unravel node makes 
 - The stronger ice takes over in colour and effect.
 - Unravel belongs to the Aerie, on every freeze, as a node.
 - Accuracy: a free node needs no new code; the balancing agent adds it to the tree.
-- Numbers (Rime's price, stacks and duration, Wither's) are placeholders for the balance run.
+- Numbers (Rime's stacks and duration, Wither's) are placeholders for the balance run.
 
 ## Open questions
 
