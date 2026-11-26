@@ -67,6 +67,20 @@ class PathPlannerTest {
     }
 
     @Test
+    void aChoiceToMakeFirstOffersEveryNodeThatMeetsAnEitherOrRequirement() {
+        UpgradeNode either = UpgradeNode.of("either", "Either", 5).inTier(1)
+                .withRequires(UpgradeCondition.owns(A1.id()).or(UpgradeCondition.owns(B1.id())));
+        UpgradeTree tree = UpgradeTree.of(A1, B1, either).withCluster(TierTrees.ROOTS);
+
+        UpgradePath path = tree.planPath(either, towerOwning(this.context, ALL_XP), this.context);
+
+        assertThat(path.block()).hasValueSatisfying(block -> {
+            assertThat(block.reason()).isEqualTo(UpgradePath.Reason.CHOOSE_FIRST);
+            assertThat(block.choices()).containsExactlyInAnyOrder(A1, B1);
+        });
+    }
+
+    @Test
     void aPathNeverMakesAClusterPickOffItsTargetsLine() {
         UpgradeNode afterBoth = UpgradeNode.of("both", "Both", 5).inTier(1).after(A1);
         UpgradeNode lone = UpgradeNode.of("lone.after", "Lone After", 5).inTier(1)

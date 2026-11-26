@@ -40,7 +40,7 @@ public enum TowerTerm implements Term {
             EffectKind.FREEZE),
     SHADE("Shade", Side.BUFF, "a missile that deals {} damage and more of it, applies {} for as long as its {}",
             SHADOW, EffectKind.WITHERED, EffectKind.FREEZE),
-    SWARM("Swarm", Side.BUFF, "missiles at once, one at each enemy in range, soonest out first, and round again while "
+    VOLLEY("Volley", Side.BUFF, "missiles at once, one at each enemy in range, soonest out first, and round again while "
             + "missiles are left"),
     HATCHING("Hatching", Side.BUFF, "missiles that hatch on top of the {}, one after another, and launch first while it "
             + "keeps loading", NEST),

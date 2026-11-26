@@ -78,7 +78,8 @@ final class PathPlanner {
             } else if (this.tree.isLockedOut(needed.get(), this.assumed)) {
                 this.blockAt(needed.get(), UpgradePath.Reason.LOCKED_OUT);
             } else if (this.offTheTargetsLine(needed.get())) {
-                this.blockAt(needed.get(), UpgradePath.Reason.CHOOSE_FIRST);
+                this.blockAt(new UpgradePath.Block(needed.get(), UpgradePath.Reason.CHOOSE_FIRST,
+                        this.alternativesTo(id, node.requires())));
             } else if (!this.assumed.owns(id)) {
                 this.gather(needed.get());
             }
@@ -107,6 +108,15 @@ final class PathPlanner {
         return true;
     }
 
+    /** The other nodes that, owned instead of {@code id}, would leave {@code requires} no longer missing it. */
+    private List<UpgradeNode> alternativesTo(String id, UpgradeCondition requires) {
+        return requires.mentionedNodes().stream().sorted()
+                .filter(other -> !other.equals(id) && !this.assumed.owns(other))
+                .flatMap(other -> this.tree.node(other).stream())
+                .filter(other -> !requires.missingNodes(this.tower, this.assumed.with(other), this.context).contains(id))
+                .toList();
+    }
+
     private Optional<UpgradePath.Reason> judge(UpgradeNode step, UpgradeState state) {
         if (this.tree.isLockedOut(step, state)) {
             return Optional.of(UpgradePath.Reason.LOCKED_OUT);
@@ -121,8 +131,12 @@ final class PathPlanner {
     }
 
     private void blockAt(UpgradeNode node, UpgradePath.Reason reason) {
+        this.blockAt(new UpgradePath.Block(node, reason));
+    }
+
+    private void blockAt(UpgradePath.Block first) {
         if (this.block == null) {
-            this.block = new UpgradePath.Block(node, reason);
+            this.block = first;
         }
     }
 }

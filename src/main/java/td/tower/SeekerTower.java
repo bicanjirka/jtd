@@ -94,7 +94,7 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode WIDE_COMB = UpgradeNode.of("seeker.wide_comb", "Wide Comb", 5)
             .withModifiers(TowerModifiers.nestCapacity(2));
 
-    private static final UpgradeNode SWARM = UpgradeNode.of("seeker.swarm", "Swarm", 10)
+    private static final UpgradeNode VOLLEY = UpgradeNode.of("seeker.volley", "Volley", 10)
             .inTier(1);
     private static final UpgradeNode HATCHING = UpgradeNode.of("seeker.hatching", "Hatching", 10)
             .inTier(1);
@@ -128,7 +128,7 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.deep_freeze_2", "Deep Freeze II", 5)
             .withModifiers(TowerModifiers.freezeDuration(40))
             .inTier(2);
-    private static final UpgradeNode QUICK_BROOD_2 = UpgradeNode.of("seeker.quick_brood_2", "Quick Brood II", 55)
+    private static final UpgradeNode QUICK_BROOD = UpgradeNode.of("seeker.quick_brood", "Quick Brood", 55)
             .withModifiers(TowerModifiers.attackSpeed(0.55f))
             .inTier(3);
     private static final UpgradeNode SHARP_STING_2 = UpgradeNode.of("seeker.sharp_sting_2", "Sharp Sting II", 55)
@@ -136,19 +136,19 @@ public final class SeekerTower extends AbstractTower {
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(DEEP_FREEZE, WIDE_COMB))
-            .with(SWARM, HATCHING, SHARP_STING, WIDE_COMB_2,
+            .with(VOLLEY, HATCHING, SHARP_STING, WIDE_COMB_2,
                     RUBY, SHADE, HIGH_PERCH, FEEDING,
-                    ICE_WAKE, SHATTER, RICH_BROOD, DEEP_FREEZE_2, QUICK_BROOD_2, SHARP_STING_2)
-            .withCluster(UpgradeCluster.of("Release", SWARM, HATCHING))
+                    ICE_WAKE, SHATTER, RICH_BROOD, DEEP_FREEZE_2, QUICK_BROOD, SHARP_STING_2)
+            .withCluster(UpgradeCluster.of("Release", VOLLEY, HATCHING))
             .withCluster(UpgradeCluster.of("Second missile", RUBY, SHADE))
             .withCluster(UpgradeCluster.of("Around the ice", ICE_WAKE, SHATTER))
-            .withCluster(UpgradeCluster.of("Apex", QUICK_BROOD_2, SHARP_STING_2))
+            .withCluster(UpgradeCluster.of("Apex", QUICK_BROOD, SHARP_STING_2))
             .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withBonus(TowerModifiers.huntRadius(2f).plus(TowerModifiers.projectileSpeed(3.75f))),
                     UpgradeTier.gated(120, 0).withPerk(RIME),
                     UpgradeTier.gated(200, 0).withBonus(TowerModifiers.accuracy(100f))));
 
     private static final MechanicCatalogue<SeekerMechanic> MECHANICS = MechanicCatalogue.of(
-            entry(SWARM.id(), () -> new ReleaseMechanic(Release.SWARM)),
+            entry(VOLLEY.id(), () -> new ReleaseMechanic(Release.VOLLEY)),
             entry(HATCHING.id(), () -> new ReleaseMechanic(Release.HATCHING)),
             entry(FEEDING.id(), FeedingMechanic::new),
             entry(RUBY.id(), () -> new SecondMissileMechanic(MissileKind.RUBY)),
@@ -268,7 +268,7 @@ public final class SeekerTower extends AbstractTower {
     }
 
     /**
-     * As many missiles as the nest holds: a Swarm's at once, one at each enemy in reach, soonest out first, and round
+     * As many missiles as the nest holds: a Volley's at once, one at each enemy in reach, soonest out first, and round
      * again while missiles are left; a Hatching's on top of the nest.
      */
     private void release(SeekerSpec spec, List<EnemyMob> inReach) {
@@ -276,7 +276,7 @@ public final class SeekerTower extends AbstractTower {
         switch (spec.release()) {
             case NONE -> {
             }
-            case SWARM -> {
+            case VOLLEY -> {
                 List<EnemyMob> left = new ArrayList<>();
                 for (int i = 0; i < missiles && !inReach.isEmpty(); i++) {
                     if (left.isEmpty()) {
@@ -466,7 +466,7 @@ public final class SeekerTower extends AbstractTower {
         held.forEach((kind, count) -> states.add(TowerBuffState.of(kind.term(), TermText.of(count + " ready in the ")
                 .plus(TowerTerm.NEST)).withStacks(count)));
         if (this.releaseReady()) {
-            TowerTerm release = this.spec().release() == Release.SWARM ? TowerTerm.SWARM : TowerTerm.HATCHING;
+            TowerTerm release = this.spec().release() == Release.VOLLEY ? TowerTerm.VOLLEY : TowerTerm.HATCHING;
             states.add(TowerBuffState.of(release, TermText.of("the next ").plus(EffectKind.FREEZE)
                     .plus(" sets it off")));
         }
@@ -476,7 +476,7 @@ public final class SeekerTower extends AbstractTower {
     /** How far the freezes are toward the next Release. */
     @Override
     protected List<NodeProgress> ownProgress() {
-        return List.of(SWARM, HATCHING).stream()
+        return List.of(VOLLEY, HATCHING).stream()
                 .flatMap(node -> this.countingNode(node.id(), this.freezes, ReleaseMechanic.EVERY).stream())
                 .toList();
     }
@@ -497,7 +497,7 @@ public final class SeekerTower extends AbstractTower {
 
     @Override
     protected String description() {
-        return "Loads homing missiles into a nest that is full at every wave start.";
+        return "Loads homing missiles into a nest that is full at every wave start, and launches them at the enemy that would leave soonest.";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

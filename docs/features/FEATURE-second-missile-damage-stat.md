@@ -9,7 +9,7 @@ damage, so the player sees it, nodes can change it and its points can't be mixed
 
 ## Current state (what exists today)
 
-- `MissileKind` holds a flat bonus in points (Ruby +40, Shade +40, Frost 0) that `damageWith` converts with
+- `MissileKind` holds a flat bonus in points (Ruby +20, Shade +20, Frost 0) that `damageWith` converts with
   `DamageUnits.ofPoints` and adds to the tower's damage. The hit's adjustment then applies, and a Shatter bursts with
   the same figure (`SeekerTower.onImpact`, `SeekerTower.shatter`).
 - The bonus first shipped unconverted (`1151400f`), so it added 0.4 points instead of 40; `d474c370` added the
@@ -23,9 +23,9 @@ damage, so the player sees it, nodes can change it and its points can't be mixed
 
 ## What this feature adds
 
-- The second missile's damage is a stat that the Info pane and the Ruby and Shade nodes show in points ("+40
+- The second missile's damage is a stat that the Info pane and the Ruby and Shade nodes show in points ("+20
   damage").
-- Ruby and Shade keep +40 each; Frost adds nothing. A Ruby or Shade hit and its Shatter deal exactly what they do
+- Ruby and Shade keep +20 each; Frost adds nothing. A Ruby or Shade hit and its Shatter deal exactly what they do
   after `d474c370`.
 - Nodes can change the figure, so the balancing agent tunes it in the tree.
 - The tests set the bonus themselves and expect the hit in points, without reading the built-in kinds.
@@ -42,7 +42,7 @@ damage, so the player sees it, nodes can change it and its points can't be mixed
 
 ## Decisions made
 
-- Ruby and Shade each stay at +40 points; numbers are the balancing agent's.
+- Ruby and Shade each stay at +20 points; numbers are the balancing agent's.
 - No save-format change is expected: stats are rebuilt from the nodes owned.
 
 ## Open questions

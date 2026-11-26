@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /** The words for the Upgrades panel: a node's hover sheet, the strips' and slots' hovers, the confirmations. Pure. */
 final class UpgradeSheetText {
@@ -179,7 +180,8 @@ final class UpgradeSheetText {
         if (path.block().isPresent()) {
             UpgradePath.Block block = path.block().get();
             lines.add(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
-                    TermText.of("Blocked: " + block.at().displayName() + " " + reasonPhrase(block.reason()))));
+                    TermText.of("Blocked: " + block.choices().stream().map(UpgradeNode::displayName)
+                            .collect(Collectors.joining(" or ")) + " " + reasonPhrase(block.reason()))));
         } else if (!buying.affordable()) {
             lines.add(SheetLine.Sentence.marked(Glyph.CROSS, Palette.UPGRADE_GATE_UNMET,
                     TermText.of("Short $" + buying.shortBy())));

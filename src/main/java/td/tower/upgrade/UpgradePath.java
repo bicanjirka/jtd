@@ -1,5 +1,6 @@
 package td.tower.upgrade;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,8 +26,26 @@ public record UpgradePath(UpgradeNode target, List<UpgradeNode> steps, Optional<
         XP
     }
 
-    /** What stops a path, and at which of its steps (or the node it needed). */
-    public record Block(UpgradeNode at, Reason reason) {
+    /**
+     * What stops a path, and at which of its steps (or the node it needed). {@code orElse} holds the other nodes that
+     * would meet the same either-or requirement instead of {@code at}.
+     */
+    public record Block(UpgradeNode at, Reason reason, List<UpgradeNode> orElse) {
+
+        public Block {
+            orElse = List.copyOf(orElse);
+        }
+
+        public Block(UpgradeNode at, Reason reason) {
+            this(at, reason, List.of());
+        }
+
+        /** {@code at} and each node that would do instead, in that order. */
+        public List<UpgradeNode> choices() {
+            List<UpgradeNode> choices = new ArrayList<>(List.of(this.at));
+            choices.addAll(this.orElse);
+            return List.copyOf(choices);
+        }
     }
 
     public UpgradePath {

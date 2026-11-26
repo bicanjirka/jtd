@@ -277,19 +277,19 @@ class SeekerTowerTest {
 
     @Test
     void theFreezeBeforeAReleaseShowsAsABuffAndTheCountAsTheNodesProgress() {
-        SeekerTower tower = this.towerWith("Swarm");
+        SeekerTower tower = this.towerWith("Volley");
 
         this.landFreezes(tower, ReleaseMechanic.EVERY - 1);
 
         assertThat(tower.releaseReady()).isTrue();
-        assertThat(tower.conditions()).extracting(TowerBuffState::term).contains(TowerTerm.SWARM);
-        assertThat(tower.progress()).contains(new NodeProgress(UpgradePaths.named(tower, "Swarm").id(),
+        assertThat(tower.conditions()).extracting(TowerBuffState::term).contains(TowerTerm.VOLLEY);
+        assertThat(tower.progress()).contains(new NodeProgress(UpgradePaths.named(tower, "Volley").id(),
                 ReleaseMechanic.EVERY - 1, ReleaseMechanic.EVERY));
     }
 
     @Test
     void aWaveStartsTheReleaseCountAtNone() {
-        SeekerTower tower = this.towerWith("Swarm");
+        SeekerTower tower = this.towerWith("Volley");
         this.landFreezes(tower, ReleaseMechanic.EVERY - 1);
 
         tower.readyForWave();
@@ -298,8 +298,8 @@ class SeekerTowerTest {
     }
 
     @Test
-    void aSwarmSendsAsManyMissilesAsTheNestHoldsAtOnceEachAtADifferentEnemySoonestOutFirst() {
-        SeekerTower tower = this.towerWith("Swarm");
+    void aVolleySendsAsManyMissilesAsTheNestHoldsAtOnceEachAtADifferentEnemySoonestOutFirst() {
+        SeekerTower tower = this.towerWith("Volley");
         int size = Math.round(tower.stats().value(TowerStat.NEST_CAPACITY));
         this.landFreezes(tower, ReleaseMechanic.EVERY);
         FakeEnemyMob[] crowd = new FakeEnemyMob[size + 1];
@@ -321,8 +321,8 @@ class SeekerTowerTest {
     }
 
     @Test
-    void aSwarmWithFewerEnemiesThanMissilesGoesRoundThemAgainSoALoneOneTakesEveryMissile() {
-        SeekerTower tower = this.towerWith("Swarm");
+    void aVolleyWithFewerEnemiesThanMissilesGoesRoundThemAgainSoALoneOneTakesEveryMissile() {
+        SeekerTower tower = this.towerWith("Volley");
         int size = Math.round(tower.stats().value(TowerStat.NEST_CAPACITY));
         this.landFreezes(tower, ReleaseMechanic.EVERY);
         FakeEnemyMob lone = this.enemyAt(tower, OUT, 0);

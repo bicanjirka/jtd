@@ -13,9 +13,9 @@ public enum MissileKind {
     /** The plain missile: its freeze is ice. */
     FROST(TowerTerm.FROST_MISSILE, 0f, IceKind.FROST, MissileLook.STANDARD, false, false),
     /** More damage, and a freeze in ruby that holds the freeze-immune. */
-    RUBY(TowerTerm.RUBY, 40f, IceKind.RUBY, MissileLook.RUBY, false, false),
+    RUBY(TowerTerm.RUBY, 20f, IceKind.RUBY, MissileLook.RUBY, false, false),
     /** More damage, as Shadow, past every Shield; and no regeneration for as long as its freeze. */
-    SHADE(TowerTerm.SHADE, 40f, IceKind.SHADE, MissileLook.SHADE, true, true);
+    SHADE(TowerTerm.SHADE, 20f, IceKind.SHADE, MissileLook.SHADE, true, true);
 
     private final TowerTerm term;
     private final float damageBonus;

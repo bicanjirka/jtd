@@ -97,7 +97,7 @@ public final class TermLooks {
             case FROST_MISSILE -> new TermLook(Palette.PROJECTILE_MISSILE, Palette.TERM_FRAME_TOWER_BUFF);
             case RUBY -> new TermLook(Palette.PROJECTILE_RUBY, Palette.TERM_FRAME_TOWER_BUFF);
             case SHADE -> new TermLook(Palette.PROJECTILE_SHADE, Palette.TERM_FRAME_TOWER_BUFF);
-            case SWARM, HATCHING -> new TermLook(Palette.TOWER_SEEKER_BODY, Palette.TERM_FRAME_TOWER_BUFF);
+            case VOLLEY, HATCHING -> new TermLook(Palette.TOWER_SEEKER_BODY, Palette.TERM_FRAME_TOWER_BUFF);
             case ICE_WAKE -> new TermLook(Palette.FREEZE_CRYSTAL, Palette.TERM_FRAME_MECHANIC);
             case LIT -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_TOWER_BUFF);
             case LIGHT, SPOTLIGHT, DAYLIGHT, PRISM -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_MECHANIC);
