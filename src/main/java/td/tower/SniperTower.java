@@ -228,8 +228,7 @@ public final class SniperTower extends AbstractTower {
 
     /** The board's scale and what its next shot deals on a crit, before armor and hit bonuses. */
     private PickContext pickContext(Viewpoint view) {
-        TowerStats now = this.stats();
-        return new PickContext(view.cellSize(), Math.round(now.damage() * now.attack().critMultiplier()));
+        return new PickContext(view.cellSize(), this.stats().critDamage());
     }
 
     private Optional<EnemyMob> findEnemy(SniperSpec spec) {
@@ -517,7 +516,7 @@ public final class SniperTower extends AbstractTower {
 
         @Override
         public void bleed(EnemyMob target, float sharePerCell, int ticks) {
-            int perCell = Math.round(this.landed.stats().damage() * sharePerCell);
+            int perCell = Math.round(this.landed.stats().critDamage() * sharePerCell);
             AttackProfile bleed = this.landed.stats().attack().pastArmorAndPlating().asPeriodic();
             SniperTower.this.applyEffect(target, _ -> Effect.bleeding(perCell, ticks,
                     bled -> SniperTower.this.dealDamage(target, bled, bleed)));

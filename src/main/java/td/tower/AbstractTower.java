@@ -901,7 +901,7 @@ public abstract class AbstractTower implements Tower {
     @Override
     public NodeWords wordsOf(UpgradeNode node) {
         List<TermText> sentences = new ArrayList<>(node.effects().sentences());
-        sentences.addAll(this.mechanicCatalogue().describe(node));
+        sentences.addAll(this.mechanicCatalogue().describe(node, this.stats()));
         return NodeWords.of(node.displayName(), this.previewed(node.effects().statRows(), node), sentences);
     }
 
@@ -1192,7 +1192,7 @@ public abstract class AbstractTower implements Tower {
             for (Mechanic mechanic : this.mechanicCatalogue().mechanicsOf(node)) {
                 for (Term term : mechanic.applies()) {
                     byTerm.computeIfAbsent(term, t -> new ArrayList<>())
-                            .add(new AppliedEffect.Source(node.displayName(), mechanic.describe()));
+                            .add(new AppliedEffect.Source(node.displayName(), mechanic.describe(this.stats())));
                 }
             }
         }
@@ -1271,20 +1271,31 @@ public abstract class AbstractTower implements Tower {
         return words;
     }
 
-    /** What changes only when an upgrade is bought, rebuilt only then. */
+    /**
+     * What changes only when an upgrade is bought or what its mechanics say at the stats now, rebuilt only then: stats
+     * move often, mostly in ways no mechanic's words quote.
+     */
     private InspectionCache cachedForUpgrades() {
         UpgradeState owned = this.upgrades();
+        TowerStats stats = this.stats();
         InspectionCache last = this.inspectionCache;
-        if (last != null && last.state() == owned) {
+        if (last != null && last.basis().state() == owned && last.basis().stats().values().sameValuesAs(stats.values())) {
             return last;
         }
-        InspectionCache fresh = new InspectionCache(owned, this.upgradeTree().lines(owned), this.applies(),
-                this.wordsOfOwned());
+        List<TermText> said = this.ownedMechanics().all().stream().map(mechanic -> mechanic.describe(stats)).toList();
+        InspectionBasis basis = new InspectionBasis(owned, stats, said);
+        InspectionCache fresh = last != null && last.basis().state() == owned && last.basis().said().equals(said)
+                ? new InspectionCache(basis, last.lines(), last.applies(), last.words())
+                : new InspectionCache(basis, this.upgradeTree().lines(owned), this.applies(), this.wordsOfOwned());
         this.inspectionCache = fresh;
         return fresh;
     }
 
-    private record InspectionCache(UpgradeState state, List<UpgradeLine> lines, List<AppliedEffect> applies,
+    /** What a cached inspection was worked out from: the nodes owned, the stats, and what its mechanics said at them. */
+    private record InspectionBasis(UpgradeState state, TowerStats stats, List<TermText> said) {
+    }
+
+    private record InspectionCache(InspectionBasis basis, List<UpgradeLine> lines, List<AppliedEffect> applies,
                                    Map<String, NodeWords> words) {
     }
 

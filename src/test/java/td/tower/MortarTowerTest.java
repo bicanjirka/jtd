@@ -10,6 +10,7 @@ import td.damage.DamageUnits;
 import td.damage.Delivery;
 import td.effect.DamageSink;
 import td.effect.Effect;
+import td.effect.EffectDynamics;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.fixtures.BoardFixtures;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -415,7 +417,7 @@ class MortarTowerTest {
     }
 
     @Test
-    void shrapnelMakesWhatAHeavysBlastReachesBleedAndANormalBleedsNothing() {
+    void shrapnelMakesWhatAHeavysBlastReachesBleedAShareOfItsHitThereAndANormalBleedsNothing() {
         MortarTower tower = this.loaded(List.of(ShellKind.HEAVY, ShellKind.NORMAL), "Shrapnel");
         float edge = tower.stats().value(TowerStat.BLAST_EDGE) * SCALE;
         FakeEnemyMob centre = this.enemyAt(tower, OUT, 0);
@@ -427,9 +429,17 @@ class MortarTowerTest {
 
         this.landAShell(tower);
 
-        assertThat(centre.activeEffectKinds()).contains(EffectKind.BLEEDING);
-        assertThat(nearTheEdge.activeEffectKinds()).contains(EffectKind.BLEEDING);
+        float centreShare = (float) bleedPerCellOf(centre) / centre.onlyHitAmount();
+        float edgeShare = (float) bleedPerCellOf(nearTheEdge) / nearTheEdge.onlyHitAmount();
+        assertThat(nearTheEdge.onlyHitAmount()).isLessThan(centre.onlyHitAmount());
+        assertThat(edgeShare).isPositive().isCloseTo(centreShare, within(0.01f));
         assertThat(next.activeEffectKinds()).doesNotContain(EffectKind.BLEEDING);
+    }
+
+    private static int bleedPerCellOf(FakeEnemyMob enemy) {
+        return enemy.activeEffects().stream().map(Effect::dynamics)
+                .flatMap(dynamics -> dynamics instanceof EffectDynamics.Distance distance ? Stream.of(distance) : Stream.empty())
+                .findFirst().orElseThrow().perCell().amount();
     }
 
     @Test

@@ -74,6 +74,11 @@ public record TowerStats(ResolvedStats<TowerStat> values, float rangeReal, float
         return Math.round(this.value(TowerStat.DAMAGE));
     }
 
+    /** What a crit deals, in hundredths, before armor, resilience and hit bonuses. */
+    public int critDamage() {
+        return Math.round(this.damage() * this.attack.critMultiplier());
+    }
+
     /** Range in cells. */
     public float range() {
         return this.value(TowerStat.RANGE);

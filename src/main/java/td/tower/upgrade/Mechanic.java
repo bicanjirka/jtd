@@ -3,6 +3,7 @@ package td.tower.upgrade;
 import td.term.Term;
 import td.term.TermText;
 import td.tower.TowerBuffState;
+import td.tower.TowerStats;
 import td.tower.ability.AbilityCharge;
 
 import java.util.Optional;
@@ -28,4 +29,12 @@ public interface Mechanic {
 
     /** What this mechanic adds, lower-case first, no full stop: "every 4th shell is a [Nuke Shell]". */
     TermText describe();
+
+    /**
+     * What this mechanic adds on a tower that has {@code stats} now: a figure it works out from a share of the tower's
+     * hit says the points it comes to. The words without a tower by default.
+     */
+    default TermText describe(TowerStats stats) {
+        return this.describe();
+    }
 }

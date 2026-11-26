@@ -12,8 +12,8 @@ public interface ShotActions {
     boolean execute(EnemyMob target);
 
     /**
-     * Makes {@code target} Bleed for {@code ticks}: for every cell it walks, {@code sharePerCell} of the damage the
-     * shot that just landed was fired with, past armor and plating.
+     * Makes {@code target} Bleed for {@code ticks}: for every cell it walks, {@code sharePerCell} of what a crit of the
+     * shot that just landed deals at the stats it was fired with, past armor and plating.
      */
     void bleed(EnemyMob target, float sharePerCell, int ticks);
 

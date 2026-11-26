@@ -1,6 +1,7 @@
 package td.tower.upgrade;
 
 import td.term.TermText;
+import td.tower.TowerStats;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,6 +54,11 @@ public final class MechanicCatalogue<P extends Mechanic> {
     /** What {@code node}'s mechanics add, in words, in the order they were added. */
     public List<TermText> describe(UpgradeNode node) {
         return this.mechanicsOf(node).stream().map(Mechanic::describe).toList();
+    }
+
+    /** What {@code node}'s mechanics add on a tower that has {@code stats} now, in the order they were added. */
+    public List<TermText> describe(UpgradeNode node, TowerStats stats) {
+        return this.mechanicsOf(node).stream().map(mechanic -> mechanic.describe(stats)).toList();
     }
 
     /**
