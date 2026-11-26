@@ -35,12 +35,12 @@ final class StrategyBuilds {
             TowerFactory.Type.SNIPER, List.of(
                     new Strategy("crit", Set.of("sniper.steady_aim", "sniper.rifling",
                             "sniper.fourth_shot", "sniper.keen_eye", "sniper.deadeye", "sniper.hollow_point",
-                            "sniper.ricochet", "sniper.sundering_rounds", "sniper.headhunter",
-                            "sniper.heavy_rounds")),
+                            "sniper.ricochet", "sniper.headhunter",
+                            "sniper.heavy_rounds", "sniper.hard_rounds")),
                     new Strategy("speed", Set.of("sniper.steady_aim", "sniper.rifling",
                             "sniper.fourth_shot", "sniper.deadeye", "sniper.deep_breath",
-                            "sniper.silver_round", "sniper.ricochet", "sniper.sundering_rounds", "sniper.executioner",
-                            "sniper.killing_spree", "sniper.unbroken_aim"))),
+                            "sniper.silver_round", "sniper.ricochet", "sniper.executioner",
+                            "sniper.killing_spree", "sniper.unbroken_aim", "sniper.hard_rounds"))),
             TowerFactory.Type.SEEKER, aerie(),
             TowerFactory.Type.MORTAR, mortar()));
 

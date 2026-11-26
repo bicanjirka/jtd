@@ -19,7 +19,8 @@ final class UpgradeTreePlans {
             tier(row(cluster("On crit", 0f), node("sniper.rifling", 2.6f), node("sniper.steady_aim", 4.4f))),
             tier(row(node("tier.1", 0f), node("sniper.fourth_shot", 1.8f), node("sniper.deadeye", 2.9f),
                     cluster("Aim", 3.9f))),
-            tier(row(node("tier.2", 0f), cluster("Ammo", 1.3f), cluster("Debuff", 4f))),
+            tier(row(node("tier.2", 0f), cluster("Ammo", 1.3f), node("sniper.exposing_crits", 4f),
+                    node("sniper.hard_rounds", 5.2f))),
             tier(row(node("tier.3", 0f), node("sniper.heavy_rounds", 1.3f), cluster("Finisher", 2.4f),
                     node("sniper.killing_spree", 4.5f), node("sniper.unbroken_aim", 5.6f))));
 

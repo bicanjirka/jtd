@@ -23,7 +23,7 @@ enum Role {
      * its field's own damage too small to answer plating.
      */
     ANTI_PHYSICAL(EnumSet.of(TowerFactory.Type.SEEKER, TowerFactory.Type.CINDER, TowerFactory.Type.MORTAR),
-            Set.of("sniper.silver_round", "sniper.sundering_rounds", "splash.arc",
+            Set.of("sniper.silver_round", "splash.arc",
                     "splash.hex_of_doom", "splash.thunderstrike")),
     /** The Obelisk's base drag stays: it comes with every field, and is the least of what holds an enemy. */
     CONTROL(EnumSet.of(TowerFactory.Type.SEEKER),

@@ -121,9 +121,6 @@ public final class SniperTower extends AbstractTower {
 
     private static final UpgradeNode HEMORRHAGE = UpgradeNode.of("sniper.hemorrhage", "Hemorrhage", 5);
     private static final UpgradeNode RICOCHET = UpgradeNode.of("sniper.ricochet", "Ricochet", 5);
-    private static final UpgradeNode SUNDERING_ROUNDS = UpgradeNode.of("sniper.sundering_rounds", "Sundering Rounds", 5)
-            .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 1)))
-            .inTier(2);
     private static final UpgradeNode EXPOSING_CRITS = UpgradeNode.of("sniper.exposing_crits", "Exposing Crits", 5)
             .inTier(2);
     private static final UpgradeNode SILVER_ROUND = UpgradeNode.of("sniper.silver_round", "Silver Round", 15)
@@ -135,6 +132,9 @@ public final class SniperTower extends AbstractTower {
             .withProc(everyFourthShotIs(TowerStatus.nextShots(TowerTerm.HOLLOW_POINT, 1,
                     TowerModifiers.damage(36f))))
             .after(FOURTH_SHOT)
+            .inTier(2);
+    private static final UpgradeNode HARD_ROUNDS = UpgradeNode.of("sniper.hard_rounds", "Hard Rounds", 10)
+            .withModifiers(TowerModifiers.damage(12f))
             .inTier(2);
 
     private static final UpgradeNode EXECUTIONER = UpgradeNode.of("sniper.executioner", "Executioner", 10)
@@ -159,15 +159,15 @@ public final class SniperTower extends AbstractTower {
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_AIM, RIFLING, HEMORRHAGE, RICOCHET))
             .with(FOURTH_SHOT, DEEP_BREATH, KEEN_EYE, DEADEYE,
-                    SUNDERING_ROUNDS, EXPOSING_CRITS, SILVER_ROUND, HOLLOW_POINT,
+                    EXPOSING_CRITS, SILVER_ROUND, HOLLOW_POINT, HARD_ROUNDS,
                     HEAVY_ROUNDS, EXECUTIONER, HEADHUNTER, UNBROKEN_AIM, KILLING_SPREE)
             .withCluster(UpgradeCluster.of("Aim", DEEP_BREATH, KEEN_EYE))
             .withCluster(UpgradeCluster.of("On crit", HEMORRHAGE, RICOCHET))
-            .withCluster(UpgradeCluster.of("Debuff", SUNDERING_ROUNDS, EXPOSING_CRITS))
             .withCluster(UpgradeCluster.of("Ammo", SILVER_ROUND, HOLLOW_POINT))
             .withCluster(UpgradeCluster.of("Finisher", HEADHUNTER, EXECUTIONER))
             .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withBonus(TowerModifiers.range(1f)),
-                    UpgradeTier.gated(120, 0).withBonus(TowerModifiers.damage(12f)),
+                    UpgradeTier.gated(120, 0).withPerk("Sundering Rounds",
+                            Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 1))),
                     UpgradeTier.gated(200, 0).withBonus(TowerModifiers.attackSpeed(0.2f))));
 
     private static final MechanicCatalogue<SniperMechanic> MECHANICS = MechanicCatalogue.of(
