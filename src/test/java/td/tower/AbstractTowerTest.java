@@ -741,6 +741,26 @@ class AbstractTowerTest {
     }
 
     @Test
+    void aNodeThatSwitchesAClusterPreviewsTheRowWithoutThePickItReplaces() {
+        UpgradeNode near = UpgradeNode.of("test.near", "Near", 1).withModifiers(TowerModifiers.range(1f));
+        UpgradeNode far = UpgradeNode.of("test.far", "Far", 1).withModifiers(TowerModifiers.range(2f));
+        UpgradeTree tree = UpgradeTree.of(List.of(near, far)).withCluster(UpgradeCluster.of("Reach", near, far));
+        FakeTower switching = FakeTower.offering(this.context, 0, 0, tree);
+        FakeTower farOnly = FakeTower.offering(this.context, 0, 0, tree);
+        this.context.towers().add(switching);
+        this.context.towers().add(farOnly);
+        UpgradePaths.buy(switching, this.context, "Near");
+        UpgradePaths.buy(farOnly, this.context, "Far");
+
+        UpgradeBonus bonus = switching.wordsOf(far).stats().getFirst();
+
+        assertThat(bonus.preview()).hasValueSatisfying(preview -> {
+            assertThat(preview.before()).isEqualTo(switching.stats().range());
+            assertThat(preview.after()).isEqualTo(farOnly.stats().range());
+        });
+    }
+
+    @Test
     void aPassiveTowerReportsNoDamageNoCadenceAndNoCritChance() {
         AuraTower aura = new AuraTower(this.context, 0, 0);
 

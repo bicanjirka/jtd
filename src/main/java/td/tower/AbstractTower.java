@@ -933,14 +933,15 @@ public abstract class AbstractTower implements Tower {
 
     /**
      * Each of the tower's own bonuses with the row it moves, as its lasting stats have it now and would with
-     * {@code node}: the first row whose source is the bonus's stat. A node already owned moves nothing, so its
+     * {@code node}, in place of the pick it switches from: the first row whose source is the bonus's stat. A node already owned moves nothing, so its
      * bonuses carry no preview, except on a stat read as a multiple, whose bonus always says the total it comes to.
      */
     private List<UpgradeBonus> previewed(List<UpgradeBonus> bonuses, UpgradeNode node) {
         Function<TowerStat, List<StatPart>> noParts = stat -> List.of();
         boolean applies = !this.applies().isEmpty();
         TowerStats now = this.lasting(List.of());
-        TowerStats with = this.lasting(List.of(node));
+        TowerStats with = this.upgradeTree().switchFor(node, this, this.context)
+                .map(change -> this.lastingAt(change.kept())).orElseGet(() -> this.lasting(List.of(node)));
         List<TowerStatLine> before = this.statRows(now, noParts, applies);
         List<TowerStatLine> after = this.statRows(with, noParts, applies);
         return bonuses.stream().map(bonus -> {
@@ -1492,6 +1493,11 @@ public abstract class AbstractTower implements Tower {
         for (UpgradeNode node : extra) {
             upgrades = upgrades.owned().contains(node) ? upgrades : upgrades.with(node);
         }
+        return this.lastingAt(upgrades);
+    }
+
+    /** The stats that last with {@code upgrades} owned: its base, those upgrades and what it receives. */
+    private TowerStats lastingAt(UpgradeState upgrades) {
         return TowerStats.of(this.baseStats, this.lastingModifiers(upgrades), this.stats.received(),
                 DisruptionPenalty.none(), this.cellPixels(), upgrades.capabilities());
     }
