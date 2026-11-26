@@ -123,6 +123,7 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 15)
             .inTier(3);
     private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 15)
+            .withModifiers(TowerModifiers.shatterDamage(10f))
             .inTier(3);
     private static final UpgradeNode RICH_BROOD = UpgradeNode.of("seeker.rich_brood", "Rich Brood", 10)
             .withRequires(UpgradeCondition.owns(RUBY.id()).or(UpgradeCondition.owns(SHADE.id())))
@@ -179,7 +180,7 @@ public final class SeekerTower extends AbstractTower {
         super(TowerFactory.Type.SEEKER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .with(TowerStat.FREEZE_DURATION, FREEZE_TICKS).with(TowerStat.NEST_CAPACITY, NEST_SIZE)
                 .with(TowerStat.PROJECTILE_SPEED, MISSILE_SPEED).with(TowerStat.HUNT_RADIUS, HUNT_CELLS)
-                .with(TowerStat.SECOND_MISSILE_DAMAGE, 0f), context, x, y);
+                .with(TowerStat.SECOND_MISSILE_DAMAGE, 0f).with(TowerStat.SHATTER_DAMAGE, 0f), context, x, y);
     }
 
     @Override
@@ -383,11 +384,10 @@ public final class SeekerTower extends AbstractTower {
         }
     }
 
-    /** The ice bursts: every other enemy close by takes a share of the damage of the missile that froze it. */
+    /** The ice bursts: every other enemy close by takes the Shatter's own damage, as the missile that froze it. */
     private void shatter(FrozenLedger.Freeze freeze) {
         Shot shot = new Shot(freeze.kind(), freeze.stats());
-        Damage damage = Damage.magic(Math.round(freeze.kind().damageWith(freeze.stats())
-                * ShatterMechanic.SHARE));
+        Damage damage = Damage.magic(Math.round(freeze.stats().value(TowerStat.SHATTER_DAMAGE)));
         AttackProfile profile = this.profileOf(shot, HitAdjustment.none());
         float radius = ShatterMechanic.RADIUS_CELLS * this.cellPixels();
         InRangeTargetQuery.around(freeze.enemy(), radius).matching(this.context.enemies())

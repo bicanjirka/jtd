@@ -16,7 +16,6 @@ import td.fixtures.WorldFixtures;
 import td.tower.seeker.FeedingMechanic;
 import td.tower.seeker.MissileKind;
 import td.tower.seeker.ReleaseMechanic;
-import td.tower.seeker.ShatterMechanic;
 import td.util.GameWorld;
 import td.wave.Vec2;
 
@@ -476,8 +475,8 @@ class SeekerTowerTest {
         tower.doTick(this.tick++);
 
         assertThat(ice).isEqualTo(IceKind.SHADE);
-        assertThat(close.onlyHitAmount()).isEqualTo(
-                Math.round((tower.damageCurrent() + tower.stats().value(TowerStat.SECOND_MISSILE_DAMAGE)) * ShatterMechanic.SHARE));
+        assertThat(close.attackers()).singleElement()
+                .satisfies(burst -> assertThat(burst.piercesShields(false)).isTrue());
     }
 
     @Test
@@ -535,10 +534,32 @@ class SeekerTowerTest {
         tower.doTick(this.tick++);
 
         assertThat(beforeThaw).containsExactly(1, 0, 0);
-        assertThat(close.onlyHitAmount()).isEqualTo(
-                Math.round(tower.damageCurrent() * ShatterMechanic.SHARE));
+        assertThat(close.hits()).hasSize(1);
         assertThat(far.hits()).isEmpty();
         assertThat(frozen.hits()).hasSize(1);
+    }
+
+    @Test
+    void aShatterDealsItsOwnFlatDamageWhateverTheMissileDealt() {
+        int plain = this.burstOf(this.towerWith("Shatter"));
+        SeekerTower charged = TowerFixtures.buffed(this.towerWith("Shatter"), this.context,
+                TowerModifiers.shatterDamage(30f).plus(TowerModifiers.damage(50f)));
+
+        int gain = this.burstOf(charged) - plain;
+
+        assertThat(DamageUnits.inPoints(gain)).isEqualTo(30f);
+    }
+
+    /** What a Shatter deals an enemy beside the one {@code tower} froze, as that freeze ends. */
+    private int burstOf(SeekerTower tower) {
+        FakeEnemyMob frozen = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob close = this.enemyAt(tower, OUT, SCALE * 0.5).movingAt(0f);
+        this.enemies(frozen);
+        this.landOne(tower);
+        this.enemies(frozen, close);
+        frozen.expire(EffectKind.FREEZE);
+        tower.doTick(this.tick++);
+        return close.onlyHitAmount();
     }
 
     @Test

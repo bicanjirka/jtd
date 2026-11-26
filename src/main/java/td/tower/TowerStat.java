@@ -66,6 +66,9 @@ public enum TowerStat implements StatKey, StatTerm {
     /** What a second missile kind deals past the tower's damage, in hundredths of a point. */
     SECOND_MISSILE_DAMAGE(0f, 0f, Float.MAX_VALUE, StatUnit.DAMAGE_PER_HIT, "Missile dmg", "Second missile damage",
             StatDirection.HIGHER, StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
+    /** What a Shatter deals each enemy it reaches, in hundredths of a point. */
+    SHATTER_DAMAGE(0f, 0f, Float.MAX_VALUE, StatUnit.DAMAGE_PER_HIT, "Shatter dmg", "Shatter damage",
+            StatDirection.HIGHER, StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
     /** How long a stream pours. */
     STREAM(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Stream", "Stream", StatDirection.HIGHER, StatGroup.DAMAGE,
             Shows.OFF_DEFAULT, false),
@@ -243,6 +246,8 @@ public enum TowerStat implements StatKey, StatTerm {
             case HEAVY_DAMAGE -> TermText.format("what a {} deals past the Mortar's damage", TowerTerm.HEAVY_SHELL);
             case SECOND_MISSILE_DAMAGE -> TermText.format("what a {} or {} missile deals past the Aerie's damage",
                     TowerTerm.RUBY, TowerTerm.SHADE);
+            case SHATTER_DAMAGE -> TermText.format("the magic damage a {} deals each enemy it reaches, whatever the "
+                    + "missile dealt", TowerTerm.SHATTER);
             case CRIT_CHANCE -> TermText.of("the chance a hit crits");
             case CRIT_MULTIPLIER -> TermText.of("what a crit deals, as a share of a normal hit");
             case AIM_STACKS -> TermText.format("how many stacks of {} it can hold", TowerTerm.STEADY_AIM);

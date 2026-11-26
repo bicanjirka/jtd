@@ -26,3 +26,5 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   `Effect.isKeptOffBy`, not through a check in the tower.
 - How a missile flies (its speed, size and hunt radius) is on each kind's popup in the nest's Buffs row
   (`TowerBuffState.stats`), so `SeekerTower.listsRow` leaves those stats off the tower's sheet.
+- A Shatter deals the `SHATTER_DAMAGE` stat of the freeze's stats, flat: what the missile dealt never reaches it, so a
+  damage node or a second missile doesn't lift it. It hits as the kind that froze (Shadow past a Shield for a Shade).
