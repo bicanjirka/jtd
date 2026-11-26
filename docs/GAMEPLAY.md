@@ -207,7 +207,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Silver Round | Buff | A shot of magic damage that ignores some magic resist. |
 | Magazine | Buff | The shells it has ready, in the order it fires them; a new one at the back draws its kind by lot, each kind as likely as its weight among the kinds it owns. |
 | Heavy | Buff | A shell that hits harder than a Normal one and flies slower. |
-| Nuke | Buff | Two Heavies fused: their damage together in a wider blast that leaves fallout applying Dead Zone and Sicken, and a flash that gives every enemy on the board Radiation. |
+| Nuke | Buff | Two Heavies fused: a harder hit in a wider blast that leaves fallout applying Dead Zone and Sicken, and a flash that gives every enemy on the board Radiation. |
 | Payload | Buff | A special shell: the Mortar's damage, and ground it leaves where it lands. |
 | Napalm | Buff | A payload whose blast is magic and leaves flames that apply Burn. |
 | Tar Shell | Buff | A payload that leaves tar applying Tar and Poison. |

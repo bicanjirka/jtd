@@ -23,7 +23,7 @@ public enum TowerTerm implements Term {
     SILVER_ROUND("Silver Round", Side.BUFF, "a shot of magic damage that ignores some magic resist"),
     HOLLOW_POINT("Hollow Point", Side.BUFF, "a shot that hits harder"),
     HEAVY_SHELL("Heavy", Side.BUFF, "a shell that hits harder than a Normal one and flies slower"),
-    NUKE_SHELL("Nuke", Side.BUFF, "two Heavies fused: their damage together in a wider blast that leaves fallout applying {} and {}, and a flash that gives every enemy on the board {}", EffectKind.DEAD_ZONE, EffectKind.SICKENED, EffectKind.IRRADIATED),
+    NUKE_SHELL("Nuke", Side.BUFF, "two Heavies fused: a harder hit in a wider blast that leaves fallout applying {} and {}, and a flash that gives every enemy on the board {}", EffectKind.DEAD_ZONE, EffectKind.SICKENED, EffectKind.IRRADIATED),
     PAYLOAD("Payload", Side.BUFF, "a special shell: the Mortar's damage, and ground it leaves where it lands"),
     NAPALM_SHELL("Napalm", Side.BUFF, "a payload whose blast is magic and leaves flames that apply {}", EffectKind.BURN),
     TAR_SHELL("Tar Shell", Side.BUFF, "a payload that leaves tar applying {} and {}", EffectKind.TARRED, EffectKind.POISON),

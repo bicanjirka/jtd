@@ -26,11 +26,11 @@ public enum ShellKind {
     /** What it deals past the Mortar's damage is its Heavy damage, a stat, and its blast widens by its Heavy blast. */
     HEAVY(ShellLook.HEAVY, DamageType.PHYSICAL, 0f, Blast.NORMAL, 0.75f, Optional.empty()),
     /**
-     * Two Heavies fused: their damage together, a blast of its own, fallout over most of it, and a flash that gives
+     * Two Heavies fused: a harder hit than a Heavy, a blast of its own, fallout over most of it, and a flash that gives
      * every enemy on the board Radiation.
      */
     NUKE(ShellLook.NUKE, DamageType.PHYSICAL, 0f, new Blast(1f, 1f, 0.75f), 0.75f,
-            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 80, 0f))),
+            Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 140, 0f))),
     /** The Mortar's one way to deal magic: its blast burns, and the ground where it lands too. */
     NAPALM(ShellLook.NAPALM, DamageType.MAGIC, 0f, Blast.NORMAL, 1.25f,
             Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 32f))),
@@ -41,6 +41,9 @@ public enum ShellKind {
     /** A Normal shell in all but the flare it leaves, which burns until the wave is over. */
     FLARE(ShellLook.FLARE, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1f,
             Optional.of(Ground.fixed(ZoneKind.FLARE, 1.5f, Zone.UNTIL_WAVE_END, 0f)));
+
+    /** How many Heavies' damage a Nuke deals: less than the two it is made of. */
+    public static final float NUKE_HEAVIES = 1.7f;
 
     /** The magic damage a second of the Radiation a Nuke's flash gives, as it starts. */
     public static final float RADIATION_POINTS_PER_SECOND = 8f;
@@ -120,7 +123,7 @@ public enum ShellKind {
 
     /**
      * The points it deals past the Mortar's damage; a Normal's and a Flare's are the Mortar's Normal damage, a Heavy's
-     * its Heavy damage, a Nuke's two Heavies'.
+     * its Heavy damage, a Nuke's {@link #NUKE_HEAVIES} Heavies'.
      */
     public float extraPoints() {
         return this.extraPoints;
@@ -128,15 +131,15 @@ public enum ShellKind {
 
     /**
      * What it deals, in hundredths of a point, for a Mortar that deals {@code base}, whose Normal deals
-     * {@code normalExtra} more and whose Heavy deals {@code heavyExtra} more: a Flare deals as a Normal, a Nuke as two
-     * Heavies, any other kind its own points more.
+     * {@code normalExtra} more and whose Heavy deals {@code heavyExtra} more: a Flare deals as a Normal, a Nuke as
+     * {@link #NUKE_HEAVIES} Heavies, any other kind its own points more.
      */
     public int damage(float base, float normalExtra, float heavyExtra) {
         float heavy = base + heavyExtra;
         return Math.round(switch (this) {
             case NORMAL, FLARE -> base + normalExtra;
             case HEAVY -> heavy;
-            case NUKE -> 2f * heavy;
+            case NUKE -> NUKE_HEAVIES * heavy;
             case NAPALM, TAR, CRYO -> base + DamageUnits.ofPoints(this.extraPoints);
         });
     }

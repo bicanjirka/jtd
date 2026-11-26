@@ -551,7 +551,7 @@ class MortarTowerTest {
     }
 
     @Test
-    void aNukeHitsAsTwoHeaviesOverAWiderCoreAndLeavesFalloutThatSickens() {
+    void aNukeHitsAsItsShareOfTwoHeaviesOverAWiderCoreAndLeavesFalloutThatSickens() {
         MortarTower tower = this.loaded(List.of(ShellKind.NUKE), "Fusion");
         float core = tower.stats().value(TowerStat.AREA_RADIUS) * SCALE;
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
@@ -561,7 +561,7 @@ class MortarTowerTest {
         this.landAShell(tower);
         this.context.zones().doTick(1);
 
-        int twoHeavies = Math.round(2 * (tower.damageCurrent() + tower.stats().value(TowerStat.HEAVY_DAMAGE)));
+        int twoHeavies = Math.round(ShellKind.NUKE_HEAVIES * (tower.damageCurrent() + tower.stats().value(TowerStat.HEAVY_DAMAGE)));
         assertThat(target.hits().getFirst().amount()).isEqualTo(twoHeavies);
         assertThat(pastANormalCore.hits().getFirst().amount()).isEqualTo(twoHeavies);
         assertThat(this.zoneKinds()).containsExactly(ZoneKind.FALLOUT);
@@ -675,7 +675,7 @@ class MortarTowerTest {
     }
 
     @Test
-    void moreDamageMakesEveryKindOfShellHitHarderByTheSamePointsAndANukeByTwice() {
+    void moreDamageMakesEveryKindOfShellHitHarderByTheSamePointsAndANukeByItsShareOfTwoHeavies() {
         MortarTower plain = this.towerWith("Napalm", "Fusion");
         MortarTower buffed = TowerFixtures.buffed(this.towerWith("Napalm", "Fusion"), this.context,
                 TowerModifiers.damage(10f));
@@ -686,7 +686,7 @@ class MortarTowerTest {
         int more = DamageUnits.ofPoints(10f);
         assertThat(plainHits).containsKeys(ShellKind.NORMAL, ShellKind.HEAVY, ShellKind.NAPALM, ShellKind.NUKE);
         plainHits.forEach((kind, hit) -> assertThat(buffedHits.get(kind))
-                .as(kind.name()).isEqualTo(hit + (kind == ShellKind.NUKE ? 2 * more : more)));
+                .as(kind.name()).isEqualTo(hit + (kind == ShellKind.NUKE ? Math.round(ShellKind.NUKE_HEAVIES * more) : more)));
     }
 
     private static Map<ShellKind, Integer> hitsByKind(MortarTower tower) {
