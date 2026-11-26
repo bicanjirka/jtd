@@ -37,7 +37,7 @@ final class UpgradeTreePlans {
     private static final UpgradeTreePlan MORTAR = UpgradeTreePlan.of(
             tier(row(node("mortar.heavy_charge", 0f), node("mortar.big_bore", 1f),
                     node("mortar.predictive_fire", 2f),
-                    node("mortar.cracking_shells", 3.3f))),
+                    node("mortar.cracking_shells", 3.3f), cluster("Shell charge", 4.3f))),
             tier(row(cluster("Heavy shell", 0f), node("mortar.flare", 2.6f), cluster("Payload", 4.25f))),
             tier(row(node("mortar.overcharge", 0f), node("mortar.big_bore_2", 1f), node("base.range", 2f),
                     node("mortar.deep_crack", 3.3f), node("mortar.thick_mix", 5.6f))),

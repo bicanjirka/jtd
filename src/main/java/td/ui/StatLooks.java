@@ -76,11 +76,11 @@ final class StatLooks {
         return switch (stat) {
             case RANGE -> StatLook.plain(Glyph.RING);
             case MINIMUM_RANGE -> StatLook.plain(Glyph.BROKEN_RING);
-            case AREA_RADIUS, BLAST_EDGE -> StatLook.plain(Glyph.RING_CENTRE);
+            case AREA_RADIUS, BLAST_EDGE, HEAVY_BLAST -> StatLook.plain(Glyph.RING_CENTRE);
             case CONE_WIDTH -> StatLook.plain(Glyph.WEDGE);
             case DAMAGE -> StatLook.plain(Glyph.DOT);
             case ATTACK_SPEED -> StatLook.plain(Glyph.CHEVRON);
-            case HEAVY_DAMAGE -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
+            case NORMAL_DAMAGE, HEAVY_DAMAGE -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
             case STREAM -> StatLook.face(TermLooks.faceOf(TowerTerm.STREAM));
             case RELOAD -> StatLook.plain(Glyph.FILLED_DIAMOND);
             case CRIT_CHANCE, CRIT_MULTIPLIER -> StatLook.toned(Glyph.SPARK, Palette.CRIT_SPARK);

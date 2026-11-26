@@ -20,8 +20,11 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   would fire now, never the kind's constants read in the UI.
 - The chances the panel shows come from `MagazineSpec.chances()` (`MagazineOdds`, which counts Fusion and Rich Mix),
   never from the weights, which no player sees.
-- A shell hits for the Mortar's damage, a Normal's, plus its kind's own points (`ShellKind.damage`): a Heavy's are the
-  `HEAVY_DAMAGE` stat, a Nuke two Heavies. Its ground's pulse and a Bleed are flat points, never a share of the damage.
+- A shell hits for the Mortar's damage plus its kind's own points (`ShellKind.damage`): a Normal's are the
+  `NORMAL_DAMAGE` stat, a Heavy's the `HEAVY_DAMAGE` stat, a Nuke two Heavies. Its ground's pulse and a Bleed are flat
+  points, never a share of the damage.
+- How much wider than the Mortar's blast a kind lands is on the kind (`ShellKind.wideningCells`): a Heavy's is the
+  `HEAVY_BLAST` stat, a payload's its Payload spec's; a Nuke's blast is its own.
 - A shell lands in two zones: its core at full damage and its edge at its kind's share. With Cracking Shells every
   shell gives what it hits the Mortar's share of Crack (Deep Crack makes the share worth more stacks). A shell's ground is one zone, owned by the Mortar (`ZoneOwner`); a
   Mortar keeps only its newest flares and puts out the oldest (`Zone.putOut`).

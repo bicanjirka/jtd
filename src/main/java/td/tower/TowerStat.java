@@ -27,6 +27,9 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.REACH, Shows.OFF_DEFAULT, false),
     BLAST_EDGE(0f, 0f, Float.MAX_VALUE, StatUnit.CELLS, "Blast edge", "Blast edge", StatDirection.HIGHER,
             StatGroup.REACH, Shows.OFF_DEFAULT, false),
+    /** Cells a Heavy shell's core and edge each reach past the blast's own. */
+    HEAVY_BLAST(0f, 0f, Float.MAX_VALUE, StatUnit.CELLS, "Heavy blast", "Heavy blast", StatDirection.HIGHER,
+            StatGroup.REACH, Shows.OFF_DEFAULT, false),
     /** The cone's full width. */
     CONE_WIDTH(0f, 0f, (float) (2 * Math.PI), StatUnit.DEGREES, "Cone width", "Cone width", StatDirection.NEUTRAL,
             StatGroup.REACH, Shows.OFF_DEFAULT, false),
@@ -36,7 +39,10 @@ public enum TowerStat implements StatKey, StatTerm {
     /** Attacks per second are the base rate times {@code 1 + attack speed}. */
     ATTACK_SPEED(0f, -0.75f, 9f, StatUnit.SIGNED_PERCENT, "Fire rate", "Fire rate", StatDirection.HIGHER,
             StatGroup.DAMAGE, Shows.IN_CORE_ROW, true),
-    /** What a Heavy shell deals past a Normal one, in hundredths of a point. */
+    /** What a Normal shell deals past the tower's damage, in hundredths of a point. */
+    NORMAL_DAMAGE(0f, 0f, Float.MAX_VALUE, StatUnit.DAMAGE_PER_HIT, "Normal dmg", "Normal damage",
+            StatDirection.HIGHER, StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
+    /** What a Heavy shell deals past the tower's damage, in hundredths of a point. */
     HEAVY_DAMAGE(0f, 0f, Float.MAX_VALUE, StatUnit.DAMAGE_PER_HIT, "Heavy dmg", "Heavy damage",
             StatDirection.HIGHER, StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
     /** How long a stream pours. */
@@ -190,12 +196,14 @@ public enum TowerStat implements StatKey, StatTerm {
             case MINIMUM_RANGE -> TermText.of("enemies closer than this can't be aimed at");
             case AREA_RADIUS -> TermText.of("how far a blast reaches from where a shot lands at full damage");
             case BLAST_EDGE -> TermText.of("how far its weaker edge reaches from where a shot lands");
+            case HEAVY_BLAST -> TermText.format("how much wider a {} blasts, core and edge alike", TowerTerm.HEAVY_SHELL);
             case CONE_WIDTH -> TermText.of("how wide its cone of fire is");
             case DAMAGE -> TermText.of("what one hit deals, before the target's defences");
             case ATTACK_SPEED -> TermText.of("how often it attacks");
             case STREAM -> TermText.format("how long it pours before it reloads: {}", TowerTerm.STREAM);
             case RELOAD -> TermText.of("how long it waits after a stream before the next; attack speed shortens it");
-            case HEAVY_DAMAGE -> TermText.format("what a {} deals past a Normal shell", TowerTerm.HEAVY_SHELL);
+            case NORMAL_DAMAGE -> TermText.of("what a Normal shell deals past the Mortar's damage");
+            case HEAVY_DAMAGE -> TermText.format("what a {} deals past the Mortar's damage", TowerTerm.HEAVY_SHELL);
             case CRIT_CHANCE -> TermText.of("the chance a hit crits");
             case CRIT_MULTIPLIER -> TermText.of("what a crit deals, as a share of a normal hit");
             case AIM_STACKS -> TermText.format("how many stacks of {} it can hold", TowerTerm.STEADY_AIM);

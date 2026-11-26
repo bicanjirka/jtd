@@ -16,12 +16,13 @@ import java.util.Set;
 
 /**
  * One kind of shell in the Mortar's magazine: how it looks, how hard and how wide it hits against a Normal shell, how
- * fast it flies, and the ground it leaves where it lands. Every kind hits for the Mortar's damage, a Normal shell's,
- * plus points of its own, so whatever raises a Normal raises every kind alike.
+ * fast it flies, and the ground it leaves where it lands. Every kind hits for the Mortar's damage plus points of its
+ * own, so whatever raises the Mortar's damage raises every kind alike; a Normal's and a Heavy's own are stats.
  */
 public enum ShellKind {
+    /** What it deals past the Mortar's damage is its Normal damage, a stat. */
     NORMAL(ShellLook.NORMAL, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1f, Optional.empty()),
-    /** What it deals past a Normal is the Mortar's Heavy damage, a stat. */
+    /** What it deals past the Mortar's damage is its Heavy damage, a stat, and its blast widens by its Heavy blast. */
     HEAVY(ShellLook.HEAVY, DamageType.PHYSICAL, 0f, Blast.NORMAL, 0.75f, Optional.empty()),
     /**
      * Two Heavies fused: their damage together, a blast of its own, fallout over most of it, and a flash that gives
@@ -101,27 +102,41 @@ public enum ShellKind {
         return this == NAPALM || this == TAR || this == CRYO;
     }
 
-    /** The points it deals past a Normal shell; a Heavy's are the Mortar's stat, a Nuke's two Heavies'. */
+    /** The points it deals past the Mortar's damage; a Normal's and a Heavy's are the Mortar's stats, a Nuke's two Heavies'. */
     public float extraPoints() {
         return this.extraPoints;
     }
 
     /**
-     * What it deals, in hundredths of a point, for a Mortar whose Normal shell deals {@code normal} and whose Heavy deals
-     * {@code heavyExtra} more: a Heavy's extra is the Mortar's stat, a Nuke two Heavies, any other kind its own points.
+     * What it deals, in hundredths of a point, for a Mortar that deals {@code base}, whose Normal deals
+     * {@code normalExtra} more and whose Heavy deals {@code heavyExtra} more: a Nuke is two Heavies, any other kind
+     * deals its own points more.
      */
-    public int damage(float normal, float heavyExtra) {
-        float heavy = normal + heavyExtra;
+    public int damage(float base, float normalExtra, float heavyExtra) {
+        float heavy = base + heavyExtra;
         return Math.round(switch (this) {
+            case NORMAL -> base + normalExtra;
             case HEAVY -> heavy;
             case NUKE -> 2f * heavy;
-            case NORMAL, NAPALM, TAR, CRYO, FLARE -> normal + DamageUnits.ofPoints(this.extraPoints);
+            case NAPALM, TAR, CRYO, FLARE -> base + DamageUnits.ofPoints(this.extraPoints);
         });
     }
 
-    /** What it hits for, said after "each deals": "a Normal shell's damage", "a Normal shell's damage +4". */
+    /**
+     * The cells its core and edge each reach past its blast's, for a Mortar whose Heavy blasts {@code heavyCells} wider
+     * and whose payloads {@code payloadCells} wider.
+     */
+    public float wideningCells(float heavyCells, float payloadCells) {
+        return switch (this) {
+            case HEAVY -> heavyCells;
+            case NAPALM, TAR, CRYO -> payloadCells;
+            case NORMAL, NUKE, FLARE -> 0f;
+        };
+    }
+
+    /** What it hits for, said after "each deals": "the Mortar's damage", "the Mortar's damage +4". */
     public String damageText() {
-        return "a Normal shell's damage" + (this.extraPoints == 0f ? "" : " " + TermNumbers.signed(this.extraPoints));
+        return "the Mortar's damage" + (this.extraPoints == 0f ? "" : " " + TermNumbers.signed(this.extraPoints));
     }
 
     /** Its name as the player reads it: "Normal", or its term. */

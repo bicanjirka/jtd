@@ -98,7 +98,7 @@ public final class MortarTower extends AbstractTower {
     public static final float SHELL_SPEED = 6.4f;
 
     private static final float MINIMUM_RANGE_CELLS = 1.5f;
-    /** What a Heavy shell deals past a Normal one, in points. */
+    /** What a Heavy shell deals past the Mortar's damage, in points. */
     private static final float HEAVY_POINTS = 24f;
     /** A rate below this counts as it, so a stalled tower's reload is long rather than endless. */
     private static final double MINIMUM_RATE = 1e-3;
@@ -111,6 +111,10 @@ public final class MortarTower extends AbstractTower {
 
     private static final UpgradeNode HEAVY_CHARGE = UpgradeNode.of("mortar.heavy_charge", "Heavy Charge", 5)
             .withModifiers(TowerModifiers.damage(12f));
+    private static final UpgradeNode PACKED_CHARGE = UpgradeNode.of("mortar.packed_charge", "Packed Charge", 5)
+            .withModifiers(TowerModifiers.normalDamage(0f));
+    private static final UpgradeNode WIDE_CRATER = UpgradeNode.of("mortar.wide_crater", "Wide Crater", 5)
+            .withModifiers(TowerModifiers.heavyBlast(0f));
     private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 5)
             .withModifiers(TowerModifiers.heavyDamage(14f));
     private static final UpgradeNode CRACKING_SHELLS = UpgradeNode.of("mortar.cracking_shells", "Cracking Shells", 5);
@@ -165,10 +169,12 @@ public final class MortarTower extends AbstractTower {
             .withModifiers(TowerModifiers.attackSpeed(3.5f / 3f - 1f))
             .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(List.of(HEAVY_CHARGE, BIG_BORE, PREDICTIVE_FIRE, CRACKING_SHELLS))
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(HEAVY_CHARGE, BIG_BORE, PREDICTIVE_FIRE, CRACKING_SHELLS,
+                    PACKED_CHARGE, WIDE_CRATER))
             .with(CONCUSSION, SHRAPNEL, NAPALM, TAR_SHELL, CRYO, FLARE,
                     BARRAGE, CARPET_BOMBING, ELEVATION, OVERCHARGE, BIG_BORE_2, THICK_MIX,
                     FUSION, RICH_MIX, LASTING_MIX, DEEP_CRACK, QUICK_RELOAD)
+            .withCluster(UpgradeCluster.of("Shell charge", PACKED_CHARGE, WIDE_CRATER))
             .withCluster(UpgradeCluster.of("Heavy shell", CONCUSSION, SHRAPNEL))
             .withCluster(UpgradeCluster.of("Payload", NAPALM, TAR_SHELL, CRYO))
             .withCluster(UpgradeCluster.of("Volley", BARRAGE, CARPET_BOMBING))
@@ -253,7 +259,8 @@ public final class MortarTower extends AbstractTower {
         super(TowerFactory.Type.MORTAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .with(TowerStat.AREA_RADIUS, CORE_CELLS).with(TowerStat.BLAST_EDGE, EDGE_CELLS)
                 .with(TowerStat.PROJECTILE_SPEED, 1f).with(TowerStat.PROJECTILE_SIZE, 1f)
-                .with(TowerStat.MINIMUM_RANGE, MINIMUM_RANGE_CELLS).with(TowerStat.HEAVY_DAMAGE, DamageUnits.ofPoints(HEAVY_POINTS)),
+                .with(TowerStat.MINIMUM_RANGE, MINIMUM_RANGE_CELLS).with(TowerStat.HEAVY_DAMAGE, DamageUnits.ofPoints(HEAVY_POINTS))
+                .with(TowerStat.NORMAL_DAMAGE, 0f).with(TowerStat.HEAVY_BLAST, 0f),
                 context, x, y);
     }
 
@@ -434,7 +441,7 @@ public final class MortarTower extends AbstractTower {
     private BlastRadii blastOf(Shell shell, MortarSpec spec) {
         TowerStats stats = shell.stats();
         ShellKind kind = shell.kind();
-        float extra = kind.isPayload() ? spec.payload().extraCells() : 0f;
+        float extra = kind.wideningCells(stats.value(TowerStat.HEAVY_BLAST), spec.payload().extraCells());
         float core = (stats.value(TowerStat.AREA_RADIUS) + kind.blast().extraCoreCells() + extra) * this.cellPixels();
         float edge = (stats.value(TowerStat.BLAST_EDGE) + kind.blast().extraEdgeCells() + extra) * this.cellPixels();
         return new BlastRadii(core, Math.max(core, edge), kind.blast().edgeShare());
@@ -449,7 +456,8 @@ public final class MortarTower extends AbstractTower {
         ShellKind kind = shell.kind();
         TowerStats stats = shell.stats();
         BlastRadii blast = this.blastOf(shell, spec);
-        int damage = kind.damage(stats.damage(), stats.value(TowerStat.HEAVY_DAMAGE));
+        int damage = kind.damage(stats.damage(), stats.value(TowerStat.NORMAL_DAMAGE),
+                stats.value(TowerStat.HEAVY_DAMAGE));
         float core2 = blast.core() * blast.core();
         for (EnemyMob enemy : InRangeTargetQuery.everyone((int) Math.round(x), (int) Math.round(y), blast.edge())
                 .matching(this.context.enemies())) {
@@ -658,7 +666,8 @@ public final class MortarTower extends AbstractTower {
         Shell shell = new Shell(kind, held.carried(), stats);
         BlastRadii radii = this.blastOf(shell, spec);
         float cell = this.cellPixels();
-        int damage = kind.damage(stats.damage(), stats.value(TowerStat.HEAVY_DAMAGE));
+        int damage = kind.damage(stats.damage(), stats.value(TowerStat.NORMAL_DAMAGE),
+                stats.value(TowerStat.HEAVY_DAMAGE));
         Set<EffectKind> applies = EnumSet.noneOf(EffectKind.class);
         if (spec.crackStacks() > 0) {
             applies.add(EffectKind.CRACKED);

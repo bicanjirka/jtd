@@ -103,6 +103,14 @@ public final class TowerModifiers {
         return flat(TowerStat.PROJECTILE_SIZE, fraction);
     }
 
+    public static StatModifiers<TowerStat> normalDamage(float points) {
+        return flat(TowerStat.NORMAL_DAMAGE, DamageUnits.ofPoints(points));
+    }
+
+    public static StatModifiers<TowerStat> heavyBlast(float cells) {
+        return flat(TowerStat.HEAVY_BLAST, cells);
+    }
+
     public static StatModifiers<TowerStat> heavyDamage(float points) {
         return flat(TowerStat.HEAVY_DAMAGE, DamageUnits.ofPoints(points));
     }

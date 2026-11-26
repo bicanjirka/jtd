@@ -341,6 +341,42 @@ class MortarTowerTest {
     }
 
     @Test
+    void normalDamageRaisesANormalShellAndNotAHeavy() {
+        MortarTower tower = TowerFixtures.buffed(this.loaded(List.of(ShellKind.NORMAL, ShellKind.HEAVY)), this.context,
+                TowerModifiers.normalDamage(10f));
+        FakeEnemyMob normalTarget = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{normalTarget});
+        this.landAShell(tower);
+        FakeEnemyMob heavyTarget = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{heavyTarget});
+
+        this.landAShell(tower);
+
+        assertThat(normalTarget.onlyHitAmount()).isEqualTo(tower.damageCurrent() + DamageUnits.ofPoints(10f));
+        assertThat(heavyTarget.onlyHitAmount()).isEqualTo(
+                Math.round(tower.damageCurrent() + tower.stats().value(TowerStat.HEAVY_DAMAGE)));
+    }
+
+    @Test
+    void heavyBlastWidensAHeavyShellsBlastAndNotANormals() {
+        MortarTower tower = TowerFixtures.buffed(this.loaded(List.of(ShellKind.HEAVY, ShellKind.NORMAL)), this.context,
+                TowerModifiers.heavyBlast(1f));
+        float justPastTheEdge = tower.stats().value(TowerStat.BLAST_EDGE) * SCALE + SCALE / 2f;
+        FakeEnemyMob heavyCentre = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob pastAHeavysEdge = this.enemyAt(tower, OUT, justPastTheEdge).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{heavyCentre, pastAHeavysEdge});
+        this.landAShell(tower);
+        FakeEnemyMob normalCentre = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob pastANormalsEdge = this.enemyAt(tower, OUT, justPastTheEdge).hidden();
+        this.context.enemies().setEnemies(new EnemyMob[]{normalCentre, pastANormalsEdge});
+
+        this.landAShell(tower);
+
+        assertThat(pastAHeavysEdge.hits()).hasSize(1);
+        assertThat(pastANormalsEdge.hits()).isEmpty();
+    }
+
+    @Test
     void concussionDazesAHeavysCoreLongerThanItsEdgeAndANormalDazesNothing() {
         MortarTower tower = this.loaded(List.of(ShellKind.HEAVY, ShellKind.NORMAL), "Concussion");
         float core = tower.stats().value(TowerStat.AREA_RADIUS) * SCALE;

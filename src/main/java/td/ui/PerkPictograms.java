@@ -99,8 +99,12 @@ final class PerkPictograms {
             // Feedback
             Map.entry("splash.feedback", "S M17.4 7.6A7.4 7.4 0 1 0 19.4 13.4 ; F M21.6 3.8L21 9.6L15.6 7.4Z ; F M13.4 7.6L9.6 12.6H12.2L11 17.2L15.2 11.6H12.6Z"),
             Map.entry("splash.wide_blast", "F O10.4 14.2 6.8 ; S M15 9.6C16 7.6 17.2 6 19 5.2 ; F M20.4 1.8L21.1 3.7L23 4.4L21.1 5.1L20.4 7L19.7 5.1L17.8 4.4L19.7 3.7Z ; K O8 11.8 1.6"),
+            // Packed Charge
+            Map.entry("mortar.packed_charge", "F M6 21.6H18C19.6 21.6 20.4 20.4 20 18.8L17.6 9.6H6.4L4 18.8C3.6 20.4 4.4 21.6 6 21.6Z ; F M8.4 6.6H15.6V9H8.4Z ; F M9.4 6.6L8 2.8L12 4.6L16 2.8L14.6 6.6Z ; X M12 12.6V19 M8.8 15.8H15.2"),
             // Heavy Charge
-            Map.entry("mortar.heavy_charge", "F M6 21.6H18C19.6 21.6 20.4 20.4 20 18.8L17.6 9.6H6.4L4 18.8C3.6 20.4 4.4 21.6 6 21.6Z ; F M8.4 6.6H15.6V9H8.4Z ; F M9.4 6.6L8 2.8L12 4.6L16 2.8L14.6 6.6Z ; X M12 12.6V19 M8.8 15.8H15.2"),
+            Map.entry("mortar.heavy_charge", "=mortar.packed_charge"),
+            // Wide Crater
+            Map.entry("mortar.wide_crater", "F M2.6 17.4A9.4 3.6 0 0 1 21.4 17.4A9.4 3.6 0 0 1 2.6 17.4Z ; K M7 17.2A5 1.6 0 0 1 17 17.2A5 1.6 0 0 1 7 17.2Z ; S M9 11.4L4.4 6.8 M15 11.4L19.6 6.8 ; F M2.6 5L7.6 5.6L3.2 10Z M21.4 5L16.4 5.6L20.8 10Z"),
             // Big Bore
             Map.entry("mortar.big_bore", "F M8 20.4H16L18 7H6Z ; F M4.4 7A7.6 2.8 0 0 1 19.6 7A7.6 2.8 0 0 1 4.4 7Z ; K M7.4 7A4.6 1.4 0 0 1 16.6 7A4.6 1.4 0 0 1 7.4 7Z ; F M5.6 20.4H18.4V22.6H5.6Z"),
             Map.entry("mortar.big_bore_2", "=mortar.big_bore"),
