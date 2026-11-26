@@ -229,6 +229,11 @@ public abstract class AbstractTower implements Tower {
     }
 
     /** One cell of the board, in pixels. */
+    /** {@code cellsPerSecond} as the pixels a shot flies a tick on this board. */
+    protected final float pixelsPerTick(float cellsPerSecond) {
+        return cellsPerSecond * this.cellPixels() / TICKS_PER_SECOND;
+    }
+
     protected final int cellPixels() {
         return this.context.getBoard().scale();
     }

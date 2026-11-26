@@ -40,8 +40,9 @@
 - Each tower's own constraints are in its sub-package's `CLAUDE.md` (`splash/`,
   `seeker/`, `pulse/`, `mortar/`, `cinder/`, `aura/`, `sniper/`): read it before editing that tower's leaf class here.
 - A tower whose fork renames it overrides `displayName()`; the id and `TowerFactory.Type` stay.
-- A missile's speed and size are a tower stat (`ProjectileStats`), shown as `TowerStatRow.PROJECTILE_SPEED`
-  (cells a second, so it holds at any board scale) and `PROJECTILE_SIZE`, and drawn from the same record.
+- A missile's speed and size are tower stats: `TowerStat.PROJECTILE_SPEED` in cells a second, so it holds at any
+  board scale, turned into pixels a tick only through `pixelsPerTick`, and `PROJECTILE_SIZE`. Shown as
+  `TowerStatRow.PROJECTILE_SPEED` and `PROJECTILE_SIZE`, and drawn from the same `ProjectileStats`.
 - Never `instanceof`/cast a tower. Use `TowerVisitor`, or ask the tower (`Tower.buffFor`).
   `AuraTower.lights`' single "is this a Beacon" check stays the only role check.
 

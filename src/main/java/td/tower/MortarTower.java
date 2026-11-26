@@ -97,8 +97,8 @@ public final class MortarTower extends AbstractTower {
     public static final float RANGE = 4.5f;
     public static final float CORE_CELLS = 1f;
     public static final float EDGE_CELLS = 1.75f;
-    /** Pixels a tick: slow enough to watch a shell fly and for a fast enemy to dodge it. */
-    public static final float SHELL_SPEED = 6.4f;
+    /** Cells a second: slow enough to watch a shell fly and for a fast enemy to dodge it; a faster one streaks. */
+    public static final float SHELL_SPEED = 4f;
 
     private static final float MINIMUM_RANGE_CELLS = 1.5f;
     /** What a Heavy shell deals past the Mortar's damage, in points. */
@@ -273,7 +273,7 @@ public final class MortarTower extends AbstractTower {
     public MortarTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.MORTAR, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .with(TowerStat.AREA_RADIUS, CORE_CELLS).with(TowerStat.BLAST_EDGE, EDGE_CELLS)
-                .with(TowerStat.PROJECTILE_SPEED, 1f).with(TowerStat.PROJECTILE_SIZE, 1f)
+                .with(TowerStat.PROJECTILE_SPEED, SHELL_SPEED).with(TowerStat.PROJECTILE_SIZE, 1f)
                 .with(TowerStat.MINIMUM_RANGE, MINIMUM_RANGE_CELLS).with(TowerStat.HEAVY_DAMAGE, DamageUnits.ofPoints(HEAVY_POINTS))
                 .with(TowerStat.NORMAL_DAMAGE, 0f).with(TowerStat.HEAVY_BLAST, 0f)
                 .with(TowerStat.NORMAL_LOAD, 1f).with(TowerStat.CHAIN_LOAD, 1f).with(TowerStat.PAYLOAD_LOAD, 1f).with(TowerStat.HEAVY_LOAD, 1f)
@@ -471,7 +471,7 @@ public final class MortarTower extends AbstractTower {
         if (!spec.leadsTarget()) {
             return aim;
         }
-        float speed = SHELL_SPEED * this.stats().value(TowerStat.PROJECTILE_SPEED) * kind.speedFactor();
+        float speed = this.pixelsPerTick(this.stats().value(TowerStat.PROJECTILE_SPEED)) * kind.speedFactor();
         for (int i = 0; i < PREDICTION_PASSES; i++) {
             int flightTicks = (int) Math.ceil(Math.hypot(aim.x() - this.centerX, aim.y() - this.centerY) / speed);
             aim = target.positionAfter(flightTicks);
@@ -482,10 +482,10 @@ public final class MortarTower extends AbstractTower {
     /** The shell as it flies: its speed, its kind's share of it, and its size are stats. */
     private ProjectileStats shellStats(Shell shell) {
         TowerStats shot = shell.stats();
-        float speedScale = shot.value(TowerStat.PROJECTILE_SPEED);
-        return ProjectileStats.of(SHELL_SPEED * speedScale * shell.kind().speedFactor())
+        float speed = shot.value(TowerStat.PROJECTILE_SPEED);
+        return ProjectileStats.of(this.pixelsPerTick(speed) * shell.kind().speedFactor())
                 .withSize(shot.value(TowerStat.PROJECTILE_SIZE))
-                .withStreak(speedScale > 1f);
+                .withStreak(speed > SHELL_SPEED);
     }
 
     /** One shell's blast, in pixels: its full-damage core, its edge, and what the edge deals. */

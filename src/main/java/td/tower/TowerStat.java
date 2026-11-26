@@ -102,7 +102,8 @@ public enum TowerStat implements StatKey, StatTerm {
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
     REVEAL_TIME(0f, 0f, Float.MAX_VALUE, StatUnit.TICKS, "Reveal time", "Reveal time", StatDirection.HIGHER,
             StatGroup.EFFECTS, Shows.OFF_DEFAULT, false),
-    PROJECTILE_SPEED(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Proj speed", "Projectile speed",
+    /** How fast its shots fly, in cells a second, so it holds at any board scale. */
+    PROJECTILE_SPEED(0f, 0.1f, Float.MAX_VALUE, StatUnit.CELLS_PER_SECOND, "Proj speed", "Projectile speed",
             StatDirection.HIGHER, StatGroup.DELIVERY, Shows.IN_CORE_ROW, false),
     PROJECTILE_SIZE(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Proj size", "Projectile size",
             StatDirection.NEUTRAL, StatGroup.DELIVERY, Shows.IN_CORE_ROW, false),
@@ -255,7 +256,7 @@ public enum TowerStat implements StatKey, StatTerm {
                     EffectKind.TOLL);
             case REVEAL_TIME -> TermText.format("how long an enemy keeps the {} its light gives once it leaves",
                     EffectKind.REVEALED);
-            case PROJECTILE_SPEED -> TermText.of("how fast its shots fly, as a share of the usual");
+            case PROJECTILE_SPEED -> TermText.of("how fast its shots fly");
             case PROJECTILE_SIZE -> TermText.of("how big its shots are, as a share of the usual");
             case NEST_CAPACITY -> TermText.of("how many missiles it can store");
             case HUNT_RADIUS -> TermText.of("how far round itself a missile in flight looks for a new enemy before it "

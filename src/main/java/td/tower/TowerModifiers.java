@@ -95,8 +95,8 @@ public final class TowerModifiers {
         return flat(TowerStat.BLAST_EDGE, cells);
     }
 
-    public static StatModifiers<TowerStat> projectileSpeed(float fraction) {
-        return flat(TowerStat.PROJECTILE_SPEED, fraction);
+    public static StatModifiers<TowerStat> projectileSpeed(float cellsPerSecond) {
+        return flat(TowerStat.PROJECTILE_SPEED, cellsPerSecond);
     }
 
     public static StatModifiers<TowerStat> projectileSize(float fraction) {

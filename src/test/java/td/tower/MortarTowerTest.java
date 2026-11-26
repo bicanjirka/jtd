@@ -33,6 +33,7 @@ import td.tower.mortar.ShellKind;
 import td.tower.mortar.ShellProfile;
 import td.tower.upgrade.UpgradeNode;
 import td.util.GameWorld;
+import td.util.TickRate;
 import td.wave.Path;
 import td.wave.Vec2;
 import td.zone.Zone;
@@ -163,7 +164,8 @@ class MortarTowerTest {
 
         this.context.projectiles().doTick(2);
 
-        assertThat(shell.getX() - tower.getX()).isCloseTo(MortarTower.SHELL_SPEED, within(1e-4));
+        assertThat(shell.getX() - tower.getX()).isCloseTo(MortarTower.SHELL_SPEED * SCALE / TickRate.TICKS_PER_SECOND,
+                within(1e-4));
     }
 
     @Test
@@ -335,7 +337,7 @@ class MortarTowerTest {
 
         TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        assertThat(speed).isLessThan(MortarTower.SHELL_SPEED);
+        assertThat(speed).isLessThan(MortarTower.SHELL_SPEED * SCALE / TickRate.TICKS_PER_SECOND);
         assertThat(target.onlyHitAmount()).isEqualTo(
                 Math.round(tower.damageCurrent() + tower.stats().value(TowerStat.HEAVY_DAMAGE)));
     }
