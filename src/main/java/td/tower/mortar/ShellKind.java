@@ -239,8 +239,9 @@ public enum ShellKind {
             }
         }
         if (pulse.slow().slows()) {
-            ground.kind().slows().ifPresent(by -> parts.add(TermText.of("applies ").plus(by).plus(" of "
-                    + TermNumbers.percent(pulse.slow().strength()) + " for " + seconds(pulse.slow().holdTicks()))));
+            ground.kind().slows().ifPresent(by -> parts.add(TermText.of("slows by "
+                    + TermNumbers.percent(pulse.slow().strength()) + " (").plus(by).plus(") for "
+                    + seconds(pulse.slow().holdTicks()))));
         }
         if (parts.isEmpty()) {
             return TermText.empty();
@@ -250,7 +251,7 @@ public enum ShellKind {
             text = text.plus(i == 0 ? "" : i == parts.size() - 1 ? " and " : ", ").plus(parts.get(i));
         }
         ZonePulse.Freeze freeze = pulse.freeze();
-        return freeze.freezes() ? text.plus(", and gives an enemy that stays " + seconds(freeze.ticksInside()) + " ")
+        return freeze.freezes() ? text.plus(", and an enemy that stays " + seconds(freeze.ticksInside()) + " gets ")
                 .plus(EffectKind.FREEZE).plus(" for " + seconds(freeze.ticks())) : text;
     }
 

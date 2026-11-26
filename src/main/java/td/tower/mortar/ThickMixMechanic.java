@@ -21,6 +21,6 @@ public final class ThickMixMechanic implements MortarMechanic {
     public TermText describe() {
         return TermText.of("a Normal shell right behind a ").plus(TowerTerm.PAYLOAD)
                 .plus(" shell carries some of it: its blast still hits as a physical Normal, and puts "
-                        + TermNumbers.percent(SHARE) + " of one pulse of that payload's ground on what it reaches");
+                        + TermNumbers.number(SHARE) + " pulses of that payload's ground on what it reaches");
     }
 }
