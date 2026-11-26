@@ -72,6 +72,12 @@ power) are answered with a bracket of two or three bench runs, never guessed: "b
   yet retuned is a stale rival: stronger than intended in its early states. Its rows tell you nothing about the
   nerfed scale, so compare only to the Sniper and to towers already retuned, and say which those are. A final
   cross-tower pass after the last tower settles any ratio that drifted.
+- **Prices move with the going rate; reprice once, at the end.** The going rate is the mean power a credit buys of a
+  bare tower over the judged towers, so every retuned (weaker) bare tower lowers it and every node's suggested price
+  rises. A full-tower bench after a retune can halve it. Keep each tower's node prices consistent with the towers
+  already retuned (same worth per credit as the Sniper's current prices) and report the rate shift; do not reprice
+  earlier towers as you go. The final cross-tower pass reprices every node at the final rate, once, and re-checks each
+  tower's ratio to the Sniper. Re-run `EnemyPowerReport` first when `enemy-power.tsv` is gone.
 - Memories that hold: bare Burst (base tree) is every tower's damage floor, Sniper the single-target ceiling, Aerie
   the top single-target vs armor/plating; report any breach (open: the Aerie above the Sniper on single and boss,
   for the Aerie's step). No tower allows for the Beacon; its combos are tuned in the Beacon's nodes. It holds nothing
