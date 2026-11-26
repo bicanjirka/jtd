@@ -55,9 +55,9 @@ final class UpgradeTreePlans {
             tier(row(node("tier.1", 0f), cluster("Release", 1f), node("seeker.sharp_sting", 3f),
                     node("seeker.wide_comb_2", 4f))),
             tier(row(node("tier.2", 0f), node("seeker.feeding", 1f), node("base.range.2", 2f),
-                    cluster("Second missile", 3f))),
-            tier(row(node("tier.3", 0f), node("seeker.rich_brood", 1f), node("seeker.deep_freeze_2", 2f),
-                    cluster("Around the ice", 3f), cluster("Apex", 5f))));
+                    node("seeker.deep_freeze_2", 3f), cluster("Second missile", 4f))),
+            tier(row(node("tier.3", 0f), node("seeker.rich_brood", 1f), cluster("Around the ice", 2f),
+                    cluster("Apex", 4f))));
 
     private static final UpgradeTreePlan PULSE = UpgradeTreePlan.of(
             tier(row(node("base.range", 2.5f), node("pulse.hum", 3.5f))),

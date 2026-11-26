@@ -106,25 +106,25 @@ public final class SeekerTower extends AbstractTower {
             .withModifiers(TowerModifiers.nestCapacity(2))
             .inTier(1);
 
-    private static final UpgradeNode RUBY = UpgradeNode.of("seeker.ruby", "Ruby", 25)
+    private static final UpgradeNode RUBY = UpgradeNode.of("seeker.ruby", "Ruby", 15)
             .withModifiers(TowerModifiers.secondMissileDamage(20f))
             .inTier(2);
-    private static final UpgradeNode SHADE = UpgradeNode.of("seeker.shade", "Shade", 25)
+    private static final UpgradeNode SHADE = UpgradeNode.of("seeker.shade", "Shade", 15)
             .withModifiers(TowerModifiers.secondMissileDamage(20f))
             .inTier(2);
     private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 10)
             .inTier(2);
     private static final Proc RIME = Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1))
             .when(new ProcCondition.TargetHasAnyOf(Set.of(EffectKind.FREEZE)));
-    private static final UpgradeNode HIGH_PERCH = UpgradeNode.of(RangeNodes.RANGE_2_ID, "High Perch", 10)
+    private static final UpgradeNode HIGH_PERCH = UpgradeNode.of(RangeNodes.RANGE_2_ID, "High Perch", 5)
             .withModifiers(TowerModifiers.range(1f).plus(TowerModifiers.huntRadius(1f)))
             .inTier(2);
 
-    private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 20)
+    private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 15)
             .inTier(3);
-    private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 20)
+    private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 15)
             .inTier(3);
-    private static final UpgradeNode RICH_BROOD = UpgradeNode.of("seeker.rich_brood", "Rich Brood", 20)
+    private static final UpgradeNode RICH_BROOD = UpgradeNode.of("seeker.rich_brood", "Rich Brood", 10)
             .withRequires(UpgradeCondition.owns(RUBY.id()).or(UpgradeCondition.owns(SHADE.id())))
             .inTier(3);
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.deep_freeze_2", "Deep Freeze II", 5)

@@ -41,7 +41,28 @@ final class StrategyBuilds {
                             "sniper.fourth_shot", "sniper.deadeye", "sniper.deep_breath",
                             "sniper.silver_round", "sniper.ricochet", "sniper.sundering_rounds", "sniper.executioner",
                             "sniper.killing_spree", "sniper.unbroken_aim"))),
+            TowerFactory.Type.SEEKER, aerie(),
             TowerFactory.Type.MORTAR, mortar()));
+
+    /** Focus (one enemy at a time), Volley (many at once) and Wither (long holds, no healing), each with its stronger Apex. */
+    private static List<Strategy> aerie() {
+        Set<String> focus = Set.of("seeker.wide_comb", "seeker.hatching", "seeker.sharp_sting", "seeker.wide_comb_2",
+                "seeker.feeding", "base.range.2", "seeker.ruby", "seeker.rich_brood", "seeker.shatter");
+        Set<String> volley = Set.of("seeker.wide_comb", "seeker.volley", "seeker.sharp_sting", "seeker.wide_comb_2",
+                "seeker.feeding", "base.range.2", "seeker.shade", "seeker.rich_brood", "seeker.shatter");
+        Set<String> wither = Set.of("seeker.deep_freeze", "seeker.wide_comb", "seeker.hatching", "seeker.sharp_sting",
+                "seeker.wide_comb_2", "seeker.feeding", "base.range.2", "seeker.deep_freeze_2", "seeker.shade",
+                "seeker.rich_brood", "seeker.ice_wake");
+        return List.of(new Strategy("focus", with(focus, "seeker.quick_brood")),
+                new Strategy("volley", with(volley, "seeker.quick_brood")),
+                new Strategy("wither", with(wither, "seeker.sharp_sting_2")));
+    }
+
+    private static Set<String> with(Set<String> nodes, String added) {
+        Set<String> all = new LinkedHashSet<>(nodes);
+        all.add(added);
+        return Set.copyOf(all);
+    }
 
     private static final String PREDICTIVE = "mortar.predictive_fire";
     private static final String WIDE_CRATER = "mortar.wide_crater";

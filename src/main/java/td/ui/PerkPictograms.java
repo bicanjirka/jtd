@@ -224,14 +224,14 @@ final class PerkPictograms {
             Map.entry("seeker.deep_freeze", "=effect.freeze"),
             // Wide Comb
             Map.entry("seeker.wide_comb", "F M4.4 20.4V9.6C4.4 6.6 5.8 4.4 7.6 2.8C9.4 4.4 10.8 6.6 10.8 9.6V20.4Z M13.2 20.4V9.6C13.2 6.6 14.6 4.4 16.4 2.8C18.2 4.4 19.6 6.6 19.6 9.6V20.4Z ; F M4.4 20.4L2.6 22.2V17.6L4.4 15.8Z M10.8 20.4L12.6 22.2V17.6L10.8 15.8Z M19.6 20.4L21.4 22.2V17.6L19.6 15.8Z ; X M4.4 9.4H10.8 M13.2 9.4H19.6"),
-            // Swarm
-            Map.entry("seeker.swarm", "=tower.swarm"),
+            // Volley
+            Map.entry("seeker.volley", "=tower.volley"),
             // Hatching
             Map.entry("seeker.hatching", "=tower.nest"),
             // Feeding
             Map.entry("seeker.feeding", "F M5.4 20.6V10.2C5.4 7.4 6.8 5.2 8.6 3.6C10.4 5.2 11.8 7.4 11.8 10.2V20.6Z ; X M5.4 10.6H11.8 ; S M15.4 19.6A6.2 6.2 0 0 0 17.6 7.6 ; F M14.6 5.2L19.8 4.6L18.4 9.8Z"),
             // Wide Comb II
-            Map.entry("seeker.wide_comb_2", "=seeker.wide_comb"),
+            Map.entry("seeker.wide_comb_2", "F M2 20.4V9.6C2 6.6 3 4.4 4.3 2.8C5.6 4.4 6.6 6.6 6.6 9.6V20.4Z M9.7 20.4V9.6C9.7 6.6 10.7 4.4 12 2.8C13.3 4.4 14.3 6.6 14.3 9.6V20.4Z M17.4 20.4V9.6C17.4 6.6 18.4 4.4 19.7 2.8C21 4.4 22 6.6 22 9.6V20.4Z ; X M2 9.4H6.6 M9.7 9.4H14.3 M17.4 9.4H22"),
             // Ruby
             Map.entry("seeker.ruby", "=tower.ruby"),
             // Shade
@@ -245,11 +245,11 @@ final class PerkPictograms {
             // Rich Brood
             Map.entry("seeker.rich_brood", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M15.2 16.6L16 18.6L18 19.4L16 20.2L15.2 22.2L14.4 20.2L12.4 19.4L14.4 18.6Z ; F M21 11.8L18 15.8H20L19.2 19.2L22.4 14.8H20.4Z"),
             // Deep Freeze II
-            Map.entry("seeker.deep_freeze_2", "=effect.freeze"),
-            // Quick Brood II
-            Map.entry("seeker.quick_brood_2", "=pulse.quick_toll"),
+            Map.entry("seeker.deep_freeze_2", "S M3 6L12 2L21 6V18L12 22L3 18Z ; F M12 8L16.5 10.2V15L12 17.2L7.5 15V10.2Z"),
+            // Quick Brood: an egg with its speed streaks
+            Map.entry("seeker.quick_brood", "F M15 3.6C19 3.6 22 9 22 14C22 18.6 19 21.4 15 21.4C11 21.4 8 18.6 8 14C8 9 11 3.6 15 3.6Z ; T M2.4 10H6 M1.6 13H5.4 M2.4 16H6"),
             // Sharp Sting II
-            Map.entry("seeker.sharp_sting_2", "=seeker.sharp_sting"));
+            Map.entry("seeker.sharp_sting_2", "F M8 2.6L10.8 13.4H5.2Z M16 2.6L18.8 13.4H13.2Z ; F O8 18 2.6 ; F O16 18 2.6"));
 
     private PerkPictograms() {
     }

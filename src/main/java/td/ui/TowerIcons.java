@@ -147,11 +147,11 @@ final class TowerIcons {
         return Icon.of(circ(-0.08, 0.08, 0.30), both(rot(nozzle, -40), circ(-0.08, 0.08, 0.1)));
     }
 
-    /** A perch in its ring and one missile on the ring. */
+    /** A perch in its ring and the three missiles of its nest on the ring. */
     private static Icon aerie() {
-        Shape missile = at(rot(poly(0.12, 0, -0.08, 0.075, -0.04, 0, -0.08, -0.075), 90), -50, 0.40);
+        Shape missile = rot(poly(0.12, 0, -0.08, 0.075, -0.04, 0, -0.08, -0.075), 90);
         return Icon.of(both(minus(circ(0, 0, 0.33), circ(0, 0, 0.25)), ngon(0, 0, 6, 0.16, 0)),
-                both(missile, ngon(0, 0, 6, 0.07, 30)));
+                both(at(missile, -90, 0.40), at(missile, 30, 0.40), at(missile, 150, 0.40), ngon(0, 0, 6, 0.07, 30)));
     }
 
     /** A stone seen from above, two of its faces lit. */
