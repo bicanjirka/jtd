@@ -43,12 +43,13 @@ public final class ShrapnelMechanic implements MortarMechanic {
         return this.bleeds(SHARE + " a cell");
     }
 
+    /** The figures are the blast before any enemy's defences, which the words leave unsaid, as every damage figure does. */
     @Override
     public TermText describe(TowerStats stats) {
         int heavy = ShellKind.HEAVY.damage(stats.damage(), stats.value(TowerStat.NORMAL_DAMAGE),
                 stats.value(TowerStat.HEAVY_DAMAGE));
         return this.bleeds(SHARE + " (about " + points(bleedPerCell(heavy)) + " at full damage, "
-                + points(bleedPerCell(heavy * ShellKind.HEAVY.blast().edgeShare())) + " at its edge, before armor) a cell");
+                + points(bleedPerCell(heavy * ShellKind.HEAVY.blast().edgeShare())) + " at its edge) a cell");
     }
 
     private TermText bleeds(String perCell) {

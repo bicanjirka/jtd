@@ -37,10 +37,11 @@ public final class HemorrhageMechanic implements SniperMechanic {
         return this.bleeds(SHARE + " a cell");
     }
 
+    /** The figure is the crit before any enemy's defences, which the words leave unsaid, as every damage figure does. */
     @Override
     public TermText describe(TowerStats stats) {
         float points = DamageUnits.inPoints(Math.round(stats.critDamage() * SHARE_PER_CELL));
-        return this.bleeds(SHARE + " (about " + TermNumbers.number(points) + " before armor) a cell");
+        return this.bleeds(SHARE + " (about " + TermNumbers.number(points) + ") a cell");
     }
 
     private TermText bleeds(String perCell) {
