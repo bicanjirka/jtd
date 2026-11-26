@@ -1,6 +1,6 @@
 # Feature Request: Second missile damage as a stat
 
-Status: requested.
+**Status: implemented.**
 
 ## Summary
 
@@ -45,6 +45,5 @@ damage, so the player sees it, nodes can change it and its points can't be mixed
 - Ruby and Shade each stay at +20 points; numbers are the balancing agent's.
 - No save-format change is expected: stats are rebuilt from the nodes owned.
 
-## Open questions
-
-1. **One stat or two.** A single second-missile figure, or one for Ruby and one for Shade?
+- One stat, `TowerStat.SECOND_MISSILE_DAMAGE`: Ruby and Shade are one pick-one cluster, so a tower holds at most one
+  second kind. Each node sets it (`TowerModifiers.secondMissileDamage`); a kind only says whether it adds the stat.

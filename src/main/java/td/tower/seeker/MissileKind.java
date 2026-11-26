@@ -1,8 +1,9 @@
 package td.tower.seeker;
 
-import td.damage.DamageUnits;
 import td.effect.IceKind;
 import td.projectile.MissileLook;
+import td.tower.TowerStat;
+import td.tower.TowerStats;
 import td.tower.TowerTerm;
 
 /**
@@ -11,22 +12,22 @@ import td.tower.TowerTerm;
  */
 public enum MissileKind {
     /** The plain missile: its freeze is ice. */
-    FROST(TowerTerm.FROST_MISSILE, 0f, IceKind.FROST, MissileLook.STANDARD, false, false),
+    FROST(TowerTerm.FROST_MISSILE, false, IceKind.FROST, MissileLook.STANDARD, false, false),
     /** More damage, and a freeze in ruby that holds the freeze-immune. */
-    RUBY(TowerTerm.RUBY, 20f, IceKind.RUBY, MissileLook.RUBY, false, false),
+    RUBY(TowerTerm.RUBY, true, IceKind.RUBY, MissileLook.RUBY, false, false),
     /** More damage, as Shadow, past every Shield; and no regeneration for as long as its freeze. */
-    SHADE(TowerTerm.SHADE, 20f, IceKind.SHADE, MissileLook.SHADE, true, true);
+    SHADE(TowerTerm.SHADE, true, IceKind.SHADE, MissileLook.SHADE, true, true);
 
     private final TowerTerm term;
-    private final float damageBonus;
+    private final boolean second;
     private final IceKind ice;
     private final MissileLook look;
     private final boolean shadow;
     private final boolean withers;
 
-    MissileKind(TowerTerm term, float damageBonus, IceKind ice, MissileLook look, boolean shadow, boolean withers) {
+    MissileKind(TowerTerm term, boolean second, IceKind ice, MissileLook look, boolean shadow, boolean withers) {
         this.term = term;
-        this.damageBonus = damageBonus;
+        this.second = second;
         this.ice = ice;
         this.look = look;
         this.shadow = shadow;
@@ -37,14 +38,9 @@ public enum MissileKind {
         return this.term;
     }
 
-    /** The points its hit deals on top of the tower's damage. */
-    public float damageBonus() {
-        return this.damageBonus;
-    }
-
-    /** What its hit deals with the tower's {@code damage}, before the hit's adjustment. */
-    public float damageWith(float damage) {
-        return damage + DamageUnits.ofPoints(this.damageBonus);
+    /** What its hit deals at the tower's {@code stats}, before the hit's adjustment: a second kind adds its own stat. */
+    public float damageWith(TowerStats stats) {
+        return stats.damage() + (this.second ? stats.value(TowerStat.SECOND_MISSILE_DAMAGE) : 0f);
     }
 
     public IceKind ice() {

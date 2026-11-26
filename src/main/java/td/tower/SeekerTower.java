@@ -106,8 +106,10 @@ public final class SeekerTower extends AbstractTower {
             .inTier(1);
 
     private static final UpgradeNode RUBY = UpgradeNode.of("seeker.ruby", "Ruby", 25)
+            .withModifiers(TowerModifiers.secondMissileDamage(20f))
             .inTier(2);
     private static final UpgradeNode SHADE = UpgradeNode.of("seeker.shade", "Shade", 25)
+            .withModifiers(TowerModifiers.secondMissileDamage(20f))
             .inTier(2);
     private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 10)
             .inTier(2);
@@ -176,7 +178,8 @@ public final class SeekerTower extends AbstractTower {
     public SeekerTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SEEKER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .with(TowerStat.FREEZE_DURATION, FREEZE_TICKS).with(TowerStat.NEST_CAPACITY, NEST_SIZE)
-                .with(TowerStat.PROJECTILE_SPEED, MISSILE_SPEED).with(TowerStat.HUNT_RADIUS, HUNT_CELLS), context, x, y);
+                .with(TowerStat.PROJECTILE_SPEED, MISSILE_SPEED).with(TowerStat.HUNT_RADIUS, HUNT_CELLS)
+                .with(TowerStat.SECOND_MISSILE_DAMAGE, 0f), context, x, y);
     }
 
     @Override
@@ -316,7 +319,7 @@ public final class SeekerTower extends AbstractTower {
         MissileKind kind = shot.kind();
         Optional<IceKind> iceBefore = iceOn(target);
         HitAdjustment adjustment = this.hitAdjustment(target, HitKind.MISSILE, 0f, stats);
-        int amount = Math.round(kind.damageWith(stats.damage()) * adjustment.damageFactor());
+        int amount = Math.round(kind.damageWith(stats) * adjustment.damageFactor());
         HitResult hit = this.landHit(target, Damage.magic(amount), this.profileOf(shot, adjustment).asAimed());
         if (hit.dodged()) {
             return;
@@ -383,7 +386,7 @@ public final class SeekerTower extends AbstractTower {
     /** The ice bursts: every other enemy close by takes a share of the damage of the missile that froze it. */
     private void shatter(FrozenLedger.Freeze freeze) {
         Shot shot = new Shot(freeze.kind(), freeze.stats());
-        Damage damage = Damage.magic(Math.round(freeze.kind().damageWith(freeze.stats().damage())
+        Damage damage = Damage.magic(Math.round(freeze.kind().damageWith(freeze.stats())
                 * ShatterMechanic.SHARE));
         AttackProfile profile = this.profileOf(shot, HitAdjustment.none());
         float radius = ShatterMechanic.RADIUS_CELLS * this.cellPixels();

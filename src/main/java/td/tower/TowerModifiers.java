@@ -137,6 +137,10 @@ public final class TowerModifiers {
         return flat(TowerStat.HEAVY_DAMAGE, DamageUnits.ofPoints(points));
     }
 
+    public static StatModifiers<TowerStat> secondMissileDamage(float points) {
+        return flat(TowerStat.SECOND_MISSILE_DAMAGE, DamageUnits.ofPoints(points));
+    }
+
     /** The cone {@code factor} times as wide, after every flat and percent bonus. */
     public static StatModifiers<TowerStat> coneTimes(float factor) {
         return StatModifiers.of(TowerStat.CONE_WIDTH, StatModifier.times(factor));

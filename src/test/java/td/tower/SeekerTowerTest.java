@@ -76,6 +76,18 @@ class SeekerTowerTest {
         }
     }
 
+    /** What the next {@code kind} missile deals a fresh enemy, after landing the others ahead of it. */
+    private int hitOf(SeekerTower tower, MissileKind kind) {
+        tower.readyForWave();
+        while (tower.nestMissiles().getFirst() != kind) {
+            this.landFreezes(tower, 1);
+        }
+        FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
+        this.enemies(target);
+        this.landOne(tower);
+        return target.onlyHitAmount();
+    }
+
     /** The ticks until the nest takes in a missile, with no enemy about. */
     private int ticksToTheNextLoad(SeekerTower tower) {
         this.enemies();
@@ -398,7 +410,7 @@ class SeekerTowerTest {
         this.landOne(tower);
 
         assertThat(immune.onlyHitAmount()).isEqualTo(
-                Math.round(tower.damageCurrent() + DamageUnits.ofPoints(MissileKind.RUBY.damageBonus())));
+                Math.round(tower.damageCurrent() + tower.stats().value(TowerStat.SECOND_MISSILE_DAMAGE)));
         assertThat(immune.activeEffects()).anySatisfy(effect -> assertThat(effect.ice()).isEqualTo(IceKind.RUBY));
     }
 
@@ -413,8 +425,23 @@ class SeekerTowerTest {
         this.landOne(tower);
 
         assertThat(shielded.onlyHitAmount()).isEqualTo(
-                Math.round(tower.damageCurrent() + DamageUnits.ofPoints(MissileKind.SHADE.damageBonus())));
+                Math.round(tower.damageCurrent() + tower.stats().value(TowerStat.SECOND_MISSILE_DAMAGE)));
         assertThat(shielded.hasEffect(EffectKind.FREEZE)).isTrue();
+    }
+
+    @Test
+    void moreSecondMissileDamageMakesASecondMissileHitHarderAndLeavesAFrostHitAlone() {
+        SeekerTower plain = this.towerWith("Ruby");
+        int plainFrost = this.hitOf(plain, MissileKind.FROST);
+        int plainSecond = this.hitOf(plain, MissileKind.RUBY);
+        SeekerTower charged = TowerFixtures.buffed(this.towerWith("Ruby"), this.context,
+                TowerModifiers.secondMissileDamage(30f));
+
+        int frostGain = this.hitOf(charged, MissileKind.FROST) - plainFrost;
+        int secondGain = this.hitOf(charged, MissileKind.RUBY) - plainSecond;
+
+        assertThat(frostGain).isZero();
+        assertThat(DamageUnits.inPoints(secondGain)).isEqualTo(30f);
     }
 
     @Test
@@ -450,7 +477,7 @@ class SeekerTowerTest {
 
         assertThat(ice).isEqualTo(IceKind.SHADE);
         assertThat(close.onlyHitAmount()).isEqualTo(
-                Math.round((tower.damageCurrent() + DamageUnits.ofPoints(MissileKind.SHADE.damageBonus())) * ShatterMechanic.SHARE));
+                Math.round((tower.damageCurrent() + tower.stats().value(TowerStat.SECOND_MISSILE_DAMAGE)) * ShatterMechanic.SHARE));
     }
 
     @Test
@@ -509,7 +536,7 @@ class SeekerTowerTest {
 
         assertThat(beforeThaw).containsExactly(1, 0, 0);
         assertThat(close.onlyHitAmount()).isEqualTo(
-                Math.round((tower.damageCurrent() + DamageUnits.ofPoints(MissileKind.FROST.damageBonus())) * ShatterMechanic.SHARE));
+                Math.round(tower.damageCurrent() * ShatterMechanic.SHARE));
         assertThat(far.hits()).isEmpty();
         assertThat(frozen.hits()).hasSize(1);
     }

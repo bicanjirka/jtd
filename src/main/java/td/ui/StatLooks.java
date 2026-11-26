@@ -81,6 +81,7 @@ final class StatLooks {
             case DAMAGE -> StatLook.plain(Glyph.DOT);
             case ATTACK_SPEED, NORMAL_LOAD, CHAIN_LOAD, PAYLOAD_LOAD, HEAVY_LOAD, NUKE_LOAD -> StatLook.plain(Glyph.CHEVRON);
             case NORMAL_DAMAGE, HEAVY_DAMAGE -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_PHYSICAL);
+            case SECOND_MISSILE_DAMAGE -> StatLook.toned(Glyph.CHEVRON, Palette.DAMAGE_MAGIC);
             case STREAM -> StatLook.face(TermLooks.faceOf(TowerTerm.STREAM));
             case RELOAD -> StatLook.plain(Glyph.FILLED_DIAMOND);
             case CRIT_CHANCE, CRIT_MULTIPLIER -> StatLook.toned(Glyph.SPARK, Palette.CRIT_SPARK);
