@@ -72,8 +72,6 @@ public final class TowerBench {
     static final String LINE = "line";
     static final String BEFORE = "before";
     static final String FULL = "full";
-    /** Nodes the user prices by hand: situational, so no build the bench measures owns them. */
-    static final Set<String> PRICED_BY_HAND = Set.of("mortar.flare");
     static final String WITHOUT = "without";
     static final String WITHOUT_AT_TOP = "without-top";
     static final String STRATEGY = "strategy";
@@ -488,9 +486,6 @@ public final class TowerBench {
         Map<String, Build> builds = new LinkedHashMap<>();
         builds.put(BARE, Build.of(BARE, BARE, resolve(type, Set.of())));
         for (UpgradeNode node : tree.nodes()) {
-            if (PRICED_BY_HAND.contains(node.id())) {
-                continue;
-            }
             Set<String> line = tree.pathTo(node).stream().map(UpgradeNode::id)
                     .collect(Collectors.toCollection(LinkedHashSet::new));
             Resolved with = resolve(type, line);
@@ -573,7 +568,7 @@ public final class TowerBench {
             boolean picked = tree.clusterOf(node)
                     .map(cluster -> picks.getOrDefault(cluster, cluster.memberIds().getFirst()).equals(node.id()))
                     .orElse(true);
-            if (node.tier() <= maxTier && picked && !node.id().equals(without) && !PRICED_BY_HAND.contains(node.id())) {
+            if (node.tier() <= maxTier && picked && !node.id().equals(without)) {
                 ids.add(node.id());
             }
         }

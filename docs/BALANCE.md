@@ -229,8 +229,7 @@ Every scenario is fought twice: alone, and beside two fixed partners, a bare Sni
 Snipers for tank, or a bare Obelisk, Sniper and Aerie for controlled (the column ending in `+`, counting what all of them hold; `tower-scenarios.tsv` has what the partners hold by themselves). The
 second is where a tower that only helps others shows, and where a tower that holds nothing alone shows what it adds. A Mortar starts each fight with its magazine drawn from its build, as a wave long after the purchase finds it, not with the shells it held before its nodes.
 
-The builds are read off each tower's tree, so a new tier, node, cluster or tower needs no change to the tool. A node the user prices by hand (`TowerBench.PRICED_BY_HAND`, the Mortar's Flare) is in no build, so a situational node never drags a stage or a cluster. The
-one exception is a `strategy`: a build a tower's retune names, listed by its nodes in `StrategyBuilds`:
+The builds are read off each tower's tree, so a new tier, node, cluster or tower needs no change to the tool. The one exception is a `strategy`: a build a tower's retune names, listed by its nodes in `StrategyBuilds`:
 
 | Role | Build | Set against (`versus`) |
 | --- | --- | --- |

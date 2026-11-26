@@ -26,23 +26,10 @@ class TowerBenchTest {
             List<TowerBench.Build> builds = TowerBench.buildsOf(type);
 
             for (UpgradeNode node : TowerFactory.createTower(type, WorldFixtures.newWorld(), 0, 0).upgradeTree().nodes()) {
-                if (TowerBench.PRICED_BY_HAND.contains(node.id())) {
-                    continue;
-                }
                 for (String role : List.of(TowerBench.LINE, TowerBench.WITHOUT, TowerBench.WITHOUT_AT_TOP)) {
                     assertThat(TowerBench.weighing(builds, role, node.id())).as(role + " " + node.id()).isNotEmpty();
                 }
             }
-        }
-    }
-
-    @Test
-    void noBuildTheBenchMeasuresOwnsANodePricedByHand() {
-        for (TowerFactory.Type type : TowerFactory.Type.values()) {
-            List<TowerBench.Build> builds = TowerBench.buildsOf(type);
-
-            assertThat(builds).allSatisfy(build -> assertThat(build.owned()).doesNotContainAnyElementsOf(
-                    TowerBench.PRICED_BY_HAND));
         }
     }
 
