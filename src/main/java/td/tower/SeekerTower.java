@@ -12,6 +12,7 @@ import td.enemy.HitResult;
 import td.projectile.MissileGuide;
 import td.projectile.MissileProjectile;
 import td.projectile.ProjectileStats;
+import td.stat.StatBreakdown;
 import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.proc.HitAdjustment;
@@ -452,12 +453,21 @@ public final class SeekerTower extends AbstractTower {
         return DamageType.MAGIC;
     }
 
+    /** How a missile flies is on its own popup in the nest, not on the tower's sheet. */
     @Override
-    protected List<TowerStatLine> ownStats(TowerStats stats) {
-        ProjectileStats missile = this.missileStats(stats, MissileKind.FROST);
-        return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED,
-                        stats.value(TowerStat.PROJECTILE_SPEED)),
-                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, missile.size()));
+    protected boolean listsRow(TowerStat stat) {
+        return switch (stat) {
+            case PROJECTILE_SPEED, PROJECTILE_SIZE, HUNT_RADIUS -> false;
+            default -> true;
+        };
+    }
+
+    /** How its missiles fly now: their speed, size and how far round they look for a new enemy. */
+    private List<StatBreakdown> missileRows() {
+        TowerStats stats = this.stats();
+        return List.of(StatBreakdown.unchanged(TowerStatRow.PROJECTILE_SPEED, stats.value(TowerStat.PROJECTILE_SPEED)),
+                StatBreakdown.unchanged(TowerStatRow.PROJECTILE_SIZE, this.missileStats(stats, MissileKind.FROST).size()),
+                this.liveBreakdown(TowerStat.HUNT_RADIUS));
     }
 
     /** Each kind of missile the nest holds, with how many, and the Release the next freeze sets off. */
@@ -467,7 +477,7 @@ public final class SeekerTower extends AbstractTower {
         this.nest.missiles().forEach(kind -> held.merge(kind, 1, Integer::sum));
         List<TowerBuffState> states = new ArrayList<>();
         held.forEach((kind, count) -> states.add(TowerBuffState.of(kind.term(), TermText.of(count + " ready in the ")
-                .plus(TowerTerm.NEST)).withStacks(count)));
+                .plus(TowerTerm.NEST)).withStacks(count).withStats(this.missileRows())));
         if (this.releaseReady()) {
             TowerTerm release = this.spec().release() == Release.VOLLEY ? TowerTerm.VOLLEY : TowerTerm.HATCHING;
             states.add(TowerBuffState.of(release, TermText.of("the next ").plus(EffectKind.FREEZE)

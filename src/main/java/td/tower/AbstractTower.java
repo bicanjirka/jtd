@@ -1396,6 +1396,13 @@ public abstract class AbstractTower implements Tower {
                 stats.value(stat)), stat);
     }
 
+    /** {@code stat} as its row would read now, with what changed it. Game loop only. */
+    protected final StatBreakdown liveBreakdown(TowerStat stat) {
+        TowerStats now = this.stats;
+        StatModifiers<TowerStat> jam = jamChanges(now);
+        return this.statRow(stat, now, changed -> this.partsOf(changed, jam)).breakdown();
+    }
+
     /** Whether {@code stat} may be a row of this tower's sheet at all; a stat that belongs to what it fires leaves it. */
     protected boolean listsRow(TowerStat stat) {
         return true;

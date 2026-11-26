@@ -366,6 +366,7 @@ final class TowerSheetText {
             rows.add(Row.plain(Glyph.DOT, "Stacks", TermNumbers.number(state.stacks())));
         }
         state.changes().stats().forEach(stat -> rows.add(StatRowText.change(stat, state.changes().get(stat), WORDING)));
+        rows.addAll(StatRowText.live(state.stats(), WORDING));
         return new SheetIcon(face, TooltipKey.ofTerm("condition", state.term()),
                 TermSheets.of(state.term(), state.detail(), rows));
     }

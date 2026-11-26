@@ -24,3 +24,5 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   made.
 - How strong the ice is lives on the effect (`IceKind`), so a Ruby freeze holds an enemy immune to freezing through
   `Effect.isKeptOffBy`, not through a check in the tower.
+- How a missile flies (its speed, size and hunt radius) is on each kind's popup in the nest's Buffs row
+  (`TowerBuffState.stats`), so `SeekerTower.listsRow` leaves those stats off the tower's sheet.
