@@ -175,6 +175,10 @@ public final class TowerModifiers {
         return flat(TowerStat.NEST_CAPACITY, missiles);
     }
 
+    public static StatModifiers<TowerStat> huntRadius(float cells) {
+        return flat(TowerStat.HUNT_RADIUS, cells);
+    }
+
     public static StatModifiers<TowerStat> aimStacks(int stacks) {
         return flat(TowerStat.AIM_STACKS, stacks);
     }

@@ -97,6 +97,7 @@ final class StatLooks {
             case REVEAL_TIME -> StatLook.face(TermLooks.faceOf(EffectKind.REVEALED));
             case PROJECTILE_SPEED, PROJECTILE_SIZE -> StatLook.plain(Glyph.COMET);
             case NEST_CAPACITY -> StatLook.plain(Glyph.PIP);
+            case HUNT_RADIUS -> StatLook.plain(Glyph.COMET);
             case BOUNTY -> StatLook.face(TermLooks.faceOf(StatusTerm.CASH));
             case DISRUPTION_TAKEN -> StatLook.toned(Glyph.FILLED_DIAMOND, Palette.DISRUPTION);
         };

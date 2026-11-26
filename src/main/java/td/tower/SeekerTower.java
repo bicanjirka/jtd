@@ -79,7 +79,7 @@ public final class SeekerTower extends AbstractTower {
     private static final float NEST_SIZE = 3f;
     private static final int LAUNCH_GAP_TICKS = 4;
     /** How far around itself a missile that lost its enemy looks for another. */
-    private static final float RETARGET_CELLS = 2f;
+    private static final float HUNT_CELLS = 2f;
     private static final TargetSelector SOONEST_OUT = PreferringSelector.priority(new SoonestOutSelector());
 
     private static final UpgradeNode QUICK_BROOD = UpgradeNode.of("seeker.quick_brood", "Quick Brood", 9)
@@ -88,8 +88,8 @@ public final class SeekerTower extends AbstractTower {
             .withModifiers(TowerModifiers.freezeDuration(6));
     private static final UpgradeNode WIDE_COMB = UpgradeNode.of("seeker.wide_comb", "Wide Comb", 3)
             .withModifiers(TowerModifiers.nestCapacity(2));
-    private static final UpgradeNode LONG_FLIGHT = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Flight", 3)
-            .withModifiers(TowerModifiers.range(1f));
+    private static final UpgradeNode LONG_FLIGHT = UpgradeNode.of("seeker.long_flight", "Long Flight", 3)
+            .withModifiers(TowerModifiers.huntRadius(1f));
 
     private static final UpgradeNode SWARM = UpgradeNode.of("seeker.swarm", "Swarm", 16)
             .inTier(1);
@@ -111,8 +111,8 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode SHARP_STING = UpgradeNode.of("seeker.sharp_sting", "Sharp Sting", 39)
             .withModifiers(TowerModifiers.damage(10f))
             .inTier(2);
-    private static final UpgradeNode LONG_FLIGHT_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Flight II", 10)
-            .withModifiers(TowerModifiers.range(1f))
+    private static final UpgradeNode HIGH_PERCH = UpgradeNode.of(RangeNodes.RANGE_2_ID, "High Perch", 10)
+            .withModifiers(TowerModifiers.range(1f).plus(TowerModifiers.huntRadius(1f)))
             .inTier(2);
 
     private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 22)
@@ -131,7 +131,7 @@ public final class SeekerTower extends AbstractTower {
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(QUICK_BROOD, DEEP_FREEZE, WIDE_COMB, LONG_FLIGHT))
             .with(SWARM, HATCHING, FEEDING, SWIFT_WINGS, WIDE_COMB_2,
-                    RUBY, SHADE, SHARP_STING, LONG_FLIGHT_2,
+                    RUBY, SHADE, SHARP_STING, HIGH_PERCH,
                     ICE_WAKE, SHATTER, RICH_BROOD, DEEP_FREEZE_2, QUICK_BROOD_2)
             .withCluster(UpgradeCluster.of("Release", SWARM, HATCHING))
             .withCluster(UpgradeCluster.of("Second missile", RUBY, SHADE))
@@ -168,7 +168,7 @@ public final class SeekerTower extends AbstractTower {
     public SeekerTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.SEEKER, new TowerBaseStats(DAMAGE_POINTS, RANGE, COOLDOWN_MAX)
                 .with(TowerStat.FREEZE_DURATION, FREEZE_TICKS).with(TowerStat.NEST_CAPACITY, NEST_SIZE)
-                .with(TowerStat.PROJECTILE_SPEED, 1f), context, x, y);
+                .with(TowerStat.PROJECTILE_SPEED, 1f).with(TowerStat.HUNT_RADIUS, HUNT_CELLS), context, x, y);
     }
 
     @Override
@@ -513,7 +513,7 @@ public final class SeekerTower extends AbstractTower {
 
         @Override
         public Optional<EnemyMob> retarget(double x, double y) {
-            float radius = RETARGET_CELLS * SeekerTower.this.cellPixels();
+            float radius = this.shot.stats().value(TowerStat.HUNT_RADIUS) * SeekerTower.this.cellPixels();
             List<EnemyMob> near = InRangeTargetQuery.visible((int) Math.round(x), (int) Math.round(y), radius)
                     .matching(SeekerTower.this.context.enemies()).stream()
                     .filter(enemy -> !enemy.hasEffect(EffectKind.FREEZE))

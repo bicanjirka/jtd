@@ -51,7 +51,7 @@ final class UpgradeTreePlans {
             tier(row(cluster("Burning", 0f), node("cinder.hot_flame_2", 3.3f), node("cinder.long_stream_2", 4.3f))));
 
     private static final UpgradeTreePlan SEEKER = UpgradeTreePlan.of(
-            tier(row(node("seeker.deep_freeze", 0f), node("base.range", 2f), node("seeker.quick_brood", 4f),
+            tier(row(node("seeker.deep_freeze", 0f), node("seeker.long_flight", 2f), node("seeker.quick_brood", 4f),
                     node("seeker.wide_comb", 5f))),
             tier(row(node("seeker.feeding", 0f), node("seeker.swift_wings", 1.3f), cluster("Release", 2.6f),
                     node("seeker.wide_comb_2", 5f))),

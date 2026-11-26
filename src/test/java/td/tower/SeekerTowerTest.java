@@ -230,6 +230,34 @@ class SeekerTowerTest {
         assertThat(only.hits()).isNotEmpty();
     }
 
+    /**
+     * Whether a missile whose enemy is gone at once finds one half a cell past the bare tower's hunt, with
+     * {@code wider} cells more.
+     */
+    private boolean huntsHalfACellPastTheBareHunt(float wider) {
+        this.context = WorldFixtures.newWorldOnBoard(SCALE, 20, 20);
+        SeekerTower tower = this.towerWith();
+        double off = (tower.stats().value(TowerStat.HUNT_RADIUS) + 0.5) * SCALE;
+        TowerFixtures.buffed(tower, this.context, TowerModifiers.huntRadius(wider));
+        FakeEnemyMob first = this.enemyAt(tower, OUT, 0).withDistanceToExit(10);
+        FakeEnemyMob beyond = this.enemyAt(tower, -off, 0).withDistanceToExit(500);
+        this.enemies(first, beyond);
+        tower.doTick(this.tick++);
+
+        first.invalidate();
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+        return !beyond.hits().isEmpty();
+    }
+
+    @Test
+    void aMissileHuntsAsFarRoundItselfAsItsHuntRadius() {
+        boolean bare = this.huntsHalfACellPastTheBareHunt(0f);
+        boolean wider = this.huntsHalfACellPastTheBareHunt(1f);
+
+        assertThat(bare).isFalse();
+        assertThat(wider).isTrue();
+    }
+
     @Test
     void aMissileWithNothingLeftToHuntFliesHomeIntoTheNest() {
         SeekerTower tower = this.towerWith();

@@ -706,9 +706,9 @@ class AbstractTowerTest {
 
     @Test
     void aNodeNotYetOwnedPreviewsTheRowItMovesOnTheLastingStats() {
-        SeekerTower tower = new SeekerTower(this.context, 0, 0);
+        UpgradeNode range = UpgradeNode.of("test.range", "Range", 1).withModifiers(TowerModifiers.range(1f));
+        FakeTower tower = FakeTower.offering(this.context, 0, 0, UpgradeTree.of(List.of(range)));
         this.context.towers().add(tower);
-        UpgradeNode range = UpgradePaths.named(tower, "Long Flight");
 
         UpgradeBonus bonus = tower.wordsOf(range).stats().getFirst();
 

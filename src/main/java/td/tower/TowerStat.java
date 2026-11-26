@@ -108,6 +108,9 @@ public enum TowerStat implements StatKey, StatTerm {
             StatDirection.NEUTRAL, StatGroup.DELIVERY, Shows.IN_CORE_ROW, false),
     NEST_CAPACITY(0f, 0f, Float.MAX_VALUE, StatUnit.MISSILES, "Nest", "Nest capacity", StatDirection.HIGHER,
             StatGroup.DELIVERY, Shows.OFF_DEFAULT, false),
+    /** How far round itself a missile in flight looks for a new enemy. */
+    HUNT_RADIUS(0f, 0f, Float.MAX_VALUE, StatUnit.CELLS, "Hunt", "Hunt radius", StatDirection.HIGHER,
+            StatGroup.DELIVERY, Shows.OFF_DEFAULT, false),
     BOUNTY(0f, 0f, Float.MAX_VALUE, StatUnit.SIGNED_PERCENT, "Bounty bonus", "Bounty bonus", StatDirection.HIGHER,
             StatGroup.ECONOMY, Shows.OFF_DEFAULT, true),
     /** The share of an enemy's disruption that reaches the tower. */
@@ -255,6 +258,8 @@ public enum TowerStat implements StatKey, StatTerm {
             case PROJECTILE_SPEED -> TermText.of("how fast its shots fly, as a share of the usual");
             case PROJECTILE_SIZE -> TermText.of("how big its shots are, as a share of the usual");
             case NEST_CAPACITY -> TermText.of("how many missiles it can store");
+            case HUNT_RADIUS -> TermText.of("how far round itself a missile in flight looks for a new enemy before it "
+                    + "flies home");
             case BOUNTY -> TermText.of("extra cash for each kill it makes");
             case DISRUPTION_TAKEN -> TermText.format("the share of {} it takes from enemies",
                     TowerTerm.JAMMED);
