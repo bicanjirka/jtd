@@ -60,7 +60,7 @@ final class StrategyBuilds {
                 "mortar.big_bore_2", "base.range");
         Set<String> heavy = Set.of("mortar.big_bore", "mortar.big_bore_2", "mortar.heavy_charge", CRACKING, CONCUSSION, OVERCHARGE, "base.range", "mortar.barrage",
                 "mortar.rich_mix", "mortar.deep_crack", "mortar.quick_reload");
-        Set<String> normal = Set.of("mortar.heavy_charge", "mortar.packed_charge", CRACKING, "base.range",
+        Set<String> normal = Set.of("mortar.predictive_fire", "mortar.flare", "mortar.packed_charge", CRACKING, "base.range",
                 "mortar.deep_crack", "mortar.quick_load", "mortar.quick_reload");
         List<Strategy> strategies = new ArrayList<>(List.of(new Strategy("nuke", nuke), bled("nuke", nuke),
                 new Strategy("heavy-bores", bores), bled("heavy-bores", bores),

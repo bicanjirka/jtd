@@ -131,7 +131,7 @@ public final class MortarTower extends AbstractTower {
             .inTier(1);
     private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 15)
             .inTier(1);
-    private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 15)
+    private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 5)
             .inTier(1);
     private static final UpgradeCondition A_PAYLOAD = UpgradeCondition.owns(NAPALM.id())
             .or(UpgradeCondition.owns(TAR_SHELL.id())).or(UpgradeCondition.owns(CRYO.id()));
@@ -513,7 +513,7 @@ public final class MortarTower extends AbstractTower {
             this.crack(enemy, spec);
             this.carryPayload(enemy, shell, spec);
             if (kind == ShellKind.HEAVY) {
-                this.rideHeavy(enemy, spec.heavy(), inCore, stats);
+                this.rideHeavy(enemy, spec.heavy(), inCore, stats, damage);
             }
         }
         if (kind.irradiatesTheBoard()) {
@@ -550,7 +550,7 @@ public final class MortarTower extends AbstractTower {
     }
 
     /** What a Heavy's pick puts on an enemy its blast reached: a Daze by zone, or a Bleed. */
-    private void rideHeavy(EnemyMob enemy, HeavyRider rider, boolean inCore, TowerStats stats) {
+    private void rideHeavy(EnemyMob enemy, HeavyRider rider, boolean inCore, TowerStats stats, int heavyDamage) {
         switch (rider) {
             case NONE -> {
             }
@@ -560,7 +560,7 @@ public final class MortarTower extends AbstractTower {
             }
             case SHRAPNEL -> {
                 AttackProfile bleed = stats.attack().pastArmorAndPlating().asPeriodic();
-                this.applyEffect(enemy, _ -> Effect.bleeding(DamageUnits.ofPoints(ShrapnelMechanic.POINTS_PER_CELL), ShrapnelMechanic.BLEED_TICKS,
+                this.applyEffect(enemy, _ -> Effect.bleeding(Math.round(heavyDamage * ShrapnelMechanic.SHARE_PER_CELL), ShrapnelMechanic.BLEED_TICKS,
                         bled -> this.dealDamage(enemy, bled, bleed)));
             }
         }
