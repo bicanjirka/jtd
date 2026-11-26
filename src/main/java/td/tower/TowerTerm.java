@@ -28,7 +28,7 @@ public enum TowerTerm implements Term {
     NAPALM_SHELL("Napalm", Side.BUFF, "a payload whose blast is magic and leaves flames that apply {}", EffectKind.BURN),
     TAR_SHELL("Tar Shell", Side.BUFF, "a payload that leaves tar applying {} and {}", EffectKind.TARRED, EffectKind.POISON),
     CRYO_SHELL("Cryo", Side.BUFF, "a payload that leaves frost applying {}, and {} to an enemy that stays", EffectKind.CHILL, EffectKind.FREEZE),
-    FLARE("Flare", Side.BUFF, "a shell that leaves a flare lasting until the wave ends; every enemy that enters it gains {}", EffectKind.REVEALED),
+    FLARE("Flare", Side.BUFF, "a Normal shell that also leaves a flare lasting until the wave ends; every enemy that enters it gains {}", EffectKind.REVEALED),
     BARRAGE("Barrage", Side.BUFF, "the front shells loaded together and fired one after another at one target"),
     CARPET_BOMBING("Carpet Bombing", Side.BUFF, "the front shells loaded together, a Normal between each two, and laid along the path with the middle one on the target"),
     FROST_MISSILE("Frost", Side.BUFF, "the plain missile: it applies {} to the enemy it hits", EffectKind.FREEZE),

@@ -20,8 +20,8 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   would fire now, never the kind's constants read in the UI.
 - The chances the panel shows come from `MagazineSpec.chances()` (`MagazineOdds`, which counts Fusion and Rich Mix),
   never from the weights, which no player sees.
-- A shell hits for the Mortar's damage plus its kind's own points (`ShellKind.damage`): a Normal's are the
-  `NORMAL_DAMAGE` stat, a Heavy's the `HEAVY_DAMAGE` stat, a Nuke two Heavies. Its ground's pulse and a Bleed are flat
+- A shell hits for the Mortar's damage plus its kind's own points (`ShellKind.damage`): a Normal's and a Flare's
+  are the `NORMAL_DAMAGE` stat, a Heavy's the `HEAVY_DAMAGE` stat, a Nuke two Heavies. Its ground's pulse and a Bleed are flat
   points, never a share of the damage.
 - How much wider than the Mortar's blast a kind lands is on the kind (`ShellKind.wideningCells`): a Heavy's is the
   `HEAVY_BLAST` stat, a payload's its Payload spec's; a Nuke's blast is its own.

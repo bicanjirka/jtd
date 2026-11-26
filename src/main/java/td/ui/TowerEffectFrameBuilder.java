@@ -44,7 +44,6 @@ import td.ui.render.EmbersDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.ExecutionDraw;
 import td.ui.render.FlameDraw;
-import td.ui.render.FlashDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.FlockLook;
 import td.ui.render.FootDustDraw;
@@ -159,7 +158,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int SHATTER_SHARDS = 10;
     private static final float SHATTER_SHARD_CELLS = 0.18f;
     private static final float SHATTER_STROKE_CELLS = 0.06f;
-    private static final float BLAST_MARK_ALPHA = 0.4f;
     private static final float BLAST_CORE_RING_ALPHA = 0.7f;
     private static final float BLAST_EDGE_RING_ALPHA = 0.3f;
     /** A Heavy's fragments: how many fly out, how long each streak is as a share of the edge, and how thick. */
@@ -695,13 +693,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     public Void visitMortarTower(MortarTower tower) {
         for (BlastMark mark : tower.getBlastMarks()) {
             float ticks = this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha;
-            Optional<BlastLook> look = blastLookOf(mark);
-            float progress = ticks / look.map(TowerEffectFrameBuilder::blastTicks).orElse(FLASH_BLAST_TICKS);
+            BlastLook look = blastLookOf(mark);
+            float progress = ticks / blastTicks(look);
             if (progress < 0f || progress >= 1f) {
                 continue;
             }
-            look.ifPresentOrElse(detonation -> this.detonation(mark, detonation, progress),
-                    () -> this.blastMark(mark, progress));
+            this.detonation(mark, look, progress);
             if (mark.look() == ShellLook.NUKE && ticks < NUKE_WHITEOUT_TICKS) {
                 this.whiteOut(mark, 1f - ticks / NUKE_WHITEOUT_TICKS);
             }
@@ -771,20 +768,19 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 1f - coolDown, pose.has(TowerCue.VOLLEY), pose.stock(), pose.load()));
     }
 
-    /** The detonation a blast goes off in, a Heavy's as its pick marks it; a flare's is a flash with rings. */
-    private static Optional<BlastLook> blastLookOf(BlastMark mark) {
+    /** The detonation a blast goes off in, a Heavy's as its pick marks it; a flare goes off as a Normal shell. */
+    private static BlastLook blastLookOf(BlastMark mark) {
         return switch (mark.look()) {
-            case FLARE -> Optional.empty();
-            case NORMAL -> Optional.of(BlastLook.NORMAL);
-            case HEAVY -> Optional.of(switch (mark.rider()) {
+            case NORMAL, FLARE -> BlastLook.NORMAL;
+            case HEAVY -> switch (mark.rider()) {
                 case NONE -> BlastLook.HEAVY;
                 case SHRAPNEL -> BlastLook.SHRAPNEL;
                 case CONCUSSION -> BlastLook.CONCUSSION;
-            });
-            case NAPALM -> Optional.of(BlastLook.NAPALM);
-            case TAR -> Optional.of(BlastLook.TAR);
-            case CRYO -> Optional.of(BlastLook.CRYO);
-            case NUKE -> Optional.of(BlastLook.NUKE);
+            };
+            case NAPALM -> BlastLook.NAPALM;
+            case TAR -> BlastLook.TAR;
+            case CRYO -> BlastLook.CRYO;
+            case NUKE -> BlastLook.NUKE;
         };
     }
 
@@ -821,13 +817,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     /** A nuke's flash whitening the board, while one is going off; of two at once, the stronger shows. */
     public Optional<BoardFlashDraw> boardFlash() {
         return this.flashes.stream().max(Comparator.comparingDouble(BoardFlashDraw::strength));
-    }
-
-    /** A flare's blast: a flash over its edge and the rings of its reach. */
-    private void blastMark(BlastMark mark, float progress) {
-        this.draws.add(new FlashDraw(ProjectileFrameBuilder.paletteFor(mark.look()), (float) mark.at().x(),
-                (float) mark.at().y(), mark.edge(), (1f - progress) * BLAST_MARK_ALPHA));
-        this.blastRings(mark, progress);
     }
 
     /** A white ring round a blast's full-damage core, a fainter one round its edge. */

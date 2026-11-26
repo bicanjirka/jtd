@@ -29,7 +29,6 @@ import td.ui.render.EnemyRingDraw;
 import td.ui.render.EnemyTintDraw;
 import td.ui.render.ExecutionDraw;
 import td.ui.render.FlameDraw;
-import td.ui.render.FlashDraw;
 import td.ui.render.FlockDraw;
 import td.ui.render.FootDustDraw;
 import td.ui.render.HexRuneDraw;
@@ -1307,7 +1306,6 @@ public final class Java2DFrameRenderer {
                     colorFor(Palette.TOWER_SUNDIAL_UMBRA));
             case WardOutlineDraw ward -> paintWardOutline(g2, ward);
             case RingDraw ring -> this.paintRing(g2, ring);
-            case FlashDraw flash -> this.paintFlash(g2, flash);
             case StreamDraw stream -> paintStream(g2, stream);
             case NestDraw nest -> TowerLifeArt.nest(g2, nest);
             case FlockDraw flock -> TowerLifeArt.birds(g2, flock);
@@ -1413,12 +1411,6 @@ public final class Java2DFrameRenderer {
         float r = wake.radius();
         g2.draw(new Ellipse2D.Float(wake.centerX() - r, wake.centerY() - r, r * 2, r * 2));
         g2.setStroke(defaultStroke);
-    }
-
-    private void paintFlash(Graphics2D g2, FlashDraw flash) {
-        g2.setColor(withAlpha(colorFor(flash.palette()), Math.round(flash.alpha() * 255)));
-        g2.fill(new Ellipse2D.Float(flash.centerX() - flash.radius(), flash.centerY() - flash.radius(),
-                flash.radius() * 2, flash.radius() * 2));
     }
 
     private void paintRing(Graphics2D g2, RingDraw ring) {

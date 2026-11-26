@@ -212,7 +212,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Napalm | Buff | A payload whose blast is magic and leaves flames that apply Burn. |
 | Tar Shell | Buff | A payload that leaves tar applying Tar and Poison. |
 | Cryo | Buff | A payload that leaves frost applying Chill, and Freeze to an enemy that stays. |
-| Flare | Buff | A shell that leaves a flare lasting until the wave ends; every enemy that enters it gains Reveal. |
+| Flare | Buff | A Normal shell that also leaves a flare lasting until the wave ends; every enemy that enters it gains Reveal. |
 | Barrage | Buff | The front shells loaded together and fired one after another at one target. |
 | Carpet Bombing | Buff | The front shells loaded together, a Normal between each two, and laid along the path from the target back toward where the enemies come from. |
 | Frost | Buff | The plain missile: it applies Freeze to the enemy it hits. |

@@ -202,7 +202,8 @@ public enum TowerStat implements StatKey, StatTerm {
             case ATTACK_SPEED -> TermText.of("how often it attacks");
             case STREAM -> TermText.format("how long it pours before it reloads: {}", TowerTerm.STREAM);
             case RELOAD -> TermText.of("how long it waits after a stream before the next; attack speed shortens it");
-            case NORMAL_DAMAGE -> TermText.of("what a Normal shell deals past the Mortar's damage");
+            case NORMAL_DAMAGE -> TermText.format("what a Normal shell or a {} deals past the Mortar's damage",
+                    TowerTerm.FLARE);
             case HEAVY_DAMAGE -> TermText.format("what a {} deals past the Mortar's damage", TowerTerm.HEAVY_SHELL);
             case CRIT_CHANCE -> TermText.of("the chance a hit crits");
             case CRIT_MULTIPLIER -> TermText.of("what a crit deals, as a share of a normal hit");

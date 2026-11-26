@@ -37,8 +37,8 @@ public enum ShellKind {
             Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 14.4f))),
     CRYO(ShellLook.CRYO, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1.25f,
             Optional.of(Ground.fixed(ZoneKind.FROST_GROUND, 1.6f, 100, 0f))),
-    /** A small blast with no edge, and a flare that burns until the wave is over. */
-    FLARE(ShellLook.FLARE, DamageType.PHYSICAL, 0f, new Blast(-0.25f, -1f, 0f), 1.25f,
+    /** A Normal shell in all but the flare it leaves, which burns until the wave is over. */
+    FLARE(ShellLook.FLARE, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1f,
             Optional.of(Ground.fixed(ZoneKind.FLARE, 1.5f, Zone.UNTIL_WAVE_END, 0f)));
 
     /** The magic damage a second of the Radiation a Nuke's flash gives, as it starts. */
@@ -102,23 +102,26 @@ public enum ShellKind {
         return this == NAPALM || this == TAR || this == CRYO;
     }
 
-    /** The points it deals past the Mortar's damage; a Normal's and a Heavy's are the Mortar's stats, a Nuke's two Heavies'. */
+    /**
+     * The points it deals past the Mortar's damage; a Normal's and a Flare's are the Mortar's Normal damage, a Heavy's
+     * its Heavy damage, a Nuke's two Heavies'.
+     */
     public float extraPoints() {
         return this.extraPoints;
     }
 
     /**
      * What it deals, in hundredths of a point, for a Mortar that deals {@code base}, whose Normal deals
-     * {@code normalExtra} more and whose Heavy deals {@code heavyExtra} more: a Nuke is two Heavies, any other kind
-     * deals its own points more.
+     * {@code normalExtra} more and whose Heavy deals {@code heavyExtra} more: a Flare deals as a Normal, a Nuke as two
+     * Heavies, any other kind its own points more.
      */
     public int damage(float base, float normalExtra, float heavyExtra) {
         float heavy = base + heavyExtra;
         return Math.round(switch (this) {
-            case NORMAL -> base + normalExtra;
+            case NORMAL, FLARE -> base + normalExtra;
             case HEAVY -> heavy;
             case NUKE -> 2f * heavy;
-            case NAPALM, TAR, CRYO, FLARE -> base + DamageUnits.ofPoints(this.extraPoints);
+            case NAPALM, TAR, CRYO -> base + DamageUnits.ofPoints(this.extraPoints);
         });
     }
 

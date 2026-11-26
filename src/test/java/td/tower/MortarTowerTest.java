@@ -341,11 +341,14 @@ class MortarTowerTest {
     }
 
     @Test
-    void normalDamageRaisesANormalShellAndNotAHeavy() {
-        MortarTower tower = TowerFixtures.buffed(this.loaded(List.of(ShellKind.NORMAL, ShellKind.HEAVY)), this.context,
-                TowerModifiers.normalDamage(10f));
+    void normalDamageRaisesANormalShellAndAFlareAndNotAHeavy() {
+        MortarTower tower = TowerFixtures.buffed(this.loaded(List.of(ShellKind.NORMAL, ShellKind.FLARE, ShellKind.HEAVY),
+                "Flare"), this.context, TowerModifiers.normalDamage(10f));
         FakeEnemyMob normalTarget = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{normalTarget});
+        this.landAShell(tower);
+        FakeEnemyMob flareTarget = this.enemyAt(tower, OUT, 0);
+        this.context.enemies().setEnemies(new EnemyMob[]{flareTarget});
         this.landAShell(tower);
         FakeEnemyMob heavyTarget = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{heavyTarget});
@@ -353,6 +356,7 @@ class MortarTowerTest {
         this.landAShell(tower);
 
         assertThat(normalTarget.onlyHitAmount()).isEqualTo(tower.damageCurrent() + DamageUnits.ofPoints(10f));
+        assertThat(flareTarget.onlyHitAmount()).isEqualTo(normalTarget.onlyHitAmount());
         assertThat(heavyTarget.onlyHitAmount()).isEqualTo(
                 Math.round(tower.damageCurrent() + tower.stats().value(TowerStat.HEAVY_DAMAGE)));
     }
