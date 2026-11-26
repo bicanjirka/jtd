@@ -72,6 +72,8 @@ public final class TowerBench {
     static final String LINE = "line";
     static final String BEFORE = "before";
     static final String FULL = "full";
+    /** Nodes only a strategy buys: a situational node no tier, cluster or whole-tree build owns, so it never drags them. */
+    static final Set<String> STRATEGY_ONLY = Set.of("mortar.flare");
     static final String WITHOUT = "without";
     static final String WITHOUT_AT_TOP = "without-top";
     static final String STRATEGY = "strategy";
@@ -568,7 +570,7 @@ public final class TowerBench {
             boolean picked = tree.clusterOf(node)
                     .map(cluster -> picks.getOrDefault(cluster, cluster.memberIds().getFirst()).equals(node.id()))
                     .orElse(true);
-            if (node.tier() <= maxTier && picked && !node.id().equals(without)) {
+            if (node.tier() <= maxTier && picked && !node.id().equals(without) && !STRATEGY_ONLY.contains(node.id())) {
                 ids.add(node.id());
             }
         }

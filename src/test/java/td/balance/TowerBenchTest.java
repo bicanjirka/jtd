@@ -26,7 +26,9 @@ class TowerBenchTest {
             List<TowerBench.Build> builds = TowerBench.buildsOf(type);
 
             for (UpgradeNode node : TowerFactory.createTower(type, WorldFixtures.newWorld(), 0, 0).upgradeTree().nodes()) {
-                for (String role : List.of(TowerBench.LINE, TowerBench.WITHOUT, TowerBench.WITHOUT_AT_TOP)) {
+                List<String> roles = TowerBench.STRATEGY_ONLY.contains(node.id()) ? List.of(TowerBench.LINE)
+                        : List.of(TowerBench.LINE, TowerBench.WITHOUT, TowerBench.WITHOUT_AT_TOP);
+                for (String role : roles) {
                     assertThat(TowerBench.weighing(builds, role, node.id())).as(role + " " + node.id()).isNotEmpty();
                 }
             }
