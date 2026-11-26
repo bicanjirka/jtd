@@ -1,7 +1,11 @@
 package td.tower.mortar;
 
+import td.damage.DamageUnits;
 import td.term.Term;
+import td.term.TermNumbers;
 import td.term.TermText;
+import td.tower.TowerStat;
+import td.tower.TowerStats;
 import td.tower.TowerTerm;
 
 import java.util.Set;
@@ -26,5 +30,12 @@ public final class FusionMechanic implements MortarMechanic {
                 .plus(", which ").plus(ShellKind.NUKE.groundText())
                 .plus(" and whose flash gives every enemy on the board ").plus(ShellKind.NUKE.flashText())
                 .plus("; Normals come up less often");
+    }
+
+    @Override
+    public TermText describe(TowerStats stats) {
+        int nuke = ShellKind.NUKE.damage(stats.damage(), stats.value(TowerStat.NORMAL_DAMAGE),
+                stats.value(TowerStat.HEAVY_DAMAGE));
+        return this.describe().plus(", and hits for " + TermNumbers.number(DamageUnits.inPoints(nuke)) + " damage");
     }
 }
