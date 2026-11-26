@@ -10,7 +10,7 @@ public final class ShatterMechanic implements SeekerMechanic {
 
     public static final float RADIUS_CELLS = 1f;
     /** The share of the missile's damage the burst deals. */
-    public static final float SHARE = 0.3f;
+    public static final float SHARE = 0.2f;
 
     @Override
     public SeekerSpec refineSpec(SeekerSpec spec) {

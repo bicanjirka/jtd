@@ -9,10 +9,13 @@ import td.tower.sniper.AimFocus;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Supplier;
 
 /**
- * A buff, debuff or named mechanic of a tower, named for the player. A sentence mentions only effect kinds; its
- * {@code {}} slots take them in order.
+ * A buff, debuff or named mechanic of a tower, named for the player. A sentence mentions effect kinds or other terms;
+ * its {@code {}} slots take them in order. A term declared below the one that mentions it is still null while the
+ * constants are built, and the compiler rejects naming it there even inside a lambda: such a sentence names its terms in
+ * a supplier that reads the later term through a method, called only when the term is described.
  */
 public enum TowerTerm implements Term {
     STEADY_AIM("Steady Aim", Side.BUFF, "each shot adds a stack, kept across targets and kills; " + TermNumbers.seconds(AimFocus.STACK_SECONDS)
@@ -34,8 +37,8 @@ public enum TowerTerm implements Term {
     FROST_MISSILE("Frost", Side.BUFF, "the plain missile: it applies {} to the enemy it hits", EffectKind.FREEZE),
     RUBY("Ruby", Side.BUFF, "a missile that deals more damage, and whose {} also holds an enemy immune to it",
             EffectKind.FREEZE),
-    SHADE("Shade", Side.BUFF, "a missile that deals more damage, past {} and insulation, and applies {} for as long as "
-            + "its {}", EffectKind.SHIELD, EffectKind.WITHERED, EffectKind.FREEZE),
+    SHADE("Shade", Side.BUFF, "a missile that deals {} damage and more of it, applies {} for as long as its {}",
+            () -> List.of(shadow(), EffectKind.WITHERED, EffectKind.FREEZE)),
     SWARM("Swarm", Side.BUFF, "missiles at once, one at each enemy in range, soonest out first, and round again while "
             + "missiles are left"),
     HATCHING("Hatching", Side.BUFF, "missiles that hatch on top of the nest, one after another, and launch first while it "
@@ -88,13 +91,26 @@ public enum TowerTerm implements Term {
     private final String title;
     private final Side side;
     private final String sentence;
-    private final List<EffectKind> mentions;
+    private final Supplier<List<Term>> mentions;
 
     TowerTerm(String title, Side side, String sentence, EffectKind... mentions) {
+        this(title, side, sentence, List.<Term>of(mentions));
+    }
+
+    TowerTerm(String title, Side side, String sentence, List<Term> mentions) {
+        this(title, side, sentence, () -> mentions);
+    }
+
+    TowerTerm(String title, Side side, String sentence, Supplier<List<Term>> mentions) {
         this.title = title;
         this.side = side;
         this.sentence = sentence;
-        this.mentions = List.of(mentions);
+        this.mentions = mentions;
+    }
+
+    /** {@link #SHADOW}, for a sentence declared above it. */
+    private static TowerTerm shadow() {
+        return SHADOW;
     }
 
     @Override
@@ -109,7 +125,7 @@ public enum TowerTerm implements Term {
 
     @Override
     public TermText describe() {
-        return TermText.format(this.sentence, this.mentions.toArray(EffectKind[]::new));
+        return TermText.format(this.sentence, this.mentions.get().toArray(Term[]::new));
     }
 
     /** Whether it helps the tower that carries it or hurts it. */

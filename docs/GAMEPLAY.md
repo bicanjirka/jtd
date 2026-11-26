@@ -218,7 +218,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Carpet Bombing | Buff | The front shells loaded together, a Normal between each two, and laid along the path from the target back toward where the enemies come from. |
 | Frost | Buff | The plain missile: it applies Freeze to the enemy it hits. |
 | Ruby | Buff | A missile that deals more damage, and whose Freeze also holds an enemy immune to it. |
-| Shade | Buff | A missile that deals more damage, past Shield and insulation, and applies Wither for as long as its Freeze. |
+| Shade | Buff | A missile that deals Shadow damage and more of it, applies Wither for as long as its Freeze. |
 | Swarm | Buff | Missiles at once, one at each enemy in range, soonest out first, and round again while missiles are left. |
 | Hatching | Buff | Missiles that hatch on top of the nest, one after another, and launch first while it keeps loading. |
 | Ice Wake | Buff | While a Freeze the tower landed holds, every enemy walking close past the ice gains Chill. |

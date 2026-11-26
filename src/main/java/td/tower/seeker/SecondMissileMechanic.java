@@ -36,7 +36,11 @@ public final class SecondMissileMechanic implements SeekerMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("adds ").plus(this.kind.term()).plus(" missiles to the ").plus(TowerTerm.NEST)
+        TermText missiles = TermText.of("adds ").plus(this.kind.term()).plus(" missiles");
+        if (this.kind.shadow()) {
+            missiles = missiles.plus(", which deal ").plus(TowerTerm.SHADOW).plus(" damage,");
+        }
+        return missiles.plus(" to the ").plus(TowerTerm.NEST)
                 .plus(", one in " + BroodSpec.frostOnly().withSecond(this.kind).oneIn());
     }
 }

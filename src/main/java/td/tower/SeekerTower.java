@@ -118,18 +118,18 @@ public final class SeekerTower extends AbstractTower {
             .withModifiers(TowerModifiers.range(1f).plus(TowerModifiers.huntRadius(1f)))
             .inTier(2);
 
-    private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 25)
+    private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 20)
             .inTier(3);
-    private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 25)
+    private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 20)
             .inTier(3);
     private static final UpgradeNode RICH_BROOD = UpgradeNode.of("seeker.rich_brood", "Rich Brood", 20)
             .withRequires(UpgradeCondition.owns(RUBY.id()).or(UpgradeCondition.owns(SHADE.id())))
             .inTier(3);
     private static final UpgradeNode DEEP_FREEZE_2 = UpgradeNode.of("seeker.deep_freeze_2", "Deep Freeze II", 5)
             .withModifiers(TowerModifiers.freezeDuration(40))
-            .inTier(3);
+            .inTier(2);
     private static final UpgradeNode QUICK_BROOD_2 = UpgradeNode.of("seeker.quick_brood_2", "Quick Brood II", 55)
-            .withModifiers(TowerModifiers.attackSpeed(0.5f))
+            .withModifiers(TowerModifiers.attackSpeed(0.55f))
             .inTier(3);
     private static final UpgradeNode SHARP_STING_2 = UpgradeNode.of("seeker.sharp_sting_2", "Sharp Sting II", 55)
             .withModifiers(TowerModifiers.damage(30f))
