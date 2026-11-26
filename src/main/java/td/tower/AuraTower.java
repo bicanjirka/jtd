@@ -71,25 +71,25 @@ public final class AuraTower extends AbstractTower {
     private static final int LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
     private static final int CHILL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
 
-    private static final UpgradeNode STEADY_LIGHT = UpgradeNode.of("aura.steady_light", "Steady Light", 11)
+    private static final UpgradeNode STEADY_LIGHT = UpgradeNode.of("aura.steady_light", "Steady Light", 10)
             .withEmission(TowerModifiers.disruptionTaken(STEADY_JAM_FACTOR));
-    private static final UpgradeNode AFTERGLOW = UpgradeNode.of("aura.afterglow", "Afterglow", 1)
+    private static final UpgradeNode AFTERGLOW = UpgradeNode.of("aura.afterglow", "Afterglow", 5)
             .withModifiers(TowerModifiers.revealTime(AFTERGLOW_TICKS));
 
     private static final UpgradeNode SEARCHLIGHT = UpgradeNode.of("aura.searchlight", "Searchlight", 35).inTier(1);
     private static final UpgradeNode LAST_LIGHT = UpgradeNode.of("aura.last_light", "Last Light", 35).inTier(1);
     private static final UpgradeNode RINGLEADER = UpgradeNode.of("aura.ringleader", "Ringleader", 35).inTier(1);
-    private static final UpgradeNode KINSHIP = UpgradeNode.of("aura.kinship", "Kinship", 21).inTier(1);
-    private static final UpgradeNode MENTOR = UpgradeNode.of("aura.mentor", "Mentor", 21).inTier(1);
-    private static final UpgradeNode BREAKTHROUGH = UpgradeNode.of("aura.breakthrough", "Breakthrough", 21).inTier(1);
+    private static final UpgradeNode KINSHIP = UpgradeNode.of("aura.kinship", "Kinship", 20).inTier(1);
+    private static final UpgradeNode MENTOR = UpgradeNode.of("aura.mentor", "Mentor", 20).inTier(1);
+    private static final UpgradeNode BREAKTHROUGH = UpgradeNode.of("aura.breakthrough", "Breakthrough", 20).inTier(1);
 
-    private static final UpgradeNode DAYLIGHT = UpgradeNode.of("aura.daylight", "Daylight", 69).inTier(2);
-    private static final UpgradeNode GLARE = UpgradeNode.of("aura.glare", "Glare", 69).inTier(2);
+    private static final UpgradeNode DAYLIGHT = UpgradeNode.of("aura.daylight", "Daylight", 70).inTier(2);
+    private static final UpgradeNode GLARE = UpgradeNode.of("aura.glare", "Glare", 70).inTier(2);
 
     private static final UpgradeNode SANCTUARY = UpgradeNode.of("aura.sanctuary", "Sanctuary", 50)
             .withEmission(TowerModifiers.disruptionTaken(0f))
             .inTier(3);
-    private static final UpgradeNode PRISM = UpgradeNode.of("aura.prism", "Prism", 89).inTier(3);
+    private static final UpgradeNode PRISM = UpgradeNode.of("aura.prism", "Prism", 90).inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_LIGHT, AFTERGLOW))
             .with(SEARCHLIGHT, LAST_LIGHT, RINGLEADER, KINSHIP, MENTOR, BREAKTHROUGH,

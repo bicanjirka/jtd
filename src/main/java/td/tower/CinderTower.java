@@ -75,50 +75,50 @@ public final class CinderTower extends AbstractTower {
     private static final int SINGE_LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
 
-    private static final UpgradeNode HOT_FLAME = UpgradeNode.of("cinder.hot_flame", "Hot Flame", 13)
+    private static final UpgradeNode HOT_FLAME = UpgradeNode.of("cinder.hot_flame", "Hot Flame", 15)
             .withModifiers(TowerModifiers.damage(15f));
-    private static final UpgradeNode LONG_STREAM = UpgradeNode.of("cinder.long_stream", "Long Stream", 17)
+    private static final UpgradeNode LONG_STREAM = UpgradeNode.of("cinder.long_stream", "Long Stream", 20)
             .withModifiers(TowerModifiers.stream(Math.round(0.5f * TickRate.TICKS_PER_SECOND)));
-    private static final UpgradeNode WIDE_NOZZLE = UpgradeNode.of("cinder.wide_nozzle", "Wide Nozzle", 6)
+    private static final UpgradeNode WIDE_NOZZLE = UpgradeNode.of("cinder.wide_nozzle", "Wide Nozzle", 5)
             .withModifiers(TowerModifiers.coneTimes(1.5f));
-    private static final UpgradeNode LONG_NOZZLE = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Nozzle", 7)
+    private static final UpgradeNode LONG_NOZZLE = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Nozzle", 15)
             .withModifiers(TowerModifiers.range(0.5f));
 
-    private static final UpgradeNode CORE = UpgradeNode.of("cinder.core", "Core", 38)
+    private static final UpgradeNode CORE = UpgradeNode.of("cinder.core", "Core", 25)
             .inTier(1);
-    private static final UpgradeNode LANCE = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Lance", 9)
+    private static final UpgradeNode LANCE = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Lance", 5)
             .withModifiers(TowerModifiers.range(0.65f).plus(TowerModifiers.coneTimes(0.6f)))
             .inTier(1);
-    private static final UpgradeNode FAN = UpgradeNode.of("cinder.fan", "Fan", 9)
+    private static final UpgradeNode FAN = UpgradeNode.of("cinder.fan", "Fan", 5)
             .withModifiers(TowerModifiers.coneTimes(1.4f))
             .inTier(1);
-    private static final UpgradeNode KINDLING = UpgradeNode.of("cinder.kindling", "Kindling", 1)
+    private static final UpgradeNode KINDLING = UpgradeNode.of("cinder.kindling", "Kindling", 5)
             .inTier(1);
 
-    private static final UpgradeNode SOULFIRE = UpgradeNode.of("cinder.soulfire", "Soulfire", 23)
+    private static final UpgradeNode SOULFIRE = UpgradeNode.of("cinder.soulfire", "Soulfire", 15)
             .withModifiers(TowerModifiers.damagePercent(0.1f).plus(TowerModifiers.magicPenetration(0.5f)))
             .inTier(2);
-    private static final UpgradeNode DRAGONS_BREATH = UpgradeNode.of("cinder.dragons_breath", "Dragon's Breath", 23)
+    private static final UpgradeNode DRAGONS_BREATH = UpgradeNode.of("cinder.dragons_breath", "Dragon's Breath", 15)
             .withModifiers(TowerModifiers.streamTimes(2f).plus(TowerModifiers.damageTimes(0.65f))
                     .plus(TowerModifiers.reload(-Math.round(TickRate.TICKS_PER_SECOND))))
             .inTier(2);
-    private static final UpgradeNode WHITE_FLAME = UpgradeNode.of("cinder.white_flame", "White Flame", 59)
+    private static final UpgradeNode WHITE_FLAME = UpgradeNode.of("cinder.white_flame", "White Flame", 30)
             .withModifiers(TowerModifiers.damage(30f))
             .inTier(2);
-    private static final UpgradeNode BELLOWS = UpgradeNode.of("cinder.bellows", "Bellows", 32)
+    private static final UpgradeNode BELLOWS = UpgradeNode.of("cinder.bellows", "Bellows", 25)
             .withModifiers(TowerModifiers.reload(-Math.round(0.5f * TickRate.TICKS_PER_SECOND)))
             .inTier(2);
 
-    private static final UpgradeNode FLASHOVER = UpgradeNode.of("cinder.flashover", "Flashover", 66)
+    private static final UpgradeNode FLASHOVER = UpgradeNode.of("cinder.flashover", "Flashover", 20)
             .inTier(3);
-    private static final UpgradeNode MELTDOWN = UpgradeNode.of("cinder.meltdown", "Meltdown", 66)
+    private static final UpgradeNode MELTDOWN = UpgradeNode.of("cinder.meltdown", "Meltdown", 20)
             .inTier(3);
-    private static final UpgradeNode THERMAL_SHOCK = UpgradeNode.of("cinder.thermal_shock", "Thermal Shock", 66)
+    private static final UpgradeNode THERMAL_SHOCK = UpgradeNode.of("cinder.thermal_shock", "Thermal Shock", 20)
             .inTier(3);
-    private static final UpgradeNode HOT_FLAME_2 = UpgradeNode.of("cinder.hot_flame_2", "Hot Flame II", 43)
+    private static final UpgradeNode HOT_FLAME_2 = UpgradeNode.of("cinder.hot_flame_2", "Hot Flame II", 30)
             .withModifiers(TowerModifiers.damage(15f))
             .inTier(3);
-    private static final UpgradeNode LONG_STREAM_2 = UpgradeNode.of("cinder.long_stream_2", "Long Stream II", 107)
+    private static final UpgradeNode LONG_STREAM_2 = UpgradeNode.of("cinder.long_stream_2", "Long Stream II", 45)
             .withModifiers(TowerModifiers.stream(Math.round(TickRate.TICKS_PER_SECOND)))
             .inTier(3);
 
