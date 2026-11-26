@@ -39,7 +39,7 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   impact, with a Normal sneaked between each two loaded shells (`VolleySpec.sequence`), never taken from the magazine;
   a Barrage's later shells re-pick their target when they fire. The pane shows the next firing as it is sent, sneaked
   Normals in place (`LinedUpShell`), then the rest of the magazine.
-- With Thick Mix a Normal right behind a payload carries it (`HeldShell`): in the magazine, where the front shell is
+- With Coated Shells a Normal right behind a payload carries it (`HeldShell`): in the magazine, where the front shell is
   behind the one fired last (`Magazine.lastFired`, kept by the save), and in a volley, where a sneaked Normal is behind
   the loaded shell before it. Its blast puts a share of a pulse of that payload's ground on what it reaches, through
   the ground's own `ZoneEffects.touch` (`ZonePulse.shareOf`), never a zone of its own and never a second hit: its blast

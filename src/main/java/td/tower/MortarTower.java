@@ -18,6 +18,7 @@ import td.tower.mortar.BarrageMechanic;
 import td.tower.mortar.BigBoreMechanic;
 import td.tower.mortar.BlastMark;
 import td.tower.mortar.CarpetBombingMechanic;
+import td.tower.mortar.CoatedShellsMechanic;
 import td.tower.mortar.ConcussionMechanic;
 import td.tower.mortar.CrackingShellsMechanic;
 import td.tower.mortar.DeepCrackMechanic;
@@ -39,7 +40,6 @@ import td.tower.mortar.RichMixMechanic;
 import td.tower.mortar.ShellKind;
 import td.tower.mortar.ShellProfile;
 import td.tower.mortar.ShrapnelMechanic;
-import td.tower.mortar.ThickMixMechanic;
 import td.tower.mortar.VolleySpec;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
@@ -52,10 +52,10 @@ import td.tower.targeting.TargetSelector;
 import td.tower.targeting.Viewpoint;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
-import td.tower.upgrade.RangeNodes;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.PathRuntime;
@@ -92,8 +92,8 @@ import static td.tower.upgrade.MechanicCatalogue.entry;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class MortarTower extends AbstractTower {
 
-    public static final int PRICE = 20;
-    public static final float DAMAGE_POINTS = 32f;
+    public static final int PRICE = 30;
+    public static final float DAMAGE_POINTS = 13f;
     public static final float RANGE = 4.5f;
     public static final float CORE_CELLS = 1f;
     public static final float EDGE_CELLS = 1.75f;
@@ -102,7 +102,7 @@ public final class MortarTower extends AbstractTower {
 
     private static final float MINIMUM_RANGE_CELLS = 1.5f;
     /** What a Heavy shell deals past the Mortar's damage, in points. */
-    private static final float HEAVY_POINTS = 24f;
+    private static final float HEAVY_POINTS = 16f;
     /** A rate below this counts as it, so a stalled tower's reload is long rather than endless. */
     private static final double MINIMUM_RATE = 1e-3;
     /** A shot every 3.5 s. */
@@ -112,79 +112,76 @@ public final class MortarTower extends AbstractTower {
     /** Flight time depends on where the shell is going, so the aim is refined this many times. */
     private static final int PREDICTION_PASSES = 3;
 
-    private static final UpgradeNode HEAVY_CHARGE = UpgradeNode.of("mortar.heavy_charge", "Heavy Charge", 5)
-            .withModifiers(TowerModifiers.damage(12f));
     private static final UpgradeNode PACKED_CHARGE = UpgradeNode.of("mortar.packed_charge", "Packed Charge", 5)
-            .withModifiers(TowerModifiers.normalDamage(0f));
+            .withModifiers(TowerModifiers.normalDamage(8f));
     private static final UpgradeNode WIDE_CRATER = UpgradeNode.of("mortar.wide_crater", "Wide Crater", 5)
-            .withModifiers(TowerModifiers.heavyBlast(0f));
+            .withModifiers(TowerModifiers.heavyBlast(1.2f));
     private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 5)
             .withModifiers(TowerModifiers.heavyDamage(14f));
     private static final UpgradeNode CRACKING_SHELLS = UpgradeNode.of("mortar.cracking_shells", "Cracking Shells", 5);
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 5)
             .withTargeting(TargetPriority.BIGGEST_GROUP_AHEAD);
 
-    private static final UpgradeNode CONCUSSION = UpgradeNode.of("mortar.concussion", "Concussion", 10)
+    private static final UpgradeNode CONCUSSION = UpgradeNode.of("mortar.concussion", "Concussion", 5)
             .inTier(1);
-    private static final UpgradeNode SHRAPNEL = UpgradeNode.of("mortar.shrapnel", "Shrapnel", 10)
+    private static final UpgradeNode SHRAPNEL = UpgradeNode.of("mortar.shrapnel", "Shrapnel", 5)
             .inTier(1);
-    private static final UpgradeNode NAPALM = UpgradeNode.of("mortar.napalm", "Napalm", 15)
+    private static final UpgradeNode NAPALM = UpgradeNode.of("mortar.napalm", "Napalm", 10)
             .inTier(1);
-    private static final UpgradeNode TAR_SHELL = UpgradeNode.of("mortar.tar_shell", "Tar Shell", 15)
+    private static final UpgradeNode TAR_SHELL = UpgradeNode.of("mortar.tar_shell", "Tar Shell", 10)
             .inTier(1);
-    private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 15)
+    private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 10)
             .inTier(1);
     private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 5)
             .inTier(1);
     private static final UpgradeCondition A_PAYLOAD = UpgradeCondition.owns(NAPALM.id())
             .or(UpgradeCondition.owns(TAR_SHELL.id())).or(UpgradeCondition.owns(CRYO.id()));
 
-    private static final UpgradeNode BARRAGE = UpgradeNode.of("mortar.barrage", "Barrage", 50)
+    private static final UpgradeNode BARRAGE = UpgradeNode.of("mortar.barrage", "Barrage", 25)
             .inTier(3);
-    private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 50)
+    private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 25)
             .inTier(3);
-    private static final UpgradeNode QUICK_LOAD = UpgradeNode.of("mortar.quick_load", "Quick Load", 50)
+    private static final UpgradeNode QUICK_LOAD = UpgradeNode.of("mortar.quick_load", "Quick Load", 25)
             .withModifiers(TowerModifiers.normalLoad(-0.5f))
             .inTier(3);
-    private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 20)
-            .withModifiers(TowerModifiers.range(1.6f))
+    private static final UpgradeNode OVERCHARGE = UpgradeNode.of("mortar.overcharge", "Overcharge", 10)
+            .withModifiers(TowerModifiers.heavyDamage(50f))
             .inTier(2);
-    private static final UpgradeNode OVERCHARGE = UpgradeNode.of("mortar.overcharge", "Overcharge", 25)
-            .withModifiers(TowerModifiers.heavyDamage(64f))
+    private static final UpgradeNode HARD_CASINGS = UpgradeNode.of("mortar.hard_casings", "Hard Casings", 10)
+            .withModifiers(TowerModifiers.normalDamage(18f))
             .inTier(2);
-    private static final UpgradeNode BIG_BORE_2 = UpgradeNode.of("mortar.big_bore_2", "Big Bore II", 20)
-            .withModifiers(TowerModifiers.heavyDamage(42f))
+    private static final UpgradeNode HEAVY_RACK = UpgradeNode.of("mortar.heavy_rack", "Heavy Rack", 10)
             .inTier(2);
-    private static final UpgradeNode THICK_MIX = UpgradeNode.of("mortar.thick_mix", "Thick Mix", 20)
+    private static final UpgradeNode COATED_SHELLS = UpgradeNode.of("mortar.coated_shells", "Coated Shells", 5)
             .withRequires(A_PAYLOAD)
             .inTier(2);
 
-    private static final UpgradeNode FUSION = UpgradeNode.of("mortar.fusion", "Fusion", 40)
+    private static final UpgradeNode FUSION = UpgradeNode.of("mortar.fusion", "Fusion", 20)
             .inTier(3);
-    private static final UpgradeNode RICH_MIX = UpgradeNode.of("mortar.rich_mix", "Rich Mix", 40)
+    private static final UpgradeNode RICH_MIX = UpgradeNode.of("mortar.rich_mix", "Rich Mix", 20)
             .inTier(3);
-    private static final UpgradeNode LASTING_MIX = UpgradeNode.of("mortar.lasting_mix", "Lasting Mix", 30)
-            .after(THICK_MIX)
+    private static final UpgradeNode LASTING_MIX = UpgradeNode.of("mortar.lasting_mix", "Lasting Mix", 10)
+            .after(COATED_SHELLS)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 15)
+    private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 5)
             .after(CRACKING_SHELLS)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode QUICK_RELOAD = UpgradeNode.of("mortar.quick_reload", "Quick Reload", 40)
-            .withModifiers(TowerModifiers.attackSpeed(3.5f / 3f - 1f))
-            .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(List.of(HEAVY_CHARGE, BIG_BORE, PREDICTIVE_FIRE, CRACKING_SHELLS,
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(BIG_BORE, PREDICTIVE_FIRE, CRACKING_SHELLS,
                     PACKED_CHARGE, WIDE_CRATER))
             .with(CONCUSSION, SHRAPNEL, NAPALM, TAR_SHELL, CRYO, FLARE,
-                    BARRAGE, CARPET_BOMBING, QUICK_LOAD, ELEVATION, OVERCHARGE, BIG_BORE_2, THICK_MIX,
-                    FUSION, RICH_MIX, LASTING_MIX, DEEP_CRACK, QUICK_RELOAD)
+                    BARRAGE, CARPET_BOMBING, QUICK_LOAD, OVERCHARGE, HARD_CASINGS, HEAVY_RACK, COATED_SHELLS,
+                    FUSION, RICH_MIX, LASTING_MIX, DEEP_CRACK)
             .withCluster(UpgradeCluster.of("Shell charge", PACKED_CHARGE, WIDE_CRATER))
             .withCluster(UpgradeCluster.of("Heavy shell", CONCUSSION, SHRAPNEL))
             .withCluster(UpgradeCluster.of("Payload", NAPALM, TAR_SHELL, CRYO))
+            .withCluster(UpgradeCluster.of("Heavy or Normal", HEAVY_RACK, HARD_CASINGS))
             .withCluster(UpgradeCluster.of("Loading", BARRAGE, CARPET_BOMBING, QUICK_LOAD))
-            .withCluster(UpgradeCluster.of("Order", FUSION, RICH_MIX));
+            .withCluster(UpgradeCluster.of("Order", FUSION, RICH_MIX))
+            .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withBonus(TowerModifiers.damage(8f)),
+                    UpgradeTier.gated(120, 0).withBonus(TowerModifiers.range(1.6f)), UpgradeTier.gated(200, 0).withBonus(TowerModifiers.attackSpeed(0.15f))));
 
     private static final MechanicCatalogue<MortarMechanic> MECHANICS = MechanicCatalogue.of(
             entry(BIG_BORE.id(), () -> new BigBoreMechanic(1)),
@@ -198,8 +195,8 @@ public final class MortarTower extends AbstractTower {
             entry(FLARE.id(), FlareMechanic::new),
             entry(BARRAGE.id(), BarrageMechanic::new),
             entry(CARPET_BOMBING.id(), CarpetBombingMechanic::new),
-            entry(BIG_BORE_2.id(), () -> new BigBoreMechanic(1)),
-            entry(THICK_MIX.id(), ThickMixMechanic::new),
+            entry(HEAVY_RACK.id(), () -> new BigBoreMechanic(2)),
+            entry(COATED_SHELLS.id(), CoatedShellsMechanic::new),
             entry(FUSION.id(), FusionMechanic::new),
             entry(RICH_MIX.id(), RichMixMechanic::new),
             entry(LASTING_MIX.id(), LastingMixMechanic::new),
@@ -439,7 +436,7 @@ public final class MortarTower extends AbstractTower {
         return unchained + odds.chained() * stats.value(TowerStat.NORMAL_LOAD) * (stats.value(TowerStat.CHAIN_LOAD) - 1f);
     }
 
-    /** {@code shell} as this Mortar fires it: a Normal carries the payload in front of it only with Thick Mix. */
+    /** {@code shell} as this Mortar fires it: a Normal carries the payload in front of it only with Coated Shells. */
     private static HeldShell asFired(HeldShell shell, MortarSpec spec) {
         return spec.payload().normalsCarry() > 0f ? shell : shell.plain();
     }
@@ -733,7 +730,7 @@ public final class MortarTower extends AbstractTower {
         }).profiles();
     }
 
-    /** Every kind it can load, and with Thick Mix a Normal carrying each payload it can load. */
+    /** Every kind it can load, and with Coated Shells a Normal carrying each payload it can load. */
     private List<HeldShell> profiledShells(MortarSpec spec) {
         List<ShellKind> kinds = this.loadableKinds();
         List<HeldShell> shells = new ArrayList<>(kinds.stream().map(kind -> new HeldShell(kind, Optional.empty())).toList());

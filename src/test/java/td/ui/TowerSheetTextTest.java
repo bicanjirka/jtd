@@ -261,9 +261,9 @@ class TowerSheetTextTest {
     }
 
     @Test
-    void withThickMixANormalRightBehindAPayloadShowsThePayloadItCarriesInItsSlotAndItsSheet() {
+    void withCoatedShellsANormalRightBehindAPayloadShowsThePayloadItCarriesInItsSlotAndItsSheet() {
         Tower mortar = this.place(TowerFactory.Type.MORTAR, 0, 0);
-        UpgradePaths.buy(mortar, this.world, "Napalm", "Thick Mix");
+        UpgradePaths.buy(mortar, this.world, "Napalm", "Coated Shells");
         MortarTower.loadMagazine(mortar, MagazineFixtures.frontedBy(ShellKind.NAPALM, ShellKind.NORMAL, ShellKind.NORMAL));
 
         InfoSheet sheet = TowerSheetText.status(BoardRenderer.liveInspection(mortar));

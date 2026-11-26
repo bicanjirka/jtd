@@ -32,15 +32,15 @@ public enum ShellKind {
      * Two Heavies fused: a harder hit than a Heavy, a blast of its own, fallout over most of it, and a flash that gives
      * every enemy on the board Radiation.
      */
-    NUKE(ShellLook.NUKE, DamageType.PHYSICAL, 0f, new Blast(1f, 1f, 0.75f), 0.75f,
+    NUKE(ShellLook.NUKE, DamageType.PHYSICAL, 0f, new Blast(1.6f, 1.6f, 0.75f), 0.75f,
             Optional.of(Ground.ofBlast(ZoneKind.FALLOUT, 0.8f, 140, 0f))),
-    /** The Mortar's one way to deal magic: its blast burns, and the ground where it lands too. */
+    /** A payload deals magic: its blast burns, and the ground where it lands too. */
     NAPALM(ShellLook.NAPALM, DamageType.MAGIC, 0f, Blast.NORMAL, 1.25f,
-            Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 32f))),
+            Optional.of(Ground.fixed(ZoneKind.BURNING_GROUND, 1f, 60, 35f))),
     TAR(ShellLook.TAR, DamageType.MAGIC, 0f, Blast.NORMAL, 1.25f,
-            Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 15.5f).withSlow(0.4f, 1f))),
+            Optional.of(Ground.fixed(ZoneKind.TAR, 1.2f, 60, 18f).withSlow(0.4f, 1f))),
     CRYO(ShellLook.CRYO, DamageType.MAGIC, 0f, Blast.NORMAL, 1.25f,
-            Optional.of(Ground.fixed(ZoneKind.FROST_GROUND, 1.6f, 100, 8f).withSlow(0.4f, 2f).withFreeze(4, 1.5f))),
+            Optional.of(Ground.fixed(ZoneKind.FROST_GROUND, 1.6f, 100, 2.5f).withSlow(0.4f, 2f).withFreeze(4, 1.5f))),
     /** A Normal shell in all but the flare it leaves, which burns until the wave is over. */
     FLARE(ShellLook.FLARE, DamageType.PHYSICAL, 0f, Blast.NORMAL, 1f,
             Optional.of(Ground.fixed(ZoneKind.FLARE, 1.5f, Zone.UNTIL_WAVE_END, 0f)));

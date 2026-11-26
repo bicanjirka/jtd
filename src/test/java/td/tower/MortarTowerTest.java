@@ -528,9 +528,9 @@ class MortarTowerTest {
 
     @ParameterizedTest
     @CsvSource({"NAPALM, true, true", "NORMAL, true, false", "NAPALM, false, false"})
-    void aNormalShellsBlastCarriesThePayloadsGroundOnlyRightBehindAPayloadWithThickMix(ShellKind inFront,
-            boolean thickMix, boolean burns) {
-        String[] nodes = thickMix ? new String[]{"Napalm", "Thick Mix"} : new String[]{"Napalm"};
+    void aNormalShellsBlastCarriesThePayloadsGroundOnlyRightBehindAPayloadWithCoatedShells(ShellKind inFront,
+            boolean coated, boolean burns) {
+        String[] nodes = coated ? new String[]{"Napalm", "Coated Shells"} : new String[]{"Napalm"};
         MortarTower tower = this.towerWith(nodes);
         MortarTower.loadMagazine(tower, MagazineFixtures.firedAfter(inFront, ShellKind.NORMAL));
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
@@ -543,7 +543,7 @@ class MortarTowerTest {
 
     @Test
     void aNormalRightBehindAGroundThatHitsDirectlyLandsOnePhysicalHitAndTheShareItsSheetShowsAsMagic() {
-        MortarTower tower = this.towerWith("Cryo", "Thick Mix");
+        MortarTower tower = this.towerWith("Cryo", "Coated Shells");
         MortarTower.loadMagazine(tower, MagazineFixtures.firedAfter(ShellKind.CRYO, ShellKind.NORMAL));
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
@@ -566,7 +566,7 @@ class MortarTowerTest {
     void lastingMixMakesAPayloadsGroundLastLonger() {
         Zone plain = payloadGround("Cryo");
 
-        Zone lasting = payloadGround("Cryo", "Thick Mix", "Lasting Mix");
+        Zone lasting = payloadGround("Cryo", "Coated Shells", "Lasting Mix");
 
         assertThat(lasting.lifeLeft()).isGreaterThan(plain.lifeLeft());
     }
@@ -686,7 +686,7 @@ class MortarTowerTest {
 
     @Test
     void aPayloadsProfileShowsTheGroundItLeavesAndWhatItsFirstPulseDealsThere() {
-        MortarTower tower = this.loaded(List.of(ShellKind.CRYO), "Cryo", "Thick Mix", "Lasting Mix");
+        MortarTower tower = this.loaded(List.of(ShellKind.CRYO), "Cryo", "Coated Shells", "Lasting Mix");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
         ShellProfile.Ground shown = tower.shellProfiles().stream().filter(profile -> profile.kind() == ShellKind.CRYO)

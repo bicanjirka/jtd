@@ -527,9 +527,9 @@ no place for a price at a gate, but the tree can still make a paid tier's unlock
 - **Approach:** delete the unlock with the next change to tier gates, moving `TierTrees` to standard tiers; or, if a
   paid gate comes back, give the panel's floor strip a pay button.
 
-### Thick Mix may be meant for the Normals behind a payload, not every Normal
+### Coated Shells may be meant for the Normals behind a payload, not every Normal
 
-With Thick Mix every Normal shell carries the loaded payload, and the magazine bands every Normal to match. A
+With Coated Shells every Normal shell carries the loaded payload, and the magazine bands every Normal to match. A
 narrower rule, a Normal carrying it only when it follows a payload shell in the magazine, may read better: the band
 would then tell shells apart rather than mark them all. It would weaken the node, which was priced on every Normal
 carrying.

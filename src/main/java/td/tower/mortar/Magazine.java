@@ -49,7 +49,7 @@ public record Magazine(List<ShellKind> shells, Optional<ShellKind> lastFired) {
         return this.shells.subList(0, Math.min(count, this.shells.size()));
     }
 
-    /** Its shells, front first, each with the payload right in front of it that a Normal carries with Thick Mix. */
+    /** Its shells, front first, each with the payload right in front of it that a Normal carries with Coated Shells. */
     public List<HeldShell> held() {
         List<HeldShell> held = new ArrayList<>();
         Optional<ShellKind> inFront = this.lastFired;
