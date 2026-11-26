@@ -49,8 +49,9 @@ final class StrategyBuilds {
     private static final String OVERCHARGE = "mortar.overcharge";
 
     /**
-     * Nuke, Heavy shells (to tier II with both Big Bores, then the whole build without them) and a Payload per kind;
-     * every one with Concussion also with Shrapnel, and the Payloads also without Concussion or Overcharge.
+     * Nuke, Heavy shells (to tier II with both Big Bores, then the whole build without them), a Payload per kind and
+     * Normal shells loaded fast; every one with Concussion also with Shrapnel, and the Payloads also without Concussion
+     * or Overcharge.
      */
     private static List<Strategy> mortar() {
         Set<String> nuke = Set.of("mortar.big_bore", "mortar.heavy_charge", CRACKING, CONCUSSION, OVERCHARGE, "mortar.big_bore_2",
@@ -59,9 +60,11 @@ final class StrategyBuilds {
                 "mortar.big_bore_2", "base.range");
         Set<String> heavy = Set.of("mortar.big_bore", "mortar.big_bore_2", "mortar.heavy_charge", CRACKING, CONCUSSION, OVERCHARGE, "base.range", "mortar.barrage",
                 "mortar.rich_mix", "mortar.deep_crack", "mortar.quick_reload");
+        Set<String> normal = Set.of("mortar.heavy_charge", "mortar.packed_charge", CRACKING, "base.range",
+                "mortar.deep_crack", "mortar.quick_load", "mortar.quick_reload");
         List<Strategy> strategies = new ArrayList<>(List.of(new Strategy("nuke", nuke), bled("nuke", nuke),
                 new Strategy("heavy-bores", bores), bled("heavy-bores", bores),
-                new Strategy("heavy", heavy), bled("heavy", heavy)));
+                new Strategy("heavy", heavy), bled("heavy", heavy), new Strategy("normal", normal)));
         for (String payload : List.of("napalm", "tar_shell", "cryo")) {
             Set<String> nodes = Set.of("mortar.heavy_charge", CRACKING, CONCUSSION, "mortar." + payload, OVERCHARGE, "base.range",
                     "mortar.barrage", "mortar.thick_mix", "mortar.rich_mix", "mortar.deep_crack",
