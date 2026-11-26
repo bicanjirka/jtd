@@ -140,6 +140,9 @@ public final class MortarTower extends AbstractTower {
             .inTier(3);
     private static final UpgradeNode CARPET_BOMBING = UpgradeNode.of("mortar.carpet_bombing", "Carpet Bombing", 50)
             .inTier(3);
+    private static final UpgradeNode QUICK_LOAD = UpgradeNode.of("mortar.quick_load", "Quick Load", 50)
+            .withModifiers(TowerModifiers.normalLoad(-0.5f))
+            .inTier(3);
     private static final UpgradeNode ELEVATION = UpgradeNode.of(RangeNodes.RANGE_ID, "Elevation", 20)
             .withModifiers(TowerModifiers.range(1.6f))
             .inTier(2);
@@ -172,12 +175,12 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(HEAVY_CHARGE, BIG_BORE, PREDICTIVE_FIRE, CRACKING_SHELLS,
                     PACKED_CHARGE, WIDE_CRATER))
             .with(CONCUSSION, SHRAPNEL, NAPALM, TAR_SHELL, CRYO, FLARE,
-                    BARRAGE, CARPET_BOMBING, ELEVATION, OVERCHARGE, BIG_BORE_2, THICK_MIX,
+                    BARRAGE, CARPET_BOMBING, QUICK_LOAD, ELEVATION, OVERCHARGE, BIG_BORE_2, THICK_MIX,
                     FUSION, RICH_MIX, LASTING_MIX, DEEP_CRACK, QUICK_RELOAD)
             .withCluster(UpgradeCluster.of("Shell charge", PACKED_CHARGE, WIDE_CRATER))
             .withCluster(UpgradeCluster.of("Heavy shell", CONCUSSION, SHRAPNEL))
             .withCluster(UpgradeCluster.of("Payload", NAPALM, TAR_SHELL, CRYO))
-            .withCluster(UpgradeCluster.of("Volley", BARRAGE, CARPET_BOMBING))
+            .withCluster(UpgradeCluster.of("Loading", BARRAGE, CARPET_BOMBING, QUICK_LOAD))
             .withCluster(UpgradeCluster.of("Order", FUSION, RICH_MIX));
 
     private static final MechanicCatalogue<MortarMechanic> MECHANICS = MechanicCatalogue.of(
@@ -246,6 +249,8 @@ public final class MortarTower extends AbstractTower {
     private volatile Magazine magazine = Magazine.opener();
     private volatile int loading = 1;
     private FireClock clock = new FireClock(COOLDOWN_MAX);
+    /** How many periods the reload under way takes: the volley's factor times the load time of what it loads. */
+    private double reloadPeriods = 1.0;
     /** The chances last worked out, and the draw they were worked out for. */
     private volatile Optional<ShellOdds> odds = Optional.empty();
     /** The kinds it can load, and the mechanics they were worked out for. */
@@ -260,7 +265,9 @@ public final class MortarTower extends AbstractTower {
                 .with(TowerStat.AREA_RADIUS, CORE_CELLS).with(TowerStat.BLAST_EDGE, EDGE_CELLS)
                 .with(TowerStat.PROJECTILE_SPEED, 1f).with(TowerStat.PROJECTILE_SIZE, 1f)
                 .with(TowerStat.MINIMUM_RANGE, MINIMUM_RANGE_CELLS).with(TowerStat.HEAVY_DAMAGE, DamageUnits.ofPoints(HEAVY_POINTS))
-                .with(TowerStat.NORMAL_DAMAGE, 0f).with(TowerStat.HEAVY_BLAST, 0f),
+                .with(TowerStat.NORMAL_DAMAGE, 0f).with(TowerStat.HEAVY_BLAST, 0f)
+                .with(TowerStat.NORMAL_LOAD, 1f).with(TowerStat.PAYLOAD_LOAD, 1f).with(TowerStat.HEAVY_LOAD, 1f)
+                .with(TowerStat.NUKE_LOAD, 1f),
                 context, x, y);
     }
 
@@ -302,7 +309,7 @@ public final class MortarTower extends AbstractTower {
             this.findTarget(spec).ifPresent(target -> {
                 this.target = Optional.of(target);
                 this.load(target, spec);
-                this.clock.spend(spec.volley().reloadFactor());
+                this.clock.spend(this.reloadPeriods);
             });
         }
         this.clock.advance(this.attackRate());
@@ -312,6 +319,7 @@ public final class MortarTower extends AbstractTower {
     @Override
     protected void endFight() {
         this.clock = new FireClock(COOLDOWN_MAX);
+        this.reloadPeriods = 1.0;
         this.volleyLeft.clear();
         this.flares.clear();
         this.target = Optional.empty();
@@ -331,6 +339,7 @@ public final class MortarTower extends AbstractTower {
         List<HeldShell> held = this.magazine.held();
         List<HeldShell> front = held.subList(0, Math.min(volley.shells(), held.size()));
         this.magazine = this.magazine.fired(front.size(), spec.magazine(), this.context.random());
+        this.reloadPeriods = volley.reloadFactor() * loadTime(this.magazine.front(volley.shells()), this.stats());
         List<HeldShell> loaded = volley.sequence(front).stream().map(shell -> asFired(shell.shell(), spec)).toList();
         List<Optional<Vec2>> laid = this.laidAlongThePath(target, volley, loaded.size());
         HeldShell first = loaded.getFirst();
@@ -385,6 +394,17 @@ public final class MortarTower extends AbstractTower {
 
     /** A shell of a volley still to fire: the shell, where it is laid with Carpet Bombing, and the tick it fires. */
     private record VolleyShell(HeldShell shell, Optional<Vec2> laidAt, int firesAt) {
+    }
+
+    /** How long loading {@code kinds} takes, as a share of the reload: the mean of their kinds' load times. */
+    private static double loadTime(List<ShellKind> kinds, TowerStats stats) {
+        return kinds.stream().mapToDouble(kind -> stats.value(kind.loadStat())).average().orElse(1.0);
+    }
+
+    /** The load time of a shell it fires, over a long run of draws: each kind's by its share of the shells. */
+    private static double averageLoadTime(Map<ShellKind, Float> chances, TowerStats stats) {
+        return chances.entrySet().stream().mapToDouble(entry -> entry.getValue() * stats.value(entry.getKey().loadStat()))
+                .sum();
     }
 
     /** {@code shell} as this Mortar fires it: a Normal carries the payload in front of it only with Thick Mix. */
@@ -718,9 +738,9 @@ public final class MortarTower extends AbstractTower {
                 it.context.random()));
     }
 
-    /** How much of the reload is still to run: 1 as a shell leaves, 0 once the next is ready. */
+    /** How much of the reload under way is still to run, however long: 1 as a shell leaves, 0 once the next is ready. */
     public float getCoolDownFraction() {
-        return this.clock.remaining();
+        return this.clock.remaining(this.reloadPeriods);
     }
 
     /** The ticks since its last shell left, a volley's included, while they are within {@code window}. */
@@ -728,9 +748,9 @@ public final class MortarTower extends AbstractTower {
         return within(this.firedAt, gameTime, window);
     }
 
-    /** How many ticks a whole reload takes at its rate now: the cooldown fraction falls by one over that many. */
+    /** How many ticks the reload under way takes at its rate now: the cooldown fraction falls by one over that many. */
     public double reloadTicks() {
-        return this.clock.period() / Math.max(MINIMUM_RATE, this.attackRate());
+        return this.clock.period() * this.reloadPeriods / Math.max(MINIMUM_RATE, this.attackRate());
     }
 
     public TurretAim getTurretAim() {
@@ -742,16 +762,17 @@ public final class MortarTower extends AbstractTower {
         return List.copyOf(this.blastMarks);
     }
 
-    /** A volley loads several shells for a longer reload, so its rate is shells a second over the whole cycle. */
+    /**
+     * Shells a second over a long run: a volley loads several shells for a longer reload, and each kind takes its own
+     * time to load, so the rate is over the whole cycle and every kind by its share of the shells.
+     */
     @Override
     protected TowerStatLine cadence(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
         VolleySpec volley = this.spec(this.mechanics.all()).volley();
-        if (!volley.isVolley()) {
-            return super.cadence(stats, parts);
-        }
+        double loadTime = averageLoadTime(this.shellChances(), stats);
         return this.derivedRow(TowerStatRow.FIRE_RATE, TowerStat.ATTACK_SPEED, stats, parts,
                 at -> (float) (volley.fired() * TICKS_PER_SECOND * at.attackRate()
-                        / ((this.coolDownMax + 1) * volley.reloadFactor())));
+                        / ((this.coolDownMax + 1) * volley.reloadFactor() * loadTime)));
     }
 
     @Override

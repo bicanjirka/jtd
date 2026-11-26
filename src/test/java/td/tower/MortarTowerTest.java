@@ -751,6 +751,46 @@ class MortarTowerTest {
     }
 
     @Test
+    void theReloadAfterAFiringLastsTheLoadTimeOfTheShellLoadedNext() {
+        MortarTower tower = TowerFixtures.buffed(this.loaded(List.of(ShellKind.NORMAL, ShellKind.NORMAL, ShellKind.HEAVY)),
+                this.context, TowerModifiers.normalLoad(-0.5f));
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+        List<Integer> firedAt = new ArrayList<>();
+
+        for (int i = 0; i < 400 && firedAt.size() < 3; i++) {
+            int before = this.context.projectiles().getProjectiles().size();
+            tower.doTick(this.tick);
+            if (this.context.projectiles().getProjectiles().size() > before) {
+                firedAt.add(this.tick);
+            }
+            this.tick++;
+        }
+
+        int beforeTheNormal = firedAt.get(1) - firedAt.get(0);
+        int beforeTheHeavy = firedAt.get(2) - firedAt.get(1);
+        assertThat(beforeTheHeavy).isEqualTo(2 * beforeTheNormal);
+    }
+
+    @Test
+    void theFireRateRowWeighsEachKindsLoadTimeByItsChance() {
+        MortarTower plain = this.towerAt(3, 3);
+        float plainRate = fireRateOf(plain);
+        MortarTower quick = TowerFixtures.buffed(this.towerAt(6, 6), this.context, TowerModifiers.normalLoad(-0.5f));
+        float loadTime = (float) quick.shellChances().entrySet().stream()
+                .mapToDouble(entry -> entry.getValue() * (entry.getKey().loadStat() == TowerStat.NORMAL_LOAD ? 0.5 : 1.0))
+                .sum();
+
+        float quickRate = fireRateOf(quick);
+
+        assertThat(quickRate).isCloseTo(plainRate / loadTime, within(1e-3f));
+    }
+
+    private static float fireRateOf(MortarTower tower) {
+        return tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)
+                .findFirst().orElseThrow().current();
+    }
+
+    @Test
     void aVolleyShowsItsShellsASecondOverTheWholeCycle() {
         MortarTower tower = this.towerAt(3, 3);
         TowerStatLine before = tower.inspect().stats().stream().filter(line -> line.stat() == TowerStatRow.FIRE_RATE)

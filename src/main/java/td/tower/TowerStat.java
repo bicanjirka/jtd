@@ -39,6 +39,18 @@ public enum TowerStat implements StatKey, StatTerm {
     /** Attacks per second are the base rate times {@code 1 + attack speed}. */
     ATTACK_SPEED(0f, -0.75f, 9f, StatUnit.SIGNED_PERCENT, "Fire rate", "Fire rate", StatDirection.HIGHER,
             StatGroup.DAMAGE, Shows.IN_CORE_ROW, true),
+    /** How long loading a Normal shell or a Flare takes, as a share of the reload. */
+    NORMAL_LOAD(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Normal load", "Normal load time", StatDirection.LOWER,
+            StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
+    /** How long loading a Payload shell takes, as a share of the reload. */
+    PAYLOAD_LOAD(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Payload load", "Payload load time", StatDirection.LOWER,
+            StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
+    /** How long loading a Heavy shell takes, as a share of the reload. */
+    HEAVY_LOAD(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Heavy load", "Heavy load time", StatDirection.LOWER,
+            StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
+    /** How long loading a Nuke takes, as a share of the reload. */
+    NUKE_LOAD(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Nuke load", "Nuke load time", StatDirection.LOWER,
+            StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
     /** What a Normal shell deals past the tower's damage, in hundredths of a point. */
     NORMAL_DAMAGE(0f, 0f, Float.MAX_VALUE, StatUnit.DAMAGE_PER_HIT, "Normal dmg", "Normal damage",
             StatDirection.HIGHER, StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
@@ -200,6 +212,14 @@ public enum TowerStat implements StatKey, StatTerm {
             case CONE_WIDTH -> TermText.of("how wide its cone of fire is");
             case DAMAGE -> TermText.of("what one hit deals, before the target's defences");
             case ATTACK_SPEED -> TermText.of("how often it attacks");
+            case NORMAL_LOAD -> TermText.format("how long loading a Normal shell or a {} takes, as a share of the reload",
+                    TowerTerm.FLARE);
+            case PAYLOAD_LOAD -> TermText.format("how long loading a {} shell takes, as a share of the reload",
+                    TowerTerm.PAYLOAD);
+            case HEAVY_LOAD -> TermText.format("how long loading a {} takes, as a share of the reload",
+                    TowerTerm.HEAVY_SHELL);
+            case NUKE_LOAD -> TermText.format("how long loading a {} takes, as a share of the reload",
+                    TowerTerm.NUKE_SHELL);
             case STREAM -> TermText.format("how long it pours before it reloads: {}", TowerTerm.STREAM);
             case RELOAD -> TermText.of("how long it waits after a stream before the next; attack speed shortens it");
             case NORMAL_DAMAGE -> TermText.format("what a Normal shell or a {} deals past the Mortar's damage",

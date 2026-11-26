@@ -125,6 +125,8 @@ final class PerkPictograms {
             Map.entry("mortar.barrage", "=tower.barrage"),
             // Carpet Bombing
             Map.entry("mortar.carpet_bombing", "=tower.carpet_bombing"),
+            // Quick Load
+            Map.entry("mortar.quick_load", "F M9 8.4H15.4C18.6 8.4 21.4 10 22.4 12C21.4 14 18.6 15.6 15.4 15.6H9Z ; F M6.8 8.4H8.2V15.6H6.8Z ; T M1.4 9.6H5.2 M2.4 12H5.4 M1.4 14.4H5.2"),
             // Overcharge
             Map.entry("mortar.overcharge", "F M8.6 2.4H15.4V11.6L12 17L8.6 11.6Z ; X M8.6 6.4H15.4 ; S M2.4 19H21.6 ; T M7 19L5.2 22.4 M17 19L18.8 22.4 M12 19V22.6"),
             // Fusion

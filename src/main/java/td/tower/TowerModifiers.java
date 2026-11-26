@@ -103,6 +103,23 @@ public final class TowerModifiers {
         return flat(TowerStat.PROJECTILE_SIZE, fraction);
     }
 
+    /** A Normal shell's and a Flare's load time {@code fraction} of the reload longer; negative for shorter. */
+    public static StatModifiers<TowerStat> normalLoad(float fraction) {
+        return flat(TowerStat.NORMAL_LOAD, fraction);
+    }
+
+    public static StatModifiers<TowerStat> payloadLoad(float fraction) {
+        return flat(TowerStat.PAYLOAD_LOAD, fraction);
+    }
+
+    public static StatModifiers<TowerStat> heavyLoad(float fraction) {
+        return flat(TowerStat.HEAVY_LOAD, fraction);
+    }
+
+    public static StatModifiers<TowerStat> nukeLoad(float fraction) {
+        return flat(TowerStat.NUKE_LOAD, fraction);
+    }
+
     public static StatModifiers<TowerStat> normalDamage(float points) {
         return flat(TowerStat.NORMAL_DAMAGE, DamageUnits.ofPoints(points));
     }

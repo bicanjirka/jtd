@@ -6,6 +6,7 @@ import td.effect.EffectKind;
 import td.projectile.ShellLook;
 import td.term.TermNumbers;
 import td.term.TermText;
+import td.tower.TowerStat;
 import td.tower.TowerTerm;
 import td.util.TickRate;
 import td.zone.Zone;
@@ -95,6 +96,16 @@ public enum ShellKind {
         return TermText.of(EffectKind.IRRADIATED).plus(" of " + TermNumbers.number(RADIATION_POINTS_PER_SECOND)
                 + " magic damage a second, halving every "
                 + TermNumbers.seconds(RADIATION_HALF_LIFE_TICKS / TickRate.TICKS_PER_SECOND));
+    }
+
+    /** The stat that says how long loading it takes: a Flare loads as a Normal, Napalm, Tar and Cryo as Payloads. */
+    public TowerStat loadStat() {
+        return switch (this) {
+            case NORMAL, FLARE -> TowerStat.NORMAL_LOAD;
+            case NAPALM, TAR, CRYO -> TowerStat.PAYLOAD_LOAD;
+            case HEAVY -> TowerStat.HEAVY_LOAD;
+            case NUKE -> TowerStat.NUKE_LOAD;
+        };
     }
 
     /** Napalm, Tar or Cryo: the kinds a Payload node adds. */

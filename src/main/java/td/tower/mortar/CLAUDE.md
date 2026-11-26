@@ -16,6 +16,9 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   look in flight. Everything a kind does differently (blast, damage type, flight speed, ground) is on the kind;
   the tower never compares kinds but for a Heavy's pick, a Nuke's flash and the Flares it keeps. A pick a node makes
   between kinds is a value in the spec (`HeavyRider`), not a branch per mechanic.
+- The reload after a firing is how long loading the shells it loads next takes: each kind's load time is a stat
+  (`ShellKind.loadStat`), a volley's the mean of its shells' times its factor. The Fire rate row averages the kinds by
+  their chances, and the reload art reads the reload under way (`getCoolDownFraction`, `reloadTicks`), never one period.
 - What the pane says a kind does (its hit, speed, blast, effects) is a `ShellProfile` the tower works out from what it
   would fire now, never the kind's constants read in the UI.
 - The chances the panel shows come from `MagazineSpec.chances()` (`MagazineOdds`, which counts Fusion and Rich Mix),
