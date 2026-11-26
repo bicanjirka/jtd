@@ -54,6 +54,19 @@ class SeekerNestTest {
     }
 
     @Test
+    void aHatchedMissileLeavesFirstAndTakesNoneOfTheRoom() {
+        SeekerNest nest = new SeekerNest();
+        nest.load(MissileKind.FROST);
+        nest.loadHatched(MissileKind.RUBY);
+
+        boolean room = nest.hasRoom(2);
+        MissileKind first = nest.launch(GAP);
+
+        assertThat(room).isTrue();
+        assertThat(first).isEqualTo(MissileKind.RUBY);
+    }
+
+    @Test
     void itLetsGoTheMissilesOfAKindItNoLongerHolds() {
         SeekerNest nest = new SeekerNest();
         nest.load(MissileKind.FROST);

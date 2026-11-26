@@ -8,7 +8,6 @@ import td.projectile.Projectile;
 import td.stat.StatWording;
 import td.tower.AuraTower;
 import td.tower.MortarTower;
-import td.tower.SeekerTower;
 import td.tower.Tower;
 import td.tower.TowerInspection;
 import td.ui.render.CellDraw;
@@ -121,11 +120,10 @@ public final class BoardRenderer {
         return Optional.of(new CellGridDraw(blocked));
     }
 
-    /** {@code tower} as it stands this frame: what it carries (and what its light carries), how far its nodes count, its bars, its magazine or nest. */
+    /** {@code tower} as it stands this frame: what it carries (and what its light carries), how far its nodes count, its bars, its magazine. */
     static TowerInspection liveInspection(Tower tower) {
         TowerInspection found = tower.inspect().withConditions(tower.conditions()).withProgress(tower.progress())
                 .withAbilities(tower.abilities()).withCarries(AuraTower.carriedBy(tower));
-        TowerInspection loaded = MortarTower.magazineViewOf(tower).map(found::withMagazine).orElse(found);
-        return SeekerTower.nestViewOf(tower).map(loaded::withNest).orElse(loaded);
+        return MortarTower.magazineViewOf(tower).map(found::withMagazine).orElse(found);
     }
 }

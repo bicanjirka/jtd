@@ -32,11 +32,6 @@ class SeekerTowerTest {
     private GameWorld context = WorldFixtures.newWorldOnBoard(SCALE, 20, 20);
     private int tick = 1;
 
-    /** From now on every missile the nest draws is its second kind, when it has one. */
-    private void drawingTheSecondKind() {
-        this.context = WorldFixtures.newWorldOnBoard(() -> 0.0, SCALE, 20, 20);
-    }
-
     private SeekerTower towerWith(String... nodes) {
         SeekerTower tower = new SeekerTower(this.context, 3, 3);
         UpgradePaths.buy(tower, this.context, nodes);
@@ -70,6 +65,13 @@ class SeekerTowerTest {
         for (int i = 0; i < count; i++) {
             this.enemies(this.enemyAt(tower, OUT, 0));
             this.landOne(tower);
+        }
+    }
+
+    /** Lands the Frost missiles ahead of the nest's first second-kind missile, each on a fresh enemy. */
+    private void spendTheFrostAhead(SeekerTower tower) {
+        while (tower.nestMissiles().getFirst() == MissileKind.FROST) {
+            this.landFreezes(tower, 1);
         }
     }
 
@@ -267,10 +269,11 @@ class SeekerTowerTest {
     }
 
     @Test
-    void aSwarmSendsItsMissilesAtOnceEachAtADifferentEnemySoonestOutFirst() {
+    void aSwarmSendsAsManyMissilesAsTheNestHoldsAtOnceEachAtADifferentEnemySoonestOutFirst() {
         SeekerTower tower = this.towerWith("Swarm");
+        int size = Math.round(tower.stats().value(TowerStat.NEST_CAPACITY));
         this.landFreezes(tower, ReleaseMechanic.EVERY);
-        FakeEnemyMob[] crowd = new FakeEnemyMob[ReleaseMechanic.MISSILES + 1];
+        FakeEnemyMob[] crowd = new FakeEnemyMob[size + 1];
         for (int i = 0; i < crowd.length; i++) {
             double angle = 2 * Math.PI * i / crowd.length;
             crowd[i] = this.enemyAt(tower, Math.cos(angle) * OUT, Math.sin(angle) * OUT).withDistanceToExit(100 + i);
@@ -281,24 +284,25 @@ class SeekerTowerTest {
         int launched = this.context.projectiles().getProjectiles().size();
         TowerFixtures.flyProjectilesToCompletion(this.context);
 
-        assertThat(launched).isEqualTo(ReleaseMechanic.MISSILES);
-        for (int i = 0; i < ReleaseMechanic.MISSILES; i++) {
+        assertThat(launched).isEqualTo(size);
+        for (int i = 0; i < size; i++) {
             assertThat(crowd[i].hits()).hasSize(1);
         }
-        assertThat(crowd[ReleaseMechanic.MISSILES].hits()).isEmpty();
+        assertThat(crowd[size].hits()).isEmpty();
     }
 
     @Test
-    void aHatchingHatchesItsMissilesIntoTheNestPastItsSize() {
+    void aHatchingHatchesAsManyMissilesAsTheNestHoldsOnTopOfTheNestWhichKeepsLoading() {
         SeekerTower tower = this.towerWith("Hatching");
+        int size = Math.round(tower.stats().value(TowerStat.NEST_CAPACITY));
         this.landFreezes(tower, ReleaseMechanic.EVERY);
         this.enemies();
 
-        for (int i = 0; i < ReleaseMechanic.MISSILES * ReleaseMechanic.HATCH_GAP_TICKS; i++) {
+        for (int i = 0; i < 400; i++) {
             tower.doTick(this.tick++);
         }
 
-        assertThat(tower.nestMissiles()).hasSizeGreaterThanOrEqualTo(ReleaseMechanic.MISSILES);
+        assertThat(tower.nestMissiles()).hasSize(2 * size);
     }
 
     @Test
@@ -318,24 +322,23 @@ class SeekerTowerTest {
 
     @Test
     void aRubyDealsDoubleDamageAndFreezesWhatIsImmuneToFreezing() {
-        this.drawingTheSecondKind();
         SeekerTower tower = this.towerWith("Ruby");
         tower.readyForWave();
+        this.spendTheFrostAhead(tower);
         FakeEnemyMob immune = this.enemyAt(tower, OUT, 0).immuneTo(EffectKind.FREEZE);
         this.enemies(immune);
 
         this.landOne(tower);
 
-        assertThat(tower.nestMissiles()).containsOnly(MissileKind.RUBY);
         assertThat(immune.onlyHitAmount()).isEqualTo(2 * tower.damageCurrent());
         assertThat(immune.activeEffects()).anySatisfy(effect -> assertThat(effect.ice()).isEqualTo(IceKind.RUBY));
     }
 
     @Test
     void aShadeGoesPastAShieldAndFreezes() {
-        this.drawingTheSecondKind();
         SeekerTower tower = this.towerWith("Shade");
         tower.readyForWave();
+        this.spendTheFrostAhead(tower);
         FakeEnemyMob shielded = this.enemyAt(tower, OUT, 0).shieldingEveryHit();
         this.enemies(shielded);
 
@@ -346,8 +349,9 @@ class SeekerTowerTest {
 
     @Test
     void aShadesEnemyStaysSilencedOnceItThawsForAsLongAsItWasFrozen() {
-        this.drawingTheSecondKind();
         SeekerTower tower = this.towerWith("Shade");
+        tower.readyForWave();
+        this.spendTheFrostAhead(tower);
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.enemies(target);
         this.launch(tower);
@@ -366,8 +370,20 @@ class SeekerTowerTest {
     }
 
     @Test
+    void everyWaveStartsTheNestsOrderOver() {
+        SeekerTower tower = this.towerWith("Ruby");
+        tower.readyForWave();
+        List<MissileKind> first = tower.nestMissiles();
+        this.landFreezes(tower, 1);
+
+        tower.readyForWave();
+
+        assertThat(first).contains(MissileKind.RUBY);
+        assertThat(tower.nestMissiles()).isEqualTo(first);
+    }
+
+    @Test
     void aMissileOfAKindNoLongerOwnedLeavesTheNest() {
-        this.drawingTheSecondKind();
         SeekerTower tower = this.towerWith("Ruby");
         tower.readyForWave();
 

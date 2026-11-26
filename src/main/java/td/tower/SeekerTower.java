@@ -14,13 +14,11 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
-import td.tower.seeker.BroodSpec;
 import td.tower.seeker.FeedingMechanic;
 import td.tower.seeker.FrozenLedger;
 import td.tower.seeker.IceRider;
 import td.tower.seeker.IceWakeMechanic;
 import td.tower.seeker.MissileKind;
-import td.tower.seeker.NestView;
 import td.tower.seeker.Release;
 import td.tower.seeker.ReleaseMechanic;
 import td.tower.seeker.RichBroodMechanic;
@@ -47,6 +45,7 @@ import td.util.TickRate;
 import td.wave.Vec2;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -148,43 +147,6 @@ public final class SeekerTower extends AbstractTower {
             entry(ICE_WAKE.id(), IceWakeMechanic::new),
             entry(SHATTER.id(), ShatterMechanic::new));
 
-    private static final TowerVisitor<Optional<SeekerTower>> AS_SEEKER = new TowerVisitor<>() {
-        @Override
-        public Optional<SeekerTower> visitSniperTower(SniperTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<SeekerTower> visitSplashTower(SplashTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<SeekerTower> visitPulseTower(PulseTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<SeekerTower> visitAuraTower(AuraTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<SeekerTower> visitMortarTower(MortarTower tower) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<SeekerTower> visitSeekerTower(SeekerTower tower) {
-            return Optional.of(tower);
-        }
-
-        @Override
-        public Optional<SeekerTower> visitCinderTower(CinderTower tower) {
-            return Optional.empty();
-        }
-    };
-
     private final OwnedMechanics<SeekerMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private SeekerNest nest = new SeekerNest();
     private final List<ShatterMark> shatterMarks = new ArrayList<>();
@@ -192,6 +154,8 @@ public final class SeekerTower extends AbstractTower {
     private FireClock clock = new FireClock(COOLDOWN_MAX);
     /** The charge freezes have fed the load in progress, held under its floor. */
     private double fed;
+    /** The missiles it made this wave, which sets the kind of the next. */
+    private int made;
     /** Freezes toward the next Release. */
     private int freezes;
     private boolean releaseDue;
@@ -243,10 +207,10 @@ public final class SeekerTower extends AbstractTower {
             this.release(spec, inReach);
         }
         if (this.nest.hatchesNow(ReleaseMechanic.HATCH_GAP_TICKS)) {
-            this.nest.load(spec.brood().draw(this.context.random()));
+            this.nest.loadHatched(this.nextMissile(spec));
         }
         if (this.clock.isReady() && this.nest.hasRoom(this.capacity())) {
-            this.nest.load(spec.brood().draw(this.context.random()));
+            this.nest.load(this.nextMissile(spec));
             this.clock.spend();
             this.fed = 0.0;
         }
@@ -284,28 +248,37 @@ public final class SeekerTower extends AbstractTower {
         this.freezes = 0;
         this.releaseDue = false;
         this.ringRadians = 0.0;
+        this.made = 0;
         this.nest = new SeekerNest();
-        BroodSpec brood = this.spec().brood();
+        SeekerSpec spec = this.spec();
         while (this.nest.hasRoom(this.capacity())) {
-            this.nest.load(brood.draw(this.context.random()));
+            this.nest.load(this.nextMissile(spec));
         }
     }
 
-    /** A Swarm's missiles at once, at as many different enemies, soonest out first; a Hatching's into the nest. */
+    /** The kind of the next missile it makes, in the order its brood makes them. */
+    private MissileKind nextMissile(SeekerSpec spec) {
+        return spec.brood().kindOf(++this.made);
+    }
+
+    /**
+     * As many missiles as the nest holds: a Swarm's at once, at as many different enemies, soonest out first; a
+     * Hatching's on top of the nest.
+     */
     private void release(SeekerSpec spec, List<EnemyMob> inReach) {
+        int missiles = this.capacity();
         switch (spec.release()) {
             case NONE -> {
             }
             case SWARM -> {
                 List<EnemyMob> left = new ArrayList<>(inReach);
-                for (int i = 0; i < ReleaseMechanic.MISSILES && !left.isEmpty(); i++) {
+                for (int i = 0; i < missiles && !left.isEmpty(); i++) {
                     EnemyMob target = SOONEST_OUT.selectFrom(left).orElseThrow();
                     left.remove(target);
-                    this.launch(spec.brood().draw(this.context.random()), target,
-                            this.ringRadians + 2 * Math.PI * i / ReleaseMechanic.MISSILES);
+                    this.launch(this.nextMissile(spec), target, this.ringRadians + 2 * Math.PI * i / missiles);
                 }
             }
-            case HATCHING -> this.nest.hatch(ReleaseMechanic.MISSILES);
+            case HATCHING -> this.nest.hatch(missiles);
         }
     }
 
@@ -456,21 +429,6 @@ public final class SeekerTower extends AbstractTower {
         return this.spec().brood().second();
     }
 
-    /** Its nest as the pane shows it. */
-    public NestView nestView() {
-        return new NestView(this.nest.missiles(), this.missileChances());
-    }
-
-    /** {@code tower}'s nest as the pane shows it, when it is an Aerie. */
-    public static Optional<NestView> nestViewOf(Tower tower) {
-        return tower.accept(AS_SEEKER).map(SeekerTower::nestView);
-    }
-
-    /** What share of the new missiles each kind comes to. */
-    public Map<MissileKind, Float> missileChances() {
-        return this.spec().brood().chances();
-    }
-
     @Override
     protected DamageType damageType() {
         return DamageType.MAGIC;
@@ -484,14 +442,14 @@ public final class SeekerTower extends AbstractTower {
                 TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, missile.size()));
     }
 
-    /** The nest's missiles, and the Release the next freeze sets off. */
+    /** Each kind of missile the nest holds, with how many, and the Release the next freeze sets off. */
     @Override
     protected List<TowerBuffState> ownConditions() {
+        Map<MissileKind, Integer> held = new EnumMap<>(MissileKind.class);
+        this.nest.missiles().forEach(kind -> held.merge(kind, 1, Integer::sum));
         List<TowerBuffState> states = new ArrayList<>();
-        if (this.nest.stored() > 0) {
-            states.add(TowerBuffState.of(TowerTerm.NEST, TermText.of(this.nest.stored() + " of " + this.capacity()
-                    + " missiles ready")).withStacks(this.nest.stored()));
-        }
+        held.forEach((kind, count) -> states.add(TowerBuffState.of(kind.term(), TermText.of(count + " ready in the ")
+                .plus(TowerTerm.NEST)).withStacks(count)));
         if (this.releaseReady()) {
             TowerTerm release = this.spec().release() == Release.SWARM ? TowerTerm.SWARM : TowerTerm.HATCHING;
             states.add(TowerBuffState.of(release, TermText.of("the next ").plus(EffectKind.FREEZE)

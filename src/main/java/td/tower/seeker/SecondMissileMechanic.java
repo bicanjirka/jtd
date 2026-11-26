@@ -7,7 +7,7 @@ import td.tower.TowerTerm;
 
 import java.util.Set;
 
-/** Ruby or Shade: adds a second kind of missile to the nest, drawn by lot beside Frost. */
+/** Ruby or Shade: adds a second kind of missile to the nest, made in a fixed order beside Frost. */
 public final class SecondMissileMechanic implements SeekerMechanic {
 
     private final MissileKind kind;
@@ -32,6 +32,6 @@ public final class SecondMissileMechanic implements SeekerMechanic {
     @Override
     public TermText describe() {
         return TermText.of("adds ").plus(this.kind.term()).plus(" missiles to the ").plus(TowerTerm.NEST)
-                .plus(", one in " + Math.round(1f / BroodSpec.frostOnly().withSecond(this.kind).secondShare()));
+                .plus(", one in " + BroodSpec.frostOnly().withSecond(this.kind).oneIn());
     }
 }

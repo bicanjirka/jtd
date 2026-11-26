@@ -1,38 +1,37 @@
 package td.tower.seeker;
 
 import org.junit.jupiter.api.Test;
-import td.util.RandomSource;
 
-import java.util.Map;
+import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
 
 class BroodSpecTest {
 
-    @Test
-    void frostAloneDrawsFrostWithoutRolling() {
-        RandomSource never = () -> {
-            throw new AssertionError("rolled");
-        };
-
-        assertThat(BroodSpec.frostOnly().draw(never)).isEqualTo(MissileKind.FROST);
+    private static List<MissileKind> firstSix(BroodSpec brood) {
+        return IntStream.rangeClosed(1, 6).mapToObj(brood::kindOf).toList();
     }
 
     @Test
-    void aSecondKindComesUpOneInThree() {
+    void frostAloneMakesOnlyFrost() {
+        assertThat(firstSix(BroodSpec.frostOnly())).containsOnly(MissileKind.FROST);
+    }
+
+    @Test
+    void aSecondKindComesEveryThirdMissile() {
         BroodSpec brood = BroodSpec.frostOnly().withSecond(MissileKind.RUBY);
 
-        assertThat(brood.draw(() -> 0.32)).isEqualTo(MissileKind.RUBY);
-        assertThat(brood.draw(() -> 0.34)).isEqualTo(MissileKind.FROST);
-        assertThat(brood.chances().get(MissileKind.RUBY)).isCloseTo(1f / 3f, within(1e-6f));
+        assertThat(firstSix(brood)).containsExactly(MissileKind.FROST, MissileKind.FROST, MissileKind.RUBY,
+                MissileKind.FROST, MissileKind.FROST, MissileKind.RUBY);
     }
 
     @Test
-    void aRichBroodBringsTheSecondKindUpOneInTwo() {
-        Map<MissileKind, Float> chances = BroodSpec.frostOnly().withSecond(MissileKind.SHADE).richer().chances();
+    void aRichBroodBringsTheSecondKindEverySecondMissile() {
+        BroodSpec brood = BroodSpec.frostOnly().withSecond(MissileKind.SHADE).richer();
 
-        assertThat(chances).containsEntry(MissileKind.SHADE, 0.5f).containsEntry(MissileKind.FROST, 0.5f);
+        assertThat(firstSix(brood)).containsExactly(MissileKind.FROST, MissileKind.SHADE, MissileKind.FROST,
+                MissileKind.SHADE, MissileKind.FROST, MissileKind.SHADE);
     }
 
     @Test

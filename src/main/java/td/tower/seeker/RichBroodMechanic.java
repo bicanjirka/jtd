@@ -12,7 +12,7 @@ public final class RichBroodMechanic implements SeekerMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("the second kind of missile comes up one in "
-                + Math.round(1f / BroodSpec.frostOnly().withSecond(MissileKind.RUBY).richer().secondShare()));
+        return TermText.of("the second kind of missile comes one in "
+                + BroodSpec.frostOnly().withSecond(MissileKind.RUBY).richer().oneIn());
     }
 }

@@ -37,8 +37,8 @@ public enum TowerTerm implements Term {
     SHADE("Shade", Side.BUFF, "a missile whose hit goes past {} and insulation, and whose {} leaves its enemy {} as "
             + "long again once it thaws", EffectKind.SHIELD, EffectKind.FREEZE, EffectKind.SILENCED),
     SWARM("Swarm", Side.BUFF, "missiles at once, each at a different enemy, soonest out first"),
-    HATCHING("Hatching", Side.BUFF, "missiles that hatch into the nest past its size, one after another, and launch as "
-            + "usual"),
+    HATCHING("Hatching", Side.BUFF, "missiles that hatch on top of the nest, one after another, and launch first while it "
+            + "keeps loading"),
     ICE_WAKE("Ice Wake", Side.BUFF, "while a {} the tower landed holds, every enemy walking close past the ice gains {}",
             EffectKind.FREEZE, EffectKind.CHILL),
     LIGHT("Light", Side.BUFF, "a Beacon's circle: every enemy in it gains {}, while inside and a moment after, and "

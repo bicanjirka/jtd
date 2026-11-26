@@ -213,31 +213,6 @@ public sealed interface SheetLine {
                         Optional<SheetTooltip> tooltip) {
     }
 
-    /**
-     * An Aerie's nest: a slot per missile it holds, the next to leave first, over one strip split into each kind's
-     * share of the new missiles.
-     *
-     * @param missiles the missiles, the next to leave first
-     * @param shares   each kind it can draw with its share, in order; the shares add to one
-     * @param tooltip  what hovering it opens: each kind's chance
-     */
-    record NestRow(List<LoadedMissile> missiles, List<MissileShare> shares, SheetTooltip tooltip) implements SheetLine {
-
-        public NestRow {
-            missiles = List.copyOf(missiles);
-            shares = List.copyOf(shares);
-        }
-
-        @Override
-        public Optional<InfoSheet> tooltipFor(TooltipKey key) {
-            return this.tooltip.key().equals(key) ? Optional.of(this.tooltip.sheet()) : Optional.empty();
-        }
-    }
-
-    /** One kind's piece of a nest's strip. */
-    record MissileShare(LoadedMissile missile, float share) {
-    }
-
     /** A face, a bold name in the face's tone, and a value on the right: the head of a tooltip. */
     record IconTitle(IconFace face, String name, Palette tone, String value) implements SheetLine {
     }

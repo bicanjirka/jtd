@@ -219,7 +219,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Ruby | Buff | A missile that deals double damage, and whose Freeze also holds an enemy immune to it. |
 | Shade | Buff | A missile whose hit goes past Shield and insulation, and whose Freeze leaves its enemy Silenced as long again once it thaws. |
 | Swarm | Buff | Missiles at once, each at a different enemy, soonest out first. |
-| Hatching | Buff | Missiles that hatch into the nest past its size, one after another, and launch as usual. |
+| Hatching | Buff | Missiles that hatch on top of the nest, one after another, and launch first while it keeps loading. |
 | Ice Wake | Buff | While a Freeze the tower landed holds, every enemy walking close past the ice gains Chill. |
 | Light | Buff | A Beacon's circle: every enemy in it gains Reveal, while inside and a moment after, and every other tower whose centre is in it is Lit; lights that overlap stack. |
 | Lit | Buff | In a Beacon's light: it takes less of the jam and the blinding enemies put on it. |
