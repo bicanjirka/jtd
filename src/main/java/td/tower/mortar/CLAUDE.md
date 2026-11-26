@@ -21,6 +21,8 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   volley's the mean of its shells' times its factor. The Fire rate row averages the kinds by their chances and the
   chained ones by `MagazineSpec.chainedShare`, and the reload art reads the reload under way (`getCoolDownFraction`,
   `reloadTicks`), never one period.
+- The tower's sheet lists its own stats; what belongs to a shell (blast, hit past the Mortar's damage, load time, speed) is
+  on that shell's `ShellProfile`, so `MortarTower.listsRow` leaves those stats off the sheet.
 - What the pane says a kind does (its hit, speed, blast, effects) is a `ShellProfile` the tower works out from what it
   would fire now, never the kind's constants read in the UI.
 - The chances the panel shows come from `MagazineSpec.chances()` (`MagazineOdds`, which counts Fusion and Rich Mix),

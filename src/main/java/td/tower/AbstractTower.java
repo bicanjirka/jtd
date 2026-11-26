@@ -1370,7 +1370,15 @@ public abstract class AbstractTower implements Tower {
                 stats.value(stat)), stat);
     }
 
+    /** Whether {@code stat} may be a row of this tower's sheet at all; a stat that belongs to what it fires leaves it. */
+    protected boolean listsRow(TowerStat stat) {
+        return true;
+    }
+
     private boolean showsRow(TowerStat stat, TowerStats stats, boolean applies) {
+        if (!this.listsRow(stat)) {
+            return false;
+        }
         // A stat whose range starts above its default resolves to that floor, which is still its default.
         float unset = stat.clamp(stat.defaultBase());
         boolean offDefault = stat.clamp(this.baseStats.stats().value(stat)) != unset || stats.value(stat) != unset;

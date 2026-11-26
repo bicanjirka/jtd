@@ -842,12 +842,14 @@ public final class MortarTower extends AbstractTower {
                         / ((this.coolDownMax + 1) * volley.reloadFactor() * loadTime)));
     }
 
+    /** What each shell does is on its sheet in the magazine, not on the tower's: its blast, its hit, its speed. */
     @Override
-    protected List<TowerStatLine> ownStats(TowerStats stats) {
-        ProjectileStats shell = this.shellStats(new Shell(ShellKind.NORMAL, Optional.empty(), stats));
-        float cellsPerSecond = shell.speed() * TICKS_PER_SECOND / this.cellPixels();
-        return List.of(TowerStatLine.fixed(TowerStatRow.PROJECTILE_SPEED, TowerStat.PROJECTILE_SPEED, cellsPerSecond),
-                TowerStatLine.fixed(TowerStatRow.PROJECTILE_SIZE, TowerStat.PROJECTILE_SIZE, shell.size()));
+    protected boolean listsRow(TowerStat stat) {
+        return switch (stat) {
+            case AREA_RADIUS, BLAST_EDGE, HEAVY_BLAST, NORMAL_DAMAGE, HEAVY_DAMAGE, NORMAL_LOAD, CHAIN_LOAD, PAYLOAD_LOAD,
+                 HEAVY_LOAD, NUKE_LOAD, PROJECTILE_SPEED, PROJECTILE_SIZE -> false;
+            default -> true;
+        };
     }
 
     /** The shell loading, when it is any kind but a Normal. */
