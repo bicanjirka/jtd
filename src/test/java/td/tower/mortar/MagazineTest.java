@@ -104,6 +104,21 @@ class MagazineTest {
     }
 
     @Test
+    void theChainedShareIsTheLightShellsFiredRightAfterALightOneAndRichMixBreaksANormalsChain() {
+        MagazineSpec spec = new MagazineSpec(Map.of(ShellKind.NORMAL, 2, ShellKind.FLARE, 1, ShellKind.HEAVY, 1), false,
+                false);
+
+        float chained = spec.chainedShare();
+        float mixedChained = spec.mixing().chainedShare();
+
+        assertThat(chained).isCloseTo(0.75f * 0.75f, within(1e-3f));
+        Map<ShellKind, Float> mixed = spec.mixing().chances();
+        float normalToFlare = mixed.get(ShellKind.NORMAL) * (1f / 2f);
+        float flareToNormal = mixed.get(ShellKind.FLARE) * (2f / 3f);
+        assertThat(mixedChained).isCloseTo(normalToFlare + flareToNormal, within(1e-3f));
+    }
+
+    @Test
     void withRichMixAndOnlyTwoKindsTheyComeUpHalfAndHalfWhateverTheirWeights() {
         MagazineSpec mixing = MagazineSpec.standard().mixing();
 

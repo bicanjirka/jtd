@@ -42,6 +42,12 @@ public enum TowerStat implements StatKey, StatTerm {
     /** How long loading a Normal shell or a Flare takes, as a share of the reload. */
     NORMAL_LOAD(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Normal load", "Normal load time", StatDirection.LOWER,
             StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
+    /**
+     * How long loading a Normal shell or a Flare right after one takes, as a share of its Normal load time; at its
+     * default a chain loads as any other Normal.
+     */
+    CHAIN_LOAD(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Chain load", "Chain load time", StatDirection.LOWER,
+            StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
     /** How long loading a Payload shell takes, as a share of the reload. */
     PAYLOAD_LOAD(1f, 0.1f, Float.MAX_VALUE, StatUnit.PERCENT, "Payload load", "Payload load time", StatDirection.LOWER,
             StatGroup.DAMAGE, Shows.OFF_DEFAULT, false),
@@ -213,6 +219,9 @@ public enum TowerStat implements StatKey, StatTerm {
             case DAMAGE -> TermText.of("what one hit deals, before the target's defences");
             case ATTACK_SPEED -> TermText.of("how often it attacks");
             case NORMAL_LOAD -> TermText.format("how long loading a Normal shell or a {} takes, as a share of the reload",
+                    TowerTerm.FLARE);
+            case CHAIN_LOAD -> TermText.format(
+                    "how long loading a Normal shell or a {} right after one takes, as a share of its Normal load time",
                     TowerTerm.FLARE);
             case PAYLOAD_LOAD -> TermText.format("how long loading a {} shell takes, as a share of the reload",
                     TowerTerm.PAYLOAD);

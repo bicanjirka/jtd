@@ -99,4 +99,9 @@ public record MagazineSpec(Map<ShellKind, Integer> weights, boolean fuses, boole
     public Map<ShellKind, Float> chances() {
         return MagazineOdds.of(this);
     }
+
+    /** The share of the shells it fires that are light and fired right after a light one, over a long run of draws. */
+    public float chainedShare() {
+        return MagazineOdds.chained(this);
+    }
 }

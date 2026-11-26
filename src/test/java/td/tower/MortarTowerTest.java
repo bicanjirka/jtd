@@ -91,6 +91,20 @@ class MortarTowerTest {
         return this.context.projectiles().getProjectiles().getLast();
     }
 
+    /** Ticks the tower until it has fired {@code count} times; the tick of each firing. */
+    private List<Integer> ticksOfFirings(MortarTower tower, int count) {
+        List<Integer> firedAt = new ArrayList<>();
+        for (int i = 0; i < 400 && firedAt.size() < count; i++) {
+            int before = this.context.projectiles().getProjectiles().size();
+            tower.doTick(this.tick);
+            if (this.context.projectiles().getProjectiles().size() > before) {
+                firedAt.add(this.tick);
+            }
+            this.tick++;
+        }
+        return firedAt;
+    }
+
     private List<ZoneKind> zoneKinds() {
         return this.context.zones().zones().stream().map(Zone::kind).toList();
     }
@@ -755,20 +769,25 @@ class MortarTowerTest {
         MortarTower tower = TowerFixtures.buffed(this.loaded(List.of(ShellKind.NORMAL, ShellKind.NORMAL, ShellKind.HEAVY)),
                 this.context, TowerModifiers.normalLoad(-0.5f));
         this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
-        List<Integer> firedAt = new ArrayList<>();
 
-        for (int i = 0; i < 400 && firedAt.size() < 3; i++) {
-            int before = this.context.projectiles().getProjectiles().size();
-            tower.doTick(this.tick);
-            if (this.context.projectiles().getProjectiles().size() > before) {
-                firedAt.add(this.tick);
-            }
-            this.tick++;
-        }
+        List<Integer> firedAt = this.ticksOfFirings(tower, 3);
 
         int beforeTheNormal = firedAt.get(1) - firedAt.get(0);
         int beforeTheHeavy = firedAt.get(2) - firedAt.get(1);
         assertThat(beforeTheHeavy).isEqualTo(2 * beforeTheNormal);
+    }
+
+    @Test
+    void chainLoadShortensOnlyALightShellLoadedRightAfterALightOne() {
+        MortarTower tower = TowerFixtures.buffed(this.loaded(List.of(ShellKind.HEAVY, ShellKind.NORMAL, ShellKind.FLARE),
+                "Flare"), this.context, TowerModifiers.chainLoad(-0.5f));
+        this.context.enemies().setEnemies(new EnemyMob[]{this.enemyAt(tower, OUT, 0)});
+
+        List<Integer> firedAt = this.ticksOfFirings(tower, 3);
+
+        int afterTheHeavy = firedAt.get(1) - firedAt.get(0);
+        int afterTheNormal = firedAt.get(2) - firedAt.get(1);
+        assertThat(afterTheHeavy).isEqualTo(2 * afterTheNormal);
     }
 
     @Test

@@ -108,6 +108,11 @@ public final class TowerModifiers {
         return flat(TowerStat.NORMAL_LOAD, fraction);
     }
 
+    /** A light shell loaded right after a light shell takes {@code fraction} of its Normal load time longer. */
+    public static StatModifiers<TowerStat> chainLoad(float fraction) {
+        return flat(TowerStat.CHAIN_LOAD, fraction);
+    }
+
     public static StatModifiers<TowerStat> payloadLoad(float fraction) {
         return flat(TowerStat.PAYLOAD_LOAD, fraction);
     }

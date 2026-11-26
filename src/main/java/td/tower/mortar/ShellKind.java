@@ -108,6 +108,11 @@ public enum ShellKind {
         };
     }
 
+    /** A Normal or a Flare: a shell that loads as a Normal, and chains when loaded right after another. */
+    public boolean isLight() {
+        return this == NORMAL || this == FLARE;
+    }
+
     /** Napalm, Tar or Cryo: the kinds a Payload node adds. */
     public boolean isPayload() {
         return this == NAPALM || this == TAR || this == CRYO;

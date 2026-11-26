@@ -18,13 +18,27 @@ final class MagazineOdds {
     }
 
     static Map<ShellKind, Float> of(MagazineSpec spec) {
+        return walk(spec).chances();
+    }
+
+    /** The share of the shells fired that are light and follow a light one; light shells never fuse, so a pair stays. */
+    static float chained(MagazineSpec spec) {
+        return walk(spec).chained();
+    }
+
+    private record Walk(Map<ShellKind, Float> chances, float chained) {
+    }
+
+    private static Walk walk(MagazineSpec spec) {
         ShellKind[] kinds = ShellKind.values();
         double[] waiting = new double[kinds.length];
         waiting[ShellKind.NORMAL.ordinal()] = 1.0;
         double[] fired = new double[kinds.length];
+        double chained = 0.0;
         for (int step = 0; step < STEPS; step++) {
             double[] next = new double[kinds.length];
             double[] firedNow = new double[kinds.length];
+            double chainedNow = 0.0;
             for (ShellKind last : kinds) {
                 double share = waiting[last.ordinal()];
                 if (share == 0.0) {
@@ -40,6 +54,9 @@ final class MagazineOdds {
                     } else {
                         firedNow[last.ordinal()] += chance;
                         next[drawn.ordinal()] += chance;
+                        if (last.isLight() && drawn.isLight()) {
+                            chainedNow += chance;
+                        }
                     }
                 }
             }
@@ -48,6 +65,7 @@ final class MagazineOdds {
                 for (int i = 0; i < fired.length; i++) {
                     fired[i] += firedNow[i];
                 }
+                chained += chainedNow;
             }
         }
         double total = 0.0;
@@ -58,6 +76,6 @@ final class MagazineOdds {
         for (ShellKind kind : kinds) {
             chances.put(kind, total == 0.0 ? 0f : (float) (fired[kind.ordinal()] / total));
         }
-        return chances;
+        return new Walk(chances, total == 0.0 ? 0f : (float) (chained / total));
     }
 }

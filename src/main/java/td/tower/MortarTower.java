@@ -266,7 +266,7 @@ public final class MortarTower extends AbstractTower {
                 .with(TowerStat.PROJECTILE_SPEED, 1f).with(TowerStat.PROJECTILE_SIZE, 1f)
                 .with(TowerStat.MINIMUM_RANGE, MINIMUM_RANGE_CELLS).with(TowerStat.HEAVY_DAMAGE, DamageUnits.ofPoints(HEAVY_POINTS))
                 .with(TowerStat.NORMAL_DAMAGE, 0f).with(TowerStat.HEAVY_BLAST, 0f)
-                .with(TowerStat.NORMAL_LOAD, 1f).with(TowerStat.PAYLOAD_LOAD, 1f).with(TowerStat.HEAVY_LOAD, 1f)
+                .with(TowerStat.NORMAL_LOAD, 1f).with(TowerStat.CHAIN_LOAD, 1f).with(TowerStat.PAYLOAD_LOAD, 1f).with(TowerStat.HEAVY_LOAD, 1f)
                 .with(TowerStat.NUKE_LOAD, 1f),
                 context, x, y);
     }
@@ -339,7 +339,8 @@ public final class MortarTower extends AbstractTower {
         List<HeldShell> held = this.magazine.held();
         List<HeldShell> front = held.subList(0, Math.min(volley.shells(), held.size()));
         this.magazine = this.magazine.fired(front.size(), spec.magazine(), this.context.random());
-        this.reloadPeriods = volley.reloadFactor() * loadTime(this.magazine.front(volley.shells()), this.stats());
+        this.reloadPeriods = volley.reloadFactor()
+                * loadTime(front.getLast().kind(), this.magazine.front(volley.shells()), this.stats());
         List<HeldShell> loaded = volley.sequence(front).stream().map(shell -> asFired(shell.shell(), spec)).toList();
         List<Optional<Vec2>> laid = this.laidAlongThePath(target, volley, loaded.size());
         HeldShell first = loaded.getFirst();
@@ -386,7 +387,7 @@ public final class MortarTower extends AbstractTower {
     private record LoadableKinds(List<MortarMechanic> owned, List<ShellKind> kinds) {
     }
 
-    private record ShellOdds(MagazineSpec spec, Map<ShellKind, Float> chances) {
+    private record ShellOdds(MagazineSpec spec, Map<ShellKind, Float> chances, float chained) {
     }
 
     private record ShellProfiles(TowerStats stats, List<MortarMechanic> owned, List<ShellProfile> profiles) {
@@ -396,15 +397,33 @@ public final class MortarTower extends AbstractTower {
     private record VolleyShell(HeldShell shell, Optional<Vec2> laidAt, int firesAt) {
     }
 
-    /** How long loading {@code kinds} takes, as a share of the reload: the mean of their kinds' load times. */
-    private static double loadTime(List<ShellKind> kinds, TowerStats stats) {
-        return kinds.stream().mapToDouble(kind -> stats.value(kind.loadStat())).average().orElse(1.0);
+    /**
+     * How long loading {@code next} takes after {@code fired}, as a share of the reload: the mean of each shell's load
+     * time, a light one's chained when the shell in front of it is light too.
+     */
+    private static double loadTime(ShellKind fired, List<ShellKind> next, TowerStats stats) {
+        double total = 0.0;
+        ShellKind before = fired;
+        for (ShellKind kind : next) {
+            total += loadTimeOf(before, kind, stats);
+            before = kind;
+        }
+        return next.isEmpty() ? 1.0 : total / next.size();
     }
 
-    /** The load time of a shell it fires, over a long run of draws: each kind's by its share of the shells. */
-    private static double averageLoadTime(Map<ShellKind, Float> chances, TowerStats stats) {
-        return chances.entrySet().stream().mapToDouble(entry -> entry.getValue() * stats.value(entry.getKey().loadStat()))
-                .sum();
+    private static double loadTimeOf(ShellKind before, ShellKind kind, TowerStats stats) {
+        float own = stats.value(kind.loadStat());
+        return before.isLight() && kind.isLight() ? own * stats.value(TowerStat.CHAIN_LOAD) : own;
+    }
+
+    /**
+     * The load time of a shell it fires, over a long run of draws: each kind's by its share of the shells, and a
+     * chained light one's by the share of chained shells.
+     */
+    private static double averageLoadTime(ShellOdds odds, TowerStats stats) {
+        double unchained = odds.chances().entrySet().stream()
+                .mapToDouble(entry -> entry.getValue() * stats.value(entry.getKey().loadStat())).sum();
+        return unchained + odds.chained() * stats.value(TowerStat.NORMAL_LOAD) * (stats.value(TowerStat.CHAIN_LOAD) - 1f);
     }
 
     /** {@code shell} as this Mortar fires it: a Normal carries the payload in front of it only with Thick Mix. */
@@ -596,12 +615,16 @@ public final class MortarTower extends AbstractTower {
 
     /** What share of the shells it fires are each kind, over a long run of draws; worked out again only as it changes. */
     public Map<ShellKind, Float> shellChances() {
+        return this.shellOdds().chances();
+    }
+
+    private ShellOdds shellOdds() {
         MagazineSpec spec = this.spec(this.mechanics.all()).magazine();
         return this.odds.filter(last -> last.spec().equals(spec)).orElseGet(() -> {
-            ShellOdds fresh = new ShellOdds(spec, spec.chances());
+            ShellOdds fresh = new ShellOdds(spec, spec.chances(), spec.chainedShare());
             this.odds = Optional.of(fresh);
             return fresh;
-        }).chances();
+        });
     }
 
     /**
@@ -769,7 +792,7 @@ public final class MortarTower extends AbstractTower {
     @Override
     protected TowerStatLine cadence(TowerStats stats, Function<TowerStat, List<StatPart>> parts) {
         VolleySpec volley = this.spec(this.mechanics.all()).volley();
-        double loadTime = averageLoadTime(this.shellChances(), stats);
+        double loadTime = averageLoadTime(this.shellOdds(), stats);
         return this.derivedRow(TowerStatRow.FIRE_RATE, TowerStat.ATTACK_SPEED, stats, parts,
                 at -> (float) (volley.fired() * TICKS_PER_SECOND * at.attackRate()
                         / ((this.coolDownMax + 1) * volley.reloadFactor() * loadTime)));
