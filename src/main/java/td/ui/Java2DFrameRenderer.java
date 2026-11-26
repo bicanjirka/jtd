@@ -156,6 +156,7 @@ public final class Java2DFrameRenderer {
     private static final float STANDING_RIM = 0.3f;
     private static final float STANDING_RIM_MIN = 1f;
     private static final float PROJECTILE_SIZE = 5f;
+    private static final float[] DEAD_ZONE_DASH = {5f, 4f};
     private static final float SHELL_STREAK_ALPHA = 0.5f;
     /** How much of a shell's radius the lit part keeps; the rest is its shaded edge, bottom right. */
     private static final float SHELL_LIT_SHARE = 0.78f;
@@ -1257,8 +1258,21 @@ public final class Java2DFrameRenderer {
             float r = sprite.rangeReal();
             g2.setColor(Color.PINK);
             g2.draw(new Ellipse2D.Float(sprite.centerX() - r, sprite.centerY() - r, r * 2, r * 2));
+            paintDeadZone(g2, sprite);
         }
         TowerSprites.paintShadow(g2, sprite, scale, this.light);
+    }
+
+    /** A dashed ring for what a selected tower cannot reach close to itself. */
+    private static void paintDeadZone(Graphics2D g2, TowerSpriteDraw sprite) {
+        float r = sprite.minimumRangeReal();
+        if (r <= 0f) {
+            return;
+        }
+        Stroke saved = g2.getStroke();
+        g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, DEAD_ZONE_DASH, 0f));
+        g2.draw(new Ellipse2D.Float(sprite.centerX() - r, sprite.centerY() - r, r * 2, r * 2));
+        g2.setStroke(saved);
     }
 
     /** One green up arrow in the cell's top-left corner, the same whichever tier the upgrade is in. */

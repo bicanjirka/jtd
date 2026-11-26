@@ -311,6 +311,11 @@ public abstract class AbstractTower implements Tower {
         return this.stats.rangeReal();
     }
 
+    @Override
+    public float getMinimumRangeReal() {
+        return this.stats.value(TowerStat.MINIMUM_RANGE) * this.cellPixels();
+    }
+
     /**
      * What selling it pays back of everything paid: the tower at the price it was bought for, and
      * every upgrade bought for it. Nothing during free build.

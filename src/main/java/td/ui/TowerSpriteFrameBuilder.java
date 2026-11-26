@@ -288,7 +288,7 @@ public final class TowerSpriteFrameBuilder implements TowerVisitor<Void> {
         TierRise rise = tower.tierRise();
         float lifeSeconds = this.lifeSeconds(tower);
         this.draws.add(new TowerSpriteDraw(body, tree.highestOpenTier(tower, this.world), pose, tower.getBoardX(),
-                tower.getBoardY(), tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(),
+                tower.getBoardY(), tower.isSelected(), tower.getX(), tower.getY(), tower.getRangeReal(), tower.getMinimumRangeReal(),
                 (float) headingRadians, this.upgradeReady(tower), rise.from(),
                 this.progress(rise.ticksSince(this.gameTime, RISE_TICKS), RISE_TICKS),
                 this.progress(tower.ticksSincePlaced(this.gameTime, SETTLE_TICKS), SETTLE_TICKS), lifeSeconds));

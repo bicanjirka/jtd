@@ -74,6 +74,9 @@ public interface Tower {
     /** Range in pixels, with buffs. */
     float getRangeReal();
 
+    /** How close a target may stand, in pixels, for a tower with a dead zone; 0 for one with none. */
+    float getMinimumRangeReal();
+
     int getX();
 
     int getY();
