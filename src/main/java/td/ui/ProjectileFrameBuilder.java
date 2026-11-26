@@ -14,9 +14,11 @@ import td.ui.render.ProjectileDraw;
 import td.ui.render.ShellTrail;
 import td.ui.render.SmokeDraw;
 import td.ui.render.TrailLook;
+import td.wave.Vec2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /** Describes each projectile, interpolated between ticks. */
@@ -48,16 +50,22 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
     /** A Normal carrying a share of a payload draws a thinner tail than the payload shell itself. */
     private static final float CARRIED_TRAIL_WIDTH = 0.6f;
 
+    /** A missile drops from its nest to its flight, and climbs back into it, over this many cells round its tower. */
+    private static final float NEST_DROP_CELLS = 1f;
+
     private final List<ProjectileDraw> draws = new ArrayList<>();
     private final double interpolationAlpha;
     private final int scale;
     private final int tick;
+    private final Map<Vec2, Float> nestLifts;
 
     /** A builder for the frame at {@code tick}, which a tail's flicker follows. */
-    public ProjectileFrameBuilder(int tick, double interpolationAlpha, int scale) {
+    /** {@code nestLifts} says how high each Aerie's nest circles over the centre it is keyed by, in pixels. */
+    public ProjectileFrameBuilder(int tick, double interpolationAlpha, int scale, Map<Vec2, Float> nestLifts) {
         this.tick = tick;
         this.interpolationAlpha = interpolationAlpha;
         this.scale = scale;
+        this.nestLifts = Map.copyOf(nestLifts);
     }
 
     private static float lerp(double from, double to, double alpha) {
@@ -189,6 +197,13 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         return new ShellTrail(look, width * projectile.stats().size(), List.copyOf(points), this.tick);
     }
 
+    /** How high a missile at ({@code x}, {@code y}) is drawn: its nest's height at home, none a cell away. */
+    private float nestLiftAt(MissileProjectile projectile, double x, double y) {
+        float lift = this.nestLifts.getOrDefault(new Vec2(projectile.homeX(), projectile.homeY()), 0f);
+        double away = Math.hypot(x - projectile.homeX(), y - projectile.homeY()) / (NEST_DROP_CELLS * this.scale);
+        return lift * (float) Math.max(0.0, 1.0 - away);
+    }
+
     @Override
     public Void visitMissile(MissileProjectile projectile) {
         float x = lerp(projectile.getPrevX(), projectile.getX(), this.interpolationAlpha);
@@ -197,10 +212,14 @@ public final class ProjectileFrameBuilder implements ProjectileVisitor<Void> {
         for (int i = 0; i < trail.size(); i++) {
             // The oldest puff is the faintest and the widest, as it has had longest to spread.
             float age = (trail.size() - i) / (float) (trail.size() + 1);
-            this.draws.add(new SmokeDraw(Palette.PROJECTILE_SMOKE, (float) trail.get(i).x(), (float) trail.get(i).y(),
+            double px = trail.get(i).x();
+            double py = trail.get(i).y();
+            this.draws.add(new SmokeDraw(Palette.PROJECTILE_SMOKE, (float) px,
+                    (float) py - this.nestLiftAt(projectile, px, py),
                     SMOKE_RADIUS * (1f + age) * projectile.stats().size(), SMOKE_ALPHA * (1f - age)));
         }
-        this.draws.add(new MissileDraw(loadedMissileOf(projectile.stats().look()), x, y, projectile.headingRadians(),
+        this.draws.add(new MissileDraw(loadedMissileOf(projectile.stats().look()), x,
+                y - this.nestLiftAt(projectile, x, y), projectile.headingRadians(),
                 MISSILE_LENGTH_CELLS * this.scale * projectile.stats().size()));
         return null;
     }

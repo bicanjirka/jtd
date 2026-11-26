@@ -55,7 +55,7 @@ final class TowerTermPictograms {
             // Ruby
             Map.entry("tower.ruby", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M17.6 13.2L18.6 16.4L21.8 17.4L18.6 18.4L17.6 21.6L16.6 18.4L13.4 17.4L16.6 16.4Z"),
             // Shade
-            Map.entry("tower.shade", "=effect.silenced"),
+            Map.entry("tower.shade", "F@-40 M3 10.4H15L19.8 12L15 13.6H3Z M3.6 10.4L2 7.6H5.6L7.4 10.4Z M3.6 13.6L2 16.4H5.6L7.4 13.6Z ; F M18.6 13.4A4 4 0 1 0 21.6 20.4A3.2 3.2 0 1 1 18.6 13.4Z"),
             // Swarm
             Map.entry("tower.swarm", "F O6 16.4 2.2 O12 8.6 2.2 O18 16.4 2.2 ; T M6 16.4L12 8.6L18 16.4 ; S M12 21.4V18.2"),
             // Hatching

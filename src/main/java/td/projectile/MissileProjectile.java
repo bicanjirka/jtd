@@ -99,6 +99,15 @@ public final class MissileProjectile extends AbstractProjectile {
         this.trail.addLast(new TrailPoint(this.x, this.y));
     }
 
+    /** Where it left from, and where it flies home to: its tower's centre. */
+    public double homeX() {
+        return this.homeX;
+    }
+
+    public double homeY() {
+        return this.homeY;
+    }
+
     public ProjectileStats stats() {
         return this.stats;
     }

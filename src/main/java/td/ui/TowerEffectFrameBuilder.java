@@ -210,6 +210,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private final double interpolationAlpha;
     private final double animationSeconds;
     private final List<BoardFlashDraw> flashes = new ArrayList<>();
+    /** How high each Aerie's nest circles over its centre, by that centre, for the missiles that leave and come home. */
+    private final Map<Vec2, Float> nestLifts = new LinkedHashMap<>();
 
     public TowerEffectFrameBuilder(GameWorld world, int gameTime, double interpolationAlpha, double animationSeconds) {
         this.world = world;
@@ -819,6 +821,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return this.flashes.stream().max(Comparator.comparingDouble(BoardFlashDraw::strength));
     }
 
+    /** How high each Aerie's nest circles over its centre, in pixels, keyed by that centre. */
+    public Map<Vec2, Float> nestLifts() {
+        return Map.copyOf(this.nestLifts);
+    }
+
     /** A white ring round a blast's full-damage core, a fainter one round its edge. */
     private void blastRings(BlastMark mark, float progress) {
         float fade = 1f - progress;
@@ -868,6 +875,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
         Point2D.Float top = TowerSprites.nestCentre(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
                 TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale);
+        this.nestLifts.put(new Vec2(tower.getX(), tower.getY()), tower.getY() - top.y);
         float lifeSeconds = TowerSpriteFrameBuilder.lifeSeconds(tower, this.animationSeconds);
         if (!missiles.isEmpty()) {
             this.draws.add(new NestDraw(top.x, top.y, NEST_RADIUS_CELLS * this.scale, missiles,

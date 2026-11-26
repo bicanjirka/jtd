@@ -81,7 +81,7 @@ public final class BoardRenderer {
         }
 
         ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(gameTime, interpolationAlpha,
-                level.board().scale());
+                level.board().scale(), effectFrameBuilder.nestLifts());
         for (Projectile projectile : this.world.projectiles().getProjectiles()) {
             projectile.accept(projectileFrameBuilder);
         }

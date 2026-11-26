@@ -13,14 +13,13 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 
 /**
- * Paints an Aerie's missile, one drawing for the nest and for flight: a blue dart, a red diamond shard or a pale green
- * wisp. The shapes are authored for a missile one unit long, heading {@code +X}.
+ * Paints an Aerie's missile, one drawing for the nest and for flight: a blue or grey dart, or a red diamond shard. The
+ * shapes are authored for a missile one unit long, heading {@code +X}.
  */
 final class MissileArt {
 
     /** How far the halo of a missile that waits on a Release reaches, as a share of its length. */
     private static final float HALO = 0.8f;
-    private static final Color SHADE_EYE = new Color(0x1d1f26);
 
     private MissileArt() {
     }
@@ -45,7 +44,7 @@ final class MissileArt {
             g2.fill(new Ellipse2D.Float(-HALO, -HALO, HALO * 2, HALO * 2));
         }
         switch (kind) {
-            case FROST -> {
+            case FROST, SHADE -> {
                 g2.setColor(mix(colour, Color.BLACK, 0.3f));
                 g2.fill(poly(0.6f, 0f, -0.4f, 0.33f, -0.2f, 0f, -0.4f, -0.33f));
                 g2.setColor(mix(colour, Color.WHITE, 0.5f));
@@ -56,14 +55,6 @@ final class MissileArt {
                 g2.fill(poly(0.6f, 0f, 0f, 0.3f, -0.45f, 0f, 0f, -0.3f));
                 g2.setColor(mix(colour, Color.WHITE, 0.35f));
                 g2.fill(poly(0.6f, 0f, 0f, -0.3f, -0.45f, 0f));
-            }
-            case SHADE -> {
-                g2.setColor(faded(colour, 0.35));
-                g2.fill(poly(0f, -0.27f, -1f, 0f, 0f, 0.27f));
-                g2.setColor(faded(colour, 0.9));
-                g2.fill(new Ellipse2D.Float(-0.2f, -0.29f, 0.58f, 0.58f));
-                g2.setColor(SHADE_EYE);
-                g2.fill(new Ellipse2D.Float(0.05f, -0.12f, 0.24f, 0.24f));
             }
         }
         g2.setPaint(paint);

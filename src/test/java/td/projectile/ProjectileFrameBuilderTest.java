@@ -7,6 +7,7 @@ import td.ui.render.CannonballDraw;
 import td.ui.render.ProjectileDraw;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -19,7 +20,7 @@ class ProjectileFrameBuilderTest {
         });
         shell.doTick(1); // prevX/Y = (0,0), x/y = (10,0)
 
-        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0, 0.5, BoardFixtures.SCALE);
+        ProjectileFrameBuilder builder = new ProjectileFrameBuilder(0, 0.5, BoardFixtures.SCALE, Map.of());
         shell.accept(builder);
         List<ProjectileDraw> draws = builder.build();
 

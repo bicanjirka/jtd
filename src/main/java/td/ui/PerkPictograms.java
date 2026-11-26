@@ -243,7 +243,7 @@ final class PerkPictograms {
             // Ruby
             Map.entry("seeker.ruby", "=tower.ruby"),
             // Shade
-            Map.entry("seeker.shade", "=effect.silenced"),
+            Map.entry("seeker.shade", "=tower.shade"),
             // Sharp Sting
             Map.entry("seeker.sharp_sting", "F M12 2.6L15 14.4H9Z ; F O12 18 3.2"),
             // Ice Wake
