@@ -98,8 +98,8 @@ public final class SeekerTower extends AbstractTower {
             .inTier(1);
     private static final UpgradeNode HATCHING = UpgradeNode.of("seeker.hatching", "Hatching", 10)
             .inTier(1);
-    private static final UpgradeNode SHARP_STING = UpgradeNode.of("seeker.sharp_sting", "Sharp Sting", 5)
-            .withModifiers(TowerModifiers.damage(3f))
+    private static final UpgradeNode SHARP_STING = UpgradeNode.of("seeker.sharp_sting", "Sharp Sting", 10)
+            .withModifiers(TowerModifiers.damage(5f))
             .inTier(1);
     private static final UpgradeNode WIDE_COMB_2 = UpgradeNode.of("seeker.wide_comb_2", "Wide Comb II", 5)
             .withModifiers(TowerModifiers.nestCapacity(2))
@@ -269,8 +269,8 @@ public final class SeekerTower extends AbstractTower {
     }
 
     /**
-     * As many missiles as the nest holds: a Swarm's at once, at as many different enemies, soonest out first; a
-     * Hatching's on top of the nest.
+     * As many missiles as the nest holds: a Swarm's at once, one at each enemy in reach, soonest out first, and round
+     * again while missiles are left; a Hatching's on top of the nest.
      */
     private void release(SeekerSpec spec, List<EnemyMob> inReach) {
         int missiles = this.capacity();
@@ -278,8 +278,11 @@ public final class SeekerTower extends AbstractTower {
             case NONE -> {
             }
             case SWARM -> {
-                List<EnemyMob> left = new ArrayList<>(inReach);
-                for (int i = 0; i < missiles && !left.isEmpty(); i++) {
+                List<EnemyMob> left = new ArrayList<>();
+                for (int i = 0; i < missiles && !inReach.isEmpty(); i++) {
+                    if (left.isEmpty()) {
+                        left.addAll(inReach);
+                    }
                     EnemyMob target = SOONEST_OUT.selectFrom(left).orElseThrow();
                     left.remove(target);
                     this.launch(this.nextMissile(spec), target, this.ringRadians + 2 * Math.PI * i / missiles);

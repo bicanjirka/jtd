@@ -320,6 +320,20 @@ class SeekerTowerTest {
     }
 
     @Test
+    void aSwarmWithFewerEnemiesThanMissilesGoesRoundThemAgainSoALoneOneTakesEveryMissile() {
+        SeekerTower tower = this.towerWith("Swarm");
+        int size = Math.round(tower.stats().value(TowerStat.NEST_CAPACITY));
+        this.landFreezes(tower, ReleaseMechanic.EVERY);
+        FakeEnemyMob lone = this.enemyAt(tower, OUT, 0);
+        this.enemies(lone);
+
+        tower.doTick(this.tick++);
+        TowerFixtures.flyProjectilesToCompletion(this.context);
+
+        assertThat(lone.hits()).hasSize(size);
+    }
+
+    @Test
     void aHatchingHatchesAsManyMissilesAsTheNestHoldsOnTopOfTheNestWhichKeepsLoading() {
         SeekerTower tower = this.towerWith("Hatching");
         int size = Math.round(tower.stats().value(TowerStat.NEST_CAPACITY));
