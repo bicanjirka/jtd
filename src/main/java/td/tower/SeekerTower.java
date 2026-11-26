@@ -123,7 +123,7 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode ICE_WAKE = UpgradeNode.of("seeker.ice_wake", "Ice Wake", 15)
             .inTier(3);
     private static final UpgradeNode SHATTER = UpgradeNode.of("seeker.shatter", "Shatter", 15)
-            .withModifiers(TowerModifiers.shatterDamage(10f))
+            .withModifiers(TowerModifiers.shatterDamage(8f))
             .inTier(3);
     private static final UpgradeNode RICH_BROOD = UpgradeNode.of("seeker.rich_brood", "Rich Brood", 10)
             .withRequires(UpgradeCondition.owns(RUBY.id()).or(UpgradeCondition.owns(SHADE.id())))
