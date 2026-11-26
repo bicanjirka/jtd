@@ -43,6 +43,7 @@ import td.tower.upgrade.RangeNodes;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeCondition;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -71,8 +72,8 @@ import static td.tower.upgrade.MechanicCatalogue.entry;
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class SeekerTower extends AbstractTower {
 
-    public static final int PRICE = 15;
-    public static final float DAMAGE_POINTS = 15f;
+    public static final int PRICE = 20;
+    public static final float DAMAGE_POINTS = 7f;
     public static final float RANGE = 4f;
     /** Pixels a tick at its top speed: slow enough to see a missile hunt. */
     public static final float MISSILE_SPEED = 8f;
@@ -85,26 +86,22 @@ public final class SeekerTower extends AbstractTower {
     private static final float NEST_SIZE = 3f;
     private static final int LAUNCH_GAP_TICKS = 4;
     /** How far around itself a missile that lost its enemy looks for another. */
-    private static final float HUNT_CELLS = 2f;
+    private static final float HUNT_CELLS = 1f;
     private static final TargetSelector SOONEST_OUT = PreferringSelector.priority(new SoonestOutSelector());
 
-    private static final UpgradeNode QUICK_BROOD = UpgradeNode.of("seeker.quick_brood", "Quick Brood", 9)
-            .withModifiers(TowerModifiers.attackSpeed(2f / 1.6f - 1f));
     private static final UpgradeNode DEEP_FREEZE = UpgradeNode.of("seeker.deep_freeze", "Deep Freeze", 3)
             .withModifiers(TowerModifiers.freezeDuration(6));
     private static final UpgradeNode WIDE_COMB = UpgradeNode.of("seeker.wide_comb", "Wide Comb", 3)
             .withModifiers(TowerModifiers.nestCapacity(2));
-    private static final UpgradeNode LONG_FLIGHT = UpgradeNode.of("seeker.long_flight", "Long Flight", 3)
-            .withModifiers(TowerModifiers.huntRadius(1f));
+    private static final UpgradeNode SWIFT_WINGS = UpgradeNode.of("seeker.swift_wings", "Swift Wings", 6)
+            .withModifiers(TowerModifiers.projectileSpeed(0.5f));
 
     private static final UpgradeNode SWARM = UpgradeNode.of("seeker.swarm", "Swarm", 16)
             .inTier(1);
     private static final UpgradeNode HATCHING = UpgradeNode.of("seeker.hatching", "Hatching", 16)
             .inTier(1);
-    private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 8)
-            .inTier(1);
-    private static final UpgradeNode SWIFT_WINGS = UpgradeNode.of("seeker.swift_wings", "Swift Wings", 6)
-            .withModifiers(TowerModifiers.projectileSpeed(0.5f))
+    private static final UpgradeNode SHARP_STING = UpgradeNode.of("seeker.sharp_sting", "Sharp Sting", 39)
+            .withModifiers(TowerModifiers.damage(10f))
             .inTier(1);
     private static final UpgradeNode WIDE_COMB_2 = UpgradeNode.of("seeker.wide_comb_2", "Wide Comb II", 4)
             .withModifiers(TowerModifiers.nestCapacity(2))
@@ -114,8 +111,10 @@ public final class SeekerTower extends AbstractTower {
             .inTier(2);
     private static final UpgradeNode SHADE = UpgradeNode.of("seeker.shade", "Shade", 19)
             .inTier(2);
-    private static final UpgradeNode SHARP_STING = UpgradeNode.of("seeker.sharp_sting", "Sharp Sting", 39)
-            .withModifiers(TowerModifiers.damage(10f))
+    private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 8)
+            .inTier(2);
+    private static final UpgradeNode QUICK_BROOD = UpgradeNode.of("seeker.quick_brood", "Quick Brood", 9)
+            .withModifiers(TowerModifiers.attackSpeed(2f / 1.6f - 1f))
             .inTier(2);
     private static final UpgradeNode RIME = UpgradeNode.of("seeker.rime", "Rime", 12)
             .withProc(Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1))
@@ -138,14 +137,21 @@ public final class SeekerTower extends AbstractTower {
     private static final UpgradeNode QUICK_BROOD_2 = UpgradeNode.of("seeker.quick_brood_2", "Quick Brood II", 31)
             .withModifiers(TowerModifiers.attackSpeed(2f / 1.3f - 2f / 1.6f))
             .inTier(3);
+    private static final UpgradeNode SHARP_STING_2 = UpgradeNode.of("seeker.sharp_sting_2", "Sharp Sting II", 31)
+            .withModifiers(TowerModifiers.damage(10f))
+            .inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(List.of(QUICK_BROOD, DEEP_FREEZE, WIDE_COMB, LONG_FLIGHT))
-            .with(SWARM, HATCHING, FEEDING, SWIFT_WINGS, WIDE_COMB_2,
-                    RUBY, SHADE, SHARP_STING, HIGH_PERCH, RIME,
-                    ICE_WAKE, SHATTER, RICH_BROOD, DEEP_FREEZE_2, QUICK_BROOD_2)
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(DEEP_FREEZE, WIDE_COMB, SWIFT_WINGS))
+            .with(SWARM, HATCHING, SHARP_STING, WIDE_COMB_2,
+                    RUBY, SHADE, HIGH_PERCH, RIME, FEEDING, QUICK_BROOD,
+                    ICE_WAKE, SHATTER, RICH_BROOD, DEEP_FREEZE_2, QUICK_BROOD_2, SHARP_STING_2)
             .withCluster(UpgradeCluster.of("Release", SWARM, HATCHING))
             .withCluster(UpgradeCluster.of("Second missile", RUBY, SHADE))
-            .withCluster(UpgradeCluster.of("Around the ice", ICE_WAKE, SHATTER));
+            .withCluster(UpgradeCluster.of("Around the ice", ICE_WAKE, SHATTER))
+            .withCluster(UpgradeCluster.of("Speed or sting", QUICK_BROOD_2, SHARP_STING_2))
+            .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withBonus(TowerModifiers.huntRadius(2f)),
+                    UpgradeTier.gated(120, 0).withBonus(TowerModifiers.accuracy(50f)),
+                    UpgradeTier.gated(200, 0).withBonus(TowerModifiers.freezeDuration(20))));
 
     private static final MechanicCatalogue<SeekerMechanic> MECHANICS = MechanicCatalogue.of(
             entry(SWARM.id(), () -> new ReleaseMechanic(Release.SWARM)),
@@ -162,8 +168,6 @@ public final class SeekerTower extends AbstractTower {
     private final List<ShatterMark> shatterMarks = new ArrayList<>();
     private FrozenLedger frozen = new FrozenLedger();
     private FireClock clock = new FireClock(COOLDOWN_MAX);
-    /** The charge freezes have fed the load in progress, held under its floor. */
-    private double fed;
     /** The missiles it made this wave, which sets the kind of the next. */
     private int made;
     /** Freezes toward the next Release. */
@@ -222,7 +226,6 @@ public final class SeekerTower extends AbstractTower {
         if (this.clock.isReady() && this.nest.hasRoom(this.capacity())) {
             this.nest.load(this.nextMissile(spec));
             this.clock.spend();
-            this.fed = 0.0;
         }
         this.nest.tick();
         if (!inReach.isEmpty()) {
@@ -254,7 +257,6 @@ public final class SeekerTower extends AbstractTower {
         this.frozen = new FrozenLedger();
         this.shatterMarks.clear();
         this.clock = new FireClock(COOLDOWN_MAX);
-        this.fed = 0.0;
         this.freezes = 0;
         this.releaseDue = false;
         this.ringRadians = 0.0;
@@ -359,9 +361,7 @@ public final class SeekerTower extends AbstractTower {
             this.releaseDue = true;
         }
         if (spec.feeds()) {
-            double fed = FeedingMechanic.feedFor(this.fed, this.clock.period(), this.attackRate());
-            this.clock.hasten(fed);
-            this.fed += fed;
+            this.clock.hasten(FeedingMechanic.feedFor(this.attackRate()));
         }
     }
 

@@ -206,7 +206,7 @@ class SeekerTowerTest {
     void aMissileWhoseEnemyIsFrozenInFlightTurnsToAnUnfrozenOneCloseBy() {
         SeekerTower tower = this.towerWith();
         FakeEnemyMob first = this.enemyAt(tower, OUT, 0).withDistanceToExit(10);
-        FakeEnemyMob beside = this.enemyAt(tower, SCALE, SCALE / 2.0).withDistanceToExit(500);
+        FakeEnemyMob beside = this.enemyAt(tower, SCALE / 2.0, SCALE / 2.0).withDistanceToExit(500);
         this.enemies(first, beside);
         this.launch(tower);
 
@@ -333,19 +333,43 @@ class SeekerTowerTest {
         assertThat(tower.nestMissiles()).hasSize(2 * size);
     }
 
-    @Test
-    void feedingBringsTheNextLoadSoonerForEachFreeze() {
-        SeekerTower plain = this.towerWith();
-        this.landFreezes(plain, 1);
-        int plainTicks = this.ticksToTheNextLoad(plain);
+    /**
+     * A tower in a fresh world loading as slowly as a tower can, with room for {@code room} more missiles, its nest
+     * full and the load after its first launch about to start.
+     */
+    private SeekerTower slowTower(int room, String... nodes) {
         this.context = WorldFixtures.newWorldOnBoard(SCALE, 20, 20);
         this.tick = 1;
-        SeekerTower fed = this.towerWith("Feeding");
-        this.landFreezes(fed, 1);
+        SeekerTower tower = TowerFixtures.buffed(this.towerWith(nodes), this.context,
+                TowerModifiers.attackSpeed(-0.75f).plus(TowerModifiers.nestCapacity(room)));
+        tower.readyForWave();
+        return tower;
+    }
 
-        int fedTicks = this.ticksToTheNextLoad(fed);
+    /** About the ticks a slow tower takes to load one missile: what is left of a load just begun. */
+    private int slowLoadTicks() {
+        SeekerTower tower = this.slowTower(0);
+        this.landFreezes(tower, 1);
+        this.ticksToTheNextLoad(tower);
+        this.landFreezes(tower, 1);
+        return this.ticksToTheNextLoad(tower);
+    }
 
-        assertThat(plainTicks - fedTicks).isEqualTo(FeedingMechanic.FED_TICKS);
+    /** The ticks left of the load in progress once {@code freezes} freezes landed, each on a fresh enemy. */
+    private int ticksLeftAfter(int freezes, String... nodes) {
+        SeekerTower tower = this.slowTower(freezes, nodes);
+        this.landFreezes(tower, freezes);
+        return this.ticksToTheNextLoad(tower);
+    }
+
+    @Test
+    void feedingBringsTheNextLoadSoonerForEveryFreezeHoweverManyFedItAlready() {
+        int freezes = this.slowLoadTicks() / (2 * FeedingMechanic.FED_TICKS) + 2;
+        int plain = this.ticksLeftAfter(freezes);
+
+        int fed = this.ticksLeftAfter(freezes, "Feeding");
+
+        assertThat(plain - fed).isEqualTo(freezes * FeedingMechanic.FED_TICKS);
     }
 
     @Test

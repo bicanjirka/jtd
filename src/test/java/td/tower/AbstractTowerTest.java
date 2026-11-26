@@ -132,8 +132,8 @@ class AbstractTowerTest {
         elsewhere.towers().add(alone);
         TowerFixtures.buffed(buffed, this.context, TowerModifiers.rangePercent(0.2f));
 
-        UpgradePaths.buy(buffed, this.context, "Long Flight");
-        UpgradePaths.buy(alone, elsewhere, "Long Flight");
+        UpgradePaths.buy(buffed, this.context, "High Perch");
+        UpgradePaths.buy(alone, elsewhere, "High Perch");
 
         assertThat(buffed.stats().range()).isCloseTo(alone.stats().range() * 1.2f, within(1e-5f));
     }
