@@ -323,7 +323,7 @@ public final class SniperTower extends AbstractTower {
             return this.traceOf(bullet, false);
         }
         boolean critical = this.settle(new ShotResult(target, hit.critical(), target.isDead()),
-                new Actions(bullet, chain.landedOn(target)), this.mechanics.all());
+                new Actions(bullet, hit, chain.landedOn(target)), this.mechanics.all());
         return this.traceOf(bullet, critical);
     }
 
@@ -496,10 +496,12 @@ public final class SniperTower extends AbstractTower {
     private final class Actions implements ShotActions {
 
         private final Bullet landed;
+        private final HitResult hit;
         private final ShotChain chain;
 
-        private Actions(Bullet landed, ShotChain chain) {
+        private Actions(Bullet landed, HitResult hit, ShotChain chain) {
             this.landed = landed;
+            this.hit = hit;
             this.chain = chain;
         }
 
@@ -516,7 +518,7 @@ public final class SniperTower extends AbstractTower {
 
         @Override
         public void bleed(EnemyMob target, float sharePerCell, int ticks) {
-            int perCell = Math.round(this.landed.stats().critDamage() * sharePerCell);
+            int perCell = Math.round(this.hit.credited() * sharePerCell);
             AttackProfile bleed = this.landed.stats().attack().pastArmorAndPlating().asPeriodic();
             SniperTower.this.applyEffect(target, _ -> Effect.bleeding(perCell, ticks,
                     bled -> SniperTower.this.dealDamage(target, bled, bleed)));

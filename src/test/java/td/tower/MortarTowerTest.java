@@ -436,6 +436,19 @@ class MortarTowerTest {
         assertThat(next.activeEffectKinds()).doesNotContain(EffectKind.BLEEDING);
     }
 
+    @Test
+    void aHeavysBleedCountsFromWhatItsBlastGotPastTheEnemysDefences() {
+        MortarTower tower = this.loaded(List.of(ShellKind.HEAVY), "Shrapnel");
+        FakeEnemyMob bare = this.enemyAt(tower, OUT, 0);
+        FakeEnemyMob armored = this.enemyAt(tower, OUT, 0).takingShareOfEveryHit(0.5f);
+        this.context.enemies().setEnemies(new EnemyMob[]{bare, armored});
+
+        this.landAShell(tower);
+
+        assertThat(armored.onlyHitAmount()).isEqualTo(bare.onlyHitAmount());
+        assertThat((float) bleedPerCellOf(armored)).isCloseTo(bleedPerCellOf(bare) * 0.5f, within(1f));
+    }
+
     private static int bleedPerCellOf(FakeEnemyMob enemy) {
         return enemy.activeEffects().stream().map(Effect::dynamics)
                 .flatMap(dynamics -> dynamics instanceof EffectDynamics.Distance distance ? Stream.of(distance) : Stream.empty())

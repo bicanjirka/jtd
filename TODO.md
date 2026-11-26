@@ -65,12 +65,14 @@ Implemented, for reference: `FEATURE-enemy-spawn-types.md`, `FEATURE-multiple-en
 
 ## Architecture and correctness
 
-### The zones loadout allocates over budget in the frame build
+### The zones loadout is over budget in the frame build and the paint
 
-**Where:** `td.PerformanceHarness zones` reports a frame-build allocation p99 of about 517 KB against 512 KB (it read
-519 KB before the board look revamp touched anything), so the harness fails in that loadout.
+**Where:** `td.PerformanceHarness zones` reports a frame-build allocation p99 of about 540-546 KB against 512 KB and
+a paint p99 of about 11 ms against 10 ms (measured at `c687a965`; the allocation read 517 KB before), so the harness
+fails in that loadout. The default loadout stays within budget.
 **Approach:** profile it with `--jfr`, find what the zone frames allocate per disc (`ZoneFrameBuilder`,
-`ZoneOutlineTracer`) and build those without a copy per frame.
+`ZoneOutlineTracer`) and build those without a copy per frame; for the paint, see what of the zone patches and the
+flames is painted live rather than kept (`KeptPatches`, `Stamps`).
 
 Findings from the architecture audits of 2026-09-17, highest-severity first. The threading
 group and the external audit's critical/high/moderate findings have landed; what remains is

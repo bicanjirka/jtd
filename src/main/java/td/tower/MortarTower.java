@@ -504,8 +504,7 @@ public final class MortarTower extends AbstractTower {
             double dy = enemy.getY() - y;
             boolean inCore = dx * dx + dy * dy <= core2;
             HitAdjustment adjustment = this.hitAdjustment(enemy, HitKind.BLAST, 0f, stats);
-            float zoneDamage = damage * (inCore ? 1f : blast.edgeShare());
-            int amount = Math.round(zoneDamage * adjustment.damageFactor());
+            int amount = Math.round(damage * (inCore ? 1f : blast.edgeShare()) * adjustment.damageFactor());
             HitResult hit = this.landHit(enemy, Damage.of(kind.damageType(), amount), adjustment.applyTo(stats.attack()));
             if (hit.dodged()) {
                 continue;
@@ -514,7 +513,7 @@ public final class MortarTower extends AbstractTower {
             this.crack(enemy, spec);
             this.carryPayload(enemy, shell, spec);
             if (kind == ShellKind.HEAVY) {
-                this.rideHeavy(enemy, spec.heavy(), inCore, stats, zoneDamage);
+                this.rideHeavy(enemy, spec.heavy(), inCore, stats, hit.credited());
             }
         }
         if (kind.irradiatesTheBoard()) {
@@ -551,10 +550,10 @@ public final class MortarTower extends AbstractTower {
     }
 
     /**
-     * What a Heavy's pick puts on an enemy its blast reached: a Daze by zone, or a Bleed from {@code zoneDamage}, what
-     * the zone it stood in deals before hit bonuses.
+     * What a Heavy's pick puts on an enemy its blast reached: a Daze by zone, or a Bleed from {@code dealt}, what the
+     * blast did to it after its defences.
      */
-    private void rideHeavy(EnemyMob enemy, HeavyRider rider, boolean inCore, TowerStats stats, float zoneDamage) {
+    private void rideHeavy(EnemyMob enemy, HeavyRider rider, boolean inCore, TowerStats stats, int dealt) {
         switch (rider) {
             case NONE -> {
             }
@@ -564,7 +563,7 @@ public final class MortarTower extends AbstractTower {
             }
             case SHRAPNEL -> {
                 AttackProfile bleed = stats.attack().pastArmorAndPlating().asPeriodic();
-                this.applyEffect(enemy, _ -> Effect.bleeding(ShrapnelMechanic.bleedPerCell(zoneDamage), ShrapnelMechanic.BLEED_TICKS,
+                this.applyEffect(enemy, _ -> Effect.bleeding(ShrapnelMechanic.bleedPerCell(dealt), ShrapnelMechanic.BLEED_TICKS,
                         bled -> this.dealDamage(enemy, bled, bleed)));
             }
         }

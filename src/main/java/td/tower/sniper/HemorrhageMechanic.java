@@ -11,14 +11,14 @@ import td.util.TickRate;
 
 import java.util.Set;
 
-/** Hemorrhage: a crit makes its target Bleed, a share of the crit's damage for every cell it walks. */
+/** Hemorrhage: a crit makes its target Bleed, a share of what the crit dealt it for every cell it walks. */
 public final class HemorrhageMechanic implements SniperMechanic {
 
-    /** What a Bleed costs a cell walked, a share of what the crit deals. */
+    /** What a Bleed costs a cell walked, a share of what the crit dealt after the target's defences. */
     private static final float SHARE_PER_CELL = 0.10f;
     /** As long as every bleed lasts. */
     private static final int BLEED_TICKS = ShrapnelMechanic.BLEED_TICKS;
-    private static final String SHARE = TermNumbers.percent(SHARE_PER_CELL) + " of the crit's damage";
+    private static final String SHARE = TermNumbers.percent(SHARE_PER_CELL) + " of the damage the crit deals it";
 
     @Override
     public void react(ShotResult result, ShotActions actions) {
@@ -40,7 +40,7 @@ public final class HemorrhageMechanic implements SniperMechanic {
     @Override
     public TermText describe(TowerStats stats) {
         float points = DamageUnits.inPoints(Math.round(stats.critDamage() * SHARE_PER_CELL));
-        return this.bleeds(SHARE + " (about " + TermNumbers.number(points) + ") a cell");
+        return this.bleeds(SHARE + " (about " + TermNumbers.number(points) + " before armor) a cell");
     }
 
     private TermText bleeds(String perCell) {

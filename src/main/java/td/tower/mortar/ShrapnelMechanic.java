@@ -13,17 +13,17 @@ import td.util.TickRate;
 import java.util.Set;
 
 /**
- * Shrapnel: a Heavy shell makes everything its blast reaches Bleed, a share a cell of what the blast dealt it where it
- * stood, its core or its edge.
+ * Shrapnel: a Heavy shell makes everything its blast reaches Bleed, a share a cell of what the blast dealt it, its
+ * core or its edge, after its defences.
  */
 public final class ShrapnelMechanic implements MortarMechanic {
 
-    /** What a Bleed costs a cell walked, a share of what the Heavy's blast deals where the enemy stood. */
+    /** What a Bleed costs a cell walked, a share of what the Heavy's blast dealt the enemy. */
     public static final float SHARE_PER_CELL = 0.18f;
     public static final int BLEED_TICKS = Math.round(4 * TickRate.TICKS_PER_SECOND);
     private static final String SHARE = TermNumbers.percent(SHARE_PER_CELL) + " of the damage its blast deals it";
 
-    /** What a Bleed costs a cell walked, in hundredths, for an enemy a blast of {@code blastDamage} reached. */
+    /** What a Bleed costs a cell walked, in hundredths, for an enemy a blast dealt {@code blastDamage}. */
     public static int bleedPerCell(float blastDamage) {
         return Math.round(blastDamage * SHARE_PER_CELL);
     }
@@ -48,7 +48,7 @@ public final class ShrapnelMechanic implements MortarMechanic {
         int heavy = ShellKind.HEAVY.damage(stats.damage(), stats.value(TowerStat.NORMAL_DAMAGE),
                 stats.value(TowerStat.HEAVY_DAMAGE));
         return this.bleeds(SHARE + " (about " + points(bleedPerCell(heavy)) + " at full damage, "
-                + points(bleedPerCell(heavy * ShellKind.HEAVY.blast().edgeShare())) + " at its edge) a cell");
+                + points(bleedPerCell(heavy * ShellKind.HEAVY.blast().edgeShare())) + " at its edge, before armor) a cell");
     }
 
     private TermText bleeds(String perCell) {

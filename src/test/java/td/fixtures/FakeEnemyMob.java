@@ -21,7 +21,8 @@ import java.util.Set;
 
 /**
  * An {@link EnemyMob} placed at a chosen point, which a real mob's path cannot do. It records
- * every hit and effect and absorbs nothing, so a recorded hit is exactly what was dealt; its
+ * every hit and effect and absorbs nothing, so a recorded hit is exactly what was dealt (unless told to take only a
+ * share of each); its
  * health never drops, so it dies only through {@link #invalidate()}. What it applies goes into a real
  * {@link ActiveEffects}, which answers every effect query, so stacking and caps are the game's; time never
  * runs on it, so an effect ends only through {@link #expire}, a dispel or lost stacks.
@@ -42,6 +43,7 @@ public final class FakeEnemyMob implements EnemyMob {
     private boolean hitsLandCritical;
     private boolean diesOnHit;
     private boolean shielded;
+    private float takenShare = 1f;
     private boolean appliesEffects;
     private boolean regenerates;
     private boolean taunting;
@@ -231,6 +233,12 @@ public final class FakeEnemyMob implements EnemyMob {
         return this;
     }
 
+    /** From now on every hit lands at {@code share} of what was dealt, as armor would leave it; it records it whole. */
+    public FakeEnemyMob takingShareOfEveryHit(float share) {
+        this.takenShare = share;
+        return this;
+    }
+
     /** Reports a freeze as active, without any real effect. */
     public void reportFrozen() {
         this.frozen = true;
@@ -256,7 +264,9 @@ public final class FakeEnemyMob implements EnemyMob {
         if (this.shielded && !attacker.piercesShields(this.hitsLandCritical)) {
             return new HitResult(new Damage(0, damage.type(), false), damage.amount());
         }
-        return new HitResult(this.hitsLandCritical ? new Damage(damage.amount(), damage.type(), true) : damage, 0);
+        Damage taken = new Damage(Math.round(damage.amount() * this.takenShare), damage.type(),
+                this.hitsLandCritical || damage.critical());
+        return new HitResult(taken, 0);
     }
 
     /**
