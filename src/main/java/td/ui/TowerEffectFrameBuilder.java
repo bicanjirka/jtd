@@ -898,10 +898,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
         BlastDraw blast = new BlastDraw(look, (float) mark.at().x(), (float) mark.at().y(), mark.core(), mark.edge(),
                 progress, this.scale, seed);
+        this.addAt(new BlastGroundDraw(blast), blast.y());
         this.addAt(blast, blast.y());
-        if (look == BlastLook.NUKE) {
-            this.addAt(new BlastGroundDraw(blast), blast.y());
-        }
         if (look == BlastLook.SHRAPNEL) {
             this.fragments(mark, progress * blastTicks(look) / FLASH_BLAST_TICKS);
         }

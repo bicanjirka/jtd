@@ -1,5 +1,5 @@
 package td.ui.render;
 
-/** What a blast that towers over the board lays on the ground under everything that stands: its heat, scorch and rings. */
+/** What a shell's blast lays on the ground, under everything that stands: its scorch or glow, its rings, its splats. */
 public record BlastGroundDraw(BlastDraw blast) implements BoardDraw {
 }

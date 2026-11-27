@@ -17,8 +17,8 @@ tower in front of it, and the flames on a burning ground lay under every enemy.
   What lies on the ground keeps build order.
 - What belongs to an enemy or a tower takes its foot, so it is painted with it. Something with a place of its own (a
   blast, a shot, a flame on a burning ground) takes that place.
-- A visual sits at one height whole. A nuke is split: what it lays on the ground (`BlastGroundDraw`) under what stands,
-  its cloud in the high air.
+- A visual sits at one height whole, except a shell's blast: what it lays on the ground (`BlastGroundDraw`: scorch,
+  shock ring, splats) lies under what stands, what it throws up is in the air (a nuke's cloud in the high air).
 - The floor, path marks, the cell highlight and zone patches stay ahead of the scene, as before.
 
 ## Consequences
@@ -31,5 +31,5 @@ tower in front of it, and the flames on a burning ground lay under every enemy.
 - *One list per height on `RenderFrame`*: the painter would still need the depth inside each, and a new height would
   widen the record.
 - *A free depth number per visual*: every builder would invent numbers; a few named heights are what the art needs.
-- *Splitting every blast into a ground and an air part*: a reworking of each blast's art for little gain; only the
-  nuke reads wrong whole.
+- *Splitting every visual that touches the ground*: only a blast lays a wide mark on the ground while it throws
+  things up; the rest read right at one height.

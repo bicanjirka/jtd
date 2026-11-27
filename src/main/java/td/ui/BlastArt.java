@@ -63,6 +63,7 @@ final class BlastArt {
     private BlastArt() {
     }
 
+    /** What a blast throws up, over everything that stands near it; what it lays flat is {@link #ground}. */
     static void paint(Graphics2D g2, BlastDraw blast) {
         switch (blast.look()) {
             case NORMAL -> normal(g2, blast);
@@ -297,9 +298,6 @@ final class BlastArt {
     private static void normal(Graphics2D g2, BlastDraw b) {
         double p = b.progress();
         double u = b.unit();
-        TowerLifeArt.glow(g2, b.x(), b.y(), b.core() * 0.8, SCORCH, 0.5 * (1 - Easing.inOut(0.4, 1, p)));
-        ring(g2, b.x(), b.y(), b.core() * Easing.outStrong(p / 0.5), u * 0.05 * (1 - p), SHOCK,
-                0.6 * (1 - Easing.clamp01(p / 0.5)));
         flash(g2, b.x(), b.y(), b.core() * 0.7, YELLOW_FIRE, p / 0.35);
         double grow = Easing.outStrong(p / 0.5);
         double fade = 1 - Easing.inOut(0.5, 1, p);
@@ -328,8 +326,6 @@ final class BlastArt {
     private static void heavy(Graphics2D g2, BlastDraw b) {
         double p = b.progress();
         double u = b.unit();
-        TowerLifeArt.glow(g2, b.x(), b.y(), b.core() * 1.1, SCORCH, 0.7 * (1 - Easing.inOut(0.5, 1, p)));
-        ring(g2, b.x(), b.y(), b.edge() * Easing.outStrong(p / 0.4), u * 0.08 * (1 - p), SHOCK, 0.85 * (1 - Easing.clamp01(p / 0.4)));
         flash(g2, b.x(), b.y(), b.core() * 1.1, YELLOW_FIRE, p / 0.3);
         double grow = Easing.outStrong(p / 0.4);
         double fade = 1 - Easing.inOut(0.6, 1, p);
@@ -384,7 +380,6 @@ final class BlastArt {
         double wave = Easing.clamp01((p - 0.1) / 0.55);
         if (wave < 1) {
             double reach = b.edge() * Easing.outStrong(wave);
-            ring(g2, b.x(), b.y(), reach, u * 0.14 * (1 - wave), SHOCK, 0.7 * (1 - wave));
             List<Puff> dust = new ArrayList<>();
             for (int i = 0; i < CONCUSSION_DUST; i++) {
                 double angle = i * 2 * Math.PI / CONCUSSION_DUST + hash(b.seed(), 180 + i) * 0.3;
@@ -427,8 +422,6 @@ final class BlastArt {
         double p = b.progress();
         double u = b.unit();
         double spread = Easing.outStrong(p / 0.3);
-        TowerLifeArt.glow(g2, b.x(), b.y(), b.edge() * (0.5 + 0.5 * spread), ORANGE_FIRE,
-                0.5 * (1 - Easing.inOut(0.5, 1, p)));
         flash(g2, b.x(), b.y(), b.core() * 1.2, ORANGE_FIRE, p / 0.22);
         double burn = Math.pow(1 - p, 0.6);
         List<double[]> flames = new ArrayList<>();
@@ -493,18 +486,8 @@ final class BlastArt {
         double u = b.unit();
         flash(g2, b.x(), b.y(), b.core() * 0.9, TAR_FLASH, p / 0.18);
         double fade = 1 - Easing.inOut(0.7, 1, p);
-        for (int i = 0; i < TAR_GLOBS; i++) {
-            double h = hash(b.seed(), 40 + i);
-            double share = p * 2.4 / (0.8 + 0.4 * h);
-            if (share >= 1) {
-                double angle = hash(b.seed(), 60 + i) * 2 * Math.PI;
-                double[] at = thrown(b.x(), b.y(), angle, b.edge() * (0.5 + 0.45 * h), 0, 1);
-                splat(g2, at[0], at[1], u * (0.08 + 0.05 * h), fade);
-            }
-        }
         double crown = Math.sin(Math.PI * Easing.clamp01(p / 0.6));
-        double ringR = b.core() * (0.22 + 0.32 * Easing.outStrong(p / 0.4));
-        splat(g2, b.x(), b.y(), ringR * 1.3, fade);
+        double ringR = tarRing(b);
         List<double[]> spikes = new ArrayList<>();
         for (int i = 0; i < TAR_SPIKES; i++) {
             double h = hash(b.seed(), i);
@@ -584,8 +567,6 @@ final class BlastArt {
         double u = b.unit();
         double spread = Easing.outStrong(p / 0.5);
         double fade = 1 - Easing.inOut(0.5, 1, p);
-        TowerLifeArt.glow(g2, b.x(), b.y(), b.edge() * (0.4 + 0.7 * spread), VAPOUR, 0.4 * fade);
-        ring(g2, b.x(), b.y(), b.edge() * spread, u * 0.05, Color.WHITE, 0.6 * fade);
         flash(g2, b.x(), b.y(), b.core() * 1.2, FROST_FLASH, p / 0.22);
         Bank vapour = new Bank(b, b.edge() * 0.72 * spread, u * 0.36 * (0.5 + 0.5 * spread)
                 * (1 - 0.5 * Easing.inOut(0.55, 1, p)), VAPOUR, 1 - Easing.inOut(0.75, 1, p));
@@ -628,7 +609,6 @@ final class BlastArt {
      * A nuclear blast, slow and huge: a fireball on the ground that lifts off and rolls into a mushroom cloud on a stem
      * of dust, a shock ring and a base surge running out across the ground, a ring of cloud round the stem as the
      * shock passes. It cools from white heat through fire to the dusty yellow-green of its fallout, and thins away.
-     * What it lays flat on the ground is {@link #ground}, painted under everything that stands.
      */
     private static void nuke(Graphics2D g2, BlastDraw b) {
         double p = b.progress();
@@ -716,8 +696,72 @@ final class BlastArt {
         bank(g2, surge, false);
     }
 
-    /** What a nuke lays on the ground, under everything that stands: its heat, its scorch, its shock and dust rings. */
+    /**
+     * What a blast lays on the ground, under everything that stands: its scorch or glow, the shock ring running out
+     * from it, what it splashed down.
+     */
     static void ground(Graphics2D g2, BlastDraw b) {
+        double p = b.progress();
+        double u = b.unit();
+        switch (b.look()) {
+            case NORMAL -> {
+                TowerLifeArt.glow(g2, b.x(), b.y(), b.core() * 0.8, SCORCH, 0.5 * (1 - Easing.inOut(0.4, 1, p)));
+                ring(g2, b.x(), b.y(), b.core() * Easing.outStrong(p / 0.5), u * 0.05 * (1 - p), SHOCK,
+                        0.6 * (1 - Easing.clamp01(p / 0.5)));
+            }
+            case HEAVY, SHRAPNEL -> heavyGround(g2, b);
+            case CONCUSSION -> {
+                double wave = Easing.clamp01((p - 0.1) / 0.55);
+                if (wave < 1) {
+                    ring(g2, b.x(), b.y(), b.edge() * Easing.outStrong(wave), u * 0.14 * (1 - wave), SHOCK,
+                            0.7 * (1 - wave));
+                }
+                heavyGround(g2, b);
+            }
+            case NAPALM -> TowerLifeArt.glow(g2, b.x(), b.y(), b.edge() * (0.5 + 0.5 * Easing.outStrong(p / 0.3)),
+                    ORANGE_FIRE, 0.5 * (1 - Easing.inOut(0.5, 1, p)));
+            case TAR -> tarGround(g2, b);
+            case CRYO -> {
+                double spread = Easing.outStrong(p / 0.5);
+                double fade = 1 - Easing.inOut(0.5, 1, p);
+                TowerLifeArt.glow(g2, b.x(), b.y(), b.edge() * (0.4 + 0.7 * spread), VAPOUR, 0.4 * fade);
+                ring(g2, b.x(), b.y(), b.edge() * spread, u * 0.05, Color.WHITE, 0.6 * fade);
+            }
+            case NUKE -> nukeGround(g2, b);
+        }
+    }
+
+    private static void heavyGround(Graphics2D g2, BlastDraw b) {
+        double p = b.progress();
+        TowerLifeArt.glow(g2, b.x(), b.y(), b.core() * 1.1, SCORCH, 0.7 * (1 - Easing.inOut(0.5, 1, p)));
+        ring(g2, b.x(), b.y(), b.edge() * Easing.outStrong(p / 0.4), b.unit() * 0.08 * (1 - p), SHOCK,
+                0.85 * (1 - Easing.clamp01(p / 0.4)));
+    }
+
+    /** How far out a tar shell's crown stands round the hole. */
+    private static double tarRing(BlastDraw b) {
+        return b.core() * (0.22 + 0.32 * Easing.outStrong(b.progress() / 0.4));
+    }
+
+    /** The tar pooled in the hole and the gobs that have come down round it. */
+    private static void tarGround(Graphics2D g2, BlastDraw b) {
+        double p = b.progress();
+        double u = b.unit();
+        double fade = 1 - Easing.inOut(0.7, 1, p);
+        for (int i = 0; i < TAR_GLOBS; i++) {
+            double h = hash(b.seed(), 40 + i);
+            double share = p * 2.4 / (0.8 + 0.4 * h);
+            if (share >= 1) {
+                double angle = hash(b.seed(), 60 + i) * 2 * Math.PI;
+                double[] at = thrown(b.x(), b.y(), angle, b.edge() * (0.5 + 0.45 * h), 0, 1);
+                splat(g2, at[0], at[1], u * (0.08 + 0.05 * h), fade);
+            }
+        }
+        splat(g2, b.x(), b.y(), tarRing(b) * 1.3, fade);
+    }
+
+    /** A nuke's heat, scorch, shock and dust rings. */
+    private static void nukeGround(Graphics2D g2, BlastDraw b) {
         double p = b.progress();
         double u = b.unit();
         double x = b.x();
