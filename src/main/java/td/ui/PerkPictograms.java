@@ -151,10 +151,9 @@ final class PerkPictograms {
             // Dragon's Breath
             Map.entry("cinder.dragons_breath", "=tower.dragons_breath"),
             // Blue Flame
-            Map.entry("cinder.blue_flame", "=tower.flame"),
+            Map.entry("cinder.blue_flame", "F M12 2C12 2 19.5 8 19.5 14.2A7.5 7.5 0 0 1 4.5 14.2C4.5 10.8 6.6 8.6 8.2 7.2C8.6 9.6 9.8 11 11 11.4C10.4 8.2 10.9 4.8 12 2Z ; K M12 5C12 5 15.4 10.6 15.4 15.4A3.4 3.4 0 0 1 8.6 15.4C8.6 10.6 12 5 12 5Z"),
             // Heatstroke
             Map.entry("cinder.heatstroke", "=tower.heatstroke"),
-            Map.entry("cinder.long_stream_2", "=cinder.long_stream"),
             // Meltdown
             Map.entry("cinder.meltdown", "=tower.meltdown"),
             // Thermal Shock

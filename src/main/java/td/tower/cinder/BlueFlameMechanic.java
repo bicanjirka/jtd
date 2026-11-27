@@ -20,8 +20,8 @@ public final class BlueFlameMechanic implements CinderMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("the middle " + TermNumbers.percent(SHARE) + " of the cone's width glows white and pours "
+        return TermText.of("the middle " + TermNumbers.percent(SHARE) + " of the cone's width pours "
                 + TermNumbers.percent(MORE) + " more ").plus(TowerTerm.FLAME).plus(", on top of the ")
-                .plus(TowerTerm.CORE);
+                .plus(TowerTerm.CORE).plus(", and shines white round a blue ").plus(TowerTerm.CORE);
     }
 }

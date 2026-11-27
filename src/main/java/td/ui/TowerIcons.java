@@ -141,10 +141,11 @@ final class TowerIcons {
                 .withSeam(minus(circ(0, 0, 0.14), circ(0.02, 0.02, 0.075)));
     }
 
-    /** A tank and the flared nozzle. */
+    /** The octagon body with its three tanks seen from above, and the flared nozzle across it. */
     private static Icon scorcher() {
         Shape nozzle = mv(poly(0, -0.045, 0.3, -0.045, 0.42, -0.11, 0.42, 0.11, 0.3, 0.045, 0, 0.045), -0.02, 0);
-        return Icon.of(circ(-0.08, 0.08, 0.30), both(rot(nozzle, -40), circ(-0.08, 0.08, 0.1)));
+        return Icon.of(ngon(-0.06, 0.06, 8, 0.34, 22.5), both(rot(nozzle, -40), circ(-0.06, 0.06, 0.09)))
+                .withSeam(both(circ(-0.2, 0.0, 0.055), circ(-0.2, 0.2, 0.055), circ(0.0, 0.2, 0.055)));
     }
 
     /** A perch in its ring and the three missiles of its nest on the ring. */

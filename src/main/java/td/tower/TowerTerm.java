@@ -58,7 +58,7 @@ public enum TowerTerm implements Term {
             + "lives and stays in range, and with no enemy left in range it runs its time out into the air"),
     CORE("Core", Side.BUFF, "the middle of the cone's width, where its target always stands; it pours more"),
     DRAGONS_BREATH("Dragon's Breath", Side.BUFF, "a longer stream with a short reload, at a weaker flame"),
-    HEATSTROKE("Heatstroke", Side.BUFF, "each second of the stream, an enemy whose {} holds enough fuel is {}",
+    HEATSTROKE("Heatstroke", Side.BUFF, "each second of the stream, an enemy whose {} holds enough fuel gets {}",
             EffectKind.BURN, EffectKind.DAZED),
     THERMAL_SHOCK("Thermal Shock", Side.BUFF, "more flame into an enemy another tower holds with {} or {}",
             EffectKind.CHILL, EffectKind.FREEZE),

@@ -15,7 +15,7 @@ import java.util.Set;
 public final class HeatstrokeMechanic implements CinderMechanic {
 
     /** The fuel, in points, a burn holds from which it flashes over. */
-    public static final float HOT_FUEL_POINTS = 250f;
+    public static final float HOT_FUEL_POINTS = 80f;
     public static final float DAZE_SECONDS = 0.5f;
     public static final int DAZE_TICKS = Math.round(DAZE_SECONDS * TickRate.TICKS_PER_SECOND);
 
@@ -32,7 +32,7 @@ public final class HeatstrokeMechanic implements CinderMechanic {
     @Override
     public TermText describe() {
         return TermText.of("each second of the stream, an enemy in the cone whose ").plus(EffectKind.BURN)
-                .plus(" holds " + TermNumbers.whole(HOT_FUEL_POINTS) + " fuel or more is ").plus(EffectKind.DAZED)
+                .plus(" holds " + TermNumbers.whole(HOT_FUEL_POINTS) + " fuel or more gets ").plus(EffectKind.DAZED)
                 .plus(" for " + TermNumbers.seconds(DAZE_SECONDS));
     }
 }

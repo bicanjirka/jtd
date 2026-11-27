@@ -8,7 +8,7 @@ import td.tower.TowerTerm;
 /** Thermal Shock: more Flame into an enemy another tower holds. */
 public final class ThermalShockMechanic implements CinderMechanic {
 
-    private static final float MORE = 0.35f;
+    private static final float MORE = 0.5f;
 
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {
