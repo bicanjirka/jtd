@@ -433,7 +433,6 @@ public final class SplashTower extends AbstractTower {
         run.spend(target);
         if (!hit.dodged()) {
             this.report(target, HitKind.ARC, hit.critical(), target.isDead());
-            this.tag(target, hit, spec);
             if (hit.critical()) {
                 this.earnAbilities(arc.critRefund());
             }

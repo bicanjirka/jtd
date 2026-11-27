@@ -223,6 +223,21 @@ class SplashTowerTest {
         assertThat(tooFar.hits()).isEmpty();
     }
 
+    @Test
+    void anArcJumpTagsNothingSoItsHitEarnsNoSpark() {
+        SplashTower tower = this.casting("Arc");
+        FakeEnemyMob target = near(tower, 1, 0);
+        FakeEnemyMob next = ghostBeside(target, (SplashTower.EDGE_CELLS + ArcSpec.REACH_CELLS) / 2)
+                .atHealthFraction(StaticMechanic.DISCHARGE_AT / 2).withMaxHealthPoints(1_000_000);
+        this.enemies(target, next);
+
+        this.runUntil(tower, () -> !magicHits(next).isEmpty());
+        this.run(tower, 10);
+
+        assertThat(magicHits(next)).hasSize(1);
+        assertThat(tower.wispsInFlight()).isEmpty();
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"Arc", "Shockwave", "Thunderstrike"})
     void aSparkSpellDealsTheSameWhateverTheTowersDamage(String spell) {

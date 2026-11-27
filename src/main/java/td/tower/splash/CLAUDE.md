@@ -10,7 +10,7 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
 - The fork's passive is the `Passive` the spec carries: Static (Stormcaller) or Soulbrand (Hexer). A hit that reached
   health (landed above zero) tags its enemy in the tower's own `TagLedger`, one stack per tower; the stack is settled
   at the start of the tower's tick and pays by the enemy's max health (`PassivePayout`), when the spark or soul arrives.
-  What a cast deals tags nothing.
+  What a cast or an Arc jump deals tags nothing.
 - The currency is earned only through `earnAbilities`: the stones' credited damage by `SplashSpec.damagePerUnit`, and
   the passive's payouts. Abilities are node mechanics with an `AbilityCharge`; their casts go through `CastActions`,
   never a tower method a mechanic calls itself.
