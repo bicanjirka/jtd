@@ -106,8 +106,8 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     static final int EFFECT_PULSE_DURATION_TICKS = MomentLength.SHORT.ticks();
     /** Runes sit in a row over the body; their size is fixed. */
     private static final float RUNE_ROW_OFFSET_FRACTION = 0.6f;
-    private static final float RUNE_FIXED_SCALE = 5.5f;
-    private static final float RUNE_SPACING = 19f;
+    private static final float RUNE_FIXED_SCALE = 2.75f;
+    private static final float RUNE_SPACING = 9.5f;
     /** Toll's ring has a segment for each stack a plain field builds, just outside the selection ring. */
     private static final int TOLL_SEGMENTS = 5;
     private static final float TOLL_RING_MARGIN = 2f;

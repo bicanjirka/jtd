@@ -137,7 +137,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float ORB_CELLS = 0.12f;
     private static final float ORB_BOW_CELLS = 0.18f;
     /** A curse: its head's radius, and how high it floats over the enemies it passes, in cells. */
-    private static final float CURSE_CELLS = 0.2f;
+    private static final float CURSE_CELLS = 0.135f;
     private static final float CURSE_HOVER_CELLS = 0.6f;
     /** A spell's or a curse's tail: how long it is in cells, how many points it bends at, and its width at the head. */
     private static final float SPELL_TRAIL_CELLS = 1.1f;
