@@ -42,7 +42,18 @@ final class StrategyBuilds {
                             "sniper.silver_round", "sniper.ricochet", "sniper.executioner",
                             "sniper.killing_spree", "sniper.unbroken_aim", "sniper.hard_rounds"))),
             TowerFactory.Type.SEEKER, aerie(),
+            TowerFactory.Type.CINDER, scorcher(),
             TowerFactory.Type.MORTAR, mortar()));
+
+    /** Long (reach, one enemy in the Core) or Wide (a cone, many in the Core), each with Soulfire or Dragon's Breath. */
+    private static List<Strategy> scorcher() {
+        Set<String> reachBuild = Set.of("base.range", "cinder.hot_flame", "cinder.long_stream", "cinder.core", "base.range.2");
+        Set<String> wideBuild = Set.of("cinder.wide_nozzle", "cinder.hot_flame", "cinder.long_stream", "cinder.core", "base.range.2");
+        return List.of(new Strategy("long soulfire", with(reachBuild, "cinder.soulfire")),
+                new Strategy("long dragon", with(reachBuild, "cinder.dragons_breath")),
+                new Strategy("wide soulfire", with(wideBuild, "cinder.soulfire")),
+                new Strategy("wide dragon", with(wideBuild, "cinder.dragons_breath")));
+    }
 
     /** Focus (one enemy at a time), Volley (many at once) and Wither (long holds, no healing), each with its stronger Apex. */
     private static List<Strategy> aerie() {

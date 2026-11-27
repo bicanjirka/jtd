@@ -573,7 +573,7 @@ it fired before; 100 would make it fire on almost every stream, even outside the
 - **Where:** `td.tower.cinder.FlashoverMechanic.HOT_FUEL_POINTS` and its sentence.
 - **Approach:** in the Scorcher's balance, make it "a burn whose bar is full flashes over" (400 fuel). It reuses the
   burn bar the player already sees, so it drops a number. Simulated on one enemy standing in the cone, it keeps
-  deep builds (Core, Long Stream II and Bellows: 62% of the stream against 52% today) and several Scorchers on one
+  deep builds (Core, Long Stream II and a shorter reload: 62% of the stream against 52% today) and several Scorchers on one
   enemy, and drops a mid-size Core build (19% today) to none; weigh that loss there. Pools have no cap, so fuel
   still rises past a full bar.
 

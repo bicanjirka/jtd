@@ -146,15 +146,12 @@ final class PerkPictograms {
             // Core
             Map.entry("cinder.core", "=tower.core"),
             // Fan
-            Map.entry("cinder.fan", "=cinder.wide_nozzle"),
             // Soulfire
             Map.entry("cinder.soulfire", "=effect.soulfire"),
             // Dragon's Breath
             Map.entry("cinder.dragons_breath", "=tower.dragons_breath"),
             // White Flame
             Map.entry("cinder.white_flame", "=tower.flame"),
-            // Bellows
-            Map.entry("cinder.bellows", "=cinder.wide_nozzle"),
             // Flashover
             Map.entry("cinder.flashover", "=tower.flashover"),
             // Meltdown

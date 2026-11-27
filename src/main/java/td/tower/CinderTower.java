@@ -60,7 +60,7 @@ public final class CinderTower extends AbstractTower {
 
     public static final int PRICE = 20;
     /** Fuel a second, in points. */
-    public static final float FLAME_POINTS = 60f;
+    public static final float FLAME_POINTS = 21f;
     public static final float RANGE = 2.2f;
 
     private static final float CONE_DEGREES = 60f;
@@ -70,37 +70,31 @@ public final class CinderTower extends AbstractTower {
     private static final int RELOAD_PERIOD_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
 
-    private static final UpgradeNode HOT_FLAME = UpgradeNode.of("cinder.hot_flame", "Hot Flame", 15)
-            .withModifiers(TowerModifiers.damage(15f));
-    private static final UpgradeNode LONG_STREAM = UpgradeNode.of("cinder.long_stream", "Long Stream", 20)
+    private static final UpgradeNode HOT_FLAME = UpgradeNode.of("cinder.hot_flame", "Hot Flame", 10)
+            .withModifiers(TowerModifiers.damage(8f));
+    private static final UpgradeNode LONG_STREAM = UpgradeNode.of("cinder.long_stream", "Long Stream", 10)
             .withModifiers(TowerModifiers.stream(Math.round(0.5f * TickRate.TICKS_PER_SECOND)));
-    private static final UpgradeNode WIDE_NOZZLE = UpgradeNode.of("cinder.wide_nozzle", "Wide Nozzle", 15)
-            .withModifiers(TowerModifiers.coneWidth(30f));
-    private static final UpgradeNode LONG_NOZZLE = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Nozzle", 15)
-            .withModifiers(TowerModifiers.range(0.5f));
+    private static final UpgradeNode WIDE_NOZZLE = UpgradeNode.of("cinder.wide_nozzle", "Wide Nozzle", 5)
+            .withModifiers(TowerModifiers.coneWidth(60f).plus(TowerModifiers.range(-0.25f)));
+    private static final UpgradeNode LONG_NOZZLE = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Nozzle", 5)
+            .withModifiers(TowerModifiers.range(1f).plus(TowerModifiers.coneWidth(-20f)));
 
-    private static final UpgradeNode CORE = UpgradeNode.of("cinder.core", "Core", 25)
+    private static final UpgradeNode CORE = UpgradeNode.of("cinder.core", "Core", 10)
             .inTier(1);
     private static final UpgradeNode LANCE = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Lance", 5)
-            .withModifiers(TowerModifiers.range(0.65f).plus(TowerModifiers.coneWidth(-24f)))
-            .inTier(1);
-    private static final UpgradeNode FAN = UpgradeNode.of("cinder.fan", "Fan", 5)
-            .withModifiers(TowerModifiers.coneWidth(24f))
+            .withModifiers(TowerModifiers.range(1f))
             .inTier(1);
 
     private static final UpgradeNode SOULFIRE = UpgradeNode.of("cinder.soulfire", "Soulfire", 15)
-            .withModifiers(TowerModifiers.damagePercent(0.1f).plus(TowerModifiers.magicPenetration(0.5f)))
+            .withModifiers(TowerModifiers.damage(12f).plus(TowerModifiers.magicPenetration(0.5f)))
             .inTier(2);
     private static final UpgradeNode DRAGONS_BREATH = UpgradeNode.of("cinder.dragons_breath", "Dragon's Breath", 15)
-            .withModifiers(TowerModifiers.streamTimes(2f).plus(TowerModifiers.damageTimes(0.65f))
-                    .plus(TowerModifiers.reload(-Math.round(TickRate.TICKS_PER_SECOND))))
+            .withModifiers(TowerModifiers.stream(Math.round(TickRate.TICKS_PER_SECOND)).plus(TowerModifiers.damage(-14f))
+                    .plus(TowerModifiers.reload(-Math.round(1.25f * TickRate.TICKS_PER_SECOND))))
             .inTier(2);
     private static final UpgradeNode WHITE_FLAME = UpgradeNode.of("cinder.white_flame", "White Flame", 30)
-            .withModifiers(TowerModifiers.damage(30f))
-            .inTier(2);
-    private static final UpgradeNode BELLOWS = UpgradeNode.of("cinder.bellows", "Bellows", 25)
-            .withModifiers(TowerModifiers.reload(-Math.round(0.5f * TickRate.TICKS_PER_SECOND)))
-            .inTier(2);
+            .withModifiers(TowerModifiers.damage(34f))
+            .inTier(3);
 
     private static final UpgradeNode FLASHOVER = UpgradeNode.of("cinder.flashover", "Flashover", 20)
             .inTier(3);
@@ -110,20 +104,19 @@ public final class CinderTower extends AbstractTower {
             .inTier(3);
     private static final UpgradeNode HOT_FLAME_2 = UpgradeNode.of("cinder.hot_flame_2", "Hot Flame II", 30)
             .withModifiers(TowerModifiers.damage(15f))
-            .inTier(3);
+            .inTier(2);
     private static final UpgradeNode LONG_STREAM_2 = UpgradeNode.of("cinder.long_stream_2", "Long Stream II", 45)
             .withModifiers(TowerModifiers.stream(Math.round(TickRate.TICKS_PER_SECOND)))
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(HOT_FLAME, LONG_STREAM, WIDE_NOZZLE, LONG_NOZZLE))
-            .with(CORE, LANCE, FAN,
-                    SOULFIRE, DRAGONS_BREATH, WHITE_FLAME, BELLOWS,
+            .with(CORE, LANCE,
+                    SOULFIRE, DRAGONS_BREATH, WHITE_FLAME,
                     FLASHOVER, MELTDOWN, THERMAL_SHOCK, HOT_FLAME_2, LONG_STREAM_2)
             .withCluster(UpgradeCluster.of("Nozzle", WIDE_NOZZLE, LONG_NOZZLE))
-            .withCluster(UpgradeCluster.of("Lance or Fan", LANCE, FAN))
             .withCluster(UpgradeCluster.of("Flame", SOULFIRE, DRAGONS_BREATH))
             .withCluster(UpgradeCluster.of("Burning", FLASHOVER, MELTDOWN, THERMAL_SHOCK))
-            .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withMechanics(), UpgradeTier.gated(120, 0),
+            .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withMechanics(), UpgradeTier.gated(120, 0).withBonus(TowerModifiers.reload(-Math.round(0.5f * TickRate.TICKS_PER_SECOND))),
                     UpgradeTier.gated(200, 0)));
 
     private static final MechanicCatalogue<CinderMechanic> MECHANICS = MechanicCatalogue.of(
