@@ -16,6 +16,9 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   never a tower method a mechanic calls itself.
 - An Arc starts from where a charged stone landed, carries the stats that stone was thrown with, and jumps hop by hop
   with a pause between.
+- A spell is an ability whose currency is Sparks or Souls (`SpellMarkMechanic.isSpell`), never a list of names: the
+  `Casting` a mechanic casts through knows whether its ability is one, and an Arc knows from its own ability
+  (`ArcSpec.spell`). A stone is never a spell.
 - A spell's damage (an Arc's jump, a cast's bolt, a hex's poison) is a flat number of points its mechanic holds,
   never a share of the tower's damage; only the hit's own adjustments move it.
 - A Hexer's hex is an enemy effect in `EffectCategory.HEX`, applied through `applyEffect` once its curse arrives, and

@@ -12,31 +12,40 @@ import td.tower.targeting.Viewpoint;
  * @param arc           how a charged stone's Arc runs
  * @param hexes         how its hexes bite
  * @param damagePerUnit the damage its stones deal for one unit of its currency, in points
+ * @param spellsMark    whether what a spell hits or hexes is left Vulnerable
  */
-public record SplashSpec(Reach reach, Passive passive, ArcSpec arc, HexSpec hexes, float damagePerUnit) {
+public record SplashSpec(Reach reach, Passive passive, ArcSpec arc, HexSpec hexes, float damagePerUnit,
+                         boolean spellsMark) {
 
     /** The damage a stone deals for one Spark or Soul, in points. */
     public static final float DAMAGE_PER_UNIT = 100f;
 
     /** The visible enemies in range, no passive, and the bare Arc and hexes. */
     public static SplashSpec from(Viewpoint view) {
-        return new SplashSpec(Reach.visible(view), Passive.NONE, ArcSpec.bare(), HexSpec.bare(), DAMAGE_PER_UNIT);
+        return new SplashSpec(Reach.visible(view), Passive.NONE, ArcSpec.bare(), HexSpec.bare(), DAMAGE_PER_UNIT,
+                false);
     }
 
     public SplashSpec withPassive(Passive passive) {
-        return new SplashSpec(this.reach, passive, this.arc, this.hexes, this.damagePerUnit);
+        return new SplashSpec(this.reach, passive, this.arc, this.hexes, this.damagePerUnit, this.spellsMark);
     }
 
     public SplashSpec withArc(ArcSpec arc) {
-        return new SplashSpec(this.reach, this.passive, arc, this.hexes, this.damagePerUnit);
+        return new SplashSpec(this.reach, this.passive, arc, this.hexes, this.damagePerUnit, this.spellsMark);
     }
 
     public SplashSpec withHexes(HexSpec hexes) {
-        return new SplashSpec(this.reach, this.passive, this.arc, hexes, this.damagePerUnit);
+        return new SplashSpec(this.reach, this.passive, this.arc, hexes, this.damagePerUnit, this.spellsMark);
+    }
+
+    /** What a spell hits or hexes is left Vulnerable. */
+    public SplashSpec withSpellsMarking() {
+        return new SplashSpec(this.reach, this.passive, this.arc, this.hexes, this.damagePerUnit, true);
     }
 
     /** Earns a unit for {@code points} of damage, if that is faster than it earns now. */
     public SplashSpec withDamagePerUnitAtMost(float points) {
-        return new SplashSpec(this.reach, this.passive, this.arc, this.hexes, Math.min(this.damagePerUnit, points));
+        return new SplashSpec(this.reach, this.passive, this.arc, this.hexes, Math.min(this.damagePerUnit, points),
+                this.spellsMark);
     }
 }

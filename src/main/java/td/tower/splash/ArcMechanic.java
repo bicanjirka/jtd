@@ -21,6 +21,11 @@ public final class ArcMechanic implements SplashMechanic {
     }
 
     @Override
+    public SplashSpec refineSpec(SplashSpec spec) {
+        return SpellMarkMechanic.isSpell(this.charge.ability()) ? spec.withArc(spec.arc().castAsSpell()) : spec;
+    }
+
+    @Override
     public boolean cast(CastActions actions) {
         return actions.primeArc();
     }

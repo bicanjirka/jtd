@@ -55,6 +55,12 @@ class SplashTowerTest {
         return TowerFixtures.buffed(this.tower(nodes), this.context, TowerModifiers.damageTimes(1000f));
     }
 
+    /** {@code tower} with the XP that opens its tier II, which it holds free. */
+    private static SplashTower atTierTwo(SplashTower tower) {
+        tower.earnXp(tower.upgradeTree().tiers().get(2).xp());
+        return tower;
+    }
+
     private void enemies(FakeEnemyMob... enemies) {
         this.context.enemies().setEnemies(enemies);
     }
@@ -235,8 +241,8 @@ class SplashTowerTest {
     }
 
     @Test
-    void joltLeavesTheEnemyAJumpHitVulnerable() {
-        SplashTower tower = this.casting("Arc", "Jolt");
+    void tierTwoMakesEachJumpOfASpellsArcLeaveItsEnemyVulnerable() {
+        SplashTower tower = atTierTwo(this.casting("Arc"));
         FakeEnemyMob target = near(tower, 1, 0);
         FakeEnemyMob next = ghostBeside(target, (SplashTower.EDGE_CELLS + ArcSpec.REACH_CELLS) / 2);
         this.enemies(target, next);
@@ -372,14 +378,39 @@ class SplashTowerTest {
     }
 
     @Test
-    void agonyMakesAHexedEnemyVulnerable() {
-        SplashTower tower = this.casting("Hex of Doom", "Agony");
+    void tierTwoMakesAHexLeaveItsEnemyVulnerableForAsLongAsTheHexLasts() {
+        SplashTower tower = atTierTwo(this.casting("Hex of Doom"));
         FakeEnemyMob enemy = near(tower, 1, 0);
         this.enemies(enemy);
 
         this.runUntil(tower, () -> enemy.hasEffect(EffectKind.DOOM));
 
+        assertThat(remainingTicks(enemy, EffectKind.VULNERABLE)).isNotEmpty()
+                .isEqualTo(remainingTicks(enemy, EffectKind.DOOM));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Shockwave", "Thunderstrike"})
+    void tierTwoMakesASpellsLightningLeaveTheEnemyItStrikesVulnerable(String spell) {
+        SplashTower tower = atTierTwo(this.casting(spell));
+        FakeEnemyMob enemy = near(tower, 1, 0).withHealth(900);
+        this.enemies(enemy);
+
+        this.runUntil(tower, () -> !magicHits(enemy).isEmpty());
+
         assertThat(enemy.hasEffect(EffectKind.VULNERABLE)).isTrue();
+    }
+
+    @Test
+    void aStoneIsNoSpellAndLeavesNothingVulnerable() {
+        SplashTower tower = atTierTwo(this.tower());
+        FakeEnemyMob enemy = near(tower, 1, 0);
+        this.enemies(enemy);
+
+        this.landFirstStone(tower);
+
+        assertThat(enemy.hits()).isNotEmpty();
+        assertThat(enemy.hasEffect(EffectKind.VULNERABLE)).isFalse();
     }
 
     @ParameterizedTest
@@ -518,7 +549,7 @@ class SplashTowerTest {
         SplashTower tower = this.tower();
 
         assertThat(SplashTower.forkOf(UpgradePaths.named(tower, "Arc"))).isEqualTo(SplashTower.Fork.STORMCALLER);
-        assertThat(SplashTower.forkOf(UpgradePaths.named(tower, "Agony"))).isEqualTo(SplashTower.Fork.HEXER);
+        assertThat(SplashTower.forkOf(UpgradePaths.named(tower, "Contagion"))).isEqualTo(SplashTower.Fork.HEXER);
         assertThat(SplashTower.forkOf(UpgradePaths.named(tower, "Sharp Stones"))).isEqualTo(SplashTower.Fork.NONE);
     }
 }

@@ -13,7 +13,6 @@ import td.tower.ability.AbilityCharge;
 import td.tower.ability.AbilityUnits;
 import td.tower.proc.HitAdjustment;
 import td.tower.proc.HitKind;
-import td.tower.splash.AgonyMechanic;
 import td.tower.splash.ArcMechanic;
 import td.tower.splash.ArcSpec;
 import td.tower.splash.BacklashHex;
@@ -38,13 +37,13 @@ import td.tower.splash.HexKeeper;
 import td.tower.splash.HexMechanic;
 import td.tower.splash.HexSpec;
 import td.tower.splash.HighVoltageMechanic;
-import td.tower.splash.JoltMechanic;
 import td.tower.splash.Passive;
 import td.tower.splash.PassivePayout;
 import td.tower.splash.ReckoningMechanic;
 import td.tower.splash.ShockwaveMechanic;
 import td.tower.splash.SoulHarvestMechanic;
 import td.tower.splash.SoulbrandMechanic;
+import td.tower.splash.SpellMarkMechanic;
 import td.tower.splash.SplashMechanic;
 import td.tower.splash.SplashSpec;
 import td.tower.splash.StaticMechanic;
@@ -155,10 +154,6 @@ public final class SplashTower extends AbstractTower {
             .after(HEX_OF_BLIGHT)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode AGONY = UpgradeNode.of("splash.agony", "Agony", 5)
-            .after(HEXER)
-            .withOwnArt()
-            .inTier(2);
     private static final UpgradeNode CONTAGION = UpgradeNode.of("splash.contagion", "Contagion", 5)
             .after(HEXER)
             .withOwnArt()
@@ -173,9 +168,8 @@ public final class SplashTower extends AbstractTower {
             .after(ARC)
             .withOwnArt()
             .inTier(2);
-    private static final UpgradeNode JOLT = UpgradeNode.of("splash.jolt", "Jolt", 5)
-            .after(ARC)
-            .withOwnArt()
+    private static final UpgradeNode HARD_STONES = UpgradeNode.of("splash.hard_stones", "Hard Stones", 10)
+            .withModifiers(TowerModifiers.damage(7f))
             .inTier(2);
     private static final UpgradeNode LONG_THROW_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Throw II", 10)
             .withModifiers(TowerModifiers.range(1.2f))
@@ -213,8 +207,8 @@ public final class SplashTower extends AbstractTower {
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(LONG_THROW, FLINT_STONES, SHARP_STONES))
             .with(STORMCALLER, HEXER, ARC, HEX_OF_DOOM, HEX_OF_BLIGHT,
-                    RECKONING, BLIGHT_CLOUD, AGONY, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR, JOLT,
-                    LONG_THROW_2,
+                    RECKONING, BLIGHT_CLOUD, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR,
+                    LONG_THROW_2, HARD_STONES,
                     SOUL_HARVEST, HEX_OF_BACKLASH, CHOKING_HEXES, TWIN_HEX, SHOCKWAVE, THUNDERSTRIKE, HIGH_VOLTAGE,
                     FEEDBACK, WIDE_BLAST)
             .withCluster(UpgradeCluster.of("Stones", FLINT_STONES, SHARP_STONES))
@@ -224,7 +218,7 @@ public final class SplashTower extends AbstractTower {
             .withCluster(UpgradeCluster.of("Storm", SHOCKWAVE, THUNDERSTRIKE))
             .withTiers(List.of(UpgradeTier.open(),
                     UpgradeTier.gated(60, 0).withBonus(TowerModifiers.areaRadius(0.6f).plus(TowerModifiers.blastEdge(1.2f))),
-                    UpgradeTier.gated(120, 0).withBonus(TowerModifiers.damage(7f)), UpgradeTier.gated(200, 0).withBonus(TowerModifiers.attackSpeed(0.25f))));
+                    UpgradeTier.gated(120, 0).withMechanics(), UpgradeTier.gated(200, 0).withBonus(TowerModifiers.attackSpeed(0.25f))));
 
     private static final MechanicCatalogue<SplashMechanic> MECHANICS = MechanicCatalogue.of(
             entry(STORMCALLER.id(), StaticMechanic::new),
@@ -234,12 +228,10 @@ public final class SplashTower extends AbstractTower {
             entry(HEX_OF_BLIGHT.id(), () -> new HexMechanic(BLIGHT, 2)),
             entry(RECKONING.id(), ReckoningMechanic::new),
             entry(BLIGHT_CLOUD.id(), BlightCloudMechanic::new),
-            entry(AGONY.id(), AgonyMechanic::new),
             entry(CONTAGION.id(), ContagionMechanic::new),
             entry(CHAIN_LIGHTNING.id(), ChainLightningMechanic::new),
             entry(WILD_ARC.id(), WildArcMechanic::new),
             entry(CONDUCTOR.id(), ConductorMechanic::new),
-            entry(JOLT.id(), JoltMechanic::new),
             entry(SOUL_HARVEST.id(), SoulHarvestMechanic::new),
             entry(HEX_OF_BACKLASH.id(), () -> new HexMechanic(BACKLASH, 3)),
             entry(CHOKING_HEXES.id(), ChokingHexesMechanic::new),
@@ -247,7 +239,8 @@ public final class SplashTower extends AbstractTower {
             entry(SHOCKWAVE.id(), ShockwaveMechanic::new),
             entry(THUNDERSTRIKE.id(), ThunderstrikeMechanic::new),
             entry(HIGH_VOLTAGE.id(), HighVoltageMechanic::new),
-            entry(FEEDBACK.id(), FeedbackMechanic::new));
+            entry(FEEDBACK.id(), FeedbackMechanic::new),
+            entry(UpgradeTree.tierNodeId(2), SpellMarkMechanic::new));
 
     private final OwnedMechanics<SplashMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final TargetSelector randomAim;
@@ -306,8 +299,9 @@ public final class SplashTower extends AbstractTower {
         if (ready || casting) {
             List<EnemyMob> inReach = spec.reach().matching(this.context.enemies());
             if (!inReach.isEmpty()) {
-                Casting actions = new Casting(spec, inReach);
-                this.castReadyAbilities(owned, mechanic -> mechanic.cast(actions));
+                this.castReadyAbilities(owned, mechanic -> mechanic.cast(new Casting(spec, inReach,
+                        spec.spellsMark() && mechanic.ability().map(AbilityCharge::ability)
+                                .filter(SpellMarkMechanic::isSpell).isPresent())));
                 if (ready) {
                     this.randomAim.selectFrom(inReach).ifPresent(this::throwAt);
                 }
@@ -447,9 +441,8 @@ public final class SplashTower extends AbstractTower {
                 this.earnAbilities(arc.critRefund());
             }
             this.bolts.add(Bolt.jump(hop.from(), target, this.tickNow(), hit.critical()));
-            if (arc.jolt()) {
-                this.applyEffect(target, sink -> Effect.vulnerable(1,
-                        Math.round(ArcSpec.JOLT_SECONDS * TICKS_PER_SECOND), sink));
+            if (arc.spell() && spec.spellsMark()) {
+                this.leaveJolted(target);
             }
         }
         this.jumpOn(at, Optional.of(target), run);
@@ -557,7 +550,7 @@ public final class SplashTower extends AbstractTower {
         } else {
             this.hexKeeper.record(target, hex.kind(), ticks);
         }
-        if (hexes.agony()) {
+        if (pending.dose().marks()) {
             this.applyEffect(target, sink -> Effect.vulnerable(1, ticks, sink));
         }
         if (hexes.choking()) {
@@ -645,10 +638,20 @@ public final class SplashTower extends AbstractTower {
 
         private final SplashSpec spec;
         private final List<EnemyMob> inReach;
+        // Whether the ability casting is a spell while spells mark what they reach.
+        private final boolean marks;
 
-        private Casting(SplashSpec spec, List<EnemyMob> inReach) {
+        private Casting(SplashSpec spec, List<EnemyMob> inReach, boolean marks) {
             this.spec = spec;
             this.inReach = inReach;
+            this.marks = marks;
+        }
+
+        /** A spell's lightning struck {@code enemy} with {@code hit}: one that landed leaves it Vulnerable. */
+        private void marked(EnemyMob enemy, HitResult hit) {
+            if (this.marks && !hit.dodged()) {
+                SplashTower.this.leaveJolted(enemy);
+            }
         }
 
         @Override
@@ -662,7 +665,8 @@ public final class SplashTower extends AbstractTower {
             TowerStats stats = SplashTower.this.stats();
             Vec2 from = SplashTower.this.center();
             for (EnemyMob enemy : this.inReach) {
-                SplashTower.this.strike(enemy, from, DamageUnits.ofPoints(points), stats, BoltKind.SHOCKWAVE);
+                this.marked(enemy, SplashTower.this.strike(enemy, from, DamageUnits.ofPoints(points), stats,
+                        BoltKind.SHOCKWAVE));
             }
             return true;
         }
@@ -672,7 +676,8 @@ public final class SplashTower extends AbstractTower {
             return THUNDERSTRIKE_AIM.selectFrom(this.inReach).map(enemy -> {
                 TowerStats stats = SplashTower.this.stats();
                 Vec2 above = new Vec2(enemy.getX(), enemy.getY() - THUNDERSTRIKE_HEIGHT_CELLS * SplashTower.this.cellPixels());
-                SplashTower.this.strike(enemy, above, DamageUnits.ofPoints(points), stats, BoltKind.THUNDERSTRIKE);
+                this.marked(enemy, SplashTower.this.strike(enemy, above, DamageUnits.ofPoints(points), stats,
+                        BoltKind.THUNDERSTRIKE));
                 if (!enemy.isDead()) {
                     SplashTower.this.applyEffect(enemy,
                             sink -> Effect.dazed(Math.round(dazeSeconds * TICKS_PER_SECOND), sink));
@@ -695,19 +700,31 @@ public final class SplashTower extends AbstractTower {
             }
             Vec2 from = SplashTower.this.center();
             int ticks = Math.round(hex.seconds() * TICKS_PER_SECOND);
-            cursed.forEach(target -> SplashTower.this.sendCurse(hex, from, target, Dose.cast(ticks)));
+            cursed.forEach(target -> SplashTower.this.sendCurse(hex, from, target, Dose.cast(ticks, this.marks)));
             return !cursed.isEmpty();
         }
     }
 
     /** A cast's bolt: magic that never crits, and tags nothing. */
-    private void strike(EnemyMob enemy, Vec2 from, int amount, TowerStats stats, BoltKind kind) {
+    private HitResult strike(EnemyMob enemy, Vec2 from, int amount, TowerStats stats, BoltKind kind) {
         HitResult hit = this.landHit(enemy, Damage.magic(amount), stats.attack().withoutCrits());
         if (!hit.dodged()) {
             this.report(enemy, HitKind.ARC, false, enemy.isDead());
         }
         Bolt bolt = Bolt.cast(from, enemy, this.tickNow(), kind);
         this.bolts.add(hit.dodged() ? bolt.missed() : bolt);
+        return hit;
+    }
+
+    /** A spell's lightning leaves {@code enemy} Vulnerable for a while. */
+    private void leaveJolted(EnemyMob enemy) {
+        this.applyEffect(enemy, sink -> Effect.vulnerable(1,
+                Math.round(SpellMarkMechanic.JOLT_SECONDS * TICKS_PER_SECOND), sink));
+    }
+
+    // A hex starts only from a cast that costs Souls, so one jumping on is still a spell's.
+    private boolean hexesMark() {
+        return this.spec(this.mechanics.all()).spellsMark();
     }
 
     /** What a hex puts on an enemy as it lands. */
@@ -752,7 +769,8 @@ public final class SplashTower extends AbstractTower {
         @Override
         public void jump(HexJump jump) {
             HEXES.stream().filter(hex -> hex.kind() == jump.hex().kind()).findFirst().ifPresent(hex ->
-                    SplashTower.this.sendCurse(hex, jump.from(), jump.to(), Dose.jumped(jump.hex().castTicks(), jump.grownSlow(), jump.hex().stored())));
+                    SplashTower.this.sendCurse(hex, jump.from(), jump.to(), Dose.jumped(jump.hex().castTicks(),
+                            jump.grownSlow(), jump.hex().stored(), SplashTower.this.hexesMark())));
         }
     }
 
@@ -819,17 +837,17 @@ public final class SplashTower extends AbstractTower {
     }
 
     /**
-     * How long a hex lasts as cast, the slow it starts from, and for one that jumped on from a dead carrier the damage
-     * it recorded there.
+     * How long a hex lasts as cast, the slow it starts from, for one that jumped on from a dead carrier the damage it
+     * recorded there, and whether it leaves its carrier Vulnerable while it lasts.
      */
-    private record Dose(int ticks, float grownSlow, boolean jumped, long stored) {
+    private record Dose(int ticks, float grownSlow, boolean jumped, long stored, boolean marks) {
 
-        static Dose cast(int ticks) {
-            return new Dose(ticks, 0f, false, 0);
+        static Dose cast(int ticks, boolean marks) {
+            return new Dose(ticks, 0f, false, 0, marks);
         }
 
-        static Dose jumped(int ticks, float grownSlow, long stored) {
-            return new Dose(ticks, grownSlow, true, stored);
+        static Dose jumped(int ticks, float grownSlow, long stored, boolean marks) {
+            return new Dose(ticks, grownSlow, true, stored, marks);
         }
     }
 

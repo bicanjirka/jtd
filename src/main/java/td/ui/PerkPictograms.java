@@ -71,8 +71,6 @@ final class PerkPictograms {
             Map.entry("splash.reckoning", "F M 12 2.6 C 7.2 2.6 4 6.2 4 10.4 C 4 13.2 5.4 15.2 7.4 16.2 V 19.6 C 7.4 20.4 8 21.2 9 21.2 H 15 C 16 21.2 16.6 20.4 16.6 19.6 V 16.2 C 18.6 15.2 20 13.2 20 10.4 C 20 6.2 16.8 2.6 12 2.6 Z ; K O8.9 11.0 2.1 ; K O15.1 11.0 2.1 ; T O12 12 11.4"),
             // Blight Cloud
             Map.entry("splash.blight_cloud", "F O8 15 4 O13 11.6 5.2 O18 15.6 3.6 M4 15H22V19H4Z ; K O9 16.4 1 O13.6 15 1.1 O17 17.4 0.9 ; F M5.4 8.4C5.4 5.6 7.4 3.8 10 3.6C10 6.4 8.2 8.4 5.4 8.4Z"),
-            // Agony
-            Map.entry("splash.agony", "=effect.vulnerable"),
             // Contagion
             Map.entry("splash.contagion", "F O12 12 4.6 ; S M12 7V3.6 M12 17V20.4 M7.67 9.5L4.72 7.8 M16.33 14.5L19.28 16.2 M7.67 14.5L4.72 16.2 M16.33 9.5L19.28 7.8 ; F O12 3.2 1.7 O12 20.8 1.7 O4.38 7.6 1.7 O19.62 16.4 1.7 O4.38 16.4 1.7 O19.62 7.6 1.7"),
             // Chain Lightning
@@ -91,8 +89,8 @@ final class PerkPictograms {
             Map.entry("splash.shockwave", "F M13.4 3L8.4 12.4H11.6L10.4 21L15.8 10.8H12.6Z ; S M6.4 8A6 6 0 0 0 6.4 16 M17.6 8A6 6 0 0 1 17.6 16 ; T M3 5.4A9.6 9.6 0 0 0 3 18.6 M21 5.4A9.6 9.6 0 0 1 21 18.6"),
             // Thunderstrike
             Map.entry("splash.thunderstrike", "F M6.4 13C4.4 13 3 11.6 3 9.8C3 8 4.4 6.6 6.2 6.6C6.8 4.4 8.8 3 11.2 3C14 3 16.2 5 16.6 7.6C18.8 7.6 20.6 9.2 20.6 11.2C20.6 13 19.2 13 17.4 13Z ; F M12.8 13.8L9.4 18.6H12L10.8 22.4L15.6 16.6H12.8L14.6 13.8Z"),
-            // Jolt
-            Map.entry("splash.jolt", "F M10.6 20C4.4 15.4 2 11.4 2 8.4A4.6 4.6 0 0 1 10.6 6.8A4.6 4.6 0 0 1 19.2 8.4C19.2 11.4 16.8 15.4 10.6 20Z ; X M10.8 6.6L9 10.4L12 12.8L10 17 ; X M17.4 8.4L12.6 15.8H15.6L14 22.8L21.4 13H18L20.2 8.4Z ; F M17.4 8.4L12.6 15.8H15.6L14 22.8L21.4 13H18L20.2 8.4Z"),
+            // Hard Stones
+            Map.entry("splash.hard_stones", "F M4 17.4L6.4 8.2L12.6 4.4L19.4 8L20.4 16.6L13.2 20.6Z ; X M6.4 8.2L12.4 11.6L19.4 8 M12.4 11.6L13.2 20.6 ; T M3 21.6H21"),
             // Conductor
             Map.entry("splash.conductor", "F O5 6.6 2.4 O19 6.6 2.4 ; S M7.4 6.6L10.4 11L13.6 4.8L16.6 6.6 ; F M12 13.4L13.2 16.6L16.4 17.8L13.2 19L12 22.2L10.8 19L7.6 17.8L10.8 16.6Z"),
             // High Voltage
