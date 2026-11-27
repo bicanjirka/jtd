@@ -565,17 +565,13 @@ tower's own.
   look alike, so what is drawn is what pours; then weigh it again with `tree_calc.py`, since a narrower cone reaches
   fewer enemies.
 
-### Flashover's threshold is a stopgap
+### Heatstroke's threshold is a hidden number
 
-Since pools last 4 s, Flashover's threshold is 250 fuel, raised from 100 only so it keeps about the share of a stream
-it fired before; 100 would make it fire on almost every stream, even outside the Core. 250 is a hidden number the player can't read off the board.
+Heatstroke dazes an enemy whose burn holds 80 fuel, a number picked on the bench (it leads single targets and bosses there) that the player can't read off the board.
 
-- **Where:** `td.tower.cinder.FlashoverMechanic.HOT_FUEL_POINTS` and its sentence.
-- **Approach:** in the Scorcher's balance, make it "a burn whose bar is full flashes over" (400 fuel). It reuses the
-  burn bar the player already sees, so it drops a number. Simulated on one enemy standing in the cone, it keeps
-  deep builds (Core, Long Stream II and a shorter reload: 62% of the stream against 52% today) and several Scorchers on one
-  enemy, and drops a mid-size Core build (19% today) to none; weigh that loss there. Pools have no cap, so fuel
-  still rises past a full bar.
+- **Where:** `td.tower.cinder.HeatstrokeMechanic.HOT_FUEL_POINTS` and its sentence.
+- **Approach:** mark the threshold on the burn bar the player already sees, or move it to a fuel the bar shows (a full bar is 400),
+  and re-measure Heatstroke on the bench.
 
 ### Effect duration has no source and reaches only some effects
 
@@ -653,7 +649,7 @@ Volley's gap, reload and spacing, and the nuke's flash. Nothing has been played 
 enemies.
 
 The Scorcher's numbers were weighed on paper (`shipped/FEATURE-next-gen-cinder-tower.md`), never played: its Flame, stream,
-reload, cone and range, each node's bonus and price, the Core's width and share, Flashover's threshold, reach and
+reload, cone and range, each node's bonus and price, the Core's width and share, Heatstroke's threshold, reach and
 share, Meltdown's share a point and Thermal Shock's bonus. So were the pool rule every burn, poison and Soulfire
 follows (100 fuel in 1.75 s, pulses four times a second) and the fuel the Mortar's ground and the Blight now give,
 each set to what one application dealt under the old decaying rule.

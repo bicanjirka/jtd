@@ -94,12 +94,6 @@ public final class TowerArtGame {
                 flicker)), List.of(), 1f, 0f));
     }
 
-    /** The game's Flashover tongue from {@code fromX, fromY} to {@code toX, toY}, in cell units. */
-    public static void paintFlashover(Graphics2D g, double fromX, double fromY, double toX, double toY, int flicker) {
-        Java2DFrameRenderer.paintStream(g, TowerEffectFrameBuilder.flashover(false, (float) fromX, (float) fromY,
-                (float) toX, (float) toY, flicker));
-    }
-
     /** One lit part: {@code shape} standing {@code height} tall in the three tones of {@code body}. */
     public static void paintSolid(Graphics2D g, Shape shape, double height, Color body, double pixels) {
         TowerSprites.paintParts(g, List.of(TowerFoundations.Part.solid(shape, 0, height, Tones.of(body))), pixels);

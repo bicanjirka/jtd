@@ -530,7 +530,12 @@ public abstract class AbstractTower implements Tower {
      * periodic damage, so it never crits and never spends a mark.
      */
     protected void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect) {
-        Effect applied = effect.apply(d -> this.dealPeriodicDamage(target, d));
+        this.applyEffect(target, effect, this.stats.attack().asPeriodic());
+    }
+
+    /** As {@link #applyEffect(EnemyMob, Function)}, with the effect's damage dealt as {@code attack}. */
+    protected void applyEffect(EnemyMob target, Function<DamageSink, Effect> effect, AttackProfile attack) {
+        Effect applied = effect.apply(d -> this.dealDamage(target, d, attack));
         float length = this.stats.effectLength();
         // A shared count holds and fades the same whoever adds to it, so a tower's length never reaches it.
         boolean scaled = length != 1f && !applied.kind().isCount();

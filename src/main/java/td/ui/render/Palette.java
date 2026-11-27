@@ -54,10 +54,10 @@ public enum Palette {
     TOWER_SPLASH_CAST,
     /** The rune over an enemy carrying a hex. */
     HEX_RUNE,
-    /** A Flashover's outer tongue, then its middle one. */
+    /** The flame's outer tongue, then its middle one. */
     TOWER_STREAM_OUTER,
     TOWER_STREAM_MIDDLE,
-    /** A Soulfire Flashover's outer tongue, then its middle one. */
+    /** Soulfire's outer tongue, then its middle one. */
     TOWER_SOULFIRE_OUTER,
     TOWER_SOULFIRE_MIDDLE,
     /** A Normal shell's iron, in a magazine's strip. */

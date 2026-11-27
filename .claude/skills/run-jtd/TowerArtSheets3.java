@@ -546,14 +546,6 @@ final class TowerArtSheets3 {
             TowerArt.paintCell(gg, TowerArt.build("beacon", 3, st()), px);
         });
         y += h + 22 + 44;
-        tile(g, 20, y, w, h, px, "Flashover: tongues leap from a hot enemy|to the ones beside it", gg -> {
-            dummy(gg, -1.0, 0.2);
-            dummy(gg, 0.1, -0.35);
-            dummy(gg, 0.3, 0.7);
-            for (double[] to : new double[][] {{0.1, -0.35}, {0.3, 0.7}}) {
-                td.ui.TowerArtGame.paintFlashover(gg, -1.0, 0.2, to[0], to[1], 3);
-            }
-        });
         tile(g, 340, y, w, h, px, "Knell: the stone rocks and one ring|runs out to the field's edge", gg -> {
             gg.setColor(TowerArt.alpha(TowerArt.OBELISK, 0.12));
             gg.fill(TowerArt.circ(0, 0, 1.05));

@@ -234,7 +234,7 @@ Buffs, debuffs and mechanics that towers carry or leave on enemies.
 | Sundial | Buff | The stone's shadow, turning once around it every few seconds, past the field; every enemy it passes takes an aimed hit and a stack of Toll. |
 | Frailty | Buff | Each stack of Toll makes the enemy take more damage from every source. |
 | Shadow | Buff | Magic damage that goes past Shield and insulation; magic resist still holds. |
-| Flashover | Buff | A hot Burn in the stream spreads: the enemies beside it take part of the flame too. |
+| Heatstroke | Buff | Each second of the stream, an enemy whose Burn holds enough fuel is Dazed. |
 | Thermal Shock | Buff | More flame into an enemy another tower holds with Chill, Freeze or Daze. |
 | Meltdown | Buff | An enemy's armor and plating add to the Burn it takes, a share for each point. |
 | Kinship | Buff | Towers in a Beacon's Light learn faster for every other kind of tower in the same light. |

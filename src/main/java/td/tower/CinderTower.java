@@ -14,8 +14,7 @@ import td.tower.cinder.CinderMechanic;
 import td.tower.cinder.CinderSpec;
 import td.tower.cinder.CoreMechanic;
 import td.tower.cinder.DragonsBreathMechanic;
-import td.tower.cinder.Flash;
-import td.tower.cinder.FlashoverMechanic;
+import td.tower.cinder.HeatstrokeMechanic;
 import td.tower.cinder.MeltdownMechanic;
 import td.tower.cinder.SingeMechanic;
 import td.tower.cinder.SoulfireMechanic;
@@ -94,7 +93,7 @@ public final class CinderTower extends AbstractTower {
     private static final UpgradeNode BLUE_FLAME = UpgradeNode.of("cinder.blue_flame", "Blue Flame", 30)
             .inTier(3);
 
-    private static final UpgradeNode FLASHOVER = UpgradeNode.of("cinder.flashover", "Flashover", 20)
+    private static final UpgradeNode HEATSTROKE = UpgradeNode.of("cinder.heatstroke", "Heatstroke", 20)
             .inTier(3);
     private static final UpgradeNode MELTDOWN = UpgradeNode.of("cinder.meltdown", "Meltdown", 20)
             .inTier(3);
@@ -103,6 +102,7 @@ public final class CinderTower extends AbstractTower {
     private static final UpgradeNode HOT_FLAME_2 = UpgradeNode.of("cinder.hot_flame_2", "Hot Flame II", 30)
             .withModifiers(TowerModifiers.damage(15f))
             .inTier(2);
+
     private static final UpgradeNode LONG_STREAM_2 = UpgradeNode.of("cinder.long_stream_2", "Long Stream II", 45)
             .withModifiers(TowerModifiers.stream(Math.round(TickRate.TICKS_PER_SECOND)))
             .inTier(3);
@@ -110,10 +110,10 @@ public final class CinderTower extends AbstractTower {
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(HOT_FLAME, LONG_STREAM, WIDE_NOZZLE, LONG_NOZZLE))
             .with(CORE, LANCE,
                     SOULFIRE, DRAGONS_BREATH, BLUE_FLAME,
-                    FLASHOVER, MELTDOWN, THERMAL_SHOCK, HOT_FLAME_2, LONG_STREAM_2)
+                    HEATSTROKE, MELTDOWN, THERMAL_SHOCK, HOT_FLAME_2, LONG_STREAM_2)
             .withCluster(UpgradeCluster.of("Nozzle", WIDE_NOZZLE, LONG_NOZZLE))
             .withCluster(UpgradeCluster.of("Flame", SOULFIRE, DRAGONS_BREATH))
-            .withCluster(UpgradeCluster.of("Burning", FLASHOVER, MELTDOWN, THERMAL_SHOCK))
+            .withCluster(UpgradeCluster.of("Burning", HEATSTROKE, MELTDOWN, THERMAL_SHOCK))
             .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withMechanics(), UpgradeTier.gated(120, 0).withBonus(TowerModifiers.reload(-Math.round(0.5f * TickRate.TICKS_PER_SECOND))),
                     UpgradeTier.gated(200, 0)));
 
@@ -123,15 +123,13 @@ public final class CinderTower extends AbstractTower {
             entry(SOULFIRE.id(), SoulfireMechanic::new),
             entry(DRAGONS_BREATH.id(), DragonsBreathMechanic::new),
             entry(BLUE_FLAME.id(), BlueFlameMechanic::new),
-            entry(FLASHOVER.id(), FlashoverMechanic::new),
+            entry(HEATSTROKE.id(), HeatstrokeMechanic::new),
             entry(MELTDOWN.id(), MeltdownMechanic::new),
             entry(THERMAL_SHOCK.id(), ThermalShockMechanic::new));
 
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<CinderMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final TargetSelector nearest = PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY));
-    /** Each hot enemy that flashed over this tick and an enemy it reached, in pairs, for the look. */
-    private final List<Flash> flashes = new ArrayList<>();
     /** Each enemy the cone fed this tick and what it was fed, for the look. */
     private final List<Caught> caught = new ArrayList<>();
     private FireClock clock = new FireClock(RELOAD_PERIOD_TICKS - 1);
@@ -169,7 +167,6 @@ public final class CinderTower extends AbstractTower {
     protected void act(int gameTime) {
         CinderSpec spec = this.spec(this.mechanics.all());
         List<EnemyMob> inRange = spec.reach().matching(this.context.enemies());
-        this.flashes.clear();
         this.caught.clear();
         if (this.streamLeft == 0 && this.clock.isReady() && !inRange.isEmpty()) {
             this.streamStats = this.beginShot();
@@ -195,14 +192,15 @@ public final class CinderTower extends AbstractTower {
 
     /**
      * One tick of the stream: Flame into every enemy in the cone, this Scorcher's share of Singe with it once it has the
-     * Singe, more Flame in each band that holds it, then a hot burn's Flashover onto the enemies beside it.
+     * Singe, more Flame in each band that holds it, and on each whole second of the stream a hot burn's Heatstroke.
      */
     private void pour(CinderSpec spec) {
         double heading = this.turretAim.currentRadians();
         double halfWidth = this.halfWidthRadians();
         float perTick = this.streamStats.damage() / TickRate.TICKS_PER_SECOND;
-        float hot = DamageUnits.ofPoints(FlashoverMechanic.HOT_FUEL_POINTS);
-        List<EnemyMob> hotOnes = new ArrayList<>();
+        float hot = DamageUnits.ofPoints(HeatstrokeMechanic.HOT_FUEL_POINTS);
+        int elapsed = Math.round(this.streamStats.value(TowerStat.STREAM)) - this.streamLeft;
+        boolean checksHeat = spec.heatstroke() && elapsed % Math.round(TickRate.TICKS_PER_SECOND) == 0;
         for (EnemyMob enemy : new InWedgeTargetQuery(this.centerX, this.centerY, heading, halfWidth)
                 .and(InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal()))
                 .matching(this.context.enemies())) {
@@ -213,29 +211,25 @@ public final class CinderTower extends AbstractTower {
             if (spec.singe()) {
                 this.applyEffect(enemy, sink -> Effect.singed(SingeMechanic.LINGER_TICKS, sink));
             }
-            if (spec.flashover() && fuelOf(enemy, spec.fire()) >= hot) {
-                hotOnes.add(enemy);
-            }
-        }
-        float radius = FlashoverMechanic.REACH_CELLS * this.cellPixels();
-        for (EnemyMob source : hotOnes) {
-            for (EnemyMob beside : InRangeTargetQuery.around(source, radius).matching(this.context.enemies())) {
-                this.feed(beside, perTick * FlashoverMechanic.SHARE, spec);
-                this.flashes.add(new Flash(source.position(), beside.position()));
+            if (checksHeat && fuelOf(enemy, spec.fire()) >= hot) {
+                this.applyEffect(enemy, sink -> Effect.dazed(HeatstrokeMechanic.DAZE_TICKS, sink));
             }
         }
     }
 
     /** {@code fuel} damage units into {@code enemy}'s pool, as Thermal Shock and Meltdown make it; what it poured. */
     private float feed(EnemyMob enemy, float fuel, CinderSpec spec) {
-        boolean held = enemy.hasEffect(EffectKind.CHILL) || enemy.hasEffect(EffectKind.FREEZE)
-                || enemy.hasEffect(EffectKind.DAZED);
+        boolean held = enemy.hasEffect(EffectKind.CHILL) || enemy.hasEffect(EffectKind.FREEZE);
         float amount = fuel * (held ? spec.thermalShock() : 1f) * (1f + spec.meltdown() * enemy.armorAndPlating());
         Damage poured = Damage.magic(Math.round(amount));
         if (poured.amount() <= 0) {
             return 0f;
         }
-        this.applyEffect(enemy, sink -> spec.soulfire() ? Effect.soulfire(poured, sink) : Effect.burn(poured, sink));
+        if (spec.soulfire()) {
+            this.applyEffect(enemy, sink -> Effect.soulfire(poured, sink), this.stats().attack().asPeriodic().asShadow());
+        } else {
+            this.applyEffect(enemy, sink -> Effect.burn(poured, sink));
+        }
         return poured.amount();
     }
 
@@ -254,7 +248,6 @@ public final class CinderTower extends AbstractTower {
         this.clock = new FireClock(RELOAD_PERIOD_TICKS - 1);
         this.streamLeft = 0;
         this.target = Optional.empty();
-        this.flashes.clear();
         this.caught.clear();
     }
 
@@ -314,11 +307,6 @@ public final class CinderTower extends AbstractTower {
     public StreamLook streamLook() {
         CinderSpec spec = this.spec(this.mechanics.all());
         return new StreamLook(spec.soulfire(), spec.dragonsBreath(), spec.core(), spec.middle());
-    }
-
-    /** This tick's Flashovers, each from a hot enemy to one beside it. */
-    public List<Flash> flashes() {
-        return List.copyOf(this.flashes);
     }
 
     @Override

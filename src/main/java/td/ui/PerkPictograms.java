@@ -152,8 +152,9 @@ final class PerkPictograms {
             Map.entry("cinder.dragons_breath", "=tower.dragons_breath"),
             // Blue Flame
             Map.entry("cinder.blue_flame", "=tower.flame"),
-            // Flashover
-            Map.entry("cinder.flashover", "=tower.flashover"),
+            // Heatstroke
+            Map.entry("cinder.heatstroke", "=tower.heatstroke"),
+            Map.entry("cinder.long_stream_2", "=cinder.long_stream"),
             // Meltdown
             Map.entry("cinder.meltdown", "=tower.meltdown"),
             // Thermal Shock
@@ -161,7 +162,6 @@ final class PerkPictograms {
             // Hot Flame II
             Map.entry("cinder.hot_flame_2", "=tower.flame"),
             // Long Stream II
-            Map.entry("cinder.long_stream_2", "=cinder.long_stream"),
             // Hum
             Map.entry("pulse.hum", "F@-40 M7 3.4H17V9.4H7Z M10.9 9.4H13.1V18H10.9Z ; F M4 19.4H14V22H4Z"),
             // Sundial

@@ -15,7 +15,6 @@ import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
 import td.tower.aura.RevealedEnemy;
 import td.tower.cinder.Caught;
-import td.tower.cinder.Flash;
 import td.tower.cinder.StreamLook;
 import td.tower.mortar.BlastMark;
 import td.tower.pulse.StoneLook;
@@ -66,7 +65,6 @@ import td.ui.render.SpellOrbDraw;
 import td.ui.render.SpellOrbLook;
 import td.ui.render.SplashDraw;
 import td.ui.render.SteamDraw;
-import td.ui.render.StreamDraw;
 import td.ui.render.ThunderboltDraw;
 import td.ui.render.TowerCue;
 import td.ui.render.TowerEffectDraw;
@@ -181,8 +179,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float STREAM_MIDDLE_REACH = 0.78f;
     private static final float STREAM_MIDDLE_WIDTH = 0.66f;
     private static final int STREAM_CORE_TIPS = 5;
-    /** How wide a Flashover's tongue spreads either side, in radians. */
-    private static final float FLASHOVER_HALF_WIDTH = 0.22f;
     /** A Ward's rune circle runs just inside its field's outline. */
     private static final float WARD_INSET_CELLS = 0.07f;
     /** The knell's ring runs out to the field's edge in this long. */
@@ -924,17 +920,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
     }
 
-    /** A Flashover: a small tongue of the stream's fire from {@code fromX, fromY} reaching {@code toX, toY}. */
-    static StreamDraw flashover(boolean soulfire, float fromX, float fromY, float toX, float toY, int flicker) {
-        float length = (float) Math.hypot(toX - fromX, toY - fromY);
-        Palette outer = soulfire ? Palette.TOWER_SOULFIRE_OUTER : Palette.TOWER_STREAM_OUTER;
-        Palette middle = soulfire ? Palette.TOWER_SOULFIRE_MIDDLE : Palette.TOWER_STREAM_MIDDLE;
-        return new StreamDraw(fromX, fromY, (float) Math.atan2(toY - fromY, toX - fromX), List.of(
-                new StreamDraw.Tongue(outer, STREAM_OUTER_ALPHA, length, FLASHOVER_HALF_WIDTH, STREAM_CORE_TIPS),
-                new StreamDraw.Tongue(middle, STREAM_MIDDLE_ALPHA, length * STREAM_MIDDLE_REACH,
-                        FLASHOVER_HALF_WIDTH * STREAM_MIDDLE_WIDTH, STREAM_CORE_TIPS)), flicker);
-    }
-
     /** How hot fuel of {@code fuelPerSecond} points looks: 0 the bare flame's, 1 as hot as the flame is drawn. */
     static float heatOf(float fuelPerSecond) {
         return (float) Math.max(0, (fuelPerSecond - CinderTower.FLAME_POINTS)
@@ -943,7 +928,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     /**
      * While it streams, its cone from the nozzle to its range, which the frame's flame paints with every other, and each
-     * enemy it fed. Each Flashover is a small tongue from the hot enemy to the one beside it.
+     * enemy it fed.
      */
     public Void visitCinderTower(CinderTower tower) {
         if (!tower.isStreaming()) {
@@ -966,10 +951,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         for (Caught fed : tower.caught()) {
             this.burning.merge(fed.enemy(), new Burning(new Cone(fed.fuelPerSecond(), muzzle, look.soulfire()),
                     fed.inCore(), 1), Burning::with);
-        }
-        for (Flash flash : tower.flashes()) {
-            this.draws.add(flashover(look.soulfire(), (float) flash.from().x(), (float) flash.from().y(),
-                    (float) flash.to().x(), (float) flash.to().y(), flicker));
         }
         return null;
     }

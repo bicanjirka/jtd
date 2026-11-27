@@ -18,7 +18,6 @@ public final class ThermalShockMechanic implements CinderMechanic {
     @Override
     public TermText describe() {
         return TermText.of("it pours " + TermNumbers.percent(MORE) + " more ").plus(TowerTerm.FLAME)
-                .plus(" into an enemy with ").plus(EffectKind.CHILL).plus(", ").plus(EffectKind.FREEZE).plus(" or ")
-                .plus(EffectKind.DAZED);
+                .plus(" into an enemy with ").plus(EffectKind.CHILL).plus(" or ").plus(EffectKind.FREEZE);
     }
 }

@@ -9,4 +9,4 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   Singe, never in state the tower keeps about it; the tower remembers nothing about whom a stream has touched.
 - A stream runs its length once started, into the air if its target leaves; the reload is paid on the fire clock
   after it, so attack speed shortens the reload alone. A tower's stats for a stream are taken once, as it starts.
-- Soulfire pours its own pool in place of the burn; Flashover reads an enemy's burning pools together.
+- Soulfire pours its own pool in place of the burn; Heatstroke reads an enemy's burning pool.

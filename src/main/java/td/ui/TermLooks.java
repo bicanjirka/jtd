@@ -103,7 +103,7 @@ public final class TermLooks {
             case LIGHT, SPOTLIGHT, DAYLIGHT, PRISM -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_MECHANIC);
             case NEST -> new TermLook(Palette.TOWER_SEEKER_BODY, Palette.TERM_FRAME_TOWER_BUFF);
             case JAMMED -> new TermLook(Palette.DISRUPTION, Palette.TERM_FRAME_TOWER_DEBUFF);
-            case FLAME, STREAM, CORE, DRAGONS_BREATH, FLASHOVER, THERMAL_SHOCK, MELTDOWN ->
+            case FLAME, STREAM, CORE, DRAGONS_BREATH, HEATSTROKE, THERMAL_SHOCK, MELTDOWN ->
                     new TermLook(Palette.TOWER_STREAM_MIDDLE, Palette.TERM_FRAME_MECHANIC);
             case SUNDIAL, FRAILTY, SHADOW -> new TermLook(Palette.TOWER_PULSE_BODY, Palette.TERM_FRAME_MECHANIC);
             case KINSHIP, MENTOR, BREAKTHROUGH -> new TermLook(Palette.TERM_AURA, Palette.TERM_FRAME_MECHANIC);

@@ -14,12 +14,12 @@ import td.tower.targeting.Viewpoint;
  * @param middle        the band its middle pours more in, if it has one
  * @param singe         whether its stream Singes what it touches
  * @param dragonsBreath whether its stream is Dragon's Breath, for the look
- * @param flashover     whether a hot burn in the stream spreads to the enemies beside it
+ * @param heatstroke     whether a hot burn in the stream dazes its enemy
  * @param meltdown      what each point of an enemy's armor and plating adds to the fuel it takes, 0 for nothing
  * @param thermalShock  how much more it pours into a held enemy, 1 for no more
  */
 public record CinderSpec(Reach reach, EffectKind fire, FlameBand core, FlameBand middle, boolean singe,
-                         boolean dragonsBreath, boolean flashover, float meltdown, float thermalShock) {
+                         boolean dragonsBreath, boolean heatstroke, float meltdown, float thermalShock) {
 
     /** The nearest visible enemy in range, a plain burn, no bands and no Singe. */
     public static CinderSpec from(Viewpoint view) {
@@ -29,42 +29,42 @@ public record CinderSpec(Reach reach, EffectKind fire, FlameBand core, FlameBand
 
     public CinderSpec withFire(EffectKind fire) {
         return new CinderSpec(this.reach, fire, this.core, this.middle, this.singe, this.dragonsBreath,
-                this.flashover, this.meltdown, this.thermalShock);
+                this.heatstroke, this.meltdown, this.thermalShock);
     }
 
     public CinderSpec withCore(FlameBand core) {
         return new CinderSpec(this.reach, this.fire, core, this.middle, this.singe, this.dragonsBreath,
-                this.flashover, this.meltdown, this.thermalShock);
+                this.heatstroke, this.meltdown, this.thermalShock);
     }
 
     public CinderSpec withSinge() {
         return new CinderSpec(this.reach, this.fire, this.core, this.middle, true, this.dragonsBreath,
-                this.flashover, this.meltdown, this.thermalShock);
+                this.heatstroke, this.meltdown, this.thermalShock);
     }
 
     public CinderSpec withMiddle(FlameBand middle) {
         return new CinderSpec(this.reach, this.fire, this.core, middle, this.singe, this.dragonsBreath,
-                this.flashover, this.meltdown, this.thermalShock);
+                this.heatstroke, this.meltdown, this.thermalShock);
     }
 
     public CinderSpec withDragonsBreath() {
-        return new CinderSpec(this.reach, this.fire, this.core, this.middle, this.singe, true, this.flashover,
+        return new CinderSpec(this.reach, this.fire, this.core, this.middle, this.singe, true, this.heatstroke,
                 this.meltdown, this.thermalShock);
     }
 
-    public CinderSpec withFlashover() {
+    public CinderSpec withHeatstroke() {
         return new CinderSpec(this.reach, this.fire, this.core, this.middle, this.singe, this.dragonsBreath, true,
                 this.meltdown, this.thermalShock);
     }
 
     public CinderSpec withMeltdown(float perPoint) {
         return new CinderSpec(this.reach, this.fire, this.core, this.middle, this.singe, this.dragonsBreath,
-                this.flashover, perPoint, this.thermalShock);
+                this.heatstroke, perPoint, this.thermalShock);
     }
 
     public CinderSpec withThermalShock(float factor) {
         return new CinderSpec(this.reach, this.fire, this.core, this.middle, this.singe, this.dragonsBreath,
-                this.flashover, this.meltdown, factor);
+                this.heatstroke, this.meltdown, factor);
     }
 
     /**

@@ -12,7 +12,7 @@ import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
-import td.tower.cinder.FlashoverMechanic;
+import td.tower.cinder.HeatstrokeMechanic;
 import td.util.GameWorld;
 import td.util.TickRate;
 
@@ -250,31 +250,27 @@ class CinderTowerTest {
     }
 
     @Test
-    void flashoverPoursPartOfTheFlameIntoTheEnemiesBesideAHotBurn() {
-        CinderTower tower = this.tower("Flashover");
+    void heatstrokeDazesAnEnemyWhoseBurnIsHotOnTheStreamsFirstTick() {
+        CinderTower tower = this.tower("Heatstroke");
         FakeEnemyMob hot = FakeEnemyMob.at(150, 112);
-        hot.applyEffect(Effect.burn(Damage.magic(DamageUnits.ofPoints(2 * FlashoverMechanic.HOT_FUEL_POINTS)),
+        hot.applyEffect(Effect.burn(Damage.magic(DamageUnits.ofPoints(2 * HeatstrokeMechanic.HOT_FUEL_POINTS)),
                 DamageSink.none()));
-        FakeEnemyMob beside = FakeEnemyMob.at(150, 150);
-        this.enemies(hot, beside);
+        this.enemies(hot);
 
         tower.doTick(1);
 
-        assertThat(fuelPoured(beside, EffectKind.BURN))
-                .isCloseTo(perTick(tower) * FlashoverMechanic.SHARE, within(1f));
-        assertThat(tower.flashes()).hasSize(1);
+        assertThat(hot.hasEffect(EffectKind.DAZED)).isTrue();
     }
 
     @Test
-    void aCoolBurnDoesNotFlashOver() {
-        CinderTower tower = this.tower("Flashover");
+    void aCoolBurnIsNotDazed() {
+        CinderTower tower = this.tower("Heatstroke");
         FakeEnemyMob cool = FakeEnemyMob.at(150, 112);
-        FakeEnemyMob beside = FakeEnemyMob.at(150, 150);
-        this.enemies(cool, beside);
+        this.enemies(cool);
 
         tower.doTick(1);
 
-        assertThat(beside.appliedEffects()).isEmpty();
+        assertThat(cool.hasEffect(EffectKind.DAZED)).isFalse();
     }
 
     @Test

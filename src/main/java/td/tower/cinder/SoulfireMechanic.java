@@ -3,10 +3,11 @@ package td.tower.cinder;
 import td.effect.EffectKind;
 import td.term.Term;
 import td.term.TermText;
+import td.tower.TowerTerm;
 
 import java.util.Set;
 
-/** Soulfire: all its fire is Soulfire, which burns what is immune to Burn. */
+/** Soulfire: all its fire is Soulfire, which burns what is immune to Burn and deals Shadow damage. */
 public final class SoulfireMechanic implements CinderMechanic {
 
     @Override
@@ -21,6 +22,7 @@ public final class SoulfireMechanic implements CinderMechanic {
 
     @Override
     public TermText describe() {
-        return TermText.of("all its fire is ").plus(EffectKind.SOULFIRE).plus(" in place of ").plus(EffectKind.BURN);
+        return TermText.of("all its fire is ").plus(EffectKind.SOULFIRE).plus(" in place of ").plus(EffectKind.BURN)
+                .plus(", and it deals ").plus(TowerTerm.SHADOW).plus(" damage");
     }
 }

@@ -163,7 +163,7 @@ public final class DevEffects {
             case JAMMED -> new Builds<>(List.of(SECONDS, ATTACK_SPEED_LOST, RANGE_LOST), in -> new TowerGrant.Jam(in.ticks(0),
                     new DisruptionAura(JAM_REACH_CELLS * in.scale(), in.value(1) / 100f, in.value(2))));
             case STEADY_AIM, NEST -> new Refuses<>(KEPT_BY_THE_TOWER);
-            case FLAME, STREAM, CORE, DRAGONS_BREATH, FLASHOVER, THERMAL_SHOCK, MELTDOWN,
+            case FLAME, STREAM, CORE, DRAGONS_BREATH, HEATSTROKE, THERMAL_SHOCK, MELTDOWN,
                  HEAVY_SHELL, NUKE_SHELL, PAYLOAD, NAPALM_SHELL, TAR_SHELL, CRYO_SHELL, FLARE, BARRAGE, CARPET_BOMBING,
                  FROST_MISSILE, RUBY, SHADE, VOLLEY, HATCHING, ICE_WAKE,
                  SHATTER, ARC, HEX, STATIC, SOULBRAND, SPARK, SOUL, SHOCKWAVE,
