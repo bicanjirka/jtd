@@ -115,7 +115,7 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeNode PACKED_CHARGE = UpgradeNode.of("mortar.packed_charge", "Packed Charge", 5)
             .withModifiers(TowerModifiers.normalDamage(8f));
     private static final UpgradeNode WIDE_CRATER = UpgradeNode.of("mortar.wide_crater", "Wide Crater", 5)
-            .withModifiers(TowerModifiers.heavyBlast(1.2f));
+            .withModifiers(TowerModifiers.heavyBlast(0.6f));
     private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 5)
             .withModifiers(TowerModifiers.heavyDamage(14f));
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 5)
@@ -132,9 +132,6 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 10)
             .inTier(1);
     private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 5)
-            .inTier(1);
-    private static final UpgradeNode HEAVY_POWDER = UpgradeNode.of("mortar.heavy_powder", "Heavy Powder", 10)
-            .withModifiers(TowerModifiers.damage(8f))
             .inTier(1);
     private static final UpgradeCondition A_PAYLOAD = UpgradeCondition.owns(NAPALM.id())
             .or(UpgradeCondition.owns(TAR_SHELL.id())).or(UpgradeCondition.owns(CRYO.id()));
@@ -172,7 +169,7 @@ public final class MortarTower extends AbstractTower {
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(BIG_BORE, PREDICTIVE_FIRE,
                     PACKED_CHARGE, WIDE_CRATER))
-            .with(CONCUSSION, SHRAPNEL, NAPALM, TAR_SHELL, CRYO, FLARE, HEAVY_POWDER,
+            .with(CONCUSSION, SHRAPNEL, NAPALM, TAR_SHELL, CRYO, FLARE,
                     BARRAGE, CARPET_BOMBING, QUICK_LOAD, OVERCHARGE, HARD_CASINGS, HEAVY_RACK, COATED_SHELLS,
                     FUSION, RICH_MIX, LASTING_MIX, DEEP_CRACK)
             .withCluster(UpgradeCluster.of("Shell charge", PACKED_CHARGE, WIDE_CRATER))

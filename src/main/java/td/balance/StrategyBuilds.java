@@ -22,16 +22,16 @@ final class StrategyBuilds {
 
     private static final Map<TowerFactory.Type, List<Strategy>> STRATEGIES = new EnumMap<>(Map.of(
             TowerFactory.Type.SPLASH, List.of(
-                    new Strategy("doom", Set.of("base.range", "splash.hexer", "splash.hex_of_doom", "splash.reckoning", "splash.contagion", "splash.twin_hex", "base.range.2", "splash.soul_harvest", "splash.wide_blast", "splash.hard_stones")),
-                    new Strategy("blight", Set.of("base.range", "splash.hexer", "splash.hex_of_blight", "splash.blight_cloud", "splash.choking_hexes", "splash.twin_hex", "base.range.2", "splash.soul_harvest", "splash.wide_blast", "splash.hard_stones")),
+                    new Strategy("doom", Set.of("base.range", "splash.hexer", "splash.hex_of_doom", "splash.reckoning", "splash.contagion", "splash.twin_hex", "base.range.2", "splash.soul_harvest", "splash.hard_stones")),
+                    new Strategy("blight", Set.of("base.range", "splash.hexer", "splash.hex_of_blight", "splash.blight_cloud", "splash.choking_hexes", "splash.twin_hex", "base.range.2", "splash.soul_harvest", "splash.hard_stones")),
                     new Strategy("shockwave", Set.of("base.range", "splash.stormcaller",
                             "splash.arc", "splash.chain_lightning", "base.range.2",
                             "splash.shockwave", "splash.high_voltage",
-                            "splash.wide_blast", "splash.hard_stones")),
+                            "splash.hard_stones")),
                     new Strategy("thunderstrike", Set.of("base.range", "splash.stormcaller",
                             "splash.arc", "splash.chain_lightning", "base.range.2",
                             "splash.thunderstrike", "splash.high_voltage",
-                            "splash.wide_blast", "splash.hard_stones"))),
+                            "splash.hard_stones"))),
             TowerFactory.Type.SNIPER, List.of(
                     new Strategy("crit", Set.of("sniper.steady_aim", "sniper.rifling",
                             "sniper.fourth_shot", "sniper.keen_eye", "sniper.deadeye", "sniper.hollow_point",
@@ -47,8 +47,8 @@ final class StrategyBuilds {
 
     /** Long (reach, one enemy in the Core) or Wide (a cone, many in the Core), each with Soulfire or Dragon's Breath. */
     private static List<Strategy> scorcher() {
-        Set<String> reachBuild = Set.of("base.range", "cinder.hot_flame", "cinder.long_stream", "cinder.core", "base.range.2");
-        Set<String> wideBuild = Set.of("cinder.wide_nozzle", "cinder.hot_flame", "cinder.long_stream", "cinder.core", "base.range.2");
+        Set<String> reachBuild = Set.of("base.range", "cinder.hot_flame", "cinder.long_stream", "cinder.core");
+        Set<String> wideBuild = Set.of("cinder.wide_nozzle", "cinder.hot_flame", "cinder.long_stream", "cinder.core");
         return List.of(new Strategy("long soulfire", with(reachBuild, "cinder.soulfire")),
                 new Strategy("long dragon", with(reachBuild, "cinder.dragons_breath")),
                 new Strategy("wide soulfire", with(wideBuild, "cinder.soulfire")),
@@ -77,7 +77,6 @@ final class StrategyBuilds {
 
     private static final String PREDICTIVE = "mortar.predictive_fire";
     private static final String WIDE_CRATER = "mortar.wide_crater";
-    private static final String HEAVY_POWDER = "mortar.heavy_powder";
     private static final String CONCUSSION = "mortar.concussion";
     private static final String SHRAPNEL = "mortar.shrapnel";
     private static final String OVERCHARGE = "mortar.overcharge";
@@ -88,19 +87,19 @@ final class StrategyBuilds {
      * or Overcharge.
      */
     private static List<Strategy> mortar() {
-        Set<String> nuke = Set.of(WIDE_CRATER, "mortar.big_bore", HEAVY_POWDER, CONCUSSION, OVERCHARGE, "mortar.heavy_rack",
+        Set<String> nuke = Set.of(WIDE_CRATER, "mortar.big_bore", CONCUSSION, OVERCHARGE, "mortar.heavy_rack",
                 "mortar.barrage", "mortar.fusion", "mortar.deep_crack");
-        Set<String> bores = Set.of(WIDE_CRATER, "mortar.big_bore", HEAVY_POWDER, CONCUSSION, OVERCHARGE,
+        Set<String> bores = Set.of(WIDE_CRATER, "mortar.big_bore", CONCUSSION, OVERCHARGE,
                 "mortar.heavy_rack");
-        Set<String> heavy = Set.of(WIDE_CRATER, "mortar.big_bore", "mortar.heavy_rack", HEAVY_POWDER, CONCUSSION, OVERCHARGE, "mortar.barrage",
+        Set<String> heavy = Set.of(WIDE_CRATER, "mortar.big_bore", "mortar.heavy_rack", CONCUSSION, OVERCHARGE, "mortar.barrage",
                 "mortar.rich_mix", "mortar.deep_crack");
         Set<String> normal = Set.of(PREDICTIVE, "mortar.flare", "mortar.packed_charge", "mortar.hard_casings",
-                "mortar.quick_load", HEAVY_POWDER);
+                "mortar.quick_load");
         List<Strategy> strategies = new ArrayList<>(List.of(new Strategy("nuke", nuke), bled("nuke", nuke),
                 new Strategy("heavy-bores", bores), bled("heavy-bores", bores),
                 new Strategy("heavy", heavy), bled("heavy", heavy), new Strategy("normal", normal)));
         for (String payload : List.of("napalm", "tar_shell", "cryo")) {
-            Set<String> nodes = Set.of("mortar.packed_charge", "mortar.hard_casings", HEAVY_POWDER, CONCUSSION, "mortar." + payload, OVERCHARGE,
+            Set<String> nodes = Set.of("mortar.packed_charge", "mortar.hard_casings", CONCUSSION, "mortar." + payload, OVERCHARGE,
                     "mortar.carpet_bombing", "mortar.coated_shells", "mortar.rich_mix", "mortar.deep_crack",
                     "mortar.lasting_mix");
             strategies.addAll(List.of(new Strategy(payload, nodes), bled(payload, nodes),

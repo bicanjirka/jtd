@@ -45,7 +45,7 @@ import java.util.Set;
 public final class GameSaveText {
 
     /** The version this game writes and reads. */
-    static final int FORMAT = 15;
+    static final int FORMAT = 16;
     private static final int TOWER_FIELDS = 7;
 
     private GameSaveText() {

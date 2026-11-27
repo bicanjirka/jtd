@@ -170,7 +170,7 @@ public final class SplashTower extends AbstractTower {
             .inTier(2);
     private static final UpgradeNode HARD_STONES = UpgradeNode.of("splash.hard_stones", "Hard Stones", 10)
             .withModifiers(TowerModifiers.damage(7f))
-            .inTier(2);
+            .inTier(3);
     private static final UpgradeNode LONG_THROW_2 = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Long Throw II", 10)
             .withModifiers(TowerModifiers.range(1.2f))
             .inTier(2);
@@ -201,23 +201,20 @@ public final class SplashTower extends AbstractTower {
             .after(CONDUCTOR)
             .withOwnArt()
             .inTier(3);
-    private static final UpgradeNode WIDE_BLAST = UpgradeNode.of("splash.wide_blast", "Wide Blast", 10)
-            .withModifiers(TowerModifiers.areaRadius(0.5f).plus(TowerModifiers.blastEdge(1.0f)))
-            .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(LONG_THROW, FLINT_STONES, SHARP_STONES))
             .with(STORMCALLER, HEXER, ARC, HEX_OF_DOOM, HEX_OF_BLIGHT,
                     RECKONING, BLIGHT_CLOUD, CONTAGION, CHAIN_LIGHTNING, WILD_ARC, CONDUCTOR,
                     LONG_THROW_2, HARD_STONES,
                     SOUL_HARVEST, HEX_OF_BACKLASH, CHOKING_HEXES, TWIN_HEX, SHOCKWAVE, THUNDERSTRIKE, HIGH_VOLTAGE,
-                    FEEDBACK, WIDE_BLAST)
+                    FEEDBACK)
             .withCluster(UpgradeCluster.of("Stones", FLINT_STONES, SHARP_STONES))
             .withFork(UpgradeCluster.of("Stormcaller or Hexer", STORMCALLER, HEXER))
             .withCluster(UpgradeCluster.of("Hex", HEX_OF_DOOM, HEX_OF_BLIGHT))
             .withCluster(UpgradeCluster.of("Arc's path", CHAIN_LIGHTNING, WILD_ARC))
             .withCluster(UpgradeCluster.of("Storm", SHOCKWAVE, THUNDERSTRIKE))
             .withTiers(List.of(UpgradeTier.open(),
-                    UpgradeTier.gated(60, 0).withBonus(TowerModifiers.areaRadius(0.6f).plus(TowerModifiers.blastEdge(1.2f))),
+                    UpgradeTier.gated(60, 0).withBonus(TowerModifiers.areaRadius(0.3f).plus(TowerModifiers.blastEdge(0.6f))),
                     UpgradeTier.gated(120, 0).withMechanics(), UpgradeTier.gated(200, 0).withBonus(TowerModifiers.attackSpeed(0.25f))));
 
     private static final MechanicCatalogue<SplashMechanic> MECHANICS = MechanicCatalogue.of(

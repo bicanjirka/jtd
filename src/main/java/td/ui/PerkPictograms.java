@@ -97,7 +97,6 @@ final class PerkPictograms {
             Map.entry("splash.high_voltage", "F M9.2 2.6L3.4 12.6H7.6L6.4 21.4L12.4 10.6H8.2Z ; F M17.6 6L12.4 14.8H16L15 21.6L20.8 12.4H17Z"),
             // Feedback
             Map.entry("splash.feedback", "S M17.4 7.6A7.4 7.4 0 1 0 19.4 13.4 ; F M21.6 3.8L21 9.6L15.6 7.4Z ; F M13.4 7.6L9.6 12.6H12.2L11 17.2L15.2 11.6H12.6Z"),
-            Map.entry("splash.wide_blast", "F O10.4 14.2 6.8 ; S M15 9.6C16 7.6 17.2 6 19 5.2 ; F M20.4 1.8L21.1 3.7L23 4.4L21.1 5.1L20.4 7L19.7 5.1L17.8 4.4L19.7 3.7Z ; K O8 11.8 1.6"),
             // Packed Charge
             Map.entry("mortar.hard_casings", "F M12 2.8C14.8 5 17.4 7.4 17.4 11V21H6.6V11C6.6 7.4 9.2 5 12 2.8Z ; X M9.2 18L12 15.2L14.8 18 M9.2 13.6L12 10.8L14.8 13.6"),
             Map.entry("mortar.packed_charge", "F M6 21.6H18C19.6 21.6 20.4 20.4 20 18.8L17.6 9.6H6.4L4 18.8C3.6 20.4 4.4 21.6 6 21.6Z ; F M8.4 6.6H15.6V9H8.4Z ; F M9.4 6.6L8 2.8L12 4.6L16 2.8L14.6 6.6Z ; X M12 12.6V19 M8.8 15.8H15.2"),
@@ -133,7 +132,6 @@ final class PerkPictograms {
             // Rich Mix
             Map.entry("mortar.rich_mix", "F O7.4 13 3.6 ; S O16.6 13 3.6 ; T M7.4 6.4V8 M16.6 6.4V8"),
             // Heavy Powder
-            Map.entry("mortar.heavy_powder", "F M6.4 21.6H17.6L16.4 9.6H7.6Z ; F M9.4 9.6V6.6H14.6V9.6Z ; X M8.8 14.4H15.2 M8.4 17.6H15.6 ; F O12 4 1.6"),
             // Deep Crack
             Map.entry("mortar.lasting_mix", "F M3.6 20.4H10V12C10 8.6 8.6 6.2 6.8 4.8C5 6.2 3.6 8.6 3.6 12Z ; F M13.6 8.4H20.8L17.2 14.4Z M13.6 20.4H20.8L17.2 14.4Z ; T M12.8 7.6H21.6 M12.8 21.2H21.6"),
             Map.entry("mortar.deep_crack", "F M5 4H19A1.5 1.5 0 0 1 20.5 5.5V18.5A1.5 1.5 0 0 1 19 20H5A1.5 1.5 0 0 1 3.5 18.5V5.5A1.5 1.5 0 0 1 5 4Z ; K O6.6 7.1 1 O17.4 7.1 1 O6.6 16.9 1 O17.4 16.9 1 ; X M9.6 4L8 8.8L10.6 12L8.4 16.4L9.4 20 M15 4L13.4 8.4L16 11.8L13.6 16L14.8 20"),

@@ -95,7 +95,7 @@ public final class SniperTower extends AbstractTower {
 
     private static final HitBonus STEADY_AIM_BONUS = perSteadyAimStack(
             HitAdjustment.attackSpeed(0.05f).plus(HitAdjustment.critChance(0.02f)).plus(HitAdjustment.accuracy(2f))
-                    .plus(HitAdjustment.range(0.2f)));
+                    .plus(HitAdjustment.range(0.1f)));
 
     private static final UpgradeNode STEADY_AIM = UpgradeNode.of("sniper.steady_aim", "Steady Aim", 5)
             .withModifiers(TowerModifiers.aimStacks(5).plus(TowerModifiers.aimStacksPerShot(1)))
@@ -112,7 +112,7 @@ public final class SniperTower extends AbstractTower {
             .after(STEADY_AIM)
             .inTier(1);
     private static final UpgradeNode KEEN_EYE = UpgradeNode.of("sniper.keen_eye", "Keen Eye", 10)
-            .withHitBonus(perSteadyAimStack(HitAdjustment.critChance(0.03f).plus(HitAdjustment.range(0.2f))))
+            .withHitBonus(perSteadyAimStack(HitAdjustment.critChance(0.03f).plus(HitAdjustment.range(0.1f))))
             .after(STEADY_AIM)
             .inTier(1);
     private static final UpgradeNode DEADEYE = UpgradeNode.of("sniper.deadeye", "Deadeye", 10)
@@ -168,7 +168,7 @@ public final class SniperTower extends AbstractTower {
             .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withBonus(TowerModifiers.range(1f)),
                     UpgradeTier.gated(120, 0).withPerk("Sundering Rounds",
                             Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.SUNDERED, 1))),
-                    UpgradeTier.gated(200, 0).withBonus(TowerModifiers.attackSpeed(0.2f))));
+                    UpgradeTier.gated(200, 0).withBonus(TowerModifiers.attackSpeed(0.15f))));
 
     private static final MechanicCatalogue<SniperMechanic> MECHANICS = MechanicCatalogue.of(
             entry(HEMORRHAGE.id(), HemorrhageMechanic::new),
