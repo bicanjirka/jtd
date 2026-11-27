@@ -14,6 +14,7 @@ import td.ui.BoardRenderer;
 import td.ui.FramePaintTimer;
 import td.ui.render.RenderFrame;
 import td.util.GameHost;
+import td.util.GameWorld;
 import td.util.RandomSource;
 import td.util.ThreadConfined;
 import td.util.TickRate;
@@ -31,7 +32,8 @@ import java.util.Set;
  * plays it to the end several times, and reports tick time, frame-build time and allocation per
  * frame, and paints every tenth frame it builds at 1x on the event dispatch thread, as the live board would, to time
  * the paint. A tool run on demand, not a test. The argument {@code zones} fills the board with only the
- * towers that leave ground zones, each with the upgrades that make the most of them; {@code observe=one}
+ * towers that leave ground zones, each with the upgrades that make the most of them; {@code beacons} fills it with
+ * Beacons among the towers they light, each Beacon with every node; {@code observe=one}
  * keeps one enemy observed and {@code observe=all} every enemy, each writing its trace to the log as the
  * dev panel's Observe does. Only unobserved play must keep the budget: an observed run shows what a trace costs.
  * {@code --jfr} records the measured passes with Flight Recorder and prints where the time and allocations go.
@@ -66,6 +68,7 @@ public final class PerformanceHarness {
     private int painted = 0;
     private int measured = 0;
     private final boolean zonesOnly;
+    private final boolean beacons;
     private final Observed observed;
     private final boolean profiled;
     private int peakEnemies = 0;
@@ -73,11 +76,14 @@ public final class PerformanceHarness {
     private int towerCount = 0;
 
     private static final List<TowerFactory.Type> ZONE_TOWERS = List.of(TowerFactory.Type.MORTAR);
+    private static final List<TowerFactory.Type> BEACON_TOWERS = List.of(TowerFactory.Type.AURA, TowerFactory.Type.SNIPER,
+            TowerFactory.Type.SPLASH, TowerFactory.Type.MORTAR);
     // Barrage, Napalm and Flare for the Mortar.
     private static final Set<String> ZONE_UPGRADES = Set.of("mortar.barrage", "mortar.napalm", "mortar.flare");
 
-    private PerformanceHarness(boolean zonesOnly, Observed observed, boolean profiled) {
+    private PerformanceHarness(boolean zonesOnly, boolean beacons, Observed observed, boolean profiled) {
         this.zonesOnly = zonesOnly;
+        this.beacons = beacons;
         this.observed = observed;
         this.profiled = profiled;
     }
@@ -92,7 +98,7 @@ public final class PerformanceHarness {
         }
         LevelDefinition level = new BuiltInLevelCatalog().levels().stream()
                 .max(Comparator.comparingInt(candidate -> BoardSurvey.of(candidate).buildable().size())).orElseThrow();
-        if (!new PerformanceHarness(given.contains("zones"), observed, given.contains("--jfr")).run(level)) {
+        if (!new PerformanceHarness(given.contains("zones"), given.contains("beacons"), observed, given.contains("--jfr")).run(level)) {
             System.exit(1);
         }
     }
@@ -132,10 +138,16 @@ public final class PerformanceHarness {
         FramePaintTimer painter = new FramePaintTimer();
         engine.loadLevel(level);
         engine.debugGrantCredits(GRANTED_CREDITS);
-        this.towerCount = fillBoard(engine, this.zonesOnly ? ZONE_TOWERS : List.of(TowerFactory.Type.values()));
+        this.towerCount = fillBoard(engine, this.zonesOnly ? ZONE_TOWERS
+                : this.beacons ? BEACON_TOWERS : List.of(TowerFactory.Type.values()));
         if (this.zonesOnly) {
             engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
             engine.getTowers().forEach(PerformanceHarness::buyZoneUpgrades);
+        }
+        if (this.beacons) {
+            engine.getGameWorld().playtestRules().setUpgradeGatesIgnored(true);
+            engine.getTowers().stream().filter(tower -> tower.getType() == TowerFactory.Type.AURA)
+                    .forEach(tower -> buyEverything(tower, engine.getGameWorld()));
         }
 
         Tower inspected = engine.getTowers().getFirst();
@@ -202,6 +214,13 @@ public final class PerformanceHarness {
     /** The first enemy still alive, which a click would select. */
     private static Optional<EnemyMob> firstAlive(GameEngine engine) {
         return Arrays.stream(engine.getGameWorld().enemies().getEnemies()).filter(EnemyMob::validTarget).findFirst();
+    }
+
+    private static void buyEverything(Tower tower, GameWorld world) {
+        List<UpgradeNode> offered = tower.offeredUpgrades(world);
+        while (!offered.isEmpty() && tower.buyUpgrade(offered.getFirst())) {
+            offered = tower.offeredUpgrades(world);
+        }
     }
 
     private static void buyZoneUpgrades(Tower tower) {

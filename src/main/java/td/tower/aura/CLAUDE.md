@@ -16,6 +16,10 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
 - Prism's stacked marks land on top of what the enemy carries, up to the mark's own cap, as it enters each light, and
   again while it stays once the mark has worn off it; never every tick. Its timed marks are its own share, refreshed
   every tick the enemy stays.
+- The light's picture is read from what the tick published (`stirredAt`, `enemiesInLight`, `prismArcs`), never from a
+  scan in the frame build. The edge shows for a moment when the light stirs (built, what it lights or what its nodes make
+  it do changed), never on a wave's start; an enemy in several lights is lit once, and a crowded frame lights each with
+  its pool and rim alone.
 - Daylight reaches the enemies only through `GameWorld.daylight()`: the Beacon adds its circle in the towers phase,
   and an enemy reads it on its next tick.
 - Breakthrough's and Head Start's XP do not come from `ExperienceAwarder`: the Beacon pays Breakthrough's on the tick a Lit

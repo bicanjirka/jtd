@@ -20,6 +20,8 @@ public enum Palette {
     TOWER_AURA_REVEAL_RAY,
     TOWER_AURA_SPOTLIGHT,
     TOWER_AURA_LIT_MARK,
+    TOWER_AURA_LIGHT,
+    TOWER_AURA_LIGHT_HIGH,
     /** Perk icon frames, one role per upgrade tier from the bottom. */
     TOWER_UPGRADE_TIER_0,
     TOWER_UPGRADE_TIER_1,

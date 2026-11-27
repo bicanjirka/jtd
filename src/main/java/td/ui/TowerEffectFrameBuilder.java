@@ -13,6 +13,8 @@ import td.tower.SplashTower;
 import td.tower.Tower;
 import td.tower.TowerTerm;
 import td.tower.TowerVisitor;
+import td.tower.aura.PrismArc;
+import td.tower.aura.PrismMark;
 import td.tower.aura.RevealedEnemy;
 import td.tower.cinder.Caught;
 import td.tower.cinder.StreamLook;
@@ -48,6 +50,9 @@ import td.ui.render.FlockLook;
 import td.ui.render.FootDustDraw;
 import td.ui.render.IceWakeDraw;
 import td.ui.render.LaserDraw;
+import td.ui.render.LightArc;
+import td.ui.render.LightEdgeDraw;
+import td.ui.render.LitEnemyDraw;
 import td.ui.render.LoadedMissile;
 import td.ui.render.MuzzleBlastDraw;
 import td.ui.render.NestDraw;
@@ -81,12 +86,15 @@ import td.wave.Vec2;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.DoubleFunction;
 
 /**
@@ -101,6 +109,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int REVEAL_RAY_TICKS = MomentLength.LONG.ticks();
     private static final float REVEAL_RAY_WIDTH_CELLS = 0.04f;
     private static final float SPOTLIGHT_WIDTH_CELLS = 0.3f;
+    /** How long the light's edge shows when it stirs, and how far inside it an enemy is fully lit, in cells. */
+    private static final float LIGHT_STIR_TICKS = Math.round(1.5f * TickRate.TICKS_PER_SECOND);
+    private static final float LIT_ENEMY_EDGE_CELLS = 0.3f;
+    private static final float LIT_ENEMY_PHASE = 1.3f;
+    /** Past this many lit enemies in a frame, each is drawn with its pool and rim alone. */
+    private static final int LIT_ENEMY_DETAIL_LIMIT = 24;
 
     private static final float STATUS_MARKER_SCALE_FRACTION = 0.12f;
     private static final float REFUND_MARK_SCALE_FRACTION = 0.3f;
@@ -198,6 +212,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private final GameWorld world;
     private final List<TowerEffectDraw> draws = new ArrayList<>();
     private final List<ZoneDraw> wards = new ArrayList<>();
+    /** The enemies a light has lit this frame, so overlapping lights light one once; membership only. */
+    private final Set<EnemyMob> litDrawn = Collections.newSetFromMap(new IdentityHashMap<>());
     private final List<FlameDraw.Stream> streams = new ArrayList<>();
     private final Map<EnemyMob, Burning> burning = new LinkedHashMap<>();
     private final int scale;
@@ -677,6 +693,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
         tower.heldEnemy().ifPresent(enemy -> this.draws.add(BeamDraw.solid(Palette.TOWER_AURA_SPOTLIGHT, lanternX,
                 lanternY, (float) enemy.getX(), (float) enemy.getY(), this.scale * SPOTLIGHT_WIDTH_CELLS)));
+        this.lightEdge(tower);
+        this.litEnemies(tower);
         if (tower.isSelected()) {
             for (Tower lit : tower.litTowers()) {
                 this.draws.add(new TowerStatusDraw(Palette.TOWER_AURA_LIT_MARK, lit.getBoardX() + this.scale * 0.15f,
@@ -684,6 +702,56 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             }
         }
         return null;
+    }
+
+    /** The edge of the light, for a moment each time it stirs: the Beacon is built, or what it lights changes. */
+    private void lightEdge(AuraTower tower) {
+        OptionalInt stirred = tower.stirredAt();
+        if (stirred.isEmpty()) {
+            return;
+        }
+        float progress = (this.gameTime - stirred.getAsInt() + (float) this.interpolationAlpha) / LIGHT_STIR_TICKS;
+        if (progress < 0f || progress >= 1f) {
+            return;
+        }
+        List<LightArc> arcs = tower.prismArcs().stream()
+                .map(arc -> new LightArc(arc.angleRadians(), markPalette(arc.mark()))).toList();
+        this.draws.add(new LightEdgeDraw(tower.getX(), tower.getY(), tower.getRangeReal(), progress, arcs));
+    }
+
+    /** Every enemy standing in the light, lit from the top left; with Prism the light splits into its marks. */
+    private void litEnemies(AuraTower tower) {
+        List<EnemyMob> inside = tower.enemiesInLight();
+        if (inside.isEmpty()) {
+            return;
+        }
+        List<Palette> fringe = tower.prismArcs().stream().map(PrismArc::mark).distinct()
+                .sorted(Comparator.naturalOrder()).map(TowerEffectFrameBuilder::markPalette).toList();
+        float edge = LIT_ENEMY_EDGE_CELLS * this.scale;
+        int index = 0;
+        for (EnemyMob enemy : inside) {
+            double dx = enemy.getX() - tower.getX();
+            double dy = enemy.getY() - tower.getY();
+            float depth = (tower.getRangeReal() - (float) Math.sqrt(dx * dx + dy * dy)) / edge;
+            float light = Math.clamp(depth, 0f, 1f);
+            if (light > 0f && !enemy.isDead() && !enemy.isHidden() && this.litDrawn.add(enemy)) {
+                this.draws.add(new LitEnemyDraw((float) enemy.getX(), (float) enemy.getY(), this.scale,
+                        light * light * (3f - 2f * light), (float) this.animationSeconds, index * LIT_ENEMY_PHASE, fringe,
+                        this.litDrawn.size() > LIT_ENEMY_DETAIL_LIMIT));
+            }
+            index++;
+        }
+    }
+
+    private static Palette markPalette(PrismMark mark) {
+        return switch (mark) {
+            case SUNDER -> Palette.STATUS_MARKER_SUNDERED;
+            case CRACK -> Palette.STATUS_MARKER_CRACKED;
+            case UNRAVEL -> Palette.STATUS_MARKER_UNRAVELED;
+            case SINGE -> Palette.STATUS_MARKER_SINGED;
+            case VULNERABLE -> Palette.STATUS_MARKER_VULNERABLE;
+            case TOLL -> Palette.STATUS_MARKER_TOLL;
+        };
     }
 
     /** Each blast that just went off, the strongest nuke's flash over the board; the shell is a projectile. */

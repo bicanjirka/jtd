@@ -34,6 +34,8 @@ import td.ui.render.FootDustDraw;
 import td.ui.render.HexRuneDraw;
 import td.ui.render.IceWakeDraw;
 import td.ui.render.LaserDraw;
+import td.ui.render.LightEdgeDraw;
+import td.ui.render.LitEnemyDraw;
 import td.ui.render.MissMarkDraw;
 import td.ui.render.MissileDraw;
 import td.ui.render.MuzzleBlastDraw;
@@ -372,6 +374,8 @@ public final class Java2DFrameRenderer {
             case TOWER_AURA_REVEAL_RAY -> new Color(255, 250, 225, 200);
             case TOWER_AURA_SPOTLIGHT -> new Color(255, 236, 170, 60);
             case TOWER_AURA_LIT_MARK -> TowerLooks.color(TowerLook.AURA);
+            case TOWER_AURA_LIGHT -> new Color(255, 205, 120);
+            case TOWER_AURA_LIGHT_HIGH -> new Color(255, 238, 195);
             case TOWER_UPGRADE_TIER_3 -> new Color(127, 212, 255);
             case TOWER_UPGRADE_TIER_0 -> new Color(225, 225, 230);
             case TOWER_UPGRADE_TIER_1 -> new Color(255, 200, 60);
@@ -1316,6 +1320,8 @@ public final class Java2DFrameRenderer {
     private void paintTowerEffect(Graphics2D g2, TowerEffectDraw effect) {
         switch (effect) {
             case BeamDraw beam -> this.paintBeam(g2, beam);
+            case LightEdgeDraw edge -> BeaconLightArt.edge(g2, edge);
+            case LitEnemyDraw lit -> BeaconLightArt.litEnemy(g2, lit);
             case TracerDraw tracer -> this.paintTracer(g2, tracer);
             case CannonballDraw stone -> this.paintShell(g2, stone);
             case SplashDraw splash ->

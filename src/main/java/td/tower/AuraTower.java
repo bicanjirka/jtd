@@ -19,6 +19,7 @@ import td.tower.aura.LanternMechanic;
 import td.tower.aura.LastLightMechanic;
 import td.tower.aura.LightSpec;
 import td.tower.aura.MentorMechanic;
+import td.tower.aura.PrismArc;
 import td.tower.aura.PrismMark;
 import td.tower.aura.PrismMechanic;
 import td.tower.aura.RevealedEnemy;
@@ -45,6 +46,7 @@ import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
 import static td.tower.upgrade.MechanicCatalogue.entry;
@@ -195,6 +197,14 @@ public final class AuraTower extends AbstractTower {
     private volatile Optional<EnemyMob> held = Optional.empty();
     /** The hidden enemies the light revealed in the last moment, for the reveal ray; published whole. */
     private volatile List<RevealedEnemy> reveals = List.of();
+    /** The enemies in the light at the last tick, for the frame build to light; published whole. */
+    private volatile List<EnemyMob> inLight = List.of();
+    /** The tick the light last stirred: it was built, or the towers it lights or what its nodes make it do changed. */
+    private volatile OptionalInt stirredAt = OptionalInt.empty();
+    /** What Prism carries toward each Lit tower at the last tick, for the frame build; published whole. */
+    private volatile List<PrismArc> arcs = List.of();
+    private List<Tower> litBefore = List.of();
+    private LightSpec specBefore = LightSpec.bare();
     /** The enemies inside at the last tick: one entering gets Prism's stacks. Membership only. */
     private Set<EnemyMob> lastInside = Collections.newSetFromMap(new IdentityHashMap<>());
 
@@ -327,13 +337,41 @@ public final class AuraTower extends AbstractTower {
         return this.reveals;
     }
 
+    /** The enemies in the light as of the last tick; the frame build lights each. */
+    public List<EnemyMob> enemiesInLight() {
+        return this.inLight;
+    }
+
+    /** The tick the light last stirred, which the frame build shows as the edge of the light for a moment. */
+    public OptionalInt stirredAt() {
+        return this.stirredAt;
+    }
+
+    /** What Prism's light carried toward each Lit tower that leaves a mark at the last tick; none without Prism. */
+    public List<PrismArc> prismArcs() {
+        return this.arcs;
+    }
+
+    private List<PrismArc> arcsToward(List<Tower> lit) {
+        List<PrismArc> toward = new ArrayList<>();
+        for (Tower tower : lit) {
+            tower.accept(MARK_OF).ifPresent(mark -> toward.add(new PrismArc(
+                    (float) Math.atan2(tower.getY() - this.centerY, tower.getX() - this.centerX), mark)));
+        }
+        return List.copyOf(toward);
+    }
+
     /** The marks Prism carries now, one per Lit tower type that leaves one, in the pane's order; none without it. */
     public List<PrismMark> prismMarks() {
+        return this.marksOf(this.litTowers());
+    }
+
+    private List<PrismMark> marksOf(List<Tower> lit) {
         if (!this.spec().prism()) {
             return List.of();
         }
         Set<PrismMark> marks = EnumSet.noneOf(PrismMark.class);
-        for (Tower tower : this.litTowers()) {
+        for (Tower tower : lit) {
             tower.accept(MARK_OF).ifPresent(marks::add);
         }
         return List.copyOf(marks);
@@ -352,6 +390,7 @@ public final class AuraTower extends AbstractTower {
     @Override
     protected void act(int gameTime) {
         LightSpec spec = this.spec();
+        List<Tower> lit = this.litTowers();
         if (spec.edge() == LightSpec.Edge.DAYLIGHT) {
             this.context.daylight().add(this.centerX, this.centerY, this.rangeReal());
         }
@@ -364,7 +403,7 @@ public final class AuraTower extends AbstractTower {
                 revealed.add(earlier);
             }
         }
-        List<PrismMark> marks = this.prismMarks();
+        List<PrismMark> marks = this.marksOf(lit);
         Set<EnemyMob> nowInside = Collections.newSetFromMap(new IdentityHashMap<>());
         for (EnemyMob enemy : inside) {
             nowInside.add(enemy);
@@ -381,19 +420,26 @@ public final class AuraTower extends AbstractTower {
             marks.forEach(mark -> this.carry(mark, enemy, entered));
         }
         this.lastInside = nowInside;
+        this.inLight = this.touchesEnemies(spec) ? List.copyOf(inside) : List.of();
         this.reveals = List.copyOf(revealed);
         this.hold(spec.spotlight(), inside);
         if (spec.lesson() == LightSpec.Lesson.BREAKTHROUGH) {
-            this.teachBreakthroughs(gameTime);
+            this.teachBreakthroughs(gameTime, lit);
         }
+        this.arcs = spec.prism() ? this.arcsToward(lit) : List.of();
         if (spec.xpFloor() > 0) {
-            this.liftToFloor(spec.xpFloor());
+            this.liftToFloor(spec.xpFloor(), lit);
         }
+        if (this.stirredAt.isEmpty() || !lit.equals(this.litBefore) || !spec.equals(this.specBefore)) {
+            this.stirredAt = OptionalInt.of(gameTime);
+        }
+        this.litBefore = lit;
+        this.specBefore = spec;
     }
 
     /** Head Start: a Lit tower under the floor earns what it lacks. */
-    private void liftToFloor(int floor) {
-        for (Tower tower : this.litTowers()) {
+    private void liftToFloor(int floor, List<Tower> lit) {
+        for (Tower tower : lit) {
             int lacking = floor - tower.experience().xp();
             if (lacking > 0) {
                 tower.earnXp(lacking);
@@ -446,8 +492,7 @@ public final class AuraTower extends AbstractTower {
     }
 
     /** Breakthrough: a Lit tower whose tier rose this tick, beyond what Head Start gives, teaches every other Lit tower. */
-    private void teachBreakthroughs(int gameTime) {
-        List<Tower> lit = this.litTowers();
+    private void teachBreakthroughs(int gameTime, List<Tower> lit) {
         int floor = this.spec().xpFloor();
         for (Tower opener : lit) {
             TierRise rise = opener.tierRise();
@@ -458,11 +503,18 @@ public final class AuraTower extends AbstractTower {
         }
     }
 
+    /** Whether the light does anything to an enemy in it, which is what shows it lit. */
+    private boolean touchesEnemies(LightSpec spec) {
+        return spec.reveals() || spec.edge() != LightSpec.Edge.NONE || spec.prism() || spec.spotlight().isActive();
+    }
+
     /** The beam lets go and the light's tags are dropped; what an enemy carries is its own. */
     @Override
     protected void endFight() {
         this.held = Optional.empty();
         this.reveals = List.of();
+        this.inLight = List.of();
+        this.arcs = List.of();
         this.lastInside = Collections.newSetFromMap(new IdentityHashMap<>());
     }
 

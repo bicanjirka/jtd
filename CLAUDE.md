@@ -8,7 +8,7 @@ the decision behind it. `docs/ARCHITECTURE.md` is an overview of the system as i
 
 ```bash
 mvn verify                # Spotless + Checkstyle + tests - run before every commit
-mvn -q compile exec:java -Dexec.mainClass=td.PerformanceHarness   # performance budget; add -Dexec.args=zones for the ground-zone loadout, --jfr to profile it (target/perf.jfr; top CPU and allocation per phase)
+mvn -q compile exec:java -Dexec.mainClass=td.PerformanceHarness   # performance budget; add -Dexec.args=zones for the ground-zone loadout, `beacons` for Beacons among the towers they light (every Beacon with every node), --jfr to profile it (target/perf.jfr; top CPU and allocation per phase)
 mvn test-compile pitest:mutationCoverage -Dpit.targetClasses='td.tower.*' -Dpit.targetTests='td.tower.*'   # mutation testing on demand, never in verify: narrow both to the package you changed; report in target/pit-reports/index.html
 ```
 
