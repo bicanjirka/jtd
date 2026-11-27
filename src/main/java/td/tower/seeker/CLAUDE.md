@@ -15,6 +15,9 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
 - A missile in flight asks the tower through its `MissileGuide`: it keeps its pick unless that enemy was frozen since,
   turns to the soonest-out unfrozen enemy within its hunt radius (`TowerStat.HUNT_RADIUS`), stays on its pick when there is none, and flies home to reload
   only when no enemy is left. It lands with the stats its shot began with.
+- Rime's Unravel comes with a freeze that took hold, never with every hit: its condition reads the freeze the hit has
+  just put on, so the hit freezes before it is reported. A dodge, a hit a shield took whole, a kill of an unfrozen enemy
+  and a hit on an enemy no freeze holds add none.
 - A hit freezes unless a shield took all of it. A stronger ice landing on a held freeze turns it to its own
   (`IceKind.strongerOf`, in `ActiveEffects`) and it ends when it would have; the ledger then holds it as the new
   kind's (`FrozenLedger.retake`), which is no new freeze. Each new freeze is counted for the release and for Feeding; a release

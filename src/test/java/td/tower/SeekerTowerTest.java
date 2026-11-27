@@ -13,11 +13,14 @@ import td.fixtures.FakeEnemyMob;
 import td.fixtures.TowerFixtures;
 import td.fixtures.UpgradePaths;
 import td.fixtures.WorldFixtures;
+import td.stat.DisruptionPenalty;
 import td.tower.seeker.FeedingMechanic;
 import td.tower.seeker.MissileKind;
 import td.tower.seeker.ReleaseMechanic;
 import td.util.GameWorld;
 import td.wave.Vec2;
+import td.zone.Zone;
+import td.zone.ZoneOwner;
 
 import java.util.List;
 
@@ -589,5 +592,22 @@ class SeekerTowerTest {
         tower.doTick(this.tick++);
 
         assertThat(close.hits()).hasSize(1);
+    }
+
+    @Test
+    void aMissileABlindingFieldMakesMissReportsNoHitSoTierTwoLeavesNoUnravel() {
+        this.context = WorldFixtures.newWorldOnBoard(() -> 0.0, SCALE, 20, 20);
+        SeekerTower tower = new SeekerTower(this.context, 3, 3);
+        tower.earnXp(tower.upgradeTree().tiers().get(2).xp());
+        this.context.zones().add(Zone.blinding(tower.centerX, tower.centerY, 2 * SCALE, Zone.UNTIL_WAVE_END,
+                DisruptionPenalty.blinding(0.75f), ZoneOwner.nobody()));
+        FakeEnemyMob enemy = this.enemyAt(tower, OUT, 0);
+        this.enemies(enemy);
+        tower.beginTick(this.tick);
+
+        this.landOne(tower);
+
+        assertThat(enemy.hits()).isEmpty();
+        assertThat(enemy.effectStacks(EffectKind.UNRAVELED)).isZero();
     }
 }

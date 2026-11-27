@@ -114,6 +114,7 @@ public final class SeekerTower extends AbstractTower {
             .inTier(2);
     private static final UpgradeNode FEEDING = UpgradeNode.of("seeker.feeding", "Feeding", 10)
             .inTier(2);
+    // Unravel comes with a freeze that took hold, never with every hit: the hit freezes before it is reported.
     private static final Proc RIME = Proc.onHit(new ProcPayload.ApplyStacks(StackingDebuff.UNRAVELED, 1))
             .when(new ProcCondition.TargetHasAnyOf(Set.of(EffectKind.FREEZE)));
     private static final UpgradeNode HIGH_PERCH = UpgradeNode.of(RangeNodes.RANGE_2_ID, "High Perch", 5)
