@@ -43,11 +43,21 @@ final class SpellArt {
     private static final Color RUNE_BACK = new Color(0x140a1e);
 
     /** How often a crackle takes new joints, a second. */
-    private static final double CRACKLE_HZ = 14;
+    private static final double CRACKLE_HZ = 6;
     /** A shock flickers between black and lit this many times over its length. */
     private static final int SHOCK_FLICKERS = 4;
     /** The share of a moment its first flash lasts. */
     private static final double FLASH_SHARE = 0.25;
+    /** A spell's blast: its inner ring runs out over this share of it, its outer one starts here. */
+    private static final double INNER_RING_SHARE = 0.45;
+    private static final double OUTER_RING_START = 0.3;
+    /** The Stormcaller's arcs leap out over this share of its blast. */
+    private static final double ARC_SHARE = 0.35;
+    private static final int STORM_ARCS = 4;
+    /** The Hexer's star: each line is drawn over this share of its blast and fades over the next, a frame or two. */
+    private static final int PENTAGRAM_LINES = 5;
+    private static final double PENTAGRAM_LINE_SHARE = 0.13;
+    private static final double PENTAGRAM_LINE_LINGER = 0.08;
 
     /** Each glyph at a size of one, built once. */
     private static final Map<HexGlyph, Shape> GLYPHS = glyphs();
@@ -200,29 +210,29 @@ final class SpellArt {
     }
 
     private static void ballLightning(Graphics2D g2, double x, double y, double r, double seconds) {
-        TowerLifeArt.glow(g2, x, y, r * 3.4, STORM_GLOW, 0.75);
+        TowerLifeArt.glow(g2, x, y, r * 3, STORM_GLOW, 0.5);
         g2.setColor(TowerLifeArt.faded(STORM_BODY, 0.9));
         g2.fill(BlastArt.disc(x, y, r));
         TowerLifeArt.glow(g2, x, y, r * 1.1, Color.WHITE, 0.9);
         int frame = (int) Math.floor(seconds * CRACKLE_HZ);
         Stroke stroke = g2.getStroke();
         g2.setStroke(new BasicStroke((float) Math.max(0.8, r * 0.18), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        for (int k = 0; k < 4; k++) {
+        for (int k = 0; k < 2; k++) {
             double a = BlastArt.hash(frame, k) * Math.PI * 2;
-            g2.setColor(TowerLifeArt.faded(k % 2 == 0 ? Color.WHITE : STORM_BODY, 0.95));
-            g2.draw(zigzag(x + Math.cos(a) * r * 0.4, y + Math.sin(a) * r * 0.4, x + Math.cos(a) * r * 2.1,
-                    y + Math.sin(a) * r * 2.1, 3, r * 0.45, frame * 31 + k));
+            g2.setColor(TowerLifeArt.faded(k % 2 == 0 ? Color.WHITE : STORM_BODY, 0.55));
+            g2.draw(zigzag(x + Math.cos(a) * r * 0.4, y + Math.sin(a) * r * 0.4, x + Math.cos(a) * r * 1.6,
+                    y + Math.sin(a) * r * 1.6, 2, r * 0.3, frame * 31 + k));
         }
         g2.setStroke(stroke);
     }
 
     private static void arcaneOrb(Graphics2D g2, double x, double y, double r, double seconds) {
-        TowerLifeArt.glow(g2, x, y, r * 3.2, ARCANE_GLOW, 0.7);
+        TowerLifeArt.glow(g2, x, y, r * 2.8, ARCANE_GLOW, 0.5);
         g2.setColor(TowerLifeArt.faded(BlastArt.mix(ARCANE_GLOW, RUNE_BACK, 0.35), 0.95));
         g2.fill(BlastArt.disc(x, y, r));
         Stroke stroke = g2.getStroke();
         g2.setStroke(new BasicStroke((float) Math.max(0.8, r * 0.2), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        double turn = Math.toDegrees(seconds * 5);
+        double turn = Math.toDegrees(seconds * 2.5);
         g2.setColor(ARCANE_BODY);
         g2.draw(new Arc2D.Double(x - r * 0.62, y - r * 0.62, r * 1.24, r * 1.24, turn, 130, Arc2D.OPEN));
         g2.setColor(ARCANE_HOT);
@@ -230,8 +240,8 @@ final class SpellArt {
         g2.setStroke(stroke);
         TowerLifeArt.glow(g2, x, y, r * 0.7, ARCANE_HOT, 0.9);
         for (int k = 0; k < 3; k++) {
-            double a = seconds * 3.1 + k * Math.PI * 2 / 3;
-            BlastArt.glint(g2, x + Math.cos(a) * r * 1.6, y + Math.sin(a) * r * 0.9, r * 0.55, ARCANE_HOT, 0.9);
+            double a = seconds * 1.6 + k * Math.PI * 2 / 3;
+            BlastArt.glint(g2, x + Math.cos(a) * r * 1.5, y + Math.sin(a) * r * 0.85, r * 0.35, ARCANE_HOT, 0.5);
         }
     }
 
@@ -410,81 +420,100 @@ final class SpellArt {
     }
 
     /**
-     * Lightning bursting from the landing out to a crackling ring at the core's edge, and sparks leaping from it to a
-     * fainter crackling ring at the edge's.
+     * The inner ring of a spell's blast, running out to the core early in it and fading as it gets there, then the
+     * outer one, running from the core to the edge; a blast with no edge share shows only the inner. Each is handed to
+     * {@code ring} with its radius and strength while it shows.
+     */
+    private static void blastRings(SpellBlastDraw blast, RingPainter ring) {
+        double p = blast.progress();
+        double inner = Easing.clamp01(p / INNER_RING_SHARE);
+        if (inner < 1) {
+            ring.paint(blast.core() * Easing.outStrong(inner), 1 - inner);
+        }
+        double outer = Easing.clamp01((p - OUTER_RING_START) / (1 - OUTER_RING_START));
+        if (blast.edge() > blast.core() && outer > 0 && outer < 1) {
+            ring.paint(blast.core() + (blast.edge() - blast.core()) * Easing.outStrong(outer), 1 - outer);
+        }
+    }
+
+    @FunctionalInterface
+    private interface RingPainter {
+        void paint(double radius, double strength);
+    }
+
+    /** A brief flash where a spell lands. */
+    private static void blastFlash(Graphics2D g2, SpellBlastDraw blast, Color color) {
+        double p = blast.progress();
+        if (p < FLASH_SHARE) {
+            TowerLifeArt.glow(g2, blast.x(), blast.y(), blast.core() * 0.9, color, 0.7 * (1 - p / FLASH_SHARE));
+        }
+    }
+
+    /**
+     * An electric blast: a flash, a few arcs of lightning leaping out of the landing, and crackling rings running out to
+     * the core and then the edge, their crackle changing every few frames.
      */
     private static void stormBlast(Graphics2D g2, SpellBlastDraw blast) {
         double p = blast.progress();
-        double fade = 1 - p * p;
         double x = blast.x();
         double y = blast.y();
-        double core = blast.core();
-        double edge = blast.edge();
         double cell = blast.scale();
-        int frame = blast.seed() * 17 + (int) Math.floor(p * 8);
-        if (p < FLASH_SHARE) {
-            TowerLifeArt.glow(g2, x, y, core * 1.6, Color.WHITE, 0.9 * (1 - p / FLASH_SHARE));
-        }
-        BlastArt.flat(g2, x, y, edge, STORM_GLOW, 0.1 * fade);
-        BlastArt.flat(g2, x, y, core, STORM_BODY, 0.22 * fade);
+        int frame = blast.seed() * 17 + (int) Math.floor(p * 10);
+        blastFlash(g2, blast, Color.WHITE);
         Stroke stroke = g2.getStroke();
-        stroke(g2, jaggedRing(x, y, edge, cell * 0.05, frame), cell * 0.05, STORM_GLOW, 0.75 * fade);
-        stroke(g2, new Ellipse2D.Double(x - core, y - core, core * 2, core * 2), cell * 0.18, STORM_GLOW, 0.45 * fade);
-        stroke(g2, jaggedRing(x, y, core, cell * 0.04, frame + 5), cell * 0.05, Color.WHITE, fade);
-        for (int k = 0; k < 6; k++) {
-            double a = (k + BlastArt.hash(frame, k)) * Math.PI / 3;
-            Shape arc = zigzag(x, y, x + Math.cos(a) * core, y + Math.sin(a) * core, 3, core * 0.18, frame + k);
-            stroke(g2, arc, cell * 0.12, STORM_GLOW, 0.5 * fade);
-            stroke(g2, arc, cell * 0.04, Color.WHITE, fade);
-            if (edge > core) {
-                double b = a + Math.PI / 6;
-                stroke(g2, zigzag(x + Math.cos(b) * core, y + Math.sin(b) * core, x + Math.cos(b) * edge,
-                        y + Math.sin(b) * edge, 2, (edge - core) * 0.3, frame + 20 + k), cell * 0.035, STORM_BODY,
-                        0.8 * fade);
+        blastRings(blast, (r, strength) -> {
+            Shape ring = jaggedRing(x, y, r, cell * 0.04, frame);
+            stroke(g2, ring, cell * 0.1, STORM_GLOW, 0.35 * strength);
+            stroke(g2, ring, cell * 0.03, Color.WHITE, 0.85 * strength);
+        });
+        double arcs = p / ARC_SHARE;
+        if (arcs < 1) {
+            double reach = blast.core() * (0.4 + 0.6 * Easing.outStrong(arcs));
+            for (int k = 0; k < STORM_ARCS; k++) {
+                double a = (k + BlastArt.hash(frame, k)) * 2 * Math.PI / STORM_ARCS;
+                Shape arc = zigzag(x, y, x + Math.cos(a) * reach, y + Math.sin(a) * reach, 2, reach * 0.2, frame + k);
+                stroke(g2, arc, cell * 0.08, STORM_GLOW, 0.4 * (1 - arcs));
+                stroke(g2, arc, cell * 0.03, Color.WHITE, 1 - arcs);
             }
         }
         g2.setStroke(stroke);
     }
 
     /**
-     * A sigil flaring on the ground: a star inside a solid circle at the core's edge, a ring of turning rune strokes at
-     * the edge's, motes rising off it.
+     * A briefly summoned pentagram: a flash, its star drawn line by line, each line fading a moment after the next
+     * starts, and rings running out to the core and then the edge.
      */
     private static void hexBlast(Graphics2D g2, SpellBlastDraw blast) {
         double p = blast.progress();
-        double fade = 1 - p * p;
         double x = blast.x();
         double y = blast.y();
-        double core = blast.core();
-        double edge = blast.edge();
         double cell = blast.scale();
-        if (p < FLASH_SHARE) {
-            TowerLifeArt.glow(g2, x, y, core * 1.5, ARCANE_HOT, 0.8 * (1 - p / FLASH_SHARE));
-        }
-        BlastArt.flat(g2, x, y, edge, ARCANE_GLOW, 0.1 * fade);
-        BlastArt.flat(g2, x, y, core, ARCANE_GLOW, 0.24 * fade);
+        blastFlash(g2, blast, ARCANE_HOT);
         Stroke stroke = g2.getStroke();
-        runeRing(g2, x, y, edge, cell * 0.05, p * 1.5 + blast.seed(), ARCANE_BODY, 0.75 * fade);
-        stroke(g2, new Ellipse2D.Double(x - core, y - core, core * 2, core * 2), cell * 0.16, ARCANE_GLOW, 0.5 * fade);
-        stroke(g2, new Ellipse2D.Double(x - core, y - core, core * 2, core * 2), cell * 0.06, ARCANE_HOT, fade);
-        Path2D.Double star = new Path2D.Double();
-        double turn = -p * 0.8 + blast.seed();
-        for (int i = 0; i <= 5; i++) {
-            double a = turn + i * 4 * Math.PI / 5;
-            double px = x + Math.cos(a) * core * 0.92;
-            double py = y + Math.sin(a) * core * 0.92;
-            if (i == 0) {
-                star.moveTo(px, py);
-            } else {
-                star.lineTo(px, py);
+        blastRings(blast, (r, strength) -> {
+            Shape ring = new Ellipse2D.Double(x - r, y - r, r * 2, r * 2);
+            stroke(g2, ring, cell * 0.1, ARCANE_GLOW, 0.35 * strength);
+            stroke(g2, ring, cell * 0.03, ARCANE_HOT, 0.85 * strength);
+        });
+        double turn = BlastArt.hash(blast.seed(), 0) * 2 * Math.PI;
+        double r = blast.core() * 0.85;
+        for (int i = 0; i < PENTAGRAM_LINES; i++) {
+            double start = i * PENTAGRAM_LINE_SHARE;
+            double drawn = Easing.clamp01((p - start) / PENTAGRAM_LINE_SHARE);
+            double gone = (p - start - PENTAGRAM_LINE_SHARE) / PENTAGRAM_LINE_LINGER;
+            if (drawn <= 0 || gone >= 1) {
+                continue;
             }
-        }
-        stroke(g2, star, cell * 0.05, ARCANE_BODY, 0.9 * fade);
-        for (int k = 0; k < 8; k++) {
-            double a = BlastArt.hash(blast.seed(), k) * Math.PI * 2;
-            double d = core * Math.sqrt(BlastArt.hash(blast.seed(), 10 + k));
-            double rise = cell * 0.9 * Easing.out(p) * (0.6 + 0.4 * BlastArt.hash(blast.seed(), 20 + k));
-            BlastArt.glint(g2, x + Math.cos(a) * d, y + Math.sin(a) * d - rise, cell * 0.09, ARCANE_HOT, fade);
+            double a = turn + i * 4 * Math.PI / 5;
+            double b = turn + (i + 1) * 4 * Math.PI / 5;
+            double fromX = x + Math.cos(a) * r;
+            double fromY = y + Math.sin(a) * r;
+            double toX = fromX + (x + Math.cos(b) * r - fromX) * drawn;
+            double toY = fromY + (y + Math.sin(b) * r - fromY) * drawn;
+            Shape line = new Line2D.Double(fromX, fromY, toX, toY);
+            double strength = 1 - Easing.clamp01(gone);
+            stroke(g2, line, cell * 0.12, ARCANE_GLOW, 0.45 * strength);
+            stroke(g2, line, cell * 0.04, ARCANE_HOT, strength);
         }
         g2.setStroke(stroke);
     }

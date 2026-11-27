@@ -4,6 +4,6 @@ package td.ui.render;
 public enum SpellBlastLook {
     /** The Stormcaller's: a burst of lightning. */
     STORM,
-    /** The Hexer's: a sigil flaring on the ground. */
+    /** The Hexer's: a pentagram summoned line by line. */
     HEX
 }

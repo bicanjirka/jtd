@@ -134,7 +134,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final double NEST_TURN = 0.6;
     private static final float TRACER_WIDTH_CELLS = 0.028f;
     /** A fork's spell: its head's radius, and how high its flight bows, in cells. */
-    private static final float ORB_CELLS = 0.18f;
+    private static final float ORB_CELLS = 0.12f;
     private static final float ORB_BOW_CELLS = 0.18f;
     /** A curse: its head's radius, and how high it floats over the enemies it passes, in cells. */
     private static final float CURSE_CELLS = 0.2f;
@@ -144,7 +144,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final int SPELL_TRAIL_POINTS = 8;
     private static final float SPELL_TRAIL_WIDTH = 0.55f;
     /** How long a fork's impact, a Thunderstrike's bolt and the shock of a spell's hit are drawn. */
-    private static final int SPELL_BLAST_TICKS = MomentLength.BEAT.ticks();
+    /** A spell's blast is as brief as a heavy shell's. */
+    private static final int SPELL_BLAST_TICKS = MomentLength.SHORT.ticks();
     private static final int THUNDERBOLT_TICKS = MomentLength.LONG.ticks();
     private static final int SHOCK_TICKS = MomentLength.BEAT.ticks();
     /** How much of its way a spark or soul in flight trails behind it. */
