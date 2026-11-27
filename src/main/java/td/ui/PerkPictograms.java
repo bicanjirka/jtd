@@ -189,7 +189,7 @@ final class PerkPictograms {
             Map.entry("pulse.deep_pull_2", "=pulse.deep_pull"),
             // Swift Shadow
             Map.entry("pulse.swift_shadow", "=tower.sundial"),
-            // Steady Light
+            // Lantern
             Map.entry("aura.lantern", "F M12 10.4L15.6 21.4H13.4L12 16.8L10.6 21.4H8.4Z ; F O12 8.4 2 ; S M7.6 4.6A6.2 6.2 0 0 0 7.6 12.2 M16.4 4.6A6.2 6.2 0 0 1 16.4 12.2 ; T M4.2 2A10.2 10.2 0 0 0 4.2 14.8 M19.8 2A10.2 10.2 0 0 1 19.8 14.8"),
             // Afterglow
             Map.entry("aura.afterglow", "F M12 20.4L2.8 9.4A13 13 0 0 1 21.2 9.4Z ; X M7.2 14.6A7 7 0 0 1 16.8 14.6 M4.6 11.6A10.6 10.6 0 0 1 19.4 11.6"),
@@ -198,7 +198,7 @@ final class PerkPictograms {
             // Last Light
             Map.entry("aura.last_light", "S M3.2 8.4C4.8 15.2 10 19.6 17.2 20.4 ; S M3.2 8.4L17.2 20.4 ; T M10.2 14.4L16.6 8 ; F O17.4 7.2 2 ; F M9 20.6H14V22.4H9Z"),
             // Ringleader
-            Map.entry("aura.ringleader", "=effect.priority"),
+            Map.entry("aura.ringleader", "F O16.4 8.2 3.4 ; S O16.4 8.2 6.2 ; F O9.4 13 2.4 ; F O5.4 16.6 1.8 ; F O2.6 19.8 1.2"),
             // Kinship
             Map.entry("aura.kinship", "F M12 7.4L16.6 12L12 16.6L7.4 12Z ; S M12 1.6L9.6 4 M12 1.6L14.4 4 M12 22.4L9.6 20 M12 22.4L14.4 20 M1.6 12L4 9.6 M1.6 12L4 14.4 M22.4 12L20 9.6 M22.4 12L20 14.4"),
             // Mentor
@@ -210,7 +210,7 @@ final class PerkPictograms {
             // Glare
             Map.entry("aura.glare", "=effect.exposed"),
             // Sanctuary
-            Map.entry("aura.sanctuary", "=aura.lantern"),
+            Map.entry("aura.sanctuary", "S M3.4 20.4A8.6 8.6 0 0 1 20.6 20.4 ; S M2 20.4H22 ; F M12 9.6C14.2 12 14.4 14.6 12 16.8C9.6 14.6 9.8 12 12 9.6Z ; T M12 2.6V5.4 M5.2 5.4L7 7.2 M18.8 5.4L17 7.2"),
             // Prism
             Map.entry("aura.prism", "=tower.prism"),
             // Deep Freeze

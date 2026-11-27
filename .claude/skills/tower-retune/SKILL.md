@@ -259,3 +259,23 @@ shipped design doc and breaks on a name the doc lacks; then
 - **Mechanics reuse.** Shadow damage is `AttackProfile.asShadow()`; a tower's effect can deal it through
   `AbstractTower.applyEffect(target, effect, attack)`. The pool rule (100 fuel in 4 s, time grows with the root of the
   fuel) is shared by every tower: a pace change goes in the final cross-tower pass, not in one tower's step.
+
+## Lessons from the Beacon's retune
+
+- **A support tower is judged, never a rival.** `TowerSheet.SUPPORT` keeps it out of the going rate, the medians and
+  every rival comparison (`isRival`, `rivals()`), while its stages, tiers, nodes and clusters get verdicts on what it
+  adds beside partners. Its tower price stays by hand. The bench's partners are bare, so what it adds to full-tier
+  partners (the Synergies table) is far more than its worth: price above worth on purpose and say so in the commit.
+- **A free tier node can carry a mechanic** (`withMechanics()`, its catalogue entry under `UpgradeTree.tierNodeId`),
+  and several tiers' mechanics fold into one spec (the jam share is a product of their factors). A passive that must
+  exist from the start (it feeds the tower's XP) stays in the bare tower with a neutral value; the node carries the
+  benefit.
+- **Check every free grant for a build-and-sell loop** before pricing it: a tower sold back at full price, rebuilt, and
+  granted XP again feeds any "tier rise" or "XP earned" payoff. Close it at the payoff (it ignores what the grant
+  itself opened), not with state.
+- **A visual is designed before it is built.** Render a real `PreviewBoard` scene, paint competing looks over it in a
+  scratch Graphics2D class (stills, then animated GIF loops sent with `SendUserFile`), and wait for approval. Judge the
+  paint cost with a harness loadout of the tower (`PerformanceHarness` `beacons`) against a worktree of the commit
+  before it; a look that draws for every enemy dedupes across lights and drops detail when a frame is crowded.
+- **Shell.** A large Python heredoc with quotes can break the Bash tool: write the script to a file in the scratchpad
+  with the Write tool and run it. Files are CRLF: normalise before matching and write back with CRLF.

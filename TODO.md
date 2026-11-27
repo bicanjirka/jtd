@@ -678,6 +678,15 @@ under two minutes.
 - **Approach:** tune through play or `td.balance.BalanceReport` with the other placeholder entries; decide
   whether a long burn's resilience loss (crit damage up to double at the floor) is too strong.
 
+### The Beacon's tick
+
+**Where**: `AuraTower.act` and `AuraTower.litTowers`, measured with `td.PerformanceHarness` `beacons`.
+
+**Approach**: in a board of Beacons among towers, every one with every node, the tick p99 is about 2 ms against the
+1 ms budget and a frame allocates about 685 KB against 512 KB. Each Beacon copies the roster (`TowerRoster.all`) and
+filters it every tick, then lists the Lit towers again for Prism and the lessons. Keep the Lit towers as one list the
+roster publishes when a tower is built, sold or moved, and let the Beacons read it.
+
 ## Enemy features
 
 ### A swarm's scatter ignores how big its members are
