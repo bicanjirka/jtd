@@ -118,7 +118,6 @@ public final class MortarTower extends AbstractTower {
             .withModifiers(TowerModifiers.heavyBlast(1.2f));
     private static final UpgradeNode BIG_BORE = UpgradeNode.of("mortar.big_bore", "Big Bore", 5)
             .withModifiers(TowerModifiers.heavyDamage(14f));
-    private static final UpgradeNode CRACKING_SHELLS = UpgradeNode.of("mortar.cracking_shells", "Cracking Shells", 5);
     private static final UpgradeNode PREDICTIVE_FIRE = UpgradeNode.of("mortar.predictive_fire", "Predictive Fire", 5)
             .withTargeting(TargetPriority.BIGGEST_GROUP_AHEAD);
 
@@ -133,6 +132,9 @@ public final class MortarTower extends AbstractTower {
     private static final UpgradeNode CRYO = UpgradeNode.of("mortar.cryo", "Cryo", 10)
             .inTier(1);
     private static final UpgradeNode FLARE = UpgradeNode.of("mortar.flare", "Flare", 5)
+            .inTier(1);
+    private static final UpgradeNode HEAVY_POWDER = UpgradeNode.of("mortar.heavy_powder", "Heavy Powder", 10)
+            .withModifiers(TowerModifiers.damage(8f))
             .inTier(1);
     private static final UpgradeCondition A_PAYLOAD = UpgradeCondition.owns(NAPALM.id())
             .or(UpgradeCondition.owns(TAR_SHELL.id())).or(UpgradeCondition.owns(CRYO.id()));
@@ -165,13 +167,12 @@ public final class MortarTower extends AbstractTower {
             .withOwnArt()
             .inTier(3);
     private static final UpgradeNode DEEP_CRACK = UpgradeNode.of("mortar.deep_crack", "Deep Crack", 5)
-            .after(CRACKING_SHELLS)
             .withOwnArt()
             .inTier(2);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(List.of(BIG_BORE, PREDICTIVE_FIRE, CRACKING_SHELLS,
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(BIG_BORE, PREDICTIVE_FIRE,
                     PACKED_CHARGE, WIDE_CRATER))
-            .with(CONCUSSION, SHRAPNEL, NAPALM, TAR_SHELL, CRYO, FLARE,
+            .with(CONCUSSION, SHRAPNEL, NAPALM, TAR_SHELL, CRYO, FLARE, HEAVY_POWDER,
                     BARRAGE, CARPET_BOMBING, QUICK_LOAD, OVERCHARGE, HARD_CASINGS, HEAVY_RACK, COATED_SHELLS,
                     FUSION, RICH_MIX, LASTING_MIX, DEEP_CRACK)
             .withCluster(UpgradeCluster.of("Shell charge", PACKED_CHARGE, WIDE_CRATER))
@@ -180,13 +181,13 @@ public final class MortarTower extends AbstractTower {
             .withCluster(UpgradeCluster.of("Heavy or Normal", HEAVY_RACK, HARD_CASINGS))
             .withCluster(UpgradeCluster.of("Loading", BARRAGE, CARPET_BOMBING, QUICK_LOAD))
             .withCluster(UpgradeCluster.of("Order", FUSION, RICH_MIX))
-            .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withBonus(TowerModifiers.damage(8f)),
+            .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withMechanics(),
                     UpgradeTier.gated(120, 0).withBonus(TowerModifiers.range(1.6f)), UpgradeTier.gated(200, 0).withBonus(TowerModifiers.attackSpeed(0.15f))));
 
     private static final MechanicCatalogue<MortarMechanic> MECHANICS = MechanicCatalogue.of(
             entry(BIG_BORE.id(), () -> new BigBoreMechanic(1)),
             entry(PREDICTIVE_FIRE.id(), PredictiveFireMechanic::new),
-            entry(CRACKING_SHELLS.id(), CrackingShellsMechanic::new),
+            entry(UpgradeTree.tierNodeId(1), CrackingShellsMechanic::new),
             entry(CONCUSSION.id(), ConcussionMechanic::new),
             entry(SHRAPNEL.id(), ShrapnelMechanic::new),
             entry(NAPALM.id(), () -> new PayloadMechanic(ShellKind.NAPALM)),

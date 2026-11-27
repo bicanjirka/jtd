@@ -37,12 +37,13 @@ final class UpgradeTreePlans {
 
     private static final UpgradeTreePlan MORTAR = UpgradeTreePlan.of(
             tier(row(node("mortar.big_bore", 0f), node("mortar.predictive_fire", 1f),
-                    node("mortar.cracking_shells", 2.3f), cluster("Shell charge", 3.5f))),
-            tier(row(node("tier.1", 0f), cluster("Heavy shell", 1f), node("mortar.flare", 3.1f), cluster("Payload", 4.2f))),
+                    cluster("Shell charge", 2.3f))),
+            tier(row(node("tier.1", 0f), cluster("Heavy shell", 1f), node("mortar.flare", 3.1f), cluster("Payload", 4.2f)),
+                    row(node("mortar.heavy_powder", 3.1f))),
             tier(row(node("tier.2", 0f), node("mortar.overcharge", 1f), cluster("Heavy or Normal", 2.6f),
                     node("mortar.deep_crack", 4.6f), node("mortar.coated_shells", 5.7f))),
-            tier(row(node("tier.3", 0f), cluster("Order", 1.1f), node("mortar.lasting_mix", 3.6f)),
-                    row(cluster("Loading", 2.25f))));
+            tier(row(node("tier.3", 0f), cluster("Loading", 1f), cluster("Order", 4.1f),
+                    node("mortar.lasting_mix", 6.2f))));
 
     private static final UpgradeTreePlan CINDER = UpgradeTreePlan.of(
             tier(row(node("cinder.hot_flame", 0f), node("cinder.long_stream", 1f), node("cinder.wide_nozzle", 2f),

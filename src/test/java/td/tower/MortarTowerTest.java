@@ -170,7 +170,7 @@ class MortarTowerTest {
 
     @Test
     void theBlastDealsFullDamageInItsCoreAndCracksPlatingWithoutSlowing() {
-        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL), "Cracking Shells");
+        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL), "Deep Crack");
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
 
@@ -182,7 +182,7 @@ class MortarTowerTest {
     }
 
     @Test
-    void aMortarWithoutCrackingShellsCracksNothing() {
+    void aBareMortarCracksNothing() {
         MortarTower tower = this.loaded(List.of(ShellKind.NORMAL));
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
         this.context.enemies().setEnemies(new EnemyMob[]{target});
@@ -195,7 +195,7 @@ class MortarTowerTest {
 
     @Test
     void theBlastsEdgeDealsLessThanItsCoreAndNothingReachesPastIt() {
-        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL), "Cracking Shells");
+        MortarTower tower = this.loaded(List.of(ShellKind.NORMAL), "Deep Crack");
         float core = tower.stats().value(TowerStat.AREA_RADIUS) * SCALE;
         float edge = tower.stats().value(TowerStat.BLAST_EDGE) * SCALE;
         FakeEnemyMob target = this.enemyAt(tower, OUT, 0);
@@ -672,7 +672,7 @@ class MortarTowerTest {
 
     @Test
     void aShellsProfileIsTheHitItWouldLandWithAndWhatItsPickAdds() {
-        MortarTower tower = this.towerWith("Concussion", "Cracking Shells");
+        MortarTower tower = this.towerWith("Concussion", "Deep Crack");
         TowerStats stats = tower.stats();
 
         Map<ShellKind, ShellProfile> profiles = tower.shellProfiles().stream()

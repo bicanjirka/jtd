@@ -134,8 +134,8 @@ final class PerkPictograms {
             Map.entry("mortar.fusion", "=tower.nuke_shell"),
             // Rich Mix
             Map.entry("mortar.rich_mix", "F O7.4 13 3.6 ; S O16.6 13 3.6 ; T M7.4 6.4V8 M16.6 6.4V8"),
-            // Cracking Shells
-            Map.entry("mortar.cracking_shells", "=effect.cracked"),
+            // Heavy Powder
+            Map.entry("mortar.heavy_powder", "F M6.4 21.6H17.6L16.4 9.6H7.6Z ; F M9.4 9.6V6.6H14.6V9.6Z ; X M8.8 14.4H15.2 M8.4 17.6H15.6 ; F O12 4 1.6"),
             // Deep Crack
             Map.entry("mortar.lasting_mix", "F M3.6 20.4H10V12C10 8.6 8.6 6.2 6.8 4.8C5 6.2 3.6 8.6 3.6 12Z ; F M13.6 8.4H20.8L17.2 14.4Z M13.6 20.4H20.8L17.2 14.4Z ; T M12.8 7.6H21.6 M12.8 21.2H21.6"),
             Map.entry("mortar.deep_crack", "F M5 4H19A1.5 1.5 0 0 1 20.5 5.5V18.5A1.5 1.5 0 0 1 19 20H5A1.5 1.5 0 0 1 3.5 18.5V5.5A1.5 1.5 0 0 1 5 4Z ; K O6.6 7.1 1 O17.4 7.1 1 O6.6 16.9 1 O17.4 16.9 1 ; X M9.6 4L8 8.8L10.6 12L8.4 16.4L9.4 20 M15 4L13.4 8.4L16 11.8L13.6 16L14.8 20"),

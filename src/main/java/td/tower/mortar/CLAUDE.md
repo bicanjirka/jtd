@@ -32,7 +32,7 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   share of the damage; a Heavy's Bleed is a share of what its blast dealt the enemy (`ShrapnelMechanic.bleedPerCell`).
 - How much wider than the Mortar's blast a kind lands is on the kind (`ShellKind.wideningCells`): a Heavy's is the
   `HEAVY_BLAST` stat, a payload's its Payload spec's; a Nuke's blast is its own.
-- A shell lands in two zones: its core at full damage and its edge at its kind's share. With Cracking Shells every
+- A shell lands in two zones: its core at full damage and its edge at its kind's share. From tier I's free node every
   shell gives what it hits the Mortar's share of Crack (Deep Crack makes the share worth more stacks). A shell's ground is one zone, owned by the Mortar (`ZoneOwner`); a
   Mortar keeps only its newest flares and puts out the oldest (`Zone.putOut`).
 - Carpet Bombing lays a volley along the enemy path centred on the target (`PathLine`), never by geometry around the

@@ -66,7 +66,7 @@ final class StrategyBuilds {
 
     private static final String PREDICTIVE = "mortar.predictive_fire";
     private static final String WIDE_CRATER = "mortar.wide_crater";
-    private static final String CRACKING = "mortar.cracking_shells";
+    private static final String HEAVY_POWDER = "mortar.heavy_powder";
     private static final String CONCUSSION = "mortar.concussion";
     private static final String SHRAPNEL = "mortar.shrapnel";
     private static final String OVERCHARGE = "mortar.overcharge";
@@ -77,19 +77,19 @@ final class StrategyBuilds {
      * or Overcharge.
      */
     private static List<Strategy> mortar() {
-        Set<String> nuke = Set.of(WIDE_CRATER, "mortar.big_bore", CRACKING, CONCUSSION, OVERCHARGE, "mortar.heavy_rack",
+        Set<String> nuke = Set.of(WIDE_CRATER, "mortar.big_bore", HEAVY_POWDER, CONCUSSION, OVERCHARGE, "mortar.heavy_rack",
                 "mortar.barrage", "mortar.fusion", "mortar.deep_crack");
-        Set<String> bores = Set.of(WIDE_CRATER, "mortar.big_bore", CRACKING, CONCUSSION, OVERCHARGE,
+        Set<String> bores = Set.of(WIDE_CRATER, "mortar.big_bore", HEAVY_POWDER, CONCUSSION, OVERCHARGE,
                 "mortar.heavy_rack");
-        Set<String> heavy = Set.of(WIDE_CRATER, "mortar.big_bore", "mortar.heavy_rack", CRACKING, CONCUSSION, OVERCHARGE, "mortar.barrage",
+        Set<String> heavy = Set.of(WIDE_CRATER, "mortar.big_bore", "mortar.heavy_rack", HEAVY_POWDER, CONCUSSION, OVERCHARGE, "mortar.barrage",
                 "mortar.rich_mix", "mortar.deep_crack");
         Set<String> normal = Set.of(PREDICTIVE, "mortar.flare", "mortar.packed_charge", "mortar.hard_casings",
-                "mortar.quick_load");
+                "mortar.quick_load", HEAVY_POWDER);
         List<Strategy> strategies = new ArrayList<>(List.of(new Strategy("nuke", nuke), bled("nuke", nuke),
                 new Strategy("heavy-bores", bores), bled("heavy-bores", bores),
                 new Strategy("heavy", heavy), bled("heavy", heavy), new Strategy("normal", normal)));
         for (String payload : List.of("napalm", "tar_shell", "cryo")) {
-            Set<String> nodes = Set.of("mortar.packed_charge", "mortar.hard_casings", CRACKING, CONCUSSION, "mortar." + payload, OVERCHARGE,
+            Set<String> nodes = Set.of("mortar.packed_charge", "mortar.hard_casings", HEAVY_POWDER, CONCUSSION, "mortar." + payload, OVERCHARGE,
                     "mortar.carpet_bombing", "mortar.coated_shells", "mortar.rich_mix", "mortar.deep_crack",
                     "mortar.lasting_mix");
             strategies.addAll(List.of(new Strategy(payload, nodes), bled(payload, nodes),

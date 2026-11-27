@@ -6,7 +6,7 @@ import td.term.TermText;
 
 import java.util.Set;
 
-/** Cracking Shells: every shell gives what its blast reaches a share of Crack. */
+/** Every shell gives what its blast reaches a share of Crack. */
 public final class CrackingShellsMechanic implements MortarMechanic {
 
     @Override
