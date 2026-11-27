@@ -46,9 +46,8 @@ final class UpgradeTreePlans {
                     node("mortar.lasting_mix", 6.2f))));
 
     private static final UpgradeTreePlan CINDER = UpgradeTreePlan.of(
-            tier(row(node("cinder.hot_flame", 0f), node("cinder.long_stream", 1f), node("cinder.wide_nozzle", 2f),
-                    node("base.range", 3f))),
-            tier(row(node("cinder.core", 0f), cluster("Nozzle", 1.3f), node("cinder.kindling", 3.6f))),
+            tier(row(node("cinder.hot_flame", 0f), node("cinder.long_stream", 1f), cluster("Nozzle", 2f))),
+            tier(row(node("tier.1", 0f), node("cinder.core", 1f), cluster("Lance or Fan", 2.2f))),
             tier(row(cluster("Flame", 0f), node("cinder.white_flame", 2.3f), node("cinder.bellows", 3.3f))),
             tier(row(cluster("Burning", 0f), node("cinder.hot_flame_2", 3.3f), node("cinder.long_stream_2", 4.3f))));
 

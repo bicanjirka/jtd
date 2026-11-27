@@ -7,7 +7,6 @@ import td.effect.Effect;
 import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.stat.StatPart;
-import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.cinder.Caught;
 import td.tower.cinder.CinderMechanic;
@@ -17,8 +16,8 @@ import td.tower.cinder.DragonsBreathMechanic;
 import td.tower.cinder.FlameLook;
 import td.tower.cinder.Flash;
 import td.tower.cinder.FlashoverMechanic;
-import td.tower.cinder.KindlingMechanic;
 import td.tower.cinder.MeltdownMechanic;
+import td.tower.cinder.SingeMechanic;
 import td.tower.cinder.SoulfireMechanic;
 import td.tower.cinder.StreamLook;
 import td.tower.cinder.ThermalShockMechanic;
@@ -33,17 +32,16 @@ import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.RangeNodes;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
 import td.util.TickRate;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.Set;
 import java.util.function.Function;
 
 import static td.tower.upgrade.MechanicCatalogue.entry;
@@ -70,29 +68,24 @@ public final class CinderTower extends AbstractTower {
     private static final int RELOAD_TICKS = Math.round(2 * TickRate.TICKS_PER_SECOND);
     /** The reload is paid on the fire clock in periods of this many ticks, so attack speed shortens it alone. */
     private static final int RELOAD_PERIOD_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
-    private static final int SEAR_STACKS = 5;
-    /** The stream's Singe outlasts its last touch by this, so an enemy at the cone's edge keeps it as the head turns. */
-    private static final int SINGE_LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
     private static final double MAX_TURN_RADIANS_PER_TICK = 0.3;
 
     private static final UpgradeNode HOT_FLAME = UpgradeNode.of("cinder.hot_flame", "Hot Flame", 15)
             .withModifiers(TowerModifiers.damage(15f));
     private static final UpgradeNode LONG_STREAM = UpgradeNode.of("cinder.long_stream", "Long Stream", 20)
             .withModifiers(TowerModifiers.stream(Math.round(0.5f * TickRate.TICKS_PER_SECOND)));
-    private static final UpgradeNode WIDE_NOZZLE = UpgradeNode.of("cinder.wide_nozzle", "Wide Nozzle", 5)
-            .withModifiers(TowerModifiers.coneTimes(1.5f));
+    private static final UpgradeNode WIDE_NOZZLE = UpgradeNode.of("cinder.wide_nozzle", "Wide Nozzle", 15)
+            .withModifiers(TowerModifiers.coneWidth(30f));
     private static final UpgradeNode LONG_NOZZLE = UpgradeNode.of(RangeNodes.RANGE_ID, "Long Nozzle", 15)
             .withModifiers(TowerModifiers.range(0.5f));
 
     private static final UpgradeNode CORE = UpgradeNode.of("cinder.core", "Core", 25)
             .inTier(1);
     private static final UpgradeNode LANCE = UpgradeNode.of(RangeNodes.RANGE_2_ID, "Lance", 5)
-            .withModifiers(TowerModifiers.range(0.65f).plus(TowerModifiers.coneTimes(0.6f)))
+            .withModifiers(TowerModifiers.range(0.65f).plus(TowerModifiers.coneWidth(-24f)))
             .inTier(1);
     private static final UpgradeNode FAN = UpgradeNode.of("cinder.fan", "Fan", 5)
-            .withModifiers(TowerModifiers.coneTimes(1.4f))
-            .inTier(1);
-    private static final UpgradeNode KINDLING = UpgradeNode.of("cinder.kindling", "Kindling", 5)
+            .withModifiers(TowerModifiers.coneWidth(24f))
             .inTier(1);
 
     private static final UpgradeNode SOULFIRE = UpgradeNode.of("cinder.soulfire", "Soulfire", 15)
@@ -123,16 +116,19 @@ public final class CinderTower extends AbstractTower {
             .inTier(3);
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(HOT_FLAME, LONG_STREAM, WIDE_NOZZLE, LONG_NOZZLE))
-            .with(CORE, LANCE, FAN, KINDLING,
+            .with(CORE, LANCE, FAN,
                     SOULFIRE, DRAGONS_BREATH, WHITE_FLAME, BELLOWS,
                     FLASHOVER, MELTDOWN, THERMAL_SHOCK, HOT_FLAME_2, LONG_STREAM_2)
-            .withCluster(UpgradeCluster.of("Nozzle", LANCE, FAN))
+            .withCluster(UpgradeCluster.of("Nozzle", WIDE_NOZZLE, LONG_NOZZLE))
+            .withCluster(UpgradeCluster.of("Lance or Fan", LANCE, FAN))
             .withCluster(UpgradeCluster.of("Flame", SOULFIRE, DRAGONS_BREATH))
-            .withCluster(UpgradeCluster.of("Burning", FLASHOVER, MELTDOWN, THERMAL_SHOCK));
+            .withCluster(UpgradeCluster.of("Burning", FLASHOVER, MELTDOWN, THERMAL_SHOCK))
+            .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withMechanics(), UpgradeTier.gated(120, 0),
+                    UpgradeTier.gated(200, 0)));
 
     private static final MechanicCatalogue<CinderMechanic> MECHANICS = MechanicCatalogue.of(
             entry(CORE.id(), CoreMechanic::new),
-            entry(KINDLING.id(), KindlingMechanic::new),
+            entry(UpgradeTree.tierNodeId(1), SingeMechanic::new),
             entry(SOULFIRE.id(), SoulfireMechanic::new),
             entry(DRAGONS_BREATH.id(), DragonsBreathMechanic::new),
             entry(WHITE_FLAME.id(), WhiteFlameMechanic::new),
@@ -143,8 +139,6 @@ public final class CinderTower extends AbstractTower {
     private final TurretAim turretAim = new TurretAim(MAX_TURN_RADIANS_PER_TICK, this.restHeading());
     private final OwnedMechanics<CinderMechanic> mechanics = new OwnedMechanics<>(MECHANICS);
     private final TargetSelector nearest = PreferringSelector.priority(new NearestSelector(this.centerX, this.centerY));
-    /** The enemies this stream has touched, which Sear has already scorched; it only answers membership. */
-    private final Set<EnemyMob> touched = new HashSet<>();
     /** Each hot enemy that flashed over this tick and an enemy it reached, in pairs, for the look. */
     private final List<Flash> flashes = new ArrayList<>();
     /** Each enemy the cone fed this tick and what it was fed, for the look. */
@@ -173,7 +167,7 @@ public final class CinderTower extends AbstractTower {
 
     /** Whom it aims at and what it pours, as the mechanics in {@code owned} make it. */
     private CinderSpec spec(List<CinderMechanic> owned) {
-        CinderSpec spec = CinderSpec.from(this.viewpoint(), SEAR_STACKS);
+        CinderSpec spec = CinderSpec.from(this.viewpoint());
         for (CinderMechanic mechanic : owned) {
             spec = mechanic.refineSpec(spec);
         }
@@ -189,7 +183,6 @@ public final class CinderTower extends AbstractTower {
         if (this.streamLeft == 0 && this.clock.isReady() && !inRange.isEmpty()) {
             this.streamStats = this.beginShot();
             this.streamLeft = Math.max(1, Math.round(this.streamStats.value(TowerStat.STREAM)));
-            this.touched.clear();
             this.target = Optional.empty();
         }
         if (this.streamLeft > 0 && this.target.filter(inRange::contains).isEmpty()) {
@@ -210,8 +203,8 @@ public final class CinderTower extends AbstractTower {
     }
 
     /**
-     * One tick of the stream: Flame and this Scorcher's share of Singe into every enemy in the cone, more Flame in the
-     * Core, Sear on the first touch of each enemy, then a hot burn's Flashover onto the enemies beside it.
+     * One tick of the stream: Flame into every enemy in the cone, this Scorcher's share of Singe with it once it has the
+     * Singe, more Flame in the Core, then a hot burn's Flashover onto the enemies beside it.
      */
     private void pour(CinderSpec spec) {
         double heading = this.turretAim.currentRadians();
@@ -225,9 +218,8 @@ public final class CinderTower extends AbstractTower {
             boolean inCore = spec.core().isActive() && this.offAxis(enemy, heading) <= halfWidth * spec.core().share();
             float fed = this.feed(enemy, perTick * (inCore ? spec.core().factor() : 1f), spec);
             this.caught.add(new Caught(enemy, DamageUnits.inPoints(fed) * TickRate.TICKS_PER_SECOND, inCore));
-            this.applyEffect(enemy, sink -> Effect.singed(SINGE_LINGER_TICKS, sink));
-            if (this.touched.add(enemy)) {
-                this.applyEffect(enemy, sink -> Effect.scorched(spec.searStacks()));
+            if (spec.singe()) {
+                this.applyEffect(enemy, sink -> Effect.singed(SingeMechanic.LINGER_TICKS, sink));
             }
             if (spec.flashover() && fuelOf(enemy, spec.fire()) >= hot) {
                 hotOnes.add(enemy);
@@ -270,7 +262,6 @@ public final class CinderTower extends AbstractTower {
         this.clock = new FireClock(RELOAD_PERIOD_TICKS - 1);
         this.streamLeft = 0;
         this.target = Optional.empty();
-        this.touched.clear();
         this.flashes.clear();
         this.caught.clear();
     }
@@ -347,12 +338,7 @@ public final class CinderTower extends AbstractTower {
     @Override
     protected List<AppliedEffect> baseApplies() {
         return List.of(new AppliedEffect(EffectKind.BURN, List.of(new AppliedEffect.Source(this.displayName(),
-                        TermText.of("its stream pours ").plus(TowerTerm.FLAME).plus(" into ").plus(EffectKind.BURN)))),
-                new AppliedEffect(EffectKind.SCORCHED, List.of(new AppliedEffect.Source(this.displayName(),
-                        TermText.of("Sear: the first touch of each stream gives " + SEAR_STACKS + " stacks")))),
-                new AppliedEffect(EffectKind.SINGED, List.of(new AppliedEffect.Source(this.displayName(),
-                        TermText.of("its stream gives its own share while it touches, and "
-                                + TermNumbers.seconds(SINGE_LINGER_TICKS / TickRate.TICKS_PER_SECOND) + " after")))));
+                TermText.of("its stream pours ").plus(TowerTerm.FLAME).plus(" into ").plus(EffectKind.BURN)))));
     }
 
     @Override

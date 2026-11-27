@@ -147,8 +147,6 @@ final class PerkPictograms {
             Map.entry("cinder.core", "=tower.core"),
             // Fan
             Map.entry("cinder.fan", "=cinder.wide_nozzle"),
-            // Kindling
-            Map.entry("cinder.kindling", "=effect.scorched"),
             // Soulfire
             Map.entry("cinder.soulfire", "=effect.soulfire"),
             // Dragon's Breath

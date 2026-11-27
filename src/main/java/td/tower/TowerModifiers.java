@@ -145,9 +145,9 @@ public final class TowerModifiers {
         return flat(TowerStat.SHATTER_DAMAGE, DamageUnits.ofPoints(points));
     }
 
-    /** The cone {@code factor} times as wide, after every flat and percent bonus. */
-    public static StatModifiers<TowerStat> coneTimes(float factor) {
-        return StatModifiers.of(TowerStat.CONE_WIDTH, StatModifier.times(factor));
+    /** The cone {@code degrees} wider, or narrower when negative. */
+    public static StatModifiers<TowerStat> coneWidth(float degrees) {
+        return flat(TowerStat.CONE_WIDTH, (float) Math.toRadians(degrees));
     }
 
     public static StatModifiers<TowerStat> stream(int ticks) {

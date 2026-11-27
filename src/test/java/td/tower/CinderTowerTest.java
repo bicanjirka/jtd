@@ -69,8 +69,9 @@ class CinderTowerTest {
     }
 
     @Test
-    void aStreamSingesAnEnemyInItsConeWithOneShareForTheTower() {
+    void aStreamSingesAnEnemyInItsConeWithOneShareForTheTowerOnceItsFirstTierIsOpen() {
         CinderTower tower = this.tower();
+        tower.earnXp(60);
         FakeEnemyMob ahead = FakeEnemyMob.at(150, 112);
         this.enemies(ahead);
 
@@ -180,32 +181,14 @@ class CinderTowerTest {
     }
 
     @Test
-    void searScorchesAnEnemyOnTheFirstTouchOfEachStreamOnly() {
+    void aStreamLeavesNoSingeBeforeItsFirstTierIsOpen() {
         CinderTower tower = this.tower();
         FakeEnemyMob ahead = FakeEnemyMob.at(150, 112);
         this.enemies(ahead);
-        int stream = Math.round(tower.stats().value(TowerStat.STREAM));
-        int reload = Math.round(tower.stats().value(TowerStat.RELOAD));
 
-        tickThrough(tower, 1, stream);
-        int afterOne = poured(ahead, EffectKind.SCORCHED).size();
-        tickThrough(tower, stream + 1, stream + reload + 1);
+        tickThrough(tower, 1, 3);
 
-        assertThat(afterOne).isEqualTo(1);
-        assertThat(poured(ahead, EffectKind.SCORCHED)).hasSize(2);
-    }
-
-    @Test
-    void kindlingMakesSearScorchMore() {
-        FakeEnemyMob plain = FakeEnemyMob.at(150, 112);
-        this.enemies(plain);
-        this.tower().doTick(1);
-        FakeEnemyMob kindled = FakeEnemyMob.at(150, 112);
-        this.enemies(kindled);
-
-        this.tower("Kindling").doTick(1);
-
-        assertThat(kindled.effectStacks(EffectKind.SCORCHED)).isGreaterThan(plain.effectStacks(EffectKind.SCORCHED));
+        assertThat(ahead.effectStacks(EffectKind.SINGED)).isZero();
     }
 
     @Test
@@ -310,11 +293,13 @@ class CinderTowerTest {
     }
 
     @Test
-    void itAppliesBurnItsSearsScorchedAndItsSingeOnceEachFromItself() {
+    void itAppliesBurnAndOnceItsFirstTierIsOpenItsSingeOnceEachFromItself() {
         CinderTower tower = this.tower();
+        assertThat(tower.applies()).extracting(AppliedEffect::term).containsExactly(EffectKind.BURN);
 
-        assertThat(tower.applies()).extracting(AppliedEffect::term)
-                .containsExactly(EffectKind.BURN, EffectKind.SCORCHED, EffectKind.SINGED);
+        tower.earnXp(60);
+
+        assertThat(tower.applies()).extracting(AppliedEffect::term).containsExactly(EffectKind.BURN, EffectKind.SINGED);
         assertThat(tower.applies().getFirst().sources()).hasSize(1);
         assertThat(tower.inspect().targeting()).isEqualTo("nearest");
     }
