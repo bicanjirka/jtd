@@ -15,7 +15,6 @@ import td.tower.aura.KinshipMechanic;
 import td.tower.aura.MentorMechanic;
 import td.tower.aura.PrismMark;
 import td.tower.aura.RevealedEnemy;
-import td.tower.splash.StaticMechanic;
 import td.util.GameWorld;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -214,15 +213,17 @@ class AuraTowerTest {
         this.place(new SniperTower(this.context, 0, 0));
         this.place(new SniperTower(this.context, 0, 0));
         this.place(new MortarTower(this.context, 0, 0));
+        this.place(new SplashTower(this.context, 0, 0));
         FakeEnemyMob inside = FakeEnemyMob.at(0, 0);
         this.enemies(inside);
 
         beacon.doTick(1);
         beacon.doTick(2);
 
-        assertThat(beacon.prismMarks()).containsExactly(PrismMark.SUNDER, PrismMark.CRACK);
+        assertThat(beacon.prismMarks()).containsExactly(PrismMark.SUNDER, PrismMark.CRACK, PrismMark.VULNERABLE);
         assertThat(inside.effectStacks(EffectKind.SUNDERED)).isEqualTo(PrismMark.SUNDER.stacks());
         assertThat(inside.hasEffect(EffectKind.CRACKED)).isTrue();
+        assertThat(inside.hasEffect(EffectKind.VULNERABLE)).isTrue();
     }
 
     @Test
@@ -260,27 +261,6 @@ class AuraTowerTest {
         this.place(new SniperTower(this.context, 0, 0));
 
         assertThat(beacon.prismMarks()).isEmpty();
-    }
-
-    @Test
-    void eachLightsStaticDischargesOnceTheEnemyIsBadlyHurt() {
-        AuraTower beacon = this.beaconWith("Prism");
-        AuraTower second = this.place(new AuraTower(this.context, 0, 0));
-        UpgradePaths.buy(second, this.context, "Prism");
-        SplashTower stormcaller = this.place(new SplashTower(this.context, 0, 0));
-        UpgradePaths.buy(stormcaller, this.context, "Stormcaller");
-        FakeEnemyMob enemy = FakeEnemyMob.at(0, 0);
-        this.enemies(enemy);
-        beacon.doTick(1);
-        second.doTick(1);
-        boolean hitWhileHealthy = !enemy.hits().isEmpty();
-
-        enemy.atHealthFraction(StaticMechanic.DISCHARGE_AT);
-        beacon.doTick(2);
-        second.doTick(2);
-
-        assertThat(hitWhileHealthy).isFalse();
-        assertThat(enemy.hits()).hasSize(2);
     }
 
     @Test

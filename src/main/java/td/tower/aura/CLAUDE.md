@@ -12,9 +12,8 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
 - The Spotlight holds its enemy until it dies or leaves the light, then picks again; Priority, Glare's Expose and a
   timed Prism mark are refreshed every tick the enemy stays, so they end a moment after it leaves.
 - Prism's stacked marks land on top of what the enemy carries, up to the mark's own cap, as it enters each light, and
-  again while it stays once the mark has worn off it; never every tick. The light's Static and Soulbrand are tags in
-  the Beacon's own `TagLedger`s, settled by the Burst's rules (`TagLedger.settleStatic`, `settleSoulbrand`); they pay no
-  currency, and their damage is the Beacon's.
+  again while it stays once the mark has worn off it; never every tick. Its timed marks are its own share, refreshed
+  every tick the enemy stays.
 - Daylight reaches the enemies only through `GameWorld.daylight()`: the Beacon adds its circle in the towers phase,
   and an enemy reads it on its next tick.
 - Breakthrough's XP is the one XP that does not come from `ExperienceAwarder`: the Beacon pays it on the tick a Lit

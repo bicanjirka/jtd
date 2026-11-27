@@ -2,7 +2,6 @@ package td.tower.aura;
 
 import td.effect.EffectKind;
 import td.term.Term;
-import td.tower.TowerTerm;
 
 /**
  * The mark a kind of tower leaves, as the light's Prism carries it: one stack, or what one stack is for that mark.
@@ -11,15 +10,10 @@ import td.tower.TowerTerm;
 public enum PrismMark {
     SUNDER(EffectKind.SUNDERED, 1),
     CRACK(EffectKind.CRACKED, 1),
-    // One stack of Scorch is a single point of resilience; what the Scorcher's sear gives is worth carrying.
-    SCORCH(EffectKind.SCORCHED, 5),
-    CHILL(EffectKind.CHILL, 1),
-    TOLL(EffectKind.TOLL, 1),
-    STATIC(TowerTerm.STATIC, 1),
-    SOULBRAND(TowerTerm.SOULBRAND, 1);
-
-    /** The slow the light's Chill takes. */
-    public static final float CHILL_STRENGTH = 0.15f;
+    UNRAVEL(EffectKind.UNRAVELED, 1),
+    SINGE(EffectKind.SINGED, 1),
+    VULNERABLE(EffectKind.VULNERABLE, 1),
+    TOLL(EffectKind.TOLL, 1);
 
     private final Term term;
     private final int stacks;
@@ -29,7 +23,7 @@ public enum PrismMark {
         this.stacks = stacks;
     }
 
-    /** What the mark is called: the effect, or the Burst passive whose stack it is. */
+    /** What the mark is called: the effect it puts on. */
     public Term term() {
         return this.term;
     }

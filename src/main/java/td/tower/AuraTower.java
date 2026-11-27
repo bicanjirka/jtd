@@ -23,9 +23,6 @@ import td.tower.aura.RevealedEnemy;
 import td.tower.aura.RingleaderMechanic;
 import td.tower.aura.SearchlightMechanic;
 import td.tower.aura.Spotlight;
-import td.tower.splash.SoulbrandMechanic;
-import td.tower.splash.StaticMechanic;
-import td.tower.splash.TagLedger;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
@@ -67,9 +64,8 @@ public final class AuraTower extends AbstractTower {
     private static final float STEADY_JAM_FACTOR = 0.5f;
     private static final int REVEAL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     private static final int AFTERGLOW_TICKS = Math.round(2f * TickRate.TICKS_PER_SECOND);
-    /** How long what the light holds an enemy to lasts once it leaves: Priority, Glare's Expose, Prism's Chill. */
+    /** How long what the light holds an enemy to lasts once it leaves: Priority, Glare's Expose, Prism's timed marks. */
     private static final int LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
-    private static final int CHILL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
 
     private static final UpgradeNode STEADY_LIGHT = UpgradeNode.of("aura.steady_light", "Steady Light", 10)
             .withEmission(TowerModifiers.disruptionTaken(STEADY_JAM_FACTOR));
@@ -119,11 +115,7 @@ public final class AuraTower extends AbstractTower {
 
         @Override
         public Optional<PrismMark> visitSplashTower(SplashTower tower) {
-            return switch (tower.fork()) {
-                case NONE -> Optional.empty();
-                case STORMCALLER -> Optional.of(PrismMark.STATIC);
-                case HEXER -> Optional.of(PrismMark.SOULBRAND);
-            };
+            return Optional.of(PrismMark.VULNERABLE);
         }
 
         @Override
@@ -143,12 +135,12 @@ public final class AuraTower extends AbstractTower {
 
         @Override
         public Optional<PrismMark> visitSeekerTower(SeekerTower tower) {
-            return Optional.of(PrismMark.CHILL);
+            return Optional.of(PrismMark.UNRAVEL);
         }
 
         @Override
         public Optional<PrismMark> visitCinderTower(CinderTower tower) {
-            return Optional.of(PrismMark.SCORCH);
+            return Optional.of(PrismMark.SINGE);
         }
     };
 
@@ -198,9 +190,6 @@ public final class AuraTower extends AbstractTower {
     private volatile List<RevealedEnemy> reveals = List.of();
     /** The enemies inside at the last tick: one entering gets Prism's stacks. Membership only. */
     private Set<EnemyMob> lastInside = Collections.newSetFromMap(new IdentityHashMap<>());
-    /** The enemies this light's Static and Soulbrand tag, one stack per light, settled by the Burst's rules. */
-    private TagLedger lightStatic = new TagLedger();
-    private TagLedger lightSoulbrand = new TagLedger();
 
     public AuraTower(GameWorld context, int x, int y) {
         super(TowerFactory.Type.AURA, new TowerBaseStats(DAMAGE_POINTS, RANGE, 0)
@@ -382,7 +371,6 @@ public final class AuraTower extends AbstractTower {
         this.lastInside = nowInside;
         this.reveals = List.copyOf(revealed);
         this.hold(spec.spotlight(), inside);
-        this.settleTags();
         if (spec.lesson() == LightSpec.Lesson.BREAKTHROUGH) {
             this.teachBreakthroughs(gameTime);
         }
@@ -411,9 +399,9 @@ public final class AuraTower extends AbstractTower {
                     this.applyStacks(enemy, StackingDebuff.SUNDERED, mark.stacks());
                 }
             }
-            case SCORCH -> {
-                if (landsAgain(enemy, EffectKind.SCORCHED, entered)) {
-                    this.applyEffect(enemy, _ -> Effect.scorched(mark.stacks()));
+            case UNRAVEL -> {
+                if (landsAgain(enemy, EffectKind.UNRAVELED, entered)) {
+                    this.applyStacks(enemy, StackingDebuff.UNRAVELED, mark.stacks());
                 }
             }
             case TOLL -> {
@@ -422,29 +410,14 @@ public final class AuraTower extends AbstractTower {
                 }
             }
             case CRACK -> this.applyEffect(enemy, sink -> Effect.cracked(mark.stacks(), MortarTower.CRACKED_TICKS, sink));
-            case CHILL -> this.applyEffect(enemy, sink -> Effect.chill(PrismMark.CHILL_STRENGTH, CHILL_TICKS, sink));
-            case STATIC -> this.lightStatic.tag(enemy);
-            case SOULBRAND -> this.lightSoulbrand.tag(enemy);
+            case SINGE -> this.applyEffect(enemy, sink -> Effect.singed(LINGER_TICKS, sink));
+            case VULNERABLE -> this.applyEffect(enemy, sink -> Effect.vulnerable(mark.stacks(), LINGER_TICKS, sink));
         }
     }
 
     /** A stacking mark lands as the enemy enters, and again while it stays once the mark has worn off it. */
     private static boolean landsAgain(EnemyMob enemy, EffectKind mark, boolean entered) {
         return entered || enemy.effectStacks(mark) == 0;
-    }
-
-    /** The light's Static discharges once badly hurt and its Soulbrand bursts once killed, as the Burst's do. */
-    private void settleTags() {
-        this.lightStatic.settleStatic(
-                enemy -> this.dealDamage(enemy, StaticMechanic.discharge(), this.stats().attack().withoutCrits()));
-        this.lightSoulbrand.settleSoulbrand(this::burstSoul);
-    }
-
-    private void burstSoul(EnemyMob dead) {
-        InRangeTargetQuery.around(dead, SoulbrandMechanic.BURST_CELLS * this.cellPixels())
-                .matching(this.context.enemies()).stream()
-                .filter(enemy -> !enemy.isDead())
-                .forEach(enemy -> this.dealDamage(enemy, SoulbrandMechanic.burst(), this.stats().attack().withoutCrits()));
     }
 
     /** Breakthrough: a Lit tower whose tier rose this tick teaches every other Lit tower. */
@@ -463,8 +436,6 @@ public final class AuraTower extends AbstractTower {
         this.held = Optional.empty();
         this.reveals = List.of();
         this.lastInside = Collections.newSetFromMap(new IdentityHashMap<>());
-        this.lightStatic = new TagLedger();
-        this.lightSoulbrand = new TagLedger();
     }
 
     @Override
