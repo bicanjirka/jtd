@@ -48,8 +48,9 @@ edge, so the nearer thing is on top. Ties keep the order they were built in, so 
 The heights:
 
 1. **Ground**: everything flat. The floor, path marks, the cell highlight and range circles, zone patches, tower
-   shadows, splash discs, spell blasts (discs, rings, sigils), a nuke's surge and shock ring, frost wakes, the
-   Sundial's shadow, ward outlines, the Beacon's light edge, aura rings. Flat marks keep the order they were built in.
+   shadows, splash discs, spell blasts, what a shell's blast lays down (scorch, shock and dust rings, tar), frost
+   wakes, the Sundial's shadow, ward outlines, the Beacon's light edge, aura rings. Flat marks keep the order they were
+   built in.
 2. **Standing**: towers and enemies, sorted together by their feet, each with everything that belongs to it painted
    with it at its foot:
    - an enemy: its body or fading corpse, what an effect sends off it (under and over the body), its tint, ice, shield
@@ -61,7 +62,7 @@ The heights:
      Tar's bubbles, the rime and the smoke stay with the flat patch.
    An enemy walking in front of a tower is painted over it, and behind it under it, its ice and shield with it.
 3. **Low air**: what flies or rises a little, between towers and enemies: beams, tracers, bullets, the laser, flame
-   streams, stones, shells, spell orbs, curses, a Mortar shell's blast.
+   streams, stones, shells, spell orbs, curses, what a Mortar shell's blast throws up.
 4. **Signals**: what the player reads: enemy bars, dots, rank badges, affix pips, hex runes, Toll and Silence marks,
    the "miss" mark, the selection ring, tower status and refund marks, upgrade arrows. Never hidden by anything that
    stands or flies low.
@@ -69,9 +70,10 @@ The heights:
    bolt, a nuke's fireball, stem and mushroom cloud.
 6. **Flash**: the nuke's white-out, over everything (as today).
 
-A visual sits at one height as a whole. Only where that reads wrong is it split across two heights; the nuke is the
-one known case (its surge on the ground, its cloud in the high air). The list above places every kind drawn today;
-planning confirms each, and a new visual names its height.
+A visual sits at one height as a whole, except a shell's blast: what it lays on the ground (its scorch or glow, its
+shock ring, the tar it splashes down) lies on the Ground under the enemies, and what it throws up is in the air, a
+Mortar shell's in Low air, a nuke's cloud in High air. The list above places every kind drawn today; a new visual names
+its height.
 
 Out of scope: real 3D, shadows cast by effects, any change to how a visual looks other than where it falls in the
 order, previews in panels (they keep painting their one subject).

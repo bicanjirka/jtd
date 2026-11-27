@@ -8,6 +8,8 @@ All the work still open, in one place. The source carries no inline `TODO`; a ga
 
 ## Feature ideas
 
+- **An enemy in the fire as a silhouette** (`docs/features/shipped/FEATURE-board-draw-layers.md`, "Still wanted"):
+  an enemy deep in a burning ground darkens to a silhouette among the flames. Not started.
 - **Balance after the next-gen towers** (`docs/features/FEATURE-balance-after-next-gen-towers.md`): the second pass,
   played by the built towers: the game's absolute difficulty, the floor and ceiling in play, lives, the bosses.
   Request written; the towers are built.

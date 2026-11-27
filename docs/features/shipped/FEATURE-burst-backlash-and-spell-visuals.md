@@ -44,7 +44,10 @@ Visuals:
   crit and every Thunderstrike also show the skeleton inside.
 - The Thunderstrike falls from the top of the board as a big lightning bolt, standing in 3D like the towers and blasts.
 - The Stormcaller's and the Hexer's blasts land with a brief impact of their own lore, which still shows where the full
-  damage core ends and where the half-damage edge ends.
+  damage core ends and where the half-damage edge ends. It is as brief and as quiet as a Mortar's Heavy shell: a short
+  flash, a thin ring running out to the core, then one running on to the edge, and nothing filled. The Stormcaller's
+  rings crackle and a few arcs of lightning leap out of the landing; the Hexer's pentagram is summoned line by line,
+  each line fading a frame or two after the next one starts.
 
 Out of scope: any change to Doom's record, to what the hexes pick or to any number.
 
