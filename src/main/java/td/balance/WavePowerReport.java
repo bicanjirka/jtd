@@ -292,7 +292,7 @@ public final class WavePowerReport {
             List<Step> steps = new ArrayList<>();
             for (int stage = -1; stage <= sheet.topStage(); stage++) {
                 int at = stage;
-                List<TowerSheet.Held> best = sheet.judged().stream()
+                List<TowerSheet.Held> best = sheet.rivals().stream()
                         .flatMap(tower -> sheet.stage(tower, at).stream()
                                 .max((left, right) -> Double.compare(sheet.power(left) / left.cost(),
                                         sheet.power(right) / right.cost())).stream())
@@ -300,7 +300,7 @@ public final class WavePowerReport {
                 steps.add(new Step(best.stream().mapToInt(TowerSheet.Held::cost).average().orElse(0),
                         best.stream().mapToDouble(sheet::power).average().orElse(0)));
             }
-            return new Yardstick(steps, sheet.judged().size(), TowerFactory.Type.COPY_PRICE_GROWTH);
+            return new Yardstick(steps, sheet.rivals().size(), TowerFactory.Type.COPY_PRICE_GROWTH);
         }
 
         /** What moving a tower from {@code built} steps to one more adds, in Walkers. */
@@ -330,7 +330,7 @@ public final class WavePowerReport {
             BoardSurvey survey = BoardSurvey.of(level);
             BoardSurvey bench = BoardSurvey.of(PowerBench.lane(EnemyPowerReport.NO_CONTENT, "walker"));
             double cells = Arrays.stream(TowerFactory.Type.values())
-                    .filter(type -> TowerSheet.isJudged(type.name()))
+                    .filter(type -> TowerSheet.isRival(type.name()))
                     .mapToDouble(type -> bench.reach(type) / bench.scale()).average().orElse(1);
             double onBench = bench.pathWithin(TowerBench.SUBJECT, cells * bench.scale(), 0) / bench.scale();
             List<double[]> reach = new ArrayList<>();

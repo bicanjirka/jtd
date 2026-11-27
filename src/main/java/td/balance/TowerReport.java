@@ -344,11 +344,11 @@ public final class TowerReport {
     private int towerPrice(String tower) {
         Held bare = this.sheet.bare(tower);
         double worth = this.sheet.worth(bare);
-        return !TowerSheet.isJudged(tower) || Math.abs(bare.cost() - worth) <= TOWER_BAND * worth ? bare.cost() : readable(worth);
+        return !TowerSheet.isRival(tower) || Math.abs(bare.cost() - worth) <= TOWER_BAND * worth ? bare.cost() : readable(worth);
     }
 
     private String towerVerdict(String tower, int price, double worth) {
-        if (!TowerSheet.isJudged(tower)) {
+        if (!TowerSheet.isRival(tower)) {
             return NOT_JUDGED;
         }
         return Math.abs(price - worth) <= TOWER_BAND * worth ? OK : "WARN price " + price + " -> " + readable(worth);
@@ -366,7 +366,7 @@ public final class TowerReport {
                         String.valueOf(best.cost()), ReportPage.number(this.sheet.power(best)),
                         ReportPage.number(this.sheet.worth(best)), ReportPage.number(this.value(best)),
                         ReportPage.number(against), bestAt.isEmpty() ? NONE : String.join(", ", bestAt),
-                        this.stageVerdict(tower, against, bestAt)));
+                        this.stageVerdict(against, bestAt)));
             }
         }
         return ReportPage.Table.of("Stages", List.of("tower", "name", "stage", "bought to", "build", "cost", "power", "worth",
@@ -377,10 +377,7 @@ public final class TowerReport {
                 .heating("value", "vs rivals");
     }
 
-    private String stageVerdict(String tower, double against, List<String> bestAt) {
-        if (!TowerSheet.isJudged(tower)) {
-            return NOT_JUDGED;
-        }
+    private String stageVerdict(double against, List<String> bestAt) {
         double share = bestAt.stream().mapToDouble(TowerSheet::weightOf).sum()
                 / this.sheet.scenarios().stream().mapToDouble(TowerSheet::weightOf).sum();
         if (share >= GO_TO) {
@@ -553,9 +550,7 @@ public final class TowerReport {
         Price own = this.ownPrice(tower, line);
         int suggested = this.sharedPrice(tower, line);
         String verdict = own.fair() > 0 ? priceVerdict(price, suggested) : own.verdict();
-        if (!TowerSheet.isJudged(tower)) {
-            verdict = NOT_JUDGED;
-        } else if (worth.share() <= -SINKS && !verdict.startsWith("BREACH")) {
+        if (worth.share() <= -SINKS && !verdict.startsWith("BREACH")) {
             verdict = String.format(Locale.ROOT, "BREACH the whole tree holds %.0f%% more without it; %s", -worth.share() * 100,
                     verdict);
         } else if (worth.share() >= KEYSTONE && !verdict.startsWith("BREACH")) {
@@ -712,7 +707,7 @@ public final class TowerReport {
                 rows.add(List.of(tower, this.sheet.bare(tower).name(), UpgradeTier.nameOf(tier),
                         String.valueOf(this.tierNodes(tower, tier).size()), ReportPage.number(this.tierCost(tower, tier, PRICE)),
                         ReportPage.number(this.tierCost(tower, tier, SUGGESTED)), ReportPage.number(mine),
-                        ReportPage.number(mine / rivals), this.tierVerdict(tower, mine / rivals)));
+                        ReportPage.number(mine / rivals), this.tierVerdict(mine / rivals)));
             }
         }
         return ReportPage.Table.of("Tiers", List.of("tower", "name", "tier", "nodes", "cost", "suggested", "tower prices",
@@ -737,10 +732,7 @@ public final class TowerReport {
         return this.tierNodes(tower, tier).stream().mapToInt(node -> Integer.parseInt(node.get(column))).sum();
     }
 
-    private String tierVerdict(String tower, double againstRivals) {
-        if (!TowerSheet.isJudged(tower)) {
-            return NOT_JUDGED;
-        }
+    private String tierVerdict(double againstRivals) {
         if (againstRivals > TIER_APART || againstRivals * TIER_APART < 1) {
             return "WARN " + times(againstRivals) + " the same tier of its rivals";
         }
@@ -792,7 +784,7 @@ public final class TowerReport {
                             entry.getValue().label(), String.valueOf(entry.getValue().cost()),
                             ReportPage.number(this.sheet.power(entry.getValue())), ReportPage.number(pick.value() / best),
                             ahead.isEmpty() ? NONE : String.join(", ", ahead),
-                            TowerSheet.isJudged(tower) ? verdicts.get(next) : NOT_JUDGED));
+                            verdicts.get(next)));
                     next++;
                 }
             }
@@ -840,7 +832,7 @@ public final class TowerReport {
             }
             double mean = Math.exp(read.stream().mapToDouble(Math::log).average().orElse(0));
             row.add(ReportPage.number(mean));
-            boolean judged = TowerSheet.isJudged(pair.get(0)) && TowerSheet.isJudged(pair.get(2));
+            boolean judged = TowerSheet.isRival(pair.get(0)) && TowerSheet.isRival(pair.get(2));
             String verdict = OK;
             if (mean >= SYNERGY_HIGH) {
                 verdict = "WARN strong pair: " + times(mean) + " what they hold apart";
@@ -923,7 +915,7 @@ public final class TowerReport {
 
     /** The judged towers that are bought to {@code stage}. */
     private List<String> rivalsAt(int stage) {
-        return this.sheet.judged().stream().filter(tower -> !this.sheet.stage(tower, stage).isEmpty()).toList();
+        return this.sheet.rivals().stream().filter(tower -> !this.sheet.stage(tower, stage).isEmpty()).toList();
     }
 
     /** The Walkers of {@code scenario} a credit holds alone, by {@code tower}'s best build of {@code stage} for it. */

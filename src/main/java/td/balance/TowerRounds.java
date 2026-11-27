@@ -82,7 +82,7 @@ final class TowerRounds {
         Map<String, Integer> prices = new LinkedHashMap<>();
         Map<String, List<Build>> builds = new LinkedHashMap<>();
         Map<String, List<Integer>> gates = new LinkedHashMap<>();
-        for (String tower : sheet.judged()) {
+        for (String tower : sheet.rivals()) {
             TowerSheet.Held bare = sheet.bare(tower);
             names.put(tower, bare.name());
             prices.put(tower, bare.cost());

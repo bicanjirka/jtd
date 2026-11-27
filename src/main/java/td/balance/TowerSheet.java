@@ -22,8 +22,11 @@ final class TowerSheet {
             Map.entry("regen", 1.0), Map.entry("tank", 2.0),
             Map.entry("controlled", 1.5));
     private static final double UNLISTED = 1.0;
-    /** Measured, but nothing is priced off them and no verdict counts them: their trees are not final. */
-    private static final Set<String> NOT_JUDGED = Set.of("AURA");
+    /**
+     * Towers that hold nothing alone: judged on what they add to the partners, but never a rival, in the going
+     * rate or in a median, and their tower price is set by hand.
+     */
+    private static final Set<String> SUPPORT = Set.of("AURA");
     private static final String SEPARATOR = ":";
     private static final int FIRST_SCENARIO = 9;
 
@@ -37,7 +40,7 @@ final class TowerSheet {
         this.scenarios = List.copyOf(scenarios);
         this.partners = Map.copyOf(partners);
         List<Double> rates = new ArrayList<>();
-        this.judged().forEach(tower -> rates.add(this.power(this.bare(tower)) / this.bare(tower).cost()));
+        this.rivals().forEach(tower -> rates.add(this.power(this.bare(tower)) / this.bare(tower).cost()));
         this.rate = rates.stream().mapToDouble(Double::doubleValue).average().orElse(0);
     }
 
@@ -136,13 +139,13 @@ final class TowerSheet {
         return this.builds.stream().map(Held::tower).distinct().toList();
     }
 
-    /** The towers verdicts and prices count. */
-    List<String> judged() {
-        return this.towers().stream().filter(TowerSheet::isJudged).toList();
+    /** The towers the rate, the medians and every rival comparison count. */
+    List<String> rivals() {
+        return this.towers().stream().filter(TowerSheet::isRival).toList();
     }
 
-    static boolean isJudged(String tower) {
-        return !NOT_JUDGED.contains(tower);
+    static boolean isRival(String tower) {
+        return !SUPPORT.contains(tower);
     }
 
     /** The scenarios fought, by the name each has alone. */

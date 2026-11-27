@@ -251,7 +251,7 @@ public final class PlayCheck {
     /** The best effort, the same on bare towers, and one player per judged tower that builds nothing else. */
     static List<Contestant> contestants(int ahead) {
         Set<TowerFactory.Type> judged = EnumSet.noneOf(TowerFactory.Type.class);
-        Arrays.stream(TowerFactory.Type.values()).filter(type -> TowerSheet.isJudged(type.name())).forEach(judged::add);
+        Arrays.stream(TowerFactory.Type.values()).filter(type -> TowerSheet.isRival(type.name())).forEach(judged::add);
         List<Contestant> contestants = new ArrayList<>();
         contestants.add(new Contestant(BEST, "every judged tower, every node",
                 new SearchingPlayer.Limits(judged, true, ahead), Expect.CLEARS));
