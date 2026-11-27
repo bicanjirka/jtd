@@ -472,7 +472,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
         List<Bolt> bolts = tower.recentBolts();
         for (int i = 0; i < bolts.size(); i++) {
-            this.bolt(bolts.get(i), i);
+            this.bolt(bolts.get(i), i, this.crownHeight(tower, tier));
         }
         return null;
     }
@@ -499,8 +499,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         return (float) ((this.gameTime - tick + this.interpolationAlpha) / ticks);
     }
 
-    /** A bolt as jagged lightning, a Thunderstrike's from the sky, and the enemy it hit shocked. */
-    private void bolt(Bolt bolt, int order) {
+    /**
+     * A bolt as jagged lightning, a Thunderstrike's from the sky, and the enemy it hit shocked; a Shockwave's leaves
+     * the tower's crown, {@code crownHeight} over its centre.
+     */
+    private void bolt(Bolt bolt, int order, float crownHeight) {
         if (bolt.kind() == BoltKind.THUNDERSTRIKE) {
             float progress = this.momentProgress(bolt.tick(), THUNDERBOLT_TICKS);
             if (progress < 1f) {
@@ -510,7 +513,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         } else {
             float progress = (this.gameTime - bolt.tick()) / DETONATION_TICKS;
             if (progress < 1f) {
-                this.lightning((float) bolt.from().x(), (float) bolt.from().y(), (float) bolt.to().x(),
+                float lift = bolt.kind() == BoltKind.SHOCKWAVE ? crownHeight : 0f;
+                this.lightning((float) bolt.from().x(), (float) bolt.from().y() - lift, (float) bolt.to().x(),
                         (float) bolt.to().y(), order, 1f - progress);
             }
         }
