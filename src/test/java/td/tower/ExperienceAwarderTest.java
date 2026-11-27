@@ -65,6 +65,7 @@ class ExperienceAwarderTest {
 
     private AuraTower auraWith(int x, int y, String... nodes) {
         AuraTower aura = this.place(new AuraTower(this.world, x, y));
+        UpgradePaths.buy(aura, this.world, "Lantern");
         UpgradePaths.buy(aura, this.world, nodes);
         return aura;
     }

@@ -3,8 +3,10 @@
 Constraints for `AuraTower` (in `td.tower`), the Beacon, and its mechanics in this package. The
 rules shared by every tower are in `td/tower/CLAUDE.md`.
 
-- The light is the Beacon's one circle: every enemy in it is Revealed (`REVEAL_TIME` after it leaves), and every
-  other tower whose centre is in it is Lit. A Beacon never lights another Beacon. What a Lit tower receives
+- The light is the Beacon's one circle: every other tower whose centre is in it is Lit, and the Beacon earns XP through
+  them from the start. Lit gives nothing until the Lantern node, which also makes every enemy in the light Revealed
+  (`REVEAL_TIME` after it leaves). A Beacon never lights another Beacon, and itself only with Self Light (tier II).
+  What a Lit tower receives
   (`buffFor`) is only a share of the jam and the blinding (`DISRUPTION_TAKEN`, a multiplier), never damage, range,
   fire rate or crit. Lights that overlap stack, each as if it stood alone.
 - The mechanics are `AuraMechanic`s over one `LightSpec`: which enemy the Spotlight holds, how the Lit towers learn,
@@ -16,5 +18,6 @@ rules shared by every tower are in `td/tower/CLAUDE.md`.
   every tick the enemy stays.
 - Daylight reaches the enemies only through `GameWorld.daylight()`: the Beacon adds its circle in the towers phase,
   and an enemy reads it on its next tick.
-- Breakthrough's XP is the one XP that does not come from `ExperienceAwarder`: the Beacon pays it on the tick a Lit
-  tower's `tierRise()` happens. Each tower opens each tier once, so the chain ends by itself.
+- Breakthrough's and Head Start's XP do not come from `ExperienceAwarder`: the Beacon pays Breakthrough's on the tick a Lit
+  tower's `tierRise()` happens. Each tower opens each tier once, so the chain ends by itself. Head Start's is the difference up to its floor every tick, so a tower built or reached later is lifted too.
+- Steady Light, Self Light and Head Start are the free tier I, II and III nodes, their mechanics under `UpgradeTree.tierNodeId`. The jam share is the product of the mechanics' factors (`LightSpec.jamTaken`).

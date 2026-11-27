@@ -13,7 +13,9 @@ import td.tower.aura.AuraMechanic;
 import td.tower.aura.BreakthroughMechanic;
 import td.tower.aura.DaylightMechanic;
 import td.tower.aura.GlareMechanic;
+import td.tower.aura.HeadStartMechanic;
 import td.tower.aura.KinshipMechanic;
+import td.tower.aura.LanternMechanic;
 import td.tower.aura.LastLightMechanic;
 import td.tower.aura.LightSpec;
 import td.tower.aura.MentorMechanic;
@@ -22,12 +24,15 @@ import td.tower.aura.PrismMechanic;
 import td.tower.aura.RevealedEnemy;
 import td.tower.aura.RingleaderMechanic;
 import td.tower.aura.SearchlightMechanic;
+import td.tower.aura.SelfLightMechanic;
 import td.tower.aura.Spotlight;
+import td.tower.aura.SteadyLightMechanic;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.upgrade.MechanicCatalogue;
 import td.tower.upgrade.OwnedMechanics;
 import td.tower.upgrade.UpgradeCluster;
 import td.tower.upgrade.UpgradeNode;
+import td.tower.upgrade.UpgradeTier;
 import td.tower.upgrade.UpgradeTree;
 import td.util.GameWorld;
 import td.util.ThreadConfined;
@@ -45,10 +50,11 @@ import java.util.Set;
 import static td.tower.upgrade.MechanicCatalogue.entry;
 
 /**
- * The Beacon: a lantern that never attacks. Its light reveals every enemy in it, and every other tower whose centre
- * is in it is Lit and takes less of the jam and the blinding. It gives no damage, range or fire rate; what its nodes
- * add is a counter (Daylight, Glare, Sanctuary), a direction (the Spotlight), time (the Lessons) or every Lit type's
- * mark (Prism). Lights that overlap stack, each as if it stood alone.
+ * The Beacon: a lantern that never attacks. Every other tower whose centre is in its light is Lit; the Lantern node
+ * makes the light reveal every enemy in it and a Lit tower take less of the jam and the blinding, and without it Lit
+ * gives nothing. It gives no damage, range or fire rate; what its nodes add is a counter (Daylight, Glare,
+ * Sanctuary), a direction (the Spotlight), time (the Lessons) or every Lit type's mark (Prism). Lights that overlap
+ * stack, each as if it stood alone.
  */
 @ThreadConfined(value = ThreadConfined.Owner.GAME_LOOP)
 public final class AuraTower extends AbstractTower {
@@ -57,18 +63,13 @@ public final class AuraTower extends AbstractTower {
     public static final float DAMAGE_POINTS = 0f;
     /** The light's radius; no node changes it. */
     public static final float RANGE = 2.5f;
-    /** The share of the jam and the blinding a Lit tower still takes. */
-    public static final float LIT_JAM_TAKEN = 0.66f;
 
-    /** Steady Light halves what the bare light lets through. */
-    private static final float STEADY_JAM_FACTOR = 0.5f;
     private static final int REVEAL_TICKS = Math.round(TickRate.TICKS_PER_SECOND);
     private static final int AFTERGLOW_TICKS = Math.round(2f * TickRate.TICKS_PER_SECOND);
     /** How long what the light holds an enemy to lasts once it leaves: Priority, Glare's Expose, Prism's timed marks. */
     private static final int LINGER_TICKS = Math.round(TickRate.TICKS_PER_SECOND / 2f);
 
-    private static final UpgradeNode STEADY_LIGHT = UpgradeNode.of("aura.steady_light", "Steady Light", 10)
-            .withEmission(TowerModifiers.disruptionTaken(STEADY_JAM_FACTOR));
+    private static final UpgradeNode LANTERN = UpgradeNode.of("aura.lantern", "Lantern", 10);
     private static final UpgradeNode AFTERGLOW = UpgradeNode.of("aura.afterglow", "Afterglow", 5)
             .withModifiers(TowerModifiers.revealTime(AFTERGLOW_TICKS));
 
@@ -87,15 +88,21 @@ public final class AuraTower extends AbstractTower {
             .inTier(3);
     private static final UpgradeNode PRISM = UpgradeNode.of("aura.prism", "Prism", 90).inTier(3);
 
-    private static final UpgradeTree TREE = UpgradeTree.of(List.of(STEADY_LIGHT, AFTERGLOW))
+    private static final UpgradeTree TREE = UpgradeTree.of(List.of(LANTERN, AFTERGLOW))
             .with(SEARCHLIGHT, LAST_LIGHT, RINGLEADER, KINSHIP, MENTOR, BREAKTHROUGH,
                     DAYLIGHT, GLARE,
                     SANCTUARY, PRISM)
             .withCluster(UpgradeCluster.of("Spotlight", SEARCHLIGHT, LAST_LIGHT, RINGLEADER))
             .withCluster(UpgradeCluster.of("Lessons", KINSHIP, MENTOR, BREAKTHROUGH))
-            .withCluster(UpgradeCluster.of("Edge of light", DAYLIGHT, GLARE));
+            .withCluster(UpgradeCluster.of("Edge of light", DAYLIGHT, GLARE))
+            .withTiers(List.of(UpgradeTier.open(), UpgradeTier.gated(60, 0).withMechanics(),
+                    UpgradeTier.gated(120, 0).withMechanics(), UpgradeTier.gated(200, 0).withMechanics()));
 
     private static final MechanicCatalogue<AuraMechanic> MECHANICS = MechanicCatalogue.of(
+            entry(LANTERN.id(), LanternMechanic::new),
+            entry(UpgradeTree.tierNodeId(1), SteadyLightMechanic::new),
+            entry(UpgradeTree.tierNodeId(2), SelfLightMechanic::new),
+            entry(UpgradeTree.tierNodeId(3), HeadStartMechanic::new),
             entry(SEARCHLIGHT.id(), SearchlightMechanic::new),
             entry(LAST_LIGHT.id(), LastLightMechanic::new),
             entry(RINGLEADER.id(), RingleaderMechanic::new),
@@ -238,12 +245,15 @@ public final class AuraTower extends AbstractTower {
 
     /** What a Lit tower takes from this light: the share of the jam and the blinding it lets through. */
     public StatModifiers<TowerStat> light() {
-        return TowerModifiers.disruptionTaken(LIT_JAM_TAKEN).plus(this.upgrades().totalEmission());
+        return TowerModifiers.disruptionTaken(this.spec().jamTaken()).plus(this.upgrades().totalEmission());
     }
 
-    /** Another tower whose centre is in the light. Never itself, and never another Beacon. */
+    /** Another tower whose centre is in the light, and itself once Self Light lets it. Never another Beacon. */
     private boolean lights(Tower other) {
-        if (other == this || other.getType() == TowerFactory.Type.AURA) {
+        if (other == this) {
+            return this.spec().litsSelf();
+        }
+        if (other.getType() == TowerFactory.Type.AURA) {
             return false;
         }
         int dx = this.centerX - other.getX();
@@ -359,10 +369,12 @@ public final class AuraTower extends AbstractTower {
         for (EnemyMob enemy : inside) {
             nowInside.add(enemy);
             boolean entered = !this.lastInside.contains(enemy);
-            if (entered && enemy.isHidden()) {
-                revealed.add(new RevealedEnemy(enemy, gameTime));
+            if (spec.reveals()) {
+                if (entered && enemy.isHidden()) {
+                    revealed.add(new RevealedEnemy(enemy, gameTime));
+                }
+                this.reveal(enemy, revealTicks);
             }
-            this.reveal(enemy, revealTicks);
             if (spec.edge() == LightSpec.Edge.GLARE) {
                 this.applyEffect(enemy, sink -> Effect.exposed(LINGER_TICKS, sink));
             }
@@ -373,6 +385,19 @@ public final class AuraTower extends AbstractTower {
         this.hold(spec.spotlight(), inside);
         if (spec.lesson() == LightSpec.Lesson.BREAKTHROUGH) {
             this.teachBreakthroughs(gameTime);
+        }
+        if (spec.xpFloor() > 0) {
+            this.liftToFloor(spec.xpFloor());
+        }
+    }
+
+    /** Head Start: a Lit tower under the floor earns what it lacks. */
+    private void liftToFloor(int floor) {
+        for (Tower tower : this.litTowers()) {
+            int lacking = floor - tower.experience().xp();
+            if (lacking > 0) {
+                tower.earnXp(lacking);
+            }
         }
     }
 
@@ -420,11 +445,14 @@ public final class AuraTower extends AbstractTower {
         return entered || enemy.effectStacks(mark) == 0;
     }
 
-    /** Breakthrough: a Lit tower whose tier rose this tick teaches every other Lit tower. */
+    /** Breakthrough: a Lit tower whose tier rose this tick, beyond what Head Start gives, teaches every other Lit tower. */
     private void teachBreakthroughs(int gameTime) {
         List<Tower> lit = this.litTowers();
+        int floor = this.spec().xpFloor();
         for (Tower opener : lit) {
-            if (opener.tierRise().ticksSince(gameTime, 0).isPresent()) {
+            TierRise rise = opener.tierRise();
+            // A tier the light's own XP floor opens teaches no one, or building and selling towers would farm XP.
+            if (rise.ticksSince(gameTime, 0).isPresent() && opener.upgradeTree().tiers().get(rise.to()).xp() > floor) {
                 lit.stream().filter(tower -> tower != opener).forEach(tower -> tower.earnXp(BreakthroughMechanic.XP));
             }
         }
@@ -440,19 +468,24 @@ public final class AuraTower extends AbstractTower {
 
     @Override
     protected List<AppliedEffect> baseApplies() {
-        float seconds = this.stats().value(TowerStat.REVEAL_TIME) / TickRate.TICKS_PER_SECOND;
-        return List.of(new AppliedEffect(EffectKind.REVEALED, List.of(new AppliedEffect.Source(this.displayName(),
-                        TermText.of("every enemy in the ").plus(TowerTerm.LIGHT)
-                                .plus(", while inside and " + TermNumbers.seconds(seconds) + " after")))),
-                new AppliedEffect(TowerTerm.LIT, List.of(new AppliedEffect.Source(this.displayName(),
-                        TermText.of("every other tower in the ").plus(TowerTerm.LIGHT).plus(": ")
-                                .plus(TowerStat.DISRUPTION_TAKEN.changeText(this.light().get(TowerStat.DISRUPTION_TAKEN)))))));
+        LightSpec spec = this.spec();
+        List<AppliedEffect> applied = new ArrayList<>();
+        if (spec.reveals()) {
+            float seconds = this.stats().value(TowerStat.REVEAL_TIME) / TickRate.TICKS_PER_SECOND;
+            applied.add(new AppliedEffect(EffectKind.REVEALED, List.of(new AppliedEffect.Source(this.displayName(),
+                    TermText.of("every enemy in the ").plus(TowerTerm.LIGHT)
+                            .plus(", while inside and " + TermNumbers.seconds(seconds) + " after")))));
+        }
+        applied.add(new AppliedEffect(TowerTerm.LIT, List.of(new AppliedEffect.Source(this.displayName(),
+                    TermText.of("every other tower in the ").plus(TowerTerm.LIGHT).plus(": ")
+                            .plus(TowerStat.DISRUPTION_TAKEN.changeText(this.light().get(TowerStat.DISRUPTION_TAKEN)))))));
+        return applied;
     }
 
     @Override
     protected String description() {
-        return "Never attacks. Its light shows the hidden and shields the towers in it from jam; a Beacon never "
-                + "lights another Beacon, and lights that overlap stack.";
+        return "Never attacks. Its light reaches the towers in it, but they gain nothing and the hidden stay hidden until its "
+                + "Lantern is bought, which shows the hidden and shields those towers from jam; a Beacon never lights another Beacon, and lights that overlap stack.";
     }
 
     public <R> R accept(TowerVisitor<R> visitor) {

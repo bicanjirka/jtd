@@ -125,7 +125,7 @@ class TowerSheetTextTest {
     @Test
     void aPrismBeaconsPaneListsTheMarksItsLightCarriesNow() {
         Tower beacon = this.place(TowerFactory.Type.AURA, 0, 0);
-        UpgradePaths.buy(beacon, this.world, "Prism");
+        UpgradePaths.buy(beacon, this.world, "Lantern", "Prism");
         InfoSheet empty = TowerSheetText.status(BoardRenderer.liveInspection(beacon));
         this.place(TowerFactory.Type.SNIPER, 1, 0);
 

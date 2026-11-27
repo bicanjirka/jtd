@@ -69,10 +69,10 @@ final class UpgradeTreePlans {
             tier(row(node("pulse.swift_shadow", 0f), cluster("Payoff", 2f), node("pulse.deep_pull_2", 6f))));
 
     private static final UpgradeTreePlan AURA = UpgradeTreePlan.of(
-            tier(row(node("aura.steady_light", 2.5f), node("aura.afterglow", 3.5f))),
-            tier(row(cluster("Spotlight", 0f), cluster("Lessons", 4.25f))),
-            tier(row(cluster("Edge of light", 0f))),
-            tier(row(node("aura.sanctuary", 2.5f), node("aura.prism", 3.5f))));
+            tier(row(node("aura.lantern", 2.5f), node("aura.afterglow", 3.5f))),
+            tier(row(node("tier.1", 0f), cluster("Spotlight", 1f), cluster("Lessons", 4.25f))),
+            tier(row(node("tier.2", 0f), cluster("Edge of light", 1f))),
+            tier(row(node("tier.3", 0f), node("aura.sanctuary", 2.5f), node("aura.prism", 3.5f))));
 
     private UpgradeTreePlans() {
     }

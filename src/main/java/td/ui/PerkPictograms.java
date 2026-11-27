@@ -190,7 +190,7 @@ final class PerkPictograms {
             // Swift Shadow
             Map.entry("pulse.swift_shadow", "=tower.sundial"),
             // Steady Light
-            Map.entry("aura.steady_light", "F M12 10.4L15.6 21.4H13.4L12 16.8L10.6 21.4H8.4Z ; F O12 8.4 2 ; S M7.6 4.6A6.2 6.2 0 0 0 7.6 12.2 M16.4 4.6A6.2 6.2 0 0 1 16.4 12.2 ; T M4.2 2A10.2 10.2 0 0 0 4.2 14.8 M19.8 2A10.2 10.2 0 0 1 19.8 14.8"),
+            Map.entry("aura.lantern", "F M12 10.4L15.6 21.4H13.4L12 16.8L10.6 21.4H8.4Z ; F O12 8.4 2 ; S M7.6 4.6A6.2 6.2 0 0 0 7.6 12.2 M16.4 4.6A6.2 6.2 0 0 1 16.4 12.2 ; T M4.2 2A10.2 10.2 0 0 0 4.2 14.8 M19.8 2A10.2 10.2 0 0 1 19.8 14.8"),
             // Afterglow
             Map.entry("aura.afterglow", "F M12 20.4L2.8 9.4A13 13 0 0 1 21.2 9.4Z ; X M7.2 14.6A7 7 0 0 1 16.8 14.6 M4.6 11.6A10.6 10.6 0 0 1 19.4 11.6"),
             // Searchlight
@@ -210,7 +210,7 @@ final class PerkPictograms {
             // Glare
             Map.entry("aura.glare", "=effect.exposed"),
             // Sanctuary
-            Map.entry("aura.sanctuary", "=aura.steady_light"),
+            Map.entry("aura.sanctuary", "=aura.lantern"),
             // Prism
             Map.entry("aura.prism", "=tower.prism"),
             // Deep Freeze

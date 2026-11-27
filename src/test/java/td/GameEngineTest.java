@@ -506,6 +506,7 @@ class GameEngineTest {
         engine.startPlacing(TowerFactory.Type.AURA, AuraTower.RANGE);
         engine.mouseClicked(BoardFixtures.cellCenter(5), BoardFixtures.cellCenter(5));
         Tower sniper = towerOfType(engine, TowerFactory.Type.SNIPER);
+        UpgradePaths.buy(towerOfType(engine, TowerFactory.Type.AURA), engine.getGameWorld(), "Lantern");
         boolean litBefore = sniper.conditions().stream().anyMatch(state -> state.term() == TowerTerm.LIT);
         engine.nextWave();
 

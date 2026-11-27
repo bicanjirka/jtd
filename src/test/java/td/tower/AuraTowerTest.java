@@ -11,6 +11,7 @@ import td.fixtures.WorldFixtures;
 import td.stat.DisruptionAura;
 import td.stat.StatModifiers;
 import td.tower.aura.BreakthroughMechanic;
+import td.tower.aura.HeadStartMechanic;
 import td.tower.aura.KinshipMechanic;
 import td.tower.aura.MentorMechanic;
 import td.tower.aura.PrismMark;
@@ -27,9 +28,16 @@ class AuraTowerTest {
     private AuraTower beaconWith(String... nodes) {
         AuraTower beacon = new AuraTower(this.context, 0, 0);
         this.context.towers().add(beacon);
+        UpgradePaths.buy(beacon, this.context, "Lantern");
         if (nodes.length > 0) {
             UpgradePaths.buy(beacon, this.context, nodes);
         }
+        return beacon;
+    }
+
+    private AuraTower beaconAt(int x, int y) {
+        AuraTower beacon = this.place(new AuraTower(this.context, x, y));
+        UpgradePaths.buy(beacon, this.context, "Lantern");
         return beacon;
     }
 
@@ -68,7 +76,7 @@ class AuraTowerTest {
         SniperTower lit = this.place(new SniperTower(this.context, 0, 0));
         float underOne = lit.stats().value(TowerStat.DISRUPTION_TAKEN);
 
-        this.place(new AuraTower(this.context, 0, 0));
+        this.beaconAt(0, 0);
 
         assertThat(underOne).isEqualTo(first.light().get(TowerStat.DISRUPTION_TAKEN).multiply());
         assertThat(lit.stats().value(TowerStat.DISRUPTION_TAKEN)).isCloseTo(underOne * underOne, within(1e-6f));
@@ -77,7 +85,7 @@ class AuraTowerTest {
     @Test
     void aBeaconNeverLightsAnotherBeaconOrItself() {
         AuraTower first = this.beaconWith();
-        AuraTower second = this.place(new AuraTower(this.context, 0, 0));
+        AuraTower second = this.beaconAt(0, 0);
 
         assertThat(first.buffFor(second)).isEqualTo(StatModifiers.none());
         assertThat(first.buffFor(first)).isEqualTo(StatModifiers.none());
@@ -88,7 +96,7 @@ class AuraTowerTest {
         AuraTower beacon = this.beaconWith();
         SniperTower near = this.place(new SniperTower(this.context, 0, 0));
         this.place(new SniperTower(this.context, (int) this.outside(), 0));
-        this.place(new AuraTower(this.context, 0, 0));
+        this.beaconAt(0, 0);
         SplashTower later = this.place(new SplashTower(this.context, 0, 0));
 
         assertThat(beacon.litTowers()).containsExactly(near, later);
@@ -98,7 +106,7 @@ class AuraTowerTest {
     void sellingTheBeaconTakesItsLightAway() {
         this.context.economy().startEconomy(100, 5);
         SniperTower lit = this.place(new SniperTower(this.context, 0, 0));
-        AuraTower beacon = this.place(new AuraTower(this.context, 0, 0));
+        AuraTower beacon = this.beaconAt(0, 0);
 
         this.context.towers().sell(beacon);
 
@@ -243,7 +251,7 @@ class AuraTowerTest {
     @Test
     void eachLightAnEnemyEntersAddsItsOwnStack() {
         AuraTower first = this.beaconWith("Prism");
-        AuraTower second = this.place(new AuraTower(this.context, 0, 0));
+        AuraTower second = this.beaconAt(0, 0);
         UpgradePaths.buy(second, this.context, "Prism");
         this.place(new SniperTower(this.context, 0, 0));
         FakeEnemyMob enemy = FakeEnemyMob.at(0, 0);
@@ -322,5 +330,61 @@ class AuraTowerTest {
 
         assertThat(beacon.applies()).extracting(AppliedEffect::term)
                 .containsExactly(EffectKind.REVEALED, TowerTerm.LIT, EffectKind.EXPOSED);
+    }
+
+    @Test
+    void aBeaconWithoutItsLanternLightsTowersButGivesThemNothingAndRevealsNothing() {
+        AuraTower beacon = this.place(new AuraTower(this.context, 0, 0));
+        SniperTower near = this.place(new SniperTower(this.context, 0, 0));
+        FakeEnemyMob inside = FakeEnemyMob.ghostAt(0, 0);
+        this.enemies(inside);
+
+        beacon.doTick(1);
+
+        assertThat(beacon.litTowers()).containsExactly(near);
+        assertThat(near.stats().value(TowerStat.DISRUPTION_TAKEN)).isEqualTo(1f);
+        assertThat(inside.appliedEffects()).isEmpty();
+    }
+
+    @Test
+    void theBeaconLightsItselfOnlyOnceItsOwnTierIIOpens() {
+        AuraTower beacon = this.beaconWith();
+        int tierII = beacon.upgradeTree().tiers().get(2).xp();
+        float before = beacon.stats().value(TowerStat.DISRUPTION_TAKEN);
+
+        beacon.earnXp(tierII);
+
+        assertThat(before).isEqualTo(1f);
+        assertThat(beacon.litTowers()).containsExactly(beacon);
+        assertThat(beacon.stats().value(TowerStat.DISRUPTION_TAKEN)).isLessThan(before);
+    }
+
+    @Test
+    void aTierTheXpFloorOpensTeachesNoOneSoBuildingTowersFarmsNothing() {
+        AuraTower beacon = this.beaconWith("Breakthrough");
+        beacon.earnXp(beacon.upgradeTree().tiers().get(3).xp());
+        SniperTower resident = this.place(new SniperTower(this.context, 0, 0));
+        beacon.doTick(1);
+        SniperTower built = this.place(new SniperTower(this.context, 0, 0));
+
+        beacon.doTick(2);
+        beacon.doTick(3);
+
+        assertThat(built.experience().xp()).isEqualTo(HeadStartMechanic.XP);
+        assertThat(resident.experience().xp()).isEqualTo(HeadStartMechanic.XP);
+    }
+
+    @Test
+    void aLitTowerUnderTheXpFloorIsLiftedToItOnceAndAnotherOutsideTheLightIsNot() {
+        AuraTower beacon = this.beaconWith();
+        beacon.earnXp(beacon.upgradeTree().tiers().get(3).xp());
+        SniperTower built = this.place(new SniperTower(this.context, 0, 0));
+        SniperTower dark = this.place(new SniperTower(this.context, (int) this.outside(), 0));
+
+        beacon.doTick(1);
+        beacon.doTick(2);
+
+        assertThat(built.experience().xp()).isEqualTo(HeadStartMechanic.XP);
+        assertThat(dark.experience().xp()).isZero();
     }
 }
