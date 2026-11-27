@@ -222,3 +222,40 @@ shipped design doc and breaks on a name the doc lacks; then
   empty, every commit compiles (`git rev-list` + `mvn -q compile`), `mvn verify` passes, delete the tag.
 - A content change adds no test. A test it breaks is rewritten on a fixture or deleted, never given a new expected
   number. Update `docs/CONTENT.md`'s tower table and any `docs/BALANCE.md` or `CLAUDE.md` line the step makes false.
+
+## Lessons from the Scorcher's retune
+
+- **Commit in the step's two commits as you go.** Fixups into an earlier step conflict in every later commit that
+  touched the same lines (a renamed node, a price on the same line). The Scorcher's restructure needed a scripted
+  resolver (take one side of each hunk, then fix what the other side brought back) and still folded tier I changes into
+  a later commit. Settle a step, commit it as two commits, and only then start the next. After a restructure, check
+  `git diff retune-backup`: a resolver that takes "theirs" can quietly bring back a deleted node.
+- **Measure a node the bench cannot see with a sweep, not a guess.** Edit the node's constant, run `TowerBench --towers
+  <t>` and `TowerReport --tower <t>`, read the node's worth and cluster row, restore the file (all in one script, the
+  file restored in a `finally`). Two or three values of one knob show whether the node responds at all: Heatstroke's
+  fuel cap went 3.6 (100), 9.1 (80), 22.5 (60), 31 (40), Meltdown's share was linear. A node that does not respond
+  (Thermal Shock, +100% for worth 1.7) needs a scenario, not a bigger number.
+- **A temporary scenario changes the stored tables.** Adding a scenario column to `towers.tsv` makes every other
+  tower's row stale and `TowerReport`'s rivals vanish (every ratio reads 1.00 DOMINANT). Revert the scenario, then run
+  the full `TowerBench` (no `--towers`, about 4 minutes) before trusting a report again. Use team stands with owned node
+  ids (`Stand(type, cell, List.of("seeker.deep_freeze"))`) to put Chill or Freeze beside the subject.
+- **The bench cannot see a cone past 120 degrees, a tail after leaving range, mixed waves, or a node that only pays
+  beside a partner (its alone column reads 0).** Say so, price a combo node by its best scenario, and judge width by a
+  `PreviewBoard` render.
+- **The user may price below worth on purpose** (a short-range tower is meant to pay a little above the Sniper per
+  credit). Report the stage ratios first, then lower prices until they land, and note in the commit that the prices
+  sit below worth so the final cross-tower pass leaves them.
+- **`DpsProbe.java`** (beside this file) lists a tower's highest-damage builds against one slow plain enemy; compile it
+  into `td.balance` (its header has the command). Single target only.
+- **Shell and file hygiene.** `sed -i` rewrites CRLF files as LF: run `mvn -q spotless:apply` after it, and in Python
+  read with `newline=''` and normalise before matching. Pass Java tools repo-relative paths with forward slashes: a
+  Windows path with backslashes in bash loses them and writes a file named `Usersjuras...` in the repo root. Python on
+  Windows and bash disagree about `/tmp`; keep scratch files in the scratchpad. `mvn -q verify && git commit`, never
+  `;`. `TermWordingTest` rejects a plain word that is also a term ("burns").
+- **Pictures.** `PreviewBoard` coordinates in `crop` are board pixels; a full-tier tower kills a lone Walker in about
+  a dozen ticks, so `record` a strip from the tick it enters range. A tower beside a path segment the enemy walks
+  (not the loop's far side) is needed to catch a stream. A shop icon check is a scratch class in `td.ui` painting
+  `TowerIcons.paint` next to the neighbours.
+- **Mechanics reuse.** Shadow damage is `AttackProfile.asShadow()`; a tower's effect can deal it through
+  `AbstractTower.applyEffect(target, effect, attack)`. The pool rule (100 fuel in 4 s, time grows with the root of the
+  fuel) is shared by every tower: a pace change goes in the final cross-tower pass, not in one tower's step.
