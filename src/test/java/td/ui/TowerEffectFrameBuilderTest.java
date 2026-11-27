@@ -25,8 +25,8 @@ class TowerEffectFrameBuilderTest {
         TowerEffectFrameBuilder used = new TowerEffectFrameBuilder(context, 0, 0.0, 0.0);
         used.addStatus(tower);
 
-        assertThat(unused.build()).singleElement().isInstanceOf(RefundMarkDraw.class);
-        assertThat(used.build()).isEmpty();
+        assertThat(unused.build()).extracting(PlacedDraw::draw).singleElement().isInstanceOf(RefundMarkDraw.class);
+        assertThat(used.build()).extracting(PlacedDraw::draw).isEmpty();
     }
 
     @Test
@@ -43,7 +43,7 @@ class TowerEffectFrameBuilderTest {
         builder.addStatus(jammed);
         builder.addStatus(clear);
 
-        assertThat(builder.build()).singleElement().isInstanceOfSatisfying(TowerStatusDraw.class,
+        assertThat(builder.build()).extracting(PlacedDraw::draw).singleElement().isInstanceOfSatisfying(TowerStatusDraw.class,
                 marker -> assertThat(marker.palette()).isEqualTo(Palette.DISRUPTION));
     }
 }

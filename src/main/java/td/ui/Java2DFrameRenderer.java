@@ -5,6 +5,8 @@ import td.term.Term;
 import td.ui.render.AffixPipsDraw;
 import td.ui.render.BeamDraw;
 import td.ui.render.BlastDraw;
+import td.ui.render.BlastGroundDraw;
+import td.ui.render.BoardDraw;
 import td.ui.render.BulletDraw;
 import td.ui.render.CannonballDraw;
 import td.ui.render.CasingDraw;
@@ -65,13 +67,17 @@ import td.ui.render.StreamDraw;
 import td.ui.render.ThunderboltDraw;
 import td.ui.render.TollMarkDraw;
 import td.ui.render.TowerEffectDraw;
+import td.ui.render.TowerGroundDraw;
 import td.ui.render.TowerLook;
 import td.ui.render.TowerSpriteDraw;
 import td.ui.render.TowerStatusDraw;
 import td.ui.render.TracerDraw;
+import td.ui.render.UpgradeArrowDraw;
 import td.ui.render.WardOutlineDraw;
 import td.ui.render.ZoneArcDraw;
+import td.ui.render.ZoneDetailDraw;
 import td.ui.render.ZoneDraw;
+import td.ui.render.ZoneGroundPieceDraw;
 import td.ui.render.ZonePatchDraw;
 import td.util.ThreadConfined;
 import td.wave.PathColor;
@@ -559,35 +565,27 @@ public final class Java2DFrameRenderer {
                 this.paintZoneDetails(g2, patch);
             }
         }
-        for (TowerSpriteDraw sprite : frame.towerSprites()) {
-            this.paintTowerGround(g2, sprite, frame.scale());
-        }
-        for (EnemyDraw enemy : frame.enemies()) {
-            this.paintEnemy(g2, enemy);
-        }
-        for (CritSparkDraw spark : frame.critSparks()) {
-            this.paintCritSpark(g2, spark);
-        }
-        for (TowerSpriteDraw sprite : frame.towerSprites()) {
-            TowerSprites.paint(g2, sprite, frame.scale(), this.light);
-        }
-        // A tall tower may stand over an enemy north of it; its bars and marks still show where it is and how it fares.
-        for (EnemyOverlayDraw overlay : frame.enemyOverlays()) {
-            this.paintEnemyOverlay(g2, overlay);
-        }
-        for (TowerSpriteDraw sprite : frame.towerSprites()) {
-            if (sprite.upgradeReady()) {
-                this.paintUpgradeArrow(g2, sprite, frame.scale());
-            }
-        }
-        for (TowerEffectDraw effect : frame.towerEffects()) {
-            this.paintTowerEffect(g2, effect);
-        }
-        for (ProjectileDraw projectile : frame.projectiles()) {
-            this.paintProjectile(g2, projectile);
+        for (BoardDraw draw : frame.scene()) {
+            this.paintDraw(g2, draw, frame.scale());
         }
         frame.boardFlash().ifPresent(flash -> BlastArt.whiteOut(g2, flash, frame.enemies(), frame.maxX(), frame.maxY()));
         this.keptPatches.endFrame();
+    }
+
+    private void paintDraw(Graphics2D g2, BoardDraw draw, int scale) {
+        switch (draw) {
+            case TowerGroundDraw ground -> this.paintTowerGround(g2, ground.sprite(), scale);
+            case BlastGroundDraw ground -> BlastArt.ground(g2, ground.blast());
+            case ZoneDetailDraw detail -> this.paintZoneDetail(g2, detail.palette(), detail.zone());
+            case ZoneGroundPieceDraw piece -> GroundArt.piece(g2, piece, scale);
+            case EnemyDraw enemy -> this.paintEnemy(g2, enemy);
+            case EnemyOverlayDraw overlay -> this.paintEnemyOverlay(g2, overlay);
+            case CritSparkDraw spark -> this.paintCritSpark(g2, spark);
+            case TowerSpriteDraw sprite -> TowerSprites.paint(g2, sprite, scale, this.light);
+            case UpgradeArrowDraw arrow -> this.paintUpgradeArrow(g2, arrow.sprite(), scale);
+            case TowerEffectDraw effect -> this.paintTowerEffect(g2, effect);
+            case ProjectileDraw projectile -> this.paintProjectile(g2, projectile);
+        }
     }
 
     /** The frame's light, the same object while the level's light stays, so kept pictures find their key fast. */
@@ -636,8 +634,11 @@ public final class Java2DFrameRenderer {
         g2.setStroke(defaultStroke);
     }
 
-    /** What stands or flickers on each disc of a patch, over its ground. */
+    /** What lies on each disc of a patch, over its ground; what stands on one is painted in the scene. */
     private void paintZoneDetails(Graphics2D g2, ZonePatchDraw patch) {
+        if (ZoneFrameBuilder.stands(patch.palette())) {
+            return;
+        }
         for (ZoneDraw zone : patch.discs()) {
             this.paintZoneDetail(g2, patch.palette(), zone);
         }

@@ -1,4 +1,4 @@
 package td.ui.render;
 
-public sealed interface ProjectileDraw permits CannonballDraw, MissileDraw, SmokeDraw {
+public sealed interface ProjectileDraw extends BoardDraw permits CannonballDraw, MissileDraw, SmokeDraw {
 }

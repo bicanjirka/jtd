@@ -13,7 +13,7 @@ package td.ui.render;
 public record TowerSpriteDraw(TowerLook look, int tier, TowerPose pose, int boardX, int boardY, boolean selected,
                               float centerX, float centerY, float rangeReal, float minimumRangeReal, float headingRadians,
                               boolean upgradeReady, int risenFrom, float riseProgress, float buildProgress,
-                              float lifeSeconds) {
+                              float lifeSeconds) implements BoardDraw {
 
     /** A settled tower at rest: nothing rising, nothing held. */
     public static TowerSpriteDraw still(TowerLook look, int tier, int boardX, int boardY, float centerX, float centerY,

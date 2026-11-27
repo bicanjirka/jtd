@@ -3,6 +3,7 @@ package td.ui;
 import td.ui.render.Palette;
 import td.ui.render.ZoneArcDraw;
 import td.ui.render.ZoneDraw;
+import td.ui.render.ZoneGroundPieceDraw;
 import td.ui.render.ZonePatchDraw;
 
 import java.awt.BasicStroke;
@@ -13,9 +14,6 @@ import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * The ground a Mortar's payload leaves: burning jelly, a pool of tar, a sheet of frost. Each lies flat as one even fill
@@ -93,10 +91,9 @@ final class GroundArt {
     private static final int EMBERS = 12;
     private static final int WISPS = 2;
 
-    /** Charred ground glowing with embers, flames standing all over it, and smoke curling up off it. */
+    /** Charred ground glowing with embers and smoke curling up off it; its flames stand among the enemies. */
     private static void burning(Graphics2D g2, ZonePatchDraw patch, Path2D ground, Path2D edge, int unit) {
         lie(g2, ground, edge, BURNING_FILL, 0.7, BURNING_EDGE, 0.55);
-        List<double[]> flames = new ArrayList<>();
         for (ZoneDraw zone : patch.discs()) {
             int seed = seedOf(zone);
             double fade = zone.fade();
@@ -108,18 +105,6 @@ final class GroundArt {
                 BlastArt.flat(g2, at[0], at[1], unit * 0.022, BlastArt.mix(BlastArt.RED_FIRE, BlastArt.YELLOW_FIRE,
                         glow), (0.4 + 0.6 * glow) * fade);
             }
-            int count = Math.max(3, Math.round(5 * zone.radius() * zone.radius() / (unit * unit)));
-            for (int i = 0; i < count; i++) {
-                double[] at = spot(zone, seed + 1, i, count, 0.72);
-                flames.add(new double[] {at[0], at[1], BlastArt.hash(seed, 400 + i), zone.phase(), fade, i});
-            }
-        }
-        flames.sort(Comparator.comparingDouble(f -> f[1]));
-        for (double[] f : flames) {
-            double flicker = 0.75 + 0.25 * Math.sin(f[3] * (9 + 3 * f[2]) + f[5] * 1.7)
-                    + 0.08 * Math.sin(f[3] * 23 + f[5]);
-            BlastArt.flame(g2, f[0], f[1], unit * (0.12 + 0.05 * f[2]), unit * (0.32 + 0.22 * f[2]) * flicker * f[4],
-                    f[4]);
         }
         for (ZoneDraw zone : patch.discs()) {
             int seed = seedOf(zone);
@@ -176,7 +161,8 @@ final class GroundArt {
     private static final int MIST = 3;
     private static final int GLINTS = 3;
 
-    /** A sheet of frost: fern-like rime grown out from where the shell landed, shards of ice, a low mist drifting. */
+    /** A sheet of frost: fern-like rime grown out from where the shell landed and a low mist drifting; its shards of ice
+     * stand among the enemies. */
     private static void frost(Graphics2D g2, ZonePatchDraw patch, Path2D ground, Path2D edge, int unit) {
         lie(g2, ground, edge, FROST_FILL, 0.45, FROST_EDGE, 0.8);
         g2.setStroke(new BasicStroke(Math.max(1f, unit * 0.022f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -187,21 +173,6 @@ final class GroundArt {
                 double angle = i * Math.PI * 2 / FERNS + BlastArt.hash(seed, 700) * Math.PI;
                 fern(g2, zone.centerX(), zone.centerY(), angle, zone.radius() * 0.78);
             }
-        }
-        List<double[]> shards = new ArrayList<>();
-        for (ZoneDraw zone : patch.discs()) {
-            int seed = seedOf(zone);
-            for (int i = 0; i < SHARDS; i++) {
-                double[] at = i == 0 ? new double[] {zone.centerX(), zone.centerY()} : spot(zone, seed, i, SHARDS, 0.5);
-                shards.add(new double[] {at[0], at[1], BlastArt.hash(seed, 800 + i), i, zone.fade(),
-                        (at[0] - zone.centerX()) / zone.radius()});
-            }
-        }
-        shards.sort(Comparator.comparingDouble(s -> s[1]));
-        for (double[] s : shards) {
-            boolean middle = s[3] == 0;
-            BlastArt.shard(g2, s[0], s[1], unit * (middle ? 0.13 : 0.08), unit * (middle ? 0.65 : 0.3 + 0.2 * s[2]),
-                    s[5] * 0.6, s[4]);
         }
         for (ZoneDraw zone : patch.discs()) {
             int seed = seedOf(zone);
@@ -218,6 +189,48 @@ final class GroundArt {
                 double twinkle = Math.max(0, Math.sin(zone.phase() * 2.5 + i * 2.1 + seed));
                 BlastArt.glint(g2, at[0], at[1], unit * 0.07 * twinkle, Color.WHITE, zone.fade());
             }
+        }
+    }
+
+    // ---- what stands on a payload ground ---------------------------------------------------------------------------
+
+    /** How many pieces stand on disc {@code zone} of a patch of {@code look}: a burning ground's flames, frost's shards. */
+    static int pieces(Palette look, ZoneDraw zone, int unit) {
+        return switch (look) {
+            case ZONE_BURNING -> Math.max(3, Math.round(5 * zone.radius() * zone.radius() / (unit * unit)));
+            case ZONE_FROST -> SHARDS;
+            default -> 0;
+        };
+    }
+
+    /** Where piece {@code piece} stands on its disc: its foot on the ground. */
+    static double[] pieceAt(ZoneGroundPieceDraw piece) {
+        ZoneDraw zone = piece.zone();
+        int seed = seedOf(zone);
+        if (piece.palette() == Palette.ZONE_BURNING) {
+            return spot(zone, seed + 1, piece.index(), piece.count(), 0.72);
+        }
+        return piece.index() == 0 ? new double[] {zone.centerX(), zone.centerY()}
+                : spot(zone, seed, piece.index(), piece.count(), 0.5);
+    }
+
+    /** One flame or shard of ice standing on a payload ground, {@code unit} pixels to a cell. */
+    static void piece(Graphics2D g2, ZoneGroundPieceDraw piece, int unit) {
+        ZoneDraw zone = piece.zone();
+        int seed = seedOf(zone);
+        int i = piece.index();
+        double[] at = pieceAt(piece);
+        double fade = zone.fade();
+        if (piece.palette() == Palette.ZONE_BURNING) {
+            double h = BlastArt.hash(seed, 400 + i);
+            double flicker = 0.75 + 0.25 * Math.sin(zone.phase() * (9 + 3 * h) + i * 1.7)
+                    + 0.08 * Math.sin(zone.phase() * 23 + i);
+            BlastArt.flame(g2, at[0], at[1], unit * (0.12 + 0.05 * h), unit * (0.32 + 0.22 * h) * flicker * fade, fade);
+        } else {
+            boolean middle = i == 0;
+            double h = BlastArt.hash(seed, 800 + i);
+            BlastArt.shard(g2, at[0], at[1], unit * (middle ? 0.13 : 0.08), unit * (middle ? 0.65 : 0.3 + 0.2 * h),
+                    (at[0] - zone.centerX()) / zone.radius() * 0.6, fade);
         }
     }
 

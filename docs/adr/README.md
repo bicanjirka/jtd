@@ -66,3 +66,4 @@ Each alternative, with why it lost.
 | [0026](0026-each-level-has-its-own-light.md) | Each level has its own light | Accepted |
 | [0027](0027-the-presentation-times-its-moments.md) | The presentation times its moments | Accepted |
 | [0028](0028-a-free-tier-brings-mechanics.md) | A free tier's node brings mechanics, granted by the XP it holds | Accepted |
+| [0029](0029-the-board-paints-by-height-then-depth.md) | The board paints by height, then depth | Accepted |

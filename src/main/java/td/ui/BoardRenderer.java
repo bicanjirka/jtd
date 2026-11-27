@@ -10,12 +10,24 @@ import td.tower.AuraTower;
 import td.tower.MortarTower;
 import td.tower.Tower;
 import td.tower.TowerInspection;
+import td.ui.render.BoardDraw;
+import td.ui.render.CannonballDraw;
 import td.ui.render.CellDraw;
 import td.ui.render.CellGridDraw;
 import td.ui.render.InfoSheet;
+import td.ui.render.MissileDraw;
 import td.ui.render.PathMarkerDraw;
+import td.ui.render.ProjectileDraw;
 import td.ui.render.RenderFrame;
+import td.ui.render.SmokeDraw;
+import td.ui.render.TowerGroundDraw;
 import td.ui.render.TowerSheet;
+import td.ui.render.TowerSpriteDraw;
+import td.ui.render.UpgradeArrowDraw;
+import td.ui.render.ZoneDetailDraw;
+import td.ui.render.ZoneDraw;
+import td.ui.render.ZoneGroundPieceDraw;
+import td.ui.render.ZonePatchDraw;
 import td.util.GameWorld;
 import td.util.LoadedLevel;
 import td.util.PathRuntime;
@@ -76,8 +88,7 @@ public final class BoardRenderer {
                 interpolationAlpha, animationSeconds);
         for (Tower tower : this.world.towers().all()) {
             tower.accept(spriteFrameBuilder);
-            tower.accept(effectFrameBuilder);
-            effectFrameBuilder.addStatus(tower);
+            effectFrameBuilder.add(tower);
         }
 
         ProjectileFrameBuilder projectileFrameBuilder = new ProjectileFrameBuilder(gameTime, interpolationAlpha,
@@ -98,12 +109,57 @@ public final class BoardRenderer {
         Optional<TowerSheet> towerSheet = this.world.towers().all().stream().filter(Tower::isSelected).findFirst()
                 .map(tower -> new TowerSheet(tower.getX(), tower.getY(), TowerSheetText.status(liveInspection(tower))));
 
-        return new RenderFrame(board.scale(), board.maxX(), board.maxY(),
-                cells, ZoneFrameBuilder.build(this.world.zones(), this.world.towers().all(), animationSeconds), enemyFrameBuilder.build(), enemyFrameBuilder.buildCritSparks(),
-                spriteFrameBuilder.build(),
-                effectFrameBuilder.build(), projectileFrameBuilder.build(), pathMarkers,
-                enemyFrameBuilder.buildOverlays(), enemySheet, towerSheet, this.cellGrid(level), level.ground(),
-                effectFrameBuilder.boardFlash());
+        List<ZonePatchDraw> zones = ZoneFrameBuilder.build(this.world.zones(), this.world.towers().all(), animationSeconds);
+        List<BoardDraw> scene = scene(board.scale(), spriteFrameBuilder.build(), enemyFrameBuilder.placed(), zones,
+                effectFrameBuilder.build(), projectileFrameBuilder.build());
+        return new RenderFrame(board.scale(), board.maxX(), board.maxY(), cells, zones, pathMarkers, scene,
+                enemySheet, towerSheet, this.cellGrid(level), level.ground(), effectFrameBuilder.boardFlash());
+    }
+
+    /**
+     * Everything over the ground in paint order. Within a height and a foot, what is added first is painted first: a
+     * tower's ground before an enemy's ring, an enemy before what a tower does to it, a tower before what moves at it.
+     */
+    private static List<BoardDraw> scene(int scale, List<TowerSpriteDraw> sprites, List<PlacedDraw> enemies,
+            List<ZonePatchDraw> zones, List<PlacedDraw> effects, List<ProjectileDraw> projectiles) {
+        List<PlacedDraw> placed = new ArrayList<>(sprites.size() * 3 + enemies.size() + effects.size()
+                + projectiles.size());
+        for (TowerSpriteDraw sprite : sprites) {
+            placed.add(PlacedDraw.of(new TowerGroundDraw(sprite), sprite.centerY()));
+        }
+        placed.addAll(enemies);
+        for (TowerSpriteDraw sprite : sprites) {
+            placed.add(PlacedDraw.of(sprite, sprite.centerY()));
+            if (sprite.upgradeReady()) {
+                placed.add(PlacedDraw.of(new UpgradeArrowDraw(sprite), sprite.centerY()));
+            }
+        }
+        for (ZonePatchDraw patch : zones) {
+            for (ZoneDraw zone : patch.discs()) {
+                if (ZoneFrameBuilder.stands(patch.palette())) {
+                    placed.add(PlacedDraw.of(new ZoneDetailDraw(patch.palette(), zone), zone.centerY()));
+                }
+                int count = GroundArt.pieces(patch.palette(), zone, scale);
+                for (int i = 0; i < count; i++) {
+                    ZoneGroundPieceDraw piece = new ZoneGroundPieceDraw(patch.palette(), zone, i, count);
+                    placed.add(PlacedDraw.of(piece, (float) GroundArt.pieceAt(piece)[1]));
+                }
+            }
+        }
+        placed.addAll(effects);
+        for (ProjectileDraw projectile : projectiles) {
+            placed.add(PlacedDraw.of(projectile, footOf(projectile)));
+        }
+        return PlacedDraw.inOrder(placed);
+    }
+
+    /** The screen row of the ground under a shot in flight. */
+    private static float footOf(ProjectileDraw projectile) {
+        return switch (projectile) {
+            case CannonballDraw shell -> shell.y();
+            case MissileDraw missile -> missile.y();
+            case SmokeDraw smoke -> smoke.y();
+        };
     }
 
     /** Blocked means unbuildable with no tower on it: a path covers the cell. */

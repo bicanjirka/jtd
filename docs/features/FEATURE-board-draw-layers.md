@@ -1,6 +1,6 @@
 # Feature Request: Board draw layers
 
-Status: requested.
+Status: implemented (ADR 0029).
 
 ## Summary
 
@@ -49,14 +49,16 @@ The heights:
 
 1. **Ground**: everything flat. The floor, path marks, the cell highlight and range circles, zone patches, tower
    shadows, splash discs, spell blasts (discs, rings, sigils), a nuke's surge and shock ring, frost wakes, the
-   Sundial's shadow, ward outlines, the Beacon's light edge, aura rings. Newer ground marks lie over older ones.
+   Sundial's shadow, ward outlines, the Beacon's light edge, aura rings. Flat marks keep the order they were built in.
 2. **Standing**: towers and enemies, sorted together by their feet, each with everything that belongs to it painted
    with it at its foot:
    - an enemy: its body or fading corpse, what an effect sends off it (under and over the body), its tint, ice, shield
      outline, cast and spawn pulses, bursts, a lightning shock, an execution, a crit spark, the Beacon's light on it;
    - a tower: its sprite and what moves at it (muzzle smoke, foot dust, pump steam, a shell carried to the muzzle, a
      spent casing, steam, embers);
-   - what stands on a zone (flames, a mine's casing), at the zone's foot.
+   - what stands on a zone, each piece at its own foot: a burning ground's flames, frost's shards of ice, a mine's
+     casing, a flare's spark. An enemy walking through fire stands among the flames, the nearer ones over its body.
+     Tar's bubbles, the rime and the smoke stay with the flat patch.
    An enemy walking in front of a tower is painted over it, and behind it under it, its ice and shield with it.
 3. **Low air**: what flies or rises a little, between towers and enemies: beams, tracers, bullets, the laser, flame
    streams, stones, shells, spell orbs, curses, a Mortar shell's blast.
@@ -103,8 +105,13 @@ order, previews in panels (they keep painting their one subject).
 
 ## Open questions
 
-- Does the Aerie's nest belong to High air or to its tower in Standing? It circles the top of its own tower.
-- A beam or tracer runs from a tower to an enemy: is its foot its nearer end, or does Low air simply keep build order?
+None left. Settled while building it: the Aerie's nest is High air, with its missiles; a beam or tracer stands at its
+tower's foot.
+
+## Still wanted
+
+- An enemy deep in a burning ground could read as a silhouette in the fire (its body darkened while it burns), not only
+  partly covered by the flames in front of it. That is a change to the burn's art, not to the order.
 
 ---
 

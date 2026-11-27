@@ -85,6 +85,11 @@ final class ZoneFrameBuilder {
         return new ZoneDraw((float) zone.x(), (float) zone.y(), zone.radius() * fade, fade, (float) animationSeconds);
     }
 
+    /** Whether something stands on each disc of a patch of {@code look}, painted among the enemies by where it stands. */
+    static boolean stands(Palette look) {
+        return look == Palette.ZONE_WARD || look == Palette.ZONE_FLARE;
+    }
+
     /** The ground an Obelisk's field lies on: each stone its own patch. */
     static Palette fieldPaletteFor(StoneLook look) {
         return switch (look) {

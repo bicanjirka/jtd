@@ -14,9 +14,14 @@ keeps the seam honest.
 - One frame builder per domain type, dispatching through that type's visitor (`EnemyFrameBuilder`,
   `TowerSpriteFrameBuilder`, `TowerEffectFrameBuilder`, `ProjectileFrameBuilder`, ...). Builders
   return `null` for "nothing to draw".
-- Ground zones are the one board list drawn under the enemies (`ZoneFrameBuilder`, `RenderFrame.zones`):
+- The board paints by height, then depth (ADR 0029): over the floor, path marks, cell highlight and zone patches,
+  `RenderFrame.scene` holds every other visual sorted once by its `DrawHeight` and its foot, the screen row of the
+  ground it stands on; ties keep build order. A new draw kind gets a case in `DrawHeight.of`. What belongs to an enemy
+  or a tower is added at its foot, right after it; something with a place of its own is added at that place.
+- Ground zones are patches under everything that stands (`ZoneFrameBuilder`, `RenderFrame.zones`):
   a zone is a patch, not an enemy overlay or a tower effect. Zones of one kind never stack in play, so they draw as one
-  `ZonePatchDraw` with one even fill and one outline; what stands on a disc (a mine's casing, flames) stays per zone.
+  `ZonePatchDraw` with one even fill and one outline; what stands on a disc (a mine's casing, a flare's spark, a
+  burning ground's flames, frost's shards) is a scene draw of its own at its foot, so what stands in it stands among it.
   An Obelisk's field is a tower's range, not a zone, but lies on the ground the same way: one patch per stone.
 - Every colour, shape and stroke for board content lives in `td.ui`, keyed by a role, never by domain
   type: an enemy body's in its `EnemyLooks` row (keyed by `EnemyLook`), a tower's colour and tier
@@ -61,8 +66,8 @@ keeps the seam honest.
   `EnemySprites.lift`.
 - A tower is painted by `TowerSprites` alone: its foundation for its look, tier and `TowerPose`, the head of a look
   that aims, and the parts that stand in front of that head, each drawn once into a kept picture (a head per heading
-  step) and placed whole. Towers are painted back to front, after the enemies, and the enemy overlays after them, so
-  a covered enemy's bars and marks still show.
+  step) and placed whole. Towers and enemies are painted together by depth; their bars and marks are signals, a
+  height above, so they still show.
 - A foundation never turns: only a head aims. A tier above the last wears the last tier's foundation.
 - What a tower holds or is doing reaches its picture only through its `TowerPose`, built in that tower's visit method
   in `TowerSpriteFrameBuilder` and read in its look's builder in `TowerFoundations`: a new cue is a `TowerCue`
@@ -79,7 +84,7 @@ keeps the seam honest.
   scale of 1.
 - Idle life runs on the wall clock (a light, a slow scan, the nest turning, birds circling); a moment (a shot, a
   reload, a rise, a placement, a knell, birds coming or leaving) runs on the tick clock.
-- The nest circles the top of its tower, so no missile is drawn behind the tower.
+- The nest, its birds and missiles are in the high air, so no missile is drawn behind a tower.
 - The Mortar has no head: it is stationary, its barrel part of its posed body.
 - The toolbar icon and the Info pane's glyph are the look's `TowerIcons` row.
 - The art sheets in `docs/art` are rendered from these tables. After a change to a look, render

@@ -119,6 +119,7 @@ Records: [0004](adr/0004-gameworld-hands-out-collaborators.md),
 BoardRenderer.buildFrame(gameTime, interpolationAlpha, animationSeconds)   on game-loop
     -> one frame builder per domain type, through that type's visitor
     -> RenderFrame (immutable, AWT-free draw records in td.ui.render)
+    -> BoardRenderer sorts everything over the ground into one scene: by height, then depth (ADR 0029)
         -> Java2DFrameRenderer.paint(g2, frame)   pixels, on the EDT
         -> AsciiBoardRenderer                     text, for DEBUG logging
 ```
@@ -126,7 +127,7 @@ BoardRenderer.buildFrame(gameTime, interpolationAlpha, animationSeconds)   on ga
 | Builder | Describes | Dispatch |
 |---|---|---|
 | `CellFrameBuilder` | the placement or selection highlight | one `CellHighlight` and its cell |
-| `ZoneFrameBuilder` | ground zones as one patch per kind, drawn under the enemies | — |
+| `ZoneFrameBuilder` | ground zones as one patch per kind, under everything that stands | — |
 | `EnemyFrameBuilder` | bodies, death fades, overlays | `EnemyMobVisitor` |
 | `TowerSpriteFrameBuilder` | tower look, tier, head heading, upgrade arrow | `TowerVisitor` |
 | `TowerEffectFrameBuilder` | beams, blasts, pulses, auras, cones | `TowerVisitor` |

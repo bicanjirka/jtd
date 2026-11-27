@@ -628,6 +628,7 @@ final class BlastArt {
      * A nuclear blast, slow and huge: a fireball on the ground that lifts off and rolls into a mushroom cloud on a stem
      * of dust, a shock ring and a base surge running out across the ground, a ring of cloud round the stem as the
      * shock passes. It cools from white heat through fire to the dusty yellow-green of its fallout, and thins away.
+     * What it lays flat on the ground is {@link #ground}, painted under everything that stands.
      */
     private static void nuke(Graphics2D g2, BlastDraw b) {
         double p = b.progress();
@@ -635,14 +636,6 @@ final class BlastArt {
         double x = b.x();
         double y = b.y();
         double vanish = 1 - Easing.inOut(0.72, 1, p);
-        TowerLifeArt.glow(g2, x, y, b.edge() * 1.3, NUKE_HEAT, 0.75 * (1 - Easing.inOut(0, 0.35, p)));
-        TowerLifeArt.glow(g2, x, y, b.edge(), SCORCH, 0.6 * Easing.inOut(0.1, 0.35, p) * vanish);
-        double shock = p / 0.2;
-        ring(g2, x, y, b.edge() * 1.6 * Easing.outStrong(shock), u * 0.12 * (1 - Easing.clamp01(shock)), SHOCK,
-                0.9 * (1 - Easing.clamp01(shock)));
-        double dust = p / 0.55;
-        ring(g2, x, y, b.edge() * 2.1 * Easing.outStrong(dust), u * 0.35, NUKE_DUST, 0.22 * (1 - Easing.clamp01(dust)));
-
         double heat = 1 - Easing.clamp01(p / 0.4);
         Color fire = ramp(heat, NUKE_SMOKE, ORANGE_FIRE, YELLOW_FIRE, WHITE_HOT);
         double capR = Math.min(b.edge() * 0.5, u * 1.25) * (0.6 + 0.4 * Easing.outStrong(p / 0.45)) * (1 + 0.12 * p);
@@ -721,6 +714,22 @@ final class BlastArt {
             TowerLifeArt.glow(g2, x, capY, capR * 1.7, NUKE_GLOW, 0.35 * heat * cloudIn);
         }
         bank(g2, surge, false);
+    }
+
+    /** What a nuke lays on the ground, under everything that stands: its heat, its scorch, its shock and dust rings. */
+    static void ground(Graphics2D g2, BlastDraw b) {
+        double p = b.progress();
+        double u = b.unit();
+        double x = b.x();
+        double y = b.y();
+        double vanish = 1 - Easing.inOut(0.72, 1, p);
+        TowerLifeArt.glow(g2, x, y, b.edge() * 1.3, NUKE_HEAT, 0.75 * (1 - Easing.inOut(0, 0.35, p)));
+        TowerLifeArt.glow(g2, x, y, b.edge(), SCORCH, 0.6 * Easing.inOut(0.1, 0.35, p) * vanish);
+        double shock = p / 0.2;
+        ring(g2, x, y, b.edge() * 1.6 * Easing.outStrong(shock), u * 0.12 * (1 - Easing.clamp01(shock)), SHOCK,
+                0.9 * (1 - Easing.clamp01(shock)));
+        double dust = p / 0.55;
+        ring(g2, x, y, b.edge() * 2.1 * Easing.outStrong(dust), u * 0.35, NUKE_DUST, 0.22 * (1 - Easing.clamp01(dust)));
     }
 
     /** A low bank of cloud rolling out in a ring along the ground: its centre, radius, thickness, colour and seed. */

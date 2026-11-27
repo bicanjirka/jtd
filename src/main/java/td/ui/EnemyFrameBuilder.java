@@ -11,6 +11,7 @@ import td.enemy.Rank;
 import td.enemy.SupportAura;
 import td.term.Term;
 import td.ui.render.AffixPipsDraw;
+import td.ui.render.BoardDraw;
 import td.ui.render.CritSparkDraw;
 import td.ui.render.EffectPulseDraw;
 import td.ui.render.EnemyBarLook;
@@ -40,6 +41,7 @@ import td.ui.render.RankBadge;
 import td.ui.render.RankBadgeDraw;
 import td.ui.render.SilenceMarkDraw;
 import td.ui.render.TollMarkDraw;
+import td.util.ThreadConfined;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -53,6 +55,7 @@ import java.util.Set;
  * {@link BodyArchetype}. A live body is interpolated between ticks; a dying one is drawn where it
  * died, since it no longer moves.
  */
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
 
     static final int CRIT_SPARK_DURATION_TICKS = MomentLength.SHORT.ticks();
@@ -133,15 +136,18 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     /** A long tail or antenna shouldn't lift the badge off the body it belongs to. */
     private static final float RANK_BADGE_REACH_LIMIT = 1.3f;
     private final List<EnemyDraw> draws = new ArrayList<>();
-    private final List<CritSparkDraw> critSparkDraws = new ArrayList<>();
     private final List<EnemyOverlayDraw> overlayDraws = new ArrayList<>();
     /** Read last, so every enemy's badge, runes, dots and bars stay readable over every enemy's effects. */
     private final List<EnemyOverlayDraw> markDraws = new ArrayList<>();
     private final List<EnemyOverlayDraw> badgeDraws = new ArrayList<>();
+    /** Everything above, in the order it was added, each at the foot of the enemy it belongs to. */
+    private final List<PlacedDraw> placed = new ArrayList<>();
     private final int gameTime;
     private final double interpolationAlpha;
     private final Optional<EnemyMob> selected;
     private final float animationSeconds;
+    /** The foot of the enemy being visited. */
+    private float foot;
 
     public EnemyFrameBuilder(int gameTime, double interpolationAlpha) {
         this(gameTime, interpolationAlpha, Optional.empty(), 0.0);
@@ -270,12 +276,23 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         };
     }
 
-    public List<EnemyDraw> build() {
-        return this.draws;
+    /** Every draw of every enemy, each with its place in the board's paint order. */
+    List<PlacedDraw> placed() {
+        return this.placed;
     }
 
-    public List<CritSparkDraw> buildCritSparks() {
-        return this.critSparkDraws;
+    private <T extends BoardDraw> void add(List<T> list, T draw) {
+        list.add(draw);
+        this.place(draw);
+    }
+
+    /** Places {@code draw} at the foot of the enemy being visited. */
+    private void place(BoardDraw draw) {
+        this.placed.add(PlacedDraw.of(draw, this.foot));
+    }
+
+    public List<EnemyDraw> build() {
+        return this.draws;
     }
 
     public List<EnemyOverlayDraw> buildOverlays() {
@@ -294,10 +311,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private Void body(EnemyLook look, DefinedEnemyMob mob, float scale, double facingRadians,
             Optional<SupportAura> supportAura) {
         if (mob.isDead()) {
+            this.foot = (float) mob.getY();
             int age = mob.ticksSinceDeath(this.gameTime).orElse(0);
             if (age <= fadeDurationTicks(mob.getRank())) {
                 float fadeProgress = fadeProgress(mob.getRank(), age);
-                this.draws.add(new EnemyFadeDraw(look, (float) mob.getX(), (float) mob.getY(), facingRadians, scale, age, fadeProgress));
+                this.add(this.draws, new EnemyFadeDraw(look, (float) mob.getX(), (float) mob.getY(), facingRadians, scale, age, fadeProgress));
             }
         } else if (!mob.isInactive()) {
             this.liveBody(look, mob, scale, facingRadians, supportAura);
@@ -333,6 +351,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private void liveBody(EnemyLook look, DefinedEnemyMob mob, float scale, double facingRadians, Optional<SupportAura> supportAura) {
         float x = lerp(mob.getPrevX(), mob.getX(), this.interpolationAlpha);
         float y = lerp(mob.getPrevY(), mob.getY(), this.interpolationAlpha);
+        this.foot = y;
         float visibility = 1f - this.cloakProgress(mob);
         Set<EffectKind> active = mob.activeEffectKinds();
         float reach = scale * EnemyLooks.of(look).reach();
@@ -352,23 +371,23 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         float drawScale = mob.getDrawScale();
 
         if (active.contains(EffectKind.BLEEDING) && (mob.getX() != mob.getPrevX() || mob.getY() != mob.getPrevY())) {
-            this.draws.add(new EnemyEmissionDraw(EnemyEmissionLook.BLEED, x, y, hull, 1f, seed, this.animationSeconds, visibility));
+            this.add(this.draws, new EnemyEmissionDraw(EnemyEmissionLook.BLEED, x, y, hull, 1f, seed, this.animationSeconds, visibility));
         }
-        this.draws.add(new EnemyBodyDraw(look, x, y, facing, drawScale, 1f - visibility));
+        this.add(this.draws, new EnemyBodyDraw(look, x, y, facing, drawScale, 1f - visibility));
         if (active.contains(EffectKind.POISON)) {
-            this.overlayDraws.add(new EnemyTintDraw(look, x, y, facing, drawScale, EnemyTintLook.POISON, 1f, visibility));
+            this.add(this.overlayDraws, new EnemyTintDraw(look, x, y, facing, drawScale, EnemyTintLook.POISON, 1f, visibility));
             this.emit(EnemyEmissionLook.POISON, x, y, hull, this.fullness(mob, EffectKind.POISON), seed, visibility);
         }
         if (active.contains(EffectKind.CHILL)) {
             float level = this.fullness(mob, EffectKind.CHILL);
-            this.overlayDraws.add(new EnemyTintDraw(look, x, y, facing, drawScale, EnemyTintLook.CHILL, level, visibility));
+            this.add(this.overlayDraws, new EnemyTintDraw(look, x, y, facing, drawScale, EnemyTintLook.CHILL, level, visibility));
             this.emit(EnemyEmissionLook.CHILL, x, y, hull, level, seed, visibility);
         }
         int iceVariant = (int) Math.floorMod(mob.id(), EnemyEffects.iceVariants());
         IceKind ice = mob.lastIce();
         if (active.contains(EffectKind.FREEZE)) {
-            this.overlayDraws.add(new EnemyTintDraw(look, x, y, facing, drawScale, tintOf(ice), 1f, visibility));
-            this.overlayDraws.add(new EnemyIceDraw(iceLookOf(ice), x, y, iceScale, iceVariant, seed, this.animationSeconds,
+            this.add(this.overlayDraws, new EnemyTintDraw(look, x, y, facing, drawScale, tintOf(ice), 1f, visibility));
+            this.add(this.overlayDraws, new EnemyIceDraw(iceLookOf(ice), x, y, iceScale, iceVariant, seed, this.animationSeconds,
                     visibility));
             above = Math.max(above, EnemyEffects.iceAbove(iceVariant, iceScale));
             beneath = Math.max(beneath, EnemyEffects.iceBeneath(iceVariant, iceScale));
@@ -389,35 +408,35 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
             this.emit(EnemyEmissionLook.DAZE, x, y, hull, 1f, seed, visibility);
         }
         if (active.contains(EffectKind.SHIELD)) {
-            this.overlayDraws.add(new EnemyEggDraw(x, y, eggX, eggY, this.shieldFlash(mob), seed, this.animationSeconds, visibility));
+            this.add(this.overlayDraws, new EnemyEggDraw(x, y, eggX, eggY, this.shieldFlash(mob), seed, this.animationSeconds, visibility));
             above = Math.max(above, eggY);
             beneath = Math.max(beneath, eggY * EGG_BOTTOM_SHARE);
             ringRadius = Math.max(ringRadius, Math.max(eggX, eggY) + SELECTION_RING_MARGIN);
         }
         OptionalInt broken = mob.ticksSinceShieldBroken(this.gameTime);
         if (within(broken, SHIELD_POP_DURATION_TICKS)) {
-            this.overlayDraws.add(new EnemyBurstDraw(EnemyBurstLook.SHIELD_POP, x, y, eggX, eggY,
+            this.add(this.overlayDraws, new EnemyBurstDraw(EnemyBurstLook.SHIELD_POP, x, y, eggX, eggY,
                     (float) broken.getAsInt() / SHIELD_POP_DURATION_TICKS, seed, visibility));
         }
         OptionalInt thawed = mob.effectLostWithin(EffectKind.FREEZE, this.gameTime, ICE_SHARDS_DURATION_TICKS);
         if (thawed.isPresent() && !active.contains(EffectKind.FREEZE)) {
-            this.overlayDraws.add(new EnemyBurstDraw(shardsOf(ice), x, y, eggX, eggY,
+            this.add(this.overlayDraws, new EnemyBurstDraw(shardsOf(ice), x, y, eggX, eggY,
                     (float) thawed.getAsInt() / ICE_SHARDS_DURATION_TICKS, seed, visibility));
         }
         this.critSpark(mob, x, y);
         if (active.contains(EffectKind.EXPOSED)) {
-            this.critSparkDraws.add(new CritSparkDraw(Palette.EXPOSED_GLINT, x + scale * GLINT_OFFSET_SHARE,
+            this.place(new CritSparkDraw(Palette.EXPOSED_GLINT, x + scale * GLINT_OFFSET_SHARE,
                     y - scale * GLINT_OFFSET_SHARE, scale * GLINT_SIZE_SHARE, 0f, 0f));
         }
         this.overlays(mob, x, y, ringRadius, supportAura);
         if (active.contains(EffectKind.TOLL)) {
             int stacks = mob.effectStacks(EffectKind.TOLL);
-            this.markDraws.add(new TollMarkDraw(x, y, ringRadius + TOLL_RING_MARGIN, Math.min(stacks, TOLL_SEGMENTS),
+            this.add(this.markDraws, new TollMarkDraw(x, y, ringRadius + TOLL_RING_MARGIN, Math.min(stacks, TOLL_SEGMENTS),
                     stacks >= TOLL_SEGMENTS, visibility));
         }
         if (active.contains(EffectKind.SILENCED)) {
             float top = Math.max(above + RANK_BADGE_GAP + RANK_BADGE_SIZE, ringRadius + TOLL_RING_MARGIN);
-            this.markDraws.add(new SilenceMarkDraw(x, y - top - SILENCE_MARK_GAP - SILENCE_MARK_SIZE / 2f,
+            this.add(this.markDraws, new SilenceMarkDraw(x, y - top - SILENCE_MARK_GAP - SILENCE_MARK_SIZE / 2f,
                     SILENCE_MARK_SIZE, visibility));
         }
         this.pulses(mob, x, y, scale);
@@ -430,7 +449,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     }
 
     private void emit(EnemyEmissionLook look, float x, float y, float hull, float amount, float seed, float alpha) {
-        this.overlayDraws.add(new EnemyEmissionDraw(look, x, y, hull, amount, seed, this.animationSeconds, alpha));
+        this.add(this.overlayDraws, new EnemyEmissionDraw(look, x, y, hull, amount, seed, this.animationSeconds, alpha));
     }
 
     private float fullness(DefinedEnemyMob mob, EffectKind kind) {
@@ -456,7 +475,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         EnemyBarsDraw.Bar healthBar = new EnemyBarsDraw.Bar(EnemyBarLook.HEALTH, health);
         List<EnemyBarsDraw.Bar> bars = !shielded ? List.of(healthBar)
                 : hurt ? List.of(this.shieldBar(mob), healthBar) : List.of(this.shieldBar(mob));
-        this.markDraws.add(new EnemyBarsDraw(x, top, Math.max(BAR_MIN_WIDTH, scale * BAR_WIDTH_SCALE_FRACTION),
+        this.add(this.markDraws, new EnemyBarsDraw(x, top, Math.max(BAR_MIN_WIDTH, scale * BAR_WIDTH_SCALE_FRACTION),
                 visibility, bars));
     }
 
@@ -485,10 +504,10 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         float width = badgeToPips + Math.max(0, affixes.size() - 1) * pipStep;
         float left = x - width / 2f;
         if (ranked) {
-            this.badgeDraws.add(new RankBadgeDraw(badge, left, y, RANK_BADGE_SIZE, visibility));
+            this.add(this.badgeDraws, new RankBadgeDraw(badge, left, y, RANK_BADGE_SIZE, visibility));
         }
         if (!affixes.isEmpty()) {
-            this.badgeDraws.add(new AffixPipsDraw(left + badgeToPips, y, AFFIX_PIP_SIZE * share, pipStep, visibility,
+            this.add(this.badgeDraws, new AffixPipsDraw(left + badgeToPips, y, AFFIX_PIP_SIZE * share, pipStep, visibility,
                     List.<Term>copyOf(affixes)));
         }
     }
@@ -505,7 +524,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         if (dots.isEmpty()) {
             return false;
         }
-        this.markDraws.add(new EnemyDotsDraw(x, y, visibility, List.copyOf(dots)));
+        this.add(this.markDraws, new EnemyDotsDraw(x, y, visibility, List.copyOf(dots)));
         return true;
     }
 
@@ -514,11 +533,11 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         // A caster in daylight gives its allies nothing, so it shows no aura either.
         boolean leads = !mob.inDaylight();
         if (this.selected.isPresent() && this.selected.get() == mob) {
-            this.overlayDraws.add(new EnemyRingDraw(Palette.SELECTION, x, y, selectionRadius, SELECTION_RING_ALPHA));
-            supportAura.filter(aura -> leads).ifPresent(aura -> this.overlayDraws.add(
+            this.add(this.overlayDraws, new EnemyRingDraw(Palette.SELECTION, x, y, selectionRadius, SELECTION_RING_ALPHA));
+            supportAura.filter(aura -> leads).ifPresent(aura -> this.add(this.overlayDraws,
                     new EnemyRingDraw(markerPaletteFor(aura.kind()), x, y, aura.radius(), SUPPORT_AURA_RING_ALPHA)));
         }
-        mob.definition().disruption().filter(aura -> leads).ifPresent(aura -> this.overlayDraws.add(
+        mob.definition().disruption().filter(aura -> leads).ifPresent(aura -> this.add(this.overlayDraws,
                 new EnemyRingDraw(Palette.DISRUPTION, x, y, aura.radius(), DISRUPTION_RING_ALPHA)));
     }
 
@@ -530,13 +549,13 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                 float progress = (float) ticksSince / EFFECT_PULSE_DURATION_TICKS;
                 // A zero radius would draw an invisible ring.
                 float ringRadius = cast.radius() > 0 ? cast.radius() : scale * CAST_PULSE_RADIUS_FRACTION;
-                this.overlayDraws.add(new EffectPulseDraw(markerPaletteFor(cast.kind()), x, y, ringRadius, progress));
+                this.add(this.overlayDraws, new EffectPulseDraw(markerPaletteFor(cast.kind()), x, y, ringRadius, progress));
             }
         });
         OptionalInt spawned = mob.ticksSinceAbilitySpawn(this.gameTime);
         if (within(spawned, EFFECT_PULSE_DURATION_TICKS)) {
             float progress = (float) spawned.getAsInt() / EFFECT_PULSE_DURATION_TICKS;
-            this.overlayDraws.add(new EffectPulseDraw(Palette.SPAWN_BURST, x, y, scale * SPAWN_BURST_RADIUS_FRACTION, progress));
+            this.add(this.overlayDraws, new EffectPulseDraw(Palette.SPAWN_BURST, x, y, scale * SPAWN_BURST_RADIUS_FRACTION, progress));
         }
     }
 
@@ -544,7 +563,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
         OptionalInt crit = mob.ticksSinceCriticalHit(this.gameTime);
         if (within(crit, CRIT_SPARK_DURATION_TICKS)) {
             float fadeProgress = (float) crit.getAsInt() / CRIT_SPARK_DURATION_TICKS;
-            this.critSparkDraws.add(new CritSparkDraw(Palette.CRIT_SPARK, x, y, CRIT_SPARK_FIXED_SCALE,
+            this.place(new CritSparkDraw(Palette.CRIT_SPARK, x, y, CRIT_SPARK_FIXED_SCALE,
                     sparkRotation(mob.id(), this.gameTime - crit.getAsInt()), fadeProgress));
         }
     }
@@ -559,7 +578,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
     private void missMark(DefinedEnemyMob mob, float rightOfBody, float y) {
         OptionalInt dodged = mob.ticksSinceDodge(this.gameTime);
         if (within(dodged, MISS_MARK_DURATION_TICKS)) {
-            this.markDraws.add(new MissMarkDraw(rightOfBody, y, (float) dodged.getAsInt() / MISS_MARK_DURATION_TICKS));
+            this.add(this.markDraws, new MissMarkDraw(rightOfBody, y, (float) dodged.getAsInt() / MISS_MARK_DURATION_TICKS));
         }
     }
 
@@ -602,7 +621,7 @@ public final class EnemyFrameBuilder implements EnemyMobVisitor<Void> {
                 .toList();
         float left = x - RUNE_SPACING * (glyphs.size() - 1) / 2f;
         for (int i = 0; i < glyphs.size(); i++) {
-            this.markDraws.add(new HexRuneDraw(glyphs.get(i), left + RUNE_SPACING * i, y, RUNE_FIXED_SCALE,
+            this.add(this.markDraws, new HexRuneDraw(glyphs.get(i), left + RUNE_SPACING * i, y, RUNE_FIXED_SCALE,
                     this.animationSeconds));
         }
     }

@@ -34,7 +34,9 @@ import td.tower.splash.Stone;
 import td.tower.splash.Wisp;
 import td.ui.render.BeamDraw;
 import td.ui.render.BlastDraw;
+import td.ui.render.BlastGroundDraw;
 import td.ui.render.BlastLook;
+import td.ui.render.BoardDraw;
 import td.ui.render.BoardFlashDraw;
 import td.ui.render.BulletDraw;
 import td.ui.render.BulletRound;
@@ -42,6 +44,7 @@ import td.ui.render.CannonballDraw;
 import td.ui.render.CasingDraw;
 import td.ui.render.CurseDraw;
 import td.ui.render.EmbersDraw;
+import td.ui.render.EnemyBodyDraw;
 import td.ui.render.EnemyLook;
 import td.ui.render.ExecutionDraw;
 import td.ui.render.FlameDraw;
@@ -81,6 +84,7 @@ import td.ui.render.TrailLook;
 import td.ui.render.WardOutlineDraw;
 import td.ui.render.ZoneDraw;
 import td.util.GameWorld;
+import td.util.ThreadConfined;
 import td.util.TickRate;
 import td.wave.Vec2;
 
@@ -101,6 +105,7 @@ import java.util.function.DoubleFunction;
  * Describes each tower's transient effect - beam, splash, pulse, cone, or an aura's ring - as draw
  * commands.
  */
+@ThreadConfined(value = ThreadConfined.Owner.ENCLOSING)
 public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
     // Two rings half a period apart read as one breathing aura, not a blinking ring.
@@ -210,7 +215,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
 
 
     private final GameWorld world;
-    private final List<TowerEffectDraw> draws = new ArrayList<>();
+    /** What is drawn, in the order it was added, each with its place in the board's paint order. */
+    private final List<PlacedDraw> draws = new ArrayList<>();
     private final List<ZoneDraw> wards = new ArrayList<>();
     /** The enemies a light has lit this frame, so overlapping lights light one once; membership only. */
     private final Set<EnemyMob> litDrawn = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -223,6 +229,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private final List<BoardFlashDraw> flashes = new ArrayList<>();
     /** How high each Aerie's nest circles over its centre, by that centre, for the missiles that leave and come home. */
     private final Map<Vec2, Float> nestLifts = new LinkedHashMap<>();
+    /** The foot of the tower being visited, where what it does at itself stands. */
+    private float towerFoot;
 
     public TowerEffectFrameBuilder(GameWorld world, int gameTime, double interpolationAlpha, double animationSeconds) {
         this.world = world;
@@ -238,20 +246,37 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         float x = tower.getBoardX() + this.scale * 0.85f;
         float y = tower.getBoardY() + this.scale * 0.15f;
         if (tower.isDisrupted()) {
-            this.draws.add(new TowerStatusDraw(Palette.DISRUPTION, x, y, this.scale * STATUS_MARKER_SCALE_FRACTION));
+            this.add(new TowerStatusDraw(Palette.DISRUPTION, x, y, this.scale * STATUS_MARKER_SCALE_FRACTION));
         } else if (tower.use().anyUnused()) {
-            this.draws.add(new RefundMarkDraw(x, y, this.scale * REFUND_MARK_SCALE_FRACTION));
+            this.add(new RefundMarkDraw(x, y, this.scale * REFUND_MARK_SCALE_FRACTION));
         }
     }
 
-    public List<TowerEffectDraw> build() {
+    /** What {@code tower} shows round itself and its marks. */
+    public void add(Tower tower) {
+        this.towerFoot = (float) tower.getY();
+        tower.accept(this);
+        this.addStatus(tower);
+    }
+
+    /** Something {@code tower} does at itself, standing at its foot. */
+    private void add(TowerEffectDraw draw) {
+        this.addAt(draw, this.towerFoot);
+    }
+
+    /** Something that stands, flies or lands at its own place: {@code foot} is the screen row of its ground. */
+    private void addAt(BoardDraw draw, float foot) {
+        this.draws.add(PlacedDraw.of(draw, foot));
+    }
+
+    public List<PlacedDraw> build() {
         if (!this.wards.isEmpty()) {
-            this.draws.add(new WardOutlineDraw(ZoneOutlineTracer.trace(this.wards), this.scale));
+            this.addAt(new WardOutlineDraw(ZoneOutlineTracer.trace(this.wards), this.scale), 0f);
         }
         if (!this.streams.isEmpty()) {
             List<FlameDraw.Caught> caught = this.burning.entrySet().stream()
                     .map(entry -> this.caught(entry.getKey(), entry.getValue())).toList();
-            this.draws.add(new FlameDraw(this.streams, caught, this.scale, this.tickSeconds()));
+            this.addAt(new FlameDraw(this.streams, caught, this.scale, this.tickSeconds()), 0f);
         }
         return this.draws;
     }
@@ -284,7 +309,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         if (tower.frenzied()) {
             TowerFoundations.Foundation foundation = TowerFoundations.of(TowerLook.SNIPER, tier,
                     TowerSpriteFrameBuilder.poseOf(tower, this.gameTime));
-            this.draws.add(new EmbersDraw(tower.getX(), (float) (tower.getY() - TowerFoundations.LIFT
+            this.add(new EmbersDraw(tower.getX(), (float) (tower.getY() - TowerFoundations.LIFT
                     * (foundation.top() + EMBERS_ABOVE_CELLS) * this.scale), this.scale, this.tickSeconds(),
                     TowerSpriteFrameBuilder.seedOf(tower)));
         }
@@ -309,7 +334,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
         TowerFoundations.Foundation foundation = TowerFoundations.of(TowerLook.SNIPER, tier,
                 TowerSpriteFrameBuilder.poseOf(tower, this.gameTime));
-        this.draws.add(new CasingDraw(tower.getX(), tower.getY(), this.scale,
+        this.add(new CasingDraw(tower.getX(), tower.getY(), this.scale,
                 (float) tower.getTurretAim().radiansAt(this.interpolationAlpha),
                 (float) (foundation.top() + CASING_ABOVE_CELLS), this.progressOf(since.getAsInt(), CASING_TICKS)));
     }
@@ -340,7 +365,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         double heading = Math.atan2(toY - tower.getY(), toX - tower.getX());
         Point2D.Float muzzle = TowerSprites.muzzle(TowerLook.SNIPER, tier,
                 TowerSpriteFrameBuilder.poseOf(tower, this.gameTime), tower.getX(), tower.getY(), this.scale, heading);
-        this.draws.add(new BulletDraw(roundOf(rounds, critical), muzzle.x, muzzle.y, toX, toY, 0f, flown, alpha,
+        this.add(new BulletDraw(roundOf(rounds, critical), muzzle.x, muzzle.y, toX, toY, 0f, flown, alpha,
                 this.scale, this.tickSeconds()));
     }
 
@@ -349,7 +374,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      * shot it hopped from; a ricochet follows a crit, so a plain shot hops as one.
      */
     private void hop(Hop hop, float flown) {
-        this.draws.add(new BulletDraw(roundOf(hop.rounds(), true), (float) hop.from().x(), (float) hop.from().y(),
+        this.add(new BulletDraw(roundOf(hop.rounds(), true), (float) hop.from().x(), (float) hop.from().y(),
                 (float) hop.bullet().target().getX(), (float) hop.bullet().target().getY(), HOP_BOW, flown, 1f,
                 this.scale, this.tickSeconds()));
     }
@@ -382,8 +407,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             return;
         }
         Body body = Body.of(execution.enemy());
-        this.draws.add(new ExecutionDraw((float) execution.at().x(), (float) execution.at().y() + body.feet(),
-                body.lift(), this.scale, progress, execution.tick()));
+        this.addAt(new ExecutionDraw((float) execution.at().x(), (float) execution.at().y() + body.feet(),
+                body.lift(), this.scale, progress, execution.tick()), (float) execution.enemy().getY());
     }
 
     /** The hunting scope's laser from its lens to the enemy it singles out, while it does. */
@@ -403,7 +428,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         Point2D.Float at = target.accept(mob -> new Point2D.Float(this.lerp(mob.getPrevX(), mob.getX()),
                 this.lerp(mob.getPrevY(), mob.getY())));
         Body body = Body.of(target);
-        this.draws.add(new LaserDraw(lensX, lensY, at.x, at.y + body.feet() - body.lift(), this.scale,
+        this.add(new LaserDraw(lensX, lensY, at.x, at.y + body.feet() - body.lift(), this.scale,
                 (float) this.animationSeconds));
     }
 
@@ -434,7 +459,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             spellBlast.ifPresentOrElse(spell -> {
                 float progress = this.momentProgress(blast.tick(), SPELL_BLAST_TICKS);
                 if (progress < 1f) {
-                    this.draws.add(new SpellBlastDraw(spell, x, y, blast.core(), blast.edge(), progress, this.scale,
+                    this.add(new SpellBlastDraw(spell, x, y, blast.core(), blast.edge(), progress, this.scale,
                             blast.tick()));
                 }
             }, () -> {
@@ -478,8 +503,8 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         if (bolt.kind() == BoltKind.THUNDERSTRIKE) {
             float progress = this.momentProgress(bolt.tick(), THUNDERBOLT_TICKS);
             if (progress < 1f) {
-                this.draws.add(new ThunderboltDraw((float) bolt.to().x(), (float) bolt.to().y(), progress, this.scale,
-                        bolt.tick() * 31 + order));
+                this.addAt(new ThunderboltDraw((float) bolt.to().x(), (float) bolt.to().y(), progress, this.scale,
+                        bolt.tick() * 31 + order), (float) bolt.to().y());
             }
         } else {
             float progress = (this.gameTime - bolt.tick()) / DETONATION_TICKS;
@@ -490,9 +515,11 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
         float shocked = this.momentProgress(bolt.tick(), SHOCK_TICKS);
         if (shocked < 1f) {
-            bolt.shocked().ifPresent(enemy -> this.draws.add(new ShockDraw(
-                    EnemyFrameBuilder.bodyOf(enemy, this.interpolationAlpha),
-                    bolt.critical() || bolt.kind() == BoltKind.THUNDERSTRIKE, shocked, bolt.tick() * 7 + order)));
+            bolt.shocked().ifPresent(enemy -> {
+                EnemyBodyDraw body = EnemyFrameBuilder.bodyOf(enemy, this.interpolationAlpha);
+                this.addAt(new ShockDraw(body, bolt.critical() || bolt.kind() == BoltKind.THUNDERSTRIKE, shocked,
+                        bolt.tick() * 7 + order), body.y());
+            });
         }
     }
 
@@ -521,9 +548,9 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             return new ShellTrail.Point((float) point.x(), (float) (point.y() - this.orbLift(launch, share)));
         });
         TrailLook trail = look == SpellOrbLook.BALL_LIGHTNING ? TrailLook.STORM : TrailLook.ARCANE;
-        this.draws.add(new SpellOrbDraw(look, (float) at.x(), (float) at.y(), this.orbLift(launch, flown),
+        this.addAt(new SpellOrbDraw(look, (float) at.x(), (float) at.y(), this.orbLift(launch, flown),
                 ORB_CELLS * this.scale, new ShellTrail(trail, SPELL_TRAIL_WIDTH, points, this.gameTime),
-                (float) this.animationSeconds));
+                (float) this.animationSeconds), (float) at.y());
     }
 
     /** How high over its centre on the ground a tower's crowning ball is, in pixels. */
@@ -569,8 +596,9 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 case BLIGHT -> TrailLook.BLIGHT;
                 case BACKLASH -> TrailLook.BACKLASH;
             };
-            this.draws.add(new CurseDraw(glyph, head.x(), head.y(), CURSE_CELLS * this.scale,
-                    new ShellTrail(trail, SPELL_TRAIL_WIDTH, points, this.gameTime), (float) this.animationSeconds));
+            this.addAt(new CurseDraw(glyph, head.x(), head.y(), CURSE_CELLS * this.scale,
+                    new ShellTrail(trail, SPELL_TRAIL_WIDTH, points, this.gameTime), (float) this.animationSeconds),
+                    head.y());
         });
     }
 
@@ -596,15 +624,15 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 stone.to().y() - tower.getY()) / this.scale, this.scale);
         float lift = ProjectileFrameBuilder.lobLift(launch, peak, flown);
         Palette tone = stone.charged() ? Palette.TOWER_SPLASH_ARC : Palette.TOWER_SPLASH_STONE;
-        this.draws.add(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(flown), STONE_SIZE, x,
-                y - lift, Optional.empty(), Optional.empty()));
+        this.addAt(new CannonballDraw(tone, x, y, lift, ProjectileFrameBuilder.lobShadowScale(flown), STONE_SIZE, x,
+                y - lift, Optional.empty(), Optional.empty()), y);
     }
 
     /** Something flying straight to where it lands, its streak trailing behind its head. */
     private void streak(Palette tone, Vec2 from, Vec2 to, ShotFlight flight) {
         double flown = this.flown(flight);
         double tail = Math.max(0, flown - STREAK_SHARE);
-        this.draws.add(new TracerDraw(tone, tone, (float) (from.x() + (to.x() - from.x()) * tail),
+        this.add(new TracerDraw(tone, tone, (float) (from.x() + (to.x() - from.x()) * tail),
                 (float) (from.y() + (to.y() - from.y()) * tail), (float) (from.x() + (to.x() - from.x()) * flown),
                 (float) (from.y() + (to.y() - from.y()) * flown), TRACER_WIDTH_CELLS * this.scale, 1f));
     }
@@ -612,10 +640,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private void detonation(float centerX, float centerY, float edge, float progress, SplashBlastLook look) {
         float radius = edge * progress;
         if (progress < FLASH_SHARE) {
-            this.draws.add(new SplashDraw(look.flash(), centerX, centerY, edge * (FLASH_SHARE + progress)));
+            this.add(new SplashDraw(look.flash(), centerX, centerY, edge * (FLASH_SHARE + progress)));
         }
-        this.draws.add(new RingDraw(look.detonation(), centerX, centerY, radius, 1f - progress));
-        this.draws.add(new RingDraw(look.detonationDark(), centerX, centerY, radius,
+        this.add(new RingDraw(look.detonation(), centerX, centerY, radius, 1f - progress));
+        this.add(new RingDraw(look.detonationDark(), centerX, centerY, radius,
                 DARK_RING_ALPHA * progress * (1f - progress) * 4f));
     }
 
@@ -652,7 +680,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             float side = i == ARC_SEGMENTS ? 0f : ((i + order) % 2 == 0 ? 1f : -1f);
             float nextX = fromX + dx * t + normalX * side;
             float nextY = fromY + dy * t + normalY * side;
-            this.draws.add(new BeamDraw(Palette.TOWER_SPLASH_ARC, x, y, nextX, nextY, 2f, alpha));
+            this.add(new BeamDraw(Palette.TOWER_SPLASH_ARC, x, y, nextX, nextY, 2f, alpha));
             x = nextX;
             y = nextY;
         }
@@ -669,12 +697,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         int rang = tower.ticksSinceKnell(this.gameTime);
         if (rang < KNELL_RING_TICKS) {
             float progress = Math.min(1f, (rang + (float) this.interpolationAlpha) / KNELL_RING_TICKS);
-            this.draws.add(new RingDraw(ZoneFrameBuilder.fieldPaletteFor(tower.stoneLook()), x, y, field * progress,
+            this.add(new RingDraw(ZoneFrameBuilder.fieldPaletteFor(tower.stoneLook()), x, y, field * progress,
                     1f - progress));
         }
         if (tower.isCastingShadow()) {
             float alpha = Math.min(1f, tower.shadowShareLeft() / SHADOW_FADE_SHARE);
-            this.draws.add(new ShadowDraw(x, y, (float) tower.shadowRadians(this.interpolationAlpha),
+            this.add(new ShadowDraw(x, y, (float) tower.shadowRadians(this.interpolationAlpha),
                     tower.shadowReach(), this.scale, alpha, field, tower.stoneLook() == StoneLook.UMBRA));
         }
         return null;
@@ -687,17 +715,17 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             float progress = (this.gameTime - reveal.atTick() + (float) this.interpolationAlpha) / REVEAL_RAY_TICKS;
             if (progress >= 0f && progress < 1f) {
                 EnemyMob enemy = reveal.enemy();
-                this.draws.add(new BeamDraw(Palette.TOWER_AURA_REVEAL_RAY, lanternX, lanternY, (float) enemy.getX(),
+                this.add(new BeamDraw(Palette.TOWER_AURA_REVEAL_RAY, lanternX, lanternY, (float) enemy.getX(),
                         (float) enemy.getY(), this.scale * REVEAL_RAY_WIDTH_CELLS, 1f - progress));
             }
         }
-        tower.heldEnemy().ifPresent(enemy -> this.draws.add(BeamDraw.solid(Palette.TOWER_AURA_SPOTLIGHT, lanternX,
+        tower.heldEnemy().ifPresent(enemy -> this.add(BeamDraw.solid(Palette.TOWER_AURA_SPOTLIGHT, lanternX,
                 lanternY, (float) enemy.getX(), (float) enemy.getY(), this.scale * SPOTLIGHT_WIDTH_CELLS)));
         this.lightEdge(tower);
         this.litEnemies(tower);
         if (tower.isSelected()) {
             for (Tower lit : tower.litTowers()) {
-                this.draws.add(new TowerStatusDraw(Palette.TOWER_AURA_LIT_MARK, lit.getBoardX() + this.scale * 0.15f,
+                this.add(new TowerStatusDraw(Palette.TOWER_AURA_LIT_MARK, lit.getBoardX() + this.scale * 0.15f,
                         lit.getBoardY() + this.scale * 0.85f, this.scale * STATUS_MARKER_SCALE_FRACTION));
             }
         }
@@ -716,7 +744,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
         List<LightArc> arcs = tower.prismArcs().stream()
                 .map(arc -> new LightArc(arc.angleRadians(), markPalette(arc.mark()))).toList();
-        this.draws.add(new LightEdgeDraw(tower.getX(), tower.getY(), tower.getRangeReal(), progress, arcs));
+        this.add(new LightEdgeDraw(tower.getX(), tower.getY(), tower.getRangeReal(), progress, arcs));
     }
 
     /** Every enemy standing in the light, lit from the top left; with Prism the light splits into its marks. */
@@ -735,9 +763,10 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             float depth = (tower.getRangeReal() - (float) Math.sqrt(dx * dx + dy * dy)) / edge;
             float light = Math.clamp(depth, 0f, 1f);
             if (light > 0f && !enemy.isDead() && !enemy.isHidden() && this.litDrawn.add(enemy)) {
-                this.draws.add(new LitEnemyDraw((float) enemy.getX(), (float) enemy.getY(), this.scale,
+                this.addAt(new LitEnemyDraw((float) enemy.getX(), (float) enemy.getY(), this.scale,
                         light * light * (3f - 2f * light), (float) this.animationSeconds, index * LIT_ENEMY_PHASE, fringe,
-                        this.litDrawn.size() > LIT_ENEMY_DETAIL_LIMIT));
+                        this.litDrawn.size() > LIT_ENEMY_DETAIL_LIMIT),
+                        EnemyFrameBuilder.bodyOf(enemy, this.interpolationAlpha).y());
             }
             index++;
         }
@@ -789,17 +818,17 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         if (shot.isPresent()) {
             int since = shot.getAsInt();
             double[] mouth = TowerFoundations.mortarMouth(tier, pose);
-            this.draws.add(new MuzzleBlastDraw((float) (tower.getX() + mouth[0] * this.scale),
+            this.add(new MuzzleBlastDraw((float) (tower.getX() + mouth[0] * this.scale),
                     (float) (tower.getY() + (mouth[1] - TowerFoundations.LIFT * mouth[2]) * this.scale), this.scale,
                     this.progressOf(since, TowerMomentArt.MUZZLE_SMOKE_TICKS)));
             if (since >= 1 && since <= TowerMomentArt.FOOT_DUST_TICKS) {
-                this.draws.add(new FootDustDraw(tier, tower.getX(), tower.getY(), this.scale,
+                this.add(new FootDustDraw(tier, tower.getX(), tower.getY(), this.scale,
                         this.progressOf(since - 1, TowerMomentArt.FOOT_DUST_TICKS)));
             }
         }
         if (steam >= 0f) {
             double[] pump = TowerFoundations.mortarPump(tier, pose);
-            this.draws.add(new PumpSteamDraw((float) (tower.getX() + pump[0] * this.scale),
+            this.add(new PumpSteamDraw((float) (tower.getX() + pump[0] * this.scale),
                     (float) (tower.getY() + (pump[1] - TowerFoundations.LIFT * pump[2]) * this.scale), this.scale,
                     steam));
         }
@@ -829,7 +858,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         }
         TowerPose pose = TowerSpriteFrameBuilder.poseOf(tower, this.gameTime);
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
-        this.draws.add(new ShellCarryDraw(tier, pose.has(TowerCue.LONG_BARREL), tower.getX(), tower.getY(), this.scale,
+        this.add(new ShellCarryDraw(tier, pose.has(TowerCue.LONG_BARREL), tower.getX(), tower.getY(), this.scale,
                 1f - coolDown, pose.has(TowerCue.VOLLEY), pose.stock(), pose.load()));
     }
 
@@ -867,8 +896,12 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         if (look == BlastLook.NORMAL) {
             this.blastRings(mark, progress);
         }
-        this.draws.add(new BlastDraw(look, (float) mark.at().x(), (float) mark.at().y(), mark.core(), mark.edge(),
-                progress, this.scale, seed));
+        BlastDraw blast = new BlastDraw(look, (float) mark.at().x(), (float) mark.at().y(), mark.core(), mark.edge(),
+                progress, this.scale, seed);
+        this.addAt(blast, blast.y());
+        if (look == BlastLook.NUKE) {
+            this.addAt(new BlastGroundDraw(blast), blast.y());
+        }
         if (look == BlastLook.SHRAPNEL) {
             this.fragments(mark, progress * blastTicks(look) / FLASH_BLAST_TICKS);
         }
@@ -894,9 +927,9 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         float fade = 1f - progress;
         float x = (float) mark.at().x();
         float y = (float) mark.at().y();
-        this.draws.add(new RingDraw(Palette.BLAST_RING, x, y, mark.core(), fade * BLAST_CORE_RING_ALPHA));
+        this.add(new RingDraw(Palette.BLAST_RING, x, y, mark.core(), fade * BLAST_CORE_RING_ALPHA));
         if (mark.edge() > mark.core()) {
-            this.draws.add(new RingDraw(Palette.BLAST_RING, x, y, mark.edge(), fade * BLAST_EDGE_RING_ALPHA));
+            this.add(new RingDraw(Palette.BLAST_RING, x, y, mark.edge(), fade * BLAST_EDGE_RING_ALPHA));
         }
     }
 
@@ -912,7 +945,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
                 double angle = i * 2 * Math.PI / BLAST_FRAGMENTS + mark.startedAtTick();
                 float cos = (float) Math.cos(angle);
                 float sin = (float) Math.sin(angle);
-                this.draws.add(new TracerDraw(Palette.PROJECTILE_CANNONBALL, Palette.TERM_HEAVY_SHELL, x + cos * tail,
+                this.add(new TracerDraw(Palette.PROJECTILE_CANNONBALL, Palette.TERM_HEAVY_SHELL, x + cos * tail,
                         y + sin * tail, x + cos * head, y + sin * head, this.scale * FRAGMENT_STROKE_CELLS, fade));
             }
         }
@@ -924,7 +957,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
      */
     public Void visitSeekerTower(SeekerTower tower) {
         for (Vec2 held : tower.iceWakes()) {
-            this.draws.add(new IceWakeDraw((float) held.x(), (float) held.y(), tower.iceWakeRadius(), this.scale));
+            this.add(new IceWakeDraw((float) held.x(), (float) held.y(), tower.iceWakeRadius(), this.scale));
         }
         for (ShatterMark mark : tower.shatterMarks()) {
             float progress = (this.gameTime - mark.startedAtTick() + (float) this.interpolationAlpha)
@@ -941,7 +974,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         this.nestLifts.put(new Vec2(tower.getX(), tower.getY()), tower.getY() - top.y);
         float lifeSeconds = TowerSpriteFrameBuilder.lifeSeconds(tower, this.animationSeconds);
         if (!missiles.isEmpty()) {
-            this.draws.add(new NestDraw(top.x, top.y, NEST_RADIUS_CELLS * this.scale, missiles,
+            this.add(new NestDraw(top.x, top.y, NEST_RADIUS_CELLS * this.scale, missiles,
                     tower.ringRadians() + lifeSeconds * NEST_TURN,
                     ProjectileFrameBuilder.MISSILE_LENGTH_CELLS * this.scale, tower.releaseReady()));
         }
@@ -968,7 +1001,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             case RUBY -> FlockLook.EMBERS;
             case SHADE -> FlockLook.CROWS;
         }).orElse(FlockLook.TERNS);
-        this.draws.add(new FlockDraw(look, TowerLifeArt.birdCount(look, tier), top.x, top.y, this.scale, lifeSeconds,
+        this.add(new FlockDraw(look, TowerLifeArt.birdCount(look, tier), top.x, top.y, this.scale, lifeSeconds,
                 TowerSpriteFrameBuilder.seedOf(tower), (float) presence.arrived(), (float) presence.leaving()));
     }
 
@@ -983,7 +1016,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
             double angle = i * 2 * Math.PI / SHATTER_SHARDS + mark.startedAtTick();
             float cos = (float) Math.cos(angle);
             float sin = (float) Math.sin(angle);
-            this.draws.add(new TracerDraw(ice, Palette.PROJECTILE_FROST, x + cos * tail, y + sin * tail,
+            this.add(new TracerDraw(ice, Palette.PROJECTILE_FROST, x + cos * tail, y + sin * tail,
                     x + cos * head, y + sin * head, this.scale * SHATTER_STROKE_CELLS, 1f - progress));
         }
     }
@@ -1064,7 +1097,7 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         Point2D.Float muzzle = TowerSprites.muzzle(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
                 TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale,
                 tower.getTurretAim().radiansAt(this.interpolationAlpha));
-        this.draws.add(new SteamDraw(muzzle.x, muzzle.y, this.scale, this.progressOf(since.getAsInt(), STEAM_TICKS),
+        this.add(new SteamDraw(muzzle.x, muzzle.y, this.scale, this.progressOf(since.getAsInt(), STEAM_TICKS),
                 TowerSpriteFrameBuilder.seedOf(tower)));
     }
 }
