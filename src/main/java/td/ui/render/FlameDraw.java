@@ -15,12 +15,15 @@ public record FlameDraw(List<Stream> streams, List<Caught> caught, float cellPix
     }
 
     /**
-     * One stream from its nozzle at ({@code x}, {@code y}) along {@code headingRadians}, {@code reach} long and
-     * {@code halfWidthRadians} wide either side; {@code heat} 0..1 from its fuel, {@code coreHalfWidthRadians} its
-     * Core's half-width (0 without one), in Soulfire's colours while {@code soulfire}; {@code flicker} picks its edge.
+     * One stream along {@code headingRadians} from its tower's centre at ({@code x}, {@code y}), shown from its nozzle,
+     * {@code inner} out, to {@code reach}, {@code halfWidthRadians} wide either side; {@code heat} 0..1 from its fuel.
+     * {@code middleHalfWidthRadians} and {@code coreHalfWidthRadians} are the half-widths of the bands its nodes give
+     * it (0 for none) and {@code coreHeat} how hot its core burns; it is Soulfire or Dragon's Breath by those flags,
+     * and {@code flicker} picks its tips.
      */
-    public record Stream(float x, float y, float headingRadians, float reach, float halfWidthRadians, float heat,
-                         float coreHalfWidthRadians, boolean soulfire, int flicker) {
+    public record Stream(float x, float y, float headingRadians, float inner, float reach, float halfWidthRadians,
+                         float heat, float middleHalfWidthRadians, float coreHalfWidthRadians, float coreHeat,
+                         boolean soulfire, boolean dragon, int flicker) {
     }
 
     /**

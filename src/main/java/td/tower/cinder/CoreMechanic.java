@@ -4,7 +4,7 @@ import td.term.TermNumbers;
 import td.term.TermText;
 import td.tower.TowerTerm;
 
-/** Core: the middle of the cone, where its target stands, pours more. */
+/** Core: the middle of the cone, where its target stands, pours more, all the way out to its reach. */
 public final class CoreMechanic implements CinderMechanic {
 
     private static final float SHARE = 0.25f;
@@ -12,7 +12,7 @@ public final class CoreMechanic implements CinderMechanic {
 
     @Override
     public CinderSpec refineSpec(CinderSpec spec) {
-        return spec.withCore(new CoreSpec(SHARE, 1f + MORE));
+        return spec.withCore(new FlameBand(SHARE, MORE));
     }
 
     @Override

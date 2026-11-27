@@ -8,12 +8,12 @@ import td.effect.EffectKind;
 import td.enemy.EnemyMob;
 import td.stat.StatPart;
 import td.term.TermText;
+import td.tower.cinder.BlueFlameMechanic;
 import td.tower.cinder.Caught;
 import td.tower.cinder.CinderMechanic;
 import td.tower.cinder.CinderSpec;
 import td.tower.cinder.CoreMechanic;
 import td.tower.cinder.DragonsBreathMechanic;
-import td.tower.cinder.FlameLook;
 import td.tower.cinder.Flash;
 import td.tower.cinder.FlashoverMechanic;
 import td.tower.cinder.MeltdownMechanic;
@@ -21,7 +21,6 @@ import td.tower.cinder.SingeMechanic;
 import td.tower.cinder.SoulfireMechanic;
 import td.tower.cinder.StreamLook;
 import td.tower.cinder.ThermalShockMechanic;
-import td.tower.cinder.WhiteFlameMechanic;
 import td.tower.targeting.InRangeTargetQuery;
 import td.tower.targeting.InWedgeTargetQuery;
 import td.tower.targeting.NearestSelector;
@@ -89,11 +88,10 @@ public final class CinderTower extends AbstractTower {
             .withModifiers(TowerModifiers.damage(12f).plus(TowerModifiers.magicPenetration(0.5f)))
             .inTier(2);
     private static final UpgradeNode DRAGONS_BREATH = UpgradeNode.of("cinder.dragons_breath", "Dragon's Breath", 15)
-            .withModifiers(TowerModifiers.stream(Math.round(TickRate.TICKS_PER_SECOND)).plus(TowerModifiers.damage(-14f))
+            .withModifiers(TowerModifiers.streamTimes(2f).plus(TowerModifiers.damageTimes(0.8f))
                     .plus(TowerModifiers.reload(-Math.round(1.25f * TickRate.TICKS_PER_SECOND))))
             .inTier(2);
-    private static final UpgradeNode WHITE_FLAME = UpgradeNode.of("cinder.white_flame", "White Flame", 30)
-            .withModifiers(TowerModifiers.damage(34f))
+    private static final UpgradeNode BLUE_FLAME = UpgradeNode.of("cinder.blue_flame", "Blue Flame", 30)
             .inTier(3);
 
     private static final UpgradeNode FLASHOVER = UpgradeNode.of("cinder.flashover", "Flashover", 20)
@@ -111,7 +109,7 @@ public final class CinderTower extends AbstractTower {
 
     private static final UpgradeTree TREE = UpgradeTree.of(List.of(HOT_FLAME, LONG_STREAM, WIDE_NOZZLE, LONG_NOZZLE))
             .with(CORE, LANCE,
-                    SOULFIRE, DRAGONS_BREATH, WHITE_FLAME,
+                    SOULFIRE, DRAGONS_BREATH, BLUE_FLAME,
                     FLASHOVER, MELTDOWN, THERMAL_SHOCK, HOT_FLAME_2, LONG_STREAM_2)
             .withCluster(UpgradeCluster.of("Nozzle", WIDE_NOZZLE, LONG_NOZZLE))
             .withCluster(UpgradeCluster.of("Flame", SOULFIRE, DRAGONS_BREATH))
@@ -124,7 +122,7 @@ public final class CinderTower extends AbstractTower {
             entry(UpgradeTree.tierNodeId(1), SingeMechanic::new),
             entry(SOULFIRE.id(), SoulfireMechanic::new),
             entry(DRAGONS_BREATH.id(), DragonsBreathMechanic::new),
-            entry(WHITE_FLAME.id(), WhiteFlameMechanic::new),
+            entry(BLUE_FLAME.id(), BlueFlameMechanic::new),
             entry(FLASHOVER.id(), FlashoverMechanic::new),
             entry(MELTDOWN.id(), MeltdownMechanic::new),
             entry(THERMAL_SHOCK.id(), ThermalShockMechanic::new));
@@ -197,7 +195,7 @@ public final class CinderTower extends AbstractTower {
 
     /**
      * One tick of the stream: Flame into every enemy in the cone, this Scorcher's share of Singe with it once it has the
-     * Singe, more Flame in the Core, then a hot burn's Flashover onto the enemies beside it.
+     * Singe, more Flame in each band that holds it, then a hot burn's Flashover onto the enemies beside it.
      */
     private void pour(CinderSpec spec) {
         double heading = this.turretAim.currentRadians();
@@ -208,8 +206,9 @@ public final class CinderTower extends AbstractTower {
         for (EnemyMob enemy : new InWedgeTargetQuery(this.centerX, this.centerY, heading, halfWidth)
                 .and(InRangeTargetQuery.everyone(this.centerX, this.centerY, this.rangeReal()))
                 .matching(this.context.enemies())) {
-            boolean inCore = spec.core().isActive() && this.offAxis(enemy, heading) <= halfWidth * spec.core().share();
-            float fed = this.feed(enemy, perTick * (inCore ? spec.core().factor() : 1f), spec);
+            double off = this.offAxis(enemy, heading);
+            boolean inCore = spec.core().moreAt(off, halfWidth) > 0f;
+            float fed = this.feed(enemy, perTick * spec.flameAt(off, halfWidth), spec);
             this.caught.add(new Caught(enemy, DamageUnits.inPoints(fed) * TickRate.TICKS_PER_SECOND, inCore));
             if (spec.singe()) {
                 this.applyEffect(enemy, sink -> Effect.singed(SingeMechanic.LINGER_TICKS, sink));
@@ -272,7 +271,7 @@ public final class CinderTower extends AbstractTower {
         return List.of(flame, dpsLine(TowerStatRow.STREAM_FUEL, streamFuel(this.authoredStats()), streamFuel(stats)));
     }
 
-    /** What a whole stream at {@code stats} gives one enemy outside the Core, in points. */
+    /** What a whole stream at {@code stats} gives one enemy outside its bands, in points. */
     private static float streamFuel(TowerStats stats) {
         return DamageUnits.inPoints(stats.damage()) * stats.value(TowerStat.STREAM) / TickRate.TICKS_PER_SECOND;
     }
@@ -290,7 +289,7 @@ public final class CinderTower extends AbstractTower {
         return this.streamLeft > 0;
     }
 
-    /** The fuel its stream pours a second, in points, outside the Core. */
+    /** The fuel its stream pours a second, in points, outside its bands. */
     public float fuelPerSecond() {
         return DamageUnits.inPoints(this.streamStats.damage());
     }
@@ -314,8 +313,7 @@ public final class CinderTower extends AbstractTower {
     /** What its stream looks like now, as its nodes shape it. */
     public StreamLook streamLook() {
         CinderSpec spec = this.spec(this.mechanics.all());
-        return new StreamLook(spec.soulfire(), spec.look() == FlameLook.WHITE, spec.dragonsBreath(),
-                spec.core().isActive() ? (float) this.halfWidthRadians() * spec.core().share() : 0f);
+        return new StreamLook(spec.soulfire(), spec.dragonsBreath(), spec.core(), spec.middle());
     }
 
     /** This tick's Flashovers, each from a hot enemy to one beside it. */

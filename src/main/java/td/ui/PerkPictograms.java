@@ -150,8 +150,8 @@ final class PerkPictograms {
             Map.entry("cinder.soulfire", "=effect.soulfire"),
             // Dragon's Breath
             Map.entry("cinder.dragons_breath", "=tower.dragons_breath"),
-            // White Flame
-            Map.entry("cinder.white_flame", "=tower.flame"),
+            // Blue Flame
+            Map.entry("cinder.blue_flame", "=tower.flame"),
             // Flashover
             Map.entry("cinder.flashover", "=tower.flashover"),
             // Meltdown

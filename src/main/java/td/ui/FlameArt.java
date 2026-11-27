@@ -12,31 +12,41 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 
 /**
- * The Scorchers' flame. Every stream of the frame is painted in one pass, layer by layer, so where two cones cross their
- * fire merges into one flame instead of stacking its alpha twice. A cone's solid fire covers its whole reach and its
- * tips lick past it. Over the fire, each enemy caught in a cone shows as a body standing in the jet: heat pooling on its
- * front, a dimmer wake behind it, its dark silhouette ringed by a rim of its heat, tongues of flame licking round both
- * sides and embers shed off it. How hot it all looks follows the fuel: a hotter stream and a hotter enemy burn yellower,
- * then white, then ice-blue, and a hotter rim is thicker. Nothing is stored between frames.
+ * The Scorchers' flame. Every stream of the frame is painted in one pass, layer by layer, so where two cones of one
+ * fire cross they merge into one flame instead of stacking their alpha twice. A cone's solid fire covers its whole
+ * reach, its front licking past it; inside it burn a middle tongue and a core tongue, small on a bare tower and grown to
+ * the bands its nodes give it, though shorter than the reach they pour to. Blue Flame turns the middle white and the
+ * core blue. Each fire has its own look: fire licks in jagged tips and sheds sparks, Dragon's Breath rolls in deep red
+ * billows and smoke, Soulfire ripples violet in a ghostly halo and lets off pale wisps.
+ * <p>
+ * Over the fire, each enemy caught in a cone shows as a body standing in the jet: heat pooling on its front, a dimmer
+ * wake behind it, its dark silhouette ringed by a rim of its heat, tongues of flame licking round both sides and embers
+ * shed off it. How hot it all looks follows the fuel. Nothing is stored between frames.
  */
 final class FlameArt {
 
     /** Fuel a second at which a stream is as hot as it is drawn: every damage node it can take. */
-    static final double FULL_FUEL = 120;
+    static final double FULL_FUEL = 105;
     /** Heat added inside the Core, on top of the fuel the Core already adds. */
     static final double CORE_HEAT = 0.25;
     /** Heat each cone past the hottest adds to an enemy caught in several. */
     static final double CROSSFIRE_HEAT = 0.1;
 
-    /** The three layers' alpha; the outer and middle merge across cones, the core stays each stream's. */
-    private static final float OUTER_ALPHA = 0.55f;
-    private static final float MIDDLE_ALPHA = 0.72f;
-    private static final float CORE_ALPHA = 0.88f;
     private static final int OUTER_TIPS = 9;
-    private static final int MIDDLE_TIPS = 7;
-    private static final int CORE_TIPS = 5;
-    private static final int WHITE_TIPS = 3;
     private static final int TONGUE_SEEDS = 7;
+    /** The tongues of a bare tower, as shares of the cone's half-width and reach. */
+    private static final double BARE_MIDDLE_WIDTH = 0.42;
+    private static final double BARE_MIDDLE_REACH = 0.55;
+    private static final double BARE_CORE_WIDTH = 0.13;
+    private static final double BARE_CORE_REACH = 0.32;
+    /** With the Core the middle tongue grows too, so it still holds the core's; how far each band's tongue reaches. */
+    private static final double CORED_MIDDLE_WIDTH = 0.5;
+    private static final double CORED_MIDDLE_REACH = 0.78;
+    private static final double MIDDLE_REACH = 0.82;
+    private static final double CORE_REACH = 0.7;
+    /** Dragon's Breath's and Soulfire's halo, past their cone. */
+    private static final double HALO_REACH = 1.07;
+    private static final double HALO_WIDTH = 1.1;
     /** A silhouette: how dark it lies over the fire, and its coolest rim's width in cells. */
     private static final Color SILHOUETTE = new Color(0x1a0c06);
     private static final float SILHOUETTE_ALPHA = 0.68f;
@@ -50,8 +60,20 @@ final class FlameArt {
     private static final int LICK_POINTS = 14;
     private static final Color FLAME = new Color(0xff8a2a);
     private static final Color FLAME_SOUL = new Color(0xb49cff);
+    private static final Color SMOKE = new Color(0x1e1412);
+    private static final Color WISP = new Color(0xe6f8ff);
+    private static final Color WISP_GLOW = new Color(0x9fe8ff);
 
     private FlameArt() {
+    }
+
+    /** The three fires a stream can be: its own, Dragon's Breath and Soulfire. */
+    private enum Fire {
+        FLAME, DRAGON, SOUL
+    }
+
+    private static Fire fireOf(FlameDraw.Stream s) {
+        return s.soulfire() ? Fire.SOUL : s.dragon() ? Fire.DRAGON : Fire.FLAME;
     }
 
     private static Color mix(Color a, Color b, double t) {
@@ -68,19 +90,48 @@ final class FlameArt {
         return mix(stops[i], stops[i + 1], at - i);
     }
 
-    private static Color outer(double heat, boolean soul) {
-        return soul ? ramp(heat, new Color(0x5a36b8), new Color(0x6a48d0))
-                : ramp(heat, new Color(0xe2402a), new Color(0xf25a28), new Color(0xff6e2a));
+    private static Color outer(Fire fire, double heat) {
+        return switch (fire) {
+            case FLAME -> ramp(heat, new Color(0xe2402a), new Color(0xf25a28), new Color(0xff6e2a));
+            case DRAGON -> ramp(heat, new Color(0xb3201a), new Color(0xcf3119), new Color(0xe5461c));
+            case SOUL -> ramp(heat, new Color(0x4a2aa0), new Color(0x5a36b8), new Color(0x6a48d0));
+        };
     }
 
-    private static Color middle(double heat, boolean soul) {
-        return soul ? ramp(heat, new Color(0x8f6cf0), new Color(0xb49cff))
-                : ramp(heat, new Color(0xff8a2a), new Color(0xffa83a), new Color(0xffc24a));
+    private static float outerAlpha(Fire fire) {
+        return switch (fire) {
+            case FLAME -> 0.55f;
+            case DRAGON -> 0.62f;
+            case SOUL -> 0.5f;
+        };
     }
 
-    private static Color core(double heat, boolean soul) {
-        return soul ? ramp(heat, new Color(0xd5e6ff), Color.WHITE)
-                : ramp(heat, new Color(0xffe27a), new Color(0xfff2b8), new Color(0xfffaf0), new Color(0xe6f0ff));
+    private static Color middle(Fire fire, double heat) {
+        return switch (fire) {
+            case FLAME -> ramp(heat, new Color(0xff8a2a), new Color(0xffa83a), new Color(0xffc24a));
+            case DRAGON -> ramp(heat, new Color(0xff951c), new Color(0xffb534), new Color(0xffcf58));
+            case SOUL -> ramp(heat, new Color(0x8f6cf0), new Color(0xa486f8), new Color(0xb49cff));
+        };
+    }
+
+    /** The middle under Blue Flame: white, warm in fire, cool in Soulfire. */
+    private static Color white(Fire fire) {
+        return switch (fire) {
+            case FLAME -> new Color(0xfff6e6);
+            case DRAGON -> new Color(0xfff1d0);
+            case SOUL -> new Color(0xf0eaff);
+        };
+    }
+
+    /** The core: from warm to white as it heats, light blue once strong, and wholly blue under a white middle. */
+    private static Color core(Fire fire, double heat, boolean whiteMiddle) {
+        Color warm = switch (fire) {
+            case FLAME -> new Color(0xffe27a);
+            case DRAGON -> new Color(0xffe066);
+            case SOUL -> new Color(0xc8d6ff);
+        };
+        Color blue = fire == Fire.SOUL ? new Color(0x5fd8f5) : new Color(0x62b2f5);
+        return ramp(whiteMiddle ? 1 : heat, warm, new Color(0xfff6d8), new Color(0xfffcf4), blue);
     }
 
     /** How far {@code heat} is toward the hottest a rim gets: a full stream in the Core. */
@@ -97,71 +148,208 @@ final class FlameArt {
     /** Every stream and every enemy caught in one. */
     static void paint(Graphics2D g2, FlameDraw flame) {
         double scale = flame.cellPixels();
-        // Every tongue winds the same way, so a non-zero fill of all of them is their union, filled once.
-        for (int soul = 0; soul < 2; soul++) {
+        double t = flame.seconds();
+        for (Fire fire : Fire.values()) {
+            // Every shape winds the same way, so a non-zero fill of a layer is the union of every stream's, filled once.
+            Path2D.Double halo = new Path2D.Double(Path2D.WIND_NON_ZERO);
             Path2D.Double outer = new Path2D.Double(Path2D.WIND_NON_ZERO);
             Path2D.Double middle = new Path2D.Double(Path2D.WIND_NON_ZERO);
+            Path2D.Double core = new Path2D.Double(Path2D.WIND_NON_ZERO);
             double heat = 0;
+            double coreHeat = 0;
             int count = 0;
+            boolean whiteMiddle = false;
             for (FlameDraw.Stream s : flame.streams()) {
-                if (s.soulfire() != (soul == 1)) {
+                if (fireOf(s) != fire) {
                     continue;
                 }
-                int seed = s.flicker() * TONGUE_SEEDS;
-                outer.append(placed(s, tongue(s.reach(), s.halfWidthRadians(), OUTER_TIPS, seed)), false);
-                middle.append(placed(s, tongue(s.reach() * 0.78, s.halfWidthRadians() * 0.66, MIDDLE_TIPS, seed + 1)),
+                int seed = seedOf(s);
+                double half = s.halfWidthRadians();
+                outer.append(placed(s, front(fire, s.inner(), s.reach(), half, s.flicker(), seed, t, 1)), false);
+                if (fire != Fire.FLAME) {
+                    halo.append(placed(s, front(fire, s.inner(), s.reach() * HALO_REACH, half * HALO_WIDTH,
+                            s.flicker(), seed, t, 1.3)), false);
+                }
+                boolean white = s.middleHalfWidthRadians() > 0;
+                boolean cored = s.coreHalfWidthRadians() > 0;
+                double middleHalf = white ? s.middleHalfWidthRadians()
+                        : half * (cored ? CORED_MIDDLE_WIDTH : BARE_MIDDLE_WIDTH);
+                double middleReach = white ? MIDDLE_REACH : cored ? CORED_MIDDLE_REACH : BARE_MIDDLE_REACH;
+                double coreHalf = cored ? s.coreHalfWidthRadians() : half * BARE_CORE_WIDTH;
+                double coreReach = cored ? CORE_REACH : BARE_CORE_REACH;
+                middle.append(placed(s, tongue(fire, s.inner(), s.reach() * middleReach, middleHalf, seed + 1, t)),
                         false);
+                core.append(placed(s, tongue(fire, s.inner(), s.reach() * coreReach, coreHalf, seed + 2, t)), false);
+                whiteMiddle |= white;
                 heat += s.heat();
+                coreHeat += s.coreHeat() + (cored ? CORE_HEAT : 0);
                 count++;
             }
             if (count == 0) {
                 continue;
             }
-            g2.setColor(TowerLifeArt.faded(outer(heat / count, soul == 1), OUTER_ALPHA));
+            Color outerColor = outer(fire, heat / count);
+            if (fire != Fire.FLAME) {
+                g2.setColor(TowerLifeArt.faded(outerColor, fire == Fire.SOUL ? 0.24 : 0.2));
+                g2.fill(halo);
+            }
+            g2.setColor(TowerLifeArt.faded(outerColor, outerAlpha(fire)));
             g2.fill(outer);
-            g2.setColor(TowerLifeArt.faded(middle(heat / count, soul == 1), MIDDLE_ALPHA));
+            g2.setColor(TowerLifeArt.faded(whiteMiddle ? white(fire) : middle(fire, heat / count),
+                    whiteMiddle ? 0.84 : 0.74));
             g2.fill(middle);
+            g2.setColor(TowerLifeArt.faded(core(fire, coreHeat / count, whiteMiddle), 0.9));
+            g2.fill(core);
         }
         for (FlameDraw.Stream s : flame.streams()) {
-            boolean core = s.coreHalfWidthRadians() > 0;
-            double coreHalf = core ? s.coreHalfWidthRadians() : s.halfWidthRadians() * 0.26;
-            double coreHeat = s.heat() + (core ? CORE_HEAT : 0);
-            int seed = s.flicker() * TONGUE_SEEDS;
-            g2.setColor(TowerLifeArt.faded(core(coreHeat, s.soulfire()), CORE_ALPHA));
-            g2.fill(placed(s, tongue(s.reach() * (core ? 0.72 : 0.42), coreHalf, CORE_TIPS, seed + 2)));
-            if (coreHeat > 0.5) {
-                g2.setColor(TowerLifeArt.faded(Color.WHITE, Math.min(0.8, (coreHeat - 0.5) * 1.2)));
-                g2.fill(placed(s, tongue(s.reach() * (core ? 0.5 : 0.28), coreHalf * 0.45, WHITE_TIPS, seed + 3)));
-            }
+            motes(g2, s, fireOf(s), scale, t);
         }
         for (FlameDraw.Caught c : flame.caught()) {
-            silhouette(g2, c, scale, flame.seconds());
+            silhouette(g2, c, scale, t);
         }
     }
 
-    private static Shape placed(FlameDraw.Stream s, Shape tongue) {
-        AffineTransform t = AffineTransform.getTranslateInstance(s.x(), s.y());
-        t.rotate(s.headingRadians());
-        return t.createTransformedShape(tongue);
+    private static int seedOf(FlameDraw.Stream s) {
+        return (int) Math.round(s.x() * 7 + s.y() * 13);
     }
 
-    /** A flame along +x: its notches lie at {@code reach} across its width, its tips past it, shorter toward its sides. */
-    private static Shape tongue(double reach, double half, int tips, int seed) {
+    private static Shape placed(FlameDraw.Stream s, Shape shape) {
+        AffineTransform at = AffineTransform.getTranslateInstance(s.x(), s.y());
+        at.rotate(s.headingRadians());
+        return at.createTransformedShape(shape);
+    }
+
+    /**
+     * The cone along +x from its apex, from {@code inner} out to {@code reach}, {@code half} either side: the wedge it
+     * pours into, its front the fire's own. Fire licks past the reach in jagged tips, Dragon's Breath rolls in round
+     * billows, Soulfire ripples; {@code soft} stretches how far.
+     */
+    private static Shape front(Fire fire, double inner, double reach, double half, int flicker, int seed, double t,
+                               double soft) {
         Path2D.Double path = new Path2D.Double();
-        double root = reach * 0.01;
-        path.moveTo(0, root);
-        path.lineTo(0, -root);
-        int points = tips * 2;
-        for (int i = 0; i <= points; i++) {
-            double angle = -half + 2 * half * i / points;
-            double roll = TowerLifeArt.hash(seed, i);
-            double over = (0.15 + 0.10 * roll) * (1 - 0.5 * Math.abs(angle / half));
-            double share = i % 2 == 0 ? 1.0 + 0.04 * roll : 1.0 + over;
-            double r = reach * share;
-            path.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+        int arc = 10;
+        for (int i = 0; i <= arc; i++) {
+            double a = half - 2 * half * i / arc;
+            if (i == 0) {
+                path.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
+            } else {
+                path.lineTo(Math.cos(a) * inner, Math.sin(a) * inner);
+            }
+        }
+        if (fire == Fire.FLAME) {
+            int points = OUTER_TIPS * 2;
+            int tipSeed = flicker * TONGUE_SEEDS + seed;
+            for (int i = 0; i <= points; i++) {
+                double a = -half + 2 * half * i / points;
+                double roll = TowerLifeArt.hash(tipSeed, i);
+                double over = (0.15 + 0.10 * roll) * (1 - 0.5 * Math.abs(a / half)) * soft;
+                double r = reach * (i % 2 == 0 ? 1.0 + 0.04 * roll : 1.0 + over);
+                path.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
+        } else {
+            int points = 48;
+            for (int i = 0; i <= points; i++) {
+                double u = (double) i / points;
+                double a = -half + 2 * half * u;
+                double side = 1 - 0.45 * Math.abs(a / half);
+                double out = fire == Fire.DRAGON
+                        ? 0.15 * Math.pow(Math.abs(Math.sin(Math.PI * (5.5 * u - t * 1.6) + seed)), 0.55) * side
+                        : (0.06 + 0.05 * Math.sin(u * 19 + t * 2.4 + seed) + 0.03 * Math.sin(u * 41 - t * 3.3)) * side;
+                double r = reach * (1 + out * soft);
+                path.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
         }
         path.closePath();
         return path;
+    }
+
+    /**
+     * A tongue of flame inside the cone, from the nozzle at {@code inner} to its tip at {@code end}: as wide as
+     * {@code half} near its root, tapering to a point, its sides wavering and its length pulsing. Soulfire sways slow
+     * and wide, Dragon's Breath hardly at all.
+     */
+    private static Shape tongue(Fire fire, double inner, double end, double half, int seed, double t) {
+        int n = 22;
+        double length = Math.max(end - inner, 1);
+        double wave = switch (fire) {
+            case FLAME -> 0.09;
+            case DRAGON -> 0.05;
+            case SOUL -> 0.16;
+        };
+        double speed = fire == Fire.SOUL ? 3.0 : 9.0;
+        double pulse = 0.05 * Math.sin(t * (fire == Fire.SOUL ? 2.1 : 6.3) + seed);
+        double sway = (fire == Fire.SOUL ? 0.22 : 0.08) * half * Math.sin(t * 2.7 + seed);
+        double[] xs = new double[n + 1];
+        double[] ws = new double[n + 1];
+        for (int i = 0; i <= n; i++) {
+            double u = (double) i / n;
+            xs[i] = inner + length * (1 + pulse) * u;
+            ws[i] = Math.max(0, xs[i] * Math.tan(half) * Math.pow(1 - u, 0.6) * (1 + wave * Math.sin(u * 9 - t * speed
+                    + seed)));
+        }
+        Path2D.Double path = new Path2D.Double();
+        path.moveTo(xs[0], -ws[0]);
+        for (int i = 1; i <= n; i++) {
+            path.lineTo(xs[i], -ws[i] + xs[i] * sway * i / n);
+        }
+        for (int i = n; i >= 0; i--) {
+            path.lineTo(xs[i], ws[i] + xs[i] * sway * i / n);
+        }
+        path.closePath();
+        return path;
+    }
+
+    /**
+     * What a stream throws off, past a glow on its nozzle: fire sheds sparks that fly past its reach, Dragon's Breath
+     * rolls dark smoke off its front, Soulfire lets pale wisps curl up out of it. Each mote follows the clock.
+     */
+    private static void motes(Graphics2D g2, FlameDraw.Stream s, Fire fire, double scale, double t) {
+        int seed = seedOf(s);
+        double hx = Math.cos(s.headingRadians());
+        double hy = Math.sin(s.headingRadians());
+        TowerLifeArt.glow(g2, s.x() + hx * s.inner(), s.y() + hy * s.inner(), scale * 0.22, core(fire, s.heat(), false),
+                0.6);
+        int motes = fire == Fire.FLAME ? 10 : 6;
+        double rate = switch (fire) {
+            case FLAME -> 1.3;
+            case DRAGON -> 0.6;
+            case SOUL -> 0.45;
+        };
+        for (int i = 0; i < motes; i++) {
+            double life = t * rate + TowerLifeArt.hash(seed, i);
+            double age = life - Math.floor(life);
+            long generation = (long) Math.floor(life);
+            double a = s.headingRadians()
+                    + (TowerLifeArt.hash(seed + generation, i + 11L) - 0.5) * 2 * s.halfWidthRadians() * 0.8;
+            double span = s.reach() - s.inner();
+            switch (fire) {
+                case FLAME -> {
+                    double r = s.inner() + span * (0.4 + 0.8 * age);
+                    double rad = scale * 0.026 * (1 - 0.5 * age);
+                    g2.setColor(TowerLifeArt.faded(mix(new Color(0xfff0a0), new Color(0xff6a20), age),
+                            (1 - age) * Math.min(1, age * 6)));
+                    g2.fill(new Ellipse2D.Double(s.x() + Math.cos(a) * r - rad, s.y() + Math.sin(a) * r - rad, rad * 2,
+                            rad * 2));
+                }
+                case DRAGON -> {
+                    double r = s.reach() * (0.92 + 0.25 * age);
+                    double rad = scale * (0.08 + 0.12 * age);
+                    g2.setColor(TowerLifeArt.faded(SMOKE, 0.5 * (1 - age) * Math.min(1, age * 5)));
+                    g2.fill(new Ellipse2D.Double(s.x() + Math.cos(a) * r - rad, s.y() + Math.sin(a) * r - rad, rad * 2,
+                            rad * 2));
+                }
+                case SOUL -> {
+                    double r = s.inner() + span * (0.3 + 0.75 * age);
+                    double curl = Math.sin(age * 7 + i) * scale * 0.12;
+                    double px = s.x() + Math.cos(a) * r - hy * curl;
+                    double py = s.y() + Math.sin(a) * r + hx * curl - age * scale * 0.25;
+                    double rad = scale * 0.045 * (1.2 - 0.6 * age);
+                    TowerLifeArt.glow(g2, px, py, rad * 3, WISP_GLOW, 0.35 * (1 - age));
+                    g2.setColor(TowerLifeArt.faded(WISP, 0.85 * (1 - age) * Math.min(1, age * 4)));
+                    g2.fill(new Ellipse2D.Double(px - rad, py - rad * 1.6, rad * 2, rad * 3.2));
+                }
+            }
+        }
     }
 
     /**

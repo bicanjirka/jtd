@@ -180,7 +180,6 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
     private static final float STREAM_MIDDLE_ALPHA = 0.75f;
     private static final float STREAM_MIDDLE_REACH = 0.78f;
     private static final float STREAM_MIDDLE_WIDTH = 0.66f;
-    /** How far the core reaches: most of the cone with the Core or a White Flame, a short heart at the nozzle without. */
     private static final int STREAM_CORE_TIPS = 5;
     /** How wide a Flashover's tongue spreads either side, in radians. */
     private static final float FLASHOVER_HALF_WIDTH = 0.22f;
@@ -957,12 +956,13 @@ public final class TowerEffectFrameBuilder implements TowerVisitor<Void> {
         int tier = tower.upgradeTree().highestOpenTier(tower, this.world);
         Point2D.Float muzzle = TowerSprites.muzzle(TowerSpriteFrameBuilder.bodyLookOf(tower), tier,
                 TowerSpriteFrameBuilder.poseOf(tower), tower.getX(), tower.getY(), this.scale, heading);
-        // The cone pours as far as its range from the tower's centre, so it is drawn to there from the nozzle.
-        float reach = tower.getRangeReal() - (float) ((muzzle.x - tower.getX()) * Math.cos(heading)
+        // The cone's apex is the tower's centre, where it pours from; it shows from the nozzle out.
+        float inner = (float) Math.max(0, (muzzle.x - tower.getX()) * Math.cos(heading)
                 + (muzzle.y - tower.getY()) * Math.sin(heading));
-        this.streams.add(new FlameDraw.Stream(muzzle.x, muzzle.y, (float) heading, reach,
-                (float) tower.halfWidthRadians(), heatOf(tower.fuelPerSecond()), look.coreHalfWidth(), look.soulfire(),
-                flicker));
+        float half = (float) tower.halfWidthRadians();
+        this.streams.add(new FlameDraw.Stream(tower.getX(), tower.getY(), (float) heading, inner, tower.getRangeReal(),
+                half, heatOf(tower.fuelPerSecond()), look.middle().halfWidthIn(half), look.core().halfWidthIn(half),
+                heatOf(tower.fuelPerSecond() * look.coreFactor()), look.soulfire(), look.dragonsBreath(), flicker));
         for (Caught fed : tower.caught()) {
             this.burning.merge(fed.enemy(), new Burning(new Cone(fed.fuelPerSecond(), muzzle, look.soulfire()),
                     fed.inCore(), 1), Burning::with);
