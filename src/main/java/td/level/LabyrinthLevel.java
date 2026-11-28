@@ -120,11 +120,11 @@ final class LabyrinthLevel {
                                     "e 4 elite walker elite golem elite knight 3 elite walker " +
                                     "e 2 elite unstoppable templar " +
                                     "8 e elite exalted regenerating magma"),
-                            new WaveDefinition("w100 elite: 2 armored magma 3 warding golem 4 elusive rich bronzeBull " +
+                            new WaveDefinition("w100 elite (2 armored magma 3 warding golem 4 elusive rich bronzeBull " +
                                     "e talos e " +
                                     "exalted rich bronzeBull unstoppable bronzeBull exalted rich bronzeBull unstoppable bronzeBull " +
-                                    "2 regenerating hulking golem commanding golem 2 vengeful magma"),
-                            new WaveDefinition("elite: 4 unstoppable bronzeBull e golem e minotaur 3 e 4 vengeful exalted bronzeBull")))
+                                    "2 regenerating hulking golem commanding golem 2 vengeful magma)"),
+                            new WaveDefinition("elite (4 unstoppable bronzeBull e golem e minotaur 3 e 4 vengeful exalted bronzeBull)")))
             .withColor(STONE_COLOR);
 
     static final LevelDefinition DEFINITION = LevelDefinition
