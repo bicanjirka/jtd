@@ -3,7 +3,7 @@ package td.wave;
 /**
  * One authored wave. Health and bounty come from each enemy's definition at its rank.
  *
- * @param enemies         the wave script, e.g. {@code "soldier: 3 knight e 4 walker"}
+ * @param enemies         the wave script, e.g. {@code "soldier (3 knight e 4 walker)"}
  * @param clearBonus      credits paid when the round this wave belongs to clears with no enemy leaked; none by
  *                        default
  */

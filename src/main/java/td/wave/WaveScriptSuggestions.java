@@ -93,8 +93,14 @@ public final class WaveScriptSuggestions {
 
     public static Result suggest(String text, int caret, EnemyCatalog catalog) {
         int at = Math.clamp(caret, 0, text.length());
-        int start = text.lastIndexOf(' ', at - 1) + 1;
-        int end = text.indexOf(' ', at) < 0 ? text.length() : text.indexOf(' ', at);
+        int start = at;
+        while (start > 0 && !endsToken(text.charAt(start - 1))) {
+            start--;
+        }
+        int end = at;
+        while (end < text.length() && !endsToken(text.charAt(end))) {
+            end++;
+        }
         String prefix = text.substring(start, at).toLowerCase(Locale.ROOT);
 
         List<Candidate> candidates = new ArrayList<>();
@@ -108,6 +114,12 @@ public final class WaveScriptSuggestions {
         return new Result(start, end, candidates);
     }
 
+    /** A space or a bracket: a bracket needs no space beside it. */
+    private static boolean endsToken(char character) {
+        return character == ' ' || WaveScript.GROUP_START.indexOf(character) >= 0
+                || WaveScript.GROUP_END.indexOf(character) >= 0;
+    }
+
     private static List<Candidate> candidatesAt(String typed, EnemyCatalog catalog) {
         NextWords next;
         try {
@@ -118,10 +130,13 @@ public final class WaveScriptSuggestions {
         }
         List<Candidate> all = new ArrayList<>();
         if (next.accepts(NextWords.Kind.SPACING)) {
-            all.add(Candidate.stem(SPACING_STEM, "ticks per slot, e.g. w30:"));
+            all.add(Candidate.stem(SPACING_STEM, "ticks per slot, e.g. w30"));
         }
-        if (next.accepts(NextWords.Kind.HEAD_END)) {
-            all.add(Candidate.token(WaveScript.HEAD_END, "ends the head"));
+        if (next.accepts(NextWords.Kind.GROUP_END)) {
+            all.add(Candidate.token(WaveScript.GROUP_END, "closes the group"));
+        }
+        if (next.accepts(NextWords.Kind.GROUP_START)) {
+            all.add(Candidate.token(WaveScript.GROUP_START, "opens a group"));
         }
         if (next.accepts(NextWords.Kind.RANK)) {
             for (RankKeyword rank : RankKeyword.values()) {

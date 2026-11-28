@@ -364,12 +364,12 @@ public class PanelDev extends JPanel {
 
                 The script is a level's wave
                 script, as in "3 elite swarm
-                4 simple". A head ended by ":"
-                holds defaults and affixes come
-                before the enemy, as in
-                "soldier armored: 2 shielded
-                knight". The preview updates as
-                you type; hover it to inspect.
+                4 walker". Brackets repeat a
+                group and give it a rank and
+                affixes, as in "soldier armored
+                (2 shielded knight)". The
+                preview updates as you type;
+                hover it to inspect.
                 The script field suggests the
                 next token: tab or right takes
                 the grey completion, down or up

@@ -335,7 +335,7 @@ public final class TowerBench {
             String carried = this.affix.map(added -> added.word() + " ").orElse("");
             String slots = this.count == 1 ? carried + id
                     : IntStream.range(0, this.count).mapToObj(i -> carried + id + i).collect(Collectors.joining(" "));
-            return "w" + this.spacing + " " + WaveScript.headed(this.rank, slots);
+            return "w" + this.spacing + " " + WaveScript.underRank(this.rank, slots);
         }
 
         /**
@@ -876,7 +876,7 @@ public final class TowerBench {
         List<Double> partners = this.thresholds(beside.stream()
                 .map(scenario -> new Job(scenario, scenario.partners(), FIRST_GUESS)).toList());
         return this.scenarios.stream().map(scenario -> List.of(scenario.name(),
-                "w" + scenario.spacing() + " " + WaveScript.headed(scenario.rank(), scenario.count() + " "
+                "w" + scenario.spacing() + " " + WaveScript.underRank(scenario.rank(), scenario.count() + " "
                         + scenario.affix().map(added -> added.word() + " ").orElse("") + scenario.kind()),
                 scenario.kind(), scenario.rank().name().toLowerCase(Locale.ROOT), String.valueOf(scenario.count()),
                 ReportPage.number(PowerBench.passage(scenario.lane(1)).walkTicks() / (double) TickRate.TICKS_PER_SECOND),

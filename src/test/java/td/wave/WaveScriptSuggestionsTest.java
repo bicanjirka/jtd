@@ -58,20 +58,40 @@ class WaveScriptSuggestionsTest {
     }
 
     @Test
-    void theHeadEndIsOfferedAfterTheHeadsWords() {
-        assertThat(this.at("w30 soldier ")).contains(":");
-        assertThat(this.at("w30 ")).contains(":");
+    void aBracketMayOpenWhereverNoShapeHasBeenWritten() {
+        assertThat(this.at("")).contains("(").doesNotContain(")");
+        assertThat(this.at("3 elite armored ")).contains("(");
+        assertThat(this.at("flank ")).doesNotContain("(");
     }
 
     @Test
-    void theHeadEndIsNotOfferedOnceASlotHasBegun() {
-        assertThat(this.at("2 ")).doesNotContain(":");
-        assertThat(this.at("alpha ")).doesNotContain(":");
+    void aClosingBracketIsOfferedOnlyOnceAnOpenGroupHoldsASlot() {
+        assertThat(this.at("( ")).doesNotContain(")");
+        assertThat(this.at("( alpha ")).contains(")");
+        assertThat(this.at("( alpha 2 ")).doesNotContain(")");
+        assertThat(this.at("( alpha ) ")).doesNotContain(")");
+        assertThat(this.at("( ( alpha ) ")).contains(")");
     }
 
     @Test
-    void theSpacingTokenIsNotOfferedAfterTheHead() {
-        assertThat(this.at("soldier: ")).doesNotContain("w").contains("alpha");
+    void theSpacingTokenIsNotOfferedAfterABracket() {
+        assertThat(this.at("soldier (")).doesNotContain("w").contains("alpha");
+    }
+
+    @Test
+    void aBracketEndsTheTokenBeforeAndAfterTheCaretWithoutASpace() {
+        WaveScriptSuggestions.Result result = WaveScriptSuggestions.suggest("2(al)", 4, this.catalog);
+
+        assertThat(result.start()).isEqualTo(2);
+        assertThat(result.end()).isEqualTo(4);
+        assertThat(result.candidates()).extracting(Candidate::text).containsExactlyInAnyOrder("alpha", "alder");
+    }
+
+    @Test
+    void aGroupsAffixesCountAgainstTheSlotsInsideUntilItCloses() {
+        assertThat(this.at("armored (hulking ")).doesNotContain("elusive").contains("alpha");
+        assertThat(this.at("armored (alpha ) hulking ")).contains("elusive");
+        assertThat(this.at("armored (lo")).isEmpty();
     }
 
     @Test
@@ -92,14 +112,8 @@ class WaveScriptSuggestionsTest {
     }
 
     @Test
-    void afterASpacingOnlyTheHeadsWordsFollow() {
-        assertThat(this.at("w30 b")).contains("boss").doesNotContain("brute");
-    }
-
-    @Test
     void aSlotThatCarriesTheMostAffixesIsOfferedNoMore() {
         assertThat(this.at("armored hulking ")).doesNotContain("elusive").contains("alpha");
-        assertThat(this.at("armored: hulking ")).doesNotContain("elusive").contains("alpha");
     }
 
     @Test

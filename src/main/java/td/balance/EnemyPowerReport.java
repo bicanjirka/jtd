@@ -215,12 +215,12 @@ public final class EnemyPowerReport {
 
     static String group(String kind, Rank rank) {
         int count = groupAt(rank);
-        return WaveScript.headed(rank, count == 1 ? kind : "column " + count + " " + kind);
+        return WaveScript.underRank(rank, count == 1 ? kind : "column " + count + " " + kind);
     }
 
     /** Half the group of Walkers, the enemy, and the rest of the Walkers: the enemy in company. */
     private static String escorted(String kind, Rank rank) {
-        return WaveScript.headed(rank, "3 " + BASELINE + " " + kind + " " + (ESCORT_SLOTS - 4) + " " + BASELINE);
+        return WaveScript.underRank(rank, "3 " + BASELINE + " " + kind + " " + (ESCORT_SLOTS - 4) + " " + BASELINE);
     }
 
     /** An enemy at a rank, and the level whose content it comes from. */
@@ -308,7 +308,7 @@ public final class EnemyPowerReport {
             }
             Baseline unmixed = new Baseline(rank, pure, 1, 1, 1);
             double mix = PowerBench.threshold(lane, unmixed.mixAt(), 1, DamageMix.none());
-            double company = PowerBench.threshold(PowerBench.lane(NO_CONTENT, WaveScript.headed(rank, ESCORT_SLOTS + " " + BASELINE)),
+            double company = PowerBench.threshold(PowerBench.lane(NO_CONTENT, WaveScript.underRank(rank, ESCORT_SLOTS + " " + BASELINE)),
                     unmixed.mixAt(), 1, DamageMix.none());
             return new Baseline(rank, pure, mix, company, heldFactor(NO_CONTENT, BASELINE, rank));
         }
@@ -330,7 +330,7 @@ public final class EnemyPowerReport {
 
     /** How many times as long one {@code kind} walks the lane under a chill and a freeze now and then as free. */
     private static double heldFactor(LevelDefinition content, String kind, Rank rank) {
-        LevelDefinition lane = PowerBench.lane(content, WaveScript.headed(rank, kind));
+        LevelDefinition lane = PowerBench.lane(content, WaveScript.underRank(rank, kind));
         PowerBench.Outcome free = PowerBench.run(lane, ProbeRig.Loadout.none(), DamageMix.none(), PAY_SEED);
         PowerBench.Outcome held = PowerBench.run(lane,
                 ProbeRig.Loadout.none().holding(ProbeRig.Hold.CHILL_AND_FREEZE), DamageMix.none(), PAY_SEED);

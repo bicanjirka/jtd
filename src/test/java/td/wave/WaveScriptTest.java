@@ -11,6 +11,8 @@ import td.enemy.SpawnParameters;
 import td.fixtures.EnemyFixtures;
 import td.util.GameStartupException;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -30,7 +32,7 @@ class WaveScriptTest {
 
     @Test
     void aLeadingSpacingTokenSetsTheWavesSpacingAndSpawnsNothing() {
-        WaveContent content = WaveScript.parse("w30: 2 walker", Rank.GRUNT, this.catalog);
+        WaveContent content = WaveScript.parse("w30 2 walker", Rank.GRUNT, this.catalog);
 
         assertThat(content.delayTicksPerSlot()).isEqualTo(30f);
         assertThat(content.enemyCount()).isEqualTo(2);
@@ -51,64 +53,156 @@ class WaveScriptTest {
     }
 
     @Test
-    void aSpacingTokenOutsideAHeadFailsAtThatToken() {
-        assertThatThrownBy(() -> WaveScript.parse("w30 walker", Rank.GRUNT, this.catalog))
+    void aSpacingTokenAnywhereButFirstFailsAtThatToken() {
+        assertThatThrownBy(() -> WaveScript.parse("3 walker w30 walker", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
                 .hasMessageContaining("»w30«")
-                .hasMessageContaining("head");
-    }
-
-    @Test
-    void aHeadsRankIsTheRankOfEverySlotThatNamesNone() {
-        WaveContent content = WaveScript.parse("soldier: walker knight", Rank.GRUNT, this.catalog);
-
-        assertThat(content.enemySet()).containsExactly(this.catalog.get("walker", Rank.SOLDIER),
-                this.catalog.get("knight", Rank.SOLDIER));
-    }
-
-    @Test
-    void aSlotsOwnRankBeatsTheHeads() {
-        WaveContent content = WaveScript.parse("soldier: elite walker knight", Rank.GRUNT, this.catalog);
-
-        assertThat(content.enemySet()).containsExactly(this.catalog.get("walker", Rank.ELITE),
-                this.catalog.get("knight", Rank.SOLDIER));
-    }
-
-    @Test
-    void aLevelsWaveWithNoRankInItsHeadIsGrunt() {
-        WaveContent content = WaveScript.parse("w30: walker", this.catalog);
-
-        assertThat(content.enemySet()).containsExactly(this.catalog.get("walker", Rank.GRUNT));
-    }
-
-    @Test
-    void aHeadsEndMayStandApartFromItsLastWord() {
-        WaveContent apart = WaveScript.parse("w30 soldier : walker", Rank.GRUNT, this.catalog);
-
-        assertThat(apart.delayTicksPerSlot()).isEqualTo(30f);
-        assertThat(apart.enemySet()).containsExactly(this.catalog.get("walker", Rank.SOLDIER));
-    }
-
-    @Test
-    void aSecondHeadEndFails() {
-        assertThatThrownBy(() -> WaveScript.parse("soldier: walker: knight", Rank.GRUNT, this.catalog))
-                .isInstanceOf(GameStartupException.class)
-                .hasMessageContaining("one head");
-    }
-
-    @Test
-    void aHeadWrittenAfterASlotFailsAtItsOwnWordNotTheScriptsFirst() {
-        assertThatThrownBy(() -> WaveScript.parse("3 walker e w30: 2 walker", Rank.GRUNT, this.catalog))
+                .hasMessageContaining("first word");
+        assertThatThrownBy(() -> WaveScript.parse("soldier (w30 walker)", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
                 .hasMessageContaining("»w30«");
     }
 
     @Test
-    void aHeadEndAfterASlotSaysTheHeadOpensTheScript() {
-        assertThatThrownBy(() -> WaveScript.parse("walker soldier: knight", Rank.GRUNT, this.catalog))
+    void aCountBeforeBracketsRepeatsTheWholeGroupInOrder() {
+        WaveContent grouped = WaveScript.parse("3 (2 walker e knight)", Rank.GRUNT, this.catalog);
+        WaveContent written = WaveScript.parse("2 walker e knight 2 walker e knight 2 walker e knight", Rank.GRUNT,
+                this.catalog);
+
+        assertThat(grouped.spawnSequence()).isEqualTo(written.spawnSequence());
+    }
+
+    @Test
+    void groupsNestAndTheirCountsMultiply() {
+        WaveContent nested = WaveScript.parse("2 (knight 2 (walker e)) ghost", Rank.GRUNT, this.catalog);
+        WaveContent written = WaveScript.parse("knight walker e walker e knight walker e walker e ghost", Rank.GRUNT,
+                this.catalog);
+
+        assertThat(nested.spawnSequence()).isEqualTo(written.spawnSequence());
+    }
+
+    @Test
+    void bracketsNeedNoSpaceBesideThem() {
+        WaveContent tight = WaveScript.parse("2(walker(knight))ghost", Rank.GRUNT, this.catalog);
+        WaveContent spaced = WaveScript.parse("2 ( walker ( knight ) ) ghost", Rank.GRUNT, this.catalog);
+
+        assertThat(tight.spawnSequence()).isEqualTo(spaced.spawnSequence());
+    }
+
+    @Test
+    void theInnermostRankWinsAndEndsWithItsBrackets() {
+        WaveContent content = WaveScript.parse("soldier (walker veteran (knight elite ghost) runner) mender",
+                Rank.GRUNT, this.catalog);
+
+        assertThat(content.spawnSequence()).extracting(slot -> ((EnemySlot) slot).rank())
+                .containsExactly(Rank.SOLDIER, Rank.VETERAN, Rank.ELITE, Rank.SOLDIER, Rank.GRUNT);
+    }
+
+    @Test
+    void aGroupsAffixesAddToThoseInsideAndEndWithItsBrackets() {
+        WaveContent content = WaveScript.parse("withered (hulking walker (knight)) ghost", Rank.GRUNT, this.catalog);
+
+        assertThat(content.spawnSequence()).extracting(slot -> ((EnemySlot) slot).definition().affixes())
+                .containsExactly(List.of(Affix.WITHERED, Affix.HULKING), List.of(Affix.WITHERED), List.of());
+    }
+
+    @Test
+    void anAffixAlreadyOnTheBracketsFailsInside() {
+        assertThatThrownBy(() -> WaveScript.parse("armored (armored walker)", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
-                .hasMessageContaining("»:«")
-                .hasMessageContaining("A head opens the script");
+                .hasMessageContaining("token 3")
+                .hasMessageContaining("already");
+    }
+
+    @Test
+    void aThirdAffixAcrossBracketsFailsAtItsToken() {
+        assertThatThrownBy(() -> WaveScript.parse("hulking (armored (withered walker))", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»withered«")
+                .hasMessageContaining("at most");
+    }
+
+    @Test
+    void aSpacerStandsInsideRankedAndAffixedBrackets() {
+        WaveContent content = WaveScript.parse("elite armored (walker e)", Rank.GRUNT, this.catalog);
+
+        assertThat(content.spawnSequence()).hasSize(2).last().isEqualTo(new EmptySlot());
+    }
+
+    @Test
+    void aUniqueEnemyInRankedBracketsStillComesAsBoss() {
+        WaveContent content = WaveScript.parse("elite (warlord)", Rank.GRUNT, this.catalog);
+
+        assertThat(content.rankFor(this.catalog.get("warlord"))).isEqualTo(Rank.BOSS);
+    }
+
+    @Test
+    void aUniqueEnemyInAffixedBracketsFails() {
+        assertThatThrownBy(() -> WaveScript.parse("armored (walker warlord)", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»warlord«")
+                .hasMessageContaining("no affix");
+    }
+
+    @Test
+    void aShapeBeforeBracketsFails() {
+        assertThatThrownBy(() -> WaveScript.parse("flank (walker)", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»(«")
+                .hasMessageContaining("cannot go on brackets");
+    }
+
+    @Test
+    void aBracketNeverClosedFailsAtTheEnd() {
+        assertThatThrownBy(() -> WaveScript.parse("2 (walker (knight)", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("ends early")
+                .hasMessageContaining("never closed");
+    }
+
+    @Test
+    void aBracketThatClosesNoneFailsAtItself() {
+        assertThatThrownBy(() -> WaveScript.parse("walker) knight", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»)«")
+                .hasMessageContaining("closes no");
+    }
+
+    @Test
+    void emptyBracketsFail() {
+        assertThatThrownBy(() -> WaveScript.parse("walker 3 ()", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("at least one slot");
+    }
+
+    @Test
+    void wordsLeftBeforeAClosingBracketFail() {
+        assertThatThrownBy(() -> WaveScript.parse("(walker elite) knight", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("»)«")
+                .hasMessageContaining("rank token");
+    }
+
+    @Test
+    void nestedCountsThatMultiplyPastTheMostSlotsAreRejected() {
+        assertThatThrownBy(() -> WaveScript.parse("100 (100 (100 walker))", Rank.GRUNT, this.catalog))
+                .isInstanceOf(GameStartupException.class)
+                .hasMessageContaining("at most " + WaveScript.MAX_SLOTS + " slots");
+    }
+
+    @Test
+    void aWaveMayHoldExactlyTheMostSlots() {
+        WaveContent content = WaveScript.parse("10 (100 walker)", Rank.GRUNT, this.catalog);
+
+        assertThat(content.spawnSequence()).hasSize(WaveScript.MAX_SLOTS);
+    }
+
+    @Test
+    void aScriptUnderARankGivesEverySlotThatRank() {
+        WaveContent content = WaveScript.parse(WaveScript.underRank(Rank.VETERAN, "2 walker knight"), this.catalog);
+
+        assertThat(content.spawnSequence()).extracting(slot -> ((EnemySlot) slot).rank())
+                .containsOnly(Rank.VETERAN);
     }
 
     @Test
@@ -120,7 +214,7 @@ class WaveScriptTest {
 
     @Test
     void aSpacingOfZeroIsRejected() {
-        assertThatThrownBy(() -> WaveScript.parse("w0: walker", Rank.GRUNT, this.catalog))
+        assertThatThrownBy(() -> WaveScript.parse("w0 walker", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
                 .hasMessageContaining("greater than zero");
     }
@@ -215,22 +309,6 @@ class WaveScriptTest {
     }
 
     @Test
-    void aHeadsAffixGoesOnEverySlot() {
-        WaveContent content = WaveScript.parse("armored: walker knight", Rank.GRUNT, this.catalog);
-
-        assertThat(content.enemySet()).allSatisfy(definition ->
-                assertThat(definition.affixes()).containsExactly(Affix.ARMORED));
-    }
-
-    @Test
-    void anAffixAlreadyInTheHeadFailsOnASlot() {
-        assertThatThrownBy(() -> WaveScript.parse("armored: armored walker", Rank.GRUNT, this.catalog))
-                .isInstanceOf(GameStartupException.class)
-                .hasMessageContaining("token 3")
-                .hasMessageContaining("already");
-    }
-
-    @Test
     void anAffixOnAUniqueEnemyFails() {
         assertThatThrownBy(() -> WaveScript.parse("armored warlord", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
@@ -253,22 +331,6 @@ class WaveScriptTest {
         assertThatThrownBy(() -> WaveScript.parse("armored e walker", Rank.GRUNT, this.catalog))
                 .isInstanceOf(GameStartupException.class)
                 .hasMessageContaining("»e«");
-    }
-
-    @Test
-    void aHeadsAffixesAddToASlotsOwnInTheOrderWritten() {
-        WaveContent content = WaveScript.parse("withered: hulking walker", Rank.GRUNT, this.catalog);
-
-        EnemySlot slot = (EnemySlot) content.spawnSequence().getFirst();
-        assertThat(slot.definition().affixes()).containsExactly(Affix.WITHERED, Affix.HULKING);
-    }
-
-    @Test
-    void aThirdAffixFailsAtItsToken() {
-        assertThatThrownBy(() -> WaveScript.parse("hulking: armored withered walker", Rank.GRUNT, this.catalog))
-                .isInstanceOf(GameStartupException.class)
-                .hasMessageContaining("»withered«")
-                .hasMessageContaining("at most");
     }
 
     @Test

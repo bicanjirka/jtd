@@ -859,7 +859,7 @@ public class Driver {
     }
 
     // Spawns a wave script on the first path as the dev panel's spawn box does, Grunt by default, so a
-    // head, affixes and shapes reach the live game: script <wave script>. A bad script prints the problem.
+    // brackets, affixes and shapes reach the live game: script <wave script>. A bad script prints the problem.
     private static void spawnScript(String script) throws Exception {
         GameWorld context = getGameWorld();
         WaveContent content;

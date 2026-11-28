@@ -775,7 +775,7 @@ class GameEngineTest {
         GameEngine engine = FakeGameHost.newBoundEngine();
         engine.loadLevel(LevelFixtures.levelWith(List.of(
                 new WaveDefinition("walker e elite walker"),
-                new WaveDefinition("soldier: knight")), 100));
+                new WaveDefinition("soldier (knight)")), 100));
 
         WaveProgress progress = engine.waveProgress();
 
@@ -1329,7 +1329,7 @@ class GameEngineTest {
     @Test
     void aLeakedEnemyPaysTheSameXpAsAKilledOne() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("boss: walker")), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("boss (walker)")), 1000)
                 .withStartingLives(50));
         Tower tower = placeTower(engine, TowerFactory.Type.SNIPER, 1, 1);
         engine.nextWave();
@@ -1356,7 +1356,7 @@ class GameEngineTest {
     @Test
     void anEnemyAlreadyWalkingWhenTheTowerWasBuiltPaysItNoXp() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("boss: walker")), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("boss (walker)")), 1000)
                 .withStartingLives(50));
         engine.nextWave();
         engine.doTick(1);
@@ -1385,7 +1385,7 @@ class GameEngineTest {
     @Test
     void anAuraWithNoTowerToBuffEarnsNothingFromEnemiesPassingItsRange() {
         GameEngine engine = FakeGameHost.newBoundEngine();
-        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("boss: walker")), 1000)
+        engine.loadLevel(LevelFixtures.biggerLevelWith(List.of(new WaveDefinition("boss (walker)")), 1000)
                 .withStartingLives(50));
         Tower aura = placeTower(engine, TowerFactory.Type.AURA, 1, 1);
         engine.nextWave();
@@ -1396,7 +1396,7 @@ class GameEngineTest {
     }
 
     private static final List<WaveDefinition> CHECKPOINT_WAVES = List.of(new WaveDefinition("6 walker"),
-            new WaveDefinition("elite: 8 knight"), new WaveDefinition("walker"));
+            new WaveDefinition("elite (8 knight)"), new WaveDefinition("walker"));
 
     /** An engine on its own luck, a few towers of every kind built and a wave played and cleared. */
     private static GameEngine engineAfterAWave(long seed) {

@@ -25,35 +25,38 @@ never in the constructor: that keeps a level load a single `LoadedLevel` publica
 `spawn()` call builds a fresh set, so calling it twice puts two copies on the board. For
 counts, use `enemyCount()`/`enemySet()`, which need no spawn.
 
-- An optional **head**, ended by `:`, holds the wave's defaults in slot order: `w<number>`, a
-  rank, then affixes (`w30 soldier armored: 3 walker`). A script has a head only when every token before its first
-  `:` is a head word; a token ending in `:` reads as the word and the `:`. `w<number>` sets the ticks one slot of spacing is worth to an enemy of
-  speed 1, default `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`, and carries on `WaveContent`; it is positive, stands
-  only in a head, and no enemy id may look like it. A level wave whose head names no rank is Grunt:
-  the head is the only place a wave's rank is written.
-- **Rank keywords** `grunt soldier veteran elite boss` go before the enemy or shape they rank and
-  override the head's rank for that slot. A unique enemy is Boss whatever the default; any
-  rank keyword but `boss` before it is an error.
+- `script := w<n>? item*`; an item is a slot or a **group**: items in brackets (`3 elite armored ( … )`). Brackets
+  need no space beside them, and groups nest. Before a group stand only a count, a rank and affixes, in that order: the
+  count repeats the group, and the rank and affixes are the defaults of everything inside.
+- `w<number>` sets the ticks one slot of spacing is worth to an enemy of speed 1, default
+  `SpawnParameters.DEFAULT_DELAY_TICKS_PER_SLOT`, and carries on `WaveContent`. It is positive, stands only first in the
+  script, since it times the whole wave, and no enemy id may look like it.
+- **Rank keywords** `grunt soldier veteran elite boss` go before the enemy, shape or group they rank; the innermost one
+  wins. A level wave's slot that no rank reaches is Grunt. A unique enemy is Boss whatever its group or the default
+  says; any rank keyword but `boss` right before it is an error.
 - **Shape keywords** go before the enemy: `flank` (2 members at opposite sides), `swarm n` (smaller and weaker the more members, the swarm more health and bounty in all,
   scattered), `line n` (spread across), `column n` / `drip n` (spaced tighter / looser than one
   slot).
-- **Affix words** (`td.enemy.Affix`) go after the rank and shape, right before the enemy, and add
-  to the head's. The grammar applies them to the slot's definition when it builds the slot, measured
-  against the slot's rank and one member's health. At most `WaveScript.MAX_AFFIXES` a slot, head
+- **Affix words** (`td.enemy.Affix`) go after the rank and shape, right before the enemy or the group, and add
+  to the open groups'. The grammar applies them to the slot's definition when it builds the slot, measured
+  against the slot's rank and one member's health. At most `WaveScript.MAX_AFFIXES` a slot, groups'
   included; none twice, none that `Affix.excludes` another, none on a unique enemy, none whose
   `problemWith` objects, and none that `actsOnAllies` on a swarm.
 - A shape says how a slot spawns, never what the enemy is: that is an affix.
 - A slot takes at most two counts: one first, which repeats the whole slot (`3 knight e 4 walker`,
-  `3 elite swarm 4 walker`), and one right after a shape keyword, its member count. A count anywhere else fails,
-  so no enemy id may be all digits.
-- Errors (`GameStartupException`): an unknown token, anything but a spacing and a rank in a head,
-  a second `:`, a head after a slot, a spacing outside a head, a rank after a shape, a rank right before
-  `e`, two ranks in a row, a count out of place or left at the end, a missing or forbidden member count, a repeat
-  count over `WaveScript.MAX_REPEAT`. Blank tokens are skipped. An error
+  `3 elite swarm 4 walker`), and one right after a shape keyword, its member count. A group takes the first only. A
+  count anywhere else fails, so no enemy id may be all digits.
+- Groups expand while parsing: `WaveContent` is a flat slot list, and nothing after the parser knows of a group. Nested
+  counts multiply, so a wave holds at most `WaveScript.MAX_SLOTS` slots, checked before a repeat is built.
+- Errors (`GameStartupException`): an unknown token, a spacing that isn't the first word, a bracket never closed or
+  closing none, a group with no slot, a shape on a group, a rank after a shape, a rank right before `e`, two ranks in a
+  row, a count out of place or left over, a missing or forbidden member count, a repeat count over
+  `WaveScript.MAX_REPEAT`, more slots than `WaveScript.MAX_SLOTS`. Blank tokens are skipped. An error
   marks the offending token in the script and ends with `WaveScriptGrammar.RULES`, and a level's load adds its
   level, path and wave.
 - `WaveScriptGrammar` parses: each rule takes an immutable cursor and returns what it
-  read with the cursor after it, and a broken rule throws its checked `ScriptFault`. A spawn-type keyword is one
+  read with the cursor after it, only the open groups are carried between rules (a stack, so reading a whole script and
+  reading its start for suggestions share them), and a broken rule throws its checked `ScriptFault`. A spawn-type keyword is one
   `ShapeKeyword` row, a rank one `RankKeyword` row.
 - `WaveScriptSuggestions` asks `WaveScriptGrammar.next` what the same rules accept after the typed tokens; it never
   reads the script itself. A new keyword is its row plus the rule that reads it, and `next` answers for it.

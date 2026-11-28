@@ -177,7 +177,7 @@ replaced; on the measured yardstick their rooms stand at two to six, and they wa
 | The Last Hour | 4: Soldiers on three lanes · 8: Timekeepers on every lane · 11: an Elite on every lane · 12: the Keeper |
 
 The Labyrinth is three long rounds that pay while they run; the report counts a round's pay only once it is over, so
-its rooms there mean little and its waves are proved in play, not by the report. Its middle round is headed Elite: that is what
+its rooms there mean little and its waves are proved in play, not by the report. Its middle round is Elite: that is what
 Boss weighed before the rank ladder was steepened. For the same reason the Warden calls two Elite Drones at a time, not
 three, and its round's escort is Elite.
 

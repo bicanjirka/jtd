@@ -822,7 +822,7 @@ public final class TowerLab {
 
     private static LevelDefinition withOneRound(LevelDefinition level, int count, String id, int onlyPath, Rank rank,
                                                 RankedEnemy enemy) {
-        WaveDefinition round = new WaveDefinition(WaveScript.headed(rank, count + " " + id));
+        WaveDefinition round = new WaveDefinition(WaveScript.underRank(rank, count + " " + id));
         WaveDefinition none = new WaveDefinition(NO_ENEMY);
         List<PathDefinition> paths = IntStream.range(0, level.paths().size())
                 .mapToObj(i -> level.paths().get(i).withWaves(List.of(onlyPath < 0 || onlyPath == i ? round : none)))

@@ -130,8 +130,8 @@ Elite Golem and the Wardens; none on the eggs) and resilience on the Wardens, wh
 ### Rank
 
 Every enemy spawns at one of five named ranks — **Grunt, Soldier, Veteran, Elite, Boss** — shown
-as a badge on its body rather than as a number. A wave's script can name the rank its slots default to in its head
-(`soldier: 8 walker`), and is Grunt when it names none; any slot can name a different rank inline, before the enemy id (`elite walker`) or before a spawn
+as a badge on its body rather than as a number. A wave's script can name the rank of a whole group of slots before its
+bracket (`soldier (8 walker)`), and a slot no rank reaches is Grunt; any slot can name a different rank inline, before the enemy id (`elite walker`) or before a spawn
 shape (`elite swarm 4 walker`). The Walker sets the ladder: its health climbs a curve that bends upward to 32 times the Grunt's, so each
 rank adds more than the one before, an Elite is worth more than two Veterans and a Boss two Elites; its
 bounty grows only with the square root of its health, so a tougher rank asks for more damage per credit (a
